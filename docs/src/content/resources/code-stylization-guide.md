@@ -3,7 +3,29 @@ title: Code Stylization Guide
 description: Millennium Dawn's Code Stylization Guide
 ---
 
-This guide covers coding standards, best practices, and formatting rules for Millennium Dawn mod development.
+Write code another contributor can understand without reconstructing your intent.
+Keep the change local, reuse existing behavior, and add only what the task needs.
+
+## Keep It Simple
+
+- Prefer plain names and direct control flow over clever or compressed code.
+- Add a helper only when it removes meaningful duplication or clarifies a required boundary.
+  Do not turn a few clear lines into a one-use wrapper.
+- Query existing game state instead of maintaining flags that mirror it. Keep flags
+  for historical transitions or state the engine cannot otherwise answer.
+- Keep behavior-preserving cleanup separate from gameplay changes.
+- Remove unused code and commented-out blocks. Add a comment only for a non-obvious
+  reason, in one short line. Do not narrate the code.
+
+### Names and Encoding
+
+Country-specific variables and flags use `TAG_`; global state uses `GLOBAL_`; shared
+systems use their domain prefix. Use `snake_case` after the prefix and keep system
+acronyms uppercase. Match identifier case exactly.
+
+Script `.txt` files use UTF-8 without BOM. English localisation `.yml` files use
+UTF-8 with BOM. Python tools must preserve LF when writing; see
+[Maintaining Tools](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md#maintaining-tools).
 
 > **Quick Tools**:
 >
@@ -21,7 +43,7 @@ This guide covers coding standards, best practices, and formatting rules for Mil
 | Focus Trees | Use `relative_position_id`, include logging, `ai_will_do` last |
 | Decisions   | Include logging, use `fire_only_once` sparingly                |
 | Events      | Use `is_triggered_only = yes`, log only if effects exist       |
-| Ideas       | Remove `allowed = { always = no }`, use `allowed_civil_war`    |
+| Ideas       | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
 | Formatting  | Tabs (not spaces), 1 line between elements                     |
 
 ---
@@ -55,6 +77,52 @@ These guidelines help keep the mod running smoothly:
 
 The number forces load order (shared trees load before country-specific).
 
+## Tree Layout
+
+Focus trees are laid out **horizontally**: every branch gets its own `x` lane, placed side by side. Examples are China and France
+
+- Leave a clear gap between lanes so branch boundaries read at a glance
+- Position focuses inside a lane with `relative_position_id` off the branch root, so the whole branch
+  can be shifted sideways by moving one focus
+- Place `continuous_focus_position = { x = ... y = ... }` clear of the branch lanes
+
+## Focus Shortcuts
+
+Shortcuts render as jump buttons above the tree and are the main navigation aid for players who
+cannot fit the whole tree on screen. Every tree gets roughly one shortcut per branch lane. Keep it around 4 - 6
+
+They are declared at `focus_tree` level, not inside a `focus`, directly after
+`continuous_focus_position`:
+
+```hoiscript
+# Focus Shortcuts
+shortcut = {
+    name = political_shortcut_title
+    target = FRA_state_of_french_politics
+    scroll_wheel_factor = 0.80
+}
+```
+
+- `name` is a localisation key, `target` is the branch root focus `id`
+- `scroll_wheel_factor = 0.80` is the Millennium Dawn standard, keep it identical on every shortcut
+
+### Standard Shortcut Tooltips
+
+Reuse these shared keys for the four common branch types instead of writing tag-prefixed ones. They
+live in `localisation/english/MD_misc_l_english.yml` and are already translated in every language:
+
+| Key                        | Tooltip             |
+| -------------------------- | ------------------- |
+| `political_shortcut_title` | Political           |
+| `economy_shortcut_title`   | Economy             |
+| `military_shortcut_title`  | Military            |
+| `diplomacy_shortcut_title` | Foreign Interaction |
+
+Write a custom `TAG_name_shortcut` key only when a branch genuinely is not one of those four, for
+example `AFG_civil_war_shortcut`. Custom keys go in that country's `MD_focus_TAG_l_english.yml`.
+
+`common/national_focus/05_france.txt` is the reference tree using the standard keys end to end.
+
 ## Required Order Within a Focus
 
 ```
@@ -74,6 +142,8 @@ The number forces load order (shared trees load before country-specific).
 ## Best Practices
 
 - Use `relative_position_id` for tree positioning
+- Lay branches out in horizontal lanes and give every branch a `shortcut`, reusing the standard
+  shortcut tooltip keys where they fit
 - Add logging: `log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"`
 - Omit default values: `cancel_if_invalid = yes`, `continue_if_invalid = no`
 - Include `ai_will_do` with game options checks
@@ -200,7 +270,8 @@ country_event = {
 ## Best Practices
 
 - Include `allowed_civil_war = { always = yes }` for civil war tags
-- **Remove** `allowed = { always = no }` - this is the default; `allowed` is checked once at game start/load and `add_ideas` bypasses it entirely. Tradeoff: `has_available_idea_with_trait` builds a list of every idea that passes `allowed`, then evaluates their `available` triggers at runtime. Removing `allowed = { always = no }` lets more ideas into that pool (more runtime checks), while keeping it filters them out. MD does not use that trigger, so the tradeoff is moot here
+- **Remove** the whole `allowed` block from an idea in a category with no slot (`country`, `hidden_ideas`). Nothing picks from those categories, so `add_idea` is the only way in and it never consults `allowed`. The gate does nothing no matter what is inside it
+- **Keep** `allowed = { always = no }` on slotted ideas that must not appear in the picker (religion and other laws). `add_idea` still applies them. Missing `allowed` means everyone sees the idea in the list
 - **Remove** `cancel = { always = no }` - checked hourly, never true; redundant default
 - **Remove** empty `on_add = { log = "" }` unless you're actually doing something
 - Log in `on_add` only when making changes
@@ -233,7 +304,8 @@ BRA_idea_higher_minimum_wage_1 = {
 
 ## Brackets
 
-- Place closing brackets on the same line as the keyword
+- Place opening braces on the same line as the keyword
+- Put closing braces on their own line at the outer indent, except for simple one-line blocks
 - Avoid excessive whitespace
 - Keep simple checks on one line when appropriate
 
@@ -304,7 +376,7 @@ CHI_norinco_manufacturer = {
 
 ## Trait Guidelines
 
-- Maximum grid: `y = 0 - 9`
+- Keep trait x positions at or below 9. Negative x is allowed; y is not capped
 - Use relative positioning within the grid
 
 ---

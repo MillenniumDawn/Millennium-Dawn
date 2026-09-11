@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import create_backup, log_message
+from shared_utils import atomic_write_text, create_backup, log_message
 
 # Output order
 SECTION_ORDER = [
@@ -389,13 +389,13 @@ class LocalisationStandardizer:
         )
 
         try:
-            output_file.write_text(output, encoding="utf-8-sig")
+            atomic_write_text(str(output_file), output, bom=True)
         except OSError as exc:
             log_message("ERROR", f"Cannot write {output_file}: {exc}")
             return False
 
         # Summary
-        cats = {}
+        cats: Dict[str, int] = {}
         for entry in entries:
             if entry.key:
                 cat = _find_category(entry.key, self.index, self.references)

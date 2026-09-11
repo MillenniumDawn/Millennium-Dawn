@@ -198,6 +198,42 @@ microchip_update = {
 
 				subtract_from_variable = { country_microchip_production_var = tai_chip_resource_use_improvements }
 			}
+			if = {
+				limit = { has_dynamic_modifier = the_great_chip_race_modifier }
+				set_variable = {
+					tai_microchip_prod_boost_var = {
+						value = CHI.resource_produced@microchips
+						divide = resource_produced@microchips
+						clamp = { min = 0.05 max = 0.6 }
+					}
+				}
+
+				set_variable = {
+					tai_microchip_const_boost_var = {
+						value = CHI.resource_produced@microchips
+						divide = resource_produced@microchips
+						multiply = 0.5
+						clamp = { min = 0.05 max = 0.6 }
+					}
+				}
+			}
+		}
+
+		# if we have no production or import of a required material (none avaiabile at all), then halt production
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						check_variable = { resource_produced@chromium = 0 }
+						check_variable = { resource_imported@chromium = 0 }
+					}
+					AND = {
+						check_variable = { resource_produced@tungsten = 0 }
+						check_variable = { resource_improted@tungsten = 0 }
+					}
+				}
+			}
+			set_variable = { country_microchip_production_var = resource_produced@microchips }
 		}
 
 		clamp_variable = { var = country_microchip_production_var min = 0 max = country_microchip_reducer_max }

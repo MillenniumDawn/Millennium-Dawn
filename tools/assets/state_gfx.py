@@ -3,12 +3,19 @@
 # YOU SHOULD DO `pip install Pillow` IN CMD IF YOU GET ERRORS FOR 'PIL' MODULE.
 
 import csv
+import importlib
+import io
 import os
 import re
 import sys
 
-import PIL.Image
-from PIL import Image
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import read_text_under
+
+
+def _pil_image():
+    return importlib.import_module("PIL.Image")
+
 
 # Anchor to the repo (tools/assets/ -> repo root) with OS-correct separators;
 # the old `r"..\history\states"` literals were dead on Linux.
@@ -24,7 +31,7 @@ def rgb_to_hex(rgb):
 
 
 def merge_provinces(image_path, target_hex_codes, replacement_hex_code):
-    img = PIL.Image.open(image_path).convert("RGB")
+    img = _pil_image().open(image_path).convert("RGB")
     img_arr = img.load()
 
     width, height = img.size
@@ -50,16 +57,24 @@ def main():
             )
 
     state_ids = input("Enter the state ID(s) separated by spaces: ").split(" ")
-    scale_number = int(
-        input(
-            "Enter the scale (I suggest 2, but try one in game to see how big it becomes)(default is 1): "
+    try:
+        scale_number = int(
+            input(
+                "Enter the scale (I suggest 2, but try one in game to see how big it becomes)(default is 1): "
+            )
+            or 1
         )
-        or 1
-    )
+    except ValueError:
+        sys.exit("Scale must be an integer")
+
+    try:
+        state_names = os.listdir(states_dir)
+    except OSError as e:
+        sys.exit(f"ERROR: cannot list states directory: {e}")
 
     for state_id in state_ids:
         state_file = None
-        for file_name in os.listdir(states_dir):
+        for file_name in state_names:
             if file_name.startswith(state_id) and not any(
                 char.isdigit() for char in file_name[len(state_id) :]
             ):
@@ -70,42 +85,49 @@ def main():
 
         if state_file:
             province_ids = []
-            with open(state_file, "r", encoding="utf-8-sig") as file:
-                state_data = file.read()
-                match = re.findall(r"provinces\s*=\s*{([^}]*)}", state_data)
-                if match:
-                    province_ids = match[0].split()
-                state_name_match = re.search(r"\d+-(.+)\.txt", file_name)
-                if state_name_match:
-                    state_name = state_name_match.group(1)
-                    print("State Name:", state_name)
-                else:
-                    print("Could not extract state name from file name.")
-                    continue
+            try:
+                state_data = read_text_under(state_file, REPO_ROOT)
+            except (OSError, ValueError) as e:
+                sys.exit(f"ERROR: cannot read state file: {e}")
+            match = re.findall(r"provinces\s*=\s*{([^}]*)}", state_data)
+            if match:
+                province_ids = match[0].split()
+            state_name_match = re.search(r"\d+-(.+)\.txt", os.path.basename(state_file))
+            if state_name_match:
+                state_name = state_name_match.group(1)
+                print("State Name:", state_name)
+            else:
+                print("Could not extract state name from file name.")
+                continue
 
-            with open(definition_file, "r") as file:
-                csv_reader = csv.reader(file, delimiter=";")
-                next(csv_reader)  # Skip header
-                for row in csv_reader:
-                    if len(row) < 4:
-                        print(f"Skipping malformed row: {row}")
-                        continue
-                    print("Row content:", row)  # Debugging line
-                    try:
-                        province_id = int(row[0])
-                        if str(province_id) in province_ids:
-                            rgb = tuple(map(int, row[1:4]))
-                            hex_code = rgb_to_hex(rgb)
-                            hex_codes.append(hex_code)
-                    except ValueError:
-                        print(f"Skipping invalid province_id: {row[0]}")
+            try:
+                definition = read_text_under(
+                    definition_file, REPO_ROOT, encoding="utf-8"
+                )
+            except (OSError, ValueError) as e:
+                sys.exit(f"ERROR: cannot read definition file: {e}")
+            csv_reader = csv.reader(io.StringIO(definition), delimiter=";")
+            next(csv_reader)  # Skip header
+            for row in csv_reader:
+                if len(row) < 4:
+                    print(f"Skipping malformed row: {row}")
+                    continue
+                print("Row content:", row)  # Debugging line
+                try:
+                    province_id = int(row[0])
+                    if str(province_id) in province_ids:
+                        rgb = tuple(map(int, row[1:4]))
+                        hex_code = rgb_to_hex(rgb)
+                        hex_codes.append(hex_code)
+                except ValueError:
+                    print(f"Skipping invalid province_id: {row[0]}")
 
             print("Province IDs:", province_ids)
             print("HEX Codes:", hex_codes)
             print("Let me cook...")
 
         else:
-            print("Couldn't find state file")
+            raise SystemExit(f"Couldn't find state file for state ID {state_id}")
 
         image_path = provinces_bmp
         target_hex_codes = hex_codes
@@ -133,13 +155,13 @@ def main():
             max_y = max(y for x, y in white_pixel_coords)
             new_width = max_x - min_x + 1
             new_height = max_y - min_y + 1
-            new_image = Image.new("RGBA", (new_width, new_height), (0, 0, 0, 0))
+            new_image = _pil_image().new("RGBA", (new_width, new_height), (0, 0, 0, 0))
             for x, y in white_pixel_coords:
                 new_image.putpixel((x - min_x, y - min_y), (255, 255, 255, 255))
-            resize_width = int(new_image.width)
-            resize_height = int(new_image.height)
-            new_resize_width = int(resize_width * scale_number)
-            new_resize_height = int(resize_height * scale_number)
+            resize_width = new_image.width
+            resize_height = new_image.height
+            new_resize_width = resize_width * scale_number
+            new_resize_height = resize_height * scale_number
             resized_image = new_image.resize((new_resize_width, new_resize_height))
             output_name = state_name.lower().replace(" ", "_")
             resized_image.save(os.path.join(desktop_path, f"{output_name}.png"))

@@ -8,7 +8,7 @@ error but does nothing at runtime.
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -77,6 +77,11 @@ _VAR_WRITE = re.compile(
     r"((?:global\.|ROOT\.|PREV\.|THIS\.|FROM\.|OWNER\.|CONTROLLER\.|[A-Z]{2,4}\.)?"
     r"[A-Za-z_][A-Za-z0-9_]*)"
 )
+
+# Timer-driven engine globals documented as a performance trap in
+# performance-patterns.md (GUI dirty counters): binding dirty to them redraws
+# the whole GUI every tick.
+_DIRTY_TIMER_GLOBALS: FrozenSet[str] = frozenset({"global.date", "global.num_days"})
 
 # global.X reference anywhere (read or write) — marks X as a global-namespace variable.
 _GLOBAL_REF = re.compile(r"\bglobal\.([A-Za-z_][A-Za-z0-9_]*)")
@@ -222,9 +227,9 @@ def _parse_gui_text(text: str, rel: str) -> Dict:
     }
 
 
-def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict:
+def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict[str, Any]:
     """Build a single scripted_gui block dict from its body text."""
-    block = {
+    block: Dict[str, Any] = {
         "name": name,
         "file": file,
         "line": line,
@@ -375,15 +380,24 @@ class Validator(BaseValidator):
             f"{len(files)} .gui files"
         )
 
-    def _parse_one_gui_file(self, filepath: str) -> None:
+    def _read_text_or_warn(self, filepath: str) -> Optional[Tuple[str, str]]:
+        """Read filepath as utf-8-sig text, returning (text, relative path).
+
+        Logs a warning and returns None on any read failure.
+        """
         try:
             with open(filepath, "r", encoding="utf-8-sig") as fh:
                 text = fh.read()
         except Exception as e:
             self.log(f"  ! could not read {filepath}: {e}", "warning")
-            return
+            return None
+        return text, os.path.relpath(filepath, self.mod_path)
 
-        rel = os.path.relpath(filepath, self.mod_path)
+    def _parse_one_gui_file(self, filepath: str) -> None:
+        parsed = self._read_text_or_warn(filepath)
+        if parsed is None:
+            return
+        text, rel = parsed
         data = disk_cache.per_file_cached_by_content(
             self.mod_path,
             "sgui.gui2",
@@ -414,14 +428,10 @@ class Validator(BaseValidator):
         )
 
     def _parse_one_scripted_gui_file(self, filepath: str) -> None:
-        try:
-            with open(filepath, "r", encoding="utf-8-sig") as fh:
-                text = fh.read()
-        except Exception as e:
-            self.log(f"  ! could not read {filepath}: {e}", "warning")
+        parsed = self._read_text_or_warn(filepath)
+        if parsed is None:
             return
-
-        rel = os.path.relpath(filepath, self.mod_path)
+        text, rel = parsed
         blocks, trigger_names = disk_cache.per_file_cached_by_content(
             self.mod_path,
             "sgui.scripted4",
@@ -463,7 +473,7 @@ class Validator(BaseValidator):
                 "sgui.varwrites2",
                 filepath,
                 text,
-                lambda text=text: _parse_var_writes_text(text),
+                lambda: _parse_var_writes_text(text),
             )
             self._written_names.update(written)
             self._global_ref_names.update(global_refs)
@@ -654,6 +664,18 @@ class Validator(BaseValidator):
             if not d or d in ("yes", "no"):
                 continue
             if "[" in d or "]" in d:  # runtime-substituted name, can't resolve
+                continue
+            if d in _DIRTY_TIMER_GLOBALS:
+                self.add_issue(
+                    Severity.WARNING,
+                    "DIRTY_TIMER_GLOBAL",
+                    f"Scripted GUI '{block['name']}' has dirty = {d}, which changes "
+                    f"every tick, so the GUI redraws every frame. Use a dedicated "
+                    f"counter incremented only when the backing data changes "
+                    f"(performance-patterns.md, GUI dirty counters)",
+                    file=block["file"],
+                    line=block["line"],
+                )
                 continue
             base = d.rsplit(".", 1)[-1]
             if d.startswith("global."):

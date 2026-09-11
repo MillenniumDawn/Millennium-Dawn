@@ -68,7 +68,7 @@ def main():
         print(f"All {len(found)} tokens already present. Nothing to add.")
         return
 
-    with open(args.output, "a", encoding="utf-8") as f:
+    with open(args.output, "a", encoding="utf-8", newline="") as f:
         if raw and not raw.endswith("\n"):
             f.write("\n")
         for t in missing:

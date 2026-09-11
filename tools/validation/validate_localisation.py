@@ -5,6 +5,7 @@ Based on Kaiserreich Autotests by Pelmen (https://github.com/Pelmen323),
 adapted for Millennium Dawn with multiprocessing.
 """
 
+import functools
 import glob
 import logging
 import os
@@ -43,11 +44,14 @@ def _should_skip(filename: str) -> bool:
 # --- Multiprocessing helpers ---
 
 
+def _loc_body_lines(filename: str) -> List[str]:
+    return FileOpener.open_text_file(filename, strip_comments_flag=True).split("\n")[1:]
+
+
 def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
+    lines = _loc_body_lines(filename)
     for line_idx, line in enumerate(lines):
         if line.count("[") != line.count("]"):
             results.append(
@@ -69,13 +73,19 @@ _PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
 # `KEY:0 "value"` lines across two lines and rewrote double quotes to single
 # quotes. Paradox YAML is not real YAML — both mangle silently in-game rather
 # than erroring, so they must be caught here.
+# Opinion modifiers sit exactly one level under the file's `opinion_modifiers
+# = { }` wrapper. Spaces are accepted alongside the tab MD actually uses, but
+# only one level deep — `\s+` would swallow blank lines and match nested blocks.
+_OPINION_MODIFIER_RE = re.compile(
+    r"^(?:\t| {1,4})([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE
+)
 _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
 _MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List:
+def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[Issue | str]:
     filename, valid_colors, subst_keys = args
-    results = []
+    results: List[Issue | str] = []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
@@ -125,26 +135,23 @@ def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List:
                     f"{os.path.basename(filename)}, line {line_idx + 2}, colors - expected {expected} \u00a7! but got {actual}"
                 )
             else:
-                try:
-                    for idx, ch in enumerate(color_line):
-                        if ch == "\u00a7" and idx + 1 < len(color_line):
-                            next_ch = color_line[idx + 1]
-                            if next_ch not in valid_colors and next_ch not in [
-                                "!",
-                                "[",
-                                "$",
-                            ]:
-                                results.append(
-                                    f"{os.path.basename(filename)}, line {line_idx + 2}, colors - unsupported color '{next_ch}'"
-                                )
-                except Exception:
-                    continue
+                for idx, ch in enumerate(color_line):
+                    if ch == "\u00a7" and idx + 1 < len(color_line):
+                        next_ch = color_line[idx + 1]
+                        if next_ch not in valid_colors and next_ch not in [
+                            "!",
+                            "[",
+                            "$",
+                        ]:
+                            results.append(
+                                f"{os.path.basename(filename)}, line {line_idx + 2}, colors - unsupported color '{next_ch}'"
+                            )
     return results
 
 
 def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
     filename = args[0]
-    results = []
+    results: List[str] = []
     text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
     lines = text_file.split("\n")
     if lines == [""]:
@@ -213,13 +220,13 @@ _TYPO_RE = re.compile(
     re.IGNORECASE,
 )
 _TYPO_VALUE_RE = re.compile(r'^\s*[\w.\-]+:\d*\s*"(.*)"')
+_TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+")
 
 
 def process_yml_for_typos(args: Tuple[str]) -> List[str]:
     filename = args[0]
     results = []
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    lines = text_file.split("\n")[1:]
+    lines = _loc_body_lines(filename)
     for line_idx, line in enumerate(lines):
         if not line.strip():
             continue
@@ -229,11 +236,48 @@ def process_yml_for_typos(args: Tuple[str]) -> List[str]:
         value = value_match.group(1)
         if any(exempt in value for exempt in _TYPO_EXEMPTIONS):
             continue
-        for m in _TYPO_RE.finditer(value):
+        prose = _TYPO_RUNTIME_REFERENCE_RE.sub("", value)
+        for m in _TYPO_RE.finditer(prose):
             correction = _TYPO_WATCHLIST[m.group(0).lower()]
             results.append(
                 f"{os.path.basename(filename)} - line {line_idx + 2} - "
                 f"'{m.group(0)}' -> '{correction}'"
+            )
+    return results
+
+
+def process_yml_for_prose(args: Tuple[str]) -> List[Issue]:
+    filename = args[0]
+    results: List[Issue] = []
+    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
+    lines = text_file.split("\n")[1:]
+    basename = os.path.basename(filename)
+    for line_idx, line in enumerate(lines):
+        if not line.strip():
+            continue
+        value_match = _TYPO_VALUE_RE.match(line)
+        if not value_match:
+            continue
+        value = value_match.group(1)
+        for _ in range(value.count("\u2014")):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-em-dash",
+                    message="Em dash in loc value: replace with a period, comma, or colon (see .claude/docs/localisation-rules.md)",
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+        for _ in range(value.count("`")):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-backtick-apostrophe",
+                    message="Backtick used as apostrophe in loc value: use ' instead",
+                    file=basename,
+                    line=line_idx + 2,
+                )
             )
     return results
 
@@ -261,7 +305,7 @@ def get_all_loc_keys(
     filepath = str(Path(mod_path) / "localisation" / "english") + "/"
     loc_dict: Dict[str, str] = {}
     duplicated_keys: List[str] = []
-    namespace = f"loc.keys.lc={int(lowercase)}"
+    namespace = f"loc.keys.lc={'1' if lowercase else '0'}"
 
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
         text_file = FileOpener.open_text_file(
@@ -358,6 +402,150 @@ def process_txt_for_loc_key_refs(filename: str) -> List[str]:
     return results
 
 
+def _trigger_tooltip_keys(text: str) -> List[str]:
+    """Keys from every custom_trigger_tooltip, past any nested trigger body."""
+    keys: List[str] = []
+    for match in re.finditer(r"custom_trigger_tooltip\s*=\s*\{", text):
+        depth = 0
+        start = text.index("{", match.end() - 1)
+        for token in re.finditer(r"[{}]|\btooltip\s*=\s*(?!\{)(\S+)", text[start:]):
+            symbol = token.group(0)
+            if symbol == "{":
+                depth += 1
+            elif symbol == "}":
+                depth -= 1
+                if depth == 0:
+                    break
+            elif depth == 1:
+                keys.append(token.group(1))
+                break
+    return keys
+
+
+# --- [?variable] references -------------------------------------------------
+
+# An unwritten [?name] renders as 0 rather than erroring, so it is invisible.
+
+_LOC_VAR_REF_RE = re.compile(r"\[\?([^\]]+)\]")
+_LOC_VAR_WRITE_RE = re.compile(
+    r"(?:set_variable|set_temp_variable|set_global_variable|add_to_variable|"
+    r"subtract_from_variable|multiply_variable|divide_variable|clamp_variable|"
+    r"modulo_variable|round_variable|min_variable|max_variable)\s*=\s*\{\s*"
+    r"(?:var\s*=\s*)?((?:\d+\.)?[A-Za-z_][\w.:@^]*)"
+)
+_LOC_VAR_ARRAY_RE = re.compile(
+    r"(?:add_to_array|add_to_temp_array|resize_array)\s*=\s*\{\s*"
+    r"(?:array\s*=\s*)?([A-Za-z_][\w.:@^]*)"
+)
+
+_VAR_SCOPE_WORDS = frozenset(
+    {
+        "root",
+        "this",
+        "from",
+        "prev",
+        "owner",
+        "controller",
+        "capital",
+        "global",
+        "var",
+        "event_target",
+        "token",
+    }
+)
+
+# Engine-side, but absent from resources/documentation.
+_EXTRA_ENGINE_LOC_VARS = frozenset({"days_left", "war_support"})
+
+_DYNAMIC_VAR_DOC = os.path.join(
+    "resources", "documentation", "dynamic_variables_documentation.md"
+)
+_DOC_HEADING_RE = re.compile(r"^#{2,4}\s+([A-Za-z_][\w.]*)\s*$", re.M)
+
+
+@functools.lru_cache(maxsize=1)
+def _engine_loc_vars(mod_path: str) -> frozenset:
+    """Read-only dynamic variables the engine supplies, from the vanilla docs."""
+    try:
+        with open(
+            os.path.join(mod_path, _DYNAMIC_VAR_DOC), "r", encoding="utf-8"
+        ) as handle:
+            body = handle.read()
+    except OSError:
+        return _EXTRA_ENGINE_LOC_VARS
+    return frozenset(_DOC_HEADING_RE.findall(body)) | _EXTRA_ENGINE_LOC_VARS
+
+
+def _loc_var_name(raw: str) -> str:
+    """The variable a `[?...]` names, or "" for an @ read, promote or scope.
+
+    Leading scope hops (`var:`, `CONTROLLER:`, `ROOT.`, `145.`) are stripped.
+    """
+    name = raw.split("|", 1)[0].strip()
+    if not name or "@" in name:
+        return ""
+    name = name.split("^", 1)[0]
+    while ":" in name:
+        head, _, tail = name.partition(":")
+        if not re.fullmatch(r"[A-Za-z_]\w*", head):
+            break
+        name = tail
+    parts = [seg for seg in name.split(".") if seg]
+    if any(seg[:1].isupper() and seg[1:2].islower() for seg in parts[1:]):
+        return ""  # a promote such as .GetName, not a variable read
+    while len(parts) > 1 and (
+        parts[0].lower() in _VAR_SCOPE_WORDS
+        or re.fullmatch(r"[A-Z]{3}", parts[0])
+        or parts[0].isdigit()
+    ):
+        parts.pop(0)
+    name = ".".join(parts).strip()
+    # A scope hop can sit behind the dotted prefix too: FROM.CONTROLLER:var.
+    while ":" in name:
+        head, _, tail = name.partition(":")
+        if not re.fullmatch(r"[A-Za-z_]\w*", head):
+            break
+        name = tail
+    if not name or name.lower() in _VAR_SCOPE_WORDS or re.fullmatch(r"[A-Z]{3}", name):
+        return ""
+    if len(name) < 3 or name.endswith("_array") or "." in name:
+        return ""
+    return name
+
+
+def process_txt_for_var_writes(args: Tuple[str]) -> Set[str]:
+    """Pool worker: variable names one script file writes."""
+    filename = args[0]
+    text = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if not text:
+        return set()
+    written: Set[str] = set()
+    for raw in _LOC_VAR_WRITE_RE.findall(text) + _LOC_VAR_ARRAY_RE.findall(text):
+        written.add(raw.split("^")[0].split(".")[-1])
+        name = _loc_var_name(raw)
+        if name:
+            written.add(name)
+    return written
+
+
+def process_yml_for_var_refs(args: Tuple[str]) -> List[Tuple[str, str, int]]:
+    """Pool worker: (variable, file, line) for every `[?...]` in one loc file."""
+    filename = args[0]
+    out: List[Tuple[str, str, int]] = []
+    try:
+        with open(filename, "r", encoding="utf-8-sig", newline="") as handle:
+            for number, line in enumerate(handle, 1):
+                for raw in _LOC_VAR_REF_RE.findall(line):
+                    name = _loc_var_name(raw)
+                    if name:
+                        out.append((name, os.path.basename(filename), number))
+    except (OSError, UnicodeDecodeError):
+        return []
+    return out
+
+
 def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
     """Pool worker: check custom_effect_tooltip / custom_trigger_tooltip keys in one .txt file.
 
@@ -375,22 +563,20 @@ def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
     ):
         return []
     simple_pattern = r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)"
-    trigger_pattern = r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(?!\{)(\S+)"
     basename = os.path.basename(filename)
     results = []
-    for pattern in [simple_pattern, trigger_pattern]:
-        for key in re.findall(pattern, text_file):
-            if key in valid_keys or key in VANILLA_LOC_KEYS or key in scripted_keys:
-                continue
-            if "[" in key or "|" in key or '"' in key:
-                continue
-            if key.startswith("GFX_"):
-                continue
-            if key.startswith("cannot_go_higher_than_") or key.startswith(
-                "cannot_go_lower_than_"
-            ):
-                continue
-            results.append(f"{key} - {basename}")
+    for key in re.findall(simple_pattern, text_file) + _trigger_tooltip_keys(text_file):
+        if key in valid_keys or key in VANILLA_LOC_KEYS or key in scripted_keys:
+            continue
+        if "[" in key or "|" in key or '"' in key:
+            continue
+        if key.startswith("GFX_"):
+            continue
+        if key.startswith("cannot_go_higher_than_") or key.startswith(
+            "cannot_go_lower_than_"
+        ):
+            continue
+        results.append(f"{key} - {basename}")
     return results
 
 
@@ -599,6 +785,40 @@ class Validator(BaseValidator):
             category="loc-typo-watchlist",
         )
 
+    def validate_prose_conventions(self):
+        self._log_section(
+            "Checking localisation prose conventions (em dashes, backtick apostrophes)..."
+        )
+
+        yml_files = self._get_yml_files()
+        args_list = [(f,) for f in yml_files]
+
+        all_results = self._pool_map(process_yml_for_prose, args_list, chunksize=10)
+
+        em_dash_results: List[Issue] = []
+        backtick_results: List[Issue] = []
+        for file_results in all_results:
+            for issue in file_results:
+                if issue.category == "loc-em-dash":
+                    em_dash_results.append(issue)
+                else:
+                    backtick_results.append(issue)
+
+        self._report(
+            em_dash_results,
+            "✓ No em dashes in localisation values",
+            "Em dashes in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-em-dash",
+        )
+        self._report(
+            backtick_results,
+            "✓ No backtick-as-apostrophe in localisation values",
+            "Backtick used as apostrophe in localisation values:",
+            severity=Severity.WARNING,
+            category="loc-backtick-apostrophe",
+        )
+
     def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
         """Scan txt files with a worker that needs the valid/scripted key sets,
         shipped once per worker (loc_keys is ~200k entries; per-task shipping
@@ -762,10 +982,7 @@ class Validator(BaseValidator):
                 r"[A-Za-z0-9_]+",
                 esc,
             )
-            try:
-                dynamic_ref_patterns.append(re.compile(f"^{esc}$"))
-            except re.error:
-                pass
+            dynamic_ref_patterns.append(re.compile(f"^{esc}$"))
 
         def _matches_dynamic_ref(key: str) -> bool:
             return any(p.match(key) for p in dynamic_ref_patterns)
@@ -803,6 +1020,81 @@ class Validator(BaseValidator):
             "Orphaned tooltip keys (defined in loc but never referenced):",
         )
 
+    def validate_opinion_modifiers(self, loc_keys: Dict, scripted_loc_keys: set):
+        self._log_section("Checking opinion modifier localisation...")
+
+        modifier_files = self._collect_files(
+            ["common/opinion_modifiers/**/*.txt"], ignore_staged=True
+        )
+        modifiers: Dict[str, str] = {}
+        for filepath in modifier_files:
+            try:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+            except OSError:
+                continue
+            basename = os.path.basename(filepath)
+            for match in _OPINION_MODIFIER_RE.finditer(text):
+                name = match.group(1)
+                if name not in modifiers:
+                    modifiers[name] = basename
+
+        missing = []
+        for name, basename in sorted(modifiers.items()):
+            if (
+                name in loc_keys
+                or name in scripted_loc_keys
+                or name in VANILLA_LOC_KEYS
+            ):
+                continue
+            missing.append(
+                f"{name} - {basename}: opinion modifier without localisation"
+            )
+        self._report(
+            missing,
+            "\u2713 All opinion modifiers have localisation",
+            "Opinion modifiers without localisation:",
+            severity=Severity.WARNING,
+            category="missing-opinion-modifier-localisation",
+        )
+
+    def validate_variable_references(self):
+        """`[?name]` in English loc must name a variable some script writes."""
+        self._log_section("Checking [?variable] references in localisation...")
+
+        written: Set[str] = set()
+        for names in self._pool_map(
+            process_txt_for_var_writes,
+            [
+                (f,)
+                for f in self._collect_files(
+                    ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+                )
+            ],
+            chunksize=30,
+        ):
+            written |= names
+
+        engine = _engine_loc_vars(self.mod_path)
+        results = []
+        for refs in self._pool_map(
+            process_yml_for_var_refs,
+            [(f,) for f in self._get_yml_files()],
+            chunksize=10,
+        ):
+            for name, basename, number in refs:
+                if name not in written and name not in engine:
+                    results.append((f"{name} - {basename}", basename, number))
+
+        self._report(
+            results,
+            "✓ Every [?variable] reference resolves to a written variable",
+            "Localisation reads a variable no script writes (renders as 0):",
+            severity=Severity.WARNING,
+            category="loc-unwritten-variable",
+        )
+
     def run_validations(self):
         if self.staged_only and not self.staged_files:
             self.log(
@@ -821,6 +1113,7 @@ class Validator(BaseValidator):
         self.validate_syntax()
         self.validate_mandatory_line()
         self.validate_typo_watchlist()
+        self.validate_prose_conventions()
 
         # Cross-reference checks scan all .txt/.gui files — skip in staged mode
         if not self.staged_only:
@@ -830,6 +1123,8 @@ class Validator(BaseValidator):
             self.validate_orphaned_tooltip_keys(
                 loc_keys, skipped_keys, scripted_loc_keys
             )
+            self.validate_opinion_modifiers(loc_keys, scripted_loc_keys)
+            self.validate_variable_references()
 
 
 if __name__ == "__main__":

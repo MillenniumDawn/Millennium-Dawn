@@ -17,10 +17,9 @@ GRE_CYP_category = {
 			has_equipment = {
 				infantry_weapons_1 > 99
 			}
-			check_variable = { 145.GRE_SUPPORT > 50 }
 			custom_trigger_tooltip = {
-				tooltip = GRE_NCY_incite_riot_TT
-				check_variable = { 145.GRE_SUPPORT > 49 }
+				tooltip = GRE_guarantee_turkish_property_support_tt
+				check_variable = { 145.GRE_SUPPORT > 50 }
 			}
 			custom_trigger_tooltip = {
 				tooltip = only_one_decision_is_available_TT
@@ -43,10 +42,9 @@ GRE_CYP_category = {
 			}
 			hidden_effect = {
 				log = "[GetDateText]: [Root.GetName]: Decision GRE_guarantee_turkish_property"
-				add_to_variable = { 145.GRE_SUPPORT = 20 }
-				add_to_variable = { 146.GRE_SUPPORT = -20 }
-				clamp_variable = { var = 146.GRE_SUPPORT min = 0 max = 100 }
-				clamp_variable = { var = 145.GRE_SUPPORT min = 0 max = 100 }
+				set_temp_variable = { GRE_cyp_south_change = 20 }
+				set_temp_variable = { GRE_cyp_north_change = -20 }
+				GRE_change_cyprus_support = yes
 			}
 		}
 
@@ -99,9 +97,11 @@ GRE_CYP_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GRE_please_north"
 			custom_effect_tooltip = GRE_gain_5_strength
 			custom_effect_tooltip = GRE_turks_lose_5_strength
-			add_to_variable = { 145.GRE_SUPPORT = 5 }
-			add_to_variable = { 146.GRE_SUPPORT = -5 }
-			clamp_variable = { var = 146.GRE_SUPPORT min = 0 max = 100 }
+			hidden_effect = {
+				set_temp_variable = { GRE_cyp_south_change = 5 }
+				set_temp_variable = { GRE_cyp_north_change = -5 }
+				GRE_change_cyprus_support = yes
+			}
 		}
 
 		ai_will_do = {
@@ -224,7 +224,7 @@ GRE_CYP_category = {
 GRE_confederation_category = {
 
 	GRE_decide_autonomy_level = {
-		icon = generic_political_actions
+		icon = GFX_decision_generic_decision
 		fire_only_once = yes
 
 		visible = {
@@ -248,7 +248,7 @@ GRE_confederation_category = {
 	}
 
 	GRE_decide_economic_distribution = {
-		icon = generic_political_actions
+		icon = GFX_decision_generic_decision
 		fire_only_once = yes
 
 		visible = {
@@ -272,7 +272,7 @@ GRE_confederation_category = {
 	}
 
 	GRE_decide_security_guarantees = {
-		icon = generic_political_actions
+		icon = GFX_decision_generic_decision
 		fire_only_once = yes
 
 		visible = {
@@ -299,7 +299,7 @@ GRE_confederation_category = {
 GRE_eastern_missions_category = {
 
 	GRE_aegean_dialogue_mission = {
-		icon = generic_political_actions
+		icon = GFX_decision_generic_decision
 
 		activation = {
 			always = no
@@ -327,5 +327,166 @@ GRE_eastern_missions_category = {
 		}
 
 		ai_will_do = { base = 0 }
+	}
+}
+
+GRE_ai_path_category = {
+
+	GRE_rally_the_conservatives = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = GRE_HISTORICAL_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			has_completed_focus = GRE_support_eu
+			western_conservatism_are_in_power = no
+			check_variable = { party_pop_array^1 < 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_rally_the_conservatives"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.03 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	GRE_conservatives_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = GRE_HISTORICAL_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			western_conservatism_are_in_power = no
+			check_variable = { party_pop_array^1 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_conservatives_take_the_country"
+			set_temp_variable = { rul_party_temp = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	GRE_rally_the_communists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = GRE_COMMUNIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			emerging_communist_state_are_in_power = no
+			check_variable = { party_pop_array^4 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_rally_the_communists"
+			set_temp_variable = { party_index = 4 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	GRE_communists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = GRE_COMMUNIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			emerging_communist_state_are_in_power = no
+			check_variable = { party_pop_array^4 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_communists_take_the_country"
+			set_temp_variable = { rul_party_temp = 4 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	GRE_rally_the_nationalists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = GRE_NATIONALIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			nationalist_fascist_are_in_power = no
+			check_variable = { party_pop_array^21 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_rally_the_nationalists"
+			set_temp_variable = { party_index = 21 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	GRE_nationalists_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = GRE_NATIONALIST_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			nationalist_fascist_are_in_power = no
+			check_variable = { party_pop_array^21 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GRE_nationalists_take_the_country"
+			set_temp_variable = { rul_party_temp = 21 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

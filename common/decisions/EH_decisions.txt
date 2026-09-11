@@ -4,10 +4,9 @@ EH_electric_traps_category = {
 	EH_set_up_electric_trap = {
 		icon = GFX_decision_fixes_button
 		days_remove = 7
-
 		state_target = yes
-
 		on_map_mode = map_only
+
 		highlight_states = {
 			highlight_states_trigger = {
 				is_controlled_by = ROOT
@@ -16,10 +15,12 @@ EH_electric_traps_category = {
 			highlight_color_before_active = 3
 			highlight_color_while_active = 2
 		}
+
 		target_trigger = {
 			FROM = {
 				is_controlled_by = ROOT
 				has_state_flag = EH_electric_trap_enabled_flag
+				NOT = { has_state_flag = EH_electric_trap_set_up_flag }
 			}
 		}
 
@@ -30,29 +31,20 @@ EH_electric_traps_category = {
 			}
 		}
 
-		visible = {
-			FROM = {
-				NOT = { has_state_flag = EH_electric_trap_set_up_flag }
-			}
-		}
-
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_set_up_electric_trap"
-			FROM = {
-				set_state_flag = EH_electric_trap_set_up_flag
-			}
-			add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = 1 }
+			FROM = { set_state_flag = EH_electric_trap_set_up_flag }
+			hidden_effect = { add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = 1 } }
 			custom_effect_tooltip = EH_electric_trap_country_resource_cost_tungsten_TT
 		}
 
 		ai_will_do = { base = 0 }
 	}
+
 	EH_remove_electric_trap = {
 		icon = GFX_decision_fixes_button_blocked
 		days_remove = 7
-
 		state_target = yes
-
 		on_map_mode = map_only
 
 		highlight_states = {
@@ -71,25 +63,11 @@ EH_electric_traps_category = {
 			}
 		}
 
-		visible = {
-			FROM = {
-				has_state_flag = EH_electric_trap_set_up_flag
-			}
-		}
-
-		available = {
-			FROM = {
-				NOT = {
-					has_state_flag = EH_electric_trap_active_flag
-				}
-			}
-		}
+		available = { FROM = { NOT = { has_state_flag = EH_electric_trap_active_flag } } }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_remove_electric_trap"
-			FROM = {
-				set_state_flag = EH_electric_trap_removing_flag
-			}
+			FROM = { set_state_flag = EH_electric_trap_removing_flag }
 		}
 
 		remove_effect = {
@@ -98,18 +76,17 @@ EH_electric_traps_category = {
 				clr_state_flag = EH_electric_trap_set_up_flag
 				clr_state_flag = EH_electric_trap_removing_flag
 			}
-			add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = -1 }
+			hidden_effect = { add_to_variable = { EH_electric_trap_country_resource_cost_tungsten_var = -1 } }
 			custom_effect_tooltip = EH_electric_trap_remove_country_resource_cost_tungsten_TT
 		}
 
 		ai_will_do = { base = 0 }
 	}
+
 	EH_activate_electric_trap = {
 		icon = GFX_decision_influence
 		days_remove = 10
-
 		state_target = yes
-
 		on_map_mode = map_only
 
 		highlight_states = {
@@ -124,12 +101,6 @@ EH_electric_traps_category = {
 		target_trigger = {
 			FROM = {
 				is_controlled_by = ROOT
-				has_state_flag = EH_electric_trap_set_up_flag
-			}
-		}
-
-		visible = {
-			FROM = {
 				has_state_flag = EH_electric_trap_set_up_flag
 			}
 		}
@@ -148,33 +119,21 @@ EH_electric_traps_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_activate_electric_trap"
 			if = {
-				limit = {
-					NOT = {
-						has_dynamic_modifier = {
-							modifier = EH_electric_trap_country_effects_idea
-						}
-					}
-				}
-				hidden_effect = {
-					add_dynamic_modifier = {
-						modifier = EH_electric_trap_country_effects_idea
-					}
-				}
+				limit = { NOT = { has_dynamic_modifier = { modifier = EH_electric_trap_country_effects_idea } } }
+				hidden_effect = { add_dynamic_modifier = { modifier = EH_electric_trap_country_effects_idea } }
 			}
-			add_to_variable = { EH_electric_trap_energy_use_var = 0.1 }
+			hidden_effect = { add_to_variable = { EH_electric_trap_energy_use_var = 0.1 } }
 			custom_effect_tooltip = EH_electric_trap_energy_use_TT
 			FROM = {
 				set_state_flag = EH_electric_trap_active_flag
-				add_dynamic_modifier = {
-					modifier = EH_electric_trap_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_electric_trap_modifier }
 			}
 		}
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_activate_electric_trap"
 			# Effects for country
-			add_to_variable = { EH_electric_trap_energy_use_var = -0.1 }
+			hidden_effect = { add_to_variable = { EH_electric_trap_energy_use_var = -0.1 } }
 			FROM = {
 				# Effects for state
 				set_state_flag = {
@@ -201,18 +160,14 @@ EH_research_sites_category = {
 				tooltip = EH_research_sites_limit_TT
 				check_variable = { EH_research_sites_constructed_var < 10 }
 			}
-			NOT = {
-				has_country_flag = EH_research_sites_decision_ongoing_flag
-			}
+			NOT = { has_country_flag = EH_research_sites_decision_ongoing_flag }
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_setup_research_site"
 			set_temp_variable = { treasury_change = -15 }
 			if = {
-				limit = {
-					has_country_flag = EH_research_sites_anti_air_installed_flag
-				}
+				limit = { has_country_flag = EH_research_sites_anti_air_installed_flag }
 				subtract_from_temp_variable = { treasury_change = 5 }
 			}
 			set_country_flag = EH_research_sites_decision_ongoing_flag
@@ -225,16 +180,8 @@ EH_research_sites_category = {
 			add_to_variable = { EH_research_sites_constructed_var = 1 }
 			EH_calculate_research_sites_effects = yes
 			if = {
-				limit = {
-					NOT = {
-						has_dynamic_modifier = {
-							modifier = EH_research_sites_effects_idea
-						}
-					}
-				}
-				add_dynamic_modifier = {
-					modifier = EH_research_sites_effects_idea
-				}
+				limit = { NOT = { has_dynamic_modifier = { modifier = EH_research_sites_effects_idea } } }
+				add_dynamic_modifier = { modifier = EH_research_sites_effects_idea }
 			}
 			custom_effect_tooltip = EH_add_research_site_TT
 			clr_country_flag = EH_research_sites_decision_ongoing_flag
@@ -250,9 +197,7 @@ EH_research_sites_category = {
 
 		available = {
 			EH_has_research_site = yes
-			NOT = {
-				has_country_flag = EH_research_sites_decision_ongoing_flag
-			}
+			NOT = { has_country_flag = EH_research_sites_decision_ongoing_flag }
 		}
 
 		complete_effect = {
@@ -282,9 +227,7 @@ EH_research_sites_category = {
 
 		available = {
 			EH_has_research_site = yes
-			NOT = {
-				has_country_flag = EH_research_sites_decision_ongoing_flag
-			}
+			NOT = { has_country_flag = EH_research_sites_decision_ongoing_flag }
 		}
 
 		complete_effect = {
@@ -315,9 +258,7 @@ EH_research_sites_category = {
 
 		available = {
 			EH_has_research_site = yes
-			NOT = {
-				has_country_flag = EH_research_sites_decision_ongoing_flag
-			}
+			NOT = { has_country_flag = EH_research_sites_decision_ongoing_flag }
 		}
 
 		complete_effect = {
@@ -342,10 +283,7 @@ EH_research_sites_category = {
 	EH_disable_site_notifications = {
 		icon = GFX_decision_message_decline_button
 		days_remove = 0
-
-		visible = {
-			NOT = { has_country_flag = EH_research_sites_disable_notifications_flag }
-		}
+		visible = { NOT = { has_country_flag = EH_research_sites_disable_notifications_flag } }
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_disable_site_notifications"
@@ -357,12 +295,9 @@ EH_research_sites_category = {
 	}
 
 	EH_enable_site_notifications = {
-		icon = GFX_decision_message_accept_button
+		icon = GFX_social_accept_button
 		days_remove = 0
-
-		visible = {
-			has_country_flag = EH_research_sites_disable_notifications_flag
-		}
+		visible = { has_country_flag = EH_research_sites_disable_notifications_flag }
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_enable_site_notifications"
@@ -382,9 +317,7 @@ EH_research_sites_category = {
 		available = {
 			has_war_with = ALN
 			has_country_flag = EH_research_sites_enabled
-			NOT = {
-				has_country_flag = EH_doudna_or_charpentier_finished_project_flag
-			}
+			NOT = { has_country_flag = EH_doudna_or_charpentier_finished_project_flag }
 		}
 
 		cancel_trigger = {
@@ -412,7 +345,6 @@ EH_find_new_veins_category = {
 		icon = GFX_decision_search_for_randallite
 		days_remove = var:EH_search_for_randallite_veins_time_var
 		days_re_enable = 10
-
 		fixed_random_seed = no
 
 		available = {
@@ -427,11 +359,8 @@ EH_find_new_veins_category = {
 				tooltip = EH_randallite_limit_TT
 				check_variable = { EH_randallite_stockpile < 300 }
 			}
-
 			OR = {
-				NOT = {
-					has_active_mission = EH_set_up_mine_mission
-				}
+				NOT = { has_active_mission = EH_set_up_mine_mission }
 				has_completed_focus = EH_new_enemy_new_strategy
 			}
 		}
@@ -444,11 +373,7 @@ EH_find_new_veins_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_search_for_randallite_veins"
 			if = {
-				limit = {
-					NOT = {
-						has_active_mission = EH_set_up_mine_mission
-					}
-				}
+				limit = { NOT = { has_active_mission = EH_set_up_mine_mission } }
 				set_temp_variable = { treasury_change = -10 }
 				modify_treasury_effect = yes
 			}
@@ -462,15 +387,9 @@ EH_find_new_veins_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_search_for_randallite_veins"
 			random_list = {
-				80 = {
-					country_event = EH_focus_event.12
-				}
-				10 = {
-					country_event = EH_focus_event.13
-				}
-				10 = {
-					country_event = EH_focus_event.14
-				}
+				80 = { country_event = EH_focus_event.12 }
+				10 = { country_event = EH_focus_event.13 }
+				10 = { country_event = EH_focus_event.14 }
 			}
 		}
 
@@ -481,30 +400,20 @@ EH_find_new_veins_category = {
 		icon = GFX_decision_search_for_randallite
 		is_good = yes
 		days_mission_timeout = var:EH_set_up_mine_time_var
-
-		activation = {
-			always = no
-		}
-
-		available = {
-			always = no
-		}
+		activation = { always = no }
+		available = { always = no }
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_set_up_mine_mission"
 			if = {
-				limit = {
-					has_country_flag = EH_setting_up_randallite_mine_flag
-				}
+				limit = { has_country_flag = EH_setting_up_randallite_mine_flag }
 				set_temp_variable = { add_randallite = EH_add_randallite_random }
 				EH_add_randallite_effect = yes
 				add_to_variable = { EH_randallite_mines_set_up_var = 1 }
 				clr_country_flag = EH_setting_up_randallite_mine_flag
 			}
 			if = {
-				limit = {
-					has_country_flag = EH_setting_up_iron_mine_flag
-				}
+				limit = { has_country_flag = EH_setting_up_iron_mine_flag }
 				random_controlled_state = {
 					add_resource = {
 						type = steel
@@ -514,9 +423,7 @@ EH_find_new_veins_category = {
 				clr_country_flag = EH_setting_up_iron_mine_flag
 			}
 			if = {
-				limit = {
-					has_country_flag = EH_setting_up_aluminium_mine_flag
-				}
+				limit = { has_country_flag = EH_setting_up_aluminium_mine_flag }
 				random_controlled_state = {
 					add_resource = {
 						type = aluminium
@@ -532,19 +439,14 @@ EH_find_new_veins_category = {
 	EH_large_company_seeks_for_randallite_mission = {
 		icon = GFX_decision_gre_investment_decisions
 		days_mission_timeout = 100
-
 		fixed_random_seed = no
 
 		activation = {
-			NOT = {
-				has_country_flag = EH_outlawed_randallite_extraction_flag
-			}
+			NOT = { has_country_flag = EH_outlawed_randallite_extraction_flag }
 			has_completed_focus = EH_find_new_veins
 		}
 
-		available = {
-			has_country_flag = EH_outlawed_randallite_extraction_flag
-		}
+		available = { has_country_flag = EH_outlawed_randallite_extraction_flag }
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_large_company_seeks_for_randallite_mission"
@@ -555,7 +457,6 @@ EH_find_new_veins_category = {
 				add_to_variable = { EH_non_state_mines_var = 1 }
 				add_to_variable = { EH_total_mines = 1 }
 				multiply_variable = { EH_non_state_mines_corporate_tax_income_var = EH_non_state_mines_var }
-
 				if = {
 					limit = {
 						NOT = {
@@ -585,41 +486,30 @@ EH_find_new_veins_category = {
 		days_remove = 30
 
 		visible = {
-			NOT = {
-				has_country_flag = EH_outlawed_randallite_extraction_flag
-			}
+			NOT = { has_country_flag = EH_outlawed_randallite_extraction_flag }
 			check_variable = { EH_non_state_mines_var > 0 }
 		}
 
-		modifier = {
-			political_power_gain = -1
-		}
+		modifier = { political_power_gain = -1 }
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_outlaw_randallite_extraction"
 			set_temp_variable = { EH_outlaw_randallite_stability_penalty = -0.04 }
 			set_temp_variable = { EH_outlaw_randallite_pp_penalty = -50 }
 			set_temp_variable = { EH_outlaw_randallite_randallite_gain = 2 }
-
 			multiply_temp_variable = { EH_outlaw_randallite_stability_penalty = EH_non_state_mines_var }
 			multiply_temp_variable = { EH_outlaw_randallite_pp_penalty = EH_non_state_mines_var }
 			multiply_temp_variable = { EH_outlaw_randallite_randallite_gain = EH_non_state_mines_var }
-
 			add_stability = EH_outlaw_randallite_stability_penalty
 			add_political_power = EH_outlaw_randallite_pp_penalty
 			set_temp_variable = { add_randallite = EH_outlaw_randallite_randallite_gain }
 			EH_add_randallite_effect = yes
-
 			add_to_variable = { EH_randallite_mines_set_up_var = EH_non_state_mines_var }
 			set_variable = { EH_non_state_mines_var = 0 }
-
 			newline = yes
-
 			set_country_flag = EH_outlawed_randallite_extraction_flag
 			custom_effect_tooltip = EH_outlaw_randallite_extraction_TT
-
 			newline = yes
-
 			increase_corruption = yes
 		}
 
@@ -629,14 +519,8 @@ EH_find_new_veins_category = {
 	EH_legalize_randallite_extraction = {
 		icon = GFX_decision_randallite_allowed
 		days_remove = 30
-
-		visible = {
-			has_country_flag = EH_outlawed_randallite_extraction_flag
-		}
-
-		modifier = {
-			political_power_gain = -0.5
-		}
+		visible = { has_country_flag = EH_outlawed_randallite_extraction_flag }
+		modifier = { political_power_gain = -0.5 }
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EH_legalize_randallite_extraction"
@@ -669,9 +553,7 @@ EH_nile_defense_line_category = {
 				}
 				590 = {
 					any_province_building_level = {
-						province = {
-							id = 13227
-						}
+						province = { id = 13227 }
 						building = bunker
 						level > 3
 					}
@@ -725,21 +607,15 @@ EH_nile_defense_line_category = {
 			}
 			217 = {
 				set_state_flag = EH_state_with_zenobia_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_zenobia_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_zenobia_line_wall_modifier }
 			}
 			590 = {
 				set_state_flag = EH_state_with_zenobia_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_zenobia_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_zenobia_line_wall_modifier }
 			}
 			221 = { # Chimera Territory
 				set_state_flag = EH_state_with_zenobia_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_zenobia_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_zenobia_line_wall_modifier }
 			}
 			newline = yes
 			custom_effect_tooltip = EH_construct_southern_zenobia_defense_line_TT
@@ -747,6 +623,7 @@ EH_nile_defense_line_category = {
 
 		ai_will_do = { base = 100 }
 	}
+
 	EH_southern_zenobia_defense_line_destruction = {
 		icon = GFX_decision_fire
 		days_mission_timeout = 15
@@ -759,9 +636,7 @@ EH_nile_defense_line_category = {
 					controls_province = 13227
 				}
 			}
-			217 = {
-				has_state_flag = EH_state_with_zenobia_line_wall
-			}
+			217 = { has_state_flag = EH_state_with_zenobia_line_wall }
 		}
 
 		available = {
@@ -800,12 +675,8 @@ EH_nile_defense_line_category = {
 				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
 				visible = EH_scenario_enabled
 			}
-			217 = {
-				clr_state_flag = EH_state_with_zenobia_line_wall
-			}
-			590 = {
-				clr_state_flag = EH_state_with_zenobia_line_wall
-			}
+			217 = { clr_state_flag = EH_state_with_zenobia_line_wall }
+			590 = { clr_state_flag = EH_state_with_zenobia_line_wall }
 			221 = { # Chimera Territory
 				clr_state_flag = EH_state_with_zenobia_line_wall
 			}
@@ -823,18 +694,14 @@ EH_nile_defense_line_category = {
 				tooltip = EH_all_highlighted_states_must_have_bunker_TT
 				216 = {
 					any_province_building_level = {
-						province = {
-							id = 7079
-						}
+						province = { id = 7079 }
 						building = bunker
 						level > 3
 					}
 				}
 				218 = {
 					any_province_building_level = {
-						province = {
-							id = 12764
-						}
+						province = { id = 12764 }
 						building = bunker
 						level > 3
 					}
@@ -878,21 +745,15 @@ EH_nile_defense_line_category = {
 			}
 			216 = {
 				set_state_flag = EH_state_with_zenobia_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_zenobia_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_zenobia_line_wall_modifier }
 			}
 			218 = {
 				set_state_flag = EH_state_with_zenobia_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_zenobia_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_zenobia_line_wall_modifier }
 			}
 			396 = { # Chimera Territory
 				set_state_flag = EH_state_with_zenobia_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_zenobia_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_zenobia_line_wall_modifier }
 			}
 			newline = yes
 			custom_effect_tooltip = EH_construct_western_zenobia_defense_line_TT
@@ -912,9 +773,7 @@ EH_nile_defense_line_category = {
 					controls_province = 7079
 				}
 			}
-			216 = {
-				has_state_flag = EH_state_with_zenobia_line_wall
-			}
+			216 = { has_state_flag = EH_state_with_zenobia_line_wall }
 		}
 
 		available = {
@@ -942,12 +801,8 @@ EH_nile_defense_line_category = {
 				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
 				visible = EH_scenario_enabled
 			}
-			216 = {
-				clr_state_flag = EH_state_with_zenobia_line_wall
-			}
-			218 = {
-				clr_state_flag = EH_state_with_zenobia_line_wall
-			}
+			216 = { clr_state_flag = EH_state_with_zenobia_line_wall }
+			218 = { clr_state_flag = EH_state_with_zenobia_line_wall }
 			396 = { # Chimera Territory
 				clr_state_flag = EH_state_with_zenobia_line_wall
 			}
@@ -965,9 +820,7 @@ EH_nile_defense_line_category = {
 				tooltip = EH_all_highlighted_states_must_have_bunker_TT
 				216 = {
 					any_province_building_level = {
-						province = {
-							id = 11967
-						}
+						province = { id = 11967 }
 						building = bunker
 						level > 3
 					}
@@ -995,9 +848,7 @@ EH_nile_defense_line_category = {
 				}
 				219 = {
 					any_province_building_level = {
-						province = {
-							id = 12889
-						}
+						province = { id = 12889 }
 						building = bunker
 						level > 3
 					}
@@ -1076,28 +927,20 @@ EH_nile_defense_line_category = {
 				visible = EH_scenario_enabled
 			}
 			216 = {
-				add_dynamic_modifier = {
-					modifier = EH_saladin_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_saladin_line_wall_modifier }
 				set_state_flag = EH_state_with_saladin_line_wall
 			}
 			217 = {
 				set_state_flag = EH_state_with_saladin_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_saladin_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_saladin_line_wall_modifier }
 			}
 			218 = {
 				set_state_flag = EH_state_with_saladin_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_saladin_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_saladin_line_wall_modifier }
 			}
 			219 = {
 				set_state_flag = EH_state_with_saladin_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_saladin_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_saladin_line_wall_modifier }
 			}
 			newline = yes
 			custom_effect_tooltip = EH_construct_inner_saladin_defense_line_TT
@@ -1122,9 +965,7 @@ EH_nile_defense_line_category = {
 					controls_province = 12071
 				}
 			}
-			216 = {
-				has_state_flag = EH_state_with_saladin_line_wall
-			}
+			216 = { has_state_flag = EH_state_with_saladin_line_wall }
 		}
 
 		available = {
@@ -1193,18 +1034,10 @@ EH_nile_defense_line_category = {
 				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
 				visible = EH_scenario_enabled
 			}
-			216 = {
-				clr_state_flag = EH_state_with_saladin_line_wall
-			}
-			217 = {
-				clr_state_flag = EH_state_with_saladin_line_wall
-			}
-			218 = {
-				clr_state_flag = EH_state_with_saladin_line_wall
-			}
-			219 = {
-				clr_state_flag = EH_state_with_saladin_line_wall
-			}
+			216 = { clr_state_flag = EH_state_with_saladin_line_wall }
+			217 = { clr_state_flag = EH_state_with_saladin_line_wall }
+			218 = { clr_state_flag = EH_state_with_saladin_line_wall }
+			219 = { clr_state_flag = EH_state_with_saladin_line_wall }
 			custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
 		}
 	}
@@ -1266,15 +1099,11 @@ EH_nile_defense_line_category = {
 			}
 			213 = {
 				set_state_flag = EH_state_with_saladin_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_saladin_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_saladin_line_wall_modifier }
 			}
 			214 = {
 				set_state_flag = EH_state_with_saladin_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_saladin_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_saladin_line_wall_modifier }
 			}
 			newline = yes
 			custom_effect_tooltip = EH_construct_outer_saladin_defense_line_TT
@@ -1294,9 +1123,7 @@ EH_nile_defense_line_category = {
 					controls_province = 1155
 				}
 			}
-			213 = {
-				has_state_flag = EH_state_with_saladin_line_wall
-			}
+			213 = { has_state_flag = EH_state_with_saladin_line_wall }
 		}
 
 		available = {
@@ -1324,12 +1151,8 @@ EH_nile_defense_line_category = {
 				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
 				visible = EH_scenario_enabled
 			}
-			213 = {
-				clr_state_flag = EH_state_with_saladin_line_wall
-			}
-			214 = {
-				clr_state_flag = EH_state_with_saladin_line_wall
-			}
+			213 = { clr_state_flag = EH_state_with_saladin_line_wall }
+			214 = { clr_state_flag = EH_state_with_saladin_line_wall }
 			custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
 		}
 	}
@@ -1416,27 +1239,19 @@ EH_bosporus_defense_line_category = {
 			}
 			155 = {
 				set_state_flag = EH_state_with_bosphorus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_bosphorus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_bosphorus_line_wall_modifier }
 			}
 			156 = {
 				set_state_flag = EH_state_with_bosphorus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_bosphorus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_bosphorus_line_wall_modifier }
 			}
 			159 = { # Chimera Territory
 				set_state_flag = EH_state_with_bosphorus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_bosphorus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_bosphorus_line_wall_modifier }
 			}
 			160 = { # Chimera Territory
 				set_state_flag = EH_state_with_bosphorus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_bosphorus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_bosphorus_line_wall_modifier }
 			}
 			newline = yes
 			custom_effect_tooltip = EH_construct_bosphorus_defense_line_TT
@@ -1444,6 +1259,7 @@ EH_bosporus_defense_line_category = {
 
 		ai_will_do = { base = 100 }
 	}
+
 	EH_bosphorus_defense_line_destruction = {
 		icon = GFX_decision_fire
 		days_mission_timeout = 15
@@ -1459,9 +1275,7 @@ EH_bosporus_defense_line_category = {
 					controls_province = 6871
 				}
 			}
-			155 = {
-				has_state_flag = EH_state_with_bosphorus_line_wall
-			}
+			155 = { has_state_flag = EH_state_with_bosphorus_line_wall }
 		}
 
 		available = {
@@ -1546,37 +1360,28 @@ EH_caucasus_defense_line_category = {
 				}
 				674 = {
 					any_province_building_level = {
-						province = {
-							id = 9649
-							id = 11633
-						}
+						province = { id = 0 }
 						building = bunker
 						level > 3
 					}
 				}
 				673 = {
 					any_province_building_level = {
-						province = {
-							id = 9628
-						}
+						province = { id = 9628 }
 						building = bunker
 						level > 3
 					}
 				}
 				1126 = {
 					any_province_building_level = {
-						province = {
-							id = 670
-						}
+						province = { id = 670 }
 						building = bunker
 						level > 3
 					}
 				}
 				672 = {
 					any_province_building_level = {
-						province = {
-							id = 666
-						}
+						province = { id = 666 }
 						building = bunker
 						level > 3
 					}
@@ -1604,9 +1409,7 @@ EH_caucasus_defense_line_category = {
 				}
 				1085 = {
 					any_province_building_level = {
-						province = {
-							id = 14435
-						}
+						province = { id = 14435 }
 						building = bunker
 						level > 3
 					}
@@ -1725,105 +1528,73 @@ EH_caucasus_defense_line_category = {
 			}
 			1140 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			1125 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			674 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			673 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			1126 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			672 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			671 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			669 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			1085 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			667 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			1107 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			705 = {
 				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			706 = {
-				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			707 = {
-				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			708 = {
-				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
 			1206 = {
-				set_state_flag = EH_state_with_caucasus_line_wall
-				add_dynamic_modifier = {
-					modifier = EH_caucasus_line_wall_modifier
-				}
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_caucasus_line_wall_modifier }
 			}
-			newline = yes
 		}
 
 		ai_will_do = { base = 100 }
 	}
+
 	EH_caucasus_defense_line_destruction_1 = {
 		icon = GFX_decision_fire
 		days_mission_timeout = 15
@@ -1831,43 +1602,97 @@ EH_caucasus_defense_line_category = {
 		activation = {
 			ALN = {
 				OR = {
-					controls_province = 9663
-					controls_province = 9694
-					controls_province = 9674
-					controls_province = 11664
-					controls_province = 13828
-					controls_province = 9649
-					controls_province = 11633
-					controls_province = 9628
-					controls_province = 670
-					controls_province = 666
-					controls_province = 6689
-					controls_province = 9645
-					controls_province = 4463
+					controls_province = 4640
+					controls_province = 11057
+					controls_province = 9221
+					controls_province = 13932
+					controls_province = 3298
+					controls_province = 341
+					controls_province = 9275
+					controls_province = 310
+					controls_province = 11358
+					controls_province = 13256
+					controls_province = 9295
+					controls_province = 3320
+					controls_province = 327
+					controls_province = 9274
+					controls_province = 6281
+					controls_province = 3254
+					controls_province = 400
+					controls_province = 347
+					controls_province = 11247
+					controls_province = 290
+					controls_province = 11466
+					controls_province = 9452
+					controls_province = 6580
+					controls_province = 585
+					controls_province = 6522
+					controls_province = 3434
+					controls_province = 3565
+					controls_province = 11520
+					controls_province = 746
+					controls_province = 11676
+					controls_province = 727
+					controls_province = 11689
+					controls_province = 6584
+					controls_province = 9716
+					controls_province = 723
+					controls_province = 6747
+					controls_province = 9701
+					controls_province = 6706
+					controls_province = 3076
+					controls_province = 14287
+					controls_province = 687
 				}
 			}
-			674 = {
-				has_state_flag = EH_state_with_caucasus_line_wall
-			}
+			669 = { has_state_flag = EH_state_with_europe_line_wall }
 		}
 
 		available = {
 			ALN = {
 				NOT = {
 					OR = {
-						controls_province = 9663
-						controls_province = 9694
-						controls_province = 9674
-						controls_province = 11664
-						controls_province = 13828
-						controls_province = 9649
-						controls_province = 11633
-						controls_province = 9628
-						controls_province = 670
-						controls_province = 666
-						controls_province = 6689
-						controls_province = 9645
-						controls_province = 4463
+						controls_province = 4640
+						controls_province = 11057
+						controls_province = 9221
+						controls_province = 13932
+						controls_province = 3298
+						controls_province = 341
+						controls_province = 9275
+						controls_province = 310
+						controls_province = 11358
+						controls_province = 13256
+						controls_province = 9295
+						controls_province = 3320
+						controls_province = 327
+						controls_province = 9274
+						controls_province = 6281
+						controls_province = 3254
+						controls_province = 400
+						controls_province = 347
+						controls_province = 11247
+						controls_province = 290
+						controls_province = 11466
+						controls_province = 9452
+						controls_province = 6580
+						controls_province = 585
+						controls_province = 6522
+						controls_province = 3434
+						controls_province = 3565
+						controls_province = 11520
+						controls_province = 746
+						controls_province = 11676
+						controls_province = 727
+						controls_province = 11689
+						controls_province = 6584
+						controls_province = 9716
+						controls_province = 723
+						controls_province = 6747
+						controls_province = 9701
+						controls_province = 6706
+						controls_province = 3076
+						controls_province = 14287
+						controls_province = 687
 					}
 				}
 			}
@@ -1899,17 +1724,27 @@ EH_caucasus_defense_line_category = {
 				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
 				visible = EH_scenario_enabled
 			}
-			1140 = { clr_state_flag = EH_state_with_caucasus_line_wall }
-			1125 = { clr_state_flag = EH_state_with_caucasus_line_wall }
-			674 = { clr_state_flag = EH_state_with_caucasus_line_wall }
-			673 = { clr_state_flag = EH_state_with_caucasus_line_wall }
-			1126 = { clr_state_flag = EH_state_with_caucasus_line_wall }
-			672 = { clr_state_flag = EH_state_with_caucasus_line_wall }
-			671 = { clr_state_flag = EH_state_with_caucasus_line_wall }
+			1140 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1125 = { clr_state_flag = EH_state_with_europe_line_wall }
+			674 = { clr_state_flag = EH_state_with_europe_line_wall }
+			673 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1126 = { clr_state_flag = EH_state_with_europe_line_wall }
+			672 = { clr_state_flag = EH_state_with_europe_line_wall }
+			671 = { clr_state_flag = EH_state_with_europe_line_wall }
+			669 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1085 = { clr_state_flag = EH_state_with_europe_line_wall }
+			667 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1107 = { clr_state_flag = EH_state_with_europe_line_wall }
+			705 = { clr_state_flag = EH_state_with_europe_line_wall }
+			706 = { clr_state_flag = EH_state_with_europe_line_wall }
+			707 = { clr_state_flag = EH_state_with_europe_line_wall }
+			708 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1206 = { clr_state_flag = EH_state_with_europe_line_wall }
 			news_event = EH_event.807
 			custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
 		}
 	}
+
 	EH_caucasus_defense_line_destruction_2 = {
 		icon = GFX_decision_fire
 		days_mission_timeout = 15
@@ -1933,9 +1768,7 @@ EH_caucasus_defense_line_category = {
 					controls_province = 9503
 				}
 			}
-			155 = {
-				has_state_flag = EH_state_with_caucasus_line_wall
-			}
+			155 = { has_state_flag = EH_state_with_caucasus_line_wall }
 		}
 
 		available = {
@@ -2009,10 +1842,575 @@ EH_caucasus_defense_line_category = {
 	}
 }
 
+EH_europe_defense_line_category = {
+	EH_construct_europe_defense_line = {
+		icon = GFX_decision_fortification
+		days_remove = 30
+		fire_only_once = yes
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = EH_all_highlighted_states_must_have_bunker_TT
+				105 = {
+					any_province_building_level = {
+						province = { id = 4640 }
+						building = bunker
+						level > 3
+					}
+				}
+				106 = {
+					any_province_building_level = {
+						province = {
+							id = 11057
+							id = 9221
+						}
+						building = bunker
+						level > 3
+					}
+				}
+				1058 = {
+					any_province_building_level = {
+						province = { id = 13932 }
+						building = bunker
+						level > 3
+					}
+				}
+				1013 = {
+					any_province_building_level = {
+						province = {
+							id = 3298
+							id = 341
+							id = 9275
+							id = 310
+						}
+						building = bunker
+						level > 3
+					}
+				}
+				108 = {
+					any_province_building_level = {
+						province = { id = 11358 }
+						building = bunker
+						level > 3
+					}
+				}
+				110 = {
+					any_province_building_level = {
+						province = {
+							id = 13256
+							id = 9295
+							id = 3320
+							id = 327
+							id = 9274
+						}
+						building = bunker
+						level > 3
+					}
+				}
+				1044 = {
+					any_province_building_level = {
+						province = { id = 6281 }
+						building = bunker
+						level > 3
+					}
+				}
+				1014 = {
+					any_province_building_level = {
+						province = {
+							id = 3254
+							id = 400
+							id = 347
+							id = 11247
+							id = 290
+						}
+						building = bunker
+						level > 3
+					}
+				}
+				628 = {
+					any_province_building_level = {
+						province = {
+							id = 11466
+							id = 9452
+							id = 6580
+						}
+						building = bunker
+						level > 3
+					}
+				}
+				1098 = {
+					any_province_building_level = {
+						province = {
+							id = 585
+							id = 6522
+							id = 3434
+						}
+						building = bunker
+						level > 3
+					}
+				}
+				120 = {
+					any_province_building_level = {
+						province = { id = 3565 }
+						building = bunker
+						level > 3
+					}
+				}
+				122 = {
+					any_province_building_level = {
+						province = { id = 11520 }
+						building = bunker
+						level > 3
+					}
+				}
+				909 = {
+					any_province_building_level = {
+						province = {
+							id = 746
+							id = 11676
+							id = 727
+						}
+						building = bunker
+						level > 3
+					}
+				}
+				152 = {
+					any_province_building_level = {
+						province = {
+							id = 11689
+							id = 6584
+							id = 9716
+							id = 723
+							id = 6747
+							id = 9701
+							id = 6706
+						}
+						building = bunker
+						level > 3
+					}
+				}
+				284 = {
+					any_province_building_level = {
+						province = {
+							id = 3076
+							id = 14287
+							id = 687
+						}
+						building = bunker
+						level > 3
+					}
+				}
+			}
+		}
+
+		highlight_states = {
+			highlight_provinces = { 4640 11057 9221 13932 3298 341 9275 310 11358 13256 9295 3320 327 9274 6281 3254 400 347 11247 290 11466 9452 6580 585 6522 3434 3565 11520 746 11676 727 11689 6584 9716 723 6747 9701 6706 3076 14287 687 }
+			highlight_color_before_active = 3
+			highlight_color_while_active = 2
+		}
+
+		modifier = {
+			land_bunker_effectiveness_factor = -0.15
+			civilian_factory_use = 6
+			production_speed_bunker_factor = 0.2
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_europe_defense_line"
+			if = {
+				limit = { NOT = { has_global_flag = EH_europe_line_construction_flag } }
+				news_event = EH_event.810
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_construct_europe_defense_line"
+			create_entity = {
+				entity = building_landmark_zenobia_wall
+				id = 9017
+				x = 0
+				y = 6
+				z = 0
+				province = 14287
+				rotation = 3.0
+				scale = 0.8
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall
+				id = 9018
+				x = 8
+				y = 0
+				z = 0
+				province = 723
+				rotation = 1.7
+				scale = 1.55
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall
+				id = 9019
+				x = 4
+				y = 2
+				z = 0
+				province = 727
+				scale = 1.8
+				rotation = 3.2
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall
+				id = 9020
+				x = 9
+				y = 4
+				z = 0
+				province = 3565
+				scale = 1.17
+				rotation = 1.6
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall
+				id = 9021
+				x = -8
+				y = 9
+				z = 0
+				province = 6580
+				scale = 1.37
+				rotation = 1.5
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall
+				id = 9022
+				x = 7
+				y = 8
+				z = 0
+				province = 347
+				scale = 1.47
+				rotation = 1.1
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall
+				id = 9023
+				x = 17
+				y = 25
+				z = 0
+				province = 3320
+				scale = 1.67
+				rotation = 0.8
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall
+				id = 9024
+				x = 9
+				y = 16
+				z = 0
+				province = 13932
+				scale = 1.67
+				rotation = 1.6
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			105 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			106 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			1058 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			1013 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			108 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			110 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			1044 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			1014 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			628 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			1098 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			120 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			122 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			909 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			152 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+			284 = {
+				set_state_flag = EH_state_with_europe_line_wall
+				add_dynamic_modifier = { modifier = EH_europe_line_wall_modifier }
+			}
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	EH_europe_defense_line_destruction = {
+		icon = GFX_decision_fire
+		days_mission_timeout = 15
+
+		activation = {
+			ALN = {
+				OR = {
+					controls_province = 4640
+					controls_province = 11057
+					controls_province = 9221
+					controls_province = 13932
+					controls_province = 3298
+					controls_province = 341
+					controls_province = 9275
+					controls_province = 310
+					controls_province = 11358
+					controls_province = 13256
+					controls_province = 9295
+					controls_province = 3320
+					controls_province = 327
+					controls_province = 9274
+					controls_province = 6281
+					controls_province = 3254
+					controls_province = 400
+					controls_province = 347
+					controls_province = 11247
+					controls_province = 290
+					controls_province = 11466
+					controls_province = 9452
+					controls_province = 6580
+					controls_province = 585
+					controls_province = 6522
+					controls_province = 3434
+					controls_province = 3565
+					controls_province = 11520
+					controls_province = 746
+					controls_province = 11676
+					controls_province = 727
+					controls_province = 11689
+					controls_province = 6584
+					controls_province = 9716
+					controls_province = 723
+					controls_province = 6747
+					controls_province = 9701
+					controls_province = 6706
+					controls_province = 3076
+					controls_province = 14287
+					controls_province = 687
+				}
+			}
+			284 = { has_state_flag = EH_state_with_europe_line_wall }
+		}
+
+		available = {
+			ALN = {
+				NOT = {
+					OR = {
+						controls_province = 4640
+						controls_province = 11057
+						controls_province = 9221
+						controls_province = 13932
+						controls_province = 3298
+						controls_province = 341
+						controls_province = 9275
+						controls_province = 310
+						controls_province = 11358
+						controls_province = 13256
+						controls_province = 9295
+						controls_province = 3320
+						controls_province = 327
+						controls_province = 9274
+						controls_province = 6281
+						controls_province = 3254
+						controls_province = 400
+						controls_province = 347
+						controls_province = 11247
+						controls_province = 290
+						controls_province = 11466
+						controls_province = 9452
+						controls_province = 6580
+						controls_province = 585
+						controls_province = 6522
+						controls_province = 3434
+						controls_province = 3565
+						controls_province = 11520
+						controls_province = 746
+						controls_province = 11676
+						controls_province = 727
+						controls_province = 11689
+						controls_province = 6584
+						controls_province = 9716
+						controls_province = 723
+						controls_province = 6747
+						controls_province = 9701
+						controls_province = 6706
+						controls_province = 3076
+						controls_province = 14287
+						controls_province = 687
+					}
+				}
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EH_europe_defense_line_destruction"
+			create_entity = {
+				entity = building_landmark_zenobia_wall_destroyed
+				id = 9017
+				x = 0
+				y = 6
+				z = 0
+				province = 14287
+				rotation = 3.0
+				scale = 0.8
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall_destroyed
+				id = 9018
+				x = 8
+				y = 0
+				z = 0
+				province = 723
+				rotation = 1.7
+				scale = 1.55
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall_destroyed
+				id = 9019
+				x = 4
+				y = 2
+				z = 0
+				province = 727
+				scale = 1.8
+				rotation = 3.2
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall_destroyed
+				id = 9020
+				x = 9
+				y = 4
+				z = 0
+				province = 3565
+				scale = 1.17
+				rotation = 1.6
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall_destroyed
+				id = 9021
+				x = -8
+				y = 9
+				z = 0
+				province = 6580
+				scale = 1.37
+				rotation = 1.5
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall_destroyed
+				id = 9022
+				x = 7
+				y = 8
+				z = 0
+				province = 347
+				scale = 1.47
+				rotation = 1.1
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall_destroyed
+				id = 9023
+				x = 17
+				y = 25
+				z = 0
+				province = 3320
+				scale = 1.67
+				rotation = 0.8
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			create_entity = {
+				entity = building_landmark_zenobia_wall_destroyed
+				id = 9024
+				x = 9
+				y = 16
+				z = 0
+				province = 13932
+				scale = 1.67
+				rotation = 1.6
+				min_zoom = @DEFENSE_WALLS_RENDER_DISTANCE
+				visible = EH_scenario_enabled
+			}
+			105 = { clr_state_flag = EH_state_with_europe_line_wall }
+			106 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1058 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1013 = { clr_state_flag = EH_state_with_europe_line_wall }
+			108 = { clr_state_flag = EH_state_with_europe_line_wall }
+			110 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1044 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1014 = { clr_state_flag = EH_state_with_europe_line_wall }
+			628 = { clr_state_flag = EH_state_with_europe_line_wall }
+			1098 = { clr_state_flag = EH_state_with_europe_line_wall }
+			120 = { clr_state_flag = EH_state_with_europe_line_wall }
+			122 = { clr_state_flag = EH_state_with_europe_line_wall }
+			909 = { clr_state_flag = EH_state_with_europe_line_wall }
+			152 = { clr_state_flag = EH_state_with_europe_line_wall }
+			284 = { clr_state_flag = EH_state_with_europe_line_wall }
+			news_event = EH_event.811
+			custom_effect_tooltip = EH_defense_line_will_be_destroyed_TT
+		}
+	}
+}
+
 EH_start_scenario_cheat_category = {
 	EH_start_scenario_decision = {
 		icon = GFX_decision_generic_research
-
 		fire_only_once = yes
 
 		complete_effect = {

@@ -5,22 +5,27 @@ Millennium Dawn Idea Standardizer
 Standardizes HOI4 idea files according to Millennium Dawn coding standards
 """
 
-import os
 import re
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from _common import format_elapsed
-from common_utils import PROP_NAME_RE, BaseStandardizer, run_standardizer
+from common_utils import (
+    PROP_NAME_RE,
+    BaseStandardizer,
+    read_lines_for_standardization,
+    run_standardizer,
+    write_standardized_output,
+)
 from shared_utils import (
     blank_quoted_strings,
+    collapse_nested_blocks,
     collapse_or_compact,
     extract_block,
     log_message,
     strip_inline_comment,
 )
 
-_SINGLE_LINE_PROPS = {"name", "picture"}
+_SINGLE_LINE_PROPS = {"name", "picture", "ledger"}
 
 _BLOCK_PROPS = {
     "allowed",
@@ -35,8 +40,11 @@ _BLOCK_PROPS = {
     "on_remove",
 }
 
-# Blocks that get filtered out when they contain `always = no`
-_ALWAYS_NO_FILTERED = {"allowed", "allowed_civil_war", "cancel"}
+# Blocks that get filtered out when they contain `always = no`.
+# `allowed` is not in this set: on a slotted idea it hides the entry from the
+# picker while add_idea still applies it. Slotless allowed blocks are stripped
+# by strip_idea_allowed_gates.py instead.
+_ALWAYS_NO_FILTERED = {"allowed_civil_war", "cancel"}
 
 # Block pattern for wrapper blocks / idea blocks
 _BLOCK_START_RE = re.compile(r"\s*[\w_]+\s*=\s*{")
@@ -132,6 +140,7 @@ class IdeaStandardizer(BaseStandardizer):
             "allowed": [],
             "allowed_civil_war": [],
             "picture": "",
+            "ledger": "",
             "cancel": [],
             "modifier": [],
             "targeted_modifier": [],
@@ -259,16 +268,10 @@ class IdeaStandardizer(BaseStandardizer):
         return False
 
     def is_always_no_block(self, block_lines: List[str], property_name: str) -> bool:
-        """Check if a block contains only `always = no` — a redundant default.
+        """True when the block is a redundant `always = no` default we drop.
 
-        Removed as code cleanup, NOT a performance optimization.
-        `allowed` is checked once at game start/load (default = always allowed)
-        and is bypassed by add_ideas — so `allowed = { always = no }` is dead code.
-        Tradeoff: `has_available_idea_with_trait` builds a list of every idea that
-        passes `allowed`, then evaluates their `available` triggers at runtime.
-        Keeping `allowed = { always = no }` keeps ideas out of that list (fewer
-        runtime checks). Removing it lets more ideas into the pool (more runtime
-        checks). MD does not use that trigger, so the tradeoff is moot here.
+        `allowed = { always = no }` is not redundant on slotted ideas: it hides
+        the entry from the picker while add_idea still applies it.
         """
         if property_name not in _ALWAYS_NO_FILTERED:
             return False
@@ -313,7 +316,7 @@ class IdeaStandardizer(BaseStandardizer):
     ) -> List[str]:
         """Single-line collapse a single-leaf block, else reindent at prop_indent."""
         collapsed = collapse_or_compact(block_lines[:], prop_indent)
-        multi = self.compact_block(block_lines[:], prop_indent)
+        multi = self.compact_block(collapse_nested_blocks(block_lines), prop_indent)
         if len(collapsed) == 1 and len(multi) != 1:
             return collapsed
         return multi
@@ -363,7 +366,7 @@ class IdeaStandardizer(BaseStandardizer):
                     modified.append(log_line)
             block = modified
 
-        return self.compact_block(block[:], prop_indent)
+        return self.compact_block(collapse_nested_blocks(block[:]), prop_indent)
 
     def format_block(self, props: Dict[str, Any], base_indent: str = "\t") -> List[str]:
         """Format idea according to Millennium Dawn standard"""
@@ -394,11 +397,23 @@ class IdeaStandardizer(BaseStandardizer):
             emit_comments("picture")
             lines.append(prop_indent + props["picture"])
 
-        # 3-10. Simple blocks emitted in order
+        # 3. allowed-family blocks (gates evaluated once at game start)
         for key in (
             "allowed",
             "allowed_civil_war",
             "cancel",
+        ):
+            for index, block in enumerate(props[key]):
+                emit_comments(key, index)
+                lines.extend(self._reindent_or_collapse(block, prop_indent))
+
+        # 4. ledger (single-line categorisation, sits above the effect blocks)
+        if props["ledger"]:
+            emit_comments("ledger")
+            lines.append(prop_indent + props["ledger"])
+
+        # 5-10. Effect blocks emitted in order
+        for key in (
             "modifier",
             "targeted_modifier",
             "research_bonus",
@@ -456,43 +471,28 @@ class IdeaStandardizer(BaseStandardizer):
 
         return cleaned_lines
 
+    def standardize_lines(self, lines: List[str]) -> Optional[List[str]]:
+        """Ideas nest, so the recursive walker replaces the base block loop."""
+        return self._process_lines(lines, depth=0)
+
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         """Standardize ideas file by handling nested structure properly"""
         self.start_time = time.time()
-        log_message("INFO", f"Starting standardization of {input_file}", self.verbose)
-
-        if not os.path.exists(input_file):
-            log_message("ERROR", f"Input file not found: {input_file}")
+        lines = read_lines_for_standardization(input_file, verbose=self.verbose)
+        if lines is None:
             return False
 
-        try:
-            with open(input_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-            log_message(
-                "INFO", f"Read {len(lines)} lines from {input_file}", self.verbose
-            )
-        except Exception as e:
-            log_message("ERROR", f"Failed to read {input_file}: {e}")
-            return False
+        output_lines = self.standardize_lines(lines)
+        if output_lines is None:
+            return True
 
-        output_lines = self._process_lines(lines, depth=0)
-
-        try:
-            with open(output_file, "w", encoding="utf-8") as f:
-                for line in output_lines:
-                    f.write(line + "\n")
-
-            time_str = format_elapsed(time.time() - self.start_time)
-
-            log_message("SUCCESS", f"Standardization completed in {time_str}")
-            log_message("SUCCESS", f"Processed {self.processed_count} ideas")
-            log_message("SUCCESS", f"Output written to: {output_file}")
-
-        except Exception as e:
-            log_message("ERROR", f"Failed to write {output_file}: {e}")
-            return False
-
-        return True
+        return write_standardized_output(
+            output_file,
+            output_lines,
+            start_time=self.start_time,
+            processed_count=self.processed_count,
+            unit_label="ideas",
+        )
 
     def _process_lines(
         self, lines: List[str], depth: int, mode: str = "root"

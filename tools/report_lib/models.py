@@ -23,17 +23,41 @@ class Issue:
     line: int = 0
     validator: str = ""
     detected_by: List[str] = field(default_factory=list)
+    # Set by baseline.classify(): "new" / "existing" when a baseline was
+    # available and the issue could be keyed; None otherwise.
+    baseline_status: Optional[str] = None
+    # Set by baseline.tag_changed_files(): True when Issue.file is in the PR diff.
+    in_diff: bool = False
 
     @classmethod
     def from_dict(cls, d: dict, validator: str = "") -> "Issue":
+        detected_by = d.get("detected_by", [])
+        if not isinstance(detected_by, list):
+            detected_by = []
+        try:
+            line = int(d.get("line", 0) or 0)
+        except (TypeError, ValueError):
+            line = 0
         return cls(
             severity=d.get("severity", Severity.ERROR),
             category=d.get("category", ""),
             message=d.get("message", ""),
             file=d.get("file", ""),
-            line=int(d.get("line", 0) or 0),
+            line=line,
             validator=d.get("validator", validator),
+            detected_by=list(detected_by),
         )
+
+    def to_dict(self) -> dict:
+        return {
+            "severity": self.severity,
+            "category": self.category,
+            "message": self.message,
+            "file": self.file,
+            "line": self.line,
+            "validator": self.validator,
+            "detected_by": list(self.detected_by),
+        }
 
     @property
     def dedup_key(self) -> tuple:
@@ -56,6 +80,13 @@ class ValidatorRun:
     errors: int = 0
     warnings: int = 0
     had_json: bool = False  # True when JSON sidecar was loaded; False = text fallback
+    execution_complete: bool = True
+    strict: Optional[bool] = None
+    # "tools" for tools-tests suite-run artifacts, "mod" for validator sidecars.
+    suite: str = "mod"
+    job: str = (
+        ""  # owning CI job; empty until known (Checks API falls back to the name)
+    )
 
     def status_symbol(self) -> str:
         return {
@@ -77,6 +108,12 @@ class ReportContext:
     artifact_url: Optional[str] = None
     date_utc: Optional[str] = None
     repo: Optional[str] = None  # "owner/name", used to build blob links to file:line
-    # "partial" when only the validators covering the diff ran, which makes a
-    # clean report a weaker claim, so the rendered body has to say which.
+    # Scope distinguishes diff-only and PR-code reports from full validation.
     validation_scope: str = "full"
+    # "available" or "unavailable" when the workflow requested a baseline.
+    baseline_status: Optional[str] = None
+    # "available" or "unavailable" when --changed-files was passed.
+    changed_files_status: Optional[str] = None
+    # Impact reports use a separate comment marker and title.
+    report_marker: str = ""
+    report_title: str = ""

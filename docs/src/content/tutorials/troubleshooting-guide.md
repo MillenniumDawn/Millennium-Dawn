@@ -3,11 +3,17 @@ title: Troubleshooting Guide
 description: Guide for troubleshooting common issues in Millennium Dawn
 ---
 
+Start with a playset containing only Millennium Dawn and check that your HOI4 version
+matches the selected mod release. For installation paths, see [Getting Started](/getting-started/).
+Back up local saves and any personal mod edits before removing files during troubleshooting.
+
 ## General Performance Improvement Tips
 
 Some computers may have performance issues with Millennium Dawn and as such we recommend taking a couple precautionary steps if you have an older GPU/Laptop or any form of computer that offers. Every update we strive to continue to make the mod more performant, but are ultimately beholden to Paradox for most major performance improvements.
 
 Hearts of Iron IV runs multi-core on most processes but AI remains it's main bottleneck and is what causes most of the lag you see in game. Having a strong CPU with single-core performance will yield you
+
+\***\*[For a more detailed performance guide click this link.](/player-tutorials/performance-guide/)\*\***
 
 **Troubleshoot Guide**
 
@@ -63,9 +69,26 @@ To resolve this:
 
 **Important:** Each of these steps (validating files, unsubscribing/resubscribing) can regenerate duplicate `.mod` files if old ones were not fully removed first. Always delete the stale files _before_ triggering any Steam download or validation. If you frequently switch between game versions or mod versions, check this directory regularly to ensure no extra/loose `.mod` files remain.
 
+## Saves After an Update
+
+A save that stops loading after a development update may be incompatible, not corrupted.
+Development builds do not guarantee save compatibility. Keep separate test saves and
+try a new game before editing a save or reinstalling. For release compatibility, check
+the [release notes](https://github.com/MillenniumDawn/Millennium-Dawn/releases).
+
 ## Save Game Corruption
 
 Save games in Millennium Dawn are much larger than other mods. It is important to ensure you are using local game saves over cloud saves for the most stability. Typically this becomes more problematic in the late game around the 2020+ mark when save files start to exceed 100MB or more. You can easily bypass this issue by not saving anything on the cloud for _Millennium Dawn_.
+
+### Corrupted `operation_assets` Entry (Crash on Load / End of Day)
+
+After 20+ years of play, a country that ceases to exist through annexation may leave behind a dangling entry in another country's `operation_assets` intel data. On save, the now-invalid tag serializes as `={ token_airforce token_army }` (no country tag before the `=`), which desyncs the Clausewitz parser and causes a fatal crash at end-of-day serialization.
+
+**Symptoms:** Crash on load or at end of day with "Unexpected token" errors in the log; all tokens after the corruption are misread.
+
+**Player workaround:** Open the save file in a text editor, locate the malformed `={ token_... }` line (it is brace-balanced and safe to remove), and delete it. The parser resyncs after the removed line and other intel entries are preserved.
+
+**Prevention:** The mod frees captured operatives when a country becomes a puppet or is removed, and clears all operation tokens targeting annexed countries from every nation's intel data.
 
 ## Low Virtual Memory / Paging File
 

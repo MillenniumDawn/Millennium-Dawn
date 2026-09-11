@@ -31,7 +31,7 @@ country_event = {
 	immediate = {
 		log = "[GetDateText]: [ROOT.GetName]: investments_event.3 executed"
 		var:ROOT.investments_nation_target = {
-			country_event = investments_event.10
+			send_pending_investment_offer = yes
 		}
 		refresh_investment_gui = yes
 	}
@@ -46,73 +46,12 @@ country_event = {
 	is_triggered_only = yes
 
 	immediate = {
-		hidden_effect = {
-			set_variable = {
-				investor_cost = {
-					value = FROM.project_monetary_cost_effect
-					multiply = 0.1
-				}
-			}
-			set_variable = { pending_offer_total_cost = FROM.project_monetary_cost^-1 }
-			set_variable = { pending_offer_duration = FROM.project_construction_duration^-1 }
-			set_variable = { pending_offer_amount = FROM.project_build_amount^-1 }
-			set_variable = { pending_offer_type = FROM.project_building_type^-1 }
-			set_variable = { pending_offer_state = FROM.investments_state_target }
-		}
+		hidden_effect = { initialize_pending_investment_offer = yes }
 	}
 	option = {
 		name = investments_event.1.o1
 		log = "[GetDateText]: [This.GetName]: investments_event.1.o1 executed"
-		hidden_effect = {
-			FROM = {
-				# Restore snapshotted offer values so overlapping offers don't corrupt the staging slots
-				set_variable = { project_building_type^-1 = PREV.pending_offer_type }
-				set_variable = { project_build_amount^-1 = PREV.pending_offer_amount }
-				set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }
-				set_variable = { investments_state_target = PREV.pending_offer_state }
-				set_variable = {
-					project_monetary_cost_effect = {
-						value = PREV.pending_offer_total_cost
-						multiply = -1
-					}
-				}
-
-				start_project_two = yes
-				clr_country_flag = this_investment_offer_pending@PREV
-				clr_country_flag = investments_ai_pending
-			}
-			# Influence Section
-			if = {
-				limit = { NOT = { has_country_flag = influence_gained_@FROM } }
-				set_temp_variable = { percent_change = global.investment_percent_change_value }
-				set_temp_variable = { tag_index = FROM.id }
-				change_influence_percentage = yes
-				newline = yes
-
-				# Cool Down for the Influence Gain
-				if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_14_cooldown } }
-					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 14 }
-					custom_effect_tooltip = cooldown_influence_limit_14_tooltip
-				}
-				else_if = { limit = { has_game_rule = { rule = rule_influence_cooldown_limits option = day_30_cooldown } }
-					set_country_flag = { flag = influence_gained_@FROM value = 1 days = 30 }
-					custom_effect_tooltip = cooldown_influence_limit_30_tooltip
-				}
-			}
-
-
-			# THIS Nation
-			# take 10% of the cost of the project
-			set_temp_variable = { treasury_change = FROM.project_monetary_cost_effect }
-			multiply_temp_variable = { treasury_change = 0.1 }
-			modify_treasury_effect = yes
-			clear_variable = investor_cost
-			clear_variable = pending_offer_total_cost
-			clear_variable = pending_offer_duration
-			clear_variable = pending_offer_amount
-			clear_variable = pending_offer_type
-			clear_variable = pending_offer_state
-		}
+		hidden_effect = { accept_pending_investment_offer = yes }
 
 		# AI Chance of taking the Investment Project
 		ai_chance = {
@@ -299,6 +238,17 @@ country_event = {
 				has_country_flag = recently_refused_investment@FROM
 			}
 		}
+	}
+}
+
+country_event = {
+	id = investments_event.12
+	hidden = yes
+	is_triggered_only = yes
+	immediate = {
+		log = "[GetDateText]: [THIS.GetName]: Automatically accepted investment offer from [FROM.GetName]"
+		initialize_pending_investment_offer = yes
+		accept_pending_investment_offer = yes
 	}
 }
 

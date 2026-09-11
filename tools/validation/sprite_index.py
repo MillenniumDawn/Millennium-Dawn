@@ -12,19 +12,22 @@ import glob
 import os
 import re
 import sys
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.dirname(__file__))
 
 import disk_cache
+from image_size import read_image_size
 from shared_utils import extract_block_from_text
 from validate_gfx_references import (
     _GFX_SPRITE_TYPES,
+    _load_vanilla_sprite_sizes,
     _strip_comments,
     _vanilla_gfx_files,
+    sprite_defs_from_gfx_text,
 )
 
-_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
+_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*(?:"([^"]+)"|([^\s}]+))')
 
 
 def _parse_names(raw: str) -> List[str]:
@@ -38,7 +41,7 @@ def _parse_names(raw: str) -> List[str]:
             block = text[m.end() : line_end if line_end != -1 else m.end() + 200]
         nm = _NAME_IN_BLOCK.search(block)
         if nm:
-            names.append(nm.group(1))
+            names.append(nm.group(1) or nm.group(2))
     return names
 
 
@@ -80,8 +83,8 @@ def build_sprite_index(
         include_vanilla: when True, also scan the vanilla HOI4 install (if
             discoverable). Event pictures must be MD-defined, so the event check
             passes False — that keeps it accurate in CI, where vanilla is absent.
-            Focus/idea icons may legitimately reuse vanilla sprites, so those
-            keep the default.
+            Focus/idea/decision icons may legitimately reuse vanilla sprites, so
+            those keep the default.
     """
     gfx_files: List[str] = glob.glob(
         os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True
@@ -100,3 +103,118 @@ def build_sprite_index(
     if gfx_only:
         names = {n for n in names if n.startswith("GFX_")}
     return frozenset(names)
+
+
+def _gfx_root(filepath: str) -> str:
+    """Return the root a .gfx file's `texturefile` paths are relative to.
+
+    That is the directory holding `interface/`: the mod root, the vanilla
+    install, or an individual `dlc/<name>/` — DLC art ships beside its own .gfx.
+    """
+    normalized = filepath.replace("\\", "/")
+    root, sep, _rest = normalized.partition("/interface/")
+    return root if sep else os.path.dirname(normalized)
+
+
+def _textures_in_file(args) -> List[List[str]]:
+    """Pool-worker: return ``[sprite_name, absolute texture path]`` pairs."""
+    filepath, mod_path = args
+    root = _gfx_root(filepath)
+    try:
+        with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+            raw = fh.read()
+    except OSError:
+        return []
+
+    def _compute() -> List[List[str]]:
+        pairs = []
+        for name, texture, _line in sprite_defs_from_gfx_text(raw):
+            if not texture:
+                continue
+            rel = texture.replace("\\", "/").lstrip("/")
+            pairs.append([name, os.path.normpath(os.path.join(root, rel))])
+        return pairs
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "sprite_index.textures", filepath, raw, _compute
+    )
+
+
+def build_sprite_texture_index(
+    mod_path: str, pool_map=None, include_vanilla: bool = True
+) -> Dict[str, str]:
+    """Return sprite name -> absolute path of the texture it renders.
+
+    Mod definitions are applied last so a mod sprite overriding a vanilla name
+    wins, matching load order. Sprites with no `texturefile` (frame strips built
+    from other sprites, `textfile` entries) are absent rather than empty.
+    """
+    jobs: List = []
+    if include_vanilla:
+        jobs.extend((f, mod_path) for f in _vanilla_gfx_files())
+    jobs.extend(
+        (f, mod_path)
+        for f in glob.glob(
+            os.path.join(mod_path, "interface", "**", "*.gfx"), recursive=True
+        )
+    )
+
+    mapper = pool_map if pool_map is not None else lambda fn, it: map(fn, it)
+    index: Dict[str, str] = {}
+    for pairs in mapper(_textures_in_file, jobs):
+        for name, path in pairs:
+            index[name] = path
+    return index
+
+
+class SpriteSizeIndex:
+    """Sprite name -> texture pixel size, from textures on disk else the manifest.
+
+    A name in the texture index is measured from its file, so a mod sprite that
+    shadows a vanilla name wins; anything else falls back to the size column of
+    ``vanilla_sprites.txt``. ``unreadable`` counts textures the index names but
+    could not be read — in CI that is every art directory the prepared workspace
+    does not ship, so callers log it rather than silently skipping.
+    """
+
+    def __init__(
+        self,
+        textures: Dict[str, str],
+        vanilla_sizes: Optional[Dict[str, Tuple[int, int]]] = None,
+    ):
+        self._textures = textures
+        self._vanilla = vanilla_sizes or {}
+        self.unreadable = 0
+
+    def __contains__(self, name: str) -> bool:
+        return name in self._textures or name in self._vanilla
+
+    def __len__(self) -> int:
+        return len(self._textures) + len(self._vanilla)
+
+    @property
+    def manifest_backed(self) -> bool:
+        return bool(self._vanilla)
+
+    def is_vanilla_only(self, name: str) -> bool:
+        return name not in self._textures and name in self._vanilla
+
+    def size(self, name: str) -> Optional[Tuple[int, int]]:
+        path = self._textures.get(name)
+        if path is None:
+            return self._vanilla.get(name)
+        size = read_image_size(path)
+        if size is None:
+            self.unreadable += 1
+        return size
+
+
+def build_sprite_size_index(mod_path: str, pool_map=None) -> SpriteSizeIndex:
+    """Return a size index over mod + vanilla sprites.
+
+    Same precedence as validate_gfx_references: a live install is read directly,
+    and the committed manifest stands in only when no install is discoverable.
+    """
+    textures = build_sprite_texture_index(mod_path, pool_map)
+    vanilla = {} if _vanilla_gfx_files() else _load_vanilla_sprite_sizes()
+    return SpriteSizeIndex(textures, vanilla)

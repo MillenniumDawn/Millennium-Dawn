@@ -6,13 +6,7 @@ a directly-passed file. These regressions cover both entry points: a resources/
 file path and the resources/ directory itself must be left untouched.
 """
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-import cleanup_or  # noqa: E402
+import cleanup_or
 
 # A collapsible OR block cleanup_or would otherwise rewrite to a bare condition.
 _REWRITABLE = "foo = {\n\tavailable = {\n\t\tOR = {\n\t\t\thas_country_flag = bar\n\t\t}\n\t}\n}\n"

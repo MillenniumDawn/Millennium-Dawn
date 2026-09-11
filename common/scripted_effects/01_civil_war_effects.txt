@@ -10,7 +10,7 @@ put_the_largest_opposition_party_in_power = {
 		if = {
 			limit = {
 				check_variable = { v > opposition_party_popularity }
-				NOT = { is_in_array = { ruling_party = i } }
+				NOT = { AND = { has_variable = ruling_party check_variable = { ruling_party = i } } }
 				NOT = { is_in_array = { gov_coalition_array = i } }
 			}
 			set_temp_variable = { opposition_party_index = i }
@@ -20,89 +20,21 @@ put_the_largest_opposition_party_in_power = {
 
 	#Save current ruling data
 	set_temp_variable = { party_index = 0 }
-	set_temp_variable_to_ruling_party = yes
+	set_temp_variable = { party_index = ruling_party }
 	set_temp_variable = { current_ruling_popularity = party_pop_array^party_index }
 
 	#Set new politics for us
+	if = {
+		limit = { has_elections = yes }
+		set_temp_variable = { disable_elections = 0 }
+	}
+	else = {
+		set_temp_variable = { disable_elections = 1 }
+	}
 	set_temp_variable = { rul_party_temp = opposition_party_index }
 	change_ruling_party_effect = yes
 	hidden_effect = {
 		set_variable = { current_term = 0 } #not a full term
-	}
-	if = {
-		limit = {
-			check_variable = { opposition_party_index < 4 }
-		}
-		if = {
-			limit = { has_elections = yes }
-			set_politics = {
-				ruling_party = democratic
-				elections_allowed = yes
-			}
-		}
-		else = {
-			set_politics = {
-				ruling_party = democratic
-				elections_allowed = no
-			}
-		}
-	}
-	if = {
-		limit = {
-			check_variable = { opposition_party_index > 3 }
-			check_variable = { opposition_party_index < 10 }
-		}
-		if = {
-			limit = { has_elections = yes }
-			set_politics = {
-				ruling_party = communism
-				elections_allowed = yes
-			}
-		}
-		else = {
-			set_politics = {
-				ruling_party = communism
-				elections_allowed = no
-			}
-		}
-	}
-	if = {
-		limit = {
-			check_variable = { opposition_party_index > 9 }
-			check_variable = { opposition_party_index < 12 }
-		}
-		set_politics = {
-			ruling_party = fascism
-			elections_allowed = no
-		}
-	}
-	if = {
-		limit = {
-			check_variable = { opposition_party_index > 11 }
-			check_variable = { opposition_party_index < 20 }
-		}
-		if = {
-			limit = { has_elections = yes }
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = yes
-			}
-		}
-		else = {
-			set_politics = {
-				ruling_party = neutrality
-				elections_allowed = no
-			}
-		}
-	}
-	if = {
-		limit = {
-			check_variable = { opposition_party_index > 19 }
-		}
-		set_politics = {
-			ruling_party = nationalist
-			elections_allowed = yes
-		}
 	}
 }
 
@@ -118,7 +50,7 @@ start_civil_war_against_the_strongest_opposition = {
 		if = {
 			limit = {
 				check_variable = { v > opposition_party_popularity }
-				NOT = { is_in_array = { ruling_party = i } }
+				NOT = { AND = { has_variable = ruling_party check_variable = { ruling_party = i } } }
 				NOT = { is_in_array = { gov_coalition_array = i } }
 			}
 			set_temp_variable = { opposition_party_index = i }
@@ -137,49 +69,45 @@ start_civil_war_against_the_strongest_opposition = {
 
 	hidden_effect = {
 		#Start the civil war
+		set_temp_variable = { outlook_party_index = opposition_party_index }
+		set_outlook_from_party_index = yes
 		if = {
 			limit = {
-				check_variable = { opposition_party_index < 4 }
+				check_variable = { outlook_id = 0 }
 			}
 			start_civil_war = {
 				ideology = democratic
 				size = opposition_party_popularity
 			}
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { opposition_party_index > 3 }
-				check_variable = { opposition_party_index < 10 }
+				check_variable = { outlook_id = 1 }
 			}
 			start_civil_war = {
 				ideology = communism
 				size = opposition_party_popularity
 			}
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { opposition_party_index > 9 }
-				check_variable = { opposition_party_index < 12 }
+				check_variable = { outlook_id = 2 }
 			}
 			start_civil_war = {
 				ideology = fascism
 				size = opposition_party_popularity
 			}
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { opposition_party_index > 11 }
-				check_variable = { opposition_party_index < 20 }
+				check_variable = { outlook_id = 3 }
 			}
 			start_civil_war = {
 				ideology = neutrality
 				size = opposition_party_popularity
 			}
 		}
-		if = {
-			limit = {
-				check_variable = { opposition_party_index > 19 }
-			}
+		else = {
 			start_civil_war = {
 				ideology = nationalist
 				size = opposition_party_popularity
@@ -216,49 +144,45 @@ start_civil_war_as_the_strongest_opposition = {
 	hidden_effect = {
 		#Start the civil war
 		set_country_flag = no_leader_change
+		set_temp_variable = { outlook_party_index = party_index }
+		set_outlook_from_party_index = yes
 		if = {
 			limit = {
-				check_variable = { party_index < 4 }
+				check_variable = { outlook_id = 0 }
 			}
 			start_civil_war = {
 				ideology = democratic
 				size = opposition_party_popularity
 			}
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { party_index > 3 }
-				check_variable = { party_index < 10 }
+				check_variable = { outlook_id = 1 }
 			}
 			start_civil_war = {
 				ideology = communism
 				size = opposition_party_popularity
 			}
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { party_index > 9 }
-				check_variable = { party_index < 12 }
+				check_variable = { outlook_id = 2 }
 			}
 			start_civil_war = {
 				ideology = fascism
 				size = opposition_party_popularity
 			}
 		}
-		if = {
+		else_if = {
 			limit = {
-				check_variable = { party_index > 11 }
-				check_variable = { party_index < 20 }
+				check_variable = { outlook_id = 3 }
 			}
 			start_civil_war = {
 				ideology = neutrality
 				size = opposition_party_popularity
 			}
 		}
-		if = {
-			limit = {
-				check_variable = { party_index > 19 }
-			}
+		else = {
 			start_civil_war = {
 				ideology = nationalist
 				size = opposition_party_popularity
@@ -329,14 +253,17 @@ CAR_common_rebel_setup = {
 	economic_cycle_drift_popularity = yes # Actually impacts the economic cycle drifts
 	# Ensures the Rebel army is supplied for the conflict
 	add_equipment_to_stockpile = { type = infantry_weapons_1 amount = 1500 producer = SOV }
-	division_template = {
-		name = "Rebel Groups"
-		is_locked = yes
-		regiments = {
-			Militia_Bat = { x = 0 y = 0 }
-			Militia_Bat = { x = 0 y = 1 }
-			Militia_Bat = { x = 0 y = 2 }
-			Militia_Bat = { x = 0 y = 3 }
+	if = {
+		limit = { NOT = { has_template = "Rebel Groups" } }
+		division_template = {
+			name = "Rebel Groups"
+			is_locked = yes
+			regiments = {
+				Militia_Bat = { x = 0 y = 0 }
+				Militia_Bat = { x = 0 y = 1 }
+				Militia_Bat = { x = 0 y = 2 }
+				Militia_Bat = { x = 0 y = 3 }
+			}
 		}
 	}
 	inherit_technology = CAR
@@ -370,14 +297,17 @@ MAL_common_rebel_setup = {
 	economic_cycle_drift_popularity = yes # Actually impacts the economic cycle drifts
 	# Ensures the Rebel army is supplied for the conflict
 	add_equipment_to_stockpile = { type = infantry_weapons_1 amount = 1500 producer = SOV }
-	division_template = {
-		name = "Rebel Groups"
-		is_locked = yes
-		regiments = {
-			Militia_Bat = { x = 0 y = 0 }
-			Militia_Bat = { x = 0 y = 1 }
-			Militia_Bat = { x = 0 y = 2 }
-			Militia_Bat = { x = 0 y = 3 }
+	if = {
+		limit = { NOT = { has_template = "Rebel Groups" } }
+		division_template = {
+			name = "Rebel Groups"
+			is_locked = yes
+			regiments = {
+				Militia_Bat = { x = 0 y = 0 }
+				Militia_Bat = { x = 0 y = 1 }
+				Militia_Bat = { x = 0 y = 2 }
+				Militia_Bat = { x = 0 y = 3 }
+			}
 		}
 	}
 	inherit_technology = MAL
@@ -541,6 +471,7 @@ civil_war_cleanup_afghanistan = {
 		414 = { remove_core_of = AFG remove_core_of = TAL }
 		415 = { remove_core_of = AFG remove_core_of = TAL }
 		drop_cosmetic_tag = yes
+		clear_variable = dynamic_flag_variant
 		if = { limit = { has_idea = non_state_actor } remove_ideas = non_state_actor }
 		if = {
 			limit = { original_tag = TAL }
@@ -769,6 +700,7 @@ civil_war_cleanup_yemen = {
 		if = {
 			limit = { NOT = { original_tag = YEM } }
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
 			clr_country_flag = dynamic_flag
 			clr_country_flag = dynamic_rebel_flag
 			set_cosmetic_tag = YEM
@@ -778,7 +710,9 @@ civil_war_cleanup_yemen = {
 			limit = { original_tag = AQY }
 			add_ideas = intervention_neo_imperialism
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
 			set_cosmetic_tag = YEM_AUTH_SS_fascism
+			set_variable = { dynamic_flag_variant = 8 }
 		}
 		add_state_core = 194
 		add_state_core = 195
@@ -871,6 +805,163 @@ civil_war_cleanup_second_libya_war = {
 	}
 }
 
+nep_remove_guerrilla_effect = {
+	485 = { if = { limit = { has_dynamic_modifier = { modifier = NEP_guerrilla_conflict } } remove_dynamic_modifier = { modifier = NEP_guerrilla_conflict } } }
+	489 = { if = { limit = { has_dynamic_modifier = { modifier = NEP_guerrilla_conflict } } remove_dynamic_modifier = { modifier = NEP_guerrilla_conflict } } }
+}
+
+nep_kings_death_effect = {
+	if = {
+		limit = {
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				has_war_with = NPM
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		NEP = {
+			swap_ideas = {
+				remove_idea = NEP_National_Unity_Campaign
+				add_idea = NEP_The_National_vendetta
+			}
+			kill_country_leader = yes
+		}
+		news_event = { id = news.90 random_days = 3 }
+	}
+}
+
+civil_war_cleanup_nepal_truth_ending = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				has_war_with = NPM
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		NEP = {
+			country_event = { id = nepal.1 days = 511 }
+			annex_country = { target = NPM transfer_troops = no }
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		485 = { remove_core_of = NPM }
+		489 = { remove_core_of = NPM }
+		news_event = { id = news.87 random_days = 3 }
+	}
+}
+
+civil_war_cleanup_nepal_kings_victory = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			NOT = { country_exists = NPM }
+			NEP = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		news_event = { id = news.89 random_days = 3 }
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		485 = { remove_core_of = NPM }
+		489 = { remove_core_of = NPM }
+	}
+}
+
+civil_war_cleanup_nepal_reds_victory = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NPM
+			NOT = { country_exists = NEP }
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		news_event = { id = news.88 random_days = 3 }
+		nep_remove_guerrilla_effect = yes
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+			set_cosmetic_tag = NEP
+		}
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		485 = { remove_core_of = NEP }
+		489 = { remove_core_of = NEP }
+	}
+}
+
+civil_war_cleanup_nepal_peace = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			country_exists = NEP
+			country_exists = NPM
+			NEP = {
+				NOT = { has_war_with = NPM }
+				has_capitulated = no
+			}
+			NPM = { has_capitulated = no }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = { remove_ideas = NEP_Himalayan_Rebellion_Struggle }
+	}
+}
+
+civil_war_cleanup_nepal_no_survivor = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = GLOBAL_nepal_civil_war_over }
+			NOT = { country_exists = NEP }
+			NOT = { country_exists = NPM }
+		}
+		set_global_flag = GLOBAL_nepal_civil_war_over
+		nep_remove_guerrilla_effect = yes
+		NEP = {
+			remove_ideas = NEP_National_Unity_Campaign
+			remove_ideas = NEP_The_National_vendetta
+		}
+		NPM = {
+			remove_ideas = NEP_Himalayan_Rebellion_Struggle
+			remove_ideas = non_state_actor
+		}
+		485 = { remove_core_of = NEP remove_core_of = NPM }
+		489 = { remove_core_of = NEP remove_core_of = NPM }
+	}
+}
+
+civil_war_cleanup_nepal = {
+	civil_war_cleanup_nepal_kings_victory = yes
+	civil_war_cleanup_nepal_reds_victory = yes
+	civil_war_cleanup_nepal_peace = yes
+	civil_war_cleanup_nepal_no_survivor = yes
+}
+
 # Guards above self-validate, so this is safe to fire from any war-ending on_action;
 # a call that comes too early is a no-op and the next hook retries it.
 civil_war_cleanup_hooks = {
@@ -906,6 +997,8 @@ civil_war_cleanup_hooks = {
 	HOR = { civil_war_cleanup_second_libya_war = yes }
 	GNA = { civil_war_cleanup_second_libya_war = yes }
 	GNC = { civil_war_cleanup_second_libya_war = yes }
+	NEP = { civil_war_cleanup_nepal = yes }
+	NPM = { civil_war_cleanup_nepal = yes }
 }
 
 civil_war_startup_repairs = {

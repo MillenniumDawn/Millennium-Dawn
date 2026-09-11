@@ -7,13 +7,26 @@ import bisect
 import logging
 import os
 import re
+import stat
 import subprocess
 import sys
+import tempfile
 import time
 from collections import OrderedDict
 from datetime import datetime
+from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import (
+    Any,
+    Callable,
+    Container,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+)
 
 
 class Colors:
@@ -41,6 +54,62 @@ _LEVEL_COLORS = {
 # Default skip patterns shared across validators. Individual validators can
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
+
+# ruling_party 0-23. Slot 0 is Western Autocracy.
+PARTY_SLOT_NAMES: Dict[int, str] = {
+    0: "Western_Autocracy",
+    1: "conservatism",
+    2: "liberalism",
+    3: "socialism",
+    4: "Communist-State",
+    5: "anarchist_communism",
+    6: "Conservative",
+    7: "Autocracy",
+    8: "Mod_Vilayat_e_Faqih",
+    9: "Vilayat_e_Faqih",
+    10: "Kingdom",
+    11: "Caliphate",
+    12: "Neutral_Muslim_Brotherhood",
+    13: "Neutral_Autocracy",
+    14: "Neutral_conservatism",
+    15: "oligarchism",
+    16: "Neutral_Libertarian",
+    17: "Neutral_green",
+    18: "neutral_Social",
+    19: "Neutral_Communism",
+    20: "Nat_Populism",
+    21: "Nat_Fascism",
+    22: "Nat_Autocracy",
+    23: "Monarchist",
+}
+
+# Leave a quarter of the machine to whoever is using it. A full suite run
+# fans out over every validator and each of those keeps its own pool, so
+# without a shared ceiling the tooling oversubscribes the box and everything
+# else on it stalls.
+CPU_BUDGET_FRACTION = 0.75
+
+
+def cpu_budget() -> int:
+    """Cores this repo's tooling may occupy at once, never the whole machine.
+
+    ``MD_MAX_WORKERS`` overrides the share outright. CI runners have the box to
+    themselves, so there the budget is every core.
+    """
+    override = os.environ.get("MD_MAX_WORKERS", "").strip()
+    if override.isdigit() and int(override) > 0:
+        return int(override)
+    cores = os.cpu_count() or 1
+    if os.environ.get("CI", "").strip().lower() in ("1", "true"):
+        return cores
+    return max(1, int(cores * CPU_BUDGET_FRACTION))
+
+
+def split_cpu_budget(tasks: int) -> Tuple[int, int]:
+    """Split the budget into (concurrent tasks, workers each), product capped."""
+    budget = cpu_budget()
+    parallel = max(1, min(tasks, budget))
+    return parallel, max(1, budget // parallel)
 
 
 def log_message(
@@ -184,6 +253,32 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
     return block_lines, i  # position AFTER the block, not i-1
 
 
+def find_matching_brace(text: str, open_idx: int) -> int:
+    """Return the index of the ``}`` matching the ``{`` at *open_idx*.
+
+    Returns -1 if the braces never balance. Braces inside double-quoted
+    strings are ignored; :func:`extract_block_from_text` delegates here for
+    its own brace matching.
+    """
+    depth = 0
+    in_str = False
+    i = open_idx
+    n = len(text)
+    while i < n:
+        c = text[i]
+        if c == '"' and text[i - 1] != "\\":
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                depth += 1
+            elif c == "}":
+                depth -= 1
+                if depth == 0:
+                    return i
+        i += 1
+    return -1
+
+
 def extract_block_from_text(text: str, start: int) -> Tuple[str, int]:
     """Char-accurate brace-block extractor for raw text.
 
@@ -195,24 +290,31 @@ def extract_block_from_text(text: str, start: int) -> Tuple[str, int]:
     open_pos = text.find("{", start)
     if open_pos == -1:
         return "", -1
-    n = len(text)
-    body_start = open_pos + 1
+    close_pos = find_matching_brace(text, open_pos)
+    if close_pos == -1:
+        return "", -1
+    return text[open_pos + 1 : close_pos], close_pos + 1
+
+
+def find_unquoted_block_end(text: str, start: int) -> Tuple[int, bool]:
+    """Advance from *start* (just past an already-consumed opening ``{``),
+    counting bare ``{``/``}`` until depth returns to zero or *text* runs out.
+
+    Returns ``(end_index, balanced)`` — *end_index* is one past the matching
+    ``}`` when *balanced*, else ``len(text)``. Unlike :func:`find_matching_brace`,
+    quoted-string interiors are not respected; use only where the input can't
+    hide a brace inside a ``"..."`` span.
+    """
     depth = 1
-    i = body_start
-    in_str = False
-    while i < n:
-        c = text[i]
-        if c == '"' and text[i - 1] != "\\":
-            in_str = not in_str
-        elif not in_str:
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth == 0:
-                    return text[body_start:i], i + 1
+    i = start
+    n = len(text)
+    while i < n and depth > 0:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
         i += 1
-    return "", -1
+    return i, depth == 0
 
 
 def compact_block(block_lines: List[str]) -> List[str]:
@@ -226,6 +328,23 @@ def compact_block(block_lines: List[str]) -> List[str]:
             compacted.append(line.rstrip())
 
     return compacted
+
+
+def count_braces(text: str) -> Tuple[int, int]:
+    """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
+    strings and after an unquoted ``#`` comment."""
+    code = strip_inline_comment(text)
+    opens = closes = 0
+    in_str = False
+    for i, c in enumerate(code):
+        if c == '"' and (i == 0 or code[i - 1] != "\\"):
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                opens += 1
+            elif c == "}":
+                closes += 1
+    return opens, closes
 
 
 def collapse_ws_outside_quotes(text: str) -> str:
@@ -270,6 +389,51 @@ def _normalize_oneline_braces(text: str) -> str:
     return collapse_ws_outside_quotes("".join(out))
 
 
+_COMPARISON_OPS = {"!=", "==", ">=", "<="}
+
+
+def normalize_spacing(line: str) -> str:
+    """Put single spaces around braces, assignments and comparisons in one line.
+
+    Leading indentation, ``"..."`` string interiors and any trailing ``#``
+    comment are left byte-exact; a whole-line comment is returned unchanged.
+    Comparison operators are padded without splitting their two-character forms,
+    and an empty block keeps its written spacing (``{}`` and ``{ }`` both survive).
+    Idempotent.
+    """
+    code = strip_inline_comment(line)
+    comment = line[len(code) :].strip()
+    stripped = code.strip()
+    if not stripped or stripped.startswith("#"):
+        return line.rstrip()
+
+    indent = code[: len(code) - len(code.lstrip())]
+
+    out: List[str] = []
+    in_str = False
+    i = 0
+    n = len(code)
+    while i < n:
+        c = code[i]
+        if c == '"' and (i == 0 or code[i - 1] != "\\"):
+            in_str = not in_str
+            out.append(c)
+        elif in_str:
+            out.append(c)
+        elif code[i : i + 2] in _COMPARISON_OPS or code[i : i + 2] == "{}":
+            out.append(f" {code[i : i + 2]} ")
+            i += 2
+            continue
+        elif c in "{}=<>":
+            out.append(f" {c} ")
+        else:
+            out.append(c)
+        i += 1
+
+    body = collapse_ws_outside_quotes("".join(out))
+    return f"{indent}{body} {comment}".rstrip() if comment else f"{indent}{body}"
+
+
 def collapse_or_compact(
     block_lines: List[str], indent: Optional[str] = None
 ) -> List[str]:
@@ -279,7 +443,9 @@ def collapse_or_compact(
     Single-leaf test (evaluated outside string literals and comments):
     ``leaves = (#"=<>") - (#"{")``; collapse iff ``leaves == 1`` and braces
     balance. Comparison operators ``<``/``>`` count as leaves alongside ``=`` so a
-    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. Bails to
+    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. A bare
+    token list (``focus = { A B C }``) counts as one leaf per token, so a
+    multi-line list stays multi-line. Bails to
     ``compact_block`` if any line carries a ``#`` comment. When *indent* is None
     the single-line form keeps the block's existing leading whitespace (from
     ``block_lines[0]``); otherwise *indent* is used as the prefix.
@@ -313,9 +479,57 @@ def collapse_or_compact(
                 n_close += 1
 
     if n_open != n_close or n_leaf - n_open != 1:
-        return compact_block(block_lines)
+        return compact_block(collapse_nested_blocks(block_lines))
+
+    unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
+    for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
+        if len(group.split()) > 1:
+            return compact_block(collapse_nested_blocks(block_lines))
 
     return [f"{indent}{_normalize_oneline_braces(text)}"]
+
+
+def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
+    """Collapse each nested ``key = { ... }`` child that reduces to a single leaf
+    onto one line, innermost first, leaving the enclosing block multi-line.
+
+    Applies :func:`collapse_or_compact`'s single-leaf test per child, so a child
+    with two leaves (``{ name = "X" ruling_only = yes }``) or a ``#`` comment
+    stays multi-line. Each collapsed child keeps its own opening line's
+    indentation; the enclosing opener and closer are never touched. Input whose
+    braces don't balance is returned as-is.
+    """
+    if len(block_lines) < 3:
+        return list(block_lines)
+
+    out = [block_lines[0]]
+    last = len(block_lines) - 1
+    i = 1
+    while i < last:
+        line = block_lines[i]
+        opens, closes = count_braces(line)
+        if opens <= closes:
+            out.append(line)
+            i += 1
+            continue
+
+        depth = opens - closes
+        j = i + 1
+        while j < last and depth > 0:
+            o, c = count_braces(block_lines[j])
+            depth += o - c
+            j += 1
+        if depth > 0:
+            out.extend(block_lines[i:])
+            return out
+
+        child = collapse_nested_blocks(block_lines[i:j])
+        collapsed = collapse_or_compact(child)
+        out.extend(collapsed if len(collapsed) == 1 else child)
+        i = j
+
+    out.append(block_lines[last])
+    return out
 
 
 _FACTOR_TOKEN_RE = re.compile(r"\bfactor\b")
@@ -364,8 +578,8 @@ def create_backup(filename: str) -> str:
     backup_filename = f"{filename}.backup.{timestamp}"
 
     try:
-        with open(filename, "r", encoding="utf-8") as src:
-            with open(backup_filename, "w", encoding="utf-8") as dst:
+        with open(filename, "r", encoding="utf-8", newline="") as src:
+            with open(backup_filename, "w", encoding="utf-8", newline="") as dst:
                 dst.write(src.read())
         log_message("INFO", f"Backup created: {backup_filename}")
         return backup_filename
@@ -377,20 +591,182 @@ def create_backup(filename: str) -> str:
 def should_skip_file(
     filename: str, extra_skip_patterns: Optional[List[str]] = None
 ) -> bool:
-    """Check if a file should be skipped during processing"""
-    IGNORED_DIRS = ["gfx", "tools", "resources", "docs", "map"]
-
-    normalized_path = filename.replace("\\", "/")
-    for ignored_dir in IGNORED_DIRS:
-        if f"/{ignored_dir}/" in normalized_path or normalized_path.startswith(
-            f"{ignored_dir}/"
-        ):
+    """Check if a file should be skipped during processing."""
+    ignored_dirs = {".git", ".claude", "gfx", "tools", "resources", "docs", "map"}
+    content_roots = {"common", "events", "history", "interface", "localisation"}
+    normalized_path = filename.replace("\\", "/").strip("/")
+    parts = normalized_path.split("/")
+    # Canal/strait closures set flags read here, so this file is game logic
+    # that must count for variables validation. Stale worktree and reference
+    # copies stay ignored.
+    if parts[-2:] == ["map", "adjacency_rules.txt"] and not (
+        ignored_dirs - {"map"}
+    ).intersection(parts[:-2]):
+        return False
+    for index, part in enumerate(parts):
+        if part not in ignored_dirs:
+            continue
+        if part in {".git", ".claude"} or not content_roots.intersection(parts[:index]):
             return True
     if extra_skip_patterns:
         for pattern in extra_skip_patterns:
-            if pattern in filename:
+            if pattern in normalized_path:
                 return True
     return False
+
+
+def normalize_path_separators(path: str) -> str:
+    """Return a path with POSIX separators for public output."""
+    return path.replace("\\", "/")
+
+
+def is_excluded_path(path: str, excluded_dirs: Container[str], repo_root: str) -> bool:
+    """True if path is under one of excluded_dirs, matched relative to repo_root.
+
+    Matching is against the path relative to repo_root, not the absolute path:
+    a checkout nested under an ancestor dir literally named after one of
+    excluded_dirs would otherwise match every file and no-op the whole repo.
+    """
+    try:
+        rel = os.path.relpath(os.path.abspath(path), os.path.abspath(repo_root))
+    except ValueError:
+        rel = normalize_path_separators(os.path.abspath(path)).strip("/")
+        return any(part in excluded_dirs for part in rel.split("/"))
+    return any(part in excluded_dirs for part in rel.split(os.sep))
+
+
+def iter_txt_targets(
+    path: str, excluded_dirs: Container[str]
+) -> Iterator[Tuple[str, str]]:
+    """Yield (display_path, full_path) for every .txt file a CLI target names.
+
+    `path` may be a single file (yielded as-is) or a directory (walked
+    recursively, pruning excluded_dirs). display_path is path-relative for a
+    walked file, or path itself for a direct file argument. Callers must check
+    whether path itself is excluded before calling this.
+    """
+    if os.path.isdir(path):
+        for dirpath, dirnames, filenames in os.walk(path):
+            dirnames[:] = [d for d in dirnames if d not in excluded_dirs]
+            for fn in filenames:
+                if fn.lower().endswith(".txt"):
+                    full = os.path.join(dirpath, fn)
+                    yield normalize_path_separators(os.path.relpath(full, path)), full
+    elif os.path.isfile(path):
+        yield path, path
+
+
+def _reject_symlink_path(path: Path) -> None:
+    if path.is_symlink():
+        raise OSError(f"Refusing to access symlink: {path}")
+    for parent in path.absolute().parents:
+        if parent == parent.parent:
+            break
+        if parent.is_symlink():
+            raise OSError(f"Refusing to access symlinked parent: {parent}")
+
+
+def read_text_strict(
+    filename: str,
+    encoding: str = "utf-8-sig",
+    *,
+    reject_symlink: bool = True,
+) -> str:
+    """Read repository text without replacing malformed bytes."""
+    path = Path(filename)
+    if reject_symlink:
+        _reject_symlink_path(path)
+    with path.open("r", encoding=encoding, errors="strict", newline="") as handle:
+        return handle.read()
+
+
+def resolve_under(path: str, under: str) -> Path:
+    """Resolve *path* and raise if it is not inside *under*."""
+    root = Path(under).resolve()
+    resolved = Path(path).resolve()
+    if resolved != root and root not in resolved.parents:
+        raise ValueError(f"path {path} is not under {under}")
+    _reject_symlink_path(resolved)
+    return resolved
+
+
+def read_text_under(
+    path: str,
+    under: str,
+    encoding: str = "utf-8-sig",
+    *,
+    errors: str = "replace",
+) -> str:
+    """Read a text file after proving it lives under *under*."""
+    resolved = resolve_under(path, under)
+    return Path(os.fspath(resolved)).read_text(encoding=encoding, errors=errors)
+
+
+def atomic_write_bytes(filename: str, data: bytes) -> None:
+    """Replace a regular file atomically, preserving mode and old contents."""
+    path = Path(filename)
+    _reject_symlink_path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    existing_mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else None
+    temp_name = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="wb", dir=path.parent, prefix=f".{path.name}.", delete=False
+        ) as handle:
+            temp_name = handle.name
+            handle.write(data)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.chmod(temp_name, existing_mode if existing_mode is not None else 0o644)
+        os.replace(temp_name, path)
+        opener = globals().get("FileOpener")
+        if opener is not None:
+            opener.invalidate(str(path))
+        temp_name = None
+    finally:
+        if temp_name is not None:
+            try:
+                os.unlink(temp_name)
+            except FileNotFoundError:
+                pass
+
+
+def atomic_write_text(
+    filename: str,
+    text: str,
+    encoding: str = "utf-8",
+    *,
+    bom: Optional[bool] = None,
+) -> None:
+    """Atomically write text, preserving an existing UTF-8 BOM by default."""
+    path = Path(filename)
+    _reject_symlink_path(path)
+    existing = b""
+    if path.exists():
+        try:
+            existing = path.read_bytes()
+        except OSError:
+            existing = b""
+    if bom is None:
+        bom = existing.startswith(b"\xef\xbb\xbf")
+    if b"\r\n" in existing and "\n" in text:
+        text = text.replace("\r\n", "\n").replace("\n", "\r\n")
+    text = text.removeprefix("\ufeff")
+    if bom:
+        text = "\ufeff" + text
+    output_encoding = "utf-8" if encoding == "utf-8-sig" else encoding
+    atomic_write_bytes(filename, text.encode(output_encoding, errors="strict"))
+
+
+def write_text_under(
+    path: str,
+    under: str,
+    text: str,
+    encoding: str = "utf-8",
+) -> None:
+    """Write text after proving *path* lives under *under*."""
+    resolved = resolve_under(path, under)
+    atomic_write_text(str(resolved), text, encoding=encoding)
 
 
 def clean_filepath(filepath: str) -> str:
@@ -423,14 +799,146 @@ HOI4_INSTALL_PATHS = [
 ]
 
 
+_HOI4_GAME_SUBDIR = os.path.join("steamapps", "common", "Hearts of Iron IV")
+_STEAM_VDF_PATH_RE = re.compile(r'"path"\s*"([^"]+)"')
+# Keys the MD VS Code extensions and CWTools keep the game path under.
+_EDITOR_INSTALL_KEYS = (
+    "mdHoi4Utilities.installPath",
+    "hoi4ModUtilities.installPath",
+    "cwtools.cache.hoi4",
+)
+_EDITOR_INSTALL_RE = re.compile(
+    r'"(?:'
+    + "|".join(re.escape(k) for k in _EDITOR_INSTALL_KEYS)
+    + r')"\s*:\s*"([^"]+)"'
+)
+
+
+def _steam_roots() -> List[str]:
+    """Steam client roots: the Windows registry first, then the Unix defaults."""
+    roots: List[str] = []
+    if sys.platform == "win32":
+        try:
+            import winreg
+
+            for hive, key, value in (
+                (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam", "SteamPath"),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\WOW6432Node\Valve\Steam",
+                    "InstallPath",
+                ),
+            ):
+                try:
+                    with winreg.OpenKey(hive, key) as handle:
+                        roots.append(str(winreg.QueryValueEx(handle, value)[0]))
+                except OSError:
+                    continue
+        except ImportError:
+            pass
+    roots.extend(
+        os.path.expanduser(p)
+        for p in (
+            "~/.steam/steam",
+            "~/.local/share/Steam",
+            "~/.steam/debian-installation",
+            "~/Library/Application Support/Steam",
+        )
+    )
+    return roots
+
+
+def _steam_library_installs() -> List[str]:
+    """Game dirs under every library listed in Steam's libraryfolders.vdf."""
+    found: List[str] = []
+    for root in _steam_roots():
+        for vdf in (
+            os.path.join(root, "steamapps", "libraryfolders.vdf"),
+            os.path.join(root, "config", "libraryfolders.vdf"),
+        ):
+            try:
+                with open(vdf, encoding="utf-8", errors="replace") as fh:
+                    text = fh.read()
+            except OSError:
+                continue
+            for lib in _STEAM_VDF_PATH_RE.findall(text):
+                candidate = os.path.join(lib.replace("\\\\", "\\"), _HOI4_GAME_SUBDIR)
+                if candidate not in found:
+                    found.append(candidate)
+    return found
+
+
+def _editor_settings_files() -> List[str]:
+    mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    vscode = os.path.join(mod_root, ".vscode")
+    files = [os.path.join(vscode, "settings.json")]
+    try:
+        files.extend(
+            os.path.join(vscode, f)
+            for f in sorted(os.listdir(vscode))
+            if f.endswith(".code-workspace")
+        )
+    except OSError:
+        pass
+    appdata = os.environ.get("APPDATA", "")
+    files.extend(
+        os.path.expanduser(p)
+        for p in (
+            os.path.join(appdata, "Code", "User", "settings.json"),
+            os.path.join(appdata, "Code - Insiders", "User", "settings.json"),
+            "~/.config/Code/User/settings.json",
+            "~/Library/Application Support/Code/User/settings.json",
+        )
+        if p
+    )
+    return files
+
+
+def _editor_settings_installs() -> List[str]:
+    """Game paths the VS Code HOI4 extensions were configured with.
+
+    Settings files are JSONC (comments, trailing commas), so the keys are
+    picked out with a regex rather than json.loads.
+    """
+    found: List[str] = []
+    for path in _editor_settings_files():
+        try:
+            with open(path, encoding="utf-8-sig", errors="replace") as fh:
+                text = fh.read()
+        except OSError:
+            continue
+        for raw in _EDITOR_INSTALL_RE.findall(text):
+            candidate = raw.replace("\\\\", "\\").rstrip("\\/")
+            if candidate and candidate not in found:
+                found.append(candidate)
+    return found
+
+
+# Probed after $HOI4_PATH and before the fixed HOI4_INSTALL_PATHS list; tests
+# blank it so a developer machine with the game does not leak into assertions.
+HOI4_DISCOVERY_SOURCES: List[Callable[[], List[str]]] = [
+    _steam_library_installs,
+    _editor_settings_installs,
+]
+
+
 def find_hoi4_install(explicit_path: Optional[str] = None) -> Optional[str]:
-    """Return the first existing HOI4 install root, checking explicit_path, $HOI4_PATH, then HOI4_INSTALL_PATHS."""
+    """Return the first existing HOI4 install root.
+
+    Order: explicit_path, $HOI4_PATH, every Steam library folder, the game path
+    from the VS Code HOI4 extension settings, then HOI4_INSTALL_PATHS.
+    """
     candidates: List[str] = []
     if explicit_path:
         candidates.append(explicit_path)
     env_path = os.environ.get("HOI4_PATH")
     if env_path:
         candidates.append(env_path)
+    for source in HOI4_DISCOVERY_SOURCES:
+        try:
+            candidates.extend(source())
+        except OSError:
+            continue
     candidates.extend(HOI4_INSTALL_PATHS)
     for base in candidates:
         if base and os.path.isdir(base):
@@ -478,15 +986,8 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
         if not m:
             continue
         start = m.end()
-        depth = 1
-        i = start
-        while i < len(text) and depth > 0:
-            if text[i] == "{":
-                depth += 1
-            elif text[i] == "}":
-                depth -= 1
-            i += 1
-        cat_block = text[start : i - 1] if depth == 0 else text[start:]
+        i, balanced = find_unquoted_block_end(text, start)
+        cat_block = text[start : i - 1] if balanced else text[start:]
 
         pos = 0
         while True:
@@ -495,17 +996,10 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
                 break
             cat_name = cat_m.group(1)
             cat_start = pos + cat_m.end()
-            cat_depth = 1
-            cat_i = cat_start
-            while cat_i < len(cat_block) and cat_depth > 0:
-                if cat_block[cat_i] == "{":
-                    cat_depth += 1
-                elif cat_block[cat_i] == "}":
-                    cat_depth -= 1
-                cat_i += 1
+            cat_i, cat_balanced = find_unquoted_block_end(cat_block, cat_start)
             cat_body = (
                 cat_block[cat_start : cat_i - 1]
-                if cat_depth == 0
+                if cat_balanced
                 else cat_block[cat_start:]
             )
             type_m = re.search(r"\btype\s*=\s*(\w+)", cat_body)
@@ -523,20 +1017,8 @@ def get_all_idea_categories(mod_root: Optional[str] = None) -> List[Dict]:
     return out
 
 
-def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
-    """Parse common/idea_tags/*.txt and return non-selectable idea category names.
-
-    A category is non-selectable if it has `hidden = yes` or has neither
-    `slot =` nor `character_slot =` entries (like `country` with
-    `type = national_spirit`). These are categories where ideas are only
-    added/removed via script (add_ideas/remove_ideas), never picked in the UI,
-    so `allowed = { always = no }` is always redundant.
-
-    Args:
-        mod_root: Path to the mod root (auto-detected if None).
-    Returns:
-        frozenset of non-selectable category names (e.g. {'country', 'hidden_ideas'}).
-    """
+@lru_cache(maxsize=None)
+def _non_selectable_idea_categories_cached(mod_root: str) -> frozenset:
     categories = {
         c["name"]
         for c in get_all_idea_categories(mod_root)
@@ -545,6 +1027,41 @@ def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozen
     return (
         frozenset(categories) if categories else frozenset({"country", "hidden_ideas"})
     )
+
+
+def get_non_selectable_idea_categories(mod_root: Optional[str] = None) -> frozenset:
+    """Return non-selectable idea categories for one normalized mod root."""
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    normalized = os.path.normcase(os.path.abspath(os.path.normpath(mod_root)))
+    return _non_selectable_idea_categories_cached(normalized)
+
+
+@lru_cache(maxsize=None)
+def _slotless_idea_categories_cached(mod_root: str) -> frozenset:
+    return frozenset(
+        c["name"]
+        for c in get_all_idea_categories(mod_root)
+        if not c["has_slot"] and not c["has_char_slot"]
+    )
+
+
+def get_slotless_idea_categories(mod_root: Optional[str] = None) -> frozenset:
+    """Return idea categories with no slot of any kind.
+
+    Narrower than get_non_selectable_idea_categories, which also counts a hidden
+    category that still has a slot (dynamic_modifier_slots). An idea here can
+    only arrive through add_idea, so its `allowed` gate is never consulted; one
+    in a slotted category still filters the pool the slot draws from.
+
+    Empty when common/idea_tags/ is missing or unparseable. This backs an
+    ERROR-severity check, so it guesses at nothing: no categories means the
+    check goes quiet rather than blocking a PR on a hardcoded assumption.
+    """
+    if mod_root is None:
+        mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    normalized = os.path.normcase(os.path.abspath(os.path.normpath(mod_root)))
+    return _slotless_idea_categories_cached(normalized)
 
 
 def find_line_number(filename: str, pattern: str, lowercase: bool = True) -> int:
@@ -568,8 +1085,10 @@ def strip_comments(text: str) -> str:
     lines = text.split("\n")
     result = []
     for line in lines:
-        stripped = line.lstrip()
-        if stripped.startswith("#"):
+        if "#" not in line:
+            result.append(line)
+            continue
+        if line.lstrip().startswith("#"):
             result.append("")
             continue
         in_quote = False
@@ -613,6 +1132,235 @@ def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> st
     return "".join(out)
 
 
+def flat_block_text(block: str) -> str:
+    """Strip an outer brace pair, but only when the two actually match.
+
+    A bare body ending in the `}` of its last child keeps both characters — a
+    naive strip there would delete an unrelated brace and desync every depth
+    count downstream.
+    """
+    inner = block.strip()
+    if inner.startswith("{") and find_matching_brace(inner, 0) == len(inner) - 1:
+        return inner[1:-1]
+    return inner
+
+
+def iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
+    """Yield offsets at brace depth zero, skipping comments and nested blocks."""
+    inner = flat_block_text(block)
+    depth = 0
+    index = 0
+    while index < len(inner):
+        char = inner[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif char == "#":
+            while index < len(inner) and inner[index] != "\n":
+                index += 1
+            continue
+        elif depth == 0:
+            yield inner, index
+        index += 1
+
+
+_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:@]*)\s*(>=|<=|==|=|>|<)")
+_FOCUS_START = re.compile(r"^[ \t]*(focus|shared_focus|joint_focus)\s*=\s*\{", re.M)
+_FOCUS_ID = re.compile(r"^[ \t]*id\s*=\s*(\S+)", re.M)
+
+
+def read_script(path: str, keep_quotes: bool = False) -> str:
+    """Read a mod file and neutralise comments, and by default quoted strings.
+
+    Both passes preserve length and newlines, so every offset and line number
+    computed downstream still points at the original file. `keep_quotes` is for
+    files whose quoted values are the data (loc key names in a game rule).
+    """
+    with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
+        text = strip_comments(handle.read())
+    return text if keep_quotes else blank_quoted_strings(text)
+
+
+def iter_statement_ops(
+    body: str,
+) -> Iterator[Tuple[str, str, Optional[str], Optional[str]]]:
+    """Yield (key, operator, scalar, block) for every statement at depth 0."""
+    index = 0
+    length = len(body)
+    while index < length:
+        if body[index] in "{}":
+            index += 1
+            continue
+        match = _STATEMENT.match(body, index)
+        if not match:
+            index += 1
+            continue
+        key, operator = match.group(1), match.group(2)
+        cursor = match.end()
+        while cursor < length and body[cursor] in " \t\r\n":
+            cursor += 1
+        if cursor < length and body[cursor] == "{":
+            close = find_matching_brace(body, cursor)
+            if close == -1:
+                return
+            yield key, operator, None, body[cursor + 1 : close]
+            index = close + 1
+            continue
+        if cursor < length and body[cursor] == '"':
+            stop = body.find('"', cursor + 1)
+            if stop == -1:
+                return
+            yield key, operator, body[cursor + 1 : stop], None
+            index = stop + 1
+            continue
+        stop = cursor
+        while stop < length and body[stop] not in " \t\r\n{}":
+            stop += 1
+        yield key, operator, body[cursor:stop], None
+        index = stop
+
+
+def iter_statements(body: str) -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
+    """Yield (key, scalar, block) for every `key = ...` at depth 0 of *body*."""
+    for key, _operator, scalar, block in iter_statement_ops(body):
+        yield key, scalar, block
+
+
+def line_of(text: str, offset: int) -> int:
+    return text.count("\n", 0, offset) + 1
+
+
+def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
+    """Yield (id, kind, line, body) for each focus of a focus tree file.
+
+    A block without an `id` is skipped rather than reported under a made-up
+    name; the game ignores it too.
+    """
+    position = 0
+    while True:
+        match = _FOCUS_START.search(text, position)
+        if not match:
+            return
+        open_index = text.index("{", match.start())
+        close = find_matching_brace(text, open_index)
+        if close == -1:
+            return
+        body = text[open_index + 1 : close]
+        position = close + 1
+        id_match = _FOCUS_ID.search(body)
+        if id_match:
+            yield id_match.group(1), match.group(1), line_of(text, match.start()), body
+
+
+_IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
+# The three trigger blocks that can hide a decision or category from a player.
+_AI_GATE_FIELDS = ("visible", "available", "allowed")
+_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+
+
+def first_flat_match(
+    block: str, pattern: "re.Pattern[str]"
+) -> Optional["re.Match[str]"]:
+    """First match of *pattern* sitting unconditionally at depth 0 of a block.
+
+    Nested inside NOT/OR/AND/if/limit or a scoped `TAG = { }` a token is
+    conditional and means something different: `NOT = { has_country_flag = X }`
+    is satisfied until X is set, the opposite of a gate that X opens.
+    ``iter_flat_offsets`` yields every depth-0 character position, hence the
+    preceding-whitespace guard against matching mid-token.
+    """
+    if not block:
+        return None
+    for inner, index in iter_flat_offsets(block):
+        if index and not inner[index - 1].isspace():
+            continue
+        match = pattern.match(inner, index)
+        if match:
+            return match
+    return None
+
+
+def has_flat_is_ai(block: str) -> bool:
+    """True when `is_ai = yes` sits unconditionally at depth 0 of a trigger block."""
+    return first_flat_match(block, _IS_AI_YES_RE) is not None
+
+
+def iter_direct_child_blocks(
+    body: str, opener: "re.Pattern[str]"
+) -> Iterator[Tuple["re.Match[str]", int, int]]:
+    """Yield `(match, open_idx, close_idx)` for every *opener* block at depth 0.
+
+    Depth-aware so a nested `visible` inside a `modifier` or an effect's `limit`
+    is never mistaken for the object's own trigger block. Each hit advances past
+    its own closing brace, which keeps the depth count balanced — landing back
+    on that `}` would decrement a depth the matching `{` never incremented.
+    """
+    index = 0
+    depth = 0
+    while index < len(body):
+        char = body[index]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif depth == 0:
+            match = opener.match(body, index)
+            if match:
+                close = find_matching_brace(body, match.end() - 1)
+                if close == -1:
+                    return
+                yield match, match.end() - 1, close
+                index = close + 1
+                continue
+        index += 1
+
+
+def direct_child_block(body: str, name: str) -> str:
+    """Return the `name = { ... }` block at depth 0 of *body*, braces included.
+
+    Returns "" when there is no such block.
+    """
+    opener = re.compile(r"\b" + re.escape(name) + r"\s*=\s*\{")
+    for _match, open_idx, close in iter_direct_child_blocks(body, opener):
+        return body[open_idx : close + 1]
+    return ""
+
+
+def is_ai_only_block(body: str) -> bool:
+    """True when a decision or category body is gated on an unconditional `is_ai = yes`.
+
+    Accepts the body with or without its outer braces.
+    """
+    inner = flat_block_text(body)
+    return any(has_flat_is_ai(direct_child_block(inner, f)) for f in _AI_GATE_FIELDS)
+
+
+def ai_only_decision_categories(mod_path: str) -> Dict[str, str]:
+    """Decision categories no human player ever sees, mapped to their filename.
+
+    Every decision inside one inherits that: it needs no localisation and no
+    tooltip wrapper, because there is nobody to read either. The basename comes
+    back with the name so a finding can cite its source without a second walk
+    over the same directory.
+    """
+    root = Path(mod_path) / "common" / "decisions" / "categories"
+    names: Dict[str, str] = {}
+    for path in sorted(root.rglob("*.txt")):
+        try:
+            text = path.read_text(encoding="utf-8-sig", errors="replace")
+        except OSError:
+            continue
+        if "is_ai" not in text:
+            continue
+        text = strip_comments(text)
+        for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
+            body, _end = extract_block_from_text(text, match.end() - 1)
+            if body and is_ai_only_block(body):
+                names.setdefault(match.group(1), path.name)
+    return names
+
+
 class FileOpener:
     # LRU bound sized for common/ (~3600 files) plus localisation, so a broad
     # scan stays cached without evicting on every overflow.
@@ -631,20 +1379,28 @@ class FileOpener:
         if cached is not None:
             cls._cache.move_to_end(cache_key)
             return cached
-        try:
-            with open(filename, "r", encoding="utf-8-sig") as text_file:
-                content = text_file.read()
-                if strip_comments_flag:
-                    content = strip_comments(content)
-                if lowercase:
-                    content = content.lower()
-        except Exception as ex:
-            log_message("WARNING", f"Skipping file {filename}: {ex}")
-            return ""
+        content = read_text_strict(filename)
+        if strip_comments_flag:
+            content = strip_comments(content)
+        if lowercase:
+            content = content.lower()
         cls._cache[cache_key] = content
         if len(cls._cache) > cls._MAX_CACHE_SIZE:
             cls._cache.popitem(last=False)
         return content
+
+    @classmethod
+    def invalidate(cls, filename: str) -> None:
+        """Drop every cached representation of one file."""
+        target = os.path.abspath(os.fspath(filename))
+        for key in [
+            key for key in cls._cache if os.path.abspath(os.fspath(key[0])) == target
+        ]:
+            del cls._cache[key]
+
+    @classmethod
+    def clear_cache(cls) -> None:
+        cls._cache.clear()
 
 
 class DataCleaner:
@@ -801,8 +1557,8 @@ def create_linting_parser(
     parser.add_argument(
         "--workers",
         type=int,
-        default=max(1, min(os.cpu_count() or 2, 4)),
-        help="Number of parallel workers (default: min(CPU count, 4))",
+        default=max(1, min(cpu_budget(), 4)),
+        help="Number of parallel workers (default: min(CPU budget, 4))",
     )
     parser.add_argument(
         "filenames",
@@ -850,6 +1606,70 @@ def get_root_dir() -> str:
     )
 
 
+def add_dry_run_argument(parser: argparse.ArgumentParser) -> None:
+    """Add the standard `--dry-run` flag shared by the auto-fixer sweeps."""
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would be fixed without writing changes",
+    )
+
+
+def run_linting_sweep(
+    args,
+    *,
+    banner: str,
+    file_filter: Callable[[str], bool],
+    apply_fn: Callable[[str], Tuple[str, int]],
+    dry_run_fn: Callable[[str], Tuple[str, int]],
+    unit: str,
+    no_files_message: str,
+    applied_verb: str = "Fixed",
+    dry_run_verb: str = "Would fix",
+) -> int:
+    """Run a whole-tree auto-fixer sweep and print its standard report.
+
+    *apply_fn* / *dry_run_fn* each take a path and return (path, fix count).
+    Returns the process exit code.
+    """
+    timings = []
+    root_dir = get_root_dir()
+    print(f"{banner} (Mode: {args.mode}, Dry run: {args.dry_run})")
+
+    with Timer("file collection") as t:
+        all_files = collect_files_by_mode(args, root_dir)
+    timings.append(("file collection", t.elapsed))
+
+    targets = [f for f in all_files if file_filter(f)]
+    if not targets:
+        print(no_files_message)
+        return 0
+
+    print(f"Processing {len(targets)} files...")
+
+    process_fn = dry_run_fn if args.dry_run else apply_fn
+    with Timer("processing") as t:
+        results = run_with_pool(process_fn, targets, args.workers)
+    timings.append(("processing", t.elapsed))
+
+    action = dry_run_verb if args.dry_run else applied_verb
+    files_fixed = [(f, c) for f, c in results if c > 0]
+    total_fixes = sum(c for _, c in results)
+
+    for filepath, count in sorted(files_fixed):
+        print(f"  {clean_filepath(filepath)}: {action.lower()} {count} {unit}")
+
+    print("\n------")
+    print(f"Processed {len(targets)} files")
+    print(f"{action} {total_fixes} {unit} in {len(files_fixed)} file(s)")
+
+    elapsed_total = sum(t for _, t in timings)
+    print(f"\nCompleted in {elapsed_total:.1f}s")
+    print_timing_summary(timings)
+
+    return 0
+
+
 def run_with_pool(
     func,
     items: list,
@@ -869,8 +1689,8 @@ def run_with_pool(
         return pool.map(func, items)
 
 
-_DEFAULT_DIRECTORIES = ("common", "events", "history")
-_DIRECTORIES_WITH_INTERFACE = ("common", "events", "history", "interface")
+_DEFAULT_DIRECTORIES = ("common", "events", "history", "music")
+_DIRECTORIES_WITH_INTERFACE = ("common", "events", "history", "music", "interface")
 
 _staged_files_cache: Optional[List[str]] = None
 
@@ -967,41 +1787,69 @@ def get_all_txt_files(
 
 
 def get_staged_files(
-    mod_path: str, extensions: Optional[List[str]] = None
+    mod_path: str,
+    extensions: Optional[List[str]] = None,
+    include_missing: bool = False,
 ) -> Optional[List[str]]:
     """Get list of git changed files for validation.
 
     First checks for staged (cached) files — used in pre-commit hook context.
     Falls back to the branch diff vs main when nothing is staged, so that
     running --staged on a feature branch validates only the changed files.
+    Set include_missing to retain deleted paths for cross-reference checks.
     """
     if extensions is None:
         extensions = [".txt"]
 
+    # Most validators open every changed path, so missing files are filtered
+    # unless a cross-reference check needs to observe a deleted target.
     def _filter(names: list) -> list:
-        return [
-            os.path.join(mod_path, f)
+        paths = [
+            os.path.normpath(os.path.join(mod_path, f))
             for f in names
             if f and any(f.endswith(ext) for ext in extensions)
         ]
+        return paths if include_missing else [p for p in paths if os.path.isfile(p)]
+
+    def _git_diff(*args):
+        diff_filter = "ACMRD" if include_missing else "ACM"
+        output_format = "--name-status" if include_missing else "--name-only"
+        command = ["git", "diff"] + list(args) + [output_format]
+        if include_missing:
+            command.append("--find-renames")
+        command.append(f"--diff-filter={diff_filter}")
+        result = subprocess.run(
+            command,
+            cwd=mod_path,
+            capture_output=True,
+            text=True,
+            check=True,
+            timeout=15,
+        )
+        if not include_missing:
+            return result.stdout.strip().split("\n")
+
+        names = []
+        for line in result.stdout.splitlines():
+            status, *paths = line.split("\t")
+            if status.startswith(("R", "C")):
+                names.extend(paths)
+            elif paths:
+                names.append(paths[0])
+        return names
 
     env_files = _read_staged_from_env()
     if env_files is not None:
-        return _filter(env_files) or None
+        files = _filter(env_files)
+        if not include_missing:
+            return files or None
+        try:
+            files.extend(_filter(_git_diff("--cached")))
+        except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
+            pass
+        return list(dict.fromkeys(files)) or None
 
     try:
-
-        def _git_diff(*args):
-            result = subprocess.run(
-                ["git", "diff"] + list(args) + ["--name-only", "--diff-filter=ACM"],
-                cwd=mod_path,
-                capture_output=True,
-                text=True,
-                check=True,
-                timeout=15,
-            )
-            return result.stdout.strip().split("\n")
-
         # Pre-commit hook context: files added to the index
         files = _filter(_git_diff("--cached"))
         if files:

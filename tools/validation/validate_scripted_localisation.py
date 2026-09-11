@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
+from validate_gfx_references import sprite_names_from_gfx_text
 from validator_common import (
     BaseValidator,
     Colors,
@@ -62,7 +63,10 @@ _LOC_REFERENCE_RE = re.compile(
     r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
     r"localization_key)\s*=\s*(\w[\w-]*)"
 )
-_BRACKET_LOC_RE = re.compile(r"\[(?:([A-Za-z_][A-Za-z0-9_]*)\.)?(\w[\w-]*)\]")
+# Scope chains can be multi-level: a map-mode tooltip scopes to a state, so the country
+# scripted loc is only reachable as [FROM.CONTROLLER.name]. A single-segment prefix misses
+# those calls and reports the target as unused.
+_BRACKET_LOC_RE = re.compile(r"\[((?:[A-Za-z_][A-Za-z0-9_]*\.)+)?(\w[\w-]*)\]")
 
 
 def _find_reference_line(path: str, name: str) -> int:
@@ -248,7 +252,10 @@ class ScriptedLocalisation:
                 glob.iglob(os.path.join(mod_path, "**", "*.gui"), recursive=True)
             )
             yml_files = list(
-                glob.iglob(os.path.join(mod_path, "**", "*.yml"), recursive=True)
+                glob.iglob(
+                    os.path.join(mod_path, "localisation", "english", "**", "*.yml"),
+                    recursive=True,
+                )
             )
             txt_files = list(
                 glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True)
@@ -426,11 +433,9 @@ class Validator(BaseValidator):
         defined_gfx = set()
         for filename in glob.iglob(gfx_path + "**/*.gfx", recursive=True):
             text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
+                filename, lowercase=False, strip_comments_flag=False
             )
-            matches = re.findall(r'name\s*=\s*"(GFX_[^"]+)"', text_file)
-            for m in matches:
-                defined_gfx.add(m)
+            defined_gfx.update(sprite_names_from_gfx_text(text_file))
 
         # Collect all GFX_ references from scripted localisation files
         if self.staged_files:

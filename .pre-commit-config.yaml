@@ -11,10 +11,17 @@
 # The normal `git commit` flow already runs hooks against just the staged
 # files, which is what you want.
 #
-# md-standardize runs on commit so focus, event, decision, and idea files cannot
-# bypass the project's formatter. The remaining MD-specific hooks are manual:
+# md-fix-styling runs on commit and normalizes only staged-diff lines, so a
+# legacy file never becomes a whole-file whitespace rewrite. It writes the
+# worktree and does not git-add the result; stage the fix and retry the commit.
+# md-standardize is disabled: re-enabling it would silently reformat whole
+# legacy files on any commit that touches them. validate_standardization (part
+# of md-validate-content) reports the files it would rewrite instead,
+# warning-only; run tools/standardization/standardize.py on them by hand.
+# Bulk legacy passes are opt-in via direct fixer flags:
+#   python3 tools/linting/fix_styling.py --mode all --fix-indent
+#   python3 tools/linting/fix_styling.py --mode all --collapse-comment-alignment
 #   pre-commit run --hook-stage manual           # all manual hooks
-#   pre-commit run md-fix-styling --hook-stage manual  # single hook
 
 # Global exclude. resources/ is a holding area for unintegrated submods and
 # external contributions — its contents are not subject to MD style rules and
@@ -144,28 +151,41 @@ repos:
         pass_filenames: true
       # Runs the full tools test suite before push (not on every commit).
       # Enable with: pre-commit install --hook-type pre-push
-      - id: tools-pytest
-        name: Run tools test suite (pytest)
-        entry: python3 -m pytest
+      - id: tools-pytest-config
+        name: Verify tools pytest collection configuration
+        entry: >-
+          python3 -m pytest tools/tests/collection_layout_test.py
+          -o addopts= -q
         language: system
-        files: '^tools/.*\.py$'
+        files: >-
+          ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
         pass_filenames: false
         stages: [pre-push]
-      # --- MD-specific hooks (manual by default) ---
+      - id: tools-pytest
+        name: Run tools test suite (pytest)
+        entry: >-
+          python3 -m pytest tools/tests -o addopts=
+          -o python_files=*_test.py
+        language: system
+        files: >-
+          ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
+        pass_filenames: false
+        stages: [pre-push]
+      # --- MD-specific hooks ---
       - id: md-fix-styling
-        name: MD Fix Styling (auto-fix spaces/tabs/braces)
-        entry: python3 tools/linting/fix_styling.py --mode staged
+        name: MD Fix Styling (fix spacing warnings on the staged diff's lines)
+        entry: >-
+          python3 tools/linting/fix_styling.py --mode staged --changed-lines
         language: system
         files: '\.(txt)$'
         exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
         pass_filenames: false
-        stages: [manual]
-      - id: md-standardize
-        name: MD Standardize (auto-fix ideas/events/decisions/focuses)
-        entry: python3 tools/standardize_staged.py
-        language: system
-        files: '(common/(national_focus|decisions|ideas)|events)/.*\.txt$'
-        pass_filenames: true
+      # - id: md-standardize
+      #   name: MD Standardize (auto-fix ideas/events/decisions/focuses)
+      #   entry: python3 tools/standardize_staged.py
+      #   language: system
+      #   files: '(common/(national_focus|decisions|ideas)|events)/.*\.txt$'
+      #   pass_filenames: true
       - id: md-validate-content
         name: MD Validate (commit-stage content validators, in parallel)
         # One process fans the run-on-commit validators out concurrently instead
@@ -177,15 +197,8 @@ repos:
         # tools/tests/precommit_validate_test.py pins coverage against drift.
         entry: python3 tools/precommit_validate.py --no-color
         language: system
-        files: '\.(txt|yml)$'
+        files: '\.(txt|yml|gfx)$'
         pass_filenames: true
-      - id: check-common-mistakes
-        name: MD Common Mistakes (threat scale, value ranges, always=no, etc.)
-        entry: python3 tools/linting/check_common_mistakes.py --mode staged
-        language: system
-        files: '\.(txt)$'
-        exclude: 'Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$'
-        pass_filenames: false
       - id: md-validate-defines
         name: MD Validate defines against vanilla
         entry: >-

@@ -386,7 +386,7 @@ def generate_goals(mod_root, gfxbool=None):
         entries,
         render,
         header=header,
-        protected={"GFX_goal_unknown"},
+        protected=frozenset({"GFX_goal_unknown"}),
     )
     _print_merge_report("goals.gfx", *result)
 
@@ -401,7 +401,7 @@ def generate_goals(mod_root, gfxbool=None):
 
     def render_shine(name, texture_path):
         return (
-            f'\tspriteType = {{ \n\t\tname = "{name}"\n'
+            f'\tspriteType = {{\n\t\tname = "{name}"\n'
             f'\t\ttexturefile = "{texture_path}"\n'
             '\t\teffectfile = "gfx/FX/buttonstate.lua"\n'
             "\t\tanimation = {\n"
@@ -459,7 +459,7 @@ def generate_goals(mod_root, gfxbool=None):
         shine_entries,
         render_shine,
         header=shine_header,
-        protected={"GFX__shine"},
+        protected=frozenset({"GFX__shine"}),
     )
     _print_merge_report("goals_shine.gfx", *result_shine)
 
@@ -533,7 +533,7 @@ def generate_ideas(mod_root):
 
     def render(name, texture_path):
         return (
-            "\tspriteType ={\n"
+            "\tspriteType = {\n"
             f'\t\tname = "{name}"\n'
             f'\t\ttexturefile = "{texture_path}"\n'
             "\t}\n"
@@ -541,7 +541,7 @@ def generate_ideas(mod_root):
 
     header = (
         "spriteTypes = {\n"
-        '\n\t## DO NOT REMOVE\n\tspriteType={\n\t\tname = "GFX_idea_traits_strip"\n'
+        '\n\t## DO NOT REMOVE\n\tspriteType = {\n\t\tname = "GFX_idea_traits_strip"\n'
         '\t\ttexturefile = "gfx/interface/ideas/idea_traits_strip.dds"\n\t\tnoOfFrames = 18\n\t}\n'
     )
 
@@ -550,7 +550,7 @@ def generate_ideas(mod_root):
         entries,
         render,
         header=header,
-        protected={"GFX_idea_traits_strip"},
+        protected=frozenset({"GFX_idea_traits_strip"}),
     )
     _print_merge_report("MD_ideas.gfx", *result)
     print(f"\nMD_ideas.gfx has been processed for {len(files)} idea pictures.")
@@ -1023,8 +1023,11 @@ def _style_block(suffix):
 
 
 def _read_lf(path):
-    with open(path, "r", encoding="utf-8", newline="") as fh:
-        return fh.read()
+    try:
+        with open(path, "r", encoding="utf-8", newline="") as fh:
+            return fh.read()
+    except OSError:
+        return ""
 
 
 def _newline_of(text):
@@ -1035,8 +1038,11 @@ def _write_with_newline(path, text, newline):
     text = text.replace("\r\n", "\n").replace("\r", "\n")
     if newline == "\r\n":
         text = text.replace("\n", "\r\n")
-    with open(path, "w", encoding="utf-8", newline="") as fh:
-        fh.write(text)
+    try:
+        with open(path, "w", encoding="utf-8", newline="") as fh:
+            fh.write(text)
+    except OSError as exc:
+        print(f"{bcolors.FAIL}Failed to write {path}: {exc}{bcolors.RESET}")
 
 
 def _remove_block_by_name(text, name):
@@ -1169,14 +1175,15 @@ def generate_focus_titlebars(mod_root):
     styles_nl = _newline_of(styles_text)
     styles_text = styles_text.replace("\r\n", "\n").replace("\r", "\n")
     styles_text_stripped = _strip_region(styles_text, STYLE_BEGIN, STYLE_END)
-    styled = set(
-        re.findall(
-            r"available\s*=\s*GFX_focus_can_start_joint_(\S+)", styles_text_stripped
+    style_pattern = r"available\s*=\s*GFX_focus_can_start_joint_(\S+)"
+    styled_outside = set(re.findall(style_pattern, styles_text_stripped))
+    styled_before = set(re.findall(style_pattern, styles_text))
+    managed_style_suffixes = [s for s in emitted if s not in styled_outside]
+    need_style = [s for s in managed_style_suffixes if s not in styled_before]
+    if managed_style_suffixes:
+        style_body = "\n\n".join(
+            _style_block(s).rstrip("\n") for s in managed_style_suffixes
         )
-    )
-    need_style = [s for s in emitted if s not in styled]
-    if need_style:
-        style_body = "\n\n".join(_style_block(s).rstrip("\n") for s in need_style)
         managed_styles = f"{STYLE_BEGIN}\n\n{style_body}\n\n{STYLE_END}\n"
         styles_text_out = styles_text_stripped.rstrip("\n") + "\n\n" + managed_styles
     else:

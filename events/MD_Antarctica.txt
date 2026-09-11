@@ -11,7 +11,6 @@ country_event = {
 
 	option = {
 		name = MD_antarctica.1.a
-		log = "[GetDateText]: [This.GetName]: MD_antarctica.1.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -26,25 +25,13 @@ country_event = {
 
 		if = {
 			limit = { check_variable = { antarctica_observer_target_station > 0 } }
-
-			meta_effect = {
-				text = {
-					clr_global_flag = research_station_[ID]_observers_incoming
-				}
-				ID = "[?antarctica_observer_target_station]"
-			}
-
-			meta_effect = {
-				text = {
-					set_temp_variable = { station_illegal_activities = global.research_station_[ID]_illegal_activities_enabled }
-					set_temp_variable = { station_open_loop_module = global.research_station_[ID]_module_slot_12 }
-					set_temp_variable = { station_lab_slot_6 = global.research_station_[ID]_module_slot_6 }
-					set_temp_variable = { station_lab_slot_7 = global.research_station_[ID]_module_slot_7 }
-					set_temp_variable = { station_lab_slot_8 = global.research_station_[ID]_module_slot_8 }
-					set_temp_variable = { station_lab_slot_9 = global.research_station_[ID]_module_slot_9 }
-				}
-				ID = "[?antarctica_observer_target_station]"
-			}
+			set_variable = { global.antarctica_station_observers_incoming^antarctica_observer_target_station = 0 }
+			set_temp_variable = { station_illegal_activities = global.antarctica_station_illegal_activities_enabled^antarctica_observer_target_station }
+			set_temp_variable = { station_open_loop_module = global.antarctica_station_module_slot_12^antarctica_observer_target_station }
+			set_temp_variable = { station_lab_slot_6 = global.antarctica_station_module_slot_6^antarctica_observer_target_station }
+			set_temp_variable = { station_lab_slot_7 = global.antarctica_station_module_slot_7^antarctica_observer_target_station }
+			set_temp_variable = { station_lab_slot_8 = global.antarctica_station_module_slot_8^antarctica_observer_target_station }
+			set_temp_variable = { station_lab_slot_9 = global.antarctica_station_module_slot_9^antarctica_observer_target_station }
 
 			if = {
 				limit = {
@@ -229,6 +216,7 @@ country_event = {
 			limit = { has_dlc = "By Blood Alone" }
 			send_embargo = FROM
 		}
+		newline = yes
 		add_opinion_modifier = { target = FROM modifier = embargo }
 		reverse_add_opinion_modifier = { target = FROM modifier = embargo }
 		add_opinion_modifier = { target = FROM modifier = embargo_opinion }
@@ -247,7 +235,6 @@ country_event = {
 	}
 	option = {
 		name = MD_antarctica.7.b
-		log = "[GetDateText]: [This.GetName]: MD_antarctica.7.b executed"
 		ai_chance = {
 			base = 2
 			modifier = {
@@ -270,7 +257,10 @@ country_event = {
 	immediate = {
 		antarctica_trigger_blizzard_event = yes
 		hidden_effect = {
-			news_event = MD_antarctica_news.9
+			if = {
+				limit = { has_country_flag = antarctica_has_active_station }
+				news_event = MD_antarctica_news.9
+			}
 			country_event = { id = MD_antarctica.8 days = 300 random_days = 50 }
 		}
 	}
@@ -286,7 +276,6 @@ country_event = {
 
 	option = {
 		name = MD_antarctica.9.a
-		log = "[GetDateText]: [This.GetName]: MD_antarctica.9.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -301,7 +290,6 @@ country_event = {
 
 	option = {
 		name = MD_antarctica.10.a
-		log = "[GetDateText]: [This.GetName]: MD_antarctica.10.a executed"
 		ai_chance = { base = 100 }
 	}
 }
@@ -504,10 +492,9 @@ news_event = {
 	id = MD_antarctica_news.9
 	title = MD_antarctica_news.9.t
 	desc = MD_antarctica_news.9.d
-
 	picture = GFX_antarctica_blizzard_news
-
 	is_triggered_only = yes
+	trigger = { has_country_flag = antarctica_has_active_station }
 
 	option = {
 		name = MD_antarctica_news.9.a

@@ -9,7 +9,7 @@ Usage:
 
 Prerequisites
 -------------
-- Python 3.10+ (3.12+ recommended)
+- Python 3.12+
 - Git
 - (Optional for --docs) Node.js 24+ and Bun (https://bun.sh/)
 
@@ -17,7 +17,7 @@ The script will auto-create a local ``.venv`` if your system Python is
 externally managed (PEP 668 on Debian/Ubuntu and similar).
 
 Run this after cloning the repo. It will:
-  1. Check Python version (3.10+ required, 3.12+ recommended)
+  1. Check Python version (3.12+ required)
   2. Install pre-commit and set up git hooks
   3. Install Python tool dependencies (requests, pillow)
   4. Install Python dev/test and static-analysis dependencies so tests and
@@ -25,6 +25,7 @@ Run this after cloning the repo. It will:
   5. Optionally set up the docs site (Node.js 24+, Bun)
 """
 
+import importlib.metadata
 import importlib.util
 import os
 import re
@@ -47,8 +48,7 @@ PYPROJECT = REPO_ROOT / "pyproject.toml"
 # Packages whose import name differs from their distribution name.
 _IMPORT_NAMES = {"pillow": "PIL", "pyyaml": "yaml"}
 
-MIN_PYTHON = (3, 10)
-REC_PYTHON = (3, 12)
+MIN_PYTHON = (3, 12)
 MIN_NODE = 24
 
 
@@ -148,14 +148,11 @@ def reexec_with(python: Path) -> None:
 def check_python() -> bool:
     v = sys.version_info
     print(f"  Python: {v.major}.{v.minor}.{v.micro}", end="")
-    if v >= REC_PYTHON:
-        print(" (recommended)")
-    elif v >= MIN_PYTHON:
-        print(f" (works, but {REC_PYTHON[0]}.{REC_PYTHON[1]}+ recommended)")
-    else:
-        print(f" (too old — need {MIN_PYTHON[0]}.{MIN_PYTHON[1]}+)")
-        return False
-    return True
+    if v >= MIN_PYTHON:
+        print()
+        return True
+    print(f" (too old — need {MIN_PYTHON[0]}.{MIN_PYTHON[1]}+)")
+    return False
 
 
 def check_pre_commit() -> bool:
@@ -209,20 +206,44 @@ def _group_packages(group: str) -> list[str]:
     return re.findall(r'"([^"]+)"', match.group(1)) if match else []
 
 
+def _version_tuple(value: str) -> tuple[int, ...]:
+    return tuple(int(part) for part in re.findall(r"\d+", value))
+
+
+def _spec_satisfied(spec: str, installed: str) -> bool:
+    match = re.fullmatch(r"([A-Za-z0-9_.-]+)(?:(==|>=)(.+))?", spec)
+    if not match:
+        return False
+    operator, required = match.group(2), match.group(3)
+    if operator is None or required is None:
+        return True
+    if operator == "==":
+        return _version_tuple(installed) == _version_tuple(required)
+    return _version_tuple(installed) >= _version_tuple(required)
+
+
 def _check_group(group: str, label: str) -> bool:
-    """Return True if every package in the dependency-group is importable."""
+    """Return True if dependency-group packages and versions are installed."""
     specs = _group_packages(group)
     if not specs:
         print(f"  {label}: group '{group}' not found in pyproject.toml")
         return False
-    missing = []
+    failures = []
     for spec in specs:
         pkg = re.split(r"[><=!~]+", spec)[0].strip()
         import_name = _IMPORT_NAMES.get(pkg.lower(), pkg.replace("-", "_"))
         if importlib.util.find_spec(import_name) is None:
-            missing.append(pkg)
-    if missing:
-        print(f"  {label}: missing {', '.join(missing)}")
+            failures.append(f"{pkg} (missing)")
+            continue
+        try:
+            installed = importlib.metadata.version(pkg)
+        except importlib.metadata.PackageNotFoundError:
+            failures.append(f"{pkg} (version unknown)")
+            continue
+        if not _spec_satisfied(spec, installed):
+            failures.append(f"{pkg} {installed} (requires {spec})")
+    if failures:
+        print(f"  {label}: {', '.join(failures)}")
         return False
     print(f"  {label}: OK")
     return True

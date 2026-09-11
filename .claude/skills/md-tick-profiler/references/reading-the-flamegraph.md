@@ -5,6 +5,7 @@ Everything here is produced by `tools/analysis/tick_audit.py` (tests in
 looks the way it does.
 
 ## Table of contents
+
 1. The engine facts the whole thing rests on
 2. What "ops" is and isn't
 3. Call tree vs the flat report (why totals differ)
@@ -41,8 +42,9 @@ about "checks", and checks cost CPU, so counting them is correct.
 - A node's `ops` (its "self") = statements directly in its body.
 - A node's `total` = self + the total of everything it calls (bar size uses
   `total`).
-- It is a **proxy**, not milliseconds. The in-game profiler measures real ms but
-  crashes on MD; ops is the static stand-in. Never present ops as time.
+- It is a **proxy**, not milliseconds. Native `profile` is usable for bounded
+  in-game spot tests and measures real timing. Use the static audit for broad
+  source and reachability coverage. Never present ops as time.
 
 ## 3. Call tree vs the flat report
 
@@ -103,15 +105,30 @@ beat", not "fires every time". Open the `def file:line` and read the guard.
 
 ## 7. Flags
 
-```
+```text
 python tools/run.py tick_audit                     # summary + heaviest countries
   --cadence daily|weekly|monthly                   # restrict to one beat
   --top N                                           # size of heaviest-country table
   --list hooks|events|decisions|loops|all          # itemize, each with file:line
-  --tag TAG                                         # filter --list to a country (+globals)
-  --limit N                                         # cap per --list section (0 = unlimited)
+  --tag TAG                                         # country + globals
+  --limit N                                         # 0 = unlimited
   --json PATH                                       # full report as JSON
   --flamegraph PATH                                 # interactive HTML call tree
   --tree PATH                                       # raw call tree as JSON
+  --spot-check [PATH ...]                           # static hotspot findings
+  --format text|json                                # spot-check stdout format
+  --fail-on critical|high|medium|low|none           # optional spot-check gate
   --no-color
 ```
+
+Static findings for bounded source checks:
+
+```bash
+python tools/run.py tick_audit --spot-check
+python tools/run.py tick_audit --spot-check common/on_actions \
+  --format json --fail-on high
+```
+
+Spot checks report context-aware source patterns. They complement native
+`profile` measurements and do not replace them. Keep the same save, game speed,
+map position, open UI, and sample window when comparing native measurements.
