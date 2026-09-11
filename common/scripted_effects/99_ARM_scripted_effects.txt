@@ -8,7 +8,7 @@ ARM_tourism_add_and_pay = {
 
 ARM_party_change_apply = {
 	if = {
-		limit = { NOT = { is_in_array = { ruling_party = ARM_path_party } } }
+		limit = { NOT = { check_variable = { ruling_party = ARM_path_party } } }
 		set_temp_variable = { rul_party_temp = ARM_path_party }
 		set_temp_variable = { disable_elections = 0 }
 		change_ruling_party_effect = yes
@@ -165,15 +165,79 @@ ARM_bad_army_remove = {
 	}
 }
 
+# Artsakh reaches this effect from only five focuses, so each step clears two tiers of the eight-tier ladder.
+NKR_bad_army_remove = {
+	if = {
+		limit = { has_idea = ARM_outdated_army_idea7 }
+		remove_ideas = ARM_outdated_army_idea7
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea6 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea6
+			add_idea = ARM_outdated_army_idea7
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea5 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea5
+			add_idea = ARM_outdated_army_idea7
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea4 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea4
+			add_idea = ARM_outdated_army_idea6
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea3 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea3
+			add_idea = ARM_outdated_army_idea5
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea2 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea2
+			add_idea = ARM_outdated_army_idea4
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea1 }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea1
+			add_idea = ARM_outdated_army_idea3
+		}
+	}
+	else_if = {
+		limit = { has_idea = ARM_outdated_army_idea }
+		swap_ideas = {
+			remove_idea = ARM_outdated_army_idea
+			add_idea = ARM_outdated_army_idea2
+		}
+	}
+}
+
 ARM_tourism_calculate = {
 	set_variable = { tourism_armenia = 0.015 }
+	set_temp_variable = { ARM_tourism_income = 0 }
 
 	if = {
 		limit = {
-			has_idea = ARM_tourism_idea
-			owns_state = 709
+			has_country_flag = ARM_tourism_russian_tourists
+			country_exists = SOV
+			NOT = { has_war_with = SOV }
 		}
-		set_temp_variable = { ARM_tourism_income = 0.0194 }
+		set_temp_variable = { ARM_tourism_russians = 1 }
+	}
+
+	if = {
+		limit = { owns_state = 709 }
+		add_to_temp_variable = { ARM_tourism_income = 0.0194 }
 		if = { limit = { has_completed_focus = ARM_economy_historic }
 			add_to_temp_variable = { ARM_tourism_income = 0.0098 }
 		}
@@ -186,31 +250,17 @@ ARM_tourism_calculate = {
 		if = { limit = { has_completed_focus = ARM_economy_hotels }
 			add_to_temp_variable = { ARM_tourism_income = 0.0138 }
 		}
-		if = {
-			limit = {
-				has_country_flag = ARM_tourism_russian_tourists
-				country_exists = SOV
-				NOT = { has_war_with = SOV }
-			}
+		if = { limit = { check_variable = { ARM_tourism_russians > 0 } }
 			add_to_temp_variable = { ARM_tourism_income = 0.0314 }
 		}
-		random_list = {
-			seed = random
-			40 = { }
-			40 = { multiply_temp_variable = { ARM_tourism_income = 0.75 } }
-			20 = { multiply_temp_variable = { ARM_tourism_income = 1.50 } }
-		}
-		set_temp_variable = { modify_tourism_armenia = ARM_tourism_income }
-		ARM_tourism_add_and_pay = yes
 	}
 
 	if = {
 		limit = {
-			has_idea = ARM_tourism_idea
 			owns_state = 706
 			has_country_flag = ARM_economy_tourism_abkhazia
 		}
-		set_temp_variable = { ARM_tourism_income = 0.0090 }
+		add_to_temp_variable = { ARM_tourism_income = 0.0090 }
 		if = { limit = { has_completed_focus = ARM_economy_historic }
 			add_to_temp_variable = { ARM_tourism_income = 0.0098 }
 		}
@@ -220,31 +270,17 @@ ARM_tourism_calculate = {
 		if = { limit = { has_completed_focus = ARM_economy_hotels }
 			add_to_temp_variable = { ARM_tourism_income = 0.0070 }
 		}
-		if = {
-			limit = {
-				has_country_flag = ARM_tourism_russian_tourists
-				country_exists = SOV
-				NOT = { has_war_with = SOV }
-			}
+		if = { limit = { check_variable = { ARM_tourism_russians > 0 } }
 			add_to_temp_variable = { ARM_tourism_income = 0.0082 }
 		}
-		random_list = {
-			seed = random
-			40 = { }
-			40 = { multiply_temp_variable = { ARM_tourism_income = 0.75 } }
-			20 = { multiply_temp_variable = { ARM_tourism_income = 1.50 } }
-		}
-		set_temp_variable = { modify_tourism_armenia = ARM_tourism_income }
-		ARM_tourism_add_and_pay = yes
 	}
 
 	if = {
 		limit = {
-			has_idea = ARM_tourism_idea
 			owns_state = 713
 			has_country_flag = ARM_economy_tourism_azer
 		}
-		set_temp_variable = { ARM_tourism_income = 0.0122 }
+		add_to_temp_variable = { ARM_tourism_income = 0.0122 }
 		if = { limit = { has_completed_focus = ARM_economy_historic }
 			add_to_temp_variable = { ARM_tourism_income = 0.0098 }
 		}
@@ -254,14 +290,13 @@ ARM_tourism_calculate = {
 		if = { limit = { has_completed_focus = ARM_economy_hotels }
 			add_to_temp_variable = { ARM_tourism_income = 0.0138 }
 		}
-		if = {
-			limit = {
-				has_country_flag = ARM_tourism_russian_tourists
-				country_exists = SOV
-				NOT = { has_war_with = SOV }
-			}
+		if = { limit = { check_variable = { ARM_tourism_russians > 0 } }
 			add_to_temp_variable = { ARM_tourism_income = 0.0110 }
 		}
+	}
+
+	if = {
+		limit = { check_variable = { ARM_tourism_income > 0 } }
 		random_list = {
 			seed = random
 			40 = { }
@@ -590,71 +625,74 @@ ARM_multigroup_script = {
 }
 ARM_it_sector_positive_script = {
 	if = {
-		limit = { has_idea = ARM_it_sector_idea8 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea8
-			add_idea = ARM_it_sector_idea9
-		}
+		limit = { check_variable = { ARM_econ_it_level < 10 } }
+		add_to_variable = { ARM_econ_it_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ARM_western_partners_modifier }
+		add_to_variable = { ARM_west_research_speed_factor = 0.01 tooltip = research_speed_factor_tt }
+		add_to_variable = { ARM_west_offices_productivity = 0.01 tooltip = offices_productivity_tt }
+		add_to_variable = { ARM_west_projects_cost_modifier = -0.04 tooltip = projects_cost_modifier_tt }
+		add_to_variable = { ARM_west_corporate_tax_income_multiplier_modifier = 0.005 tooltip = corporate_tax_income_multiplier_modifier_tt }
 	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea7 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea7
-			add_idea = ARM_it_sector_idea8
+}
+# Unwinds whichever retail banks are actually held before the sector aggregate replaces them.
+ARM_dissolve_retail_banks = {
+	if = {
+		limit = { check_variable = { ARM_econ_ardshinbank_level > 0 } }
+		add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.01 }
+		add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.03 }
+		if = {
+			limit = { check_variable = { ARM_econ_ardshinbank_level > 1 } }
+			add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.01 }
+			add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.01 }
+			add_to_variable = { ARM_econ_research_speed_factor = -0.01 }
 		}
+		set_variable = { ARM_econ_ardshinbank_level = 0 }
 	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea6 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea6
-			add_idea = ARM_it_sector_idea7
+	if = {
+		limit = { check_variable = { ARM_econ_evocabank_level > 0 } }
+		add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.02 }
+		add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.04 }
+		add_to_variable = { ARM_econ_research_speed_factor = -0.01 }
+		set_variable = { ARM_econ_evocabank_level = 0 }
+	}
+	if = {
+		limit = { check_variable = { ARM_econ_inecobank_level > 0 } }
+		add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.02 }
+		add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.04 }
+		set_variable = { ARM_econ_inecobank_level = 0 }
+	}
+	if = {
+		limit = { check_variable = { ARM_econ_ameriabank_level > 0 } }
+		add_to_variable = { ARM_econ_corporate_tax_income_multiplier_modifier = -0.03 }
+		add_to_variable = { ARM_econ_economic_cycles_cost_factor = 0.04 }
+		set_variable = { ARM_econ_ameriabank_level = 0 }
+	}
+}
+# Called from on_war_relation_added for both ROOT and FROM, so the body lives here rather than twice in the hook.
+ARM_review_foreign_partner_ties = {
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = ARM_western_partners_modifier }
+			OR = {
+				has_war_with = USA
+				has_war_with = ENG
+				has_war_with = CAN
+				has_war_with = FRA
+				has_war_with = GER
+				has_war_with = HOL
+				has_war_with = ISR
+			}
 		}
+		remove_dynamic_modifier = { modifier = ARM_western_partners_modifier }
+		country_event = arm_economic.24
 	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea5 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea5
-			add_idea = ARM_it_sector_idea6
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = ARM_russian_partners_modifier }
+			has_war_with = SOV
 		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea4 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea4
-			add_idea = ARM_it_sector_idea5
-		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea3 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea3
-			add_idea = ARM_it_sector_idea4
-		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea2 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea2
-			add_idea = ARM_it_sector_idea3
-		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea1 }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea1
-			add_idea = ARM_it_sector_idea2
-		}
-	}
-	else_if = {
-		limit = { has_idea = ARM_it_sector_idea }
-		swap_ideas = {
-			remove_idea = ARM_it_sector_idea
-			add_idea = ARM_it_sector_idea1
-		}
-	}
-	else_if = {
-		limit = { NOT = { has_idea = ARM_it_sector_idea } }
-		add_ideas = ARM_it_sector_idea
+		remove_dynamic_modifier = { modifier = ARM_russian_partners_modifier }
+		country_event = arm_economic.25
 	}
 }
 ARM_polish_revoult_script = {
@@ -683,7 +721,7 @@ ARM_polish_revoult_script = {
 					puppet = POL
 				}
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 23 } } }
+					limit = { NOT = { check_variable = { ruling_party = 23 } } }
 					set_temp_variable = { rul_party_temp = 23 }
 					if = {
 						limit = { has_elections = no }
@@ -699,6 +737,7 @@ ARM_polish_revoult_script = {
 				set_temp_variable = { temp_outlook_increase = 0.35 }
 				change_relative_party_popularity = yes
 				set_cosmetic_tag = POL_AUTH_S_nationalist
+				set_variable = { dynamic_flag_variant = 8 }
 				retire_country_leader = yes
 				create_country_leader = {
 					name = "Janusz Korwin-Mikke"
@@ -710,17 +749,11 @@ ARM_polish_revoult_script = {
 						interventionist
 					}
 				}
-				create_dynamic_country = {
-					original_tag = POL
-					copy_tag = POL
-					transfer_state = 111
-					transfer_state = 114
-					transfer_state = 1014
-					transfer_state = 116
-					transfer_state = 113
-					transfer_state = 474
-					transfer_state = 625
-					transfer_state = 626
+				start_civil_war = {
+					ideology = democratic
+					size = 0.6
+					capital = 114
+					states = { 111 114 1014 116 113 474 625 626 }
 					set_popularities = {
 						democratic = 100
 						neutrality = 0
@@ -728,36 +761,12 @@ ARM_polish_revoult_script = {
 						communism = 0
 						nationalist = 0
 					}
-					inherit_technology = POL
 					set_temp_variable = { rul_party_temp = 2 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_temp_variable = {
-						current_cons_popularity = party_pop_array^2
-					}
-					multiply_temp_variable = {
-						current_cons_popularity = 0.5
-					}
-					subtract_from_variable = {
-						party_pop_array^2 = current_cons_popularity
-					}
-					recalculate_party = yes
-					retire_country_leader = yes
-					POL = {
-						transfer_units_fraction = {
-							target = PREV
-							size = 0.7
-							stockpile_ratio = 0.6
-							army_ratio = 0.6
-							navy_ratio = 0.6
-							air_ratio = 0.6
-						}
-					}
-					declare_war_on = {
-						target = POL
-						type = civil_war
-					}
-					add_civil_war_target = POL
+					set_temp_variable = { party_index = 2 }
+					set_temp_variable = { party_popularity_multiplier = 0.5 }
+					scale_party_popularity = yes
 				}
 			}
 			set_temp_variable = { percent_change = 10 }
@@ -807,17 +816,11 @@ ARM_italian_revoult_script = {
 			ITA = { country_event = arm_empire.27 }
 			ARM = { country_event = arm_empire.27 }
 			ITA = {
-				create_dynamic_country = {
-					original_tag = ITA
-					copy_tag = ITA
-					transfer_state = 1061
-					transfer_state = 285
-					transfer_state = 78
-					transfer_state = 80
-					transfer_state = 1059
-					transfer_state = 77
-					transfer_state = 1060
-					transfer_state = 265
+				start_civil_war = {
+					ideology = democratic
+					size = 0.4
+					capital = 80
+					states = { 1061 285 78 80 1059 77 1060 265 }
 					set_popularities = {
 						democratic = 100
 						neutrality = 0
@@ -825,36 +828,12 @@ ARM_italian_revoult_script = {
 						communism = 0
 						nationalist = 0
 					}
-					inherit_technology = ITA
 					set_temp_variable = { rul_party_temp = 2 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_temp_variable = {
-						current_cons_popularity = party_pop_array^2
-					}
-					multiply_temp_variable = {
-						current_cons_popularity = 0.5
-					}
-					subtract_from_variable = {
-						party_pop_array^2 = current_cons_popularity
-					}
-					recalculate_party = yes
-					retire_country_leader = yes
-					ITA = {
-						transfer_units_fraction = {
-							target = PREV
-							size = 0.5
-							stockpile_ratio = 0.4
-							army_ratio = 0.4
-							navy_ratio = 0.4
-							air_ratio = 0.4
-						}
-					}
-					declare_war_on = {
-						target = ITA
-						type = civil_war
-					}
-					add_civil_war_target = ITA
+					set_temp_variable = { party_index = 2 }
+					set_temp_variable = { party_popularity_multiplier = 0.5 }
+					scale_party_popularity = yes
 				}
 			}
 		}
@@ -864,12 +843,11 @@ ARM_kob_russia_script = {
 	if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_fsb_idea2
-				has_idea = SOV_omon_idea
+				has_completed_focus = SOV_second_slujba
+				has_completed_focus = SOV_omon
 				OR = {
-					has_idea = SOV_inner_army_idea
-					has_idea = SOV_rosguard_idea
-					has_idea = SOV_rosguard_idea1
+					SOV_has_internal_troops = yes
+					has_completed_focus = SOV_rosguard_start_org
 				}
 				NOT = {
 					influence_higher_40 = yes
@@ -894,13 +872,12 @@ ARM_kob_russia_script = {
 	else_if = {
 		limit = {
 			SOV = {
-				has_idea = SOV_fsb_idea2
+				has_completed_focus = SOV_second_slujba
 				NOT = {
 					OR = {
-						has_idea = SOV_omon_idea
-						has_idea = SOV_inner_army_idea
-						has_idea = SOV_rosguard_idea
-						has_idea = SOV_rosguard_idea1
+						has_completed_focus = SOV_omon
+						SOV_has_internal_troops = yes
+						has_completed_focus = SOV_rosguard_start_org
 					}
 				}
 				influence_higher_40 = yes
@@ -925,24 +902,22 @@ ARM_kob_russia_script = {
 		limit = {
 			OR = {
 				SOV = {
-					has_idea = SOV_fsb_idea2
+					has_completed_focus = SOV_second_slujba
 					NOT = {
 						OR = {
-							has_idea = SOV_omon_idea
-							has_idea = SOV_inner_army_idea
-							has_idea = SOV_rosguard_idea
-							has_idea = SOV_rosguard_idea1
+							has_completed_focus = SOV_omon
+							SOV_has_internal_troops = yes
+							has_completed_focus = SOV_rosguard_start_org
 						}
 					}
 				}
 				SOV = {
 					NOT = {
 						OR = {
-							has_idea = SOV_fsb_idea2
-							has_idea = SOV_omon_idea
-							has_idea = SOV_inner_army_idea
-							has_idea = SOV_rosguard_idea
-							has_idea = SOV_rosguard_idea1
+							has_completed_focus = SOV_second_slujba
+							has_completed_focus = SOV_omon
+							SOV_has_internal_troops = yes
+							has_completed_focus = SOV_rosguard_start_org
 						}
 					}
 					influence_higher_40 = yes
@@ -969,11 +944,10 @@ ARM_kob_russia_script = {
 			SOV = {
 				NOT = {
 					OR = {
-						has_idea = SOV_fsb_idea2
-						has_idea = SOV_omon_idea
-						has_idea = SOV_inner_army_idea
-						has_idea = SOV_rosguard_idea
-						has_idea = SOV_rosguard_idea1
+						has_completed_focus = SOV_second_slujba
+						has_completed_focus = SOV_omon
+						SOV_has_internal_troops = yes
+						has_completed_focus = SOV_rosguard_start_org
 					}
 				}
 			}
@@ -994,65 +968,7 @@ ARM_kob_russia_script = {
 		}
 	}
 }
-ARM_kob_russia_revoult_script = {
-	hidden_effect = {
-		SOV = {
-			create_dynamic_country = {
-				original_tag = SOV
-				copy_tag = SOV
-				transfer_state = 1133
-				transfer_state = 1135
-				transfer_state = 681
-				transfer_state = 658
-				transfer_state = 656
-				set_popularities = {
-					democratic = 0
-					neutrality = 0
-					fascism = 0
-					communism = 0
-					nationalist = 100
-				}
-				inherit_technology = SOV
-				set_temp_variable = { rul_party_temp = 22 }
-				set_temp_variable = { disable_elections = 1 }
-				change_ruling_party_effect = yes
-				set_temp_variable = { current_cons_popularity = party_pop_array^22 }
-				multiply_temp_variable = { current_cons_popularity = 0.5 }
-				subtract_from_variable = { party_pop_array^22 = current_cons_popularity }
-				recalculate_party = yes
-				retire_country_leader = yes
-				SOV = {
-					transfer_units_fraction = {
-						target = PREV
-						size = 0.2
-						stockpile_ratio = 0.1
-						army_ratio = 0.1
-						navy_ratio = 0.1
-						air_ratio = 0.1
-					}
-				}
-				PREV = {
-					set_cosmetic_tag = SOV_kobnod
-					create_country_leader = {
-						name = "Constantine Petrov"
-						picture = "constantine_petrov.dds"
-						ideology = Nat_Autocracy
-						traits = {
-							nationalist_Nat_Autocracy
-						}
-					}
-					clr_country_flag = SOV_did_not_allow_duma_to_speak
-					mark_focus_tree_layout_dirty = yes
-				}
-				declare_war_on = {
-					target = SOV
-					type = civil_war
-				}
-				add_civil_war_target = SOV
-			}
-		}
-	}
-}
+
 ARM_lebanon_revoult_script = {
 	if = {
 		limit = {
@@ -1068,7 +984,7 @@ ARM_lebanon_revoult_script = {
 					puppet = LEB
 				}
 				if = {
-					limit = { NOT = { is_in_array = { ruling_party = 18 } } }
+					limit = { NOT = { check_variable = { ruling_party = 18 } } }
 					set_temp_variable = { rul_party_temp = 18 }
 					if = {
 						limit = { has_elections = no }
@@ -1818,62 +1734,76 @@ NKR_integrate_army_of_armenia = {
 	set_temp_variable = { percent_change = 0 }
 	if = {
 		limit = {
-			ARM = { has_idea = ARM_national_guard_idea }
-			NOT = { has_idea = ARM_national_guard_idea }
+			ARM = { check_variable = { ARM_national_guard_level > 0 } }
+			check_variable = { NKR_national_guard_level = 0 }
 		}
-		add_ideas = ARM_national_guard_idea
+		set_variable = { NKR_national_guard_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_army_core_attack_factor = 0.04 tooltip = army_core_attack_factor_tt }
+		add_to_variable = { NKR_land_army_core_defence_factor = 0.06 tooltip = army_core_defence_factor_tt }
+		add_to_variable = { NKR_land_resistance_damage_to_garrison = -0.08 tooltip = resistance_damage_to_garrison_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = { has_idea = ARM_teroborona }
-			NOT = { has_idea = ARM_teroborona }
+			ARM = { check_variable = { ARM_teroborona_level > 0 } }
+			check_variable = { NKR_teroborona_level = 0 }
 		}
-		add_ideas = ARM_teroborona
+		set_variable = { NKR_teroborona_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_mobilization_speed = 0.04 tooltip = mobilization_speed_tt }
+		add_to_variable = { NKR_land_army_core_defence_factor = 0.03 tooltip = army_core_defence_factor_tt }
+		add_to_variable = { NKR_land_war_support_factor = 0.01 tooltip = war_support_factor_tt }
+		add_to_variable = { NKR_land_training_time_army_factor = -0.02 tooltip = training_time_army_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = {
-				has_idea = ARM_army_engineer
-			}
-			NOT = {
-				has_idea = ARM_army_engineer
-			}
+			ARM = { check_variable = { ARM_army_engineer_level > 0 } }
+			check_variable = { NKR_army_engineer_level = 0 }
 		}
-		add_ideas = ARM_army_engineer
+		set_variable = { NKR_army_engineer_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_army_speed_factor = 0.05 tooltip = army_speed_factor_tt }
+		add_to_variable = { NKR_land_army_core_defence_factor = 0.05 tooltip = army_core_defence_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = {
-				has_idea = ARM_army_railway
-			}
-			NOT = {
-				has_idea = ARM_army_railway
-			}
+			ARM = { check_variable = { ARM_army_railway_level > 0 } }
+			check_variable = { NKR_army_railway_level = 0 }
 		}
-		add_ideas = ARM_army_railway
+		set_variable = { NKR_army_railway_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_repair_speed_rail_way_factor = 0.10 tooltip = repair_speed_rail_way_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = {
-				has_idea = ARM_army_radio
-			}
-			NOT = {
-				has_idea = ARM_army_radio
-			}
+			ARM = { check_variable = { ARM_army_radio_level > 0 } }
+			check_variable = { NKR_army_radio_level = 0 }
 		}
-		add_ideas = ARM_army_radio
+		set_variable = { NKR_army_radio_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_army_attack_factor = 0.01 tooltip = army_attack_factor_tt }
+		add_to_variable = { NKR_land_army_org_factor = 0.05 tooltip = army_org_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 	if = {
 		limit = {
-			ARM = { has_idea = ARM_border_troops }
-			NOT = { has_idea = ARM_border_troops }
+			ARM = { check_variable = { ARM_border_troops_level > 0 } }
+			check_variable = { NKR_border_troops_level = 0 }
 		}
-		add_ideas = ARM_border_troops
+		set_variable = { NKR_border_troops_level = 1 }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = NKR_landforce_modifier }
+		add_to_variable = { NKR_land_foreign_influence_defense_modifier = 0.06 tooltip = foreign_influence_defense_modifier_tt }
+		add_to_variable = { NKR_land_army_core_defence_factor = 0.06 tooltip = army_core_defence_factor_tt }
+		newline = yes
 		add_to_temp_variable = { percent_change = 1 }
 	}
 
@@ -2011,11 +1941,11 @@ ARM_azer_commi_revoult_script = {
 		}
 		hidden_effect = {
 			AZE = {
-				create_dynamic_country = {
-					original_tag = AZE
-					copy_tag = AZE
-					transfer_state = 1038
-					transfer_state = 711
+				start_civil_war = {
+					ideology = neutrality
+					size = 0.1
+					capital = 1038
+					states = { 1038 711 }
 					set_popularities = {
 						democratic = 0
 						neutrality = 100
@@ -2023,7 +1953,6 @@ ARM_azer_commi_revoult_script = {
 						communism = 0
 						nationalist = 0
 					}
-					inherit_technology = AZE
 					set_temp_variable = { rul_party_temp = 19 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -2031,22 +1960,6 @@ ARM_azer_commi_revoult_script = {
 					multiply_temp_variable = { current_cons_popularity = 0.5 }
 					subtract_from_variable = { party_pop_array^5 = current_cons_popularity }
 					recalculate_party = yes
-					retire_country_leader = yes
-					AZE = {
-						transfer_units_fraction = {
-							target = PREV
-							size = 0.1
-							stockpile_ratio = 0.1
-							army_ratio = 0.1
-							navy_ratio = 0.1
-							air_ratio = 0.1
-						}
-					}
-					declare_war_on = {
-						target = AZE
-						type = civil_war
-					}
-					add_civil_war_target = AZE
 				}
 			}
 			ARM = {
@@ -2071,11 +1984,11 @@ ARM_georgia_commi_revoult_script = {
 		}
 		hidden_effect = {
 			GEO = {
-				create_dynamic_country = {
-					original_tag = GEO
-					copy_tag = GEO
-					transfer_state = 1033
-					transfer_state = 466
+				start_civil_war = {
+					ideology = neutrality
+					size = 0.1
+					capital = 1033
+					states = { 1033 466 }
 					set_popularities = {
 						democratic = 0
 						neutrality = 100
@@ -2083,7 +1996,6 @@ ARM_georgia_commi_revoult_script = {
 						communism = 0
 						nationalist = 0
 					}
-					inherit_technology = GEO
 					set_temp_variable = { rul_party_temp = 19 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
@@ -2091,22 +2003,6 @@ ARM_georgia_commi_revoult_script = {
 					multiply_temp_variable = { current_cons_popularity = 0.5 }
 					subtract_from_variable = { party_pop_array^5 = current_cons_popularity }
 					recalculate_party = yes
-					retire_country_leader = yes
-					GEO = {
-						transfer_units_fraction = {
-							target = PREV
-							size = 0.1
-							stockpile_ratio = 0.1
-							army_ratio = 0.1
-							navy_ratio = 0.1
-							air_ratio = 0.1
-						}
-					}
-					declare_war_on = {
-						target = GEO
-						type = civil_war
-					}
-					add_civil_war_target = GEO
 				}
 			}
 			ARM = {
@@ -2246,10 +2142,11 @@ ARM_russian_revoult_in_armenia_script = {
 			set_temp_variable = { influence_target = ARM }
 			change_influence_percentage = yes
 			ARM = {
-				create_dynamic_country = {
-					original_tag = ARM
-					copy_tag = ARM
-					transfer_state = 1034
+				start_civil_war = {
+					ideology = nationalist
+					size = 0.1
+					capital = 1034
+					states = { 1034 }
 					set_popularities = {
 						democratic = 0
 						neutrality = 0
@@ -2257,38 +2154,14 @@ ARM_russian_revoult_in_armenia_script = {
 						communism = 0
 						nationalist = 100
 					}
-					inherit_technology = ARM
 					set_temp_variable = { rul_party_temp = 22 }
 					set_temp_variable = { disable_elections = 1 }
 					change_ruling_party_effect = yes
-					set_temp_variable = {
-						current_cons_popularity = party_pop_array^22
-					}
-					multiply_temp_variable = {
-						current_cons_popularity = 0.5
-					}
-					subtract_from_variable = {
-						party_pop_array^22 = current_cons_popularity
-					}
-					recalculate_party = yes
-					retire_country_leader = yes
+					set_temp_variable = { party_index = 22 }
+					set_temp_variable = { party_popularity_multiplier = 0.5 }
+					scale_party_popularity = yes
 					country_event = sov_gru.1
 					load_focus_tree = armenia_focus
-					ARM = {
-						transfer_units_fraction = {
-							target = PREV
-							size = 0.1
-							stockpile_ratio = 0.1
-							army_ratio = 0.1
-							navy_ratio = 0.1
-							air_ratio = 0.1
-						}
-					}
-					declare_war_on = {
-						target = ARM
-						type = civil_war
-					}
-					add_civil_war_target = ARM
 				}
 			}
 		}
@@ -2478,46 +2351,6 @@ ARM_cored_state_kurdistan_revoult_script = {
 	}
 }
 
-ARM_cored_state_djavakh_revoult_script = {
-	create_dynamic_country = {
-		original_tag = ARM
-		copy_tag = ARM
-		transfer_state = 1033
-		set_popularities = {
-			democratic = 0
-			neutrality = 0
-			fascism = 0
-			communism = 0
-			nationalist = 100
-		}
-		inherit_technology = ARM
-		set_temp_variable = { rul_party_temp = 22 }
-		set_temp_variable = { disable_elections = 1 }
-		change_ruling_party_effect = yes
-		set_temp_variable = { current_cons_popularity = party_pop_array^21 }
-		multiply_temp_variable = { current_cons_popularity = 0.5 }
-		subtract_from_variable = { party_pop_array^21 = current_cons_popularity }
-		recalculate_party = yes
-		retire_country_leader = yes
-		set_cosmetic_tag = ARM_djavakhq
-		ARM = {
-			transfer_units_fraction = {
-				target = PREV
-				size = 0.1
-				stockpile_ratio = 0.1
-				army_ratio = 0.1
-				navy_ratio = 0.1
-				air_ratio = 0.1
-			}
-		}
-		declare_war_on = {
-			target = ARM
-			type = civil_war
-		}
-		add_civil_war_target = ARM
-	}
-}
-
 ARM_cored_state_talyshstan_revoult_script = {
 	TLS = {
 		transfer_state = 1038
@@ -2571,5 +2404,15 @@ ARM_unionstate_integration_effect = {
 			hours = 6
 			id = union_state_news.4
 		}
+	}
+}
+
+update_arm_artsakh_dirty_variable = {
+	if = {
+		limit = { check_variable = { global.ARM_artsakh_dirty_update_var < 10000 } }
+		add_to_variable = { global.ARM_artsakh_dirty_update_var = 1 }
+	}
+	else = {
+		set_variable = { global.ARM_artsakh_dirty_update_var = 1 }
 	}
 }

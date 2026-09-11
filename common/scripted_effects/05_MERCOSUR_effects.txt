@@ -55,6 +55,7 @@ MER_recalculate_unasul_member_state_stability_factor = {
 }
 
 MER_remove_unasul_faction_membership_silent = {
+	set_temp_variable = { faction_goal_refresh_transferred_leader = 0 }
 	if = {
 		limit = { has_idea = UNASUL_member }
 
@@ -80,6 +81,8 @@ MER_remove_unasul_faction_membership_silent = {
 				}
 				set_faction_leader = yes
 				set_country_flag = MER_unasul_faction_leader
+				save_event_target_as = faction_goal_transferred_leader
+				set_temp_variable = { ROOT.faction_goal_refresh_transferred_leader = 1 }
 			}
 		}
 		else_if = {
@@ -99,6 +102,10 @@ MER_remove_unasul_faction_membership_silent = {
 
 		remove_ideas = UNASUL_member
 		leave_faction = yes
+		if = {
+			limit = { check_variable = { faction_goal_refresh_transferred_leader = 1 } }
+			hidden_effect = { event_target:faction_goal_transferred_leader = { faction_goal_refresh_all_caches = yes } }
+		}
 	}
 }
 
@@ -109,7 +116,7 @@ UNASUL_leave = {
 		MER_remove_unasul_faction_membership_silent = yes
 
 		custom_effect_tooltip = UNASUL_leave_tt
-		hidden_effect = { news_event = { id = mercosur_news.3 hours = 6 } }
+		hidden_effect = { country_event = { id = mercosur_news.3 hours = 6 } }
 	}
 }
 
@@ -128,7 +135,7 @@ MER_suspend_mercosur_member_effect = {
 		}
 
 		MER_clear_mercosur_member_state_variables = yes
-		remove_dynamic_modifier = { modifier = mercosur_member_state_modifier }
+		if = { limit = { has_dynamic_modifier = { modifier = mercosur_member_state_modifier } } remove_dynamic_modifier = { modifier = mercosur_member_state_modifier } }
 		remove_from_array = { global.mercosur_member_state = THIS }
 	}
 }
@@ -159,7 +166,7 @@ MER_suspend_unasul_member_effect = {
 			MER_remove_unasul_faction_membership_silent = yes
 		}
 
-		remove_dynamic_modifier = { modifier = unasul_member_state_modifier }
+		if = { limit = { has_dynamic_modifier = { modifier = unasul_member_state_modifier } } remove_dynamic_modifier = { modifier = unasul_member_state_modifier } }
 		remove_from_array = { global.unasul_member_state = THIS }
 	}
 }

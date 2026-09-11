@@ -4,12 +4,19 @@ Quick reference for equipment types in Order of Battle (OOB) files. For complete
 
 ## File Type Quick Reference
 
-| File Pattern   | DLC Required   | Equipment System     | Syntax                                                               |
-| -------------- | -------------- | -------------------- | -------------------------------------------------------------------- |
-| `*_nsb.txt`    | No Step Back   | Chassis types        | `type = medium_tank_chassis_1` + `variant_name = "T-72B"`            |
-| `*_nonnsb.txt` | None           | Legacy equipment IDs | `type = MBT_2` (no variant_name)                                     |
-| `*_bba.txt`    | By Blood Alone | Airframe types       | `type = medium_plane_fighter_airframe_2` + `variant_name = "MiG-29"` |
-| `*_nonbba.txt` | None           | Legacy aircraft IDs  | `type = AS_Fighter2`                                                 |
+| File Pattern   | DLC Required   | Equipment System     |
+| -------------- | -------------- | -------------------- |
+| `*_nsb.txt`    | No Step Back   | Chassis types        |
+| `*_nonnsb.txt` | None           | Legacy equipment IDs |
+| `*_bba.txt`    | By Blood Alone | Airframe types       |
+| `*_nonbba.txt` | None           | Legacy aircraft IDs  |
+
+Syntax:
+
+- `*_nsb.txt` — `type = medium_tank_chassis_1` + `variant_name = "T-72B"`
+- `*_nonnsb.txt` — `type = MBT_2` (no variant_name)
+- `*_bba.txt` — `type = medium_plane_fighter_airframe_2` + `variant_name = "MiG-29"`
+- `*_nonbba.txt` — `type = AS_Fighter2`
 
 **Critical Rule**: Never mix the two systems. NSB files use chassis types with `variant_name`; non-NSB files use legacy IDs without `variant_name`.
 

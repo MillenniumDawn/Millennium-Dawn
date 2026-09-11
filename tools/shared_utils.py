@@ -16,7 +16,17 @@ from collections import OrderedDict
 from datetime import datetime
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Container, Dict, Iterator, List, Optional, Set, Tuple
+from typing import (
+    Any,
+    Callable,
+    Container,
+    Dict,
+    Iterator,
+    List,
+    Optional,
+    Set,
+    Tuple,
+)
 
 
 class Colors:
@@ -44,6 +54,34 @@ _LEVEL_COLORS = {
 # Default skip patterns shared across validators. Individual validators can
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
+
+# ruling_party 0-23. Slot 0 is Western Autocracy.
+PARTY_SLOT_NAMES: Dict[int, str] = {
+    0: "Western_Autocracy",
+    1: "conservatism",
+    2: "liberalism",
+    3: "socialism",
+    4: "Communist-State",
+    5: "anarchist_communism",
+    6: "Conservative",
+    7: "Autocracy",
+    8: "Mod_Vilayat_e_Faqih",
+    9: "Vilayat_e_Faqih",
+    10: "Kingdom",
+    11: "Caliphate",
+    12: "Neutral_Muslim_Brotherhood",
+    13: "Neutral_Autocracy",
+    14: "Neutral_conservatism",
+    15: "oligarchism",
+    16: "Neutral_Libertarian",
+    17: "Neutral_green",
+    18: "neutral_Social",
+    19: "Neutral_Communism",
+    20: "Nat_Populism",
+    21: "Nat_Fascism",
+    22: "Nat_Autocracy",
+    23: "Monarchist",
+}
 
 # Leave a quarter of the machine to whoever is using it. A full suite run
 # fans out over every validator and each of those keeps its own pool, so
@@ -292,6 +330,23 @@ def compact_block(block_lines: List[str]) -> List[str]:
     return compacted
 
 
+def count_braces(text: str) -> Tuple[int, int]:
+    """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
+    strings and after an unquoted ``#`` comment."""
+    code = strip_inline_comment(text)
+    opens = closes = 0
+    in_str = False
+    for i, c in enumerate(code):
+        if c == '"' and (i == 0 or code[i - 1] != "\\"):
+            in_str = not in_str
+        elif not in_str:
+            if c == "{":
+                opens += 1
+            elif c == "}":
+                closes += 1
+    return opens, closes
+
+
 def collapse_ws_outside_quotes(text: str) -> str:
     """Collapse runs of whitespace outside double-quoted spans to single spaces,
     leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
@@ -388,7 +443,9 @@ def collapse_or_compact(
     Single-leaf test (evaluated outside string literals and comments):
     ``leaves = (#"=<>") - (#"{")``; collapse iff ``leaves == 1`` and braces
     balance. Comparison operators ``<``/``>`` count as leaves alongside ``=`` so a
-    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. Bails to
+    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. A bare
+    token list (``focus = { A B C }``) counts as one leaf per token, so a
+    multi-line list stays multi-line. Bails to
     ``compact_block`` if any line carries a ``#`` comment. When *indent* is None
     the single-line form keeps the block's existing leading whitespace (from
     ``block_lines[0]``); otherwise *indent* is used as the prefix.
@@ -422,9 +479,57 @@ def collapse_or_compact(
                 n_close += 1
 
     if n_open != n_close or n_leaf - n_open != 1:
-        return compact_block(block_lines)
+        return compact_block(collapse_nested_blocks(block_lines))
+
+    unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
+    for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
+        if len(group.split()) > 1:
+            return compact_block(collapse_nested_blocks(block_lines))
 
     return [f"{indent}{_normalize_oneline_braces(text)}"]
+
+
+def collapse_nested_blocks(block_lines: List[str]) -> List[str]:
+    """Collapse each nested ``key = { ... }`` child that reduces to a single leaf
+    onto one line, innermost first, leaving the enclosing block multi-line.
+
+    Applies :func:`collapse_or_compact`'s single-leaf test per child, so a child
+    with two leaves (``{ name = "X" ruling_only = yes }``) or a ``#`` comment
+    stays multi-line. Each collapsed child keeps its own opening line's
+    indentation; the enclosing opener and closer are never touched. Input whose
+    braces don't balance is returned as-is.
+    """
+    if len(block_lines) < 3:
+        return list(block_lines)
+
+    out = [block_lines[0]]
+    last = len(block_lines) - 1
+    i = 1
+    while i < last:
+        line = block_lines[i]
+        opens, closes = count_braces(line)
+        if opens <= closes:
+            out.append(line)
+            i += 1
+            continue
+
+        depth = opens - closes
+        j = i + 1
+        while j < last and depth > 0:
+            o, c = count_braces(block_lines[j])
+            depth += o - c
+            j += 1
+        if depth > 0:
+            out.extend(block_lines[i:])
+            return out
+
+        child = collapse_nested_blocks(block_lines[i:j])
+        collapsed = collapse_or_compact(child)
+        out.extend(collapsed if len(collapsed) == 1 else child)
+        i = j
+
+    out.append(block_lines[last])
+    return out
 
 
 _FACTOR_TOKEN_RE = re.compile(r"\bfactor\b")
@@ -694,14 +799,146 @@ HOI4_INSTALL_PATHS = [
 ]
 
 
+_HOI4_GAME_SUBDIR = os.path.join("steamapps", "common", "Hearts of Iron IV")
+_STEAM_VDF_PATH_RE = re.compile(r'"path"\s*"([^"]+)"')
+# Keys the MD VS Code extensions and CWTools keep the game path under.
+_EDITOR_INSTALL_KEYS = (
+    "mdHoi4Utilities.installPath",
+    "hoi4ModUtilities.installPath",
+    "cwtools.cache.hoi4",
+)
+_EDITOR_INSTALL_RE = re.compile(
+    r'"(?:'
+    + "|".join(re.escape(k) for k in _EDITOR_INSTALL_KEYS)
+    + r')"\s*:\s*"([^"]+)"'
+)
+
+
+def _steam_roots() -> List[str]:
+    """Steam client roots: the Windows registry first, then the Unix defaults."""
+    roots: List[str] = []
+    if sys.platform == "win32":
+        try:
+            import winreg
+
+            for hive, key, value in (
+                (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam", "SteamPath"),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\WOW6432Node\Valve\Steam",
+                    "InstallPath",
+                ),
+            ):
+                try:
+                    with winreg.OpenKey(hive, key) as handle:
+                        roots.append(str(winreg.QueryValueEx(handle, value)[0]))
+                except OSError:
+                    continue
+        except ImportError:
+            pass
+    roots.extend(
+        os.path.expanduser(p)
+        for p in (
+            "~/.steam/steam",
+            "~/.local/share/Steam",
+            "~/.steam/debian-installation",
+            "~/Library/Application Support/Steam",
+        )
+    )
+    return roots
+
+
+def _steam_library_installs() -> List[str]:
+    """Game dirs under every library listed in Steam's libraryfolders.vdf."""
+    found: List[str] = []
+    for root in _steam_roots():
+        for vdf in (
+            os.path.join(root, "steamapps", "libraryfolders.vdf"),
+            os.path.join(root, "config", "libraryfolders.vdf"),
+        ):
+            try:
+                with open(vdf, encoding="utf-8", errors="replace") as fh:
+                    text = fh.read()
+            except OSError:
+                continue
+            for lib in _STEAM_VDF_PATH_RE.findall(text):
+                candidate = os.path.join(lib.replace("\\\\", "\\"), _HOI4_GAME_SUBDIR)
+                if candidate not in found:
+                    found.append(candidate)
+    return found
+
+
+def _editor_settings_files() -> List[str]:
+    mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    vscode = os.path.join(mod_root, ".vscode")
+    files = [os.path.join(vscode, "settings.json")]
+    try:
+        files.extend(
+            os.path.join(vscode, f)
+            for f in sorted(os.listdir(vscode))
+            if f.endswith(".code-workspace")
+        )
+    except OSError:
+        pass
+    appdata = os.environ.get("APPDATA", "")
+    files.extend(
+        os.path.expanduser(p)
+        for p in (
+            os.path.join(appdata, "Code", "User", "settings.json"),
+            os.path.join(appdata, "Code - Insiders", "User", "settings.json"),
+            "~/.config/Code/User/settings.json",
+            "~/Library/Application Support/Code/User/settings.json",
+        )
+        if p
+    )
+    return files
+
+
+def _editor_settings_installs() -> List[str]:
+    """Game paths the VS Code HOI4 extensions were configured with.
+
+    Settings files are JSONC (comments, trailing commas), so the keys are
+    picked out with a regex rather than json.loads.
+    """
+    found: List[str] = []
+    for path in _editor_settings_files():
+        try:
+            with open(path, encoding="utf-8-sig", errors="replace") as fh:
+                text = fh.read()
+        except OSError:
+            continue
+        for raw in _EDITOR_INSTALL_RE.findall(text):
+            candidate = raw.replace("\\\\", "\\").rstrip("\\/")
+            if candidate and candidate not in found:
+                found.append(candidate)
+    return found
+
+
+# Probed after $HOI4_PATH and before the fixed HOI4_INSTALL_PATHS list; tests
+# blank it so a developer machine with the game does not leak into assertions.
+HOI4_DISCOVERY_SOURCES: List[Callable[[], List[str]]] = [
+    _steam_library_installs,
+    _editor_settings_installs,
+]
+
+
 def find_hoi4_install(explicit_path: Optional[str] = None) -> Optional[str]:
-    """Return the first existing HOI4 install root, checking explicit_path, $HOI4_PATH, then HOI4_INSTALL_PATHS."""
+    """Return the first existing HOI4 install root.
+
+    Order: explicit_path, $HOI4_PATH, every Steam library folder, the game path
+    from the VS Code HOI4 extension settings, then HOI4_INSTALL_PATHS.
+    """
     candidates: List[str] = []
     if explicit_path:
         candidates.append(explicit_path)
     env_path = os.environ.get("HOI4_PATH")
     if env_path:
         candidates.append(env_path)
+    for source in HOI4_DISCOVERY_SOURCES:
+        try:
+            candidates.extend(source())
+        except OSError:
+            continue
     candidates.extend(HOI4_INSTALL_PATHS)
     for base in candidates:
         if base and os.path.isdir(base):
@@ -926,6 +1163,94 @@ def iter_flat_offsets(block: str) -> Iterator[Tuple[str, int]]:
         elif depth == 0:
             yield inner, index
         index += 1
+
+
+_STATEMENT = re.compile(r"([A-Za-z_][A-Za-z0-9_.:@]*)\s*(>=|<=|==|=|>|<)")
+_FOCUS_START = re.compile(r"^[ \t]*(focus|shared_focus|joint_focus)\s*=\s*\{", re.M)
+_FOCUS_ID = re.compile(r"^[ \t]*id\s*=\s*(\S+)", re.M)
+
+
+def read_script(path: str, keep_quotes: bool = False) -> str:
+    """Read a mod file and neutralise comments, and by default quoted strings.
+
+    Both passes preserve length and newlines, so every offset and line number
+    computed downstream still points at the original file. `keep_quotes` is for
+    files whose quoted values are the data (loc key names in a game rule).
+    """
+    with open(path, "r", encoding="utf-8-sig", errors="replace") as handle:
+        text = strip_comments(handle.read())
+    return text if keep_quotes else blank_quoted_strings(text)
+
+
+def iter_statement_ops(
+    body: str,
+) -> Iterator[Tuple[str, str, Optional[str], Optional[str]]]:
+    """Yield (key, operator, scalar, block) for every statement at depth 0."""
+    index = 0
+    length = len(body)
+    while index < length:
+        if body[index] in "{}":
+            index += 1
+            continue
+        match = _STATEMENT.match(body, index)
+        if not match:
+            index += 1
+            continue
+        key, operator = match.group(1), match.group(2)
+        cursor = match.end()
+        while cursor < length and body[cursor] in " \t\r\n":
+            cursor += 1
+        if cursor < length and body[cursor] == "{":
+            close = find_matching_brace(body, cursor)
+            if close == -1:
+                return
+            yield key, operator, None, body[cursor + 1 : close]
+            index = close + 1
+            continue
+        if cursor < length and body[cursor] == '"':
+            stop = body.find('"', cursor + 1)
+            if stop == -1:
+                return
+            yield key, operator, body[cursor + 1 : stop], None
+            index = stop + 1
+            continue
+        stop = cursor
+        while stop < length and body[stop] not in " \t\r\n{}":
+            stop += 1
+        yield key, operator, body[cursor:stop], None
+        index = stop
+
+
+def iter_statements(body: str) -> Iterator[Tuple[str, Optional[str], Optional[str]]]:
+    """Yield (key, scalar, block) for every `key = ...` at depth 0 of *body*."""
+    for key, _operator, scalar, block in iter_statement_ops(body):
+        yield key, scalar, block
+
+
+def line_of(text: str, offset: int) -> int:
+    return text.count("\n", 0, offset) + 1
+
+
+def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
+    """Yield (id, kind, line, body) for each focus of a focus tree file.
+
+    A block without an `id` is skipped rather than reported under a made-up
+    name; the game ignores it too.
+    """
+    position = 0
+    while True:
+        match = _FOCUS_START.search(text, position)
+        if not match:
+            return
+        open_index = text.index("{", match.start())
+        close = find_matching_brace(text, open_index)
+        if close == -1:
+            return
+        body = text[open_index + 1 : close]
+        position = close + 1
+        id_match = _FOCUS_ID.search(body)
+        if id_match:
+            yield id_match.group(1), match.group(1), line_of(text, match.start()), body
 
 
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
@@ -1281,6 +1606,70 @@ def get_root_dir() -> str:
     )
 
 
+def add_dry_run_argument(parser: argparse.ArgumentParser) -> None:
+    """Add the standard `--dry-run` flag shared by the auto-fixer sweeps."""
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would be fixed without writing changes",
+    )
+
+
+def run_linting_sweep(
+    args,
+    *,
+    banner: str,
+    file_filter: Callable[[str], bool],
+    apply_fn: Callable[[str], Tuple[str, int]],
+    dry_run_fn: Callable[[str], Tuple[str, int]],
+    unit: str,
+    no_files_message: str,
+    applied_verb: str = "Fixed",
+    dry_run_verb: str = "Would fix",
+) -> int:
+    """Run a whole-tree auto-fixer sweep and print its standard report.
+
+    *apply_fn* / *dry_run_fn* each take a path and return (path, fix count).
+    Returns the process exit code.
+    """
+    timings = []
+    root_dir = get_root_dir()
+    print(f"{banner} (Mode: {args.mode}, Dry run: {args.dry_run})")
+
+    with Timer("file collection") as t:
+        all_files = collect_files_by_mode(args, root_dir)
+    timings.append(("file collection", t.elapsed))
+
+    targets = [f for f in all_files if file_filter(f)]
+    if not targets:
+        print(no_files_message)
+        return 0
+
+    print(f"Processing {len(targets)} files...")
+
+    process_fn = dry_run_fn if args.dry_run else apply_fn
+    with Timer("processing") as t:
+        results = run_with_pool(process_fn, targets, args.workers)
+    timings.append(("processing", t.elapsed))
+
+    action = dry_run_verb if args.dry_run else applied_verb
+    files_fixed = [(f, c) for f, c in results if c > 0]
+    total_fixes = sum(c for _, c in results)
+
+    for filepath, count in sorted(files_fixed):
+        print(f"  {clean_filepath(filepath)}: {action.lower()} {count} {unit}")
+
+    print("\n------")
+    print(f"Processed {len(targets)} files")
+    print(f"{action} {total_fixes} {unit} in {len(files_fixed)} file(s)")
+
+    elapsed_total = sum(t for _, t in timings)
+    print(f"\nCompleted in {elapsed_total:.1f}s")
+    print_timing_summary(timings)
+
+    return 0
+
+
 def run_with_pool(
     func,
     items: list,
@@ -1300,8 +1689,8 @@ def run_with_pool(
         return pool.map(func, items)
 
 
-_DEFAULT_DIRECTORIES = ("common", "events", "history")
-_DIRECTORIES_WITH_INTERFACE = ("common", "events", "history", "interface")
+_DEFAULT_DIRECTORIES = ("common", "events", "history", "music")
+_DIRECTORIES_WITH_INTERFACE = ("common", "events", "history", "music", "interface")
 
 _staged_files_cache: Optional[List[str]] = None
 

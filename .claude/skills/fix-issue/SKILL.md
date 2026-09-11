@@ -35,6 +35,14 @@ Steps:
 
    When working a codebase-scanned bug or a quoted task with no issue number, omit the `Closes #` line from the PR since there is no issue to reference.
 
+   Once the issue passes the scope guard, claim it so nobody duplicates the work:
+
+   ```
+   gh issue edit <number> --add-assignee @me
+   ```
+
+   `@me` resolves to the authenticated account — never hardcode a login. Skip this for a quoted task or a codebase-scanned bug, which have no issue to assign.
+
 2. **Understand the work**
 
    Read the issue body (or the task description). For a bug, identify the wrong behaviour, the expected behaviour, and any country, decision, event, or system named. For a task, identify the desired outcome, its acceptance criteria, and which files or systems it touches.
@@ -71,14 +79,14 @@ Steps:
 
 6. **Commit**
 
-   Never create or switch branches on your own. First check the current branch:
+   **Always branch from `main`.** Never commit onto whatever branch the session happens to start on — a leftover branch from earlier work carries its own unmerged commits and its own open PR, and the new work lands inside them.
 
    ```
-   git rev-parse --abbrev-ref HEAD
+   git fetch origin
+   git checkout -b <slug> origin/main
    ```
 
-   - If on **`main`**: stop and use `AskUserQuestion` to ask which branch to use. Offer: (a) check out an existing branch (user supplies the name), (b) create a new branch (user supplies the name). Only after the user answers, run `git checkout <name>` or `git checkout -b <name>`. Do not invent a branch name.
-   - If **not on `main`**: commit on the current branch. Do not switch or create a branch.
+   `<slug>` is a short kebab-case description of the work (`naval-mio-production-bonus`, `png-art-format-validator`), not an issue number — the number belongs in the commit subject and the PR body. Do this before staging anything; uncommitted work follows the checkout across.
 
    Then stage only the files changed for this work and commit. Use an accurate verb (`Fix` for a bug, `Add` or `Implement` for a task):
 

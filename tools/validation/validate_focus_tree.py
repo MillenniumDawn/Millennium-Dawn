@@ -28,6 +28,32 @@ from validator_common import (
 _FOCUS_TREE_START = re.compile(r"\bfocus_tree\s*=\s*\{")
 _SHARED_FOCUS_DEF_START = re.compile(r"\b(?:shared_focus|joint_focus)\s*=\s*\{")
 
+# A single `key: "value"` localisation line, version suffix optional.
+_LOC_LINE_RE = re.compile(r'^[ \t]*([\w.\-]+)\s*:\d*\s*"(.*)"[ \t]*$')
+# Focus descriptions may highlight a term (§Y), mark a gain (§G) or a cost (§R);
+# titles carry no color at all. See .claude/docs/localisation-rules.md.
+_DESC_PALETTE = frozenset("YGR")
+# A § followed by whitespace and a digit is a prose section sign (a legal
+# citation like "15 U.S.C. § 1"), never markup — same exemption as the sibling
+# check in validate_localisation.py.
+_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+
+
+def _color_codes(value: str) -> List[str]:
+    """Return the color codes opened in *value*, ignoring resets."""
+    cleaned = _PROSE_SECTION_SIGN_RE.sub("", value)
+    return [c for c in re.findall("§(.)", cleaned) if c != "!"]
+
+
+def _fmt_codes(codes: List[str]) -> str:
+    seen = sorted(set(codes))
+    return (
+        "color code"
+        + ("s " if len(seen) > 1 else " ")
+        + ", ".join(f"§{c}" for c in seen)
+    )
+
+
 # focus ID extraction
 _FOCUS_ID_RE = re.compile(r"\bfocus\s*=\s*\{")
 _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
@@ -48,12 +74,10 @@ _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 # shared_focus reference inside a focus_tree block (not a definition)
 _SHARED_REF_RE = re.compile(r"\bshared_focus\s*=\s*(\w+)")
 
-# add_tech_bonus inside completion_reward (incl. joint-focus reward variants)
+# completion_reward, incl. the joint-focus reward variants
 _REWARD_BLOCK_RE = re.compile(
     r"\bcompletion_reward(?:_joint_originator|_joint_member)?\s*=\s*\{"
 )
-_TECH_BONUS_START = re.compile(r"\badd_tech_bonus\s*=\s*\{")
-_NAME_LINE_RE = re.compile(r"\bname\s*=\s*(\S+)")
 
 # PP malus in completion_reward (focus time is the cost — AGENTS.md).
 # Occurrences inside an effect_tooltip = { } subtree preview a PP change
@@ -851,44 +875,6 @@ def _iter_reward_blocks(
         pos = body_end
 
 
-def _extract_tech_bonuses(
-    args: Tuple[str, str],
-) -> List[Tuple[str, Optional[str], str, int]]:
-    """Pool worker: return (focus_id, bonus_name, filepath, line) for every
-    add_tech_bonus inside a completion_reward* block. bonus_name is None when
-    the block has no `name =` parameter.
-    """
-    filepath, mod_path = args
-    raw = _read_mod_text(filepath, mod_path)
-    if not raw:
-        return []
-    text = strip_comments(raw)
-
-    def _compute() -> List[Tuple[str, Optional[str], str, int]]:
-        out: List[Tuple[str, Optional[str], str, int]] = []
-        for focus_id, _, fstart, fend in _iter_focus_blocks_with_id(text):
-            focus_id = focus_id if focus_id is not None else "?"
-            for _, rstart, rend in _iter_reward_blocks(text, fstart, fend):
-                bpos = rstart
-                while True:
-                    bm = _TECH_BONUS_START.search(text, bpos, rend)
-                    if not bm:
-                        break
-                    bbody, bend = _extract_block(text, bm.start())
-                    if not bbody:
-                        bpos = bm.end()
-                        continue
-                    nm = _NAME_LINE_RE.search(bbody)
-                    name = nm.group(1).strip('"') if nm else None
-                    out.append((focus_id, name, filepath, _line_of(text, bm.start())))
-                    bpos = bend
-        return out
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path, "focus_tree.tech_bonus", filepath, text, _compute
-    )
-
-
 def _extract_ai_guard_data(
     args: Tuple[str, str, Dict[str, FrozenSet[str]], FrozenSet[str]],
 ) -> List[Dict]:
@@ -1146,6 +1132,44 @@ def _scan_pp_malus(text: str, filepath: str) -> List[Tuple[str, str, int]]:
                 ):
                     out.append((focus_id, filepath, _line_of(text, match.start())))
     return out
+
+
+_FOCUS_DEFAULT_WRITE_RE = re.compile(
+    r"\b(?:cancel_if_invalid\s*=\s*yes|continue_if_invalid\s*=\s*no"
+    r"|available_if_capitulated\s*=\s*no)\b"
+)
+_AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
+_RE_BYPASS_BLOCK = re.compile(r"\bbypass\s*=\s*\{")
+_RE_EMPTY_MUTEX = re.compile(r"\bmutually_exclusive\s*=\s*\{\s*\}")
+_RE_EMPTY_AVAILABLE = re.compile(r"\bavailable\s*=\s*\{\s*\}")
+
+
+def _scan_focus_structural(text: str, filepath: str) -> List[Tuple[str, str, str, int]]:
+    """Scan focus blocks for default writes, dead gates, and empty blocks."""
+    out: List[Tuple[str, str, str, int]] = []
+    for focus_id, body, start, _end in _iter_focus_blocks_with_id(text):
+        focus_id = focus_id if focus_id is not None else "?"
+        for m in _FOCUS_DEFAULT_WRITE_RE.finditer(body):
+            line = _line_of(text, start + m.start())
+            out.append((f"default-write:{m.group()}", focus_id, filepath, line))
+        always_no = None
+        for match in _AVAILABLE_BLOCK_START.finditer(body):
+            available_body, end = _extract_block(body, match.start())
+            if end != -1 and re.fullmatch(r"\s*always\s*=\s*no\s*", available_body):
+                always_no = match
+                break
+        if always_no and _RE_BYPASS_BLOCK.search(body):
+            line = _line_of(text, start + always_no.start())
+            out.append(("always-no-bypass", focus_id, filepath, line))
+        for pattern in (_RE_EMPTY_MUTEX, _RE_EMPTY_AVAILABLE):
+            for m in pattern.finditer(body):
+                line = _line_of(text, start + m.start())
+                out.append(("empty-block", focus_id, filepath, line))
+    return out
+
+
+def _extract_focus_structural(args: Tuple[str, str]) -> List[Tuple[str, str, str, int]]:
+    return _cached_focus_scan(args, "focus_tree.structural", _scan_focus_structural)
 
 
 def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
@@ -1565,59 +1589,97 @@ class Validator(BaseValidator):
         )
 
     # -----------------------------------------------------------------------
-    # Check 5: add_tech_bonus name parameters
+    # Check 4b: Color codes in focus name / description localisation
     # -----------------------------------------------------------------------
 
-    def validate_tech_bonus_names(self):
-        """Flag add_tech_bonus blocks in completion rewards without a
-        localised `name =`.
+    def _load_focus_loc_values(
+        self, wanted: FrozenSet[str]
+    ) -> Dict[str, Tuple[str, str, int]]:
+        """Map each wanted loc key to its (value, filepath, line).
 
-        Without a name the research-bonus row shows no source; the convention
-        is `name = <focus_id>`, which reuses the focus title loc key.
+        ``_load_localisation_keys`` yields key names only, so the palette check
+        needs its own pass to see the strings themselves. Later definitions win,
+        matching how the game resolves a duplicated key.
         """
-        self._log_section("Checking add_tech_bonus name parameters in focus rewards...")
+        memo = getattr(self, "_focus_loc_values_memo", None)
+        if memo is not None:
+            return memo
+        values: Dict[str, Tuple[str, str, int]] = {}
+        for filepath in self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        ):
+            try:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+                    lines = fh.readlines()
+            except OSError:
+                continue
+            for line_idx, line in enumerate(lines):
+                match = _LOC_LINE_RE.match(line.rstrip("\r\n"))
+                if match and match.group(1) in wanted:
+                    values[match.group(1)] = (match.group(2), filepath, line_idx + 1)
+        self._focus_loc_values_memo = values
+        return values
 
-        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        bonus_lists = self._pool_map(
-            _extract_tech_bonuses, [(f, self.mod_path) for f in files]
+    def validate_focus_loc_colors(self):
+        self._log_section("Checking focus localisation against the color palette...")
+
+        parsed = self._get_parsed_files()
+        _, focus_info = self._build_focus_registry(parsed)
+        wanted = frozenset(
+            [fid for fid in focus_info] + [f"{fid}_desc" for fid in focus_info]
         )
-        loc_keys = self._load_localisation_keys()
+        loc_values = self._load_focus_loc_values(wanted)
 
-        results = []
-        for sub in bonus_lists:
-            for focus_id, name, fp, line in sub:
-                if not self._is_reportable(fp):
+        title_results = []
+        desc_results = []
+        for focus_id in sorted(focus_info):
+            for key in (focus_id, f"{focus_id}_desc"):
+                entry = loc_values.get(key)
+                if entry is None:
                     continue
-                rel = os.path.relpath(fp, self.mod_path)
-                if name is None:
-                    results.append(
+                value, filepath, line = entry
+                codes = _color_codes(value)
+                if not codes or not self._is_reportable(filepath):
+                    continue
+                rel = os.path.relpath(filepath, self.mod_path)
+                if key == focus_id:
+                    title_results.append(
                         (
-                            f"add_tech_bonus in '{focus_id}' has no name = parameter"
-                            f" — players see no source for the bonus (use name = {focus_id})",
+                            f"Focus title '{key}' uses {_fmt_codes(codes)} — "
+                            f"titles carry no color",
                             rel,
                             line,
                         )
                     )
-                elif "[" not in name and name not in loc_keys:
-                    results.append(
+                    continue
+                off_palette = [c for c in codes if c not in _DESC_PALETTE]
+                if off_palette:
+                    desc_results.append(
                         (
-                            f"add_tech_bonus name '{name}' in '{focus_id}' has no"
-                            " localisation key (typo? convention is the focus id)",
+                            f"Focus description '{key}' uses "
+                            f"{_fmt_codes(off_palette)} — use §Y, §G or §R",
                             rel,
                             line,
                         )
                     )
 
         self._report(
-            results,
-            "All add_tech_bonus blocks in focus rewards carry a localised name",
-            "add_tech_bonus blocks missing a name or using an unlocalised name:",
-            Severity.WARNING,
-            category="tech-bonus-name",
+            title_results,
+            "No focus titles carry color codes",
+            "Focus titles using color codes:",
+            Severity.ERROR,
+            category="focus-title-color-code",
+        )
+        self._report(
+            desc_results,
+            "No focus descriptions use off-palette colors",
+            "Focus descriptions using colors outside §Y/§G/§R:",
+            Severity.ERROR,
+            category="focus-desc-color-palette",
         )
 
     # -----------------------------------------------------------------------
-    # Check 5b: Missing search_filters in focus blocks
+    # Check 5: Missing search_filters in focus blocks
     # -----------------------------------------------------------------------
 
     def validate_missing_search_filters(self):
@@ -2155,17 +2217,83 @@ class Validator(BaseValidator):
             category="missing-focus-icon",
         )
 
+    def validate_structural_defaults(self):
+        """Flag default writes, dead gates, and empty focus blocks."""
+        self._log_section("Checking focus structural defaults and dead gates...")
+
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        data_lists = self._pool_map(
+            _extract_focus_structural, [(f, self.mod_path) for f in files], chunksize=10
+        )
+
+        by_kind: Dict[str, List[Tuple[str, str, int]]] = defaultdict(list)
+        for sub in data_lists:
+            for kind, focus_id, fp, line in sub:
+                if not self._is_reportable(fp):
+                    continue
+                rel = os.path.relpath(fp, self.mod_path)
+                by_kind[kind].append((focus_id, rel, line))
+
+        default_writes = [
+            (
+                f"Focus '{focus_id}' writes the engine default '{kind.split(':', 1)[1]}'"
+                f" - omit it",
+                rel,
+                line,
+            )
+            for kind, entries in by_kind.items()
+            if kind.startswith("default-write:")
+            for focus_id, rel, line in entries
+        ]
+        self._report(
+            default_writes,
+            "No focus blocks write engine-default values",
+            "Focus blocks writing engine-default values (omit them):",
+            Severity.WARNING,
+            category="focus-default-write",
+        )
+
+        always_no = [
+            (
+                f"Focus '{focus_id}' pairs available = {{ always = no }} with a"
+                f" bypass - use a matching condition instead",
+                rel,
+                line,
+            )
+            for focus_id, rel, line in by_kind["always-no-bypass"]
+        ]
+        self._report(
+            always_no,
+            "No always = no available blocks paired with a bypass",
+            "Focuses with available = { always = no } and a bypass:",
+            Severity.WARNING,
+            category="focus-always-no-bypass",
+        )
+
+        empty_blocks = [
+            (f"Focus '{focus_id}' has an empty block", rel, line)
+            for focus_id, rel, line in by_kind["empty-block"]
+        ]
+        self._report(
+            empty_blocks,
+            "No empty mutually_exclusive/available blocks",
+            "Focus blocks with an empty mutually_exclusive/available block:",
+            Severity.WARNING,
+            category="focus-empty-block",
+        )
+
     def run_validations(self):
         self.validate_duplicate_focus_ids()
         self.validate_missing_prerequisite_targets()
         self.validate_orphan_focuses()
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()
-        self.validate_tech_bonus_names()
+        self.validate_focus_loc_colors()
         self.validate_missing_search_filters()
         self.validate_ai_will_do_guards()
         self.validate_cross_country_event_tooltips()
         self.validate_pp_malus_in_rewards()
+        self.validate_structural_defaults()
 
         if self.missing_icons:
             self.validate_focus_icons()

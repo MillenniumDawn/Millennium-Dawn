@@ -1,8 +1,9 @@
 # Decision Reference
 
-On-demand reference for decision structure and examples. For best practices, see AGENTS.md.
+Decision conventions, structure, and examples. Use `ai_will_do = { base = N }`,
+not root-level `factor`, for AI weights.
 
-Full HOI4 wiki reference: https://hoi4.paradoxwikis.com/Decision_modding
+Full HOI4 wiki reference: <https://hoi4.paradoxwikis.com/Decision_modding>
 
 ## Icon Field
 
@@ -21,13 +22,15 @@ A decision becomes targeted when it includes `targets`, `target_array`, `target_
 
 ### Trigger Evaluation Order & Frequency
 
-| Block                 | Scope       | Frequency                                    | Purpose                                       |
-| --------------------- | ----------- | -------------------------------------------- | --------------------------------------------- |
-| `allowed`             | ROOT        | Once (game start/load)                       | Permanent gate                                |
-| `target_root_trigger` | ROOT only   | Daily                                        | Fast pre-filter — if false, skips all targets |
-| `target_trigger`      | ROOT + FROM | Daily (only if `target_root_trigger` passes) | Per-target daily filter                       |
-| `visible`             | ROOT + FROM | Every tick                                   | UI visibility (most expensive)                |
-| `available`           | ROOT + FROM | Every tick                                   | Clickability gate                             |
+| Block                 | Scope       | Frequency              | Purpose                        |
+| --------------------- | ----------- | ---------------------- | ------------------------------ |
+| `allowed`             | ROOT        | Once (game start/load) | Permanent gate                 |
+| `target_root_trigger` | ROOT only   | Daily                  | Fast pre-filter                |
+| `target_trigger`      | ROOT + FROM | Daily                  | Per-target daily filter        |
+| `visible`             | ROOT + FROM | Every tick             | UI visibility (most expensive) |
+| `available`           | ROOT + FROM | Every tick             | Clickability gate              |
+
+`target_trigger` runs only if `target_root_trigger` passes — a false pre-filter skips all targets.
 
 **Don't repeat the category's `allowed` on each decision.** A decision's `allowed` is redundant when it just duplicates the parent category's `allowed` (e.g. both are `original_tag = TAG`) — the category gate already applies to every decision inside it. Restrict the nation once on the category; put dynamic conditions in `available`/`visible` (since `allowed` is locked at game start).
 
@@ -64,23 +67,23 @@ state_target = yes               # Target states instead of countries
 
 ```
 my_targeted_decision = {
-	target_root_trigger = {
-		has_completed_focus = my_focus
-	}
-	targets = { BHR QAT SAU OMA YEM IRQ SYR LEB ISR PAL }
-	targets_dynamic = yes
-	target_trigger = {
-		FROM = { has_idea = my_idea }
-	}
-	icon = my_icon
-	cost = 20
-	war_with_target_on_complete = yes
-	complete_effect = {
-		create_wargoal = {
-			target = FROM
-			type = annex_everything
-		}
-	}
+ target_root_trigger = {
+  has_completed_focus = my_focus
+ }
+ targets = { BHR QAT SAU OMA YEM IRQ SYR LEB ISR PAL }
+ targets_dynamic = yes
+ target_trigger = {
+  FROM = { has_idea = my_idea }
+ }
+ icon = my_icon
+ cost = 20
+ war_with_target_on_complete = yes
+ complete_effect = {
+  create_wargoal = {
+   target = FROM
+   type = annex_everything
+  }
+ }
 }
 ```
 
@@ -88,20 +91,20 @@ my_targeted_decision = {
 
 ```
 my_state_targeted_decision = {
-	state_target = yes
-	target_root_trigger = {
-		has_completed_focus = my_focus
-	}
-	target_array = GER.core_states
-	target_trigger = {
-		FROM = { is_owned_by = ROOT }
-	}
-	on_map_mode = map_and_decisions_view
-	icon = my_icon
-	cost = 20
-	complete_effect = {
-		FROM = { remove_core_of = GER }
-	}
+ state_target = yes
+ target_root_trigger = {
+  has_completed_focus = my_focus
+ }
+ target_array = GER.core_states
+ target_trigger = {
+  FROM = { is_owned_by = ROOT }
+ }
+ on_map_mode = map_and_decisions_view
+ icon = my_icon
+ cost = 20
+ complete_effect = {
+  FROM = { remove_core_of = GER }
+ }
 }
 ```
 
@@ -118,7 +121,7 @@ Regular `war_with_on_*` does not work with FROM. Use these instead:
 The engine runs four blocks as a decision's effects: `complete_effect` (player takes it), `remove_effect` (`days_remove` timer expires or `remove_trigger` fires), `timeout_effect` (mission `days_mission_timeout` expires) and `cancel_effect` (`cancel_trigger` fires). Each one logs its own line, as the block's first statement:
 
 ```
-	log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"
+ log = "[GetDateText]: [Root.GetName]: Decision DECISION_ID"
 ```
 
 Log first so the game log reads in firing order, and use the decision's own ID: a copied ID from a neighbouring decision is the most common mistake here (`tools/linting/fix_log_ids.py` rewrites those). A log nested inside an `if` / `else` / `hidden_effect` records which branch ran, so it belongs where it sits and does not substitute for the block's own log line.
@@ -133,12 +136,12 @@ A decision is **AI-only** when the engine can never show it to a human player. T
 - membership in a decision **category** whose `visible` / `available` / `allowed` carries that same unconditional `is_ai = yes`.
 
 ```
-	SOV_nuke_europe = {
-		allowed = { original_tag = SOV }
+ SOV_nuke_europe = {
+  allowed = { original_tag = SOV }
 
-		visible = {
-			is_ai = yes
-		}
+  visible = {
+   is_ai = yes
+  }
 ```
 
 "Unconditional" means the token sits at brace depth zero of the trigger block. Nested inside `OR`, `AND`, `if = { limit = }` or a scoped `TAG = { }` it is conditional and the decision is **not** AI-only — `allowed = { OR = { is_ai = yes  is_debug = yes } }` still shows to a player in debug, and `GRE = { is_ai = yes }` asks about a different country entirely.
@@ -150,10 +153,10 @@ The same holds for an **AI-only category** — one whose own `visible` / `availa
 **An AI-only decision takes no tooltip wrappers either.** `custom_trigger_tooltip` exists to give a requirement line a human can read, and `custom_effect_tooltip` to describe an effect the player is about to trigger; on an AI-only decision both render to nobody and only keep a loc key alive. Write the trigger bare:
 
 ```
-		available = {
-			nationalist_monarchists_are_in_power = no
-			check_variable = { party_pop_array^23 < 0.35 }
-		}
+  available = {
+   nationalist_monarchists_are_in_power = no
+   check_variable = { party_pop_array^23 < 0.35 }
+  }
 ```
 
 `validate_variables.py` backs this: its three `available`-block checks — `untooltipped-available-check`, `unlocalised-available-flag` and `untooltipped-available-scripted-trigger` — skip AI-only decisions and every decision inside an AI-only category, using the same depth-0 `is_ai = yes` rule as above.
@@ -165,10 +168,10 @@ A category with no `visible` block sits on the decisions tab from the first day,
 A category gated on state that flips during play (a country or global flag, a completed focus, an idea, a variable) appears part-way through a game. Whatever turns it on should say so, with `unlock_decision_category_tooltip = <category>` in the focus `completion_reward` or event effect that sets the gate:
 
 ```
-	completion_reward = {
-		set_country_flag = ALG_drone_program_open
-		unlock_decision_category_tooltip = ALG_drone_program_category
-	}
+ completion_reward = {
+  set_country_flag = ALG_drone_program_open
+  unlock_decision_category_tooltip = ALG_drone_program_category
+ }
 ```
 
 Without it a whole tab of decisions appears with no indication of where it came from. `unlock_decision_tooltip = <decision>` on one of its decisions counts too, since that names the decision the player just gained.
@@ -184,10 +187,10 @@ The gate must sit at brace depth zero of `visible` to count. Inside a `NOT` the 
 A decision effect that sets a flag another decision's `visible` or `available` waits on has unlocked that decision. `unlock_decision_tooltip = <decision>` is how the player is told:
 
 ```
-		complete_effect = {
-			set_country_flag = SAU_decisive_storm
-			unlock_decision_tooltip = SAU_storm_air_campaign
-		}
+  complete_effect = {
+   set_country_flag = SAU_decisive_storm
+   unlock_decision_tooltip = SAU_storm_air_campaign
+  }
 ```
 
 MD does not announce every unlock, so `validate_decisions.py` only reports the inconsistent case as `unannounced-decision-unlock` (WARNING): a block that already calls `unlock_decision_tooltip` at least once and misses a sibling gated on the very flag it just set. That is an oversight, not a style choice. Both `visible` and `available` gates count, and the same depth-zero rule applies.
@@ -197,31 +200,31 @@ MD does not announce every unlock, so `validate_decisions.py` only reports the i
 A decision that can fire more than once and rolls randomness (`random_list = { ... }` or `random = { chance = N ... }`) needs `fixed_random_seed = no` at decision top level:
 
 ```
-	days_re_enable = 180
+ days_re_enable = 180
 
-	fixed_random_seed = no
+ fixed_random_seed = no
 
-	remove_effect = {
+ remove_effect = {
 ```
 
 The engine seeds the roll from the save state, so without it every repeat of the decision returns the same branch. `fire_only_once = yes` decisions are exempt, since their roll only ever resolves once. Write `fixed_random_seed = yes` when the repeat _should_ be deterministic; `validate_decisions.py` treats an explicit value either way as intentional and only flags the field being absent.
 
 ## Formable Commitment Ratchet
 
-The AI commits to one formable at a time via two country variables: `formable_committed_id` (unique ordinal per formable) and `formable_committed_size` (that formable's full `update_flag` state count). Without this, a country holding territory for two formables alternates their zero-cost `update_flag` decisions forever.
+The AI commits to one formable at a time via `formable_committed_id` / `formable_committed_size`; every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate that blocks any formable other than the committed one unless it is strictly larger, and special formables (USoE, EFS membership, UAR, ...) commit through `commit_special_formable` with a sentinel size that outranks every decision formable. Full contract, id/size tables, guarded sites, and the maintenance rules (a new formable must wire the gates; editing an `update_flag` state list means updating every size literal — `validate_decisions.py` gates on drift): [formable-reference.md](formable-reference.md).
 
 Every decision in `common/decisions/formable_nation_decisions.txt` carries an AI-only `ai_will_do` gate — _blocked when committed to a different formable that is not strictly smaller_:
 
 ```
-	modifier = {
-		factor = 0
-		NOT = { check_variable = { formable_committed_id = <ID> } }
-		check_variable = {
-			var = formable_committed_size
-			value = <SIZE>
-			compare = greater_than_or_equals
-		}
-	}
+ modifier = {
+  factor = 0
+  NOT = { check_variable = { formable_committed_id = <ID> } }
+  check_variable = {
+   var = formable_committed_size
+   value = <SIZE>
+   compare = greater_than_or_equals
+  }
+ }
 ```
 
 Commit writes (`hidden_effect` setting both variables) live in every `integrate_start` and `update_flag` `complete_effect`; IBR/ANZ (which have no `integrate_start`) commit from their integrate decisions' `remove_effect`, and Spain's `SPR_solidify_the_iberian_union` focus commits IBR — those delayed/ungated sites guard the write with `compare = less_than` so they never downgrade a larger commitment. NORDEM/AVG/ANZ gates carry an extra exemption so a CANZUK commitment stranded by the EU guard cannot block its fallback formables, and `CANZUK_integrate_start` is AI-blocked while EU-blocked.
@@ -232,28 +235,28 @@ A **new formable** must wire all of this: gate on every decision, commit in `int
 
 ```
 URA_world_opr = {
-	allowed = { original_tag = URA }
-	icon = GFX_decision_sovfed_button
+ allowed = { original_tag = URA }
+ icon = GFX_decision_sovfed_button
 
-	cost = 50
-	days_remove = 400
+ cost = 50
+ days_remove = 400
 
-	visible = {
-		country_exists = OPR
-		OPR = {
-			OR = {
-				has_autonomy_state = autonomy_republic_rf
-				has_autonomy_state = autonomy_kray_rf
-			}
-		}
-	}
+ visible = {
+  country_exists = OPR
+  OPR = {
+   OR = {
+    has_autonomy_state = autonomy_republic_rf
+    has_autonomy_state = autonomy_kray_rf
+   }
+  }
+ }
 
-	complete_effect = {
-		log = "[GetDateText]: [Root.GetName]: Decision URA_world_opr"
-		OPR = { country_event = { id = subject_rus.121 days = 1 } }
-	}
+ complete_effect = {
+  log = "[GetDateText]: [Root.GetName]: Decision URA_world_opr"
+  OPR = { country_event = { id = subject_rus.121 days = 1 } }
+ }
 
-	ai_will_do = { base = 10 }
+ ai_will_do = { base = 10 }
 }
 ```
 
@@ -263,38 +266,38 @@ Missions use `activation` instead of player selection, with `days_mission_timeou
 
 ```
 ISR_pal_rooting_terrorists = {
-	available = { always = no }
-	activation = {
-		has_country_flag = ISR_start_operation
-	}
-	days_mission_timeout = 60
-	is_good = no
-	icon = GFX_decision_category_taliban_insurgency
+ available = { always = no }
+ activation = {
+  has_country_flag = ISR_start_operation
+ }
+ days_mission_timeout = 60
+ is_good = no
+ icon = GFX_decision_category_taliban_insurgency
 
-	visible = {
-		has_country_flag = ISR_start_operation
-	}
-	cancel_if_not_visible = yes
+ visible = {
+  has_country_flag = ISR_start_operation
+ }
+ cancel_if_not_visible = yes
 
-	timeout_effect = {
-		log = "[GetDateText]: [Root.GetName]: Decision ISR_pal_rooting_terrorists"
-		custom_effect_tooltip = ISR_operation_result_outcome_tt
-		custom_effect_tooltip = ISR_operation_failed_root_terr_tt
-		hidden_effect = {
-			clr_country_flag = ISR_start_operation
-			if = {
-				limit = {
-					check_variable = { ISR_operation_success > 7 }
-				}
-				ISR = { country_event = israel.91 }
-				PAL = { country_event = israel.91 }
-			}
-			else = {
-				ISR = { country_event = israel.92 }
-				PAL = { country_event = israel.92 }
-			}
-		}
-	}
+ timeout_effect = {
+  log = "[GetDateText]: [Root.GetName]: Decision ISR_pal_rooting_terrorists"
+  custom_effect_tooltip = ISR_operation_result_outcome_tt
+  custom_effect_tooltip = ISR_operation_failed_root_terr_tt
+  hidden_effect = {
+   clr_country_flag = ISR_start_operation
+   if = {
+    limit = {
+     check_variable = { ISR_operation_success > 7 }
+    }
+    ISR = { country_event = israel.91 }
+    PAL = { country_event = israel.91 }
+   }
+   else = {
+    ISR = { country_event = israel.92 }
+    PAL = { country_event = israel.92 }
+   }
+  }
+ }
 }
 ```
 

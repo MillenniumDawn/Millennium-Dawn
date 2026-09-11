@@ -13,6 +13,7 @@ boost 25
 DEN_legacy historical
 DEN_guarded socialist 150
 DEN_naked historical
+DEN_inline historical
 DEN_neutral -
 """
 
@@ -58,6 +59,12 @@ TREE = """focus_tree = {
 	focus = {
 		id = DEN_naked
 		x = 2
+	}
+
+	focus = {
+		id = DEN_inline
+		x = 4
+		ai_will_do = { base = 80 }
 	}
 
 	focus = {
@@ -143,6 +150,22 @@ class TestRewrite:
         assert "ai_will_do = {" in block
         assert "base = 1" in block
         assert "modifier = { factor = 25 DEN_ai_historical_path = yes }" in block
+
+    def test_single_line_ai_will_do_keeps_its_base(self):
+        output, _ = run()
+        block = output.split("id = DEN_inline")[1].split("focus = {")[0]
+        assert "base = 80" in block
+        assert "modifier = { factor = 25 DEN_ai_historical_path = yes }" in block
+        assert "modifier = { factor = 0 DEN_ai_not_historical_path = yes }" in block
+
+    def test_inline_ai_will_do_with_a_nested_block_is_rejected(self):
+        with pytest.raises(tool.MappingError):
+            run(
+                text=TREE.replace(
+                    "ai_will_do = { base = 80 }",
+                    "ai_will_do = { base = 80 modifier = { factor = 2 } }",
+                )
+            )
 
     def test_un_owning_strips_path_modifiers_and_keeps_the_rest(self):
         output, _ = run()

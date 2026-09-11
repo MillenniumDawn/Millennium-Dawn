@@ -8,7 +8,7 @@ error but does nothing at runtime.
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -77,6 +77,11 @@ _VAR_WRITE = re.compile(
     r"((?:global\.|ROOT\.|PREV\.|THIS\.|FROM\.|OWNER\.|CONTROLLER\.|[A-Z]{2,4}\.)?"
     r"[A-Za-z_][A-Za-z0-9_]*)"
 )
+
+# Timer-driven engine globals documented as a performance trap in
+# performance-patterns.md (GUI dirty counters): binding dirty to them redraws
+# the whole GUI every tick.
+_DIRTY_TIMER_GLOBALS: FrozenSet[str] = frozenset({"global.date", "global.num_days"})
 
 # global.X reference anywhere (read or write) — marks X as a global-namespace variable.
 _GLOBAL_REF = re.compile(r"\bglobal\.([A-Za-z_][A-Za-z0-9_]*)")
@@ -222,9 +227,9 @@ def _parse_gui_text(text: str, rel: str) -> Dict:
     }
 
 
-def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict:
+def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict[str, Any]:
     """Build a single scripted_gui block dict from its body text."""
-    block = {
+    block: Dict[str, Any] = {
         "name": name,
         "file": file,
         "line": line,
@@ -468,7 +473,7 @@ class Validator(BaseValidator):
                 "sgui.varwrites2",
                 filepath,
                 text,
-                lambda text=text: _parse_var_writes_text(text),
+                lambda: _parse_var_writes_text(text),
             )
             self._written_names.update(written)
             self._global_ref_names.update(global_refs)
@@ -659,6 +664,18 @@ class Validator(BaseValidator):
             if not d or d in ("yes", "no"):
                 continue
             if "[" in d or "]" in d:  # runtime-substituted name, can't resolve
+                continue
+            if d in _DIRTY_TIMER_GLOBALS:
+                self.add_issue(
+                    Severity.WARNING,
+                    "DIRTY_TIMER_GLOBAL",
+                    f"Scripted GUI '{block['name']}' has dirty = {d}, which changes "
+                    f"every tick, so the GUI redraws every frame. Use a dedicated "
+                    f"counter incremented only when the backing data changes "
+                    f"(performance-patterns.md, GUI dirty counters)",
+                    file=block["file"],
+                    line=block["line"],
+                )
                 continue
             base = d.rsplit(".", 1)[-1]
             if d.startswith("global."):

@@ -87,6 +87,40 @@ def test_position_x_bounds_exempt_orgs(tmp_path):
     assert v._issues[0].category == "trait-x-bounds"
 
 
+def test_percentage_org_modifier_whole_number_flagged(tmp_path):
+    v = _validator(tmp_path)
+    body = (
+        "\tinitial_trait = {\n"
+        "\t\torganization_modifier = {\n"
+        "\t\t\tmilitary_industrial_organization_size_up_requirement = -3\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert len(v._issues) == 1
+    assert v._issues[0].category == "org-modifier-out-of-range"
+    assert v._issues[0].line == 3
+
+
+def test_fractional_org_modifier_passes(tmp_path):
+    v = _validator(tmp_path)
+    body = (
+        "\torganization_modifier = {\n"
+        "\t\tmilitary_industrial_organization_size_up_requirement = -0.15\n"
+        "\t\tmilitary_industrial_organization_research_bonus = 0.10\n"
+        "\t}\n"
+    )
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert not v._issues
+
+
+def test_task_capacity_is_exempt_from_range_check(tmp_path):
+    v = _validator(tmp_path)
+    body = "\torganization_modifier = { military_industrial_organization_task_capacity = 3 }\n"
+    v._check_org_modifier_range(body, "f.txt", 0)
+    assert not v._issues
+
+
 def test_empty_on_complete_flagged(tmp_path):
     v = _validator(tmp_path)
     v._check_on_complete("\ton_complete = {\n\t}\n", "f.txt", 0)
@@ -270,6 +304,12 @@ equipments = {
 \t\treliability = 0.9
 \t\tmax_organisation = 0.2
 \t}
+\tcorvette = {
+\t\tis_archetype = yes
+\t\ttype = screen_ship
+\t\treliability = 0.9
+\t\tbuild_cost_ic = 900
+\t}
 }
 """
 
@@ -284,7 +324,7 @@ def _equipment_index(tmp_path):
 def _run_org_check(tmp_path, body, org_id="TST_org"):
     v = _validator(tmp_path)
     v._org_bodies = {org_id: body}
-    v._check_org_equipment_bonus(org_id, body, "f.txt", 0, _equipment_index(tmp_path))
+    v._check_org_trait_bonuses(org_id, body, "f.txt", 0, _equipment_index(tmp_path))
     return v
 
 
@@ -389,9 +429,7 @@ def test_include_supplies_the_equipment_type(tmp_path):
     )
     v = _validator(tmp_path)
     v._org_bodies = {"TST_org": body, "generic_shared": shared}
-    v._check_org_equipment_bonus(
-        "TST_org", body, "f.txt", 0, _equipment_index(tmp_path)
-    )
+    v._check_org_trait_bonuses("TST_org", body, "f.txt", 0, _equipment_index(tmp_path))
     assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
 
 
@@ -434,10 +472,78 @@ def test_commented_out_bonus_is_ignored(tmp_path):
     v = _validator(tmp_path)
     body = V.blank_comments(body)
     v._org_bodies = {"TST_org": body}
-    v._check_org_equipment_bonus(
-        "TST_org", body, "f.txt", 0, _equipment_index(tmp_path)
-    )
+    v._check_org_trait_bonuses("TST_org", body, "f.txt", 0, _equipment_index(tmp_path))
     assert not v._issues
+
+
+# ---- naval production_bonus checks (issue #3878) ---------------------------
+
+
+def _production_org(equipment_type: str, bonus: str, limit: str = "") -> str:
+    return (
+        f"\tequipment_type = {{ {equipment_type} }}\n"
+        "\ttrait = {\n"
+        "\t\ttoken = TST_trait\n"
+        f"{limit}"
+        f"\t\tproduction_bonus = {{ {bonus} }}\n"
+        "\t}\n"
+    )
+
+
+def test_efficiency_bonus_on_a_wholly_naval_scope_is_flagged(tmp_path):
+    body = _production_org("corvette", "production_efficiency_gain_factor = 0.10")
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
+    assert v._issues[0].severity == "error"
+    assert "corvette" in v._issues[0].message
+
+
+def test_conversion_speed_on_a_wholly_naval_scope_is_flagged(tmp_path):
+    body = _production_org("corvette", "production_conversion_speed_factor = 0.15")
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
+
+
+def test_type_category_token_counts_as_naval(tmp_path):
+    """`equipment_type` accepts a type category, which owns no `types` entry of
+    its own and so only resolves through the category set."""
+    body = _production_org("screen_ship", "production_efficiency_cap_factor = 0.08")
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
+
+
+def test_efficiency_bonus_on_a_land_scope_passes(tmp_path):
+    body = _production_org("AA_Equipment", "production_efficiency_gain_factor = 0.10")
+    assert not _run_org_check(tmp_path, body)._issues
+
+
+def test_live_production_keys_on_a_naval_scope_pass(tmp_path):
+    body = _production_org(
+        "corvette",
+        "production_capacity_factor = 0.10 production_cost_factor = -0.05",
+    )
+    assert not _run_org_check(tmp_path, body)._issues
+
+
+def test_mixed_naval_scope_is_its_own_category(tmp_path):
+    body = _production_org(
+        "AA_Equipment corvette", "production_efficiency_gain_factor = 0.10"
+    )
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-partial-naval"]
+    assert v._issues[0].severity == "warning"
+    assert "corvette" in v._issues[0].message
+    assert "AA_Equipment" in v._issues[0].message
+
+
+def test_limit_to_equipment_type_narrows_a_mixed_org_onto_ships(tmp_path):
+    body = _production_org(
+        "AA_Equipment corvette",
+        "production_efficiency_gain_factor = 0.10",
+        limit="\t\tlimit_to_equipment_type = { corvette }\n",
+    )
+    v = _run_org_check(tmp_path, body)
+    assert [i.category for i in v._issues] == ["mio-production-bonus-naval"]
 
 
 def test_nested_policy_form_checks_each_archetype_separately(tmp_path):
@@ -457,6 +563,46 @@ def test_nested_policy_form_checks_each_archetype_separately(tmp_path):
     v._check_nested_equipment_bonus(text, "p.txt", _equipment_index(tmp_path))
     assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
     assert "AA_Equipment" in v._issues[0].message
+
+
+def test_type_and_child_sharing_a_stat_is_flagged(tmp_path):
+    equipment_dir = tmp_path / "common" / "units" / "equipment"
+    equipment_dir.mkdir(parents=True, exist_ok=True)
+    (equipment_dir / "MD_ships.txt").write_text(
+        "equipments = {\n"
+        "\thelicopter_operator = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 28000\n"
+        "\t}\n"
+        "\tcarrier = {\n"
+        "\t\tis_archetype = yes\n"
+        "\t\ttype = carrier\n"
+        "\t\tbuild_cost_ic = 40000\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    text = (
+        "mio_policy_test = {\n"
+        "\tequipment_bonus = {\n"
+        "\t\tcarrier = {\n"
+        "\t\t\tbuild_cost_ic = -0.25\n"
+        "\t\t}\n"
+        "\t\thelicopter_operator = {\n"
+        "\t\t\tbuild_cost_ic = -0.25\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    v = _validator(tmp_path)
+    v._check_nested_equipment_bonus(
+        text, "p.txt", V.build_equipment_stat_index(str(tmp_path))
+    )
+    assert [i.category for i in v._issues] == ["bonus-type-archetype-stack"]
+    assert v._issues[0].severity == "error"
+    assert "helicopter_operator" in v._issues[0].message
+    assert "carrier" in v._issues[0].message
 
 
 def test_production_keys_are_not_equipment_stats(tmp_path):
@@ -762,9 +908,7 @@ def test_include_pointing_at_an_unknown_org_supplies_nothing(tmp_path):
     )
     v = _validator(tmp_path)
     v._org_bodies = {"TST_org": body}
-    v._check_org_equipment_bonus(
-        "TST_org", body, "f.txt", 0, _equipment_index(tmp_path)
-    )
+    v._check_org_trait_bonuses("TST_org", body, "f.txt", 0, _equipment_index(tmp_path))
     assert not v._issues
 
 
@@ -913,3 +1057,298 @@ def test_staged_run_with_no_mio_input_skips(tmp_path, write_path, monkeypatch):
 
     assert v._issues == []
     assert any("No staged MIO files" in line for line in v.output_lines)
+
+
+def test_staged_interface_edit_rescans_all_mios(tmp_path, write_path, monkeypatch):
+    _run_repo(tmp_path, write_path)
+    sprite = tmp_path / "interface" / "mio.gfx"
+    sprite.parent.mkdir(parents=True)
+    sprite.write_text("spriteType = { name = GFX_test }\n", encoding="utf-8")
+    monkeypatch.setenv("MD_STAGED_FILES", "interface/mio.gfx")
+
+    v = V.Validator(str(tmp_path), staged_only=True)
+
+    assert v._org_files()
+
+
+def test_staged_sprite_deletion_rescans_all_mios(tmp_path, write_path):
+    _run_repo(tmp_path, write_path)
+    sprite = tmp_path / "interface" / "mio.gfx"
+    sprite.parent.mkdir(parents=True)
+    sprite.write_text("spriteType = { name = GFX_test }\n", encoding="utf-8")
+    sprite.unlink()
+    v = V.Validator(str(tmp_path))
+    v.staged_only = True
+    v.staged_files = [sprite]
+
+    assert v._org_files()
+
+
+def _sprite_set(*names):
+    return frozenset(names) | {f"GFX_pad_{i}" for i in range(V._MIN_SPRITE_INDEX)}
+
+
+def test_icon_that_is_not_a_gfx_name_is_flagged(tmp_path):
+    v = _validator(tmp_path)
+    v._sprites = _sprite_set()
+
+    v._check_icons("\ticon = x # TODO: needs a company logo", "orgs.txt")
+
+    assert [i.category for i in v._issues] == ["mio-icon-not-gfx"]
+    assert v._issues[0].line == 1
+
+
+def test_unresolved_gfx_icon_is_a_warning(tmp_path):
+    v = _validator(tmp_path)
+    v._sprites = _sprite_set("GFX_idea_other_org")
+
+    v._check_icons("\ticon = GFX_idea_ALG_seriana\n", "orgs.txt")
+
+    assert [i.category for i in v._issues] == ["mio-icon-unresolved"]
+    assert v._issues[0].severity == "warning"
+
+
+def test_resolved_gfx_icon_is_clean(tmp_path):
+    v = _validator(tmp_path)
+    v._sprites = _sprite_set(
+        "GFX_idea_ALG_khenchela_arms", "GFX_generic_mio_trait_icon_reliability"
+    )
+
+    v._check_icons(
+        "\ticon = GFX_idea_ALG_khenchela_arms\n"
+        "\ttrait = {\n\t\ticon = GFX_generic_mio_trait_icon_reliability\n\t}\n",
+        "orgs.txt",
+    )
+
+    assert not v._issues
+
+
+def test_small_sprite_index_skips_resolution(tmp_path):
+    v = _validator(tmp_path)
+    v._sprites = frozenset({"GFX_something"})
+
+    v._check_icons("\ticon = GFX_idea_missing\n", "orgs.txt")
+
+    assert not v._issues
+
+
+def test_quoted_icon_value_is_checked(tmp_path):
+    v = _validator(tmp_path)
+    v._sprites = _sprite_set()
+
+    v._check_icons('\ticon = "bare_token"\n', "orgs.txt")
+
+    assert [i.category for i in v._issues] == ["mio-icon-not-gfx"]
+
+
+def test_icon_scanner_ignores_quoted_assignments_and_accepts_punctuation(tmp_path):
+    v = _validator(tmp_path)
+    v._sprites = _sprite_set("GFX_company-logo")
+
+    v._check_icons(
+        '\tdesc = "icon = not_a_reference"\n'
+        "\ticon = GFX_company-logo # comment icon = fake\n",
+        "orgs.txt",
+    )
+
+    assert not v._issues
+
+
+def test_icon_scanner_reports_empty_values(tmp_path):
+    v = _validator(tmp_path)
+    v._sprites = _sprite_set()
+
+    v._check_icons("\ticon = {}\n", "orgs.txt")
+
+    assert [i.category for i in v._issues] == ["mio-icon-not-gfx"]
+
+
+def _geometry_trait(
+    token, x=None, y=None, rel=None, parents=None, any_parents=None, mutual=None
+):
+    text = "\ttrait = {\n\t\ttoken = " + token + "\n"
+    if parents:
+        text += "\t\tall_parents = { " + " ".join(parents) + " }\n"
+    if any_parents:
+        text += "\t\tany_parent = { " + " ".join(any_parents) + " }\n"
+    if mutual:
+        text += "\t\tmutually_exclusive = { " + " ".join(mutual) + " }\n"
+    if rel:
+        text += "\t\trelative_position_id = " + rel + "\n"
+    if x is not None or y is not None:
+        text += "\t\tposition = { x = " + str(x) + " y = " + str(y) + " }\n"
+    text += "\t}\n"
+    return text
+
+
+def _index(*bodies):
+    index = {}
+    for body in bodies:
+        for token, trait in V._parse_org_traits(body).items():
+            index.setdefault(token, trait)
+    return index
+
+
+def _geometry_validator(tmp_path, index):
+    v = _validator(tmp_path)
+    v._traits = index
+    v._reported_mutex_rows = set()
+    return v
+
+
+def test_real_mio_relative_position_is_trait_level():
+    body = (
+        "\ttrait = {\n"
+        "\t\ttoken = AST_bae_trait_hull_reinforcement\n"
+        "\t\tall_parents = { AST_bae_trait_combat_system_integration }\n"
+        "\t\trelative_position_id = AST_bae_trait_combat_system_integration\n"
+        "\t\tposition = { x = 0 y = 1 }\n"
+        "\t}\n"
+    )
+
+    trait = V._parse_org_traits(body)["AST_bae_trait_hull_reinforcement"]
+
+    assert trait.rel == "AST_bae_trait_combat_system_integration"
+    assert (trait.x, trait.y) == (0, 1)
+
+
+def test_nested_relative_position_is_not_a_trait_anchor():
+    body = (
+        "\ttrait = {\n"
+        "\t\ttoken = TST_nested_relative\n"
+        "\t\tposition = { x = 0 y = 1 relative_position_id = wrong }\n"
+        "\t}\n"
+    )
+
+    trait = V._parse_org_traits(body)["TST_nested_relative"]
+
+    assert trait.rel is None
+
+
+def test_child_below_parent_is_clean(tmp_path):
+    body = _geometry_trait("root", x=0, y=0) + _geometry_trait(
+        "child", x=0, y=1, rel="root", parents=["root"]
+    )
+    v = _geometry_validator(tmp_path, _index(body))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert not v._issues
+
+
+def test_child_on_or_above_parent_row_is_flagged(tmp_path):
+    body = _geometry_trait("root", x=0, y=0) + _geometry_trait(
+        "child", x=0, y=0, rel="root", parents=["root"]
+    )
+    v = _geometry_validator(tmp_path, _index(body))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert [i.category for i in v._issues] == ["trait-geometry-parent-row"]
+    assert "`child`" in v._issues[0].message and "`root`" in v._issues[0].message
+
+    v = _geometry_validator(tmp_path, _index(body))
+    body_above = _geometry_trait("root", x=0, y=2) + _geometry_trait(
+        "child", x=0, y=1, parents=["root"]
+    )
+    v._check_trait_geometry("TST_org", body_above, "orgs.txt", 0)
+    assert [i.category for i in v._issues] == ["trait-geometry-parent-row"]
+
+
+def test_relative_position_chain_resolves_across_orgs(tmp_path):
+    other_org = _geometry_trait("cross_org_root", x=2, y=5)
+    body = _geometry_trait("mid", x=0, y=1, rel="cross_org_root") + _geometry_trait(
+        "leaf", x=0, y=1, rel="mid", parents=["mid"]
+    )
+    v = _geometry_validator(tmp_path, _index(body, other_org))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert not v._issues
+
+
+def test_unresolvable_anchor_reports_nothing(tmp_path):
+    body = _geometry_trait("orphan", x=0, y=1, rel="missing_anchor")
+    v = _geometry_validator(tmp_path, _index(body))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert not v._issues
+
+
+def test_position_anchor_cycle_reports_nothing(tmp_path):
+    body = (
+        _geometry_trait("a", x=0, y=1, rel="b")
+        + _geometry_trait("b", x=0, y=1, rel="a")
+        + _geometry_trait("child", x=0, y=1, rel="a", parents=["a"])
+    )
+    v = _geometry_validator(tmp_path, _index(body))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert not v._issues
+
+
+def test_mutually_exclusive_traits_on_different_rows_are_flagged(tmp_path):
+    body = _geometry_trait("left", x=0, y=2, mutual=["right"]) + _geometry_trait(
+        "right", x=1, y=3
+    )
+    v = _geometry_validator(tmp_path, _index(body))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert [i.category for i in v._issues] == ["trait-geometry-mutex-row"]
+
+
+def test_mutually_exclusive_traits_sharing_a_row_are_clean(tmp_path):
+    body = _geometry_trait("left", x=0, y=2, mutual=["right"]) + _geometry_trait(
+        "right", x=1, y=2
+    )
+    v = _geometry_validator(tmp_path, _index(body))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert not v._issues
+
+
+def test_all_parents_with_mutually_exclusive_parents_is_flagged(tmp_path):
+    body = (
+        _geometry_trait("left", x=0, y=0, mutual=["right"])
+        + _geometry_trait("right", x=1, y=0)
+        + _geometry_trait("child", x=0, y=1, parents=["left", "right"])
+    )
+    v = _geometry_validator(tmp_path, _index(body))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert [i.category for i in v._issues] == ["trait-geometry-mutex-parents"]
+    assert "any_parent" in v._issues[0].message
+
+
+def test_any_parent_with_mutually_exclusive_parents_is_clean(tmp_path):
+    body = (
+        _geometry_trait("left", x=0, y=0, mutual=["right"])
+        + _geometry_trait("right", x=1, y=0)
+        + _geometry_trait("child", x=0, y=1, any_parents=["left", "right"])
+    )
+    v = _geometry_validator(tmp_path, _index(body))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert not v._issues
+
+
+def test_unknown_parent_or_mutex_tokens_report_nothing(tmp_path):
+    body = _geometry_trait(
+        "child",
+        x=0,
+        y=1,
+        rel="no_such_anchor",
+        parents=["ghost_parent"],
+        mutual=["ghost_peer"],
+    )
+    v = _geometry_validator(tmp_path, _index(body))
+
+    v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
+
+    assert not v._issues
