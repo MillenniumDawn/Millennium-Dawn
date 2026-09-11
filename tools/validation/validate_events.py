@@ -55,8 +55,12 @@ _LONG_FORM_PATTERN = re.compile(
 # sprite). Sprite names may contain `.` (frame suffixes like GFX_CTC.5) and `-`
 # (e.g. GFX_Polizistin-Kiesewetter), so both are part of the captured name.
 _EVENT_PICTURE_REF = re.compile(r'\bpicture\s*=\s*"?(GFX_[A-Za-z0-9_.\-]+)"?')
-_EVENT_PICTURE_FIELD = re.compile(r"\bpicture\s*=")
 _PICTURE_ASSIGN = re.compile(r"\bpicture\s*=\s*")
+
+# Stand-in art used while drafting an event; shipped events need real art.
+_PLACEHOLDER_PICTURES = frozenset(
+    {"GFX_placeholder_events", "GFX_placeholder_news", "GFX_news_md4"}
+)
 
 
 def _own_picture_refs(body: str) -> List[Tuple[str, int]]:
@@ -474,6 +478,8 @@ def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
 # bound on its own is an expiry guard on a chain event and says nothing about
 # scheduling, so only the lower bound is matched here.
 _DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
+# Any bound is redundant on an event the yearly effects already schedule.
+_DATE_BOUND_RE = re.compile(r"\bdate\s*[<>]=?\s*\d{4}\.\d{1,2}\.\d{1,2}")
 _TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
 
 
@@ -499,12 +505,10 @@ def _event_trigger_body(body: str) -> Optional[str]:
     return None
 
 
-def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
-    """Pool worker: events whose own trigger carries a `date >` bound.
-
-    Returns (id, file, line) so a finding can point at the definition.
-    """
-    filename = args[0]
+def _events_with_trigger_date(
+    filename: str, pattern: "re.Pattern[str]"
+) -> List[Tuple[str, str, int]]:
+    """(id, file, line) of every event whose own trigger matches `pattern`."""
     cleaned = _read_cleaned_text(filename)
     if cleaned is None:
         return []
@@ -514,9 +518,19 @@ def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, 
         if not eid:
             continue
         trigger = _event_trigger_body(body)
-        if trigger and _DATE_LOWER_BOUND_RE.search(trigger):
+        if trigger and pattern.search(trigger):
             out.append((eid, filename, cleaned.count("\n", 0, start) + 1))
     return out
+
+
+def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+    """Pool worker: events whose own trigger carries a `date >` bound."""
+    return _events_with_trigger_date(args[0], _DATE_LOWER_BOUND_RE)
+
+
+def scan_date_bounded_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+    """Pool worker: events whose own trigger carries any `date` comparison."""
+    return _events_with_trigger_date(args[0], _DATE_BOUND_RE)
 
 
 def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
@@ -924,7 +938,6 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "file": basename,
                 "line": text.count("\n", 0, start) + 1,
                 "is_hidden": "hidden = yes" in body_nc,
-                "has_picture": bool(_EVENT_PICTURE_FIELD.search(body_nc)),
                 "picture_refs": [
                     (sprite, picture_base_line + body_c.count("\n", 0, offset))
                     for sprite, offset in _own_picture_refs(body_c)
@@ -962,7 +975,7 @@ class Validator(BaseValidator):
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
         Each metadata dict has: id (or None for malformed blocks), type, file,
-        is_hidden, has_picture, picture_refs, is_triggered_only, fire_only_once,
+        is_hidden, picture_refs, is_triggered_only, fire_only_once,
         is_major, has_mtth, option_count, title_desc_refs.
         """
         if self._meta_cache is not None:
@@ -1414,6 +1427,51 @@ class Validator(BaseValidator):
             )
         return results
 
+    def validate_scheduled_date_bounds(self):
+        """Flag scheduled events whose own trigger still carries a date bound.
+
+        A `trigger_year_YYYY_events` slot already fixes the year and `days =`
+        the day, so a `date` comparison on the event is redundant, and a
+        `date <` bound can silently drop the event when `random_days` spills
+        past it. Only events whose sole fire source is the yearly effects are
+        reported: a second fire path (focus, decision, chain) may need the guard.
+        """
+        self._log_section(
+            "Checking scheduled events for redundant date bounds in their trigger..."
+        )
+
+        bounded_args = [
+            (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
+        ]
+        bounded: List[Tuple[str, str, int]] = []
+        for result in self._pool_map(
+            scan_date_bounded_events, bounded_args, chunksize=10
+        ):
+            bounded.extend(result)
+        self.log(f"  Found {len(bounded)} events with a date bound")
+
+        sources: Dict[str, Set[str]] = {}
+        for eid, filename, _line in self._get_event_fires():
+            sources.setdefault(eid, set()).add(self._rel_posix(filename))
+        if not any(_YEARLY_EFFECTS_REL in rels for rels in sources.values()):
+            self.log(f"  {_YEARLY_EFFECTS_REL} schedules nothing, skipping")
+            return
+
+        results = [
+            f"{eid} - {self._rel_posix(filename)}:{line} is scheduled from "
+            f"{_YEARLY_EFFECTS_REL}, so the date bound in its trigger is redundant "
+            "(remove it; drop the trigger block if nothing else is left)"
+            for eid, filename, line in sorted(bounded)
+            if sources.get(eid) == {_YEARLY_EFFECTS_REL}
+        ]
+        self._report(
+            results,
+            "✓ No scheduled event carries a redundant date bound",
+            f"Events scheduled from {_YEARLY_EFFECTS_REL} with a redundant date bound:",
+            Severity.WARNING,
+            category="scheduled-event-date-bound",
+        )
+
     def validate_mtth_triggered_only(self):
         """Flag events with both mean_time_to_happen and is_triggered_only.
 
@@ -1757,24 +1815,55 @@ class Validator(BaseValidator):
         )
 
     def validate_event_picture_omissions(self):
-        """Warn visible country/news events that do not declare a picture."""
+        """Flag visible country/news events that declare no picture of their own.
+
+        Reads `picture_refs` (depth 0 of the event body) rather than a body-wide
+        scan, so a `create_country_leader = { picture = ... }` portrait nested
+        in an option or `immediate` block does not count as the event's picture.
+        News events are clean and gate as errors; country events carry a
+        backlog of portrait-only events and stay warnings until cleared.
+        """
         self._log_section("Checking visible country/news events have pictures...")
 
         meta, _ = self._get_event_metadata()
+        omitted = {"country_event": [], "news_event": []}
+        for ev in meta:
+            if ev["type"] in omitted and not ev["is_hidden"] and not ev["picture_refs"]:
+                omitted[ev["type"]].append(f"{ev['id'] or 'unknown'} - {ev['file']}")
+
+        self._report(
+            omitted["news_event"],
+            "✓ All visible news events have pictures",
+            "Visible news events with no picture field of their own:",
+            Severity.ERROR,
+            category="news-event-picture-omitted",
+        )
+        self._report(
+            omitted["country_event"],
+            "✓ All visible country events have pictures",
+            "Visible country events with no picture field of their own:",
+            Severity.WARNING,
+            category="event-picture-omitted",
+        )
+
+    def validate_placeholder_event_pictures(self):
+        """Flag events whose own picture is one of the drafting stand-in sprites."""
+        self._log_section("Checking for events using placeholder pictures...")
+
+        meta, _ = self._get_event_metadata()
         results = [
-            f"{ev['id'] or 'unknown'} - {ev['file']}"
+            (f"{ev['id'] or 'unknown'} - {sprite}", ev["file"], line)
             for ev in meta
-            if ev["type"] in ("country_event", "news_event")
-            and not ev["is_hidden"]
-            and not ev["has_picture"]
+            for sprite, line in ev["picture_refs"]
+            if sprite in _PLACEHOLDER_PICTURES
         ]
 
         self._report(
             results,
-            "✓ All visible country/news events have pictures",
-            "Visible country/news events missing a picture field:",
-            Severity.WARNING,
-            category="event-picture-omitted",
+            "✓ No events use a placeholder picture",
+            "Events using placeholder art (replace with real event art):",
+            Severity.ERROR,
+            category="placeholder-event-picture",
         )
 
     def validate_event_pictures(self):
@@ -1953,6 +2042,7 @@ class Validator(BaseValidator):
         self.validate_event_call_long_form()
         self.validate_triggered_only_unreferenced()
         self.validate_date_gated_scheduling()
+        self.validate_scheduled_date_bounds()
         self.validate_missing_localisation()
         self.validate_mtth_triggered_only()
         self.validate_hidden_event_options()
@@ -1964,6 +2054,7 @@ class Validator(BaseValidator):
         self.validate_event_fire_types()
         self.validate_undefined_event_fires()
         self.validate_event_pictures()
+        self.validate_placeholder_event_pictures()
         self.validate_event_picture_formats()
         self.validate_fire_only_once_in_loop()
         self.validate_major_event_in_loop()
