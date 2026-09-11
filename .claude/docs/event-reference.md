@@ -197,6 +197,8 @@ A news event's picture is a different shape from a country event's, and each win
 
 A `hidden = yes` event opens no window, so a `picture` on one is dead data and is reported as `hidden-event-picture`.
 
+`GFX_placeholder_events`, `GFX_placeholder_news` and `GFX_news_md4` are drafting stand-ins, not shippable art. Any event pointing at one is reported as `placeholder-event-picture` (ERROR).
+
 ## Conditional Descriptions
 
 Use `text =` inside desc blocks for conditional descriptions, **not** `desc =`:
