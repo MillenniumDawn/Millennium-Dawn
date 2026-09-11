@@ -16,7 +16,6 @@ from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from image_size import read_image_size
 from shared_utils import (
     ai_only_decision_categories,
     atomic_write_text,
@@ -31,7 +30,7 @@ from shared_utils import (
     strip_comments,
     strip_inline_comment,
 )
-from sprite_index import build_sprite_index, build_sprite_texture_index
+from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -188,16 +187,22 @@ def _slot_for_size(width: int, height: int) -> Optional[str]:
     return None
 
 
-def _resolved_sprite(kind: str, value: str, textures: Dict[str, str]) -> Optional[str]:
+def _resolved_sprite(kind: str, value: str, sprites: SpriteSizeIndex) -> Optional[str]:
     """Return the sprite name the engine renders for one icon/picture value."""
     for candidate in _sprite_candidates(kind, value):
-        if candidate in textures:
+        if candidate in sprites:
             return candidate
     return None
 
 
+_MOD_ART_HINT = "resize with tools/assets/resize_decision_icons.py"
+_VANILLA_ART_HINT = (
+    "vanilla art: use a sprite sized for this slot or add a resized MD copy"
+)
+
+
 def _icon_type_message(
-    kind: str, owner: str, value: str, textures: Dict[str, str]
+    kind: str, owner: str, value: str, sprites: SpriteSizeIndex
 ) -> Optional[str]:
     """Return a finding when the value's art belongs to a different slot.
 
@@ -206,19 +211,20 @@ def _icon_type_message(
     """
     if "[" in value or "]" in value:
         return None
-    sprite = _resolved_sprite(kind, value, textures)
+    sprite = _resolved_sprite(kind, value, sprites)
     if sprite is None:
         return None
-    size = read_image_size(textures[sprite])
+    size = sprites.size(sprite)
     if size is None:
         return None
     actual = _slot_for_size(*size)
     if actual is None or actual == kind:
         return None
+    hint = _VANILLA_ART_HINT if sprites.is_vanilla_only(sprite) else _MOD_ART_HINT
     return (
         f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> {sprite} is "
         f"{size[0]}x{size[1]}, which is {_SLOT_LABEL[actual]} art; a "
-        f"{_SLOT_LABEL[kind]} is {_SLOT_TYPICAL_SIZE[kind]}"
+        f"{_SLOT_LABEL[kind]} is {_SLOT_TYPICAL_SIZE[kind]} ({hint})"
     )
 
 
@@ -3022,14 +3028,19 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decision icons match their UI slot...")
 
-        textures = build_sprite_texture_index(self.mod_path)
-        if len(textures) < 1000:
+        sprites = build_sprite_size_index(self.mod_path, self._pool_map)
+        if len(sprites) < 1000:
             self.log(
-                f"  Only {len(textures)} GFX textures loaded — sprite definitions "
+                f"  Only {len(sprites)} GFX textures loaded — sprite definitions "
                 "did not load; skipping the icon type check",
                 "warning",
             )
             return
+        self.log(
+            "  Vanilla sprite sizes from vanilla_sprites.txt (no HOI4 install)"
+            if sprites.manifest_backed
+            else "  Vanilla sprite sizes read from the HOI4 install"
+        )
 
         files = self._collect_files(["common/decisions/**/*.txt"], ignore_staged=True)
         ref_lists = self._pool_map(
@@ -3039,11 +3050,16 @@ class Validator(BaseValidator):
         results = []
         for filepath, refs in zip(files, ref_lists):
             for owner, kind, value, line in refs:
-                msg = _icon_type_message(kind, owner, value, textures)
+                msg = _icon_type_message(kind, owner, value, sprites)
                 if not msg:
                     continue
                 results.append((msg, os.path.relpath(filepath, self.mod_path), line))
 
+        if sprites.unreadable:
+            self.log(
+                f"  {sprites.unreadable} referenced textures not on disk (skipped)",
+                "warning",
+            )
         self._report(
             results,
             "✓ All decision icons use art sized for their slot",

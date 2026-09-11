@@ -108,6 +108,9 @@ def _discovery_env():
 def _repo_path(filepath):
     absolute = os.path.abspath(filepath)
     parent = absolute if os.path.isdir(absolute) else os.path.dirname(absolute)
+    discovery_env = os.environ.copy()
+    discovery_env.pop("GIT_DIR", None)
+    discovery_env.pop("GIT_WORK_TREE", None)
     try:
         result = subprocess.run(
             ["git", "-C", parent, "rev-parse", "--show-toplevel"],
