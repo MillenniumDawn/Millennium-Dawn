@@ -1606,6 +1606,8 @@ class Validator(BaseValidator):
         News art is roughly 397x153 and country art 217x163, and each window
         draws its picture at the texture's native size, so a swap overflows the
         frame or leaves a gap. Hidden events are skipped — nothing renders.
+
+        Reports as ERROR: the #3993 backlog is cleared, so this gates --strict.
         """
         self._log_section("Checking event pictures match their window...")
 
@@ -1646,7 +1648,7 @@ class Validator(BaseValidator):
             results,
             "✓ All event pictures use art sized for their window",
             "Event pictures using art authored for the other event window:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="event-picture-format-mismatch",
         )
 
