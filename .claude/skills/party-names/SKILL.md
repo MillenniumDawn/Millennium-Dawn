@@ -6,7 +6,7 @@ description: 'Fill or rework a country''s political party localisation in the MD
 Fill in a country's political parties across all 24 subideology slots: the localisation
 keys, the descriptions, and the scripted-localisation hooks that make them render.
 
-Requested arguments: $ARGUMENTS (a 3-letter TAG; ask if none given).
+Requested arguments: $ARGUMENTS (one or more 3-letter TAGs; see Defaults when none given).
 
 Read `.claude/docs/party-loc-reference.md` first — it holds the slot table, the key format,
 the icon rules, the hook mechanics, and the verification checklist. This skill is the
@@ -15,6 +15,40 @@ procedure; that doc is the reference.
 **Hard limit: at most 5 TAGs per PR.** When asked for more, split the work into separate
 branches/PRs of 5 TAGs or fewer and say so up front. Never append a sixth TAG to an existing
 party-loc branch.
+
+## Defaults
+
+These are settled; do not ask about them again.
+
+- **No TAG given:** run `gh issue view 3895 --json body -q .body`, take the first `- [ ]`
+  tag, and work that one tag only.
+- **Branch:** always a fresh `3895-party-loc-batch-N` off `origin/main`, where N is one
+  more than the highest existing local or remote `3895-party-loc-batch-*`. Never reuse or
+  extend an old batch branch.
+- **Research, then re-verify:** one research agent per tag, then a separate fresh agent
+  re-verifies every party, slot fit and gate date against sources. Only after that is the
+  mapping presented for confirmation (step 3).
+- **Style standard:** the `ENG` block for shape (header, `\n\n`, two paragraphs) and the
+  `HOL` block for prose register. Present tense; what the party stands for, how it governs
+  or campaigns, its foreign-policy posture where relevant, and where its leverage lies. No
+  leader parades, chronologies or founding narratives. Target 90–120 words per `_desc`
+  including the header.
+- **Dates:** no dates before 2000 at all, not even founding years. Post-2000 events may
+  carry a year but never a day-level date; no election results, percentages, seat counts,
+  or "entered/left parliament" outcomes; no speculation about future outcomes.
+- **Gating:** only on verified identity changes (rename, merger, ban, dissolution), never
+  on a founding alone.
+- **Icons:** a generic sprite means no `_icon` key and no `_icon` hook. Ignore reviewers
+  that flag "missing icon keys" for generic sprites.
+- **Slot 23:** show the monarchist party while out of power and the royal house when
+  `check_variable = { ruling_party = 23 }` (AUS Habsburg precedent).
+- **Moving a party between slots:** first grep the country's focus tree, events and
+  `*_political_leaders.txt` for `ruling_party = N` and `*_are_in_power` gates, and move the
+  leader block with the party.
+- **After writing:** a second style recheck against ENG/HOL plus a grep of the block for
+  any `19xx` year, then the validator.
+- **PR:** title "Standardize party localisation for TAG[, TAG]", no changelog entry, and tick
+  the tag's box in #3895 when the PR is opened.
 
 ## Steps
 
@@ -50,6 +84,9 @@ party-loc branch.
    Where a country's party of a given slot changed identity mid-period (a ban, a rename, a
    successor), plan a date- or flag-gated variant pair instead of picking one.
 
+   Then hand the full candidate list to a fresh agent to re-verify from scratch (see
+   Defaults). Drop or downgrade anything it cannot confirm.
+
 3. **Confirm the mapping before writing.**
 
    Present the slot→party table and the slots you intend to leave generic. This is where
@@ -77,7 +114,9 @@ party-loc branch.
 
 7. **Verify**
 
-   Run `python tools/validation/validate_party_loc.py --tag <TAG>` until it is clean, then
-   work the rest of the reference doc's verification checklist. Confirm the branch touches
-   the party blocks of at most 5 TAGs before pushing. Finally, in game, open the politics
-   view at the start date and at any date the gates split on.
+   Run the post-write style recheck from Defaults, then
+   `python tools/validation/validate_party_loc.py --tag <TAG>` until it is clean, then work
+   the rest of the reference doc's verification checklist. Confirm the branch touches the
+   party blocks of at most 5 TAGs before pushing. Open the PR and tick the tag's box in
+   #3895. Finally, in game, open the politics view at the start date and at any date the
+   gates split on.
