@@ -107,6 +107,18 @@ def test_graphics_and_map_paths_skip_expensive_content_job(path):
     assert groups["content"] is False
 
 
+@pytest.mark.parametrize(
+    "path",
+    ("gfx/interface/decisions/politics/crisis.dds", "interface/MD_decisions.gfx"),
+)
+def test_decision_art_change_runs_decision_validation(path):
+    groups = change_groups.classify([path])
+
+    assert groups["decisions"] is True
+    assert groups["content"] is True
+    assert groups["full_suite"] is False
+
+
 def test_file_path_roots_match_validator_content_roots():
     assert set(change_groups._FILE_PATH_ROOTS) == set(CONTENT_ROOTS)
 

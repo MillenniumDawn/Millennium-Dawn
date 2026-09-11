@@ -443,7 +443,9 @@ def collapse_or_compact(
     Single-leaf test (evaluated outside string literals and comments):
     ``leaves = (#"=<>") - (#"{")``; collapse iff ``leaves == 1`` and braces
     balance. Comparison operators ``<``/``>`` count as leaves alongside ``=`` so a
-    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. Bails to
+    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. A bare
+    token list (``focus = { A B C }``) counts as one leaf per token, so a
+    multi-line list stays multi-line. Bails to
     ``compact_block`` if any line carries a ``#`` comment. When *indent* is None
     the single-line form keeps the block's existing leading whitespace (from
     ``block_lines[0]``); otherwise *indent* is used as the prefix.
@@ -478,6 +480,11 @@ def collapse_or_compact(
 
     if n_open != n_close or n_leaf - n_open != 1:
         return compact_block(collapse_nested_blocks(block_lines))
+
+    unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
+    for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
+        if len(group.split()) > 1:
+            return compact_block(collapse_nested_blocks(block_lines))
 
     return [f"{indent}{_normalize_oneline_braces(text)}"]
 
@@ -792,14 +799,146 @@ HOI4_INSTALL_PATHS = [
 ]
 
 
+_HOI4_GAME_SUBDIR = os.path.join("steamapps", "common", "Hearts of Iron IV")
+_STEAM_VDF_PATH_RE = re.compile(r'"path"\s*"([^"]+)"')
+# Keys the MD VS Code extensions and CWTools keep the game path under.
+_EDITOR_INSTALL_KEYS = (
+    "mdHoi4Utilities.installPath",
+    "hoi4ModUtilities.installPath",
+    "cwtools.cache.hoi4",
+)
+_EDITOR_INSTALL_RE = re.compile(
+    r'"(?:'
+    + "|".join(re.escape(k) for k in _EDITOR_INSTALL_KEYS)
+    + r')"\s*:\s*"([^"]+)"'
+)
+
+
+def _steam_roots() -> List[str]:
+    """Steam client roots: the Windows registry first, then the Unix defaults."""
+    roots: List[str] = []
+    if sys.platform == "win32":
+        try:
+            import winreg
+
+            for hive, key, value in (
+                (winreg.HKEY_CURRENT_USER, r"Software\Valve\Steam", "SteamPath"),
+                (
+                    winreg.HKEY_LOCAL_MACHINE,
+                    r"SOFTWARE\WOW6432Node\Valve\Steam",
+                    "InstallPath",
+                ),
+            ):
+                try:
+                    with winreg.OpenKey(hive, key) as handle:
+                        roots.append(str(winreg.QueryValueEx(handle, value)[0]))
+                except OSError:
+                    continue
+        except ImportError:
+            pass
+    roots.extend(
+        os.path.expanduser(p)
+        for p in (
+            "~/.steam/steam",
+            "~/.local/share/Steam",
+            "~/.steam/debian-installation",
+            "~/Library/Application Support/Steam",
+        )
+    )
+    return roots
+
+
+def _steam_library_installs() -> List[str]:
+    """Game dirs under every library listed in Steam's libraryfolders.vdf."""
+    found: List[str] = []
+    for root in _steam_roots():
+        for vdf in (
+            os.path.join(root, "steamapps", "libraryfolders.vdf"),
+            os.path.join(root, "config", "libraryfolders.vdf"),
+        ):
+            try:
+                with open(vdf, encoding="utf-8", errors="replace") as fh:
+                    text = fh.read()
+            except OSError:
+                continue
+            for lib in _STEAM_VDF_PATH_RE.findall(text):
+                candidate = os.path.join(lib.replace("\\\\", "\\"), _HOI4_GAME_SUBDIR)
+                if candidate not in found:
+                    found.append(candidate)
+    return found
+
+
+def _editor_settings_files() -> List[str]:
+    mod_root = os.path.normpath(os.path.join(os.path.dirname(__file__), ".."))
+    vscode = os.path.join(mod_root, ".vscode")
+    files = [os.path.join(vscode, "settings.json")]
+    try:
+        files.extend(
+            os.path.join(vscode, f)
+            for f in sorted(os.listdir(vscode))
+            if f.endswith(".code-workspace")
+        )
+    except OSError:
+        pass
+    appdata = os.environ.get("APPDATA", "")
+    files.extend(
+        os.path.expanduser(p)
+        for p in (
+            os.path.join(appdata, "Code", "User", "settings.json"),
+            os.path.join(appdata, "Code - Insiders", "User", "settings.json"),
+            "~/.config/Code/User/settings.json",
+            "~/Library/Application Support/Code/User/settings.json",
+        )
+        if p
+    )
+    return files
+
+
+def _editor_settings_installs() -> List[str]:
+    """Game paths the VS Code HOI4 extensions were configured with.
+
+    Settings files are JSONC (comments, trailing commas), so the keys are
+    picked out with a regex rather than json.loads.
+    """
+    found: List[str] = []
+    for path in _editor_settings_files():
+        try:
+            with open(path, encoding="utf-8-sig", errors="replace") as fh:
+                text = fh.read()
+        except OSError:
+            continue
+        for raw in _EDITOR_INSTALL_RE.findall(text):
+            candidate = raw.replace("\\\\", "\\").rstrip("\\/")
+            if candidate and candidate not in found:
+                found.append(candidate)
+    return found
+
+
+# Probed after $HOI4_PATH and before the fixed HOI4_INSTALL_PATHS list; tests
+# blank it so a developer machine with the game does not leak into assertions.
+HOI4_DISCOVERY_SOURCES: List[Callable[[], List[str]]] = [
+    _steam_library_installs,
+    _editor_settings_installs,
+]
+
+
 def find_hoi4_install(explicit_path: Optional[str] = None) -> Optional[str]:
-    """Return the first existing HOI4 install root, checking explicit_path, $HOI4_PATH, then HOI4_INSTALL_PATHS."""
+    """Return the first existing HOI4 install root.
+
+    Order: explicit_path, $HOI4_PATH, every Steam library folder, the game path
+    from the VS Code HOI4 extension settings, then HOI4_INSTALL_PATHS.
+    """
     candidates: List[str] = []
     if explicit_path:
         candidates.append(explicit_path)
     env_path = os.environ.get("HOI4_PATH")
     if env_path:
         candidates.append(env_path)
+    for source in HOI4_DISCOVERY_SOURCES:
+        try:
+            candidates.extend(source())
+        except OSError:
+            continue
     candidates.extend(HOI4_INSTALL_PATHS)
     for base in candidates:
         if base and os.path.isdir(base):
