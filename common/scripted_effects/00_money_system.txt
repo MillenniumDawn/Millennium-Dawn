@@ -22,10 +22,6 @@
 # military_rate - cost of military law
 # personnel_cost - how much you pay soldiers and maintenance on equipment
 
-# treasury_cyber_small - cost of small investments in cyber security infrastructure
-# treasury_cyber_medium - cost of medium investments in cyber security infrastructure
-# treasury_cyber_large - cost of large investments in cyber security infrastructure
-
 # corporation_tax - Value of the Corporate taxes
 # population_tax - value of the population tax
 # corporation_tax_rate - Corporate Tax rate
@@ -252,7 +248,6 @@ ingame_update_setup = {
 
 	#Various
 	update_economic_cycle_cost = yes
-	update_cyber_cost = yes
 	update_employment_productivity_output_dynamic_modifier = yes
 	calculate_migration_mechanic_values = yes
 
@@ -3380,10 +3375,11 @@ update_education_rate = {
 	}
 
 	#Set which spending level the country is at
-	set_temp_variable = { education_index = { value = education_law subtract = 1 clamp = { min = 0 max = 4 } } }
 	set_temp_variable = { edu_facilities_mult = { value = education_index multiply = 0.5 add = 1 } }
 	multiply_variable = { THIS.total_facilities_spending_display_var = edu_facilities_mult }
 
+
+	set_temp_variable = { education_index = { value = education_law subtract = 1 clamp = { min = 0 max = 4 } } }
 	set_variable = { education_gain = { value = array_education_spend^education_index clamp = { min = 0 max = @math_expressions_max } } }
 	clamp_variable = { var = total_facilities_spending_display_var min = 0 }
 }
@@ -4472,15 +4468,20 @@ calculate_resource_sale_rate = {
 # Effect: update_display
 # Purpose: Aggregates expense streams and computes net treasury change for the UI
 update_display = {
-	set_variable = { display_expense = {
-		value = bureaucracy_gain
-		add = defence_gain
-		add = security_gain
-		add = education_gain
-		add = health_gain
-		add = welfare_gain
-		add = infra_gain
-	} }
+	set_variable = {
+		display_expense = {
+			value = bureaucracy_gain
+			add = defence_gain
+			add = security_gain
+			add = education_gain
+			add = health_gain
+			add = welfare_gain
+			add = infra_gain
+			add = additional_expenses_rate
+			add = border_control_gain
+			add = united_nations_expenses
+		}
+	}
 	if = {
 		limit = {
 			NOT = {
@@ -4492,47 +4493,34 @@ update_display = {
 		}
 		add_to_variable = { display_expense = debt_rate }
 	}
-	add_to_variable = {
-		var = display_expense
-		value = {
-			value = additional_expenses_rate
-			add = border_control_gain
-			add = united_nations_expenses
+
+	set_variable = {
+		display_income = {
+			value = tax_gain
+			add = resource_sale_rate
+			add = int_investments_collected_rate
+			add = additional_income_rate
 		}
 	}
 
-	# Giving it to Global Nations
-	if = { limit = { is_debug = yes }
-		resize_temp_array = { array = budget_array value = 0 size = 10 }
-		set_temp_variable = { budget_array^0 = bureaucracy_gain }
-		set_temp_variable = { budget_array^1 = defence_gain }
-		set_temp_variable = { budget_array^2 = security_gain }
-		set_temp_variable = { budget_array^3 = education_gain }
-		set_temp_variable = { budget_array^4 = health_gain }
-		set_temp_variable = { budget_array^5 = welfare_gain }
-		set_temp_variable = { budget_array^6 = debt_rate }
-		set_temp_variable = { budget_array^7 = additional_expenses_rate }
-		set_temp_variable = { budget_array^8 = border_control_gain }
-		set_temp_variable = { budget_array^9 = united_nations_expenses }
-		find_highest_in_array = {
-			array = budget_array
-			value = value_highest_cost_temp
-			index = index_highest_cost_temp
+	# Calculate for Rentier State
+	set_variable = {
+		resource_to_tax_income = {
+			value = resource_sale_rate
+			divide = {
+				value = tax_gain
+				clamp = { min = 0.001 max = 100000000 }
+			}
 		}
-		log = "[GetDateText]: [THIS.GetName]: Highest Economic Expenditure: Index: [?index_highest_cost_temp] Value: [?value_highest_cost_temp]: Treasury Rate: [?THIS.treasury_rate]"
 	}
-
-	set_variable = { display_income = { value = tax_gain add = resource_sale_rate } }
-	set_variable = { resource_to_tax_income = resource_sale_rate } #t these next 2 lines are to get resource export income divided by tax income (pop and corp), then use this ratio as one of the prerequisites for when rentier state cancels so it's not just based on resource extraction as % of GDP
-	set_temp_variable = { tmp_tax_gain_divisor = tax_gain }
-	clamp_temp_variable = { var = tmp_tax_gain_divisor min = 0.001 }
-	divide_variable = { resource_to_tax_income = tmp_tax_gain_divisor }
-	add_to_variable = { display_income = int_investments_collected_rate }
-	add_to_variable = { display_income = additional_income_rate }
 
 	# Adjusted Potential Income to the international investments so that people can't exploit the incoming financial collapse
-	set_variable = { potential_income = display_income }
-	add_to_variable = { potential_income = int_investments_reinvest_rate }
+	set_variable = {
+		potential_income = {
+			value = display_income
+			add = int_investments_reinvest_rate
+		}
+	}
 
 	# Adjust Potential Expense to Include the Debt Rate
 	set_variable = { potential_expense = display_expense }
@@ -4566,81 +4554,6 @@ update_economic_cycle_cost = {
 			}
 		}
 	}
-}
-
-# Effect: update_cyber_cost
-# Purpose: Computes tiered costs for cybersecurity investments (small, medium, large)
-update_cyber_cost = {
-	if = {
-		limit = { check_variable = { gdp_total < 501 } }
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.006 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.011 multiply = 0.85 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.015 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 500 }
-			check_variable = { gdp_total < 1001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.005 multiply = 0.85 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.009 multiply = 0.85 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.015 multiply = 0.90 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 1000 }
-			check_variable = { gdp_total < 2001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.004 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.007 multiply = 0.85 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.01 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 2000 }
-			check_variable = { gdp_total < 5001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.003 multiply = 0.85 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.005 multiply = 0.75 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.005 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 5000 }
-			check_variable = { gdp_total < 10001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.002 multiply = 0.85 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.003 multiply = 0.90 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.005 multiply = 0.80 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 10000 }
-			check_variable = { gdp_total < 30001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.002 multiply = 0.70 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.003 multiply = 0.65 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.003 multiply = 0.85 } }
-	}
-
-	if = {
-		limit = { check_variable = { gdp_total > 30000 } }
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.001 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.002 multiply = 0.70 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.002 multiply = 0.87 } }
-	}
-
-	#Apply cyber cost multiplier modifier
-	set_temp_variable = { cyber_cost_multiplier = { value = 1 add = modifier@cyber_cost_multiplier_modifier } }
-
-	multiply_variable = { treasury_cyber_small = cyber_cost_multiplier }
-	multiply_variable = { treasury_cyber_medium = cyber_cost_multiplier }
-	multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
 }
 
 # Effect: update_state_variables
@@ -4679,25 +4592,8 @@ update_state_variables = {
 				}
 			}
 		}
-
-		set_variable = {
-			rocket_sites = {
-				value = 0
-				every_collection = {
-					named_collection = controlled_states_collection
-					add = building_level@rocket_site
-				}
-			}
-		}
-		set_variable = {
-			anti_air_building = {
-				value = 0
-				every_collection = {
-					named_collection = controlled_states_collection
-					add = building_level@anti_air_building
-				}
-			}
-		}
+		set_variable = { rocket_sites = num_missile_silo }
+		set_variable = { anti_air_building = num_anti_air_building }
 
 		set_variable = {
 			agriculture_district_total = {
