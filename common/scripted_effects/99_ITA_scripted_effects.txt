@@ -1,5 +1,37 @@
 #written by Traiano
 
+# Roman border focuses claim states individually, but each controller should receive only one wargoal.
+	ITA_queue_roman_wargoal_target = {
+		controller = {
+			if = {
+				limit = {
+					NOT = { tag = ITA }
+					NOT = { is_in_faction_with = ITA }
+					NOT = { is_in_array = { ITA.ITA_roman_wargoal_targets = THIS } }
+				}
+				add_to_array = { ITA.ITA_roman_wargoal_targets = THIS }
+			}
+		}
+	}
+
+	ITA_grant_roman_wargoals = {
+		custom_effect_tooltip = ITA_roman_wargoals_tt
+		hidden_effect = {
+			for_each_scope_loop = {
+				array = ITA_roman_wargoal_targets
+				ITA = {
+					set_temp_variable = { wargoal_on = PREV }
+					add_threat_from_wargoal_effect = yes
+					create_wargoal = {
+						type = take_claimed_state
+						target = PREV
+					}
+				}
+			}
+			clear_array = ITA_roman_wargoal_targets
+		}
+	}
+
 #mafia
   #police effectivness in each region is based on the italian baseline that is affected by focuses and laws
   #mafia_strength is used to calculate industrial focus costs and police effectivness and mafia dynamic modifier maluses
