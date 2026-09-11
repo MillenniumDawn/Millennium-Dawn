@@ -1,6 +1,6 @@
 # MIO Reference
 
-On-demand reference for Military-Industrial Organization structure, examples, and valid modifier keys. For best practices, see AGENTS.md.
+Military-Industrial Organization conventions, structure, examples, and valid modifier keys.
 
 ## Example MIO
 
@@ -39,7 +39,8 @@ CHI_norinco_manufacturer = {
 - Always include `allowed = { original_tag = TAG }` to restrict to the correct country
 - `task_capacity` scales with the org's breadth and nation size, not a formula. Most MIOs omit it — 5 is the MD default (`DEFAULT_INITIAL_TASK_CAPACITY`). When set: 2-3 for small/niche orgs, ~10 for major-nation manufacturers (USA/SOV/FRA/ENG), 18-25 for sprawling multi-category giants (CHI Norinco covers 8 equipment types at 18)
 - Equipment types must reference valid `equipment_type` categories
-- Trait grid x is bounded `0..9`; y is unlimited. Use `relative_position_id` for branch internals but keep total x-spread inside 0..9
+- Trait x positions must not exceed 9. Negative x is valid; y is not capped.
+  Use `relative_position_id` for branch internals.
 - An **organic network is the default**: branches interleave and cross-link, paths split and reconverge, and cross-branch parents are encouraged (a parent from another branch is fine as long as it sits at a lower `y` than the child). Produce a clean raster/column layout only when explicitly requested.
 - A child sits below its parent; vertical spacing may vary for an organic layout, but a child is never on or above its parent's row (`validate_mios.py` reports violations as `trait-geometry-parent-row`)
 - Mutually exclusive traits sit on the same row (same `y` value), placed side by side (`trait-geometry-mutex-row` when they don't)
@@ -69,6 +70,8 @@ Used inside `organization_modifier = { ... }` blocks.
 ### Production modifiers
 
 Used inside `production_bonus = { ... }` blocks. Equipment types the key applies to in parentheses.
+
+Ships are built in dockyards, which have no production-efficiency mechanic, so the three `(non-naval)` keys below are wholly inert on a naval roster. `validate_mios.py` enforces it: `mio-production-bonus-naval` (ERROR, gates) when every equipment the trait reaches is a ship, `mio-production-bonus-partial-naval` (WARNING) when only part of it is. Use `production_capacity_factor`, `production_cost_factor`, `production_resource_need_factor` or `production_resource_penalty_factor` on a naval MIO instead.
 
 - `production_capacity_factor` (All) — Increases production output (items produced per day). Example: `= 0.1`
 - `production_conversion_speed_factor` (non-naval) — Speed at which equipment conversions are performed. Example: `= 0.5`

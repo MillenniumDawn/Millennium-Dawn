@@ -684,8 +684,8 @@ Bugfix:
 - [ISR] Fixed liberal leader selection logic preventing Yair Lapid from ever appearing - NOT block incorrectly checked all five party flags as a group instead of individually, causing Yitzhak Mordechai to always trigger first
 - [SOV] Fixed Uzbekistan missing from CIS democratic foreign policy focuses - added UZB to SOV_russia_inivte_to_cis_former_member, SOV_russia_create_unite_cis_forces, and SOV_russia_create_unite_cis_state scripted effects, plus the autonomy_state_cis allowed block (Issue #1147)
 - Fixed cyber warfare operations not clearing the target attack flag on mission failure, permanently blocking future operations against that country
-- [GAH] Fixed leader succession for conservatism, socialism, Communist-State, Neutral_green, Neutral_Communism, and Monarchist ideologies — successor leaders were in unreachable else_if blocks and could never appear
-- [ZAM] Fixed leader succession for liberalism, socialism, and Neutral_green ideologies — successor leaders were in unreachable else_if blocks and could never appear
+- [GAH] Fixed leader succession for conservatism, socialism, Communist-State, Neutral_green, Neutral_Communism, and Monarchist ideologies. Successor leaders were in unreachable else_if blocks and could never appear
+- [ZAM] Fixed leader succession for liberalism, socialism, and Neutral_green ideologies. Successor leaders were in unreachable else_if blocks and could never appear
 - [ARM] Fixed unreachable duplicate else_if with self-swapping idea in ARM_shadow_economy_bad_script
 - Fixed healthcare budget effects performing no-op swap_ideas (health_06 to health_06) when already at max tier
 - Fixed UN vote influence (both GA and SC) showing effects applying to the player instead of the target country, caused by incorrect scope resolution of THIS.id in scripted GUI dynamic list effects
@@ -696,7 +696,7 @@ Bugfix:
 - Fixed Blackwater units not being disbanded when Constellis forms - the formation event now iterates all hiring countries and removes their Blackwater units and correctly adjusts deployment counts
 - Fixed PMC self-hire exploit where hiring a domestic PMC refunded the cost back to the player via the payment event (Issue #490)
 - Fixed VTB PMC mission clearing the wrong flag (sberbank_yes instead of vtb_yes), preventing VTB from being rehired
-- [SOM] Fixed somalia.3 event causing SNA to annex itself during unification — scoped change_tag_from and annex_country into SOM to fix ROOT scope mismatch (Issue #812)
+- [SOM] Fixed somalia.3 event causing SNA to annex itself during unification. Scoped change_tag_from and annex_country into SOM to fix ROOT scope mismatch (Issue #812)
 - [RCD] Fixed Rally for Congolese Democracy capital set to state 311 (Tshopo, owned by DRC) instead of state 310 (Maniema)
 - Replaced PMC OOB files with inline unit spawning for improved reliability and removed No Step Back DLC branching
 - Removed unused modify_pmc_expenses and modify_pmc_profits scripted effects, inlining their logic directly
@@ -883,7 +883,7 @@ Bugfix:
 - [UKR] Added a support ships for ukranian navy
 - [ISR] Added submarine production for Israel (INS Tkuma)
 - [CZE] Fixed Petr Pavel's political branch not being available after Pavel retires from the army
-- [SOV] Renamed misspelled SUB_subject_rebeliion_flag to SUB_subject_rebellion_flag across all call sites; save-incompatible — pre-existing saves with the old flag will lose their rebellion-blocking state, allowing affected subjects to rebel again
+- [SOV] Renamed misspelled SUB_subject_rebeliion_flag to SUB_subject_rebellion_flag across all call sites; save-incompatible. Pre-existing saves with the old flag will lose their rebellion-blocking state, allowing affected subjects to rebel again
 - [SOV] Initialized SUB_ekb_level alongside SUB_moscow_level in SOV history so subject city level checks return correct values from game start
 - [DEN] Fixed gulf exploitation income missing the \*0.0003 multiplier, which made the income contribution effectively zero
 - [WAA] Fixed narcotics income missing original_tag = WAA guard, which could grant income to any country that briefly held the WAA_Narcotics_Producer idea
@@ -932,7 +932,7 @@ Bugfix:
 - [SPR] Fixed the conservative and socialist LGBT focuses (SPR_the_lgbtqa_stance, SPR_lgbtq_affirmations) not stacking because both fired the same three-way choice event; the socialist focus now grants a separate SPR_lgbtq_affirmations_idea that stacks on top of the pro-LGBT stance idea (Issue #1007)
 - Fixed the Drone Missile Package (land_module_drone_launcher_1-4) blanking the rocket-artillery designer to "Unknown" with no way to recover; added the missing allow_equipment_type = rocket declaration that every other primary-weapon module in MD_arty_modules.txt already carries (Issue #1333)
 - [IRQ] Fixed Iraq capitulating to USA and triggering the end-game screen when the Multinational Coalition Forces (MNF) capitulated to Iraq during Operation Iraqi Freedom; the Iraqi Forces Scatter on_capitulation handler matched MNF (which shares original_tag = IRQ via copy_tag) and fired iraq_war.9 on the real Iraq, now gated by NOT = { has_country_flag = is_iraq_mnf } on ROOT (Issue #1196)
-- [RAJ/PAK/CHI] Fixed the Kashmir border clash decision categories firing for the overlord when India was a puppet of a third-party country; the category visible blocks only blocked the puppet-of-each-other and same-faction cases, so RAJ AI kept taking attack decisions and pulling the overlord's troops and generals (including field marshals) onto the Indian border via start_border_war — added is_subject = no checks for both belligerents in each category (Issue #1473)
+- [RAJ/PAK/CHI] Fixed the Kashmir border clash decision categories firing for the overlord when India was a puppet of a third-party country; the category visible blocks only blocked the puppet-of-each-other and same-faction cases, so RAJ AI kept taking attack decisions and pulling the overlord's troops and generals (including field marshals) onto the Indian border via start_border_war. Added is_subject = no checks for both belligerents in each category (Issue #1473)
 - [BLR/EGY/SOV] Cleaned up the fertilizer-capacity variable writes in BLR_GrodnoAzot, BLR_Chinese_kal, EGY_evergrow, and SOV_economic_grodno_annex; the initialisers used redundant TAG-prefixed set_variable while tooltips read the bare names, so the writes now match the loc and the rest of the focus-tree convention (Issue #1442)
 - Fixed the Anti-Ship Drone Missile modules contributing nothing when paired with conventional naval armament on the same plane; the five tiers now apply a small flat baseline plus a multiplier to naval strike attack and targeting on naval bomber and port strike missions, so the drones act as a force multiplier on whatever primary anti-ship weapon the plane carries (Issue #1166)
 - [ITA/GER] Fixed AI and player investment building nuclear reactors in countries with a policy ban; added country_can_build_nuclear_reactors scripted trigger that both the investment GUI gate (investments_building_reactor_available) and the AI investment scorer (AI_get_nuclear_reactor_score) consult, covering ITA_nuclear_power_banned and GER_idea_carbon_neutral (Issue #1130)
@@ -1176,7 +1176,7 @@ Graphics:
 - Fixed CZE infantry entity animation wired to charge_rifle instead of charge_mg to match the mesh animation set
 - Fixed ENG George Zambellas portrait referencing wrong filename casing
 - Deleted stray empty test file and entirely-commented-out \_\_\_MD_infantry_units.asset/.gfx
-- Fixed UKR entity filename double-underscore typo (UKR**MD* to UKR_MD*) and \_**MD_tanks_and_vechicles spelling
+- Fixed UKR entity filename double-underscore typo (UKR**MD\* to UKR_MD\*) and \_**MD_tanks_and_vechicles spelling
 - Removed unused Eastern European special forces technology sprite entries that referenced missing DDS files
 - Fixed and restored all 3D models that were previously broken in the 1.12.x build
   - Restored landmarks now rendering: Big Ben, Statue of Liberty, Mount Fuji, Golden Gate Bridge, Minot ICBM silos
@@ -1259,7 +1259,7 @@ Localization:
 - [JAP] Fixed depopulation national spirit descriptions displaying "§Y2 4 years§!" instead of "§Y2 to 4 years§!" across five national spirit desc keys
 - Fixed [From.GetXxx] scope keyword capitalization to [FROM.GetXxx] throughout the events localisation file
 - Refreshed landmark descriptions for the 2000s setting and consolidated all landmark loc into a single file for easier maintenance
-- Fixed artillery tech tier labels — artillery_4 was "ART 2035" at the 2045 row and artillery_5 was "ART 2045" at the 2065 row; relabelled to match the actual 20-year tech unlock cadence (Issue #1511)
+- Fixed artillery tech tier labels. artillery_4 was "ART 2035" at the 2045 row and artillery_5 was "ART 2045" at the 2065 row; relabelled to match the actual 20-year tech unlock cadence (Issue #1511)
 - Fixed nine broken dynamic-modifier tooltip substitutions in MD_dm_modifiers (mobilization_laws, trade_laws, economy, political_advisor, tank/naval/aircraft/materiel manufacturer, and industrial concern cost factors) that referenced non-existent loc tokens and spammed the error log (Issue #1504)
 - Added display strings and tooltip helpers for the elite_forces_doctrine_cost_factor and equipment_doctrine_cost_factor modifiers so they render with the army doctrine cost icon in idea and dynamic_modifier tooltips, and removed the orphan special_forces_doctrine_cost_factor_tt entry that pointed at a non-existent modifier (Issue #662)
 - Removed "NATO" word from Polish UPR path which gets Ukraine closer to Poland OR NATO. It looked weird when NATO didn't exist or Poland wasn't part of it.
