@@ -111,9 +111,9 @@ EU_law_party_value_weight = {
 	if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 1 } ### conservatism
-				is_in_array = { ruling_party = 6 } ### Conservative
-				is_in_array = { ruling_party = 14 } ### Neutral_conservatism
+				check_variable = { ruling_party = 1 } ### conservatism
+				check_variable = { ruling_party = 6 } ### Conservative
+				check_variable = { ruling_party = 14 } ### Neutral_conservatism
 			}
 		}
 		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = value1 }
@@ -121,8 +121,8 @@ EU_law_party_value_weight = {
 	else_if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 2 } ### liberalism
-				is_in_array = { ruling_party = 16 } ### Neutral_Libertarian
+				check_variable = { ruling_party = 2 } ### liberalism
+				check_variable = { ruling_party = 16 } ### Neutral_Libertarian
 			}
 		}
 		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = value2 }
@@ -130,21 +130,21 @@ EU_law_party_value_weight = {
 	else_if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 3 } ### socialism
-				is_in_array = { ruling_party = 18 } ### neutral_Social
+				check_variable = { ruling_party = 3 } ### socialism
+				check_variable = { ruling_party = 18 } ### neutral_Social
 			}
 		}
 		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = value3 }
 	}
-	else_if = { limit = { is_in_array = { ruling_party = 17 } } ### Neutral_green
+	else_if = { limit = { check_variable = { ruling_party = 17 } } ### Neutral_green
 		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = value4 }
 	}
 	else_if = {
 		limit = {
 				OR = {
-					is_in_array = { ruling_party = 4 } ### Communist-State
-					is_in_array = { ruling_party = 5 } ### anarchist_communism
-					is_in_array = { ruling_party = 19 } ### Neutral_Communism
+					check_variable = { ruling_party = 4 } ### Communist-State
+					check_variable = { ruling_party = 5 } ### anarchist_communism
+					check_variable = { ruling_party = 19 } ### Neutral_Communism
 				}
 		}
 		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = value5 }
@@ -152,10 +152,10 @@ EU_law_party_value_weight = {
 	else_if = {
 		limit = {
 			OR = {
-				is_in_array = { ruling_party = 20 } ### Nat_Populism
-				is_in_array = { ruling_party = 21 } ### Nat_Fascism
-				is_in_array = { ruling_party = 22 } ### Nat_Autocracy
-				is_in_array = { ruling_party = 23 } ### Monarchist
+				check_variable = { ruling_party = 20 } ### Nat_Populism
+				check_variable = { ruling_party = 21 } ### Nat_Fascism
+				check_variable = { ruling_party = 22 } ### Nat_Autocracy
+				check_variable = { ruling_party = 23 } ### Monarchist
 			}
 		}
 		add_to_temp_variable = { EU_AI_focus_modifier_yes_vote = value6 }
@@ -382,6 +382,26 @@ apply_EU_QMV_result = {
 	}
 }
 
+EU_drop_rival_endgame = {
+	remove_from_array = { array = global.EU_council_votes value = rival_endgame_id }
+	remove_from_array = { array = global.EU_potential_votes value = rival_endgame_id }
+	if = {
+		limit = { check_variable = { global.current_active_agenda_disp = rival_endgame_id } }
+		clr_global_flag = EU_active_EP_agenda_holder
+		set_variable = { global.current_active_agenda_disp = 0 }
+		set_variable = { global.active_MEP_Support = 0 }
+		set_variable = { global.pass_vote_mission_ender = 0 }
+		for_each_scope_loop = {
+			array = global.EU_member
+			if = {
+				limit = { has_active_mission = EU_parliament_focus_EUXXX_approve }
+				remove_mission = EU_parliament_focus_EUXXX_approve
+			}
+		}
+	}
+	update_eu_dirty_variable = yes
+}
+
 ### EU111 - United States of Europe ###
 focus_EU111_QMV_result = {
 	for_each_scope_loop = {
@@ -393,6 +413,8 @@ focus_EU111_QMV_result = {
 		# Record the vote before annexations — on_annex resets current_active_vote_disp to 0
 		add_to_array = { array = global.EU_passed_votes value = 111 }
 		remove_from_array = { array = global.EU_council_votes value = 111 }
+		set_temp_variable = { rival_endgame_id = 112 }
+		EU_drop_rival_endgame = yes
 		set_variable = { global.current_active_vote_disp = 0 }
 
 		# Snapshot members before annexing: annex_country fires on_annex, which removes each
@@ -448,6 +470,8 @@ focus_EU111_QMV_result = {
 	}
 	ROOT = {
 		set_cosmetic_tag = USoE
+		set_temp_variable = { special_formable_id = 101 }
+		commit_special_formable = yes
 		clr_country_flag = dynamic_flag
 		set_country_flag = USoE
 		set_variable = { global.united_states_of_europe = THIS.id }
@@ -465,6 +489,10 @@ focus_EU111_QMV_result = {
 			remove_mission = ENG_scottish_referendum
 			remove_mission = ENG_irish_referendum
 			remove_mission = ENG_welsh_referendum
+			remove_mission = ENG_union_settlement_referendum
+			remove_mission = ENG_scottish_referendum_pressure
+			remove_mission = ENG_north_irish_referendum_pressure
+			remove_mission = ENG_welsh_referendum_pressure
 		}
 		add_ideas = multi_ethnic_state_idea
 	}
@@ -844,6 +872,10 @@ focus_EU408_QMV_result = {
 ### EU112 ###
 focus_EU112_QMV_result = {
 	set_global_flag = european_federation
+	hidden_effect = {
+		set_temp_variable = { rival_endgame_id = 111 }
+		EU_drop_rival_endgame = yes
+	}
 }
 
 # Enlargement QMV handlers — passing the vote makes each cohort an EU candidate,

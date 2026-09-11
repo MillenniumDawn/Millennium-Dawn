@@ -2,7 +2,9 @@
 
 ## Language & Encoding
 
-- English is the only language to edit. All other language files are managed via Paratranz — **do not touch them**.
+- Edit and review English only. Non-English files are expected to diverge while
+  translation is deferred. Do not modify them or report missing, stale, or mismatched
+  keys relative to English.
 - All `.yml` files must be **UTF-8 with BOM**.
 - First line must be `l_english:` with no leading whitespace.
 - Use **1 space** of indentation per key (not tabs).
@@ -29,8 +31,53 @@
 - **No ellipsis abuse.** Do not use `...` in descriptions or tooltips.
 - **No em dashes** (`—`) in player-facing strings. Use a period when the clause stands alone ("Their economy answers to us. Their borders remain intact."), a comma for a participial phrase ("...transfers weekly, appearing as a new expense..."), or a colon to introduce a list or requirement ("Requires war contribution: one battle won or three months at war."). Em dashes read as soft connectors and almost always replace one of those three.
 - Capitalize proper nouns, party names, ideology group names, and in-game concepts (e.g., Political Power, Stability).
-- No all-caps for emphasis; use in-game formatting codes if needed (e.g., `£icon`, `§Y...§!`).
+- No all-caps for emphasis; use in-game formatting codes if needed (e.g., `£icon`, `§Y...§!`). Which color code to reach for is fixed — see [Color Codes](#color-codes).
 - **No padding filler.** Every sentence should carry real information — founding facts, political orientation, mechanical implication, alignment. Sentences that restate the title or fill space with "the party has remained influential over the years" add nothing. Applies to subideology descs, focus descs, idea descs, event flavour, and option text alike.
+
+### Perspective and Mechanical Claims
+
+Use first-person collective (we, us, our nation) when the country is the subject,
+and third person for the target. Tutorial tooltips may use second person sparingly.
+Keep lore in past/present tense and option buttons action-oriented. Use consistent
+grammar across a set of action labels.
+
+Verify durations, percentages, currency, and other mechanical claims against the
+actual effects and triggers. Short tooltips usually need one to three sentences;
+a full explainer may need more, but not filler. Do not repeat modifier values in
+idea descriptions when the modifier tooltip already shows them.
+
+### Preserve Dynamic Text
+
+When polishing values, preserve formatting and substitution tokens byte-for-byte:
+`§Y...§!`, `£icon`, `\n`, `[scope.Getter]`, `[?var|format]`, `[!trigger]`, and
+`[scripted_loc]`. A prose edit must not change the mechanic or break a getter.
+
+- Indexed values use forms such as `[?ROOT.CPD_VP@THIS|.0]`.
+- Scripted-localisation blocks use their defined-text name, such as `[CPD_some_defined_text]`.
+- Scripted-GUI trigger breakdowns use forms such as `[!CPD_some_button_click_enabled]`.
+
+These are syntax examples, not identifiers to copy. Resolve every name before use.
+
+## Color Codes
+
+A color code is `§X`, closed by `§!`. The mod uses **three** of them, chosen by what the text means, never by taste:
+
+| Code | Use for                                                                      |
+| ---- | ---------------------------------------------------------------------------- |
+| `§Y` | a key term, proper noun, programme name, or a `[TAG.GetNameWithFlag]` getter |
+| `§G` | a positive outcome: a gain, a bonus, a granted capability                    |
+| `§R` | a negative outcome: a cost, a malus, or a mechanical warning                 |
+
+Rules:
+
+- **Focus titles take no color at all.** The node's own frame already conveys state, so a colored title only competes with it. Color belongs in the description and the tooltip.
+- `§H` renders the identical RGB to `§Y` (`255 189 0` in `interface/core.gfx`). Write `§Y`.
+- The `§0`–`§9` gradient codes exist for graph series. Never use them in prose.
+- Do not build a per-country palette (a color per political party, per branch, per coup path). It reads as noise once a player moves between trees.
+- Colour only the term that carries the meaning, not the whole sentence.
+- One exception: text that **names a color the player can see elsewhere** picks the code matching that rendered color. `GCC_map_mode_tooltip_delayed` labels its map-mode legend `§CTeal§!` because the map really is teal.
+
+Enforced for focus name and `_desc` keys by `validate_focus_tree.py` (`focus-title-color-code`, `focus-desc-color-palette`).
 
 ## Subideology Localisation Format
 
@@ -67,6 +114,20 @@ MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (A
 - Name (`name: "..."`) title-cased, concise (3–6 words typical).
 - Description explains what the idea represents in 1–3 sentences. Do not repeat modifier values verbatim; describe their political or economic meaning.
 
+### Removable spirit footer
+
+Every starting national spirit the player can fix (negative or mixed, and something removes, swaps, or improves it) ends its `_desc` with a footer:
+
+`...last flavour sentence.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we complete the §Y$TAG_focus_id$§! focus."`
+
+- Vocabulary: `will be §RRemoved§!`, `will §GImprove§!`, `will §RWorsen§!`, `will never be §RRemoved§!`. Use `§RRemoved§! and replaced by <short label>` when a swap target is neither clearly better nor a tier of the same chain.
+- Sources: `the §Y$focus_id$§! focus`, `the §Y$decision_id$§! decision`, `§Y<threshold>§!` for variables. Events fired by a focus name the focus, not the event.
+- Up to three sources: list them all. More: name the branch by its root focus (`in the §Y$root_id$§! branch`) or the theme with up to three `such as` examples.
+- Tiered chains get the footer on every tier. The last tier before removal says `will be §RRemoved§! by the next ...`. Chains that improve but never clear say `will never be §RRemoved§!` plus what still changes.
+- Weekly or variable-driven spirits explain the driver, then the removal condition, in that order (see `PER_us_sanctions_desc`).
+- No footer for anything nothing ever changes: permanent spirits, the economy and military-branch dynamic modifiers (`TAG_economy_modifier`, `TAG_artesh_modifier`), positive flavour spirits, hidden ideas. A dynamic modifier qualifies only when it has penalties and a focus, decision, or event removes or improves it.
+- First person collective, no em dashes, `§Y` never `§H`.
+
 ## YAML Validity
 
 HOI4 loc files are checked by `check-yaml` in the pre-commit hook. The HOI4 format is not strict YAML, so several patterns cause parse failures:
@@ -98,22 +159,22 @@ Hits in both `common/national_focus/` and `common/ideas/` for the same KEY = ren
 
 ## Common Mistakes to Avoid
 
-| Wrong                                                                   | Correct                                                                     |
-| ----------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `key:0 "value"`                                                         | `key: "value"`                                                              |
-| `...` trailing sentences                                                | End with a full stop                                                        |
-| `Pro-Western` mid-sentence as a standalone noun                         | `pro-Western` (adjective)                                                   |
-| Repeating the same sentence across multiple ideology descs              | Unique body per entry                                                       |
-| Empty or placeholder strings like `"TODO"`                              | Always provide a complete string                                            |
-| `"text "quoted word" more text"`                                        | `"text \"quoted word\" more text"`                                          |
-| Mixed indented/non-indented keys in same file                           | All keys at same indentation level                                          |
-| Backtick `` ` `` as apostrophe: ``"we`ll"``                             | `"we'll"` — use the real apostrophe                                         |
-| Cyrillic lookalike characters (e.g., `С`, `а`, `е`) in English text     | Latin equivalents — run a non-ASCII check                                   |
-| Non-English text in `*_l_english.yml` (French, Russian, Spanish titles) | Full English translation                                                    |
-| Duplicate keys in the same `.yml` file                                  | Remove the earlier duplicate; keep only one definition per key              |
-| Wrong color-code prefix, e.g. `§RY` (stray extra character)             | `§R` then text immediately — no stray character between code and content    |
-| Copy-pasted country-specific flavour text left unreplaced               | Update every reference to the original country's name, demonym, and culture |
-| Lowercase scope keywords: `[From.GetName]`, `[Root.GetName]`            | Always uppercase: `[FROM.GetName]`, `[ROOT.GetName]`, `[THIS.GetName]`      |
+Each entry is wrong form → correct form:
+
+- `key:0 "value"` → `key: "value"`
+- `...` trailing sentences → end with a full stop
+- `Pro-Western` mid-sentence as a standalone noun → `pro-Western` (adjective)
+- Repeating the same sentence across multiple ideology descs → unique body per entry
+- Empty or placeholder strings like `"TODO"` → always provide a complete string
+- `"text "quoted word" more text"` → `"text \"quoted word\" more text"`
+- Mixed indented/non-indented keys in same file → all keys at same indentation level
+- Backtick `` ` `` as apostrophe (``"we`ll"``) → `"we'll"` — use the real apostrophe
+- Cyrillic lookalike characters (e.g., `С`, `а`, `е`) in English text → Latin equivalents; run a non-ASCII check
+- Non-English text in `*_l_english.yml` (French, Russian, Spanish titles) → full English translation
+- Duplicate keys in the same `.yml` file → remove the earlier duplicate; keep only one definition per key
+- Wrong color-code prefix, e.g. `§RY` (stray extra character) → `§R` then text immediately, no stray character between code and content
+- Copy-pasted country-specific flavour text left unreplaced → update every reference to the original country's name, demonym, and culture
+- Lowercase scope keywords `[From.GetName]`, `[Root.GetName]` → always uppercase: `[FROM.GetName]`, `[ROOT.GetName]`, `[THIS.GetName]`
 
 ## Recurring Typos
 

@@ -3,25 +3,19 @@
 #DO NOT MESS WITH THIS CODE UNLESS YOU UNDERSTAND HOW ARRAYS, LOOPS, AND SORTING THOSE WORK
 #Setup Functions
 counter_terror_nation_startup = {
-	#TODO: Move this to the modifier, and have it base off base funding
-	set_variable = { ct_global_base_detect_var = 0 }
-	set_variable = { ct_police_cost_var = 0 }
-	set_variable = { ct_home_defense_var = 0 }
-
-	set_variable = { foreign_counter_terror_support = 0 }
-
-	#If you add more terror orgs, you need to adjust the end number to the last
-	#Adjust the end to the total number of terror orgs on game start
-	#the let it ride baby!
-	for_loop_effect = {
-		end = 7
-		add_to_array = { international_terror_org_intel = 0 }
-		add_to_array = { international_terror_org_specific_intel = 0 }
-		add_to_array = { international_terror_org_temp_specific_intel = 0 }
-		add_to_array = { ct_mass_gather_store_var = 0 }
-	}
-
+	set_temp_variable = { ct_org_count = global.active_terror_orgs^num }
+	ct_resize_nation_intel = yes
+	resize_array = { ct_attacked_by_org_arr = 10 }
+	resize_array = { ct_infiltrated_org_arr = 10 }
+	resize_array = { ct_failed_infil_org_arr = 10 }
 	counter_terror_individual = yes
+}
+
+ct_resize_nation_intel = {
+	resize_array = { international_terror_org_intel = ct_org_count }
+	resize_array = { international_terror_org_specific_intel = ct_org_count }
+	resize_array = { international_terror_org_temp_specific_intel = ct_org_count }
+	resize_array = { ct_mass_gather_store_var = ct_org_count }
 }
 
 counter_terror_global_setup = {
@@ -48,31 +42,59 @@ create_staggered_cycle = {
 add_on_creation = {
 	if = {
 		limit = {
-			check_variable = { global.staggered_setup_tracker = 0 }
 			country_exists = THIS
+			NOT = {
+				OR = {
+					is_in_array = { global.ct_first_week = THIS }
+					is_in_array = { global.ct_second_week = THIS }
+					is_in_array = { global.ct_third_week = THIS }
+					is_in_array = { global.ct_last_week = THIS }
+				}
+			}
 		}
-		add_to_variable = { global.staggered_setup_tracker = 1 }
-		add_to_array = { global.ct_first_week = THIS }
-	} else_if = {
-		limit = {
-			check_variable = { global.staggered_setup_tracker = 1 }
-			country_exists = THIS
+		counter_terror_nation_startup = yes
+		if = {
+			limit = { check_variable = { global.staggered_setup_tracker = 0 } }
+			add_to_variable = { global.staggered_setup_tracker = 1 }
+			add_to_array = { global.ct_first_week = THIS }
 		}
-		add_to_variable = { global.staggered_setup_tracker = 1 }
-		add_to_array = { global.ct_second_week = THIS }
-	} else_if = {
-		limit = {
-			check_variable = { global.staggered_setup_tracker = 2 }
-			country_exists = THIS
+		else_if = {
+			limit = { check_variable = { global.staggered_setup_tracker = 1 } }
+			add_to_variable = { global.staggered_setup_tracker = 1 }
+			add_to_array = { global.ct_second_week = THIS }
 		}
-		add_to_variable = { global.staggered_setup_tracker = 1 }
-		add_to_array = { global.ct_third_week = THIS }
-	} else_if = {
-		limit = {
-			country_exists = THIS
+		else_if = {
+			limit = { check_variable = { global.staggered_setup_tracker = 2 } }
+			add_to_variable = { global.staggered_setup_tracker = 1 }
+			add_to_array = { global.ct_third_week = THIS }
 		}
-		set_variable = { global.staggered_setup_tracker = 0 }
-		add_to_array = { global.ct_last_week = THIS }
+		else = {
+			set_variable = { global.staggered_setup_tracker = 0 }
+			add_to_array = { global.ct_last_week = THIS }
+		}
+	}
+}
+
+ct_staggered_country_tick = {
+	if = {
+		limit = { country_exists = THIS }
+		counter_terror_individual = yes
+		ct_decay_org_id_state = yes
+		if = {
+			limit = { has_global_flag = power_ranking_ideas_cycle }
+			assign_power_ranking_ideas = yes
+		}
+		if = {
+			limit = { is_ai = yes }
+			if = {
+				limit = { check_variable = { cyber_capability > 0 } }
+				ai_cyber_monthly = yes
+			}
+			if = {
+				limit = { check_variable = { ct_weekly_org_count > 0 } }
+				ct_ai_weekly = yes
+			}
+		}
 	}
 }
 
@@ -97,69 +119,171 @@ setup_all_orgs = {
 }
 
 add_new_org = {
-	set_temp_variable = { maxer = { value = global.inactive_terror_orgs^num subtract = 1 } }
+	if = {
+		limit = { check_variable = { global.inactive_terror_orgs^num > 0 } }
+		set_temp_variable = { ct_new_org_hq = 0 }
+		random_scope_in_array = {
+			array = global.middle_eastern_nations
+			limit = { num_of_controlled_states > 0 }
+			random_controlled_state = {
+				set_temp_variable = { ct_new_org_hq = THIS }
+				set_temp_variable = { ct_new_org_hq_country = controller }
+			}
+		}
+		if = {
+			limit = { check_variable = { ct_new_org_hq > 0 } }
+			ct_create_org_at_hq = yes
+		}
+	}
+}
 
+ct_create_org_at_hq = {
+	set_temp_variable = { maxer = { value = global.inactive_terror_orgs^num subtract = 1 } }
 	set_temp_variable_to_random = {
 		var = random_pull
 		min = 0
 		max = maxer
 		integer = yes
 	}
-
 	add_to_array = { global.active_terror_orgs = global.inactive_terror_orgs^random_pull }
-	remove_from_array = { global.inactive_terror_orgs = global.inactive_terror_orgs^random_pull }
-
+	remove_from_array = { array = global.inactive_terror_orgs index = random_pull }
 	set_temp_variable_to_random = {
 		var = starting_threat
 		min = 10
 		max = 25
 		integer = yes
 	}
-
 	set_temp_variable_to_random = {
 		var = starting_vis
 		min = 5
 		max = 15
 	}
-
 	add_to_array = { global.active_terror_org_threat_lvl = starting_threat }
 	add_to_array = { global.active_terror_org_vis_lvl = starting_vis }
 	add_to_array = { global.terror_org_attack_cooldown = 0 }
-	# New orgs emerge without a known HQ state; default to regional reach in Middle East
+	add_to_array = { global.active_terror_hq = ct_new_org_hq }
+	add_to_array = { global.active_terror_hq_country = ct_new_org_hq_country }
+	var:ct_new_org_hq = { set_state_flag = is_regional_terror_base }
 	add_to_array = { global.active_terror_org_reach = 1 }
 	add_to_array = { global.active_terror_org_region = 2 }
 	add_to_array = { global.active_terror_org_regional_flag = 1 }
 	add_to_array = { global.active_terror_org_international_flag = 0 }
-	every_country = {
-		add_to_array = { international_terror_org_intel = 0 }
-		add_to_array = { international_terror_org_specific_intel = 0 }
-		add_to_array = { international_terror_org_temp_specific_intel = 0 }
-		add_to_array = { ct_mass_gather_store_var = 0 }
+	set_temp_variable = { ct_org_count = global.active_terror_orgs^num }
+	for_each_scope_loop = {
+		array = global.ct_first_week
+		ct_resize_nation_intel = yes
 	}
-
-	international_systems_update = yes
+	for_each_scope_loop = {
+		array = global.ct_second_week
+		ct_resize_nation_intel = yes
+	}
+	for_each_scope_loop = {
+		array = global.ct_third_week
+		ct_resize_nation_intel = yes
+	}
+	for_each_scope_loop = {
+		array = global.ct_last_week
+		ct_resize_nation_intel = yes
+	}
+	international_systems_force_update = yes
 }
 
-#Call this in the same effect where you set the remove_org temp_variable, so it passes
-#that then pulls the correct terror org, AND the correct info, out of the active array
+# Every parallel array must remove the same slot, including intel held by annexed countries.
 remove_org = {
-	remove_from_array = { array = global.active_terror_orgs index = targeted_org }
-	remove_from_array = { array = global.active_terror_org_threat_lvl index = targeted_org }
-	remove_from_array = { array = global.active_terror_org_vis_lvl index = targeted_org }
-	remove_from_array = { array = global.terror_org_attack_cooldown index = targeted_org }
-	remove_from_array = { array = global.active_terror_org_reach index = targeted_org }
-	remove_from_array = { array = global.active_terror_org_region index = targeted_org }
-	remove_from_array = { array = global.active_terror_org_regional_flag index = targeted_org }
-	remove_from_array = { array = global.active_terror_org_international_flag index = targeted_org }
-
-	every_country = {
-		remove_from_array = { array = international_terror_org_intel index = targeted_org }
-		remove_from_array = { array = international_terror_org_specific_intel index = targeted_org }
-		remove_from_array = { array = international_terror_org_temp_specific_intel index = targeted_org }
-		remove_from_array = { array = ct_mass_gather_store_var index = targeted_org }
+	if = {
+		limit = {
+			check_variable = { targeted_org > -1 }
+			check_variable = { targeted_org < global.active_terror_orgs^num }
+		}
+		set_temp_variable = { ct_removed_org_hq = global.active_terror_hq^targeted_org }
+		set_temp_variable = { ct_cleared_org_id = global.active_terror_orgs^targeted_org }
+		remove_from_array = { array = global.active_terror_orgs index = targeted_org }
+		remove_from_array = { array = global.active_terror_org_threat_lvl index = targeted_org }
+		remove_from_array = { array = global.active_terror_org_vis_lvl index = targeted_org }
+		remove_from_array = { array = global.terror_org_attack_cooldown index = targeted_org }
+		remove_from_array = { array = global.active_terror_hq index = targeted_org }
+		remove_from_array = { array = global.active_terror_hq_country index = targeted_org }
+		remove_from_array = { array = global.active_terror_org_reach index = targeted_org }
+		remove_from_array = { array = global.active_terror_org_region index = targeted_org }
+		remove_from_array = { array = global.active_terror_org_regional_flag index = targeted_org }
+		remove_from_array = { array = global.active_terror_org_international_flag index = targeted_org }
+		if = {
+			limit = { is_in_array = { global.active_terror_hq = ct_removed_org_hq } }
+			var:ct_removed_org_hq = { set_state_flag = is_regional_terror_base }
+		}
+		else = {
+			var:ct_removed_org_hq = { clr_state_flag = is_regional_terror_base }
+		}
+		for_each_scope_loop = {
+			array = global.ct_first_week
+			ct_remove_nation_org_state = yes
+		}
+		for_each_scope_loop = {
+			array = global.ct_second_week
+			ct_remove_nation_org_state = yes
+		}
+		for_each_scope_loop = {
+			array = global.ct_third_week
+			ct_remove_nation_org_state = yes
+		}
+		for_each_scope_loop = {
+			array = global.ct_last_week
+			ct_remove_nation_org_state = yes
+		}
+		international_systems_force_update = yes
 	}
+}
 
-	international_systems_update = yes
+ct_remove_nation_org_state = {
+	remove_from_array = { array = international_terror_org_intel index = targeted_org }
+	remove_from_array = { array = international_terror_org_specific_intel index = targeted_org }
+	remove_from_array = { array = international_terror_org_temp_specific_intel index = targeted_org }
+	remove_from_array = { array = ct_mass_gather_store_var index = targeted_org }
+	if = {
+		limit = { check_variable = { selected_org > targeted_org } }
+		subtract_from_variable = { selected_org = 1 }
+	}
+	else_if = {
+		limit = { check_variable = { selected_org = targeted_org } }
+		set_variable = { selected_org = 0 }
+	}
+	set_variable = { ct_attacked_by_org_arr^ct_cleared_org_id = 0 }
+	set_variable = { ct_infiltrated_org_arr^ct_cleared_org_id = 0 }
+	set_variable = { ct_failed_infil_org_arr^ct_cleared_org_id = 0 }
+}
+
+# One tick per staggered pass (~28 days); 13 ticks cover the old 365-day flag window.
+ct_decay_org_id_state = {
+	for_each_loop = {
+		array = ct_attacked_by_org_arr
+		value = ct_decay_v
+		index = ct_decay_i
+		if = {
+			limit = { check_variable = { ct_decay_v > 0 } }
+			subtract_from_variable = { ct_attacked_by_org_arr^ct_decay_i = 1 }
+		}
+		if = {
+			limit = { check_variable = { ct_failed_infil_org_arr^ct_decay_i > 0 } }
+			subtract_from_variable = { ct_failed_infil_org_arr^ct_decay_i = 1 }
+		}
+	}
+}
+
+ct_resolve_raid_org = {
+	set_temp_variable = { targeted_org = -1 }
+	if = {
+		limit = { has_variable = target_raid_org_id }
+		for_each_loop = {
+			array = global.active_terror_orgs
+			value = ct_raid_org_id
+			index = ct_raid_org_slot
+			if = {
+				limit = { check_variable = { ct_raid_org_id = target_raid_org_id } }
+				set_temp_variable = { targeted_org = ct_raid_org_slot }
+			}
+		}
+		clear_variable = target_raid_org_id
+	}
 }
 
 set_starting_org_values = {

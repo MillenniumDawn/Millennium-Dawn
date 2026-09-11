@@ -1,63 +1,46 @@
 # Agent Conventions
 
-Shared rules for every agent under `.claude/agents/`. Read once at the start of any subagent task; each agent file lists only the conventions specific to its role.
+Read `AGENTS.md` at the start of every task. Its scope, KISS, validation, encoding,
+and BLUF rules apply to every agent. Role files add only role-specific requirements.
 
-## Universal anti-rules
+## Scope and Reading
 
-Apply to every agent. Individual agents may add more; they never relax these.
+- Work on the caller's assigned files, issue, or diff. No idle scans or unrelated fixes
+  unless requested. Trace shared consumers when needed without widening edit scope.
+- Read the relevant definitions and callers, including nested effects and AI blocks.
+  Use the task links in `AGENTS.md`; do not load every reference for every role.
+- Reviewers read `known-false-positives.md` and the relevant domain reference before
+  reporting a suspected bug. Scripting reviews also use `bug-patterns.md`.
+- Read `performance-patterns.md` when execution frequency or scope expansion matters.
+- English-localisation work uses `localisation-rules.md` and `typo-watchlist.md`.
+- Tooling work uses `tools/README.md` and `validation-pipeline.md`, not game-script recipes.
 
-- **Do NOT run validators or `pre-commit run --all-files`.** Validation runs on GitHub CI at PR time. Pre-commit's auto-fixers rewrite the whole repo and leave hundreds of unrelated whitespace edits. To preview a hook locally, scope it: `pre-commit run --files <path1> <path2>`.
-- **Do NOT add Claude attribution.** No `Co-Authored-By: Claude`, no `Generated with Claude Code` footer in commits or PR descriptions. The user commits under their own identity.
-- **Do NOT modify files outside the requested scope.** If a task names a file or country tag, edits stay within that scope. Subagents have silently leaked edits to neighbor files before; always mentally `git diff --stat` before claiming done.
-- **Do NOT touch non-English localisation files** (`*_l_french.yml`, `*_l_russian.yml`, etc.). Managed via Paratranz.
-- **Do NOT modify anything under `resources/`** unless the user explicitly asks. Reference material only.
-- **Do NOT invent identifier names.** Modifier names, define names, event IDs, GFX sprites, scripted effect names — grep first. The engine accepts unknown names silently and the code does nothing.
+Paths without a directory above are under `.claude/docs/`.
 
-## Standard required reading
+## Hand Back in BLUF Style
 
-Most agents read these in addition to anything in their own "Required reading" section:
+Lead with the result or blocker, then only the evidence the caller needs.
 
-- `AGENTS.md` — project-wide conventions, pre-commit/CI divergence, formatting rules.
-- `.claude/rules/general-rules.md` — scoping traps, modifier rules, scripting patterns.
-- `.claude/docs/known-false-positives.md` — patterns that look wrong but are intentional.
+- Writers: changed behavior and `path:line`, checks actually run and their result,
+  remaining work, and any in-game verification still needed. Do not paste whole files
+  already edited; provide code blocks only when the caller requested a draft.
+- Reviewers: findings ordered by severity, each with `path:line`, impact, and the
+  smallest safe fix. Say no findings when clean. Do not invent issues to fill categories.
+- Separate confirmed defects from uncertain observations. Never claim a check passed
+  without running it. Omit empty headings and redundant counts.
+- End the handoff with `BLUF`. Follow a requested machine-readable schema instead
+  when a prose marker would invalidate it.
 
-Reviewer / analyzer agents also read:
+Severity: Critical means game-breaking or severe repeated runtime cost; High is a
+correctness bug or significant cost; Medium is a smaller maintainability/performance
+issue; Low is cosmetic. Judge frequency and reach, not syntax alone.
 
-- `.claude/docs/performance-patterns.md` — performance anti-patterns.
+## Maintaining Agent Instructions
 
-Loc-touching agents also read:
+Keep each role to its purpose, task-specific reading, boundaries, and useful handoff
+requirements. Do not copy scripting examples, toolchain versions, helper inventories,
+or shared output templates into it. Update the owning reference instead.
 
-- `.claude/docs/localisation-rules.md` — encoding, key format, style.
-- `.claude/docs/typo-watchlist.md` — recurring typos.
-
-## Output format conventions
-
-Reviewer and analyzer agents return findings in this shape. Builder agents have their own templated output (described in their file).
-
-- **Summary** — one sentence: "clean" or "N issues found".
-- **Findings by category** — each: `file:line — issue — suggested fix`. Skip empty categories rather than padding.
-- **Severity counts** — `Critical / High / Medium / Low` totals.
-- **Open questions / notes** — anything flagged but not certain.
-
-Severity rubric (when applicable):
-
-| Tier     | Meaning                                                                                                                    |
-| -------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Critical | Game-breaking, silently-broken behavior, or perf catastrophe (unbounded daily `every_country`, GUI `dirty = global.date`). |
-| High     | Clear correctness bug or significant perf hit, but the surface still works.                                                |
-| Medium   | Style / readability / minor perf — should fix but won't block.                                                             |
-| Low      | Cosmetic; nice-to-have.                                                                                                    |
-
-## Hand-back contract
-
-Every agent must end its turn with a self-contained report the caller can act on without re-reading source files:
-
-- Quote file paths and line numbers, not "in the thing we just looked at".
-- State what changed (writer agents) or what was found (reviewers) in plain prose at the top.
-- Flag anything the caller must verify themselves (in-game test, grep, opinion modifier wiring).
-- If you couldn't complete the task, say so explicitly with the blocker; never claim done on partial work.
-- Be terse (see `AGENTS.md` > Output Style): lead with the conclusion, report facts not process, cut padding confirmations and tool-by-tool narration. Trim words, never information — no dropped path, line, finding, or caveat.
-
-## Scripting & encoding rules
-
-Scripting-pattern and encoding rules are always in context via `.claude/rules/general-rules.md` — re-read its Scripting Patterns section before flagging; do not restate rules in findings, cite them.
+Player instructions belong in `docs/src/content/pages/` or `tutorials/`; contributor
+instructions belong in `docs/src/content/resources/`. Keep internal agent procedures
+out of player guides. See `docs/CONTRIBUTING.md` for site links and content rules.

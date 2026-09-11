@@ -6,10 +6,39 @@ import json
 import struct
 import subprocess
 import sys
+import tempfile
 import urllib.error
 from http.client import HTTPMessage
 from pathlib import Path
 from types import ModuleType
+
+from report_lib.models import Issue, Severity
+
+
+def symlinks_available() -> bool:
+    """Whether this process may create a symlink.
+
+    Windows refuses without Developer Mode or admin rights (WinError 1314), so
+    symlink-rejection tests skip there instead of failing the whole suite.
+    """
+    with tempfile.TemporaryDirectory() as folder:
+        target = Path(folder) / "target"
+        target.mkdir()
+        try:
+            (Path(folder) / "link").symlink_to(target)
+        except (OSError, NotImplementedError):
+            return False
+    return True
+
+
+def imagemagick_available() -> bool:
+    """Whether a real ImageMagick binary is on PATH.
+
+    Windows ships its own `convert.exe` (the FAT-to-NTFS converter), so the
+    tool's own resolver decides — the name alone proves nothing.
+    """
+    converter = load_tool_module("assets/md_art_convert.py")
+    return converter.find_imagemagick("magick", "convert", "identify") is not None
 
 
 def run_git(repository, *args):
@@ -30,6 +59,18 @@ def initialize_git_repository(repository, *paths):
     run_git(repository, "config", "diff.renames", "true")
     run_git(repository, "add", *paths)
     run_git(repository, "commit", "-m", "initial")
+
+
+def run_validator(validator_cls, tmp_path, **kwargs):
+    validator = validator_cls(
+        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True, **kwargs
+    )
+    validator.run_validations()
+    return validator
+
+
+def issue_categories(validator):
+    return sorted(issue.category for issue in validator._issues)
 
 
 def collecting_validator(cls):
@@ -84,6 +125,19 @@ def issue_dict(severity, file="a.txt", line=1, message="m", category="c"):
         "file": file,
         "line": line,
     }
+
+
+def make_issue(**overrides):
+    fields = {
+        "severity": Severity.ERROR,
+        "category": "missing_key",
+        "message": "key FOO not found",
+        "file": "events/MD_x.txt",
+        "line": 212,
+        "validator": "events",
+    }
+    fields.update(overrides)
+    return Issue(**fields)
 
 
 class _UnreadableHTTPError(urllib.error.HTTPError):

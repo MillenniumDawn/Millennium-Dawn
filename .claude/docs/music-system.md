@@ -4,11 +4,11 @@ How MD organises music and how to add new tracks.
 
 ## File types
 
-| Type                 | Location              | Purpose                                                                        |
-| -------------------- | --------------------- | ------------------------------------------------------------------------------ |
-| **Music definition** | `music/*.asset`       | Maps a logical `song` name to an actual `.ogg` audio file                      |
-| **Playlist**         | `music/*.txt`         | Declares which songs belong to which `music_station` and when they should play |
-| **Credits**          | `music/*/Credits.txt` | Attribution for artists whose music is used in each station                    |
+| Type                 | Location              | Purpose                                      |
+| -------------------- | --------------------- | -------------------------------------------- |
+| **Music definition** | `music/*.asset`       | Maps a logical `song` name to a `.ogg` file  |
+| **Playlist**         | `music/*.txt`         | Songs per `music_station` and when they play |
+| **Credits**          | `music/*/Credits.txt` | Artist attribution for each station's music  |
 
 ## How it works
 
@@ -25,15 +25,13 @@ Each `music = { name = "Song Name" file = "filename.ogg" volume = X }` entry reg
 
 Key definition files for MD content:
 
-| File                                              | Songs it contains                                                                           |
-| ------------------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `music/MD_music.asset`                            | Main MD soundtrack (main theme, modern warfare, tension, commercials)                       |
-| `music/Main Music/MD_main_music.asset`            | Main Music station (EU calm/tension/war tracks by Karel Antonin, Voyager, Matt Ragan, etc.) |
-| `music/Asian/MD_asian_music.asset`                | Asian regional music (calm/tension/war for East Asian countries)                            |
-| `music/Middle East/MD_middle_eastern_music.asset` | Middle Eastern regional music (calm/tension/war + jihad nasheeds)                           |
-| `music/UKR-RUS war/UKR_RUS_war_music.asset`       | Ukraine-Russia war station (UKR and SOV/separatist tracks)                                  |
-| `music/Synthwave/MD_synthwave.asset`              | Synthwave station tracks                                                                    |
-| `music/music.asset`                               | Vanilla base-game soundtrack definitions                                                     |
+- `music/MD_music.asset` — Main MD soundtrack (main theme, modern warfare, tension, commercials)
+- `music/Main Music/MD_main_music.asset` — Main Music station (EU calm/tension/war tracks by Karel Antonin, Voyager, Matt Ragan, etc.)
+- `music/Asian/MD_asian_music.asset` — Asian regional music (calm/tension/war for East Asian countries)
+- `music/Middle East/MD_middle_eastern_music.asset` — Middle Eastern regional music (calm/tension/war + jihad nasheeds)
+- `music/UKR-RUS war/UKR_RUS_war_music.asset` — Ukraine-Russia war station (UKR and SOV/separatist tracks)
+- `music/Synthwave/MD_synthwave.asset` — Synthwave station tracks
+- `music/music.asset` — Vanilla base-game soundtrack definitions
 
 ## Playlist (`.txt` files)
 
@@ -71,15 +69,15 @@ Some playlists use fake `song` entries with descriptive names (e.g., `"--ASIAN P
 
 ## Music stations in MD
 
-| Station              | Playlist file                                        | Asset file                                                                | Purpose                                                                                |
-| -------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| `MD_Soundtrack`      | `MD_songs.txt`                                       | `MD_music.asset`                                                          | Main MD soundtrack — general tension, war, peace, USA-specific tracks, commercials     |
-| `MD_main_music`      | (inline in asset)                                    | `Main Music/MD_main_music.asset`                                          | European-style calm/tension/war tracks                                                 |
-| `MD_regional_music`  | `MD_regional_music.txt`                              | `Asian/MD_asian_music.asset`, `Middle East/MD_middle_eastern_music.asset` | Asian and Middle Eastern regional tracks, triggered by `original_tag`                  |
-| `MD_ukrwar_music`    | `UKR-RUS war/MD_ukraine_war_music.txt`               | `UKR-RUS war/UKR_RUS_war_music.asset`                                     | Ukraine and Russia/separatist war tracks, triggered by `original_tag` + `has_war_with` |
-| `MD_synthwave_music` | `Synthwave/MD_synthwave.txt`                         | `Synthwave/MD_synthwave.asset`                                            | Always-on synthwave ambient music (equal weight)                                       |
-| `MD_fm_habibi`       | `MD_fm_habibi.txt`                                   | —                                                                         | Israeli music (currently commented out / disabled)                                     |
-| `base_music`         | `_songs.txt` and integrated-DLC playlists           | `music.asset` and game/integrated-DLC assets                               | Vanilla base and integrated-DLC soundtrack                                             |
+Each entry: station — playlist file; asset file(s); purpose.
+
+- `MD_Soundtrack` — `MD_songs.txt`; `MD_music.asset`; main MD soundtrack — general tension, war, peace, USA-specific tracks, commercials
+- `MD_main_music` — playlist inline in asset; `Main Music/MD_main_music.asset`; European-style calm/tension/war tracks
+- `MD_regional_music` — `MD_regional_music.txt`; `Asian/MD_asian_music.asset`, `Middle East/MD_middle_eastern_music.asset`; Asian and Middle Eastern regional tracks, triggered by `original_tag`
+- `MD_ukrwar_music` — `UKR-RUS war/MD_ukraine_war_music.txt`; `UKR-RUS war/UKR_RUS_war_music.asset`; Ukraine and Russia/separatist war tracks, triggered by `original_tag` + `has_war_with`
+- `MD_synthwave_music` — `Synthwave/MD_synthwave.txt`; `Synthwave/MD_synthwave.asset`; always-on synthwave ambient music (equal weight)
+- `MD_fm_habibi` — `MD_fm_habibi.txt`; no asset file; Israeli music (currently commented out / disabled)
+- `base_music` — `_songs.txt` and integrated-DLC playlists; `music.asset` and game/integrated-DLC assets; vanilla base and integrated-DLC soundtrack
 
 All stations play simultaneously; the game mixes or crossfades between them. Regional stations use `original_tag = TAG` triggers to target specific countries.
 

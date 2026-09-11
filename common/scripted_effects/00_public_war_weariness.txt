@@ -72,12 +72,43 @@ public_war_weariness_effect = {
 }
 
 public_war_weariness_penalty_effect = {
-	set_temp_variable = { add_t = penalty_factor }
+	if = {
+		limit = {
+			has_an_AB_war = yes
+			has_war = yes
+		}
+		set_temp_variable = { add_t = penalty_factor }
 
-	set_variable = { war_support_factor_var = add_t }
-	multiply_variable = { war_support_factor_var = -0.005 }
+		set_variable = { war_support_factor_var = add_t }
+		multiply_variable = { war_support_factor_var = -0.005 }
 
-	if = { limit = { NOT = { has_dynamic_modifier = { modifier = public_war_weariness_effect } } }
-		add_dynamic_modifier = { modifier = public_war_weariness_effect }
+		if = { limit = { NOT = { has_dynamic_modifier = { modifier = public_war_weariness_effect } } }
+			add_dynamic_modifier = { modifier = public_war_weariness_effect }
+		}
+	}
+	else = {
+		remove_public_war_weariness_effect = yes
+	}
+}
+
+remove_public_war_weariness_effect = {
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = public_war_weariness_effect }
+			OR = {
+				has_war = no
+				has_an_AB_war = no
+			}
+		}
+		remove_dynamic_modifier = { modifier = public_war_weariness_effect }
+		clear_variable = war_support_factor_var
+	}
+	if = {
+		limit = {
+			has_war = no
+			has_an_AB_war = no
+		}
+		clear_variable = anti_bully_wars
+		clear_variable = penalty_factor
 	}
 }

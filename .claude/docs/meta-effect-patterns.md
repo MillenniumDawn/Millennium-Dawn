@@ -79,10 +79,12 @@ _unlock_btn_enabled = { always = no }
 
 For meta substitution to interpolate cleanly, target trigger/effect names must be derivable from the token key by simple string concatenation. The MD MIO catalog uses:
 
-| Token                                  | Derived trigger                                           | Notes                    |
-| -------------------------------------- | --------------------------------------------------------- | ------------------------ |
-| `GENERIC_krepost_state_defense_bureau` | `GENERIC_krepost_state_defense_bureau_unlock_btn_enabled` | Suffix concatenation     |
-| `GENERIC_krepost_state_defense_bureau` | `GENERIC_krepost_state_defense_bureau_<anything_else>`    | Add per-purpose suffixes |
+Token (`<TOKEN>` below): `GENERIC_krepost_state_defense_bureau` — the first row expands to `GENERIC_krepost_state_defense_bureau_unlock_btn_enabled`.
+
+| Derived trigger              | Notes                    |
+| ---------------------------- | ------------------------ |
+| `<TOKEN>_unlock_btn_enabled` | Suffix concatenation     |
+| `<TOKEN>_<anything_else>`    | Add per-purpose suffixes |
 
 **Rule:** name per-entity triggers/effects `<TOKEN_KEY>_<purpose>` from day one. Cheap to do, impossible to retrofit cleanly if you start with short names like `mio_cat_krepost_*`.
 

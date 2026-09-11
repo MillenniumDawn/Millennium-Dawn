@@ -1,12 +1,12 @@
 apply_protest_effects = {
-	# monthly cooldown of tensions
 	apply_passive_protest_drift = yes
-	apply_passive_radicalisation_drift = yes
+	update_protest_radicalisation = yes
 
 	set_temp_variable = { protest_drift = 0 }
 	calculate_protest_drift = yes
 
 	add_to_variable = { protest_strength = protest_drift }
+	clamp_variable = { var = protest_strength min = 0 max = 100 }
 }
 
 apply_passive_protest_drift = {
@@ -28,10 +28,25 @@ apply_passive_protest_drift = {
 	clamp_variable = { var = protest_strength min = 0 max = 100 }
 }
 
-apply_passive_radicalisation_drift = {
-	random = {
-		chance = 10
-		subtract_from_variable = { protest_radicalisation = 1 }
+update_protest_radicalisation = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { protest_strength > 49 }
+				has_active_mission = MD_incoming_protest_movement
+				has_active_mission = MD_incoming_revolt
+			}
+		}
+		random = {
+			chance = 20
+			add_to_variable = { protest_radicalisation = 1 }
+		}
+	}
+	else = {
+		random = {
+			chance = 10
+			subtract_from_variable = { protest_radicalisation = 1 }
+		}
 	}
 
 	if = { limit = { NOT = { has_variable = protest_radicalisation } } set_variable = { protest_radicalisation = 0 } }
@@ -84,15 +99,10 @@ calculate_protest_drift = {
 }
 
 calculate_unrest_growth = {
-	#Grab our old protest strength
-	set_temp_variable = { start_protest_str = protest_strength }
-
-
 	MD_protests_calc_deterministic_drift = yes
 
 	add_to_variable = { var = protest_strength
-		value = { value = det_spending_drift
-			add = det_stability_drift
+		value = { value = det_stability_drift
 			add = det_interest_drift
 			add = det_war_drift
 			add = det_corruption_drift
@@ -147,22 +157,6 @@ calculate_unrest_growth = {
 			set_variable = { drift_ct_last = protest_drift }
 		}
 		add_to_variable = { protest_strength = protest_drift }
-	}
-
-	if = {
-		limit = {
-			check_variable = { protest_strength > 0 }
-			check_variable = { start_protest_str = protest_strength }
-		}
-
-		randomize_temp_variable = {
-			var = protest_reduction
-			distribution = poisson
-			min = 0.5
-			lambda = 3
-		}
-
-		subtract_from_variable = { protest_strength = protest_reduction }
 	}
 
 	round_variable = protest_strength
@@ -283,13 +277,22 @@ MD_protests_count_resisting_cores = {
 	set_variable = { cores_resisting_count = 0 }
 	set_variable = { MD_top_resistant_state_value = 0 }
 	if = {
+		limit = { has_event_target = MD_top_resistant_state_scope }
+		clear_global_event_target = MD_top_resistant_state_scope
+	}
+	if = {
 		limit = { has_active_mission = MD_incoming_revolt }
 		every_owned_state = {
 			limit = {
+				is_capital = no
 				is_core_of = PREV
 				is_controlled_by = PREV
 				has_state_flag = MD_protests_active@PREV
 				has_resistance = yes
+				OR = {
+					compliance < 50
+					resistance > 39
+				}
 			}
 			PREV = { add_to_variable = { cores_resisting_count = 1 } }
 			set_temp_variable = { state_resistance_val = resistance }
@@ -315,7 +318,10 @@ MD_protests_clear_display_vars = {
 	clear_variable = drift_total_last
 	clear_variable = cores_resisting_count
 	clear_variable = MD_top_resistant_state_value
-	clear_global_event_target = MD_top_resistant_state_scope
+	if = {
+		limit = { has_event_target = MD_top_resistant_state_scope }
+		clear_global_event_target = MD_top_resistant_state_scope
+	}
 }
 
 MD_protests_compute_drift_total = {
@@ -334,9 +340,106 @@ MD_protests_compute_drift_total = {
 	}
 }
 
+MD_resolve_pacified_protest_states = {
+	if = {
+		limit = { has_active_mission = MD_incoming_revolt }
+		every_owned_state = {
+			limit = {
+				is_core_of = PREV
+				is_controlled_by = PREV
+				has_state_flag = MD_protests_active@PREV
+				has_resistance = yes
+				OR = {
+					is_capital = yes
+					AND = {
+						compliance > 49
+						resistance < 40
+					}
+				}
+			}
+			cancel_resistance = yes
+			clr_state_flag = MD_protests_active@PREV
+			set_state_flag = MD_protests_resolved@PREV
+		}
+	}
+}
+
+MD_cleanup_protest_revolt = {
+	every_owned_state = {
+		limit = {
+			is_core_of = PREV
+			has_state_flag = MD_protests_active@PREV
+			has_resistance = yes
+		}
+		cancel_resistance = yes
+	}
+	every_core_state = {
+		clr_state_flag = MD_protests_active@PREV
+		clr_state_flag = MD_protests_resolved@PREV
+	}
+	clr_country_flag = MD_protest_revolt_pending
+	clear_variable = protest_spread_exhaustion
+	set_country_flag = {
+		flag = MD_protest_cooldown
+		days = 1000
+		value = 1
+	}
+}
+
+MD_calculate_protest_civil_war_size = {
+	set_temp_variable = { protest_active_state_count = 0 }
+	set_temp_variable = { protest_eligible_state_count = 0 }
+	every_owned_state = {
+		limit = {
+			is_capital = no
+			is_core_of = PREV
+			is_controlled_by = PREV
+		}
+		PREV = { add_to_temp_variable = { protest_eligible_state_count = 1 } }
+		if = {
+			limit = {
+				has_state_flag = MD_protests_active@PREV
+				has_resistance = yes
+			}
+			PREV = { add_to_temp_variable = { protest_active_state_count = 1 } }
+		}
+	}
+	set_temp_variable = { protest_civil_war_size = 0.1 }
+	if = {
+		limit = { check_variable = { protest_eligible_state_count > 0 } }
+		set_temp_variable = { protest_civil_war_size = protest_active_state_count }
+		divide_temp_variable = { protest_civil_war_size = protest_eligible_state_count }
+	}
+	set_temp_variable = { protest_radicalisation_size = protest_radicalisation }
+	divide_temp_variable = { protest_radicalisation_size = 50 }
+	add_to_temp_variable = { protest_civil_war_size = protest_radicalisation_size }
+	clamp_temp_variable = { var = protest_civil_war_size min = 0.1 max = 0.5 }
+}
+
+MD_start_scaled_protest_civil_war = {
+	set_country_flag = no_leader_change
+	if = { limit = { has_government = nationalist }
+		start_civil_war = { ideology = nationalist size = protest_civil_war_size }
+	}
+	else_if = { limit = { has_government = communism }
+		start_civil_war = { ideology = communism size = protest_civil_war_size }
+	}
+	else_if = { limit = { has_government = democratic }
+		start_civil_war = { ideology = democratic size = protest_civil_war_size }
+	}
+	else_if = { limit = { has_government = neutrality }
+		start_civil_war = { ideology = neutrality size = protest_civil_war_size }
+	}
+	else_if = { limit = { has_government = fascism }
+		start_civil_war = { ideology = fascism size = protest_civil_war_size }
+	}
+	clr_country_flag = no_leader_change
+}
+
 check_protest_trigger = {
 	if = {
 		limit = {
+			NOT = { has_country_flag = disabled_protests_system }
 			NOT = { has_country_flag = MD_protest_cooldown }
 			NOT = { has_country_flag = MD_protest_revolt_pending }
 			NOT = { has_active_mission = MD_incoming_protest_movement }
@@ -359,10 +462,12 @@ check_protest_trigger = {
 }
 
 random_protest_events = {
+	MD_resolve_pacified_protest_states = yes
 	if = {
 		limit = {
 			has_active_mission = MD_incoming_revolt
 			any_owned_state = {
+				is_capital = no
 				is_core_of = ROOT
 				is_controlled_by = ROOT
 				has_state_flag = MD_protests_active@ROOT
@@ -391,7 +496,6 @@ random_protest_events = {
 				country_event = protests.101
 			}
 		}
-		country_event = protests.102
 		random_list = {
 			70 = {
 				# Nothing happens
@@ -410,11 +514,13 @@ random_protest_events = {
 }
 
 update_protest_dirty_var = {
-	if = {
-		limit = { check_variable = { global.protest_ui_dirty < 100000 } }
-		add_to_variable = { global.protest_ui_dirty = 1 }
-	}
-	else = {
-		set_variable = { global.protest_ui_dirty = 1 }
+	if = { limit = { is_ai = no }
+		if = {
+			limit = { check_variable = { global.protest_ui_dirty < 100000 } }
+			add_to_variable = { global.protest_ui_dirty = 1 }
+		}
+		else = {
+			set_variable = { global.protest_ui_dirty = 1 }
+		}
 	}
 }

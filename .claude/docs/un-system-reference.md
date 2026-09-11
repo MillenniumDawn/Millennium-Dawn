@@ -4,15 +4,15 @@ Architecture and edit rules for the United Nations voting, membership, and elect
 
 ## Files
 
-| File                                                           | Owns                                                                                     |
-| -------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `common/scripted_effects/01_international_systems_effects.txt` | Vote queues, finishers, UNSC elections, aborts, sanctions, recognition helpers           |
-| `events/UN_Voting_Events.txt`                                  | Generic vote events (UN.6, UNSC.1), result event (UN.410), sway chains (UN/UNSC.200-204) |
-| `events/International Recognition.txt`                         | Type-5 membership chain (recognition.10-15, 71-73)                                       |
-| `common/decisions/un_voting_decisions.txt`                     | Finisher missions (UN_GA/SC_voting_mission + result timers)                              |
-| `common/scripted_triggers/01_international_triggers.txt`       | `un_ga_2_3_required`, `has_passed_sc_vote`, auto-vote triggers                           |
-| `common/scripted_guis/00_missiles_scripted_guis.txt`           | UN windows: propose, tallies, sway, queue reorder, budget                                |
-| `common/on_actions/MD_on_actions.txt`                          | Weekly queue pulse, monthly AI actors, June election start, January rotation             |
+What each file owns:
+
+- `common/scripted_effects/01_international_systems_effects.txt` — vote queues, finishers, UNSC elections, aborts, sanctions, recognition helpers
+- `events/UN_Voting_Events.txt` — generic vote events (UN.6, UNSC.1), result event (UN.410), sway chains (UN/UNSC.200-204)
+- `events/International Recognition.txt` — type-5 membership chain (recognition.10-15, 71-73)
+- `common/decisions/un_voting_decisions.txt` — finisher missions (UN_GA/SC_voting_mission + result timers)
+- `common/scripted_triggers/01_international_triggers.txt` — `un_ga_2_3_required`, `has_passed_sc_vote`, auto-vote triggers
+- `common/scripted_guis/00_missiles_scripted_guis.txt` — UN windows: propose, tallies, sway, queue reorder, budget
+- `common/on_actions/MD_on_actions.txt` — weekly queue pulse, monthly AI actors, June election start, January rotation
 
 ## Vote lifecycle
 
@@ -71,16 +71,19 @@ SC and GA type ids live in **separate namespaces** (`global.current_sc_vote_type
 
 ### Security Council (`security_council_vote_finished`)
 
-| Type | Resolution                      | On pass, the **subject** gets                                                  | Proposable by |
-| ---- | ------------------------------- | ------------------------------------------------------------------------------ | ------------- |
-| 1    | Cease offensive operations      | `has_end_war_mission` + `UNSC_end_all_offensive_wars`                          | AI, GUI       |
-| 2    | Economic sanctions              | `apply_united_nations_sanctions`                                               | AI, GUI       |
-| 3    | Restrict foreign volunteers     | `unsc_restricted_volunteers_too`                                               | GUI           |
-| 4    | Arms embargo                    | `unsc_arms_embargo`                                                            | AI, GUI       |
-| 5    | Recognition                     | routes to the GA via `update_ga_vote`                                          | script only   |
-| 6    | Disarmament / material breach   | `unsc_material_breach` (fail: `unsc_disarmament_rejected`)                     | script only   |
-| 7    | Demand surrender of a terrorist | `unsc_extradition_demanded` + UN sanctions (fail: `unsc_extradition_rejected`) | script only   |
-| 8    | Recommend permanent membership  | routes the serialized applicant to GA type 22                                  | script only   |
+| Type | Resolution                      | On pass, the **subject** gets                         |
+| ---- | ------------------------------- | ----------------------------------------------------- |
+| 1    | Cease offensive operations      | `has_end_war_mission` + `UNSC_end_all_offensive_wars` |
+| 2    | Economic sanctions              | `apply_united_nations_sanctions`                      |
+| 3    | Restrict foreign volunteers     | `unsc_restricted_volunteers_too`                      |
+| 4    | Arms embargo                    | `unsc_arms_embargo`                                   |
+| 5    | Recognition                     | routes to the GA via `update_ga_vote`                 |
+| 6    | Disarmament / material breach   | `unsc_material_breach`                                |
+| 7    | Demand surrender of a terrorist | `unsc_extradition_demanded` + UN sanctions            |
+| 8    | Recommend permanent membership  | routes the serialized applicant to GA type 22         |
+
+- Proposable by: types 1, 2, 4 — AI and GUI; type 3 — GUI only; types 5-8 — script only.
+- On fail: type 6 applies `unsc_disarmament_rejected`; type 7 applies `unsc_extradition_rejected`.
 
 Type 7 only calls `apply_united_nations_sanctions` if the subject doesn't already carry `united_nations_security_council_sanctions` (it may predate the demand via a type 2 vote), and records that ownership with `unsc_extradition_sanctions_applied`. The extradition chain (`wot.11.a`) clears `unsc_extradition_demanded` unconditionally but only strips the dynamic modifier when it owns that flag, so it never lifts sanctions a separate type-2 vote applied.
 
@@ -100,7 +103,7 @@ Type 7 only calls `apply_united_nations_sanctions` if the subject doesn't alread
 
 - **AI**: `un_ai_sc_consider_resolution` sets `sc_ai_action_type` from an explicit `if`/`else_if` chain that only ever yields **1, 2 or 4**. There is no random pick over a type range and no fallback branch — the `random = { chance = 40 }` decides _whether_ to propose, never _what_. GA proposals come from `un_ai_ga_consider_resolution`.
 - **Player**: the propose window in `00_missiles_scripted_guis.txt` has hardcoded buttons writing `sc_selected_action` = 1, 2, 3 or 4.
-- **Script only**: everything else. A type that has no branch in the AI chain and no GUI button cannot be proposed against an arbitrary country, and some types must stay that way — a randomly proposed "demand this nation surrender a terrorist" is nonsense. If you add a type that should stay script-only, add nothing to either path and say so in the table above.
+- **Script only**: everything else. A type that has no branch in the AI chain and no GUI button cannot be proposed against an arbitrary country, and some types must stay that way — a randomly proposed "demand this nation surrender a terrorist" is nonsense. If you add a type that should stay script-only, add nothing to either path and say so in the proposable-by list above.
 
 ### The Council has no proposer concept
 
@@ -115,7 +118,7 @@ Passage is `has_passed_sc_vote`: no veto, and at least `global.un_sc_required_ye
 3. Add the resolution name to `UNSCGetResolutionTypePassDesc` in `01_ledger_localisation.txt` (`UNSC_pass_type_<id>_desc`), or UNSC.10/11 render a blank where the resolution should be.
 4. Weight it in UNSC.1's yes/no/abstain `ai_chance`. `FROM` inside UNSC.1 is the **subject**, not the proposer, so `has_opinion = { target = FROM }` reads how the voter feels about the country being voted on. The generic `check_variable = { global.current_sc_vote_type > 1 }` modifiers already apply to any new type — check whether that is what you want before adding more.
 5. Queue it with `set_temp_variable = { sc_new_vote_type = <id> }` + `{ sc_new_vote_nation = <TAG>.id }` + `update_sc_vote = yes`. Never set `global.current_sc_vote_type` directly; `update_sc_vote` decides between starting the vote and queueing it behind a live one. `update_sc_vote` does **not** set `sc_action_against@<subject>` — the GUI and AI proposer paths set it themselves, and a script caller must too (`<TAG> = { set_global_flag = sc_action_against@THIS }`), or the one-proposal-per-subject invariant breaks. Gate the proposing decision on `NOT = { has_global_flag = sc_action_against@<TAG> }` (tooltip `TT_UNSC_NO_PENDING_SUBJECT_VOTE`) so it cannot double-queue behind someone else's proposal.
-6. Decide whether the AI and the propose GUI should be able to raise it, and wire (or deliberately do not wire) them. Record the decision in the table above.
+6. Decide whether the AI and the propose GUI should be able to raise it, and wire (or deliberately do not wire) them. Record the decision in the proposable-by list above.
 7. A subject that can die mid-vote needs teardown. `clear_united_nations_member_state` aborts a live vote whose subject is the dying nation and purges the queue via `un_remove_dying_nation_queued_votes`, and it does that for **any** subject, GA member or not — the membership pruning is just one part of it. It runs from `on_annex`. But a country removed by a scripted `annex_country` in a decision or event is not worth betting on, so call `clear_united_nations_member_state` explicitly on the dying nation before you remove it. Any SC type whose subject is not a normal member (TAL, for instance) is exposed to this.
 
 ## Adding a new GA resolution type

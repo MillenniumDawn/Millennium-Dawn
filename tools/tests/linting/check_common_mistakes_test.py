@@ -92,6 +92,7 @@ from check_common_mistakes import (
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
     _check_redundant_avoid_starting_wars,
+    _check_retired_ideology_flags,
     _check_tautological_or,
     _equipment_bonus_enum,
     _equipment_names,
@@ -2244,10 +2245,11 @@ assert_finds(
 print("\n── Leader rotation (political_leaders) ──")
 
 
-def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail=""):
+def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail=None):
     """One rotation tier: counter check, increment, kill, create, do_not_retire undo."""
     retire = counter if retire is None else retire
     undo = increment if undo is None else undo
+    tail = [] if tail is None else tail
     return [
         f"\t\tif = {{ limit = {{ check_variable = {{ {counter} = {number} }} {guard}}}\n",
         f"\t\t\tadd_to_variable = {{ {counter} = {increment} }}\n",
@@ -2262,10 +2264,10 @@ def _tier(counter, number, guard="", increment=1, retire=None, undo=None, tail="
     ]
 
 
-def _rotation(*tiers, flag="set_conservatism"):
+def _rotation(*tiers, slot=1):
     return [
         "set_leader_TST = {\n",
-        f"\tif = {{ limit = {{ has_country_flag = {flag} }}\n",
+        f"\tif = {{ limit = {{ check_variable = {{ ruling_party = {slot} }} }}\n",
         *[line for tier in tiers for line in tier],
         "\t}\n",
         "}\n",
@@ -2396,7 +2398,7 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } }\n",
         "\t\tif = { limit = { date < 2002.12.10 }\n",
         *_tier("conservatism_leader", 0),
         "\t\t}\n",
@@ -2415,7 +2417,7 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_liberalism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 2 } }\n",
         "\t\tif = { limit = { check_variable = { liberalism_leader = 1 } }\n",
         '\t\t\tcreate_country_leader = { name = "A" ideology = liberalism }\n',
         "\t\t}\n",
@@ -2433,10 +2435,10 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
-        "\telse_if = { limit = { has_country_flag = set_conservatism }\n",
+        "\telse_if = { limit = { check_variable = { ruling_party = 1 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
         "}\n",
@@ -2459,10 +2461,10 @@ assert_finds(
     _check_leader_rotation,
     [
         "set_leader_TST = {\n",
-        "\tif = { limit = { has_country_flag = set_conservatism }\n",
+        "\tif = { limit = { check_variable = { ruling_party = 1 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
-        "\telse_if = { limit = { has_country_flag = set_Monarchist }\n",
+        "\telse_if = { limit = { check_variable = { ruling_party = 23 } }\n",
         *_tier("conservatism_leader", 0),
         "\t}\n",
         "}\n",
@@ -2471,13 +2473,43 @@ assert_finds(
     "branch counting with another ideology's counter flagged",
 )
 
+assert_finds(
+    _check_retired_ideology_flags,
+    [
+        "test_trigger = {\n",
+        "\thas_country_flag\n",
+        "\t\t=\n",
+        "\t\tset_conservatism\n",
+        "}\n",
+        "test_effect = {\n",
+        "\tset_country_flag = {\n",
+        "\t\tvalue = 1\n",
+        "\t\tflag = set_Kingdom\n",
+        "\t}\n",
+        "}\n",
+        "cleanup_effect = { clr_country_flag = set_Nat_Autocracy }\n",
+    ],
+    3,
+    "retired ideology flags flagged regardless of operation or layout",
+)
+
+assert_finds(
+    _check_retired_ideology_flags,
+    [
+        "# has_country_flag = set_conservatism\n",
+        'log = "set_country_flag = set_Kingdom"\n',
+    ],
+    0,
+    "commented and quoted retired ideology flags ignored",
+)
+
 # CAS/PHI carry off-name counters (socalism_leader) that nothing else drives -- harmless
 assert_finds(
     _check_leader_rotation,
     _rotation(
         _tier("socalism_leader", 0),
         _tier("socalism_leader", 1, guard=_B_GUARD),
-        flag="set_socialism",
+        slot=3,
     ),
     0,
     "off-name counter owned by a single branch not flagged",
@@ -3726,9 +3758,11 @@ assert_finds(
 
 print("\n── add_equipment_bonus ──")
 
+equipment_bonus_enum = _equipment_bonus_enum()
+assert equipment_bonus_enum is not None
 assert_eq(
-    "util_vehicle_type" in _equipment_bonus_enum()
-    and "util_vehicle_equipment" not in _equipment_bonus_enum(),
+    "util_vehicle_type" in equipment_bonus_enum
+    and "util_vehicle_equipment" not in equipment_bonus_enum,
     True,
     "equipment bonus enum read from common/script_enums.txt",
 )
@@ -3774,10 +3808,12 @@ assert_finds(
 
 print("\n── equipment type ──")
 
+equipment_names = _equipment_names()
+assert equipment_names is not None
 assert_eq(
-    "infantry_weapons_type" in _equipment_names()
-    and "medium_tank_destroyer_chassis_0" in _equipment_names()
-    and "infantry_equipment" not in _equipment_names(),
+    "infantry_weapons_type" in equipment_names
+    and "medium_tank_destroyer_chassis_0" in equipment_names
+    and "infantry_equipment" not in equipment_names,
     True,
     "equipment names cover archetypes, variants and duplicate_archetypes clones",
 )

@@ -432,6 +432,7 @@ def test_untooltipped_check_variable_in_available_is_reported(tmp_path, write_pa
     issue = validator._issues[0]
     assert issue.category == "untooltipped-available-check"
     assert (issue.file, issue.line) == ("common/decisions/dec.txt", 4)
+    assert issue.severity == V.Severity.ERROR
 
 
 def test_repeated_unlocalised_flag_in_one_file_is_reported_once(tmp_path, write_path):

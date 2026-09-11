@@ -341,3 +341,67 @@ def test_ai_only_category_call_not_flagged(tmp_path):
         rel="common/decisions/src.txt",
     )
     assert out == []
+
+
+# --- AI-only if branch -------------------------------------------------------
+
+
+def test_ai_only_if_branch_exempt(tmp_path, ai_split_available):
+    out = _findings(tmp_path, ai_split_available("pak_raj_border_available = yes"))
+    assert out == []
+
+
+def test_human_else_branch_still_flagged(tmp_path, ai_split_available):
+    text = ai_split_available(
+        "has_war = no", else_body="pak_raj_border_available = yes"
+    )
+    out = _findings(tmp_path, text)
+    assert len(out) == 1
+    assert out[0][2] == 8
+
+
+def test_conditional_is_ai_not_exempt(tmp_path, ai_split_available):
+    text = ai_split_available(
+        "pak_raj_border_available = yes", limit="OR = { is_ai = yes tag = FOO }"
+    )
+    assert len(_findings(tmp_path, text)) == 1
+
+
+def test_is_ai_no_branch_not_exempt(tmp_path, ai_split_available):
+    text = ai_split_available("pak_raj_border_available = yes", limit="is_ai = no")
+    assert len(_findings(tmp_path, text)) == 1
+
+
+def test_else_if_ai_branch_exempt(tmp_path):
+    out = _findings(
+        tmp_path,
+        "my_focus = {\n"
+        "\tavailable = {\n"
+        "\t\tif = {\n"
+        "\t\t\tlimit = { has_war = yes }\n"
+        "\t\t\thas_war = yes\n"
+        "\t\t}\n"
+        "\t\telse_if = {\n"
+        "\t\t\tlimit = { is_ai = yes }\n"
+        "\t\t\tpak_raj_border_available = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert out == []
+
+
+def test_branch_after_last_is_ai_still_scanned(tmp_path, ai_split_available):
+    # The scan stops walking braces once no is_ai remains ahead; a later branch
+    # with no is_ai at all must still reach the stack walk.
+    text = ai_split_available("has_war = no") + (
+        "my_other_focus = {\n"
+        "\tavailable = {\n"
+        "\t\tif = {\n"
+        "\t\t\tlimit = { has_war = no }\n"
+        "\t\t\tpak_raj_border_available = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert len(_findings(tmp_path, text)) == 1

@@ -20,49 +20,25 @@ different_country_flags_category = {
 		visible = {
 			has_country_flag = dynamic_flag
 			has_elections = yes
-			if = {
-				limit = { has_country_flag = is_civil_war_faction }
-				meta_trigger = {
-					text = {
-						NOT = {
-							OR = {
-								if = {
-									limit = { has_country_flag = dynamic_flag_new }
-									has_cosmetic_tag = [ROOTTAG]_NEW
-								}
-								else = {
-									has_cosmetic_tag = [ROOTTAG]
-								}
-								has_civil_war = yes
-								NOT = { tag = [ROOTTAG] }
-								has_cosmetic_tag = [ROOTTAG]_REB
-								has_cosmetic_tag = [ROOTTAG]_REB_S
-							}
-						}
+			NOT = {
+				OR = {
+					if = {
+						limit = { has_country_flag = dynamic_flag_new }
+						check_variable = { dynamic_flag_variant = 1 }
 					}
-					ROOTTAG = "[?civil_war_original_tag.GetTag]"
-				}
-			}
-			else = {
-				meta_trigger = {
-					text = {
-						NOT = {
-							OR = {
-								if = {
-									limit = { has_country_flag = dynamic_flag_new }
-									has_cosmetic_tag = [ROOTTAG]_NEW
-								}
-								else = {
-									has_cosmetic_tag = [ROOTTAG]
-								}
-								has_civil_war = yes
-								NOT = { tag = [ROOTTAG] }
-								has_cosmetic_tag = [ROOTTAG]_REB
-								has_cosmetic_tag = [ROOTTAG]_REB_S
-							}
-						}
+					else = {
+						check_variable = { dynamic_flag_variant = 0 }
 					}
-					ROOTTAG = "[?original_tag.GetTag]"
+					has_civil_war = yes
+					check_variable = { dynamic_flag_variant = 6 }
+					check_variable = { dynamic_flag_variant = 7 }
+					if = {
+						limit = { has_country_flag = is_civil_war_faction }
+						NOT = { tag = var:civil_war_original_tag }
+					}
+					else = {
+						NOT = { tag = original_tag }
+					}
 				}
 			}
 			if = {
@@ -95,9 +71,11 @@ different_country_flags_category = {
 						if = {
 							limit = { has_country_flag = dynamic_flag_new }
 							set_cosmetic_tag = [ROOTTAG]_NEW
+							set_variable = { dynamic_flag_variant = 1 }
 						}
 						else = {
 							set_cosmetic_tag = [ROOTTAG]
+							clear_variable = dynamic_flag_variant
 						}
 					}
 					ROOTTAG = "[?civil_war_original_tag.GetTag]"
@@ -109,9 +87,11 @@ different_country_flags_category = {
 						if = {
 							limit = { has_country_flag = dynamic_flag_new }
 							set_cosmetic_tag = [ROOTTAG]_NEW
+							set_variable = { dynamic_flag_variant = 1 }
 						}
 						else = {
 							set_cosmetic_tag = [ROOTTAG]
+							clear_variable = dynamic_flag_variant
 						}
 					}
 					ROOTTAG = "[?original_tag.GetTag]"
@@ -185,30 +165,7 @@ different_country_flags_category = {
 
 				# Normally democratic party is AUTH
 				AND = {
-					NOT = {
-						OR = {
-							has_civil_war = yes
-							if = {
-								limit = { has_country_flag = is_civil_war_faction }
-								meta_trigger = {
-									text = {
-										has_cosmetic_tag = [ROOTTAG]
-										has_cosmetic_tag = [ROOTTAG]_NEW
-									}
-									ROOTTAG = "[?civil_war_original_tag.GetTag]"
-								}
-							}
-							else = {
-								meta_trigger = {
-									text = {
-										has_cosmetic_tag = [ROOTTAG]
-										has_cosmetic_tag = [ROOTTAG]_NEW
-									}
-									ROOTTAG = "[?original_tag.GetTag]"
-								}
-							}
-						}
-					}
+					has_civil_war = no
 					OR = {
 						western_conservatism_are_in_power = yes
 						western_liberals_are_in_power = yes
@@ -229,23 +186,12 @@ different_country_flags_category = {
 
 			if = {
 				limit = { has_country_flag = is_civil_war_faction }
-				meta_trigger = {
-					text = {
-						set_temp_variable = { temp_var = [ROOTTAG] }
-						var:temp_var = { NOT = { has_cosmetic_tag = [ROOTTAG]_AUTH } }
-					}
-					ROOTTAG = "[?civil_war_original_tag.GetTag]"
-				}
+				set_temp_variable = { temp_var = civil_war_original_tag }
 			}
 			else = {
-				meta_trigger = {
-					text = {
-						set_temp_variable = { temp_var = [ROOTTAG] }
-						var:temp_var = { NOT = { has_cosmetic_tag = [ROOTTAG]_AUTH } }
-					}
-					ROOTTAG = "[?original_tag.GetTag]"
-				}
+				set_temp_variable = { temp_var = original_tag }
 			}
+			var:temp_var = { NOT = { check_variable = { dynamic_flag_variant = 2 } } }
 
 			NOT = {
 				OR = {
@@ -273,12 +219,14 @@ different_country_flags_category = {
 					text = { set_cosmetic_tag = [ROOTTAG]_AUTH }
 					ROOTTAG = "[?civil_war_original_tag.GetTag]"
 				}
+				set_variable = { dynamic_flag_variant = 2 }
 			}
 			else = {
 				meta_effect = {
 					text = { set_cosmetic_tag = [ROOTTAG]_AUTH }
 					ROOTTAG = "[?original_tag.GetTag]"
 				}
+				set_variable = { dynamic_flag_variant = 2 }
 			}
 			custom_effect_tooltip = tooltip_change_flag
 		}
@@ -341,31 +289,20 @@ different_country_flags_category = {
 
 			if = {
 				limit = { has_country_flag = is_civil_war_faction }
-				meta_trigger = {
-					text = {
-						set_temp_variable = { temp_var = [ROOTTAG] }
-						var:temp_var = { NOT = { has_cosmetic_tag = [ROOTTAG]_AUTH_S } }
-					}
-					ROOTTAG = "[?civil_war_original_tag.GetTag]"
-				}
+				set_temp_variable = { temp_var = civil_war_original_tag }
 			}
 			else = {
-				meta_trigger = {
-					text = {
-						set_temp_variable = { temp_var = [ROOTTAG] }
-						var:temp_var = { NOT = { has_cosmetic_tag = [ROOTTAG]_AUTH_S } }
-					}
-					ROOTTAG = "[?original_tag.GetTag]"
-				}
+				set_temp_variable = { temp_var = original_tag }
 			}
+			var:temp_var = { NOT = { check_variable = { dynamic_flag_variant = 3 } } }
 
 			OR = {
-				is_in_array = { array = ruling_party value = 10 }
-				is_in_array = { array = ruling_party value = 23 }
+				check_variable = { ruling_party = 10 }
+				check_variable = { ruling_party = 23 }
 				AND = {
 					OR = {
-						is_in_array = { array = ruling_party value = 4 }
-						is_in_array = { array = ruling_party value = 19 }
+						check_variable = { ruling_party = 4 }
+						check_variable = { ruling_party = 19 }
 					}
 					OR = {
 						has_civil_war = no
@@ -386,12 +323,14 @@ different_country_flags_category = {
 					text = { set_cosmetic_tag = [ROOTTAG]_AUTH_S }
 					ROOTTAG = "[?civil_war_original_tag.GetTag]"
 				}
+				set_variable = { dynamic_flag_variant = 3 }
 			}
 			else = {
 				meta_effect = {
 					text = { set_cosmetic_tag = [ROOTTAG]_AUTH_S }
 					ROOTTAG = "[?original_tag.GetTag]"
 				}
+				set_variable = { dynamic_flag_variant = 3 }
 				custom_effect_tooltip = tooltip_change_flag
 			}
 		}
@@ -457,18 +396,12 @@ different_country_flags_category = {
 					limit = {
 						has_country_flag = dynamic_flag_edgy
 						has_game_rule = { rule = allow_edgy_flags option = yes }
-						is_in_array = { array = ruling_party value = 21 }
+						check_variable = { ruling_party = 21 }
 					}
-					meta_trigger = {
-						text = { NOT = { has_cosmetic_tag = [ROOTTAG]_AUTH_SS_EDGY } }
-						ROOTTAG = "[?civil_war_original_tag.GetTag]"
-					}
+					NOT = { check_variable = { dynamic_flag_variant = 5 } }
 				}
 				else = {
-					meta_trigger = {
-						text = { NOT = { has_cosmetic_tag = [ROOTTAG]_AUTH_SS } }
-						ROOTTAG = "[?civil_war_original_tag.GetTag]"
-					}
+					NOT = { check_variable = { dynamic_flag_variant = 4 } }
 				}
 			}
 			else = {
@@ -476,29 +409,24 @@ different_country_flags_category = {
 					limit = {
 						has_country_flag = dynamic_flag_edgy
 						has_game_rule = { rule = allow_edgy_flags option = yes }
-						is_in_array = { array = ruling_party value = 21 }
+						check_variable = { ruling_party = 21 }
 					}
-					meta_trigger = {
-						text = { NOT = { has_cosmetic_tag = [ROOTTAG]_AUTH_SS_EDGY } }
-						ROOTTAG = "[?original_tag.GetTag]"
+					NOT = {
+						OR = {
+							check_variable = { dynamic_flag_variant = 4 }
+							check_variable = { dynamic_flag_variant = 5 }
+						}
 					}
 				}
 				else = {
-					meta_trigger = {
-						text = { NOT = { has_cosmetic_tag = [ROOTTAG]_AUTH_SS } }
-						ROOTTAG = "[?original_tag.GetTag]"
-					}
+					NOT = { check_variable = { dynamic_flag_variant = 4 } }
 				}
 			}
-			meta_trigger = {
-				text = { NOT = { has_cosmetic_tag = [ROOTTAG]_AUTH_SS } }
-				ROOTTAG = "[?original_tag.GetTag]"
-			}
 			OR = {
-				is_in_array = { array = ruling_party value = 21 }
-				is_in_array = { array = ruling_party value = 8 }
-				is_in_array = { array = ruling_party value = 9 }
-				is_in_array = { array = ruling_party value = 11 }
+				check_variable = { ruling_party = 21 }
+				check_variable = { ruling_party = 8 }
+				check_variable = { ruling_party = 9 }
+				check_variable = { ruling_party = 11 }
 			}
 		}
 
@@ -511,18 +439,20 @@ different_country_flags_category = {
 					limit = {
 						has_country_flag = dynamic_flag_edgy
 						has_game_rule = { rule = allow_edgy_flags option = yes }
-						is_in_array = { array = ruling_party value = 21 }
+						check_variable = { ruling_party = 21 }
 					}
 					meta_effect = {
 						text = { set_cosmetic_tag = [ROOTTAG]_AUTH_SS_EDGY }
 						ROOTTAG = "[?civil_war_original_tag.GetTag]"
 					}
+					set_variable = { dynamic_flag_variant = 5 }
 				}
 				else = {
 					meta_effect = {
 						text = { set_cosmetic_tag = [ROOTTAG]_AUTH_SS }
 						ROOTTAG = "[?civil_war_original_tag.GetTag]"
 					}
+					set_variable = { dynamic_flag_variant = 4 }
 				}
 			}
 			else = {
@@ -530,18 +460,20 @@ different_country_flags_category = {
 					limit = {
 						has_country_flag = dynamic_flag_edgy
 						has_game_rule = { rule = allow_edgy_flags option = yes }
-						is_in_array = { array = ruling_party value = 21 }
+						check_variable = { ruling_party = 21 }
 					}
 					meta_effect = {
 						text = { set_cosmetic_tag = [ROOTTAG]_AUTH_SS_EDGY }
 						ROOTTAG = "[?original_tag.GetTag]"
 					}
+					set_variable = { dynamic_flag_variant = 5 }
 				}
 				else = {
 					meta_effect = {
 						text = { set_cosmetic_tag = [ROOTTAG]_AUTH_SS }
 						ROOTTAG = "[?original_tag.GetTag]"
 					}
+					set_variable = { dynamic_flag_variant = 4 }
 				}
 				custom_effect_tooltip = tooltip_change_flag
 			}
@@ -580,77 +512,35 @@ different_country_flags_category = {
 			}
 			if = {
 				limit = { has_country_flag = is_civil_war_faction }
-				meta_trigger = {
-					text = {
-						if = {
-							limit = { NOT = { tag = original_tag } }
-							any_country_with_original_tag = {
-								original_tag_to_check = ROOT
-								has_cosmetic_tag = [ROOTTAG]
-							}
-						}
-						else = { always = no }
-						NOT = {
-							OR = {
-								has_cosmetic_tag = [ROOTTAG]_REB
-								tag = [ROOTTAG]
-							}
-						}
-					}
-					ROOTTAG = "[?civil_war_original_tag.GetTag]"
-				}
-				NOT = {
-					OR = {
-						is_in_array = { array = ruling_party value = 4 }
-						is_in_array = { array = ruling_party value = 19 }
-						is_in_array = { array = ruling_party value = 22 }
-						is_in_array = { array = ruling_party value = 21 }
-						is_in_array = { array = ruling_party value = 8 }
-						is_in_array = { array = ruling_party value = 9 }
-						is_in_array = { array = ruling_party value = 10 }
-						is_in_array = { array = ruling_party value = 11 }
-						is_in_array = { array = ruling_party value = 23 }
-						is_in_array = { array = ruling_party value = 0 }
-						is_in_array = { array = ruling_party value = 7 }
-						is_in_array = { array = ruling_party value = 13 }
-					}
-				}
+				set_temp_variable = { temp_var = civil_war_original_tag }
 			}
 			else = {
-				meta_trigger = {
-					text = {
-						if = {
-							limit = { NOT = { tag = original_tag } }
-							any_country_with_original_tag = {
-								original_tag_to_check = ROOT
-								has_cosmetic_tag = [ROOTTAG]
-							}
-						}
-						else = { always = no }
-						NOT = {
-							OR = {
-								has_cosmetic_tag = [ROOTTAG]_REB
-								tag = [ROOTTAG]
-							}
-						}
-					}
-					ROOTTAG = "[?original_tag.GetTag]"
+				set_temp_variable = { temp_var = original_tag }
+			}
+			if = {
+				limit = { NOT = { tag = original_tag } }
+				any_country_with_original_tag = {
+					original_tag_to_check = ROOT
+					check_variable = { dynamic_flag_variant = 0 }
 				}
-				NOT = {
-					OR = {
-						is_in_array = { array = ruling_party value = 4 }
-						is_in_array = { array = ruling_party value = 19 }
-						is_in_array = { array = ruling_party value = 22 }
-						is_in_array = { array = ruling_party value = 21 }
-						is_in_array = { array = ruling_party value = 8 }
-						is_in_array = { array = ruling_party value = 9 }
-						is_in_array = { array = ruling_party value = 10 }
-						is_in_array = { array = ruling_party value = 11 }
-						is_in_array = { array = ruling_party value = 23 }
-						is_in_array = { array = ruling_party value = 0 }
-						is_in_array = { array = ruling_party value = 7 }
-						is_in_array = { array = ruling_party value = 13 }
-					}
+			}
+			else = { always = no }
+			NOT = {
+				OR = {
+					check_variable = { dynamic_flag_variant = 6 }
+					tag = var:temp_var
+					check_variable = { ruling_party = 4 }
+					check_variable = { ruling_party = 19 }
+					check_variable = { ruling_party = 22 }
+					check_variable = { ruling_party = 21 }
+					check_variable = { ruling_party = 8 }
+					check_variable = { ruling_party = 9 }
+					check_variable = { ruling_party = 10 }
+					check_variable = { ruling_party = 11 }
+					check_variable = { ruling_party = 23 }
+					western_autocrats_are_in_power = yes
+					check_variable = { ruling_party = 7 }
+					check_variable = { ruling_party = 13 }
 				}
 			}
 		}
@@ -663,12 +553,14 @@ different_country_flags_category = {
 					text = { set_cosmetic_tag = [ROOTTAG]_REB }
 					ROOTTAG = "[?civil_war_original_tag.GetTag]"
 				}
+				set_variable = { dynamic_flag_variant = 6 }
 			}
 			else = {
 				meta_effect = {
 					text = { set_cosmetic_tag = [ROOTTAG]_REB }
 					ROOTTAG = "[?original_tag.GetTag]"
 				}
+				set_variable = { dynamic_flag_variant = 6 }
 				custom_effect_tooltip = tooltip_change_flag
 			}
 		}
@@ -688,39 +580,20 @@ different_country_flags_category = {
 			has_civil_war = yes
 			if = {
 				limit = { has_country_flag = is_civil_war_faction }
-				meta_trigger = {
-					text = {
-						NOT = { has_cosmetic_tag = [ROOTTAG]_REB_S }
-						OR = {
-							is_in_array = { array = ruling_party value = 22 }
-							AND = {
-								OR = {
-									is_in_array = { array = ruling_party value = 4 }
-									is_in_array = { array = ruling_party value = 19 }
-								}
-								NOT = { tag = [ROOTTAG] }
-							}
-						}
-					}
-					ROOTTAG = "[?civil_war_original_tag.GetTag]"
-				}
+				set_temp_variable = { temp_var = civil_war_original_tag }
 			}
 			else = {
-				meta_trigger = {
-					text = {
-						NOT = { has_cosmetic_tag = [ROOTTAG]_REB_S }
-						OR = {
-							is_in_array = { array = ruling_party value = 22 }
-							AND = {
-								OR = {
-									is_in_array = { array = ruling_party value = 4 }
-									is_in_array = { array = ruling_party value = 19 }
-								}
-								NOT = { tag = [ROOTTAG] }
-							}
-						}
+				set_temp_variable = { temp_var = original_tag }
+			}
+			NOT = { check_variable = { dynamic_flag_variant = 7 } }
+			OR = {
+				check_variable = { ruling_party = 22 }
+				AND = {
+					OR = {
+						check_variable = { ruling_party = 4 }
+						check_variable = { ruling_party = 19 }
 					}
-					ROOTTAG = "[?original_tag.GetTag]"
+					NOT = { tag = var:temp_var }
 				}
 			}
 			if = {
@@ -751,12 +624,14 @@ different_country_flags_category = {
 					text = { set_cosmetic_tag = [ROOTTAG]_REB_S }
 					ROOTTAG = "[?civil_war_original_tag.GetTag]"
 				}
+				set_variable = { dynamic_flag_variant = 7 }
 			}
 			else = {
 				meta_effect = {
 					text = { set_cosmetic_tag = [ROOTTAG]_REB_S }
 					ROOTTAG = "[?original_tag.GetTag]"
 				}
+				set_variable = { dynamic_flag_variant = 7 }
 				custom_effect_tooltip = tooltip_change_flag
 			}
 		}
@@ -854,6 +729,7 @@ different_country_flags_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SER_flag_change"
 			set_cosmetic_tag = SER
+			clear_variable = dynamic_flag_variant
 			set_country_flag = dynamic_flag
 			set_country_flag = dynamic_rebel_flag
 			custom_effect_tooltip = tooltip_change_flag
@@ -926,6 +802,7 @@ different_country_flags_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision MAU_NEW_flag"
 			set_country_flag = dynamic_flag_new
 			set_cosmetic_tag = MAU_NEW
+			set_variable = { dynamic_flag_variant = 1 }
 		}
 	}
 
@@ -948,6 +825,7 @@ different_country_flags_category = {
 			set_country_flag = dynamic_rebel_flag
 
 			set_cosmetic_tag = DRC_AUTH
+			set_variable = { dynamic_flag_variant = 2 }
 		}
 	}
 
@@ -965,6 +843,7 @@ different_country_flags_category = {
 			set_country_flag = dynamic_flag
 
 			set_cosmetic_tag = RWA
+			clear_variable = dynamic_flag_variant
 		}
 
 		ai_will_do = {
@@ -976,6 +855,9 @@ different_country_flags_category = {
 		icon = GFX_decision_generic_form_nation
 		ai_will_do = { base = 1 }
 		allowed = { original_tag = GER }
+		visible = {
+			NOT = { has_global_flag = GAME_RULE_disable_formable_nations }
+		}
 		available = {
 			NOT = { has_cosmetic_tag = GER_empire }
 			nationalist_monarchists_are_in_power = yes
@@ -984,6 +866,9 @@ different_country_flags_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_monarchist_flag"
 			custom_effect_tooltip = tooltip_change_flag
 			set_cosmetic_tag = GER_empire
+			mark_formed_country_formable = yes
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
 		}
 	}
 }

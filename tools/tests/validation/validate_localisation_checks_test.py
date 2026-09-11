@@ -162,6 +162,62 @@ def test_custom_tooltip_reference_is_reported(tmp_path, monkeypatch):
     assert VL.process_txt_for_custom_tt_refs(path) == ["MISSING_TT - tt.txt"]
 
 
+def test_trigger_tooltip_key_found_behind_a_nested_block(tmp_path, monkeypatch):
+    """A nested block in the trigger body must not hide the tooltip key."""
+    _init_worker_keys(monkeypatch, valid={"KNOWN_TT"})
+    path = _txt(
+        tmp_path,
+        "common/tt.txt",
+        "custom_trigger_tooltip = {\n"
+        "\tcheck_variable = { party_pop_array^19 > 0.30 }\n"
+        "\ttooltip = MISSING_NESTED_TT\n"
+        "}\n"
+        "custom_trigger_tooltip = {\n"
+        "\ttooltip = KNOWN_TT\n"
+        "}\n",
+    )
+    assert VL.process_txt_for_custom_tt_refs(path) == ["MISSING_NESTED_TT - tt.txt"]
+
+
+# --- [?variable] references -------------------------------------------------
+
+
+def test_loc_var_name_strips_scope_hops_and_rejects_non_variables():
+    """What counts as a variable read, and what does not."""
+    assert VL._loc_var_name("CZE_cssd_stability|%.2+") == "CZE_cssd_stability"
+    assert VL._loc_var_name("ROOT.GER_Troop_anger") == "GER_Troop_anger"
+    assert VL._loc_var_name("145.GRE_SUPPORT") == "GRE_SUPPORT"
+    assert VL._loc_var_name("FROM.CONTROLLER:gdp_per_capita|Y") == "gdp_per_capita"
+
+    # engine value reads, not variables
+    assert VL._loc_var_name("modifier@conscription_factor|Y%2") == ""
+    assert VL._loc_var_name("resource@oil") == ""
+    assert VL._loc_var_name("cyber_defense_rating@var:target") == ""
+    # scopes, arrays and promotes
+    assert VL._loc_var_name("ROOT") == ""
+    assert VL._loc_var_name("var:FROM.influence_array^0") == ""
+    assert VL._loc_var_name("current_nation.UNSCGetResolutionTypePassDesc") == ""
+
+
+def test_unwritten_loc_variable_is_reported(tmp_path):
+    """A [?name] no script writes renders as 0, so it must be reported."""
+    _english(
+        tmp_path,
+        "t_l_english.yml",
+        ' a_key: "Written: [?written_var|0] Unwritten: [?never_written_var|0]"\n',
+    )
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n\tset_variable = { written_var = 3 }\n}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_variable_references()
+    reported = [str(i) for i in v._issues]
+    assert any("never_written_var" in r for r in reported)
+    assert not any("written_var|" in r or " written_var " in r for r in reported)
+
+
 # --- NOT-block extraction ---------------------------------------------------
 
 
@@ -461,3 +517,22 @@ def test_issue_paths_use_the_file_basename(tmp_path):
     path = _english(tmp_path, "prose_l_english.yml", 'l_english:\n A:0 "a — b"\n')
     issues = VL.process_yml_for_prose((path,))
     assert [i.file for i in issues] == [os.path.basename(path)]
+
+
+@pytest.mark.parametrize(
+    "directory", ["common", "events", "history/countries", "history/states"]
+)
+@pytest.mark.parametrize(
+    "target", ["written_var", "145.written_var", "ROOT.written_var"]
+)
+def test_loc_variable_writes_include_history_and_state_scopes(
+    tmp_path, directory, target
+):
+    _english(
+        tmp_path, "t_l_english.yml", ' a_key: "[?145.written_var] [?missing_var]"\n'
+    )
+    _txt(tmp_path, f"{directory}/e.txt", f"set_variable = {{ {target} = 3 }}\n")
+    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_variable_references()
+    assert len(validator._issues) == 1
+    assert "missing_var" in str(validator._issues[0])

@@ -104,6 +104,33 @@ _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
 _DELETE_TEMPLATE_SOURCE_PATTERNS = _CREATE_UNIT_SOURCE_PATTERNS + [
     "common/ideas/*.txt",
 ]
+# Static template sources; OOB definitions stay wildcard-owned.
+_TEMPLATE_SOURCE_PATTERNS = [
+    "history/**/*.txt",
+    "events/**/*.txt",
+    "common/national_focus/*.txt",
+    "common/decisions/*.txt",
+    "common/scripted_effects/*.txt",
+    "common/on_actions/*.txt",
+    "common/scripted_guis/**/*.txt",
+    "common/operations/**/*.txt",
+    "common/resistance_compliance_modifiers/**/*.txt",
+    "common/special_projects/**/*.txt",
+    "common/ideas/**/*.txt",
+]
+_TEMPLATE_SOURCE_ROOTS = (
+    "history/",
+    "events/",
+    "common/national_focus/",
+    "common/decisions/",
+    "common/scripted_effects/",
+    "common/on_actions/",
+    "common/scripted_guis/",
+    "common/operations/",
+    "common/resistance_compliance_modifiers/",
+    "common/special_projects/",
+    "common/ideas/",
+)
 
 
 def _read_text(filepath: str, under: str) -> str:
@@ -732,7 +759,6 @@ _DIVISION_VALUE_RE = re.compile(r'\bdivision\s*=\s*"((?:[^"\\]|\\.)*)"', re.S)
 _TEMPLATE_NAME_RE = re.compile(r'\bname\s*=\s*"([^"]*)"')
 _KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _OWNER_RE = re.compile(r"\bowner\s*=")
-_OWNER_VALUE_RE = re.compile(r"\bowner\s*=\s*([A-Za-z0-9_]+)")
 _DELETE_TEMPLATE_BLOCK_RE = re.compile(
     r"delete_unit_template_and_units\s*=\s*\{([^{}]*)\}"
 )
@@ -797,6 +823,7 @@ _CREATE_UNIT_CATEGORIES = {
     "missing-template-ensure": (
         "CREATE UNIT: template not created or has_template-guarded in this effect"
     ),
+    "foreign-static-template": ("CREATE UNIT: foreign-only static template definition"),
 }
 _CREATE_UNIT_WARNING_KINDS = frozenset({"out-of-bounds-division"})
 # persistent.cpp rejects these even inside quotes (Sweden militärdistriktet).
@@ -886,6 +913,9 @@ def _matching_braces(text: str) -> Dict[int, int]:
                 stack.append(i)
             elif c == "}" and stack:
                 pairs[stack.pop()] = i
+        # HOI4 strings cannot span lines.
+        if c == "\n":
+            in_str = False
     return pairs
 
 
@@ -961,6 +991,130 @@ def _country_scope_path(
         elif scope is not None:
             path.append(scope)
     return tuple(path)
+
+
+def _at_top_level(text: str, start: int, pos: int) -> bool:
+    depth = 0
+    in_string = False
+    escaped = False
+    for char in text[start:pos]:
+        if char == '"' and not escaped:
+            in_string = not in_string
+        elif not in_string:
+            if char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+        escaped = char == "\\" and not escaped
+        if char != "\\":
+            escaped = False
+    return depth == 0 and not in_string
+
+
+def _top_level_value(text: str, start: int, end: int, key: str) -> Optional[str]:
+    assignment = re.compile(r"\b" + re.escape(key) + r"\s*=\s*")
+    for match in assignment.finditer(text, start, end):
+        if not _at_top_level(text, start, match.start()):
+            continue
+        value_start = match.end()
+        if value_start >= end:
+            return None
+        if text[value_start] == '"':
+            escaped = False
+            for pos in range(value_start + 1, end):
+                char = text[pos]
+                if char == '"' and not escaped:
+                    return text[value_start + 1 : pos]
+                escaped = char == "\\" and not escaped
+                if char != "\\":
+                    escaped = False
+            return None
+        value = re.match(r"[^\s{}]+", text[value_start:end])
+        return value.group(0) if value else None
+    return None
+
+
+def _static_template_name(nodes: List[Dict], text: str, idx: int) -> Optional[str]:
+    name = _top_level_value(text, nodes[idx]["start"] + 1, nodes[idx]["end"], "name")
+    if not name or any(
+        marker in name for marker in ("$", "[", "]", "var:", "global.", "event_target:")
+    ):
+        return None
+    return name
+
+
+def _focus_root_owner(nodes: List[Dict], text: str, idx: int) -> Optional[str]:
+    focus = next(
+        (
+            ancestor
+            for ancestor in _ancestors(nodes, idx)
+            if nodes[ancestor]["label"] == "focus_tree"
+        ),
+        -1,
+    )
+    if focus == -1:
+        return None
+    country_blocks = [
+        child
+        for child in nodes[focus]["children"]
+        if nodes[child]["label"] == "country"
+    ]
+    if len(country_blocks) != 1:
+        return None
+    country = nodes[country_blocks[0]]
+    body = text[country["start"] + 1 : country["end"]]
+    selectors = []
+    unknown = False
+    for match in re.finditer(r"\b(?:original_tag|tag)\s*=", body):
+        value = re.match(r"\s*([^\s{}]+)", body[match.end() :])
+        if not value or not _LITERAL_TAG_SCOPE_RE.fullmatch(value.group(1)):
+            unknown = True
+        else:
+            selectors.append(value.group(1))
+    if unknown or len(set(selectors)) != 1:
+        return None
+    return selectors[0]
+
+
+def _template_owner(nodes: List[Dict], text: str, idx: int, rel: str) -> Optional[str]:
+    if rel.startswith("history/"):
+        return None
+    path = _country_scope_path(nodes, idx)
+    tags = []
+    for scope in path[1:]:
+        if not _LITERAL_TAG_SCOPE_RE.fullmatch(scope):
+            return None
+        tags.append(scope)
+    if tags:
+        return tags[-1]
+    if rel.startswith("common/national_focus/"):
+        return _focus_root_owner(nodes, text, idx)
+    return None
+
+
+def build_division_template_index(
+    sources: List[Tuple[str, str]],
+) -> Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]:
+    """Index static template names by safe country scope and wildcard the rest."""
+    owners: Dict[str, Set[str]] = {}
+    wildcard: Set[str] = set()
+    for rel, raw in sources:
+        if "division_template" not in raw:
+            continue
+        text = strip_comments(raw)
+        nodes = _build_block_nodes(text)
+        for idx, node in enumerate(nodes):
+            if node["label"] != "division_template":
+                continue
+            name = _static_template_name(nodes, text, idx)
+            if name is None:
+                continue
+            owner = _template_owner(nodes, text, idx, rel)
+            if owner is None:
+                wildcard.add(name)
+            else:
+                owners.setdefault(name, set()).add(owner)
+    return {name: frozenset(tags) for name, tags in owners.items()}, frozenset(wildcard)
 
 
 def _deepest_node_at(nodes: List[Dict], pos: int) -> int:
@@ -1502,10 +1656,26 @@ def _deleted_template_names(mod_path: str, files: List[str]) -> FrozenSet[str]:
 
 
 def _check_created_units(
-    args: Tuple[str, str, str, FrozenSet[str], Dict[str, FrozenSet[str]]],
+    args: Tuple[
+        str,
+        str,
+        str,
+        FrozenSet[str],
+        Dict[str, FrozenSet[str]],
+        Dict[str, FrozenSet[str]],
+        FrozenSet[str],
+    ],
 ) -> List[Issue]:
     """Validate every create_unit block in one file. Returns error Issues."""
-    filepath, rel, mod_path, deleted_names, effect_closure = args
+    (
+        filepath,
+        rel,
+        mod_path,
+        deleted_names,
+        effect_closure,
+        template_owners,
+        template_wildcard,
+    ) = args
     raw = _read_text(filepath, mod_path)
     if not raw:
         return []
@@ -1565,6 +1735,17 @@ def _check_created_units(
                 f"{cu['line']}: division string must stay on one physical line",
                 line,
             )
+        # An unescaped inner quote closes the value early.
+        tail = body[dm.end() :].split("\n", 1)[0]
+        if tail.strip() and not re.match(
+            r"\s*(?:[A-Za-z_][A-Za-z0-9_]*\s*=|[{}])", tail
+        ):
+            out.error(
+                "malformed-division",
+                f"{cu['line']}: division string has an unescaped inner quote; "
+                f"the text after it does not parse as army data",
+                line,
+            )
         # The string carries escaped quotes (\"...\"); normalize so the inner
         # name/template/factor tokens parse like the engine's parsed string.
         dval_clean = dval.replace('\\"', '"')
@@ -1611,24 +1792,38 @@ def _check_created_units(
 
         if found_same_scope:
             continue
-        if tname not in deleted_names:
-            continue
-        # force_equipment_variants entries carry their own `owner =`; only the
-        # keys outside the division string belong to the create_unit block.
-        outer = body[: dm.start()] + body[dm.end() :]
-        owner_m = _OWNER_VALUE_RE.search(outer)
-        owner = owner_m.group(1) if owner_m else None
+        # Ignore owner values embedded in force_equipment_variants.
+        owner_value = _top_level_value(content, cu["start"] + 1, cu["end"], "owner")
+        owner = (
+            owner_value
+            if owner_value and _LITERAL_TAG_SCOPE_RE.fullmatch(owner_value)
+            else None
+        )
         if _prior_effect_ensures(
             content, container, nodes, cu["start"], tname, effect_closure
         ):
             continue
-        if not _has_prior_covering_template(nodes, content, cu_idx, tname, owner):
+        if _has_prior_covering_template(nodes, content, cu_idx, tname, owner):
+            continue
+        if tname in deleted_names:
             out.warn(
                 "missing-template-ensure",
                 f"{cu['line']}: create_unit uses division_template '{tname}' which is deleted "
                 f"elsewhere, with no prior division_template or has_template guard in this effect",
                 line,
             )
+        if not owner or tname in template_wildcard:
+            continue
+        known_owners = template_owners.get(tname)
+        if not known_owners or owner in known_owners:
+            continue
+        foreign_owners = sorted(known_owners)
+        out.warn(
+            "foreign-static-template",
+            f"{cu['line']}: create_unit uses division_template '{tname}', but only static "
+            f"definitions found for {', '.join(foreign_owners)}; none found for {owner}",
+            line,
+        )
 
     return out.issues
 
@@ -1999,7 +2194,36 @@ class Validator(BaseValidator):
         """Check every create_unit effect source for proper form."""
         self._log_section("Checking create_unit effects across the mod...")
 
-        files = self._collect_files(_CREATE_UNIT_SOURCE_PATTERNS)
+        template_files = self._collect_files(
+            _TEMPLATE_SOURCE_PATTERNS, ignore_staged=True
+        )
+        template_sources = [
+            (
+                normalize_path_separators(os.path.relpath(filepath, self.mod_path)),
+                _read_text(filepath, self.mod_path),
+            )
+            for filepath in template_files
+        ]
+        template_owners, template_wildcard = disk_cache.aggregate_cached(
+            self.mod_path,
+            "oob_units.division_templates",
+            template_files,
+            lambda: build_division_template_index(template_sources),
+        )
+        staged_template_paths = [
+            normalize_path_separators(os.path.relpath(path, self.mod_path))
+            for path in get_staged_files(
+                self.mod_path, extensions=self.STAGED_EXTENSIONS, include_missing=True
+            )
+            or []
+        ]
+        template_changed = self.staged_only and any(
+            path.startswith(_TEMPLATE_SOURCE_ROOTS) and path.endswith(".txt")
+            for path in staged_template_paths
+        )
+        files = self._collect_files(
+            _CREATE_UNIT_SOURCE_PATTERNS, ignore_staged=template_changed
+        )
         if not files:
             self.log("  No files to check")
             return
@@ -2030,6 +2254,8 @@ class Validator(BaseValidator):
                 self.mod_path,
                 deleted_names,
                 effect_closure,
+                template_owners,
+                template_wildcard,
             )
             for f in files
         ]

@@ -227,13 +227,36 @@ def test_event_file_dispatch_covers_the_event_only_checks(tmp_path, scoped_refs)
     assert _matching(messages, "log references Event test.2")
 
 
+@pytest.mark.parametrize(
+    "path",
+    [
+        "common/decisions/MD_test.txt",
+        "events/MD_test_events.txt",
+        "history/countries/MDT - Test.txt",
+    ],
+)
+def test_retired_ideology_flags_are_checked_in_every_runtime_tree(
+    tmp_path, scoped_refs, path
+):
+    messages = _messages(
+        tmp_path,
+        path,
+        "test_effect = {",
+        "\tset_country_flag",
+        "\t\t= set_conservatism",
+        "}",
+    )
+
+    assert _matching(messages, "retired ideology flag set_conservatism")
+
+
 def test_political_leaders_file_dispatch(tmp_path, scoped_refs):
     messages = _messages(
         tmp_path,
         "common/scripted_effects/MD_TAG_political_leaders.txt",
         "set_leader_TAG = {",
         "\tif = {",
-        "\t\tlimit = { has_country_flag = set_conservatism }",
+        "\t\tlimit = { check_variable = { ruling_party = 1 } }",
         "\t\tif = {",
         "\t\t\tlimit = { check_variable = { conservatism_leader = 0 } }",
         "\t\t\tadd_to_variable = { conservatism_leader = 2 }",
@@ -491,8 +514,8 @@ def test_script_entry_point_exits_with_the_finding_count(tmp_path, monkeypatch):
 
 def test_targeted_mode_recognises_every_scoping_flag():
     class Args:
-        filenames = None
-        files = None
+        filenames: list[str] | None = None
+        files: list[str] | None = None
         mode = "all"
 
     assert not checker._targeted_mode(Args())
@@ -1111,7 +1134,7 @@ def test_rotation_walker_tolerates_incomplete_branches():
         "\t\tadd_political_power = 1\n",
         "\t}\n",
         "\tif = {\n",
-        "\t\tlimit = { has_country_flag = set_conservatism date > 2010.1.1 }\n",
+        "\t\tlimit = { check_variable = { ruling_party = 1 } date > 2010.1.1 }\n",
         "\t\tif = {\n",
         "\t\t\tadd_political_power = 1\n",
         "\t\t}\n",

@@ -166,6 +166,77 @@ def test_text_blocks_and_spacing_edge_cases():
     )
 
 
+def test_collapse_nested_blocks():
+    reward = [
+        "\t\tcompletion_reward = {",
+        '\t\t\tlog = "x"',
+        "\t\t\tset_temp_variable = {",
+        "\t\t\t\tparty_popularity_increase = 0.1",
+        "\t\t\t}",
+        "\t\t\thas_country_leader = {",
+        '\t\t\t\tname = "Serzh Sargsyan"',
+        "\t\t\t\truling_only = yes",
+        "\t\t\t}",
+        "\t\t}",
+    ]
+    collapsed = U.collapse_nested_blocks(reward)
+    assert collapsed == [
+        "\t\tcompletion_reward = {",
+        '\t\t\tlog = "x"',
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.1 }",
+        "\t\t\thas_country_leader = {",
+        '\t\t\t\tname = "Serzh Sargsyan"',
+        "\t\t\t\truling_only = yes",
+        "\t\t\t}",
+        "\t\t}",
+    ]
+    assert U.collapse_nested_blocks(collapsed) == collapsed
+    assert U.collapse_or_compact(reward) == collapsed
+
+    # Innermost first, at any depth; a child with a comment stays multi-line.
+    assert U.collapse_nested_blocks(
+        [
+            "a = {",
+            "\tb = {",
+            "\t\tc = {",
+            "\t\t\tx = 1",
+            "\t\t}",
+            "\t\ty = 2",
+            "\t}",
+            "}",
+        ]
+    ) == ["a = {", "\tb = {", "\t\tc = { x = 1 }", "\t\ty = 2", "\t}", "}"]
+    commented = ["a = {", "\tb = {", "\t\tx = 1 # note", "\t}", "\tc = 3", "}"]
+    assert U.collapse_nested_blocks(commented) == commented
+
+    # Unbalanced input is handed back untouched rather than reshaped.
+    unbalanced = ["a = {", "\tb = {", "\t\tx = 1", "}"]
+    assert U.collapse_nested_blocks(unbalanced) == unbalanced
+    assert U.collapse_nested_blocks(["a = { b = 1 }"]) == ["a = { b = 1 }"]
+
+    # A multi-token list is not a single leaf; a one-token list still collapses.
+    listed = [
+        "\t\t\treduce_focus_completion_cost = {",
+        "\t\t\t\tcost = 20",
+        "\t\t\t\tfocus = {",
+        "\t\t\t\t\tCHI_project_921",
+        "\t\t\t\t\tCHI_shenzhou_program",
+        "\t\t\t\t}",
+        "\t\t\t}",
+    ]
+    assert U.collapse_or_compact(listed) == listed
+    assert U.collapse_or_compact(
+        [
+            "\tx = {",
+            "\t\tfocus = {",
+            "\t\t\tJAP_blue_water_navy",
+            "\t\t}",
+            "\t\tcost = 35",
+            "\t}",
+        ]
+    ) == ["\tx = { focus = { JAP_blue_water_navy } cost = 35 }"]
+
+
 def test_atomic_encoding_backup_and_safe_reads(tmp_path, monkeypatch):
     target = tmp_path / "nested" / "file.txt"
     U.atomic_write_text(str(target), "café\n", encoding="utf-8-sig", bom=True)
@@ -198,7 +269,11 @@ def test_find_install_and_idea_categories(tmp_path, monkeypatch):
     assert U.find_hoi4_install(str(install)) == str(install)
     monkeypatch.delenv("HOI4_PATH")
     monkeypatch.setattr(U, "HOI4_INSTALL_PATHS", [str(tmp_path / "missing-install")])
+    monkeypatch.setattr(U, "HOI4_DISCOVERY_SOURCES", [])
     assert U.find_hoi4_install() is None
+
+    monkeypatch.setattr(U, "HOI4_DISCOVERY_SOURCES", [lambda: [str(install)]])
+    assert U.find_hoi4_install() == str(install)
 
     tags = tmp_path / "common" / "idea_tags"
     _write(
@@ -231,6 +306,56 @@ def test_find_install_and_idea_categories(tmp_path, monkeypatch):
         {"country", "hidden_ideas"}
     )
     assert U.get_slotless_idea_categories(str(empty)) == frozenset()
+
+
+def test_steam_library_installs_reads_every_library_folder(tmp_path, monkeypatch):
+    steam = tmp_path / "Steam"
+    other = tmp_path / "Games"
+    game = other / "steamapps" / "common" / "Hearts of Iron IV"
+    game.mkdir(parents=True)
+    escaped_steam = str(steam).replace("\\", "\\\\")
+    escaped_other = str(other).replace("\\", "\\\\")
+    _write(
+        steam / "steamapps" / "libraryfolders.vdf",
+        '"libraryfolders"\n{\n'
+        f'\t"0"\n\t{{\n\t\t"path"\t\t"{escaped_steam}"\n\t}}\n'
+        f'\t"1"\n\t{{\n\t\t"path"\t\t"{escaped_other}"\n\t}}\n}}\n',
+    )
+    monkeypatch.setattr(U, "_steam_roots", lambda: [str(steam)])
+    installs = U._steam_library_installs()
+    assert installs == [
+        os.path.join(str(steam), U._HOI4_GAME_SUBDIR),
+        os.path.join(str(other), U._HOI4_GAME_SUBDIR),
+    ]
+    monkeypatch.setattr(U, "HOI4_INSTALL_PATHS", [])
+    monkeypatch.delenv("HOI4_PATH", raising=False)
+    assert U.find_hoi4_install() == str(game)
+
+    monkeypatch.setattr(U, "_steam_roots", lambda: [str(tmp_path / "nowhere")])
+    assert U._steam_library_installs() == []
+
+
+def test_editor_settings_installs_parses_jsonc(tmp_path, monkeypatch):
+    settings = tmp_path / "settings.json"
+    _write(
+        settings,
+        "{\n"
+        "    // user settings\n"
+        '    "cwtools.cache.hoi4": "H:\\\\Games\\\\Hearts of Iron IV",\n'
+        '    "mdHoi4Utilities.installPath": "h:\\\\Games\\\\Hearts of Iron IV\\\\",\n'
+        '    "mdHoi4Utilities.modFile": "D:\\\\mod\\\\descriptor.mod",\n'
+        "}\n",
+    )
+    monkeypatch.setattr(U, "_editor_settings_files", lambda: [str(settings)])
+    assert U._editor_settings_installs() == [
+        "H:\\Games\\Hearts of Iron IV",
+        "h:\\Games\\Hearts of Iron IV",
+    ]
+
+    _write(settings, '{ "editor.tabSize": 4 }\n')
+    assert U._editor_settings_installs() == []
+    monkeypatch.setattr(U, "_editor_settings_files", lambda: [str(tmp_path / "gone")])
+    assert U._editor_settings_installs() == []
 
 
 def test_file_opener_cleaners_and_line_helpers(tmp_path, monkeypatch, capsys):

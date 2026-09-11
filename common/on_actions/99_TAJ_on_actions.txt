@@ -1,4 +1,111 @@
 on_actions = {
+	# on_annex can fire while TAJ still exists, so country_exists = TAJ in
+	# TAJ_drug_flow_update would still read true here - remove outright instead.
+	on_annex = {
+		effect = {
+			if = {
+				limit = {
+					FROM = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_dynamic_modifier = { modifier = TAJ_tajik_drugs } }
+				}
+				SOV = { remove_dynamic_modifier = { modifier = TAJ_tajik_drugs } }
+			}
+		}
+	}
+
+	on_subject_annexed = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_dynamic_modifier = { modifier = TAJ_tajik_drugs } }
+				}
+				SOV = { remove_dynamic_modifier = { modifier = TAJ_tajik_drugs } }
+			}
+		}
+	}
+
+	on_puppet = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_subject_free = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_release_as_puppet = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_release_as_free = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_peaceconference_ended = {
+		effect = {
+			if = {
+				limit = {
+					FROM = { original_tag = TAJ }
+					country_exists = SOV
+					SOV = { has_country_flag = tajik_drugs_flag }
+				}
+				SOV = { TAJ_drug_flow_update = yes }
+			}
+		}
+	}
+
+	on_government_change = {
+		effect = {
+			if = {
+				limit = {
+					ROOT = {
+						original_tag = TAJ
+						has_completed_focus = TAJ_appoint_rustam
+					}
+				}
+				ROOT = { TAJ_rustams_governance_update = yes }
+			}
+		}
+	}
+
 	on_daily_TAJ = {
 		effect = {
 			if = {
@@ -21,6 +128,12 @@ on_actions = {
 	}
 	on_monthly_TAJ = {
 		effect = {
+			# Every emerging subideology sits in the communism ideology group, so a swap
+			# between them never reaches on_government_change.
+			if = {
+				limit = { has_completed_focus = TAJ_appoint_rustam }
+				TAJ_rustams_governance_update = yes
+			}
 			if = {
 				limit = {
 					has_country_flag = TAJ_monthly_distribution

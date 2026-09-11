@@ -28,13 +28,14 @@ def _sprite_index(*names):
 # ---------------------------------------------------------------------------
 
 
-_WORKERS = [
+_WORKERS: list[tuple[object, object]] = [
     (V.scan_event_definitions, set()),
     (V.scan_event_definition_types, []),
     (V.scan_event_fires, []),
     (V.scan_typed_event_fires, []),
     (V.scan_dynamic_event_namespaces, set()),
     (V.scan_date_gated_events, []),
+    (V.scan_date_bounded_events, []),
     (V.scan_event_fire_graph, []),
     (V.scan_invalid_event_calls, []),
     (V.scan_probability_rolled_fires, set()),
@@ -408,6 +409,7 @@ country_event = {
 \tid = foo.1
 \tis_triggered_only = yes
 \tfire_only_once = yes
+\tpicture = GFX_event
 \ttitle = foo.1.t
 \tdesc = foo.1.d
 \toption = {

@@ -1,18 +1,12 @@
 """Tests for validate_cosmetic_tags (missing, unused, and unused-colour checks)."""
 
 import validate_cosmetic_tags as V
+from shared.suite import issue_categories as _categories
+from shared.suite import run_validator
 
 
 def _run(tmp_path, **kwargs):
-    validator = V.Validator(
-        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True, **kwargs
-    )
-    validator.run_validations()
-    return validator
-
-
-def _categories(validator):
-    return sorted(issue.category for issue in validator._issues)
+    return run_validator(V.Validator, tmp_path, **kwargs)
 
 
 def test_loc_worker_skips_ignored_paths(tmp_path, write_path):
@@ -56,6 +50,17 @@ def test_a_tag_named_in_two_files_is_reported_once(tmp_path, write_path):
     assert len(by_category["missing-cosmetic-tag"]) == 1
     assert len(by_category["unused-cosmetic-tag"]) == 1
     assert by_category["missing-cosmetic-tag"][0].file in ("a.txt", "b.txt")
+
+
+def test_a_meta_effect_placeholder_is_not_a_cosmetic_tag(tmp_path, write_path):
+    """`set_cosmetic_tag = [ROOTTAG]_AUTH` names a substitution, not a tag."""
+    write_path(
+        tmp_path,
+        "common/decisions/flags.txt",
+        "set_cosmetic_tag = [ROOTTAG]_AUTH\nset_cosmetic_tag = [ROOTTAG]\n",
+    )
+
+    assert _categories(_run(tmp_path)) == []
 
 
 def test_a_flag_named_exactly_after_the_tag_counts_as_used(tmp_path, write_path):
