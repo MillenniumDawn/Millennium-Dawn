@@ -359,10 +359,18 @@ def _unactivated(candidates: set, activated: set) -> list:
     return sorted(remaining)
 
 
+# The leading `\b` on both keywords rejects a longer key ending in one
+# (`md_unlock_decision_tooltip`).
 _UNLOCK_CATEGORY_RE = re.compile(
-    r"unlock_decision_category_tooltip\s*=\s*([A-Za-z0-9_]+)"
+    r"\bunlock_decision_category_tooltip\s*=\s*([A-Za-z0-9_]+)"
 )
-_UNLOCK_DECISION_RE = re.compile(r"unlock_decision_tooltip\s*=\s*([A-Za-z0-9_]+)")
+# `unlock_decision_tooltip` takes a bare decision token or the block form
+# `{ decision = <token> ... }` (resources/documentation/effects_documentation.md),
+# where the decision may sit beside `show_effect_tooltip` / `show_modifiers`.
+_UNLOCK_DECISION_RE = re.compile(
+    r"\bunlock_decision_tooltip\s*=\s*(?:([A-Za-z0-9_]+)"
+    r"|\{[^{}]*?\bdecision\s*=\s*([A-Za-z0-9_]+))"
+)
 # State that flips on during play, so the category it gates appears mid-game.
 _MIDGAME_GATE_RE = re.compile(
     r"\b(?:has_country_flag|has_global_flag|has_completed_focus|has_idea)"
@@ -374,7 +382,60 @@ _SET_FLAG_RE = re.compile(
     r"set_(?:country|global)_flag\s*=\s*(?:([A-Za-z0-9_]+)"
     r"|\{[^{}]*?flag\s*=\s*([A-Za-z0-9_]+))"
 )
-_UNLOCK_IN_EFFECT_RE = re.compile(r"unlock_decision_tooltip\s*=\s*([A-Za-z0-9_]+)")
+
+
+def _unlock_decision_names(text: str) -> Set[str]:
+    """Decision names `unlock_decision_tooltip` names in *text*, either form.
+
+    A quoted string is text, not an effect: a `log = "unlock_decision_tooltip =
+    X"` line names nothing, so the strings are blanked before matching.
+    """
+    code = blank_quoted_strings(text)
+    return {m.group(1) or m.group(2) for m in _UNLOCK_DECISION_RE.finditer(code)}
+
+
+def _announced_names(refs: List[Tuple[str, str, str, int]]) -> Set[str]:
+    """Names told to the player by (kind, name, file, line) unlock refs."""
+    return {name for _, name, _, _ in refs}
+
+
+# What each unlock tooltip names, and where that definition lives.
+_UNLOCK_TARGET_FIELD = {
+    "decision": "unlock_decision_tooltip",
+    "category": "unlock_decision_category_tooltip",
+}
+_UNLOCK_TARGET_SOURCE = {
+    "decision": "common/decisions",
+    "category": "common/decisions/categories",
+}
+
+
+def _undefined_unlock_message(kind: str, name: str) -> str:
+    """Finding text for an unlock tooltip whose target has no definition."""
+    return (
+        f"{_UNLOCK_TARGET_FIELD[kind]} = {name} -> no {kind} named {name} is "
+        f"defined in {_UNLOCK_TARGET_SOURCE[kind]} (fix the typo or define it)"
+    )
+
+
+def _unlock_refs(text: str) -> List[Tuple[str, str, int]]:
+    """Return (kind, name, line) for each unlock tooltip reference in *text*.
+
+    The caller strips comments first, so a commented-out tooltip is absent.
+    Quoted strings are blanked before matching: a string quoting the keyword
+    references nothing. blank_quoted_strings keeps every offset and newline, so
+    a reported line still points at the real reference.
+    """
+    code = blank_quoted_strings(text)
+    refs = [
+        ("category", m.group(1), code.count("\n", 0, m.start()) + 1)
+        for m in _UNLOCK_CATEGORY_RE.finditer(code)
+    ]
+    refs.extend(
+        ("decision", m.group(1) or m.group(2), code.count("\n", 0, m.start()) + 1)
+        for m in _UNLOCK_DECISION_RE.finditer(code)
+    )
+    return refs
 
 
 def _flat_flag_gates(block: str) -> Set[str]:
@@ -395,23 +456,23 @@ def _flat_flag_gates(block: str) -> Set[str]:
     return flags
 
 
-def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, set]:
-    """Single-read worker: (activated, missions, removed, announced).
+def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, list]:
+    """Single-read worker: (activated, missions, removed, unlock refs).
 
     Combines the activation, external-removal and unlock-tooltip scans so the
-    full-repo .txt sweep reads each file once instead of three times.
-    `announced` holds both the categories and the individual decisions that some
-    focus or effect tells the player it has unlocked.
+    full-repo .txt sweep reads each file once instead of three times. The last
+    element holds (kind, name, line) for every reference that tells the player a
+    decision or category it has unlocked; the caller adds the file path.
     """
     if _should_skip(filename):
-        return set(), set(), set(), set()
+        return set(), set(), set(), []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
     decisions: set = set()
     missions: set = set()
     removals: set = set()
-    announced: set = set()
+    unlock_refs: List[Tuple[str, str, int]] = []
     if "activate_targeted_decision" in text_file:
         for block in _TARGETED_BLOCK_RE.findall(text_file):
             decisions.update(_DECISION_NAME_RE.findall(block))
@@ -421,11 +482,9 @@ def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, set]:
         removals.update(_REMOVE_DECISION_RE.findall(text_file))
         for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
             removals.update(_REMOVE_DECISION_NAME_RE.findall(block))
-    if "unlock_decision_category_tooltip" in text_file:
-        announced.update(_UNLOCK_CATEGORY_RE.findall(text_file))
-    if "unlock_decision_tooltip" in text_file:
-        announced.update(_UNLOCK_DECISION_RE.findall(text_file))
-    return decisions, missions, removals, announced
+    if "unlock_decision" in text_file:
+        unlock_refs = _unlock_refs(text_file)
+    return decisions, missions, removals, unlock_refs
 
 
 def _load_scripted_localisation_keys(mod_path: str) -> set:
@@ -1400,7 +1459,7 @@ class Validator(BaseValidator):
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
         self._activation_removal_cache: Optional[
-            Tuple[Set[str], Set[str], Set[str], Set[str]]
+            Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]]]
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
@@ -1439,8 +1498,13 @@ class Validator(BaseValidator):
 
     def _get_activation_removal_scan(
         self,
-    ) -> Tuple[Set[str], Set[str], Set[str], Set[str]]:
-        """Scan shipped content for activations, external removals and unlocks."""
+    ) -> Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]]]:
+        """Scan shipped content for activations, external removals and unlocks.
+
+        The fourth element is every `unlock_*_tooltip` reference as
+        (kind, name, file, line); the names it carries are the unlocks that
+        announce themselves to the player.
+        """
         if self._activation_removal_cache is not None:
             return self._activation_removal_cache
         all_files = [
@@ -1453,19 +1517,28 @@ class Validator(BaseValidator):
         activated_decisions: Set[str] = set()
         activated_missions: Set[str] = set()
         externally_removed: Set[str] = set()
-        announced: Set[str] = set()
-        for decision_set, mission_set, removed_set, announced_set in self._pool_map(
-            _scan_activations_and_removals, all_files, chunksize=30
+        unlock_refs: List[Tuple[str, str, str, int]] = []
+        for filename, (
+            decision_set,
+            mission_set,
+            removed_set,
+            file_refs,
+        ) in zip(
+            all_files,
+            self._pool_map(_scan_activations_and_removals, all_files, chunksize=30),
         ):
             activated_decisions |= decision_set
             activated_missions |= mission_set
             externally_removed |= removed_set
-            announced |= announced_set
+            relative = os.path.relpath(filename, self.mod_path)
+            unlock_refs.extend(
+                (kind, name, relative, line) for kind, name, line in file_refs
+            )
         self._activation_removal_cache = (
             activated_decisions,
             activated_missions,
             externally_removed,
-            announced,
+            unlock_refs,
         )
         return self._activation_removal_cache
 
@@ -2405,7 +2478,8 @@ class Validator(BaseValidator):
         if not flagged:
             return []
 
-        _, _, _, announced = self._get_activation_removal_scan()
+        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        announced = _announced_names(unlock_refs)
         return [
             f"{name} - {sources.get(name, 'decisions/categories')}: AI-only "
             f"decision category has localisation key '{key}'"
@@ -2413,6 +2487,40 @@ class Validator(BaseValidator):
             if name not in announced
             for key in flagged[name]
         ]
+
+    def validate_undefined_unlock_tooltips(self):
+        """Flag unlock tooltips naming a decision or category that does not exist.
+
+        `unlock_decision_tooltip = <decision>` (or `= { decision = <decision> }`)
+        and `unlock_decision_category_tooltip = <category>` tell the player what
+        has just opened. A typo or a rename leaves the tooltip naming nothing
+        while the unlock still happens. #3957's stale category name produced
+        `Invalid Decision Category` in error.log. This check reports the stale
+        reference during CI, with the file and line of the call.
+        """
+        self._log_section("Checking unlock tooltips name real decisions...")
+        self._report(
+            self._undefined_unlock_targets(),
+            "✓ Every unlock tooltip names a defined decision or category",
+            "Unlock tooltips naming a decision or category that does not exist:",
+            Severity.ERROR,
+            category="undefined-unlock-tooltip-target",
+        )
+
+    def _undefined_unlock_targets(self) -> List[Tuple[str, str, int]]:
+        """Findings for unlock tooltips whose decision/category is undefined."""
+        known = {
+            "decision": set(
+                parse_all_decision_names(self.mod_path, lowercase=False)[0]
+            ),
+            "category": set(parse_decision_categories(self.mod_path)),
+        }
+        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        results = []
+        for kind, name, filepath, line in unlock_refs:
+            if name not in known[kind]:
+                results.append((_undefined_unlock_message(kind, name), filepath, line))
+        return results
 
     def validate_unannounced_categories(self):
         """Flag categories that switch on mid-game without telling the player.
@@ -2438,7 +2546,8 @@ class Validator(BaseValidator):
     def _unannounced_categories(self) -> List[str]:
         """Findings for mid-game categories nothing announces to the player."""
         ai_only = self._get_ai_only_categories()
-        _, _, _, announced = self._get_activation_removal_scan()
+        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        announced = _announced_names(unlock_refs)
         by_category = parse_categories_with_decisions(self.mod_path, lowercase=False)
 
         results = []
@@ -2498,9 +2607,13 @@ class Validator(BaseValidator):
         for setter in factories:
             for block_name in EFFECT_BLOCKS:
                 block = getattr(setter, block_name)
-                if not block or "unlock_decision_tooltip" not in block:
+                if not block:
                     continue
-                announced = set(_UNLOCK_IN_EFFECT_RE.findall(block))
+                announced = _unlock_decision_names(block)
+                # Nothing announced: only the inconsistent case (some unlocks
+                # announced, siblings missed) is a defect.
+                if not announced:
+                    continue
                 missed: Set[str] = set()
                 for first, second in _SET_FLAG_RE.findall(block):
                     missed |= gated.get(first or second, set())
@@ -3098,6 +3211,7 @@ class Validator(BaseValidator):
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
         self.validate_missing_localisation()
+        self.validate_undefined_unlock_tooltips()
         self.validate_unannounced_decision_unlocks()
         self.validate_missing_log()
         self.validate_log_not_first()
