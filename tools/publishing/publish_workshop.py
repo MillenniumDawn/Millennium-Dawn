@@ -16,6 +16,7 @@ to ship whatever version is currently committed in the repo.
 import argparse
 import fnmatch
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -42,6 +43,12 @@ MOD_NAMES = {
     "beta": "Millennium Dawn: A Beta Test Mod",
     "test": "MD Test",
 }
+
+# Localisation keys that render the version in the loading screen and main menu.
+VERSION_LOC_KEYS = {"VERSION_MD_LOADING", "VERSION_MD"}
+
+# An existing version token inside those values, e.g. v2.0.0 or v1.12.3b.
+VERSION_TOKEN = re.compile(r"v\d+(?:\.\d+)*(?:[A-Za-z]\w*)?")
 
 # Files that must always be included (even if unchanged in diff mode).
 ALWAYS_KEEP = {"descriptor.mod", "thumbnail.png"}
@@ -440,6 +447,45 @@ def patch_descriptor(
         print("  version:        (unchanged — using repo descriptor.mod value)")
 
 
+def patch_frontend_version(mod_dir: Path, version: str) -> None:
+    """Point the in-game version banner at the version being uploaded.
+
+    VERSION_MD_LOADING and VERSION_MD are baked into every locale's frontend
+    localisation, so they keep showing whichever version was last bumped by
+    hand. Only the version token is replaced; labels, translations, and the
+    " DEV" suffix survive.
+    """
+    loc_files = sorted(mod_dir.glob("localisation/*/MD_frontend_l_*.yml"))
+    matched = 0
+    updated = 0
+    for loc_file in loc_files:
+        lines = loc_file.read_text(encoding="utf-8").splitlines(keepends=True)
+        changed = False
+        for i, line in enumerate(lines):
+            if line.split(":", 1)[0].strip() not in VERSION_LOC_KEYS:
+                continue
+            matched += 1
+            replaced = VERSION_TOKEN.sub(f"v{version}", line, count=1)
+            if replaced != line:
+                lines[i] = replaced
+                changed = True
+        if changed:
+            with loc_file.open("w", encoding="utf-8", newline="") as handle:
+                handle.write("".join(lines))
+            updated += 1
+
+    if not matched:
+        print(
+            "  WARNING: no VERSION_MD_LOADING/VERSION_MD keys found under "
+            "localisation/; version banner left unchanged"
+        )
+        return
+    print(
+        f"  Version banner: v{version} "
+        f"({updated}/{len(loc_files)} frontend files rewritten)"
+    )
+
+
 def steam_login(steamcmd: Path, username: str) -> None:
     """Log in to Steam interactively to cache credentials before uploading."""
     print(f"  Logging in to Steam as '{username}'...")
@@ -748,6 +794,10 @@ def main() -> None:
 
         # Rewrite descriptor.mod so the shipped copy matches this target.
         patch_descriptor(mod_dir, MOD_NAMES[args.target], mod_id, args.version)
+
+        # Keep the menu/loading-screen version in step with the upload.
+        if args.version:
+            patch_frontend_version(mod_dir, args.version)
 
         # Validate required files exist
         validate_mod_files(mod_dir)

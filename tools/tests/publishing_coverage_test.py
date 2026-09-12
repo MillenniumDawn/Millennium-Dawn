@@ -185,6 +185,83 @@ def test_patch_descriptor_missing_file_warns(tmp_path, capsys):
 
 
 # ---------------------------------------------------------------------------
+# Frontend version banner patching
+# ---------------------------------------------------------------------------
+
+
+def _frontend_loc(mod_dir, lang, body):
+    path = mod_dir / "localisation" / lang / f"MD_frontend_l_{lang}.yml"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(b"\xef\xbb\xbf" + body.encode("utf-8"))
+    return path
+
+
+def test_patch_frontend_version_rewrites_every_locale(tmp_path, capsys):
+    body = (
+        "l_english:\n"
+        ' VERSION_MD_LOADING: "Version: v2.0.0 DEV"\n'
+        ' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n'
+        ' VERSION_MD_DATE: "Release Date: 11th September 2026"\n'
+    )
+    paths = [_frontend_loc(tmp_path, lang, body) for lang in ("english", "german")]
+
+    pw.patch_frontend_version(tmp_path, "1.2.3")
+
+    for path in paths:
+        raw = path.read_bytes()
+        assert raw.startswith(b"\xef\xbb\xbf"), "BOM must survive"
+        text = raw.decode("utf-8")
+        assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in text
+        assert 'VERSION_MD: "Millennium Dawn: A Modern Day v1.2.3 DEV"' in text
+        assert "v2.0.0" not in text
+        assert 'VERSION_MD_DATE: "Release Date: 11th September 2026"' in text
+    assert "2/2 frontend files rewritten" in capsys.readouterr().out
+
+
+def test_patch_frontend_version_keeps_translated_text(tmp_path):
+    korean = _frontend_loc(
+        tmp_path,
+        "korean",
+        "l_korean:\n"
+        ' VERSION_MD_LOADING: "버전: v2.0.0 DEV"\n'
+        ' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n',
+    )
+    chinese = _frontend_loc(
+        tmp_path,
+        "simp_chinese",
+        'l_simp_chinese:\n VERSION_MD_LOADING: "版本：v2.0.0 开发版"\n',
+    )
+
+    pw.patch_frontend_version(tmp_path, "2.1.0")
+
+    assert 'VERSION_MD_LOADING: "버전: v2.1.0 DEV"' in korean.read_text(
+        encoding="utf-8"
+    )
+    assert 'VERSION_MD_LOADING: "版本：v2.1.0 开发版"' in chinese.read_text(
+        encoding="utf-8"
+    )
+
+
+def test_patch_frontend_version_warns_when_no_keys(tmp_path, capsys):
+    _frontend_loc(tmp_path, "english", "l_english:\n KEY: value\n")
+
+    pw.patch_frontend_version(tmp_path, "1.0.0")
+
+    assert "WARNING" in capsys.readouterr().out
+
+
+def test_patch_frontend_version_is_a_noop_when_already_current(tmp_path):
+    path = _frontend_loc(
+        tmp_path, "english", 'l_english:\n VERSION_MD: "Version: v1.2.3 DEV"\n'
+    )
+    before = path.read_bytes()
+
+    pw.patch_frontend_version(tmp_path, "1.2.3")
+
+    assert path.read_bytes() == before
+
+
+# ---------------------------------------------------------------------------
 # VDF generation
 # ---------------------------------------------------------------------------
 
@@ -864,6 +941,55 @@ def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeyp
     assert seen["mod_id"] == "2777133449"
     assert seen["changenote"] == "notes"
     assert seen["verbose"] is False
+
+
+def _main_frontend_text(tmp_path, monkeypatch, *args):
+    _prepare_full_main(tmp_path, monkeypatch, *args)
+    seen = {}
+
+    def fake_copy(dest_parent, _excludes):
+        mod_dir = dest_parent / "mod"
+        loc = mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
+        loc.parent.mkdir(parents=True)
+        loc.write_bytes(
+            b'\xef\xbb\xbfl_english:\n VERSION_MD_LOADING: "Version: v2.0.0 DEV"\n'
+        )
+        write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
+        (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
+        return mod_dir
+
+    def fake_publish(mod_dir, *_args, **_kwargs):
+        seen["frontend"] = (
+            mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
+        ).read_text(encoding="utf-8")
+
+    monkeypatch.setattr(pw, "copy_repo", fake_copy)
+    monkeypatch.setattr(pw, "publish", fake_publish)
+    pw.main()
+    return seen["frontend"]
+
+
+def test_main_patches_the_version_banner_when_version_given(tmp_path, monkeypatch):
+    frontend = _main_frontend_text(
+        tmp_path,
+        monkeypatch,
+        "test",
+        "--full",
+        "--username",
+        "u",
+        "--version",
+        "1.2.3",
+    )
+
+    assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in frontend
+
+
+def test_main_leaves_the_version_banner_alone_without_version(tmp_path, monkeypatch):
+    frontend = _main_frontend_text(
+        tmp_path, monkeypatch, "test", "--full", "--username", "u"
+    )
+
+    assert 'VERSION_MD_LOADING: "Version: v2.0.0 DEV"' in frontend
 
 
 def test_main_no_default_excludes_is_honoured(tmp_path, monkeypatch):

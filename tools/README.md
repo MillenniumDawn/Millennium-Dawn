@@ -417,6 +417,10 @@ python3 tools/publishing/publish_workshop.py beta --base-ref v1.12.3b
 
 The script uses `git log --diff-filter=ACM` to determine which files changed, copies the full repo, then prunes unchanged files before uploading. `descriptor.mod` and `thumbnail.png` are always included.
 
+#### Version String
+
+`--version X.Y.Z` rewrites `version=` in the uploaded `descriptor.mod` and the `VERSION_MD_LOADING` / `VERSION_MD` banner in every `localisation/*/MD_frontend_l_*.yml` inside the staging copy. The repo's own files are never touched. Without `--version`, both keep the value already committed.
+
 ### What Gets Excluded
 
 The following are automatically excluded from all uploads:
@@ -436,6 +440,7 @@ Use `--exclude PATTERN` to add extra exclusions, or `--no-default-excludes` to s
 | `--mod-id ID`           | Override the default Workshop mod ID                                   |
 | `--exclude PATTERN`     | Extra exclude pattern (repeatable)                                     |
 | `--no-default-excludes` | Skip the built-in exclude list                                         |
+| `--version VERSION`     | Override the uploaded version (descriptor.mod and in-game banner)      |
 
 ### Workshop Mod IDs
 
