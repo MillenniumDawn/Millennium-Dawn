@@ -10,6 +10,7 @@
 import glob
 import os
 import re
+import subprocess
 import sys
 from difflib import get_close_matches
 from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
@@ -91,6 +92,8 @@ _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
 _PRODUCER_RE = re.compile(r'\b(?:creator|producer)\s*=\s*"?([A-Za-z_]\w*)"?')
 _LOAD_OOB_RE = re.compile(r'\bload_oob\s*=\s*(?:"([^"]+)"|([A-Za-z_]\w*))')
+_DIVISION_TEMPLATE_DEF_PATTERN = r"division_template\s*=\s*\{"
+_DIVISION_TEMPLATE_DEF_RE = re.compile(_DIVISION_TEMPLATE_DEF_PATTERN.encode())
 
 # create_unit and runtime load_oob appear in these sources.
 _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
@@ -131,6 +134,60 @@ _TEMPLATE_SOURCE_ROOTS = (
     "common/special_projects/",
     "common/ideas/",
 )
+
+
+def _any_file_contains(paths: List[str], needle: bytes) -> bool:
+    # Unreadable files stay in-scope so a skip cannot hide a real check.
+    for path in paths:
+        try:
+            with open(path, "rb") as handle:
+                if needle in handle.read():
+                    return True
+        except OSError:
+            return True
+    return False
+
+
+def _any_file_matches(paths: List[str], pattern: re.Pattern[bytes]) -> bool:
+    for path in paths:
+        try:
+            with open(path, "rb") as handle:
+                if pattern.search(handle.read()):
+                    return True
+        except OSError:
+            return True
+    return False
+
+
+def _changed_lines_match(mod_path: str, paths: List[str], pattern: str) -> bool:
+    if not paths or not os.path.exists(os.path.join(mod_path, ".git")):
+        return False
+    relative = [
+        normalize_path_separators(os.path.relpath(path, mod_path)) for path in paths
+    ]
+    try:
+        staged = subprocess.run(
+            ["git", "diff", "--cached", "--quiet", "--", *relative],
+            cwd=mod_path,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=15,
+        )
+        if staged.returncode not in (0, 1):
+            return True
+        scope = ["--cached"] if staged.returncode == 1 else ["main...HEAD"]
+        matched = subprocess.run(
+            ["git", "diff", *scope, "--quiet", f"-G{pattern}", "--", *relative],
+            cwd=mod_path,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return True
+    return matched.returncode != 0
 
 
 def _read_text(filepath: str, under: str) -> str:
@@ -1935,12 +1992,19 @@ class Validator(BaseValidator):
         """Validate every `division_names_group = X` in OOB files points to a real group."""
         self._log_section("Checking division_names_group references in OOB files...")
 
+        files = self._collect_files(["history/units/*.txt"])
+        self.log(f"  Found {len(files)} OOB files to check")
+        if not files:
+            self._report(
+                [],
+                "✓ All division_names_group references resolve",
+                "OOB files with unknown division_names_group references:",
+            )
+            return
+
         group_keys = parse_division_group_keys(self.mod_path)
         group_keys_lower = {k.lower(): k for k in group_keys}
         self.log(f"  Found {len(group_keys)} division_names_group definitions")
-
-        files = self._collect_files(["history/units/*.txt"])
-        self.log(f"  Found {len(files)} OOB files to check")
 
         args_list = [(f, group_keys, group_keys_lower, self.mod_path) for f in files]
         all_results = self._pool_map(
@@ -1965,9 +2029,18 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking air_wing_names_template loc references...")
 
-        loc_keys = self._load_localisation_keys()
         files = self._collect_files(["common/units/names/*.txt", "history/units/*.txt"])
         self.log(f"  Found {len(files)} files to check")
+        if not files:
+            self._report(
+                [],
+                "✓ All air_wing_names_template references resolve to a loc key",
+                "Files with unknown air_wing_names_template loc references:",
+                severity=Severity.WARNING,
+                category="air-wing-template-loc",
+            )
+            return
+        loc_keys = self._load_localisation_keys()
 
         results = []
         for filepath in files:
@@ -2041,6 +2114,10 @@ class Validator(BaseValidator):
         if not sources:
             self.log("  No files with equipment variants to check")
             return
+        sources = [item for item in sources if "create_equipment_variant" in item[1]]
+        if not sources:
+            self.log("  No create_equipment_variant effects in scope — skipping")
+            return
         self.log(f"  Found {len(sources)} files to check")
 
         index = self.cached(
@@ -2084,15 +2161,29 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking OOB and production equipment references...")
 
+        oob_files = self._collect_files(["history/units/*.txt"])
+        prod_files = self._collect_files(_HISTORY_PRODUCTION_PATTERNS)
+        if not oob_files and not prod_files:
+            self.log("  No OOB or production files in scope — skipping")
+            return
+        need_variants = _any_file_contains(oob_files, b"version_name")
+        need_archetypes = _any_file_contains(prod_files, b"add_equipment_")
+        if not need_variants and not need_archetypes:
+            self.log("  No equipment references in scope — skipping")
+            return
+
         def _build_variants():
             return build_variant_name_index(
                 self._get_variant_sources(ignore_staged=True)
             )
 
-        by_tag, wildcard = self.cached("variant_name_index", _build_variants)
-        if not by_tag and not wildcard:
-            self.log("  No equipment variants found, skipping")
-            return
+        by_tag: Dict[str, Set[Tuple[str, str]]] = {}
+        wildcard: Set[Tuple[str, str]] = set()
+        if need_variants:
+            by_tag, wildcard = self.cached("variant_name_index", _build_variants)
+            if not by_tag and not wildcard:
+                self.log("  No equipment variants found")
+                need_variants = False
 
         def _build_archetypes():
             units_dir = os.path.join(self.mod_path, "common", "units", "equipment")
@@ -2103,40 +2194,50 @@ class Validator(BaseValidator):
                 ]
             )
 
-        archetypes = self.cached("equipment_archetypes", _build_archetypes)
+        archetypes: Set[str] = set()
+        if need_archetypes:
+            archetypes = self.cached("equipment_archetypes", _build_archetypes)
+        if not need_variants and not need_archetypes:
+            return
 
         results = []
-        for filepath in self._collect_files(["history/units/*.txt"]):
-            content = _read_text(filepath, self.mod_path)
-            if "version_name" not in content:
-                continue
-            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
-            for f in check_oob_variant_refs(content, by_tag, wildcard):
-                results.append(
-                    Issue(
-                        severity=Severity.ERROR,
-                        category=_VARIANT_REF_CATEGORIES[f.kind],
-                        message=f.message,
-                        file=rel,
-                        line=f.line,
-                    )
+        if need_variants:
+            for filepath in oob_files:
+                content = _read_text(filepath, self.mod_path)
+                if "version_name" not in content:
+                    continue
+                rel = normalize_path_separators(
+                    os.path.relpath(filepath, self.mod_path)
                 )
+                for f in check_oob_variant_refs(content, by_tag, wildcard):
+                    results.append(
+                        Issue(
+                            severity=Severity.ERROR,
+                            category=_VARIANT_REF_CATEGORIES[f.kind],
+                            message=f.message,
+                            file=rel,
+                            line=f.line,
+                        )
+                    )
 
-        for filepath in self._collect_files(_HISTORY_PRODUCTION_PATTERNS):
-            content = _read_text(filepath, self.mod_path)
-            if "add_equipment_" not in content:
-                continue
-            rel = normalize_path_separators(os.path.relpath(filepath, self.mod_path))
-            for f in check_attributed_archetypes(content, archetypes):
-                results.append(
-                    Issue(
-                        severity=Severity.ERROR,
-                        category=_VARIANT_REF_CATEGORIES[f.kind],
-                        message=f.message,
-                        file=rel,
-                        line=f.line,
-                    )
+        if need_archetypes:
+            for filepath in prod_files:
+                content = _read_text(filepath, self.mod_path)
+                if "add_equipment_" not in content:
+                    continue
+                rel = normalize_path_separators(
+                    os.path.relpath(filepath, self.mod_path)
                 )
+                for f in check_attributed_archetypes(content, archetypes):
+                    results.append(
+                        Issue(
+                            severity=Severity.ERROR,
+                            category=_VARIANT_REF_CATEGORIES[f.kind],
+                            message=f.message,
+                            file=rel,
+                            line=f.line,
+                        )
+                    )
 
         self._report(
             results,
@@ -2148,10 +2249,6 @@ class Validator(BaseValidator):
         """Check that runtime OOB loads name an existing history file."""
         self._log_section("Checking runtime OOB references...")
 
-        target_paths = self._collect_files(["history/units/*.txt"], ignore_staged=True)
-        targets = {
-            os.path.splitext(os.path.basename(filepath))[0] for filepath in target_paths
-        }
         changed_targets = self.staged_only and any(
             normalize_path_separators(
                 os.path.relpath(filepath, self.mod_path)
@@ -2164,6 +2261,17 @@ class Validator(BaseValidator):
         source_paths = self._collect_files(
             _CREATE_UNIT_SOURCE_PATTERNS, ignore_staged=changed_targets
         )
+        if not source_paths:
+            self.log("  No runtime OOB callers in scope — skipping")
+            return
+        if not changed_targets and not _any_file_contains(source_paths, b"load_oob"):
+            self.log("  No load_oob calls in scope — skipping")
+            return
+
+        target_paths = self._collect_files(["history/units/*.txt"], ignore_staged=True)
+        targets = {
+            os.path.splitext(os.path.basename(filepath))[0] for filepath in target_paths
+        }
 
         results = []
         for filepath in source_paths:
@@ -2194,6 +2302,42 @@ class Validator(BaseValidator):
         """Check every create_unit effect source for proper form."""
         self._log_section("Checking create_unit effects across the mod...")
 
+        staged_template_paths = [
+            normalize_path_separators(os.path.relpath(path, self.mod_path))
+            for path in get_staged_files(
+                self.mod_path, extensions=self.STAGED_EXTENSIONS, include_missing=True
+            )
+            or []
+        ]
+        template_candidates = []
+        for path in staged_template_paths:
+            if not (path.startswith(_TEMPLATE_SOURCE_ROOTS) and path.endswith(".txt")):
+                continue
+            template_candidates.append(
+                path if os.path.isabs(path) else os.path.join(self.mod_path, path)
+            )
+        # Path roots include events/focuses, which usually have no template
+        # definition. Only a real `division_template = {` (or a deleted file)
+        # should force a full-repo create_unit rescan.
+        template_changed = self.staged_only and (
+            _any_file_matches(template_candidates, _DIVISION_TEMPLATE_DEF_RE)
+            or _changed_lines_match(
+                self.mod_path,
+                template_candidates,
+                _DIVISION_TEMPLATE_DEF_PATTERN,
+            )
+        )
+        files = self._collect_files(
+            _CREATE_UNIT_SOURCE_PATTERNS, ignore_staged=template_changed
+        )
+        if not files:
+            self.log("  No files to check")
+            return
+        if not template_changed and not _any_file_contains(files, b"create_unit"):
+            self.log("  No create_unit effects in scope — skipping")
+            return
+        self.log(f"  Found {len(files)} files to check")
+
         template_files = self._collect_files(
             _TEMPLATE_SOURCE_PATTERNS, ignore_staged=True
         )
@@ -2210,24 +2354,6 @@ class Validator(BaseValidator):
             template_files,
             lambda: build_division_template_index(template_sources),
         )
-        staged_template_paths = [
-            normalize_path_separators(os.path.relpath(path, self.mod_path))
-            for path in get_staged_files(
-                self.mod_path, extensions=self.STAGED_EXTENSIONS, include_missing=True
-            )
-            or []
-        ]
-        template_changed = self.staged_only and any(
-            path.startswith(_TEMPLATE_SOURCE_ROOTS) and path.endswith(".txt")
-            for path in staged_template_paths
-        )
-        files = self._collect_files(
-            _CREATE_UNIT_SOURCE_PATTERNS, ignore_staged=template_changed
-        )
-        if not files:
-            self.log("  No files to check")
-            return
-        self.log(f"  Found {len(files)} files to check")
 
         delete_files = self._collect_files(
             _DELETE_TEMPLATE_SOURCE_PATTERNS, ignore_staged=True
