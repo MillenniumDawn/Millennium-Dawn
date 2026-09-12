@@ -2,6 +2,7 @@
 `MD_NO_CACHE` bypass."""
 
 import os
+import shutil
 
 import disk_cache
 import pytest
@@ -36,6 +37,44 @@ def _patch_helper_change(monkeypatch, namespace, helper_name):
         return original_read_bytes(path)
 
     monkeypatch.setattr(type(helper), "read_bytes", changed_read_bytes)
+
+
+def _close_cache_connections():
+    with disk_cache._conns_lock:
+        for key in list(disk_cache._conns):
+            conn = disk_cache._conns.pop(key)
+            try:
+                conn.close()
+            except (OSError, disk_cache.sqlite3.Error):
+                pass
+
+
+def _copy_cache(src, dst):
+    _close_cache_connections()
+    shutil.copytree(src / disk_cache._CACHE_DIR_NAME, dst / disk_cache._CACHE_DIR_NAME)
+
+
+def _two_identical_files(tmp_path, rel="common/x.txt", body="hello"):
+    first = tmp_path / "a"
+    second = tmp_path / "b"
+    for root in (first, second):
+        path = root / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(body, encoding="utf-8")
+    return first, second
+
+
+def _warm_content(root, content="hello", namespace="ns", rel="common/x.txt"):
+    calls = []
+
+    def compute():
+        calls.append(1)
+        return content
+
+    disk_cache.per_file_cached_by_content(
+        str(root), namespace, str(root / rel), content, compute
+    )
+    return calls, compute
 
 
 def test_code_fingerprints_are_scoped_to_owner_and_shared_code():
@@ -508,3 +547,232 @@ def test_clear_if_stale_keeps_a_fresh_cache(tmp_path):
 
     assert disk_cache.clear_if_stale(str(tmp_path), 7.0) is False
     assert disk_cache._marker_path(str(tmp_path)).exists()
+
+
+def test_source_key_is_relative_under_the_checkout(tmp_path):
+    source = tmp_path / "common" / "x.txt"
+    source.parent.mkdir()
+    source.write_text("hello", encoding="utf-8")
+
+    assert disk_cache._source_key(str(tmp_path), str(source)) == "common/x.txt"
+    assert disk_cache._source_key(str(tmp_path), "already/rel.txt") == (
+        "already/rel.txt"
+    )
+
+
+def test_code_fingerprint_ignores_checkout_root(tmp_path, monkeypatch):
+    first = tmp_path / "a" / "owner.py"
+    second = tmp_path / "b" / "owner.py"
+    first.parent.mkdir()
+    second.parent.mkdir()
+    first.write_text("same", encoding="utf-8")
+    second.write_text("same", encoding="utf-8")
+    disk_cache._FINGERPRINT_CACHE.clear()
+    monkeypatch.setattr(disk_cache, "_fingerprint_paths", lambda _ns: [first])
+    left = disk_cache._validator_code_fingerprint("ns")
+    disk_cache._FINGERPRINT_CACHE.clear()
+    monkeypatch.setattr(disk_cache, "_fingerprint_paths", lambda _ns: [second])
+    right = disk_cache._validator_code_fingerprint("ns")
+
+    assert left == right
+
+
+def test_copied_content_cache_hits_at_a_different_root(tmp_path):
+    first, second = _two_identical_files(tmp_path)
+    calls, compute = _warm_content(first)
+    _copy_cache(first, second)
+    disk_cache.per_file_cached_by_content(
+        str(second), "ns", str(second / "common" / "x.txt"), "hello", compute
+    )
+
+    assert calls == [1]
+    conn = disk_cache._connect(str(first))
+    assert conn is not None
+    keys = [row[0] for row in conn.execute("SELECT key FROM entries")]
+    assert keys == ["common/x.txt"]
+
+
+def test_modified_content_at_the_new_root_misses(tmp_path):
+    first, second = _two_identical_files(tmp_path)
+    calls, compute = _warm_content(first)
+    _copy_cache(first, second)
+    disk_cache.per_file_cached_by_content(
+        str(second), "ns", str(second / "common" / "x.txt"), "changed", compute
+    )
+
+    assert calls == [1, 1]
+
+
+def test_helper_change_still_invalidates_after_a_copy(tmp_path, monkeypatch):
+    first, second = _two_identical_files(tmp_path)
+    calls = []
+
+    def compute():
+        calls.append(1)
+        return "ok"
+
+    disk_cache._FINGERPRINT_CACHE.clear()
+    disk_cache.per_file_cached_by_content(
+        str(first),
+        "sprite_index.names",
+        str(first / "common" / "x.txt"),
+        "hello",
+        compute,
+    )
+    _copy_cache(first, second)
+    _patch_helper_change(
+        monkeypatch, "sprite_index.names", "validate_gfx_references.py"
+    )
+    disk_cache._FINGERPRINT_CACHE.clear()
+    disk_cache.per_file_cached_by_content(
+        str(second),
+        "sprite_index.names",
+        str(second / "common" / "x.txt"),
+        "hello",
+        compute,
+    )
+
+    assert calls == [1, 1]
+
+
+def test_deleted_tracked_file_invalidates_aggregate_after_a_copy(tmp_path):
+    first, second = _two_identical_files(tmp_path)
+    extra = first / "common" / "y.txt"
+    extra.write_text("y", encoding="utf-8")
+    (second / "common" / "y.txt").write_text("y", encoding="utf-8")
+    calls = []
+
+    def factory():
+        calls.append(1)
+        return "merged"
+
+    tracked_first = [str(first / "common" / "x.txt"), str(extra)]
+    disk_cache.aggregate_cached(str(first), "agg", tracked_first, factory)
+    _copy_cache(first, second)
+    (second / "common" / "y.txt").unlink()
+    disk_cache.aggregate_cached(
+        str(second), "agg", [str(second / "common" / "x.txt")], factory
+    )
+
+    assert calls == [1, 1]
+
+
+def test_embedded_checkout_paths_rehome_on_restore(tmp_path):
+    first, second = _two_identical_files(tmp_path)
+    src_first = str(first / "common" / "x.txt")
+    src_second = str(second / "common" / "x.txt")
+    disk_cache.per_file_cached_by_content(
+        str(first),
+        "ns",
+        src_first,
+        "hello",
+        lambda: {"file": src_first, "ok": True},
+    )
+    _copy_cache(first, second)
+    result = disk_cache.per_file_cached_by_content(
+        str(second),
+        "ns",
+        src_second,
+        "hello",
+        lambda: {"file": "miss", "ok": False},
+    )
+
+    assert result == {"file": src_second, "ok": True}
+
+
+def test_sprite_textures_rehome_and_do_not_store_absolute_paths(tmp_path):
+    first, second = _two_identical_files(tmp_path)
+    gfx_body = (
+        'spriteType = {\n\tname = "GFX_g"\n' '\ttexturefile = "gfx/art/g.dds"\n}\n'
+    )
+    for root in (first, second):
+        gfx = root / "interface" / "g.gfx"
+        gfx.parent.mkdir(parents=True)
+        gfx.write_text(gfx_body, encoding="utf-8")
+    index_first = sprite_index.build_sprite_texture_index(
+        str(first), include_vanilla=False
+    )
+    conn = disk_cache._connect(str(first))
+    assert conn is not None
+    row = conn.execute(
+        "SELECT value FROM entries WHERE namespace = ?",
+        ("sprite_index.textures",),
+    ).fetchone()
+    stored = disk_cache._unpack(str(first), row[0])
+    assert stored == [["GFX_g", "gfx/art/g.dds"]]
+    assert str(first) not in str(stored)
+    _copy_cache(first, second)
+    index_second = sprite_index.build_sprite_texture_index(
+        str(second), include_vanilla=False
+    )
+
+    assert index_first["GFX_g"] == os.path.join(str(first), "gfx", "art", "g.dds")
+    assert index_second["GFX_g"] == os.path.join(str(second), "gfx", "art", "g.dds")
+    assert str(first) not in index_second["GFX_g"]
+
+
+def test_vanilla_install_paths_do_not_leak_across_installs(tmp_path, monkeypatch):
+    first, second = _two_identical_files(tmp_path)
+    for root in (first, second):
+        (root / "interface").mkdir(parents=True, exist_ok=True)
+        (root / "interface" / "mod.gfx").write_text(
+            'spriteType = { name = "GFX_mod" texturefile = "gfx/mod.dds" }\n',
+            encoding="utf-8",
+        )
+    van_first = tmp_path / "van_a" / "interface" / "v.gfx"
+    van_second = tmp_path / "van_b" / "interface" / "v.gfx"
+    van_first.parent.mkdir(parents=True)
+    van_second.parent.mkdir(parents=True)
+    gfx_text = 'spriteType = { name = "GFX_van" texturefile = "gfx/van.dds" }\n'
+    van_first.write_text(gfx_text, encoding="utf-8")
+    van_second.write_text(gfx_text, encoding="utf-8")
+    monkeypatch.setattr(sprite_index, "_vanilla_gfx_files", lambda: [str(van_first)])
+    index_first = sprite_index.build_sprite_texture_index(
+        str(first), include_vanilla=True
+    )
+    _copy_cache(first, second)
+    monkeypatch.setattr(sprite_index, "_vanilla_gfx_files", lambda: [str(van_second)])
+    index_second = sprite_index.build_sprite_texture_index(
+        str(second), include_vanilla=True
+    )
+
+    assert index_first["GFX_van"].endswith(os.path.join("gfx", "van.dds"))
+    assert str(tmp_path / "van_a") in index_first["GFX_van"]
+    assert index_second["GFX_van"].endswith(os.path.join("gfx", "van.dds"))
+    assert str(tmp_path / "van_b") in index_second["GFX_van"]
+    assert str(tmp_path / "van_a") not in index_second["GFX_van"]
+
+
+def test_portable_key_and_rehome_edges(tmp_path):
+    old = str(tmp_path / "old")
+    new = str(tmp_path / "new")
+    posix_new = os.path.normpath(new).replace("\\", "/")
+    assert disk_cache._source_key(str(tmp_path), "") == ""
+    assert disk_cache._source_key(str(tmp_path), str(tmp_path)) == "."
+    outside = tmp_path.parent / "other.txt"
+    assert disk_cache._source_key(str(tmp_path), str(outside)) == os.path.normpath(
+        str(outside)
+    ).replace("\\", "/")
+    assert disk_cache._rehome_str(old, old, new) == posix_new
+    assert disk_cache._rehome_mod_paths([old + "/a.txt"], old, new) == [
+        os.path.join(new, "a.txt").replace("\\", "/")
+    ]
+    assert disk_cache._rehome_mod_paths((old + "/a.txt",), old, new) == (
+        os.path.join(new, "a.txt").replace("\\", "/"),
+    )
+    assert disk_cache._rehome_mod_paths({old + "/a.txt"}, old, new) == {
+        os.path.join(new, "a.txt").replace("\\", "/")
+    }
+    assert disk_cache._rehome_mod_paths(frozenset({old + "/a.txt"}), old, new) == (
+        frozenset({os.path.join(new, "a.txt").replace("\\", "/")})
+    )
+    from collections import namedtuple
+
+    rec = namedtuple("Rec", "path")
+    moved = disk_cache._rehome_mod_paths(rec(old + "/a.txt"), old, new)
+    assert moved.path == os.path.join(new, "a.txt").replace("\\", "/")
+    loop: list = []
+    loop.append(loop)
+    disk_cache._rehome_mod_paths(loop, old, new)
+    with pytest.raises(disk_cache.pickle.UnpicklingError):
+        disk_cache._unpack(str(tmp_path), disk_cache.pickle.dumps(("nope",)))
