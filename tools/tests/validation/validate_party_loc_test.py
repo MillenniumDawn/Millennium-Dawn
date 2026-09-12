@@ -318,6 +318,32 @@ def test_registered_original_tag_is_not_unknown(tmp_path, write_path):
     assert validator._issues == []
 
 
+def test_unknown_tag_inside_an_or_gate_is_an_error(tmp_path, write_path):
+    write_path(tmp_path, "common/country_tags/00_countries.txt", _GRE_TAGS)
+    hooks = (
+        "defined_text = {\n"
+        "\tname = conservatism_L\n"
+        "\ttext = { trigger = { OR = { original_tag = GRE original_tag = WAG } } localization_key = GRE.conservatism }\n"
+        "}\n"
+        "defined_text = {\n"
+        "\tname = conservatism_L_desc\n"
+        "\ttext = { trigger = { original_tag = GRE } localization_key = GRE.conservatism_desc }\n"
+        "}\n"
+    )
+    validator = _run(tmp_path, write_path, _GRE_NAME + _GRE_DESC, hooks)
+    assert _categories(validator) == ["party-loc-unknown-tag"]
+    assert validator._issues[0].severity == Severity.ERROR
+    assert "original_tag = WAG," in validator._issues[0].message
+
+
+def test_format_findings_stay_warnings_when_tags_are_loaded(tmp_path, write_path):
+    write_path(tmp_path, "common/country_tags/00_countries.txt", _GRE_TAGS)
+    loc = ' GRE.conservatism:0 "£GRE_conservative New Democracy"\n' + _GRE_DESC
+    validator = _run(tmp_path, write_path, loc, _GRE_HOOKS)
+    assert _categories(validator) == ["party-loc-name-format"]
+    assert validator._issues[0].severity == Severity.WARNING
+
+
 def test_alias_original_tag_is_not_unknown(tmp_path, write_path):
     write_path(tmp_path, "common/country_tags/00_countries.txt", _GRE_TAGS)
     write_path(
