@@ -104,3 +104,43 @@ def test_cli_without_strict_exits_zero_despite_findings(tmp_path, monkeypatch):
         run_validator_main(common_mistakes.Validator, "common mistakes")
 
     assert exit_info.value.code == 0
+
+
+def test_staged_plain_file_skips_the_global_ref_scan(tmp_path, monkeypatch):
+    path = _write(
+        tmp_path,
+        "common/scripted_effects/plain.txt",
+        "test_effect = { add_political_power = 10 }\n",
+    )
+
+    def _boom(_root):
+        raise AssertionError("global ref scan should be skipped")
+
+    monkeypatch.setattr(common_mistakes, "_scan_global_refs", _boom)
+    validator = common_mistakes.Validator(
+        str(tmp_path), use_colors=False, workers=1, staged_only=True
+    )
+    validator.staged_files = [str(path)]
+    validator.run_validations()
+    assert validator._issues == []
+
+
+def test_staged_nation_trigger_still_scans_global_refs(tmp_path, monkeypatch):
+    path = _write(
+        tmp_path,
+        "common/scripted_triggers/nation.txt",
+        "test_trigger = { is_arab_nation = yes }\n",
+    )
+    scanned = []
+
+    def _scan(root):
+        scanned.append(root)
+        return set(), set(), set()
+
+    monkeypatch.setattr(common_mistakes, "_scan_global_refs", _scan)
+    validator = common_mistakes.Validator(
+        str(tmp_path), use_colors=False, workers=1, staged_only=True
+    )
+    validator.staged_files = [str(path)]
+    validator.run_validations()
+    assert scanned == [validator.mod_path]
