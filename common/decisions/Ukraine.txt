@@ -5886,7 +5886,7 @@ UKR_reorganize_navy_category = {
 			}
 			set_country_flag = {
 				flag = UKR_reorganize_navy_finish_ternopil_construction_flag
-				days = 540
+				days = 1440
 				value = 1
 			}
 		}
@@ -5921,6 +5921,48 @@ UKR_reorganize_navy_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision UKR_reorganize_navy_maintain_1241 removed"
 			navy_experience = 1
 			country_event = ukraine_reorganize_navy_maintain_1241.1
+		}
+	}
+
+	UKR_reorganize_navy_finish_project_133 = {
+		icon = GFX_decision_icon_UKR_reorganize_navy_coast_guards
+		fire_only_once = yes
+		visible = {
+			date < 2001.01.01
+		}
+		ai_will_do = { base = 5 }
+
+		custom_cost_trigger = { check_variable = { treasury > 0.04 } }
+		custom_cost_text = cost_0_04
+
+		available = {
+			date < 2001.01.01
+			has_country_flag = UKR_reorganize_navy_finish_11451_construction_flag
+		}
+
+		days_remove = 120
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_reorganize_navy_finish_project_133"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.04 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_reorganize_navy_finish_project_133 removed"
+			669 = { #Crimea
+				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
+			}
+
+			mio:UKR_more_shipyard_naval_manufacturer = {
+				add_mio_funds = 400
+				add_mio_funds_gain_factor = 0.1
+			}
+
+			country_event = ukraine_reorganize_navy_finish_project_133.1
 		}
 	}
 
@@ -6067,7 +6109,6 @@ UKR_reorganize_navy_category = {
 				set_temp_variable = { treasury_change = -0.13 }
 				modify_treasury_effect = yes
 			}
-			if = { limit = { date < 2005.01.01 } }
 		}
 
 		remove_effect = {
@@ -6158,18 +6199,16 @@ UKR_reorganize_navy_category = {
 						value > 39
 					}
 				}
-				OR = {
-					USA = {
-						has_opinion = {
-							target = UKR
-							value > 29
-						}
+				USA = {
+					has_opinion = {
+						target = UKR
+						value > 29
 					}
-					FRA = {
-						has_opinion = {
-							target = UKR
-							value > 19
-						}
+				}
+				FRA = {
+					has_opinion = {
+						target = UKR
+						value > 19
 					}
 				}
 			}
@@ -7359,7 +7398,7 @@ UKR_modernize_sov_category = {
 			create_equipment_variant = {
 				name = "BTR-70M-KBA-2"
 				type = medium_tank_amphibious_chassis_1
-				parent_version = 8
+				parent_version = 0
 				modules = {
 					main_armament_slot = small_autocannon_2
 					turret_type_slot = tank_base_tank_turret
@@ -10544,6 +10583,66 @@ UKR_modernize_sov_category = {
 		}
 	}
 
+	UKR_develop_baryer_s = {
+		icon = GFX_decision_icon_UKR_develop_domestic_stuhna_p
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+		visible = { date > 2019.01.01 }
+		custom_cost_trigger = { check_variable = { treasury > 0.03 } }
+		custom_cost_text = cost_0_03
+
+		available = {
+			date > 2020.01.01
+			date < 2023.06.01
+			controls_state = 698 #Kyiv
+			has_army_experience > 6
+			has_tech = Heavy_Anti_tank_2
+		}
+
+		modifier = {
+			research_speed_factor = 0.02
+			industrial_capacity_factory = -0.002
+		}
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 698 #Kyiv
+			}
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 120
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_baryer_s"
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.1 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_baryer_s"
+			army_experience = 4
+			create_equipment_variant = {
+				name = "Baryer-S"
+				type = Heavy_Anti_tank_2
+				parent_version = 0
+				icon = "gfx/interface/technologies/SOV/LAND/HAT2_Sturm.dds"
+				upgrades = {
+					H_AT_Fire_Control = 3
+					H_AT_Warhead = 3
+					H_AT_Reliability = 1
+				}
+			}
+			698 = { #Kyiv
+				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
+			}
+		}
+	}
+
 	UKR_develop_bm21_k = {
 		fire_only_once = yes
 		icon = GFX_decision_icon_UKR_modernize_sov_bm21
@@ -12356,66 +12455,6 @@ UKR_develop_domestic_category = {
 		}
 
 		ai_will_do = { base = 10 }
-	}
-
-	UKR_develop_baryer_s = {
-		icon = GFX_decision_icon_UKR_develop_domestic_stuhna_p
-		fire_only_once = yes
-		ai_will_do = { base = 10 }
-		visible = { date > 2019.01.01 }
-		custom_cost_trigger = { check_variable = { treasury > 0.03 } }
-		custom_cost_text = cost_0_03
-
-		available = {
-			date > 2020.01.01
-			date < 2023.06.01
-			controls_state = 698 #Kyiv
-			has_army_experience > 6
-			has_tech = Heavy_Anti_tank_2
-		}
-
-		modifier = {
-			research_speed_factor = 0.02
-			industrial_capacity_factory = -0.002
-		}
-
-		highlight_states = {
-			highlight_states_trigger = {
-				state = 698 #Kyiv
-			}
-			highlight_color_while_active = 3
-			highlight_color_before_active = 2
-		}
-
-		on_map_mode = map_and_decisions_view
-		days_remove = 120
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision UKR_develop_baryer_s"
-			hidden_effect = {
-				set_temp_variable = { treasury_change = -0.1 }
-				modify_treasury_effect = yes
-			}
-		}
-
-		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_baryer_s"
-			army_experience = 4
-			create_equipment_variant = {
-				name = "Baryer-S"
-				type = Heavy_Anti_tank_2
-				parent_version = 0
-				icon = "gfx/interface/technologies/SOV/LAND/HAT2_Sturm.dds"
-				upgrades = {
-					H_AT_Fire_Control = 3
-					H_AT_Warhead = 3
-					H_AT_Reliability = 1
-				}
-			}
-			698 = { #Kyiv
-				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
-			}
-		}
 	}
 
 	UKR_develop_stuhna_p_atgm = {
