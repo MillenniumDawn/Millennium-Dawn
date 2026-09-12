@@ -14,26 +14,33 @@ tags whose keys or hooks the branch touched: touch one `GRE.*` line and all of
 Greece is checked, leave it alone and Greece is silent. `--all` sweeps the
 backlog and `--tag` audits one country on demand.
 
-Missing tags, missing slots and missing `_desc`/`_icon` keys are deliberately
-not reported: an absent slot is supposed to fall through to the generic label
-rather than have a party invented for it. `£sprite` resolution is not checked
-either — validate_gfx_references.py already scans every `.yml` for undefined and
+Missing slots and missing `_desc`/`_icon` keys are deliberately not reported:
+an absent slot is supposed to fall through to the generic label rather than
+have a party invented for it. `£sprite` resolution is not checked either —
+validate_gfx_references.py already scans every `.yml` for undefined and
 miscased sprite references.
+
+Hooks whose `original_tag` is not a registered country tag or tag alias are
+ERROR. That check is independent of the format-scope filter, so deleting a
+nation still fails leftover politics-view gates.
 """
 
 import os
 import re
 import subprocess
 import sys
-from typing import Dict, List, NamedTuple, Optional, Sequence, Set, Tuple
+from typing import Dict, FrozenSet, List, NamedTuple, Optional, Sequence, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import disk_cache
 from shared_utils import PARTY_SLOT_NAMES, read_text_strict, strip_comments
 from validator_common import BaseValidator, Issue, Severity, run_validator_main
 
 LOC_PATH = "localisation/english/MD_politics_view_parties_l_english.yml"
 HOOK_PATH = "common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt"
+COUNTRY_TAG_DIR = "common/country_tags"
+ALIAS_DIR = "common/country_tag_aliases"
 
 # Longest first, so `Neutral_conservatism` is never truncated to a shorter slot.
 _SLOTS: Tuple[str, ...] = tuple(
@@ -59,6 +66,9 @@ _TEXT_ENTRY_RE = re.compile(r"(?<![\w])text\s*=\s*\{")
 _TRIGGER_RE = re.compile(r"trigger\s*=\s*\{")
 _BLOCK_NAME_RE = re.compile(r"name\s*=\s*(\w+)")
 _LONE_ORIGINAL_TAG_RE = re.compile(r"^original_tag\s*=\s*(\w+)$")
+_ORIGINAL_TAG_RE = re.compile(r"original_tag\s*=\s*(\w+)")
+_COUNTRY_TAG_DEF_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
+_ALIAS_DEF_RE = re.compile(r"^\s*([A-Z0-9_]{3})\s*=\s*\{", re.MULTILINE)
 _HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 _DIFF_HEADER_RE = re.compile(r"^diff --git a/(.*) b/(.*)$")
 
@@ -188,6 +198,77 @@ def find_duplicate_hooks(text: str) -> List[Tuple[int, str, str]]:
                 duplicates.append((line, block_name, tag))
             seen.add(tag)
     return duplicates
+
+
+def find_unknown_tag_hooks(
+    text: str, valid_tags: FrozenSet[str]
+) -> List[Tuple[int, str, str]]:
+    """(line, block_name, tag) for an `original_tag` the mod does not register.
+
+    Compound and OR triggers count. `original_tag` is accepted if it is a
+    country tag or a tag alias.
+    """
+    findings: List[Tuple[int, str, str]] = []
+    for block in _DEFINED_TEXT_RE.finditer(text):
+        block_end = _match_brace(text, block.end() - 1)
+        name_match = _BLOCK_NAME_RE.search(text, block.end(), block_end)
+        block_name = name_match.group(1) if name_match else "?"
+        for entry in _TEXT_ENTRY_RE.finditer(text, block.end(), block_end):
+            entry_end = _match_brace(text, entry.end() - 1)
+            trigger = _TRIGGER_RE.search(text, entry.end(), entry_end)
+            if trigger is None:
+                continue
+            trigger_end = _match_brace(text, trigger.end() - 1)
+            trigger_body = text[trigger.end() : trigger_end - 1]
+            for tag_match in _ORIGINAL_TAG_RE.finditer(trigger_body):
+                tag = tag_match.group(1)
+                if tag in valid_tags:
+                    continue
+                line = text.count("\n", 0, trigger.end() + tag_match.start()) + 1
+                findings.append((line, block_name, tag))
+    return findings
+
+
+def _tag_source_files(mod_path: str) -> List[str]:
+    files: List[str] = []
+    for rel in (COUNTRY_TAG_DIR, ALIAS_DIR):
+        directory = os.path.join(mod_path, rel)
+        if not os.path.isdir(directory):
+            continue
+        try:
+            names = os.listdir(directory)
+        except OSError:
+            continue
+        for name in sorted(names):
+            if name.endswith(".txt"):
+                files.append(os.path.join(directory, name))
+    return files
+
+
+def _parse_registered_tags(files: Sequence[str]) -> FrozenSet[str]:
+    tags: Set[str] = set()
+    for filepath in files:
+        try:
+            text = read_text_strict(filepath)
+        except (OSError, UnicodeDecodeError):
+            continue
+        tags.update(_COUNTRY_TAG_DEF_RE.findall(text))
+        tags.update(_ALIAS_DEF_RE.findall(text))
+    return frozenset(tags)
+
+
+def load_registered_tags(mod_path: str) -> FrozenSet[str]:
+    """Country tags plus tag aliases, cached against the source files."""
+    files = _tag_source_files(mod_path)
+    if not files:
+        return frozenset()
+    return disk_cache.aggregate_cached(
+        mod_path,
+        "party_loc.registered_tags",
+        files,
+        lambda: _parse_registered_tags(files),
+        namespace="party_loc",
+    )
 
 
 def _parse_added_lines(diff_text: str) -> Set[int]:
@@ -338,9 +419,18 @@ class Validator(BaseValidator):
 
         keys, miscased = parse_party_keys(loc_text)
         hooks = parse_hooks(hook_text)
+        tag_files = _tag_source_files(self.mod_path)
+        if tag_files:
+            self._report(
+                self._check_unknown_tags(
+                    hook_text, load_registered_tags(self.mod_path)
+                ),
+                "Every party hook original_tag is a registered country tag or alias",
+                "Party hooks whose original_tag is not a registered country tag or alias:",
+            )
         scope = self._scoped_tags(keys, hooks)
         if scope is not None and not scope:
-            self.log("  No party localisation changed — nothing in scope")
+            self.log("  No party localisation changed — format checks skipped")
             return
         if scope is None:
             self.log(f"  Checking all {len({key.tag for key in keys})} tags...")
@@ -400,6 +490,25 @@ class Validator(BaseValidator):
             file=path,
             line=line,
         )
+
+    def _check_unknown_tags(
+        self, hook_text: str, valid_tags: FrozenSet[str]
+    ) -> List[Issue]:
+        results = []
+        for line, block_name, tag in find_unknown_tag_hooks(hook_text, valid_tags):
+            results.append(
+                Issue(
+                    severity=Severity.ERROR,
+                    category="party-loc-unknown-tag",
+                    message=(
+                        f"{block_name} gates original_tag = {tag}, which is not a"
+                        " registered country tag or alias"
+                    ),
+                    file=HOOK_PATH,
+                    line=line,
+                )
+            )
+        return results
 
     def _check_names(self, keys: List[PartyKey]) -> List[Issue]:
         results = []

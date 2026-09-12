@@ -104,6 +104,7 @@ def test_namespace_mapping_covers_all_real_cache_prefixes():
         "modifiers",
         "oob_units",
         "on_actions",
+        "party_loc",
         "scripted_gui",
         "sgui",
         "scripted_params",

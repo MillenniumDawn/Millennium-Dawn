@@ -63,6 +63,7 @@ _VALIDATOR_NAMESPACES = {
     "modifiers": "validate_modifiers.py",
     "oob_units": "validate_oob_units.py",
     "on_actions": "validate_on_actions.py",
+    "party_loc": "validate_party_loc.py",
     "scripted_gui": "validate_scripted_gui.py",
     "sgui": "validate_scripted_gui.py",
     "scripted_params": "validate_scripted_params.py",

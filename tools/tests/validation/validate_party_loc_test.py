@@ -1,14 +1,15 @@
 """Tests for validate_party_loc.py.
 
 The validator audits the party loc keys that exist against the standard in
-.claude/docs/party-loc-reference.md. It never reports a missing nation, a
-missing slot or a missing key -- an unfilled slot is meant to fall through to
-the generic label.
+.claude/docs/party-loc-reference.md. It never reports a missing slot or a
+missing key -- an unfilled slot is meant to fall through to the generic label.
+Unknown `original_tag` gates are ERROR and do not use the format-scope filter.
 """
 
 import validate_party_loc as V
 from shared.suite import issue_categories as _categories
 from shared.suite import run_validator
+from validator_common import Severity
 
 LOC = V.LOC_PATH
 HOOK = V.HOOK_PATH
@@ -281,3 +282,108 @@ def test_only_the_staged_tag_is_audited(tmp_path, write_path):
         "party-loc-missing-hook",
         "party-loc-name-format",
     ]
+
+
+_GRE_TAGS = 'GRE = "countries/Greece.txt"\n'
+_GRE_ICON = ' GRE.conservatism_icon:0 "£GRE_conservative"\n'
+_WAG_HOOKS = (
+    "defined_text = {\n"
+    "\tname = conservatism_L\n"
+    "\ttext = { trigger = { original_tag = WAG date < 2016.12.12 } localization_key = GRE.conservatism }\n"
+    "}\n"
+    "defined_text = {\n"
+    "\tname = conservatism_L_desc\n"
+    "\ttext = { trigger = { original_tag = WAG } localization_key = GRE.conservatism_desc }\n"
+    "}\n"
+    "defined_text = {\n"
+    "\tname = conservatism_L_icon\n"
+    "\ttext = { trigger = { original_tag = WAG } localization_key = GRE.conservatism_icon }\n"
+    "}\n"
+)
+
+
+def test_unknown_original_tag_is_an_error(tmp_path, write_path):
+    write_path(tmp_path, "common/country_tags/00_countries.txt", _GRE_TAGS)
+    validator = _run(
+        tmp_path, write_path, _GRE_NAME + _GRE_DESC + _GRE_ICON, _WAG_HOOKS
+    )
+    assert _categories(validator) == ["party-loc-unknown-tag"] * 3
+    assert {issue.severity for issue in validator._issues} == {Severity.ERROR}
+    assert all("original_tag = WAG," in issue.message for issue in validator._issues)
+
+
+def test_registered_original_tag_is_not_unknown(tmp_path, write_path):
+    write_path(tmp_path, "common/country_tags/00_countries.txt", _GRE_TAGS)
+    validator = _run(tmp_path, write_path, _GRE_NAME + _GRE_DESC, _GRE_HOOKS)
+    assert validator._issues == []
+
+
+def test_alias_original_tag_is_not_unknown(tmp_path, write_path):
+    write_path(tmp_path, "common/country_tags/00_countries.txt", _GRE_TAGS)
+    write_path(
+        tmp_path,
+        "common/country_tag_aliases/tag_aliases.txt",
+        "STC = {\n\toriginal_tag = YEM\n}\n",
+    )
+    hooks = (
+        "defined_text = {\n"
+        "\tname = conservatism_L\n"
+        "\ttext = { trigger = { original_tag = STC } localization_key = GRE.conservatism }\n"
+        "}\n"
+        "defined_text = {\n"
+        "\tname = conservatism_L_desc\n"
+        "\ttext = { trigger = { original_tag = GRE } localization_key = GRE.conservatism_desc }\n"
+        "}\n"
+    )
+    validator = _run(tmp_path, write_path, _GRE_NAME + _GRE_DESC, hooks)
+    assert validator._issues == []
+
+
+def test_unknown_tag_is_skipped_without_tag_files(tmp_path, write_path):
+    validator = _run(tmp_path, write_path, _GRE_NAME + _GRE_DESC, _WAG_HOOKS)
+    assert "party-loc-unknown-tag" not in _categories(validator)
+
+
+def test_unknown_tag_still_reports_when_format_scope_is_empty(
+    tmp_path, write_path, monkeypatch
+):
+    write_path(tmp_path, "common/country_tags/00_countries.txt", _GRE_TAGS)
+    patch = (
+        "diff --git a/common/country_tags/00_countries.txt"
+        " b/common/country_tags/00_countries.txt\n"
+        "@@ -1 +1 @@\n"
+        '-WAG = "countries/Wagner.txt"\n'
+        '+GRE = "countries/Greece.txt"\n'
+    )
+    write_path(tmp_path, "party-loc-scope.diff", patch)
+    monkeypatch.setenv("MD_PARTY_LOC_DIFF", "party-loc-scope.diff")
+    validator = _run(
+        tmp_path,
+        write_path,
+        _GRE_NAME + _GRE_DESC + _GRE_ICON,
+        _WAG_HOOKS,
+        scan_all=False,
+    )
+    assert _categories(validator) == ["party-loc-unknown-tag"] * 3
+
+
+def test_registered_tags_are_disk_cached(tmp_path, write_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    write_path(tmp_path, "common/country_tags/00_countries.txt", _GRE_TAGS)
+    write_path(
+        tmp_path,
+        "common/country_tag_aliases/tag_aliases.txt",
+        "STC = {\n\toriginal_tag = YEM\n}\n",
+    )
+    calls = []
+    real = V._parse_registered_tags
+
+    def wrapped(files):
+        calls.append(1)
+        return real(files)
+
+    monkeypatch.setattr(V, "_parse_registered_tags", wrapped)
+    first = V.load_registered_tags(str(tmp_path))
+    second = V.load_registered_tags(str(tmp_path))
+    assert first == second == frozenset({"GRE", "STC"})
+    assert calls == [1]
