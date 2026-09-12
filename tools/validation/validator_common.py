@@ -1097,18 +1097,29 @@ class BaseValidator:
         yml_files = self._collect_files(
             ["localisation/english/**/*.yml"], ignore_staged=True
         )
-        key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
-        all_keys: set = set()
-        for filepath in yml_files:
-            try:
-                with open(filepath, encoding="utf-8-sig", errors="replace") as f:
-                    text = f.read()
-            except Exception:
-                continue
-            all_keys.update(key_pattern.findall(text))
-        all_keys.update(KNOWN_VANILLA_LOC_KEYS)
-        self._loc_keys_memo = frozenset(all_keys)
-        return self._loc_keys_memo
+
+        def _build() -> frozenset:
+            key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
+            all_keys: set = set()
+            for filepath in yml_files:
+                try:
+                    with open(filepath, encoding="utf-8-sig", errors="replace") as f:
+                        text = f.read()
+                except Exception:
+                    continue
+                all_keys.update(key_pattern.findall(text))
+            all_keys.update(KNOWN_VANILLA_LOC_KEYS)
+            return frozenset(all_keys)
+
+        keys = disk_cache.aggregate_cached(
+            self.mod_path,
+            "loc.english_keys",
+            yml_files,
+            _build,
+            namespace="loc",
+        )
+        self._loc_keys_memo = keys
+        return keys
 
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")
