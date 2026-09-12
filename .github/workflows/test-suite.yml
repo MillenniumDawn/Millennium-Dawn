@@ -170,6 +170,11 @@ jobs:
           HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
         run: |
           merge_base=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
+          hook_path=common/scripted_localisation/00_MD_politicsview_
+          hook_path+=scripted_localisation.txt
+          git diff --unified=0 "$merge_base" "$HEAD_SHA" -- \
+            localisation/english/MD_politics_view_parties_l_english.yml \
+            "$hook_path" > party-loc-scope.diff
           git diff --name-status -z "$merge_base" "$HEAD_SHA" \
             | python3 tools/validation/collect_changed_files.py \
             > changed-files.txt
@@ -190,7 +195,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: changed-files
-          path: changed-files.txt
+          path: |
+            changed-files.txt
+            party-loc-scope.diff
           if-no-files-found: warn
           retention-days: 7
 
@@ -659,6 +666,13 @@ jobs:
         id: setup-python
         uses: ./.github/actions/setup-md-python
 
+      - name: Download party localisation scope
+        if: matrix.batch == 'targeted-b'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: changed-files
+          path: validation-scope
+
       - name: Compute changed validator groups
         id: groups
         env:
@@ -713,6 +727,10 @@ jobs:
           --batch ${{ matrix.batch }}
           --changed-groups "${{ steps.groups.outputs.groups || '__none__' }}"
           --no-color --output-dir batch-results
+        env:
+          MD_PARTY_LOC_DIFF: >-
+            ${{ matrix.batch == 'targeted-b' &&
+            'validation-scope/party-loc-scope.diff' || '' }}
 
       - name: Collect style-relevant files
         id: style-files

@@ -30,6 +30,12 @@ _GRE_HOOKS = (
     "\ttext = { localization_key = generic.conservatism_desc }\n"
     "}\n"
 )
+_CAN_HOOK = (
+    "defined_text = {\n"
+    "\tname = conservatism_L\n"
+    "\ttext = { trigger = { original_tag = CAN } localization_key = CAN.conservatism }\n"
+    "}\n"
+)
 
 
 def _run(tmp_path, write_path, loc_body, hook_body, **kwargs):
@@ -193,17 +199,61 @@ def test_defined_text_opener_does_not_swallow_the_block(tmp_path, write_path):
     assert V.find_duplicate_hooks(hooks) == []
 
 
-def test_nothing_changed_reports_nothing(tmp_path, write_path):
-    """Without --all or --tag the scope comes from git, which sees no repo here."""
+def test_no_scope_source_runs_a_full_audit(tmp_path, write_path):
+    """Without git or a CI sidecar, broken data must not be silently skipped."""
     loc = ' CAN.conservatism:0 "£generic Liberals"\n'
     validator = _run(tmp_path, write_path, loc, "", scan_all=False)
-    assert validator._issues == []
+    assert _categories(validator) == [
+        "party-loc-missing-hook",
+        "party-loc-name-format",
+    ]
 
 
 def test_tag_filter_limits_the_audit(tmp_path, write_path):
     loc = _GRE_NAME + _GRE_DESC + ' CAN.conservatism:0 "£generic Liberals"\n'
     validator = _run(tmp_path, write_path, loc, _GRE_HOOKS, scan_all=False, tag=["GRE"])
     assert validator._issues == []
+
+
+def test_external_two_file_patch_scopes_only_the_changed_tag(
+    tmp_path, write_path, monkeypatch
+):
+    loc = _GRE_NAME + _GRE_DESC + ' CAN.conservatism:0 "£generic Liberals"\n'
+    hooks = _GRE_HOOKS + _CAN_HOOK
+    patch = (
+        f"diff --git a/{LOC} b/{LOC}\n"
+        f"--- a/{LOC}\n+++ b/{LOC}\n"
+        "@@ -4 +4 @@\n"
+        '- CAN.conservatism:0 "£generic Liberals"\n'
+        '+ CAN.conservatism:0 "£generic Grits"\n'
+        f"diff --git a/{HOOK} b/{HOOK}\n"
+        f"--- a/{HOOK}\n+++ b/{HOOK}\n"
+        "@@ -12 +12 @@\n"
+        "- old hook\n+ new hook\n"
+    )
+    write_path(tmp_path, "party-loc-scope.diff", patch)
+    monkeypatch.setenv("MD_PARTY_LOC_DIFF", "party-loc-scope.diff")
+
+    validator = _run(tmp_path, write_path, loc, hooks, scan_all=False)
+    assert {issue.line for issue in validator._issues} == {4}
+    assert _categories(validator) == ["party-loc-name-format"]
+
+
+def test_patch_parser_keeps_paths_separate():
+    patch = (
+        f"diff --git a/{LOC} b/{LOC}\n@@ -2 +3,2 @@\n"
+        f"diff --git a/{HOOK} b/{HOOK}\n@@ -4 +5 @@\n"
+    )
+    assert V._patch_diff_lines(patch, LOC) == {3, 4}
+    assert V._patch_diff_lines(patch, HOOK) == {5}
+
+
+def test_failed_main_diff_preserves_unknown_scope(tmp_path, monkeypatch):
+    def fake_git_diff(_mod_path, args):
+        return set() if "--cached" in args else None
+
+    monkeypatch.setattr(V, "_git_diff", fake_git_diff)
+    assert V._git_diff_lines(str(tmp_path), LOC) is None
 
 
 def test_only_the_staged_tag_is_audited(tmp_path, write_path):

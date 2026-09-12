@@ -60,6 +60,7 @@ _TRIGGER_RE = re.compile(r"trigger\s*=\s*\{")
 _BLOCK_NAME_RE = re.compile(r"name\s*=\s*(\w+)")
 _LONE_ORIGINAL_TAG_RE = re.compile(r"^original_tag\s*=\s*(\w+)$")
 _HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+_DIFF_HEADER_RE = re.compile(r"^diff --git a/(.*) b/(.*)$")
 
 
 class PartyKey(NamedTuple):
@@ -189,6 +190,49 @@ def find_duplicate_hooks(text: str) -> List[Tuple[int, str, str]]:
     return duplicates
 
 
+def _parse_added_lines(diff_text: str) -> Set[int]:
+    """Added head-side line numbers from unified diff hunk headers."""
+    lines: Set[int] = set()
+    for line in diff_text.splitlines():
+        hunk = _HUNK_RE.match(line)
+        if hunk:
+            start = int(hunk.group(1))
+            count = int(hunk.group(2)) if hunk.group(2) else 1
+            lines.update(range(start, start + count))
+    return lines
+
+
+def _patch_diff_lines(diff_text: str, rel_path: str) -> Optional[Set[int]]:
+    """Added head-side line numbers for one path in a multi-file patch."""
+    target_hunks: List[str] = []
+    current_path: Optional[str] = None
+    found_file = False
+    for line in diff_text.splitlines():
+        if line.startswith("diff --git "):
+            match = _DIFF_HEADER_RE.match(line)
+            if match is None:
+                return None
+            current_path = match.group(2)
+            found_file = True
+            continue
+        if line.startswith("@@"):
+            if current_path is None or _HUNK_RE.match(line) is None:
+                return None
+            if current_path == rel_path:
+                target_hunks.append(line)
+    if not found_file and diff_text.strip():
+        return None
+    return _parse_added_lines("\n".join(target_hunks))
+
+
+def _read_patch(mod_path: str, path: str) -> Optional[str]:
+    patch_path = path if os.path.isabs(path) else os.path.join(mod_path, path)
+    try:
+        return read_text_strict(patch_path)
+    except (OSError, UnicodeDecodeError):
+        return None
+
+
 def _git_diff(mod_path: str, args: List[str]) -> Optional[Set[int]]:
     """Added line numbers from one `git diff -U0`, or None if it did not run."""
     try:
@@ -196,20 +240,13 @@ def _git_diff(mod_path: str, args: List[str]) -> Optional[Set[int]]:
             ["git", "diff", "-U0"] + args,
             cwd=mod_path,
             capture_output=True,
-            text=True,
             check=True,
             timeout=15,
         )
-    except (OSError, subprocess.SubprocessError):
+        diff_text = result.stdout.decode("utf-8")
+    except (OSError, subprocess.SubprocessError, UnicodeDecodeError):
         return None
-    lines: Set[int] = set()
-    for line in result.stdout.split("\n"):
-        hunk = _HUNK_RE.match(line)
-        if hunk:
-            start = int(hunk.group(1))
-            count = int(hunk.group(2)) if hunk.group(2) else 1
-            lines.update(range(start, start + count))
-    return lines
+    return _parse_added_lines(diff_text)
 
 
 def _git_diff_lines(mod_path: str, rel_path: str) -> Optional[Set[int]]:
@@ -225,7 +262,7 @@ def _git_diff_lines(mod_path: str, rel_path: str) -> Optional[Set[int]]:
         return None
     if staged:
         return staged
-    return _git_diff(mod_path, ["main...HEAD", "--", rel_path]) or set()
+    return _git_diff(mod_path, ["main...HEAD", "--", rel_path])
 
 
 class Validator(BaseValidator):
@@ -255,11 +292,29 @@ class Validator(BaseValidator):
         if self.only_tags:
             return set(self.only_tags)
 
-        loc_lines = _git_diff_lines(self.mod_path, LOC_PATH)
-        hook_lines = _git_diff_lines(self.mod_path, HOOK_PATH)
+        supplied_diff = os.environ.get("MD_PARTY_LOC_DIFF")
+        if supplied_diff:
+            diff_text = _read_patch(self.mod_path, supplied_diff)
+            loc_lines = (
+                _patch_diff_lines(diff_text, LOC_PATH)
+                if diff_text is not None
+                else None
+            )
+            hook_lines = (
+                _patch_diff_lines(diff_text, HOOK_PATH)
+                if diff_text is not None
+                else None
+            )
+        else:
+            loc_lines = hook_lines = None
+
+        if loc_lines is None:
+            loc_lines = _git_diff_lines(self.mod_path, LOC_PATH)
+        if hook_lines is None:
+            hook_lines = _git_diff_lines(self.mod_path, HOOK_PATH)
         if loc_lines is None or hook_lines is None:
-            self.log("  git is unavailable — no tags in scope", "warning")
-            return set()
+            self.log("  diff scope unavailable — auditing all tags", "warning")
+            return None
 
         tags = {key.tag for key in keys if key.line in loc_lines}
         tags.update(
