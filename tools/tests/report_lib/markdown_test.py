@@ -451,15 +451,20 @@ def test_verdict_counts_new_against_baseline():
     assert "2 errors total" in body
 
 
-def test_verdict_says_none_new_when_all_existing():
-    runs = [
-        ValidatorRun(
-            name="events", title="Events", status="failed", errors=2, warnings=6
-        )
-    ]
-    body = render(
-        [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=0)
+def _failed_events_body(*, new_errors, new_warnings):
+    run = ValidatorRun(
+        name="events", title="Events", status="failed", errors=2, warnings=6
     )
+    return render(
+        [run],
+        [],
+        _ctx(),
+        baseline_stats=_stats(new_errors=new_errors, new_warnings=new_warnings),
+    )
+
+
+def test_verdict_says_none_new_when_all_existing():
+    body = _failed_events_body(new_errors=0, new_warnings=0)
     # A standing backlog is not this branch's problem — no red banner.
     assert "> [!NOTE]" in body
     assert "> [!CAUTION]" not in body
@@ -469,14 +474,7 @@ def test_verdict_says_none_new_when_all_existing():
 
 
 def test_verdict_warns_when_only_warnings_are_new():
-    runs = [
-        ValidatorRun(
-            name="events", title="Events", status="failed", errors=2, warnings=6
-        )
-    ]
-    body = render(
-        [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=1)
-    )
+    body = _failed_events_body(new_errors=0, new_warnings=1)
     assert "> [!WARNING]" in body
     assert "> [!CAUTION]" not in body
     assert "1 new warning against the main baseline." in body

@@ -171,7 +171,7 @@ def test_created_variant_check_skips_files_without_a_variant(tmp_path, monkeypat
     _write(tmp_path, "common/units/equipment/MD_ships.txt", _EQUIPMENT)
     _write(tmp_path, "events/SWE.txt", "country_event = {\n\tid = swe.1\n}\n")
     logged = _created_variant_log(tmp_path, monkeypatch)
-    assert "  Found 1 files to check" in logged
+    assert "  No create_equipment_variant effects in scope — skipping" in logged
 
 
 def test_oob_version_name_without_a_matching_variant_is_reported(tmp_path):
@@ -250,3 +250,29 @@ def test_clean_mod_passes_every_oob_check(tmp_path):
     assert validator._issues == []
     assert validator.errors_found == 0
     assert validator.warnings_found == 0
+
+
+def test_staged_event_without_unit_constructs_skips_variant_indexes(
+    tmp_path, monkeypatch
+):
+    (tmp_path / "common/units/equipment").mkdir(parents=True)
+    event = _write(tmp_path, "events/Algeria.txt", "country_event = { id = foo.1 }\n")
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("full-repo OOB index should be skipped")
+
+    monkeypatch.setenv("MD_STAGED_FILES", "events/Algeria.txt")
+    monkeypatch.setattr("validate_oob_units.build_variant_name_index", _boom)
+    monkeypatch.setattr("validate_oob_units.build_division_template_index", _boom)
+    monkeypatch.setattr("validate_oob_units.build_equipment_index", _boom)
+    validator = Validator(
+        mod_path=str(tmp_path),
+        use_colors=False,
+        workers=1,
+        staged_only=True,
+    )
+    validator.staged_files = [str(event)]
+    validator.validate_oob_variant_references()
+    validator.validate_created_units()
+    validator.validate_created_variant_modules()
+    assert validator._issues == []
