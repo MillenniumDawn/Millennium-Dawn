@@ -296,7 +296,7 @@ def test_run_validations_reports_undefined_targets_from_every_source_root(
         if issue.category == "undefined-unlock-tooltip-target"
     }
     assert reported == {
-        (_FOCUS_PATH, 4, V.Severity.ERROR),
-        (os.path.join("events", "md_test_events.txt"), 3, V.Severity.ERROR),
-        (os.path.join("history", "countries", "md_test.txt"), 1, V.Severity.ERROR),
+        ("common/national_focus/test.txt", 4, V.Severity.ERROR),
+        ("events/md_test_events.txt", 3, V.Severity.ERROR),
+        ("history/countries/md_test.txt", 1, V.Severity.ERROR),
     }
