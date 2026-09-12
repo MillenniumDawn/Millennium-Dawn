@@ -241,6 +241,42 @@ def test_matching_fire_type_is_not_flagged(tmp_path):
     assert v._get_event_definition_types() == {"foo.1": "news_event"}
 
 
+def _validator_for_staged_event_change(tmp_path, definition, caller):
+    event = _write(tmp_path, "events/Ev.txt", definition)
+    _write(tmp_path, "common/f.txt", caller)
+    validator = _validator(tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [event]
+    return validator
+
+
+def test_staged_event_type_change_rescans_unchanged_callers(tmp_path):
+    validator = _validator_for_staged_event_change(
+        tmp_path,
+        "news_event = { id = foo.1 is_triggered_only = yes }\n",
+        "x = { country_event = foo.1 }\n",
+    )
+
+    validator.validate_event_fire_types()
+
+    assert [issue.category for issue in validator._issues] == [
+        "event-fire-type-mismatch"
+    ]
+
+
+def test_staged_event_definition_removal_rescans_unchanged_callers(tmp_path):
+    validator = _validator_for_staged_event_change(
+        tmp_path,
+        "country_event = { id = real.1 is_triggered_only = yes }\n",
+        "x = { country_event = removed.1 }\n",
+    )
+
+    validator.validate_undefined_event_fires()
+
+    assert [issue.category for issue in validator._issues] == ["undefined-event-fire"]
+    assert "removed.1" in validator._issues[0].message
+
+
 def test_undefined_fire_reported_once_per_id(tmp_path):
     _write(
         tmp_path,
@@ -278,6 +314,44 @@ def test_event_fire_caches_are_reused(tmp_path):
     assert v._get_typed_event_fires() is v._get_typed_event_fires()
     assert [f[0] for f in v._get_event_fires()] == ["foo.1"]
     assert v._rel_posix(str(tmp_path / "common" / "f.txt")) == "common/f.txt"
+
+
+def test_event_fires_hit_disk_cache_across_instances(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    _write(tmp_path, "common/f.txt", "x = { country_event = foo.1 }\n")
+    first = _validator(tmp_path)._get_event_fires()
+    calls = []
+    original = V.scan_event_fires
+
+    def wrapped(args):
+        calls.append(args[0])
+        return original(args)
+
+    monkeypatch.setattr(V, "scan_event_fires", wrapped)
+    second = _validator(tmp_path)._get_event_fires()
+    assert calls == []
+    assert [row[0] for row in second] == [row[0] for row in first]
+
+
+def test_event_definition_types_hit_disk_cache_across_instances(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "news_event = {\n\tid = foo.1\n\tis_triggered_only = yes\n}\n",
+    )
+    first = _validator(tmp_path)._get_event_definition_types()
+    calls = []
+    original = V.scan_event_definition_types
+
+    def wrapped(args):
+        calls.append(args[0])
+        return original(args)
+
+    monkeypatch.setattr(V, "scan_event_definition_types", wrapped)
+    second = _validator(tmp_path)._get_event_definition_types()
+    assert calls == []
+    assert second == first
 
 
 def test_empty_on_actions_file_contributes_no_random_event_ids(tmp_path):

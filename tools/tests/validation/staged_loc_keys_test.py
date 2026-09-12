@@ -49,6 +49,27 @@ def test_loc_keys_memoized(tmp_path):
     assert first is second, "Repeat calls must return the memoized frozenset"
 
 
+def test_loc_keys_hit_disk_cache_across_instances(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    _make_loc_tree(tmp_path)
+    first = _DummyValidator(
+        mod_path=str(tmp_path), use_colors=False, workers=1
+    )._load_localisation_keys()
+    opens = []
+    original_open = open
+
+    def wrapped(path, *args, **kwargs):
+        opens.append(str(path))
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.open", wrapped)
+    second = _DummyValidator(
+        mod_path=str(tmp_path), use_colors=False, workers=1
+    )._load_localisation_keys()
+    assert not any(path.endswith(".yml") for path in opens)
+    assert second == first
+
+
 def test_triggered_only_reference_scan_full_repo_in_staged_mode(tmp_path):
     from validate_events import Validator as EventsValidator
 
