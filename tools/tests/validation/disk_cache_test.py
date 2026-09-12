@@ -41,6 +41,7 @@ def _patch_helper_change(monkeypatch, namespace, helper_name):
 def test_code_fingerprints_are_scoped_to_owner_and_shared_code():
     events = disk_cache._fingerprint_paths("events.metadata")
     focus = disk_cache._fingerprint_paths("focus_tree.parse")
+    party_loc = disk_cache._fingerprint_paths("party_loc.registered_tags")
     sprites = disk_cache._fingerprint_paths("sprite_index.names")
 
     assert any(path.name == "validate_events.py" for path in events)
@@ -48,6 +49,7 @@ def test_code_fingerprints_are_scoped_to_owner_and_shared_code():
     assert any(path.name == "validator_common.py" for path in events)
     assert not any(path.name == "validate_focus_tree.py" for path in events)
     assert any(path.name == "validate_focus_tree.py" for path in focus)
+    assert any(path.name == "validate_party_loc.py" for path in party_loc)
     assert any(path.name == "validate_gfx_references.py" for path in sprites)
     assert not any(path.name == "validate_focus_tree.py" for path in sprites)
 
@@ -104,6 +106,7 @@ def test_namespace_mapping_covers_all_real_cache_prefixes():
         "modifiers",
         "oob_units",
         "on_actions",
+        "party_loc",
         "scripted_gui",
         "sgui",
         "scripted_params",

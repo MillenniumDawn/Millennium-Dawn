@@ -417,6 +417,18 @@ python3 tools/publishing/publish_workshop.py beta --base-ref v1.12.3b
 
 The script uses `git log --diff-filter=ACM` to determine which files changed, copies the full repo, then prunes unchanged files before uploading. `descriptor.mod` and `thumbnail.png` are always included.
 
+#### Version String
+
+`--version X.Y.Z` rewrites `version=` in the uploaded `descriptor.mod` and
+both version banner keys in all ten production frontend locale files inside the
+staging copy. Accepted values are `X.Y.Z`, legacy suffixes such as `X.Y.Zb` or
+`X.Y.Zrc1`, and SemVer prereleases such as `X.Y.Z-beta.5`. One leading `v` or
+`V` is optional. A diff publish with `--version` carries all ten banner files
+even when they are not part of the diff. Without `--version`, a diff publish
+prunes them as usual. Missing, excluded, duplicate, or malformed banners abort
+before upload rather than uploading a mismatch. The repo's own files are never
+touched.
+
 ### What Gets Excluded
 
 The following are automatically excluded from all uploads:
@@ -436,6 +448,7 @@ Use `--exclude PATTERN` to add extra exclusions, or `--no-default-excludes` to s
 | `--mod-id ID`           | Override the default Workshop mod ID                                   |
 | `--exclude PATTERN`     | Extra exclude pattern (repeatable)                                     |
 | `--no-default-excludes` | Skip the built-in exclude list                                         |
+| `--version VERSION`     | Override the uploaded version. Invalid or incomplete banners abort.    |
 
 ### Workshop Mod IDs
 
