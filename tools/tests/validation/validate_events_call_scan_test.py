@@ -307,12 +307,31 @@ def test_undefined_fire_reported_once_per_id(tmp_path):
     assert v._issues[0].category == "undefined-event-fire"
 
 
-def test_event_fire_caches_are_reused(tmp_path):
+def test_event_fire_views_share_typed_scan(tmp_path, monkeypatch):
+    monkeypatch.setenv("MD_NO_CACHE", "1")
     _write(tmp_path, "common/f.txt", "x = { country_event = foo.1 }\n")
+    calls = []
+    original = V.scan_typed_event_fires
+
+    def wrapped(args):
+        calls.append(args[0])
+        return original(args)
+
+    monkeypatch.setattr(V, "scan_typed_event_fires", wrapped)
+    monkeypatch.setattr(
+        V,
+        "scan_event_fires",
+        lambda _args: pytest.fail("untyped fires must reuse the typed scan"),
+    )
     v = _validator(tmp_path)
-    assert v._get_event_fires() is v._get_event_fires()
-    assert v._get_typed_event_fires() is v._get_typed_event_fires()
-    assert [f[0] for f in v._get_event_fires()] == ["foo.1"]
+    fires = v._get_event_fires()
+    typed_fires = v._get_typed_event_fires()
+
+    assert calls == [str(tmp_path / "common" / "f.txt")]
+    assert fires is v._get_event_fires()
+    assert typed_fires is v._get_typed_event_fires()
+    assert fires == [(eid, filename, line) for eid, _, filename, line in typed_fires]
+    assert [f[0] for f in fires] == ["foo.1"]
     assert v._rel_posix(str(tmp_path / "common" / "f.txt")) == "common/f.txt"
 
 
@@ -321,13 +340,13 @@ def test_event_fires_hit_disk_cache_across_instances(tmp_path, monkeypatch):
     _write(tmp_path, "common/f.txt", "x = { country_event = foo.1 }\n")
     first = _validator(tmp_path)._get_event_fires()
     calls = []
-    original = V.scan_event_fires
+    original = V.scan_typed_event_fires
 
     def wrapped(args):
         calls.append(args[0])
         return original(args)
 
-    monkeypatch.setattr(V, "scan_event_fires", wrapped)
+    monkeypatch.setattr(V, "scan_typed_event_fires", wrapped)
     second = _validator(tmp_path)._get_event_fires()
     assert calls == []
     assert [row[0] for row in second] == [row[0] for row in first]
