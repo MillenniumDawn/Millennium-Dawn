@@ -280,6 +280,44 @@ def test_event_fire_caches_are_reused(tmp_path):
     assert v._rel_posix(str(tmp_path / "common" / "f.txt")) == "common/f.txt"
 
 
+def test_event_fires_hit_disk_cache_across_instances(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    _write(tmp_path, "common/f.txt", "x = { country_event = foo.1 }\n")
+    first = _validator(tmp_path)._get_event_fires()
+    calls = []
+    original = V.scan_event_fires
+
+    def wrapped(args):
+        calls.append(args[0])
+        return original(args)
+
+    monkeypatch.setattr(V, "scan_event_fires", wrapped)
+    second = _validator(tmp_path)._get_event_fires()
+    assert calls == []
+    assert [row[0] for row in second] == [row[0] for row in first]
+
+
+def test_event_definition_types_hit_disk_cache_across_instances(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "news_event = {\n\tid = foo.1\n\tis_triggered_only = yes\n}\n",
+    )
+    first = _validator(tmp_path)._get_event_definition_types()
+    calls = []
+    original = V.scan_event_definition_types
+
+    def wrapped(args):
+        calls.append(args[0])
+        return original(args)
+
+    monkeypatch.setattr(V, "scan_event_definition_types", wrapped)
+    second = _validator(tmp_path)._get_event_definition_types()
+    assert calls == []
+    assert second == first
+
+
 def test_empty_on_actions_file_contributes_no_random_event_ids(tmp_path):
     _write(tmp_path, "common/on_actions/00_empty.txt", "")
     v = _validator(tmp_path)

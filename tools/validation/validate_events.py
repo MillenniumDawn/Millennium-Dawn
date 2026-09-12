@@ -555,6 +555,27 @@ def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
     return out
 
 
+def _stat_cached_scan(mod_path: str, namespace: str, filename: str, scanner):
+    return disk_cache.per_file_cached(
+        mod_path,
+        namespace,
+        filename,
+        lambda: scanner((filename, frozenset())),
+    )
+
+
+def _cached_scan_event_fires(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    filename, mod_path = args
+    return _stat_cached_scan(mod_path, "events.fires", filename, scan_event_fires)
+
+
+def _cached_scan_event_fire_graph(args: Tuple[str, str]) -> List[Tuple[str, str]]:
+    filename, mod_path = args
+    return _stat_cached_scan(
+        mod_path, "events.fire_graph", filename, scan_event_fire_graph
+    )
+
+
 # Where MD schedules its historical events from.
 _YEARLY_EFFECTS_REL = "common/scripted_effects/00_yearly_effects.txt"
 
@@ -1063,9 +1084,8 @@ class Validator(BaseValidator):
         if self._fires_cache is not None:
             return self._fires_cache
         fires: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(
-            scan_event_fires, self._get_fire_scan_args(), chunksize=30
-        ):
+        args = [(path, self.mod_path) for path, _ in self._get_fire_scan_args()]
+        for result in self._pool_map(_cached_scan_event_fires, args, chunksize=30):
             fires.extend(result)
         self._fires_cache = fires
         return fires
@@ -1086,14 +1106,25 @@ class Validator(BaseValidator):
         """Return event declaration keywords from the full events tree."""
         if self._definition_types_cache is not None:
             return self._definition_types_cache
-        definitions: Dict[str, str] = {}
         event_files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
-        for result in self._pool_map(
-            scan_event_definition_types,
-            [(f, frozenset()) for f in event_files],
-            chunksize=20,
-        ):
-            definitions.update(result)
+
+        def _build() -> Dict[str, str]:
+            definitions: Dict[str, str] = {}
+            for result in self._pool_map(
+                scan_event_definition_types,
+                [(f, frozenset()) for f in event_files],
+                chunksize=20,
+            ):
+                definitions.update(result)
+            return definitions
+
+        definitions = disk_cache.aggregate_cached(
+            self.mod_path,
+            "events.definition_types",
+            event_files,
+            _build,
+            namespace="events",
+        )
         self._definition_types_cache = definitions
         return definitions
 
@@ -1109,15 +1140,25 @@ class Validator(BaseValidator):
         # Lookup pass: must scan full repo even in staged mode, or staged
         # events lose their random_events MTTH exemption.
         files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
-        ids: set = set()
-        for filepath in files:
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=True
-            )
-            if not text:
-                continue
-            ids.update(_extract_random_event_ids(text))
 
+        def _build() -> set:
+            ids: set = set()
+            for filepath in files:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+                if not text:
+                    continue
+                ids.update(_extract_random_event_ids(text))
+            return ids
+
+        ids = disk_cache.aggregate_cached(
+            self.mod_path,
+            "events.random_event_ids",
+            files,
+            _build,
+            namespace="events",
+        )
         self._random_events_cache = ids
         return ids
 
@@ -1444,12 +1485,14 @@ class Validator(BaseValidator):
             return None
 
         # Lookup pass: a staged event's parent almost always lives elsewhere.
-        graph_args: List[Tuple[str, frozenset]] = [
-            (f, frozenset())
+        graph_args: List[Tuple[str, str]] = [
+            (f, self.mod_path)
             for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
         ]
         parents: Dict[str, Set[str]] = {}
-        for pairs in self._pool_map(scan_event_fire_graph, graph_args, chunksize=10):
+        for pairs in self._pool_map(
+            _cached_scan_event_fire_graph, graph_args, chunksize=10
+        ):
             for parent, child in pairs:
                 parents.setdefault(child, set()).add(parent)
 

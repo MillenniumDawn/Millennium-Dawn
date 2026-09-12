@@ -255,7 +255,13 @@ def _run(monkeypatch, gated, fires, graph, random_events=(), polls=()):
     validator = _stub(
         monkeypatch,
         fires,
-        lambda fn, args, **kw: [graph if fn is V.scan_event_fire_graph else gated],
+        lambda fn, args, **kw: [
+            (
+                graph
+                if fn in (V.scan_event_fire_graph, V._cached_scan_event_fire_graph)
+                else gated
+            )
+        ],
     )
     monkeypatch.setattr(validator, "_get_random_event_ids", lambda: set(random_events))
     monkeypatch.setattr(validator, "_get_probability_rolled_ids", lambda: set(polls))
