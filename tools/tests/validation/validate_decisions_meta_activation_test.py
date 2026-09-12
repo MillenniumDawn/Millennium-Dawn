@@ -105,11 +105,11 @@ def test_activation_scan_uses_only_shipped_content_roots(tmp_path):
     archived.parent.mkdir()
     archived.write_text("activate_mission = archived_mission\n", encoding="utf-8")
 
-    decisions, missions, removals, announced = V.Validator(
+    decisions, missions, removals, unlock_refs = V.Validator(
         str(tmp_path), workers=1
     )._get_activation_removal_scan()
 
     assert decisions == set()
     assert missions == {"shipped_mission"}
     assert removals == set()
-    assert announced == set()
+    assert unlock_refs == []
