@@ -10,6 +10,7 @@
 import glob
 import os
 import re
+import subprocess
 import sys
 from difflib import get_close_matches
 from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
@@ -91,7 +92,8 @@ _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
 _PRODUCER_RE = re.compile(r'\b(?:creator|producer)\s*=\s*"?([A-Za-z_]\w*)"?')
 _LOAD_OOB_RE = re.compile(r'\bload_oob\s*=\s*(?:"([^"]+)"|([A-Za-z_]\w*))')
-_DIVISION_TEMPLATE_DEF_RE = re.compile(rb"division_template\s*=\s*\{")
+_DIVISION_TEMPLATE_DEF_PATTERN = r"division_template\s*=\s*\{"
+_DIVISION_TEMPLATE_DEF_RE = re.compile(_DIVISION_TEMPLATE_DEF_PATTERN.encode())
 
 # create_unit and runtime load_oob appear in these sources.
 _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
@@ -155,6 +157,37 @@ def _any_file_matches(paths: List[str], pattern: re.Pattern[bytes]) -> bool:
         except OSError:
             return True
     return False
+
+
+def _changed_lines_match(mod_path: str, paths: List[str], pattern: str) -> bool:
+    if not paths or not os.path.exists(os.path.join(mod_path, ".git")):
+        return False
+    relative = [
+        normalize_path_separators(os.path.relpath(path, mod_path)) for path in paths
+    ]
+    try:
+        staged = subprocess.run(
+            ["git", "diff", "--cached", "--quiet", "--", *relative],
+            cwd=mod_path,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=15,
+        )
+        if staged.returncode not in (0, 1):
+            return True
+        scope = ["--cached"] if staged.returncode == 1 else ["main...HEAD"]
+        matched = subprocess.run(
+            ["git", "diff", *scope, "--quiet", f"-G{pattern}", "--", *relative],
+            cwd=mod_path,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+            timeout=15,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return True
+    return matched.returncode != 0
 
 
 def _read_text(filepath: str, under: str) -> str:
@@ -2286,8 +2319,13 @@ class Validator(BaseValidator):
         # Path roots include events/focuses, which usually have no template
         # definition. Only a real `division_template = {` (or a deleted file)
         # should force a full-repo create_unit rescan.
-        template_changed = self.staged_only and _any_file_matches(
-            template_candidates, _DIVISION_TEMPLATE_DEF_RE
+        template_changed = self.staged_only and (
+            _any_file_matches(template_candidates, _DIVISION_TEMPLATE_DEF_RE)
+            or _changed_lines_match(
+                self.mod_path,
+                template_candidates,
+                _DIVISION_TEMPLATE_DEF_PATTERN,
+            )
         )
         files = self._collect_files(
             _CREATE_UNIT_SOURCE_PATTERNS, ignore_staged=template_changed

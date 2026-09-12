@@ -713,6 +713,7 @@ class Validator(BaseValidator):
         self.staged_only = False
         idea_files = self._collect_files(["common/ideas/**/*.txt"])
         char_files = self._collect_files(["common/characters/**/*.txt"])
+        idea_tag_files = self._collect_files(["common/idea_tags/**/*.txt"])
         self.staged_only = saved
         self.log(f"  Parsing {len(idea_files)} idea files...")
         slotless = self.slotless_categories
@@ -748,7 +749,7 @@ class Validator(BaseValidator):
             disk_cache.aggregate_cached(
                 self.mod_path,
                 "ideas.all_defs",
-                idea_files + char_files,
+                idea_files + char_files + idea_tag_files,
                 _build,
                 namespace="ideas",
             )

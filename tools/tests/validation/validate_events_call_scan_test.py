@@ -241,6 +241,42 @@ def test_matching_fire_type_is_not_flagged(tmp_path):
     assert v._get_event_definition_types() == {"foo.1": "news_event"}
 
 
+def _validator_for_staged_event_change(tmp_path, definition, caller):
+    event = _write(tmp_path, "events/Ev.txt", definition)
+    _write(tmp_path, "common/f.txt", caller)
+    validator = _validator(tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [event]
+    return validator
+
+
+def test_staged_event_type_change_rescans_unchanged_callers(tmp_path):
+    validator = _validator_for_staged_event_change(
+        tmp_path,
+        "news_event = { id = foo.1 is_triggered_only = yes }\n",
+        "x = { country_event = foo.1 }\n",
+    )
+
+    validator.validate_event_fire_types()
+
+    assert [issue.category for issue in validator._issues] == [
+        "event-fire-type-mismatch"
+    ]
+
+
+def test_staged_event_definition_removal_rescans_unchanged_callers(tmp_path):
+    validator = _validator_for_staged_event_change(
+        tmp_path,
+        "country_event = { id = real.1 is_triggered_only = yes }\n",
+        "x = { country_event = removed.1 }\n",
+    )
+
+    validator.validate_undefined_event_fires()
+
+    assert [issue.category for issue in validator._issues] == ["undefined-event-fire"]
+    assert "removed.1" in validator._issues[0].message
+
+
 def test_undefined_fire_reported_once_per_id(tmp_path):
     _write(
         tmp_path,

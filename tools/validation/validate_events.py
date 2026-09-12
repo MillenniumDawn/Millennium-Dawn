@@ -19,6 +19,7 @@ from image_size import read_image_size
 from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
+    get_staged_files,
     strip_comments,
     strip_inline_comment,
 )
@@ -569,6 +570,25 @@ def _cached_scan_event_fires(args: Tuple[str, str]) -> List[Tuple[str, str, int]
     return _stat_cached_scan(mod_path, "events.fires", filename, scan_event_fires)
 
 
+def _cached_scan_typed_event_fires(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, str, int]]:
+    filename, mod_path = args
+    return _stat_cached_scan(
+        mod_path, "events.typed_fires", filename, scan_typed_event_fires
+    )
+
+
+def _cached_scan_dynamic_event_namespaces(args: Tuple[str, str]) -> Set[str]:
+    filename, mod_path = args
+    return _stat_cached_scan(
+        mod_path,
+        "events.dynamic_namespaces",
+        filename,
+        scan_dynamic_event_namespaces,
+    )
+
+
 def _cached_scan_event_fire_graph(args: Tuple[str, str]) -> List[Tuple[str, str]]:
     filename, mod_path = args
     return _stat_cached_scan(
@@ -992,6 +1012,7 @@ class Validator(BaseValidator):
         self._fires_cache: Optional[List[Tuple[str, str, int]]] = None
         self._typed_fires_cache: Optional[List[Tuple[str, str, str, int]]] = None
         self._definition_types_cache: Optional[Dict[str, str]] = None
+        self._full_call_site_scan_cache: Optional[bool] = None
 
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
@@ -1067,10 +1088,37 @@ class Validator(BaseValidator):
                 return True
         return False
 
+    def _needs_full_call_site_scan(self) -> bool:
+        if not self.staged_only:
+            return True
+        if self._full_call_site_scan_cache is not None:
+            return self._full_call_site_scan_cache
+        paths = list(self.staged_files or [])
+        paths.extend(
+            get_staged_files(
+                self.mod_path,
+                extensions=self.STAGED_EXTENSIONS,
+                include_missing=True,
+            )
+            or []
+        )
+        self._full_call_site_scan_cache = any(
+            self._rel_posix(
+                path if os.path.isabs(path) else os.path.join(self.mod_path, path)
+            ).startswith("events/")
+            for path in paths
+        )
+        return self._full_call_site_scan_cache
+
+    def _get_call_site_scan_args(self) -> List[Tuple[str, frozenset]]:
+        if self._needs_full_call_site_scan():
+            return self._get_fire_scan_args()
+        return self._get_scoped_fire_scan_args()
+
     def _skip_call_site_check(
         self, success: str, fail: str, category: str, severity=Severity.ERROR
     ) -> bool:
-        if not self.staged_only:
+        if not self.staged_only or self._needs_full_call_site_scan():
             return False
         files = [path for path, _ in self._get_scoped_fire_scan_args()]
         if self._files_contain_event_fires(files):
@@ -1095,8 +1143,9 @@ class Validator(BaseValidator):
         if self._typed_fires_cache is not None:
             return self._typed_fires_cache
         fires: List[Tuple[str, str, str, int]] = []
+        args = [(path, self.mod_path) for path, _ in self._get_fire_scan_args()]
         for result in self._pool_map(
-            scan_typed_event_fires, self._get_fire_scan_args(), chunksize=30
+            _cached_scan_typed_event_fires, args, chunksize=30
         ):
             fires.extend(result)
         self._typed_fires_cache = fires
@@ -1871,16 +1920,19 @@ class Validator(BaseValidator):
             "event-fire-type-mismatch",
         ):
             return
-        fire_args = self._get_scoped_fire_scan_args()
+        fire_args = self._get_call_site_scan_args()
         definitions = self._get_event_definition_types()
         results = []
         typed_fires: List[Tuple[str, str, str, int]] = []
-        for result in self._pool_map(
-            scan_typed_event_fires,
-            fire_args,
-            chunksize=30,
-        ):
-            typed_fires.extend(result)
+        if self._needs_full_call_site_scan():
+            typed_fires = self._get_typed_event_fires()
+        else:
+            for result in self._pool_map(
+                scan_typed_event_fires,
+                fire_args,
+                chunksize=30,
+            ):
+                typed_fires.extend(result)
         for eid, call_type, filename, line in typed_fires:
             expected = definitions.get(eid)
             if expected is None or expected == call_type:
@@ -1921,27 +1973,29 @@ class Validator(BaseValidator):
             "undefined-event-fire",
         ):
             return
-        args_list = self._get_scoped_fire_scan_args()
+        args_list = self._get_call_site_scan_args()
 
         # The definition scan must also cover the full repo in staged mode: a
         # staged caller's target event almost always lives in an unstaged file.
-        event_files = [
-            (f, frozenset())
-            for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
-        ]
-        defined: Set[str] = set()
-        for s in self._pool_map(scan_event_definitions, event_files, chunksize=10):
-            defined.update(s)
+        defined = set(self._get_event_definition_types())
         self.log(f"  Found {len(defined)} defined event IDs")
 
         dynamic_namespaces: Set[str] = set()
-        for s in self._pool_map(scan_dynamic_event_namespaces, args_list, chunksize=30):
-            dynamic_namespaces.update(s)
+        namespace_args = [(path, self.mod_path) for path, _ in args_list]
+        for namespaces in self._pool_map(
+            _cached_scan_dynamic_event_namespaces,
+            namespace_args,
+            chunksize=30,
+        ):
+            dynamic_namespaces.update(namespaces)
 
         seen: Dict[str, Tuple[str, int]] = {}
         fires: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(scan_event_fires, args_list, chunksize=30):
-            fires.extend(result)
+        if self._needs_full_call_site_scan():
+            fires = self._get_event_fires()
+        else:
+            for result in self._pool_map(scan_event_fires, args_list, chunksize=30):
+                fires.extend(result)
         for eid, filename, line in fires:
             if eid in defined or eid in seen:
                 continue
