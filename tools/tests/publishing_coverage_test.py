@@ -382,62 +382,53 @@ def test_patch_frontend_version_rejects_a_missing_file_without_partial_writes(tm
     )
 
 
-def test_patch_frontend_version_rejects_a_missing_key(tmp_path):
+@pytest.mark.parametrize(
+    "malformation, expected_error",
+    [
+        (
+            (b" VERSION_MD: ", b" VERSION_REMOVED: "),
+            "VERSION_MD must appear exactly once",
+        ),
+        (
+            (
+                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n',
+                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n'
+                b' VERSION_MD: "Duplicate v2.0.0"\n',
+            ),
+            "VERSION_MD must appear exactly once",
+        ),
+        (
+            (
+                b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
+                b' VERSION_MD_LOADING: "Version: missing DEV"',
+            ),
+            "VERSION_MD_LOADING must contain exactly one",
+        ),
+        (
+            (
+                b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
+                b' VERSION_MD_LOADING: "Version: v2.0.0 and v2.0.0 DEV"',
+            ),
+            "VERSION_MD_LOADING must contain exactly one",
+        ),
+    ],
+    ids=[
+        "missing_key",
+        "duplicate_key",
+        "zero_replaceable_tokens",
+        "multiple_replaceable_tokens",
+    ],
+)
+def test_patch_frontend_version_rejects_malformed_frontend_banners(
+    tmp_path, malformation, expected_error
+):
     paths = _write_frontend_tree(tmp_path)
     english = tmp_path / "localisation/english/MD_frontend_l_english.yml"
-    english.write_bytes(
-        english.read_bytes().replace(b" VERSION_MD: ", b" VERSION_REMOVED: ")
-    )
+    old, new = malformation
+    english.write_bytes(english.read_bytes().replace(old, new))
     before = {path: path.read_bytes() for path in paths}
 
-    with pytest.raises(SystemExit, match="VERSION_MD must appear exactly once"):
-        pw.patch_frontend_version(tmp_path, "1.2.3")
-
-    assert all(path.read_bytes() == data for path, data in before.items())
-
-
-def test_patch_frontend_version_rejects_a_duplicate_key(tmp_path):
-    paths = _write_frontend_tree(tmp_path)
-    english = tmp_path / "localisation/english/MD_frontend_l_english.yml"
-    with english.open("ab") as handle:
-        handle.write(b' VERSION_MD: "Duplicate v2.0.0"\n')
-    before = {path: path.read_bytes() for path in paths}
-
-    with pytest.raises(SystemExit, match="VERSION_MD must appear exactly once"):
-        pw.patch_frontend_version(tmp_path, "1.2.3")
-
-    assert all(path.read_bytes() == data for path, data in before.items())
-
-
-def test_patch_frontend_version_rejects_zero_replaceable_tokens(tmp_path):
-    paths = _write_frontend_tree(tmp_path)
-    english = tmp_path / "localisation/english/MD_frontend_l_english.yml"
-    english.write_bytes(
-        english.read_bytes().replace(
-            b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
-            b' VERSION_MD_LOADING: "Version: missing DEV"',
-        )
-    )
-    before = {path: path.read_bytes() for path in paths}
-
-    with pytest.raises(SystemExit, match="VERSION_MD_LOADING must contain exactly one"):
-        pw.patch_frontend_version(tmp_path, "1.2.3")
-
-    assert all(path.read_bytes() == data for path, data in before.items())
-
-
-def test_patch_frontend_version_rejects_multiple_replaceable_tokens(tmp_path):
-    paths = _write_frontend_tree(tmp_path)
-    english = tmp_path / "localisation/english/MD_frontend_l_english.yml"
-    english.write_bytes(
-        english.read_bytes().replace(
-            b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
-            b' VERSION_MD_LOADING: "Version: v2.0.0 and v2.0.0 DEV"',
-        )
-    )
-    before = {path: path.read_bytes() for path in paths}
-
-    with pytest.raises(SystemExit, match="VERSION_MD_LOADING must contain exactly one"):
+    with pytest.raises(SystemExit, match=expected_error):
         pw.patch_frontend_version(tmp_path, "1.2.3")
 
     assert all(path.read_bytes() == data for path, data in before.items())
