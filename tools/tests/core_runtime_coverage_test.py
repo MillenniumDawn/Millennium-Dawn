@@ -707,7 +707,7 @@ def test_cache_corruption_and_file_cache_lifecycle(tmp_path, monkeypatch):
     assert conn is not None
     conn.execute(
         "UPDATE entries SET value = ? WHERE namespace = ? AND key = ?",
-        (b"corrupt", "test", str(source)),
+        (b"corrupt", "test", cache._source_key(str(tmp_path), str(source))),
     )
     assert cache.per_file_cached(str(tmp_path), "test", str(source), compute) == {
         "value": 2
