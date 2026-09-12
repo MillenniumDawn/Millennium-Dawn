@@ -419,7 +419,15 @@ The script uses `git log --diff-filter=ACM` to determine which files changed, co
 
 #### Version String
 
-`--version X.Y.Z` rewrites `version=` in the uploaded `descriptor.mod` and the `VERSION_MD_LOADING` / `VERSION_MD` banner in every `localisation/*/MD_frontend_l_*.yml` inside the staging copy. A leading `v` is ignored. A diff publish carries those files even when they are not part of the diff, so the banner always matches the upload. The repo's own files are never touched. Without `--version`, both keep the value already committed.
+`--version X.Y.Z` rewrites `version=` in the uploaded `descriptor.mod` and
+both version banner keys in all ten production frontend locale files inside the
+staging copy. Accepted values are `X.Y.Z`, legacy suffixes such as `X.Y.Zb` or
+`X.Y.Zrc1`, and SemVer prereleases such as `X.Y.Z-beta.5`. One leading `v` or
+`V` is optional. A diff publish with `--version` carries all ten banner files
+even when they are not part of the diff. Without `--version`, a diff publish
+prunes them as usual. Missing, excluded, duplicate, or malformed banners abort
+before upload rather than uploading a mismatch. The repo's own files are never
+touched.
 
 ### What Gets Excluded
 
@@ -440,7 +448,7 @@ Use `--exclude PATTERN` to add extra exclusions, or `--no-default-excludes` to s
 | `--mod-id ID`           | Override the default Workshop mod ID                                   |
 | `--exclude PATTERN`     | Extra exclude pattern (repeatable)                                     |
 | `--no-default-excludes` | Skip the built-in exclude list                                         |
-| `--version VERSION`     | Override the uploaded version (descriptor.mod and in-game banner)      |
+| `--version VERSION`     | Override the uploaded version. Invalid or incomplete banners abort.    |
 
 ### Workshop Mod IDs
 

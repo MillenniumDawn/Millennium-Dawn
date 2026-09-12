@@ -10,8 +10,10 @@ Usage:
 
 Username is read from --username or the STEAM_USERNAME env var.
 --version rewrites version= in descriptor.mod and the in-game version banner
-(VERSION_MD_LOADING / VERSION_MD) for this upload only; omit to ship whatever
-version is currently committed in the repo.
+(VERSION_MD_LOADING / VERSION_MD) for this upload only. Accepted values are
+X.Y.Z, legacy suffixes such as X.Y.Zb or X.Y.Zrc1, and SemVer prereleases such
+as X.Y.Z-beta.5. An optional leading v or V is ignored; omit the flag to ship
+whatever version is currently committed in the repo.
 """
 
 import argparse
@@ -46,10 +48,34 @@ MOD_NAMES = {
 }
 
 # Localisation keys that render the version in the loading screen and main menu.
-VERSION_LOC_KEYS = {"VERSION_MD_LOADING", "VERSION_MD"}
+VERSION_LOC_KEYS = ("VERSION_MD_LOADING", "VERSION_MD")
 
-# An existing version token inside those values, e.g. v2.0.0 or v1.12.3b.
-VERSION_TOKEN = re.compile(r"v\d+(?:\.\d+)*(?:[A-Za-z]\w*)?")
+# The production frontend banners are intentionally a fixed set. A missing or
+# excluded locale must fail the publish instead of silently uploading a mismatch.
+FRONTEND_LOCALES = (
+    "braz_por",
+    "english",
+    "french",
+    "german",
+    "japanese",
+    "korean",
+    "polish",
+    "russian",
+    "simp_chinese",
+    "spanish",
+)
+
+# An existing version token inside those values, e.g. v2.0.0, v1.12.3b, or
+# v2.0.0-beta.1. Boundaries prevent a partial match from leaving a suffix behind.
+_VERSION_NUMBER = r"(?:0|[1-9][0-9]*)"
+_PRERELEASE_IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z][0-9A-Za-z-]*)"
+_VERSION_BODY = (
+    rf"{_VERSION_NUMBER}\.{_VERSION_NUMBER}\.{_VERSION_NUMBER}"
+    rf"(?:(?:[A-Za-z][A-Za-z0-9]*)|"
+    rf"(?:-(?:{_PRERELEASE_IDENTIFIER})(?:\.(?:{_PRERELEASE_IDENTIFIER}))*))?"
+)
+VERSION_TOKEN = re.compile(rf"(?<![A-Za-z0-9_])v{_VERSION_BODY}(?![A-Za-z0-9_.+-])")
+VERSION_VALUE = re.compile(rf"[vV]?{_VERSION_BODY}")
 
 # Files that must always be included (even if unchanged in diff mode).
 ALWAYS_KEEP = {"descriptor.mod", "thumbnail.png"}
@@ -113,6 +139,19 @@ ANYWHERE_EXCLUDES = {
 }
 
 DEFAULT_EXCLUDES = ROOT_ONLY_EXCLUDES | ANYWHERE_EXCLUDES
+
+
+def normalize_version(value: str | None) -> str | None:
+    """Validate a publish version and remove one optional leading ``v``."""
+    if value is None:
+        return None
+    if VERSION_VALUE.fullmatch(value) is None:
+        raise SystemExit(
+            f"ERROR: Invalid version {value!r}. Expected X.Y.Z, a legacy suffix "
+            "such as X.Y.Zb, or a SemVer prerelease such as X.Y.Z-beta.5. "
+            "One optional leading v or V is accepted."
+        )
+    return value[1:] if value[:1] in ("v", "V") else value
 
 
 def elapsed_str(start: float) -> str:
@@ -448,48 +487,63 @@ def patch_descriptor(
         print("  version:        (unchanged — using repo descriptor.mod value)")
 
 
-def frontend_loc_files(mod_dir: Path) -> set[str]:
-    """Repo-relative paths of the frontend localisation files carrying the banner."""
-    return {
-        path.relative_to(mod_dir).as_posix()
-        for path in mod_dir.glob("localisation/*/MD_frontend_l_*.yml")
-    }
+def frontend_loc_files(mod_dir: Path) -> tuple[Path, ...]:
+    """Return the fixed set of frontend localisation paths for a mod copy."""
+    return tuple(
+        mod_dir / "localisation" / locale / f"MD_frontend_l_{locale}.yml"
+        for locale in FRONTEND_LOCALES
+    )
 
 
 def patch_frontend_version(mod_dir: Path, version: str) -> None:
-    """Point the in-game version banner at the version being uploaded.
+    """Point every required in-game version banner at the uploaded version."""
+    loc_files = frontend_loc_files(mod_dir)
+    validated: list[tuple[Path, list[str]]] = []
 
-    VERSION_MD_LOADING and VERSION_MD are baked into every locale's frontend
-    localisation, so they keep showing whichever version was last bumped by
-    hand. Only the version token is replaced; labels, translations, and the
-    " DEV" suffix survive.
-    """
-    loc_files = sorted(frontend_loc_files(mod_dir))
-    matched = 0
+    for loc_file in loc_files:
+        rel = loc_file.relative_to(mod_dir).as_posix()
+        if not loc_file.is_file():
+            raise SystemExit(
+                f"ERROR: Missing expected frontend localisation file: {rel}"
+            )
+
+        with loc_file.open("r", encoding="utf-8", newline="") as handle:
+            lines = handle.read().splitlines(keepends=True)
+        for key in VERSION_LOC_KEYS:
+            key_lines = [
+                (i, line)
+                for i, line in enumerate(lines)
+                if line.split(":", 1)[0].strip() == key
+            ]
+            if len(key_lines) != 1:
+                raise SystemExit(
+                    f"ERROR: Invalid version banner in {rel}: {key} must appear "
+                    f"exactly once (found {len(key_lines)})"
+                )
+            _, key_line = key_lines[0]
+            token_count = len(VERSION_TOKEN.findall(key_line))
+            if token_count != 1:
+                raise SystemExit(
+                    f"ERROR: Invalid version banner in {rel}: {key} must contain "
+                    f"exactly one version token (found {token_count})"
+                )
+        validated.append((loc_file, lines))
+
     updated = 0
-    for rel in loc_files:
-        loc_file = mod_dir / rel
-        lines = loc_file.read_text(encoding="utf-8").splitlines(keepends=True)
-        changed = False
-        for i, line in enumerate(lines):
-            if line.split(":", 1)[0].strip() not in VERSION_LOC_KEYS:
-                continue
-            matched += 1
-            replaced = VERSION_TOKEN.sub(lambda _match: f"v{version}", line, count=1)
-            if replaced != line:
-                lines[i] = replaced
-                changed = True
-        if changed:
+    for loc_file, lines in validated:
+        patched = [
+            (
+                VERSION_TOKEN.sub(lambda _match: f"v{version}", line, count=1)
+                if line.split(":", 1)[0].strip() in VERSION_LOC_KEYS
+                else line
+            )
+            for line in lines
+        ]
+        if patched != lines:
             with loc_file.open("w", encoding="utf-8", newline="") as handle:
-                handle.write("".join(lines))
+                handle.write("".join(patched))
             updated += 1
 
-    if not matched:
-        print(
-            "  WARNING: no VERSION_MD_LOADING/VERSION_MD keys found under "
-            "localisation/; version banner left unchanged"
-        )
-        return
     print(
         f"  Version banner: v{version} "
         f"({updated}/{len(loc_files)} frontend files rewritten)"
@@ -727,9 +781,10 @@ def main() -> None:
     parser.add_argument("--mod-id", help="Override the Workshop mod ID")
     parser.add_argument(
         "--version",
-        help="Override version= in descriptor.mod and the in-game version banner "
-        '(e.g. "1.12.3"; a leading "v" is ignored). Leave unset to ship the '
-        "value already committed in the repo.",
+        help="Override version= and the in-game banner. Accepts X.Y.Z, legacy "
+        "suffixes (X.Y.Zb or X.Y.Zrc1), or SemVer prereleases "
+        "(X.Y.Z-beta.5); one leading v/V is optional. Missing, excluded, or "
+        "malformed banners abort before upload.",
     )
     parser.add_argument(
         "--exclude",
@@ -764,10 +819,8 @@ def main() -> None:
     if not username:
         sys.exit("ERROR: No username. Pass --username or set STEAM_USERNAME.")
 
-    # A leading "v" is a display convention, not part of the version value.
-    version = args.version
-    if version and version[:1] in ("v", "V"):
-        version = version[1:]
+    # Validate before copying or staging anything.
+    version = normalize_version(args.version)
 
     mod_id = args.mod_id or MOD_IDS[args.target]
     excludes = set() if args.no_default_excludes else set(DEFAULT_EXCLUDES)
@@ -806,7 +859,10 @@ def main() -> None:
                 )
             if version:
                 # The banner lives in files a diff upload would otherwise drop.
-                publishable_changed |= frontend_loc_files(mod_dir)
+                publishable_changed |= {
+                    loc_file.relative_to(mod_dir).as_posix()
+                    for loc_file in frontend_loc_files(mod_dir)
+                }
             prune_unchanged(mod_dir, publishable_changed, verbose=args.verbose)
         else:
             mod_dir = copy_repo(tmp, excludes)

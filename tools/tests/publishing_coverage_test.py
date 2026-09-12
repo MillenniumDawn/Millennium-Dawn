@@ -189,6 +189,23 @@ def test_patch_descriptor_missing_file_warns(tmp_path, capsys):
 # ---------------------------------------------------------------------------
 
 
+EXPECTED_FRONTEND_PATHS = {
+    "localisation/braz_por/MD_frontend_l_braz_por.yml",
+    "localisation/english/MD_frontend_l_english.yml",
+    "localisation/french/MD_frontend_l_french.yml",
+    "localisation/german/MD_frontend_l_german.yml",
+    "localisation/japanese/MD_frontend_l_japanese.yml",
+    "localisation/korean/MD_frontend_l_korean.yml",
+    "localisation/polish/MD_frontend_l_polish.yml",
+    "localisation/russian/MD_frontend_l_russian.yml",
+    "localisation/simp_chinese/MD_frontend_l_simp_chinese.yml",
+    "localisation/spanish/MD_frontend_l_spanish.yml",
+}
+
+
+EXPECTED_VERSION_LOC_KEYS = ("VERSION_MD_LOADING", "VERSION_MD")
+
+
 def _frontend_loc(mod_dir, lang, body):
     path = mod_dir / "localisation" / lang / f"MD_frontend_l_{lang}.yml"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -196,14 +213,45 @@ def _frontend_loc(mod_dir, lang, body):
     return path
 
 
-def test_patch_frontend_version_rewrites_every_locale(tmp_path, capsys):
-    body = (
-        "l_english:\n"
-        ' VERSION_MD_LOADING: "Version: v2.0.0 DEV"\n'
-        ' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n'
+def test_frontend_loc_files_returns_the_fixed_locale_set(tmp_path):
+    assert {
+        path.relative_to(tmp_path).as_posix()
+        for path in pw.frontend_loc_files(tmp_path)
+    } == EXPECTED_FRONTEND_PATHS
+
+
+def _frontend_body(lang, version="2.0.0"):
+    loading = "Version: v{version} DEV"
+    main = "Millennium Dawn: A Modern Day v{version} DEV"
+    if lang == "korean":
+        loading = "버전: v{version} DEV"
+    elif lang == "simp_chinese":
+        loading = "版本：v{version} 开发版"
+        main = "千禧黎明：现代之日 v{version} 开发版"
+    return (
+        f"l_{lang}:\n"
+        f' VERSION_MD_LOADING: "{loading.format(version=version)}"\n'
+        f' VERSION_MD: "{main.format(version=version)}"\n'
         ' VERSION_MD_DATE: "Release Date: 11th September 2026"\n'
     )
-    paths = [_frontend_loc(tmp_path, lang, body) for lang in ("english", "german")]
+
+
+def _write_frontend_tree(mod_dir, version="2.0.0", bodies=None):
+    bodies = bodies or {}
+    paths = []
+    for rel in sorted(EXPECTED_FRONTEND_PATHS):
+        path = mod_dir / rel
+        lang = path.parent.name
+        paths.append(
+            _frontend_loc(
+                mod_dir, lang, bodies.get(lang, _frontend_body(lang, version))
+            )
+        )
+    return paths
+
+
+def test_patch_frontend_version_rewrites_every_locale(tmp_path, capsys):
+    paths = _write_frontend_tree(tmp_path)
 
     pw.patch_frontend_version(tmp_path, "1.2.3")
 
@@ -211,78 +259,217 @@ def test_patch_frontend_version_rewrites_every_locale(tmp_path, capsys):
         raw = path.read_bytes()
         assert raw.startswith(b"\xef\xbb\xbf"), "BOM must survive"
         text = raw.decode("utf-8")
-        assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in text
-        assert 'VERSION_MD: "Millennium Dawn: A Modern Day v1.2.3 DEV"' in text
-        assert "v2.0.0" not in text
+        for key in EXPECTED_VERSION_LOC_KEYS:
+            matches = [
+                line
+                for line in text.splitlines()
+                if line.split(":", 1)[0].strip() == key
+            ]
+            assert len(matches) == 1
+            assert matches[0].count("v1.2.3") == 1
+            assert "v2.0.0" not in matches[0]
         assert 'VERSION_MD_DATE: "Release Date: 11th September 2026"' in text
-    assert "2/2 frontend files rewritten" in capsys.readouterr().out
+    assert "10/10 frontend files rewritten" in capsys.readouterr().out
 
 
 def test_patch_frontend_version_keeps_translated_text(tmp_path):
-    korean = _frontend_loc(
-        tmp_path,
-        "korean",
-        "l_korean:\n"
-        ' VERSION_MD_LOADING: "버전: v2.0.0 DEV"\n'
-        ' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n',
-    )
-    chinese = _frontend_loc(
-        tmp_path,
-        "simp_chinese",
-        'l_simp_chinese:\n VERSION_MD_LOADING: "版本：v2.0.0 开发版"\n',
-    )
+    _write_frontend_tree(tmp_path)
 
     pw.patch_frontend_version(tmp_path, "2.1.0")
 
-    assert 'VERSION_MD_LOADING: "버전: v2.1.0 DEV"' in korean.read_text(
+    korean = (tmp_path / "localisation/korean/MD_frontend_l_korean.yml").read_text(
         encoding="utf-8"
     )
-    assert 'VERSION_MD_LOADING: "版本：v2.1.0 开发版"' in chinese.read_text(
-        encoding="utf-8"
+    chinese = (
+        tmp_path / "localisation/simp_chinese/MD_frontend_l_simp_chinese.yml"
+    ).read_text(encoding="utf-8")
+    assert 'VERSION_MD_LOADING: "버전: v2.1.0 DEV"' in korean
+    assert 'VERSION_MD: "Millennium Dawn: A Modern Day v2.1.0 DEV"' in korean
+    assert 'VERSION_MD_LOADING: "版本：v2.1.0 开发版"' in chinese
+    assert 'VERSION_MD: "千禧黎明：现代之日 v2.1.0 开发版"' in chinese
+
+
+def test_patch_frontend_version_replaces_a_complete_prerelease_token(tmp_path):
+    _write_frontend_tree(tmp_path, version="2.0.0-beta.1")
+
+    pw.patch_frontend_version(tmp_path, "2.0.0-beta.5")
+
+    for rel in EXPECTED_FRONTEND_PATHS:
+        text = (tmp_path / rel).read_text(encoding="utf-8")
+        assert text.count("v2.0.0-beta.5") == 2
+        assert "v2.0.0-beta.1" not in text
+
+
+@pytest.mark.parametrize(
+    "source,expected",
+    [
+        ("v2.0.0", ["v2.0.0"]),
+        ("v1.12.3b", ["v1.12.3b"]),
+        ("v2.0.0-beta.1", ["v2.0.0-beta.1"]),
+    ],
+)
+def test_version_token_matches_complete_supported_formats(source, expected):
+    assert pw.VERSION_TOKEN.findall(source) == expected
+
+
+@pytest.mark.parametrize(
+    "source",
+    [
+        "xv2.0.0",
+        "_v2.0.0",
+        "v2.0.0+build.1",
+        "v2.0.0_beta",
+    ],
+)
+def test_version_token_rejects_partial_matches(source):
+    assert pw.VERSION_TOKEN.findall(source) == []
+
+
+@pytest.mark.parametrize(
+    "value,expected",
+    [
+        (None, None),
+        ("0.0.0", "0.0.0"),
+        ("1.2.3", "1.2.3"),
+        ("1.2.3rc1", "1.2.3rc1"),
+        (
+            "123456789012345678901234567890.987654321098765432109876543210.111111111111111111111111111111",
+            "123456789012345678901234567890.987654321098765432109876543210.111111111111111111111111111111",
+        ),
+        ("v1.12.3b", "1.12.3b"),
+        ("V2.0.0-beta.5", "2.0.0-beta.5"),
+    ],
+)
+def test_normalize_version_accepts_supported_formats(value, expected):
+    assert pw.normalize_version(value) == expected
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "",
+        "v",
+        " 1.2.3",
+        "1.2.3 ",
+        '"1.2.3"',
+        "1.2.3\\1",
+        "1.2",
+        "1.2.3-",
+        "1.2.3-beta..1",
+        "-1.2.3",
+        "01.2.3",
+        "1.2.3\n",
+        "1.2.3\x00",
+    ],
+)
+def test_normalize_version_rejects_malformed_values(value):
+    with pytest.raises(SystemExit, match=r"^ERROR: Invalid version") as exc_info:
+        pw.normalize_version(value)
+    assert "One optional leading v or V is accepted" in str(exc_info.value)
+
+
+def test_patch_frontend_version_rejects_a_missing_file_without_partial_writes(tmp_path):
+    paths = _write_frontend_tree(tmp_path)
+    before = {path: path.read_bytes() for path in paths}
+    missing = tmp_path / "localisation/english/MD_frontend_l_english.yml"
+    missing.unlink()
+
+    with pytest.raises(SystemExit, match="Missing expected frontend localisation file"):
+        pw.patch_frontend_version(tmp_path, "1.2.3")
+
+    assert all(
+        path.read_bytes() == data for path, data in before.items() if path != missing
     )
 
 
-def test_patch_frontend_version_warns_when_no_keys(tmp_path, capsys):
-    _frontend_loc(tmp_path, "english", "l_english:\n KEY: value\n")
-
-    pw.patch_frontend_version(tmp_path, "1.0.0")
-
-    assert "WARNING" in capsys.readouterr().out
-
-
-def test_patch_frontend_version_is_a_noop_when_already_current(tmp_path):
-    path = _frontend_loc(
-        tmp_path, "english", 'l_english:\n VERSION_MD: "Version: v1.2.3 DEV"\n'
+def test_patch_frontend_version_rejects_a_missing_key(tmp_path):
+    paths = _write_frontend_tree(tmp_path)
+    english = tmp_path / "localisation/english/MD_frontend_l_english.yml"
+    english.write_bytes(
+        english.read_bytes().replace(b" VERSION_MD: ", b" VERSION_REMOVED: ")
     )
-    before = path.read_bytes()
+    before = {path: path.read_bytes() for path in paths}
+
+    with pytest.raises(SystemExit, match="VERSION_MD must appear exactly once"):
+        pw.patch_frontend_version(tmp_path, "1.2.3")
+
+    assert all(path.read_bytes() == data for path, data in before.items())
+
+
+def test_patch_frontend_version_rejects_a_duplicate_key(tmp_path):
+    paths = _write_frontend_tree(tmp_path)
+    english = tmp_path / "localisation/english/MD_frontend_l_english.yml"
+    with english.open("ab") as handle:
+        handle.write(b' VERSION_MD: "Duplicate v2.0.0"\n')
+    before = {path: path.read_bytes() for path in paths}
+
+    with pytest.raises(SystemExit, match="VERSION_MD must appear exactly once"):
+        pw.patch_frontend_version(tmp_path, "1.2.3")
+
+    assert all(path.read_bytes() == data for path, data in before.items())
+
+
+def test_patch_frontend_version_rejects_zero_replaceable_tokens(tmp_path):
+    paths = _write_frontend_tree(tmp_path)
+    english = tmp_path / "localisation/english/MD_frontend_l_english.yml"
+    english.write_bytes(
+        english.read_bytes().replace(
+            b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
+            b' VERSION_MD_LOADING: "Version: missing DEV"',
+        )
+    )
+    before = {path: path.read_bytes() for path in paths}
+
+    with pytest.raises(SystemExit, match="VERSION_MD_LOADING must contain exactly one"):
+        pw.patch_frontend_version(tmp_path, "1.2.3")
+
+    assert all(path.read_bytes() == data for path, data in before.items())
+
+
+def test_patch_frontend_version_rejects_multiple_replaceable_tokens(tmp_path):
+    paths = _write_frontend_tree(tmp_path)
+    english = tmp_path / "localisation/english/MD_frontend_l_english.yml"
+    english.write_bytes(
+        english.read_bytes().replace(
+            b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
+            b' VERSION_MD_LOADING: "Version: v2.0.0 and v2.0.0 DEV"',
+        )
+    )
+    before = {path: path.read_bytes() for path in paths}
+
+    with pytest.raises(SystemExit, match="VERSION_MD_LOADING must contain exactly one"):
+        pw.patch_frontend_version(tmp_path, "1.2.3")
+
+    assert all(path.read_bytes() == data for path, data in before.items())
+
+
+def test_patch_frontend_version_is_a_byte_for_byte_noop_for_same_version(tmp_path):
+    paths = _write_frontend_tree(tmp_path, version="1.2.3")
+    before = {path: path.read_bytes() for path in paths}
 
     pw.patch_frontend_version(tmp_path, "1.2.3")
 
-    assert path.read_bytes() == before
+    assert all(path.read_bytes() == data for path, data in before.items())
 
 
-def test_patch_frontend_version_treats_the_version_literally(tmp_path):
-    path = _frontend_loc(
-        tmp_path, "english", 'l_english:\n VERSION_MD: "Version: v2.0.0 DEV"\n'
-    )
+def test_real_frontend_files_match_the_fixed_production_locale_contract():
+    localisation = pw.REPO_ROOT / "localisation"
+    actual = {
+        path.relative_to(pw.REPO_ROOT).as_posix()
+        for path in localisation.glob("*/MD_frontend_l_*.yml")
+    }
+    assert actual == EXPECTED_FRONTEND_PATHS
+    assert tuple(pw.VERSION_LOC_KEYS) == EXPECTED_VERSION_LOC_KEYS
 
-    pw.patch_frontend_version(tmp_path, "2.0\\1")
-
-    assert 'VERSION_MD: "Version: v2.0\\1 DEV"' in path.read_text(encoding="utf-8")
-
-
-def test_real_frontend_files_expose_a_patchable_version_banner():
-    loc_files = sorted((pw.REPO_ROOT / "localisation").glob("*/MD_frontend_l_*.yml"))
-
-    assert loc_files, "expected frontend localisation files in the repo"
-    for path in loc_files:
+    for rel in sorted(EXPECTED_FRONTEND_PATHS):
+        path = pw.REPO_ROOT / rel
         lines = path.read_text(encoding="utf-8").splitlines()
-        for key in pw.VERSION_LOC_KEYS:
+        for key in EXPECTED_VERSION_LOC_KEYS:
             matches = [line for line in lines if line.split(":", 1)[0].strip() == key]
-            assert len(matches) == 1, f"{path.name}: expected exactly one {key}"
-            assert pw.VERSION_TOKEN.search(
-                matches[0]
-            ), f"{path.name}: {key} has no version token for the publisher to replace"
+            assert len(matches) == 1, f"{rel}: expected exactly one {key}"
+            assert (
+                len(pw.VERSION_TOKEN.findall(matches[0])) == 1
+            ), f"{rel}: {key} must have exactly one complete version token"
 
 
 # ---------------------------------------------------------------------------
@@ -941,11 +1128,16 @@ def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeyp
             mod_dir / "descriptor.mod",
             'name="Old"\nversion="0.1"\nremote_file_id="0"\n',
         )
+        _write_frontend_tree(mod_dir)
         (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
         return mod_dir
 
     def fake_publish(mod_dir, username, mod_id, changenote, verbose=False):
         seen["descriptor"] = (mod_dir / "descriptor.mod").read_text(encoding="utf-8")
+        seen["frontend_paths"] = {
+            path.relative_to(mod_dir).as_posix()
+            for path in mod_dir.glob("localisation/*/MD_frontend_l_*.yml")
+        }
         seen["username"] = username
         seen["mod_id"] = mod_id
         seen["changenote"] = changenote
@@ -961,6 +1153,7 @@ def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeyp
     assert 'name="MD Test"' in seen["descriptor"]
     assert 'remote_file_id="2777133449"' in seen["descriptor"]
     assert 'version="1.2.3"' in seen["descriptor"]
+    assert seen["frontend_paths"] == EXPECTED_FRONTEND_PATHS
     assert seen["username"] == "uploader"
     assert seen["mod_id"] == "2777133449"
     assert seen["changenote"] == "notes"
@@ -971,13 +1164,12 @@ def _main_staged(tmp_path, monkeypatch, *args):
     _prepare_full_main(tmp_path, monkeypatch, *args)
     seen = {}
 
-    def fake_copy(dest_parent, _excludes):
+    def fake_copy(dest_parent, excludes):
         mod_dir = dest_parent / "mod"
-        loc = mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
-        loc.parent.mkdir(parents=True)
-        loc.write_bytes(
-            b'\xef\xbb\xbfl_english:\n VERSION_MD_LOADING: "Version: v2.0.0 DEV"\n'
-        )
+        mod_dir.mkdir()
+        _write_frontend_tree(mod_dir)
+        if "english" in excludes:
+            (mod_dir / "localisation/english/MD_frontend_l_english.yml").unlink()
         write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
         (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
         return mod_dir
@@ -986,6 +1178,10 @@ def _main_staged(tmp_path, monkeypatch, *args):
         seen["frontend"] = (
             mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
         ).read_text(encoding="utf-8")
+        seen["frontend_paths"] = {
+            path.relative_to(mod_dir).as_posix()
+            for path in mod_dir.glob("localisation/*/MD_frontend_l_*.yml")
+        }
         seen["descriptor"] = (mod_dir / "descriptor.mod").read_text(encoding="utf-8")
 
     monkeypatch.setattr(pw, "copy_repo", fake_copy)
@@ -1004,11 +1200,8 @@ def _main_diff_staged(tmp_path, monkeypatch, changed, *args):
 
     def fake_copy(dest_parent, _excludes):
         mod_dir = dest_parent / "mod"
-        loc = mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
-        loc.parent.mkdir(parents=True)
-        loc.write_bytes(
-            b'\xef\xbb\xbfl_english:\n VERSION_MD_LOADING: "Version: v2.0.0 DEV"\n'
-        )
+        mod_dir.mkdir()
+        _write_frontend_tree(mod_dir)
         (mod_dir / "events").mkdir()
         write_text(mod_dir / "events" / "foo.txt", "changed\n")
         write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
@@ -1018,6 +1211,10 @@ def _main_diff_staged(tmp_path, monkeypatch, changed, *args):
     def fake_publish(mod_dir, *_args, **_kwargs):
         loc = mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
         seen["banner"] = loc.read_text(encoding="utf-8") if loc.exists() else ""
+        seen["frontend_paths"] = {
+            path.relative_to(mod_dir).as_posix()
+            for path in mod_dir.glob("localisation/*/MD_frontend_l_*.yml")
+        }
         seen["kept_event"] = (mod_dir / "events" / "foo.txt").exists()
 
     monkeypatch.setattr(pw, "copy_repo", fake_copy)
@@ -1039,12 +1236,14 @@ def test_main_patches_the_version_banner_when_version_given(tmp_path, monkeypatc
     )
 
     assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in staged["frontend"]
+    assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
 
 
 def test_main_leaves_the_version_banner_alone_without_version(tmp_path, monkeypatch):
     staged = _main_staged(tmp_path, monkeypatch, "test", "--full", "--username", "u")
 
     assert 'VERSION_MD_LOADING: "Version: v2.0.0 DEV"' in staged["frontend"]
+    assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
 
 
 def test_main_ignores_a_leading_v_in_the_version(tmp_path, monkeypatch):
@@ -1061,6 +1260,41 @@ def test_main_ignores_a_leading_v_in_the_version(tmp_path, monkeypatch):
 
     assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in staged["frontend"]
     assert 'version="1.2.3"' in staged["descriptor"]
+
+
+def test_main_version_validation_happens_before_copy(tmp_path, monkeypatch):
+    _prepare_full_main(
+        tmp_path,
+        monkeypatch,
+        "test",
+        "--full",
+        "--username",
+        "u",
+        "--version",
+        r"1.2.3\\1",
+    )
+    monkeypatch.setattr(pw, "copy_repo", lambda *_args: pytest.fail("copy_repo called"))
+
+    with pytest.raises(SystemExit, match=r"^ERROR: Invalid version"):
+        pw.main()
+
+
+def test_main_excludes_a_required_locale_instead_of_uploading_a_mismatch(
+    tmp_path, monkeypatch
+):
+    with pytest.raises(SystemExit, match="Missing expected frontend localisation file"):
+        _main_staged(
+            tmp_path,
+            monkeypatch,
+            "test",
+            "--full",
+            "--username",
+            "u",
+            "--version",
+            "1.2.3",
+            "--exclude",
+            "english",
+        )
 
 
 def test_main_diff_publish_with_version_ships_the_patched_banner(
@@ -1080,8 +1314,9 @@ def test_main_diff_publish_with_version_ships_the_patched_banner(
     )
 
     assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in staged["banner"]
+    assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
     assert staged["kept_event"] is True
-    assert "1/1 frontend files rewritten" in capsys.readouterr().out
+    assert "10/10 frontend files rewritten" in capsys.readouterr().out
 
 
 def test_main_diff_publish_without_version_still_prunes_the_banner(
@@ -1099,6 +1334,7 @@ def test_main_diff_publish_without_version_still_prunes_the_banner(
     )
 
     assert staged["banner"] == ""
+    assert staged["frontend_paths"] == set()
     assert staged["kept_event"] is True
 
 
