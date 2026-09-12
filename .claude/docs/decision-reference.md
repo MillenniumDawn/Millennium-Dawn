@@ -174,6 +174,8 @@ A category gated on state that flips during play (a country or global flag, a co
  }
 ```
 
+The documented form takes a bare category token, and the token has to name a category that exists. #3957 used the stale name `DEN_decision_Investments_Global_II`, which produced `Invalid Decision Category` in error.log. `validate_decisions.py` reports the stale reference as `undefined-unlock-tooltip-target` (ERROR, with the file and line of the call) during CI.
+
 Without it a whole tab of decisions appears with no indication of where it came from. `unlock_decision_tooltip = <decision>` on one of its decisions counts too, since that names the decision the player just gained.
 
 `validate_decisions.py` reports the gap as `unannounced-decision-category` (WARNING), naming the trigger that makes the category conditional so the fix location is obvious. AI-only categories are exempt: nobody is watching.
@@ -194,6 +196,17 @@ A decision effect that sets a flag another decision's `visible` or `available` w
 ```
 
 MD does not announce every unlock, so `validate_decisions.py` only reports the inconsistent case as `unannounced-decision-unlock` (WARNING): a block that already calls `unlock_decision_tooltip` at least once and misses a sibling gated on the very flag it just set. That is an oversight, not a style choice. Both `visible` and `available` gates count, and the same depth-zero rule applies.
+
+The effect takes a decision token, or the block form when the tooltip should also preview the decision's effects:
+
+```
+ unlock_decision_tooltip = {
+  decision = JAP_tokyo_startup_special_zone
+  show_effect_tooltip = yes
+ }
+```
+
+Either way the name has to be a decision that exists. `undefined-unlock-tooltip-target` (ERROR) reports one that does not, for both `unlock_decision_tooltip` and `unlock_decision_category_tooltip`, resolving every reference in `common/`, `events/` and `history/` against the decisions and categories defined under `common/decisions/`. A reference is reported at its own file and line, so a typo or a stale rename is a one-line fix. Only the two documented forms above count, and a quoted string (a `log = "..."` line) is text, not a reference.
 
 ## Randomised Effects
 
