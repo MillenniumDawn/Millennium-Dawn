@@ -261,6 +261,30 @@ def test_patch_frontend_version_is_a_noop_when_already_current(tmp_path):
     assert path.read_bytes() == before
 
 
+def test_patch_frontend_version_treats_the_version_literally(tmp_path):
+    path = _frontend_loc(
+        tmp_path, "english", 'l_english:\n VERSION_MD: "Version: v2.0.0 DEV"\n'
+    )
+
+    pw.patch_frontend_version(tmp_path, "2.0\\1")
+
+    assert 'VERSION_MD: "Version: v2.0\\1 DEV"' in path.read_text(encoding="utf-8")
+
+
+def test_real_frontend_files_expose_a_patchable_version_banner():
+    loc_files = sorted((pw.REPO_ROOT / "localisation").glob("*/MD_frontend_l_*.yml"))
+
+    assert loc_files, "expected frontend localisation files in the repo"
+    for path in loc_files:
+        lines = path.read_text(encoding="utf-8").splitlines()
+        for key in pw.VERSION_LOC_KEYS:
+            matches = [line for line in lines if line.split(":", 1)[0].strip() == key]
+            assert len(matches) == 1, f"{path.name}: expected exactly one {key}"
+            assert pw.VERSION_TOKEN.search(
+                matches[0]
+            ), f"{path.name}: {key} has no version token for the publisher to replace"
+
+
 # ---------------------------------------------------------------------------
 # VDF generation
 # ---------------------------------------------------------------------------
@@ -943,7 +967,7 @@ def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeyp
     assert seen["verbose"] is False
 
 
-def _main_frontend_text(tmp_path, monkeypatch, *args):
+def _main_staged(tmp_path, monkeypatch, *args):
     _prepare_full_main(tmp_path, monkeypatch, *args)
     seen = {}
 
@@ -962,15 +986,48 @@ def _main_frontend_text(tmp_path, monkeypatch, *args):
         seen["frontend"] = (
             mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
         ).read_text(encoding="utf-8")
+        seen["descriptor"] = (mod_dir / "descriptor.mod").read_text(encoding="utf-8")
 
     monkeypatch.setattr(pw, "copy_repo", fake_copy)
     monkeypatch.setattr(pw, "publish", fake_publish)
     pw.main()
-    return seen["frontend"]
+    return seen
+
+
+def _main_diff_staged(tmp_path, monkeypatch, changed, *args):
+    monkeypatch.setattr(sys, "argv", ["publish_workshop.py", *args])
+    monkeypatch.setattr(pw, "get_deleted_files", lambda _ref: set())
+    monkeypatch.setattr(pw, "get_changed_files", lambda _ref: set(changed))
+    monkeypatch.setattr(pw.tempfile, "mkdtemp", lambda prefix="": str(tmp_path / "pub"))
+    (tmp_path / "pub").mkdir()
+    seen = {}
+
+    def fake_copy(dest_parent, _excludes):
+        mod_dir = dest_parent / "mod"
+        loc = mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
+        loc.parent.mkdir(parents=True)
+        loc.write_bytes(
+            b'\xef\xbb\xbfl_english:\n VERSION_MD_LOADING: "Version: v2.0.0 DEV"\n'
+        )
+        (mod_dir / "events").mkdir()
+        write_text(mod_dir / "events" / "foo.txt", "changed\n")
+        write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
+        (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
+        return mod_dir
+
+    def fake_publish(mod_dir, *_args, **_kwargs):
+        loc = mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
+        seen["banner"] = loc.read_text(encoding="utf-8") if loc.exists() else ""
+        seen["kept_event"] = (mod_dir / "events" / "foo.txt").exists()
+
+    monkeypatch.setattr(pw, "copy_repo", fake_copy)
+    monkeypatch.setattr(pw, "publish", fake_publish)
+    pw.main()
+    return seen
 
 
 def test_main_patches_the_version_banner_when_version_given(tmp_path, monkeypatch):
-    frontend = _main_frontend_text(
+    staged = _main_staged(
         tmp_path,
         monkeypatch,
         "test",
@@ -981,15 +1038,86 @@ def test_main_patches_the_version_banner_when_version_given(tmp_path, monkeypatc
         "1.2.3",
     )
 
-    assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in frontend
+    assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in staged["frontend"]
 
 
 def test_main_leaves_the_version_banner_alone_without_version(tmp_path, monkeypatch):
-    frontend = _main_frontend_text(
-        tmp_path, monkeypatch, "test", "--full", "--username", "u"
+    staged = _main_staged(tmp_path, monkeypatch, "test", "--full", "--username", "u")
+
+    assert 'VERSION_MD_LOADING: "Version: v2.0.0 DEV"' in staged["frontend"]
+
+
+def test_main_ignores_a_leading_v_in_the_version(tmp_path, monkeypatch):
+    staged = _main_staged(
+        tmp_path,
+        monkeypatch,
+        "test",
+        "--full",
+        "--username",
+        "u",
+        "--version",
+        "v1.2.3",
     )
 
-    assert 'VERSION_MD_LOADING: "Version: v2.0.0 DEV"' in frontend
+    assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in staged["frontend"]
+    assert 'version="1.2.3"' in staged["descriptor"]
+
+
+def test_main_diff_publish_with_version_ships_the_patched_banner(
+    tmp_path, monkeypatch, capsys
+):
+    staged = _main_diff_staged(
+        tmp_path,
+        monkeypatch,
+        {"events/foo.txt"},
+        "beta",
+        "--base-ref",
+        "v1",
+        "--username",
+        "u",
+        "--version",
+        "1.2.3",
+    )
+
+    assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in staged["banner"]
+    assert staged["kept_event"] is True
+    assert "1/1 frontend files rewritten" in capsys.readouterr().out
+
+
+def test_main_diff_publish_without_version_still_prunes_the_banner(
+    tmp_path, monkeypatch
+):
+    staged = _main_diff_staged(
+        tmp_path,
+        monkeypatch,
+        {"events/foo.txt"},
+        "beta",
+        "--base-ref",
+        "v1",
+        "--username",
+        "u",
+    )
+
+    assert staged["banner"] == ""
+    assert staged["kept_event"] is True
+
+
+def test_main_diff_publish_with_version_still_refuses_an_empty_diff(
+    tmp_path, monkeypatch
+):
+    with pytest.raises(SystemExit, match="No publishable mod files changed"):
+        _main_diff_staged(
+            tmp_path,
+            monkeypatch,
+            {"tools/secret.py"},
+            "beta",
+            "--base-ref",
+            "v1",
+            "--username",
+            "u",
+            "--version",
+            "1.2.3",
+        )
 
 
 def test_main_no_default_excludes_is_honoured(tmp_path, monkeypatch):

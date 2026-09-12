@@ -419,7 +419,7 @@ The script uses `git log --diff-filter=ACM` to determine which files changed, co
 
 #### Version String
 
-`--version X.Y.Z` rewrites `version=` in the uploaded `descriptor.mod` and the `VERSION_MD_LOADING` / `VERSION_MD` banner in every `localisation/*/MD_frontend_l_*.yml` inside the staging copy. The repo's own files are never touched. Without `--version`, both keep the value already committed.
+`--version X.Y.Z` rewrites `version=` in the uploaded `descriptor.mod` and the `VERSION_MD_LOADING` / `VERSION_MD` banner in every `localisation/*/MD_frontend_l_*.yml` inside the staging copy. A leading `v` is ignored. A diff publish carries those files even when they are not part of the diff, so the banner always matches the upload. The repo's own files are never touched. Without `--version`, both keep the value already committed.
 
 ### What Gets Excluded
 

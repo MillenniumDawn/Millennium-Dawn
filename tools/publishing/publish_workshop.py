@@ -9,8 +9,9 @@ Usage:
   STEAM_USERNAME=MyUser publish_workshop.py beta --full
 
 Username is read from --username or the STEAM_USERNAME env var.
---version rewrites version= in descriptor.mod for this upload only; omit
-to ship whatever version is currently committed in the repo.
+--version rewrites version= in descriptor.mod and the in-game version banner
+(VERSION_MD_LOADING / VERSION_MD) for this upload only; omit to ship whatever
+version is currently committed in the repo.
 """
 
 import argparse
@@ -447,6 +448,14 @@ def patch_descriptor(
         print("  version:        (unchanged — using repo descriptor.mod value)")
 
 
+def frontend_loc_files(mod_dir: Path) -> set[str]:
+    """Repo-relative paths of the frontend localisation files carrying the banner."""
+    return {
+        path.relative_to(mod_dir).as_posix()
+        for path in mod_dir.glob("localisation/*/MD_frontend_l_*.yml")
+    }
+
+
 def patch_frontend_version(mod_dir: Path, version: str) -> None:
     """Point the in-game version banner at the version being uploaded.
 
@@ -455,17 +464,18 @@ def patch_frontend_version(mod_dir: Path, version: str) -> None:
     hand. Only the version token is replaced; labels, translations, and the
     " DEV" suffix survive.
     """
-    loc_files = sorted(mod_dir.glob("localisation/*/MD_frontend_l_*.yml"))
+    loc_files = sorted(frontend_loc_files(mod_dir))
     matched = 0
     updated = 0
-    for loc_file in loc_files:
+    for rel in loc_files:
+        loc_file = mod_dir / rel
         lines = loc_file.read_text(encoding="utf-8").splitlines(keepends=True)
         changed = False
         for i, line in enumerate(lines):
             if line.split(":", 1)[0].strip() not in VERSION_LOC_KEYS:
                 continue
             matched += 1
-            replaced = VERSION_TOKEN.sub(f"v{version}", line, count=1)
+            replaced = VERSION_TOKEN.sub(lambda _match: f"v{version}", line, count=1)
             if replaced != line:
                 lines[i] = replaced
                 changed = True
@@ -717,8 +727,9 @@ def main() -> None:
     parser.add_argument("--mod-id", help="Override the Workshop mod ID")
     parser.add_argument(
         "--version",
-        help='Override version= in descriptor.mod (e.g. "1.12.3"). '
-        "Leave unset to ship the value already committed in the repo.",
+        help="Override version= in descriptor.mod and the in-game version banner "
+        '(e.g. "1.12.3"; a leading "v" is ignored). Leave unset to ship the '
+        "value already committed in the repo.",
     )
     parser.add_argument(
         "--exclude",
@@ -752,6 +763,11 @@ def main() -> None:
     username = args.username
     if not username:
         sys.exit("ERROR: No username. Pass --username or set STEAM_USERNAME.")
+
+    # A leading "v" is a display convention, not part of the version value.
+    version = args.version
+    if version and version[:1] in ("v", "V"):
+        version = version[1:]
 
     mod_id = args.mod_id or MOD_IDS[args.target]
     excludes = set() if args.no_default_excludes else set(DEFAULT_EXCLUDES)
@@ -788,16 +804,19 @@ def main() -> None:
                     "ERROR: No publishable mod files changed after excludes. "
                     "Use --full or adjust --exclude / --no-default-excludes."
                 )
+            if version:
+                # The banner lives in files a diff upload would otherwise drop.
+                publishable_changed |= frontend_loc_files(mod_dir)
             prune_unchanged(mod_dir, publishable_changed, verbose=args.verbose)
         else:
             mod_dir = copy_repo(tmp, excludes)
 
         # Rewrite descriptor.mod so the shipped copy matches this target.
-        patch_descriptor(mod_dir, MOD_NAMES[args.target], mod_id, args.version)
+        patch_descriptor(mod_dir, MOD_NAMES[args.target], mod_id, version)
 
         # Keep the menu/loading-screen version in step with the upload.
-        if args.version:
-            patch_frontend_version(mod_dir, args.version)
+        if version:
+            patch_frontend_version(mod_dir, version)
 
         # Validate required files exist
         validate_mod_files(mod_dir)
