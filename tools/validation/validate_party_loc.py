@@ -22,14 +22,26 @@ miscased sprite references.
 
 Hooks whose `original_tag` is not a registered country tag or tag alias are
 ERROR. That check is independent of the format-scope filter, so deleting a
-nation still fails leftover politics-view gates.
+nation still fails leftover politics-view gates. Missing or unreadable inputs
+and tag registrations fail instead of turning an incomplete workspace into a
+clean run.
 """
 
 import os
 import re
 import subprocess
 import sys
-from typing import Dict, FrozenSet, List, NamedTuple, Optional, Sequence, Set, Tuple
+from typing import (
+    Dict,
+    FrozenSet,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -169,6 +181,25 @@ def parse_hooks(text: str) -> List[Hook]:
     ]
 
 
+def _iter_defined_text_blocks(text: str) -> Iterator[Tuple[str, int, int]]:
+    for block in _DEFINED_TEXT_RE.finditer(text):
+        block_end = _match_brace(text, block.end() - 1)
+        name_match = _BLOCK_NAME_RE.search(text, block.end(), block_end)
+        yield name_match.group(1) if name_match else "?", block.end(), block_end
+
+
+def _iter_entry_triggers(
+    text: str, start: int, end: int
+) -> Iterator[Tuple[int, int, str]]:
+    for entry in _TEXT_ENTRY_RE.finditer(text, start, end):
+        entry_end = _match_brace(text, entry.end() - 1)
+        trigger = _TRIGGER_RE.search(text, entry.end(), entry_end)
+        if trigger is None:
+            continue
+        trigger_end = _match_brace(text, trigger.end() - 1)
+        yield entry.start(), trigger.end(), text[trigger.end() : trigger_end - 1]
+
+
 def find_duplicate_hooks(text: str) -> List[Tuple[int, str, str]]:
     """(line, block_name, tag) for a repeated unconditional `original_tag` gate.
 
@@ -176,25 +207,17 @@ def find_duplicate_hooks(text: str) -> List[Tuple[int, str, str]]:
     same `defined_text` can never fire.
     """
     duplicates: List[Tuple[int, str, str]] = []
-    for block in _DEFINED_TEXT_RE.finditer(text):
-        block_end = _match_brace(text, block.end() - 1)
-        name_match = _BLOCK_NAME_RE.search(text, block.end(), block_end)
-        block_name = name_match.group(1) if name_match else "?"
+    for block_name, block_start, block_end in _iter_defined_text_blocks(text):
         seen: Set[str] = set()
-        for entry in _TEXT_ENTRY_RE.finditer(text, block.end(), block_end):
-            entry_end = _match_brace(text, entry.end() - 1)
-            trigger = _TRIGGER_RE.search(text, entry.end(), entry_end)
-            if trigger is None:
-                continue
-            trigger_end = _match_brace(text, trigger.end() - 1)
-            tag_match = _LONE_ORIGINAL_TAG_RE.match(
-                text[trigger.end() : trigger_end - 1].strip()
-            )
+        for entry_start, _, trigger_body in _iter_entry_triggers(
+            text, block_start, block_end
+        ):
+            tag_match = _LONE_ORIGINAL_TAG_RE.match(trigger_body.strip())
             if tag_match is None:
                 continue
             tag = tag_match.group(1)
             if tag in seen:
-                line = text.count("\n", 0, entry.start()) + 1
+                line = text.count("\n", 0, entry_start) + 1
                 duplicates.append((line, block_name, tag))
             seen.add(tag)
     return duplicates
@@ -209,22 +232,15 @@ def find_unknown_tag_hooks(
     country tag or a tag alias.
     """
     findings: List[Tuple[int, str, str]] = []
-    for block in _DEFINED_TEXT_RE.finditer(text):
-        block_end = _match_brace(text, block.end() - 1)
-        name_match = _BLOCK_NAME_RE.search(text, block.end(), block_end)
-        block_name = name_match.group(1) if name_match else "?"
-        for entry in _TEXT_ENTRY_RE.finditer(text, block.end(), block_end):
-            entry_end = _match_brace(text, entry.end() - 1)
-            trigger = _TRIGGER_RE.search(text, entry.end(), entry_end)
-            if trigger is None:
-                continue
-            trigger_end = _match_brace(text, trigger.end() - 1)
-            trigger_body = text[trigger.end() : trigger_end - 1]
+    for block_name, block_start, block_end in _iter_defined_text_blocks(text):
+        for _, trigger_start, trigger_body in _iter_entry_triggers(
+            text, block_start, block_end
+        ):
             for tag_match in _ORIGINAL_TAG_RE.finditer(trigger_body):
                 tag = tag_match.group(1)
                 if tag in valid_tags:
                     continue
-                line = text.count("\n", 0, trigger.end() + tag_match.start()) + 1
+                line = text.count("\n", 0, trigger_start + tag_match.start()) + 1
                 findings.append((line, block_name, tag))
     return findings
 
@@ -237,8 +253,8 @@ def _tag_source_files(mod_path: str) -> List[str]:
             continue
         try:
             names = os.listdir(directory)
-        except OSError:
-            continue
+        except OSError as error:
+            raise OSError(f"{directory}: {error}") from error
         for name in sorted(names):
             if name.endswith(".txt"):
                 files.append(os.path.join(directory, name))
@@ -250,8 +266,8 @@ def _parse_registered_tags(files: Sequence[str]) -> FrozenSet[str]:
     for filepath in files:
         try:
             text = read_text_strict(filepath)
-        except (OSError, UnicodeDecodeError):
-            continue
+        except (OSError, UnicodeDecodeError) as error:
+            raise OSError(f"{filepath}: {error}") from error
         tags.update(_COUNTRY_TAG_DEF_RE.findall(text))
         tags.update(_ALIAS_DEF_RE.findall(text))
     return frozenset(tags)
@@ -413,18 +429,59 @@ class Validator(BaseValidator):
         loc_text = self._read(LOC_PATH)
         hook_text = self._read(HOOK_PATH)
         if loc_text is None or hook_text is None:
-            self.log("  Party localisation files not present — nothing to check")
+            missing = [
+                path
+                for path, text in ((LOC_PATH, loc_text), (HOOK_PATH, hook_text))
+                if text is None
+            ]
+            self._report(
+                [
+                    Issue(
+                        severity=Severity.ERROR,
+                        category="party-loc-input-missing",
+                        message="Required party-localisation input is missing or unreadable",
+                        file=path,
+                        line=1,
+                    )
+                    for path in missing
+                ],
+                "All required party-localisation inputs are readable",
+                "Required party-localisation inputs that cannot be read:",
+            )
             return
         hook_text = strip_comments(hook_text)
 
         keys, miscased = parse_party_keys(loc_text)
         hooks = parse_hooks(hook_text)
-        tag_files = _tag_source_files(self.mod_path)
-        if tag_files:
+        tag_source_issue: Optional[Issue] = None
+        valid_tags: FrozenSet[str] = frozenset()
+        try:
+            valid_tags = load_registered_tags(self.mod_path)
+        except OSError as error:
+            tag_source_issue = Issue(
+                severity=Severity.ERROR,
+                category="party-loc-tag-source-unreadable",
+                message=f"Country-tag registration source cannot be read: {error}",
+                file=COUNTRY_TAG_DIR,
+                line=1,
+            )
+        if tag_source_issue is None and not valid_tags:
+            tag_source_issue = Issue(
+                severity=Severity.ERROR,
+                category="party-loc-tag-source-missing",
+                message="No country-tag registration files are available",
+                file=COUNTRY_TAG_DIR,
+                line=1,
+            )
+        if tag_source_issue is not None:
             self._report(
-                self._check_unknown_tags(
-                    hook_text, load_registered_tags(self.mod_path)
-                ),
+                [tag_source_issue],
+                "Country-tag registrations are available",
+                "Country-tag registrations cannot be read:",
+            )
+        else:
+            self._report(
+                self._check_unknown_tags(hook_text, valid_tags),
                 "Every party hook original_tag is a registered country tag or alias",
                 "Party hooks whose original_tag is not a registered country tag or alias:",
             )

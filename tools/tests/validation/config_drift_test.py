@@ -629,6 +629,13 @@ def test_ci_strict_gate_lives_in_batch_specs():
     ]
 
 
+def test_ci_party_loc_gate_is_registered_and_strict():
+    spec = _spec_for("validate_party_loc.py")
+    assert spec.name == "party-loc"
+    assert spec.groups == ("localisation", "common")
+    assert spec.strict is True
+
+
 def test_ci_redundant_modifier_gate_is_strict():
     assert _spec_for("validate_modifiers.py").strict is True
 
