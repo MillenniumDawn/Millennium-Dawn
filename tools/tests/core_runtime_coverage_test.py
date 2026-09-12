@@ -1,3 +1,4 @@
+import argparse
 import io
 import json
 import os
@@ -60,6 +61,16 @@ def test_parser_factories_and_linting_extensions():
     assert parsed.input_file == "input.txt"
     assert parsed.output == "out.txt"
     assert parsed.backup and parsed.verbose and parsed.no_color
+
+    file_parser = argparse.ArgumentParser()
+    U.add_standard_file_arguments(file_parser, input_help="Custom input")
+    assert "Custom input" in file_parser.format_help()
+    parsed = file_parser.parse_args(["source.txt", "-o", "dest.txt", "-b", "-v"])
+    assert parsed.input_file == "source.txt"
+    assert parsed.output == "dest.txt"
+    assert parsed.backup and parsed.verbose
+    with pytest.raises(SystemExit):
+        file_parser.parse_args(["source.txt", "--no-color"])
 
     validation = U.create_validation_parser("validation")
     parsed = validation.parse_args(

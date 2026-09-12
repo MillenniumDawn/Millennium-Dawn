@@ -23,6 +23,7 @@ from common_utils import (
     resolve_output_file_and_backup,
 )
 from shared_utils import (
+    add_standard_file_arguments,
     atomic_write_text,
     blank_quoted_strings,
     collapse_or_compact,
@@ -1041,14 +1042,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Standardize HOI4 focus tree files - reformats focus blocks and all focus tree properties"
     )
-    parser.add_argument("input_file", help="Input focus tree file")
-    parser.add_argument(
-        "-o", "--output", help="Output file (default: overwrites input)"
-    )
-    parser.add_argument(
-        "-b", "--backup", action="store_true", help="Create backup before modifying"
-    )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    add_standard_file_arguments(parser, input_help="Input focus tree file")
     add_check_naming_argument(parser)
 
     args = parser.parse_args()

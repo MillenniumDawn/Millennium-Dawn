@@ -5,7 +5,10 @@ both drive, so routing lives in one place and neither of them has to write a
 file to find out what the formatter would produce.
 """
 
+from typing import cast
+
 import pytest
+import standardize_api
 from standardize_api import kind_for_path, standardize_lines, standardize_text
 
 _ROUTED = [
@@ -30,6 +33,16 @@ _UNROUTED = [
 @pytest.mark.parametrize("path,expected", _ROUTED)
 def test_kind_for_path_routes_owned_paths(path, expected):
     assert kind_for_path(path) == expected
+
+
+def test_routes_have_only_supported_standardizer_kinds():
+    assert {kind for _prefix, kind in standardize_api.ROUTES} == {
+        "focus",
+        "event",
+        "decision",
+        "idea",
+        "mio",
+    }
 
 
 @pytest.mark.parametrize("path", _UNROUTED)
@@ -74,7 +87,7 @@ def test_standardize_text_touches_no_file(tmp_path):
 
 
 def test_standardize_lines_matches_standardize_text():
-    lines = _MESSY_EVENT.splitlines(keepends=True)
+    lines = cast(list[str], _MESSY_EVENT.splitlines(keepends=True))
     from_lines = standardize_lines("event", lines)
 
     assert from_lines is not None

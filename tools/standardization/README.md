@@ -169,6 +169,26 @@ Standardizes MIO organization files according to Millennium Dawn standards.
 python3 standardize_mio.py input.txt -o output.txt --backup --verbose
 ```
 
+### History (`standardize_history.py`)
+
+Standardizes dated blocks in country history files without changing content outside them.
+
+**Usage:**
+
+```bash
+python3 standardize_history.py "history/countries/CHI - China.txt" -o output.txt
+```
+
+### Localisation (`standardize_localisation.py`)
+
+Reorganizes English localisation files by content category and detects the mod root when possible.
+
+**Usage:**
+
+```bash
+python3 standardize_localisation.py input.yml --mod-root /path/to/mod
+```
+
 ## Unified Interface
 
 For convenience, use the unified `standardize.py` script:
@@ -188,6 +208,12 @@ python3 standardize.py idea input.txt -v
 
 # Standardize MIOs
 python3 standardize.py mio input.txt
+
+# Standardize history files
+python3 standardize.py history "history/countries/CHI - China.txt"
+
+# Standardize localisation
+python3 standardize.py localisation input.yml --mod-root /path/to/mod
 ```
 
 ## Common Options
@@ -198,6 +224,11 @@ All standardizers support these command-line options:
 - `-o, --output` - Output file (default: overwrites input)
 - `-b, --backup` - Create backup before modifying (recommended)
 - `-v, --verbose` - Verbose output for debugging
+
+Additional options are limited to their relevant subcommands:
+
+- `--check-naming` - Check modifier naming conventions (focus trees only)
+- `--mod-root` - Mod root path (localisation files only)
 
 ## Code Standards Enforced
 
