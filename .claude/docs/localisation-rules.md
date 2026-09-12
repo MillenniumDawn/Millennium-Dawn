@@ -114,6 +114,20 @@ MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (A
 - Name (`name: "..."`) title-cased, concise (3–6 words typical).
 - Description explains what the idea represents in 1–3 sentences. Do not repeat modifier values verbatim; describe their political or economic meaning.
 
+### Removable spirit footer
+
+Every starting national spirit the player can fix (negative or mixed, and something removes, swaps, or improves it) ends its `_desc` with a footer:
+
+`...last flavour sentence.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we complete the §Y$TAG_focus_id$§! focus."`
+
+- Vocabulary: `will be §RRemoved§!`, `will §GImprove§!`, `will §RWorsen§!`, `will never be §RRemoved§!`. Use `§RRemoved§! and replaced by <short label>` when a swap target is neither clearly better nor a tier of the same chain.
+- Sources: `the §Y$focus_id$§! focus`, `the §Y$decision_id$§! decision`, `§Y<threshold>§!` for variables. Events fired by a focus name the focus, not the event.
+- Up to three sources: list them all. More: name the branch by its root focus (`in the §Y$root_id$§! branch`) or the theme with up to three `such as` examples.
+- Tiered chains get the footer on every tier. The last tier before removal says `will be §RRemoved§! by the next ...`. Chains that improve but never clear say `will never be §RRemoved§!` plus what still changes.
+- Weekly or variable-driven spirits explain the driver, then the removal condition, in that order (see `PER_us_sanctions_desc`).
+- No footer for anything nothing ever changes: permanent spirits, the economy and military-branch dynamic modifiers (`TAG_economy_modifier`, `TAG_artesh_modifier`), positive flavour spirits, hidden ideas. A dynamic modifier qualifies only when it has penalties and a focus, decision, or event removes or improves it.
+- First person collective, no em dashes, `§Y` never `§H`.
+
 ## YAML Validity
 
 HOI4 loc files are checked by `check-yaml` in the pre-commit hook. The HOI4 format is not strict YAML, so several patterns cause parse failures:
