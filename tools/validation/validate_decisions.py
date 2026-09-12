@@ -49,6 +49,9 @@ _DECISION_REFERENCE_SOURCE_PATTERNS = (
     "history/**/*.txt",
 )
 
+# Decision and category IDs can contain hyphens, for example Communist-State_invite.
+_LITERAL_ID_TOKEN = r"[\w-]+"
+
 
 def _should_skip(filename: str) -> bool:
     return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
@@ -362,14 +365,14 @@ def _unactivated(candidates: set, activated: set) -> list:
 # The leading `\b` on both keywords rejects a longer key ending in one
 # (`md_unlock_decision_tooltip`).
 _UNLOCK_CATEGORY_RE = re.compile(
-    r"\bunlock_decision_category_tooltip\s*=\s*([A-Za-z0-9_]+)"
+    rf"\bunlock_decision_category_tooltip\s*=\s*({_LITERAL_ID_TOKEN})"
 )
 # `unlock_decision_tooltip` takes a bare decision token or the block form
 # `{ decision = <token> ... }` (resources/documentation/effects_documentation.md),
 # where the decision may sit beside `show_effect_tooltip` / `show_modifiers`.
 _UNLOCK_DECISION_RE = re.compile(
-    r"\bunlock_decision_tooltip\s*=\s*(?:([A-Za-z0-9_]+)"
-    r"|\{[^{}]*?\bdecision\s*=\s*([A-Za-z0-9_]+))"
+    rf"\bunlock_decision_tooltip\s*=\s*(?:({_LITERAL_ID_TOKEN})"
+    rf"|\{{[^{{}}]*?\bdecision\s*=\s*({_LITERAL_ID_TOKEN}))"
 )
 # State that flips on during play, so the category it gates appears mid-game.
 _MIDGAME_GATE_RE = re.compile(
@@ -513,7 +516,9 @@ _DECISIONS_BLOCK_RE = re.compile(
     r"^\t[^\t#\n]+?\s*=\s*\{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
 )
 _DECISION_TOKEN_LINE_RE = re.compile(r"^\t(\S+)\s*=", flags=re.MULTILINE)
-_CATEGORY_BLOCK_RE = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
+_CATEGORY_BLOCK_RE = re.compile(
+    rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
+)
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 

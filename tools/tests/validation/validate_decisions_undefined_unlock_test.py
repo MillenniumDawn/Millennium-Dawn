@@ -26,15 +26,19 @@ def _focus_file(effects):
     )
 
 
-def _write_mod(tmp_path, effects):
+def _write_mod(tmp_path, effects, *, no_cache=False):
     write_text(
         tmp_path / "common" / "decisions" / "categories" / "cat.txt",
-        "md_category = {\n\ticon = GFX_decision_generic\n}\n",
+        "md_category = {\n\ticon = GFX_decision_generic\n}\n"
+        "md_hyphen-category = {\n\ticon = GFX_decision_generic\n}\n",
     )
     write_text(
         tmp_path / "common" / "decisions" / "dec.txt",
         "md_category = {\n"
         "\tmd_real_decision = {\n"
+        "\t\ticon = GFX_decision_generic\n"
+        "\t}\n"
+        "\tmd_hyphen-decision = {\n"
         "\t\ticon = GFX_decision_generic\n"
         "\t}\n"
         "}\n",
@@ -43,7 +47,7 @@ def _write_mod(tmp_path, effects):
         tmp_path / "common" / "national_focus" / "test.txt",
         _focus_file(effects),
     )
-    return V.Validator(str(tmp_path), use_colors=False, workers=1)
+    return V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=no_cache)
 
 
 def _findings(validator):
@@ -116,6 +120,69 @@ def test_block_form_reference_to_an_undefined_decision_is_flagged(tmp_path):
     message, path, line = _findings(validator)[0]
     assert "unlock_decision_tooltip = md_typo" in message
     assert "no decision named md_typo" in message
+    assert (path, line) == (_FOCUS_PATH, 4)
+
+
+def test_hyphenated_decision_reference_is_clean(tmp_path):
+    validator = _write_mod(
+        tmp_path, "\t\tunlock_decision_tooltip = md_hyphen-decision\n"
+    )
+    assert _findings(validator) == []
+
+
+def test_hyphenated_decision_block_form_reference_is_clean(tmp_path):
+    validator = _write_mod(
+        tmp_path,
+        "\t\tunlock_decision_tooltip = {\n"
+        "\t\t\tdecision = md_hyphen-decision\n"
+        "\t\t\tshow_effect_tooltip = yes\n"
+        "\t\t}\n",
+    )
+    assert _findings(validator) == []
+
+
+def test_hyphenated_category_reference_is_clean(tmp_path):
+    validator = _write_mod(
+        tmp_path, "\t\tunlock_decision_category_tooltip = md_hyphen-category\n"
+    )
+    assert _findings(validator) == []
+
+
+def test_undefined_hyphenated_decision_reference_is_flagged(tmp_path):
+    validator = _write_mod(tmp_path, "\t\tunlock_decision_tooltip = md_hyphen-typo\n")
+
+    assert _findings(validator) == [
+        (
+            "unlock_decision_tooltip = md_hyphen-typo -> no decision named "
+            "md_hyphen-typo is defined in common/decisions (fix the typo or "
+            "define it)",
+            _FOCUS_PATH,
+            4,
+        )
+    ]
+
+
+def test_undefined_hyphenated_block_form_reference_is_flagged(tmp_path):
+    validator = _write_mod(
+        tmp_path,
+        "\t\tunlock_decision_tooltip = {\n"
+        "\t\t\tdecision = md_hyphen-typo\n"
+        "\t\t\tshow_effect_tooltip = yes\n"
+        "\t\t}\n",
+    )
+
+    message, path, line = _findings(validator)[0]
+    assert "no decision named md_hyphen-typo" in message
+    assert (path, line) == (_FOCUS_PATH, 4)
+
+
+def test_undefined_hyphenated_category_reference_is_flagged(tmp_path):
+    validator = _write_mod(
+        tmp_path, "\t\tunlock_decision_category_tooltip = md_hyphen-catagory\n"
+    )
+
+    message, path, line = _findings(validator)[0]
+    assert "no category named md_hyphen-catagory" in message
     assert (path, line) == (_FOCUS_PATH, 4)
 
 
@@ -200,3 +267,36 @@ def test_finding_is_an_error_with_category_and_location(tmp_path):
     ]
     assert validator._issues[0].file == "common/national_focus/test.txt"
     assert validator._issues[0].line == 4
+
+
+def test_run_validations_reports_undefined_targets_from_every_source_root(
+    tmp_path,
+):
+    validator = _write_mod(
+        tmp_path, "\t\tunlock_decision_tooltip = md_typo\n", no_cache=True
+    )
+    write_text(
+        tmp_path / "events" / "md_test_events.txt",
+        "country_event = {\n"
+        "\timmediate = {\n"
+        "\t\tunlock_decision_tooltip = md_typo\n"
+        "\t}\n"
+        "}\n",
+    )
+    write_text(
+        tmp_path / "history" / "countries" / "md_test.txt",
+        "unlock_decision_category_tooltip = md_typo\n",
+    )
+
+    validator.run_validations()
+
+    reported = {
+        (issue.file, issue.line, issue.severity)
+        for issue in validator._issues
+        if issue.category == "undefined-unlock-tooltip-target"
+    }
+    assert reported == {
+        (_FOCUS_PATH, 4, V.Severity.ERROR),
+        (os.path.join("events", "md_test_events.txt"), 3, V.Severity.ERROR),
+        (os.path.join("history", "countries", "md_test.txt"), 1, V.Severity.ERROR),
+    }
