@@ -110,6 +110,10 @@ def test_manual_texture_audit_is_not_auto_discovered():
     assert "validate_unused_textures.py" not in scripts
 
 
+def test_variables_run_passes_the_redundant_focus_flag_scan():
+    assert runner._VALIDATOR_EXTRA_FLAGS["variables"] == ["--redundant-focus-flags"]
+
+
 def test_summary_totals_use_deduplicated_issues(tmp_path, monkeypatch):
     finding = {
         "severity": "error",
