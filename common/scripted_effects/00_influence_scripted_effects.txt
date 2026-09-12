@@ -18,6 +18,18 @@ init_influence = {
 	clear_array = influence_array
 }
 
+# Effect: update_dirty_influence_var
+# Purpose: This is the main effect that is used to update the dirty influence variable
+update_dirty_influence_var = {
+	if = {
+		limit = { check_variable = { global.update_influence_ui < 10000 } }
+		add_to_variable = { global.update_influence_ui = 1 }
+	}
+	else = {
+		set_variable = { global.update_influence_ui = 1 }
+	}
+}
+
 # Effect: recalculate_influence
 # Purpose: This is the main effect that is used to recalculate the influence
 recalculate_influence = {
@@ -200,6 +212,7 @@ make_puppet_action = {
 	every_neighbor_country = {
 		add_opinion_modifier = { target = PREV modifier = puppeted_neighbor }
 	}
+	update_dirty_influence_var = yes
 }
 
 # Effect: economic_exploitation_action
@@ -392,6 +405,7 @@ mp_economic_aid_transfer = {
 	}
 
 	update_money_dirty_variable = yes
+	update_dirty_influence_var = yes
 }
 
 automation_combat_foreign_influence_execute = {
@@ -1138,6 +1152,8 @@ change_influence_percentage = {
 		recalculate_influence = yes
 	}
 	set_temp_variable = { percent_change = percent_change_temp }
+
+	update_dirty_influence_var = yes
 }
 
 # Effect: init_auto_influence_array
@@ -1196,6 +1212,7 @@ update_auto_influence_array = {
 	}
 
 	clamp_variable = { var = auto_influence_users min = 0 max = 10 }
+	update_dirty_influence_var = yes
 }
 
 # Effect: create_new_auto_influencer_request
