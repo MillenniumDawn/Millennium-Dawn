@@ -558,6 +558,15 @@ jobs:
           "https://github.com/${{ github.repository }}.git"
           "${{ github.sha }}"
 
+      - name: Compute staged validator code hash
+        id: staged-toolshash
+        if: >-
+          always() && !cancelled() && matrix.quality == true &&
+          steps.dependencies.outcome == 'success'
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**',
+          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
       - name: Create staged integration worktree
         id: staged-worktree
         if: >-
@@ -565,8 +574,34 @@ jobs:
           steps.staged-fetch.outcome == 'success'
         run: |
           worktree="${{ runner.temp }}/md-staged-validator-test"
-          git worktree add --detach "$worktree" "${{ github.sha }}"
-          git -C "$worktree" sparse-checkout disable
+          git worktree add --detach --no-checkout \
+            "$worktree" "${{ github.sha }}"
+          # Anchored patterns: a bare `interface` would also match the 1.8 GB
+          # gfx/interface art tree, so every entry is root-anchored (see
+          # tools/validation/staged_sparse_profile.txt).
+          git -C "$worktree" sparse-checkout init --no-cone
+          git -C "$worktree" sparse-checkout set --stdin \
+            < tools/validation/staged_sparse_profile.txt
+          git -C "$worktree" checkout "${{ github.sha }}"
+          test -d "$worktree/gfx/flags" || \
+            { echo "::error::sparse worktree missing gfx/flags"; exit 1; }
+          test ! -e "$worktree/gfx/interface" || \
+            { echo "::error::sparse worktree leaked gfx/interface"; exit 1; }
+
+      - name: Restore staged validator disk cache
+        id: staged-valcache
+        if: >-
+          always() && !cancelled() && matrix.quality == true &&
+          steps.staged-worktree.outcome == 'success'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ${{ runner.temp }}/md-staged-validator-test/.validation_cache
+          key: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.staged-toolshash.outputs.hash }}
+          restore-keys: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.staged-toolshash.outputs.hash }}-
 
       - name: Run staged-validator integration
         id: staged
@@ -578,7 +613,8 @@ jobs:
           MD_RUN_STAGED_INTEGRATION: "1"
         run: >-
           python -m pytest tools/tests/staged_validators_test.py
-          tools/tests/staged_validators_real_test.py -q
+          tools/tests/staged_validators_real_test.py
+          tools/tests/staged_sparse_coverage_test.py -q
 
       - name: Run tools validation
         id: validate-tools
@@ -609,7 +645,9 @@ jobs:
             "${{ steps.bun-deps.outcome }}" \
             "${{ steps.jscpd.outcome }}" \
             "${{ steps.staged-fetch.outcome }}" \
+            "${{ steps.staged-toolshash.outcome }}" \
             "${{ steps.staged-worktree.outcome }}" \
+            "${{ steps.staged-valcache.outcome }}" \
             "${{ steps.staged.outcome }}" \
             "${{ steps.validate-tools.outcome }}"; do
             if [ "$outcome" = "failure" ]; then
