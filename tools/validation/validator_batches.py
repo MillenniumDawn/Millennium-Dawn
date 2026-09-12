@@ -121,7 +121,6 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "party-loc",
             "validate_party_loc.py",
             ("localisation", "common"),
-            strict=False,
         ),
     ),
 }
