@@ -57,16 +57,20 @@ REQUIRED_PROFILE_ENTRIES = [
     "/pyproject.toml",
 ]
 
-_GAME_DIRS = ("common", "events", "history", "localisation")
 
-
-def _game_content_checked_out() -> bool:
-    return all(os.path.isdir(os.path.join(REPO_ROOT, d)) for d in _GAME_DIRS)
+def _reference_trees_checked_out() -> bool:
+    return os.path.isdir(os.path.join(REPO_ROOT, "interface")) and os.path.isdir(
+        os.path.join(REPO_ROOT, "gfx", "flags")
+    )
 
 
 def test_staged_reference_coverage():
     """Reference trees and the sparse profile pinning them are intact."""
-    if not _game_content_checked_out():
+    # Tools-tests CI has common/events but not interface or gfx/flags.
+    if (
+        os.environ.get("MD_RUN_STAGED_INTEGRATION") != "1"
+        and not _reference_trees_checked_out()
+    ):
         raise SkipTest("game content not checked out (sparse checkout)")
     problems = []
     for pattern, floor in COVERAGE.items():
