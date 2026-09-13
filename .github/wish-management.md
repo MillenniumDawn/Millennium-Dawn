@@ -68,7 +68,8 @@ commands below; rerun them to rebuild it. Needs
 ```
 gh project create --owner MillenniumDawn --title "Millennium Dawn Wishes"
 gh project field-create 7 --owner MillenniumDawn --name "Council mentor" \
-  --data-type SINGLE_SELECT --single-select-options "AngriestBird,Blazer135,TemplarGeneral"
+  --data-type SINGLE_SELECT \
+  --single-select-options "AngriestBird,Blazer135,TemplarGeneral,MrP0tter,KianGhk1530"
 gh project field-create 7 --owner MillenniumDawn --name "Last check-in" --data-type DATE
 gh project field-list 7 --owner MillenniumDawn --format json \
   --jq '.fields[] | select(.name=="Status") | .id'
