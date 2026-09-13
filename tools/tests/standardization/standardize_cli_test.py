@@ -7,6 +7,7 @@ CLI even when the underlying standardizer supports it.
 import subprocess
 import sys
 
+import pytest
 from shared.paths import STANDARDIZATION_DIR
 
 _STD_DIR = STANDARDIZATION_DIR
@@ -34,6 +35,40 @@ def _run(*args):
     return subprocess.run(
         [sys.executable, str(_CLI), *args], capture_output=True, text=True
     )
+
+
+@pytest.mark.parametrize(
+    "command", ["focus", "event", "decision", "idea", "mio", "history", "localisation"]
+)
+def test_subcommand_help_lists_common_file_options(command):
+    result = _run(command, "--help")
+
+    assert result.returncode == 0
+    assert "-o" in result.stdout and "--output" in result.stdout
+    assert "-b" in result.stdout and "--backup" in result.stdout
+    assert "-v" in result.stdout and "--verbose" in result.stdout
+    assert "--no-color" not in result.stdout
+
+
+def test_focus_help_has_focus_only_option():
+    result = _run("focus", "--help")
+
+    assert "--check-naming" in result.stdout
+    assert "--mod-root" not in result.stdout
+
+
+def test_localisation_help_has_localisation_only_option():
+    result = _run("localisation", "--help")
+
+    assert "--mod-root" in result.stdout
+    assert "--check-naming" not in result.stdout
+
+
+def test_event_rejects_no_color():
+    result = _run("event", "input.txt", "--no-color")
+
+    assert result.returncode == 2
+    assert "unrecognized arguments: --no-color" in result.stderr
 
 
 def test_focus_legacy_name_does_not_block_standardization_by_default(tmp_path):

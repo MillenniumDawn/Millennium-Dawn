@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from _common import format_elapsed
 from shared_utils import (
+    add_standard_file_arguments,
     atomic_write_text,
     blank_quoted_strings,
     create_backup,
@@ -378,14 +379,7 @@ def create_gate_sweep_parser(
 def create_standardizer_parser(description: str) -> argparse.ArgumentParser:
     """Create a standard argument parser for all standardizers"""
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("input_file", help="Input file to standardize")
-    parser.add_argument(
-        "-o", "--output", help="Output file (default: overwrites input)"
-    )
-    parser.add_argument(
-        "-b", "--backup", action="store_true", help="Create backup before modifying"
-    )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    add_standard_file_arguments(parser, input_help="Input file to standardize")
     return parser
 
 

@@ -52,11 +52,22 @@ def test_discovery_hides_tests_and_validation_libraries():
             "disk_cache",
             "equipment_module_slots",
             "equipment_stats",
+            "guard_scan",
+            "image_size",
             "sprite_index",
+            "standardize_api",
+            "validator_batches",
         }
         & tools.keys()
     )
     assert "validate_common_mistakes" in tools
+
+
+def test_discovery_includes_balance_scripts():
+    tools = launcher.find_all_tools()
+
+    assert tools["set_energy_tech_scurves"].parent.name == "balance"
+    assert tools["set_renewable_hotspots"].parent.name == "balance"
 
 
 def test_discovery_skips_private_hidden_and_absent_directories(tmp_path, monkeypatch):

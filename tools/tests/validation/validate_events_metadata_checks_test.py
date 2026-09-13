@@ -435,6 +435,28 @@ def test_unreferenced_triggered_only_skips_exempt_ids(tmp_path):
     assert [i.message for i in v._issues] == ["foo.9 - Ev.txt"]
 
 
+def test_unreferenced_skips_the_full_tree_scan_in_staged_mode(tmp_path, monkeypatch):
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "country_event = {\n"
+        "\tid = foo.9\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = foo.9.a }\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    v.staged_only = True
+    v.staged_files = [str(tmp_path / "events" / "Ev.txt")]
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("unreferenced scan should be skipped on commit")
+
+    monkeypatch.setattr(v, "_pool_map", _boom)
+    v.validate_triggered_only_unreferenced()
+    assert v._issues == []
+
+
 def test_id_based_checks_skip_a_block_with_no_id(tmp_path):
     """A malformed block has no ID to report against; only the checks that can
     name it "unknown" may report on it."""
