@@ -130,6 +130,27 @@ def test_balanced_quotes_not_flagged():
     assert _spacing('\tlog = "balanced"\n') == []
 
 
+def test_quoted_braces_and_operators_are_not_spacing_findings():
+    assert _spacing('\tlog = "a=b {c} > d"\n') == []
+
+
+def test_escaped_quotes_keep_lexical_state():
+    assert _spacing('\tlog = "a \\" b"\n') == []
+
+
+def test_indented_comments_and_inline_comments_are_ignored():
+    assert _spacing("\t# foo={bar} x=y\n") == []
+    assert _spacing("\tfoo = bar # note={x=y}\n") == []
+
+
+def test_unspaced_assignment_outside_a_string_is_still_reported():
+    assert _spacing("\tfoo={bar}\n") == [
+        ("Missing space before or after open brace", 1),
+        ("Missing space before or after close brace", 1),
+        ("Missing space before or after '='", 1),
+    ]
+
+
 def test_odd_quote_inside_a_comment_not_flagged():
     assert _spacing('\ta = 1 # "note\n') == []
 

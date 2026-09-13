@@ -48,19 +48,23 @@ CACHE_VERSION = 8
 _VALIDATOR_NAMESPACES = {
     "agency": "validate_agency_upgrades.py",
     "agency_upgrades": "validate_agency_upgrades.py",
+    "building_guards_scan_v3": "validate_building_guards.py",
     "cosmetic": "validate_cosmetic_tags.py",
     "decisions": "validate_decisions.py",
     "dlc_guards": "validate_dlc_guards.py",
+    "dynamic_modifier_guards_scan_v1": "validate_dynamic_modifier_guards.py",
     "events": "validate_events.py",
     "focus_tree": "validate_focus_tree.py",
     "gfx_ref": "validate_gfx_references.py",
     "history_techs": "validate_history.py",
     "ideas": "validate_ideas.py",
     "loc": "validate_localisation.py",
+    "math_expr": "validate_math_expressions.py",
     "modifiers": "validate_modifiers.py",
     "oob_units": "validate_oob_units.py",
     "on_actions": "validate_on_actions.py",
     "scripted_gui": "validate_scripted_gui.py",
+    "sgui": "validate_scripted_gui.py",
     "scripted_params": "validate_scripted_params.py",
     "set_variables": "validate_set_variables.py",
     "simplifications": "validate_simplifications.py",
@@ -73,6 +77,16 @@ _VALIDATOR_NAMESPACES = {
 
 _FINGERPRINT_CACHE: Dict[str, Tuple[Tuple[Tuple[str, int, int], ...], str]] = {}
 
+# These helpers are called inside cached computations, so their source changes
+# must invalidate the owning namespace without making unrelated namespaces cold.
+_HELPER_DEPENDENCIES = {
+    "building_guards_scan_v3": ("guard_scan.py",),
+    "dynamic_modifier_guards_scan_v1": ("guard_scan.py",),
+    "math_expr": ("equipment_module_slots.py",),
+    "oob_units": ("equipment_module_slots.py",),
+    "sprite_index": ("validate_gfx_references.py",),
+}
+
 
 def _fingerprint_paths(namespace: str) -> list[Path]:
     paths = [
@@ -80,11 +94,14 @@ def _fingerprint_paths(namespace: str) -> list[Path]:
         Path(__file__).parent.parent / "shared_utils.py",
         Path(__file__).parent / "validator_common.py",
     ]
-    owner = _VALIDATOR_NAMESPACES.get(namespace.split(".", 1)[0])
+    prefix = namespace.split(".", 1)[0]
+    owner = _VALIDATOR_NAMESPACES.get(prefix)
     if owner:
         paths.append(Path(__file__).parent / owner)
     else:
         paths.extend(Path(__file__).parent.glob("*.py"))
+    for dependency in _HELPER_DEPENDENCIES.get(prefix, ()):
+        paths.append(Path(__file__).parent / dependency)
     return sorted(set(paths))
 
 

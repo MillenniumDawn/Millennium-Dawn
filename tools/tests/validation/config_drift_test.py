@@ -13,6 +13,7 @@ from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
     _CREATE_UNIT_SOURCE_PATTERNS,
     _DELETE_TEMPLATE_SOURCE_PATTERNS,
+    _TEMPLATE_SOURCE_PATTERNS,
     _VARIANT_SOURCE_PATTERNS,
 )
 from validate_scripted_params import _CALLER_PATTERNS
@@ -111,7 +112,7 @@ CI_EXEMPT = {
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
 }
-PRECOMMIT_EXEMPT = set()
+PRECOMMIT_EXEMPT: set[str] = set()
 STRICT_MISMATCH_ALLOWED = {"validate_ai_equipment.py"}
 
 
@@ -533,6 +534,7 @@ def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
     assert sorted(spec.name for spec in ALL_SPECS if not spec.strict) == [
         "building-guards",
+        "party-loc",
         "simplifications",
     ]
 
@@ -574,16 +576,20 @@ def test_gfx_and_scripted_localisation_routes_are_preserved():
 
 def test_group_patterns_preserve_cross_reference_routes():
     assert "interface/**" in GROUP_PATTERNS["scientist-traits"]
+    assert "interface/**" in GROUP_PATTERNS["mios"]
     assert "common/**/*.txt" in GROUP_PATTERNS["decisions"]
     assert "map/adjacency_rules.txt" in GROUP_PATTERNS["map-adjacency"]
-    dirs = {
-        pattern.rsplit("/", 1)[0] + "/"
-        for pattern in (
-            _CREATE_UNIT_SOURCE_PATTERNS
-            + _DELETE_TEMPLATE_SOURCE_PATTERNS
-            + _VARIANT_SOURCE_PATTERNS
-        )
-    }
+    dirs = set()
+    for pattern in (
+        _CREATE_UNIT_SOURCE_PATTERNS
+        + _DELETE_TEMPLATE_SOURCE_PATTERNS
+        + _TEMPLATE_SOURCE_PATTERNS
+        + _VARIANT_SOURCE_PATTERNS
+    ):
+        directory = pattern.rsplit("/", 1)[0]
+        if directory.endswith("/**"):
+            directory = directory[:-3]
+        dirs.add(directory + "/")
     assert {directory + "**" for directory in dirs} <= set(GROUP_PATTERNS["oob"])
     assert set(_DECISION_REFERENCE_SOURCE_PATTERNS) <= set(GROUP_PATTERNS["decisions"])
 

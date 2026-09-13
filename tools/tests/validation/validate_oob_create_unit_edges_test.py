@@ -6,6 +6,8 @@ create_unit suite does not exercise: a top-level effect, an unknown nested key,
 a ROOT scope reset, and a ROOT-scope template covering a country-scoped spawn.
 """
 
+from typing import Optional
+
 from validate_oob_units import (
     _build_block_nodes,
     _check_created_units,
@@ -26,18 +28,35 @@ def _esc(value):
     return _BS + '"' + value + _BS + '"'
 
 
-def _division(template="Militia", extra=""):
+def _division(template: Optional[str] = "Militia", extra=""):
     body = "name = " + _esc("1st Brigade")
     if template is not None:
         body += " division_template = " + _esc(template)
     return body + extra
 
 
-def _run(tmp_path, content, subdir="common/national_focus", deleted=frozenset()):
+def _run(
+    tmp_path,
+    content,
+    subdir="common/national_focus",
+    deleted=frozenset(),
+    template_owners=None,
+    template_wildcard=frozenset(),
+):
     target = tmp_path / subdir / "test.txt"
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
-    return _check_created_units((str(target), "test.txt", str(tmp_path), deleted, {}))
+    return _check_created_units(
+        (
+            str(target),
+            "test.txt",
+            str(tmp_path),
+            deleted,
+            {},
+            template_owners or {},
+            template_wildcard,
+        )
+    )
 
 
 def _kinds(issues):
@@ -300,7 +319,15 @@ def test_root_scope_block_resets_the_country_scope_path():
 def test_missing_file_yields_no_issues(tmp_path):
     assert (
         _check_created_units(
-            (str(tmp_path / "gone.txt"), "gone.txt", str(tmp_path), frozenset(), {})
+            (
+                str(tmp_path / "gone.txt"),
+                "gone.txt",
+                str(tmp_path),
+                frozenset(),
+                {},
+                {},
+                frozenset(),
+            )
         )
         == []
     )
@@ -309,7 +336,7 @@ def test_missing_file_yields_no_issues(tmp_path):
 def test_top_level_create_unit_is_out_of_scope(tmp_path):
     issues = _run(
         tmp_path,
-        "create_unit = {\n" f'\tdivision = "{_division()}"\n' "\towner = ROOT\n" "}\n",
+        f'create_unit = {{\n\tdivision = "{_division()}"\n\towner = ROOT\n}}\n',
     )
     assert _kinds(issues) == ["CREATE UNIT: not in a state scope"]
 

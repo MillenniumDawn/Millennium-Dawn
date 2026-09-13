@@ -431,7 +431,7 @@ _LOC_VAR_WRITE_RE = re.compile(
     r"(?:set_variable|set_temp_variable|set_global_variable|add_to_variable|"
     r"subtract_from_variable|multiply_variable|divide_variable|clamp_variable|"
     r"modulo_variable|round_variable|min_variable|max_variable)\s*=\s*\{\s*"
-    r"(?:var\s*=\s*)?([A-Za-z_][\w.:@^]*)"
+    r"(?:var\s*=\s*)?((?:\d+\.)?[A-Za-z_][\w.:@^]*)"
 )
 _LOC_VAR_ARRAY_RE = re.compile(
     r"(?:add_to_array|add_to_temp_array|resize_array)\s*=\s*\{\s*"
@@ -1066,7 +1066,12 @@ class Validator(BaseValidator):
         written: Set[str] = set()
         for names in self._pool_map(
             process_txt_for_var_writes,
-            [(f,) for f in self._collect_files(["common/**/*.txt", "events/**/*.txt"])],
+            [
+                (f,)
+                for f in self._collect_files(
+                    ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+                )
+            ],
             chunksize=30,
         ):
             written |= names

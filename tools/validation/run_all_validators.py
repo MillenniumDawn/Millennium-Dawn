@@ -302,6 +302,11 @@ def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
 
 
 def main():
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            reconfigure(encoding="utf-8", errors="replace")
+
     parser = argparse.ArgumentParser(description="Run all MD validators in parallel")
     parser.add_argument("--staged", action="store_true")
     parser.add_argument("--strict", action="store_true")

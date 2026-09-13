@@ -12,12 +12,14 @@ carry that ensure pattern.
 
 from textwrap import indent
 
+import validate_oob_units as oob
 from validate_oob_units import (
     Validator,
     _check_created_units,
     _deleted_template_names,
     _effect_template_closure,
     _parse_division_string,
+    build_division_template_index,
 )
 from validator_common import Severity
 
@@ -39,18 +41,45 @@ def _div_for(tname, unitname):
 
 
 def _run(
-    content, tmp_path, filename="test.txt", deleted_names=frozenset(), closure=None
+    content,
+    tmp_path,
+    filename="test.txt",
+    deleted_names=frozenset(),
+    closure=None,
+    template_owners=None,
+    template_wildcard=frozenset(),
 ):
     target = tmp_path / "common" / "national_focus" / filename
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(content, encoding="utf-8")
     return _check_created_units(
-        (str(target), filename, str(tmp_path), deleted_names, closure or {})
+        (
+            str(target),
+            filename,
+            str(tmp_path),
+            deleted_names,
+            closure or {},
+            template_owners or {},
+            template_wildcard,
+        )
+    )
+
+
+def _run_indexed(content, tmp_path, owners, wildcard):
+    return _run(
+        content,
+        tmp_path,
+        template_owners=owners,
+        template_wildcard=wildcard,
     )
 
 
 def _cats(issues):
     return [i.category for i in issues]
+
+
+def _assert_no_foreign_warning(issues):
+    assert "CREATE UNIT: foreign-only static template definition" not in _cats(issues)
 
 
 def _block(name, content):
@@ -74,6 +103,26 @@ def _focus_with_effect(effect):
         "\t\tcost = 5\n\t\tcompletion_reward = {\n\t\t\thidden_effect = {\n"
         f"{indent(effect, chr(9) * 4)}\n"
         "\t\t\t}\n\t\t}\n\t\tai_will_do = { base = 1 }\n\t}\n}\n"
+    )
+
+
+def _focus_with_template_owner(owner, template):
+    return (
+        "focus_tree = {\n"
+        f"\tcountry = {{ modifier = {{ add = 20 original_tag = {owner} }} }}\n"
+        f"{indent(template, chr(9))}\n"
+        "}\n"
+    )
+
+
+def _focus_index(owner, name="Militia"):
+    return build_division_template_index(
+        [
+            (
+                "common/national_focus/Odessa.txt",
+                _focus_with_template_owner(owner, _division_template(name)),
+            )
+        ]
     )
 
 
@@ -710,3 +759,202 @@ def test_umlaut_create_unit_is_flagged(tmp_path):
     assert all(
         i.severity == Severity.WARNING for i in issues if "German/Danish" in i.category
     )
+
+
+def test_parse_division_string_ukraine_decision_string_is_clean():
+    issues, tname = _parse_division_string(
+        'name = "1st Operational Brigade of the National Guard of Ukraine" '
+        'division_template = "Natsionalna Hvardiya" start_experience_factor = 0.1'
+    )
+    assert issues == []
+    assert tname == "Natsionalna Hvardiya"
+
+
+def test_ukraine_spawn_warns_for_foreign_static_templates(tmp_path):
+    div = (
+        "name = "
+        + _esc_quote("1st Operational Brigade of the National Guard of Ukraine")
+        + " division_template = "
+        + _esc_quote("Natsionalna Hvardiya")
+        + " start_experience_factor = 0.1"
+    )
+    owners, wildcard = build_division_template_index(
+        [
+            (
+                "common/national_focus/Odessa.txt",
+                _focus_with_template_owner(
+                    "OPR", _division_template("Natsionalna Hvardiya")
+                ),
+            ),
+            (
+                "common/national_focus/Malorossiya.txt",
+                _focus_with_template_owner(
+                    "MLR", _division_template("Natsionalna Hvardiya")
+                ),
+            ),
+            (
+                "common/national_focus/05_south_ossetia.txt",
+                _focus_with_template_owner(
+                    "SOO", _division_template("Natsionalna Hvardiya")
+                ),
+            ),
+        ]
+    )
+    issues = _run(
+        _focus_with_effect(_create_unit(div, owner="UKR")),
+        tmp_path,
+        template_owners=owners,
+        template_wildcard=wildcard,
+    )
+    assert "CREATE UNIT: division string does not parse" not in _cats(issues)
+    foreign = [
+        issue
+        for issue in issues
+        if issue.category == "CREATE UNIT: foreign-only static template definition"
+    ]
+    assert len(foreign) == 1
+    assert "only static definitions found for MLR, OPR, SOO" in foreign[0].message
+    assert "none found for UKR" in foreign[0].message
+
+
+def test_same_owner_static_definition_is_clean(tmp_path):
+    owners, wildcard = _focus_index("OPR")
+    issues = _run_indexed(
+        _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="OPR")),
+        tmp_path,
+        owners,
+        wildcard,
+    )
+    _assert_no_foreign_warning(issues)
+
+
+def test_oob_template_is_wildcard(tmp_path):
+    owners, wildcard = build_division_template_index(
+        [("history/units/MLR_2000.txt", _division_template("Militia"))]
+    )
+    issues = _run_indexed(
+        _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="UKR")),
+        tmp_path,
+        owners,
+        wildcard,
+    )
+    _assert_no_foreign_warning(issues)
+    assert "Militia" in wildcard
+
+
+def test_unknown_definition_scope_is_wildcard(tmp_path):
+    owners, wildcard = build_division_template_index(
+        [
+            (
+                "common/scripted_effects/templates.txt",
+                "event_target:recipient = { " + _division_template("Militia") + " }",
+            )
+        ]
+    )
+    issues = _run_indexed(
+        _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="UKR")),
+        tmp_path,
+        owners,
+        wildcard,
+    )
+    _assert_no_foreign_warning(issues)
+    assert "Militia" in wildcard
+
+
+def test_nested_literal_scope_overrides_focus_root(tmp_path):
+    source = _focus_with_template_owner(
+        "OPR", _block("UKR", _division_template("Militia"))
+    )
+    owners, wildcard = build_division_template_index(
+        [("common/national_focus/shared.txt", source)]
+    )
+    assert owners == {"Militia": frozenset({"UKR"})}
+    issues = _run_indexed(
+        _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="UKR")),
+        tmp_path,
+        owners,
+        wildcard,
+    )
+    _assert_no_foreign_warning(issues)
+
+
+def test_embedded_equipment_owner_does_not_cover_foreign_spawn(tmp_path):
+    owners, wildcard = _focus_index("OPR")
+    div = (
+        _div_for("Militia", "Militia")
+        + " force_equipment_variants = { rifles = { owner = OPR } }"
+    )
+    issues = _run_indexed(
+        _focus_with_effect(_create_unit(div, owner="UKR")),
+        tmp_path,
+        owners,
+        wildcard,
+    )
+    assert "CREATE UNIT: foreign-only static template definition" in _cats(issues)
+
+
+def test_dynamic_or_malformed_template_owner_is_skipped(tmp_path):
+    owners, wildcard = _focus_index("OPR")
+    issues = _run_indexed(
+        _focus_with_effect(
+            _create_unit(_div_for("Militia", "Militia"), owner="var:UKR")
+        ),
+        tmp_path,
+        owners,
+        wildcard,
+    )
+    _assert_no_foreign_warning(issues)
+
+
+def test_unknown_or_dynamic_template_names_are_skipped(tmp_path):
+    owners, wildcard = _focus_index("OPR")
+    content = _focus_with_effect(
+        "\n".join(
+            (
+                _create_unit(_div_for("Unindexed", "Militia"), owner="UKR"),
+                _create_unit(_div_for("var:template", "Militia"), owner="UKR"),
+            )
+        )
+    )
+    issues = _run_indexed(content, tmp_path, owners, wildcard)
+    _assert_no_foreign_warning(issues)
+
+
+def test_guard_suppresses_foreign_static_warning(tmp_path):
+    owners, wildcard = _focus_index("OPR", "Territorial Defense Brigade")
+    content = _GUARDED.replace("owner = ROOT", "owner = UKR")
+    issues = _run_indexed(content, tmp_path, owners, wildcard)
+    _assert_no_foreign_warning(issues)
+
+
+def test_staged_definition_change_rescans_unstaged_callers(tmp_path, monkeypatch):
+    definition = tmp_path / "common" / "national_focus" / "foreign.txt"
+    definition.parent.mkdir(parents=True, exist_ok=True)
+    definition.write_text(
+        _focus_with_template_owner("OPR", _division_template("Militia")),
+        encoding="utf-8",
+    )
+    caller = tmp_path / "common" / "national_focus" / "caller.txt"
+    caller.write_text(
+        _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="UKR")),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        oob, "get_staged_files", lambda *args, **kwargs: [str(definition)]
+    )
+    validator = Validator(
+        mod_path=str(tmp_path), use_colors=False, staged_only=True, workers=1
+    )
+    validator.staged_files = [str(caller)]
+    validator.validate_created_units()
+    assert any(
+        issue.category == "CREATE UNIT: foreign-only static template definition"
+        for issue in validator._issues
+    )
+
+
+def test_unescaped_inner_quotes_break_the_division_string(tmp_path):
+    div = 'name = "1st Operational Brigade division_template = Natsionalna'
+    content = _focus_with_effect(_create_unit(div, owner="UKR"))
+    issues = _run(content, tmp_path)
+    assert "CREATE UNIT: division string does not parse" in _cats(issues)

@@ -309,8 +309,8 @@
 	NDefines.NMilitary.ARMOR_VS_AVERAGE = 0.4 -- 0.4 Reset this back up to try and improve tanks a little bit, keeping below to make pen better
 	NDefines.NMilitary.PEN_VS_AVERAGE = 0.425 -- 0.4 Increase pen avaiable to units, so that infantry has a better chance against armor
 
-	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 18 -- Vanilla 24
-	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 15 --24
+	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 24 -- Vanilla 24
+	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 20 --24
 	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 4 -- Vanilla 5
 	NDefines.NMilitary.BASE_DIVISION_SUPPORT_SLOT_COST = 5 -- 10
 	NDefines.NMilitary.COMBAT_MINIMUM_TIME = 6 -- 4

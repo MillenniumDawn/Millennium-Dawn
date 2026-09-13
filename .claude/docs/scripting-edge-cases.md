@@ -75,6 +75,25 @@ if = {
 
 Other accepted forms: `non_damaged_building_level = { building = X level > 0 }` (use this when damage matters, not just presence), a `random_list` bucket zeroed by `modifier = { factor = 0  X < 1 }`, and an `any_core_state = { X > N }` pre-selection before a `random_core_state` pick. Flagged (WARNING) by `validate_building_guards.py`.
 
+## remove_dynamic_modifier Needs a Matching Presence Guard
+
+Removing a dynamic modifier the scope is not carrying logs an error and does nothing. MD fires these from focus rewards, on_actions and repeatable decisions, so one unguarded call keeps writing to `error.log` for the rest of the campaign (#3764).
+
+The guard must name the **same** modifier as the removal. A proxy trigger — a country flag, an idea, a variable that happens to track the modifier — reads like a guard and proves nothing, because anything else may have removed the modifier in between:
+
+```
+# Wrong — gated on a flag, not on the modifier
+if = {
+    limit = { has_country_flag = CHI_hkg_integrated }
+    remove_dynamic_modifier = { modifier = CHI_HKG_sinicization_modifier }
+}
+
+# Correct — the house style, one line
+if = { limit = { has_dynamic_modifier = { modifier = CHI_HKG_sinicization_modifier } } remove_dynamic_modifier = { modifier = CHI_HKG_sinicization_modifier } }
+```
+
+Cross-scope removals put the same trigger inside the state the effect runs in: `limit = { 215 = { has_dynamic_modifier = { modifier = X } } }` guarding `215 = { remove_dynamic_modifier = { modifier = X } }`. A decision `available` or an event `trigger` is **not** a guard — it sits on the enclosing object, not on the scope the effect runs in, and `allowed` is evaluated once at game start. Flagged (ERROR) by `validate_dynamic_modifier_guards.py`.
+
 ## Guard Gates on Optional / Elected Office Holders — Worked Example
 
 ## EU Game-Rule Guard on europeanism_change Calls

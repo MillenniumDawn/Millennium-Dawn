@@ -55,6 +55,52 @@ These guidelines help keep the mod running smoothly:
 
 The number forces load order (shared trees load before country-specific).
 
+## Tree Layout
+
+Focus trees are laid out **horizontally**: every branch gets its own `x` lane, placed side by side. Examples are China and France
+
+- Leave a clear gap between lanes so branch boundaries read at a glance
+- Position focuses inside a lane with `relative_position_id` off the branch root, so the whole branch
+  can be shifted sideways by moving one focus
+- Place `continuous_focus_position = { x = ... y = ... }` clear of the branch lanes
+
+## Focus Shortcuts
+
+Shortcuts render as jump buttons above the tree and are the main navigation aid for players who
+cannot fit the whole tree on screen. Every tree gets roughly one shortcut per branch lane. Keep it around 4 - 6
+
+They are declared at `focus_tree` level, not inside a `focus`, directly after
+`continuous_focus_position`:
+
+```hoiscript
+# Focus Shortcuts
+shortcut = {
+    name = political_shortcut_title
+    target = FRA_state_of_french_politics
+    scroll_wheel_factor = 0.80
+}
+```
+
+- `name` is a localisation key, `target` is the branch root focus `id`
+- `scroll_wheel_factor = 0.80` is the Millennium Dawn standard, keep it identical on every shortcut
+
+### Standard Shortcut Tooltips
+
+Reuse these shared keys for the four common branch types instead of writing tag-prefixed ones. They
+live in `localisation/english/MD_misc_l_english.yml` and are already translated in every language:
+
+| Key                        | Tooltip             |
+| -------------------------- | ------------------- |
+| `political_shortcut_title` | Political           |
+| `economy_shortcut_title`   | Economy             |
+| `military_shortcut_title`  | Military            |
+| `diplomacy_shortcut_title` | Foreign Interaction |
+
+Write a custom `TAG_name_shortcut` key only when a branch genuinely is not one of those four, for
+example `AFG_civil_war_shortcut`. Custom keys go in that country's `MD_focus_TAG_l_english.yml`.
+
+`common/national_focus/05_france.txt` is the reference tree using the standard keys end to end.
+
 ## Required Order Within a Focus
 
 ```
@@ -74,6 +120,8 @@ The number forces load order (shared trees load before country-specific).
 ## Best Practices
 
 - Use `relative_position_id` for tree positioning
+- Lay branches out in horizontal lanes and give every branch a `shortcut`, reusing the standard
+  shortcut tooltip keys where they fit
 - Add logging: `log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"`
 - Omit default values: `cancel_if_invalid = yes`, `continue_if_invalid = no`
 - Include `ai_will_do` with game options checks

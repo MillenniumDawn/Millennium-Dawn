@@ -109,9 +109,6 @@ PENDING_IMPLEMENTATION_NAMES = frozenset(
         "BRA_target_acreage_effect",
         "BRA_acre_rate_gain_effect",
         "BRA_acre_rate_loss_effect",
-        # North Korea Supreme People's Assembly session handling — pending rework
-        # (NKO_spa_resync_active_mandates is reached via this one, so needs no entry)
-        "NKO_spa_open_session",
         # US Congress elections — pending the American midterm elections issue (#2719)
         "USA_congress_remove_state",
         "USA_election_senate",
