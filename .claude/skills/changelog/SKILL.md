@@ -26,16 +26,16 @@ Steps:
    Classify each change into one existing category (skip empty categories). Focus on user-facing and gameplay-relevant changes; omit internal refactors or implementation details that don't affect the player unless they have meaningful performance or correctness impact.
 
 4. Write each entry following the `Changelog.txt` format:
-   - 1 space before category name, followed by a colon (e.g., ` AI:`)
-   - 2 spaces + `- ` before each entry (e.g., `  - [SER] Fixed focus prerequisite`)
+   - BLUF, one line: ` - [TAG] <Past-tense verb> <what the player sees> (Issue #N)`. Lead with the outcome. No cause clauses ("which left...", "because..."), no "It now..." follow-up sentence, no before/after numbers unless they are the change itself. Aim for under 120 characters before the issue suffix. Depth belongs in the commit and PR body.
+   - Category name followed by a colon at column 0 (e.g., `Bugfix:`)
+   - 1 space + `- ` before each entry (e.g., ` - [SER] Fixed focus prerequisite`)
    - Prefix with `[TAG]` when the change is country-specific
    - No tag prefix for global/system changes
-   - One bullet per distinct change; group related micro-changes into a single bullet
+   - One bullet per PR; group related micro-changes into that single bullet
    - Use past tense ("Added", "Fixed", "Reduced", "Reworked")
    - Be specific: name the focus, event, decision, or mechanic affected
    - Mention issue numbers if referenced in commits (e.g., `(Issue #330)`)
-   - No em dashes — end the sentence with a period instead
-   - Entries are short one-liners, not in-depth explanations; depth belongs in the commit/PR
+   - No em dashes; end the sentence with a period instead
 
    What NOT to write: padding filler ("Fixed an issue where the AI would not behave correctly" — say what specifically, e.g. "Fixed AI sending volunteers to countries it cannot reach"); internal terminology players don't know ("immediate block", "trigger scope"); future tense ("Will add" — use "Added"); a duplicate of an entry already covering the same change.
 
