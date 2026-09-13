@@ -131,13 +131,11 @@ def log_message(
     print(formatted_message, file=sys.stderr)
 
 
-def create_standard_parser(description: str) -> argparse.ArgumentParser:
-    """Create a standard argument parser for Millennium Dawn tools"""
-    parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument("input_file", help="Input file to process")
+def add_standard_file_arguments(
+    parser: argparse.ArgumentParser, *, input_help="Input file to process"
+):
+    """Add shared file arguments; --no-color remains specific to create_standard_parser."""
+    parser.add_argument("input_file", help=input_help)
     parser.add_argument(
         "-o", "--output", help="Output file (default: overwrites input)"
     )
@@ -145,6 +143,15 @@ def create_standard_parser(description: str) -> argparse.ArgumentParser:
         "-b", "--backup", action="store_true", help="Create backup before modifying"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+
+
+def create_standard_parser(description: str) -> argparse.ArgumentParser:
+    """Create a standard argument parser for Millennium Dawn tools"""
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    add_standard_file_arguments(parser)
     parser.add_argument(
         "--no-color", action="store_true", help="Disable ANSI color codes in output"
     )

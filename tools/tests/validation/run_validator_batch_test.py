@@ -20,8 +20,10 @@ class _Process:
         return self.returncode
 
 
-def _spec(name, script="validate_stub.py", strict=True):
-    return ValidatorSpec(name=name, script=script, groups=("common",), strict=strict)
+def _spec(name, script="validate_stub.py", strict=True, args=()):
+    return ValidatorSpec(
+        name=name, script=script, groups=("common",), strict=strict, args=args
+    )
 
 
 class _Args:
@@ -229,6 +231,25 @@ def test_batch_selection_passes_strict_only_for_gated_specs(tmp_path, monkeypatc
         "validation-gated": True,
         "validation-advisory": False,
     }
+
+
+def test_run_batch_forwards_spec_args_to_launch_validator(tmp_path, monkeypatch):
+    captured = []
+
+    def launch(_script, flags, _output_dir, name, _mod_path, **_kwargs):
+        captured.append((name, list(flags)))
+        (tmp_path / f"{name}.log").write_text("log", encoding="utf-8")
+        (tmp_path / f"{name}.json").write_text("[]", encoding="utf-8")
+        return _Process(0), _FakeStream()
+
+    specs = [_spec("variables", args=("--redundant-focus-flags",))]
+    _current_specs[:] = specs
+    monkeypatch.setattr(rvb.run_all_validators, "launch_validator", launch)
+    monkeypatch.setattr(rvb, "split_cpu_budget", lambda tasks: (1, 1))
+
+    assert rvb.run_batch(specs, _Args(tmp_path)) == 0
+    assert "--redundant-focus-flags" in captured[0][1]
+    assert captured[0][0] == "validation-variables"
 
 
 def test_main_impact_selects_by_changed_files(tmp_path, monkeypatch, capsys):
