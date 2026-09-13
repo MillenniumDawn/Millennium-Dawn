@@ -31,6 +31,12 @@ def test_core_batch_selects_from_the_core_groups():
         assert set(spec.groups) == set(vb._CORE_GROUPS)
 
 
+def test_variables_spec_carries_the_redundant_focus_flag_scan():
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "variables")
+    assert spec.args == ("--redundant-focus-flags",)
+    assert spec.strict is True
+
+
 def test_selected_specs_filters_by_changed_groups():
     selected = {
         spec.name

@@ -132,12 +132,13 @@ def _textures_in_file(args) -> List[List[str]]:
             if not texture:
                 continue
             rel = texture.replace("\\", "/").lstrip("/")
-            pairs.append([name, os.path.normpath(os.path.join(root, rel))])
+            pairs.append([name, rel])
         return pairs
 
-    return disk_cache.per_file_cached_by_content(
+    cached = disk_cache.per_file_cached_by_content(
         mod_path, "sprite_index.textures", filepath, raw, _compute
     )
+    return [[name, os.path.normpath(os.path.join(root, rel))] for name, rel in cached]
 
 
 def build_sprite_texture_index(

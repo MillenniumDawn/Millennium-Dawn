@@ -9,13 +9,17 @@ Usage:
   STEAM_USERNAME=MyUser publish_workshop.py beta --full
 
 Username is read from --username or the STEAM_USERNAME env var.
---version rewrites version= in descriptor.mod for this upload only; omit
-to ship whatever version is currently committed in the repo.
+--version rewrites version= in descriptor.mod and the in-game version banner
+(VERSION_MD_LOADING / VERSION_MD) for this upload only. Accepted values are
+X.Y.Z, legacy suffixes such as X.Y.Zb or X.Y.Zrc1, and SemVer prereleases such
+as X.Y.Z-beta.5. An optional leading v or V is ignored; omit the flag to ship
+whatever version is currently committed in the repo.
 """
 
 import argparse
 import fnmatch
 import os
+import re
 import shlex
 import shutil
 import subprocess
@@ -42,6 +46,36 @@ MOD_NAMES = {
     "beta": "Millennium Dawn: A Beta Test Mod",
     "test": "MD Test",
 }
+
+# Localisation keys that render the version in the loading screen and main menu.
+VERSION_LOC_KEYS = ("VERSION_MD_LOADING", "VERSION_MD")
+
+# The production frontend banners are intentionally a fixed set. A missing or
+# excluded locale must fail the publish instead of silently uploading a mismatch.
+FRONTEND_LOCALES = (
+    "braz_por",
+    "english",
+    "french",
+    "german",
+    "japanese",
+    "korean",
+    "polish",
+    "russian",
+    "simp_chinese",
+    "spanish",
+)
+
+# An existing version token inside those values, e.g. v2.0.0, v1.12.3b, or
+# v2.0.0-beta.1. Boundaries prevent a partial match from leaving a suffix behind.
+_VERSION_NUMBER = r"(?:0|[1-9][0-9]*)"
+_PRERELEASE_IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z][0-9A-Za-z-]*)"
+_VERSION_BODY = (
+    rf"{_VERSION_NUMBER}\.{_VERSION_NUMBER}\.{_VERSION_NUMBER}"
+    rf"(?:(?:[A-Za-z][A-Za-z0-9]*)|"
+    rf"(?:-(?:{_PRERELEASE_IDENTIFIER})(?:\.(?:{_PRERELEASE_IDENTIFIER}))*))?"
+)
+VERSION_TOKEN = re.compile(rf"(?<![A-Za-z0-9_])v{_VERSION_BODY}(?![A-Za-z0-9_.+-])")
+VERSION_VALUE = re.compile(rf"[vV]?{_VERSION_BODY}")
 
 # Files that must always be included (even if unchanged in diff mode).
 ALWAYS_KEEP = {"descriptor.mod", "thumbnail.png"}
@@ -105,6 +139,19 @@ ANYWHERE_EXCLUDES = {
 }
 
 DEFAULT_EXCLUDES = ROOT_ONLY_EXCLUDES | ANYWHERE_EXCLUDES
+
+
+def normalize_version(value: str | None) -> str | None:
+    """Validate a publish version and remove one optional leading ``v``."""
+    if value is None:
+        return None
+    if VERSION_VALUE.fullmatch(value) is None:
+        raise SystemExit(
+            f"ERROR: Invalid version {value!r}. Expected X.Y.Z, a legacy suffix "
+            "such as X.Y.Zb, or a SemVer prerelease such as X.Y.Z-beta.5. "
+            "One optional leading v or V is accepted."
+        )
+    return value[1:] if value[:1] in ("v", "V") else value
 
 
 def elapsed_str(start: float) -> str:
@@ -440,6 +487,69 @@ def patch_descriptor(
         print("  version:        (unchanged — using repo descriptor.mod value)")
 
 
+def frontend_loc_files(mod_dir: Path) -> tuple[Path, ...]:
+    """Return the fixed set of frontend localisation paths for a mod copy."""
+    return tuple(
+        mod_dir / "localisation" / locale / f"MD_frontend_l_{locale}.yml"
+        for locale in FRONTEND_LOCALES
+    )
+
+
+def patch_frontend_version(mod_dir: Path, version: str) -> None:
+    """Point every required in-game version banner at the uploaded version."""
+    loc_files = frontend_loc_files(mod_dir)
+    validated: list[tuple[Path, list[str]]] = []
+
+    for loc_file in loc_files:
+        rel = loc_file.relative_to(mod_dir).as_posix()
+        if not loc_file.is_file():
+            raise SystemExit(
+                f"ERROR: Missing expected frontend localisation file: {rel}"
+            )
+
+        with loc_file.open("r", encoding="utf-8", newline="") as handle:
+            lines = handle.read().splitlines(keepends=True)
+        for key in VERSION_LOC_KEYS:
+            key_lines = [
+                (i, line)
+                for i, line in enumerate(lines)
+                if line.split(":", 1)[0].strip() == key
+            ]
+            if len(key_lines) != 1:
+                raise SystemExit(
+                    f"ERROR: Invalid version banner in {rel}: {key} must appear "
+                    f"exactly once (found {len(key_lines)})"
+                )
+            _, key_line = key_lines[0]
+            token_count = len(VERSION_TOKEN.findall(key_line))
+            if token_count != 1:
+                raise SystemExit(
+                    f"ERROR: Invalid version banner in {rel}: {key} must contain "
+                    f"exactly one version token (found {token_count})"
+                )
+        validated.append((loc_file, lines))
+
+    updated = 0
+    for loc_file, lines in validated:
+        patched = [
+            (
+                VERSION_TOKEN.sub(lambda _match: f"v{version}", line, count=1)
+                if line.split(":", 1)[0].strip() in VERSION_LOC_KEYS
+                else line
+            )
+            for line in lines
+        ]
+        if patched != lines:
+            with loc_file.open("w", encoding="utf-8", newline="") as handle:
+                handle.write("".join(patched))
+            updated += 1
+
+    print(
+        f"  Version banner: v{version} "
+        f"({updated}/{len(loc_files)} frontend files rewritten)"
+    )
+
+
 def steam_login(steamcmd: Path, username: str) -> None:
     """Log in to Steam interactively to cache credentials before uploading."""
     print(f"  Logging in to Steam as '{username}'...")
@@ -671,8 +781,10 @@ def main() -> None:
     parser.add_argument("--mod-id", help="Override the Workshop mod ID")
     parser.add_argument(
         "--version",
-        help='Override version= in descriptor.mod (e.g. "1.12.3"). '
-        "Leave unset to ship the value already committed in the repo.",
+        help="Override version= and the in-game banner. Accepts X.Y.Z, legacy "
+        "suffixes (X.Y.Zb or X.Y.Zrc1), or SemVer prereleases "
+        "(X.Y.Z-beta.5); one leading v/V is optional. Missing, excluded, or "
+        "malformed banners abort before upload.",
     )
     parser.add_argument(
         "--exclude",
@@ -706,6 +818,9 @@ def main() -> None:
     username = args.username
     if not username:
         sys.exit("ERROR: No username. Pass --username or set STEAM_USERNAME.")
+
+    # Validate before copying or staging anything.
+    version = normalize_version(args.version)
 
     mod_id = args.mod_id or MOD_IDS[args.target]
     excludes = set() if args.no_default_excludes else set(DEFAULT_EXCLUDES)
@@ -742,12 +857,22 @@ def main() -> None:
                     "ERROR: No publishable mod files changed after excludes. "
                     "Use --full or adjust --exclude / --no-default-excludes."
                 )
+            if version:
+                # The banner lives in files a diff upload would otherwise drop.
+                publishable_changed |= {
+                    loc_file.relative_to(mod_dir).as_posix()
+                    for loc_file in frontend_loc_files(mod_dir)
+                }
             prune_unchanged(mod_dir, publishable_changed, verbose=args.verbose)
         else:
             mod_dir = copy_repo(tmp, excludes)
 
         # Rewrite descriptor.mod so the shipped copy matches this target.
-        patch_descriptor(mod_dir, MOD_NAMES[args.target], mod_id, args.version)
+        patch_descriptor(mod_dir, MOD_NAMES[args.target], mod_id, version)
+
+        # Keep the menu/loading-screen version in step with the upload.
+        if version:
+            patch_frontend_version(mod_dir, version)
 
         # Validate required files exist
         validate_mod_files(mod_dir)
