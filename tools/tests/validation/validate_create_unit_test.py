@@ -35,9 +35,9 @@ def _esc_quote(value):
 
 def _div_for(tname, unitname):
     """A division string referencing *tname* with the given unit *unitname*."""
-    return (
-        "name = " + _esc_quote(unitname) + " division_template = " + _esc_quote(tname)
-    )
+    base = "name = " + _esc_quote(unitname)
+    base += " division_template = " + _esc_quote(tname)
+    return base + " start_equipment_factor = 1.0"
 
 
 def _run(
@@ -212,6 +212,57 @@ def test_missing_owner_and_out_of_scope_flagged(tmp_path):
     cats = _cats(_run(content, tmp_path))
     assert "CREATE UNIT: not in a state scope" in cats
     assert "CREATE UNIT: missing owner" in cats
+
+
+def test_missing_equipment_factor_warns(tmp_path):
+    content = _GUARDED.replace(" start_equipment_factor = 1.0", "")
+    issues = _run(content, tmp_path)
+    warned = [
+        i.severity
+        for i in issues
+        if i.category == "CREATE UNIT: division string lacks start_equipment_factor"
+    ]
+    assert "CREATE UNIT: division string lacks start_equipment_factor" in _cats(issues)
+    assert warned == [Severity.WARNING]
+
+
+def test_near_zero_equipment_factor_is_an_error(tmp_path):
+    content = _GUARDED.replace(
+        "start_equipment_factor = 1.0", "start_equipment_factor = 0.005"
+    )
+    issues = _run(content, tmp_path)
+    errored = [
+        i.severity
+        for i in issues
+        if i.category == "CREATE UNIT: equipment/manpower factor below 0.01"
+    ]
+    assert "CREATE UNIT: equipment/manpower factor below 0.01" in _cats(issues)
+    assert errored == [Severity.ERROR]
+
+
+def test_factor_floor_boundary_0_01_is_clean(tmp_path):
+    content = _GUARDED.replace(
+        "start_equipment_factor = 1.0", "start_equipment_factor = 0.01"
+    )
+    assert _run(content, tmp_path) == []
+
+
+def test_near_zero_manpower_factor_is_an_error(tmp_path):
+    content = _GUARDED.replace(
+        "start_equipment_factor = 1.0",
+        "start_equipment_factor = 1.0 start_manpower_factor = 0.005",
+    )
+    assert "CREATE UNIT: equipment/manpower factor below 0.01" in _cats(
+        _run(content, tmp_path)
+    )
+
+
+def test_low_experience_factor_is_allowed(tmp_path):
+    content = _GUARDED.replace(
+        "start_equipment_factor = 1.0",
+        "start_equipment_factor = 1.0 start_experience_factor = 0.05",
+    )
+    assert _run(content, tmp_path) == []
 
 
 def test_multiline_division_flagged(tmp_path):

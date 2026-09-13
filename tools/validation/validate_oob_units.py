@@ -823,6 +823,10 @@ _DELETE_TEMPLATE_NAME_RE = re.compile(r'\bdivision_template\s*=\s*"([^"]*)"')
 _ZERO_FACTOR_RE = re.compile(
     r"\b(?:start_equipment_factor|start_manpower_factor)\s*=\s*0(?![.\d])"
 )
+_EQUIPMENT_FACTOR_RE = re.compile(r"\bstart_equipment_factor\s*=")
+_LOW_FACTOR_RE = re.compile(
+    r"\bstart_(equipment|manpower)_factor\s*=\s*([+-]?(?:\d+\.\d*|\.\d+|\d+))"
+)
 _STATE_YES_RE = re.compile(r"\bstate\s*=\s*yes\b")
 _EXECUTE_EFFECT_RE = re.compile(r"\bexecute_effect\b")
 _HAS_TEMPLATE_RE = re.compile(r'\bhas_template\s*=\s*"([^\"]*)"')
@@ -876,6 +880,10 @@ _CREATE_UNIT_CATEGORIES = {
     "malformed-division": "CREATE UNIT: division string does not parse",
     "out-of-bounds-division": "CREATE UNIT: division string has German/Danish letters",
     "zero-factor": "CREATE UNIT: equipment/manpower factor is zero",
+    "missing-equipment-factor": (
+        "CREATE UNIT: division string lacks start_equipment_factor"
+    ),
+    "near-zero-factor": "CREATE UNIT: equipment/manpower factor below 0.01",
     "template-order": "CREATE UNIT: template defined after create_unit",
     "missing-template-ensure": (
         "CREATE UNIT: template not created or has_template-guarded in this effect"
@@ -1812,6 +1820,23 @@ def _check_created_units(
                 f"{cu['line']}: start_equipment_factor/start_manpower_factor of 0 is treated as 1",
                 line,
             )
+        if not _EQUIPMENT_FACTOR_RE.search(dval_clean):
+            out.warn(
+                "missing-equipment-factor",
+                f"{cu['line']}: division string has no start_equipment_factor; set it explicitly",
+                line,
+            )
+        for fmatch in _LOW_FACTOR_RE.finditer(dval_clean):
+            try:
+                fvalue = float(fmatch.group(2))
+            except ValueError:
+                continue
+            if 0.0 < fvalue < 0.01:
+                out.error(
+                    "near-zero-factor",
+                    f"{cu['line']}: start_{fmatch.group(1)}_factor of {fmatch.group(2)} is below 0.01",
+                    line,
+                )
 
         parsed_issues, tname = _parse_division_string(dval_clean)
         for kind, message in parsed_issues:
