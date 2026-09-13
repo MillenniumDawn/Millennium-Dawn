@@ -565,11 +565,6 @@ def _stat_cached_scan(mod_path: str, namespace: str, filename: str, scanner):
     )
 
 
-def _cached_scan_event_fires(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
-    filename, mod_path = args
-    return _stat_cached_scan(mod_path, "events.fires", filename, scan_event_fires)
-
-
 def _cached_scan_typed_event_fires(
     args: Tuple[str, str],
 ) -> List[Tuple[str, str, str, int]]:
@@ -1129,14 +1124,12 @@ class Validator(BaseValidator):
 
     def _get_event_fires(self) -> List[Tuple[str, str, int]]:
         """Every literal event fire in the mod as (event_id, file, line)."""
-        if self._fires_cache is not None:
-            return self._fires_cache
-        fires: List[Tuple[str, str, int]] = []
-        args = [(path, self.mod_path) for path, _ in self._get_fire_scan_args()]
-        for result in self._pool_map(_cached_scan_event_fires, args, chunksize=30):
-            fires.extend(result)
-        self._fires_cache = fires
-        return fires
+        if self._fires_cache is None:
+            self._fires_cache = [
+                (eid, filename, line)
+                for eid, _call_type, filename, line in self._get_typed_event_fires()
+            ]
+        return self._fires_cache
 
     def _get_typed_event_fires(self) -> List[Tuple[str, str, str, int]]:
         """Every literal event fire with its call keyword."""
