@@ -1100,9 +1100,11 @@ Militia_AI_templates = {
 }
 
 ## AI Strategy
-ai_limiter_calculations = {
+ai_division_limiter_refresh = {
 	if = {
 		limit = {
+			is_ai = yes
+			ai_for_units_is_not_disabled = yes
 			OR = {
 				has_game_rule = { rule = allow_division_limiter option = yes }
 				has_game_rule = { rule = allow_division_limiter option = potato_edition }
@@ -1112,9 +1114,86 @@ ai_limiter_calculations = {
 		if = { limit = { ai_is_threatened = yes }
 			set_temp_variable = { ai_limiter_is_threatened = 1 }
 		}
-		daily_division_limiter_calculation = yes
-		daily_plane_limiter_calculation = yes
-		daily_ship_limiter_calculation = yes
+		set_temp_variable = { ai_limiter_at_war = 0 }
+		if = { limit = { has_war = yes }
+			set_temp_variable = { ai_limiter_at_war = 1 }
+		}
+		set_temp_variable = { ai_limiter_is_major = 0 }
+		if = { limit = { is_major = yes }
+			set_temp_variable = { ai_limiter_is_major = 1 }
+		}
+		set_temp_variable = { ai_limiter_is_major_power = 0 }
+		if = {
+			limit = {
+				OR = {
+					original_tag = SOV
+					original_tag = USA
+					original_tag = CHI
+					original_tag = RAJ
+				}
+			}
+			set_temp_variable = { ai_limiter_is_major_power = 1 }
+		}
+		set_temp_variable = { ai_limiter_high_threat = 0 }
+		if = { limit = { threat > 0.50 }
+			set_temp_variable = { ai_limiter_high_threat = 1 }
+		}
+		set_temp_variable = { ai_limiter_in_faction = 0 }
+		if = { limit = { is_in_faction = yes }
+			set_temp_variable = { ai_limiter_in_faction = 1 }
+		}
+		set_temp_variable = { ai_limiter_nato_member = 0 }
+		if = { limit = { has_idea = NATO_member }
+			set_temp_variable = { ai_limiter_nato_member = 1 }
+		}
+		set_temp_variable = { ai_limiter_eu_member = 0 }
+		if = { limit = { has_idea = EU_member }
+			set_temp_variable = { ai_limiter_eu_member = 1 }
+		}
+		set_temp_variable = { ai_limiter_is_usa = 0 }
+		if = { limit = { original_tag = USA }
+			set_temp_variable = { ai_limiter_is_usa = 1 }
+		}
+		division_limiter_calculation = yes
+		set_variable = {
+			plane_limiter_deployed_size = {
+				value = num_deployed_planes_with_type@large_plane_airframe
+				add = num_deployed_planes_with_type@large_plane_cas_airframe
+				add = num_deployed_planes_with_type@large_plane_awacs_airframe
+				add = num_deployed_planes_with_type@large_plane_air_transport_airframe
+				add = num_deployed_planes_with_type@large_plane_maritime_patrol_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_air_transport_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_maritime_patrol_airframe
+				add = num_deployed_planes_with_type@medium_plane_air_transport_airframe
+				add = num_deployed_planes_with_type@medium_plane_maritime_patrol_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_scout_airframe
+				add = num_deployed_planes_with_type@medium_plane_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_airframe
+				add = num_deployed_planes_with_type@medium_plane_fighter_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_fighter_airframe
+				add = num_deployed_planes_with_type@small_plane_suicide_airframe
+				add = num_deployed_planes_with_type@medium_plane_cas_airframe
+				add = num_deployed_planes_with_type@medium_plane_suicide_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_cas_airframe
+				add = num_deployed_planes_with_type@small_plane_airframe
+				add = num_deployed_planes_with_type@small_plane_cas_airframe
+				add = num_deployed_planes_with_type@small_plane_naval_bomber_airframe
+				add = num_deployed_planes_with_type@cv_small_plane_airframe
+				add = num_deployed_planes_with_type@cv_small_plane_cas_airframe
+				add = num_deployed_planes_with_type@cv_small_plane_naval_bomber_airframe
+				add = num_deployed_planes_with_type@cv_small_plane_suicide_airframe
+				add = num_deployed_planes_with_type@small_plane_strike_airframe
+				add = num_deployed_planes_with_type@cv_small_plane_strike_airframe
+			}
+		}
+		plane_limiter_calculation = yes
+		if = {
+			limit = { num_of_naval_factories > 0 }
+			ship_limiter_calculation = yes
+		}
+		else = {
+			set_variable = { ship_limiter_limit = 0 }
+		}
 		if = { limit = { has_game_rule = { rule = allow_division_limiter option = potato_edition } }
 			multiply_variable = { division_limiter_limit = 0.5 }
 			round_variable = division_limiter_limit
@@ -1126,127 +1205,172 @@ ai_limiter_calculations = {
 	}
 }
 
-daily_division_limiter_calculation = {
-	set_temp_variable = { upper_limit = num_of_factories }
-	if = {
-		limit = { num_of_factories > 4 }
-		add_to_temp_variable = { upper_limit = 5 }
-	}
-	multiply_temp_variable = { upper_limit = 1.3 }
-	if = { limit = { has_war = yes }
-		multiply_temp_variable = { upper_limit = 1.75 }
-	}
-
-	if = { limit = { check_variable = { ai_limiter_is_threatened = 1 } }
-		multiply_temp_variable = { upper_limit = 1.25 }
-	}
-	if = {
-		limit = {
-			has_war = no
-			check_variable = { ai_limiter_is_threatened = 0 }
-		}
-		multiply_temp_variable = { upper_limit = 0.75 }
-	}
-	if = { limit = { is_major = yes }
-		multiply_temp_variable = { upper_limit = 1.15 }
-	}
-	if = { limit = { has_idea = NATO_member }
-		multiply_temp_variable = { upper_limit = 0.8 }
-	}
-	if = { limit = { has_idea = EU_member }
-		multiply_temp_variable = { upper_limit = 0.8 }
-	}
-	if = { limit = { threat > 0.50 }
-		multiply_temp_variable = { upper_limit = 1.25 }
-	}
-
-	if = { limit = { num_of_military_factories > 35 }
-		multiply_temp_variable = { upper_limit = 1.15 }
-	}
-	else_if = { limit = { num_of_military_factories > 25 }
-		multiply_temp_variable = { upper_limit = 1.1 }
-	}
-	else_if = { limit = { num_of_military_factories > 15 }
-		multiply_temp_variable = { upper_limit = 1.05 }
-	}
-
-	if = { limit = { is_in_faction = yes }
-		multiply_temp_variable = { upper_limit = 0.90 }
-	}
-	if = {
-		limit = {
-			OR = {
-				original_tag = SOV
-				original_tag = USA
-				original_tag = CHI
-				original_tag = RAJ
+division_limiter_calculation = {
+	set_variable = {
+		division_limiter_limit = {
+			value = num_of_factories
+			if = {
+				limit = {
+					value = num_of_factories
+					greater_than = 4
+				}
+				add = 5
 			}
+			multiply = 1.3
+			if = {
+				limit = { value = ai_limiter_at_war }
+				multiply = 1.75
+			}
+			if = {
+				limit = { value = ai_limiter_is_threatened }
+				multiply = 1.25
+			}
+			if = {
+				limit = {
+					value = ai_limiter_at_war
+					not = yes
+				}
+				if = {
+					limit = {
+						value = ai_limiter_is_threatened
+						not = yes
+					}
+					multiply = 0.75
+				}
+			}
+			if = {
+				limit = { value = ai_limiter_is_major }
+				multiply = 1.15
+			}
+			if = {
+				limit = { value = ai_limiter_nato_member }
+				multiply = 0.8
+			}
+			if = {
+				limit = { value = ai_limiter_eu_member }
+				multiply = 0.8
+			}
+			if = {
+				limit = { value = ai_limiter_high_threat }
+				multiply = 1.25
+			}
+			if = {
+				limit = {
+					value = num_of_military_factories
+					greater_than = 35
+				}
+				multiply = 1.15
+			}
+			else = {
+				if = {
+					limit = {
+						value = num_of_military_factories
+						greater_than = 25
+					}
+					multiply = 1.1
+				}
+				else = {
+					if = {
+						limit = {
+							value = num_of_military_factories
+							greater_than = 15
+						}
+						multiply = 1.05
+					}
+				}
+			}
+			if = {
+				limit = { value = ai_limiter_in_faction }
+				multiply = 0.90
+			}
+			if = {
+				limit = { value = ai_limiter_is_major_power }
+				multiply = 1.2
+			}
+			round = yes
 		}
-		multiply_temp_variable = { upper_limit = 1.2 }
 	}
-	round_temp_variable = upper_limit
-	set_variable = { division_limiter_limit = upper_limit }
 }
 
-daily_plane_limiter_calculation = {
-	set_temp_variable = { upper_limit = num_of_military_factories }
-	multiply_temp_variable = { upper_limit = 80 }
-	add_to_temp_variable = { upper_limit = 50 }
-	if = { limit = { has_war = yes }
-		multiply_temp_variable = { upper_limit = 1.25 }
+plane_limiter_calculation = {
+	set_variable = {
+		plane_limiter_limit = {
+			value = num_of_military_factories
+			multiply = 80
+			add = 50
+			if = {
+				limit = { value = ai_limiter_at_war }
+				multiply = 1.25
+			}
+			if = {
+				limit = { value = ai_limiter_is_threatened }
+				multiply = 1.25
+			}
+			if = {
+				limit = { value = ai_limiter_is_major }
+				multiply = 1.15
+			}
+			if = {
+				limit = { value = ai_limiter_nato_member }
+				multiply = 1.2
+			}
+			if = {
+				limit = { value = ai_limiter_high_threat }
+				multiply = 1.25
+			}
+			if = {
+				limit = { value = ai_limiter_in_faction }
+				multiply = 0.90
+			}
+			round = yes
+		}
 	}
-	if = { limit = { check_variable = { ai_limiter_is_threatened = 1 } }
-		multiply_temp_variable = { upper_limit = 1.25 }
-	}
-	if = { limit = { is_major = yes }
-		multiply_temp_variable = { upper_limit = 1.15 }
-	}
-	if = { limit = { has_idea = NATO_member }
-		multiply_temp_variable = { upper_limit = 1.2 }
-	}
-	if = { limit = { threat > 0.50 }
-		multiply_temp_variable = { upper_limit = 1.25 }
-	}
-	if = { limit = { is_in_faction = yes }
-		multiply_temp_variable = { upper_limit = 0.90 }
-	}
-	round_temp_variable = upper_limit
-	set_variable = { plane_limiter_limit = upper_limit }
 }
 
-daily_ship_limiter_calculation = {
-	set_temp_variable = { ship_limit = num_of_naval_factories }
-	multiply_temp_variable = { ship_limit = 7 }
-	if = { limit = { has_war = yes }
-		multiply_temp_variable = { ship_limit = 1.35 }
+ship_limiter_calculation = {
+	set_variable = {
+		ship_limiter_limit = {
+			value = num_of_naval_factories
+			multiply = 7
+			if = {
+				limit = { value = ai_limiter_at_war }
+				multiply = 1.35
+			}
+			else = {
+				multiply = 0.80
+			}
+			if = {
+				limit = { value = ai_limiter_is_threatened }
+				multiply = 1.25
+			}
+			if = {
+				limit = { value = ai_limiter_is_major }
+				multiply = 1.35
+			}
+			if = {
+				limit = { value = ai_limiter_nato_member }
+				multiply = 0.80
+			}
+			if = {
+				limit = { value = ai_limiter_eu_member }
+				multiply = 0.80
+			}
+			if = {
+				limit = { value = ai_limiter_high_threat }
+				multiply = 1.25
+			}
+			else = {
+				multiply = 0.85
+			}
+			if = {
+				limit = { value = ai_limiter_in_faction }
+				multiply = 0.95
+			}
+			if = {
+				limit = { value = ai_limiter_is_usa }
+				multiply = 1.25
+			}
+			round = yes
+		}
 	}
-	else = {
-		multiply_temp_variable = { ship_limit = 0.80 }
-	}
-	if = { limit = { check_variable = { ai_limiter_is_threatened = 1 } }
-		multiply_temp_variable = { ship_limit = 1.25 }
-	}
-	if = { limit = { is_major = yes }
-		multiply_temp_variable = { ship_limit = 1.35 }
-	}
-	if = { limit = { has_idea = NATO_member }
-		multiply_temp_variable = { ship_limit = 0.80 }
-	}
-	if = { limit = { has_idea = EU_member }
-		multiply_temp_variable = { ship_limit = 0.80 }
-	}
-	if = { limit = { threat > 0.50 }
-		multiply_temp_variable = { ship_limit = 1.25 }
-	}
-	else = {
-		multiply_temp_variable = { ship_limit = 0.85 }
-	}
-	if = { limit = { is_in_faction = yes }
-		multiply_temp_variable = { ship_limit = 0.95 }
-	}
-	if = { limit = { original_tag = USA }
-		multiply_temp_variable = { ship_limit = 1.25 }
-	}
-	round_temp_variable = ship_limit
-	set_variable = { ship_limiter_limit = ship_limit }
 }

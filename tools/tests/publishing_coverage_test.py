@@ -702,6 +702,25 @@ def test_publish_succeeds_and_retries_a_transient_failure(
     assert list(tmp_path.glob("md_publish_*.log"))
 
 
+def test_publish_does_not_overwrite_predictable_log_path(tmp_path, monkeypatch):
+    _stub_publish_runtime(tmp_path, monkeypatch)
+    predictable_log = tmp_path / "md_publish_1700000000.log"
+    write_text(predictable_log, "attacker-owned\n")
+    monkeypatch.setattr(pw.time, "time", lambda: 1_700_000_000)
+    monkeypatch.setattr(
+        pw.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: _SteamProc(["Uploading content"], returncode=0),
+    )
+
+    pw.publish(_publish_mod(tmp_path), "user", "2777133449", "note")
+
+    assert predictable_log.read_text(encoding="utf-8") == "attacker-owned\n"
+    logs = list(tmp_path.glob("md_publish_*.log"))
+    assert len(logs) == 2
+    assert any(path != predictable_log for path in logs)
+
+
 def test_publish_does_not_retry_an_auth_failure(tmp_path, monkeypatch):
     _stub_publish_runtime(tmp_path, monkeypatch)
     slept = []

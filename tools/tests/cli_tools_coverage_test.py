@@ -15,7 +15,7 @@ from pathlib import Path
 
 import assign_mio_icons
 import pytest
-from shared.suite import symlinks_available
+from shared.suite import run_git, symlinks_available
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOLS = REPO_ROOT / "tools"
@@ -460,24 +460,32 @@ class TestStandardizeStaged:
 class TestValidateStaged:
     """Tests for tools/validate_staged.py — pre-commit validation runner."""
 
-    def test_main_no_staged_files_or_skip_env(self, tmp_path):
+    def test_main_no_staged_files_or_skip_env(self, tmp_path, monkeypatch):
         """With no staged files or MD_SKIP_VALIDATE=1, no validators run and exit 0."""
-        # No staged files
+        for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "MD_SKIP_VALIDATE"):
+            monkeypatch.delenv(name, raising=False)
+        run_git(tmp_path, "init")
         result = subprocess.run(
             [sys.executable, str(TOOLS / "validate_staged.py")],
             capture_output=True,
             text=True,
-            cwd=REPO_ROOT,
+            cwd=tmp_path,
         )
         assert result.returncode == 0
         assert "Running " not in result.stdout
 
-        # Skip env
+        (tmp_path / "events").mkdir()
+        write_text(tmp_path / "events" / "example.txt", "add_namespace = example\n")
+        run_git(tmp_path, "add", "events/example.txt")
+        assert (
+            run_git(tmp_path, "diff", "--cached", "--name-only").stdout.strip()
+            == "events/example.txt"
+        )
         result = subprocess.run(
             [sys.executable, str(TOOLS / "validate_staged.py")],
             capture_output=True,
             text=True,
-            cwd=REPO_ROOT,
+            cwd=tmp_path,
             env={**os.environ, "MD_SKIP_VALIDATE": "1"},
         )
         assert result.returncode == 0

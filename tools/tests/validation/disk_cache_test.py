@@ -5,6 +5,7 @@ import os
 
 import disk_cache
 import pytest
+import sprite_index
 
 
 @pytest.fixture(autouse=True)
@@ -13,33 +14,98 @@ def clear_env(monkeypatch):
     monkeypatch.delenv("MD_NO_CACHE", raising=False)
 
 
+def _counted_compute(calls, namespace):
+    def run():
+        calls[namespace] += 1
+        return calls[namespace]
+
+    return run
+
+
+def _patch_helper_change(monkeypatch, namespace, helper_name):
+    helper = next(
+        path
+        for path in disk_cache._fingerprint_paths(namespace)
+        if path.name == helper_name
+    )
+    original_read_bytes = type(helper).read_bytes
+
+    def changed_read_bytes(path):
+        if path == helper:
+            return original_read_bytes(path) + b"\\nhelper change"
+        return original_read_bytes(path)
+
+    monkeypatch.setattr(type(helper), "read_bytes", changed_read_bytes)
+
+
 def test_code_fingerprints_are_scoped_to_owner_and_shared_code():
     events = disk_cache._fingerprint_paths("events.metadata")
     focus = disk_cache._fingerprint_paths("focus_tree.parse")
+    sprites = disk_cache._fingerprint_paths("sprite_index.names")
 
     assert any(path.name == "validate_events.py" for path in events)
     assert any(path.name == "shared_utils.py" for path in events)
     assert any(path.name == "validator_common.py" for path in events)
     assert not any(path.name == "validate_focus_tree.py" for path in events)
     assert any(path.name == "validate_focus_tree.py" for path in focus)
+    assert any(path.name == "validate_gfx_references.py" for path in sprites)
+    assert not any(path.name == "validate_focus_tree.py" for path in sprites)
+
+
+def test_sprite_index_cached_and_uncached_results_match(tmp_path, monkeypatch):
+    gfx = tmp_path / "sample.gfx"
+    gfx.write_text('spriteType = { name = "GFX_sample" }', encoding="utf-8")
+
+    cached = sprite_index._names_in_file(str(gfx), str(tmp_path))
+    monkeypatch.setenv("MD_NO_CACHE", "1")
+    uncached = sprite_index._names_in_file(str(gfx), str(tmp_path))
+
+    assert cached == uncached == ["GFX_sample"]
+
+
+def test_sprite_index_helper_change_invalidates_actual_cache(tmp_path, monkeypatch):
+    gfx = tmp_path / "sample.gfx"
+    gfx.write_text('spriteType = { name = "GFX_sample" }', encoding="utf-8")
+    disk_cache._FINGERPRINT_CACHE.clear()
+    sprite_index._names_in_file(str(gfx), str(tmp_path))
+
+    original_parse = sprite_index._parse_names
+    calls = []
+
+    def counted_parse(raw):
+        calls.append(raw)
+        return original_parse(raw)
+
+    _patch_helper_change(
+        monkeypatch, "sprite_index.names", "validate_gfx_references.py"
+    )
+    monkeypatch.setattr(sprite_index, "_parse_names", counted_parse)
+    disk_cache._FINGERPRINT_CACHE.clear()
+
+    assert sprite_index._names_in_file(str(gfx), str(tmp_path)) == ["GFX_sample"]
+    assert len(calls) == 1
 
 
 def test_namespace_mapping_covers_all_real_cache_prefixes():
     expected = {
         "agency",
+        "building_guards_scan_v3",
         "cosmetic",
         "decisions",
         "dlc_guards",
+        "dynamic_modifier_guards_scan_v1",
         "events",
         "focus_tree",
         "gfx_ref",
         "history_techs",
         "ideas",
         "loc",
+        "math_expr",
         "modifiers",
         "oob_units",
         "on_actions",
         "scripted_gui",
+        "sgui",
         "scripted_params",
         "set_variables",
         "simplifications",
@@ -93,30 +159,68 @@ def test_owner_source_change_invalidates_only_that_namespace(tmp_path, monkeypat
     disk_cache._FINGERPRINT_CACHE.clear()
     calls = {"owned": 0, "other": 0}
 
-    def compute(namespace):
-        def run():
-            calls[namespace] += 1
-            return calls[namespace]
-
-        return run
-
     first_owned = disk_cache.per_file_cached_by_content(
-        str(tmp_path), "owned.result", "source.txt", "body", compute("owned")
+        str(tmp_path),
+        "owned.result",
+        "source.txt",
+        "body",
+        _counted_compute(calls, "owned"),
     )
     first_other = disk_cache.per_file_cached_by_content(
-        str(tmp_path), "other.result", "source.txt", "body", compute("other")
+        str(tmp_path),
+        "other.result",
+        "source.txt",
+        "body",
+        _counted_compute(calls, "other"),
     )
     owner.write_text("changed owner", encoding="utf-8")
     second_owned = disk_cache.per_file_cached_by_content(
-        str(tmp_path), "owned.result", "source.txt", "body", compute("owned")
+        str(tmp_path),
+        "owned.result",
+        "source.txt",
+        "body",
+        _counted_compute(calls, "owned"),
     )
     second_other = disk_cache.per_file_cached_by_content(
-        str(tmp_path), "other.result", "source.txt", "body", compute("other")
+        str(tmp_path),
+        "other.result",
+        "source.txt",
+        "body",
+        _counted_compute(calls, "other"),
     )
 
     assert (first_owned, second_owned) == (1, 2)
     assert (first_other, second_other) == (1, 1)
     assert calls == {"owned": 2, "other": 1}
+
+
+def test_configured_helper_change_invalidates_affected_namespace_only(
+    tmp_path, monkeypatch
+):
+    source = tmp_path / "data.txt"
+    source.write_text("hello", encoding="utf-8")
+    disk_cache._FINGERPRINT_CACHE.clear()
+    calls = {"building": 0, "events": 0}
+
+    def run_both():
+        for namespace, key in (
+            ("building_guards_scan_v3.result", "building"),
+            ("events.result", "events"),
+        ):
+            disk_cache.per_file_cached_by_content(
+                str(tmp_path),
+                namespace,
+                str(source),
+                "body",
+                _counted_compute(calls, key),
+            )
+
+    run_both()
+    _patch_helper_change(monkeypatch, "building_guards_scan_v3.result", "guard_scan.py")
+    disk_cache._FINGERPRINT_CACHE.clear()
+    run_both()
+
+    assert calls == {"building": 2, "events": 1}
 
 
 def test_per_file_cached_hits_on_unchanged_file(tmp_path):

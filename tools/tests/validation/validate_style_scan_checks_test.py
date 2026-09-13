@@ -130,6 +130,27 @@ def test_balanced_quotes_not_flagged():
     assert _spacing('\tlog = "balanced"\n') == []
 
 
+def test_quoted_braces_and_operators_are_not_spacing_findings():
+    assert _spacing('\tlog = "a=b {c} > d"\n') == []
+
+
+def test_escaped_quotes_keep_lexical_state():
+    assert _spacing('\tlog = "a \\" b"\n') == []
+
+
+def test_indented_comments_and_inline_comments_are_ignored():
+    assert _spacing("\t# foo={bar} x=y\n") == []
+    assert _spacing("\tfoo = bar # note={x=y}\n") == []
+
+
+def test_unspaced_assignment_outside_a_string_is_still_reported():
+    assert _spacing("\tfoo={bar}\n") == [
+        ("Missing space before or after open brace", 1),
+        ("Missing space before or after close brace", 1),
+        ("Missing space before or after '='", 1),
+    ]
+
+
 def test_odd_quote_inside_a_comment_not_flagged():
     assert _spacing('\ta = 1 # "note\n') == []
 
@@ -255,6 +276,24 @@ def test_run_validations_splits_errors_from_warnings(tmp_path, write_path):
     assert "spacing" in categories
     assert v.errors_found == 1
     assert v.warnings_found == 2
+
+
+def test_focus_named_event_option_is_not_reported_as_a_focus_standard(
+    tmp_path, write_path
+):
+    """An option name carrying "Focus" belongs to event-log alone, not both buckets."""
+    write_path(
+        tmp_path,
+        "events/Test.txt",
+        "option = {\n\tname = LibyaFocus.104.a\n\tadd_political_power = 50\n}\n",
+    )
+
+    v = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.run_validations()
+
+    categories = [i.category for i in v._issues]
+    assert categories == ["event-log"]
+    assert v.warnings_found == 1
 
 
 def test_run_validations_scans_music_files(tmp_path, write_path):

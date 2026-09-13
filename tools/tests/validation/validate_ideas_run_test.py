@@ -367,6 +367,7 @@ def _write_unused_mod(tmp_path):
         "\t\tUSED_spirit = { picture = x }\n"
         "\t\tDEAD_spirit = { picture = x }\n"
         "\t\tTOKEN_spirit = { picture = x }\n"
+        "\t\tTABLE_spirit = { picture = x }\n"
         "\t\tMETA_spirit_TAG = { picture = x }\n"
         "\t}\n"
         "\tpolitical_advisor = {\n"
@@ -384,6 +385,7 @@ def _write_unused_mod(tmp_path):
         "events/MD_grants.txt",
         "grant = {\n"
         "\tadd_ideas = USED_spirit\n"
+        "\tadd_to_array = { global.ideas = token:TABLE_spirit }\n"
         "\tadd_timed_idea = { idea = META_spirit_[ROOTTAG] days = 30 }\n"
         "}\n",
     )

@@ -262,3 +262,17 @@ def test_ai_only_category_flag_not_flagged(tmp_path):
         rel="common/decisions/src.txt",
     )
     assert out == []
+
+
+def test_ai_only_if_branch_exempt(tmp_path, ai_split_available):
+    out = _findings(tmp_path, ai_split_available("has_country_flag = ENG_deal_flag"))
+    assert out == []
+
+
+def test_flag_in_human_else_branch_still_flagged(tmp_path, ai_split_available):
+    text = ai_split_available(
+        "has_war = no", else_body="has_country_flag = ENG_deal_flag"
+    )
+    out = _findings(tmp_path, text)
+    assert len(out) == 1
+    assert out[0][0] == "ENG_deal_flag"

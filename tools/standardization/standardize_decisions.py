@@ -19,12 +19,13 @@ from common_utils import (
 )
 from shared_utils import (
     atomic_write_text,
+    collapse_nested_blocks,
     collapse_or_compact,
     collapse_ws_outside_quotes,
     convert_root_factor_to_base,
+    count_braces,
     extract_block,
     log_message,
-    strip_inline_comment,
 )
 
 # Decision/category IDs, unlike the property keywords PROP_NAME_RE matches, may
@@ -67,21 +68,7 @@ _CATEGORY_BLOCK_PROPS = {
 }
 
 
-def _count_braces(text: str) -> tuple:
-    """Return ``(opens, closes)`` for *text*, ignoring braces inside double-quoted
-    strings and after an unquoted ``#`` comment."""
-    code = strip_inline_comment(text)
-    opens = closes = 0
-    in_str = False
-    for i, c in enumerate(code):
-        if c == '"' and (i == 0 or code[i - 1] != "\\"):
-            in_str = not in_str
-        elif not in_str:
-            if c == "{":
-                opens += 1
-            elif c == "}":
-                closes += 1
-    return opens, closes
+_count_braces = count_braces
 
 
 def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
@@ -123,7 +110,7 @@ def reindent_block(block_lines: List[str], base_indent: int) -> List[str]:
 def _reindent_or_collapse(block_lines: List[str], base_indent: int) -> List[str]:
     """Single-line collapse a single-leaf block, else reindent at base_indent tabs."""
     collapsed = collapse_or_compact(block_lines, "\t" * base_indent)
-    multi = reindent_block(block_lines, base_indent)
+    multi = reindent_block(collapse_nested_blocks(block_lines), base_indent)
     if len(collapsed) == 1 and len(multi) != 1:
         return collapsed
     return multi

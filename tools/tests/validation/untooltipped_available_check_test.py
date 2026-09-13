@@ -465,3 +465,17 @@ def test_focus_tree_with_is_ai_still_flagged(tmp_path):
         rel="common/national_focus/my_tree.txt",
     )
     assert len(out) == 1
+
+
+def test_ai_only_if_branch_exempt(tmp_path, ai_split_available):
+    out = _findings(tmp_path, ai_split_available("check_variable = { my_var > 5 }"))
+    assert out == []
+
+
+def test_check_in_human_else_branch_still_flagged(tmp_path, ai_split_available):
+    text = ai_split_available(
+        "has_war = no", else_body="check_variable = { my_var > 5 }"
+    )
+    out = _findings(tmp_path, text)
+    assert len(out) == 1
+    assert out[0][2] == 8

@@ -102,6 +102,14 @@ def test_scoped_bracketed_invocation_tracks_member_name():
     }
 
 
+def test_multi_scope_bracketed_invocation_tracks_member_name():
+    # A map-mode tooltip scopes to a state, so the country scripted loc is only reachable
+    # as [FROM.CONTROLLER.name]; a single-segment scope class reported it as unused.
+    assert V._scan_loc_tokens("[FROM.CONTROLLER.map_mode_ruling_party]", False) == {
+        "map_mode_ruling_party"
+    }
+
+
 def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
     assert V._scan_loc_tokens("[status] [USA_STATUS]", False) == {
         "status",
@@ -111,7 +119,7 @@ def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
 
 def test_engine_getters_are_not_scripted_loc_candidates(tmp_path):
     getters = " ".join(
-        f"[{value}] [ROOT.{value}]"
+        f"[{value}] [ROOT.{value}] [FROM.CONTROLLER.{value}]"
         for value in (
             "GetFullName",
             "GetRank",

@@ -6,9 +6,9 @@ Pipeline:
   1. Load per-validator JSON sidecars (falls back to parsing `.log` text).
   2. Dedupe issues that multiple validators surface about the same line.
   3. Classify NEW vs EXISTING against the main-side baseline when one was
-     restored (otherwise render as before the baseline existed).
-  4. Render two bodies: a concise PR comment (summary table + step-summary
-     pointer) and a detailed step summary (full per-validator issue list).
+     restored, and tag IN YOUR PR from --changed-files when given.
+  4. Render two bodies: a PR comment (new-findings list + tables + pointer)
+     and a detailed step summary (full per-validator issue list).
   5. Truncate the comment if over GitHub's 65 536-byte limit.
   6. Optionally sync a findings-only PR comment and/or emit Checks API annotations.
 
@@ -35,14 +35,18 @@ from report_lib import (  # noqa: E402
     dedupe,
     load_all,
     load_baseline,
+    load_changed_files,
     post_checks,
     post_comment,
     render,
+    tag_changed_files,
     truncate_if_needed,
 )
 
 
-def build_report(results_dir: str, ctx: ReportContext, baseline=None):
+def build_report(
+    results_dir: str, ctx: ReportContext, baseline=None, changed_files=None
+):
     """Return (body, step_summary_body, runs, deduped_issues, truncated, stats)."""
     runs = load_all(results_dir)
     flat_issues = [i for run in runs for i in run.issues]
@@ -52,10 +56,11 @@ def build_report(results_dir: str, ctx: ReportContext, baseline=None):
     # one was restored. None keeps rendering exactly as before the baseline
     # existed (cold cache, validator generation change).
     baseline_stats = classify(deduped, baseline) if baseline is not None else None
+    if changed_files:
+        tag_changed_files(deduped, changed_files)
 
-    # PR comment — concise: verdict, summary-table counts, and a pointer to the
-    # step summary. The full per-validator issue list is dropped here so the
-    # comment stays small instead of dumping every finding into the PR thread.
+    # PR comment: verdict, tables, capped new-findings and in-PR lists, and a
+    # pointer to the step summary for the full per-validator issue list.
     body = render(
         runs,
         deduped,
@@ -109,7 +114,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument(
         "--checks-api",
         action="store_true",
-        help="Emit one Check Run per validator with inline annotations",
+        help="Emit one Check Run per CI job with inline annotations",
     )
     parser.add_argument(
         "--baseline-dir",
@@ -127,6 +132,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         help=(
             "Validator source hash the baseline must have been built with; "
             "a mismatch ignores the baseline instead of comparing stale output."
+        ),
+    )
+    parser.add_argument(
+        "--changed-files",
+        default=None,
+        help=(
+            "Newline-separated PR changed-file list. Findings whose file is "
+            "in the list are tagged IN YOUR PR."
         ),
     )
     parser.add_argument(
@@ -159,9 +172,19 @@ def main(argv: Optional[List[str]] = None) -> int:
         if args.baseline_dir
         else None
     )
+    if args.baseline_dir:
+        ctx.baseline_status = "available" if baseline is not None else "unavailable"
+
+    changed_files = None
+    if args.changed_files:
+        if os.path.isfile(args.changed_files):
+            changed_files = load_changed_files(args.changed_files)
+            ctx.changed_files_status = "available"
+        else:
+            ctx.changed_files_status = "unavailable"
 
     body, step_body, runs, deduped, truncated, baseline_stats = build_report(
-        args.results_dir, ctx, baseline
+        args.results_dir, ctx, baseline, changed_files
     )
 
     try:
@@ -203,6 +226,23 @@ def main(argv: Optional[List[str]] = None) -> int:
             f"{baseline_stats.new_warnings} new warning(s), "
             f"{baseline_stats.existing_errors + baseline_stats.existing_warnings} existing, "
             f"{baseline_stats.unclassified} unclassified",
+            file=sys.stderr,
+        )
+    elif args.baseline_dir:
+        print(
+            "main baseline unavailable; no NEW/EXISTING comparison was made",
+            file=sys.stderr,
+        )
+    if changed_files is not None:
+        in_diff = sum(1 for issue in deduped if issue.in_diff)
+        print(
+            f"tagged {in_diff} finding(s) IN YOUR PR "
+            f"({len(changed_files)} changed file(s))",
+            file=sys.stderr,
+        )
+    elif args.changed_files:
+        print(
+            "changed-file list unavailable; no IN YOUR PR tagging",
             file=sys.stderr,
         )
 

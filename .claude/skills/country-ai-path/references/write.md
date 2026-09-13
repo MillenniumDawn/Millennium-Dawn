@@ -197,7 +197,7 @@ Triggers may call each other, so the set stays small. Keep the depth shallow —
 plenty.
 
 **The `is_historical_focus_on` arm is only safe inside `ai_will_do`.** Under an explicit alt rule with
-historical AI on, the plain owner trigger above is *also* true — harmless there only because the
+historical AI on, the plain owner trigger above is _also_ true — harmless there only because the
 mandated pair (§5) puts `factor = 0 DEN_ai_not_historical_path = yes` **last**, and that not trigger
 is a pure alt-flag OR, so the killswitch wins. Two places break that guarantee:
 
@@ -383,7 +383,6 @@ A ramp pair per path, in `common/decisions/<Country>.txt`:
 			log = "[GetDateText]: [Root.GetName]: Decision DEN_monarchists_take_the_country"
 			set_temp_variable = { rul_party_temp = 23 }
 			change_ruling_party_effect = yes
-			hidden_effect = { update_party_name = yes }
 		}
 
 		ai_will_do = { base = 100 }
@@ -493,7 +492,6 @@ country_event = {
 			set_elections_60_months = yes
 		}
 		else = {
-			set_ruling_leader = yes
 			set_leader = yes
 		}
 	}
@@ -508,7 +506,7 @@ ignore leap years:
 DEN = { country_event = { id = denmark_md.400 days = 158 } }
 ```
 
-**Pointer semantics.** `<subideology>_leader = N` means *the next person created is roster index N*.
+**Pointer semantics.** `<subideology>_leader = N` means _the next person created is roster index N_.
 Each roster block in `common/scripted_effects/<TAG>_political_leaders.txt` increments before creating,
 and the blocks are sequential `if`s rather than `else_if`s, so the cascade keeps running past N until
 a block's `date <` end-of-tenure guard sets `b = 1`. The last entry of every branch sets `b`
@@ -517,8 +515,7 @@ unconditionally, so the list never falls off its end.
 **Assert the index in every branch.** Never blind-advance by calling `set_leader` and trusting the
 pointer. Explicit assertion makes each date idempotent and self-repairing: a generic election between
 two historical dates moves the pointer, and the next date snaps it back. `britain_md.400` and
-`HOL_politics.86` blind-advance, which is why the AI UK gets Gordon Brown in 2005 and Ed Miliband in
-2007.
+`HOL_politics.86` blind-advance, which is why the AI UK gets Gordon Brown in 2005 and Ed Miliband in 2007.
 
 **Never pass `change_leader_temp = 1`.** It sets `do_not_retire`
 (`common/scripted_effects/00_MD_politicsview_scripted_effects.txt:2231`), which makes the roster

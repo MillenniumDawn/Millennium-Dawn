@@ -19,6 +19,7 @@ from common_utils import (
     compact_search_filters,
     join_groups,
     read_lines_for_standardization,
+    render_standardized,
     resolve_output_file_and_backup,
 )
 from shared_utils import (
@@ -28,7 +29,6 @@ from shared_utils import (
     convert_root_factor_to_base,
     extract_block,
     log_message,
-    normalize_spacing,
     strip_inline_comment,
 )
 
@@ -220,10 +220,18 @@ def _split_block(block_lines, *, allow_trailing_comment=False):
     return first, block_lines[1:-1], block_lines[-1]
 
 
-def _merge_duplicate_blocks(first, second):
+# Weight blocks are not merged. The trigger/effect argument below does not hold
+# for a scoring block: folding two of them under one header yields a single
+# `ai_will_do` carrying two `base` lines, which is not what either block meant.
+_UNMERGEABLE_PROPERTY_KEYS = frozenset({"ai_will_do"})
+
+
+def _merge_duplicate_blocks(first, second, key=None):
     """The engine ANDs duplicate trigger blocks and runs duplicate effect
     blocks in order, so concatenating inner lines under one header preserves
     semantics. Falls back to emitting both blocks when a shape is opaque."""
+    if key in _UNMERGEABLE_PROPERTY_KEYS:
+        return first + second
     a = _split_block(first)
     b = _split_block(second)
     if a is None or b is None:
@@ -344,7 +352,7 @@ def extract_focus_properties(focus_lines):
                     claim(key, len(props[key]) - 1)
                 elif props[key]:
                     claim(key)
-                    props[key] = _merge_duplicate_blocks(props[key], block_lines)
+                    props[key] = _merge_duplicate_blocks(props[key], block_lines, key)
                 else:
                     claim(key)
                     props[key] = block_lines
@@ -917,16 +925,8 @@ def add_check_naming_argument(parser: argparse.ArgumentParser) -> None:
     )
 
 
-def standardize_focus_tree(
-    input_file: str, output_file: str, verbose: bool = False, check_naming: bool = False
-):
-    """Standardize focus tree by reformatting focus blocks and all focus tree properties"""
-    start_time = time.time()
-
-    lines = read_lines_for_standardization(input_file, verbose=verbose)
-    if lines is None:
-        return False
-
+def format_focus_tree_lines(lines, verbose: bool = False):
+    """Reformat focus tree lines in memory, returning (output_lines, counts)."""
     output_lines = []
     i = 0
     counts = {block_type: 0 for block_type in _BLOCK_COUNT_ORDER}
@@ -988,7 +988,21 @@ def standardize_focus_tree(
             ):
                 final_lines.append("")
         final_lines.append(line)
-    output_lines = final_lines
+
+    return final_lines, counts
+
+
+def standardize_focus_tree(
+    input_file: str, output_file: str, verbose: bool = False, check_naming: bool = False
+):
+    """Standardize focus tree by reformatting focus blocks and all focus tree properties"""
+    start_time = time.time()
+
+    lines = read_lines_for_standardization(input_file, verbose=verbose)
+    if lines is None:
+        return False
+
+    output_lines, counts = format_focus_tree_lines(lines, verbose)
 
     # Naming convention check runs before writing so a failed standardization
     # cannot silently leave a partially reformatted file behind.
@@ -1000,7 +1014,7 @@ def standardize_focus_tree(
         return False
 
     try:
-        output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
+        output = render_standardized(output_lines)
         atomic_write_text(output_file, output)
 
         time_str = format_elapsed(time.time() - start_time)

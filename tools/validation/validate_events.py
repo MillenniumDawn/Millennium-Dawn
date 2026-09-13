@@ -15,8 +15,15 @@ from typing import Callable, Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import blank_quoted_strings, extract_block_from_text, strip_comments
-from sprite_index import build_sprite_index
+from image_size import read_image_size
+from shared_utils import (
+    blank_quoted_strings,
+    extract_block_from_text,
+    get_staged_files,
+    strip_comments,
+    strip_inline_comment,
+)
+from sprite_index import build_sprite_index, build_sprite_texture_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -31,8 +38,7 @@ EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS
 # The five HOI4 event-firing keywords. It is `operative_leader_event`, not
 # `operative_event`, and there is no `character_event`; because `operative` has
 # no word boundary before `_leader_event`, an `operative`/`_event` split never
-# matches the real keyword. Kept in sync with the definition keywords in
-# _EVENT_TYPE_PATTERN.
+# matches the real keyword.
 _EVENT_CALL_KEYWORDS = (
     "country_event",
     "news_event",
@@ -41,6 +47,7 @@ _EVENT_CALL_KEYWORDS = (
     "operative_leader_event",
 )
 _EVENT_CALL_ALT = "|".join(_EVENT_CALL_KEYWORDS)
+_EVENT_CALL_NEEDLES = tuple(keyword.encode() for keyword in _EVENT_CALL_KEYWORDS)
 
 _LONG_FORM_PATTERN = re.compile(
     r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
@@ -50,6 +57,130 @@ _LONG_FORM_PATTERN = re.compile(
 # sprite). Sprite names may contain `.` (frame suffixes like GFX_CTC.5) and `-`
 # (e.g. GFX_Polizistin-Kiesewetter), so both are part of the captured name.
 _EVENT_PICTURE_REF = re.compile(r'\bpicture\s*=\s*"?(GFX_[A-Za-z0-9_.\-]+)"?')
+_PICTURE_ASSIGN = re.compile(r"\bpicture\s*=\s*")
+
+# Stand-in art used while drafting an event; shipped events need real art.
+_PLACEHOLDER_PICTURES = frozenset(
+    {"GFX_placeholder_events", "GFX_placeholder_news", "GFX_news_md4"}
+)
+
+
+def _own_picture_refs(body: str) -> List[Tuple[str, int]]:
+    """Return (sprite, offset) for the picture fields an event itself declares.
+
+    A body-wide scan is wrong here: `create_country_leader = { picture = "..." }`
+    and advisor portraits nested in an `immediate` block are character art, not
+    the event's picture. `_iter_typed_event_bodies` yields a body stripped of its
+    outer braces, so the event's own fields sit at depth 0 — the convention
+    `_own_id` uses. The conditional form `picture = { trigger = { ... }
+    picture = GFX_x }` contributes its inner references instead.
+    """
+    refs: List[Tuple[str, int]] = []
+    depth = 0
+    pos = 0
+    end = len(body)
+    while pos < end:
+        char = body[pos]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+        elif depth == 0:
+            assign = _PICTURE_ASSIGN.match(body, pos)
+            if assign:
+                value = assign.end()
+                if value < end and body[value] == "{":
+                    _conditional_picture_refs(body, value, refs)
+                    pos = value
+                    continue
+                ref = _EVENT_PICTURE_REF.match(body, assign.start())
+                if ref:
+                    refs.append((ref.group(1), assign.start()))
+                pos = value
+                continue
+        pos += 1
+    return refs
+
+
+def _conditional_picture_refs(
+    body: str, open_pos: int, refs: List[Tuple[str, int]]
+) -> None:
+    """Collect the inner refs of a `picture = { trigger = { } picture = X }` block."""
+    depth = 0
+    for pos in range(open_pos, len(body)):
+        char = body[pos]
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth -= 1
+            if depth == 0:
+                return
+        elif depth == 1:
+            assign = _PICTURE_ASSIGN.match(body, pos)
+            if assign:
+                ref = _EVENT_PICTURE_REF.match(body, assign.start())
+                if ref:
+                    refs.append((ref.group(1), assign.start()))
+
+
+# Both event windows draw `event_picture` at the texture's native size — the
+# country/report slot (interface/eventwindow.gui:87) and the news slot (:425)
+# each declare a position and no size — so art authored for one window overflows
+# or under-fills the other. The two families separate cleanly by aspect ratio and
+# not by name: GFX_china_trade_war is news art, GFX_FRA_eiffel_tower_news is not.
+# Country art tops out at 1.45 (217x163 dominant) and news art starts at 2.0
+# (397x153 dominant, 500x250 at the low end), so the 1.5-2.0 band identifies no
+# family and is deliberately left unreported.
+_PICTURE_ASPECT_COUNTRY_MAX = 1.5
+_PICTURE_ASPECT_NEWS_MIN = 2.0
+# Decision and idea icons used as event pictures are a different defect entirely;
+# classifying them by shape would report the wrong thing, so they are skipped.
+_PICTURE_MIN_EDGE = 100
+_PICTURE_FORMAT_LABEL = {
+    "country_event": "country event",
+    "news_event": "news event",
+}
+_PICTURE_TYPICAL_SIZE = {
+    "country_event": "217x163",
+    "news_event": "397x153",
+}
+
+
+def _picture_format_for_size(width: int, height: int) -> Optional[str]:
+    """Return the event window a texture of this size is authored for, if clear."""
+    if height <= 0 or max(width, height) < _PICTURE_MIN_EDGE:
+        return None
+    aspect = width / height
+    if aspect <= _PICTURE_ASPECT_COUNTRY_MAX:
+        return "country_event"
+    if aspect >= _PICTURE_ASPECT_NEWS_MIN:
+        return "news_event"
+    return None
+
+
+def _picture_format_message(
+    event_type: str, event_id: str, sprite: str, textures: Dict[str, str]
+) -> Optional[str]:
+    """Return a finding when the picture's art is authored for the other window.
+
+    A sprite that resolves to nothing, or to a texture whose size cannot be read,
+    is left to the missing-picture check rather than reported twice.
+    """
+    texture = textures.get(sprite)
+    if texture is None:
+        return None
+    size = read_image_size(texture)
+    if size is None:
+        return None
+    authored = _picture_format_for_size(*size)
+    if authored is None or authored == event_type:
+        return None
+    return (
+        f"{event_id}: picture = {sprite} is {size[0]}x{size[1]}, which is "
+        f"{_PICTURE_FORMAT_LABEL[authored]} art; a "
+        f"{_PICTURE_FORMAT_LABEL[event_type]} picture is "
+        f"{_PICTURE_TYPICAL_SIZE[event_type]}"
+    )
 
 
 def _should_skip(filename: str) -> bool:
@@ -77,6 +208,19 @@ def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
         line = text.count("\n", 0, m.start()) + 1
         out.append((m.group(1), filename, line))
     return out
+
+
+def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, int]]:
+    """Pool worker: (option name, filename, line) for logs in effect-free options."""
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
+        return []
+    return [
+        (name, filename, line) for name, line in find_option_logs_without_effects(text)
+    ]
 
 
 _ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
@@ -149,17 +293,48 @@ def _matching_brace(text: str, open_pos: int) -> int:
     return -1
 
 
-def _iter_typed_event_bodies(cleaned: str):
-    """Yield typed definitions using brace matching so indentation is irrelevant."""
+_ID_OR_BRACE_RE = re.compile(r"[{}]|\bid\s*=\s*([A-Za-z_][\w.]*)")
+
+
+def _own_id(body: str):
+    """The `id` at the definition's own depth.
+
+    A malformed event with no id of its own can still contain a block fire
+    (`country_event = { id = foo.1 days = 1 }`) in its effects. Searching the
+    whole body would adopt that child's id, inventing a duplicate of the real
+    foo.1 and mislabelling the malformed block instead of leaving it unknown.
+    """
+    depth = 0
+    for m in _ID_OR_BRACE_RE.finditer(body):
+        token = m.group(0)
+        if token == "{":
+            depth += 1
+        elif token == "}":
+            depth -= 1
+        elif depth == 0:
+            return m.group(1)
+    return None
+
+
+def _iter_typed_event_bodies(cleaned: str, *, require_id: bool = True):
+    """Yield typed definitions using brace matching so indentation is irrelevant.
+
+    With require_id=False a definition block missing its `id` is still yielded,
+    with None for the id; the metadata checks report those blocks as "unknown"
+    rather than passing over them.
+    """
     for m in _EVENT_BLOCK_OPEN_RE.finditer(cleaned):
         ob = cleaned.index("{", m.end() - 1)
         end = _matching_brace(cleaned, ob)
         if end == -1:
             continue
         body = cleaned[ob + 1 : end]
-        idm = _FIRE_ID_RE.search(body)
-        if idm and _DEFINITION_ONLY_RE.search(body):
-            yield idm.group(1), m.group(1), body, m.start()
+        if not _DEFINITION_ONLY_RE.search(body):
+            continue
+        event_id = _own_id(body)
+        if event_id is None and require_id:
+            continue
+        yield event_id, m.group(1), body, m.start()
 
 
 def _iter_event_bodies(cleaned: str):
@@ -174,7 +349,7 @@ def scan_event_definitions(args: Tuple[str, frozenset]) -> Set[str]:
     cleaned = _read_cleaned_text(filename, skip=False)
     if cleaned is None:
         return set()
-    return {eid for eid, _body, _start in _iter_event_bodies(cleaned)}
+    return {eid for eid, _body, _start in _iter_event_bodies(cleaned) if eid}
 
 
 def scan_event_definition_types(
@@ -188,6 +363,7 @@ def scan_event_definition_types(
     return [
         (eid, event_type)
         for eid, event_type, _body, _start in _iter_typed_event_bodies(cleaned)
+        if eid
     ]
 
 
@@ -304,6 +480,8 @@ def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
 # bound on its own is an expiry guard on a chain event and says nothing about
 # scheduling, so only the lower bound is matched here.
 _DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
+# Any bound is redundant on an event the yearly effects already schedule.
+_DATE_BOUND_RE = re.compile(r"\bdate\s*[<>]=?\s*\d{4}\.\d{1,2}\.\d{1,2}")
 _TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
 
 
@@ -329,22 +507,32 @@ def _event_trigger_body(body: str) -> Optional[str]:
     return None
 
 
-def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
-    """Pool worker: events whose own trigger carries a `date >` bound.
-
-    Returns (id, file, line) so a finding can point at the definition.
-    """
-    filename = args[0]
+def _events_with_trigger_date(
+    filename: str, pattern: "re.Pattern[str]"
+) -> List[Tuple[str, str, int]]:
+    """(id, file, line) of every event whose own trigger matches `pattern`."""
     cleaned = _read_cleaned_text(filename)
     if cleaned is None:
         return []
 
     out: List[Tuple[str, str, int]] = []
     for eid, body, start in _iter_event_bodies(cleaned):
+        if not eid:
+            continue
         trigger = _event_trigger_body(body)
-        if trigger and _DATE_LOWER_BOUND_RE.search(trigger):
+        if trigger and pattern.search(trigger):
             out.append((eid, filename, cleaned.count("\n", 0, start) + 1))
     return out
+
+
+def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+    """Pool worker: events whose own trigger carries a `date >` bound."""
+    return _events_with_trigger_date(args[0], _DATE_LOWER_BOUND_RE)
+
+
+def scan_date_bounded_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+    """Pool worker: events whose own trigger carries any `date` comparison."""
+    return _events_with_trigger_date(args[0], _DATE_BOUND_RE)
 
 
 def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
@@ -360,10 +548,52 @@ def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
 
     out: List[Tuple[str, str]] = []
     for parent, body, _start in _iter_event_bodies(cleaned):
+        if not parent:
+            continue
         for child, _pos in _iter_fired_ids(body):
-            if child != parent:
+            if child and child != parent:
                 out.append((parent, child))
     return out
+
+
+def _stat_cached_scan(mod_path: str, namespace: str, filename: str, scanner):
+    return disk_cache.per_file_cached(
+        mod_path,
+        namespace,
+        filename,
+        lambda: scanner((filename, frozenset())),
+    )
+
+
+def _cached_scan_event_fires(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    filename, mod_path = args
+    return _stat_cached_scan(mod_path, "events.fires", filename, scan_event_fires)
+
+
+def _cached_scan_typed_event_fires(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, str, int]]:
+    filename, mod_path = args
+    return _stat_cached_scan(
+        mod_path, "events.typed_fires", filename, scan_typed_event_fires
+    )
+
+
+def _cached_scan_dynamic_event_namespaces(args: Tuple[str, str]) -> Set[str]:
+    filename, mod_path = args
+    return _stat_cached_scan(
+        mod_path,
+        "events.dynamic_namespaces",
+        filename,
+        scan_dynamic_event_namespaces,
+    )
+
+
+def _cached_scan_event_fire_graph(args: Tuple[str, str]) -> List[Tuple[str, str]]:
+    filename, mod_path = args
+    return _stat_cached_scan(
+        mod_path, "events.fire_graph", filename, scan_event_fire_graph
+    )
 
 
 # Where MD schedules its historical events from.
@@ -572,15 +802,27 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
 # --- Event parsing ---
 
 
-_EVENT_TYPE_PATTERN = re.compile(
-    r"^(country_event|news_event|state_event|unit_leader_event|operative_leader_event)\s*=\s*\{",
-    re.MULTILINE,
-)
 _ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
-_EVENT_ID_PATTERN = re.compile(r"^\tid\s*=\s*(\S+)", re.MULTILINE)
 _RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
 _RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
 _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
+
+# Statements an option can carry that change no game state. `trigger` gates the
+# option's visibility and `ai_chance` weights the AI's pick; neither runs an effect.
+# Triggered-only events the engine dispatches with no script reference to find.
+# lar_collab_gov.1 is the vanilla La Resistance event behind the live
+# operation_collaboration_government system, fired on collaboration-government
+# creation; MD keeps it so the operation still has its event.
+_EXEMPT_UNREFERENCED_EVENT_IDS = frozenset({"lar_collab_gov.1"})
+
+_OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
+# A scope key is an effect too: `652 = { ... }` opens a state scope and `"LGN" = { ... }`
+# a quoted tag scope, so both alternatives must match or an option whose only effect is
+# one of them reads as effect-free. Quoted keys survive blank_quoted_strings, which
+# blanks the interior but keeps the quotes.
+_OPTION_STATEMENT_RE = re.compile(r'([A-Za-z_]\w*|\d+|"[^"]*")\s*=')
+_OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
+
 # Event-level (depth-1) title/desc fields — option-level name fields are
 # nested deeper and are not matched.
 _EVENT_TITLEDESC_PATTERN = re.compile(r"^\t(?:title|desc)\s*=\s*(.+)$", re.MULTILINE)
@@ -599,6 +841,61 @@ _TITLE_DESC_INLINE_RE = {
 # a dot). Covers simple form (title = foo.1.t) and block form
 # (triggered_desc { desc = foo.1.t }). validate_missing_localisation.
 _LOC_REF_PATTERN = re.compile(r"\b(?:title|desc|name)\s*=\s*([\w][\w.]*)", re.MULTILINE)
+
+
+def find_option_logs_without_effects(text: str) -> List[Tuple[str, int]]:
+    """(option name, 1-based log line) for every `log` in an effect-free option.
+
+    Shared with tools/linting/fix_event_option_logs.py so detection cannot drift.
+    Line-based rather than offset-based: strip_comments preserves line counts but
+    not offsets, and the fixer needs the exact line to delete.
+    """
+    lines = text.splitlines()
+    code = [blank_quoted_strings(strip_inline_comment(line)) for line in lines]
+    out: List[Tuple[str, int]] = []
+    row = 0
+    while row < len(code):
+        match = _OPTION_OPEN_RE.search(code[row])
+        if match is None:
+            row += 1
+            continue
+        names: List[str] = []
+        logs: List[int] = []
+        name: Optional[str] = None
+        depth = 0
+        end_row = row
+        closed = False
+        while end_row < len(code) and not closed:
+            line = code[end_row]
+            i = match.end() - 1 if end_row == row else 0
+            while i < len(line):
+                char = line[i]
+                if char == "{":
+                    depth += 1
+                elif char == "}":
+                    depth -= 1
+                    if depth == 0:
+                        closed = True
+                        break
+                elif depth == 1:
+                    stmt = _OPTION_STATEMENT_RE.match(line, i)
+                    if stmt:
+                        key = stmt.group(1)
+                        names.append(key)
+                        if key == "log":
+                            logs.append(end_row + 1)
+                        elif key == "name":
+                            value = line[stmt.end() :].split()
+                            name = value[0] if value else None
+                        i = stmt.end()
+                        continue
+                i += 1
+            if not closed:
+                end_row += 1
+        if logs and not (set(names) - _OPTION_NON_EFFECT_KEYS):
+            out.extend((name or "unnamed option", line_no) for line_no in logs)
+        row = end_row + 1 if end_row > row else row + 1
+    return out
 
 
 def _extract_random_event_ids(text: str) -> set:
@@ -656,25 +953,37 @@ _RE_MAJOR_YES = re.compile(r"(?<![A-Za-z0-9_])major\s*=\s*yes")
 def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str]]:
     namespaces: Set[str] = set(_ADD_NAMESPACE_PATTERN.findall(text))
     meta: List[dict] = []
-    for m in _EVENT_TYPE_PATTERN.finditer(text):
-        event_type = m.group(1)
-        body, _ = extract_block_from_text(text, m.end() - 1)
+    # Brace matching rather than column-anchored patterns: 64 definitions in
+    # the mod are indented, and an anchored scan drops every one of them from
+    # the checks that read this metadata.
+    for event_id, event_type, body, start in _iter_typed_event_bodies(
+        text, require_id=False
+    ):
         # Quote-aware comment strip + quoted-string blanking before the `in body`
         # flag checks: a commented-out `#fire_only_once = yes` (or hidden /
         # is_triggered_only / mean_time_to_happen) must not count as an active
         # directive, and a `#` (or one of those keywords) inside a quoted
         # log/desc string must not truncate the line or false-match.
-        body_nc = blank_quoted_strings(strip_comments(body))
-
-        id_match = _EVENT_ID_PATTERN.search(body)
+        body_c = strip_comments(body)
+        body_nc = blank_quoted_strings(body_c)
+        # Picture refs read the un-blanked text: Event Horizon quotes its values
+        # (`picture = "GFX_EH_USN_HQ"`), which blank_quoted_strings would erase.
+        # The body starts one character past its opening brace, so that brace's
+        # line is the base every in-body offset counts from.
+        picture_base_line = text.count("\n", 0, text.index("{", start)) + 1
 
         meta.append(
             {
-                "id": id_match.group(1) if id_match else None,
+                "id": event_id,
                 "body": body,
                 "type": event_type,
                 "file": basename,
+                "line": text.count("\n", 0, start) + 1,
                 "is_hidden": "hidden = yes" in body_nc,
+                "picture_refs": [
+                    (sprite, picture_base_line + body_c.count("\n", 0, offset))
+                    for sprite, offset in _own_picture_refs(body_c)
+                ],
                 "is_triggered_only": "is_triggered_only = yes" in body_nc,
                 "fire_only_once": "fire_only_once = yes" in body_nc,
                 "is_major": bool(_RE_MAJOR_YES.search(body_nc)),
@@ -703,13 +1012,14 @@ class Validator(BaseValidator):
         self._fires_cache: Optional[List[Tuple[str, str, int]]] = None
         self._typed_fires_cache: Optional[List[Tuple[str, str, str, int]]] = None
         self._definition_types_cache: Optional[Dict[str, str]] = None
+        self._full_call_site_scan_cache: Optional[bool] = None
 
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
         Each metadata dict has: id (or None for malformed blocks), type, file,
-        is_hidden, is_triggered_only, fire_only_once, is_major, has_mtth,
-        option_count, title_desc_refs.
+        is_hidden, picture_refs, is_triggered_only, fire_only_once,
+        is_major, has_mtth, option_count, title_desc_refs.
         """
         if self._meta_cache is not None:
             return self._meta_cache
@@ -767,14 +1077,63 @@ class Validator(BaseValidator):
             )
         ]
 
+    def _files_contain_event_fires(self, files: List[str]) -> bool:
+        for path in files:
+            try:
+                with open(path, "rb") as handle:
+                    data = handle.read()
+            except OSError:
+                return True
+            if any(needle in data for needle in _EVENT_CALL_NEEDLES):
+                return True
+        return False
+
+    def _needs_full_call_site_scan(self) -> bool:
+        if not self.staged_only:
+            return True
+        if self._full_call_site_scan_cache is not None:
+            return self._full_call_site_scan_cache
+        paths = list(self.staged_files or [])
+        paths.extend(
+            get_staged_files(
+                self.mod_path,
+                extensions=self.STAGED_EXTENSIONS,
+                include_missing=True,
+            )
+            or []
+        )
+        self._full_call_site_scan_cache = any(
+            self._rel_posix(
+                path if os.path.isabs(path) else os.path.join(self.mod_path, path)
+            ).startswith("events/")
+            for path in paths
+        )
+        return self._full_call_site_scan_cache
+
+    def _get_call_site_scan_args(self) -> List[Tuple[str, frozenset]]:
+        if self._needs_full_call_site_scan():
+            return self._get_fire_scan_args()
+        return self._get_scoped_fire_scan_args()
+
+    def _skip_call_site_check(
+        self, success: str, fail: str, category: str, severity=Severity.ERROR
+    ) -> bool:
+        if not self.staged_only or self._needs_full_call_site_scan():
+            return False
+        files = [path for path, _ in self._get_scoped_fire_scan_args()]
+        if self._files_contain_event_fires(files):
+            return False
+        self.log("  No event fires in scope — skipping")
+        self._report([], success, fail, severity, category)
+        return True
+
     def _get_event_fires(self) -> List[Tuple[str, str, int]]:
         """Every literal event fire in the mod as (event_id, file, line)."""
         if self._fires_cache is not None:
             return self._fires_cache
         fires: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(
-            scan_event_fires, self._get_fire_scan_args(), chunksize=30
-        ):
+        args = [(path, self.mod_path) for path, _ in self._get_fire_scan_args()]
+        for result in self._pool_map(_cached_scan_event_fires, args, chunksize=30):
             fires.extend(result)
         self._fires_cache = fires
         return fires
@@ -784,8 +1143,9 @@ class Validator(BaseValidator):
         if self._typed_fires_cache is not None:
             return self._typed_fires_cache
         fires: List[Tuple[str, str, str, int]] = []
+        args = [(path, self.mod_path) for path, _ in self._get_fire_scan_args()]
         for result in self._pool_map(
-            scan_typed_event_fires, self._get_fire_scan_args(), chunksize=30
+            _cached_scan_typed_event_fires, args, chunksize=30
         ):
             fires.extend(result)
         self._typed_fires_cache = fires
@@ -795,14 +1155,25 @@ class Validator(BaseValidator):
         """Return event declaration keywords from the full events tree."""
         if self._definition_types_cache is not None:
             return self._definition_types_cache
-        definitions: Dict[str, str] = {}
         event_files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
-        for result in self._pool_map(
-            scan_event_definition_types,
-            [(f, frozenset()) for f in event_files],
-            chunksize=20,
-        ):
-            definitions.update(result)
+
+        def _build() -> Dict[str, str]:
+            definitions: Dict[str, str] = {}
+            for result in self._pool_map(
+                scan_event_definition_types,
+                [(f, frozenset()) for f in event_files],
+                chunksize=20,
+            ):
+                definitions.update(result)
+            return definitions
+
+        definitions = disk_cache.aggregate_cached(
+            self.mod_path,
+            "events.definition_types",
+            event_files,
+            _build,
+            namespace="events",
+        )
         self._definition_types_cache = definitions
         return definitions
 
@@ -818,15 +1189,25 @@ class Validator(BaseValidator):
         # Lookup pass: must scan full repo even in staged mode, or staged
         # events lose their random_events MTTH exemption.
         files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
-        ids: set = set()
-        for filepath in files:
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=True
-            )
-            if not text:
-                continue
-            ids.update(_extract_random_event_ids(text))
 
+        def _build() -> set:
+            ids: set = set()
+            for filepath in files:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+                if not text:
+                    continue
+                ids.update(_extract_random_event_ids(text))
+            return ids
+
+        ids = disk_cache.aggregate_cached(
+            self.mod_path,
+            "events.random_event_ids",
+            files,
+            _build,
+            namespace="events",
+        )
         self._random_events_cache = ids
         return ids
 
@@ -980,6 +1361,16 @@ class Validator(BaseValidator):
         self._log_section("Checking for events with missing localisation keys...")
 
         meta, _ = self._get_event_metadata()
+        if not meta:
+            self.log("  No events in scope — skipping")
+            self._report(
+                [],
+                "✓ All event localisation keys are defined",
+                "Events with missing localisation keys:",
+                Severity.WARNING,
+                category="missing-event-localisation",
+            )
+            return
         loc_keys = self._load_localisation_keys()
         self.log(f"  Found {len(meta)} events, {len(loc_keys)} localisation keys")
 
@@ -1011,15 +1402,34 @@ class Validator(BaseValidator):
         triggered_only_ids: Dict[str, str] = {
             ev["id"]: ev["file"]
             for ev in meta
-            if ev["id"] is not None and ev["is_triggered_only"]
+            if ev["id"] is not None
+            and ev["is_triggered_only"]
+            and ev["id"] not in _EXEMPT_UNREFERENCED_EVENT_IDS
         }
 
         self.log(
             f"  Found {len(triggered_only_ids)} triggered-only events — scanning for references..."
         )
+        # Staged mode cannot scan only staged files (fires live elsewhere) and
+        # the full-tree walk is a warning-only CI audit, so commit skips it.
+        if not triggered_only_ids or self.staged_only:
+            if self.staged_only and triggered_only_ids:
+                self.log(
+                    "  Staged mode — skipping unreferenced scan; CI covers the full tree"
+                )
+            else:
+                self.log(
+                    "  No triggered-only events in scope — skipping reference scan"
+                )
+            self._report(
+                [],
+                "✓ All triggered-only events are referenced somewhere",
+                "Triggered-only events with no references found:",
+                Severity.WARNING,
+                category="unreferenced-triggered-only",
+            )
+            return
 
-        # Reference scan: must cover the full repo even in staged mode — a
-        # staged event's references usually live in unstaged files.
         txt_files = self._collect_files(
             ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
             ignore_staged=True,
@@ -1124,12 +1534,14 @@ class Validator(BaseValidator):
             return None
 
         # Lookup pass: a staged event's parent almost always lives elsewhere.
-        graph_args: List[Tuple[str, frozenset]] = [
-            (f, frozenset())
+        graph_args: List[Tuple[str, str]] = [
+            (f, self.mod_path)
             for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
         ]
         parents: Dict[str, Set[str]] = {}
-        for pairs in self._pool_map(scan_event_fire_graph, graph_args, chunksize=10):
+        for pairs in self._pool_map(
+            _cached_scan_event_fire_graph, graph_args, chunksize=10
+        ):
             for parent, child in pairs:
                 parents.setdefault(child, set()).add(parent)
 
@@ -1158,6 +1570,60 @@ class Validator(BaseValidator):
             )
         return results
 
+    def validate_scheduled_date_bounds(self):
+        """Flag scheduled events whose own trigger still carries a date bound.
+
+        A `trigger_year_YYYY_events` slot already fixes the year and `days =`
+        the day, so a `date` comparison on the event is redundant, and a
+        `date <` bound can silently drop the event when `random_days` spills
+        past it. Only events whose sole fire source is the yearly effects are
+        reported: a second fire path (focus, decision, chain) may need the guard.
+        """
+        self._log_section(
+            "Checking scheduled events for redundant date bounds in their trigger..."
+        )
+
+        bounded_args = [
+            (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
+        ]
+        bounded: List[Tuple[str, str, int]] = []
+        for result in self._pool_map(
+            scan_date_bounded_events, bounded_args, chunksize=10
+        ):
+            bounded.extend(result)
+        self.log(f"  Found {len(bounded)} events with a date bound")
+        if not bounded:
+            self._report(
+                [],
+                "✓ No scheduled event carries a redundant date bound",
+                f"Events scheduled from {_YEARLY_EFFECTS_REL} with a redundant date bound:",
+                Severity.WARNING,
+                category="scheduled-event-date-bound",
+            )
+            return
+
+        sources: Dict[str, Set[str]] = {}
+        for eid, filename, _line in self._get_event_fires():
+            sources.setdefault(eid, set()).add(self._rel_posix(filename))
+        if not any(_YEARLY_EFFECTS_REL in rels for rels in sources.values()):
+            self.log(f"  {_YEARLY_EFFECTS_REL} schedules nothing, skipping")
+            return
+
+        results = [
+            f"{eid} - {self._rel_posix(filename)}:{line} is scheduled from "
+            f"{_YEARLY_EFFECTS_REL}, so the date bound in its trigger is redundant "
+            "(remove it; drop the trigger block if nothing else is left)"
+            for eid, filename, line in sorted(bounded)
+            if sources.get(eid) == {_YEARLY_EFFECTS_REL}
+        ]
+        self._report(
+            results,
+            "✓ No scheduled event carries a redundant date bound",
+            f"Events scheduled from {_YEARLY_EFFECTS_REL} with a redundant date bound:",
+            Severity.WARNING,
+            category="scheduled-event-date-bound",
+        )
+
     def validate_mtth_triggered_only(self):
         """Flag events with both mean_time_to_happen and is_triggered_only.
 
@@ -1173,12 +1639,22 @@ class Validator(BaseValidator):
         )
 
         meta, _ = self._get_event_metadata()
+        mtth_triggered = [
+            ev for ev in meta if ev["has_mtth"] and ev["is_triggered_only"]
+        ]
+        if not mtth_triggered:
+            self._report(
+                [],
+                "✓ No triggered-only events with mean_time_to_happen",
+                "Events with mean_time_to_happen AND is_triggered_only (MTTH does nothing — remove one):",
+                Severity.WARNING,
+                category="mtth-triggered-only",
+            )
+            return
         random_event_ids = self._get_random_event_ids()
         results = []
 
-        for ev in meta:
-            if not (ev["has_mtth"] and ev["is_triggered_only"]):
-                continue
+        for ev in mtth_triggered:
             if ev["id"] is None:
                 continue
             if ev["id"] in random_event_ids:
@@ -1238,12 +1714,22 @@ class Validator(BaseValidator):
         self._log_section("Checking hidden events for pointless localisation...")
 
         meta, _ = self._get_event_metadata()
+        hidden_with_loc = [
+            ev for ev in meta if ev["is_hidden"] and ev["title_desc_refs"]
+        ]
+        if not hidden_with_loc:
+            self._report(
+                [],
+                "✓ No hidden events with pointless localisation",
+                "Hidden events with localisation keys (hidden events display nothing — remove these keys):",
+                Severity.WARNING,
+                category="hidden-event-localisation",
+            )
+            return
         loc_keys = self._load_localisation_keys()
         results = []
 
-        for ev in meta:
-            if not ev["is_hidden"] or not ev["title_desc_refs"]:
-                continue
+        for ev in hidden_with_loc:
             # Only flag when the declared title/desc actually resolves to a real
             # loc key. A hidden event declaring `title = foo.t` with no `foo.t`
             # in any .yml has nothing to remove, so it is not a finding.
@@ -1260,6 +1746,82 @@ class Validator(BaseValidator):
             "Hidden events with localisation keys (hidden events display nothing — remove these keys):",
             Severity.WARNING,
             category="hidden-event-localisation",
+        )
+
+    def validate_hidden_event_pictures(self):
+        """Flag hidden events that still declare a picture.
+
+        A hidden event opens no window, so the picture is never drawn and the
+        field is dead. Only the event's own picture counts — a portrait inside a
+        nested character block is not the event's.
+        """
+        self._log_section("Checking hidden events for pointless pictures...")
+
+        meta, _ = self._get_event_metadata()
+        results = [
+            f"{ev['id'] or 'unknown'} - {ev['file']}"
+            for ev in meta
+            if ev["is_hidden"] and ev["picture_refs"]
+        ]
+
+        self._report(
+            results,
+            "✓ No hidden events with pictures",
+            "Hidden events declaring a picture (hidden events display nothing — remove the field):",
+            Severity.WARNING,
+            category="hidden-event-picture",
+        )
+
+    def validate_event_picture_formats(self):
+        """Flag pictures whose art is authored for the other event window.
+
+        News art is roughly 397x153 and country art 217x163, and each window
+        draws its picture at the texture's native size, so a swap overflows the
+        frame or leaves a gap. Hidden events are skipped — nothing renders.
+
+        Reports as ERROR: the #3993 backlog is cleared, so this gates --strict.
+        """
+        self._log_section("Checking event pictures match their window...")
+
+        meta, _ = self._get_event_metadata()
+        candidates = [
+            ev
+            for ev in meta
+            if ev["type"] in ("country_event", "news_event")
+            and not ev["is_hidden"]
+            and ev["picture_refs"]
+        ]
+        if not candidates:
+            self.log("  No event pictures in scope — skipping")
+            return
+
+        # Built sequentially for the reason validate_event_pictures documents,
+        # and without vanilla because MD must not use vanilla event pictures.
+        textures = build_sprite_texture_index(self.mod_path, include_vanilla=False)
+        if len(textures) < 1000:
+            self.log(
+                f"  Only {len(textures)} GFX textures loaded from "
+                f"{os.path.join(self.mod_path, 'interface')}/*.gfx — sprite "
+                "definitions did not load; skipping the picture format check",
+                "warning",
+            )
+            return
+
+        results = []
+        for ev in candidates:
+            for sprite, line in ev["picture_refs"]:
+                message = _picture_format_message(
+                    ev["type"], ev["id"] or "unknown", sprite, textures
+                )
+                if message:
+                    results.append((message, ev["file"], line))
+
+        self._report(
+            results,
+            "✓ All event pictures use art sized for their window",
+            "Event pictures using art authored for the other event window:",
+            Severity.ERROR,
+            category="event-picture-format-mismatch",
         )
 
     def validate_duplicate_event_ids(self):
@@ -1352,9 +1914,26 @@ class Validator(BaseValidator):
         """Flag fires whose effect keyword does not match the declaration."""
         self._log_section("Checking event call types match their declarations...")
 
+        if self._skip_call_site_check(
+            "✓ Event call types match their declarations",
+            "Event calls using the wrong effect type:",
+            "event-fire-type-mismatch",
+        ):
+            return
+        fire_args = self._get_call_site_scan_args()
         definitions = self._get_event_definition_types()
         results = []
-        for eid, call_type, filename, line in self._get_typed_event_fires():
+        typed_fires: List[Tuple[str, str, str, int]] = []
+        if self._needs_full_call_site_scan():
+            typed_fires = self._get_typed_event_fires()
+        else:
+            for result in self._pool_map(
+                scan_typed_event_fires,
+                fire_args,
+                chunksize=30,
+            ):
+                typed_fires.extend(result)
+        for eid, call_type, filename, line in typed_fires:
             expected = definitions.get(eid)
             if expected is None or expected == call_type:
                 continue
@@ -1388,25 +1967,36 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking event fires resolve to a defined event...")
 
-        args_list = self._get_fire_scan_args()
+        if self._skip_call_site_check(
+            "✓ Every fired event ID resolves to a defined event",
+            "Fires at undefined event IDs (silently do nothing):",
+            "undefined-event-fire",
+        ):
+            return
+        args_list = self._get_call_site_scan_args()
 
         # The definition scan must also cover the full repo in staged mode: a
         # staged caller's target event almost always lives in an unstaged file.
-        event_files = [
-            (f, frozenset())
-            for f in self._collect_files(["events/**/*.txt"], ignore_staged=True)
-        ]
-        defined: Set[str] = set()
-        for s in self._pool_map(scan_event_definitions, event_files, chunksize=10):
-            defined.update(s)
+        defined = set(self._get_event_definition_types())
         self.log(f"  Found {len(defined)} defined event IDs")
 
         dynamic_namespaces: Set[str] = set()
-        for s in self._pool_map(scan_dynamic_event_namespaces, args_list, chunksize=30):
-            dynamic_namespaces.update(s)
+        namespace_args = [(path, self.mod_path) for path, _ in args_list]
+        for namespaces in self._pool_map(
+            _cached_scan_dynamic_event_namespaces,
+            namespace_args,
+            chunksize=30,
+        ):
+            dynamic_namespaces.update(namespaces)
 
         seen: Dict[str, Tuple[str, int]] = {}
-        for eid, filename, line in self._get_event_fires():
+        fires: List[Tuple[str, str, int]] = []
+        if self._needs_full_call_site_scan():
+            fires = self._get_event_fires()
+        else:
+            for result in self._pool_map(scan_event_fires, args_list, chunksize=30):
+                fires.extend(result)
+        for eid, filename, line in fires:
             if eid in defined or eid in seen:
                 continue
             if eid[: eid.rfind(".")] in dynamic_namespaces:
@@ -1426,6 +2016,58 @@ class Validator(BaseValidator):
             category="undefined-event-fire",
         )
 
+    def validate_event_picture_omissions(self):
+        """Flag visible country/news events that declare no picture of their own.
+
+        Reads `picture_refs` (depth 0 of the event body) rather than a body-wide
+        scan, so a `create_country_leader = { picture = ... }` portrait nested
+        in an option or `immediate` block does not count as the event's picture.
+        News events are clean and gate as errors; country events carry a
+        backlog of portrait-only events and stay warnings until cleared.
+        """
+        self._log_section("Checking visible country/news events have pictures...")
+
+        meta, _ = self._get_event_metadata()
+        omitted = {"country_event": [], "news_event": []}
+        for ev in meta:
+            if ev["type"] in omitted and not ev["is_hidden"] and not ev["picture_refs"]:
+                omitted[ev["type"]].append(f"{ev['id'] or 'unknown'} - {ev['file']}")
+
+        self._report(
+            omitted["news_event"],
+            "✓ All visible news events have pictures",
+            "Visible news events with no picture field of their own:",
+            Severity.ERROR,
+            category="news-event-picture-omitted",
+        )
+        self._report(
+            omitted["country_event"],
+            "✓ All visible country events have pictures",
+            "Visible country events with no picture field of their own:",
+            Severity.WARNING,
+            category="event-picture-omitted",
+        )
+
+    def validate_placeholder_event_pictures(self):
+        """Flag events whose own picture is one of the drafting stand-in sprites."""
+        self._log_section("Checking for events using placeholder pictures...")
+
+        meta, _ = self._get_event_metadata()
+        results = [
+            (f"{ev['id'] or 'unknown'} - {sprite}", ev["file"], line)
+            for ev in meta
+            for sprite, line in ev["picture_refs"]
+            if sprite in _PLACEHOLDER_PICTURES
+        ]
+
+        self._report(
+            results,
+            "✓ No events use a placeholder picture",
+            "Events using placeholder art (replace with real event art):",
+            Severity.ERROR,
+            category="placeholder-event-picture",
+        )
+
     def validate_event_pictures(self):
         """Flag events whose `picture = GFX_x` sprite is not MD-defined.
 
@@ -1435,6 +2077,7 @@ class Validator(BaseValidator):
         where the vanilla install is absent. A missing sprite renders a blank
         picture box, so it is an error.
         """
+        self.validate_event_picture_omissions()
         self._log_section("Checking for events with missing pictures...")
 
         files = self._collect_files(["events/**/*.txt"])
@@ -1499,6 +2142,16 @@ class Validator(BaseValidator):
             "Checking for fire_only_once events fired inside iterators..."
         )
 
+        if self._skip_call_site_check(
+            "✓ No fire_only_once events fired inside iterators",
+            "fire_only_once events fired inside iterators (only the first recipient gets it):",
+            "fire-only-once-in-loop",
+        ):
+            return
+
+        txt_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        )
         fire_only_once_ids = frozenset(self._get_fire_only_once_ids())
         if not fire_only_once_ids:
             self.log("  No fire_only_once events defined — skipping")
@@ -1510,9 +2163,6 @@ class Validator(BaseValidator):
             )
             return
 
-        txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-        )
         args_list = [(f, fire_only_once_ids, self.mod_path) for f in txt_files]
         all_results = self._pool_map(
             scan_fire_only_once_in_loop, args_list, chunksize=30
@@ -1542,6 +2192,16 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for major events fired inside iterators...")
 
+        if self._skip_call_site_check(
+            "✓ No major events fired inside iterators",
+            "major events fired inside iterators (each iteration broadcasts to every country):",
+            "major-event-in-loop",
+        ):
+            return
+
+        txt_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        )
         major_ids = frozenset(self._get_major_event_ids())
         if not major_ids:
             self.log("  No major events defined — skipping")
@@ -1552,10 +2212,6 @@ class Validator(BaseValidator):
                 category="major-event-in-loop",
             )
             return
-
-        txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-        )
         args_list = [(f, major_ids, self.mod_path) for f in txt_files]
         all_results = self._pool_map(scan_major_event_in_loop, args_list, chunksize=30)
         results = [r for file_res in all_results for r in file_res]
@@ -1571,24 +2227,53 @@ class Validator(BaseValidator):
             category="major-event-in-loop",
         )
 
+    def validate_option_log_without_effect(self):
+        """Flag `log` lines in event options that run no effects.
+
+        An option carrying only `name`, `log`, `trigger` and `ai_chance` changes
+        nothing, so its log records a state change that never happened.
+        """
+        self._log_section("Checking event options for logs without effects...")
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+        results: List[str] = []
+        for sub in self._pool_map(_extract_option_logs_without_effects, files):
+            for name, filename, line in sub:
+                results.append(f"{os.path.basename(filename)}:{line} - {name}")
+        self._report(
+            sorted(results),
+            "✓ No event option logs without effects",
+            "Event options with a log but no effects (the option changes nothing"
+            " — remove the log line):",
+            Severity.WARNING,
+            category="event-option-log-without-effect",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
         self.validate_event_call_long_form()
         self.validate_triggered_only_unreferenced()
         self.validate_date_gated_scheduling()
+        self.validate_scheduled_date_bounds()
         self.validate_missing_localisation()
         self.validate_mtth_triggered_only()
         self.validate_hidden_event_options()
         self.validate_hidden_event_localisation()
+        self.validate_hidden_event_pictures()
         self.validate_duplicate_event_ids()
         self.validate_namespace_mismatch()
         self.validate_invalid_event_calls()
         self.validate_event_fire_types()
         self.validate_undefined_event_fires()
         self.validate_event_pictures()
+        self.validate_placeholder_event_pictures()
+        self.validate_event_picture_formats()
         self.validate_fire_only_once_in_loop()
         self.validate_major_event_in_loop()
+        self.validate_option_log_without_effect()
 
 
 if __name__ == "__main__":

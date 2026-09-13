@@ -9,7 +9,7 @@ import difflib
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, List, Set, Tuple
+from typing import Dict, FrozenSet, Iterable, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -66,6 +66,18 @@ def _references(text: str) -> List[Tuple[str, int]]:
     return found
 
 
+def load_known_categories(paths: Iterable[str]) -> FrozenSet[str]:
+    """Every category token declared in the given technology_tags files."""
+    known: Set[str] = set()
+    for path in paths:
+        try:
+            text = FileOpener.open_text_file(path, strip_comments_flag=True)
+        except (OSError, UnicodeDecodeError):
+            continue
+        known.update(_CATEGORY_TOKEN_RE.findall(text))
+    return frozenset(known)
+
+
 def _check_file(args) -> List[Tuple[str, str, int]]:
     """Worker: return (category, relpath, line) for unknown references."""
     filepath, known, mod_path = args
@@ -87,15 +99,11 @@ class Validator(BaseValidator):
 
     def _load_known_categories(self) -> FrozenSet[str]:
         """Every category token declared under common/technology_tags/."""
-        known: Set[str] = set()
-        for path in self._collect_files([_TAGS_GLOB], ignore_staged=True):
-            try:
-                text = FileOpener.open_text_file(path, strip_comments_flag=True)
-            except (OSError, UnicodeDecodeError):
-                continue
-            known.update(_CATEGORY_TOKEN_RE.findall(text))
+        known = load_known_categories(
+            self._collect_files([_TAGS_GLOB], ignore_staged=True)
+        )
         self.log(f"  Known category set: {len(known)} names")
-        return frozenset(known)
+        return known
 
     def validate_category_references(self, known: FrozenSet[str]):
         self._log_section("Checking technology category references...")

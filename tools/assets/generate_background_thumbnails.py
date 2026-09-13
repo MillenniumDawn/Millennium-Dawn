@@ -114,7 +114,9 @@ def thumbnail_for(source: Path) -> Path:
 
 def render_thumbnail(dds: types.ModuleType, source: Path) -> bytes:
     with Image.open(source) as image:
-        thumbnail = image.convert("RGB").resize(THUMBNAIL_SIZE, Image.LANCZOS)
+        thumbnail = image.convert("RGB").resize(
+            THUMBNAIL_SIZE, Image.Resampling.LANCZOS
+        )
     raw = thumbnail.tobytes()
     pixels = [
         (raw[i + 2], raw[i + 1], raw[i], 255) for i in range(0, len(raw), 3)
