@@ -820,12 +820,10 @@ _DELETE_TEMPLATE_BLOCK_RE = re.compile(
     r"delete_unit_template_and_units\s*=\s*\{([^{}]*)\}"
 )
 _DELETE_TEMPLATE_NAME_RE = re.compile(r'\bdivision_template\s*=\s*"([^"]*)"')
-_ZERO_FACTOR_RE = re.compile(
-    r"\b(?:start_equipment_factor|start_manpower_factor)\s*=\s*0(?![.\d])"
-)
 _EQUIPMENT_FACTOR_RE = re.compile(r"\bstart_equipment_factor\s*=")
-_LOW_FACTOR_RE = re.compile(
-    r"\bstart_(equipment|manpower)_factor\s*=\s*([+-]?(?:\d+\.\d*|\.\d+|\d+))"
+_START_FACTOR_RE = re.compile(
+    r"\bstart_(equipment|manpower)_factor\s*=\s*"
+    r"([+-]?(?:\d+\.\d*|\.\d+|\d+))(?![.\w])"
 )
 _STATE_YES_RE = re.compile(r"\bstate\s*=\s*yes\b")
 _EXECUTE_EFFECT_RE = re.compile(r"\bexecute_effect\b")
@@ -1814,24 +1812,24 @@ def _check_created_units(
         # The string carries escaped quotes (\"...\"); normalize so the inner
         # name/template/factor tokens parse like the engine's parsed string.
         dval_clean = dval.replace('\\"', '"')
-        if _ZERO_FACTOR_RE.search(dval_clean):
-            out.error(
-                "zero-factor",
-                f"{cu['line']}: start_equipment_factor/start_manpower_factor of 0 is treated as 1",
-                line,
-            )
         if not _EQUIPMENT_FACTOR_RE.search(dval_clean):
             out.warn(
                 "missing-equipment-factor",
                 f"{cu['line']}: division string has no start_equipment_factor; set it explicitly",
                 line,
             )
-        for fmatch in _LOW_FACTOR_RE.finditer(dval_clean):
+        for fmatch in _START_FACTOR_RE.finditer(dval_clean):
             try:
                 fvalue = float(fmatch.group(2))
             except ValueError:
                 continue
-            if 0.0 < fvalue < 0.01:
+            if fvalue == 0.0:
+                out.error(
+                    "zero-factor",
+                    f"{cu['line']}: start_{fmatch.group(1)}_factor of {fmatch.group(2)} is treated as 1",
+                    line,
+                )
+            elif fvalue < 0.01:
                 out.error(
                     "near-zero-factor",
                     f"{cu['line']}: start_{fmatch.group(1)}_factor of {fmatch.group(2)} is below 0.01",

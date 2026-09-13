@@ -12,6 +12,7 @@ carry that ensure pattern.
 
 from textwrap import indent
 
+import pytest
 import validate_oob_units as oob
 from validate_oob_units import (
     Validator,
@@ -226,6 +227,24 @@ def test_missing_equipment_factor_warns(tmp_path):
     assert warned == [Severity.WARNING]
 
 
+@pytest.mark.parametrize("value", ("0", "0.0", ".0", "0.", "00", "+0", "-0"))
+@pytest.mark.parametrize(
+    "factor_name", ("start_equipment_factor", "start_manpower_factor")
+)
+def test_zero_factor_spellings_are_errors(tmp_path, factor_name, value):
+    factor = f"{factor_name} = {value}"
+    if factor_name == "start_manpower_factor":
+        factor = f"start_equipment_factor = 1.0 {factor}"
+    content = _GUARDED.replace("start_equipment_factor = 1.0", factor)
+    issues = _run(content, tmp_path)
+    severities = [
+        i.severity
+        for i in issues
+        if i.category == "CREATE UNIT: equipment/manpower factor is zero"
+    ]
+    assert severities == [Severity.ERROR]
+
+
 def test_near_zero_equipment_factor_is_an_error(tmp_path):
     content = _GUARDED.replace(
         "start_equipment_factor = 1.0", "start_equipment_factor = 0.005"
@@ -238,6 +257,18 @@ def test_near_zero_equipment_factor_is_an_error(tmp_path):
     ]
     assert "CREATE UNIT: equipment/manpower factor below 0.01" in _cats(issues)
     assert errored == [Severity.ERROR]
+
+
+@pytest.mark.parametrize(
+    "factor_name", ("start_equipment_factor", "start_manpower_factor")
+)
+def test_negative_factor_is_an_error(tmp_path, factor_name):
+    factor = f"{factor_name} = -0.5"
+    if factor_name == "start_manpower_factor":
+        factor = f"start_equipment_factor = 1.0 {factor}"
+    issues = _run(_GUARDED.replace("start_equipment_factor = 1.0", factor), tmp_path)
+    category = "CREATE UNIT: equipment/manpower factor below 0.01"
+    assert [i.severity for i in issues if i.category == category] == [Severity.ERROR]
 
 
 def test_factor_floor_boundary_0_01_is_clean(tmp_path):
