@@ -744,33 +744,28 @@ def test_vanilla_install_paths_do_not_leak_across_installs(tmp_path, monkeypatch
 
 
 def test_portable_key_and_rehome_edges(tmp_path):
-    old = str(tmp_path / "old")
-    new = str(tmp_path / "new")
-    posix_new = os.path.normpath(new).replace("\\", "/")
+    old = (tmp_path / "old").as_posix()
+    new = (tmp_path / "new").as_posix()
     assert disk_cache._source_key(str(tmp_path), "") == ""
     assert disk_cache._source_key(str(tmp_path), str(tmp_path)) == "."
     outside = tmp_path.parent / "other.txt"
     assert disk_cache._source_key(str(tmp_path), str(outside)) == os.path.normpath(
         str(outside)
     ).replace("\\", "/")
-    assert disk_cache._rehome_str(old, old, new) == posix_new
-    assert disk_cache._rehome_mod_paths([old + "/a.txt"], old, new) == [
-        os.path.join(new, "a.txt").replace("\\", "/")
-    ]
+    assert disk_cache._rehome_str(old, old, new) == new
+    assert disk_cache._rehome_mod_paths([old + "/a.txt"], old, new) == [new + "/a.txt"]
     assert disk_cache._rehome_mod_paths((old + "/a.txt",), old, new) == (
-        os.path.join(new, "a.txt").replace("\\", "/"),
+        new + "/a.txt",
     )
-    assert disk_cache._rehome_mod_paths({old + "/a.txt"}, old, new) == {
-        os.path.join(new, "a.txt").replace("\\", "/")
-    }
+    assert disk_cache._rehome_mod_paths({old + "/a.txt"}, old, new) == {new + "/a.txt"}
     assert disk_cache._rehome_mod_paths(frozenset({old + "/a.txt"}), old, new) == (
-        frozenset({os.path.join(new, "a.txt").replace("\\", "/")})
+        frozenset({new + "/a.txt"})
     )
     from collections import namedtuple
 
     rec = namedtuple("Rec", "path")
     moved = disk_cache._rehome_mod_paths(rec(old + "/a.txt"), old, new)
-    assert moved.path == os.path.join(new, "a.txt").replace("\\", "/")
+    assert moved.path == new + "/a.txt"
     loop: list = []
     loop.append(loop)
     disk_cache._rehome_mod_paths(loop, old, new)
