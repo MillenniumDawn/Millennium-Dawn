@@ -41,6 +41,7 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
     "bonus-names": ["--name-not-owner-id"],
     "focus-tree": ["--missing-icons"],
+    "variables": ["--redundant-focus-flags"],
 }
 
 

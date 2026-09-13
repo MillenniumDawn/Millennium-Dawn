@@ -7,7 +7,7 @@ from shared.paths import VALIDATION_DIR
 
 
 def test_every_batch_spec_script_exists():
-    assert len(vb.ALL_SPECS) == 38
+    assert len(vb.ALL_SPECS) == 39
     assert not {spec.name for spec in vb.ALL_SPECS} & {
         spec.name for spec in vb.IMPACT_ONLY_SPECS
     }
@@ -29,6 +29,12 @@ def test_batches_cover_every_ci_validator_exactly_once():
 def test_core_batch_selects_from_the_core_groups():
     for spec in vb.BATCHES["core"]:
         assert set(spec.groups) == set(vb._CORE_GROUPS)
+
+
+def test_variables_spec_carries_the_redundant_focus_flag_scan():
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "variables")
+    assert spec.args == ("--redundant-focus-flags",)
+    assert spec.strict is True
 
 
 def test_selected_specs_filters_by_changed_groups():
