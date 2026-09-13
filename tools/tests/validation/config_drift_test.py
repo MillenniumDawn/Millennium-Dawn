@@ -2,6 +2,7 @@
 
 import re
 
+import dev_setup
 import pytest
 import yaml
 from change_groups import GROUP_PATTERNS, classify
@@ -23,6 +24,12 @@ from validator_batches import ALL_SPECS, BATCHES, ValidatorSpec
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
 CI_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "test-suite.yml"
 VALIDATOR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "validator-cache.yml"
+DOCS_QUALITY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "docs-quality.yml"
+SETUP_MD_PYTHON = REPO_ROOT / ".github" / "actions" / "setup-md-python" / "action.yml"
+DEVELOPER_SETUP = (
+    REPO_ROOT / "docs" / "src" / "content" / "resources" / "developer-setup.md"
+)
+TOOLS_README = REPO_ROOT / "tools" / "README.md"
 NIGHTLY_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "nightly-pr-validation.yml"
 PR_CACHE_WORKFLOW = REPO_ROOT / ".github" / "workflows" / "pr-cache-cleanup.yml"
 
@@ -38,6 +45,14 @@ OLD_WORKFLOWS = (
 def _workflow_trigger(workflow):
     config = yaml.safe_load(workflow.read_text(encoding="utf-8"))
     return config.get("on", config.get(True, {}))
+
+
+def _setup_python_version(steps):
+    for step in steps:
+        uses = str(step.get("uses", ""))
+        if "actions/setup-python@" in uses:
+            return step["with"]["python-version"]
+    raise AssertionError("no actions/setup-python step")
 
 
 def _parse_precommit():
@@ -170,6 +185,45 @@ def test_tools_linux_runs_quality_suite():
     assert "staged_validators_real_test.py" in commands
 
 
+def test_python_version_declarations_agree():
+    major, minor = dev_setup.MIN_PYTHON
+    assert (major, minor) == (3, 12)
+    assert not hasattr(dev_setup, "REC_PYTHON")
+    version = f"{major}.{minor}"
+    pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
+    assert re.search(rf'^target-version\s*=\s*"py{major}{minor}"\s*$', pyproject, re.M)
+    assert re.search(rf'^py-version\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M)
+    assert re.search(
+        rf'^python_version\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M
+    )
+    assert re.search(
+        rf'^pythonVersion\s*=\s*"{re.escape(version)}"\s*$', pyproject, re.M
+    )
+
+    for path in (
+        SETUP_MD_PYTHON,
+        VALIDATOR_CACHE_WORKFLOW,
+        DOCS_QUALITY_WORKFLOW,
+        DEVELOPER_SETUP,
+        TOOLS_README,
+    ):
+        assert path.is_file(), path
+
+    action = yaml.safe_load(SETUP_MD_PYTHON.read_text(encoding="utf-8"))
+    cache = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
+    docs = yaml.safe_load(DOCS_QUALITY_WORKFLOW.read_text(encoding="utf-8"))
+    assert _setup_python_version(action["runs"]["steps"]) == version
+    assert _setup_python_version(cache["jobs"]["build-cache"]["steps"]) == version
+    assert _setup_python_version(docs["jobs"]["docs-quality"]["steps"]) == version
+    assert "3.x" not in SETUP_MD_PYTHON.read_text(encoding="utf-8")
+    assert "3.x" not in VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
+
+    setup_doc = DEVELOPER_SETUP.read_text(encoding="utf-8")
+    assert f"{version}+" in setup_doc
+    assert "3.10+" not in setup_doc
+    assert f"Python {version}" in TOOLS_README.read_text(encoding="utf-8")
+
+
 def test_tools_checkout_exposes_consumed_configuration():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     checkout = workflow["jobs"]["tools-tests"]["steps"][0]
@@ -182,8 +236,10 @@ def test_tools_checkout_exposes_consumed_configuration():
         ".github/actions/setup-md-python/action.yml",
         ".github/workflows/test-suite.yml",
         ".github/workflows/validator-cache.yml",
+        ".github/workflows/docs-quality.yml",
         ".github/workflows/nightly-pr-validation.yml",
         ".github/workflows/pr-cache-cleanup.yml",
+        "docs/src/content/resources/developer-setup.md",
     }
     assert required <= sparse
 
@@ -235,11 +291,27 @@ def test_detect_changes_uses_python_grouping():
     assert "dorny/paths-filter" not in text
     assert "filter: blob:none" in text
     assert "git diff --name-status -z" in text
+    detect_script = next(
+        step["run"]
+        for step in detect["steps"]
+        if step.get("name") == "Derive changed files"
+    )
+    assert re.search(
+        r'git diff --unified=0 "\$merge_base" "\$HEAD_SHA" -- \\\n'
+        r"\s+localisation/english/MD_politics_view_parties_l_english\.yml \\\n"
+        r'\s+"\$hook_path" > party-loc-scope\.diff',
+        detect_script,
+    )
+    assert "party-loc-scope.diff" in text
     assert "collect_changed_files.py" in text
     assert "change_groups.py" in text
     assert "full_suite" in detect["outputs"]
     assert "tools" in detect["outputs"]
-    assert any(step.get("name") == "Upload changed files" for step in detect["steps"])
+    upload = next(
+        step for step in detect["steps"] if step.get("name") == "Upload changed files"
+    )
+    assert "changed-files.txt" in upload["with"]["path"]
+    assert "party-loc-scope.diff" in upload["with"]["path"]
     for path in ("resources/documentation/modifiers_documentation.md",):
         assert classify([path])["full_suite"] is True
 
@@ -280,7 +352,7 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
         and step.get("with", {}).get("path")
         and "sparse" in step.get("id", "")
     )
-    assert "md-sparse-v1-${{ runner.os }}" in cache["with"]["key"]
+    assert "md-sparse-v2-${{ runner.os }}" in cache["with"]["key"]
     assert "needs.detect-changes.outputs.head-sha" in cache["with"]["key"]
     valcache = next(
         step
@@ -291,6 +363,25 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
     assert "full_suite != 'true'" in valcache["if"]
     assert "steps.toolshash.outputs.hash" in valcache["with"]["key"]
     assert "base-sha" not in valcache["with"]["key"]
+
+
+def test_targeted_b_downloads_and_hands_off_party_loc_scope():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    steps = workflow["jobs"]["mod-tests"]["steps"]
+    download = next(
+        step
+        for step in steps
+        if step.get("name") == "Download party localisation scope"
+    )
+    assert download["if"] == "matrix.batch == 'targeted-b'"
+    assert download["with"] == {
+        "name": "changed-files",
+        "path": "validation-scope",
+    }
+    batch = next(step for step in steps if step.get("name") == "Run validator batch")
+    assert "MD_PARTY_LOC_DIFF" in batch["env"]
+    assert "validation-scope/party-loc-scope.diff" in batch["env"]["MD_PARTY_LOC_DIFF"]
+    assert "targeted-b" in batch["env"]["MD_PARTY_LOC_DIFF"]
 
 
 def test_mod_core_runs_extra_checks_after_batch():
@@ -536,6 +627,13 @@ def test_ci_strict_gate_lives_in_batch_specs():
         "building-guards",
         "simplifications",
     ]
+
+
+def test_ci_party_loc_gate_is_registered_and_strict():
+    spec = _spec_for("validate_party_loc.py")
+    assert spec.name == "party-loc"
+    assert spec.groups == ("localisation", "common")
+    assert spec.strict is True
 
 
 def test_ci_redundant_modifier_gate_is_strict():

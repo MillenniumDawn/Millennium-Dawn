@@ -8,4 +8,6 @@ paths:
 
 # AI Strategy & Equipment
 
-Read `.claude/docs/ai-strategy-reference.md` (three-layer unit production: threat gate, role ratios, templates) and `.claude/docs/ai-equipment-reference.md` (role coverage, `target_variant`, penalty cascades) before editing. `role_ratio id` must match a `role` in `common/ai_templates/` and unit names are case-sensitive — both pre-commit-validated.
+Read `.claude/docs/ai-strategy-reference.md` and `.claude/docs/ai-equipment-reference.md`
+before editing. They own production gates, role/template matching, equipment coverage,
+and refresh scheduling.

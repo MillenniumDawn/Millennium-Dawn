@@ -709,46 +709,52 @@ class Validator(BaseValidator):
         Always parses every idea file regardless of staged mode — the full
         set of defined ideas is needed as the reference for undefined-ref checks.
         """
-        # Force full scan for idea definitions even in staged mode
         saved = self.staged_only
         self.staged_only = False
         idea_files = self._collect_files(["common/ideas/**/*.txt"])
+        char_files = self._collect_files(["common/characters/**/*.txt"])
+        idea_tag_files = self._collect_files(["common/idea_tags/**/*.txt"])
         self.staged_only = saved
         self.log(f"  Parsing {len(idea_files)} idea files...")
+        slotless = self.slotless_categories
 
-        all_defined: Dict[str, Tuple[str, Optional[str], Optional[str]]] = {}
-        issues_by_file: Dict[str, List[IdeaIssue]] = {}
-        ideas_by_file: Dict[str, List[str]] = {}
+        def _build():
+            all_defined: Dict[str, Tuple[str, Optional[str], Optional[str]]] = {}
+            issues_by_file: Dict[str, List[IdeaIssue]] = {}
+            ideas_by_file: Dict[str, List[str]] = {}
+            for filepath in idea_files:
+                defined, issues = _parse_ideas_from_file(
+                    filepath,
+                    self.mod_path,
+                    slotless,
+                )
+                all_defined.update(defined)
+                ideas_by_file[filepath] = list(defined.keys())
+                if issues:
+                    issues_by_file[filepath] = issues
+            char_tokens = 0
+            for filepath in char_files:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+                if not text or "idea_token" not in text:
+                    continue
+                for token in _IDEA_TOKEN_RE.findall(text):
+                    if token not in all_defined:
+                        all_defined[token] = ("character", None, None)
+                        char_tokens += 1
+            return all_defined, issues_by_file, ideas_by_file, char_tokens
 
-        for filepath in idea_files:
-            defined, issues = _parse_ideas_from_file(
-                filepath,
+        all_defined, issues_by_file, ideas_by_file, char_tokens = (
+            disk_cache.aggregate_cached(
                 self.mod_path,
-                self.slotless_categories,
+                "ideas.all_defs",
+                idea_files + char_files + idea_tag_files,
+                _build,
+                namespace="ideas",
             )
-            all_defined.update(defined)
-            ideas_by_file[filepath] = list(defined.keys())
-            if issues:
-                issues_by_file[filepath] = issues
-
-        # Also collect idea_token entries from character files
-        saved2 = self.staged_only
-        self.staged_only = False
-        char_files = self._collect_files(["common/characters/**/*.txt"])
-        self.staged_only = saved2
-        char_tokens = 0
-        for filepath in char_files:
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=True
-            )
-            if not text or "idea_token" not in text:
-                continue
-            for token in _IDEA_TOKEN_RE.findall(text):
-                if token not in all_defined:
-                    all_defined[token] = ("character", None, None)
-                    char_tokens += 1
+        )
         self.log(f"  Found {char_tokens} character idea_token entries")
-
         return all_defined, issues_by_file, ideas_by_file
 
     def validate_undefined_idea_refs(

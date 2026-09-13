@@ -233,7 +233,7 @@ def test_skipped_files_contribute_no_activations_or_removals(tmp_path, write_pat
         set(),
         set(),
         set(),
-        set(),
+        [],
     )
 
 
@@ -278,7 +278,9 @@ def test_formable_without_a_commit_write_is_reported():
 
 def test_icon_checks_skip_themselves_without_a_sprite_index(tmp_path, monkeypatch):
     monkeypatch.setattr(V, "build_sprite_index", lambda *a, **k: {"GFX_one": "x"})
-    monkeypatch.setattr(V, "build_sprite_texture_index", lambda *a, **k: {})
+    monkeypatch.setattr(
+        V, "build_sprite_size_index", lambda *a, **k: V.SpriteSizeIndex({})
+    )
     validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
 
     validator.validate_missing_icons()
@@ -293,16 +295,16 @@ def test_icon_type_message_accepts_art_sized_for_its_slot(tmp_path):
 
     texture = tmp_path / "icon.dds"
     Image.new("RGB", (32, 31)).save(str(texture), format="DDS")
-    textures = {"GFX_decision_x": str(texture)}
+    textures = V.SpriteSizeIndex({"GFX_decision_x": str(texture)})
 
     assert V._icon_type_message("decision", "dec", "GFX_decision_x", textures) is None
-    assert "category icon" in V._icon_type_message(
-        "category_icon", "cat", "GFX_decision_x", textures
-    )
+    message = V._icon_type_message("category_icon", "cat", "GFX_decision_x", textures)
+    assert message is not None
+    assert "category icon" in message
 
 
 def test_icon_type_message_skips_a_texture_it_cannot_measure(tmp_path):
-    textures = {"GFX_decision_x": str(tmp_path / "gone.dds")}
+    textures = V.SpriteSizeIndex({"GFX_decision_x": str(tmp_path / "gone.dds")})
 
     assert V._icon_type_message("decision", "dec", "GFX_decision_x", textures) is None
 

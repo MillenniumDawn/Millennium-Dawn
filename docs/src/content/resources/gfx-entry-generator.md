@@ -39,7 +39,7 @@ Python is an interpreted, object-oriented, high-level programming language with 
 
 "python command dont work / I dont have python installed, how do I download it?"<br>
 
-In order to install python you can access Windows Store and search for "Python 3.10", once it is installed you are good to go, enter Step 3) again. <br>
+In order to install python you can access Windows Store and search for "Python 3.12", once it is installed you are good to go, enter Step 3) again. <br>
 
 "I dont use windows, how can I get python?" <br>
 

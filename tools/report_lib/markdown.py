@@ -1,15 +1,18 @@
 """Render the validation report as Markdown.
 
+Section order, findings first: marker, "Test Suite Report" verdict banner
+(driven by the new-vs-baseline counts when a baseline is present), metadata
+strip, an unavailable-baseline notice when needed, the new-findings and in-PR
+groups, the per-category table, then the Mod tests and Tools tests tables
+(findings only, with a New column when classified; a clean Tools sweep
+collapses to one line).
+
 Two renderings come out of the same builder:
-  - PR comment (``include_validator_sections=False``): marker, "Test Suite
-    Report" verdict banner (new counts lead when a baseline is present),
-    metadata strip, an unavailable-baseline notice when needed, the Tools
-    tests and Mod tests tables (with a New column when classified), capped
-    new-findings or in-diff groups, plus a pointer to the step summary.
-  - Step summary (default): the same top sections, then new findings in two
-    collapsible error/warning groups, and per-validator <details> only for
-    validators with findings. Clean validators collapse to a single count
-    line. Optionally the raw per-validator logs.
+  - PR comment (``include_validator_sections=False``): findings groups capped
+    at ``MAX_NEW_FINDINGS_COMMENT``, closing with a pointer to the step summary.
+  - Step summary (default): the same sections at a higher cap, plus
+    per-validator <details> for validators with findings. Clean validators
+    collapse to a single count line. Optionally the raw per-validator logs.
 """
 
 from collections import defaultdict
@@ -30,11 +33,16 @@ MAX_NEW_FINDINGS_COMMENT = 40
 MAX_ISSUES_STEP_SUMMARY = 1000
 # How many issues to show inside one collapsed category block.
 MAX_PER_CATEGORY = 100
+# Rows in the per-category breakdown table.
+MAX_CATEGORY_ROWS = 25
 
 # Shown once above the issue list when there is anything to fix.
 _LEGEND = "_Errors block merge. Warnings are advisory and won't fail CI._"
 _NEW_FINDINGS_HEADING = "New Findings Introduced by this branch."
-_IN_DIFF_HEADING = "Findings in your diff"
+_IN_PR_HEADING = "Findings in your PR"
+_CATEGORY_HEADING = "Findings by category"
+# Statuses that mean a run produced no usable result, so it cannot count as passed.
+_INCOMPLETE_STATUSES = {"unknown", "no_output"}
 
 
 def render(
@@ -50,7 +58,7 @@ def render(
 
     With ``include_validator_sections=False`` the per-validator <details>
     sections and raw logs are dropped (the concise PR comment). New findings
-    (or in-diff findings when no baseline) still appear, capped by
+    and in-PR findings still appear, each capped by
     ``MAX_NEW_FINDINGS_COMMENT``. The default renders the full detail for the
     step summary.
 
@@ -58,7 +66,7 @@ def render(
     annotation: new counts lead the verdict, a New column appears on the
     tables, and new findings are listed in separate groups.
     ``Issue.baseline_status`` drives the per-bullet NEW tag; ``Issue.in_diff``
-    drives IN YOUR DIFF. Omit ``baseline_stats`` (no baseline restored) and
+    drives IN YOUR PR. Omit ``baseline_stats`` (no baseline restored) and
     the report renders without NEW annotation.
     """
     parts: List[str] = []
@@ -79,20 +87,6 @@ def render(
         parts.append(notice)
         parts.append("")
 
-    new_errors = (
-        _new_error_counts(baseline_stats) if baseline_stats is not None else None
-    )
-
-    tools_section = _render_tools_section(runs, new_errors)
-    if tools_section:
-        parts.append(tools_section)
-        parts.append("")
-
-    summary = _render_summary_table(runs, new_errors)
-    if summary:
-        parts.append(summary)
-        parts.append("")
-
     findings_cap = (
         max_visible
         if include_validator_sections
@@ -103,11 +97,32 @@ def render(
         if baseline_section:
             parts.append(baseline_section)
             parts.append("")
-    else:
-        in_diff_section = _render_in_diff_section(issues, ctx, findings_cap)
-        if in_diff_section:
-            parts.append(in_diff_section)
-            parts.append("")
+
+    in_pr_section = _render_in_pr_section(
+        issues, ctx, findings_cap, exclude_new=baseline_stats is not None
+    )
+    if in_pr_section:
+        parts.append(in_pr_section)
+        parts.append("")
+
+    categories = _render_category_section(issues, baseline_stats)
+    if categories:
+        parts.append(categories)
+        parts.append("")
+
+    new_errors = (
+        _new_error_counts(baseline_stats) if baseline_stats is not None else None
+    )
+
+    summary = _render_summary_table(runs, new_errors)
+    if summary:
+        parts.append(summary)
+        parts.append("")
+
+    tools_section = _render_tools_section(runs, new_errors)
+    if tools_section:
+        parts.append(tools_section)
+        parts.append("")
 
     errored_or_warned = [
         i for i in issues if i.severity in (Severity.ERROR, Severity.WARNING)
@@ -191,38 +206,39 @@ def _severity_icon(errors: int, warnings: int) -> str:
 def _error_verdict_with_baseline(
     total_errors: int, total_warnings: int, stats: "BaselineStats"
 ) -> str:
-    if stats.new_errors:
-        line = (
-            f"{_plural(stats.new_errors, 'new error')} against the main baseline "
-            f"must be fixed before merge."
-        )
-        extras = [f"{_plural(total_errors, 'error')} total"]
-        if stats.new_warnings:
-            extras.append(_plural(stats.new_warnings, "new warning"))
-        elif total_warnings:
-            extras.append(f"{_plural(total_warnings, 'warning')}, advisory")
-        return f"{line} ({', '.join(extras)}.)"
     line = (
-        f"No new errors against the main baseline. "
-        f"{_plural(total_errors, 'error')} must be fixed before merge."
+        f"{_plural(stats.new_errors, 'new error')} against the main baseline "
+        f"must be fixed before merge."
     )
+    extras = [f"{_plural(total_errors, 'error')} total"]
     if stats.new_warnings:
-        line += f" ({_plural(stats.new_warnings, 'new warning')}.)"
+        extras.append(_plural(stats.new_warnings, "new warning"))
     elif total_warnings:
-        line += f" ({_plural(total_warnings, 'warning')}, advisory.)"
-    return line
+        extras.append(f"{_plural(total_warnings, 'warning')}, advisory")
+    return f"{line} ({', '.join(extras)}.)"
 
 
-def _warning_verdict_with_baseline(total_warnings: int, stats: "BaselineStats") -> str:
-    if stats.new_warnings:
+def _warning_verdict_with_baseline(
+    total_errors: int, total_warnings: int, stats: "BaselineStats"
+) -> str:
+    line = f"{_plural(stats.new_warnings, 'new warning')} against the main baseline."
+    extras = [f"{_plural(total_warnings, 'warning')} to review"]
+    if total_errors:
+        extras.append(f"{_plural(total_errors, 'pre-existing error')} remain")
+    return f"{line} ({', '.join(extras)}. None block merge.)"
+
+
+def _clean_verdict_with_baseline(total_errors: int, total_warnings: int) -> str:
+    """No new findings, but the standing backlog is still worth stating."""
+    if not total_errors:
         return (
-            f"{_plural(stats.new_warnings, 'new warning')} against the main baseline. "
-            f"({_plural(total_warnings, 'warning')} to review. None block merge.)"
+            f"No new warnings against the main baseline. "
+            f"{_plural(total_warnings, 'warning')} to review. None block merge."
         )
-    return (
-        f"No new warnings against the main baseline. "
-        f"{_plural(total_warnings, 'warning')} to review. None block merge."
-    )
+    extras = [f"{_plural(total_errors, 'pre-existing error')} remain"]
+    if total_warnings:
+        extras.append(f"{_plural(total_warnings, 'warning')}, advisory")
+    return f"No new errors against the main baseline. ({', '.join(extras)}.)"
 
 
 def _render_verdict(
@@ -230,39 +246,50 @@ def _render_verdict(
     validation_scope: str = "full",
     baseline_stats: Optional["BaselineStats"] = None,
 ) -> str:
-    """A GitHub alert callout giving an at-a-glance pass/fail verdict."""
+    """A GitHub alert callout giving an at-a-glance pass/fail verdict.
+
+    With a baseline restored the alert level follows what the branch
+    introduced, not the repo-wide totals: CAUTION is reserved for new errors,
+    so a clean branch sitting on a standing backlog does not read as broken.
+    """
     if not runs:
         if validation_scope == "preview":
             return "> [!NOTE]\n> ✅ No validators selected. Nothing to run."
         return ""
     total_errors, total_warnings = _totals(runs)
-    incomplete = sum(1 for run in runs if run.status in {"unknown", "no_output"})
+    incomplete = sum(1 for run in runs if run.status in _INCOMPLETE_STATUSES)
+    incomplete_tail = (
+        f" {_plural(incomplete, 'validator')} did not complete." if incomplete else ""
+    )
 
-    if total_errors:
-        if baseline_stats is not None:
+    if baseline_stats is not None:
+        if baseline_stats.new_errors:
             line = _error_verdict_with_baseline(
                 total_errors, total_warnings, baseline_stats
             )
-        else:
-            line = f"{_plural(total_errors, 'error')} must be fixed before merge."
-            if total_warnings:
-                line += f" ({_plural(total_warnings, 'warning')}, advisory.)"
-        if incomplete:
-            line += f" {_plural(incomplete, 'validator')} did not complete."
-        return f"> [!CAUTION]\n> ❌ {line}"
-
-    if total_warnings:
-        if baseline_stats is not None:
-            line = _warning_verdict_with_baseline(total_warnings, baseline_stats)
-        else:
-            line = f"{_plural(total_warnings, 'warning')} to review. None block merge."
-        if incomplete:
-            line += f" {_plural(incomplete, 'validator')} did not complete."
-        return f"> [!WARNING]\n> ⚠️ {line}"
+            return f"> [!CAUTION]\n> ❌ {line}{incomplete_tail}"
+        if baseline_stats.new_warnings:
+            line = _warning_verdict_with_baseline(
+                total_errors, total_warnings, baseline_stats
+            )
+            return f"> [!WARNING]\n> ⚠️ {line}{incomplete_tail}"
+        if total_errors or total_warnings:
+            line = _clean_verdict_with_baseline(total_errors, total_warnings)
+            return f"> [!NOTE]\n> ✅ {line}{incomplete_tail}"
+    elif total_errors:
+        line = f"{_plural(total_errors, 'error')} must be fixed before merge."
+        if total_warnings:
+            line += f" ({_plural(total_warnings, 'warning')}, advisory.)"
+        return f"> [!CAUTION]\n> ❌ {line}{incomplete_tail}"
+    elif total_warnings:
+        line = f"{_plural(total_warnings, 'warning')} to review. None block merge."
+        return f"> [!WARNING]\n> ⚠️ {line}{incomplete_tail}"
 
     if incomplete:
+        # An unfinished run is a pipeline problem, not something the PR
+        # introduced — warn rather than caution.
         line = f"{_plural(incomplete, 'validator')} did not produce a complete result."
-        return f"> [!CAUTION]\n> ❌ {line} Review the workflow run."
+        return f"> [!WARNING]\n> ⚠️ {line} Review the workflow run."
 
     scope_tails = {
         "full": "Nothing to fix.",
@@ -316,7 +343,7 @@ def _render_availability_notice(ctx: ReportContext) -> str:
         )
     if ctx.changed_files_status == "unavailable":
         bits.append(
-            "Changed-file list was not available. Findings are not tagged IN YOUR DIFF."
+            "Changed-file list was not available. Findings are not tagged IN YOUR PR."
         )
     if not bits:
         return ""
@@ -360,22 +387,40 @@ def _table_row(
 def _render_tools_section(
     runs: List[ValidatorRun], new_errors: Optional[Dict[str, int]] = None
 ) -> str:
-    """One row per tools-tests suite run; omitted when none ran."""
+    """Findings only; omitted when no tools suite ran, one line when all passed."""
     tools_runs = [r for r in runs if r.suite == "tools"]
     if not tools_runs:
         return ""
+
+    total_errors, total_warnings = _totals(tools_runs)
+    # A suite that produced no sidecar also reports 0/0 — never call that a success.
+    incomplete = [r for r in tools_runs if r.status in _INCOMPLETE_STATUSES]
+    if not total_errors and not total_warnings and not incomplete:
+        return "## Tools tests\n\n✅ All tools based tests have succeeded!"
+
+    sorted_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_errors))
+    table_runs = [
+        r
+        for r in sorted_runs
+        if r.errors or r.warnings or r.status in _INCOMPLETE_STATUSES
+    ]
+    passed = len(tools_runs) - len(table_runs)
+    passed_note = ""
+    if passed:
+        passed_note = (
+            f"\n\n✅ {_plural(passed, 'other tool suite')} completed successfully."
+        )
+
     if new_errors is not None:
-        tools_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_errors))
         header = "| Tool suite | New | Errors | Warnings |\n|-----------|----:|-------:|---------:|"
         rows = [
             _table_row(r.title, r.errors, r.warnings, new_errors.get(r.name, 0))
-            for r in tools_runs
+            for r in table_runs
         ]
     else:
-        tools_runs = sorted(tools_runs, key=lambda r: r.title.lower())
         header = "| Tool suite | Errors | Warnings |\n|-----------|-------:|---------:|"
-        rows = [_table_row(r.title, r.errors, r.warnings) for r in tools_runs]
-    return "## Tools tests\n\n" + header + "\n" + "\n".join(rows)
+        rows = [_table_row(r.title, r.errors, r.warnings) for r in table_runs]
+    return "## Tools tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 
 def _render_summary_table(
@@ -416,11 +461,57 @@ def _render_summary_table(
     return "## Mod tests\n\n" + header + "\n" + "\n".join(rows) + passed_note
 
 
+def _render_category_section(
+    issues: List[Issue], baseline_stats: Optional["BaselineStats"] = None
+) -> str:
+    """Per-category counts, so a category name is visible without the step summary.
+
+    The per-validator issue lists only render in the step summary, and a
+    backlog that predates the baseline reaches neither the new-findings nor
+    the in-PR section, so its category is otherwise invisible in the comment.
+    """
+    counts: Dict[str, List[int]] = defaultdict(lambda: [0, 0, 0])
+    for issue in issues:
+        if issue.severity == Severity.ERROR:
+            index = 0
+        elif issue.severity == Severity.WARNING:
+            index = 1
+        else:
+            continue
+        row = counts[issue.category or "uncategorised"]
+        row[index] += 1
+        if baseline_stats is not None and issue.baseline_status == "new":
+            row[2] += 1
+    if not counts:
+        return ""
+
+    ordered = sorted(counts.items(), key=lambda kv: (-kv[1][0], -kv[1][1], kv[0]))
+    shown = ordered[:MAX_CATEGORY_ROWS]
+
+    if baseline_stats is not None:
+        header = "| Category | New | Errors | Warnings |\n|----------|----:|-------:|---------:|"
+        rows = [
+            _table_row(_humanize(cat), errors, warnings, new)
+            for cat, (errors, warnings, new) in shown
+        ]
+    else:
+        header = "| Category | Errors | Warnings |\n|----------|-------:|---------:|"
+        rows = [
+            _table_row(_humanize(cat), errors, warnings)
+            for cat, (errors, warnings, _new) in shown
+        ]
+    body = f"## {_CATEGORY_HEADING}\n\n" + header + "\n" + "\n".join(rows)
+    hidden = len(ordered) - len(shown)
+    if hidden:
+        body += f"\n\n_…and {hidden:,} more categories._"
+    return body
+
+
 # ── Issues section ─────────────────────────────────────────────────────────────
 
 
 def _finding_sort_key(issue: Issue) -> Tuple[int, str, int, str]:
-    """IN YOUR DIFF first (including NEW + in-diff), then file/line."""
+    """IN YOUR PR first (including NEW + in-PR), then file/line."""
     return (0 if issue.in_diff else 1, issue.file, issue.line, issue.message)
 
 
@@ -455,23 +546,34 @@ def _render_new_severity_group(
     return lines, overflow
 
 
-def _render_in_diff_section(
-    issues: List[Issue], ctx: ReportContext, max_visible: int
+def _render_in_pr_section(
+    issues: List[Issue],
+    ctx: ReportContext,
+    max_visible: int,
+    exclude_new: bool = False,
 ) -> str:
-    """Cold-baseline fallback: findings whose file is in the PR diff."""
-    in_diff = [
+    """Findings whose file is in the PR diff, pre-existing ones included.
+
+    Always rendered, so a standing backlog surfaces in the files a PR touches
+    instead of staying invisible behind the new-vs-baseline comparison. With
+    ``exclude_new`` the new findings are dropped here, since the New Findings
+    section above already lists them.
+    """
+    in_pr = [
         i
         for i in issues
-        if i.in_diff and i.severity in (Severity.ERROR, Severity.WARNING)
+        if i.in_diff
+        and i.severity in (Severity.ERROR, Severity.WARNING)
+        and not (exclude_new and i.baseline_status == "new")
     ]
-    if not in_diff:
+    if not in_pr:
         return ""
-    lines: List[str] = [f"## {_IN_DIFF_HEADING}", ""]
-    errors = [i for i in in_diff if i.severity == Severity.ERROR]
-    warnings = [i for i in in_diff if i.severity != Severity.ERROR]
+    lines: List[str] = [f"## {_IN_PR_HEADING}", ""]
+    errors = [i for i in in_pr if i.severity == Severity.ERROR]
+    warnings = [i for i in in_pr if i.severity != Severity.ERROR]
     remaining = max_visible
     error_lines, error_overflow = _render_new_severity_group(
-        "❌ In-diff errors",
+        "❌ Errors in your PR",
         "error",
         errors,
         ctx,
@@ -481,7 +583,7 @@ def _render_in_diff_section(
     )
     remaining = max(0, remaining - (len(errors) - error_overflow))
     warning_lines, _warning_overflow = _render_new_severity_group(
-        "⚠️ In-diff warnings",
+        "⚠️ Warnings in your PR",
         "warning",
         warnings,
         ctx,
@@ -681,7 +783,7 @@ def _render_bullet(issue: Issue, ctx: ReportContext) -> str:
     if issue.baseline_status == "new":
         tags.append("**NEW**")
     if issue.in_diff:
-        tags.append("**IN YOUR DIFF**")
+        tags.append("**IN YOUR PR**")
     tag_str = f" {' '.join(tags)}" if tags else ""
     also = f" _(also: {', '.join(issue.detected_by)})_" if issue.detected_by else ""
 

@@ -28,6 +28,32 @@ from validator_common import (
 _FOCUS_TREE_START = re.compile(r"\bfocus_tree\s*=\s*\{")
 _SHARED_FOCUS_DEF_START = re.compile(r"\b(?:shared_focus|joint_focus)\s*=\s*\{")
 
+# A single `key: "value"` localisation line, version suffix optional.
+_LOC_LINE_RE = re.compile(r'^[ \t]*([\w.\-]+)\s*:\d*\s*"(.*)"[ \t]*$')
+# Focus descriptions may highlight a term (§Y), mark a gain (§G) or a cost (§R);
+# titles carry no color at all. See .claude/docs/localisation-rules.md.
+_DESC_PALETTE = frozenset("YGR")
+# A § followed by whitespace and a digit is a prose section sign (a legal
+# citation like "15 U.S.C. § 1"), never markup — same exemption as the sibling
+# check in validate_localisation.py.
+_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+
+
+def _color_codes(value: str) -> List[str]:
+    """Return the color codes opened in *value*, ignoring resets."""
+    cleaned = _PROSE_SECTION_SIGN_RE.sub("", value)
+    return [c for c in re.findall("§(.)", cleaned) if c != "!"]
+
+
+def _fmt_codes(codes: List[str]) -> str:
+    seen = sorted(set(codes))
+    return (
+        "color code"
+        + ("s " if len(seen) > 1 else " ")
+        + ", ".join(f"§{c}" for c in seen)
+    )
+
+
 # focus ID extraction
 _FOCUS_ID_RE = re.compile(r"\bfocus\s*=\s*\{")
 _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
@@ -1563,6 +1589,96 @@ class Validator(BaseValidator):
         )
 
     # -----------------------------------------------------------------------
+    # Check 4b: Color codes in focus name / description localisation
+    # -----------------------------------------------------------------------
+
+    def _load_focus_loc_values(
+        self, wanted: FrozenSet[str]
+    ) -> Dict[str, Tuple[str, str, int]]:
+        """Map each wanted loc key to its (value, filepath, line).
+
+        ``_load_localisation_keys`` yields key names only, so the palette check
+        needs its own pass to see the strings themselves. Later definitions win,
+        matching how the game resolves a duplicated key.
+        """
+        memo = getattr(self, "_focus_loc_values_memo", None)
+        if memo is not None:
+            return memo
+        values: Dict[str, Tuple[str, str, int]] = {}
+        for filepath in self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        ):
+            try:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as fh:
+                    lines = fh.readlines()
+            except OSError:
+                continue
+            for line_idx, line in enumerate(lines):
+                match = _LOC_LINE_RE.match(line.rstrip("\r\n"))
+                if match and match.group(1) in wanted:
+                    values[match.group(1)] = (match.group(2), filepath, line_idx + 1)
+        self._focus_loc_values_memo = values
+        return values
+
+    def validate_focus_loc_colors(self):
+        self._log_section("Checking focus localisation against the color palette...")
+
+        parsed = self._get_parsed_files()
+        _, focus_info = self._build_focus_registry(parsed)
+        wanted = frozenset(
+            [fid for fid in focus_info] + [f"{fid}_desc" for fid in focus_info]
+        )
+        loc_values = self._load_focus_loc_values(wanted)
+
+        title_results = []
+        desc_results = []
+        for focus_id in sorted(focus_info):
+            for key in (focus_id, f"{focus_id}_desc"):
+                entry = loc_values.get(key)
+                if entry is None:
+                    continue
+                value, filepath, line = entry
+                codes = _color_codes(value)
+                if not codes or not self._is_reportable(filepath):
+                    continue
+                rel = os.path.relpath(filepath, self.mod_path)
+                if key == focus_id:
+                    title_results.append(
+                        (
+                            f"Focus title '{key}' uses {_fmt_codes(codes)} — "
+                            f"titles carry no color",
+                            rel,
+                            line,
+                        )
+                    )
+                    continue
+                off_palette = [c for c in codes if c not in _DESC_PALETTE]
+                if off_palette:
+                    desc_results.append(
+                        (
+                            f"Focus description '{key}' uses "
+                            f"{_fmt_codes(off_palette)} — use §Y, §G or §R",
+                            rel,
+                            line,
+                        )
+                    )
+
+        self._report(
+            title_results,
+            "No focus titles carry color codes",
+            "Focus titles using color codes:",
+            Severity.ERROR,
+            category="focus-title-color-code",
+        )
+        self._report(
+            desc_results,
+            "No focus descriptions use off-palette colors",
+            "Focus descriptions using colors outside §Y/§G/§R:",
+            Severity.ERROR,
+            category="focus-desc-color-palette",
+        )
+
+    # -----------------------------------------------------------------------
     # Check 5: Missing search_filters in focus blocks
     # -----------------------------------------------------------------------
 
@@ -2172,6 +2288,7 @@ class Validator(BaseValidator):
         self.validate_orphan_focuses()
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()
+        self.validate_focus_loc_colors()
         self.validate_missing_search_filters()
         self.validate_ai_will_do_guards()
         self.validate_cross_country_event_tooltips()
