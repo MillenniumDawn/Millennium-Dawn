@@ -61,15 +61,24 @@ the council's.
 
 ## Building the board
 
-Needs `gh auth refresh -h github.com -s project,read:project` once.
+The board is <https://github.com/orgs/MillenniumDawn/projects/7>. It was built with the
+commands below; rerun them to rebuild it. Needs
+`gh auth refresh -h github.com -s project,read:project` once.
 
 ```
 gh project create --owner MillenniumDawn --title "Millennium Dawn Wishes"
-gh project field-create <N> --owner MillenniumDawn --name "Council mentor" \
+gh project field-create 7 --owner MillenniumDawn --name "Council mentor" \
   --data-type SINGLE_SELECT --single-select-options "AngriestBird,Blazer135,TemplarGeneral"
-gh project field-create <N> --owner MillenniumDawn --name "Last check-in" --data-type DATE
+gh project field-create 7 --owner MillenniumDawn --name "Last check-in" --data-type DATE
+gh project field-list 7 --owner MillenniumDawn --format json \
+  --jq '.fields[] | select(.name=="Status") | .id'
+gh api graphql -f query='mutation { updateProjectV2Field(input: { fieldId: "<id>",
+  singleSelectOptions: [ {name: "Wish", color: GRAY, description: ""},
+  {name: "Claimed", color: BLUE, description: ""}, {name: "In progress", color: YELLOW, description: ""},
+  {name: "Review", color: ORANGE, description: ""}, {name: "Done", color: GREEN, description: ""} ] })
+  { projectV2Field { ... on ProjectV2SingleSelectField { name } } } }'
 ```
 
-In the UI: rename the `Status` options to Wish, Claimed, In progress, Review, Done, create
-the four views above, and put the project URL into `wish-intake.yml`. The `PROJECT_PAT`
-repository secret must be able to write to the project.
+Views have no API; create the four views above in the UI. Adding a mentor is
+Settings > Council mentor > add option. The `PROJECT_PAT` repository secret must be able
+to write to the project.
