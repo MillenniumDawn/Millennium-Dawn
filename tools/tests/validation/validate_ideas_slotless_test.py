@@ -8,6 +8,7 @@ alternatives and are never flagged.
 """
 
 import pytest
+import shared_utils
 from validate_ideas import (
     IdeaIssue,
     Validator,
@@ -146,6 +147,37 @@ def test_category_set_is_part_of_parser_cache_key(tmp_path, gate):
 
     assert first == []
     assert {issue.issue_type for issue in second} == {_slotless(gate)}
+
+
+def test_idea_tag_change_invalidates_aggregate_cache(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    tag_file = tmp_path / "common" / "idea_tags" / "00_idea.txt"
+    _write(
+        tag_file,
+        "idea_categories = {\n\tcustom_slotless = { type = national_spirit }\n}\n",
+    )
+    _write(
+        tmp_path / "common" / "ideas" / "test.txt",
+        _custom_slotless_idea("allowed"),
+    )
+    shared_utils._slotless_idea_categories_cached.cache_clear()
+    first = Validator(str(tmp_path), use_colors=False, workers=1, unused_ideas=False)
+    _defined, first_issues, _by_file = first._parse_all_ideas()
+
+    _write(
+        tag_file,
+        "idea_categories = {\n"
+        "\tcustom_slotless = { type = national_spirit slot = political_advisor }\n"
+        "}\n",
+    )
+    shared_utils._slotless_idea_categories_cached.cache_clear()
+    second = Validator(str(tmp_path), use_colors=False, workers=1, unused_ideas=False)
+    _defined, second_issues, _by_file = second._parse_all_ideas()
+
+    assert {
+        issue.issue_type for issues in first_issues.values() for issue in issues
+    } == {"allowed-in-slotless-category"}
+    assert second_issues == {}
 
 
 def test_staged_idea_tags_change_runs_full_quality_scan():

@@ -1,35 +1,35 @@
 # MIO Reference
 
-On-demand reference for Military-Industrial Organization structure, examples, and valid modifier keys. For best practices, see AGENTS.md.
+Military-Industrial Organization conventions, structure, examples, and valid modifier keys.
 
 ## Example MIO
 
 ```
 CHI_norinco_manufacturer = {
-	allowed = { original_tag = CHI }
-	icon = GFX_idea_Norinco_CHI
+ allowed = { original_tag = CHI }
+ icon = GFX_idea_Norinco_CHI
 
-	task_capacity = 18
+ task_capacity = 18
 
-	equipment_type = {
-		infantry_weapons_type
-		artillery_equipment
-		mio_cat_all_armor
-	}
+ equipment_type = {
+  infantry_weapons_type
+  artillery_equipment
+  mio_cat_all_armor
+ }
 
-	research_categories = {
-		CAT_infrastructure
-		CAT_armor
-		CAT_artillery
-	}
+ research_categories = {
+  CAT_infrastructure
+  CAT_armor
+  CAT_artillery
+ }
 
-	initial_trait = {
-		name = CHI_norinco_trait
-		equipment_bonus = {
-			reliability = 0.03
-			build_cost_ic = -0.03
-		}
-	}
+ initial_trait = {
+  name = CHI_norinco_trait
+  equipment_bonus = {
+   reliability = 0.03
+   build_cost_ic = -0.03
+  }
+ }
 }
 ```
 
@@ -39,12 +39,13 @@ CHI_norinco_manufacturer = {
 - Always include `allowed = { original_tag = TAG }` to restrict to the correct country
 - `task_capacity` scales with the org's breadth and nation size, not a formula. Most MIOs omit it — 5 is the MD default (`DEFAULT_INITIAL_TASK_CAPACITY`). When set: 2-3 for small/niche orgs, ~10 for major-nation manufacturers (USA/SOV/FRA/ENG), 18-25 for sprawling multi-category giants (CHI Norinco covers 8 equipment types at 18)
 - Equipment types must reference valid `equipment_type` categories
-- Trait grid x is bounded `0..9`; y is unlimited. Use `relative_position_id` for branch internals but keep total x-spread inside 0..9
+- Trait x positions must not exceed 9. Negative x is valid; y is not capped.
+  Use `relative_position_id` for branch internals.
 - An **organic network is the default**: branches interleave and cross-link, paths split and reconverge, and cross-branch parents are encouraged (a parent from another branch is fine as long as it sits at a lower `y` than the child). Produce a clean raster/column layout only when explicitly requested.
-- A child sits below its parent; vertical spacing may vary for an organic layout, but a child is never on or above its parent's row
-- Mutually exclusive traits sit on the same row (same `y` value), placed side by side
+- A child sits below its parent; vertical spacing may vary for an organic layout, but a child is never on or above its parent's row (`validate_mios.py` reports violations as `trait-geometry-parent-row`)
+- Mutually exclusive traits sit on the same row (same `y` value), placed side by side (`trait-geometry-mutex-row` when they don't)
 - A parent's connecting line must reach its child without crossing sibling traits on the same row. If it would cross, reposition the child or nudge with `relative_position_id`.
-- Children that should inherit from either of two mutually exclusive parents must use `any_parent` (not `parent`) — otherwise picking the "wrong" parent locks the child out
+- Children that should inherit from either of two mutually exclusive parents must use `any_parent` (not `parent`) — otherwise picking the "wrong" parent locks the child out (`trait-geometry-mutex-parents`); both geometry checks resolve `relative_position_id` chains and tokens defined in `include`d orgs, and stay silent when a position or token cannot be resolved statically
 - Spread `organization_modifier` / `production_bonus` traits across tree depth (near roots, mid-tree, and leaves) rather than clustering them in the bottom rows. Full organic-layout playbook lives in the `mio-builder` skill.
 - Name the initial trait `{org_token}_trait` (e.g. `CHI_norinco_trait`)
 - `on_complete` always needs `on_complete = { expenditure_for_mio_upgrade = yes }`, unless you add custom effects (idea switch, give a factory, etc.)
@@ -69,6 +70,8 @@ Used inside `organization_modifier = { ... }` blocks.
 ### Production modifiers
 
 Used inside `production_bonus = { ... }` blocks. Equipment types the key applies to in parentheses.
+
+Ships are built in dockyards, which have no production-efficiency mechanic, so the three `(non-naval)` keys below are wholly inert on a naval roster. `validate_mios.py` enforces it: `mio-production-bonus-naval` (ERROR, gates) when every equipment the trait reaches is a ship, `mio-production-bonus-partial-naval` (WARNING) when only part of it is. Use `production_capacity_factor`, `production_cost_factor`, `production_resource_need_factor` or `production_resource_penalty_factor` on a naval MIO instead.
 
 - `production_capacity_factor` (All) — Increases production output (items produced per day). Example: `= 0.1`
 - `production_conversion_speed_factor` (non-naval) — Speed at which equipment conversions are performed. Example: `= 0.5`

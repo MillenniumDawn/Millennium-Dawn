@@ -16,12 +16,17 @@ class _Process:
     def __init__(self, returncode=0):
         self.returncode = returncode
 
+    def poll(self) -> int | None:
+        return self.returncode
+
     def wait(self):
         return self.returncode
 
 
-def _spec(name, script="validate_stub.py", strict=True):
-    return ValidatorSpec(name=name, script=script, groups=("common",), strict=strict)
+def _spec(name, script="validate_stub.py", strict=True, args=()):
+    return ValidatorSpec(
+        name=name, script=script, groups=("common",), strict=strict, args=args
+    )
 
 
 class _Args:
@@ -58,7 +63,7 @@ class _FakeStream:
         pass
 
 
-_current_specs = []
+_current_specs: list[ValidatorSpec] = []
 
 
 def test_parse_changed_groups_empty_means_all():
@@ -155,6 +160,42 @@ def test_concurrency_stays_bounded(tmp_path, monkeypatch):
     assert max(peak) == 2
 
 
+def test_refills_slot_when_any_validator_finishes_first(tmp_path, monkeypatch, capsys):
+    events = []
+    poll_counts = {}
+
+    def launch(_script, _flags, _output_dir, name, _mod_path, **_kwargs):
+        events.append(("launch", name))
+        (tmp_path / f"{name}.log").write_text("log", encoding="utf-8")
+        (tmp_path / f"{name}.json").write_text("[]", encoding="utf-8")
+
+        class _Controlled(_Process):
+            def poll(self) -> int | None:
+                poll_counts[name] = poll_counts.get(name, 0) + 1
+                if poll_counts[name] > 20:
+                    pytest.fail(f"{name} never finished; a filled slot stayed idle")
+                if name == "validation-a" and ("launch", "validation-c") not in events:
+                    return None
+                return self.returncode
+
+            def wait(self):
+                events.append(("done", name))
+                return self.returncode
+
+        return _Controlled(), _FakeStream()
+
+    specs = [_spec("a"), _spec("b"), _spec("c")]
+    monkeypatch.setattr(rvb.run_all_validators, "launch_validator", launch)
+    monkeypatch.setattr(rvb, "split_cpu_budget", lambda tasks: (2, 1))
+
+    assert rvb.run_batch(specs, _Args(tmp_path)) == 0
+    assert events.index(("launch", "validation-c")) < events.index(
+        ("done", "validation-a")
+    )
+    output = capsys.readouterr().out
+    assert output.index("OK a") < output.index("OK b") < output.index("OK c")
+
+
 STUB_VALIDATOR = """
 import json
 import os
@@ -229,6 +270,25 @@ def test_batch_selection_passes_strict_only_for_gated_specs(tmp_path, monkeypatc
         "validation-gated": True,
         "validation-advisory": False,
     }
+
+
+def test_run_batch_forwards_spec_args_to_launch_validator(tmp_path, monkeypatch):
+    captured = []
+
+    def launch(_script, flags, _output_dir, name, _mod_path, **_kwargs):
+        captured.append((name, list(flags)))
+        (tmp_path / f"{name}.log").write_text("log", encoding="utf-8")
+        (tmp_path / f"{name}.json").write_text("[]", encoding="utf-8")
+        return _Process(0), _FakeStream()
+
+    specs = [_spec("variables", args=("--redundant-focus-flags",))]
+    _current_specs[:] = specs
+    monkeypatch.setattr(rvb.run_all_validators, "launch_validator", launch)
+    monkeypatch.setattr(rvb, "split_cpu_budget", lambda tasks: (1, 1))
+
+    assert rvb.run_batch(specs, _Args(tmp_path)) == 0
+    assert "--redundant-focus-flags" in captured[0][1]
+    assert captured[0][0] == "validation-variables"
 
 
 def test_main_impact_selects_by_changed_files(tmp_path, monkeypatch, capsys):
@@ -471,6 +531,41 @@ def test_standalone_adapter_clean_encoding_has_no_issues(
     assert message in output.read_text(encoding="utf-8")
     with open(output.with_suffix(".json"), encoding="utf-8") as handle:
         assert json.load(handle) == []
+
+
+def test_txt_standalone_adapter_scans_shipped_roots_not_resources(tmp_path):
+    good = tmp_path / "common" / "good.txt"
+    good.parent.mkdir(parents=True)
+    good.write_bytes(b"x = 1\n")
+    bad = tmp_path / "events" / "bad.txt"
+    bad.parent.mkdir(parents=True)
+    bad.write_bytes(b"\xef\xbb\xbfx = 1\n")
+    ignored = tmp_path / "resources" / "documentation" / "ignored.txt"
+    ignored.parent.mkdir(parents=True)
+    ignored.write_bytes(b"\xef\xbb\xbfx = 1\n")
+    output = tmp_path / "out" / "validation-txt-encoding.log"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(
+                Path(__file__).parents[3] / "tools/validation/run_impact_standalone.py"
+            ),
+            "--validator",
+            "txt-encoding",
+            "--path",
+            str(tmp_path),
+            "--output",
+            str(output),
+        ],
+        capture_output=True,
+        text=True,
+    )
+
+    assert result.returncode == 1
+    with open(output.with_suffix(".json"), encoding="utf-8") as handle:
+        issues = json.load(handle)
+    assert [issue["file"] for issue in issues] == ["events/bad.txt"]
 
 
 def test_standalone_adapter_writes_report_sidecar(tmp_path):

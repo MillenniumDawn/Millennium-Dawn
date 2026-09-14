@@ -39,6 +39,8 @@ focus_tree = {
 		scroll_wheel_factor = 0.80
 	}
 
+	continuous_focus_position = { x = 150 y = 900 }
+
 ##SICK MAN OF EUROPE
 
 	focus = {
@@ -66,7 +68,7 @@ focus_tree = {
 		id = ITA_diplomatic_focus
 		icon = italy_deal
 
-		x = 164
+		x = 118
 		y = 0
 
 		cost = 0.1
@@ -1525,7 +1527,7 @@ focus_tree = {
 		id = ITA_industrial_focus
 		icon = generic_housing
 
-		x = 129
+		x = 82
 		y = 0
 		relative_position_id = ITA_divided_nation
 
@@ -3190,7 +3192,7 @@ focus_tree = {
 		id = ITA_ideology_focus
 		icon = italy_parliament
 
-		x = 82
+		x = 73
 		y = 0
 
 		cost = 0.1
@@ -3334,7 +3336,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_seize_power"
 			ITA_calculate_civil_war_size = yes
 			set_country_flag = ITA_undemocratic_coup
-			remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } } remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = ITA_multipurpose_modifier }
 			add_to_variable = { ITA_stability_factor_var = -0.4 tooltip = stability_factor_tt }
 			add_to_variable = { ITA_stability_weekly_var = -0.002 tooltip = stability_weekly_tt }
@@ -3531,7 +3533,7 @@ focus_tree = {
 			}
 			custom_effect_tooltip = ITA_empower_the_king_TT
 			news_event = italy_news.2
-			remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } } remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } }
 		}
 
 		ai_will_do = {
@@ -3676,7 +3678,7 @@ focus_tree = {
 			}
 			recalculate_party = yes
 			add_dynamic_modifier = { modifier = ITA_party_propaganda_modifier }
-			remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } } remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } }
 			set_variable = { neutrality_propaganda_var = 0.1 }
 		}
 
@@ -3805,7 +3807,7 @@ focus_tree = {
 				change_ruling_party_effect = yes
 			}
 			add_dynamic_modifier = { modifier = ITA_party_propaganda_modifier }
-			remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } } remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } }
 			set_variable = { democratic_propaganda_var = 0.1 }
 		}
 
@@ -3853,7 +3855,7 @@ focus_tree = {
 				change_ruling_party_effect = yes
 			}
 			add_dynamic_modifier = { modifier = ITA_party_propaganda_modifier }
-			remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } } remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } }
 			set_variable = { communism_propaganda_var = 0.1 }
 		}
 
@@ -3899,7 +3901,7 @@ focus_tree = {
 			set_temp_variable = { temp_outlook_increase = 0.3 }
 			change_relative_party_popularity = yes
 			add_dynamic_modifier = { modifier = ITA_party_propaganda_modifier }
-			remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } } remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } }
 			set_variable = { neutrality_propaganda_var = 0.1 }
 			recalculate_party = yes
 		}
@@ -4583,7 +4585,7 @@ focus_tree = {
 			change_relative_party_popularity = yes
 			add_ideas = ITA_new_march_on_rome
 			news_event = italy_news.1
-			remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } } remove_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier } }
 		}
 
 		ai_will_do = {
@@ -4934,7 +4936,7 @@ focus_tree = {
 		id = ITA_territorial_claims
 		icon = focus_generic_spread_fascism
 
-		x = 178
+		x = 132
 		y = 0
 
 		cost = 0.1
@@ -6433,6 +6435,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_retake_african_coast"
+			clear_array = ITA_roman_wargoal_targets
 			every_state = {
 				limit = {
 					OR = {
@@ -6443,99 +6446,25 @@ focus_tree = {
 					}
 				}
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			379 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			381 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			382 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			394 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
+			ITA_grant_roman_wargoals = yes
 		}
 
 		ai_will_do = {
@@ -6589,6 +6518,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_retake_levant"
+			clear_array = ITA_roman_wargoal_targets
 			every_state = {
 				limit = {
 					OR = {
@@ -6598,61 +6528,17 @@ focus_tree = {
 					}
 				}
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			172 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			488 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
+			ITA_grant_roman_wargoals = yes
 		}
 
 		ai_will_do = {
@@ -6709,6 +6595,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_balkans"
+			clear_array = ITA_roman_wargoal_targets
 			every_state = {
 				limit = {
 					OR = {
@@ -6718,80 +6605,21 @@ focus_tree = {
 					}
 				}
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			123 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			333 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			669 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
+			ITA_grant_roman_wargoals = yes
 		}
 
 		ai_will_do = {
@@ -6844,6 +6672,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_anatolia"
+			clear_array = ITA_roman_wargoal_targets
 			every_state = {
 				limit = {
 					OR = {
@@ -6853,23 +6682,9 @@ focus_tree = {
 					}
 				}
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
+			ITA_grant_roman_wargoals = yes
 		}
 
 		ai_will_do = {
@@ -6913,6 +6728,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_strike_gaul"
+			clear_array = ITA_roman_wargoal_targets
 			every_state = {
 				limit = {
 					OR = {
@@ -6921,42 +6737,13 @@ focus_tree = {
 					}
 				}
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			65 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
+			ITA_grant_roman_wargoals = yes
 		}
 
 		ai_will_do = {
@@ -7000,47 +6787,19 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_iberia"
+			clear_array = ITA_roman_wargoal_targets
 			every_state = {
 				limit = {
 					region = 41
 				}
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
 			94 = {
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
+			ITA_grant_roman_wargoals = yes
 		}
 
 		ai_will_do = {
@@ -7083,28 +6842,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_britannia"
+			clear_array = ITA_roman_wargoal_targets
 			every_state = {
 				limit = {
 					region = 1
 				}
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
+			ITA_grant_roman_wargoals = yes
 		}
 
 		ai_will_do = {
@@ -7147,28 +6893,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_recover_alps"
+			clear_array = ITA_roman_wargoal_targets
 			every_state = {
 				limit = {
 					region = 21
 				}
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
+			ITA_grant_roman_wargoals = yes
 		}
 
 		ai_will_do = {
@@ -7213,28 +6946,15 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_strike_germans_before_they_can"
+			clear_array = ITA_roman_wargoal_targets
 			every_state = {
 				limit = {
 					region = 5
 				}
 				add_claim_by = ITA
-				controller = {
-					set_temp_variable = { wargoal_target = THIS }
-				}
-				ITA = {
-					if = {
-						limit = {
-							NOT = { is_in_faction_with = wargoal_target }
-						}
-						set_temp_variable = { wargoal_on = wargoal_target }
-						add_threat_from_wargoal_effect = yes
-						create_wargoal = {
-							type = take_claimed_state
-							target = wargoal_target
-						}
-					}
-				}
+				ITA_queue_roman_wargoal_target = yes
 			}
+			ITA_grant_roman_wargoals = yes
 		}
 
 		ai_will_do = {
@@ -9918,8 +9638,8 @@ focus_tree = {
 		id = ITA_economic_policies
 		icon = italy_trade
 
-		x = 126
-		y = 0
+		x = 90
+		y = 7
 
 		cost = 0.1
 
@@ -9934,8 +9654,8 @@ focus_tree = {
 		id = ITA_environmental_policies
 		icon = tree_focus
 
-		x = 138
-		y = 0
+		x = 82
+		y = 11
 
 		cost = 0.1
 
@@ -9950,8 +9670,8 @@ focus_tree = {
 		id = ITA_social_policies
 		icon = BRA_labor_laws
 
-		x = 112
-		y = 0
+		x = 74
+		y = 7
 
 		cost = 0.1
 
@@ -12706,7 +12426,7 @@ focus_tree = {
 		id = ITA_post_cold_war_reforms
 		icon = italian_armed_forces
 
-		x = 208
+		x = 163
 		y = 0
 
 		cost = 4
@@ -21799,7 +21519,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus ITA_close_nimby_committees"
 			clear_variable = nimby_culture_var
-			remove_dynamic_modifier = { modifier = ITA_nimby_culture }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_nimby_culture } } remove_dynamic_modifier = { modifier = ITA_nimby_culture } }
 		}
 
 		ai_will_do = { base = 80 }
@@ -22149,8 +21869,8 @@ focus_tree = {
 		id = ITA_relations_with_the_church
 		icon = focus_generic_vatican_state
 
-		x = 56
-		y = 0
+		x = 49
+		y = 5
 
 		cost = 0.1
 
@@ -22721,7 +22441,7 @@ focus_tree = {
 						limit = {
 							check_variable = { roma_capitale_modifier_var = 0 }
 						}
-						remove_dynamic_modifier = { modifier = roma_capitale_modifier }
+						if = { limit = { has_dynamic_modifier = { modifier = roma_capitale_modifier } } remove_dynamic_modifier = { modifier = roma_capitale_modifier } }
 					}
 				}
 			}
@@ -22754,7 +22474,7 @@ focus_tree = {
 						limit = {
 							check_variable = { roma_capitale_modifier_var = 0 }
 						}
-						remove_dynamic_modifier = { modifier = roma_capitale_modifier }
+						if = { limit = { has_dynamic_modifier = { modifier = roma_capitale_modifier } } remove_dynamic_modifier = { modifier = roma_capitale_modifier } }
 					}
 				}
 			}
@@ -22832,7 +22552,7 @@ focus_tree = {
 						limit = {
 							check_variable = { roma_capitale_modifier_var = 0 }
 						}
-						remove_dynamic_modifier = { modifier = roma_capitale_modifier }
+						if = { limit = { has_dynamic_modifier = { modifier = roma_capitale_modifier } } remove_dynamic_modifier = { modifier = roma_capitale_modifier } }
 					}
 				}
 			}
@@ -22911,7 +22631,7 @@ focus_tree = {
 						limit = {
 							check_variable = { roma_capitale_modifier_var = 0 }
 						}
-						remove_dynamic_modifier = { modifier = roma_capitale_modifier }
+						if = { limit = { has_dynamic_modifier = { modifier = roma_capitale_modifier } } remove_dynamic_modifier = { modifier = roma_capitale_modifier } }
 					}
 				}
 			}
@@ -22944,7 +22664,7 @@ focus_tree = {
 						limit = {
 							check_variable = { roma_capitale_modifier_var = 0 }
 						}
-						remove_dynamic_modifier = { modifier = roma_capitale_modifier }
+						if = { limit = { has_dynamic_modifier = { modifier = roma_capitale_modifier } } remove_dynamic_modifier = { modifier = roma_capitale_modifier } }
 					}
 				}
 			}
@@ -22979,7 +22699,7 @@ focus_tree = {
 						limit = {
 							check_variable = { roma_capitale_modifier_var = 0 }
 						}
-						remove_dynamic_modifier = { modifier = roma_capitale_modifier }
+						if = { limit = { has_dynamic_modifier = { modifier = roma_capitale_modifier } } remove_dynamic_modifier = { modifier = roma_capitale_modifier } }
 					}
 				}
 			}
@@ -23293,18 +23013,14 @@ focus_tree = {
 			set_temp_variable = { mafia_industrial_focus_base_cost = -8 }
 			mafia_industrial_focus_south_effect = yes
 			83 = {
-				remove_dynamic_modifier = {
-					modifier = unfinished_infrastructures
-				}
+				if = { limit = { has_dynamic_modifier = { modifier = unfinished_infrastructures } } remove_dynamic_modifier = { modifier = unfinished_infrastructures } }
 				add_dynamic_modifier = {
 					modifier = messina_strait_bridge
 				}
 				add_extra_state_shared_building_slots = 1
 			}
 			956 = {
-				remove_dynamic_modifier = {
-					modifier = unfinished_infrastructures
-				}
+				if = { limit = { has_dynamic_modifier = { modifier = unfinished_infrastructures } } remove_dynamic_modifier = { modifier = unfinished_infrastructures } }
 				add_extra_state_shared_building_slots = 1
 			}
 		}
@@ -23345,9 +23061,7 @@ focus_tree = {
 			set_temp_variable = { mafia_industrial_focus_base_cost = -5 }
 			mafia_industrial_focus_north_effect = yes
 			78 = {
-				remove_dynamic_modifier = {
-					modifier = frequent_high_tides
-				}
+				if = { limit = { has_dynamic_modifier = { modifier = frequent_high_tides } } remove_dynamic_modifier = { modifier = frequent_high_tides } }
 				add_extra_state_shared_building_slots = 1
 			}
 		}
@@ -23388,9 +23102,7 @@ focus_tree = {
 			set_temp_variable = { mafia_industrial_focus_base_cost = -5 }
 			mafia_industrial_focus_north_effect = yes
 			1060 = {
-				remove_dynamic_modifier = {
-					modifier = floods_and_land_erosion
-				}
+				if = { limit = { has_dynamic_modifier = { modifier = floods_and_land_erosion } } remove_dynamic_modifier = { modifier = floods_and_land_erosion } }
 				add_extra_state_shared_building_slots = 1
 			}
 		}
@@ -23596,7 +23308,7 @@ focus_tree = {
 						add_idea = consumption_economy
 					}
 			}
-			remove_dynamic_modifier = { modifier = ITA_party_propaganda_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_propaganda_modifier } } remove_dynamic_modifier = { modifier = ITA_party_propaganda_modifier } }
 			add_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
 			set_temp_variable = { drift_switch_change = 0.1 }
 			modify_reform_expectance_effect = yes
@@ -23723,7 +23435,7 @@ focus_tree = {
 						add_idea = consumption_economy
 					}
 			}
-			remove_dynamic_modifier = { modifier = ITA_party_propaganda_modifier }
+			if = { limit = { has_dynamic_modifier = { modifier = ITA_party_propaganda_modifier } } remove_dynamic_modifier = { modifier = ITA_party_propaganda_modifier } }
 			add_dynamic_modifier = { modifier = ITA_party_popularity_drift_modifier }
 			set_temp_variable = { drift_switch_change = 0.1 }
 			modify_reform_expectance_effect = yes

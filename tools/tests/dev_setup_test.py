@@ -267,14 +267,14 @@ def test_reexec_with_hands_the_argv_tail_to_the_new_interpreter(monkeypatch, cap
 
 
 @pytest.mark.parametrize(
-    ("version", "ok", "note"),
+    ("version", "ok"),
     [
-        ((3, 13, 1), True, "(recommended)"),
-        ((3, 11, 4), True, "3.12+ recommended"),
-        ((3, 9, 18), False, "too old"),
+        ((3, 13, 1), True),
+        ((3, 12, 0), True),
+        ((3, 11, 4), False),
     ],
 )
-def test_check_python_grades_the_interpreter(version, ok, note, monkeypatch, capsys):
+def test_check_python_grades_the_interpreter(version, ok, monkeypatch, capsys):
     monkeypatch.setattr(
         sys,
         "version_info",
@@ -282,7 +282,14 @@ def test_check_python_grades_the_interpreter(version, ok, note, monkeypatch, cap
     )
 
     assert dev_setup.check_python() is ok
-    assert note in capsys.readouterr().out
+    output = capsys.readouterr().out
+    printed = f"{version[0]}.{version[1]}.{version[2]}"
+    assert printed in output
+    if ok:
+        assert "too old" not in output
+    else:
+        assert "too old" in output
+        assert f"{dev_setup.MIN_PYTHON[0]}.{dev_setup.MIN_PYTHON[1]}+" in output
 
 
 def test_check_pre_commit_reports_the_module_version(monkeypatch, capsys):
@@ -751,7 +758,10 @@ def test_main_stops_on_an_unsupported_python(setup_env, monkeypatch, capsys):
     setup_env.state["check_python"] = False
 
     assert run_main(monkeypatch) == 1
-    assert "Python 3.10+ is required" in capsys.readouterr().out
+    assert (
+        f"Python {dev_setup.MIN_PYTHON[0]}.{dev_setup.MIN_PYTHON[1]}+ is required"
+        in capsys.readouterr().out
+    )
     assert not any(name.startswith("install_") for name in setup_env.calls)
 
 
