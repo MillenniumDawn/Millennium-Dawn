@@ -1038,6 +1038,11 @@ country_event = {
 			idea = the_white_paper_1
 			days = 1460
 		}
+		set_country_flag = {
+			flag = ast_white_paper_ongoing
+			days = 1460
+			value = 1
+		}
 	}
 
 	option = {
@@ -1047,6 +1052,11 @@ country_event = {
 			idea = the_white_paper_2
 			days = 1460
 		}
+		set_country_flag = {
+			flag = ast_white_paper_ongoing
+			days = 1460
+			value = 1
+		}
 	}
 
 	option = {
@@ -1055,6 +1065,11 @@ country_event = {
 		add_timed_idea = {
 			idea = the_white_paper_3
 			days = 1460
+		}
+		set_country_flag = {
+			flag = ast_white_paper_ongoing
+			days = 1460
+			value = 1
 		}
 	}
 }
@@ -4381,6 +4396,7 @@ country_event = {
 		if = {
 			limit = { has_completed_focus = AST_hold_onto_the_wild }
 			add_ideas = national_parks_codified_ast
+			bushfires_tick_down = yes
 			newline = yes
 		}
 		if = {
@@ -4624,10 +4640,6 @@ country_event = {
 			limit = { date > 2007.01.01 date < 2010.01.01 }
 			set_temp_variable = { rul_party_temp = 3 }
 			change_ruling_party_effect = yes
-			set_politics = {
-				ruling_party = democratic
-				elections_allowed = yes
-			}
 			kill_country_leader = yes
 			create_country_leader = {
 					name = "Kevin Rudd"
@@ -4647,10 +4659,6 @@ country_event = {
 			limit = { date > 2012.01.01 date < 2014.01.01 }
 			set_temp_variable = { rul_party_temp = 1 }
 			change_ruling_party_effect = yes
-			set_politics = {
-				ruling_party = democratic
-				elections_allowed = yes
-			}
 			kill_country_leader = yes
 			remove_power_balance = { id = rudd_bop }
 			create_country_leader = {
@@ -4688,6 +4696,7 @@ country_event = {
 		original_tag = AST
 		date > 2005.01.01
 		NOT = { has_country_flag = election_cooldown_ast }
+		is_ai = no
 	}
 
 	immediate = { set_country_flag = general_elections_start }
@@ -8574,26 +8583,118 @@ country_event = {
 	picture = GFX_bushfire2
 	is_triggered_only = yes
 
-	trigger = {
-		tag = AST
-		NOT = { has_country_flag = generic_fires_ast_1 }
-		is_ai = no
+	immediate = {
+		hidden_effect = {
+			random_owned_state = {
+				limit = {
+					is_core_of = AST
+					is_on_continent = australia
+				}
+				save_global_event_target_as = ast_bushfire_state
+			}
+		}
 	}
-
-	immediate = { set_country_flag = generic_fires_ast_1 }
 
 	option = {
 		name = generic_bushfires_ast.1.a
 		log = "[GetDateText]: [This.GetName]: generic_bushfires_ast.1.a executed"
-		743 = {
-			if = {
-				limit = { infrastructure > 0 }
-				damage_building = {
+		event_target:ast_bushfire_state = {
+			damage_building = {
+				type = infrastructure
+				damage = 2
+			}
+		}
+		add_stability = -0.03
+	}
+}
+
+#canberra bushfire
+news_event = {
+	id = generic_bushfires_ast.2
+	title = generic_bushfires_ast.2.t
+	desc = generic_bushfires_ast.2.d
+	picture = GFX_AST_canberra_fires
+	is_triggered_only = yes
+
+	option = {
+		name = generic_bushfires_ast.2.a
+		log = "[GetDateText]: [This.GetName]: generic_bushfires_ast.2.a executed"
+		742 = {
+			damage_building = {
 					type = infrastructure
 					damage = 2
 				}
-			}
+			set_temp_variable = { temp_productivity_change = -20 }
+			state_flat_productivity_change_effect = yes
 		}
+		add_stability = -0.03	
+	}
+}
+
+country_event = {
+	id = generic_bushfires_ast.3
+	is_triggered_only = yes
+	hidden = yes
+
+	immediate = {
+		#yearly firestuff
+			bushfires_tick_up = yes
+			if = {
+				limit = { 
+					NOT = {
+						has_country_flag = AST_fire_event_cooldown
+					}
+				}
+				if = {
+					limit = { check_variable = { bushfire_ticker = 4 } }
+					random_list = {
+						30 = {
+							AST_fire_bushfire_event = yes
+							set_variable = { bushfire_ticker = 1 }
+							set_country_flag = {
+								flag = AST_fire_event_cooldown
+								days = 450
+								value = 1
+							}
+						}
+						70 = {
+							#nothing
+						}
+					}
+				}
+				else_if = {
+					limit = { check_variable = { bushfire_ticker = 5 } }
+					random_list = {
+						60 = {
+							AST_fire_bushfire_event = yes
+							set_variable = { bushfire_ticker = 1 }
+							set_country_flag = {
+								flag = AST_fire_event_cooldown
+								days = 450
+								value = 1
+							}
+						}
+						40 = {
+							#nothing
+						}
+					}
+				}
+				else_if = {
+					limit = { check_variable = { bushfire_ticker = 6 } }
+					AST_fire_bushfire_event = yes
+					set_variable = { bushfire_ticker = 1 }
+					set_country_flag = {
+						flag = AST_fire_event_cooldown
+						days = 450
+						value = 1
+					}
+				}
+			}
+		country_event = { id = generic_bushfires_ast.3 days = 365 }
+	}
+
+	option = {
+		name = generic_bushfires_ast.3.a
 	}
 }
 
@@ -8605,14 +8706,7 @@ news_event = {
 	desc = black_saturday_ast.1.d
 	picture = GFX_black_saturday_1
 	is_triggered_only = yes
-
-	trigger = {
-		tag = AST
-		NOT = { has_country_flag = black_saturday_1_done }
-		is_ai = no
-	}
-
-	immediate = { set_country_flag = black_saturday_1_done }
+	fire_only_once = yes
 
 	option = {
 		name = black_saturday_ast.1.a
@@ -8637,14 +8731,6 @@ news_event = {
 	picture = GFX_black_saturday_2
 	is_triggered_only = yes
 
-	trigger = {
-		tag = AST
-		NOT = { has_country_flag = black_saturday_2_done }
-		NOT = { has_focus_tree = ruddgov_focus }
-		date > 2009.02.28
-		is_ai = no
-	}
-
 	immediate = { set_country_flag = black_saturday_2_done }
 
 	option = {
@@ -8660,14 +8746,6 @@ news_event = {
 	desc = black_saturday_ast.2.d
 	picture = GFX_black_saturday_3
 	is_triggered_only = yes
-
-	trigger = {
-		tag = AST
-		has_focus_tree = ruddgov_focus
-		NOT = { has_country_flag = black_saturday_2_done }
-		date > 2009.02.28
-		is_ai = no
-	}
 
 	immediate = { set_country_flag = black_saturday_2_done }
 
