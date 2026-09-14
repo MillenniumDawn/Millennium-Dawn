@@ -74,6 +74,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "mios", "validate_mios.py", ("mios", "localisation", "interface")
         ),
+        ValidatorSpec("mio-icons", "validate_mio_icons.py", ("mios",)),
         ValidatorSpec(
             "scripted-gui", "validate_scripted_gui.py", ("scripted-guis", "interface")
         ),
