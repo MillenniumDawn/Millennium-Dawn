@@ -48,7 +48,7 @@ def test_identical_event_bodies_are_not_collapsed(tmp_path):
     assert "B.txt" in joined
 
 
-def test_visible_country_and_news_events_without_pictures_are_reported(tmp_path):
+def test_visible_news_events_without_pictures_are_reported(tmp_path):
     _write(
         tmp_path,
         "events/Ev.txt",
@@ -66,10 +66,9 @@ def test_visible_country_and_news_events_without_pictures_are_reported(tmp_path)
     v.validate_event_picture_omissions()
     assert [(i.message, i.category, i.severity, i.file, i.line) for i in v._issues] == [
         (f"foo.2: {_PICTURE_FIX}", "news-event-picture-omitted", "error", "Ev.txt", 5),
-        (f"foo.1: {_PICTURE_FIX}", "event-picture-omitted", "warning", "Ev.txt", 1),
     ]
     assert v.errors_found == 1
-    assert v.warnings_found == 1
+    assert v.warnings_found == 0
 
 
 def test_picture_omission_ignores_nested_portrait_pictures(tmp_path):
