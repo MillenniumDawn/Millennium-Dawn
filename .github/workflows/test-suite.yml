@@ -42,6 +42,7 @@ env:
     localisation
     interface
     gfx/flags
+    gfx/interface/decisions
     map/adjacency_rules.txt
     music
     tools
@@ -169,6 +170,11 @@ jobs:
           HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
         run: |
           merge_base=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
+          hook_path=common/scripted_localisation/00_MD_politicsview_
+          hook_path+=scripted_localisation.txt
+          git diff --unified=0 "$merge_base" "$HEAD_SHA" -- \
+            localisation/english/MD_politics_view_parties_l_english.yml \
+            "$hook_path" > party-loc-scope.diff
           git diff --name-status -z "$merge_base" "$HEAD_SHA" \
             | python3 tools/validation/collect_changed_files.py \
             > changed-files.txt
@@ -189,7 +195,9 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: changed-files
-          path: changed-files.txt
+          path: |
+            changed-files.txt
+            party-loc-scope.diff
           if-no-files-found: warn
           retention-days: 7
 
@@ -284,6 +292,7 @@ jobs:
             localisation
             interface
             gfx/flags
+            gfx/interface/decisions
             map/adjacency_rules.txt
             music
             tools
@@ -306,6 +315,7 @@ jobs:
             localisation
             interface
             gfx/flags
+            gfx/interface/decisions
             map/adjacency_rules.txt
             music
             tools
@@ -316,7 +326,7 @@ jobs:
             pyproject.toml
             *.mod
           key: >-
-            md-sparse-v1-${{ runner.os }}-${{
+            md-sparse-v2-${{ runner.os }}-${{
             needs.detect-changes.outputs.head-sha }}
 
       - name: Materialize sparse workspace on cache miss
@@ -374,6 +384,7 @@ jobs:
             localisation
             interface
             gfx/flags
+            gfx/interface/decisions
             map/adjacency_rules.txt
             music
             tools
@@ -384,7 +395,7 @@ jobs:
             pyproject.toml
             *.mod
           key: >-
-            md-sparse-v1-${{ runner.os }}-${{
+            md-sparse-v2-${{ runner.os }}-${{
             needs.detect-changes.outputs.head-sha }}
 
       - name: Upload prepared workspace
@@ -442,8 +453,10 @@ jobs:
             .github/workflows/nightly-pr-validation.yml
             .github/workflows/pr-cache-cleanup.yml
             .github/workflows/validator-cache.yml
+            .github/workflows/docs-quality.yml
             .github/workflows/pr-housekeeping.yml
             .github/workflows/issue-triage.yml
+            docs/src/content/resources/developer-setup.md
           sparse-checkout-cone-mode: false
 
       - name: Set up Python and dependencies
@@ -545,6 +558,15 @@ jobs:
           "https://github.com/${{ github.repository }}.git"
           "${{ github.sha }}"
 
+      - name: Compute staged validator code hash
+        id: staged-toolshash
+        if: >-
+          always() && !cancelled() && matrix.quality == true &&
+          steps.dependencies.outcome == 'success'
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**',
+          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+
       - name: Create staged integration worktree
         id: staged-worktree
         if: >-
@@ -552,8 +574,34 @@ jobs:
           steps.staged-fetch.outcome == 'success'
         run: |
           worktree="${{ runner.temp }}/md-staged-validator-test"
-          git worktree add --detach "$worktree" "${{ github.sha }}"
-          git -C "$worktree" sparse-checkout disable
+          git worktree add --detach --no-checkout \
+            "$worktree" "${{ github.sha }}"
+          # Anchored patterns: a bare `interface` would also match the 1.8 GB
+          # gfx/interface art tree, so every entry is root-anchored (see
+          # tools/validation/staged_sparse_profile.txt).
+          git -C "$worktree" sparse-checkout init --no-cone
+          git -C "$worktree" sparse-checkout set --stdin \
+            < tools/validation/staged_sparse_profile.txt
+          git -C "$worktree" checkout "${{ github.sha }}"
+          test -d "$worktree/gfx/flags" || \
+            { echo "::error::sparse worktree missing gfx/flags"; exit 1; }
+          test ! -e "$worktree/gfx/interface" || \
+            { echo "::error::sparse worktree leaked gfx/interface"; exit 1; }
+
+      - name: Restore staged validator disk cache
+        id: staged-valcache
+        if: >-
+          always() && !cancelled() && matrix.quality == true &&
+          steps.staged-worktree.outcome == 'success'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ${{ runner.temp }}/md-staged-validator-test/.validation_cache
+          key: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.staged-toolshash.outputs.hash }}
+          restore-keys: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.staged-toolshash.outputs.hash }}-
 
       - name: Run staged-validator integration
         id: staged
@@ -565,7 +613,8 @@ jobs:
           MD_RUN_STAGED_INTEGRATION: "1"
         run: >-
           python -m pytest tools/tests/staged_validators_test.py
-          tools/tests/staged_validators_real_test.py -q
+          tools/tests/staged_validators_real_test.py
+          tools/tests/staged_sparse_coverage_test.py -q
 
       - name: Run tools validation
         id: validate-tools
@@ -596,7 +645,9 @@ jobs:
             "${{ steps.bun-deps.outcome }}" \
             "${{ steps.jscpd.outcome }}" \
             "${{ steps.staged-fetch.outcome }}" \
+            "${{ steps.staged-toolshash.outcome }}" \
             "${{ steps.staged-worktree.outcome }}" \
+            "${{ steps.staged-valcache.outcome }}" \
             "${{ steps.staged.outcome }}" \
             "${{ steps.validate-tools.outcome }}"; do
             if [ "$outcome" = "failure" ]; then
@@ -653,6 +704,13 @@ jobs:
         id: setup-python
         uses: ./.github/actions/setup-md-python
 
+      - name: Download party localisation scope
+        if: matrix.batch == 'targeted-b'
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: changed-files
+          path: validation-scope
+
       - name: Compute changed validator groups
         id: groups
         env:
@@ -707,6 +765,10 @@ jobs:
           --batch ${{ matrix.batch }}
           --changed-groups "${{ steps.groups.outputs.groups || '__none__' }}"
           --no-color --output-dir batch-results
+        env:
+          MD_PARTY_LOC_DIFF: >-
+            ${{ matrix.batch == 'targeted-b' &&
+            'validation-scope/party-loc-scope.diff' || '' }}
 
       - name: Collect style-relevant files
         id: style-files

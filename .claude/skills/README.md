@@ -22,6 +22,7 @@ Project slash commands for Claude Code. Each directory holds a `SKILL.md` whose 
 | `/party-names`         | Fill a country's subideology party names, descs, and hooks           |
 | `/rework-brief`        | Reframe a rework task issue into a mechanic-by-mechanic design brief |
 | `/search-filter-check` | Validate focus `search_filters` against the approved list            |
+| `/spirit-removal-desc` | Append the removal footer to a TAG's starting spirit descriptions    |
 | `/standardize`         | Auto-standardize a mod file with the standardization tools           |
 | `/test-plan`           | Generate a playthrough test plan for the branch (opt-in)             |
 | `/update-claude`       | Propose CLAUDE.md/rules/docs/skills improvements from the session    |

@@ -927,13 +927,10 @@ def test_guard_suppresses_foreign_static_warning(tmp_path):
     _assert_no_foreign_warning(issues)
 
 
-def test_staged_definition_change_rescans_unstaged_callers(tmp_path, monkeypatch):
-    definition = tmp_path / "common" / "national_focus" / "foreign.txt"
+def _staged_template_validator(tmp_path, monkeypatch, definition_text):
+    definition = tmp_path / "common" / "national_focus" / "definition.txt"
     definition.parent.mkdir(parents=True, exist_ok=True)
-    definition.write_text(
-        _focus_with_template_owner("OPR", _division_template("Militia")),
-        encoding="utf-8",
-    )
+    definition.write_text(definition_text, encoding="utf-8")
     caller = tmp_path / "common" / "national_focus" / "caller.txt"
     caller.write_text(
         _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="UKR")),
@@ -942,15 +939,61 @@ def test_staged_definition_change_rescans_unstaged_callers(tmp_path, monkeypatch
     monkeypatch.setattr(
         oob, "get_staged_files", lambda *args, **kwargs: [str(definition)]
     )
-    validator = Validator(
+    return Validator(
         mod_path=str(tmp_path), use_colors=False, staged_only=True, workers=1
     )
-    validator.staged_files = [str(caller)]
+
+
+def _assert_foreign_template_issue(validator):
     validator.validate_created_units()
     assert any(
         issue.category == "CREATE UNIT: foreign-only static template definition"
         for issue in validator._issues
     )
+
+
+def test_staged_definition_change_rescans_unstaged_callers(tmp_path, monkeypatch):
+    validator = _staged_template_validator(
+        tmp_path,
+        monkeypatch,
+        _focus_with_template_owner("OPR", _division_template("Militia")),
+    )
+    _assert_foreign_template_issue(validator)
+
+
+def test_staged_definition_removal_rescans_unstaged_callers(tmp_path, monkeypatch):
+    foreign = tmp_path / "common" / "national_focus" / "foreign.txt"
+    foreign.parent.mkdir(parents=True, exist_ok=True)
+    foreign.write_text(
+        _focus_with_template_owner("OPR", _division_template("Militia")),
+        encoding="utf-8",
+    )
+    validator = _staged_template_validator(
+        tmp_path,
+        monkeypatch,
+        "focus_tree = { id = empty }\n",
+    )
+    monkeypatch.setattr(oob, "_changed_lines_match", lambda *args: True)
+    _assert_foreign_template_issue(validator)
+
+
+def test_changed_lines_match_detects_a_staged_removal(tmp_path, monkeypatch):
+    (tmp_path / ".git").mkdir()
+    commands = []
+    returncodes = iter((1, 1))
+
+    def _run(command, **_kwargs):
+        commands.append(command)
+        return oob.subprocess.CompletedProcess(command, next(returncodes))
+
+    monkeypatch.setattr(oob.subprocess, "run", _run)
+    path = str(tmp_path / "common" / "national_focus" / "definition.txt")
+
+    assert oob._changed_lines_match(
+        str(tmp_path), [path], oob._DIVISION_TEMPLATE_DEF_PATTERN
+    )
+    assert commands[1][2] == "--cached"
+    assert any(arg.startswith("-Gdivision_template") for arg in commands[1])
 
 
 def test_unescaped_inner_quotes_break_the_division_string(tmp_path):

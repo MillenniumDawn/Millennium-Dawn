@@ -8,8 +8,8 @@ cannot play multiplayer together.
 
 It also checks the format a texture ships in, which is a property of the name
 rather than the bytes: MD converts delivered art to DDS (TGA for flags) with
-tools/assets/md_art_convert.py, so a PNG or PSD under a content root is art that
-skipped that step.
+tools/assets/md_art_convert.py, so a PNG or PSD under gfx/ is art that skipped
+that step.
 """
 
 import os
@@ -58,9 +58,10 @@ _WINDOWS_RESERVED = (
     | {f"LPT{i}" for i in range(1, 10)}
 )
 
-# .bmp is absent on purpose: map/ ships provinces, heightmap, terrain, rivers and
-# cities as BMP and the engine requires that format there.
-_WORKING_FILE_EXTENSIONS = frozenset({".psd", ".xcf"})
+# Only gfx/ is art: map/ ships its BMP terrain data and a PNG modding guide, and
+# the engine requires BMP there.
+_ART_ROOT = "gfx/"
+_WORKING_FILE_EXTENSIONS = frozenset({".psd", ".xcf", ".tif", ".tiff"})
 _UNCOMPRESSED_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg"})
 
 
@@ -148,17 +149,20 @@ def tracked_content_paths(mod_path: str) -> Optional[List[str]]:
     Reads the git index rather than the filesystem so the check still sees every
     shipped path under a sparse checkout, where most of the tree is absent.
     """
+    # -z emits raw UTF-8 names; text=True would decode them with the console
+    # code page and fail on Windows at the first non-ASCII path.
     try:
         result = subprocess.run(
             ["git", "-C", mod_path, "ls-files", "-z"],
             capture_output=True,
-            text=True,
             check=True,
         )
     except (OSError, subprocess.CalledProcessError):
         return None
     return [
-        path for path in result.stdout.split("\0") if path.startswith(_ROOT_PREFIXES)
+        path
+        for path in result.stdout.decode("utf-8", errors="surrogateescape").split("\0")
+        if path.startswith(_ROOT_PREFIXES)
     ]
 
 
@@ -334,18 +338,19 @@ class Validator(BaseValidator):
         )
 
     def _check_source_art_formats(self, paths: List[str]):
-        self._log_section("Checking for source art shipped under a content root...")
+        self._log_section("Checking for source art shipped under gfx/...")
         results = []
         for path in paths:
+            if not path.startswith(_ART_ROOT):
+                continue
             problem = source_art_problem(path)
             if problem:
                 results.append((problem, path, 0))
         self._report(
             results,
             "✓ Every shipped texture is in a runtime format",
-            "Source art shipped under a content root (convert it with "
+            "Source art shipped under gfx/ (convert it with "
             "tools/assets/md_art_convert.py and repoint the texturefile):",
-            severity=Severity.WARNING,
             category="source-art-format",
         )
 

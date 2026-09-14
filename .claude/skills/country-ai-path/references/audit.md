@@ -81,7 +81,7 @@ The judgment left to you:
 
 - **Sign.** The tool does not know a bonus from a malus, so its `nothing relieves` line mixes both.
   Read the idea's modifier block before treating an unrelieved entry as a defect; the direction rule
-  is in `.claude/rules/general-rules.md` (relief effects). `tools/analysis/find_idea_references.py`
+  is in `.claude/docs/scripting-edge-cases.md` (relief effects). `tools/analysis/find_idea_references.py`
   answers where an idea is touched at all.
 - **Transitive fit.** Does the crisis modifier's trigger actually match what the focus removes, once
   you follow the scripted effects it calls?

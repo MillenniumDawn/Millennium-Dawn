@@ -101,6 +101,7 @@ def test_windows_name_problem_rejects_hostile_names(path):
         "gfx/event_pictures/generic/events/trade_agreement.jpeg",
         "gfx/leaders/POL/rudiger.psd",
         "gfx/interface/equipmentdesigner/planes/plane_designer_popup_bg.xcf",
+        "gfx/interface/ideas/china/CHI_taiwanese_collaboration.tiff",
         "gfx/interface/decisions/SHOUTING.PNG",
     ],
 )
@@ -123,16 +124,27 @@ def test_source_art_problem_accepts_shipped_formats(path):
     assert vfp.source_art_problem(path) is None
 
 
-def test_source_art_is_a_warning_not_an_error(tmp_path, monkeypatch):
+def test_source_art_is_an_error(tmp_path, monkeypatch):
     validator = _validator(
         tmp_path,
         ["gfx/interface/decisions/decision_olympics.png"],
         ["common/dynamic_modifiers/wuw_dynamic_modifiers.txt"],
         monkeypatch,
     )
-    assert validator.errors_found == 0
-    assert validator.warnings_found == 1
+    assert validator.errors_found == 1
+    assert validator.warnings_found == 0
     assert validator._issues[0].category == "source-art-format"
+
+
+def test_source_art_check_is_scoped_to_gfx(tmp_path, monkeypatch):
+    # map/ ships a PNG modding guide that is not a texture.
+    validator = _validator(
+        tmp_path,
+        ["map/zz_terrain_use_guide.png", "gfx/interface/a.png"],
+        ["common/dynamic_modifiers/wuw_dynamic_modifiers.txt"],
+        monkeypatch,
+    )
+    assert [i.file for i in validator._issues] == ["gfx/interface/a.png"]
 
 
 def test_working_file_message_differs_from_uncompressed():

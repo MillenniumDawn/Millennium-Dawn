@@ -35,7 +35,12 @@ _CORE_GROUPS = (
 BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     "core": (
         ValidatorSpec("common-mistakes", "validate_common_mistakes.py", _CORE_GROUPS),
-        ValidatorSpec("variables", "validate_variables.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "variables",
+            "validate_variables.py",
+            _CORE_GROUPS,
+            args=("--redundant-focus-flags",),
+        ),
         ValidatorSpec("math-expressions", "validate_math_expressions.py", _CORE_GROUPS),
         ValidatorSpec(
             "scripted-localisation", "validate_scripted_localisation.py", _CORE_GROUPS
@@ -112,11 +117,11 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             ("common", "events"),
         ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
+        ValidatorSpec("country-names", "validate_country_names.py", ("common",)),
         ValidatorSpec(
             "party-loc",
             "validate_party_loc.py",
             ("localisation", "common"),
-            strict=False,
         ),
     ),
 }
