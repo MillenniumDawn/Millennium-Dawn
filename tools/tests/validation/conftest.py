@@ -61,6 +61,18 @@ def ai_split_available():
 
 
 @pytest.fixture
+def issues_by_line():
+    def run(validator_cls, root):
+        validator = validator_cls(str(root), use_colors=False, workers=1)
+        validator.run_validations()
+        return {
+            (issue.category, issue.line): issue for issue in validator._issues
+        }, validator
+
+    return run
+
+
+@pytest.fixture
 def gfx_notices(monkeypatch):
     from validate_gfx_references import Validator
 
