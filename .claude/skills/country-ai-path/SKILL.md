@@ -32,6 +32,17 @@ Branch `3162-[country]-ai-paths` off main.
 python tools/analysis/ai_path_report.py --tag TAG
 ```
 
+**No focus tree.** If the report exits `no focus file found for tag TAG`, the country has no path
+layer to own and the rule is **removed**, not converted (São Tomé #3702, Solomon Islands are the
+shape). Delete the `TAG_ai_behavior` block and its `TAG_AI_BEHAVIOR` / `RULE_OPTION_*` keys from
+`MD_game_rules_l_english.yml`, then strip every `has_game_rule` read from the country's events:
+keep `factor = 5 is_historical_focus_on = yes` on the historical option of each fork and any
+situational flavour modifier (influence, who holds power), drop `factor = 1` no-ops and the
+`is_historical_focus_on = no` coin-flip nudges, and delete an `ai_chance` block that has no modifier
+left (default weight 1 is identical). Non-English files keep their orphaned keys. Sections 3–5
+below do not apply; verify with the grep set in §5 and `validate_events.py` /
+`validate_localisation.py`, and say in the PR that the report does not apply.
+
 The report decides every mechanical question: rule and loc conformance, flag wiring, which focuses
 carry path modifiers and whether they are multiplicative, path flags that appear nowhere, killswitch
 orphans per rule state × historical AI on/off, mutex ties, `focus_factors` disagreements, dangerous
@@ -58,6 +69,11 @@ python tools/standardization/apply_ai_path_weights.py --map <mapping>
 ```
 
 Loc drafting and `_desc` sentence-count fixes go to a `localisation-editor` subagent on haiku.
+
+**Defects you find are in scope.** A broken fork, a timing race between the country's own path
+events, an asymmetric branch, a wrong state id, or a typo in an English string the path events show
+gets fixed in the same PR, in its own commit, never deferred as a follow-up. English values only —
+never rename a key that non-English files carry.
 
 **Rule standard.** Exactly `HISTORICAL` + one option per alt-history path + `RANDOM_PATH` +
 `NO_PATH`, and `NO_PATH` is the `default = { }` block, listed last — a country the player never
@@ -109,6 +125,11 @@ date resolves to the person history had). Then `validate_focus_tree.py --path .`
 `validate_decisions.py` warning-group counts against a stashed baseline.
 
 ## 6. Finish
+
+Changelog first: `Changelog.txt` carries one shared line under the current version's `Content:`,
+`- Country AI path game rules standardised to Historical / alternate paths / Random Path / No Path:
+TAG, TAG`. Append your TAG to it; create the line if the version has none. No issue number, no
+per-country line. This is the one exception to the AGENTS.md changelog rule.
 
 PR (create, or update title/body if one exists), then tick the checklist line to `- [x]` and append
 ` (#PR)` via `gh issue edit 3162 --body-file` — re-fetch the body and change only that line. Report

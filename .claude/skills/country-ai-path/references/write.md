@@ -124,8 +124,8 @@ Optional AI sentiment grant, if the country has one — `if`/`else_if`, no bookk
 
 Everything downstream gates on `has_global_flag`, **never** `has_game_rule` — including events and
 strategy plans, or a `RANDOM_PATH` roll enables the flags but not the plan. Known direct readers to
-convert when they touch your country: `HOL_strategy_plans.txt`, `events/Solomon_Islands.txt`,
-`events/Sao_Tome_e_Principe.txt`, `events/comoros.txt`, `events/05_japan.txt`, `events/Italy.txt`,
+convert when they touch your country: `HOL_strategy_plans.txt`, `events/comoros.txt`,
+`events/05_japan.txt`, `events/Italy.txt`,
 `history/countries/GER - Germany.txt`, `common/scripted_effects/00_yearly_effects.txt`. The report's
 Wiring section lists any remaining reader for your tag.
 
