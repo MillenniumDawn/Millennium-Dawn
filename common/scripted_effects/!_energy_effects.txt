@@ -299,6 +299,7 @@ energy_calc_consumption = {
 			value = population_energy_use_display_var
 			add = energy_use_buildings_total_display_var
 			add = other_energy_use_display_var
+			add = energy_load_sharing_use_var
 			clamp = { min = 0.001 max = 999999999 }
 		}
 	}
@@ -506,6 +507,7 @@ energy_calc_generation = {
 	# Flat Miscellaneous Gain from Content
 	set_variable = { other_energy_generation = { value = modifier@energy_gain multiply = temp_energy_gain_m } }
 	add_to_variable = { energy_sum = other_energy_generation }
+	add_to_variable = { energy_sum = energy_load_sharing_gain_var }
 }
 
 # Effect: energy_calc_balance
@@ -625,6 +627,7 @@ energy_calc_fuel = {
 	# Calculate the Display Variables
 	set_variable = { fossil_pp_fuel_display = { value = fossil_pp_fuel_consumption multiply = 24 } }
 	set_variable = { non_electric_fuel_display = { value = non_electric_fuel_consumption multiply = 24 } }
+	set_variable = { total_energy_fuel_display = { value = powerplants_and_pop_fuel_consumption multiply = 24 } }
 	md_check_nuclear_fuel_alert = yes
 	md_check_energy_balance_alert = yes
 	md_check_idle_nuclear_reactors_alert = yes
@@ -652,6 +655,7 @@ calculate_energy_load_sharing = {
 			available_energy_to_share = {
 				value = energy_difference_variable
 				add = energy_load_sharing_use_var
+				add = free_fossil_powerplants_power
 				max = 0
 			}
 		}
@@ -685,7 +689,7 @@ calculate_energy_load_sharing = {
 			set_temp_variable = { total_energy_required_to_share = 0 }
 			for_each_loop = {
 				array = energy_load_sharing_nations_value
-				add_to_temp_variable = { PREV.total_energy_required_to_share = v }
+				add_to_temp_variable = { total_energy_required_to_share = v }
 			}
 			set_variable = { energy_load_sharing_use_var = { value = total_energy_required_to_share multiply = -1 } }
 		}
@@ -698,6 +702,11 @@ calculate_energy_load_sharing = {
 					set_variable = { energy_load_sharing_gain_var = 0 }
 				}
 			}
+		}
+		calculate_energy_use = yes
+		for_each_scope_loop = {
+			array = energy_load_sharing_nations
+			calculate_energy_use = yes
 		}
 	}
 	# Clear variables if you're neither a provider nor a recipient
