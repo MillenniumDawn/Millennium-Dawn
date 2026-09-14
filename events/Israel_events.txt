@@ -15386,6 +15386,7 @@ country_event = {
 		subtract_from_variable = {
 			ISR_palestine_situation_additional = 20
 		}
+		custom_effect_tooltip = ISR_operation_failed_pal_tt
 		add_political_power = -50
 		add_stability = 0.05
 		add_war_support = -0.1
@@ -16283,21 +16284,19 @@ country_event = {
 			original_tag = ISR
 			PAL = { has_country_flag = ISR_start_operation_doer }
 		}
-		hidden_effect = {
-			HAM = {
-				annex_country = {
-					target = PAL
-					transfer_troops = yes
-				}
-				add_timed_idea = { idea = ISR_failed_operation days = 365 }
-				set_cosmetic_tag = HAM-Western_Outlook
+		HAM = {
+			annex_country = {
+				target = PAL
+				transfer_troops = yes
 			}
-			if = { limit = { HAM = { NOT = { is_subject_of = ISR } } }
-				diplomatic_relation = {
-					country = HAM
-					relation = puppet
-					active = yes
-				}
+			add_timed_idea = { idea = ISR_failed_operation days = 365 }
+			set_cosmetic_tag = HAM-Western_Outlook
+		}
+		if = { limit = { HAM = { NOT = { is_subject_of = ISR } } }
+			diplomatic_relation = {
+				country = HAM
+				relation = puppet
+				active = yes
 			}
 		}
 		ai_chance = { base = 100 }
@@ -16305,7 +16304,35 @@ country_event = {
 
 	option = {
 		name = israel.92.c
-		trigger = { original_tag = PAL }
+		trigger = {
+			original_tag = PAL
+			NOT = { has_country_flag = ISR_start_operation_doer }
+		}
+		ai_chance = { base = 100 }
+	}
+
+	option = {
+		name = israel.92.e
+		log = "[GetDateText]: [This.GetName]: israel.92.e executed"
+		trigger = {
+			original_tag = PAL
+			has_country_flag = ISR_start_operation_doer
+		}
+		effect_tooltip = {
+			HAM = {
+				annex_country = {
+					target = PAL
+					transfer_troops = yes
+				}
+			}
+			ISR = {
+				diplomatic_relation = {
+					country = HAM
+					relation = puppet
+					active = yes
+				}
+			}
+		}
 		ai_chance = { base = 100 }
 	}
 }
