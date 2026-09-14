@@ -2015,6 +2015,7 @@ class Validator(BaseValidator):
         Reads `picture_refs` (depth 0 of the event body) rather than a body-wide
         scan, so a `create_country_leader = { picture = ... }` portrait nested
         in an option or `immediate` block does not count as the event's picture.
+        The finding names the fix, since the group header is not rendered.
         News events are clean and gate as errors; country events carry a
         backlog of portrait-only events and stay warnings until cleared.
         """
@@ -2024,19 +2025,26 @@ class Validator(BaseValidator):
         omitted = {"country_event": [], "news_event": []}
         for ev in meta:
             if ev["type"] in omitted and not ev["is_hidden"] and not ev["picture_refs"]:
-                omitted[ev["type"]].append(f"{ev['id'] or 'unknown'} - {ev['file']}")
+                omitted[ev["type"]].append(
+                    (
+                        f"{ev['id'] or 'unknown'}: event has no picture, "
+                        "add `picture = GFX_<sprite>` below `desc =`",
+                        ev["file"],
+                        ev["line"],
+                    )
+                )
 
         self._report(
             omitted["news_event"],
             "✓ All visible news events have pictures",
-            "Visible news events with no picture field of their own:",
+            "News events with no picture (add `picture = GFX_<sprite>` below `desc =`):",
             Severity.ERROR,
             category="news-event-picture-omitted",
         )
         self._report(
             omitted["country_event"],
             "✓ All visible country events have pictures",
-            "Visible country events with no picture field of their own:",
+            "Country events with no picture (add `picture = GFX_<sprite>` below `desc =`):",
             Severity.WARNING,
             category="event-picture-omitted",
         )
