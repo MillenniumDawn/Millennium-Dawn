@@ -92,14 +92,6 @@ def _mod_sprites(mod_path):
     return names
 
 
-def _issues(tmp_path):
-    validator = Validator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    return {
-        (issue.category, issue.line): issue for issue in validator._issues
-    }, validator
-
-
 def test_parse_groups_reads_top_level_tokens_with_lines():
     assert parse_groups(GROUPS) == [("mio_cat_all_armor", 1), ("mio_cat_all_utils", 7)]
 
@@ -116,9 +108,11 @@ def test_parse_org_equipment_types_skips_limits_and_include_only_orgs():
     ]
 
 
-def test_missing_group_sprite_is_an_error_at_the_group_definition(tmp_path):
+def test_missing_group_sprite_is_an_error_at_the_group_definition(
+    tmp_path, issues_by_line
+):
     _write_fixture(tmp_path)
-    issues, _ = _issues(tmp_path)
+    issues, _ = issues_by_line(Validator, tmp_path)
     issue = issues[("mio-equipment-group-icon", 7)]
     assert issue.severity == Severity.ERROR
     assert "GFX_mio_cat_all_utils" in issue.message
@@ -126,9 +120,9 @@ def test_missing_group_sprite_is_an_error_at_the_group_definition(tmp_path):
     assert issue.file.replace("\\", "/").endswith("mio_equipment_groups.txt")
 
 
-def test_group_token_in_an_org_is_not_reported_again(tmp_path):
+def test_group_token_in_an_org_is_not_reported_again(tmp_path, issues_by_line):
     _write_fixture(tmp_path)
-    issues, _ = _issues(tmp_path)
+    issues, _ = issues_by_line(Validator, tmp_path)
     assert not [
         key
         for key, issue in issues.items()
@@ -136,44 +130,46 @@ def test_group_token_in_an_org_is_not_reported_again(tmp_path):
     ]
 
 
-def test_raw_token_without_sprite_is_an_error_on_the_equipment_type_line(tmp_path):
+def test_raw_token_without_sprite_is_an_error_on_the_equipment_type_line(
+    tmp_path, issues_by_line
+):
     _write_fixture(tmp_path)
-    issues, _ = _issues(tmp_path)
+    issues, _ = issues_by_line(Validator, tmp_path)
     issue = issues[("mio-equipment-type-icon", 15)]
     assert issue.severity == Severity.ERROR
     assert "GFX_military_industrial_organization_heavy_frigate" in issue.message
 
 
-def test_commented_out_token_is_ignored(tmp_path):
+def test_commented_out_token_is_ignored(tmp_path, issues_by_line):
     _write_fixture(tmp_path)
-    issues, _ = _issues(tmp_path)
+    issues, _ = issues_by_line(Validator, tmp_path)
     assert not [
         issue for issue in issues.values() if "medium_plane_airframe" in issue.message
     ]
 
 
-def test_mod_and_vanilla_sprites_both_resolve(tmp_path):
+def test_mod_and_vanilla_sprites_both_resolve(tmp_path, issues_by_line):
     _write_fixture(tmp_path)
-    issues, _ = _issues(tmp_path)
+    issues, _ = issues_by_line(Validator, tmp_path)
     messages = [issue.message for issue in issues.values()]
     assert not [m for m in messages if "artillery_equipment" in m]
     assert not [m for m in messages if "anti_air" in m]
     assert not [m for m in messages if "mio_cat_all_armor" in m]
 
 
-def test_clean_fixture_reports_nothing(tmp_path):
+def test_clean_fixture_reports_nothing(tmp_path, issues_by_line):
     gfx = GFX[: GFX.rindex("}")] + (
         '\tspriteType = { name = "GFX_mio_cat_all_utils" texturefile = "c.dds" }\n'
         '\tspriteType = { name = "GFX_military_industrial_organization_heavy_frigate" texturefile = "d.dds" }\n'
         "}\n"
     )
     _write_fixture(tmp_path, gfx=gfx)
-    issues, _ = _issues(tmp_path)
+    issues, _ = issues_by_line(Validator, tmp_path)
     assert issues == {}
 
 
-def test_small_sprite_index_skips_the_check(tmp_path, monkeypatch):
+def test_small_sprite_index_skips_the_check(tmp_path, monkeypatch, issues_by_line):
     monkeypatch.setattr("validate_mio_icons._MIN_SPRITE_INDEX", 1000)
     _write_fixture(tmp_path)
-    issues, _ = _issues(tmp_path)
+    issues, _ = issues_by_line(Validator, tmp_path)
     assert issues == {}
