@@ -131,6 +131,10 @@ Changelog first: `Changelog.txt` carries one shared line under the current versi
 TAG, TAG`. Append your TAG to it; create the line if the version has none. No issue number, no
 per-country line. This is the one exception to the AGENTS.md changelog rule.
 
+PR body in the `/open-pr` step 5 format and nothing else: a single `### Changes` heading, one
+plain bullet per player-visible outcome, no file paths, commit hashes, tables, testing section or
+`## Bottom line`, then a blank line and `Part of #3162`. Keep the body under ten lines.
+
 PR (create, or update title/body if one exists), then tick the checklist line to `- [x]` and append
 ` (#PR)` via `gh issue edit 3162 --body-file` — re-fetch the body and change only that line. Report
 the PR URL. The next country starts in a fresh chat with `/country-ai-path`.
