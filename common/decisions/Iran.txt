@@ -15292,3 +15292,2043 @@ PER_us_war = {
 		}
 	}
 }
+
+# Aerospace, UAV, Missile & Air Defense Industry Progression
+# Decisions reveal in waves as PER_aerospace_stage advances (0->1->2->3):
+# only the founding decision is visible at stage 0; completing it reveals the
+# stage-1 wave (consolidation gate + two early operational decisions);
+# consolidating reveals the stage-2 wave (institutional lead + most of the
+# operational roster); declaring the complex reveals the capstone.
+# Only one decision in this category can be taken at a time: every decision
+# sets PER_aerospace_action_cooldown (15 days) and checks it in `available`,
+# so the whole category pauses briefly after any single action. The two
+# decisions that contact a foreign country (PER_request_foreign_defense_
+# cooperation, PER_offer_arms_technology_sale) additionally set/check
+# PER_diplomatic_contact_cooldown (365 days) shared between just the two of
+# them, so approaching one country locks out approaching any other for a
+# year. Both foreign-contact decisions are plain (non-targeted) and open a
+# country-picker event instead of spawning one row per valid target.
+#
+# Three 0-100 country variables gate BOTH remaining stage transitions:
+# PER_missile_progress, PER_drone_progress, PER_air_defense_progress. Almost
+# every operational decision adds to one (institutional_rivalry_friction adds
+# to all three at once, being the only real grind available at stage 1) and
+# all three must read 100 before the stage-advance decision for that wave
+# becomes available -- PER_consolidate_under_one_roof (1->2) and
+# PER_declare_strategic_aerospace_complex (2->3) both gate on this the same
+# way. Consolidating resets all three back to 0 so the stage-2 roster has
+# its own grind to fill; declaring does not reset them since there is no
+# stage 4. The missile track is the one track that cannot reach 100 during
+# stage 2 without PER_missile_fuel_refinery_program, which itself requires
+# Fuel Refining III researched and a level 6+ synthetic refinery complex
+# already built in a single state -- deliberately forcing fuel
+# infrastructure before the missile program can be finished. Every
+# add_to_variable on these three is followed by a
+# clamp_variable so the GUI's progress bars, which read the raw value as a
+# 0-100 frame, never receive an out-of-range number. PER_aerospace_gui_dirty
+# is a plain incrementing counter bumped alongside every stage or progress
+# change -- scripted_gui `dirty` only tracks one variable, so this one
+# variable stands in for all four (stage + 3 progress bars) that the GUI
+# reads.
+PER_aerospace_industry_category = {
+	PER_found_aerospace_coordination_council = {
+		icon = generic_construction
+		cost = 100
+		fire_only_once = yes
+
+		visible = {
+			check_variable = { PER_aerospace_stage = 0 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_found_aerospace_coordination_council"
+			custom_effect_tooltip = PER_advances_to_stage_1_tt
+			custom_effect_tooltip = PER_aerospace_stage_advance_clears_cooldown_tt
+			newline = yes
+			set_variable = { PER_aerospace_stage = 1 }
+			# Founding the council is what puts the "State of the Iranian
+			# Aerospace Industry" modifier on the country -- without this every
+			# add_to_variable against it would write to a modifier that was
+			# never applied, and none of the programme's bonuses would exist.
+			add_dynamic_modifier = { modifier = PER_aerospace_modifier }
+			add_tech_bonus = {
+				name = PER_found_aerospace_coordination_council
+				bonus = 0.5
+				uses = 1
+				category = CAT_missile
+			}
+			newline = yes
+			add_tech_bonus = {
+				name = PER_found_aerospace_coordination_council
+				bonus = 0.5
+				uses = 1
+				category = CAT_drones
+			}
+			newline = yes
+			add_tech_bonus = {
+				name = PER_found_aerospace_coordination_council
+				bonus = 0.5
+				uses = 1
+				category = CAT_aa_missiles
+			}
+			newline = yes
+			407 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -2.00 }
+			modify_treasury_effect = yes
+			hidden_effect = {
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+				# Advancing a stage clears the shared action cooldown instead of
+				# setting it, so the new stage's roster is usable immediately.
+				clr_country_flag = PER_aerospace_action_cooldown
+			}
+			unlock_decision_tooltip = PER_consolidate_under_one_roof
+			unlock_decision_tooltip = PER_missile_test_launch_program
+			unlock_decision_tooltip = PER_institutional_rivalry_friction
+			unlock_decision_tooltip = PER_document_holy_defence_experiences
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	PER_consolidate_under_one_roof = {
+		icon = generic_industry
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			has_political_power > 149
+			check_variable = { treasury > 9 }
+		}
+		custom_cost_text = PER_cost_pp150_treasury10
+		ai_hint_pp_cost = 180
+
+		visible = {
+			check_variable = { PER_aerospace_stage = 1 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			OR = {
+				AND = { has_completed_focus = PER_AIO has_completed_focus = PER_ballistic_shift }
+				AND = { has_completed_focus = PER_AIO has_completed_focus = PER_naze_at_rockets_in_tabriz }
+				AND = { has_completed_focus = PER_ballistic_shift has_completed_focus = PER_naze_at_rockets_in_tabriz }
+			}
+			# Industrial floor for consolidation. The *_total variables are the
+			# country-wide building counts the money system already maintains.
+			custom_trigger_tooltip = {
+				tooltip = PER_consolidate_industry_requirement_tt
+				check_variable = { industrial_complex_total > 29 }
+				check_variable = { military_factory_total > 19 }
+				check_variable = { microchip_plant_total > 1 }
+				any_owned_state = {
+					check_variable = { building_level@radar_station > 4 }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_missile_progress_full_tt
+				check_variable = { PER_missile_progress > 99 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_drone_progress_full_tt
+				check_variable = { PER_drone_progress > 99 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_air_defense_progress_full_tt
+				check_variable = { PER_air_defense_progress > 99 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_consolidate_under_one_roof"
+			custom_effect_tooltip = PER_advances_to_stage_2_tt
+			custom_effect_tooltip = PER_aerospace_stage_advance_clears_cooldown_tt
+			newline = yes
+			set_variable = { PER_aerospace_stage = 2 }
+			if = {
+				limit = { has_dlc = "Arms Against Tyranny" }
+				mio:PER_shahid_hemmat_industries_manufacturer = {
+					add_mio_size = 3
+				}
+			}
+			newline = yes
+			407 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 2
+					instant_build = yes
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = PER_aerospace_bars_reset_tt
+			set_variable = { PER_missile_progress = 0 }
+			set_variable = { PER_drone_progress = 0 }
+			set_variable = { PER_air_defense_progress = 0 }
+			newline = yes
+			hidden_effect = {
+				add_political_power = -150
+				set_temp_variable = { treasury_change = -10.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+				clr_country_flag = PER_aerospace_action_cooldown
+			}
+			unlock_decision_tooltip = PER_declare_strategic_aerospace_complex
+			unlock_decision_tooltip = PER_sepah_missile_command
+			unlock_decision_tooltip = PER_aio_civilian_command
+			unlock_decision_tooltip = PER_bazaar_workshop_network
+			unlock_decision_tooltip = PER_expand_shahed_production_lines
+			unlock_decision_tooltip = PER_expand_integrated_air_defense_network
+			unlock_decision_tooltip = PER_national_space_launch_ambition
+			unlock_decision_tooltip = PER_sanctions_workaround_procurement
+			unlock_decision_tooltip = PER_export_missile_technology_to_allies
+			unlock_decision_tooltip = PER_expand_missile_site_construction
+			unlock_decision_tooltip = PER_fortified_underground_missile_sites
+			unlock_decision_tooltip = PER_build_workshop_network
+			unlock_decision_tooltip = PER_missile_fuel_refinery_program
+			unlock_decision_tooltip = PER_national_radar_network
+			unlock_decision_tooltip = PER_layered_sam_belt
+			unlock_decision_tooltip = PER_drone_swarm_doctrine_program
+			newline = yes
+			country_event = { id = PER_aerospace.4 days = 1 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	PER_declare_strategic_aerospace_complex = {
+		icon = missile_nuclear_button
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			has_political_power > 199
+			command_power > 49
+		}
+		custom_cost_text = PER_cost_pp200_cp50
+		ai_hint_pp_cost = 250
+
+		visible = {
+			check_variable = { PER_aerospace_stage = 2 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			OR = {
+				AND = { has_dlc = "Gotterdammerung" has_tech = IRBM4 }
+				AND = { NOT = { has_dlc = "Gotterdammerung" } has_tech = GLCM4_non_got }
+			}
+			has_military_spending_law_at_least_5 = yes
+			custom_trigger_tooltip = {
+				tooltip = PER_declare_arsenal_requirement_tt
+				has_equipment = { ballistic_missile_equipment > 1999 }
+				has_equipment = { guided_missile_equipment > 999 }
+				has_equipment = { sam_missile_equipment > 799 }
+				OR = {
+					has_equipment = { small_plane_suicide_airframe > 1199 }
+					has_equipment = { medium_plane_suicide_airframe > 1199 }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_missile_progress_full_tt
+				check_variable = { PER_missile_progress > 99 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_drone_progress_full_tt
+				check_variable = { PER_drone_progress > 99 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_air_defense_progress_full_tt
+				check_variable = { PER_air_defense_progress > 99 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_declare_strategic_aerospace_complex"
+			custom_effect_tooltip = PER_advances_to_stage_3_tt
+			custom_effect_tooltip = PER_aerospace_stage_advance_clears_cooldown_tt
+			newline = yes
+			set_variable = { PER_aerospace_stage = 3 }
+			newline = yes
+			hidden_effect = {
+				add_political_power = -200
+				add_command_power = -50
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+				clr_country_flag = PER_aerospace_action_cooldown
+			}
+			newline = yes
+			# Absorbs what the retired PER_strategic_missile_power idea used to
+			# carry, so the whole system reports through one modifier block.
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+			add_to_variable = { PER_aerospace_production_speed_rocket_site_factor = 0.25 tooltip = production_speed_rocket_site_factor_tt }
+			add_to_variable = { PER_aerospace_production_speed_radar_station_factor = 0.10 tooltip = production_speed_radar_station_factor_tt }
+			add_to_variable = { PER_aerospace_static_anti_air_damage_factor = 0.10 tooltip = static_anti_air_damage_factor_tt }
+			add_to_variable = { PER_aerospace_static_anti_air_hit_chance_factor = 0.05 tooltip = static_anti_air_hit_chance_factor_tt }
+			newline = yes
+			add_tech_bonus = {
+				name = PER_declare_strategic_aerospace_complex
+				bonus = 0.5
+				uses = 2
+				category = CAT_missile
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -8.00 }
+			modify_treasury_effect = yes
+			newline = yes
+			400 = {
+				add_building_construction = {
+					type = rocket_site
+					level = 2
+					instant_build = yes
+				}
+			}
+			407 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 3
+					instant_build = yes
+				}
+			}
+			newline = yes
+			unlock_decision_tooltip = PER_fattah_hypersonic_glide_program
+			country_event = { id = PER_aerospace.1 days = 2 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	PER_sepah_missile_command = {
+		icon = arm_drone_button
+
+		custom_cost_trigger = {
+			command_power > 74
+		}
+		custom_cost_text = PER_cost_cp75
+		ai_hint_pp_cost = 75
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_sepah_missile_command_block_tt
+				NOT = { has_country_flag = PER_sepah_missile_command_block }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_sepah_missile_command"
+			add_ideas = PER_sepah_led_aerospace
+			if = {
+				limit = { has_idea = PER_aio_led_aerospace }
+				remove_ideas = PER_aio_led_aerospace
+			}
+			if = {
+				limit = { has_idea = PER_distributed_aerospace_network }
+				remove_ideas = PER_distributed_aerospace_network
+			}
+			hidden_effect = {
+				add_command_power = -75
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_sepah_missile_command_block days = 365 value = 1 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	PER_aio_civilian_command = {
+		icon = generic_industry
+
+		custom_cost_trigger = {
+			command_power > 74
+		}
+		custom_cost_text = PER_cost_cp75
+		ai_hint_pp_cost = 75
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_aio_civilian_command_block_tt
+				NOT = { has_country_flag = PER_aio_civilian_command_block }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_aio_civilian_command"
+			add_ideas = PER_aio_led_aerospace
+			if = {
+				limit = { has_idea = PER_sepah_led_aerospace }
+				remove_ideas = PER_sepah_led_aerospace
+			}
+			if = {
+				limit = { has_idea = PER_distributed_aerospace_network }
+				remove_ideas = PER_distributed_aerospace_network
+			}
+			newline = yes
+			add_tech_bonus = {
+				name = PER_aio_civilian_command
+				bonus = 1.0
+				uses = 1
+				category = CAT_agriculture_tech
+			}
+			hidden_effect = {
+				add_command_power = -75
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_aio_civilian_command_block days = 365 value = 1 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	PER_bazaar_workshop_network = {
+		icon = generic_construction
+
+		custom_cost_trigger = {
+			command_power > 74
+		}
+		custom_cost_text = PER_cost_cp75
+		ai_hint_pp_cost = 75
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_bazaar_workshop_network_block_tt
+				NOT = { has_country_flag = PER_bazaar_workshop_network_block }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_bazaar_workshop_network"
+			add_ideas = PER_distributed_aerospace_network
+			if = {
+				limit = { has_idea = PER_sepah_led_aerospace }
+				remove_ideas = PER_sepah_led_aerospace
+			}
+			if = {
+				limit = { has_idea = PER_aio_led_aerospace }
+				remove_ideas = PER_aio_led_aerospace
+			}
+			hidden_effect = {
+				add_command_power = -75
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_bazaar_workshop_network_block days = 365 value = 1 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	PER_missile_test_launch_program = {
+		icon = launch_missile
+		cost = 50
+		fixed_random_seed = no
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 1
+				compare = greater_than_or_equals
+			}
+			check_variable = { PER_missile_test_count < 3 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_missile_test_launch_program_repeat }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_missile_test_launch_program"
+			add_to_variable = { PER_missile_test_count = 1 }
+			set_temp_variable = { treasury_change = -2.00 }
+			modify_treasury_effect = yes
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_missile_test_launch_program_repeat days = 45 value = 1 }
+			random_list = {
+				65 = {
+					custom_effect_tooltip = PER_missile_test_success_tt
+					if = {
+						limit = { check_variable = { PER_missile_test_count < 3 } }
+						add_tech_bonus = {
+							name = PER_missile_test_launch_program
+							bonus = 0.15
+							uses = 1
+							category = CAT_missile
+						}
+					}
+					newline = yes
+					# Trials teach less once the industry is consolidated.
+					if = {
+						limit = { check_variable = { PER_aerospace_stage < 2 } }
+						custom_effect_tooltip = PER_missile_sector_progress_10_tt
+						add_to_variable = { PER_missile_progress = 10 }
+					}
+					else = {
+						custom_effect_tooltip = PER_missile_sector_progress_5_tt
+						add_to_variable = { PER_missile_progress = 5 }
+					}
+					clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+					hidden_effect = { add_to_variable = { PER_aerospace_gui_dirty = 1 } }
+					country_event = { id = PER_aerospace.2 days = 1 }
+				}
+				35 = {
+					custom_effect_tooltip = PER_missile_test_failure_tt
+					add_stability = -0.01
+					country_event = { id = PER_aerospace.3 days = 1 }
+				}
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	PER_drone_endurance_trials = {
+		icon = uav
+		cost = 40
+		fixed_random_seed = no
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 1
+				compare = greater_than_or_equals
+			}
+			check_variable = { PER_drone_trial_count < 3 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_drone_endurance_trials_repeat }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_drone_endurance_trials"
+			add_to_variable = { PER_drone_trial_count = 1 }
+			set_temp_variable = { treasury_change = -2.00 }
+			modify_treasury_effect = yes
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_drone_endurance_trials_repeat days = 45 value = 1 }
+			random_list = {
+				70 = {
+					custom_effect_tooltip = PER_drone_trial_success_tt
+					country_event = { id = PER_aerospace.18 days = 1 }
+					newline = yes
+					# Trials teach less once the industry is consolidated.
+					if = {
+						limit = { check_variable = { PER_aerospace_stage < 2 } }
+						custom_effect_tooltip = PER_drone_sector_progress_10_tt
+						add_to_variable = { PER_drone_progress = 10 }
+					}
+					else = {
+						custom_effect_tooltip = PER_drone_sector_progress_5_tt
+						add_to_variable = { PER_drone_progress = 5 }
+					}
+					clamp_variable = { var = PER_drone_progress min = 0 max = 100 }
+					hidden_effect = { add_to_variable = { PER_aerospace_gui_dirty = 1 } }
+				}
+				30 = {
+					custom_effect_tooltip = PER_drone_trial_failure_tt
+					add_stability = -0.01
+					country_event = { id = PER_aerospace.19 days = 1 }
+				}
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	PER_air_defense_live_fire_exercise = {
+		icon = arm_drone_button
+		cost = 40
+		fixed_random_seed = no
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 1
+				compare = greater_than_or_equals
+			}
+			check_variable = { PER_air_defense_exercise_count < 3 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_air_defense_live_fire_exercise_repeat }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_air_defense_live_fire_exercise"
+			add_to_variable = { PER_air_defense_exercise_count = 1 }
+			set_temp_variable = { treasury_change = -2.00 }
+			modify_treasury_effect = yes
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_air_defense_live_fire_exercise_repeat days = 45 value = 1 }
+			random_list = {
+				70 = {
+					custom_effect_tooltip = PER_air_defense_exercise_success_tt
+					country_event = { id = PER_aerospace.20 days = 1 }
+					newline = yes
+					# Trials teach less once the industry is consolidated.
+					if = {
+						limit = { check_variable = { PER_aerospace_stage < 2 } }
+						custom_effect_tooltip = PER_air_defense_sector_progress_10_tt
+						add_to_variable = { PER_air_defense_progress = 10 }
+					}
+					else = {
+						custom_effect_tooltip = PER_air_defense_sector_progress_5_tt
+						add_to_variable = { PER_air_defense_progress = 5 }
+					}
+					clamp_variable = { var = PER_air_defense_progress min = 0 max = 100 }
+					hidden_effect = { add_to_variable = { PER_aerospace_gui_dirty = 1 } }
+				}
+				30 = {
+					custom_effect_tooltip = PER_air_defense_exercise_failure_tt
+					add_stability = -0.01
+					country_event = { id = PER_aerospace.21 days = 1 }
+				}
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	PER_expand_shahed_production_lines = {
+		icon = uav
+		days_remove = 90
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 7 }
+		}
+		custom_cost_text = PER_cost_treasury8
+		ai_hint_pp_cost = 50
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = { PER_shahed_production_lines_expanded < 3 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_expand_shahed_production_lines_repeat }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_expand_shahed_production_lines"
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_expand_shahed_production_lines_repeat days = 45 value = 1 }
+			custom_effect_tooltip = PER_work_under_way_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_expand_shahed_production_lines"
+			add_to_variable = { PER_shahed_production_lines_expanded = 1 }
+			if = {
+				limit = { check_variable = { PER_shahed_production_lines_expanded < 3 } }
+				add_tech_bonus = {
+					name = PER_expand_shahed_production_lines
+					bonus = 0.5
+					uses = 1
+					category = CAT_drones
+				}
+				newline = yes
+				if = {
+					limit = { has_dlc = "By Blood Alone" }
+					add_equipment_to_stockpile = {
+						type = small_plane_suicide_airframe
+						amount = 100
+					}
+				}
+				else = {
+					add_tech_bonus = {
+						name = PER_expand_shahed_production_lines
+						bonus = 0.5
+						uses = 1
+						category = CAT_l_drone
+					}
+				}
+			}
+			newline = yes
+			if = {
+				limit = { NOT = { has_country_flag = PER_aerospace_hardening_done } }
+				set_country_flag = PER_aerospace_hardening_done
+				add_ideas = PER_state_of_iranian_aerospace_industry
+			}
+			newline = yes
+			407 = {
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = PER_drone_sector_progress_20_tt
+			add_to_variable = { PER_drone_progress = 20 }
+			clamp_variable = { var = PER_drone_progress min = 0 max = 100 }
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -8.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			if = {
+				limit = { NOT = { has_country_flag = PER_aerospace_basics_established } }
+				set_country_flag = PER_aerospace_basics_established
+				unlock_decision_tooltip = PER_national_space_launch_ambition
+				unlock_decision_tooltip = PER_sanctions_workaround_procurement
+				unlock_decision_tooltip = PER_export_missile_technology_to_allies
+				unlock_decision_tooltip = PER_request_foreign_defense_cooperation
+				unlock_decision_tooltip = PER_offer_arms_technology_sale
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	PER_export_missile_technology_to_allies = {
+		icon = missile_rocket_button
+		cost = 60
+		days_re_enable = 240
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			has_country_flag = PER_aerospace_basics_established
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_export_missile_technology_to_allies_repeat }
+			}
+			is_in_faction = yes
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_export_missile_technology_to_allies"
+			if = {
+				limit = { has_dlc = "Gotterdammerung" }
+				every_allied_country = {
+					limit = { NOT = { tag = PER } }
+					add_equipment_to_stockpile = {
+						type = guided_missile_equipment_1
+						amount = 50
+						producer = PER
+					}
+				}
+			}
+			else = {
+				every_allied_country = {
+					limit = { NOT = { tag = PER } }
+					add_equipment_to_stockpile = {
+						type = ballistic_missile_equipment
+						amount = 50
+						producer = PER
+					}
+				}
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = 8.00 }
+			modify_treasury_effect = yes
+			add_to_variable = { PER_missile_export_count = 1 }
+			if = {
+				limit = { check_variable = { PER_missile_export_count < 3 } }
+				custom_effect_tooltip = PER_missile_sector_progress_10_tt
+				add_to_variable = { PER_missile_progress = 10 }
+				clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+				hidden_effect = { add_to_variable = { PER_aerospace_gui_dirty = 1 } }
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_export_missile_technology_to_allies_repeat days = 45 value = 1 }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	PER_sanctions_workaround_procurement = {
+		icon = generic_industry
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 5 }
+		}
+		custom_cost_text = PER_cost_treasury6
+		ai_hint_pp_cost = 40
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			has_country_flag = PER_aerospace_basics_established
+			check_variable = { PER_sanctions_workaround_count < 3 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_sanctions_workaround_procurement_repeat }
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_sanctions_workaround_procurement_requirement_tt
+				has_country_flag = PER_sanctioned
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_sanctions_workaround_procurement"
+			add_to_variable = { PER_sanctions_workaround_count = 1 }
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -6.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			if = {
+				limit = { check_variable = { PER_sanctions_workaround_count < 3 } }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+				add_to_variable = { PER_aerospace_production_speed_rocket_site_factor = 0.05 tooltip = production_speed_rocket_site_factor_tt }
+			}
+			newline = yes
+			custom_effect_tooltip = PER_missile_sector_progress_10_tt
+			add_to_variable = { PER_missile_progress = 10 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_sanctions_workaround_procurement_repeat days = 45 value = 1 }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	PER_institutional_rivalry_friction = {
+		icon = generic_political_discourse
+		cost = 40
+		fire_only_once = yes
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 1
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_institutional_rivalry_friction"
+			add_to_variable = { PER_institutional_friction_count = 1 }
+			add_stability = 0.02
+			add_political_power = 20
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+			add_to_variable = { PER_aerospace_mio_funds_gain_factor = 0.03 tooltip = military_industrial_organization_funds_gain_tt }
+			newline = yes
+			# Sepah runs the missile and drone programs, Artesh runs air
+			# defense -- smoothing relations between the two therefore moves
+			# all three tracks at once, not just one. The funds-gain bump above
+			# is capped to the first two rounds of mediation; this progress
+			# grant is not.
+			custom_effect_tooltip = PER_missile_sector_progress_15_tt
+			add_to_variable = { PER_missile_progress = 15 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			custom_effect_tooltip = PER_drone_sector_progress_15_tt
+			add_to_variable = { PER_drone_progress = 15 }
+			clamp_variable = { var = PER_drone_progress min = 0 max = 100 }
+			custom_effect_tooltip = PER_air_defense_sector_progress_15_tt
+			add_to_variable = { PER_air_defense_progress = 15 }
+			clamp_variable = { var = PER_air_defense_progress min = 0 max = 100 }
+			hidden_effect = {
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	# Stage-1 roster part 2: three one-time decisions revealed in sequence
+	# (each gated on the previous one's completion flag) rather than all
+	# three appearing alongside institutional_rivalry_friction/missile_test
+	# at once. Formerly PER_aerospace_engineering_pipeline (stage 2) -- moved
+	# here since funding the education pipeline logically precedes staffing
+	# the institute with it, and re-skinned around Iran's real National
+	# Elites Foundation (Bonyad-e Melli-ye Nokhbegan).
+	PER_national_elites_foundation_scholarships = {
+		icon = generic_construction
+		cost = 80
+		fire_only_once = yes
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 1
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			# Soft gate: visible from the start so the player can read what it
+			# needs, but the Foundation only has candidates to fund once the
+			# three groundwork programs have each been run at least once.
+			has_education_law_at_least_5 = yes
+			custom_trigger_tooltip = {
+				tooltip = PER_elites_foundation_requirement_tt
+				check_variable = { PER_institutional_friction_count > 0 }
+				check_variable = { PER_missile_test_count > 0 }
+				has_country_flag = PER_holy_defence_documented
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_national_elites_foundation_scholarships"
+			set_country_flag = PER_aerospace_pipeline_done
+			set_country_flag = PER_elites_foundation_done
+			if = {
+				limit = { has_dlc = "Arms Against Tyranny" }
+				mio:PER_shahid_hemmat_industries_manufacturer = {
+					add_mio_size = 1
+				}
+			}
+			newline = yes
+			add_tech_bonus = {
+				name = PER_national_elites_foundation_scholarships
+				bonus = 0.5
+				uses = 1
+				category = CAT_missile
+			}
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+			add_to_variable = { PER_aerospace_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			add_to_variable = { PER_aerospace_recruitable_population = 0.01 tooltip = recruitable_population_tt }
+			newline = yes
+			custom_effect_tooltip = PER_missile_sector_progress_30_tt
+			add_to_variable = { PER_missile_progress = 30 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			custom_effect_tooltip = PER_drone_sector_progress_30_tt
+			add_to_variable = { PER_drone_progress = 30 }
+			clamp_variable = { var = PER_drone_progress min = 0 max = 100 }
+			custom_effect_tooltip = PER_air_defense_sector_progress_40_tt
+			add_to_variable = { PER_air_defense_progress = 40 }
+			clamp_variable = { var = PER_air_defense_progress min = 0 max = 100 }
+			hidden_effect = {
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			unlock_decision_tooltip = PER_fattah_hypersonic_glide_program
+			unlock_decision_tooltip = PER_private_sector_component_contracts
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	# Timed: the study runs for 40 days before it produces anything. The
+	# blocking flag is set immediately on selection so it can never be
+	# re-queued while the archive work is still under way.
+	PER_document_holy_defence_experiences = {
+		icon = generic_research
+		fire_only_once = yes
+		days_remove = 40
+
+		custom_cost_trigger = {
+			command_power > 19
+		}
+		custom_cost_text = PER_cost_cp20
+		ai_hint_pp_cost = 20
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 1
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_document_holy_defence_experiences"
+			set_country_flag = PER_holy_defence_documented
+			hidden_effect = {
+				add_command_power = -20
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_document_holy_defence_experiences"
+			army_experience = 20
+			air_experience = 15
+			add_stability = 0.01
+			newline = yes
+			add_tech_bonus = {
+				name = PER_document_holy_defence_experiences
+				bonus = 0.2
+				uses = 1
+				category = CAT_missile
+			}
+			newline = yes
+			add_tech_bonus = {
+				name = PER_document_holy_defence_experiences
+				bonus = 0.2
+				uses = 1
+				category = CAT_drones
+			}
+			newline = yes
+			custom_effect_tooltip = PER_missile_sector_progress_40_tt
+			add_to_variable = { PER_missile_progress = 40 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			custom_effect_tooltip = PER_drone_sector_progress_20_tt
+			add_to_variable = { PER_drone_progress = 20 }
+			clamp_variable = { var = PER_drone_progress min = 0 max = 100 }
+			hidden_effect = {
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	PER_private_sector_component_contracts = {
+		icon = generic_industry
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 9 }
+		}
+		custom_cost_text = PER_cost_treasury10
+		ai_hint_pp_cost = 70
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 1
+				compare = greater_than_or_equals
+			}
+			has_country_flag = PER_elites_foundation_done
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_private_sector_component_contracts"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+			add_to_variable = { PER_aerospace_microchip_plant_productivity_modifier = 0.05 tooltip = microchip_plant_productivity_modifier_tt }
+			add_to_variable = { PER_aerospace_military_factories_productivity = 0.05 tooltip = military_factories_productivity_tt }
+			add_to_variable = { PER_aerospace_production_speed_synthetic_refinery_factor = 0.05 tooltip = production_speed_synthetic_refinery_factor_tt }
+			add_to_variable = { PER_aerospace_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+			newline = yes
+			add_tech_bonus = {
+				name = PER_private_sector_component_contracts
+				bonus = 0.3
+				uses = 2
+				category = CAT_microchips
+			}
+			newline = yes
+			random_owned_controlled_state = {
+				limit = {
+					free_building_slots = {
+						building = microchip_plant
+						size > 0
+					}
+				}
+				add_building_construction = {
+					type = microchip_plant
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = PER_missile_sector_progress_15_tt
+			add_to_variable = { PER_missile_progress = 15 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			custom_effect_tooltip = PER_drone_sector_progress_35_tt
+			add_to_variable = { PER_drone_progress = 35 }
+			clamp_variable = { var = PER_drone_progress min = 0 max = 100 }
+			custom_effect_tooltip = PER_air_defense_sector_progress_45_tt
+			add_to_variable = { PER_air_defense_progress = 45 }
+			clamp_variable = { var = PER_air_defense_progress min = 0 max = 100 }
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -10.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	PER_request_foreign_defense_cooperation = {
+		icon = missile_rocket_button
+		cost = 60
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			has_country_flag = PER_aerospace_basics_established
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			NOT = { has_country_flag = PER_diplomatic_contact_cooldown }
+			OR = {
+				has_opinion = { target = SOV value > -25 }
+				has_opinion = { target = CHI value > -25 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_request_foreign_defense_cooperation"
+			add_to_variable = { PER_foreign_defense_request_count = 1 }
+			if = {
+				limit = { check_variable = { PER_foreign_defense_request_count < 3 } }
+				custom_effect_tooltip = PER_air_defense_sector_progress_10_tt
+				add_to_variable = { PER_air_defense_progress = 10 }
+				clamp_variable = { var = PER_air_defense_progress min = 0 max = 100 }
+				hidden_effect = { add_to_variable = { PER_aerospace_gui_dirty = 1 } }
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_diplomatic_contact_cooldown days = 365 value = 1 }
+			country_event = { id = PER_aerospace.9 days = 1 }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	PER_fattah_hypersonic_glide_program = {
+		icon = missile_nuclear_button
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			has_political_power > 249
+			check_variable = { treasury > 7 }
+		}
+		custom_cost_text = PER_cost_pp250_treasury8
+		ai_hint_pp_cost = 300
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 3
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			has_country_flag = PER_aerospace_pipeline_done
+			OR = {
+				AND = { has_dlc = "Gotterdammerung" has_tech = IRBM6 }
+				AND = { NOT = { has_dlc = "Gotterdammerung" } has_tech = GLCM6_non_got }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_fattah_hypersonic_glide_program"
+			add_ideas = PER_fattah_class_delivery_systems
+			hidden_effect = {
+				add_political_power = -250
+				set_temp_variable = { treasury_change = -8.00 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			407 = {
+				add_building_construction = {
+					type = radar_station
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+			add_to_variable = { PER_aerospace_research_speed_factor = 0.05 tooltip = research_speed_factor_tt }
+			newline = yes
+			add_doctrine_cost_reduction = {
+				name = PER_fattah_hypersonic_glide_program
+				cost_reduction = 0.3
+				uses = 2
+				category = air_doctrine
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			news_event = { id = PER_aerospace.14 days = 1 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	PER_national_space_launch_ambition = {
+		icon = Launch_Commercial_Satellite
+		days_remove = 120
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 5 }
+		}
+		custom_cost_text = PER_cost_treasury6
+		ai_hint_pp_cost = 35
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			has_country_flag = PER_aerospace_basics_established
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_national_space_launch_ambition"
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			custom_effect_tooltip = PER_work_under_way_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_national_space_launch_ambition"
+			add_tech_bonus = {
+				name = PER_national_space_launch_ambition
+				bonus = 0.75
+				uses = 1
+				category = CAT_satellite
+			}
+			newline = yes
+			1146 = {
+				add_building_construction = {
+					type = rocket_site
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = PER_missile_sector_progress_15_tt
+			add_to_variable = { PER_missile_progress = 15 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -6.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	PER_expand_integrated_air_defense_network = {
+		icon = arm_drone_button
+		days_remove = 80
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 5 }
+		}
+		custom_cost_text = PER_cost_treasury6
+		ai_hint_pp_cost = 40
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = { PER_air_defense_expansion_count < 3 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_expand_integrated_air_defense_network_repeat }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_expand_integrated_air_defense_network"
+			add_to_variable = { PER_air_defense_expansion_count = 1 }
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_expand_integrated_air_defense_network_repeat days = 45 value = 1 }
+			custom_effect_tooltip = PER_work_under_way_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_expand_integrated_air_defense_network"
+			if = {
+				limit = { check_variable = { PER_air_defense_expansion_count < 3 } }
+				add_tech_bonus = {
+					name = PER_expand_integrated_air_defense_network
+					bonus = 0.5
+					uses = 1
+					category = CAT_aa_missiles
+				}
+				newline = yes
+				if = {
+					limit = { has_dlc = "Gotterdammerung" }
+					add_equipment_to_stockpile = {
+						type = sam_missile_equipment
+						amount = 150
+					}
+				}
+				else = {
+					add_equipment_to_stockpile = {
+						type = AA_Equipment
+						amount = 300
+					}
+				}
+				newline = yes
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+				add_to_variable = { PER_aerospace_static_anti_air_hit_chance_factor = 0.05 tooltip = static_anti_air_hit_chance_factor_tt }
+			}
+			newline = yes
+			405 = {
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = PER_air_defense_sector_progress_10_tt
+			add_to_variable = { PER_air_defense_progress = 10 }
+			clamp_variable = { var = PER_air_defense_progress min = 0 max = 100 }
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -6.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			if = {
+				limit = { NOT = { has_country_flag = PER_aerospace_basics_established } }
+				set_country_flag = PER_aerospace_basics_established
+				unlock_decision_tooltip = PER_national_space_launch_ambition
+				unlock_decision_tooltip = PER_sanctions_workaround_procurement
+				unlock_decision_tooltip = PER_export_missile_technology_to_allies
+				unlock_decision_tooltip = PER_request_foreign_defense_cooperation
+				unlock_decision_tooltip = PER_offer_arms_technology_sale
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	PER_national_shorad_program = {
+		icon = arm_drone_button
+		days_remove = 120
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 11 }
+		}
+		custom_cost_text = PER_cost_treasury12
+		ai_hint_pp_cost = 80
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = PER_air_defense_progress
+				value = 65
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_national_shorad_program"
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			custom_effect_tooltip = PER_work_under_way_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_national_shorad_program"
+			add_tech_bonus = {
+				name = PER_national_shorad_program
+				bonus = 1.0
+				uses = 1
+				category = CAT_l_aa
+			}
+			newline = yes
+			every_owned_state = {
+				limit = {
+					anti_air_building < 5
+				}
+				add_building_construction = {
+					type = anti_air_building
+					level = 1
+					instant_build = yes
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = PER_air_defense_sector_progress_20_tt
+			add_to_variable = { PER_air_defense_progress = 20 }
+			clamp_variable = { var = PER_air_defense_progress min = 0 max = 100 }
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -12.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	PER_offer_arms_technology_sale = {
+		icon = missile_rocket_button
+		cost = 40
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			has_country_flag = PER_aerospace_basics_established
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			NOT = { has_country_flag = PER_diplomatic_contact_cooldown }
+			OR = {
+				has_opinion = { target = SOV value > 14 }
+				has_opinion = { target = CHI value > 14 }
+				has_opinion = { target = ARM value > 14 }
+				has_opinion = { target = SUD value > 14 }
+				has_opinion = { target = BFA value > 14 }
+				has_opinion = { target = VEN value > 14 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = PER_offer_arms_technology_sale_all_dealt_tt
+				NOT = {
+					AND = {
+						SOV = { has_country_flag = PER_arms_deal_done }
+						CHI = { has_country_flag = PER_arms_deal_done }
+						ARM = { has_country_flag = PER_arms_deal_done }
+						SUD = { has_country_flag = PER_arms_deal_done }
+						BFA = { has_country_flag = PER_arms_deal_done }
+						VEN = { has_country_flag = PER_arms_deal_done }
+					}
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_offer_arms_technology_sale"
+			custom_effect_tooltip = PER_missile_sector_progress_10_tt
+			add_to_variable = { PER_missile_progress = 10 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			hidden_effect = { add_to_variable = { PER_aerospace_gui_dirty = 1 } }
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_diplomatic_contact_cooldown days = 365 value = 1 }
+			country_event = { id = PER_aerospace.10 days = 1 }
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	PER_expand_missile_site_construction = {
+		icon = launch_missile
+		days_remove = 100
+		cost = 45
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = { PER_missile_site_construction_count < 3 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_expand_missile_site_construction_repeat }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_expand_missile_site_construction"
+			add_to_variable = { PER_missile_site_construction_count = 1 }
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_expand_missile_site_construction_repeat days = 45 value = 1 }
+			custom_effect_tooltip = PER_work_under_way_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_expand_missile_site_construction"
+			if = {
+				limit = { check_variable = { PER_missile_site_construction_count < 3 } }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+				add_to_variable = { PER_aerospace_production_speed_rocket_site_factor = 0.05 tooltip = production_speed_rocket_site_factor_tt }
+			}
+			newline = yes
+			# New sites are sited across the south and west (Fars, Khuzestan,
+			# Kermanshah) rather than stacking in one province, one per use.
+			if = {
+				limit = { check_variable = { PER_missile_site_construction_count = 1 } }
+				400 = {
+					add_building_construction = { type = rocket_site level = 1 instant_build = yes }
+				}
+			}
+			else_if = {
+				limit = { check_variable = { PER_missile_site_construction_count = 2 } }
+				399 = {
+					add_building_construction = { type = rocket_site level = 1 instant_build = yes }
+				}
+			}
+			else = {
+				1139 = {
+					add_building_construction = { type = rocket_site level = 1 instant_build = yes }
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = PER_missile_sector_progress_10_tt
+			add_to_variable = { PER_missile_progress = 10 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			hidden_effect = {
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			if = {
+				limit = { NOT = { has_country_flag = PER_aerospace_basics_established } }
+				set_country_flag = PER_aerospace_basics_established
+				unlock_decision_tooltip = PER_national_space_launch_ambition
+				unlock_decision_tooltip = PER_sanctions_workaround_procurement
+				unlock_decision_tooltip = PER_export_missile_technology_to_allies
+				unlock_decision_tooltip = PER_request_foreign_defense_cooperation
+				unlock_decision_tooltip = PER_offer_arms_technology_sale
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	# Map-based: the player picks the state on the actual game map
+	# (on_map_mode opens it alongside the decision panel) rather than the
+	# site being hardcoded or rotated through a fixed list. target_array
+	# reuses the engine-native PER.core_states array -- no custom array to
+	# build or maintain.
+	PER_fortified_underground_missile_sites = {
+		icon = missile_nuclear_button
+		fire_only_once = yes
+		days_remove = 120
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 34 }
+		}
+		custom_cost_text = PER_cost_treasury35
+		ai_hint_pp_cost = 70
+
+		# Launch and combat infrastructure goes in the west and south -- the
+		# curated target list keeps this to four map choices instead of one
+		# row per owned state.
+		targets = { 399 400 1139 1146 }
+		target_trigger = {
+			FROM = {
+				NOT = { check_variable = { building_level@rocket_site > 2 } }
+			}
+		}
+
+		target_root_trigger = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = PER_missile_progress
+				value = 30
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_fortified_underground_missile_sites"
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			custom_effect_tooltip = PER_work_under_way_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_fortified_underground_missile_sites"
+			# The hardening package is granted once across both map decisions,
+			# never stacked -- the flag guards the tooltip as well as the idea.
+			if = {
+				limit = { NOT = { has_country_flag = PER_aerospace_hardening_done } }
+				set_country_flag = PER_aerospace_hardening_done
+				add_ideas = PER_state_of_iranian_aerospace_industry
+			}
+			newline = yes
+			FROM = {
+				add_building_construction = { type = rocket_site level = 1 instant_build = yes }
+			}
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+			add_to_variable = { PER_aerospace_repair_speed_arms_factory_factor = 0.08 tooltip = repair_speed_arms_factory_factor_tt }
+			newline = yes
+			custom_effect_tooltip = PER_missile_sector_progress_20_tt
+			add_to_variable = { PER_missile_progress = 20 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -10.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	PER_build_workshop_network = {
+		icon = generic_construction
+		days_remove = 90
+		state_target = yes
+		on_map_mode = map_and_decisions_view
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 11 }
+		}
+		custom_cost_text = PER_cost_treasury12
+		ai_hint_pp_cost = 60
+
+		# Production capacity goes in the centre, north and east, away from the
+		# exposed border provinces. Capped at two builds total, so the player
+		# picks two states and gets at most two military factories from it.
+		targets = { 405 404 1147 402 }
+		target_trigger = {
+			FROM = {
+				NOT = { check_variable = { building_level@arms_factory > 8 } }
+			}
+		}
+
+		target_root_trigger = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = { PER_workshop_network_count < 2 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_build_workshop_network_repeat }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_build_workshop_network"
+			add_to_variable = { PER_workshop_network_count = 1 }
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_build_workshop_network_repeat days = 45 value = 1 }
+			custom_effect_tooltip = PER_work_under_way_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_build_workshop_network"
+			if = {
+				limit = { NOT = { has_country_flag = PER_aerospace_hardening_done } }
+				set_country_flag = PER_aerospace_hardening_done
+				add_ideas = PER_state_of_iranian_aerospace_industry
+			}
+			newline = yes
+			FROM = {
+				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+			}
+			newline = yes
+			if = {
+				limit = { check_variable = { PER_workshop_network_count < 2 } }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+				add_to_variable = { PER_aerospace_mio_funds_gain_factor = 0.02 tooltip = military_industrial_organization_funds_gain_tt }
+			}
+			newline = yes
+			custom_effect_tooltip = PER_drone_sector_progress_15_tt
+			add_to_variable = { PER_drone_progress = 15 }
+			clamp_variable = { var = PER_drone_progress min = 0 max = 100 }
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -12.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	PER_missile_fuel_refinery_program = {
+		icon = generic_industry
+		days_remove = 110
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			has_political_power > 79
+			check_variable = { treasury > 11 }
+		}
+		custom_cost_text = PER_cost_pp80_treasury12
+		ai_hint_pp_cost = 125
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = PER_missile_progress
+				value = 60
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_missile_fuel_refinery_program_requirement_tt
+				has_tech = fuel_refining3
+				any_owned_state = {
+					check_variable = { building_level@synthetic_refinery > 5 }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_missile_fuel_refinery_program"
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			custom_effect_tooltip = PER_work_under_way_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_missile_fuel_refinery_program"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+			add_to_variable = { PER_aerospace_production_speed_synthetic_refinery_factor = 0.10 tooltip = production_speed_synthetic_refinery_factor_tt }
+			newline = yes
+			custom_effect_tooltip = PER_missile_sector_progress_35_tt
+			add_to_variable = { PER_missile_progress = 35 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			hidden_effect = {
+				add_political_power = -80
+				set_temp_variable = { treasury_change = -12.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	PER_national_radar_network = {
+		icon = arm_drone_button
+		days_remove = 90
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 9 }
+		}
+		custom_cost_text = PER_cost_treasury10
+		ai_hint_pp_cost = 60
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = PER_air_defense_progress
+				value = 30
+				compare = greater_than_or_equals
+			}
+			check_variable = { PER_radar_network_count < 3 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_national_radar_network_repeat }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_national_radar_network"
+			add_to_variable = { PER_radar_network_count = 1 }
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_national_radar_network_repeat days = 45 value = 1 }
+			custom_effect_tooltip = PER_work_under_way_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_national_radar_network"
+			if = {
+				limit = { check_variable = { PER_radar_network_count < 3 } }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+				add_to_variable = { PER_aerospace_production_speed_radar_station_factor = 0.10 tooltip = production_speed_radar_station_factor_tt }
+				add_to_variable = { PER_aerospace_air_detection = 0.06 tooltip = air_detection_tt }
+			}
+			newline = yes
+			# Coverage is only as good as its spread: one station in the
+			# capital plus one each in the south and west. one_state_radar_station
+			# charges its own construction money for each, on top of the
+			# decision's own cost.
+			405 = { one_state_radar_station = yes }
+			1146 = { one_state_radar_station = yes }
+			1139 = { one_state_radar_station = yes }
+			newline = yes
+			custom_effect_tooltip = PER_air_defense_sector_progress_15_tt
+			add_to_variable = { PER_air_defense_progress = 15 }
+			clamp_variable = { var = PER_air_defense_progress min = 0 max = 100 }
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -10.00 }
+				modify_treasury_effect = yes
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	PER_layered_sam_belt = {
+		icon = arm_drone_button
+
+		custom_cost_trigger = {
+			command_power > 59
+		}
+		custom_cost_text = PER_cost_cp60
+		ai_hint_pp_cost = 60
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = PER_air_defense_progress
+				value = 55
+				compare = greater_than_or_equals
+			}
+			check_variable = { PER_sam_belt_count < 3 }
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+			custom_trigger_tooltip = {
+				tooltip = PER_repeat_cooldown_tt
+				NOT = { has_country_flag = PER_layered_sam_belt_repeat }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_layered_sam_belt"
+			add_to_variable = { PER_sam_belt_count = 1 }
+			if = {
+				limit = { check_variable = { PER_sam_belt_count < 3 } }
+				add_tech_bonus = {
+					name = PER_layered_sam_belt
+					bonus = 0.5
+					uses = 1
+					category = CAT_aa_missiles
+				}
+				newline = yes
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+				add_to_variable = { PER_aerospace_static_anti_air_damage_factor = 0.05 tooltip = static_anti_air_damage_factor_tt }
+				newline = yes
+				add_doctrine_cost_reduction = {
+					name = PER_layered_sam_belt
+					cost_reduction = 0.2
+					uses = 1
+					category = air_doctrine
+				}
+			}
+			newline = yes
+			custom_effect_tooltip = PER_air_defense_sector_progress_15_tt
+			add_to_variable = { PER_air_defense_progress = 15 }
+			clamp_variable = { var = PER_air_defense_progress min = 0 max = 100 }
+			hidden_effect = {
+				add_command_power = -60
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+			set_country_flag = { flag = PER_layered_sam_belt_repeat days = 45 value = 1 }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	PER_drone_swarm_doctrine_program = {
+		icon = uav
+		fire_only_once = yes
+		cost = 55
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = PER_drone_progress
+				value = 30
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_drone_swarm_doctrine_program"
+			add_tech_bonus = {
+				name = PER_drone_swarm_doctrine_program
+				bonus = 0.75
+				uses = 1
+				category = CAT_l_drone
+			}
+			newline = yes
+			add_doctrine_cost_reduction = {
+				name = PER_drone_swarm_doctrine_program
+				cost_reduction = 0.3
+				uses = 1
+				category = air_doctrine
+			}
+			newline = yes
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+			add_to_variable = { PER_aerospace_raid_cost_factor = -0.10 tooltip = raid_cost_factor_tt }
+			newline = yes
+			custom_effect_tooltip = PER_drone_sector_progress_30_tt
+			add_to_variable = { PER_drone_progress = 30 }
+			clamp_variable = { var = PER_drone_progress min = 0 max = 100 }
+			hidden_effect = {
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+		}
+
+		ai_will_do = { base = 4 }
+	}
+
+	PER_naval_cruise_missile_program = {
+		icon = missile_rocket_button
+		fire_only_once = yes
+
+		custom_cost_trigger = {
+			command_power > 69
+		}
+		custom_cost_text = PER_cost_cp70
+		ai_hint_pp_cost = 70
+
+		visible = {
+			check_variable = {
+				var = PER_aerospace_stage
+				value = 2
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = PER_missile_progress
+				value = 60
+				compare = greater_than_or_equals
+			}
+		}
+
+		available = {
+			NOT = { has_country_flag = PER_aerospace_action_cooldown }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision PER_naval_cruise_missile_program"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
+			add_to_variable = { PER_aerospace_naval_damage_factor = 0.08 tooltip = naval_damage_factor_tt }
+			newline = yes
+			add_doctrine_cost_reduction = {
+				name = PER_naval_cruise_missile_program
+				cost_reduction = 0.2
+				uses = 1
+				category = air_doctrine
+			}
+			newline = yes
+			custom_effect_tooltip = PER_missile_sector_progress_10_tt
+			add_to_variable = { PER_missile_progress = 10 }
+			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
+			hidden_effect = {
+				add_command_power = -70
+				add_to_variable = { PER_aerospace_gui_dirty = 1 }
+			}
+			set_country_flag = { flag = PER_aerospace_action_cooldown days = 15 value = 1 }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+}
