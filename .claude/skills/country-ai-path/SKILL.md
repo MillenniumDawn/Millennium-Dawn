@@ -102,9 +102,11 @@ Never pass `change_leader_temp = 1`; never inline `create_country_leader`.
 (`.claude/docs/ai-strategy-reference.md`, the `ai_is_threatened` section); bankruptcy / `can_staff`
 guards on spending focuses (run `tools/validation/validate_focus_tree.py --path .` first — it may
 already be clean, and it flags guards on focuses that spend nothing); review
-`common/ai_strategy/[TAG].txt` for gaps, especially a losing-war brake on any wargoal-generating
-focus. Under historical AI the AI must stick to history: killswitch non-historical branch roots,
-boost the historical branch.
+`common/ai_strategy/[TAG].txt` for gaps. Before writing any per-TAG block, grep the mod-wide files
+(`MD_war_declaration_ai.txt`, `MD_combat_ai_strategies.txt`, `MD_econ_ai.txt`) for a strategy with
+the same `enable`; reuse it, or widen the generic block, never copy it under a TAG name. The
+losing-war and outmatched brakes already exist there for every country. Under historical AI the AI
+must stick to history: killswitch non-historical branch roots, boost the historical branch.
 
 The country must also stay able to fix itself. Every burden it starts with keeps a live cure in every
 rule state you leave standing — if killswitching a branch takes the last one, re-own the cure focus
