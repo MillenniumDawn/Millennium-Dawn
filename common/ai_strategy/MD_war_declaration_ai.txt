@@ -1,7 +1,7 @@
 # War Declaration Intelligence Layer
 # Inspired by Ebby Warfare Overhaul
 #
-# Each conflict pairing has a 5-block readiness-gated progression:
+# Most conflict pairings use the following readiness-gated progression:
 #   1. prepare     — fires when wargoal exists, builds up armies
 #   2. delay_demo  — democracies below threshold get declare_war penalty
 #   3. ready_demo  — democracies above threshold get declare_war bonus
@@ -9,8 +9,10 @@
 #   5. ready_mid   — communism/neutrality mid-range threshold
 #   6. failsafe    — anti-stall: forces declaration when clearly overpowered
 #
+# Korean readiness uses relative strength instead of the ideology tiers below.
+#
 # Design notes:
-# - Democracies at war get hard -120 suppression with no positive offset (no two-front wars)
+# - Democracies at war receive declaration penalties with no readiness bonus
 # - Subjects lose wargoals on puppeting, so has_wargoal_against + abort_when_not_enabled gates them
 # - Neutrality and communism both route through the ready_mid tier
 
@@ -148,69 +150,40 @@ NKO_prepare_reunification_KOR = {
 	ai_strategy = { type = prepare_for_war id = KOR value = 180 }
 	ai_strategy = { type = front_unit_request tag = KOR value = 12 }
 	ai_strategy = { type = force_build_armies value = 35 }
+	ai_strategy = { type = unit_ratio id = fighter value = 8 }
+	ai_strategy = { type = unit_ratio id = cas value = 6 }
 }
 
-NKO_delay_demo_reunification_KOR = {
+NKO_delay_reunification_KOR = {
 	allowed = { original_tag = NKO }
 	enable = {
 		has_wargoal_against = KOR
 		NOT = { has_war_with = KOR }
 		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
-		has_government = democratic
 		OR = {
-			num_divisions < 18
+			NOT = { strength_ratio = { tag = KOR ratio > 1 } }
+			AND = {
+				has_government = democratic
+				has_war = yes
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = KOR value = -4000 }
+}
+
+NKO_ready_reunification_KOR = {
+	allowed = { original_tag = NKO }
+	enable = {
+		has_wargoal_against = KOR
+		NOT = { has_war_with = KOR }
+		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
+		strength_ratio = { tag = KOR ratio > 1 }
+		NOT = {
+			has_government = democratic
 			has_war = yes
 		}
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = KOR value = -120 }
-}
-
-NKO_ready_demo_reunification_KOR = {
-	allowed = { original_tag = NKO }
-	enable = {
-		has_wargoal_against = KOR
-		NOT = { has_war_with = KOR }
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
-		has_government = democratic
-		num_divisions > 18
-		NOT = { has_war = yes }
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = KOR value = 55 }
-	ai_strategy = { type = conquer id = KOR value = 180 }
-}
-
-NKO_ready_nat_reunification_KOR = {
-	allowed = { original_tag = NKO }
-	enable = {
-		has_wargoal_against = KOR
-		NOT = { has_war_with = KOR }
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
-		OR = {
-			has_government = nationalist
-			has_government = fascism
-		}
-		num_divisions > 12
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = KOR value = 85 }
-	ai_strategy = { type = conquer id = KOR value = 220 }
-}
-
-NKO_ready_mid_reunification_KOR = {
-	allowed = { original_tag = NKO }
-	enable = {
-		has_wargoal_against = KOR
-		NOT = { has_war_with = KOR }
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
-		NOT = { has_government = democratic }
-		NOT = { has_government = nationalist }
-		NOT = { has_government = fascism }
-		num_divisions > 15
 	}
 	abort_when_not_enabled = yes
 
@@ -218,116 +191,59 @@ NKO_ready_mid_reunification_KOR = {
 	ai_strategy = { type = conquer id = KOR value = 190 }
 }
 
-NKO_failsafe_reunification_KOR = {
-	allowed = { original_tag = NKO }
-	enable = {
-		has_wargoal_against = KOR
-		NOT = { has_war_with = KOR }
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
-		NOT = { has_war = yes }
-		num_divisions > 30
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = KOR value = 110 }
-}
-
 ### KOR vs NKO — Korean Peninsula (South) ###
 
 KOR_prepare_counter_reunification_NKO = {
 	allowed = { original_tag = KOR }
 	enable = {
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
 		has_wargoal_against = NKO
 		NOT = { has_war_with = NKO }
+		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = prepare_for_war id = NKO value = 180 }
 	ai_strategy = { type = front_unit_request tag = NKO value = 12 }
 	ai_strategy = { type = force_build_armies value = 35 }
+	ai_strategy = { type = unit_ratio id = fighter value = 8 }
+	ai_strategy = { type = unit_ratio id = cas value = 6 }
 }
 
-KOR_delay_demo_counter_reunification_NKO = {
+KOR_delay_counter_reunification_NKO = {
 	allowed = { original_tag = KOR }
 	enable = {
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
 		has_wargoal_against = NKO
 		NOT = { has_war_with = NKO }
-		has_government = democratic
+		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
 		OR = {
-			num_divisions < 22
+			NOT = { strength_ratio = { tag = NKO ratio > 1 } }
+			AND = {
+				has_government = democratic
+				has_war = yes
+			}
+		}
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = declare_war id = NKO value = -4000 }
+}
+
+KOR_ready_counter_reunification_NKO = {
+	allowed = { original_tag = KOR }
+	enable = {
+		has_wargoal_against = NKO
+		NOT = { has_war_with = NKO }
+		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
+		strength_ratio = { tag = NKO ratio > 1 }
+		NOT = {
+			has_government = democratic
 			has_war = yes
 		}
 	}
 	abort_when_not_enabled = yes
 
-	ai_strategy = { type = declare_war id = NKO value = -120 }
-}
-
-KOR_ready_demo_counter_reunification_NKO = {
-	allowed = { original_tag = KOR }
-	enable = {
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
-		has_wargoal_against = NKO
-		NOT = { has_war_with = NKO }
-		has_government = democratic
-		num_divisions > 22
-		NOT = { has_war = yes }
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = NKO value = 55 }
-	ai_strategy = { type = conquer id = NKO value = 180 }
-}
-
-KOR_ready_nat_counter_reunification_NKO = {
-	allowed = { original_tag = KOR }
-	enable = {
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
-		has_wargoal_against = NKO
-		NOT = { has_war_with = NKO }
-		OR = {
-			has_government = nationalist
-			has_government = fascism
-		}
-		num_divisions > 15
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = NKO value = 85 }
-	ai_strategy = { type = conquer id = NKO value = 220 }
-}
-
-KOR_ready_mid_counter_reunification_NKO = {
-	allowed = { original_tag = KOR }
-	enable = {
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
-		has_wargoal_against = NKO
-		NOT = { has_war_with = NKO }
-		NOT = { has_government = democratic }
-		NOT = { has_government = nationalist }
-		NOT = { has_government = fascism }
-		num_divisions > 18
-	}
-	abort_when_not_enabled = yes
-
 	ai_strategy = { type = declare_war id = NKO value = 65 }
 	ai_strategy = { type = conquer id = NKO value = 190 }
-}
-
-KOR_failsafe_counter_reunification_NKO = {
-	allowed = { original_tag = KOR }
-	enable = {
-		NOT = { NKO_is_pursuing_peaceful_reunification = yes }
-		has_wargoal_against = NKO
-		NOT = { has_war_with = NKO }
-		NOT = { has_war = yes }
-		num_divisions > 38
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = NKO value = 110 }
 }
 
 ### ISR vs PER — Middle East ###
