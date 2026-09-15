@@ -20,6 +20,9 @@ not December-to-December inflation.
   not the **1.8%** end-of-period decline.
 - **Taiwan:** [Central Bank, 2006 historical indicators](https://www.cbc.gov.tw/public/data/publications/year2006/06-en-key.pdf).
   The 1999 general CPI entry is **0.17%**. This uses the published historical series in that report.
+- **Russia:** [OECD CPI index via FRED](https://fred.stlouisfed.org/series/RUSCPIALLMINMEI).
+  December 1999 over December 1998 gives **36.6%** (index 18.395 over 13.470), matching the
+  Rosstat year-end figure. The mod uses this end-of-period rate instead of the **85.7%** annual average.
 
 ### How the values are used
 
@@ -29,8 +32,11 @@ not December-to-December inflation.
   a starting zero is not evidence that their real-world inflation was zero.
 - Each country's starting rate fills the four-quarter tracker at startup. Later quarterly
   calculations replace one entry at a time, smoothing the first updates.
-- Angola, Belarus, and the Democratic Republic of the Congo have reported rates above **200%**.
-  Their historical seeds are retained, but the quarterly calculation clamps inflation to **200%**.
+- Angola and the Democratic Republic of the Congo have reported rates above **200%**. Their
+  historical seeds are retained, but the quarterly calculation clamps inflation to **200%**.
+- Belarus and Russia use an end-of-period figure instead of the 1999 annual average, because
+  the yearly aggregate stalls the economy for the first two years. Belarus starts at **32.6%**.
+  Russia starts at **36.5%**, the December 1999 year-on-year CPI (see the Russia entry above).
 - The World Bank's Serbia series is not copied to Kosovo or Montenegro. Its combined West Bank
   and Gaza series is used for Palestine, not Israel or a separate Gaza tag.
 
