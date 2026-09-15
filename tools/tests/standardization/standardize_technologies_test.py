@@ -56,14 +56,9 @@ def test_space_skeleton_reorders_into_fixed_layout():
             "\t\tresearch_cost = 2",
             "\t\tstart_year = 2000",
             "",
-            "\t\tpath = {",
-            "\t\t\tleads_to_tech = sat_2",
-            "\t\t\tresearch_cost_coeff = 1",
-            "\t\t}",
-            "\t\tfolder = {",
-            "\t\t\tname = space_folder",
-            "\t\t\tposition = { x = @row1 y = @2000 }",
-            "\t\t}",
+            "\t\tpath = { research_cost_coeff = 1 leads_to_tech = sat_2 }",
+            "\t\tfolder = { name = space_folder position = { x = @row1 y = @2000 } }",
+            "",
             "\t\tcategories = {",
             "\t\t\tCAT_space",
             "\t\t\tCAT_Civilian",
@@ -203,19 +198,42 @@ def test_repeated_paths_and_remaining_slots():
             "\t\txp_unlock_cost = 50",
             "\t\txp_research_bonus = 1.50",
             "",
-            "\t\tpath = {",
-            "\t\t\tleads_to_tech = MR_Fighter3",
-            "\t\t\tresearch_cost_coeff = 1",
-            "\t\t}",
-            "\t\tpath = {",
-            "\t\t\tleads_to_tech = MR_Fighter4",
-            "\t\t\tresearch_cost_coeff = 1",
-            "\t\t}",
+            "\t\tpath = { research_cost_coeff = 1 leads_to_tech = MR_Fighter3 }",
+            "\t\tpath = { research_cost_coeff = 1 leads_to_tech = MR_Fighter4 }",
             "",
             "\t\tai_research_weights = { oil = -2.0 }",
             "\t\tai_will_do = { factor = 1 }",
             "",
             "\t\t# leftover",
+            "\t}",
+        ]
+    )
+
+
+def test_commented_path_and_folder_stay_multi_line():
+    assert (
+        _format("""
+	MR_Fighter7 = {
+		path = {
+			# leads_to_tech = MR_Fighter8
+			research_cost_coeff = 1
+		}
+		folder = {
+			name = electronics_folder #civilian_folder
+			position = { x = @row11 y = @1985 }
+		}
+	}
+""")
+        == [
+            "\tMR_Fighter7 = {",
+            "\t\tpath = {",
+            "\t\t\t# leads_to_tech = MR_Fighter8",
+            "\t\t\tresearch_cost_coeff = 1",
+            "\t\t}",
+            "\t\tfolder = {",
+            "\t\t\tname = electronics_folder #civilian_folder",
+            "\t\t\tposition = { x = @row11 y = @1985 }",
+            "\t\t}",
             "\t}",
         ]
     )
@@ -261,10 +279,7 @@ def test_file_passes_wrapper_through_and_reindents_bodies():
         "\n"
         "\t\tresearch_cost = 1\n"
         "\n"
-        "\t\tfolder = {\n"
-        "\t\t\tname = infantry_folder\n"
-        "\t\t\tposition = { x = @row1 y = @1965 }\n"
-        "\t\t}\n"
+        "\t\tfolder = { name = infantry_folder position = { x = @row1 y = @1965 } }\n"
         "\t}\n"
         "\n"
         "\t#1975\n"

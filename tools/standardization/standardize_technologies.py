@@ -20,6 +20,7 @@ from shared_utils import (
     collapse_nested_blocks,
     collapse_or_compact,
     extract_block,
+    normalize_spacing,
     strip_inline_comment,
 )
 from standardize_decisions import reindent_block
@@ -54,8 +55,10 @@ _RESEARCH_KEYS = (
     "xp_research_bonus",
     "force_use_small_tech_layout",
 )
-_TREE_KEYS = ("path", "folder", "categories", "special_project_specialization")
+_LAYOUT_KEYS = ("path", "folder")
+_CATEGORY_KEYS = ("categories", "special_project_specialization")
 _AI_KEYS = ("ai_research_weights", "ai_will_do")
+_PATH_ORDER = ("research_cost_coeff", "leads_to_tech")
 
 # Every key not listed here is a modifier (a plain stat, a `category_*` block,
 # or a sub-unit block) and keeps its source order inside the modifiers group.
@@ -65,7 +68,8 @@ _STRUCTURAL = frozenset(
     + _UNLOCK_KEYS
     + _ON_COMPLETE_KEYS
     + _RESEARCH_KEYS
-    + _TREE_KEYS
+    + _LAYOUT_KEYS
+    + _CATEGORY_KEYS
     + _AI_KEYS
 )
 
@@ -96,11 +100,30 @@ def _token_list(block_lines: List[str]) -> Optional[List[str]]:
     return body.split()
 
 
+def _one_line(block_lines: List[str], indent: str) -> Optional[List[str]]:
+    """Pack `path`/`folder` onto one line; None when a comment must survive."""
+    if any(strip_inline_comment(line) != line for line in block_lines):
+        return None
+    text = " ".join(line.strip() for line in block_lines)
+    head, _, rest = text.partition("{")
+    inner, _, tail = rest.rpartition("}")
+    if head.split("=")[0].strip() == "path" and not re.search(r"[{}]", inner):
+        rank = {name: i for i, name in enumerate(_PATH_ORDER)}
+        pairs = re.findall(r"\w+\s*=\s*\S+", inner)
+        pairs.sort(key=lambda pair: rank.get(pair.split("=")[0].strip(), len(rank)))
+        inner = " ".join(pairs)
+    return [normalize_spacing(f"{indent}{head}{{{inner}}}{tail}")]
+
+
 def _render(entry, base_indent: int) -> List[str]:
     kind, data = entry
     indent = "\t" * base_indent
     if kind == "scalar":
         return [indent + data.strip()]
+    if data[0].split("=")[0].strip() in _LAYOUT_KEYS:
+        packed = _one_line(data, indent)
+        if packed is not None:
+            return packed
     tokens = _token_list(data)
     if tokens is not None:
         key = data[0].split("=")[0].strip()
@@ -197,7 +220,8 @@ class TechnologyStandardizer(BaseStandardizer):
             emit(_UNLOCK_KEYS),
             emit(_ON_COMPLETE_KEYS),
             emit(_RESEARCH_KEYS),
-            emit(_TREE_KEYS),
+            emit(_LAYOUT_KEYS),
+            emit(_CATEGORY_KEYS),
             emit(_AI_KEYS),
             ["\t" * prop_indent + line for line in props[_TRAILING]],
         ]

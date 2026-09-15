@@ -311,14 +311,16 @@ Groups are separated by one blank line. Skip any group the technology does not u
 4. on_research_complete_limit, on_research_complete
 5. Research: research_cost, start_year, xp_research_type, xp_boost_cost,
    xp_unlock_cost, xp_research_bonus, force_use_small_tech_layout
-6. Tree: path, folder, categories, special_project_specialization
-7. ai_research_weights, ai_will_do (LAST)
+6. Layout: path, folder (each on one line)
+7. categories, special_project_specialization
+8. ai_research_weights, ai_will_do (LAST)
 ```
 
 ## Best Practices
 
 - Any key outside the lists above is treated as an effect and stays in source order
 - Write a single-token list on one line: `enable_equipments = { infantry_weapons_2 }`
+- Write path and folder on one line: `path = { research_cost_coeff = 1 leads_to_tech = X }`
 - Keep `ai_will_do` on `factor`; technologies do not use `base`
 - Leave one blank line between technologies; `@` constants and section comments stay where they are
 - `standardize.py technology` applies this layout
@@ -336,14 +338,9 @@ night_vision_1 = {
     xp_boost_cost = 50
     xp_research_bonus = 1.00
 
-    path = {
-        leads_to_tech = night_vision_2
-        research_cost_coeff = 1
-    }
-    folder = {
-        name = infantry_folder
-        position = { x = @row3 y = @1965 }
-    }
+    path = { research_cost_coeff = 1 leads_to_tech = night_vision_2 }
+    folder = { name = infantry_folder position = { x = @row3 y = @1965 } }
+
     categories = {
         CAT_inf
         CAT_nvg
