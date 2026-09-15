@@ -6,7 +6,7 @@ scripted_gui = {
 		parent_window_token = production_tab
 		window_name = "mio_catalog_open_btn_mio_list"
 
-		visible = { is_custom_mio_country = no }
+		visible = { mio_catalog_any_entry_allowed = yes }
 
 		effects = {
 			mio_cat_open_btn_click = {
@@ -61,6 +61,10 @@ scripted_gui = {
 
 			mio_cat_unlock_btn_click = {
 				add_political_power = -50
+				if = {
+					limit = { is_custom_mio_country = yes }
+					add_to_variable = { mio_catalog_tokens = -1 }
+				}
 				mio_catalog_entry_unlock_yes = yes
 				mio_catalog_rebuild_visible_yes = yes
 				update_mio_catalog_dirty_variable = yes
@@ -72,10 +76,21 @@ scripted_gui = {
 			# so the player sees which entries to save PP for.
 			mio_cat_unlock_btn_click_enabled = {
 				has_political_power > 49
+				custom_trigger_tooltip = {
+					tooltip = MIO_CAT_REQ_TOKENS_TT
+					OR = {
+						is_custom_mio_country = no
+						check_variable = { mio_catalog_tokens > 0 }
+					}
+				}
 				mio_catalog_entry_prereqs_yes = yes
 			}
 
 			mio_cat_unlock_btn_glow_visible = {
+				OR = {
+					is_custom_mio_country = no
+					check_variable = { mio_catalog_tokens > 0 }
+				}
 				mio_catalog_entry_prereqs_yes = yes
 			}
 		}
