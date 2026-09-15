@@ -61,6 +61,7 @@ ORG_DIR = "common/military_industrial_organization/organizations"
 POLICY_DIR = "common/military_industrial_organization/policies"
 COMPANY_TRAIT_FILE = "common/country_leader/defense_company_traits.txt"
 COUNTRY_TAG_DIR = "common/country_tags"
+SCRIPTED_TRIGGER_DIR = "common/scripted_triggers"
 DOCTRINE_DIR = "common/doctrines"
 
 # Files that can carry a `mio:` reference. The org dir itself is excluded — a
@@ -91,6 +92,8 @@ X_BOUNDS_EXEMPT_ORGS = frozenset(
 )
 
 ORIGINAL_TAG_RE = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
+# `allowed = { is_benelux_country = yes }`: a scripted trigger standing in for the tag list.
+SCRIPTED_TRIGGER_USE_RE = re.compile(r"\b([a-z][a-z0-9_]*)\s*=\s*yes\b")
 INITIAL_TRAIT_NAME_RE = re.compile(
     r"initial_trait\s*=\s*\{\s*name\s*=\s*([A-Za-z0-9_]+)"
 )
@@ -385,6 +388,7 @@ class Validator(BaseValidator):
     _org_bodies: Dict[str, str] = {}
     # Lazily built once per run; both are full-repo indexes.
     _org_allowed: Optional[Dict[str, FrozenSet[str]]] = None
+    _trigger_tags: Optional[Dict[str, FrozenSet[str]]] = None
     _sprites: Optional[FrozenSet[str]] = None
     _tags: Optional[FrozenSet[str]] = None
     _traits: Optional[Dict[str, _Trait]] = None
@@ -454,11 +458,40 @@ class Validator(BaseValidator):
             return self._org_allowed
         allowed: Dict[str, FrozenSet[str]] = {}
         for org_id, body in self._iter_all_org_blocks():
-            blocks = _sub_blocks(body, "allowed")
-            tags = ORIGINAL_TAG_RE.findall(blocks[0][1]) if blocks else []
-            allowed[org_id] = frozenset(tags)
+            allowed[org_id] = self._allowed_tags(body)
         self._org_allowed = allowed
         return allowed
+
+    def _allowed_tags(self, body: str) -> FrozenSet[str]:
+        """Tags an org's `allowed` block accepts, literal or via a scripted trigger."""
+        blocks = _sub_blocks(body, "allowed")
+        if not blocks:
+            return frozenset()
+        inner = blocks[0][1]
+        tags: Set[str] = set(ORIGINAL_TAG_RE.findall(inner))
+        triggers = self._scripted_trigger_tags()
+        for name in SCRIPTED_TRIGGER_USE_RE.findall(inner):
+            tags.update(triggers.get(name, ()))
+        return frozenset(tags)
+
+    def _scripted_trigger_tags(self) -> Dict[str, FrozenSet[str]]:
+        """scripted trigger name -> every `original_tag` its body names."""
+        if self._trigger_tags is not None:
+            return self._trigger_tags
+        triggers: Dict[str, FrozenSet[str]] = {}
+        for filepath in self._collect_files(
+            [f"{SCRIPTED_TRIGGER_DIR}/*.txt"], ignore_staged=True
+        ):
+            try:
+                text = blank_comments(Path(filepath).read_text(encoding="utf-8"))
+            except (OSError, UnicodeDecodeError):
+                continue
+            for start, end, name in _block_spans(text):
+                tags = ORIGINAL_TAG_RE.findall(text[start:end])
+                if tags:
+                    triggers[name] = frozenset(tags)
+        self._trigger_tags = triggers
+        return triggers
 
     def _iter_all_org_blocks(self) -> Iterator[Tuple[str, str]]:
         """(org id, block body) for every org in the dir, staged filter ignored.
@@ -642,7 +675,7 @@ class Validator(BaseValidator):
         if not m:
             return
         tag = m.group(1)
-        if not any(m2.group(1) == tag for m2 in ORIGINAL_TAG_RE.finditer(body)):
+        if tag not in ORIGINAL_TAG_RE.findall(body) and tag not in self._allowed_tags(body):
             self.add_error(
                 "org-allowed-tag",
                 f"MIO {org_id} must pin its tag with "
