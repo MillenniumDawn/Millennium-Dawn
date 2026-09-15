@@ -6,7 +6,7 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
     GENERIC_/generic_ orgs are exempt
   * orgs pin their tag with allowed = { original_tag = TAG }
   * initial traits are named TAG_<...>_trait (or reference a shared
-    generic_* trait from MD_generic_organization.txt)
+    generic_* trait from MD_generic_organizations_old.txt)
   * trait grid x never exceeds 9 (negative x is the standard organic-layout
     first column; only the upper bound is a finding)
   * on_complete blocks are never empty (they need expenditure_for_mio_upgrade
@@ -479,7 +479,7 @@ class Validator(BaseValidator):
         """org id -> its block body.
 
         Built up front rather than as files are visited: the dir sorts
-        `MD_UKR_organizations.txt` before `MD_generic_organization.txt`, so a
+        `MD_UKR_organizations.txt` before `MD_generic_organizations_old.txt`, so a
         lazily-filled map silently drops the equipment scope of every org whose
         `include` target sorts after it.
         """
