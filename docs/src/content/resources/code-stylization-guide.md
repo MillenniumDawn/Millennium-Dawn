@@ -309,11 +309,12 @@ Groups are separated by one blank line. Skip any group the technology does not u
 3. Unlocks: enable_equipments, enable_equipment_modules, enable_subunits,
    enable_building, enable_tactic, sub_technologies, show_equipment_icon
 4. on_research_complete_limit, on_research_complete
-5. Research: research_cost, start_year, xp_research_type, xp_boost_cost,
-   xp_unlock_cost, xp_research_bonus, force_use_small_tech_layout
-6. Layout: path, folder (each on one line)
-7. categories, special_project_specialization
-8. ai_research_weights, ai_will_do (LAST)
+5. Research: research_cost, start_year
+6. XP: xp_research_type, xp_boost_cost, xp_unlock_cost, xp_research_bonus,
+   special_project_specialization
+7. Layout: force_use_small_tech_layout, path, folder (each on one line)
+8. categories
+9. ai_research_weights, ai_will_do (LAST)
 ```
 
 ## Best Practices
@@ -334,6 +335,7 @@ night_vision_1 = {
 
     research_cost = 2
     start_year = 1965
+
     xp_research_type = army
     xp_boost_cost = 50
     xp_research_bonus = 1.00

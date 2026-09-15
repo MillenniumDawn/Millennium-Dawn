@@ -46,17 +46,16 @@ _UNLOCK_KEYS = (
     "show_equipment_icon",
 )
 _ON_COMPLETE_KEYS = ("on_research_complete_limit", "on_research_complete")
-_RESEARCH_KEYS = (
-    "research_cost",
-    "start_year",
+_RESEARCH_KEYS = ("research_cost", "start_year")
+_XP_KEYS = (
     "xp_research_type",
     "xp_boost_cost",
     "xp_unlock_cost",
     "xp_research_bonus",
-    "force_use_small_tech_layout",
+    "special_project_specialization",
 )
-_LAYOUT_KEYS = ("path", "folder")
-_CATEGORY_KEYS = ("categories", "special_project_specialization")
+_LAYOUT_KEYS = ("force_use_small_tech_layout", "path", "folder")
+_CATEGORY_KEYS = ("categories",)
 _AI_KEYS = ("ai_research_weights", "ai_will_do")
 _PATH_ORDER = ("research_cost_coeff", "leads_to_tech")
 
@@ -68,6 +67,7 @@ _STRUCTURAL = frozenset(
     + _UNLOCK_KEYS
     + _ON_COMPLETE_KEYS
     + _RESEARCH_KEYS
+    + _XP_KEYS
     + _LAYOUT_KEYS
     + _CATEGORY_KEYS
     + _AI_KEYS
@@ -120,7 +120,7 @@ def _render(entry, base_indent: int) -> List[str]:
     indent = "\t" * base_indent
     if kind == "scalar":
         return [indent + data.strip()]
-    if data[0].split("=")[0].strip() in _LAYOUT_KEYS:
+    if data[0].split("=")[0].strip() in ("path", "folder"):
         packed = _one_line(data, indent)
         if packed is not None:
             return packed
@@ -220,6 +220,7 @@ class TechnologyStandardizer(BaseStandardizer):
             emit(_UNLOCK_KEYS),
             emit(_ON_COMPLETE_KEYS),
             emit(_RESEARCH_KEYS),
+            emit(_XP_KEYS),
             emit(_LAYOUT_KEYS),
             emit(_CATEGORY_KEYS),
             emit(_AI_KEYS),

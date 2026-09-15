@@ -56,6 +56,8 @@ def test_space_skeleton_reorders_into_fixed_layout():
             "\t\tresearch_cost = 2",
             "\t\tstart_year = 2000",
             "",
+            "\t\tspecial_project_specialization = { specialization_air }",
+            "",
             "\t\tpath = { research_cost_coeff = 1 leads_to_tech = sat_2 }",
             "\t\tfolder = { name = space_folder position = { x = @row1 y = @2000 } }",
             "",
@@ -63,7 +65,6 @@ def test_space_skeleton_reorders_into_fixed_layout():
             "\t\t\tCAT_space",
             "\t\t\tCAT_Civilian",
             "\t\t}",
-            "\t\tspecial_project_specialization = { specialization_air }",
             "",
             "\t\tai_will_do = { factor = 1 }",
             "\t}",
@@ -176,6 +177,7 @@ def test_repeated_paths_and_remaining_slots():
 		}
 		on_research_complete_limit = { ROOT = { num_of_naval_factories > 0 } }
 		xp_research_bonus = 1.50
+		research_cost = 1
 		xp_unlock_cost = 50
 		xp_research_type = army
 		doctrine = yes
@@ -193,6 +195,8 @@ def test_repeated_paths_and_remaining_slots():
             "",
             "\t\ton_research_complete_limit = { ROOT = { num_of_naval_factories > 0 } }",
             "\t\ton_research_complete = { custom_effect_tooltip = COLD_WAR_TECH_CANT_TAKE }",
+            "",
+            "\t\tresearch_cost = 1",
             "",
             "\t\txp_research_type = army",
             "\t\txp_unlock_cost = 50",
