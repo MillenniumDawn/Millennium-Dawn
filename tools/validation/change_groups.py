@@ -30,6 +30,7 @@ GROUP_PATTERNS = {
     "scientist-traits": ["common/scientist_traits/**", "interface/**"],
     "oob": [
         "history/units/**",
+        "history/**",
         "common/units/**",
         "common/ai_templates/**",
         "common/scripted_effects/**",
@@ -44,7 +45,13 @@ GROUP_PATTERNS = {
         "common/scripted_guis/**",
         "common/ideas/**",
     ],
-    "decisions": ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+    "decisions": [
+        "common/**/*.txt",
+        "events/**/*.txt",
+        "history/**/*.txt",
+        "interface/**/*.gfx",
+        "gfx/interface/decisions/**",
+    ],
     "scripted-loc": ["common/scripted_localisation/**"],
     "scripted-guis": ["common/scripted_guis/**"],
     "interface": ["interface/**"],
@@ -56,6 +63,7 @@ GROUP_PATTERNS = {
         "common/doctrines/**",
         "common/units/equipment/**",
         "common/equipment_groups/**",
+        "interface/**",
     ],
     "scripted-effects": ["common/scripted_effects/**"],
     "style": [
@@ -72,6 +80,7 @@ GROUP_PATTERNS = {
         "history/**",
         "localisation/**",
         "interface/**",
+        "gfx/interface/decisions/**",
         "music/**",
         "map/adjacency_rules.txt",
         "*.mod",

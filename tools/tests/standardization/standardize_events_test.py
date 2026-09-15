@@ -504,3 +504,18 @@ def test_main_standardizes_the_named_file(tmp_path, monkeypatch):
 
     with open(output, "r", encoding="utf-8", newline="") as handle:
         assert "test.1.a executed" in handle.read()
+
+
+def test_tooltip_only_option_does_not_get_an_execution_log():
+    option = [
+        "\toption = {",
+        "\t\tname = test.1.a",
+        "\t\teffect_tooltip = {",
+        "\t\t\tZOM = { declare_war_on = { target = FROM type = annex_everything } }",
+        "\t\t}",
+        "\t}",
+    ]
+    assert not _option_has_effects(_option(option))
+    result = _standardize_event(["country_event = {", "\tid = test.1", *option, "}"])
+    assert "log =" not in "\n".join(result)
+    assert "declare_war_on" in "\n".join(result)
