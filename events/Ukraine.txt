@@ -18177,3 +18177,53 @@ news_event = {
 		add_to_variable = { UKR_econ_mod_productivity_growth_modifier = 0.040 tooltip = productivity_growth_modifier_tt }
 	}
 }
+
+country_event = {
+	id = ukr_history.400
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_civil_war = no
+		UKR_ai_historical_path = yes
+		UKR_ai_not_historical_path = no
+		NOT = { has_country_flag = generic_election_killswitch }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event ukr_history.400"
+		if = {
+			limit = { date > 2019.5.19 }
+			if = {
+				limit = { NOT = { has_country_flag = UKR_zelensky_formed } }
+				country_event = ukr_zelenskiy.2
+			}
+			set_variable = { Neutral_Libertarian_leader = 2 }
+			set_temp_variable = { rul_party_temp = 16 }
+		}
+		else_if = {
+			limit = { date > 2014.6.6 }
+			set_variable = { conservatism_leader = 2 }
+			set_temp_variable = { rul_party_temp = 1 }
+		}
+		else_if = {
+			limit = { date > 2010.2.24 }
+			set_variable = { Conservative_leader = 0 }
+			set_temp_variable = { rul_party_temp = 6 }
+		}
+		else = {
+			set_variable = { conservatism_leader = 1 }
+			set_temp_variable = { rul_party_temp = 1 }
+		}
+
+		if = {
+			limit = { NOT = { check_variable = { ruling_party = rul_party_temp } } }
+			change_ruling_party_effect = yes
+			set_elections_60_months = yes
+		}
+		else = {
+			set_leader = yes
+		}
+	}
+}
