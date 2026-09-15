@@ -46,6 +46,7 @@ from validate_decisions import (
     _DEC_ICON_KEY_RE,
     _DEC_ICON_SIMPLE_RE,
     _DEC_PICTURE_RE,
+    _SLOT_EXEMPT_SPRITES,
     _extract_decision_icons,
     _resolved_sprite,
     _slot_for_size,
@@ -152,7 +153,7 @@ def collect_jobs(root: Path, textures: Dict[str, str]) -> List[Job]:
             if "[" in value or "]" in value:
                 continue
             sprite = _resolved_sprite(kind, value, textures)
-            if sprite is None:
+            if sprite is None or sprite in _SLOT_EXEMPT_SPRITES:
                 continue
             size = read_image_size(textures[sprite])
             if size is None:

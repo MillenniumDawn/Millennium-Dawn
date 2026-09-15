@@ -73,6 +73,15 @@ def test_category_art_on_a_decision_is_reported(tmp_path):
     assert _MOD_ART_HINT in msg
 
 
+def test_exempt_sprite_is_not_reported(tmp_path):
+    textures = _textures(tmp_path, {"GFX_decision_sinaloa_high": (52, 40)})
+
+    assert (
+        _icon_type_message("decision", "d", "GFX_decision_sinaloa_high", textures)
+        is None
+    )
+
+
 def test_vanilla_manifest_art_in_the_wrong_slot_is_reported(tmp_path):
     textures = _textures(tmp_path, {}, {"GFX_decision_category_x": (52, 40)})
 
