@@ -820,8 +820,10 @@ _DELETE_TEMPLATE_BLOCK_RE = re.compile(
     r"delete_unit_template_and_units\s*=\s*\{([^{}]*)\}"
 )
 _DELETE_TEMPLATE_NAME_RE = re.compile(r'\bdivision_template\s*=\s*"([^"]*)"')
-_ZERO_FACTOR_RE = re.compile(
-    r"\b(?:start_equipment_factor|start_manpower_factor)\s*=\s*0(?![.\d])"
+_EQUIPMENT_FACTOR_RE = re.compile(r"\bstart_equipment_factor\s*=")
+_START_FACTOR_RE = re.compile(
+    r"\bstart_(equipment|manpower)_factor\s*=\s*"
+    r"([+-]?(?:\d+\.\d*|\.\d+|\d+))(?![.\w])"
 )
 _STATE_YES_RE = re.compile(r"\bstate\s*=\s*yes\b")
 _EXECUTE_EFFECT_RE = re.compile(r"\bexecute_effect\b")
@@ -876,6 +878,10 @@ _CREATE_UNIT_CATEGORIES = {
     "malformed-division": "CREATE UNIT: division string does not parse",
     "out-of-bounds-division": "CREATE UNIT: division string has German/Danish letters",
     "zero-factor": "CREATE UNIT: equipment/manpower factor is zero",
+    "missing-equipment-factor": (
+        "CREATE UNIT: division string lacks start_equipment_factor"
+    ),
+    "near-zero-factor": "CREATE UNIT: equipment/manpower factor below 0.01",
     "template-order": "CREATE UNIT: template defined after create_unit",
     "missing-template-ensure": (
         "CREATE UNIT: template not created or has_template-guarded in this effect"
@@ -1806,12 +1812,29 @@ def _check_created_units(
         # The string carries escaped quotes (\"...\"); normalize so the inner
         # name/template/factor tokens parse like the engine's parsed string.
         dval_clean = dval.replace('\\"', '"')
-        if _ZERO_FACTOR_RE.search(dval_clean):
-            out.error(
-                "zero-factor",
-                f"{cu['line']}: start_equipment_factor/start_manpower_factor of 0 is treated as 1",
+        if not _EQUIPMENT_FACTOR_RE.search(dval_clean):
+            out.warn(
+                "missing-equipment-factor",
+                f"{cu['line']}: division string has no start_equipment_factor; set it explicitly",
                 line,
             )
+        for fmatch in _START_FACTOR_RE.finditer(dval_clean):
+            try:
+                fvalue = float(fmatch.group(2))
+            except ValueError:
+                continue
+            if fvalue == 0.0:
+                out.error(
+                    "zero-factor",
+                    f"{cu['line']}: start_{fmatch.group(1)}_factor of {fmatch.group(2)} is treated as 1",
+                    line,
+                )
+            elif fvalue < 0.01:
+                out.error(
+                    "near-zero-factor",
+                    f"{cu['line']}: start_{fmatch.group(1)}_factor of {fmatch.group(2)} is below 0.01",
+                    line,
+                )
 
         parsed_issues, tname = _parse_division_string(dval_clean)
         for kind, message in parsed_issues:
@@ -1890,6 +1913,7 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def __init__(self, *args, **kwargs):
+        self.missing_equipment_factor = kwargs.pop("missing_equipment_factor", False)
         super().__init__(*args, **kwargs)
         self.canonical = set()
         self.canonical_lower = {}
@@ -2391,6 +2415,14 @@ class Validator(BaseValidator):
         for file_results in all_results:
             results.extend(file_results)
 
+        if not self.missing_equipment_factor:
+            self.log(
+                "  Skipping missing-equipment-factor check "
+                "(pass --missing-equipment-factor to enable)"
+            )
+            skip_cat = _CREATE_UNIT_CATEGORIES["missing-equipment-factor"]
+            results = [issue for issue in results if issue.category != skip_cat]
+
         self._report(
             results,
             "✓ All create_unit effects are well-formed",
@@ -2409,8 +2441,18 @@ class Validator(BaseValidator):
         self.validate_created_units()
 
 
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--missing-equipment-factor",
+        action="store_true",
+        dest="missing_equipment_factor",
+        help=("Warn when a create_unit division string omits start_equipment_factor"),
+    )
+
+
 if __name__ == "__main__":
     run_validator_main(
         Validator,
         "Validate unit names in OOB files and AI templates against canonical definitions",
+        extra_args_fn=_add_extra_args,
     )
