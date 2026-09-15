@@ -29,8 +29,11 @@ not December-to-December inflation.
   a starting zero is not evidence that their real-world inflation was zero.
 - Each country's starting rate fills the four-quarter tracker at startup. Later quarterly
   calculations replace one entry at a time, smoothing the first updates.
-- Angola, Belarus, and the Democratic Republic of the Congo have reported rates above **200%**.
-  Their historical seeds are retained, but the quarterly calculation clamps inflation to **200%**.
+- Angola and the Democratic Republic of the Congo have reported rates above **200%**. Their
+  historical seeds are retained, but the quarterly calculation clamps inflation to **200%**.
+- Belarus and Russia use an end-of-period figure instead of the 1999 annual average, because
+  the yearly aggregate stalls the economy for the first two years. Belarus starts at **32.6%**.
+  Russia starts at **36.5%**, the December 1999 year-on-year CPI reported by Rosstat.
 - The World Bank's Serbia series is not copied to Kosovo or Montenegro. Its combined West Bank
   and Gaza series is used for Palestine, not Israel or a separate Gaza tag.
 
