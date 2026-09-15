@@ -114,6 +114,10 @@ def test_variables_run_passes_the_redundant_focus_flag_scan():
     assert runner._VALIDATOR_EXTRA_FLAGS["variables"] == ["--redundant-focus-flags"]
 
 
+def test_oob_units_run_does_not_enable_missing_equipment_factor():
+    assert "oob-units" not in runner._VALIDATOR_EXTRA_FLAGS
+
+
 def test_summary_totals_use_deduplicated_issues(tmp_path, monkeypatch):
     finding = {
         "severity": "error",

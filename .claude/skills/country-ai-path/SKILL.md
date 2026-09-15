@@ -32,6 +32,17 @@ Branch `3162-[country]-ai-paths` off main.
 python tools/analysis/ai_path_report.py --tag TAG
 ```
 
+**No focus tree.** If the report exits `no focus file found for tag TAG`, the country has no path
+layer to own and the rule is **removed**, not converted (São Tomé #3702, Solomon Islands are the
+shape). Delete the `TAG_ai_behavior` block and its `TAG_AI_BEHAVIOR` / `RULE_OPTION_*` keys from
+`MD_game_rules_l_english.yml`, then strip every `has_game_rule` read from the country's events:
+keep `factor = 5 is_historical_focus_on = yes` on the historical option of each fork and any
+situational flavour modifier (influence, who holds power), drop `factor = 1` no-ops and the
+`is_historical_focus_on = no` coin-flip nudges, and delete an `ai_chance` block that has no modifier
+left (default weight 1 is identical). Non-English files keep their orphaned keys. Sections 3–5
+below do not apply; verify with the grep set in §5 and `validate_events.py` /
+`validate_localisation.py`, and say in the PR that the report does not apply.
+
 The report decides every mechanical question: rule and loc conformance, flag wiring, which focuses
 carry path modifiers and whether they are multiplicative, path flags that appear nowhere, killswitch
 orphans per rule state × historical AI on/off, mutex ties, `focus_factors` disagreements, dangerous
@@ -58,6 +69,11 @@ python tools/standardization/apply_ai_path_weights.py --map <mapping>
 ```
 
 Loc drafting and `_desc` sentence-count fixes go to a `localisation-editor` subagent on haiku.
+
+**Defects you find are in scope.** A broken fork, a timing race between the country's own path
+events, an asymmetric branch, a wrong state id, or a typo in an English string the path events show
+gets fixed in the same PR, in its own commit, never deferred as a follow-up. English values only —
+never rename a key that non-English files carry.
 
 **Rule standard.** Exactly `HISTORICAL` + one option per alt-history path + `RANDOM_PATH` +
 `NO_PATH`, and `NO_PATH` is the `default = { }` block, listed last — a country the player never
@@ -86,9 +102,11 @@ Never pass `change_leader_temp = 1`; never inline `create_country_leader`.
 (`.claude/docs/ai-strategy-reference.md`, the `ai_is_threatened` section); bankruptcy / `can_staff`
 guards on spending focuses (run `tools/validation/validate_focus_tree.py --path .` first — it may
 already be clean, and it flags guards on focuses that spend nothing); review
-`common/ai_strategy/[TAG].txt` for gaps, especially a losing-war brake on any wargoal-generating
-focus. Under historical AI the AI must stick to history: killswitch non-historical branch roots,
-boost the historical branch.
+`common/ai_strategy/[TAG].txt` for gaps. Before writing any per-TAG block, grep the mod-wide files
+(`MD_war_declaration_ai.txt`, `MD_combat_ai_strategies.txt`, `MD_econ_ai.txt`) for a strategy with
+the same `enable`; reuse it, or widen the generic block, never copy it under a TAG name. The
+losing-war and outmatched brakes already exist there for every country. Under historical AI the AI
+must stick to history: killswitch non-historical branch roots, boost the historical branch.
 
 The country must also stay able to fix itself. Every burden it starts with keeps a live cure in every
 rule state you leave standing — if killswitching a branch takes the last one, re-own the cure focus
@@ -109,6 +127,15 @@ date resolves to the person history had). Then `validate_focus_tree.py --path .`
 `validate_decisions.py` warning-group counts against a stashed baseline.
 
 ## 6. Finish
+
+Changelog first: `Changelog.txt` carries one shared line under the current version's `Content:`,
+`- Country AI path game rules standardised to Historical / alternate paths / Random Path / No Path:
+TAG, TAG`. Append your TAG to it; create the line if the version has none. No issue number, no
+per-country line. This is the one exception to the AGENTS.md changelog rule.
+
+PR body in the `/open-pr` step 5 format and nothing else: a single `### Changes` heading, one
+plain bullet per player-visible outcome, no file paths, commit hashes, tables, testing section or
+`## Bottom line`, then a blank line and `Part of #3162`. Keep the body under ten lines.
 
 PR (create, or update title/body if one exists), then tick the checklist line to `- [x]` and append
 ` (#PR)` via `gh issue edit 3162 --body-file` — re-fetch the body and change only that line. Report
