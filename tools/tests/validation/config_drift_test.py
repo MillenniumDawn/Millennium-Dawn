@@ -629,6 +629,12 @@ def test_ci_strict_gate_lives_in_batch_specs():
     ]
 
 
+def test_ci_oob_units_does_not_enable_missing_equipment_factor():
+    spec = _spec_for("validate_oob_units.py")
+    assert spec.name == "oob-units"
+    assert "--missing-equipment-factor" not in spec.args
+
+
 def test_ci_party_loc_gate_is_registered_and_strict():
     spec = _spec_for("validate_party_loc.py")
     assert spec.name == "party-loc"
