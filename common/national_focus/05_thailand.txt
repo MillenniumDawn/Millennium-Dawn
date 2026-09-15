@@ -6441,8 +6441,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_senate_of_appointees"
 			add_political_power = 50
-			# S-2: SIA_isoc_network (post appointed_senate merge) may already be held via the parallel
-			# SIA_isoc_state branch.
 			if = { limit = { NOT = { has_idea = SIA_isoc_network } } add_ideas = SIA_isoc_network }
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = -0.04 }
@@ -7038,10 +7036,7 @@ focus_tree = {
 			if = {
 				limit = { NOT = { has_country_flag = SIA_ds_active } }
 				set_country_flag = SIA_ds_active
-				set_variable = { SIA_insurgency_intensity = 25 }
-				# Twin-meter: seed the community-grievance root cause behind the violence. Kept well
-				# under intensity so the derived floor (0.6x) leaves the counter-insurgency ladders
-				# room to actually move the meter down.
+				set_variable = { SIA_insurgency_intensity = 30 }
 				set_variable = { SIA_ds_grievance = 15 }
 				SIA_ds_recompute_floor = yes
 				add_ideas = SIA_deep_south_insurgency_1
@@ -7053,8 +7048,6 @@ focus_tree = {
 		ai_will_do = { base = 40 }
 	}
 
-	# Deep South three-track arc (Z6) One shared crisis (anchored at SIA_the_southern_question,
-	# 65,1) with three path-locked answers:
 	focus = {
 		id = SIA_iron_fist_doctrine
 		icon = generic_counter_insurgency_icon
@@ -7066,6 +7059,7 @@ focus_tree = {
 		cost = 4
 
 		prerequisite = { focus = SIA_the_southern_question }
+		mutually_exclusive = { focus = SIA_royal_development_projects focus = SIA_peace_dialogue_initiative }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -7074,11 +7068,8 @@ focus_tree = {
 			has_country_flag = SIA_ds_active
 		}
 
-		bypass = { NOT = { has_country_flag = SIA_ds_active } }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_iron_fist_doctrine"
-			custom_effect_tooltip = SIA_iron_fist_doctrine_tt
 			set_temp_variable = { ds_delta = -10 }
 			SIA_ds_set_intensity = yes
 			set_temp_variable = { ds_floor_delta = 12 }
@@ -7107,17 +7098,16 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_iron_fist_doctrine
 
-		cost = 4
+		cost = 3
 
 		prerequisite = { focus = SIA_iron_fist_doctrine }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { has_completed_focus = SIA_iron_fist_doctrine }
+		available = {}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_martial_law_south"
-			custom_effect_tooltip = SIA_martial_law_south_tt
 			set_temp_variable = { ds_delta = -8 }
 			SIA_ds_set_intensity = yes
 			set_temp_variable = { ds_floor_delta = 12 }
@@ -7138,16 +7128,13 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_martial_law_south
 
-		cost = 4
+		cost = 3
 
 		prerequisite = { focus = SIA_martial_law_south }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_iron_fist_doctrine
-			# (Hard rebalance): the decisive sweep can't begin while the South is in open revolt — grind
-			# intensity down with decisions first.
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_50_tt
 				check_variable = { SIA_insurgency_intensity < 50 }
@@ -7156,7 +7143,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_search_and_destroy"
-			custom_effect_tooltip = SIA_search_and_destroy_tt
 			set_temp_variable = { ds_delta = -12 }
 			SIA_ds_set_intensity = yes
 			set_temp_variable = { ds_floor_delta = 10 }
@@ -7189,7 +7175,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_iron_fist_doctrine
+			date > 2005.1.1
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_40_tt
 				check_variable = { SIA_insurgency_intensity < 40 }
@@ -7208,8 +7194,6 @@ focus_tree = {
 		ai_will_do = { base = 20 }
 	}
 
-	## Royal Development ladder (Royalist) — x=65 SIA_royal_development_projects is the MERGE
-	## target for SIA_southern_development_push.
 	focus = {
 		id = SIA_royal_development_projects
 		icon = stability
@@ -7221,6 +7205,7 @@ focus_tree = {
 		cost = 7
 
 		prerequisite = { focus = SIA_the_southern_question }
+		mutually_exclusive = { focus = SIA_iron_fist_doctrine focus = SIA_peace_dialogue_initiative }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -7229,11 +7214,8 @@ focus_tree = {
 			has_country_flag = SIA_ds_active
 		}
 
-		bypass = { NOT = { has_country_flag = SIA_ds_active } }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_royal_development_projects"
-			custom_effect_tooltip = SIA_royal_development_projects_tt
 			set_temp_variable = { ds_grievance_delta = -10 }
 			SIA_ds_set_grievance = yes
 			set_temp_variable = { ds_delta = -6 }
@@ -7262,7 +7244,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { has_completed_focus = SIA_royal_development_projects }
+		available = { }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_isoc_southern_command"
@@ -7290,14 +7272,13 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_isoc_southern_command
 
-		cost = 5
+		cost = 4
 
 		prerequisite = { focus = SIA_isoc_southern_command }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_royal_development_projects
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_40_tt
 				check_variable = { SIA_insurgency_intensity < 40 }
@@ -7306,9 +7287,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_winning_hearts_royally"
-			custom_effect_tooltip = SIA_winning_hearts_royally_tt
-			# Twin-meter: patronage and development heal the grievance behind the revolt. Grievance
-			# (floor) down first, then intensity, so the cut lands.
 			set_temp_variable = { ds_grievance_delta = -12 }
 			SIA_ds_set_grievance = yes
 			set_temp_variable = { ds_delta = -7 }
@@ -7340,7 +7318,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_royal_development_projects
+			date > 2005.1.1
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_30_tt
 				check_variable = { SIA_insurgency_intensity < 30 }
@@ -7370,6 +7348,7 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = SIA_the_southern_question }
+		mutually_exclusive = { focus = SIA_iron_fist_doctrine focus = SIA_royal_development_projects }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
@@ -7379,15 +7358,10 @@ focus_tree = {
 			has_stability > 0.45
 		}
 
-		bypass = { NOT = { has_country_flag = SIA_ds_active } }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_peace_dialogue_initiative"
-			# Twin-meter: coming to the table starts to address the grievance directly. Grievance (floor)
-			# down first, then intensity, so the cut lands.
 			set_temp_variable = { ds_grievance_delta = -10 }
 			SIA_ds_set_grievance = yes
-			custom_effect_tooltip = SIA_peace_dialogue_initiative_tt
 			set_temp_variable = { ds_delta = -5 }
 			SIA_ds_set_intensity = yes
 			add_opinion_modifier = { target = MAY modifier = medium_increase }
@@ -7411,13 +7385,11 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_peace_dialogue_initiative
-			has_stability > 0.45
+			has_stability > 0.50
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_mara_patani_talks"
-			custom_effect_tooltip = SIA_mara_patani_talks_tt
 			# Twin-meter: formal negotiation with MARA Patani eases grievance substantially. Grievance
 			# (floor) down first, then intensity, so the cut lands.
 			set_temp_variable = { ds_grievance_delta = -14 }
@@ -7445,7 +7417,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_peace_dialogue_initiative
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_35_tt
 				check_variable = { SIA_insurgency_intensity < 35 }
@@ -7454,12 +7425,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_autonomy_framework"
-			custom_effect_tooltip = SIA_autonomy_framework_tt
-			set_temp_variable = { ds_grievance_delta = -16 }
+			set_temp_variable = { ds_grievance_delta = -15 }
 			SIA_ds_set_grievance = yes
 			set_temp_variable = { ds_delta = -7 }
 			SIA_ds_set_intensity = yes
-			country_event = { id = thailand.359 days = 3 }
+			country_event = { id = thailand.359 days = 1 }
 		}
 
 		ai_will_do = { base = 30 }
@@ -7480,7 +7450,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_peace_dialogue_initiative
+			date > 2005.1.1
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_25_tt
 				check_variable = { SIA_insurgency_intensity < 25 }
@@ -7512,9 +7482,6 @@ focus_tree = {
 		}
 	}
 
-	# ZONE 7 — KRA CANAL MEGAPROJECT Anchor SIA_kra_gateway (abs 76,2) is the only absolute root
-	# in Z7; every other focus chains to it via relative_position_id.
-
 	focus = {
 		id = SIA_kra_gateway
 		icon = naval_industry
@@ -7534,8 +7501,6 @@ focus_tree = {
 			NOT = { has_country_flag = SIA_imf_program_active }
 		}
 
-		# G-KRA gate: economy dependency satisfied only by has_completed_focus inside `available`; NO
-		# prerequisite = { focus = SIA_thailand_4_0 }.
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_kra_gateway"
 			set_temp_variable = { treasury_change = -30 }
@@ -7555,8 +7520,6 @@ focus_tree = {
 		}
 	}
 
-	# Patron fan — 4 hidden mutually-exclusive focuses; the player picks one in thailand.380,
-	# which completes the matching focus and sets the patron flag.
 	focus = {
 		id = SIA_kra_patron_china
 		icon = trade_with_china
@@ -11297,10 +11260,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_golden_triangle_interdiction"
-			add_stability = 0.03
-			set_temp_variable = { treasury_change = 3 }
+			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = SIA_golden_triangle_interdiction_tt
+			add_stability = 0.05
+			add_to_variable = { SIA_pol_corruption_cost_factor = -0.05 tooltip = corruption_cost_factor_tt }
 			hidden_effect = {
 				if = {
 					# B-1 guard: don't re-fire.362 if thailand.3 Option C already did.
