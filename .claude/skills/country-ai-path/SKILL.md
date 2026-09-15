@@ -126,6 +126,11 @@ asserts an in-range roster index, no `change_leader_temp`, no unbounded party ch
 date resolves to the person history had). Then `validate_focus_tree.py --path .`, and
 `validate_decisions.py` warning-group counts against a stashed baseline.
 
+Then `git diff main -- common/ai_strategy/TAG.txt`: every added block's `enable` must name a
+target, focus or flag the mod-wide files cannot express. A block on `surrender_progress`,
+`enemies_strength_ratio` or bare `has_war` duplicates `MD_war_declaration_ai.txt` — delete it
+(review rejected `SYR_hold_new_wars_while_losing` on #4342 and the Sweden copy on #4287).
+
 ## 6. Finish
 
 Changelog first: `Changelog.txt` carries one shared line under the current version's `Content:`,
