@@ -1,18 +1,12 @@
 """Tests for validate_cosmetic_tags (missing, unused, and unused-colour checks)."""
 
 import validate_cosmetic_tags as V
+from shared.suite import issue_categories as _categories
+from shared.suite import run_validator
 
 
 def _run(tmp_path, **kwargs):
-    validator = V.Validator(
-        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True, **kwargs
-    )
-    validator.run_validations()
-    return validator
-
-
-def _categories(validator):
-    return sorted(issue.category for issue in validator._issues)
+    return run_validator(V.Validator, tmp_path, **kwargs)
 
 
 def test_loc_worker_skips_ignored_paths(tmp_path, write_path):

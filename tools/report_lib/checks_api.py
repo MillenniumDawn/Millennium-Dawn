@@ -26,7 +26,7 @@ import urllib.error
 import urllib.request
 from typing import Dict, List, Optional, Tuple
 
-from validator_batches import BATCHES
+from validation.validator_batches import BATCHES
 
 from .models import Issue, Severity, ValidatorRun
 
@@ -40,14 +40,16 @@ _OS_JOB_NAMES = {"linux": "Linux", "macos": "macOS", "windows": "Windows"}
 
 def _fallback_job(name: str) -> str:
     """Map a validator slug to its owning CI job when `job` is unset."""
+    if name == "file-paths":
+        return "File path validation"
     if name.startswith("tools-"):
         os_name = name.removeprefix("tools-")
         return f"Tools tests ({_OS_JOB_NAMES.get(os_name.lower(), os_name)})"
     for batch, specs in BATCHES.items():
         if any(spec.name == name for spec in specs):
             return f"Mod tests ({batch})"
-    # Standalone checks (file-paths, style, common-mistakes, encoding,
-    # descriptors) and anything unmapped run inside the core batch job.
+    # Standalone checks (style, common-mistakes, encoding, descriptors) and
+    # anything unmapped run inside the core batch job.
     return _CORE_JOB
 
 

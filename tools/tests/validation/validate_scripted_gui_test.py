@@ -172,3 +172,53 @@ def test_staged_mode_suppresses_findings_outside_the_staged_set(
 def test_repo_without_interface_or_scripted_guis_is_a_clean_pass(tmp_path):
     validator = _run(tmp_path)
     assert validator._issues == []
+
+
+def test_dirty_bound_to_engine_timer_is_flagged(tmp_path, write_path):
+    write_path(tmp_path, "interface/windows.gui", _GUI)
+    write_path(
+        tmp_path,
+        "common/scripted_guis/main.txt",
+        "scripted_gui = {\n"
+        "\ttimer_one = {\n"
+        "\t\tcontext_type = player_context\n"
+        "\t\tdirty = global.date\n"
+        "\t}\n"
+        "\ttimer_two = {\n"
+        "\t\tcontext_type = player_context\n"
+        "\t\tdirty = global.num_days\n"
+        "\t}\n"
+        "}\n",
+    )
+
+    validator = _run(tmp_path)
+
+    assert [(i.category, i.severity) for i in validator._issues] == [
+        ("DIRTY_TIMER_GLOBAL", "warning"),
+        ("DIRTY_TIMER_GLOBAL", "warning"),
+    ]
+    assert "dirty = global.date" in validator._issues[0].message
+    assert "dirty = global.num_days" in validator._issues[1].message
+
+
+def test_dirty_bound_to_written_counter_is_clean(tmp_path, write_path):
+    write_path(tmp_path, "interface/windows.gui", _GUI)
+    write_path(
+        tmp_path,
+        "common/scripted_guis/main.txt",
+        "scripted_gui = {\n"
+        "\tcountered = {\n"
+        "\t\tcontext_type = player_context\n"
+        "\t\tdirty = global.my_counter\n"
+        "\t}\n"
+        "}\n",
+    )
+    write_path(
+        tmp_path,
+        "events/writes.txt",
+        "add_to_variable = { global.my_counter = 1 }\n",
+    )
+
+    validator = _run(tmp_path)
+
+    assert validator._issues == []

@@ -2,6 +2,10 @@
 
 import builtins
 import json
+import os
+import subprocess
+import sys
+from pathlib import Path
 
 import baseline_check
 import pytest
@@ -10,6 +14,8 @@ from report_lib.baseline import META_FILENAME
 from shared.suite import issue_dict as _issue_dict
 from shared.suite import write_slug_json as _write_sidecar
 from shared.suite import write_text
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
 def _write_meta(base, toolshash="h"):
@@ -80,6 +86,21 @@ def _run(
     return baseline_check.main(argv)
 
 
+def test_standalone_help_bootstraps_shared_report_imports():
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    result = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "baseline_check.py"), "--help"],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Diff a main-side validation run" in result.stdout
+
+
 def test_empty_candidate_establishes_clean_baseline(tmp_path, monkeypatch, capsys):
     current = tmp_path / "current"
     current.mkdir()
@@ -127,20 +148,35 @@ def test_establishing_baseline_when_previous_missing(tmp_path, monkeypatch, caps
 
 def test_new_errors_fail_and_keep_old_baseline(tmp_path, monkeypatch, capsys):
     previous = _previous_with_one_old_error(tmp_path)
+    _write_sidecar(
+        previous,
+        "events-warnings",
+        [_issue_dict("warning", message="known warning")],
+    )
     current = tmp_path / "current"
     _write_sidecar(
         current,
         "events",
         [
             _issue_dict("error", message="old"),
+            _issue_dict("warning", message="known warning"),
             _issue_dict("error", message="brand new", file="b.txt", line=2),
+            _issue_dict("warning", message="new warning", file="c.txt", line=3),
         ],
     )
+    summary_path = tmp_path / "summary.md"
 
-    code = _run(tmp_path, previous, current, monkeypatch=monkeypatch)
+    code = _run(
+        tmp_path,
+        previous,
+        current,
+        monkeypatch=monkeypatch,
+        summary_path=summary_path,
+    )
 
     assert code == 1
     assert "1 new error(s)" in capsys.readouterr().err
+    assert "- **New warnings:** 1" in summary_path.read_text(encoding="utf-8")
     # Red night: the old baseline stays; nothing is written to --output.
     assert not (tmp_path / "baseline" / META_FILENAME).exists()
 
@@ -244,9 +280,9 @@ def test_step_summary_includes_the_workflow_run_url(tmp_path, monkeypatch):
         tmp_path,
         monkeypatch,
         "https://example.test/run/1",
-        commit="abc1234deadbeef",
+        commit="a" * 40,
     )
-    assert "**Commit:** `abc1234`" in summary
+    assert "**Commit:** `aaaaaaa`" in summary
     assert (
         "**Run:** [https://example.test/run/1](https://example.test/run/1)" in summary
     )

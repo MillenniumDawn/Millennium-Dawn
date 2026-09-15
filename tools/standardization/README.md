@@ -169,6 +169,26 @@ Standardizes MIO organization files according to Millennium Dawn standards.
 python3 standardize_mio.py input.txt -o output.txt --backup --verbose
 ```
 
+### History (`standardize_history.py`)
+
+Standardizes dated blocks in country history files without changing content outside them.
+
+**Usage:**
+
+```bash
+python3 standardize_history.py "history/countries/CHI - China.txt" -o output.txt
+```
+
+### Localisation (`standardize_localisation.py`)
+
+Reorganizes English localisation files by content category and detects the mod root when possible.
+
+**Usage:**
+
+```bash
+python3 standardize_localisation.py input.yml --mod-root /path/to/mod
+```
+
 ## Unified Interface
 
 For convenience, use the unified `standardize.py` script:
@@ -188,6 +208,12 @@ python3 standardize.py idea input.txt -v
 
 # Standardize MIOs
 python3 standardize.py mio input.txt
+
+# Standardize history files
+python3 standardize.py history "history/countries/CHI - China.txt"
+
+# Standardize localisation
+python3 standardize.py localisation input.yml --mod-root /path/to/mod
 ```
 
 ## Common Options
@@ -198,6 +224,11 @@ All standardizers support these command-line options:
 - `-o, --output` - Output file (default: overwrites input)
 - `-b, --backup` - Create backup before modifying (recommended)
 - `-v, --verbose` - Verbose output for debugging
+
+Additional options are limited to their relevant subcommands:
+
+- `--check-naming` - Check modifier naming conventions (focus trees only)
+- `--mod-root` - Mod root path (localisation files only)
 
 ## Code Standards Enforced
 
@@ -313,30 +344,36 @@ This will show:
 
 ## Integration with Development Workflow
 
-### Pre-commit Hook
+No standardizer runs automatically. The `md-standardize` pre-commit hook is
+disabled on purpose: it rewrites whole files, so on a repo where most files
+predate the current rules it would drag a full reformat into every unrelated
+commit. Run the standardizers by hand on the files you are working on.
 
-Consider adding standardization to your pre-commit hooks:
+What runs instead is `tools/validation/validate_standardization.py`, which
+_reports_ the files a standardizer would rewrite without touching them. It is
+warning-only and scoped to changed files, in pre-commit (through
+`tools/precommit_validate.py`) and in CI (a `core`-batch step). Each finding
+names the command that fixes it:
 
-```bash
-# In .git/hooks/pre-commit
-#!/bin/bash
-    python3 tools/standardization/standardize.py focus common/national_focus/*.txt
-    python3 tools/standardization/standardize.py event events/*.txt
-    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt
+```
+events/Gulf.txt - not standardized - run: python3 tools/standardization/standardize.py event "events/Gulf.txt"
 ```
 
-### CI/CD Pipeline
+Pass `--all` for a full-repo sweep instead of the changed-file scope.
 
-Add standardization checks to your continuous integration:
+### standardize_api.py
 
-```yaml
-# .github/workflows/standardize.yml
-- name: Standardize Files
-  run: |
-    python3 tools/standardization/standardize.py focus common/national_focus/*.txt --backup
-    python3 tools/standardization/standardize.py event events/*.txt --backup
-    python3 tools/standardization/standardize.py mio common/military_industrial_organization/organizations/*.txt --backup
-```
+`standardize_api.py` is the in-memory entry point both the validator and the
+(disabled) `tools/standardize_staged.py` hook drive, so path routing and
+standardizer selection live in one place:
+
+- `kind_for_path(path)` — `"focus"`, `"event"`, `"decision"`, `"idea"`, `"mio"`,
+  or `None` when no standardizer owns the path.
+- `standardize_text(kind, text)` — the text the standardizer would write, or
+  `None` when the file holds no block of that kind.
+
+Neither reads or writes the file, so a checker can compare against disk without
+the risk of a half-written file.
 
 ## Related Documentation
 

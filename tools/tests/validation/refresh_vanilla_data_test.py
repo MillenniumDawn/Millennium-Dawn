@@ -1,6 +1,7 @@
 """Behavioral tests for tools/validation/refresh_vanilla_data.py."""
 
 import importlib
+import struct
 
 import pytest
 
@@ -167,44 +168,67 @@ def test_refresh_gui_raises_when_no_files(monkeypatch):
         rvd_mod._refresh_gui()
 
 
-def test_refresh_sprites_writes_manifest(monkeypatch, tmp_manifests):
+def _write_sprite_install(root):
+    """Lay out a fake install: one .gfx with a sized, an unsized and a lost texture."""
+    interface = root / "interface"
+    interface.mkdir(parents=True)
+    art = root / "gfx" / "interface"
+    art.mkdir(parents=True)
+    header = bytearray(128)
+    header[0:4] = b"DDS "
+    struct.pack_into("<II", header, 12, 40, 52)
+    (art / "sized.dds").write_bytes(bytes(header))
+    (interface / "decisions.gfx").write_text(
+        "spriteTypes = {\n"
+        '\tspriteType = { name = "GFX_sized" texturefile = "gfx/interface/sized.dds" }\n'
+        '\tspriteType = { name = "GFX_lost" texturefile = "gfx/interface/lost.dds" }\n'
+        '\tspriteType = { name = "GFX_unsized" }\n'
+        "}\n",
+        encoding="utf-8",
+    )
+    return str(interface / "decisions.gfx")
+
+
+def test_refresh_sprites_writes_sizes_beside_names(monkeypatch, tmp_manifests):
     import validation.refresh_vanilla_data as rvd_mod
 
-    monkeypatch.setattr(rvd_mod, "_vanilla_gfx_files", lambda: ["/x/events.gfx"])
-    monkeypatch.setattr(
-        rvd_mod, "_read_raw", lambda p: "raw content" if "events" in p else None
-    )
-    monkeypatch.setattr(
-        rvd_mod,
-        "sprite_names_from_gfx_text",
-        lambda raw: {"GFX_event_test_sprite"},
-    )
+    gfx = _write_sprite_install(tmp_manifests / "install")
+    monkeypatch.setattr(rvd_mod, "_vanilla_gfx_files", lambda: [gfx])
 
     summary = rvd_mod._refresh_sprites()
     assert summary.startswith("vanilla_sprites.txt:")
 
     body = (tmp_manifests / "vanilla_sprites.txt").read_text(encoding="utf-8")
-    assert "GFX_event_test_sprite" in body
+    lines = [line for line in body.splitlines() if not line.startswith("#")]
+    assert lines == ["GFX_lost", "GFX_sized 52x40", "GFX_unsized"]
 
 
 def test_refresh_sprites_skips_unreadable_gfx(monkeypatch, tmp_manifests):
     import validation.refresh_vanilla_data as rvd_mod
 
-    monkeypatch.setattr(
-        rvd_mod, "_vanilla_gfx_files", lambda: ["/x/events.gfx", "/y/bad.gfx"]
-    )
-    monkeypatch.setattr(
-        rvd_mod, "_read_raw", lambda p: "raw content" if "events" in p else None
-    )
-    monkeypatch.setattr(
-        rvd_mod,
-        "sprite_names_from_gfx_text",
-        lambda raw: {"GFX_event_test_sprite"},
-    )
+    gfx = _write_sprite_install(tmp_manifests / "install")
+    monkeypatch.setattr(rvd_mod, "_vanilla_gfx_files", lambda: [gfx, "/y/bad.gfx"])
 
     rvd_mod._refresh_sprites()
     body = (tmp_manifests / "vanilla_sprites.txt").read_text(encoding="utf-8")
-    assert "GFX_event_test_sprite" in body
+    assert "GFX_sized 52x40" in body
+
+
+def test_refresh_sprites_keeps_size_over_a_textureless_repeat(
+    monkeypatch, tmp_manifests
+):
+    import validation.refresh_vanilla_data as rvd_mod
+
+    gfx = _write_sprite_install(tmp_manifests / "install")
+    later = tmp_manifests / "install" / "interface" / "zz_override.gfx"
+    later.write_text(
+        'spriteTypes = {\n\tspriteType = { name = "GFX_sized" }\n}\n', encoding="utf-8"
+    )
+    monkeypatch.setattr(rvd_mod, "_vanilla_gfx_files", lambda: [gfx, str(later)])
+
+    rvd_mod._refresh_sprites()
+    body = (tmp_manifests / "vanilla_sprites.txt").read_text(encoding="utf-8")
+    assert "GFX_sized 52x40" in body
 
 
 def test_refresh_fonts_writes_manifest(monkeypatch, tmp_manifests):

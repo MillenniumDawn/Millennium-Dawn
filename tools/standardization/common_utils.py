@@ -16,6 +16,7 @@ from typing import Any, Dict, List, Optional, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from _common import format_elapsed
 from shared_utils import (
+    add_standard_file_arguments,
     atomic_write_text,
     blank_quoted_strings,
     create_backup,
@@ -225,6 +226,11 @@ def read_lines_for_standardization(
     return lines
 
 
+def render_standardized(output_lines: List[str]) -> str:
+    """Render a standardizer's output lines as the file text it would write."""
+    return "".join(normalize_spacing(line) + "\n" for line in output_lines)
+
+
 def write_standardized_output(
     output_file: str,
     output_lines: List[str],
@@ -238,7 +244,7 @@ def write_standardized_output(
     Returns True on success, False (after logging) if the write fails.
     """
     try:
-        output = "".join(normalize_spacing(line) + "\n" for line in output_lines)
+        output = render_standardized(output_lines)
         atomic_write_text(output_file, output)
 
         time_str = format_elapsed(time.time() - start_time)
@@ -298,12 +304,13 @@ class BaseStandardizer(ABC):
         """Format block according to standard"""
         pass
 
-    def standardize_file(self, input_file: str, output_file: str) -> bool:
-        """Standardize file by processing blocks of the target type"""
-        lines = read_lines_for_standardization(input_file, verbose=self.verbose)
-        if lines is None:
-            return False
+    def standardize_lines(self, lines: List[str]) -> Optional[List[str]]:
+        """Standardize lines in memory, or None when no block of this type matched.
 
+        None is the "nothing to do" signal the file path turns into a skipped
+        write, so a checker can distinguish it from a file that is already
+        standardized.
+        """
         output_lines = []
         i = 0
         self.processed_count = 0
@@ -334,7 +341,17 @@ class BaseStandardizer(ABC):
                 output_lines.append(line)
                 i += 1
 
-        if self.processed_count == 0:
+        return None if self.processed_count == 0 else output_lines
+
+    def standardize_file(self, input_file: str, output_file: str) -> bool:
+        """Standardize file by processing blocks of the target type"""
+        lines = read_lines_for_standardization(input_file, verbose=self.verbose)
+        if lines is None:
+            return False
+
+        output_lines = self.standardize_lines(lines)
+
+        if output_lines is None:
             log_message("INFO", "No blocks matched — skipping file write")
             return True
 
@@ -362,14 +379,7 @@ def create_gate_sweep_parser(
 def create_standardizer_parser(description: str) -> argparse.ArgumentParser:
     """Create a standard argument parser for all standardizers"""
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("input_file", help="Input file to standardize")
-    parser.add_argument(
-        "-o", "--output", help="Output file (default: overwrites input)"
-    )
-    parser.add_argument(
-        "-b", "--backup", action="store_true", help="Create backup before modifying"
-    )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    add_standard_file_arguments(parser, input_help="Input file to standardize")
     return parser
 
 

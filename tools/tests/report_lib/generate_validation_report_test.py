@@ -24,6 +24,26 @@ def _write_baseline(base, toolshash, issues):
     (base / "events.json").write_text(json.dumps(issues), encoding="utf-8")
 
 
+def _old_and_new_tree(tmp_path, toolshash="h"):
+    make_results_tree(
+        tmp_path,
+        {
+            "events": {
+                "log": "VALIDATION COMPLETE",
+                "issues": [
+                    _issue_dict("error", file="old.txt", message="old finding"),
+                    _issue_dict("error", file="new.txt", message="new finding"),
+                ],
+            }
+        },
+    )
+    _write_baseline(
+        tmp_path / "baseline",
+        toolshash,
+        [_issue_dict("error", file="old.txt", message="old finding")],
+    )
+
+
 def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None):
     argv = [
         "--results-dir",
@@ -44,6 +64,19 @@ def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None):
     return argv
 
 
+def _report_with_changed_files(tmp_path, changed_files):
+    changed = tmp_path / "changed-files.txt"
+    changed.write_text("".join(f"{name}\n" for name in changed_files), encoding="utf-8")
+
+    code = generate_validation_report.main(
+        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
+        + ["--changed-files", str(changed)]
+    )
+
+    assert code == 0
+    return (tmp_path / "report.md").read_text(encoding="utf-8")
+
+
 def _post_argv(tmp_path, *extra):
     argv = _argv(tmp_path)
     argv += [
@@ -59,23 +92,7 @@ def _post_argv(tmp_path, *extra):
 
 def test_main_annotates_new_vs_existing_from_baseline(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    make_results_tree(
-        tmp_path,
-        {
-            "events": {
-                "log": "VALIDATION COMPLETE",
-                "issues": [
-                    _issue_dict("error", file="old.txt", message="old finding"),
-                    _issue_dict("error", file="new.txt", message="new finding"),
-                ],
-            }
-        },
-    )
-    _write_baseline(
-        tmp_path / "baseline",
-        "h",
-        [_issue_dict("error", file="old.txt", message="old finding")],
-    )
+    _old_and_new_tree(tmp_path)
 
     code = generate_validation_report.main(
         _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
@@ -83,22 +100,15 @@ def test_main_annotates_new_vs_existing_from_baseline(tmp_path, monkeypatch, cap
 
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
-    assert "1 new error against the main baseline." in report
+    assert "1 new error against the main baseline" in report
+    assert "**Baseline comparison:** available" in report
     err = capsys.readouterr().err
     assert "vs main baseline: 1 new error(s), 0 new warning(s)" in err
 
 
 def test_main_ignores_stale_baseline(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    make_results_tree(
-        tmp_path,
-        {
-            "events": {
-                "log": "VALIDATION COMPLETE",
-                "issues": [_issue_dict("error", file="new.txt", message="finding")],
-            }
-        },
-    )
+    _findings_tree(tmp_path)
     _write_baseline(
         tmp_path / "baseline",
         "old-generation",
@@ -118,19 +128,12 @@ def test_main_ignores_stale_baseline(tmp_path, monkeypatch):
     # A baseline from a different validator generation must be ignored, not
     # compared: no NEW/EXISTING annotation anywhere.
     assert "main baseline" not in report
+    assert "**Baseline comparison:** unavailable" in report
 
 
 def test_main_renders_without_baseline_when_dir_missing(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
-    make_results_tree(
-        tmp_path,
-        {
-            "events": {
-                "log": "VALIDATION COMPLETE",
-                "issues": [_issue_dict("error", file="new.txt", message="finding")],
-            }
-        },
-    )
+    _findings_tree(tmp_path)
 
     code = generate_validation_report.main(
         _argv(tmp_path, baseline_dir=tmp_path / "no-such-baseline")
@@ -140,6 +143,7 @@ def test_main_renders_without_baseline_when_dir_missing(tmp_path, monkeypatch):
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "1 error must be fixed before merge." in report
     assert "main baseline" not in report
+    assert "**Baseline comparison:** unavailable" in report
 
 
 def _findings_tree(tmp_path):
@@ -159,6 +163,23 @@ def _passing_tree(tmp_path):
         tmp_path,
         {"events": {"log": "✓ VALIDATION COMPLETE"}},
     )
+
+
+def _write_tools_sidecar(tmp_path, os_name="Linux", **overrides):
+    directory = tmp_path / "validation-results" / f"tools-tests-{os_name}-results"
+    directory.mkdir(parents=True, exist_ok=True)
+    sidecar = {
+        "suite": "tools",
+        "job": f"Tools tests ({os_name})",
+        "name": f"tools-{os_name.lower()}",
+        "title": f"Tools tests ({os_name})",
+        "status": "passed",
+        "errors": 0,
+        "warnings": 0,
+        "issues": [],
+    }
+    sidecar.update(overrides)
+    (directory / "suite-run.json").write_text(json.dumps(sidecar), encoding="utf-8")
 
 
 def _warnings_tree(tmp_path):
@@ -269,24 +290,7 @@ def test_main_posts_comment_when_no_validator_ran(tmp_path, monkeypatch):
 def test_main_hands_tools_suite_runs_to_the_checks_api(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _findings_tree(tmp_path)
-    root = tmp_path / "validation-results"
-    directory = root / "tools-tests-Linux-results"
-    directory.mkdir()
-    (directory / "suite-run.json").write_text(
-        json.dumps(
-            {
-                "suite": "tools",
-                "job": "Tools tests (Linux)",
-                "name": "tools-linux",
-                "title": "Tools tests (Linux)",
-                "status": "passed",
-                "errors": 0,
-                "warnings": 0,
-                "issues": [],
-            }
-        ),
-        encoding="utf-8",
-    )
+    _write_tools_sidecar(tmp_path)
     seen = []
     monkeypatch.setattr(
         generate_validation_report,
@@ -397,6 +401,20 @@ def test_main_writes_the_step_summary_when_ci_sets_the_path(
     # The step summary carries the per-validator detail the comment drops.
     assert "## Validators" in step_body
     assert "## Validators" not in (tmp_path / "report.md").read_text(encoding="utf-8")
+
+
+def test_main_step_summary_collapses_a_clean_tools_suite(tmp_path, monkeypatch):
+    summary = tmp_path / "step-summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary))
+    _passing_tree(tmp_path)
+    _write_tools_sidecar(tmp_path)
+
+    code = generate_validation_report.main(_argv(tmp_path))
+
+    assert code == 0
+    step_body = summary.read_text(encoding="utf-8")
+    assert "## Tools tests\n\n✅ All tools based tests have succeeded!" in step_body
+    assert "| Tool suite |" not in step_body
 
 
 def test_main_survives_an_unwritable_step_summary(tmp_path, monkeypatch, capsys):
@@ -560,3 +578,58 @@ def test_main_post_comment_requires_pr_number(tmp_path, monkeypatch):
     code = generate_validation_report.main(argv)
 
     assert code == 1
+
+
+def test_main_tags_changed_files(tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _findings_tree(tmp_path)
+    changed = tmp_path / "changed-files.txt"
+    changed.write_text("new.txt\n", encoding="utf-8")
+
+    code = generate_validation_report.main(
+        _argv(tmp_path) + ["--changed-files", str(changed)]
+    )
+
+    assert code == 0
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "**IN YOUR PR**" in report
+    assert "## Findings in your PR" in report
+    assert "**Changed files:** available" in report
+    assert "tagged 1 finding(s) IN YOUR PR" in capsys.readouterr().err
+
+
+def test_main_changed_files_missing_sets_unavailable(tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _findings_tree(tmp_path)
+
+    code = generate_validation_report.main(
+        _argv(tmp_path) + ["--changed-files", str(tmp_path / "missing.txt")]
+    )
+
+    assert code == 0
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "Changed-file list was not available" in report
+    assert "**IN YOUR PR**" not in report
+    assert "changed-file list unavailable" in capsys.readouterr().err
+
+
+def test_main_changed_files_and_baseline_tag_both(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _old_and_new_tree(tmp_path)
+
+    report = _report_with_changed_files(tmp_path, ["new.txt"])
+
+    assert "**NEW** **IN YOUR PR**" in report
+    assert "## New Findings Introduced by this branch." in report
+
+
+def test_main_surfaces_existing_findings_in_touched_files(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _old_and_new_tree(tmp_path)
+
+    report = _report_with_changed_files(tmp_path, ["old.txt", "new.txt"])
+
+    assert "## New Findings Introduced by this branch." in report
+    in_pr = report[report.index("## Findings in your PR") :]
+    assert "old finding" in in_pr
+    assert "new finding" not in in_pr

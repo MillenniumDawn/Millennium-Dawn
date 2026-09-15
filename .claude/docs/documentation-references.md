@@ -38,6 +38,17 @@ Use for broader modding context not covered in local docs:
 
 ## Millennium Dawn Conventions
 
+Keep `AGENTS.md` and agent prompts to guardrails and task-based reading pointers.
+Implementation details belong in the existing reference for that domain. Player-facing
+instructions belong in `docs/src/content/pages/` or `tutorials/`; contributor guidance
+belongs in `docs/src/content/resources/`. Do not move internal review procedures into
+player guides.
+
+Write the answer or action first where useful. Keep prose terse and tables readable
+in plaintext: pad columns using the repo's Prettier settings and keep each whole
+padded row within 100 characters. Shorten cells or use a list instead of a wide table.
+For website frontmatter, headings, and links, read `docs/CONTRIBUTING.md`.
+
 ### Naming Scheme
 
 Most filenames end in one of four suffixes: `-reference` (structure or valid-key lookup), `-rules` (must-follow conventions), `-patterns` (recipe/refactor catalogs), or `-system` (subsystem architecture). A handful of docs use a plain descriptive name instead when none of those fit (`agent-conventions.md`, `debug-commands.md`, `typo-watchlist.md`, `validation-pipeline.md`).
@@ -74,6 +85,7 @@ All files below live in `.claude/docs/`.
 | `namelist-reference.md`          | Division/ship name-list files and mandatory groups           |
 | `oob-equipment-reference.md`     | OOB equipment types (NSB), stockpiles, variant errors        |
 | `oob-variants-reference.md`      | Full OOB + variant reference (`history/units/`)              |
+| `party-loc-reference.md`         | Politics-view party keys, subideology slots, loc hooks       |
 | `performance-patterns.md`        | Hoisting, dirty counters, clamp-before-divide, early-outs    |
 | `refactor-checklist.md`          | Rename/migration sweeps: namespaces, GUI/GFX refs, tags      |
 | `scripted-gui-patterns.md`       | `dynamic_lists`, loc dispatchers, dirty-var standard         |
@@ -88,13 +100,15 @@ All files below live in `.claude/docs/`.
 
 Detail moved out of the table:
 
-- `agent-conventions.md` anti-rules: no proactive validators, no AI attribution, stay in scope, never guess identifiers.
+- `agent-conventions.md`: task-specific reading, role boundaries, and BLUF handoffs.
 - `ai-equipment-reference.md` role-template structure keys: `category`/`roles`/`priority`.
 - `entity-system.md` landmark buildings: state-file placement, `map/buildings.txt` spawn points, `provinces.bmp` validation, heightmap-calibrated y, rendering gotchas; plus a division-designer performance note.
 - `formable-reference.md` paths: 23 decision formables, EU111 USoE, EU112 EFS, UAR, Yugoslavia, United States of Africa, Event Horizon, focus-tree unions; plus known traps and maintenance rules.
 - `music-system.md` stations: Main, Regional, UKR-RUS war, Synthwave.
 - `scripted-gui-patterns.md`: the dirty-variable standard is `update_<system>_dirty_variable`; checkbox swap = filter-checkbox image swap; ✓/✗ tooltips are per-entry.
-- `scripting-edge-cases.md` holds niche pitfalls moved out of the always-loaded `general-rules.md`, including per-effect scope interpolation for `add_to_war` / `add_*_opinion_modifier` / `add_relation_modifier` (FROM in events fired from on_actions or `random_scope_in_array` defaults to the firing scope).
+- `scripting-edge-cases.md`: trigger semantics, relief signs, equipment transfers, guards,
+  and effect scope interpolation. `FROM` in events fired from on_actions or
+  `random_scope_in_array` defaults to the firing scope.
 - `sound-system.md` also covers adding voicelines and audio-file requirements.
 
 ## AI Agent Definitions
@@ -103,4 +117,4 @@ Agents live in `.claude/agents/` (10 definitions); the session agent list carrie
 
 ## Repository Access
 
-Use `gh` CLI for GitHub operations: `gh issue list`, `gh pr list`, `gh pr view`, `gh api`
+Use `gh` CLI commands for GitHub operations: `gh issue list`, `gh pr list`, `gh pr view`.

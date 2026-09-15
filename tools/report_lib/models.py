@@ -26,6 +26,8 @@ class Issue:
     # Set by baseline.classify(): "new" / "existing" when a baseline was
     # available and the issue could be keyed; None otherwise.
     baseline_status: Optional[str] = None
+    # Set by baseline.tag_changed_files(): True when Issue.file is in the PR diff.
+    in_diff: bool = False
 
     @classmethod
     def from_dict(cls, d: dict, validator: str = "") -> "Issue":
@@ -108,6 +110,10 @@ class ReportContext:
     repo: Optional[str] = None  # "owner/name", used to build blob links to file:line
     # Scope distinguishes diff-only and PR-code reports from full validation.
     validation_scope: str = "full"
+    # "available" or "unavailable" when the workflow requested a baseline.
+    baseline_status: Optional[str] = None
+    # "available" or "unavailable" when --changed-files was passed.
+    changed_files_status: Optional[str] = None
     # Impact reports use a separate comment marker and title.
     report_marker: str = ""
     report_title: str = ""

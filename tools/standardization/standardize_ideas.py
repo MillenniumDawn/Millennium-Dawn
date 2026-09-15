@@ -7,7 +7,7 @@ Standardizes HOI4 idea files according to Millennium Dawn coding standards
 
 import re
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from common_utils import (
     PROP_NAME_RE,
@@ -18,6 +18,7 @@ from common_utils import (
 )
 from shared_utils import (
     blank_quoted_strings,
+    collapse_nested_blocks,
     collapse_or_compact,
     extract_block,
     log_message,
@@ -315,7 +316,7 @@ class IdeaStandardizer(BaseStandardizer):
     ) -> List[str]:
         """Single-line collapse a single-leaf block, else reindent at prop_indent."""
         collapsed = collapse_or_compact(block_lines[:], prop_indent)
-        multi = self.compact_block(block_lines[:], prop_indent)
+        multi = self.compact_block(collapse_nested_blocks(block_lines), prop_indent)
         if len(collapsed) == 1 and len(multi) != 1:
             return collapsed
         return multi
@@ -365,7 +366,7 @@ class IdeaStandardizer(BaseStandardizer):
                     modified.append(log_line)
             block = modified
 
-        return self.compact_block(block[:], prop_indent)
+        return self.compact_block(collapse_nested_blocks(block[:]), prop_indent)
 
     def format_block(self, props: Dict[str, Any], base_indent: str = "\t") -> List[str]:
         """Format idea according to Millennium Dawn standard"""
@@ -470,6 +471,10 @@ class IdeaStandardizer(BaseStandardizer):
 
         return cleaned_lines
 
+    def standardize_lines(self, lines: List[str]) -> Optional[List[str]]:
+        """Ideas nest, so the recursive walker replaces the base block loop."""
+        return self._process_lines(lines, depth=0)
+
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         """Standardize ideas file by handling nested structure properly"""
         self.start_time = time.time()
@@ -477,7 +482,9 @@ class IdeaStandardizer(BaseStandardizer):
         if lines is None:
             return False
 
-        output_lines = self._process_lines(lines, depth=0)
+        output_lines = self.standardize_lines(lines)
+        if output_lines is None:
+            return True
 
         return write_standardized_output(
             output_file,
