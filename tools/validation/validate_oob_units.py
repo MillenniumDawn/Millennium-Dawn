@@ -1913,6 +1913,7 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def __init__(self, *args, **kwargs):
+        self.missing_equipment_factor = kwargs.pop("missing_equipment_factor", False)
         super().__init__(*args, **kwargs)
         self.canonical = set()
         self.canonical_lower = {}
@@ -2414,6 +2415,14 @@ class Validator(BaseValidator):
         for file_results in all_results:
             results.extend(file_results)
 
+        if not self.missing_equipment_factor:
+            self.log(
+                "  Skipping missing-equipment-factor check "
+                "(pass --missing-equipment-factor to enable)"
+            )
+            skip_cat = _CREATE_UNIT_CATEGORIES["missing-equipment-factor"]
+            results = [issue for issue in results if issue.category != skip_cat]
+
         self._report(
             results,
             "✓ All create_unit effects are well-formed",
@@ -2432,8 +2441,18 @@ class Validator(BaseValidator):
         self.validate_created_units()
 
 
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--missing-equipment-factor",
+        action="store_true",
+        dest="missing_equipment_factor",
+        help=("Warn when a create_unit division string omits start_equipment_factor"),
+    )
+
+
 if __name__ == "__main__":
     run_validator_main(
         Validator,
         "Validate unit names in OOB files and AI templates against canonical definitions",
+        extra_args_fn=_add_extra_args,
     )

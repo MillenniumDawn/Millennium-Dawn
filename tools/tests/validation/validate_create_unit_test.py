@@ -10,6 +10,7 @@ template as a malformed token. Templates nothing deletes are not required to
 carry that ensure pattern.
 """
 
+import argparse
 from textwrap import indent
 
 import pytest
@@ -225,6 +226,39 @@ def test_missing_equipment_factor_warns(tmp_path):
     ]
     assert "CREATE UNIT: division string lacks start_equipment_factor" in _cats(issues)
     assert warned == [Severity.WARNING]
+
+
+def _missing_factor_validator(tmp_path, **kwargs):
+    target = tmp_path / "common" / "national_focus" / "test.txt"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        _GUARDED.replace(" start_equipment_factor = 1.0", ""), encoding="utf-8"
+    )
+    validator = Validator(str(tmp_path), workers=1, **kwargs)
+    validator.validate_created_units()
+    return validator
+
+
+def test_missing_equipment_factor_defaults_off(tmp_path):
+    validator = _missing_factor_validator(tmp_path)
+    assert validator.missing_equipment_factor is False
+    assert "CREATE UNIT: division string lacks start_equipment_factor" not in _cats(
+        validator._issues
+    )
+
+
+def test_missing_equipment_factor_flag_reports(tmp_path):
+    validator = _missing_factor_validator(tmp_path, missing_equipment_factor=True)
+    assert "CREATE UNIT: division string lacks start_equipment_factor" in _cats(
+        validator._issues
+    )
+
+
+def test_missing_equipment_factor_flag_is_registered():
+    parser = argparse.ArgumentParser()
+    oob._add_extra_args(parser)
+    assert parser.parse_args(["--missing-equipment-factor"]).missing_equipment_factor
+    assert not parser.parse_args([]).missing_equipment_factor
 
 
 @pytest.mark.parametrize("value", ("0", "0.0", ".0", "0.", "00", "+0", "-0"))

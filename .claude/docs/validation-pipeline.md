@@ -132,8 +132,13 @@ The CI validator list lives in `validator_batches.py`, so the batch jobs and pre
   effects: state scope, `owner`, block keys, a single-line division string
   that parses as army data (documented inner keys, quoted `name` /
   `division_template`, numeric factors, `force_equipment_variants` shape),
-  zero equipment/manpower factors, and the order of a template defined in the
-  same file and effect path as the `create_unit` using it. German/Danish letters
+  zero equipment/manpower factors, near-zero factors below 0.01, and the order
+  of a template defined in the same file and effect path as the `create_unit`
+  using it. A missing `start_equipment_factor` is WARNING
+  (`missing-equipment-factor`) and opt-in behind `--missing-equipment-factor`:
+  the ~1,300-finding backlog would bury every other OOB finding, so CI,
+  pre-commit, and `run_all_validators.py` leave the flag off. Pass it for a
+  spawn audit. German/Danish letters
   in that string (`äöüßæøå`) are WARNING (`out-of-bounds-division`): the inner
   parser rejects them even inside quotes (Sweden `militärdistriktet`). Romance,
   Slavic, and Kurdish accents are allowed; they render in game. Schema failures
