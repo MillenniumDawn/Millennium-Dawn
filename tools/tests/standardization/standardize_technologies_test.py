@@ -239,7 +239,10 @@ technologies = {
 					position = { x = @row1 y = @1965 }
 				}
 			}
+	#1975
 	packed = { research_cost = 1 start_year = 1965 }
+
+
 }
 """
 
@@ -263,6 +266,8 @@ def test_file_passes_wrapper_through_and_reindents_bodies():
         "\t\t\tposition = { x = @row1 y = @1965 }\n"
         "\t\t}\n"
         "\t}\n"
+        "\n"
+        "\t#1975\n"
         "\tpacked = {\n"
         "\t\tresearch_cost = 1\n"
         "\t\tstart_year = 1965\n"

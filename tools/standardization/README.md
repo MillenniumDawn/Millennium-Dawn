@@ -171,7 +171,7 @@ python3 standardize_mio.py input.txt -o output.txt --backup --verbose
 
 ### Technologies (`standardize_technologies.py`)
 
-Reorders every `technology` block in `common/technologies/` into one fixed layout. Text outside the blocks (the `technologies = {` wrapper, `@row` constants, section comments) passes through unchanged.
+Reorders every `technology` block in `common/technologies/` into one fixed layout with one blank line between technologies. Text outside the blocks (the `technologies = {` wrapper, `@row` constants, section comments) passes through unchanged.
 
 **Block layout** (one blank line between groups, `ai_will_do` last):
 

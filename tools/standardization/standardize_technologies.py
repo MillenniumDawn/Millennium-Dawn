@@ -213,7 +213,19 @@ class TechnologyStandardizer(BaseStandardizer):
         output_lines = super().standardize_lines(lines)
         if output_lines is None:
             return None
-        return collapse_blank_runs(output_lines)
+        # One blank line after every technology, none before the wrapper closer.
+        spaced: List[str] = []
+        previous = ""
+        for line in output_lines:
+            if line.strip():
+                if previous == "\t}":
+                    while spaced and not spaced[-1].strip():
+                        spaced.pop()
+                    if line != "}":
+                        spaced.append("")
+                previous = line
+            spaced.append(line)
+        return collapse_blank_runs(spaced)
 
 
 def main():
