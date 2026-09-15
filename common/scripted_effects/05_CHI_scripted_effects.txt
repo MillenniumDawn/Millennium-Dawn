@@ -1236,32 +1236,54 @@ CHI_evaluate_local_debt = {
 
 # Callers set local_debt_change (pressure) or local_debt_tolerance_change (tolerance) as temp variables first.
 CHI_change_local_debt = {
-	add_to_variable = { CHI_local_debt_pressure = local_debt_change tooltip = CHI_local_debt_pressure_tt }
-	CHI_evaluate_local_debt = yes
+	if = {
+		limit = { NOT = { has_country_flag = CHI_local_debt_resolved } }
+		add_to_variable = { CHI_local_debt_pressure = local_debt_change tooltip = CHI_local_debt_pressure_tt }
+		CHI_evaluate_local_debt = yes
+	}
 }
 CHI_change_local_debt_tolerance = {
-	add_to_variable = { CHI_local_debt_tolerance = local_debt_tolerance_change tooltip = CHI_local_debt_tolerance_tt }
-	CHI_evaluate_local_debt = yes
+	if = {
+		limit = { NOT = { has_country_flag = CHI_local_debt_resolved } }
+		add_to_variable = { CHI_local_debt_tolerance = local_debt_tolerance_change tooltip = CHI_local_debt_tolerance_tt }
+		CHI_evaluate_local_debt = yes
+	}
+}
+
+CHI_update_local_debt_buildings = {
+	set_variable = {
+		CHI_local_debt_buildings = {
+			value = industrial_complex_total
+			add = office_park_total
+		}
+	}
 }
 
 CHI_local_debt_monthly_tick = {
-	add_to_variable = { CHI_local_debt_tolerance = 1 }
+	add_to_variable = { CHI_local_debt_tolerance = 0.25 }
+	CHI_update_local_debt_buildings = yes
 	set_temp_variable = {
 		local_debt_excess = {
-			value = industrial_complex_total
-			add = office_park_total
+			value = CHI_local_debt_buildings
 			subtract = CHI_local_debt_tolerance
 		}
 	}
 	if = {
 		limit = { check_variable = { local_debt_excess > 0 } }
-		set_temp_variable = { local_debt_change = { value = local_debt_excess multiply = 0.02 } }
+		set_temp_variable = { local_debt_change = local_debt_excess }
 	}
 	else = {
 		set_temp_variable = { local_debt_change = -0.5 }
 	}
 	add_to_variable = { CHI_local_debt_pressure = local_debt_change }
 	CHI_evaluate_local_debt = yes
+	if = {
+		limit = {
+			check_variable = { CHI_local_debt_pressure < 1 }
+			NOT = { has_active_mission = CHI_local_debt_resolution_mission }
+		}
+		activate_mission = CHI_local_debt_resolution_mission
+	}
 }
 CHI_military_corruption_monthly_tick = {
 	if = {
