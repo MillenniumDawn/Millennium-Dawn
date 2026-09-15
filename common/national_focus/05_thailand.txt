@@ -180,6 +180,14 @@ focus_tree = {
 			has_country_flag = SIA_imf_program_active
 		}
 
+		bypass = { date > 2005.1.1 }
+
+		bypass_effect = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_repay_the_imf"
+			clr_country_flag = SIA_imf_program_active
+			country_event = thailand.51
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_repay_the_imf"
 			clr_country_flag = SIA_imf_program_active
@@ -2906,6 +2914,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
+			has_civil_war = no
 			custom_trigger_tooltip = {
 				tooltip = SIA_reform_5pct_tt
 				check_variable = { party_pop_array^3 > 0.05 }
@@ -2914,6 +2923,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_seeds_of_reform"
+			SIA_strike_cleanup_effect = yes
+			SIA_realign_to_reform = yes
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = 0.25 }
 			set_temp_variable = { temp_outlook_increase = 0.25 }
@@ -4181,6 +4192,13 @@ focus_tree = {
 			has_war_support > 0.40
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = BRM }
+				has_subject = BRM
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_thai_yai"
 			country_event = thailand.101
@@ -4225,6 +4243,13 @@ focus_tree = {
 			NOT = { has_war_with = LAO }
 			NOT = { has_subject = LAO }
 			has_war_support > 0.40
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = LAO }
+				has_subject = LAO
+			}
 		}
 
 		completion_reward = {
@@ -4273,6 +4298,13 @@ focus_tree = {
 			has_war_support > 0.40
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = CBD }
+				has_subject = CBD
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_preah_vihear"
 			country_event = thailand.103
@@ -4317,6 +4349,13 @@ focus_tree = {
 			NOT = { has_war_with = MAY }
 			NOT = { has_subject = MAY }
 			has_war_support > 0.40
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = MAY }
+				has_subject = MAY
+			}
 		}
 
 		completion_reward = {
@@ -6406,8 +6445,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_senate_of_appointees"
 			add_political_power = 50
-			# S-2: SIA_isoc_network (post appointed_senate merge) may already be held via the parallel
-			# SIA_isoc_state branch.
 			if = { limit = { NOT = { has_idea = SIA_isoc_network } } add_ideas = SIA_isoc_network }
 			set_temp_variable = { party_index = 3 }
 			set_temp_variable = { party_popularity_increase = -0.04 }
@@ -6624,7 +6661,7 @@ focus_tree = {
 
 		available = {
 			date > 2005.2.6
-			has_country_flag = SIA_path_populist
+			SIA_populist_trunk_open = yes
 		}
 
 		completion_reward = {
@@ -6661,7 +6698,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_ECONOMY }
 
 		available = {
-			has_country_flag = SIA_path_populist
+			SIA_populist_trunk_open = yes
 			date > 2011.8.1
 		}
 
@@ -6704,7 +6741,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_populist
+			SIA_populist_trunk_open = yes
 			NOT = { has_idea = SIA_junta_government }
 		}
 
@@ -6732,7 +6769,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_INDUSTRY }
 
-		available = { has_country_flag = SIA_path_populist }
+		available = { SIA_populist_trunk_open = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_heartland_development"
@@ -6762,7 +6799,7 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_MILITARY_LAWS }
 
-		available = { has_country_flag = SIA_path_royalist }
+		available = { SIA_royalist_trunk_open = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_eastern_tigers"
@@ -6789,7 +6826,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_royalist
+			SIA_royalist_trunk_open = yes
 			date > 2014.5.22
 		}
 
@@ -6823,7 +6860,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_royalist
+			SIA_royalist_trunk_open = yes
 			date > 2016.10.13
 		}
 
@@ -7003,10 +7040,7 @@ focus_tree = {
 			if = {
 				limit = { NOT = { has_country_flag = SIA_ds_active } }
 				set_country_flag = SIA_ds_active
-				set_variable = { SIA_insurgency_intensity = 25 }
-				# Twin-meter: seed the community-grievance root cause behind the violence. Kept well
-				# under intensity so the derived floor (0.6x) leaves the counter-insurgency ladders
-				# room to actually move the meter down.
+				set_variable = { SIA_insurgency_intensity = 30 }
 				set_variable = { SIA_ds_grievance = 15 }
 				SIA_ds_recompute_floor = yes
 				add_ideas = SIA_deep_south_insurgency_1
@@ -7018,8 +7052,6 @@ focus_tree = {
 		ai_will_do = { base = 40 }
 	}
 
-	# Deep South three-track arc (Z6) One shared crisis (anchored at SIA_the_southern_question,
-	# 65,1) with three path-locked answers:
 	focus = {
 		id = SIA_iron_fist_doctrine
 		icon = generic_counter_insurgency_icon
@@ -7031,19 +7063,17 @@ focus_tree = {
 		cost = 4
 
 		prerequisite = { focus = SIA_the_southern_question }
+		mutually_exclusive = { focus = SIA_royal_development_projects focus = SIA_peace_dialogue_initiative }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_populist
+			SIA_populist_trunk_open = yes
 			has_country_flag = SIA_ds_active
 		}
 
-		bypass = { NOT = { has_country_flag = SIA_ds_active } }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_iron_fist_doctrine"
-			custom_effect_tooltip = SIA_iron_fist_doctrine_tt
 			set_temp_variable = { ds_delta = -10 }
 			SIA_ds_set_intensity = yes
 			set_temp_variable = { ds_floor_delta = 12 }
@@ -7072,17 +7102,14 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_iron_fist_doctrine
 
-		cost = 4
+		cost = 3
 
 		prerequisite = { focus = SIA_iron_fist_doctrine }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { has_completed_focus = SIA_iron_fist_doctrine }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_martial_law_south"
-			custom_effect_tooltip = SIA_martial_law_south_tt
 			set_temp_variable = { ds_delta = -8 }
 			SIA_ds_set_intensity = yes
 			set_temp_variable = { ds_floor_delta = 12 }
@@ -7103,16 +7130,13 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_martial_law_south
 
-		cost = 4
+		cost = 3
 
 		prerequisite = { focus = SIA_martial_law_south }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_iron_fist_doctrine
-			# (Hard rebalance): the decisive sweep can't begin while the South is in open revolt — grind
-			# intensity down with decisions first.
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_50_tt
 				check_variable = { SIA_insurgency_intensity < 50 }
@@ -7121,7 +7145,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_search_and_destroy"
-			custom_effect_tooltip = SIA_search_and_destroy_tt
 			set_temp_variable = { ds_delta = -12 }
 			SIA_ds_set_intensity = yes
 			set_temp_variable = { ds_floor_delta = 10 }
@@ -7154,7 +7177,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_iron_fist_doctrine
+			date > 2005.1.1
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_40_tt
 				check_variable = { SIA_insurgency_intensity < 40 }
@@ -7173,8 +7196,6 @@ focus_tree = {
 		ai_will_do = { base = 20 }
 	}
 
-	## Royal Development ladder (Royalist) — x=65 SIA_royal_development_projects is the MERGE
-	## target for SIA_southern_development_push.
 	focus = {
 		id = SIA_royal_development_projects
 		icon = stability
@@ -7186,19 +7207,17 @@ focus_tree = {
 		cost = 7
 
 		prerequisite = { focus = SIA_the_southern_question }
+		mutually_exclusive = { focus = SIA_iron_fist_doctrine focus = SIA_peace_dialogue_initiative }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_royalist
+			SIA_royalist_trunk_open = yes
 			has_country_flag = SIA_ds_active
 		}
 
-		bypass = { NOT = { has_country_flag = SIA_ds_active } }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_royal_development_projects"
-			custom_effect_tooltip = SIA_royal_development_projects_tt
 			set_temp_variable = { ds_grievance_delta = -10 }
 			SIA_ds_set_grievance = yes
 			set_temp_variable = { ds_delta = -6 }
@@ -7227,8 +7246,6 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
-		available = { has_completed_focus = SIA_royal_development_projects }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_isoc_southern_command"
 			custom_effect_tooltip = SIA_isoc_southern_command_tt
@@ -7255,14 +7272,13 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_isoc_southern_command
 
-		cost = 5
+		cost = 4
 
 		prerequisite = { focus = SIA_isoc_southern_command }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_royal_development_projects
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_40_tt
 				check_variable = { SIA_insurgency_intensity < 40 }
@@ -7271,9 +7287,6 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_winning_hearts_royally"
-			custom_effect_tooltip = SIA_winning_hearts_royally_tt
-			# Twin-meter: patronage and development heal the grievance behind the revolt. Grievance
-			# (floor) down first, then intensity, so the cut lands.
 			set_temp_variable = { ds_grievance_delta = -12 }
 			SIA_ds_set_grievance = yes
 			set_temp_variable = { ds_delta = -7 }
@@ -7298,14 +7311,14 @@ focus_tree = {
 		y = 1
 		relative_position_id = SIA_winning_hearts_royally
 
-		cost = 6
+		cost = 7
 
 		prerequisite = { focus = SIA_winning_hearts_royally }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_royal_development_projects
+			date > 2005.1.1
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_30_tt
 				check_variable = { SIA_insurgency_intensity < 30 }
@@ -7335,24 +7348,20 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = SIA_the_southern_question }
+		mutually_exclusive = { focus = SIA_iron_fist_doctrine focus = SIA_royal_development_projects }
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_country_flag = SIA_path_democrat
+			SIA_democrat_trunk_open = yes
 			has_country_flag = SIA_ds_active
 			has_stability > 0.45
 		}
 
-		bypass = { NOT = { has_country_flag = SIA_ds_active } }
-
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_peace_dialogue_initiative"
-			# Twin-meter: coming to the table starts to address the grievance directly. Grievance (floor)
-			# down first, then intensity, so the cut lands.
 			set_temp_variable = { ds_grievance_delta = -10 }
 			SIA_ds_set_grievance = yes
-			custom_effect_tooltip = SIA_peace_dialogue_initiative_tt
 			set_temp_variable = { ds_delta = -5 }
 			SIA_ds_set_intensity = yes
 			add_opinion_modifier = { target = MAY modifier = medium_increase }
@@ -7376,13 +7385,11 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_peace_dialogue_initiative
-			has_stability > 0.45
+			has_stability > 0.50
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_mara_patani_talks"
-			custom_effect_tooltip = SIA_mara_patani_talks_tt
 			# Twin-meter: formal negotiation with MARA Patani eases grievance substantially. Grievance
 			# (floor) down first, then intensity, so the cut lands.
 			set_temp_variable = { ds_grievance_delta = -14 }
@@ -7410,7 +7417,6 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_peace_dialogue_initiative
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_35_tt
 				check_variable = { SIA_insurgency_intensity < 35 }
@@ -7419,12 +7425,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_autonomy_framework"
-			custom_effect_tooltip = SIA_autonomy_framework_tt
-			set_temp_variable = { ds_grievance_delta = -16 }
+			set_temp_variable = { ds_grievance_delta = -15 }
 			SIA_ds_set_grievance = yes
 			set_temp_variable = { ds_delta = -7 }
 			SIA_ds_set_intensity = yes
-			country_event = { id = thailand.359 days = 3 }
+			country_event = { id = thailand.359 days = 1 }
 		}
 
 		ai_will_do = { base = 30 }
@@ -7445,7 +7450,7 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
 		available = {
-			has_completed_focus = SIA_peace_dialogue_initiative
+			date > 2005.1.1
 			custom_trigger_tooltip = {
 				tooltip = SIA_ds_intensity_below_25_tt
 				check_variable = { SIA_insurgency_intensity < 25 }
@@ -7477,9 +7482,6 @@ focus_tree = {
 		}
 	}
 
-	# ZONE 7 — KRA CANAL MEGAPROJECT Anchor SIA_kra_gateway (abs 76,2) is the only absolute root
-	# in Z7; every other focus chains to it via relative_position_id.
-
 	focus = {
 		id = SIA_kra_gateway
 		icon = naval_industry
@@ -7499,8 +7501,6 @@ focus_tree = {
 			NOT = { has_country_flag = SIA_imf_program_active }
 		}
 
-		# G-KRA gate: economy dependency satisfied only by has_completed_focus inside `available`; NO
-		# prerequisite = { focus = SIA_thailand_4_0 }.
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_kra_gateway"
 			set_temp_variable = { treasury_change = -30 }
@@ -7520,8 +7520,6 @@ focus_tree = {
 		}
 	}
 
-	# Patron fan — 4 hidden mutually-exclusive focuses; the player picks one in thailand.380,
-	# which completes the matching focus and sets the patron flag.
 	focus = {
 		id = SIA_kra_patron_china
 		icon = trade_with_china
@@ -8224,7 +8222,11 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_ghosts_of_the_jungle"
+			SIA_clear_path_flags = yes
 			set_country_flag = SIA_path_communist
+			SIA_coup_cleanup_effect = yes
+			set_country_flag = generic_election_killswitch
+			custom_effect_tooltip = SIA_red_road_elections_tt
 			# Grow the emerging (communist) outlook alongside the party share, or the relative shift just
 			# caps out at Thailand's near-zero communist bloc.
 			set_temp_variable = { party_index = 4 }
@@ -8264,17 +8266,19 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_ECONOMY }
 
+		available = { SIA_communist_road_open = yes }
+
+		bypass = { SIA_communist_trunk_open = yes }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_isaan_soviets"
-			# Raise the emerging (communist) outlook too, else the party share caps out.
 			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.15 }
-			set_temp_variable = { temp_outlook_increase = 0.15 }
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			set_temp_variable = { temp_outlook_increase = 0.10 }
 			change_relative_party_popularity = yes
 			custom_effect_tooltip = SIA_outlook_emerging_tt
 			recalculate_party = yes
-			# N-1: SIA_western_sanctions can also arrive via thailand.251.a; guard so this grant is
-			# idempotent rather than a silent no-op double-add.
 			if = { limit = { NOT = { has_idea = SIA_western_sanctions } } add_ideas = SIA_western_sanctions }
 			if = { limit = { country_exists = USA } USA = { add_opinion_modifier = { target = SIA modifier = medium_decrease } } }
 		}
@@ -8297,6 +8301,11 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
 
+		available = { SIA_communist_road_open = yes }
+
+		bypass = { SIA_communist_trunk_open = yes }
+
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_general_strike"
 			custom_effect_tooltip = SIA_general_strike_tt
@@ -8307,12 +8316,13 @@ focus_tree = {
 			custom_effect_tooltip = SIA_outlook_emerging_tt
 			recalculate_party = yes
 			add_political_power = 50
-			# Open the 180-day strike: a decision-driven push toward capitulation.
+			# Open the year-long strike: a decision-driven push toward capitulation.
 			set_country_flag = SIA_strike_active
 			set_variable = { SIA_strike_momentum = 0 }
-			add_timed_idea = { idea = SIA_general_strike_idea days = 180 }
+			set_variable = { SIA_strike_days_left = 365 }
+			add_timed_idea = { idea = SIA_general_strike_idea days = 365 }
 			hidden_effect = {
-				country_event = { id = thailand.259 days = 180 }
+				country_event = { id = thailand.259 days = 365 }
 			}
 		}
 
@@ -8334,18 +8344,22 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MILITARY_LAWS }
 
+		bypass = { SIA_communist_trunk_open = yes }
+
+		available = {
+			SIA_communist_road_open = yes
+			has_civil_war = no
+			custom_trigger_tooltip = {
+				tooltip = communist_state_20_tt
+				check_variable = { party_pop_array^4 > 0.2 }
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_protracted_peoples_war"
 			# This is the armed road — set the same flag the crackdown branch of thailand.250 sets, so
 			# downstream content reads one consistent state.
 			set_country_flag = SIA_communist_armed_path
-			# Lift the emerging (communist) outlook too, else the party share caps out.
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.10 }
-			set_temp_variable = { temp_outlook_increase = 0.10 }
-			change_relative_party_popularity = yes
-			custom_effect_tooltip = SIA_outlook_emerging_tt
-			recalculate_party = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = SIA_military_modifier }
 			add_to_variable = { SIA_mil_army_morale_factor = 0.05 tooltip = army_morale_factor_tt }
 			add_to_variable = { SIA_mil_experience_gain_army_factor = 0.1 tooltip = experience_gain_army_factor_tt }
@@ -8366,6 +8380,33 @@ focus_tree = {
 			hidden_effect = {
 				news_event = { id = thailand_news.31 days = 2 }
 			}
+			add_political_power = -150
+			custom_effect_tooltip = SIA_ppw_uprising_tt
+			hidden_effect = {
+				start_civil_war_with_no_leader_change = yes
+				random_other_country = {
+					limit = {
+						original_tag = PREV
+						NOT = { TAG = PREV }
+					}
+					civil_war_replication_effect = yes
+				}
+				set_temp_variable = { nation_to_copy_from = PREV }
+				copy_subideolgy_leader_throughput = yes
+				set_politics = {
+					ruling_party = communism
+					elections_allowed = no
+				}
+				add_popularity = {
+					ideology = communism
+					popularity = 0.5
+				}
+				start_politics_input = yes
+				set_variable = { ruling_party = 4 }
+				set_variable = { party_pop_array^4 = 0.9 }
+				startup_politics = yes
+				set_leader = yes
+			}
 		}
 
 		ai_will_do = { base = 5 }
@@ -8385,7 +8426,14 @@ focus_tree = {
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 
+		bypass = {
+			SIA_communist_trunk_open = yes
+			has_civil_war = no
+		}
+
 		available = {
+			SIA_communist_road_open = yes
+			has_civil_war = no
 			# You cannot simply click your way into power.
 			custom_trigger_tooltip = {
 				tooltip = SIA_seize_power_gate_tt
@@ -8396,43 +8444,14 @@ focus_tree = {
 			}
 		}
 
+		bypass_effect = {
+			log = "[GetDateText]: [Root.GetName]: Focus SIA_people_seize_power"
+			SIA_communist_seizure_effect = yes
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_people_seize_power"
-			SIA_remove_barami = yes
-			SIA_remove_three_pillars = yes
-			if = {
-				limit = { has_idea = SIA_network_monarchy_idea }
-				remove_ideas = SIA_network_monarchy_idea
-			}
-			if = {
-				limit = { has_idea = SIA_kings_moral_authority }
-				remove_ideas = SIA_kings_moral_authority
-			}
-			if = {
-				limit = { has_idea = SIA_peoples_constitution }
-				remove_ideas = SIA_peoples_constitution
-			}
-			if = {
-				limit = { has_idea = SIA_junta_government }
-				remove_ideas = SIA_junta_government
-			}
-			if = {
-				limit = { has_country_flag = SIA_communist_armed_path }
-				start_civil_war = {
-					ruling_party = communism
-					ideology = nationalist
-					size = 0.45
-				}
-				add_war_support = 0.10
-			}
-			# Formalize the communist state on our side: exact party index, name, leader and suspended
-			# elections (thailand.70-style protocol).
-			set_temp_variable = { rul_party_temp = 4 }
-			set_temp_variable = { disable_elections = 1 }
-			change_ruling_party_effect = yes
-			hidden_effect = {
-				country_event = { id = thailand.251 days = 3 }
-			}
+			SIA_communist_seizure_effect = yes
 		}
 
 		ai_will_do = { base = 5 }
@@ -11218,10 +11237,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_golden_triangle_interdiction"
-			add_stability = 0.03
-			set_temp_variable = { treasury_change = 3 }
+			set_temp_variable = { treasury_change = -5 }
 			modify_treasury_effect = yes
-			custom_effect_tooltip = SIA_golden_triangle_interdiction_tt
+			add_stability = 0.05
+			add_to_variable = { SIA_pol_corruption_cost_factor = -0.05 tooltip = corruption_cost_factor_tt }
 			hidden_effect = {
 				if = {
 					# B-1 guard: don't re-fire.362 if thailand.3 Option C already did.
@@ -11432,6 +11451,13 @@ focus_tree = {
 			NOT = { has_subject = PHI }
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = PHI }
+				has_subject = PHI
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_claim_philippines"
 			if = {
@@ -11484,6 +11510,13 @@ focus_tree = {
 			NOT = { has_subject = IND }
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = IND }
+				has_subject = IND
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_claim_indonesia"
 			if = {
@@ -11534,6 +11567,13 @@ focus_tree = {
 			country_exists = BRU
 			NOT = { has_war_with = BRU }
 			NOT = { has_subject = BRU }
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = BRU }
+				has_subject = BRU
+			}
 		}
 
 		completion_reward = {
@@ -11624,6 +11664,13 @@ focus_tree = {
 			NOT = { has_subject = VIE }
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = VIE }
+				has_subject = VIE
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_claim_vietnam"
 			if = {
@@ -11674,6 +11721,13 @@ focus_tree = {
 			country_exists = SIN
 			NOT = { has_war_with = SIN }
 			NOT = { has_subject = SIN }
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = SIN }
+				has_subject = SIN
+			}
 		}
 
 		completion_reward = {
@@ -12053,6 +12107,13 @@ focus_tree = {
 			NOT = { has_subject = SHN }
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = SHN }
+				has_subject = SHN
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_subdue_the_shan"
 			add_timed_idea = { idea = SIA_shan_campaign days = 365 }
@@ -12103,6 +12164,13 @@ focus_tree = {
 			NOT = { has_subject = KAR }
 		}
 
+		bypass = {
+			OR = {
+				NOT = { country_exists = KAR }
+				has_subject = KAR
+			}
+		}
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus SIA_subdue_the_karen"
 			add_timed_idea = { idea = SIA_karen_campaign days = 365 }
@@ -12151,6 +12219,13 @@ focus_tree = {
 			country_exists = WAA
 			NOT = { has_war_with = WAA }
 			NOT = { has_subject = WAA }
+		}
+
+		bypass = {
+			OR = {
+				NOT = { country_exists = WAA }
+				has_subject = WAA
+			}
 		}
 
 		completion_reward = {

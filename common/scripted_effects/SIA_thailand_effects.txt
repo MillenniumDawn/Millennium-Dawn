@@ -366,6 +366,7 @@ SIA_strike_cleanup_effect = {
 	clr_country_flag = SIA_strike_active
 	if = { limit = { has_idea = SIA_general_strike_idea } remove_ideas = SIA_general_strike_idea }
 	set_variable = { SIA_strike_momentum = 0 }
+	set_variable = { SIA_strike_days_left = 0 }
 }
 
 # Swap the visible "tide" tier spirit to match SIA_pheu_thai_pressure. Three tiers: dormant
@@ -520,6 +521,7 @@ SIA_clear_path_flags = {
 	if = { limit = { has_country_flag = SIA_path_communist } clr_country_flag = SIA_path_communist }
 	if = { limit = { has_country_flag = SIA_communist_armed_path } clr_country_flag = SIA_communist_armed_path }
 	if = { limit = { has_country_flag = SIA_communist_peaceful_path } clr_country_flag = SIA_communist_peaceful_path }
+	if = { limit = { has_idea = SIA_red_revival } remove_ideas = SIA_red_revival }
 	# The opening-year Thaksinite surge is a pre-realignment mechanic; retire it the moment any
 	# path is committed so it never runs alongside the standing systems.
 	if = { limit = { has_idea = SIA_thaksin_ascendant } remove_ideas = SIA_thaksin_ascendant }
@@ -550,6 +552,35 @@ SIA_realign_to_royalist = {
 	# The monarchist establishment quiets the Thaksinite tide outright — retire any tier spirit
 	# and zero the meter so it cannot resume or carry over.
 	SIA_pt_quiet_effect = yes
+	SIA_coup_cleanup_effect = yes
+}
+
+SIA_communist_seizure_effect = {
+	SIA_strip_populist_ideas = yes
+	SIA_strip_royalist_ideas = yes
+	SIA_strip_reform_ideas = yes
+	SIA_strip_democrat_ideas = yes
+	SIA_remove_barami = yes
+	SIA_remove_three_pillars = yes
+	if = { limit = { has_idea = SIA_network_monarchy_idea } remove_ideas = SIA_network_monarchy_idea }
+	if = { limit = { has_idea = SIA_kings_moral_authority } remove_ideas = SIA_kings_moral_authority }
+	if = { limit = { has_idea = SIA_peoples_constitution } remove_ideas = SIA_peoples_constitution }
+	if = { limit = { has_idea = SIA_junta_government } remove_ideas = SIA_junta_government }
+	if = { limit = { has_country_flag = SIA_communist_armed_path } add_war_support = 0.10 }
+	set_temp_variable = { rul_party_temp = 4 }
+	set_temp_variable = { disable_elections = 1 }
+	change_ruling_party_effect = yes
+	hidden_effect = { country_event = { id = thailand.251 days = 3 } }
+}
+
+SIA_realign_to_communist = {
+	log = "[GetDateText]: [Root.GetName]: SIA_realign_to_communist - the red road is taken"
+	SIA_clear_path_flags = yes
+	set_country_flag = SIA_path_communist
+	SIA_strip_populist_ideas = yes
+	SIA_strip_royalist_ideas = yes
+	SIA_strip_reform_ideas = yes
+	SIA_strip_democrat_ideas = yes
 	SIA_coup_cleanup_effect = yes
 }
 
