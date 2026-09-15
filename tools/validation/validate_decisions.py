@@ -198,6 +198,24 @@ def _resolved_sprite(kind: str, value: str, sprites: SpriteSizeIndex) -> Optiona
     return None
 
 
+# Bespoke cartel map icons drawn at 52x40 on purpose; accepted as-is.
+_SLOT_EXEMPT_SPRITES = frozenset(
+    {
+        "GFX_decision_sinaloa_high",
+        "GFX_decision_sinaloa_medium",
+        "GFX_decision_sinaloa_low",
+        "GFX_decision_sinaloa_none",
+        "GFX_decision_tamaulpas_high",
+        "GFX_decision_tamaulpas_medium",
+        "GFX_decision_tamaulpas_low",
+        "GFX_decision_tamaulpas_none",
+        "GFX_decision_tierra_caliente_high",
+        "GFX_decision_tierra_caliente_medium",
+        "GFX_decision_tierra_caliente_low",
+        "GFX_decision_tierra_caliente_none",
+    }
+)
+
 _MOD_ART_HINT = "resize with tools/assets/resize_decision_icons.py"
 _VANILLA_ART_HINT = (
     "vanilla art: use a sprite sized for this slot or add a resized MD copy"
@@ -215,7 +233,7 @@ def _icon_type_message(
     if "[" in value or "]" in value:
         return None
     sprite = _resolved_sprite(kind, value, sprites)
-    if sprite is None:
+    if sprite is None or sprite in _SLOT_EXEMPT_SPRITES:
         return None
     size = sprites.size(sprite)
     if size is None:
