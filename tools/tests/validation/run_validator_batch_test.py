@@ -16,6 +16,9 @@ class _Process:
     def __init__(self, returncode=0):
         self.returncode = returncode
 
+    def poll(self) -> int | None:
+        return self.returncode
+
     def wait(self):
         return self.returncode
 
@@ -155,6 +158,42 @@ def test_concurrency_stays_bounded(tmp_path, monkeypatch):
 
     assert rvb.run_batch(specs, _Args(tmp_path)) == 0
     assert max(peak) == 2
+
+
+def test_refills_slot_when_any_validator_finishes_first(tmp_path, monkeypatch, capsys):
+    events = []
+    poll_counts = {}
+
+    def launch(_script, _flags, _output_dir, name, _mod_path, **_kwargs):
+        events.append(("launch", name))
+        (tmp_path / f"{name}.log").write_text("log", encoding="utf-8")
+        (tmp_path / f"{name}.json").write_text("[]", encoding="utf-8")
+
+        class _Controlled(_Process):
+            def poll(self) -> int | None:
+                poll_counts[name] = poll_counts.get(name, 0) + 1
+                if poll_counts[name] > 20:
+                    pytest.fail(f"{name} never finished; a filled slot stayed idle")
+                if name == "validation-a" and ("launch", "validation-c") not in events:
+                    return None
+                return self.returncode
+
+            def wait(self):
+                events.append(("done", name))
+                return self.returncode
+
+        return _Controlled(), _FakeStream()
+
+    specs = [_spec("a"), _spec("b"), _spec("c")]
+    monkeypatch.setattr(rvb.run_all_validators, "launch_validator", launch)
+    monkeypatch.setattr(rvb, "split_cpu_budget", lambda tasks: (2, 1))
+
+    assert rvb.run_batch(specs, _Args(tmp_path)) == 0
+    assert events.index(("launch", "validation-c")) < events.index(
+        ("done", "validation-a")
+    )
+    output = capsys.readouterr().out
+    assert output.index("OK a") < output.index("OK b") < output.index("OK c")
 
 
 STUB_VALIDATOR = """
