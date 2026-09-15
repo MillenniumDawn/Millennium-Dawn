@@ -27,7 +27,7 @@ _TOKEN_RE = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
 _TAG_FORMAT_RE = re.compile(r"^CAT_[a-z0-9_]+$")
 
 # `category = CAT_x` in add_tech_bonus / add_doctrine_cost_reduction blocks.
-_CATEGORY_ASSIGN_RE = re.compile(r"\bcategory\s*=\s*(CAT_\w+)")
+_CATEGORY_ASSIGN_RE = re.compile(r"\bcategory\s*=\s*((?i:cat_)\w+)")
 
 # research_bonus = { CAT_x = 0.05 } — the keys are categories. ai_focuses and
 # ai_strategy_plans weight categories the same way in research = { CAT_x = 5.0 }.

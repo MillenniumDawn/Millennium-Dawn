@@ -167,6 +167,17 @@ def test_tech_file_categories_are_checked(tmp_path):
     assert "Cat_Armor_Engines" in messages[0]
 
 
+def test_mixed_case_category_assignment_is_reported(tmp_path):
+    v = _run(
+        tmp_path,
+        "events/Test.txt",
+        "country_event = {\n\tadd_tech_bonus = { category = Cat_Armor_Engines }\n}\n",
+    )
+    messages = _messages(v)
+    assert len(messages) == 1
+    assert "Cat_Armor_Engines" in messages[0]
+
+
 def test_categories_block_outside_tech_files_is_not_a_reference(tmp_path):
     # Doctrines and sub-units carry categories blocks of their own.
     v = _run(
