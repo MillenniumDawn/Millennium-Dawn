@@ -169,6 +169,33 @@ Standardizes MIO organization files according to Millennium Dawn standards.
 python3 standardize_mio.py input.txt -o output.txt --backup --verbose
 ```
 
+### Technologies (`standardize_technologies.py`)
+
+Reorders every `technology` block in `common/technologies/` into one fixed layout. Text outside the blocks (the `technologies = {` wrapper, `@row` constants, section comments) passes through unchanged.
+
+**Block layout** (one blank line between groups, `ai_will_do` last):
+
+1. Gates: `is_special_project_tech`, `doctrine`, `allow`, `allow_branch`, `dependencies`, `XOR`
+2. Effects: every key that is not in the structural set (plain modifiers, `category_*` and sub-unit blocks) in source order, then `modifier`, `custom_modifier_tooltip`, `show_effect_as_desc`
+3. Unlocks: `enable_equipments`, `enable_equipment_modules`, `enable_subunits`, `enable_building`, `enable_tactic`, `sub_technologies`, `show_equipment_icon`
+4. `on_research_complete_limit`, `on_research_complete`
+5. Research: `research_cost`, `start_year`, `xp_research_type`, `xp_boost_cost`, `xp_unlock_cost`, `xp_research_bonus`, `force_use_small_tech_layout`
+6. Tree: `path` (repeatable), `folder`, `categories`, `special_project_specialization`
+7. AI: `ai_research_weights`, `ai_will_do`
+
+**Rendering:**
+
+- Single-leaf blocks collapse to one line (`ai_will_do = { factor = 1 }`, `allow = { has_doctrine = x }`); other blocks are reindented with their single-leaf children collapsed (`position = { x = @row1 y = @1965 }`)
+- Bare token lists are one line for a single token (`enable_equipments = { X }`) and one token per line for two or more
+- Comments above a property travel with it; a block holding a `#` comment stays multi-line
+- No `ai_will_do` `factor` to `base` rewrite and no log injection into `on_research_complete` (`tools/logging_tool.py tech_add` does that)
+
+**Usage:**
+
+```bash
+python3 standardize_technologies.py common/technologies/infantry.txt -o output.txt
+```
+
 ### History (`standardize_history.py`)
 
 Standardizes dated blocks in country history files without changing content outside them.
@@ -208,6 +235,9 @@ python3 standardize.py idea input.txt -v
 
 # Standardize MIOs
 python3 standardize.py mio input.txt
+
+# Standardize technologies
+python3 standardize.py technology common/technologies/infantry.txt
 
 # Standardize history files
 python3 standardize.py history "history/countries/CHI - China.txt"
@@ -275,6 +305,12 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 - Place all `tree_header_text` blocks before `initial_trait`
 - Place all `trait` blocks after `initial_trait`
 - Remove excessive blank lines inside blocks
+
+### Technologies
+
+- Fixed group order: gates, effects, unlocks, on_research_complete, research meta, tree placement, AI
+- Any key outside the structural set is an effect and keeps its source order
+- `ai_will_do` always last
 
 ## Performance Optimizations
 
