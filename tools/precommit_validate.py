@@ -182,6 +182,7 @@ _REGISTRY = [
             ("common/decisions/", TXT),
             ("common/ideas/", TXT),
             ("common/military_industrial_organization/", TXT),
+            ("common/technologies/", TXT),
         ],
         strict=False,
     ),

@@ -686,10 +686,8 @@ def _parse_tech_file(
                 tech_brace_depth = brace_depth
                 all_techs.add(current_tech)
         else:
-            leads_match = _LEADS_TO_TECH_RE.match(line)
-            if leads_match:
-                target = leads_match.group(1)
-                prerequisites[target].add(current_tech)
+            for leads_match in _LEADS_TO_TECH_RE.finditer(line):
+                prerequisites[leads_match.group(1)].add(current_tech)
 
             if module_techs is not None:
                 if in_enable:
@@ -700,8 +698,13 @@ def _parse_tech_file(
                     if brace_depth < enable_brace_depth:
                         in_enable = False
                 if not in_enable and _ENABLE_MODULES_RE.match(line):
-                    in_enable = True
-                    enable_brace_depth = brace_depth
+                    inner = line[line.index("{") + 1 :]
+                    if "}" in inner:
+                        for name in inner[: inner.index("}")].split():
+                            module_techs[name].add(current_tech)
+                    else:
+                        in_enable = True
+                        enable_brace_depth = brace_depth
 
             if tech_dlc_reqs is not None:
                 if in_allow:
@@ -712,9 +715,14 @@ def _parse_tech_file(
                             tech_dlc_reqs[current_tech].append((kind, dlc))
                         allow_buf = []
                 if not in_allow and _ALLOW_BRANCH_RE.match(line):
-                    in_allow = True
-                    allow_brace_depth = brace_depth
-                    allow_buf = [line]
+                    if line.count("{") == line.count("}"):
+                        tech_dlc_reqs[current_tech].extend(
+                            _extract_dlc_conditions(line)
+                        )
+                    else:
+                        in_allow = True
+                        allow_brace_depth = brace_depth
+                        allow_buf = [line]
 
             if brace_depth < tech_brace_depth:
                 current_tech = None

@@ -33,18 +33,20 @@ UTF-8 with BOM. Python tools must preserve LF when writing; see
 > - Run `python3 tools/standardization/standardize.py event` to auto-format events
 > - Run `python3 tools/standardization/standardize.py decision` to auto-format decisions
 > - Run `python3 tools/standardization/standardize.py idea` to auto-format ideas
+> - Run `python3 tools/standardization/standardize.py technology` to auto-format technologies
 
 ---
 
 # Quick Reference
 
-| Feature     | Key Rules                                                      |
-| ----------- | -------------------------------------------------------------- |
-| Focus Trees | Use `relative_position_id`, include logging, `ai_will_do` last |
-| Decisions   | Include logging, use `fire_only_once` sparingly                |
-| Events      | Use `is_triggered_only = yes`, log only if effects exist       |
-| Ideas       | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
-| Formatting  | Tabs (not spaces), 1 line between elements                     |
+| Feature      | Key Rules                                                      |
+| ------------ | -------------------------------------------------------------- |
+| Focus Trees  | Use `relative_position_id`, include logging, `ai_will_do` last |
+| Decisions    | Include logging, use `fire_only_once` sparingly                |
+| Events       | Use `is_triggered_only = yes`, log only if effects exist       |
+| Ideas        | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
+| Technologies | Gates, effects, unlocks, research, tree, `ai_will_do` last     |
+| Formatting   | Tabs (not spaces), 1 line between elements                     |
 
 ---
 
@@ -289,6 +291,65 @@ BRA_idea_higher_minimum_wage_1 = {
         consumer_goods_factor = 0.075
         population_tax_income_multiplier_modifier = 0.05
     }
+}
+```
+
+---
+
+# Technologies
+
+## Required Order Within a Technology
+
+Groups are separated by one blank line. Skip any group the technology does not use.
+
+```
+1. Gates: is_special_project_tech, doctrine, allow, allow_branch, dependencies, XOR
+2. Effects: stat modifiers and category_* / sub-unit blocks in source order,
+   then modifier, custom_modifier_tooltip, show_effect_as_desc
+3. Unlocks: enable_equipments, enable_equipment_modules, enable_subunits,
+   enable_building, enable_tactic, sub_technologies, show_equipment_icon
+4. on_research_complete_limit, on_research_complete
+5. Research: research_cost, start_year
+6. XP: xp_research_type, xp_boost_cost, xp_unlock_cost, xp_research_bonus,
+   special_project_specialization
+7. Layout: force_use_small_tech_layout, path, folder (each on one line)
+8. categories
+9. ai_research_weights, ai_will_do (LAST)
+```
+
+## Best Practices
+
+- Any key outside the lists above is treated as an effect and stays in source order
+- Write a single-token list on one line: `enable_equipments = { infantry_weapons_2 }`
+- Write path and folder on one line: `path = { research_cost_coeff = 1 leads_to_tech = X }`
+- Keep `ai_will_do` on `factor`; technologies do not use `base`
+- Leave one blank line between technologies; `@` constants and section comments stay where they are
+- `standardize.py technology` applies this layout
+
+## Example Technology
+
+```hoiscript
+night_vision_1 = {
+    land_night_attack = 0.05
+    army_personnel_cost_multiplier_modifier = 0.02
+
+    research_cost = 2
+    start_year = 1965
+
+    xp_research_type = army
+    xp_boost_cost = 50
+    xp_research_bonus = 1.00
+
+    path = { research_cost_coeff = 1 leads_to_tech = night_vision_2 }
+    folder = { name = infantry_folder position = { x = @row3 y = @1965 } }
+
+    categories = {
+        CAT_inf
+        CAT_nvg
+        CAT_Military
+    }
+
+    ai_will_do = { factor = 1 }
 }
 ```
 

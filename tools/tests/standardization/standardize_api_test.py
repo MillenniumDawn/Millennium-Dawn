@@ -19,6 +19,7 @@ _ROUTED = [
     ("common/ideas/Bosnian.txt", "idea"),
     ("common/military_industrial_organization/organizations/MD_ARG.txt", "mio"),
     ("common/military_industrial_organization/policies/_land_policies.txt", "mio"),
+    ("common/technologies/infantry.txt", "technology"),
 ]
 
 _UNROUTED = [
@@ -42,6 +43,7 @@ def test_routes_have_only_supported_standardizer_kinds():
         "decision",
         "idea",
         "mio",
+        "technology",
     }
 
 

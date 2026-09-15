@@ -21,6 +21,7 @@ from standardize_history import HistoryStandardizer
 from standardize_ideas import IdeaStandardizer
 from standardize_localisation import LocalisationStandardizer, _detect_mod_root
 from standardize_mio import MIOStandardizer
+from standardize_technologies import TechnologyStandardizer
 
 _SUBCOMMANDS = (
     ("focus", "Standardize focus tree files", "Input focus tree file"),
@@ -32,6 +33,7 @@ _SUBCOMMANDS = (
         "Standardize military industrial organization files",
         "Input MIO file",
     ),
+    ("technology", "Standardize technology files", "Input technology file"),
     (
         "history",
         "Standardize history/countries files (dated blocks)",
@@ -61,6 +63,10 @@ _RUN_STANDARDIZERS = {
         MIOStandardizer,
         "Standardize HOI4 military industrial organization files according to Millennium Dawn coding standards",
     ),
+    "technology": (
+        TechnologyStandardizer,
+        "Standardize HOI4 technology files according to Millennium Dawn coding standards",
+    ),
     "history": (
         HistoryStandardizer,
         "Standardize HOI4 history/countries files according to Millennium Dawn coding standards",
@@ -79,6 +85,7 @@ Examples:
   python3 standardize.py decision input.txt
   python3 standardize.py idea input.txt -v
   python3 standardize.py mio input.txt
+  python3 standardize.py technology common/technologies/infantry.txt
   python3 standardize.py history "history/countries/CHI - China.txt"
   python3 standardize.py localisation input.yml --mod-root /path/to/mod
         """,

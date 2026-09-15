@@ -21,6 +21,7 @@ from standardize_events import EventStandardizer
 from standardize_focus_tree import format_focus_tree_lines
 from standardize_ideas import IdeaStandardizer
 from standardize_mio import MIOStandardizer
+from standardize_technologies import TechnologyStandardizer
 
 # Path prefix -> standardizer kind. `common/decisions/` covers `categories/`
 # too; DecisionStandardizer handles both shapes.
@@ -30,6 +31,7 @@ ROUTES: Tuple[Tuple[str, str], ...] = (
     ("common/decisions/", "decision"),
     ("common/ideas/", "idea"),
     ("common/military_industrial_organization/", "mio"),
+    ("common/technologies/", "technology"),
 )
 
 _STANDARDIZERS = {
@@ -37,6 +39,7 @@ _STANDARDIZERS = {
     "decision": DecisionStandardizer,
     "idea": IdeaStandardizer,
     "mio": MIOStandardizer,
+    "technology": TechnologyStandardizer,
 }
 
 
