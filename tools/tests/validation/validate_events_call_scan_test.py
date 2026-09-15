@@ -35,6 +35,7 @@ _WORKERS: list[tuple[object, object]] = [
     (V.scan_typed_event_fires, []),
     (V.scan_dynamic_event_namespaces, set()),
     (V.scan_date_gated_events, []),
+    (V.scan_date_bounded_events, []),
     (V.scan_event_fire_graph, []),
     (V.scan_invalid_event_calls, []),
     (V.scan_probability_rolled_fires, set()),

@@ -214,6 +214,28 @@ def test_collapse_nested_blocks():
     assert U.collapse_nested_blocks(unbalanced) == unbalanced
     assert U.collapse_nested_blocks(["a = { b = 1 }"]) == ["a = { b = 1 }"]
 
+    # A multi-token list is not a single leaf; a one-token list still collapses.
+    listed = [
+        "\t\t\treduce_focus_completion_cost = {",
+        "\t\t\t\tcost = 20",
+        "\t\t\t\tfocus = {",
+        "\t\t\t\t\tCHI_project_921",
+        "\t\t\t\t\tCHI_shenzhou_program",
+        "\t\t\t\t}",
+        "\t\t\t}",
+    ]
+    assert U.collapse_or_compact(listed) == listed
+    assert U.collapse_or_compact(
+        [
+            "\tx = {",
+            "\t\tfocus = {",
+            "\t\t\tJAP_blue_water_navy",
+            "\t\t}",
+            "\t\tcost = 35",
+            "\t}",
+        ]
+    ) == ["\tx = { focus = { JAP_blue_water_navy } cost = 35 }"]
+
 
 def test_atomic_encoding_backup_and_safe_reads(tmp_path, monkeypatch):
     target = tmp_path / "nested" / "file.txt"

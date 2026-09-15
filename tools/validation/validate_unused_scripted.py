@@ -68,6 +68,7 @@ FALSE_POSITIVE_NAMES = frozenset(
         "ai_has_acceptable_surplus",
         "ai_has_acceptable_deficit_factories",
         "interest_rate_lower_than_5_5",
+        "inflation_rate_lower_than_2",
         "debt_higher_than_30",
         "gdp_per_capita_greater_than_2",
         "gdp_per_capita_greater_than_7",

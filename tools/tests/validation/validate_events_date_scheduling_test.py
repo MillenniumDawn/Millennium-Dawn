@@ -389,6 +389,122 @@ def test_get_probability_rolled_ids_wiring(tmp_path, monkeypatch):
     assert calls == [V.scan_probability_rolled_fires]
 
 
+# --- redundant date bounds on scheduled events ---
+#
+# The reverse check: an event the yearly effects already schedule needs no
+# `date` comparison of its own. Unlike the scheduling check, both bounds
+# count.
+
+
+def _bounded(tmp_path, body, name="events/Ev.txt"):
+    return {
+        e[0]
+        for e in V.scan_date_bounded_events(
+            (_write(tmp_path, name, body), frozenset())
+        )
+    }
+
+
+def test_bounded_lower_bound_detected(tmp_path):
+    assert _bounded(tmp_path, DATE_GATED) == {"foo.1"}
+
+
+def test_bounded_upper_bound_detected(tmp_path):
+    """`date <` counts here: on a scheduled event it can only drop the fire."""
+    assert _bounded(tmp_path, EXPIRY_ONLY) == {"foo.2"}
+
+
+def test_bounded_nested_inside_trigger_detected(tmp_path):
+    body = EXPIRY_ONLY.replace(
+        "\t\tdate < 2005.1.1\n", "\t\tOR = {\n\t\t\tdate < 2005.1.1\n\t\t}\n"
+    )
+    assert _bounded(tmp_path, body) == {"foo.2"}
+
+
+def test_bounded_date_outside_trigger_not_detected(tmp_path):
+    body = """country_event = {
+\tid = foo.3
+\tis_triggered_only = yes
+\timmediate = {
+\t\tif = { limit = { date < 2005.1.1 } set_country_flag = x }
+\t}
+\toption = {
+\t\tname = foo.3.a
+\t\tif = { limit = { date > 2005.1.1 } add_political_power = 5 }
+\t}
+}
+"""
+    assert _bounded(tmp_path, body) == set()
+
+
+def _run_bounded(monkeypatch, bounded, fires):
+    validator = _FakeValidator("/tmp")
+    monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: ["f.txt"])
+    monkeypatch.setattr(validator, "_rel_posix", lambda f: f)
+    monkeypatch.setattr(validator, "_get_event_fires", lambda: fires)
+    monkeypatch.setattr(validator, "_pool_map", lambda fn, args, **kw: [bounded])
+    validator.validate_scheduled_date_bounds()
+    return validator.collected
+
+
+def test_scheduled_event_with_date_bound_flagged(monkeypatch):
+    results = _run_bounded(
+        monkeypatch,
+        bounded=[("foo.1", "events/Ev.txt", 10)],
+        fires=[("foo.1", _YE, 5)],
+    )
+    assert len(results) == 1
+    assert "foo.1" in results[0] and _YE in results[0]
+
+
+def test_scheduled_event_also_fired_from_focus_not_flagged(monkeypatch):
+    """A second fire path may need the guard, so only sole-source events count."""
+    results = _run_bounded(
+        monkeypatch,
+        bounded=[("foo.1", "events/Ev.txt", 10)],
+        fires=[("foo.1", _YE, 5), ("foo.1", "common/national_focus/GER.txt", 12)],
+    )
+    assert results == []
+
+
+def test_scheduled_event_also_fired_from_chain_not_flagged(monkeypatch):
+    results = _run_bounded(
+        monkeypatch,
+        bounded=[("foo.1", "events/Ev.txt", 10)],
+        fires=[("foo.1", _YE, 5), ("foo.1", "events/Other.txt", 30)],
+    )
+    assert results == []
+
+
+def test_unscheduled_event_with_date_bound_not_flagged(monkeypatch):
+    results = _run_bounded(
+        monkeypatch,
+        bounded=[("foo.1", "events/Ev.txt", 10)],
+        fires=[("other.1", _YE, 5), ("foo.1", "events/Ev.txt", 30)],
+    )
+    assert results == []
+
+
+def test_bounded_missing_scheduling_file_skips_check(monkeypatch):
+    results = _run_bounded(
+        monkeypatch,
+        bounded=[("foo.1", "events/Ev.txt", 10)],
+        fires=[("foo.1", "events/Ev.txt", 30)],
+    )
+    assert results == []
+
+
+def test_scheduled_date_bound_check_reports_warning_severity(monkeypatch):
+    """Warning-only until the 123-event backlog is cleared."""
+    validator = _FakeValidator("/tmp")
+    monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: ["f.txt"])
+    monkeypatch.setattr(validator, "_rel_posix", lambda f: f)
+    monkeypatch.setattr(validator, "_get_event_fires", lambda: [("foo.1", _YE, 5)])
+    monkeypatch.setattr(validator, "_pool_map", lambda fn, args, **kw: [])
+    validator.validate_scheduled_date_bounds()
+    assert validator.last_severity == V.Severity.WARNING
+
+
 def test_get_random_event_ids_wiring(tmp_path, monkeypatch):
     """The wrapper scans on_actions files and caches the result."""
     body = """on_actions = {

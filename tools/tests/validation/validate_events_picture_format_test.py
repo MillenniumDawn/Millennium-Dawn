@@ -79,8 +79,8 @@ def test_news_art_on_a_country_event_is_reported(tmp_path, monkeypatch):
             "event-picture-format-mismatch",
         ),
     ]
-    assert v.warnings_found == 1
-    assert v.errors_found == 0
+    assert v.errors_found == 1
+    assert v.warnings_found == 0
 
 
 def test_country_art_on_a_news_event_is_reported(tmp_path, monkeypatch):
@@ -91,7 +91,7 @@ def test_country_art_on_a_news_event_is_reported(tmp_path, monkeypatch):
         _event("news_event", "foo.2", "major = yes", "picture = GFX_narrow"),
     )
 
-    assert v.warnings_found == 1
+    assert v.errors_found == 1
     assert "country event art" in v._issues[0].message
     assert v._issues[0].line == 5
 
