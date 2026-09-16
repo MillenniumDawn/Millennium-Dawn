@@ -260,7 +260,6 @@ SIA_thaksin_rise_update = {
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		set_temp_variable = { temp_outlook_increase = 0.02 }
 		change_relative_party_popularity = yes
-		recalculate_party = yes
 	}
 	# NAP (idx 20) starts at 0.30 and, untouched, is max_index_2 at the Jan-2001 election — the
 	# AI's coalition-cost math then installs it over the Democrats/TRT.
@@ -365,7 +364,15 @@ SIA_strike_add_momentum = {
 SIA_strike_cleanup_effect = {
 	clr_country_flag = SIA_strike_active
 	if = { limit = { has_idea = SIA_general_strike_idea } remove_ideas = SIA_general_strike_idea }
+	# The five instrument spirits the strike decisions grant outlast it otherwise — up to 90 days
+	# of maluses on whichever government the strike put in power.
+	if = { limit = { has_idea = SIA_strike_shutdown } remove_ideas = SIA_strike_shutdown }
+	if = { limit = { has_idea = SIA_strike_supply_freeze } remove_ideas = SIA_strike_supply_freeze }
+	if = { limit = { has_idea = SIA_strike_campus_walkout } remove_ideas = SIA_strike_campus_walkout }
+	if = { limit = { has_idea = SIA_strike_world_watching } remove_ideas = SIA_strike_world_watching }
+	if = { limit = { has_idea = SIA_strike_barracks_agitation } remove_ideas = SIA_strike_barracks_agitation }
 	set_variable = { SIA_strike_momentum = 0 }
+	set_variable = { SIA_strike_days_left = 0 }
 }
 
 # Swap the visible "tide" tier spirit to match SIA_pheu_thai_pressure. Three tiers: dormant
@@ -418,7 +425,6 @@ SIA_pt_wave_popularity_boost = {
 		}
 		set_temp_variable = { temp_outlook_increase = party_popularity_increase }
 		change_relative_party_popularity = yes
-		recalculate_party = yes
 	}
 }
 
@@ -493,6 +499,7 @@ SIA_strip_royalist_ideas = {
 	if = { limit = { has_idea = SIA_yellow_shirts_idea } remove_ideas = SIA_yellow_shirts_idea }
 	if = { limit = { has_idea = SIA_junta_government } remove_ideas = SIA_junta_government }
 	if = { limit = { has_idea = SIA_guided_democracy } remove_ideas = SIA_guided_democracy }
+	if = { limit = { has_idea = SIA_quiet_word_pressure } remove_ideas = SIA_quiet_word_pressure }
 }
 
 SIA_strip_reform_ideas = {
@@ -508,8 +515,9 @@ SIA_strip_democrat_ideas = {
 	SIA_pt_cleanup_effect = yes
 }
 
-# Shared bookkeeping for any realignment: clear the three path flags so exactly one is set by
-# the caller afterwards.
+# Shared teardown for any realignment: retire everything the outgoing trunk owns — its path
+# flags, its spirits, the general strike and any running political drive — so the caller can set
+# exactly one SIA_path_* afterwards and arm its own systems.
 SIA_clear_path_flags = {
 	if = { limit = { has_country_flag = SIA_path_populist } clr_country_flag = SIA_path_populist }
 	if = { limit = { has_country_flag = SIA_path_royalist } clr_country_flag = SIA_path_royalist }
@@ -520,6 +528,24 @@ SIA_clear_path_flags = {
 	if = { limit = { has_country_flag = SIA_path_communist } clr_country_flag = SIA_path_communist }
 	if = { limit = { has_country_flag = SIA_communist_armed_path } clr_country_flag = SIA_communist_armed_path }
 	if = { limit = { has_country_flag = SIA_communist_peaceful_path } clr_country_flag = SIA_communist_peaceful_path }
+	# Leaving the red road retires the strike with it, or the weekly stability drain and the
+	# day-365 thailand.259 junta keep running against whoever governs next.
+	if = { limit = { has_country_flag = SIA_strike_active } SIA_strike_cleanup_effect = yes }
+	# The Party Machine category reads this flag, not SIA_path_democrat, so leaving the trunk
+	# without running the democrat strip would leave its decisions open on a dead meter.
+	if = { limit = { has_country_flag = SIA_democrat_machine_active } clr_country_flag = SIA_democrat_machine_active }
+	if = { limit = { has_idea = SIA_red_revival } remove_ideas = SIA_red_revival }
+	if = { limit = { has_idea = SIA_cadre_mobilisation } remove_ideas = SIA_cadre_mobilisation }
+	# A political drive belongs to the trunk that started it; the caller arms its own after this.
+	# Exception: if the drive's own party is the one now governing, it just won — let it run out.
+	if = {
+		limit = {
+			check_variable = { SIA_drive_weeks > 0 }
+			NOT = { check_variable = { SIA_drive_party = ruling_party } }
+		}
+		set_variable = { SIA_drive_weeks = 0 }
+		set_variable = { SIA_drive_rate = 0 }
+	}
 	# The opening-year Thaksinite surge is a pre-realignment mechanic; retire it the moment any
 	# path is committed so it never runs alongside the standing systems.
 	if = { limit = { has_idea = SIA_thaksin_ascendant } remove_ideas = SIA_thaksin_ascendant }
@@ -551,6 +577,51 @@ SIA_realign_to_royalist = {
 	# and zero the meter so it cannot resume or carry over.
 	SIA_pt_quiet_effect = yes
 	SIA_coup_cleanup_effect = yes
+}
+
+SIA_communist_seizure_effect = {
+	# One seizure per run. The focus bypass, its completion reward and the weekly election
+	# watch all route here, and more than one of them can come true in the same week.
+	if = {
+		limit = { NOT = { has_country_flag = SIA_communist_seized } }
+		# One seizure per run: the focus, its bypass and the weekly election watch all route here.
+		set_country_flag = SIA_communist_seized
+		# Power is taken by the strike that carried the party there, so it ends here. The weekly
+		# momentum-100 path tears down first, so this is the seizure-without-capitulation route.
+		if = { limit = { has_country_flag = SIA_strike_active } SIA_strike_cleanup_effect = yes }
+		# The organising drive bought this; it has nothing left to buy.
+		if = {
+			limit = { check_variable = { SIA_drive_weeks > 0 } }
+			set_variable = { SIA_drive_weeks = 0 }
+			set_variable = { SIA_drive_rate = 0 }
+		}
+		SIA_strip_populist_ideas = yes
+		SIA_strip_royalist_ideas = yes
+		SIA_strip_reform_ideas = yes
+		SIA_strip_democrat_ideas = yes
+		SIA_remove_barami = yes
+		SIA_remove_three_pillars = yes
+		if = { limit = { has_idea = SIA_network_monarchy_idea } remove_ideas = SIA_network_monarchy_idea }
+		if = { limit = { has_idea = SIA_peoples_constitution } remove_ideas = SIA_peoples_constitution }
+		if = { limit = { has_idea = SIA_junta_government } remove_ideas = SIA_junta_government }
+		if = { limit = { has_country_flag = SIA_communist_armed_path } add_war_support = 0.10 }
+		set_temp_variable = { rul_party_temp = 4 }
+		set_temp_variable = { disable_elections = 1 }
+		change_ruling_party_effect = yes
+		hidden_effect = { country_event = { id = thailand.251 days = 3 } }
+	}
+}
+
+SIA_realign_to_communist = {
+	log = "[GetDateText]: [Root.GetName]: SIA_realign_to_communist - the red road is taken"
+	SIA_clear_path_flags = yes
+	set_country_flag = SIA_path_communist
+	SIA_strip_populist_ideas = yes
+	SIA_strip_royalist_ideas = yes
+	SIA_strip_reform_ideas = yes
+	SIA_strip_democrat_ideas = yes
+	SIA_coup_cleanup_effect = yes
+	country_event = { id = thailand.427 days = 2 }
 }
 
 SIA_realign_to_reform = {
