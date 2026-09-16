@@ -126,7 +126,7 @@ The engine runs four blocks as a decision's effects: `complete_effect` (player t
 
 Log first so the game log reads in firing order, and use the decision's own ID: a copied ID from a neighbouring decision is the most common mistake here (`tools/linting/fix_log_ids.py` rewrites those). A log nested inside an `if` / `else` / `hidden_effect` records which branch ran, so it belongs where it sits and does not substitute for the block's own log line.
 
-`validate_decisions.py` reports a block with no log as `missing-decision-log` and a block-level log that is not first as `decision-log-not-first`. A log that is the _only_ content of a `complete_effect` is a separate mistake: `check_common_mistakes.py` rejects it, because the block does nothing but log. Delete the dead block instead.
+`validate_decisions.py` reports a block with no log as `missing-decision-log` and a block-level log that is not first as `decision-log-not-first`. A log that is the _only_ content of any of the four effect blocks is a separate mistake: `check_common_mistakes.py` rejects it (#4456), because the block does nothing but log. Delete the dead block instead; the decisions standardizer drops it rather than injecting a log into an empty one.
 
 ## AI-Only Decisions
 

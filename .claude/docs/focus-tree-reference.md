@@ -6,7 +6,9 @@ Focus tree conventions, structure, property order, and examples.
 
 - IDs use `TAG_focus_name`. Use `relative_position_id` beyond the root.
 - Include logging, `ai_will_do = { base = N }`, and the two-layer search filters
-  from [Search Filters](search-filters.md).
+  from [Search Filters](search-filters.md). The log belongs in a `completion_reward`
+  or `select_effect` that runs something; a block holding only a log is dead and
+  `check_common_mistakes.py` rejects it (#4456). Omit the block instead.
 - Omit defaults: `cost = 10`, `cancel_if_invalid = yes`, `continue_if_invalid = no`,
   and `available_if_capitulated = no`.
 - No empty `mutually_exclusive` or `available` blocks, or commented-out slot markers.

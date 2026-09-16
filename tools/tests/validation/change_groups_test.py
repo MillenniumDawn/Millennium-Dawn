@@ -17,8 +17,15 @@ def test_localisation_only_change():
     assert groups["style_files"] == []
 
 
-def test_validation_tool_change_runs_full_suite():
-    groups = change_groups.classify(["tools/validation/change_groups.py"])
+@pytest.mark.parametrize(
+    "path",
+    (
+        "tools/validation/change_groups.py",
+        "tools/linting/check_common_mistakes.py",
+    ),
+)
+def test_validation_tool_change_runs_full_suite(path):
+    groups = change_groups.classify([path])
 
     assert groups["full_suite"] is True
     assert groups["tools"] is True

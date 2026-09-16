@@ -51,6 +51,7 @@ _BLOCK_START_RE = re.compile(r"\s*[\w_]+\s*=\s*{")
 
 
 _ALLOWED_TAG_RE = re.compile(r"\btag\s*=\s*(\w+)")
+_LOG_STATEMENT_RE = re.compile(r'\blog\s*=\s*"[^"]*"')
 
 
 def _rewrite_allowed_tag(line: str) -> str:
@@ -254,13 +255,12 @@ class IdeaStandardizer(BaseStandardizer):
             return False
 
         for line in block_lines:
-            stripped = line.strip()
+            stripped = _LOG_STATEMENT_RE.sub("", line).strip()
             if (
                 stripped in ("{", "}", "")
                 or not stripped
                 or stripped.startswith("#")
                 or stripped.endswith("{")  # block opener, e.g. `on_remove = {`
-                or stripped.startswith("log =")
             ):
                 continue
             return True
@@ -334,19 +334,15 @@ class IdeaStandardizer(BaseStandardizer):
         # A single-line block (`on_add = { set_variable = { x = 1 } }`) has its
         # opener and closer on the same line, so an injected log would land
         # outside the block and re-inject on the next run (non-idempotent).
-        # Explode it only when a log will actually be injected (meaningful
-        # effects, no existing log) — leaving log-only single-line blocks handled
-        # exactly as before so this fix doesn't silently strip them.
+        # Judge the exploded form (a packed `on_add = { log = "..." }` reads as
+        # content otherwise) and explode only when a log will be injected.
         if len(block) == 1:
             exploded = _explode_braces(block)
-            # An empty single-line block (`on_add = { }`) reads as meaningful when
-            # left packed, so the legacy path would inject a log outside its
-            # braces. Detect emptiness on the exploded form and drop it.
             if self.is_empty_log_block(exploded):
                 return []
-            if self.has_meaningful_effects(exploded) and not any(
-                "log =" in line for line in exploded
-            ):
+            if not self.has_meaningful_effects(exploded):
+                return []
+            if not any("log =" in line for line in exploded):
                 block = exploded
         if self.is_empty_log_block(block):
             return []
