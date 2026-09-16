@@ -50,3 +50,5 @@ For each file reviewed, report:
 3. Mark anything that must be fixed before merge as **[blocker]**.
 
 End with a total issue count per category, or "No content issues found."
+
+When the branch has an open PR, a body (title and description) that does not match the diff is a **[blocker]** and rejects the PR until the body describes what the code actually does: name what the body claims that the diff lacks or what the diff contains that the body omits. A missing or empty body counts as not matching.

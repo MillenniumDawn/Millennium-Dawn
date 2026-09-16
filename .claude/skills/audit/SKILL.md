@@ -72,6 +72,8 @@ Combine all reports into a single structured output.
 
 Drop empty sections rather than writing "none".
 
+**PR body check.** When the branch has an open PR, verify the body (title and description) describes what the diff actually changes. Any mismatch is a blocker and rejects the PR until the body is corrected: name what the body claims that the diff lacks and what the diff contains that the body omits. A missing or empty body counts as not matching. Do not soften a mismatch into a suggestion.
+
 ### 6. Apply fixes (if user confirms)
 
 If the user asks to fix the issues, apply them directly:
