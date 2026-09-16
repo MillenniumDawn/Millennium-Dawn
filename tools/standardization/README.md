@@ -188,7 +188,7 @@ Reorders every `technology` block in `common/technologies/` into one fixed layou
 - Single-leaf blocks collapse to one line (`ai_will_do = { factor = 1 }`, `allow = { has_doctrine = x }`); other blocks are reindented with their single-leaf children collapsed (`position = { x = @row1 y = @1965 }`)
 - Bare token lists are one line for a single token (`enable_equipments = { X }`) and one token per line for two or more
 - Comments above a property travel with it; a block holding a `#` comment stays multi-line
-- No `ai_will_do` `factor` to `base` rewrite and no log injection into `on_research_complete` (`tools/logging_tool.py tech_add` does that)
+- No `ai_will_do` `factor` to `base` rewrite and no log injection into `on_research_complete` (`tools/logging_tool.py tech_add` does that, only into a block that runs something)
 
 **Usage:**
 
