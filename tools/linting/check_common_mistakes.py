@@ -295,11 +295,14 @@ _RE_LIMIT_OPEN = re.compile(r"\blimit\s*=\s*\{")
 _RE_IF_ELSE_OPEN = re.compile(r"\b(if|else_if|else)\s*=\s*\{")
 _RE_HAS_IDEA = re.compile(r"has_idea\s*=\s*(\w+)")
 _RE_OR_CONTENT = re.compile(r"OR\s*=\s*\{([^}]*)\}")
-_RE_LOG_ONLY_EFFECT = re.compile(r"log\s*=\s*\"[^\"]+\"\s*$")
+_RE_LOG_ONLY_EFFECT = re.compile(r"log\s*=\s*\"[^\"]*\"\s*$")
 _RE_OPTION_BLOCK_OPEN = re.compile(r"\boption\s*=\s*\{")
 _RE_TRIGGER_BLOCK_OPEN = re.compile(r"\btrigger\s*=\s*\{")
-_RE_COMPLETE_EFFECT_OPEN = re.compile(r"\bcomplete_effect\s*=\s*\{")
-_RE_REMOVE_EFFECT_OPEN = re.compile(r"\bremove_effect\s*=\s*\{")
+# Every block the engine runs as an effect list and MD logs from (#4456).
+_RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
+    r"\b(option|complete_effect|remove_effect|timeout_effect|cancel_effect"
+    r"|on_add|on_remove|completion_reward|select_effect|immediate)\s*=\s*\{"
+)
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
 _RE_TRADE_AGREEMENT_WITH = re.compile(r"\bhas_trade_agreement_with\s*=")
 # add_to_faction adds the ARGUMENT country to the current scope's faction, so it
@@ -1400,47 +1403,44 @@ def _check_duplicate_add_to_variable(lines):
 
 
 def _check_empty_log_only_blocks(lines):
-    """Flag option/complete_effect blocks where log is the only content.
+    """Flag effect blocks where log is the only content.
 
-    A log statement with no actual effects is pointless -- remove it.
-    Exception: remove_effect blocks in decisions should always have logs for debugging.
+    Covers every block MD logs from: event option / immediate, decision
+    complete/remove/timeout/cancel_effect, idea on_add / on_remove, focus
+    completion_reward / select_effect. A log with no effect beside it records
+    a state change that never happened, so the whole block is dead -- delete
+    it. Both the multi-line and the packed `key = { log = "..." }` shape are
+    read; an empty block is left to the missing-log checks.
     """
     issues = []
     i = 0
     n = len(lines)
     while i < n:
-        line = lines[i]
-        block_start = None
-        block_type = None
-
-        for pattern, btype in [
-            (_RE_OPTION_BLOCK_OPEN, "option"),
-            (_RE_COMPLETE_EFFECT_OPEN, "complete_effect"),
-        ]:
-            if pattern.search(line):
-                block_start = i
-                block_type = btype
-                break
-
-        if block_start is not None:
-            block_lines, next_i = _get_block(lines, block_start)
+        match = _RE_LOGGED_EFFECT_BLOCK_OPEN.search(strip_inline_comment(lines[i]))
+        if match is None:
+            i += 1
+            continue
+        block_lines, next_i = _get_block(lines, i)
+        if len(block_lines) == 1:
+            code = strip_inline_comment(block_lines[0])
+            inner = code[match.end() : code.rindex("}")].strip()
+            content_lines = [inner] if inner else []
+        else:
             content_lines = [
                 l.strip()
                 for l in block_lines[1:-1]
                 if l.strip() and not l.strip().startswith("#")
             ]
 
-            if len(content_lines) == 1 and _RE_LOG_ONLY_EFFECT.match(content_lines[0]):
-                issues.append(
-                    (
-                        block_start + 1,
-                        f'log = "..." is the only content in this {block_type} block -- '
-                        "remove it (logs should accompany effects, not replace them)",
-                    )
+        if content_lines and all(_RE_LOG_ONLY_EFFECT.match(l) for l in content_lines):
+            issues.append(
+                (
+                    i + 1,
+                    f'log = "..." is the only content in this {match.group(1)} block -- '
+                    "delete the block (a log records an effect that never runs)",
                 )
-            i = next_i
-        else:
-            i += 1
+            )
+        i = next_i
     return issues
 
 

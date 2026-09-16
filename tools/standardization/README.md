@@ -20,7 +20,7 @@ Standardizes national focus files according to Millennium Dawn standards.
 **Key features:**
 
 - Enforces proper property ordering
-- Adds missing logging to completion rewards and effects
+- Adds missing logging to completion rewards and effects that run something; an empty or log-only block is removed
 - Formats search_filters into single lines
 - Ensures ai_will_do is properly formatted
 
@@ -67,7 +67,7 @@ Standardizes decision files according to Millennium Dawn standards.
 
 **Key features:**
 
-- Adds logging to complete_effect blocks
+- Adds logging to complete/remove/timeout/cancel_effect blocks that run something; an empty or log-only block is removed
 - Enforces proper property ordering
 - Maintains consistent formatting
 - Preserves ai_will_do blocks
@@ -273,7 +273,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 ### Focus Trees
 
 - Use `relative_position_id` for positioning
-- Include logging in completion_reward/select_effect/bypass_effect
+- Include logging in completion_reward/select_effect/bypass_effect only when the block runs an effect; a log-only block is removed
 - Proper property ordering (id, icon, position, cost, prerequisites, etc.)
 - ai_will_do always last
 
@@ -286,7 +286,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 ### Decisions
 
-- Include logging in complete_effect
+- Include logging in complete_effect only when the block runs an effect; a log-only block is removed
 - Use `fire_only_once` sparingly
 - Proper property ordering
 - Include ai_will_do
@@ -295,7 +295,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 - Keep `allowed = { always = no }` on slotted ideas (hides them from the picker; `add_idea` still applies them)
 - Remove `cancel = { always = no }` (redundant default; checked hourly, never true)
-- Remove empty `on_add = { log = "" }`
+- Remove `on_add` / `on_remove` blocks whose only statement is a log
 - Include `allowed_civil_war = { always = yes }` for civil war tags
 - Log only when on_add/on_remove have actual effects
 

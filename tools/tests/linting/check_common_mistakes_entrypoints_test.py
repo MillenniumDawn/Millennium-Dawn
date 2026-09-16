@@ -607,6 +607,11 @@ def test_block_without_a_decision_marker_is_not_a_decision(scoped_refs):
 # ---------------------------------------------------------------------------
 
 
+def _log_only_block_types(lines):
+    issues = checker._check_empty_log_only_blocks(lines)
+    return [message.split("this ")[1].split(" block")[0] for _line, message in issues]
+
+
 def test_log_only_option_and_complete_effect_are_flagged():
     lines = [
         "\toption = {\n",
@@ -618,12 +623,41 @@ def test_log_only_option_and_complete_effect_are_flagged():
         "\t}\n",
     ]
 
-    issues = checker._check_empty_log_only_blocks(lines)
+    assert _log_only_block_types(lines) == ["option", "complete_effect"]
 
-    assert [message.split(" -- ")[0] for _line, message in issues] == [
-        'log = "..." is the only content in this option block',
-        'log = "..." is the only content in this complete_effect block',
+
+def test_every_logged_effect_block_kind_is_covered():
+    kinds = [
+        "remove_effect",
+        "timeout_effect",
+        "cancel_effect",
+        "on_add",
+        "on_remove",
+        "completion_reward",
+        "select_effect",
+        "immediate",
     ]
+    lines = []
+    for kind in kinds:
+        lines += [f"\t{kind} = {{\n", '\t\tlog = "x"\n', "\t}\n"]
+
+    assert _log_only_block_types(lines) == kinds
+
+
+def test_packed_log_only_block_is_flagged():
+    lines = [
+        '\t\tcompletion_reward = { log = "[GetDateText]: Focus TST_x" }\n',
+        '\t\ton_remove = { log = "" }  # trailing comment\n',
+        "\t\tremove_effect = { }\n",
+    ]
+
+    assert _log_only_block_types(lines) == ["completion_reward", "on_remove"]
+
+
+def test_commented_out_effect_block_is_ignored():
+    lines = ['\t\t# completion_reward = { log = "x" }\n']
+
+    assert checker._check_empty_log_only_blocks(lines) == []
 
 
 def test_log_beside_a_real_effect_is_kept():
@@ -632,6 +666,14 @@ def test_log_beside_a_real_effect_is_kept():
         '\t\tlog = "[GetDateText]: Event test.1 Option a"\n',
         "\t\tadd_political_power = 10\n",
         "\t}\n",
+        "\tcompletion_reward = {\n",
+        '\t\tlog = "x"\n',
+        "\t\tif = {\n",
+        "\t\t\tlimit = { has_war = yes }\n",
+        '\t\t\tlog = "branch"\n',
+        "\t\t}\n",
+        "\t}\n",
+        '\t\tremove_effect = { log = "x" add_stability = 0.1 }\n',
     ]
 
     assert checker._check_empty_log_only_blocks(lines) == []
