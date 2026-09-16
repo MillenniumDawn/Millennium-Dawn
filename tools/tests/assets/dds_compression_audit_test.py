@@ -24,7 +24,11 @@ def _pixelformat(flags, fourcc=0, bit_count=0, masks=(0, 0, 0, 0)):
 
 def _uncompressed(width, height, *, alpha_rows=None, mip_count=1, declared_mips=None):
     """A 32bpp BGRA DDS. alpha_rows maps mip index -> alpha byte for that level."""
-    pf = _pixelformat(audit.DDPF_ALPHAPIXELS, bit_count=32, masks=(0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000))
+    pf = _pixelformat(
+        audit.DDPF_ALPHAPIXELS,
+        bit_count=32,
+        masks=(0x00FF0000, 0x0000FF00, 0x000000FF, 0xFF000000),
+    )
     head = dds_header(
         DDS_MAGIC,
         DDSD_CAPS,
@@ -46,7 +50,10 @@ def _uncompressed(width, height, *, alpha_rows=None, mip_count=1, declared_mips=
 
 def _fourcc(width, height, tag=b"DXT1"):
     pf = _pixelformat(audit.DDPF_FOURCC, fourcc=struct.unpack("<I", tag)[0])
-    return dds_header(DDS_MAGIC, DDSD_CAPS, height, width, 0, pf, DDSCAPS_TEXTURE, 1) + b"\x00" * 64
+    return (
+        dds_header(DDS_MAGIC, DDSD_CAPS, height, width, 0, pf, DDSCAPS_TEXTURE, 1)
+        + b"\x00" * 64
+    )
 
 
 def _dx10(width, height, dxgi):
@@ -139,7 +146,9 @@ def test_non_dds_file_is_rejected(tmp_path):
 
 def test_truncated_dx10_extension_is_rejected(tmp_path):
     pf = _pixelformat(audit.DDPF_FOURCC, fourcc=struct.unpack("<I", b"DX10")[0])
-    blob = dds_header(DDS_MAGIC, DDSD_CAPS, 8, 8, 0, pf, DDSCAPS_TEXTURE, 1) + b"\x00" * 4
+    blob = (
+        dds_header(DDS_MAGIC, DDSD_CAPS, 8, 8, 0, pf, DDSCAPS_TEXTURE, 1) + b"\x00" * 4
+    )
     assert audit.parse(_write(tmp_path, "cut.dds", blob)) is None
 
 
@@ -147,20 +156,32 @@ def test_truncated_dx10_extension_is_rejected(tmp_path):
 
 
 def test_block_alignment_gates_the_recommendation(tmp_path):
-    assert audit.parse(_write(tmp_path, "ok.dds", _uncompressed(8, 8))).block_aligned is True
-    assert audit.parse(_write(tmp_path, "odd.dds", _uncompressed(7, 8))).block_aligned is False
+    assert (
+        audit.parse(_write(tmp_path, "ok.dds", _uncompressed(8, 8))).block_aligned
+        is True
+    )
+    assert (
+        audit.parse(_write(tmp_path, "odd.dds", _uncompressed(7, 8))).block_aligned
+        is False
+    )
 
 
 def test_projection_counts_every_mip_level(tmp_path):
     single = audit.parse(_write(tmp_path, "one.dds", _uncompressed(8, 8, mip_count=1)))
-    chained = audit.parse(_write(tmp_path, "many.dds", _uncompressed(8, 8, mip_count=4)))
+    chained = audit.parse(
+        _write(tmp_path, "many.dds", _uncompressed(8, 8, mip_count=4))
+    )
     assert chained.projected_size() > single.projected_size()
 
 
 def test_dxt1_projection_is_half_of_dxt5(tmp_path):
     opaque = audit.parse(_write(tmp_path, "a.dds", _uncompressed(8, 8)))
-    glass = audit.parse(_write(tmp_path, "b.dds", _uncompressed(8, 8, alpha_rows={0: 0x40})))
-    assert (glass.projected_size() - audit.HEADER) == 2 * (opaque.projected_size() - audit.HEADER)
+    glass = audit.parse(
+        _write(tmp_path, "b.dds", _uncompressed(8, 8, alpha_rows={0: 0x40}))
+    )
+    assert (glass.projected_size() - audit.HEADER) == 2 * (
+        opaque.projected_size() - audit.HEADER
+    )
 
 
 # --- reporting and output modes -------------------------------------------
@@ -184,7 +205,9 @@ def test_texconv_command_writes_the_mip_count_explicitly(tmp_path):
 
 
 def test_texconv_command_uses_bc3_when_alpha_is_used(tmp_path):
-    texture = audit.parse(_write(tmp_path, "glass.dds", _uncompressed(8, 8, alpha_rows={0: 0x40})))
+    texture = audit.parse(
+        _write(tmp_path, "glass.dds", _uncompressed(8, 8, alpha_rows={0: 0x40}))
+    )
     assert "BC3_UNORM" in audit.texconv_command(texture)
 
 
@@ -199,7 +222,9 @@ def test_json_output_lists_candidates(tmp_path, capsys):
 def test_emit_commands_mode_prints_one_line_per_file(tmp_path, capsys):
     _write(tmp_path, "big.dds", _uncompressed(64, 64))
     audit.main([str(tmp_path), "--min-kb", "0", "--emit-commands"])
-    lines = [ln for ln in capsys.readouterr().out.splitlines() if ln.startswith("texconv")]
+    lines = [
+        ln for ln in capsys.readouterr().out.splitlines() if ln.startswith("texconv")
+    ]
     assert len(lines) == 1
 
 

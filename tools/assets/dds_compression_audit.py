@@ -35,7 +35,15 @@ BLOCK_BYTES = {"DXT1": 8, "DXT5": 16}
 # container is an uncompressed payload and is a candidate like any other.
 DXGI_BLOCK_COMPRESSED = frozenset(range(70, 85)) | frozenset(range(94, 100))
 
-DXGI_NAMES = {70: "BC1", 73: "BC2", 76: "BC3", 79: "BC4", 82: "BC5", 94: "BC6H", 97: "BC7"}
+DXGI_NAMES = {
+    70: "BC1",
+    73: "BC2",
+    76: "BC3",
+    79: "BC4",
+    82: "BC5",
+    94: "BC6H",
+    97: "BC7",
+}
 
 
 def _mip_levels(width, height):
@@ -125,19 +133,35 @@ def parse(path, alpha_floor=0):
                         return None
                     dxgi = struct.unpack("<I", ext[0:4])[0]
                     if dxgi in DXGI_BLOCK_COMPRESSED:
-                        return Texture(path, size, width, height, _dxgi_label(dxgi), mipmaps, False)
+                        return Texture(
+                            path, size, width, height, _dxgi_label(dxgi), mipmaps, False
+                        )
                     # Uncompressed payload in a DX10 container: a real candidate.
                     alpha = False
                     if size >= alpha_floor:
-                        alpha = _alpha_is_used(handle, width, height, 0xFF000000, mipmaps, HEADER + DX10_HEADER)
+                        alpha = _alpha_is_used(
+                            handle,
+                            width,
+                            height,
+                            0xFF000000,
+                            mipmaps,
+                            HEADER + DX10_HEADER,
+                        )
                     return Texture(path, size, width, height, None, mipmaps, alpha)
                 return Texture(path, size, width, height, name, mipmaps, False)
 
             bit_count = struct.unpack("<I", head[88:92])[0]
             alpha_mask = struct.unpack("<I", head[104:108])[0]
             alpha_used = False
-            if size >= alpha_floor and pf_flags & DDPF_ALPHAPIXELS and bit_count == 32 and alpha_mask:
-                alpha_used = _alpha_is_used(handle, width, height, alpha_mask, mipmaps, HEADER)
+            if (
+                size >= alpha_floor
+                and pf_flags & DDPF_ALPHAPIXELS
+                and bit_count == 32
+                and alpha_mask
+            ):
+                alpha_used = _alpha_is_used(
+                    handle, width, height, alpha_mask, mipmaps, HEADER
+                )
             return Texture(path, size, width, height, None, mipmaps, alpha_used)
     except (OSError, struct.error):
         return None
@@ -212,11 +236,26 @@ def texconv_command(texture):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("paths", nargs="*", default=["gfx"], help="files or directories (default: gfx)")
-    parser.add_argument("--min-kb", type=float, default=64.0, help="ignore files smaller than this (default: 64)")
-    parser.add_argument("--limit", type=int, default=40, help="rows to print (default: 40, 0 for all)")
-    parser.add_argument("--by-dir", action="store_true", help="group the saving by directory instead")
-    parser.add_argument("--emit-commands", action="store_true", help="print texconv commands instead of a report")
+    parser.add_argument(
+        "paths", nargs="*", default=["gfx"], help="files or directories (default: gfx)"
+    )
+    parser.add_argument(
+        "--min-kb",
+        type=float,
+        default=64.0,
+        help="ignore files smaller than this (default: 64)",
+    )
+    parser.add_argument(
+        "--limit", type=int, default=40, help="rows to print (default: 40, 0 for all)"
+    )
+    parser.add_argument(
+        "--by-dir", action="store_true", help="group the saving by directory instead"
+    )
+    parser.add_argument(
+        "--emit-commands",
+        action="store_true",
+        help="print texconv commands instead of a report",
+    )
     parser.add_argument("--format", choices=["text", "json"], default="text")
     args = parser.parse_args(argv)
 
@@ -227,7 +266,9 @@ def main(argv=None):
     if args.format == "json":
         json.dump(
             {
-                "inventory": {k: {"files": counts[k], "bytes": sizes[k]} for k in counts},
+                "inventory": {
+                    k: {"files": counts[k], "bytes": sizes[k]} for k in counts
+                },
                 "convert": [
                     {
                         "path": str(t.path).replace("\\", "/"),
@@ -241,7 +282,9 @@ def main(argv=None):
                     }
                     for t in convert
                 ],
-                "skipped_not_block_aligned": [str(t.path).replace("\\", "/") for t in skipped],
+                "skipped_not_block_aligned": [
+                    str(t.path).replace("\\", "/") for t in skipped
+                ],
                 "total_saving_bytes": total_saving,
             },
             sys.stdout,
@@ -260,7 +303,9 @@ def main(argv=None):
     for label in sorted(counts, key=lambda k: -sizes[k]):
         print(f"  {label:14} {counts[label]:7} files  {sizes[label] / 1048576:9.1f} MB")
 
-    print(f"\nRECOMMENDED RE-ENCODES  (uncompressed, at least {args.min_kb:.0f} KB, block aligned)")
+    print(
+        f"\nRECOMMENDED RE-ENCODES  (uncompressed, at least {args.min_kb:.0f} KB, block aligned)"
+    )
     print(f"  {len(convert)} files, about {total_saving / 1048576:.0f} MB saved\n")
 
     if args.by_dir:
@@ -279,9 +324,13 @@ def main(argv=None):
             )
 
     if skipped:
-        print(f"\nSKIPPED, not a multiple of 4 so block compression would need padding: {len(skipped)}")
+        print(
+            f"\nSKIPPED, not a multiple of 4 so block compression would need padding: {len(skipped)}"
+        )
         for texture in skipped[:10]:
-            print(f"  {texture.width}x{texture.height}  {str(texture.path).replace(chr(92), '/')}")
+            print(
+                f"  {texture.width}x{texture.height}  {str(texture.path).replace(chr(92), '/')}"
+            )
 
     return 0
 
