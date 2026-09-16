@@ -207,7 +207,6 @@ on_actions = {
 				set_temp_variable = { party_index = 23 }
 				set_temp_variable = { party_popularity_increase = 0.005 }
 				change_relative_party_popularity = yes
-				recalculate_party = yes
 			}
 
 			# See SIA_political_drift_update. Skipped on the communist path and after a republic.
@@ -437,9 +436,18 @@ on_actions = {
 			}
 
 			# Political realignment detector. Watches the ruling party and swaps the player onto the
-			# matching trunk.
+			# matching trunk. The watch itself runs every week even when realignment is suppressed:
+			# a SIA_last_ruling_party left behind during the red road would otherwise fire a
+			# years-old "change" the week the player leaves that trunk.
+			set_party_index_to_ruling_party = yes
+			# Seed once so we react to changes only, not to the initial party-vs-trunk gap.
+			if = {
+				limit = { NOT = { has_variable = SIA_last_ruling_party } }
+				set_variable = { SIA_last_ruling_party = party_index }
+			}
 			if = {
 				limit = {
+					NOT = { check_variable = { SIA_last_ruling_party = party_index } }
 					# The red road is entered before the party holds power, so an ordinary election
 					# defeat must not realign it away: SIA_clear_path_flags would take the trunk flag,
 					# the strike, the spirits and the drive in one pass, and only SIA_ghosts_of_the_jungle
@@ -447,78 +455,69 @@ on_actions = {
 					NOT = { has_country_flag = SIA_path_communist }
 					NOT = { has_country_flag = SIA_republic_declared }
 				}
-				set_party_index_to_ruling_party = yes
-				# Seed once so we react to changes only, not to the initial party-vs-trunk gap.
 				if = {
-					limit = { NOT = { has_variable = SIA_last_ruling_party } }
-					set_variable = { SIA_last_ruling_party = party_index }
+					limit = {
+						check_variable = { party_index = 18 }
+						NOT = { has_country_flag = SIA_path_populist }
+					}
+					SIA_realign_to_populist = yes
+					country_event = { id = thailand.420 days = 2 }
 				}
-				if = {
-					limit = { NOT = { check_variable = { SIA_last_ruling_party = party_index } } }
-					if = {
-						limit = {
-							check_variable = { party_index = 18 }
-							NOT = { has_country_flag = SIA_path_populist }
+				else_if = {
+					limit = {
+						OR = {
+							check_variable = { party_index = 22 }
+							check_variable = { party_index = 23 }
 						}
-						SIA_realign_to_populist = yes
-						country_event = { id = thailand.420 days = 2 }
+						NOT = { has_country_flag = SIA_path_royalist }
 					}
-					else_if = {
-						limit = {
-							OR = {
-								check_variable = { party_index = 22 }
-								check_variable = { party_index = 23 }
-							}
-							NOT = { has_country_flag = SIA_path_royalist }
-						}
-						SIA_realign_to_royalist = yes
-						country_event = { id = thailand.421 days = 2 }
+					SIA_realign_to_royalist = yes
+					country_event = { id = thailand.421 days = 2 }
+				}
+				else_if = {
+					# No flag guard: SIA_seeds_of_reform sets SIA_path_reform before the vote, so the
+					# outgoing government's spirits are still standing when idx 3 finally wins.
+					limit = { check_variable = { party_index = 3 } }
+					SIA_realign_to_reform = yes
+					set_leader = yes
+					country_event = { id = thailand.422 days = 2 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { party_index = 1 }
+						NOT = { has_country_flag = SIA_path_democrat }
 					}
-					else_if = {
-						# No flag guard: SIA_seeds_of_reform sets SIA_path_reform before the vote, so the
-						# outgoing government's spirits are still standing when idx 3 finally wins.
-						limit = { check_variable = { party_index = 3 } }
-						SIA_realign_to_reform = yes
-						set_leader = yes
-						country_event = { id = thailand.422 days = 2 }
+					SIA_realign_to_democrat = yes
+					country_event = { id = thailand.424 days = 2 }
+				}
+				else_if = {
+					limit = {
+						check_variable = { party_index = 4 }
+						NOT = { has_country_flag = SIA_path_communist }
 					}
-					else_if = {
-						limit = {
-							check_variable = { party_index = 1 }
-							NOT = { has_country_flag = SIA_path_democrat }
-						}
-						SIA_realign_to_democrat = yes
-						country_event = { id = thailand.424 days = 2 }
+					SIA_realign_to_communist = yes
+				}
+				else_if = {
+					limit = {
+						# Fail-open: an unmodelled ruling party must clear the path flags, or the is_in_array entry
+						# gates match nothing and no trunk can reopen.
+						NOT = { check_variable = { party_index = 18 } }
+						NOT = { check_variable = { party_index = 22 } }
+						NOT = { check_variable = { party_index = 23 } }
+						NOT = { check_variable = { party_index = 3 } }
+						NOT = { check_variable = { party_index = 1 } }
+						NOT = { check_variable = { party_index = 4 } }
 					}
-					else_if = {
-						limit = {
-							check_variable = { party_index = 4 }
-							NOT = { has_country_flag = SIA_path_communist }
-						}
-						SIA_realign_to_communist = yes
-					}
-					else_if = {
-						limit = {
-							# Fail-open: an unmodelled ruling party must clear the path flags, or the is_in_array entry
-							# gates match nothing and no trunk can reopen.
-							NOT = { check_variable = { party_index = 18 } }
-							NOT = { check_variable = { party_index = 22 } }
-							NOT = { check_variable = { party_index = 23 } }
-							NOT = { check_variable = { party_index = 3 } }
-							NOT = { check_variable = { party_index = 1 } }
-							NOT = { check_variable = { party_index = 4 } }
-						}
-						SIA_clear_path_flags = yes
-						SIA_strip_populist_ideas = yes
-						SIA_strip_royalist_ideas = yes
-						SIA_strip_reform_ideas = yes
-						SIA_strip_democrat_ideas = yes
-						SIA_coup_cleanup_effect = yes
-						SIA_pt_cleanup_effect = yes
-					}
-					set_variable = { SIA_last_ruling_party = party_index }
+					SIA_clear_path_flags = yes
+					SIA_strip_populist_ideas = yes
+					SIA_strip_royalist_ideas = yes
+					SIA_strip_reform_ideas = yes
+					SIA_strip_democrat_ideas = yes
+					SIA_coup_cleanup_effect = yes
+					SIA_pt_cleanup_effect = yes
 				}
 			}
+			set_variable = { SIA_last_ruling_party = party_index }
 
 			if = {
 				limit = {
