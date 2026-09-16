@@ -66,6 +66,7 @@ _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 # real, distinct sprite name, not two tokens).
 _FOCUS_BLOCK_START = re.compile(r"\b(?:focus|shared_focus|joint_focus)\s*=\s*\{")
 _ICON_LINE_RE = re.compile(r'\bicon\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
+_RELATIVE_POSITION_RE = re.compile(r"\brelative_position_id\s*=\s*(\S+)")
 
 # prerequisite blocks: prerequisite = { focus = A  focus = B }
 _PREREQ_BLOCK_RE = re.compile(r"\bprerequisite\s*=\s*\{([^}]*)\}", re.DOTALL)
@@ -1183,6 +1184,33 @@ def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     return _cached_focus_scan(args, "focus_tree.pp_malus", _scan_pp_malus)
 
 
+def _scan_relative_positions(
+    text: str, filepath: str
+) -> List[Tuple[str, Optional[str], str, int]]:
+    """Return (focus_id, relative_position_id target or None, filepath, line)
+    for every focus block with an id, in file order."""
+    out: List[Tuple[str, Optional[str], str, int]] = []
+    for focus_id, body, start, _end in _iter_focus_blocks_with_id(text):
+        if focus_id is None:
+            continue
+        m = _RELATIVE_POSITION_RE.search(body)
+        if m:
+            out.append(
+                (focus_id, m.group(1), filepath, _line_of(text, start + m.start()))
+            )
+        else:
+            out.append((focus_id, None, filepath, _line_of(text, start)))
+    return out
+
+
+def _extract_relative_positions(
+    args: Tuple[str, str],
+) -> List[Tuple[str, Optional[str], str, int]]:
+    return _cached_focus_scan(
+        args, "focus_tree.relative_positions", _scan_relative_positions
+    )
+
+
 def _parse_focus_text(text: str, filepath: str) -> Dict:
     """Parse comment-stripped focus tree text into a structured result dict.
 
@@ -2282,9 +2310,75 @@ class Validator(BaseValidator):
             category="focus-empty-block",
         )
 
+    def validate_relative_position_targets(self):
+        """Flag a relative_position_id naming a focus defined later in the
+        same file, or defined nowhere.
+
+        The engine resolves positions in file order, so a target defined below
+        its user logs an error and leaves the focus mispositioned. A target in
+        another file (a shared focus) is not checked: cross-file order is
+        engine load order.
+        """
+        self._log_section("Checking relative_position_id targets and file order...")
+
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        data_lists = self._pool_map(
+            _extract_relative_positions,
+            [(f, self.mod_path) for f in files],
+            chunksize=10,
+        )
+
+        defined = {focus_id for sub in data_lists for focus_id, _, _, _ in sub}
+        forward = []
+        missing = []
+        for sub in data_lists:
+            if not sub or not self._is_reportable(sub[0][2]):
+                continue
+            rel = os.path.relpath(sub[0][2], self.mod_path)
+            in_file = {focus_id for focus_id, _, _, _ in sub}
+            seen: Set[str] = set()
+            for focus_id, target, _fp, line in sub:
+                if target is not None and target not in seen:
+                    if target in in_file:
+                        forward.append(
+                            (
+                                f"Focus '{focus_id}' uses relative_position_id"
+                                f" '{target}', which is defined later in the file"
+                                f" - move '{target}' above it",
+                                rel,
+                                line,
+                            )
+                        )
+                    elif target not in defined:
+                        missing.append(
+                            (
+                                f"Focus '{focus_id}' uses relative_position_id"
+                                f" '{target}', which no focus defines",
+                                rel,
+                                line,
+                            )
+                        )
+                seen.add(focus_id)
+
+        self._report(
+            forward,
+            "No relative_position_id targets defined later in their file",
+            "Focuses whose relative_position_id target is defined later in the file:",
+            Severity.ERROR,
+            category="relative-position-forward-ref",
+        )
+        self._report(
+            missing,
+            "No relative_position_id targets are undefined",
+            "Focuses whose relative_position_id names an undefined focus:",
+            Severity.ERROR,
+            category="relative-position-missing-target",
+        )
+
     def run_validations(self):
         self.validate_duplicate_focus_ids()
         self.validate_missing_prerequisite_targets()
+        self.validate_relative_position_targets()
         self.validate_orphan_focuses()
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()
