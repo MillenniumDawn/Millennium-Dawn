@@ -6,7 +6,7 @@ Rules from .claude/docs/focus-tree-reference.md + AGENTS.md category rules:
     digits and underscores) must carry every category its parent carries.
   * A gen dropping a category its whole lineage has is a copy-paste slip that
     silently mis-tags the tech in the research tree (e.g. a special-project
-    gated gen losing CAT_Military).
+    gated gen losing CAT_military).
   * Techs whose id does not share the parent's stripped stem (branches into a
     distinct subtype, e.g. countermeasures vs. air weapons, or Anti_Air vs.
     AA_upgrade) are intentionally different and are NOT flagged.
