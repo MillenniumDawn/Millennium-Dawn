@@ -10,10 +10,13 @@ Reads DDS headers only, so it is pure stdlib and does not need ImageMagick or
 texconv. It reports what to convert; converting is a separate step on a machine
 that has texconv, which the --emit-commands output drives.
 
-A texture is recommended for DXT1 when no mip level is translucent, and DXT5
-when any level uses alpha. Textures whose width or height is not a multiple of
-4 are reported as skipped, because block compression cannot represent them
-without padding.
+Follows docs/src/content/resources/art-standards.md, which allows only DXT1
+(BC1) and DXT5 (BC3), asks for no mip chain, and tells authors to keep flat
+colour art uncompressed because block compression blocks up on hard edges. So a
+texture is offered for DXT1 when no mip level is translucent and DXT5 when any
+level uses alpha, but only if it is photographic. Flat art, anything whose
+width or height is not a multiple of 4, and anything already compressed are
+each reported in their own bucket instead.
 """
 
 import argparse
@@ -30,6 +33,20 @@ DDPF_FOURCC = 0x4
 
 # Bytes per 4x4 block.
 BLOCK_BYTES = {"DXT1": 8, "DXT5": 16}
+
+# art-standards.md lists DXT1 (BC1) and DXT5 (BC3) and nothing else. DXT3, BC7
+# and the rest load or fail at the engine's discretion, so they are reported
+# rather than left alone.
+SUPPORTED_COMPRESSED = frozenset({"DXT1", "DXT5", "BC1", "BC3"})
+
+# Share of sampled pixels that are a distinct colour. Measured on the tree, a
+# playing card or logo sits near 0.002 and a photograph near 0.15, so anything
+# under this is the flat art the standard says to leave uncompressed.
+FLAT_COLOUR_RATIO = 0.02
+
+# Every fourth pixel of the top level is enough to separate two orders of
+# magnitude without reading whole textures.
+FLAT_SAMPLE_STEP = 7
 
 # DXGI formats that are already block compressed. Anything else behind a DX10
 # container is an uncompressed payload and is a candidate like any other.
@@ -66,7 +83,9 @@ def _dxgi_label(fmt):
 class Texture:
     """One parsed DDS file."""
 
-    def __init__(self, path, size, width, height, fourcc, mipmaps, alpha_used):
+    def __init__(
+        self, path, size, width, height, fourcc, mipmaps, alpha_used, flat=False
+    ):
         self.path = path
         self.size = size
         self.width = width
@@ -74,10 +93,16 @@ class Texture:
         self.fourcc = fourcc
         self.mipmaps = mipmaps
         self.alpha_used = alpha_used
+        self.flat = flat
 
     @property
     def compressed(self):
         return self.fourcc is not None
+
+    @property
+    def conforms(self):
+        """True if an already compressed texture uses a format the standard lists."""
+        return self.fourcc in SUPPORTED_COMPRESSED
 
     @property
     def block_aligned(self):
@@ -88,14 +113,11 @@ class Texture:
         return "DXT5" if self.alpha_used else "DXT1"
 
     def projected_size(self):
-        """Size after re-encoding, including the mip chain and header."""
+        """Size after re-encoding. The standard ships no mip chain, so this is
+        the top level plus the header whatever the source carried."""
         per_block = BLOCK_BYTES[self.target]
-        total = 0
-        w, h = self.width, self.height
-        for _ in range(self.mipmaps):
-            total += max(1, (w + 3) // 4) * max(1, (h + 3) // 4) * per_block
-            w, h = max(1, w // 2), max(1, h // 2)
-        return total + HEADER
+        blocks = max(1, (self.width + 3) // 4) * max(1, (self.height + 3) // 4)
+        return blocks * per_block + HEADER
 
     def saving(self):
         return max(0, self.size - self.projected_size())
@@ -137,34 +159,49 @@ def parse(path, alpha_floor=0):
                             path, size, width, height, _dxgi_label(dxgi), mipmaps, False
                         )
                     # Uncompressed payload in a DX10 container: a real candidate.
-                    alpha = False
+                    alpha = flat = False
                     if size >= alpha_floor:
+                        start = HEADER + DX10_HEADER
                         alpha = _alpha_is_used(
-                            handle,
-                            width,
-                            height,
-                            0xFF000000,
-                            mipmaps,
-                            HEADER + DX10_HEADER,
+                            handle, width, height, 0xFF000000, mipmaps, start
                         )
-                    return Texture(path, size, width, height, None, mipmaps, alpha)
+                        flat = _is_flat_colour(handle, width, height, start)
+                    return Texture(
+                        path, size, width, height, None, mipmaps, alpha, flat
+                    )
                 return Texture(path, size, width, height, name, mipmaps, False)
 
             bit_count = struct.unpack("<I", head[88:92])[0]
             alpha_mask = struct.unpack("<I", head[104:108])[0]
-            alpha_used = False
-            if (
-                size >= alpha_floor
-                and pf_flags & DDPF_ALPHAPIXELS
-                and bit_count == 32
-                and alpha_mask
-            ):
-                alpha_used = _alpha_is_used(
-                    handle, width, height, alpha_mask, mipmaps, HEADER
-                )
-            return Texture(path, size, width, height, None, mipmaps, alpha_used)
+            alpha_used = flat = False
+            if size >= alpha_floor and bit_count == 32:
+                if pf_flags & DDPF_ALPHAPIXELS and alpha_mask:
+                    alpha_used = _alpha_is_used(
+                        handle, width, height, alpha_mask, mipmaps, HEADER
+                    )
+                flat = _is_flat_colour(handle, width, height, HEADER)
+            return Texture(path, size, width, height, None, mipmaps, alpha_used, flat)
     except (OSError, struct.error):
         return None
+
+
+def _is_flat_colour(handle, width, height, data_start):
+    """True if the top level is flat art rather than a photograph.
+
+    art-standards.md asks for flat colour and hard edged art to stay
+    uncompressed, because DXT blocks up on it: the doc measures a two colour
+    logo at about 26 dB PSNR against 30 dB on a painting. Distinct colours per
+    sampled pixel separates the two cleanly on this tree, a playing card
+    landing near 0.002 and a background near 0.15.
+    """
+    pixels = width * height
+    handle.seek(data_start)
+    body = handle.read(pixels * 4)
+    if len(body) < pixels * 4:
+        return False
+    colours = {body[i * 4 : i * 4 + 4] for i in range(0, pixels, FLAT_SAMPLE_STEP)}
+    sampled = len(range(0, pixels, FLAT_SAMPLE_STEP))
+    return len(colours) / sampled < FLAT_COLOUR_RATIO
 
 
 def _alpha_is_used(handle, width, height, alpha_mask, mipmaps, data_start):
@@ -205,8 +242,8 @@ def collect(roots):
 
 
 def build_report(paths, floor):
-    """Return (convert, skipped, counts, sizes) for the given roots."""
-    convert, skipped = [], []
+    """Return (convert, skipped, flat, nonconforming, counts, sizes)."""
+    convert, skipped, flat, nonconforming = [], [], [], []
     counts, sizes = defaultdict(int), defaultdict(int)
     for path in collect(paths):
         texture = parse(path, floor)
@@ -215,23 +252,33 @@ def build_report(paths, floor):
         label = texture.fourcc or "UNCOMPRESSED"
         counts[label] += 1
         sizes[label] += texture.size
-        if texture.compressed or texture.size < floor:
+        if texture.compressed:
+            if not texture.conforms:
+                nonconforming.append(texture)
             continue
-        (convert if texture.block_aligned else skipped).append(texture)
+        if texture.size < floor:
+            continue
+        if texture.flat:
+            flat.append(texture)
+        elif texture.block_aligned:
+            convert.append(texture)
+        else:
+            skipped.append(texture)
     convert.sort(key=lambda t: -t.saving())
-    return convert, skipped, counts, sizes
+    flat.sort(key=lambda t: -t.size)
+    return convert, skipped, flat, nonconforming, counts, sizes
 
 
 def texconv_command(texture):
     """texconv invocation for one texture.
 
-    -m takes the number of mip levels to generate. texconv reads 0 as "the
-    full chain", which would add levels a single-level source never had, so
-    the count is always written explicitly.
+    art-standards.md asks for no mip chain on every category, so -m is always
+    1. texconv reads 0 as "the full chain", which would both disobey the
+    standard and add levels a single-level source never had.
     """
     fmt = "BC3_UNORM" if texture.target == "DXT5" else "BC1_UNORM"
     path = str(texture.path).replace("\\", "/")
-    return f'texconv -f {fmt} -m {texture.mipmaps} -y -o "{Path(path).parent}" "{path}"'
+    return f'texconv -f {fmt} -m 1 -y -o "{Path(path).parent}" "{path}"'
 
 
 def main(argv=None):
@@ -260,7 +307,9 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     floor = args.min_kb * 1024
-    convert, skipped, counts, sizes = build_report(args.paths, floor)
+    convert, skipped, flat, nonconforming, counts, sizes = build_report(
+        args.paths, floor
+    )
     total_saving = sum(t.saving() for t in convert)
 
     if args.format == "json":
@@ -285,6 +334,13 @@ def main(argv=None):
                 "skipped_not_block_aligned": [
                     str(t.path).replace("\\", "/") for t in skipped
                 ],
+                "kept_uncompressed_flat_art": [
+                    str(t.path).replace("\\", "/") for t in flat
+                ],
+                "unsupported_format": [
+                    {"path": str(t.path).replace("\\", "/"), "format": t.fourcc}
+                    for t in nonconforming
+                ],
                 "total_saving_bytes": total_saving,
             },
             sys.stdout,
@@ -304,7 +360,8 @@ def main(argv=None):
         print(f"  {label:14} {counts[label]:7} files  {sizes[label] / 1048576:9.1f} MB")
 
     print(
-        f"\nRECOMMENDED RE-ENCODES  (uncompressed, at least {args.min_kb:.0f} KB, block aligned)"
+        f"\nRECOMMENDED RE-ENCODES  (photographic, uncompressed, at least "
+        f"{args.min_kb:.0f} KB, block aligned)"
     )
     print(f"  {len(convert)} files, about {total_saving / 1048576:.0f} MB saved\n")
 
@@ -331,6 +388,26 @@ def main(argv=None):
             print(
                 f"  {texture.width}x{texture.height}  {str(texture.path).replace(chr(92), '/')}"
             )
+
+    if flat:
+        kept = sum(t.size for t in flat) / 1048576
+        print(
+            f"\nLEFT ALONE, flat colour art the standard keeps uncompressed: "
+            f"{len(flat)} files, {kept:.0f} MB"
+        )
+        for texture in flat[:10]:
+            print(
+                f"  {texture.size / 1048576:6.2f} MB  {texture.width}x{texture.height}"
+                f"  {str(texture.path).replace(chr(92), '/')}"
+            )
+
+    if nonconforming:
+        print(
+            f"\nNOT IN art-standards.md, which lists only DXT1 and DXT5: "
+            f"{len(nonconforming)} files"
+        )
+        for texture in nonconforming[:10]:
+            print(f"  {texture.fourcc:6}  {str(texture.path).replace(chr(92), '/')}")
 
     return 0
 

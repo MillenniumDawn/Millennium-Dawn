@@ -22,8 +22,15 @@ def _pixelformat(flags, fourcc=0, bit_count=0, masks=(0, 0, 0, 0)):
     return struct.pack("<8I", 32, flags, fourcc, bit_count, *masks)
 
 
-def _uncompressed(width, height, *, alpha_rows=None, mip_count=1, declared_mips=None):
-    """A 32bpp BGRA DDS. alpha_rows maps mip index -> alpha byte for that level."""
+def _uncompressed(
+    width, height, *, alpha_rows=None, mip_count=1, declared_mips=None, flat=False
+):
+    """A 32bpp BGRA DDS. alpha_rows maps mip index -> alpha byte for that level.
+
+    flat=True paints one colour, standing in for a logo or card face; otherwise
+    every pixel differs, standing in for a photograph. The audit only offers the
+    photographic ones, so which of the two a fixture is matters.
+    """
     pf = _pixelformat(
         audit.DDPF_ALPHAPIXELS,
         bit_count=32,
@@ -43,7 +50,13 @@ def _uncompressed(width, height, *, alpha_rows=None, mip_count=1, declared_mips=
     w, h = width, height
     for level in range(mip_count):
         alpha = (alpha_rows or {}).get(level, 0xFF)
-        body += struct.pack("<I", (alpha << 24) | 0x00112233) * (w * h)
+        if flat:
+            body += struct.pack("<I", (alpha << 24) | 0x00112233) * (w * h)
+        else:
+            body += b"".join(
+                struct.pack("<I", (alpha << 24) | (i * 2654435761 & 0xFFFFFF))
+                for i in range(w * h)
+            )
         w, h = max(1, w // 2), max(1, h // 2)
     return head + body
 
@@ -166,12 +179,14 @@ def test_block_alignment_gates_the_recommendation(tmp_path):
     )
 
 
-def test_projection_counts_every_mip_level(tmp_path):
+def test_projection_ignores_the_source_mip_chain(tmp_path):
+    """The standard ships no mip chain, so a chained source projects the same."""
     single = audit.parse(_write(tmp_path, "one.dds", _uncompressed(8, 8, mip_count=1)))
     chained = audit.parse(
         _write(tmp_path, "many.dds", _uncompressed(8, 8, mip_count=4))
     )
-    assert chained.projected_size() > single.projected_size()
+    assert chained.mipmaps == 4
+    assert chained.projected_size() == single.projected_size()
 
 
 def test_dxt1_projection_is_half_of_dxt5(tmp_path):
@@ -191,14 +206,53 @@ def test_report_splits_candidates_from_misaligned(tmp_path):
     _write(tmp_path, "big.dds", _uncompressed(64, 64))
     _write(tmp_path, "odd.dds", _uncompressed(63, 64))
     _write(tmp_path, "done.dds", _fourcc(64, 64))
-    convert, skipped, counts, _ = audit.build_report([tmp_path], floor=0)
+    convert, skipped, flat, nonconforming, counts, _ = audit.build_report(
+        [tmp_path], floor=0
+    )
     assert [t.path.name for t in convert] == ["big.dds"]
     assert [t.path.name for t in skipped] == ["odd.dds"]
+    assert flat == [] and nonconforming == []
     assert counts["DXT1"] == 1
 
 
-def test_texconv_command_writes_the_mip_count_explicitly(tmp_path):
-    texture = audit.parse(_write(tmp_path, "one.dds", _uncompressed(8, 8, mip_count=1)))
+# --- art-standards.md conformance -----------------------------------------
+
+
+def test_flat_colour_art_is_kept_uncompressed(tmp_path):
+    """A card face or logo blocks up under DXT, so the standard keeps it as is."""
+    _write(tmp_path, "card.dds", _uncompressed(64, 64, flat=True))
+    _write(tmp_path, "photo.dds", _uncompressed(64, 64))
+    convert, _, flat, _, _, _ = audit.build_report([tmp_path], floor=0)
+    assert [t.path.name for t in convert] == ["photo.dds"]
+    assert [t.path.name for t in flat] == ["card.dds"]
+
+
+def test_a_format_outside_the_standard_is_reported(tmp_path):
+    """Only DXT1 and DXT5 are listed; DXT3 is neither offered nor left silent."""
+    _write(tmp_path, "dxt3.dds", _fourcc(64, 64, tag=b"DXT3"))
+    _, _, _, nonconforming, _, _ = audit.build_report([tmp_path], floor=0)
+    assert [(t.path.name, t.fourcc) for t in nonconforming] == [("dxt3.dds", "DXT3")]
+
+
+def test_bc7_is_reported_rather_than_treated_as_done(tmp_path):
+    """HOI4 does not take BC7, so a BC7 payload is a finding, not a pass."""
+    texture = audit.parse(_write(tmp_path, "bc7.dds", _dx10(8, 8, 98)))
+    assert texture.compressed is True
+    assert texture.conforms is False
+
+
+def test_a_listed_format_does_not_get_reported(tmp_path):
+    _, _, _, nonconforming, _, _ = audit.build_report(
+        [_write(tmp_path, "ok.dds", _fourcc(64, 64, tag=b"DXT1")).parent], floor=0
+    )
+    assert nonconforming == []
+
+
+def test_texconv_command_asks_for_no_mip_chain(tmp_path):
+    """Every category in the standard is "No Mipmaps", including chained sources."""
+    texture = audit.parse(
+        _write(tmp_path, "many.dds", _uncompressed(8, 8, mip_count=4))
+    )
     command = audit.texconv_command(texture)
     assert "-m 1" in command and "-m 0" not in command
     assert "BC1_UNORM" in command
@@ -236,6 +290,46 @@ def test_text_report_and_by_dir_both_render(tmp_path, capsys):
     assert "DDS INVENTORY" in out and "SKIPPED" in out
     audit.main([str(tmp_path), "--min-kb", "0", "--by-dir"])
     assert "MB" in capsys.readouterr().out
+
+
+def test_text_report_names_the_two_conformance_buckets(tmp_path, capsys):
+    _write(tmp_path, "photo.dds", _uncompressed(64, 64))
+    _write(tmp_path, "card.dds", _uncompressed(64, 64, flat=True))
+    _write(tmp_path, "dxt3.dds", _fourcc(64, 64, tag=b"DXT3"))
+    audit.main([str(tmp_path), "--min-kb", "0"])
+    out = capsys.readouterr().out
+    assert "LEFT ALONE" in out and "card.dds" in out
+    assert "NOT IN art-standards.md" in out and "dxt3.dds" in out
+
+
+def test_json_output_carries_the_conformance_buckets(tmp_path, capsys):
+    _write(tmp_path, "card.dds", _uncompressed(64, 64, flat=True))
+    _write(tmp_path, "dxt3.dds", _fourcc(64, 64, tag=b"DXT3"))
+    audit.main([str(tmp_path), "--min-kb", "0", "--format", "json"])
+    payload = json.loads(capsys.readouterr().out)
+    assert [p.rsplit("/", 1)[-1] for p in payload["kept_uncompressed_flat_art"]] == [
+        "card.dds"
+    ]
+    assert [
+        (e["path"].rsplit("/", 1)[-1], e["format"])
+        for e in payload["unsupported_format"]
+    ] == [("dxt3.dds", "DXT3")]
+
+
+def test_a_truncated_body_is_not_called_flat(tmp_path):
+    """A header promising more pixels than the file holds must not read as flat."""
+    blob = _uncompressed(64, 64)[: audit.HEADER + 64]
+    assert audit.parse(_write(tmp_path, "cut.dds", blob)).flat is False
+
+
+def test_an_unnamed_dxgi_format_still_gets_a_label():
+    """Every block compressed code names a family; anything else falls back."""
+    assert audit._dxgi_label(84) == "BC5"
+    assert audit._dxgi_label(87) == "DXGI87"
+
+
+def test_an_unreadable_file_is_skipped(tmp_path):
+    assert audit.parse(tmp_path / "does_not_exist.dds") is None
 
 
 def test_collect_accepts_a_single_file(tmp_path):
