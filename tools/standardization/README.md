@@ -380,22 +380,25 @@ This will show:
 
 ## Integration with Development Workflow
 
-No standardizer runs automatically. The `md-standardize` pre-commit hook is
-disabled on purpose: it rewrites whole files, so on a repo where most files
+Standardization is manual, static tooling: no standardizer or standardization
+check runs in pre-commit or CI. The `md-standardize` auto-fixer hook is
+disabled on purpose — it rewrites whole files, so on a repo where most files
 predate the current rules it would drag a full reformat into every unrelated
-commit. Run the standardizers by hand on the files you are working on.
+commit — and `tools/validation/validate_standardization.py` is likewise
+unwired from both pipelines. Run the standardizers by hand on the files you
+are working on, or run the report on your own schedule for a cleanup pass:
 
-What runs instead is `tools/validation/validate_standardization.py`, which
-_reports_ the files a standardizer would rewrite without touching them. It is
-warning-only and scoped to changed files, in pre-commit (through
-`tools/precommit_validate.py`) and in CI (a `core`-batch step). Each finding
-names the command that fixes it:
+```bash
+python3 tools/validation/validate_standardization.py --all --no-color
+```
+
+Each finding names the command that fixes it:
 
 ```
 events/Gulf.txt - not standardized - run: python3 tools/standardization/standardize.py event "events/Gulf.txt"
 ```
 
-Pass `--all` for a full-repo sweep instead of the changed-file scope.
+Drop `--all` (and add `--staged`) for the changed-file scope.
 
 ### standardize_api.py
 
