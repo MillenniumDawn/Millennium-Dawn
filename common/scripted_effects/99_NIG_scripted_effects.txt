@@ -339,13 +339,72 @@ NIG_set_to_pluralist = {
 	}
 }
 
-NIG_clear_conversion_country_flags = {
-	clr_country_flag = NIG_religious_conversion_abuja
-	clr_country_flag = NIG_religious_conversion_ambazonia
-	clr_country_flag = NIG_religious_conversion_benue
-	clr_country_flag = NIG_religious_conversion_biafra
-	clr_country_flag = NIG_religious_conversion_borno
-	clr_country_flag = NIG_religious_conversion_kano
-	clr_country_flag = NIG_religious_conversion_lagos
-	clr_country_flag = NIG_religious_conversion_sokoto
+# Rolls the outcome branch of a state conversion decision and applies it.
+# Caller (country scope) must save event_target:NIG_religious_conversion_state and set the base temps.
+NIG_religious_conversion_outcome = {
+	random_list = {
+		25 = {
+			set_temp_variable = { NIG_conv_pop_mult = 1 }
+			set_temp_variable = { NIG_conv_stab_mult = 1 }
+			NIG_apply_religious_conversion = yes
+			country_event = { id = nigeria_md.1 days = 1 }
+		}
+		50 = {
+			set_temp_variable = { NIG_conv_pop_mult = 0.5 }
+			set_temp_variable = { NIG_conv_stab_mult = 2 }
+			NIG_apply_religious_conversion = yes
+			country_event = { id = nigeria_md.2 days = 1 }
+		}
+		25 = {
+			modifier = {
+				factor = 1.25
+				has_country_flag = NIG_sharia_law_warning_flag
+			}
+			set_temp_variable = { NIG_conv_pop_mult = 0.25 }
+			set_temp_variable = { NIG_conv_stab_mult = 4 }
+			NIG_apply_religious_conversion = yes
+			country_event = { id = nigeria_md.3 days = 1 }
+		}
+	}
+	if = {
+		limit = {
+			322 = { NIG_has_been_converted = yes }
+			332 = { NIG_has_been_converted = yes }
+			334 = { NIG_has_been_converted = yes }
+			336 = { NIG_has_been_converted = yes }
+			337 = { NIG_has_been_converted = yes }
+			338 = { NIG_has_been_converted = yes }
+			339 = { NIG_has_been_converted = yes }
+			340 = { NIG_has_been_converted = yes }
+		}
+		set_country_flag = NIG_has_converted_everything
+	}
+}
+
+# Applies one state conversion. Temp-var arguments from the caller: NIG_conv_pop_base,
+# NIG_conv_stab_base (negative), NIG_conv_unrest_extra (negative, Boko Haram base only).
+# Branch multipliers come from NIG_religious_conversion_outcome.
+NIG_apply_religious_conversion = {
+	if = {
+		limit = { has_completed_focus = NIG_suppression_of_islam }
+		set_temp_variable = { party_index = 14 }
+		event_target:NIG_religious_conversion_state = { set_state_flag = NIG_christian_state }
+	}
+	else = {
+		set_temp_variable = { party_index = 11 }
+		event_target:NIG_religious_conversion_state = { set_state_flag = NIG_islamic_state }
+	}
+	multiply_temp_variable = { NIG_conv_pop_base = NIG_conv_pop_mult }
+	multiply_temp_variable = { NIG_conv_stab_base = NIG_conv_stab_mult }
+	set_temp_variable = { party_popularity_increase = NIG_conv_pop_base }
+	set_temp_variable = { temp_outlook_increase = NIG_conv_pop_base }
+	change_relative_party_popularity = yes
+	add_stability = NIG_conv_stab_base
+	if = {
+		limit = {
+			has_completed_focus = NIG_suppression_of_islam
+			check_variable = { NIG_conv_unrest_extra < 0 }
+		}
+		add_stability = NIG_conv_unrest_extra
+	}
 }
