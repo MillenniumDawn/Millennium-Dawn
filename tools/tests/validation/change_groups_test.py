@@ -17,7 +17,7 @@ def test_localisation_only_change():
     assert groups["style_files"] == []
 
 
-def test_tools_change_runs_full_suite():
+def test_validation_tool_change_runs_full_suite():
     groups = change_groups.classify(["tools/validation/change_groups.py"])
 
     assert groups["full_suite"] is True
@@ -26,6 +26,14 @@ def test_tools_change_runs_full_suite():
         groups[name] is True for name in change_groups.GROUP_PATTERNS if name != "style"
     )
     assert groups["style"] is False
+
+
+def test_non_validation_tool_change_skips_full_suite():
+    groups = change_groups.classify(["tools/assets/dds_compression_audit.py"])
+
+    assert groups["full_suite"] is False
+    assert groups["tools"] is True
+    assert groups["content"] is False
 
 
 def test_dispatch_is_distinct_from_empty_diff():
