@@ -615,7 +615,10 @@ def _log_only_block_types(lines):
 def test_log_only_option_and_complete_effect_are_flagged():
     lines = [
         "\toption = {\n",
+        "\t\tname = test.1.a\n",
         '\t\tlog = "[GetDateText]: Event test.1 Option a"\n',
+        "\t\ttrigger = { always = yes }\n",
+        "\t\tai_chance = { base = 1 }\n",
         "\t}\n",
         "\tcomplete_effect = {\n",
         "\t\t# a comment does not count as content\n",
@@ -652,6 +655,33 @@ def test_packed_log_only_block_is_flagged():
     ]
 
     assert _log_only_block_types(lines) == ["completion_reward", "on_remove"]
+
+
+def test_multiline_log_only_block_with_trailing_comment_is_flagged():
+    lines = [
+        "\tcompletion_reward = {\n",
+        '\t\tlog = "[GetDateText]: Focus TST_x" # note\n',
+        "\t}\n",
+    ]
+
+    assert _log_only_block_types(lines) == ["completion_reward"]
+
+
+def test_log_only_option_is_reported_through_check_file(tmp_path, scoped_refs):
+    messages = _messages(
+        tmp_path,
+        "events/test.txt",
+        "country_event = {",
+        "\tid = test.1",
+        "\toption = {",
+        "\t\tname = test.1.a",
+        '\t\tlog = "[GetDateText]: Event test.1 Option a"',
+        "\t\tai_chance = { base = 1 }",
+        "\t}",
+        "}",
+    )
+
+    assert len(_matching(messages, "only effect in this option block")) == 1
 
 
 def test_commented_out_effect_block_is_ignored():

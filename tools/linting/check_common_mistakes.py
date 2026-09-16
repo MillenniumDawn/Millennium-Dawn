@@ -298,6 +298,7 @@ _RE_OR_CONTENT = re.compile(r"OR\s*=\s*\{([^}]*)\}")
 _RE_LOG_ONLY_EFFECT = re.compile(r"log\s*=\s*\"[^\"]*\"\s*$")
 _RE_OPTION_BLOCK_OPEN = re.compile(r"\boption\s*=\s*\{")
 _RE_TRIGGER_BLOCK_OPEN = re.compile(r"\btrigger\s*=\s*\{")
+_OPTION_NON_EFFECT_KEYS = {"name", "log", "trigger", "ai_chance"}
 # Every block the engine runs as an effect list and MD logs from (#4456).
 _RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
     r"\b(option|complete_effect|remove_effect|timeout_effect|cancel_effect"
@@ -1402,8 +1403,19 @@ def _check_duplicate_add_to_variable(lines):
     return issues
 
 
+def _option_has_no_effects(block_lines):
+    option = next(
+        (node for node in _parse_script_tree(block_lines) if node.key == "option"),
+        None,
+    )
+    if option is None:
+        return False
+    keys = {child.key for child in option.children}
+    return "log" in keys and keys <= _OPTION_NON_EFFECT_KEYS
+
+
 def _check_empty_log_only_blocks(lines):
-    """Flag effect blocks where log is the only content.
+    """Flag effect blocks where log is the only effect.
 
     Covers every block MD logs from: event option / immediate, decision
     complete/remove/timeout/cancel_effect, idea on_add / on_remove, focus
@@ -1421,22 +1433,28 @@ def _check_empty_log_only_blocks(lines):
             i += 1
             continue
         block_lines, next_i = _get_block(lines, i)
-        if len(block_lines) == 1:
-            code = strip_inline_comment(block_lines[0])
-            inner = code[match.end() : code.rindex("}")].strip()
-            content_lines = [inner] if inner else []
+        if match.group(1) == "option":
+            log_only = _option_has_no_effects(block_lines)
         else:
-            content_lines = [
-                l.strip()
-                for l in block_lines[1:-1]
-                if l.strip() and not l.strip().startswith("#")
-            ]
+            if len(block_lines) == 1:
+                code = strip_inline_comment(block_lines[0])
+                inner = code[match.end() : code.rindex("}")].strip()
+                content_lines = [inner] if inner else []
+            else:
+                content_lines = []
+                for line in block_lines[1:-1]:
+                    code = strip_inline_comment(line).strip()
+                    if code:
+                        content_lines.append(code)
+            log_only = bool(content_lines) and all(
+                _RE_LOG_ONLY_EFFECT.match(line) for line in content_lines
+            )
 
-        if content_lines and all(_RE_LOG_ONLY_EFFECT.match(l) for l in content_lines):
+        if log_only:
             issues.append(
                 (
                     i + 1,
-                    f'log = "..." is the only content in this {match.group(1)} block -- '
+                    f'log = "..." is the only effect in this {match.group(1)} block -- '
                     "delete the block (a log records an effect that never runs)",
                 )
             )
