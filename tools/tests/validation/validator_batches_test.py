@@ -165,6 +165,16 @@ def test_manual_texture_audit_stays_excluded_from_impact():
     assert adhoc == []
 
 
+def test_manual_standardization_check_stays_excluded_from_impact():
+    # Manual-only: the standardization report is deliberately unwired from
+    # pre-commit and CI, so editing the script must not re-select it.
+    batch, adhoc = vb.select_for_changed_files(
+        ["tools/validation/validate_standardization.py"]
+    )
+    assert batch == []
+    assert adhoc == []
+
+
 def test_unsupported_new_validator_is_not_run_with_standard_flags(
     tmp_path, monkeypatch
 ):
