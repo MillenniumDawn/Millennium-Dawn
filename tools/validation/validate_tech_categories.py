@@ -236,7 +236,7 @@ class Validator(BaseValidator):
             ],
             "All technology categories are CAT_lowercase",
             "Technology categories not named CAT_lowercase:",
-            severity=Severity.ERROR,
+            severity=Severity.WARNING,
             category="tech-category-name-format",
         )
 
@@ -257,7 +257,7 @@ class Validator(BaseValidator):
             unlocalised,
             "All technology categories are localised",
             "Technology categories missing a name or _research loc key:",
-            severity=Severity.ERROR,
+            severity=Severity.WARNING,
             category="tech-category-unlocalised",
         )
 
@@ -277,7 +277,7 @@ class Validator(BaseValidator):
             ],
             "All technology categories are used by a technology",
             "Technology categories no technology carries:",
-            severity=Severity.ERROR,
+            severity=Severity.WARNING,
             category="tech-category-unused",
         )
 

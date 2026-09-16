@@ -152,6 +152,7 @@ def test_mixed_case_tag_is_a_format_error(tmp_path):
     assert _messages(v, "tech-category-name-format") == [
         "Technology category 'CAT_Military' is not CAT_lowercase"
     ]
+    assert (v.errors_found, v.warnings_found) == (0, 1)
 
 
 def test_tech_file_categories_are_checked(tmp_path):
@@ -223,6 +224,7 @@ def test_tag_without_loc_keys_is_reported(tmp_path):
     assert _messages(v, "tech-category-unlocalised") == [
         "Technology category 'CAT_missile' has no English loc key CAT_missile_research"
     ]
+    assert (v.errors_found, v.warnings_found) == (0, 1)
 
 
 def test_tag_no_tech_uses_is_reported(tmp_path):
@@ -235,6 +237,7 @@ def test_tag_no_tech_uses_is_reported(tmp_path):
     assert _messages(v, "tech-category-unused") == [
         "Technology category 'CAT_missile' is not used by any technology"
     ]
+    assert (v.errors_found, v.warnings_found) == (0, 1)
 
 
 def test_clean_fixture_has_no_definition_findings(tmp_path):
