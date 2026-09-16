@@ -71,9 +71,34 @@ on_actions = {
 				clamp_variable = { var = SIA_strike_days_left min = 0 max = 365 }
 				if = {
 					limit = { check_variable = { SIA_strike_momentum > 99 } }
+					# Record the win here, not in thailand.250: the event is a day away and the
+					# realignment detector below runs first, so the red road can be gone by then.
+					set_country_flag = SIA_communist_peaceful_path
 					country_event = { id = thailand.250 days = 1 }
-					# Clear the flag now so the day-365 thailand.259 deadline no-ops.
-					clr_country_flag = SIA_strike_active
+					# Full teardown now, so the day-365 thailand.259 deadline no-ops and a trunk switch
+					# later in this same tick cannot leave the idea and the meter standing.
+					SIA_strike_cleanup_effect = yes
+				}
+			}
+
+			# A political drive pays its support out weekly over a year instead of in one lump.
+			# Weekly, not daily: the payout ends in recalculate_party, which re-sorts all 24 parties.
+			if = {
+				limit = { check_variable = { SIA_drive_weeks > 0 } }
+				set_temp_variable = { party_index = SIA_drive_party }
+				set_temp_variable = { party_popularity_increase = SIA_drive_rate }
+				set_temp_variable = { temp_outlook_increase = SIA_drive_rate }
+				# change_relative_party_popularity ends in recalculate_party itself; a second call here
+				# would re-sort all 24 parties twice every armed week.
+				change_relative_party_popularity = yes
+				# temp_outlook_increase persists for the rest of this weekly pass; the Yellow Shirts
+				# drift below sets no outlook of its own and would inherit this one.
+				set_temp_variable = { temp_outlook_increase = 0 }
+				subtract_from_variable = { SIA_drive_weeks = 1 }
+				# Retire the rate with the last week, or a later drive resumes at the old total.
+				if = {
+					limit = { check_variable = { SIA_drive_weeks < 1 } }
+					set_variable = { SIA_drive_rate = 0 }
 				}
 			}
 
@@ -175,6 +200,8 @@ on_actions = {
 			if = {
 				limit = {
 					has_completed_focus = SIA_yellow_shirts
+					# A reform or communist government does not drift toward the palace.
+					SIA_royalist_policy_open = yes
 					check_variable = { party_pop_array^23 < 0.35 }
 				}
 				set_temp_variable = { party_index = 23 }
@@ -396,10 +423,30 @@ on_actions = {
 				SIA_pt_quiet_effect = yes
 			}
 
+			# The red road's own path to power: the CPT winning a vote is the seizure, even if the tree
+			# has not reached SIA_people_seize_power yet. That focus's bypass covers the case where it
+			# has; this covers the case where it has not, so a lost election is only a delay.
+			if = {
+				limit = {
+					has_country_flag = SIA_path_communist
+					check_variable = { ruling_party = 4 }
+					NOT = { has_country_flag = SIA_communist_seized }
+					has_civil_war = no
+				}
+				SIA_communist_seizure_effect = yes
+			}
+
 			# Political realignment detector. Watches the ruling party and swaps the player onto the
 			# matching trunk.
 			if = {
-				limit = { NOT = { has_country_flag = SIA_republic_declared } }
+				limit = {
+					# The red road is entered before the party holds power, so an ordinary election
+					# defeat must not realign it away: SIA_clear_path_flags would take the trunk flag,
+					# the strike, the spirits and the drive in one pass, and only SIA_ghosts_of_the_jungle
+					# (one-shot) or winning outright at idx 4 can ever set the flag again.
+					NOT = { has_country_flag = SIA_path_communist }
+					NOT = { has_country_flag = SIA_republic_declared }
+				}
 				set_party_index_to_ruling_party = yes
 				# Seed once so we react to changes only, not to the initial party-vs-trunk gap.
 				if = {
@@ -428,10 +475,9 @@ on_actions = {
 						country_event = { id = thailand.421 days = 2 }
 					}
 					else_if = {
-						limit = {
-							check_variable = { party_index = 3 }
-							NOT = { has_country_flag = SIA_path_reform }
-						}
+						# No flag guard: SIA_seeds_of_reform sets SIA_path_reform before the vote, so the
+						# outgoing government's spirits are still standing when idx 3 finally wins.
+						limit = { check_variable = { party_index = 3 } }
 						SIA_realign_to_reform = yes
 						set_leader = yes
 						country_event = { id = thailand.422 days = 2 }
