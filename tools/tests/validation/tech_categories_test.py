@@ -1,6 +1,11 @@
 """Tests for validate_tech_categories."""
 
-from validate_tech_categories import Validator, _brace_span, _references
+from validate_tech_categories import (
+    Validator,
+    _brace_span,
+    _doctrine_category_bodies,
+    _references,
+)
 
 _TAG_NAMES = [
     "CAT_military",
@@ -233,8 +238,49 @@ def test_tag_no_tech_uses_is_reported(tmp_path):
         techs=_TECHS.replace("categories = { CAT_missile }", "categories = { }"),
     )
     assert _messages(v, "tech-category-unused") == [
-        "Technology category 'CAT_missile' is not used by any technology"
+        "Technology category 'CAT_missile' is not used by any technology or doctrine"
     ]
+
+
+def test_doctrine_categories_are_checked(tmp_path):
+    v = _run(
+        tmp_path,
+        "common/doctrines/grand_doctrines/land.txt",
+        "combined_arms = {\n\tfolder = land\n\tcategories = {\n"
+        "\t\tCAT_zzz_doctrine\n\t}\n}\n",
+    )
+    messages = _messages(v)
+    assert len(messages) == 1
+    assert messages[0].startswith("Unknown technology category 'CAT_zzz_doctrine'")
+
+
+def test_doctrine_mastery_categories_are_not_references(tmp_path):
+    v = _run(
+        tmp_path,
+        "common/doctrines/subdoctrines/land/x.txt",
+        "sub = {\n\ttrack = t\n\tcategories = {\n\t\tCAT_missile\n\t}\n"
+        "\tmastery = {\n\t\tcategories = { category_all_infantry }\n\t}\n}\n",
+    )
+    assert _messages(v) == []
+
+
+def test_doctrine_carrier_satisfies_unused_check(tmp_path):
+    v = _run(
+        tmp_path,
+        "common/doctrines/subdoctrines/land/x.txt",
+        "sub = {\n\tcategories = {\n\t\tCAT_missile\n\t}\n}\n",
+        techs=_TECHS.replace("categories = { CAT_missile }", "categories = { }"),
+    )
+    assert _messages(v, "tech-category-unused") == []
+
+
+def test_doctrine_category_bodies_skips_nested_mastery_block():
+    text = (
+        "a = {\n\tcategories = { X }\n\tmastery = {\n\t\tcategories = { Y }\n\t}\n}\n"
+    )
+    bodies = list(_doctrine_category_bodies(text))
+    assert len(bodies) == 1
+    assert "X" in bodies[0][0]
 
 
 def test_clean_fixture_has_no_definition_findings(tmp_path):

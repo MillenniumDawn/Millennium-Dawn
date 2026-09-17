@@ -6,6 +6,8 @@
 # motivated this: CAT_encryption (the token is CAT_encryption_tech) sat in eight
 # idea research_bonus blocks, and CAT_computer_systems is a real token that
 # means armour computer systems, so computing content using it bought tank tech.
+# A doctrine's own categories block, directly under common/doctrines/, counts as
+# both a reference to check and a carrier that satisfies the unused-tag check.
 import difflib
 import os
 import re
@@ -43,6 +45,11 @@ _TECH_CATEGORIES_RE = re.compile(r"\bcategories\s*=\s*\{")
 _TAGS_GLOB = "common/technology_tags/**/*.txt"
 _TECH_DIR = "common/technologies/"
 _TECH_GLOB = _TECH_DIR + "**/*.txt"
+# A doctrine's own categories block sits at depth 2 (doctrine_name = { categories
+# = { ... } }); its mastery block nests a sub-unit categories block one level
+# deeper, which stays a non-reference like any other categories block.
+_DOCTRINE_DIRS = ("common/doctrines/grand_doctrines/", "common/doctrines/subdoctrines/")
+_DOCTRINE_GLOB = "common/doctrines/**/*.txt"
 _VALIDATE_PATTERNS = [
     "common/**/*.txt",
     "events/**/*.txt",
@@ -70,12 +77,41 @@ def _block_bodies(text: str, opener: "re.Pattern") -> Iterable[Tuple[str, int]]:
         yield text[open_idx + 1 : end], open_idx + 1
 
 
-def _references(text: str, tech_file: bool = False) -> List[Tuple[str, int]]:
+def _doctrine_category_bodies(text: str) -> Iterable[Tuple[str, int]]:
+    """(body, body_offset) of every categories block sitting directly inside a doctrine.
+
+    A doctrine's own block is at brace depth 1 when it opens (the doctrine body
+    itself), so its `{` lands at depth 2; a mastery block's nested categories
+    sit one level deeper and are skipped. Depth is tracked in a single pass so
+    it stays linear in the length of *text*.
+    """
+    matches = list(_TECH_CATEGORIES_RE.finditer(text))
+    if not matches:
+        return
+    depth = 0
+    mi = 0
+    for i, ch in enumerate(text):
+        while mi < len(matches) and matches[mi].start() == i:
+            if depth == 1:
+                open_idx = text.index("{", matches[mi].start())
+                end = _brace_span(text, open_idx)
+                yield text[open_idx + 1 : end], open_idx + 1
+            mi += 1
+        if ch == "{":
+            depth += 1
+        elif ch == "}":
+            depth -= 1
+
+
+def _references(
+    text: str, tech_file: bool = False, doctrine_file: bool = False
+) -> List[Tuple[str, int]]:
     """Every (category_name, char_offset) this text references.
 
     Deliberately narrow: `category = CAT_x`, the keys of a research_bonus or
-    research block, the tokens of a research_categories block and, for tech
-    files, the tokens of a categories block. A bare CAT_ token elsewhere is not
+    research block, the tokens of a research_categories block, for tech files
+    the tokens of a categories block, and for doctrine files the tokens of a
+    doctrine's own depth-2 categories block. A bare CAT_ token elsewhere is not
     a category reference, which is what keeps
     `has_country_flag = CAT_revolted_against_spain` (a Catalonia flag) and
     `name = CAT_tribute` (a tech-bonus name) out of this.
@@ -91,6 +127,10 @@ def _references(text: str, tech_file: bool = False) -> List[Tuple[str, int]]:
         listed.append(_TECH_CATEGORIES_RE)
     for opener in listed:
         for body, offset in _block_bodies(text, opener):
+            for tm in _TOKEN_RE.finditer(body):
+                found.append((tm.group(0), offset + tm.start()))
+    if doctrine_file:
+        for body, offset in _doctrine_category_bodies(text):
             for tm in _TOKEN_RE.finditer(body):
                 found.append((tm.group(0), offset + tm.start()))
     return found
@@ -126,25 +166,30 @@ def _check_file(args) -> List[Tuple[str, str, int]]:
         return []
     rel = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
     out: List[Tuple[str, str, int]] = []
-    for name, offset in _references(text, tech_file=rel.startswith(_TECH_DIR)):
+    for name, offset in _references(
+        text,
+        tech_file=rel.startswith(_TECH_DIR),
+        doctrine_file=rel.startswith(_DOCTRINE_DIRS),
+    ):
         if name in known:
             continue
         out.append((name, rel, text.count("\n", 0, offset) + 1))
     return out
 
 
-def _tech_categories(args) -> Set[str]:
-    """Worker: every category token a tech file assigns."""
-    (filepath,) = args
+def _carried_categories(args) -> Set[str]:
+    """Worker: every category token a tech or doctrine file carries."""
+    filepath, is_doctrine = args
     try:
         text = FileOpener.open_text_file(filepath, strip_comments_flag=True)
     except (OSError, UnicodeDecodeError):
         return set()
-    return {
-        tm.group(0)
-        for body, _ in _block_bodies(text, _TECH_CATEGORIES_RE)
-        for tm in _TOKEN_RE.finditer(body)
-    }
+    bodies = (
+        _doctrine_category_bodies(text)
+        if is_doctrine
+        else _block_bodies(text, _TECH_CATEGORIES_RE)
+    )
+    return {tm.group(0) for body, _ in bodies for tm in _TOKEN_RE.finditer(body)}
 
 
 class Validator(BaseValidator):
@@ -262,21 +307,31 @@ class Validator(BaseValidator):
         )
 
         tech_files = self._collect_files([_TECH_GLOB], ignore_staged=True)
+        doctrine_files = [
+            f
+            for f in self._collect_files([_DOCTRINE_GLOB], ignore_staged=True)
+            if os.path.relpath(f, self.mod_path)
+            .replace(os.sep, "/")
+            .startswith(_DOCTRINE_DIRS)
+        ]
+        carrier_args = [(f, False) for f in tech_files] + [
+            (f, True) for f in doctrine_files
+        ]
         used: Set[str] = set()
-        for cats in self._pool_map(_tech_categories, [(f,) for f in tech_files]):
+        for cats in self._pool_map(_carried_categories, carrier_args):
             used.update(cats)
         self._report(
             [
                 (
-                    f"Technology category '{name}' is not used by any technology",
+                    f"Technology category '{name}' is not used by any technology or doctrine",
                     rel,
                     line,
                 )
                 for name, rel, line in declared
                 if name not in used
             ],
-            "All technology categories are used by a technology",
-            "Technology categories no technology carries:",
+            "All technology categories are used by a technology or doctrine",
+            "Technology categories no technology or doctrine carries:",
             severity=Severity.ERROR,
             category="tech-category-unused",
         )
