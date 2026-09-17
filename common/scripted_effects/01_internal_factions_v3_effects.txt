@@ -51,6 +51,11 @@ if_debug_toggle_policy = {
 	else = {
 		add_to_array = { if_policies = if_p }
 	}
+	set_temp_variable = { if_id = global.if_policy_faction^if_p }
+	if = {
+		limit = { is_in_array = { array = if_active value = if_id } }
+		if_apply_faction_modifiers = yes
+	}
 	update_if_dirty_variable = yes
 }
 
@@ -62,6 +67,7 @@ if_change_opinion = {
 		limit = { is_in_array = { array = if_active value = if_id } }
 		add_to_variable = { if_opinion^if_id = temp_opinion }
 		clamp_variable = { var = if_opinion^if_id min = 0 max = 100 }
+		if_apply_faction_modifiers = yes
 		update_if_dirty_variable = yes
 	}
 }
@@ -74,6 +80,7 @@ if_change_influence = {
 		limit = { is_in_array = { array = if_active value = if_id } }
 		add_to_variable = { if_influence^if_id = temp_influence }
 		clamp_variable = { var = if_influence^if_id min = 0 max = 100 }
+		if_apply_faction_modifiers = yes
 		update_if_dirty_variable = yes
 	}
 }
@@ -99,6 +106,8 @@ if_add_faction = {
 					}
 				}
 			}
+			set_temp_variable = { if_dm_id = if_replace_id }
+			if_detach_dynmod = yes
 			for_each_loop = {
 				array = if_active
 				index = if_i
@@ -111,6 +120,9 @@ if_add_faction = {
 		}
 		set_variable = { if_opinion^if_id = 50 }
 		set_variable = { if_influence^if_id = global.if_base_influence^if_id }
+		set_temp_variable = { if_dm_id = if_id }
+		if_attach_dynmod = yes
+		if_apply_faction_modifiers = yes
 		update_if_dirty_variable = yes
 	}
 	set_temp_variable = { if_replace_id = 0 }
@@ -122,6 +134,8 @@ if_remove_faction = {
 	if = {
 		limit = { is_in_array = { array = if_active value = if_id } }
 		remove_from_array = { array = if_active value = if_id }
+		set_temp_variable = { if_dm_id = if_id }
+		if_detach_dynmod = yes
 		update_if_dirty_variable = yes
 	}
 }
@@ -155,6 +169,7 @@ if_seed_held_faction = {
 		if_pick_rule_filled_slot = yes
 		if_add_faction = yes
 		set_variable = { if_opinion^if_id = if_seed_opinion }
+		if_apply_faction_modifiers = yes
 	}
 }
 
@@ -469,6 +484,8 @@ if_copy_factions = {
 		array = var:nation_to_copy_from.if_active
 		value = if_v
 		add_to_array = { if_active = if_v }
+		set_temp_variable = { if_dm_id = if_v }
+		if_attach_dynmod = yes
 		set_variable = { if_opinion^if_v = var:nation_to_copy_from.if_opinion^if_v }
 		set_variable = { if_influence^if_v = var:nation_to_copy_from.if_influence^if_v }
 		set_temp_variable = { if_aff = if_v }
@@ -480,6 +497,7 @@ if_copy_factions = {
 			subtract_from_variable = { if_opinion^if_v = var:nation_to_copy_from.if_opinion^if_v }
 		}
 	}
+	if_apply_modifiers = yes
 	update_if_dirty_variable = yes
 }
 
@@ -739,6 +757,7 @@ if_monthly_tick = {
 			add_to_variable = { if_influence^if_v = if_d }
 			clamp_variable = { var = if_influence^if_v min = 0 max = 100 }
 		}
+		if_apply_modifiers = yes
 		update_if_dirty_variable = yes
 	}
 }

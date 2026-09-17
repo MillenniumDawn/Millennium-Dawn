@@ -583,6 +583,12 @@ id), `if_aff` (affinity index), `if_group`, `if_mil_term`, `if_pol_term`,
 `if_law`, `if_party`. Later steps must not reuse these names for unrelated
 values within the same call chain.
 
+The modifier feed (step 4) adds its own reserved temp names: `if_s`
+(opinion-scaled base), `if_g` (government bonus strength), `if_gov_aff`
+(affinity index for the ruling party), `if_k` (a per-key scratch value inside
+a single `if_dynmod_<id>` block), and `if_dm_id` (the faction id passed to
+`if_attach_dynmod` and `if_detach_dynmod`).
+
 ## Prototype GUI (step 3)
 
 Files: `common/scripted_guis/01_internal_factions_gui.txt`,
@@ -599,6 +605,67 @@ dispatchers on `v`: `if_tier_text_v`, `if_inf_tier_text_v`, `if_stance_v`,
 `[?global.if_token^v.GetTokenLocalizedKey]` directly, and the icon uses
 `GFX_idea_[?global.if_token^v.GetTokenKey]`. Open buttons sit in the top bar
 next to the EU button and on the politics tab next to the protests button.
+
+## Modifier feed (step 4)
+
+File: `common/scripted_effects/01_internal_factions_v3_modifier_feeds.txt`.
+This is now the only writer of the vars in
+`common/dynamic_modifiers/05_internal_factions_modifiers.txt`. The old
+`apply_<f>_DYNMOD` effects and their call sites are gone from
+`00_internal_faction_effects.txt`.
+
+`if_apply_faction_modifiers` (param `if_id`) computes two numbers and then
+dispatches to one of 23 `if_dynmod_<id>` blocks:
+
+- `if_s`, the opinion-scaled base: `(if_opinion^id - 50)` scaled by influence
+  tier, 0.5 at marginal, 1.0 at influential, 1.5 at powerful.
+- `if_g`, the government bonus strength: 0 normally, 0.5 when the ruling
+  party's group is backed by the faction (`global.if_affinity`) and opinion
+  is in the positive tier (60-79), 1.0 at the enthusiastic tier (80+).
+  Coalition partners are not weighted in, only the ruling party.
+
+Each `if_dynmod_<id>` block writes one var per modifier key on the faction's
+dynamic modifier: first the opinion-scaled vars (`set_variable = { VAR =
+if_s }` then `multiply_variable` by the same k the old feed used), then the
+two government-bonus keys from table E (added into an existing opinion-scaled
+var through the `if_k` temp var, or set directly from `if_g` when the key has
+no opinion-scaled var), then every remaining policy-only var is zeroed, then
+the four policies from table D are applied with `is_in_array = { if_policies
+= p }`, `p = (id - 1) * 4 + k` (k 1-3 privileges, 4 the crackdown). A key that
+is shared by several sub-resources (the `local_resources_*_factor` keys, or a
+policy that says `local_resources_factor`) always resolves to the block's one
+shared local-resources var, never a per-resource one.
+
+The intelligence community (id 9) keeps its DLC branch: with La Resistance,
+the four `*_intel_factor` vars are opinion-scaled and decryption/encryption
+are zeroed; without it, decryption/encryption are opinion-scaled and the four
+intel vars are zeroed. The government bonus and policies for id 9 are added
+after the branch, so they apply either way. The Quds Force (id 20) has no
+`has_idea` guard, since it is only reached through `if_active`. Three ids (2,
+4, 5) had an acceptance var keyed to `global.monthly_internal_faction_tick_rate`
+in the old feed; that k is now the constant `@if_k_acceptance` (0.25).
+
+Refresh points, all guarded by faction presence:
+`if_apply_faction_modifiers` (one faction, on `if_id`) runs from
+`if_change_opinion`, `if_change_influence`, `if_add_faction`,
+`if_seed_held_faction`, and `if_debug_toggle_policy`. `if_apply_modifiers`
+(loops `if_active` and calls the above per faction) runs at the end of
+`if_monthly_tick` and `if_copy_factions`.
+
+`if_attach_dynmod` and `if_detach_dynmod` (param `if_dm_id`, an if/else_if
+chain on the faction id) add or remove the one dynamic modifier for that
+faction, guarded by `has_dynamic_modifier` so they are safe to call when the
+modifier is already in the right state. They are called from `if_add_faction`
+(detach the replaced slot, attach the new one), `if_remove_faction`
+(detach), `if_copy_factions` (attach for each copied faction), and the
+game-rule reseed in `999_game_rules_on_actions.txt` (detach every active
+faction before `clear_array = if_active`).
+
+Known gap, not fixed here: a faction idea added mid-game through the old
+`add_ideas` path attaches its dynamic modifier through the idea's own
+`on_add`, without joining `if_active`. Its vars stay at 0 (or stale, if it
+replaced a faction that was swapped out) until step 11 replaces those
+callers.
 
 ## Step map
 
