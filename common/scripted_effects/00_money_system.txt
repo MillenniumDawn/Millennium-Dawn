@@ -4986,6 +4986,23 @@ update_state_variables = {
 
 # Effect: calculate_gdp
 # Purpose: Sums per-building GDP contributions into gdp_total and derives gdp_per_capita
+# Effect: apply_weekly_gdp_growth
+# Purpose: The only place GDP compounds. Kept out of calculate_gdp, which re-runs on demand.
+apply_weekly_gdp_growth = {
+	# Zero before a country's first economy pass would wipe gdp_total
+	if = {
+		limit = { check_variable = { overall_productivity > 0 } }
+		multiply_variable = {
+			var = gdp_total
+			value = {
+				value = overall_productivity
+				divide = global.productivity_center
+			}
+		}
+		clamp_variable = { var = gdp_total min = 0.1 }
+	}
+}
+
 calculate_gdp = {
 	# Calculate Last Quarter's GDP
 	if = {
@@ -6123,15 +6140,6 @@ calculate_gdp = {
 			value = gdp_from_healthcare
 			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
 			clamp = { min = 0 max = 1 }
-		}
-	}
-
-	# Overall productivity grows over time (on_monthly) and with techs and its the main source of economic growth for developed countries
-	multiply_variable = {
-		var = gdp_total
-		value = {
-			value = overall_productivity
-			divide = global.productivity_center
 		}
 	}
 
