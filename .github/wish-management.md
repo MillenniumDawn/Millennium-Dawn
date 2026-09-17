@@ -15,15 +15,14 @@ check, and the commands used to build the board.
 
 Wishes come in through the issue forms under `.github/ISSUE_TEMPLATE/`:
 
-| Form        | Label at creation  | Extra labels from the form                                  |
-| ----------- | ------------------ | ----------------------------------------------------------- |
-| New country | `type:new-country` | `region:*`                                                  |
-| Rework      | `type:rework`      | `region:*`                                                  |
-| Task        | none               | `type:update`, `type:system`, or `type:gfx`, and `region:*` |
+| Form       | Issue type  | Labels from the form                                        |
+| ---------- | ----------- | ----------------------------------------------------------- |
+| Focus tree | Focus Trees | `type:new-country` or `type:rework`, and `region:*`         |
+| Task       | Task        | `type:update`, `type:system`, or `type:gfx`, and `region:*` |
 
-`wish-intake.yml` reads the Region and Work type dropdowns, applies the matching labels,
-and adds any issue with a `type:*` label to the board. Assignees stay empty until the
-council claims the wish.
+`wish-intake.yml` reads the Kind, Work type, and Region dropdowns, applies the matching
+labels, and adds any issue with a `type:*` label to the board. Assignees stay empty until
+the council claims the wish.
 
 ## Where each field lives
 
