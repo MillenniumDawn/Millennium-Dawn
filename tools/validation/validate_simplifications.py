@@ -26,6 +26,16 @@ Four more collapses are flagged on top of the same-scope merge:
   * `random_state` limited by `controller = { tag = X }` / `is_controlled_by = X`
     -> `random_controlled_state` (drop the controller check; keep other limits)
 
+A second pass flags redundant owner scopes in focus and decision files
+(_scan_focus_file / _scan_decision_file): a tree locked to one country via
+`focus_tree = { country = { ... tag = X } }`, or a decision locked via its
+own (or its enclosing category's) `allowed`, already runs every trigger and
+effect in that country's scope, so `X = { ... }` wrappers splice into the
+parent and bare `tag = X` / `original_tag = X` re-checks drop out. Only
+strict (`tag = X`) ownership lifts scopes; `original_tag = X` gates admit
+breakaways, so they only lose their always-true `original_tag` re-checks.
+`joint_focus` blocks are never scanned (rewards fan out to every member).
+
 Output is WARNING-only.
 """
 
@@ -612,6 +622,276 @@ def _find_random_controlled_shortcut(text: str):
     return results
 
 
+# Redundant owner scope: a focus tree or decision locked to one country
+# already evaluates in that scope. Ownership is strict (`tag = X`, current
+# scope provably IS X) or gate-only (`original_tag = X`, breakaways admitted).
+_OWNER_ATOM_RE = re.compile(r"\b(tag|original_tag)\s*=\s*([A-Z]{3})\b")
+_REL_SCOPE_REF_RE = re.compile(r"\b(PREV|FROM)\b")
+
+# Block headers that preserve the current country scope. Anything else that
+# opens a block (tags, state ids, magic scopes, iterators, `target_trigger`,
+# effect-parameter blocks, ...) drops the walk to non-owner scope, which only
+# suppresses findings. `target_trigger` is deliberately absent: it runs in
+# the target's scope, while `target_root_trigger` runs in ROOT's.
+_OWNER_TRANSPARENT = frozenset(
+    {
+        "AND",
+        "OR",
+        "NOT",
+        "if",
+        "else_if",
+        "else",
+        "limit",
+        "trigger",
+        "hidden_trigger",
+        "hidden_effect",
+        "effect_tooltip",
+        "custom_effect_tooltip",
+        "custom_trigger_tooltip",
+        "available",
+        "allowed",
+        "allow_branch",
+        "visible",
+        "activation",
+        "bypass",
+        "bypass_effect",
+        "complete_effect",
+        "remove_effect",
+        "timeout_effect",
+        "cancel_effect",
+        "remove_trigger",
+        "cancel_trigger",
+        "target_root_trigger",
+        "completion_reward",
+        "select_effect",
+        "ai_will_do",
+        "modifier",
+        "country",
+        "offset",
+    }
+)
+_OR_LIKE_HEADERS = frozenset({"OR", "NOT"})
+_GATE_SITE_HEADERS = frozenset({"allowed", "allow_branch"})
+# Ownership collection recurses only through AND-like wrappers. OR dilutes
+# identity (`OR = { tag = X ... }` still admits non-X) and NOT inverts it
+# (`allowed = { NOT = { tag = X } }` locks to everyone BUT X), so atoms under
+# either prove nothing about the current scope.
+_OWNER_GATE_TRANSPARENT = frozenset(
+    {
+        "AND",
+        "limit",
+        "trigger",
+        "hidden_trigger",
+        "allowed",
+        "allow_branch",
+        "country",
+        "modifier",
+    }
+)
+
+
+def _collect_owner_atoms(text: str) -> tuple[set[str], set[str]]:
+    """Return (strict_tags, orig_tags) for `tag = X` / `original_tag = X`
+    triggers not nested under a scope-changing or sense-changing block.
+    AND-like wrappers don't block collection; country, state, magic, or
+    iterator scopes do (atoms there describe another scope), as do OR and NOT
+    (which dilute or invert the identity the atom asserts)."""
+    strict: set[str] = set()
+    orig: set[str] = set()
+    pos = 0
+    while True:
+        m = _OPEN_RE.search(text, pos)
+        gap = text[pos : m.start() if m else len(text)]
+        for gm in _OWNER_ATOM_RE.finditer(gap):
+            (strict if gm.group(1) == "tag" else orig).add(gm.group(2))
+        if not m:
+            break
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            break
+        if m.group(1) in _OWNER_GATE_TRANSPARENT:
+            s, o = _collect_owner_atoms(body)
+            strict |= s
+            orig |= o
+        pos = end
+    return strict, orig
+
+
+def _owner_from_atoms(strict: set[str], orig: set[str]) -> tuple[str, bool] | None:
+    """Return (tag, is_strict) when the atoms lock to one country, else None.
+    Strict needs a strict atom for the tag; original-only gates admit
+    breakaways whose current tag differs, so they never prove scope."""
+    tags = strict | orig
+    if len(tags) != 1:
+        return None
+    tag = next(iter(tags))
+    if strict == {tag} and orig <= {tag}:
+        return (tag, True)
+    if not strict and orig == {tag}:
+        return (tag, False)
+    return None
+
+
+def _liftable_owner_block(body: str) -> bool:
+    """True when an owner-scope block splices into its parent. Bodies
+    referencing PREV/FROM are left alone (relative chains), as are the two
+    single-trigger shapes the scope-expansion check already owns."""
+    if _REL_SCOPE_REF_RE.search(body):
+        return False
+    sm = _SINGLE_TRIGGER_RE.match(body.strip())
+    if sm and (sm.group(1), sm.group(2)) in _FLAT_EQUIV:
+        return False
+    return True
+
+
+def _walk_owner_scope(
+    body: str,
+    owner: str,
+    strict: bool,
+    findings: list,
+    start_line: int,
+    scope_owner: bool = True,
+    or_depth: int = 0,
+    gate_site: bool = False,
+) -> None:
+    """Append (message, line) for redundant owner-scope blocks and
+    always-true owner checks. *body* starts at file line *start_line*;
+    scope, OR/NOT depth, and gate-site state thread through transparent
+    wrappers, while any other block drops to non-owner scope."""
+    pos = 0
+    while True:
+        m = _OPEN_RE.search(body, pos)
+        gap = body[pos : m.start() if m else len(body)]
+        if scope_owner and or_depth == 0 and not gate_site:
+            for gm in _OWNER_ATOM_RE.finditer(gap):
+                kind, tag = gm.group(1), gm.group(2)
+                if tag != owner:
+                    continue
+                if kind == "original_tag" or strict:
+                    line = start_line + gap.count("\n", 0, gm.start())
+                    findings.append(
+                        (
+                            f"`{kind} = {tag}` always true in this owner scope; remove it",
+                            line,
+                        )
+                    )
+        if not m:
+            break
+        header = m.group(1)
+        inner, end = extract_block_from_text(body, m.end() - 1)
+        if end == -1:
+            break
+        line = start_line + body.count("\n", 0, m.start())
+        child_line = start_line + body.count("\n", 0, m.end())
+        if header in _OWNER_TRANSPARENT:
+            _walk_owner_scope(
+                inner,
+                owner,
+                strict,
+                findings,
+                child_line,
+                scope_owner,
+                or_depth + (header in _OR_LIKE_HEADERS),
+                gate_site or header in _GATE_SITE_HEADERS,
+            )
+        elif header == owner and scope_owner and strict:
+            if _liftable_owner_block(inner):
+                findings.append(
+                    (
+                        f"`{owner} = {{ ... }}` already runs in the `{owner}` scope; "
+                        "remove the wrapper",
+                        line,
+                    )
+                )
+            else:
+                _walk_owner_scope(
+                    inner, owner, strict, findings, child_line, True, or_depth, False
+                )
+        else:
+            _walk_owner_scope(
+                inner, owner, strict, findings, child_line, False, or_depth, False
+            )
+        pos = end
+
+
+def _top_level_blocks(text: str, names, start_line: int = 1):
+    """Yield (header, body, body_start_line) for each depth-0 block. *names*
+    None matches every header. Callers always land on depth 0 by jumping
+    block to block."""
+    pos = 0
+    while True:
+        m = _OPEN_RE.search(text, pos)
+        if not m:
+            break
+        body, end = extract_block_from_text(text, m.end() - 1)
+        if end == -1:
+            break
+        if names is None or m.group(1) in names:
+            yield m.group(1), body, start_line + text.count("\n", 0, m.end())
+        pos = end
+
+
+def _direct_gate_atoms(body: str) -> tuple[set[str], set[str]]:
+    """Owner atoms from direct-child `allowed` / `allow_branch` blocks."""
+    strict: set[str] = set()
+    orig: set[str] = set()
+    for _, abody, _ in _top_level_blocks(body, _GATE_SITE_HEADERS):
+        s, o = _collect_owner_atoms(abody)
+        strict |= s
+        orig |= o
+    return strict, orig
+
+
+def _scan_focus_file(text: str) -> list:
+    """Return [(message, line)] for redundant owner scopes in one focus file.
+    Ownership comes from the single `focus_tree` country gate, narrowed by
+    each focus's own `allow_branch`; `joint_focus` blocks are never scanned."""
+    findings: list = []
+    trees = list(_top_level_blocks(text, {"focus_tree"}))
+    if len(trees) != 1:
+        return findings
+    _, tbody, tline = trees[0]
+    countries = list(_top_level_blocks(tbody, {"country"}))
+    if len(countries) > 1:
+        return findings
+    base = _collect_owner_atoms(countries[0][1]) if countries else (set(), set())
+    blocks = list(_top_level_blocks(tbody, {"focus"}, tline))
+    blocks += list(_top_level_blocks(text, {"focus"}))
+    for _, fbody, fline in blocks:
+        s, o = _direct_gate_atoms(fbody)
+        owner = _owner_from_atoms(base[0] | s, base[1] | o)
+        if owner is None:
+            continue
+        _walk_owner_scope(fbody, owner[0], owner[1], findings, fline)
+    return findings
+
+
+def _scan_decision_file(text: str) -> list:
+    """Return [(message, line)] for redundant owner scopes in one decisions
+    file. Ownership comes from each decision's own `allowed`, extended with
+    the enclosing `*_category` block's `allowed` when nested."""
+    findings: list = []
+    for header, body, bline in _top_level_blocks(text, None):
+        if header.endswith("_category"):
+            cstrict, corig = _direct_gate_atoms(body)
+            for dheader, dbody, dline in _top_level_blocks(body, None, bline):
+                if dheader.endswith("_category"):
+                    continue
+                if dheader in _GATE_SITE_HEADERS:
+                    continue  # gate definition, not a decision
+                s, o = _direct_gate_atoms(dbody)
+                owner = _owner_from_atoms(cstrict | s, corig | o)
+                if owner is None:
+                    continue
+                _walk_owner_scope(dbody, owner[0], owner[1], findings, dline)
+        else:
+            owner = _owner_from_atoms(*_direct_gate_atoms(body))
+            if owner is None:
+                continue
+            _walk_owner_scope(body, owner[0], owner[1], findings, bline)
+    return findings
+
+
 def _scan_file(text: str, path: str):
     """Return [(message, line)] for one comment-stripped file. Pure function of
     *text*, so parse_files_cached can content-cache it."""
@@ -679,7 +959,20 @@ def _scan_bare_not(text: str, path: str):
     return findings
 
 
-_ALL_SCAN_PATTERNS = list(dict.fromkeys(_SCAN_PATTERNS + _NOT_SCAN_PATTERNS))
+_FOCUS_PATTERNS = [
+    "common/national_focus/*.txt",
+    "common/national_focus/**/*.txt",
+]
+_DECISION_PATTERNS = [
+    "common/decisions/*.txt",
+    "common/decisions/**/*.txt",
+]
+
+_ALL_SCAN_PATTERNS = list(
+    dict.fromkeys(
+        _SCAN_PATTERNS + _NOT_SCAN_PATTERNS + _FOCUS_PATTERNS + _DECISION_PATTERNS
+    )
+)
 
 
 def _matches_relative_pattern(path: str, patterns) -> bool:
@@ -704,28 +997,58 @@ def _matches_relative_pattern(path: str, patterns) -> bool:
 
 
 def _scan_composite(text: str, path: str):
-    """Run the two simplification passes after one content read/cache lookup."""
+    """Run the simplification passes after one content read/cache lookup."""
     findings = []
     if _matches_relative_pattern(path, _SCAN_PATTERNS):
         findings.extend(_scan_file(text, path))
     if _matches_relative_pattern(path, _NOT_SCAN_PATTERNS):
         findings.extend(_scan_bare_not(text, path))
+    if _matches_relative_pattern(path, _FOCUS_PATTERNS):
+        findings.extend(_scan_focus_file(text))
+    if _matches_relative_pattern(path, _DECISION_PATTERNS):
+        findings.extend(_scan_decision_file(text))
     return findings
+
+
+def _scan_owner_scope_only(text: str, path: str):
+    """Run just the redundant owner-scope pass (focus trees + decisions)."""
+    findings = []
+    if _matches_relative_pattern(path, _FOCUS_PATTERNS):
+        findings.extend(_scan_focus_file(text))
+    if _matches_relative_pattern(path, _DECISION_PATTERNS):
+        findings.extend(_scan_decision_file(text))
+    return findings
+
+
+_OWNER_SCOPE_PATTERNS = list(dict.fromkeys(_FOCUS_PATTERNS + _DECISION_PATTERNS))
 
 
 class Validator(BaseValidator):
     TITLE = "SIMPLIFICATION SUGGESTIONS"
     STAGED_EXTENSIONS = [".txt"]
 
+    def __init__(self, *args, owner_scope_only: bool = False, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.owner_scope_only = owner_scope_only
+
     def run_validations(self):
         self._log_section("Scanning for simplification opportunities...")
-        # Both passes use the same comment-stripped source on overlapping files.
+        # All passes share one comment-stripped read per file; the cache key
+        # must differ per pass set, since the same content yields different
+        # findings under --owner-scope-only.
+        if self.owner_scope_only:
+            self._log_section("Owner-scope pass only (--owner-scope-only).")
+            patterns = _OWNER_SCOPE_PATTERNS
+            cache_key = "simplifications.owner-scope"
+            scan_fn = _scan_owner_scope_only
+        else:
+            patterns = _ALL_SCAN_PATTERNS
+            cache_key = "simplifications.composite"
+            scan_fn = _scan_composite
         parsed = self.parse_files_cached(
-            _ALL_SCAN_PATTERNS,
-            "simplifications.composite",
-            lambda text, path: _scan_composite(
-                text, os.path.relpath(path, self.mod_path)
-            ),
+            patterns,
+            cache_key,
+            lambda text, path: scan_fn(text, os.path.relpath(path, self.mod_path)),
         )
         self.log(f"Scanned {len(parsed)} files for simplification opportunities")
 
@@ -745,8 +1068,19 @@ class Validator(BaseValidator):
         )
 
 
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--owner-scope-only",
+        action="store_true",
+        dest="owner_scope_only",
+        help="Only run the redundant owner-scope pass (focus trees and "
+        "decisions); skip the other simplification checks",
+    )
+
+
 if __name__ == "__main__":
     run_validator_main(
         Validator,
         "Suggest merging consecutive same-scope blocks in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
     )
