@@ -47,4 +47,8 @@ For each file reviewed, report:
 Mark anything that could corrupt save state, soft-lock the player, or crash the GUI as **[critical]**.
 
 Lead with the findings or "No findings in the reviewed scope." State verification
-limits rather than claiming every edge case is handled. End with `BLUF`.
+limits rather than claiming every edge case is handled.
+
+When the branch has an open PR, a body (title and description) that does not match the diff is a **[blocker]** and rejects the PR until the body describes what the code actually does: name what the body claims that the diff lacks or what the diff contains that the body omits. A missing or empty body counts as not matching.
+
+End with `BLUF`.
