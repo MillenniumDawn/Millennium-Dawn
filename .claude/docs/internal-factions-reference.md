@@ -583,6 +583,23 @@ id), `if_aff` (affinity index), `if_group`, `if_mil_term`, `if_pol_term`,
 `if_law`, `if_party`. Later steps must not reuse these names for unrelated
 values within the same call chain.
 
+## Prototype GUI (step 3)
+
+Files: `common/scripted_guis/01_internal_factions_gui.txt`,
+`interface/MD_internal_factions.gui`,
+`common/scripted_localisation/01_internal_factions_scripted_loc.txt`,
+`localisation/english/MD_internal_factions_v3_l_english.yml`. The window
+carries `dirty = global.if_ui_dirty` and is gated by the country flag
+`if_window_open`, toggled by `if_toggle_window`. Policies are debug-only for
+now: a per-country `if_policies` array flipped by `if_debug_toggle_policy`,
+with policy id `(faction id - 1) * 4 + k` (k 1-3 privilege, 4 crackdown); no
+cost or effect until step 5. Per-entry display goes through scripted-loc
+dispatchers on `v`: `if_tier_text_v`, `if_inf_tier_text_v`, `if_stance_v`,
+`if_affinity_v`, and `if_policy_k_icon` per slot. The faction name uses
+`[?global.if_token^v.GetTokenLocalizedKey]` directly, and the icon uses
+`GFX_idea_[?global.if_token^v.GetTokenKey]`. Open buttons sit in the top bar
+next to the EU button and on the politics tab next to the protests button.
+
 ## Step map
 
 One line per sub-issue in epic #4260, listing what each step builds.
