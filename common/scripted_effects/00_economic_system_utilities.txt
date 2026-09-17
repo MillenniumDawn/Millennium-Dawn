@@ -48,49 +48,120 @@ ai_repay_debt = {
 	if = {
 		limit = {
 			check_variable = { debt > 0 }
-			check_variable = { treasury > 0 }
-			check_variable = { debt_ratio > 0.3 }
 			NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
 			NOT = { has_country_flag = paused_debt_repayment }
 		}
-		set_temp_variable = { ai_debt_reserve = { value = display_expense multiply = 8 } }
 		set_temp_variable = { ai_debt_reserve_min = { value = gdp_total multiply = 0.02 } }
-		# Absolute floor, or a collapsed economy with near-zero GDP and expenses empties its whole treasury
 		if = { limit = { check_variable = { ai_debt_reserve_min < 1 } }
 			set_temp_variable = { ai_debt_reserve_min = 1 }
 		}
-		if = { limit = { check_variable = { ai_debt_reserve < ai_debt_reserve_min } }
-			set_temp_variable = { ai_debt_reserve = ai_debt_reserve_min }
-		}
-		# A year of runway; automated_debt_taker borrows >=1% of GDP with a 1% fee on any dip below zero
+		set_temp_variable = { ai_debt_full_payoff_buffer = debt }
+		add_to_temp_variable = { ai_debt_full_payoff_buffer = ai_debt_reserve_min }
 		if = { limit = { check_variable = { treasury_rate < 0 } }
 			set_temp_variable = { ai_debt_deficit_runway = { value = treasury_rate multiply = -52 } }
-			add_to_temp_variable = { ai_debt_reserve = ai_debt_deficit_runway }
+			add_to_temp_variable = { ai_debt_full_payoff_buffer = ai_debt_deficit_runway }
 		}
 
-		set_temp_variable = { ai_debt_payment = { value = treasury subtract = ai_debt_reserve } }
-		if = { limit = { check_variable = { ai_debt_payment > debt } }
-			set_temp_variable = { ai_debt_payment = debt }
-		}
-
-		set_temp_variable = { ai_debt_payment_min = { value = gdp_total multiply = 0.005 } }
-		if = { limit = { check_variable = { ai_debt_payment_min < 0.01 } }
-			set_temp_variable = { ai_debt_payment_min = 0.01 }
-		}
-		# Collapsing the threshold to the remainder lets the final instalment clear the debt
-		if = { limit = { check_variable = { ai_debt_payment_min > debt } }
-			set_temp_variable = { ai_debt_payment_min = debt }
-		}
-
+		# Treasury already covers the whole debt: clear it in one payment if cash after payoff leaves an operating runway
 		if = {
-			limit = { check_variable = { var = ai_debt_payment value = ai_debt_payment_min compare = greater_than_or_equals } }
+			limit = {
+				check_variable = { treasury > debt }
+				OR = {
+					NOT = { check_variable = { treasury_rate < 0 } }
+					check_variable = { treasury > ai_debt_full_payoff_buffer }
+				}
+			}
+			set_temp_variable = { ai_debt_payment = debt }
 			subtract_from_variable = { treasury = ai_debt_payment }
-			subtract_from_variable = { debt = ai_debt_payment }
-			if = { limit = { check_variable = { debt < 0.001 } }
-				set_variable = { debt = 0 }
+			set_variable = { debt = 0 }
+			set_variable = { interest_rate = 0 }
+			set_variable = { debt_rate = 0 }
+			set_variable = { debt_ratio = 0 }
+			set_variable = { debt_interest_premium = 0 }
+			set_variable = { interest_rate_multiplier = 0 }
+			set_variable = { cb_rate_premium = 0 }
+			set_variable = { threat_interest_premium = 0 }
+			set_variable = { adjusted_tension_premium = 0 }
+			set_variable = { interest_rate_clamp_adjustment = 0 }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } }
+				remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
+				clear_variable = high_interest_penalty_modifier
+				clear_variable = stability_factor_very_high_interest_modifier
+				clear_variable = western_drift_very_high_interest_modifier
+				clear_variable = emerging_drift_very_high_interest_modifier
+				clear_variable = nonaligned_drift_very_high_interest_modifier
+				clear_variable = salafist_drift_very_high_interest_modifier
+				clear_variable = nationalist_drift_very_high_interest_modifier
 			}
 			if = { limit = { is_debug = yes }
-				log = "[GetDateText]: [Root.GetName]: AI repaid [?ai_debt_payment]b debt (Reserve: [?ai_debt_reserve]b, Treasury: [?treasury]b, Debt: [?debt]b, Interest Rate: [?interest_rate]%, Treasury Rate: [?treasury_rate]b)"
+				log = "[GetDateText]: [Root.GetName]: AI cleared [?ai_debt_payment]b debt (Treasury: [?treasury]b)"
+			}
+		}
+		# Otherwise repay gradually from the treasury above an operating reserve
+		else = {
+			if = {
+				limit = { check_variable = { treasury > 0 } }
+				set_temp_variable = { ai_debt_reserve = { value = display_expense multiply = 8 } }
+				set_temp_variable = { ai_debt_reserve_min = { value = gdp_total multiply = 0.02 } }
+				# Absolute floor, or a collapsed economy with near-zero GDP and expenses empties its whole treasury
+				if = { limit = { check_variable = { ai_debt_reserve_min < 1 } }
+					set_temp_variable = { ai_debt_reserve_min = 1 }
+				}
+				if = { limit = { check_variable = { ai_debt_reserve < ai_debt_reserve_min } }
+					set_temp_variable = { ai_debt_reserve = ai_debt_reserve_min }
+				}
+				# A year of runway; automated_debt_taker borrows >=1% of GDP with a 1% fee on any dip below zero
+				if = { limit = { check_variable = { treasury_rate < 0 } }
+					set_temp_variable = { ai_debt_deficit_runway = { value = treasury_rate multiply = -52 } }
+					add_to_temp_variable = { ai_debt_reserve = ai_debt_deficit_runway }
+				}
+
+				set_temp_variable = { ai_debt_payment = { value = treasury subtract = ai_debt_reserve } }
+				if = { limit = { check_variable = { ai_debt_payment > debt } }
+					set_temp_variable = { ai_debt_payment = debt }
+				}
+
+				set_temp_variable = { ai_debt_payment_min = { value = gdp_total multiply = 0.005 } }
+				if = { limit = { check_variable = { ai_debt_payment_min < 0.01 } }
+					set_temp_variable = { ai_debt_payment_min = 0.01 }
+				}
+				# Collapsing the threshold to the remainder lets the final instalment clear the debt
+				if = { limit = { check_variable = { ai_debt_payment_min > debt } }
+					set_temp_variable = { ai_debt_payment_min = debt }
+				}
+
+				if = {
+					limit = { check_variable = { var = ai_debt_payment value = ai_debt_payment_min compare = greater_than_or_equals } }
+					subtract_from_variable = { treasury = ai_debt_payment }
+					subtract_from_variable = { debt = ai_debt_payment }
+					if = { limit = { check_variable = { debt < 0.001 } }
+						set_variable = { debt = 0 }
+						set_variable = { interest_rate = 0 }
+						set_variable = { debt_rate = 0 }
+						set_variable = { debt_ratio = 0 }
+						set_variable = { debt_interest_premium = 0 }
+						set_variable = { interest_rate_multiplier = 0 }
+						set_variable = { cb_rate_premium = 0 }
+						set_variable = { threat_interest_premium = 0 }
+						set_variable = { adjusted_tension_premium = 0 }
+						set_variable = { interest_rate_clamp_adjustment = 0 }
+						if = {
+							limit = { has_dynamic_modifier = { modifier = very_high_interest_country_modifiers } }
+							remove_dynamic_modifier = { modifier = very_high_interest_country_modifiers }
+							clear_variable = high_interest_penalty_modifier
+							clear_variable = stability_factor_very_high_interest_modifier
+							clear_variable = western_drift_very_high_interest_modifier
+							clear_variable = emerging_drift_very_high_interest_modifier
+							clear_variable = nonaligned_drift_very_high_interest_modifier
+							clear_variable = salafist_drift_very_high_interest_modifier
+							clear_variable = nationalist_drift_very_high_interest_modifier
+						}
+					}
+					if = { limit = { is_debug = yes }
+						log = "[GetDateText]: [Root.GetName]: AI repaid [?ai_debt_payment]b debt (Reserve: [?ai_debt_reserve]b, Treasury: [?treasury]b, Debt: [?debt]b, Interest Rate: [?interest_rate]%, Treasury Rate: [?treasury_rate]b)"
+					}
+				}
 			}
 		}
 	}
