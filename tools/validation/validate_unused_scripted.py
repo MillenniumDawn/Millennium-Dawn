@@ -117,9 +117,6 @@ PENDING_IMPLEMENTATION_NAMES = frozenset(
         "USA_return_majority",
         "USA_flip_support",
         "usa_congress_oppposition_elections",
-        # Internal factions v3 (#4260): callers land in steps 2 and 5
-        "if_change_influence",
-        "if_remove_faction",
     }
 )
 

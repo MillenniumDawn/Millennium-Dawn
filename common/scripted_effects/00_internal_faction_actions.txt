@@ -1,0 +1,271 @@
+# Internal factions v3 player and AI actions, see .claude/docs/internal-factions-reference.md
+@if_grant_opinion = 10
+@if_revoke_opinion = -15
+@if_revoke_stability = -0.03
+@if_crackdown_opinion = -20
+@if_crackdown_influence = -20
+@if_crackdown_stability = -0.05
+@if_lift_opinion = 5
+@if_appease_opinion = 10
+@if_appease_rival_opinion = -3
+@if_ai_coup_plot_threshold = 50
+@if_ai_coup_pp = 150
+@if_ai_privilege_pp = 200
+
+# Parameters:
+# - if_id: faction id 1-23; economic factions (category 1) pay a GDP share from the treasury, the rest pay political power
+if_pay_privilege_cost = {
+	if = {
+		limit = { check_variable = { global.if_category^if_id = 1 } }
+		set_temp_variable = { treasury_change = gdp_total }
+		multiply_temp_variable = { treasury_change = global.if_cost_grant_gdp_share }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+	}
+	else = {
+		set_temp_variable = { if_pp = global.if_cost_grant_pp }
+		multiply_temp_variable = { if_pp = -1 }
+		add_political_power = if_pp
+	}
+}
+
+# Parameters:
+# - if_p: privilege id (faction id - 1) * 4 + k, k 1-3
+if_grant_privilege = {
+	if = {
+		limit = { if_can_grant_privilege = yes }
+		set_temp_variable = { if_id = global.if_policy_faction^if_p }
+		add_to_array = { if_policies = if_p }
+		set_variable = { if_policy_cooldown^if_id = global.if_policy_cooldown_months }
+		set_temp_variable = { temp_opinion = @if_grant_opinion }
+		if_change_opinion = yes
+		log = "[GetDateText]: [Root.GetName]: granted privilege [?if_p] to faction [?if_id]"
+		if_pay_privilege_cost = yes
+	}
+}
+
+# Parameters:
+# - if_p: privilege id (faction id - 1) * 4 + k, k 1-3
+if_revoke_privilege = {
+	if = {
+		limit = { if_can_revoke_privilege = yes }
+		set_temp_variable = { if_id = global.if_policy_faction^if_p }
+		remove_from_array = { array = if_policies value = if_p }
+		set_variable = { if_policy_cooldown^if_id = global.if_policy_cooldown_months }
+		set_temp_variable = { temp_opinion = @if_revoke_opinion }
+		if_change_opinion = yes
+		add_stability = @if_revoke_stability
+		log = "[GetDateText]: [Root.GetName]: revoked privilege [?if_p] from faction [?if_id]"
+		set_temp_variable = { if_pp = global.if_cost_revoke }
+		multiply_temp_variable = { if_pp = -1 }
+		add_political_power = if_pp
+	}
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+if_enact_crackdown = {
+	if = {
+		limit = { if_can_enact_crackdown = yes }
+		set_temp_variable = { if_cp = if_id }
+		multiply_temp_variable = { if_cp = 4 }
+		add_to_array = { if_policies = if_cp }
+		subtract_from_temp_variable = { if_cp = 1 }
+		remove_from_array = { array = if_policies value = if_cp }
+		subtract_from_temp_variable = { if_cp = 1 }
+		remove_from_array = { array = if_policies value = if_cp }
+		subtract_from_temp_variable = { if_cp = 1 }
+		remove_from_array = { array = if_policies value = if_cp }
+		set_variable = { if_policy_cooldown^if_id = global.if_policy_cooldown_months }
+		set_temp_variable = { temp_opinion = @if_crackdown_opinion }
+		if_change_opinion = yes
+		set_temp_variable = { temp_influence = @if_crackdown_influence }
+		if_change_influence = yes
+		add_stability = @if_crackdown_stability
+		log = "[GetDateText]: [Root.GetName]: enacted crackdown on faction [?if_id]"
+		set_temp_variable = { if_pp = global.if_cost_crackdown }
+		multiply_temp_variable = { if_pp = -1 }
+		add_political_power = if_pp
+	}
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+if_lift_crackdown = {
+	if = {
+		limit = { if_can_lift_crackdown = yes }
+		set_temp_variable = { if_cp = if_id }
+		multiply_temp_variable = { if_cp = 4 }
+		remove_from_array = { array = if_policies value = if_cp }
+		set_variable = { if_policy_cooldown^if_id = global.if_policy_cooldown_months }
+		set_temp_variable = { temp_opinion = @if_lift_opinion }
+		if_change_opinion = yes
+		log = "[GetDateText]: [Root.GetName]: lifted crackdown on faction [?if_id]"
+		set_temp_variable = { if_pp = global.if_cost_lift }
+		multiply_temp_variable = { if_pp = -1 }
+		add_political_power = if_pp
+	}
+}
+
+# Parameters:
+# - if_id: faction id 1-23; other active factions of the same category lose opinion
+if_appease = {
+	if = {
+		limit = { if_can_appease = yes }
+		set_temp_variable = { if_appease_id = if_id }
+		set_temp_variable = { temp_opinion = @if_appease_opinion }
+		if_change_opinion = yes
+		for_each_loop = {
+			array = if_active
+			value = if_v
+			if = {
+				limit = {
+					NOT = { check_variable = { if_v = if_appease_id } }
+					check_variable = { global.if_category^if_v = global.if_category^if_appease_id }
+				}
+				set_temp_variable = { if_id = if_v }
+				set_temp_variable = { temp_opinion = @if_appease_rival_opinion }
+				if_change_opinion = yes
+			}
+		}
+		set_temp_variable = { if_id = if_appease_id }
+		log = "[GetDateText]: [Root.GetName]: appeased faction [?if_id]"
+		set_temp_variable = { if_pp = global.if_cost_appease }
+		multiply_temp_variable = { if_pp = -1 }
+		add_political_power = if_pp
+	}
+}
+
+# Parameters:
+# - if_id: active faction to replace; fills if_swap_candidates with every available inactive faction
+if_open_swap_window = {
+	set_variable = { if_swap_from = if_id }
+	clear_array = if_swap_candidates
+	for_loop_effect = {
+		start = 1
+		end = 24
+		value = if_id
+		if = {
+			limit = {
+				NOT = { is_in_array = { array = if_active value = if_id } }
+				if_is_available = yes
+			}
+			add_to_array = { if_swap_candidates = if_id }
+		}
+	}
+	set_country_flag = if_swap_open
+	update_if_dirty_variable = yes
+}
+
+if_close_swap_window = {
+	clr_country_flag = if_swap_open
+	clear_array = if_swap_candidates
+	update_if_dirty_variable = yes
+}
+
+# Parameters:
+# - if_new_id: replacement faction id; the outgoing faction is if_swap_from
+if_swap_faction = {
+	set_temp_variable = { if_id = if_swap_from }
+	if = {
+		limit = {
+			if_can_swap_out = yes
+			NOT = { is_in_array = { array = if_active value = if_new_id } }
+		}
+		if_remove_faction = yes
+		set_temp_variable = { if_id = if_new_id }
+		if_add_faction = yes
+		set_variable = { if_swap_cooldown^if_id = global.if_swap_cooldown_months }
+		log = "[GetDateText]: [Root.GetName]: swapped faction [?if_swap_from] for [?if_new_id]"
+		set_temp_variable = { if_pp = global.if_cost_swap }
+		multiply_temp_variable = { if_pp = -1 }
+		add_political_power = if_pp
+	}
+}
+
+# Parameters:
+# - if_p: privilege id; revokes when active, grants otherwise
+if_toggle_privilege = {
+	if = {
+		limit = { is_in_array = { array = if_policies value = if_p } }
+		if_revoke_privilege = yes
+	}
+	else = {
+		if_grant_privilege = yes
+	}
+}
+
+# Parameters:
+# - if_id: faction id; lifts when its crackdown is active, enacts otherwise
+if_toggle_crackdown = {
+	set_temp_variable = { if_cp = if_id }
+	multiply_temp_variable = { if_cp = 4 }
+	if = {
+		limit = { is_in_array = { array = if_policies value = if_cp } }
+		if_lift_crackdown = yes
+	}
+	else = {
+		if_enact_crackdown = yes
+	}
+}
+
+# One action per month for AI countries; called at the end of if_monthly_tick
+if_ai_monthly = {
+	if = {
+		limit = {
+			check_variable = { if_coup_plot > @if_ai_coup_plot_threshold }
+			has_political_power > @if_ai_coup_pp
+			is_in_array = { if_active = 7 }
+		}
+		set_temp_variable = { if_id = 7 }
+		if = {
+			limit = {
+				is_in_array = { if_active = 9 }
+				check_variable = { var = if_opinion^9 value = 60 compare = greater_than_or_equals }
+				if_can_enact_crackdown = yes
+			}
+			log = "[GetDateText]: [Root.GetName]: AI coup plot [?if_coup_plot|0], enacting political commissars"
+			if_enact_crackdown = yes
+		}
+		else_if = {
+			limit = { if_can_appease = yes }
+			log = "[GetDateText]: [Root.GetName]: AI coup plot [?if_coup_plot|0], appeasing the military"
+			if_appease = yes
+		}
+	}
+	else_if = {
+		limit = { has_political_power > @if_ai_privilege_pp }
+		set_temp_variable = { if_ai_done = 0 }
+		for_each_loop = {
+			array = if_active
+			value = if_v
+			if = {
+				limit = {
+					check_variable = { if_ai_done = 0 }
+					set_temp_variable = { if_id = if_v }
+					if_influence_powerful = yes
+					if_tier_hostile = yes
+				}
+				for_loop_effect = {
+					start = 0
+					end = 3
+					value = if_k
+					if = {
+						limit = { check_variable = { if_ai_done = 0 } }
+						set_temp_variable = { if_p = if_v }
+						subtract_from_temp_variable = { if_p = 1 }
+						multiply_temp_variable = { if_p = 4 }
+						add_to_temp_variable = { if_p = 1 }
+						add_to_temp_variable = { if_p = if_k }
+						if = {
+							limit = { if_can_grant_privilege = yes }
+							log = "[GetDateText]: [Root.GetName]: AI granting privilege [?if_p] to powerful hostile faction [?if_v]"
+							if_grant_privilege = yes
+							set_temp_variable = { if_ai_done = 1 }
+						}
+					}
+				}
+			}
+		}
+	}
+}

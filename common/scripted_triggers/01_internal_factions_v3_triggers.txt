@@ -314,3 +314,116 @@ if_is_available = {
 		}
 	}
 }
+
+# Action availability, shared by the GUI buttons and if_ai_monthly
+
+# Parameters:
+# - if_id: faction id 1-23
+if_can_afford_privilege = {
+	OR = {
+		AND = {
+			check_variable = { global.if_category^if_id = 1 }
+			set_temp_variable = { if_cost = gdp_total }
+			multiply_temp_variable = { if_cost = global.if_cost_grant_gdp_share }
+			check_variable = { treasury > if_cost }
+		}
+		AND = {
+			NOT = { check_variable = { global.if_category^if_id = 1 } }
+			set_temp_variable = { if_cost = global.if_cost_grant_pp }
+			has_political_power > if_cost
+		}
+	}
+}
+
+# Parameters:
+# - if_p: privilege id (faction id - 1) * 4 + k, k 1-3
+if_can_grant_privilege = {
+	set_temp_variable = { if_id = global.if_policy_faction^if_p }
+	set_temp_variable = { if_cp = if_id }
+	multiply_temp_variable = { if_cp = 4 }
+	check_variable = { global.if_policy_kind^if_p = 1 }
+	is_in_array = { array = if_active value = if_id }
+	NOT = { is_in_array = { array = if_policies value = if_p } }
+	NOT = { is_in_array = { array = if_policies value = if_cp } }
+	check_variable = { if_policy_cooldown^if_id = 0 }
+	if_can_afford_privilege = yes
+}
+
+# Parameters:
+# - if_p: privilege id (faction id - 1) * 4 + k, k 1-3
+if_can_revoke_privilege = {
+	set_temp_variable = { if_id = global.if_policy_faction^if_p }
+	set_temp_variable = { if_cost = global.if_cost_revoke }
+	is_in_array = { array = if_active value = if_id }
+	is_in_array = { array = if_policies value = if_p }
+	check_variable = { if_policy_cooldown^if_id = 0 }
+	has_political_power > if_cost
+}
+
+# Parameters:
+# - if_id: faction id 1-23; the military or the intelligence community must be present and not hostile, cracking down on the military needs a positive intelligence community
+if_crackdown_enforcer_ready = {
+	OR = {
+		AND = {
+			check_variable = { if_id = 7 }
+			is_in_array = { if_active = 9 }
+			check_variable = { var = if_opinion^9 value = 60 compare = greater_than_or_equals }
+		}
+		AND = {
+			NOT = { check_variable = { if_id = 7 } }
+			OR = {
+				AND = {
+					is_in_array = { if_active = 7 }
+					check_variable = { var = if_opinion^7 value = 20 compare = greater_than_or_equals }
+				}
+				AND = {
+					is_in_array = { if_active = 9 }
+					check_variable = { var = if_opinion^9 value = 20 compare = greater_than_or_equals }
+				}
+			}
+		}
+	}
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+if_can_enact_crackdown = {
+	set_temp_variable = { if_cp = if_id }
+	multiply_temp_variable = { if_cp = 4 }
+	set_temp_variable = { if_cost = global.if_cost_crackdown }
+	is_in_array = { array = if_active value = if_id }
+	NOT = { is_in_array = { array = if_policies value = if_cp } }
+	check_variable = { if_policy_cooldown^if_id = 0 }
+	has_political_power > if_cost
+	if_crackdown_enforcer_ready = yes
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+if_can_lift_crackdown = {
+	set_temp_variable = { if_cp = if_id }
+	multiply_temp_variable = { if_cp = 4 }
+	set_temp_variable = { if_cost = global.if_cost_lift }
+	is_in_array = { array = if_active value = if_id }
+	is_in_array = { array = if_policies value = if_cp }
+	check_variable = { if_policy_cooldown^if_id = 0 }
+	has_political_power > if_cost
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+if_can_appease = {
+	set_temp_variable = { if_cost = global.if_cost_appease }
+	is_in_array = { array = if_active value = if_id }
+	has_political_power > if_cost
+}
+
+# Parameters:
+# - if_id: active faction to replace; only a marginal faction off cooldown can go
+if_can_swap_out = {
+	set_temp_variable = { if_cost = global.if_cost_swap }
+	is_in_array = { array = if_active value = if_id }
+	if_influence_marginal = yes
+	check_variable = { if_swap_cooldown^if_id = 0 }
+	has_political_power > if_cost
+}

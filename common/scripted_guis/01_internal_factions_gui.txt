@@ -48,30 +48,82 @@ scripted_gui = {
 		effects = {
 			if_close_btn_click = {
 				clr_country_flag = if_window_open
-				update_if_dirty_variable = yes
+				if_close_swap_window = yes
 			}
 			if_policy_1_btn_click = {
 				set_temp_variable = { if_p = v }
 				multiply_temp_variable = { if_p = 4 }
 				subtract_from_temp_variable = { if_p = 3 }
-				if_debug_toggle_policy = yes
+				if_toggle_privilege = yes
 			}
 			if_policy_2_btn_click = {
 				set_temp_variable = { if_p = v }
 				multiply_temp_variable = { if_p = 4 }
 				subtract_from_temp_variable = { if_p = 2 }
-				if_debug_toggle_policy = yes
+				if_toggle_privilege = yes
 			}
 			if_policy_3_btn_click = {
 				set_temp_variable = { if_p = v }
 				multiply_temp_variable = { if_p = 4 }
 				subtract_from_temp_variable = { if_p = 1 }
-				if_debug_toggle_policy = yes
+				if_toggle_privilege = yes
 			}
 			if_policy_4_btn_click = {
+				set_temp_variable = { if_id = v }
+				if_toggle_crackdown = yes
+			}
+			if_appease_btn_click = {
+				set_temp_variable = { if_id = v }
+				if_appease = yes
+			}
+			if_swap_btn_click = {
+				set_temp_variable = { if_id = v }
+				if_open_swap_window = yes
+			}
+		}
+
+		triggers = {
+			if_policy_1_btn_click_enabled = {
 				set_temp_variable = { if_p = v }
 				multiply_temp_variable = { if_p = 4 }
-				if_debug_toggle_policy = yes
+				subtract_from_temp_variable = { if_p = 3 }
+				OR = {
+					if_can_grant_privilege = yes
+					if_can_revoke_privilege = yes
+				}
+			}
+			if_policy_2_btn_click_enabled = {
+				set_temp_variable = { if_p = v }
+				multiply_temp_variable = { if_p = 4 }
+				subtract_from_temp_variable = { if_p = 2 }
+				OR = {
+					if_can_grant_privilege = yes
+					if_can_revoke_privilege = yes
+				}
+			}
+			if_policy_3_btn_click_enabled = {
+				set_temp_variable = { if_p = v }
+				multiply_temp_variable = { if_p = 4 }
+				subtract_from_temp_variable = { if_p = 1 }
+				OR = {
+					if_can_grant_privilege = yes
+					if_can_revoke_privilege = yes
+				}
+			}
+			if_policy_4_btn_click_enabled = {
+				set_temp_variable = { if_id = v }
+				OR = {
+					if_can_enact_crackdown = yes
+					if_can_lift_crackdown = yes
+				}
+			}
+			if_appease_btn_click_enabled = {
+				set_temp_variable = { if_id = v }
+				if_can_appease = yes
+			}
+			if_swap_btn_click_enabled = {
+				set_temp_variable = { if_id = v }
+				if_can_swap_out = yes
 			}
 		}
 
@@ -83,6 +135,44 @@ scripted_gui = {
 			if_policy_2_btn = { image = "[if_policy_2_icon]" }
 			if_policy_3_btn = { image = "[if_policy_3_icon]" }
 			if_policy_4_btn = { image = "[if_policy_4_icon]" }
+		}
+	}
+
+	if_swap_gui = {
+		context_type = player_context
+		window_name = "if_swap_window"
+
+		dirty = global.if_ui_dirty
+
+		visible = { has_country_flag = if_swap_open }
+
+		ai_enabled = { always = no }
+
+		dynamic_lists = {
+			if_swap_grid = {
+				array = if_swap_candidates
+				entry_container = "if_swap_entry"
+			}
+		}
+
+		effects = {
+			if_swap_close_btn_click = { if_close_swap_window = yes }
+			if_swap_pick_btn_click = {
+				set_temp_variable = { if_new_id = v }
+				if_swap_faction = yes
+				if_close_swap_window = yes
+			}
+		}
+
+		triggers = {
+			if_swap_pick_btn_click_enabled = {
+				set_temp_variable = { if_id = if_swap_from }
+				if_can_swap_out = yes
+			}
+		}
+
+		properties = {
+			if_swap_entry_icon = { image = "GFX_idea_[?global.if_token^v.GetTokenKey]" }
 		}
 	}
 }

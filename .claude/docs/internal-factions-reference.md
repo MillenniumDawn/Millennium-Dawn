@@ -447,15 +447,20 @@ removed at step 11.
 
 ## Per-country state and tiers
 
-| array / var                        | range         | meaning                            |
-| ---------------------------------- | ------------- | ---------------------------------- |
-| `if_active`                        | exactly 4 ids | presence and display order         |
-| `if_opinion^id`                    | 0-100         | replaces `<f>_opinion`, 50 neutral |
-| `if_influence^id`                  | 0-100         | clout                              |
-| `if_target^id`, `if_inf_target^id` | 0-100         | last computed targets              |
-| `if_policies`                      | policy ids    | active privileges and crackdowns   |
-| `if_slot_cooldown^slot`            | date          | swap cooldown per slot             |
-| `if_coup_plot`                     | 0-100         | coup accumulator (step 7)          |
+| array / var                        | range         | meaning                                      |
+| ---------------------------------- | ------------- | -------------------------------------------- |
+| `if_active`                        | exactly 4 ids | presence and display order                   |
+| `if_opinion^id`                    | 0-100         | replaces `<f>_opinion`, 50 neutral           |
+| `if_influence^id`                  | 0-100         | clout                                        |
+| `if_target^id`, `if_inf_target^id` | 0-100         | last computed targets                        |
+| `if_policies`                      | policy ids    | active privileges and crackdowns             |
+| `if_policy_cooldown^id`            | months, 0-12  | since the last policy change on that faction |
+| `if_swap_cooldown^id`              | months, 0-24  | since the faction was brought in by a swap   |
+| `if_coup_plot`                     | 0-100         | coup accumulator (step 7)                    |
+
+`if_swap_from` (faction id being replaced) and `if_swap_candidates` (array of
+available inactive faction ids) are GUI-only state, rebuilt each time the swap
+window opens.
 
 Test presence with `is_in_array = { if_active = 7 }`.
 
@@ -494,8 +499,12 @@ changes stay immediate shocks on top of the drift.
 
 Privilege, crackdown and rival-privilege terms are added to
 `if_compute_opinion_target` / `if_compute_influence_target` in step 5
-(#4267) together with `if_policies`; influence drifts at
-`@if_influence_drift_rate` = 0.10 regardless of the rule.
+(#4267) from the `if_priv_count` / `if_crackdown` temp arrays that
+`if_monthly_tick` builds from `if_policies` each tick; influence drifts at
+`@if_influence_drift_rate` = 0.10 regardless of the rule. The rival term reads
+`global.if_rival`, a matrix computed once in `setup_global_arrays`:
+`global.if_rival^(v * 24 + j)` is 1 when faction `j` holds a privilege that
+opposes a policy group faction `v` backs (any group, not just the ruling one).
 
 ## Old-system quirks to remove at step 11
 
@@ -580,8 +589,11 @@ Temp variable names used across `if_monthly_tick`, `if_compute_opinion_target`,
 id), `if_aff` (affinity index), `if_group`, `if_mil_term`, `if_pol_term`,
 `if_edu_term`, `if_soc_term`, `if_corp_term`, `if_pop_term`, `if_oil_share`,
 `if_war`, `if_sector`, `if_t`, `if_x`, `if_d`, `if_col`, `if_aff_col`,
-`if_law`, `if_party`. Later steps must not reuse these names for unrelated
-values within the same call chain.
+`if_law`, `if_party`. Step 5 (#4267) adds `if_priv_count`, `if_crackdown`
+(temp arrays sized 24, built each tick from `if_policies`), `if_pf`, `if_j`,
+`if_r`, `if_y`, `if_cp`, `if_cost`, `if_pp`, `if_clear_id`, `if_appease_id`,
+`if_new_id`, `if_ai_done`, `if_k`. Later steps must not reuse these names for
+unrelated values within the same call chain.
 
 The modifier feed (step 4) adds its own reserved temp names: `if_s`
 (opinion-scaled base), `if_g` (government bonus strength), `if_gov_aff`
@@ -596,10 +608,15 @@ Files: `common/scripted_guis/01_internal_factions_gui.txt`,
 `common/scripted_localisation/01_internal_factions_scripted_loc.txt`,
 `localisation/english/MD_internal_factions_v3_l_english.yml`. The window
 carries `dirty = global.if_ui_dirty` and is gated by the country flag
-`if_window_open`, toggled by `if_toggle_window`. Policies are debug-only for
-now: a per-country `if_policies` array flipped by `if_debug_toggle_policy`,
-with policy id `(faction id - 1) * 4 + k` (k 1-3 privilege, 4 crackdown); no
-cost or effect until step 5. Per-entry display goes through scripted-loc
+`if_window_open`, toggled by `if_toggle_window`. Policies are a per-country
+`if_policies` array holding policy id `(faction id - 1) * 4 + k` (k 1-3
+privilege, 4 crackdown). The three privilege buttons dispatch to
+`if_toggle_privilege` and the crackdown button to `if_toggle_crackdown`, each
+enabled through the matching `if_can_grant/revoke/enact/lift_*` trigger. Two
+more buttons per entry call `if_appease` and `if_open_swap_window`, the latter
+opening the second `if_swap_window` (its own scripted GUI, `if_swap_gui`,
+listing `if_swap_candidates`) where picking a row calls `if_swap_faction`.
+Per-entry display goes through scripted-loc
 dispatchers on `v`: `if_tier_text_v`, `if_inf_tier_text_v`, `if_stance_v`,
 `if_affinity_v`, and `if_policy_k_icon` per slot. The faction name uses
 `[?global.if_token^v.GetTokenLocalizedKey]` directly, and the icon uses
@@ -647,10 +664,11 @@ in the old feed; that k is now the constant `@if_k_acceptance` (0.25).
 
 Refresh points, all guarded by faction presence:
 `if_apply_faction_modifiers` (one faction, on `if_id`) runs from
-`if_change_opinion`, `if_change_influence`, `if_add_faction`,
-`if_seed_held_faction`, and `if_debug_toggle_policy`. `if_apply_modifiers`
-(loops `if_active` and calls the above per faction) runs at the end of
-`if_monthly_tick` and `if_copy_factions`.
+`if_change_opinion`, `if_change_influence`, `if_add_faction`, and
+`if_seed_held_faction`; every action in `00_internal_faction_actions.txt`
+reaches it through `if_change_opinion` or `if_change_influence`, so none of
+them call it directly. `if_apply_modifiers` (loops `if_active` and calls the
+above per faction) runs at the end of `if_monthly_tick` and `if_copy_factions`.
 
 `if_attach_dynmod` and `if_detach_dynmod` (param `if_dm_id`, an if/else_if
 chain on the faction id) add or remove the one dynamic modifier for that
@@ -666,6 +684,54 @@ Known gap, not fixed here: a faction idea added mid-game through the old
 `on_add`, without joining `if_active`. Its vars stay at 0 (or stale, if it
 replaced a faction that was swapped out) until step 11 replaces those
 callers.
+
+## Player actions and AI (step 5)
+
+File: `common/scripted_effects/00_internal_faction_actions.txt`. Every action
+checks its own `if_can_*` trigger from `01_internal_factions_v3_triggers.txt`
+before doing anything, so the same gate covers both the GUI button and
+`if_ai_monthly`.
+
+Costs and cooldown lengths are registry vars set once in `setup_global_arrays`
+(`global.if_cost_grant_pp`, `global.if_cost_grant_gdp_share`,
+`global.if_cost_revoke`, `global.if_cost_crackdown`, `global.if_cost_lift`,
+`global.if_cost_appease`, `global.if_cost_swap`,
+`global.if_policy_cooldown_months` = 12, `global.if_swap_cooldown_months` =
+24), so triggers, effects and tooltips all read the same source.
+`999_game_rules_on_actions.txt` multiplies `global.if_cost_swap` by 0.25 when
+`rule_internal_faction_cost_reduction = yes`.
+
+`if_grant_privilege` and `if_revoke_privilege` take a policy id and add or
+remove it from `if_policies`, set `if_policy_cooldown^id`, and shift opinion
+(`if_pay_privilege_cost` charges a GDP share from the treasury for economic
+factions, category 1, or political power for the rest). `if_enact_crackdown`
+and `if_lift_crackdown` do the same for the crackdown slot (`k = 4`),
+also moving influence and stability. Crackdown enforcement
+(`if_crackdown_enforcer_ready`) needs the Military (id 7) or the Intelligence
+Community (id 9) active with opinion 20 or higher; cracking down on the
+Military itself needs the Intelligence Community active with opinion 60 or
+higher. `if_appease` shifts the target faction's opinion up and every other
+active faction in the same category down. `if_toggle_privilege` and
+`if_toggle_crackdown` are the GUI dispatch wrappers the buttons call, picking
+grant/enact or revoke/lift from current state.
+
+Swap is `if_remove_faction` on the outgoing id followed by `if_add_faction` on
+the incoming one; the incoming faction lands in the last row, starts at
+opinion 50 and base influence, and gets `if_swap_cooldown^id` set so it cannot
+be swapped out again immediately. `if_add_faction` and `if_remove_faction`
+both call the new `if_clear_faction_state` helper on the faction leaving
+`if_active`, dropping its policies and both cooldowns so a later reseed of
+the same id starts clean. `if_open_swap_window` and `if_close_swap_window`
+manage the second window: opening it records `if_swap_from` and rebuilds
+`if_swap_candidates` from every currently inactive, available faction;
+`if_swap_faction` is only reachable through that window.
+
+`if_ai_monthly` runs at the end of `if_monthly_tick` for AI countries only. It
+prioritizes a coup response when `if_coup_plot` is above 50 and the Military
+is active: crack down on the Military if it can afford to and the enforcer
+condition holds, otherwise appease it. Failing that, with enough political
+power it looks for one powerful (influence 60+) and hostile (opinion below 20)
+active faction and grants it the first affordable privilege.
 
 ## Step map
 
