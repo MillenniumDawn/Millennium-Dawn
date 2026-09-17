@@ -1064,6 +1064,7 @@ class BaseValidator:
                 for f in glob.iglob(
                     os.path.join(self.mod_path, pattern), recursive=True
                 ):
+                    f = os.path.normpath(f)
                     if f not in seen:
                         seen.add(f)
                         files.append(f)
