@@ -418,7 +418,9 @@ class Validator(BaseValidator):
         ):
             return files
         if any(
-            self._is_equipment_input(path) or self._is_sprite_input(path)
+            self._is_equipment_input(path)
+            or self._is_sprite_input(path)
+            or self._is_scripted_trigger_input(path)
             for path in staged
         ):
             return files
@@ -436,6 +438,11 @@ class Validator(BaseValidator):
             (Path(self.mod_path) / "interface").resolve()
         )
 
+    def _is_scripted_trigger_input(self, path: Path) -> bool:
+        return path.is_relative_to(
+            (Path(self.mod_path) / SCRIPTED_TRIGGER_DIR).resolve()
+        )
+
     def _reference_files(self) -> List[str]:
         """Script files that may carry a `mio:` reference, minus the org dir."""
 
@@ -444,7 +451,13 @@ class Validator(BaseValidator):
             # across ~6k candidates.
             return f"/{ORG_DIR}/" in filepath.replace("\\", "/")
 
-        return self._collect_files(REFERENCE_PATTERNS, extra_skip=_in_org_dir)
+        staged = {Path(f).resolve() for f in self.staged_files or []}
+        return self._collect_files(
+            REFERENCE_PATTERNS,
+            extra_skip=_in_org_dir,
+            ignore_staged=self.staged_only
+            and any(self._is_scripted_trigger_input(path) for path in staged),
+        )
 
     def _org_allowed_tags(self) -> Dict[str, FrozenSet[str]]:
         """org id -> every tag its `allowed` block accepts.
@@ -675,7 +688,9 @@ class Validator(BaseValidator):
         if not m:
             return
         tag = m.group(1)
-        if tag not in ORIGINAL_TAG_RE.findall(body) and tag not in self._allowed_tags(body):
+        if tag not in ORIGINAL_TAG_RE.findall(body) and tag not in self._allowed_tags(
+            body
+        ):
             self.add_error(
                 "org-allowed-tag",
                 f"MIO {org_id} must pin its tag with "

@@ -1087,6 +1087,45 @@ def test_a_staged_equipment_edit_rescans_every_org(tmp_path, write_path, monkeyp
     ]
 
 
+def test_a_staged_scripted_trigger_rescans_orgs_and_references(
+    tmp_path, write_path, monkeypatch
+):
+    orgs = _REFERENCE_ORGS.replace(
+        "GRE_eas_materiel_manufacturer = {\n\tallowed = { original_tag = GRE }",
+        "GRE_eas_materiel_manufacturer = {\n\tallowed = { is_usa_or_breakaway = yes }",
+    )
+    write_path(tmp_path, f"{V.ORG_DIR}/MD_TEST_organizations.txt", orgs)
+    write_path(
+        tmp_path,
+        f"{V.COUNTRY_TAG_DIR}/00_countries.txt",
+        _REFERENCE_TAGS,
+    )
+    write_path(
+        tmp_path,
+        f"{V.SCRIPTED_TRIGGER_DIR}/99_USA_scripted_triggers.txt",
+        _REFERENCE_TRIGGERS,
+    )
+    write_path(
+        tmp_path,
+        "common/national_focus/05_greece.txt",
+        _focus(
+            "GRE_test",
+            "\t\t\tdesign_team = mio:GRE_eas_materiel_manufacturer\n",
+        ),
+    )
+    monkeypatch.setenv(
+        "MD_STAGED_FILES", "common/scripted_triggers/99_USA_scripted_triggers.txt"
+    )
+    v = V.Validator(str(tmp_path), staged_only=True)
+
+    v.run_validations()
+
+    assert sorted(i.category for i in v._issues) == [
+        "mio-reference-wrong-tag",
+        "org-allowed-tag",
+    ]
+
+
 def test_staged_run_with_no_mio_input_skips(tmp_path, write_path, monkeypatch):
     _run_repo(tmp_path, write_path)
     write_path(tmp_path, "interface/unrelated.txt", "guiTypes = { }\n")
