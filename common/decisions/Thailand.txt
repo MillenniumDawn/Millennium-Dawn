@@ -145,7 +145,7 @@ SIA_deep_south_category = {
 
 		available = {
 			custom_trigger_tooltip = {
-				tooltip = SIA_tt_peace_dialogue_intensity
+				tooltip = SIA_ds_intensity_below_50_tt
 				check_variable = { SIA_insurgency_intensity < 50 }
 			}
 		}
@@ -338,6 +338,8 @@ SIA_deep_south_category = {
 				has_country_flag = SIA_path_populist
 				has_country_flag = SIA_path_royalist
 				has_country_flag = SIA_path_democrat
+				has_country_flag = SIA_path_reform
+				has_country_flag = SIA_path_communist
 			}
 		}
 
@@ -356,6 +358,15 @@ SIA_deep_south_category = {
 			OR = {
 				has_country_flag = SIA_ds_resolved_force
 				has_country_flag = SIA_ds_resolved_peace
+				# Every doctrine gates on who governs. An unmodelled ruling party satisfies none of
+				# them, and the timeout must not punish a choice the player cannot make.
+				AND = {
+					NOT = { SIA_populist_trunk_open = yes }
+					NOT = { SIA_communist_trunk_open = yes }
+					NOT = { SIA_royalist_trunk_open = yes }
+					NOT = { SIA_democrat_trunk_open = yes }
+					NOT = { SIA_reform_trunk_open = yes }
+				}
 			}
 		}
 
@@ -551,7 +562,7 @@ SIA_economy_category = {
 		days_remove = 90
 		days_re_enable = 270
 		fire_only_once = no
-		available = { has_completed_focus = SIA_sufficiency_economy }
+		available = { has_completed_focus = SIA_sufficiency_and_the_crown }
 		custom_cost_trigger = { check_variable = { treasury > 1.4 } }
 		custom_cost_text = SIA_cost_1_5
 
@@ -1184,7 +1195,7 @@ SIA_greater_thailand_category = {
 # other political levers. HOI4 merges same-key decision blocks.
 SIA_political_gambits_category = {
 	SIA_retry_section_112 = {
-		icon = GFX_decision_category_generic_political_actions
+		icon = GFX_decision_generic_political_discourse
 		cost = 100
 		days_remove = 60
 		fire_only_once = yes
@@ -1332,6 +1343,105 @@ SIA_political_gambits_category = {
 			modifier = { factor = 2 has_country_flag = SIA_path_reform }
 		}
 	}
+}
+
+## Coup-watch — the army's patience meter (SIA_coup_risk 0-100).
+SIA_democrat_machine_category = {
+	SIA_constituency_machine = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 60
+		days_re_enable = 90
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_constituency_machine"
+			add_stability = -0.01
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.025 }
+			set_temp_variable = { temp_outlook_increase = 0.025 }
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = SIA_outlook_western_tt
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -8 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 6 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
+	}
+
+	SIA_match_the_populists = {
+		icon = GFX_decision_generic_political_rally
+		cost = 50
+		days_re_enable = 150
+		fire_only_once = no
+		custom_cost_trigger = { check_variable = { treasury > 5.9 } }
+		custom_cost_text = SIA_cost_6_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_match_the_populists"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			add_stability = 0.01
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.025 }
+			set_temp_variable = { temp_outlook_increase = -0.025 }
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = SIA_outlook_nonaligned_tt
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.025 }
+			set_temp_variable = { temp_outlook_increase = 0.025 }
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = SIA_outlook_western_tt
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -12 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 5 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
+	}
+
+	SIA_counter_messaging = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 65
+		days_re_enable = 120
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_counter_messaging"
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.03 }
+			set_temp_variable = { temp_outlook_increase = -0.03 }
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = SIA_outlook_nonaligned_tt
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -10 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 5 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
+	}
+
+	SIA_expose_corruption = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 90
+		days_re_enable = 180
+		fire_only_once = no
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_expose_corruption"
+			add_stability = -0.02
+			set_temp_variable = { party_index = 18 }
+			set_temp_variable = { party_popularity_increase = -0.04 }
+			set_temp_variable = { temp_outlook_increase = -0.04 }
+			change_relative_party_popularity = yes
+			custom_effect_tooltip = SIA_outlook_nonaligned_tt
+			recalculate_party = yes
+			set_temp_variable = { pt_delta = -25 }
+			SIA_pt_pressure_set = yes
+		}
+
+		ai_will_do = { base = 4 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 55 } } }
+	}
 
 	SIA_rural_development_package = {
 		icon = GFX_decision_generic_construction
@@ -1370,95 +1480,6 @@ SIA_political_gambits_category = {
 			modifier = { factor = 3 check_variable = { SIA_pheu_thai_pressure > 55 } }
 		}
 	}
-}
-
-## Coup-watch — the army's patience meter (SIA_coup_risk 0-100).
-SIA_democrat_machine_category = {
-	SIA_constituency_machine = {
-		icon = GFX_decision_generic_political_discourse
-		cost = 60
-		days_re_enable = 90
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SIA_constituency_machine"
-			add_stability = -0.01
-			set_temp_variable = { party_index = 1 }
-			set_temp_variable = { party_popularity_increase = 0.01 }
-			change_relative_party_popularity = yes
-			recalculate_party = yes
-			set_temp_variable = { pt_delta = -8 }
-			SIA_pt_pressure_set = yes
-		}
-
-		ai_will_do = { base = 6 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
-	}
-
-	SIA_match_the_populists = {
-		icon = GFX_decision_generic_political_rally
-		cost = 50
-		days_re_enable = 150
-		fire_only_once = no
-		custom_cost_trigger = { check_variable = { treasury > 5.9 } }
-		custom_cost_text = SIA_cost_6_0
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SIA_match_the_populists"
-			set_temp_variable = { treasury_change = -6 }
-			modify_treasury_effect = yes
-			add_stability = 0.01
-			set_temp_variable = { party_index = 18 }
-			set_temp_variable = { party_popularity_increase = -0.01 }
-			change_relative_party_popularity = yes
-			set_temp_variable = { party_index = 1 }
-			set_temp_variable = { party_popularity_increase = 0.01 }
-			change_relative_party_popularity = yes
-			recalculate_party = yes
-			set_temp_variable = { pt_delta = -12 }
-			SIA_pt_pressure_set = yes
-		}
-
-		ai_will_do = { base = 5 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
-	}
-
-	SIA_counter_messaging = {
-		icon = GFX_decision_generic_political_discourse
-		cost = 65
-		days_re_enable = 120
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SIA_counter_messaging"
-			set_temp_variable = { party_index = 18 }
-			set_temp_variable = { party_popularity_increase = -0.01 }
-			change_relative_party_popularity = yes
-			recalculate_party = yes
-			set_temp_variable = { pt_delta = -10 }
-			SIA_pt_pressure_set = yes
-		}
-
-		ai_will_do = { base = 5 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 40 } } }
-	}
-
-	SIA_expose_corruption = {
-		icon = GFX_decision_generic_political_discourse
-		cost = 90
-		days_re_enable = 180
-		fire_only_once = no
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision SIA_expose_corruption"
-			add_stability = -0.02
-			set_temp_variable = { party_index = 18 }
-			set_temp_variable = { party_popularity_increase = -0.02 }
-			change_relative_party_popularity = yes
-			recalculate_party = yes
-			set_temp_variable = { pt_delta = -25 }
-			SIA_pt_pressure_set = yes
-		}
-
-		ai_will_do = { base = 4 modifier = { factor = 2 check_variable = { SIA_pheu_thai_pressure > 55 } } }
-	}
 
 	# Buy a parliamentary firewall. Sizeable one-shot relief, but the coalition's price is a
 	# standing drag (SIA_coalition_price), so it cannot just be spammed.
@@ -1478,8 +1499,10 @@ SIA_democrat_machine_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_broaden_the_coalition"
 			add_timed_idea = { idea = SIA_broad_coalition_idea days = 365 }
 			set_temp_variable = { party_index = 18 }
-			set_temp_variable = { party_popularity_increase = -0.02 }
+			set_temp_variable = { party_popularity_increase = -0.05 }
+			set_temp_variable = { temp_outlook_increase = -0.05 }
 			change_relative_party_popularity = yes
+			custom_effect_tooltip = SIA_outlook_nonaligned_tt
 			recalculate_party = yes
 			set_temp_variable = { pt_delta = -35 }
 			SIA_pt_pressure_set = yes
@@ -1733,6 +1756,7 @@ SIA_coup_watch_category = {
 SIA_red_path_category = {
 	SIA_spread_flame_isaan = {
 		icon = GFX_decision_generic_political_discourse
+		cost = 40
 		visible = { has_completed_focus = SIA_isaan_soviets }
 
 		available = {
@@ -1743,15 +1767,25 @@ SIA_red_path_category = {
 		days_remove = 90
 		days_re_enable = 90
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_spread_flame_isaan"
+			add_timed_idea = { idea = SIA_cadre_mobilisation days = 90 }
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_spread_flame_isaan remove"
-			# Grow the emerging (communist) outlook too, else the party share caps out.
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.02 }
-			set_temp_variable = { temp_outlook_increase = 0.02 }
-			change_relative_party_popularity = yes
-			recalculate_party = yes
-			add_stability = -0.02
+			# The timer outlives the trunk, so re-check: organising for a party the country has
+			# since abandoned must not still pay out under the next government.
+			if = {
+				limit = { SIA_communist_road_open = yes }
+				# Grow the emerging (communist) outlook too, else the party share caps out.
+				set_temp_variable = { party_index = 4 }
+				set_temp_variable = { party_popularity_increase = 0.04 }
+				set_temp_variable = { temp_outlook_increase = 0.04 }
+				change_relative_party_popularity = yes
+				recalculate_party = yes
+				add_stability = -0.02
+			}
 		}
 
 		ai_will_do = { base = 8 }
@@ -1759,6 +1793,7 @@ SIA_red_path_category = {
 
 	SIA_spread_flame_north = {
 		icon = GFX_decision_generic_political_discourse
+		cost = 40
 		visible = { has_completed_focus = SIA_isaan_soviets }
 
 		available = {
@@ -1769,15 +1804,25 @@ SIA_red_path_category = {
 		days_remove = 90
 		days_re_enable = 90
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_spread_flame_north"
+			add_timed_idea = { idea = SIA_cadre_mobilisation days = 90 }
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_spread_flame_north remove"
-			# Grow the emerging (communist) outlook too, else the party share caps out.
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.02 }
-			set_temp_variable = { temp_outlook_increase = 0.02 }
-			change_relative_party_popularity = yes
-			recalculate_party = yes
-			add_stability = -0.02
+			# The timer outlives the trunk, so re-check: organising for a party the country has
+			# since abandoned must not still pay out under the next government.
+			if = {
+				limit = { SIA_communist_road_open = yes }
+				# Grow the emerging (communist) outlook too, else the party share caps out.
+				set_temp_variable = { party_index = 4 }
+				set_temp_variable = { party_popularity_increase = 0.04 }
+				set_temp_variable = { temp_outlook_increase = 0.04 }
+				change_relative_party_popularity = yes
+				recalculate_party = yes
+				add_stability = -0.02
+			}
 		}
 
 		ai_will_do = { base = 6 }
@@ -1786,26 +1831,30 @@ SIA_red_path_category = {
 	SIA_mass_education_campaign = {
 		icon = GFX_decision_generic_speech
 
-		visible = {
-			has_completed_focus = SIA_isaan_soviets
-			has_completed_focus = SIA_isaan_soviets
-		}
-
-		available = { has_completed_focus = SIA_isaan_soviets }
-		cost = 50
+		visible = { has_completed_focus = SIA_isaan_soviets }
+		cost = 75
 		days_remove = 180
 		days_re_enable = 180
 
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_mass_education_campaign"
+			add_timed_idea = { idea = SIA_cadre_mobilisation days = 90 }
+		}
+
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_mass_education_campaign remove"
-			# Grow the emerging (communist) outlook too, else the party share caps out.
-			set_temp_variable = { party_index = 4 }
-			set_temp_variable = { party_popularity_increase = 0.03 }
-			set_temp_variable = { temp_outlook_increase = 0.03 }
-			change_relative_party_popularity = yes
-			recalculate_party = yes
-			add_stability = -0.02
-			add_political_power = 50
+			# The timer outlives the trunk, so re-check: organising for a party the country has
+			# since abandoned must not still pay out under the next government.
+			if = {
+				limit = { SIA_communist_road_open = yes }
+				# Grow the emerging (communist) outlook too, else the party share caps out.
+				set_temp_variable = { party_index = 4 }
+				set_temp_variable = { party_popularity_increase = 0.05 }
+				set_temp_variable = { temp_outlook_increase = 0.05 }
+				change_relative_party_popularity = yes
+				recalculate_party = yes
+				add_stability = -0.02
+			}
 		}
 
 		ai_will_do = { base = 4 }
@@ -2002,7 +2051,7 @@ SIA_economy_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_gripen_ef_upgrade"
 			set_country_flag = SIA_gripen_ef_contracted
-			add_tech_bonus = { name = SIA_gripen_ef_upgrade bonus = 0.5 uses = 1 category = CAT_air_eqp }
+			add_tech_bonus = { name = SIA_gripen_ef_upgrade bonus = 0.5 uses = 1 category = CAT_aircraft }
 			air_experience = 25
 		}
 
@@ -2267,20 +2316,27 @@ SIA_reconstruction_category = {
 	}
 }
 
-# ─── General Strike push (communist urban road, 180-day window) ─── Raise SIA_strike_momentum
-# toward 100 to force the government to capitulate (thailand.250, peaceful road).
-SIA_general_strike_category = {
+SIA_red_path_category = {
 	SIA_strike_mass_pickets = {
 		icon = GFX_decision_generic_political_discourse
 		cost = 40
-		days_re_enable = 15
+		days_remove = 7
+		days_re_enable = 20
 		fire_only_once = no
 		visible = { has_country_flag = SIA_strike_active }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_mass_pickets"
-			set_temp_variable = { strike_delta = 8 }
-			SIA_strike_add_momentum = yes
+			add_timed_idea = { idea = SIA_strike_shutdown days = 30 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_mass_pickets remove"
+			if = {
+				limit = { has_country_flag = SIA_strike_active }
+				set_temp_variable = { strike_delta = 8 }
+				SIA_strike_add_momentum = yes
+			}
 		}
 
 		ai_will_do = { base = 8 }
@@ -2288,6 +2344,7 @@ SIA_general_strike_category = {
 
 	SIA_strike_paralyze_transport = {
 		icon = GFX_decision_generic_construction
+		days_remove = 7
 		days_re_enable = 30
 		fire_only_once = no
 		visible = { has_country_flag = SIA_strike_active }
@@ -2298,24 +2355,100 @@ SIA_general_strike_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_paralyze_transport"
 			set_temp_variable = { treasury_change = -4 }
 			modify_treasury_effect = yes
-			set_temp_variable = { strike_delta = 15 }
-			SIA_strike_add_momentum = yes
+			add_timed_idea = { idea = SIA_strike_supply_freeze days = 30 }
+			random_owned_controlled_state = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 1
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_paralyze_transport remove"
+			if = {
+				limit = { has_country_flag = SIA_strike_active }
+				set_temp_variable = { strike_delta = 15 }
+				SIA_strike_add_momentum = yes
+			}
 		}
 
 		ai_will_do = { base = 6 }
 	}
 
+	SIA_strike_student_walkout = {
+		icon = GFX_decision_generic_political_rally
+		cost = 25
+		days_remove = 7
+		days_re_enable = 20
+		fire_only_once = no
+		visible = { has_country_flag = SIA_strike_active }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_student_walkout"
+			add_stability = -0.03
+			add_timed_idea = { idea = SIA_strike_campus_walkout days = 30 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_student_walkout remove"
+			if = {
+				limit = { has_country_flag = SIA_strike_active }
+				set_temp_variable = { strike_delta = 5 }
+				SIA_strike_add_momentum = yes
+			}
+		}
+
+		ai_will_do = { base = 8 }
+	}
+
+	SIA_strike_foreign_press = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 30
+		days_remove = 7
+		days_re_enable = 60
+		fire_only_once = no
+		visible = { has_country_flag = SIA_strike_active }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_foreign_press"
+			add_war_support = -0.03
+			add_timed_idea = { idea = SIA_strike_world_watching days = 30 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_foreign_press remove"
+			if = {
+				limit = { has_country_flag = SIA_strike_active }
+				set_temp_variable = { strike_delta = 6 }
+				SIA_strike_add_momentum = yes
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
 	SIA_strike_win_the_conscripts = {
 		icon = GFX_decision_generic_political_discourse
 		cost = 75
+		days_remove = 7
 		days_re_enable = 30
 		fire_only_once = no
 		visible = { has_country_flag = SIA_strike_active }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_win_the_conscripts"
-			set_temp_variable = { strike_delta = 12 }
-			SIA_strike_add_momentum = yes
+			add_timed_idea = { idea = SIA_strike_barracks_agitation days = 90 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIA_strike_win_the_conscripts remove"
+			if = {
+				limit = { has_country_flag = SIA_strike_active }
+				set_temp_variable = { strike_delta = 12 }
+				SIA_strike_add_momentum = yes
+			}
 		}
 
 		ai_will_do = { base = 6 }

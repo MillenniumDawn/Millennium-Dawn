@@ -127,7 +127,10 @@ CI_EXEMPT = {
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
 }
-PRECOMMIT_EXEMPT: set[str] = set()
+# Manual-only: the standardization report is deliberately unwired from
+# pre-commit and CI; standardizers run by hand instead (see
+# tools/standardization/README.md).
+PRECOMMIT_EXEMPT: set[str] = {"validate_standardization.py"}
 STRICT_MISMATCH_ALLOWED = {"validate_ai_equipment.py"}
 
 

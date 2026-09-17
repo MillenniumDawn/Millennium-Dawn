@@ -1127,21 +1127,21 @@ CHI_apply_demographic_policy = {
 		add_to_variable = { CHI_economy_monthly_population = 0.90 }
 		subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.08 }
 		add_to_variable = { CHI_economy_consumer_goods_factor = 0.10 }
-		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.12 }
+		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.08 }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_demographic_stage_applied = 2 } }
 		add_to_variable = { CHI_economy_monthly_population = 0.45 }
 		subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.04 }
 		add_to_variable = { CHI_economy_consumer_goods_factor = 0.05 }
-		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.06 }
+		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.04 }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_demographic_stage_applied = 3 } }
 		add_to_variable = { CHI_economy_monthly_population = 0.15 }
 		subtract_from_variable = { CHI_economy_productivity_growth_modifier = 0.015 }
 		add_to_variable = { CHI_economy_consumer_goods_factor = 0.02 }
-		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.02 }
+		subtract_from_variable = { CHI_economy_total_workforce_modifier = 0.01 }
 	}
 
 	custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
@@ -1150,21 +1150,21 @@ CHI_apply_demographic_policy = {
 		subtract_from_variable = { CHI_economy_monthly_population = 0.90 tooltip = monthly_population_tt }
 		add_to_variable = { CHI_economy_productivity_growth_modifier = 0.08 tooltip = productivity_growth_modifier_tt }
 		subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.10 tooltip = consumer_goods_factor_tt }
-		add_to_variable = { CHI_economy_total_workforce_modifier = 0.12 tooltip = total_workforce_modifier_tt }
+		add_to_variable = { CHI_economy_total_workforce_modifier = 0.08 tooltip = total_workforce_modifier_tt }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_demographic_policy_stage = 2 } }
 		subtract_from_variable = { CHI_economy_monthly_population = 0.45 tooltip = monthly_population_tt }
 		add_to_variable = { CHI_economy_productivity_growth_modifier = 0.04 tooltip = productivity_growth_modifier_tt }
 		subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.05 tooltip = consumer_goods_factor_tt }
-		add_to_variable = { CHI_economy_total_workforce_modifier = 0.06 tooltip = total_workforce_modifier_tt }
+		add_to_variable = { CHI_economy_total_workforce_modifier = 0.04 tooltip = total_workforce_modifier_tt }
 	}
 	else_if = {
 		limit = { check_variable = { CHI_demographic_policy_stage = 3 } }
 		subtract_from_variable = { CHI_economy_monthly_population = 0.15 tooltip = monthly_population_tt }
 		add_to_variable = { CHI_economy_productivity_growth_modifier = 0.015 tooltip = productivity_growth_modifier_tt }
 		subtract_from_variable = { CHI_economy_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
-		add_to_variable = { CHI_economy_total_workforce_modifier = 0.02 tooltip = total_workforce_modifier_tt }
+		add_to_variable = { CHI_economy_total_workforce_modifier = 0.01 tooltip = total_workforce_modifier_tt }
 	}
 	# stage 4 (abolished): penalty and dividend both fully reversed above, nothing applied
 
@@ -1205,6 +1205,85 @@ CHI_evaluate_arms_dependency = {
 CHI_add_arms_self_sufficiency = {
 	add_to_variable = { CHI_military_self_sufficiency = arms_ss_gain tooltip = CHI_military_self_sufficiency_tt }
 	CHI_evaluate_arms_dependency = yes
+}
+
+### Local government debt: pressure 0-100 rises while civs + offices exceed the fiscal tolerance. Tier can move both ways. ###
+CHI_evaluate_local_debt = {
+	clamp_variable = { var = CHI_local_debt_pressure min = 0 max = 100 }
+	clamp_variable = { var = CHI_local_debt_tolerance min = 100 }
+
+	if = { limit = { check_variable = { CHI_local_debt_pressure > 89 } } set_temp_variable = { local_debt_target = 4 } }
+	else_if = { limit = { check_variable = { CHI_local_debt_pressure > 69 } } set_temp_variable = { local_debt_target = 3 } }
+	else_if = { limit = { check_variable = { CHI_local_debt_pressure > 44 } } set_temp_variable = { local_debt_target = 2 } }
+	else_if = { limit = { check_variable = { CHI_local_debt_pressure > 19 } } set_temp_variable = { local_debt_target = 1 } }
+	else = { set_temp_variable = { local_debt_target = 0 } }
+
+	if = {
+		limit = { NOT = { check_variable = { CHI_local_debt_tier = local_debt_target } } }
+		if = { limit = { has_idea = CHI_local_government_debt_4 } remove_ideas = CHI_local_government_debt_4 }
+		else_if = { limit = { has_idea = CHI_local_government_debt_3 } remove_ideas = CHI_local_government_debt_3 }
+		else_if = { limit = { has_idea = CHI_local_government_debt_2 } remove_ideas = CHI_local_government_debt_2 }
+		else_if = { limit = { has_idea = CHI_local_government_debt } remove_ideas = CHI_local_government_debt }
+
+		if = { limit = { check_variable = { local_debt_target = 1 } } add_ideas = CHI_local_government_debt_4 }
+		else_if = { limit = { check_variable = { local_debt_target = 2 } } add_ideas = CHI_local_government_debt_3 }
+		else_if = { limit = { check_variable = { local_debt_target = 3 } } add_ideas = CHI_local_government_debt_2 }
+		else_if = { limit = { check_variable = { local_debt_target = 4 } } add_ideas = CHI_local_government_debt }
+
+		set_variable = { CHI_local_debt_tier = local_debt_target }
+	}
+}
+
+# Callers set local_debt_change (pressure) or local_debt_tolerance_change (tolerance) as temp variables first.
+CHI_change_local_debt = {
+	if = {
+		limit = { NOT = { has_country_flag = CHI_local_debt_resolved } }
+		add_to_variable = { CHI_local_debt_pressure = local_debt_change tooltip = CHI_local_debt_pressure_tt }
+		CHI_evaluate_local_debt = yes
+	}
+}
+CHI_change_local_debt_tolerance = {
+	if = {
+		limit = { NOT = { has_country_flag = CHI_local_debt_resolved } }
+		add_to_variable = { CHI_local_debt_tolerance = local_debt_tolerance_change tooltip = CHI_local_debt_tolerance_tt }
+		CHI_evaluate_local_debt = yes
+	}
+}
+
+CHI_update_local_debt_buildings = {
+	set_variable = {
+		CHI_local_debt_buildings = {
+			value = industrial_complex_total
+			add = office_park_total
+		}
+	}
+}
+
+CHI_local_debt_monthly_tick = {
+	add_to_variable = { CHI_local_debt_tolerance = 0.25 }
+	CHI_update_local_debt_buildings = yes
+	set_temp_variable = {
+		local_debt_excess = {
+			value = CHI_local_debt_buildings
+			subtract = CHI_local_debt_tolerance
+		}
+	}
+	if = {
+		limit = { check_variable = { local_debt_excess > 0 } }
+		set_temp_variable = { local_debt_change = local_debt_excess }
+	}
+	else = {
+		set_temp_variable = { local_debt_change = -0.5 }
+	}
+	add_to_variable = { CHI_local_debt_pressure = local_debt_change }
+	CHI_evaluate_local_debt = yes
+	if = {
+		limit = {
+			check_variable = { CHI_local_debt_pressure < 1 }
+			NOT = { has_active_mission = CHI_local_debt_resolution_mission }
+		}
+		activate_mission = CHI_local_debt_resolution_mission
+	}
 }
 CHI_military_corruption_monthly_tick = {
 	if = {
@@ -1515,7 +1594,7 @@ CHI_unlock_random_asteroid_bonus = {
 				set_country_flag = CHI_asteroid_bonus_7
 				add_to_variable = { CHI_asteroid_bonus_count = 1 }
 				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = CHI_economy_modifier }
-				add_to_variable = { CHI_economy_return_on_investment_modifier = 0.03 tooltip = return_on_investment_modifier_tt }
+				add_to_variable = { CHI_economy_local_resources_tungsten_factor = 0.05 tooltip = local_resources_tungsten_factor_tt }
 			}
 			else = {
 				set_temp_variable = { treasury_change = 25 }

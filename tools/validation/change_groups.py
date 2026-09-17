@@ -96,6 +96,8 @@ _FULL_SUITE_EXACT = {
     ".claude/docs/typo-watchlist.md",
 }
 _FULL_SUITE_PREFIXES = (
+    "tools/validation/",
+    "tools/linting/",
     "resources/documentation/",
     ".github/actions/",
     ".github/workflows/test-suite.yml",
@@ -151,7 +153,7 @@ def _matches(path: str, group: str) -> bool:
 
 def _is_full_suite(path: str) -> bool:
     return (
-        path.startswith("tools/")
+        path == "tools/shared_utils.py"
         or path in _FULL_SUITE_EXACT
         or any(path.startswith(prefix) for prefix in _FULL_SUITE_PREFIXES)
     )

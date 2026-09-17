@@ -1,6 +1,6 @@
 ---
 name: standardize
-description: "Auto-standardize a MD focus/event/decision/idea/MIO file with the tools/standardization/ scripts and report what changed. Use when asked to standardize, reformat, or bring a mod file up to MD conventions. Takes the file path as argument."
+description: "Auto-standardize a MD focus/event/decision/idea/MIO/technology file with the tools/standardization/ scripts and report what changed. Use when asked to standardize, reformat, or bring a mod file up to MD conventions. Takes the file path as argument."
 ---
 
 Standardize a Millennium Dawn mod file using the standardization tools.
@@ -15,6 +15,7 @@ Steps:
    - `common/decisions/` → `decision`
    - `common/ideas/` → `idea`
    - `common/military_industrial_organization/organizations/` → `mio`
+   - `common/technologies/` → `technology`
      If the type cannot be determined, ask the user to clarify.
 
 2. Run from the `tools/standardization/` directory:

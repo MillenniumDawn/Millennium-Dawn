@@ -26,6 +26,10 @@ Lead with the result or blocker, then only the evidence the caller needs.
   already edited; provide code blocks only when the caller requested a draft.
 - Reviewers: findings ordered by severity, each with `path:line`, impact, and the
   smallest safe fix. Say no findings when clean. Do not invent issues to fill categories.
+  When the branch has an open PR, verify the PR body (title and description) describes what
+  the diff actually changes; a mismatch is a blocker that rejects the PR until the body is
+  corrected. Name what the body claims that the diff lacks or what the diff contains that
+  the body omits. A missing or empty body counts as not matching.
 - Separate confirmed defects from uncertain observations. Never claim a check passed
   without running it. Omit empty headings and redundant counts.
 - End the handoff with `BLUF`. Follow a requested machine-readable schema instead

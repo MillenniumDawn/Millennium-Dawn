@@ -23,6 +23,8 @@ from validate_simplifications import (
     _find_two_bucket_random,
     _iter_direct_assignments,
     _scan_composite,
+    _scan_decision_file,
+    _scan_focus_file,
     strip_comments,
 )
 
@@ -910,6 +912,432 @@ def test_clean_tree_reports_nothing(tmp_path, write_path):
     validator.run_validations()
 
     assert validator._issues == []
+
+
+# --- redundant owner scope -------------------------------------------------
+
+
+def _owner_focus(text):
+    return sorted((line, m) for m, line in _scan_focus_file(strip_comments(text)))
+
+
+def _owner_decision(text):
+    return sorted((line, m) for m, line in _scan_decision_file(strip_comments(text)))
+
+
+def _strict_chi_tree(focus_text):
+    return (
+        "focus_tree = {\n"
+        "\tid = china_focus\n"
+        "\tcountry = {\n"
+        "\t\tfactor = 0\n"
+        "\t\tmodifier = { add = 20 tag = CHI }\n"
+        "\t}\n" + focus_text + "}\n"
+    )
+
+
+def test_owner_scope_trigger_wrapper_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\tCHI = { has_war = no }\n"
+        "\t\t}\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tadd_stability = 0.05\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [10]
+    assert "`CHI = { ... }`" in findings[0][1]
+    assert "remove the wrapper" in findings[0][1]
+
+
+def test_owner_scope_effect_wrapper_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = {\n"
+        "\t\t\t\tadd_stability = 0.05\n"
+        "\t\t\t\tadd_war_support = 0.05\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [10]
+    assert "remove the wrapper" in findings[0][1]
+
+
+def test_owner_scope_redundant_tag_check_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\ttag = CHI\n"
+        "\t\t\thas_war = no\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [10]
+    assert "`tag = CHI` always true" in findings[0][1]
+
+
+def test_owner_scope_inside_iterator_not_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tevery_other_country = {\n"
+        "\t\t\t\tlimit = { has_government = fascism }\n"
+        "\t\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_owner_scope_body_with_prev_not_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = {\n"
+        "\t\t\t\tadd_opinion_modifier = { target = PREV modifier = drama }\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_joint_focus_never_scanned():
+    text = (
+        "joint_focus = {\n"
+        "\tid = CHI_SOV_test\n"
+        "\tallow_branch = { tag = CHI }\n"
+        "\tcompletion_reward = {\n"
+        "\t\tCHI = { add_stability = 0.05 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_original_tag_gate_lifts_nothing_but_flags_recheck():
+    text = (
+        "focus_tree = {\n"
+        "\tid = shared\n"
+        "\tcountry = {\n"
+        "\t\tfactor = 0\n"
+        "\t\tmodifier = { add = 20 original_tag = CHI }\n"
+        "\t}\n"
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\toriginal_tag = CHI\n"
+        "\t\t}\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = {\n"
+        "\t\t\t\tadd_stability = 0.05\n"
+        "\t\t\t\tadd_war_support = 0.05\n"
+        "\t\t\t}\n"
+        "\t\t\tif = {\n"
+        "\t\t\t\tlimit = { tag = CHI }\n"
+        "\t\t\t\tadd_stability = 0.05\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [10]
+    assert "`original_tag = CHI` always true" in findings[0][1]
+
+
+def test_multi_owner_tree_not_flagged():
+    text = (
+        "focus_tree = {\n"
+        "\tid = joint\n"
+        "\tcountry = {\n"
+        "\t\tfactor = 0\n"
+        "\t\tmodifier = { add = 20 tag = CHI }\n"
+        "\t\tmodifier = { add = 20 tag = SOV }\n"
+        "\t}\n"
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_or_and_not_nested_recheck_not_flagged():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\tOR = { tag = CHI has_war = yes }\n"
+        "\t\t\tNOT = { tag = CHI }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_flat_equiv_single_trigger_left_to_scope_expansion():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tavailable = {\n"
+        "\t\t\tCHI = { exists = yes }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    assert _owner_focus(text) == []
+    assert ("CHI", "country_exists = CHI") in _expansion(text)
+
+
+def test_focus_without_tree_not_flagged():
+    text = (
+        "focus = {\n"
+        "\tid = CHI_test\n"
+        "\tcompletion_reward = {\n"
+        "\t\tCHI = { add_stability = 0.05 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_focus(text) == []
+
+
+def test_decision_strict_allowed_lifts_scope():
+    text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { tag = CHI }\n"
+        "\tcomplete_effect = {\n"
+        "\t\tCHI = {\n"
+        "\t\t\tadd_stability = 0.05\n"
+        "\t\t\tadd_war_support = 0.05\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_decision(text)
+    assert [line for line, _m in findings] == [4]
+    assert "remove the wrapper" in findings[0][1]
+
+
+def test_decision_original_tag_allowed_flags_recheck_only():
+    text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { original_tag = CHI }\n"
+        "\tvisible = {\n"
+        "\t\toriginal_tag = CHI\n"
+        "\t\thas_country_flag = test_flag\n"
+        "\t}\n"
+        "\tcomplete_effect = {\n"
+        "\t\tCHI = {\n"
+        "\t\t\tadd_stability = 0.05\n"
+        "\t\t\tadd_war_support = 0.05\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_decision(text)
+    assert [line for line, _m in findings] == [4]
+    assert "`original_tag = CHI` always true" in findings[0][1]
+
+
+def test_decision_inherits_category_allowed():
+    text = (
+        "CHI_test_category = {\n"
+        "\tallowed = { original_tag = CHI }\n"
+        "\tCHI_test_decision = {\n"
+        "\t\tvisible = {\n"
+        "\t\t\toriginal_tag = CHI\n"
+        "\t\t\thas_country_flag = test_flag\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_decision(text)
+    assert [line for line, _m in findings] == [5]
+    assert "`original_tag = CHI` always true" in findings[0][1]
+
+
+def test_decision_target_trigger_excluded():
+    text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { tag = CHI }\n"
+        "\ttarget_trigger = {\n"
+        "\t\tCHI = { has_war = no }\n"
+        "\t}\n"
+        "\tcomplete_effect = {\n"
+        "\t\tadd_stability = 0.05\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_decision(text) == []
+
+
+def test_decision_negated_allowed_claims_no_ownership():
+    text = (
+        "BLT_integrate_LIT = {\n"
+        "\tallowed = { NOT = { tag = LIT } }\n"
+        "\tremove_effect = {\n"
+        "\t\tif = {\n"
+        "\t\t\tlimit = { country_exists = LIT }\n"
+        "\t\t\tLIT = { every_unit_leader = { set_nationality = ROOT } }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_decision(text) == []
+
+
+def test_decision_disjunctive_allowed_claims_no_ownership():
+    text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { OR = { tag = CHI has_war = yes } }\n"
+        "\tcomplete_effect = {\n"
+        "\t\tCHI = { add_stability = 0.05 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_decision(text) == []
+
+
+def test_focus_disjunctive_allow_branch_keeps_tree_ownership():
+    text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tallow_branch = {\n"
+        "\t\t\tOR = { original_tag = CHI original_tag = SOV }\n"
+        "\t\t}\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [13]
+    assert "remove the wrapper" in findings[0][1]
+
+
+def test_decision_conflicting_gates_not_flagged():
+    text = (
+        "CHI_test_category = {\n"
+        "\tallowed = { original_tag = CHI }\n"
+        "\tCHI_test_decision = {\n"
+        "\t\tallowed = { tag = SOV }\n"
+        "\t\tcomplete_effect = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _owner_decision(text) == []
+
+
+def test_owner_scope_lines_account_for_leading_lines():
+    text = "# a comment line\n" "\n" + _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    findings = _owner_focus(text)
+    assert [line for line, _m in findings] == [12]
+
+
+def test_decision_lines_account_for_leading_lines():
+    text = (
+        "# a comment line\n"
+        "CHI_test_category = {\n"
+        "\tallowed = { original_tag = CHI }\n"
+        "\tCHI_test_decision = {\n"
+        "\t\tvisible = {\n"
+        "\t\t\toriginal_tag = CHI\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _owner_decision(text)
+    assert [line for line, _m in findings] == [6]
+
+
+def test_owner_scope_only_flag_skips_other_passes(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "common/national_focus/mix.txt",
+        "focus_tree = {\n"
+        "\tid = mix\n"
+        "\tcountry = {\n"
+        "\t\tfactor = 0\n"
+        "\t\tmodifier = { add = 20 tag = CHI }\n"
+        "\t}\n"
+        "\tfocus = {\n"
+        "\t\tid = CHI_mix\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tUSA = { add_stability = 0.01 }\n"
+        "\t\t\tUSA = { add_war_support = 0.01 }\n"
+        "\t\t\tCHI = { add_political_power = 10 }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+
+    scoped = vs.Validator(
+        str(tmp_path), use_colors=False, workers=1, owner_scope_only=True
+    )
+    scoped.run_validations()
+    scoped_messages = [issue.message for issue in scoped._issues]
+    assert len(scoped_messages) == 1
+    assert "remove the wrapper" in scoped_messages[0]
+
+    full = vs.Validator(str(tmp_path), use_colors=False, workers=1)
+    full.run_validations()
+    full_messages = [issue.message for issue in full._issues]
+    assert len(full_messages) == 2
+    assert any("can be merged into one" in m for m in full_messages)
+    assert any("remove the wrapper" in m for m in full_messages)
+
+
+def test_composite_routes_focus_and_decision_passes():
+    focus_text = _strict_chi_tree(
+        "\tfocus = {\n"
+        "\t\tid = CHI_test\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tCHI = { add_stability = 0.05 }\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    messages = [
+        m for m, _line in _scan_composite(focus_text, "common/national_focus/x.txt")
+    ]
+    assert any("remove the wrapper" in m for m in messages)
+
+    decision_text = (
+        "CHI_test_decision = {\n"
+        "\tallowed = { tag = CHI }\n"
+        "\tcomplete_effect = {\n"
+        "\t\tCHI = { add_stability = 0.05 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    messages = [
+        m for m, _line in _scan_composite(decision_text, "common/decisions/x.txt")
+    ]
+    assert any("remove the wrapper" in m for m in messages)
 
 
 def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
