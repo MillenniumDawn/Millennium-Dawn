@@ -13,22 +13,21 @@ check, and the commands used to build the board.
 
 ## Intake
 
-Wishes come in through the issue forms under `.github/ISSUE_TEMPLATE/`:
+Wishes come in through the Focus tree form under `.github/ISSUE_TEMPLATE/`:
 
-| Form       | Issue type  | Labels from the form                                        |
-| ---------- | ----------- | ----------------------------------------------------------- |
-| Focus tree | Focus Trees | `type:new-country` or `type:rework`, and `region:*`         |
-| Task       | Task        | `type:update`, `type:system`, or `type:gfx`, and `region:*` |
+| Form       | Issue type  | Labels from the form                                |
+| ---------- | ----------- | --------------------------------------------------- |
+| Focus tree | Focus Trees | `type:new-country` or `type:rework`, and `region:*` |
 
-`wish-intake.yml` reads the Kind, Work type, and Region dropdowns, applies the matching
-labels, and adds any issue with a `type:*` label to the board. Assignees stay empty until
-the council claims the wish.
+`wish-intake.yml` reads the Kind and Region dropdowns, applies the matching labels, and
+adds any issue with a `type:*` label to the board. Assignees stay empty until the council
+claims the wish. Task issues are plain issues; they never reach the board.
 
 ## Where each field lives
 
 | Field          | Lives in            | Values                                                                                                             |
 | -------------- | ------------------- | ------------------------------------------------------------------------------------------------------------------ |
-| Type           | repo label          | `type:new-country`, `type:rework`, `type:update`, `type:system`, `type:gfx`                                        |
+| Type           | repo label          | `type:new-country`, `type:rework`                                                                                  |
 | Region         | repo label          | `region:africa`, `region:latin-america`, `region:east-asia`, `region:middle-east`, `region:europe`, `region:other` |
 | Target         | milestone           | `2.1`, `3.0`, or none for backlog                                                                                  |
 | Stage          | board `Status`      | Wish, Claimed, In progress, Review, Done                                                                           |
