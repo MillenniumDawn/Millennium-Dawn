@@ -74,6 +74,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "mios", "validate_mios.py", ("mios", "localisation", "interface")
         ),
+        ValidatorSpec("mio-icons", "validate_mio_icons.py", ("mios",)),
         ValidatorSpec(
             "scripted-gui", "validate_scripted_gui.py", ("scripted-guis", "interface")
         ),
@@ -134,12 +135,6 @@ ALL_SPECS: Tuple[ValidatorSpec, ...] = tuple(
 IMPACT_ONLY_SPECS: Tuple[ValidatorSpec, ...] = (
     ValidatorSpec("file-paths", "validate_file_paths.py", (), True),
     ValidatorSpec("style", "validate_style.py", (), True),
-    # Warning-only and changed-files-scoped: the repo-wide backlog of files the
-    # standardizers would rewrite is in the hundreds, so a gate or a full-repo
-    # run would bury every other finding.
-    ValidatorSpec(
-        "standardization", "validate_standardization.py", (), False, ("--staged",)
-    ),
     ValidatorSpec("mod-descriptors", "validate_mod_descriptors.py", (), True),
     ValidatorSpec(
         "localization-encoding",
@@ -161,6 +156,9 @@ _IMPACT_EXCLUDED_SCRIPTS = {
     "validate_unused_textures.py",
     "validate_tools.py",
     "validate_staged.py",
+    # Manual-only: the standardization report is deliberately unwired from
+    # pre-commit and CI; editing the script must not re-select it.
+    "validate_standardization.py",
 }
 _REFERENCE_FILES = {
     ".claude/docs/typo-watchlist.md": ("localisation",),
