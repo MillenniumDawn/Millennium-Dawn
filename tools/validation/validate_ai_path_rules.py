@@ -8,17 +8,13 @@ least a `HISTORICAL` option and a `default = { }` block to steer it. Shared tree
 """
 
 import glob
-import os
 import re
-import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-
-from shared_utils import extract_block_from_text  # noqa: E402
-from validator_common import (  # noqa: E402
+from validator_common import (
     BaseValidator,
+    extract_block_from_text,
     run_validator_main,
     strip_comments,
 )
@@ -76,7 +72,7 @@ class Validator(BaseValidator):
         focus_files = sorted(glob.glob(str(mod / FOCUS_DIR / "*.txt")))
         if not focus_files:
             return
-        if self.staged_only and not self._touches_scope():
+        if self.staged_only and not self.staged_touches(SCOPE_DIRS):
             return
 
         owners: Set[str] = set()
@@ -132,19 +128,6 @@ class Validator(BaseValidator):
             return Path(path).read_text(encoding="utf-8-sig")
         except OSError:
             return ""
-
-    def _touches_scope(self) -> bool:
-        mod = Path(self.mod_path)
-        for f in self.staged_files or []:
-            p = Path(f)
-            abs_p = p if p.is_absolute() else mod / p
-            try:
-                rel = abs_p.resolve().relative_to(mod.resolve()).as_posix()
-            except ValueError:
-                continue
-            if rel.startswith(tuple(d + "/" for d in SCOPE_DIRS)):
-                return True
-        return False
 
 
 if __name__ == "__main__":
