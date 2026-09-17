@@ -274,6 +274,16 @@ def test_doctrine_carrier_satisfies_unused_check(tmp_path):
     assert _messages(v, "tech-category-unused") == []
 
 
+def test_doctrine_carried_tag_needs_no_research_loc_key(tmp_path):
+    v = _run(
+        tmp_path,
+        "common/doctrines/subdoctrines/land/x.txt",
+        "sub = {\n\tcategories = {\n\t\tCAT_missile\n\t}\n}\n",
+        loc=_LOC.replace(' CAT_missile_research: "$CAT_missile$ Research"\n', ""),
+    )
+    assert _messages(v, "tech-category-unlocalised") == []
+
+
 def test_doctrine_category_bodies_skips_nested_mastery_block():
     text = (
         "a = {\n\tcategories = { X }\n\tmastery = {\n\t\tcategories = { Y }\n\t}\n}\n"

@@ -8,6 +8,8 @@
 # means armour computer systems, so computing content using it bought tank tech.
 # A doctrine's own categories block, directly under common/doctrines/, counts as
 # both a reference to check and a carrier that satisfies the unused-tag check.
+# Doctrines cannot take a research bonus, so a doctrine-carried tag needs only its
+# name loc key, not the _research one.
 import difflib
 import os
 import re
@@ -285,10 +287,30 @@ class Validator(BaseValidator):
             category="tech-category-name-format",
         )
 
+        tech_files = self._collect_files([_TECH_GLOB], ignore_staged=True)
+        doctrine_files = [
+            f
+            for f in self._collect_files([_DOCTRINE_GLOB], ignore_staged=True)
+            if os.path.relpath(f, self.mod_path)
+            .replace(os.sep, "/")
+            .startswith(_DOCTRINE_DIRS)
+        ]
+        tech_used: Set[str] = set()
+        for cats in self._pool_map(
+            _carried_categories, [(f, False) for f in tech_files]
+        ):
+            tech_used.update(cats)
+        doctrine_used: Set[str] = set()
+        for cats in self._pool_map(
+            _carried_categories, [(f, True) for f in doctrine_files]
+        ):
+            doctrine_used.update(cats)
+
         loc_keys = self._load_localisation_keys()
         unlocalised = []
         for name, rel, line in declared:
-            missing = [k for k in (name, f"{name}_research") if k not in loc_keys]
+            wanted = (name,) if name in doctrine_used else (name, f"{name}_research")
+            missing = [k for k in wanted if k not in loc_keys]
             if missing:
                 unlocalised.append(
                     (
@@ -306,20 +328,7 @@ class Validator(BaseValidator):
             category="tech-category-unlocalised",
         )
 
-        tech_files = self._collect_files([_TECH_GLOB], ignore_staged=True)
-        doctrine_files = [
-            f
-            for f in self._collect_files([_DOCTRINE_GLOB], ignore_staged=True)
-            if os.path.relpath(f, self.mod_path)
-            .replace(os.sep, "/")
-            .startswith(_DOCTRINE_DIRS)
-        ]
-        carrier_args = [(f, False) for f in tech_files] + [
-            (f, True) for f in doctrine_files
-        ]
-        used: Set[str] = set()
-        for cats in self._pool_map(_carried_categories, carrier_args):
-            used.update(cats)
+        used = tech_used | doctrine_used
         self._report(
             [
                 (
