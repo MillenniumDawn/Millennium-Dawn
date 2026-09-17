@@ -120,6 +120,11 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
         ValidatorSpec("country-names", "validate_country_names.py", ("common",)),
         ValidatorSpec(
+            "ai-path-rules",
+            "validate_ai_path_rules.py",
+            ("national-focus", "common", "history"),
+        ),
+        ValidatorSpec(
             "party-loc",
             "validate_party_loc.py",
             ("localisation", "common"),

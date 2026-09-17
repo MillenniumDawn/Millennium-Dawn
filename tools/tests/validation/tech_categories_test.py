@@ -1,6 +1,13 @@
 """Tests for validate_tech_categories."""
 
-from validate_tech_categories import Validator, _brace_span, _references
+from shared.paths import REPO_ROOT
+from validate_tech_categories import (
+    _LEGACY_CATEGORIES,
+    Validator,
+    _brace_span,
+    _references,
+    load_known_categories,
+)
 
 _TAG_NAMES = [
     "CAT_military",
@@ -8,6 +15,7 @@ _TAG_NAMES = [
     "CAT_encryption_tech",
     "CAT_computing_tech",
     "CAT_computer_systems",
+    "CAT_small_arms",
 ]
 
 _TAGS = """technology_Categories = {
@@ -16,6 +24,7 @@ _TAGS = """technology_Categories = {
 \tCAT_encryption_tech
 \tCAT_computing_tech \t#general computing
 \tCAT_computer_systems \t#armour computer systems
+\tCAT_small_arms
 }
 """
 
@@ -87,6 +96,37 @@ def test_unknown_category_suggests_the_closest_real_name(tmp_path):
     messages = _messages(v)
     assert len(messages) == 1
     assert "CAT_encryption_tech" in messages[0], messages[0]
+
+
+def test_legacy_category_suggests_its_replacement(tmp_path):
+    v = _run(
+        tmp_path,
+        "events/Test.txt",
+        "country_event = {\n\tadd_tech_bonus = { category = CAT_inf_wep }\n}\n",
+    )
+    messages = _messages(v)
+    assert len(messages) == 1
+    assert "did you mean 'CAT_small_arms'" in messages[0], messages[0]
+
+
+def test_mixed_case_reference_suggests_the_lowercase_tag(tmp_path):
+    v = _run(
+        tmp_path,
+        "events/Test.txt",
+        "country_event = {\n\tadd_tech_bonus = { category = CAT_Military }\n}\n",
+    )
+    messages = _messages(v)
+    assert len(messages) == 1
+    assert "did you mean 'CAT_military'" in messages[0], messages[0]
+
+
+def test_legacy_table_targets_exist_and_keys_do_not():
+    known = load_known_categories(
+        sorted((REPO_ROOT / "common" / "technology_tags").glob("*.txt"))
+    )
+    known_lower = {k.lower() for k in known}
+    assert set(_LEGACY_CATEGORIES.values()) <= known
+    assert not set(_LEGACY_CATEGORIES) & known_lower
 
 
 def test_research_bonus_keys_are_checked(tmp_path):
