@@ -262,6 +262,12 @@ def test_collect_files_dedupes_overlapping_patterns(dummy, write_path, tmp_path)
     assert len(files) == 1
 
 
+def test_collect_files_dedupes_nested_dir_patterns(dummy, write_path, tmp_path):
+    write_path(tmp_path, "common/sub/a.txt", "x")
+    files = dummy._collect_files(["common/sub/*.txt", "common/**/*.txt"])
+    assert len(files) == 1
+
+
 def test_pool_map_falls_back_to_sequential_without_a_pool(tmp_path, monkeypatch):
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, workers=2)
     monkeypatch.setattr(v, "_get_pool", lambda: None)
