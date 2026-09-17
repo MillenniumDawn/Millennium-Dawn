@@ -498,6 +498,53 @@ need a fix before then.
 - `chaebols`, `wall_street`, and `the_donju` lack
   `_at_least_enthusiastic_opinion` triggers and entrench decisions.
 
+## Data layer API (step 1)
+
+Files: `common/scripted_effects/01_internal_factions_v3_effects.txt`,
+`common/scripted_triggers/01_internal_factions_v3_triggers.txt`.
+
+`if_init_arrays` creates three per-country arrays sized 24 (index 0 unused,
+ids 1-23 match the faction id order used throughout this doc): `if_active`
+(the up-to-4 held ids), `if_opinion` (0-100 per id), `if_influence`
+(0-100 per id).
+
+Effects:
+
+- `if_change_opinion` (if_id, temp_opinion): adds temp_opinion to
+  `if_opinion^if_id` and clamps, only when if_id is active.
+- `if_change_influence` (if_id, temp_influence): same for `if_influence^if_id`.
+- `if_add_faction` (if_id, optional if_replace_id): activates if_id, replacing
+  if_replace_id or the lowest-influence active id when already at 4.
+- `if_remove_faction` (if_id): drops if_id from `if_active`.
+- `if_seed_factions` (no params): run directly after `setup_init_factions`.
+  Adds every held idea's faction first (at its old `<f>_opinion`), then fills
+  remaining slots up to 4, from the random pool under
+  `rule_randomize_internal_factions` or otherwise by the fixed rule order in
+  `if_seed_rule_fill`.
+- `if_copy_factions` (nation_to_copy_from): copies `if_active`, `if_opinion`,
+  `if_influence` from that country; mirrors opinion around 50 for factions
+  aligned with the new ruling party's group.
+- `update_if_dirty_variable`: bumps `global.if_ui_dirty` for the player only.
+
+Triggers: `if_has_<token>` per faction (23, plus `if_has_religious_faction`
+for ids 14-17); `if_tier_hostile/negative/indifferent/positive/enthusiastic`
+and `if_influence_marginal/influential/powerful` on `if_opinion^if_id` /
+`if_influence^if_id`; `if_is_available` (on `if_id`) reproduces the old idea
+`allowed`/`available` gating, minus `internal_faction_swap_allowed`.
+
+Seeding order in `if_seed_rule_fill`: religious factions first, then oil,
+dockyard share, agriculture share (and landowners under no elections), ruling
+party alignment, military/police law, corruption, then the remaining ids in a
+fixed fallback order. The building-share thresholds (oil 5% of GDP, dockyard
+10% of naval+military+industrial capacity, agriculture 25% of
+industrial+office+agriculture capacity) are provisional and get tuned in step 9 (#4272).
+
+Bridge: each old `change_<f>_opinion` effect now also calls
+`if_change_opinion` with the raw `temp_opinion`, before `autocrats_opinion_change`
+and outside the `has_idea` guard, so the new arrays move even for
+rule-filled factions with no idea. The old `<f>_opinion` variable keeps
+updating unchanged; the 2x autocrat multiplier is not applied to the bridge.
+
 ## Step map
 
 One line per sub-issue in epic #4260, listing what each step builds.

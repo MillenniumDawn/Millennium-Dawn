@@ -117,6 +117,9 @@ PENDING_IMPLEMENTATION_NAMES = frozenset(
         "USA_return_majority",
         "USA_flip_support",
         "usa_congress_oppposition_elections",
+        # Internal factions v3 (#4260): callers land in steps 2 and 5
+        "if_change_influence",
+        "if_remove_faction",
     }
 )
 
@@ -130,6 +133,8 @@ FALSE_POSITIVE_FILES = frozenset(
         # wants to check a faction mood level has a ready-made trigger, even if
         # many are not currently referenced anywhere in the mod.
         "00_internal_factions_trigger.txt",
+        # Internal factions v3 preset triggers (if_has_X, if_tier_X, if_influence_X), callers land in later #4260 steps
+        "01_internal_factions_v3_triggers.txt",
         # Dummy effect existing only to suppress false positives on dynamically
         # built flag/variable names; deliberately never called.
         "!_cwtools_dummy_effects.txt",

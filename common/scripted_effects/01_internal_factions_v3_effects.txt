@@ -1,0 +1,450 @@
+# Internal factions v3 data layer, see .claude/docs/internal-factions-reference.md
+
+if_init_arrays = {
+	if = {
+		limit = { check_variable = { if_opinion^num < 24 } }
+		resize_array = { array = if_opinion value = 0 size = 24 }
+		resize_array = { array = if_influence value = 0 size = 24 }
+	}
+}
+
+update_if_dirty_variable = {
+	if = { limit = { is_ai = no }
+		if = {
+			limit = { check_variable = { global.if_ui_dirty < 100000 } }
+			add_to_variable = { global.if_ui_dirty = 1 }
+		}
+		else = {
+			set_variable = { global.if_ui_dirty = 1 }
+		}
+	}
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+# - temp_opinion: opinion delta (optional, set by the caller of the change_<f>_opinion wrapper)
+if_change_opinion = {
+	if = {
+		limit = { is_in_array = { array = if_active value = if_id } }
+		add_to_variable = { if_opinion^if_id = temp_opinion }
+		clamp_variable = { var = if_opinion^if_id min = 0 max = 100 }
+		update_if_dirty_variable = yes
+	}
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+# - temp_influence: influence delta
+if_change_influence = {
+	if = {
+		limit = { is_in_array = { array = if_active value = if_id } }
+		add_to_variable = { if_influence^if_id = temp_influence }
+		clamp_variable = { var = if_influence^if_id min = 0 max = 100 }
+		update_if_dirty_variable = yes
+	}
+}
+
+# Activates faction if_id; when all 4 slots are full it takes the slot of if_replace_id, or of the lowest-influence active faction when if_replace_id is 0
+if_add_faction = {
+	if = {
+		limit = { NOT = { is_in_array = { array = if_active value = if_id } } }
+		if = {
+			limit = { check_variable = { if_active^num < 4 } }
+			add_to_array = { if_active = if_id }
+		}
+		else = {
+			if = {
+				limit = { NOT = { is_in_array = { array = if_active value = if_replace_id } } }
+				set_temp_variable = { if_replace_id = if_active^0 }
+				for_each_loop = {
+					array = if_active
+					value = if_v
+					if = {
+						limit = { check_variable = { if_influence^if_v < if_influence^if_replace_id } }
+						set_temp_variable = { if_replace_id = if_v }
+					}
+				}
+			}
+			for_each_loop = {
+				array = if_active
+				index = if_i
+				value = if_v
+				if = {
+					limit = { check_variable = { if_v = if_replace_id } }
+					set_variable = { if_active^if_i = if_id }
+				}
+			}
+		}
+		set_variable = { if_opinion^if_id = 50 }
+		set_variable = { if_influence^if_id = global.if_base_influence^if_id }
+		update_if_dirty_variable = yes
+	}
+	set_temp_variable = { if_replace_id = 0 }
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+if_remove_faction = {
+	if = {
+		limit = { is_in_array = { array = if_active value = if_id } }
+		remove_from_array = { array = if_active value = if_id }
+		update_if_dirty_variable = yes
+	}
+}
+
+# Sets if_replace_id to the lowest-influence active faction whose idea is not held, 0 when none
+if_pick_rule_filled_slot = {
+	set_temp_variable = { if_replace_id = 0 }
+	for_each_loop = {
+		array = if_active
+		value = if_v
+		set_temp_variable = { if_tok = global.if_token^if_v }
+		if = {
+			limit = {
+				NOT = { has_idea = var:if_tok }
+				OR = {
+					check_variable = { if_replace_id = 0 }
+					check_variable = { if_influence^if_v < if_influence^if_replace_id }
+				}
+			}
+			set_temp_variable = { if_replace_id = if_v }
+		}
+	}
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+# - if_seed_opinion: starting opinion, the old <f>_opinion
+if_seed_held_faction = {
+	if = {
+		limit = { NOT = { is_in_array = { array = if_active value = if_id } } }
+		if_pick_rule_filled_slot = yes
+		if_add_faction = yes
+		set_variable = { if_opinion^if_id = if_seed_opinion }
+	}
+}
+
+# Parameters:
+# - if_id: faction id 1-23
+if_try_seed_faction = {
+	if = {
+		limit = {
+			check_variable = { if_active^num < 4 }
+			NOT = { is_in_array = { array = if_active value = if_id } }
+			if_is_available = yes
+		}
+		if_add_faction = yes
+	}
+}
+
+if_seed_rule_fill = {
+	set_temp_variable = { if_id = 17 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 15 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 16 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 14 }
+	if_try_seed_faction = yes
+	if = {
+		limit = { check_variable = { gdp_total > 0 } }
+		set_temp_variable = { if_share = oil_exports }
+		divide_temp_variable = { if_share = gdp_total }
+		if = {
+			limit = { check_variable = { if_share > 0.05 } }
+			set_temp_variable = { if_id = 3 }
+			if_try_seed_faction = yes
+		}
+	}
+	set_temp_variable = { if_share = industrial_complex_total }
+	add_to_temp_variable = { if_share = military_factory_total }
+	add_to_temp_variable = { if_share = naval_factory_total }
+	if = {
+		limit = { check_variable = { if_share > 0 } }
+		set_temp_variable = { if_dockyard_share = naval_factory_total }
+		divide_temp_variable = { if_dockyard_share = if_share }
+		if = {
+			limit = { check_variable = { if_dockyard_share > 0.10 } }
+			set_temp_variable = { if_id = 6 }
+			if_try_seed_faction = yes
+		}
+	}
+	set_temp_variable = { if_share = industrial_complex_total }
+	add_to_temp_variable = { if_share = office_park_total }
+	add_to_temp_variable = { if_share = agriculture_district_total }
+	if = {
+		limit = { check_variable = { if_share > 0 } }
+		set_temp_variable = { if_agri_share = agriculture_district_total }
+		divide_temp_variable = { if_agri_share = if_share }
+		if = {
+			limit = { check_variable = { if_agri_share > 0.25 } }
+			set_temp_variable = { if_id = 12 }
+			if_try_seed_faction = yes
+			if = {
+				limit = { has_elections = no }
+				set_temp_variable = { if_id = 11 }
+				if_try_seed_faction = yes
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { global.ip_party_policy_group^ruling_party = 1 } }
+		set_temp_variable = { if_id = 13 }
+		if_try_seed_faction = yes
+	}
+	else_if = {
+		limit = { check_variable = { global.ip_party_policy_group^ruling_party = 2 } }
+		set_temp_variable = { if_id = 10 }
+		if_try_seed_faction = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { military_law > 3 }
+				check_variable = { ruling_party = 22 }
+			}
+		}
+		set_temp_variable = { if_id = 7 }
+		if_try_seed_faction = yes
+	}
+	if = {
+		limit = { check_variable = { police_law > 3 } }
+		set_temp_variable = { if_id = 9 }
+		if_try_seed_faction = yes
+	}
+	if = {
+		limit = {
+			OR = {
+				has_idea = corruption_level_04
+				has_idea = corruption_level_05
+				has_idea = corruption_level_06
+				has_idea = corruption_level_07
+				has_idea = corruption_level_08
+				has_idea = corruption_level_09
+				has_idea = corruption_level_10
+			}
+		}
+		set_temp_variable = { if_id = 5 }
+		if_try_seed_faction = yes
+	}
+	set_temp_variable = { if_id = 1 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 4 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 8 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 2 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 7 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 11 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 12 }
+	if_try_seed_faction = yes
+	set_temp_variable = { if_id = 3 }
+	if_try_seed_faction = yes
+}
+
+if_seed_random_fill = {
+	clear_temp_array = if_pool
+	for_loop_effect = {
+		start = 1
+		end = 24
+		value = if_id
+		if = {
+			limit = {
+				NOT = { is_in_array = { array = if_active value = if_id } }
+				if_is_available = yes
+			}
+			add_to_temp_array = { if_pool = if_id }
+		}
+	}
+	while_loop_effect = {
+		limit = {
+			check_variable = { if_active^num < 4 }
+			check_variable = { if_pool^num > 0 }
+		}
+		set_temp_variable = { if_last = if_pool^num }
+		subtract_from_temp_variable = { if_last = 1 }
+		set_temp_variable_to_random = { var = if_r min = 0 max = if_last integer = yes }
+		set_temp_variable = { if_id = if_pool^if_r }
+		if = {
+			limit = { if_is_available = yes }
+			if_add_faction = yes
+		}
+		remove_from_temp_array = { array = if_pool index = if_r }
+	}
+}
+
+# Runs after setup_init_factions: held ideas first, then fill to 4 by rules (random pool under rule_randomize_internal_factions)
+if_seed_factions = {
+	if_init_arrays = yes
+	if = {
+		limit = { has_idea = small_medium_business_owners }
+		set_temp_variable = { if_id = 1 }
+		set_temp_variable = { if_seed_opinion = small_medium_business_owners_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = international_bankers }
+		set_temp_variable = { if_id = 2 }
+		set_temp_variable = { if_seed_opinion = international_bankers_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = fossil_fuel_industry }
+		set_temp_variable = { if_id = 3 }
+		set_temp_variable = { if_seed_opinion = fossil_fuel_industry_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = industrial_conglomerates }
+		set_temp_variable = { if_id = 4 }
+		set_temp_variable = { if_seed_opinion = industrial_conglomerates_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = oligarchs }
+		set_temp_variable = { if_id = 5 }
+		set_temp_variable = { if_seed_opinion = oligarchs_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = maritime_industry }
+		set_temp_variable = { if_id = 6 }
+		set_temp_variable = { if_seed_opinion = maritime_industry_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_military }
+		set_temp_variable = { if_id = 7 }
+		set_temp_variable = { if_seed_opinion = the_military_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = defense_industry }
+		set_temp_variable = { if_id = 8 }
+		set_temp_variable = { if_seed_opinion = defense_industry_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = intelligence_community }
+		set_temp_variable = { if_id = 9 }
+		set_temp_variable = { if_seed_opinion = intelligence_community_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = labour_unions }
+		set_temp_variable = { if_id = 10 }
+		set_temp_variable = { if_seed_opinion = labour_unions_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = landowners }
+		set_temp_variable = { if_id = 11 }
+		set_temp_variable = { if_seed_opinion = landowners_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = farmers }
+		set_temp_variable = { if_id = 12 }
+		set_temp_variable = { if_seed_opinion = farmers_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = communist_cadres }
+		set_temp_variable = { if_id = 13 }
+		set_temp_variable = { if_seed_opinion = communist_cadres_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_priesthood }
+		set_temp_variable = { if_id = 14 }
+		set_temp_variable = { if_seed_opinion = the_priesthood_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_ulema }
+		set_temp_variable = { if_id = 15 }
+		set_temp_variable = { if_seed_opinion = the_ulema_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_clergy }
+		set_temp_variable = { if_id = 16 }
+		set_temp_variable = { if_seed_opinion = the_clergy_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = wahabi_ulema }
+		set_temp_variable = { if_id = 17 }
+		set_temp_variable = { if_seed_opinion = wahabi_ulema_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_donju }
+		set_temp_variable = { if_id = 18 }
+		set_temp_variable = { if_seed_opinion = the_donju_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = saudi_royal_family }
+		set_temp_variable = { if_id = 19 }
+		set_temp_variable = { if_seed_opinion = saudi_royal_family_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = iranian_quds_force }
+		set_temp_variable = { if_id = 20 }
+		set_temp_variable = { if_seed_opinion = iranian_quds_force_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = foreign_jihadis }
+		set_temp_variable = { if_id = 21 }
+		set_temp_variable = { if_seed_opinion = foreign_jihadis_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = wall_street }
+		set_temp_variable = { if_id = 22 }
+		set_temp_variable = { if_seed_opinion = wall_street_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = chaebols }
+		set_temp_variable = { if_id = 23 }
+		set_temp_variable = { if_seed_opinion = chaebols_opinion }
+		if_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_game_rule = { rule = rule_randomize_internal_factions option = yes } }
+		if_seed_random_fill = yes
+	}
+	else = {
+		if_seed_rule_fill = yes
+	}
+}
+
+# Parameters:
+# - nation_to_copy_from: country whose if_active, if_opinion and if_influence are copied; factions backing the new ruling party mirror opinion around 50
+if_copy_factions = {
+	if_init_arrays = yes
+	clear_array = if_active
+	for_each_loop = {
+		array = var:nation_to_copy_from.if_active
+		value = if_v
+		add_to_array = { if_active = if_v }
+		set_variable = { if_opinion^if_v = var:nation_to_copy_from.if_opinion^if_v }
+		set_variable = { if_influence^if_v = var:nation_to_copy_from.if_influence^if_v }
+		set_temp_variable = { if_aff = if_v }
+		multiply_temp_variable = { if_aff = 13 }
+		add_to_temp_variable = { if_aff = global.ip_party_policy_group^ruling_party }
+		if = {
+			limit = { check_variable = { global.if_affinity^if_aff = 1 } }
+			set_variable = { if_opinion^if_v = 100 }
+			subtract_from_variable = { if_opinion^if_v = var:nation_to_copy_from.if_opinion^if_v }
+		}
+	}
+	update_if_dirty_variable = yes
+}
