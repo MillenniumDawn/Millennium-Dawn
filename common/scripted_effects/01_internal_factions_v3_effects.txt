@@ -1,10 +1,19 @@
 # Internal factions v3 data layer, see .claude/docs/internal-factions-reference.md
+@if_influence_drift_rate = 0.10
+@if_k_building_share = 100
+@if_k_heavy_share = 300
+@if_k_debt = 10
+@if_k_unions = 15
+@if_k_party_pop = 30
+@if_k_religious_pop = 20
 
 if_init_arrays = {
 	if = {
-		limit = { check_variable = { if_opinion^num < 24 } }
+		limit = { check_variable = { if_inf_target^num < 24 } }
 		resize_array = { array = if_opinion value = 0 size = 24 }
 		resize_array = { array = if_influence value = 0 size = 24 }
+		resize_array = { array = if_target value = 0 size = 24 }
+		resize_array = { array = if_inf_target value = 0 size = 24 }
 	}
 }
 
@@ -447,4 +456,264 @@ if_copy_factions = {
 		}
 	}
 	update_if_dirty_variable = yes
+}
+
+# Parameters (set by if_monthly_tick):
+# - if_v: faction id
+# - if_group: policy group of the ruling party
+# - if_mil_term, if_pol_term, if_edu_term, if_soc_term, if_corp_term, if_pop_term: hoisted law terms
+if_compute_opinion_target = {
+	set_temp_variable = { if_t = 50 }
+	if = {
+		limit = { check_variable = { global.if_affinity^if_aff = 1 } }
+		add_to_temp_variable = { if_t = 15 }
+	}
+	else_if = {
+		limit = { check_variable = { global.if_affinity^if_aff = -1 } }
+		subtract_from_temp_variable = { if_t = 10 }
+	}
+	if = {
+		limit = { check_variable = { gov_coalition_array^num > 0 } }
+		set_temp_variable = { if_col = 0 }
+		for_each_loop = {
+			array = gov_coalition_array
+			value = if_party
+			set_temp_variable = { if_aff_col = if_v }
+			multiply_temp_variable = { if_aff_col = 13 }
+			add_to_temp_variable = { if_aff_col = global.ip_party_policy_group^if_party }
+			if = {
+				limit = { check_variable = { global.if_affinity^if_aff_col = 1 } }
+				add_to_temp_variable = { if_col = 15 }
+			}
+			else_if = {
+				limit = { check_variable = { global.if_affinity^if_aff_col = -1 } }
+				subtract_from_temp_variable = { if_col = 10 }
+			}
+		}
+		divide_temp_variable = { if_col = gov_coalition_array^num }
+		multiply_temp_variable = { if_col = 0.5 }
+		add_to_temp_variable = { if_t = if_col }
+	}
+	set_temp_variable = { if_law = global.if_pref_military_law^if_v }
+	multiply_temp_variable = { if_law = if_mil_term }
+	set_temp_variable = { if_x = global.if_pref_police_law^if_v }
+	multiply_temp_variable = { if_x = if_pol_term }
+	add_to_temp_variable = { if_law = if_x }
+	set_temp_variable = { if_x = global.if_pref_education_law^if_v }
+	multiply_temp_variable = { if_x = if_edu_term }
+	add_to_temp_variable = { if_law = if_x }
+	set_temp_variable = { if_x = global.if_pref_social_law^if_v }
+	multiply_temp_variable = { if_x = if_soc_term }
+	add_to_temp_variable = { if_law = if_x }
+	set_temp_variable = { if_x = global.if_pref_corporate_tax^if_v }
+	multiply_temp_variable = { if_x = if_corp_term }
+	add_to_temp_variable = { if_law = if_x }
+	set_temp_variable = { if_x = global.if_pref_population_tax^if_v }
+	multiply_temp_variable = { if_x = if_pop_term }
+	add_to_temp_variable = { if_law = if_x }
+	clamp_temp_variable = { var = if_law min = -10 max = 10 }
+	add_to_temp_variable = { if_t = if_law }
+	clamp_temp_variable = { var = if_t min = 5 max = 95 }
+	set_variable = { if_target^if_v = if_t }
+}
+
+# Sector driver of faction if_v, 0-30, see the reference doc; K values are provisional until step 9
+if_compute_sector_score = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { if_v = 1 }
+				check_variable = { if_v = 4 }
+				check_variable = { if_v = 18 }
+				check_variable = { if_v = 23 }
+			}
+		}
+		set_temp_variable = { if_sector = civil_fac_percent }
+		multiply_temp_variable = { if_sector = @if_k_building_share }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { if_v = 2 }
+				check_variable = { if_v = 22 }
+			}
+		}
+		set_temp_variable = { if_sector = office_fac_percent }
+		multiply_temp_variable = { if_sector = @if_k_building_share }
+		set_temp_variable = { if_x = debt_ratio }
+		multiply_temp_variable = { if_x = @if_k_debt }
+		add_to_temp_variable = { if_sector = if_x }
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 3 } }
+		set_temp_variable = { if_sector = if_oil_share }
+		multiply_temp_variable = { if_sector = @if_k_heavy_share }
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 5 } }
+		set_temp_variable = { if_sector = civil_fac_percent }
+		multiply_temp_variable = { if_sector = @if_k_building_share }
+		multiply_temp_variable = { if_sector = 0.6 }
+		if = {
+			limit = {
+				OR = {
+					has_idea = corruption_level_04
+					has_idea = corruption_level_05
+					has_idea = corruption_level_06
+					has_idea = corruption_level_07
+					has_idea = corruption_level_08
+					has_idea = corruption_level_09
+					has_idea = corruption_level_10
+				}
+			}
+			add_to_temp_variable = { if_sector = 10 }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 6 } }
+		set_temp_variable = { if_sector = naval_factory_total_percent }
+		multiply_temp_variable = { if_sector = @if_k_heavy_share }
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 7 } }
+		set_temp_variable = { if_sector = military_law }
+		multiply_temp_variable = { if_sector = 2 }
+		add_to_temp_variable = { if_sector = if_war }
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 8 } }
+		set_temp_variable = { if_sector = military_factory_total_percent }
+		multiply_temp_variable = { if_sector = @if_k_heavy_share }
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 9 } }
+		set_temp_variable = { if_sector = police_law }
+		multiply_temp_variable = { if_sector = 5 }
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 10 } }
+		set_temp_variable = { if_sector = civil_fac_percent }
+		add_to_temp_variable = { if_sector = military_factory_total_percent }
+		multiply_temp_variable = { if_sector = social_law }
+		multiply_temp_variable = { if_sector = @if_k_unions }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { if_v = 11 }
+				check_variable = { if_v = 12 }
+			}
+		}
+		set_temp_variable = { if_sector = agriculture_district_fac_percent }
+		add_to_temp_variable = { if_sector = agriculture_percent }
+		multiply_temp_variable = { if_sector = @if_k_building_share }
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 13 } }
+		set_temp_variable = { if_sector = party_pop_array^4 }
+		add_to_temp_variable = { if_sector = party_pop_array^19 }
+		multiply_temp_variable = { if_sector = @if_k_party_pop }
+	}
+	else_if = {
+		limit = {
+			check_variable = { if_v > 13 }
+			check_variable = { if_v < 18 }
+		}
+		set_temp_variable = { if_sector = 5 }
+		subtract_from_temp_variable = { if_sector = education_law }
+		multiply_temp_variable = { if_sector = 3 }
+		add_to_temp_variable = { if_sector = 10 }
+		set_temp_variable = { if_x = party_pop_array^8 }
+		add_to_temp_variable = { if_x = party_pop_array^9 }
+		add_to_temp_variable = { if_x = party_pop_array^11 }
+		add_to_temp_variable = { if_x = party_pop_array^12 }
+		multiply_temp_variable = { if_x = @if_k_religious_pop }
+		add_to_temp_variable = { if_sector = if_x }
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 19 } }
+		set_temp_variable = { if_sector = 20 }
+	}
+	else_if = {
+		limit = { check_variable = { if_v = 20 } }
+		set_temp_variable = { if_sector = military_law }
+		multiply_temp_variable = { if_sector = 2 }
+	}
+	else = {
+		set_temp_variable = { if_sector = if_war }
+	}
+	clamp_temp_variable = { var = if_sector min = 0 max = 30 }
+}
+
+# Parameters (set by if_monthly_tick):
+# - if_v: faction id
+# - if_aff: if_v * 13 + ruling policy group
+# - if_oil_share, if_war: hoisted sector inputs
+if_compute_influence_target = {
+	set_temp_variable = { if_t = global.if_base_influence^if_v }
+	if_compute_sector_score = yes
+	add_to_temp_variable = { if_t = if_sector }
+	if = {
+		limit = { check_variable = { global.if_affinity^if_aff = 1 } }
+		add_to_temp_variable = { if_t = 10 }
+	}
+	clamp_temp_variable = { var = if_t min = 5 max = 100 }
+	set_variable = { if_inf_target^if_v = if_t }
+}
+
+# Monthly: recompute targets for every active faction and drift opinion (global.if_drift_rate) and influence toward them
+if_monthly_tick = {
+	if = {
+		limit = { check_variable = { if_active^num > 0 } }
+		if_init_arrays = yes
+		set_temp_variable = { if_group = global.ip_party_policy_group^ruling_party }
+		set_temp_variable = { if_mil_term = military_law }
+		subtract_from_temp_variable = { if_mil_term = 5 }
+		set_temp_variable = { if_pol_term = police_law }
+		subtract_from_temp_variable = { if_pol_term = 3 }
+		multiply_temp_variable = { if_pol_term = 2 }
+		set_temp_variable = { if_edu_term = education_law }
+		subtract_from_temp_variable = { if_edu_term = 3 }
+		multiply_temp_variable = { if_edu_term = 2 }
+		set_temp_variable = { if_soc_term = social_law }
+		subtract_from_temp_variable = { if_soc_term = 3 }
+		multiply_temp_variable = { if_soc_term = 2 }
+		set_temp_variable = { if_corp_term = corporate_tax_rate }
+		subtract_from_temp_variable = { if_corp_term = 25 }
+		multiply_temp_variable = { if_corp_term = 0.2 }
+		set_temp_variable = { if_pop_term = population_tax_rate }
+		subtract_from_temp_variable = { if_pop_term = 25 }
+		multiply_temp_variable = { if_pop_term = 0.2 }
+		set_temp_variable = { if_oil_share = 0 }
+		if = {
+			limit = { check_variable = { gdp_total > 0 } }
+			set_temp_variable = { if_oil_share = oil_exports }
+			divide_temp_variable = { if_oil_share = gdp_total }
+		}
+		set_temp_variable = { if_war = 0 }
+		if = {
+			limit = { has_war = yes }
+			set_temp_variable = { if_war = 10 }
+		}
+		for_each_loop = {
+			array = if_active
+			value = if_v
+			set_temp_variable = { if_aff = if_v }
+			multiply_temp_variable = { if_aff = 13 }
+			add_to_temp_variable = { if_aff = if_group }
+			if_compute_opinion_target = yes
+			if_compute_influence_target = yes
+			set_temp_variable = { if_d = if_target^if_v }
+			subtract_from_temp_variable = { if_d = if_opinion^if_v }
+			multiply_temp_variable = { if_d = global.if_drift_rate }
+			add_to_variable = { if_opinion^if_v = if_d }
+			clamp_variable = { var = if_opinion^if_v min = 0 max = 100 }
+			set_temp_variable = { if_d = if_inf_target^if_v }
+			subtract_from_temp_variable = { if_d = if_influence^if_v }
+			multiply_temp_variable = { if_d = @if_influence_drift_rate }
+			add_to_variable = { if_influence^if_v = if_d }
+			clamp_variable = { var = if_influence^if_v min = 0 max = 100 }
+		}
+		update_if_dirty_variable = yes
+	}
 }

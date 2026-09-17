@@ -136,24 +136,33 @@ centre 3 / scale 2 for police, education, and social; taxes use
 Step 2 influence formula: `inf_target = base + sector (0-30) + 10 per active
 privilege (cap 20) - 20 if cracked down + 10 if a backed group rules`,
 clamped to 5..100. Sector is `clamp(driver * K, 0, 30)`; K values are
-provisional and get tuned in steps 2 and 9. Every var referenced already
-exists.
+provisional and get tuned in step 9. Shares are the existing GDP-share vars
+set in `00_money_system.txt:6040+` (`civil_fac_percent`, `office_fac_percent`,
+`naval_factory_total_percent`, `military_factory_total_percent`,
+`agriculture_district_fac_percent`, `agriculture_percent`), `debt_ratio`
+(`:2584`), and `oil_exports / gdp_total`. K constants: `@if_k_building_share`
+100, `@if_k_heavy_share` 300, `@if_k_debt` 10, `@if_k_unions` 15,
+`@if_k_party_pop` 30, `@if_k_religious_pop` 20.
 
-- 1, 4, 23: (`civil_fac_tax` + `internet_station_tax`) / `gdp_total`
-  (`00_money_system.txt:429,681`)
-- 2, 22: `office_tax` / `gdp_total` + `debt` / `gdp_total` (`:501`, `:2584`)
-- 3: `oil_exports` / `gdp_total` (`:4434`)
-- 5: civ share times corruption tier (`corruption_level_01..` ideas,
-  `00_budget_effects.txt:677`)
-- 6: `dockyard_tax` / `gdp_total` (`:477`)
-- 7: `military_law` x 2, plus 10 if `has_war = yes` (`00_law_attitudes.txt:135`)
-- 8: `military_fac_tax` / `gdp_total` (`:453`)
-- 9: `police_law` x 5 (`00_law_attitudes.txt:30`)
-- 10: (`civil_fac_tax` + `military_fac_tax`) / `gdp_total` x `social_law`
-- 11, 12: `agriculture_district_tax` / `gdp_total` (`:525`)
-- 13: popularity of group-1 parties (`party_pop_array`)
-- 14-17: 10 + (5 - `education_law`) x 3 + religious party popularity
-- 18: civ share, same driver as faction 1
+- 1, 4, 18, 23: `civil_fac_percent` x `@if_k_building_share`
+- 2, 22: `office_fac_percent` x `@if_k_building_share` + `debt_ratio` x
+  `@if_k_debt`
+- 3: `oil_exports` / `gdp_total` x `@if_k_heavy_share`
+- 5: oligarchs, `civil_fac_percent` x `@if_k_building_share` x 0.6, +10 under
+  `corruption_level_04` and above
+- 6: `naval_factory_total_percent` x `@if_k_heavy_share`
+- 7: `military_law` x 2, plus 10 if `has_war = yes`
+- 8: `military_factory_total_percent` x `@if_k_heavy_share`
+- 9: `police_law` x 5
+- 10: (`civil_fac_percent` + `military_factory_total_percent`) x
+  `social_law` x `@if_k_unions`
+- 11, 12: (`agriculture_district_fac_percent` + `agriculture_percent`) x
+  `@if_k_building_share`
+- 13: communist, (`party_pop_array^4` + `party_pop_array^19`) x
+  `@if_k_party_pop` (party indices 4 and 19 are the communist parties)
+- 14-17: religious, 10 + (5 - `education_law`) x 3 + (`party_pop_array^8` +
+  `^9` + `^11` + `^12`) x `@if_k_religious_pop` (party indices 8, 9, 11, 12
+  are the religious parties)
 - 19: fixed 20
 - 20: `military_law` x 2
 - 21: 10 if `has_war = yes`, else 0
@@ -477,9 +486,16 @@ clamp 5..95
 opinion += (target - opinion) * global.if_drift_rate
 ```
 
-`global.if_drift_rate` defaults to 0.10 and is set from
-`rule_internal_faction_tick_amount` (0 / 0.05 / 0.10 / 0.15 / 0.20).
-Focus, event, and decision changes stay immediate shocks on top of the drift.
+`global.if_drift_rate` is set from `rule_internal_faction_tick_amount`,
+ordinal: point_00 0, point_10 0.05, point_25 0.10, point_50 0.15, point_75
+0.20. The rule's default option is point_50, so the drift rate defaults to
+0.15 until the rule loc is relabelled in step 11. Focus, event, and decision
+changes stay immediate shocks on top of the drift.
+
+Privilege, crackdown and rival-privilege terms are added to
+`if_compute_opinion_target` / `if_compute_influence_target` in step 5
+(#4267) together with `if_policies`; influence drifts at
+`@if_influence_drift_rate` = 0.10 regardless of the rule.
 
 ## Old-system quirks to remove at step 11
 
@@ -503,10 +519,11 @@ need a fix before then.
 Files: `common/scripted_effects/01_internal_factions_v3_effects.txt`,
 `common/scripted_triggers/01_internal_factions_v3_triggers.txt`.
 
-`if_init_arrays` creates three per-country arrays sized 24 (index 0 unused,
+`if_init_arrays` creates the per-country arrays sized 24 (index 0 unused,
 ids 1-23 match the faction id order used throughout this doc): `if_active`
 (the up-to-4 held ids), `if_opinion` (0-100 per id), `if_influence`
-(0-100 per id).
+(0-100 per id), `if_target` (0-100 per id, last computed opinion target),
+`if_inf_target` (0-100 per id, last computed influence target).
 
 Effects:
 
@@ -544,6 +561,27 @@ Bridge: each old `change_<f>_opinion` effect now also calls
 and outside the `has_idea` guard, so the new arrays move even for
 rule-filled factions with no idea. The old `<f>_opinion` variable keeps
 updating unchanged; the 2x autocrat multiplier is not applied to the bridge.
+
+## Monthly tick (step 2)
+
+`if_monthly_tick` runs from `MD_on_actions.txt`'s monthly `every_country`,
+right after the old `monthly_tick_internal_factions_opinion`. It skips
+countries with an empty `if_active`. It hoists the ruling policy group, the
+six law terms (`if_mil_term`, `if_pol_term`, `if_edu_term`, `if_soc_term`,
+`if_corp_term`, `if_pop_term`), the oil share, and the war flag once per
+country, then for each active faction runs `if_compute_opinion_target` and
+`if_compute_influence_target`, drifts `if_opinion` toward `if_target` at
+`global.if_drift_rate` and `if_influence` toward `if_inf_target` at
+`@if_influence_drift_rate`, and clamps both to 0-100. It bumps the player
+dirty var once at the end, not per faction.
+
+Temp variable names used across `if_monthly_tick`, `if_compute_opinion_target`,
+`if_compute_influence_target`, and `if_compute_sector_score`: `if_v` (faction
+id), `if_aff` (affinity index), `if_group`, `if_mil_term`, `if_pol_term`,
+`if_edu_term`, `if_soc_term`, `if_corp_term`, `if_pop_term`, `if_oil_share`,
+`if_war`, `if_sector`, `if_t`, `if_x`, `if_d`, `if_col`, `if_aff_col`,
+`if_law`, `if_party`. Later steps must not reuse these names for unrelated
+values within the same call chain.
 
 ## Step map
 
