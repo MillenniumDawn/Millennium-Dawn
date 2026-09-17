@@ -22,12 +22,11 @@ def padded(content: str) -> str:
     return content + "# coverage filler\n" * 12
 
 
-def test_logging_helpers_cover_io_comments_and_trigger_boundaries(
+def test_logging_helpers_cover_io_comments_and_block_shapes(
     tmp_path, capsys, monkeypatch
 ):
     source = tmp_path / "source.txt"
     write_text(source, "first\nsecond\n")
-    assert logging_tool._read_lines(source) == ["first\n", "second\n"]
     assert logging_tool._read_lines_if_large_enough(source, min_size=1) == [
         "first\n",
         "second\n",
@@ -38,7 +37,6 @@ def test_logging_helpers_cover_io_comments_and_trigger_boundaries(
         "second\n",
     ]
     missing = tmp_path / "missing.txt"
-    assert logging_tool._read_lines(missing) is None
     assert logging_tool._read_lines_if_large_enough(missing) is None
     assert logging_tool._read_lines_or_warn(missing, "missing.txt") is None
     assert "Could not read" in capsys.readouterr().out
@@ -47,7 +45,7 @@ def test_logging_helpers_cover_io_comments_and_trigger_boundaries(
         raise UnicodeError("invalid source encoding")
 
     monkeypatch.setattr(logging_tool, "open", fail_read)
-    assert logging_tool._read_lines(source) is None
+    assert logging_tool._read_lines_or_warn(source, "source.txt", min_size=1) is None
     assert "invalid source encoding" in capsys.readouterr().out
     monkeypatch.undo()
 
@@ -62,9 +60,9 @@ def test_logging_helpers_cover_io_comments_and_trigger_boundaries(
 
     event = tmp_path / "event.txt"
     write_text(event, "event = {\n", encoding="utf-8-sig")
-    assert logging_tool._read_event_lines(event, "event.txt") == ["event = {\n"]
-    assert logging_tool._read_event_lines(missing, "missing.txt") is None
-    assert "missing.txt" in capsys.readouterr().out
+    assert logging_tool._read_lines_or_warn(
+        event, "event.txt", min_size=1, encoding="utf-8-sig"
+    ) == ["event = {\n"]
 
     directory = tmp_path / "directory"
     directory.mkdir()
@@ -78,64 +76,37 @@ def test_logging_helpers_cover_io_comments_and_trigger_boundaries(
         "ideas = {\n",
         "\tcategory = {\n",
         "\t\tone = { # preserve\n",
-        "\t\t\tname = one\n",
+        "\t\t\ton_add = { set_variable = { a = 1 } }\n",
+        "\t\t}\n",
         "\t\ttwo = {\n",
         '\t\t\ton_add = { log = "already" }\n',
+        "\t\t\ton_remove = {\n",
+        "\t\t\t\t# only a comment\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
         "\t\tthree = {\n",
         "\t\t\tname = three\n",
+        "\t\t\ton_remove = {\n",
+        '\t\t\t\tlog = "a { brace in a string"\n',
+        "\t\t\t\tclr_country_flag = three\n",
+        "\t\t\t}\n",
         "\t\t}\n",
         "\t}\n",
         "}\n",
     ]
-    assert logging_tool._find_log_targets(
-        lines, depth=2, log_prefix="on_add = { log = "
-    ) == [3]
-    assert logging_tool._added_log_block(
-        "\t\tone = { # preserve\n",
-        header_indent="\t\t",
-        log_indent="\t\t\t",
-        effect="on_add = { log =",
-        entity_kind="idea",
-    ) == (
-        "\t\tone = { #preserve\n"
-        '\t\t\ton_add = { log = "[GetDateText]: [Root.GetName]: add idea one" }\n'
-    )
-    assert logging_tool._added_log_block(
-        "tech_one = {\n",
-        header_indent="\t",
-        log_indent="\t\t",
-        effect="on_research_complete = {log =",
-        entity_kind="tech",
-    ).endswith('add tech tech_one" }\n')
+    assert list(
+        logging_tool._find_effect_targets(
+            lines,
+            entity=lambda key, level: level == 2,
+            effect_keys={"on_add", "on_remove"},
+        )
+    ) == [(2, 3, "on_add")]
+    assert logging_tool._entity_name(lines, 2) == "one"
+    assert logging_tool._entity_id(lines, 0, 5) is None
 
     assert logging_tool._update_brace_level(0, "{ nested { } }\n") == 0
     assert logging_tool._update_brace_level(2, "no braces\n") == 2
-    assert logging_tool.check_triggered(4, ["event = {\n"] * 4)
-    assert logging_tool.check_triggered(3, ["event = {\n"] * 4)
-    assert logging_tool.check_triggered(2, ["event = {\n"] * 4)
-    assert logging_tool.check_triggered(
-        1, ["event = {\n", "title = x\n", "days = 2\n", "}\n"]
-    )
-    assert logging_tool.check_triggered(
-        1, ["event = {\n", "days = 2\n", "title = x\n", "}\n"]
-    )
-    assert logging_tool.check_triggered(
-        2, ["event = {\n", "title = x\n", "}\n", "tail = x\n"]
-    )
-    assert logging_tool.check_triggered(1, ["event = {\n", "# comment\n", "\n", "}\n"])
-    assert not logging_tool.check_triggered(
-        1,
-        [
-            "event = {\n",
-            "title = x\n",
-            "other = x\n",
-            "description = x\n",
-            "}\n",
-        ],
-    )
-    assert not logging_tool.check_triggered(
-        1, ["event = {\n", "# comment\n", "\n", "\n"]
-    )
+    assert logging_tool._update_brace_level(1, 'log = "}"\n') == 1
 
 
 def test_logging_atomic_flushes_even_when_wrapped_function_fails(tmp_path):
@@ -158,22 +129,37 @@ def test_focus_add_remove_and_dry_run(tmp_path):
     source = focus_dir / "focuses.txt"
     write_text(
         source,
-        padded("""focus = {
-\tid = TEST_regular
-\tcompletion_reward = {
-\t\tadd_political_power = 1
+        padded("""focus_tree = {
+\tfocus = {
+\t\tid = TEST_regular
+\t\tcompletion_reward = {
+\t\t\tadd_political_power = 1
+\t\t}
+\t}
+\tfocus = {
+\t\tid = TEST_orphan
+\t}
+\tfocus = {
+\t\tid = TEST_inline
+\t\tcompletion_reward = { add_political_power = 3 }
+\t}
+\tfocus = {
+\t\tid = TEST_logged
+\t\tcompletion_reward = {
+\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TEST_logged"
+\t\t\tadd_political_power = 4
+\t\t}
+\t}
+\tfocus = {
+\t\tid = TEST_dead
+\t\tcompletion_reward = {
+\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TEST_dead"
+\t\t}
 \t}
 }
 shared_focus = {
 \tid = TEST_shared # inline id comment
 \tcompletion_reward = { add_political_power = 2 }
-}
-focus = {
-\tid = TEST_orphan
-}
-focus = {
-\tid = TEST_inline
-\tcompletion_reward = { add_political_power = 3 }
 }
 """),
     )
@@ -182,22 +168,38 @@ focus = {
 
     assert logging_tool.focus_add(tmp_path) == 3
     content = source.read_text(encoding="utf-8")
-    assert content.count("[GetDateText]: [Root.GetName]: Focus ") == 3
-    assert "Focus TEST_regular" in content
-    assert "Focus TEST_shared" in content
-    assert "Focus TEST_inline" in content
+    assert content.count("[GetDateText]: [Root.GetName]: Focus ") == 5
+    assert (
+        "\t\tcompletion_reward = {\n"
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TEST_regular"\n'
+        "\t\t\tadd_political_power = 1\n"
+    ) in content
+    assert (
+        "\t\tcompletion_reward = {\n"
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TEST_inline"\n'
+        "\t\t\tadd_political_power = 3\n"
+        "\t\t}\n"
+    ) in content
+    assert (
+        "\tcompletion_reward = {\n"
+        '\t\tlog = "[GetDateText]: [Root.GetName]: Focus TEST_shared"\n'
+        "\t\tadd_political_power = 2\n"
+        "\t}\n"
+    ) in content
     assert "TEST_orphan" in content
+    assert content.count("Focus TEST_dead") == 1
 
     before = content
+    assert logging_tool.focus_add(tmp_path) == 0
     assert logging_tool.focus_add(tmp_path, dry_run=True) == 0
     assert source.read_text(encoding="utf-8") == before
-    assert logging_tool.focus_remove(tmp_path) == 3
+    assert logging_tool.focus_remove(tmp_path) == 5
     removed = source.read_text(encoding="utf-8")
     assert "[GetDateText]: [Root.GetName]: Focus " not in removed
     assert "add_political_power = 1" in removed
 
 
-def test_event_add_remove_handles_bom_untriggered_and_malformed_ids(tmp_path):
+def test_event_add_remove_handles_bom_and_dead_immediates(tmp_path):
     event_dir = tmp_path / "events"
     source = event_dir / "events.txt"
     write_text(
@@ -205,25 +207,30 @@ def test_event_add_remove_handles_bom_untriggered_and_malformed_ids(tmp_path):
         padded("""country_event = {
 \tid = TEST.1
 \ttitle = test_title
-\tdescription = test_description
+\timmediate = {
+\t\tset_country_flag = one
+\t}
 \toption = { name = test_option }
 }
 news_event = {
 \tid = PLAIN_ID
-\ttitle = plain_title
-\tdescription = plain_description
-\toption = { name = plain_option }
+\timmediate = { hidden_effect = { set_country_flag = two } }
 }
-immediate = {log = "existing log"}
 unit_leader_event = {
 \tid = TEST.2
 \tdays = 2
 }
 state_event = {
 \tid = TEST.3
-\ttitle = state_title
-\tdescription = state_description
+\timmediate = {
+\t}
 \toption = { name = state_option }
+}
+country_event = {
+\tid = TEST.4
+\timmediate = {
+\t\tlog = "[GetDateText]: [Root.GetName]: event TEST.4"
+\t}
 }
 """),
         encoding="utf-8-sig",
@@ -231,18 +238,25 @@ state_event = {
 
     assert logging_tool.event_add(tmp_path) == 2
     content = source.read_text(encoding="utf-8")
-    assert content.count('immediate = {log = "[GetDateText]') == 2
-    assert "id = TEST.1" in content
-    assert "id = TEST.3" in content
-    assert "id = PLAIN_ID\n" in content
-    assert "id = TEST.2" in content
+    assert content.count('log = "[GetDateText]') == 3
+    assert (
+        "\timmediate = {\n"
+        '\t\tlog = "[GetDateText]: [Root.GetName]: event TEST.1"\n'
+        "\t\tset_country_flag = one\n"
+    ) in content
+    assert (
+        "\timmediate = {\n"
+        '\t\tlog = "[GetDateText]: [Root.GetName]: event PLAIN_ID"\n'
+        "\t\thidden_effect = { set_country_flag = two }\n"
+        "\t}\n"
+    ) in content
+    assert "\timmediate = {\n\t}\n" in content
+    assert logging_tool.event_add(tmp_path) == 0
 
-    with open(source, "a", encoding="utf-8", newline="") as handle:
-        handle.write('\timmediate = {log = "unfinished log"\n')
-    assert logging_tool.event_remove(tmp_path) == 4
+    assert logging_tool.event_remove(tmp_path) == 3
     removed = source.read_text(encoding="utf-8")
-    assert 'immediate = {log = "[GetDateText]' not in removed
-    assert "\timmediate = {\n" in removed
+    assert 'log = "[GetDateText]' not in removed
+    assert "set_country_flag = one" in removed
 
 
 def test_idea_add_remove_preserves_comments_and_skips_helpers(tmp_path):
@@ -254,6 +268,16 @@ def test_idea_add_remove_preserves_comments_and_skips_helpers(tmp_path):
 \tcategory = {
 \t\tTEST_idea = { # keep this comment
 \t\t\tname = TEST_idea
+\t\t\ton_add = { # keep this too
+\t\t\t\tset_country_flag = on
+\t\t\t}
+\t\t\ton_remove = { clr_country_flag = on }
+\t\t}
+\t\tTEST_dead = {
+\t\t\ton_add = { }
+\t\t\ton_remove = {
+\t\t\t\tlog = "[GetDateText]: [Root.GetName]: remove idea TEST_dead"
+\t\t\t}
 \t\t}
 \t}
 }
@@ -262,18 +286,28 @@ def test_idea_add_remove_preserves_comments_and_skips_helpers(tmp_path):
     write_text(ideas_dir / "_helper.txt", padded("helper = {\n"))
     write_text(ideas_dir / "small.txt", "ideas = {\n")
 
-    assert logging_tool.idea_add(tmp_path) == 1
+    assert logging_tool.idea_add(tmp_path) == 2
     content = source.read_text(encoding="utf-8")
-    assert "TEST_idea = { #keep this comment" in content
+    assert "TEST_idea = { # keep this comment" in content
     assert (
-        'on_add = { log = "[GetDateText]: [Root.GetName]: add idea TEST_idea" }'
-        in content
+        "\t\t\ton_add = { # keep this too\n"
+        '\t\t\t\tlog = "[GetDateText]: [Root.GetName]: add idea TEST_idea"\n'
+        "\t\t\t\tset_country_flag = on\n"
+    ) in content
+    assert (
+        "\t\t\ton_remove = {\n"
+        '\t\t\t\tlog = "[GetDateText]: [Root.GetName]: remove idea TEST_idea"\n'
+        "\t\t\t\tclr_country_flag = on\n"
+        "\t\t\t}\n"
+    ) in content
+    assert "\t\t\ton_add = { }\n" in content
+    assert content.count("TEST_dead") == 2
+    assert logging_tool.idea_add(tmp_path) == 0
+    assert logging_tool.idea_remove(tmp_path) == 3
+    assert 'log = "[GetDateText]' not in source.read_text(encoding="utf-8")
+    assert 'log = "[GetDateText]' not in (ideas_dir / "_helper.txt").read_text(
+        encoding="utf-8"
     )
-    assert logging_tool.idea_remove(tmp_path) == 1
-    assert 'on_add = { log = "[GetDateText]' not in source.read_text(encoding="utf-8")
-    assert 'on_add = { log = "[GetDateText]' not in (
-        ideas_dir / "_helper.txt"
-    ).read_text(encoding="utf-8")
 
 
 def test_decision_add_remove_covers_effect_shapes_and_targets(tmp_path):
@@ -292,6 +326,9 @@ def test_decision_add_remove_covers_effect_shapes_and_targets(tmp_path):
 \t}
 \tTEST_no_effect = {
 \t\tvisible = { always = yes }
+\t\tcomplete_effect = {
+\t\t}
+\t\tremove_effect = { log = "[GetDateText]: [Root.GetName]: Decision remove TEST_no_effect" }
 \t}
 }
 """),
@@ -304,12 +341,20 @@ def test_decision_add_remove_covers_effect_shapes_and_targets(tmp_path):
     assert content.count("Decision TEST_decision target: [From.GetName]") == 1
     assert content.count("Decision remove TEST_decision target: [From.GetName]") == 1
     assert content.count("Decision timeout TEST_decision target: [From.GetName]") == 1
-    assert "complete_effect = {" in content
-    assert "remove_effect = {" in content
-    assert "timeout_effect = {" in content
+    assert "\t\tcomplete_effect = {\n\t\t}\n" in content
+    assert content.count("TEST_no_effect") == 2
+    assert (
+        "\t\ttimeout_effect = {\n"
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision timeout TEST_decision target: [From.GetName]"\n'
+        "\t\t\tadd_political_power = 2\n"
+        "\t\t}\n"
+    ) in content
+    assert (decisions_dir / "categories.txt").read_text(encoding="utf-8") == padded(
+        "category = {\n"
+    )
     with open(source, "a", encoding="utf-8", newline="") as handle:
         handle.write('log = "[GetDateText]: complete_effect regression"\n')
-    assert logging_tool.decision_remove(tmp_path) == 4
+    assert logging_tool.decision_remove(tmp_path) == 5
     removed = source.read_text(encoding="utf-8")
     assert 'log = "[GetDateText]: [Root.GetName]: Decision' not in removed
     assert "complete_effect = {\n\t\t}\n" in removed
@@ -322,10 +367,20 @@ def test_tech_add_remove_handles_generated_and_legacy_log_shapes(tmp_path, capsy
         source,
         padded("""technologies = {
 \tTEST_tech = { # technology comment
-\t\tname = TEST_tech
+\t\ton_research_complete = { # effect comment
+\t\t\tset_country_flag = researched
+\t\t}
 \t}
 \tTEST_second = {
-\t\tname = TEST_second
+\t\ton_research_complete = { set_country_flag = second }
+\t}
+\tTEST_silent = {
+\t\tname = TEST_silent
+\t}
+\tTEST_dead = {
+\t\ton_research_complete = {
+\t\t\tlog = "[GetDateText]: [Root.GetName]: add tech TEST_dead"
+\t\t}
 \t}
 }
 """),
@@ -333,8 +388,21 @@ def test_tech_add_remove_handles_generated_and_legacy_log_shapes(tmp_path, capsy
 
     assert logging_tool.tech_add(tmp_path) == 2
     content = source.read_text(encoding="utf-8")
-    assert content.count("add tech TEST_") == 2
-    assert "TEST_tech = { #technology comment" in content
+    assert content.count("add tech TEST_") == 3
+    assert "TEST_tech = { # technology comment" in content
+    assert (
+        "\t\ton_research_complete = { # effect comment\n"
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: add tech TEST_tech"\n'
+        "\t\t\tset_country_flag = researched\n"
+    ) in content
+    assert (
+        "\t\ton_research_complete = {\n"
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: add tech TEST_second"\n'
+        "\t\t\tset_country_flag = second\n"
+        "\t\t}\n"
+    ) in content
+    assert "on_research_complete" not in content.split("TEST_silent")[1].split("}")[0]
+    assert logging_tool.tech_add(tmp_path) == 0
 
     legacy = tech_dir / "legacy.txt"
     write_text(
@@ -348,7 +416,7 @@ def test_tech_add_remove_handles_generated_and_legacy_log_shapes(tmp_path, capsy
 }
 """),
     )
-    assert logging_tool.tech_remove(tmp_path) == 5
+    assert logging_tool.tech_remove(tmp_path) == 8
     assert "Deleted logging at line" in capsys.readouterr().out
     assert 'log = "[GetDateText]' not in source.read_text(encoding="utf-8")
     assert 'log = "[GetDateText]' not in legacy.read_text(encoding="utf-8")

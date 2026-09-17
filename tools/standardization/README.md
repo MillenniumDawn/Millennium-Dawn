@@ -20,7 +20,7 @@ Standardizes national focus files according to Millennium Dawn standards.
 **Key features:**
 
 - Enforces proper property ordering
-- Adds missing logging to completion rewards and effects
+- Adds missing logging to completion rewards and effects that run something; an empty or log-only block is removed
 - Formats search_filters into single lines
 - Ensures ai_will_do is properly formatted
 
@@ -67,7 +67,7 @@ Standardizes decision files according to Millennium Dawn standards.
 
 **Key features:**
 
-- Adds logging to complete_effect blocks
+- Adds logging to complete/remove/timeout/cancel_effect blocks that run something; an empty or log-only block is removed
 - Enforces proper property ordering
 - Maintains consistent formatting
 - Preserves ai_will_do blocks
@@ -188,7 +188,7 @@ Reorders every `technology` block in `common/technologies/` into one fixed layou
 - Single-leaf blocks collapse to one line (`ai_will_do = { factor = 1 }`, `allow = { has_doctrine = x }`); other blocks are reindented with their single-leaf children collapsed (`position = { x = @row1 y = @1965 }`)
 - Bare token lists are one line for a single token (`enable_equipments = { X }`) and one token per line for two or more
 - Comments above a property travel with it; a block holding a `#` comment stays multi-line
-- No `ai_will_do` `factor` to `base` rewrite and no log injection into `on_research_complete` (`tools/logging_tool.py tech_add` does that)
+- No `ai_will_do` `factor` to `base` rewrite and no log injection into `on_research_complete` (`tools/logging_tool.py tech_add` does that, only into a block that runs something)
 
 **Usage:**
 
@@ -273,7 +273,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 ### Focus Trees
 
 - Use `relative_position_id` for positioning
-- Include logging in completion_reward/select_effect/bypass_effect
+- Include logging in completion_reward/select_effect/bypass_effect only when the block runs an effect; a log-only block is removed
 - Proper property ordering (id, icon, position, cost, prerequisites, etc.)
 - ai_will_do always last
 
@@ -286,7 +286,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 ### Decisions
 
-- Include logging in complete_effect
+- Include logging in complete_effect only when the block runs an effect; a log-only block is removed
 - Use `fire_only_once` sparingly
 - Proper property ordering
 - Include ai_will_do
@@ -295,7 +295,7 @@ Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 
 - Keep `allowed = { always = no }` on slotted ideas (hides them from the picker; `add_idea` still applies them)
 - Remove `cancel = { always = no }` (redundant default; checked hourly, never true)
-- Remove empty `on_add = { log = "" }`
+- Remove `on_add` / `on_remove` blocks whose only statement is a log
 - Include `allowed_civil_war = { always = yes }` for civil war tags
 - Log only when on_add/on_remove have actual effects
 
@@ -380,22 +380,25 @@ This will show:
 
 ## Integration with Development Workflow
 
-No standardizer runs automatically. The `md-standardize` pre-commit hook is
-disabled on purpose: it rewrites whole files, so on a repo where most files
+Standardization is manual, static tooling: no standardizer or standardization
+check runs in pre-commit or CI. The `md-standardize` auto-fixer hook is
+disabled on purpose — it rewrites whole files, so on a repo where most files
 predate the current rules it would drag a full reformat into every unrelated
-commit. Run the standardizers by hand on the files you are working on.
+commit — and `tools/validation/validate_standardization.py` is likewise
+unwired from both pipelines. Run the standardizers by hand on the files you
+are working on, or run the report on your own schedule for a cleanup pass:
 
-What runs instead is `tools/validation/validate_standardization.py`, which
-_reports_ the files a standardizer would rewrite without touching them. It is
-warning-only and scoped to changed files, in pre-commit (through
-`tools/precommit_validate.py`) and in CI (a `core`-batch step). Each finding
-names the command that fixes it:
+```bash
+python3 tools/validation/validate_standardization.py --all --no-color
+```
+
+Each finding names the command that fixes it:
 
 ```
 events/Gulf.txt - not standardized - run: python3 tools/standardization/standardize.py event "events/Gulf.txt"
 ```
 
-Pass `--all` for a full-repo sweep instead of the changed-file scope.
+Drop `--all` (and add `--staged`) for the changed-file scope.
 
 ### standardize_api.py
 
