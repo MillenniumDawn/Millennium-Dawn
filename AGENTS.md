@@ -8,7 +8,9 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 - Edit and review English localisation only. Non-English `.yml` files are expected
   to diverge; do not modify them or flag missing, stale, or mismatched English keys.
 - `resources/` is reference-only. Do not modify it unless explicitly asked.
-- Keep edits within the requested scope. Do not add `Changelog.txt` entries unless asked.
+- Keep edits within the requested scope.
+- Every PR that changes game files adds exactly one BLUF `Changelog.txt` line under the
+  current version, in an existing category. Skills may define their own exception.
 - Do not add attribution trailers or tool-generated footers, or sign commits.
 - Keep the session working directory fixed. Use absolute paths or per-command flags.
 - Development builds may invalidate saves. Do not add legacy migration support.
