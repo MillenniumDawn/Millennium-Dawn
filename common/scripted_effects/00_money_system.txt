@@ -4396,7 +4396,7 @@ calculate_additional_expense_rate = {
 # Purpose: Computes weekly ROI from international investments and splits it into treasury vs reinvested shares
 calculate_int_investments_rate = {
 	# Base ROI + stacked return_on_investment_modifier, clamped to the engine-wide ceiling
-	set_variable = { roi_rate = { value = 0.06 add = modifier@return_on_investment_modifier clamp = { min = 0 max = 0.20 } } }
+	set_variable = { roi_rate = { value = 0.06 add = modifier@return_on_investment_modifier clamp = { min = 0 max = global.roi_rate_cap } } }
 
 	#This is how much money we get back in a year, converted to weekly
 	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 clamp = { min = 0 max = @math_expressions_max } } }
@@ -6277,11 +6277,14 @@ calculate_tax_adjustments = {
 		set_temp_variable = { corp_tax_change = 1 }
 	}
 
-	# Interest rate escalation: if interest > 8% and any deficit, force tax increases
+	# Debt crisis escalation: if interest > 8% or debt_ratio > 1.0 with any deficit, force tax increases
 	# Catches debt spirals early before treasury_rate thresholds are hit
 	if = {
 		limit = {
-			check_variable = { interest_rate > 8 }
+			OR = {
+				check_variable = { interest_rate > 8 }
+				check_variable = { debt_ratio > 1.0 }
+			}
 			check_variable = { treasury_rate < 0 }
 		}
 		if = {

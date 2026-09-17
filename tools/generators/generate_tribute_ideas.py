@@ -44,7 +44,6 @@ def main():
         idea_lines.extend(
             [
                 f"tribute_idea_{fname} = {{{newline}",
-                f'on_add = {{ log = "[GetDateText]: [Root.GetName]: add idea tribute_idea_{fname}" }}{newline}',
                 f"name = {fname}_tribute{newline}",
                 f"picture = international_treaty2{newline}allowed = {{ always = no }}{newline}allowed_civil_war = {{ always = yes }}{newline}",
                 f"targeted_modifier = {{{newline2}tag = {fname}{modifiers}}}",

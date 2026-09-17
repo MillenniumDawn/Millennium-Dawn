@@ -97,6 +97,7 @@ _FULL_SUITE_EXACT = {
 }
 _FULL_SUITE_PREFIXES = (
     "tools/validation/",
+    "tools/linting/",
     "resources/documentation/",
     ".github/actions/",
     ".github/workflows/test-suite.yml",

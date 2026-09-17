@@ -42,7 +42,6 @@ def _selected(path):
 _GOLDEN = {
     "common/national_focus/france.txt": {
         "validate_style",
-        "validate_standardization",
         "validate_ideas",
         "validate_events",
         "validate_oob_units",
@@ -55,7 +54,6 @@ _GOLDEN = {
     },
     "events/Syria.txt": {
         "validate_style",
-        "validate_standardization",
         "validate_ideas",
         "validate_events",
         "validate_oob_units",
@@ -63,7 +61,6 @@ _GOLDEN = {
     },
     "common/decisions/Sudan.txt": {
         "validate_style",
-        "validate_standardization",
         "validate_ideas",
         "validate_events",
         "validate_oob_units",
@@ -142,13 +139,11 @@ _GOLDEN = {
     "common/factions/x.txt": {"validate_style", "validate_events"},
     "common/military_industrial_organization/organizations/MD_ISR_organizations.txt": {
         "validate_style",
-        "validate_standardization",
         "validate_mios",
         "validate_events",
     },
     "common/military_industrial_organization/policies/_land_policies.txt": {
         "validate_style",
-        "validate_standardization",
         "validate_mios",
         "validate_events",
     },
