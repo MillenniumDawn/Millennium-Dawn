@@ -291,107 +291,14 @@ display_election_campaign_status = {
 	# Further Modified by your factions
 	set_variable = { campaign_funding_count = 10 }
 
-	# Economic Factions
-	if = { limit = { has_idea = small_medium_business_owners }
-		set_temp_variable = { temp_faction_opinion = small_medium_business_owners_opinion }
+	for_each_loop = {
+		array = if_active
+		value = if_v
+		set_temp_variable = { if_id = if_v }
+		set_temp_variable = { temp_faction_opinion = if_opinion^if_v }
 		calculate_election_funding_from_opinion = yes
 	}
-	if = { limit = { has_idea = international_bankers }
-		set_temp_variable = { temp_faction_opinion = international_bankers_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = fossil_fuel_industry }
-		set_temp_variable = { temp_faction_opinion = fossil_fuel_industry_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = industrial_conglomerates }
-		set_temp_variable = { temp_faction_opinion = industrial_conglomerates_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = oligarchs }
-		set_temp_variable = { temp_faction_opinion = oligarchs_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-
-	# Militaristic Groups
-	if = { limit = { has_idea = defense_industry }
-		set_temp_variable = { temp_faction_opinion = defense_industry_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = maritime_industry }
-		set_temp_variable = { temp_faction_opinion = maritime_industry_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = the_military }
-		set_temp_variable = { temp_faction_opinion = the_military_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = intelligence_community }
-		set_temp_variable = { temp_faction_opinion = intelligence_community_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-
-	# Special Interest Groups
-	if = { limit = { has_idea = labour_unions }
-		set_temp_variable = { temp_faction_opinion = labour_unions_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = landowners }
-		set_temp_variable = { temp_faction_opinion = landowners_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = farmers }
-		set_temp_variable = { temp_faction_opinion = farmers_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = communist_cadres }
-		set_temp_variable = { temp_faction_opinion = communist_cadres_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-
-	# Religious Factions
-	if = { limit = { has_idea = the_priesthood }
-		set_temp_variable = { temp_faction_opinion = the_priesthood_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = the_ulema }
-		set_temp_variable = { temp_faction_opinion = the_ulema_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = the_clergy }
-		set_temp_variable = { temp_faction_opinion = the_clergy_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = wahabi_ulema }
-		set_temp_variable = { temp_faction_opinion = wahabi_ulema_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-
-	# Nation Specific Factions
-	if = { limit = { has_idea = the_donju }
-		set_temp_variable = { temp_faction_opinion = the_donju_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = saudi_royal_family }
-		set_temp_variable = { temp_faction_opinion = saudi_royal_family_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = iranian_quds_force }
-		set_temp_variable = { temp_faction_opinion = iranian_quds_force_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = foreign_jihadis }
-		set_temp_variable = { temp_faction_opinion = foreign_jihadis_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = wall_street }
-		set_temp_variable = { temp_faction_opinion = wall_street_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
-	if = { limit = { has_idea = chaebols }
-		set_temp_variable = { temp_faction_opinion = chaebols_opinion }
-		calculate_election_funding_from_opinion = yes
-	}
+	round_variable = campaign_funding_count
 
 	custom_effect_tooltip = display_internal_faction_election_effects
 }
@@ -401,18 +308,23 @@ display_election_campaign_status = {
 # Usage: set temp_faction_opinion before calling
 calculate_election_funding_from_opinion = {
 	if = { limit = { check_variable = { temp_faction_opinion < 20 } }
-		add_to_variable = { campaign_funding_count = -2 }
+		set_temp_variable = { if_funding = -2 }
 	}
 	else_if = { limit = { check_variable = { temp_faction_opinion < 40 } }
-		add_to_variable = { campaign_funding_count = -1 }
+		set_temp_variable = { if_funding = -1 }
 	}
 	else_if = { limit = { check_variable = { temp_faction_opinion > 79 } }
-		add_to_variable = { campaign_funding_count = 2 }
+		set_temp_variable = { if_funding = 2 }
 	}
 	else_if = { limit = { check_variable = { temp_faction_opinion > 59 } }
-		add_to_variable = { campaign_funding_count = 1 }
+		set_temp_variable = { if_funding = 1 }
 	}
-	# 40-59 adds 0, no action needed
+	else = {
+		set_temp_variable = { if_funding = 0 }
+	}
+	if_influence_scale = yes
+	multiply_temp_variable = { if_funding = if_scale }
+	add_to_variable = { campaign_funding_count = if_funding }
 }
 
 # Cleanup Function:

@@ -592,8 +592,10 @@ id), `if_aff` (affinity index), `if_group`, `if_mil_term`, `if_pol_term`,
 `if_law`, `if_party`. Step 5 (#4267) adds `if_priv_count`, `if_crackdown`
 (temp arrays sized 24, built each tick from `if_policies`), `if_pf`, `if_j`,
 `if_r`, `if_y`, `if_cp`, `if_cost`, `if_pp`, `if_clear_id`, `if_appease_id`,
-`if_new_id`, `if_ai_done`, `if_k`. Later steps must not reuse these names for
-unrelated values within the same call chain.
+`if_new_id`, `if_ai_done`, `if_k`. Step 6 (#4268) adds `if_scale`, `if_push`, `if_best`,
+`if_best_pop`, `if_pi`, `if_a`, `if_react`, `if_protest`, `if_funding`, `law_kind`,
+`law_delta`. Later steps must not reuse these names for unrelated values within the
+same call chain.
 
 The modifier feed (step 4) adds its own reserved temp names: `if_s`
 (opinion-scaled base), `if_g` (government bonus strength), `if_gov_aff`
@@ -732,6 +734,66 @@ is active: crack down on the Military if it can afford to and the enforcer
 condition holds, otherwise appease it. Failing that, with enough political
 power it looks for one powerful (influence 60+) and hostile (opinion below 20)
 active faction and grants it the first affordable privilege.
+
+## Ecosystem hooks (step 6)
+
+File: `common/scripted_effects/01_internal_factions_v3_ecosystem.txt`. Loc for the
+tax-reaction tooltips lives in
+`common/scripted_localisation/02_internal_factions_ecosystem_scripted_loc.txt` and
+`localisation/english/MD_internal_factions_l_english.yml`. Constants: `@if_push_max`
+0.001, `@if_push_gate` 20, `@if_law_shock` 2, `@if_tax_shock` 0.5, `@if_desire_weight`
+0.5.
+
+`if_influence_scale` (param `if_id`, sets temp `if_scale`) is the shared 0.5/1.0/1.5
+influence-tier multiplier, called from elections and law desires.
+
+`if_party_push`, run from `if_monthly_tick` after the per-faction drift loop, gates
+each active faction on `NOT if_influence_marginal` and opinion above 70 or below 30
+(written as `50 +/- @if_push_gate` through the `if_push` temp var, never as literals),
+then calls `if_party_push_faction` (param `if_v`). That helper scales
+`@if_push_max * if_influence^if_v / 100` (doubled while a religious faction's morality
+laws privilege is active: policy 54/58/62 for ids 14/15/16), picks the
+affinity-matching party with the largest `party_pop_array` entry (excluding the ruling
+party for a hostile faction), and calls `change_relative_party_popularity` on it.
+
+`if_react_to_law` (params `law_kind` 1-6, `law_delta`) is called from every law and tax
+write site: it reads the matching `global.if_pref_*` array for every active faction,
+multiplies by `law_delta` and by `@if_law_shock` (laws) or `@if_tax_shock` (taxes), and
+applies any non-zero result through `if_change_opinion` with an `if_react_tt` tooltip.
+Hook sites: the 26 law idea `on_add` blocks (10 military, 5 police, 5 education, 6
+social; bureau and health have no faction preference and are untouched), the 8
+money-tab tax buttons, the 2 tax-automation writes, the 2 AI tax appliers in
+`00_money_system.txt`, and the 2 `modify_*_tax_rate_effect` content effects, 40 call
+sites in total. The 16-entry tax-reaction line list (`if_react_pop_up_0..3` and the
+`pop_down`/`corp_up`/`corp_down` variants, in
+`02_internal_factions_ecosystem_scripted_loc.txt`) duplicates the `@if_tax_shock` 0.5
+factor as a literal, since scripted loc cannot read file constants; keep both in sync
+if step 9 retunes the shock.
+
+`if_compute_law_desires`, called first in `recalculate_law_desires`, writes
+`if_desire_military/police/education/social` from every active faction backing the
+ruling party's policy group, scaled by `if_influence_scale` and `@if_desire_weight`,
+clamped to -1..1. `calculate_expected_*_spending` in `00_expected_spending_effects.txt`
+add the matching var right before their own `round_variable` call. Health and bureau
+have no law preference, so they get no desire var. The desire term lags the faction
+opinion by one month, since `calculate_expected_spending` runs before
+`recalculate_law_desires` each month.
+
+`if_compute_protest_drift` (deterministic, only sets temp `if_protest`) sums, over
+`if_active`, `if_influence^if_v / 25` for a hostile faction or a flat 1 for a negative
+and powerful one, doubled for a mass faction (category 3), plus 1 more if the
+`unions_strike_ban` policy (id 40) is active. `apply_protest_effects` adds it into the
+live `protest_strength` tick; `MD_protests_calc_deterministic_drift`'s player-only
+display block also calls it to fill `drift_factions_last`, folded into
+`MD_protests_compute_drift_total` and cleared in `MD_protests_clear_display_vars`. The
+protests panel (`interface/MD_protests_system.gui`) shows it as a 5th row,
+`MD_drift_factions_row`, added to `MD_protests_drift_right` (now 153 tall, matching the
+left column) below a separator added to `MD_drift_passive_row`.
+
+`display_election_campaign_status` and `calculate_election_funding_from_opinion` in
+`00_internal_faction_effects.txt` are rewritten to loop `if_active` instead of 23
+`has_idea` checks, closing #1450; the per-faction funding step is scaled by
+`if_influence_scale` and the total is rounded before the tooltip.
 
 ## Step map
 
