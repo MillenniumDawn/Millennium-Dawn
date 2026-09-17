@@ -62,7 +62,7 @@ Each option's log must match its own ID — copy-paste errors between `.a` and `
  }
 ```
 
-Only an option that runs effects gets a log — a dismiss option carrying nothing but `name`, `trigger` and `ai_chance` logs a state change that never happened, and `validate_events` reports it as `event-option-log-without-effect`.
+Only an option that runs effects gets a log — a dismiss option carrying nothing but `name`, `trigger` and `ai_chance` logs a state change that never happened, and `validate_events` reports it as `event-option-log-without-effect`. The same goes for `immediate`: a log-only `immediate` block is rejected by `check_common_mistakes.py` (#4456), so omit the block.
 
 ## Example: Multi-Option Cross-Country Event
 
