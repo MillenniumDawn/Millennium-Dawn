@@ -1,4 +1,5 @@
 add_namespace = ghana
+add_namespace = ghana_news
 
 # Western Togoland Rebellion. Fired at whoever owns Volta (345) from
 # trigger_year_2020_events; every step re-checks ownership. Each response feeds
@@ -97,6 +98,7 @@ country_event = {
 				set_temp_variable = { temp_productivity_change = -10 }
 				state_flat_productivity_change_effect = yes
 			}
+			news_event = { id = ghana_news.1 hours = 6 }
 		}
 	}
 
@@ -201,6 +203,10 @@ country_event = {
 			if = {
 				limit = { check_variable = { GAH_togoland_grievance > 1 } }
 				country_event = { id = ghana.4 days = 150 random_days = 90 }
+			}
+			else_if = {
+				limit = { check_variable = { GAH_togoland_grievance < 1 } }
+				country_event = { id = ghana.7 days = 120 random_days = 60 }
 			}
 			else = { clear_variable = GAH_togoland_grievance }
 		}
@@ -344,6 +350,7 @@ country_event = {
 				}
 			}
 			country_event = { id = ghana.6 days = 90 }
+			news_event = { id = ghana_news.2 hours = 6 }
 		}
 	}
 }
@@ -384,6 +391,7 @@ country_event = {
 			add_compliance = 20
 			cancel_resistance = yes
 		}
+		hidden_effect = { news_event = { id = ghana_news.3 hours = 6 } }
 		ai_chance = { base = 10 }
 	}
 
@@ -405,6 +413,102 @@ country_event = {
 			set_compliance = 90
 			cancel_resistance = yes
 		}
+		hidden_effect = { news_event = { id = ghana_news.3 hours = 6 } }
 		ai_chance = { base = 5 }
 	}
+}
+
+# The good ending: a region handled with restraint twice gets a settlement before
+# anyone has to fight for it.
+country_event = {
+	id = ghana.7
+	title = ghana.7.t
+	desc = ghana.7.d
+	picture = GFX_african_meeting
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		owns_state = 345
+		controls_state = 345
+	}
+
+	# A statute of regional autonomy for the Volta Region.
+	option = {
+		name = ghana.7.a
+		log = "[GetDateText]: [This.GetName]: ghana.7.a executed"
+		add_political_power = -50
+		add_stability = 0.02
+		345 = {
+			set_compliance = 90
+			cancel_resistance = yes
+		}
+		hidden_effect = {
+			clear_variable = GAH_togoland_grievance
+			news_event = { id = ghana_news.3 hours = 6 }
+		}
+		ai_chance = { base = 10 }
+	}
+
+	# Thank the chiefs and leave the constitution alone.
+	option = {
+		name = ghana.7.b
+		log = "[GetDateText]: [This.GetName]: ghana.7.b executed"
+		add_political_power = 25
+		345 = { add_compliance = 10 }
+		hidden_effect = { clear_variable = GAH_togoland_grievance }
+		ai_chance = { base = 3 }
+	}
+}
+
+# ---------------------------------------------------------------------------- news
+# Regional incidents reach Africa and the superpowers; a civil war reaches the great
+# powers too; a settlement reaches everyone.
+
+news_event = {
+	id = ghana_news.1
+	title = ghana_news.1.t
+	desc = ghana_news.1.d
+	picture = GFX_news_central_african_civil_war
+	major = yes
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			has_country_flag = african_nation_flag
+			has_idea = super_power
+		}
+	}
+
+	option = { name = ghana_news.1.a }
+}
+
+news_event = {
+	id = ghana_news.2
+	title = ghana_news.2.t
+	desc = ghana_news.2.d
+	picture = GFX_news_central_african_civil_war
+	major = yes
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			has_country_flag = african_nation_flag
+			has_idea = great_power
+			has_idea = super_power
+		}
+	}
+
+	option = { name = ghana_news.2.a }
+}
+
+news_event = {
+	id = ghana_news.3
+	title = ghana_news.3.t
+	desc = ghana_news.3.d
+	picture = GFX_african_meeting_news
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = ghana_news.3.a }
 }
