@@ -40,7 +40,12 @@ def _results_for(
     monkeypatch.setattr(
         validator,
         "_get_activation_removal_scan",
-        lambda: (set(), set(), set(), set(unlocked_categories)),
+        lambda: (
+            set(),
+            set(),
+            set(),
+            [("category", name, "cat.txt", 1) for name in unlocked_categories],
+        ),
         raising=False,
     )
     validator.validate_missing_localisation()

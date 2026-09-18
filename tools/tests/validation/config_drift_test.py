@@ -127,7 +127,10 @@ CI_EXEMPT = {
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
 }
-PRECOMMIT_EXEMPT: set[str] = set()
+# Manual-only: the standardization report is deliberately unwired from
+# pre-commit and CI; standardizers run by hand instead (see
+# tools/standardization/README.md).
+PRECOMMIT_EXEMPT: set[str] = {"validate_standardization.py"}
 STRICT_MISMATCH_ALLOWED = {"validate_ai_equipment.py"}
 
 
@@ -625,9 +628,21 @@ def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
     assert sorted(spec.name for spec in ALL_SPECS if not spec.strict) == [
         "building-guards",
-        "party-loc",
         "simplifications",
     ]
+
+
+def test_ci_oob_units_does_not_enable_missing_equipment_factor():
+    spec = _spec_for("validate_oob_units.py")
+    assert spec.name == "oob-units"
+    assert "--missing-equipment-factor" not in spec.args
+
+
+def test_ci_party_loc_gate_is_registered_and_strict():
+    spec = _spec_for("validate_party_loc.py")
+    assert spec.name == "party-loc"
+    assert spec.groups == ("localisation", "common")
+    assert spec.strict is True
 
 
 def test_ci_redundant_modifier_gate_is_strict():

@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-# Check every technology category reference against common/technology_tags/.
+# Check every technology category reference against common/technology_tags/,
+# and the tag set itself against the naming, localisation and usage rules.
 # An unknown category name compiles silently and grants nothing, so a focus,
 # event or idea can promise a research bonus and deliver zero. Two live cases
 # motivated this: CAT_encryption (the token is CAT_encryption_tech) sat in eight
@@ -16,17 +17,32 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import FileOpener
 from validator_common import BaseValidator, Severity, run_validator_main
 
-# Categories are bare tokens inside technology_Categories = { }. CAT_Military is
-# mixed case, so this cannot be restricted to lowercase.
-_CATEGORY_TOKEN_RE = re.compile(r"\bCAT_\w+")
+# The tag block in common/technology_tags/. Every bare token inside it is a
+# category, whatever its case: a wrongly cased token must still load so the
+# format check can name it.
+_CATEGORIES_BLOCK_RE = re.compile(r"(?i)\btechnology_categories\s*=\s*\{")
+_TOKEN_RE = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
+
+# Every tag is CAT_ followed by lowercase words (#4250).
+_TAG_FORMAT_RE = re.compile(r"^CAT_[a-z0-9_]+$")
 
 # `category = CAT_x` in add_tech_bonus / add_doctrine_cost_reduction blocks.
-_CATEGORY_ASSIGN_RE = re.compile(r"\bcategory\s*=\s*(CAT_\w+)")
+_CATEGORY_ASSIGN_RE = re.compile(r"\bcategory\s*=\s*((?i:cat_)\w+)")
 
-# research_bonus = { CAT_x = 0.05 } — the keys are categories.
-_RESEARCH_BONUS_RE = re.compile(r"\bresearch_bonus\s*=\s*\{")
+# research_bonus = { CAT_x = 0.05 } — the keys are categories. ai_focuses and
+# ai_strategy_plans weight categories the same way in research = { CAT_x = 5.0 }.
+_KEYED_BLOCK_RE = re.compile(r"\b(?:research_bonus|research)\s*=\s*\{")
+_KEYED_CATEGORY_RE = re.compile(r"((?i:cat_)\w+)\s*=")
+
+# MIO research_categories = { CAT_x CAT_y } and, in tech files only, a tech's
+# own categories = { }. Outside common/technologies/ a `categories` block is a
+# doctrine or sub-unit category list, not a tech category reference.
+_LISTED_BLOCK_RE = re.compile(r"\bresearch_categories\s*=\s*\{")
+_TECH_CATEGORIES_RE = re.compile(r"\bcategories\s*=\s*\{")
 
 _TAGS_GLOB = "common/technology_tags/**/*.txt"
+_TECH_DIR = "common/technologies/"
+_TECH_GLOB = _TECH_DIR + "**/*.txt"
 _VALIDATE_PATTERNS = [
     "common/**/*.txt",
     "events/**/*.txt",
@@ -46,23 +62,46 @@ def _brace_span(text: str, open_idx: int) -> int:
     return len(text)
 
 
-def _references(text: str) -> List[Tuple[str, int]]:
+def _block_bodies(text: str, opener: "re.Pattern") -> Iterable[Tuple[str, int]]:
+    """(body, body_offset) of every block *opener* introduces."""
+    for m in opener.finditer(text):
+        open_idx = text.index("{", m.start())
+        end = _brace_span(text, open_idx)
+        yield text[open_idx + 1 : end], open_idx + 1
+
+
+def _references(text: str, tech_file: bool = False) -> List[Tuple[str, int]]:
     """Every (category_name, char_offset) this text references.
 
-    Deliberately narrow: only `category = CAT_x` and the keys of a
-    research_bonus block. A bare CAT_ token elsewhere is not a category
-    reference, which is what keeps `has_country_flag = CAT_revolted_against_spain`
-    (a Catalonia flag) and `name = CAT_tribute` (a tech-bonus name) out of this.
+    Deliberately narrow: `category = CAT_x`, the keys of a research_bonus or
+    research block, the tokens of a research_categories block and, for tech
+    files, the tokens of a categories block. A bare CAT_ token elsewhere is not
+    a category reference, which is what keeps
+    `has_country_flag = CAT_revolted_against_spain` (a Catalonia flag) and
+    `name = CAT_tribute` (a tech-bonus name) out of this.
     """
     found: List[Tuple[str, int]] = []
     for m in _CATEGORY_ASSIGN_RE.finditer(text):
         found.append((m.group(1), m.start(1)))
-    for m in _RESEARCH_BONUS_RE.finditer(text):
-        open_idx = text.index("{", m.start())
-        end = _brace_span(text, open_idx)
-        body = text[open_idx + 1 : end]
-        for km in re.finditer(r"(CAT_\w+)\s*=", body):
-            found.append((km.group(1), open_idx + 1 + km.start(1)))
+    for body, offset in _block_bodies(text, _KEYED_BLOCK_RE):
+        for km in _KEYED_CATEGORY_RE.finditer(body):
+            found.append((km.group(1), offset + km.start(1)))
+    listed = [_LISTED_BLOCK_RE]
+    if tech_file:
+        listed.append(_TECH_CATEGORIES_RE)
+    for opener in listed:
+        for body, offset in _block_bodies(text, opener):
+            for tm in _TOKEN_RE.finditer(body):
+                found.append((tm.group(0), offset + tm.start()))
+    return found
+
+
+def _tag_tokens(text: str) -> List[Tuple[str, int]]:
+    """Every (token, char_offset) declared inside a technology_categories block."""
+    found: List[Tuple[str, int]] = []
+    for body, offset in _block_bodies(text, _CATEGORIES_BLOCK_RE):
+        for tm in _TOKEN_RE.finditer(body):
+            found.append((tm.group(0), offset + tm.start()))
     return found
 
 
@@ -74,7 +113,7 @@ def load_known_categories(paths: Iterable[str]) -> FrozenSet[str]:
             text = FileOpener.open_text_file(path, strip_comments_flag=True)
         except (OSError, UnicodeDecodeError):
             continue
-        known.update(_CATEGORY_TOKEN_RE.findall(text))
+        known.update(name for name, _ in _tag_tokens(text))
     return frozenset(known)
 
 
@@ -87,11 +126,25 @@ def _check_file(args) -> List[Tuple[str, str, int]]:
         return []
     rel = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
     out: List[Tuple[str, str, int]] = []
-    for name, offset in _references(text):
+    for name, offset in _references(text, tech_file=rel.startswith(_TECH_DIR)):
         if name in known:
             continue
         out.append((name, rel, text.count("\n", 0, offset) + 1))
     return out
+
+
+def _tech_categories(args) -> Set[str]:
+    """Worker: every category token a tech file assigns."""
+    (filepath,) = args
+    try:
+        text = FileOpener.open_text_file(filepath, strip_comments_flag=True)
+    except (OSError, UnicodeDecodeError):
+        return set()
+    return {
+        tm.group(0)
+        for body, _ in _block_bodies(text, _TECH_CATEGORIES_RE)
+        for tm in _TOKEN_RE.finditer(body)
+    }
 
 
 class Validator(BaseValidator):
@@ -104,6 +157,19 @@ class Validator(BaseValidator):
         )
         self.log(f"  Known category set: {len(known)} names")
         return known
+
+    def _declared_tags(self) -> List[Tuple[str, str, int]]:
+        """(token, relpath, line) for every declaration, in file order."""
+        out: List[Tuple[str, str, int]] = []
+        for path in self._collect_files([_TAGS_GLOB], ignore_staged=True):
+            try:
+                text = FileOpener.open_text_file(path, strip_comments_flag=True)
+            except (OSError, UnicodeDecodeError):
+                continue
+            rel = os.path.relpath(path, self.mod_path).replace(os.sep, "/")
+            for name, offset in _tag_tokens(text):
+                out.append((name, rel, text.count("\n", 0, offset) + 1))
+        return out
 
     def validate_category_references(self, known: FrozenSet[str]):
         self._log_section("Checking technology category references...")
@@ -155,10 +221,70 @@ class Validator(BaseValidator):
             category="unknown-tech-category",
         )
 
-    def run_validations(self):
-        self.validate_category_references(
-            self.cached("tech_categories", self._load_known_categories)
+    def validate_tag_definitions(self, known: FrozenSet[str]):
+        """Every declared tag is CAT_lowercase, localised and used by a tech."""
+        if not known:
+            return
+        self._log_section("Checking technology category definitions...")
+        declared = self._declared_tags()
+
+        self._report(
+            [
+                (f"Technology category '{name}' is not CAT_lowercase", rel, line)
+                for name, rel, line in declared
+                if not _TAG_FORMAT_RE.match(name)
+            ],
+            "All technology categories are CAT_lowercase",
+            "Technology categories not named CAT_lowercase:",
+            severity=Severity.ERROR,
+            category="tech-category-name-format",
         )
+
+        loc_keys = self._load_localisation_keys()
+        unlocalised = []
+        for name, rel, line in declared:
+            missing = [k for k in (name, f"{name}_research") if k not in loc_keys]
+            if missing:
+                unlocalised.append(
+                    (
+                        f"Technology category '{name}' has no English loc key "
+                        f"{', '.join(missing)}",
+                        rel,
+                        line,
+                    )
+                )
+        self._report(
+            unlocalised,
+            "All technology categories are localised",
+            "Technology categories missing a name or _research loc key:",
+            severity=Severity.ERROR,
+            category="tech-category-unlocalised",
+        )
+
+        tech_files = self._collect_files([_TECH_GLOB], ignore_staged=True)
+        used: Set[str] = set()
+        for cats in self._pool_map(_tech_categories, [(f,) for f in tech_files]):
+            used.update(cats)
+        self._report(
+            [
+                (
+                    f"Technology category '{name}' is not used by any technology",
+                    rel,
+                    line,
+                )
+                for name, rel, line in declared
+                if name not in used
+            ],
+            "All technology categories are used by a technology",
+            "Technology categories no technology carries:",
+            severity=Severity.ERROR,
+            category="tech-category-unused",
+        )
+
+    def run_validations(self):
+        known = self.cached("tech_categories", self._load_known_categories)
+        self.validate_category_references(known)
+        self.validate_tag_definitions(known)
 
 
 if __name__ == "__main__":

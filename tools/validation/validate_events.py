@@ -565,11 +565,6 @@ def _stat_cached_scan(mod_path: str, namespace: str, filename: str, scanner):
     )
 
 
-def _cached_scan_event_fires(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
-    filename, mod_path = args
-    return _stat_cached_scan(mod_path, "events.fires", filename, scan_event_fires)
-
-
 def _cached_scan_typed_event_fires(
     args: Tuple[str, str],
 ) -> List[Tuple[str, str, str, int]]:
@@ -1129,14 +1124,12 @@ class Validator(BaseValidator):
 
     def _get_event_fires(self) -> List[Tuple[str, str, int]]:
         """Every literal event fire in the mod as (event_id, file, line)."""
-        if self._fires_cache is not None:
-            return self._fires_cache
-        fires: List[Tuple[str, str, int]] = []
-        args = [(path, self.mod_path) for path, _ in self._get_fire_scan_args()]
-        for result in self._pool_map(_cached_scan_event_fires, args, chunksize=30):
-            fires.extend(result)
-        self._fires_cache = fires
-        return fires
+        if self._fires_cache is None:
+            self._fires_cache = [
+                (eid, filename, line)
+                for eid, _call_type, filename, line in self._get_typed_event_fires()
+            ]
+        return self._fires_cache
 
     def _get_typed_event_fires(self) -> List[Tuple[str, str, str, int]]:
         """Every literal event fire with its call keyword."""
@@ -2017,35 +2010,36 @@ class Validator(BaseValidator):
         )
 
     def validate_event_picture_omissions(self):
-        """Flag visible country/news events that declare no picture of their own.
+        """Flag visible news events that declare no picture of their own.
 
         Reads `picture_refs` (depth 0 of the event body) rather than a body-wide
         scan, so a `create_country_leader = { picture = ... }` portrait nested
         in an option or `immediate` block does not count as the event's picture.
-        News events are clean and gate as errors; country events carry a
-        backlog of portrait-only events and stay warnings until cleared.
+        The finding names the fix, since the group header is not rendered.
+        Country events may omit their picture, so only news events are checked.
         """
-        self._log_section("Checking visible country/news events have pictures...")
+        self._log_section("Checking visible news events have pictures...")
 
         meta, _ = self._get_event_metadata()
-        omitted = {"country_event": [], "news_event": []}
-        for ev in meta:
-            if ev["type"] in omitted and not ev["is_hidden"] and not ev["picture_refs"]:
-                omitted[ev["type"]].append(f"{ev['id'] or 'unknown'} - {ev['file']}")
+        omitted = [
+            (
+                f"{ev['id'] or 'unknown'}: event has no picture, "
+                "add `picture = GFX_<sprite>` below `desc =`",
+                ev["file"],
+                ev["line"],
+            )
+            for ev in meta
+            if ev["type"] == "news_event"
+            and not ev["is_hidden"]
+            and not ev["picture_refs"]
+        ]
 
         self._report(
-            omitted["news_event"],
+            omitted,
             "✓ All visible news events have pictures",
-            "Visible news events with no picture field of their own:",
+            "News events with no picture (add `picture = GFX_<sprite>` below `desc =`):",
             Severity.ERROR,
             category="news-event-picture-omitted",
-        )
-        self._report(
-            omitted["country_event"],
-            "✓ All visible country events have pictures",
-            "Visible country events with no picture field of their own:",
-            Severity.WARNING,
-            category="event-picture-omitted",
         )
 
     def validate_placeholder_event_pictures(self):
