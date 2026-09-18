@@ -640,9 +640,10 @@ def collect_clamp_ranges(
 
 def _extract_clamp_checks(cleaned: str, rel: str) -> List[Tuple[str, str, int, int]]:
     checks: List[Tuple[str, str, int, int]] = []
+    offsets = compute_line_offsets(cleaned)
     for pattern in (_CHECKVAR_SHORT_RE, _CHECKVAR_LONG_RE):
         for m in pattern.finditer(cleaned):
-            line = cleaned[: m.start()].count("\n") + 1
+            line = line_for_offset(offsets, m.start())
             checks.append((m.group(1), m.group(2), line, m.end()))
     return checks
 
