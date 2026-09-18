@@ -7,7 +7,7 @@ from shared.paths import VALIDATION_DIR
 
 
 def test_every_batch_spec_script_exists():
-    assert len(vb.ALL_SPECS) == 40
+    assert len(vb.ALL_SPECS) == 41
     assert not {spec.name for spec in vb.ALL_SPECS} & {
         spec.name for spec in vb.IMPACT_ONLY_SPECS
     }
@@ -160,6 +160,16 @@ def test_standalone_ci_tools_select_only_their_impact_specs():
 def test_manual_texture_audit_stays_excluded_from_impact():
     batch, adhoc = vb.select_for_changed_files(
         ["tools/validation/validate_unused_textures.py"]
+    )
+    assert batch == []
+    assert adhoc == []
+
+
+def test_manual_standardization_check_stays_excluded_from_impact():
+    # Manual-only: the standardization report is deliberately unwired from
+    # pre-commit and CI, so editing the script must not re-select it.
+    batch, adhoc = vb.select_for_changed_files(
+        ["tools/validation/validate_standardization.py"]
     )
     assert batch == []
     assert adhoc == []
