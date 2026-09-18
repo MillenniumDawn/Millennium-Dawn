@@ -505,7 +505,7 @@ _VAR_SCOPE_WORDS = frozenset(
 )
 
 # Engine-side, but absent from resources/documentation.
-_EXTRA_ENGINE_LOC_VARS = frozenset({"days_left", "war_support"})
+_EXTRA_ENGINE_LOC_VARS = frozenset({"days_left", "war_support", "strength_ratio"})
 
 _DYNAMIC_VAR_DOC = os.path.join(
     "resources", "documentation", "dynamic_variables_documentation.md"
@@ -527,13 +527,16 @@ def _engine_loc_vars(mod_path: str) -> frozenset:
 
 
 def _loc_var_name(raw: str) -> str:
-    """The variable a `[?...]` names, or "" for an @ read, promote or scope.
+    """The variable a `[?...]` names, or "" for a promote or scope.
 
     Leading scope hops (`var:`, `CONTROLLER:`, `ROOT.`, `145.`) are stripped.
+    A `name@target` dynamic variable yields `name`.
     """
     name = raw.split("|", 1)[0].strip()
-    if not name or "@" in name:
+    if not name:
         return ""
+    if "@" in name:
+        name = name.split("@", 1)[0]
     name = name.split("^", 1)[0]
     while ":" in name:
         head, _, tail = name.partition(":")
@@ -578,6 +581,41 @@ def process_txt_for_var_writes(args: Tuple[str]) -> Set[str]:
         if name:
             written.add(name)
     return written
+
+
+# name@target. Trailing `_@SCOPE` is a flag token, not a dynamic variable.
+_TARGETED_VAR_RE = re.compile(r"(?<![A-Za-z0-9_])([A-Za-z][A-Za-z0-9_]*[A-Za-z0-9])@")
+_FLAG_LINE_RE = re.compile(
+    r"(?:"
+    r"\b(?:has|set|clr|modify)_"
+    r"(?:country|global|state|character|mio|project|unit_leader)_flag\s*="
+    r"|\bflag\s*="
+    r")"
+)
+
+
+def _scan_targeted_var_text(text: str, basename: str) -> List[Tuple[str, str, int]]:
+    """(prefix, file, line) for every name@target that is not a flag token."""
+    if "@" not in text:
+        return []
+    out: List[Tuple[str, str, int]] = []
+    for number, line in enumerate(text.split("\n"), 1):
+        if "@" not in line or _FLAG_LINE_RE.search(line):
+            continue
+        for prefix in _TARGETED_VAR_RE.findall(line):
+            out.append((prefix, basename, number))
+    return out
+
+
+def process_txt_for_targeted_vars(args: Tuple[str]) -> List[Tuple[str, str, int]]:
+    """Pool worker: name@target prefixes one script file uses."""
+    filename = args[0]
+    text = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if not text:
+        return []
+    return _scan_targeted_var_text(text, os.path.basename(filename))
 
 
 def process_yml_for_var_refs(args: Tuple[str]) -> List[Tuple[str, str, int]]:
@@ -1146,10 +1184,10 @@ class Validator(BaseValidator):
             category="missing-opinion-modifier-localisation",
         )
 
-    def validate_variable_references(self):
-        """`[?name]` in English loc must name a variable some script writes."""
-        self._log_section("Checking [?variable] references in localisation...")
-
+    def _script_written_variables(self) -> Set[str]:
+        memo = getattr(self, "_script_written_vars", None)
+        if memo is not None:
+            return memo
         written: Set[str] = set()
         for names in self._pool_map(
             process_txt_for_var_writes,
@@ -1162,7 +1200,14 @@ class Validator(BaseValidator):
             chunksize=30,
         ):
             written |= names
+        self._script_written_vars = written
+        return written
 
+    def validate_variable_references(self):
+        """`[?name]` in English loc must name a variable some script writes."""
+        self._log_section("Checking [?variable] references in localisation...")
+
+        written = self._script_written_variables()
         engine = _engine_loc_vars(self.mod_path)
         results = []
         for name, basename, number in self._get_shared_yml_scan()["var_refs"]:
@@ -1175,6 +1220,34 @@ class Validator(BaseValidator):
             "Localisation reads a variable no script writes (renders as 0):",
             severity=Severity.WARNING,
             category="loc-unwritten-variable",
+        )
+
+    def validate_targeted_dynamic_variables(self):
+        """name@target in script must be a documented dynamic var or a write."""
+        self._log_section("Checking name@target dynamic variables...")
+
+        known = self._script_written_variables() | _engine_loc_vars(self.mod_path)
+        results = []
+        for hits in self._pool_map(
+            process_txt_for_targeted_vars,
+            [
+                (f,)
+                for f in self._collect_files(
+                    ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+                )
+            ],
+            chunksize=30,
+        ):
+            for prefix, basename, number in hits:
+                if prefix not in known:
+                    results.append((f"{prefix} - {basename}", basename, number))
+
+        self._report(
+            results,
+            "✓ Every name@target dynamic variable is documented or written",
+            "Unknown name@target dynamic variable (typos read as 0):",
+            severity=Severity.ERROR,
+            category="unknown-dynamic-variable",
         )
 
     def run_validations(self):
@@ -1207,6 +1280,7 @@ class Validator(BaseValidator):
             )
             self.validate_opinion_modifiers(loc_keys, scripted_loc_keys)
             self.validate_variable_references()
+            self.validate_targeted_dynamic_variables()
 
 
 if __name__ == "__main__":

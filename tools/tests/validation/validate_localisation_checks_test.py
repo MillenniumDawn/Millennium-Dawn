@@ -189,10 +189,11 @@ def test_loc_var_name_strips_scope_hops_and_rejects_non_variables():
     assert VL._loc_var_name("145.GRE_SUPPORT") == "GRE_SUPPORT"
     assert VL._loc_var_name("FROM.CONTROLLER:gdp_per_capita|Y") == "gdp_per_capita"
 
-    # engine value reads, not variables
-    assert VL._loc_var_name("modifier@conscription_factor|Y%2") == ""
-    assert VL._loc_var_name("resource@oil") == ""
-    assert VL._loc_var_name("cyber_defense_rating@var:target") == ""
+    # engine / scripted dynamic variables with a target
+    assert VL._loc_var_name("modifier@conscription_factor|Y%2") == "modifier"
+    assert VL._loc_var_name("resource@oil") == "resource"
+    assert VL._loc_var_name("cyber_defense_rating@var:target") == "cyber_defense_rating"
+    assert VL._loc_var_name("resource_improted@tungsten") == "resource_improted"
     # scopes, arrays and promotes
     assert VL._loc_var_name("ROOT") == ""
     assert VL._loc_var_name("var:FROM.influence_array^0") == ""
@@ -536,3 +537,106 @@ def test_loc_variable_writes_include_history_and_state_scopes(
     validator.validate_variable_references()
     assert len(validator._issues) == 1
     assert "missing_var" in str(validator._issues[0])
+
+
+def _engine_doc(tmp_path, names):
+    path = (
+        tmp_path / "resources" / "documentation" / "dynamic_variables_documentation.md"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = "# Dynamic Variables\n\n" + "".join(f"### {n}\n\n" for n in names)
+    path.write_text(body, encoding="utf-8")
+    VL._engine_loc_vars.cache_clear()
+
+
+def test_unwritten_targeted_loc_variable_is_reported(tmp_path):
+    """[?name@target] uses the prefix; a typo of a documented name is reported."""
+    _engine_doc(tmp_path, ["resource_imported"])
+    _english(
+        tmp_path,
+        "t_l_english.yml",
+        ' a_key: "[?resource_imported@oil|+0] [?resource_improted@tungsten|+0]"\n',
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_variable_references()
+    reported = [str(i) for i in v._issues]
+    assert any("resource_improted" in r for r in reported)
+    assert not any("resource_imported" in r for r in reported)
+
+
+def test_unknown_targeted_dynamic_variable_is_an_error(tmp_path):
+    """resource_improted@tungsten in check_variable must fail the suite."""
+    _engine_doc(tmp_path, ["resource_imported", "resource_produced"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "microchip_update = {\n"
+        "\tcheck_variable = { resource_produced@tungsten = 0 }\n"
+        "\tcheck_variable = { resource_improted@tungsten = 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    issues = v._issues
+    assert len(issues) == 1
+    assert issues[0].category == "unknown-dynamic-variable"
+    assert issues[0].severity == VL.Severity.ERROR
+    assert "resource_improted" in issues[0].message
+
+
+def test_written_targeted_variable_is_clean(tmp_path):
+    _engine_doc(tmp_path, ["resource_imported"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { recognition_pressure_end@var:open_state = 1 }\n"
+        "\tcheck_variable = { recognition_pressure_end@var:open_state > 0 }\n"
+        "\tcheck_variable = { resource_imported@oil > 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    assert v._issues == []
+
+
+def test_flag_at_scope_is_not_a_dynamic_variable(tmp_path):
+    _engine_doc(tmp_path, ["resource_imported"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\thas_country_flag = trade_agreement@ROOT\n"
+        "\tset_country_flag = {\n"
+        "\t\tflag = recognition_campaign_from@ROOT\n"
+        "\t\tdays = 210\n"
+        "\t}\n"
+        "\tcheck_variable = { resource_imported@steel > 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    assert v._issues == []
+
+
+def test_strength_ratio_is_an_extra_engine_var(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = { check_variable = { strength_ratio@THIS < 1.3 } }\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    assert v._issues == []
+
+
+def test_resources_typo_is_an_error(tmp_path):
+    _engine_doc(tmp_path, ["resource"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = { check_variable = { resources@composites < 0 } }\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    assert any("resources" in i.message for i in v._issues)
