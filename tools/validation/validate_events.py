@@ -226,6 +226,11 @@ def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, 
 _ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
 
 
+def _scan_event_id_counts_text(cleaned: str, tracked_ids: frozenset) -> Dict[str, int]:
+    counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
+    return {eid: counts[eid] for eid in tracked_ids if eid in counts}
+
+
 def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     """Pool worker: count occurrences of each tracked event ID in one file.
 
@@ -239,8 +244,7 @@ def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
     cleaned = _read_cleaned_text(filename)
     if cleaned is None:
         return {}
-    counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
-    return {eid: counts[eid] for eid in tracked_ids if eid in counts}
+    return _scan_event_id_counts_text(cleaned, tracked_ids)
 
 
 # Event IDs built at runtime by string interpolation never appear as a literal
@@ -393,6 +397,13 @@ def _iter_fired_ids(text: str):
         yield eid, pos
 
 
+def _scan_fires_text(cleaned: str, filename: str) -> List[Tuple[str, str, int]]:
+    return [
+        (eid, filename, cleaned.count("\n", 0, pos) + 1)
+        for eid, pos in _iter_fired_ids(cleaned)
+    ]
+
+
 def scan_event_fires(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
     """Pool worker: every event ID fired from one file, as (id, file, line).
 
@@ -403,10 +414,15 @@ def scan_event_fires(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
     cleaned = _read_cleaned_text(filename)
     if cleaned is None:
         return []
+    return _scan_fires_text(cleaned, filename)
 
+
+def _scan_typed_fires_text(
+    cleaned: str, filename: str
+) -> List[Tuple[str, str, str, int]]:
     return [
-        (eid, filename, cleaned.count("\n", 0, pos) + 1)
-        for eid, pos in _iter_fired_ids(cleaned)
+        (eid, call_type, filename, cleaned.count("\n", 0, pos) + 1)
+        for eid, call_type, pos in _iter_typed_fires(cleaned)
     ]
 
 
@@ -418,24 +434,12 @@ def scan_typed_event_fires(
     cleaned = _read_cleaned_text(filename)
     if cleaned is None:
         return []
-    return [
-        (eid, call_type, filename, cleaned.count("\n", 0, pos) + 1)
-        for eid, call_type, pos in _iter_typed_fires(cleaned)
-    ]
+    return _scan_typed_fires_text(cleaned, filename)
 
 
-def scan_invalid_event_calls(
-    args: Tuple[str, frozenset],
+def _scan_invalid_calls_text(
+    cleaned: str, filename: str
 ) -> List[Tuple[str, str, str, str, int]]:
-    """Pool worker: reversed keywords and event calls missing ``=``."""
-    filename = args[0]
-    if _should_skip(filename):
-        return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = blank_quoted_strings(strip_comments(text))
     results: List[Tuple[str, str, str, str, int]] = []
     for m in _REVERSED_EVENT_CALL_RE.finditer(cleaned):
         results.append(
@@ -461,6 +465,25 @@ def scan_invalid_event_calls(
     return results
 
 
+def scan_invalid_event_calls(
+    args: Tuple[str, frozenset],
+) -> List[Tuple[str, str, str, str, int]]:
+    """Pool worker: reversed keywords and event calls missing ``=``."""
+    filename = args[0]
+    if _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    cleaned = blank_quoted_strings(strip_comments(text))
+    return _scan_invalid_calls_text(cleaned, filename)
+
+
+def _scan_dynamic_namespaces_text(cleaned: str) -> Set[str]:
+    return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
+
+
 def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
     """Pool worker: namespaces fired via string-interpolated event IDs in a file.
 
@@ -471,7 +494,7 @@ def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
     cleaned = _read_cleaned_text(filename)
     if cleaned is None:
         return set()
-    return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
+    return _scan_dynamic_namespaces_text(cleaned)
 
 
 # --- date-gated events and the event fire graph ---
@@ -562,25 +585,6 @@ def _stat_cached_scan(mod_path: str, namespace: str, filename: str, scanner):
         namespace,
         filename,
         lambda: scanner((filename, frozenset())),
-    )
-
-
-def _cached_scan_typed_event_fires(
-    args: Tuple[str, str],
-) -> List[Tuple[str, str, str, int]]:
-    filename, mod_path = args
-    return _stat_cached_scan(
-        mod_path, "events.typed_fires", filename, scan_typed_event_fires
-    )
-
-
-def _cached_scan_dynamic_event_namespaces(args: Tuple[str, str]) -> Set[str]:
-    filename, mod_path = args
-    return _stat_cached_scan(
-        mod_path,
-        "events.dynamic_namespaces",
-        filename,
-        scan_dynamic_event_namespaces,
     )
 
 
@@ -691,29 +695,15 @@ def _loop_stack_flags(stack: List[str], pinned_shields: bool) -> bool:
     return False
 
 
-def _scan_tracked_events_in_loop(
-    args: Tuple[str, frozenset, str],
+def _scan_tracked_in_loop_text(
+    cleaned: str,
+    filename: str,
+    tracked_ids: frozenset,
+    mod_path: str,
     *,
     pinned_shields: bool,
     message: str,
 ) -> List[str]:
-    """Flag tracked event IDs fired inside an every_*/for_each_* iterator."""
-    filename, tracked_ids, mod_path = args
-    if not tracked_ids or _should_skip(filename):
-        return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    # Cheap early-out: a file that fires no events can't fire one inside a loop,
-    # so skip the two full-text transforms + tokenize on the bulk of the repo
-    # (history/, ai_strategy/, unit stat files, ... none of which fire events).
-    if not any(k in text for k in _EVENT_CALL_KEYWORDS):
-        return []
-    # Quote-aware: strip comments, then blank quoted-string interiors so a
-    # literal brace inside a `log = "...{..."` string can't desync the depth
-    # stack and corrupt every finding after it.
-    cleaned = blank_quoted_strings(strip_comments(text))
     findings: List[str] = []
 
     def _flag(eid: str, pos: int) -> None:
@@ -721,9 +711,6 @@ def _scan_tracked_events_in_loop(
         rel = os.path.relpath(filename, mod_path)
         findings.append(f"{rel}:{line} - {message.format(eid=eid)}")
 
-    # Stack of scope frames: "iter" (every_/for_each_), "pinned"
-    # (fixed-recipient scope switch), or "other" (limit / if / random_* /
-    # completion_reward / the event-call block / ...).
     stack: List[str] = []
     for m in _RE_FOF_TOKEN.finditer(cleaned):
         tok = m.group(0)
@@ -737,7 +724,6 @@ def _scan_tracked_events_in_loop(
         elif _RE_FOF_PINNED_OPEN.match(tok):
             stack.append("pinned")
         elif _RE_FOF_EVENT_LONG.match(tok):
-            # Long form: extract id from the block body (id may not be first).
             stack.append("other")
             body, _ = extract_block_from_text(cleaned, m.end() - 1)
             idm = _RE_FOF_ID.search(body)
@@ -755,6 +741,33 @@ def _scan_tracked_events_in_loop(
     return findings
 
 
+def _scan_tracked_events_in_loop(
+    args: Tuple[str, frozenset, str],
+    *,
+    pinned_shields: bool,
+    message: str,
+) -> List[str]:
+    """Flag tracked event IDs fired inside an every_*/for_each_* iterator."""
+    filename, tracked_ids, mod_path = args
+    if not tracked_ids or _should_skip(filename):
+        return []
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    if not any(k in text for k in _EVENT_CALL_KEYWORDS):
+        return []
+    cleaned = blank_quoted_strings(strip_comments(text))
+    return _scan_tracked_in_loop_text(
+        cleaned,
+        filename,
+        tracked_ids,
+        mod_path,
+        pinned_shields=pinned_shields,
+        message=message,
+    )
+
+
 def scan_fire_only_once_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
     """Pool worker: flag fire_only_once events fired inside an iterator."""
     return _scan_tracked_events_in_loop(
@@ -769,6 +782,22 @@ def scan_major_event_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
     )
 
 
+def _scan_long_form_text(cleaned: str, filename: str, mod_path: str) -> List[str]:
+    rel = os.path.relpath(filename, mod_path)
+    results = []
+    seen = set()
+    for m in _LONG_FORM_PATTERN.finditer(cleaned):
+        line = cleaned[: m.start()].count("\n") + 1
+        key = (rel, line, m.group(1), m.group(2))
+        if key in seen:
+            continue
+        seen.add(key)
+        results.append(
+            f"{rel}:{line} - {m.group(1)} = {{ id = {m.group(2)} }} → use shorthand `{m.group(1)} = {m.group(2)}`"
+        )
+    return results
+
+
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
     """Pool worker: find id-only long-form event calls in one .txt file."""
     filename, mod_path = args
@@ -779,19 +808,98 @@ def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
     except Exception:
         return []
     cleaned = re.sub(r"#[^\n]*", "", text)
-    results = []
-    seen = set()
-    for m in _LONG_FORM_PATTERN.finditer(cleaned):
-        line = cleaned[: m.start()].count("\n") + 1
-        rel = os.path.relpath(filename, mod_path)
-        key = (rel, line, m.group(1), m.group(2))
-        if key in seen:
-            continue
-        seen.add(key)
-        results.append(
-            f"{rel}:{line} - {m.group(1)} = {{ id = {m.group(2)} }} → use shorthand `{m.group(1)} = {m.group(2)}`"
+    return _scan_long_form_text(cleaned, filename, mod_path)
+
+
+_C_LONGFORM = 1
+_C_INVALID = 2
+_C_TYPED = 4
+_C_COUNT = 8
+_C_DYNAMIC = 16
+_C_FOF = 32
+_C_MAJOR = 64
+
+_EMPTY_SHARED_CALL_SITE_RESULT: Tuple = ([], [], [], {}, set(), [], [])
+
+
+def _scan_shared_call_site_file(args) -> Tuple:
+    """Pool worker: run every applicable call-site scan on one file.
+
+    Reads the file once and shares the naive-stripped and quote-aware artifacts
+    across long-form, invalid-call, typed-fire, count, dynamic-namespace, and
+    in-loop scans instead of one read plus strip pass per check. Each scan calls
+    the same ``_scan_*_text`` helper its standalone worker uses, gated by ``mask``
+    so the file set per check is unchanged. Typed fires and dynamic namespaces
+    keep their existing disk-cache namespaces.
+    Returns (longform, invalid, typed, counts, dynamic, fof, major).
+    """
+    filename, mod_path, mask, count_tracked, fof_ids, major_ids = args
+    if mask == 0 or _should_skip(filename):
+        return _EMPTY_SHARED_CALL_SITE_RESULT
+    try:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return _EMPTY_SHARED_CALL_SITE_RESULT
+
+    need_naive = mask & (_C_LONGFORM | _C_TYPED | _C_COUNT | _C_DYNAMIC)
+    need_blanked = mask & (_C_INVALID | _C_FOF | _C_MAJOR)
+    if not (need_naive or need_blanked):
+        return _EMPTY_SHARED_CALL_SITE_RESULT
+
+    naive = re.sub(r"#[^\n]*", "", text) if need_naive else ""
+    blanked = blank_quoted_strings(strip_comments(text)) if need_blanked else ""
+
+    longform: List[str] = []
+    invalid: List = []
+    typed: List = []
+    counts: Dict[str, int] = {}
+    dynamic: Set[str] = set()
+    fof: List[str] = []
+    major: List[str] = []
+
+    if mask & _C_LONGFORM:
+        longform = _scan_long_form_text(naive, filename, mod_path)
+    if mask & _C_INVALID:
+        invalid = _scan_invalid_calls_text(blanked, filename)
+    if mask & _C_TYPED:
+        typed = disk_cache.per_file_cached_by_content(
+            mod_path,
+            "events.typed_fires",
+            filename,
+            naive,
+            lambda: _scan_typed_fires_text(naive, filename),
         )
-    return results
+    if mask & _C_COUNT and count_tracked:
+        counts = _scan_event_id_counts_text(naive, count_tracked)
+    if mask & _C_DYNAMIC:
+        dynamic = disk_cache.per_file_cached_by_content(
+            mod_path,
+            "events.dynamic_namespaces",
+            filename,
+            naive,
+            lambda: _scan_dynamic_namespaces_text(naive),
+        )
+    if mask & (_C_FOF | _C_MAJOR):
+        if any(k in text for k in _EVENT_CALL_KEYWORDS):
+            if mask & _C_FOF and fof_ids:
+                fof = _scan_tracked_in_loop_text(
+                    blanked,
+                    filename,
+                    fof_ids,
+                    mod_path,
+                    pinned_shields=True,
+                    message=_FOF_IN_LOOP_MSG,
+                )
+            if mask & _C_MAJOR and major_ids:
+                major = _scan_tracked_in_loop_text(
+                    blanked,
+                    filename,
+                    major_ids,
+                    mod_path,
+                    pinned_shields=False,
+                    message=_MAJOR_IN_LOOP_MSG,
+                )
+    return (longform, invalid, typed, counts, dynamic, fof, major)
 
 
 # --- Event parsing ---
@@ -1105,11 +1213,6 @@ class Validator(BaseValidator):
         )
         return self._full_call_site_scan_cache
 
-    def _get_call_site_scan_args(self) -> List[Tuple[str, frozenset]]:
-        if self._needs_full_call_site_scan():
-            return self._get_fire_scan_args()
-        return self._get_scoped_fire_scan_args()
-
     def _skip_call_site_check(
         self, success: str, fail: str, category: str, severity=Severity.ERROR
     ) -> bool:
@@ -1122,27 +1225,104 @@ class Validator(BaseValidator):
         self._report([], success, fail, severity, category)
         return True
 
+    def _get_shared_call_site_scan(self) -> dict:
+        """Run every call-site check in one pool pass over the union file set.
+
+        Reads each candidate file once and shares the naive-stripped and
+        quote-aware artifacts across long-form, invalid-call, typed-fire,
+        count, dynamic-namespace, and in-loop scans. Each file runs exactly the
+        scans its own check file list would have run (via ``mask``), and each
+        scan calls the same ``_scan_*_text`` helper its standalone worker uses,
+        so findings are unchanged. Typed fires derive untyped fires parent-side,
+        and the two disk-cache namespaces are kept. Events-only passes (pictures,
+        option logs, date gates, fire graph, definitions) and on_actions lookups
+        keep their own file sets and stay separate.
+        """
+        memo = getattr(self, "_shared_call_site_memo", None)
+        if memo is not None:
+            return memo
+        self._log_section("Sharing per-file reads across event call-site checks...")
+
+        full_files = [f for f, _ in self._get_fire_scan_args()]
+        scoped_files = [f for f, _ in self._get_scoped_fire_scan_args()]
+        use_full = (not self.staged_only) or self._needs_full_call_site_scan()
+        union = full_files if use_full else scoped_files
+
+        fof_ids = frozenset(self._get_fire_only_once_ids())
+        major_ids = frozenset(self._get_major_event_ids())
+        count_tracked: frozenset = frozenset()
+        if not self.staged_only:
+            meta, _ = self._get_event_metadata()
+            count_tracked = frozenset(
+                ev["id"]
+                for ev in meta
+                if ev["id"] is not None
+                and ev["is_triggered_only"]
+                and ev["id"] not in _EXEMPT_UNREFERENCED_EVENT_IDS
+            )
+
+        scoped_set = set(scoped_files)
+        typed_set = set(full_files) if use_full else scoped_set
+        count_set = set(full_files) if not self.staged_only else set()
+        args_list = []
+        for f in union:
+            mask = 0
+            if f in scoped_set:
+                mask |= _C_LONGFORM | _C_INVALID | _C_FOF | _C_MAJOR
+            if f in typed_set:
+                mask |= _C_TYPED | _C_DYNAMIC
+            if f in count_set:
+                mask |= _C_COUNT
+            args_list.append(
+                (f, self.mod_path, mask, count_tracked, fof_ids, major_ids)
+            )
+
+        longform_all: List[str] = []
+        invalid_all: List = []
+        typed_all: List = []
+        fof_all: List[str] = []
+        major_all: List[str] = []
+        dynamic_all: Set[str] = set()
+        total_counts: Dict[str, int] = {}
+        for longform, invalid, typed, counts, dynamic, fof, major in self._pool_map(
+            _scan_shared_call_site_file, args_list, chunksize=30
+        ):
+            longform_all.extend(longform)
+            invalid_all.extend(invalid)
+            typed_all.extend(typed)
+            fof_all.extend(fof)
+            major_all.extend(major)
+            dynamic_all.update(dynamic)
+            for eid, count in counts.items():
+                total_counts[eid] = total_counts.get(eid, 0) + count
+        fires_all = [
+            (eid, filename, line) for eid, _call_type, filename, line in typed_all
+        ]
+        empty: dict = {
+            "longform": longform_all,
+            "invalid": invalid_all,
+            "typed": typed_all,
+            "fires": fires_all,
+            "counts": total_counts,
+            "dynamic": dynamic_all,
+            "fof": fof_all,
+            "major": major_all,
+        }
+        self._shared_call_site_memo = empty
+        return empty
+
     def _get_event_fires(self) -> List[Tuple[str, str, int]]:
         """Every literal event fire in the mod as (event_id, file, line)."""
         if self._fires_cache is None:
-            self._fires_cache = [
-                (eid, filename, line)
-                for eid, _call_type, filename, line in self._get_typed_event_fires()
-            ]
+            self._fires_cache = list(self._get_shared_call_site_scan()["fires"])
         return self._fires_cache
 
     def _get_typed_event_fires(self) -> List[Tuple[str, str, str, int]]:
         """Every literal event fire with its call keyword."""
         if self._typed_fires_cache is not None:
             return self._typed_fires_cache
-        fires: List[Tuple[str, str, str, int]] = []
-        args = [(path, self.mod_path) for path, _ in self._get_fire_scan_args()]
-        for result in self._pool_map(
-            _cached_scan_typed_event_fires, args, chunksize=30
-        ):
-            fires.extend(result)
-        self._typed_fires_cache = fires
-        return fires
+        self._typed_fires_cache = list(self._get_shared_call_site_scan()["typed"])
+        return self._typed_fires_cache
 
     def _get_event_definition_types(self) -> Dict[str, str]:
         """Return event declaration keywords from the full events tree."""
@@ -1335,14 +1515,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for redundant long-form event calls (id-only)...")
 
-        txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-        )
-        args_list = [(f, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            process_txt_for_long_form_events, args_list, chunksize=30
-        )
-        results = [r for file_res in all_results for r in file_res]
+        results = list(self._get_shared_call_site_scan()["longform"])
 
         self._report(
             results,
@@ -1423,27 +1596,10 @@ class Validator(BaseValidator):
             )
             return
 
-        txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
-            ignore_staged=True,
-        )
-        tracked = frozenset(triggered_only_ids.keys())
-        args_list = [(f, tracked) for f in txt_files]
-        all_counts = self._pool_map(count_event_ids_in_file, args_list, chunksize=30)
+        shared = self._get_shared_call_site_scan()
+        total_counts: Dict[str, int] = dict(shared["counts"])
 
-        total_counts: Dict[str, int] = {eid: 0 for eid in tracked}
-        for file_counts in all_counts:
-            for eid, count in file_counts.items():
-                total_counts[eid] = total_counts.get(eid, 0) + count
-
-        # Namespaces dispatched via runtime-interpolated IDs (e.g. UN.[ID],
-        # MD_cyber.1[TYPE]) never appear as literal tokens — exempt them.
-        dyn_ns_lists = self._pool_map(
-            scan_dynamic_event_namespaces, args_list, chunksize=30
-        )
-        dynamic_namespaces: Set[str] = set()
-        for s in dyn_ns_lists:
-            dynamic_namespaces.update(s)
+        dynamic_namespaces: Set[str] = set(shared["dynamic"])
 
         # The definition itself contributes 1 occurrence (id = X inside the event block).
         # Anything > 1 means it's referenced somewhere else.
@@ -1881,11 +2037,7 @@ class Validator(BaseValidator):
         self._log_section("Checking event call syntax...")
 
         results = []
-        for matches in self._pool_map(
-            scan_invalid_event_calls,
-            self._get_scoped_fire_scan_args(),
-            chunksize=30,
-        ):
+        for matches in [self._get_shared_call_site_scan()["invalid"]]:
             for kind, keyword, eid, filename, line in matches:
                 if kind == "reversed":
                     message = f"{keyword} = {eid} - use an event effect keyword"
@@ -1913,19 +2065,11 @@ class Validator(BaseValidator):
             "event-fire-type-mismatch",
         ):
             return
-        fire_args = self._get_call_site_scan_args()
         definitions = self._get_event_definition_types()
         results = []
-        typed_fires: List[Tuple[str, str, str, int]] = []
-        if self._needs_full_call_site_scan():
-            typed_fires = self._get_typed_event_fires()
-        else:
-            for result in self._pool_map(
-                scan_typed_event_fires,
-                fire_args,
-                chunksize=30,
-            ):
-                typed_fires.extend(result)
+        typed_fires: List[Tuple[str, str, str, int]] = list(
+            self._get_shared_call_site_scan()["typed"]
+        )
         for eid, call_type, filename, line in typed_fires:
             expected = definitions.get(eid)
             if expected is None or expected == call_type:
@@ -1966,29 +2110,17 @@ class Validator(BaseValidator):
             "undefined-event-fire",
         ):
             return
-        args_list = self._get_call_site_scan_args()
+        shared = self._get_shared_call_site_scan()
 
         # The definition scan must also cover the full repo in staged mode: a
         # staged caller's target event almost always lives in an unstaged file.
         defined = set(self._get_event_definition_types())
         self.log(f"  Found {len(defined)} defined event IDs")
 
-        dynamic_namespaces: Set[str] = set()
-        namespace_args = [(path, self.mod_path) for path, _ in args_list]
-        for namespaces in self._pool_map(
-            _cached_scan_dynamic_event_namespaces,
-            namespace_args,
-            chunksize=30,
-        ):
-            dynamic_namespaces.update(namespaces)
+        dynamic_namespaces: Set[str] = set(shared["dynamic"])
 
         seen: Dict[str, Tuple[str, int]] = {}
-        fires: List[Tuple[str, str, int]] = []
-        if self._needs_full_call_site_scan():
-            fires = self._get_event_fires()
-        else:
-            for result in self._pool_map(scan_event_fires, args_list, chunksize=30):
-                fires.extend(result)
+        fires: List[Tuple[str, str, int]] = list(shared["fires"])
         for eid, filename, line in fires:
             if eid in defined or eid in seen:
                 continue
@@ -2010,35 +2142,36 @@ class Validator(BaseValidator):
         )
 
     def validate_event_picture_omissions(self):
-        """Flag visible country/news events that declare no picture of their own.
+        """Flag visible news events that declare no picture of their own.
 
         Reads `picture_refs` (depth 0 of the event body) rather than a body-wide
         scan, so a `create_country_leader = { picture = ... }` portrait nested
         in an option or `immediate` block does not count as the event's picture.
-        News events are clean and gate as errors; country events carry a
-        backlog of portrait-only events and stay warnings until cleared.
+        The finding names the fix, since the group header is not rendered.
+        Country events may omit their picture, so only news events are checked.
         """
-        self._log_section("Checking visible country/news events have pictures...")
+        self._log_section("Checking visible news events have pictures...")
 
         meta, _ = self._get_event_metadata()
-        omitted = {"country_event": [], "news_event": []}
-        for ev in meta:
-            if ev["type"] in omitted and not ev["is_hidden"] and not ev["picture_refs"]:
-                omitted[ev["type"]].append(f"{ev['id'] or 'unknown'} - {ev['file']}")
+        omitted = [
+            (
+                f"{ev['id'] or 'unknown'}: event has no picture, "
+                "add `picture = GFX_<sprite>` below `desc =`",
+                ev["file"],
+                ev["line"],
+            )
+            for ev in meta
+            if ev["type"] == "news_event"
+            and not ev["is_hidden"]
+            and not ev["picture_refs"]
+        ]
 
         self._report(
-            omitted["news_event"],
+            omitted,
             "✓ All visible news events have pictures",
-            "Visible news events with no picture field of their own:",
+            "News events with no picture (add `picture = GFX_<sprite>` below `desc =`):",
             Severity.ERROR,
             category="news-event-picture-omitted",
-        )
-        self._report(
-            omitted["country_event"],
-            "✓ All visible country events have pictures",
-            "Visible country events with no picture field of their own:",
-            Severity.WARNING,
-            category="event-picture-omitted",
         )
 
     def validate_placeholder_event_pictures(self):
@@ -2142,9 +2275,6 @@ class Validator(BaseValidator):
         ):
             return
 
-        txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-        )
         fire_only_once_ids = frozenset(self._get_fire_only_once_ids())
         if not fire_only_once_ids:
             self.log("  No fire_only_once events defined — skipping")
@@ -2156,11 +2286,7 @@ class Validator(BaseValidator):
             )
             return
 
-        args_list = [(f, fire_only_once_ids, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            scan_fire_only_once_in_loop, args_list, chunksize=30
-        )
-        results = [r for file_res in all_results for r in file_res]
+        results = list(self._get_shared_call_site_scan()["fof"])
 
         # ERROR: the 11-site pre-existing backlog was cleared.
         self._report(
@@ -2192,9 +2318,6 @@ class Validator(BaseValidator):
         ):
             return
 
-        txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-        )
         major_ids = frozenset(self._get_major_event_ids())
         if not major_ids:
             self.log("  No major events defined — skipping")
@@ -2205,9 +2328,7 @@ class Validator(BaseValidator):
                 category="major-event-in-loop",
             )
             return
-        args_list = [(f, major_ids, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(scan_major_event_in_loop, args_list, chunksize=30)
-        results = [r for file_res in all_results for r in file_res]
+        results = list(self._get_shared_call_site_scan()["major"])
 
         # ERROR: the 9-site pre-existing backlog was cleared.
         self._report(

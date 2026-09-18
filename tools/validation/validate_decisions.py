@@ -198,6 +198,24 @@ def _resolved_sprite(kind: str, value: str, sprites: SpriteSizeIndex) -> Optiona
     return None
 
 
+# Bespoke cartel map icons drawn at 52x40 on purpose; accepted as-is.
+_SLOT_EXEMPT_SPRITES = frozenset(
+    {
+        "GFX_decision_sinaloa_high",
+        "GFX_decision_sinaloa_medium",
+        "GFX_decision_sinaloa_low",
+        "GFX_decision_sinaloa_none",
+        "GFX_decision_tamaulpas_high",
+        "GFX_decision_tamaulpas_medium",
+        "GFX_decision_tamaulpas_low",
+        "GFX_decision_tamaulpas_none",
+        "GFX_decision_tierra_caliente_high",
+        "GFX_decision_tierra_caliente_medium",
+        "GFX_decision_tierra_caliente_low",
+        "GFX_decision_tierra_caliente_none",
+    }
+)
+
 _MOD_ART_HINT = "resize with tools/assets/resize_decision_icons.py"
 _VANILLA_ART_HINT = (
     "vanilla art: use a sprite sized for this slot or add a resized MD copy"
@@ -215,7 +233,7 @@ def _icon_type_message(
     if "[" in value or "]" in value:
         return None
     sprite = _resolved_sprite(kind, value, sprites)
-    if sprite is None:
+    if sprite is None or sprite in _SLOT_EXEMPT_SPRITES:
         return None
     size = sprites.size(sprite)
     if size is None:
@@ -875,6 +893,12 @@ def _is_effectively_ai_only(
 ) -> bool:
     """Whether the decision or its category is gated to AI players."""
     return dec.ai_only or dec_id in ai_only_by_category
+
+
+# AI-only decisions whose name keys stay on purpose.
+_AI_ONLY_LOC_KEEP = frozenset(
+    {"monetary_policy_austerity", "monetary_policy_expand_money_supply"}
+)
 
 
 def _formable_state_counts(factories: List["DecisionFactory"]) -> Dict[str, int]:
@@ -2424,6 +2448,8 @@ class Validator(BaseValidator):
                 # weight — the check runs in reverse and reports keys that
                 # exist. `custom_cost_text` is exempt: it can point at a
                 # scripted-loc key shared with player-facing decisions.
+                if dec_id in _AI_ONLY_LOC_KEEP:
+                    continue
                 for key in (name_key, f"{dec_id}_desc", dec.desc_override):
                     if key and key in loc_keys:
                         ai_results.append(

@@ -644,9 +644,25 @@ SOV_uralvagonzavod_tank_manufacturer = {
 GENERIC_open_organization = {
 \tallowed = { always = yes }
 }
+
+USA_boeing_aircraft_manufacturer = {
+\tallowed = { is_usa_or_breakaway = yes }
+}
 """
 
-_REFERENCE_TAGS = "ENG = { }\nGRE = { }\nCHI = { }\nHKG = { }\nSOV = { }\nNKO = { }\n"
+_REFERENCE_TAGS = (
+    "ENG = { }\nGRE = { }\nCHI = { }\nHKG = { }\nSOV = { }\nNKO = { }\n"
+    "USA = { }\nTEX = { }\n"
+)
+
+_REFERENCE_TRIGGERS = """\
+is_usa_or_breakaway = {
+\tOR = {
+\t\toriginal_tag = USA
+\t\toriginal_tag = TEX
+\t}
+}
+"""
 
 
 def _reference_validator(tmp_path):
@@ -658,6 +674,11 @@ def _reference_validator(tmp_path):
     tag_dir = tmp_path / V.COUNTRY_TAG_DIR
     tag_dir.mkdir(parents=True)
     (tag_dir / "00_countries.txt").write_text(_REFERENCE_TAGS, encoding="utf-8")
+    trigger_dir = tmp_path / V.SCRIPTED_TRIGGER_DIR
+    trigger_dir.mkdir(parents=True)
+    (trigger_dir / "99_USA_scripted_triggers.txt").write_text(
+        _REFERENCE_TRIGGERS, encoding="utf-8"
+    )
     return _validator(tmp_path)
 
 
@@ -709,6 +730,25 @@ def test_multi_tag_allowed_block_passes(tmp_path):
     text = _focus("HKG_test", "\t\t\tdesign_team = mio:CHI_norinco_manufacturer\n")
     v._check_mio_references(text, "common/national_focus/05_china.txt")
     assert not v._issues
+
+
+def test_scripted_trigger_allowed_block_resolves_its_tags(tmp_path):
+    """`allowed = { is_usa_or_breakaway = yes }` reaches every tag the trigger names."""
+    v = _reference_validator(tmp_path)
+    text = "\tcreate_equipment_variant = {\n\t\tdesign_team = mio:USA_boeing_aircraft_manufacturer\n\t}\n"
+    v._check_mio_references(text, "history/countries/TEX - Texas.txt")
+    assert not v._issues
+    v._check_mio_references(text, "history/countries/GRE - Greece.txt")
+    assert [i.category for i in v._issues] == ["mio-reference-wrong-tag"]
+
+
+def test_scripted_trigger_allowed_block_pins_the_tag(tmp_path):
+    v = _reference_validator(tmp_path)
+    body = "\tallowed = { is_usa_or_breakaway = yes }\n"
+    v._check_allowed("USA_boeing_aircraft_manufacturer", body, "f.txt", 0)
+    assert not v._issues
+    v._check_allowed("GRE_eas_materiel_manufacturer", body, "f.txt", 0)
+    assert [i.category for i in v._issues] == ["org-allowed-tag"]
 
 
 def test_explicit_country_scope_wins_over_focus_owner(tmp_path):
@@ -1044,6 +1084,45 @@ def test_a_staged_equipment_edit_rescans_every_org(tmp_path, write_path, monkeyp
     assert sorted(i.category for i in v._issues) == [
         "mio-bonus-no-base-stat",
         "mio-bonus-no-base-stat",
+    ]
+
+
+def test_a_staged_scripted_trigger_rescans_orgs_and_references(
+    tmp_path, write_path, monkeypatch
+):
+    orgs = _REFERENCE_ORGS.replace(
+        "GRE_eas_materiel_manufacturer = {\n\tallowed = { original_tag = GRE }",
+        "GRE_eas_materiel_manufacturer = {\n\tallowed = { is_usa_or_breakaway = yes }",
+    )
+    write_path(tmp_path, f"{V.ORG_DIR}/MD_TEST_organizations.txt", orgs)
+    write_path(
+        tmp_path,
+        f"{V.COUNTRY_TAG_DIR}/00_countries.txt",
+        _REFERENCE_TAGS,
+    )
+    write_path(
+        tmp_path,
+        f"{V.SCRIPTED_TRIGGER_DIR}/99_USA_scripted_triggers.txt",
+        _REFERENCE_TRIGGERS,
+    )
+    write_path(
+        tmp_path,
+        "common/national_focus/05_greece.txt",
+        _focus(
+            "GRE_test",
+            "\t\t\tdesign_team = mio:GRE_eas_materiel_manufacturer\n",
+        ),
+    )
+    monkeypatch.setenv(
+        "MD_STAGED_FILES", "common/scripted_triggers/99_USA_scripted_triggers.txt"
+    )
+    v = V.Validator(str(tmp_path), staged_only=True)
+
+    v.run_validations()
+
+    assert sorted(i.category for i in v._issues) == [
+        "mio-reference-wrong-tag",
+        "org-allowed-tag",
     ]
 
 

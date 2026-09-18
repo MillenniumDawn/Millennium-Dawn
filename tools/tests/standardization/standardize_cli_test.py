@@ -38,7 +38,17 @@ def _run(*args):
 
 
 @pytest.mark.parametrize(
-    "command", ["focus", "event", "decision", "idea", "mio", "history", "localisation"]
+    "command",
+    [
+        "focus",
+        "event",
+        "decision",
+        "idea",
+        "mio",
+        "technology",
+        "history",
+        "localisation",
+    ],
 )
 def test_subcommand_help_lists_common_file_options(command):
     result = _run(command, "--help")

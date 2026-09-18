@@ -1,7 +1,7 @@
 # Write templates
 
-Every artefact of a #3162 country pass, verbatim. Copy from here — **do not open another country's
-focus tree to learn a shape**. Belarus, Brazil, Bulgaria and Comoros are naming references only.
+Every artefact of a country AI path pass, verbatim. Copy from here — **do not open another country's
+focus tree to learn a shape**.
 
 Substitute `DEN` / `Denmark` / the path names. Tabs for indentation.
 
@@ -37,8 +37,10 @@ DEN_ai_behavior = {
 `NO_PATH` is the `default = { }` block and stays last — a fresh game leaves the AI unscripted unless
 the player picks a path. `HISTORICAL` is a plain `option` and comes first, with one `option` per
 alt-history path between it and `RANDOM_PATH`. No `DEFAULT`. Option names are unprefixed
-(`EUROPEAN_UNION`, not `DEN_EUROPEAN_UNION`) and never contain "random". Don't reorder the file —
-the alphabetical pass is a separate cross-cutting item.
+(`EUROPEAN_UNION`, not `DEN_EUROPEAN_UNION`) and never contain "random". The file lists the rules
+alphabetically by displayed country name; insert a new block at that position. A country sub-rule
+(`BLR_union_state_ai_behavior`, `GEO_help_CHE_behavior`) goes directly after the main rule in the
+same group, with no `icon`.
 
 ## 2. Localisation — `localisation/english/MD_game_rules_l_english.yml`
 
@@ -55,10 +57,10 @@ country-specific history. Never an evocative title, never `"Default"`, `"Histori
  RULE_OPTION_DEN_EUROPEAN_UNION_DESC: "..."
 ```
 
-Header key `@TAG <short country name>` — `@EST Estonia`, not `@EST Republic of Estonia`. Some
-countries carry it in `localisation/english/replace/replaced_from_game_rules_l_english.yml` instead;
-check both before adding a duplicate. Some existing keys are suffixed `_MD` (`CZE_AI_BEHAVIOR_MD`) —
-match whatever the rule's `name =` points at.
+Header key `@TAG <short country name>` — `@EST Estonia`, not `@EST Republic of Estonia`. A key
+vanilla also defines lives in `localisation/english/replace/replaced_from_game_rules_l_english.yml`
+instead; check both before adding a duplicate. Country blocks follow the same alphabetical order as
+the rules file; insert a new block at that position.
 
 Every `_desc` is **exactly two sentences**, present tense about the country, no hard dates, `§8…§!`
 on party and movement names. First sentence: what the country does. Second: what that means for the
@@ -123,11 +125,8 @@ Optional AI sentiment grant, if the country has one — `if`/`else_if`, no bookk
 ```
 
 Everything downstream gates on `has_global_flag`, **never** `has_game_rule` — including events and
-strategy plans, or a `RANDOM_PATH` roll enables the flags but not the plan. Known direct readers to
-convert when they touch your country: `HOL_strategy_plans.txt`, `events/comoros.txt`,
-`events/05_japan.txt`, `events/Italy.txt`,
-`history/countries/GER - Germany.txt`, `common/scripted_effects/00_yearly_effects.txt`. The report's
-Wiring section lists any remaining reader for your tag.
+strategy plans, or a `RANDOM_PATH` roll enables the flags but not the plan. The report's Wiring
+section lists every direct `has_game_rule` reader for your tag; convert each one.
 
 ## 4. Scripted triggers — `common/scripted_triggers/99_DEN_scripted_triggers.txt`
 
@@ -400,27 +399,26 @@ wrong when the target sits inside a group next to the incumbent.
 
 ## 7. AI strategy — war weighting
 
+**Reuse mod-wide strategies first.** `MD_war_declaration_ai.txt`, `MD_combat_ai_strategies.txt` and
+`MD_econ_ai.txt` carry blocks without `allowed` that already run for every country. Before writing a
+per-TAG block, grep them for the same `enable`; if one exists, the country needs nothing. If the
+country needs a different threshold or an extra `ai_strategy` line, widen the generic block so the
+next country gets it too. A per-TAG block exists only for a condition the generic files do not
+express (a named target, a country focus, a country flag).
+
 `declare_war` is target-keyed (`id = TAG`) and weights only **opening** a war. There is no
 `dont_declare_war` token and no targetless form. A `declare_war` block gated on
 `has_war_with = TARGET` is a no-op. The 306 `TAG_cancel_war_TARGET` blocks across
 ITA/LIC/TUR/JAP/GER/HOL/ENG/SWE/CHI/BUL/CUB/IND/CAN/VEN/COL/ETH/GUY/KOR are that bug — never copy
 one, never add one.
 
-**Surrender brake, per target** (`common/ai_strategy/ALG.txt` is the model):
-
-```
-DEN_cancel_war_neighbours = {
-	allowed = { original_tag = DEN }
-	enable = {
-		has_war = yes
-		surrender_progress > 0.15
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = { type = declare_war id = "SWE" value = -4000 }
-	ai_strategy = { type = declare_war id = "GER" value = -4000 }
-}
-```
+**Losing-war brake: already mod-wide.** `MD_avoid_new_wars_while_losing` (`has_war = yes` +
+`surrender_progress > 0.15`) and `MD_avoid_new_wars_when_outmatched` (`has_war = yes` +
+`enemies_strength_ratio > 0.75`) in `MD_war_declaration_ai.txt` cover every country. Never add a
+`TAG_hold_new_wars_while_losing`, `TAG_cancel_war_neighbours` or per-tag `avoid_starting_wars`
+block on the same trigger — review rejected exactly that on Sweden (#4287), and `HOL.txt:57`,
+`SOV_avoid_starting_wars`, `BLR_avoid_starting_wars` are the legacy shape, not models. A country
+that needs a harder brake changes the generic block's value or threshold.
 
 **Pre-war readiness gate, per target.** Enable on `has_wargoal_against = X` +
 `NOT = { has_war_with = X }` + a strength or size check, then `declare_war id = X` negative to hold
@@ -428,9 +426,7 @@ and positive to release. `MD_war_declaration_ai.txt`, `BOS_avoid_unready_war_wit
 `BOS_prepare_war_with_cro` are the references. Cache anything containing `any_of_scopes` behind a
 country flag and have `enable` read only the flag.
 
-**Losing-war brake, targetless.** `avoid_starting_wars` gated on `has_war = yes` +
-`enemies_strength_ratio`; `SOV_avoid_starting_wars`, `BLR_avoid_starting_wars` and `RAJ.txt:378` are
-the references. `enemies_strength_ratio` rises as your enemies get stronger (MD's peace-deal
+**Strength semantics.** `enemies_strength_ratio` rises as your enemies get stronger (MD's peace-deal
 triggers read `> 1.7` as losing, `> 2.0` as massively outgunned), while
 `strength_ratio = { tag = X ratio < 1 }` means you are weaker than X. `avoid_starting_wars` is
 additive with `conquer`, not a standalone peacefulness dial — read the surrounding `conquer` values
