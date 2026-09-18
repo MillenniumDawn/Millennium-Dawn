@@ -6,10 +6,6 @@
 # motivated this: CAT_encryption (the token is CAT_encryption_tech) sat in eight
 # idea research_bonus blocks, and CAT_computer_systems is a real token that
 # means armour computer systems, so computing content using it bought tank tech.
-# A doctrine's own categories block, directly under common/doctrines/, counts as
-# both a reference to check and a carrier that satisfies the unused-tag check.
-# Doctrines cannot take a research bonus, so a doctrine-carried tag needs only its
-# name loc key, not the _research one.
 import difflib
 import os
 import re
@@ -30,6 +26,134 @@ _TOKEN_RE = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
 # Every tag is CAT_ followed by lowercase words (#4250).
 _TAG_FORMAT_RE = re.compile(r"^CAT_[a-z0-9_]+$")
 
+# Tags renamed in the #4250 rework, keyed lowercase: an unknown reference is
+# looked up case-insensitively here before falling back to string similarity.
+_LEGACY_CATEGORIES = {
+    "cat_3d": "CAT_3d_printing",
+    "cat_olv": "CAT_orbital_launch_vehicles",
+    "cat_a_uav": "CAT_air_drones",
+    "cat_aa": "CAT_anti_air",
+    "cat_aa_missiles": "CAT_naval_anti_air_missiles",
+    "cat_abm": "CAT_surface_to_air_missiles",
+    "cat_afv": "CAT_armored_fighting_vehicles",
+    "cat_afv_weapons": "CAT_infantry_fighting_vehicles",
+    "cat_agriculture_tech": "CAT_agriculture",
+    "cat_ai": "CAT_artificial_intelligence",
+    "cat_air_camera": "CAT_targeting_pods",
+    "cat_air_engine": "CAT_air_engines",
+    "cat_air_eqp": "CAT_aircraft",
+    "cat_air_ground_weapons": "CAT_air_to_ground_weapons",
+    "cat_air_naval_weapons": "CAT_air_to_naval_weapons",
+    "cat_air_spc": "CAT_air_modules",
+    "cat_air_wpn": "CAT_air_weapons",
+    "cat_airborne": "CAT_special_forces_equipment",
+    "cat_airmobile": "CAT_special_forces_equipment",
+    "cat_alcm": "CAT_cruise_missiles",
+    "cat_apc": "CAT_armored_personnel_carriers",
+    "cat_armor_engines": "CAT_tank_engines",
+    "cat_armor_weapons": "CAT_tank_guns",
+    "cat_armour": "CAT_tank_armor",
+    "cat_armour_ds": "CAT_tank_defensive_systems",
+    "cat_art_ammo": "CAT_artillery_ammunition",
+    "cat_arty": "CAT_towed_artillery",
+    "cat_as_fighter": "CAT_medium_aircraft",
+    "cat_as_missiles": "CAT_naval_anti_ship_missiles",
+    "cat_at": "CAT_anti_tank",
+    "cat_atk_heli": "CAT_attack_helicopters",
+    "cat_atk_sub": "CAT_attack_submarines",
+    "cat_awacs": "CAT_airborne_early_warning",
+    "cat_carrier": "CAT_aircraft_carriers",
+    "cat_cas": "CAT_air_to_ground_weapons",
+    "cat_cm": "CAT_cruise_missiles",
+    "cat_cnc": "CAT_command_and_control_equipment",
+    "cat_computer_systems": "CAT_tank_computer_systems",
+    "cat_computing_tech": "CAT_information_technology",
+    "cat_construction_tech": "CAT_construction",
+    "cat_corvette": "CAT_corvettes",
+    "cat_cruiser": "CAT_cruisers",
+    "cat_cv_l_s_fighter": "CAT_light_aircraft",
+    "cat_cv_mr_fighter": "CAT_medium_aircraft",
+    "cat_cze": "CAT_czech_engines",
+    "cat_d_sub": "CAT_attack_submarines",
+    "cat_decryption_tech": "CAT_decryption",
+    "cat_destroyer": "CAT_destroyers",
+    "cat_electrical_tech": "CAT_energy",
+    "cat_encryption_tech": "CAT_encryption",
+    "cat_excavation_tech": "CAT_excavation",
+    "cat_fighter": "CAT_medium_aircraft",
+    "cat_fixed_wing": "CAT_aircraft",
+    "cat_frigate": "CAT_frigates",
+    "cat_fuel_oil": "CAT_fuel_refining",
+    "cat_genes": "CAT_genetics",
+    "cat_glcm": "CAT_ground_launched_cruise_missiles",
+    "cat_gnss": "CAT_navigation_satellites",
+    "cat_h_air": "CAT_heavy_aircraft",
+    "cat_h_at": "CAT_heavy_anti_tank",
+    "cat_heli": "CAT_helicopters",
+    "cat_heli_atgm": "CAT_helicopter_atgm",
+    "cat_heli_defense": "CAT_helicopter_defense_systems",
+    "cat_heli_drone": "CAT_helicopter_drones",
+    "cat_heli_engine": "CAT_helicopter_engines",
+    "cat_heli_gunpods": "CAT_helicopter_gun_pods",
+    "cat_heli_modules": "CAT_helicopter_modules",
+    "cat_heli_nose_gun": "CAT_helicopter_nose_guns",
+    "cat_heli_rocketpods": "CAT_helicopter_rocket_pods",
+    "cat_hscm": "CAT_hypersonic_cruise_missiles",
+    "cat_icbm": "CAT_intercontinental_ballistic_missiles",
+    "cat_ifv": "CAT_infantry_fighting_vehicles",
+    "cat_inf": "CAT_infantry",
+    "cat_inf_wep": "CAT_small_arms",
+    "cat_internet_tech": "CAT_internet",
+    "cat_irbm": "CAT_intermediate_range_ballistic_missiles",
+    "cat_l_aa": "CAT_manpads",
+    "cat_l_at": "CAT_light_anti_tank",
+    "cat_l_drone": "CAT_land_drones",
+    "cat_l_fighter": "CAT_light_aircraft",
+    "cat_l_s_fighter": "CAT_light_aircraft",
+    "cat_large_plane": "CAT_heavy_aircraft",
+    "cat_m_sub": "CAT_missile_submarines",
+    "cat_marine": "CAT_special_forces_equipment",
+    "cat_mbt": "CAT_tanks",
+    "cat_medium_plane": "CAT_medium_aircraft",
+    "cat_missile": "CAT_missiles",
+    "cat_mr_fighter": "CAT_medium_aircraft",
+    "cat_naval_air": "CAT_medium_aircraft",
+    "cat_naval_all": "CAT_naval",
+    "cat_naval_engine": "CAT_naval_engines",
+    "cat_naval_plane": "CAT_heavy_aircraft",
+    "cat_naval_radar_drone": "CAT_naval_recon_drones",
+    "cat_naval_radar_jammer": "CAT_naval_radar_jammers",
+    "cat_naval_railgun": "CAT_naval_railguns",
+    "cat_naval_stealth": "CAT_naval_stealth_ships",
+    "cat_nfibers": "CAT_nanofibers",
+    "cat_nuke_sub": "CAT_submarines",
+    "cat_nvg": "CAT_night_vision",
+    "cat_patrolboat": "CAT_patrol_boats",
+    "cat_pds": "CAT_naval_point_defense_systems",
+    "cat_rec_tank": "CAT_light_tanks",
+    "cat_renewable": "CAT_renewable_energy",
+    "cat_s_fighter": "CAT_light_aircraft",
+    "cat_sam": "CAT_surface_to_air_missiles",
+    "cat_satellite": "CAT_satellites",
+    "cat_slcm": "CAT_cruise_missiles",
+    "cat_small_plane": "CAT_light_aircraft",
+    "cat_sp_aa": "CAT_self_propelled_anti_air",
+    "cat_sp_arty": "CAT_self_propelled_artillery",
+    "cat_sp_r_arty": "CAT_self_propelled_artillery",
+    "cat_special_forces": "CAT_special_forces_equipment",
+    "cat_str_bomber": "CAT_heavy_aircraft",
+    "cat_sub": "CAT_submarines",
+    "cat_surface_ship": "CAT_surface_ships",
+    "cat_trans_heli": "CAT_transport_helicopters",
+    "cat_trans_plane": "CAT_heavy_aircraft",
+    "cat_trans_ship": "CAT_landing_craft",
+    "cat_util": "CAT_utility_vehicles",
+    "cat_vls_air_systems": "CAT_vertical_launch_anti_air_missiles",
+    "cat_vls_land_systems": "CAT_vertical_launch_surface_missiles",
+    "cat_vls_systems": "CAT_naval_vertical_launch_systems",
+    "cat_wings": "CAT_wing_designs",
+}
+
 # `category = CAT_x` in add_tech_bonus / add_doctrine_cost_reduction blocks.
 _CATEGORY_ASSIGN_RE = re.compile(r"\bcategory\s*=\s*((?i:cat_)\w+)")
 
@@ -47,11 +171,6 @@ _TECH_CATEGORIES_RE = re.compile(r"\bcategories\s*=\s*\{")
 _TAGS_GLOB = "common/technology_tags/**/*.txt"
 _TECH_DIR = "common/technologies/"
 _TECH_GLOB = _TECH_DIR + "**/*.txt"
-# A doctrine's own categories block sits at depth 2 (doctrine_name = { categories
-# = { ... } }); its mastery block nests a sub-unit categories block one level
-# deeper, which stays a non-reference like any other categories block.
-_DOCTRINE_DIRS = ("common/doctrines/grand_doctrines/", "common/doctrines/subdoctrines/")
-_DOCTRINE_GLOB = "common/doctrines/**/*.txt"
 _VALIDATE_PATTERNS = [
     "common/**/*.txt",
     "events/**/*.txt",
@@ -79,41 +198,12 @@ def _block_bodies(text: str, opener: "re.Pattern") -> Iterable[Tuple[str, int]]:
         yield text[open_idx + 1 : end], open_idx + 1
 
 
-def _doctrine_category_bodies(text: str) -> Iterable[Tuple[str, int]]:
-    """(body, body_offset) of every categories block sitting directly inside a doctrine.
-
-    A doctrine's own block is at brace depth 1 when it opens (the doctrine body
-    itself), so its `{` lands at depth 2; a mastery block's nested categories
-    sit one level deeper and are skipped. Depth is tracked in a single pass so
-    it stays linear in the length of *text*.
-    """
-    matches = list(_TECH_CATEGORIES_RE.finditer(text))
-    if not matches:
-        return
-    depth = 0
-    mi = 0
-    for i, ch in enumerate(text):
-        while mi < len(matches) and matches[mi].start() == i:
-            if depth == 1:
-                open_idx = text.index("{", matches[mi].start())
-                end = _brace_span(text, open_idx)
-                yield text[open_idx + 1 : end], open_idx + 1
-            mi += 1
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-
-
-def _references(
-    text: str, tech_file: bool = False, doctrine_file: bool = False
-) -> List[Tuple[str, int]]:
+def _references(text: str, tech_file: bool = False) -> List[Tuple[str, int]]:
     """Every (category_name, char_offset) this text references.
 
     Deliberately narrow: `category = CAT_x`, the keys of a research_bonus or
-    research block, the tokens of a research_categories block, for tech files
-    the tokens of a categories block, and for doctrine files the tokens of a
-    doctrine's own depth-2 categories block. A bare CAT_ token elsewhere is not
+    research block, the tokens of a research_categories block and, for tech
+    files, the tokens of a categories block. A bare CAT_ token elsewhere is not
     a category reference, which is what keeps
     `has_country_flag = CAT_revolted_against_spain` (a Catalonia flag) and
     `name = CAT_tribute` (a tech-bonus name) out of this.
@@ -129,10 +219,6 @@ def _references(
         listed.append(_TECH_CATEGORIES_RE)
     for opener in listed:
         for body, offset in _block_bodies(text, opener):
-            for tm in _TOKEN_RE.finditer(body):
-                found.append((tm.group(0), offset + tm.start()))
-    if doctrine_file:
-        for body, offset in _doctrine_category_bodies(text):
             for tm in _TOKEN_RE.finditer(body):
                 found.append((tm.group(0), offset + tm.start()))
     return found
@@ -159,6 +245,18 @@ def load_known_categories(paths: Iterable[str]) -> FrozenSet[str]:
     return frozenset(known)
 
 
+def _suggest(name: str, known: FrozenSet[str], by_lower: Dict[str, str]) -> str:
+    """The real tag an unknown reference most likely meant, or ''."""
+    lowered = name.lower()
+    if lowered in by_lower:
+        return by_lower[lowered]
+    legacy = _LEGACY_CATEGORIES.get(lowered)
+    if legacy in known:
+        return legacy
+    close = difflib.get_close_matches(name, known, n=1, cutoff=0.6)
+    return close[0] if close else ""
+
+
 def _check_file(args) -> List[Tuple[str, str, int]]:
     """Worker: return (category, relpath, line) for unknown references."""
     filepath, known, mod_path = args
@@ -168,30 +266,25 @@ def _check_file(args) -> List[Tuple[str, str, int]]:
         return []
     rel = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
     out: List[Tuple[str, str, int]] = []
-    for name, offset in _references(
-        text,
-        tech_file=rel.startswith(_TECH_DIR),
-        doctrine_file=rel.startswith(_DOCTRINE_DIRS),
-    ):
+    for name, offset in _references(text, tech_file=rel.startswith(_TECH_DIR)):
         if name in known:
             continue
         out.append((name, rel, text.count("\n", 0, offset) + 1))
     return out
 
 
-def _carried_categories(args) -> Set[str]:
-    """Worker: every category token a tech or doctrine file carries."""
-    filepath, is_doctrine = args
+def _tech_categories(args) -> Set[str]:
+    """Worker: every category token a tech file assigns."""
+    (filepath,) = args
     try:
         text = FileOpener.open_text_file(filepath, strip_comments_flag=True)
     except (OSError, UnicodeDecodeError):
         return set()
-    bodies = (
-        _doctrine_category_bodies(text)
-        if is_doctrine
-        else _block_bodies(text, _TECH_CATEGORIES_RE)
-    )
-    return {tm.group(0) for body, _ in bodies for tm in _TOKEN_RE.finditer(body)}
+    return {
+        tm.group(0)
+        for body, _ in _block_bodies(text, _TECH_CATEGORIES_RE)
+        for tm in _TOKEN_RE.finditer(body)
+    }
 
 
 class Validator(BaseValidator):
@@ -252,12 +345,13 @@ class Validator(BaseValidator):
             for name, rel, line in batch:
                 first_seen.setdefault(name, (rel, line))
 
+        by_lower = {k.lower(): k for k in known}
         formatted = []
         for name, (rel, line) in sorted(
             first_seen.items(), key=lambda kv: (kv[1][0], kv[1][1])
         ):
-            close = difflib.get_close_matches(name, known, n=1, cutoff=0.6)
-            hint = f", did you mean '{close[0]}'?" if close else ""
+            suggestion = _suggest(name, known, by_lower)
+            hint = f", did you mean '{suggestion}'?" if suggestion else ""
             formatted.append((f"Unknown technology category '{name}'{hint}", rel, line))
 
         self._report(
@@ -287,30 +381,10 @@ class Validator(BaseValidator):
             category="tech-category-name-format",
         )
 
-        tech_files = self._collect_files([_TECH_GLOB], ignore_staged=True)
-        doctrine_files = [
-            f
-            for f in self._collect_files([_DOCTRINE_GLOB], ignore_staged=True)
-            if os.path.relpath(f, self.mod_path)
-            .replace(os.sep, "/")
-            .startswith(_DOCTRINE_DIRS)
-        ]
-        tech_used: Set[str] = set()
-        for cats in self._pool_map(
-            _carried_categories, [(f, False) for f in tech_files]
-        ):
-            tech_used.update(cats)
-        doctrine_used: Set[str] = set()
-        for cats in self._pool_map(
-            _carried_categories, [(f, True) for f in doctrine_files]
-        ):
-            doctrine_used.update(cats)
-
         loc_keys = self._load_localisation_keys()
         unlocalised = []
         for name, rel, line in declared:
-            wanted = (name,) if name in doctrine_used else (name, f"{name}_research")
-            missing = [k for k in wanted if k not in loc_keys]
+            missing = [k for k in (name, f"{name}_research") if k not in loc_keys]
             if missing:
                 unlocalised.append(
                     (
@@ -328,19 +402,22 @@ class Validator(BaseValidator):
             category="tech-category-unlocalised",
         )
 
-        used = tech_used | doctrine_used
+        tech_files = self._collect_files([_TECH_GLOB], ignore_staged=True)
+        used: Set[str] = set()
+        for cats in self._pool_map(_tech_categories, [(f,) for f in tech_files]):
+            used.update(cats)
         self._report(
             [
                 (
-                    f"Technology category '{name}' is not used by any technology or doctrine",
+                    f"Technology category '{name}' is not used by any technology",
                     rel,
                     line,
                 )
                 for name, rel, line in declared
                 if name not in used
             ],
-            "All technology categories are used by a technology or doctrine",
-            "Technology categories no technology or doctrine carries:",
+            "All technology categories are used by a technology",
+            "Technology categories no technology carries:",
             severity=Severity.ERROR,
             category="tech-category-unused",
         )
