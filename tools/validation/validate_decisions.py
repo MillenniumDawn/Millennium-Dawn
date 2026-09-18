@@ -895,6 +895,12 @@ def _is_effectively_ai_only(
     return dec.ai_only or dec_id in ai_only_by_category
 
 
+# AI-only decisions whose name keys stay on purpose.
+_AI_ONLY_LOC_KEEP = frozenset(
+    {"monetary_policy_austerity", "monetary_policy_expand_money_supply"}
+)
+
+
 def _formable_state_counts(factories: List["DecisionFactory"]) -> Dict[str, int]:
     """tag -> full state count of ``<tag>_update_flag``'s available block."""
     counts: Dict[str, int] = {}
@@ -2442,6 +2448,8 @@ class Validator(BaseValidator):
                 # weight — the check runs in reverse and reports keys that
                 # exist. `custom_cost_text` is exempt: it can point at a
                 # scripted-loc key shared with player-facing decisions.
+                if dec_id in _AI_ONLY_LOC_KEEP:
+                    continue
                 for key in (name_key, f"{dec_id}_desc", dec.desc_override):
                     if key and key in loc_keys:
                         ai_results.append(
