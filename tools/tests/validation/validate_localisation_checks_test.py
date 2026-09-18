@@ -217,6 +217,8 @@ def test_unwritten_loc_variable_is_reported(tmp_path):
     reported = [str(i) for i in v._issues]
     assert any("never_written_var" in r for r in reported)
     assert not any("written_var|" in r or " written_var " in r for r in reported)
+    assert all(i.severity == VL.Severity.ERROR for i in v._issues)
+    assert all(i.category == "loc-unwritten-variable" for i in v._issues)
 
 
 # --- NOT-block extraction ---------------------------------------------------
@@ -640,3 +642,104 @@ def test_resources_typo_is_an_error(tmp_path):
     v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     v.validate_targeted_dynamic_variables()
     assert any("resources" in i.message for i in v._issues)
+
+
+def test_unwritten_check_variable_is_an_error(tmp_path):
+    _engine_doc(tmp_path, ["num_days"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { written_var = 3 }\n"
+        "\tcheck_variable = { written_var > 0 }\n"
+        "\tcheck_variable = { never_written_var > 0 }\n"
+        "\tcheck_variable = { num_days > 5 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    issues = v._issues
+    assert len(issues) == 1
+    assert issues[0].category == "script-unwritten-variable"
+    assert issues[0].severity == VL.Severity.WARNING
+    assert "never_written_var" in issues[0].message
+
+
+def test_unwritten_has_variable_is_an_error(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { ruling_party = 1 }\n"
+        "\thas_variable = ruling_party\n"
+        "\thas_variable = missing_party\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    issues = v._issues
+    assert len(issues) == 1
+    assert "missing_party" in issues[0].message
+
+
+def test_loop_binder_is_a_written_variable(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tfor_each_loop = { array = stations value = current_station_id }\n"
+        "\tcheck_variable = { current_station_id > 0 }\n"
+        "\tfind_highest_in_array = { array = gdp_array value = max index = max_index }\n"
+        "\tcheck_variable = { max > 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert v._issues == []
+
+
+def test_check_variable_tooltip_and_script_constant_are_skipped(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { ENG_scottish_agitation = 1 }\n"
+        "\tset_variable = { var_GNSS_mil_system_idx = 1 }\n"
+        "\tcheck_variable = {\n"
+        "\t\ttooltip = ENG_scottish_agitation_rising_tt\n"
+        "\t\tvar = ENG_scottish_agitation\n"
+        "\t\tvalue = 9\n"
+        "\t\tcompare = greater_than\n"
+        "\t}\n"
+        "\tcheck_variable = { var_GNSS_mil_system_idx > @GNSS_sat_idx_base }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert v._issues == []
+
+
+def test_token_compare_is_not_a_variable_read(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tadd_to_array = { md_alerts = 1 }\n"
+        "\tcheck_variable = { md_alerts^alert_idx = token:md_negative_nuclear_fuel }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert v._issues == []
+
+
+def test_check_variable_targeted_typo_is_not_double_counted(tmp_path):
+    _engine_doc(tmp_path, ["resource_imported"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = { check_variable = { resource_improted@tungsten = 0 } }\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert v._issues == []

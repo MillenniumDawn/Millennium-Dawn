@@ -274,8 +274,7 @@ def _scan_typos_text(text: str, basename: str) -> List[str]:
         for m in _TYPO_RE.finditer(prose):
             correction = _TYPO_WATCHLIST[m.group(0).lower()]
             results.append(
-                f"{basename} - line {line_idx + 2} - "
-                f"'{m.group(0)}' -> '{correction}'"
+                f"{basename} - line {line_idx + 2} - '{m.group(0)}' -> '{correction}'"
             )
     return results
 
@@ -478,9 +477,13 @@ def _trigger_tooltip_keys(text: str) -> List[str]:
 
 _LOC_VAR_REF_RE = re.compile(r"\[\?([^\]]+)\]")
 _LOC_VAR_WRITE_RE = re.compile(
-    r"(?:set_variable|set_temp_variable|set_global_variable|add_to_variable|"
-    r"subtract_from_variable|multiply_variable|divide_variable|clamp_variable|"
-    r"modulo_variable|round_variable|min_variable|max_variable)\s*=\s*\{\s*"
+    r"(?:set_variable|set_temp_variable|set_global_variable|set_variable_to_random|"
+    r"set_temp_variable_to_random|randomize_variable|"
+    r"add_to_variable|add_to_temp_variable|subtract_from_variable|"
+    r"subtract_from_temp_variable|multiply_variable|multiply_temp_variable|"
+    r"divide_variable|divide_temp_variable|clamp_variable|clamp_temp_variable|"
+    r"modulo_variable|modulo_temp_variable|round_variable|round_temp_variable|"
+    r"min_variable|max_variable)\s*=\s*\{\s*"
     r"(?:var\s*=\s*)?((?:\d+\.)?[A-Za-z_][\w.:@^]*)"
 )
 _LOC_VAR_ARRAY_RE = re.compile(
@@ -580,6 +583,42 @@ def process_txt_for_var_writes(args: Tuple[str]) -> Set[str]:
         name = _loc_var_name(raw)
         if name:
             written.add(name)
+    if any(
+        key in text
+        for key in (
+            "for_each_loop",
+            "for_each_scope_loop",
+            "for_loop_effect",
+            "while_loop_effect",
+            "find_highest_in_array",
+            "find_lowest_in_array",
+        )
+    ):
+        search_from = 0
+        while True:
+            match = _LOOP_OPEN_RE.search(text, search_from)
+            if not match:
+                break
+            body, end = extract_block_from_text(text, match.end() - 1)
+            if end == -1:
+                break
+            written.update(_LOOP_BIND_RE.findall(body))
+            search_from = end
+    if "var =" in text or "var=" in text:
+        search_from = 0
+        while True:
+            match = _WRITE_OPEN_RE.search(text, search_from)
+            if not match:
+                break
+            body, end = extract_block_from_text(text, match.end() - 1)
+            if end == -1:
+                break
+            for raw in _VAR_BIND_RE.findall(body):
+                written.add(raw.split("^")[0].split(".")[-1])
+                name = _loc_var_name(raw)
+                if name:
+                    written.add(name)
+            search_from = end
     return written
 
 
@@ -616,6 +655,100 @@ def process_txt_for_targeted_vars(args: Tuple[str]) -> List[Tuple[str, str, int]
     if not text:
         return []
     return _scan_targeted_var_text(text, os.path.basename(filename))
+
+
+_WRITE_OPEN_RE = re.compile(
+    r"\b(?:set_variable|set_temp_variable|set_global_variable|"
+    r"set_variable_to_random|set_temp_variable_to_random|randomize_variable|"
+    r"add_to_variable|add_to_temp_variable|subtract_from_variable|"
+    r"subtract_from_temp_variable|multiply_variable|multiply_temp_variable|"
+    r"divide_variable|divide_temp_variable|clamp_variable|clamp_temp_variable|"
+    r"modulo_variable|modulo_temp_variable|round_variable|round_temp_variable|"
+    r"min_variable|max_variable)\s*=\s*\{"
+)
+_VAR_BIND_RE = re.compile(r"\bvar\s*=\s*([A-Za-z_][\w.:@^]*)")
+_LOOP_OPEN_RE = re.compile(
+    r"\b(?:for_each_loop|for_each_scope_loop|for_loop_effect|while_loop_effect|"
+    r"find_highest_in_array|find_lowest_in_array)\s*=\s*\{"
+)
+_LOOP_BIND_RE = re.compile(r"\b(?:value|index)\s*=\s*([A-Za-z_][\w]*)")
+_CHECK_VARIABLE_OPEN_RE = re.compile(r"\bcheck_variable\s*=\s*\{")
+_HAS_VARIABLE_RE = re.compile(r"\bhas_variable\s*=\s*([^\s{}]+)")
+_CHECK_VAR_TOKEN_RE = re.compile(r"[A-Za-z_][\w.:@^]*")
+_CHECK_VAR_TOOLTIP_RE = re.compile(r"\btooltip\s*=\s*\S+")
+_CHECK_VAR_CONSTANT_RE = re.compile(r"(?<![A-Za-z0-9_])@[A-Za-z_][\w]*")
+_CHECK_VAR_KEYWORDS = frozenset(
+    {
+        "var",
+        "variable",
+        "value",
+        "compare",
+        "tooltip",
+        "greater",
+        "greater_than",
+        "less",
+        "less_than",
+        "equals",
+        "not_equals",
+        "greater_than_or_equals",
+        "less_than_or_equals",
+        "AND",
+        "OR",
+        "NOT",
+        "limit",
+        "if",
+        "else",
+    }
+)
+
+
+def _scan_script_var_reads_text(text: str, basename: str) -> List[Tuple[str, str, int]]:
+    """Unwritten check_variable / has_variable names. @ targets are a separate check."""
+    if "check_variable" not in text and "has_variable" not in text:
+        return []
+    out: List[Tuple[str, str, int]] = []
+    for number, line in enumerate(text.split("\n"), 1):
+        if "has_variable" not in line:
+            continue
+        for raw in _HAS_VARIABLE_RE.findall(line):
+            if "@" in raw or raw.startswith("token:"):
+                continue
+            name = _loc_var_name(raw)
+            if name:
+                out.append((name, basename, number))
+    search_from = 0
+    while True:
+        match = _CHECK_VARIABLE_OPEN_RE.search(text, search_from)
+        if not match:
+            break
+        body, end = extract_block_from_text(text, match.end() - 1)
+        if end == -1:
+            break
+        search_from = end
+        if "[" in body:
+            continue
+        lineno = text.count("\n", 0, match.start()) + 1
+        body = _CHECK_VAR_TOOLTIP_RE.sub("", body)
+        body = _CHECK_VAR_CONSTANT_RE.sub("", body)
+        for raw in _CHECK_VAR_TOKEN_RE.findall(body):
+            if "@" in raw or raw.startswith("token:") or raw in _CHECK_VAR_KEYWORDS:
+                continue
+            name = _loc_var_name(raw)
+            if name:
+                out.append((name, basename, lineno))
+        search_from = end
+    return out
+
+
+def process_txt_for_script_var_reads(args: Tuple[str]) -> List[Tuple[str, str, int]]:
+    """Pool worker: check_variable / has_variable names one script file reads."""
+    filename = args[0]
+    text = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if not text:
+        return []
+    return _scan_script_var_reads_text(text, os.path.basename(filename))
 
 
 def process_yml_for_var_refs(args: Tuple[str]) -> List[Tuple[str, str, int]]:
@@ -1184,6 +1317,11 @@ class Validator(BaseValidator):
             category="missing-opinion-modifier-localisation",
         )
 
+    def _script_txt_files(self) -> List[str]:
+        return self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        )
+
     def _script_written_variables(self) -> Set[str]:
         memo = getattr(self, "_script_written_vars", None)
         if memo is not None:
@@ -1191,12 +1329,7 @@ class Validator(BaseValidator):
         written: Set[str] = set()
         for names in self._pool_map(
             process_txt_for_var_writes,
-            [
-                (f,)
-                for f in self._collect_files(
-                    ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-                )
-            ],
+            [(f,) for f in self._script_txt_files()],
             chunksize=30,
         ):
             written |= names
@@ -1218,8 +1351,31 @@ class Validator(BaseValidator):
             results,
             "✓ Every [?variable] reference resolves to a written variable",
             "Localisation reads a variable no script writes (renders as 0):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="loc-unwritten-variable",
+        )
+
+    def validate_unwritten_script_variables(self):
+        """check_variable / has_variable must name a written or engine variable."""
+        self._log_section("Checking check_variable and has_variable reads...")
+
+        known = self._script_written_variables() | _engine_loc_vars(self.mod_path)
+        results = []
+        for hits in self._pool_map(
+            process_txt_for_script_var_reads,
+            [(f,) for f in self._script_txt_files()],
+            chunksize=30,
+        ):
+            for name, basename, number in hits:
+                if name not in known:
+                    results.append((f"{name} - {basename}", basename, number))
+
+        self._report(
+            results,
+            "✓ Every check_variable / has_variable read is documented or written",
+            "Script reads a variable no script writes (reads as 0):",
+            severity=Severity.WARNING,
+            category="script-unwritten-variable",
         )
 
     def validate_targeted_dynamic_variables(self):
@@ -1230,12 +1386,7 @@ class Validator(BaseValidator):
         results = []
         for hits in self._pool_map(
             process_txt_for_targeted_vars,
-            [
-                (f,)
-                for f in self._collect_files(
-                    ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-                )
-            ],
+            [(f,) for f in self._script_txt_files()],
             chunksize=30,
         ):
             for prefix, basename, number in hits:
@@ -1280,6 +1431,7 @@ class Validator(BaseValidator):
             )
             self.validate_opinion_modifiers(loc_keys, scripted_loc_keys)
             self.validate_variable_references()
+            self.validate_unwritten_script_variables()
             self.validate_targeted_dynamic_variables()
 
 
