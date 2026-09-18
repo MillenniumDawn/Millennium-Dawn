@@ -12,7 +12,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Set, Tuple, Union
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -81,6 +81,16 @@ _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
 _MANGLED_SINGLE_QUOTE_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*'.*'\s*$")
 
 
+def _mangled_loc_issue(basename: str, line: int, message: str) -> Issue:
+    return Issue(
+        severity=Severity.ERROR,
+        category="mangled-loc-line",
+        message=message,
+        file=basename,
+        line=line,
+    )
+
+
 def _scan_syntax_text(
     text: str, basename: str, valid_colors: List[str]
 ) -> List[Tuple[Union[Issue, str], Optional[str]]]:
@@ -97,12 +107,10 @@ def _scan_syntax_text(
         if _MANGLED_SINGLE_QUOTE_VALUE_RE.match(line):
             out.append(
                 (
-                    Issue(
-                        severity=Severity.ERROR,
-                        category="mangled-loc-line",
-                        message="Loc value uses single quotes instead of double quotes (formatter-mangled, breaks in-game)",
-                        file=basename,
-                        line=line_idx + 2,
+                    _mangled_loc_issue(
+                        basename,
+                        line_idx + 2,
+                        "Loc value uses single quotes instead of double quotes (formatter-mangled, breaks in-game)",
                     ),
                     None,
                 )
@@ -110,12 +118,10 @@ def _scan_syntax_text(
         elif _MANGLED_KEY_NO_VALUE_RE.match(line):
             out.append(
                 (
-                    Issue(
-                        severity=Severity.ERROR,
-                        category="mangled-loc-line",
-                        message="Loc key has no value on the same line (formatter-mangled, breaks in-game)",
-                        file=basename,
-                        line=line_idx + 2,
+                    _mangled_loc_issue(
+                        basename,
+                        line_idx + 2,
+                        "Loc key has no value on the same line (formatter-mangled, breaks in-game)",
                     ),
                     None,
                 )
@@ -248,15 +254,20 @@ _TYPO_VALUE_RE = re.compile(r'^\s*[\w.\-]+:\d*\s*"(.*)"')
 _TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+")
 
 
-def _scan_typos_text(text: str, basename: str) -> List[str]:
-    results = []
+def _iter_loc_values(text: str) -> Iterator[Tuple[int, str]]:
+    """Yield (line_idx, value) for each non-blank body line with a quoted value."""
     for line_idx, line in enumerate(text.split("\n")[1:]):
         if not line.strip():
             continue
         value_match = _TYPO_VALUE_RE.match(line)
         if not value_match:
             continue
-        value = value_match.group(1)
+        yield line_idx, value_match.group(1)
+
+
+def _scan_typos_text(text: str, basename: str) -> List[str]:
+    results = []
+    for line_idx, value in _iter_loc_values(text):
         if any(exempt in value for exempt in _TYPO_EXEMPTIONS):
             continue
         prose = _TYPO_RUNTIME_REFERENCE_RE.sub("", value)
@@ -277,13 +288,7 @@ def process_yml_for_typos(args: Tuple[str]) -> List[str]:
 
 def _scan_prose_text(text: str, basename: str) -> List[Issue]:
     results: List[Issue] = []
-    for line_idx, line in enumerate(text.split("\n")[1:]):
-        if not line.strip():
-            continue
-        value_match = _TYPO_VALUE_RE.match(line)
-        if not value_match:
-            continue
-        value = value_match.group(1)
+    for line_idx, value in _iter_loc_values(text):
         for _ in range(value.count("\u2014")):
             results.append(
                 Issue(
