@@ -8,6 +8,7 @@
 @internal_faction_lift_opinion = 5
 @internal_faction_appease_opinion = 10
 @internal_faction_appease_rival_opinion = -3
+@internal_faction_support_influence = 15
 @internal_faction_ai_coup_plot_threshold = 50
 @internal_faction_ai_coup_pp = 150
 @internal_faction_ai_privilege_pp = 200
@@ -137,49 +138,18 @@ internal_faction_appease = {
 }
 
 # Parameters:
-# - internal_faction_id: active faction to replace; fills internal_faction_swap_candidates with every available inactive faction
-internal_faction_open_swap_window = {
-	set_variable = { internal_faction_swap_from = internal_faction_id }
-	clear_array = internal_faction_swap_candidates
-	for_loop_effect = {
-		start = 1
-		end = 24
-		value = internal_faction_id
-		if = {
-			limit = {
-				NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
-				internal_faction_is_available = yes
-			}
-			add_to_array = { internal_faction_swap_candidates = internal_faction_id }
-		}
-	}
-	set_country_flag = internal_faction_swap_open
-	update_internal_faction_dirty_variable = yes
-}
-
-internal_faction_close_swap_window = {
-	clr_country_flag = internal_faction_swap_open
-	clear_array = internal_faction_swap_candidates
-	update_internal_faction_dirty_variable = yes
-}
-
-# Parameters:
-# - internal_faction_new_id: replacement faction id; the outgoing faction is internal_faction_swap_from
-internal_faction_swap_faction = {
-	set_temp_variable = { internal_faction_id = internal_faction_swap_from }
+# - internal_faction_id: inactive faction id 1-23; the activation pass runs right away so a faction pushed past the weakest active one takes its slot
+internal_faction_support_faction = {
 	if = {
-		limit = {
-			internal_faction_can_swap_out = yes
-			NOT = { is_in_array = { array = internal_faction_active value = internal_faction_new_id } }
-		}
-		internal_faction_remove_faction = yes
-		set_temp_variable = { internal_faction_id = internal_faction_new_id }
-		internal_faction_add_faction = yes
-		set_variable = { internal_faction_swap_cooldown^internal_faction_id = global.internal_faction_swap_cooldown_months }
-		log = "[GetDateText]: [Root.GetName]: swapped faction [?internal_faction_swap_from] for [?internal_faction_new_id]"
-		set_temp_variable = { internal_faction_pp = global.internal_faction_cost_swap }
+		limit = { internal_faction_can_support = yes }
+		set_temp_variable = { temp_influence = @internal_faction_support_influence }
+		internal_faction_change_influence = yes
+		log = "[GetDateText]: [Root.GetName]: supported faction [?internal_faction_id]"
+		set_temp_variable = { internal_faction_pp = global.internal_faction_cost_support }
 		multiply_temp_variable = { internal_faction_pp = -1 }
 		add_political_power = internal_faction_pp
+		internal_faction_build_pool = yes
+		internal_faction_refresh_active = yes
 	}
 }
 

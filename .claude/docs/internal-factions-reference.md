@@ -9,6 +9,8 @@ This doc replaces, over steps 1-11, the old system built from these files:
 `common/dynamic_modifiers/05_internal_factions_modifiers.txt`,
 `common/decisions/00_internal_factions.txt`, `events/Internal Faction Events.txt`,
 and loc `localisation/english/MD_internal_factions_l_english.yml`.
+Every v3 identifier (arrays, effects, triggers, GUI names, loc keys, registry
+vars, file constants, temp vars) carries the `internal_faction_` prefix.
 
 ## Decisions closed here
 
@@ -447,20 +449,26 @@ removed at step 11.
 
 ## Per-country state and tiers
 
-| array / var                                                    | range         | meaning                                      |
-| -------------------------------------------------------------- | ------------- | -------------------------------------------- |
-| `internal_faction_active`                                      | exactly 4 ids | presence and display order                   |
-| `internal_faction_opinion^id`                                  | 0-100         | replaces `<f>_opinion`, 50 neutral           |
-| `internal_faction_influence^id`                                | 0-100         | clout                                        |
-| `internal_faction_target^id`, `internal_faction_inf_target^id` | 0-100         | last computed targets                        |
-| `internal_faction_policies`                                    | policy ids    | active privileges and crackdowns             |
-| `internal_faction_policy_cooldown^id`                          | months, 0-12  | since the last policy change on that faction |
-| `internal_faction_swap_cooldown^id`                            | months, 0-24  | since the faction was brought in by a swap   |
-| `internal_faction_coup_plot`                                   | 0-100         | coup accumulator (step 7)                    |
+| array / var                                                    | range        | meaning                                                            |
+| -------------------------------------------------------------- | ------------ | ------------------------------------------------------------------ |
+| `internal_faction_active`                                      | 3 ids        | the active factions, always `global.internal_faction_active_count` |
+| `internal_faction_pool`                                        | ids          | available factions, rebuilt by `internal_faction_build_pool`       |
+| `internal_faction_inactive`                                    | ids          | player-only display array: pool minus active                       |
+| `internal_faction_opinion^id`                                  | 0-100        | replaces `<f>_opinion`, 50 neutral                                 |
+| `internal_faction_influence^id`                                | 0-100        | clout                                                              |
+| `internal_faction_target^id`, `internal_faction_inf_target^id` | 0-100        | last computed targets                                              |
+| `internal_faction_policies`                                    | policy ids   | active privileges and crackdowns                                   |
+| `internal_faction_policy_cooldown^id`                          | months, 0-12 | since the last policy change on that faction                       |
+| `internal_faction_coup_plot`                                   | 0-100        | coup accumulator (step 7)                                          |
 
-`internal_faction_swap_from` (faction id being replaced) and `internal_faction_swap_candidates` (array of
-available inactive faction ids) are GUI-only state, rebuilt each time the swap
-window opens.
+Every faction in the pool tracks influence; only active factions track opinion
+(initialised to 50 for every id and kept when a faction drops out). The active
+set is refreshed by `internal_faction_refresh_active` each monthly tick and after
+a Support action: factions no longer in the pool leave, the highest-influence
+available factions fill up to `global.internal_faction_active_count` (3), then
+one challenger with influence at or above `global.internal_faction_active_threshold`
+(25) that leads the weakest active faction by `@internal_faction_displace_margin`
+(5) takes its slot.
 
 Test presence with `is_in_array = { internal_faction_active = 7 }`.
 
@@ -468,8 +476,8 @@ Opinion tiers: hostile below 20, negative 20-39, indifferent 40-59, positive
 60-79, enthusiastic 80 and up.
 
 Influence tiers: marginal below 25, influential 25-59, powerful 60 and up,
-scaling the influence-driven effects at 0.5 / 1.0 / 1.5. Marginal factions
-can be swapped out.
+scaling the influence-driven effects at 0.5 / 1.0 / 1.5. The threshold for
+displacing an active faction is the marginal/influential boundary.
 
 The old tier triggers overlap at 60 and 40 (`00_internal_factions_trigger.txt`);
 the new `internal_faction_tier_*` triggers use the clean bands above.
@@ -530,7 +538,7 @@ Files: `common/scripted_effects/01_internal_factions_v3_effects.txt`,
 
 `internal_faction_init_arrays` creates the per-country arrays sized 24 (index 0 unused,
 ids 1-23 match the faction id order used throughout this doc): `internal_faction_active`
-(the up-to-4 held ids), `internal_faction_opinion` (0-100 per id), `internal_faction_influence`
+(the 3 active ids), `internal_faction_opinion` (0-100 per id, 50 at creation), `internal_faction_influence`
 (0-100 per id), `internal_faction_target` (0-100 per id, last computed opinion target),
 `internal_faction_inf_target` (0-100 per id, last computed influence target).
 
@@ -538,18 +546,25 @@ Effects:
 
 - `internal_faction_change_opinion` (internal_faction_id, temp_opinion): adds temp_opinion to
   `internal_faction_opinion^internal_faction_id` and clamps, only when internal_faction_id is active.
-- `internal_faction_change_influence` (internal_faction_id, temp_influence): same for `internal_faction_influence^internal_faction_id`.
-- `internal_faction_add_faction` (internal_faction_id, optional internal_faction_replace_id): activates internal_faction_id, replacing
-  internal_faction_replace_id or the lowest-influence active id when already at 4.
+- `internal_faction_change_influence` (internal_faction_id, temp_influence): same for `internal_faction_influence^internal_faction_id`,
+  for any faction, active or not; the modifier refresh only runs for an active one.
+- `internal_faction_add_faction` (internal_faction_id): activates internal_faction_id, dropping
+  the lowest-influence active id when the slots are full. Opinion and influence are not reset.
 - `internal_faction_remove_faction` (internal_faction_id): drops internal_faction_id from `internal_faction_active`.
+- `internal_faction_build_pool`: rebuilds `internal_faction_pool` from `internal_faction_is_available`.
+- `internal_faction_find_weakest` / `internal_faction_find_challenger`: set the temp vars
+  `internal_faction_low` (weakest active) and `internal_faction_high` (strongest available inactive, 0 when none).
+- `internal_faction_refresh_active`: the activation pass described above; ends with
+  `internal_faction_rebuild_inactive` for the player.
 - `internal_faction_seed_factions` (no params): run directly after `setup_init_factions`.
-  Adds every held idea's faction first (at its old `<f>_opinion`), then fills
-  remaining slots up to 4, from the random pool under
-  `rule_randomize_internal_factions` or otherwise by the fixed rule order in
-  `internal_faction_seed_rule_fill`.
-- `internal_faction_copy_factions` (nation_to_copy_from): copies `internal_faction_active`, `internal_faction_opinion`,
-  `internal_faction_influence` from that country; mirrors opinion around 50 for factions
-  aligned with the new ruling party's group.
+  Sets every faction's influence to `global.internal_faction_base_influence` (plus a -10..10
+  jitter under `rule_randomize_internal_factions`), then every held idea's faction keeps its
+  old `<f>_opinion`, gains `@internal_faction_held_idea_influence` (20) and activates first,
+  then `internal_faction_refresh_active` fills the remaining slots.
+- `internal_faction_copy_factions` (nation_to_copy_from): copies all 23 `internal_faction_opinion` and
+  `internal_faction_influence` entries and `internal_faction_active` from that country; mirrors opinion
+  around 50 for factions aligned with the new ruling party's group, then runs the activation
+  pass so factions unavailable to the new tag drop out.
 - `update_internal_faction_dirty_variable`: bumps `global.internal_faction_ui_dirty` for the player only.
 
 Triggers: `internal_faction_has_<token>` per faction (23, plus `internal_faction_has_religious_faction`
@@ -558,12 +573,9 @@ and `internal_faction_influence_marginal/influential/powerful` on `internal_fact
 `internal_faction_influence^internal_faction_id`; `internal_faction_is_available` (on `internal_faction_id`) reproduces the old idea
 `allowed`/`available` gating, minus `internal_faction_swap_allowed`.
 
-Seeding order in `internal_faction_seed_rule_fill`: religious factions first, then oil,
-dockyard share, agriculture share (and landowners under no elections), ruling
-party alignment, military/police law, corruption, then the remaining ids in a
-fixed fallback order. The building-share thresholds (oil 5% of GDP, dockyard
-10% of naval+military+industrial capacity, agriculture 25% of
-industrial+office+agriculture capacity) are provisional and get tuned in step 9 (#4272).
+Base influence per faction is the seed order: a country without held ideas
+starts with the three highest `global.internal_faction_base_influence` entries
+among its available factions (ties keep id order).
 
 Bridge: each old `change_<f>_opinion` effect now also calls
 `internal_faction_change_opinion` with the raw `temp_opinion`, before `autocrats_opinion_change`
@@ -578,11 +590,14 @@ right after the old `monthly_tick_internal_factions_opinion`. It skips
 countries with an empty `internal_faction_active`. It hoists the ruling policy group, the
 six law terms (`internal_faction_mil_term`, `internal_faction_pol_term`, `internal_faction_edu_term`, `internal_faction_soc_term`,
 `internal_faction_corp_term`, `internal_faction_pop_term`), the oil share, and the war flag once per
-country, then for each active faction runs `internal_faction_compute_opinion_target` and
-`internal_faction_compute_influence_target`, drifts `internal_faction_opinion` toward `internal_faction_target` at
-`global.internal_faction_drift_rate` and `internal_faction_influence` toward `internal_faction_inf_target` at
-`@internal_faction_influence_drift_rate`, and clamps both to 0-100. It bumps the player
-dirty var once at the end, not per faction.
+country, rebuilds `internal_faction_pool`, then for every faction in the pool runs
+`internal_faction_compute_influence_target` and drifts `internal_faction_influence` toward
+`internal_faction_inf_target` at `@internal_faction_influence_drift_rate`; for the active ones it
+also runs `internal_faction_compute_opinion_target`, drifts `internal_faction_opinion` toward
+`internal_faction_target` at `global.internal_faction_drift_rate` and ticks the policy
+cooldown. Both values clamp to 0-100. It then runs `internal_faction_refresh_active`
+before the party push and modifier feed, and bumps the player dirty var once at
+the end, not per faction.
 
 Temp variable names used across `internal_faction_monthly_tick`, `internal_faction_compute_opinion_target`,
 `internal_faction_compute_influence_target`, and `internal_faction_compute_sector_score`: `internal_faction_v` (faction
@@ -592,9 +607,11 @@ id), `internal_faction_aff` (affinity index), `internal_faction_group`, `interna
 `internal_faction_law`, `internal_faction_party`. Step 5 (#4267) adds `internal_faction_priv_count`, `internal_faction_crackdown`
 (temp arrays sized 24, built each tick from `internal_faction_policies`), `internal_faction_pf`, `internal_faction_j`,
 `internal_faction_r`, `internal_faction_y`, `internal_faction_cp`, `internal_faction_cost`, `internal_faction_pp`, `internal_faction_clear_id`, `internal_faction_appease_id`,
-`internal_faction_new_id`, `internal_faction_ai_done`, `internal_faction_k`. Step 6 (#4268) adds `internal_faction_scale`, `internal_faction_push`, `internal_faction_best`,
+`internal_faction_ai_done`, `internal_faction_k`. Step 6 (#4268) adds `internal_faction_scale`, `internal_faction_push`, `internal_faction_best`,
 `internal_faction_best_pop`, `internal_faction_pi`, `internal_faction_a`, `internal_faction_react`, `internal_faction_protest`, `internal_faction_funding`, `law_kind`,
-`law_delta`. Later steps must not reuse these names for unrelated values within the
+`law_delta`. The activation pass adds `internal_faction_low`, `internal_faction_high`,
+`internal_faction_gone` (temp array), `internal_faction_keep_id` and `internal_faction_seed_opinion`.
+Later steps must not reuse these names for unrelated values within the
 same call chain.
 
 The modifier feed (step 4) adds its own reserved temp names: `internal_faction_s`
@@ -614,10 +631,13 @@ carries `dirty = global.internal_faction_ui_dirty` and is gated by the country f
 `internal_faction_policies` array holding policy id `(faction id - 1) * 4 + k` (k 1-3
 privilege, 4 crackdown). The three privilege buttons dispatch to
 `internal_faction_toggle_privilege` and the crackdown button to `internal_faction_toggle_crackdown`, each
-enabled through the matching `internal_faction_can_grant/revoke/enact/lift_*` trigger. Two
-more buttons per entry call `internal_faction_appease` and `internal_faction_open_swap_window`, the latter
-opening the second `internal_faction_swap_window` (its own scripted GUI, `internal_faction_swap_gui`,
-listing `internal_faction_swap_candidates`) where picking a row calls `internal_faction_swap_faction`.
+enabled through the matching `internal_faction_can_grant/revoke/enact/lift_*` trigger. One
+more button per active entry calls `internal_faction_appease`. Active rows carry the
+vanilla `GFX_ongoing_generic_glow_yellow` glow (`internal_faction_entry_glow`) behind the
+faction icon. Below the three active rows a scrollable `internal_faction_inactive_scroll`
+lists `internal_faction_inactive` through `internal_faction_inactive_entry` (icon, name,
+stance, influence bar and tier) with a Support button that calls
+`internal_faction_support_faction`, enabled by `internal_faction_can_support`.
 Per-entry display goes through scripted-loc
 dispatchers on `v`: `internal_faction_tier_text_v`, `internal_faction_inf_tier_text_v`, `internal_faction_stance_v`,
 `internal_faction_affinity_v`, and `internal_faction_policy_k_icon` per slot. The faction name uses
@@ -684,7 +704,7 @@ faction before `clear_array = internal_faction_active`).
 Known gap, not fixed here: a faction idea added mid-game through the old
 `add_ideas` path attaches its dynamic modifier through the idea's own
 `on_add`, without joining `internal_faction_active`. Its vars stay at 0 (or stale, if it
-replaced a faction that was swapped out) until step 11 replaces those
+replaced a faction that dropped out) until step 11 replaces those
 callers.
 
 ## Player actions and AI (step 5)
@@ -697,11 +717,11 @@ before doing anything, so the same gate covers both the GUI button and
 Costs and cooldown lengths are registry vars set once in `setup_global_arrays`
 (`global.internal_faction_cost_grant_pp`, `global.internal_faction_cost_grant_gdp_share`,
 `global.internal_faction_cost_revoke`, `global.internal_faction_cost_crackdown`, `global.internal_faction_cost_lift`,
-`global.internal_faction_cost_appease`, `global.internal_faction_cost_swap`,
-`global.internal_faction_policy_cooldown_months` = 12, `global.internal_faction_swap_cooldown_months` =
-24), so triggers, effects and tooltips all read the same source.
-`999_game_rules_on_actions.txt` multiplies `global.internal_faction_cost_swap` by 0.25 when
-`rule_internal_faction_cost_reduction = yes`.
+`global.internal_faction_cost_appease`, `global.internal_faction_cost_support` = 75,
+`global.internal_faction_policy_cooldown_months` = 12, `global.internal_faction_active_count` = 3,
+`global.internal_faction_active_threshold` = 25), so triggers, effects and tooltips all read
+the same source. `999_game_rules_on_actions.txt` multiplies `global.internal_faction_cost_support`
+by 0.25 when `rule_internal_faction_cost_reduction = yes`.
 
 `internal_faction_grant_privilege` and `internal_faction_revoke_privilege` take a policy id and add or
 remove it from `internal_faction_policies`, set `internal_faction_policy_cooldown^id`, and shift opinion
@@ -717,16 +737,15 @@ active faction in the same category down. `internal_faction_toggle_privilege` an
 `internal_faction_toggle_crackdown` are the GUI dispatch wrappers the buttons call, picking
 grant/enact or revoke/lift from current state.
 
-Swap is `internal_faction_remove_faction` on the outgoing id followed by `internal_faction_add_faction` on
-the incoming one; the incoming faction lands in the last row, starts at
-opinion 50 and base influence, and gets `internal_faction_swap_cooldown^id` set so it cannot
-be swapped out again immediately. `internal_faction_add_faction` and `internal_faction_remove_faction`
-both call the new `internal_faction_clear_faction_state` helper on the faction leaving
-`internal_faction_active`, dropping its policies and both cooldowns so a later reseed of
-the same id starts clean. `internal_faction_open_swap_window` and `internal_faction_close_swap_window`
-manage the second window: opening it records `internal_faction_swap_from` and rebuilds
-`internal_faction_swap_candidates` from every currently inactive, available faction;
-`internal_faction_swap_faction` is only reachable through that window.
+`internal_faction_support_faction` (inactive faction) adds `@internal_faction_support_influence`
+(15) influence through `internal_faction_change_influence`, charges
+`global.internal_faction_cost_support` political power and runs `internal_faction_build_pool`
+plus `internal_faction_refresh_active` at once, so a faction pushed past the weakest active
+one takes its slot without waiting for the tick. There is no manual swap: the
+activation pass is the only way in or out of `internal_faction_active`.
+`internal_faction_remove_faction` calls `internal_faction_clear_faction_state` on the faction
+leaving `internal_faction_active`, dropping its policies and cooldown so a later return
+starts clean; its opinion and influence are kept.
 
 `internal_faction_ai_monthly` runs at the end of `internal_faction_monthly_tick` for AI countries only. It
 prioritizes a coup response when `internal_faction_coup_plot` is above 50 and the Military
@@ -800,13 +819,13 @@ left column) below a separator added to `MD_drift_passive_row`.
 One line per sub-issue in epic #4260, listing what each step builds.
 
 - #4262 Data layer: id-indexed arrays, generic effects/triggers, a bridge
-  from the old effects, and seeding to 4.
+  from the old effects, and seeding.
 - #4263 Monthly tick: opinion target and drift, influence target and drift,
   tiers.
 - #4264 Prototype GUI.
 - #4265 Consequences: influence-scaled modifiers, government bonus, policy
   effects.
-- #4267 Player actions: policies, swap, appease; AI routine.
+- #4267 Player actions: policies, support, appease; AI routine.
 - #4268 Ecosystem: party push, elections, laws, protests.
 - #4269 Military coup chain.
 - #4270 Events: presence gating and demands.

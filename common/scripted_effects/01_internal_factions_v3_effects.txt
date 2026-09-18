@@ -1,5 +1,7 @@
 # Internal factions v3 data layer, see .claude/docs/internal-factions-reference.md
 @internal_faction_influence_drift_rate = 0.10
+@internal_faction_displace_margin = 5
+@internal_faction_held_idea_influence = 20
 @internal_faction_k_building_share = 100
 @internal_faction_k_heavy_share = 300
 @internal_faction_k_debt = 10
@@ -10,12 +12,11 @@
 internal_faction_init_arrays = {
 	if = {
 		limit = { check_variable = { internal_faction_inf_target^num < 24 } }
-		resize_array = { array = internal_faction_opinion value = 0 size = 24 }
+		resize_array = { array = internal_faction_opinion value = 50 size = 24 }
 		resize_array = { array = internal_faction_influence value = 0 size = 24 }
 		resize_array = { array = internal_faction_target value = 0 size = 24 }
 		resize_array = { array = internal_faction_inf_target value = 0 size = 24 }
 		resize_array = { array = internal_faction_policy_cooldown value = 0 size = 24 }
-		resize_array = { array = internal_faction_swap_cooldown value = 0 size = 24 }
 	}
 }
 
@@ -43,7 +44,7 @@ internal_faction_toggle_window = {
 }
 
 # Parameters:
-# - internal_faction_clear_id: faction leaving internal_faction_active; drops its policies and cooldowns
+# - internal_faction_clear_id: faction leaving internal_faction_active; drops its policies and cooldown
 internal_faction_clear_faction_state = {
 	set_temp_variable = { internal_faction_cp = internal_faction_clear_id }
 	multiply_temp_variable = { internal_faction_cp = 4 }
@@ -55,7 +56,6 @@ internal_faction_clear_faction_state = {
 	subtract_from_temp_variable = { internal_faction_cp = 1 }
 	remove_from_array = { array = internal_faction_policies value = internal_faction_cp }
 	set_variable = { internal_faction_policy_cooldown^internal_faction_clear_id = 0 }
-	set_variable = { internal_faction_swap_cooldown^internal_faction_clear_id = 0 }
 }
 
 # Parameters:
@@ -72,61 +72,68 @@ internal_faction_change_opinion = {
 }
 
 # Parameters:
-# - internal_faction_id: faction id 1-23
+# - internal_faction_id: faction id 1-23, active or not
 # - temp_influence: influence delta
 internal_faction_change_influence = {
+	add_to_variable = { internal_faction_influence^internal_faction_id = temp_influence }
+	clamp_variable = { var = internal_faction_influence^internal_faction_id min = 0 max = 100 }
 	if = {
 		limit = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
-		add_to_variable = { internal_faction_influence^internal_faction_id = temp_influence }
-		clamp_variable = { var = internal_faction_influence^internal_faction_id min = 0 max = 100 }
 		internal_faction_apply_faction_modifiers = yes
-		update_internal_faction_dirty_variable = yes
+	}
+	update_internal_faction_dirty_variable = yes
+}
+
+# Sets internal_faction_low to the lowest-influence active faction
+internal_faction_find_weakest = {
+	set_temp_variable = { internal_faction_low = internal_faction_active^0 }
+	for_each_loop = {
+		array = internal_faction_active
+		value = internal_faction_v
+		if = {
+			limit = { check_variable = { internal_faction_influence^internal_faction_v < internal_faction_influence^internal_faction_low } }
+			set_temp_variable = { internal_faction_low = internal_faction_v }
+		}
 	}
 }
 
-# Activates faction internal_faction_id; when all 4 slots are full it takes the slot of internal_faction_replace_id, or of the lowest-influence active faction when internal_faction_replace_id is 0
+# Sets internal_faction_high to the highest-influence available inactive faction, 0 when none
+internal_faction_find_challenger = {
+	set_temp_variable = { internal_faction_high = 0 }
+	for_each_loop = {
+		array = internal_faction_pool
+		value = internal_faction_v
+		if = {
+			limit = {
+				NOT = { is_in_array = { array = internal_faction_active value = internal_faction_v } }
+				OR = {
+					check_variable = { internal_faction_high = 0 }
+					check_variable = { internal_faction_influence^internal_faction_v > internal_faction_influence^internal_faction_high }
+				}
+			}
+			set_temp_variable = { internal_faction_high = internal_faction_v }
+		}
+	}
+}
+
+# Activates faction internal_faction_id; when the slots are full it takes the slot of the lowest-influence active faction
 internal_faction_add_faction = {
 	if = {
 		limit = { NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } } }
 		if = {
-			limit = { check_variable = { internal_faction_active^num < 4 } }
-			add_to_array = { internal_faction_active = internal_faction_id }
+			limit = { check_variable = { var = internal_faction_active^num value = global.internal_faction_active_count compare = greater_than_or_equals } }
+			internal_faction_find_weakest = yes
+			set_temp_variable = { internal_faction_keep_id = internal_faction_id }
+			set_temp_variable = { internal_faction_id = internal_faction_low }
+			internal_faction_remove_faction = yes
+			set_temp_variable = { internal_faction_id = internal_faction_keep_id }
 		}
-		else = {
-			if = {
-				limit = { NOT = { is_in_array = { array = internal_faction_active value = internal_faction_replace_id } } }
-				set_temp_variable = { internal_faction_replace_id = internal_faction_active^0 }
-				for_each_loop = {
-					array = internal_faction_active
-					value = internal_faction_v
-					if = {
-						limit = { check_variable = { internal_faction_influence^internal_faction_v < internal_faction_influence^internal_faction_replace_id } }
-						set_temp_variable = { internal_faction_replace_id = internal_faction_v }
-					}
-				}
-			}
-			set_temp_variable = { internal_faction_dm_id = internal_faction_replace_id }
-			internal_faction_detach_dynmod = yes
-			set_temp_variable = { internal_faction_clear_id = internal_faction_replace_id }
-			internal_faction_clear_faction_state = yes
-			for_each_loop = {
-				array = internal_faction_active
-				index = internal_faction_i
-				value = internal_faction_v
-				if = {
-					limit = { check_variable = { internal_faction_v = internal_faction_replace_id } }
-					set_variable = { internal_faction_active^internal_faction_i = internal_faction_id }
-				}
-			}
-		}
-		set_variable = { internal_faction_opinion^internal_faction_id = 50 }
-		set_variable = { internal_faction_influence^internal_faction_id = global.internal_faction_base_influence^internal_faction_id }
+		add_to_array = { internal_faction_active = internal_faction_id }
 		set_temp_variable = { internal_faction_dm_id = internal_faction_id }
 		internal_faction_attach_dynmod = yes
 		internal_faction_apply_faction_modifiers = yes
 		update_internal_faction_dirty_variable = yes
 	}
-	set_temp_variable = { internal_faction_replace_id = 0 }
 }
 
 # Parameters:
@@ -143,194 +150,111 @@ internal_faction_remove_faction = {
 	}
 }
 
-# Sets internal_faction_replace_id to the lowest-influence active faction whose idea is not held, 0 when none
-internal_faction_pick_rule_filled_slot = {
-	set_temp_variable = { internal_faction_replace_id = 0 }
-	for_each_loop = {
-		array = internal_faction_active
-		value = internal_faction_v
-		set_temp_variable = { internal_faction_tok = global.internal_faction_token^internal_faction_v }
-		if = {
-			limit = {
-				NOT = { has_idea = var:internal_faction_tok }
-				OR = {
-					check_variable = { internal_faction_replace_id = 0 }
-					check_variable = { internal_faction_influence^internal_faction_v < internal_faction_influence^internal_faction_replace_id }
-				}
-			}
-			set_temp_variable = { internal_faction_replace_id = internal_faction_v }
-		}
-	}
-}
-
-# Parameters:
-# - internal_faction_id: faction id 1-23
-# - internal_faction_seed_opinion: starting opinion, the old <f>_opinion
-internal_faction_seed_held_faction = {
-	if = {
-		limit = { NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } } }
-		internal_faction_pick_rule_filled_slot = yes
-		internal_faction_add_faction = yes
-		set_variable = { internal_faction_opinion^internal_faction_id = internal_faction_seed_opinion }
-		internal_faction_apply_faction_modifiers = yes
-	}
-}
-
-# Parameters:
-# - internal_faction_id: faction id 1-23
-internal_faction_try_seed_faction = {
-	if = {
-		limit = {
-			check_variable = { internal_faction_active^num < 4 }
-			NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
-			internal_faction_is_available = yes
-		}
-		internal_faction_add_faction = yes
-	}
-}
-
-internal_faction_seed_rule_fill = {
-	set_temp_variable = { internal_faction_id = 17 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 15 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 16 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 14 }
-	internal_faction_try_seed_faction = yes
-	if = {
-		limit = { check_variable = { gdp_total > 0 } }
-		set_temp_variable = { internal_faction_share = oil_exports }
-		divide_temp_variable = { internal_faction_share = gdp_total }
-		if = {
-			limit = { check_variable = { internal_faction_share > 0.05 } }
-			set_temp_variable = { internal_faction_id = 3 }
-			internal_faction_try_seed_faction = yes
-		}
-	}
-	set_temp_variable = { internal_faction_share = industrial_complex_total }
-	add_to_temp_variable = { internal_faction_share = military_factory_total }
-	add_to_temp_variable = { internal_faction_share = naval_factory_total }
-	if = {
-		limit = { check_variable = { internal_faction_share > 0 } }
-		set_temp_variable = { internal_faction_dockyard_share = naval_factory_total }
-		divide_temp_variable = { internal_faction_dockyard_share = internal_faction_share }
-		if = {
-			limit = { check_variable = { internal_faction_dockyard_share > 0.10 } }
-			set_temp_variable = { internal_faction_id = 6 }
-			internal_faction_try_seed_faction = yes
-		}
-	}
-	set_temp_variable = { internal_faction_share = industrial_complex_total }
-	add_to_temp_variable = { internal_faction_share = office_park_total }
-	add_to_temp_variable = { internal_faction_share = agriculture_district_total }
-	if = {
-		limit = { check_variable = { internal_faction_share > 0 } }
-		set_temp_variable = { internal_faction_agri_share = agriculture_district_total }
-		divide_temp_variable = { internal_faction_agri_share = internal_faction_share }
-		if = {
-			limit = { check_variable = { internal_faction_agri_share > 0.25 } }
-			set_temp_variable = { internal_faction_id = 12 }
-			internal_faction_try_seed_faction = yes
-			if = {
-				limit = { has_elections = no }
-				set_temp_variable = { internal_faction_id = 11 }
-				internal_faction_try_seed_faction = yes
-			}
-		}
-	}
-	if = {
-		limit = { check_variable = { global.ip_party_policy_group^ruling_party = 1 } }
-		set_temp_variable = { internal_faction_id = 13 }
-		internal_faction_try_seed_faction = yes
-	}
-	else_if = {
-		limit = { check_variable = { global.ip_party_policy_group^ruling_party = 2 } }
-		set_temp_variable = { internal_faction_id = 10 }
-		internal_faction_try_seed_faction = yes
-	}
-	if = {
-		limit = {
-			OR = {
-				check_variable = { military_law > 3 }
-				check_variable = { ruling_party = 22 }
-			}
-		}
-		set_temp_variable = { internal_faction_id = 7 }
-		internal_faction_try_seed_faction = yes
-	}
-	if = {
-		limit = { check_variable = { police_law > 3 } }
-		set_temp_variable = { internal_faction_id = 9 }
-		internal_faction_try_seed_faction = yes
-	}
-	if = {
-		limit = {
-			OR = {
-				has_idea = corruption_level_04
-				has_idea = corruption_level_05
-				has_idea = corruption_level_06
-				has_idea = corruption_level_07
-				has_idea = corruption_level_08
-				has_idea = corruption_level_09
-				has_idea = corruption_level_10
-			}
-		}
-		set_temp_variable = { internal_faction_id = 5 }
-		internal_faction_try_seed_faction = yes
-	}
-	set_temp_variable = { internal_faction_id = 1 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 4 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 8 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 2 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 7 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 11 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 12 }
-	internal_faction_try_seed_faction = yes
-	set_temp_variable = { internal_faction_id = 3 }
-	internal_faction_try_seed_faction = yes
-}
-
-internal_faction_seed_random_fill = {
-	clear_temp_array = internal_faction_pool
+# Fills internal_faction_pool with every faction id passing internal_faction_is_available
+internal_faction_build_pool = {
+	clear_array = internal_faction_pool
 	for_loop_effect = {
 		start = 1
 		end = 24
 		value = internal_faction_id
 		if = {
-			limit = {
-				NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
-				internal_faction_is_available = yes
-			}
-			add_to_temp_array = { internal_faction_pool = internal_faction_id }
-		}
-	}
-	while_loop_effect = {
-		limit = {
-			check_variable = { internal_faction_active^num < 4 }
-			check_variable = { internal_faction_pool^num > 0 }
-		}
-		set_temp_variable = { internal_faction_last = internal_faction_pool^num }
-		subtract_from_temp_variable = { internal_faction_last = 1 }
-		set_temp_variable_to_random = { var = internal_faction_r min = 0 max = internal_faction_last integer = yes }
-		set_temp_variable = { internal_faction_id = internal_faction_pool^internal_faction_r }
-		if = {
 			limit = { internal_faction_is_available = yes }
-			internal_faction_add_faction = yes
+			add_to_array = { internal_faction_pool = internal_faction_id }
 		}
-		remove_from_temp_array = { array = internal_faction_pool index = internal_faction_r }
 	}
 }
 
-# Runs after setup_init_factions: held ideas first, then fill to 4 by rules (random pool under rule_randomize_internal_factions)
+# Player-only display array: available factions that are not active, in id order
+internal_faction_rebuild_inactive = {
+	if = {
+		limit = { is_ai = no }
+		clear_array = internal_faction_inactive
+		for_each_loop = {
+			array = internal_faction_pool
+			value = internal_faction_v
+			if = {
+				limit = { NOT = { is_in_array = { array = internal_faction_active value = internal_faction_v } } }
+				add_to_array = { internal_faction_inactive = internal_faction_v }
+			}
+		}
+	}
+}
+
+# Keeps internal_faction_active at global.internal_faction_active_count ids: drops unavailable factions, fills from the highest-influence available ones, then lets one challenger at or above global.internal_faction_active_threshold displace the weakest active faction when it leads by @internal_faction_displace_margin
+# Expects internal_faction_pool built by internal_faction_build_pool; rebuilds it after every change since the religious factions exclude each other through internal_faction_is_available
+internal_faction_refresh_active = {
+	clear_temp_array = internal_faction_gone
+	for_each_loop = {
+		array = internal_faction_active
+		value = internal_faction_v
+		if = {
+			limit = { NOT = { is_in_array = { array = internal_faction_pool value = internal_faction_v } } }
+			add_to_temp_array = { internal_faction_gone = internal_faction_v }
+		}
+	}
+	if = {
+		limit = { check_variable = { internal_faction_gone^num > 0 } }
+		for_each_loop = {
+			array = internal_faction_gone
+			value = internal_faction_id
+			internal_faction_remove_faction = yes
+		}
+		internal_faction_build_pool = yes
+	}
+	internal_faction_find_challenger = yes
+	while_loop_effect = {
+		limit = {
+			check_variable = { internal_faction_active^num < global.internal_faction_active_count }
+			check_variable = { internal_faction_high > 0 }
+		}
+		set_temp_variable = { internal_faction_id = internal_faction_high }
+		internal_faction_add_faction = yes
+		internal_faction_build_pool = yes
+		internal_faction_find_challenger = yes
+	}
+	if = {
+		limit = { check_variable = { internal_faction_active^num > 0 } }
+		internal_faction_find_weakest = yes
+		set_temp_variable = { internal_faction_x = internal_faction_influence^internal_faction_low }
+		add_to_temp_variable = { internal_faction_x = @internal_faction_displace_margin }
+		if = {
+			limit = {
+				check_variable = { internal_faction_high > 0 }
+				check_variable = { var = internal_faction_influence^internal_faction_high value = global.internal_faction_active_threshold compare = greater_than_or_equals }
+				check_variable = { var = internal_faction_influence^internal_faction_high value = internal_faction_x compare = greater_than_or_equals }
+			}
+			log = "[GetDateText]: [Root.GetName]: faction [?internal_faction_high] displaced faction [?internal_faction_low]"
+			set_temp_variable = { internal_faction_id = internal_faction_high }
+			internal_faction_add_faction = yes
+			internal_faction_build_pool = yes
+		}
+	}
+	internal_faction_rebuild_inactive = yes
+}
+
+# Parameters:
+# - internal_faction_id: faction id 1-23 whose idea the country holds
+# - internal_faction_seed_opinion: starting opinion, the old <f>_opinion
+internal_faction_seed_held_faction = {
+	set_variable = { internal_faction_opinion^internal_faction_id = internal_faction_seed_opinion }
+	add_to_variable = { internal_faction_influence^internal_faction_id = @internal_faction_held_idea_influence }
+	internal_faction_add_faction = yes
+}
+
+# Runs after setup_init_factions: every faction starts at its base influence (jittered under rule_randomize_internal_factions), held ideas lead, then the activation pass fills to global.internal_faction_active_count
 internal_faction_seed_factions = {
 	internal_faction_init_arrays = yes
+	for_loop_effect = {
+		start = 1
+		end = 24
+		value = internal_faction_id
+		set_variable = { internal_faction_influence^internal_faction_id = global.internal_faction_base_influence^internal_faction_id }
+		if = {
+			limit = { has_game_rule = { rule = rule_randomize_internal_factions option = yes } }
+			set_temp_variable_to_random = { var = internal_faction_r min = -10 max = 10 integer = yes }
+			add_to_variable = { internal_faction_influence^internal_faction_id = internal_faction_r }
+		}
+	}
 	if = {
 		limit = { has_idea = small_medium_business_owners }
 		set_temp_variable = { internal_faction_id = 1 }
@@ -469,19 +393,21 @@ internal_faction_seed_factions = {
 		set_temp_variable = { internal_faction_seed_opinion = chaebols_opinion }
 		internal_faction_seed_held_faction = yes
 	}
-	if = {
-		limit = { has_game_rule = { rule = rule_randomize_internal_factions option = yes } }
-		internal_faction_seed_random_fill = yes
-	}
-	else = {
-		internal_faction_seed_rule_fill = yes
-	}
+	internal_faction_build_pool = yes
+	internal_faction_refresh_active = yes
 }
 
 # Parameters:
-# - nation_to_copy_from: country whose internal_faction_active, internal_faction_opinion and internal_faction_influence are copied; factions backing the new ruling party mirror opinion around 50
+# - nation_to_copy_from: country whose faction arrays are copied; factions backing the new ruling party mirror opinion around 50
 internal_faction_copy_factions = {
 	internal_faction_init_arrays = yes
+	for_loop_effect = {
+		start = 1
+		end = 24
+		value = internal_faction_v
+		set_variable = { internal_faction_opinion^internal_faction_v = var:nation_to_copy_from.internal_faction_opinion^internal_faction_v }
+		set_variable = { internal_faction_influence^internal_faction_v = var:nation_to_copy_from.internal_faction_influence^internal_faction_v }
+	}
 	clear_array = internal_faction_active
 	for_each_loop = {
 		array = var:nation_to_copy_from.internal_faction_active
@@ -489,8 +415,6 @@ internal_faction_copy_factions = {
 		add_to_array = { internal_faction_active = internal_faction_v }
 		set_temp_variable = { internal_faction_dm_id = internal_faction_v }
 		internal_faction_attach_dynmod = yes
-		set_variable = { internal_faction_opinion^internal_faction_v = var:nation_to_copy_from.internal_faction_opinion^internal_faction_v }
-		set_variable = { internal_faction_influence^internal_faction_v = var:nation_to_copy_from.internal_faction_influence^internal_faction_v }
 		set_temp_variable = { internal_faction_aff = internal_faction_v }
 		multiply_temp_variable = { internal_faction_aff = 13 }
 		add_to_temp_variable = { internal_faction_aff = global.ip_party_policy_group^ruling_party }
@@ -500,6 +424,8 @@ internal_faction_copy_factions = {
 			subtract_from_variable = { internal_faction_opinion^internal_faction_v = var:nation_to_copy_from.internal_faction_opinion^internal_faction_v }
 		}
 	}
+	internal_faction_build_pool = yes
+	internal_faction_refresh_active = yes
 	internal_faction_apply_modifiers = yes
 	update_internal_faction_dirty_variable = yes
 }
@@ -746,7 +672,7 @@ internal_faction_compute_influence_target = {
 	set_variable = { internal_faction_inf_target^internal_faction_v = internal_faction_t }
 }
 
-# Monthly: recompute targets for every active faction, drift opinion (global.internal_faction_drift_rate) and influence toward them, tick cooldowns, run the AI routine
+# Monthly: drift influence toward its target for every available faction and opinion (global.internal_faction_drift_rate) for the active ones, tick cooldowns, refresh the active set, run the AI routine
 internal_faction_monthly_tick = {
 	if = {
 		limit = { check_variable = { internal_faction_active^num > 0 } }
@@ -794,33 +720,34 @@ internal_faction_monthly_tick = {
 				set_temp_variable = { internal_faction_crackdown^internal_faction_pf = 1 }
 			}
 		}
+		internal_faction_build_pool = yes
 		for_each_loop = {
-			array = internal_faction_active
+			array = internal_faction_pool
 			value = internal_faction_v
 			set_temp_variable = { internal_faction_aff = internal_faction_v }
 			multiply_temp_variable = { internal_faction_aff = 13 }
 			add_to_temp_variable = { internal_faction_aff = internal_faction_group }
-			internal_faction_compute_opinion_target = yes
 			internal_faction_compute_influence_target = yes
-			set_temp_variable = { internal_faction_d = internal_faction_target^internal_faction_v }
-			subtract_from_temp_variable = { internal_faction_d = internal_faction_opinion^internal_faction_v }
-			multiply_temp_variable = { internal_faction_d = global.internal_faction_drift_rate }
-			add_to_variable = { internal_faction_opinion^internal_faction_v = internal_faction_d }
-			clamp_variable = { var = internal_faction_opinion^internal_faction_v min = 0 max = 100 }
 			set_temp_variable = { internal_faction_d = internal_faction_inf_target^internal_faction_v }
 			subtract_from_temp_variable = { internal_faction_d = internal_faction_influence^internal_faction_v }
 			multiply_temp_variable = { internal_faction_d = @internal_faction_influence_drift_rate }
 			add_to_variable = { internal_faction_influence^internal_faction_v = internal_faction_d }
 			clamp_variable = { var = internal_faction_influence^internal_faction_v min = 0 max = 100 }
 			if = {
-				limit = { check_variable = { internal_faction_policy_cooldown^internal_faction_v > 0 } }
-				subtract_from_variable = { internal_faction_policy_cooldown^internal_faction_v = 1 }
-			}
-			if = {
-				limit = { check_variable = { internal_faction_swap_cooldown^internal_faction_v > 0 } }
-				subtract_from_variable = { internal_faction_swap_cooldown^internal_faction_v = 1 }
+				limit = { is_in_array = { array = internal_faction_active value = internal_faction_v } }
+				internal_faction_compute_opinion_target = yes
+				set_temp_variable = { internal_faction_d = internal_faction_target^internal_faction_v }
+				subtract_from_temp_variable = { internal_faction_d = internal_faction_opinion^internal_faction_v }
+				multiply_temp_variable = { internal_faction_d = global.internal_faction_drift_rate }
+				add_to_variable = { internal_faction_opinion^internal_faction_v = internal_faction_d }
+				clamp_variable = { var = internal_faction_opinion^internal_faction_v min = 0 max = 100 }
+				if = {
+					limit = { check_variable = { internal_faction_policy_cooldown^internal_faction_v > 0 } }
+					subtract_from_variable = { internal_faction_policy_cooldown^internal_faction_v = 1 }
+				}
 			}
 		}
+		internal_faction_refresh_active = yes
 		internal_faction_party_push = yes
 		internal_faction_apply_modifiers = yes
 		if = {
