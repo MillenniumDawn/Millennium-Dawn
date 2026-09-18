@@ -709,6 +709,30 @@ def test_log_beside_a_real_effect_is_kept():
     assert checker._check_empty_log_only_blocks(lines) == []
 
 
+def test_log_beside_unlock_decision_category_tooltip_is_kept():
+    # SAU_saudi_foreign_policy shape: log plus only a tooltip line.
+    lines = [
+        "\tcompletion_reward = {\n",
+        '\t\tlog = "[GetDateText]: Focus SAU_saudi_foreign_policy"\n',
+        "\t\tunlock_decision_category_tooltip = SAU_foreign_policy_cat\n",
+        "\t}\n",
+    ]
+
+    assert checker._check_empty_log_only_blocks(lines) == []
+
+
+def test_log_beside_custom_effect_tooltip_is_kept():
+    # ISR_mofaz shape: log plus only a tooltip line.
+    lines = [
+        "\tcompletion_reward = {\n",
+        '\t\tlog = "[GetDateText]: Focus ISR_mofaz"\n',
+        "\t\tcustom_effect_tooltip = ISR_mofaz_tt\n",
+        "\t}\n",
+    ]
+
+    assert checker._check_empty_log_only_blocks(lines) == []
+
+
 def test_is_x_nation_flagged_only_when_a_real_flag_exists(scoped_refs):
     lines = ["\tavailable = { is_arab_nation = yes }\n"]
 

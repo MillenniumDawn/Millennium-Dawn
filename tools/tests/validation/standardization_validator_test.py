@@ -57,7 +57,37 @@ def test_unstandardized_file_warns_with_the_fixing_command(write_path, tmp_path)
 
 def test_unowned_paths_are_skipped(write_path, tmp_path):
     write_path(tmp_path, "common/units/MD_land_units.txt", _MESSY_EVENT)
+    # A history-owned path with no dated blocks is also skipped.
     write_path(tmp_path, "history/countries/ARA - Arabistan.txt", _MESSY_EVENT)
+
+    assert _run(tmp_path)._issues == []
+
+
+_MESSY_HISTORY = """capital = 652
+
+2000.1.1 = {
+\tset_country_flag = TST_alpha
+\tcomplete_special_project = sp:sp_space_program
+}
+"""
+
+
+def test_unstandardized_history_warns_with_the_fixing_command(write_path, tmp_path):
+    write_path(tmp_path, "history/countries/ARA - Arabistan.txt", _MESSY_HISTORY)
+
+    validator = _run(tmp_path)
+
+    assert [issue.category for issue in validator._issues] == ["not-standardized"]
+    message = validator._issues[0].message
+    assert 'standardize.py history "history/countries/ARA - Arabistan.txt"' in message
+
+
+def test_standardized_history_is_clean(write_path, tmp_path):
+    standardized = standardize_api.standardize_text(
+        "history", _MESSY_HISTORY, mod_root=str(tmp_path)
+    )
+    assert standardized is not None
+    write_path(tmp_path, "history/countries/ARA - Arabistan.txt", standardized)
 
     assert _run(tmp_path)._issues == []
 
@@ -71,7 +101,7 @@ def test_file_with_no_matching_block_is_skipped(write_path, tmp_path):
 def test_standardizer_failure_is_an_error(write_path, tmp_path, monkeypatch):
     _write_event(write_path, tmp_path, _MESSY_EVENT)
 
-    def explode(kind, text):
+    def explode(kind, text, mod_root=None):
         raise ValueError("unbalanced braces")
 
     monkeypatch.setattr(validate_standardization, "standardize_text", explode)
