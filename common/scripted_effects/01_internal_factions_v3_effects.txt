@@ -1,253 +1,253 @@
 # Internal factions v3 data layer, see .claude/docs/internal-factions-reference.md
-@if_influence_drift_rate = 0.10
-@if_k_building_share = 100
-@if_k_heavy_share = 300
-@if_k_debt = 10
-@if_k_unions = 15
-@if_k_party_pop = 30
-@if_k_religious_pop = 20
+@internal_faction_influence_drift_rate = 0.10
+@internal_faction_k_building_share = 100
+@internal_faction_k_heavy_share = 300
+@internal_faction_k_debt = 10
+@internal_faction_k_unions = 15
+@internal_faction_k_party_pop = 30
+@internal_faction_k_religious_pop = 20
 
-if_init_arrays = {
+internal_faction_init_arrays = {
 	if = {
-		limit = { check_variable = { if_inf_target^num < 24 } }
-		resize_array = { array = if_opinion value = 0 size = 24 }
-		resize_array = { array = if_influence value = 0 size = 24 }
-		resize_array = { array = if_target value = 0 size = 24 }
-		resize_array = { array = if_inf_target value = 0 size = 24 }
-		resize_array = { array = if_policy_cooldown value = 0 size = 24 }
-		resize_array = { array = if_swap_cooldown value = 0 size = 24 }
+		limit = { check_variable = { internal_faction_inf_target^num < 24 } }
+		resize_array = { array = internal_faction_opinion value = 0 size = 24 }
+		resize_array = { array = internal_faction_influence value = 0 size = 24 }
+		resize_array = { array = internal_faction_target value = 0 size = 24 }
+		resize_array = { array = internal_faction_inf_target value = 0 size = 24 }
+		resize_array = { array = internal_faction_policy_cooldown value = 0 size = 24 }
+		resize_array = { array = internal_faction_swap_cooldown value = 0 size = 24 }
 	}
 }
 
-update_if_dirty_variable = {
+update_internal_faction_dirty_variable = {
 	if = { limit = { is_ai = no }
 		if = {
-			limit = { check_variable = { global.if_ui_dirty < 100000 } }
-			add_to_variable = { global.if_ui_dirty = 1 }
+			limit = { check_variable = { global.internal_faction_ui_dirty < 100000 } }
+			add_to_variable = { global.internal_faction_ui_dirty = 1 }
 		}
 		else = {
-			set_variable = { global.if_ui_dirty = 1 }
+			set_variable = { global.internal_faction_ui_dirty = 1 }
 		}
 	}
 }
 
-if_toggle_window = {
+internal_faction_toggle_window = {
 	if = {
-		limit = { has_country_flag = if_window_open }
-		clr_country_flag = if_window_open
+		limit = { has_country_flag = internal_faction_window_open }
+		clr_country_flag = internal_faction_window_open
 	}
 	else = {
-		set_country_flag = if_window_open
+		set_country_flag = internal_faction_window_open
 	}
-	update_if_dirty_variable = yes
+	update_internal_faction_dirty_variable = yes
 }
 
 # Parameters:
-# - if_clear_id: faction leaving if_active; drops its policies and cooldowns
-if_clear_faction_state = {
-	set_temp_variable = { if_cp = if_clear_id }
-	multiply_temp_variable = { if_cp = 4 }
-	remove_from_array = { array = if_policies value = if_cp }
-	subtract_from_temp_variable = { if_cp = 1 }
-	remove_from_array = { array = if_policies value = if_cp }
-	subtract_from_temp_variable = { if_cp = 1 }
-	remove_from_array = { array = if_policies value = if_cp }
-	subtract_from_temp_variable = { if_cp = 1 }
-	remove_from_array = { array = if_policies value = if_cp }
-	set_variable = { if_policy_cooldown^if_clear_id = 0 }
-	set_variable = { if_swap_cooldown^if_clear_id = 0 }
+# - internal_faction_clear_id: faction leaving internal_faction_active; drops its policies and cooldowns
+internal_faction_clear_faction_state = {
+	set_temp_variable = { internal_faction_cp = internal_faction_clear_id }
+	multiply_temp_variable = { internal_faction_cp = 4 }
+	remove_from_array = { array = internal_faction_policies value = internal_faction_cp }
+	subtract_from_temp_variable = { internal_faction_cp = 1 }
+	remove_from_array = { array = internal_faction_policies value = internal_faction_cp }
+	subtract_from_temp_variable = { internal_faction_cp = 1 }
+	remove_from_array = { array = internal_faction_policies value = internal_faction_cp }
+	subtract_from_temp_variable = { internal_faction_cp = 1 }
+	remove_from_array = { array = internal_faction_policies value = internal_faction_cp }
+	set_variable = { internal_faction_policy_cooldown^internal_faction_clear_id = 0 }
+	set_variable = { internal_faction_swap_cooldown^internal_faction_clear_id = 0 }
 }
 
 # Parameters:
-# - if_id: faction id 1-23
+# - internal_faction_id: faction id 1-23
 # - temp_opinion: opinion delta (optional, set by the caller of the change_<f>_opinion wrapper)
-if_change_opinion = {
+internal_faction_change_opinion = {
 	if = {
-		limit = { is_in_array = { array = if_active value = if_id } }
-		add_to_variable = { if_opinion^if_id = temp_opinion }
-		clamp_variable = { var = if_opinion^if_id min = 0 max = 100 }
-		if_apply_faction_modifiers = yes
-		update_if_dirty_variable = yes
+		limit = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		add_to_variable = { internal_faction_opinion^internal_faction_id = temp_opinion }
+		clamp_variable = { var = internal_faction_opinion^internal_faction_id min = 0 max = 100 }
+		internal_faction_apply_faction_modifiers = yes
+		update_internal_faction_dirty_variable = yes
 	}
 }
 
 # Parameters:
-# - if_id: faction id 1-23
+# - internal_faction_id: faction id 1-23
 # - temp_influence: influence delta
-if_change_influence = {
+internal_faction_change_influence = {
 	if = {
-		limit = { is_in_array = { array = if_active value = if_id } }
-		add_to_variable = { if_influence^if_id = temp_influence }
-		clamp_variable = { var = if_influence^if_id min = 0 max = 100 }
-		if_apply_faction_modifiers = yes
-		update_if_dirty_variable = yes
+		limit = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		add_to_variable = { internal_faction_influence^internal_faction_id = temp_influence }
+		clamp_variable = { var = internal_faction_influence^internal_faction_id min = 0 max = 100 }
+		internal_faction_apply_faction_modifiers = yes
+		update_internal_faction_dirty_variable = yes
 	}
 }
 
-# Activates faction if_id; when all 4 slots are full it takes the slot of if_replace_id, or of the lowest-influence active faction when if_replace_id is 0
-if_add_faction = {
+# Activates faction internal_faction_id; when all 4 slots are full it takes the slot of internal_faction_replace_id, or of the lowest-influence active faction when internal_faction_replace_id is 0
+internal_faction_add_faction = {
 	if = {
-		limit = { NOT = { is_in_array = { array = if_active value = if_id } } }
+		limit = { NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } } }
 		if = {
-			limit = { check_variable = { if_active^num < 4 } }
-			add_to_array = { if_active = if_id }
+			limit = { check_variable = { internal_faction_active^num < 4 } }
+			add_to_array = { internal_faction_active = internal_faction_id }
 		}
 		else = {
 			if = {
-				limit = { NOT = { is_in_array = { array = if_active value = if_replace_id } } }
-				set_temp_variable = { if_replace_id = if_active^0 }
+				limit = { NOT = { is_in_array = { array = internal_faction_active value = internal_faction_replace_id } } }
+				set_temp_variable = { internal_faction_replace_id = internal_faction_active^0 }
 				for_each_loop = {
-					array = if_active
-					value = if_v
+					array = internal_faction_active
+					value = internal_faction_v
 					if = {
-						limit = { check_variable = { if_influence^if_v < if_influence^if_replace_id } }
-						set_temp_variable = { if_replace_id = if_v }
+						limit = { check_variable = { internal_faction_influence^internal_faction_v < internal_faction_influence^internal_faction_replace_id } }
+						set_temp_variable = { internal_faction_replace_id = internal_faction_v }
 					}
 				}
 			}
-			set_temp_variable = { if_dm_id = if_replace_id }
-			if_detach_dynmod = yes
-			set_temp_variable = { if_clear_id = if_replace_id }
-			if_clear_faction_state = yes
+			set_temp_variable = { internal_faction_dm_id = internal_faction_replace_id }
+			internal_faction_detach_dynmod = yes
+			set_temp_variable = { internal_faction_clear_id = internal_faction_replace_id }
+			internal_faction_clear_faction_state = yes
 			for_each_loop = {
-				array = if_active
-				index = if_i
-				value = if_v
+				array = internal_faction_active
+				index = internal_faction_i
+				value = internal_faction_v
 				if = {
-					limit = { check_variable = { if_v = if_replace_id } }
-					set_variable = { if_active^if_i = if_id }
+					limit = { check_variable = { internal_faction_v = internal_faction_replace_id } }
+					set_variable = { internal_faction_active^internal_faction_i = internal_faction_id }
 				}
 			}
 		}
-		set_variable = { if_opinion^if_id = 50 }
-		set_variable = { if_influence^if_id = global.if_base_influence^if_id }
-		set_temp_variable = { if_dm_id = if_id }
-		if_attach_dynmod = yes
-		if_apply_faction_modifiers = yes
-		update_if_dirty_variable = yes
+		set_variable = { internal_faction_opinion^internal_faction_id = 50 }
+		set_variable = { internal_faction_influence^internal_faction_id = global.internal_faction_base_influence^internal_faction_id }
+		set_temp_variable = { internal_faction_dm_id = internal_faction_id }
+		internal_faction_attach_dynmod = yes
+		internal_faction_apply_faction_modifiers = yes
+		update_internal_faction_dirty_variable = yes
 	}
-	set_temp_variable = { if_replace_id = 0 }
+	set_temp_variable = { internal_faction_replace_id = 0 }
 }
 
 # Parameters:
-# - if_id: faction id 1-23
-if_remove_faction = {
+# - internal_faction_id: faction id 1-23
+internal_faction_remove_faction = {
 	if = {
-		limit = { is_in_array = { array = if_active value = if_id } }
-		remove_from_array = { array = if_active value = if_id }
-		set_temp_variable = { if_dm_id = if_id }
-		if_detach_dynmod = yes
-		set_temp_variable = { if_clear_id = if_id }
-		if_clear_faction_state = yes
-		update_if_dirty_variable = yes
+		limit = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		remove_from_array = { array = internal_faction_active value = internal_faction_id }
+		set_temp_variable = { internal_faction_dm_id = internal_faction_id }
+		internal_faction_detach_dynmod = yes
+		set_temp_variable = { internal_faction_clear_id = internal_faction_id }
+		internal_faction_clear_faction_state = yes
+		update_internal_faction_dirty_variable = yes
 	}
 }
 
-# Sets if_replace_id to the lowest-influence active faction whose idea is not held, 0 when none
-if_pick_rule_filled_slot = {
-	set_temp_variable = { if_replace_id = 0 }
+# Sets internal_faction_replace_id to the lowest-influence active faction whose idea is not held, 0 when none
+internal_faction_pick_rule_filled_slot = {
+	set_temp_variable = { internal_faction_replace_id = 0 }
 	for_each_loop = {
-		array = if_active
-		value = if_v
-		set_temp_variable = { if_tok = global.if_token^if_v }
+		array = internal_faction_active
+		value = internal_faction_v
+		set_temp_variable = { internal_faction_tok = global.internal_faction_token^internal_faction_v }
 		if = {
 			limit = {
-				NOT = { has_idea = var:if_tok }
+				NOT = { has_idea = var:internal_faction_tok }
 				OR = {
-					check_variable = { if_replace_id = 0 }
-					check_variable = { if_influence^if_v < if_influence^if_replace_id }
+					check_variable = { internal_faction_replace_id = 0 }
+					check_variable = { internal_faction_influence^internal_faction_v < internal_faction_influence^internal_faction_replace_id }
 				}
 			}
-			set_temp_variable = { if_replace_id = if_v }
+			set_temp_variable = { internal_faction_replace_id = internal_faction_v }
 		}
 	}
 }
 
 # Parameters:
-# - if_id: faction id 1-23
-# - if_seed_opinion: starting opinion, the old <f>_opinion
-if_seed_held_faction = {
+# - internal_faction_id: faction id 1-23
+# - internal_faction_seed_opinion: starting opinion, the old <f>_opinion
+internal_faction_seed_held_faction = {
 	if = {
-		limit = { NOT = { is_in_array = { array = if_active value = if_id } } }
-		if_pick_rule_filled_slot = yes
-		if_add_faction = yes
-		set_variable = { if_opinion^if_id = if_seed_opinion }
-		if_apply_faction_modifiers = yes
+		limit = { NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } } }
+		internal_faction_pick_rule_filled_slot = yes
+		internal_faction_add_faction = yes
+		set_variable = { internal_faction_opinion^internal_faction_id = internal_faction_seed_opinion }
+		internal_faction_apply_faction_modifiers = yes
 	}
 }
 
 # Parameters:
-# - if_id: faction id 1-23
-if_try_seed_faction = {
+# - internal_faction_id: faction id 1-23
+internal_faction_try_seed_faction = {
 	if = {
 		limit = {
-			check_variable = { if_active^num < 4 }
-			NOT = { is_in_array = { array = if_active value = if_id } }
-			if_is_available = yes
+			check_variable = { internal_faction_active^num < 4 }
+			NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+			internal_faction_is_available = yes
 		}
-		if_add_faction = yes
+		internal_faction_add_faction = yes
 	}
 }
 
-if_seed_rule_fill = {
-	set_temp_variable = { if_id = 17 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 15 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 16 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 14 }
-	if_try_seed_faction = yes
+internal_faction_seed_rule_fill = {
+	set_temp_variable = { internal_faction_id = 17 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 15 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 16 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 14 }
+	internal_faction_try_seed_faction = yes
 	if = {
 		limit = { check_variable = { gdp_total > 0 } }
-		set_temp_variable = { if_share = oil_exports }
-		divide_temp_variable = { if_share = gdp_total }
+		set_temp_variable = { internal_faction_share = oil_exports }
+		divide_temp_variable = { internal_faction_share = gdp_total }
 		if = {
-			limit = { check_variable = { if_share > 0.05 } }
-			set_temp_variable = { if_id = 3 }
-			if_try_seed_faction = yes
+			limit = { check_variable = { internal_faction_share > 0.05 } }
+			set_temp_variable = { internal_faction_id = 3 }
+			internal_faction_try_seed_faction = yes
 		}
 	}
-	set_temp_variable = { if_share = industrial_complex_total }
-	add_to_temp_variable = { if_share = military_factory_total }
-	add_to_temp_variable = { if_share = naval_factory_total }
+	set_temp_variable = { internal_faction_share = industrial_complex_total }
+	add_to_temp_variable = { internal_faction_share = military_factory_total }
+	add_to_temp_variable = { internal_faction_share = naval_factory_total }
 	if = {
-		limit = { check_variable = { if_share > 0 } }
-		set_temp_variable = { if_dockyard_share = naval_factory_total }
-		divide_temp_variable = { if_dockyard_share = if_share }
+		limit = { check_variable = { internal_faction_share > 0 } }
+		set_temp_variable = { internal_faction_dockyard_share = naval_factory_total }
+		divide_temp_variable = { internal_faction_dockyard_share = internal_faction_share }
 		if = {
-			limit = { check_variable = { if_dockyard_share > 0.10 } }
-			set_temp_variable = { if_id = 6 }
-			if_try_seed_faction = yes
+			limit = { check_variable = { internal_faction_dockyard_share > 0.10 } }
+			set_temp_variable = { internal_faction_id = 6 }
+			internal_faction_try_seed_faction = yes
 		}
 	}
-	set_temp_variable = { if_share = industrial_complex_total }
-	add_to_temp_variable = { if_share = office_park_total }
-	add_to_temp_variable = { if_share = agriculture_district_total }
+	set_temp_variable = { internal_faction_share = industrial_complex_total }
+	add_to_temp_variable = { internal_faction_share = office_park_total }
+	add_to_temp_variable = { internal_faction_share = agriculture_district_total }
 	if = {
-		limit = { check_variable = { if_share > 0 } }
-		set_temp_variable = { if_agri_share = agriculture_district_total }
-		divide_temp_variable = { if_agri_share = if_share }
+		limit = { check_variable = { internal_faction_share > 0 } }
+		set_temp_variable = { internal_faction_agri_share = agriculture_district_total }
+		divide_temp_variable = { internal_faction_agri_share = internal_faction_share }
 		if = {
-			limit = { check_variable = { if_agri_share > 0.25 } }
-			set_temp_variable = { if_id = 12 }
-			if_try_seed_faction = yes
+			limit = { check_variable = { internal_faction_agri_share > 0.25 } }
+			set_temp_variable = { internal_faction_id = 12 }
+			internal_faction_try_seed_faction = yes
 			if = {
 				limit = { has_elections = no }
-				set_temp_variable = { if_id = 11 }
-				if_try_seed_faction = yes
+				set_temp_variable = { internal_faction_id = 11 }
+				internal_faction_try_seed_faction = yes
 			}
 		}
 	}
 	if = {
 		limit = { check_variable = { global.ip_party_policy_group^ruling_party = 1 } }
-		set_temp_variable = { if_id = 13 }
-		if_try_seed_faction = yes
+		set_temp_variable = { internal_faction_id = 13 }
+		internal_faction_try_seed_faction = yes
 	}
 	else_if = {
 		limit = { check_variable = { global.ip_party_policy_group^ruling_party = 2 } }
-		set_temp_variable = { if_id = 10 }
-		if_try_seed_faction = yes
+		set_temp_variable = { internal_faction_id = 10 }
+		internal_faction_try_seed_faction = yes
 	}
 	if = {
 		limit = {
@@ -256,13 +256,13 @@ if_seed_rule_fill = {
 				check_variable = { ruling_party = 22 }
 			}
 		}
-		set_temp_variable = { if_id = 7 }
-		if_try_seed_faction = yes
+		set_temp_variable = { internal_faction_id = 7 }
+		internal_faction_try_seed_faction = yes
 	}
 	if = {
 		limit = { check_variable = { police_law > 3 } }
-		set_temp_variable = { if_id = 9 }
-		if_try_seed_faction = yes
+		set_temp_variable = { internal_faction_id = 9 }
+		internal_faction_try_seed_faction = yes
 	}
 	if = {
 		limit = {
@@ -276,361 +276,361 @@ if_seed_rule_fill = {
 				has_idea = corruption_level_10
 			}
 		}
-		set_temp_variable = { if_id = 5 }
-		if_try_seed_faction = yes
+		set_temp_variable = { internal_faction_id = 5 }
+		internal_faction_try_seed_faction = yes
 	}
-	set_temp_variable = { if_id = 1 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 4 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 8 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 2 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 7 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 11 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 12 }
-	if_try_seed_faction = yes
-	set_temp_variable = { if_id = 3 }
-	if_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 1 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 4 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 8 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 2 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 7 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 11 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 12 }
+	internal_faction_try_seed_faction = yes
+	set_temp_variable = { internal_faction_id = 3 }
+	internal_faction_try_seed_faction = yes
 }
 
-if_seed_random_fill = {
-	clear_temp_array = if_pool
+internal_faction_seed_random_fill = {
+	clear_temp_array = internal_faction_pool
 	for_loop_effect = {
 		start = 1
 		end = 24
-		value = if_id
+		value = internal_faction_id
 		if = {
 			limit = {
-				NOT = { is_in_array = { array = if_active value = if_id } }
-				if_is_available = yes
+				NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+				internal_faction_is_available = yes
 			}
-			add_to_temp_array = { if_pool = if_id }
+			add_to_temp_array = { internal_faction_pool = internal_faction_id }
 		}
 	}
 	while_loop_effect = {
 		limit = {
-			check_variable = { if_active^num < 4 }
-			check_variable = { if_pool^num > 0 }
+			check_variable = { internal_faction_active^num < 4 }
+			check_variable = { internal_faction_pool^num > 0 }
 		}
-		set_temp_variable = { if_last = if_pool^num }
-		subtract_from_temp_variable = { if_last = 1 }
-		set_temp_variable_to_random = { var = if_r min = 0 max = if_last integer = yes }
-		set_temp_variable = { if_id = if_pool^if_r }
+		set_temp_variable = { internal_faction_last = internal_faction_pool^num }
+		subtract_from_temp_variable = { internal_faction_last = 1 }
+		set_temp_variable_to_random = { var = internal_faction_r min = 0 max = internal_faction_last integer = yes }
+		set_temp_variable = { internal_faction_id = internal_faction_pool^internal_faction_r }
 		if = {
-			limit = { if_is_available = yes }
-			if_add_faction = yes
+			limit = { internal_faction_is_available = yes }
+			internal_faction_add_faction = yes
 		}
-		remove_from_temp_array = { array = if_pool index = if_r }
+		remove_from_temp_array = { array = internal_faction_pool index = internal_faction_r }
 	}
 }
 
 # Runs after setup_init_factions: held ideas first, then fill to 4 by rules (random pool under rule_randomize_internal_factions)
-if_seed_factions = {
-	if_init_arrays = yes
+internal_faction_seed_factions = {
+	internal_faction_init_arrays = yes
 	if = {
 		limit = { has_idea = small_medium_business_owners }
-		set_temp_variable = { if_id = 1 }
-		set_temp_variable = { if_seed_opinion = small_medium_business_owners_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 1 }
+		set_temp_variable = { internal_faction_seed_opinion = small_medium_business_owners_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = international_bankers }
-		set_temp_variable = { if_id = 2 }
-		set_temp_variable = { if_seed_opinion = international_bankers_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 2 }
+		set_temp_variable = { internal_faction_seed_opinion = international_bankers_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = fossil_fuel_industry }
-		set_temp_variable = { if_id = 3 }
-		set_temp_variable = { if_seed_opinion = fossil_fuel_industry_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 3 }
+		set_temp_variable = { internal_faction_seed_opinion = fossil_fuel_industry_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = industrial_conglomerates }
-		set_temp_variable = { if_id = 4 }
-		set_temp_variable = { if_seed_opinion = industrial_conglomerates_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 4 }
+		set_temp_variable = { internal_faction_seed_opinion = industrial_conglomerates_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = oligarchs }
-		set_temp_variable = { if_id = 5 }
-		set_temp_variable = { if_seed_opinion = oligarchs_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 5 }
+		set_temp_variable = { internal_faction_seed_opinion = oligarchs_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = maritime_industry }
-		set_temp_variable = { if_id = 6 }
-		set_temp_variable = { if_seed_opinion = maritime_industry_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 6 }
+		set_temp_variable = { internal_faction_seed_opinion = maritime_industry_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = the_military }
-		set_temp_variable = { if_id = 7 }
-		set_temp_variable = { if_seed_opinion = the_military_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 7 }
+		set_temp_variable = { internal_faction_seed_opinion = the_military_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = defense_industry }
-		set_temp_variable = { if_id = 8 }
-		set_temp_variable = { if_seed_opinion = defense_industry_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 8 }
+		set_temp_variable = { internal_faction_seed_opinion = defense_industry_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = intelligence_community }
-		set_temp_variable = { if_id = 9 }
-		set_temp_variable = { if_seed_opinion = intelligence_community_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 9 }
+		set_temp_variable = { internal_faction_seed_opinion = intelligence_community_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = labour_unions }
-		set_temp_variable = { if_id = 10 }
-		set_temp_variable = { if_seed_opinion = labour_unions_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 10 }
+		set_temp_variable = { internal_faction_seed_opinion = labour_unions_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = landowners }
-		set_temp_variable = { if_id = 11 }
-		set_temp_variable = { if_seed_opinion = landowners_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 11 }
+		set_temp_variable = { internal_faction_seed_opinion = landowners_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = farmers }
-		set_temp_variable = { if_id = 12 }
-		set_temp_variable = { if_seed_opinion = farmers_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 12 }
+		set_temp_variable = { internal_faction_seed_opinion = farmers_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = communist_cadres }
-		set_temp_variable = { if_id = 13 }
-		set_temp_variable = { if_seed_opinion = communist_cadres_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 13 }
+		set_temp_variable = { internal_faction_seed_opinion = communist_cadres_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = the_priesthood }
-		set_temp_variable = { if_id = 14 }
-		set_temp_variable = { if_seed_opinion = the_priesthood_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 14 }
+		set_temp_variable = { internal_faction_seed_opinion = the_priesthood_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = the_ulema }
-		set_temp_variable = { if_id = 15 }
-		set_temp_variable = { if_seed_opinion = the_ulema_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 15 }
+		set_temp_variable = { internal_faction_seed_opinion = the_ulema_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = the_clergy }
-		set_temp_variable = { if_id = 16 }
-		set_temp_variable = { if_seed_opinion = the_clergy_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 16 }
+		set_temp_variable = { internal_faction_seed_opinion = the_clergy_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = wahabi_ulema }
-		set_temp_variable = { if_id = 17 }
-		set_temp_variable = { if_seed_opinion = wahabi_ulema_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 17 }
+		set_temp_variable = { internal_faction_seed_opinion = wahabi_ulema_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = the_donju }
-		set_temp_variable = { if_id = 18 }
-		set_temp_variable = { if_seed_opinion = the_donju_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 18 }
+		set_temp_variable = { internal_faction_seed_opinion = the_donju_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = saudi_royal_family }
-		set_temp_variable = { if_id = 19 }
-		set_temp_variable = { if_seed_opinion = saudi_royal_family_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 19 }
+		set_temp_variable = { internal_faction_seed_opinion = saudi_royal_family_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = iranian_quds_force }
-		set_temp_variable = { if_id = 20 }
-		set_temp_variable = { if_seed_opinion = iranian_quds_force_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 20 }
+		set_temp_variable = { internal_faction_seed_opinion = iranian_quds_force_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = foreign_jihadis }
-		set_temp_variable = { if_id = 21 }
-		set_temp_variable = { if_seed_opinion = foreign_jihadis_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 21 }
+		set_temp_variable = { internal_faction_seed_opinion = foreign_jihadis_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = wall_street }
-		set_temp_variable = { if_id = 22 }
-		set_temp_variable = { if_seed_opinion = wall_street_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 22 }
+		set_temp_variable = { internal_faction_seed_opinion = wall_street_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_idea = chaebols }
-		set_temp_variable = { if_id = 23 }
-		set_temp_variable = { if_seed_opinion = chaebols_opinion }
-		if_seed_held_faction = yes
+		set_temp_variable = { internal_faction_id = 23 }
+		set_temp_variable = { internal_faction_seed_opinion = chaebols_opinion }
+		internal_faction_seed_held_faction = yes
 	}
 	if = {
 		limit = { has_game_rule = { rule = rule_randomize_internal_factions option = yes } }
-		if_seed_random_fill = yes
+		internal_faction_seed_random_fill = yes
 	}
 	else = {
-		if_seed_rule_fill = yes
+		internal_faction_seed_rule_fill = yes
 	}
 }
 
 # Parameters:
-# - nation_to_copy_from: country whose if_active, if_opinion and if_influence are copied; factions backing the new ruling party mirror opinion around 50
-if_copy_factions = {
-	if_init_arrays = yes
-	clear_array = if_active
+# - nation_to_copy_from: country whose internal_faction_active, internal_faction_opinion and internal_faction_influence are copied; factions backing the new ruling party mirror opinion around 50
+internal_faction_copy_factions = {
+	internal_faction_init_arrays = yes
+	clear_array = internal_faction_active
 	for_each_loop = {
-		array = var:nation_to_copy_from.if_active
-		value = if_v
-		add_to_array = { if_active = if_v }
-		set_temp_variable = { if_dm_id = if_v }
-		if_attach_dynmod = yes
-		set_variable = { if_opinion^if_v = var:nation_to_copy_from.if_opinion^if_v }
-		set_variable = { if_influence^if_v = var:nation_to_copy_from.if_influence^if_v }
-		set_temp_variable = { if_aff = if_v }
-		multiply_temp_variable = { if_aff = 13 }
-		add_to_temp_variable = { if_aff = global.ip_party_policy_group^ruling_party }
+		array = var:nation_to_copy_from.internal_faction_active
+		value = internal_faction_v
+		add_to_array = { internal_faction_active = internal_faction_v }
+		set_temp_variable = { internal_faction_dm_id = internal_faction_v }
+		internal_faction_attach_dynmod = yes
+		set_variable = { internal_faction_opinion^internal_faction_v = var:nation_to_copy_from.internal_faction_opinion^internal_faction_v }
+		set_variable = { internal_faction_influence^internal_faction_v = var:nation_to_copy_from.internal_faction_influence^internal_faction_v }
+		set_temp_variable = { internal_faction_aff = internal_faction_v }
+		multiply_temp_variable = { internal_faction_aff = 13 }
+		add_to_temp_variable = { internal_faction_aff = global.ip_party_policy_group^ruling_party }
 		if = {
-			limit = { check_variable = { global.if_affinity^if_aff = 1 } }
-			set_variable = { if_opinion^if_v = 100 }
-			subtract_from_variable = { if_opinion^if_v = var:nation_to_copy_from.if_opinion^if_v }
+			limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff = 1 } }
+			set_variable = { internal_faction_opinion^internal_faction_v = 100 }
+			subtract_from_variable = { internal_faction_opinion^internal_faction_v = var:nation_to_copy_from.internal_faction_opinion^internal_faction_v }
 		}
 	}
-	if_apply_modifiers = yes
-	update_if_dirty_variable = yes
+	internal_faction_apply_modifiers = yes
+	update_internal_faction_dirty_variable = yes
 }
 
-# Parameters (set by if_monthly_tick):
-# - if_v: faction id
-# - if_group: policy group of the ruling party
-# - if_mil_term, if_pol_term, if_edu_term, if_soc_term, if_corp_term, if_pop_term: hoisted law terms
-# - if_priv_count, if_crackdown: temp arrays built by if_monthly_tick from if_policies
-if_compute_opinion_target = {
-	set_temp_variable = { if_t = 50 }
+# Parameters (set by internal_faction_monthly_tick):
+# - internal_faction_v: faction id
+# - internal_faction_group: policy group of the ruling party
+# - internal_faction_mil_term, internal_faction_pol_term, internal_faction_edu_term, internal_faction_soc_term, internal_faction_corp_term, internal_faction_pop_term: hoisted law terms
+# - internal_faction_priv_count, internal_faction_crackdown: temp arrays built by internal_faction_monthly_tick from internal_faction_policies
+internal_faction_compute_opinion_target = {
+	set_temp_variable = { internal_faction_t = 50 }
 	if = {
-		limit = { check_variable = { global.if_affinity^if_aff = 1 } }
-		add_to_temp_variable = { if_t = 15 }
+		limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff = 1 } }
+		add_to_temp_variable = { internal_faction_t = 15 }
 	}
 	else_if = {
-		limit = { check_variable = { global.if_affinity^if_aff = -1 } }
-		subtract_from_temp_variable = { if_t = 10 }
+		limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff = -1 } }
+		subtract_from_temp_variable = { internal_faction_t = 10 }
 	}
 	if = {
 		limit = { check_variable = { gov_coalition_array^num > 0 } }
-		set_temp_variable = { if_col = 0 }
+		set_temp_variable = { internal_faction_col = 0 }
 		for_each_loop = {
 			array = gov_coalition_array
-			value = if_party
-			set_temp_variable = { if_aff_col = if_v }
-			multiply_temp_variable = { if_aff_col = 13 }
-			add_to_temp_variable = { if_aff_col = global.ip_party_policy_group^if_party }
+			value = internal_faction_party
+			set_temp_variable = { internal_faction_aff_col = internal_faction_v }
+			multiply_temp_variable = { internal_faction_aff_col = 13 }
+			add_to_temp_variable = { internal_faction_aff_col = global.ip_party_policy_group^internal_faction_party }
 			if = {
-				limit = { check_variable = { global.if_affinity^if_aff_col = 1 } }
-				add_to_temp_variable = { if_col = 15 }
+				limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff_col = 1 } }
+				add_to_temp_variable = { internal_faction_col = 15 }
 			}
 			else_if = {
-				limit = { check_variable = { global.if_affinity^if_aff_col = -1 } }
-				subtract_from_temp_variable = { if_col = 10 }
+				limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff_col = -1 } }
+				subtract_from_temp_variable = { internal_faction_col = 10 }
 			}
 		}
-		divide_temp_variable = { if_col = gov_coalition_array^num }
-		multiply_temp_variable = { if_col = 0.5 }
-		add_to_temp_variable = { if_t = if_col }
+		divide_temp_variable = { internal_faction_col = gov_coalition_array^num }
+		multiply_temp_variable = { internal_faction_col = 0.5 }
+		add_to_temp_variable = { internal_faction_t = internal_faction_col }
 	}
-	set_temp_variable = { if_x = if_priv_count^if_v }
-	multiply_temp_variable = { if_x = 10 }
-	clamp_temp_variable = { var = if_x min = 0 max = 20 }
-	add_to_temp_variable = { if_t = if_x }
+	set_temp_variable = { internal_faction_x = internal_faction_priv_count^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = 10 }
+	clamp_temp_variable = { var = internal_faction_x min = 0 max = 20 }
+	add_to_temp_variable = { internal_faction_t = internal_faction_x }
 	if = {
-		limit = { check_variable = { if_crackdown^if_v = 1 } }
-		subtract_from_temp_variable = { if_t = 15 }
+		limit = { check_variable = { internal_faction_crackdown^internal_faction_v = 1 } }
+		subtract_from_temp_variable = { internal_faction_t = 15 }
 	}
-	set_temp_variable = { if_x = 0 }
+	set_temp_variable = { internal_faction_x = 0 }
 	for_each_loop = {
-		array = if_active
-		value = if_j
+		array = internal_faction_active
+		value = internal_faction_j
 		if = {
 			limit = {
-				NOT = { check_variable = { if_j = if_v } }
-				check_variable = { if_priv_count^if_j > 0 }
+				NOT = { check_variable = { internal_faction_j = internal_faction_v } }
+				check_variable = { internal_faction_priv_count^internal_faction_j > 0 }
 			}
-			set_temp_variable = { if_r = if_v }
-			multiply_temp_variable = { if_r = 24 }
-			add_to_temp_variable = { if_r = if_j }
+			set_temp_variable = { internal_faction_r = internal_faction_v }
+			multiply_temp_variable = { internal_faction_r = 24 }
+			add_to_temp_variable = { internal_faction_r = internal_faction_j }
 			if = {
-				limit = { check_variable = { global.if_rival^if_r = 1 } }
-				set_temp_variable = { if_y = if_priv_count^if_j }
-				multiply_temp_variable = { if_y = 5 }
-				subtract_from_temp_variable = { if_x = if_y }
+				limit = { check_variable = { global.internal_faction_rival^internal_faction_r = 1 } }
+				set_temp_variable = { internal_faction_y = internal_faction_priv_count^internal_faction_j }
+				multiply_temp_variable = { internal_faction_y = 5 }
+				subtract_from_temp_variable = { internal_faction_x = internal_faction_y }
 			}
 		}
 	}
-	clamp_temp_variable = { var = if_x min = -10 max = 0 }
-	add_to_temp_variable = { if_t = if_x }
-	set_temp_variable = { if_law = global.if_pref_military_law^if_v }
-	multiply_temp_variable = { if_law = if_mil_term }
-	set_temp_variable = { if_x = global.if_pref_police_law^if_v }
-	multiply_temp_variable = { if_x = if_pol_term }
-	add_to_temp_variable = { if_law = if_x }
-	set_temp_variable = { if_x = global.if_pref_education_law^if_v }
-	multiply_temp_variable = { if_x = if_edu_term }
-	add_to_temp_variable = { if_law = if_x }
-	set_temp_variable = { if_x = global.if_pref_social_law^if_v }
-	multiply_temp_variable = { if_x = if_soc_term }
-	add_to_temp_variable = { if_law = if_x }
-	set_temp_variable = { if_x = global.if_pref_corporate_tax^if_v }
-	multiply_temp_variable = { if_x = if_corp_term }
-	add_to_temp_variable = { if_law = if_x }
-	set_temp_variable = { if_x = global.if_pref_population_tax^if_v }
-	multiply_temp_variable = { if_x = if_pop_term }
-	add_to_temp_variable = { if_law = if_x }
-	clamp_temp_variable = { var = if_law min = -10 max = 10 }
-	add_to_temp_variable = { if_t = if_law }
-	clamp_temp_variable = { var = if_t min = 5 max = 95 }
-	set_variable = { if_target^if_v = if_t }
+	clamp_temp_variable = { var = internal_faction_x min = -10 max = 0 }
+	add_to_temp_variable = { internal_faction_t = internal_faction_x }
+	set_temp_variable = { internal_faction_law = global.internal_faction_pref_military_law^internal_faction_v }
+	multiply_temp_variable = { internal_faction_law = internal_faction_mil_term }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_police_law^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_pol_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_education_law^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_edu_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_social_law^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_soc_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_corporate_tax^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_corp_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_population_tax^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_pop_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	clamp_temp_variable = { var = internal_faction_law min = -10 max = 10 }
+	add_to_temp_variable = { internal_faction_t = internal_faction_law }
+	clamp_temp_variable = { var = internal_faction_t min = 5 max = 95 }
+	set_variable = { internal_faction_target^internal_faction_v = internal_faction_t }
 }
 
-# Sector driver of faction if_v, 0-30, see the reference doc; K values are provisional until step 9
-if_compute_sector_score = {
+# Sector driver of faction internal_faction_v, 0-30, see the reference doc; K values are provisional until step 9
+internal_faction_compute_sector_score = {
 	if = {
 		limit = {
 			OR = {
-				check_variable = { if_v = 1 }
-				check_variable = { if_v = 4 }
-				check_variable = { if_v = 18 }
-				check_variable = { if_v = 23 }
+				check_variable = { internal_faction_v = 1 }
+				check_variable = { internal_faction_v = 4 }
+				check_variable = { internal_faction_v = 18 }
+				check_variable = { internal_faction_v = 23 }
 			}
 		}
-		set_temp_variable = { if_sector = civil_fac_percent }
-		multiply_temp_variable = { if_sector = @if_k_building_share }
+		set_temp_variable = { internal_faction_sector = civil_fac_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_building_share }
 	}
 	else_if = {
 		limit = {
 			OR = {
-				check_variable = { if_v = 2 }
-				check_variable = { if_v = 22 }
+				check_variable = { internal_faction_v = 2 }
+				check_variable = { internal_faction_v = 22 }
 			}
 		}
-		set_temp_variable = { if_sector = office_fac_percent }
-		multiply_temp_variable = { if_sector = @if_k_building_share }
-		set_temp_variable = { if_x = debt_ratio }
-		multiply_temp_variable = { if_x = @if_k_debt }
-		add_to_temp_variable = { if_sector = if_x }
+		set_temp_variable = { internal_faction_sector = office_fac_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_building_share }
+		set_temp_variable = { internal_faction_x = debt_ratio }
+		multiply_temp_variable = { internal_faction_x = @internal_faction_k_debt }
+		add_to_temp_variable = { internal_faction_sector = internal_faction_x }
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 3 } }
-		set_temp_variable = { if_sector = if_oil_share }
-		multiply_temp_variable = { if_sector = @if_k_heavy_share }
+		limit = { check_variable = { internal_faction_v = 3 } }
+		set_temp_variable = { internal_faction_sector = internal_faction_oil_share }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_heavy_share }
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 5 } }
-		set_temp_variable = { if_sector = civil_fac_percent }
-		multiply_temp_variable = { if_sector = @if_k_building_share }
-		multiply_temp_variable = { if_sector = 0.6 }
+		limit = { check_variable = { internal_faction_v = 5 } }
+		set_temp_variable = { internal_faction_sector = civil_fac_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_building_share }
+		multiply_temp_variable = { internal_faction_sector = 0.6 }
 		if = {
 			limit = {
 				OR = {
@@ -643,190 +643,190 @@ if_compute_sector_score = {
 					has_idea = corruption_level_10
 				}
 			}
-			add_to_temp_variable = { if_sector = 10 }
+			add_to_temp_variable = { internal_faction_sector = 10 }
 		}
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 6 } }
-		set_temp_variable = { if_sector = naval_factory_total_percent }
-		multiply_temp_variable = { if_sector = @if_k_heavy_share }
+		limit = { check_variable = { internal_faction_v = 6 } }
+		set_temp_variable = { internal_faction_sector = naval_factory_total_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_heavy_share }
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 7 } }
-		set_temp_variable = { if_sector = military_law }
-		multiply_temp_variable = { if_sector = 2 }
-		add_to_temp_variable = { if_sector = if_war }
+		limit = { check_variable = { internal_faction_v = 7 } }
+		set_temp_variable = { internal_faction_sector = military_law }
+		multiply_temp_variable = { internal_faction_sector = 2 }
+		add_to_temp_variable = { internal_faction_sector = internal_faction_war }
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 8 } }
-		set_temp_variable = { if_sector = military_factory_total_percent }
-		multiply_temp_variable = { if_sector = @if_k_heavy_share }
+		limit = { check_variable = { internal_faction_v = 8 } }
+		set_temp_variable = { internal_faction_sector = military_factory_total_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_heavy_share }
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 9 } }
-		set_temp_variable = { if_sector = police_law }
-		multiply_temp_variable = { if_sector = 5 }
+		limit = { check_variable = { internal_faction_v = 9 } }
+		set_temp_variable = { internal_faction_sector = police_law }
+		multiply_temp_variable = { internal_faction_sector = 5 }
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 10 } }
-		set_temp_variable = { if_sector = civil_fac_percent }
-		add_to_temp_variable = { if_sector = military_factory_total_percent }
-		multiply_temp_variable = { if_sector = social_law }
-		multiply_temp_variable = { if_sector = @if_k_unions }
+		limit = { check_variable = { internal_faction_v = 10 } }
+		set_temp_variable = { internal_faction_sector = civil_fac_percent }
+		add_to_temp_variable = { internal_faction_sector = military_factory_total_percent }
+		multiply_temp_variable = { internal_faction_sector = social_law }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_unions }
 	}
 	else_if = {
 		limit = {
 			OR = {
-				check_variable = { if_v = 11 }
-				check_variable = { if_v = 12 }
+				check_variable = { internal_faction_v = 11 }
+				check_variable = { internal_faction_v = 12 }
 			}
 		}
-		set_temp_variable = { if_sector = agriculture_district_fac_percent }
-		add_to_temp_variable = { if_sector = agriculture_percent }
-		multiply_temp_variable = { if_sector = @if_k_building_share }
+		set_temp_variable = { internal_faction_sector = agriculture_district_fac_percent }
+		add_to_temp_variable = { internal_faction_sector = agriculture_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_building_share }
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 13 } }
-		set_temp_variable = { if_sector = party_pop_array^4 }
-		add_to_temp_variable = { if_sector = party_pop_array^19 }
-		multiply_temp_variable = { if_sector = @if_k_party_pop }
+		limit = { check_variable = { internal_faction_v = 13 } }
+		set_temp_variable = { internal_faction_sector = party_pop_array^4 }
+		add_to_temp_variable = { internal_faction_sector = party_pop_array^19 }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_party_pop }
 	}
 	else_if = {
 		limit = {
-			check_variable = { if_v > 13 }
-			check_variable = { if_v < 18 }
+			check_variable = { internal_faction_v > 13 }
+			check_variable = { internal_faction_v < 18 }
 		}
-		set_temp_variable = { if_sector = 5 }
-		subtract_from_temp_variable = { if_sector = education_law }
-		multiply_temp_variable = { if_sector = 3 }
-		add_to_temp_variable = { if_sector = 10 }
-		set_temp_variable = { if_x = party_pop_array^8 }
-		add_to_temp_variable = { if_x = party_pop_array^9 }
-		add_to_temp_variable = { if_x = party_pop_array^11 }
-		add_to_temp_variable = { if_x = party_pop_array^12 }
-		multiply_temp_variable = { if_x = @if_k_religious_pop }
-		add_to_temp_variable = { if_sector = if_x }
+		set_temp_variable = { internal_faction_sector = 5 }
+		subtract_from_temp_variable = { internal_faction_sector = education_law }
+		multiply_temp_variable = { internal_faction_sector = 3 }
+		add_to_temp_variable = { internal_faction_sector = 10 }
+		set_temp_variable = { internal_faction_x = party_pop_array^8 }
+		add_to_temp_variable = { internal_faction_x = party_pop_array^9 }
+		add_to_temp_variable = { internal_faction_x = party_pop_array^11 }
+		add_to_temp_variable = { internal_faction_x = party_pop_array^12 }
+		multiply_temp_variable = { internal_faction_x = @internal_faction_k_religious_pop }
+		add_to_temp_variable = { internal_faction_sector = internal_faction_x }
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 19 } }
-		set_temp_variable = { if_sector = 20 }
+		limit = { check_variable = { internal_faction_v = 19 } }
+		set_temp_variable = { internal_faction_sector = 20 }
 	}
 	else_if = {
-		limit = { check_variable = { if_v = 20 } }
-		set_temp_variable = { if_sector = military_law }
-		multiply_temp_variable = { if_sector = 2 }
+		limit = { check_variable = { internal_faction_v = 20 } }
+		set_temp_variable = { internal_faction_sector = military_law }
+		multiply_temp_variable = { internal_faction_sector = 2 }
 	}
 	else = {
-		set_temp_variable = { if_sector = if_war }
+		set_temp_variable = { internal_faction_sector = internal_faction_war }
 	}
-	clamp_temp_variable = { var = if_sector min = 0 max = 30 }
+	clamp_temp_variable = { var = internal_faction_sector min = 0 max = 30 }
 }
 
-# Parameters (set by if_monthly_tick):
-# - if_v: faction id
-# - if_aff: if_v * 13 + ruling policy group
-# - if_oil_share, if_war: hoisted sector inputs
-if_compute_influence_target = {
-	set_temp_variable = { if_t = global.if_base_influence^if_v }
-	if_compute_sector_score = yes
-	add_to_temp_variable = { if_t = if_sector }
-	set_temp_variable = { if_x = if_priv_count^if_v }
-	multiply_temp_variable = { if_x = 10 }
-	clamp_temp_variable = { var = if_x min = 0 max = 20 }
-	add_to_temp_variable = { if_t = if_x }
+# Parameters (set by internal_faction_monthly_tick):
+# - internal_faction_v: faction id
+# - internal_faction_aff: internal_faction_v * 13 + ruling policy group
+# - internal_faction_oil_share, internal_faction_war: hoisted sector inputs
+internal_faction_compute_influence_target = {
+	set_temp_variable = { internal_faction_t = global.internal_faction_base_influence^internal_faction_v }
+	internal_faction_compute_sector_score = yes
+	add_to_temp_variable = { internal_faction_t = internal_faction_sector }
+	set_temp_variable = { internal_faction_x = internal_faction_priv_count^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = 10 }
+	clamp_temp_variable = { var = internal_faction_x min = 0 max = 20 }
+	add_to_temp_variable = { internal_faction_t = internal_faction_x }
 	if = {
-		limit = { check_variable = { if_crackdown^if_v = 1 } }
-		subtract_from_temp_variable = { if_t = 20 }
+		limit = { check_variable = { internal_faction_crackdown^internal_faction_v = 1 } }
+		subtract_from_temp_variable = { internal_faction_t = 20 }
 	}
 	if = {
-		limit = { check_variable = { global.if_affinity^if_aff = 1 } }
-		add_to_temp_variable = { if_t = 10 }
+		limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff = 1 } }
+		add_to_temp_variable = { internal_faction_t = 10 }
 	}
-	clamp_temp_variable = { var = if_t min = 5 max = 100 }
-	set_variable = { if_inf_target^if_v = if_t }
+	clamp_temp_variable = { var = internal_faction_t min = 5 max = 100 }
+	set_variable = { internal_faction_inf_target^internal_faction_v = internal_faction_t }
 }
 
-# Monthly: recompute targets for every active faction, drift opinion (global.if_drift_rate) and influence toward them, tick cooldowns, run the AI routine
-if_monthly_tick = {
+# Monthly: recompute targets for every active faction, drift opinion (global.internal_faction_drift_rate) and influence toward them, tick cooldowns, run the AI routine
+internal_faction_monthly_tick = {
 	if = {
-		limit = { check_variable = { if_active^num > 0 } }
-		if_init_arrays = yes
-		set_temp_variable = { if_group = global.ip_party_policy_group^ruling_party }
-		set_temp_variable = { if_mil_term = military_law }
-		subtract_from_temp_variable = { if_mil_term = 5 }
-		set_temp_variable = { if_pol_term = police_law }
-		subtract_from_temp_variable = { if_pol_term = 3 }
-		multiply_temp_variable = { if_pol_term = 2 }
-		set_temp_variable = { if_edu_term = education_law }
-		subtract_from_temp_variable = { if_edu_term = 3 }
-		multiply_temp_variable = { if_edu_term = 2 }
-		set_temp_variable = { if_soc_term = social_law }
-		subtract_from_temp_variable = { if_soc_term = 3 }
-		multiply_temp_variable = { if_soc_term = 2 }
-		set_temp_variable = { if_corp_term = corporate_tax_rate }
-		subtract_from_temp_variable = { if_corp_term = 25 }
-		multiply_temp_variable = { if_corp_term = 0.2 }
-		set_temp_variable = { if_pop_term = population_tax_rate }
-		subtract_from_temp_variable = { if_pop_term = 25 }
-		multiply_temp_variable = { if_pop_term = 0.2 }
-		set_temp_variable = { if_oil_share = 0 }
+		limit = { check_variable = { internal_faction_active^num > 0 } }
+		internal_faction_init_arrays = yes
+		set_temp_variable = { internal_faction_group = global.ip_party_policy_group^ruling_party }
+		set_temp_variable = { internal_faction_mil_term = military_law }
+		subtract_from_temp_variable = { internal_faction_mil_term = 5 }
+		set_temp_variable = { internal_faction_pol_term = police_law }
+		subtract_from_temp_variable = { internal_faction_pol_term = 3 }
+		multiply_temp_variable = { internal_faction_pol_term = 2 }
+		set_temp_variable = { internal_faction_edu_term = education_law }
+		subtract_from_temp_variable = { internal_faction_edu_term = 3 }
+		multiply_temp_variable = { internal_faction_edu_term = 2 }
+		set_temp_variable = { internal_faction_soc_term = social_law }
+		subtract_from_temp_variable = { internal_faction_soc_term = 3 }
+		multiply_temp_variable = { internal_faction_soc_term = 2 }
+		set_temp_variable = { internal_faction_corp_term = corporate_tax_rate }
+		subtract_from_temp_variable = { internal_faction_corp_term = 25 }
+		multiply_temp_variable = { internal_faction_corp_term = 0.2 }
+		set_temp_variable = { internal_faction_pop_term = population_tax_rate }
+		subtract_from_temp_variable = { internal_faction_pop_term = 25 }
+		multiply_temp_variable = { internal_faction_pop_term = 0.2 }
+		set_temp_variable = { internal_faction_oil_share = 0 }
 		if = {
 			limit = { check_variable = { gdp_total > 0 } }
-			set_temp_variable = { if_oil_share = oil_exports }
-			divide_temp_variable = { if_oil_share = gdp_total }
+			set_temp_variable = { internal_faction_oil_share = oil_exports }
+			divide_temp_variable = { internal_faction_oil_share = gdp_total }
 		}
-		set_temp_variable = { if_war = 0 }
+		set_temp_variable = { internal_faction_war = 0 }
 		if = {
 			limit = { has_war = yes }
-			set_temp_variable = { if_war = 10 }
+			set_temp_variable = { internal_faction_war = 10 }
 		}
-		resize_temp_array = { array = if_priv_count size = 24 }
-		resize_temp_array = { array = if_crackdown size = 24 }
+		resize_temp_array = { array = internal_faction_priv_count size = 24 }
+		resize_temp_array = { array = internal_faction_crackdown size = 24 }
 		for_each_loop = {
-			array = if_policies
-			value = if_p
-			set_temp_variable = { if_pf = global.if_policy_faction^if_p }
+			array = internal_faction_policies
+			value = internal_faction_p
+			set_temp_variable = { internal_faction_pf = global.internal_faction_policy_faction^internal_faction_p }
 			if = {
-				limit = { check_variable = { global.if_policy_kind^if_p = 1 } }
-				add_to_temp_variable = { if_priv_count^if_pf = 1 }
+				limit = { check_variable = { global.internal_faction_policy_kind^internal_faction_p = 1 } }
+				add_to_temp_variable = { internal_faction_priv_count^internal_faction_pf = 1 }
 			}
 			else = {
-				set_temp_variable = { if_crackdown^if_pf = 1 }
+				set_temp_variable = { internal_faction_crackdown^internal_faction_pf = 1 }
 			}
 		}
 		for_each_loop = {
-			array = if_active
-			value = if_v
-			set_temp_variable = { if_aff = if_v }
-			multiply_temp_variable = { if_aff = 13 }
-			add_to_temp_variable = { if_aff = if_group }
-			if_compute_opinion_target = yes
-			if_compute_influence_target = yes
-			set_temp_variable = { if_d = if_target^if_v }
-			subtract_from_temp_variable = { if_d = if_opinion^if_v }
-			multiply_temp_variable = { if_d = global.if_drift_rate }
-			add_to_variable = { if_opinion^if_v = if_d }
-			clamp_variable = { var = if_opinion^if_v min = 0 max = 100 }
-			set_temp_variable = { if_d = if_inf_target^if_v }
-			subtract_from_temp_variable = { if_d = if_influence^if_v }
-			multiply_temp_variable = { if_d = @if_influence_drift_rate }
-			add_to_variable = { if_influence^if_v = if_d }
-			clamp_variable = { var = if_influence^if_v min = 0 max = 100 }
+			array = internal_faction_active
+			value = internal_faction_v
+			set_temp_variable = { internal_faction_aff = internal_faction_v }
+			multiply_temp_variable = { internal_faction_aff = 13 }
+			add_to_temp_variable = { internal_faction_aff = internal_faction_group }
+			internal_faction_compute_opinion_target = yes
+			internal_faction_compute_influence_target = yes
+			set_temp_variable = { internal_faction_d = internal_faction_target^internal_faction_v }
+			subtract_from_temp_variable = { internal_faction_d = internal_faction_opinion^internal_faction_v }
+			multiply_temp_variable = { internal_faction_d = global.internal_faction_drift_rate }
+			add_to_variable = { internal_faction_opinion^internal_faction_v = internal_faction_d }
+			clamp_variable = { var = internal_faction_opinion^internal_faction_v min = 0 max = 100 }
+			set_temp_variable = { internal_faction_d = internal_faction_inf_target^internal_faction_v }
+			subtract_from_temp_variable = { internal_faction_d = internal_faction_influence^internal_faction_v }
+			multiply_temp_variable = { internal_faction_d = @internal_faction_influence_drift_rate }
+			add_to_variable = { internal_faction_influence^internal_faction_v = internal_faction_d }
+			clamp_variable = { var = internal_faction_influence^internal_faction_v min = 0 max = 100 }
 			if = {
-				limit = { check_variable = { if_policy_cooldown^if_v > 0 } }
-				subtract_from_variable = { if_policy_cooldown^if_v = 1 }
+				limit = { check_variable = { internal_faction_policy_cooldown^internal_faction_v > 0 } }
+				subtract_from_variable = { internal_faction_policy_cooldown^internal_faction_v = 1 }
 			}
 			if = {
-				limit = { check_variable = { if_swap_cooldown^if_v > 0 } }
-				subtract_from_variable = { if_swap_cooldown^if_v = 1 }
+				limit = { check_variable = { internal_faction_swap_cooldown^internal_faction_v > 0 } }
+				subtract_from_variable = { internal_faction_swap_cooldown^internal_faction_v = 1 }
 			}
 		}
-		if_party_push = yes
-		if_apply_modifiers = yes
+		internal_faction_party_push = yes
+		internal_faction_apply_modifiers = yes
 		if = {
 			limit = { is_ai = yes }
-			if_ai_monthly = yes
+			internal_faction_ai_monthly = yes
 		}
-		update_if_dirty_variable = yes
+		update_internal_faction_dirty_variable = yes
 	}
 }

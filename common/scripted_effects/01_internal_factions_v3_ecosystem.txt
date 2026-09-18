@@ -1,44 +1,44 @@
 # Internal factions v3 ecosystem hooks (parties, elections, laws, protests), see .claude/docs/internal-factions-reference.md
-@if_push_max = 0.001
-@if_push_gate = 20
-@if_law_shock = 2
-@if_tax_shock = 0.5
-@if_desire_weight = 0.5
+@internal_faction_push_max = 0.001
+@internal_faction_push_gate = 20
+@internal_faction_law_shock = 2
+@internal_faction_tax_shock = 0.5
+@internal_faction_desire_weight = 0.5
 
 # Parameters:
-# - if_id: faction id 1-23
-if_influence_scale = {
-	set_temp_variable = { if_scale = 1 }
+# - internal_faction_id: faction id 1-23
+internal_faction_influence_scale = {
+	set_temp_variable = { internal_faction_scale = 1 }
 	if = {
-		limit = { if_influence_marginal = yes }
-		set_temp_variable = { if_scale = 0.5 }
+		limit = { internal_faction_influence_marginal = yes }
+		set_temp_variable = { internal_faction_scale = 0.5 }
 	}
 	else_if = {
-		limit = { if_influence_powerful = yes }
-		set_temp_variable = { if_scale = 1.5 }
+		limit = { internal_faction_influence_powerful = yes }
+		set_temp_variable = { internal_faction_scale = 1.5 }
 	}
 }
 
-# Runs from if_monthly_tick, after the per-faction drift loop
-if_party_push = {
+# Runs from internal_faction_monthly_tick, after the per-faction drift loop
+internal_faction_party_push = {
 	for_each_loop = {
-		array = if_active
-		value = if_v
-		set_temp_variable = { if_id = if_v }
+		array = internal_faction_active
+		value = internal_faction_v
+		set_temp_variable = { internal_faction_id = internal_faction_v }
 		if = {
-			limit = { NOT = { if_influence_marginal = yes } }
-			set_temp_variable = { if_push = 50 }
-			add_to_temp_variable = { if_push = @if_push_gate }
+			limit = { NOT = { internal_faction_influence_marginal = yes } }
+			set_temp_variable = { internal_faction_push = 50 }
+			add_to_temp_variable = { internal_faction_push = @internal_faction_push_gate }
 			if = {
-				limit = { check_variable = { var = if_opinion^if_v value = if_push compare = greater_than } }
-				if_party_push_faction = yes
+				limit = { check_variable = { var = internal_faction_opinion^internal_faction_v value = internal_faction_push compare = greater_than } }
+				internal_faction_party_push_faction = yes
 			}
 			else = {
-				set_temp_variable = { if_push = 50 }
-				subtract_from_temp_variable = { if_push = @if_push_gate }
+				set_temp_variable = { internal_faction_push = 50 }
+				subtract_from_temp_variable = { internal_faction_push = @internal_faction_push_gate }
 				if = {
-					limit = { check_variable = { var = if_opinion^if_v value = if_push compare = less_than } }
-					if_party_push_faction = yes
+					limit = { check_variable = { var = internal_faction_opinion^internal_faction_v value = internal_faction_push compare = less_than } }
+					internal_faction_party_push_faction = yes
 				}
 			}
 		}
@@ -46,50 +46,50 @@ if_party_push = {
 }
 
 # Parameters:
-# - if_v: faction id, already polarised and non-marginal; opponents (opinion below 50) never push the ruling party
-if_party_push_faction = {
-	set_temp_variable = { if_push = if_influence^if_v }
-	multiply_temp_variable = { if_push = @if_push_max }
-	divide_temp_variable = { if_push = 100 }
+# - internal_faction_v: faction id, already polarised and non-marginal; opponents (opinion below 50) never push the ruling party
+internal_faction_party_push_faction = {
+	set_temp_variable = { internal_faction_push = internal_faction_influence^internal_faction_v }
+	multiply_temp_variable = { internal_faction_push = @internal_faction_push_max }
+	divide_temp_variable = { internal_faction_push = 100 }
 	if = {
 		limit = {
 			OR = {
-				AND = { check_variable = { if_v = 14 } is_in_array = { array = if_policies value = 54 } }
-				AND = { check_variable = { if_v = 15 } is_in_array = { array = if_policies value = 58 } }
-				AND = { check_variable = { if_v = 16 } is_in_array = { array = if_policies value = 62 } }
+				AND = { check_variable = { internal_faction_v = 14 } is_in_array = { array = internal_faction_policies value = 54 } }
+				AND = { check_variable = { internal_faction_v = 15 } is_in_array = { array = internal_faction_policies value = 58 } }
+				AND = { check_variable = { internal_faction_v = 16 } is_in_array = { array = internal_faction_policies value = 62 } }
 			}
 		}
-		multiply_temp_variable = { if_push = 2 }
+		multiply_temp_variable = { internal_faction_push = 2 }
 	}
-	set_temp_variable = { if_best = -1 }
-	set_temp_variable = { if_best_pop = 0 }
+	set_temp_variable = { internal_faction_best = -1 }
+	set_temp_variable = { internal_faction_best_pop = 0 }
 	for_loop_effect = {
 		end = party_pop_array^num
-		value = if_pi
-		set_temp_variable = { if_a = if_v }
-		multiply_temp_variable = { if_a = 13 }
-		add_to_temp_variable = { if_a = global.ip_party_policy_group^if_pi }
+		value = internal_faction_pi
+		set_temp_variable = { internal_faction_a = internal_faction_v }
+		multiply_temp_variable = { internal_faction_a = 13 }
+		add_to_temp_variable = { internal_faction_a = global.ip_party_policy_group^internal_faction_pi }
 		if = {
 			limit = {
-				check_variable = { global.if_affinity^if_a = 1 }
+				check_variable = { global.internal_faction_affinity^internal_faction_a = 1 }
 				OR = {
-					check_variable = { if_opinion^if_v > 50 }
-					NOT = { check_variable = { if_pi = ruling_party } }
+					check_variable = { internal_faction_opinion^internal_faction_v > 50 }
+					NOT = { check_variable = { internal_faction_pi = ruling_party } }
 				}
 				OR = {
-					check_variable = { if_best = -1 }
-					check_variable = { party_pop_array^if_pi > if_best_pop }
+					check_variable = { internal_faction_best = -1 }
+					check_variable = { party_pop_array^internal_faction_pi > internal_faction_best_pop }
 				}
 			}
-			set_temp_variable = { if_best = if_pi }
-			set_temp_variable = { if_best_pop = party_pop_array^if_pi }
+			set_temp_variable = { internal_faction_best = internal_faction_pi }
+			set_temp_variable = { internal_faction_best_pop = party_pop_array^internal_faction_pi }
 		}
 	}
 	if = {
-		limit = { check_variable = { var = if_best value = 0 compare = greater_than_or_equals } }
-		set_temp_variable = { party_index = if_best }
-		set_temp_variable = { party_popularity_increase = if_push }
-		set_temp_variable = { temp_outlook_increase = if_push }
+		limit = { check_variable = { var = internal_faction_best value = 0 compare = greater_than_or_equals } }
+		set_temp_variable = { party_index = internal_faction_best }
+		set_temp_variable = { party_popularity_increase = internal_faction_push }
+		set_temp_variable = { temp_outlook_increase = internal_faction_push }
 		change_relative_party_popularity = yes
 	}
 }
@@ -97,125 +97,125 @@ if_party_push_faction = {
 # Parameters:
 # - law_kind: 1 military, 2 police, 3 education, 4 social, 5 corporate tax, 6 population tax
 # - law_delta: signed change in the law's step, or in the tax rate's percentage points
-if_react_to_law = {
+internal_faction_react_to_law = {
 	if = {
 		limit = {
 			NOT = { check_variable = { law_delta = 0 } }
-			check_variable = { if_active^num > 0 }
+			check_variable = { internal_faction_active^num > 0 }
 		}
 		for_each_loop = {
-			array = if_active
-			value = if_v
+			array = internal_faction_active
+			value = internal_faction_v
 			if = {
 				limit = { check_variable = { law_kind = 1 } }
-				set_temp_variable = { if_react = global.if_pref_military_law^if_v }
+				set_temp_variable = { internal_faction_react = global.internal_faction_pref_military_law^internal_faction_v }
 			}
 			else_if = {
 				limit = { check_variable = { law_kind = 2 } }
-				set_temp_variable = { if_react = global.if_pref_police_law^if_v }
+				set_temp_variable = { internal_faction_react = global.internal_faction_pref_police_law^internal_faction_v }
 			}
 			else_if = {
 				limit = { check_variable = { law_kind = 3 } }
-				set_temp_variable = { if_react = global.if_pref_education_law^if_v }
+				set_temp_variable = { internal_faction_react = global.internal_faction_pref_education_law^internal_faction_v }
 			}
 			else_if = {
 				limit = { check_variable = { law_kind = 4 } }
-				set_temp_variable = { if_react = global.if_pref_social_law^if_v }
+				set_temp_variable = { internal_faction_react = global.internal_faction_pref_social_law^internal_faction_v }
 			}
 			else_if = {
 				limit = { check_variable = { law_kind = 5 } }
-				set_temp_variable = { if_react = global.if_pref_corporate_tax^if_v }
+				set_temp_variable = { internal_faction_react = global.internal_faction_pref_corporate_tax^internal_faction_v }
 			}
 			else = {
-				set_temp_variable = { if_react = global.if_pref_population_tax^if_v }
+				set_temp_variable = { internal_faction_react = global.internal_faction_pref_population_tax^internal_faction_v }
 			}
-			multiply_temp_variable = { if_react = law_delta }
+			multiply_temp_variable = { internal_faction_react = law_delta }
 			if = {
 				limit = { check_variable = { law_kind < 5 } }
-				multiply_temp_variable = { if_react = @if_law_shock }
+				multiply_temp_variable = { internal_faction_react = @internal_faction_law_shock }
 			}
 			else = {
-				multiply_temp_variable = { if_react = @if_tax_shock }
+				multiply_temp_variable = { internal_faction_react = @internal_faction_tax_shock }
 			}
 			if = {
-				limit = { NOT = { check_variable = { if_react = 0 } } }
-				custom_effect_tooltip = if_react_tt
-				set_temp_variable = { if_id = if_v }
-				set_temp_variable = { temp_opinion = if_react }
-				if_change_opinion = yes
+				limit = { NOT = { check_variable = { internal_faction_react = 0 } } }
+				custom_effect_tooltip = internal_faction_react_tt
+				set_temp_variable = { internal_faction_id = internal_faction_v }
+				set_temp_variable = { temp_opinion = internal_faction_react }
+				internal_faction_change_opinion = yes
 			}
 		}
 	}
 }
 
-# Writes if_desire_military/police/education/social, read by calculate_expected_*_spending
-if_compute_law_desires = {
-	set_variable = { if_desire_military = 0 }
-	set_variable = { if_desire_police = 0 }
-	set_variable = { if_desire_education = 0 }
-	set_variable = { if_desire_social = 0 }
+# Writes internal_faction_desire_military/police/education/social, read by calculate_expected_*_spending
+internal_faction_compute_law_desires = {
+	set_variable = { internal_faction_desire_military = 0 }
+	set_variable = { internal_faction_desire_police = 0 }
+	set_variable = { internal_faction_desire_education = 0 }
+	set_variable = { internal_faction_desire_social = 0 }
 	for_each_loop = {
-		array = if_active
-		value = if_v
-		set_temp_variable = { if_a = if_v }
-		multiply_temp_variable = { if_a = 13 }
-		add_to_temp_variable = { if_a = global.ip_party_policy_group^ruling_party }
+		array = internal_faction_active
+		value = internal_faction_v
+		set_temp_variable = { internal_faction_a = internal_faction_v }
+		multiply_temp_variable = { internal_faction_a = 13 }
+		add_to_temp_variable = { internal_faction_a = global.ip_party_policy_group^ruling_party }
 		if = {
-			limit = { check_variable = { global.if_affinity^if_a = 1 } }
-			set_temp_variable = { if_id = if_v }
-			if_influence_scale = yes
-			set_temp_variable = { if_react = global.if_pref_military_law^if_v }
-			multiply_temp_variable = { if_react = if_scale }
-			multiply_temp_variable = { if_react = @if_desire_weight }
-			add_to_variable = { if_desire_military = if_react }
-			set_temp_variable = { if_react = global.if_pref_police_law^if_v }
-			multiply_temp_variable = { if_react = if_scale }
-			multiply_temp_variable = { if_react = @if_desire_weight }
-			add_to_variable = { if_desire_police = if_react }
-			set_temp_variable = { if_react = global.if_pref_education_law^if_v }
-			multiply_temp_variable = { if_react = if_scale }
-			multiply_temp_variable = { if_react = @if_desire_weight }
-			add_to_variable = { if_desire_education = if_react }
-			set_temp_variable = { if_react = global.if_pref_social_law^if_v }
-			multiply_temp_variable = { if_react = if_scale }
-			multiply_temp_variable = { if_react = @if_desire_weight }
-			add_to_variable = { if_desire_social = if_react }
+			limit = { check_variable = { global.internal_faction_affinity^internal_faction_a = 1 } }
+			set_temp_variable = { internal_faction_id = internal_faction_v }
+			internal_faction_influence_scale = yes
+			set_temp_variable = { internal_faction_react = global.internal_faction_pref_military_law^internal_faction_v }
+			multiply_temp_variable = { internal_faction_react = internal_faction_scale }
+			multiply_temp_variable = { internal_faction_react = @internal_faction_desire_weight }
+			add_to_variable = { internal_faction_desire_military = internal_faction_react }
+			set_temp_variable = { internal_faction_react = global.internal_faction_pref_police_law^internal_faction_v }
+			multiply_temp_variable = { internal_faction_react = internal_faction_scale }
+			multiply_temp_variable = { internal_faction_react = @internal_faction_desire_weight }
+			add_to_variable = { internal_faction_desire_police = internal_faction_react }
+			set_temp_variable = { internal_faction_react = global.internal_faction_pref_education_law^internal_faction_v }
+			multiply_temp_variable = { internal_faction_react = internal_faction_scale }
+			multiply_temp_variable = { internal_faction_react = @internal_faction_desire_weight }
+			add_to_variable = { internal_faction_desire_education = internal_faction_react }
+			set_temp_variable = { internal_faction_react = global.internal_faction_pref_social_law^internal_faction_v }
+			multiply_temp_variable = { internal_faction_react = internal_faction_scale }
+			multiply_temp_variable = { internal_faction_react = @internal_faction_desire_weight }
+			add_to_variable = { internal_faction_desire_social = internal_faction_react }
 		}
 	}
-	clamp_variable = { var = if_desire_military min = -1 max = 1 }
-	clamp_variable = { var = if_desire_police min = -1 max = 1 }
-	clamp_variable = { var = if_desire_education min = -1 max = 1 }
-	clamp_variable = { var = if_desire_social min = -1 max = 1 }
+	clamp_variable = { var = internal_faction_desire_military min = -1 max = 1 }
+	clamp_variable = { var = internal_faction_desire_police min = -1 max = 1 }
+	clamp_variable = { var = internal_faction_desire_education min = -1 max = 1 }
+	clamp_variable = { var = internal_faction_desire_social min = -1 max = 1 }
 }
 
-# Sets temp if_protest, deterministic, no writes
-if_compute_protest_drift = {
-	set_temp_variable = { if_protest = 0 }
+# Sets temp internal_faction_protest, deterministic, no writes
+internal_faction_compute_protest_drift = {
+	set_temp_variable = { internal_faction_protest = 0 }
 	for_each_loop = {
-		array = if_active
-		value = if_v
-		set_temp_variable = { if_id = if_v }
-		set_temp_variable = { if_react = 0 }
+		array = internal_faction_active
+		value = internal_faction_v
+		set_temp_variable = { internal_faction_id = internal_faction_v }
+		set_temp_variable = { internal_faction_react = 0 }
 		if = {
-			limit = { if_tier_hostile = yes }
-			set_temp_variable = { if_react = if_influence^if_v }
-			divide_temp_variable = { if_react = 25 }
+			limit = { internal_faction_tier_hostile = yes }
+			set_temp_variable = { internal_faction_react = internal_faction_influence^internal_faction_v }
+			divide_temp_variable = { internal_faction_react = 25 }
 		}
 		else_if = {
 			limit = {
-				if_tier_negative = yes
-				if_influence_powerful = yes
+				internal_faction_tier_negative = yes
+				internal_faction_influence_powerful = yes
 			}
-			set_temp_variable = { if_react = 1 }
+			set_temp_variable = { internal_faction_react = 1 }
 		}
 		if = {
-			limit = { check_variable = { global.if_category^if_v = 3 } }
-			multiply_temp_variable = { if_react = 2 }
+			limit = { check_variable = { global.internal_faction_category^internal_faction_v = 3 } }
+			multiply_temp_variable = { internal_faction_react = 2 }
 		}
-		add_to_temp_variable = { if_protest = if_react }
+		add_to_temp_variable = { internal_faction_protest = internal_faction_react }
 	}
 	if = {
-		limit = { is_in_array = { array = if_policies value = 40 } }
-		add_to_temp_variable = { if_protest = 1 }
+		limit = { is_in_array = { array = internal_faction_policies value = 40 } }
+		add_to_temp_variable = { internal_faction_protest = 1 }
 	}
 }

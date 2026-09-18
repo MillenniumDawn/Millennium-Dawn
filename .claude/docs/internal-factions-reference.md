@@ -64,7 +64,7 @@ Policy groups come from `global.ip_party_policy_group`
 (`00_startup_effects.txt:75-104`): 1 communist, 2 socialist, 3 green,
 4 conservative, 5 religious conservative, 6 liberal, 7 autocrat, 8 oligarch,
 9 fascist, 10 monarchist, 11 emerging fundamentalist, 12 salafist. Lookup:
-`global.if_affinity^(id * 13 + global.ip_party_policy_group^ruling_party)`.
+`global.internal_faction_affinity^(id * 13 + global.ip_party_policy_group^ruling_party)`.
 
 | id  | faction            | backs (+1)  | opposes (-1)          |
 | --- | ------------------ | ----------- | --------------------- |
@@ -140,28 +140,28 @@ provisional and get tuned in step 9. Shares are the existing GDP-share vars
 set in `00_money_system.txt:6040+` (`civil_fac_percent`, `office_fac_percent`,
 `naval_factory_total_percent`, `military_factory_total_percent`,
 `agriculture_district_fac_percent`, `agriculture_percent`), `debt_ratio`
-(`:2584`), and `oil_exports / gdp_total`. K constants: `@if_k_building_share`
-100, `@if_k_heavy_share` 300, `@if_k_debt` 10, `@if_k_unions` 15,
-`@if_k_party_pop` 30, `@if_k_religious_pop` 20.
+(`:2584`), and `oil_exports / gdp_total`. K constants: `@internal_faction_k_building_share`
+100, `@internal_faction_k_heavy_share` 300, `@internal_faction_k_debt` 10, `@internal_faction_k_unions` 15,
+`@internal_faction_k_party_pop` 30, `@internal_faction_k_religious_pop` 20.
 
-- 1, 4, 18, 23: `civil_fac_percent` x `@if_k_building_share`
-- 2, 22: `office_fac_percent` x `@if_k_building_share` + `debt_ratio` x
-  `@if_k_debt`
-- 3: `oil_exports` / `gdp_total` x `@if_k_heavy_share`
-- 5: oligarchs, `civil_fac_percent` x `@if_k_building_share` x 0.6, +10 under
+- 1, 4, 18, 23: `civil_fac_percent` x `@internal_faction_k_building_share`
+- 2, 22: `office_fac_percent` x `@internal_faction_k_building_share` + `debt_ratio` x
+  `@internal_faction_k_debt`
+- 3: `oil_exports` / `gdp_total` x `@internal_faction_k_heavy_share`
+- 5: oligarchs, `civil_fac_percent` x `@internal_faction_k_building_share` x 0.6, +10 under
   `corruption_level_04` and above
-- 6: `naval_factory_total_percent` x `@if_k_heavy_share`
+- 6: `naval_factory_total_percent` x `@internal_faction_k_heavy_share`
 - 7: `military_law` x 2, plus 10 if `has_war = yes`
-- 8: `military_factory_total_percent` x `@if_k_heavy_share`
+- 8: `military_factory_total_percent` x `@internal_faction_k_heavy_share`
 - 9: `police_law` x 5
 - 10: (`civil_fac_percent` + `military_factory_total_percent`) x
-  `social_law` x `@if_k_unions`
+  `social_law` x `@internal_faction_k_unions`
 - 11, 12: (`agriculture_district_fac_percent` + `agriculture_percent`) x
-  `@if_k_building_share`
+  `@internal_faction_k_building_share`
 - 13: communist, (`party_pop_array^4` + `party_pop_array^19`) x
-  `@if_k_party_pop` (party indices 4 and 19 are the communist parties)
+  `@internal_faction_k_party_pop` (party indices 4 and 19 are the communist parties)
 - 14-17: religious, 10 + (5 - `education_law`) x 3 + (`party_pop_array^8` +
-  `^9` + `^11` + `^12`) x `@if_k_religious_pop` (party indices 8, 9, 11, 12
+  `^9` + `^11` + `^12`) x `@internal_faction_k_religious_pop` (party indices 8, 9, 11, 12
   are the religious parties)
 - 19: fixed 20
 - 20: `military_law` x 2
@@ -170,8 +170,8 @@ set in `00_money_system.txt:6040+` (`civil_fac_percent`, `office_fac_percent`,
 ## Policies (table D)
 
 Policy id `p = (id - 1) * 4 + k`: k 1-3 is a privilege, k 4 is the crackdown.
-`global.if_policy_faction^p` and `global.if_policy_kind^p` (1 privilege,
-2 crackdown) hold the reverse map. Loc keys are `if_policy_<slug>` and
+`global.internal_faction_policy_faction^p` and `global.internal_faction_policy_kind^p` (1 privilege,
+2 crackdown) hold the reverse map. Loc keys are `internal_faction_policy_<slug>` and
 `_desc` (step 5). Effects are vars written into the faction's dynamic
 modifier block (step 4); the values below are the full effect at 100%
 strength. Costs follow epic 1.6. `(md)` marks a key defined in
@@ -253,7 +253,7 @@ strength. Costs follow epic 1.6. `(md)` marks a key defined in
 - `military_promotion_autonomy` P: experience_gain_army_factor +0.05,
   political_power_factor -0.03
 - `military_political_commissars` C: army_org_factor -0.05,
-  drift_defence_factor +0.10; mutator: `if_coup_plot` frozen (step 7)
+  drift_defence_factor +0.10; mutator: `internal_faction_coup_plot` frozen (step 7)
 
 **8 defense industry**
 
@@ -447,22 +447,22 @@ removed at step 11.
 
 ## Per-country state and tiers
 
-| array / var                        | range         | meaning                                      |
-| ---------------------------------- | ------------- | -------------------------------------------- |
-| `if_active`                        | exactly 4 ids | presence and display order                   |
-| `if_opinion^id`                    | 0-100         | replaces `<f>_opinion`, 50 neutral           |
-| `if_influence^id`                  | 0-100         | clout                                        |
-| `if_target^id`, `if_inf_target^id` | 0-100         | last computed targets                        |
-| `if_policies`                      | policy ids    | active privileges and crackdowns             |
-| `if_policy_cooldown^id`            | months, 0-12  | since the last policy change on that faction |
-| `if_swap_cooldown^id`              | months, 0-24  | since the faction was brought in by a swap   |
-| `if_coup_plot`                     | 0-100         | coup accumulator (step 7)                    |
+| array / var                                                    | range         | meaning                                      |
+| -------------------------------------------------------------- | ------------- | -------------------------------------------- |
+| `internal_faction_active`                                      | exactly 4 ids | presence and display order                   |
+| `internal_faction_opinion^id`                                  | 0-100         | replaces `<f>_opinion`, 50 neutral           |
+| `internal_faction_influence^id`                                | 0-100         | clout                                        |
+| `internal_faction_target^id`, `internal_faction_inf_target^id` | 0-100         | last computed targets                        |
+| `internal_faction_policies`                                    | policy ids    | active privileges and crackdowns             |
+| `internal_faction_policy_cooldown^id`                          | months, 0-12  | since the last policy change on that faction |
+| `internal_faction_swap_cooldown^id`                            | months, 0-24  | since the faction was brought in by a swap   |
+| `internal_faction_coup_plot`                                   | 0-100         | coup accumulator (step 7)                    |
 
-`if_swap_from` (faction id being replaced) and `if_swap_candidates` (array of
+`internal_faction_swap_from` (faction id being replaced) and `internal_faction_swap_candidates` (array of
 available inactive faction ids) are GUI-only state, rebuilt each time the swap
 window opens.
 
-Test presence with `is_in_array = { if_active = 7 }`.
+Test presence with `is_in_array = { internal_faction_active = 7 }`.
 
 Opinion tiers: hostile below 20, negative 20-39, indifferent 40-59, positive
 60-79, enthusiastic 80 and up.
@@ -472,7 +472,7 @@ scaling the influence-driven effects at 0.5 / 1.0 / 1.5. Marginal factions
 can be swapped out.
 
 The old tier triggers overlap at 60 and 40 (`00_internal_factions_trigger.txt`);
-the new `if_tier_*` triggers use the clean bands above.
+the new `internal_faction_tier_*` triggers use the clean bands above.
 
 ## Opinion target formula
 
@@ -488,22 +488,22 @@ target = 50
                            a group this one backs, cap -10
        + law term          table C, clamp -10..+10
 clamp 5..95
-opinion += (target - opinion) * global.if_drift_rate
+opinion += (target - opinion) * global.internal_faction_drift_rate
 ```
 
-`global.if_drift_rate` is set from `rule_internal_faction_tick_amount`,
+`global.internal_faction_drift_rate` is set from `rule_internal_faction_tick_amount`,
 ordinal: point_00 0, point_10 0.05, point_25 0.10, point_50 0.15, point_75
 0.20. The rule's default option is point_50, so the drift rate defaults to
 0.15 until the rule loc is relabelled in step 11. Focus, event, and decision
 changes stay immediate shocks on top of the drift.
 
 Privilege, crackdown and rival-privilege terms are added to
-`if_compute_opinion_target` / `if_compute_influence_target` in step 5
-(#4267) from the `if_priv_count` / `if_crackdown` temp arrays that
-`if_monthly_tick` builds from `if_policies` each tick; influence drifts at
-`@if_influence_drift_rate` = 0.10 regardless of the rule. The rival term reads
-`global.if_rival`, a matrix computed once in `setup_global_arrays`:
-`global.if_rival^(v * 24 + j)` is 1 when faction `j` holds a privilege that
+`internal_faction_compute_opinion_target` / `internal_faction_compute_influence_target` in step 5
+(#4267) from the `internal_faction_priv_count` / `internal_faction_crackdown` temp arrays that
+`internal_faction_monthly_tick` builds from `internal_faction_policies` each tick; influence drifts at
+`@internal_faction_influence_drift_rate` = 0.10 regardless of the rule. The rival term reads
+`global.internal_faction_rival`, a matrix computed once in `setup_global_arrays`:
+`global.internal_faction_rival^(v * 24 + j)` is 1 when faction `j` holds a privilege that
 opposes a policy group faction `v` backs (any group, not just the ruling one).
 
 ## Old-system quirks to remove at step 11
@@ -528,37 +528,37 @@ need a fix before then.
 Files: `common/scripted_effects/01_internal_factions_v3_effects.txt`,
 `common/scripted_triggers/01_internal_factions_v3_triggers.txt`.
 
-`if_init_arrays` creates the per-country arrays sized 24 (index 0 unused,
-ids 1-23 match the faction id order used throughout this doc): `if_active`
-(the up-to-4 held ids), `if_opinion` (0-100 per id), `if_influence`
-(0-100 per id), `if_target` (0-100 per id, last computed opinion target),
-`if_inf_target` (0-100 per id, last computed influence target).
+`internal_faction_init_arrays` creates the per-country arrays sized 24 (index 0 unused,
+ids 1-23 match the faction id order used throughout this doc): `internal_faction_active`
+(the up-to-4 held ids), `internal_faction_opinion` (0-100 per id), `internal_faction_influence`
+(0-100 per id), `internal_faction_target` (0-100 per id, last computed opinion target),
+`internal_faction_inf_target` (0-100 per id, last computed influence target).
 
 Effects:
 
-- `if_change_opinion` (if_id, temp_opinion): adds temp_opinion to
-  `if_opinion^if_id` and clamps, only when if_id is active.
-- `if_change_influence` (if_id, temp_influence): same for `if_influence^if_id`.
-- `if_add_faction` (if_id, optional if_replace_id): activates if_id, replacing
-  if_replace_id or the lowest-influence active id when already at 4.
-- `if_remove_faction` (if_id): drops if_id from `if_active`.
-- `if_seed_factions` (no params): run directly after `setup_init_factions`.
+- `internal_faction_change_opinion` (internal_faction_id, temp_opinion): adds temp_opinion to
+  `internal_faction_opinion^internal_faction_id` and clamps, only when internal_faction_id is active.
+- `internal_faction_change_influence` (internal_faction_id, temp_influence): same for `internal_faction_influence^internal_faction_id`.
+- `internal_faction_add_faction` (internal_faction_id, optional internal_faction_replace_id): activates internal_faction_id, replacing
+  internal_faction_replace_id or the lowest-influence active id when already at 4.
+- `internal_faction_remove_faction` (internal_faction_id): drops internal_faction_id from `internal_faction_active`.
+- `internal_faction_seed_factions` (no params): run directly after `setup_init_factions`.
   Adds every held idea's faction first (at its old `<f>_opinion`), then fills
   remaining slots up to 4, from the random pool under
   `rule_randomize_internal_factions` or otherwise by the fixed rule order in
-  `if_seed_rule_fill`.
-- `if_copy_factions` (nation_to_copy_from): copies `if_active`, `if_opinion`,
-  `if_influence` from that country; mirrors opinion around 50 for factions
+  `internal_faction_seed_rule_fill`.
+- `internal_faction_copy_factions` (nation_to_copy_from): copies `internal_faction_active`, `internal_faction_opinion`,
+  `internal_faction_influence` from that country; mirrors opinion around 50 for factions
   aligned with the new ruling party's group.
-- `update_if_dirty_variable`: bumps `global.if_ui_dirty` for the player only.
+- `update_internal_faction_dirty_variable`: bumps `global.internal_faction_ui_dirty` for the player only.
 
-Triggers: `if_has_<token>` per faction (23, plus `if_has_religious_faction`
-for ids 14-17); `if_tier_hostile/negative/indifferent/positive/enthusiastic`
-and `if_influence_marginal/influential/powerful` on `if_opinion^if_id` /
-`if_influence^if_id`; `if_is_available` (on `if_id`) reproduces the old idea
+Triggers: `internal_faction_has_<token>` per faction (23, plus `internal_faction_has_religious_faction`
+for ids 14-17); `internal_faction_tier_hostile/negative/indifferent/positive/enthusiastic`
+and `internal_faction_influence_marginal/influential/powerful` on `internal_faction_opinion^internal_faction_id` /
+`internal_faction_influence^internal_faction_id`; `internal_faction_is_available` (on `internal_faction_id`) reproduces the old idea
 `allowed`/`available` gating, minus `internal_faction_swap_allowed`.
 
-Seeding order in `if_seed_rule_fill`: religious factions first, then oil,
+Seeding order in `internal_faction_seed_rule_fill`: religious factions first, then oil,
 dockyard share, agriculture share (and landowners under no elections), ruling
 party alignment, military/police law, corruption, then the remaining ids in a
 fixed fallback order. The building-share thresholds (oil 5% of GDP, dockyard
@@ -566,42 +566,42 @@ fixed fallback order. The building-share thresholds (oil 5% of GDP, dockyard
 industrial+office+agriculture capacity) are provisional and get tuned in step 9 (#4272).
 
 Bridge: each old `change_<f>_opinion` effect now also calls
-`if_change_opinion` with the raw `temp_opinion`, before `autocrats_opinion_change`
+`internal_faction_change_opinion` with the raw `temp_opinion`, before `autocrats_opinion_change`
 and outside the `has_idea` guard, so the new arrays move even for
 rule-filled factions with no idea. The old `<f>_opinion` variable keeps
 updating unchanged; the 2x autocrat multiplier is not applied to the bridge.
 
 ## Monthly tick (step 2)
 
-`if_monthly_tick` runs from `MD_on_actions.txt`'s monthly `every_country`,
+`internal_faction_monthly_tick` runs from `MD_on_actions.txt`'s monthly `every_country`,
 right after the old `monthly_tick_internal_factions_opinion`. It skips
-countries with an empty `if_active`. It hoists the ruling policy group, the
-six law terms (`if_mil_term`, `if_pol_term`, `if_edu_term`, `if_soc_term`,
-`if_corp_term`, `if_pop_term`), the oil share, and the war flag once per
-country, then for each active faction runs `if_compute_opinion_target` and
-`if_compute_influence_target`, drifts `if_opinion` toward `if_target` at
-`global.if_drift_rate` and `if_influence` toward `if_inf_target` at
-`@if_influence_drift_rate`, and clamps both to 0-100. It bumps the player
+countries with an empty `internal_faction_active`. It hoists the ruling policy group, the
+six law terms (`internal_faction_mil_term`, `internal_faction_pol_term`, `internal_faction_edu_term`, `internal_faction_soc_term`,
+`internal_faction_corp_term`, `internal_faction_pop_term`), the oil share, and the war flag once per
+country, then for each active faction runs `internal_faction_compute_opinion_target` and
+`internal_faction_compute_influence_target`, drifts `internal_faction_opinion` toward `internal_faction_target` at
+`global.internal_faction_drift_rate` and `internal_faction_influence` toward `internal_faction_inf_target` at
+`@internal_faction_influence_drift_rate`, and clamps both to 0-100. It bumps the player
 dirty var once at the end, not per faction.
 
-Temp variable names used across `if_monthly_tick`, `if_compute_opinion_target`,
-`if_compute_influence_target`, and `if_compute_sector_score`: `if_v` (faction
-id), `if_aff` (affinity index), `if_group`, `if_mil_term`, `if_pol_term`,
-`if_edu_term`, `if_soc_term`, `if_corp_term`, `if_pop_term`, `if_oil_share`,
-`if_war`, `if_sector`, `if_t`, `if_x`, `if_d`, `if_col`, `if_aff_col`,
-`if_law`, `if_party`. Step 5 (#4267) adds `if_priv_count`, `if_crackdown`
-(temp arrays sized 24, built each tick from `if_policies`), `if_pf`, `if_j`,
-`if_r`, `if_y`, `if_cp`, `if_cost`, `if_pp`, `if_clear_id`, `if_appease_id`,
-`if_new_id`, `if_ai_done`, `if_k`. Step 6 (#4268) adds `if_scale`, `if_push`, `if_best`,
-`if_best_pop`, `if_pi`, `if_a`, `if_react`, `if_protest`, `if_funding`, `law_kind`,
+Temp variable names used across `internal_faction_monthly_tick`, `internal_faction_compute_opinion_target`,
+`internal_faction_compute_influence_target`, and `internal_faction_compute_sector_score`: `internal_faction_v` (faction
+id), `internal_faction_aff` (affinity index), `internal_faction_group`, `internal_faction_mil_term`, `internal_faction_pol_term`,
+`internal_faction_edu_term`, `internal_faction_soc_term`, `internal_faction_corp_term`, `internal_faction_pop_term`, `internal_faction_oil_share`,
+`internal_faction_war`, `internal_faction_sector`, `internal_faction_t`, `internal_faction_x`, `internal_faction_d`, `internal_faction_col`, `internal_faction_aff_col`,
+`internal_faction_law`, `internal_faction_party`. Step 5 (#4267) adds `internal_faction_priv_count`, `internal_faction_crackdown`
+(temp arrays sized 24, built each tick from `internal_faction_policies`), `internal_faction_pf`, `internal_faction_j`,
+`internal_faction_r`, `internal_faction_y`, `internal_faction_cp`, `internal_faction_cost`, `internal_faction_pp`, `internal_faction_clear_id`, `internal_faction_appease_id`,
+`internal_faction_new_id`, `internal_faction_ai_done`, `internal_faction_k`. Step 6 (#4268) adds `internal_faction_scale`, `internal_faction_push`, `internal_faction_best`,
+`internal_faction_best_pop`, `internal_faction_pi`, `internal_faction_a`, `internal_faction_react`, `internal_faction_protest`, `internal_faction_funding`, `law_kind`,
 `law_delta`. Later steps must not reuse these names for unrelated values within the
 same call chain.
 
-The modifier feed (step 4) adds its own reserved temp names: `if_s`
-(opinion-scaled base), `if_g` (government bonus strength), `if_gov_aff`
-(affinity index for the ruling party), `if_k` (a per-key scratch value inside
-a single `if_dynmod_<id>` block), and `if_dm_id` (the faction id passed to
-`if_attach_dynmod` and `if_detach_dynmod`).
+The modifier feed (step 4) adds its own reserved temp names: `internal_faction_s`
+(opinion-scaled base), `internal_faction_g` (government bonus strength), `internal_faction_gov_aff`
+(affinity index for the ruling party), `internal_faction_k` (a per-key scratch value inside
+a single `internal_faction_dynmod_<id>` block), and `internal_faction_dm_id` (the faction id passed to
+`internal_faction_attach_dynmod` and `internal_faction_detach_dynmod`).
 
 ## Prototype GUI (step 3)
 
@@ -609,20 +609,20 @@ Files: `common/scripted_guis/01_internal_factions_gui.txt`,
 `interface/MD_internal_factions.gui`,
 `common/scripted_localisation/01_internal_factions_scripted_loc.txt`,
 `localisation/english/MD_internal_factions_v3_l_english.yml`. The window
-carries `dirty = global.if_ui_dirty` and is gated by the country flag
-`if_window_open`, toggled by `if_toggle_window`. Policies are a per-country
-`if_policies` array holding policy id `(faction id - 1) * 4 + k` (k 1-3
+carries `dirty = global.internal_faction_ui_dirty` and is gated by the country flag
+`internal_faction_window_open`, toggled by `internal_faction_toggle_window`. Policies are a per-country
+`internal_faction_policies` array holding policy id `(faction id - 1) * 4 + k` (k 1-3
 privilege, 4 crackdown). The three privilege buttons dispatch to
-`if_toggle_privilege` and the crackdown button to `if_toggle_crackdown`, each
-enabled through the matching `if_can_grant/revoke/enact/lift_*` trigger. Two
-more buttons per entry call `if_appease` and `if_open_swap_window`, the latter
-opening the second `if_swap_window` (its own scripted GUI, `if_swap_gui`,
-listing `if_swap_candidates`) where picking a row calls `if_swap_faction`.
+`internal_faction_toggle_privilege` and the crackdown button to `internal_faction_toggle_crackdown`, each
+enabled through the matching `internal_faction_can_grant/revoke/enact/lift_*` trigger. Two
+more buttons per entry call `internal_faction_appease` and `internal_faction_open_swap_window`, the latter
+opening the second `internal_faction_swap_window` (its own scripted GUI, `internal_faction_swap_gui`,
+listing `internal_faction_swap_candidates`) where picking a row calls `internal_faction_swap_faction`.
 Per-entry display goes through scripted-loc
-dispatchers on `v`: `if_tier_text_v`, `if_inf_tier_text_v`, `if_stance_v`,
-`if_affinity_v`, and `if_policy_k_icon` per slot. The faction name uses
-`[?global.if_token^v.GetTokenLocalizedKey]` directly, and the icon uses
-`GFX_idea_[?global.if_token^v.GetTokenKey]`. Open buttons sit in the top bar
+dispatchers on `v`: `internal_faction_tier_text_v`, `internal_faction_inf_tier_text_v`, `internal_faction_stance_v`,
+`internal_faction_affinity_v`, and `internal_faction_policy_k_icon` per slot. The faction name uses
+`[?global.internal_faction_token^v.GetTokenLocalizedKey]` directly, and the icon uses
+`GFX_idea_[?global.internal_faction_token^v.GetTokenKey]`. Open buttons sit in the top bar
 next to the EU button and on the politics tab next to the protests button.
 
 ## Modifier feed (step 4)
@@ -633,23 +633,23 @@ This is now the only writer of the vars in
 `apply_<f>_DYNMOD` effects and their call sites are gone from
 `00_internal_faction_effects.txt`.
 
-`if_apply_faction_modifiers` (param `if_id`) computes two numbers and then
-dispatches to one of 23 `if_dynmod_<id>` blocks:
+`internal_faction_apply_faction_modifiers` (param `internal_faction_id`) computes two numbers and then
+dispatches to one of 23 `internal_faction_dynmod_<id>` blocks:
 
-- `if_s`, the opinion-scaled base: `(if_opinion^id - 50)` scaled by influence
+- `internal_faction_s`, the opinion-scaled base: `(internal_faction_opinion^id - 50)` scaled by influence
   tier, 0.5 at marginal, 1.0 at influential, 1.5 at powerful.
-- `if_g`, the government bonus strength: 0 normally, 0.5 when the ruling
-  party's group is backed by the faction (`global.if_affinity`) and opinion
+- `internal_faction_g`, the government bonus strength: 0 normally, 0.5 when the ruling
+  party's group is backed by the faction (`global.internal_faction_affinity`) and opinion
   is in the positive tier (60-79), 1.0 at the enthusiastic tier (80+).
   Coalition partners are not weighted in, only the ruling party.
 
-Each `if_dynmod_<id>` block writes one var per modifier key on the faction's
+Each `internal_faction_dynmod_<id>` block writes one var per modifier key on the faction's
 dynamic modifier: first the opinion-scaled vars (`set_variable = { VAR =
-if_s }` then `multiply_variable` by the same k the old feed used), then the
+internal_faction_s }` then `multiply_variable` by the same k the old feed used), then the
 two government-bonus keys from table E (added into an existing opinion-scaled
-var through the `if_k` temp var, or set directly from `if_g` when the key has
+var through the `internal_faction_k` temp var, or set directly from `internal_faction_g` when the key has
 no opinion-scaled var), then every remaining policy-only var is zeroed, then
-the four policies from table D are applied with `is_in_array = { if_policies
+the four policies from table D are applied with `is_in_array = { internal_faction_policies
 = p }`, `p = (id - 1) * 4 + k` (k 1-3 privileges, 4 the crackdown). A key that
 is shared by several sub-resources (the `local_resources_*_factor` keys, or a
 policy that says `local_resources_factor`) always resolves to the block's one
@@ -660,76 +660,76 @@ the four `*_intel_factor` vars are opinion-scaled and decryption/encryption
 are zeroed; without it, decryption/encryption are opinion-scaled and the four
 intel vars are zeroed. The government bonus and policies for id 9 are added
 after the branch, so they apply either way. The Quds Force (id 20) has no
-`has_idea` guard, since it is only reached through `if_active`. Three ids (2,
+`has_idea` guard, since it is only reached through `internal_faction_active`. Three ids (2,
 4, 5) had an acceptance var keyed to `global.monthly_internal_faction_tick_rate`
-in the old feed; that k is now the constant `@if_k_acceptance` (0.25).
+in the old feed; that k is now the constant `@internal_faction_k_acceptance` (0.25).
 
 Refresh points, all guarded by faction presence:
-`if_apply_faction_modifiers` (one faction, on `if_id`) runs from
-`if_change_opinion`, `if_change_influence`, `if_add_faction`, and
-`if_seed_held_faction`; every action in `00_internal_faction_actions.txt`
-reaches it through `if_change_opinion` or `if_change_influence`, so none of
-them call it directly. `if_apply_modifiers` (loops `if_active` and calls the
-above per faction) runs at the end of `if_monthly_tick` and `if_copy_factions`.
+`internal_faction_apply_faction_modifiers` (one faction, on `internal_faction_id`) runs from
+`internal_faction_change_opinion`, `internal_faction_change_influence`, `internal_faction_add_faction`, and
+`internal_faction_seed_held_faction`; every action in `00_internal_faction_actions.txt`
+reaches it through `internal_faction_change_opinion` or `internal_faction_change_influence`, so none of
+them call it directly. `internal_faction_apply_modifiers` (loops `internal_faction_active` and calls the
+above per faction) runs at the end of `internal_faction_monthly_tick` and `internal_faction_copy_factions`.
 
-`if_attach_dynmod` and `if_detach_dynmod` (param `if_dm_id`, an if/else_if
+`internal_faction_attach_dynmod` and `internal_faction_detach_dynmod` (param `internal_faction_dm_id`, an if/else_if
 chain on the faction id) add or remove the one dynamic modifier for that
 faction, guarded by `has_dynamic_modifier` so they are safe to call when the
-modifier is already in the right state. They are called from `if_add_faction`
-(detach the replaced slot, attach the new one), `if_remove_faction`
-(detach), `if_copy_factions` (attach for each copied faction), and the
+modifier is already in the right state. They are called from `internal_faction_add_faction`
+(detach the replaced slot, attach the new one), `internal_faction_remove_faction`
+(detach), `internal_faction_copy_factions` (attach for each copied faction), and the
 game-rule reseed in `999_game_rules_on_actions.txt` (detach every active
-faction before `clear_array = if_active`).
+faction before `clear_array = internal_faction_active`).
 
 Known gap, not fixed here: a faction idea added mid-game through the old
 `add_ideas` path attaches its dynamic modifier through the idea's own
-`on_add`, without joining `if_active`. Its vars stay at 0 (or stale, if it
+`on_add`, without joining `internal_faction_active`. Its vars stay at 0 (or stale, if it
 replaced a faction that was swapped out) until step 11 replaces those
 callers.
 
 ## Player actions and AI (step 5)
 
 File: `common/scripted_effects/00_internal_faction_actions.txt`. Every action
-checks its own `if_can_*` trigger from `01_internal_factions_v3_triggers.txt`
+checks its own `internal_faction_can_*` trigger from `01_internal_factions_v3_triggers.txt`
 before doing anything, so the same gate covers both the GUI button and
-`if_ai_monthly`.
+`internal_faction_ai_monthly`.
 
 Costs and cooldown lengths are registry vars set once in `setup_global_arrays`
-(`global.if_cost_grant_pp`, `global.if_cost_grant_gdp_share`,
-`global.if_cost_revoke`, `global.if_cost_crackdown`, `global.if_cost_lift`,
-`global.if_cost_appease`, `global.if_cost_swap`,
-`global.if_policy_cooldown_months` = 12, `global.if_swap_cooldown_months` =
+(`global.internal_faction_cost_grant_pp`, `global.internal_faction_cost_grant_gdp_share`,
+`global.internal_faction_cost_revoke`, `global.internal_faction_cost_crackdown`, `global.internal_faction_cost_lift`,
+`global.internal_faction_cost_appease`, `global.internal_faction_cost_swap`,
+`global.internal_faction_policy_cooldown_months` = 12, `global.internal_faction_swap_cooldown_months` =
 24), so triggers, effects and tooltips all read the same source.
-`999_game_rules_on_actions.txt` multiplies `global.if_cost_swap` by 0.25 when
+`999_game_rules_on_actions.txt` multiplies `global.internal_faction_cost_swap` by 0.25 when
 `rule_internal_faction_cost_reduction = yes`.
 
-`if_grant_privilege` and `if_revoke_privilege` take a policy id and add or
-remove it from `if_policies`, set `if_policy_cooldown^id`, and shift opinion
-(`if_pay_privilege_cost` charges a GDP share from the treasury for economic
-factions, category 1, or political power for the rest). `if_enact_crackdown`
-and `if_lift_crackdown` do the same for the crackdown slot (`k = 4`),
+`internal_faction_grant_privilege` and `internal_faction_revoke_privilege` take a policy id and add or
+remove it from `internal_faction_policies`, set `internal_faction_policy_cooldown^id`, and shift opinion
+(`internal_faction_pay_privilege_cost` charges a GDP share from the treasury for economic
+factions, category 1, or political power for the rest). `internal_faction_enact_crackdown`
+and `internal_faction_lift_crackdown` do the same for the crackdown slot (`k = 4`),
 also moving influence and stability. Crackdown enforcement
-(`if_crackdown_enforcer_ready`) needs the Military (id 7) or the Intelligence
+(`internal_faction_crackdown_enforcer_ready`) needs the Military (id 7) or the Intelligence
 Community (id 9) active with opinion 20 or higher; cracking down on the
 Military itself needs the Intelligence Community active with opinion 60 or
-higher. `if_appease` shifts the target faction's opinion up and every other
-active faction in the same category down. `if_toggle_privilege` and
-`if_toggle_crackdown` are the GUI dispatch wrappers the buttons call, picking
+higher. `internal_faction_appease` shifts the target faction's opinion up and every other
+active faction in the same category down. `internal_faction_toggle_privilege` and
+`internal_faction_toggle_crackdown` are the GUI dispatch wrappers the buttons call, picking
 grant/enact or revoke/lift from current state.
 
-Swap is `if_remove_faction` on the outgoing id followed by `if_add_faction` on
+Swap is `internal_faction_remove_faction` on the outgoing id followed by `internal_faction_add_faction` on
 the incoming one; the incoming faction lands in the last row, starts at
-opinion 50 and base influence, and gets `if_swap_cooldown^id` set so it cannot
-be swapped out again immediately. `if_add_faction` and `if_remove_faction`
-both call the new `if_clear_faction_state` helper on the faction leaving
-`if_active`, dropping its policies and both cooldowns so a later reseed of
-the same id starts clean. `if_open_swap_window` and `if_close_swap_window`
-manage the second window: opening it records `if_swap_from` and rebuilds
-`if_swap_candidates` from every currently inactive, available faction;
-`if_swap_faction` is only reachable through that window.
+opinion 50 and base influence, and gets `internal_faction_swap_cooldown^id` set so it cannot
+be swapped out again immediately. `internal_faction_add_faction` and `internal_faction_remove_faction`
+both call the new `internal_faction_clear_faction_state` helper on the faction leaving
+`internal_faction_active`, dropping its policies and both cooldowns so a later reseed of
+the same id starts clean. `internal_faction_open_swap_window` and `internal_faction_close_swap_window`
+manage the second window: opening it records `internal_faction_swap_from` and rebuilds
+`internal_faction_swap_candidates` from every currently inactive, available faction;
+`internal_faction_swap_faction` is only reachable through that window.
 
-`if_ai_monthly` runs at the end of `if_monthly_tick` for AI countries only. It
-prioritizes a coup response when `if_coup_plot` is above 50 and the Military
+`internal_faction_ai_monthly` runs at the end of `internal_faction_monthly_tick` for AI countries only. It
+prioritizes a coup response when `internal_faction_coup_plot` is above 50 and the Military
 is active: crack down on the Military if it can afford to and the enforcer
 condition holds, otherwise appease it. Failing that, with enough political
 power it looks for one powerful (influence 60+) and hostile (opinion below 20)
@@ -740,47 +740,47 @@ active faction and grants it the first affordable privilege.
 File: `common/scripted_effects/01_internal_factions_v3_ecosystem.txt`. Loc for the
 tax-reaction tooltips lives in
 `common/scripted_localisation/02_internal_factions_ecosystem_scripted_loc.txt` and
-`localisation/english/MD_internal_factions_l_english.yml`. Constants: `@if_push_max`
-0.001, `@if_push_gate` 20, `@if_law_shock` 2, `@if_tax_shock` 0.5, `@if_desire_weight`
+`localisation/english/MD_internal_factions_l_english.yml`. Constants: `@internal_faction_push_max`
+0.001, `@internal_faction_push_gate` 20, `@internal_faction_law_shock` 2, `@internal_faction_tax_shock` 0.5, `@internal_faction_desire_weight`
 0.5.
 
-`if_influence_scale` (param `if_id`, sets temp `if_scale`) is the shared 0.5/1.0/1.5
+`internal_faction_influence_scale` (param `internal_faction_id`, sets temp `internal_faction_scale`) is the shared 0.5/1.0/1.5
 influence-tier multiplier, called from elections and law desires.
 
-`if_party_push`, run from `if_monthly_tick` after the per-faction drift loop, gates
-each active faction on `NOT if_influence_marginal` and opinion above 70 or below 30
-(written as `50 +/- @if_push_gate` through the `if_push` temp var, never as literals),
-then calls `if_party_push_faction` (param `if_v`). That helper scales
-`@if_push_max * if_influence^if_v / 100` (doubled while a religious faction's morality
+`internal_faction_party_push`, run from `internal_faction_monthly_tick` after the per-faction drift loop, gates
+each active faction on `NOT internal_faction_influence_marginal` and opinion above 70 or below 30
+(written as `50 +/- @internal_faction_push_gate` through the `internal_faction_push` temp var, never as literals),
+then calls `internal_faction_party_push_faction` (param `internal_faction_v`). That helper scales
+`@internal_faction_push_max * internal_faction_influence^internal_faction_v / 100` (doubled while a religious faction's morality
 laws privilege is active: policy 54/58/62 for ids 14/15/16), picks the
 affinity-matching party with the largest `party_pop_array` entry (excluding the ruling
 party for a hostile faction), and calls `change_relative_party_popularity` on it.
 
-`if_react_to_law` (params `law_kind` 1-6, `law_delta`) is called from every law and tax
-write site: it reads the matching `global.if_pref_*` array for every active faction,
-multiplies by `law_delta` and by `@if_law_shock` (laws) or `@if_tax_shock` (taxes), and
-applies any non-zero result through `if_change_opinion` with an `if_react_tt` tooltip.
+`internal_faction_react_to_law` (params `law_kind` 1-6, `law_delta`) is called from every law and tax
+write site: it reads the matching `global.internal_faction_pref_*` array for every active faction,
+multiplies by `law_delta` and by `@internal_faction_law_shock` (laws) or `@internal_faction_tax_shock` (taxes), and
+applies any non-zero result through `internal_faction_change_opinion` with an `internal_faction_react_tt` tooltip.
 Hook sites: the 26 law idea `on_add` blocks (10 military, 5 police, 5 education, 6
 social; bureau and health have no faction preference and are untouched), the 8
 money-tab tax buttons, the 2 tax-automation writes, the 2 AI tax appliers in
 `00_money_system.txt`, and the 2 `modify_*_tax_rate_effect` content effects, 40 call
-sites in total. The 16-entry tax-reaction line list (`if_react_pop_up_0..3` and the
+sites in total. The 16-entry tax-reaction line list (`internal_faction_react_pop_up_0..3` and the
 `pop_down`/`corp_up`/`corp_down` variants, in
-`02_internal_factions_ecosystem_scripted_loc.txt`) duplicates the `@if_tax_shock` 0.5
+`02_internal_factions_ecosystem_scripted_loc.txt`) duplicates the `@internal_faction_tax_shock` 0.5
 factor as a literal, since scripted loc cannot read file constants; keep both in sync
 if step 9 retunes the shock.
 
-`if_compute_law_desires`, called first in `recalculate_law_desires`, writes
-`if_desire_military/police/education/social` from every active faction backing the
-ruling party's policy group, scaled by `if_influence_scale` and `@if_desire_weight`,
+`internal_faction_compute_law_desires`, called first in `recalculate_law_desires`, writes
+`internal_faction_desire_military/police/education/social` from every active faction backing the
+ruling party's policy group, scaled by `internal_faction_influence_scale` and `@internal_faction_desire_weight`,
 clamped to -1..1. `calculate_expected_*_spending` in `00_expected_spending_effects.txt`
 add the matching var right before their own `round_variable` call. Health and bureau
 have no law preference, so they get no desire var. The desire term lags the faction
 opinion by one month, since `calculate_expected_spending` runs before
 `recalculate_law_desires` each month.
 
-`if_compute_protest_drift` (deterministic, only sets temp `if_protest`) sums, over
-`if_active`, `if_influence^if_v / 25` for a hostile faction or a flat 1 for a negative
+`internal_faction_compute_protest_drift` (deterministic, only sets temp `internal_faction_protest`) sums, over
+`internal_faction_active`, `internal_faction_influence^internal_faction_v / 25` for a hostile faction or a flat 1 for a negative
 and powerful one, doubled for a mass faction (category 3), plus 1 more if the
 `unions_strike_ban` policy (id 40) is active. `apply_protest_effects` adds it into the
 live `protest_strength` tick; `MD_protests_calc_deterministic_drift`'s player-only
@@ -791,9 +791,9 @@ protests panel (`interface/MD_protests_system.gui`) shows it as a 5th row,
 left column) below a separator added to `MD_drift_passive_row`.
 
 `display_election_campaign_status` and `calculate_election_funding_from_opinion` in
-`00_internal_faction_effects.txt` are rewritten to loop `if_active` instead of 23
+`00_internal_faction_effects.txt` are rewritten to loop `internal_faction_active` instead of 23
 `has_idea` checks, closing #1450; the per-faction funding step is scaled by
-`if_influence_scale` and the total is rounded before the tooltip.
+`internal_faction_influence_scale` and the total is rounded before the tooltip.
 
 ## Step map
 
