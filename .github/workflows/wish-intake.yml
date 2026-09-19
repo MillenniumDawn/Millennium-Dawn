@@ -1,0 +1,84 @@
+name: Wish Intake
+
+on:
+  issues:
+    types: [opened, edited]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.issue.number }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  intake:
+    name: Label from form and add to wish board
+    runs-on: ubuntu-latest
+    steps:
+      - name: Map form dropdowns to labels
+        id: labels
+        uses: >-
+          actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const regionLabels = {
+              'Africa': 'region:africa',
+              'Latin America': 'region:latin-america',
+              'East Asia': 'region:east-asia',
+              'Middle East': 'region:middle-east',
+              'Europe': 'region:europe',
+              'Other': 'region:other',
+            };
+            const kindLabels = {
+              'New country': 'type:new-country',
+              'Rework': 'type:rework',
+            };
+
+            // Issue forms render each field as "### <label>" followed by the answer.
+            const answer = (body, heading) => {
+              const match = body.match(
+                new RegExp(`^### ${heading}\\s*\\n+([^\\n]+)`, 'm')
+              );
+              return match ? match[1].trim() : null;
+            };
+
+            try {
+              const issue = context.payload.issue;
+              const body = issue.body || '';
+              const current = (issue.labels || []).map(l => l.name);
+
+              const wanted = [];
+              const region = regionLabels[answer(body, 'Region')];
+              if (region) wanted.push(region);
+              const kind = kindLabels[answer(body, 'Kind')];
+              if (kind) wanted.push(kind);
+
+              const missing = wanted.filter(l => !current.includes(l));
+              if (missing.length) {
+                await github.rest.issues.addLabels({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  labels: missing,
+                });
+                console.log(`Added ${missing.join(', ')} to #${issue.number}`);
+              }
+
+              const all = current.concat(missing);
+              const wishLabels = Object.values(kindLabels);
+              core.setOutput('is-wish', all.some(l => wishLabels.includes(l)));
+            } catch (err) {
+              core.warning(`wish-intake skipped for #${context.issue.number}: ${err.message}`);
+              core.setOutput('is-wish', false);
+            }
+
+      - name: Add to wish board
+        if: steps.labels.outputs.is-wish == 'true'
+        uses: >-
+          actions/add-to-project@5afcf98fcd03f1c2f92c3c83f58ae24323cc57fd
+        with:
+          project-url: https://github.com/orgs/MillenniumDawn/projects/7
+          github-token: ${{ secrets.PROJECT_PAT }}
