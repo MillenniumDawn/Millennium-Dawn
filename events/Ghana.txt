@@ -1,0 +1,511 @@
+add_namespace = ghana
+add_namespace = ghana_news
+
+# Western Togoland Rebellion. Fired at whoever owns Volta (345) from
+# trigger_year_2020_events; every step re-checks ownership. Each response feeds
+# GAH_togoland_grievance. Firm handling all the way scores 3 and ends with the Dragons
+# event; the armed rising (ghana.5) needs 4, so it takes a dismissal or a state of
+# emergency along the way, or hunting the Dragons after a firm road. Those options carry
+# ai_chance 0, so the war is a human-only outcome.
+
+# 1 September 2020: the Western Togoland Restoration Front declares sovereignty.
+country_event = {
+	id = ghana.1
+	title = ghana.1.t
+	desc = ghana.1.d
+	picture = GFX_african_demonstration
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		owns_state = 345
+		controls_state = 345
+		345 = { has_resistance = no }
+	}
+
+	# Joint military-police operation into the region: what Accra did.
+	option = {
+		name = ghana.1.a
+		log = "[GetDateText]: [This.GetName]: ghana.1.a executed"
+		add_command_power = -25
+		345 = {
+			force_enable_resistance = ROOT
+			start_resistance = yes
+			set_resistance = 20
+			set_compliance = 60
+			set_garrison_strength = 1.0
+		}
+		hidden_effect = {
+			add_to_variable = { GAH_togoland_grievance = 1 }
+			country_event = { id = ghana.2 days = 24 }
+		}
+		ai_chance = { base = 10 }
+	}
+
+	# Talks through the Volta Regional House of Chiefs.
+	option = {
+		name = ghana.1.b
+		log = "[GetDateText]: [This.GetName]: ghana.1.b executed"
+		add_political_power = -50
+		345 = {
+			force_enable_resistance = ROOT
+			start_resistance = yes
+			set_resistance = 10
+			set_compliance = 70
+		}
+		hidden_effect = { country_event = { id = ghana.2 days = 24 } }
+		ai_chance = { base = 2 }
+	}
+
+	# Dismiss it as a fringe stunt.
+	option = {
+		name = ghana.1.c
+		log = "[GetDateText]: [This.GetName]: ghana.1.c executed"
+		345 = {
+			force_enable_resistance = ROOT
+			start_resistance = yes
+			set_resistance = 30
+			set_compliance = 50
+		}
+		hidden_effect = {
+			add_to_variable = { GAH_togoland_grievance = 2 }
+			country_event = { id = ghana.2 days = 24 }
+		}
+		ai_chance = { base = 0 }
+	}
+}
+
+# 25 September 2020: an armoury is seized, the Aveyime and Mepe police stations are
+# attacked, roads into the region are blocked.
+country_event = {
+	id = ghana.2
+	title = ghana.2.t
+	desc = ghana.2.d
+	picture = GFX_african_rebels
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		owns_state = 345
+		controls_state = 345
+	}
+
+	immediate = {
+		hidden_effect = {
+			345 = {
+				set_temp_variable = { temp_productivity_change = -10 }
+				state_flat_productivity_change_effect = yes
+			}
+			news_event = { id = ghana_news.1 hours = 6 }
+		}
+	}
+
+	# Security sweep: 31 arrested, the weapons recovered, one separatist dead.
+	option = {
+		name = ghana.2.a
+		log = "[GetDateText]: [This.GetName]: ghana.2.a executed"
+		add_command_power = -25
+		add_stability = -0.01
+		345 = {
+			add_resistance = -10
+			add_compliance = 5
+		}
+		hidden_effect = {
+			add_to_variable = { GAH_togoland_grievance = 1 }
+			country_event = { id = ghana.3 days = 90 random_days = 30 }
+		}
+		ai_chance = { base = 10 }
+	}
+
+	# Talks with the chiefs and the Homeland Study Group.
+	option = {
+		name = ghana.2.b
+		log = "[GetDateText]: [This.GetName]: ghana.2.b executed"
+		add_political_power = -75
+		add_stability = -0.02
+		345 = {
+			add_resistance = -15
+			add_compliance = 10
+		}
+		hidden_effect = { country_event = { id = ghana.3 days = 90 random_days = 30 } }
+		ai_chance = { base = 2 }
+	}
+
+	# State of emergency across the region.
+	option = {
+		name = ghana.2.c
+		log = "[GetDateText]: [This.GetName]: ghana.2.c executed"
+		add_stability = -0.03
+		add_war_support = 0.02
+		345 = {
+			add_resistance = -20
+			add_compliance = -10
+		}
+		hidden_effect = {
+			add_to_variable = { GAH_togoland_grievance = 2 }
+			country_event = { id = ghana.3 days = 90 random_days = 30 }
+		}
+		ai_chance = { base = 0 }
+	}
+}
+
+# The movement is contained: leaders in custody, the army deployed before the election.
+# A region handled with restraint ends the arc here; a bruised one hears from the
+# Dragons next year.
+country_event = {
+	id = ghana.3
+	title = ghana.3.t
+	desc = ghana.3.d
+	picture = GFX_african_guard
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		owns_state = 345
+		controls_state = 345
+	}
+
+	# Prosecute the ringleaders.
+	option = {
+		name = ghana.3.a
+		log = "[GetDateText]: [This.GetName]: ghana.3.a executed"
+		add_stability = 0.01
+		345 = {
+			add_compliance = 10
+			cancel_resistance = yes
+		}
+		hidden_effect = {
+			add_to_variable = { GAH_togoland_grievance = 1 }
+			if = {
+				limit = { check_variable = { GAH_togoland_grievance > 1 } }
+				country_event = { id = ghana.4 days = 150 random_days = 90 }
+			}
+			else = { clear_variable = GAH_togoland_grievance }
+		}
+		ai_chance = { base = 10 }
+	}
+
+	# Quiet release on bail, as with the 2019 arrests.
+	option = {
+		name = ghana.3.b
+		log = "[GetDateText]: [This.GetName]: ghana.3.b executed"
+		add_political_power = 25
+		345 = {
+			add_compliance = 5
+			add_resistance = -5
+		}
+		hidden_effect = {
+			if = {
+				limit = { check_variable = { GAH_togoland_grievance > 1 } }
+				country_event = { id = ghana.4 days = 150 random_days = 90 }
+			}
+			else_if = {
+				limit = { check_variable = { GAH_togoland_grievance < 1 } }
+				country_event = { id = ghana.7 days = 120 random_days = 60 }
+			}
+			else = { clear_variable = GAH_togoland_grievance }
+		}
+		ai_chance = { base = 2 }
+	}
+}
+
+# 2021: the Dragons promised in the video turn out to exist, in small numbers and
+# across the Togolese border. Only reached when the region was handled roughly.
+country_event = {
+	id = ghana.4
+	title = ghana.4.t
+	desc = ghana.4.d
+	picture = GFX_african_rebels
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		owns_state = 345
+		controls_state = 345
+		has_civil_war = no
+	}
+
+	# Hunt them down, border to border. The region remembers.
+	option = {
+		name = ghana.4.a
+		log = "[GetDateText]: [This.GetName]: ghana.4.a executed"
+		add_command_power = -50
+		add_stability = -0.02
+		345 = {
+			force_enable_resistance = ROOT
+			start_resistance = yes
+			set_resistance = 40
+			add_compliance = -15
+		}
+		hidden_effect = {
+			add_to_variable = { GAH_togoland_grievance = 1 }
+			if = {
+				limit = { check_variable = { GAH_togoland_grievance > 3 } }
+				country_event = { id = ghana.5 days = 60 random_days = 60 }
+			}
+			else = { clear_variable = GAH_togoland_grievance }
+		}
+		ai_chance = { base = 0 }
+	}
+
+	# Amnesty and a development package for the Volta Region.
+	option = {
+		name = ghana.4.b
+		log = "[GetDateText]: [This.GetName]: ghana.4.b executed"
+		set_temp_variable = { treasury_change = -0.25 }
+		modify_treasury_effect = yes
+		add_stability = 0.01
+		345 = {
+			add_compliance = 15
+			cancel_resistance = yes
+		}
+		hidden_effect = { clear_variable = GAH_togoland_grievance }
+		ai_chance = { base = 10 }
+	}
+}
+
+# The Volta rises: a one-state civil war fought by militias on both sides. The regular
+# army stays out of the split; ghana.6 settles it before the engine can hand the whole
+# country to either side.
+country_event = {
+	id = ghana.5
+	title = ghana.5.t
+	desc = ghana.5.d
+	picture = GFX_african_guard
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		owns_state = 345
+		controls_state = 345
+		has_civil_war = no
+		has_war = no
+	}
+
+	option = {
+		name = ghana.5.a
+		log = "[GetDateText]: [This.GetName]: ghana.5.a executed"
+		add_stability = -0.05
+		hidden_effect = {
+			clear_variable = GAH_togoland_grievance
+			division_template = {
+				name = "Volta Militia"
+				is_locked = yes
+				regiments = {
+					Militia_Bat = { x = 0 y = 0 }
+					Militia_Bat = { x = 0 y = 1 }
+					Militia_Bat = { x = 0 y = 2 }
+					Militia_Bat = { x = 0 y = 3 }
+				}
+			}
+			capital_scope = {
+				create_unit = {
+					division = "name = \"1. Volta Militia\" division_template = \"Volta Militia\" start_experience_factor = 0.3 start_equipment_factor = 1"
+					owner = ROOT
+				}
+				create_unit = {
+					division = "name = \"2. Volta Militia\" division_template = \"Volta Militia\" start_experience_factor = 0.3 start_equipment_factor = 1"
+					owner = ROOT
+				}
+			}
+			start_civil_war = {
+				ideology = neutrality
+				size = 0.05
+				army_ratio = 0
+				navy_ratio = 0
+				air_ratio = 0
+				states = { 345 }
+				set_cosmetic_tag = GAH_WTG
+				division_template = {
+					name = "Dragons of Western Togoland"
+					is_locked = yes
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+						Militia_Bat = { x = 0 y = 1 }
+						Militia_Bat = { x = 0 y = 2 }
+						Militia_Bat = { x = 0 y = 3 }
+					}
+				}
+				345 = {
+					create_unit = {
+						division = "name = \"1. Dragons\" division_template = \"Dragons of Western Togoland\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"2. Dragons\" division_template = \"Dragons of Western Togoland\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+					create_unit = {
+						division = "name = \"3. Dragons\" division_template = \"Dragons of Western Togoland\" start_experience_factor = 0.5 start_equipment_factor = 1"
+						owner = PREV
+					}
+				}
+			}
+			country_event = { id = ghana.6 days = 90 }
+			news_event = { id = ghana_news.2 hours = 6 }
+		}
+	}
+}
+
+# Three months in, the fighting has a shape and Accra chooses how it ends.
+country_event = {
+	id = ghana.6
+	title = ghana.6.t
+	desc = ghana.6.d
+	picture = GFX_african_meeting
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		has_civil_war = yes
+		any_other_country = {
+			original_tag = ROOT
+			has_civil_war = yes
+			has_cosmetic_tag = GAH_WTG
+		}
+	}
+
+	# Finish it by force.
+	option = {
+		name = ghana.6.a
+		log = "[GetDateText]: [This.GetName]: ghana.6.a executed"
+		add_stability = -0.02
+		add_war_support = 0.05
+		random_other_country = {
+			limit = {
+				original_tag = ROOT
+				has_civil_war = yes
+				has_cosmetic_tag = GAH_WTG
+			}
+			ROOT = { annex_country = { target = PREV transfer_troops = no } }
+		}
+		345 = {
+			add_compliance = 20
+			cancel_resistance = yes
+		}
+		hidden_effect = { news_event = { id = ghana_news.3 hours = 6 } }
+		ai_chance = { base = 10 }
+	}
+
+	# An autonomous Volta Region inside Ghana.
+	option = {
+		name = ghana.6.b
+		log = "[GetDateText]: [This.GetName]: ghana.6.b executed"
+		add_political_power = -100
+		add_stability = 0.02
+		random_other_country = {
+			limit = {
+				original_tag = ROOT
+				has_civil_war = yes
+				has_cosmetic_tag = GAH_WTG
+			}
+			ROOT = { annex_country = { target = PREV transfer_troops = no } }
+		}
+		345 = {
+			set_compliance = 90
+			cancel_resistance = yes
+		}
+		hidden_effect = { news_event = { id = ghana_news.3 hours = 6 } }
+		ai_chance = { base = 5 }
+	}
+}
+
+# The good ending: a region handled with restraint twice gets a settlement before
+# anyone has to fight for it.
+country_event = {
+	id = ghana.7
+	title = ghana.7.t
+	desc = ghana.7.d
+	picture = GFX_african_meeting
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		owns_state = 345
+		controls_state = 345
+	}
+
+	# A statute of regional autonomy for the Volta Region.
+	option = {
+		name = ghana.7.a
+		log = "[GetDateText]: [This.GetName]: ghana.7.a executed"
+		add_political_power = -50
+		add_stability = 0.02
+		345 = {
+			set_compliance = 90
+			cancel_resistance = yes
+		}
+		hidden_effect = {
+			clear_variable = GAH_togoland_grievance
+			news_event = { id = ghana_news.3 hours = 6 }
+		}
+		ai_chance = { base = 10 }
+	}
+
+	# Thank the chiefs and leave the constitution alone.
+	option = {
+		name = ghana.7.b
+		log = "[GetDateText]: [This.GetName]: ghana.7.b executed"
+		add_political_power = 25
+		345 = { add_compliance = 10 }
+		hidden_effect = { clear_variable = GAH_togoland_grievance }
+		ai_chance = { base = 3 }
+	}
+}
+
+# ---------------------------------------------------------------------------- news
+# Audience widens with the stakes: a regional incident reaches Africa, the country's
+# influencers and the superpowers; a civil war adds the great powers; a settlement
+# reaches everyone.
+
+news_event = {
+	id = ghana_news.1
+	title = ghana_news.1.t
+	desc = ghana_news.1.d
+	picture = GFX_news_central_african_civil_war
+	major = yes
+	is_triggered_only = yes
+
+	trigger = {
+		OR = {
+			has_country_flag = african_nation_flag
+			has_idea = super_power
+			FROM = { influence_higher_20 = yes }
+		}
+	}
+
+	option = { name = ghana_news.1.a }
+}
+
+news_event = {
+	id = ghana_news.2
+	title = ghana_news.2.t
+	desc = ghana_news.2.d
+	picture = GFX_news_central_african_civil_war
+	major = yes
+	is_triggered_only = yes
+
+	# One tier wider than ghana_news.1: a shooting war in a stable democracy is great-power
+	# news, a border raid is not.
+	trigger = {
+		OR = {
+			has_country_flag = african_nation_flag
+			has_idea = great_power
+			has_idea = super_power
+			FROM = { influence_higher_20 = yes }
+		}
+	}
+
+	option = { name = ghana_news.2.a }
+}
+
+news_event = {
+	id = ghana_news.3
+	title = ghana_news.3.t
+	desc = ghana_news.3.d
+	picture = GFX_african_meeting_news
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = ghana_news.3.a }
+}
