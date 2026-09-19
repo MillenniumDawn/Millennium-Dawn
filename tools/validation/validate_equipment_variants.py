@@ -2,7 +2,7 @@
 """Find locally created equipment variants consumed before their unlock is assured.
 
 This is a local effect-flow check, not a whole-program proof. External scripted
-effects, focus prerequisites and history unlocks can establish availability too,
+effects and focus prerequisites can establish availability too,
 so findings are warnings. All equipment types use the same engine contract.
 """
 
@@ -14,15 +14,22 @@ from dataclasses import dataclass, field
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from equipment_module_slots import _depth0_text, _iter_blocks, blank_comments
-from linting.check_common_mistakes import (
-    _first_child,
-    _parse_script_nodes,
-    _scope_frame_kind,
+from equipment_variant_context import (
+    VariantContext,
+    branches,
+    countries,
+    focus_countries,
 )
+from equipment_variant_context import (
+    script_nodes as _nodes,
+)
+from equipment_variant_context import (
+    value as _value,
+)
+from linting.check_common_mistakes import _first_child, _scope_frame_kind
 from shared_utils import FileOpener
 from validator_common import BaseValidator, Severity, run_validator_main
 
-_TOKEN = re.compile(r'"(?:\\.|[^"\\])*"|[{}]|[<>!]=?|=|[^\s{}=<>!]+')
 _LITERAL = re.compile(r"[A-Za-z_][\w.-]*\Z")
 _CONSUMERS = {
     "add_equipment_production": "version_name",
@@ -55,20 +62,6 @@ _EFFECTS = {
 }
 
 
-def _nodes(text):
-    tokens = [
-        (match.group(), line)
-        for line, code in enumerate(blank_comments(text).splitlines(), 1)
-        for match in _TOKEN.finditer(code)
-    ]
-    return _parse_script_nodes(tokens, 0)[0]
-
-
-def _value(node, key):
-    child = _first_child(node, key)
-    return child.value.strip('"') if child and child.value else None
-
-
 def equipment_unlocks(text):
     """Map equipment tokens to their enabling technologies, not assumed names."""
     text = blank_comments(text)
@@ -85,11 +78,13 @@ def equipment_unlocks(text):
     return result
 
 
-def _guaranteed(nodes):
+def _guaranteed(nodes, dlcs=None):
     """Technologies required by a conjunctive trigger; OR needs every arm."""
     known = set()
-    for node in nodes:
-        if node.key == "has_tech" and node.value:
+    for node in branches(nodes, dlcs or {}):
+        if isinstance(node, list):
+            known.update(set.intersection(*(_guaranteed(arm, dlcs) for arm in node)))
+        elif node.key == "has_tech" and node.value:
             known.add(node.value.strip('"'))
         elif node.key in {
             "AND",
@@ -97,9 +92,11 @@ def _guaranteed(nodes):
             "custom_trigger_tooltip",
             "custom_override_tooltip",
         }:
-            known.update(_guaranteed(node.children))
+            known.update(_guaranteed(node.children, dlcs))
         elif node.key == "OR" and node.children:
-            known.update(set.intersection(*(_guaranteed([n]) for n in node.children)))
+            known.update(
+                set.intersection(*(_guaranteed([n], dlcs) for n in node.children))
+            )
     return known
 
 
@@ -113,9 +110,13 @@ def _when_false(nodes):
 class _Flow:
     techs: set = field(default_factory=set)
     pending: dict = field(default_factory=dict)
+    gates: tuple = ()
+    removed: set = field(default_factory=set)
 
     def copy(self):
-        return _Flow(self.techs.copy(), self.pending.copy())
+        return _Flow(
+            self.techs.copy(), self.pending.copy(), self.gates, self.removed.copy()
+        )
 
 
 def _join(states):
@@ -124,14 +125,24 @@ def _join(states):
         for key, (techs, line) in state.pending.items():
             if not techs & state.techs:
                 pending[key] = (techs, line)
-    return _Flow(set.intersection(*(state.techs for state in states)), pending)
+    return _Flow(
+        set.intersection(*(state.techs for state in states)),
+        pending,
+        tuple(
+            gate
+            for gate in states[0].gates
+            if all(gate in state.gates for state in states)
+        ),
+        set.union(*(state.removed for state in states)),
+    )
 
 
-def check_variant_availability(text, unlocks):
+def check_variant_availability(text, unlocks, context=None, history_country=None):
     """Return (message, use-line) warnings for deferred variants used locally."""
     findings = set()
+    context = context or VariantContext()
 
-    def walk(nodes, state, country="ROOT"):
+    def walk(nodes, state, country="ROOT", root_country="ROOT"):
         index = 0
         while index < len(nodes):
             node = nodes[index]
@@ -147,7 +158,10 @@ def check_variant_availability(text, unlocks):
                     conditions = limit.children if limit else []
                     selected = remaining.copy()
                     selected.techs.update(_guaranteed(conditions))
-                    outcomes.append(walk(branch.children, selected, country))
+                    selected.gates += tuple(conditions)
+                    outcomes.append(
+                        walk(branch.children, selected, country, root_country)
+                    )
                     remaining.techs.update(_when_false(conditions))
                     if index == len(nodes) or nodes[index].key not in {
                         "else_if",
@@ -158,21 +172,34 @@ def check_variant_availability(text, unlocks):
                     branch = nodes[index]
                     index += 1
                     if branch.key == "else":
-                        outcomes.append(walk(branch.children, remaining, country))
+                        outcomes.append(
+                            walk(branch.children, remaining, country, root_country)
+                        )
                         break
                 state = _join(outcomes)
             elif node.key == "set_technology":
                 for tech in node.children:
                     if tech.value == "1":
                         state.techs.add(tech.key)
+                        state.removed.discard(tech.key)
                     elif tech.value == "0":
                         state.techs.discard(tech.key)
+                        state.removed.add(tech.key)
             elif node.key == "create_equipment_variant":
                 equipment, name = _value(node, "type"), _value(node, "name")
                 if not equipment or not name or any(c in name for c in "[]$"):
                     continue
                 key = (equipment, name)
                 techs = unlocks.get(equipment)
+                if techs:
+                    requirements = [
+                        set(context.tech_dlcs.get(tech, {}).items()) for tech in techs
+                    ]
+                    dlcs = dict(set.intersection(*requirements))
+                    known = _guaranteed(state.gates, dlcs)
+                    if country != history_country:
+                        known |= context.history(country, dlcs)
+                    state.techs.update((techs & known) - state.removed)
                 if _value(node, "allow_without_tech") == "yes" or (
                     techs and techs & state.techs
                 ):
@@ -195,7 +222,11 @@ def check_variant_availability(text, unlocks):
                         else "creator"
                     ),
                 )
-                if creator and creator not in {country, "THIS"}:
+                if (
+                    creator
+                    and creator not in {country, "THIS"}
+                    and not (creator == "ROOT" and country == root_country)
+                ):
                     continue
                 key = (_value(source, "type"), _value(source, _CONSUMERS[node.key]))
                 deferred = state.pending.get(key)
@@ -209,15 +240,19 @@ def check_variant_availability(text, unlocks):
                             node.line,
                         )
                     )
-            elif node.key in {"hidden_effect", "THIS", country}:
-                state = walk(node.children, state, country)
+            elif node.key in {"hidden_effect", "THIS", country} or (
+                node.key == "ROOT" and country == root_country
+            ):
+                state = walk(node.children, state, country, root_country)
             elif node.key in {"random", "while"}:
                 conditional = state.copy()
                 limit = _first_child(node, "limit")
                 conditional.techs.update(
                     _guaranteed(limit.children) if limit else set()
                 )
-                state = _join([state, walk(node.children, conditional, country)])
+                state = _join(
+                    [state, walk(node.children, conditional, country, root_country)]
+                )
             elif node.key == "random_list":
                 outcomes = []
                 guaranteed_selection = False
@@ -237,7 +272,9 @@ def check_variant_availability(text, unlocks):
                     selected.techs.update(
                         _guaranteed(trigger.children) if trigger else set()
                     )
-                    outcomes.append(walk(outcome.children, selected, country))
+                    outcomes.append(
+                        walk(outcome.children, selected, country, root_country)
+                    )
                     if (
                         weight is not None
                         and weight > 0
@@ -251,22 +288,36 @@ def check_variant_availability(text, unlocks):
             elif node.key in {"country_event", "news_event"}:
                 event_state = _Flow()
                 trigger = _first_child(node, "trigger")
+                tags = countries(trigger.children) if trigger else None
                 if trigger:
                     event_state.techs.update(_guaranteed(trigger.children))
-                immediate = _first_child(node, "immediate")
-                if immediate:
-                    event_state = walk(immediate.children, event_state)
-                for child in node.children:
-                    if child.key != "immediate":
-                        walk([child], event_state.copy())
+                    event_state.gates = tuple(trigger.children)
+                recipients = (
+                    tags
+                    if tags is not None
+                    else context.event_countries.get(_value(node, "id"), {"ROOT"})
+                )
+                for recipient in recipients:
+                    selected = event_state.copy()
+                    immediate = _first_child(node, "immediate")
+                    if immediate:
+                        selected = walk(
+                            immediate.children, selected, recipient, recipient
+                        )
+                    for child in node.children:
+                        if child.key != "immediate":
+                            walk([child], selected.copy(), recipient, recipient)
+            elif history_country and re.fullmatch(r"\d{4}\.\d{1,2}\.\d{1,2}", node.key):
+                state = walk(node.children, state, country, root_country)
             elif node.children:
                 inherited = state.copy() if node.key in _EFFECTS else _Flow()
                 for gate in node.children:
                     if gate.key in {"available", "trigger", "limit"}:
                         inherited.techs.update(_guaranteed(gate.children))
+                        inherited.gates += tuple(gate.children)
                 scope = country
                 if node.key == "ROOT":
-                    scope = "ROOT"
+                    scope = root_country
                 elif re.fullmatch(r"[A-Z]{3}", node.key):
                     scope = node.key
                 elif (
@@ -276,10 +327,25 @@ def check_variant_availability(text, unlocks):
                     or node.key.isdigit()
                 ):
                     scope = None
-                walk(node.children, inherited, scope)
+                tags = countries(inherited.gates)
+                if node.key == "focus_tree":
+                    tags = focus_countries(node)
+                elif node.key in context.categories:
+                    tags = context.categories[node.key]
+                for recipient in tags if tags is not None else {scope}:
+                    walk(
+                        node.children,
+                        inherited.copy(),
+                        recipient,
+                        recipient if node.key == "focus_tree" else root_country,
+                    )
         return state
 
-    walk(_nodes(text), _Flow())
+    walk(
+        _nodes(text) if isinstance(text, str) else text,
+        _Flow(),
+        history_country or "ROOT",
+    )
     return sorted(findings, key=lambda finding: (finding[1], finding[0]))
 
 
@@ -297,20 +363,78 @@ class Validator(BaseValidator):
                 FileOpener.open_text_file(path)
             ).items():
                 unlocks.setdefault(equipment, set()).update(techs)
-        tech_changed = self.staged_only and any(
-            "common/technologies/" in path.replace("\\", "/")
+        context = VariantContext()
+        paths = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+            ignore_staged=True,
+        )
+        for path in paths:
+            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            text = FileOpener.open_text_file(path)
+            if (
+                any(
+                    token in text
+                    for token in (
+                        "create_equipment_variant",
+                        "country_event",
+                        "news_event",
+                        "set_technology",
+                    )
+                )
+                or re.search(r"\b[A-Za-z_]\w*\.\d+\b", text)
+                or relative.startswith(
+                    (
+                        "common/decisions/categories/",
+                        "common/technologies/",
+                        "common/technology_tags/",
+                        "common/bookmarks/",
+                    )
+                )
+            ):
+                context.documents[relative] = _nodes(text)
+        context.index()
+        context_changed = self.staged_only and any(
+            path.replace("\\", "/").endswith(".txt")
+            and (
+                any(
+                    part in path.replace("\\", "/")
+                    for part in (
+                        "common/technologies/",
+                        "common/technology_tags/",
+                        "common/bookmarks/",
+                        "history/countries/",
+                        "common/decisions/categories/",
+                        "common/national_focus/",
+                        "events/",
+                    )
+                )
+                or any(
+                    token in FileOpener.open_text_file(path)
+                    for token in (
+                        "country_event",
+                        "news_event",
+                        "random_events",
+                        "events =",
+                    )
+                )
+            )
             for path in self.staged_files
         )
         results = []
         for path in self._collect_files(
             ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
-            ignore_staged=tech_changed,
+            ignore_staged=context_changed,
         ):
             text = FileOpener.open_text_file(path)
             if "create_equipment_variant" not in text:
                 continue
-            for message, line in check_variant_availability(text, unlocks):
-                results.append((message, os.path.relpath(path, self.mod_path), line))
+            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            match = re.match(r"history/countries/([A-Z]{3})(?:\s|\.)", relative)
+            history_country = match[1] if match else None
+            for message, line in check_variant_availability(
+                context.documents[relative], unlocks, context, history_country
+            ):
+                results.append((message, relative, line))
         self._report(
             results,
             "No locally deferred equipment variants consumed",

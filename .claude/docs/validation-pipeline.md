@@ -36,10 +36,18 @@ The CI validator list lives in `validator_batches.py`, so the batch jobs and pre
   `ROOT`/`THIS` blocks preserve local state, and event options inherit `immediate`
   effects independently. Random lists merge selectable outcomes, retaining a skip
   path when no positive outcome is guaranteed. Tooltip effects and foreign scopes
-  cannot supply an unlock. It does not follow calls
-  to scripted effects, cross-file variant creation, focus prerequisites, dynamic
-  names, or starting-history guarantees, so findings require review. Staged
-  source edits scan those files; staged technology edits rescan all consumers.
+  cannot supply an unlock. Country history through the earliest bookmark supplies
+  starting technologies only for proven recipients. Event triggers, focus-tree
+  selection, decision-category restrictions, and event callers establish country
+  identity; unknown callers remain unknown, and every possible recipient is checked.
+  Conditional history grants and focus requirements are evaluated using the enabling
+  technologies' shared folder DLC requirements. Future history and optional grants
+  cannot suppress a warning. A grant in the event's country also survives an explicit
+  scope back to that same country.
+  The check does not follow scripted-effect calls, cross-file variant creation, focus
+  prerequisites, or dynamic names, so findings still require review. Staged history,
+  technology, folder, bookmark, category, focus, or event-caller changes rescan consumers;
+  other staged source edits scan those files.
   The repository backlog has not been audited. This does not change game files.
 
 - Most content validators run **CI-only**: the three bounded-parallel `mod-tests` batch jobs in `.github/workflows/test-suite.yml` are the gate. `tools/validation/validator_batches.py` is the single list of what runs, which changed-file groups select each validator, and which run without `--strict`; the batch runner (`run_validator_batch.py`) executes the selected validators with the shared CPU budget and uploads one artifact per batch holding every validator's `validation-<name>.log` + `.json` sidecar (the report loader unpacks them per validator). A crash or missing result file fails the batch while the remaining validators finish. On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `validate_defines.py`. Common scripting-mistake rules run once through `validate_common_mistakes.py` in that dispatcher and the CI validator list. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).

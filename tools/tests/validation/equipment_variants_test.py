@@ -1,4 +1,6 @@
 import pytest
+from equipment_variant_context import VariantContext, script_nodes
+from shared_utils import FileOpener
 from validate_equipment_variants import (
     Validator,
     check_variant_availability,
@@ -242,7 +244,7 @@ def test_staged_sources_and_technology_changes(tmp_path, write_path, staged):
     )
     validator.staged_files = [str(tmp_path / staged)]
     validator.run_validations()
-    assert len(validator._issues) == (2 if staged.startswith("common/") else 1)
+    assert len(validator._issues) == 2
 
 
 @pytest.mark.parametrize(
@@ -360,3 +362,313 @@ def test_random_list_optional_selection_or_grant(outcomes):
     assert check_variant_availability(
         "random_list = { " + body + " }" + reward(), UNLOCKS
     )
+
+
+def context_for(documents):
+    documents = {
+        "common/bookmarks/start.txt": "bookmarks = { bookmark = { date = 2000.1.1.12 } }",
+        "common/technology_tags/folders.txt": 'technology_folders = { designer = { available = { has_dlc = "Designer" } } }',
+        "common/technologies/test.txt": "technologies = { naval_tech = { folder = { name = designer } enable_equipments = { hull } } }",
+        **documents,
+    }
+    context = VariantContext(
+        documents={path: script_nodes(text) for path, text in documents.items()}
+    )
+    context.index()
+    return context
+
+
+def event_body(body, event="test.1", trigger="", triggered=True):
+    mode = "is_triggered_only = yes" if triggered else ""
+    return f"country_event = {{ id = {event} {mode} trigger = {{ {trigger} }} option = {{ {body} }} }}"
+
+
+def country_focus(body, tag="GER"):
+    return f"focus_tree = {{ country = {{ factor = 0 modifier = {{ add = 10 tag = {tag} }} }} focus = {{ completion_reward = {{ {body} }} }} }}"
+
+
+@pytest.mark.parametrize(
+    "gate", ["tag = GER", "original_tag = GER", "OR = { tag = GER tag = BEL }"]
+)
+def test_starting_history_for_event_recipients(gate):
+    context = context_for(
+        {
+            f"history/countries/{tag} - Test.txt": '2000.1.1 = { if = { limit = { has_dlc = "Designer" } set_technology = { naval_tech = 1 } } }'
+            for tag in ("GER", "BEL")
+        }
+    )
+    assert not check_variant_availability(
+        event_body(reward(), trigger=gate), UNLOCKS, context
+    )
+
+
+@pytest.mark.parametrize(
+    "history,expected",
+    [
+        ("set_technology = { naval_tech = 1 }", 0),
+        ("1999.12.31 = { set_technology = { naval_tech = 1 } }", 0),
+        ("2000.1.1 = { set_technology = { naval_tech = 1 } }", 0),
+        ("2001.1.1 = { set_technology = { naval_tech = 1 } }", 1),
+        ("if = { limit = { has_war = yes } set_technology = { naval_tech = 1 } }", 1),
+        ("set_technology = { naval_tech = 1 } set_technology = { naval_tech = 0 }", 1),
+        (
+            'if = { limit = { NOT = { has_dlc = "Designer" } } set_technology = { naval_tech = 1 } }',
+            1,
+        ),
+        (
+            'if = { limit = { has_dlc = "Other" } set_technology = { naval_tech = 1 } }',
+            1,
+        ),
+        (
+            'if = { limit = { has_dlc = "Other" } } else_if = { limit = { has_dlc = "Designer" } set_technology = { naval_tech = 1 } }',
+            1,
+        ),
+        (
+            'if = { limit = { NOT = { has_dlc = "Designer" } } } else = { set_technology = { naval_tech = 1 } }',
+            0,
+        ),
+    ],
+)
+def test_history_only_guaranteed_starting_grants(history, expected):
+    context = context_for({"history/countries/GER - Test.txt": history})
+    assert (
+        len(
+            check_variant_availability(
+                event_body(reward(), trigger="tag = GER"), UNLOCKS, context
+            )
+        )
+        == expected
+    )
+
+
+@pytest.mark.parametrize(
+    "gate",
+    ["NOT = { tag = GER }", "OR = { tag = GER has_war = yes }", "BEL = { tag = GER }"],
+)
+def test_weak_country_guards_do_not_borrow_history(gate):
+    context = context_for(
+        {"history/countries/GER - Test.txt": "set_technology = { naval_tech = 1 }"}
+    )
+    assert check_variant_availability(
+        event_body(reward(), trigger=gate), UNLOCKS, context
+    )
+
+
+def test_mixed_recipients_keep_missing_partner_warning():
+    context = context_for(
+        {"history/countries/GER - Test.txt": "set_technology = { naval_tech = 1 }"}
+    )
+    body = event_body(reward(), trigger="OR = { tag = GER tag = POL }")
+    assert len(check_variant_availability(body, UNLOCKS, context)) == 1
+
+
+@pytest.mark.parametrize(
+    "guard,expected",
+    [
+        (
+            'if = { limit = { has_dlc = "Designer" } has_tech = naval_tech } else = { has_tech = armor_tech }',
+            0,
+        ),
+        (
+            'if = { limit = { NOT = { has_dlc = "Designer" } } has_tech = naval_tech }',
+            1,
+        ),
+        ("if = { limit = { has_war = yes } has_tech = naval_tech }", 1),
+        (
+            'if = { limit = { has_dlc = "Designer" } OR = { has_tech = naval_tech has_war = yes } }',
+            1,
+        ),
+        (
+            'if = { limit = { has_dlc = "Designer" } GER = { has_tech = naval_tech } }',
+            1,
+        ),
+    ],
+)
+def test_conditional_focus_requirements(guard, expected):
+    body = (
+        f"focus = {{ available = {{ {guard} }} completion_reward = {{ {reward()} }} }}"
+    )
+    assert len(check_variant_availability(body, UNLOCKS, context_for({}))) == expected
+
+
+def test_category_ownership_applies_to_decision_rewards():
+    context = context_for(
+        {
+            "common/decisions/categories/test.txt": "military = { allowed = { original_tag = GER } }",
+            "history/countries/GER - Test.txt": "set_technology = { naval_tech = 1 }",
+        }
+    )
+    body = "military = { build_ship = { remove_effect = { " + reward() + " } } }"
+    assert not check_variant_availability(body, UNLOCKS, context)
+    assert check_variant_availability(
+        body.replace("military =", "unknown =", 1), UNLOCKS, context
+    )
+
+
+def test_event_call_chain_infers_all_partner_countries():
+    body = event_body(reward(), event="test.3")
+    docs = {
+        "common/national_focus/test.txt": country_focus(
+            "BEL = { country_event = test.1 } HOL = { country_event = { id = test.1 days = 1 } }"
+        ),
+        "events/test.txt": event_body("country_event = test.2")
+        + event_body("country_event = test.3", event="test.2")
+        + body,
+        **{
+            f"history/countries/{tag} - Test.txt": "set_technology = { naval_tech = 1 }"
+            for tag in ("BEL", "HOL")
+        },
+    }
+    context = context_for(docs)
+    assert context.event_countries["test.3"] == {"BEL", "HOL"}
+    assert not check_variant_availability(body, UNLOCKS, context)
+    del docs["history/countries/HOL - Test.txt"]
+    assert check_variant_availability(body, UNLOCKS, context_for(docs))
+
+
+@pytest.mark.parametrize("scope", ["GER", "ROOT", "THIS"])
+def test_same_country_event_scope_keeps_direct_grant(scope):
+    body = event_body(
+        "set_technology = { naval_tech = 1 } "
+        + f"{scope} = {{ {reward(creator='creator = ROOT')} }}"
+    )
+    context = context_for(
+        {
+            "events/test.txt": body,
+            "common/national_focus/test.txt": country_focus("country_event = test.1"),
+        }
+    )
+    assert context.event_countries["test.1"] == {"GER"}
+    assert not check_variant_availability(body, UNLOCKS, context)
+    assert check_variant_availability(
+        body.replace("set_technology = { naval_tech = 1 }", ""), UNLOCKS, context
+    )
+
+
+@pytest.mark.parametrize(
+    "extra",
+    [
+        "common/scripted_effects/unknown.txt",
+        "common/on_actions/unknown.txt",
+    ],
+)
+def test_unknown_callers_prevent_single_country_assumption(extra):
+    body = event_body(reward())
+    docs = {
+        "events/test.txt": body,
+        "common/national_focus/test.txt": country_focus("country_event = test.1"),
+        "history/countries/GER - Test.txt": "set_technology = { naval_tech = 1 }",
+        extra: "some_effect = { country_event = test.1 }",
+    }
+    context = context_for(docs)
+    assert None in context.event_countries["test.1"]
+    assert check_variant_availability(body, UNLOCKS, context)
+
+
+def test_random_event_pool_is_an_unknown_caller():
+    context = context_for(
+        {
+            "events/test.txt": event_body(reward()),
+            "common/national_focus/test.txt": country_focus("country_event = test.1"),
+            "common/on_actions/test.txt": "on_actions = { on_daily = { random_events = { 1 = test.1 } } }",
+        }
+    )
+    assert context.event_countries["test.1"] == {"GER", None}
+
+
+def test_recursive_event_chain_without_entry_is_unknown():
+    context = context_for(
+        {
+            "events/test.txt": event_body("country_event = test.2")
+            + event_body("country_event = test.1", event="test.2")
+        }
+    )
+    assert context.event_countries == {"test.1": {None}, "test.2": {None}}
+
+
+def test_foreign_scope_and_technology_revocation_do_not_borrow_unlock():
+    context = context_for(
+        {"history/countries/GER - Test.txt": "set_technology = { naval_tech = 1 }"}
+    )
+    for body in (
+        "BEL = { " + reward() + " }",
+        "set_technology = { naval_tech = 0 }" + reward(),
+    ):
+        assert check_variant_availability(
+            event_body(body, trigger="tag = GER"), UNLOCKS, context
+        )
+
+
+def test_history_file_does_not_borrow_its_later_grant():
+    body = "2000.1.1 = { " + reward() + " set_technology = { naval_tech = 1 } }"
+    context = context_for({"history/countries/GER - Test.txt": body})
+    assert check_variant_availability(body, UNLOCKS, context, history_country="GER")
+
+
+def test_context_is_loaded_for_staged_consumers_and_rescanned_for_history(
+    tmp_path, write_path
+):
+    body = event_body(reward(), trigger="tag = GER")
+    docs = {
+        "events/test.txt": body,
+        "history/countries/GER - Test.txt": "2000.1.1 = { set_technology = { naval_tech = 1 } }",
+    }
+    write_technology(tmp_path, write_path)
+    write_path(
+        tmp_path,
+        "common/bookmarks/start.txt",
+        "bookmarks = { bookmark = { date = 2000.1.1 } }",
+    )
+    for path, text in docs.items():
+        write_path(tmp_path, path, text)
+    validator = Validator(
+        mod_path=str(tmp_path), staged_only=True, workers=1, use_colors=False
+    )
+    validator.staged_files = [str(tmp_path / "events/test.txt")]
+    validator.run_validations()
+    assert not validator._issues
+    write_path(
+        tmp_path,
+        "history/countries/GER - Test.txt",
+        "set_technology = { armor_tech = 1 }",
+    )
+    FileOpener.clear_cache()
+    validator.staged_files = [str(tmp_path / "history/countries/GER - Test.txt")]
+    validator.run_validations()
+    assert len(validator._issues) == 1
+
+
+def test_alternative_unlock_does_not_assume_one_designers_dlc():
+    context = context_for(
+        {
+            "history/countries/GER - Test.txt": 'if = { limit = { has_dlc = "Designer" } set_technology = { naval_tech = 1 } }'
+        }
+    )
+    assert check_variant_availability(
+        event_body(reward(), trigger="tag = GER"),
+        {"hull": {"naval_tech", "other_tech"}},
+        context,
+    )
+
+
+def test_history_dates_apply_chronologically_after_undated_defaults():
+    context = context_for(
+        {
+            "history/countries/GER - Test.txt": "2000.1.1 = { set_technology = { naval_tech = 0 } } 1999.1.1 = { set_technology = { naval_tech = 1 } } set_technology = { naval_tech = 1 }"
+        }
+    )
+    assert check_variant_availability(
+        event_body(reward(), trigger="tag = GER"), UNLOCKS, context
+    )
+
+
+def test_random_list_event_calls_keep_country_identity():
+    context = context_for(
+        {
+            "events/test.txt": event_body(reward()),
+            "common/national_focus/test.txt": country_focus(
+                "random_list = { 10 = { country_event = test.1 } }"
+            ),
+        }
+    )
+    assert context.event_countries["test.1"] == {"GER"}
