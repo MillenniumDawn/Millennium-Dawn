@@ -14,7 +14,11 @@ from dataclasses import dataclass, field
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from equipment_module_slots import _depth0_text, _iter_blocks, blank_comments
-from linting.check_common_mistakes import _first_child, _parse_script_nodes
+from linting.check_common_mistakes import (
+    _first_child,
+    _parse_script_nodes,
+    _scope_frame_kind,
+)
 from shared_utils import FileOpener
 from validator_common import BaseValidator, Severity, run_validator_main
 
@@ -33,6 +37,7 @@ _METADATA = {
     "visible",
     "ai_will_do",
     "ai_chance",
+    "modifier",
     "effect_tooltip",
     "custom_effect_tooltip",
     "custom_trigger_tooltip",
@@ -121,7 +126,7 @@ def check_variant_availability(text, unlocks):
     """Return (message, use-line) warnings for deferred variants used locally."""
     findings = set()
 
-    def walk(nodes, state, country=None):
+    def walk(nodes, state, country="ROOT"):
         index = 0
         while index < len(nodes):
             node = nodes[index]
@@ -199,7 +204,7 @@ def check_variant_availability(text, unlocks):
                             node.line,
                         )
                     )
-            elif node.key == "hidden_effect":
+            elif node.key in {"hidden_effect", "THIS", country}:
                 state = walk(node.children, state, country)
             elif node.key in {"random", "while"}:
                 conditional = state.copy()
@@ -209,17 +214,64 @@ def check_variant_availability(text, unlocks):
                 )
                 state = _join([state, walk(node.children, conditional, country)])
             elif node.key == "random_list":
-                state = _join(
-                    [state]
-                    + [walk(n.children, state.copy(), country) for n in node.children]
-                )
+                outcomes = []
+                guaranteed_selection = False
+                for outcome in node.children:
+                    if outcome.value is not None or outcome.key in _METADATA:
+                        continue
+                    weight = (
+                        float(outcome.key)
+                        if re.fullmatch(r"-?\d+(?:\.\d+)?", outcome.key)
+                        else None
+                    )
+                    modified = _first_child(outcome, "modifier") is not None
+                    if weight is not None and weight <= 0 and not modified:
+                        continue
+                    trigger = _first_child(outcome, "trigger")
+                    selected = state.copy()
+                    selected.techs.update(
+                        _guaranteed(trigger.children) if trigger else set()
+                    )
+                    outcomes.append(walk(outcome.children, selected, country))
+                    if (
+                        weight is not None
+                        and weight > 0
+                        and not modified
+                        and not trigger
+                    ):
+                        guaranteed_selection = True
+                if not guaranteed_selection:
+                    outcomes.append(state)
+                state = _join(outcomes)
+            elif node.key in {"country_event", "news_event"}:
+                event_state = _Flow()
+                trigger = _first_child(node, "trigger")
+                if trigger:
+                    event_state.techs.update(_guaranteed(trigger.children))
+                immediate = _first_child(node, "immediate")
+                if immediate:
+                    event_state = walk(immediate.children, event_state)
+                for child in node.children:
+                    if child.key != "immediate":
+                        walk([child], event_state.copy())
             elif node.children:
-                inherited = state.techs.copy() if node.key in _EFFECTS else set()
+                inherited = state.copy() if node.key in _EFFECTS else _Flow()
                 for gate in node.children:
                     if gate.key in {"available", "trigger", "limit"}:
-                        inherited.update(_guaranteed(gate.children))
-                scope = node.key if re.fullmatch(r"[A-Z]{3}", node.key) else country
-                walk(node.children, _Flow(inherited), scope)
+                        inherited.techs.update(_guaranteed(gate.children))
+                scope = country
+                if node.key == "ROOT":
+                    scope = "ROOT"
+                elif re.fullmatch(r"[A-Z]{3}", node.key):
+                    scope = node.key
+                elif (
+                    _scope_frame_kind(node.key) == "foreign"
+                    or node.key.startswith(("random_", "every_", "FROM", "PREV"))
+                    or node.key in {"owner", "controller", "overlord"}
+                    or node.key.isdigit()
+                ):
+                    scope = None
+                walk(node.children, inherited, scope)
         return state
 
     walk(_nodes(text), _Flow())

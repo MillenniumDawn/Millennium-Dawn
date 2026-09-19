@@ -32,8 +32,11 @@ The CI validator list lives in `validator_batches.py`, so the batch jobs and pre
   `create_ship`, or `add_equipment_to_stockpile`. All equipment types are covered.
   Technologies are resolved through `enable_equipments`, rather than assuming
   technology and equipment IDs match. The check follows effect order, direct
-  technology guards, conditional grants, and `allow_without_tech = yes`; tooltip
-  effects and foreign scopes cannot supply an unlock. It does not follow calls
+  technology guards, conditional grants, and `allow_without_tech = yes`. Same-country
+  `ROOT`/`THIS` blocks preserve local state, and event options inherit `immediate`
+  effects independently. Random lists merge selectable outcomes, retaining a skip
+  path when no positive outcome is guaranteed. Tooltip effects and foreign scopes
+  cannot supply an unlock. It does not follow calls
   to scripted effects, cross-file variant creation, focus prerequisites, dynamic
   names, or starting-history guarantees, so findings require review. Staged
   source edits scan those files; staged technology edits rescan all consumers.

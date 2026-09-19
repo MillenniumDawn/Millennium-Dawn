@@ -229,3 +229,106 @@ def test_staged_sources_and_technology_changes(tmp_path, write_path, staged):
 def test_optional_grants_do_not_unlock_later_consumers(wrapper):
     prefix = wrapper.replace("BODY", "set_technology = { naval_tech = 1 }")
     assert check_variant_availability(prefix + reward(), UNLOCKS)
+
+
+@pytest.mark.parametrize(
+    "consumer,field",
+    [
+        ("add_equipment_production", "creator"),
+        ("create_ship", "creator"),
+        ("add_equipment_to_stockpile", "producer"),
+    ],
+)
+def test_root_producer_is_local(consumer, field):
+    body = reward(consumer=consumer, creator=f"{field} = ROOT")
+    assert check_variant_availability("completion_reward = { " + body + " }", UNLOCKS)
+
+
+@pytest.mark.parametrize("scope", ["ROOT", "THIS"])
+def test_same_scope_preserves_technology_and_pending_variants(scope):
+    creation, use = reward().splitlines()
+    grant = "set_technology = { naval_tech = 1 }"
+    assert not check_variant_availability(
+        grant + f"{scope} = {{ {reward()} }}", UNLOCKS
+    )
+    assert not check_variant_availability(
+        f"{scope} = {{ {grant} }}" + reward(), UNLOCKS
+    )
+    assert check_variant_availability(creation + f"{scope} = {{ {use} }}", UNLOCKS)
+    assert check_variant_availability(f"{scope} = {{ {creation} }}" + use, UNLOCKS)
+
+
+@pytest.mark.parametrize(
+    "scope", ["random_other_country", "every_country", "FROM", "event_target:recipient"]
+)
+def test_foreign_selector_does_not_inherit_literal_country(scope):
+    foreign = reward(creator="creator = GER")
+    assert not check_variant_availability(
+        f"GER = {{ {scope} = {{ {foreign} }} }}", UNLOCKS
+    )
+    local = reward(creator="creator = THIS")
+    assert check_variant_availability(f"GER = {{ {scope} = {{ {local} }} }}", UNLOCKS)
+    assert not check_variant_availability(
+        f"{scope} = {{ {reward(creator='creator = ROOT')} }}", UNLOCKS
+    )
+
+
+def test_same_literal_scope_preserves_state():
+    assert not check_variant_availability(
+        "GER = { set_technology = { naval_tech = 1 } GER = { " + reward() + " } }",
+        UNLOCKS,
+    )
+
+
+@pytest.mark.parametrize("event_type", ["country_event", "news_event"])
+def test_event_immediate_seeds_each_option_independently(event_type):
+    creation, use = reward().splitlines()
+    grant = "set_technology = { naval_tech = 1 }"
+    assert not check_variant_availability(
+        f"{event_type} = {{ option = {{ {reward()} }} immediate = {{ {grant} }} }}",
+        UNLOCKS,
+    )
+    text = (
+        f"{event_type} = {{ immediate = {{ {creation} }} "
+        f"option = {{ {grant} {use} }} option = {{ {use} }} }}"
+    )
+    assert len(check_variant_availability(text, UNLOCKS)) == 1
+    assert check_variant_availability(
+        f"{event_type} = {{ immediate = {{ {grant} }} }} "
+        f"{event_type} = {{ option = {{ {reward()} }} }}",
+        UNLOCKS,
+    )
+
+
+@pytest.mark.parametrize(
+    "outcomes",
+    [
+        "1 = { GRANT } 1 = { GRANT }",
+        "1 = { GRANT } 0 = { add_stability = 0.1 }",
+        "1 = { GRANT } variable_weight = { GRANT }",
+        "log = yes seed = some_seed 1 = { GRANT }",
+    ],
+)
+def test_random_list_guaranteed_selection(outcomes):
+    body = outcomes.replace("GRANT", "set_technology = { naval_tech = 1 }")
+    assert not check_variant_availability(
+        "random_list = { " + body + " }" + reward(), UNLOCKS
+    )
+
+
+@pytest.mark.parametrize(
+    "outcomes",
+    [
+        "0 = { GRANT }",
+        "variable_weight = { GRANT }",
+        "1 = { trigger = { has_war = yes } GRANT }",
+        "1 = { modifier = { factor = 0 has_war = yes } GRANT }",
+        "1 = { GRANT } 1 = { }",
+        "1 = { GRANT } 0 = { modifier = { add = 1 has_war = yes } add_stability = 0.1 }",
+    ],
+)
+def test_random_list_optional_selection_or_grant(outcomes):
+    body = outcomes.replace("GRANT", "set_technology = { naval_tech = 1 }")
+    assert check_variant_availability(
+        "random_list = { " + body + " }" + reward(), UNLOCKS
+    )
