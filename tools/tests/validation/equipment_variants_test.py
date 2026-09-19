@@ -73,6 +73,34 @@ def test_explicit_permission_and_guards(body):
 
 
 @pytest.mark.parametrize(
+    "wrapper", ["custom_trigger_tooltip", "custom_override_tooltip"]
+)
+@pytest.mark.parametrize(
+    "container",
+    [
+        "if = { limit = { GUARD } BODY }",
+        "focus = { available = { GUARD } completion_reward = { BODY } }",
+        "country_event = { trigger = { GUARD } option = { BODY } }",
+    ],
+)
+@pytest.mark.parametrize(
+    "condition,expected_warnings",
+    [
+        ("has_tech = naval_tech", 0),
+        ("NOT = { has_tech = naval_tech }", 1),
+        ("OR = { has_tech = naval_tech has_war = yes }", 1),
+        ("GER = { has_tech = naval_tech }", 1),
+    ],
+)
+def test_tooltip_wrapped_technology_guards(
+    wrapper, container, condition, expected_warnings
+):
+    guard = f"{wrapper} = {{ tooltip = TECH_REQUIRED {condition} }}"
+    body = container.replace("GUARD", guard).replace("BODY", reward())
+    assert len(check_variant_availability(body, UNLOCKS)) == expected_warnings
+
+
+@pytest.mark.parametrize(
     "prefix",
     [
         "if = { limit = { has_war = yes } set_technology = { naval_tech = 1 } }",

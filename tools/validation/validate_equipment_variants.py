@@ -91,7 +91,12 @@ def _guaranteed(nodes):
     for node in nodes:
         if node.key == "has_tech" and node.value:
             known.add(node.value.strip('"'))
-        elif node.key in {"AND", "hidden_trigger"}:
+        elif node.key in {
+            "AND",
+            "hidden_trigger",
+            "custom_trigger_tooltip",
+            "custom_override_tooltip",
+        }:
             known.update(_guaranteed(node.children))
         elif node.key == "OR" and node.children:
             known.update(set.intersection(*(_guaranteed([n]) for n in node.children)))
