@@ -68,7 +68,7 @@ def test_parse_leader_trait_names_reads_only_txt_files(tmp_path, write_path):
     write_path(
         tmp_path,
         "common/country_leader/traits.txt",
-        "leader_traits = {\n\temerging_Communist-State = {\n\t}\n}\n",
+        "leader_traits = {\n\temerging_communist_state = {\n\t}\n}\n",
     )
     write_path(
         tmp_path,
@@ -78,7 +78,7 @@ def test_parse_leader_trait_names_reads_only_txt_files(tmp_path, write_path):
 
     names = VC.parse_leader_trait_names(str(tmp_path), "country_leader")
 
-    assert names == {"emerging_Communist-State"}
+    assert names == {"emerging_communist_state"}
 
 
 def test_parse_leader_trait_names_survives_an_unreadable_dir(tmp_path, monkeypatch):

@@ -73,6 +73,7 @@ GROUP_PATTERNS = {
         "music/**/*.txt",
     ],
     "mod": ["*.mod"],
+    "docs": ["docs/**", "tools/docs_checks/**", ".github/workflows/docs-quality.yml"],
     "map-adjacency": ["map/adjacency_rules.txt"],
     "content": [
         "common/**",
