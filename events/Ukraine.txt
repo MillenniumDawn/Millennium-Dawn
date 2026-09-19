@@ -43,6 +43,7 @@ add_namespace = ukraine_reorganize_navy_maintain_641_submarine
 add_namespace = ukraine_reorganize_navy_repair_rivne
 add_namespace = ukraine_reorganize_navy_repair_support_ships
 add_namespace = ukraine_reorganize_navy_build_simferopol_recon_ship
+add_namespace = ukraine_develop_btr3
 add_namespace = ukraine_develop_btr4
 add_namespace = ukraine_develop_2s22
 ##############MAIDAN##############
@@ -1317,6 +1318,7 @@ country_event = {
 		country_event = { id = ukraine_maidan.2 days = 1 }
 		hidden_effect = {
 			UKR = { release = CRM }
+			669 = { add_core_of = UKR }
 			CRM = {
 				set_country_flag = UKR_crimea_bund
 				set_country_flag = SOV_subject_republic
@@ -1362,6 +1364,7 @@ country_event = {
 		country_event = ukraine_maidan.3
 		hidden_effect = {
 			UKR = { release = CRM }
+			669 = { add_core_of = UKR }
 			CRM = {
 				set_country_flag = UKR_crimea_bund
 				set_country_flag = UKR_subject_agree
@@ -3776,6 +3779,7 @@ country_event = {
 					UKR = { owns_state = 669 }
 				}
 				UKR = { release = CRM }
+				669 = { add_core_of = UKR }
 			}
 			if = {
 				limit = {
@@ -3835,6 +3839,7 @@ country_event = {
 					UKR = { owns_state = 669 }
 				}
 				UKR = { release = CRM }
+				669 = { add_core_of = UKR }
 			}
 			if = {
 				limit = {
@@ -8093,6 +8098,600 @@ country_event = {
 }
 
 country_event = {
+	id = ukraine_develop_btr3.1
+	title = ukraine_develop_btr3.1.name
+	desc = ukraine_develop_btr3.1.desc
+	picture = GFX_ukraine_btr3u_uae_tender_presentation
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_develop_btr3.1.a
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.1.a executed"
+
+		if = {
+			limit = {
+				UAE = {
+					has_opinion = {
+						target = UKR
+						value > 39
+					}
+					influence_higher_5 = yes
+				}
+			}
+
+			UAE = {
+				set_temp_variable = { treasury_change = -0.2 }
+				modify_treasury_effect = yes
+			}
+			set_temp_variable = { treasury_change = 0.2 }
+				modify_treasury_effect = yes
+
+			696 = { #Kharkiv
+				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.04 } }
+			}
+
+			create_equipment_variant = {
+				name = "BTR-3U Guardian"
+				type = medium_tank_amphibious_chassis_1
+				parent_version = 0
+				modules = {
+					main_armament_slot = small_autocannon_2
+					secondary_armament_slot = afv_coax_machine_gun
+					reload_type_slot = automatic_loading
+					ammunition_load_slot = mixed_autocannon_ammo_2
+					turret_type_slot = tank_base_tank_turret
+					suspension_type_slot = tank_wheeled_suspension_medium
+					armor_type_slot = tank_steel_armor_gen2
+					engine_type_slot = tank_diesel_engine_gen3
+					special_type_slot_1 = afv_atgm_gen2
+					special_type_slot_2 = smoke_launchers
+					special_type_slot_4 = tank_battlestation_2
+					special_type_slot_5 = afv_troop_capacity
+				}
+				upgrades = { tank_nsb_armor_upgrade = 0 }
+				icon = "gfx/interface/technologies/UKR/LAND/BTR-3U_Guardian.dds"
+				model = btr80a_vehicle_entity
+				design_team = mio:UKR_kmdb_tank_manufacturer
+			}
+
+			set_country_flag = UKR_develop_btr3_uae_tender_win_flag
+
+			if = {
+				limit = {
+					696 = { #Kharkiv
+						arms_factory > 0
+					}
+				}
+
+				country_event = {
+					id = ukraine_develop_btr3.2
+					days = 180
+				}
+
+				696 = { #Kharkiv
+					remove_building = {
+						type = arms_factory
+						level = 1
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					696 = { #Kharkiv
+						arms_factory < 1
+					}
+				}
+
+				country_event = {
+					id = ukraine_develop_btr3.5
+					days = 30
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_develop_btr3.1.b
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.1.b executed"
+
+		if = {
+			limit = {
+				UAE = {
+					has_opinion = {
+						target = UKR
+						value < 40
+					}
+					influence_higher_0 = yes
+				}
+			}
+
+			add_opinion_modifier = {
+				target = UAE
+				modifier = refused_market_trade
+			}
+
+			set_country_flag = UKR_develop_btr3_uae_tender_lose_flag
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_develop_btr3.2
+	title = ukraine_develop_btr3.2.name
+	desc = ukraine_develop_btr3.2.desc
+	picture = GFX_ukraine_btr3u_uae_tender_procurement
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_develop_btr3.2.a
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.2.a executed"
+
+		696 = { #Kharkiv
+			add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.01 } }
+		}
+
+		UAE = {
+			set_temp_variable = { treasury_change = -0.1 }
+			modify_treasury_effect = yes
+
+			add_equipment_to_stockpile = {
+				type = medium_tank_amphibious_chassis_1
+				variant_name = "BTR-3U Guardian"
+				amount = 30
+				producer = UKR
+			}
+		}
+
+		set_temp_variable = { treasury_change = 0.1 }
+			modify_treasury_effect = yes
+
+		if = {
+			limit = {
+				696 = { #Kharkiv
+					arms_factory > 0
+				}
+			}
+
+			country_event = {
+				id = ukraine_develop_btr3.3
+				days = 120
+			}
+		}
+
+		if = {
+			limit = {
+				696 = { #Kharkiv
+					arms_factory < 1
+				}
+			}
+
+			696 = { #Kharkiv
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			country_event = {
+				id = ukraine_develop_btr3.6
+				days = 30
+			}
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_develop_btr3.3
+	title = ukraine_develop_btr3.3.name
+	desc = ukraine_develop_btr3.3.desc
+	picture = GFX_ukraine_btr3u_uae_tender_procurement
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_develop_btr3.3.a
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.3.a executed"
+
+		696 = { #Kharkiv
+			add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
+		}
+
+		UAE = {
+			set_temp_variable = { treasury_change = -0.1 }
+			modify_treasury_effect = yes
+
+			add_equipment_to_stockpile = {
+				type = medium_tank_amphibious_chassis_1
+				variant_name = "BTR-3U Guardian"
+				amount = 30
+				producer = UKR
+			}
+		}
+
+		set_temp_variable = { treasury_change = 0.1 }
+			modify_treasury_effect = yes
+
+		if = {
+			limit = {
+				696 = { #Kharkiv
+					arms_factory > 0
+				}
+			}
+
+			country_event = {
+				id = ukraine_develop_btr3.4
+				days = 90
+			}
+		}
+
+		if = {
+			limit = {
+				696 = { #Kharkiv
+					arms_factory < 1
+				}
+			}
+
+			696 = { #Kharkiv
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			country_event = {
+				id = ukraine_develop_btr3.7
+				days = 30
+			}
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_develop_btr3.4
+	title = ukraine_develop_btr3.4.name
+	desc = ukraine_develop_btr3.4.desc
+	picture = GFX_ukraine_btr3u_uae_tender_license
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_develop_btr3.4.a
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.4.a executed"
+
+		696 = { #Kharkiv
+			add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
+
+			add_building_construction = {
+				type = arms_factory
+				level = 1
+				instant_build = yes
+			}
+		}
+
+		UAE = {
+			set_temp_variable = { treasury_change = -0.1 }
+			modify_treasury_effect = yes
+
+			add_equipment_to_stockpile = {
+				type = medium_tank_amphibious_chassis_1
+				variant_name = "BTR-3U Guardian"
+				amount = 30
+				producer = UKR
+			}
+		}
+
+		set_temp_variable = { treasury_change = 0.1 }
+			modify_treasury_effect = yes
+
+
+		set_country_flag = UKR_develop_btr3_uae_tender_finish_flag
+	}
+
+	option = {
+		name = ukraine_develop_btr3.4.b
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.4.b executed"
+
+		if = {
+			limit = {
+				UAE = {
+					has_opinion = {
+						target = UKR
+						value > 49
+					}
+					influence_higher_10 = yes
+				}
+			}
+
+			696 = { #Kharkiv
+				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.04 } }
+
+				add_building_construction = {
+					type = arms_factory
+					level = 1
+					instant_build = yes
+				}
+			}
+
+			UAE = {
+				set_temp_variable = { treasury_change = -0.4 }
+				modify_treasury_effect = yes
+
+				add_equipment_to_stockpile = {
+					type = medium_tank_amphibious_chassis_1
+					variant_name = "BTR-3U Guardian"
+					amount = 30
+					producer = UKR
+				}
+			}
+
+			create_production_license = {
+				target = UAE
+				equipment = {
+					type = medium_tank_amphibious_chassis_1
+					version_name = "BTR-3U Guardian"
+				}
+				cost_factor = 1
+			}
+
+			set_temp_variable = { treasury_change = 0.4 }
+			modify_treasury_effect = yes
+
+			set_country_flag = UKR_develop_btr3_uae_tender_license_flag
+		}
+	}
+}
+
+country_event = {
+	id = ukraine_develop_btr3.5
+	title = ukraine_develop_btr3.5.name
+	desc = ukraine_develop_btr3.5.desc
+	picture = GFX_ukraine_btr3u_uae_tender_license
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_develop_btr3.5.a
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.5.a executed"
+
+		if = {
+			limit = {
+				UAE = {
+					has_opinion = {
+						target = UKR
+						value > 49
+					}
+					influence_higher_10 = yes
+				}
+			}
+
+			if = {
+				limit = {
+					696 = { #Kharkiv
+						arms_factory > 0
+					}
+				}
+
+				country_event = {
+					id = ukraine_develop_btr3.2
+					days = 180
+				}
+
+				696 = { #Kharkiv
+					remove_building = {
+						type = arms_factory
+						level = 1
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					696 = { #Kharkiv
+						arms_factory < 1
+					}
+				}
+
+				country_event = {
+					id = ukraine_develop_btr3.5
+					days = 30
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_develop_btr3.5.b
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.5.b executed"
+
+		696 = { #Kharkiv
+			add_state_modifier = { modifier = { state_productivity_growth_modifier = -0.02 } }
+		}
+
+		UAE = {
+			add_opinion_modifier = {
+				target = UKR
+				modifier = broke_trade_agreement
+			}
+		}
+
+		set_country_flag = UKR_develop_btr3_uae_tender_terminated_flag
+	}
+}
+
+country_event = {
+	id = ukraine_develop_btr3.6
+	title = ukraine_develop_btr3.6.name
+	desc = ukraine_develop_btr3.6.desc
+	picture = GFX_ukraine_btr3u_uae_tender_license
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_develop_btr3.5.a
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.6.a executed"
+
+		if = {
+			limit = {
+				UAE = {
+					has_opinion = {
+						target = UKR
+						value > 49
+					}
+					influence_higher_10 = yes
+				}
+			}
+
+			if = {
+				limit = {
+					696 = { #Kharkiv
+						arms_factory > 0
+					}
+				}
+
+				country_event = {
+					id = ukraine_develop_btr3.3
+					days = 150
+				}
+
+				696 = { #Kharkiv
+					remove_building = {
+						type = arms_factory
+						level = 1
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					696 = { #Kharkiv
+						arms_factory < 1
+					}
+				}
+
+				country_event = {
+					id = ukraine_develop_btr3.6
+					days = 30
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_develop_btr3.6.b
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.6.b executed"
+
+		696 = { #Kharkiv
+			add_state_modifier = { modifier = { state_productivity_growth_modifier = -0.02 } }
+		}
+
+		UAE = {
+			add_opinion_modifier = {
+				target = UKR
+				modifier = broke_trade_agreement
+			}
+		}
+
+		set_country_flag = UKR_develop_btr3_uae_tender_terminated_flag
+	}
+}
+
+country_event = {
+	id = ukraine_develop_btr3.7
+	title = ukraine_develop_btr3.7.name
+	desc = ukraine_develop_btr3.7.desc
+	picture = GFX_ukraine_btr3u_uae_tender_license
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_develop_btr3.5.a
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.7.a executed"
+
+		if = {
+			limit = {
+				UAE = {
+					has_opinion = {
+						target = UKR
+						value > 49
+					}
+					influence_higher_10 = yes
+				}
+			}
+
+			if = {
+				limit = {
+					696 = { #Kharkiv
+						arms_factory > 0
+					}
+				}
+
+				country_event = {
+					id = ukraine_develop_btr3.4
+					days = 120
+				}
+
+				696 = { #Kharkiv
+					remove_building = {
+						type = arms_factory
+						level = 1
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					696 = { #Kharkiv
+						arms_factory < 1
+					}
+				}
+
+				country_event = {
+					id = ukraine_develop_btr3.7
+					days = 30
+				}
+			}
+		}
+	}
+
+	option = {
+		name = ukraine_develop_btr3.7.b
+		log = "[GetDateText]: [This.GetName]: ukraine_develop_btr3.7.b executed"
+
+		696 = { #Kharkiv
+			add_state_modifier = { modifier = { state_productivity_growth_modifier = -0.02 } }
+		}
+
+		UAE = {
+			add_opinion_modifier = {
+				target = UKR
+				modifier = broke_trade_agreement
+			}
+		}
+
+		set_country_flag = UKR_develop_btr3_uae_tender_terminated_flag
+	}
+}
+
+country_event = {
 	id = ukraine_develop_btr4.1
 	title = ukraine_develop_btr4.1.name
 	desc = ukraine_develop_btr4.1.desc
@@ -9776,6 +10375,12 @@ country_event = {
 	is_triggered_only = yes
 
 	trigger = {
+		SOV = {
+			OR = {
+				controls_province = 16514
+				controls_province = 3543
+			}
+		}
 		NOT = { has_country_flag = UKR_strategic_industry_dispersed_production }
 		NOT = { has_country_flag = UKR_strategic_industry_held_the_plants }
 	}
