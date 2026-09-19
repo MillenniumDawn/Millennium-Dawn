@@ -61,7 +61,7 @@ PARTY_SLOT_NAMES: Dict[int, str] = {
     1: "conservatism",
     2: "liberalism",
     3: "socialism",
-    4: "Communist-State",
+    4: "communist_state",
     5: "anarchist_communism",
     6: "Conservative",
     7: "Autocracy",
