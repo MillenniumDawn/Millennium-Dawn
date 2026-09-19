@@ -52,9 +52,13 @@
 	NDefines.NDiplomacy.REVOKE_GUARANTEE_COST = 30
 	NDefines.NDiplomacy.OPINION_PER_VOLUNTEER = 15
 	NDefines.NDiplomacy.MAX_OPINION_FROM_VOLUNTEERS = 50
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 3
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 20
 	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.5  -- was -0.7
+
+	--License AI: Modifiers for license
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 5 -- 2 is the default value
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_PUPPET_BASE = 5 -- 15 is the default value
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 30
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_OPINION_FACTOR = 0.35 -- 0.4 is the default value
 
 	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_BASE = 0  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
 	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_FACTOR = 0.05  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
