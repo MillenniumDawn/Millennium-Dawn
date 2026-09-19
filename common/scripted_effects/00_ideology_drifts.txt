@@ -63,6 +63,7 @@ setup_coalition_idea_tokens = {
 }
 
 reset_coalition_ideas = {
+	clear_coalition_count_ideas = yes
 	reset_democratic_coalition_ideas = yes
 	reset_communism_coalition_ideas = yes
 	reset_fascism_coalition_ideas = yes
@@ -73,7 +74,6 @@ reset_coalition_ideas = {
 reset_democratic_coalition_ideas = {
 	set_temp_variable = { coalition_idea_share = coalition_democratic }
 	set_coalition_idea_level = yes
-	set_temp_variable = { coalition_idea_outlook_id = 0 }
 	set_temp_variable = { coalition_idea_target_token = global.coalition_western_idea^coalition_idea_level }
 	update_coalition_outlook_idea = yes
 }
@@ -81,7 +81,6 @@ reset_democratic_coalition_ideas = {
 reset_communism_coalition_ideas = {
 	set_temp_variable = { coalition_idea_share = coalition_communism }
 	set_coalition_idea_level = yes
-	set_temp_variable = { coalition_idea_outlook_id = 1 }
 	set_temp_variable = { coalition_idea_target_token = global.coalition_emerging_idea^coalition_idea_level }
 	update_coalition_outlook_idea = yes
 }
@@ -89,7 +88,6 @@ reset_communism_coalition_ideas = {
 reset_fascism_coalition_ideas = {
 	set_temp_variable = { coalition_idea_share = coalition_fascism }
 	set_coalition_idea_level = yes
-	set_temp_variable = { coalition_idea_outlook_id = 2 }
 	set_temp_variable = { coalition_idea_target_token = global.coalition_salafist_idea^coalition_idea_level }
 	update_coalition_outlook_idea = yes
 }
@@ -97,7 +95,6 @@ reset_fascism_coalition_ideas = {
 reset_neutrality_coalition_ideas = {
 	set_temp_variable = { coalition_idea_share = coalition_neutrality }
 	set_coalition_idea_level = yes
-	set_temp_variable = { coalition_idea_outlook_id = 3 }
 	set_temp_variable = { coalition_idea_target_token = global.coalition_non_alligned_idea^coalition_idea_level }
 	update_coalition_outlook_idea = yes
 }
@@ -105,7 +102,6 @@ reset_neutrality_coalition_ideas = {
 reset_nationalist_coalition_ideas = {
 	set_temp_variable = { coalition_idea_share = coalition_nationalist }
 	set_coalition_idea_level = yes
-	set_temp_variable = { coalition_idea_outlook_id = 4 }
 	set_temp_variable = { coalition_idea_target_token = global.coalition_nationalist_idea^coalition_idea_level }
 	update_coalition_outlook_idea = yes
 }
@@ -130,24 +126,13 @@ set_coalition_idea_level = {
 }
 
 # Parameters:
-# - coalition_idea_outlook_id: Numeric outlook ID (0..4).
-# - coalition_idea_target_token: Desired idea token, or 0 to remove it.
+# - coalition_idea_target_token: Desired idea token, or 0 for none.
 update_coalition_outlook_idea = {
 	if = {
-		limit = {
-			NOT = { check_variable = { coalition_applied_tokens^coalition_idea_outlook_id = 0 } }
-			NOT = { check_variable = { coalition_applied_tokens^coalition_idea_outlook_id = coalition_idea_target_token } }
-		}
-		remove_ideas = var:coalition_applied_tokens^coalition_idea_outlook_id
-	}
-	if = {
-		limit = {
-			NOT = { check_variable = { coalition_idea_target_token = 0 } }
-			NOT = { has_idea = var:coalition_idea_target_token }
-		}
+		limit = { NOT = { check_variable = { coalition_idea_target_token = 0 } } }
 		add_ideas = var:coalition_idea_target_token
 	}
-	set_variable = { coalition_applied_tokens^coalition_idea_outlook_id = coalition_idea_target_token }
+	add_to_array = { coalition_applied_tokens = coalition_idea_target_token }
 }
 
 clear_coalition_count_ideas = {

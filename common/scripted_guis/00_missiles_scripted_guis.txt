@@ -120,6 +120,13 @@ scripted_gui = {
 				clear_variable = var_open_MD_UN_gui
 				clear_variable = var_open_MD_cyber_gui
 				clear_variable = var_open_MD_antarctica_gui
+				if = {
+					limit = {
+						check_variable = { selected_nation > 0 }
+						NOT = { check_variable = { selected_nation = THIS.id } }
+					}
+					set_variable = { selected_ct_nation = selected_nation }
+				}
 				international_systems_update = yes
 			}
 			pmc_gui_ledger_button_click = {
@@ -4163,6 +4170,15 @@ scripted_gui = {
 		}
 
 		triggers = {
+			un_sc_vote_status_tracker_visible = {
+				OR = {
+					has_global_flag = current_ongoing_sc_vote
+					has_country_flag = unsc_permanent_seat_sc_pending
+					has_country_flag = unsc_permanent_seat_ga_pending
+					has_country_flag = unsc_permanent_seat_approved_pending_promotion
+					has_country_flag = unsc_permanent_seat_retry_cooldown
+				}
+			}
 			unsc_actions_text_visible = {
 				is_on_un_sec_council = yes
 			}
@@ -7656,7 +7672,7 @@ scripted_gui = {
 					}
 				}
 				else_if = { limit = { check_variable = { v = 026 } }
-					PMR = { has_country_flag = sheriff_create }
+					PMR = { has_completed_focus = PMR_sheriff_pmc }
 					if = { limit = { NOT = { tag = PMR } }
 						country_exists = PMR
 						NOT = { has_war_with = PMR }
@@ -7883,33 +7899,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 008 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary SpecOps SandLine Unit"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-								Arty_Bat = { x = 1 y = 0 }
-								Arty_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-								SP_AA_Battery = { x = 0 y = 3 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary SpecOps SandLine Unit\" division_template = \"Mercenary SpecOps SandLine Unit\" start_experience_factor = 1.0"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_specops_sandline = yes }
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8066,30 +8056,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 013 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary SpecOps GardaWorld Unit"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary SpecOps GardaWorld Unit\" division_template = \"Mercenary SpecOps GardaWorld Unit\" start_experience_factor = 0.7"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_specops_gardaworld = yes }
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
 					CAN = { set_country_flag = garda_yes }
@@ -8137,37 +8104,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 015 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary SpecOps G4S Unit"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-								Special_Forces = { x = 1 y = 0 }
-								Special_Forces = { x = 1 y = 1 }
-								Special_Forces = { x = 1 y = 2 }
-								Special_Forces = { x = 1 y = 3 }
-								Arty_Bat = { x = 2 y = 0 }
-								Arty_Bat = { x = 2 y = 1 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-								SP_AA_Battery = { x = 0 y = 3 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary SpecOps G4S Unit\" division_template = \"Mercenary SpecOps G4S Unit\" start_experience_factor = 1.0"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_specops_g4s = yes }
 					set_temp_variable = { treasury_change = -3.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8215,30 +8152,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 017 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary The Union of the Tribes of Sinai"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary The Union of the Tribes of Sinai\" division_template = \"Mercenary The Union of the Tribes of Sinai\" start_experience_factor = 0.3"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_sinai_union_tribes = yes }
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8253,30 +8167,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 018 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary of Gard Service"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary of Gard Service\" division_template = \"Mercenary of Gard Service\" start_experience_factor = 0.8"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_gard_service = yes }
 					set_temp_variable = { treasury_change = -2.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8291,33 +8182,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 019 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Patriot Heavy Mechanized Unit"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Arm_Inf_Bat = { x = 0 y = 0 }
-								Arm_Inf_Bat = { x = 0 y = 1 }
-								Arm_Inf_Bat = { x = 0 y = 2 }
-								Arm_Inf_Bat = { x = 1 y = 0 }
-								Arm_Inf_Bat = { x = 1 y = 1 }
-								Arm_Inf_Bat = { x = 1 y = 2 }
-							}
-							support = {
-								armor_Comp = { x = 0 y = 0 }
-								Arm_Recce_Comp = { x = 0 y = 1 }
-								H_Engi_Comp = { x = 0 y = 2 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Patriot Heavy Mechanized Unit\" division_template = \"Patriot Heavy Mechanized Unit\" start_experience_factor = 1.0"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_patriot_heavy_mech = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8332,30 +8197,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 020 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Mercenary of Dewe Security Services"
-							is_locked = yes
-							priority = 2
-							regiments = {
-								Special_Forces = { x = 0 y = 0 }
-								Special_Forces = { x = 0 y = 1 }
-								Special_Forces = { x = 0 y = 2 }
-								Special_Forces = { x = 0 y = 3 }
-							}
-							support = {
-								H_Engi_Comp = { x = 0 y = 0 }
-								L_Recce_Comp = { x = 0 y = 1 }
-							}
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Mercenary of Dewe Security Services\" division_template = \"Mercenary of Dewe Security Services\" start_experience_factor = 0.3"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_dewe_security = yes }
 					set_temp_variable = { treasury_change = -3.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8446,35 +8288,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 023 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Redut PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								Arty_Bat = { x = 0 y = 4 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-								L_Inf_Bat = { x = 1 y = 2 }
-								L_Inf_Bat = { x = 1 y = 3 }
-								Arty_Bat = { x = 1 y = 4 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Redut PMC Battalion\" division_template = \"Redut PMC Battalion\" start_experience_factor = 1.0"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_redut_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8508,31 +8322,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Gazprom PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Gazprom PMC Battalion\" division_template = \"Gazprom PMC Battalion\" start_experience_factor = 0.3"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_gazprom_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8547,27 +8337,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 025 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Iron Navy PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Iron Navy PMC Battalion\" division_template = \"Iron Navy PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_iron_navy_battalion = yes }
 					set_temp_variable = { treasury_change = -1.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8582,27 +8352,7 @@ scripted_gui = {
 				if = { limit = { check_variable = { v = 026 } }
 					clr_country_pmc_flag = yes
 					set_sel_pmc_units = yes
-					hidden_effect = {
-						division_template = {
-							name = "Sheriff PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Sheriff PMC Battalion\" division_template = \"Sheriff PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_sheriff_battalion = yes }
 					set_temp_variable = { treasury_change = -1.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8636,31 +8386,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Lukoil PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Lukoil PMC Battalion\" division_template = \"Lukoil PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_lukoil_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8694,31 +8420,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Rosneft PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Rosneft PMC Battalion\" division_template = \"Rosneft PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_rosneft_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8752,31 +8454,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Sber PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Sber PMC Battalion\" division_template = \"Sber PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_sber_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -8810,31 +8488,7 @@ scripted_gui = {
 							days = 365
 						}
 					}
-					hidden_effect = {
-						division_template = {
-							name = "Vtb PMC Battalion"
-							regiments = {
-								L_Inf_Bat = { x = 0 y = 0 }
-								L_Inf_Bat = { x = 0 y = 1 }
-								L_Inf_Bat = { x = 0 y = 2 }
-								L_Inf_Bat = { x = 0 y = 3 }
-								L_Inf_Bat = { x = 1 y = 0 }
-								L_Inf_Bat = { x = 1 y = 1 }
-							}
-							support = {
-								L_Recce_Comp = { x = 0 y = 0 }
-								L_Engi_Comp = { x = 0 y = 1 }
-							}
-							priority = 2
-						}
-						random_owned_controlled_state = {
-							limit = { ROOT = { has_full_control_of_state = PREV } }
-							create_unit = {
-								division = "name = \"Vtb PMC Battalion\" division_template = \"Vtb PMC Battalion\" start_experience_factor = 0.1"
-								owner = ROOT
-							}
-						}
-					}
+					hidden_effect = { spawn_vtb_battalion = yes }
 					set_temp_variable = { treasury_change = -5.5 }
 					modify_treasury_effect = yes
 					if = {
@@ -10022,10 +9676,8 @@ scripted_gui = {
 
 		effects = {
 			name_of_nation_button_click = {
-				ROOT = {
-					set_variable = { selected_ct_nation = PREV }
-					international_systems_update = yes
-				}
+				rotate_selected_nation = yes
+				ROOT = { international_systems_update = yes }
 			}
 		}
 	}

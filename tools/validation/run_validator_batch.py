@@ -12,6 +12,7 @@ import json
 import os
 import subprocess
 import sys
+import time
 from typing import Dict, List, Optional, Set, TextIO, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -23,6 +24,7 @@ from validator_batches import BATCHES, ValidatorSpec, select_for_changed_files
 
 RESULT_PREFIX = "validation-"
 MANIFEST_NAME = "batch-manifest.json"
+_POLL_SECONDS = 0.05
 
 
 def parse_changed_groups(raw: str) -> Optional[Set[str]]:
@@ -83,7 +85,7 @@ def _write_manifest(
     mode: str,
     batch: Optional[str],
     specs: List[ValidatorSpec],
-    outcomes: Dict[str, Tuple[int, str]],
+    outcomes: Dict[str, Tuple[int, str, str]],
     output_dir: str,
 ) -> None:
     manifest = {
@@ -122,7 +124,8 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
     processes: Dict[str, Tuple[subprocess.Popen, TextIO]] = {}
     pending = list(specs)
     failures: List[str] = []
-    outcomes: Dict[str, Tuple[int, str]] = {}
+    outcomes: Dict[str, Tuple[int, str, str]] = {}
+    specs_by_name = {spec.name: spec for spec in specs}
 
     def launch_next() -> None:
         if pending:
@@ -146,26 +149,48 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
     for _ in range(max_parallel):
         launch_next()
 
-    for spec in specs:
-        proc, stderr_fh = processes[spec.name]
+    report_index = 0
+    while processes:
+        completed_name = None
+        while completed_name is None:
+            for name, (proc, _) in processes.items():
+                if proc.poll() is not None:
+                    completed_name = name
+                    break
+            if completed_name is None:
+                # Polling waits portably for completion without a second scheduler.
+                time.sleep(_POLL_SECONDS)
+
+        proc, stderr_fh = processes.pop(completed_name)
         returncode = proc.wait()
         stderr_fh.close()
         launch_next()
 
+        spec = specs_by_name[completed_name]
         status, detail = classify_result(spec, returncode, args.output_dir)
-        outcomes[spec.name] = (returncode, status)
-        if status == "ok":
-            print(f"OK {spec.name} ({spec.script})", flush=True)
-            continue
-        failures.append(spec.name)
-        print(
-            f"FAILED {spec.name} ({spec.script}): {status} — {detail}",
-            flush=True,
-        )
-        if status == "crash":
-            run_all_validators._print_stderr_tail(
-                args.output_dir, f"{RESULT_PREFIX}{spec.name}", stream=sys.stderr
-            )
+        outcomes[spec.name] = (returncode, status, detail)
+
+        while report_index < len(specs):
+            report_spec = specs[report_index]
+            if report_spec.name not in outcomes:
+                break
+            _, report_status, report_detail = outcomes[report_spec.name]
+            if report_status == "ok":
+                print(f"OK {report_spec.name} ({report_spec.script})", flush=True)
+            else:
+                failures.append(report_spec.name)
+                print(
+                    f"FAILED {report_spec.name} ({report_spec.script}): "
+                    f"{report_status} — {report_detail}",
+                    flush=True,
+                )
+                if report_status == "crash":
+                    run_all_validators._print_stderr_tail(
+                        args.output_dir,
+                        f"{RESULT_PREFIX}{report_spec.name}",
+                        stream=sys.stderr,
+                    )
+            report_index += 1
 
     _write_manifest(
         "impact" if getattr(args, "impact", False) else "batch",
