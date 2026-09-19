@@ -143,6 +143,23 @@ def test_unshipped_path_skips_index_validation():
 
     assert groups["file-paths"] is False
     assert groups["content"] is False
+    assert groups["docs"] is True
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "docs/src/content/changelogSections/v2-0-changes.md",
+        "tools/docs_checks/check_perf_budgets.py",
+        ".github/workflows/docs-quality.yml",
+    ),
+)
+def test_docs_change_runs_docs_quality(path):
+    groups = change_groups.classify([path])
+
+    assert groups["docs"] is True
+    assert groups["content"] is False
+    assert groups["full_suite"] is False
 
 
 @pytest.mark.parametrize(
