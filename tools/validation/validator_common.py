@@ -350,7 +350,7 @@ def case_mismatch(ref: str, ci_index: dict):
 
 
 # Trait definitions sit at one tab of indent inside the `leader_traits = { }`
-# wrapper. `-` is in the charset for `emerging_Communist-State`.
+# wrapper; `-` stays in the charset so a hyphenated name cannot truncate.
 LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
 
 
@@ -358,8 +358,8 @@ def parse_leader_trait_names(mod_path: str, subdir: str) -> Set[str]:
     """Collect every trait defined in the ``common/<subdir>/`` trait files.
 
     Covers both leader trait pools: ``country_leader`` (advisors and country
-    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen is
-    part of the name charset because ``emerging_Communist-State`` exists.
+    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen
+    stays in the name charset so a hyphenated trait name cannot truncate.
     """
     names: Set[str] = set()
     trait_dir = os.path.join(mod_path, "common", subdir)
