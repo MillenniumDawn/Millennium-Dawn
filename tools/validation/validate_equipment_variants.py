@@ -18,6 +18,7 @@ from equipment_variant_context import (
     VariantContext,
     branches,
     countries,
+    event_pool_targets,
     focus_countries,
 )
 from equipment_variant_context import (
@@ -84,7 +85,7 @@ def _guaranteed(nodes, dlcs=None):
     for node in branches(nodes, dlcs or {}):
         if isinstance(node, list):
             known.update(set.intersection(*(_guaranteed(arm, dlcs) for arm in node)))
-        elif node.key == "has_tech" and node.value:
+        elif node.key == "has_tech" and node.value and node.op == "=":
             known.add(node.value.strip('"'))
         elif node.key in {
             "AND",
@@ -392,6 +393,7 @@ class Validator(BaseValidator):
                 )
             ):
                 context.documents[relative] = _nodes(text)
+                context.unknown_events.update(event_pool_targets(text))
         context.index()
         context_changed = self.staged_only and any(
             path.replace("\\", "/").endswith(".txt")

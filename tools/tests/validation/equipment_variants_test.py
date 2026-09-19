@@ -1,5 +1,5 @@
 import pytest
-from equipment_variant_context import VariantContext, script_nodes
+from equipment_variant_context import VariantContext, event_pool_targets, script_nodes
 from shared_utils import FileOpener
 from validate_equipment_variants import (
     Validator,
@@ -374,6 +374,8 @@ def context_for(documents):
     context = VariantContext(
         documents={path: script_nodes(text) for path, text in documents.items()}
     )
+    for text in documents.values():
+        context.unknown_events.update(event_pool_targets(text))
     context.index()
     return context
 
@@ -565,12 +567,17 @@ def test_unknown_callers_prevent_single_country_assumption(extra):
     assert check_variant_availability(body, UNLOCKS, context)
 
 
-def test_random_event_pool_is_an_unknown_caller():
+@pytest.mark.parametrize(
+    "pool", ["random_events = { 1 = test.1 }", "events = { test.1 }"]
+)
+def test_random_event_pool_is_an_unknown_caller(pool):
     context = context_for(
         {
             "events/test.txt": event_body(reward()),
             "common/national_focus/test.txt": country_focus("country_event = test.1"),
-            "common/on_actions/test.txt": "on_actions = { on_daily = { random_events = { 1 = test.1 } } }",
+            "common/on_actions/test.txt": "on_actions = { on_daily = { "
+            + pool
+            + " } }",
         }
     )
     assert context.event_countries["test.1"] == {"GER", None}
@@ -672,3 +679,13 @@ def test_random_list_event_calls_keep_country_identity():
         }
     )
     assert context.event_countries["test.1"] == {"GER"}
+
+
+@pytest.mark.parametrize("guard", ["tag != GER", "original_tag != GER"])
+def test_negated_country_comparison_cannot_supply_history(guard):
+    context = context_for(
+        {"history/countries/GER - Test.txt": "set_technology = { naval_tech = 1 }"}
+    )
+    assert check_variant_availability(
+        event_body(reward(), trigger=guard), UNLOCKS, context
+    )

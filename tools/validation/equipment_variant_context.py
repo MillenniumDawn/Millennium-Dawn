@@ -34,12 +34,23 @@ def value(node, key):
     return child.value.strip('"') if child and child.value else None
 
 
+def event_pool_targets(text):
+    """Bare event lists are omitted by the shared assignment-only AST parser."""
+    return {
+        event
+        for block in re.finditer(
+            r"\b(?:random_events|events)\s*=\s*\{([^{}]*)\}", blank_comments(text)
+        )
+        for event in re.findall(r"\b[A-Za-z_]\w*\.\d+\b", block[1])
+    }
+
+
 def countries(nodes):
     """Return a bounded set of country identities, or None for an unknown set."""
     result = None
     for node in nodes:
         found = None
-        if node.key in {"tag", "original_tag"} and node.value:
+        if node.key in {"tag", "original_tag"} and node.value and node.op == "=":
             tag = node.value.strip('"')
             if re.fullmatch(r"[A-Z]{3}", tag):
                 found = {tag}
@@ -93,7 +104,9 @@ def dlc_truth(nodes, dlcs):
     """Evaluate only DLC/constant predicates; every other predicate is unknown."""
     results = []
     for node in nodes:
-        if node.key == "has_dlc" and node.value:
+        if node.op != "=":
+            result = None
+        elif node.key == "has_dlc" and node.value:
             result = dlcs.get(node.value.strip('"'))
         elif node.key == "always":
             result = {"yes": True, "no": False}.get(node.value)
@@ -174,6 +187,7 @@ class VariantContext:
     histories: dict = field(default_factory=dict)
     categories: dict = field(default_factory=dict)
     event_countries: dict = field(default_factory=dict)
+    unknown_events: set = field(default_factory=set)
     tech_dlcs: dict = field(default_factory=dict)
     start: tuple = ()
     _history_cache: dict = field(default_factory=dict)
@@ -230,14 +244,20 @@ class VariantContext:
                         # Only simple folder DLC requirements establish equipment context.
                         dlcs = {}
                         for gate in gates:
-                            if gate.key == "has_dlc" and gate.value:
+                            if gate.key == "has_dlc" and gate.value and gate.op == "=":
                                 dlcs[gate.value.strip('"')] = True
                             elif gate.key == "NOT" and len(gate.children) == 1:
                                 child = gate.children[0]
-                                if child.key == "has_dlc" and child.value:
+                                if (
+                                    child.key == "has_dlc"
+                                    and child.value
+                                    and child.op == "="
+                                ):
                                     dlcs[child.value.strip('"')] = False
                         self.tech_dlcs[tech.key] = dlcs
         callers = {event: [] for event in definitions}
+        for event in self.unknown_events & callers.keys():
+            callers[event].append(frozenset({None}))
         definition_ids = {id(node) for node in definitions.values()}
 
         def visit(nodes, current=frozenset({None}), root=frozenset({None})):
