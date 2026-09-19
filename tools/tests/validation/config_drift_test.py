@@ -143,6 +143,7 @@ def test_test_suite_replaces_old_workflows():
         "prepare-workspace",
         "tools-tests",
         "mod-tests",
+        "docs-quality",
         "report",
     }
     assert "pull_request" in _workflow_trigger(CI_WORKFLOW)
@@ -151,6 +152,21 @@ def test_test_suite_replaces_old_workflows():
     if any(path.exists() for path in leftovers):
         pytest.skip("old workflow deletion is pending parent cleanup")
     assert not [path for path in leftovers if path.exists()]
+
+
+def test_docs_quality_runs_in_suite_and_feeds_the_report():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["docs-quality"]
+    assert job["uses"] == "./.github/workflows/docs-quality.yml"
+    assert "needs.detect-changes.outputs.docs" in job["if"]
+    assert "full_suite" in job["if"]
+    assert "docs-quality" in workflow["jobs"]["report"]["needs"]
+    detect = workflow["jobs"]["detect-changes"]
+    assert detect["outputs"]["docs"] == "${{ steps.groups.outputs.docs }}"
+    assert "workflow_call" in _workflow_trigger(DOCS_QUALITY_WORKFLOW)
+    text = DOCS_QUALITY_WORKFLOW.read_text(encoding="utf-8")
+    assert "suite-run.json" in text
+    assert "docs-quality-results" in text
 
 
 def test_change_groups_cover_every_batch_group():
