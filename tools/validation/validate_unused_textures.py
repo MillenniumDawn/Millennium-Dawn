@@ -1,74 +1,55 @@
 #!/usr/bin/env python3
-##########################
-# Unused Texture Validation Script (Multiprocessing Optimized)
-# Finds texture files in gfx/ that are not referenced in any .gfx file
-#
-# Checks for:
-#   1. Texture files (.dds, .tga, .png) that are not used in any .gfx file
-#   2. Texture references in .gfx files that point to missing files
-#   3. Reports unused textures that could potentially be removed
-#
-# Usage:
-#   python3 validate_unused_textures.py --path /path/to/mod [OPTIONS]
-#
-# Options:
-#   --workers N         Number of worker processes (default: CPU count / 2)
-#   --output FILE       Save results to file
-#   --no-color          Disable colored output
-#   --strict            Exit with error code if issues found
-#   --hoi4-path PATH    Path to HoI4 installation (auto-detected if not provided)
-#
-# Features:
-#   - Auto-detects vanilla HoI4 installation on Linux and Windows
-#   - Validates texture references against both mod and vanilla .gfx files
-#   - Multi-threaded processing for fast performance
-#   - Identifies unused textures that can be removed to reduce mod size
-#
-# Examples:
-#   # Basic usage with auto-detection
-#   python3 validate_unused_textures.py --workers 8 --output unused_report.txt
-#
-#   # Manual HoI4 path (Linux)
-#   python3 validate_unused_textures.py --hoi4-path ~/.steam/debian-installation/steamapps/common/Hearts\ of\ Iron\ IV
-#
-#   # Manual HoI4 path (Windows)
-#   python3 validate_unused_textures.py --hoi4-path "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV"
-##########################
+"""Find textures in gfx/ that no .gfx file references, plus references that
+point at missing files. Vanilla HoI4 installs are auto-detected so vanilla
+sprite refs don't get flagged; pass --hoi4-path to override."""
+
 import glob
 import os
 import re
+import sys
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+import disk_cache
+from shared_utils import (
+    extract_block_from_text,
+    find_hoi4_install,
+    strip_inline_comment,
+)
+from validate_gfx_references import _GFX_SPRITE_TYPES
 from validator_common import (
     BaseValidator,
     Colors,
     FileOpener,
+    Severity,
     run_validator_main,
     should_skip_file,
 )
 
-# Texture file extensions to search for
+_TEXTURE_REF_PATTERNS = [
+    re.compile(r'portrait\s*=\s*"([^"]+\.(?:dds|tga|png))"', re.IGNORECASE),
+    re.compile(r'picture\s*=\s*"([^"]+\.(?:dds|tga|png))"', re.IGNORECASE),
+    re.compile(r'"(gfx/[^"]+\.(?:dds|tga|png))"', re.IGNORECASE),
+]
+_DOUBLE_SLASH = re.compile(r"/{2,}")
+
+# Loc text icons: £stem and £GFX_stem both resolve to spriteType GFX_stem.
+_TEXT_ICON_REF = re.compile(r"£([A-Za-z0-9_.]+)")
+_SPRITE_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
+_SPRITE_TEXTUREFILE_IN_BLOCK = re.compile(
+    r'\btexturefile\s*=\s*"([^"]+)"', re.IGNORECASE
+)
+
 TEXTURE_EXTENSIONS = [".dds", ".tga", ".png"]
 
-# Skip patterns for known directories that should be excluded
 EXTRA_SKIP_PATTERNS = ["resources", "loadingscreens"]
 
-# Common Hearts of Iron IV installation paths
-COMMON_HOI4_PATHS = [
-    # Linux (Steam)
-    os.path.expanduser(
-        "~/.steam/debian-installation/steamapps/common/Hearts of Iron IV"
-    ),
-    os.path.expanduser("~/.local/share/Steam/steamapps/common/Hearts of Iron IV"),
-    os.path.expanduser("~/.steam/steam/steamapps/common/Hearts of Iron IV"),
-    # Windows (Steam)
-    "C:/Program Files (x86)/Steam/steamapps/common/Hearts of Iron IV",
-    "C:/Program Files/Steam/steamapps/common/Hearts of Iron IV",
-    # Windows (GOG)
-    "C:/GOG Games/Hearts of Iron IV",
-    "C:/Program Files (x86)/GOG Galaxy/Games/Hearts of Iron IV",
-]
+# Flags are loaded by naming convention, never referenced from a .gfx: the engine
+# resolves gfx/flags/<TAG>.tga plus its _<ideology> variants and any cosmetic-tag
+# name. Scanning them makes every flag in the mod look unused.
+_FLAG_DIR_PREFIX = "gfx/flags/"
 
 
 def find_texture_files(mod_path: str) -> Set[str]:
@@ -86,22 +67,44 @@ def find_texture_files(mod_path: str) -> Set[str]:
                     break
             if skip:
                 continue
+            rel_path = os.path.relpath(filename, mod_path).replace("\\", "/")
+            if rel_path.startswith(_FLAG_DIR_PREFIX):
+                continue
 
             # Store relative path from mod root for easier comparison
-            rel_path = os.path.relpath(filename, mod_path)
             texture_files.add(rel_path)
 
     return texture_files
 
 
-def process_gfx_file(args: Tuple[str, str, Set[str], Dict[str, List[str]]]) -> Set[str]:
+# Worker globals for the texture index, set once per worker by _textures_init
+# instead of shipped with every task — the index is ~7.7 MB pickled.
+_W_MOD = ""
+_W_TEXTURE_FILES: Set[str] = set()
+_W_FILENAME_LOOKUP: Dict[str, List[str]] = {}
+
+
+def _textures_init(
+    mod_path: str, texture_files: Set[str], filename_lookup: Dict[str, List[str]]
+) -> None:
+    global _W_MOD, _W_TEXTURE_FILES, _W_FILENAME_LOOKUP
+    _W_MOD = mod_path
+    _W_TEXTURE_FILES = texture_files
+    _W_FILENAME_LOOKUP = filename_lookup
+
+
+def process_gfx_file(filename: str) -> Tuple[Set[str], Set[str]]:
     """
     Process a single .gfx file and extract all texturefile references.
-    Returns a set of texture paths referenced in the file.
-    For entity .gfx files, also matches by filename only.
+
+    Returns ``(resolved, raw)``: *resolved* is the set of on-disk texture paths
+    the references map to (full-path or basename match) — used for the unused
+    check; *raw* is every normalized reference path as written — used for the
+    missing check (a raw ref that resolves to nothing is a missing texture).
     """
-    filename, mod_path, texture_files, filename_lookup = args
+    texture_files, filename_lookup = _W_TEXTURE_FILES, _W_FILENAME_LOOKUP
     referenced_textures = set()
+    raw_references = set()
 
     try:
         content = FileOpener.open_text_file(
@@ -121,11 +124,11 @@ def process_gfx_file(args: Tuple[str, str, Set[str], Dict[str, List[str]]]) -> S
             matches = re.finditer(pattern, content, re.IGNORECASE)
             for match in matches:
                 texture_path = match.group(1)
-                # Normalize the path (remove leading slashes, convert backslashes, collapse multiple slashes)
                 texture_path = texture_path.replace("\\", "/").lstrip("/")
-                # Collapse multiple slashes into single slash
                 while "//" in texture_path:
                     texture_path = texture_path.replace("//", "/")
+
+                raw_references.add(texture_path)
 
                 # Check if this is a full path match
                 if texture_path in texture_files:
@@ -138,62 +141,76 @@ def process_gfx_file(args: Tuple[str, str, Set[str], Dict[str, List[str]]]) -> S
                         for tex_path in filename_lookup[ref_filename]:
                             referenced_textures.add(tex_path)
 
-    except Exception as e:
+    except Exception:
         # Silently skip files that can't be read
         pass
 
-    return referenced_textures
+    return referenced_textures, raw_references
 
 
-def process_game_file(args: Tuple[str, str, Set[str]]) -> Set[str]:
+def _sprite_name_to_texture(gfx_files: List[str]) -> Dict[str, str]:
+    """Map spriteType `name` -> its normalized `texturefile` path.
+
+    Used to resolve loc £stem / £GFX_stem text-icon references (which name a
+    sprite, not a file) down to the texture path they render.
     """
-    Process a game file (common/history/events/portraits) and extract texture references.
-    References can be either full paths or just filenames.
-    Returns a set of matched texture paths.
-    """
-    filename, mod_path, texture_files = args
-    matched_textures = set()
+    mapping: Dict[str, str] = {}
+    for filename in gfx_files:
+        content = FileOpener.open_text_file(
+            filename, lowercase=False, strip_comments_flag=True
+        )
+        for m in _GFX_SPRITE_TYPES.finditer(content):
+            block, end = extract_block_from_text(content, m.end() - 1)
+            if end == -1:
+                continue
+            nm = _SPRITE_NAME_IN_BLOCK.search(block)
+            tf = _SPRITE_TEXTUREFILE_IN_BLOCK.search(block)
+            if not (nm and tf):
+                continue
+            texture_path = tf.group(1).replace("\\", "/").lstrip("/")
+            while "//" in texture_path:
+                texture_path = texture_path.replace("//", "/")
+            mapping[nm.group(1)] = texture_path
+    return mapping
 
+
+def _extract_texture_refs(content: str) -> Set[str]:
+    refs: Set[str] = set()
+    for pat in _TEXTURE_REF_PATTERNS:
+        for match in pat.finditer(content):
+            ref = match.group(1).replace("\\", "/").lstrip("/")
+            refs.add(_DOUBLE_SLASH.sub("/", ref))
+    return refs
+
+
+def process_game_file(filename: str) -> Set[str]:
+    # Cached path extraction is keyed on the file alone (no mod path / texture
+    # set leak into the cache). Matching against the current texture index
+    # runs in the worker after the cache hit.
+    mod_path = _W_MOD
+    texture_files, filename_lookup = _W_TEXTURE_FILES, _W_FILENAME_LOOKUP
     try:
         content = FileOpener.open_text_file(
             filename, lowercase=False, strip_comments_flag=True
         )
-
-        # Patterns to match texture references in game files:
-        # 1. portrait = "path/to/file.dds" or portrait = "filename.dds"
-        # 2. picture = "path/to/file.dds" or picture = "filename.dds"
-        # 3. Direct path references "gfx/leaders/..."
-        patterns = [
-            r'portrait\s*=\s*"([^"]+\.(?:dds|tga|png))"',
-            r'picture\s*=\s*"([^"]+\.(?:dds|tga|png))"',
-            r'"(gfx/[^"]+\.(?:dds|tga|png))"',
-        ]
-
-        for pattern in patterns:
-            matches = re.finditer(pattern, content, re.IGNORECASE)
-            for match in matches:
-                ref_path = match.group(1)
-                # Normalize the path
-                ref_path = ref_path.replace("\\", "/").lstrip("/")
-                while "//" in ref_path:
-                    ref_path = ref_path.replace("//", "/")
-
-                # Check if this is a full path match
-                if ref_path in texture_files:
-                    matched_textures.add(ref_path)
-                else:
-                    # Try to match by filename only
-                    ref_filename = os.path.basename(ref_path)
-                    for texture_path in texture_files:
-                        if os.path.basename(texture_path) == ref_filename:
-                            matched_textures.add(texture_path)
-                            break
-
-    except Exception as e:
-        # Silently skip files that can't be read
-        pass
-
-    return matched_textures
+    except Exception:
+        content = ""
+    refs = disk_cache.per_file_cached_by_content(
+        mod_path,
+        "unused_textures.refs",
+        filename,
+        content,
+        lambda: _extract_texture_refs(content),
+    )
+    matched: Set[str] = set()
+    for ref in refs:
+        if ref in texture_files:
+            matched.add(ref)
+        else:
+            ref_filename = os.path.basename(ref)
+            for tex_path in filename_lookup.get(ref_filename, ()):
+                matched.add(tex_path)
+    return matched
 
 
 class Validator(BaseValidator):
@@ -205,8 +222,11 @@ class Validator(BaseValidator):
         self.texture_files = set()
         self.texture_filename_lookup = {}  # Maps filename -> list of full paths
         self.referenced_textures = set()
+        self.raw_referenced_textures = set()
         self.vanilla_referenced_textures = set()
+        self.vanilla_raw_referenced_textures = set()
         self.game_file_textures = set()
+        self.text_icon_referenced_textures = set()
         self.unused_count = 0
         self.missing_count = 0
         self.hoi4_path = hoi4_path
@@ -227,20 +247,20 @@ class Validator(BaseValidator):
                 )
                 self.hoi4_path = None
 
-        # Auto-detect
-        for path in COMMON_HOI4_PATHS:
-            if os.path.exists(path):
-                self.hoi4_path = path
-                self.log(f"Auto-detected HoI4 installation: {self.hoi4_path}")
-                return
+        # Auto-detect (also honours $HOI4_PATH)
+        detected = find_hoi4_install()
+        if detected:
+            self.hoi4_path = detected
+            self.log(f"Auto-detected HoI4 installation: {self.hoi4_path}")
+            return
 
         self.log(
             f"{Colors.YELLOW if self.use_colors else ''}Warning: Could not find HoI4 installation. Vanilla .gfx files will not be checked.{Colors.ENDC if self.use_colors else ''}",
             "warning",
         )
-        self.log(f"  Use --hoi4-path to specify the installation directory.")
+        self.log("  Use --hoi4-path to specify the installation directory.")
 
-    def _find_all_gfx_files(self, search_path: str = None) -> List[str]:
+    def _find_all_gfx_files(self, search_path: Optional[str] = None) -> List[str]:
         """Find all .gfx files in the specified directory (mod or vanilla)."""
         gfx_files = []
         base_path = search_path if search_path else self.mod_path
@@ -267,33 +287,36 @@ class Validator(BaseValidator):
         return gfx_files
 
     def _get_all_referenced_textures(
-        self, search_path: str = None, label: str = "mod"
-    ) -> Set[str]:
+        self, search_path: Optional[str] = None, label: str = "mod"
+    ) -> Tuple[Set[str], Set[str]]:
         """
         Get all texture files referenced in .gfx files using multiprocessing.
+
+        Returns ``(resolved, raw)``: resolved on-disk paths (unused check) and
+        every normalized reference as written (missing check).
         """
         gfx_files = self._find_all_gfx_files(search_path)
         self.log(f"  Found {len(gfx_files)} {label} .gfx files to process")
 
-        # Prepare arguments for multiprocessing
-        args_list = [
+        all_results = self._pool_map_init(
+            process_gfx_file,
+            gfx_files,
+            _textures_init,
             (
-                f,
                 search_path if search_path else self.mod_path,
                 self.texture_files,
                 self.texture_filename_lookup,
-            )
-            for f in gfx_files
-        ]
+            ),
+            chunksize=10,
+        )
 
-        all_results = self._pool_map(process_gfx_file, args_list, chunksize=10)
-
-        # Combine all results
         referenced_textures = set()
-        for texture_set in all_results:
-            referenced_textures.update(texture_set)
+        raw_references = set()
+        for resolved_set, raw_set in all_results:
+            referenced_textures.update(resolved_set)
+            raw_references.update(raw_set)
 
-        return referenced_textures
+        return referenced_textures, raw_references
 
     def _get_game_file_references(self) -> Set[str]:
         """
@@ -301,42 +324,112 @@ class Validator(BaseValidator):
         Returns a set of texture paths that are referenced.
         """
         game_files = []
-        search_dirs = ["common", "history", "events", "portraits"]
+        # gfx/ carries .txt databases that name texturefiles directly — the
+        # equipment-designer graphic_db, army icons, train gfx — so a texture
+        # used only there would otherwise read as unused.
+        search_dirs = ["common", "history", "events", "portraits", "gfx"]
 
         for dir_name in search_dirs:
             search_path = str(Path(self.mod_path) / dir_name)
             if os.path.exists(search_path):
                 for filename in glob.iglob(search_path + "/**/*.txt", recursive=True):
-                    if should_skip_file(filename):
+                    # should_skip_file ignores gfx/ wholesale; here we want it,
+                    # because that is where the texture databases live.
+                    if dir_name != "gfx" and should_skip_file(filename):
                         continue
                     game_files.append(filename)
 
         self.log(f"  Found {len(game_files)} game files to scan")
 
-        # Prepare arguments for multiprocessing
-        args_list = [(f, self.mod_path, self.texture_files) for f in game_files]
+        all_results = self._pool_map_init(
+            process_game_file,
+            game_files,
+            _textures_init,
+            (self.mod_path, self.texture_files, self.texture_filename_lookup),
+            chunksize=10,
+        )
 
-        all_results = self._pool_map(process_game_file, args_list, chunksize=10)
-
-        # Combine all results
         matched_textures = set()
         for texture_set in all_results:
             matched_textures.update(texture_set)
 
         return matched_textures
 
-    def validate_unused_textures(self):
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Finding all texture files in gfx/...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+    def _get_mesh_referenced_textures(self) -> Set[str]:
+        """Resolve textures named inside .mesh files to texture paths.
 
-        # Find all texture files
+        Unit model textures are bound by the .mesh, not by a .gfx entry. The
+        files are binary but store texture filenames as plain ASCII, so a
+        basename scan is enough to mark them used.
+        """
+        matched: Set[str] = set()
+        pattern = re.compile(rb"[A-Za-z0-9_\-.]+\.(?:dds|tga)", re.IGNORECASE)
+        mesh_root = str(Path(self.mod_path) / "gfx")
+        count = 0
+        for filename in glob.iglob(mesh_root + "/**/*.mesh", recursive=True):
+            count += 1
+            try:
+                with open(filename, "rb") as fh:
+                    blob = fh.read()
+            except OSError:
+                continue
+            for raw in pattern.findall(blob):
+                base = raw.decode("ascii", "ignore")
+                matched.update(self.texture_filename_lookup.get(base, []))
+        self.log(f"  Scanned {count} .mesh files")
+        return matched
+
+    def _get_text_icon_referenced_textures(self) -> Set[str]:
+        """Resolve loc £stem / £GFX_stem text-icon references to texture paths.
+
+        English-only: text icons are a usage signal, not a translation-coverage
+        check, and non-English .yml are allowed to lag behind (AGENTS.md).
+        Scanning all languages would multiply the loc read ~10x for no benefit.
+        """
+        loc_files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
+        stems: Set[str] = set()
+        for filepath in loc_files:
+            try:
+                with open(filepath, encoding="utf-8-sig", errors="replace") as f:
+                    text = "\n".join(
+                        strip_inline_comment(line) for line in f.read().splitlines()
+                    )
+                    stems.update(_TEXT_ICON_REF.findall(text))
+            except Exception:
+                continue
+
+        if not stems:
+            return set()
+
+        name_to_texture = _sprite_name_to_texture(self._find_all_gfx_files())
+
+        referenced: Set[str] = set()
+        for stem in stems:
+            candidates = [f"GFX_{stem}"]
+            if stem.startswith("GFX_"):
+                candidates.append(stem)
+            for name in candidates:
+                texture_path = name_to_texture.get(name)
+                if not texture_path:
+                    continue
+                if texture_path in self.texture_files:
+                    referenced.add(texture_path)
+                else:
+                    for tex_path in self.texture_filename_lookup.get(
+                        os.path.basename(texture_path), ()
+                    ):
+                        referenced.add(tex_path)
+        return referenced
+
+    def validate_unused_textures(self):
+        self._log_section("Finding all texture files in gfx/...")
+
         self.texture_files = find_texture_files(self.mod_path)
         self.log(f"  Found {len(self.texture_files)} texture files")
 
-        # Build filename lookup for fast matching
+        # Build filename lookup for fast matching (basename -> full paths)
         self.texture_filename_lookup = {}
         for tex_path in self.texture_files:
             filename = os.path.basename(tex_path)
@@ -344,55 +437,56 @@ class Validator(BaseValidator):
                 self.texture_filename_lookup[filename] = []
             self.texture_filename_lookup[filename].append(tex_path)
 
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Scanning .gfx files for texture references...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Scanning .gfx files for texture references...")
 
-        # Get all referenced textures from mod
-        self.referenced_textures = self._get_all_referenced_textures(label="mod")
+        self.referenced_textures, self.raw_referenced_textures = (
+            self._get_all_referenced_textures(label="mod")
+        )
         self.log(
             f"  Found {len(self.referenced_textures)} unique texture references in mod"
         )
 
-        # Get all referenced textures from vanilla (if available)
         if self.hoi4_path:
-            self.log(f"\n{'='*80}")
-            self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Scanning vanilla HoI4 .gfx files...{Colors.ENDC if self.use_colors else ''}"
-            )
-            self.log(f"{'='*80}")
-            self.vanilla_referenced_textures = self._get_all_referenced_textures(
-                search_path=self.hoi4_path, label="vanilla"
+            self._log_section("Scanning vanilla HoI4 .gfx files...")
+            self.vanilla_referenced_textures, self.vanilla_raw_referenced_textures = (
+                self._get_all_referenced_textures(
+                    search_path=self.hoi4_path, label="vanilla"
+                )
             )
             self.log(
                 f"  Found {len(self.vanilla_referenced_textures)} unique texture references in vanilla"
             )
 
-        # Get texture references from game files (common/, history/, events/, portraits/)
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Scanning game files (common/history/events/portraits) for texture references...{Colors.ENDC if self.use_colors else ''}"
+        self._log_section(
+            "Scanning game files (common/history/events/portraits) for texture references..."
         )
-        self.log(f"{'='*80}")
         self.game_file_textures = self._get_game_file_references()
         self.log(
             f"  Found {len(self.game_file_textures)} textures referenced in game files"
         )
 
-        self.log(f"\n{'='*80}")
+        self._log_section("Scanning localisation for £text_icon references...")
+        self.text_icon_referenced_textures = self._get_text_icon_referenced_textures()
         self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for unused textures...{Colors.ENDC if self.use_colors else ''}"
+            f"  Found {len(self.text_icon_referenced_textures)} textures referenced via loc text icons"
         )
-        self.log(f"{'='*80}")
 
-        # Find unused textures (not in .gfx files OR game files)
+        self._log_section("Scanning .mesh files for model texture references...")
+        self.mesh_referenced_textures = self._get_mesh_referenced_textures()
+        self.log(
+            f"  Found {len(self.mesh_referenced_textures)} textures referenced by .mesh files"
+        )
+
+        self._log_section("Checking for unused textures...")
+
+        # Find unused textures (not in .gfx files, game files, .mesh, OR loc text icons)
         unused_textures = []
         for texture_path in sorted(self.texture_files):
             if (
                 texture_path not in self.referenced_textures
                 and texture_path not in self.game_file_textures
+                and texture_path not in self.text_icon_referenced_textures
+                and texture_path not in self.mesh_referenced_textures
             ):
                 unused_textures.append(texture_path)
 
@@ -406,32 +500,54 @@ class Validator(BaseValidator):
 
     def validate_missing_textures(self):
         """Check for texture references in .gfx files that point to missing files."""
-        self.log(f"\n{'='*80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking for missing texture files...{Colors.ENDC if self.use_colors else ''}"
-        )
-        self.log(f"{'='*80}")
+        self._log_section("Checking for missing texture files...")
 
         missing_textures = []
-        for texture_ref in sorted(self.referenced_textures):
-            # Check if the referenced texture exists in mod
-            full_path = os.path.join(self.mod_path, texture_ref)
-            if not os.path.exists(full_path):
-                # If not in mod, check if it's referenced in vanilla .gfx
-                if texture_ref not in self.vanilla_referenced_textures:
-                    missing_textures.append(texture_ref)
+        for texture_ref in sorted(self.raw_referenced_textures):
+            # Resolves to a real mod file by full path or basename?
+            if texture_ref in self.texture_files:
+                continue
+            if os.path.basename(texture_ref) in self.texture_filename_lookup:
+                continue
+            if os.path.exists(os.path.join(self.mod_path, texture_ref)):
+                continue
+            # Referenced or present in vanilla — not the mod's problem.
+            if (
+                texture_ref in self.vanilla_referenced_textures
+                or texture_ref in self.vanilla_raw_referenced_textures
+            ):
+                continue
+            # On disk in the vanilla install but not declared by a vanilla .gfx
+            # (e.g. atlas/icon strips loaded by convention). Still a real file
+            # in-game, so the reference is valid.
+            if self.hoi4_path and os.path.exists(
+                os.path.join(self.hoi4_path, texture_ref)
+            ):
+                continue
+            missing_textures.append(texture_ref)
 
         self.missing_count = len(missing_textures)
 
         if self.hoi4_path:
             msg = "Referenced textures that do not exist in mod or vanilla .gfx files:"
+            severity = Severity.ERROR
         else:
-            msg = "Referenced textures that do not exist (vanilla not checked):"
+            # Without a vanilla install the vanilla_* reference sets are empty, so
+            # every ref that resolves to a real vanilla texture looks "missing".
+            # Report as WARNING rather than emit hundreds of unverifiable errors.
+            msg = "Referenced textures that do not exist (vanilla not checked — WARNING only):"
+            severity = Severity.WARNING
+            self.log(
+                "  No HOI4 install detected — missing-texture findings reported as "
+                "warnings (vanilla textures cannot be verified)",
+                "warning",
+            )
 
         self._report(
             missing_textures,
             "✓ All referenced textures exist",
             msg,
+            severity=severity,
         )
 
     def run_validations(self):
@@ -439,22 +555,27 @@ class Validator(BaseValidator):
         self.validate_missing_textures()
 
         # Add summary
-        self.log(f"\n{'='*80}")
+        self._log_section("SUMMARY")
+        self.log(f"  Total texture files in gfx/: {len(self.texture_files)}", "always")
         self.log(
-            f"{Colors.CYAN if self.use_colors else ''}SUMMARY{Colors.ENDC if self.use_colors else ''}"
+            f"  Texture references in mod .gfx files: {len(self.referenced_textures)}",
+            "always",
         )
-        self.log(f"{'='*80}")
-        self.log(f"  Total texture files in gfx/: {len(self.texture_files)}")
         self.log(
-            f"  Texture references in mod .gfx files: {len(self.referenced_textures)}"
+            f"  Texture references in game files: {len(self.game_file_textures)}",
+            "always",
         )
-        self.log(f"  Texture references in game files: {len(self.game_file_textures)}")
+        self.log(
+            f"  Texture references via loc text icons: {len(self.text_icon_referenced_textures)}",
+            "always",
+        )
         if self.hoi4_path:
             self.log(
-                f"  Texture references in vanilla .gfx files: {len(self.vanilla_referenced_textures)}"
+                f"  Texture references in vanilla .gfx files: {len(self.vanilla_referenced_textures)}",
+                "always",
             )
-        self.log(f"  Unused texture files: {self.unused_count}")
-        self.log(f"  Missing texture references: {self.missing_count}")
+        self.log(f"  Unused texture files: {self.unused_count}", "always")
+        self.log(f"  Missing texture references: {self.missing_count}", "always")
 
         if self.unused_count > 0:
             self.log(
@@ -470,7 +591,7 @@ class Validator(BaseValidator):
                 self.log(
                     f"  {Colors.YELLOW if self.use_colors else ''}Note: Missing textures check is incomplete. Use --hoi4-path to check vanilla .gfx files.{Colors.ENDC if self.use_colors else ''}"
                 )
-        self.log(f"{'='*80}")
+        self.log(f"{'=' * 80}")
 
 
 def add_extra_args(parser):

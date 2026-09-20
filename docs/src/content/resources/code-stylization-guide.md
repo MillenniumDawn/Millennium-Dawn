@@ -3,7 +3,29 @@ title: Code Stylization Guide
 description: Millennium Dawn's Code Stylization Guide
 ---
 
-This guide covers coding standards, best practices, and formatting rules for Millennium Dawn mod development.
+Write code another contributor can understand without reconstructing your intent.
+Keep the change local, reuse existing behavior, and add only what the task needs.
+
+## Keep It Simple
+
+- Prefer plain names and direct control flow over clever or compressed code.
+- Add a helper only when it removes meaningful duplication or clarifies a required boundary.
+  Do not turn a few clear lines into a one-use wrapper.
+- Query existing game state instead of maintaining flags that mirror it. Keep flags
+  for historical transitions or state the engine cannot otherwise answer.
+- Keep behavior-preserving cleanup separate from gameplay changes.
+- Remove unused code and commented-out blocks. Add a comment only for a non-obvious
+  reason, in one short line. Do not narrate the code.
+
+### Names and Encoding
+
+Country-specific variables and flags use `TAG_`; global state uses `GLOBAL_`; shared
+systems use their domain prefix. Use `snake_case` after the prefix and keep system
+acronyms uppercase. Match identifier case exactly.
+
+Script `.txt` files use UTF-8 without BOM. English localisation `.yml` files use
+UTF-8 with BOM. Python tools must preserve LF when writing; see
+[Maintaining Tools](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md#maintaining-tools).
 
 > **Quick Tools**:
 >
@@ -11,18 +33,20 @@ This guide covers coding standards, best practices, and formatting rules for Mil
 > - Run `python3 tools/standardization/standardize.py event` to auto-format events
 > - Run `python3 tools/standardization/standardize.py decision` to auto-format decisions
 > - Run `python3 tools/standardization/standardize.py idea` to auto-format ideas
+> - Run `python3 tools/standardization/standardize.py technology` to auto-format technologies
 
 ---
 
 # Quick Reference
 
-| Feature     | Key Rules                                                      |
-| ----------- | -------------------------------------------------------------- |
-| Focus Trees | Use `relative_position_id`, include logging, `ai_will_do` last |
-| Decisions   | Include logging, use `fire_only_once` sparingly                |
-| Events      | Use `is_triggered_only = yes`, log only if effects exist       |
-| Ideas       | Remove `allowed = { always = no }`, use `allowed_civil_war`    |
-| Formatting  | Tabs (not spaces), 1 line between elements                     |
+| Feature      | Key Rules                                                      |
+| ------------ | -------------------------------------------------------------- |
+| Focus Trees  | Use `relative_position_id`, include logging, `ai_will_do` last |
+| Decisions    | Include logging, use `fire_only_once` sparingly                |
+| Events       | Use `is_triggered_only = yes`, log only if effects exist       |
+| Ideas        | Keep picker gates on slotted ideas, use `allowed_civil_war`    |
+| Technologies | Gates, effects, unlocks, research, tree, `ai_will_do` last     |
+| Formatting   | Tabs (not spaces), 1 line between elements                     |
 
 ---
 
@@ -36,6 +60,7 @@ These guidelines help keep the mod running smoothly:
 - **On Actions**: Use tag-specific variants (`on_daily_TAG`) instead of global triggers
 - **Dynamic Modifiers**: Use sparingly. Avoid `force_update_dynamic_modifier` as it causes lag
 - **Arrays**: Replace `every_country`/`random_country` with specific array triggers
+- **Tooltip Duplication**: Never duplicate logic in `effect_tooltip` + `for_each_scope_loop`. Use `tooltip = TT_ALL_*` inside the loop instead, this eliminates double-evaluation and prevents drift between tooltip text and actual execution.
 - **Cleanup**: Remove unused code and commented-out blocks
 
 ---
@@ -53,6 +78,52 @@ These guidelines help keep the mod running smoothly:
 | `05_`    | Country-specific trees                 |
 
 The number forces load order (shared trees load before country-specific).
+
+## Tree Layout
+
+Focus trees are laid out **horizontally**: every branch gets its own `x` lane, placed side by side. Examples are China and France
+
+- Leave a clear gap between lanes so branch boundaries read at a glance
+- Position focuses inside a lane with `relative_position_id` off the branch root, so the whole branch
+  can be shifted sideways by moving one focus
+- Place `continuous_focus_position = { x = ... y = ... }` clear of the branch lanes
+
+## Focus Shortcuts
+
+Shortcuts render as jump buttons above the tree and are the main navigation aid for players who
+cannot fit the whole tree on screen. Every tree gets roughly one shortcut per branch lane. Keep it around 4 - 6
+
+They are declared at `focus_tree` level, not inside a `focus`, directly after
+`continuous_focus_position`:
+
+```hoiscript
+# Focus Shortcuts
+shortcut = {
+    name = political_shortcut_title
+    target = FRA_state_of_french_politics
+    scroll_wheel_factor = 0.80
+}
+```
+
+- `name` is a localisation key, `target` is the branch root focus `id`
+- `scroll_wheel_factor = 0.80` is the Millennium Dawn standard, keep it identical on every shortcut
+
+### Standard Shortcut Tooltips
+
+Reuse these shared keys for the four common branch types instead of writing tag-prefixed ones. They
+live in `localisation/english/MD_misc_l_english.yml` and are already translated in every language:
+
+| Key                        | Tooltip             |
+| -------------------------- | ------------------- |
+| `political_shortcut_title` | Political           |
+| `economy_shortcut_title`   | Economy             |
+| `military_shortcut_title`  | Military            |
+| `diplomacy_shortcut_title` | Foreign Interaction |
+
+Write a custom `TAG_name_shortcut` key only when a branch genuinely is not one of those four, for
+example `AFG_civil_war_shortcut`. Custom keys go in that country's `MD_focus_TAG_l_english.yml`.
+
+`common/national_focus/05_france.txt` is the reference tree using the standard keys end to end.
 
 ## Required Order Within a Focus
 
@@ -73,6 +144,8 @@ The number forces load order (shared trees load before country-specific).
 ## Best Practices
 
 - Use `relative_position_id` for tree positioning
+- Lay branches out in horizontal lanes and give every branch a `shortcut`, reusing the standard
+  shortcut tooltip keys where they fit
 - Add logging: `log = "[GetDateText]: [Root.GetName]: Focus TAG_focus_name"`
 - Omit default values: `cancel_if_invalid = yes`, `continue_if_invalid = no`
 - Include `ai_will_do` with game options checks
@@ -93,28 +166,23 @@ focus = {
 
     cost = 5
 
-    # allow_branch = { }
     prerequisite = { focus = SER_western_approach }
-    # mutually_exclusive = { }
+
     search_filters = { FOCUS_FILTER_POLITICAL }
 
-    available = {
-        western_liberals_are_in_power = yes
-    }
-    # bypass = { }
-    # cancel = { }
+    available = { western_liberals_are_in_power = yes }
 
     completion_reward = {
         log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
         add_ideas = SER_free_market_idea
     }
-    # bypass_effect = { }
 
-    ai_will_do = {
-        base = 1
-    }
+    ai_will_do = { base = 1 }
 }
 ```
+
+Write only the properties the focus uses. An empty commented-out slot marker
+(`# bypass = { }`) is dead code, and `standardize.py focus` deletes it.
 
 ---
 
@@ -152,9 +220,7 @@ URA_world_opr = {
         OPR = { country_event = { id = subject_rus.121 days = 1 } }
     }
 
-    ai_will_do = {
-        factor = 10
-    }
+    ai_will_do = { base = 10 }
 }
 ```
 
@@ -182,7 +248,6 @@ country_event = {
     option = {
         name = france_md.504.a
         log = "[GetDateText]: [This.GetName]: france_md.504.a executed"
-        set_party_index_to_ruling_party = yes
         set_temp_variable = { party_popularity_increase = -0.01 }
         add_relative_party_popularity = yes
 
@@ -207,8 +272,9 @@ country_event = {
 ## Best Practices
 
 - Include `allowed_civil_war = { always = yes }` for civil war tags
-- **Remove** `allowed = { always = no }` - this is the default and hurts performance
-- **Remove** `cancel = { always = no }` - checked hourly, never true
+- **Remove** the whole `allowed` block from an idea in a category with no slot (`country`, `hidden_ideas`). Nothing picks from those categories, so `add_idea` is the only way in and it never consults `allowed`. The gate does nothing no matter what is inside it
+- **Keep** `allowed = { always = no }` on slotted ideas that must not appear in the picker (religion and other laws). `add_idea` still applies them. Missing `allowed` means everyone sees the idea in the list
+- **Remove** `cancel = { always = no }` - checked hourly, never true; redundant default
 - **Remove** empty `on_add = { log = "" }` unless you're actually doing something
 - Log in `on_add` only when making changes
 
@@ -217,15 +283,73 @@ country_event = {
 ```hoiscript
 BRA_idea_higher_minimum_wage_1 = {
     name = BRA_idea_higher_minimum_wage
-	picture = gold
+    picture = gold
     allowed_civil_war = { always = yes }
-
     modifier = {
         political_power_factor = 0.1
         stability_factor = 0.05
         consumer_goods_factor = 0.075
         population_tax_income_multiplier_modifier = 0.05
     }
+}
+```
+
+---
+
+# Technologies
+
+## Required Order Within a Technology
+
+Groups are separated by one blank line. Skip any group the technology does not use.
+
+```
+1. Gates: is_special_project_tech, doctrine, allow, allow_branch, dependencies, XOR
+2. Effects: stat modifiers and category_* / sub-unit blocks in source order,
+   then modifier, custom_modifier_tooltip, show_effect_as_desc
+3. Unlocks: enable_equipments, enable_equipment_modules, enable_subunits,
+   enable_building, enable_tactic, sub_technologies, show_equipment_icon
+4. on_research_complete_limit, on_research_complete
+5. Research: research_cost, start_year
+6. XP: xp_research_type, xp_boost_cost, xp_unlock_cost, xp_research_bonus,
+   special_project_specialization
+7. Layout: force_use_small_tech_layout, path, folder (each on one line)
+8. categories
+9. ai_research_weights, ai_will_do (LAST)
+```
+
+## Best Practices
+
+- Any key outside the lists above is treated as an effect and stays in source order
+- Write a single-token list on one line: `enable_equipments = { infantry_weapons_2 }`
+- Write path and folder on one line: `path = { research_cost_coeff = 1 leads_to_tech = X }`
+- Keep `ai_will_do` on `factor`; technologies do not use `base`
+- Leave one blank line between technologies; `@` constants and section comments stay where they are
+- `standardize.py technology` applies this layout
+
+## Example Technology
+
+```hoiscript
+night_vision_1 = {
+    land_night_attack = 0.05
+    army_personnel_cost_multiplier_modifier = 0.02
+
+    research_cost = 2
+    start_year = 1965
+
+    xp_research_type = army
+    xp_boost_cost = 50
+    xp_research_bonus = 1.00
+
+    path = { research_cost_coeff = 1 leads_to_tech = night_vision_2 }
+    folder = { name = infantry_folder position = { x = @row3 y = @1965 } }
+
+    categories = {
+        CAT_inf
+        CAT_nvg
+        CAT_Military
+    }
+
+    ai_will_do = { factor = 1 }
 }
 ```
 
@@ -241,7 +365,8 @@ BRA_idea_higher_minimum_wage_1 = {
 
 ## Brackets
 
-- Place closing brackets on the same line as the keyword
+- Place opening braces on the same line as the keyword
+- Put closing braces on their own line at the outer indent, except for simple one-line blocks
 - Avoid excessive whitespace
 - Keep simple checks on one line when appropriate
 
@@ -312,12 +437,14 @@ CHI_norinco_manufacturer = {
 
 ## Trait Guidelines
 
-- Maximum grid: `y = 0 - 9`
+- Keep trait x positions at or below 9. Negative x is allowed; y is not capped
 - Use relative positioning within the grid
 
 ---
 
 # Related Resources
 
-- [Code Resources](/dev-resources/code-resource) - Modifiers and effects
-- [Game Rules](/player-tutorials/game-rules) - Game rule reference
+- [Code Resources](/dev-resources/code-resource/) - Modifiers and effects
+- [Dynamic Modifiers](/dev-resources/dynamic-modifiers/) - Dynamic modifier tooltip usage
+- [Claude Code Skills](/dev-resources/claude-code-skills/) - AI-assisted development tools
+- [Game Rules](/player-tutorials/game-rules/) - Game rule reference

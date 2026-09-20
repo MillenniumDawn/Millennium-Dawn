@@ -24,7 +24,7 @@ description: Step-by-step checklist for focus tree development lifecycle
 
 <input type="checkbox"> Focus tree layout is transferred to hoi4
 
-- This can be either via [Croc's Focus Tree Tool](/dev-resources/focus-tree-tool) or via manually scripting it
+- This can be either via [Croc's Focus Tree Tool](/dev-resources/focus-tree-tool/) or via manually scripting it
 
 <input type="checkbox"> Focus tree completion rewards are set (create stubs if decisions/ideas are mentioned)
 
@@ -80,7 +80,7 @@ This section is a subsection of coding. It is is mostly for visual and quality a
 
 <input type="checkbox"> Draft is reported as done to lead dev and confirmed to be ready for testing
 
-<input type="checkbox"> Verify all effects match up with the standards in [MD Code Resource](/dev-resources/code-resource)
+<input type="checkbox"> Verify all effects match up with the standards in [MD Code Resource](/dev-resources/code-resource/)
 
 ### Playtest Phase
 
@@ -97,3 +97,25 @@ This section is a subsection of coding. It is is mostly for visual and quality a
 <input type="checkbox"> Other localisation teams are notified about incoming content
 
 <input type="checkbox"> Request is merged, job is done, git branch deleted and discord channel archived
+
+---
+
+## Developer Tools
+
+The following Claude Code skills automate checklist items. See [Claude Code Skills](/dev-resources/claude-code-skills/) for the full reference.
+
+| Skill                         | What it automates                                     |
+| ----------------------------- | ----------------------------------------------------- |
+| `/new-focus <TAG>`            | Scaffolds the focus tree file with required structure |
+| `/add-leader <TAG>`           | Scaffolds generals and admirals using count formulas  |
+| `/lifecycle-check <TAG>`      | Checks which lifecycle items are done or missing      |
+| `/search-filter-check <file>` | Validates search filters on all focuses               |
+| `/content-review`             | Runs the full content review checklist                |
+| `/validate`                   | Runs all automated validation tools                   |
+| `/changelog`                  | Updates Changelog.txt with branch changes             |
+
+---
+
+## Modernizing a Stale Tree
+
+This checklist covers drafting and building **new** focus tree content. Bringing an existing tree up to current standards is a different workflow, see the [Focus Tree Modernization Guide](/dev-resources/focus-tree-modernization-guide/) for the audit, per-nation design, and chunked-rewrite method.

@@ -1,27 +1,25 @@
 # Scripted Diplomatic Actions Reference
 
-Scripted diplomatic actions live in `common/scripted_diplomatic_actions/`. All `.txt` files in that directory are loaded by the game. Current files:
+Scripted diplomatic actions live in `common/scripted_diplomatic_actions/`. All `.txt` files there are loaded. Current files:
 
-- `00_scripted_diplomatic_actions.txt` — Core diplomatic actions (trade agreements, debt assumption, enforce peace, energy load sharing, embassies, etc.)
-- `01_peace_deal_diplomatic_actions.txt` — Peace deal related actions
+- `00_scripted_diplomatic_actions.txt` — Core actions (trade agreements, debt assumption, enforce peace, energy load sharing, embassies, etc.)
+- `01_peace_deal_diplomatic_actions.txt` — Peace deal actions
 - `02_ai_attach_diplomatic_actions.txt` — AI attach/detach actions
-- `MD_missile_scripted_diplomatic_actions.txt` — Missile-related diplomatic actions
+- `MD_missile_scripted_diplomatic_actions.txt` — Missile-related actions
 
 ## Scope Rules
 
 In all blocks within a scripted diplomatic action:
 
-| Keyword | Scope                                                                                                                           |
-| ------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `ROOT`  | The **sender** (country initiating the action)                                                                                  |
-| `THIS`  | The **target** (country receiving the action)                                                                                   |
-| `PREV`  | Context-dependent — in `visible`/`selectable`, `PREV` inside a `ROOT = { }` block refers to `THIS` (the target), and vice versa |
+| Keyword | Scope                                                                           |
+| ------- | ------------------------------------------------------------------------------- |
+| `ROOT`  | The **sender** (country initiating the action)                                  |
+| `THIS`  | The **target** (country receiving the action)                                   |
+| `PREV`  | In `visible`/`selectable`, `PREV` inside `ROOT = { }` is `THIS`, and vice versa |
 
-**Important:** `selectable` evaluates in the **target's** scope by default. Bare conditions (without explicit `ROOT = { }` or `THIS = { }`) check `THIS`. Always be explicit about scope.
+**Important:** `selectable` evaluates in the **target's** scope by default. Bare conditions (no explicit `ROOT = { }`/`THIS = { }`) check `THIS`. Always be explicit about scope.
 
 ## Block Order & Structure
-
-Every diplomatic action follows this block order:
 
 ```
 action_name = {
@@ -54,11 +52,11 @@ action_name = {
 
 ## Cooldown Pattern
 
-To prevent spamming a diplomatic action, use a timed country flag. The standard pattern:
+Prevent spamming with a timed country flag.
 
 ### 1. Set the flag on completion and/or rejection
 
-In `complete_effect` and `reject_effect`, set a timed flag on ROOT (the sender) scoped to the target:
+In `complete_effect` and `reject_effect`, set a timed flag on ROOT (sender) scoped to the target:
 
 ```
 ROOT = {
@@ -66,13 +64,11 @@ ROOT = {
 }
 ```
 
-- `@PREV` resolves to the target's ID since we're inside a `ROOT = { }` block where PREV = THIS (target).
-- Use `days = 90` as the standard cooldown (adjust per action — e.g., 270 for energy load sharing rejections).
-- Set the flag in **both** `complete_effect` and `reject_effect` if you want the cooldown regardless of outcome.
+- `@PREV` resolves to the target's ID since inside a `ROOT = { }` block PREV = THIS (target).
+- `days = 90` is the standard cooldown (adjust per action — e.g., 270 for energy load sharing rejections).
+- Set the flag in **both** `complete_effect` and `reject_effect` for a cooldown regardless of outcome.
 
 ### 2. Check the flag in `visible`
-
-Add the cooldown check in `visible` so the action is hidden during the cooldown:
 
 ```
 visible = {
@@ -96,7 +92,7 @@ modifier = {
 
 ## Pending Offer Pattern
 
-To prevent a country from sending the same action to multiple targets simultaneously:
+Prevent sending the same action to multiple targets at once.
 
 ### 1. Set a variable in `on_sent_effect`
 
@@ -121,11 +117,11 @@ modifier = {
 }
 ```
 
-Note: `NOT = { check_variable = { var = 0 } }` means "var is set and non-zero" — this is the standard idiom for "has a pending offer".
+Note: `NOT = { check_variable = { var = 0 } }` means "var is set and non-zero" — the standard idiom for "has a pending offer".
 
 ## AI Acceptance Structure
 
-`ai_acceptance` uses named condition blocks. Each block has a `base` and optional `modifier` entries:
+`ai_acceptance` uses named condition blocks, each with a `base` and optional `modifier` entries:
 
 ```
 ai_acceptance = {
@@ -136,16 +132,14 @@ ai_acceptance = {
 		base = 0
 		modifier = {
 			add = 5
-			is_same_government = yes
+			has_government = ROOT
 		}
 	}
 	# Opinion scaling pattern:
 	condition_three = {
 		base = 0
 		modifier = {
-			set_temp_variable = { opinion_calculator = opinion@ROOT }
-			multiply_temp_variable = { opinion_calculator = 0.05 }
-			check_variable = { opinion_calculator > -60 }
+			check_opinion_calculation = yes
 			add = opinion_calculator
 		}
 	}
@@ -154,9 +148,45 @@ ai_acceptance = {
 }
 ```
 
+### Mirror Rule (when the action has a custom GUI showing acceptance math)
+
+If your action's scripted GUI shows the player an "AI will accept (+N) / will not accept" breakdown, keep **three** sources in sync. The engine reads `ai_acceptance`; the GUI cannot, so it shows a scripted-trigger calculation that manually mirrors the engine math.
+
+Three updates per new modifier:
+
+1. **Engine math** — `ai_acceptance = { X_factor = { base = N modifier = { ... } } }` in the diplomatic action file.
+2. **Mirror calculation** — scripted trigger re-implementing the same logic, accumulating into a temp variable:
+   ```
+   X_AI_will_accept_calculation = {
+       # ...existing components, each accumulating into X_acceptance_temp...
+       set_temp_variable = { X_factor_temp = 0 }
+       if = {
+           limit = { ...same conditions as the engine modifier... }
+           set_temp_variable = { X_factor_temp = N }
+       }
+       add_to_temp_variable = { X_acceptance_temp = X_factor_temp }
+   }
+   ```
+3. **Player breakdown line** — `defined_text` in scripted localisation, plus a loc string and a reference in the headline tooltip key:
+   ```
+   defined_text = {
+       name = X_ai_accept_factor
+       text = {
+           trigger = { ...same logic, sets X_factor_temp... }
+           localization_key = "X_ai_accept_factor_tt"
+       }
+   }
+   # In .yml:
+   X_ai_accept_factor_tt: "Factor Name: [?X_factor_temp|0+]\n"
+   # In the headline title TT:
+   X_AIA_title_TEXT_DELAYED: "Breakdown: ...[X_ai_accept_factor]..."
+   ```
+
+Forgetting any of the three causes the player-facing score to diverge silently from the engine score (player sees "will accept (+20)", clicks send, gets rejected). Always-check-three. Concrete examples: CPD's `CPD_AI_will_accept_calculation` (in `00_peace_deal_triggers.txt`) and the `CPD_ai_accept_*` defined_text entries.
+
 ## AI Desire Structure
 
-`ai_desire` controls how eagerly the AI initiates the action. Standard gates:
+`ai_desire` controls how eagerly the AI initiates. Standard gates:
 
 ```
 ai_desire = {
@@ -195,17 +225,20 @@ log = "[GetDateText]: [Root.GetName]: diplomatic action {block_name} {action_nam
 
 ## Existing Actions
 
-| Action                             | Requires Acceptance | Cooldown                 | Notes                                 |
-| ---------------------------------- | ------------------- | ------------------------ | ------------------------------------- |
-| `recall_volunteers`                | No                  | None                     | Player-only (`is_ai = no`)            |
-| `propose_improved_trade_agreement` | Yes                 | 180d on reject           | Reject flag on both ROOT and THIS     |
-| `cancel_trade_agreement`           | No                  | None                     | Sets 90d `has_recently_canceled` flag |
-| `diplo_action_assume_debt`         | Yes                 | 90d AI cooldown          | AI-only cooldown flag                 |
-| `propose_mutual_investment_treaty` | Yes                 | Similar to trade         | —                                     |
-| `overlord_subsidies`               | Yes                 | 90d on reject            | Subject/overlord only                 |
-| `negotiate_release`                | Yes                 | None                     | Subject release                       |
-| `enforce_peace_option`             | Yes                 | 90d                      | Cooldown in visible + reject          |
-| `propose_energy_load_sharing`      | Yes                 | 90d accept / 270d reject | Neighbor + energy deficit             |
-| `request_energy_load_sharing`      | Yes                 | 270d on reject           | Reverse direction                     |
-| `purchase_reactor_grade_material`  | Yes                 | —                        | Nuclear material trade                |
-| `close_embassy` / `reopen_embassy` | No                  | —                        | Embassy management                    |
+All require acceptance except `recall_volunteers`, `cancel_trade_agreement`, and
+`close_embassy` / `reopen_embassy` (no acceptance needed).
+
+| Action                             | Cooldown                 | Notes                        |
+| ---------------------------------- | ------------------------ | ---------------------------- |
+| `recall_volunteers`                | None                     | Player-only (`is_ai = no`)   |
+| `propose_improved_trade_agreement` | 180d on reject           | Reject flag on ROOT and THIS |
+| `cancel_trade_agreement`           | None (sets 90d flag)     | `has_recently_canceled`      |
+| `diplo_action_assume_debt`         | 90d AI cooldown          | AI-only cooldown flag        |
+| `propose_mutual_investment_treaty` | Similar to trade         | —                            |
+| `overlord_subsidies`               | 90d on reject            | Subject/overlord only        |
+| `negotiate_release`                | None                     | Subject release              |
+| `enforce_peace_option`             | 90d                      | Cooldown in visible + reject |
+| `propose_energy_load_sharing`      | 90d accept / 270d reject | Neighbor + energy deficit    |
+| `request_energy_load_sharing`      | 270d on reject           | Reverse direction            |
+| `purchase_reactor_grade_material`  | —                        | Nuclear material trade       |
+| `close_embassy` / `reopen_embassy` | —                        | Embassy management           |

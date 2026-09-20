@@ -4,9 +4,10 @@ import type { MarkdownHeading } from "astro";
 import { HeadSeo, Header, Footer } from "@/widgets/site-shell";
 import { Breadcrumbs } from "@/widgets/breadcrumbs";
 import { TocSidebar } from "@/features/toc";
-import { buildSeoMeta } from "@/shared/lib/seo";
+import type { ArticleSeoMeta } from "@/shared/lib/seo";
+import { buildBreadcrumbListJsonLd, buildSeoMeta } from "@/shared/lib/seo";
 import { ensureTrailingSlash, stripBase } from "@/shared/lib/routing/urls";
-import { SITE_DESCRIPTION, SITE_TITLE } from "@/shared/config/site";
+import { SITE_DESCRIPTION, SITE_LANGUAGE, SITE_TITLE } from "@/shared/config/site";
 import { BACK_TO_TOP_CLASS, INVERSE_FOCUS_RING_CLASS, LAYOUT_CONTAINER_CLASS } from "@/shared/ui/tailwind";
 
 import "@/styles/tailwind.css";
@@ -22,6 +23,9 @@ interface Props {
   bodyClass?: string;
   canonicalPath?: string;
   headings?: MarkdownHeading[];
+  ogType?: "website" | "article";
+  seoArticle?: ArticleSeoMeta;
+  extraJsonLd?: Record<string, unknown>[];
 }
 
 const {
@@ -34,6 +38,9 @@ const {
   bodyClass,
   canonicalPath,
   headings = [],
+  ogType,
+  seoArticle,
+  extraJsonLd = [],
 }: Props = Astro.props;
 
 const navigationEntry = await getEntry("navigation", "index");
@@ -49,17 +56,28 @@ const currentPath = ensureTrailingSlash(stripBase(Astro.url.pathname));
 const pageSlug = pageId ?? title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const resolvedBodyClass = bodyClass ?? pageSlug;
 
+const resolvedCanonicalPath = canonicalPath ?? currentPath;
+const breadcrumbJsonLd = buildBreadcrumbListJsonLd({
+  path: currentPath,
+  title,
+  sections: sectionsEntry.data,
+});
+const mergedExtraJsonLd = [...extraJsonLd, ...(breadcrumbJsonLd ? [breadcrumbJsonLd] : [])];
+
 const seoMeta = buildSeoMeta({
   title: `${title} - ${SITE_TITLE}`,
   description,
-  canonicalPath: canonicalPath ?? currentPath,
+  canonicalPath: resolvedCanonicalPath,
   robots,
   seo,
+  ogType,
+  article: seoArticle,
+  extraJsonLd: mergedExtraJsonLd,
 });
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={SITE_LANGUAGE}>
   <head>
     <HeadSeo seo={seoMeta} />
     <slot name="head" />

@@ -14,59 +14,206 @@ The standardization tools help maintain consistent code formatting and best prac
 ## Available Standardizers
 
 ### Focus Trees (`standardize_focus_tree.py`)
+
 Standardizes national focus files according to Millennium Dawn standards.
 
 **Key features:**
+
 - Enforces proper property ordering
-- Adds missing logging to completion rewards and effects
+- Adds missing logging to completion rewards and effects that run something; an empty or log-only block is removed
 - Formats search_filters into single lines
 - Ensures ai_will_do is properly formatted
 
 **Usage:**
+
 ```bash
 python3 standardize_focus_tree.py input.txt -o output.txt --backup --verbose
 ```
 
+### Focus ID Prefixes (`rename_focus_ids.py`)
+
+Renames country focus IDs and their references without rewriting unrelated focus formatting.
+It scans the repository containing the tool by default; use `--root` for another checkout.
+
+**Usage:**
+
+```bash
+python3 rename_focus_ids.py \
+  --focus-file ../../common/national_focus/05_Australia.txt \
+  --localisation-file ../../localisation/english/MD_focus_AST_l_english.yml \
+  --tag AST
+```
+
 ### Events (`standardize_events.py`)
+
 Standardizes event files according to Millennium Dawn standards.
 
 **Key features:**
+
 - Ensures `is_triggered_only = yes` for triggered events
 - Adds logging to options only when they have effects
 - Maintains proper property ordering
 - Removes excessive blank lines
 
 **Usage:**
+
 ```bash
 python3 standardize_events.py input.txt -o output.txt --backup --verbose
 ```
 
 ### Decisions (`standardize_decisions.py`)
+
 Standardizes decision files according to Millennium Dawn standards.
 
 **Key features:**
-- Adds logging to complete_effect blocks
+
+- Adds logging to complete/remove/timeout/cancel_effect blocks that run something; an empty or log-only block is removed
 - Enforces proper property ordering
 - Maintains consistent formatting
 - Preserves ai_will_do blocks
 
 **Usage:**
+
 ```bash
 python3 standardize_decisions.py input.txt -o output.txt --backup --verbose
 ```
 
 ### Ideas (`standardize_ideas.py`)
+
 Standardizes idea files according to Millennium Dawn standards.
 
 **Key features:**
-- Removes performance-hurting properties (`allowed = { always = no }`, `cancel = { always = no }`)
+
+- Removes redundant default properties (`cancel = { always = no }`). Keeps `allowed = { always = no }` (hides a slotted idea from the picker; `add_idea` still applies it)
 - Adds logging to on_add/on_remove when they have effects
 - Preserves allowed_civil_war for civil war tags
 - Maintains proper formatting
 
 **Usage:**
+
 ```bash
 python3 standardize_ideas.py input.txt -o output.txt --backup --verbose
+```
+
+### Redundant Gate Blocks (`strip_idea_allowed_gates.py`, `strip_dynmod_tag_gates.py`)
+
+Surgical sweeps for two gates that never fail. Unlike the standardizers above they rewrite only the blocks they remove, so the diff carries no reformatting.
+
+`strip_idea_allowed_gates.py` drops `allowed` and `available` blocks from every idea in a category with no slot. Nothing picks from `country` or `hidden_ideas`, so `add_idea` is the only way in and it never consults either gate. Use `cancel` if the idea should remove itself. Categories come from `common/idea_tags/`, so a new slotless one is covered without editing the script.
+
+`strip_dynmod_tag_gates.py` drops `always = yes` and top-level `original_tag` / `tag` triggers from a dynamic modifier's `enable` block, removing the block when that empties it. `enable` is re-evaluated at runtime, so these cost something every pass. Only top-level triggers are touched: one inside `OR` / `NOT` is an alternative or an exclusion, and `country_exists`, `has_idea` and `has_completed_focus` stay, because those go false while the modifier is still attached. Every strip is reported — "only this country ever attaches it" is a claim about the rest of the repo that the script does not verify.
+
+Both find a block's closing brace by column, not by "the line where depth hit zero" — a closer sharing a line with the enclosing block's own `}` would otherwise be swallowed along with it. A block whose braces never balance is reported and left alone, and the run exits non-zero, rather than rewriting from the opener to EOF.
+
+`validate_ideas.py` and `validate_modifiers.py` flag both patterns, so neither grows back silently.
+
+**Usage:**
+
+```bash
+python3 strip_idea_allowed_gates.py --dry-run
+python3 strip_dynmod_tag_gates.py --backup
+```
+
+### AI Path Weights (`apply_ai_path_weights.py`)
+
+Writes the `ai_will_do` path modifiers for a country's AI path game rule (issue #3162) from a
+mapping of focus id to ownership group, so the two-line boost/killswitch pair does not have to be
+hand-written across ~180 focuses. Like the gate sweeps above it rewrites only the blocks it owns.
+
+A modifier is replaced only when it exists to route paths: it names a `<TAG>_*_FOCUS_PATH` flag, a
+`<TAG>_ai_*_path` trigger, or is a bare `factor = 0` `is_historical_focus_on` killswitch. Anything
+carrying `can_staff_an_*`, `bankruptcy_incoming_collapse` or `ai_is_threatened` is a guard and is
+preserved verbatim — `validate_focus_tree.py` scans for those tokens literally and would report a
+guard that had been folded into a path trigger as missing.
+
+The emitted pair goes last in the block, because modifiers apply in order and a later `add` would
+resurrect a focus the killswitch just zeroed. The run aborts without writing on an unknown or
+duplicated focus id, a shared focus file, unbalanced braces, or a rewrite that is not idempotent.
+
+**Usage:**
+
+```bash
+python3 apply_ai_path_weights.py --tag DEN --map plan.txt --dry-run
+python3 apply_ai_path_weights.py --tag DEN --map -
+```
+
+Mapping format (`#` comments allowed):
+
+```
+group historical owner=DEN_ai_historical_path not=DEN_ai_not_historical_path
+group socialist owner_flag=DEN_SOCIALIST_FOCUS_PATH not=DEN_ai_not_socialist_path
+boost 25
+
+DEN_join_the_euro historical
+DEN_red_bloc socialist 150
+DEN_army_reform -
+```
+
+Pair it with `tools/analysis/ai_path_report.py`, which decides which focuses belong to which group
+and re-checks the result for killswitch orphans.
+
+### Military Industrial Organizations (`standardize_mio.py`)
+
+Standardizes MIO organization files according to Millennium Dawn standards.
+
+**Key features:**
+
+- Enforces the standard property ordering for MIOs
+- Orders core fields as `name`, `allowed`, `icon`, `task_capacity`, `equipment_type`, `research_categories`, `tree_header_text`, `initial_trait`, then `trait`
+- Compacts blocks by removing excessive blank lines
+- Keeps unrecognized lines in a trailing `other` section
+
+**Usage:**
+
+```bash
+python3 standardize_mio.py input.txt -o output.txt --backup --verbose
+```
+
+### Technologies (`standardize_technologies.py`)
+
+Reorders every `technology` block in `common/technologies/` into one fixed layout with one blank line between technologies. Text outside the blocks (the `technologies = {` wrapper, `@row` constants, section comments) passes through unchanged.
+
+**Block layout** (one blank line between groups, `ai_will_do` last):
+
+1. Gates: `is_special_project_tech`, `doctrine`, `allow`, `allow_branch`, `dependencies`, `XOR`
+2. Effects: every key that is not in the structural set (plain modifiers, `category_*` and sub-unit blocks) in source order, then `modifier`, `custom_modifier_tooltip`, `show_effect_as_desc`
+3. Unlocks: `enable_equipments`, `enable_equipment_modules`, `enable_subunits`, `enable_building`, `enable_tactic`, `sub_technologies`, `show_equipment_icon`
+4. `on_research_complete_limit`, `on_research_complete`
+5. Research: `research_cost`, `start_year`, `xp_research_type`, `xp_boost_cost`, `xp_unlock_cost`, `xp_research_bonus`, `force_use_small_tech_layout`
+6. Tree: `path` (repeatable), `folder`, `categories`, `special_project_specialization`
+7. AI: `ai_research_weights`, `ai_will_do`
+
+**Rendering:**
+
+- Single-leaf blocks collapse to one line (`ai_will_do = { factor = 1 }`, `allow = { has_doctrine = x }`); other blocks are reindented with their single-leaf children collapsed (`position = { x = @row1 y = @1965 }`)
+- Bare token lists are one line for a single token (`enable_equipments = { X }`) and one token per line for two or more
+- Comments above a property travel with it; a block holding a `#` comment stays multi-line
+- No `ai_will_do` `factor` to `base` rewrite and no log injection into `on_research_complete` (`tools/logging_tool.py tech_add` does that, only into a block that runs something)
+
+**Usage:**
+
+```bash
+python3 standardize_technologies.py common/technologies/infantry.txt -o output.txt
+```
+
+### History (`standardize_history.py`)
+
+Standardizes dated blocks in country history files without changing content outside them.
+
+**Usage:**
+
+```bash
+python3 standardize_history.py "history/countries/CHI - China.txt" -o output.txt
+```
+
+### Localisation (`standardize_localisation.py`)
+
+Reorganizes English localisation files by content category and detects the mod root when possible.
+
+**Usage:**
+
+```bash
+python3 standardize_localisation.py input.yml --mod-root /path/to/mod
 ```
 
 ## Unified Interface
@@ -85,6 +232,18 @@ python3 standardize.py decision input.txt
 
 # Standardize ideas
 python3 standardize.py idea input.txt -v
+
+# Standardize MIOs
+python3 standardize.py mio input.txt
+
+# Standardize technologies
+python3 standardize.py technology common/technologies/infantry.txt
+
+# Standardize history files
+python3 standardize.py history "history/countries/CHI - China.txt"
+
+# Standardize localisation
+python3 standardize.py localisation input.yml --mod-root /path/to/mod
 ```
 
 ## Common Options
@@ -96,32 +255,62 @@ All standardizers support these command-line options:
 - `-b, --backup` - Create backup before modifying (recommended)
 - `-v, --verbose` - Verbose output for debugging
 
+Additional options are limited to their relevant subcommands:
+
+- `--check-naming` - Check modifier naming conventions (focus trees only)
+- `--mod-root` - Mod root path (localisation files only)
+
 ## Code Standards Enforced
 
+### All File Types
+
+Every line written by a standardizer passes through `normalize_spacing`
+(`tools/shared_utils.py`), which puts single spaces around `{`, `}` and `=`, so
+`NOT = {country_exists = ENG}` comes out as `NOT = { country_exists = ENG }`.
+Indentation, `"..."` string interiors and `#` comments are left byte-exact.
+`tools/linting/fix_styling.py` uses the same helper.
+
 ### Focus Trees
+
 - Use `relative_position_id` for positioning
-- Include logging in completion_reward/select_effect/bypass_effect
+- Include logging in completion_reward/select_effect/bypass_effect only when the block runs an effect; a log-only block is removed
 - Proper property ordering (id, icon, position, cost, prerequisites, etc.)
 - ai_will_do always last
 
 ### Events
+
 - Use `is_triggered_only = yes` for triggered events
 - Log only options that have actual effects
 - Proper property ordering
 - Remove excessive blank lines
 
 ### Decisions
-- Include logging in complete_effect
+
+- Include logging in complete_effect only when the block runs an effect; a log-only block is removed
 - Use `fire_only_once` sparingly
 - Proper property ordering
 - Include ai_will_do
 
 ### Ideas
-- Remove `allowed = { always = no }` (performance optimization)
-- Remove `cancel = { always = no }` (performance optimization)
-- Remove empty `on_add = { log = "" }`
+
+- Keep `allowed = { always = no }` on slotted ideas (hides them from the picker; `add_idea` still applies them)
+- Remove `cancel = { always = no }` (redundant default; checked hourly, never true)
+- Remove `on_add` / `on_remove` blocks whose only statement is a log
 - Include `allowed_civil_war = { always = yes }` for civil war tags
 - Log only when on_add/on_remove have actual effects
+
+### Military Industrial Organizations
+
+- Proper property ordering for organization headers
+- Place all `tree_header_text` blocks before `initial_trait`
+- Place all `trait` blocks after `initial_trait`
+- Remove excessive blank lines inside blocks
+
+### Technologies
+
+- Fixed group order: gates, effects, unlocks, on_research_complete, research meta, tree placement, AI
+- Any key outside the structural set is an effect and keeps its source order
+- `ai_will_do` always last
 
 ## Performance Optimizations
 
@@ -129,7 +318,6 @@ The standardizers automatically remove or optimize code patterns that hurt perfo
 
 - **Division operations**: Suggest multiplication instead of division
 - **Empty logging**: Remove `log = ""` statements
-- **Default properties**: Remove `allowed = { always = no }` and `cancel = { always = no }`
 - **MTTH events**: Warn about open-fire MTTH events
 - **Arrays**: Suggest replacing `every_country`/`random_country` with specific arrays
 
@@ -157,17 +345,20 @@ When adding new standardizers:
 ### Common Issues
 
 **Import errors**: Make sure you're running from the `tools/standardization/` directory
+
 ```bash
 cd tools/standardization
 python3 standardize.py focus input.txt
 ```
 
 **File not found**: Verify the input file path is correct
+
 ```bash
 ls -la input.txt  # Check if file exists
 ```
 
 **Permission errors**: Ensure you have write permissions for the output directory
+
 ```bash
 chmod 644 input.txt  # Make sure file is writable
 ```
@@ -175,11 +366,13 @@ chmod 644 input.txt  # Make sure file is writable
 ### Debug Mode
 
 Use `--verbose` to see detailed processing information:
+
 ```bash
 python3 standardize.py focus input.txt --verbose
 ```
 
 This will show:
+
 - Files being processed
 - Blocks being reformatted
 - Properties being extracted
@@ -187,28 +380,39 @@ This will show:
 
 ## Integration with Development Workflow
 
-### Pre-commit Hook
-
-Consider adding standardization to your pre-commit hooks:
+Standardization is manual, static tooling: no standardizer or standardization
+check runs in pre-commit or CI. The `md-standardize` auto-fixer hook is
+disabled on purpose — it rewrites whole files, so on a repo where most files
+predate the current rules it would drag a full reformat into every unrelated
+commit — and `tools/validation/validate_standardization.py` is likewise
+unwired from both pipelines. Run the standardizers by hand on the files you
+are working on, or run the report on your own schedule for a cleanup pass:
 
 ```bash
-# In .git/hooks/pre-commit
-#!/bin/bash
-python3 tools/standardization/standardize.py focus common/national_focus/*.txt
-python3 tools/standardization/standardize.py event events/*.txt
+python3 tools/validation/validate_standardization.py --all --no-color
 ```
 
-### CI/CD Pipeline
+Each finding names the command that fixes it:
 
-Add standardization checks to your continuous integration:
-
-```yaml
-# .github/workflows/standardize.yml
-- name: Standardize Files
-  run: |
-    python3 tools/standardization/standardize.py focus common/national_focus/*.txt --backup
-    python3 tools/standardization/standardize.py event events/*.txt --backup
 ```
+events/Gulf.txt - not standardized - run: python3 tools/standardization/standardize.py event "events/Gulf.txt"
+```
+
+Drop `--all` (and add `--staged`) for the changed-file scope.
+
+### standardize_api.py
+
+`standardize_api.py` is the in-memory entry point both the validator and the
+(disabled) `tools/standardize_staged.py` hook drive, so path routing and
+standardizer selection live in one place:
+
+- `kind_for_path(path)` — `"focus"`, `"event"`, `"decision"`, `"idea"`, `"mio"`,
+  or `None` when no standardizer owns the path.
+- `standardize_text(kind, text)` — the text the standardizer would write, or
+  `None` when the file holds no block of that kind.
+
+Neither reads or writes the file, so a checker can compare against disk without
+the risk of a half-written file.
 
 ## Related Documentation
 

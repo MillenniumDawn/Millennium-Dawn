@@ -5,9 +5,10 @@ import ast
 import importlib.util
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
-from typing import List, Optional, Tuple
+from typing import List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "validation"))
 from validator_common import BaseValidator, Colors, run_validator_main
@@ -26,8 +27,11 @@ class ToolsValidator(BaseValidator):
 
     def _find_scripts(self) -> List[Path]:
         try:
+            old_dir = self.tools_dir / "old"
             return sorted(
-                p for p in self.tools_dir.rglob("*.py") if p.name not in _SKIP_SCRIPTS
+                p
+                for p in self.tools_dir.rglob("*.py")
+                if p.name not in _SKIP_SCRIPTS and not p.is_relative_to(old_dir)
             )
         except (FileNotFoundError, NotADirectoryError):
             self.log(
@@ -35,18 +39,21 @@ class ToolsValidator(BaseValidator):
             )
             return []
 
-    def _validate_script(self, path: Path) -> Tuple[Optional[str], bool, bool]:
-        """Read file once; return (syntax_error, has_shebang, has_main)."""
-        rel = str(path.relative_to(self.tools_dir))
+    def _validate_script(
+        self, path: Path
+    ) -> Tuple[Optional[str], bool, bool, bool, Set[str]]:
+        """Read file once; return (syntax_error, has_shebang, has_main, has_guard, imports)."""
+        rel = path.relative_to(self.tools_dir).as_posix()
         try:
             with open(path, "r", encoding="utf-8") as f:
                 content = f.read()
         except Exception as e:
-            return f"{rel}: {e}", False, False
+            return f"{rel}: {e}", False, False, False, set()
 
         syntax_err = None
+        tree = None
         try:
-            ast.parse(content, filename=str(path))
+            tree = ast.parse(content, filename=str(path))
         except SyntaxError as e:
             syntax_err = f"{rel}: {e}"
         except Exception as e:
@@ -54,59 +61,134 @@ class ToolsValidator(BaseValidator):
 
         first_line = content.split("\n", 1)[0].strip()
         has_shebang = first_line.startswith("#!") and "python" in first_line
-        has_main = 'if __name__ == "__main__"' in content or "def main(" in content
+        has_guard = 'if __name__ == "__main__"' in content
+        has_main = (
+            has_guard
+            or "def main(" in content
+            or "run_validator_main(" in content
+            or "run_standardizer(" in content
+        )
+        imports = self._imported_modules(tree) if tree is not None else set()
 
-        return syntax_err, has_shebang, has_main
+        return syntax_err, has_shebang, has_main, has_guard, imports
 
-    def _is_executable(self, path: Path) -> bool:
-        return os.access(path, os.X_OK)
+    @staticmethod
+    def _imported_modules(tree: ast.AST) -> Set[str]:
+        mods: Set[str] = set()
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Import):
+                for alias in node.names:
+                    mods.update(alias.name.split("."))
+            elif isinstance(node, ast.ImportFrom) and node.module:
+                mods.update(node.module.split("."))
+        return mods
+
+    def _is_library(
+        self, path: Path, has_guard: bool, pkg_dirs: Set[Path], imported: Set[str]
+    ) -> bool:
+        name = path.name
+        if name in ("__init__.py", "conftest.py"):
+            return True
+        if name.startswith("test_") or name.endswith("_test.py"):
+            return True
+        if "tests" in path.relative_to(self.tools_dir).parts:
+            return True
+        # A real entry guard means the file is meant to be run, even when a test
+        # also imports it — check it before the import-based library signals.
+        if has_guard:
+            return False
+        if name.startswith("_"):
+            return True
+        if any(parent in pkg_dirs for parent in path.parents):
+            return True
+        return path.stem in imported
+
+    def _indexed_executable_paths(self) -> Optional[Set[Path]]:
+        try:
+            result = subprocess.run(
+                ["git", "ls-files", "--stage", "--", "tools"],
+                cwd=self.tools_dir.parent,
+                capture_output=True,
+                text=True,
+                check=True,
+            )
+        except (OSError, subprocess.CalledProcessError):
+            return None
+
+        executable_paths = set()
+        for line in result.stdout.splitlines():
+            metadata, separator, relative_path = line.partition("\t")
+            if separator and metadata.startswith("100755 "):
+                executable_paths.add((self.tools_dir.parent / relative_path).resolve())
+        return executable_paths
+
+    def _is_executable(
+        self, path: Path, indexed_executables: Optional[Set[Path]] = None
+    ) -> bool:
+        if indexed_executables is not None:
+            return path.resolve() in indexed_executables
+        return os.name == "nt" or os.access(path, os.X_OK)
 
     def _check_dependencies(self) -> List[str]:
-        req_file = self.tools_dir / "requirements.txt"
-        if not req_file.exists():
+        # Runtime packages live in the `runtime` dependency-group in pyproject.
+        pyproject = self.tools_dir.parent / "pyproject.toml"
+        if not pyproject.exists():
+            return []
+        try:
+            text = pyproject.read_text(encoding="utf-8")
+        except Exception as e:
+            return [f"Error reading pyproject.toml: {e}"]
+        match = re.search(r"(?ms)^runtime\s*=\s*\[(.*?)\]", text)
+        if not match:
             return []
         missing = []
-        try:
-            with open(req_file, "r") as f:
-                for line in f:
-                    line = line.strip()
-                    if not line or line.startswith("#"):
-                        continue
-                    package = re.split(r"[><=!~]+", line)[0].strip()
-                    import_name = "PIL" if package.lower() == "pillow" else package
-                    if importlib.util.find_spec(import_name) is None:
-                        missing.append(package)
-        except Exception as e:
-            return [f"Error reading requirements.txt: {e}"]
+        for spec in re.findall(r'"([^"]+)"', match.group(1)):
+            package = re.split(r"[><=!~]+", spec)[0].strip()
+            import_name = "PIL" if package.lower() == "pillow" else package
+            if importlib.util.find_spec(import_name) is None:
+                missing.append(package)
         return missing
 
     def run_validations(self):
-        self.log(f"\n{'='*80}")
+        self.log(f"\n{'=' * 80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking Python scripts...{Colors.ENDC if self.use_colors else ''}"
         )
-        self.log(f"{'='*80}")
+        self.log(f"{'=' * 80}")
 
         scripts = self._find_scripts()
         self.log(f"  Found {len(scripts)} Python scripts to validate")
+
+        pkg_dirs = {p.parent for p in scripts if p.name == "__init__.py"}
+        indexed_executables = self._indexed_executable_paths()
 
         syntax_errors = []
         missing_shebangs = []
         non_executable = []
         no_main = []
+        scanned = {}
+        imported: Set[str] = set()
 
         for path in scripts:
-            rel = str(path.relative_to(self.tools_dir))
-            syntax_err, has_shebang, has_main = self._validate_script(path)
+            syntax_err, has_shebang, has_main, has_guard, imports = (
+                self._validate_script(path)
+            )
+            scanned[path] = (syntax_err, has_shebang, has_main, has_guard)
+            imported |= imports
+
+        for path in scripts:
+            rel = path.relative_to(self.tools_dir).as_posix()
+            syntax_err, has_shebang, has_main, has_guard = scanned[path]
 
             if syntax_err:
                 syntax_errors.append(syntax_err)
-            if not has_shebang:
-                missing_shebangs.append(rel)
-            if not self._is_executable(path):
-                non_executable.append(rel)
-            if not has_main:
-                no_main.append(rel)
+            if not self._is_library(path, has_guard, pkg_dirs, imported):
+                if not has_shebang:
+                    missing_shebangs.append(rel)
+                if not self._is_executable(path, indexed_executables):
+                    non_executable.append(rel)
+                if not has_main:
+                    no_main.append(rel)
 
         self._report(
             syntax_errors,
@@ -121,11 +203,11 @@ class ToolsValidator(BaseValidator):
         for name in no_main:
             self.log(f"  Warning: no main guard or main() — {name}", "warning")
 
-        self.log(f"\n{'='*80}")
+        self.log(f"\n{'=' * 80}")
         self.log(
             f"{Colors.CYAN if self.use_colors else ''}Checking dependencies...{Colors.ENDC if self.use_colors else ''}"
         )
-        self.log(f"{'='*80}")
+        self.log(f"{'=' * 80}")
 
         missing_deps = self._check_dependencies()
         self._report(

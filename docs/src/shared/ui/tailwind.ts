@@ -159,6 +159,18 @@ export const BUTTON_OUTLINE_CLASS = [
   "active:translate-y-0",
 ].join(" ");
 
+/** Compact outline control for article “Edit on GitHub” footer actions. */
+export const ARTICLE_EDIT_BUTTON_CLASS = [
+  BUTTON_OUTLINE_CLASS,
+  "min-h-10",
+  "gap-xs",
+  "px-md",
+  "py-2",
+  "text-sm",
+  "shrink-0",
+  "hover:bg-surface-hover",
+].join(" ");
+
 export const PANEL_SURFACE_CLASS = [
   "rounded-lg",
   "border",

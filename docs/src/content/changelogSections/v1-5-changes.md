@@ -322,7 +322,7 @@ Map
 - New straits!
 - Fixes to Tunis' capital
 - St Helena & Canary Islands now are present in their respective states
-- Added Tags: SMA, MNC, LIC, CAS, CAL, TEX, ZAP, YUC, RGD, IOM, ETK, FGU, GAL, GRL, PAT, NAV, NEN, SAR, AND, SPL and SUL
+- Added Tags: SMA, MNC, LIC, CAS, CAL, TEX, ZAP, YUC, RGD, IOM, ETK, FGU, GAL, GRN, PAT, NAV, NEN, SAR, AND, SPL and SUL
 - Corrections to some supply areas in Europe
 
 Music
