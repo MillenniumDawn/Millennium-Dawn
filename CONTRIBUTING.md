@@ -61,7 +61,6 @@ AI tooling is welcome. The full policy is on the [Developer Setup Guide](https:/
 - Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md) if this is your first contribution.
 - CI validation must pass and a team leader must approve before merge.
   - CI validation includes all validation and linters that exist within the framework under the Coding Standards and Validations.
-- New countries and reworks are claimed through the wish board. See [Wish management](./.github/wish-management.md).
 
 ## What We Will Not Accept
 
