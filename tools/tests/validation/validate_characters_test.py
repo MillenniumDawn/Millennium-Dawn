@@ -89,7 +89,7 @@ COUNTRY_TRAITS = """leader_traits = {
 \tENG_royalty_advisor_trait = {
 \t\tsprite = 5
 \t}
-\temerging_Communist-State = {
+\temerging_Test-State = {
 \t\trandom = no
 \t}
 }
@@ -458,7 +458,7 @@ def test_validator_exempts_country_traits_and_unchecked_slots(tmp_path):
         _characters(
             _advisor("TAG_bespoke", "high_command", "ENG_royalty_advisor_trait"),
             _advisor("TAG_political", "political_advisor", "army_chief_defensive_1"),
-            _advisor("TAG_hyphenated", "army_chief", "emerging_Communist-State"),
+            _advisor("TAG_hyphenated", "army_chief", "emerging_Test-State"),
         ),
     )
     validator = Validator(str(tmp_path), use_colors=False, workers=1)
