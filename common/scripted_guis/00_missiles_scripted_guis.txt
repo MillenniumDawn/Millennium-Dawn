@@ -2635,14 +2635,11 @@ scripted_gui = {
 			country_view_flag_button_click = {
 				clear_satellite_deorbit_state = yes
 				set_country_flag = open_MD_satellite_orbit_country_selection
-				clear_array = temp_countries
-				every_country = {
-					ROOT = { add_to_array = { temp_countries = PREV.id } }
-				}
 				international_systems_update = yes
 			}
 			country_view_flag_button_right_click = {
 				clear_satellite_deorbit_state = yes
+				clr_country_flag = open_MD_satellite_orbit_country_selection
 				set_variable = { orbit_selected_TAG = ROOT.id }
 				set_sat_access_arrays_selected_TAG = yes
 				set_satellites_gui = yes
@@ -2950,7 +2947,6 @@ scripted_gui = {
 	MD_satellite_orbit_country_selection_gui = {
 		window_name = MD_satellite_orbit_country_selection
 		context_type = player_context
-		#context_type = selected_country_context
 		parent_window_token = MD_satellite_orbit_view
 
 		dirty = global.international_systems_updated
@@ -2965,7 +2961,8 @@ scripted_gui = {
 		}
 		effects = {
 			country_list_flag_button_click = {
-				set_variable = { orbit_selected_TAG = ROOT.temp_countries^i }
+				clear_satellite_deorbit_state = yes
+				set_variable = { orbit_selected_TAG = v }
 				set_sat_access_arrays_selected_TAG = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_SPY_mission_num_gui = num_controlled_states }
@@ -2975,26 +2972,29 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			close_button_click = {
-				if = {
-					limit = {
-						has_country_flag = open_MD_satellite_orbit_country_selection
-					}
-					clr_country_flag = open_MD_satellite_orbit_country_selection
-				}
-				clear_array = ROOT.temp_countries
+				clr_country_flag = open_MD_satellite_orbit_country_selection
 				international_systems_update = yes
+			}
+		}
+
+		triggers = {
+			country_list_selected_visible = {
+				check_variable = { orbit_selected_TAG = v }
+			}
+			country_list_empty_visible = {
+				check_variable = { global.MD_satellite_owners^num = 0 }
 			}
 		}
 
 		dynamic_lists = {
 			country_list_gridbox = {
-				array = temp_countries
+				array = global.MD_satellite_owners
 				entry_container = country_list_entry
 			}
 		}
 		properties = {
-			country_list_flag_button = {
-				#text = "test" #[?ROOT.temp_countries^i.GetFlag]
+			country_list_flag = {
+				image = "[?v.GetFlag]"
 			}
 		}
 	}

@@ -472,6 +472,60 @@ set_satellites_gui = {
 	set_KILL_satellites = yes
 }
 
+update_satellite_owner = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { var_GNSS_sat_total > 0 }
+				check_variable = { var_COM_sat_total > 0 }
+				check_variable = { var_SPY_sat_total > 0 }
+				check_variable = { var_KILL_sat_total > 0 }
+			}
+			# Rented satellite counts do not establish ownership of an orbit entry.
+			any_of = {
+				array = orbit_array
+				value = MD_satellite_model
+				check_variable = { MD_satellite_model > 0 }
+			}
+		}
+		if = {
+			limit = { NOT = { is_in_array = { global.MD_satellite_owners = THIS.id } } }
+			add_to_array = { global.MD_satellite_owners = THIS.id }
+			refresh_satellite_owner_views = yes
+		}
+	}
+	else = { remove_satellite_owner = yes }
+}
+
+remove_satellite_owner = {
+	if = {
+		limit = { is_in_array = { global.MD_satellite_owners = THIS.id } }
+		remove_from_array = { global.MD_satellite_owners = THIS.id }
+		refresh_satellite_owner_views = yes
+	}
+}
+
+refresh_satellite_owner_views = {
+	every_country = {
+		limit = { is_ai = no }
+		if = {
+			limit = {
+				check_variable = { orbit_selected_TAG = PREV.id }
+				NOT = { is_in_array = { global.MD_satellite_owners = orbit_selected_TAG } }
+			}
+			country_event = satellites.10
+		}
+		else_if = {
+			limit = {
+				has_country_flag = open_MD_countrymissilesview
+				check_variable = { var_open_MD_missiles_gui_ledger_4 = 2 }
+				check_variable = { var_open_MD_space_gui = 2 }
+			}
+			international_systems_update = yes
+		}
+	}
+}
+
 set_GNSS_satellites = {
 	set_temp_variable = { tot = 0 }
 	for_each_loop = {
@@ -2513,6 +2567,7 @@ add_satellite_from_payload = {
 	}
 	clear_temp_array = sat_replaced_slots
 	set_satellites_gui = yes
+	update_satellite_owner = yes
 	clear_array = payload_array
 	refresh_bulk_deorbit_state = yes
 }
@@ -2877,6 +2932,7 @@ remove_satellite_from_orbit = {
 			set_variable = { sat_6_array^i = -1 }
 		}
 	}
+	update_satellite_owner = yes
 }
 
 remove_satellite_from_system = {
@@ -2889,6 +2945,7 @@ remove_satellite_from_system = {
 			}
 			set_temp_variable = { sat_idx = { value = sat_id subtract = @GNSS_sat_idx_base } }
 			subtract_from_variable = { GNSS_satellite_array^sat_idx = 1 }
+			subtract_from_variable = { var_GNSS_sat_total = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2897,6 +2954,7 @@ remove_satellite_from_system = {
 			}
 			set_temp_variable = { sat_idx = { value = sat_id subtract = @COM_sat_idx_base } }
 			subtract_from_variable = { COM_satellite_array^sat_idx = 1 }
+			subtract_from_variable = { var_COM_sat_total = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2905,6 +2963,7 @@ remove_satellite_from_system = {
 			}
 			set_temp_variable = { sat_idx = { value = sat_id subtract = @SPY_sat_idx_base } }
 			subtract_from_variable = { SPY_satellite_array^sat_idx = 1 }
+			subtract_from_variable = { var_SPY_sat_total = 1 }
 		}
 		else_if = {
 			limit = {
@@ -2913,6 +2972,7 @@ remove_satellite_from_system = {
 			}
 			set_temp_variable = { sat_idx = { value = sat_id subtract = @KILLSAT_sat_idx_base } }
 			subtract_from_variable = { KILL_satellite_array^sat_idx = 1 }
+			subtract_from_variable = { var_KILL_sat_total = 1 }
 		}
 	}
 }
@@ -3644,6 +3704,8 @@ setup_missile_configuration_effect = {
 		#for testing network traffic
 		set_COM_sat_receiver_tech_array = yes
 	}
+	set_satellites_gui = yes
+	update_satellite_owner = yes
 	international_systems_update = yes
 }
 
