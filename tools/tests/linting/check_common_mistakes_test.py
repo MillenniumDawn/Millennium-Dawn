@@ -46,6 +46,7 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   43. windows path separators keep the directory-scoped checks enabled
   44. on_daily_TAG blocks that only refresh country flags for the AI to read
   45. per-tag war brakes already covered by MD_avoid_new_wars_when_outmatched
+  46. has_opinion_modifier only accepts a modifier ID, not a block
 """
 
 import os
@@ -82,6 +83,7 @@ from check_common_mistakes import (
     _check_focus_log_id,
     _check_focus_missing_war_hint,
     _check_has_idea_mutex_in_not_block,
+    _check_has_opinion_modifier_block,
     _check_hidden_trigger_in_ctt,
     _check_influence_setter_scope,
     _check_invalid_is_at_war,
@@ -3726,6 +3728,27 @@ assert_finds(
     ],
     0,
     "a variable named is_at_war is not a trigger and is not flagged",
+)
+
+# 46. has_opinion_modifier only accepts a scalar modifier ID.
+
+print("\n── invalid has_opinion_modifier block ──")
+
+assert_finds(
+    _check_has_opinion_modifier_block,
+    ["\thas_opinion_modifier = { target = CHI modifier = exploited_us }\n"],
+    1,
+    "block-form has_opinion_modifier flagged",
+)
+assert_finds(
+    _check_has_opinion_modifier_block,
+    [
+        "\thas_opinion_modifier = exploited_us\n",
+        '\tlog = "has_opinion_modifier = { target = CHI }"\n',
+        "\t# has_opinion_modifier = { target = CHI }\n",
+    ],
+    0,
+    "scalar, quoted, and commented has_opinion_modifier forms not flagged",
 )
 
 # 42. Regressions from the review of the two checks above.
