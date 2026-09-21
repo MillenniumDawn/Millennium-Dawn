@@ -13,7 +13,7 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   10. check_variable with inline >= / <=
   11. tautological OR = { X = yes X = no }
   12. dynamic triggers in decision allowed blocks
-  13. focus declares war without will_lead_to_war_with
+  13. focus declares war without will_lead_to_war_with (direct or via sent-event chain)
   14. check_expr operand chained with a raw comparator symbol
   15. every_owned_controlled_state (nonexistent effect)
   16. random_select_amount set to a non-integer-literal
@@ -53,6 +53,7 @@ import shutil
 import sys
 import tempfile
 
+import check_common_mistakes as common_mistakes
 from check_common_mistakes import (
     _RE_IS_X_NATION,
     _ai_zero_modifier_conditions,
@@ -1633,6 +1634,232 @@ assert_finds(
     ],
     0,
     "add_ai_strategy type = declare_war not flagged",
+)
+
+
+# 10k-10s. Focus sends an event that leads to war (issue #4638). The check
+# follows country_event/news_event sends from the focus completion_reward into
+# the sent event's immediate/option effects, then into chained events the event
+# sends in turn (depth-capped, cycle-safe). Wargoal grants count: they are
+# demands that lead to war. Scope rules mirror the direct check: a send fired
+# from a foreign-country scope runs as that country, and a send inside
+# effect_tooltip never fires, so neither obligates a hint. Tests inject
+# event_blocks (id -> definition text); live runs resolve ids against events/.
+_WAR_CHAIN_EVENTS = {
+    "alg_war.1": (
+        "country_event = {\n"
+        "\tid = alg_war.1\n"
+        "\toption = {\n"
+        "\t\tdeclare_war_on = { target = MOR type = annex_everything }\n"
+        "\t}\n"
+        "}\n"
+    ),
+    "alg_demand.1": (
+        "country_event = {\n"
+        "\tid = alg_demand.1\n"
+        "\timmediate = {\n"
+        "\t\tcreate_wargoal = { type = annex_everything target = MOR }\n"
+        "\t}\n"
+        "\toption = {\n"
+        "\t\tname = alg_demand.1.a\n"
+        "\t}\n"
+        "}\n"
+    ),
+    "alg_chain.1": (
+        "country_event = {\n"
+        "\tid = alg_chain.1\n"
+        "\toption = {\n"
+        "\t\tadd_political_power = 50\n"
+        "\t\tcountry_event = alg_chain.2\n"
+        "\t}\n"
+        "}\n"
+    ),
+    "alg_chain.2": (
+        "country_event = {\n"
+        "\tid = alg_chain.2\n"
+        "\toption = {\n"
+        "\t\tALG = {\n"
+        "\t\t\tcreate_wargoal = { type = annex_everything target = TUN }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    ),
+    "alg_peace.1": (
+        "country_event = {\n"
+        "\tid = alg_peace.1\n"
+        "\toption = {\n"
+        "\t\tadd_political_power = 50\n"
+        "\t}\n"
+        "}\n"
+    ),
+    "alg_loop.1": (
+        "country_event = {\n"
+        "\tid = alg_loop.1\n"
+        "\toption = {\n"
+        "\t\tcountry_event = alg_loop.2\n"
+        "\t}\n"
+        "}\n"
+    ),
+    "alg_loop.2": (
+        "country_event = {\n"
+        "\tid = alg_loop.2\n"
+        "\toption = {\n"
+        "\t\tcountry_event = alg_loop.1\n"
+        "\t}\n"
+        "}\n"
+    ),
+}
+
+
+def _check_war_chain(lines):
+    return _check_focus_missing_war_hint(lines, _WAR_CHAIN_EVENTS)
+
+
+# 10k. focus sends an event whose option declares war at owner scope → flag
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_press_claim\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tcountry_event = {\n",
+        "\t\t\t\tid = alg_war.1\n",
+        "\t\t\t\tdays = 1\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "focus sending a war event without hint flagged",
+)
+
+# 10l. focus sends a peaceful event → no flag
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_hold_talks\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tcountry_event = { id = alg_peace.1 days = 1 }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "focus sending a peaceful event not flagged",
+)
+
+# 10m. chained war: focus -> alg_chain.1 (peaceful, sends alg_chain.2 bare) ->
+# alg_chain.2 declares war in the owner's own tag scope → flag, chain named.
+_chain_lines = [
+    "\tfocus = {\n",
+    "\t\tid = ALG_escalate\n",
+    "\t\tcompletion_reward = {\n",
+    "\t\t\tcountry_event = { id = alg_chain.1 days = 1 }\n",
+    "\t\t}\n",
+    "\t}\n",
+]
+assert_finds(
+    _check_war_chain,
+    _chain_lines,
+    1,
+    "focus reaching war through a chained event flagged",
+)
+_chain_result = _check_war_chain(_chain_lines)
+assert (
+    len(_chain_result) == 1 and "alg_chain.1 -> alg_chain.2" in _chain_result[0][1]
+), "war-hint message names the event chain"
+
+# 10n. event sent TO another country runs as them: their war is not ours.
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_arm_ally\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tENG = { country_event = { id = alg_war.1 days = 1 } }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "war event sent to a foreign scope not flagged",
+)
+
+# 10o. a send inside effect_tooltip never fires → no flag.
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_show_plan\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\teffect_tooltip = {\n",
+        "\t\t\t\tcountry_event = { id = alg_war.1 }\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "war event sent inside effect_tooltip not flagged",
+)
+
+# 10p. hint present clears a focus that would otherwise flag via its event.
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_ready_for_war\n",
+        "\t\twill_lead_to_war_with = MOR\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tcountry_event = { id = alg_war.1 days = 1 }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "war event with will_lead_to_war_with not flagged",
+)
+
+# 10q. unresolvable event id ends the chain quietly (no flag, no crash).
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_unknown_signal\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tcountry_event = { id = alg_missing.9 days = 1 }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "unresolvable sent event not flagged",
+)
+
+# 10r. cyclic sends with no war terminate instead of recursing forever.
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_loop_signal\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tcountry_event = { id = alg_loop.1 days = 1 }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "cyclic event chain without war not flagged",
+)
+
+# 10s. wargoal grant (a demand) in the sent event's immediate block → flag.
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_issue_demand\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tcountry_event = { id = alg_demand.1 days = 1 }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    1,
+    "focus sending a demand (wargoal) event without hint flagged",
 )
 
 
@@ -4082,6 +4309,57 @@ assert_finds(
     0,
     "brake on a gate the strength ratio cannot express not flagged",
 )
+
+
+def test_event_chain_loads_definition_after_an_earlier_send(tmp_path, monkeypatch):
+    events = tmp_path / "events"
+    events.mkdir()
+    with open(events / "chain.txt", "w", encoding="utf-8", newline="") as handle:
+        handle.write(
+            "".join(_WAR_CHAIN_EVENTS.values()).replace(
+                "country_event = alg_chain.2", "country_event = { id = alg_chain.2 }"
+            )
+        )
+    monkeypatch.setattr(common_mistakes, "get_root_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(common_mistakes, "_EVENT_INDEX_BUILT", False)
+    monkeypatch.setattr(common_mistakes, "_EVENT_INDEX", {})
+    monkeypatch.setattr(common_mistakes, "_EVENT_BLOCKS", {})
+    result = _check_focus_missing_war_hint(_chain_lines)
+    assert len(result) == 1
+    assert "alg_chain.1 -> alg_chain.2" in result[0][1]
+
+
+def test_event_definitions_ignore_comments_and_nested_sends():
+    content = (
+        "# country_event = { id = fake.1 option = { } }\n"
+        "country_event = {\n"
+        " id = real.1\n"
+        " is_triggered_only = yes\n"
+        " immediate = {\n"
+        "  # } declare_war_on = { target = MOR }\n"
+        "  country_event = { id = real.2 }\n"
+        " }\n"
+        "}\n"
+    )
+    blocks = list(common_mistakes._iter_event_definitions(content))
+    assert len(blocks) == 1
+    assert "id = real.1" in blocks[0]
+    assert "declare_war_on" not in blocks[0]
+    assert blocks[0].endswith("}\n}")
+
+
+def test_event_chain_revisits_shared_event_with_more_depth_remaining():
+    events = {
+        "start.1": "option = { country_event = long.1 country_event = shared.1 }",
+        "long.1": "option = { country_event = long.2 }",
+        "long.2": "option = { country_event = shared.1 }",
+        "shared.1": "option = { country_event = war.1 }",
+        "war.1": "option = { declare_war_on = { target = MOR } }",
+    }
+    assert common_mistakes._event_chain_leads_to_war("start.1", "ALG", events) == (
+        True,
+        ["start.1", "shared.1", "war.1"],
+    )
 
 
 # Summary
