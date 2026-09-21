@@ -4630,6 +4630,10 @@ focus_tree = {
 	}
 
 #MHP branch
+#BRANCH TODO LIST:
+# - Add Ulema passive negatives
+# - Revisit Grey Wolves focus
+
 	focus = {
 		id = TUR_the_kingmaker
 		icon = bozkurt_is_gay
@@ -4712,6 +4716,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_preserving_ataturks_legacy"
 			custom_effect_tooltip = TUR_oust_bahceli_tt
+			hidden_effect = {
+				country_event = turkish_events.47
+			}
 			newline	= yes
 			decrease_corruption = yes
 		}
@@ -4829,8 +4836,7 @@ focus_tree = {
 		y = 2
 		relative_position_id = TUR_the_kingmaker
 
-		prerequisite = { focus = TUR_kemalisms_seventh_branch }
-		prerequisite = { focus = TUR_preserving_ataturks_legacy }
+		prerequisite = { focus = TUR_entrench_bahceli focus = TUR_preserving_ataturks_legacy }
 
 		search_filters = { FOCUS_FILTER_POLITICAL }
 		available = {
@@ -4880,6 +4886,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_guided_by_god"
 			custom_effect_tooltip = TUR_empower_clergy_tt
+			newline = yes
 			set_temp_variable = { temp_opinion = 10 }
 			change_the_ulema_opinion = yes
 			newline = yes
@@ -4920,6 +4927,7 @@ focus_tree = {
 				division_template = {
 					override_model = TUR_Special_Forces_5_entity_alt
 					name = "Bozkurt Tümeni"
+					is_locked = yes
 					regiments = {
 						Special_Forces = { x = 0 y = 0 }
 						Special_Forces = { x = 0 y = 1 }
@@ -5142,6 +5150,16 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
+			if = {
+				limit = {
+					NOT = {
+						nationalist_fascist_are_in_coalition = yes
+					}
+				}
+				newline = yes
+				set_temp_variable = { add_col_one = 21 }
+				add_coalition_members_effect = yes
+			}
 			newline = yes
 			TUR_political_modifier_tt = yes
 			add_to_variable = { TUR_popularity_attack_modifier = 0.15 tooltip = popularity_attack_modifier_tt }
@@ -5433,6 +5451,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus TUR_invite_the_osmanli"
+			custom_effect_tooltip = TUR_will_enable_ottoman_tree_tt
+			newline = yes
 			set_temp_variable = { party_index = 23 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
@@ -5440,6 +5460,7 @@ focus_tree = {
 			newline = yes
 			TUR_political_modifier_tt = yes
 			add_to_variable = { TUR_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			mark_focus_tree_layout_dirty = yes
 		}
 
 		ai_will_do = {
@@ -5524,6 +5545,354 @@ focus_tree = {
 					modifier = declaration_of_hostility
 				}
 			}
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	# Ottoman Restoration
+
+	focus = {
+		id = TUR_the_osmanli_settlement
+		icon = ottoman_emblem
+		cost = 7
+
+		x = 0
+		y = 1
+		relative_position_id = TUR_invite_the_osmanli
+
+		prerequisite = { focus = TUR_invite_the_osmanli }
+
+		allow_branch = {
+			has_completed_focus = TUR_invite_the_osmanli
+		}
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_the_oath_of_the_general_staff
+		icon = TUR_military_regime
+		cost = 7
+
+		x = -3
+		y = 1
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_the_osmanli_settlement }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_MILITARY_LAWS }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_the_crown_and_the_diyanet
+		icon = sunni_politics
+		cost = 7
+
+		x = 0
+		y = 1
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_the_osmanli_settlement }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SOCIAL_CONSERVATISM }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_the_hanedan_vakfi
+		icon = focus_generic_welfare
+		cost = 7
+
+		x = 3
+		y = 1
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_the_osmanli_settlement }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_a_crown_above_parties
+		icon = Parliament_monarchism
+		cost = 10
+
+		x = -3
+		y = 2
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_the_oath_of_the_general_staff focus = TUR_the_crown_and_the_diyanet }
+		mutually_exclusive = { focus = TUR_the_palace_prerogative }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_the_palace_prerogative
+		icon = POR_royal_edicts
+		cost = 10
+
+		x = -1
+		y = 2
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_the_oath_of_the_general_staff focus = TUR_the_crown_and_the_diyanet }
+		mutually_exclusive = { focus = TUR_a_crown_above_parties }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_trusteeship_of_the_wealth_fund
+		icon = sov_sovereign_economic
+		cost = 10
+
+		x = 3
+		y = 2
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_the_hanedan_vakfi }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_FOREIGN_INVESTMENTS }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_a_charter_for_the_provinces
+		icon = Decentralization
+		cost = 10
+
+		x = -4
+		y = 3
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_a_crown_above_parties focus = TUR_the_palace_prerogative }
+		mutually_exclusive = { focus = TUR_trustees_over_the_municipalities }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_trustees_over_the_municipalities
+		icon = MEX_Federal_government_of_Mexico
+		cost = 10
+
+		x = -2
+		y = 3
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_a_crown_above_parties focus = TUR_the_palace_prerogative }
+		mutually_exclusive = { focus = TUR_a_charter_for_the_provinces }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_the_republics_century
+		icon = turkish_republic
+		cost = 10
+
+		x = 0
+		y = 3
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_a_crown_above_parties focus = TUR_the_palace_prerogative }
+		mutually_exclusive = { focus = TUR_an_interrupted_continuity }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_an_interrupted_continuity
+		icon = turkish_heritage
+		cost = 10
+
+		x = 2
+		y = 3
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_a_crown_above_parties focus = TUR_the_palace_prerogative }
+		mutually_exclusive = { focus = TUR_the_republics_century }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_PROPAGANDA }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_the_millet_question
+		icon = Minority_syr_repres
+		cost = 10
+
+		x = -3
+		y = 4
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_a_charter_for_the_provinces focus = TUR_trustees_over_the_municipalities }
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_heritage_as_industry
+		icon = Tourism_is_our_oil
+		cost = 10
+
+		x = 3
+		y = 4
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_trusteeship_of_the_wealth_fund }
+
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_TRADE }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_the_crowned_republic
+		icon = Focus_Parliament_Constitution
+		cost = 10
+
+		x = -1
+		y = 5
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_the_millet_question }
+		prerequisite = { focus = TUR_heritage_as_industry }
+		mutually_exclusive = { focus = TUR_the_household_state }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+			has_completed_focus = TUR_a_crown_above_parties
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	focus = {
+		id = TUR_the_household_state
+		icon = Generic_Divine_Right
+		cost = 10
+
+		x = 1
+		y = 5
+		relative_position_id = TUR_the_osmanli_settlement
+
+		prerequisite = { focus = TUR_the_millet_question }
+		prerequisite = { focus = TUR_heritage_as_industry }
+		mutually_exclusive = { focus = TUR_the_crowned_republic }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
+		available = {
+			nationalist_monarchists_are_in_power = yes
+			20_percent_government_popularity = yes
+			has_completed_focus = TUR_the_palace_prerogative
 		}
 
 		ai_will_do = {
