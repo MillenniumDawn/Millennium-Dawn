@@ -292,6 +292,9 @@ _FOREIGN_COUNTRY_SCOPE_TOKENS = {
     "random_enemy_country",
     "every_subject_country",
     "random_subject_country",
+    # A country created mid-effect acts as itself, so a war it declares on the
+    # focus owner is the new state's, not the owner's.
+    "create_dynamic_country",
 }
 _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
 _RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")

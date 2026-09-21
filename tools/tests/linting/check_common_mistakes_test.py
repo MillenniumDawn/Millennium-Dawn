@@ -1512,6 +1512,24 @@ assert_finds(
     "declare_war without will_lead_to_war_with flagged",
 )
 
+# 10c-ii. a breakaway created mid-effect declares the war, not the owner -> no flag
+assert_finds(
+    _check_focus_missing_war_hint,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_release_rebels\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\tcreate_dynamic_country = {\n",
+        "\t\t\t\toriginal_tag = ALG\n",
+        "\t\t\t\tdeclare_war_on = { target = ALG type = puppet_wargoal_focus }\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "war declared by a create_dynamic_country breakaway is not the owner's",
+)
+
 # 10d. focus that does not declare war → no flag
 assert_finds(
     _check_focus_missing_war_hint,
