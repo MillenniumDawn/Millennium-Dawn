@@ -251,6 +251,24 @@ _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
 _RE_WILL_LEAD_TO_WAR = re.compile(r"\bwill_lead_to_war_with\b")
 _RE_SCRIPT_TOKEN = re.compile(r"[{}=]|[A-Za-z_][\w:.@]*")
 _RE_QUOTED_STRING = re.compile(r'"[^"]*"')
+# Event sends from effects: braced `country_event = { id = X days = N }` (the id
+# may sit on a later line, hence [^}]*? with DOTALL) or bare `country_event = X`.
+# Delayed sends (days/hours) still lead to war, so they resolve the same way.
+_RE_EVENT_SEND = re.compile(
+    r"\b(?:country_event|news_event)\s*=\s*(?:\{[^}]*?id\s*=\s*([\w.]+)|([\w.]+))",
+    re.DOTALL,
+)
+_RE_EVENT_DEFINITION_OPEN = re.compile(r"\b(?:country_event|news_event)\s*=\s*\{")
+_RE_EVENT_ID = re.compile(r"\bid\s*=\s*([\w.]+)")
+# Markers that only appear in an event DEFINITION, never in an effect send:
+# sends carry id/days/hours, definitions carry title/triggers/options.
+_RE_EVENT_DEFINITION_MARKER = re.compile(r"\b(?:title|is_triggered_only|option)\s*=")
+# effect_tooltip only displays; a country_event nested in one never fires.
+_TOOLTIP_SCOPE_OPENERS = {"effect_tooltip", "custom_effect_tooltip"}
+# Focus -> event -> event hops followed before giving up. Deeper chains are
+# gameplay telephone; the focus still needs the hint, but resolving further is
+# not worth the scan.
+_EVENT_CHAIN_MAX_DEPTH = 3
 # Tokens for the leader-rotation tree parser: braces, the comparison operators a
 # limit can use, and everything else as one word (ideology names carry '-').
 _RE_SCRIPT_NODE = re.compile(r"[{}]|[<>]=?|=|[^\s{}=<>]+")
@@ -274,6 +292,9 @@ _FOREIGN_COUNTRY_SCOPE_TOKENS = {
     "random_enemy_country",
     "every_subject_country",
     "random_subject_country",
+    # A country created mid-effect acts as itself, so a war it declares on the
+    # focus owner is the new state's, not the owner's.
+    "create_dynamic_country",
 }
 _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
 _RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")
@@ -584,17 +605,24 @@ def _focus_owner_tag(code):
     return None
 
 
-def _war_declared_at_owner_scope(code):
-    """True if a create_wargoal/declare_war fires at the focus owner's scope.
+def _scope_is_owner(stack):
+    """True when a scope stack resolves to the focus owner's country.
 
-    Walks the block's brace structure tracking country-scope changes. A war
-    effect inside a foreign-country scope (SAU = { declare_war_on = ... }) is a
-    proxy war the owner sponsors, not the owner going to war, so it does not
-    require a will_lead_to_war_with hint. ROOT/THIS and the owner's own tag
-    (PER = { ... } inside a PER_ focus) reset back to the owner.
-    """
-    owner_tag = _focus_owner_tag(code)
-    text = _RE_QUOTED_STRING.sub('""', "\n".join(code))
+    Innermost foreign scope wins (a sponsored proxy war); an explicit reset
+    (ROOT/THIS/owner tag) wins over anything outside it; anything enclosing a
+    display-only tooltip never fires, so it never counts as the owner."""
+    if "tooltip" in stack:
+        return False
+    for kind in reversed(stack):
+        if kind == "foreign":
+            return False
+        if kind == "reset":
+            return True
+    return True
+
+
+def _war_at_scope(text, owner_tag):
+    """True if create_wargoal/declare_war_on fires at the owner's scope."""
     stack = []
     last_ident = None
     opener_pending = None
@@ -612,28 +640,208 @@ def _war_declared_at_owner_scope(code):
             last_ident = None
         else:
             if tok == "create_wargoal" or tok == "declare_war_on":
-                in_foreign = False
-                for kind in reversed(stack):
-                    if kind == "foreign":
-                        in_foreign = True
-                        break
-                    if kind == "reset":
-                        break
-                if not in_foreign:
+                if _scope_is_owner(stack):
                     return True
             last_ident = tok
             opener_pending = None
     return False
 
 
-def _check_focus_missing_war_hint(lines):
-    """Flag focus blocks that declare war but carry no will_lead_to_war_with hint.
+def _war_declared_at_owner_scope(code):
+    """True if a create_wargoal/declare_war fires at the focus owner's scope.
+
+    Walks the block's brace structure tracking country-scope changes. A war
+    effect inside a foreign-country scope (SAU = { declare_war_on = ... }) is a
+    proxy war the owner sponsors, not the owner going to war, so it does not
+    require a will_lead_to_war_with hint. ROOT/THIS and the owner's own tag
+    (PER = { ... } inside a PER_ focus) reset back to the owner.
+    """
+    owner_tag = _focus_owner_tag(code)
+    text = _RE_QUOTED_STRING.sub('""', "\n".join(code))
+    return _war_at_scope(text, owner_tag)
+
+
+def _owner_scope_event_sends(text, owner_tag):
+    """Event ids a block sends while scoped to the focus owner's country.
+
+    A send inside a foreign-country scope runs as that country, so a war in
+    the sent event is theirs, not the owner's. A send inside effect_tooltip
+    never fires (display-only). Both are skipped."""
+    blank = _RE_QUOTED_STRING.sub('""', text)
+    pending = sorted(
+        (
+            (match.group(1) or match.group(2), match.start())
+            for match in _RE_EVENT_SEND.finditer(blank)
+        ),
+        key=lambda send: send[1],
+    )
+    found = []
+    if not pending:
+        return found
+    stack = []
+    last_ident = None
+    opener_pending = None
+    idx = 0
+    for tok_match in _RE_SCRIPT_TOKEN.finditer(blank):
+        while idx < len(pending) and pending[idx][1] < tok_match.start():
+            if _scope_is_owner(stack):
+                found.append(pending[idx][0])
+            idx += 1
+        tok = tok_match.group(0)
+        if tok == "=":
+            opener_pending = last_ident
+        elif tok == "{":
+            if opener_pending in _TOOLTIP_SCOPE_OPENERS:
+                stack.append("tooltip")
+            else:
+                stack.append(_scope_frame_kind(opener_pending, owner_tag))
+            opener_pending = None
+            last_ident = None
+        elif tok == "}":
+            if stack:
+                stack.pop()
+            opener_pending = None
+            last_ident = None
+        else:
+            last_ident = tok
+            opener_pending = None
+    while idx < len(pending):
+        if _scope_is_owner(stack):
+            found.append(pending[idx][0])
+        idx += 1
+    return list(dict.fromkeys(found))
+
+
+_EVENT_INDEX: dict = {}
+_EVENT_INDEX_BUILT = False
+_EVENT_BLOCKS: dict = {}
+
+
+def _iter_event_definitions(content):
+    """Yield definition block texts for country_event/news_event in content."""
+    blank = "\n".join(_code_for_depth(line) for line in content.splitlines())
+    block_end = 0
+    for open_match in _RE_EVENT_DEFINITION_OPEN.finditer(blank):
+        if open_match.start() < block_end:
+            continue
+        depth = 0
+        idx = open_match.end() - 1
+        while idx < len(blank):
+            if blank[idx] == "{":
+                depth += 1
+            elif blank[idx] == "}":
+                depth -= 1
+                if depth == 0:
+                    block_end = idx + 1
+                    yield blank[open_match.start() : block_end]
+                    break
+            idx += 1
+
+
+def _build_event_index(root_dir):
+    """Map event id -> defining file for every event definition in events/."""
+    index = {}
+    if not root_dir:
+        return index
+    events_dir = os.path.join(root_dir, "events")
+    if not os.path.isdir(events_dir):
+        return index
+    for dirpath, _, filenames in os.walk(events_dir):
+        for filename in filenames:
+            if not filename.endswith(".txt"):
+                continue
+            filepath = os.path.join(dirpath, filename)
+            try:
+                with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
+                    content = handle.read()
+            except OSError:
+                continue
+            for block in _iter_event_definitions(content):
+                if not _RE_EVENT_DEFINITION_MARKER.search(block):
+                    continue
+                id_match = _RE_EVENT_ID.search(block)
+                if id_match:
+                    index.setdefault(id_match.group(1), filepath)
+    return index
+
+
+def _get_event_block(event_id, event_blocks=None):
+    """Return the definition block text for an event id, or None.
+
+    Tests inject event_blocks (id -> text); live runs resolve against the
+    events/ tree with misses cached, so an unresolvable id simply ends the
+    chain instead of erroring.
+    """
+    if event_blocks is not None:
+        return event_blocks.get(event_id)
+    if event_id in _EVENT_BLOCKS:
+        return _EVENT_BLOCKS[event_id]
+    global _EVENT_INDEX, _EVENT_INDEX_BUILT
+    if not _EVENT_INDEX_BUILT:
+        try:
+            root_dir = get_root_dir()
+        except Exception:
+            root_dir = None
+        _EVENT_INDEX = _build_event_index(root_dir)
+        _EVENT_INDEX_BUILT = True
+    block = None
+    filepath = _EVENT_INDEX.get(event_id)
+    if filepath:
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
+                content = handle.read()
+        except OSError:
+            content = ""
+        for candidate in _iter_event_definitions(content):
+            id_match = _RE_EVENT_ID.search(candidate)
+            if id_match and id_match.group(1) == event_id:
+                block = candidate
+                break
+    _EVENT_BLOCKS[event_id] = block
+    return block
+
+
+def _event_chain_leads_to_war(
+    event_id, owner_tag, event_blocks=None, _seen=None, _depth=0
+):
+    """Follow a sent event (and its chained sends) for owner-scope war.
+
+    Returns (leads_to_war, chain): chain lists the event ids from the
+    focus-sent event down to the one declaring war (wargoal grants count as
+    demands leading to war). Unresolvable ids end the chain quietly.
+    """
+    if _seen is None:
+        _seen = set()
+    if _depth > _EVENT_CHAIN_MAX_DEPTH or event_id in _seen:
+        return False, []
+    _seen = _seen | {event_id}
+    block = _get_event_block(event_id, event_blocks)
+    if not block:
+        return False, []
+    if _war_at_scope(block, owner_tag):
+        return True, [event_id]
+    for sent_id in _owner_scope_event_sends(block, owner_tag):
+        leads, chain = _event_chain_leads_to_war(
+            sent_id, owner_tag, event_blocks, _seen, _depth + 1
+        )
+        if leads:
+            return True, [event_id] + chain
+    return False, []
+
+
+def _check_focus_missing_war_hint(lines, event_blocks=None):
+    """Flag focus blocks that lead to war but carry no will_lead_to_war_with hint.
 
     A focus whose completion_reward calls create_wargoal/declare_war at the
     OWNER's scope should set will_lead_to_war_with = TAG so the AI prepares for
-    the war. create_wargoal inside an effect_tooltip still counts; a war effect
-    nested in another country's scope (a sponsored proxy war) does not. The hint
-    anywhere in the block clears the focus.
+    the war -- and so should a focus whose completion_reward sends an event
+    (country_event/news_event) whose immediate/option effects, or a chained
+    event they send in turn, declare war at the owner's scope. Wargoal grants
+    count: they are demands that lead to war. create_wargoal inside an
+    effect_tooltip still counts; a war effect nested in another country's scope
+    (a sponsored proxy war, including an event sent TO another country) does
+    not. The hint anywhere in the block clears the focus. Live runs resolve
+    events against the events/ tree; tests inject event_blocks (id -> text).
     """
     issues = []
     i = 0
@@ -643,11 +851,11 @@ def _check_focus_missing_war_hint(lines):
             start = i
             block, i = _get_block(lines, start)
             code = [strip_inline_comment(bl) for bl in block]
-            if _war_declared_at_owner_scope(code) and not any(
-                _RE_WILL_LEAD_TO_WAR.search(c) for c in code
-            ):
-                id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
-                focus_id = id_match.group(1) if id_match else "<unknown>"
+            if any(_RE_WILL_LEAD_TO_WAR.search(c) for c in code):
+                continue
+            id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
+            focus_id = id_match.group(1) if id_match else "<unknown>"
+            if _war_declared_at_owner_scope(code):
                 issues.append(
                     (
                         start + 1,
@@ -655,6 +863,23 @@ def _check_focus_missing_war_hint(lines):
                         " -- add will_lead_to_war_with = TAG so the AI prepares for war",
                     )
                 )
+                continue
+            text = "\n".join(code)
+            owner_tag = _focus_owner_tag(code)
+            for sent_id in _owner_scope_event_sends(text, owner_tag):
+                leads, chain = _event_chain_leads_to_war(
+                    sent_id, owner_tag, event_blocks
+                )
+                if leads:
+                    issues.append(
+                        (
+                            start + 1,
+                            f"Focus {focus_id} sends event {' -> '.join(chain)} leading to"
+                            " war but has no will_lead_to_war_with"
+                            " -- add will_lead_to_war_with = TAG so the AI prepares for war",
+                        )
+                    )
+                    break
         else:
             i += 1
     return issues
