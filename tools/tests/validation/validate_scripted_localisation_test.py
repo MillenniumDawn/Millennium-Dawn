@@ -187,15 +187,13 @@ def test_builtin_and_ordinary_syntax_do_not_create_candidates():
 
 
 def test_hyphenated_scripted_loc_is_defined_and_used():
-    # MD sub-ideology names carry hyphens (Communist-State_valid); a name class without
-    # `-` truncates them to `Communist` on both sides and invents unused findings.
+    # Sub-ideology names can carry hyphens (e.g. `Test-State_valid`); a name class
+    # without `-` truncates them to `Test` on both sides and invents unused findings.
     defined, _ = V._scan_defined_locs(
-        "defined_text = { name = Communist-State_valid }", "ideologies.txt"
+        "defined_text = { name = Test-State_valid }", "ideologies.txt"
     )
-    assert defined == ["Communist-State_valid"]
-    assert V._scan_loc_tokens("[Communist-State_valid]", False) == {
-        "Communist-State_valid"
-    }
+    assert defined == ["Test-State_valid"]
+    assert V._scan_loc_tokens("[Test-State_valid]", False) == {"Test-State_valid"}
 
 
 def test_reference_line_skips_substring_match(tmp_path):
@@ -209,7 +207,7 @@ def test_reference_line_skips_substring_match(tmp_path):
 def test_definition_line_skips_longer_name_prefix(tmp_path):
     path = tmp_path / "defs.txt"
     path.write_text(
-        "defined_text = {\n\tname = Communist-State_valid\n}\n"
+        "defined_text = {\n\tname = Test-State_valid\n}\n"
         "defined_text = {\n\tname = communist\n}\n"
     )
     assert V._find_definition_line(str(path), "communist") == 5

@@ -26,6 +26,134 @@ _TOKEN_RE = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]*\b")
 # Every tag is CAT_ followed by lowercase words (#4250).
 _TAG_FORMAT_RE = re.compile(r"^CAT_[a-z0-9_]+$")
 
+# Tags renamed in the #4250 rework, keyed lowercase: an unknown reference is
+# looked up case-insensitively here before falling back to string similarity.
+_LEGACY_CATEGORIES = {
+    "cat_3d": "CAT_3d_printing",
+    "cat_olv": "CAT_orbital_launch_vehicles",
+    "cat_a_uav": "CAT_air_drones",
+    "cat_aa": "CAT_anti_air",
+    "cat_aa_missiles": "CAT_naval_anti_air_missiles",
+    "cat_abm": "CAT_surface_to_air_missiles",
+    "cat_afv": "CAT_armored_fighting_vehicles",
+    "cat_afv_weapons": "CAT_infantry_fighting_vehicles",
+    "cat_agriculture_tech": "CAT_agriculture",
+    "cat_ai": "CAT_artificial_intelligence",
+    "cat_air_camera": "CAT_targeting_pods",
+    "cat_air_engine": "CAT_air_engines",
+    "cat_air_eqp": "CAT_aircraft",
+    "cat_air_ground_weapons": "CAT_air_to_ground_weapons",
+    "cat_air_naval_weapons": "CAT_air_to_naval_weapons",
+    "cat_air_spc": "CAT_air_modules",
+    "cat_air_wpn": "CAT_air_weapons",
+    "cat_airborne": "CAT_special_forces_equipment",
+    "cat_airmobile": "CAT_special_forces_equipment",
+    "cat_alcm": "CAT_cruise_missiles",
+    "cat_apc": "CAT_armored_personnel_carriers",
+    "cat_armor_engines": "CAT_tank_engines",
+    "cat_armor_weapons": "CAT_tank_guns",
+    "cat_armour": "CAT_tank_armor",
+    "cat_armour_ds": "CAT_tank_defensive_systems",
+    "cat_art_ammo": "CAT_artillery_ammunition",
+    "cat_arty": "CAT_towed_artillery",
+    "cat_as_fighter": "CAT_medium_aircraft",
+    "cat_as_missiles": "CAT_naval_anti_ship_missiles",
+    "cat_at": "CAT_anti_tank",
+    "cat_atk_heli": "CAT_attack_helicopters",
+    "cat_atk_sub": "CAT_attack_submarines",
+    "cat_awacs": "CAT_airborne_early_warning",
+    "cat_carrier": "CAT_aircraft_carriers",
+    "cat_cas": "CAT_air_to_ground_weapons",
+    "cat_cm": "CAT_cruise_missiles",
+    "cat_cnc": "CAT_command_and_control_equipment",
+    "cat_computer_systems": "CAT_tank_computer_systems",
+    "cat_computing_tech": "CAT_information_technology",
+    "cat_construction_tech": "CAT_construction",
+    "cat_corvette": "CAT_corvettes",
+    "cat_cruiser": "CAT_cruisers",
+    "cat_cv_l_s_fighter": "CAT_light_aircraft",
+    "cat_cv_mr_fighter": "CAT_medium_aircraft",
+    "cat_cze": "CAT_czech_engines",
+    "cat_d_sub": "CAT_attack_submarines",
+    "cat_decryption_tech": "CAT_decryption",
+    "cat_destroyer": "CAT_destroyers",
+    "cat_electrical_tech": "CAT_energy",
+    "cat_encryption_tech": "CAT_encryption",
+    "cat_excavation_tech": "CAT_excavation",
+    "cat_fighter": "CAT_medium_aircraft",
+    "cat_fixed_wing": "CAT_aircraft",
+    "cat_frigate": "CAT_frigates",
+    "cat_fuel_oil": "CAT_fuel_refining",
+    "cat_genes": "CAT_genetics",
+    "cat_glcm": "CAT_ground_launched_cruise_missiles",
+    "cat_gnss": "CAT_navigation_satellites",
+    "cat_h_air": "CAT_heavy_aircraft",
+    "cat_h_at": "CAT_heavy_anti_tank",
+    "cat_heli": "CAT_helicopters",
+    "cat_heli_atgm": "CAT_helicopter_atgm",
+    "cat_heli_defense": "CAT_helicopter_defense_systems",
+    "cat_heli_drone": "CAT_helicopter_drones",
+    "cat_heli_engine": "CAT_helicopter_engines",
+    "cat_heli_gunpods": "CAT_helicopter_gun_pods",
+    "cat_heli_modules": "CAT_helicopter_modules",
+    "cat_heli_nose_gun": "CAT_helicopter_nose_guns",
+    "cat_heli_rocketpods": "CAT_helicopter_rocket_pods",
+    "cat_hscm": "CAT_hypersonic_cruise_missiles",
+    "cat_icbm": "CAT_intercontinental_ballistic_missiles",
+    "cat_ifv": "CAT_infantry_fighting_vehicles",
+    "cat_inf": "CAT_infantry",
+    "cat_inf_wep": "CAT_small_arms",
+    "cat_internet_tech": "CAT_internet",
+    "cat_irbm": "CAT_intermediate_range_ballistic_missiles",
+    "cat_l_aa": "CAT_manpads",
+    "cat_l_at": "CAT_light_anti_tank",
+    "cat_l_drone": "CAT_land_drones",
+    "cat_l_fighter": "CAT_light_aircraft",
+    "cat_l_s_fighter": "CAT_light_aircraft",
+    "cat_large_plane": "CAT_heavy_aircraft",
+    "cat_m_sub": "CAT_missile_submarines",
+    "cat_marine": "CAT_special_forces_equipment",
+    "cat_mbt": "CAT_tanks",
+    "cat_medium_plane": "CAT_medium_aircraft",
+    "cat_missile": "CAT_missiles",
+    "cat_mr_fighter": "CAT_medium_aircraft",
+    "cat_naval_air": "CAT_medium_aircraft",
+    "cat_naval_all": "CAT_naval",
+    "cat_naval_engine": "CAT_naval_engines",
+    "cat_naval_plane": "CAT_heavy_aircraft",
+    "cat_naval_radar_drone": "CAT_naval_recon_drones",
+    "cat_naval_radar_jammer": "CAT_naval_radar_jammers",
+    "cat_naval_railgun": "CAT_naval_railguns",
+    "cat_naval_stealth": "CAT_naval_stealth_ships",
+    "cat_nfibers": "CAT_nanofibers",
+    "cat_nuke_sub": "CAT_submarines",
+    "cat_nvg": "CAT_night_vision",
+    "cat_patrolboat": "CAT_patrol_boats",
+    "cat_pds": "CAT_naval_point_defense_systems",
+    "cat_rec_tank": "CAT_light_tanks",
+    "cat_renewable": "CAT_renewable_energy",
+    "cat_s_fighter": "CAT_light_aircraft",
+    "cat_sam": "CAT_surface_to_air_missiles",
+    "cat_satellite": "CAT_satellites",
+    "cat_slcm": "CAT_cruise_missiles",
+    "cat_small_plane": "CAT_light_aircraft",
+    "cat_sp_aa": "CAT_self_propelled_anti_air",
+    "cat_sp_arty": "CAT_self_propelled_artillery",
+    "cat_sp_r_arty": "CAT_self_propelled_artillery",
+    "cat_special_forces": "CAT_special_forces_equipment",
+    "cat_str_bomber": "CAT_heavy_aircraft",
+    "cat_sub": "CAT_submarines",
+    "cat_surface_ship": "CAT_surface_ships",
+    "cat_trans_heli": "CAT_transport_helicopters",
+    "cat_trans_plane": "CAT_heavy_aircraft",
+    "cat_trans_ship": "CAT_landing_craft",
+    "cat_util": "CAT_utility_vehicles",
+    "cat_vls_air_systems": "CAT_vertical_launch_anti_air_missiles",
+    "cat_vls_land_systems": "CAT_vertical_launch_surface_missiles",
+    "cat_vls_systems": "CAT_naval_vertical_launch_systems",
+    "cat_wings": "CAT_wing_designs",
+}
+
 # `category = CAT_x` in add_tech_bonus / add_doctrine_cost_reduction blocks.
 _CATEGORY_ASSIGN_RE = re.compile(r"\bcategory\s*=\s*((?i:cat_)\w+)")
 
@@ -117,6 +245,18 @@ def load_known_categories(paths: Iterable[str]) -> FrozenSet[str]:
     return frozenset(known)
 
 
+def _suggest(name: str, known: FrozenSet[str], by_lower: Dict[str, str]) -> str:
+    """The real tag an unknown reference most likely meant, or ''."""
+    lowered = name.lower()
+    if lowered in by_lower:
+        return by_lower[lowered]
+    legacy = _LEGACY_CATEGORIES.get(lowered)
+    if legacy in known:
+        return legacy
+    close = difflib.get_close_matches(name, known, n=1, cutoff=0.6)
+    return close[0] if close else ""
+
+
 def _check_file(args) -> List[Tuple[str, str, int]]:
     """Worker: return (category, relpath, line) for unknown references."""
     filepath, known, mod_path = args
@@ -205,12 +345,13 @@ class Validator(BaseValidator):
             for name, rel, line in batch:
                 first_seen.setdefault(name, (rel, line))
 
+        by_lower = {k.lower(): k for k in known}
         formatted = []
         for name, (rel, line) in sorted(
             first_seen.items(), key=lambda kv: (kv[1][0], kv[1][1])
         ):
-            close = difflib.get_close_matches(name, known, n=1, cutoff=0.6)
-            hint = f", did you mean '{close[0]}'?" if close else ""
+            suggestion = _suggest(name, known, by_lower)
+            hint = f", did you mean '{suggestion}'?" if suggestion else ""
             formatted.append((f"Unknown technology category '{name}'{hint}", rel, line))
 
         self._report(

@@ -26,7 +26,7 @@ documented at `MD_politics_view_parties_l_english.yml:38-61`.
 | 1    | `conservatism`               | `democratic`  | Conservatives                 |
 | 2    | `liberalism`                 | `democratic`  | Liberals                      |
 | 3    | `socialism`                  | `democratic`  | Social Democrats              |
-| 4    | `Communist-State`            | `communism`   | Communists                    |
+| 4    | `communist_state`            | `communism`   | Communists                    |
 | 5    | `anarchist_communism`        | `communism`   | Left-Wing Radicals            |
 | 6    | `Conservative`               | `communism`   | Reactionaries                 |
 | 7    | `Autocracy`                  | `communism`   | Autocrats                     |
@@ -47,8 +47,8 @@ documented at `MD_politics_view_parties_l_english.yml:38-61`.
 | 22   | `Nat_Autocracy`              | `nationalist` | Military Junta                |
 | 23   | `Monarchist`                 | `nationalist` | Monarchists                   |
 
-Case matters: `Communist-State` is hyphenated, `neutral_Social` and `oligarchism` are the
-only two with a lowercase first letter.
+Case matters: `neutral_Social` and `oligarchism` are the only two with a lowercase first
+letter.
 
 ## Key format
 
@@ -99,7 +99,7 @@ entirely** — the icon `defined_text` falls back to `generic.<slot>_icon` on it
 (`MOR.Caliphate` and `MOR.Vilayat_e_Faqih` are the precedent). Generic sprites are
 `GFX_generic_<slot>_small`, with two irregulars:
 
-- `Communist-State` → `£generic_Communist_State_small` (underscore, not the slot's hyphen)
+- `communist_state` → `£generic_Communist_State_small` (the sprite keeps its `Communist_State` spelling)
 - `Neutral_Muslim_Brotherhood` → `£muslim_brotherhood_small` (no `generic_` prefix)
 
 Never invent a `GFX_` name; an undefined sprite renders nothing.
@@ -119,9 +119,9 @@ Each is a switch whose lines are sorted **alphabetically by tag** and terminate 
 generic fallback:
 
 ```
-	text = { trigger = { original_tag = GRE } localization_key = GRE.conservatism }
-	…
-	text = { localization_key = generic.conservatism }
+ text = { trigger = { original_tag = GRE } localization_key = GRE.conservatism }
+ …
+ text = { localization_key = generic.conservatism }
 ```
 
 Add one line per block per party. Insert alphabetically; a misplaced line still works but
@@ -138,8 +138,8 @@ cannot drift from the event that explains it. **First match wins**, so the flag 
 first and the pair stays adjacent:
 
 ```
-	text = { trigger = { original_tag = BOT has_country_flag = BOT_business_botswana_formed } localization_key = BOT.oligarchism_2015 }
-	text = { trigger = { original_tag = BOT NOT = { has_country_flag = BOT_business_botswana_formed } } localization_key = BOT.oligarchism }
+ text = { trigger = { original_tag = BOT has_country_flag = BOT_business_botswana_formed } localization_key = BOT.oligarchism_2015 }
+ text = { trigger = { original_tag = BOT NOT = { has_country_flag = BOT_business_botswana_formed } } localization_key = BOT.oligarchism }
 ```
 
 The event (`events/Botswana.txt`, `Botswana_events.8`) is `is_triggered_only` and
@@ -149,8 +149,8 @@ and runs `update_party_name = yes`. It is scheduled on the real date from
 
 ```
 trigger_year_2015_events = {
-	…
-	BOT = { country_event = { id = Botswana_events.8 days = 209 } }
+ …
+ BOT = { country_event = { id = Botswana_events.8 days = 209 } }
 ```
 
 Precedents: `brazil_flavour_events.14` (`BRA_democrats_party_formed`, PFL → Democratas),

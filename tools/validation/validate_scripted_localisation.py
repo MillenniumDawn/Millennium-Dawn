@@ -57,7 +57,7 @@ def process_file_for_defined_localisations(
     )
 
 
-# Scripted loc names may contain hyphens (Communist-State_valid) and non-ASCII letters
+# Scripted loc names may contain hyphens and non-ASCII letters
 # (additional_income_GER_Ökosteuer); an ASCII-only class truncates both and invents findings.
 _LOC_REFERENCE_RE = re.compile(
     r"\b(?:custom_(?:effect|trigger|prerequisite|gain_xp)_tooltip|"
@@ -90,7 +90,7 @@ def _find_reference_line(path: str, name: str) -> int:
 
 
 def _find_definition_line(path: str, name: str) -> int:
-    # `name = communist` as a substring also matches `name = Communist-State_valid`.
+    # `name = communist` as a substring also matches `name = communist_state_valid`.
     try:
         text = FileOpener.open_text_file(
             path, lowercase=False, strip_comments_flag=False

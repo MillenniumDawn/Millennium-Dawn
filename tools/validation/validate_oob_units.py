@@ -1742,6 +1742,10 @@ def _check_created_units(
     raw = _read_text(filepath, mod_path)
     if not raw:
         return []
+    if "create_unit" not in raw:
+        # Most candidates never mention it; the strip and block parse below
+        # would find no create_unit node anyway.
+        return []
     content = strip_comments(raw)
     nodes = disk_cache.per_file_cached_by_content(
         mod_path,

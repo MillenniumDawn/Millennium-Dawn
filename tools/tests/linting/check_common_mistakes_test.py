@@ -2587,18 +2587,18 @@ assert_finds(
 
 _HYPHEN_DECISION_OK = [
     "category_test = {\n",
-    "\tCommunist-State_invite = {\n",
+    "\tTest-State_invite = {\n",
     "\t\tcomplete_effect = {\n",
-    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision Communist-State_invite"\n',
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision Test-State_invite"\n',
     "\t\t}\n",
     "\t}\n",
     "}\n",
 ]
 _HYPHEN_DECISION_BAD = [
     "category_test = {\n",
-    "\tCommunist-State_invite = {\n",
+    "\tTest-State_invite = {\n",
     "\t\tcomplete_effect = {\n",
-    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision Communist-State_remove"\n',
+    '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision Test-State_remove"\n',
     "\t\t}\n",
     "\t}\n",
     "}\n",

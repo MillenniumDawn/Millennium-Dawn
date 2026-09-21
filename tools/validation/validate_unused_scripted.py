@@ -117,6 +117,12 @@ PENDING_IMPLEMENTATION_NAMES = frozenset(
         "USA_return_majority",
         "USA_flip_support",
         "usa_congress_oppposition_elections",
+        # South Africa party founding hooks and error stopper, pending the SAF political rework
+        "SAF_al_jamaah_party_founded",
+        "SAF_democratic_alliance_party_founded",
+        "SAF_economic_freedom_fighters_party_founded",
+        "SAF_freedom_front_plus_party_founded",
+        "SAF_error_stopper",
     }
 )
 

@@ -311,13 +311,18 @@ def test_event_fire_views_share_typed_scan(tmp_path, monkeypatch):
     monkeypatch.setenv("MD_NO_CACHE", "1")
     _write(tmp_path, "common/f.txt", "x = { country_event = foo.1 }\n")
     calls = []
-    original = V.scan_typed_event_fires
+    original = V._scan_typed_fires_text
 
-    def wrapped(args):
-        calls.append(args[0])
-        return original(args)
+    def wrapped(cleaned, filename):
+        calls.append(filename)
+        return original(cleaned, filename)
 
-    monkeypatch.setattr(V, "scan_typed_event_fires", wrapped)
+    monkeypatch.setattr(V, "_scan_typed_fires_text", wrapped)
+    monkeypatch.setattr(
+        V,
+        "_scan_fires_text",
+        lambda *_a: pytest.fail("untyped fires must reuse the typed scan"),
+    )
     monkeypatch.setattr(
         V,
         "scan_event_fires",
@@ -340,13 +345,13 @@ def test_event_fires_hit_disk_cache_across_instances(tmp_path, monkeypatch):
     _write(tmp_path, "common/f.txt", "x = { country_event = foo.1 }\n")
     first = _validator(tmp_path)._get_event_fires()
     calls = []
-    original = V.scan_typed_event_fires
+    original = V._scan_typed_fires_text
 
-    def wrapped(args):
-        calls.append(args[0])
-        return original(args)
+    def wrapped(cleaned, filename):
+        calls.append(filename)
+        return original(cleaned, filename)
 
-    monkeypatch.setattr(V, "scan_typed_event_fires", wrapped)
+    monkeypatch.setattr(V, "_scan_typed_fires_text", wrapped)
     second = _validator(tmp_path)._get_event_fires()
     assert calls == []
     assert [row[0] for row in second] == [row[0] for row in first]

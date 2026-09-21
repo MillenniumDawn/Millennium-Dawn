@@ -33,36 +33,15 @@ Optional but useful:
 
 # Cloning the Repository
 
-## Team Members (Write Access)
+Clone the repository with GitHub Desktop by following the [Git & GitHub Desktop](/dev-resources/md-git-resources/) guide. It walks through installing GitHub Desktop, cloning over HTTPS, and your first commit and push.
 
-```bash
-git clone https://github.com/MillenniumDawn/Millennium-Dawn.git
-cd Millennium-Dawn
-```
+- **Team members (write access)**: clone `https://github.com/MillenniumDawn/Millennium-Dawn.git` directly:
 
-## Outside Contributors (Fork)
+  ```bash
+  git clone https://github.com/MillenniumDawn/Millennium-Dawn.git
+  ```
 
-1. Fork the repository on GitHub.
-2. Clone your fork:
-
-   ```bash
-   git clone https://github.com/<your-username>/Millennium-Dawn.git
-   cd Millennium-Dawn
-   ```
-
-3. Add the upstream remote:
-
-   ```bash
-   git remote add upstream https://github.com/MillenniumDawn/Millennium-Dawn.git
-   ```
-
-4. Create a feature branch from `main`:
-
-   ```bash
-   git checkout -b my-feature main
-   ```
-
-See [Git Workflow](/dev-resources/git-workflow/) for the full fork-based workflow.
+- **Outside contributors**: fork the repository first (see [GitHub: Fork a repo](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo)), then clone your fork and add the upstream remote. The [Git Workflow](/dev-resources/git-workflow/) guide has the full fork-based walkthrough.
 
 ## Staying Up to Date
 
@@ -80,6 +59,8 @@ Or rebase if you prefer a cleaner history:
 git checkout my-feature
 git rebase main
 ```
+
+For the detailed sync strategy, see [Git Workflow: Staying Up to Date with Main](/dev-resources/git-workflow/#staying-up-to-date-with-main).
 
 ## Setting Up the Mod for Testing
 
@@ -306,4 +287,5 @@ Use descriptive branch names:
 - [Code Stylization Guide](/dev-resources/code-stylization-guide/): formatting and code structure.
 - [AI Modding Guide](/dev-resources/ai-modding-guide/): AI tools for development.
 - [Content Review Guide](/dev-resources/content-review-guide/): quality checklist.
+- [Git & GitHub Desktop](/dev-resources/md-git-resources/): install GitHub Desktop and clone the mod.
 - [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md): dev tools directory layout.

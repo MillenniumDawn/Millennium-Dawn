@@ -356,7 +356,7 @@ If the country has scripted leader rotation, add the leader's `create_country_le
 | 1     | `conservatism`               | Pro-Western (democratic)  |
 | 2     | `liberalism`                 | Pro-Western (democratic)  |
 | 3     | `socialism`                  | Pro-Western (democratic)  |
-| 4     | `Communist-State`            | Emerging (communism)      |
+| 4     | `communist_state`            | Emerging (communism)      |
 | 5     | `anarchist_communism`        | Emerging (communism)      |
 | 6     | `Conservative`               | Emerging (communism)      |
 | 7     | `Autocracy`                  | Emerging (communism)      |

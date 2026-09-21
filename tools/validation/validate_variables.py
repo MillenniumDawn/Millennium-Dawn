@@ -281,6 +281,27 @@ def process_file_for_focus_flag_sites(args: Tuple[str, str]):
     )
 
 
+def _scan_flag_syntax_text(cleaned: str, rel: str) -> Tuple[List[str], List[str]]:
+    days_issues: List[str] = []
+    long_form_issues: List[str] = []
+
+    for m in _FLAG_BLOCK_RE.finditer(cleaned):
+        block = m.group(0)
+        if _FLAG_DAYS_RE.search(block) and not _FLAG_VALUE_RE.search(block):
+            line = cleaned[: m.start()].count("\n") + 1
+            days_issues.append(
+                f"{rel}:{line} - {block.strip()} (missing value field; flag will default to 0 and fail shortform has_*_flag check)"
+            )
+
+    for m in _FLAG_LONG_FORM_RE.finditer(cleaned):
+        line = cleaned[: m.start()].count("\n") + 1
+        long_form_issues.append(
+            f"{rel}:{line} - set_{m.group(1)}_flag = {{ flag = {m.group(2)} }} → use shorthand `set_{m.group(1)}_flag = {m.group(2)}`"
+        )
+
+    return (days_issues, long_form_issues)
+
+
 def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List[str]]:
     """Combined pool worker: check both days-no-value and long-form flag calls in one file.
 
@@ -300,25 +321,23 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
 
     cleaned = re.sub(r"#[^\n]*", "", text)
     rel = os.path.relpath(filename, mod_path)
+    return _scan_flag_syntax_text(cleaned, rel)
 
-    days_issues: List[str] = []
-    long_form_issues: List[str] = []
 
-    for m in _FLAG_BLOCK_RE.finditer(cleaned):
-        block = m.group(0)
-        if _FLAG_DAYS_RE.search(block) and not _FLAG_VALUE_RE.search(block):
+def _scan_math_precision_text(cleaned: str, rel: str) -> List[str]:
+    issues: List[str] = []
+    seen_ends: set = set()
+    for pattern in (_MATH_PRECISION_RE, _MATH_PRECISION_SHORTHAND_RE):
+        for m in pattern.finditer(cleaned):
+            if m.end() in seen_ends:
+                continue
+            seen_ends.add(m.end())
             line = cleaned[: m.start()].count("\n") + 1
-            days_issues.append(
-                f"{rel}:{line} - {block.strip()} (missing value field; flag will default to 0 and fail shortform has_*_flag check)"
+            issues.append(
+                f"{rel}:{line} - math expression literal with >5 decimal places"
+                f" (engine truncates silently): {m.group(0).strip()}"
             )
-
-    for m in _FLAG_LONG_FORM_RE.finditer(cleaned):
-        line = cleaned[: m.start()].count("\n") + 1
-        long_form_issues.append(
-            f"{rel}:{line} - set_{m.group(1)}_flag = {{ flag = {m.group(2)} }} → use shorthand `set_{m.group(1)}_flag = {m.group(2)}`"
-        )
-
-    return (days_issues, long_form_issues)
+    return issues
 
 
 def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
@@ -341,23 +360,7 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     # a comment nor mis-flagged as a truncated math literal.
     cleaned = blank_quoted_strings(strip_comments(text))
     rel = os.path.relpath(filename, mod_path)
-
-    issues: List[str] = []
-    # Both patterns fire on `..._variable = { ... value = X.XXXXXX }`, matching the
-    # same literal (same end offset). Dedupe on it so one bad literal is one finding;
-    # the operator pattern runs first, so its tighter match text is what's reported.
-    seen_ends: set = set()
-    for pattern in (_MATH_PRECISION_RE, _MATH_PRECISION_SHORTHAND_RE):
-        for m in pattern.finditer(cleaned):
-            if m.end() in seen_ends:
-                continue
-            seen_ends.add(m.end())
-            line = cleaned[: m.start()].count("\n") + 1
-            issues.append(
-                f"{rel}:{line} - math expression literal with >5 decimal places"
-                f" (engine truncates silently): {m.group(0).strip()}"
-            )
-    return issues
+    return _scan_math_precision_text(cleaned, rel)
 
 
 # A variable clamped to a literal range can never hold a value outside it, so a
@@ -594,20 +597,9 @@ def _normalise_variable(name: str) -> str:
     return name
 
 
-def collect_clamp_ranges(
-    args: Tuple[str, str],
+def _scan_clamp_harvest_text(
+    cleaned: str,
 ) -> Tuple[List[Tuple[str, float, float]], List[str], List[str]]:
-    """Pool worker: harvest ``clamp_variable`` min/max pairs and variable writes."""
-    filename, _mod_path = args
-    if should_skip_file(filename):
-        return [], [], []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-        cleaned = blank_quoted_strings(strip_comments(text))
-    except Exception:
-        return [], [], []
     found: List[Tuple[str, float, float]] = []
     for m in _CLAMP_RE.finditer(cleaned):
         body = m.group("body")
@@ -629,6 +621,67 @@ def collect_clamp_ranges(
     return found, temp_written, persistent_written
 
 
+def collect_clamp_ranges(
+    args: Tuple[str, str],
+) -> Tuple[List[Tuple[str, float, float]], List[str], List[str]]:
+    """Pool worker: harvest ``clamp_variable`` min/max pairs and variable writes."""
+    filename, _mod_path = args
+    if should_skip_file(filename):
+        return [], [], []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+        cleaned = blank_quoted_strings(strip_comments(text))
+    except Exception:
+        return [], [], []
+    return _scan_clamp_harvest_text(cleaned)
+
+
+def _extract_clamp_checks(cleaned: str, rel: str) -> List[Tuple[str, str, int, int]]:
+    checks: List[Tuple[str, str, int, int]] = []
+    offsets = compute_line_offsets(cleaned)
+    for pattern in (_CHECKVAR_SHORT_RE, _CHECKVAR_LONG_RE):
+        for m in pattern.finditer(cleaned):
+            line = line_for_offset(offsets, m.start())
+            checks.append((m.group(1), m.group(2), line, m.end()))
+    return checks
+
+
+def _resolve_clamp_checks(
+    checks: List[Tuple[str, str, int, int]],
+    rel: str,
+    ranges: Dict[str, Tuple[float, float]],
+) -> List[str]:
+    issues: List[str] = []
+    seen_ends: set = set()
+    for name, raw, line, end in checks:
+        if end in seen_ends:
+            continue
+        base = name[7:] if name.startswith("global.") else name
+        bounds = ranges.get(base)
+        if not bounds:
+            continue
+        lo, hi = bounds
+        try:
+            value = float(raw)
+        except ValueError:
+            continue
+        if value < lo or value > hi:
+            seen_ends.add(end)
+            issues.append(
+                f"{rel}:{line} - {base} is clamped to {lo}..{hi} but compared"
+                f" against {raw} — the check can never change outcome"
+            )
+        elif hi >= 10 and 0 < abs(value) < 1:
+            seen_ends.add(end)
+            issues.append(
+                f"{rel}:{line} - {base} is clamped to {lo}..{hi} but compared"
+                f" against {raw} — looks like a 0-1 scale value on a 0-{hi:g} variable"
+            )
+    return issues
+
+
 def process_file_for_clamp_conflicts(args) -> List[str]:
     """Pool worker: flag check_variable comparisons that contradict a clamp range."""
     filename, mod_path, ranges = args
@@ -642,37 +695,7 @@ def process_file_for_clamp_conflicts(args) -> List[str]:
     except Exception:
         return []
     rel = os.path.relpath(filename, mod_path)
-
-    issues: List[str] = []
-    seen_ends: set = set()
-    for pattern in (_CHECKVAR_SHORT_RE, _CHECKVAR_LONG_RE):
-        for m in pattern.finditer(cleaned):
-            if m.end() in seen_ends:
-                continue
-            name, raw = m.group(1), m.group(2)
-            base = name[7:] if name.startswith("global.") else name
-            bounds = ranges.get(base)
-            if not bounds:
-                continue
-            lo, hi = bounds
-            try:
-                value = float(raw)
-            except ValueError:
-                continue
-            line = cleaned[: m.start()].count("\n") + 1
-            if value < lo or value > hi:
-                seen_ends.add(m.end())
-                issues.append(
-                    f"{rel}:{line} - {base} is clamped to {lo}..{hi} but compared"
-                    f" against {raw} — the check can never change outcome"
-                )
-            elif hi >= 10 and 0 < abs(value) < 1:
-                seen_ends.add(m.end())
-                issues.append(
-                    f"{rel}:{line} - {base} is clamped to {lo}..{hi} but compared"
-                    f" against {raw} — looks like a 0-1 scale value on a 0-{hi:g} variable"
-                )
-    return issues
+    return _resolve_clamp_checks(_extract_clamp_checks(cleaned, rel), rel, ranges)
 
 
 def _is_decision_source(rel: str) -> bool:
@@ -749,15 +772,9 @@ def _available_exempt_spans(
     return _span_index(object_level + _ai_only_branch_spans(cleaned))
 
 
-def _scan_available_file(
-    args: Tuple[str, str, AbstractSet[str]],
+def _scan_available_text(
+    cleaned: str, rel: str, ai_categories: AbstractSet[str]
 ) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str]]]:
-    """Extract both available-block checks from one comment-stripped source."""
-    filename, mod_path, ai_categories = args
-    cleaned = _read_script_text(filename)
-    if cleaned is None:
-        return [], []
-    rel = os.path.relpath(filename, mod_path)
     exempt = _available_exempt_spans(cleaned, rel, ai_categories)
     events: List[Tuple[int, int, object]] = _scope_events(cleaned)
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
@@ -809,6 +826,18 @@ def _scan_available_file(
                     flags.append((flag, rel, cleaned[:pos].count("\n") + 1, flag_kind))
                     break
     return untooltipped, flags
+
+
+def _scan_available_file(
+    args: Tuple[str, str, AbstractSet[str]],
+) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str]]]:
+    """Extract both available-block checks from one comment-stripped source."""
+    filename, mod_path, ai_categories = args
+    cleaned = _read_script_text(filename)
+    if cleaned is None:
+        return [], []
+    rel = os.path.relpath(filename, mod_path)
+    return _scan_available_text(cleaned, rel, ai_categories)
 
 
 def process_file_for_untooltipped_available_checks(
@@ -863,23 +892,9 @@ def _scripted_trigger_body_has_unwrapped_global_flag(body: str) -> bool:
     return False
 
 
-def process_file_for_untooltipped_available_scripted_trigger(
-    args: Tuple[str, str, frozenset, AbstractSet[str]],
+def _scan_scripted_trigger_text(
+    cleaned: str, rel: str, flagged_names: frozenset, ai_categories: AbstractSet[str]
 ) -> List[Tuple[str, str, int]]:
-    """Pool worker: flag bare `<name> = yes` in `available` that resolves to a
-    scripted trigger whose own body checks an unwrapped global flag, with no
-    tooltip wrapper around the call.
-
-    Walks the enclosing block stack outward from each call so a wrapper at any
-    depth above it counts, not just the direct parent - same machinery as
-    ``process_file_for_untooltipped_available_checks``.
-    """
-    filename, mod_path, flagged_names, ai_categories = args
-    if not flagged_names:
-        return []
-    cleaned = _read_script_text(filename)
-    if cleaned is None:
-        return []
     call_matches = [
         (m.start(), m.group(1))
         for m in _BARE_TRIGGER_CALL_RE.finditer(cleaned)
@@ -897,7 +912,6 @@ def process_file_for_untooltipped_available_scripted_trigger(
         events.append((pos, 2, name))
     events.sort(key=lambda e: (e[0], e[1]))
 
-    rel = os.path.relpath(filename, mod_path)
     exempt = _available_exempt_spans(cleaned, rel, ai_categories)
     stack: List[str] = []
     issues: List[Tuple[str, str, int]] = []
@@ -927,21 +941,28 @@ def process_file_for_untooltipped_available_scripted_trigger(
     return issues
 
 
-def collect_dynamic_modifier_vars(args: Tuple[str, str]) -> List[Tuple[str, str]]:
-    """Pool worker: harvest (backing variable, modifier key) pairs from one file.
+def process_file_for_untooltipped_available_scripted_trigger(
+    args: Tuple[str, str, frozenset, AbstractSet[str]],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag bare `<name> = yes` in `available` that resolves to a
+    scripted trigger whose own body checks an unwrapped global flag, with no
+    tooltip wrapper around the call.
 
-    Depth-1 filtering is load-bearing — it keeps `remove_trigger` / `enable`
-    bodies (`original_tag`, `has_country_flag`, …) out of the map.
+    Walks the enclosing block stack outward from each call so a wrapper at any
+    depth above it counts, not just the direct parent - same machinery as
+    ``process_file_for_untooltipped_available_checks``.
     """
-    filename, _mod_path = args
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+    filename, mod_path, flagged_names, ai_categories = args
+    if not flagged_names:
         return []
-    cleaned = blank_quoted_strings(strip_comments(text))
+    cleaned = _read_script_text(filename)
+    if cleaned is None:
+        return []
+    rel = os.path.relpath(filename, mod_path)
+    return _scan_scripted_trigger_text(cleaned, rel, flagged_names, ai_categories)
 
+
+def _scan_dynamic_harvest_text(cleaned: str) -> List[Tuple[str, str]]:
     pairs: List[Tuple[str, str]] = []
     depth = 0
     for raw_line in cleaned.splitlines():
@@ -963,6 +984,42 @@ def collect_dynamic_modifier_vars(args: Tuple[str, str]) -> List[Tuple[str, str]
     return pairs
 
 
+def collect_dynamic_modifier_vars(args: Tuple[str, str]) -> List[Tuple[str, str]]:
+    """Pool worker: harvest (backing variable, modifier key) pairs from one file.
+
+    Depth-1 filtering is load-bearing — it keeps `remove_trigger` / `enable`
+    bodies (`original_tag`, `has_country_flag`, …) out of the map.
+    """
+    filename, _mod_path = args
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+    cleaned = blank_quoted_strings(strip_comments(text))
+    return _scan_dynamic_harvest_text(cleaned)
+
+
+def _scan_variable_tooltips_text(cleaned: str, rel: str) -> List[Tuple[str, str, int]]:
+    if "tooltip" not in cleaned:
+        return []
+
+    hidden = _span_index(_brace_spans(cleaned, _RE_HIDDEN_EFFECT))
+    offsets = compute_line_offsets(cleaned)
+
+    issues: List[Tuple[str, str, int]] = []
+    for m in _VAR_TOOLTIP_EFFECT_RE.finditer(cleaned):
+        open_idx = m.end() - 1
+        body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
+        key = _TOOLTIP_KEY_RE.search(body)
+        if not key or _inside(hidden, m.start()):
+            continue
+        pos = open_idx + key.start(1)
+        issues.append((key.group(1), rel, line_for_offset(offsets, pos)))
+    return issues
+
+
 def process_file_for_variable_tooltips(
     args: Tuple[str, str],
 ) -> List[Tuple[str, str, int]]:
@@ -982,39 +1039,13 @@ def process_file_for_variable_tooltips(
         return []
 
     cleaned = blank_quoted_strings(strip_comments(text))
-    if "tooltip" not in cleaned:
-        return []
-
-    hidden = _span_index(_brace_spans(cleaned, _RE_HIDDEN_EFFECT))
-    offsets = compute_line_offsets(cleaned)
     rel = os.path.relpath(filename, mod_path)
-
-    issues: List[Tuple[str, str, int]] = []
-    for m in _VAR_TOOLTIP_EFFECT_RE.finditer(cleaned):
-        open_idx = m.end() - 1
-        body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
-        key = _TOOLTIP_KEY_RE.search(body)
-        if not key or _inside(hidden, m.start()):
-            continue
-        pos = open_idx + key.start(1)
-        issues.append((key.group(1), rel, line_for_offset(offsets, pos)))
-    return issues
+    return _scan_variable_tooltips_text(cleaned, rel)
 
 
-def process_file_for_missing_variable_tooltips(
-    args,
+def _scan_missing_tooltips_text(
+    cleaned: str, rel: str, backing: Dict[str, Tuple[str, ...]]
 ) -> List[Tuple[str, str, Tuple[str, ...], str, int]]:
-    """Pool worker: flag dynamic-modifier writes carrying no `tooltip =`.
-
-    Fires only inside the block kinds the engine renders as a player tooltip, so
-    a scripted_effects helper or a history bootstrap write — neither of which has
-    a tooltip surface — is never reported. A `hidden_effect` anywhere above the
-    write swallows the tooltip, so it wins over the enclosing rendered block.
-    """
-    filename, mod_path, backing = args
-    cleaned = _read_script_text(filename)
-    if cleaned is None:
-        return []
     if "_variable" not in cleaned:
         return []
 
@@ -1023,7 +1054,6 @@ def process_file_for_missing_variable_tooltips(
         return []
     hidden = _span_index(_brace_spans(cleaned, _RE_HIDDEN_EFFECT))
     offsets = compute_line_offsets(cleaned)
-    rel = os.path.relpath(filename, mod_path)
 
     issues: List[Tuple[str, str, Tuple[str, ...], str, int]] = []
     for m in _VAR_WRITE_EFFECT_RE.finditer(cleaned):
@@ -1041,6 +1071,24 @@ def process_file_for_missing_variable_tooltips(
         effect = f"{m.group(1)}_variable"
         issues.append((effect, name, keys, rel, line_for_offset(offsets, m.start())))
     return issues
+
+
+def process_file_for_missing_variable_tooltips(
+    args,
+) -> List[Tuple[str, str, Tuple[str, ...], str, int]]:
+    """Pool worker: flag dynamic-modifier writes carrying no `tooltip =`.
+
+    Fires only inside the block kinds the engine renders as a player tooltip, so
+    a scripted_effects helper or a history bootstrap write — neither of which has
+    a tooltip surface — is never reported. A `hidden_effect` anywhere above the
+    write swallows the tooltip, so it wins over the enclosing rendered block.
+    """
+    filename, mod_path, backing = args
+    cleaned = _read_script_text(filename)
+    if cleaned is None:
+        return []
+    rel = os.path.relpath(filename, mod_path)
+    return _scan_missing_tooltips_text(cleaned, rel, backing)
 
 
 # modify_treasury_effect / modify_debt_effect / modify_international_investment_effect
@@ -1126,26 +1174,7 @@ def _classify_scope_token(token: str, parent: str) -> str:
     return "INHERIT"
 
 
-def process_file_for_treasury_scope(
-    args: Tuple[str, str],
-) -> List[Tuple[str, str, int]]:
-    """Pool worker: flag modify_treasury_effect calls that run in state scope.
-
-    Returns (message, rel_path, line) tuples. Only flags a call whose nearest
-    enclosing scope switch is a state block — conservative, so an intervening
-    owner/CONTROLLER/tag/ROOT opener suppresses the finding.
-    """
-    filename, mod_path = args
-    cleaned = _read_script_text(filename, blank_strings=False)
-    if cleaned is None:
-        return []
-    if not any(k in cleaned for k in _TREASURY_EFFECT_KEYWORDS):
-        return []
-
-    # Blank quoted-string interiors so a literal `}` inside a `log = "...}"`
-    # string can't be counted as a real close brace and desync the scope stack.
-    cleaned = blank_quoted_strings(cleaned)
-
+def _scan_treasury_text(cleaned: str, rel: str) -> List[Tuple[str, str, int]]:
     events = []
     for m in _SCOPE_OPEN_RE.finditer(cleaned):
         events.append((m.end() - 1, 0, m.group(1)))
@@ -1155,7 +1184,6 @@ def process_file_for_treasury_scope(
         events.append((m.start(), 2, m.group(1)))
     events.sort(key=lambda e: (e[0], e[1]))
 
-    rel = os.path.relpath(filename, mod_path)
     stack: List[Tuple[str, str]] = []
     issues: List[Tuple[str, str, int]] = []
     for pos, kind, tok in events:
@@ -1185,6 +1213,29 @@ def process_file_for_treasury_scope(
                     )
                 )
     return issues
+
+
+def process_file_for_treasury_scope(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag modify_treasury_effect calls that run in state scope.
+
+    Returns (message, rel_path, line) tuples. Only flags a call whose nearest
+    enclosing scope switch is a state block — conservative, so an intervening
+    owner/CONTROLLER/tag/ROOT opener suppresses the finding.
+    """
+    filename, mod_path = args
+    cleaned = _read_script_text(filename, blank_strings=False)
+    if cleaned is None:
+        return []
+    if not any(k in cleaned for k in _TREASURY_EFFECT_KEYWORDS):
+        return []
+
+    # Blank quoted-string interiors so a literal `}` inside a `log = "...}"`
+    # string can't be counted as a real close brace and desync the scope stack.
+    cleaned = blank_quoted_strings(cleaned)
+    rel = os.path.relpath(filename, mod_path)
+    return _scan_treasury_text(cleaned, rel)
 
 
 # Money-system input variables and the scripted effect that consumes each.
@@ -1329,36 +1380,16 @@ def _has_sequential_rewrite(
     return False
 
 
-def process_file_for_orphan_money(
-    args: Tuple[str, str, Dict[str, frozenset]],
+def _scan_orphan_money_text(
+    cleaned: str, rel: str, consumer_map: Dict[str, frozenset]
 ) -> List[Tuple[str, str, int]]:
-    """Pool worker: flag money-variable setters that are dead in their block —
-    never consumed, or overwritten at the same depth before the consumer runs.
-
-    Returns (message, rel_path, line) tuples. Setters outside any known effect
-    container (loose scripted-effect bodies that produce the value for their
-    caller) are skipped.
-    """
-    filename, mod_path, consumer_map = args
-    if should_skip_file(filename):
-        return []
-    try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-
-    # Quote-aware strip — the naive regex strip broke brace tracking in every
-    # file with a '#' inside a log string.
-    cleaned = strip_comments(text)
     setters = list(_MONEY_SETTER_RE.finditer(cleaned))
     if not setters:
         return []
 
     spans = []
     for m in _EFFECT_CONTAINER_RE.finditer(cleaned):
-        brace = m.end() - 1  # the container regex ends at the opening brace
+        brace = m.end() - 1
         body, end = extract_block_from_text(cleaned, brace)
         if body:
             is_tooltip = cleaned.startswith("effect_tooltip", m.start())
@@ -1371,7 +1402,6 @@ def process_file_for_orphan_money(
         )
         for var, names in consumer_map.items()
     }
-    rel = os.path.relpath(filename, mod_path)
     issues: List[Tuple[str, str, int]] = []
     for m in setters:
         var = m.group(1)
@@ -1386,11 +1416,8 @@ def process_file_for_orphan_money(
         if holder_start < 0:
             continue
         if holder_is_tooltip:
-            # Setter previewed in a tooltip: any consumer within it renders.
             hits = list(consumer_res[var].finditer(cleaned, m.end(), holder_end))
         else:
-            # Runtime setter: consumers that only exist inside a nested
-            # effect_tooltip are previews and never execute.
             hits = [
                 cm
                 for cm in consumer_res[var].finditer(cleaned, m.end(), holder_end)
@@ -1422,6 +1449,33 @@ def process_file_for_orphan_money(
                 )
             )
     return issues
+
+
+def process_file_for_orphan_money(
+    args: Tuple[str, str, Dict[str, frozenset]],
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: flag money-variable setters that are dead in their block —
+    never consumed, or overwritten at the same depth before the consumer runs.
+
+    Returns (message, rel_path, line) tuples. Setters outside any known effect
+    container (loose scripted-effect bodies that produce the value for their
+    caller) are skipped.
+    """
+    filename, mod_path, consumer_map = args
+    if should_skip_file(filename):
+        return []
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return []
+
+    # Quote-aware strip — the naive regex strip broke brace tracking in every
+    # file with a '#' inside a log string.
+    cleaned = strip_comments(text)
+    rel = os.path.relpath(filename, mod_path)
+    return _scan_orphan_money_text(cleaned, rel, consumer_map)
 
 
 def _scan_targets_in_text(
@@ -1533,6 +1587,141 @@ def _map_with_optional_pool(func, args_list, workers, pool, chunksize=50):
         return pool.map(func, args_list, chunksize=chunksize)
     with Pool(processes=workers) as p:
         return p.map(func, args_list, chunksize=chunksize)
+
+
+# Bitmask selecting which section scans apply to one file in the shared pass.
+# The parent builds the mask from set membership so each file runs exactly the
+# scans its own section file list would have run — no more, no fewer.
+_F_MATH = 1
+_F_ORPHAN = 2
+_F_TREASURY = 4
+_F_CLAMP = 8
+_F_AVAILABLE = 16
+_F_SCRIPTED = 32
+_F_VAR_TOOLTIP = 64
+_F_MISSING = 128
+_F_FLAG_SYNTAX = 256
+
+_EMPTY_SHARED_RESULT: Tuple = (
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    ([], []),
+)
+
+
+def _scan_shared_file(args) -> Tuple:
+    """Pool worker: run every applicable variable section on one file.
+
+    Reads the file once, strips comments once, and blanks quoted strings once,
+    then shares those artifacts across the section scans instead of paying one
+    read plus strip plus blank pass per section. Each scan calls the same
+    ``_scan_*_text`` helper its standalone worker uses, gated by ``mask`` so
+    the file set per section is unchanged. Flag syntax keeps its naive strip.
+    Returns (math, orphan, treasury, clamp_found, clamp_temp, clamp_persist,
+    clamp_checks, avail_unt, avail_flags, scripted, var_tooltips, missing,
+    (flag_days, flag_long)).
+    """
+    filename, mod_path, mask, ai_categories, flagged_names, consumer_map, backing = args
+    if should_skip_file(filename):
+        return _EMPTY_SHARED_RESULT
+    try:
+        from pathlib import Path as _Path
+
+        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except Exception:
+        return _EMPTY_SHARED_RESULT
+    rel = os.path.relpath(filename, mod_path)
+
+    need_blanked = mask & (
+        _F_MATH
+        | _F_TREASURY
+        | _F_CLAMP
+        | _F_AVAILABLE
+        | _F_SCRIPTED
+        | _F_VAR_TOOLTIP
+        | _F_MISSING
+    )
+    need_stripped = mask & (
+        _F_ORPHAN
+        | _F_MATH
+        | _F_TREASURY
+        | _F_CLAMP
+        | _F_AVAILABLE
+        | _F_SCRIPTED
+        | _F_VAR_TOOLTIP
+        | _F_MISSING
+    )
+    need_naive = mask & _F_FLAG_SYNTAX
+    if not (need_blanked or need_stripped or need_naive):
+        return _EMPTY_SHARED_RESULT
+
+    stripped = strip_comments(text) if need_stripped else ""
+    blanked = blank_quoted_strings(stripped) if need_blanked else ""
+    naive = re.sub(r"#[^\n]*", "", text) if need_naive else ""
+
+    math_issues: List[str] = []
+    orphan_issues: List = []
+    treasury_issues: List = []
+    clamp_found: List = []
+    clamp_temp: List = []
+    clamp_persist: List = []
+    clamp_checks: List = []
+    avail_unt: List = []
+    avail_flags: List = []
+    scripted_issues: List = []
+    var_tooltip_issues: List = []
+    missing_issues: List = []
+    flag_pair: Tuple = ([], [])
+
+    if mask & _F_MATH:
+        math_issues = _scan_math_precision_text(blanked, rel)
+    if mask & _F_ORPHAN:
+        orphan_issues = _scan_orphan_money_text(stripped, rel, consumer_map)
+    if mask & _F_TREASURY:
+        if any(k in blanked for k in _TREASURY_EFFECT_KEYWORDS):
+            treasury_issues = _scan_treasury_text(blanked, rel)
+    if mask & _F_CLAMP:
+        clamp_found, clamp_temp, clamp_persist = _scan_clamp_harvest_text(blanked)
+        clamp_checks = _extract_clamp_checks(blanked, rel)
+    if mask & _F_AVAILABLE:
+        avail_unt, avail_flags = _scan_available_text(blanked, rel, ai_categories)
+    if mask & _F_SCRIPTED:
+        if flagged_names:
+            scripted_issues = _scan_scripted_trigger_text(
+                blanked, rel, flagged_names, ai_categories
+            )
+    if mask & _F_VAR_TOOLTIP:
+        var_tooltip_issues = _scan_variable_tooltips_text(blanked, rel)
+    if mask & _F_MISSING:
+        missing_issues = _scan_missing_tooltips_text(blanked, rel, backing)
+    if mask & _F_FLAG_SYNTAX:
+        flag_pair = _scan_flag_syntax_text(naive, rel)
+
+    return (
+        math_issues,
+        orphan_issues,
+        treasury_issues,
+        clamp_found,
+        clamp_temp,
+        clamp_persist,
+        clamp_checks,
+        avail_unt,
+        avail_flags,
+        scripted_issues,
+        var_tooltip_issues,
+        missing_issues,
+        flag_pair,
+    )
 
 
 class Variables:
@@ -1865,15 +2054,7 @@ class Validator(BaseValidator):
     def validate_math_precision(self):
         """Flag math expression operator literals with >5 decimal places (ERROR)."""
         self._log_section("Checking for math expression precision issues...")
-
-        txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-        )
-        args_list = [(f, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_math_precision, args_list, chunksize=30
-        )
-        issues = [issue for file_issues in all_results for issue in file_issues]
+        issues = self._get_shared_scan()["math"]
         self._report(
             issues,
             "✓ No math expression precision issues found",
@@ -1893,28 +2074,7 @@ class Validator(BaseValidator):
         equally dead (clobbered).
         """
         self._log_section("Checking for orphan money-variable setters...")
-
-        txt_files = self._collect_files(
-            [
-                "common/national_focus/*.txt",
-                "common/decisions/**/*.txt",
-                "common/on_actions/**/*.txt",
-                "events/**/*.txt",
-            ]
-        )
-        if not txt_files:
-            self.log("✓ No orphan money-variable setters found")
-            return
-
-        effect_files = self._collect_files(
-            ["common/scripted_effects/**/*.txt"], ignore_staged=True
-        )
-        consumer_map = build_money_consumer_map(effect_files, self.mod_path)
-        args_list = [(f, self.mod_path, consumer_map) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_orphan_money, args_list, chunksize=30
-        )
-        issues = [issue for file_issues in all_results for issue in file_issues]
+        issues = self._get_shared_scan()["orphan"]
         self._report(
             issues,
             "✓ No orphan money-variable setters found",
@@ -1936,26 +2096,7 @@ class Validator(BaseValidator):
         self._log_section(
             "Checking for treasury/debt/investment effects in state scope..."
         )
-
-        txt_files = self._collect_files(
-            [
-                "common/national_focus/*.txt",
-                "common/decisions/**/*.txt",
-                "common/on_actions/**/*.txt",
-                "common/special_projects/**/*.txt",
-                "common/intelligence_agency_upgrades/**/*.txt",
-                "events/**/*.txt",
-            ]
-        )
-        if not txt_files:
-            self.log("✓ No treasury/debt/investment state-scope issues found")
-            return
-
-        args_list = [(f, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_treasury_scope, args_list, chunksize=30
-        )
-        issues = [issue for file_issues in all_results for issue in file_issues]
+        issues = self._get_shared_scan()["treasury"]
         self._report(
             issues,
             "✓ No treasury/debt/investment state-scope issues found",
@@ -1973,42 +2114,7 @@ class Validator(BaseValidator):
         variable clamped to a wide integer range.
         """
         self._log_section("Checking clamp ranges against check_variable values...")
-
-        txt_files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
-        if not txt_files:
-            self.log("✓ No clamp-range conflicts found")
-            return
-
-        # Clamps are harvested repo-wide even in staged mode: the clamp and the
-        # check that contradicts it almost never sit in the same file.
-        clamp_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt"], ignore_staged=True
-        )
-        args_list = [(f, self.mod_path) for f in clamp_files]
-        harvested = self._pool_map(collect_clamp_ranges, args_list, chunksize=30)
-        ranges: Dict[str, Tuple[float, float]] = {}
-        temp_names: Set[str] = set()
-        persistent_names: Set[str] = set()
-        for file_ranges, temp_written, persistent_written in harvested:
-            for name, lo, hi in file_ranges:
-                if name in ranges:
-                    prev = ranges[name]
-                    ranges[name] = (min(prev[0], lo), max(prev[1], hi))
-                else:
-                    ranges[name] = (lo, hi)
-            temp_names.update(temp_written)
-            persistent_names.update(persistent_written)
-        for name in temp_names - persistent_names:
-            ranges.pop(name, None)
-        if not ranges:
-            self.log("✓ No clamp-range conflicts found")
-            return
-
-        conflict_args = [(f, self.mod_path, ranges) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_clamp_conflicts, conflict_args, chunksize=30
-        )
-        issues = [issue for file_issues in all_results for issue in file_issues]
+        issues = self._get_shared_scan()["clamp"]
         self._report(
             issues,
             "✓ No clamp-range conflicts found",
@@ -2029,22 +2135,189 @@ class Validator(BaseValidator):
             self._ai_only_categories_memo = memo
         return memo
 
-    def _get_available_scan(self):
-        """Return both available-block scans from one per-file worker pass."""
-        memo = getattr(self, "_available_scan_memo", None)
+    def _get_shared_scan(self) -> Dict[str, List]:
+        """Run every variable section in one pool pass over the union file set.
+
+        Reads each candidate file once and shares the stripped/blanked text
+        across math, orphan-money, treasury, clamp, available, scripted-trigger,
+        tooltip, missing-tooltip, and flag-syntax scans. Each file runs exactly
+        the scans its own section file list would have run (via ``mask``), and
+        each scan calls the same ``_scan_*_text`` helper its standalone worker
+        uses, so findings are unchanged. Clamp ranges are harvested in the same
+        pass and resolved parent-side; in staged mode a repo-wide harvest still
+        seeds the ranges first, as before.
+        """
+        memo = getattr(self, "_shared_scan_memo", None)
         if memo is not None:
             return memo
-        files = self._collect_files(_PLAYER_FACING_GLOBS)
-        if not files:
-            self._available_scan_memo = []
-            return self._available_scan_memo
+        self._log_section("Sharing per-file reads across variable sections...")
+
+        math_patterns = ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+        orphan_patterns = [
+            "common/national_focus/*.txt",
+            "common/decisions/**/*.txt",
+            "common/on_actions/**/*.txt",
+            "events/**/*.txt",
+        ]
+        treasury_patterns = [
+            "common/national_focus/*.txt",
+            "common/decisions/**/*.txt",
+            "common/on_actions/**/*.txt",
+            "common/special_projects/**/*.txt",
+            "common/intelligence_agency_upgrades/**/*.txt",
+            "events/**/*.txt",
+        ]
+        clamp_patterns = ["common/**/*.txt", "events/**/*.txt"]
+        tooltip_patterns = ["common/**/*.txt", "events/**/*.txt"]
+
         ai_categories = self._get_ai_only_categories()
-        self._available_scan_memo = self._pool_map(
-            _scan_available_file,
-            [(f, self.mod_path, ai_categories) for f in files],
-            chunksize=30,
+        flagged_names = self._collect_scripted_trigger_flag_names()
+        effect_files = self._collect_files(
+            ["common/scripted_effects/**/*.txt"], ignore_staged=True
         )
-        return self._available_scan_memo
+        consumer_map = build_money_consumer_map(effect_files, self.mod_path)
+        backing = self._collect_dynamic_modifier_vars()
+
+        math_files = self._collect_files(math_patterns)
+        orphan_files = self._collect_files(orphan_patterns)
+        treasury_files = self._collect_files(treasury_patterns)
+        clamp_files = self._collect_files(clamp_patterns)
+        available_files = self._collect_files(_PLAYER_FACING_GLOBS)
+        tooltip_files = self._collect_files(tooltip_patterns)
+        flag_files = self._collect_files(math_patterns)
+
+        union = list(
+            dict.fromkeys(
+                math_files
+                + orphan_files
+                + treasury_files
+                + clamp_files
+                + available_files
+                + tooltip_files
+                + flag_files
+            )
+        )
+        empty: Dict[str, List] = {
+            "math": [],
+            "orphan": [],
+            "treasury": [],
+            "clamp": [],
+            "avail_unt": [],
+            "avail_flags": [],
+            "scripted": [],
+            "var_tooltips": [],
+            "missing": [],
+            "flag_days": [],
+            "flag_long": [],
+        }
+        if not union:
+            self._shared_scan_memo = empty
+            return empty
+
+        repo_ranges: Dict[str, Tuple[float, float]] = {}
+        repo_temp: Set[str] = set()
+        repo_persist: Set[str] = set()
+        if self.staged_only:
+            clamp_repo = self._collect_files(clamp_patterns, ignore_staged=True)
+            for file_ranges, temp_written, persist_written in self._pool_map(
+                collect_clamp_ranges,
+                [(f, self.mod_path) for f in clamp_repo],
+                chunksize=30,
+            ):
+                for name, lo, hi in file_ranges:
+                    if name in repo_ranges:
+                        prev = repo_ranges[name]
+                        repo_ranges[name] = (min(prev[0], lo), max(prev[1], hi))
+                    else:
+                        repo_ranges[name] = (lo, hi)
+                repo_temp.update(temp_written)
+                repo_persist.update(persist_written)
+
+        math_set = set(math_files)
+        orphan_set = set(orphan_files)
+        treasury_set = set(treasury_files)
+        clamp_set = set(clamp_files)
+        available_set = set(available_files)
+        tooltip_set = set(tooltip_files)
+        flag_set = set(flag_files)
+        args_list = []
+        for f in union:
+            mask = 0
+            if f in math_set:
+                mask |= _F_MATH
+            if f in orphan_set:
+                mask |= _F_ORPHAN
+            if f in treasury_set:
+                mask |= _F_TREASURY
+            if f in clamp_set:
+                mask |= _F_CLAMP
+            if f in available_set:
+                mask |= _F_AVAILABLE | _F_SCRIPTED
+            if f in tooltip_set:
+                mask |= _F_VAR_TOOLTIP | _F_MISSING
+            if f in flag_set:
+                mask |= _F_FLAG_SYNTAX
+            args_list.append(
+                (
+                    f,
+                    self.mod_path,
+                    mask,
+                    ai_categories,
+                    flagged_names,
+                    consumer_map,
+                    backing,
+                )
+            )
+        results = self._pool_map(_scan_shared_file, args_list, chunksize=30)
+
+        ranges: Dict[str, Tuple[float, float]] = dict(repo_ranges)
+        temp_names: Set[str] = set(repo_temp)
+        persistent_names: Set[str] = set(repo_persist)
+        per_file_checks: List = []
+        for filename, res in zip(union, results):
+            (
+                math_i,
+                orphan_i,
+                treasury_i,
+                found,
+                temp_w,
+                persist_w,
+                checks,
+                unt,
+                flags,
+                scripted_i,
+                tooltip_i,
+                missing_i,
+                flag_pair,
+            ) = res
+            empty["math"].extend(math_i)
+            empty["orphan"].extend(orphan_i)
+            empty["treasury"].extend(treasury_i)
+            empty["avail_unt"].extend(unt)
+            empty["avail_flags"].extend(flags)
+            empty["scripted"].extend(scripted_i)
+            empty["var_tooltips"].extend(tooltip_i)
+            empty["missing"].extend(missing_i)
+            empty["flag_days"].extend(flag_pair[0])
+            empty["flag_long"].extend(flag_pair[1])
+            for name, lo, hi in found:
+                if name in ranges:
+                    prev = ranges[name]
+                    ranges[name] = (min(prev[0], lo), max(prev[1], hi))
+                else:
+                    ranges[name] = (lo, hi)
+            temp_names.update(temp_w)
+            persistent_names.update(persist_w)
+            if checks:
+                per_file_checks.append((filename, checks))
+        for name in temp_names - persistent_names:
+            ranges.pop(name, None)
+        if ranges:
+            for filename, checks in per_file_checks:
+                rel = os.path.relpath(filename, self.mod_path)
+                empty["clamp"].extend(_resolve_clamp_checks(checks, rel, ranges))
+        self._shared_scan_memo = empty
+        return empty
 
     def validate_untooltipped_available_checks(self):
         """Flag bare check_variable inside `available` blocks (ERROR).
@@ -2059,13 +2332,7 @@ class Validator(BaseValidator):
         self._log_section(
             "Checking for untooltipped check_variable in available blocks..."
         )
-
-        available = self._get_available_scan()
-        if not available:
-            self.log("✓ No untooltipped check_variable in available blocks")
-            return
-
-        issues = [issue for untooltipped, _flags in available for issue in untooltipped]
+        issues = self._get_shared_scan()["avail_unt"]
         self._report(
             issues,
             "✓ No untooltipped check_variable in available blocks",
@@ -2082,33 +2349,27 @@ class Validator(BaseValidator):
         with no key the player reads the raw token.
         """
         self._log_section("Checking for unlocalised flags in available blocks...")
-
-        available = self._get_available_scan()
-        if not available:
-            self.log("✓ No unlocalised flags in available blocks")
-            return
-
+        shared_flags = self._get_shared_scan()["avail_flags"]
         loc_keys = self._load_localisation_keys()
 
         seen: Set[Tuple[str, str]] = set()
         issues = []
-        for _unt, file_results in available:
-            for flag, rel, line, flag_kind in file_results:
-                if flag in loc_keys:
-                    continue
-                key = (flag, rel)
-                if key in seen:
-                    continue
-                seen.add(key)
-                issues.append(
-                    (
-                        f"has_{flag_kind}_flag = {flag} in `available` has no localisation"
-                        " key - the player sees the raw flag name; add a loc key named"
-                        " after the flag",
-                        rel,
-                        line,
-                    )
+        for flag, rel, line, flag_kind in shared_flags:
+            if flag in loc_keys:
+                continue
+            key = (flag, rel)
+            if key in seen:
+                continue
+            seen.add(key)
+            issues.append(
+                (
+                    f"has_{flag_kind}_flag = {flag} in `available` has no localisation"
+                    " key - the player sees the raw flag name; add a loc key named"
+                    " after the flag",
+                    rel,
+                    line,
                 )
+            )
 
         self._report(
             issues,
@@ -2172,27 +2433,7 @@ class Validator(BaseValidator):
         self._log_section(
             "Checking for untooltipped scripted-trigger calls in available blocks..."
         )
-
-        flagged_names = self._collect_scripted_trigger_flag_names()
-        if not flagged_names:
-            self.log("✓ No untooltipped scripted-trigger calls in available blocks")
-            return
-
-        txt_files = self._collect_files(_PLAYER_FACING_GLOBS)
-        if not txt_files:
-            self.log("✓ No untooltipped scripted-trigger calls in available blocks")
-            return
-
-        ai_categories = self._get_ai_only_categories()
-        args_list = [
-            (f, self.mod_path, flagged_names, ai_categories) for f in txt_files
-        ]
-        all_results = self._pool_map(
-            process_file_for_untooltipped_available_scripted_trigger,
-            args_list,
-            chunksize=30,
-        )
-        issues = [issue for file_issues in all_results for issue in file_issues]
+        issues = self._get_shared_scan()["scripted"]
         self._report(
             issues,
             "✓ No untooltipped scripted-trigger calls in available blocks",
@@ -2237,34 +2478,24 @@ class Validator(BaseValidator):
         reads `political_power_factor_tt` instead of the modifier line.
         """
         self._log_section("Checking variable effect tooltip keys...")
-
-        txt_files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
-        if not txt_files:
-            self.log("✓ No unlocalised variable effect tooltips found")
-            return
-
-        args_list = [(f, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_variable_tooltips, args_list, chunksize=30
-        )
+        shared_tooltips = self._get_shared_scan()["var_tooltips"]
         loc_keys = self._load_localisation_keys()
 
         seen: Set[Tuple[str, str]] = set()
         issues: List[Tuple[str, str, int]] = []
-        for file_results in all_results:
-            for key, rel, line in file_results:
-                if key in loc_keys or (key, rel) in seen:
-                    continue
-                seen.add((key, rel))
-                issues.append(
-                    (
-                        f"tooltip = {key} has no English localisation entry - the"
-                        " tooltip renders the raw key; add it to"
-                        " MD_dm_modifiers_l_english.yml",
-                        rel,
-                        line,
-                    )
+        for key, rel, line in shared_tooltips:
+            if key in loc_keys or (key, rel) in seen:
+                continue
+            seen.add((key, rel))
+            issues.append(
+                (
+                    f"tooltip = {key} has no English localisation entry - the"
+                    " tooltip renders the raw key; add it to"
+                    " MD_dm_modifiers_l_english.yml",
+                    rel,
+                    line,
                 )
+            )
 
         self._report(
             issues,
@@ -2281,40 +2512,33 @@ class Validator(BaseValidator):
         it anywhere. Scoped to rendered effect blocks; see the pool worker.
         """
         self._log_section("Checking dynamic modifier writes for tooltips...")
-
-        txt_files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
-        backing = self._collect_dynamic_modifier_vars() if txt_files else {}
-        if not backing:
+        shared_missing = self._get_shared_scan()["missing"]
+        backing = self._collect_dynamic_modifier_vars()
+        if not backing and not shared_missing:
             self.log("✓ No untooltipped dynamic modifier writes found")
             return
-
-        args_list = [(f, self.mod_path, backing) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_missing_variable_tooltips, args_list, chunksize=30
-        )
         loc_keys = self._load_localisation_keys()
 
         issues: List[Tuple[str, str, int]] = []
-        for file_results in all_results:
-            for effect, name, keys, rel, line in file_results:
-                resolvable = [key for key in keys if f"{key}_tt" in loc_keys]
-                prefix = (
-                    f"{effect} = {{ {name} ... }} moves dynamic modifier"
-                    f" `{keys[0]}` with no tooltip - the change is invisible to"
-                    " the player;"
-                )
-                if resolvable:
-                    fix = " or ".join(f"tooltip = {key}_tt" for key in resolvable)
-                    issues.append((f"{prefix} add {fix}", rel, line))
-                else:
-                    issues.append(
-                        (
-                            f"{prefix} `{keys[0]}_tt` does not exist either, so add"
-                            " it to MD_dm_modifiers_l_english.yml first",
-                            rel,
-                            line,
-                        )
+        for effect, name, keys, rel, line in shared_missing:
+            resolvable = [key for key in keys if f"{key}_tt" in loc_keys]
+            prefix = (
+                f"{effect} = {{ {name} ... }} moves dynamic modifier"
+                f" `{keys[0]}` with no tooltip - the change is invisible to"
+                " the player;"
+            )
+            if resolvable:
+                fix = " or ".join(f"tooltip = {key}_tt" for key in resolvable)
+                issues.append((f"{prefix} add {fix}", rel, line))
+            else:
+                issues.append(
+                    (
+                        f"{prefix} `{keys[0]}_tt` does not exist either, so add"
+                        " it to MD_dm_modifiers_l_english.yml first",
+                        rel,
+                        line,
                     )
+                )
 
         self._report(
             issues,
@@ -2335,20 +2559,9 @@ class Validator(BaseValidator):
         Previously two separate serial rglob loops; now one pool_map pass.
         """
         self._log_section("Checking for set_*_flag syntax issues...")
-
-        txt_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-        )
-        args_list = [(f, self.mod_path) for f in txt_files]
-        all_results = self._pool_map(
-            process_file_for_flag_syntax, args_list, chunksize=30
-        )
-
-        days_issues: List[str] = []
-        long_form_issues: List[str] = []
-        for d, l in all_results:
-            days_issues.extend(d)
-            long_form_issues.extend(l)
+        shared = self._get_shared_scan()
+        days_issues: List[str] = list(shared["flag_days"])
+        long_form_issues: List[str] = list(shared["flag_long"])
 
         self._report(
             days_issues,

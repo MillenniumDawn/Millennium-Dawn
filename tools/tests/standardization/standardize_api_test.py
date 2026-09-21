@@ -20,12 +20,14 @@ _ROUTED = [
     ("common/military_industrial_organization/organizations/MD_ARG.txt", "mio"),
     ("common/military_industrial_organization/policies/_land_policies.txt", "mio"),
     ("common/technologies/infantry.txt", "technology"),
+    ("history/countries/ARA - Arabistan.txt", "history"),
 ]
 
 _UNROUTED = [
     "common/units/MD_land_units.txt",
-    "history/countries/ARA - Arabistan.txt",
     "events/Gulf.yml",
+    # Localisation stays unrouted: its standardizer needs a full-mod content
+    # index per run, which the in-memory checker cannot build per file.
     "localisation/english/MD_focus_SER_l_english.yml",
     "common/national_focus/notes.md",
 ]
@@ -44,6 +46,7 @@ def test_routes_have_only_supported_standardizer_kinds():
         "idea",
         "mio",
         "technology",
+        "history",
     }
 
 
@@ -102,3 +105,30 @@ def test_focus_standardization_never_reports_no_op():
     # A focus file is always rewritten (spacing is normalized line by line), so
     # the focus branch has no "nothing matched" case for a checker to skip.
     assert standardize_text("focus", "focus_tree = {\n\tid = test\n}\n") is not None
+
+
+_MESSY_HISTORY = """capital = 652
+
+2000.1.1 = {
+\tset_country_flag = TST_alpha
+\tcomplete_special_project = sp:sp_space_program
+}
+"""
+
+
+def test_history_text_reorders_dated_blocks_and_is_idempotent():
+    once = standardize_text("history", _MESSY_HISTORY)
+    assert once is not None
+    assert once != _MESSY_HISTORY
+    assert once.index("Special Projects") < once.index("Country Flags")
+    assert standardize_text("history", once) == once
+
+
+def test_history_text_accepts_a_mod_root(tmp_path):
+    once = standardize_text("history", _MESSY_HISTORY, mod_root=str(tmp_path))
+    assert once is not None
+    assert standardize_text("history", once, mod_root=str(tmp_path)) == once
+
+
+def test_history_text_returns_none_when_no_dated_block_matches():
+    assert standardize_text("history", "# just a comment\n") is None
