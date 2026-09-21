@@ -60,6 +60,7 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     the engine rejects the effect and the building is never placed
   - NOR = { ... } (not a HOI4 trigger keyword; silently never matches)
   - is_at_war = yes/no (not a HOI4 trigger; use has_war)
+  - has_opinion_modifier = { ... } (the trigger takes a single modifier ID)
   - max_iterations inside while_loop_effect (silently ignored by the engine)
   - var:x^i array-index shorthand (needs the full variable name)
   - limit as a direct child of an else block (else takes no condition, so the
@@ -112,6 +113,7 @@ _RE_CHECK_EXPR_BAD_OPERAND = re.compile(
 _RE_EVERY_OWNED_CONTROLLED_STATE = re.compile(r"\bevery_owned_controlled_state\b")
 _RE_NOR = re.compile(r"\bNOR\s*=\s*\{")
 _RE_IS_AT_WAR = re.compile(r"\bis_at_war\s*=\s*(?:yes|no)\b")
+_RE_HAS_OPINION_MODIFIER_BLOCK = re.compile(r"\bhas_opinion_modifier\s*=\s*\{")
 _RE_WHILE_LOOP_OPEN = re.compile(r"\bwhile_loop_effect\s*=\s*\{")
 _RE_MAX_ITERATIONS = re.compile(r"\bmax_iterations\s*=")
 # var:x^i needs the full variable name; a one-letter base is the shorthand the
@@ -282,6 +284,9 @@ _RE_TAG_SCOPE = re.compile(r"^[A-Z]{2,3}$")
 _LOGIC_SCOPE_TOKENS = {"AND", "OR", "NOT"}
 _OWNER_RESET_SCOPE_TOKENS = {"ROOT", "THIS"}
 _FOREIGN_COUNTRY_SCOPE_TOKENS = {
+    "OWNER",
+    "create_dynamic_country",
+    "owner",
     "random_country",
     "random_other_country",
     "every_country",
@@ -2290,6 +2295,20 @@ def _check_invalid_is_at_war(lines):
     return issues
 
 
+def _check_has_opinion_modifier_block(lines):
+    """Flag block-form has_opinion_modifier, which only accepts a modifier ID."""
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if _RE_HAS_OPINION_MODIFIER_BLOCK.search(_code_for_depth(line)):
+            issues.append(
+                (
+                    line_num,
+                    "has_opinion_modifier takes a modifier ID, not a block",
+                )
+            )
+    return issues
+
+
 def _check_while_loop_max_iterations(lines):
     """Flag max_iterations inside while_loop_effect -- the engine ignores it.
 
@@ -3934,6 +3953,7 @@ def check_file(filepath):
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
     issues.extend(_check_invalid_is_at_war(lines))
+    issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
     issues.extend(_check_var_index_shorthand(lines))
     issues.extend(_check_else_with_limit(lines))
