@@ -223,6 +223,55 @@ set_static_state_modifier_on_game_start = {
 	}
 }
 
+# take_debt_amount and take_debt_cost required. take_debt_min_gdp optional (0 = no GDP gate).
+take_manual_debt_effect = {
+	if = {
+		limit = {
+			check_variable = { interest_rate < 20 }
+			NOT = { has_active_mission = cheap_loan_from_the_imf_mission }
+			OR = {
+				check_variable = { take_debt_min_gdp = 0 }
+				check_variable = { gdp_total > take_debt_min_gdp }
+			}
+		}
+		add_to_variable = { treasury = take_debt_amount }
+		add_to_variable = { debt = take_debt_cost }
+		ingame_update_setup = yes
+	}
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: DEBUG: take_manual_debt [?take_debt_amount] (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+	}
+}
+
+# repay_debt_amount, or repay_debt_max = 1 to pay min(treasury, debt).
+repay_manual_debt_effect = {
+	if = {
+		limit = { check_variable = { repay_debt_max = 1 } }
+		set_temp_variable = { repay_temp = treasury }
+		if = {
+			limit = { check_variable = { debt < repay_temp } }
+			set_temp_variable = { repay_temp = debt }
+		}
+	}
+	else = {
+		set_temp_variable = { repay_temp = repay_debt_amount }
+		if = {
+			limit = { check_variable = { treasury < repay_temp } }
+			set_temp_variable = { repay_temp = treasury }
+		}
+		if = {
+			limit = { check_variable = { debt < repay_temp } }
+			set_temp_variable = { repay_temp = debt }
+		}
+	}
+	subtract_from_variable = { treasury = repay_temp }
+	subtract_from_variable = { debt = repay_temp }
+	ingame_update_setup = yes
+	if = { limit = { is_debug = yes }
+		log = "[GetDateText]: [THIS.GetName]: DEBUG: repay_manual_debt [?repay_temp] (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+	}
+}
+
 enable_automatic_debt_repayment_effect = {
 	if = {
 		limit = {
