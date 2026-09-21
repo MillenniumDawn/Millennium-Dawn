@@ -46,6 +46,7 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   43. windows path separators keep the directory-scoped checks enabled
   44. on_daily_TAG blocks that only refresh country flags for the AI to read
   45. per-tag war brakes already covered by MD_avoid_new_wars_when_outmatched
+  46. has_opinion_modifier only accepts a modifier ID, not a block
 """
 
 import os
@@ -82,6 +83,7 @@ from check_common_mistakes import (
     _check_focus_log_id,
     _check_focus_missing_war_hint,
     _check_has_idea_mutex_in_not_block,
+    _check_has_opinion_modifier_block,
     _check_hidden_trigger_in_ctt,
     _check_influence_setter_scope,
     _check_invalid_is_at_war,
@@ -1710,6 +1712,17 @@ _WAR_CHAIN_EVENTS = {
         "\t}\n"
         "}\n"
     ),
+    "alg_dynamic.1": (
+        "country_event = {\n"
+        "\tid = alg_dynamic.1\n"
+        "\toption = {\n"
+        "\t\tcreate_dynamic_country = {\n"
+        "\t\t\toriginal_tag = ALG\n"
+        "\t\t\tdeclare_war_on = { target = ALG type = annex_everything }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    ),
     "alg_loop.1": (
         "country_event = {\n"
         "\tid = alg_loop.1\n"
@@ -1800,6 +1813,35 @@ assert_finds(
     ],
     0,
     "war event sent to a foreign scope not flagged",
+)
+
+# 10n2. A send through a state's dynamic owner runs as that country, not the focus owner.
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_contact_owners\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\t19 = { OWNER = { country_event = alg_war.1 } }\n",
+        "\t\t\t298 = { owner = { country_event = alg_war.1 } }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "war event sent through dynamic state owners not flagged",
+)
+
+# 10n3. A dynamic country declaring war from its creation scope is not the focus owner.
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_spawn_rebels\n",
+        "\t\tcompletion_reward = { country_event = alg_dynamic.1 }\n",
+        "\t}\n",
+    ],
+    0,
+    "war declared by a created dynamic country not flagged",
 )
 
 # 10o. a send inside effect_tooltip never fires → no flag.
@@ -3704,6 +3746,27 @@ assert_finds(
     ],
     0,
     "a variable named is_at_war is not a trigger and is not flagged",
+)
+
+# 46. has_opinion_modifier only accepts a scalar modifier ID.
+
+print("\n── invalid has_opinion_modifier block ──")
+
+assert_finds(
+    _check_has_opinion_modifier_block,
+    ["\thas_opinion_modifier = { target = CHI modifier = exploited_us }\n"],
+    1,
+    "block-form has_opinion_modifier flagged",
+)
+assert_finds(
+    _check_has_opinion_modifier_block,
+    [
+        "\thas_opinion_modifier = exploited_us\n",
+        '\tlog = "has_opinion_modifier = { target = CHI }"\n',
+        "\t# has_opinion_modifier = { target = CHI }\n",
+    ],
+    0,
+    "scalar, quoted, and commented has_opinion_modifier forms not flagged",
 )
 
 # 42. Regressions from the review of the two checks above.
