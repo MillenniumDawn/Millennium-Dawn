@@ -1,8 +1,9 @@
 """Reporting tests for validate_focus_tree's structural checks.
 
-Covers duplicate IDs, orphan focuses, missing prerequisite targets, missing
-localisation, focus icons, the cross-country aggregate, and the staged-mode
-reporting scope (findings in unstaged files must stay out of a commit run).
+Covers duplicate IDs, orphan focuses, missing prerequisite targets,
+relative_position_id order and targets, missing localisation, focus icons,
+the cross-country aggregate, and the staged-mode reporting scope (findings in
+unstaged files must stay out of a commit run).
 """
 
 import argparse
@@ -209,6 +210,87 @@ def test_missing_prerequisites_report_case_mismatches_and_dedupe(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# relative_position_id order and targets
+# ---------------------------------------------------------------------------
+
+
+RELATIVE_POSITION_TREES = """shared_focus = {
+\tid = TAG_shared_root
+\tx = 0
+\ty = 0
+\tcost = 1
+}
+focus_tree = {
+\tid = tree_a
+\tfocus = { id = TAG_focus_root x = 0 y = 0 cost = 1 }
+\tfocus = {
+\t\tid = TAG_focus_forward
+\t\tx = 0
+\t\ty = 1
+\t\tcost = 1
+\t\trelative_position_id = TAG_focus_late
+\t}
+\tfocus = {
+\t\tid = TAG_focus_late
+\t\tx = 2
+\t\ty = 1
+\t\tcost = 1
+\t\trelative_position_id = TAG_focus_root
+\t}
+\tfocus = {
+\t\tid = TAG_focus_shared_anchor
+\t\tx = 0
+\t\ty = 1
+\t\tcost = 1
+\t\trelative_position_id = TAG_shared_root
+\t}
+\tfocus = {
+\t\tid = TAG_focus_other_file
+\t\tx = 0
+\t\ty = 1
+\t\tcost = 1
+\t\trelative_position_id = TAG_focus_elsewhere
+\t}
+\tfocus = {
+\t\tid = TAG_focus_ghost
+\t\tx = 0
+\t\ty = 1
+\t\tcost = 1
+\t\trelative_position_id = TAG_focus_nowhere
+\t}
+}
+"""
+
+
+def test_relative_position_forward_and_missing_targets(tmp_path):
+    """A target defined later in the same file and one defined nowhere are
+    reported; a shared focus above, a focus in another file, and an earlier
+    focus are clean."""
+    _focus_file(tmp_path, RELATIVE_POSITION_TREES)
+    _focus_file(
+        tmp_path,
+        "focus_tree = {\n\tid = tree_b\n"
+        "\tfocus = { id = TAG_focus_elsewhere x = 0 y = 0 cost = 1 }\n}\n",
+        name="other.txt",
+    )
+    v = _validator(tmp_path)
+    v.validate_relative_position_targets()
+
+    assert _messages(v) == [
+        "Focus 'TAG_focus_forward' uses relative_position_id 'TAG_focus_late',"
+        " which is defined later in the file - move 'TAG_focus_late' above it",
+        "Focus 'TAG_focus_ghost' uses relative_position_id 'TAG_focus_nowhere',"
+        " which no focus defines",
+    ]
+    assert [i.line for i in v._issues] == [14, 42]
+    assert [i.category for i in v._issues] == [
+        "relative-position-forward-ref",
+        "relative-position-missing-target",
+    ]
+    assert all(i.severity == V.Severity.ERROR for i in v._issues)
+
+
+# ---------------------------------------------------------------------------
 # Missing localisation
 # ---------------------------------------------------------------------------
 
@@ -349,6 +431,7 @@ PROBLEM_TREE = """focus_tree = {
 \t\ty = 0
 \t\tcost = 1
 \t\ticon = GFX_ghost
+\t\trelative_position_id = TAG_focus_b
 \t\tprerequisite = { focus = TAG_focus_b }
 \t\tcompletion_reward = {
 \t\t\tGER = { country_event = offer.1 }
@@ -447,4 +530,91 @@ def test_the_same_findings_are_reported_in_a_full_run(tmp_path, monkeypatch):
         "missing-cross-country-tooltip",
         "pp-malus-completion-reward",
         "missing-search-filters",
+        "relative-position-forward-ref",
     }
+
+
+STRUCTURAL_TREE = """focus_tree = {
+	id = tree
+	focus = {
+		id = TAG_writes_defaults
+		x = 0 y = 0 cost = 1
+		cancel_if_invalid = yes
+		continue_if_invalid = no
+		available_if_capitulated = no
+	}
+	focus = {
+		id = TAG_dead_gate
+		x = 2 y = 0 cost = 1
+		available = { always = no }
+		bypass = { country_exists = PAL }
+	}
+	focus = {
+		id = TAG_empty_blocks
+		x = 4 y = 0 cost = 1
+		mutually_exclusive = { }
+		available = { }
+	}
+	focus = {
+		id = TAG_clean
+		x = 6 y = 0 cost = 1
+	}
+}
+"""
+
+
+def test_structural_defaults_reports_all_kinds(tmp_path):
+    _focus_file(tmp_path, STRUCTURAL_TREE)
+    v = _validator(tmp_path)
+
+    v.validate_structural_defaults()
+
+    categories = sorted(i.category for i in v._issues)
+    assert categories == [
+        "focus-always-no-bypass",
+        "focus-default-write",
+        "focus-default-write",
+        "focus-default-write",
+        "focus-empty-block",
+        "focus-empty-block",
+    ]
+    assert [i.line for i in v._issues] == [5, 6, 7, 12, 18, 19]
+
+
+def test_always_no_available_without_bypass_is_clean(tmp_path):
+    tree = """focus_tree = {
+	id = tree
+	focus = {
+		id = TAG_event_driven
+		x = 0 y = 0 cost = 1
+		available = { always = no }
+	}
+}
+"""
+    _focus_file(tmp_path, tree)
+    v = _validator(tmp_path)
+
+    v.validate_structural_defaults()
+
+    assert v._issues == []
+
+
+def test_multiline_always_no_available_with_bypass_is_flagged(tmp_path):
+    tree = """focus_tree = {
+	id = tree
+	focus = {
+		id = TAG_dead_gate
+		x = 0 y = 0 cost = 1
+		available = {
+			always = no
+		}
+		bypass = { country_exists = PAL }
+	}
+}
+"""
+    _focus_file(tmp_path, tree)
+    v = _validator(tmp_path)
+
+    v.validate_structural_defaults()
+
+    assert [i.category for i in v._issues] == ["focus-always-no-bypass"]

@@ -15,7 +15,7 @@ import glob
 import os
 import re
 import sys
-from typing import FrozenSet, List, Optional, Set, Tuple
+from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -191,24 +191,43 @@ _FLAG_SPRITE_RE = re.compile(
 #   1. A live HOI4 install (Steam path or $HOI4_PATH): interface/*.gfx read
 #      directly and folded into the defined-sprites set.
 #   2. The committed vanilla_sprites.txt manifest (generated from a local
-#      install by refresh_vanilla_data.py) — what CI uses.
+#      install by refresh_vanilla_data.py) — what CI uses. Each line is the
+#      sprite name, followed by its texture's `WxH` when the texture could be
+#      read; the size column feeds the decision icon slot check.
 #   3. The _VANILLA_PREFIXES heuristic below, only when neither exists:
 #      accept vanilla-looking names rather than false-positive on them.
 _VANILLA_SPRITES_MANIFEST = os.path.join(
     os.path.dirname(__file__), "vanilla_sprites.txt"
 )
+_MANIFEST_SIZE_RE = re.compile(r"^(\d+)x(\d+)$")
 
 
-def _load_vanilla_sprite_manifest() -> FrozenSet[str]:
+def _manifest_entries() -> List[List[str]]:
     # UnicodeDecodeError too: decoding happens lazily during iteration, and a
     # corrupt manifest should degrade to the heuristic, not crash the run.
     try:
         with open(_VANILLA_SPRITES_MANIFEST, encoding="utf-8") as fh:
-            return frozenset(
-                line.strip() for line in fh if line.strip() and not line.startswith("#")
-            )
+            return [
+                line.split() for line in fh if line.strip() and not line.startswith("#")
+            ]
     except (OSError, UnicodeDecodeError):
-        return frozenset()
+        return []
+
+
+def _load_vanilla_sprite_manifest() -> FrozenSet[str]:
+    return frozenset(fields[0] for fields in _manifest_entries())
+
+
+def _load_vanilla_sprite_sizes() -> Dict[str, Tuple[int, int]]:
+    """Return sprite name -> texture pixel size for manifest lines carrying one."""
+    sizes: Dict[str, Tuple[int, int]] = {}
+    for fields in _manifest_entries():
+        if len(fields) < 2:
+            continue
+        m = _MANIFEST_SIZE_RE.match(fields[1])
+        if m:
+            sizes[fields[0]] = (int(m.group(1)), int(m.group(2)))
+    return sizes
 
 
 _VANILLA_FONTS_MANIFEST = os.path.join(os.path.dirname(__file__), "vanilla_fonts.txt")

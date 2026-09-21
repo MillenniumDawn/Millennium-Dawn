@@ -93,6 +93,55 @@ def test_parse_tech_file_without_optional_maps_still_builds_prerequisites():
     assert prereqs == {"child_tech": {"root_tech"}}
 
 
+def test_parse_tech_file_reads_single_line_path_and_module_blocks():
+    prereqs = defaultdict(set)
+    all_techs = set()
+    modules = defaultdict(set)
+    V._parse_tech_file(
+        "technologies = {\n"
+        "\troot_tech = {\n"
+        "\t\tpath = { research_cost_coeff = 1 leads_to_tech = child_tech }\n"
+        "\t\tenable_equipment_modules = { engine_2 armor_plate }\n"
+        "\t}\n"
+        "\tchild_tech = {\n"
+        "\t\tpath = {\n\t\t\tleads_to_tech = leaf_tech\n\t\t}\n"
+        "\t}\n"
+        "}\n",
+        prereqs,
+        all_techs,
+        modules,
+    )
+    assert prereqs == {"child_tech": {"root_tech"}, "leaf_tech": {"child_tech"}}
+    assert modules == {"engine_2": {"root_tech"}, "armor_plate": {"root_tech"}}
+
+
+def test_parse_tech_file_reads_single_line_allow_branch():
+    dlc = defaultdict(list)
+    V._parse_tech_file(
+        "technologies = {\n"
+        "\troot_tech = {\n"
+        '\t\tallow_branch = { has_dlc = "No Step Back" }\n'
+        "\t\tai_will_do = {\n"
+        '\t\t\tmodifier = { factor = 0 NOT = { has_dlc = "By Blood Alone" } }\n'
+        "\t\t}\n"
+        "\t}\n"
+        "\tchild_tech = {\n"
+        "\t\tallow_branch = {\n"
+        '\t\t\tNOT = { has_dlc = "By Blood Alone" }\n'
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        defaultdict(set),
+        set(),
+        None,
+        dlc,
+    )
+    assert dlc == {
+        "root_tech": [("require", "No Step Back")],
+        "child_tech": [("forbid", "By Blood Alone")],
+    }
+
+
 def test_file_without_technologies_wrapper_contributes_nothing(tmp_path):
     _write(
         tmp_path,

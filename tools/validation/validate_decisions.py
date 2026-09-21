@@ -16,7 +16,6 @@ from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from image_size import read_image_size
 from shared_utils import (
     ai_only_decision_categories,
     atomic_write_text,
@@ -31,7 +30,7 @@ from shared_utils import (
     strip_comments,
     strip_inline_comment,
 )
-from sprite_index import build_sprite_index, build_sprite_texture_index
+from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -49,6 +48,9 @@ _DECISION_REFERENCE_SOURCE_PATTERNS = (
     "events/**/*.txt",
     "history/**/*.txt",
 )
+
+# Decision and category IDs may contain hyphens.
+_LITERAL_ID_TOKEN = r"[\w-]+"
 
 
 def _should_skip(filename: str) -> bool:
@@ -188,16 +190,40 @@ def _slot_for_size(width: int, height: int) -> Optional[str]:
     return None
 
 
-def _resolved_sprite(kind: str, value: str, textures: Dict[str, str]) -> Optional[str]:
+def _resolved_sprite(kind: str, value: str, sprites: SpriteSizeIndex) -> Optional[str]:
     """Return the sprite name the engine renders for one icon/picture value."""
     for candidate in _sprite_candidates(kind, value):
-        if candidate in textures:
+        if candidate in sprites:
             return candidate
     return None
 
 
+# Bespoke cartel map icons drawn at 52x40 on purpose; accepted as-is.
+_SLOT_EXEMPT_SPRITES = frozenset(
+    {
+        "GFX_decision_sinaloa_high",
+        "GFX_decision_sinaloa_medium",
+        "GFX_decision_sinaloa_low",
+        "GFX_decision_sinaloa_none",
+        "GFX_decision_tamaulpas_high",
+        "GFX_decision_tamaulpas_medium",
+        "GFX_decision_tamaulpas_low",
+        "GFX_decision_tamaulpas_none",
+        "GFX_decision_tierra_caliente_high",
+        "GFX_decision_tierra_caliente_medium",
+        "GFX_decision_tierra_caliente_low",
+        "GFX_decision_tierra_caliente_none",
+    }
+)
+
+_MOD_ART_HINT = "resize with tools/assets/resize_decision_icons.py"
+_VANILLA_ART_HINT = (
+    "vanilla art: use a sprite sized for this slot or add a resized MD copy"
+)
+
+
 def _icon_type_message(
-    kind: str, owner: str, value: str, textures: Dict[str, str]
+    kind: str, owner: str, value: str, sprites: SpriteSizeIndex
 ) -> Optional[str]:
     """Return a finding when the value's art belongs to a different slot.
 
@@ -206,19 +232,20 @@ def _icon_type_message(
     """
     if "[" in value or "]" in value:
         return None
-    sprite = _resolved_sprite(kind, value, textures)
-    if sprite is None:
+    sprite = _resolved_sprite(kind, value, sprites)
+    if sprite is None or sprite in _SLOT_EXEMPT_SPRITES:
         return None
-    size = read_image_size(textures[sprite])
+    size = sprites.size(sprite)
     if size is None:
         return None
     actual = _slot_for_size(*size)
     if actual is None or actual == kind:
         return None
+    hint = _VANILLA_ART_HINT if sprites.is_vanilla_only(sprite) else _MOD_ART_HINT
     return (
         f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> {sprite} is "
         f"{size[0]}x{size[1]}, which is {_SLOT_LABEL[actual]} art; a "
-        f"{_SLOT_LABEL[kind]} is {_SLOT_TYPICAL_SIZE[kind]}"
+        f"{_SLOT_LABEL[kind]} is {_SLOT_TYPICAL_SIZE[kind]} ({hint})"
     )
 
 
@@ -353,10 +380,18 @@ def _unactivated(candidates: set, activated: set) -> list:
     return sorted(remaining)
 
 
+# The leading `\b` on both keywords rejects a longer key ending in one
+# (`md_unlock_decision_tooltip`).
 _UNLOCK_CATEGORY_RE = re.compile(
-    r"unlock_decision_category_tooltip\s*=\s*([A-Za-z0-9_]+)"
+    rf"\bunlock_decision_category_tooltip\s*=\s*({_LITERAL_ID_TOKEN})"
 )
-_UNLOCK_DECISION_RE = re.compile(r"unlock_decision_tooltip\s*=\s*([A-Za-z0-9_]+)")
+# `unlock_decision_tooltip` takes a bare decision token or the block form
+# `{ decision = <token> ... }` (resources/documentation/effects_documentation.md),
+# where the decision may sit beside `show_effect_tooltip` / `show_modifiers`.
+_UNLOCK_DECISION_RE = re.compile(
+    rf"\bunlock_decision_tooltip\s*=\s*(?:({_LITERAL_ID_TOKEN})"
+    rf"|\{{[^{{}}]*?\bdecision\s*=\s*({_LITERAL_ID_TOKEN}))"
+)
 # State that flips on during play, so the category it gates appears mid-game.
 _MIDGAME_GATE_RE = re.compile(
     r"\b(?:has_country_flag|has_global_flag|has_completed_focus|has_idea)"
@@ -368,7 +403,60 @@ _SET_FLAG_RE = re.compile(
     r"set_(?:country|global)_flag\s*=\s*(?:([A-Za-z0-9_]+)"
     r"|\{[^{}]*?flag\s*=\s*([A-Za-z0-9_]+))"
 )
-_UNLOCK_IN_EFFECT_RE = re.compile(r"unlock_decision_tooltip\s*=\s*([A-Za-z0-9_]+)")
+
+
+def _unlock_decision_names(text: str) -> Set[str]:
+    """Decision names `unlock_decision_tooltip` names in *text*, either form.
+
+    A quoted string is text, not an effect: a `log = "unlock_decision_tooltip =
+    X"` line names nothing, so the strings are blanked before matching.
+    """
+    code = blank_quoted_strings(text)
+    return {m.group(1) or m.group(2) for m in _UNLOCK_DECISION_RE.finditer(code)}
+
+
+def _announced_names(refs: List[Tuple[str, str, str, int]]) -> Set[str]:
+    """Names told to the player by (kind, name, file, line) unlock refs."""
+    return {name for _, name, _, _ in refs}
+
+
+# What each unlock tooltip names, and where that definition lives.
+_UNLOCK_TARGET_FIELD = {
+    "decision": "unlock_decision_tooltip",
+    "category": "unlock_decision_category_tooltip",
+}
+_UNLOCK_TARGET_SOURCE = {
+    "decision": "common/decisions",
+    "category": "common/decisions/categories",
+}
+
+
+def _undefined_unlock_message(kind: str, name: str) -> str:
+    """Finding text for an unlock tooltip whose target has no definition."""
+    return (
+        f"{_UNLOCK_TARGET_FIELD[kind]} = {name} -> no {kind} named {name} is "
+        f"defined in {_UNLOCK_TARGET_SOURCE[kind]} (fix the typo or define it)"
+    )
+
+
+def _unlock_refs(text: str) -> List[Tuple[str, str, int]]:
+    """Return (kind, name, line) for each unlock tooltip reference in *text*.
+
+    The caller strips comments first, so a commented-out tooltip is absent.
+    Quoted strings are blanked before matching: a string quoting the keyword
+    references nothing. blank_quoted_strings keeps every offset and newline, so
+    a reported line still points at the real reference.
+    """
+    code = blank_quoted_strings(text)
+    refs = [
+        ("category", m.group(1), code.count("\n", 0, m.start()) + 1)
+        for m in _UNLOCK_CATEGORY_RE.finditer(code)
+    ]
+    refs.extend(
+        ("decision", m.group(1) or m.group(2), code.count("\n", 0, m.start()) + 1)
+        for m in _UNLOCK_DECISION_RE.finditer(code)
+    )
+    return refs
 
 
 def _flat_flag_gates(block: str) -> Set[str]:
@@ -389,23 +477,23 @@ def _flat_flag_gates(block: str) -> Set[str]:
     return flags
 
 
-def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, set]:
-    """Single-read worker: (activated, missions, removed, announced).
+def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, list]:
+    """Single-read worker: (activated, missions, removed, unlock refs).
 
     Combines the activation, external-removal and unlock-tooltip scans so the
-    full-repo .txt sweep reads each file once instead of three times.
-    `announced` holds both the categories and the individual decisions that some
-    focus or effect tells the player it has unlocked.
+    full-repo .txt sweep reads each file once instead of three times. The last
+    element holds (kind, name, line) for every reference that tells the player a
+    decision or category it has unlocked; the caller adds the file path.
     """
     if _should_skip(filename):
-        return set(), set(), set(), set()
+        return set(), set(), set(), []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
     )
     decisions: set = set()
     missions: set = set()
     removals: set = set()
-    announced: set = set()
+    unlock_refs: List[Tuple[str, str, int]] = []
     if "activate_targeted_decision" in text_file:
         for block in _TARGETED_BLOCK_RE.findall(text_file):
             decisions.update(_DECISION_NAME_RE.findall(block))
@@ -415,11 +503,9 @@ def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, set]:
         removals.update(_REMOVE_DECISION_RE.findall(text_file))
         for block in _REMOVE_TARGETED_BLOCK_RE.findall(text_file):
             removals.update(_REMOVE_DECISION_NAME_RE.findall(block))
-    if "unlock_decision_category_tooltip" in text_file:
-        announced.update(_UNLOCK_CATEGORY_RE.findall(text_file))
-    if "unlock_decision_tooltip" in text_file:
-        announced.update(_UNLOCK_DECISION_RE.findall(text_file))
-    return decisions, missions, removals, announced
+    if "unlock_decision" in text_file:
+        unlock_refs = _unlock_refs(text_file)
+    return decisions, missions, removals, unlock_refs
 
 
 def _load_scripted_localisation_keys(mod_path: str) -> set:
@@ -448,7 +534,9 @@ _DECISIONS_BLOCK_RE = re.compile(
     r"^\t[^\t#\n]+?\s*=\s*\{.*?^\t\}", flags=re.MULTILINE | re.DOTALL
 )
 _DECISION_TOKEN_LINE_RE = re.compile(r"^\t(\S+)\s*=", flags=re.MULTILINE)
-_CATEGORY_BLOCK_RE = re.compile(r"^\w* = \{.*?^\}", flags=re.DOTALL | re.MULTILINE)
+_CATEGORY_BLOCK_RE = re.compile(
+    rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
+)
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
@@ -805,6 +893,12 @@ def _is_effectively_ai_only(
 ) -> bool:
     """Whether the decision or its category is gated to AI players."""
     return dec.ai_only or dec_id in ai_only_by_category
+
+
+# AI-only decisions whose name keys stay on purpose.
+_AI_ONLY_LOC_KEEP = frozenset(
+    {"monetary_policy_austerity", "monetary_policy_expand_money_supply"}
+)
 
 
 def _formable_state_counts(factories: List["DecisionFactory"]) -> Dict[str, int]:
@@ -1394,7 +1488,7 @@ class Validator(BaseValidator):
         self.missing_icons = missing_icons
         self.unannounced_categories = unannounced_categories
         self._activation_removal_cache: Optional[
-            Tuple[Set[str], Set[str], Set[str], Set[str]]
+            Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]]]
         ] = None
         self._ai_only_by_category: Optional[Set[str]] = None
         self._ai_only_categories: Optional[Dict[str, str]] = None
@@ -1433,8 +1527,13 @@ class Validator(BaseValidator):
 
     def _get_activation_removal_scan(
         self,
-    ) -> Tuple[Set[str], Set[str], Set[str], Set[str]]:
-        """Scan shipped content for activations, external removals and unlocks."""
+    ) -> Tuple[Set[str], Set[str], Set[str], List[Tuple[str, str, str, int]]]:
+        """Scan shipped content for activations, external removals and unlocks.
+
+        The fourth element is every `unlock_*_tooltip` reference as
+        (kind, name, file, line); the names it carries are the unlocks that
+        announce themselves to the player.
+        """
         if self._activation_removal_cache is not None:
             return self._activation_removal_cache
         all_files = [
@@ -1447,19 +1546,28 @@ class Validator(BaseValidator):
         activated_decisions: Set[str] = set()
         activated_missions: Set[str] = set()
         externally_removed: Set[str] = set()
-        announced: Set[str] = set()
-        for decision_set, mission_set, removed_set, announced_set in self._pool_map(
-            _scan_activations_and_removals, all_files, chunksize=30
+        unlock_refs: List[Tuple[str, str, str, int]] = []
+        for filename, (
+            decision_set,
+            mission_set,
+            removed_set,
+            file_refs,
+        ) in zip(
+            all_files,
+            self._pool_map(_scan_activations_and_removals, all_files, chunksize=30),
         ):
             activated_decisions |= decision_set
             activated_missions |= mission_set
             externally_removed |= removed_set
-            announced |= announced_set
+            relative = os.path.relpath(filename, self.mod_path)
+            unlock_refs.extend(
+                (kind, name, relative, line) for kind, name, line in file_refs
+            )
         self._activation_removal_cache = (
             activated_decisions,
             activated_missions,
             externally_removed,
-            announced,
+            unlock_refs,
         )
         return self._activation_removal_cache
 
@@ -2340,6 +2448,8 @@ class Validator(BaseValidator):
                 # weight — the check runs in reverse and reports keys that
                 # exist. `custom_cost_text` is exempt: it can point at a
                 # scripted-loc key shared with player-facing decisions.
+                if dec_id in _AI_ONLY_LOC_KEEP:
+                    continue
                 for key in (name_key, f"{dec_id}_desc", dec.desc_override):
                     if key and key in loc_keys:
                         ai_results.append(
@@ -2399,7 +2509,8 @@ class Validator(BaseValidator):
         if not flagged:
             return []
 
-        _, _, _, announced = self._get_activation_removal_scan()
+        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        announced = _announced_names(unlock_refs)
         return [
             f"{name} - {sources.get(name, 'decisions/categories')}: AI-only "
             f"decision category has localisation key '{key}'"
@@ -2407,6 +2518,40 @@ class Validator(BaseValidator):
             if name not in announced
             for key in flagged[name]
         ]
+
+    def validate_undefined_unlock_tooltips(self):
+        """Flag unlock tooltips naming a decision or category that does not exist.
+
+        `unlock_decision_tooltip = <decision>` (or `= { decision = <decision> }`)
+        and `unlock_decision_category_tooltip = <category>` tell the player what
+        has just opened. A typo or a rename leaves the tooltip naming nothing
+        while the unlock still happens. #3957's stale category name produced
+        `Invalid Decision Category` in error.log. This check reports the stale
+        reference during CI, with the file and line of the call.
+        """
+        self._log_section("Checking unlock tooltips name real decisions...")
+        self._report(
+            self._undefined_unlock_targets(),
+            "✓ Every unlock tooltip names a defined decision or category",
+            "Unlock tooltips naming a decision or category that does not exist:",
+            Severity.ERROR,
+            category="undefined-unlock-tooltip-target",
+        )
+
+    def _undefined_unlock_targets(self) -> List[Tuple[str, str, int]]:
+        """Findings for unlock tooltips whose decision/category is undefined."""
+        known = {
+            "decision": set(
+                parse_all_decision_names(self.mod_path, lowercase=False)[0]
+            ),
+            "category": set(parse_decision_categories(self.mod_path)),
+        }
+        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        results = []
+        for kind, name, filepath, line in unlock_refs:
+            if name not in known[kind]:
+                results.append((_undefined_unlock_message(kind, name), filepath, line))
+        return results
 
     def validate_unannounced_categories(self):
         """Flag categories that switch on mid-game without telling the player.
@@ -2432,7 +2577,8 @@ class Validator(BaseValidator):
     def _unannounced_categories(self) -> List[str]:
         """Findings for mid-game categories nothing announces to the player."""
         ai_only = self._get_ai_only_categories()
-        _, _, _, announced = self._get_activation_removal_scan()
+        _, _, _, unlock_refs = self._get_activation_removal_scan()
+        announced = _announced_names(unlock_refs)
         by_category = parse_categories_with_decisions(self.mod_path, lowercase=False)
 
         results = []
@@ -2492,9 +2638,13 @@ class Validator(BaseValidator):
         for setter in factories:
             for block_name in EFFECT_BLOCKS:
                 block = getattr(setter, block_name)
-                if not block or "unlock_decision_tooltip" not in block:
+                if not block:
                     continue
-                announced = set(_UNLOCK_IN_EFFECT_RE.findall(block))
+                announced = _unlock_decision_names(block)
+                # Nothing announced: only the inconsistent case (some unlocks
+                # announced, siblings missed) is a defect.
+                if not announced:
+                    continue
                 missed: Set[str] = set()
                 for first, second in _SET_FLAG_RE.findall(block):
                     missed |= gated.get(first or second, set())
@@ -3022,14 +3172,19 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking decision icons match their UI slot...")
 
-        textures = build_sprite_texture_index(self.mod_path)
-        if len(textures) < 1000:
+        sprites = build_sprite_size_index(self.mod_path, self._pool_map)
+        if len(sprites) < 1000:
             self.log(
-                f"  Only {len(textures)} GFX textures loaded — sprite definitions "
+                f"  Only {len(sprites)} GFX textures loaded — sprite definitions "
                 "did not load; skipping the icon type check",
                 "warning",
             )
             return
+        self.log(
+            "  Vanilla sprite sizes from vanilla_sprites.txt (no HOI4 install)"
+            if sprites.manifest_backed
+            else "  Vanilla sprite sizes read from the HOI4 install"
+        )
 
         files = self._collect_files(["common/decisions/**/*.txt"], ignore_staged=True)
         ref_lists = self._pool_map(
@@ -3039,11 +3194,16 @@ class Validator(BaseValidator):
         results = []
         for filepath, refs in zip(files, ref_lists):
             for owner, kind, value, line in refs:
-                msg = _icon_type_message(kind, owner, value, textures)
+                msg = _icon_type_message(kind, owner, value, sprites)
                 if not msg:
                     continue
                 results.append((msg, os.path.relpath(filepath, self.mod_path), line))
 
+        if sprites.unreadable:
+            self.log(
+                f"  {sprites.unreadable} referenced textures not on disk (skipped)",
+                "warning",
+            )
         self._report(
             results,
             "✓ All decision icons use art sized for their slot",
@@ -3082,6 +3242,7 @@ class Validator(BaseValidator):
         self.validate_visible_equals_available()
         self.validate_bare_trigger_names()
         self.validate_missing_localisation()
+        self.validate_undefined_unlock_tooltips()
         self.validate_unannounced_decision_unlocks()
         self.validate_missing_log()
         self.validate_log_not_first()

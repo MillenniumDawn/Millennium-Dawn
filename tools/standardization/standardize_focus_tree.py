@@ -23,6 +23,7 @@ from common_utils import (
     resolve_output_file_and_backup,
 )
 from shared_utils import (
+    add_standard_file_arguments,
     atomic_write_text,
     blank_quoted_strings,
     collapse_or_compact,
@@ -385,11 +386,27 @@ def _fix_log_id(line: str, focus_id: str) -> str:
     return _LOG_FOCUS_RE.sub(rf"\g<1>Focus {focus_id}\g<3>", line)
 
 
+def _effect_has_statements(effect_block):
+    """True when an effect block runs anything besides its log line."""
+    if len(effect_block) == 1:
+        split = _split_block(effect_block, allow_trailing_comment=True)
+        inner = split[1] if split is not None else []
+    else:
+        inner = effect_block[1:-1]
+    for line in inner:
+        stripped = strip_inline_comment(line).strip()
+        if stripped and not stripped.startswith("log ="):
+            return True
+    return False
+
+
 def effect_block_with_log(effect_block, focus_id):
     """Return an effect block's lines, injecting a log line as the first
     statement if the block doesn't already contain one, or correcting a
-    mismatched focus ID / missing 'Focus ' prefix in an existing log line."""
-    if not effect_block:
+    mismatched focus ID / missing 'Focus ' prefix in an existing log line.
+    An empty or log-only block is dropped: a log with nothing beside it
+    records an effect that never runs (#4456)."""
+    if not effect_block or not _effect_has_statements(effect_block):
         return []
     if focus_id and not any("log =" in line for line in effect_block):
         log_line = f'\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus {focus_id}"'
@@ -1041,14 +1058,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Standardize HOI4 focus tree files - reformats focus blocks and all focus tree properties"
     )
-    parser.add_argument("input_file", help="Input focus tree file")
-    parser.add_argument(
-        "-o", "--output", help="Output file (default: overwrites input)"
-    )
-    parser.add_argument(
-        "-b", "--backup", action="store_true", help="Create backup before modifying"
-    )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    add_standard_file_arguments(parser, input_help="Input focus tree file")
     add_check_naming_argument(parser)
 
     args = parser.parse_args()

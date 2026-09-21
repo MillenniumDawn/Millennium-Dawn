@@ -1,6 +1,6 @@
 # Idea Reference
 
-On-demand reference for idea structure and examples. For best practices, see AGENTS.md.
+Idea conventions, category-specific gates, and examples.
 
 ## Example Idea
 
@@ -30,7 +30,7 @@ BRA_idea_higher_minimum_wage_1 = {
 - Keep `allowed = { always = no }` on slotted ideas that must not appear in the picker (religion, other laws). `add_idea` still applies them. Do not use it in slotless categories (`country`, `hidden_ideas`); that gate is dead and the validator flags it
 - Remove `cancel = { always = no }` (checked hourly, never true)
 - A slotted idea whose `available` can turn false mid-game needs a mirrored `cancel` with the negated condition. `available` gates picking only — the engine never strips an already-slotted idea when it goes false — and the spirit categories are `removal_cost = -1`, so the player cannot un-pick it either. `cancel` is checked hourly and frees the slot. Precedent: the doctrine-gated office core spirits in `common/ideas/zzz_{army,navy,air}_spirits.txt`
-- Remove empty `on_add = { log = "" }` unless actually doing something
+- Drop an `on_add` / `on_remove` whose only statement is a log; `check_common_mistakes.py` rejects it (#4456) and the ideas standardizer removes it
 - Tiered ideas use suffix numbering: `TAG_idea_name_1`, `TAG_idea_name_2`, with shared `name = TAG_idea_name` for display
 - `name = X` redirects **both** name and description loc lookups — game reads `X` for the displayed name and `X_desc` for the tooltip body. The idea's own ID is no longer used for loc once `name =` is set.
 - Pick a `name = X` value that no focus, decision, or other idea uses. A focus with `id = X` and an idea with `name = X` share the same `X` / `X_desc` loc keys — duplicate definitions in `.yml` resolve to the last one written, silently overwriting the other game object's text. If a tier needs unique flavor while sharing a display name with sibling tiers, give it a distinct `name =` and its own `name_desc` entry rather than reusing the shared key.

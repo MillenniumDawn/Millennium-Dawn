@@ -32,7 +32,7 @@ Skip this step when no `tools/**` files changed.
 
 ### 2. Challenge every changed block
 
-Apply the full catalog in `.claude/docs/bug-patterns.md` — both the "Adversarial questions" and "Scan patterns" sections — plus every pattern in `.claude/rules/general-rules.md` § Scripting Patterns. For each question, if the answer is "no, it's not handled", flag it.
+Apply the full catalog in `.claude/docs/bug-patterns.md` — both the "Adversarial questions" and "Scan patterns" sections — plus the relevant sections of `.claude/docs/scripting-edge-cases.md` and `.claude/docs/hoi4-data-structures.md`. For each question, if the answer is "no, it's not handled", flag it.
 
 ### 3. Output
 
@@ -46,4 +46,9 @@ For each file reviewed, report:
 
 Mark anything that could corrupt save state, soft-lock the player, or crash the GUI as **[critical]**.
 
-End with total count or "No adversarial issues found — the author handled all edge cases."
+Lead with the findings or "No findings in the reviewed scope." State verification
+limits rather than claiming every edge case is handled.
+
+When the branch has an open PR, a body (title and description) that does not match the diff is a **[blocker]** and rejects the PR until the body describes what the code actually does: name what the body claims that the diff lacks or what the diff contains that the body omits. A missing or empty body counts as not matching.
+
+End with `BLUF`.

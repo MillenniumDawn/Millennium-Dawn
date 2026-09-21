@@ -8,6 +8,7 @@ on:
       - "tools/docs_checks/**"
       - ".github/workflows/docs-quality.yml"
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -53,4 +54,31 @@ jobs:
           python3 tools/docs_checks/check_accessibility_basics.py --self-test
 
       - name: Docs checks (lint, build, links, a11y, perf, ...)
+        id: checks
         run: python3 tools/docs_checks/check_docs.py
+
+      - name: Write docs-quality sidecar
+        if: always()
+        run: |
+          status=passed
+          errors=0
+          if [ "${{ steps.checks.outcome }}" != "success" ]; then
+            status=failed
+            errors=1
+          fi
+          {
+            printf '{"suite":"tools","job":"Docs quality",'
+            printf '"name":"docs-quality",'
+            printf '"title":"Docs quality",'
+            printf '"status":"%s","errors":%d,' "$status" "$errors"
+            printf '"warnings":0,"issues":[]}\n'
+          } >> suite-run.json
+
+      - name: Upload docs-quality results
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: docs-quality-results
+          path: suite-run.json
+          if-no-files-found: error
+          retention-days: 7

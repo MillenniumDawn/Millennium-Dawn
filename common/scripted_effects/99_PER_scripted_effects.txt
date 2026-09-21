@@ -18,7 +18,7 @@ PER_scripted_effect_update_palestine_arms_via_land = {
 	if = {
 		limit = { NOT = { PER = { has_country_flag = PIJ_not_scoped_support } } }
 		set_temp_variable = { PIJ_arms_temp_var = FROM.party_pop_array^9 }
-		if = { limit = { PER = { has_country_flag = PIJ_support_bonus } } multiply_temp_variable = { PIJ_arms_temp_var = 1.2 } }
+		if = { limit = { PER = { has_completed_focus = PER_advise_PIJ } } multiply_temp_variable = { PIJ_arms_temp_var = 1.2 } }
 		multiply_temp_variable = { PIJ_arms_temp_var = 200 }
 		add_to_variable = { PIJ_arms_value = PIJ_arms_temp_var }
 		add_to_variable = { arms_hard_varible = PIJ_arms_temp_var }
@@ -78,7 +78,7 @@ PER_scripted_effect_update_palestine_arms_via_sea = {
 	if = {
 		limit = { NOT = { PER = { has_country_flag = PIJ_not_scoped_support } } }
 		set_temp_variable = { PIJ_arms_temp_var = FROM.party_pop_array^9 }
-		if = { limit = { PER = { has_country_flag = PIJ_support_bonus } } multiply_temp_variable = { PIJ_arms_temp_var = 1.2 } }
+		if = { limit = { PER = { has_completed_focus = PER_advise_PIJ } } multiply_temp_variable = { PIJ_arms_temp_var = 1.2 } }
 		multiply_temp_variable = { PIJ_arms_temp_var = 150 }
 		add_to_variable = { hamas_arms_value = PIJ_arms_temp_var }
 		add_to_variable = { arms_hard_varible = PIJ_arms_temp_var }
@@ -124,9 +124,7 @@ PER_SAZ_independence = {
 	PER = { activate_mission = PER_rebellion_in_azerbaijan }
 	hidden_effect = {
 		407 = {
-			remove_dynamic_modifier = {
-				modifier = PER_azeri_separatism
-			}
+			if = { limit = { has_dynamic_modifier = { modifier = PER_azeri_separatism } } remove_dynamic_modifier = { modifier = PER_azeri_separatism } }
 			transfer_state_to = SAZ
 			add_core_of = SAZ
 		}
@@ -213,9 +211,7 @@ PER_SAZ_independence = {
 PER_SAZ_independence_alt = {
 	hidden_effect = {
 		407 = {
-			remove_dynamic_modifier = {
-				modifier = PER_azeri_separatism
-			}
+			if = { limit = { has_dynamic_modifier = { modifier = PER_azeri_separatism } } remove_dynamic_modifier = { modifier = PER_azeri_separatism } }
 			transfer_state_to = SAZ
 			add_core_of = SAZ
 		}
@@ -313,9 +309,7 @@ PER_BLC_independence = {
 	PER = { activate_mission = PER_rebellion_in_balochistan }
 	hidden_effect = {
 		401 = {
-			remove_dynamic_modifier = {
-				modifier = PER_baloch_separatism
-			}
+			if = { limit = { has_dynamic_modifier = { modifier = PER_baloch_separatism } } remove_dynamic_modifier = { modifier = PER_baloch_separatism } }
 			transfer_state_to = BLC
 		}
 		BLC = {
@@ -611,9 +605,7 @@ PER_ARA_independence = {
 	PER = { activate_mission = PER_rebellion_in_arabistan }
 	hidden_effect = {
 		399 = {
-			remove_dynamic_modifier = {
-				modifier = PER_ahvaz_separatism
-			}
+			if = { limit = { has_dynamic_modifier = { modifier = PER_ahvaz_separatism } } remove_dynamic_modifier = { modifier = PER_ahvaz_separatism } }
 		}
 		ARA = {
 			division_template = {
@@ -703,6 +695,7 @@ PER_scripted_effect_update_principalists_popularity_variable = {
 		set_temp_variable = { sum_parties = principalists_pop }
 		add_to_temp_variable = { sum_parties = reformists_pop }
 		set_temp_variable = { temp_var_hundred = 100 }
+		clamp_temp_variable = { var = sum_parties min = 1 }
 		divide_temp_variable = { temp_var_hundred = sum_parties }
 		multiply_temp_variable = { principalists_pop = temp_var_hundred }
 		set_variable = {
@@ -729,6 +722,180 @@ PER_scripted_effect_update_principalists_popularity_variable = {
 		round_variable = reformists_popularity_percent_round
 	}
 }
+
+PER_election_weekly_tick = {
+	if = {
+		limit = {
+			has_country_flag = PER_election_enabled
+			NOT = { has_country_flag = PER_turn_off_IR_stuff }
+		}
+		PER_scripted_effect_update_principalists_popularity_variable = yes
+		if = { #8th Period
+			limit = {
+				has_country_flag = PER_election_enabled
+				date > 2001.6.1
+				date < 2002.7.1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = principalists_popularity_percent
+						value = 50
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = PER_election_events.9
+			}
+			else = {
+				if = {
+					limit = { has_country_flag = PER_yazdi_goes }
+					country_event = PER_election_events.81
+				}
+				else = { country_event = PER_election_events.8 }
+			}
+		}
+		else_if = { #9th Period
+			limit = {
+				has_country_flag = PER_election_enabled
+				date > 2005.6.9
+				date < 2006.7.1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = principalists_popularity_percent
+						value = 50
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = PER_election_events.11
+			}
+			else = {
+				if = {
+					limit = { has_country_flag = PER_kavakebian_goes }
+					country_event = PER_election_events.101
+				}
+				else = { country_event = PER_election_events.10 }
+			}
+		}
+		else_if = { #10th Period
+			limit = {
+				has_country_flag = PER_election_enabled
+				date > 2009.6.5
+				date < 2010.7.1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = principalists_popularity_percent
+						value = 50
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = PER_election_events.13
+			}
+			else = {
+				if = {
+					limit = { has_country_flag = PER_karroubi_goes }
+					country_event = PER_election_events.121
+				}
+				else = { country_event = PER_election_events.12 }
+			}
+		}
+		else_if = { #11th Period
+			limit = {
+				has_country_flag = PER_election_enabled
+				date > 2013.6.7
+				date < 2014.7.1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = principalists_popularity_percent
+						value = 50
+						compare = greater_than_or_equals
+					}
+				}
+				if = {
+					limit = {
+						has_country_flag = principalist_portrait_ghalibaf
+						NOT = { has_country_flag = PER_mashaei_goes }
+					}
+					country_event = PER_election_events.15
+				}
+				else_if = {
+					limit = { has_country_flag = PER_mashaei_goes }
+					country_event = PER_election_events.151
+				}
+				else = { country_event = PER_election_events.16 }
+			}
+			else = { country_event = PER_election_events.14 }
+		}
+		else_if = { #12th Period
+			limit = {
+				has_country_flag = PER_election_enabled
+				date > 2017.5.12
+				date < 2018.6.1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = principalists_popularity_percent
+						value = 50
+						compare = greater_than_or_equals
+					}
+				}
+				if = {
+					limit = { has_country_flag = PER_bayadi_goes }
+					country_event = PER_election_events.181
+				}
+				else = { country_event = PER_election_events.18 }
+			}
+			else = { country_event = PER_election_events.17 }
+		}
+		else_if = { #13th Period
+			limit = {
+				has_country_flag = PER_election_enabled
+				date > 2021.6.11
+				date < 2022.7.1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = principalists_popularity_percent
+						value = 50
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = PER_election_events.20
+			}
+			else_if = {
+				limit = { has_country_flag = PER_haghshenas_goes }
+				country_event = PER_election_events.191
+			}
+			else = { country_event = PER_election_events.19 }
+		}
+		else_if = { #14th Period
+			limit = {
+				has_country_flag = PER_election_enabled
+				date > 2024.6.5
+				date < 2025.7.1
+			}
+			if = {
+				limit = {
+					check_variable = {
+						var = principalists_popularity_percent
+						value = 50
+						compare = greater_than_or_equals
+					}
+				}
+				country_event = PER_election_events.201
+			}
+			else = { country_event = PER_election_events.202 }
+		}
+	}
+}
+
 PER_scripted_effect_finish_election = {
 	hidden_effect = {
 		clr_country_flag = PER_election_enabled
@@ -853,7 +1020,6 @@ PER_scripted_effect_finish_election = {
 				anti_zionist
 			}
 		}
-		remove_mission = PER_auto_update_gui_weekly
 	}
 }
 
@@ -1470,7 +1636,7 @@ PER_montazeri_change = {
 		create_country_leader = {
 			name = "Hossein-Ali Montazeri"
 			picture = "hossein_montazeri.dds"
-			ideology = Communist-State
+			ideology = communist_state
 			traits = {
 				neutrality_Neutral_Autocracy
 				zealous
@@ -1921,7 +2087,7 @@ PER_asadollah_change = {
 		create_country_leader = {
 			name = "Asadollah Bayat-Zanjani"
 			picture = "asadollah_bayat-zanjani.dds"
-			ideology = Communist-State
+			ideology = communist_state
 			traits = {
 				neutrality_Neutral_Autocracy
 				zealous
@@ -2302,7 +2468,7 @@ PER_saneei_change = {
 		create_country_leader = {
 			name = "Yousef Saanei"
 			picture = "yousef_saanei.dds"
-			ideology = Communist-State
+			ideology = communist_state
 			traits = {
 				neutrality_Neutral_Autocracy
 				zealous

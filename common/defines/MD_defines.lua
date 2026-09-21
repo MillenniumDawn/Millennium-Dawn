@@ -52,9 +52,13 @@
 	NDefines.NDiplomacy.REVOKE_GUARANTEE_COST = 30
 	NDefines.NDiplomacy.OPINION_PER_VOLUNTEER = 15
 	NDefines.NDiplomacy.MAX_OPINION_FROM_VOLUNTEERS = 50
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 3
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 20
 	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.5  -- was -0.7
+
+	--License AI: Modifiers for license
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 5 -- 2 is the default value
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_PUPPET_BASE = 5 -- 15 is the default value
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 30
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_OPINION_FACTOR = 0.35 -- 0.4 is the default value
 
 	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_BASE = 0  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
 	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_FACTOR = 0.05  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
@@ -277,7 +281,7 @@
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.RADAR_INTEL_EFFECT = 60 -- 40
 	NDefines.NBuildings.BASE_FACTORY_REPAIR = 0.25
-	NDefines.NBuildings.MAX_SHARED_SLOTS = 72
+	NDefines.NBuildings.MAX_SHARED_SLOTS = 80
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.05	--upped from 0.02, vanilla 0.2
 	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 3.5 -- was 4.0 --Fucked with this to see
 	-- NOTE: The below piercing values are granularized to make piercing less punishing for nations with no real tank access
@@ -309,8 +313,8 @@
 	NDefines.NMilitary.ARMOR_VS_AVERAGE = 0.4 -- 0.4 Reset this back up to try and improve tanks a little bit, keeping below to make pen better
 	NDefines.NMilitary.PEN_VS_AVERAGE = 0.425 -- 0.4 Increase pen avaiable to units, so that infantry has a better chance against armor
 
-	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 18 -- Vanilla 24
-	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 15 --24
+	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 24 -- Vanilla 24
+	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 20 --24
 	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 4 -- Vanilla 5
 	NDefines.NMilitary.BASE_DIVISION_SUPPORT_SLOT_COST = 5 -- 10
 	NDefines.NMilitary.COMBAT_MINIMUM_TIME = 6 -- 4

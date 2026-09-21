@@ -5,7 +5,10 @@ both drive, so routing lives in one place and neither of them has to write a
 file to find out what the formatter would produce.
 """
 
+from typing import cast
+
 import pytest
+import standardize_api
 from standardize_api import kind_for_path, standardize_lines, standardize_text
 
 _ROUTED = [
@@ -16,12 +19,15 @@ _ROUTED = [
     ("common/ideas/Bosnian.txt", "idea"),
     ("common/military_industrial_organization/organizations/MD_ARG.txt", "mio"),
     ("common/military_industrial_organization/policies/_land_policies.txt", "mio"),
+    ("common/technologies/infantry.txt", "technology"),
+    ("history/countries/ARA - Arabistan.txt", "history"),
 ]
 
 _UNROUTED = [
     "common/units/MD_land_units.txt",
-    "history/countries/ARA - Arabistan.txt",
     "events/Gulf.yml",
+    # Localisation stays unrouted: its standardizer needs a full-mod content
+    # index per run, which the in-memory checker cannot build per file.
     "localisation/english/MD_focus_SER_l_english.yml",
     "common/national_focus/notes.md",
 ]
@@ -30,6 +36,18 @@ _UNROUTED = [
 @pytest.mark.parametrize("path,expected", _ROUTED)
 def test_kind_for_path_routes_owned_paths(path, expected):
     assert kind_for_path(path) == expected
+
+
+def test_routes_have_only_supported_standardizer_kinds():
+    assert {kind for _prefix, kind in standardize_api.ROUTES} == {
+        "focus",
+        "event",
+        "decision",
+        "idea",
+        "mio",
+        "technology",
+        "history",
+    }
 
 
 @pytest.mark.parametrize("path", _UNROUTED)
@@ -74,7 +92,7 @@ def test_standardize_text_touches_no_file(tmp_path):
 
 
 def test_standardize_lines_matches_standardize_text():
-    lines = _MESSY_EVENT.splitlines(keepends=True)
+    lines = cast(list[str], _MESSY_EVENT.splitlines(keepends=True))
     from_lines = standardize_lines("event", lines)
 
     assert from_lines is not None
@@ -87,3 +105,30 @@ def test_focus_standardization_never_reports_no_op():
     # A focus file is always rewritten (spacing is normalized line by line), so
     # the focus branch has no "nothing matched" case for a checker to skip.
     assert standardize_text("focus", "focus_tree = {\n\tid = test\n}\n") is not None
+
+
+_MESSY_HISTORY = """capital = 652
+
+2000.1.1 = {
+\tset_country_flag = TST_alpha
+\tcomplete_special_project = sp:sp_space_program
+}
+"""
+
+
+def test_history_text_reorders_dated_blocks_and_is_idempotent():
+    once = standardize_text("history", _MESSY_HISTORY)
+    assert once is not None
+    assert once != _MESSY_HISTORY
+    assert once.index("Special Projects") < once.index("Country Flags")
+    assert standardize_text("history", once) == once
+
+
+def test_history_text_accepts_a_mod_root(tmp_path):
+    once = standardize_text("history", _MESSY_HISTORY, mod_root=str(tmp_path))
+    assert once is not None
+    assert standardize_text("history", once, mod_root=str(tmp_path)) == once
+
+
+def test_history_text_returns_none_when_no_dated_block_matches():
+    assert standardize_text("history", "# just a comment\n") is None

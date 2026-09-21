@@ -3,7 +3,8 @@ title: Developer Setup & Workflow
 description: The main developer guide for Millennium Dawn. Get your environment ready, learn the workflow, and ship your first PR.
 ---
 
-This is the main developer guide for contributing to Millennium Dawn. It covers everything you need to start: prerequisites, cloning, tooling, pre-commit hooks, the day-to-day workflow, and where to find the rest of the team docs.
+Clone the mod, connect it to the launcher, install the tools, then work on a feature
+branch. If you only want to play, use [Getting Started](/getting-started/) instead.
 
 > **For docs site work specifically**, see the [Contributing Guide](/dev-resources/contributing/) which covers `bun run dev`, content conventions, and the docs CI pipeline.
 >
@@ -13,12 +14,12 @@ This is the main developer guide for contributing to Millennium Dawn. It covers 
 
 # Prerequisites
 
-| Tool            | Version                   | Purpose                              |
-| --------------- | ------------------------- | ------------------------------------ |
-| **Git**         | Any recent version        | Version control                      |
-| **Python**      | 3.10+ (3.12+ recommended) | Dev tools, validators, standardizers |
-| **Text editor** | VS Code recommended       | Editing script files                 |
-| **HOI4**        | Latest                    | Testing changes in-game              |
+| Tool            | Version              | Purpose                              |
+| --------------- | -------------------- | ------------------------------------ |
+| **Git**         | Any recent version   | Version control                      |
+| **Python**      | 3.12+                | Dev tools, validators, standardizers |
+| **Text editor** | VS Code recommended  | Editing script files                 |
+| **HOI4**        | Match mod descriptor | Testing changes in-game              |
 
 Optional but useful:
 
@@ -32,36 +33,15 @@ Optional but useful:
 
 # Cloning the Repository
 
-## Team Members (Write Access)
+Clone the repository with GitHub Desktop by following the [Git & GitHub Desktop](/dev-resources/md-git-resources/) guide. It walks through installing GitHub Desktop, cloning over HTTPS, and your first commit and push.
 
-```bash
-git clone https://github.com/MillenniumDawn/Millennium-Dawn.git
-cd Millennium-Dawn
-```
+- **Team members (write access)**: clone `https://github.com/MillenniumDawn/Millennium-Dawn.git` directly:
 
-## Outside Contributors (Fork)
+  ```bash
+  git clone https://github.com/MillenniumDawn/Millennium-Dawn.git
+  ```
 
-1. Fork the repository on GitHub.
-2. Clone your fork:
-
-   ```bash
-   git clone https://github.com/<your-username>/Millennium-Dawn.git
-   cd Millennium-Dawn
-   ```
-
-3. Add the upstream remote:
-
-   ```bash
-   git remote add upstream https://github.com/MillenniumDawn/Millennium-Dawn.git
-   ```
-
-4. Create a feature branch from `main`:
-
-   ```bash
-   git checkout -b my-feature main
-   ```
-
-See [Git Workflow](/dev-resources/git-workflow/) for the full fork-based workflow.
+- **Outside contributors**: fork the repository first (see [GitHub: Fork a repo](https://docs.github.com/en/pull-requests/how-tos/work-with-forks/fork-a-repo)), then clone your fork and add the upstream remote. The [Git Workflow](/dev-resources/git-workflow/) guide has the full fork-based walkthrough.
 
 ## Staying Up to Date
 
@@ -80,9 +60,13 @@ git checkout my-feature
 git rebase main
 ```
 
+For the detailed sync strategy, see [Git Workflow: Staying Up to Date with Main](/dev-resources/git-workflow/#staying-up-to-date-with-main).
+
 ## Setting Up the Mod for Testing
 
-After cloning, the mod folder must be in the correct location for HOI4 to detect it:
+The checked-in `Millennium_Dawn.mod` uses `path="mod/Millennium-Dawn"`. For that
+path to work, clone the repository into a folder named `Millennium-Dawn` directly
+inside your HOI4 mod directory:
 
 | OS      | Default mod directory                                                  |
 | ------- | ---------------------------------------------------------------------- |
@@ -90,9 +74,17 @@ After cloning, the mod folder must be in the correct location for HOI4 to detect
 | macOS   | `~/Documents/Paradox Interactive/Hearts of Iron IV/mod/`               |
 | Linux   | `~/.local/share/Paradox Interactive/Hearts of Iron IV/mod/`            |
 
-1. Copy the `Millennium_Dawn.mod` file from the cloned repo into the `mod/` directory.
-2. In the HOI4 launcher, go to **Playsets** → **Add More Mods** → enable **Millennium Dawn Dev**.
-3. Launch the game to verify it works.
+1. Copy `Millennium_Dawn.mod` from the checkout into the parent `mod/` directory.
+   If your checkout is elsewhere, change `path` in this local copy to the checkout's
+   absolute path using forward slashes. Do not commit your machine-specific path.
+2. Match HOI4 to `supported_version` in the checkout's descriptor, not automatically
+   the latest game patch.
+3. In the launcher, use **Playsets** → **Add More Mods** and enable
+   **Millennium Dawn: Developer Version**. Disable Workshop copies and submods in this playset.
+4. Start a new game to verify the checkout loads.
+
+Development updates may invalidate saves. Keep separate test saves and do not rely
+on a development checkout for a long-running campaign.
 
 ---
 
@@ -126,7 +118,8 @@ Hooks run automatically on every `git commit`. They catch:
 
 - **Style issues**: trailing whitespace, mixed line endings, encoding problems.
 - **Script errors**: mismatched braces, invalid localisation encoding, common HOI4 scripting mistakes.
-- **Standardization**: auto-reformats focuses, events, decisions, and ideas to MD conventions.
+- **Standardization**: reports changed files that need formatting. The bulk auto-standardizer
+  is disabled; use the command in the finding on the affected file.
 
 ## Running Manually
 
@@ -195,19 +188,16 @@ tools/
 └── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ```
 
-Python dependencies live in `pyproject.toml` under `[dependency-groups]` (a `runtime` group and a `dev` group); there are no `requirements.txt` files. `tools/dev_setup.py` installs them, and `pyproject.toml` also configures ruff (lint, import order, and formatting) and pytest.
+Python dependencies live in `pyproject.toml` under `[dependency-groups]` (a `runtime` group and a `dev` group); there are no `requirements.txt` files. `tools/dev_setup.py` installs them, and `pyproject.toml` configures Ruff for lint/import order, Black for formatting, and pytest for tests.
 
 See [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md) for the full documentation.
 
-## Writing a New Validator
+## Changing Tools
 
-1. Create `tools/validation/validate_<topic>.py`.
-2. Subclass `BaseValidator` from `tools/validation/validator_common.py`.
-3. Use `add_error(category, msg, file, line)` for structured issues.
-4. Add a `ValidatorSpec` for it in `tools/validation/validator_batches.py`
-   (batch, changed-file groups, `--strict`). This is the gate for most validators.
-5. Only if it is fast enough for commits, join the commit-stage set: add it to
-   the `_REGISTRY` in `tools/precommit_validate.py`.
+Follow [Maintaining Tools](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md#maintaining-tools)
+for text writes, shared helpers, and regression tests. The same README owns the
+[validator recipe](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md#writing-a-new-validator).
+Run `python -m pytest` for `tools/` changes and fix regressions before merge.
 
 ---
 
@@ -231,10 +221,14 @@ The repo includes a pre-configured workspace with Paradox syntax highlighting, t
 
 # Code Standards
 
-A summary. The full reference is the [Code Stylization Guide](/dev-resources/code-stylization-guide/), but the rules below are the most common ones to get right.
+Keep changes small and easy for another human to maintain. Reuse existing code and
+queryable state before adding helpers, flags, or configuration. Prefer clear local
+logic over clever abstractions. The [Code Stylization Guide](/dev-resources/code-stylization-guide/)
+owns the detailed conventions.
 
 ### Localisation (.yml)
 
+- Edit English only. Other languages are not currently mirrored and may differ.
 - 1-space indentation.
 - UTF-8 with BOM encoding.
 - Remove trailing version numbers after colons (`key: "value"`, not `key:0 "value"`).
@@ -242,7 +236,7 @@ A summary. The full reference is the [Code Stylization Guide](/dev-resources/cod
 ### Script Files (.txt)
 
 - Tab indentation (not spaces).
-- Include logging in all effects.
+- Follow the focus, decision, and event logging rules. Dismiss-only event options need no log.
 - Follow naming conventions: `TAG_focus_name_here`.
 - Use `is_triggered_only = yes` for events.
 - Include `ai_will_do` in all focuses and decisions.
@@ -265,6 +259,16 @@ If you are editing the docs site, see the [Contributing Guide](/dev-resources/co
 7. **CI validates** your PR automatically. Fix any issues flagged.
 8. **Team leader reviews** and merges.
 
+## PR Descriptions and Handoffs
+
+Use BLUF (Bottom Line Up Front): state the result first, then the supporting facts.
+PR descriptions start with `## Bottom line`. Explain why when it is not obvious;
+include changed behavior and any limits, not a file-by-file narration. Keep reviews
+to findings with paths, impact, and a suggested fix. Say what was not verified.
+
+Do not add AI attribution trailers or tool-generated footers. Add `Changelog.txt`
+entries only when requested.
+
 ## Branch Naming
 
 Use descriptive branch names:
@@ -283,4 +287,5 @@ Use descriptive branch names:
 - [Code Stylization Guide](/dev-resources/code-stylization-guide/): formatting and code structure.
 - [AI Modding Guide](/dev-resources/ai-modding-guide/): AI tools for development.
 - [Content Review Guide](/dev-resources/content-review-guide/): quality checklist.
+- [Git & GitHub Desktop](/dev-resources/md-git-resources/): install GitHub Desktop and clone the mod.
 - [tools/README.md](https://github.com/MillenniumDawn/Millennium-Dawn/blob/main/tools/README.md): dev tools directory layout.

@@ -5,8 +5,8 @@
 ## Prerequisites
 
 - Node.js 24 LTS or newer ([nodejs.org](https://nodejs.org/))
-- [Bun](https://bun.com/) — see **Bun version** below.
-- Python 3 (for `check:links`, `check:og`, `check:a11y`, `check:perf`)
+- [Bun](https://bun.com/). See **Bun version** below.
+- Python 3.12+ (for `check:links`, `check:og`, `check:a11y`, `check:perf`)
 
 ### Bun version
 
@@ -42,18 +42,13 @@ If you omit `permalink`, the URL defaults to `/<filename>/` (for example `mod-ov
 
 ## Page headings (H1)
 
-Each published page must have **exactly one** `<h1>`. The layout supplies it for most collections — **do not** repeat the page title as `# Title` in the Markdown body.
+Each published page must have **exactly one** `<h1>`. The layout supplies it for most collections. **Do not** repeat the page title as `# Title` in the Markdown body.
 
-| Collection / route                   | Who renders the H1       | Body rule                                                         |
-| ------------------------------------ | ------------------------ | ----------------------------------------------------------------- |
-| `src/content/pages/*.md` (catch-all) | Layout (`showPageTitle`) | Start with intro text or `##` sections — **no** `#` title line    |
-| `getting-started`, `faq`             | Layout (`showPageTitle`) | Same as pages above                                               |
-| `src/content/tutorials/*.md`         | Article hero             | **No** `#` matching `title` in frontmatter; use `##` for sections |
-| `src/content/resources/*.md`         | Article hero             | Same as tutorials                                                 |
-| `src/content/changelogSections/*.md` | Article hero             | Same as tutorials                                                 |
-| `src/content/devDiaries/*.{md,mdx}`  | Article hero             | Same as tutorials                                                 |
-| `src/content/countries/*.md`         | Country layout           | **No** `#` country name; use `##` for sections                    |
-| `src/content/misc/*.md`              | Article hero             | Same as tutorials                                                 |
+Start the body with intro text or `##` sections, not another page title.
+
+- Regular pages, `getting-started`, and `faq`: the layout supplies the H1 through `showPageTitle`.
+- Country pages: the country layout supplies it.
+- Tutorials, resources, changelogs, dev diaries, and misc pages: the article hero supplies it.
 
 `bun run check:content-html` fails if a hero-collection file opens with `#` text that matches its frontmatter `title` (case-insensitive).
 
@@ -70,11 +65,24 @@ Each published page must have **exactly one** `<h1>`. The layout supplies it for
   - Country page: `/countries/germany/`
 - Do not manually add the `/Millennium-Dawn` prefix.
 
+## Writing and Placement
+
+- Put player setup and gameplay instructions in `pages/` or `tutorials/`, and contributor
+  instructions in `resources/`. Internal agent procedures stay outside the site.
+- Lead with the answer or action where useful (BLUF, Bottom Line Up Front). Keep
+  procedures in the order readers need them. Do not add a literal `BLUF` footer to pages.
+- Use plain American English, short sentences, and no em dashes. Explain terms players
+  need; leave code recipes out of player guides.
+- Update the existing page and link to it rather than copying the same instructions
+  into several guides. Check that readers can reach it from the relevant entry page.
+- Keep Markdown tables aligned in plaintext, with the entire padded row within
+  100 characters. Shorten cells or use lists when a table cannot fit.
+
 ## Images and static files
 
 Raster images for the docs site are stored **only** under **`docs/src/assets/images/`**. In Markdown and YAML, keep using root-relative paths such as `/assets/images/flags/germany.png`; the build resolves them through the Astro asset pipeline (`getInternalImageAsset`, `Picture` / `getImage`) so optimized output does not rely on a duplicate tree under `public/`.
 
-**`public/`** is for assets that are not part of that pipeline — for example **`public/assets/downloads/...`** (zip archives). Do not add new tracked files under `docs/public/assets/images/`; that directory should stay empty in git.
+**`public/`** is for assets outside that pipeline, for example **`public/assets/downloads/...`** (zip archives). Do not add new tracked files under `docs/public/assets/images/`; that directory should stay empty in git.
 
 After `astro build`, the integration in `src/integrations/copy-src-images-to-dist.ts` copies `src/assets/images/**` into `dist/assets/images/**` so any HTML that still uses root-relative `/assets/images/...` (for example markdown `<img>` fallbacks) resolves in `check:links` and on static hosting. Treat **`dist/assets/images` as owned by that step**: it is wiped and repopulated each build, so nothing else should write there.
 

@@ -30,6 +30,7 @@ GROUP_PATTERNS = {
     "scientist-traits": ["common/scientist_traits/**", "interface/**"],
     "oob": [
         "history/units/**",
+        "history/**",
         "common/units/**",
         "common/ai_templates/**",
         "common/scripted_effects/**",
@@ -44,7 +45,13 @@ GROUP_PATTERNS = {
         "common/scripted_guis/**",
         "common/ideas/**",
     ],
-    "decisions": ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+    "decisions": [
+        "common/**/*.txt",
+        "events/**/*.txt",
+        "history/**/*.txt",
+        "interface/**/*.gfx",
+        "gfx/interface/decisions/**",
+    ],
     "scripted-loc": ["common/scripted_localisation/**"],
     "scripted-guis": ["common/scripted_guis/**"],
     "interface": ["interface/**"],
@@ -56,6 +63,7 @@ GROUP_PATTERNS = {
         "common/doctrines/**",
         "common/units/equipment/**",
         "common/equipment_groups/**",
+        "interface/**",
     ],
     "scripted-effects": ["common/scripted_effects/**"],
     "style": [
@@ -65,6 +73,7 @@ GROUP_PATTERNS = {
         "music/**/*.txt",
     ],
     "mod": ["*.mod"],
+    "docs": ["docs/**", "tools/docs_checks/**", ".github/workflows/docs-quality.yml"],
     "map-adjacency": ["map/adjacency_rules.txt"],
     "content": [
         "common/**",
@@ -72,6 +81,7 @@ GROUP_PATTERNS = {
         "history/**",
         "localisation/**",
         "interface/**",
+        "gfx/interface/decisions/**",
         "music/**",
         "map/adjacency_rules.txt",
         "*.mod",
@@ -87,6 +97,8 @@ _FULL_SUITE_EXACT = {
     ".claude/docs/typo-watchlist.md",
 }
 _FULL_SUITE_PREFIXES = (
+    "tools/validation/",
+    "tools/linting/",
     "resources/documentation/",
     ".github/actions/",
     ".github/workflows/test-suite.yml",
@@ -142,7 +154,7 @@ def _matches(path: str, group: str) -> bool:
 
 def _is_full_suite(path: str) -> bool:
     return (
-        path.startswith("tools/")
+        path == "tools/shared_utils.py"
         or path in _FULL_SUITE_EXACT
         or any(path.startswith(prefix) for prefix in _FULL_SUITE_PREFIXES)
     )
