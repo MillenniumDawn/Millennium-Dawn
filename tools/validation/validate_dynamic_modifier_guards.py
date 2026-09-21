@@ -35,7 +35,6 @@ import sys
 from typing import List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 import guard_scan  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import compute_line_offsets, line_for_offset
 from validator_common import BaseValidator, _child_blocks, run_validator_main
@@ -111,24 +110,9 @@ def scan_text(raw: str) -> List[Tuple[int, str]]:
 
 def scan_file(args: Tuple[str, str]) -> List[Tuple[str, int, str]]:
     """Return (relative path, line, message) for one content file."""
-    filepath, mod_path = args
-    try:
-        with open(filepath, encoding="utf-8-sig", errors="replace") as handle:
-            raw = handle.read()
-    except OSError:
-        return []
-    if _REMOVE_EFFECT not in raw:
-        return []
-
-    findings = disk_cache.per_file_cached_by_content(
-        mod_path,
-        "dynamic_modifier_guards_scan_v1",
-        filepath,
-        raw,
-        lambda: scan_text(raw),
+    return guard_scan.scan_file(
+        args, _REMOVE_EFFECT, "dynamic_modifier_guards_scan_v1", scan_text
     )
-    relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
-    return [(relative, line, message) for line, message in findings]
 
 
 class Validator(BaseValidator):
@@ -137,12 +121,9 @@ class Validator(BaseValidator):
 
     def validate_dynamic_modifier_guards(self):
         self._log_section("remove_dynamic_modifier presence guards")
-        files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
-        results = self._pool_map(scan_file, [(f, self.mod_path) for f in files])
-
         guard_scan.report_findings(
             self,
-            sorted((_CATEGORY,) + row for rows in results for row in rows),
+            guard_scan.collect_findings(self, scan_file, _CATEGORY),
             self.add_error,
             "unguarded dynamic modifier removal(s)",
             "All remove_dynamic_modifier calls are guarded",
