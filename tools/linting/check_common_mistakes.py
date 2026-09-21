@@ -716,8 +716,11 @@ _EVENT_BLOCKS: dict = {}
 
 def _iter_event_definitions(content):
     """Yield definition block texts for country_event/news_event in content."""
-    blank = _RE_QUOTED_STRING.sub('""', content)
+    blank = "\n".join(_code_for_depth(line) for line in content.splitlines())
+    block_end = 0
     for open_match in _RE_EVENT_DEFINITION_OPEN.finditer(blank):
+        if open_match.start() < block_end:
+            continue
         depth = 0
         idx = open_match.end() - 1
         while idx < len(blank):
@@ -726,7 +729,8 @@ def _iter_event_definitions(content):
             elif blank[idx] == "}":
                 depth -= 1
                 if depth == 0:
-                    yield blank[open_match.start() : idx + 1]
+                    block_end = idx + 1
+                    yield blank[open_match.start() : block_end]
                     break
             idx += 1
 
@@ -807,7 +811,7 @@ def _event_chain_leads_to_war(
         _seen = set()
     if _depth > _EVENT_CHAIN_MAX_DEPTH or event_id in _seen:
         return False, []
-    _seen.add(event_id)
+    _seen = _seen | {event_id}
     block = _get_event_block(event_id, event_blocks)
     if not block:
         return False, []

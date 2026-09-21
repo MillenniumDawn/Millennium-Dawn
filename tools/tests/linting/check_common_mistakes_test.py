@@ -53,6 +53,7 @@ import shutil
 import sys
 import tempfile
 
+import check_common_mistakes as common_mistakes
 from check_common_mistakes import (
     _RE_IS_X_NATION,
     _ai_zero_modifier_conditions,
@@ -4308,6 +4309,57 @@ assert_finds(
     0,
     "brake on a gate the strength ratio cannot express not flagged",
 )
+
+
+def test_event_chain_loads_definition_after_an_earlier_send(tmp_path, monkeypatch):
+    events = tmp_path / "events"
+    events.mkdir()
+    with open(events / "chain.txt", "w", encoding="utf-8", newline="") as handle:
+        handle.write(
+            "".join(_WAR_CHAIN_EVENTS.values()).replace(
+                "country_event = alg_chain.2", "country_event = { id = alg_chain.2 }"
+            )
+        )
+    monkeypatch.setattr(common_mistakes, "get_root_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(common_mistakes, "_EVENT_INDEX_BUILT", False)
+    monkeypatch.setattr(common_mistakes, "_EVENT_INDEX", {})
+    monkeypatch.setattr(common_mistakes, "_EVENT_BLOCKS", {})
+    result = _check_focus_missing_war_hint(_chain_lines)
+    assert len(result) == 1
+    assert "alg_chain.1 -> alg_chain.2" in result[0][1]
+
+
+def test_event_definitions_ignore_comments_and_nested_sends():
+    content = (
+        "# country_event = { id = fake.1 option = { } }\n"
+        "country_event = {\n"
+        " id = real.1\n"
+        " is_triggered_only = yes\n"
+        " immediate = {\n"
+        "  # } declare_war_on = { target = MOR }\n"
+        "  country_event = { id = real.2 }\n"
+        " }\n"
+        "}\n"
+    )
+    blocks = list(common_mistakes._iter_event_definitions(content))
+    assert len(blocks) == 1
+    assert "id = real.1" in blocks[0]
+    assert "declare_war_on" not in blocks[0]
+    assert blocks[0].endswith("}\n}")
+
+
+def test_event_chain_revisits_shared_event_with_more_depth_remaining():
+    events = {
+        "start.1": "option = { country_event = long.1 country_event = shared.1 }",
+        "long.1": "option = { country_event = long.2 }",
+        "long.2": "option = { country_event = shared.1 }",
+        "shared.1": "option = { country_event = war.1 }",
+        "war.1": "option = { declare_war_on = { target = MOR } }",
+    }
+    assert common_mistakes._event_chain_leads_to_war("start.1", "ALG", events) == (
+        True,
+        ["start.1", "shared.1", "war.1"],
+    )
 
 
 # Summary
