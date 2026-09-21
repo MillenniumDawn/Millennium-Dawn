@@ -120,6 +120,13 @@ scripted_gui = {
 				clear_variable = var_open_MD_UN_gui
 				clear_variable = var_open_MD_cyber_gui
 				clear_variable = var_open_MD_antarctica_gui
+				if = {
+					limit = {
+						check_variable = { selected_nation > 0 }
+						NOT = { check_variable = { selected_nation = THIS.id } }
+					}
+					set_variable = { selected_ct_nation = selected_nation }
+				}
 				international_systems_update = yes
 			}
 			pmc_gui_ledger_button_click = {
@@ -208,14 +215,12 @@ scripted_gui = {
 				set_variable = { var_open_MD_missiles_gui_ledger_1 = 2 }
 				clear_variable = var_open_MD_missiles_gui_ledger_4
 				clear_variable = var_open_MD_missiles_gui_ledger_5
-				clear_variable = var_open_MD_international_space
 				international_systems_update = yes
 			}
 			launching_button_click = {
 				set_variable = { var_open_MD_missiles_gui_ledger_4 = 2 }
 				clear_variable = var_open_MD_missiles_gui_ledger_5
 				clear_variable = var_open_MD_missiles_gui_ledger_1
-				clear_variable = var_open_MD_international_space
 				space_auto_refresh_ui = yes
 				international_systems_update = yes
 			}
@@ -223,14 +228,6 @@ scripted_gui = {
 				set_variable = { var_open_MD_missiles_gui_ledger_5 = 2 }
 				clear_variable = var_open_MD_missiles_gui_ledger_4
 				clear_variable = var_open_MD_missiles_gui_ledger_1
-				clear_variable = var_open_MD_international_space
-				international_systems_update = yes
-			}
-			iss_button_click = {
-				set_variable = { var_open_MD_international_space = 2 }
-				clear_variable = var_open_MD_missiles_gui_ledger_4
-				clear_variable = var_open_MD_missiles_gui_ledger_1
-				clear_variable = var_open_MD_missiles_gui_ledger_5
 				international_systems_update = yes
 			}
 		}
@@ -244,9 +241,6 @@ scripted_gui = {
 			}
 			space_button = {
 				frame = var_open_MD_missiles_gui_ledger_5
-			}
-			iss_button = {
-				frame = var_open_MD_international_space
 			}
 		}
 	}
@@ -2641,14 +2635,11 @@ scripted_gui = {
 			country_view_flag_button_click = {
 				clear_satellite_deorbit_state = yes
 				set_country_flag = open_MD_satellite_orbit_country_selection
-				clear_array = temp_countries
-				every_country = {
-					ROOT = { add_to_array = { temp_countries = PREV.id } }
-				}
 				international_systems_update = yes
 			}
 			country_view_flag_button_right_click = {
 				clear_satellite_deorbit_state = yes
+				clr_country_flag = open_MD_satellite_orbit_country_selection
 				set_variable = { orbit_selected_TAG = ROOT.id }
 				set_sat_access_arrays_selected_TAG = yes
 				set_satellites_gui = yes
@@ -2749,8 +2740,8 @@ scripted_gui = {
 			### sat
 			sat_6_button_visible = {
 				var:orbit_selected_TAG = {
-					check_variable = { sat_6_array^i > 0 }
-					NOT = { check_variable = { sat_6_array^i < 1 } }
+					check_variable = { sat_6_array^i > -1 }
+					NOT = { check_variable = { sat_6_array^i < 0 } }
 					is_filtered_type = yes
 				}
 			}
@@ -2956,7 +2947,6 @@ scripted_gui = {
 	MD_satellite_orbit_country_selection_gui = {
 		window_name = MD_satellite_orbit_country_selection
 		context_type = player_context
-		#context_type = selected_country_context
 		parent_window_token = MD_satellite_orbit_view
 
 		dirty = global.international_systems_updated
@@ -2971,7 +2961,8 @@ scripted_gui = {
 		}
 		effects = {
 			country_list_flag_button_click = {
-				set_variable = { orbit_selected_TAG = ROOT.temp_countries^i }
+				clear_satellite_deorbit_state = yes
+				set_variable = { orbit_selected_TAG = v }
 				set_sat_access_arrays_selected_TAG = yes
 				var:orbit_selected_TAG = {
 					set_variable = { ROOT.var_SPY_mission_num_gui = num_controlled_states }
@@ -2981,26 +2972,29 @@ scripted_gui = {
 				international_systems_update = yes
 			}
 			close_button_click = {
-				if = {
-					limit = {
-						has_country_flag = open_MD_satellite_orbit_country_selection
-					}
-					clr_country_flag = open_MD_satellite_orbit_country_selection
-				}
-				clear_array = ROOT.temp_countries
+				clr_country_flag = open_MD_satellite_orbit_country_selection
 				international_systems_update = yes
+			}
+		}
+
+		triggers = {
+			country_list_selected_visible = {
+				check_variable = { orbit_selected_TAG = v }
+			}
+			country_list_empty_visible = {
+				check_variable = { global.MD_satellite_owners^num = 0 }
 			}
 		}
 
 		dynamic_lists = {
 			country_list_gridbox = {
-				array = temp_countries
+				array = global.MD_satellite_owners
 				entry_container = country_list_entry
 			}
 		}
 		properties = {
-			country_list_flag_button = {
-				#text = "test" #[?ROOT.temp_countries^i.GetFlag]
+			country_list_flag = {
+				image = "[?v.GetFlag]"
 			}
 		}
 	}
@@ -4163,6 +4157,15 @@ scripted_gui = {
 		}
 
 		triggers = {
+			un_sc_vote_status_tracker_visible = {
+				OR = {
+					has_global_flag = current_ongoing_sc_vote
+					has_country_flag = unsc_permanent_seat_sc_pending
+					has_country_flag = unsc_permanent_seat_ga_pending
+					has_country_flag = unsc_permanent_seat_approved_pending_promotion
+					has_country_flag = unsc_permanent_seat_retry_cooldown
+				}
+			}
 			unsc_actions_text_visible = {
 				is_on_un_sec_council = yes
 			}
@@ -9660,10 +9663,8 @@ scripted_gui = {
 
 		effects = {
 			name_of_nation_button_click = {
-				ROOT = {
-					set_variable = { selected_ct_nation = PREV }
-					international_systems_update = yes
-				}
+				rotate_selected_nation = yes
+				ROOT = { international_systems_update = yes }
 			}
 		}
 	}

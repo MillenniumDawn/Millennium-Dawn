@@ -193,7 +193,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | Imperialist          | @x_imperialist                  | @imperialistx2    | -             | -                             |
 | Barracuda            | @Barracuda                      | @SBeausoleil      | -             | -                             |
 | JohnsonvilleF221     | @JohnsonvilleF221               | @JohnsonvilleF221 | -             | -                             |
-
+| Skjold               | @Skjold                         | @Skjold89         | -             | -                             |
 
 # Fellow Modders/Teams
 

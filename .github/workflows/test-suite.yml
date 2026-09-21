@@ -85,6 +85,7 @@ jobs:
       map-adjacency: ${{ steps.groups.outputs.map-adjacency }}
       mod: ${{ steps.groups.outputs.mod }}
       content: ${{ steps.groups.outputs.content }}
+      docs: ${{ steps.groups.outputs.docs }}
       style: ${{ steps.groups.outputs.style }}
       style_files: ${{ steps.groups.outputs.style_files }}
       tools: ${{ steps.groups.outputs.tools }}
@@ -402,7 +403,13 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: prepared-workspace
-          path: ${{ env.WORKSPACE_PATHS }}
+          # Music audio is ~80% of this artifact and no validator reads it.
+          # The gated music/*.txt playlists stay included.
+          path: |
+            ${{ env.WORKSPACE_PATHS }}
+            !music/**/*.ogg
+            !music/**/*.mp3
+            !music/**/*.wav
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
@@ -806,17 +813,6 @@ jobs:
             python3 tools/linting/check_common_mistakes.py \
             --output validation-common-mistakes.log
 
-      # No --strict: warning-only while the repo-wide standardization backlog
-      # stands, so it reports on the files a PR touches without gating them.
-      - name: Run standardization check
-        if: >-
-          always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-files == 'true'
-        run: |
-          MD_STAGED_FILES="$(cat style_files.txt)" \
-            python3 tools/validation/validate_standardization.py \
-            --staged --no-color --output validation-standardization.log
-
       - name: Verify style results
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
@@ -826,8 +822,6 @@ jobs:
           test -f validation-style-check.json
           test -f validation-common-mistakes.log
           test -f validation-common-mistakes.json
-          test -f validation-standardization.log
-          test -f validation-standardization.json
 
       - name: Check localisation UTF-8 BOM
         if: >-
@@ -886,19 +880,6 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-      - name: Upload standardization results
-        if: >-
-          always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-files == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: validation-standardization-results
-          path: |
-            validation-standardization.log
-            validation-standardization.json
-          if-no-files-found: error
-          retention-days: 7
-
       - name: Upload batch results
         if: always() && !cancelled() && hashFiles('batch-results/**') != ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -907,6 +888,16 @@ jobs:
           path: batch-results
           if-no-files-found: error
           retention-days: 7
+
+  docs-quality:
+    name: Docs quality
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.docs == 'true' ||
+      needs.detect-changes.outputs.full_suite == 'true'
+    uses: ./.github/workflows/docs-quality.yml
+    permissions:
+      contents: read
 
   report:
     name: Test suite report
@@ -917,6 +908,7 @@ jobs:
       - prepare-workspace
       - tools-tests
       - mod-tests
+      - docs-quality
     if: ${{ always() && !cancelled() }}
     permissions:
       contents: read

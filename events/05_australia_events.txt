@@ -2429,7 +2429,7 @@ country_event = {
 			name = abbott_navy_exercises_event.1.t
 				bonus = 0.7
 				uses = 1
-				category = CAT_air_eqp
+				category = CAT_aircraft
 				}
 	}
 }
@@ -4522,17 +4522,20 @@ country_event = {
 
 	immediate = {
 		set_temp_variable = { ruling_party_popularity = party_pop_array^0 }
-			set_variable = { ruling_party = 0 }
-			for_each_loop = {
-				array = party_pop_array
-				value = v
-				index = i
-				if = {
-					limit = { check_variable = { ruling_party_popularity < party_pop_array^i } }
-					set_temp_variable = { ruling_party_popularity = party_pop_array^i }
-					set_variable = { ruling_party = i }
-				}
+		set_variable = { ruling_party = 0 }
+		for_each_loop = {
+			array = party_pop_array
+			value = v
+			index = i
+			if = {
+				limit = { check_variable = { ruling_party_popularity < v } }
+				set_temp_variable = { ruling_party_popularity = v }
+				set_variable = { ruling_party = i }
 			}
+		}
+		set_temp_variable = { outlook_party_index = ruling_party }
+		set_outlook_from_party_index = yes
+
 		#rudd wins big
 		if = {
 			limit = {
@@ -4688,6 +4691,7 @@ country_event = {
 		original_tag = AST
 		date > 2005.01.01
 		NOT = { has_country_flag = election_cooldown_ast }
+		is_ai = no
 	}
 
 	immediate = { set_country_flag = general_elections_start }
@@ -4894,7 +4898,7 @@ country_event = {
 			limit = {
 				western_social_democrats_are_in_power = yes
 				date > 2011.01.01
-				date < 2014.01.01
+				date < 2017.01.01
 				NOT = { has_country_flag = labor_previously_in }
 			}
 			set_politics = {
@@ -4936,8 +4940,7 @@ country_event = {
 		else_if = {
 			limit = {
 				western_conservatism_are_in_power = yes
-				date > 2015.01.01
-				date < 2020.01.01
+				date > 2016.01.01
 				NOT = {
 					has_country_flag = liberals_previously_in
 				}
@@ -5240,17 +5243,20 @@ country_event = {
 
 	immediate = {
 		set_temp_variable = { ruling_party_popularity = party_pop_array^0 }
-			set_variable = { ruling_party = 0 }
-			for_each_loop = {
-				array = party_pop_array
-				value = v
-				index = i
-				if = {
-					limit = { check_variable = { ruling_party_popularity < party_pop_array^i } }
-					set_temp_variable = { ruling_party_popularity = party_pop_array^i }
-					set_variable = { ruling_party = i }
-				}
+		set_variable = { ruling_party = 0 }
+		for_each_loop = {
+			array = party_pop_array
+			value = v
+			index = i
+			if = {
+				limit = { check_variable = { ruling_party_popularity < v } }
+				set_temp_variable = { ruling_party_popularity = v }
+				set_variable = { ruling_party = i }
 			}
+		}
+		set_temp_variable = { outlook_party_index = ruling_party }
+		set_outlook_from_party_index = yes
+
 		#gillard wins
 		if = {
 			limit = {
@@ -5260,11 +5266,19 @@ country_event = {
 			set_country_flag = gillard_won_election_ast
 		}
 		#abbott wins
-		if = {
+		else_if = {
 			limit = {
 				western_conservatism_are_in_power = yes
 			}
 			news_event = dissolution_election_rudd.4
+		}
+		else = {
+			set_country_flag = {
+					flag = labor_previously_in
+					days = 60
+					value = 1
+				}
+			country_event = ast_elections.4
 		}
 	}
 }
@@ -6141,7 +6155,7 @@ country_event = {
 			name = uranium_trade_deal_ast.1.t
 				bonus = 0.7
 				uses = 1
-				category = CAT_nuclear
+				category = CAT_nuclear_reactors
 			}
 		AST = {
 			add_opinion_modifier = {
@@ -6181,7 +6195,7 @@ country_event = {
 			name = uranium_trade_deal_ast.2.t
 				bonus = 0.4
 				uses = 1
-				category = CAT_nuclear
+				category = CAT_nuclear_reactors
 			}
 		RAJ = {
 			add_opinion_modifier = {
@@ -8720,5 +8734,56 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: malaysianflight_event_ast.1.a executed"
 		name = malaysianflight_event_ast.1.a
 		add_stability = -0.02
+	}
+}
+
+add_namespace = opening_info_ast
+
+country_event = {
+	id = opening_info_ast.1
+	title = opening_info_ast.1.t
+	desc = opening_info_ast.1.d
+	picture = GFX_aus_kangaroo
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: opening_info_ast.1.a executed"
+		name = opening_info_ast.1.a
+		add_political_power = 10
+
+
+		ai_chance = {
+			base = 100
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: opening_info_ast.1.b executed"
+		name = opening_info_ast.1.b
+		country_event = opening_info_ast.2
+
+		ai_chance = {
+			base = 0
+		}
+	}
+}
+
+country_event = {
+	id = opening_info_ast.2
+	title = opening_info_ast.2.t
+	desc = opening_info_ast.2.d
+	picture = GFX_parliament_house_day_ast
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: opening_info_ast.2.a executed"
+		name = opening_info_ast.1.a
+		add_political_power = 10
+	}
+
+	option = {
+		name = opening_info_ast.2.a
+		log = "[GetDateText]: [This.GetName]: opening_info_ast.2.b executed"
+		country_event = opening_info_ast.1
 	}
 }
