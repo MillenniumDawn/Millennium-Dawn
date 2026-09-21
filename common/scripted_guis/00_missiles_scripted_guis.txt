@@ -120,6 +120,13 @@ scripted_gui = {
 				clear_variable = var_open_MD_UN_gui
 				clear_variable = var_open_MD_cyber_gui
 				clear_variable = var_open_MD_antarctica_gui
+				if = {
+					limit = {
+						check_variable = { selected_nation > 0 }
+						NOT = { check_variable = { selected_nation = THIS.id } }
+					}
+					set_variable = { selected_ct_nation = selected_nation }
+				}
 				international_systems_update = yes
 			}
 			pmc_gui_ledger_button_click = {
@@ -4163,6 +4170,15 @@ scripted_gui = {
 		}
 
 		triggers = {
+			un_sc_vote_status_tracker_visible = {
+				OR = {
+					has_global_flag = current_ongoing_sc_vote
+					has_country_flag = unsc_permanent_seat_sc_pending
+					has_country_flag = unsc_permanent_seat_ga_pending
+					has_country_flag = unsc_permanent_seat_approved_pending_promotion
+					has_country_flag = unsc_permanent_seat_retry_cooldown
+				}
+			}
 			unsc_actions_text_visible = {
 				is_on_un_sec_council = yes
 			}
@@ -7656,7 +7672,7 @@ scripted_gui = {
 					}
 				}
 				else_if = { limit = { check_variable = { v = 026 } }
-					PMR = { has_country_flag = sheriff_create }
+					PMR = { has_completed_focus = PMR_sheriff_pmc }
 					if = { limit = { NOT = { tag = PMR } }
 						country_exists = PMR
 						NOT = { has_war_with = PMR }
@@ -9660,10 +9676,8 @@ scripted_gui = {
 
 		effects = {
 			name_of_nation_button_click = {
-				ROOT = {
-					set_variable = { selected_ct_nation = PREV }
-					international_systems_update = yes
-				}
+				rotate_selected_nation = yes
+				ROOT = { international_systems_update = yes }
 			}
 		}
 	}
