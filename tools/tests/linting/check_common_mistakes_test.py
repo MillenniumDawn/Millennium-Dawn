@@ -1692,6 +1692,17 @@ _WAR_CHAIN_EVENTS = {
         "\t}\n"
         "}\n"
     ),
+    "alg_dynamic.1": (
+        "country_event = {\n"
+        "\tid = alg_dynamic.1\n"
+        "\toption = {\n"
+        "\t\tcreate_dynamic_country = {\n"
+        "\t\t\toriginal_tag = ALG\n"
+        "\t\t\tdeclare_war_on = { target = ALG type = annex_everything }\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    ),
     "alg_loop.1": (
         "country_event = {\n"
         "\tid = alg_loop.1\n"
@@ -1782,6 +1793,35 @@ assert_finds(
     ],
     0,
     "war event sent to a foreign scope not flagged",
+)
+
+# 10n2. A send through a state's dynamic owner runs as that country, not the focus owner.
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_contact_owners\n",
+        "\t\tcompletion_reward = {\n",
+        "\t\t\t19 = { OWNER = { country_event = alg_war.1 } }\n",
+        "\t\t\t298 = { owner = { country_event = alg_war.1 } }\n",
+        "\t\t}\n",
+        "\t}\n",
+    ],
+    0,
+    "war event sent through dynamic state owners not flagged",
+)
+
+# 10n3. A dynamic country declaring war from its creation scope is not the focus owner.
+assert_finds(
+    _check_war_chain,
+    [
+        "\tfocus = {\n",
+        "\t\tid = ALG_spawn_rebels\n",
+        "\t\tcompletion_reward = { country_event = alg_dynamic.1 }\n",
+        "\t}\n",
+    ],
+    0,
+    "war declared by a created dynamic country not flagged",
 )
 
 # 10o. a send inside effect_tooltip never fires → no flag.

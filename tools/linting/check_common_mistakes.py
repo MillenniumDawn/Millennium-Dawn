@@ -282,6 +282,9 @@ _RE_TAG_SCOPE = re.compile(r"^[A-Z]{2,3}$")
 _LOGIC_SCOPE_TOKENS = {"AND", "OR", "NOT"}
 _OWNER_RESET_SCOPE_TOKENS = {"ROOT", "THIS"}
 _FOREIGN_COUNTRY_SCOPE_TOKENS = {
+    "OWNER",
+    "create_dynamic_country",
+    "owner",
     "random_country",
     "random_other_country",
     "every_country",
