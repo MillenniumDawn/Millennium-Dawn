@@ -35,14 +35,15 @@ import sys
 from typing import List, Tuple
 
 sys.path.insert(0, os.path.dirname(__file__))
-import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 import guard_scan  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import compute_line_offsets, line_for_offset
 from validator_common import BaseValidator, _child_blocks, run_validator_main
 
 _CATEGORY = "stale-influence-target"
 _CALL_RE = re.compile(r"\bchange_influence_percentage\s*=\s*yes\b")
-_SET_TARGET_RE = re.compile(r"\binfluence_target\b")
+_SET_TARGET_RE = re.compile(
+    r"(?:^\s*influence_target\s*=|\bvar\s*=\s*influence_target\b)"
+)
 # every_* selectors plus the array/counter loop effects. `for_countries` is an
 # ai_strategy block key, not an effect, and random_* selectors execute once.
 _LOOP_RE = re.compile(
@@ -119,24 +120,9 @@ def scan_text(raw: str) -> List[Tuple[int, str]]:
 
 def scan_file(args: Tuple[str, str]) -> List[Tuple[str, int, str]]:
     """Return (relative path, line, message) for one content file."""
-    filepath, mod_path = args
-    try:
-        with open(filepath, encoding="utf-8-sig", errors="replace") as handle:
-            raw = handle.read()
-    except OSError:
-        return []
-    if "change_influence_percentage" not in raw:
-        return []
-
-    findings = disk_cache.per_file_cached_by_content(
-        mod_path,
-        "influence_calls_scan_v1",
-        filepath,
-        raw,
-        lambda: scan_text(raw),
+    return guard_scan.scan_file(
+        args, "change_influence_percentage", "influence_calls_scan_v2", scan_text
     )
-    relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
-    return [(relative, line, message) for line, message in findings]
 
 
 class Validator(BaseValidator):
@@ -145,12 +131,9 @@ class Validator(BaseValidator):
 
     def validate_influence_calls(self):
         self._log_section("change_influence_percentage loop retargeting")
-        files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
-        results = self._pool_map(scan_file, [(f, self.mod_path) for f in files])
-
         guard_scan.report_findings(
             self,
-            sorted((_CATEGORY,) + row for rows in results for row in rows),
+            guard_scan.collect_findings(self, scan_file, _CATEGORY),
             self.add_warning,
             "loop influence call(s) without a per-iteration influence_target",
             "All change_influence_percentage loop calls retarget per iteration",
