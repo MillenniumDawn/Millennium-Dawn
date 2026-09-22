@@ -641,25 +641,18 @@ CHI_army_strategy = {
 }
 
 #Buildings
-
-CHI_major_production_of_dockyard = {
-	allowed = { original_tag = CHI }
-	enable = {
-		num_of_civilian_factories_available_for_projects > 15
-		num_of_civilian_factories > 190
-	}
-	abort_when_not_enabled = yes
-
-	ai_strategy = {
-		type = building_target
-		id = dockyard
-		value = 20
-	}
-}
+#CHI has no custom dockyard baseline: generic AI_major_production_of_dockyard
+#(target 8 below 80 CIC) and AI_major_production_of_dockyard2 (target 17
+#below 150 CIC) in MD_econ_ai.txt cover it. The tiers below are exclusive:
+#regional deterrent yields to the USA arms race once a naval focus completes,
+#and the arms race stops once China holds 30 dockyards.
 
 CHI_naval_regional_deterrent = {
 	allowed = { original_tag = CHI }
 	enable = {
+		NOT = { has_completed_focus = CHI_Wolf_Warrior_Diplomacy }
+		NOT = { has_completed_focus = CHI_the_surface_capital_fleet }
+		NOT = { has_completed_focus = CHI_undersea_supremacy }
 		OR = {
 			AND = { country_exists = JAP naval_strength_ratio = { tag = JAP ratio < 1.1 } }
 			AND = { country_exists = TAI naval_strength_ratio = { tag = TAI ratio < 1.1 } }
@@ -683,11 +676,24 @@ CHI_naval_arms_race_vs_USA = {
 			has_completed_focus = CHI_undersea_supremacy
 		}
 		naval_strength_ratio = { tag = USA ratio < 1.5 }
+		num_of_naval_factories < 30
 	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = build_building id = dockyard value = 100 }
 	ai_strategy = { type = building_target id = dockyard value = 25 }
+}
+
+CHI_peacetime_economic_buildup = {
+	allowed = { original_tag = CHI }
+	enable = {
+		has_war = no
+		num_of_available_civilian_factories > 10
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = build_building id = industrial_complex value = 40 }
+	ai_strategy = { type = build_building id = arms_factory value = 20 }
 }
 
 CHI_invest_in_infrastructure_2000 = {
