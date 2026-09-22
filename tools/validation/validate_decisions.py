@@ -49,7 +49,7 @@ _DECISION_REFERENCE_SOURCE_PATTERNS = (
     "history/**/*.txt",
 )
 
-# Decision and category IDs can contain hyphens, for example Communist-State_invite.
+# Decision and category IDs may contain hyphens.
 _LITERAL_ID_TOKEN = r"[\w-]+"
 
 

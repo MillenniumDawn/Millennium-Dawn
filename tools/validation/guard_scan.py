@@ -12,6 +12,7 @@ import sys
 from typing import Callable, FrozenSet, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+import disk_cache  # noqa: E402
 from shared_utils import blank_quoted_strings  # noqa: E402
 from validator_common import strip_comments  # noqa: E402
 
@@ -45,6 +46,27 @@ def sanitize(text: str) -> str:
     return blank_quoted_strings(strip_comments(text))
 
 
+def scan_file(
+    args: Tuple[str, str],
+    effect: str,
+    namespace: str,
+    scan: Callable[[str], List[Tuple[int, str]]],
+) -> List[Tuple[str, int, str]]:
+    filepath, mod_path = args
+    try:
+        with open(filepath, encoding="utf-8-sig") as handle:
+            raw = handle.read()
+    except (OSError, UnicodeError) as exc:
+        raise ValueError(f"Cannot scan {filepath}: {exc}") from exc
+    if effect not in raw:
+        return []
+    findings = disk_cache.per_file_cached_by_content(
+        mod_path, namespace, filepath, raw, lambda: scan(raw)
+    )
+    relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
+    return [(relative, line, message) for line, message in findings]
+
+
 class Context:
     """The things proven present at a point in the script."""
 
@@ -57,6 +79,12 @@ class Context:
         if not proven:
             return self
         return Context(self.present | proven)
+
+
+def collect_findings(validator, scan, category: str) -> List[Tuple[str, str, int, str]]:
+    files = validator._collect_files(["common/**/*.txt", "events/**/*.txt"])
+    results = validator._pool_map(scan, [(path, validator.mod_path) for path in files])
+    return sorted((category,) + row for rows in results for row in rows)
 
 
 def report_findings(

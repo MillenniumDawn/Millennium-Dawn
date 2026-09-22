@@ -7,7 +7,7 @@ from shared.paths import VALIDATION_DIR
 
 
 def test_every_batch_spec_script_exists():
-    assert len(vb.ALL_SPECS) == 41
+    assert len(vb.ALL_SPECS) == 43
     assert not {spec.name for spec in vb.ALL_SPECS} & {
         spec.name for spec in vb.IMPACT_ONLY_SPECS
     }
@@ -78,7 +78,7 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
     batch, adhoc = vb.select_for_changed_files(
         ["tools/linting/check_common_mistakes.py"]
     )
-    assert {spec.name for spec in batch} == {"common-mistakes"}
+    assert {spec.name for spec in batch} == {"common-mistakes", "equipment-variants"}
     assert adhoc == []
 
 

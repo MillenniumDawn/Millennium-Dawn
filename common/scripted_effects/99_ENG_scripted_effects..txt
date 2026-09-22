@@ -488,7 +488,11 @@ ENG_settle_northern_ireland_question = {
 	ENG_update_north_irish_pressure = yes
 }
 
-# Opening ballot position: nationalism carries twice the weight of the wider pressure score
+ENG_sync_referendum_stay_vote = {
+	set_variable = { ENG_referendum_stay_vote = 100 }
+	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+}
+
 ENG_seed_referendum_campaign = {
 	clr_country_flag = ENG_referendum_pledge_used
 	if = {
@@ -511,14 +515,14 @@ ENG_seed_referendum_campaign = {
 	}
 	divide_variable = { ENG_referendum_leave_vote = 3 }
 	clamp_variable = { var = ENG_referendum_leave_vote min = 0 max = 100 }
+	ENG_sync_referendum_stay_vote = yes
 	update_eng_devolution_dirty_variable = yes
 }
 
-# Parameters:
-# - temp_change: signed amount
 ENG_referendum_campaign_shift = {
 	add_to_variable = { var = ENG_referendum_leave_vote value = temp_change }
 	clamp_variable = { var = ENG_referendum_leave_vote min = 0 max = 100 }
+	ENG_sync_referendum_stay_vote = yes
 	update_eng_devolution_dirty_variable = yes
 }
 
@@ -530,8 +534,7 @@ ENG_clear_referendum_campaign = {
 }
 
 ENG_resolve_independence_referendum = {
-	set_variable = { ENG_referendum_stay_vote = 100 }
-	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+	ENG_sync_referendum_stay_vote = yes
 	update_eng_devolution_dirty_variable = yes
 	random_list = {
 		ENG_referendum_leave_vote = {
@@ -544,12 +547,27 @@ ENG_resolve_independence_referendum = {
 }
 
 ENG_resolve_union_settlement = {
-	set_variable = { ENG_referendum_stay_vote = 100 }
-	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+	ENG_sync_referendum_stay_vote = yes
 	update_eng_devolution_dirty_variable = yes
 	random_list = {
 		ENG_referendum_stay_vote = {
 			country_event = devolution.13
+			custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
+			effect_tooltip = {
+				if = {
+					limit = { check_variable = { ENG_referendum_target = 1 } }
+					add_to_variable = { ENG_scottish_referendum_success = 1 tooltip = ENG_scottish_referendum_success_tt }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_referendum_target = 2 } }
+					add_to_variable = { ENG_north_irish_referendum_success = 1 tooltip = ENG_north_irish_referendum_success_tt }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_referendum_target = 3 } }
+					add_to_variable = { ENG_welsh_referendum_success = 1 tooltip = ENG_welsh_referendum_success_tt }
+				}
+				ENG_clear_referendum_campaign = yes
+			}
 		}
 		ENG_referendum_leave_vote = {
 			country_event = devolution.14

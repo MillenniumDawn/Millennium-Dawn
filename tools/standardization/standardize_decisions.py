@@ -29,8 +29,7 @@ from shared_utils import (
 )
 
 # Decision/category IDs, unlike the property keywords PROP_NAME_RE matches, may
-# contain hyphens (e.g. `Communist-State_invite`) — verified against every ID in
-# common/decisions/. A header this can't read is surfaced as an error, not guessed.
+# contain hyphens. A header this can't read is surfaced as an error, not guessed.
 _HEADER_ID_RE = re.compile(r"^([\w-]+)\s*=")
 _ONE_LINE_EFFECT_RE = re.compile(r"^(\w+)\s*=\s*\{(.*)\}\s*$")
 _EFFECT_LOG_BLOCKS = frozenset(

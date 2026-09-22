@@ -6,7 +6,7 @@ Pre-commit and CI do not run the same hook set. Things that pass locally can sti
 
 CI runs `python -m pytest` on every PR touching `tools/` (the Linux `tools-tests` job of `test-suite.yml`, reported as "Tools tests (Linux)"; `testpaths` in `pyproject.toml` is `tools/tests`). It must be green permanently — do not introduce regressions into the testing schema. A validator's behavior and its regression tests are one change: when a `*_test.py` under `tools/tests/` breaks because a validator changed, update the test to the new correct behavior in the same commit. If the test reflects the correct invariant and the validator regressed, fix the validator instead. Never delete or weaken a regression test to make it pass; the suite is the acceptance gate for validator wiring, and a red `pytest` blocks the PR regardless of how clean the validators themselves run. Run `python -m pytest` locally before merging any `tools/` change.
 
-CI and pre-push run the collection-layout guard by explicit path with config `addopts` disabled. The suite command also pins `tools/tests` and `*_test.py`, so a `pyproject.toml` change cannot remove tests or the guard from the run it protects. CI runs that pinned suite on Linux, macOS, and Windows; the Linux entry is also the quality job — ruff, Black, pylint, mypy, coverage, jscpd, the staged-validator integration, and `validate_tools.py` as independent named steps after one checkout and dependency setup. macOS and Windows run the unit suite only, so cross-platform breakage is caught without triple-paying for the slow checks. `.jscpd.json` scans Python under `tools/` at `threshold: 0` with `minLines: 5` / `minTokens: 50`, so a single copy-pasted block — a duplicated `tmp_path` test fixture is the usual one — fails the quality job on its own. Factor shared setup into a helper instead of pasting it into the neighbouring test.
+CI and pre-push run the collection-layout guard by explicit path with config `addopts` disabled. The suite command also pins `tools/tests` and `*_test.py`, so a `pyproject.toml` change cannot remove tests or the guard from the run it protects. CI runs that pinned suite on Linux, macOS, and Windows; the Linux entry is also the quality job — ruff, Black, pylint, mypy, coverage, jscpd, the staged-validator integration, and `validate_tools.py` as independent named steps after one checkout and dependency setup. macOS and Windows run the unit suite only, so cross-platform breakage is caught without triple-paying for the slow checks. `.jscpd.json` scans Python under `tools/` at `threshold: 0` with `minLines: 5` / `minTokens: 50`, so a single copy-pasted block — a duplicated `tmp_path` test fixture is the usual one — fails the quality job on its own. Factor shared setup into a helper instead of pasting it into the neighbouring test. The repository ruleset requires the stable `Test suite gate` check, which fails when any selected validation job fails or does not complete.
 
 ## When the Test Suite runs
 
@@ -24,6 +24,31 @@ The `report` job downloads every `*results` artifact plus the `changed-files` li
 The CI validator list lives in `validator_batches.py`, so the batch jobs and pre-commit use the same ordinary set and exclusions. Everything before the `report` job runs unprivileged and receives no write permissions; the report job alone holds `pull-requests: write` and `checks: write`.
 
 ## The split
+
+- `validate_equipment_variants.py` runs CI-only in `targeted-a` for `common`,
+  `events`, and `history` changes. `equipment-variant-unavailable` is WARNING
+  (`strict=False`): a local effect sequence creates a named variant without an
+  assured enabling technology, then uses it in `add_equipment_production`,
+  `create_ship`, or `add_equipment_to_stockpile`. All equipment types are covered.
+  Technologies are resolved through `enable_equipments`, rather than assuming
+  technology and equipment IDs match. The check follows effect order, direct
+  technology guards, conditional grants, and `allow_without_tech = yes`. Same-country
+  `ROOT`/`THIS` blocks preserve local state, and event options inherit `immediate`
+  effects independently. Random lists merge selectable outcomes, retaining a skip
+  path when no positive outcome is guaranteed. Tooltip effects and foreign scopes
+  cannot supply an unlock. Country history through the earliest bookmark supplies
+  starting technologies only for proven recipients. Event triggers, focus-tree
+  selection, decision-category restrictions, and event callers establish country
+  identity; unknown callers remain unknown, and every possible recipient is checked.
+  Conditional history grants and focus requirements are evaluated using the enabling
+  technologies' shared folder DLC requirements. Future history and optional grants
+  cannot suppress a warning. A grant in the event's country also survives an explicit
+  scope back to that same country.
+  The check does not follow scripted-effect calls, cross-file variant creation, focus
+  prerequisites, or dynamic names, so findings still require review. Staged history,
+  technology, folder, bookmark, category, focus, or event-caller changes rescan consumers;
+  other staged source edits scan those files.
+  The repository backlog has not been audited. This does not change game files.
 
 - Most content validators run **CI-only**: the three bounded-parallel `mod-tests` batch jobs in `.github/workflows/test-suite.yml` are the gate. `tools/validation/validator_batches.py` is the single list of what runs, which changed-file groups select each validator, and which run without `--strict`; the batch runner (`run_validator_batch.py`) executes the selected validators with the shared CPU budget and uploads one artifact per batch holding every validator's `validation-<name>.log` + `.json` sidecar (the report loader unpacks them per validator). A crash or missing result file fails the batch while the remaining validators finish. On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `validate_defines.py`. Common scripting-mistake rules run once through `validate_common_mistakes.py` in that dispatcher and the CI validator list. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
 - Everything that fans out draws on one CPU ceiling: `cpu_budget()` in `tools/shared_utils.py` hands out 75% of the cores and leaves the rest to whoever is using the machine. `run_all_validators.py` caps how many validators run at once and passes each `--workers`; `precommit_validate.py` splits the same budget across its fan-out (it used to floor inner workers at 2, so fan-out times pools could reach twice the core count); `BaseValidator` clamps whatever `--workers` it is given. CI runners get every core, and `MD_MAX_WORKERS=N` overrides both. The unbounded suite fan-out that this replaced was measurably faster — the suite is largely I/O-bound — so a run that needs the old speed sets `MD_MAX_WORKERS`.
