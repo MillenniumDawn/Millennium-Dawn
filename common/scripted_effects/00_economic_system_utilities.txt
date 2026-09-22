@@ -264,11 +264,15 @@ repay_manual_debt_effect = {
 			set_temp_variable = { repay_temp = debt }
 		}
 	}
-	subtract_from_variable = { treasury = repay_temp }
-	subtract_from_variable = { debt = repay_temp }
-	ingame_update_setup = yes
-	if = { limit = { is_debug = yes }
-		log = "[GetDateText]: [THIS.GetName]: DEBUG: repay_manual_debt [?repay_temp] (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+	clamp_temp_variable = { var = repay_temp min = 0 }
+	if = {
+		limit = { check_variable = { repay_temp > 0 } }
+		subtract_from_variable = { treasury = repay_temp }
+		subtract_from_variable = { debt = repay_temp }
+		ingame_update_setup = yes
+		if = { limit = { is_debug = yes }
+			log = "[GetDateText]: [THIS.GetName]: DEBUG: repay_manual_debt [?repay_temp] (Total Debt: [?debt]b, Interest Rate: [?interest_rate]% balance:[?treasury_rate]b, Total Treasury:[?treasury], Total Treasury Rate:[?treasury_rate])"
+		}
 	}
 }
 

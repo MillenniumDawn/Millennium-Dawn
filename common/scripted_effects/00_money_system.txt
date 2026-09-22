@@ -53,6 +53,10 @@
 @spending_cost_clamp_max = 100000000
 # Population Tax Adjuster
 @population_tax_adjuster = 0.008
+# Maximum exchange-rate multiplier on reserve-currency debt service
+@max_debt_fx_factor = 2
+# Target share of gross income used for debt service after a financial collapse
+@financial_collapse_debt_service_target = 0.75
 
 # GDP per-building contribution coefficients: output = total * (base_factor + prod_factor * productivity) * manpower_fulfillment
 @gdp_civ_base_factor = 17.5
@@ -2468,6 +2472,28 @@ update_tension_premium = {
 	set_variable = { tracked_threat = has_added_tension_amount }
 }
 
+calculate_debt_fx_factor = {
+	set_temp_variable = { debt_fx_factor = 1 }
+	if = {
+		limit = {
+			OR = {
+				has_idea = us_dollar
+				has_idea = euro
+				has_idea = chinese_yuan
+				has_idea = chinese_yuan_2
+				has_idea = chinese_yuan_3
+				has_idea = russia_rouble
+				has_idea = japanese_yen
+				has_idea = british_pound
+				has_idea = swiss_frank
+				has_idea = gulden
+			}
+		}
+		set_temp_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
+		clamp_temp_variable = { var = debt_fx_factor max = @max_debt_fx_factor }
+	}
+}
+
 # Effect: calculate_interest_rate
 # Purpose: Computes daily interest rate on debt based on debt-to-GDP ratio, monetary policy, and world threat
 calculate_interest_rate = {
@@ -2522,24 +2548,8 @@ calculate_interest_rate = {
 		# Only debt denominated in an external reserve currency takes the exchange hit.
 		# Must follow the set_variable above: applied before it, the adjustment is
 		# overwritten and never reaches the player.
-		if = {
-			limit = {
-				OR = {
-					has_idea = us_dollar
-					has_idea = euro
-					has_idea = chinese_yuan
-					has_idea = chinese_yuan_2
-					has_idea = chinese_yuan_3
-					has_idea = russia_rouble
-					has_idea = japanese_yen
-					has_idea = british_pound
-					has_idea = swiss_frank
-					has_idea = gulden
-				}
-			}
-			set_temp_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
-			multiply_variable = { debt_rate = debt_fx_factor }
-		}
+		calculate_debt_fx_factor = yes
+		multiply_variable = { debt_rate = debt_fx_factor }
 
 		#If interest rate is really high, add additional modifier
 		if = { limit = { check_variable = { interest_rate > 14.999 } }
@@ -2603,6 +2613,35 @@ calculate_interest_rate = {
 		clear_variable = salafist_drift_very_high_interest_modifier
 		clear_variable = nationalist_drift_very_high_interest_modifier
 	}
+}
+
+restructure_debt_after_financial_collapse = {
+	set_country_flag = { flag = recent_financial_collapse value = 1 days = 1095 }
+	if = {
+		limit = {
+			check_variable = { debt > 0 }
+			check_variable = { potential_income > 0 }
+		}
+		set_temp_variable = { restructuring_interest_rate = interest_rate }
+		clamp_temp_variable = { var = restructuring_interest_rate min = 0.8 }
+		calculate_debt_fx_factor = yes
+		set_temp_variable = {
+			restructured_debt = {
+				value = potential_income
+				multiply = @financial_collapse_debt_service_target
+				divide = 0.00019
+				divide = restructuring_interest_rate
+				divide = debt_fx_factor
+			}
+		}
+		if = { limit = { check_variable = { debt > restructured_debt } }
+			set_variable = { debt = restructured_debt }
+		}
+	}
+	else_if = { limit = { check_variable = { debt > 0 } }
+		set_variable = { debt = 0 }
+	}
+	ingame_update_setup = yes
 }
 
 # Effect: update_military_rate
@@ -6277,11 +6316,11 @@ calculate_tax_adjustments = {
 		set_temp_variable = { corp_tax_change = 1 }
 	}
 
-	# Debt crisis escalation: if interest > 8% or debt_ratio > 1.0 with any deficit, force tax increases
-	# Catches debt spirals early before treasury_rate thresholds are hit
+	# Debt crisis escalation: force tax increases when debt service is unsustainable or debt is excessive
 	if = {
 		limit = {
 			OR = {
+				check_variable = { debt_rate > potential_income }
 				check_variable = { interest_rate > 8 }
 				check_variable = { debt_ratio > 1.0 }
 			}
