@@ -39,3 +39,13 @@ We understand that everyone has a personal life and that things come up. We stil
 At the end of each month, we review team members' activity to decide whether to renew GitHub access. During the month, we or your mentor may ask for a project status update. If you do not respond, you risk being removed from the team. If your GitHub access expires, you will also be removed from the development team on Discord.
 
 <span class="dev-team-role dev-team-role--junior">Junior Developers</span> cannot start new projects. Because many projects have gone unfinished in the past, you must first complete your assigned work and show that you can contribute reliably. Starting new projects is a responsibility of <span class="dev-team-role dev-team-role--developer">Developers</span>. Once promoted, you can choose projects of your own. This helps us avoid a backlog of unfinished work.
+
+## Final reminders
+
+**Do not turn off mentions.** They are how we contact you. If you turn them off and do not respond, you risk being removed from the team for inactivity.
+
+**Tell DROID if you change your Discord name.** For example, if you change from `Fire_hair#6887` to `Newbpwner#0420`, DM or tag **DROID** with your new name. Otherwise, we may not recognize you and could remove you by mistake.
+
+**Report longer absences.** If you will be away for a week or more, tag **DROID** in your development channel and explain why.
+
+**Always commit and push when you stop coding.** This applies to <span class="dev-team-role dev-team-role--junior">Junior Developers</span> and <span class="dev-team-role dev-team-role--developer">Developers</span>, whether you are taking a short break or finishing for the day. Do not leave your work only on your computer.
