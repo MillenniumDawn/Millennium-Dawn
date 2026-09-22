@@ -224,6 +224,13 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "USA_small_lobby_effort",
         "USA_special_measures",
         "USA_statehood_for_puerto_rico",
+        # game_rules_l_english.yml — vanilla game rule option name reused by MD.
+        "ETH_AI_BEHAVIOR",
+        # diplomacy_l_english.yml — vanilla opinion modifier names; MD redefines
+        # the modifiers in common/opinion_modifiers/generic_modifiers.txt but
+        # reuses the vanilla strings.
+        "same_ruling_party",
+        "unstable_alliance",
         # Vanilla focus names reused intact by MD focus trees (string fits the
         # in-game label — e.g. "Greater Finland", "Worker's Rights").
         "EST_new_economic_policy",  # ideas_l_english.yml
@@ -249,13 +256,6 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "SPR_the_popular_front_desc",
         "SWI_armed_neutrality",  # bba_focus_l_english.yml
         "SWI_swiss_neutrality",  # bba_ideas_l_english.yml
-        # game_rules_l_english.yml — vanilla game rule option name reused by MD.
-        "ETH_AI_BEHAVIOR",
-        # diplomacy_l_english.yml — vanilla opinion modifier names; MD redefines
-        # the modifiers in common/opinion_modifiers/generic_modifiers.txt but
-        # reuses the vanilla strings.
-        "same_ruling_party",
-        "unstable_alliance",
         # lar_events_l_english.yml — live La Resistance systems reused by MD.
         "lar_collab_gov.1.d",
         "lar_collab_gov.1.t",
