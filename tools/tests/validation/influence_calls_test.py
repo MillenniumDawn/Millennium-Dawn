@@ -119,6 +119,115 @@ def test_conditional_set_does_not_cover_the_call():
     assert len(_findings(script)) == 1
 
 
+# --- reachability: every branch of a chain must set the target -------------
+
+
+def test_if_and_else_both_set_cover_the_later_call():
+    script = (
+        "every_other_country = {\n"
+        "\tif = { limit = { is_ai = yes } set_temp_variable = { influence_target = THIS } }\n"
+        "\telse = { set_temp_variable = { influence_target = THIS } }\n"
+        "\t" + LOOP_CALL + "\n"
+        "}\n"
+    )
+    assert _findings(script) == []
+
+
+def test_if_else_if_else_chain_all_set_is_clean():
+    script = (
+        "every_other_country = {\n"
+        "\tif = { limit = { is_ai = yes } set_temp_variable = { influence_target = THIS } }\n"
+        "\telse_if = { limit = { is_subject = yes } set_temp_variable = { influence_target = THIS } }\n"
+        "\telse = { set_temp_variable = { influence_target = THIS } }\n"
+        "\t" + LOOP_CALL + "\n"
+        "}\n"
+    )
+    assert _findings(script) == []
+
+
+def test_chain_with_a_branch_missing_the_set_is_flagged():
+    script = (
+        "every_other_country = {\n"
+        "\tif = { limit = { is_ai = yes } set_temp_variable = { influence_target = THIS } }\n"
+        "\telse = { " + LOOP_CALL + " }\n"
+        "\t" + LOOP_CALL + "\n"
+        "}\n"
+    )
+    assert _lines(script) == [3, 4]
+
+
+def test_bare_if_with_set_is_not_reached_by_the_chain():
+    """No else: the fall-through pass skips the set, so the later call is stale."""
+    script = (
+        "every_other_country = {\n"
+        "\tif = { limit = { is_ai = yes } set_temp_variable = { influence_target = THIS } }\n"
+        "\telse_if = { limit = { is_subject = yes } set_temp_variable = { influence_target = THIS } }\n"
+        "\t" + LOOP_CALL + "\n"
+        "}\n"
+    )
+    assert len(_findings(script)) == 1
+
+
+def test_call_inside_else_after_set_is_clean():
+    script = (
+        "every_other_country = {\n"
+        "\tif = { limit = { is_ai = yes } }\n"
+        "\telse = {\n"
+        "\t\tset_temp_variable = { influence_target = THIS }\n"
+        "\t\t" + LOOP_CALL + "\n"
+        "\t}\n"
+        "\t" + LOOP_CALL + "\n"
+        "}\n"
+    )
+    assert _lines(script) == [7]
+
+
+def test_nested_chain_all_set_inside_if_branch_promotes_the_chain():
+    script = (
+        "every_other_country = {\n"
+        "\tif = {\n"
+        "\t\tlimit = { is_ai = yes }\n"
+        "\t\tif = { limit = { has_war = yes } set_temp_variable = { influence_target = THIS } }\n"
+        "\t\telse = { set_temp_variable = { influence_target = THIS } }\n"
+        "\t}\n"
+        "\telse = { set_temp_variable = { influence_target = THIS } }\n"
+        "\t" + LOOP_CALL + "\n"
+        "}\n"
+    )
+    assert _findings(script) == []
+
+
+def test_set_in_inner_loop_does_not_cover_later_outer_call():
+    """A zero-iteration inner loop never runs its set."""
+    script = (
+        "every_other_country = {\n"
+        "\tevery_allied_country = {\n"
+        "\t\tset_temp_variable = { influence_target = PREV }\n"
+        "\t\t" + LOOP_CALL + "\n"
+        "\t}\n"
+        "\t" + LOOP_CALL + "\n"
+        "}\n"
+    )
+    assert len(_findings(script)) == 1
+    assert "every_other_country" in _findings(script)[0][1]
+
+
+def test_set_before_inner_loop_names_the_inner_loop():
+    """The pre-loop set covers enclosing passes, so the innermost uncovered
+    loop is the one the message names."""
+    script = (
+        "every_other_country = {\n"
+        "\tset_temp_variable = { influence_target = THIS }\n"
+        "\tevery_allied_country = {\n"
+        "\t\t" + LOOP_CALL + "\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _findings(script)
+    assert len(findings) == 1
+    assert "every_allied_country" in findings[0][1]
+
+
 # --- single-execution scopes are out of scope ------------------------------
 
 
@@ -222,7 +331,7 @@ def test_each_loop_is_checked_separately():
 # --- wiring ----------------------------------------------------------------
 
 
-def test_validator_reports_warning_category(tmp_path):
+def test_validator_reports_error_category(tmp_path):
     import json
 
     nf = tmp_path / "common" / "national_focus"
@@ -235,11 +344,11 @@ def test_validator_reports_warning_category(tmp_path):
     )
     v = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     v.run_validations()
-    assert v.errors_found == 0
-    assert v.warnings_found == 1
+    assert v.errors_found == 1
+    assert v.warnings_found == 0
     issues = json.loads(v.get_issues_json())
     assert issues[0]["category"] == "stale-influence-target"
-    assert issues[0]["severity"] == "warning"
+    assert issues[0]["severity"] == "error"
     assert issues[0]["line"] == 1
 
 

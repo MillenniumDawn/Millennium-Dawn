@@ -14,9 +14,12 @@ The fix at the call site is the house style China's SCO focus already uses
 loop before the call. The check asks for exactly that: between a multi-iteration
 scope's opening and the call, some `set_temp_variable = { influence_target ... }`
 must run. A set before the loop does not count — it is the stale value every
-later iteration reuses. A set inside a conditional block before the call is not
-accepted, because the call can still run on a pass where the condition skipped
-the set.
+later iteration reuses. A set inside one branch of a conditional does not cover
+a call outside that branch: the call can still run on a pass where the condition
+skipped the set. Calls after an `if`/`else_if`/`else` chain are covered only
+when every branch of the chain sets the target, because only then is the set
+reachable on every pass. Sets inside nested loops never cover outer calls — a
+loop can run zero iterations.
 
 Single-execution scopes are deliberately out of scope: a call under
 `random_country` / `random_list` / `TAG = { }` runs once per invocation, so the
@@ -25,8 +28,8 @@ separate (latent) contract question, not this bug class. `meta_effect` /
 `meta_trigger` template bodies are skipped because their text is generated at
 runtime, not executed as written.
 
-WARNING-severity until the backlog lands; #4675 sweeps the remaining sites and
-flips the check to ERROR in the same change.
+ERROR-severity: #4675 swept the remaining call sites, so `--strict` CI batches
+now gate on the check.
 """
 
 import os
@@ -53,6 +56,8 @@ _LOOP_RE = re.compile(
 # Never contains a runtime call of its own.
 _SKIP_BLOCKS = guard_scan.SKIP_BLOCKS | {"meta_effect", "meta_trigger"}
 
+_CONDITIONAL_NAMES = ("if", "else_if", "else")
+
 
 def _is_multi_iteration(name: str) -> bool:
     return bool(_LOOP_RE.match(name))
@@ -75,28 +80,65 @@ class Scanner:
             lines.append(line_for_offset(self.offsets, match.start()))
         return lines
 
-    def walk(self, start: int, end: int, loops: List[Tuple[str, bool]]):
-        """`loops` carries (name, target-set-seen) for enclosing loop scopes."""
+    def walk(
+        self, start: int, end: int, loops: List[Tuple[str, bool]], state: bool = False
+    ) -> bool:
+        """`loops` carries (name, target-set-seen) for enclosing loop scopes.
+
+        `state` tracks whether every execution path from this block's entry to
+        the cursor has run an influence_target set; it is returned so a
+        conditional chain whose every branch sets the target can raise the
+        caller's state after it. Sets inside nested loops never raise it: a
+        loop can run zero iterations, leaving the target unset."""
         children = _child_blocks(self.text, start, end)
         cursor = start
-        for name, name_start, body_start, body_end in children:
+        i = 0
+        while i < len(children):
+            name, name_start, body_start, body_end = children[i]
             for line in self._own_call_lines(cursor, name_start, children):
-                self._report(line, loops)
-            if name in _SKIP_BLOCKS:
-                pass
-            elif _is_multi_iteration(name):
-                self.walk(body_start, body_end, loops + [(name, False)])
-            else:
-                if name == "set_temp_variable" and _SET_TARGET_RE.search(
-                    self.text[body_start:body_end]
-                ):
-                    loops = [(loop, True) for loop, _ in loops]
-                self.walk(body_start, body_end, loops)
+                self._report(line, loops, state)
             cursor = body_end + 1
+            if name in _SKIP_BLOCKS:
+                i += 1
+                continue
+            if name == "if":
+                chain = [children[i]]
+                j = i + 1
+                while j < len(children) and children[j][0] in _CONDITIONAL_NAMES[1:]:
+                    chain.append(children[j])
+                    j += 1
+                branch_results = []
+                for branch_name, b_name_start, b_start, b_end in chain:
+                    for line in self._own_call_lines(cursor, b_name_start, children):
+                        self._report(line, loops, state)
+                    branch_results.append(self.walk(b_start, b_end, loops, state))
+                    cursor = b_end + 1
+                if chain[-1][0] == "else" and all(branch_results):
+                    state = True
+                i = j
+                continue
+            if name == "set_temp_variable":
+                if _SET_TARGET_RE.search(self.text[body_start:body_end]):
+                    state = True
+                self.walk(body_start, body_end, loops, state)
+                i += 1
+                continue
+            if _is_multi_iteration(name):
+                # A set before this loop is stale for its later iterations, so
+                # the new scope starts uncovered; enclosing loops keep any
+                # coverage the current state already guarantees.
+                inherited = [(loop, covered or state) for loop, covered in loops]
+                self.walk(body_start, body_end, inherited + [(name, False)])
+            else:
+                self.walk(body_start, body_end, loops, state)
+            i += 1
         for line in self._own_call_lines(cursor, end, children):
-            self._report(line, loops)
+            self._report(line, loops, state)
+        return state
 
-    def _report(self, line: int, loops: List[Tuple[str, bool]]):
+    def _report(self, line: int, loops: List[Tuple[str, bool]], state: bool):
+        if state:
+            return
         missing = next((name for name, covered in loops if not covered), None)
         if missing is None:
             return
@@ -134,7 +176,7 @@ class Validator(BaseValidator):
         guard_scan.report_findings(
             self,
             guard_scan.collect_findings(self, scan_file, _CATEGORY),
-            self.add_warning,
+            self.add_error,
             "loop influence call(s) without a per-iteration influence_target",
             "All change_influence_percentage loop calls retarget per iteration",
         )
