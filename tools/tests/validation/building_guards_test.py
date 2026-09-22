@@ -21,6 +21,12 @@ def _messages(script):
     return [message for _, _, message in _scan(script)]
 
 
+def _scan_province(script):
+    scanner = V.Scanner(V._sanitize(script))
+    scanner.check_province_building_triggers()
+    return scanner.findings
+
+
 # --- unguarded effects --------------------------------------------------
 
 
@@ -296,6 +302,68 @@ def test_decision_available_does_not_guard_remove_effect():
     findings = _scan(script)
     assert len(findings) == 1
     assert "arms_factory" in findings[0][2]
+
+
+# --- province buildings in state-only triggers ------------------------------
+
+
+def test_province_building_in_non_damaged_building_level_is_flagged():
+    """The JAP_quake_damage case: naval_base is a province building, so the
+    trigger never validates and the game logs a load error."""
+    script = (
+        "if = {\n"
+        "\tlimit = { non_damaged_building_level = { building = naval_base level > 0 } }\n"
+        "\tdamage_building = { type = naval_base damage = 0.05 }\n"
+        "}\n"
+    )
+    findings = _scan_province(script)
+    assert len(findings) == 1
+    assert findings[0][0] == "province-building-state-trigger"
+    assert findings[0][1] == 2
+    assert "naval_base" in findings[0][2]
+
+
+def test_state_building_in_non_damaged_building_level_is_clean():
+    script = (
+        "if = {\n"
+        "\tlimit = { non_damaged_building_level = { building = air_base level > 0 } }\n"
+        "\tdamage_building = { type = air_base damage = 0.05 }\n"
+        "}\n"
+    )
+    assert _scan_province(script) == []
+
+
+def test_province_building_in_any_province_building_level_is_clean():
+    script = (
+        "if = {\n"
+        "\tlimit = { any_province_building_level = { building = naval_base level > 0 } }\n"
+        "\tdamage_building = { type = naval_base damage = 0.05 }\n"
+        "}\n"
+    )
+    assert _scan_province(script) == []
+
+
+def test_province_building_trigger_does_not_count_as_a_guard():
+    script = (
+        "if = {\n"
+        "\tlimit = { non_damaged_building_level = { building = naval_base level > 0 } }\n"
+        "\tdamage_building = { type = naval_base damage = 0.05 }\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert findings[0][0] == "unguarded-damage-building"
+
+
+def test_bare_comparison_guards_a_province_building():
+    script = (
+        "if = {\n"
+        "\tlimit = { naval_base > 0 }\n"
+        "\tdamage_building = { type = naval_base damage = 0.05 }\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+    assert _scan_province(script) == []
 
 
 # --- scan_file cache --------------------------------------------------------

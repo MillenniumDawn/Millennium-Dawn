@@ -175,18 +175,21 @@ on_actions = {
 
 			if = {
 				limit = { JAP_electronics_resolved = no }
-
-				# Electronics: Model Competition pressure, driven by China's semiconductor rise and offset by Japan's own resilience
 				set_temp_variable = { jap_ec_pressure = 1 }
 				if = {
 					limit = {
-						country_exists = CHI
-						CHI = {
-							OR = {
-								has_completed_focus = CHI_smic_advanced_node
-								has_completed_focus = CHI_domestic_eda
-								has_idea = CHI_semiconductor_backwardness_3
-								has_idea = CHI_semiconductor_backwardness_4
+						OR = {
+							date > 2008.1.1
+							AND = {
+								country_exists = CHI
+								CHI = {
+									OR = {
+										has_completed_focus = CHI_smic_advanced_node
+										has_completed_focus = CHI_domestic_eda
+										has_idea = CHI_semiconductor_backwardness_3
+										has_idea = CHI_semiconductor_backwardness_4
+									}
+								}
 							}
 						}
 					}
@@ -210,65 +213,67 @@ on_actions = {
 					}
 					add_to_temp_variable = { jap_ec_pressure = 1 }
 				}
+				set_temp_variable = { jap_ec_tier = jap_ec_pressure }
+				subtract_from_temp_variable = { jap_ec_tier = JAP_electronics_resilience }
+				clamp_temp_variable = { var = jap_ec_tier min = 0 max = 3 }
 				if = {
-					limit = { check_variable = { JAP_galapagos_openness < 25 } }
-					add_to_temp_variable = { jap_ec_pressure = 1 }
+					limit = { check_variable = { jap_ec_tier > JAP_electronics_pressure } }
+					if = {
+						limit = { check_variable = { jap_ec_tier = 2 } }
+						country_event = { id = JAP_electronics.1 days = 3 }
+					}
+					else = {
+						country_event = { id = JAP_electronics.2 days = 3 }
+					}
 				}
-				subtract_from_temp_variable = { jap_ec_pressure = JAP_electronics_resilience }
-				clamp_temp_variable = { var = jap_ec_pressure min = 0 max = 3 }
+				set_variable = { JAP_electronics_pressure = jap_ec_tier }
 
 				if = {
 					limit = {
-						check_variable = { jap_ec_pressure > 2 }
+						check_variable = { jap_ec_tier = 3 }
 						NOT = { has_idea = JAP_model_competition_3 }
 					}
-					if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
-					if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
+					JAP_remove_model_competition = yes
 					add_ideas = JAP_model_competition_3
-					if = {
-						limit = { check_variable = { JAP_electronics_competition_tier < 3 } }
-						country_event = { id = JAP_electronics.2 days = 3 }
-					}
-					set_variable = { JAP_electronics_competition_tier = 3 }
 				}
 				else_if = {
 					limit = {
-						check_variable = { jap_ec_pressure = 2 }
+						check_variable = { jap_ec_tier = 2 }
 						NOT = { has_idea = JAP_model_competition_2 }
 					}
-					if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
-					if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+					JAP_remove_model_competition = yes
 					add_ideas = JAP_model_competition_2
-					if = {
-						limit = { check_variable = { JAP_electronics_competition_tier < 2 } }
-						country_event = { id = JAP_electronics.1 days = 3 }
-					}
-					set_variable = { JAP_electronics_competition_tier = 2 }
 				}
 				else_if = {
 					limit = {
-						check_variable = { jap_ec_pressure = 1 }
+						check_variable = { jap_ec_tier = 1 }
 						NOT = { has_idea = JAP_model_competition_1 }
 					}
-					if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
-					if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+					JAP_remove_model_competition = yes
 					add_ideas = JAP_model_competition_1
-					set_variable = { JAP_electronics_competition_tier = 1 }
 				}
 				else_if = {
 					limit = {
-						check_variable = { jap_ec_pressure < 1 }
+						check_variable = { jap_ec_tier = 0 }
 						OR = {
 							has_idea = JAP_model_competition_1
 							has_idea = JAP_model_competition_2
 							has_idea = JAP_model_competition_3
 						}
 					}
-					if = { limit = { has_idea = JAP_model_competition_1 } remove_ideas = JAP_model_competition_1 }
-					if = { limit = { has_idea = JAP_model_competition_2 } remove_ideas = JAP_model_competition_2 }
-					if = { limit = { has_idea = JAP_model_competition_3 } remove_ideas = JAP_model_competition_3 }
+					JAP_remove_model_competition = yes
 					country_event = { id = JAP_electronics.3 days = 3 }
-					set_variable = { JAP_electronics_competition_tier = 0 }
+				}
+			}
+
+			if = {
+				limit = { has_idea = JAP_ring_of_fire }
+				random = {
+					chance = 4
+					set_temp_variable = { jap_quake_max = { value = JAP_quake_states^num subtract = 1 } }
+					set_temp_variable_to_random = { var = jap_quake_index min = 0 max = jap_quake_max integer = yes }
+					set_variable = { JAP_quake_state = JAP_quake_states^jap_quake_index }
+					country_event = { id = JAP_earthquake.1 days = 1 random_days = 6 }
 				}
 			}
 		}

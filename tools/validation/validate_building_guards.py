@@ -25,6 +25,12 @@ mod's accepted guard idioms, all derived from live usage:
   - A sibling `modifier = { factor = 0  X < N }` zeroing a `random_list`
     bucket's weight when the building is absent.
 
+`non_damaged_building_level` and `num_of_buildings` only resolve *state*
+buildings. Naming a province building in one is a load-time error -- the game
+logs `Not a valid state building: building` and the trigger never validates --
+so those two are additionally reported, and do not count as a guard. Use the
+bare `naval_base > 0` comparison or `any_province_building_level` instead.
+
 `trigger` / `available` / `visible` / `allowed` are not guards: a
 country-level `any_owned_state = { arms_factory > 0 }` does not prove the
 state the effect runs on has that building. `effect_tooltip` subtrees are
@@ -66,6 +72,48 @@ _NAMED_BUILDING_TRIGGERS = frozenset(
         "num_of_buildings",
     }
 )
+# Triggers that read the state building list and cannot resolve a province
+# building. Naming one is a load-time parser error, not just a weak guard.
+_STATE_ONLY_BUILDING_TRIGGERS = frozenset(
+    {"non_damaged_building_level", "num_of_buildings"}
+)
+# Buildings placed on a province rather than a state: everything whose
+# spawn_point is province-typed in common/buildings/00_buildings.txt, plus the
+# two forts, which are per-province and carry no spawn point.
+_PROVINCE_BUILDINGS = frozenset(
+    {
+        "air_facility",
+        "bunker",
+        "canal_locks",
+        "coastal_bunker",
+        "dam",
+        "dam_mountain",
+        "land_facility",
+        "naval_base",
+        "naval_facility",
+        "naval_headquarters",
+        "nuclear_facility",
+    }
+)
+
+
+def _find_province_building_triggers(text: str) -> List[Tuple[int, str, str]]:
+    """`(offset, trigger, building)` for state-only triggers naming a province
+    building, anywhere in ``text``."""
+    found: List[Tuple[int, str, str]] = []
+    for name, _, body_start, body_end in _child_blocks(text, 0, len(text)):
+        if name in _STATE_ONLY_BUILDING_TRIGGERS:
+            for building in _BUILDING_FIELD_RE.findall(text[body_start:body_end]):
+                if building in _PROVINCE_BUILDINGS:
+                    found.append((body_start, name, building))
+        else:
+            found.extend(
+                (offset + body_start, trigger, building)
+                for offset, trigger, building in _find_province_building_triggers(
+                    text[body_start:body_end]
+                )
+            )
+    return found
 
 
 def _extract_building_guards(text: str) -> Set[str]:
@@ -80,7 +128,10 @@ def _extract_building_guards(text: str) -> Set[str]:
     for name, _, body_start, body_end in _child_blocks(text, 0, len(text)):
         if name in _NAMED_BUILDING_TRIGGERS:
             body = text[body_start:body_end]
-            buildings.update(_BUILDING_FIELD_RE.findall(body))
+            named = set(_BUILDING_FIELD_RE.findall(body))
+            if name in _STATE_ONLY_BUILDING_TRIGGERS:
+                named -= _PROVINCE_BUILDINGS
+            buildings.update(named)
         else:
             buildings.update(_extract_building_guards(text[body_start:body_end]))
     return buildings
@@ -93,6 +144,16 @@ class Scanner:
         self.text = text
         self.offsets = compute_line_offsets(text)
         self.findings: List[Tuple[str, int, str]] = []
+
+    def check_province_building_triggers(self):
+        for offset, trigger, building in _find_province_building_triggers(self.text):
+            line = line_for_offset(self.offsets, offset)
+            message = (
+                f"{trigger} = {{ building = {building} ... }} cannot resolve "
+                f"{building}, which is a province building; use "
+                f"`{building} > 0` or any_province_building_level"
+            )
+            self.findings.append(("province-building-state-trigger", line, message))
 
     def _check_effect(
         self, effect: str, category: str, body_start: int, body_end: int, ctx: Context
@@ -149,16 +210,24 @@ def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
             raw = handle.read()
     except OSError:
         return []
-    if "damage_building" not in raw and "remove_building" not in raw:
+    if not any(
+        token in raw
+        for token in (
+            "damage_building",
+            "remove_building",
+            *_STATE_ONLY_BUILDING_TRIGGERS,
+        )
+    ):
         return []
 
     def compute():
         scanner = Scanner(_sanitize(raw))
         scanner.walk(0, len(scanner.text), Context())
+        scanner.check_province_building_triggers()
         return scanner.findings
 
     findings = disk_cache.per_file_cached_by_content(
-        mod_path, "building_guards_scan_v3", filepath, raw, compute
+        mod_path, "building_guards_scan_v4", filepath, raw, compute
     )
     relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
     return [(category, relative, line, message) for category, line, message in findings]
@@ -172,13 +241,23 @@ class Validator(BaseValidator):
         self._log_section("damage_building / remove_building existence guards")
         files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
         results = self._pool_map(scan_file, [(f, self.mod_path) for f in files])
+        rows = sorted(row for rows in results for row in rows)
 
         report_findings(
             self,
-            sorted(row for rows in results for row in rows),
+            [row for row in rows if row[0] != "province-building-state-trigger"],
             self.add_warning,
             "unguarded building effect(s)",
             "All damage_building/remove_building effects are guarded",
+        )
+
+        self._log_section("province buildings named in state-only triggers")
+        report_findings(
+            self,
+            [row for row in rows if row[0] == "province-building-state-trigger"],
+            self.add_warning,
+            "province building(s) named in a state-only trigger",
+            "No province buildings named in state-only building triggers",
         )
 
     def run_validations(self):
