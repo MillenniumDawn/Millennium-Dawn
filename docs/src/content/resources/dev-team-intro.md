@@ -29,3 +29,13 @@ We are a helpful team. If you have suggestions or need help, ask in the appropri
 First, [set up your GitHub account using this guide](https://docs.google.com/document/d/1V8DLowqEOSmlgazlHeC-hLZzLki5e6cWhQO_ZK6HVYs/edit). Once you have finished, send your GitHub username to **DROID** if you are a <span class="dev-team-role dev-team-role--junior">Junior Developer</span>. If you have questions during setup, please ping a team member. GitHub access is required to contribute to the mod.
 
 If you are a GFX designer, ping or DM **Amtoj** for help getting set up.
+
+## Trial Period
+
+As a <span class="dev-team-role dev-team-role--junior">Junior Developer</span>, you have a one-month trial period. Your GitHub access expires after one month unless it is renewed. We will continue to renew it while you remain active, until you have completed enough work to be promoted to <span class="dev-team-role dev-team-role--developer">Developer</span>.
+
+We understand that everyone has a personal life and that things come up. We still expect you to respond when the team is tagged to check who is available. If you stop responding, you may be removed from the team until you resume communication.
+
+At the end of each month, we review team members' activity to decide whether to renew GitHub access. During the month, we or your mentor may ask for a project status update. If you do not respond, you risk being removed from the team. If your GitHub access expires, you will also be removed from the development team on Discord.
+
+<span class="dev-team-role dev-team-role--junior">Junior Developers</span> cannot start new projects. Because many projects have gone unfinished in the past, you must first complete your assigned work and show that you can contribute reliably. Starting new projects is a responsibility of <span class="dev-team-role dev-team-role--developer">Developers</span>. Once promoted, you can choose projects of your own. This helps us avoid a backlog of unfinished work.
