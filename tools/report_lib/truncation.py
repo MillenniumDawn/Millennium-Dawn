@@ -1,16 +1,20 @@
 """Keep the rendered comment body under GitHub's 65 536-byte issue comment cap.
 
-If the full body would exceed the cap we strip the new-findings list and
-anything after the summary tables, and replace them with a stub pointing
-to the workflow artifact. The verdict and tables stay so the reviewer
-still sees counts. The artifact download has the full data.
+The findings lists lead the report and are the only unbounded part of it, so
+truncation trims them from the bottom up and keeps the tail — the per-category,
+Mod tests and Tools tests tables, all bounded — intact, with a stub pointing at
+the workflow artifact in between. The reviewer keeps the branch's first findings
+and every count; the artifact download has the full data.
 """
 
-from typing import Tuple
+from typing import List, Tuple
 
 MAX_COMMENT_BYTES = 60_000  # headroom under GitHub's 65 536 hard limit
 
-_TABLE_HEADINGS = ("## Tools tests", "## Mod tests", "## Findings by category")
+# Everything from the first of these to the end of the body is kept whole.
+_TAIL_HEADINGS = ("## Findings by category", "## Mod tests", "## Tools tests")
+# Headroom for the <details> tags a mid-block cut leaves to be closed.
+_CLOSE_RESERVE = 200
 
 
 def truncate_if_needed(
@@ -18,59 +22,61 @@ def truncate_if_needed(
 ) -> Tuple[str, bool]:
     """Return (possibly_truncated_body, was_truncated).
 
-    Truncation strategy: keep the marker, title, metadata, and summary tables;
-    replace everything after the tables with a short pointer to the
-    workflow artifact or run.
+    Truncation strategy: keep the marker, title, verdict and metadata, as much
+    of the findings lists as fits, and the whole table tail; replace what was
+    dropped with a short pointer to the workflow artifact or run.
     """
-    if len(body.encode("utf-8")) <= MAX_COMMENT_BYTES:
+    if _size(body) <= MAX_COMMENT_BYTES:
         return body, False
 
-    keep_up_to = _find_summary_table_end(body)
-    if keep_up_to == -1:
-        # Couldn't find the summary table — fall back to a hard byte slice
-        # but still leave a visible note at the bottom.
-        truncated = body.encode("utf-8")[: MAX_COMMENT_BYTES - 500].decode(
-            "utf-8", errors="ignore"
-        )
-        return truncated + _tail_notice(artifact_url, workflow_run_url), True
+    notice = _tail_notice(artifact_url, workflow_run_url)
+    split = _find_tail_start(body)
+    if split == -1:
+        return _hard_slice(body, notice), True
 
-    head = body[:keep_up_to]
-    return head.rstrip() + "\n\n" + _tail_notice(artifact_url, workflow_run_url), True
+    head, tail = body[:split], body[split:]
+    budget = MAX_COMMENT_BYTES - _size(tail) - _size(notice) - _CLOSE_RESERVE
+    if budget <= 0:
+        # Tables alone blow the cap (a pathological report) — fall back to a
+        # blind slice so something still posts.
+        return _hard_slice(body, notice), True
 
-
-def _is_table_section_line(line: str) -> bool:
-    stripped = line.strip()
-    if not stripped:
-        return True
-    if stripped.startswith("|"):
-        return True
-    if stripped.startswith("✅"):
-        return True
-    # Italic one-line notes the tables carry ("_No validator results found._",
-    # "_…and N more categories._").
-    if stripped.startswith("_") and stripped.endswith("_"):
-        return True
-    return False
+    return _trim_findings(head, budget) + "\n" + notice + "\n" + tail, True
 
 
-def _find_summary_table_end(body: str) -> int:
-    """Return the offset just after the last summary table section, or -1."""
-    lines = body.splitlines(keepends=True)
-    in_section = False
+def _size(text: str) -> int:
+    return len(text.encode("utf-8"))
+
+
+def _find_tail_start(body: str) -> int:
+    """Offset of the first table section heading, or -1 when there is none."""
     offset = 0
-    end_offset = -1
-    for line in lines:
-        if line.startswith(_TABLE_HEADINGS):
-            in_section = True
-            end_offset = offset + len(line)
-        elif in_section and line.startswith("## "):
-            break
-        elif in_section and _is_table_section_line(line):
-            end_offset = offset + len(line)
-        elif in_section:
-            break
+    for line in body.splitlines(keepends=True):
+        if line.startswith(_TAIL_HEADINGS):
+            return offset
         offset += len(line)
-    return end_offset
+    return -1
+
+
+def _trim_findings(head: str, budget: int) -> str:
+    """Drop trailing lines until `head` fits, then close any orphaned block."""
+    lines: List[str] = head.splitlines(keepends=True)
+    size = _size(head)
+    while lines and size > budget:
+        size -= _size(lines[-1])
+        lines.pop()
+    text = "".join(lines).rstrip() + "\n"
+    unclosed = text.count("<details") - text.count("</details>")
+    if unclosed > 0:
+        text += "\n" + "</details>\n" * unclosed
+    return text
+
+
+def _hard_slice(body: str, notice: str) -> str:
+    truncated = body.encode("utf-8")[: MAX_COMMENT_BYTES - 500].decode(
+        "utf-8", errors="ignore"
+    )
+    return truncated + notice
 
 
 def _tail_notice(artifact_url: str, workflow_run_url: str) -> str:

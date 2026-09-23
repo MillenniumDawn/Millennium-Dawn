@@ -23,7 +23,7 @@ country_event = {
 	id = econvent.1
 	title = econvent.1.t
 	desc = econvent.1.d
-	picture = GFX_news_housing_warning
+	picture = GFX_house
 	is_triggered_only = yes
 
 	mean_time_to_happen = {
@@ -98,7 +98,7 @@ country_event = {
 	id = econvent.2
 	title = econvent.2.t
 	desc = econvent.2.d
-	picture = GFX_news_housing_crash
+	picture = GFX_banking_crisis
 	is_triggered_only = yes
 
 	mean_time_to_happen = {
@@ -392,7 +392,7 @@ country_event = {
 	id = econvent.4
 	title = econvent.4.t
 	desc = econvent.4.d
-	picture = GFX_world_foreclosure
+	picture = GFX_banking_crisis
 	is_triggered_only = yes
 
 	mean_time_to_happen = {
@@ -1324,7 +1324,6 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = -0.03 }
 		set_temp_variable = { temp_outlook_increase = -0.03 }
 		change_relative_party_popularity = yes
-		decrease_economic_growth = yes
 		ai_chance = { base = 1 }
 	}
 
@@ -2552,6 +2551,8 @@ country_event = {
 	option = {
 		name = bankruptcy.10.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.10.a executed"
+		restructure_debt_after_financial_collapse = yes
+		custom_effect_tooltip = bankruptcy_financial_collapse_restructuring_tt
 		hold_election = ROOT
 		hidden_effect = { set_elections_48_months = yes }
 		if = {
@@ -2577,9 +2578,16 @@ country_event = {
 	option = {
 		name = bankruptcy.10.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.10.b executed"
+		restructure_debt_after_financial_collapse = yes
+		custom_effect_tooltip = bankruptcy_financial_collapse_restructuring_tt
 		country_event = { id = bankruptcy.11 days = 1 }
-		ai_chance = { # AI won't block for the time being
-			base = 5
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				has_stability < 0.25
+				check_variable = { party_pop_array^ruling_party > 0.5 }
+			}
 		}
 	}
 }
@@ -2644,6 +2652,8 @@ country_event = {
 	option = {
 		name = bankruptcy.12.a
 		log = "[GetDateText]: [This.GetName]: bankruptcy.12.a executed"
+		restructure_debt_after_financial_collapse = yes
+		custom_effect_tooltip = bankruptcy_financial_collapse_restructuring_tt
 		hidden_effect = { put_the_largest_opposition_party_in_power = yes }
 		custom_effect_tooltip = bankruptcy.11.a_tt
 		if = {
@@ -2669,8 +2679,17 @@ country_event = {
 	option = {
 		name = bankruptcy.12.b
 		log = "[GetDateText]: [This.GetName]: bankruptcy.12.b executed"
+		restructure_debt_after_financial_collapse = yes
+		custom_effect_tooltip = bankruptcy_financial_collapse_restructuring_tt
 		country_event = { id = bankruptcy.11 days = 1 }
-		ai_chance = { base = 5 }
+		ai_chance = {
+			base = 0
+			modifier = {
+				add = 5
+				has_stability < 0.25
+				check_variable = { party_pop_array^ruling_party > 0.5 }
+			}
+		}
 	}
 }
 
@@ -3772,7 +3791,7 @@ country_event = {
 		ai_chance = { base = 70 }
 	}
 }
-#Communist-State makes a speech
+#communist_state makes a speech
 country_event = {
 	id = bankruptcy.204
 	title = bankruptcy.204.t

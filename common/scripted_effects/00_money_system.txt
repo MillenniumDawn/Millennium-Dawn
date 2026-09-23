@@ -22,10 +22,6 @@
 # military_rate - cost of military law
 # personnel_cost - how much you pay soldiers and maintenance on equipment
 
-# treasury_cyber_small - cost of small investments in cyber security infrastructure
-# treasury_cyber_medium - cost of medium investments in cyber security infrastructure
-# treasury_cyber_large - cost of large investments in cyber security infrastructure
-
 # corporation_tax - Value of the Corporate taxes
 # population_tax - value of the population tax
 # corporation_tax_rate - Corporate Tax rate
@@ -57,6 +53,10 @@
 @spending_cost_clamp_max = 100000000
 # Population Tax Adjuster
 @population_tax_adjuster = 0.008
+# Maximum exchange-rate multiplier on reserve-currency debt service
+@max_debt_fx_factor = 2
+# Target share of gross income used for debt service after a financial collapse
+@financial_collapse_debt_service_target = 0.75
 
 # GDP per-building contribution coefficients: output = total * (base_factor + prod_factor * productivity) * manpower_fulfillment
 @gdp_civ_base_factor = 17.5
@@ -252,7 +252,6 @@ ingame_update_setup = {
 
 	#Various
 	update_economic_cycle_cost = yes
-	update_cyber_cost = yes
 	update_employment_productivity_output_dynamic_modifier = yes
 	calculate_migration_mechanic_values = yes
 
@@ -413,7 +412,7 @@ calculate_tax_gain = {
 			# Overall productivity
 			multiply = {
 				value = overall_productivity
-				divide = global.productivity_center
+				divide = { value = global.productivity_center clamp = { min = 1000 max = 100000000 } }
 			}
 		}
 	}
@@ -873,7 +872,7 @@ calculate_additional_income_rate = {
 						}
 					}
 				}
-				set_variable = { HEZ_lebanese_support_money = 2.000 }
+				set_variable = { HEZ_lebanese_support_money = 1.000 }
 			}
 			else_if = {
 				limit = {
@@ -914,14 +913,14 @@ calculate_additional_income_rate = {
 			}
 			if = {
 				limit = {
-					PER = {
+					HEZ = {
 						OR = {
 							AND = {
-								check_variable = { influence_array^0 = HEZ }
+								check_variable = { influence_array^0 = PER }
 								check_variable = { influence_array_val^0 > 49.999 }
 							}
 							AND = {
-								check_variable = { influence_array^1 = HEZ }
+								check_variable = { influence_array^1 = PER }
 								check_variable = { influence_array_val^1 > 49.999 }
 							}
 						}
@@ -931,22 +930,22 @@ calculate_additional_income_rate = {
 			}
 			else_if = {
 				limit = {
-					PER = {
+					HEZ = {
 						OR = {
 							AND = {
-								check_variable = { influence_array^0 = HEZ }
+								check_variable = { influence_array^0 = PER }
 								check_variable = { influence_array_val^0 > 19.999 }
 							}
 							AND = {
-								check_variable = { influence_array^1 = HEZ }
+								check_variable = { influence_array^1 = PER }
 								check_variable = { influence_array_val^1 > 19.999 }
 							}
 							AND = {
-								check_variable = { influence_array^2 = HEZ }
+								check_variable = { influence_array^2 = PER }
 								check_variable = { influence_array_val^2 > 19.999 }
 							}
 							AND = {
-								check_variable = { influence_array^3 = HEZ }
+								check_variable = { influence_array^3 = PER }
 								check_variable = { influence_array_val^3 > 19.999 }
 							}
 						}
@@ -1294,6 +1293,11 @@ calculate_additional_income_rate = {
 			limit = { has_idea = BUL_varna_beaches_revenue }
 			set_variable = { additional_income_BUL_varna_beaches = 0.45 }
 			add_to_variable = { additional_income_rate = additional_income_BUL_varna_beaches }
+		}
+		if = {
+			limit = { has_idea = BUL_gold_mining_revenue }
+			set_variable = { additional_income_BUL_gold_mining = 0.30 }
+			add_to_variable = { additional_income_rate = additional_income_BUL_gold_mining }
 		}
 	}
 	# Chechnya
@@ -1979,7 +1983,7 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = additional_income_SWE_tourism_4 }
 		}
 		if = {
-			limit = { has_country_flag = SWE_Crypto_invest }
+			limit = { has_completed_focus = SWE_allow_crypto }
 			add_to_variable = { additional_income_rate = SWE_Crypto_income_effect }
 		}
 	}
@@ -2473,6 +2477,28 @@ update_tension_premium = {
 	set_variable = { tracked_threat = has_added_tension_amount }
 }
 
+calculate_debt_fx_factor = {
+	set_temp_variable = { debt_fx_factor = 1 }
+	if = {
+		limit = {
+			OR = {
+				has_idea = us_dollar
+				has_idea = euro
+				has_idea = chinese_yuan
+				has_idea = chinese_yuan_2
+				has_idea = chinese_yuan_3
+				has_idea = russia_rouble
+				has_idea = japanese_yen
+				has_idea = british_pound
+				has_idea = swiss_frank
+				has_idea = gulden
+			}
+		}
+		set_temp_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
+		clamp_temp_variable = { var = debt_fx_factor max = @max_debt_fx_factor }
+	}
+}
+
 # Effect: calculate_interest_rate
 # Purpose: Computes daily interest rate on debt based on debt-to-GDP ratio, monetary policy, and world threat
 calculate_interest_rate = {
@@ -2527,24 +2553,8 @@ calculate_interest_rate = {
 		# Only debt denominated in an external reserve currency takes the exchange hit.
 		# Must follow the set_variable above: applied before it, the adjustment is
 		# overwritten and never reaches the player.
-		if = {
-			limit = {
-				OR = {
-					has_idea = us_dollar
-					has_idea = euro
-					has_idea = chinese_yuan
-					has_idea = chinese_yuan_2
-					has_idea = chinese_yuan_3
-					has_idea = russia_rouble
-					has_idea = japanese_yen
-					has_idea = british_pound
-					has_idea = swiss_frank
-					has_idea = gulden
-				}
-			}
-			set_temp_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
-			multiply_variable = { debt_rate = debt_fx_factor }
-		}
+		calculate_debt_fx_factor = yes
+		multiply_variable = { debt_rate = debt_fx_factor }
 
 		#If interest rate is really high, add additional modifier
 		if = { limit = { check_variable = { interest_rate > 14.999 } }
@@ -2608,6 +2618,35 @@ calculate_interest_rate = {
 		clear_variable = salafist_drift_very_high_interest_modifier
 		clear_variable = nationalist_drift_very_high_interest_modifier
 	}
+}
+
+restructure_debt_after_financial_collapse = {
+	set_country_flag = { flag = recent_financial_collapse value = 1 days = 1095 }
+	if = {
+		limit = {
+			check_variable = { debt > 0 }
+			check_variable = { potential_income > 0 }
+		}
+		set_temp_variable = { restructuring_interest_rate = interest_rate }
+		clamp_temp_variable = { var = restructuring_interest_rate min = 0.8 }
+		calculate_debt_fx_factor = yes
+		set_temp_variable = {
+			restructured_debt = {
+				value = potential_income
+				multiply = @financial_collapse_debt_service_target
+				divide = 0.00019
+				divide = restructuring_interest_rate
+				divide = debt_fx_factor
+			}
+		}
+		if = { limit = { check_variable = { debt > restructured_debt } }
+			set_variable = { debt = restructured_debt }
+		}
+	}
+	else_if = { limit = { check_variable = { debt > 0 } }
+		set_variable = { debt = 0 }
+	}
+	ingame_update_setup = yes
 }
 
 # Effect: update_military_rate
@@ -4401,7 +4440,7 @@ calculate_additional_expense_rate = {
 # Purpose: Computes weekly ROI from international investments and splits it into treasury vs reinvested shares
 calculate_int_investments_rate = {
 	# Base ROI + stacked return_on_investment_modifier, clamped to the engine-wide ceiling
-	set_variable = { roi_rate = { value = 0.06 add = modifier@return_on_investment_modifier clamp = { min = 0 max = 0.20 } } }
+	set_variable = { roi_rate = { value = 0.06 add = modifier@return_on_investment_modifier clamp = { min = 0 max = global.roi_rate_cap } } }
 
 	#This is how much money we get back in a year, converted to weekly
 	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 clamp = { min = 0 max = @math_expressions_max } } }
@@ -4472,15 +4511,20 @@ calculate_resource_sale_rate = {
 # Effect: update_display
 # Purpose: Aggregates expense streams and computes net treasury change for the UI
 update_display = {
-	set_variable = { display_expense = {
-		value = bureaucracy_gain
-		add = defence_gain
-		add = security_gain
-		add = education_gain
-		add = health_gain
-		add = welfare_gain
-		add = infra_gain
-	} }
+	set_variable = {
+		display_expense = {
+			value = bureaucracy_gain
+			add = defence_gain
+			add = security_gain
+			add = education_gain
+			add = health_gain
+			add = welfare_gain
+			add = infra_gain
+			add = additional_expenses_rate
+			add = border_control_gain
+			add = united_nations_expenses
+		}
+	}
 	if = {
 		limit = {
 			NOT = {
@@ -4492,47 +4536,34 @@ update_display = {
 		}
 		add_to_variable = { display_expense = debt_rate }
 	}
-	add_to_variable = {
-		var = display_expense
-		value = {
-			value = additional_expenses_rate
-			add = border_control_gain
-			add = united_nations_expenses
+
+	set_variable = {
+		display_income = {
+			value = tax_gain
+			add = resource_sale_rate
+			add = int_investments_collected_rate
+			add = additional_income_rate
 		}
 	}
 
-	# Giving it to Global Nations
-	if = { limit = { is_debug = yes }
-		resize_temp_array = { array = budget_array value = 0 size = 10 }
-		set_temp_variable = { budget_array^0 = bureaucracy_gain }
-		set_temp_variable = { budget_array^1 = defence_gain }
-		set_temp_variable = { budget_array^2 = security_gain }
-		set_temp_variable = { budget_array^3 = education_gain }
-		set_temp_variable = { budget_array^4 = health_gain }
-		set_temp_variable = { budget_array^5 = welfare_gain }
-		set_temp_variable = { budget_array^6 = debt_rate }
-		set_temp_variable = { budget_array^7 = additional_expenses_rate }
-		set_temp_variable = { budget_array^8 = border_control_gain }
-		set_temp_variable = { budget_array^9 = united_nations_expenses }
-		find_highest_in_array = {
-			array = budget_array
-			value = value_highest_cost_temp
-			index = index_highest_cost_temp
+	# Calculate for Rentier State
+	set_variable = {
+		resource_to_tax_income = {
+			value = resource_sale_rate
+			divide = {
+				value = tax_gain
+				clamp = { min = 0.001 max = 100000000 }
+			}
 		}
-		log = "[GetDateText]: [THIS.GetName]: Highest Economic Expenditure: Index: [?index_highest_cost_temp] Value: [?value_highest_cost_temp]: Treasury Rate: [?THIS.treasury_rate]"
 	}
-
-	set_variable = { display_income = { value = tax_gain add = resource_sale_rate } }
-	set_variable = { resource_to_tax_income = resource_sale_rate } #t these next 2 lines are to get resource export income divided by tax income (pop and corp), then use this ratio as one of the prerequisites for when rentier state cancels so it's not just based on resource extraction as % of GDP
-	set_temp_variable = { tmp_tax_gain_divisor = tax_gain }
-	clamp_temp_variable = { var = tmp_tax_gain_divisor min = 0.001 }
-	divide_variable = { resource_to_tax_income = tmp_tax_gain_divisor }
-	add_to_variable = { display_income = int_investments_collected_rate }
-	add_to_variable = { display_income = additional_income_rate }
 
 	# Adjusted Potential Income to the international investments so that people can't exploit the incoming financial collapse
-	set_variable = { potential_income = display_income }
-	add_to_variable = { potential_income = int_investments_reinvest_rate }
+	set_variable = {
+		potential_income = {
+			value = display_income
+			add = int_investments_reinvest_rate
+		}
+	}
 
 	# Adjust Potential Expense to Include the Debt Rate
 	set_variable = { potential_expense = display_expense }
@@ -4566,81 +4597,6 @@ update_economic_cycle_cost = {
 			}
 		}
 	}
-}
-
-# Effect: update_cyber_cost
-# Purpose: Computes tiered costs for cybersecurity investments (small, medium, large)
-update_cyber_cost = {
-	if = {
-		limit = { check_variable = { gdp_total < 501 } }
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.006 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.011 multiply = 0.85 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.015 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 500 }
-			check_variable = { gdp_total < 1001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.005 multiply = 0.85 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.009 multiply = 0.85 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.015 multiply = 0.90 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 1000 }
-			check_variable = { gdp_total < 2001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.004 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.007 multiply = 0.85 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.01 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 2000 }
-			check_variable = { gdp_total < 5001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.003 multiply = 0.85 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.005 multiply = 0.75 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.005 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 5000 }
-			check_variable = { gdp_total < 10001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.002 multiply = 0.85 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.003 multiply = 0.90 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.005 multiply = 0.80 } }
-	}
-
-	if = {
-		limit = {
-			check_variable = { gdp_total > 10000 }
-			check_variable = { gdp_total < 30001 }
-		}
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.002 multiply = 0.70 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.003 multiply = 0.65 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.003 multiply = 0.85 } }
-	}
-
-	if = {
-		limit = { check_variable = { gdp_total > 30000 } }
-		set_variable = { treasury_cyber_small = { value = gdp_total multiply = 0.001 } }
-		set_variable = { treasury_cyber_medium = { value = gdp_total multiply = 0.002 multiply = 0.70 } }
-		set_variable = { treasury_cyber_large = { value = gdp_total multiply = 0.002 multiply = 0.87 } }
-	}
-
-	#Apply cyber cost multiplier modifier
-	set_temp_variable = { cyber_cost_multiplier = { value = 1 add = modifier@cyber_cost_multiplier_modifier } }
-
-	multiply_variable = { treasury_cyber_small = cyber_cost_multiplier }
-	multiply_variable = { treasury_cyber_medium = cyber_cost_multiplier }
-	multiply_variable = { treasury_cyber_large = cyber_cost_multiplier }
 }
 
 # Effect: update_state_variables
@@ -4679,25 +4635,8 @@ update_state_variables = {
 				}
 			}
 		}
-
-		set_variable = {
-			rocket_sites = {
-				value = 0
-				every_collection = {
-					named_collection = controlled_states_collection
-					add = building_level@rocket_site
-				}
-			}
-		}
-		set_variable = {
-			anti_air_building = {
-				value = 0
-				every_collection = {
-					named_collection = controlled_states_collection
-					add = building_level@anti_air_building
-				}
-			}
-		}
+		set_variable = { rocket_sites = num_missile_silo }
+		set_variable = { anti_air_building = num_anti_air_building }
 
 		set_variable = {
 			agriculture_district_total = {
@@ -5527,34 +5466,28 @@ calculate_gdp = {
 	set_temp_variable = { workers_per_composite_plant = { value = workers_per_composite_plant multiply = worker_requirement_gdp_multiplier } }
 	set_temp_variable = { workers_per_synthetic_refinery = { value = workers_per_synthetic_refinery multiply = worker_requirement_gdp_multiplier } }
 
-	if = { limit = { check_variable = { industrial_complex_total = 0 } }
-		set_variable = { civilian_factories_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_civ_fac_display = {
-				value = workers_per_civ_fac
-				multiply = 1000
+	set_temp_variable = {
+		workers_per_civ_fac = {
+			value = workers_per_civ_fac
+			multiply = {
+				value = 1
+				add = modifier@civ_facs_worker_requirement_modifier
+				add = modifier@buildings_worker_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
 			}
 		}
 	}
-	else = {
-		set_temp_variable = {
-			workers_per_civ_fac = {
-				value = workers_per_civ_fac
-				multiply = {
-					value = 1
-					add = modifier@civ_facs_worker_requirement_modifier
-					add = modifier@buildings_worker_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
+	set_variable = {
+		workers_per_civ_fac_display = {
+			value = workers_per_civ_fac
+			multiply = 1000
 		}
-		set_variable = {
-			workers_per_civ_fac_display = {
-				value = workers_per_civ_fac
-				multiply = 1000
-			}
-		}
+	}
 
+	if = { limit = { check_variable = { industrial_complex_total = 0 } }
+		set_variable = { civilian_factories_manpower_fulfillment = 1 }
+	}
+	else = {
 		set_temp_variable = {
 			max_workers_in_civ_facs = {
 				value = industrial_complex_total
@@ -5577,34 +5510,28 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_civ_facs }
 	}
 
-	if = { limit = { check_variable = { office_park_total = 0 } }
-		set_variable = { offices_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_office_display = {
-				value = workers_per_office
-				multiply = 1000
+	set_temp_variable = {
+		workers_per_office = {
+			value = workers_per_office
+			multiply = {
+				value = 1
+				add = modifier@offices_worker_requirement_modifier
+				add = modifier@buildings_worker_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
 			}
 		}
 	}
-	else = {
-		set_temp_variable = {
-			workers_per_office = {
-				value = workers_per_office
-				multiply = {
-					value = 1
-					add = modifier@offices_worker_requirement_modifier
-					add = modifier@buildings_worker_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
+	set_variable = {
+		workers_per_office_display = {
+			value = workers_per_office
+			multiply = 1000
 		}
-		set_variable = {
-			workers_per_office_display = {
-				value = workers_per_office
-				multiply = 1000
-			}
-		}
+	}
 
+	if = { limit = { check_variable = { office_park_total = 0 } }
+		set_variable = { offices_manpower_fulfillment = 1 }
+	}
+	else = {
 		set_temp_variable = {
 			max_workers_in_offices = {
 				value = office_park_total
@@ -5627,34 +5554,28 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_offices }
 	}
 
-	if = { limit = { check_variable = { agriculture_district_total = 0 } }
-		set_variable = { agriculture_district_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_agriculture_district_display = {
-				value = workers_per_agriculture_district
-				multiply = 1000
+	set_temp_variable = {
+		workers_per_agriculture_district = {
+			value = workers_per_agriculture_district
+			multiply = {
+				value = 1
+				add = modifier@agriculture_district_worker_requirement_modifier
+				add = modifier@buildings_worker_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
 			}
 		}
 	}
-	else = {
-		set_temp_variable = {
-			workers_per_agriculture_district = {
-				value = workers_per_agriculture_district
-				multiply = {
-					value = 1
-					add = modifier@agriculture_district_worker_requirement_modifier
-					add = modifier@buildings_worker_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
+	set_variable = {
+		workers_per_agriculture_district_display = {
+			value = workers_per_agriculture_district
+			multiply = 1000
 		}
-		set_variable = {
-			workers_per_agriculture_district_display = {
-				value = workers_per_agriculture_district
-				multiply = 1000
-			}
-		}
+	}
 
+	if = { limit = { check_variable = { agriculture_district_total = 0 } }
+		set_variable = { agriculture_district_manpower_fulfillment = 1 }
+	}
+	else = {
 		set_temp_variable = {
 			max_workers_in_agriculture_district = {
 				value = agriculture_district_total
@@ -5678,34 +5599,28 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_agriculture_district }
 	}
 
-	if = { limit = { check_variable = { microchip_plant_total = 0 } }
-		set_variable = { microchip_plant_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_microchip_plant_display = {
-				value = workers_per_microchip_plant
-				multiply = 1000
+	set_temp_variable = {
+		workers_per_microchip_plant = {
+			value = workers_per_microchip_plant
+			multiply = {
+				value = 1
+				add = modifier@microchip_plant_worker_requirement_modifier
+				add = modifier@buildings_worker_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
 			}
 		}
 	}
-	else = {
-		set_temp_variable = {
-			workers_per_microchip_plant = {
-				value = workers_per_microchip_plant
-				multiply = {
-					value = 1
-					add = modifier@microchip_plant_worker_requirement_modifier
-					add = modifier@buildings_worker_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
+	set_variable = {
+		workers_per_microchip_plant_display = {
+			value = workers_per_microchip_plant
+			multiply = 1000
 		}
-		set_variable = {
-			workers_per_microchip_plant_display = {
-				value = workers_per_microchip_plant
-				multiply = 1000
-			}
-		}
+	}
 
+	if = { limit = { check_variable = { microchip_plant_total = 0 } }
+		set_variable = { microchip_plant_manpower_fulfillment = 1 }
+	}
+	else = {
 		set_temp_variable = {
 			max_workers_in_microchip_plant = {
 				value = microchip_plant_total
@@ -5729,34 +5644,28 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_microchip_plant }
 	}
 
-	if = { limit = { check_variable = { composite_plant_total = 0 } }
-		set_variable = { composite_plant_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_composite_plant_display = {
-				value = workers_per_composite_plant
-				multiply = 1000
+	set_temp_variable = {
+		workers_per_composite_plant = {
+			value = workers_per_composite_plant
+			multiply = {
+				value = 1
+				add = modifier@composite_plant_worker_requirement_modifier
+				add = modifier@buildings_worker_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
 			}
 		}
 	}
-	else = {
-		set_temp_variable = {
-			workers_per_composite_plant = {
-				value = workers_per_composite_plant
-				multiply = {
-					value = 1
-					add = modifier@composite_plant_worker_requirement_modifier
-					add = modifier@buildings_worker_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
+	set_variable = {
+		workers_per_composite_plant_display = {
+			value = workers_per_composite_plant
+			multiply = 1000
 		}
-		set_variable = {
-			workers_per_composite_plant_display = {
-				value = workers_per_composite_plant
-				multiply = 1000
-			}
-		}
+	}
 
+	if = { limit = { check_variable = { composite_plant_total = 0 } }
+		set_variable = { composite_plant_manpower_fulfillment = 1 }
+	}
+	else = {
 		set_temp_variable = {
 			max_workers_in_composite_plant = {
 				value = composite_plant_total
@@ -5780,34 +5689,28 @@ calculate_gdp = {
 		subtract_from_temp_variable = { workforce_total = workers_in_composite_plant }
 	}
 
-	if = { limit = { check_variable = { synthetic_refinery_total = 0 } }
-		set_variable = { synthetic_refinery_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_synthetic_refinery_display = {
-				value = workers_per_synthetic_refinery
-				multiply = 1000
+	set_temp_variable = {
+		workers_per_synthetic_refinery = {
+			value = workers_per_synthetic_refinery
+			multiply = {
+				value = 1
+				add = modifier@synthetic_refinery_worker_requirement_modifier
+				add = modifier@buildings_worker_requirement_modifier
+				clamp = { min = 0.10 max = @math_expressions_max }
 			}
 		}
 	}
-	else = {
-		set_temp_variable = {
-			workers_per_synthetic_refinery = {
-				value = workers_per_synthetic_refinery
-				multiply = {
-					value = 1
-					add = modifier@synthetic_refinery_worker_requirement_modifier
-					add = modifier@buildings_worker_requirement_modifier
-					clamp = { min = 0.10 max = @math_expressions_max }
-				}
-			}
+	set_variable = {
+		workers_per_synthetic_refinery_display = {
+			value = workers_per_synthetic_refinery
+			multiply = 1000
 		}
-		set_variable = {
-			workers_per_synthetic_refinery_display = {
-				value = workers_per_synthetic_refinery
-				multiply = 1000
-			}
-		}
+	}
 
+	if = { limit = { check_variable = { synthetic_refinery_total = 0 } }
+		set_variable = { synthetic_refinery_manpower_fulfillment = 1 }
+	}
+	else = {
 		set_temp_variable = {
 			max_workers_in_synthetic_refinery = {
 				value = synthetic_refinery_total
@@ -6272,7 +6175,7 @@ calculate_gdp = {
 		var = gdp_total
 		value = {
 			value = overall_productivity
-			divide = global.productivity_center
+			divide = { value = global.productivity_center clamp = { min = 1000 max = 100000000 } }
 		}
 	}
 
@@ -6418,11 +6321,14 @@ calculate_tax_adjustments = {
 		set_temp_variable = { corp_tax_change = 1 }
 	}
 
-	# Interest rate escalation: if interest > 8% and any deficit, force tax increases
-	# Catches debt spirals early before treasury_rate thresholds are hit
+	# Debt crisis escalation: force tax increases when debt service is unsustainable or debt is excessive
 	if = {
 		limit = {
-			check_variable = { interest_rate > 8 }
+			OR = {
+				check_variable = { debt_rate > potential_income }
+				check_variable = { interest_rate > 8 }
+				check_variable = { debt_ratio > 1.0 }
+			}
 			check_variable = { treasury_rate < 0 }
 		}
 		if = {

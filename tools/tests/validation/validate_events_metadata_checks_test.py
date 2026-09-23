@@ -3,6 +3,8 @@
 from shared.suite import write_under_str as _write
 from validate_events import Validator
 
+_PICTURE_FIX = "event has no picture, add `picture = GFX_<sprite>` below `desc =`"
+
 
 def _validator(tmp_path):
     return Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
@@ -46,7 +48,7 @@ def test_identical_event_bodies_are_not_collapsed(tmp_path):
     assert "B.txt" in joined
 
 
-def test_visible_country_and_news_events_without_pictures_warn(tmp_path):
+def test_visible_news_events_without_pictures_are_reported(tmp_path):
     _write(
         tmp_path,
         "events/Ev.txt",
@@ -62,13 +64,68 @@ def test_visible_country_and_news_events_without_pictures_warn(tmp_path):
     )
     v = _validator(tmp_path)
     v.validate_event_picture_omissions()
-    assert [issue.message for issue in v._issues] == [
-        "foo.1 - Ev.txt",
-        "foo.2 - Ev.txt",
+    assert [(i.message, i.category, i.severity, i.file, i.line) for i in v._issues] == [
+        (f"foo.2: {_PICTURE_FIX}", "news-event-picture-omitted", "error", "Ev.txt", 5),
     ]
-    assert v.warnings_found == 2
-    assert v.errors_found == 0
-    assert {issue.category for issue in v._issues} == {"event-picture-omitted"}
+    assert v.errors_found == 1
+    assert v.warnings_found == 0
+
+
+def test_picture_omission_ignores_nested_portrait_pictures(tmp_path):
+    portrait = (
+        "\timmediate = {\n"
+        "\t\tcreate_country_leader = {\n"
+        '\t\t\tpicture = "gfx/leaders/x.dds"\n'
+        "\t\t}\n"
+        "\t}\n"
+    )
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "news_event = {\n"
+        "\tid = nested.1\n"
+        "\tmajor = yes\n"
+        "\tis_triggered_only = yes\n" + portrait + "}\n"
+        "news_event = {\n"
+        "\tid = own.1\n"
+        "\tmajor = yes\n"
+        "\tis_triggered_only = yes\n"
+        "\tpicture = GFX_own\n" + portrait + "}\n",
+    )
+    v = _validator(tmp_path)
+    v.validate_event_picture_omissions()
+    assert [issue.message for issue in v._issues] == [f"nested.1: {_PICTURE_FIX}"]
+
+
+def test_placeholder_event_pictures_are_errors(tmp_path):
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "country_event = {\n"
+        "\tid = ph.1\n"
+        "\tis_triggered_only = yes\n"
+        "\tpicture = GFX_placeholder_news\n"
+        "}\n"
+        "country_event = {\n"
+        "\tid = ph.2\n"
+        "\thidden = yes\n"
+        "\tis_triggered_only = yes\n"
+        "\tpicture = GFX_news_md4\n"
+        "}\n"
+        "country_event = {\n"
+        "\tid = real.1\n"
+        "\tis_triggered_only = yes\n"
+        "\tpicture = GFX_real\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    v.validate_placeholder_event_pictures()
+    assert [(i.message, i.line) for i in v._issues] == [
+        ("ph.1 - GFX_placeholder_news", 4),
+        ("ph.2 - GFX_news_md4", 10),
+    ]
+    assert v.errors_found == 2
+    assert {i.category for i in v._issues} == {"placeholder-event-picture"}
 
 
 def test_picture_omission_skips_hidden_events_fires_and_picture_forms(tmp_path):
@@ -377,6 +434,28 @@ def test_unreferenced_triggered_only_skips_exempt_ids(tmp_path):
     v = _validator(tmp_path)
     v.validate_triggered_only_unreferenced()
     assert [i.message for i in v._issues] == ["foo.9 - Ev.txt"]
+
+
+def test_unreferenced_skips_the_full_tree_scan_in_staged_mode(tmp_path, monkeypatch):
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "country_event = {\n"
+        "\tid = foo.9\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = foo.9.a }\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    v.staged_only = True
+    v.staged_files = [str(tmp_path / "events" / "Ev.txt")]
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("unreferenced scan should be skipped on commit")
+
+    monkeypatch.setattr(v, "_pool_map", _boom)
+    v.validate_triggered_only_unreferenced()
+    assert v._issues == []
 
 
 def test_id_based_checks_skip_a_block_with_no_id(tmp_path):

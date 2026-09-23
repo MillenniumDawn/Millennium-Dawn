@@ -61,7 +61,7 @@ PARTY_SLOT_NAMES: Dict[int, str] = {
     1: "conservatism",
     2: "liberalism",
     3: "socialism",
-    4: "Communist-State",
+    4: "communist_state",
     5: "anarchist_communism",
     6: "Conservative",
     7: "Autocracy",
@@ -131,13 +131,11 @@ def log_message(
     print(formatted_message, file=sys.stderr)
 
 
-def create_standard_parser(description: str) -> argparse.ArgumentParser:
-    """Create a standard argument parser for Millennium Dawn tools"""
-    parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument("input_file", help="Input file to process")
+def add_standard_file_arguments(
+    parser: argparse.ArgumentParser, *, input_help="Input file to process"
+):
+    """Add shared file arguments; --no-color remains specific to create_standard_parser."""
+    parser.add_argument("input_file", help=input_help)
     parser.add_argument(
         "-o", "--output", help="Output file (default: overwrites input)"
     )
@@ -145,6 +143,15 @@ def create_standard_parser(description: str) -> argparse.ArgumentParser:
         "-b", "--backup", action="store_true", help="Create backup before modifying"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+
+
+def create_standard_parser(description: str) -> argparse.ArgumentParser:
+    """Create a standard argument parser for Millennium Dawn tools"""
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    add_standard_file_arguments(parser)
     parser.add_argument(
         "--no-color", action="store_true", help="Disable ANSI color codes in output"
     )
@@ -443,7 +450,9 @@ def collapse_or_compact(
     Single-leaf test (evaluated outside string literals and comments):
     ``leaves = (#"=<>") - (#"{")``; collapse iff ``leaves == 1`` and braces
     balance. Comparison operators ``<``/``>`` count as leaves alongside ``=`` so a
-    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. Bails to
+    block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. A bare
+    token list (``focus = { A B C }``) counts as one leaf per token, so a
+    multi-line list stays multi-line. Bails to
     ``compact_block`` if any line carries a ``#`` comment. When *indent* is None
     the single-line form keeps the block's existing leading whitespace (from
     ``block_lines[0]``); otherwise *indent* is used as the prefix.
@@ -478,6 +487,11 @@ def collapse_or_compact(
 
     if n_open != n_close or n_leaf - n_open != 1:
         return compact_block(collapse_nested_blocks(block_lines))
+
+    unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
+    for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
+        if len(group.split()) > 1:
+            return compact_block(collapse_nested_blocks(block_lines))
 
     return [f"{indent}{_normalize_oneline_braces(text)}"]
 

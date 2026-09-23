@@ -8,6 +8,7 @@ a guard and proves nothing.
 
 import re
 
+import pytest
 import validate_dynamic_modifier_guards as V
 
 REMOVE = "remove_dynamic_modifier = {{ modifier = {name} }}"
@@ -24,10 +25,12 @@ def _findings(script):
 
 def _modifiers(script):
     """The modifier name each finding names, in report order."""
-    return [
-        re.search(r"modifier = (\w+) \}", message).group(1)
-        for _, message in _findings(script)
-    ]
+    names = []
+    for _, message in _findings(script):
+        match = re.search(r"modifier = (\w+) \}", message)
+        assert match is not None, message
+        names.append(match.group(1))
+    return names
 
 
 # --- unguarded removals ---------------------------------------------------
@@ -218,10 +221,11 @@ def test_scan_file_skips_files_without_the_effect(tmp_path):
     assert V.scan_file((str(path), str(tmp_path) + "/")) == []
 
 
-def test_scan_file_survives_an_unreadable_path(tmp_path):
+def test_scan_file_reports_an_unreadable_path(tmp_path):
     (tmp_path / "remove_dynamic_modifier.txt").mkdir()
     args = (str(tmp_path / "remove_dynamic_modifier.txt"), str(tmp_path))
-    assert V.scan_file(args) == []
+    with pytest.raises(ValueError, match="Cannot scan"):
+        V.scan_file(args)
 
 
 # --- validator wiring -------------------------------------------------------

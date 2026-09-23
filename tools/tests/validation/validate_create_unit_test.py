@@ -10,8 +10,10 @@ template as a malformed token. Templates nothing deletes are not required to
 carry that ensure pattern.
 """
 
+import argparse
 from textwrap import indent
 
+import pytest
 import validate_oob_units as oob
 from validate_oob_units import (
     Validator,
@@ -35,9 +37,9 @@ def _esc_quote(value):
 
 def _div_for(tname, unitname):
     """A division string referencing *tname* with the given unit *unitname*."""
-    return (
-        "name = " + _esc_quote(unitname) + " division_template = " + _esc_quote(tname)
-    )
+    base = "name = " + _esc_quote(unitname)
+    base += " division_template = " + _esc_quote(tname)
+    return base + " start_equipment_factor = 1.0"
 
 
 def _run(
@@ -212,6 +214,120 @@ def test_missing_owner_and_out_of_scope_flagged(tmp_path):
     cats = _cats(_run(content, tmp_path))
     assert "CREATE UNIT: not in a state scope" in cats
     assert "CREATE UNIT: missing owner" in cats
+
+
+def test_missing_equipment_factor_warns(tmp_path):
+    content = _GUARDED.replace(" start_equipment_factor = 1.0", "")
+    issues = _run(content, tmp_path)
+    warned = [
+        i.severity
+        for i in issues
+        if i.category == "CREATE UNIT: division string lacks start_equipment_factor"
+    ]
+    assert "CREATE UNIT: division string lacks start_equipment_factor" in _cats(issues)
+    assert warned == [Severity.WARNING]
+
+
+def _missing_factor_validator(tmp_path, **kwargs):
+    target = tmp_path / "common" / "national_focus" / "test.txt"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        _GUARDED.replace(" start_equipment_factor = 1.0", ""), encoding="utf-8"
+    )
+    validator = Validator(str(tmp_path), workers=1, **kwargs)
+    validator.validate_created_units()
+    return validator
+
+
+def test_missing_equipment_factor_defaults_off(tmp_path):
+    validator = _missing_factor_validator(tmp_path)
+    assert validator.missing_equipment_factor is False
+    assert "CREATE UNIT: division string lacks start_equipment_factor" not in _cats(
+        validator._issues
+    )
+
+
+def test_missing_equipment_factor_flag_reports(tmp_path):
+    validator = _missing_factor_validator(tmp_path, missing_equipment_factor=True)
+    assert "CREATE UNIT: division string lacks start_equipment_factor" in _cats(
+        validator._issues
+    )
+
+
+def test_missing_equipment_factor_flag_is_registered():
+    parser = argparse.ArgumentParser()
+    oob._add_extra_args(parser)
+    assert parser.parse_args(["--missing-equipment-factor"]).missing_equipment_factor
+    assert not parser.parse_args([]).missing_equipment_factor
+
+
+@pytest.mark.parametrize("value", ("0", "0.0", ".0", "0.", "00", "+0", "-0"))
+@pytest.mark.parametrize(
+    "factor_name", ("start_equipment_factor", "start_manpower_factor")
+)
+def test_zero_factor_spellings_are_errors(tmp_path, factor_name, value):
+    factor = f"{factor_name} = {value}"
+    if factor_name == "start_manpower_factor":
+        factor = f"start_equipment_factor = 1.0 {factor}"
+    content = _GUARDED.replace("start_equipment_factor = 1.0", factor)
+    issues = _run(content, tmp_path)
+    severities = [
+        i.severity
+        for i in issues
+        if i.category == "CREATE UNIT: equipment/manpower factor is zero"
+    ]
+    assert severities == [Severity.ERROR]
+
+
+def test_near_zero_equipment_factor_is_an_error(tmp_path):
+    content = _GUARDED.replace(
+        "start_equipment_factor = 1.0", "start_equipment_factor = 0.005"
+    )
+    issues = _run(content, tmp_path)
+    errored = [
+        i.severity
+        for i in issues
+        if i.category == "CREATE UNIT: equipment/manpower factor below 0.01"
+    ]
+    assert "CREATE UNIT: equipment/manpower factor below 0.01" in _cats(issues)
+    assert errored == [Severity.ERROR]
+
+
+@pytest.mark.parametrize(
+    "factor_name", ("start_equipment_factor", "start_manpower_factor")
+)
+def test_negative_factor_is_an_error(tmp_path, factor_name):
+    factor = f"{factor_name} = -0.5"
+    if factor_name == "start_manpower_factor":
+        factor = f"start_equipment_factor = 1.0 {factor}"
+    issues = _run(_GUARDED.replace("start_equipment_factor = 1.0", factor), tmp_path)
+    category = "CREATE UNIT: equipment/manpower factor below 0.01"
+    assert [i.severity for i in issues if i.category == category] == [Severity.ERROR]
+
+
+def test_factor_floor_boundary_0_01_is_clean(tmp_path):
+    content = _GUARDED.replace(
+        "start_equipment_factor = 1.0", "start_equipment_factor = 0.01"
+    )
+    assert _run(content, tmp_path) == []
+
+
+def test_near_zero_manpower_factor_is_an_error(tmp_path):
+    content = _GUARDED.replace(
+        "start_equipment_factor = 1.0",
+        "start_equipment_factor = 1.0 start_manpower_factor = 0.005",
+    )
+    assert "CREATE UNIT: equipment/manpower factor below 0.01" in _cats(
+        _run(content, tmp_path)
+    )
+
+
+def test_low_experience_factor_is_allowed(tmp_path):
+    content = _GUARDED.replace(
+        "start_equipment_factor = 1.0",
+        "start_equipment_factor = 1.0 start_experience_factor = 0.05",
+    )
+    assert _run(content, tmp_path) == []
 
 
 def test_multiline_division_flagged(tmp_path):
@@ -927,13 +1043,10 @@ def test_guard_suppresses_foreign_static_warning(tmp_path):
     _assert_no_foreign_warning(issues)
 
 
-def test_staged_definition_change_rescans_unstaged_callers(tmp_path, monkeypatch):
-    definition = tmp_path / "common" / "national_focus" / "foreign.txt"
+def _staged_template_validator(tmp_path, monkeypatch, definition_text):
+    definition = tmp_path / "common" / "national_focus" / "definition.txt"
     definition.parent.mkdir(parents=True, exist_ok=True)
-    definition.write_text(
-        _focus_with_template_owner("OPR", _division_template("Militia")),
-        encoding="utf-8",
-    )
+    definition.write_text(definition_text, encoding="utf-8")
     caller = tmp_path / "common" / "national_focus" / "caller.txt"
     caller.write_text(
         _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="UKR")),
@@ -942,15 +1055,61 @@ def test_staged_definition_change_rescans_unstaged_callers(tmp_path, monkeypatch
     monkeypatch.setattr(
         oob, "get_staged_files", lambda *args, **kwargs: [str(definition)]
     )
-    validator = Validator(
+    return Validator(
         mod_path=str(tmp_path), use_colors=False, staged_only=True, workers=1
     )
-    validator.staged_files = [str(caller)]
+
+
+def _assert_foreign_template_issue(validator):
     validator.validate_created_units()
     assert any(
         issue.category == "CREATE UNIT: foreign-only static template definition"
         for issue in validator._issues
     )
+
+
+def test_staged_definition_change_rescans_unstaged_callers(tmp_path, monkeypatch):
+    validator = _staged_template_validator(
+        tmp_path,
+        monkeypatch,
+        _focus_with_template_owner("OPR", _division_template("Militia")),
+    )
+    _assert_foreign_template_issue(validator)
+
+
+def test_staged_definition_removal_rescans_unstaged_callers(tmp_path, monkeypatch):
+    foreign = tmp_path / "common" / "national_focus" / "foreign.txt"
+    foreign.parent.mkdir(parents=True, exist_ok=True)
+    foreign.write_text(
+        _focus_with_template_owner("OPR", _division_template("Militia")),
+        encoding="utf-8",
+    )
+    validator = _staged_template_validator(
+        tmp_path,
+        monkeypatch,
+        "focus_tree = { id = empty }\n",
+    )
+    monkeypatch.setattr(oob, "_changed_lines_match", lambda *args: True)
+    _assert_foreign_template_issue(validator)
+
+
+def test_changed_lines_match_detects_a_staged_removal(tmp_path, monkeypatch):
+    (tmp_path / ".git").mkdir()
+    commands = []
+    returncodes = iter((1, 1))
+
+    def _run(command, **_kwargs):
+        commands.append(command)
+        return oob.subprocess.CompletedProcess(command, next(returncodes))
+
+    monkeypatch.setattr(oob.subprocess, "run", _run)
+    path = str(tmp_path / "common" / "national_focus" / "definition.txt")
+
+    assert oob._changed_lines_match(
+        str(tmp_path), [path], oob._DIVISION_TEMPLATE_DEF_PATTERN
+    )
+    assert commands[1][2] == "--cached"
+    assert any(arg.startswith("-Gdivision_template") for arg in commands[1])
 
 
 def test_unescaped_inner_quotes_break_the_division_string(tmp_path):

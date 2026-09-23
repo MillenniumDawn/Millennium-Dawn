@@ -142,7 +142,7 @@ EU_law_party_value_weight = {
 	else_if = {
 		limit = {
 				OR = {
-					check_variable = { ruling_party = 4 } ### Communist-State
+					check_variable = { ruling_party = 4 } ### communist_state
 					check_variable = { ruling_party = 5 } ### anarchist_communism
 					check_variable = { ruling_party = 19 } ### Neutral_Communism
 				}
@@ -382,6 +382,26 @@ apply_EU_QMV_result = {
 	}
 }
 
+EU_drop_rival_endgame = {
+	remove_from_array = { array = global.EU_council_votes value = rival_endgame_id }
+	remove_from_array = { array = global.EU_potential_votes value = rival_endgame_id }
+	if = {
+		limit = { check_variable = { global.current_active_agenda_disp = rival_endgame_id } }
+		clr_global_flag = EU_active_EP_agenda_holder
+		set_variable = { global.current_active_agenda_disp = 0 }
+		set_variable = { global.active_MEP_Support = 0 }
+		set_variable = { global.pass_vote_mission_ender = 0 }
+		for_each_scope_loop = {
+			array = global.EU_member
+			if = {
+				limit = { has_active_mission = EU_parliament_focus_EUXXX_approve }
+				remove_mission = EU_parliament_focus_EUXXX_approve
+			}
+		}
+	}
+	update_eu_dirty_variable = yes
+}
+
 ### EU111 - United States of Europe ###
 focus_EU111_QMV_result = {
 	for_each_scope_loop = {
@@ -393,6 +413,8 @@ focus_EU111_QMV_result = {
 		# Record the vote before annexations — on_annex resets current_active_vote_disp to 0
 		add_to_array = { array = global.EU_passed_votes value = 111 }
 		remove_from_array = { array = global.EU_council_votes value = 111 }
+		set_temp_variable = { rival_endgame_id = 112 }
+		EU_drop_rival_endgame = yes
 		set_variable = { global.current_active_vote_disp = 0 }
 
 		# Snapshot members before annexing: annex_country fires on_annex, which removes each
@@ -467,7 +489,9 @@ focus_EU111_QMV_result = {
 			remove_mission = ENG_scottish_referendum
 			remove_mission = ENG_irish_referendum
 			remove_mission = ENG_welsh_referendum
-			remove_mission = ENG_union_settlement_referendum
+			remove_mission = ENG_scottish_union_settlement_referendum
+			remove_mission = ENG_north_irish_union_settlement_referendum
+			remove_mission = ENG_welsh_union_settlement_referendum
 			remove_mission = ENG_scottish_referendum_pressure
 			remove_mission = ENG_north_irish_referendum_pressure
 			remove_mission = ENG_welsh_referendum_pressure
@@ -850,6 +874,10 @@ focus_EU408_QMV_result = {
 ### EU112 ###
 focus_EU112_QMV_result = {
 	set_global_flag = european_federation
+	hidden_effect = {
+		set_temp_variable = { rival_endgame_id = 111 }
+		EU_drop_rival_endgame = yes
+	}
 }
 
 # Enlargement QMV handlers — passing the vote makes each cohort an EU candidate,

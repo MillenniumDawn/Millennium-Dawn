@@ -875,6 +875,38 @@ USA_congress_md = {
 		ai_will_do = { base = 0 }
 	}
 
+	USA_ban_election_fraud = {
+		icon = GFX_decision_generic_arrest
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = USA_election_fraud_banned }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_ban_election_fraud"
+			set_country_flag = USA_election_fraud_banned
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	USA_allow_election_fraud = {
+		icon = generic_political_discourse
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			has_country_flag = USA_election_fraud_banned
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_allow_election_fraud"
+			clr_country_flag = USA_election_fraud_banned
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
 	USA_political_pandering = {
 		icon = ger_mefo_bills
 
@@ -2426,7 +2458,7 @@ USA_decisions_domestic_policies = {
 	}
 
 	USA_decision_the_green_wave_debate = {
-		icon = GFX_decisions_category_energy
+		icon = GFX_decision_generic_solar
 
 		available = {
 			date > 2011.3.11
@@ -2609,7 +2641,7 @@ USA_decisions_domestic_policies = {
 	}
 
 	USA_decision_the_nuclear_question = {
-		icon = GFX_decisions_category_energy
+		icon = GFX_decision_generic_nuclear
 
 		available = {
 			date > 2012.1.1
@@ -2746,7 +2778,7 @@ USA_political_and_economic_reforms = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				has_global_flag = USA_REFORMED_REPUBLIC_PATH
+				USA_ai_reformed_path = yes
 				factor = 1000
 			}
 		}
@@ -2827,7 +2859,7 @@ USA_political_and_economic_reforms = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				has_global_flag = USA_REFORMED_REPUBLIC_PATH
+				USA_ai_reformed_path = yes
 				factor = 1000
 			}
 		}
@@ -2908,7 +2940,7 @@ USA_political_and_economic_reforms = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				has_global_flag = USA_REFORMED_REPUBLIC_PATH
+				USA_ai_reformed_path = yes
 				factor = 1000
 			}
 		}
@@ -2989,7 +3021,7 @@ USA_political_and_economic_reforms = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				has_global_flag = USA_REFORMED_REPUBLIC_PATH
+				USA_ai_reformed_path = yes
 				factor = 1000
 			}
 		}
@@ -3069,7 +3101,7 @@ USA_political_and_economic_reforms = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				has_global_flag = USA_REFORMED_REPUBLIC_PATH
+				USA_ai_reformed_path = yes
 				factor = 1000
 			}
 		}
@@ -3150,7 +3182,7 @@ USA_political_and_economic_reforms = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				has_global_flag = USA_REFORMED_REPUBLIC_PATH
+				USA_ai_reformed_path = yes
 				factor = 1000
 			}
 		}
@@ -3232,7 +3264,7 @@ USA_political_and_economic_reforms = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				has_global_flag = USA_REFORMED_REPUBLIC_PATH
+				USA_ai_reformed_path = yes
 				factor = 1000
 			}
 		}
@@ -3596,6 +3628,7 @@ USA_f35_program_decisions = {
 		visible = {
 			OR = {
 				has_country_flag = USA_open_f35_program_nato
+				has_country_flag = USA_open_f35_program_allies
 				has_country_flag = USA_open_f35_program_world
 			}
 			NOT = { has_country_flag = USA_removals_opened }
@@ -3616,6 +3649,7 @@ USA_f35_program_decisions = {
 		visible = {
 			OR = {
 				has_country_flag = USA_open_f35_program_nato
+				has_country_flag = USA_open_f35_program_allies
 				has_country_flag = USA_open_f35_program_world
 			}
 			has_country_flag = USA_removals_opened
@@ -3640,14 +3674,19 @@ USA_f35_program_decisions = {
 				array = global.f35_members
 				value = FROM.id
 			}
-			# Honor the post-join grace period
-			FROM = { NOT = { has_country_flag = USA_f35_recently_joined } }
 		}
 
 		target_root_trigger = {
 			if = {
 				limit = { is_ai = no }
 				has_country_flag = USA_removals_opened
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = USA_f35_member_grace_period_tt
+				FROM = { NOT = { has_country_flag = USA_f35_recently_joined } }
 			}
 		}
 
@@ -4697,9 +4736,11 @@ USA_foreign_policy = {
 			for_each_scope_loop = {
 				array = global.is_african_nation
 				set_temp_variable = { percent_change = 2.40 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				set_temp_variable = { percent_change = -10.00 }
 				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			newline = yes
@@ -6972,9 +7013,11 @@ USA_foreign_policy = {
 						days = 1
 					}
 					set_temp_variable = { percent_change = 3.00 }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 					set_temp_variable = { percent_change = -3.00 }
 					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 				}
 			}
@@ -7713,7 +7756,7 @@ USA_foreign_policy = {
 	}
 
 	USA_trump_nato_dilemma = {
-		icon = GFX_decision_generic_leave_nato
+		icon = GFX_decision_generic_leave_nato_small
 		cost = 50
 		fire_only_once = yes
 		days_remove = 30

@@ -68,6 +68,7 @@ FALSE_POSITIVE_NAMES = frozenset(
         "ai_has_acceptable_surplus",
         "ai_has_acceptable_deficit_factories",
         "interest_rate_lower_than_5_5",
+        "inflation_rate_lower_than_2",
         "debt_higher_than_30",
         "gdp_per_capita_greater_than_2",
         "gdp_per_capita_greater_than_7",
@@ -116,6 +117,12 @@ PENDING_IMPLEMENTATION_NAMES = frozenset(
         "USA_return_majority",
         "USA_flip_support",
         "usa_congress_oppposition_elections",
+        # South Africa party founding hooks and error stopper, pending the SAF political rework
+        "SAF_al_jamaah_party_founded",
+        "SAF_democratic_alliance_party_founded",
+        "SAF_economic_freedom_fighters_party_founded",
+        "SAF_freedom_front_plus_party_founded",
+        "SAF_error_stopper",
     }
 )
 

@@ -621,6 +621,7 @@ country_event = {
 
 	#picture = GFX_Arkan_Assassination
 	trigger = {
+		NOT = { has_country_flag = SER_montenegro_independence_dead }
 		OR = {
 			134 = { is_owned_and_controlled_by = SER }
 			MNT = { is_subject_of = SER }
@@ -687,6 +688,7 @@ country_event = { #Montenegrans become militarized
 
 	#picture = GFX_Arkan_Assassination
 	trigger = {
+		NOT = { has_country_flag = SER_montenegro_independence_dead }
 		OR = {
 			134 = { is_owned_and_controlled_by = SER }
 			MNT = { is_subject_of = SER }
@@ -2608,6 +2610,7 @@ country_event = {
 				limit = { NOT = { has_war_with = ROOT } }
 				add_opinion_modifier = { target = PREV modifier = supports_us_2 }
 				reverse_add_opinion_modifier = { target = PREV modifier = supports_us_2 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			custom_effect_tooltip = influence_on_neighbors_tt
@@ -3852,7 +3855,7 @@ country_event = {
 	id = Montenegro.29
 	title = Montenegro.29.t
 	desc = Montenegro.29.d
-	picture = GFX_nato_summit_2
+	picture = GFX_MON_nato
 	is_triggered_only = yes
 
 	trigger = {
@@ -4892,6 +4895,58 @@ country_event = {
 				factor = 0
 				has_government = nationalist
 			}
+		}
+	}
+}
+
+country_event = {
+	id = Serbia.400
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_civil_war = no
+		has_country_flag = SER_bulldozer_revolution
+		SER_ai_historical_path = yes
+		SER_ai_not_historical_path = no
+		NOT = { has_country_leader = { name = "Slobodan Milošević" ruling_only = yes } }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event Serbia.400"
+		if = {
+			limit = { date > 2017.5.30 }
+			set_variable = { Neutral_Autocracy_leader = 2 }
+			set_temp_variable = { rul_party_temp = 13 }
+		}
+		else_if = {
+			limit = { date > 2012.5.30 }
+			set_variable = { Neutral_Autocracy_leader = 1 }
+			set_temp_variable = { rul_party_temp = 13 }
+		}
+		else_if = {
+			limit = { date > 2008.7.6 }
+			set_variable = { liberalism_leader = 1 }
+			set_temp_variable = { rul_party_temp = 2 }
+		}
+		else_if = {
+			limit = { date > 2004.3.2 }
+			set_variable = { Neutral_conservatism_leader = 0 }
+			set_temp_variable = { rul_party_temp = 14 }
+		}
+		else = {
+			set_variable = { liberalism_leader = 0 }
+			set_temp_variable = { rul_party_temp = 2 }
+		}
+
+		if = {
+			limit = { NOT = { check_variable = { ruling_party = rul_party_temp } } }
+			change_ruling_party_effect = yes
+			set_elections_48_months = yes
+		}
+		else = {
+			set_leader = yes
 		}
 	}
 }

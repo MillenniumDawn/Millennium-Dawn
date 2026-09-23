@@ -1,3 +1,4 @@
+import argparse
 import io
 import json
 import os
@@ -60,6 +61,16 @@ def test_parser_factories_and_linting_extensions():
     assert parsed.input_file == "input.txt"
     assert parsed.output == "out.txt"
     assert parsed.backup and parsed.verbose and parsed.no_color
+
+    file_parser = argparse.ArgumentParser()
+    U.add_standard_file_arguments(file_parser, input_help="Custom input")
+    assert "Custom input" in file_parser.format_help()
+    parsed = file_parser.parse_args(["source.txt", "-o", "dest.txt", "-b", "-v"])
+    assert parsed.input_file == "source.txt"
+    assert parsed.output == "dest.txt"
+    assert parsed.backup and parsed.verbose
+    with pytest.raises(SystemExit):
+        file_parser.parse_args(["source.txt", "--no-color"])
 
     validation = U.create_validation_parser("validation")
     parsed = validation.parse_args(
@@ -213,6 +224,28 @@ def test_collapse_nested_blocks():
     unbalanced = ["a = {", "\tb = {", "\t\tx = 1", "}"]
     assert U.collapse_nested_blocks(unbalanced) == unbalanced
     assert U.collapse_nested_blocks(["a = { b = 1 }"]) == ["a = { b = 1 }"]
+
+    # A multi-token list is not a single leaf; a one-token list still collapses.
+    listed = [
+        "\t\t\treduce_focus_completion_cost = {",
+        "\t\t\t\tcost = 20",
+        "\t\t\t\tfocus = {",
+        "\t\t\t\t\tCHI_project_921",
+        "\t\t\t\t\tCHI_shenzhou_program",
+        "\t\t\t\t}",
+        "\t\t\t}",
+    ]
+    assert U.collapse_or_compact(listed) == listed
+    assert U.collapse_or_compact(
+        [
+            "\tx = {",
+            "\t\tfocus = {",
+            "\t\t\tJAP_blue_water_navy",
+            "\t\t}",
+            "\t\tcost = 35",
+            "\t}",
+        ]
+    ) == ["\tx = { focus = { JAP_blue_water_navy } cost = 35 }"]
 
 
 def test_atomic_encoding_backup_and_safe_reads(tmp_path, monkeypatch):
@@ -685,7 +718,7 @@ def test_cache_corruption_and_file_cache_lifecycle(tmp_path, monkeypatch):
     assert conn is not None
     conn.execute(
         "UPDATE entries SET value = ? WHERE namespace = ? AND key = ?",
-        (b"corrupt", "test", str(source)),
+        (b"corrupt", "test", cache._source_key(str(tmp_path), str(source))),
     )
     assert cache.per_file_cached(str(tmp_path), "test", str(source), compute) == {
         "value": 2

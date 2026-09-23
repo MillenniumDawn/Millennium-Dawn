@@ -45,18 +45,28 @@ def _tools_run(os_name, errors=0, status=None):
     )
 
 
-def test_render_orders_tools_tests_before_mod_tests():
+def test_render_leads_with_findings_and_ends_with_the_test_tables():
     runs = [
         ValidatorRun(name="events", title="Events", status="failed", errors=2),
         _tools_run("Linux", errors=1),
         _tools_run("macOS"),
     ]
-    body = render(runs, [], _ctx())
-    tools_pos = body.index("## Tools tests")
-    mod_pos = body.index("## Mod tests")
-    assert tools_pos < mod_pos
-    assert "| ❌ Tools tests (Linux) | 1 | 0 |" in body
-    assert "| ❌ Events | 2 | 0 |" in body
+    new_issue = make_issue(baseline_status="new", in_diff=True)
+    old_issue = make_issue(
+        message="key BAR not found", line=9, baseline_status="existing", in_diff=True
+    )
+    stats = _stats(new_issues=[new_issue], new_errors=1, new_warnings=0)
+    body = render(runs, [new_issue, old_issue], _ctx(), baseline_stats=stats)
+    order = [
+        body.index("## New Findings Introduced by this branch."),
+        body.index("## Findings in your PR"),
+        body.index("## Findings by category"),
+        body.index("## Mod tests"),
+        body.index("## Tools tests"),
+    ]
+    assert order == sorted(order)
+    assert "| ❌ Tools tests (Linux) | 0 | 1 | 0 |" in body
+    assert "| ❌ Events | 1 | 2 | 0 |" in body
 
 
 def test_tools_section_folds_passing_suites_into_a_count():
@@ -134,10 +144,13 @@ def test_render_verdict_caution_when_errors():
     assert "2 errors must be fixed before merge." in body
 
 
-def test_render_verdict_caution_when_a_run_is_incomplete():
+def test_render_verdict_warns_when_a_run_is_incomplete():
+    # A validator that never finished is a pipeline problem, not something the
+    # PR introduced — it must not read as a merge blocker.
     runs = [ValidatorRun(name="events", title="Events", status="unknown")]
     body = render(runs, [], _ctx())
-    assert "> [!CAUTION]" in body
+    assert "> [!WARNING]" in body
+    assert "> [!CAUTION]" not in body
     assert "1 validator did not produce a complete result" in body
     assert "All 1 validator passed" not in body
 
@@ -438,13 +451,35 @@ def test_verdict_counts_new_against_baseline():
     assert "2 errors total" in body
 
 
-def test_verdict_says_none_new_when_all_existing():
-    runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
-    body = render(
-        [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=0)
+def _failed_events_body(*, new_errors, new_warnings):
+    run = ValidatorRun(
+        name="events", title="Events", status="failed", errors=2, warnings=6
     )
-    assert "No new errors against the main baseline." in body
-    assert "2 errors must be fixed before merge." in body
+    return render(
+        [run],
+        [],
+        _ctx(),
+        baseline_stats=_stats(new_errors=new_errors, new_warnings=new_warnings),
+    )
+
+
+def test_verdict_says_none_new_when_all_existing():
+    body = _failed_events_body(new_errors=0, new_warnings=0)
+    # A standing backlog is not this branch's problem — no red banner.
+    assert "> [!NOTE]" in body
+    assert "> [!CAUTION]" not in body
+    assert "✅ No new errors against the main baseline." in body
+    assert "(2 pre-existing errors remain, 6 warnings, advisory.)" in body
+    assert "must be fixed before merge" not in body
+
+
+def test_verdict_warns_when_only_warnings_are_new():
+    body = _failed_events_body(new_errors=0, new_warnings=1)
+    assert "> [!WARNING]" in body
+    assert "> [!CAUTION]" not in body
+    assert "1 new warning against the main baseline." in body
+    assert "2 pre-existing errors remain" in body
+    assert "None block merge." in body
 
 
 def test_verdict_splits_new_errors_and_warnings():
@@ -489,7 +524,7 @@ def test_step_summary_lists_new_findings():
     assert "1 finding(s) could not be compared (no file/line)." in body
 
 
-def test_step_summary_opens_warnings_when_no_new_errors():
+def test_step_summary_collapses_warnings_by_default():
     runs = [
         ValidatorRun(
             name="events", title="Events", status="warnings", errors=0, warnings=1
@@ -505,7 +540,8 @@ def test_step_summary_opens_warnings_when_no_new_errors():
     body = render([runs[0]], [warning], _ctx(), baseline_stats=stats)
     warning_pos = body.index("<summary>⚠️ New warnings (1)</summary>")
     warning_details = body[body.rfind("<details", 0, warning_pos) : warning_pos]
-    assert warning_details.startswith("<details open>")
+    assert warning_details.startswith("<details>")
+    assert not warning_details.startswith("<details open>")
     assert "<summary>❌ New errors" not in body
 
 
@@ -680,7 +716,11 @@ def test_in_pr_section_lists_existing_findings_alongside_baseline():
     runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
     new_issue, stats = _new_error(in_diff=True, message="new key not found", line=1)
     existing = make_issue(
-        in_diff=True, message="existing key not found", line=2, category="backlog"
+        severity=Severity.WARNING,
+        in_diff=True,
+        message="existing key not found",
+        line=2,
+        category="backlog",
     )
     body = render(
         runs,
@@ -694,6 +734,12 @@ def test_in_pr_section_lists_existing_findings_alongside_baseline():
     in_pr = body[body.index("## Findings in your PR") :]
     assert "existing key not found" in in_pr
     assert "new key not found" not in in_pr
+    in_pr_warning_pos = in_pr.index("<summary>⚠️ Warnings in your PR (1)</summary>")
+    in_pr_details = in_pr[
+        in_pr.rfind("<details", 0, in_pr_warning_pos) : in_pr_warning_pos
+    ]
+    assert in_pr_details.startswith("<details>")
+    assert not in_pr_details.startswith("<details open>")
 
 
 def test_comment_caps_new_findings():
