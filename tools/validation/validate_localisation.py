@@ -17,7 +17,12 @@ from typing import Dict, Iterator, List, Optional, Set, Tuple, Union
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text, read_text_strict, strip_comments
+from shared_utils import (
+    extract_block_from_text,
+    iter_statements,
+    read_text_strict,
+    strip_comments,
+)
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     KNOWN_VANILLA_LOC_KEYS,
@@ -484,7 +489,7 @@ _LOC_VAR_WRITE_RE = re.compile(
     r"divide_variable|divide_temp_variable|clamp_variable|clamp_temp_variable|"
     r"modulo_variable|modulo_temp_variable|round_variable|round_temp_variable|"
     r"min_variable|max_variable)\s*=\s*\{\s*"
-    r"(?:var\s*=\s*)?((?:\d+\.)?[A-Za-z_][\w.:@^]*)"
+    r"(?:var\s*=\s*)?((?:\d+\.)?(?:[A-Za-z_]|[0-9]+_)[\w.:@^]*)"
 )
 _LOC_VAR_ARRAY_RE = re.compile(
     r"(?:add_to_array|add_to_temp_array|resize_array)\s*=\s*\{\s*"
@@ -592,17 +597,41 @@ def process_txt_for_var_writes(args: Tuple[str]) -> Set[str]:
             "while_loop_effect",
             "find_highest_in_array",
             "find_lowest_in_array",
+            "any_of",
+            "all_of",
         )
     ):
         search_from = 0
         while True:
-            match = _LOOP_OPEN_RE.search(text, search_from)
+            match = _COLLECTION_BIND_OPEN_RE.search(text, search_from)
             if not match:
                 break
             body, end = extract_block_from_text(text, match.end() - 1)
             if end == -1:
                 break
-            written.update(_LOOP_BIND_RE.findall(body))
+            for key, scalar, _block in iter_statements(body):
+                if (
+                    key in {"value", "index"}
+                    and scalar
+                    and _BIND_NAME_RE.fullmatch(scalar)
+                ):
+                    written.add(scalar)
+            search_from = end
+    if "dynamic_lists" in text:
+        search_from = 0
+        while True:
+            match = _DYNAMIC_LISTS_OPEN_RE.search(text, search_from)
+            if not match:
+                break
+            body, end = extract_block_from_text(text, match.end() - 1)
+            if end == -1:
+                break
+            for _key, _scalar, entry in iter_statements(body):
+                if entry is None:
+                    continue
+                for key, scalar, _block in iter_statements(entry):
+                    if key == "value" and scalar and _BIND_NAME_RE.fullmatch(scalar):
+                        written.add(scalar)
             search_from = end
     if "var =" in text or "var=" in text:
         search_from = 0
@@ -666,17 +695,26 @@ _WRITE_OPEN_RE = re.compile(
     r"modulo_variable|modulo_temp_variable|round_variable|round_temp_variable|"
     r"min_variable|max_variable)\s*=\s*\{"
 )
-_VAR_BIND_RE = re.compile(r"\bvar\s*=\s*([A-Za-z_][\w.:@^]*)")
-_LOOP_OPEN_RE = re.compile(
+_VAR_BIND_RE = re.compile(r"\bvar\s*=\s*((?:[A-Za-z_]|[0-9]+_)[\w.:@^]*)")
+_DYNAMIC_LISTS_OPEN_RE = re.compile(r"\bdynamic_lists\s*=\s*\{")
+_BIND_NAME_RE = re.compile(r"[A-Za-z_]\w*")
+_COLLECTION_BIND_OPEN_RE = re.compile(
     r"\b(?:for_each_loop|for_each_scope_loop|for_loop_effect|while_loop_effect|"
-    r"find_highest_in_array|find_lowest_in_array)\s*=\s*\{"
+    r"find_highest_in_array|find_lowest_in_array|any_of|all_of)\s*=\s*\{"
 )
-_LOOP_BIND_RE = re.compile(r"\b(?:value|index)\s*=\s*([A-Za-z_][\w]*)")
 _CHECK_VARIABLE_OPEN_RE = re.compile(r"\bcheck_variable\s*=\s*\{")
 _HAS_VARIABLE_RE = re.compile(r"\bhas_variable\s*=\s*([^\s{}]+)")
-_CHECK_VAR_TOKEN_RE = re.compile(r"[A-Za-z_][\w.:@^]*")
+_CHECK_VAR_TOKEN_RE = re.compile(r"(?:[A-Za-z_]|[0-9]+_)[\w.:@^]*")
 _CHECK_VAR_TOOLTIP_RE = re.compile(r"\btooltip\s*=\s*\S+")
 _CHECK_VAR_CONSTANT_RE = re.compile(r"(?<![A-Za-z0-9_])@[A-Za-z_][\w]*")
+# The engine supplies these temporary values only while scoring occupation laws.
+_OCCUPATION_LAW_CONTEXT_VARS = frozenset(
+    {
+        "uncapped_resistance_target",
+        "resistance_target_without_law",
+        "garrison_min_support_ratio",
+    }
+)
 _CHECK_VAR_KEYWORDS = frozenset(
     {
         "var",
@@ -1367,7 +1405,10 @@ class Validator(BaseValidator):
             chunksize=30,
         ):
             for name, basename, number in hits:
-                if name not in known:
+                if name not in known and not (
+                    basename == "occupation_laws.txt"
+                    and name in _OCCUPATION_LAW_CONTEXT_VARS
+                ):
                     results.append((f"{name} - {basename}", basename, number))
 
         self._report(

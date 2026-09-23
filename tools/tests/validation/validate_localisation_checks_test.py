@@ -698,6 +698,93 @@ def test_loop_binder_is_a_written_variable(tmp_path):
     assert v._issues == []
 
 
+def test_any_of_and_all_of_bind_value_only_inside_the_collection(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { existing_var = 1 }\n"
+        "\tany_of = { array = orbit_array value = sat_orbit_model\n"
+        "\t\tcheck_variable = { var = existing_var value = nested_unwritten }\n"
+        "\t\tother = { index = nested_unwritten_index }\n"
+        "\t}\n"
+        "\tall_of = { array = orbit_array value = another_orbit_model }\n"
+        "\tcheck_variable = { sat_orbit_model > 0 }\n"
+        "\tcheck_variable = { another_orbit_model > 0 }\n"
+        "\tcheck_variable = { nested_unwritten > 0 }\n"
+        "\tcheck_variable = { nested_unwritten_index > 0 }\n"
+        "\tother = { value = unbound_orbit_model }\n"
+        "\tcheck_variable = { unbound_orbit_model > 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert {i.message.split(" - ")[0] for i in v._issues} == {
+        "nested_unwritten",
+        "nested_unwritten_index",
+        "unbound_orbit_model",
+    }
+
+
+def test_occupation_law_engine_values_are_not_global_exemptions(tmp_path):
+    reads = (
+        "\tcheck_variable = { uncapped_resistance_target > 0 }\n"
+        "\tcheck_variable = { resistance_target_without_law > 0 }\n"
+        "\tcheck_variable = { garrison_min_support_ratio > 0 }\n"
+    )
+    _txt(
+        tmp_path,
+        "common/occupation_laws/occupation_laws.txt",
+        "x = {\n" + reads + "}\n",
+    )
+    _txt(tmp_path, "common/decisions/other.txt", "x = {\n" + reads + "}\n")
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert len(v._issues) == 3
+    assert all("other.txt" in issue.message for issue in v._issues)
+
+
+def test_dynamic_list_value_binds_variable_but_unrelated_value_does_not(tmp_path):
+    _txt(
+        tmp_path,
+        "common/scripted_guis/menu.txt",
+        "scripted_gui = { menu = {\n"
+        "\tdynamic_lists = { topbar_menu = { array = Root.menu value = topbar_menu_v\n"
+        "\t\tother = { value = nested_menu_value }\n"
+        "\t} }\n"
+        "\tcheck_variable = { topbar_menu_v > 0 }\n"
+        "\tcheck_variable = { nested_menu_value > 0 }\n"
+        "\tcheck_variable = { missing_menu_v > 0 }\n"
+        "\tother = { value = unrelated_value }\n"
+        "\tcheck_variable = { unrelated_value > 0 }\n"
+        "} }\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert {i.message.split(" - ")[0] for i in v._issues} == {
+        "missing_menu_v",
+        "nested_menu_value",
+        "unrelated_value",
+    }
+
+
+def test_number_prefixed_variable_writes_and_reads_match(tmp_path):
+    _txt(
+        tmp_path,
+        "common/decisions/campaign.txt",
+        "x = {\n"
+        "\tadd_to_variable = { var = 500_days_completed value = 1 }\n"
+        "\tcheck_variable = { 500_days_completed = 1 }\n"
+        "\thas_variable = 500_days_completed\n"
+        "\tcheck_variable = { 600_days_missing > 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert len(v._issues) == 1
+    assert v._issues[0].message.startswith("600_days_missing - ")
+
+
 def test_check_variable_tooltip_and_script_constant_are_skipped(tmp_path):
     _txt(
         tmp_path,
