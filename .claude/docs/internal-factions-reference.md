@@ -706,11 +706,25 @@ modifier is already in the right state. They are called from `internal_faction_a
 game-rule reseed in `999_game_rules_on_actions.txt` (detach every active
 faction before `clear_array = internal_faction_active`).
 
-Known gap, not fixed here: a faction idea added mid-game through the old
-`add_ideas` path attaches its dynamic modifier through the idea's own
-`on_add`, without joining `internal_faction_active`. Its vars stay at 0 (or stale, if it
-replaced a faction that dropped out) until step 11 replaces those
-callers.
+## Idea markers
+
+The 23 ideas in `AA_law_internal_factions.txt` are thin markers that mirror
+`internal_faction_active`, so content `has_idea` checks keep working. They have
+no `allowed`/`available`; `internal_faction_is_available` is the only gate.
+
+- v3 to idea: `internal_faction_attach_dynmod` / `internal_faction_detach_dynmod` add or
+  remove the idea next to the dynamic modifier, guarded by `has_idea`.
+- Idea to v3: each idea's `on_add` calls `internal_faction_idea_added`. When the slots
+  are full it floors the faction's influence at the weakest active faction's plus
+  `@internal_faction_displace_margin`, then runs `internal_faction_add_faction`. `on_remove`
+  calls `internal_faction_idea_removed`, which takes `@internal_faction_held_idea_influence`
+  off the faction's influence and runs `internal_faction_remove_faction`; the monthly tick
+  fills the free slot.
+- Both hooks no-op on v3-driven changes: `add_faction` pushes to the array before
+  attaching, and `remove_faction` pops before detaching. `idea_added` also no-ops until
+  the arrays exist, so history ideas are seeded by `internal_faction_seed_factions`.
+- An idea added for an unavailable faction activates, then drops out on the next
+  refresh.
 
 ## Player actions and AI (step 5)
 

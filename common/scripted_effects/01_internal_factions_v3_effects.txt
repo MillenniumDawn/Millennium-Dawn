@@ -241,6 +241,40 @@ internal_faction_seed_held_faction = {
 	internal_faction_add_faction = yes
 }
 
+# Parameters:
+# - internal_faction_id: faction id 1-23 whose idea was just added
+internal_faction_idea_added = {
+	if = {
+		limit = {
+			check_variable = { internal_faction_opinion^num > 23 }
+			NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		}
+		if = {
+			limit = { check_variable = { var = internal_faction_active^num value = global.internal_faction_active_count compare = greater_than_or_equals } }
+			internal_faction_find_weakest = yes
+			set_temp_variable = { internal_faction_x = internal_faction_influence^internal_faction_low }
+			add_to_temp_variable = { internal_faction_x = @internal_faction_displace_margin }
+			if = {
+				limit = { check_variable = { internal_faction_influence^internal_faction_id < internal_faction_x } }
+				set_variable = { internal_faction_influence^internal_faction_id = internal_faction_x }
+				clamp_variable = { var = internal_faction_influence^internal_faction_id min = 0 max = 100 }
+			}
+		}
+		internal_faction_add_faction = yes
+	}
+}
+
+# Parameters:
+# - internal_faction_id: faction id 1-23 whose idea was just removed
+internal_faction_idea_removed = {
+	if = {
+		limit = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		subtract_from_variable = { internal_faction_influence^internal_faction_id = @internal_faction_held_idea_influence }
+		clamp_variable = { var = internal_faction_influence^internal_faction_id min = 0 max = 100 }
+		internal_faction_remove_faction = yes
+	}
+}
+
 # Runs after setup_init_factions: every faction starts at its base influence (jittered under rule_randomize_internal_factions), held ideas lead, then the activation pass fills to global.internal_faction_active_count
 internal_faction_seed_factions = {
 	internal_faction_init_arrays = yes
