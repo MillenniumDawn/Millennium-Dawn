@@ -1,0 +1,41 @@
+on_actions = {
+	on_weekly_ERI = {
+		effect = {
+			# Replaces bankruptcy while ERI holds its own debt
+			if = {
+				limit = {
+					has_idea = ERI_no_foreign_creditors_idea
+					check_variable = { debt_rate > potential_income }
+				}
+				if = {
+					limit = { check_variable = { potential_income > 0 } }
+					set_variable = {
+						ERI_debt_overhang = {
+							value = debt_rate
+							divide = potential_income
+							subtract = 1
+							clamp = { min = 0 max = 1 }
+						}
+					}
+				}
+				else = {
+					set_variable = { ERI_debt_overhang = 1 }
+				}
+				set_variable = { ERI_debt_burden_stability = { value = ERI_debt_overhang multiply = -0.10 } }
+				set_variable = { ERI_debt_burden_pp = { value = ERI_debt_overhang multiply = -0.20 } }
+				if = {
+					limit = { NOT = { has_dynamic_modifier = { modifier = ERI_domestic_debt_burden } } }
+					add_dynamic_modifier = { modifier = ERI_domestic_debt_burden }
+				}
+				# INFO:
+				set_temp_variable = { temp_opinion = { value = ERI_debt_overhang multiply = -3 } }
+				change_industrial_conglomerates_opinion = yes
+				change_the_military_opinion = yes
+			}
+			else_if = {
+				limit = { has_dynamic_modifier = { modifier = ERI_domestic_debt_burden } }
+				remove_dynamic_modifier = { modifier = ERI_domestic_debt_burden }
+			}
+		}
+	}
+}
