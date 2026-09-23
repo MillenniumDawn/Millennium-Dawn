@@ -682,6 +682,25 @@ def test_unwritten_has_variable_is_an_error(tmp_path):
     assert "missing_party" in issues[0].message
 
 
+def _unwritten_names(tmp_path):
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    return {i.message.split(" - ")[0] for i in v._issues}
+
+
+def test_engine_random_and_vanilla_written_reads_are_known(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tcheck_variable = { random < 0.5 }\n"
+        "\thas_variable = historical_capital_for_country\n"
+        "\thas_variable = collaboration_formed_by\n"
+        "}\n",
+    )
+    assert _unwritten_names(tmp_path) == {"collaboration_formed_by"}
+
+
 def test_loop_binder_is_a_written_variable(tmp_path):
     _txt(
         tmp_path,
@@ -717,9 +736,7 @@ def test_any_of_and_all_of_bind_value_only_inside_the_collection(tmp_path):
         "\tcheck_variable = { unbound_orbit_model > 0 }\n"
         "}\n",
     )
-    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    v.validate_unwritten_script_variables()
-    assert {i.message.split(" - ")[0] for i in v._issues} == {
+    assert _unwritten_names(tmp_path) == {
         "nested_unwritten",
         "nested_unwritten_index",
         "unbound_orbit_model",
@@ -759,9 +776,7 @@ def test_dynamic_list_value_binds_variable_but_unrelated_value_does_not(tmp_path
         "\tcheck_variable = { unrelated_value > 0 }\n"
         "} }\n",
     )
-    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    v.validate_unwritten_script_variables()
-    assert {i.message.split(" - ")[0] for i in v._issues} == {
+    assert _unwritten_names(tmp_path) == {
         "missing_menu_v",
         "nested_menu_value",
         "unrelated_value",

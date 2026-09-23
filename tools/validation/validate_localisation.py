@@ -513,7 +513,11 @@ _VAR_SCOPE_WORDS = frozenset(
 )
 
 # Engine-side, but absent from resources/documentation.
-_EXTRA_ENGINE_LOC_VARS = frozenset({"days_left", "war_support", "strength_ratio"})
+_EXTRA_ENGINE_LOC_VARS = frozenset(
+    {"days_left", "war_support", "strength_ratio", "random"}
+)
+# Written by vanilla common/on_actions/05_lar_on_actions.txt, which MD does not replace.
+_VANILLA_WRITTEN_VARS = frozenset({"historical_capital_for_country"})
 
 _DYNAMIC_VAR_DOC = os.path.join(
     "resources", "documentation", "dynamic_variables_documentation.md"
@@ -1397,7 +1401,11 @@ class Validator(BaseValidator):
         """check_variable / has_variable must name a written or engine variable."""
         self._log_section("Checking check_variable and has_variable reads...")
 
-        known = self._script_written_variables() | _engine_loc_vars(self.mod_path)
+        known = (
+            self._script_written_variables()
+            | _engine_loc_vars(self.mod_path)
+            | _VANILLA_WRITTEN_VARS
+        )
         results = []
         for hits in self._pool_map(
             process_txt_for_script_var_reads,
