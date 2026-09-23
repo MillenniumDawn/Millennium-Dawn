@@ -63,6 +63,12 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ),
         ValidatorSpec("oob-units", "validate_oob_units.py", ("oob",)),
         ValidatorSpec("equipment-upkeep", "validate_equipment_upkeep.py", ("oob",)),
+        ValidatorSpec(
+            "equipment-variants",
+            "validate_equipment_variants.py",
+            ("common", "events", "history"),
+            strict=False,
+        ),
         ValidatorSpec("ai-roles", "validate_ai_roles.py", ("ai-strategy",)),
         ValidatorSpec("ai-navy", "validate_ai_navy.py", ("ai-navy",)),
         ValidatorSpec("ai-equipment", "validate_ai_equipment.py", ("ai-equipment",)),
@@ -116,6 +122,9 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "dynamic-modifier-guards",
             "validate_dynamic_modifier_guards.py",
             ("common", "events"),
+        ),
+        ValidatorSpec(
+            "influence-calls", "validate_influence_calls.py", ("common", "events")
         ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
         ValidatorSpec("country-names", "validate_country_names.py", ("common",)),
