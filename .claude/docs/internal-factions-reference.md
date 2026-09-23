@@ -413,8 +413,7 @@ Active when a backed group rules. Strength ramps linearly with opinion:
 `clamp((opinion - 50) / 30, 0, 1)`, so 0 at 50, 0.33 at 60 and 1.0 at 80+.
 Values below are the
 full-strength effect, written into the faction's dynamic modifier block
-(step 4). This replaces the static `modifier` blocks on the old ideas,
-removed at step 11.
+(step 4). The old ideas' static `modifier` blocks moved to table F.
 
 - 1 SMBO: civilian_factories_productivity +0.10,
   production_speed_internet_station_factor +0.10
@@ -447,6 +446,41 @@ removed at step 11.
   economic_cycles_cost_factor -0.25
 - 23 chaebols: receiving_investment_duration_modifier -0.25,
   industrial_capacity_factory +0.05
+
+## Presence bonuses (table F)
+
+The flat `modifier` blocks the old ideas carried now live in each faction's
+dynamic modifier and apply whenever the faction is active, independent of
+opinion. They scale in the three influence steps through the temp
+`internal_faction_presence`: `@internal_faction_presence_marginal` 0.5 below 25,
+1.0 at 25-59, `@internal_faction_presence_powerful` 1.5 at 60+. Values below are
+the 1.0 strength. The `expected_*` keys feed `00_expected_spending_effects.txt`, and
+`interest_rate_multiplier_modifier` feeds the money system.
+
+- 2 bankers: interest_rate_multiplier_modifier -1, expected_education_modifier +0.5
+- 4 conglomerates: investment_duration_modifier -0.25, expected_adm_modifier +0.5
+- 5 oligarchs: corruption_cost_factor +0.25, expected_education_modifier -0.5
+- 6 maritime, 8 defense industry, 17 wahabi ulema: expected_mil_modifier +0.5
+- 7 military: nationalist_drift +0.02, expected_mil_modifier +0.5
+- 9 intelligence: expected_police_modifier +0.5
+- 10 unions: expected_mil_modifier -0.5, expected_healthcare_modifier +0.5
+- 11 landowners: corruption_cost_factor +0.15, expected_welfare_modifier -0.5
+- 12 farmers: agriculture_workers_modifier +0.05,
+  agriculture_district_worker_requirement_modifier +0.05
+- 13 cadres: expected_adm_modifier +0.5
+- 14 priesthood, 16 clergy: expected_mil_modifier -0.5
+- 18 donju: corruption_cost_factor +0.30, interest_rate_multiplier_modifier -1
+- 20 quds force: send_volunteer_size +2, expected_mil_modifier +0.5
+- 21 jihadis: send_volunteer_size +1, surrender_limit +0.2, expected_mil_modifier
+  +0.5, weekly_manpower +100
+- 22 wall street: economic_cycles_cost_factor -0.25, democratic_drift +0.02,
+  interest_rate_multiplier_modifier -1, expected_welfare_modifier -0.25,
+  expected_healthcare_modifier -0.25
+- 23 chaebols: corruption_cost_factor +0.25,
+  receiving_investment_duration_modifier -0.25, interest_rate_multiplier_modifier -1
+
+Ids 1, 3, 15 and 19 have no presence bonus. In each `internal_faction_dynmod_<id>` the
+presence terms sit after the government-bonus and zeroing lines, before the policies.
 
 ## Per-country state and tiers
 
@@ -618,7 +652,8 @@ Later steps must not reuse these names for unrelated values within the
 same call chain.
 
 The modifier feed (step 4) adds its own reserved temp names: `internal_faction_s`
-(opinion-scaled base), `internal_faction_g` (government bonus strength), `internal_faction_gov_aff`
+(opinion-scaled base), `internal_faction_g` (government bonus strength), `internal_faction_presence`
+(presence bonus strength), `internal_faction_gov_aff`
 (affinity index for the ruling party), `internal_faction_k` (a per-key scratch value inside
 a single `internal_faction_dynmod_<id>` block), and `internal_faction_dm_id` (the faction id passed to
 `internal_faction_attach_dynmod` and `internal_faction_detach_dynmod`).

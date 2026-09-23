@@ -2,6 +2,8 @@
 @internal_faction_gov_start = 50
 @internal_faction_gov_span = 30
 @internal_faction_k_acceptance = 0.25
+@internal_faction_presence_marginal = 0.5
+@internal_faction_presence_powerful = 1.5
 
 internal_faction_apply_modifiers = {
 	for_each_loop = {
@@ -28,6 +30,15 @@ internal_faction_apply_faction_modifiers = {
 		subtract_from_temp_variable = { internal_faction_g = @internal_faction_gov_start }
 		divide_temp_variable = { internal_faction_g = @internal_faction_gov_span }
 		clamp_temp_variable = { var = internal_faction_g min = 0 max = 1 }
+	}
+	set_temp_variable = { internal_faction_presence = 1 }
+	if = {
+		limit = { internal_faction_influence_marginal = yes }
+		set_temp_variable = { internal_faction_presence = @internal_faction_presence_marginal }
+	}
+	else_if = {
+		limit = { internal_faction_influence_powerful = yes }
+		set_temp_variable = { internal_faction_presence = @internal_faction_presence_powerful }
 	}
 	if = {
 		limit = { check_variable = { internal_faction_id = 1 } }
@@ -703,6 +714,11 @@ internal_faction_dynmod_2 = {
 	set_variable = { INTB_corporate_tax_income_multiplier_modifier_var = 0 }
 	set_variable = { INTB_receiving_investment_cost_modifier_var = 0 }
 	set_variable = { INTB_tax_gain_multiplier_modifier_var = 0 }
+	set_temp_variable = { internal_faction_k = internal_faction_presence }
+	multiply_temp_variable = { internal_faction_k = -1 }
+	add_to_variable = { INTB_interest_rate_multiplier_modifier_var = internal_faction_k }
+	set_variable = { INTB_expected_education_modifier_var = internal_faction_presence }
+	multiply_variable = { INTB_expected_education_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 5 } }
 		add_to_variable = { INTB_interest_rate_multiplier_modifier_var = -0.5 }
@@ -785,6 +801,10 @@ internal_faction_dynmod_4 = {
 	set_variable = { ICL_industrial_capacity_factory_var = 0 }
 	set_variable = { ICL_international_market_income_modifier_var = 0 }
 	set_variable = { ICL_infrastructure_cost_multiplier_modifier_var = 0 }
+	set_variable = { ICL_investment_duration_modifier_var = internal_faction_presence }
+	multiply_variable = { ICL_investment_duration_modifier_var = -0.25 }
+	set_variable = { ICL_expected_adm_modifier_var = internal_faction_presence }
+	multiply_variable = { ICL_expected_adm_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 13 } }
 		add_to_variable = { ICL_industrial_capacity_factory_var = 0.03 }
@@ -826,6 +846,11 @@ internal_faction_dynmod_5 = {
 	set_variable = { OLI_drift_defence_factor_var = 0 }
 	set_variable = { OLI_tax_gain_multiplier_modifier_var = 0 }
 	set_variable = { OLI_trade_opinion_factor_var = 0 }
+	set_temp_variable = { internal_faction_k = internal_faction_presence }
+	multiply_temp_variable = { internal_faction_k = 0.25 }
+	add_to_variable = { OLI_corruption_cost_factor_var = internal_faction_k }
+	set_variable = { OLI_expected_education_modifier_var = internal_faction_presence }
+	multiply_variable = { OLI_expected_education_modifier_var = -0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 17 } }
 		add_to_variable = { OLI_psic_factor_var = 0.05 }
@@ -868,6 +893,8 @@ internal_faction_dynmod_6 = {
 	multiply_temp_variable = { internal_faction_k = 0.05 }
 	add_to_variable = { MRI_dockyard_productivity_var = internal_faction_k }
 	set_variable = { MRI_trade_opinion_factor_var = 0 }
+	set_variable = { MRI_expected_mil_modifier_var = internal_faction_presence }
+	multiply_variable = { MRI_expected_mil_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 21 } }
 		add_to_variable = { MRI_dockyard_factor_var = 0.10 }
@@ -913,6 +940,10 @@ internal_faction_dynmod_7 = {
 	set_variable = { MILI_experience_gain_army_factor_var = 0 }
 	set_variable = { MILI_political_power_factor_var = 0 }
 	set_variable = { MILI_drift_defence_factor_var = 0 }
+	set_variable = { MILI_nationalist_drift_var = internal_faction_presence }
+	multiply_variable = { MILI_nationalist_drift_var = 0.02 }
+	set_variable = { MILI_expected_mil_modifier_var = internal_faction_presence }
+	multiply_variable = { MILI_expected_mil_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 25 } }
 		add_to_variable = { MILI_army_morale_factor_var = 0.05 }
@@ -958,6 +989,8 @@ internal_faction_dynmod_8 = {
 	set_variable = { DEF_international_market_purchase_modifier_var = 0 }
 	set_variable = { DEF_international_market_income_modifier_var = 0 }
 	set_variable = { DEF_trade_opinion_factor_var = 0 }
+	set_variable = { DEF_expected_mil_modifier_var = internal_faction_presence }
+	multiply_variable = { DEF_expected_mil_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 29 } }
 		add_to_variable = { DEF_military_factory_speed_factor_var = 0.10 }
@@ -1021,6 +1054,8 @@ internal_faction_dynmod_9 = {
 	set_variable = { INTC_stability_factor_var = 0 }
 	set_variable = { INTC_police_cost_multiplier_modifier_var = 0 }
 	set_variable = { INTC_political_power_factor_var = 0 }
+	set_variable = { INTC_expected_police_modifier_var = internal_faction_presence }
+	multiply_variable = { INTC_expected_police_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 33 } }
 		add_to_variable = { INTC_foreign_subversive_activies_var = -0.10 }
@@ -1064,6 +1099,10 @@ internal_faction_dynmod_10 = {
 	set_variable = { LBU_stability_factor_var = 0 }
 	set_variable = { LBU_civilian_factories_productivity_var = 0 }
 	set_variable = { LBU_industrial_capacity_factory_var = 0 }
+	set_variable = { LBU_expected_mil_modifier_var = internal_faction_presence }
+	multiply_variable = { LBU_expected_mil_modifier_var = -0.5 }
+	set_variable = { LBU_expected_healthcare_modifier_var = internal_faction_presence }
+	multiply_variable = { LBU_expected_healthcare_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 37 } }
 		add_to_variable = { LBU_social_cost_multiplier_modifier_var = -0.05 }
@@ -1103,6 +1142,10 @@ internal_faction_dynmod_11 = {
 	multiply_variable = { LAND_agricolture_productivity_modifier_var = 0.05 }
 	set_variable = { LAND_stability_factor_var = 0 }
 	set_variable = { LAND_agriculture_district_worker_requirement_modifier_var = 0 }
+	set_variable = { LAND_corruption_cost_factor_var = internal_faction_presence }
+	multiply_variable = { LAND_corruption_cost_factor_var = 0.15 }
+	set_variable = { LAND_expected_welfare_modifier_var = internal_faction_presence }
+	multiply_variable = { LAND_expected_welfare_modifier_var = -0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 41 } }
 		add_to_variable = { LAND_agriculture_district_income_tax_modifier_var = -0.05 }
@@ -1143,6 +1186,10 @@ internal_faction_dynmod_12 = {
 	multiply_temp_variable = { internal_faction_k = -0.03 }
 	add_to_variable = { FARM_consumer_goods_factor_var = internal_faction_k }
 	set_variable = { FARM_agriculture_district_income_tax_modifier_var = 0 }
+	set_variable = { FARM_agriculture_workers_modifier_var = internal_faction_presence }
+	multiply_variable = { FARM_agriculture_workers_modifier_var = 0.05 }
+	set_variable = { FARM_agriculture_district_worker_requirement_modifier_var = internal_faction_presence }
+	multiply_variable = { FARM_agriculture_district_worker_requirement_modifier_var = 0.05 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 45 } }
 		add_to_variable = { FARM_productivity_modifier_var = 0.05 }
@@ -1185,6 +1232,8 @@ internal_faction_dynmod_13 = {
 	set_variable = { COM_political_power_factor_var = 0 }
 	set_variable = { COM_education_cost_multiplier_modifier_var = 0 }
 	set_variable = { COM_corruption_cost_factor_var = 0 }
+	set_variable = { COM_expected_adm_modifier_var = internal_faction_presence }
+	multiply_variable = { COM_expected_adm_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 49 } }
 		add_to_variable = { COM_political_power_factor_var = 0.05 }
@@ -1223,6 +1272,8 @@ internal_faction_dynmod_14 = {
 	multiply_variable = { PRIEST_drift_defence_factor_var = 0.15 }
 	set_variable = { PRIEST_research_speed_factor_var = 0 }
 	set_variable = { PRIEST_tax_gain_multiplier_modifier_var = 0 }
+	set_variable = { PRIEST_expected_mil_modifier_var = internal_faction_presence }
+	multiply_variable = { PRIEST_expected_mil_modifier_var = -0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 53 } }
 		add_to_variable = { PRIEST_education_cost_multiplier_modifier_var = -0.05 }
@@ -1297,6 +1348,8 @@ internal_faction_dynmod_16 = {
 	multiply_variable = { CLER_drift_defence_factor_var = 0.15 }
 	set_variable = { CLER_research_speed_factor_var = 0 }
 	set_variable = { CLER_tax_gain_multiplier_modifier_var = 0 }
+	set_variable = { CLER_expected_mil_modifier_var = internal_faction_presence }
+	multiply_variable = { CLER_expected_mil_modifier_var = -0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 61 } }
 		add_to_variable = { CLER_education_cost_multiplier_modifier_var = -0.05 }
@@ -1337,6 +1390,8 @@ internal_faction_dynmod_17 = {
 	set_variable = { WAHULE_research_speed_factor_var = 0 }
 	set_variable = { WAHULE_police_cost_multiplier_modifier_var = 0 }
 	set_variable = { WAHULE_tax_gain_multiplier_modifier_var = 0 }
+	set_variable = { WAHULE_expected_mil_modifier_var = internal_faction_presence }
+	multiply_variable = { WAHULE_expected_mil_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 65 } }
 		add_to_variable = { WAHULE_education_cost_multiplier_modifier_var = -0.05 }
@@ -1379,6 +1434,11 @@ internal_faction_dynmod_18 = {
 	set_variable = { DONJU_international_market_income_modifier_var = 0 }
 	set_variable = { DONJU_tax_gain_multiplier_modifier_var = 0 }
 	set_variable = { DONJU_political_power_factor_var = 0 }
+	set_temp_variable = { internal_faction_k = internal_faction_presence }
+	multiply_temp_variable = { internal_faction_k = 0.30 }
+	add_to_variable = { DONJU_corruption_cost_factor_var = internal_faction_k }
+	set_variable = { DONJU_interest_rate_multiplier_modifier_var = internal_faction_presence }
+	multiply_variable = { DONJU_interest_rate_multiplier_modifier_var = -1 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 69 } }
 		add_to_variable = { DONJU_production_speed_industrial_complex_factor = 0.05 }
@@ -1452,6 +1512,11 @@ internal_faction_dynmod_20 = {
 	set_variable = { IRGC_political_power_factor_var = 0 }
 	set_variable = { IRGC_international_market_purchase_modifier_var = 0 }
 	set_variable = { IRGC_trade_opinion_factor_var = 0 }
+	set_temp_variable = { internal_faction_k = internal_faction_presence }
+	multiply_temp_variable = { internal_faction_k = 2 }
+	add_to_variable = { IRGC_send_volunteer_size_var = internal_faction_k }
+	set_variable = { IRGC_expected_mil_modifier_var = internal_faction_presence }
+	multiply_variable = { IRGC_expected_mil_modifier_var = 0.5 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 77 } }
 		add_to_variable = { IRGC_send_volunteer_size_var = 1 }
@@ -1491,6 +1556,15 @@ internal_faction_dynmod_21 = {
 	set_variable = { JIHAD_army_org_factor_var = 0 }
 	set_variable = { JIHAD_war_support_factor_var = 0 }
 	set_variable = { JIHAD_trade_opinion_factor_var = 0 }
+	set_variable = { JIHAD_send_volunteer_size_var = internal_faction_presence }
+	multiply_variable = { JIHAD_send_volunteer_size_var = 1 }
+	set_variable = { JIHAD_surrender_limit_var = internal_faction_presence }
+	multiply_variable = { JIHAD_surrender_limit_var = 0.2 }
+	set_variable = { JIHAD_expected_mil_modifier_var = internal_faction_presence }
+	multiply_variable = { JIHAD_expected_mil_modifier_var = 0.5 }
+	set_temp_variable = { internal_faction_k = internal_faction_presence }
+	multiply_temp_variable = { internal_faction_k = 100 }
+	add_to_variable = { JIHAD_weekly_manpower_var = internal_faction_k }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 81 } }
 		add_to_variable = { JIHAD_weekly_manpower_var = 250 }
@@ -1535,6 +1609,18 @@ internal_faction_dynmod_22 = {
 	set_variable = { WALL_return_on_investment_modifier_var = 0 }
 	set_variable = { WALL_foreign_influence_modifier_var = 0 }
 	set_variable = { WALL_tax_gain_multiplier_modifier_var = 0 }
+	set_temp_variable = { internal_faction_k = internal_faction_presence }
+	multiply_temp_variable = { internal_faction_k = -0.25 }
+	add_to_variable = { WALL_economic_cycles_cost_factor_var = internal_faction_k }
+	set_variable = { WALL_democratic_drift_var = internal_faction_presence }
+	multiply_variable = { WALL_democratic_drift_var = 0.02 }
+	set_temp_variable = { internal_faction_k = internal_faction_presence }
+	multiply_temp_variable = { internal_faction_k = -1 }
+	add_to_variable = { WALL_interest_rate_multiplier_modifier_var = internal_faction_k }
+	set_variable = { WALL_expected_welfare_modifier_var = internal_faction_presence }
+	multiply_variable = { WALL_expected_welfare_modifier_var = -0.25 }
+	set_variable = { WALL_expected_healthcare_modifier_var = internal_faction_presence }
+	multiply_variable = { WALL_expected_healthcare_modifier_var = -0.25 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 85 } }
 		add_to_variable = { WALL_interest_rate_multiplier_modifier_var = -0.5 }
@@ -1573,6 +1659,14 @@ internal_faction_dynmod_23 = {
 	set_variable = { CHAE_international_market_income_modifier_var = 0 }
 	set_variable = { CHAE_investment_cost_modifier_var = 0 }
 	set_variable = { CHAE_corruption_cost_factor_var = 0 }
+	set_temp_variable = { internal_faction_k = internal_faction_presence }
+	multiply_temp_variable = { internal_faction_k = 0.25 }
+	add_to_variable = { CHAE_corruption_cost_factor_var = internal_faction_k }
+	set_temp_variable = { internal_faction_k = internal_faction_presence }
+	multiply_temp_variable = { internal_faction_k = -0.25 }
+	add_to_variable = { CHAE_receiving_investment_duration_modifier_var = internal_faction_k }
+	set_variable = { CHAE_interest_rate_multiplier_modifier_var = internal_faction_presence }
+	multiply_variable = { CHAE_interest_rate_multiplier_modifier_var = -1 }
 	if = {
 		limit = { is_in_array = { internal_faction_policies = 89 } }
 		add_to_variable = { CHAE_industrial_capacity_factory_var = 0.03 }
