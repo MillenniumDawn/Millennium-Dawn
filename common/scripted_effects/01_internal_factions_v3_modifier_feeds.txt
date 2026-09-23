@@ -1,7 +1,6 @@
 # Internal factions v3 modifier feed, see .claude/docs/internal-factions-reference.md
-@internal_faction_scale_marginal = 0.5
-@internal_faction_scale_powerful = 1.5
-@internal_faction_gov_positive = 0.5
+@internal_faction_gov_start = 50
+@internal_faction_gov_span = 30
 @internal_faction_k_acceptance = 0.25
 
 internal_faction_apply_modifiers = {
@@ -17,28 +16,18 @@ internal_faction_apply_modifiers = {
 internal_faction_apply_faction_modifiers = {
 	set_temp_variable = { internal_faction_s = internal_faction_opinion^internal_faction_id }
 	subtract_from_temp_variable = { internal_faction_s = 50 }
-	if = {
-		limit = { internal_faction_influence_marginal = yes }
-		multiply_temp_variable = { internal_faction_s = @internal_faction_scale_marginal }
-	}
-	else_if = {
-		limit = { internal_faction_influence_powerful = yes }
-		multiply_temp_variable = { internal_faction_s = @internal_faction_scale_powerful }
-	}
+	internal_faction_influence_scale = yes
+	multiply_temp_variable = { internal_faction_s = internal_faction_scale }
 	set_temp_variable = { internal_faction_g = 0 }
 	set_temp_variable = { internal_faction_gov_aff = internal_faction_id }
 	multiply_temp_variable = { internal_faction_gov_aff = 13 }
 	add_to_temp_variable = { internal_faction_gov_aff = global.ip_party_policy_group^ruling_party }
 	if = {
 		limit = { check_variable = { global.internal_faction_affinity^internal_faction_gov_aff = 1 } }
-		if = {
-			limit = { internal_faction_tier_enthusiastic = yes }
-			set_temp_variable = { internal_faction_g = 1 }
-		}
-		else_if = {
-			limit = { internal_faction_tier_positive = yes }
-			set_temp_variable = { internal_faction_g = @internal_faction_gov_positive }
-		}
+		set_temp_variable = { internal_faction_g = internal_faction_opinion^internal_faction_id }
+		subtract_from_temp_variable = { internal_faction_g = @internal_faction_gov_start }
+		divide_temp_variable = { internal_faction_g = @internal_faction_gov_span }
+		clamp_temp_variable = { var = internal_faction_g min = 0 max = 1 }
 	}
 	if = {
 		limit = { check_variable = { internal_faction_id = 1 } }
@@ -643,6 +632,8 @@ internal_faction_dynmod_5 = {
 	multiply_variable = { OLI_communism_acceptance_factor_var = @internal_faction_k_acceptance }
 	set_variable = { OLI_communism_drift_var = internal_faction_s }
 	multiply_variable = { OLI_communism_drift_var = 0.001 }
+	set_variable = { OLI_military_industrial_organization_funds_gain_var = internal_faction_s }
+	multiply_variable = { OLI_military_industrial_organization_funds_gain_var = 0.004 }
 	set_variable = { OLI_political_power_factor_var = internal_faction_g }
 	multiply_variable = { OLI_political_power_factor_var = 0.10 }
 	set_variable = { OLI_corruption_cost_factor_var = internal_faction_g }
@@ -771,6 +762,10 @@ internal_faction_dynmod_8 = {
 	multiply_variable = { DEF_military_factories_productivity_var = 0.003 }
 	set_variable = { DEF_military_industry_tax_modifier_var = internal_faction_s }
 	multiply_variable = { DEF_military_industry_tax_modifier_var = 0.004 }
+	set_variable = { DEF_military_industrial_organization_industrial_manufacturer_assign_cost_var = internal_faction_s }
+	multiply_variable = { DEF_military_industrial_organization_industrial_manufacturer_assign_cost_var = -0.003 }
+	set_variable = { DEF_military_industrial_organization_design_team_assign_cost_var = internal_faction_s }
+	multiply_variable = { DEF_military_industrial_organization_design_team_assign_cost_var = -0.003 }
 	set_variable = { DEF_license_purchase_cost_var = internal_faction_g }
 	multiply_variable = { DEF_license_purchase_cost_var = -0.20 }
 	set_temp_variable = { internal_faction_k = internal_faction_g }

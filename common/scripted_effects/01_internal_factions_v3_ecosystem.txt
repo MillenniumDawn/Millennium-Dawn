@@ -4,19 +4,15 @@
 @internal_faction_law_shock = 2
 @internal_faction_tax_shock = 0.5
 @internal_faction_desire_weight = 0.5
+@internal_faction_scale_base = 0.5
+@internal_faction_scale_per_influence = 0.01
 
 # Parameters:
 # - internal_faction_id: faction id 1-23
 internal_faction_influence_scale = {
-	set_temp_variable = { internal_faction_scale = 1 }
-	if = {
-		limit = { internal_faction_influence_marginal = yes }
-		set_temp_variable = { internal_faction_scale = 0.5 }
-	}
-	else_if = {
-		limit = { internal_faction_influence_powerful = yes }
-		set_temp_variable = { internal_faction_scale = 1.5 }
-	}
+	set_temp_variable = { internal_faction_scale = internal_faction_influence^internal_faction_id }
+	multiply_temp_variable = { internal_faction_scale = @internal_faction_scale_per_influence }
+	add_to_temp_variable = { internal_faction_scale = @internal_faction_scale_base }
 }
 
 # Runs from internal_faction_monthly_tick, after the per-faction drift loop

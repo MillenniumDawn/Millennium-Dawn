@@ -409,8 +409,9 @@ Same 4 policies, slug prefix `priesthood_`, `ulema_`, `clergy_`.
 
 ## Government bonuses (table E)
 
-Active when a backed group rules and opinion is 60 or higher: strength 0.5
-at positive (60-79), 1.0 at enthusiastic (80+). Values below are the
+Active when a backed group rules. Strength ramps linearly with opinion:
+`clamp((opinion - 50) / 30, 0, 1)`, so 0 at 50, 0.33 at 60 and 1.0 at 80+.
+Values below are the
 full-strength effect, written into the faction's dynamic modifier block
 (step 4). This replaces the static `modifier` blocks on the old ideas,
 removed at step 11.
@@ -475,9 +476,11 @@ Test presence with `is_in_array = { internal_faction_active = 7 }`.
 Opinion tiers: hostile below 20, negative 20-39, indifferent 40-59, positive
 60-79, enthusiastic 80 and up.
 
-Influence tiers: marginal below 25, influential 25-59, powerful 60 and up,
-scaling the influence-driven effects at 0.5 / 1.0 / 1.5. The threshold for
-displacing an active faction is the marginal/influential boundary.
+Influence tiers: marginal below 25, influential 25-59, powerful 60 and up.
+The tiers are labels and gates; the influence-driven effects scale smoothly
+through `internal_faction_influence_scale`: `0.5 + influence * 0.01`, so 0.5
+at 0, 1.0 at 50 and 1.5 at 100. The threshold for displacing an active
+faction is the marginal/influential boundary.
 
 The old tier triggers overlap at 60 and 40 (`00_internal_factions_trigger.txt`);
 the new `internal_faction_tier_*` triggers use the clean bands above.
@@ -656,11 +659,13 @@ This is now the only writer of the vars in
 `internal_faction_apply_faction_modifiers` (param `internal_faction_id`) computes two numbers and then
 dispatches to one of 23 `internal_faction_dynmod_<id>` blocks:
 
-- `internal_faction_s`, the opinion-scaled base: `(internal_faction_opinion^id - 50)` scaled by influence
-  tier, 0.5 at marginal, 1.0 at influential, 1.5 at powerful.
-- `internal_faction_g`, the government bonus strength: 0 normally, 0.5 when the ruling
-  party's group is backed by the faction (`global.internal_faction_affinity`) and opinion
-  is in the positive tier (60-79), 1.0 at the enthusiastic tier (80+).
+- `internal_faction_s`, the opinion-scaled base: `(internal_faction_opinion^id - 50)` times
+  `internal_faction_scale` from `internal_faction_influence_scale` (0.5 at 0 influence,
+  1.0 at 50, 1.5 at 100).
+- `internal_faction_g`, the government bonus strength: 0 unless the ruling party's group
+  is backed by the faction (`global.internal_faction_affinity`), then
+  `clamp((opinion - @internal_faction_gov_start) / @internal_faction_gov_span, 0, 1)`
+  with start 50 and span 30.
   Coalition partners are not weighted in, only the ruling party.
 
 Each `internal_faction_dynmod_<id>` block writes one var per modifier key on the faction's
@@ -763,8 +768,9 @@ tax-reaction tooltips lives in
 0.001, `@internal_faction_push_gate` 20, `@internal_faction_law_shock` 2, `@internal_faction_tax_shock` 0.5, `@internal_faction_desire_weight`
 0.5.
 
-`internal_faction_influence_scale` (param `internal_faction_id`, sets temp `internal_faction_scale`) is the shared 0.5/1.0/1.5
-influence-tier multiplier, called from elections and law desires.
+`internal_faction_influence_scale` (param `internal_faction_id`, sets temp `internal_faction_scale`) is the shared linear
+influence multiplier, `@internal_faction_scale_base` 0.5 plus `@internal_faction_scale_per_influence` 0.01 per
+influence point, called from the modifier feed, elections and law desires.
 
 `internal_faction_party_push`, run from `internal_faction_monthly_tick` after the per-faction drift loop, gates
 each active faction on `NOT internal_faction_influence_marginal` and opinion above 70 or below 30
