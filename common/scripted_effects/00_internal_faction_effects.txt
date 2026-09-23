@@ -1486,6 +1486,31 @@ change_oligarchs_opinion = {
 }
 
 # Farmers
+# Sets the decay floor plus temp farmers_floor and farmers_ceiling from the if_farmers_* modifiers
+update_farmers_opinion_limits = {
+	set_variable = {
+		farmers_opinion_min = {
+			value = 50
+			add = modifier@if_farmers_minimum_opinion
+			clamp = { min = 0 max = 100 }
+		}
+	}
+	set_temp_variable = {
+		farmers_floor = {
+			value = 0
+			add = modifier@if_farmers_minimum_opinion
+			clamp = { min = 0 max = 100 }
+		}
+	}
+	set_temp_variable = {
+		farmers_ceiling = {
+			value = 100
+			add = modifier@if_farmers_maximum_opinion
+			clamp = { min = 0 max = 100 }
+		}
+	}
+}
+
 change_farmers_opinion = {
 	if = { limit = { has_idea = farmers }
 
@@ -1505,28 +1530,12 @@ change_farmers_opinion = {
 			multiply_temp_variable = { temp_opinion = 2 }
 		}
 
+		update_farmers_opinion_limits = yes
 		set_variable = {
-			farmers_opinion_min = {
-				value = 50
-				add = modifier@if_farmers_minimum_opinion
-				clamp = { min = 0 max = 100 }
-			}
-		}
-		set_variable = {
-			farmers_opinion_max = {
-				value = 100
-				add = modifier@if_farmers_minimum_opinion
-				clamp = { min = 0 max = 100 }
-			}
-		}
-
-		add_to_variable = {
 			farmers_opinion = {
-				value = temp_opinion
-				clamp = {
-					min = farmers_opinion_min
-					max = farmers_opinion_max
-				}
+				value = farmers_opinion
+				add = temp_opinion
+				clamp = { min = farmers_floor max = farmers_ceiling }
 			}
 		}
 
@@ -2422,14 +2431,27 @@ monthly_tick_internal_factions_opinion = {
 		apply_communist_cadres_dynamic_effect_DYNMOD = yes
 	}
 	if = {
-		limit = {
-			has_idea = farmers
-			check_variable = { farmers_opinion > farmers_opinion_min }
+		limit = { has_idea = farmers }
+		update_farmers_opinion_limits = yes
+		if = {
+			limit = {
+				OR = {
+					check_variable = { farmers_opinion > farmers_opinion_min }
+					NOT = { check_variable = { modifier@if_farmers_monthly_opinion = 0 } }
+				}
+			}
+			# Decay stops at the decay floor, but never lifts an opinion already below it
+			set_variable = {
+				farmers_opinion = {
+					value = farmers_opinion
+					subtract = global.monthly_internal_faction_tick_rate
+					max = { value = farmers_opinion min = farmers_opinion_min }
+					add = modifier@if_farmers_monthly_opinion
+					clamp = { min = farmers_floor max = farmers_ceiling }
+				}
+			}
+			apply_farmers_dynamic_effect_DYNMOD = yes
 		}
-		if = { limit = { NOT = { has_variable = farmers_opinion_min } } set_variable = { farmers_opinion_min = 50 } }
-		subtract_from_variable = { farmers_opinion = global.monthly_internal_faction_tick_rate }
-		clamp_variable = { var = farmers_opinion min = farmers_opinion_min }
-		apply_farmers_dynamic_effect_DYNMOD = yes
 	}
 	if = {
 		limit = {
