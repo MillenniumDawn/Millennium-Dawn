@@ -7,9 +7,30 @@ calculate_expected_spending = {
 	calculate_expected_police_spending = yes
 	calculate_expected_adm_spending = yes
 	calculate_expected_military_spending = yes
+	set_law_tolerance_caps = yes
 	md_check_spending_alerts = yes
 	refresh_expected_spending_frames = yes
 	update_protest_dirty_var = yes
+}
+
+# Upper edge of each ladder's hysteresis band, one step above the expected level.
+# expected_* is a rounded float whose baselines sit on .5 and whose modifiers move
+# continuously, so the rounded result flickers between two integers; without a band
+# the AI pays ~50 PP to drop a law and 50 PP to re-buy it, forever. Every ladder gets
+# the band on the UPPER side only: MD_protests_calc_deterministic_drift sums
+# expected minus actual into protest_strength, so a shortfall costs unrest while an
+# overshoot costs only money. Read by the has_*_law_desired triggers.
+set_law_tolerance_caps = {
+	set_variable = { social_law_cap = expected_welfare_spending }
+	set_variable = { health_law_cap = expected_health_spending }
+	set_variable = { education_law_cap = expected_edu_spending }
+	set_variable = { police_law_cap = expected_police_spending }
+	set_variable = { bureau_law_cap = expected_adm_spending }
+	add_to_variable = { social_law_cap = 1 }
+	add_to_variable = { health_law_cap = 1 }
+	add_to_variable = { education_law_cap = 1 }
+	add_to_variable = { police_law_cap = 1 }
+	add_to_variable = { bureau_law_cap = 1 }
 }
 
 refresh_expected_spending_frames = {
@@ -196,8 +217,6 @@ calculate_expected_welfare_spending = {
 		min = 1
 		max = 6
 	}
-	set_variable = { social_law_cap = expected_welfare_spending }
-	add_to_variable = { social_law_cap = 1 }
 }
 
 calculate_expected_healthcare_spending = {
@@ -218,8 +237,6 @@ calculate_expected_healthcare_spending = {
 		min = 1
 		max = 6
 	}
-	set_variable = { health_law_cap = expected_health_spending }
-	add_to_variable = { health_law_cap = 1 }
 }
 
 calculate_expected_education_spending = {
@@ -240,8 +257,6 @@ calculate_expected_education_spending = {
 		min = 1
 		max = 5
 	}
-	set_variable = { education_law_cap = expected_edu_spending }
-	add_to_variable = { education_law_cap = 1 }
 }
 
 calculate_expected_police_spending = {
@@ -262,11 +277,6 @@ calculate_expected_police_spending = {
 		min = 1
 		max = 5
 	}
-	# Hysteresis band: a law one step ABOVE expected counts as satisfied, so a
-	# rounding flicker on the .5 baselines cannot bill 50 PP to drop and re-buy.
-	# Never widened downward -- a shortfall feeds protest_drift directly.
-	set_variable = { police_law_cap = expected_police_spending }
-	add_to_variable = { police_law_cap = 1 }
 }
 
 calculate_expected_adm_spending = {
@@ -287,8 +297,6 @@ calculate_expected_adm_spending = {
 		min = 1
 		max = 5
 	}
-	set_variable = { bureau_law_cap = expected_adm_spending }
-	add_to_variable = { bureau_law_cap = 1 }
 }
 
 calculate_expected_military_spending = {
