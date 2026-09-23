@@ -265,10 +265,8 @@ country_event = {
 	fire_only_once = yes
 	trigger = {
 		tag = ETH
-		OR = {
-			NOT = { has_country_flag = ETH_railway_repaired_flg }
-			NOT = { has_active_mission = ETH_rehabilitation_railway_2 }
-		}
+		NOT = { has_country_flag = ETH_railway_repaired_flg }
+		NOT = { has_active_mission = ETH_rehabilitation_railway_2 }
 	}
 
 	option = {
@@ -361,6 +359,10 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ethiopia.11.a executed"
 		add_ideas = ETH_eritrean_friction
 		set_country_flag = ETH_eth_victory
+		set_country_flag = ETH_EPLF_active_FLAG
+		set_temp_variable = { ETH_EPLF_change = 20 }
+		update_ETH_EPLF_support = yes
+		custom_effect_tooltip = ETH_EPLF_formed_TT
 		custom_effect_tooltip = ETH_make_a_choice_FT_TT
 		newline = yes
 		ERI = {
@@ -373,39 +375,46 @@ country_event = {
 					nationalist_Nat_Autocracy
 				}
 			}
-			# fix
-			# nat_autocracy is already handled, will need to redo this so it doesn't mess with
-			# shit but still alerts to EPLF's existence, need to finish EPLF mechanics during this
-			# time period also - possible later stage content but will finish salafist coup
 		}
 	}
 }
 
 ### EPLF attacked convoy
-#country_event = {
-#	id = ethiopia.12
-#	title = ethiopia.12.t
-#	desc = ethiopia.12.d
-#	picture = GFX_ETH_truck
-#
-#	trigger = {
-#		tag = ETH
-#		has_country_flag = EPLF_formed_again
-#	}
-#
-#	fire_only_once = yes
-#
-#	option = {
-#		name = ethiopia.12.a
-#		log = "[GetDateText]: [This.GetName]: ethiopia.12.a executed"
-#		random_list = {
-#			25 = { add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -100 } add_equipment_to_stockpile = { type = util_vehicle_type amount = -6 } add_manpower = -12 }
-#			25 = { add_equipment_to_stockpile = { type = L_AT_Equipment amount = -30 } add_equipment_to_stockpile = { type = util_vehicle_type amount = -6 } add_manpower = -12 }
-#			25 = { add_equipment_to_stockpile = { type = AA_Equipment amount = -30 } add_equipment_to_stockpile = { type = util_vehicle_type amount = -6 } add_manpower = -12 }
-#			25 = { add_equipment_to_stockpile = { type = cnc_equipment_type amount = -50 } add_equipment_to_stockpile = { type = util_vehicle_type amount = -6 } add_manpower = -12 }
-#		}
-#	}
-#}
+country_event = {
+	id = ethiopia.12
+	title = ethiopia.12.t
+	desc = ethiopia.12.d
+	picture = GFX_ETH_truck
+
+	is_triggered_only = yes
+
+	trigger = { has_country_flag = ETH_EPLF_active_FLAG }
+
+	option = {
+		name = ethiopia.12.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.12.a executed"
+		random_list = {
+			25 = { add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -100 } add_equipment_to_stockpile = { type = util_vehicle_type amount = -6 } add_manpower = -12 }
+			25 = { add_equipment_to_stockpile = { type = L_AT_Equipment amount = -30 } add_equipment_to_stockpile = { type = util_vehicle_type amount = -6 } add_manpower = -12 }
+			25 = { add_equipment_to_stockpile = { type = AA_Equipment amount = -30 } add_equipment_to_stockpile = { type = util_vehicle_type amount = -6 } add_manpower = -12 }
+			25 = { add_equipment_to_stockpile = { type = cnc_equipment_type amount = -50 } add_equipment_to_stockpile = { type = util_vehicle_type amount = -6 } add_manpower = -12 }
+		}
+		set_temp_variable = { ETH_EPLF_change = 2.5 }
+		update_ETH_EPLF_support = yes
+		ai_chance = { base = 70 }
+	}
+
+	option = {
+		name = ethiopia.12.b
+		log = "[GetDateText]: [This.GetName]: ethiopia.12.b executed"
+		add_command_power = -15
+		set_temp_variable = { ETH_crackdown_change = 2.5 }
+		update_ETH_bozo_crackdown = yes
+		set_temp_variable = { ETH_EPLF_change = 5 }
+		update_ETH_EPLF_support = yes
+		ai_chance = { base = 30 }
+	}
+}
 
 ### Isaias Afwerki arrested
 country_event = {
@@ -417,7 +426,6 @@ country_event = {
 	fire_only_once = yes
 	trigger = {
 		tag = ETH
-		NOT = { has_country_flag = ETH_isaias_afwerki_arrested }
 		OR = {
 			AND = {
 				owns_state = 228
@@ -433,6 +441,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ethiopia.13.a executed"
 		hidden_effect = {
 			ETH = { country_event = { id = ethiopia.11 days = 2 } }
+			news_event = { id = ethiopia_news.8 hours = 6 }
 		}
 	}
 }
@@ -454,6 +463,8 @@ country_event = {
 		update_ETH_bozo_crackdown = yes
 		set_temp_variable = { ETH_propaganda_change = 10 }
 		update_ETH_propaganda_distribution = yes
+		set_temp_variable = { ETH_EPLF_change = 10 }
+		update_ETH_EPLF_support = yes
 	}
 
 	# LIFE IMPRISONMENT #
@@ -464,63 +475,86 @@ country_event = {
 		update_ETH_propaganda_distribution = yes
 		set_temp_variable = { ETH_crackdown_change = 2.5 }
 		update_ETH_bozo_crackdown = yes
+		set_temp_variable = { ETH_EPLF_change = 5 }
+		update_ETH_EPLF_support = yes
 	}
 }
 
-# ### Isaias Afwerki trial - democratic - life imprisonment
-# country_event = {
-# 	id = ethiopia.15
-# 	title = ethiopia.15.t
-# 	desc = ethiopia.15.d
-# 	picture = GFX_court
+### Isaias Afwerki trial - democratic - life imprisonment
+country_event = {
+	id = ethiopia.15
+	title = ethiopia.15.t
+	desc = ethiopia.15.d
+	picture = GFX_court
+	is_triggered_only = yes
+	fire_only_once = yes
 
-# 	is_triggered_only = yes
+	option = {
+		name = ethiopia.15.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.15.a executed"
+		add_stability = 0.02
+		set_temp_variable = { ETH_propaganda_change = 5 }
+		update_ETH_propaganda_distribution = yes
+		set_temp_variable = { ETH_crackdown_change = 2.5 }
+		update_ETH_bozo_crackdown = yes
+		set_temp_variable = { ETH_EPLF_change = 2.5 }
+		update_ETH_EPLF_support = yes
+	}
+}
 
-# 	fire_only_once = yes
+### Isaias Afwerki trial - democratic - death sentence
+country_event = {
+	id = ethiopia.16
+	title = ethiopia.16.t
+	desc = ethiopia.16.d
+	picture = GFX_court
+	is_triggered_only = yes
+	fire_only_once = yes
 
-# 	option = {
-# 		name = ethiopia.15.a
-# 		log = "[GetDateText]: [This.GetName]: ethiopia.15.a executed"
-# 	}
-# }
+	option = {
+		name = ethiopia.16.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.16.a executed"
+		set_temp_variable = { ETH_propaganda_change = 7.5 }
+		update_ETH_propaganda_distribution = yes
+		set_temp_variable = { ETH_crackdown_change = 5 }
+		update_ETH_bozo_crackdown = yes
+		set_temp_variable = { ETH_EPLF_change = 7.5 }
+		update_ETH_EPLF_support = yes
+	}
+}
 
-# ### Isaias Afwerki trial - democratic - death sentence
-# country_event = {
-# 	id = ethiopia.16
-# 	title = ethiopia.16.t
-# 	desc = ethiopia.16.d
-# 	picture = GFX_court
+### EPLF attacks police station
+country_event = {
+	id = ethiopia.17
+	title = ethiopia.17.t
+	desc = ethiopia.17.d
+	picture = GFX_ETH_truck
 
-# 	is_triggered_only = yes
+	is_triggered_only = yes
 
-# 	fire_only_once = yes
+	trigger = { has_country_flag = ETH_EPLF_active_FLAG }
 
-# 	option = {
-# 		name = ethiopia.16.a
-# 		log = "[GetDateText]: [This.GetName]: ethiopia.16.a executed"
-# 	}
-# }
+	option = {
+		name = ethiopia.17.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.17.a executed"
+		add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -50 }
+		add_manpower = -30
+		set_temp_variable = { ETH_EPLF_change = 2.5 }
+		update_ETH_EPLF_support = yes
+		ai_chance = { base = 70 }
+	}
 
-### EPLF attackes police station
-#country_event = {
-#	id = ethiopia.17
-#	title = ethiopia.17.t
-#	desc = ethiopia.17.d
-#	picture = GFX_ETH_truck
-#
-#	trigger = {
-#		tag = ETH
-#		has_country_flag = EPLF_formed_again
-#	}
-#
-#	fire_only_once = yes
-#
-#	option = {
-#		name = ethiopia.17.a
-#		log = "[GetDateText]: [This.GetName]: ethiopia.17.a executed"
-#		add_equipment_to_stockpile = { type = infantry_weapons_1 amount = -50 } add_manpower = -30
-#	}
-#}
+	option = {
+		name = ethiopia.17.b
+		log = "[GetDateText]: [This.GetName]: ethiopia.17.b executed"
+		add_stability = -0.02
+		set_temp_variable = { ETH_crackdown_change = 5 }
+		update_ETH_bozo_crackdown = yes
+		set_temp_variable = { ETH_EPLF_change = 5 }
+		update_ETH_EPLF_support = yes
+		ai_chance = { base = 30 }
+	}
+}
 
 ### Zere Yacobe Selassie returns to Ethiopia
 country_event = {
@@ -752,6 +786,8 @@ country_event = {
 		update_ETH_bozo_crackdown = yes
 		set_temp_variable = { ETH_propaganda_change = 7.5 }
 		update_ETH_propaganda_distribution = yes
+		set_temp_variable = { ETH_EPLF_change = 7.5 }
+		update_ETH_EPLF_support = yes
 	}
 	# LIFE IMPRISONMENT #
 	option = {
@@ -761,6 +797,8 @@ country_event = {
 		update_ETH_propaganda_distribution = yes
 		set_temp_variable = { ETH_crackdown_change = 5 }
 		update_ETH_bozo_crackdown = yes
+		set_temp_variable = { ETH_EPLF_change = 2.5 }
+		update_ETH_EPLF_support = yes
 	}
 }
 
@@ -805,6 +843,110 @@ country_event = {
 			set_cosmetic_tag = ETH_federation_ct
 			clr_country_flag = dynamic_flag
 		}
+	}
+}
+
+### EPLF makes its move
+country_event = {
+	id = ethiopia.25
+	title = ethiopia.25.t
+	desc = {
+		text = ethiopia.25.d_revolt
+		trigger = { ETH_EPLF_can_revolt = yes }
+	}
+	desc = {
+		text = ethiopia.25.d_breakaway
+		trigger = { ETH_EPLF_can_break_away = yes }
+	}
+	desc = {
+		text = ethiopia.25.d_crushed
+		trigger = {
+			NOT = { ETH_EPLF_can_revolt = yes }
+			NOT = { ETH_EPLF_can_break_away = yes }
+		}
+	}
+	picture = GFX_ETH_ELF
+
+	is_triggered_only = yes
+
+	fire_only_once = yes
+
+	trigger = { has_country_flag = ETH_EPLF_active_FLAG }
+
+	# OPEN REVOLT IN OCCUPIED ERITREA #
+	option = {
+		name = ethiopia.25.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.25.a executed"
+		trigger = { ETH_EPLF_can_revolt = yes }
+		if = {
+			limit = { check_variable = { ETH_EPLF_support > 74 } }
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.3
+				states = all
+				states_filter = { is_core_of = ERI }
+				ETH_EPLF_rebel_setup = yes
+			}
+		}
+		else = {
+			start_civil_war = {
+				ideology = nationalist
+				size = 0.15
+				states = all
+				states_filter = { is_core_of = ERI }
+				ETH_EPLF_rebel_setup = yes
+			}
+		}
+		clr_country_flag = ETH_EPLF_active_FLAG
+		clear_variable = ETH_EPLF_support
+	}
+
+	# THE FEDERATION BREAKS #
+	option = {
+		name = ethiopia.25.b
+		log = "[GetDateText]: [This.GetName]: ethiopia.25.b executed"
+		trigger = { ETH_EPLF_can_break_away = yes }
+		if = {
+			limit = { has_idea = ETH_eritrean_federalisation_underway }
+			remove_ideas = ETH_eritrean_federalisation_underway
+		}
+		ERI = {
+			set_country_flag = ERI_EPLF_coup_FLAG
+			clr_country_flag = ETH_transitional_government_FLAG
+			hidden_effect = {
+				drop_cosmetic_tag = yes
+				clear_variable = dynamic_flag_variant
+				set_country_flag = dynamic_flag
+			}
+			set_temp_variable = { rul_party_temp = 22 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+		end_puppet = ERI
+		declare_war_on = {
+			target = ERI
+			type = annex_everything
+		}
+		clr_country_flag = ETH_EPLF_active_FLAG
+		clear_variable = ETH_EPLF_support
+	}
+
+	# THE COUP COLLAPSES #
+	option = {
+		name = ethiopia.25.c
+		log = "[GetDateText]: [This.GetName]: ethiopia.25.c executed"
+		trigger = {
+			NOT = { ETH_EPLF_can_revolt = yes }
+			NOT = { ETH_EPLF_can_break_away = yes }
+		}
+		add_stability = 0.05
+		if = {
+			limit = { has_idea = ETH_eritrean_friction }
+			remove_ideas = ETH_eritrean_friction
+		}
+		custom_effect_tooltip = ETH_EPLF_crushed_TT
+		clr_country_flag = ETH_EPLF_active_FLAG
+		clear_variable = ETH_EPLF_support
 	}
 }
 
@@ -916,17 +1058,16 @@ country_event = {
 	}
 
 	# ERITREAN ANNEXATION #
-#	news_event = {
-#		id = ethiopia_news.8
-#		title = ethiopia_news.8.t
-#		desc = ethiopia_news.8.d
-#		picture = GFX_news_ethiopian_military
-#
-#		major = yes
-#		is_triggered_only = yes
-#
-#		option = {
-#			name = ethiopia_news.8.a
-#			log = "[GetDateText]: [This.GetName]: ethiopia_news.8.a executed"
-#		}
-#	}
+	news_event = {
+		id = ethiopia_news.8
+		title = ethiopia_news.8.t
+		desc = ethiopia_news.8.d
+		picture = GFX_news_ethiopian_military
+
+		major = yes
+		is_triggered_only = yes
+
+		option = {
+			name = ethiopia_news.8.a
+		}
+	}

@@ -88,5 +88,70 @@ update_ETH_bozo_crackdown = {
 	}
 }
 
+update_ETH_EPLF_support = {
+	if = {
+		limit = { has_country_flag = ETH_EPLF_active_FLAG }
+		custom_effect_tooltip = update_ETH_EPLF_support_TT
+		add_to_variable = { ETH_EPLF_support = ETH_EPLF_change }
+		clamp_variable = {
+			var = ETH_EPLF_support
+			min = 0
+			max = 100
+		}
+	}
+}
+
+ETH_EPLF_monthly_tick = {
+	if = {
+		limit = { has_country_flag = ETH_EPLF_active_FLAG }
+		# Suppression makes martyrs, propaganda wins them back
+		set_temp_variable = { ETH_EPLF_change = ETH_crackdown_on_bozos }
+		subtract_from_temp_variable = { ETH_EPLF_change = ETH_propaganda_distribution }
+		multiply_temp_variable = { ETH_EPLF_change = 0.05 }
+		if = {
+			limit = {
+				country_exists = ERI
+				ERI = { is_subject_of = ROOT }
+			}
+			set_temp_variable = { ETH_EPLF_party_pull = ERI.party_pop_array^22 }
+			subtract_from_temp_variable = { ETH_EPLF_party_pull = 0.15 }
+			multiply_temp_variable = { ETH_EPLF_party_pull = 10 }
+			add_to_temp_variable = { ETH_EPLF_change = ETH_EPLF_party_pull }
+		}
+		update_ETH_EPLF_support = yes
+		if = {
+			limit = { check_variable = { ETH_EPLF_support > 99 } }
+			country_event = { id = ethiopia.25 days = 1 }
+		}
+		else = {
+			set_temp_variable = { ETH_EPLF_raid_roll = random }
+			multiply_temp_variable = { ETH_EPLF_raid_roll = 100 }
+			if = {
+				limit = { check_variable = { ETH_EPLF_raid_roll < ETH_EPLF_support } }
+				random_list = {
+					50 = { country_event = { id = ethiopia.12 days = 1 random_days = 14 } }
+					50 = { country_event = { id = ethiopia.17 days = 1 random_days = 14 } }
+				}
+			}
+		}
+	}
+}
+
+ETH_EPLF_rebel_setup = {
+	set_cosmetic_tag = ERI_REB
+	clr_country_flag = dynamic_flag
+	set_temp_variable = { rul_party_temp = 22 }
+	set_temp_variable = { disable_elections = 1 }
+	change_ruling_party_effect = yes
+	create_country_leader = {
+		name = "Yemane Gebreab"
+		picture = "gfx/leaders/ERI/Portrait_Yemane_Gebreab.dds"
+		ideology = Nat_Autocracy
+		traits = {
+			nationalist_Nat_Autocracy
+		}
+	}
+}
+
 # ERITREAN STUFF
 # stashing this here until they need a file of their own
