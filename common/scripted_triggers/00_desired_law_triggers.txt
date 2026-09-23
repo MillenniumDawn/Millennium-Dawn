@@ -1,21 +1,34 @@
+# A law is "desired" at its expected level OR one step above it. The upper step is a
+# hysteresis band: expected_* is a rounded float whose per-country baselines sit on .5
+# and whose modifiers move continuously, so the rounded result flickers between two
+# integers and the AI paid ~50 PP to drop a law and 50 PP to re-buy it, forever
+# (measured on main: 61% of police-law spend, 43% of defence, ~142k PP over 12 years).
+# The band is NEVER widened downward: MD_protests_calc_deterministic_drift sums
+# expected minus actual across every ladder into protest_strength, so sitting a step
+# under is paid for in unrest, while sitting a step over costs only money.
 has_bureau_idea_law_desired = {
-	check_variable = { bureau_law = expected_adm_spending }
+	check_variable = { var = bureau_law value = expected_adm_spending compare = greater_than_or_equals }
+	check_variable = { var = bureau_law value = bureau_law_cap compare = less_than_or_equals }
 }
 
 has_police_idea_law_desired = {
-	check_variable = { police_law = expected_police_spending }
+	check_variable = { var = police_law value = expected_police_spending compare = greater_than_or_equals }
+	check_variable = { var = police_law value = police_law_cap compare = less_than_or_equals }
 }
 
 has_education_law_desired = {
-	check_variable = { education_law = expected_edu_spending }
+	check_variable = { var = education_law value = expected_edu_spending compare = greater_than_or_equals }
+	check_variable = { var = education_law value = education_law_cap compare = less_than_or_equals }
 }
 
 has_health_law_desired = {
-	check_variable = { health_law = expected_health_spending }
+	check_variable = { var = health_law value = expected_health_spending compare = greater_than_or_equals }
+	check_variable = { var = health_law value = health_law_cap compare = less_than_or_equals }
 }
 
 has_social_law_desired = {
-	check_variable = { social_law = expected_welfare_spending }
+	check_variable = { var = social_law value = expected_welfare_spending compare = greater_than_or_equals }
+	check_variable = { var = social_law value = social_law_cap compare = less_than_or_equals }
 }
 
 has_education_law_at_least_3 = {
