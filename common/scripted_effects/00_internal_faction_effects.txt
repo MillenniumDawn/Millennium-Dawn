@@ -2431,29 +2431,6 @@ monthly_tick_internal_factions_opinion = {
 		apply_communist_cadres_dynamic_effect_DYNMOD = yes
 	}
 	if = {
-		limit = { has_idea = farmers }
-		update_farmers_opinion_limits = yes
-		if = {
-			limit = {
-				OR = {
-					check_variable = { farmers_opinion > farmers_opinion_min }
-					NOT = { check_variable = { modifier@if_farmers_monthly_opinion = 0 } }
-				}
-			}
-			# Decay stops at the decay floor, but never lifts an opinion already below it
-			set_variable = {
-				farmers_opinion = {
-					value = farmers_opinion
-					subtract = global.monthly_internal_faction_tick_rate
-					max = { value = farmers_opinion min = farmers_opinion_min }
-					add = modifier@if_farmers_monthly_opinion
-					clamp = { min = farmers_floor max = farmers_ceiling }
-				}
-			}
-			apply_farmers_dynamic_effect_DYNMOD = yes
-		}
-	}
-	if = {
 		limit = {
 			has_idea = landowners
 			check_variable = { landowners_opinion > landowners_opinion_min }
@@ -2528,6 +2505,23 @@ monthly_tick_internal_factions_opinion = {
 		apply_the_donju_dynamic_effect_DYNMOD = yes
 	}
 	} # end tick rate > 0 guard
+
+	# Outside the guard so the farmers modifiers still apply with decay off
+	if = {
+		limit = { has_idea = farmers }
+		update_farmers_opinion_limits = yes
+		# Decay stops at the decay floor, but never lifts an opinion already below it
+		set_variable = {
+			farmers_opinion = {
+				value = farmers_opinion
+				subtract = global.monthly_internal_faction_tick_rate
+				max = { value = farmers_opinion min = farmers_opinion_min }
+				add = modifier@if_farmers_monthly_opinion
+				clamp = { min = farmers_floor max = farmers_ceiling }
+			}
+		}
+		apply_farmers_dynamic_effect_DYNMOD = yes
+	}
 }
 
 # Effect: copy_internal_factions_from
