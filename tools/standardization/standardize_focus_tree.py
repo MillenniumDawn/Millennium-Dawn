@@ -30,6 +30,7 @@ from shared_utils import (
     convert_root_factor_to_base,
     extract_block,
     log_message,
+    reindent_by_brace_depth,
     strip_inline_comment,
 )
 
@@ -628,45 +629,6 @@ def format_focus_block(props, block_type="focus"):
     return [f"\t{block_type} = {{"] + collapse_blank_runs(join_groups(groups)) + ["\t}"]
 
 
-def reindent_by_brace_depth(block_lines, base_tabs=0):
-    """Re-indent a formatted block so each line's tab depth is derived purely
-    from brace nesting (base_tabs at the outermost level). Blank lines are kept
-    empty. Braces inside double-quoted strings are ignored. Used to render a
-    top-level shared_focus/joint_focus block at column 0 regardless of the
-    source's original indentation, keeping the standardizer idempotent."""
-    out = []
-    depth = 0
-    for line in block_lines:
-        stripped = line.strip()
-        if not stripped:
-            out.append("")
-            continue
-
-        # Count braces on the code portion only: a `#` comment may carry an
-        # unbalanced brace (e.g. `# TODO fix { this }`) that must not shift depth.
-        code = strip_inline_comment(stripped)
-        opens = closes = 0
-        in_str = False
-        prev = ""
-        for c in code:
-            if c == '"' and prev != "\\":
-                in_str = not in_str
-            elif not in_str:
-                if c == "{":
-                    opens += 1
-                elif c == "}":
-                    closes += 1
-            prev = c
-
-        this_depth = depth - 1 if code.startswith("}") else depth
-        indent = "\t" * (base_tabs + max(0, this_depth))
-        out.append(f"{indent}{stripped}")
-
-        depth = max(0, depth + opens - closes)
-
-    return out
-
-
 def _finish_block_with_trigger(
     lines, trigger_lines, other_lines, close_indent="\t", trigger_indent=None
 ):
@@ -965,10 +927,6 @@ def format_focus_tree_lines(lines, verbose: bool = False):
             if block_type in _FOCUS_BLOCK_TYPES:
                 props = extract_focus_properties(block_lines)
                 formatted_lines = format_focus_block(props, block_type)
-                if block_type in {"shared_focus", "joint_focus"}:
-                    # shared_focus/joint_focus are top-level definitions (no
-                    # focus_tree wrapper), so render them at column 0.
-                    formatted_lines = reindent_by_brace_depth(formatted_lines)
                 counts[block_type] += 1
                 log_message(
                     "DEBUG",
@@ -984,7 +942,10 @@ def format_focus_tree_lines(lines, verbose: bool = False):
                     f"Processed {block_type} block {counts[block_type]}",
                     verbose,
                 )
-            output_lines.extend(formatted_lines)
+            # shared_focus/joint_focus are top-level definitions (no
+            # focus_tree wrapper), so render them at column 0.
+            indent = "" if block_type in {"shared_focus", "joint_focus"} else "\t"
+            output_lines.extend(reindent_by_brace_depth(formatted_lines, indent))
 
         i = next_i
 
