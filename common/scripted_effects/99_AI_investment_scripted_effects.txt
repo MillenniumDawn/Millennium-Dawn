@@ -5,7 +5,7 @@ AI_record_score = {
 		max = 15
 		integer = yes
 	}
-	add_to_temp_variable = { AI_score = state_randomizer }
+	set_temp_variable = { AI_score = { value = AI_score add = state_randomizer add = state_score_adjustment } }
 
 	if = { limit = { check_variable = { AI_score > AI_best_score } }
 		set_temp_variable = { AI_best_score = AI_score }
@@ -509,25 +509,24 @@ AI_get_nuclear_reactor_score = {
 	}
 }
 
-AI_edge_case_calculations = {
-	if = { limit = { check_variable = { THIS.state_population_k < 100 } }
-		subtract_from_temp_variable = { AI_score = 20 }
+# State-wide score change applied to every building type by AI_record_score
+AI_get_state_score_adjustment = {
+	set_temp_variable = {
+		state_score_adjustment = {
+			value = 0
+			if = { limit = { value = THIS.state_population_k less_than = 100 } subtract = 20 }
+			if = { limit = { value = THIS.state_population_k less_than = 85 } subtract = 40 }
+			if = { limit = { value = THIS.state_population_k less_than = 60 } subtract = 80 }
+		}
 	}
-	if = { limit = { check_variable = { THIS.state_population_k < 85 } }
-		subtract_from_temp_variable = { AI_score = 40 }
-	}
-	if = { limit = { check_variable = { THIS.state_population_k < 60 } }
-		subtract_from_temp_variable = { AI_score = 80 }
-	}
-
 	if = { limit = { has_state_flag = currently_encouraged_investments }
-		add_to_temp_variable = { AI_score = 20 }
+		add_to_temp_variable = { state_score_adjustment = 20 }
 	}
 	if = { limit = { has_state_flag = HOL_autonomy_economic_zone }
-		add_to_temp_variable = { AI_score = 20 }
+		add_to_temp_variable = { state_score_adjustment = 20 }
 	}
 	if = { limit = { has_state_flag = ENG_found_invest_northern_ireland_active }
-		add_to_temp_variable = { AI_score = 20 }
+		add_to_temp_variable = { state_score_adjustment = 20 }
 	}
 }
 
@@ -648,11 +647,9 @@ AI_country_selection_calculation = {
 	# Invest in Enemy of my Enemy
 	if = {
 		limit = {
-			OR = {
-				any_enemy_country = {
+			any_enemy_country = {
+				OR = {
 					has_war_with = ROOT
-				}
-				any_enemy_country = {
 					has_opinion = { target = ROOT value < -50 }
 				}
 			}
