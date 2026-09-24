@@ -75,6 +75,7 @@ All files below live in `.claude/docs/`.
 | `formable-reference.md`          | Formable paths, AI ratchet, sentinel, cross-guards, traps    |
 | `hoi4-data-structures.md`        | Variables, arrays, loops, collections, formatted loc         |
 | `idea-reference.md`              | Idea structure: pictures, tiered naming, `name =` gotchas    |
+| `internal-factions-reference.md` | IF v3 registry: ids, affinity, law prefs, policies, bonuses  |
 | `known-false-positives.md`       | Intentional bug-lookalikes; review agents must skip them     |
 | `loading-screen-system.md`       | Loading rotation vs menu picker, `GFX_<x>_small`, generator  |
 | `localisation-rules.md`          | English `.yml` rules: BOM, file naming, key formatting       |

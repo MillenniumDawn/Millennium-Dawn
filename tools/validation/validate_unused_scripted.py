@@ -136,6 +136,8 @@ FALSE_POSITIVE_FILES = frozenset(
         # wants to check a faction mood level has a ready-made trigger, even if
         # many are not currently referenced anywhere in the mod.
         "00_internal_factions_trigger.txt",
+        # Internal factions v3 preset triggers (internal_faction_has_X, internal_faction_tier_X, internal_faction_influence_X), callers land in later #4260 steps
+        "01_internal_factions_v3_triggers.txt",
         # Dummy effect existing only to suppress false positives on dynamically
         # built flag/variable names; deliberately never called.
         "!_cwtools_dummy_effects.txt",

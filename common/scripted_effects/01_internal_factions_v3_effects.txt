@@ -1,0 +1,795 @@
+# Internal factions v3 data layer, see .claude/docs/internal-factions-reference.md
+@internal_faction_influence_drift_rate = 0.10
+@internal_faction_displace_margin = 5
+@internal_faction_held_idea_influence = 20
+@internal_faction_k_building_share = 100
+@internal_faction_k_heavy_share = 300
+@internal_faction_k_debt = 10
+@internal_faction_k_unions = 15
+@internal_faction_k_party_pop = 30
+@internal_faction_k_religious_pop = 20
+
+internal_faction_init_arrays = {
+	if = {
+		limit = { check_variable = { internal_faction_inf_target^num < 24 } }
+		resize_array = { array = internal_faction_opinion value = 50 size = 24 }
+		resize_array = { array = internal_faction_influence value = 0 size = 24 }
+		resize_array = { array = internal_faction_target value = 50 size = 24 }
+		resize_array = { array = internal_faction_inf_target value = 0 size = 24 }
+		resize_array = { array = internal_faction_policy_cooldown value = 0 size = 24 }
+	}
+}
+
+update_internal_faction_dirty_variable = {
+	if = { limit = { is_ai = no }
+		if = {
+			limit = { check_variable = { global.internal_faction_ui_dirty < 100000 } }
+			add_to_variable = { global.internal_faction_ui_dirty = 1 }
+		}
+		else = {
+			set_variable = { global.internal_faction_ui_dirty = 1 }
+		}
+	}
+}
+
+internal_faction_toggle_window = {
+	if = {
+		limit = { has_country_flag = internal_faction_window_open }
+		clr_country_flag = internal_faction_window_open
+	}
+	else = {
+		set_country_flag = internal_faction_window_open
+	}
+	update_internal_faction_dirty_variable = yes
+}
+
+# Parameters:
+# - internal_faction_clear_id: faction leaving internal_faction_active; drops its policies and cooldown
+internal_faction_clear_faction_state = {
+	set_temp_variable = { internal_faction_cp = internal_faction_clear_id }
+	multiply_temp_variable = { internal_faction_cp = 4 }
+	for_loop_effect = {
+		start = 0
+		end = 4
+		if = {
+			limit = { is_in_array = { array = internal_faction_policies value = internal_faction_cp } }
+			remove_from_array = { array = internal_faction_policies value = internal_faction_cp }
+		}
+		subtract_from_temp_variable = { internal_faction_cp = 1 }
+	}
+	set_variable = { internal_faction_policy_cooldown^internal_faction_clear_id = 0 }
+}
+
+# Parameters:
+# - internal_faction_id: faction id 1-23
+# - temp_opinion: opinion delta (optional, set by the caller of the change_<f>_opinion wrapper)
+internal_faction_change_opinion = {
+	if = {
+		limit = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		add_to_variable = { internal_faction_opinion^internal_faction_id = temp_opinion }
+		clamp_variable = { var = internal_faction_opinion^internal_faction_id min = 0 max = 100 }
+		internal_faction_apply_faction_modifiers = yes
+		update_internal_faction_dirty_variable = yes
+	}
+}
+
+# Parameters:
+# - internal_faction_id: faction id 1-23, active or not
+# - temp_influence: influence delta
+internal_faction_change_influence = {
+	add_to_variable = { internal_faction_influence^internal_faction_id = temp_influence }
+	clamp_variable = { var = internal_faction_influence^internal_faction_id min = 0 max = 100 }
+	if = {
+		limit = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		internal_faction_apply_faction_modifiers = yes
+	}
+	update_internal_faction_dirty_variable = yes
+}
+
+# Sets internal_faction_low to the lowest-influence active faction
+internal_faction_find_weakest = {
+	set_temp_variable = { internal_faction_low = internal_faction_active^0 }
+	for_each_loop = {
+		array = internal_faction_active
+		value = internal_faction_v
+		if = {
+			limit = { check_variable = { internal_faction_influence^internal_faction_v < internal_faction_influence^internal_faction_low } }
+			set_temp_variable = { internal_faction_low = internal_faction_v }
+		}
+	}
+}
+
+# Sets internal_faction_high to the highest-influence available inactive faction, 0 when none
+internal_faction_find_challenger = {
+	set_temp_variable = { internal_faction_high = 0 }
+	for_each_loop = {
+		array = internal_faction_pool
+		value = internal_faction_v
+		if = {
+			limit = {
+				NOT = { is_in_array = { array = internal_faction_active value = internal_faction_v } }
+				OR = {
+					check_variable = { internal_faction_high = 0 }
+					check_variable = { internal_faction_influence^internal_faction_v > internal_faction_influence^internal_faction_high }
+				}
+			}
+			set_temp_variable = { internal_faction_high = internal_faction_v }
+		}
+	}
+}
+
+# Activates faction internal_faction_id; when the slots are full it takes the slot of the lowest-influence active faction
+internal_faction_add_faction = {
+	if = {
+		limit = { NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } } }
+		if = {
+			limit = { check_variable = { var = internal_faction_active^num value = global.internal_faction_active_count compare = greater_than_or_equals } }
+			internal_faction_find_weakest = yes
+			set_temp_variable = { internal_faction_keep_id = internal_faction_id }
+			set_temp_variable = { internal_faction_id = internal_faction_low }
+			internal_faction_remove_faction = yes
+			set_temp_variable = { internal_faction_id = internal_faction_keep_id }
+		}
+		add_to_array = { internal_faction_active = internal_faction_id }
+		set_temp_variable = { internal_faction_dm_id = internal_faction_id }
+		internal_faction_attach_dynmod = yes
+		internal_faction_apply_faction_modifiers = yes
+		update_internal_faction_dirty_variable = yes
+	}
+}
+
+# Parameters:
+# - internal_faction_id: faction id 1-23
+internal_faction_remove_faction = {
+	if = {
+		limit = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		remove_from_array = { array = internal_faction_active value = internal_faction_id }
+		set_temp_variable = { internal_faction_dm_id = internal_faction_id }
+		internal_faction_detach_dynmod = yes
+		set_temp_variable = { internal_faction_clear_id = internal_faction_id }
+		internal_faction_clear_faction_state = yes
+		update_internal_faction_dirty_variable = yes
+	}
+}
+
+# Fills internal_faction_pool with every faction id passing internal_faction_is_available
+internal_faction_build_pool = {
+	clear_array = internal_faction_pool
+	for_loop_effect = {
+		start = 1
+		end = 24
+		value = internal_faction_id
+		if = {
+			limit = { internal_faction_is_available = yes }
+			add_to_array = { internal_faction_pool = internal_faction_id }
+		}
+	}
+}
+
+# Player-only display array: available factions that are not active, in id order
+internal_faction_rebuild_inactive = {
+	if = {
+		limit = { is_ai = no }
+		clear_array = internal_faction_inactive
+		for_each_loop = {
+			array = internal_faction_pool
+			value = internal_faction_v
+			if = {
+				limit = { NOT = { is_in_array = { array = internal_faction_active value = internal_faction_v } } }
+				add_to_array = { internal_faction_inactive = internal_faction_v }
+			}
+		}
+	}
+}
+
+# Keeps internal_faction_active at global.internal_faction_active_count ids: drops unavailable factions, fills from the highest-influence available ones, then lets one challenger at or above global.internal_faction_active_threshold displace the weakest active faction when it leads by @internal_faction_displace_margin
+# Expects internal_faction_pool built by internal_faction_build_pool; rebuilds it after every change since the religious factions exclude each other through internal_faction_is_available
+internal_faction_refresh_active = {
+	clear_temp_array = internal_faction_gone
+	for_each_loop = {
+		array = internal_faction_active
+		value = internal_faction_v
+		if = {
+			limit = { NOT = { is_in_array = { array = internal_faction_pool value = internal_faction_v } } }
+			add_to_temp_array = { internal_faction_gone = internal_faction_v }
+		}
+	}
+	if = {
+		limit = { check_variable = { internal_faction_gone^num > 0 } }
+		for_each_loop = {
+			array = internal_faction_gone
+			value = internal_faction_id
+			internal_faction_remove_faction = yes
+		}
+		internal_faction_build_pool = yes
+	}
+	internal_faction_find_challenger = yes
+	while_loop_effect = {
+		limit = {
+			check_variable = { internal_faction_active^num < global.internal_faction_active_count }
+			check_variable = { internal_faction_high > 0 }
+		}
+		set_temp_variable = { internal_faction_id = internal_faction_high }
+		internal_faction_add_faction = yes
+		internal_faction_build_pool = yes
+		internal_faction_find_challenger = yes
+	}
+	if = {
+		limit = { check_variable = { internal_faction_active^num > 0 } }
+		internal_faction_find_weakest = yes
+		set_temp_variable = { internal_faction_x = internal_faction_influence^internal_faction_low }
+		add_to_temp_variable = { internal_faction_x = @internal_faction_displace_margin }
+		if = {
+			limit = {
+				check_variable = { internal_faction_high > 0 }
+				check_variable = { var = internal_faction_influence^internal_faction_high value = global.internal_faction_active_threshold compare = greater_than_or_equals }
+				check_variable = { var = internal_faction_influence^internal_faction_high value = internal_faction_x compare = greater_than_or_equals }
+			}
+			log = "[GetDateText]: [Root.GetName]: faction [?internal_faction_high] displaced faction [?internal_faction_low]"
+			set_temp_variable = { internal_faction_id = internal_faction_high }
+			internal_faction_add_faction = yes
+			internal_faction_build_pool = yes
+		}
+	}
+	internal_faction_rebuild_inactive = yes
+}
+
+# Parameters:
+# - internal_faction_id: faction id 1-23 whose idea the country holds
+# - internal_faction_seed_opinion: starting opinion, the old <f>_opinion
+internal_faction_seed_held_faction = {
+	set_variable = { internal_faction_opinion^internal_faction_id = internal_faction_seed_opinion }
+	add_to_variable = { internal_faction_influence^internal_faction_id = @internal_faction_held_idea_influence }
+	internal_faction_add_faction = yes
+}
+
+# Parameters:
+# - internal_faction_id: faction id 1-23 whose idea was just added
+internal_faction_idea_added = {
+	if = {
+		limit = {
+			check_variable = { internal_faction_opinion^num > 23 }
+			NOT = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		}
+		if = {
+			limit = { check_variable = { var = internal_faction_active^num value = global.internal_faction_active_count compare = greater_than_or_equals } }
+			internal_faction_find_weakest = yes
+			set_temp_variable = { internal_faction_x = internal_faction_influence^internal_faction_low }
+			add_to_temp_variable = { internal_faction_x = @internal_faction_displace_margin }
+			if = {
+				limit = { check_variable = { internal_faction_influence^internal_faction_id < internal_faction_x } }
+				set_variable = { internal_faction_influence^internal_faction_id = internal_faction_x }
+				clamp_variable = { var = internal_faction_influence^internal_faction_id min = 0 max = 100 }
+			}
+		}
+		internal_faction_add_faction = yes
+	}
+}
+
+# Parameters:
+# - internal_faction_id: faction id 1-23 whose idea was just removed
+internal_faction_idea_removed = {
+	if = {
+		limit = { is_in_array = { array = internal_faction_active value = internal_faction_id } }
+		subtract_from_variable = { internal_faction_influence^internal_faction_id = @internal_faction_held_idea_influence }
+		clamp_variable = { var = internal_faction_influence^internal_faction_id min = 0 max = 100 }
+		internal_faction_remove_faction = yes
+	}
+}
+
+# Runs after setup_init_factions: every faction starts at its base influence (jittered under rule_randomize_internal_factions), held ideas lead, then the activation pass fills to global.internal_faction_active_count
+internal_faction_seed_factions = {
+	internal_faction_init_arrays = yes
+	for_loop_effect = {
+		start = 1
+		end = 24
+		value = internal_faction_id
+		set_variable = { internal_faction_influence^internal_faction_id = global.internal_faction_base_influence^internal_faction_id }
+		if = {
+			limit = { has_game_rule = { rule = rule_randomize_internal_factions option = yes } }
+			set_temp_variable_to_random = { var = internal_faction_r min = -10 max = 10 integer = yes }
+			add_to_variable = { internal_faction_influence^internal_faction_id = internal_faction_r }
+		}
+	}
+	if = {
+		limit = { has_idea = small_medium_business_owners }
+		set_temp_variable = { internal_faction_id = 1 }
+		set_temp_variable = { internal_faction_seed_opinion = small_medium_business_owners_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = international_bankers }
+		set_temp_variable = { internal_faction_id = 2 }
+		set_temp_variable = { internal_faction_seed_opinion = international_bankers_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = fossil_fuel_industry }
+		set_temp_variable = { internal_faction_id = 3 }
+		set_temp_variable = { internal_faction_seed_opinion = fossil_fuel_industry_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = industrial_conglomerates }
+		set_temp_variable = { internal_faction_id = 4 }
+		set_temp_variable = { internal_faction_seed_opinion = industrial_conglomerates_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = oligarchs }
+		set_temp_variable = { internal_faction_id = 5 }
+		set_temp_variable = { internal_faction_seed_opinion = oligarchs_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = maritime_industry }
+		set_temp_variable = { internal_faction_id = 6 }
+		set_temp_variable = { internal_faction_seed_opinion = maritime_industry_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_military }
+		set_temp_variable = { internal_faction_id = 7 }
+		set_temp_variable = { internal_faction_seed_opinion = the_military_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = defense_industry }
+		set_temp_variable = { internal_faction_id = 8 }
+		set_temp_variable = { internal_faction_seed_opinion = defense_industry_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = intelligence_community }
+		set_temp_variable = { internal_faction_id = 9 }
+		set_temp_variable = { internal_faction_seed_opinion = intelligence_community_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = labour_unions }
+		set_temp_variable = { internal_faction_id = 10 }
+		set_temp_variable = { internal_faction_seed_opinion = labour_unions_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = landowners }
+		set_temp_variable = { internal_faction_id = 11 }
+		set_temp_variable = { internal_faction_seed_opinion = landowners_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = farmers }
+		set_temp_variable = { internal_faction_id = 12 }
+		set_temp_variable = { internal_faction_seed_opinion = farmers_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = communist_cadres }
+		set_temp_variable = { internal_faction_id = 13 }
+		set_temp_variable = { internal_faction_seed_opinion = communist_cadres_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_priesthood }
+		set_temp_variable = { internal_faction_id = 14 }
+		set_temp_variable = { internal_faction_seed_opinion = the_priesthood_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_ulema }
+		set_temp_variable = { internal_faction_id = 15 }
+		set_temp_variable = { internal_faction_seed_opinion = the_ulema_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_clergy }
+		set_temp_variable = { internal_faction_id = 16 }
+		set_temp_variable = { internal_faction_seed_opinion = the_clergy_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = wahabi_ulema }
+		set_temp_variable = { internal_faction_id = 17 }
+		set_temp_variable = { internal_faction_seed_opinion = wahabi_ulema_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = the_donju }
+		set_temp_variable = { internal_faction_id = 18 }
+		set_temp_variable = { internal_faction_seed_opinion = the_donju_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = saudi_royal_family }
+		set_temp_variable = { internal_faction_id = 19 }
+		set_temp_variable = { internal_faction_seed_opinion = saudi_royal_family_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = iranian_quds_force }
+		set_temp_variable = { internal_faction_id = 20 }
+		set_temp_variable = { internal_faction_seed_opinion = iranian_quds_force_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = foreign_jihadis }
+		set_temp_variable = { internal_faction_id = 21 }
+		set_temp_variable = { internal_faction_seed_opinion = foreign_jihadis_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = wall_street }
+		set_temp_variable = { internal_faction_id = 22 }
+		set_temp_variable = { internal_faction_seed_opinion = wall_street_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	if = {
+		limit = { has_idea = chaebols }
+		set_temp_variable = { internal_faction_id = 23 }
+		set_temp_variable = { internal_faction_seed_opinion = chaebols_opinion }
+		internal_faction_seed_held_faction = yes
+	}
+	internal_faction_build_pool = yes
+	internal_faction_refresh_active = yes
+}
+
+# Parameters:
+# - nation_to_copy_from: country whose faction arrays are copied; factions backing the new ruling party mirror opinion around 50
+internal_faction_copy_factions = {
+	internal_faction_init_arrays = yes
+	for_loop_effect = {
+		start = 1
+		end = 24
+		value = internal_faction_v
+		set_variable = { internal_faction_opinion^internal_faction_v = var:nation_to_copy_from.internal_faction_opinion^internal_faction_v }
+		set_variable = { internal_faction_influence^internal_faction_v = var:nation_to_copy_from.internal_faction_influence^internal_faction_v }
+	}
+	clear_array = internal_faction_active
+	for_each_loop = {
+		array = var:nation_to_copy_from.internal_faction_active
+		value = internal_faction_v
+		add_to_array = { internal_faction_active = internal_faction_v }
+		set_temp_variable = { internal_faction_dm_id = internal_faction_v }
+		internal_faction_attach_dynmod = yes
+		set_temp_variable = { internal_faction_aff = internal_faction_v }
+		multiply_temp_variable = { internal_faction_aff = 13 }
+		add_to_temp_variable = { internal_faction_aff = global.ip_party_policy_group^ruling_party }
+		if = {
+			limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff = 1 } }
+			set_variable = { internal_faction_opinion^internal_faction_v = 100 }
+			subtract_from_variable = { internal_faction_opinion^internal_faction_v = var:nation_to_copy_from.internal_faction_opinion^internal_faction_v }
+		}
+	}
+	internal_faction_build_pool = yes
+	internal_faction_refresh_active = yes
+	internal_faction_apply_modifiers = yes
+	update_internal_faction_dirty_variable = yes
+}
+
+# Parameters (set by internal_faction_monthly_tick):
+# - internal_faction_v: faction id
+# - internal_faction_group: policy group of the ruling party
+# - internal_faction_mil_term, internal_faction_pol_term, internal_faction_edu_term, internal_faction_soc_term, internal_faction_corp_term, internal_faction_pop_term: hoisted law terms
+# - internal_faction_priv_count, internal_faction_crackdown: temp arrays built by internal_faction_monthly_tick from internal_faction_policies
+internal_faction_compute_opinion_target = {
+	set_temp_variable = { internal_faction_t = 50 }
+	if = {
+		limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff = 1 } }
+		add_to_temp_variable = { internal_faction_t = 15 }
+	}
+	else_if = {
+		limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff = -1 } }
+		subtract_from_temp_variable = { internal_faction_t = 10 }
+	}
+	if = {
+		limit = { check_variable = { gov_coalition_array^num > 0 } }
+		set_temp_variable = { internal_faction_col = 0 }
+		for_each_loop = {
+			array = gov_coalition_array
+			value = internal_faction_party
+			set_temp_variable = { internal_faction_aff_col = internal_faction_v }
+			multiply_temp_variable = { internal_faction_aff_col = 13 }
+			add_to_temp_variable = { internal_faction_aff_col = global.ip_party_policy_group^internal_faction_party }
+			if = {
+				limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff_col = 1 } }
+				add_to_temp_variable = { internal_faction_col = 15 }
+			}
+			else_if = {
+				limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff_col = -1 } }
+				subtract_from_temp_variable = { internal_faction_col = 10 }
+			}
+		}
+		divide_temp_variable = { internal_faction_col = gov_coalition_array^num }
+		multiply_temp_variable = { internal_faction_col = 0.5 }
+		add_to_temp_variable = { internal_faction_t = internal_faction_col }
+	}
+	set_temp_variable = { internal_faction_x = internal_faction_priv_count^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = 10 }
+	clamp_temp_variable = { var = internal_faction_x min = 0 max = 20 }
+	add_to_temp_variable = { internal_faction_t = internal_faction_x }
+	if = {
+		limit = { check_variable = { internal_faction_crackdown^internal_faction_v = 1 } }
+		subtract_from_temp_variable = { internal_faction_t = 15 }
+	}
+	set_temp_variable = { internal_faction_x = 0 }
+	for_each_loop = {
+		array = internal_faction_active
+		value = internal_faction_j
+		if = {
+			limit = {
+				NOT = { check_variable = { internal_faction_j = internal_faction_v } }
+				check_variable = { internal_faction_priv_count^internal_faction_j > 0 }
+			}
+			set_temp_variable = { internal_faction_r = internal_faction_v }
+			multiply_temp_variable = { internal_faction_r = 24 }
+			add_to_temp_variable = { internal_faction_r = internal_faction_j }
+			if = {
+				limit = { check_variable = { global.internal_faction_rival^internal_faction_r = 1 } }
+				set_temp_variable = { internal_faction_y = internal_faction_priv_count^internal_faction_j }
+				multiply_temp_variable = { internal_faction_y = 5 }
+				subtract_from_temp_variable = { internal_faction_x = internal_faction_y }
+			}
+		}
+	}
+	clamp_temp_variable = { var = internal_faction_x min = -10 max = 0 }
+	add_to_temp_variable = { internal_faction_t = internal_faction_x }
+	set_temp_variable = { internal_faction_law = global.internal_faction_pref_military_law^internal_faction_v }
+	multiply_temp_variable = { internal_faction_law = internal_faction_mil_term }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_police_law^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_pol_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_education_law^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_edu_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_social_law^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_soc_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_corporate_tax^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_corp_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	set_temp_variable = { internal_faction_x = global.internal_faction_pref_population_tax^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = internal_faction_pop_term }
+	add_to_temp_variable = { internal_faction_law = internal_faction_x }
+	clamp_temp_variable = { var = internal_faction_law min = -10 max = 10 }
+	add_to_temp_variable = { internal_faction_t = internal_faction_law }
+	clamp_temp_variable = { var = internal_faction_t min = 5 max = 95 }
+	set_variable = { internal_faction_target^internal_faction_v = internal_faction_t }
+}
+
+# Sector driver of faction internal_faction_v, 0-30, see the reference doc; K values are provisional until step 9
+internal_faction_compute_sector_score = {
+	if = {
+		limit = {
+			OR = {
+				check_variable = { internal_faction_v = 1 }
+				check_variable = { internal_faction_v = 4 }
+				check_variable = { internal_faction_v = 18 }
+				check_variable = { internal_faction_v = 23 }
+			}
+		}
+		set_temp_variable = { internal_faction_sector = civil_fac_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_building_share }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { internal_faction_v = 2 }
+				check_variable = { internal_faction_v = 22 }
+			}
+		}
+		set_temp_variable = { internal_faction_sector = office_fac_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_building_share }
+		set_temp_variable = { internal_faction_x = debt_ratio }
+		multiply_temp_variable = { internal_faction_x = @internal_faction_k_debt }
+		add_to_temp_variable = { internal_faction_sector = internal_faction_x }
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 3 } }
+		set_temp_variable = { internal_faction_sector = internal_faction_oil_share }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_heavy_share }
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 5 } }
+		set_temp_variable = { internal_faction_sector = civil_fac_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_building_share }
+		multiply_temp_variable = { internal_faction_sector = 0.6 }
+		if = {
+			limit = {
+				OR = {
+					has_idea = corruption_level_04
+					has_idea = corruption_level_05
+					has_idea = corruption_level_06
+					has_idea = corruption_level_07
+					has_idea = corruption_level_08
+					has_idea = corruption_level_09
+					has_idea = corruption_level_10
+				}
+			}
+			add_to_temp_variable = { internal_faction_sector = 10 }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 6 } }
+		set_temp_variable = { internal_faction_sector = naval_factory_total_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_heavy_share }
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 7 } }
+		set_temp_variable = { internal_faction_sector = military_law }
+		multiply_temp_variable = { internal_faction_sector = 2 }
+		add_to_temp_variable = { internal_faction_sector = internal_faction_war }
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 8 } }
+		set_temp_variable = { internal_faction_sector = military_factory_total_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_heavy_share }
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 9 } }
+		set_temp_variable = { internal_faction_sector = police_law }
+		multiply_temp_variable = { internal_faction_sector = 5 }
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 10 } }
+		set_temp_variable = { internal_faction_sector = civil_fac_percent }
+		add_to_temp_variable = { internal_faction_sector = military_factory_total_percent }
+		multiply_temp_variable = { internal_faction_sector = social_law }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_unions }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				check_variable = { internal_faction_v = 11 }
+				check_variable = { internal_faction_v = 12 }
+			}
+		}
+		set_temp_variable = { internal_faction_sector = agriculture_district_fac_percent }
+		add_to_temp_variable = { internal_faction_sector = agriculture_percent }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_building_share }
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 13 } }
+		set_temp_variable = { internal_faction_sector = party_pop_array^4 }
+		add_to_temp_variable = { internal_faction_sector = party_pop_array^19 }
+		multiply_temp_variable = { internal_faction_sector = @internal_faction_k_party_pop }
+	}
+	else_if = {
+		limit = {
+			check_variable = { internal_faction_v > 13 }
+			check_variable = { internal_faction_v < 18 }
+		}
+		set_temp_variable = { internal_faction_sector = 5 }
+		subtract_from_temp_variable = { internal_faction_sector = education_law }
+		multiply_temp_variable = { internal_faction_sector = 3 }
+		add_to_temp_variable = { internal_faction_sector = 10 }
+		set_temp_variable = { internal_faction_x = party_pop_array^8 }
+		add_to_temp_variable = { internal_faction_x = party_pop_array^9 }
+		add_to_temp_variable = { internal_faction_x = party_pop_array^11 }
+		add_to_temp_variable = { internal_faction_x = party_pop_array^12 }
+		multiply_temp_variable = { internal_faction_x = @internal_faction_k_religious_pop }
+		add_to_temp_variable = { internal_faction_sector = internal_faction_x }
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 19 } }
+		set_temp_variable = { internal_faction_sector = 20 }
+	}
+	else_if = {
+		limit = { check_variable = { internal_faction_v = 20 } }
+		set_temp_variable = { internal_faction_sector = military_law }
+		multiply_temp_variable = { internal_faction_sector = 2 }
+	}
+	else = {
+		set_temp_variable = { internal_faction_sector = internal_faction_war }
+	}
+	clamp_temp_variable = { var = internal_faction_sector min = 0 max = 30 }
+}
+
+# Parameters (set by internal_faction_monthly_tick):
+# - internal_faction_v: faction id
+# - internal_faction_aff: internal_faction_v * 13 + ruling policy group
+# - internal_faction_oil_share, internal_faction_war: hoisted sector inputs
+internal_faction_compute_influence_target = {
+	set_temp_variable = { internal_faction_t = global.internal_faction_base_influence^internal_faction_v }
+	internal_faction_compute_sector_score = yes
+	add_to_temp_variable = { internal_faction_t = internal_faction_sector }
+	set_temp_variable = { internal_faction_x = internal_faction_priv_count^internal_faction_v }
+	multiply_temp_variable = { internal_faction_x = 10 }
+	clamp_temp_variable = { var = internal_faction_x min = 0 max = 20 }
+	add_to_temp_variable = { internal_faction_t = internal_faction_x }
+	if = {
+		limit = { check_variable = { internal_faction_crackdown^internal_faction_v = 1 } }
+		subtract_from_temp_variable = { internal_faction_t = 20 }
+	}
+	if = {
+		limit = { check_variable = { global.internal_faction_affinity^internal_faction_aff = 1 } }
+		add_to_temp_variable = { internal_faction_t = 10 }
+	}
+	clamp_temp_variable = { var = internal_faction_t min = 5 max = 100 }
+	set_variable = { internal_faction_inf_target^internal_faction_v = internal_faction_t }
+}
+
+# Monthly: drift influence toward its target for every available faction and opinion (global.internal_faction_drift_rate) for the active ones, tick cooldowns, refresh the active set, run the AI routine
+internal_faction_monthly_tick = {
+	if = {
+		limit = { check_variable = { internal_faction_active^num > 0 } }
+		internal_faction_init_arrays = yes
+		set_temp_variable = { internal_faction_group = global.ip_party_policy_group^ruling_party }
+		set_temp_variable = { internal_faction_mil_term = military_law }
+		subtract_from_temp_variable = { internal_faction_mil_term = 5 }
+		set_temp_variable = { internal_faction_pol_term = police_law }
+		subtract_from_temp_variable = { internal_faction_pol_term = 3 }
+		multiply_temp_variable = { internal_faction_pol_term = 2 }
+		set_temp_variable = { internal_faction_edu_term = education_law }
+		subtract_from_temp_variable = { internal_faction_edu_term = 3 }
+		multiply_temp_variable = { internal_faction_edu_term = 2 }
+		set_temp_variable = { internal_faction_soc_term = social_law }
+		subtract_from_temp_variable = { internal_faction_soc_term = 3 }
+		multiply_temp_variable = { internal_faction_soc_term = 2 }
+		set_temp_variable = { internal_faction_corp_term = corporate_tax_rate }
+		subtract_from_temp_variable = { internal_faction_corp_term = 25 }
+		multiply_temp_variable = { internal_faction_corp_term = 0.2 }
+		set_temp_variable = { internal_faction_pop_term = population_tax_rate }
+		subtract_from_temp_variable = { internal_faction_pop_term = 25 }
+		multiply_temp_variable = { internal_faction_pop_term = 0.2 }
+		set_temp_variable = { internal_faction_oil_share = 0 }
+		if = {
+			limit = { check_variable = { gdp_total > 0 } }
+			set_temp_variable = { internal_faction_oil_share = oil_exports }
+			divide_temp_variable = { internal_faction_oil_share = gdp_total }
+		}
+		set_temp_variable = { internal_faction_war = 0 }
+		if = {
+			limit = { has_war = yes }
+			set_temp_variable = { internal_faction_war = 10 }
+		}
+		resize_temp_array = { array = internal_faction_priv_count size = 24 }
+		resize_temp_array = { array = internal_faction_crackdown size = 24 }
+		for_each_loop = {
+			array = internal_faction_policies
+			value = internal_faction_p
+			set_temp_variable = { internal_faction_pf = global.internal_faction_policy_faction^internal_faction_p }
+			if = {
+				limit = { check_variable = { global.internal_faction_policy_kind^internal_faction_p = 1 } }
+				add_to_temp_variable = { internal_faction_priv_count^internal_faction_pf = 1 }
+			}
+			else = {
+				set_temp_variable = { internal_faction_crackdown^internal_faction_pf = 1 }
+			}
+		}
+		internal_faction_build_pool = yes
+		for_each_loop = {
+			array = internal_faction_pool
+			value = internal_faction_v
+			set_temp_variable = { internal_faction_aff = internal_faction_v }
+			multiply_temp_variable = { internal_faction_aff = 13 }
+			add_to_temp_variable = { internal_faction_aff = internal_faction_group }
+			internal_faction_compute_influence_target = yes
+			set_temp_variable = { internal_faction_d = internal_faction_inf_target^internal_faction_v }
+			subtract_from_temp_variable = { internal_faction_d = internal_faction_influence^internal_faction_v }
+			multiply_temp_variable = { internal_faction_d = @internal_faction_influence_drift_rate }
+			add_to_variable = { internal_faction_influence^internal_faction_v = internal_faction_d }
+			clamp_variable = { var = internal_faction_influence^internal_faction_v min = 0 max = 100 }
+			if = {
+				limit = { is_in_array = { array = internal_faction_active value = internal_faction_v } }
+				internal_faction_compute_opinion_target = yes
+				set_temp_variable = { internal_faction_d = internal_faction_target^internal_faction_v }
+				subtract_from_temp_variable = { internal_faction_d = internal_faction_opinion^internal_faction_v }
+				multiply_temp_variable = { internal_faction_d = global.internal_faction_drift_rate }
+				add_to_variable = { internal_faction_opinion^internal_faction_v = internal_faction_d }
+				clamp_variable = { var = internal_faction_opinion^internal_faction_v min = 0 max = 100 }
+				if = {
+					limit = { check_variable = { internal_faction_policy_cooldown^internal_faction_v > 0 } }
+					subtract_from_variable = { internal_faction_policy_cooldown^internal_faction_v = 1 }
+				}
+			}
+		}
+		internal_faction_refresh_active = yes
+		internal_faction_party_push = yes
+		internal_faction_apply_modifiers = yes
+		if = {
+			limit = { is_ai = yes }
+			internal_faction_ai_monthly = yes
+		}
+		update_internal_faction_dirty_variable = yes
+	}
+}
