@@ -5,6 +5,7 @@ import rehypeSanitize from "rehype-sanitize";
 import { SITE_BASE_PATH } from "../../config/site";
 import { markdownSanitizeSchema } from "./markdown-sanitize-schema";
 import { remarkCountryDirectives } from "./remark-country-directives";
+import { remarkDevTeamRoles } from "./remark-dev-team-roles";
 import { remarkRootRelativeToBase } from "./remark-root-relative";
 import { rehypeImageDimensions } from "./rehype-image-dimensions";
 import { rehypePreWrapper } from "./rehype-pre-wrapper";
@@ -13,7 +14,12 @@ import { rehypeTableWrapper } from "./rehype-table-wrapper";
 import { rehypeTailwindContent } from "./rehype-tailwind-content";
 
 export const markdownProcessor = unified({
-  remarkPlugins: [remarkDirective, remarkCountryDirectives, [remarkRootRelativeToBase, SITE_BASE_PATH]],
+  remarkPlugins: [
+    remarkDirective,
+    remarkCountryDirectives,
+    remarkDevTeamRoles,
+    [remarkRootRelativeToBase, SITE_BASE_PATH],
+  ],
   rehypePlugins: [
     rehypeImageDimensions,
     [

@@ -521,6 +521,46 @@ def test_shared_and_joint_focuses_are_reindented_at_top_level(tmp_path):
         assert lines[-1] == "}"
 
 
+def test_focus_nested_lines_are_reindented_by_brace_depth(tmp_path):
+    # Issue #4650: lines inside a nested block kept the source's wrong depth.
+    source = tmp_path / "focus.txt"
+    output = tmp_path / "focus-output.txt"
+    source.write_text(
+        """focus_tree = {
+\tfocus = {
+\t\tid = TST_x
+\t\tcompletion_reward = {
+\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_x"
+\t\t\t34 = {
+\t\t\t\tadd_building_construction = {
+\t\t\t\ttype = infrastructure
+\t\t\t\tlevel = 1
+\t\t\t\t}
+\t\t\t}
+\t\t}
+\t\t\tcomplete_tooltip = {
+\t\t\tadd_political_power = 1
+\t\t\tadd_stability = 0.01
+\t\t\t}
+\t}
+}
+""",
+        encoding="utf-8",
+    )
+
+    assert standardize_focus_tree(str(source), str(output)) is True
+
+    lines = output.read_text(encoding="utf-8").splitlines()
+    assert "\t\t\t\tadd_building_construction = {" in lines
+    assert "\t\t\t\t\ttype = infrastructure" in lines
+    assert "\t\t\t\t\tlevel = 1" in lines
+    assert "\t\tcomplete_tooltip = {" in lines
+    assert "\t\t\tadd_stability = 0.01" in lines
+
+    assert standardize_focus_tree(str(output), str(output)) is True
+    assert output.read_text(encoding="utf-8").splitlines() == lines
+
+
 _INVALID_MODIFIER_TREE = """focus_tree = {
 \tfocus = {
 \t\tid = TST_invalid
