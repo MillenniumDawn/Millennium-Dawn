@@ -212,3 +212,99 @@ def test_war_in_foreign_event_scope_does_not_require_hint(tmp_path):
         "\t}\n}\n"
     )
     assert _run(tmp_path, body) == []
+
+
+def test_foreign_from_event_war_does_not_require_hint(tmp_path):
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n"
+        "\toption = { declare_war_on = { target = ROOT } }\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n\tdecision = {\n"
+        "\t\tcomplete_effect = { FROM = { country_event = proxy.1 } }\n"
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+
+
+def test_decision_allowed_tag_identifies_war_owner(tmp_path):
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n"
+        "\toption = { SIL = { declare_war_on = { target = POL } } }\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n\tSIL_sov_decision = {\n"
+        "\t\tallowed = { original_tag = SOV }\n"
+        "\t\tremove_effect = { country_event = proxy.1 }\n"
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+    second = tmp_path / "owner"
+    second_events = second / "events"
+    second_events.mkdir(parents=True)
+    (second_events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n"
+        "\toption = { SOV = { declare_war_on = { target = POL } } }\n}\n",
+        encoding="utf-8",
+    )
+    assert len(_run(second, body)) == 1
+
+
+def test_owner_only_branch_does_not_count_foreign_else_war(tmp_path):
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n\toption = {\n"
+        "\t\tif = { limit = { original_tag = CHI } add_stability = -0.1 }\n"
+        "\t\telse = { declare_war_on = { target = CHI } }\n"
+        "\t}\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n\tCHI_decision = {\n"
+        "\t\tremove_effect = { country_event = proxy.1 }\n"
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+    second = tmp_path / "owner"
+    second_events = second / "events"
+    second_events.mkdir(parents=True)
+    (second_events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n\toption = {\n"
+        "\t\tif = { limit = { original_tag = CHI } "
+        "declare_war_on = { target = NKO } }\n"
+        "\t\telse = { add_stability = -0.1 }\n"
+        "\t}\n}\n",
+        encoding="utf-8",
+    )
+    assert len(_run(second, body)) == 1
+
+
+def test_shared_decision_routes_tag_specific_war_to_hintable_decision(tmp_path):
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n\toption = {\n"
+        "\t\tif = { limit = { tag = SYR } "
+        "declare_war_on = { target = FSA } }\n"
+        "\t}\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n\tshared_mission = {\n"
+        "\t\tallowed = { NOT = { original_tag = SYR } }\n"
+        "\t\ttimeout_effect = { country_event = proxy.1 }\n"
+        "\t}\n\tSYR_mission = {\n"
+        "\t\tallowed = { original_tag = SYR }\n"
+        "\t\twar_with_on_timeout = FSA\n"
+        "\t\ttimeout_effect = { country_event = proxy.1 }\n"
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+    assert len(_run(tmp_path, body.replace("war_with_on_timeout = FSA\n", ""))) == 1

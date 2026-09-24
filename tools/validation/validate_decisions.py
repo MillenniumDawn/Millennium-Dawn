@@ -2829,7 +2829,10 @@ class Validator(BaseValidator):
             fields = blank_quoted_strings(d.raw)
             tags = owners.get(d.token, set())
             prefix = re.match(r"^([A-Z]{3})_", d.token)
+            allowed_tags = _flat_tag_pins(d.allowed)
             owner_tag = next(iter(tags)) if len(tags) == 1 else None
+            if not owner_tag and len(allowed_tags) == 1:
+                owner_tag = next(iter(allowed_tags))
             if not owner_tag and prefix:
                 owner_tag = prefix.group(1)
             for phase in ("complete", "remove", "timeout"):
