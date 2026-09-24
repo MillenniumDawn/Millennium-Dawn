@@ -495,7 +495,7 @@ Laws, national spirits and focuses can shift a faction's limits. They show on th
 **Decisions**:
 
 - **Encourage Religion in Government**: +5 opinion, +5% ruling outlook popularity
-- **Impose Taxes on Religious Institutions**: -15 opinion, +10 opinion for Communist Cadres
+- **Impose Taxes on Religious Institutions**: -15 opinion, +10 opinion for Communist Cadres, maximum opinion capped at 95 while active
 - **Repeal Religious Taxes**: +5 opinion
 
 ---
