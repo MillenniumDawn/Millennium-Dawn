@@ -152,7 +152,7 @@ set_temp_variable = { temp_opinion = 5 }
 change_labour_unions_opinion = yes
 ```
 
-One `change_<faction>_opinion` effect exists per faction idea, such as `change_the_military_opinion` or `change_small_medium_business_owners_opinion`. The result respects the faction's `if_<faction>_minimum_opinion` and `if_<faction>_maximum_opinion` modifiers. For a lasting floor, cap, or monthly drift, put `if_<faction>_minimum_opinion`, `if_<faction>_maximum_opinion`, or `if_<faction>_monthly_opinion` on an idea instead of changing opinion in a loop.
+One `change_<faction>_opinion` effect exists per faction idea, such as `change_the_military_opinion` or `change_small_medium_business_owners_opinion`. Wahhabi Ulema is the exception: use `change_the_wahabi_ulema_opinion`. Autocratic governments get positive changes doubled, but `temp_opinion` itself is left alone, so one value can feed several `change_*` calls in a row. The result respects the faction's `if_<faction>_minimum_opinion` and `if_<faction>_maximum_opinion` modifiers. For a lasting floor, cap, or monthly drift, put `if_<faction>_minimum_opinion`, `if_<faction>_maximum_opinion`, or `if_<faction>_monthly_opinion` on an idea instead of changing opinion in a loop.
 
 ---
 

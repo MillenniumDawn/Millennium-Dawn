@@ -49,7 +49,7 @@ You can only have **one active faction at a time**. Switching removes the old fa
 
 Opinion represents how satisfied a faction is with the ruling government. It decays monthly toward its minimum threshold if not actively maintained.
 
-- **Starting Opinion**: 50 when you first add a faction
+- **Starting Opinion**: 60 when you add a faction during play. Factions a country starts the game with begin at 50 unless its history sets another value
 - **Minimum Threshold**: 50 by default (the floor opinion decays toward). Decay never pushes opinion below it and never lifts opinion that is already lower
 - **Opinion Ranges**:
   - **Hostile**: 0–30
@@ -676,7 +676,7 @@ Laws, national spirits and focuses can shift a faction's limits. They show on th
 
 **Available for**: South Korea only (replaces Small & Medium Business Owners)
 
-**Note**: Starts at **60** opinion and decays no lower than 60 (Minimum Opinion +10)
+**Note**: Decays no lower than **60** (Minimum Opinion +10)
 
 **Static Bonuses**:
 

@@ -91,7 +91,7 @@ Three number modifiers per faction. `<faction>` is the faction idea name: `small
 | `if_<faction>_minimum_opinion` | Decay floor becomes 50 + value; hard floor becomes the value itself. Negative values only lower the decay floor |
 | `if_<faction>_maximum_opinion` | Ceiling becomes 100 + value. Use negative values; opinion never goes above 100                                  |
 
-Values stack across every source. `change_<faction>_opinion` and `monthly_tick_internal_factions_opinion` in `00_internal_faction_effects.txt` read them, and the monthly tick recomputes `<faction>_opinion_min` from the minimum modifier. Put a faction floor or cap on the idea as one of these modifiers. Do not set `<faction>_opinion_min` or add a `custom_modifier_tooltip` for it.
+Values stack across every source. `change_<faction>_opinion` (Wahhabi Ulema: `change_the_wahabi_ulema_opinion`) and `monthly_tick_internal_factions_opinion` in `00_internal_faction_effects.txt` read them, and the monthly tick recomputes `<faction>_opinion_min` from the minimum modifier. Put a faction floor or cap on the idea as one of these modifiers. Do not set `<faction>_opinion_min` or add a `custom_modifier_tooltip` for it.
 
 ## Migration (`migration_modifier_definitions.txt`) — country scope
 
