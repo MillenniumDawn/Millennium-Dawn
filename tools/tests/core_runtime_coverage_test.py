@@ -166,7 +166,7 @@ def test_text_blocks_and_spacing_edge_cases():
     assert U.normalize_spacing("\t# unchanged = {x}") == "\t# unchanged = {x}"
     assert U.collapse_or_compact(["a = {\n", " b = 1\n", "}\n"]) == ["a = { b = 1 }"]
     commented = ["a = { # keep\n", " b = 1\n", "}\n"]
-    assert U.collapse_or_compact(commented) == ["a = { # keep", " b = 1", "}"]
+    assert U.collapse_or_compact(commented) == ["a = { # keep", "\tb = 1", "}"]
     assert (
         U.convert_root_factor_to_base(["ai_will_do = {\n", " factor = 2\n", "}\n"])[1]
         == " base = 2\n"
@@ -175,6 +175,28 @@ def test_text_blocks_and_spacing_edge_cases():
         U.convert_root_factor_to_base(["ai_will_do = {\n", " base = 2\n", "}\n"])[1]
         == " base = 2\n"
     )
+
+
+def test_collapse_or_compact_reindents_a_multi_line_block():
+    # Issue #4650: nested lines written at the wrong depth kept their tabs.
+    block = [
+        "\t\t34 = {\n",
+        "\t\t\tadd_building_construction = {\n",
+        "\t\t\ttype = infrastructure\n",
+        "\t\t\tlevel = 1\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+    ]
+    expected = [
+        "\t\t34 = {",
+        "\t\t\tadd_building_construction = {",
+        "\t\t\t\ttype = infrastructure",
+        "\t\t\t\tlevel = 1",
+        "\t\t\t}",
+        "\t\t}",
+    ]
+    assert U.collapse_or_compact(block) == expected
+    assert U.collapse_or_compact([line.lstrip() for line in block], "\t\t") == expected
 
 
 def test_collapse_nested_blocks():
