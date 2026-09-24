@@ -396,6 +396,9 @@ AI_count_pending_projects = {
 	set_temp_variable = { pending_fuel_silos = 0 }
 	set_temp_variable = { pending_internet = 0 }
 	set_temp_variable = { pending_infra = 0 }
+	set_temp_variable = { pending_renewable = 0 }
+	set_temp_variable = { pending_fossil = 0 }
+	set_temp_variable = { pending_nuclear = 0 }
 	set_temp_variable = { pending_shared_slot_building = 0 }
 	for_each_loop = {
 		array = project_type_in_state
@@ -434,6 +437,15 @@ AI_count_pending_projects = {
 		}
 		else_if = { limit = { check_variable = { project_type_in_state^i = 10 } }
 			add_to_temp_variable = { pending_internet = 1 }
+		}
+		else_if = { limit = { check_variable = { project_type_in_state^i = 11 } }
+			add_to_temp_variable = { pending_renewable = 1 }
+		}
+		else_if = { limit = { check_variable = { project_type_in_state^i = 12 } }
+			add_to_temp_variable = { pending_fossil = 1 }
+		}
+		else_if = { limit = { check_variable = { project_type_in_state^i = 13 } }
+			add_to_temp_variable = { pending_nuclear = 1 }
 		}
 	}
 }
@@ -736,7 +748,7 @@ AI_get_renewable_energy_score = {
 	if = { limit = { free_building_slots = { building = renewable_energy_infra size > 0  include_locked = no } }
 		set_temp_variable = { AI_score = 0 }
 
-		set_temp_variable = { v1 = 100 }
+		set_temp_variable = { v1 = 85 }
 
 		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
 			add_to_temp_variable = { v1 = 5 }
@@ -769,7 +781,8 @@ AI_get_renewable_energy_score = {
 			add_to_temp_variable = { v1 = 30 }
 		}
 
-		set_temp_variable = { v2 = 0 }
+		set_temp_variable = { v2 = pending_renewable }
+		multiply_temp_variable = { v2 = 40 }
 
 		if = { limit = { check_variable = { tgt_renewable_mult < 1.50 } }
 			add_to_temp_variable = { v2 = 1000 }
@@ -792,7 +805,7 @@ AI_get_fossil_powerplant_score = {
 	if = { limit = { free_building_slots = { building = fossil_powerplant size > 0  include_locked = no } }
 		set_temp_variable = { AI_score = 0 }
 
-		set_temp_variable = { v1 = 95 }
+		set_temp_variable = { v1 = 80 }
 
 		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
 			add_to_temp_variable = { v1 = 10 }
@@ -826,6 +839,10 @@ AI_get_fossil_powerplant_score = {
 			add_to_temp_variable = { v1 = -15 }
 		}
 
+		set_temp_variable = { v2 = pending_fossil }
+		multiply_temp_variable = { v2 = 40 }
+
+		subtract_from_temp_variable = { v1 = v2 }
 		add_to_temp_variable = { AI_score = v1 }
 
 		set_temp_variable = { AI_score_type = 12 }
@@ -841,55 +858,63 @@ AI_get_nuclear_reactor_score = {
 		}
 		set_temp_variable = { AI_score = 0 }
 
-		set_temp_variable = { v1 = 110 }
+		# Well below fossil so fossil stays the default pick for covering a deficit
+		set_temp_variable = { v1 = 30 }
 
 		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
-			add_to_temp_variable = { v1 = 15 }
+			add_to_temp_variable = { v1 = 10 }
 		}
 		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
-			add_to_temp_variable = { v1 = 20 }
+			add_to_temp_variable = { v1 = 15 }
 		}
 		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
-			add_to_temp_variable = { v1 = 35 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
-			add_to_temp_variable = { v1 = 45 }
-		}
-		if = { limit = { check_variable = { tgt_gdp_per_capita > 25 } }
 			add_to_temp_variable = { v1 = 20 }
 		}
-		if = { limit = { check_variable = { tgt_gdp_per_capita > 35 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { tgt_gdp_per_capita > 45 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 2000 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 4000 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 6000 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_oil_imported > 0 } }
+		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
 			add_to_temp_variable = { v1 = 25 }
 		}
-		if = { limit = { check_variable = { tgt_idea_heavy_power_restrict = 1 } }
+		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
 			add_to_temp_variable = { v1 = 30 }
 		}
-		if = { limit = { check_variable = { tgt_idea_some_power_restrict = 1 } }
+		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
+			add_to_temp_variable = { v1 = 40 }
+		}
+		if = { limit = { check_variable = { tgt_gdp_per_capita > 25 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { tgt_gdp_per_capita > 35 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { tgt_gdp_per_capita > 45 } }
+			add_to_temp_variable = { v1 = 5 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 2000 } }
+			add_to_temp_variable = { v1 = 5 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 4000 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { THIS.state_population_k > 6000 } }
+			add_to_temp_variable = { v1 = 5 }
+		}
+		if = { limit = { check_variable = { tgt_oil_imported > 0 } }
 			add_to_temp_variable = { v1 = 15 }
+		}
+		if = { limit = { check_variable = { tgt_idea_heavy_power_restrict = 1 } }
+			add_to_temp_variable = { v1 = 10 }
+		}
+		if = { limit = { check_variable = { tgt_idea_some_power_restrict = 1 } }
+			add_to_temp_variable = { v1 = 5 }
+		}
+		# Can fuel its own reactors
+		if = { limit = { check_variable = { tgt_enrichment_facilities > 0 } }
+			add_to_temp_variable = { v1 = 25 }
 		}
 
 		set_temp_variable = { v2 = 0 }
+		if = { limit = { check_variable = { tgt_nuclear_reactors = 0 } }
+			add_to_temp_variable = { v2 = 75 }
+		}
 		if = { limit = { check_variable = { tgt_gdp_per_capita < 20 } }
 			add_to_temp_variable = { v2 = 100 }
 		}
@@ -902,10 +927,11 @@ AI_get_nuclear_reactor_score = {
 		if = { limit = { check_variable = { tgt_interest_rate > 8.5 } }
 			add_to_temp_variable = { v2 = 40 }
 		}
-		if = { limit = { check_variable = { energy_balance_ratio > 1.15 } }
+		if = { limit = { check_variable = { energy_balance_ratio > 0.999 } }
 			add_to_temp_variable = { v2 = 1000 }
 		}
 		set_temp_variable = { existing_reactors = building_level@nuclear_reactor }
+		add_to_temp_variable = { existing_reactors = pending_nuclear }
 		multiply_temp_variable = { existing_reactors = 50 }
 		add_to_temp_variable = { v2 = existing_reactors }
 		if = { limit = { check_variable = { tgt_idea_heavy_consumption = 1 } }

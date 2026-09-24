@@ -378,8 +378,21 @@ country_event = {
 				if = { limit = { ROOT = { has_tech = reactor1 } }
 					set_temp_variable = { AI_has_reactor_tech = 1 }
 				}
+				# Count pending power projects as built so investors stop piling onto the same deficit
+				set_temp_variable = { pending_energy_gw = 0 }
+				for_each_scope_loop = {
+					array = controlled_states
+					for_each_loop = {
+						array = project_type_in_state
+						value = v
+						if = { limit = { check_variable = { v = 11 } } add_to_temp_variable = { pending_energy_gw = 0.5 } }
+						else_if = { limit = { check_variable = { v = 12 } } add_to_temp_variable = { pending_energy_gw = 2 } }
+						else_if = { limit = { check_variable = { v = 13 } } add_to_temp_variable = { pending_energy_gw = 4 } }
+					}
+				}
 				if = { limit = { check_variable = { energy_consumption > 0 } }
 					set_temp_variable = { energy_balance_ratio = energy_sum }
+					add_to_temp_variable = { energy_balance_ratio = pending_energy_gw }
 					divide_temp_variable = { energy_balance_ratio = energy_consumption }
 				}
 
@@ -402,6 +415,8 @@ country_event = {
 				set_temp_variable = { tgt_oil_imported = resource_imported@oil }
 				set_temp_variable = { tgt_renewable_mult = modifier@renewable_energy_gain_multiplier }
 				set_temp_variable = { tgt_threat = threat }
+				set_temp_variable = { tgt_nuclear_reactors = nuclear_reactors }
+				set_temp_variable = { tgt_enrichment_facilities = total_enrichment_facilities }
 
 				set_temp_variable = { tgt_civs_to_factories_ratio = 0 }
 				if = { limit = { check_variable = { tgt_num_factories > 0 } }
