@@ -16,6 +16,12 @@ from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from linting.check_common_mistakes import (
+    _build_event_index,
+    _event_chain_leads_to_war,
+    _owner_scope_event_sends,
+    _war_at_scope,
+)
 from shared_utils import (
     ai_only_decision_categories,
     atomic_write_text,
@@ -2038,6 +2044,19 @@ class Validator(BaseValidator):
             "Decisions in categories without allowed check that also lack their own allowed trigger:",
         )
 
+    def validate_allowed_country_flag(self):
+        results = [
+            f"{d.token:<55}{d.source_basename}"
+            for d in parse_all_decision_factories(self.mod_path)
+            if d.allowed and re.search(r"\bhas_country_flag\s*=", d.allowed)
+        ]
+        self._report(
+            results,
+            "✓ No unsupported country flags in decision allowed blocks",
+            "Decision allowed blocks with has_country_flag (unsupported by the engine; move the check to visible or available):",
+            category="unsupported-decision-allowed-flag",
+        )
+
     def validate_random_seed(self):
         """Flag repeatable decisions rolling randomness without an explicit ``fixed_random_seed``.
 
@@ -2789,41 +2808,80 @@ class Validator(BaseValidator):
         )
 
     def validate_missing_war_hint(self):
-        """Flag decisions that declare war but carry no war_with_* hint.
-
-        A decision whose complete_effect/remove_effect/timeout_effect calls
-        create_wargoal or declare_war should set one of the war_with_on_* (fixed
-        target) or war_with_target_on_* (FROM target) attributes so the AI
-        prepares for the war. create_wargoal inside an effect_tooltip still
-        represents an intended war, so its presence counts; the hint anywhere in
-        the decision body clears it.
-        """
+        """Check direct wars and owner-scope event chains for a matching phase hint."""
         self._log_section(
             "Checking decisions declaring war for a missing war_with_* hint..."
         )
 
         factories = parse_all_decision_factories(self.mod_path)
-        results = []
-        hints = (
-            "war_with_on_complete",
-            "war_with_on_remove",
-            "war_with_on_timeout",
-            "war_with_target_on_complete",
-            "war_with_target_on_remove",
-            "war_with_target_on_timeout",
-        )
+        category_pins = _category_allowed_pins(parse_decision_categories(self.mod_path))
+        category_decisions = parse_categories_with_decisions(self.mod_path)
+        owners: Dict[str, Set[str]] = {}
+        for category, tokens in category_decisions.items():
+            tags = {tag for _, tag in category_pins.get(category, set())}
+            if len(tags) == 1:
+                for token in tokens:
+                    owners.setdefault(token, set()).update(tags)
 
+        results = []
+        event_index = None
         for d in factories:
-            if not re.search(r"\b(?:create_wargoal|declare_war_on)\b", d.raw):
-                continue
-            if any(hint in d.raw for hint in hints):
-                continue
-            results.append(f"{d.token:<55}{d.source_basename}")
+            fields = blank_quoted_strings(d.raw)
+            tags = owners.get(d.token, set())
+            prefix = re.match(r"^([A-Z]{3})_", d.token)
+            allowed_tags = _flat_tag_pins(d.allowed)
+            owner_tag = next(iter(tags)) if len(tags) == 1 else None
+            if not owner_tag and len(allowed_tags) == 1:
+                owner_tag = next(iter(allowed_tags))
+            if not owner_tag and prefix:
+                owner_tag = prefix.group(1)
+            for phase in ("complete", "remove", "timeout"):
+                effect = getattr(d, f"{phase}_effect")
+                if not effect:
+                    continue
+                direct_war = _war_at_scope(blank_quoted_strings(effect), owner_tag)
+                chain = []
+                if not direct_war:
+                    sends = _owner_scope_event_sends(effect, owner_tag)
+                    if sends:
+                        if event_index is None:
+                            event_index = _build_event_index(self.mod_path)
+                        for event_id in sends:
+                            leads, chain = _event_chain_leads_to_war(
+                                event_id, owner_tag, event_index=event_index
+                            )
+                            if leads:
+                                break
+                        else:
+                            chain = []
+                if not direct_war and not chain:
+                    continue
+
+                fixed_hint = _top_level_field_value(fields, f"war_with_on_{phase}")
+                target_hint = (
+                    _top_level_field_value(fields, f"war_with_target_on_{phase}")
+                    == "yes"
+                )
+                targets_from = direct_war and re.search(
+                    r"\btarget\s*=\s*FROM\b", effect
+                )
+                if targets_from:
+                    has_hint = bool(target_hint)
+                else:
+                    has_hint = bool(fixed_hint and fixed_hint != "FROM") or bool(
+                        target_hint and (d.targets or d.target_array)
+                    )
+                if not has_hint:
+                    path = f" via {' -> '.join(chain)}" if chain else ""
+                    results.append(
+                        (f"{d.token} - {phase}_effect{path}", d.source_basename, 0)
+                    )
 
         self._report(
             results,
-            "✓ No decisions declaring war without a war_with_* hint",
-            "Decisions that declare war but have no war_with_on_* / war_with_target_on_* hint (AI won't prepare):",
+            "✓ No decisions declaring war without a matching war_with_* hint",
+            "Decision effects leading to war without a matching war_with_on_* / war_with_target_on_* hint (AI won't prepare):",
+            category="missing-decision-war-hint",
         )
 
     def validate_cancel_if_not_visible(self):
@@ -3234,6 +3292,7 @@ class Validator(BaseValidator):
         self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
+        self.validate_allowed_country_flag()
         self.validate_random_seed()
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
