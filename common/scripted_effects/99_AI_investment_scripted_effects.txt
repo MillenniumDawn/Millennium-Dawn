@@ -5,7 +5,7 @@ AI_record_score = {
 		max = 15
 		integer = yes
 	}
-	add_to_temp_variable = { AI_score = state_randomizer }
+	set_temp_variable = { AI_score = { value = AI_score add = state_randomizer add = state_score_adjustment } }
 
 	if = { limit = { check_variable = { AI_score > AI_best_score } }
 		set_temp_variable = { AI_best_score = AI_score }
@@ -50,51 +50,20 @@ invest_infra = {
 # Building Type 1: Civilian industry
 AI_get_civilian_industry_score = {
 	if = { limit = { free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-		set_temp_variable = { v1 = 170 }
-
-		if = { limit = { check_variable = { tgt_civs_to_factories_ratio < 0.65 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-
-		set_temp_variable = { v2 = building_level@industrial_complex }
-		multiply_temp_variable = { v2 = 25 }
-
-		set_temp_variable = { pending_penalty = pending_civs }
-		multiply_temp_variable = { pending_penalty = 40 }
-		add_to_temp_variable = { v2 = pending_penalty }
-
-		if = { limit = { check_variable = { tgt_avail_civs > 15 } }
-			add_to_temp_variable = { v2 = 5 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs > 30 } }
-			add_to_temp_variable = { v2 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs > 45 } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-
-		if = {
-			limit = {
-				check_variable = { tgt_unemployment < 0.020 }
-				check_variable = { tgt_pop_m < 30 }
+		set_temp_variable = {
+			AI_score = {
+				value = 170
+				if = { limit = { value = tgt_civs_to_factories_ratio less_than = 0.65 } add = 15 }
+				subtract = { value = building_level@industrial_complex multiply = 25 }
+				subtract = { value = pending_civs multiply = 40 }
+				if = { limit = { value = tgt_avail_civs greater_than = 15 } subtract = 5 }
+				if = { limit = { value = tgt_avail_civs greater_than = 30 } subtract = 10 }
+				if = { limit = { value = tgt_avail_civs greater_than = 45 } subtract = 15 }
+				if = { limit = { value = tgt_unemployment less_than = 0.020 multiply = { value = tgt_pop_m less_than = 30 } } subtract = 100 }
+				if = { limit = { value = tgt_unemployment less_than = 0.010 multiply = { value = tgt_pop_m greater_than = 29.999 } } subtract = 100 }
+				if = { limit = { value = pending_shared_slot_building greater_than = 0 } subtract = 15 }
 			}
-			add_to_temp_variable = { v2 = 100 }
 		}
-		if = {
-			limit = {
-				check_variable = { tgt_unemployment < 0.010 }
-				check_variable = { tgt_pop_m > 29.999 }
-			}
-			add_to_temp_variable = { v2 = 100 }
-		}
-
-		if = { limit = { check_variable = { pending_shared_slot_building > 0 } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
 
 		set_temp_variable = { AI_score_type = 1 }
 		AI_record_score = yes
@@ -104,73 +73,29 @@ AI_get_civilian_industry_score = {
 # Building Type 2: Military Industry
 AI_get_military_industry_score = {
 	if = { limit = { free_building_slots = { building = arms_factory size > 0 include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-
-		set_temp_variable = { v1 = 150 }
-
-		# Increase Section
-		if = { limit = { date > 2004.1.1 }
-			add_to_temp_variable = { v1 = 10 }
+		set_temp_variable = {
+			AI_score = {
+				value = 150
+				if = { limit = { value = tgt_num_mils less_than = 15 } add = 10 }
+				if = { limit = { value = tgt_num_mils less_than = 10 } add = 10 }
+				if = { limit = { value = tgt_num_mils less_than = 5 } add = 10 }
+				if = { limit = { value = tgt_AI_threatened greater_than = 0 } add = 15 }
+				subtract = { value = building_level@arms_factory multiply = 25 }
+				subtract = { value = pending_mils multiply = 40 }
+				if = { limit = { value = tgt_has_war less_than = 1 } subtract = 20 }
+				if = { limit = { value = tgt_avail_civs less_than = 15 } subtract = 10 }
+				if = { limit = { value = tgt_avail_civs less_than = 10 } subtract = 10 }
+				if = { limit = { value = tgt_avail_civs less_than = 5 } subtract = 10 }
+				if = { limit = { value = tgt_mils_to_factories_ratio greater_than = 0.45 } subtract = 70 }
+				if = { limit = { value = pending_shared_slot_building greater_than = 0 } subtract = 15 }
+				if = { limit = { value = tgt_unemployment less_than = 0.001 } subtract = 50 }
+			}
 		}
-		if = { limit = { date > 2006.1.1 }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { threat > 0.1 }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { threat > 0.2 }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { threat > 0.4 }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_num_mils < 15 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_num_mils < 10 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_num_mils < 5 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-
-		set_temp_variable = { v2 = building_level@arms_factory }
-		multiply_temp_variable = { v2 = 25 }
-
-		set_temp_variable = { pending_penalty = pending_mils }
-		multiply_temp_variable = { pending_penalty = 40 }
-		add_to_temp_variable = { v2 = pending_penalty }
-
-		if = { limit = { check_variable = { tgt_has_war = 0 } }
-			add_to_temp_variable = { v2 = 20 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 15 } }
-			add_to_temp_variable = { v2 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
-			add_to_temp_variable = { v2 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 5 } }
-			add_to_temp_variable = { v2 = 10 }
-		}
-
-		if = { limit = { check_variable = { tgt_mils_to_factories_ratio > 0.45 } }
-			add_to_temp_variable = { v2 = 70 }
-		}
-
-		if = { limit = { check_variable = { pending_shared_slot_building > 0 } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-
-		if = { limit = { check_variable = { tgt_unemployment < 0.001 } }
-			add_to_temp_variable = { v2 = 50 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
+		if = { limit = { date > 2004.1.1 } add_to_temp_variable = { AI_score = 10 } }
+		if = { limit = { date > 2006.1.1 } add_to_temp_variable = { AI_score = 10 } }
+		if = { limit = { threat > 0.1 } add_to_temp_variable = { AI_score = 10 } }
+		if = { limit = { threat > 0.2 } add_to_temp_variable = { AI_score = 10 } }
+		if = { limit = { threat > 0.4 } add_to_temp_variable = { AI_score = 10 } }
 
 		set_temp_variable = { AI_score_type = 2 }
 		AI_record_score = yes
@@ -180,69 +105,26 @@ AI_get_military_industry_score = {
 # Building Type 3: Dockyards
 AI_get_dockyard_score = {
 	if = { limit = { free_building_slots = { building = dockyard size > 0 include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-		set_temp_variable = { v1 = 170 }
-
-		if = { limit = { check_variable = { tgt_num_naval < 15 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_num_naval < 10 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_num_naval < 5 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-
-		set_temp_variable = { v2 = building_level@dockyard }
-		multiply_temp_variable = { v2 = 25 }
-
-		set_temp_variable = { pending_penalty = pending_docks }
-		multiply_temp_variable = { pending_penalty = 40 }
-		add_to_temp_variable = { v2 = pending_penalty }
-
-		if = { limit = { check_variable = { tgt_has_war = 0 } }
-			add_to_temp_variable = { v2 = 35 }
-		}
-
-		if = { limit = { is_coastal = no }
-			add_to_temp_variable = { v2 = 100 }
-		}
-
-		if = { limit = { check_variable = { tgt_steel_produced < 200 } }
-			add_to_temp_variable = { v2 = 20 }
-		}
-		if = { limit = { check_variable = { tgt_steel_produced < 100 } }
-			add_to_temp_variable = { v2 = 40 }
-		}
-
-		if = { limit = { check_variable = { tgt_gdp_total < 1000 } }
-			add_to_temp_variable = { v2 = 100 }
-		}
-		if = { limit = { check_variable = { tgt_interest_rate > 10.5 } }
-			add_to_temp_variable = { v2 = 40 }
-		}
-
-		if = { limit = { check_variable = { tgt_num_factories > 0 } }
-			set_temp_variable = { docks_to_factories_ratio = tgt_num_naval }
-			divide_temp_variable = { docks_to_factories_ratio = tgt_num_factories }
-			if = { limit = { check_variable = { docks_to_factories_ratio > 0.20 } }
-				add_to_temp_variable = { v2 = 50 }
+		# Only called for coastal states
+		set_temp_variable = {
+			AI_score = {
+				value = 170
+				if = { limit = { value = tgt_num_naval less_than = 15 } add = 10 }
+				if = { limit = { value = tgt_num_naval less_than = 10 } add = 10 }
+				if = { limit = { value = tgt_num_naval less_than = 5 } add = 10 }
+				if = { limit = { value = tgt_AI_threatened greater_than = 0 } add = 15 }
+				subtract = { value = building_level@dockyard multiply = 25 }
+				subtract = { value = pending_docks multiply = 40 }
+				if = { limit = { value = tgt_has_war less_than = 1 } subtract = 35 }
+				if = { limit = { value = tgt_steel_produced less_than = 200 } subtract = 20 }
+				if = { limit = { value = tgt_steel_produced less_than = 100 } subtract = 40 }
+				if = { limit = { value = tgt_gdp_total less_than = 1000 } subtract = 100 }
+				if = { limit = { value = tgt_interest_rate greater_than = 10.5 } subtract = 40 }
+				if = { limit = { value = tgt_num_naval greater_than = { value = tgt_num_factories multiply = 0.20 } } subtract = 50 }
+				if = { limit = { value = tgt_unemployment less_than = 0.001 } subtract = 50 }
+				if = { limit = { value = pending_shared_slot_building greater_than = 0 } subtract = 15 }
 			}
 		}
-
-		if = { limit = { check_variable = { tgt_unemployment < 0.001 } }
-			add_to_temp_variable = { v2 = 50 }
-		}
-
-		if = { limit = { check_variable = { pending_shared_slot_building > 0 } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
 
 		set_temp_variable = { AI_score_type = 3 }
 		AI_record_score = yes
@@ -253,64 +135,45 @@ AI_get_dockyard_score = {
 AI_get_infrastructure_score = {
 	if = { limit = { free_building_slots = { building = infrastructure size > 0  include_locked = no } }
 		set_temp_variable = { AI_score = 0 }
-		set_temp_variable = { v1 = 175 }
+		set_temp_variable = { planned_infra = { value = building_level@infrastructure add = pending_infra } }
 
-		if = {
-			limit = {
-				OR = {
-					has_resources_amount = { resource = aluminium amount > 10 }
-					has_resources_amount = { resource = oil amount > 10 }
-					has_resources_amount = { resource = steel amount > 10 }
-					has_resources_amount = { resource = rubber amount > 10 }
-					has_resources_amount = { resource = tungsten amount > 10 }
-					has_resources_amount = { resource = chromium amount > 10 }
+		if = { limit = { check_variable = { planned_infra < 5 } }
+			set_temp_variable = { AI_score = { value = 175 subtract = { value = building_level@infrastructure multiply = 20 } } }
+			if = {
+				limit = {
+					OR = {
+						has_resources_amount = { resource = aluminium amount > 10 }
+						has_resources_amount = { resource = oil amount > 10 }
+						has_resources_amount = { resource = steel amount > 10 }
+						has_resources_amount = { resource = rubber amount > 10 }
+						has_resources_amount = { resource = tungsten amount > 10 }
+						has_resources_amount = { resource = chromium amount > 10 }
+					}
 				}
+				add_to_temp_variable = { AI_score = 25 }
 			}
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = {
-			limit = {
-				OR = {
-					has_resources_amount = { resource = aluminium amount > 20 }
-					has_resources_amount = { resource = oil amount > 20 }
-					has_resources_amount = { resource = steel amount > 20 }
-					has_resources_amount = { resource = rubber amount > 20 }
-					has_resources_amount = { resource = tungsten amount > 20 }
-					has_resources_amount = { resource = chromium amount > 20 }
+			if = {
+				limit = {
+					OR = {
+						has_resources_amount = { resource = aluminium amount > 20 }
+						has_resources_amount = { resource = oil amount > 20 }
+						has_resources_amount = { resource = steel amount > 20 }
+						has_resources_amount = { resource = rubber amount > 20 }
+						has_resources_amount = { resource = tungsten amount > 20 }
+						has_resources_amount = { resource = chromium amount > 20 }
+					}
 				}
+				add_to_temp_variable = { AI_score = 25 }
 			}
-			add_to_temp_variable = { v1 = 25 }
-		}
-
-		set_temp_variable = { v2 = building_level@infrastructure }
-		multiply_temp_variable = { v2 = 20 }
-
-		if = { limit = { free_building_slots = { building = industrial_complex size < 2 include_locked = no } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-		if = { limit = { free_building_slots = { building = industrial_complex size < 5 include_locked = no } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-		if = { limit = { free_building_slots = { building = industrial_complex size < 10 include_locked = no } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-
-		set_temp_variable = { differential_infra = building_level@infrastructure }
-		add_to_temp_variable = { differential_infra = pending_infra }
-
-		if = { limit = { check_variable = { building_level@infrastructure = 5 } }
-			multiply_temp_variable = { AI_score = 0 }
-		}
-		else_if = { limit = { check_variable = { differential_infra > 4.999 } }
-			multiply_temp_variable = { AI_score = 0 }
-		}
-		else = {
-			add_to_temp_variable = { differential_infra = remaining_level }
-			if = { limit = { check_variable = { differential_infra > 4 } }
-				add_to_temp_variable = { v2 = 100 }
+			if = { limit = { free_building_slots = { building = industrial_complex size < 2 include_locked = no } }
+				subtract_from_temp_variable = { AI_score = 15 }
 			}
-			subtract_from_temp_variable = { v1 = v2 }
-			add_to_temp_variable = { AI_score = v1 }
+			if = { limit = { free_building_slots = { building = industrial_complex size < 5 include_locked = no } }
+				subtract_from_temp_variable = { AI_score = 15 }
+			}
+			if = { limit = { free_building_slots = { building = industrial_complex size < 10 include_locked = no } }
+				subtract_from_temp_variable = { AI_score = 15 }
+			}
 		}
 
 		set_temp_variable = { AI_score_type = 4 }
@@ -321,64 +184,24 @@ AI_get_infrastructure_score = {
 # Building Type 5: Offices
 AI_get_offices_score = {
 	if = { limit = { free_building_slots = { building = offices size > 0 include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-		set_temp_variable = { v1 = 180 }
-
-		if = { limit = { check_variable = { tgt_corp_tax > 22 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_corp_tax > 27 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { tgt_corp_tax > 32 } }
-			add_to_temp_variable = { v1 = 20 }
-		}
-
-		set_temp_variable = { v2 = building_level@offices }
-		multiply_temp_variable = { v2 = 25 }
-
-		set_temp_variable = { pending_penalty = pending_offices }
-		multiply_temp_variable = { pending_penalty = 40 }
-		add_to_temp_variable = { v2 = pending_penalty }
-
-		if = { limit = { check_variable = { tgt_avail_civs < 1 } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 5 } }
-			add_to_temp_variable = { v2 = 12 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
-			add_to_temp_variable = { v2 = 8 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 15 } }
-			add_to_temp_variable = { v2 = 5 }
-		}
-
-		if = { limit = { check_variable = { tgt_gdp_per_capita < 15 } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-
-		if = {
-			limit = {
-				check_variable = { tgt_unemployment < 0.020 }
-				check_variable = { tgt_pop_m < 30 }
+		set_temp_variable = {
+			AI_score = {
+				value = 180
+				if = { limit = { value = tgt_corp_tax greater_than = 22 } add = 10 }
+				if = { limit = { value = tgt_corp_tax greater_than = 27 } add = 15 }
+				if = { limit = { value = tgt_corp_tax greater_than = 32 } add = 20 }
+				subtract = { value = building_level@offices multiply = 25 }
+				subtract = { value = pending_offices multiply = 40 }
+				if = { limit = { value = tgt_avail_civs less_than = 1 } subtract = 15 }
+				if = { limit = { value = tgt_avail_civs less_than = 5 } subtract = 12 }
+				if = { limit = { value = tgt_avail_civs less_than = 10 } subtract = 8 }
+				if = { limit = { value = tgt_avail_civs less_than = 15 } subtract = 5 }
+				if = { limit = { value = tgt_gdp_per_capita less_than = 15 } subtract = 15 }
+				if = { limit = { value = tgt_unemployment less_than = 0.020 multiply = { value = tgt_pop_m less_than = 30 } } subtract = 100 }
+				if = { limit = { value = tgt_unemployment less_than = 0.010 multiply = { value = tgt_pop_m greater_than = 29.999 } } subtract = 100 }
+				if = { limit = { value = pending_shared_slot_building greater_than = 0 } subtract = 15 }
 			}
-			add_to_temp_variable = { v2 = 100 }
 		}
-		if = {
-			limit = {
-				check_variable = { tgt_unemployment < 0.010 }
-				check_variable = { tgt_pop_m > 29.999 }
-			}
-			add_to_temp_variable = { v2 = 100 }
-		}
-
-		if = { limit = { check_variable = { pending_shared_slot_building > 0 } }
-			add_to_temp_variable = { v2 = 15 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
 
 		set_temp_variable = { AI_score_type = 5 }
 		AI_record_score = yes
@@ -396,6 +219,9 @@ AI_count_pending_projects = {
 	set_temp_variable = { pending_fuel_silos = 0 }
 	set_temp_variable = { pending_internet = 0 }
 	set_temp_variable = { pending_infra = 0 }
+	set_temp_variable = { pending_renewable = 0 }
+	set_temp_variable = { pending_fossil = 0 }
+	set_temp_variable = { pending_nuclear = 0 }
 	set_temp_variable = { pending_shared_slot_building = 0 }
 	for_each_loop = {
 		array = project_type_in_state
@@ -435,57 +261,38 @@ AI_count_pending_projects = {
 		else_if = { limit = { check_variable = { project_type_in_state^i = 10 } }
 			add_to_temp_variable = { pending_internet = 1 }
 		}
+		else_if = { limit = { check_variable = { project_type_in_state^i = 11 } }
+			add_to_temp_variable = { pending_renewable = 1 }
+		}
+		else_if = { limit = { check_variable = { project_type_in_state^i = 12 } }
+			add_to_temp_variable = { pending_fossil = 1 }
+		}
+		else_if = { limit = { check_variable = { project_type_in_state^i = 13 } }
+			add_to_temp_variable = { pending_nuclear = 1 }
+		}
 	}
 }
 
 # Building Type 6: Surface to Air Missiles (SAM/Antiair)
 AI_get_antiair_score = {
 	if = { limit = { free_building_slots = { building = anti_air_building size > 0 include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-
-		set_temp_variable = { v1 = 120 }
-
-		if = { limit = { threat > 0.1 }
-			add_to_temp_variable = { v1 = 15 }
+		set_temp_variable = {
+			AI_score = {
+				value = 120
+				if = { limit = { value = tgt_has_war greater_than = 0 } add = 40 }
+				if = { limit = { value = tgt_AI_threatened greater_than = 0 } add = 25 }
+				if = { limit = { value = tgt_neighbor_at_war greater_than = 0 } add = 30 }
+				subtract = { value = building_level@anti_air_building multiply = 30 }
+				subtract = { value = pending_antiair multiply = 45 }
+				if = { limit = { value = tgt_has_war less_than = 1 multiply = { value = tgt_threat less_than = 0.5 } } subtract = 50 }
+				if = { limit = { value = tgt_avail_civs less_than = 10 } subtract = 30 }
+			}
 		}
-		if = { limit = { threat > 0.25 }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { threat > 0.5 }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { check_variable = { tgt_has_war = 1 } }
-			add_to_temp_variable = { v1 = 40 }
-		}
-		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { check_variable = { tgt_neighbor_at_war = 1 } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-		if = { limit = { is_coastal = yes }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { is_capital = yes }
-			add_to_temp_variable = { v1 = 15 }
-		}
-
-		set_temp_variable = { v2 = building_level@anti_air_building }
-		multiply_temp_variable = { v2 = 30 }
-
-		set_temp_variable = { pending_penalty = pending_antiair }
-		multiply_temp_variable = { pending_penalty = 45 }
-		add_to_temp_variable = { v2 = pending_penalty }
-
-		if = { limit = { check_variable = { tgt_has_war = 0 } check_variable = { tgt_threat < 0.5 } }
-			add_to_temp_variable = { v2 = 50 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
-			add_to_temp_variable = { v2 = 30 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
+		if = { limit = { threat > 0.1 } add_to_temp_variable = { AI_score = 15 } }
+		if = { limit = { threat > 0.25 } add_to_temp_variable = { AI_score = 20 } }
+		if = { limit = { threat > 0.5 } add_to_temp_variable = { AI_score = 25 } }
+		if = { limit = { is_coastal = yes } add_to_temp_variable = { AI_score = 10 } }
+		if = { limit = { is_capital = yes } add_to_temp_variable = { AI_score = 15 } }
 
 		set_temp_variable = { AI_score_type = 6 }
 		AI_record_score = yes
@@ -495,51 +302,25 @@ AI_get_antiair_score = {
 # Building Type 7: Radar Stations
 AI_get_radar_score = {
 	if = { limit = { free_building_slots = { building = radar_station size > 0 include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-
-		set_temp_variable = { v1 = 115 }
-
-		if = { limit = { threat > 0.1 }
-			add_to_temp_variable = { v1 = 15 }
+		set_temp_variable = {
+			AI_score = {
+				value = 115
+				if = { limit = { value = tgt_has_war greater_than = 0 } add = 35 }
+				if = { limit = { value = tgt_AI_threatened greater_than = 0 } add = 20 }
+				subtract = { value = building_level@radar_station multiply = 35 }
+				subtract = { value = pending_radar multiply = 45 }
+				if = { limit = { value = tgt_has_war less_than = 1 multiply = { value = tgt_threat less_than = 0.5 } } subtract = 45 }
+				if = { limit = { value = tgt_avail_civs less_than = 10 } subtract = 25 }
+			}
 		}
-		if = { limit = { threat > 0.25 }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { threat > 0.5 }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { check_variable = { tgt_has_war = 1 } }
-			add_to_temp_variable = { v1 = 35 }
-		}
-		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
-			add_to_temp_variable = { v1 = 20 }
-		}
+		if = { limit = { threat > 0.1 } add_to_temp_variable = { AI_score = 15 } }
+		if = { limit = { threat > 0.25 } add_to_temp_variable = { AI_score = 20 } }
+		if = { limit = { threat > 0.5 } add_to_temp_variable = { AI_score = 25 } }
+		if = { limit = { is_capital = yes } add_to_temp_variable = { AI_score = 15 } }
 		if = { limit = { is_coastal = yes }
-			add_to_temp_variable = { v1 = 20 }
+			add_to_temp_variable = { AI_score = 20 }
+			if = { limit = { check_variable = { tgt_has_maritime_industry = 1 } } add_to_temp_variable = { AI_score = 15 } }
 		}
-		if = { limit = { is_capital = yes }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { tgt_has_maritime_industry = 1 } is_coastal = yes }
-			add_to_temp_variable = { v1 = 15 }
-		}
-
-		set_temp_variable = { v2 = building_level@radar_station }
-		multiply_temp_variable = { v2 = 35 }
-
-		set_temp_variable = { pending_penalty = pending_radar }
-		multiply_temp_variable = { pending_penalty = 45 }
-		add_to_temp_variable = { v2 = pending_penalty }
-
-		if = { limit = { check_variable = { tgt_has_war = 0 } check_variable = { tgt_threat < 0.5 } }
-			add_to_temp_variable = { v2 = 45 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
-			add_to_temp_variable = { v2 = 25 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
 
 		set_temp_variable = { AI_score_type = 7 }
 		AI_record_score = yes
@@ -549,57 +330,25 @@ AI_get_radar_score = {
 # Building Type 8: Air Bases
 AI_get_airbase_score = {
 	if = { limit = { free_building_slots = { building = air_base size > 0 include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-
-		set_temp_variable = { v1 = 130 }
-
-		if = { limit = { check_variable = { tgt_has_war = 1 } }
-			add_to_temp_variable = { v1 = 40 }
+		set_temp_variable = {
+			AI_score = {
+				value = 130
+				if = { limit = { value = tgt_has_war greater_than = 0 } add = 40 }
+				if = { limit = { value = tgt_AI_threatened greater_than = 0 } add = 25 }
+				if = { limit = { value = tgt_num_mils greater_than = 20 } add = 10 }
+				subtract = { value = building_level@air_base multiply = 25 }
+				subtract = { value = pending_airbases multiply = 40 }
+				if = { limit = { value = tgt_has_war less_than = 1 } subtract = 30 }
+				if = { limit = { value = tgt_avail_civs less_than = 15 } subtract = 20 }
+				if = { limit = { value = tgt_avail_civs less_than = 10 } subtract = 30 }
+				if = { limit = { value = tgt_max_fuel less_than = 100 } subtract = 40 }
+			}
 		}
-		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { threat > 0.15 }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { threat > 0.3 }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { threat > 0.5 }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { is_coastal = yes }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { is_capital = yes }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_num_mils > 20 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-
-		set_temp_variable = { v2 = building_level@air_base }
-		multiply_temp_variable = { v2 = 25 }
-
-		set_temp_variable = { pending_penalty = pending_airbases }
-		multiply_temp_variable = { pending_penalty = 40 }
-		add_to_temp_variable = { v2 = pending_penalty }
-
-		if = { limit = { check_variable = { tgt_has_war = 0 } }
-			add_to_temp_variable = { v2 = 30 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 15 } }
-			add_to_temp_variable = { v2 = 20 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
-			add_to_temp_variable = { v2 = 30 }
-		}
-		if = { limit = { check_variable = { tgt_max_fuel < 100 } }
-			add_to_temp_variable = { v2 = 40 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
+		if = { limit = { threat > 0.15 } add_to_temp_variable = { AI_score = 15 } }
+		if = { limit = { threat > 0.3 } add_to_temp_variable = { AI_score = 15 } }
+		if = { limit = { threat > 0.5 } add_to_temp_variable = { AI_score = 20 } }
+		if = { limit = { is_coastal = yes } add_to_temp_variable = { AI_score = 15 } }
+		if = { limit = { is_capital = yes } add_to_temp_variable = { AI_score = 10 } }
 
 		set_temp_variable = { AI_score_type = 8 }
 		AI_record_score = yes
@@ -609,62 +358,26 @@ AI_get_airbase_score = {
 # Building Type 9: Fuel Silo
 AI_get_fuel_silo_score = {
 	if = { limit = { free_building_slots = { building = fuel_silo size > 0 include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-
-		set_temp_variable = { v1 = 140 }
-
-		if = { limit = { check_variable = { tgt_has_war = 1 } }
-			add_to_temp_variable = { v1 = 40 }
+		set_temp_variable = {
+			AI_score = {
+				value = 140
+				if = { limit = { value = tgt_has_war greater_than = 0 } add = 40 }
+				if = { limit = { value = tgt_neighbor_at_war greater_than = 0 } add = 30 }
+				if = { limit = { value = tgt_AI_threatened greater_than = 0 } add = 20 }
+				if = { limit = { value = tgt_max_fuel less_than = 250 } add = 30 }
+				if = { limit = { value = tgt_max_fuel less_than = 500 } add = 20 }
+				if = { limit = { value = tgt_max_fuel less_than = 750 } add = 15 }
+				if = { limit = { value = tgt_num_mils greater_than = 20 } add = 15 }
+				if = { limit = { value = tgt_num_mils greater_than = 40 } add = 15 }
+				subtract = { value = building_level@fuel_silo multiply = 30 }
+				subtract = { value = pending_fuel_silos multiply = 40 }
+				if = { limit = { value = tgt_max_fuel greater_than = 1500 } subtract = 40 }
+				if = { limit = { value = tgt_max_fuel greater_than = 2500 } subtract = 60 }
+				if = { limit = { value = tgt_has_war less_than = 1 multiply = { value = tgt_threat less_than = 0.1 } } subtract = 30 }
+				if = { limit = { value = tgt_avail_civs less_than = 10 } subtract = 25 }
+			}
 		}
-		if = { limit = { check_variable = { tgt_neighbor_at_war = 1 } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-		if = { limit = { check_variable = { tgt_AI_threatened = 1 } }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { check_variable = { tgt_max_fuel < 250 } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-		if = { limit = { check_variable = { tgt_max_fuel < 500 } }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { check_variable = { tgt_max_fuel < 750 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { tgt_num_mils > 20 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { tgt_num_mils > 40 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { is_coastal = yes }
-			add_to_temp_variable = { v1 = 10 }
-		}
-
-		set_temp_variable = { v2 = 0 }
-		set_temp_variable = { existing_silos = building_level@fuel_silo }
-		multiply_temp_variable = { existing_silos = 30 }
-		add_to_temp_variable = { v2 = existing_silos }
-
-		set_temp_variable = { pending_penalty = pending_fuel_silos }
-		multiply_temp_variable = { pending_penalty = 40 }
-		add_to_temp_variable = { v2 = pending_penalty }
-
-		if = { limit = { check_variable = { tgt_max_fuel > 1500 } }
-			add_to_temp_variable = { v2 = 40 }
-		}
-		if = { limit = { check_variable = { tgt_max_fuel > 2500 } }
-			add_to_temp_variable = { v2 = 60 }
-		}
-		if = { limit = { check_variable = { tgt_has_war = 0 } check_variable = { tgt_threat < 0.1 } }
-			add_to_temp_variable = { v2 = 30 }
-		}
-		if = { limit = { check_variable = { tgt_avail_civs < 10 } }
-			add_to_temp_variable = { v2 = 25 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
+		if = { limit = { is_coastal = yes } add_to_temp_variable = { AI_score = 10 } }
 
 		set_temp_variable = { AI_score_type = 9 }
 		AI_record_score = yes
@@ -674,57 +387,27 @@ AI_get_fuel_silo_score = {
 # Building Type 10: Network Infrastructure
 AI_get_network_infrastructure_score = {
 	if = { limit = { free_building_slots = { building = internet_station size > 0 include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-
-		set_temp_variable = { v1 = 125 }
-
+		set_temp_variable = {
+			AI_score = {
+				value = 125
+				if = { limit = { value = THIS.state_population_k greater_than = 100 } add = 5 }
+				if = { limit = { value = THIS.state_population_k greater_than = 500 } add = 10 }
+				if = { limit = { value = THIS.state_population_k greater_than = 1000 } add = 10 }
+				if = { limit = { value = THIS.state_population_k greater_than = 2000 } add = 10 }
+				if = { limit = { value = THIS.state_population_k greater_than = 4000 } add = 10 }
+				if = { limit = { value = THIS.state_population_k greater_than = 6000 } add = 15 }
+				if = { limit = { value = tgt_gdp_per_capita greater_than = 20 } add = 15 }
+				if = { limit = { value = tgt_gdp_per_capita greater_than = 30 } add = 10 }
+				subtract = { value = building_level@internet_station multiply = 25 }
+				subtract = { value = pending_internet multiply = 40 }
+				# Poor countries can't afford/utilize it
+				if = { limit = { value = tgt_gdp_per_capita less_than = 9.999 } subtract = 50 }
+				if = { limit = { value = tgt_gdp_per_capita less_than = 5.000 } subtract = 100 }
+			}
+		}
 		if = { limit = { check_variable = { building_level@infrastructure = 5 } }
-			add_to_temp_variable = { v1 = 50 }
+			add_to_temp_variable = { AI_score = 50 }
 		}
-		if = { limit = { check_variable = { THIS.state_population_k > 100 } }
-			add_to_temp_variable = { v1 = 5 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 500 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 1000 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 2000 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 4000 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 6000 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { tgt_gdp_per_capita > 20 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { tgt_gdp_per_capita > 30 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-
-		set_temp_variable = { v2 = 0 }
-		set_temp_variable = { existing_internet = building_level@internet_station }
-		multiply_temp_variable = { existing_internet = 25 }
-		add_to_temp_variable = { v2 = existing_internet }
-
-		set_temp_variable = { pending_penalty = pending_internet }
-		multiply_temp_variable = { pending_penalty = 40 }
-		add_to_temp_variable = { v2 = pending_penalty }
-
-		# Poor countries can't afford/utilize it
-		if = { limit = { check_variable = { tgt_gdp_per_capita < 9.999 } }
-			add_to_temp_variable = { v2 = 50 }
-		}
-		if = { limit = { check_variable = { tgt_gdp_per_capita < 5.000 } }
-			add_to_temp_variable = { v2 = 100 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
 
 		set_temp_variable = { AI_score_type = 10 }
 		AI_record_score = yes
@@ -734,53 +417,23 @@ AI_get_network_infrastructure_score = {
 # Building Type 11: Renewable Energy Infrastructure
 AI_get_renewable_energy_score = {
 	if = { limit = { free_building_slots = { building = renewable_energy_infra size > 0  include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-
-		set_temp_variable = { v1 = 100 }
-
-		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
-			add_to_temp_variable = { v1 = 5 }
+		set_temp_variable = {
+			AI_score = {
+				value = 85
+				if = { limit = { value = energy_balance_ratio less_than = 1.00 } add = 5 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.95 } add = 10 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.90 } add = 15 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.85 } add = 20 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.80 } add = 25 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.70 } add = 30 }
+				add = { value = modifier@state_renewable_capacity_factor_modifier multiply = 64 } # ~ capacity factor * 175 (factor averages 1)
+				add = { value = tgt_renewable_mult multiply = 20 }
+				if = { limit = { value = tgt_oil_imported greater_than = 0 } add = 30 }
+				subtract = { value = pending_renewable multiply = 40 }
+				if = { limit = { value = tgt_renewable_mult less_than = 1.50 } subtract = 1000 }
+				if = { limit = { value = energy_balance_ratio greater_than = 1.25 } subtract = 1000 }
+			}
 		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-
-		set_temp_variable = { state_renewable_capacity_factor_score = modifier@state_renewable_capacity_factor_modifier }
-		multiply_temp_variable = { state_renewable_capacity_factor_score = 64 } # ~ capacity factor * 175 (factor averages 1)
-		add_to_temp_variable = { v1 = state_renewable_capacity_factor_score }
-
-		set_temp_variable = { renewable_energy_gain_multiplier_score = tgt_renewable_mult }
-		multiply_temp_variable = { renewable_energy_gain_multiplier_score = 20 }
-		add_to_temp_variable = { v1 = renewable_energy_gain_multiplier_score }
-
-		if = { limit = { check_variable = { tgt_oil_imported > 0 } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-
-		set_temp_variable = { v2 = 0 }
-
-		if = { limit = { check_variable = { tgt_renewable_mult < 1.50 } }
-			add_to_temp_variable = { v2 = 1000 }
-		}
-
-		if = { limit = { check_variable = { energy_balance_ratio > 1.25 } }
-			add_to_temp_variable = { v2 = 1000 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
 
 		set_temp_variable = { AI_score_type = 11 }
 		AI_record_score = yes
@@ -790,43 +443,22 @@ AI_get_renewable_energy_score = {
 # Building Type 12: Fossil Fuel Powerplant
 AI_get_fossil_powerplant_score = {
 	if = { limit = { free_building_slots = { building = fossil_powerplant size > 0  include_locked = no } }
-		set_temp_variable = { AI_score = 0 }
-
-		set_temp_variable = { v1 = 95 }
-
-		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
-			add_to_temp_variable = { v1 = 10 }
+		set_temp_variable = {
+			AI_score = {
+				value = 80
+				if = { limit = { value = energy_balance_ratio less_than = 1.00 } add = 10 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.95 } add = 15 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.90 } add = 20 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.85 } add = 25 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.80 } add = 30 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.70 } add = 40 }
+				if = { limit = { value = tgt_idea_heavy_power_restrict greater_than = 0 } add = 10 }
+				if = { limit = { value = tgt_idea_some_power_restrict greater_than = 0 } add = 5 }
+				if = { limit = { value = tgt_idea_heavy_consumption greater_than = 0 } subtract = 25 }
+				if = { limit = { value = tgt_idea_some_consumption greater_than = 0 } subtract = 15 }
+				subtract = { value = pending_fossil multiply = 40 }
+			}
 		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
-			add_to_temp_variable = { v1 = 40 }
-		}
-		if = { limit = { check_variable = { tgt_idea_heavy_power_restrict = 1 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_idea_some_power_restrict = 1 } }
-			add_to_temp_variable = { v1 = 5 }
-		}
-
-		if = { limit = { check_variable = { tgt_idea_heavy_consumption = 1 } }
-			add_to_temp_variable = { v1 = -25 }
-		}
-		if = { limit = { check_variable = { tgt_idea_some_consumption = 1 } }
-			add_to_temp_variable = { v1 = -15 }
-		}
-
-		add_to_temp_variable = { AI_score = v1 }
 
 		set_temp_variable = { AI_score_type = 12 }
 		AI_record_score = yes
@@ -836,112 +468,63 @@ AI_get_fossil_powerplant_score = {
 # Building Type 13: Nuclear Reactor
 # Reactor-policy check hoisted to caller as tgt_can_build_reactors (ideas don't change mid-loop).
 AI_get_nuclear_reactor_score = {
-	if = { limit = {
-			free_building_slots = { building = nuclear_reactor size > 0 include_locked = no }
+	if = { limit = { free_building_slots = { building = nuclear_reactor size > 0 include_locked = no } }
+		# Well below fossil so fossil stays the default pick for covering a deficit
+		set_temp_variable = {
+			AI_score = {
+				value = 30
+				if = { limit = { value = energy_balance_ratio less_than = 1.00 } add = 10 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.95 } add = 15 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.90 } add = 20 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.85 } add = 25 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.80 } add = 30 }
+				if = { limit = { value = energy_balance_ratio less_than = 0.70 } add = 40 }
+				if = { limit = { value = tgt_gdp_per_capita greater_than = 25 } add = 10 }
+				if = { limit = { value = tgt_gdp_per_capita greater_than = 35 } add = 10 }
+				if = { limit = { value = tgt_gdp_per_capita greater_than = 45 } add = 5 }
+				if = { limit = { value = THIS.state_population_k greater_than = 2000 } add = 5 }
+				if = { limit = { value = THIS.state_population_k greater_than = 4000 } add = 10 }
+				if = { limit = { value = THIS.state_population_k greater_than = 6000 } add = 5 }
+				if = { limit = { value = tgt_oil_imported greater_than = 0 } add = 15 }
+				if = { limit = { value = tgt_idea_heavy_power_restrict greater_than = 0 } add = 10 }
+				if = { limit = { value = tgt_idea_some_power_restrict greater_than = 0 } add = 5 }
+				# Can fuel its own reactors
+				if = { limit = { value = tgt_enrichment_facilities greater_than = 0 } add = 25 }
+				if = { limit = { value = tgt_nuclear_reactors less_than = 1 } subtract = 75 }
+				if = { limit = { value = tgt_gdp_per_capita less_than = 20 } subtract = 100 }
+				if = { limit = { value = tgt_gdp_total less_than = 500 } subtract = 75 }
+				if = { limit = { value = tgt_interest_rate greater_than = 10.5 } subtract = 60 }
+				if = { limit = { value = tgt_interest_rate greater_than = 8.5 } subtract = 40 }
+				if = { limit = { value = energy_balance_ratio greater_than = 0.999 } subtract = 1000 }
+				subtract = { value = building_level@nuclear_reactor add = pending_nuclear multiply = 50 }
+				if = { limit = { value = tgt_idea_heavy_consumption greater_than = 0 } subtract = 30 }
+				if = { limit = { value = tgt_idea_some_consumption greater_than = 0 } subtract = 20 }
+			}
 		}
-		set_temp_variable = { AI_score = 0 }
-
-		set_temp_variable = { v1 = 110 }
-
-		if = { limit = { check_variable = { energy_balance_ratio < 1.00 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.95 } }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.90 } }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.85 } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.80 } }
-			add_to_temp_variable = { v1 = 35 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio < 0.70 } }
-			add_to_temp_variable = { v1 = 45 }
-		}
-		if = { limit = { check_variable = { tgt_gdp_per_capita > 25 } }
-			add_to_temp_variable = { v1 = 20 }
-		}
-		if = { limit = { check_variable = { tgt_gdp_per_capita > 35 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { tgt_gdp_per_capita > 45 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 2000 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 4000 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-		if = { limit = { check_variable = { THIS.state_population_k > 6000 } }
-			add_to_temp_variable = { v1 = 10 }
-		}
-		if = { limit = { check_variable = { tgt_oil_imported > 0 } }
-			add_to_temp_variable = { v1 = 25 }
-		}
-		if = { limit = { check_variable = { tgt_idea_heavy_power_restrict = 1 } }
-			add_to_temp_variable = { v1 = 30 }
-		}
-		if = { limit = { check_variable = { tgt_idea_some_power_restrict = 1 } }
-			add_to_temp_variable = { v1 = 15 }
-		}
-
-		set_temp_variable = { v2 = 0 }
-		if = { limit = { check_variable = { tgt_gdp_per_capita < 20 } }
-			add_to_temp_variable = { v2 = 100 }
-		}
-		if = { limit = { check_variable = { tgt_gdp_total < 500 } }
-			add_to_temp_variable = { v2 = 75 }
-		}
-		if = { limit = { check_variable = { tgt_interest_rate > 10.5 } }
-			add_to_temp_variable = { v2 = 60 }
-		}
-		if = { limit = { check_variable = { tgt_interest_rate > 8.5 } }
-			add_to_temp_variable = { v2 = 40 }
-		}
-		if = { limit = { check_variable = { energy_balance_ratio > 1.15 } }
-			add_to_temp_variable = { v2 = 1000 }
-		}
-		set_temp_variable = { existing_reactors = building_level@nuclear_reactor }
-		multiply_temp_variable = { existing_reactors = 50 }
-		add_to_temp_variable = { v2 = existing_reactors }
-		if = { limit = { check_variable = { tgt_idea_heavy_consumption = 1 } }
-			add_to_temp_variable = { v2 = 30 }
-		}
-		if = { limit = { check_variable = { tgt_idea_some_consumption = 1 } }
-			add_to_temp_variable = { v2 = 20 }
-		}
-
-		subtract_from_temp_variable = { v1 = v2 }
-		add_to_temp_variable = { AI_score = v1 }
 
 		set_temp_variable = { AI_score_type = 13 }
 		AI_record_score = yes
 	}
 }
 
-AI_edge_case_calculations = {
-	if = { limit = { check_variable = { THIS.state_population_k < 100 } }
-		subtract_from_temp_variable = { AI_score = 20 }
+# State-wide score change applied to every building type by AI_record_score
+AI_get_state_score_adjustment = {
+	set_temp_variable = {
+		state_score_adjustment = {
+			value = 0
+			if = { limit = { value = THIS.state_population_k less_than = 100 } subtract = 20 }
+			if = { limit = { value = THIS.state_population_k less_than = 85 } subtract = 40 }
+			if = { limit = { value = THIS.state_population_k less_than = 60 } subtract = 80 }
+		}
 	}
-	if = { limit = { check_variable = { THIS.state_population_k < 85 } }
-		subtract_from_temp_variable = { AI_score = 40 }
-	}
-	if = { limit = { check_variable = { THIS.state_population_k < 60 } }
-		subtract_from_temp_variable = { AI_score = 80 }
-	}
-
 	if = { limit = { has_state_flag = currently_encouraged_investments }
-		add_to_temp_variable = { AI_score = 20 }
+		add_to_temp_variable = { state_score_adjustment = 20 }
 	}
 	if = { limit = { has_state_flag = HOL_autonomy_economic_zone }
-		add_to_temp_variable = { AI_score = 20 }
+		add_to_temp_variable = { state_score_adjustment = 20 }
 	}
 	if = { limit = { has_state_flag = ENG_found_invest_northern_ireland_active }
-		add_to_temp_variable = { AI_score = 20 }
+		add_to_temp_variable = { state_score_adjustment = 20 }
 	}
 }
 
@@ -1000,10 +583,17 @@ AI_country_selection_calculation = {
 		add_to_temp_variable = { AI_country_score = 40 }
 	}
 
-	set_temp_variable = { opinion_value = opinion@PREV }
-	multiply_temp_variable = { opinion_value = 0.30 }
-	clamp_temp_variable = { var = opinion_value min = -75 max = 75 }
-	add_to_temp_variable = { AI_country_score = opinion_value }
+	set_temp_variable = {
+		AI_country_score = {
+			value = AI_country_score
+			add = { value = opinion@PREV multiply = 0.30 clamp = { min = -75 max = 75 } }
+			if = { limit = { value = corporate_tax_rate greater_than = 30 } subtract = { value = corporate_tax_rate multiply = 0.50 } }
+			# Countries under 30k gdpc gain 2 score per 1k gdpc below 30k, richer ones lose the same
+			add = { value = gdp_per_capita multiply = -2 add = 60 }
+			# Big economies are slightly less likely to get investments, to thin out the flood into developed European countries
+			add = { value = gdp_total multiply = -0.002 clamp = { min = -20 max = 0 } }
+		}
+	}
 
 	if = { limit = { has_idea = corruption_level_10 }
 		add_to_temp_variable = { AI_country_score = -25 }
@@ -1033,13 +623,6 @@ AI_country_selection_calculation = {
 		add_to_temp_variable = { AI_country_score = -2 }
 	}
 
-	# Corporate Tax Evaluation
-	if = { limit = { check_variable = { corporate_tax_rate > 30 } }
-		set_temp_variable = { corp_temp = corporate_tax_rate }
-		multiply_temp_variable = { corp_temp = -0.50 }
-		add_to_temp_variable = { AI_country_score = corp_temp }
-	}
-
 	if = {
 		limit = {
 			country_exists = PREV
@@ -1048,22 +631,6 @@ AI_country_selection_calculation = {
 		add_to_temp_variable = { AI_country_score = 25 }
 	}
 
-	# Countries under 30k gdpc will receive a bonus to score of 1.5 per gdcp under 30k and ones above will receive a score reduction for the same amount.
-	set_temp_variable = { gdpc_scaler = gdp_per_capita }
-	multiply_temp_variable = { gdpc_scaler = -2 }
-	add_to_temp_variable = { gdpc_scaler = 60 }
-	add_to_temp_variable = { AI_country_score = gdpc_scaler }
-	# Countries with big economies slightly less likely to get investments, mostly to slightly reduce the mass amount of investments going into developed European countries
-	set_temp_variable = { gdp_scaler = gdp_total }
-	multiply_temp_variable = { gdp_scaler = -0.002 }
-	clamp_temp_variable = { var = gdp_scaler min = -20 }
-	add_to_temp_variable = { AI_country_score = gdp_scaler }
-	# if = {
-	# 	limit = { check_variable = { gdp_per_capita > 35 } }
-	# 	set_temp_variable = { gdp_scaler = gdp_per_capita }
-	# 	subtract_from_temp_variable = { gdp_scaler = 35 }
-	# 	multiply_temp_variable = { gdp_scaler = -2 }
-	# 	add_to_temp_variable = { AI_country_score = gdp_scaler }
 	# AI Support the other AI
 	if = {
 		limit = {
@@ -1078,11 +645,9 @@ AI_country_selection_calculation = {
 	# Invest in Enemy of my Enemy
 	if = {
 		limit = {
-			OR = {
-				any_enemy_country = {
+			any_enemy_country = {
+				OR = {
 					has_war_with = ROOT
-				}
-				any_enemy_country = {
 					has_opinion = { target = ROOT value < -50 }
 				}
 			}
@@ -1096,17 +661,22 @@ AI_country_selection_calculation = {
 		max = 75
 		integer = yes
 	}
-	subtract_from_temp_variable = { AI_country_score = randomizer_country_score }
-
-	set_temp_variable = { investments_score_modifier = 1 }
-	subtract_from_temp_variable = { investments_score_modifier = THIS.modifier@receiving_investment_cost_modifier }
-	add_to_temp_variable = { investments_score_modifier = inv_cost_modifier }
-	clamp_temp_variable = { var = investments_score_modifier min = 0.50 max = 1.50 }
-	multiply_temp_variable = { AI_country_score = investments_score_modifier }
-
-	set_temp_variable = { investments_duration_modifier = 1 }
-	add_to_temp_variable = { investments_duration_modifier = THIS.modifier@receiving_investment_duration_modifier }
-	add_to_temp_variable = { investments_duration_modifier = inv_duration_modifier }
-	clamp_temp_variable = { var = investments_duration_modifier min = 0.50 max = 1.50 }
-	multiply_temp_variable = { AI_country_score = investments_duration_modifier }
+	set_temp_variable = {
+		AI_country_score = {
+			value = AI_country_score
+			subtract = randomizer_country_score
+			multiply = {
+				value = 1
+				subtract = modifier@receiving_investment_cost_modifier
+				add = inv_cost_modifier
+				clamp = { min = 0.50 max = 1.50 }
+			}
+			multiply = {
+				value = 1
+				add = modifier@receiving_investment_duration_modifier
+				add = inv_duration_modifier
+				clamp = { min = 0.50 max = 1.50 }
+			}
+		}
+	}
 }

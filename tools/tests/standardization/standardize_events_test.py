@@ -140,6 +140,32 @@ def test_event_idempotent():
     assert once == twice
 
 
+def test_option_nested_lines_are_reindented_by_brace_depth():
+    # Issue #4650: lines inside a nested block kept the source's wrong depth.
+    out = _standardize_event(
+        [
+            "country_event = {",
+            "\tid = test.3",
+            "\tis_triggered_only = yes",
+            "\toption = {",
+            "\t\tname = test.3.a",
+            '\t\tlog = "[GetDateText]: [This.GetName]: test.3.a executed"',
+            "\t\t34 = {",
+            "\t\t\tadd_building_construction = {",
+            "\t\t\ttype = infrastructure",
+            "\t\t\tlevel = 1",
+            "\t\t\t}",
+            "\t\t}",
+            "\t}",
+            "}",
+        ]
+    )
+    assert "\t\t\tadd_building_construction = {" in out
+    assert "\t\t\t\ttype = infrastructure" in out
+    assert "\t\t\t\tlevel = 1" in out
+    assert _standardize_event(out) == out
+
+
 _COMMENTED_EVENT = [
     "country_event = {",
     "\tid = test.2",

@@ -73,12 +73,15 @@ def test_shared_module_change_selects_its_transitive_consumers():
 
 
 def test_linting_wrapper_change_selects_the_validator_it_wraps():
-    # validate_common_mistakes imports linting.check_common_mistakes, so the
-    # wrapper's logic changes what the validator reports.
+    # Both validate_common_mistakes and validate_decisions import this scanner.
     batch, adhoc = vb.select_for_changed_files(
         ["tools/linting/check_common_mistakes.py"]
     )
-    assert {spec.name for spec in batch} == {"common-mistakes", "equipment-variants"}
+    assert {spec.name for spec in batch} == {
+        "common-mistakes",
+        "decisions",
+        "equipment-variants",
+    }
     assert adhoc == []
 
 
