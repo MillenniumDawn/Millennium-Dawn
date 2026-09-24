@@ -770,27 +770,25 @@ def _build_event_index(root_dir):
     return index
 
 
-def _get_event_block(event_id, event_blocks=None):
-    """Return the definition block text for an event id, or None.
-
-    Tests inject event_blocks (id -> text); live runs resolve against the
-    events/ tree with misses cached, so an unresolvable id simply ends the
-    chain instead of erroring.
-    """
+def _get_event_block(event_id, event_blocks=None, event_index=None):
+    """Return the definition block text for an event id, or None."""
     if event_blocks is not None:
         return event_blocks.get(event_id)
-    if event_id in _EVENT_BLOCKS:
-        return _EVENT_BLOCKS[event_id]
     global _EVENT_INDEX, _EVENT_INDEX_BUILT
-    if not _EVENT_INDEX_BUILT:
-        try:
-            root_dir = get_root_dir()
-        except Exception:
-            root_dir = None
-        _EVENT_INDEX = _build_event_index(root_dir)
-        _EVENT_INDEX_BUILT = True
+    if event_index is None:
+        if not _EVENT_INDEX_BUILT:
+            try:
+                root_dir = get_root_dir()
+            except Exception:
+                root_dir = None
+            _EVENT_INDEX = _build_event_index(root_dir)
+            _EVENT_INDEX_BUILT = True
+        event_index = _EVENT_INDEX
+    filepath = event_index.get(event_id)
+    key = (filepath, event_id)
+    if key in _EVENT_BLOCKS:
+        return _EVENT_BLOCKS[key]
     block = None
-    filepath = _EVENT_INDEX.get(event_id)
     if filepath:
         try:
             with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
@@ -802,12 +800,12 @@ def _get_event_block(event_id, event_blocks=None):
             if id_match and id_match.group(1) == event_id:
                 block = candidate
                 break
-    _EVENT_BLOCKS[event_id] = block
+    _EVENT_BLOCKS[key] = block
     return block
 
 
 def _event_chain_leads_to_war(
-    event_id, owner_tag, event_blocks=None, _seen=None, _depth=0
+    event_id, owner_tag, event_blocks=None, _seen=None, _depth=0, event_index=None
 ):
     """Follow a sent event (and its chained sends) for owner-scope war.
 
@@ -820,14 +818,14 @@ def _event_chain_leads_to_war(
     if _depth > _EVENT_CHAIN_MAX_DEPTH or event_id in _seen:
         return False, []
     _seen = _seen | {event_id}
-    block = _get_event_block(event_id, event_blocks)
+    block = _get_event_block(event_id, event_blocks, event_index)
     if not block:
         return False, []
     if _war_at_scope(block, owner_tag):
         return True, [event_id]
     for sent_id in _owner_scope_event_sends(block, owner_tag):
         leads, chain = _event_chain_leads_to_war(
-            sent_id, owner_tag, event_blocks, _seen, _depth + 1
+            sent_id, owner_tag, event_blocks, _seen, _depth + 1, event_index
         )
         if leads:
             return True, [event_id] + chain
