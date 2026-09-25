@@ -1,0 +1,378 @@
+# common/scripted_effects/md_submod_pop_effects.txt
+
+md_submod_pop_graph_init = {
+    set_temp_variable = { emp_calc = 1 }
+    subtract_from_temp_variable = { emp_calc = total_unemployed_percentage_display }
+    multiply_temp_variable = { emp_calc = 100 }
+    set_variable = { md_current_employment_rate = emp_calc }
+
+    resize_array = { array = pop_array value = population_total_m size = 120 }
+    resize_array = { array = workforce_array value = workforce_total_display size = 120 }
+    resize_array = { array = employment_array value = md_current_employment_rate size = 120 }
+    set_variable = { pop_array^0 = population_total_m }
+    set_variable = { workforce_array^0 = workforce_total_display }
+    set_variable = { employment_array^0 = md_current_employment_rate }
+}
+
+# 1. THE POPULATION & WORKFORCE MONTHLY SHIFTER (Self-Healing)
+md_submod_pop_graph_on_monthly = {
+    # Calculate Employment Rate % (100 - Unemployment %)
+    set_temp_variable = { emp_calc = 1 }
+    subtract_from_temp_variable = { emp_calc = total_unemployed_percentage_display }
+    multiply_temp_variable = { emp_calc = 100 }
+    set_variable = { md_current_employment_rate = emp_calc }
+
+    if = {
+        limit = { NOT = { check_variable = { pop_array^num > 0 } } }
+        md_submod_pop_graph_init = yes
+    }
+
+    set_variable = { pop_array^current_gdp_graph_end = population_total_m }
+    set_variable = { workforce_array^current_gdp_graph_end = workforce_total_display }
+    set_variable = { employment_array^current_gdp_graph_end = md_current_employment_rate }
+
+    # When month 1 arrives, calibrate index 0 to true calculated baseline to eliminate startup jump/tear!
+    if = {
+        limit = { check_variable = { current_gdp_graph_end = 1 } }
+        set_variable = { pop_array^0 = population_total_m }
+        set_variable = { workforce_array^0 = workforce_total_display }
+        set_variable = { employment_array^0 = md_current_employment_rate }
+    }
+}
+
+# 2. THE MATH TRANSLATOR & FAILSAFE
+update_md_flaxbeard_pop_graph = {
+    # Calculate Employment Rate %
+    set_temp_variable = { emp_calc = 1 }
+    subtract_from_temp_variable = { emp_calc = total_unemployed_percentage_display }
+    multiply_temp_variable = { emp_calc = 100 }
+    set_variable = { md_current_employment_rate = emp_calc }
+
+    if = {
+        limit = { NOT = { check_variable = { pop_array^num > 0 } } }
+        md_submod_pop_graph_init = yes
+    }
+
+    clear_array = md_flax_offsets_pop_blue
+    clear_array = md_flax_offsets_pop_red
+    clear_array = md_flax_slopes_pop
+
+    clear_array = md_flax_offsets_workforce_yellow
+    clear_array = md_flax_offsets_workforce_red
+    clear_array = md_flax_slopes_workforce
+
+    clear_array = md_flax_offsets_employment_green
+    clear_array = md_flax_offsets_employment_red
+    clear_array = md_flax_slopes_employment
+    
+    # --- YOY (JANUARY-ONLY SNAPSHOT) ---
+    set_temp_variable = { months_since_jan = global.month }
+    subtract_from_temp_variable = { months_since_jan = 1 }
+    
+    set_temp_variable = { recent_jan_idx = current_gdp_graph_end }
+    subtract_from_temp_variable = { recent_jan_idx = months_since_jan }
+    if = { limit = { check_variable = { recent_jan_idx < 0 } } set_temp_variable = { recent_jan_idx = 0 } }
+    
+    set_temp_variable = { prev_jan_idx = recent_jan_idx }
+    subtract_from_temp_variable = { prev_jan_idx = 12 }
+    if = { limit = { check_variable = { prev_jan_idx < 0 } } set_temp_variable = { prev_jan_idx = 0 } }
+    
+    set_temp_variable = { recent_jan_pop = pop_array^recent_jan_idx }
+    set_temp_variable = { prev_jan_pop = pop_array^prev_jan_idx }
+    if = { limit = { check_variable = { prev_jan_pop < 0.001 } } set_temp_variable = { prev_jan_pop = 0.001 } }
+    
+    # Population YoY Change
+    set_variable = { md_yoy_pop_change_m = recent_jan_pop }
+    subtract_from_variable = { md_yoy_pop_change_m = prev_jan_pop }
+
+    set_variable = { md_yoy_pop_change_pct = md_yoy_pop_change_m }
+    divide_variable = { md_yoy_pop_change_pct = prev_jan_pop }
+    multiply_variable = { md_yoy_pop_change_pct = 100 }
+    # ---------------------------------------------
+
+    # LEFT AXIS BOUNDS: Population & Workforce share the same scale
+    set_temp_variable = { true_max = pop_array^0 }
+    set_temp_variable = { true_min = workforce_array^0 } 
+    set_temp_variable = { max_jump = 0 }
+    
+    # Find max from population array and min from workforce array
+    for_each_loop = {
+        array = pop_array
+        value = v
+        index = i
+        
+        if = {
+            limit = { NOT = { check_variable = { i > current_gdp_graph_end } } }
+            if = { limit = { check_variable = { v > true_max } } set_temp_variable = { true_max = v } }
+            
+            set_temp_variable = { next_i = i }
+            add_to_temp_variable = { next_i = 1 }
+            if = {
+                limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
+                set_temp_variable = { jump = pop_array^next_i }
+                subtract_from_temp_variable = { jump = v }
+                if = { limit = { check_variable = { jump < 0 } } multiply_temp_variable = { jump = -1 } }
+                if = { limit = { check_variable = { jump > max_jump } } set_temp_variable = { max_jump = jump } }
+            }
+        }
+    }
+
+    for_each_loop = {
+        array = workforce_array
+        value = v
+        index = i
+        
+        if = {
+            limit = { NOT = { check_variable = { i > current_gdp_graph_end } } }
+            if = { limit = { check_variable = { v < true_min } } set_temp_variable = { true_min = v } }
+            if = { limit = { check_variable = { v > true_max } } set_temp_variable = { true_max = v } }
+            
+            set_temp_variable = { next_i = i }
+            add_to_temp_variable = { next_i = 1 }
+            if = {
+                limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
+                set_temp_variable = { jump = workforce_array^next_i }
+                subtract_from_temp_variable = { jump = v }
+                if = { limit = { check_variable = { jump < 0 } } multiply_temp_variable = { jump = -1 } }
+                if = { limit = { check_variable = { jump > max_jump } } set_temp_variable = { max_jump = jump } }
+            }
+        }
+    }
+
+    set_temp_variable = { data_diff = true_max }
+    subtract_from_temp_variable = { data_diff = true_min }
+    
+    # FAILSAFE PADDING
+    if = {
+        limit = { check_variable = { data_diff < 1 } }
+        set_temp_variable = { high = true_max }
+        add_to_temp_variable = { high = 1.0 }
+        set_temp_variable = { low = true_min }
+        subtract_from_temp_variable = { low = 1.0 }
+    }
+    else = {
+        set_temp_variable = { pad = data_diff }
+        multiply_temp_variable = { pad = 0.1 } # 10% padding
+        set_temp_variable = { high = true_max }
+        add_to_temp_variable = { high = pad }
+        set_temp_variable = { low = true_min }
+        subtract_from_temp_variable = { low = pad }
+    }
+
+    if = { limit = { check_variable = { low < 0 } } set_temp_variable = { low = 0 } }
+    
+    set_temp_variable = { diff = high }
+    subtract_from_temp_variable = { diff = low }
+    if = { limit = { check_variable = { diff < 0.01 } } set_temp_variable = { diff = 0.01 } }
+
+    # ====================================================
+    # DYNAMIC ANTI-TEAR ZOOM 
+    # ====================================================
+    set_temp_variable = { safe_diff = max_jump }
+    multiply_temp_variable = { safe_diff = 45 }
+    divide_temp_variable = { safe_diff = 10 }
+    
+    if = {
+        limit = { check_variable = { diff < safe_diff } }
+        set_temp_variable = { shortfall = safe_diff }
+        subtract_from_temp_variable = { shortfall = diff }
+        divide_temp_variable = { shortfall = 2 }
+        
+        add_to_temp_variable = { high = shortfall }
+        subtract_from_temp_variable = { low = shortfall }
+        if = { limit = { check_variable = { low < 0 } } set_temp_variable = { low = 0 } }
+        set_temp_variable = { diff = safe_diff }
+    }
+    # ====================================================
+    
+    # LEFT Y-AXIS LABELS (Millions of People)
+    set_temp_variable = { step = diff }
+    multiply_temp_variable = { step = 0.1 } 
+    set_temp_variable = { buf = low }
+    for_loop_effect = {
+        start = 0 end = 11
+        set_variable = { md_pop_y_axis_label^v = buf }
+        add_to_temp_variable = { buf = step }
+    }
+
+    # 1. DRAW POPULATION LINE (Blue on up/flat, Red on down)
+    for_each_loop = {
+        array = pop_array
+        value = v
+        index = i
+
+        if = {
+            limit = { check_variable = { i > current_gdp_graph_end } }
+            add_to_array = { md_flax_offsets_pop_blue = 1000 } 
+            add_to_array = { md_flax_offsets_pop_red = 1000 } 
+            add_to_array = { md_flax_slopes_pop = 50 }
+        }
+        else = {
+            set_temp_variable = { y1_val = v }
+            subtract_from_temp_variable = { y1_val = low }
+            divide_temp_variable = { y1_val = diff } 
+            set_temp_variable = { y1_px = y1_val }
+            multiply_temp_variable = { y1_px = 450 }
+            
+            set_temp_variable = { next_i = i }
+            add_to_temp_variable = { next_i = 1 }
+            
+            if = {
+                limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+                set_temp_variable = { y2_val = pop_array^next_i }
+            }
+            else = {
+                set_temp_variable = { y2_val = v } 
+            }
+            
+            subtract_from_temp_variable = { y2_val = low }
+            divide_temp_variable = { y2_val = diff } 
+            set_temp_variable = { y2_px = y2_val }
+            multiply_temp_variable = { y2_px = 450 } 
+
+            set_temp_variable = { offset = y1_px }
+            multiply_temp_variable = { offset = -1 }
+
+            if = {
+                limit = { check_variable = { y2_val < y1_val } } # Dropping = Red
+                add_to_array = { md_flax_offsets_pop_red = offset }
+                add_to_array = { md_flax_offsets_pop_blue = 1000 }
+            }
+            else = { # Up / Flat = Blue
+                add_to_array = { md_flax_offsets_pop_blue = offset }
+                add_to_array = { md_flax_offsets_pop_red = 1000 }
+            }
+
+            set_temp_variable = { slope = y2_px }
+            subtract_from_temp_variable = { slope = y1_px }
+            divide_temp_variable = { slope = 2 }
+            add_to_temp_variable = { slope = 50 }
+           
+            if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
+            if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
+           
+            round_variable = slope
+            add_to_array = { md_flax_slopes_pop = slope }
+        }
+    }
+
+    # 2. DRAW WORKFORCE LINE (Yellow on up/flat, Red on down)
+    for_each_loop = {
+        array = workforce_array
+        value = v
+        index = i
+
+        if = {
+            limit = { check_variable = { i > current_gdp_graph_end } }
+            add_to_array = { md_flax_offsets_workforce_yellow = 1000 } 
+            add_to_array = { md_flax_offsets_workforce_red = 1000 } 
+            add_to_array = { md_flax_slopes_workforce = 50 }
+        }
+        else = {
+            set_temp_variable = { y1_val = v }
+            subtract_from_temp_variable = { y1_val = low }
+            divide_temp_variable = { y1_val = diff } 
+            set_temp_variable = { y1_px = y1_val }
+            multiply_temp_variable = { y1_px = 450 }
+            
+            set_temp_variable = { next_i = i }
+            add_to_temp_variable = { next_i = 1 }
+            
+            if = {
+                limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+                set_temp_variable = { y2_val = workforce_array^next_i }
+            }
+            else = {
+                set_temp_variable = { y2_val = v } 
+            }
+            
+            subtract_from_temp_variable = { y2_val = low }
+            divide_temp_variable = { y2_val = diff } 
+            set_temp_variable = { y2_px = y2_val }
+            multiply_temp_variable = { y2_px = 450 } 
+
+            set_temp_variable = { offset = y1_px }
+            multiply_temp_variable = { offset = -1 }
+
+            if = {
+                limit = { check_variable = { y2_val < y1_val } } # Dropping = Red
+                add_to_array = { md_flax_offsets_workforce_red = offset }
+                add_to_array = { md_flax_offsets_workforce_yellow = 1000 }
+            }
+            else = { # Up / Flat = Yellow
+                add_to_array = { md_flax_offsets_workforce_yellow = offset }
+                add_to_array = { md_flax_offsets_workforce_red = 1000 }
+            }
+
+            set_temp_variable = { slope = y2_px }
+            subtract_from_temp_variable = { slope = y1_px }
+            divide_temp_variable = { slope = 2 }
+            add_to_temp_variable = { slope = 50 }
+           
+            if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
+            if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
+           
+            round_variable = slope
+            add_to_array = { md_flax_slopes_workforce = slope }
+        }
+    }
+
+    # 3. DRAW EMPLOYMENT RATE LINE (Green on up/flat, Red on down) — Fixed 0% to 100% Right Axis
+    for_each_loop = {
+        array = employment_array
+        value = v
+        index = i
+
+        if = {
+            limit = { check_variable = { i > current_gdp_graph_end } }
+            add_to_array = { md_flax_offsets_employment_green = 1000 } 
+            add_to_array = { md_flax_offsets_employment_red = 1000 } 
+            add_to_array = { md_flax_slopes_employment = 50 }
+        }
+        else = {
+            set_temp_variable = { y1_val = v }
+            divide_temp_variable = { y1_val = 100 } 
+            set_temp_variable = { y1_px = y1_val }
+            multiply_temp_variable = { y1_px = 450 }
+            
+            set_temp_variable = { next_i = i }
+            add_to_temp_variable = { next_i = 1 }
+            
+            if = {
+                limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+                set_temp_variable = { y2_val = employment_array^next_i }
+            }
+            else = {
+                set_temp_variable = { y2_val = v } 
+            }
+            
+            divide_temp_variable = { y2_val = 100 } 
+            set_temp_variable = { y2_px = y2_val }
+            multiply_temp_variable = { y2_px = 450 } 
+
+            set_temp_variable = { offset = y1_px }
+            multiply_temp_variable = { offset = -1 }
+
+            if = {
+                limit = { check_variable = { y2_val < y1_val } } # Dropping = Red
+                add_to_array = { md_flax_offsets_employment_red = offset }
+                add_to_array = { md_flax_offsets_employment_green = 1000 }
+            }
+            else = { # Up / Flat = Green
+                add_to_array = { md_flax_offsets_employment_green = offset }
+                add_to_array = { md_flax_offsets_employment_red = 1000 }
+            }
+
+            set_temp_variable = { slope = y2_px }
+            subtract_from_temp_variable = { slope = y1_px }
+            divide_temp_variable = { slope = 2 }
+            add_to_temp_variable = { slope = 50 }
+           
+            if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
+            if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
+           
+            round_variable = slope
+            add_to_array = { md_flax_slopes_employment = slope }
+        }
+    }
+}

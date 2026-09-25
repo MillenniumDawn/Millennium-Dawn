@@ -1,0 +1,194 @@
+# common/scripted_effects/md_submod_inflation_effects.txt
+
+md_submod_inflation_graph_init = {
+    set_temp_variable = { init_infl_pct = inflation_rate_var }
+    multiply_temp_variable = { init_infl_pct = 100 }
+    resize_array = { array = inflation_array value = init_infl_pct size = 120 }
+    set_variable = { inflation_array^0 = init_infl_pct }
+}
+
+# 1. THE INFLATION MONTHLY SHIFTER (Self-Healing)
+md_submod_inflation_graph_on_monthly = {
+    set_temp_variable = { current_infl_pct = inflation_rate_var }
+    multiply_temp_variable = { current_infl_pct = 100 }
+
+    if = {
+        limit = { NOT = { check_variable = { inflation_array^num > 0 } } }
+        md_submod_inflation_graph_init = yes
+    }
+    set_variable = { inflation_array^current_gdp_graph_end = current_infl_pct }
+    
+}
+
+# 2. THE MATH TRANSLATOR & FAILSAFE
+update_md_flaxbeard_inflation_graph = {
+    if = {
+        limit = { NOT = { check_variable = { inflation_array^num > 0 } } }
+        md_submod_inflation_graph_init = yes
+    }
+
+    clear_array = md_flax_offsets_inflation_green
+    clear_array = md_flax_offsets_inflation_red
+    clear_array = md_flax_slopes_inflation
+    
+    # --- YOY (JANUARY-ONLY SNAPSHOT) ---
+    set_temp_variable = { months_since_jan = global.month }
+    subtract_from_temp_variable = { months_since_jan = 1 }
+    
+    set_temp_variable = { recent_jan_idx = current_gdp_graph_end }
+    subtract_from_temp_variable = { recent_jan_idx = months_since_jan }
+    if = { limit = { check_variable = { recent_jan_idx < 0 } } set_temp_variable = { recent_jan_idx = 0 } }
+    
+    set_temp_variable = { prev_jan_idx = recent_jan_idx }
+    subtract_from_temp_variable = { prev_jan_idx = 12 }
+    if = { limit = { check_variable = { prev_jan_idx < 0 } } set_temp_variable = { prev_jan_idx = 0 } }
+    
+    set_temp_variable = { recent_jan_infl = inflation_array^recent_jan_idx }
+    set_temp_variable = { prev_jan_infl = inflation_array^prev_jan_idx }
+    
+    # YoY percentage point change
+    set_variable = { md_yoy_inflation_change_pct = recent_jan_infl }
+    subtract_from_variable = { md_yoy_inflation_change_pct = prev_jan_infl }
+    # ---------------------------------------------
+
+    set_temp_variable = { true_max = inflation_array^0 }
+    set_temp_variable = { true_min = inflation_array^0 } 
+    set_temp_variable = { max_jump = 0 }
+    
+    # FIND BOUNDS & MAXIMUM SPIKE
+    for_each_loop = {
+        array = inflation_array
+        value = v
+        index = i
+        
+        if = {
+            limit = { NOT = { check_variable = { i > current_gdp_graph_end } } }
+            if = { limit = { check_variable = { v > true_max } } set_temp_variable = { true_max = v } }
+            if = { limit = { check_variable = { v < true_min } } set_temp_variable = { true_min = v } }
+            
+            set_temp_variable = { next_i = i }
+            add_to_temp_variable = { next_i = 1 }
+            if = {
+                limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
+                set_temp_variable = { jump = inflation_array^next_i }
+                subtract_from_temp_variable = { jump = v }
+                if = { limit = { check_variable = { jump < 0 } } multiply_temp_variable = { jump = -1 } }
+                if = { limit = { check_variable = { jump > max_jump } } set_temp_variable = { max_jump = jump } }
+            }
+        }
+    }
+
+    set_temp_variable = { data_diff = true_max }
+    subtract_from_temp_variable = { data_diff = true_min }
+    
+    # FAILSAFE PADDING
+    if = {
+        limit = { check_variable = { data_diff < 1 } }
+        set_temp_variable = { high = true_max }
+        add_to_temp_variable = { high = 1.0 }
+        set_temp_variable = { low = true_min }
+        subtract_from_temp_variable = { low = 1.0 }
+    }
+    else = {
+        set_temp_variable = { pad = data_diff }
+        multiply_temp_variable = { pad = 0.1 } # 10% padding
+        set_temp_variable = { high = true_max }
+        add_to_temp_variable = { high = pad }
+        set_temp_variable = { low = true_min }
+        subtract_from_temp_variable = { low = pad }
+    }
+    
+    set_temp_variable = { diff = high }
+    subtract_from_temp_variable = { diff = low }
+
+    # ====================================================
+    # DYNAMIC ANTI-TEAR ZOOM 
+    # ====================================================
+    set_temp_variable = { safe_diff = max_jump }
+    multiply_temp_variable = { safe_diff = 45 }
+    divide_temp_variable = { safe_diff = 10 }
+    
+    if = {
+        limit = { check_variable = { diff < safe_diff } }
+        set_temp_variable = { shortfall = safe_diff }
+        subtract_from_temp_variable = { shortfall = diff }
+        divide_temp_variable = { shortfall = 2 }
+        
+        add_to_temp_variable = { high = shortfall }
+        subtract_from_temp_variable = { low = shortfall }
+        set_temp_variable = { diff = safe_diff }
+    }
+    # ====================================================
+    
+    # Y-AXIS LABELS
+    set_temp_variable = { step = diff }
+    multiply_temp_variable = { step = 0.1 } 
+    set_temp_variable = { buf = low }
+    for_loop_effect = {
+        start = 0 end = 11
+        set_variable = { md_inflation_y_axis_label^v = buf }
+        add_to_temp_variable = { buf = step }
+    }
+
+    # DRAW THE LINE PIXELS
+    for_each_loop = {
+        array = inflation_array
+        value = v
+        index = i
+
+        if = {
+            limit = { check_variable = { i > current_gdp_graph_end } }
+            add_to_array = { md_flax_offsets_inflation_green = 1000 } 
+            add_to_array = { md_flax_offsets_inflation_red = 1000 } 
+            add_to_array = { md_flax_slopes_inflation = 50 }
+        }
+        else = {
+            set_temp_variable = { y1_val = v }
+            subtract_from_temp_variable = { y1_val = low }
+            divide_temp_variable = { y1_val = diff } 
+            set_temp_variable = { y1_px = y1_val }
+            multiply_temp_variable = { y1_px = 450 }
+            
+            set_temp_variable = { next_i = i }
+            add_to_temp_variable = { next_i = 1 }
+            
+            if = {
+                limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+                set_temp_variable = { y2_val = inflation_array^next_i }
+            }
+            else = {
+                set_temp_variable = { y2_val = v } 
+            }
+            
+            subtract_from_temp_variable = { y2_val = low }
+            divide_temp_variable = { y2_val = diff } 
+            set_temp_variable = { y2_px = y2_val }
+            multiply_temp_variable = { y2_px = 450 } 
+
+            set_temp_variable = { offset = y1_px }
+            multiply_temp_variable = { offset = -1 }
+
+            # Note: For Inflation, going UP is BAD (Red), going DOWN is GOOD (Green)
+            if = {
+                limit = { check_variable = { y2_val > y1_val } } # Inflation increased
+                add_to_array = { md_flax_offsets_inflation_red = offset }
+                add_to_array = { md_flax_offsets_inflation_green = 1000 }
+            }
+            else = { # Inflation decreased or stayed same
+                add_to_array = { md_flax_offsets_inflation_green = offset }
+                add_to_array = { md_flax_offsets_inflation_red = 1000 }
+            }
+
+            set_temp_variable = { slope = y2_px }
+            subtract_from_temp_variable = { slope = y1_px }
+            divide_temp_variable = { slope = 2 }
+            add_to_temp_variable = { slope = 50 }
+           
+            if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
+            if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
+           
+            round_variable = slope
+            add_to_array = { md_flax_slopes_inflation = slope }
+        }
+    }
+}
