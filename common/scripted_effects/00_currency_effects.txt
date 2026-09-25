@@ -20,7 +20,6 @@
 @gbp_roi_curve = 0.0375
 @chf_roi_curve = 0.0225
 @nlg_roi_curve = 0.0225
-@brl_roi_curve = 0.03
 @reserve_network_factor = 0.0002
 
 # Trade opinion for holding a reserve currency: a flat base every holder gets, rising
@@ -120,14 +119,6 @@ update_currency_issuers = {
 		set_variable = { global.nlg_issuer = THIS }
 		set_country_flag = is_nlg_issuer
 	} }
-
-	if = { limit = { check_variable = { global.brl_issuer > 0 } }
-		var:global.brl_issuer = { clr_country_flag = is_brl_issuer }
-	}
-	885 = { owner = {
-		set_variable = { global.brl_issuer = THIS }
-		set_country_flag = is_brl_issuer
-	} }
 }
 
 # ── Monthly recalculation ─────────────────────────────────────────────────────
@@ -190,9 +181,6 @@ calculate_currency_strength = {
 	}
 	else_if = { limit = { has_country_flag = is_nlg_issuer }
 		clamp_variable = { var = currency_delta min = -0.004 max = 0.010 }
-	}
-	else_if = { limit = { has_country_flag = is_brl_issuer }
-		clamp_variable = { var = currency_delta min = -0.01 max = 0.015 }
 	}
 	else_if = { limit = { has_idea = gold_standard_back }
 		clamp_variable = { var = currency_delta min = -0.005 max = 0.008 }
@@ -338,11 +326,6 @@ calculate_seigniorage_income = {
 			seigniorage_base = { value = global.nlg_reserve_adoption_count  multiply = @seigniorage_per_adopter }
 		}
 	}
-	else_if = { limit = { has_country_flag = is_brl_issuer }
-		set_temp_variable = {
-			seigniorage_base = { value = global.brl_reserve_adoption_count  multiply = @seigniorage_per_adopter }
-		}
-	}
 }
 
 # ── Reserve currency ROI bonus ────────────────────────────────────────────────
@@ -457,15 +440,6 @@ calculate_reserve_roi_bonus = {
 			reserve_roi_from_strength = yes
 		}
 	}
-	else_if = { limit = { has_idea = brazilian_real }
-		set_temp_variable = { tmp_holds_reserve = 1 }
-		set_temp_variable = { tmp_roi_mult = @brl_roi_curve }
-		set_temp_variable = { tmp_adopters = global.brl_reserve_adoption_count }
-		if = { limit = { check_variable = { global.brl_issuer > 0 } }
-			var:global.brl_issuer = { set_temp_variable = { tmp_strength = currency_strength } }
-			reserve_roi_from_strength = yes
-		}
-	}
 
 	set_variable = { reserve_roi_bonus = tmp_reserve_roi }
 	set_variable = { reserve_trade_bonus = 0 }
@@ -506,7 +480,7 @@ adopt_chinese_yuan_reserve = {
 # ── Reserve currency projections (for the law tooltips) ───────────────────────
 
 # reserve_roi_bonus only covers the currency a country already holds, so the law
-# entries for other issuer-backed currencies would have nothing to show. These globals depend
+# entries for the other seven would have nothing to show. These globals depend
 # only on issuer strength and adoption count, so one pass serves every country.
 
 # tmp_static_* are the idea's own flat modifiers of the same three types. They are
@@ -664,16 +638,4 @@ calculate_reserve_projections = {
 	set_variable = { global.proj_roi_nlg = tmp_proj_roi }
 	set_variable = { global.proj_trade_nlg = tmp_proj_trade }
 	set_variable = { global.proj_infl_nlg = tmp_proj_infl }
-
-	set_temp_variable = { tmp_reserve_roi = 0 }
-	set_temp_variable = { tmp_roi_mult = @brl_roi_curve }
-	set_temp_variable = { tmp_adopters = global.brl_reserve_adoption_count }
-	if = { limit = { check_variable = { global.brl_issuer > 0 } }
-		var:global.brl_issuer = { set_temp_variable = { tmp_strength = currency_strength } }
-		reserve_roi_from_strength = yes
-	}
-	build_reserve_projection = yes
-	set_variable = { global.proj_roi_brl = tmp_proj_roi }
-	set_variable = { global.proj_trade_brl = tmp_proj_trade }
-	set_variable = { global.proj_infl_brl = tmp_proj_infl }
 }
