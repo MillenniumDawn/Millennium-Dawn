@@ -1216,9 +1216,15 @@ space_auto_run_launch = {
 
 		if = {
 			limit = { check_variable = { temp_flights > 0 } }
-			set_variable = { var_space_auto_waiting = 0 }
-			set_country_flag = { flag = space_auto_launched_today value = 1 days = 1 }
 			space_auto_execute_launch = yes
+			if = {
+				limit = { check_variable = { sat_launch_completed > 0 } }
+				set_variable = { var_space_auto_waiting = 0 }
+				set_country_flag = { flag = space_auto_launched_today value = 1 days = 1 }
+			}
+			else = {
+				set_variable = { var_space_auto_waiting = 1 }
+			}
 		}
 		else = {
 			set_variable = { var_space_auto_waiting = 1 }
@@ -1273,7 +1279,9 @@ space_auto_execute_launch = {
 		add_to_temp_variable = { temp_scan = 1 }
 	}
 
+	set_temp_variable = { sat_launch_automatic = 1 }
 	launch_OLV = yes
+	set_temp_variable = { sat_launch_automatic = 0 }
 
 	clear_array = payload_types_array
 	set_temp_variable = { temp_scan = 0 }
@@ -1301,7 +1309,7 @@ space_auto_execute_launch = {
 
 	if = {
 		limit = { is_debug = yes }
-		log = "[GetDateText]: [Root.GetName]: space automation launched [?temp_flights] flights"
+		log = "[GetDateText]: [Root.GetName]: space automation launched [?sat_launch_completed] flights"
 	}
 }
 
@@ -1398,6 +1406,8 @@ space_auto_raise_spysat = {
 		set_temp_variable = { temp_new_cnt = SPY_satellite_array^temp_new_idx }
 		set_temp_variable = { temp_new_max = global.SPY_sat_system_max_array^temp_new_idx }
 		set_temp_variable = { temp_new_min = global.SPY_sat_system_min_array^temp_new_idx }
+		set_temp_variable = { temp_spy_mil_max = var_SPY_mil_sat_system_max }
+		set_temp_variable = { temp_spy_civ_max = var_SPY_civ_sat_system_max }
 
 		if = {
 			limit = {
@@ -1409,7 +1419,7 @@ space_auto_raise_spysat = {
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
 				set_temp_variable = { temp_SPY_mil_idx = temp_new_idx }
-				set_variable = { var_SPY_mil_sat_system_max = temp_new_max }
+				set_temp_variable = { temp_spy_mil_max = temp_new_max }
 			}
 		}
 		if = {
@@ -1422,10 +1432,31 @@ space_auto_raise_spysat = {
 			if = {
 				limit = { check_variable = { var = temp_lhs value = temp_rhs compare = greater_than_or_equals } }
 				set_temp_variable = { temp_SPY_civ_idx = temp_new_idx }
-				set_variable = { var_SPY_civ_sat_system_max = temp_new_max }
+				set_temp_variable = { temp_spy_civ_max = temp_new_max }
 			}
 		}
-		store_SPY_local_idx = yes
+		set_SPY_satellites = yes
+		set_temp_variable = {
+			temp_spy_available = {
+				value = var_SPY_sat_total
+				subtract = { value = SPY_satellite_array^temp_SPY_mil_idx min = temp_spy_mil_max }
+			}
+		}
+		if = {
+			limit = { NOT = { check_variable = { temp_SPY_mil_idx = temp_SPY_civ_idx } } }
+			subtract_from_temp_variable = { temp_spy_available = { value = SPY_satellite_array^temp_SPY_civ_idx min = temp_spy_civ_max } }
+		}
+		for_each_loop = {
+			array = spy_mission_sat_num_array
+			value = temp_spy_mission_count
+			subtract_from_temp_variable = { temp_spy_available = temp_spy_mission_count }
+		}
+		if = {
+			limit = { NOT = { check_variable = { temp_spy_available < 0 } } }
+			set_variable = { var_SPY_mil_sat_system_max = temp_spy_mil_max }
+			set_variable = { var_SPY_civ_sat_system_max = temp_spy_civ_max }
+			store_SPY_local_idx = yes
+		}
 	}
 }
 

@@ -270,6 +270,9 @@ Every line written by a standardizer passes through `normalize_spacing`
 Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 `tools/linting/fix_styling.py` uses the same helper.
 
+Focus, event, decision, idea and technology blocks are reindented by brace
+depth, one tab per level, so a nested line written at the wrong depth is moved.
+
 ### Focus Trees
 
 - Use `relative_position_id` for positioning

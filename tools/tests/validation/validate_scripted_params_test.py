@@ -371,6 +371,24 @@ def test_change_influence_percentage_identical_scope_is_flagged(tmp_path, cip_co
     assert any("identical-influence-params" in c for c, _ in issues)
 
 
+def test_change_influence_percentage_this_in_outer_and_inner_scopes_passes(
+    tmp_path, cip_contract
+):
+    body = (
+        "shared_focus = {\n"
+        "    completion_reward = {\n"
+        "        set_temp_variable = { percent_change = 5 }\n"
+        "        set_temp_variable = { tag_index = THIS.id }\n"
+        "        every_neighbor_country = {\n"
+        "            set_temp_variable = { influence_target = THIS }\n"
+        "            change_influence_percentage = yes\n"
+        "        }\n"
+        "    }\n"
+        "}\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
 def test_change_influence_percentage_distinct_values_passes(tmp_path, cip_contract):
     """Both set but to different values is the correct call site — no flag."""
     body = (

@@ -182,10 +182,10 @@ def test_tech_in_gated_and_ungated_folder_is_not_gated(tmp_path):
 def test_allow_branch_gate_without_folder(tmp_path):
     tech_gates, _ = _tech_gates(
         tmp_path,
-        '\tencryption1 = {\n\t\tallow_branch = { NOT = { has_dlc = "La Resistance" } }\n\t}\n',
+        '\tencryption_1 = {\n\t\tallow_branch = { NOT = { has_dlc = "La Resistance" } }\n\t}\n',
         {},
     )
-    assert tech_gates["encryption1"] == frozenset({("forbid", "La Resistance")})
+    assert tech_gates["encryption_1"] == frozenset({("forbid", "La Resistance")})
 
 
 def test_category_gated_only_when_every_member_shares_the_gate(tmp_path):

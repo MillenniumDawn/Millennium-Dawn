@@ -66,14 +66,14 @@ def test_propagate_dlc_reqs_extends_gate_to_upgrade_chain():
     prerequisites = {
         "SP_arty_1": {"SP_arty_0"},
         "SP_arty_2": {"SP_arty_1"},
-        "Arty_upgrade_1": {"SP_arty_0"},
+        "arty_upgrade_1": {"SP_arty_0"},
     }
     direct = {"SP_arty_0": [("forbid", "No Step Back")]}
     prop = V.propagate_dlc_reqs(prerequisites, direct)
     assert prop["SP_arty_0"] == [("forbid", "No Step Back")]
     assert prop["SP_arty_1"] == [("forbid", "No Step Back")]
     assert prop["SP_arty_2"] == [("forbid", "No Step Back")]  # transitive
-    assert prop["Arty_upgrade_1"] == [("forbid", "No Step Back")]
+    assert prop["arty_upgrade_1"] == [("forbid", "No Step Back")]
 
 
 def test_propagate_dlc_reqs_requires_all_prereqs_gated():

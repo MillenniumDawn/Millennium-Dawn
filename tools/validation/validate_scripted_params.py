@@ -137,6 +137,17 @@ def _normalize_influence_value(value: str) -> str:
     return value
 
 
+def _same_influence_source(tag_entry: Dict, inf_entry: Dict) -> bool:
+    """Return whether both entries are guaranteed to resolve to one country."""
+    tag_value = _normalize_influence_value(tag_entry["value"])
+    inf_value = _normalize_influence_value(inf_entry["value"])
+    if tag_value != inf_value:
+        return False
+    if tag_value.upper() == "THIS":
+        return tag_entry["scope_depth"] == inf_entry["scope_depth"]
+    return True
+
+
 # Scope keywords that resolve to a country at runtime and are NOT tags.  A value
 # matching one of these (case-insensitively, so "Root" passes) is a valid
 # tag_index / influence_target reference, never a typo.
@@ -487,7 +498,11 @@ def _validate_call_sites_in_file(
             # value: the line is used for the existing missing-param check,
             # and the RHS powers the identical-params check for
             # change_influence_percentage.
-            stack[-1]["temps"][value] = {"line": lineno, "value": rhs}
+            stack[-1]["temps"][value] = {
+                "line": lineno,
+                "value": rhs,
+                "scope_depth": len(stack),
+            }
 
             # Tag-validity check: an influencer/influencee written as a literal
             # that is neither a real tag nor an alias is a silent typo (resolves
@@ -561,8 +576,7 @@ def _validate_call_sites_in_file(
                         and inf_val
                         and tag_val != "0"
                         and inf_val != "0"
-                        and _normalize_influence_value(tag_val)
-                        == _normalize_influence_value(inf_val)
+                        and _same_influence_source(tag_entry, inf_entry)
                         and abs(lineno - tag_line) <= 20
                         and abs(lineno - inf_line) <= 20
                     ):

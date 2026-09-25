@@ -11,7 +11,7 @@ equipments = {
 \t\t\tanti_air
 \t\t}
 \t\tupgrades = {
-\t\t\tAA_Fire_Control
+\t\t\tAA_fire_control
 \t\t}
 \t\treliability = 0.9
 \t\tarmor_value = 0

@@ -1017,3 +1017,35 @@ jobs:
           name: validation-report
           path: report.md
           retention-days: 30
+
+  gate:
+    name: Test suite gate
+    needs:
+      - detect-changes
+      - validate-paths
+      - prepare-workspace
+      - tools-tests
+      - mod-tests
+      - docs-quality
+      - report
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when required validation jobs do not pass
+        if: >-
+          needs.detect-changes.result != 'success' ||
+          (needs.validate-paths.result != 'success' &&
+          needs.validate-paths.result != 'skipped') ||
+          (needs.prepare-workspace.result != 'success' &&
+          needs.prepare-workspace.result != 'skipped') ||
+          (needs.tools-tests.result != 'success' &&
+          needs.tools-tests.result != 'skipped') ||
+          (needs.mod-tests.result != 'success' &&
+          needs.mod-tests.result != 'skipped') ||
+          (needs.docs-quality.result != 'success' &&
+          needs.docs-quality.result != 'skipped') ||
+          needs.report.result != 'success'
+        run: exit 1
+
+      - name: Confirm validation result
+        run: echo "Every selected validation job passed."
