@@ -151,7 +151,7 @@ def propagate_dlc_reqs(
     techs carries it: if all paths to a tech run through techs forbidden under
     DLC X, the tech itself cannot legitimately exist under X (and likewise for
     `require`). This extends a base-tech gate (e.g. SP_arty_0 forbidden under No
-    Step Back) to its whole upgrade chain (SP_arty_1..4, arty_upgrade_*), so
+    Step Back) to its whole upgrade chain (SP_arty_1..4, Arty_upgrade_*), so
     granting any tier of the legacy or NSB line in a contradicting branch is
     caught, not just the root.
     """

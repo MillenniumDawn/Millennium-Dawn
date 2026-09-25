@@ -425,7 +425,7 @@ def test_parse_sp_output_claims(tmp_path):
         "\t\tcountry_effects = {\n"
         "\t\t\tcustom_effect_tooltip = {\n"
         "\t\t\t\tlocalization_key = SP_UNLOCK_TECH\n"
-        "\t\t\t\tTECH = agriculture_6\n"
+        "\t\t\t\tTECH = programmable_harvesters\n"
         "\t\t\t}\n"
         "\t\t}\n"
         "\t}\n"
@@ -433,21 +433,21 @@ def test_parse_sp_output_claims(tmp_path):
         "sp_no_tooltip = {\n\tallowed = { always = yes }\n}\n",
     )
     claims = V.parse_sp_output_claims(str(tmp_path))
-    assert claims == {"sp_agriculture_drone": ["agriculture_6"]}
+    assert claims == {"sp_agriculture_drone": ["programmable_harvesters"]}
 
 
 def test_sp_output_consistency_flags_wrong_tech():
-    # The project gates agriculture_6 but its tooltip advertises a
+    # The project gates programmable_harvesters but its tooltip advertises a
     # different tech that another project gates.
     sp_gated = {
-        "sp_agriculture_drone": {"agriculture_6"},
-        "sp_other": {"agriculture_7"},
+        "sp_agriculture_drone": {"programmable_harvesters"},
+        "sp_other": {"improved_harvesting_automation"},
     }
-    claims = {"sp_agriculture_drone": ["agriculture_7"]}
+    claims = {"sp_agriculture_drone": ["improved_harvesting_automation"]}
     errors = V.validate_sp_output_consistency(sp_gated, claims)
     assert len(errors) == 1
     assert "sp_agriculture_drone" in errors[0]
-    assert "agriculture_7" in errors[0]
+    assert "improved_harvesting_automation" in errors[0]
     assert "sp:sp_other" in errors[0]
 
 
@@ -462,8 +462,8 @@ def test_sp_output_consistency_flags_gateless_project():
 
 
 def test_sp_output_consistency_clean_when_matches():
-    sp_gated = {"sp_agriculture_drone": {"agriculture_6"}}
-    claims = {"sp_agriculture_drone": ["agriculture_6"]}
+    sp_gated = {"sp_agriculture_drone": {"programmable_harvesters"}}
+    claims = {"sp_agriculture_drone": ["programmable_harvesters"]}
     assert V.validate_sp_output_consistency(sp_gated, claims) == []
 
 
