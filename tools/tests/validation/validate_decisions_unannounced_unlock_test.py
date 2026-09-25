@@ -71,6 +71,23 @@ def test_block_announcing_nothing_is_not_flagged(monkeypatch):
     assert out == []
 
 
+def test_quoted_tooltip_text_announces_nothing(monkeypatch):
+    # A log string quoting the effect is not an announcement, so the block still
+    # announces nothing and is skipped rather than reported.
+    setter = (
+        "md_setter = {\n"
+        "\tcomplete_effect = {\n"
+        '\t\tlog = "[GetDateText]: unlock_decision_tooltip = md_announced"\n'
+        "\t\tset_country_flag = md_gate_flag\n"
+        "\t}\n"
+        "}"
+    )
+    out = _results_for(
+        [setter, _gated("md_announced"), _gated("md_missed")], monkeypatch
+    )
+    assert out == []
+
+
 def test_negated_flag_gate_is_not_an_unlock(monkeypatch):
     # `NOT = { has_country_flag = X }` is satisfied until X is set, so setting
     # the flag hides that decision rather than unlocking it.

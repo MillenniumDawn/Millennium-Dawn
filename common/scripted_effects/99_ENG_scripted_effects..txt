@@ -145,7 +145,12 @@ ENG_change_scottish_dependency = {
 	custom_effect_tooltip = ENG_scottish_dependency_change_tt
 	hidden_effect = {
 		if = {
-			limit = { ROOT = { NOT = { has_country_flag = ENG_scottish_integrated } } }
+			limit = {
+				ROOT = {
+					NOT = { has_country_flag = ENG_scottish_integrated }
+					NOT = { country_exists = SCO }
+				}
+			}
 			set_variable = { ROOT.ENG_scottish_dependency = { value = ROOT.ENG_scottish_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
 			ROOT = { ENG_update_scottish_pressure = yes }
 		}
@@ -158,7 +163,12 @@ ENG_change_north_irish_dependency = {
 	custom_effect_tooltip = ENG_north_irish_dependency_change_tt
 	hidden_effect = {
 		if = {
-			limit = { ROOT = { NOT = { has_country_flag = ENG_north_irish_integrated } } }
+			limit = {
+				ROOT = {
+					NOT = { has_country_flag = ENG_north_irish_integrated }
+					NOT = { country_exists = NIR }
+				}
+			}
 			set_variable = { ROOT.ENG_north_irish_dependency = { value = ROOT.ENG_north_irish_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
 			ROOT = { ENG_update_north_irish_pressure = yes }
 		}
@@ -171,7 +181,12 @@ ENG_change_wales_dependency = {
 	custom_effect_tooltip = ENG_wales_dependency_change_tt
 	hidden_effect = {
 		if = {
-			limit = { ROOT = { NOT = { has_country_flag = ENG_welsh_integrated } } }
+			limit = {
+				ROOT = {
+					NOT = { has_country_flag = ENG_welsh_integrated }
+					NOT = { country_exists = WAS }
+				}
+			}
 			set_variable = { ROOT.ENG_wales_dependency = { value = ROOT.ENG_wales_dependency add = ENG_dependency_change clamp = { min = 0 max = 100 } } }
 			ROOT = { ENG_update_wales_pressure = yes }
 		}
@@ -194,7 +209,12 @@ ENG_change_scottish_agitation = {
 	custom_effect_tooltip = ENG_scottish_agitation_change_tt
 	hidden_effect = {
 		if = {
-			limit = { ROOT = { NOT = { has_country_flag = ENG_scottish_integrated } } }
+			limit = {
+				ROOT = {
+					NOT = { has_country_flag = ENG_scottish_integrated }
+					NOT = { country_exists = SCO }
+				}
+			}
 			set_variable = { ROOT.ENG_scottish_agitation = { value = ROOT.ENG_scottish_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
 			ROOT = { ENG_update_scottish_pressure = yes }
 		}
@@ -207,7 +227,12 @@ ENG_change_north_irish_agitation = {
 	custom_effect_tooltip = ENG_north_irish_agitation_change_tt
 	hidden_effect = {
 		if = {
-			limit = { ROOT = { NOT = { has_country_flag = ENG_north_irish_integrated } } }
+			limit = {
+				ROOT = {
+					NOT = { has_country_flag = ENG_north_irish_integrated }
+					NOT = { country_exists = NIR }
+				}
+			}
 			set_variable = { ROOT.ENG_north_irish_agitation = { value = ROOT.ENG_north_irish_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
 			ROOT = {
 				ENG_north_irish_agitation_change_check = yes
@@ -223,7 +248,12 @@ ENG_change_wales_agitation = {
 	custom_effect_tooltip = ENG_wales_agitation_change_tt
 	hidden_effect = {
 		if = {
-			limit = { ROOT = { NOT = { has_country_flag = ENG_welsh_integrated } } }
+			limit = {
+				ROOT = {
+					NOT = { has_country_flag = ENG_welsh_integrated }
+					NOT = { country_exists = WAS }
+				}
+			}
 			set_variable = { ROOT.ENG_wales_agitation = { value = ROOT.ENG_wales_agitation add = ENG_agitation_change clamp = { min = 0 max = 100 } } }
 			ROOT = { ENG_update_wales_pressure = yes }
 		}
@@ -458,7 +488,11 @@ ENG_settle_northern_ireland_question = {
 	ENG_update_north_irish_pressure = yes
 }
 
-# Opening ballot position: nationalism carries twice the weight of the wider pressure score
+ENG_sync_referendum_stay_vote = {
+	set_variable = { ENG_referendum_stay_vote = 100 }
+	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+}
+
 ENG_seed_referendum_campaign = {
 	clr_country_flag = ENG_referendum_pledge_used
 	if = {
@@ -481,14 +515,14 @@ ENG_seed_referendum_campaign = {
 	}
 	divide_variable = { ENG_referendum_leave_vote = 3 }
 	clamp_variable = { var = ENG_referendum_leave_vote min = 0 max = 100 }
+	ENG_sync_referendum_stay_vote = yes
 	update_eng_devolution_dirty_variable = yes
 }
 
-# Parameters:
-# - temp_change: signed amount
 ENG_referendum_campaign_shift = {
 	add_to_variable = { var = ENG_referendum_leave_vote value = temp_change }
 	clamp_variable = { var = ENG_referendum_leave_vote min = 0 max = 100 }
+	ENG_sync_referendum_stay_vote = yes
 	update_eng_devolution_dirty_variable = yes
 }
 
@@ -500,8 +534,7 @@ ENG_clear_referendum_campaign = {
 }
 
 ENG_resolve_independence_referendum = {
-	set_variable = { ENG_referendum_stay_vote = 100 }
-	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+	ENG_sync_referendum_stay_vote = yes
 	update_eng_devolution_dirty_variable = yes
 	random_list = {
 		ENG_referendum_leave_vote = {
@@ -514,12 +547,27 @@ ENG_resolve_independence_referendum = {
 }
 
 ENG_resolve_union_settlement = {
-	set_variable = { ENG_referendum_stay_vote = 100 }
-	subtract_from_variable = { var = ENG_referendum_stay_vote value = ENG_referendum_leave_vote }
+	ENG_sync_referendum_stay_vote = yes
 	update_eng_devolution_dirty_variable = yes
 	random_list = {
 		ENG_referendum_stay_vote = {
 			country_event = devolution.13
+			custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
+			effect_tooltip = {
+				if = {
+					limit = { check_variable = { ENG_referendum_target = 1 } }
+					add_to_variable = { ENG_scottish_referendum_success = 1 tooltip = ENG_scottish_referendum_success_tt }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_referendum_target = 2 } }
+					add_to_variable = { ENG_north_irish_referendum_success = 1 tooltip = ENG_north_irish_referendum_success_tt }
+				}
+				else_if = {
+					limit = { check_variable = { ENG_referendum_target = 3 } }
+					add_to_variable = { ENG_welsh_referendum_success = 1 tooltip = ENG_welsh_referendum_success_tt }
+				}
+				ENG_clear_referendum_campaign = yes
+			}
 		}
 		ENG_referendum_leave_vote = {
 			country_event = devolution.14
@@ -1687,4 +1735,15 @@ ENG_arm_milestone_2026 = {
 		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
 		ENG_arm_apply_licensing_island = yes
 	}
+}
+
+ENG_update_commonwealth_totals = {
+	set_variable = { commonwealth_total_gdp = 0 }
+	add_to_variable = { var = commonwealth_total_gdp value = NZL.gdp_total }
+	add_to_variable = { var = commonwealth_total_gdp value = CAN.gdp_total }
+	add_to_variable = { var = commonwealth_total_gdp value = AST.gdp_total }
+	set_variable = { commonwealth_total_army = 0 }
+	add_to_variable = { var = commonwealth_total_army value = NZL.deployed_army_manpower_k }
+	add_to_variable = { var = commonwealth_total_army value = CAN.deployed_army_manpower_k }
+	add_to_variable = { var = commonwealth_total_army value = AST.deployed_army_manpower_k }
 }

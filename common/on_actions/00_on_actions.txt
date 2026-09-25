@@ -570,7 +570,7 @@ on_actions = {
 					}
 				}
 				FROM = {
-					set_cosmetic_tag = SLO
+					set_cosmetic_tag = SOL
 					news_event = {
 						id = Solomon_IslandsNews.1005
 						days = 1
@@ -591,7 +591,7 @@ on_actions = {
 					}
 				}
 				FROM = {
-					set_cosmetic_tag = SLO
+					set_cosmetic_tag = SOL
 					news_event = {
 						id = Solomon_IslandsNews.1004
 						days = 1
@@ -1689,7 +1689,6 @@ on_actions = {
 			# Month Configuration for Other Sources
 			set_variable = { global.month = 1 }
 			set_variable = { global.update_monie_ui = 1 }
-			set_variable = { global.update_influence_ui = 1 }
 			set_variable = { global.storage_scripted_gui_var = 1 }
 			set_variable = { global.general_operating_budget_contribute_percent = 0.0001 }
 
@@ -1763,6 +1762,19 @@ on_actions = {
 			# Initialize On Startup
 			set_variable = { global.average_world_productivity = 650 }
 			set_variable = { global.productivity_center = 1000 }
+			set_variable = { global.roi_rate_cap = 0.20 }
+			if = {
+				limit = { has_game_rule = { rule = rule_roi_cap option = point_10 } }
+				set_variable = { global.roi_rate_cap = 0.10 }
+			}
+			else_if = {
+				limit = { has_game_rule = { rule = rule_roi_cap option = point_15 } }
+				set_variable = { global.roi_rate_cap = 0.15 }
+			}
+			else_if = {
+				limit = { has_game_rule = { rule = rule_roi_cap option = point_25 } }
+				set_variable = { global.roi_rate_cap = 0.25 }
+			}
 
 			# Intelligence advisors are selected via faction intelligence tab popup - do not pre-activate
 
@@ -1801,6 +1813,7 @@ on_actions = {
 				#Sets modifiers for microchips and composites
 				microchip_startup = yes
 				add_dynamic_modifier = { modifier = inflation_dynamic_modifier }
+				add_dynamic_modifier = { modifier = currency_effects_modifier }
 
 				if = { limit = { check_variable = { gdp_total < 8 } }
 					multiply_variable = { debt = 0.0125 }
@@ -1813,8 +1826,8 @@ on_actions = {
 
 				resize_array = { array = project_array value = 0 size = 15 } # Index starts at 0
 				init_auto_influence_array = yes
-				research_slot_init_for_country = yes
 				IP_idea_configuration = yes
+				mio_catalog_refresh_no_entries_yes = yes
 
 				# AGRICULTURE INIT
 				AGRI_plant_the_seeds = yes
@@ -1880,6 +1893,16 @@ on_actions = {
 					country_event = systems.1
 
 					if = {
+						limit = { original_tag = ITA }
+						country_event = italy_md.23
+					}
+					if = {
+						limit = { original_tag = AST }
+						country_event = opening_info_ast.1
+						country_event = generic_bushfires_ast.3
+					}
+
+					if = {
 						limit = {
 							has_game_rule = {
 								rule = rule_internal_faction_cost_reduction
@@ -1923,6 +1946,7 @@ on_actions = {
 
 				every_country = {
 					calculate_starting_mio_size = yes
+					research_slot_init_for_country = yes
 
 					if = { limit = { is_ai = yes }
 						yearly_investment_targets_routine = yes
@@ -1975,7 +1999,7 @@ on_actions = {
 						NOT = {
 							OR = {
 								emerging_anarchist_communism_are_in_power = yes
-								has_country_flag = PER_socialism2
+								has_completed_focus = PER_move_towards_westernization
 							}
 						}
 					}

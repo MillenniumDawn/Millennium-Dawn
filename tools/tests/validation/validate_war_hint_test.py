@@ -5,24 +5,26 @@ a war_with_on_* (fixed target) or war_with_target_on_* (FROM target) hint so the
 AI prepares for the war.
 """
 
+import pytest
 import validate_decisions as vd
 from validate_decisions import Validator
 
 
 def _write_decisions(tmp_path, body: str) -> str:
     dec_dir = tmp_path / "common" / "decisions"
-    dec_dir.mkdir(parents=True)
+    dec_dir.mkdir(parents=True, exist_ok=True)
     (dec_dir / "test.txt").write_text(body, encoding="utf-8")
     return str(tmp_path)
 
 
-def _run(tmp_path, body: str):
-    """Run validate_missing_war_hint over a single decisions file, return issues."""
+def _run(tmp_path, body: str, *, check="validate_missing_war_hint"):
+    """Run one decision check over a single decisions file, return issues."""
     mod_path = _write_decisions(tmp_path, body)
+    vd._invalidate_decision_cache()
     vd._set_cache_enabled(False)
     try:
         validator = Validator(mod_path=mod_path, use_colors=False)
-        validator.validate_missing_war_hint()
+        getattr(validator, check)()
         return list(validator._issues)
     finally:
         vd._set_cache_enabled(True)
@@ -97,3 +99,212 @@ def test_ai_strategy_declare_war_value_not_flagged(tmp_path):
         "}\n"
     )
     assert _run(tmp_path, body) == []
+
+
+def test_country_flag_in_decision_allowed_but_not_category(tmp_path):
+    categories = tmp_path / "common" / "decisions" / "categories"
+    categories.mkdir(parents=True)
+    (categories / "test.txt").write_text(
+        "category = {\n\tallowed = { has_country_flag = category_flag }\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n"
+        "\tbad = {\n\t\tallowed = { NOT = { has_country_flag = gate } }\n\t}\n"
+        "\tgood = {\n\t\tvisible = { has_country_flag = visible_flag }\n\t}\n"
+        "}\n"
+    )
+    issues = _run(tmp_path, body, check="validate_allowed_country_flag")
+    assert len(issues) == 1
+    assert "bad" in issues[0].message
+    assert issues[0].category == "unsupported-decision-allowed-flag"
+
+
+@pytest.mark.parametrize(
+    "effect,hint,expected",
+    [
+        ("remove", "", True),
+        ("remove", "war_with_on_remove = IRQ", False),
+        ("remove", "war_with_on_complete = IRQ", True),
+        ("complete", "war_with_on_complete = IRQ", False),
+        ("timeout", "war_with_on_timeout = IRQ", False),
+    ],
+)
+def test_event_chain_war_hint_matches_effect_and_target(
+    tmp_path, effect, hint, expected
+):
+    categories = tmp_path / "common" / "decisions" / "categories"
+    categories.mkdir(parents=True)
+    (categories / "test.txt").write_text(
+        "war_on_terror = {\n\tallowed = { original_tag = USA }\n}\n",
+        encoding="utf-8",
+    )
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = war.1\n\toption = { country_event = war.2 }\n}\n"
+        "country_event = {\n\tid = war.2\n\toption = { "
+        "create_wargoal = { target = IRQ type = annex_everything } }\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "war_on_terror = {\n"
+        "\tusa_operation = {\n"
+        f"\t\t{hint}\n"
+        f"\t\t{effect}_effect = {{ USA = {{ country_event = war.1 }} }}\n"
+        "\t}\n}\n"
+    )
+    issues = _run(tmp_path, body)
+    assert bool(issues) is expected
+    if expected:
+        assert "war.1 -> war.2" in issues[0].message
+
+
+@pytest.mark.parametrize("effect", ["complete", "remove", "timeout"])
+def test_targeted_decision_war_hints(tmp_path, effect):
+    body = (
+        "category = {\n\ttargeted = {\n"
+        "\t\ttargets = { IRQ }\n"
+        f"\t\t{effect}_effect = {{ declare_war_on = {{ target = FROM }} }}\n"
+        "\t}\n}\n"
+    )
+    assert len(_run(tmp_path, body)) == 1
+    wrong_hint = f"war_with_on_{effect} = FROM"
+    assert (
+        len(
+            _run(
+                tmp_path, body.replace("\t\ttargets", f"\t\t{wrong_hint}\n\t\ttargets")
+            )
+        )
+        == 1
+    )
+    hint = f"war_with_target_on_{effect} = yes"
+    assert _run(tmp_path, body.replace("\t\ttargets", f"\t\t{hint}\n\t\ttargets")) == []
+
+
+def test_quoted_war_effect_and_hint_do_not_count(tmp_path):
+    body = (
+        "category = {\n\tdecision = {\n"
+        '\t\tcomplete_effect = { log = "create_wargoal = { target = IRQ }" }\n'
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+    body = (
+        "category = {\n\tdecision = {\n"
+        '\t\tlog = "war_with_on_complete = IRQ"\n'
+        "\t\tcomplete_effect = { create_wargoal = { target = IRQ } }\n"
+        "\t}\n}\n"
+    )
+    assert len(_run(tmp_path, body)) == 1
+
+
+def test_war_in_foreign_event_scope_does_not_require_hint(tmp_path):
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n"
+        "\toption = { MOR = { declare_war_on = { target = IRQ } } }\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n\tdecision = {\n"
+        "\t\tremove_effect = { country_event = proxy.1 }\n"
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+
+
+def test_foreign_from_event_war_does_not_require_hint(tmp_path):
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n"
+        "\toption = { declare_war_on = { target = ROOT } }\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n\tdecision = {\n"
+        "\t\tcomplete_effect = { FROM = { country_event = proxy.1 } }\n"
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+
+
+def test_decision_allowed_tag_identifies_war_owner(tmp_path):
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n"
+        "\toption = { SIL = { declare_war_on = { target = POL } } }\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n\tSIL_sov_decision = {\n"
+        "\t\tallowed = { original_tag = SOV }\n"
+        "\t\tremove_effect = { country_event = proxy.1 }\n"
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+    second = tmp_path / "owner"
+    second_events = second / "events"
+    second_events.mkdir(parents=True)
+    (second_events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n"
+        "\toption = { SOV = { declare_war_on = { target = POL } } }\n}\n",
+        encoding="utf-8",
+    )
+    assert len(_run(second, body)) == 1
+
+
+def test_owner_only_branch_does_not_count_foreign_else_war(tmp_path):
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n\toption = {\n"
+        "\t\tif = { limit = { original_tag = CHI } add_stability = -0.1 }\n"
+        "\t\telse = { declare_war_on = { target = CHI } }\n"
+        "\t}\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n\tCHI_decision = {\n"
+        "\t\tremove_effect = { country_event = proxy.1 }\n"
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+    second = tmp_path / "owner"
+    second_events = second / "events"
+    second_events.mkdir(parents=True)
+    (second_events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n\toption = {\n"
+        "\t\tif = { limit = { original_tag = CHI } "
+        "declare_war_on = { target = NKO } }\n"
+        "\t\telse = { add_stability = -0.1 }\n"
+        "\t}\n}\n",
+        encoding="utf-8",
+    )
+    assert len(_run(second, body)) == 1
+
+
+def test_shared_decision_routes_tag_specific_war_to_hintable_decision(tmp_path):
+    events = tmp_path / "events"
+    events.mkdir()
+    (events / "war.txt").write_text(
+        "country_event = {\n\tid = proxy.1\n\toption = {\n"
+        "\t\tif = { limit = { tag = SYR } "
+        "declare_war_on = { target = FSA } }\n"
+        "\t}\n}\n",
+        encoding="utf-8",
+    )
+    body = (
+        "category = {\n\tshared_mission = {\n"
+        "\t\tallowed = { NOT = { original_tag = SYR } }\n"
+        "\t\ttimeout_effect = { country_event = proxy.1 }\n"
+        "\t}\n\tSYR_mission = {\n"
+        "\t\tallowed = { original_tag = SYR }\n"
+        "\t\twar_with_on_timeout = FSA\n"
+        "\t\ttimeout_effect = { country_event = proxy.1 }\n"
+        "\t}\n}\n"
+    )
+    assert _run(tmp_path, body) == []
+    assert len(_run(tmp_path, body.replace("war_with_on_timeout = FSA\n", ""))) == 1
