@@ -19,6 +19,35 @@ techs, it multiplies that value by the weights below and adds the result to the
 - To make AI focuses matter more or less overall, change `RESEARCH_NEEDS_FACTOR`,
   not every weight.
 
+## How the AI picks a tech
+
+The highest score wins a free research slot, with two catches.
+
+- Scores are weights, not a strict ranking. `RESEARCH_WEIGHT_TRUNCATION_THRESHOLD = 0.5`
+  in `MD_defines.lua` lets the AI pick any tech that scores at least half of the top
+  score, so some picks look a little random.
+- The AI spreads its slots across categories. Once it is researching a tech from one
+  category, the next slot goes to a different category. That is why it often skips
+  the second-highest tech: it shares a category with one already in progress.
+
+When checking AI research in game, look for the categories it leans toward, not the
+exact order. In the AI research debug view, green marks techs being researched now.
+
+## Research defines
+
+These sit in the AI research block of `common/defines/MD_defines.lua`. They shape
+every tech score, not only the part that comes from this directory.
+
+| Define                                 | MD    | Vanilla | Effect                                                                                                               |
+| -------------------------------------- | ----- | ------- | -------------------------------------------------------------------------------------------------------------------- |
+| `RESEARCH_WEIGHT_TRUNCATION_THRESHOLD` | 0.5   | 0.75    | AI picks at random from techs scoring at least this share of the top score. Lower means more variety.                |
+| `RESEARCH_DAYS_BETWEEN_WEIGHT_UPDATE`  | 20    | 7       | Days between score refreshes. A focus value change can take this long to show up.                                    |
+| `MAX_AHEAD_RESEARCH_PENALTY`           | 4     | 3       | Largest ahead-of-time penalty the AI will consider. It includes the base year-ahead penalty, so it is not raw years. |
+| `RESEARCH_BASE_DAYS`                   | 350   | 60      | Days added to each tech's time when scoring length, so the AI does not chase only quick techs.                       |
+| `RESEARCH_YEARS_BEHIND_FACTOR`         | 0.3   | 0.2     | Boost for older techs the AI has not researched yet, so it keeps up.                                                 |
+| `RESEARCH_NEEDS_FACTOR`                | 0.125 | 0.01    | How much the weights in this directory count toward the score.                                                       |
+| `RESEARCH_LENGTH_FACTOR`               | 2.5   | 3       | How much the AI prefers short research times.                                                                        |
+
 ## Scale
 
 | Weight | Meaning                           |
