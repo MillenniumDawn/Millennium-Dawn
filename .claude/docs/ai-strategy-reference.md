@@ -324,20 +324,20 @@ stockpile adds a second +100% category-demand increase.
 
 **Key force_build_armies values:**
 
-| Country | Value     | Condition                             |
-| ------- | --------- | ------------------------------------- |
-| USA     | 50        | Always                                |
-| SOV     | 50        | Always                                |
-| CHI     | 50        | Always                                |
-| GER     | 50        | Always                                |
+| Country | Value       | Condition                           |
+| ------- | ----------- | ----------------------------------- |
+| USA     | 50          | Always                              |
+| SOV     | 50          | Always                              |
+| CHI     | 50          | Always                              |
+| GER     | 50          | Always                              |
 | UKR     | 50, 150, 50 | Always, SOV threatening, BLR allied |
-| CAN     | 100       | Preparing for war                     |
-| ARG     | 100       | Preparing for war                     |
-| RAJ     | 100       | China aggressive                      |
-| KOS     | 150       | Always                                |
-| DPR/HPR | 150       | Always                                |
-| CHE     | 150       | Always                                |
-| ZOM     | 200       | Always                                |
+| CAN     | 100         | Preparing for war                   |
+| ARG     | 100         | Preparing for war                   |
+| RAJ     | 100         | China aggressive                    |
+| KOS     | 150         | Always                              |
+| DPR/HPR | 150         | Always                              |
+| CHE     | 150         | Always                              |
+| ZOM     | 200         | Always                              |
 
 **Offensive preparation:**
 
@@ -387,7 +387,7 @@ my_plan = {
 | `ai_focus_war_production`     | Construction, fuel, nanofibers, 3D printing, AI tech |
 | `ai_focus_military_equipment` | Infantry weapons, AT, AA, artillery, doctrine (SOV)  |
 
-Country-specific overrides: SOV (very high war production weights 55.0), USA (SAM in defense, lighter war production), RAJ (India-specific).
+Country-specific overrides: SOV (war production maxed at 10), USA (SAM in defense, lighter war production), RAJ (India-specific). Weights use a 1-10 scale; see `common/ai_focuses/README.md`.
 
 ## AI Templates (`common/ai_templates/`)
 
