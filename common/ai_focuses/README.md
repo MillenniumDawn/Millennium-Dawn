@@ -31,7 +31,8 @@ The highest score wins a free research slot, with two catches.
   the second-highest tech: it shares a category with one already in progress.
 
 When checking AI research in game, look for the categories it leans toward, not the
-exact order. In the AI research debug view, green marks techs being researched now.
+exact order. To see the scores, enable `human_ai` in the console, then run
+`imgui show ai_strategy`. Green marks techs being researched now.
 
 ## Research defines
 
