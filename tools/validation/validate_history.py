@@ -151,7 +151,7 @@ def propagate_dlc_reqs(
     techs carries it: if all paths to a tech run through techs forbidden under
     DLC X, the tech itself cannot legitimately exist under X (and likewise for
     `require`). This extends a base-tech gate (e.g. SP_arty_0 forbidden under No
-    Step Back) to its whole upgrade chain (SP_arty_1..4, Arty_upgrade_*), so
+    Step Back) to its whole upgrade chain (SP_arty_1..4, arty_upgrade_*), so
     granting any tier of the legacy or NSB line in a contradicting branch is
     caught, not just the root.
     """
@@ -1084,7 +1084,7 @@ def validate_country_dlc_techs(
 
     A tech gated `NOT has_dlc = "X"` (the non-DLC fallback, e.g. SP_arty_0) must
     not be set in any reachable DLC configuration where X is active; a tech
-    gated `has_dlc = "X"` (a DLC-only tech, e.g. nsb_artillery_0) must not be
+    gated `has_dlc = "X"` (a DLC-only tech, e.g. nsb_artillery_1) must not be
     set where X is inactive. Granting it anyway force-enables equipment whose
     tech branch is disabled, duplicating the active-DLC designer's equipment.
 
