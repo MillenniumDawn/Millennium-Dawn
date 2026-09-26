@@ -407,6 +407,18 @@ Also: ISR (Shock and Awe, Heavy, Air Supremacy), KOR and TAI (Defence in Depth),
 
 Everyone else: Combined Arms is the land default (base 5). Defence in Depth, plus static and elastic defense subdoctrines, gain weight in a defensive war or under `ai_is_threatened`. Local Airspace Defense is the air default for minors, and Mixed Role goes to minors with more than 10 military factories. Transport and attack helicopter subdoctrines gain weight once the first helicopter tech is researched.
 
+Subdoctrines use the same order and scale. Each track has one base 3 default (for example, battalion combat teams, centralized supply, common tech army, mixed mechanized, MBT, towed guns, multirole frigates, coastal defense), and the other options sit at base 1 with context adds. National picks follow each country's doctrine history:
+
+- USA: BCTs, Thunder Run, skill school, officer and NCO, high tech, heavy loads, heavy motorized, IFV and APC, MBT, SP guns and MLRS, both helicopters, detached air commands, stealth designs, stealth and BVR fighters, air dominance and carrier multirole, carriers, LHDs, carrier escorts, escort subs, naval supremacy, SOCOM.
+- ENG: BCTs, counterinsurgency, officer and NCO, IFV, attack helicopters, deep interdiction, AEW, air superiority and BVR, anti-sub escorts, hunter-killers, recon rangers, elite raiders, paras, counter-terror.
+- FRA: BCTs, dedicated counterinsurgency and light infantry, survival school, light loads, heavy and light motorized, carrier multirole and strike multirole, stealth escorts, escort subs.
+- GER: decentralized command, mobile defense, heavy loads, IFV and APC, SEAD, interceptors and BVR, frigate navy, anti-air escorts, hunter-killers, coastal defense, counter-terror.
+- SOV: centralized command, deep battle and centralized supply, survival school, common tech, MLRS and SP guns, dedicated designs, interceptors and dogfighting, CAS, strategic bombers, Lords of the Sea and cruisers, missile boats, armored airborne, Spetsnaz sabotage.
+- CHI: centralized command, elastic defense and dedicated deep battle, survival school, NCOs, common tech, MLRS, dedicated designs, interceptors and air superiority, naval strike, carriers, cruisers, destroyers, hunter-killers, massed landings.
+- JAP, KOR and TAI: static defense, dedicated mobile defense (JAP, KOR) or light infantry (TAI), interceptors and BVR (JAP, KOR), naval strike (JAP), destroyers, LHDs, anti-sub and anti-air escorts (JAP).
+- ISR: decentralized command, Thunder Run, dedicated urban warfare, heavy loads, APC, electronic warfare designs, air dominance and strike multirole, air superiority and dogfighting, direct action.
+- TUR and PER: drone designs, MALE UCAVs and loitering munitions. PER adds missile boats, raiding fleets and coastal defense.
+
 ## AI Templates (`common/ai_templates/`)
 
 ### Structure
