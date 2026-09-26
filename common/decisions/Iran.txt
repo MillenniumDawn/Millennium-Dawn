@@ -13248,42 +13248,6 @@ PER_us_war = {
 }
 
 # Aerospace, UAV, Missile & Air Defense Industry Progression
-# Decisions reveal in waves as PER_aerospace_stage advances (0->1->2->3):
-# only the founding decision is visible at stage 0; completing it reveals the
-# stage-1 wave (consolidation gate + two early operational decisions);
-# consolidating reveals the stage-2 wave (institutional lead + most of the
-# operational roster); declaring the complex reveals the capstone.
-# Only one decision in this category can be taken at a time: every decision
-# sets PER_aerospace_action_cooldown (15 days) and checks it in `available`,
-# so the whole category pauses briefly after any single action. The two
-# decisions that contact a foreign country (PER_request_foreign_defense_
-# cooperation, PER_offer_arms_technology_sale) additionally set/check
-# PER_diplomatic_contact_cooldown (365 days) shared between just the two of
-# them, so approaching one country locks out approaching any other for a
-# year. Both foreign-contact decisions are plain (non-targeted) and open a
-# country-picker event instead of spawning one row per valid target.
-#
-# Three 0-100 country variables gate BOTH remaining stage transitions:
-# PER_missile_progress, PER_drone_progress, PER_air_defense_progress. Almost
-# every operational decision adds to one (institutional_rivalry_friction adds
-# to all three at once, being the only real grind available at stage 1) and
-# all three must read 100 before the stage-advance decision for that wave
-# becomes available -- PER_consolidate_under_one_roof (1->2) and
-# PER_declare_strategic_aerospace_complex (2->3) both gate on this the same
-# way. Consolidating resets all three back to 0 so the stage-2 roster has
-# its own grind to fill; declaring does not reset them since there is no
-# stage 4. The missile track is the one track that cannot reach 100 during
-# stage 2 without PER_missile_fuel_refinery_program, which itself requires
-# Fuel Refining III researched and a level 6+ synthetic refinery complex
-# already built in a single state -- deliberately forcing fuel
-# infrastructure before the missile program can be finished. Every
-# add_to_variable on these three is followed by a
-# clamp_variable so the GUI's progress bars, which read the raw value as a
-# 0-100 frame, never receive an out-of-range number. PER_aerospace_gui_dirty
-# is a plain incrementing counter bumped alongside every stage or progress
-# change -- scripted_gui `dirty` only tracks one variable, so this one
-# variable stands in for all four (stage + 3 progress bars) that the GUI
-# reads.
 PER_aerospace_industry_category = {
 	PER_found_aerospace_coordination_council = {
 		icon = generic_construction
@@ -13304,10 +13268,7 @@ PER_aerospace_industry_category = {
 			custom_effect_tooltip = PER_aerospace_stage_advance_clears_cooldown_tt
 			newline = yes
 			set_variable = { PER_aerospace_stage = 1 }
-			# Founding the council is what puts the "State of the Iranian
-			# Aerospace Industry" modifier on the country -- without this every
-			# add_to_variable against it would write to a modifier that was
-			# never applied, and none of the programme's bonuses would exist.
+			# puts the "State of the Iranian Aerospace Industry" modifier on the country
 			add_dynamic_modifier = { modifier = PER_aerospace_modifier }
 			add_tech_bonus = {
 				name = PER_found_aerospace_coordination_council
@@ -13342,8 +13303,6 @@ PER_aerospace_industry_category = {
 			modify_treasury_effect = yes
 			hidden_effect = {
 				add_to_variable = { PER_aerospace_gui_dirty = 1 }
-				# Advancing a stage clears the shared action cooldown instead of
-				# setting it, so the new stage's roster is usable immediately.
 				clr_country_flag = PER_aerospace_action_cooldown
 			}
 			unlock_decision_tooltip = PER_consolidate_under_one_roof
@@ -13377,8 +13336,7 @@ PER_aerospace_industry_category = {
 				AND = { has_completed_focus = PER_AIO has_completed_focus = PER_naze_at_rockets_in_tabriz }
 				AND = { has_completed_focus = PER_ballistic_shift has_completed_focus = PER_naze_at_rockets_in_tabriz }
 			}
-			# Industrial floor for consolidation. The *_total variables are the
-			# country-wide building counts the money system already maintains.
+
 			custom_trigger_tooltip = {
 				tooltip = PER_consolidate_industry_requirement_tt
 				check_variable = { industrial_complex_total > 29 }
@@ -13518,8 +13476,6 @@ PER_aerospace_industry_category = {
 				clr_country_flag = PER_aerospace_action_cooldown
 			}
 			newline = yes
-			# Absorbs what the retired PER_strategic_missile_power idea used to
-			# carry, so the whole system reports through one modifier block.
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
 			add_to_variable = { PER_aerospace_production_speed_rocket_site_factor = 0.25 tooltip = production_speed_rocket_site_factor_tt }
 			add_to_variable = { PER_aerospace_production_speed_radar_station_factor = 0.10 tooltip = production_speed_radar_station_factor_tt }
@@ -13745,7 +13701,6 @@ PER_aerospace_industry_category = {
 						}
 					}
 					newline = yes
-					# Trials teach less once the industry is consolidated.
 					if = {
 						limit = { check_variable = { PER_aerospace_stage < 2 } }
 						custom_effect_tooltip = PER_missile_sector_progress_10_tt
@@ -13804,7 +13759,6 @@ PER_aerospace_industry_category = {
 					custom_effect_tooltip = PER_drone_trial_success_tt
 					country_event = { id = PER_aerospace.18 days = 1 }
 					newline = yes
-					# Trials teach less once the industry is consolidated.
 					if = {
 						limit = { check_variable = { PER_aerospace_stage < 2 } }
 						custom_effect_tooltip = PER_drone_sector_progress_10_tt
@@ -13862,7 +13816,6 @@ PER_aerospace_industry_category = {
 					custom_effect_tooltip = PER_air_defense_exercise_success_tt
 					country_event = { id = PER_aerospace.20 days = 1 }
 					newline = yes
-					# Trials teach less once the industry is consolidated.
 					if = {
 						limit = { check_variable = { PER_aerospace_stage < 2 } }
 						custom_effect_tooltip = PER_air_defense_sector_progress_10_tt
@@ -14130,11 +14083,6 @@ PER_aerospace_industry_category = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = PER_aerospace_modifier }
 			add_to_variable = { PER_aerospace_mio_funds_gain_factor = 0.03 tooltip = military_industrial_organization_funds_gain_tt }
 			newline = yes
-			# Sepah runs the missile and drone programs, Artesh runs air
-			# defense -- smoothing relations between the two therefore moves
-			# all three tracks at once, not just one. The funds-gain bump above
-			# is capped to the first two rounds of mediation; this progress
-			# grant is not.
 			custom_effect_tooltip = PER_missile_sector_progress_15_tt
 			add_to_variable = { PER_missile_progress = 15 }
 			clamp_variable = { var = PER_missile_progress min = 0 max = 100 }
@@ -14153,13 +14101,7 @@ PER_aerospace_industry_category = {
 		ai_will_do = { base = 3 }
 	}
 
-	# Stage-1 roster part 2: three one-time decisions revealed in sequence
-	# (each gated on the previous one's completion flag) rather than all
-	# three appearing alongside institutional_rivalry_friction/missile_test
-	# at once. Formerly PER_aerospace_engineering_pipeline (stage 2) -- moved
-	# here since funding the education pipeline logically precedes staffing
-	# the institute with it, and re-skinned around Iran's real National
-	# Elites Foundation (Bonyad-e Melli-ye Nokhbegan).
+	# Stage-1 roster part 2
 	PER_national_elites_foundation_scholarships = {
 		icon = generic_construction
 		cost = 80
@@ -14175,9 +14117,6 @@ PER_aerospace_industry_category = {
 
 		available = {
 			NOT = { has_country_flag = PER_aerospace_action_cooldown }
-			# Soft gate: visible from the start so the player can read what it
-			# needs, but the Foundation only has candidates to fund once the
-			# three groundwork programs have each been run at least once.
 			has_education_law_at_least_5 = yes
 			custom_trigger_tooltip = {
 				tooltip = PER_elites_foundation_requirement_tt
@@ -14229,9 +14168,7 @@ PER_aerospace_industry_category = {
 		ai_will_do = { base = 5 }
 	}
 
-	# Timed: the study runs for 40 days before it produces anything. The
-	# blocking flag is set immediately on selection so it can never be
-	# re-queued while the archive work is still under way.
+	# Timed
 	PER_document_holy_defence_experiences = {
 		icon = generic_research
 		fire_only_once = yes
@@ -14789,8 +14726,7 @@ PER_aerospace_industry_category = {
 				add_to_variable = { PER_aerospace_production_speed_rocket_site_factor = 0.05 tooltip = production_speed_rocket_site_factor_tt }
 			}
 			newline = yes
-			# New sites are sited across the south and west (Fars, Khuzestan,
-			# Kermanshah) rather than stacking in one province, one per use.
+			# New sites are sited across the south and west (Fars, Khuzestan, Kermanshah)
 			if = {
 				limit = { check_variable = { PER_missile_site_construction_count = 1 } }
 				400 = {
@@ -14829,11 +14765,7 @@ PER_aerospace_industry_category = {
 		ai_will_do = { base = 4 }
 	}
 
-	# Map-based: the player picks the state on the actual game map
-	# (on_map_mode opens it alongside the decision panel) rather than the
-	# site being hardcoded or rotated through a fixed list. target_array
-	# reuses the engine-native PER.core_states array -- no custom array to
-	# build or maintain.
+	# Map-based
 	PER_fortified_underground_missile_sites = {
 		icon = missile_nuclear_button
 		fire_only_once = yes
@@ -14847,9 +14779,6 @@ PER_aerospace_industry_category = {
 		custom_cost_text = PER_cost_treasury35
 		ai_hint_pp_cost = 70
 
-		# Launch and combat infrastructure goes in the west and south -- the
-		# curated target list keeps this to four map choices instead of one
-		# row per owned state.
 		targets = { 399 400 1139 1146 }
 		target_trigger = {
 			FROM = {
@@ -14882,8 +14811,6 @@ PER_aerospace_industry_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision PER_fortified_underground_missile_sites"
-			# The hardening package is granted once across both map decisions,
-			# never stacked -- the flag guards the tooltip as well as the idea.
 			if = {
 				limit = { NOT = { has_country_flag = PER_aerospace_hardening_done } }
 				set_country_flag = PER_aerospace_hardening_done
@@ -15098,10 +15025,6 @@ PER_aerospace_industry_category = {
 				add_to_variable = { PER_aerospace_air_detection = 0.06 tooltip = air_detection_tt }
 			}
 			newline = yes
-			# Coverage is only as good as its spread: one station in the
-			# capital plus one each in the south and west. one_state_radar_station
-			# charges its own construction money for each, on top of the
-			# decision's own cost.
 			405 = { one_state_radar_station = yes }
 			1146 = { one_state_radar_station = yes }
 			1139 = { one_state_radar_station = yes }
