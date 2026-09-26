@@ -716,6 +716,7 @@ on_startup_euu_action = {
 			add_to_array = { global.EU_potential_votes = 206 } # Fiscal Union
 			add_to_array = { global.EU_potential_votes = 207 } # European Economic Government
 			add_to_array = { global.EU_potential_votes = 208 } # European Minister of Economy and Finance
+			add_to_array = { global.EU_potential_votes = 209 } # Gold-Backed Euro
 			add_to_array = { global.EU_potential_votes = 301 } # European Defence Agency (EDA)
 			add_to_array = { global.EU_potential_votes = 302 } # Permanent Structured Cooperation (PESCO)
 			add_to_array = { global.EU_potential_votes = 303 } # European Defence Fund
@@ -856,6 +857,7 @@ on_startup_euu_action = {
 			EU_global_click_cost = yes
 			update_EU_budget_call_rate = yes
 			update_EU_average_eco_lvl = yes
+			update_EU_eurozone_policies = yes
 			set_EU_expenditure = yes
 			distribute_EU_budget = yes
 		}
@@ -1230,6 +1232,47 @@ update_EU_average_eco_lvl = {
 		divide_variable = { global.EU_average_eco_lvl = global.EU_member^num }
 	}
 	update_eu_dirty_variable = yes
+}
+
+update_EU_eurozone_policies = {
+	set_variable = { global.EU_eurozone_avg_inflation = 0 }
+	set_variable = { global.EU_eurozone_members = 0 }
+	for_each_scope_loop = {
+		array = global.EU_member
+		if = { limit = { has_idea = euro }
+			add_to_variable = { global.EU_eurozone_members = 1 }
+			add_to_variable = { global.EU_eurozone_avg_inflation = THIS.inflation_rate_var }
+		}
+	}
+	if = { limit = { check_variable = { global.EU_eurozone_members > 0 } }
+		divide_variable = { global.EU_eurozone_avg_inflation = global.EU_eurozone_members }
+	}
+
+	for_each_scope_loop = {
+		array = global.EU_member
+		if = { limit = { has_idea = euro }
+			update_EU_eurozone_policies_spirit = yes
+			if = { limit = { is_euro_controller = yes } sync_eurozone_policy_rate = yes }
+		}
+	}
+}
+
+# Euro user scope
+update_EU_eurozone_policies_spirit = {
+	if = { limit = { NOT = { has_dynamic_modifier = { modifier = EU_eurozone_policies } } }
+		add_dynamic_modifier = { modifier = EU_eurozone_policies }
+	}
+	set_temp_variable = { eurozone_distance = { value = inflation_rate_var subtract = global.EU_eurozone_avg_inflation max = { value = global.EU_eurozone_avg_inflation subtract = inflation_rate_var } } }
+	# 1.5-point band matches the Maastricht inflation criterion
+	set_temp_variable = { eurozone_fit = { value = 0.015 subtract = eurozone_distance multiply = 1.5 max = -0.15 } }
+	set_variable = { EU_eurozone_policies_production_speed_buildings_factor = eurozone_fit }
+	set_variable = { EU_eurozone_policies_country_productivity_growth_modifier = eurozone_fit }
+	set_variable = { EU_eurozone_policies_inflation_cost_multiplier_modifier = { value = eurozone_fit multiply = -1 } }
+	set_variable = { EU_eurozone_policies_consumer_goods_factor = { value = eurozone_fit multiply = -0.2 } }
+	# Gold-Backed Euro (EU209)
+	if = { limit = { has_idea = gold_standard_back }
+		add_to_variable = { var = EU_eurozone_policies_inflation_cost_multiplier_modifier value = { value = global.EU_eurozone_members multiply = -0.005 max = -0.10 } }
+	}
 }
 
 set_EU_gdp = {
@@ -1917,6 +1960,12 @@ joining_the_euro = {
 			remove_idea = no_foreign_reserve
 			add_idea = euro
 		}
+	}
+	if = { limit = { is_in_array = { global.EU_passed_votes = 209 } }
+		add_ideas = gold_standard_back
+	}
+	else_if = { limit = { NOT = { has_idea = no_currency_backing } }
+		add_ideas = no_currency_backing
 	}
 }
 
