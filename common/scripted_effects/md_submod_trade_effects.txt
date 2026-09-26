@@ -1,0 +1,455 @@
+# common/scripted_effects/md_submod_trade_effects.txt
+
+md_submod_trade_graph_init = {
+	set_temp_variable = { m_exp = resource_sale_rate }
+	multiply_temp_variable = { m_exp = 4.33 }
+	set_variable = { md_current_monthly_exports = m_exp }
+
+	# Calculate resource import costs
+	set_temp_variable = { imp_oil = resource_imported@oil }
+	multiply_temp_variable = { imp_oil = global.oil_price }
+	set_temp_variable = { imp_steel = resource_imported@steel }
+	multiply_temp_variable = { imp_steel = global.steel_price }
+	set_temp_variable = { imp_alum = resource_imported@aluminium }
+	multiply_temp_variable = { imp_alum = global.aluminium_price }
+	set_temp_variable = { imp_tung = resource_imported@tungsten }
+	multiply_temp_variable = { imp_tung = global.tungsten_price }
+	set_temp_variable = { imp_chrom = resource_imported@chromium }
+	multiply_temp_variable = { imp_chrom = global.chromium_price }
+	set_temp_variable = { imp_rub = resource_imported@rubber }
+	multiply_temp_variable = { imp_rub = global.rubber_price }
+	set_temp_variable = { imp_micro = resource_imported@microchips }
+	multiply_temp_variable = { imp_micro = global.microchip_price }
+	set_temp_variable = { imp_comp = resource_imported@composites }
+	multiply_temp_variable = { imp_comp = global.composite_price }
+
+	set_temp_variable = { m_imp = imp_oil }
+	add_to_temp_variable = { m_imp = imp_steel }
+	add_to_temp_variable = { m_imp = imp_alum }
+	add_to_temp_variable = { m_imp = imp_tung }
+	add_to_temp_variable = { m_imp = imp_chrom }
+	add_to_temp_variable = { m_imp = imp_rub }
+	add_to_temp_variable = { m_imp = imp_micro }
+	add_to_temp_variable = { m_imp = imp_comp }
+	multiply_temp_variable = { m_imp = 4.33 }
+	divide_temp_variable = { m_imp = 12000 } # @resource_sale_rate_constant (1/12000)
+	set_variable = { md_current_monthly_imports = m_imp }
+
+	set_variable = { md_current_monthly_trade_bal = md_current_monthly_exports }
+	subtract_from_variable = { md_current_monthly_trade_bal = md_current_monthly_imports }
+
+	resize_array = { array = trade_exports_array value = md_current_monthly_exports size = 120 }
+	resize_array = { array = trade_imports_array value = md_current_monthly_imports size = 120 }
+	resize_array = { array = trade_balance_array value = md_current_monthly_trade_bal size = 120 }
+
+	set_variable = { trade_exports_array^0 = md_current_monthly_exports }
+	set_variable = { trade_imports_array^0 = md_current_monthly_imports }
+	set_variable = { trade_balance_array^0 = md_current_monthly_trade_bal }
+}
+
+# 1. THE TRADE MONTHLY SHIFTER (Self-Healing)
+md_submod_trade_graph_on_monthly = {
+	set_temp_variable = { m_exp = resource_sale_rate }
+	multiply_temp_variable = { m_exp = 4.33 }
+	set_variable = { md_current_monthly_exports = m_exp }
+
+	set_temp_variable = { imp_oil = resource_imported@oil }
+	multiply_temp_variable = { imp_oil = global.oil_price }
+	set_temp_variable = { imp_steel = resource_imported@steel }
+	multiply_temp_variable = { imp_steel = global.steel_price }
+	set_temp_variable = { imp_alum = resource_imported@aluminium }
+	multiply_temp_variable = { imp_alum = global.aluminium_price }
+	set_temp_variable = { imp_tung = resource_imported@tungsten }
+	multiply_temp_variable = { imp_tung = global.tungsten_price }
+	set_temp_variable = { imp_chrom = resource_imported@chromium }
+	multiply_temp_variable = { imp_chrom = global.chromium_price }
+	set_temp_variable = { imp_rub = resource_imported@rubber }
+	multiply_temp_variable = { imp_rub = global.rubber_price }
+	set_temp_variable = { imp_micro = resource_imported@microchips }
+	multiply_temp_variable = { imp_micro = global.microchip_price }
+	set_temp_variable = { imp_comp = resource_imported@composites }
+	multiply_temp_variable = { imp_comp = global.composite_price }
+
+	set_temp_variable = { m_imp = imp_oil }
+	add_to_temp_variable = { m_imp = imp_steel }
+	add_to_temp_variable = { m_imp = imp_alum }
+	add_to_temp_variable = { m_imp = imp_tung }
+	add_to_temp_variable = { m_imp = imp_chrom }
+	add_to_temp_variable = { m_imp = imp_rub }
+	add_to_temp_variable = { m_imp = imp_micro }
+	add_to_temp_variable = { m_imp = imp_comp }
+	multiply_temp_variable = { m_imp = 4.33 }
+	divide_temp_variable = { m_imp = 12000 }
+	set_variable = { md_current_monthly_imports = m_imp }
+
+	set_variable = { md_current_monthly_trade_bal = md_current_monthly_exports }
+	subtract_from_variable = { md_current_monthly_trade_bal = md_current_monthly_imports }
+
+	if = {
+		limit = { NOT = { check_variable = { trade_exports_array^num > 0 } } }
+		md_submod_trade_graph_init = yes
+	}
+
+	set_variable = { trade_exports_array^current_gdp_graph_end = md_current_monthly_exports }
+	set_variable = { trade_imports_array^current_gdp_graph_end = md_current_monthly_imports }
+	set_variable = { trade_balance_array^current_gdp_graph_end = md_current_monthly_trade_bal }
+
+	if = {
+		limit = { check_variable = { current_gdp_graph_end = 1 } }
+		set_variable = { trade_exports_array^0 = md_current_monthly_exports }
+		set_variable = { trade_imports_array^0 = md_current_monthly_imports }
+		set_variable = { trade_balance_array^0 = md_current_monthly_trade_bal }
+	}
+}
+
+# 2. THE MATH TRANSLATOR & FAILSAFE
+update_md_flaxbeard_trade_graph = {
+	set_temp_variable = { m_exp = resource_sale_rate }
+	multiply_temp_variable = { m_exp = 4.33 }
+	set_variable = { md_current_monthly_exports = m_exp }
+
+	set_temp_variable = { imp_oil = resource_imported@oil }
+	multiply_temp_variable = { imp_oil = global.oil_price }
+	set_temp_variable = { imp_steel = resource_imported@steel }
+	multiply_temp_variable = { imp_steel = global.steel_price }
+	set_temp_variable = { imp_alum = resource_imported@aluminium }
+	multiply_temp_variable = { imp_alum = global.aluminium_price }
+	set_temp_variable = { imp_tung = resource_imported@tungsten }
+	multiply_temp_variable = { imp_tung = global.tungsten_price }
+	set_temp_variable = { imp_chrom = resource_imported@chromium }
+	multiply_temp_variable = { imp_chrom = global.chromium_price }
+	set_temp_variable = { imp_rub = resource_imported@rubber }
+	multiply_temp_variable = { imp_rub = global.rubber_price }
+	set_temp_variable = { imp_micro = resource_imported@microchips }
+	multiply_temp_variable = { imp_micro = global.microchip_price }
+	set_temp_variable = { imp_comp = resource_imported@composites }
+	multiply_temp_variable = { imp_comp = global.composite_price }
+
+	set_temp_variable = { m_imp = imp_oil }
+	add_to_temp_variable = { m_imp = imp_steel }
+	add_to_temp_variable = { m_imp = imp_alum }
+	add_to_temp_variable = { m_imp = imp_tung }
+	add_to_temp_variable = { m_imp = imp_chrom }
+	add_to_temp_variable = { m_imp = imp_rub }
+	add_to_temp_variable = { m_imp = imp_micro }
+	add_to_temp_variable = { m_imp = imp_comp }
+	multiply_temp_variable = { m_imp = 4.33 }
+	divide_temp_variable = { m_imp = 12000 }
+	set_variable = { md_current_monthly_imports = m_imp }
+
+	set_variable = { md_current_monthly_trade_bal = md_current_monthly_exports }
+	subtract_from_variable = { md_current_monthly_trade_bal = md_current_monthly_imports }
+
+	if = {
+		limit = { NOT = { check_variable = { trade_exports_array^num > 0 } } }
+		md_submod_trade_graph_init = yes
+	}
+
+	clear_array = md_flax_offsets_trade_exp_green
+	clear_array = md_flax_slopes_trade_exp
+
+	clear_array = md_flax_offsets_trade_imp_red
+	clear_array = md_flax_slopes_trade_imp
+
+	clear_array = md_flax_offsets_trade_bal_green
+	clear_array = md_flax_offsets_trade_bal_red
+	clear_array = md_flax_slopes_trade_bal
+
+	# --- YOY (JANUARY-ONLY SNAPSHOT) ---
+	set_temp_variable = { months_since_jan = global.month }
+	subtract_from_temp_variable = { months_since_jan = 1 }
+
+	set_temp_variable = { recent_jan_idx = current_gdp_graph_end }
+	subtract_from_temp_variable = { recent_jan_idx = months_since_jan }
+	if = { limit = { check_variable = { recent_jan_idx < 0 } } set_temp_variable = { recent_jan_idx = 0 } }
+
+	set_temp_variable = { prev_jan_idx = recent_jan_idx }
+	subtract_from_temp_variable = { prev_jan_idx = 12 }
+	if = { limit = { check_variable = { prev_jan_idx < 0 } } set_temp_variable = { prev_jan_idx = 0 } }
+
+	# ---------------------------------------------
+
+	# BOUNDS: Exports, Imports, and Net Trade Balance in $B/mo
+	set_temp_variable = { true_max = trade_exports_array^0 }
+	set_temp_variable = { true_min = trade_balance_array^0 } 
+	set_temp_variable = { max_jump = 0 }
+
+	for_each_loop = {
+		array = trade_exports_array
+		value = v
+		index = i
+
+		if = {
+			limit = { NOT = { check_variable = { i > current_gdp_graph_end } } }
+			if = { limit = { check_variable = { v > true_max } } set_temp_variable = { true_max = v } }
+			if = { limit = { check_variable = { v < true_min } } set_temp_variable = { true_min = v } }
+
+			set_temp_variable = { next_i = i }
+			add_to_temp_variable = { next_i = 1 }
+			if = {
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
+				set_temp_variable = { jump = trade_exports_array^next_i }
+				subtract_from_temp_variable = { jump = v }
+				if = { limit = { check_variable = { jump < 0 } } multiply_temp_variable = { jump = -1 } }
+				if = { limit = { check_variable = { jump > max_jump } } set_temp_variable = { max_jump = jump } }
+			}
+		}
+	}
+
+	for_each_loop = {
+		array = trade_imports_array
+		value = v
+		index = i
+
+		if = {
+			limit = { NOT = { check_variable = { i > current_gdp_graph_end } } }
+			if = { limit = { check_variable = { v > true_max } } set_temp_variable = { true_max = v } }
+			if = { limit = { check_variable = { v < true_min } } set_temp_variable = { true_min = v } }
+
+			set_temp_variable = { next_i = i }
+			add_to_temp_variable = { next_i = 1 }
+			if = {
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
+				set_temp_variable = { jump = trade_imports_array^next_i }
+				subtract_from_temp_variable = { jump = v }
+				if = { limit = { check_variable = { jump < 0 } } multiply_temp_variable = { jump = -1 } }
+				if = { limit = { check_variable = { jump > max_jump } } set_temp_variable = { max_jump = jump } }
+			}
+		}
+	}
+
+	for_each_loop = {
+		array = trade_balance_array
+		value = v
+		index = i
+
+		if = {
+			limit = { NOT = { check_variable = { i > current_gdp_graph_end } } }
+			if = { limit = { check_variable = { v > true_max } } set_temp_variable = { true_max = v } }
+			if = { limit = { check_variable = { v < true_min } } set_temp_variable = { true_min = v } }
+
+			set_temp_variable = { next_i = i }
+			add_to_temp_variable = { next_i = 1 }
+			if = {
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
+				set_temp_variable = { jump = trade_balance_array^next_i }
+				subtract_from_temp_variable = { jump = v }
+				if = { limit = { check_variable = { jump < 0 } } multiply_temp_variable = { jump = -1 } }
+				if = { limit = { check_variable = { jump > max_jump } } set_temp_variable = { max_jump = jump } }
+			}
+		}
+	}
+
+	set_temp_variable = { data_diff = true_max }
+	subtract_from_temp_variable = { data_diff = true_min }
+
+	# FAILSAFE PADDING
+	if = {
+		limit = { check_variable = { data_diff < 1 } }
+		set_temp_variable = { high = true_max }
+		add_to_temp_variable = { high = 1.0 }
+		set_temp_variable = { low = true_min }
+		subtract_from_temp_variable = { low = 1.0 }
+	}
+	else = {
+		set_temp_variable = { pad = data_diff }
+		multiply_temp_variable = { pad = 0.1 } 
+		set_temp_variable = { high = true_max }
+		add_to_temp_variable = { high = pad }
+		set_temp_variable = { low = true_min }
+		subtract_from_temp_variable = { low = pad }
+	}
+
+	set_temp_variable = { diff = high }
+	subtract_from_temp_variable = { diff = low }
+	if = { limit = { check_variable = { diff < 0.01 } } set_temp_variable = { diff = 0.01 } }
+
+	# DYNAMIC ANTI-TEAR ZOOM 
+	set_temp_variable = { safe_diff = max_jump }
+	multiply_temp_variable = { safe_diff = 45 }
+	divide_temp_variable = { safe_diff = 10 }
+
+	if = {
+		limit = { check_variable = { diff < safe_diff } }
+		set_temp_variable = { shortfall = safe_diff }
+		subtract_from_temp_variable = { shortfall = diff }
+		divide_temp_variable = { shortfall = 2 }
+
+		add_to_temp_variable = { high = shortfall }
+		subtract_from_temp_variable = { low = shortfall }
+		set_temp_variable = { diff = safe_diff }
+	}
+
+	# Y-AXIS LABELS ($B/mo)
+	set_temp_variable = { step = diff }
+	multiply_temp_variable = { step = 0.1 } 
+	set_temp_variable = { buf = low }
+	for_loop_effect = {
+		start = 0 end = 11
+		set_variable = { md_trade_y_axis_label^v = buf }
+		add_to_temp_variable = { buf = step }
+	}
+
+	# 1. DRAW EXPORTS LINE (Green)
+	for_each_loop = {
+		array = trade_exports_array
+		value = v
+		index = i
+
+		if = {
+			limit = { check_variable = { i > current_gdp_graph_end } }
+			add_to_array = { md_flax_offsets_trade_exp_green = 1000 } 
+			add_to_array = { md_flax_slopes_trade_exp = 50 }
+		}
+		else = {
+			set_temp_variable = { y1_val = v }
+			subtract_from_temp_variable = { y1_val = low }
+			divide_temp_variable = { y1_val = diff } 
+			set_temp_variable = { y1_px = y1_val }
+			multiply_temp_variable = { y1_px = 450 }
+
+			set_temp_variable = { next_i = i }
+			add_to_temp_variable = { next_i = 1 }
+
+			if = {
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				set_temp_variable = { y2_val = trade_exports_array^next_i }
+			}
+			else = {
+				set_temp_variable = { y2_val = v } 
+			}
+
+			subtract_from_temp_variable = { y2_val = low }
+			divide_temp_variable = { y2_val = diff } 
+			set_temp_variable = { y2_px = y2_val }
+			multiply_temp_variable = { y2_px = 450 } 
+
+			set_temp_variable = { offset = y1_px }
+			multiply_temp_variable = { offset = -1 }
+			add_to_array = { md_flax_offsets_trade_exp_green = offset }
+
+			set_temp_variable = { slope = y2_px }
+			subtract_from_temp_variable = { slope = y1_px }
+			divide_temp_variable = { slope = 2 }
+			add_to_temp_variable = { slope = 50 }
+
+			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
+			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
+
+			round_variable = slope
+			add_to_array = { md_flax_slopes_trade_exp = slope }
+		}
+	}
+
+	# 2. DRAW IMPORTS LINE (Red)
+	for_each_loop = {
+		array = trade_imports_array
+		value = v
+		index = i
+
+		if = {
+			limit = { check_variable = { i > current_gdp_graph_end } }
+			add_to_array = { md_flax_offsets_trade_imp_red = 1000 } 
+			add_to_array = { md_flax_slopes_trade_imp = 50 }
+		}
+		else = {
+			set_temp_variable = { y1_val = v }
+			subtract_from_temp_variable = { y1_val = low }
+			divide_temp_variable = { y1_val = diff } 
+			set_temp_variable = { y1_px = y1_val }
+			multiply_temp_variable = { y1_px = 450 }
+
+			set_temp_variable = { next_i = i }
+			add_to_temp_variable = { next_i = 1 }
+
+			if = {
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				set_temp_variable = { y2_val = trade_imports_array^next_i }
+			}
+			else = {
+				set_temp_variable = { y2_val = v } 
+			}
+
+			subtract_from_temp_variable = { y2_val = low }
+			divide_temp_variable = { y2_val = diff } 
+			set_temp_variable = { y2_px = y2_val }
+			multiply_temp_variable = { y2_px = 450 } 
+
+			set_temp_variable = { offset = y1_px }
+			multiply_temp_variable = { offset = -1 }
+			add_to_array = { md_flax_offsets_trade_imp_red = offset }
+
+			set_temp_variable = { slope = y2_px }
+			subtract_from_temp_variable = { slope = y1_px }
+			divide_temp_variable = { slope = 2 }
+			add_to_temp_variable = { slope = 50 }
+
+			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
+			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
+
+			round_variable = slope
+			add_to_array = { md_flax_slopes_trade_imp = slope }
+		}
+	}
+
+	# 3. DRAW NET TRADE BALANCE LINE (Green on Surplus, Red on Deficit)
+	for_each_loop = {
+		array = trade_balance_array
+		value = v
+		index = i
+
+		if = {
+			limit = { check_variable = { i > current_gdp_graph_end } }
+			add_to_array = { md_flax_offsets_trade_bal_green = 1000 } 
+			add_to_array = { md_flax_offsets_trade_bal_red = 1000 } 
+			add_to_array = { md_flax_slopes_trade_bal = 50 }
+		}
+		else = {
+			set_temp_variable = { y1_val = v }
+			subtract_from_temp_variable = { y1_val = low }
+			divide_temp_variable = { y1_val = diff } 
+			set_temp_variable = { y1_px = y1_val }
+			multiply_temp_variable = { y1_px = 450 }
+
+			set_temp_variable = { next_i = i }
+			add_to_temp_variable = { next_i = 1 }
+
+			if = {
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				set_temp_variable = { y2_val = trade_balance_array^next_i }
+			}
+			else = {
+				set_temp_variable = { y2_val = v } 
+			}
+
+			subtract_from_temp_variable = { y2_val = low }
+			divide_temp_variable = { y2_val = diff } 
+			set_temp_variable = { y2_px = y2_val }
+			multiply_temp_variable = { y2_px = 450 } 
+
+			set_temp_variable = { offset = y1_px }
+			multiply_temp_variable = { offset = -1 }
+
+			if = {
+				limit = { check_variable = { y1_val < 0 } } # Trade Deficit = Red
+				add_to_array = { md_flax_offsets_trade_bal_red = offset }
+				add_to_array = { md_flax_offsets_trade_bal_green = 1000 }
+			}
+			else = { # Trade Surplus = Green
+				add_to_array = { md_flax_offsets_trade_bal_green = offset }
+				add_to_array = { md_flax_offsets_trade_bal_red = 1000 }
+			}
+
+			set_temp_variable = { slope = y2_px }
+			subtract_from_temp_variable = { slope = y1_px }
+			divide_temp_variable = { slope = 2 }
+			add_to_temp_variable = { slope = 50 }
+
+			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
+			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
+
+			round_variable = slope
+			add_to_array = { md_flax_slopes_trade_bal = slope }
+		}
+	}
+}
