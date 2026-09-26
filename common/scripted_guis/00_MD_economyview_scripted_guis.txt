@@ -297,14 +297,26 @@ scripted_gui = {
 				check_variable = { var = cb_policy_rate value = 20 compare = less_than }
 				NOT = { has_country_flag = temp_cb_rate_changed }
 				ROOT = { has_political_power > 25 }
+				custom_trigger_tooltip = {
+					tooltip = monetary_control_required_tt
+					has_monetary_control = yes
+				}
 			}
 			decrease_cb_rate_click_enabled = {
 				check_variable = { var = cb_policy_rate value = 0 compare = greater_than }
 				NOT = { has_country_flag = temp_cb_rate_changed }
 				ROOT = { has_political_power > 25 }
+				custom_trigger_tooltip = {
+					tooltip = monetary_control_required_tt
+					has_monetary_control = yes
+				}
 			}
 			# Extra Features
 			print_money_button_click_enabled = {
+				custom_trigger_tooltip = {
+					tooltip = eurozone_cannot_print_money_tt
+					NOT = { has_idea = euro }
+				}
 				if = { limit = { has_country_flag = printed_money_recently }
 					custom_trigger_tooltip = {
 						tooltip = printed_money_recently_one_tt
@@ -326,7 +338,14 @@ scripted_gui = {
 				NOT = { has_country_flag = monetary_austerity_active }
 				custom_trigger_tooltip = {
 					tooltip = reserve_currency_issuer_required_tt
-					is_reserve_currency_issuer = yes
+					OR = {
+						is_reserve_currency_issuer = yes
+						is_euro_controller = yes
+					}
+				}
+				custom_trigger_tooltip = {
+					tooltip = monetary_control_required_tt
+					has_monetary_control = yes
 				}
 				NOT = { has_idea = no_foreign_reserve }
 				NOT = { has_idea = gold_standard_back }
@@ -335,6 +354,10 @@ scripted_gui = {
 			austerity_button_click_enabled = {
 				NOT = { has_country_flag = monetary_austerity_cooldown }
 				NOT = { has_country_flag = monetary_expand_active }
+				custom_trigger_tooltip = {
+					tooltip = monetary_control_required_tt
+					has_monetary_control = yes
+				}
 				is_full_state = yes
 			}
 
@@ -783,6 +806,7 @@ scripted_gui = {
 				set_temp_variable = { previous_cb_rate = cb_policy_rate }
 				add_to_variable = { cb_policy_rate = 1 }
 				clamp_variable = { var = cb_policy_rate min = 0 max = 20 }
+				if = { limit = { has_idea = euro } sync_eurozone_policy_rate = yes }
 				ingame_update_setup = yes
 				set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
 				if = { limit = { is_debug = yes }
@@ -794,6 +818,7 @@ scripted_gui = {
 				set_temp_variable = { previous_cb_rate = cb_policy_rate }
 				subtract_from_variable = { cb_policy_rate = 1 }
 				clamp_variable = { var = cb_policy_rate min = 0 max = 20 }
+				if = { limit = { has_idea = euro } sync_eurozone_policy_rate = yes }
 				ingame_update_setup = yes
 				set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
 				if = { limit = { is_debug = yes }
@@ -848,8 +873,8 @@ scripted_gui = {
 			# - Monetary Policy Buttons
 			expand_money_supply_button_click = {
 				add_timed_idea = { idea = monetary_expand_active_idea days = 180 }
-				add_to_variable = { currency_strength = -0.05 tooltip = currency_strength_modifier_tt }
-				clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+				set_temp_variable = { currency_change = -0.05 }
+				apply_currency_strength_change = yes
 				set_country_flag = { flag = monetary_expand_active value = 1 days = 180 }
 				if = {
 					limit = { OR = { has_idea = silver_standard has_idea = bi_metal_standard } }
@@ -862,8 +887,8 @@ scripted_gui = {
 				log = "[GetDateText]: [ROOT.GetName]: GUI: Expand Money Supply activated"
 			}
 			austerity_button_click = {
-				add_to_variable = { currency_strength = 0.04 tooltip = currency_strength_modifier_tt }
-				clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+				set_temp_variable = { currency_change = 0.04 }
+				apply_currency_strength_change = yes
 				set_country_flag = { flag = monetary_austerity_active value = 1 days = 120 }
 				set_country_flag = { flag = monetary_austerity_cooldown value = 1 days = 300 }
 				ingame_update_setup = yes

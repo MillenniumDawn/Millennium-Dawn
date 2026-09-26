@@ -262,6 +262,7 @@ quarterly_inflation_calculation = {
 		log = "[GetDateText]: [THIS.GetName]: DEBUG: Inflation Update: Last Four Quarters: [?THIS.year_quarter_inflation_tracker^0|%] - [?THIS.year_quarter_inflation_tracker^1|%] - [?THIS.year_quarter_inflation_tracker^2|%] - [?THIS.year_quarter_inflation_tracker^3|%]"
 	}
 	calculate_inflation_effects = yes
+	if = { limit = { has_idea = euro } update_EU_eurozone_policies_spirit = yes }
 
 	#AI-only: adjust cb_policy_rate once per quarter based on current inflation level
 	#Uses the same 60-day cooldown flag as the player GUI buttons
@@ -269,10 +270,15 @@ quarterly_inflation_calculation = {
 		limit = {
 			is_ai = yes
 			NOT = { has_country_flag = temp_cb_rate_changed }
+			has_monetary_control = yes
+		}
+		set_temp_variable = { policy_inflation = inflation_rate_var }
+		if = { limit = { has_idea = euro }
+			set_temp_variable = { policy_inflation = global.EU_eurozone_avg_inflation }
 		}
 		if = {
 			limit = {
-				check_variable = { inflation_rate_var > 0.10 }
+				check_variable = { policy_inflation > 0.10 }
 				check_variable = { cb_policy_rate < 20 }
 			}
 			add_to_variable = { cb_policy_rate = 1 }
@@ -280,7 +286,7 @@ quarterly_inflation_calculation = {
 		}
 		else_if = {
 			limit = {
-				check_variable = { inflation_rate_var > 0.05 }
+				check_variable = { policy_inflation > 0.05 }
 				check_variable = { cb_policy_rate < 15 }
 			}
 			add_to_variable = { cb_policy_rate = 1 }
@@ -288,12 +294,13 @@ quarterly_inflation_calculation = {
 		}
 		else_if = {
 			limit = {
-				check_variable = { inflation_rate_var < 0.01 }
+				check_variable = { policy_inflation < 0.01 }
 				check_variable = { cb_policy_rate > 1 }
 			}
 			subtract_from_variable = { cb_policy_rate = 1 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
 		}
+		if = { limit = { has_idea = euro } sync_eurozone_policy_rate = yes }
 	}
 }
 

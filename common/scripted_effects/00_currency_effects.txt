@@ -247,6 +247,37 @@ calculate_currency_strength = {
 	clamp_variable = { var = inflation_cost_combined_var min = 0 }
 }
 
+# ── Monetary policy ───────────────────────────────────────────────────────────
+
+# Takes temp currency_change
+apply_currency_strength_change = {
+	if = { limit = { has_idea = euro }
+		for_each_scope_loop = {
+			array = global.EU_member
+			tooltip = TT_ALL_EUROZONE_MEMBERS
+			if = { limit = { has_idea = euro }
+				add_to_variable = { currency_strength = currency_change tooltip = currency_strength_modifier_tt }
+				clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+			}
+		}
+	}
+	else = {
+		add_to_variable = { currency_strength = currency_change tooltip = currency_strength_modifier_tt }
+		clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+	}
+}
+
+# Run by the Euro controller
+sync_eurozone_policy_rate = {
+	set_temp_variable = { eurozone_policy_rate = cb_policy_rate }
+	for_each_scope_loop = {
+		array = global.EU_member
+		if = { limit = { has_idea = euro }
+			set_variable = { cb_policy_rate = eurozone_policy_rate }
+		}
+	}
+}
+
 # ── Income stream multipliers ─────────────────────────────────────────────────
 
 # Runs in ingame_update_setup (00_money_system.txt) after income is computed.
