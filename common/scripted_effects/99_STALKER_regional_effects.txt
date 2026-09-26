@@ -1,0 +1,58 @@
+# Regional profiles adjust a Zone's starting values once it awakens.
+STALKER_apply_zone_profile = {
+	if = {
+		limit = { check_variable = { STALKER_zone_profile = 1 } }
+		add_to_variable = { STALKER_zone_activity = 10 }
+		add_to_variable = { STALKER_zone_containment = 10 }
+		add_to_variable = { STALKER_zone_stalkers = -10 }
+		add_to_variable = { STALKER_zone_bandits = -15 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_profile = 2 } }
+		add_to_variable = { STALKER_zone_containment = -10 }
+		add_to_variable = { STALKER_zone_stalkers = 10 }
+		add_to_variable = { STALKER_zone_bandits = 10 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_profile = 3 } }
+		add_to_variable = { STALKER_zone_activity = 10 }
+		add_to_variable = { STALKER_zone_containment = -10 }
+		add_to_variable = { STALKER_zone_bandits = 15 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_profile = 4 } }
+		add_to_variable = { STALKER_zone_containment = 15 }
+		add_to_variable = { STALKER_zone_exploitation = 10 }
+		add_to_variable = { STALKER_zone_duty = 10 }
+	}
+	clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+	STALKER_clamp_zone_society = yes
+}
+
+STALKER_roll_regional_event = {
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_profile > 0 }
+			NOT = { has_state_flag = STALKER_regional_event_cooldown }
+			controller = { exists = yes }
+		}
+		random = {
+			chance = 5
+			set_state_flag = { flag = STALKER_regional_event_cooldown value = 1 days = 365 }
+			save_event_target_as = STALKER_zone_event_target
+			if = {
+				limit = { check_variable = { STALKER_zone_profile = 1 } }
+				controller = { country_event = STALKER.41 }
+			}
+			else_if = {
+				limit = { check_variable = { STALKER_zone_profile = 2 } }
+				controller = { country_event = STALKER.42 }
+			}
+			else_if = {
+				limit = { check_variable = { STALKER_zone_profile = 3 } }
+				controller = { country_event = STALKER.43 }
+			}
+			else = { controller = { country_event = STALKER.44 } }
+		}
+	}
+}
