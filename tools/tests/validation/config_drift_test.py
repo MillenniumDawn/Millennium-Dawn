@@ -143,7 +143,9 @@ def test_test_suite_replaces_old_workflows():
         "prepare-workspace",
         "tools-tests",
         "mod-tests",
+        "docs-quality",
         "report",
+        "gate",
     }
     assert "pull_request" in _workflow_trigger(CI_WORKFLOW)
     assert "pull_request_target" not in _workflow_trigger(CI_WORKFLOW)
@@ -151,6 +153,21 @@ def test_test_suite_replaces_old_workflows():
     if any(path.exists() for path in leftovers):
         pytest.skip("old workflow deletion is pending parent cleanup")
     assert not [path for path in leftovers if path.exists()]
+
+
+def test_docs_quality_runs_in_suite_and_feeds_the_report():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["docs-quality"]
+    assert job["uses"] == "./.github/workflows/docs-quality.yml"
+    assert "needs.detect-changes.outputs.docs" in job["if"]
+    assert "full_suite" in job["if"]
+    assert "docs-quality" in workflow["jobs"]["report"]["needs"]
+    detect = workflow["jobs"]["detect-changes"]
+    assert detect["outputs"]["docs"] == "${{ steps.groups.outputs.docs }}"
+    assert "workflow_call" in _workflow_trigger(DOCS_QUALITY_WORKFLOW)
+    text = DOCS_QUALITY_WORKFLOW.read_text(encoding="utf-8")
+    assert "suite-run.json" in text
+    assert "docs-quality-results" in text
 
 
 def test_change_groups_cover_every_batch_group():
@@ -425,6 +442,18 @@ def test_report_job_posts_comment_and_checks():
     assert "checkout-ref" in checkout["with"]["ref"]
 
 
+def test_suite_gate_requires_every_validation_job():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    gate = workflow["jobs"]["gate"]
+    assert gate["name"] == "Test suite gate"
+    assert gate["if"] == "${{ always() }}"
+    assert set(gate["needs"]) == set(workflow["jobs"]) - {"gate"}
+    failure_step = gate["steps"][0]
+    for job in gate["needs"]:
+        assert f"needs.{job}.result" in failure_step["if"]
+    assert failure_step["run"] == "exit 1"
+
+
 def test_report_restores_baseline_for_full_and_dispatch_runs():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     report = workflow["jobs"]["report"]
@@ -628,6 +657,7 @@ def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
     assert sorted(spec.name for spec in ALL_SPECS if not spec.strict) == [
         "building-guards",
+        "equipment-variants",
         "simplifications",
     ]
 

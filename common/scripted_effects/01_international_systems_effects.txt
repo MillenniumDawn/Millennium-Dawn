@@ -340,6 +340,18 @@ international_systems_update = {
 	}
 }
 
+# UI list click: THIS is the clicked country. selected_nation is the pick; CT copies it to selected_ct_nation.
+rotate_selected_nation = {
+	set_variable = { ROOT.selected_nation = THIS }
+	if = {
+		limit = { tag = ROOT }
+		clear_variable = ROOT.selected_nation
+		clear_variable = ROOT.selected_ct_nation
+	}
+	else = {
+		set_variable = { ROOT.selected_ct_nation = ROOT.selected_nation }
+	}
+}
 
 clr_country_pmc_flag = {
 	clr_country_flag = blackwater_sel
@@ -2231,20 +2243,20 @@ un_ai_sc_consider_action = {
 					}
 					ROOT = { set_temp_variable = { sc_ai_action_type = 1 } }
 				}
-				# Priority 2: Sanctions for tension (type 2)
-				else_if = {
-					limit = {
-						check_variable = { has_added_tension_amount > 10 }
-					}
-					ROOT = { set_temp_variable = { sc_ai_action_type = 2 } }
-				}
-				# Priority 3: Arms embargo (type 4)
+				# Priority 2: Arms embargo for severe tension (type 4)
 				else_if = {
 					limit = {
 						check_variable = { has_added_tension_amount > 20 }
 						NOT = { has_idea = unsc_arms_embargo }
 					}
 					ROOT = { set_temp_variable = { sc_ai_action_type = 4 } }
+				}
+				# Priority 3: Sanctions for tension (type 2)
+				else_if = {
+					limit = {
+						check_variable = { has_added_tension_amount > 10 }
+					}
+					ROOT = { set_temp_variable = { sc_ai_action_type = 2 } }
 				}
 			}
 

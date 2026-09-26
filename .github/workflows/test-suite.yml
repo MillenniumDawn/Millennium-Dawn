@@ -85,6 +85,7 @@ jobs:
       map-adjacency: ${{ steps.groups.outputs.map-adjacency }}
       mod: ${{ steps.groups.outputs.mod }}
       content: ${{ steps.groups.outputs.content }}
+      docs: ${{ steps.groups.outputs.docs }}
       style: ${{ steps.groups.outputs.style }}
       style_files: ${{ steps.groups.outputs.style_files }}
       tools: ${{ steps.groups.outputs.tools }}
@@ -888,6 +889,16 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  docs-quality:
+    name: Docs quality
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.docs == 'true' ||
+      needs.detect-changes.outputs.full_suite == 'true'
+    uses: ./.github/workflows/docs-quality.yml
+    permissions:
+      contents: read
+
   report:
     name: Test suite report
     runs-on: ubuntu-latest
@@ -897,6 +908,7 @@ jobs:
       - prepare-workspace
       - tools-tests
       - mod-tests
+      - docs-quality
     if: ${{ always() && !cancelled() }}
     permissions:
       contents: read
@@ -1005,3 +1017,35 @@ jobs:
           name: validation-report
           path: report.md
           retention-days: 30
+
+  gate:
+    name: Test suite gate
+    needs:
+      - detect-changes
+      - validate-paths
+      - prepare-workspace
+      - tools-tests
+      - mod-tests
+      - docs-quality
+      - report
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when required validation jobs do not pass
+        if: >-
+          needs.detect-changes.result != 'success' ||
+          (needs.validate-paths.result != 'success' &&
+          needs.validate-paths.result != 'skipped') ||
+          (needs.prepare-workspace.result != 'success' &&
+          needs.prepare-workspace.result != 'skipped') ||
+          (needs.tools-tests.result != 'success' &&
+          needs.tools-tests.result != 'skipped') ||
+          (needs.mod-tests.result != 'success' &&
+          needs.mod-tests.result != 'skipped') ||
+          (needs.docs-quality.result != 'success' &&
+          needs.docs-quality.result != 'skipped') ||
+          needs.report.result != 'success'
+        run: exit 1
+
+      - name: Confirm validation result
+        run: echo "Every selected validation job passed."
