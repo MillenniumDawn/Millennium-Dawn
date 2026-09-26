@@ -253,6 +253,18 @@ def test_ai_focus_research_weights_are_checked(tmp_path):
     assert "CAT_sam" in messages[0]
 
 
+def test_tech_ai_research_weights_keys_are_checked(tmp_path):
+    v = _run(
+        tmp_path,
+        "common/technologies/01_test.txt",
+        "technologies = {\n\tx = {\n\t\tcategories = { CAT_missile }\n"
+        "\t\tai_research_weights = { CAT_missile = 3 CAT_reactors = 2 }\n\t}\n}\n",
+    )
+    messages = _messages(v)
+    assert len(messages) == 1
+    assert "CAT_reactors" in messages[0]
+
+
 def test_tag_without_loc_keys_is_reported(tmp_path):
     v = _run(
         tmp_path,

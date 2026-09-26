@@ -380,14 +380,14 @@ my_plan = {
 
 4 files defining research emphasis by AI posture:
 
-| Profile                       | Key Research Categories                              |
-| ----------------------------- | ---------------------------------------------------- |
-| `ai_focus_defense`            | Artillery, infantry weapons, SAM (SOV/USA)           |
-| `ai_focus_aggressive`         | Armor                                                |
-| `ai_focus_war_production`     | Construction, fuel, nanofibers, 3D printing, AI tech |
-| `ai_focus_military_equipment` | Infantry weapons, AT, AA, artillery, doctrine (SOV)  |
+| Profile                       | Key Research Categories                                         |
+| ----------------------------- | --------------------------------------------------------------- |
+| `ai_focus_defense`            | Fortifications, AT, AA, SAM, artillery, land drones, body armor |
+| `ai_focus_aggressive`         | Armor, SP artillery, utility vehicles, transport helicopters    |
+| `ai_focus_war_production`     | Construction, energy, microchips, composites, nanofibers        |
+| `ai_focus_military_equipment` | Infantry weapons, AT, AA, artillery, transport helicopters      |
 
-Country-specific overrides: SOV (war production maxed at 10), USA (SAM in defense, lighter war production), RAJ (India-specific). Weights use a 1-10 scale; see `common/ai_focuses/README.md`.
+Country-specific overrides: SOV (war production maxed at 10), USA (more SAM in defense, drones in aviation), RAJ (India-specific). Weights use a 1-10 scale. Tech `ai_will_do` tiers, date gates, the GDP gate, and `rule_nuclear_weapons` are in `common/ai_focuses/README.md`.
 
 ## AI Templates (`common/ai_templates/`)
 
