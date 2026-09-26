@@ -156,6 +156,7 @@ tools/
 ├── shared/            Test harness helpers and repo-anchored paths
 ├── standardization/   Auto-standardizers for focuses, events, decisions, ideas
 ├── tests/             All Python tests for tools/ (root scripts plus domain subdirs)
+├── types/             Type definitions
 ├── validation/        Content validators (events, decisions, variables, etc.)
 ├── shared_utils.py    Shared utilities (Colors, FileOpener, path helpers, arg parsers)
 ├── loc.py             Localisation utilities
