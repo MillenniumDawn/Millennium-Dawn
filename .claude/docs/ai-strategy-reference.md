@@ -389,6 +389,24 @@ my_plan = {
 
 Country-specific overrides: SOV (war production maxed at 10), USA (more SAM in defense, drones in aviation), RAJ (India-specific). Weights use a 1-10 scale. Tech `ai_will_do` tiers, date gates, the GDP gate, and `rule_nuclear_weapons` are in `common/ai_focuses/README.md`.
 
+## AI Doctrines (`common/doctrines/`)
+
+The AI rechecks its best doctrine every 30 days (`DAYS_BETWEEN_CHECK_BEST_DOCTRINE`), so the highest `ai_will_do` wins. Grand doctrine blocks go base, context `add`s (3/5/10), a national `add = 30`, then `factor = 0` gates last. Generic context adds stay under 30 so a national plan always wins. Gates only drop non-powers or ideologies, never a national pick.
+
+| Tag | Land                | Equipment                        | Air            | Naval       |
+| --- | ------------------- | -------------------------------- | -------------- | ----------- |
+| USA | Mission Command     | Full (Mixed at 55 or fewer mils) | Air Supremacy  | Blue Water  |
+| ENG | Mission Command     | Mixed                            | Integrated Air | Blue Water  |
+| FRA | Battlefield Support | Mobile                           | Mixed Role     | Blue Water  |
+| GER | Mission Command     | Heavy                            | Local Airspace | Green Water |
+| SOV | Combined Arms       | Fires                            | Integrated Air | Green Water |
+| CHI | Defence in Depth    | Heavy                            | Local Airspace | Blue Water  |
+| JAP | Defence in Depth    |                                  | Local Airspace | Green Water |
+
+Also: ISR (Shock and Awe, Heavy, Air Supremacy), KOR and TAI (Defence in Depth), KOR (Local Airspace), ITA and RAJ (Mixed Role, Blue Water), TUR and PER (Autonomous Air), PER (Jeune Ecole).
+
+Everyone else: Combined Arms is the land default (base 5). Defence in Depth, plus static and elastic defense subdoctrines, gain weight in a defensive war or under `ai_is_threatened`. Local Airspace Defense is the air default for minors, and Mixed Role goes to minors with more than 10 military factories. Transport and attack helicopter subdoctrines gain weight once the first helicopter tech is researched.
+
 ## AI Templates (`common/ai_templates/`)
 
 ### Structure
