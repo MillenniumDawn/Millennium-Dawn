@@ -61,6 +61,14 @@ STALKER_update_zone_society = {
 			clamp = { min = 0 max = 100 }
 		}
 	}
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_duty > STALKER_zone_freedom }
+			check_variable = { STALKER_zone_duty > STALKER_zone_bandits }
+		}
+		add_to_temp_variable = { STALKER_bandit_target = -10 }
+		clamp_temp_variable = { var = STALKER_bandit_target min = 0 max = 100 }
+	}
 	add_to_variable = { STALKER_zone_bandits = { value = STALKER_bandit_target subtract = STALKER_zone_bandits multiply = 0.1 } }
 	STALKER_clamp_zone_society = yes
 }
@@ -68,6 +76,13 @@ STALKER_update_zone_society = {
 # The perimeter seizes and licensed buyers purchase part of the haul; bandits skim what reaches the state.
 STALKER_collect_zone_artifacts = {
 	set_variable = { STALKER_zone_artifact_haul = { value = STALKER_zone_stalkers multiply = STALKER_zone_activity multiply = 0.0005 } }
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_freedom > STALKER_zone_duty }
+			check_variable = { STALKER_zone_freedom > STALKER_zone_bandits }
+		}
+		multiply_variable = { STALKER_zone_artifact_haul = 1.1 }
+	}
 	set_temp_variable = {
 		STALKER_state_artifacts = {
 			value = STALKER_zone_containment
@@ -78,6 +93,21 @@ STALKER_collect_zone_artifacts = {
 		}
 	}
 	set_temp_variable = { STALKER_bandit_skim = { value = STALKER_zone_bandits multiply = -0.005 add = 1 } }
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_duty > STALKER_zone_freedom }
+			check_variable = { STALKER_zone_duty > STALKER_zone_bandits }
+		}
+		add_to_temp_variable = { STALKER_bandit_skim = 0.1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { STALKER_zone_bandits > STALKER_zone_duty }
+			check_variable = { STALKER_zone_bandits > STALKER_zone_freedom }
+		}
+		multiply_temp_variable = { STALKER_bandit_skim = 0.75 }
+	}
+	clamp_temp_variable = { var = STALKER_bandit_skim min = 0 max = 1 }
 	multiply_temp_variable = { STALKER_state_artifacts = STALKER_bandit_skim }
 	set_variable = { STALKER_zone_black_market = { value = STALKER_zone_artifact_haul subtract = STALKER_state_artifacts } }
 	add_to_variable = { global.STALKER_smuggled_artifacts = STALKER_zone_black_market }
@@ -94,6 +124,21 @@ STALKER_collect_zone_artifacts = {
 STALKER_roll_zone_society_events = {
 	if = {
 		limit = { controller = { exists = yes } }
+		if = {
+			limit = {
+				check_variable = { STALKER_zone_bandits > 59 }
+				check_variable = { STALKER_zone_containment < 40 }
+				controller = {
+					is_ai = no
+					NOT = { has_country_flag = STALKER_faction_crisis_cooldown }
+				}
+			}
+			save_event_target_as = STALKER_zone_event_target
+			controller = {
+				set_country_flag = { flag = STALKER_faction_crisis_cooldown value = 1 days = 365 }
+				country_event = STALKER.27
+			}
+		}
 		if = {
 			limit = {
 				NOT = { has_state_flag = STALKER_faction_clash_cooldown }
