@@ -22,6 +22,7 @@ from shared_utils import (
     blank_quoted_strings,
     collapse_or_compact,
     extract_block,
+    reindent_by_brace_depth,
     strip_inline_comment,
 )
 
@@ -310,7 +311,9 @@ class EventStandardizer(BaseStandardizer):
         emit_comments(trailing, props["comments_trailing"])
         groups.append(trailing)
 
-        return collapse_blank_runs([header] + join_groups(groups) + ["}"])
+        return reindent_by_brace_depth(
+            collapse_blank_runs([header] + join_groups(groups) + ["}"])
+        )
 
 
 def main():

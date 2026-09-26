@@ -451,15 +451,20 @@ def test_verdict_counts_new_against_baseline():
     assert "2 errors total" in body
 
 
-def test_verdict_says_none_new_when_all_existing():
-    runs = [
-        ValidatorRun(
-            name="events", title="Events", status="failed", errors=2, warnings=6
-        )
-    ]
-    body = render(
-        [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=0)
+def _failed_events_body(*, new_errors, new_warnings):
+    run = ValidatorRun(
+        name="events", title="Events", status="failed", errors=2, warnings=6
     )
+    return render(
+        [run],
+        [],
+        _ctx(),
+        baseline_stats=_stats(new_errors=new_errors, new_warnings=new_warnings),
+    )
+
+
+def test_verdict_says_none_new_when_all_existing():
+    body = _failed_events_body(new_errors=0, new_warnings=0)
     # A standing backlog is not this branch's problem — no red banner.
     assert "> [!NOTE]" in body
     assert "> [!CAUTION]" not in body
@@ -469,14 +474,7 @@ def test_verdict_says_none_new_when_all_existing():
 
 
 def test_verdict_warns_when_only_warnings_are_new():
-    runs = [
-        ValidatorRun(
-            name="events", title="Events", status="failed", errors=2, warnings=6
-        )
-    ]
-    body = render(
-        [runs[0]], [], _ctx(), baseline_stats=_stats(new_errors=0, new_warnings=1)
-    )
+    body = _failed_events_body(new_errors=0, new_warnings=1)
     assert "> [!WARNING]" in body
     assert "> [!CAUTION]" not in body
     assert "1 new warning against the main baseline." in body
@@ -526,7 +524,7 @@ def test_step_summary_lists_new_findings():
     assert "1 finding(s) could not be compared (no file/line)." in body
 
 
-def test_step_summary_opens_warnings_when_no_new_errors():
+def test_step_summary_collapses_warnings_by_default():
     runs = [
         ValidatorRun(
             name="events", title="Events", status="warnings", errors=0, warnings=1
@@ -542,7 +540,8 @@ def test_step_summary_opens_warnings_when_no_new_errors():
     body = render([runs[0]], [warning], _ctx(), baseline_stats=stats)
     warning_pos = body.index("<summary>⚠️ New warnings (1)</summary>")
     warning_details = body[body.rfind("<details", 0, warning_pos) : warning_pos]
-    assert warning_details.startswith("<details open>")
+    assert warning_details.startswith("<details>")
+    assert not warning_details.startswith("<details open>")
     assert "<summary>❌ New errors" not in body
 
 
@@ -717,7 +716,11 @@ def test_in_pr_section_lists_existing_findings_alongside_baseline():
     runs = [ValidatorRun(name="events", title="Events", status="failed", errors=2)]
     new_issue, stats = _new_error(in_diff=True, message="new key not found", line=1)
     existing = make_issue(
-        in_diff=True, message="existing key not found", line=2, category="backlog"
+        severity=Severity.WARNING,
+        in_diff=True,
+        message="existing key not found",
+        line=2,
+        category="backlog",
     )
     body = render(
         runs,
@@ -731,6 +734,12 @@ def test_in_pr_section_lists_existing_findings_alongside_baseline():
     in_pr = body[body.index("## Findings in your PR") :]
     assert "existing key not found" in in_pr
     assert "new key not found" not in in_pr
+    in_pr_warning_pos = in_pr.index("<summary>⚠️ Warnings in your PR (1)</summary>")
+    in_pr_details = in_pr[
+        in_pr.rfind("<details", 0, in_pr_warning_pos) : in_pr_warning_pos
+    ]
+    assert in_pr_details.startswith("<details>")
+    assert not in_pr_details.startswith("<details open>")
 
 
 def test_comment_caps_new_findings():

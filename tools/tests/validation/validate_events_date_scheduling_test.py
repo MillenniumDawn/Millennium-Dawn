@@ -242,18 +242,29 @@ def test_extract_random_event_ids():
 _FakeValidator = collecting_validator(V.Validator)
 
 
-def _run(monkeypatch, gated, fires, graph, random_events=(), polls=()):
+def _stub(monkeypatch, fires, pool_map):
     validator = _FakeValidator("/tmp")
     monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: ["f.txt"])
     monkeypatch.setattr(validator, "_rel_posix", lambda f: f)
     monkeypatch.setattr(validator, "_get_event_fires", lambda: fires)
+    monkeypatch.setattr(validator, "_pool_map", pool_map)
+    return validator
+
+
+def _run(monkeypatch, gated, fires, graph, random_events=(), polls=()):
+    validator = _stub(
+        monkeypatch,
+        fires,
+        lambda fn, args, **kw: [
+            (
+                graph
+                if fn in (V.scan_event_fire_graph, V._cached_scan_event_fire_graph)
+                else gated
+            )
+        ],
+    )
     monkeypatch.setattr(validator, "_get_random_event_ids", lambda: set(random_events))
     monkeypatch.setattr(validator, "_get_probability_rolled_ids", lambda: set(polls))
-    monkeypatch.setattr(
-        validator,
-        "_pool_map",
-        lambda fn, args, **kw: [graph if fn is V.scan_event_fire_graph else gated],
-    )
     validator.validate_date_gated_scheduling()
     return validator.collected
 
@@ -399,9 +410,7 @@ def test_get_probability_rolled_ids_wiring(tmp_path, monkeypatch):
 def _bounded(tmp_path, body, name="events/Ev.txt"):
     return {
         e[0]
-        for e in V.scan_date_bounded_events(
-            (_write(tmp_path, name, body), frozenset())
-        )
+        for e in V.scan_date_bounded_events((_write(tmp_path, name, body), frozenset()))
     }
 
 
@@ -438,11 +447,7 @@ def test_bounded_date_outside_trigger_not_detected(tmp_path):
 
 
 def _run_bounded(monkeypatch, bounded, fires):
-    validator = _FakeValidator("/tmp")
-    monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: ["f.txt"])
-    monkeypatch.setattr(validator, "_rel_posix", lambda f: f)
-    monkeypatch.setattr(validator, "_get_event_fires", lambda: fires)
-    monkeypatch.setattr(validator, "_pool_map", lambda fn, args, **kw: [bounded])
+    validator = _stub(monkeypatch, fires, lambda fn, args, **kw: [bounded])
     validator.validate_scheduled_date_bounds()
     return validator.collected
 

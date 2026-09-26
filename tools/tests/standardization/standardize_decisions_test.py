@@ -397,11 +397,11 @@ def test_modifier_factor_untouched_in_ai_will_do():
 
 
 def test_hyphenated_decision_id_preserved_and_idempotent():
-    # Regression: `Communist-State_invite` was misread by the \w+-only header
+    # Regression: a hyphenated decision id was misread by the \w+-only header
     # regex and silently rewritten to the literal ID `decision`.
     block = _decision(
         [
-            "\tCommunist-State_invite = {",
+            "\tTest-State_invite = {",
             "\t\tcomplete_effect = {",
             "\t\t\tadd_political_power = 10",
             "\t\t}",
@@ -409,9 +409,9 @@ def test_hyphenated_decision_id_preserved_and_idempotent():
         ]
     )
     out = format_decision(block)
-    assert out[0].strip() == "Communist-State_invite = {"
+    assert out[0].strip() == "Test-State_invite = {"
     text = "\n".join(out)
-    assert 'Decision Communist-State_invite"' in text
+    assert 'Decision Test-State_invite"' in text
 
     reparsed = format_decision([l + "\n" for l in out])
     assert reparsed == out
@@ -421,10 +421,10 @@ def test_hyphenated_decision_ids_survive_full_category_pass():
     category = _decision(
         [
             "Coalition_decisions = {",
-            "\tCommunist-State_invite = {",
+            "\tTest-State_invite = {",
             "\t\ticon = generic_decision",
             "\t}",
-            "\tCommunist-State_remove = {",
+            "\tTest-State_remove = {",
             "\t\ticon = generic_decision",
             "\t}",
             "}",
@@ -434,8 +434,8 @@ def test_hyphenated_decision_ids_survive_full_category_pass():
     out = std.format_block(std.extract_properties(category))
     assert _ids(out) == [
         "Coalition_decisions",
-        "Communist-State_invite",
-        "Communist-State_remove",
+        "Test-State_invite",
+        "Test-State_remove",
     ]
 
 
@@ -634,11 +634,22 @@ def test_ensure_effect_log_boundaries():
     assert ensure_effect_log(["\t\ticon = generic_decision"], "CHI_x") == [
         "\t\ticon = generic_decision"
     ]
-    # An empty one-line effect expands and carries no stray body line; the
-    # source has no trailing newline, so neither does the injected log.
-    assert ensure_effect_log(["\t\tremove_effect = { }"], "CHI_x") == [
+    # An empty or log-only effect block is dropped rather than given a log.
+    assert ensure_effect_log(["\t\tremove_effect = { }"], "CHI_x") == []
+    assert ensure_effect_log(['\t\tremove_effect = { log = "x" }'], "CHI_x") == []
+    assert (
+        ensure_effect_log(
+            ["\t\tremove_effect = {", '\t\t\tlog = "x"', "\t\t}"], "CHI_x"
+        )
+        == []
+    )
+    # The source has no trailing newline, so neither does the injected log.
+    assert ensure_effect_log(
+        ["\t\tremove_effect = { add_stability = 0.1 }"], "CHI_x"
+    ) == [
         "\t\tremove_effect = {",
         '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision CHI_x"',
+        "\t\t\tadd_stability = 0.1",
         "\t\t}",
     ]
 
@@ -665,6 +676,34 @@ def test_single_line_effect_after_one_liners_starts_a_new_group():
         "\t\tremove_effect = {",
         '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision CHI_visit"',
         "\t\t\tcountry_event = foo.1",
+        "\t\t}",
+        "\t}",
+    ]
+
+
+def test_format_decision_drops_empty_and_log_only_effect_blocks():
+    out = format_decision(
+        _decision(
+            [
+                "\tCHI_visit = {",
+                "\t\tcost = 50",
+                '\t\tcomplete_effect = { log = "x" }',
+                "\t\tremove_effect = {",
+                '\t\t\tlog = "x"',
+                "\t\t}",
+                "\t\ttimeout_effect = { }",
+                "\t\tcancel_effect = { add_stability = 0.1 }",
+                "\t}",
+            ]
+        )
+    )
+    assert out == [
+        "\tCHI_visit = {",
+        "\t\tcost = 50",
+        "",
+        "\t\tcancel_effect = {",
+        '\t\t\tlog = "[GetDateText]: [Root.GetName]: Decision CHI_visit"',
+        "\t\t\tadd_stability = 0.1",
         "\t\t}",
         "\t}",
     ]

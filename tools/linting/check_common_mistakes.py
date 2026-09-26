@@ -60,6 +60,7 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     the engine rejects the effect and the building is never placed
   - NOR = { ... } (not a HOI4 trigger keyword; silently never matches)
   - is_at_war = yes/no (not a HOI4 trigger; use has_war)
+  - has_opinion_modifier = { ... } (the trigger takes a single modifier ID)
   - max_iterations inside while_loop_effect (silently ignored by the engine)
   - var:x^i array-index shorthand (needs the full variable name)
   - limit as a direct child of an else block (else takes no condition, so the
@@ -112,6 +113,7 @@ _RE_CHECK_EXPR_BAD_OPERAND = re.compile(
 _RE_EVERY_OWNED_CONTROLLED_STATE = re.compile(r"\bevery_owned_controlled_state\b")
 _RE_NOR = re.compile(r"\bNOR\s*=\s*\{")
 _RE_IS_AT_WAR = re.compile(r"\bis_at_war\s*=\s*(?:yes|no)\b")
+_RE_HAS_OPINION_MODIFIER_BLOCK = re.compile(r"\bhas_opinion_modifier\s*=\s*\{")
 _RE_WHILE_LOOP_OPEN = re.compile(r"\bwhile_loop_effect\s*=\s*\{")
 _RE_MAX_ITERATIONS = re.compile(r"\bmax_iterations\s*=")
 # var:x^i needs the full variable name; a one-letter base is the shorthand the
@@ -251,6 +253,24 @@ _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
 _RE_WILL_LEAD_TO_WAR = re.compile(r"\bwill_lead_to_war_with\b")
 _RE_SCRIPT_TOKEN = re.compile(r"[{}=]|[A-Za-z_][\w:.@]*")
 _RE_QUOTED_STRING = re.compile(r'"[^"]*"')
+# Event sends from effects: braced `country_event = { id = X days = N }` (the id
+# may sit on a later line, hence [^}]*? with DOTALL) or bare `country_event = X`.
+# Delayed sends (days/hours) still lead to war, so they resolve the same way.
+_RE_EVENT_SEND = re.compile(
+    r"\b(?:country_event|news_event)\s*=\s*(?:\{[^}]*?id\s*=\s*([\w.]+)|([\w.]+))",
+    re.DOTALL,
+)
+_RE_EVENT_DEFINITION_OPEN = re.compile(r"\b(?:country_event|news_event)\s*=\s*\{")
+_RE_EVENT_ID = re.compile(r"\bid\s*=\s*([\w.]+)")
+# Markers that only appear in an event DEFINITION, never in an effect send:
+# sends carry id/days/hours, definitions carry title/triggers/options.
+_RE_EVENT_DEFINITION_MARKER = re.compile(r"\b(?:title|is_triggered_only|option)\s*=")
+# effect_tooltip only displays; a country_event nested in one never fires.
+_TOOLTIP_SCOPE_OPENERS = {"effect_tooltip", "custom_effect_tooltip"}
+# Focus -> event -> event hops followed before giving up. Deeper chains are
+# gameplay telephone; the focus still needs the hint, but resolving further is
+# not worth the scan.
+_EVENT_CHAIN_MAX_DEPTH = 3
 # Tokens for the leader-rotation tree parser: braces, the comparison operators a
 # limit can use, and everything else as one word (ideology names carry '-').
 _RE_SCRIPT_NODE = re.compile(r"[{}]|[<>]=?|=|[^\s{}=<>]+")
@@ -264,6 +284,10 @@ _RE_TAG_SCOPE = re.compile(r"^[A-Z]{2,3}$")
 _LOGIC_SCOPE_TOKENS = {"AND", "OR", "NOT"}
 _OWNER_RESET_SCOPE_TOKENS = {"ROOT", "THIS"}
 _FOREIGN_COUNTRY_SCOPE_TOKENS = {
+    "FROM",
+    "OWNER",
+    "create_dynamic_country",
+    "owner",
     "random_country",
     "random_other_country",
     "every_country",
@@ -274,6 +298,9 @@ _FOREIGN_COUNTRY_SCOPE_TOKENS = {
     "random_enemy_country",
     "every_subject_country",
     "random_subject_country",
+    # A country created mid-effect acts as itself, so a war it declares on the
+    # focus owner is the new state's, not the owner's.
+    "create_dynamic_country",
 }
 _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
 _RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")
@@ -295,11 +322,15 @@ _RE_LIMIT_OPEN = re.compile(r"\blimit\s*=\s*\{")
 _RE_IF_ELSE_OPEN = re.compile(r"\b(if|else_if|else)\s*=\s*\{")
 _RE_HAS_IDEA = re.compile(r"has_idea\s*=\s*(\w+)")
 _RE_OR_CONTENT = re.compile(r"OR\s*=\s*\{([^}]*)\}")
-_RE_LOG_ONLY_EFFECT = re.compile(r"log\s*=\s*\"[^\"]+\"\s*$")
+_RE_LOG_ONLY_EFFECT = re.compile(r"log\s*=\s*\"[^\"]*\"\s*$")
 _RE_OPTION_BLOCK_OPEN = re.compile(r"\boption\s*=\s*\{")
 _RE_TRIGGER_BLOCK_OPEN = re.compile(r"\btrigger\s*=\s*\{")
-_RE_COMPLETE_EFFECT_OPEN = re.compile(r"\bcomplete_effect\s*=\s*\{")
-_RE_REMOVE_EFFECT_OPEN = re.compile(r"\bremove_effect\s*=\s*\{")
+_OPTION_NON_EFFECT_KEYS = {"name", "log", "trigger", "ai_chance"}
+# Every block the engine runs as an effect list and MD logs from (#4456).
+_RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
+    r"\b(option|complete_effect|remove_effect|timeout_effect|cancel_effect"
+    r"|on_add|on_remove|completion_reward|select_effect|immediate)\s*=\s*\{"
+)
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
 _RE_TRADE_AGREEMENT_WITH = re.compile(r"\bhas_trade_agreement_with\s*=")
 # add_to_faction adds the ARGUMENT country to the current scope's faction, so it
@@ -580,6 +611,72 @@ def _focus_owner_tag(code):
     return None
 
 
+def _scope_is_owner(stack):
+    """True when a scope stack resolves to the focus owner's country.
+
+    Innermost foreign scope wins (a sponsored proxy war); an explicit reset
+    (ROOT/THIS/owner tag) wins over anything outside it; anything enclosing a
+    display-only tooltip never fires, so it never counts as the owner."""
+    if "tooltip" in stack or "inapplicable" in stack:
+        return False
+    for kind in reversed(stack):
+        if kind == "foreign":
+            return False
+        if kind == "reset":
+            return True
+    return True
+
+
+def _war_at_scope(text, owner_tag):
+    """True if create_wargoal/declare_war_on fires at the owner's scope."""
+    stack = []
+    openers = []
+    previous_owner_if = {}
+    last_ident = None
+    opener_pending = None
+    for match in _RE_SCRIPT_TOKEN.finditer(text):
+        tok = match.group(0)
+        if tok == "=":
+            opener_pending = last_ident
+        elif tok == "{":
+            opener = opener_pending
+            limit = None
+            if opener in ("if", "else_if"):
+                limit = re.match(
+                    r"\s*limit\s*=\s*\{\s*(?:original_tag|tag)\s*=\s*([A-Z]{2,3})\s*\}",
+                    text[match.end() :],
+                )
+            blocked_by_previous = bool(
+                opener in ("else", "else_if") and previous_owner_if.get(len(stack))
+            )
+            owner_if = (
+                bool(limit and owner_tag == limit.group(1)) or blocked_by_previous
+            )
+            impossible = (limit and owner_tag != limit.group(1)) or blocked_by_previous
+            stack.append(
+                "inapplicable" if impossible else _scope_frame_kind(opener, owner_tag)
+            )
+            openers.append((opener, owner_if))
+            previous_owner_if.pop(len(stack) - 1, None)
+            opener_pending = None
+            last_ident = None
+        elif tok == "}":
+            if stack:
+                stack.pop()
+                opener, owner_if = openers.pop()
+                previous_owner_if[len(stack)] = (
+                    owner_if if opener in ("if", "else_if") else False
+                )
+            opener_pending = None
+            last_ident = None
+        else:
+            if tok in ("create_wargoal", "declare_war_on") and _scope_is_owner(stack):
+                return True
+            last_ident = tok
+            opener_pending = None
+    return False
+
+
 def _war_declared_at_owner_scope(code):
     """True if a create_wargoal/declare_war fires at the focus owner's scope.
 
@@ -591,14 +688,43 @@ def _war_declared_at_owner_scope(code):
     """
     owner_tag = _focus_owner_tag(code)
     text = _RE_QUOTED_STRING.sub('""', "\n".join(code))
+    return _war_at_scope(text, owner_tag)
+
+
+def _owner_scope_event_sends(text, owner_tag):
+    """Event ids a block sends while scoped to the focus owner's country.
+
+    A send inside a foreign-country scope runs as that country, so a war in
+    the sent event is theirs, not the owner's. A send inside effect_tooltip
+    never fires (display-only). Both are skipped."""
+    blank = _RE_QUOTED_STRING.sub('""', text)
+    pending = sorted(
+        (
+            (match.group(1) or match.group(2), match.start())
+            for match in _RE_EVENT_SEND.finditer(blank)
+        ),
+        key=lambda send: send[1],
+    )
+    found = []
+    if not pending:
+        return found
     stack = []
     last_ident = None
     opener_pending = None
-    for tok in _RE_SCRIPT_TOKEN.findall(text):
+    idx = 0
+    for tok_match in _RE_SCRIPT_TOKEN.finditer(blank):
+        while idx < len(pending) and pending[idx][1] < tok_match.start():
+            if _scope_is_owner(stack):
+                found.append(pending[idx][0])
+            idx += 1
+        tok = tok_match.group(0)
         if tok == "=":
             opener_pending = last_ident
         elif tok == "{":
-            stack.append(_scope_frame_kind(opener_pending, owner_tag))
+            if opener_pending in _TOOLTIP_SCOPE_OPENERS:
+                stack.append("tooltip")
+            else:
+                stack.append(_scope_frame_kind(opener_pending, owner_tag))
             opener_pending = None
             last_ident = None
         elif tok == "}":
@@ -607,29 +733,143 @@ def _war_declared_at_owner_scope(code):
             opener_pending = None
             last_ident = None
         else:
-            if tok == "create_wargoal" or tok == "declare_war_on":
-                in_foreign = False
-                for kind in reversed(stack):
-                    if kind == "foreign":
-                        in_foreign = True
-                        break
-                    if kind == "reset":
-                        break
-                if not in_foreign:
-                    return True
             last_ident = tok
             opener_pending = None
-    return False
+    while idx < len(pending):
+        if _scope_is_owner(stack):
+            found.append(pending[idx][0])
+        idx += 1
+    return list(dict.fromkeys(found))
 
 
-def _check_focus_missing_war_hint(lines):
-    """Flag focus blocks that declare war but carry no will_lead_to_war_with hint.
+_EVENT_INDEX: dict = {}
+_EVENT_INDEX_BUILT = False
+_EVENT_BLOCKS: dict = {}
+
+
+def _iter_event_definitions(content):
+    """Yield definition block texts for country_event/news_event in content."""
+    blank = "\n".join(_code_for_depth(line) for line in content.splitlines())
+    block_end = 0
+    for open_match in _RE_EVENT_DEFINITION_OPEN.finditer(blank):
+        if open_match.start() < block_end:
+            continue
+        depth = 0
+        idx = open_match.end() - 1
+        while idx < len(blank):
+            if blank[idx] == "{":
+                depth += 1
+            elif blank[idx] == "}":
+                depth -= 1
+                if depth == 0:
+                    block_end = idx + 1
+                    yield blank[open_match.start() : block_end]
+                    break
+            idx += 1
+
+
+def _build_event_index(root_dir):
+    """Map event id -> defining file for every event definition in events/."""
+    index = {}
+    if not root_dir:
+        return index
+    events_dir = os.path.join(root_dir, "events")
+    if not os.path.isdir(events_dir):
+        return index
+    for dirpath, _, filenames in os.walk(events_dir):
+        for filename in filenames:
+            if not filename.endswith(".txt"):
+                continue
+            filepath = os.path.join(dirpath, filename)
+            try:
+                with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
+                    content = handle.read()
+            except OSError:
+                continue
+            for block in _iter_event_definitions(content):
+                if not _RE_EVENT_DEFINITION_MARKER.search(block):
+                    continue
+                id_match = _RE_EVENT_ID.search(block)
+                if id_match:
+                    index.setdefault(id_match.group(1), filepath)
+    return index
+
+
+def _get_event_block(event_id, event_blocks=None, event_index=None):
+    """Return the definition block text for an event id, or None."""
+    if event_blocks is not None:
+        return event_blocks.get(event_id)
+    global _EVENT_INDEX, _EVENT_INDEX_BUILT
+    if event_index is None:
+        if not _EVENT_INDEX_BUILT:
+            try:
+                root_dir = get_root_dir()
+            except Exception:
+                root_dir = None
+            _EVENT_INDEX = _build_event_index(root_dir)
+            _EVENT_INDEX_BUILT = True
+        event_index = _EVENT_INDEX
+    filepath = event_index.get(event_id)
+    key = (filepath, event_id)
+    if key in _EVENT_BLOCKS:
+        return _EVENT_BLOCKS[key]
+    block = None
+    if filepath:
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
+                content = handle.read()
+        except OSError:
+            content = ""
+        for candidate in _iter_event_definitions(content):
+            id_match = _RE_EVENT_ID.search(candidate)
+            if id_match and id_match.group(1) == event_id:
+                block = candidate
+                break
+    _EVENT_BLOCKS[key] = block
+    return block
+
+
+def _event_chain_leads_to_war(
+    event_id, owner_tag, event_blocks=None, _seen=None, _depth=0, event_index=None
+):
+    """Follow a sent event (and its chained sends) for owner-scope war.
+
+    Returns (leads_to_war, chain): chain lists the event ids from the
+    focus-sent event down to the one declaring war (wargoal grants count as
+    demands leading to war). Unresolvable ids end the chain quietly.
+    """
+    if _seen is None:
+        _seen = set()
+    if _depth > _EVENT_CHAIN_MAX_DEPTH or event_id in _seen:
+        return False, []
+    _seen = _seen | {event_id}
+    block = _get_event_block(event_id, event_blocks, event_index)
+    if not block:
+        return False, []
+    if _war_at_scope(block, owner_tag):
+        return True, [event_id]
+    for sent_id in _owner_scope_event_sends(block, owner_tag):
+        leads, chain = _event_chain_leads_to_war(
+            sent_id, owner_tag, event_blocks, _seen, _depth + 1, event_index
+        )
+        if leads:
+            return True, [event_id] + chain
+    return False, []
+
+
+def _check_focus_missing_war_hint(lines, event_blocks=None):
+    """Flag focus blocks that lead to war but carry no will_lead_to_war_with hint.
 
     A focus whose completion_reward calls create_wargoal/declare_war at the
     OWNER's scope should set will_lead_to_war_with = TAG so the AI prepares for
-    the war. create_wargoal inside an effect_tooltip still counts; a war effect
-    nested in another country's scope (a sponsored proxy war) does not. The hint
-    anywhere in the block clears the focus.
+    the war -- and so should a focus whose completion_reward sends an event
+    (country_event/news_event) whose immediate/option effects, or a chained
+    event they send in turn, declare war at the owner's scope. Wargoal grants
+    count: they are demands that lead to war. create_wargoal inside an
+    effect_tooltip still counts; a war effect nested in another country's scope
+    (a sponsored proxy war, including an event sent TO another country) does
+    not. The hint anywhere in the block clears the focus. Live runs resolve
+    events against the events/ tree; tests inject event_blocks (id -> text).
     """
     issues = []
     i = 0
@@ -639,11 +879,11 @@ def _check_focus_missing_war_hint(lines):
             start = i
             block, i = _get_block(lines, start)
             code = [strip_inline_comment(bl) for bl in block]
-            if _war_declared_at_owner_scope(code) and not any(
-                _RE_WILL_LEAD_TO_WAR.search(c) for c in code
-            ):
-                id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
-                focus_id = id_match.group(1) if id_match else "<unknown>"
+            if any(_RE_WILL_LEAD_TO_WAR.search(c) for c in code):
+                continue
+            id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
+            focus_id = id_match.group(1) if id_match else "<unknown>"
+            if _war_declared_at_owner_scope(code):
                 issues.append(
                     (
                         start + 1,
@@ -651,6 +891,23 @@ def _check_focus_missing_war_hint(lines):
                         " -- add will_lead_to_war_with = TAG so the AI prepares for war",
                     )
                 )
+                continue
+            text = "\n".join(code)
+            owner_tag = _focus_owner_tag(code)
+            for sent_id in _owner_scope_event_sends(text, owner_tag):
+                leads, chain = _event_chain_leads_to_war(
+                    sent_id, owner_tag, event_blocks
+                )
+                if leads:
+                    issues.append(
+                        (
+                            start + 1,
+                            f"Focus {focus_id} sends event {' -> '.join(chain)} leading to"
+                            " war but has no will_lead_to_war_with"
+                            " -- add will_lead_to_war_with = TAG so the AI prepares for war",
+                        )
+                    )
+                    break
         else:
             i += 1
     return issues
@@ -1399,48 +1656,62 @@ def _check_duplicate_add_to_variable(lines):
     return issues
 
 
-def _check_empty_log_only_blocks(lines):
-    """Flag option/complete_effect blocks where log is the only content.
+def _option_has_no_effects(block_lines):
+    option = next(
+        (node for node in _parse_script_tree(block_lines) if node.key == "option"),
+        None,
+    )
+    if option is None:
+        return False
+    keys = {child.key for child in option.children}
+    return "log" in keys and keys <= _OPTION_NON_EFFECT_KEYS
 
-    A log statement with no actual effects is pointless -- remove it.
-    Exception: remove_effect blocks in decisions should always have logs for debugging.
+
+def _check_empty_log_only_blocks(lines):
+    """Flag effect blocks where log is the only effect.
+
+    Covers every block MD logs from: event option / immediate, decision
+    complete/remove/timeout/cancel_effect, idea on_add / on_remove, focus
+    completion_reward / select_effect. A log with no effect beside it records
+    a state change that never happened, so the whole block is dead -- delete
+    it. Both the multi-line and the packed `key = { log = "..." }` shape are
+    read; an empty block is left to the missing-log checks.
     """
     issues = []
     i = 0
     n = len(lines)
     while i < n:
-        line = lines[i]
-        block_start = None
-        block_type = None
-
-        for pattern, btype in [
-            (_RE_OPTION_BLOCK_OPEN, "option"),
-            (_RE_COMPLETE_EFFECT_OPEN, "complete_effect"),
-        ]:
-            if pattern.search(line):
-                block_start = i
-                block_type = btype
-                break
-
-        if block_start is not None:
-            block_lines, next_i = _get_block(lines, block_start)
-            content_lines = [
-                l.strip()
-                for l in block_lines[1:-1]
-                if l.strip() and not l.strip().startswith("#")
-            ]
-
-            if len(content_lines) == 1 and _RE_LOG_ONLY_EFFECT.match(content_lines[0]):
-                issues.append(
-                    (
-                        block_start + 1,
-                        f'log = "..." is the only content in this {block_type} block -- '
-                        "remove it (logs should accompany effects, not replace them)",
-                    )
-                )
-            i = next_i
-        else:
+        match = _RE_LOGGED_EFFECT_BLOCK_OPEN.search(strip_inline_comment(lines[i]))
+        if match is None:
             i += 1
+            continue
+        block_lines, next_i = _get_block(lines, i)
+        if match.group(1) == "option":
+            log_only = _option_has_no_effects(block_lines)
+        else:
+            if len(block_lines) == 1:
+                code = strip_inline_comment(block_lines[0])
+                inner = code[match.end() : code.rindex("}")].strip()
+                content_lines = [inner] if inner else []
+            else:
+                content_lines = []
+                for line in block_lines[1:-1]:
+                    code = strip_inline_comment(line).strip()
+                    if code:
+                        content_lines.append(code)
+            log_only = bool(content_lines) and all(
+                _RE_LOG_ONLY_EFFECT.match(line) for line in content_lines
+            )
+
+        if log_only:
+            issues.append(
+                (
+                    i + 1,
+                    f'log = "..." is the only effect in this {match.group(1)} block -- '
+                    "delete the block (a log records an effect that never runs)",
+                )
+            )
+        i = next_i
     return issues
 
 
@@ -2042,6 +2313,20 @@ def _check_invalid_is_at_war(lines):
                 (
                     line_num,
                     "is_at_war is not a HOI4 trigger -- use has_war = yes/no",
+                )
+            )
+    return issues
+
+
+def _check_has_opinion_modifier_block(lines):
+    """Flag block-form has_opinion_modifier, which only accepts a modifier ID."""
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if _RE_HAS_OPINION_MODIFIER_BLOCK.search(_code_for_depth(line)):
+            issues.append(
+                (
+                    line_num,
+                    "has_opinion_modifier takes a modifier ID, not a block",
                 )
             )
     return issues
@@ -3691,6 +3976,7 @@ def check_file(filepath):
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
     issues.extend(_check_invalid_is_at_war(lines))
+    issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
     issues.extend(_check_var_index_shorthand(lines))
     issues.extend(_check_else_with_limit(lines))

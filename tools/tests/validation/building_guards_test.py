@@ -8,7 +8,11 @@ an `if`/`limit` guarding something else entirely (an idea, a flag) must still
 flag the effect inside it.
 """
 
+import re
+
+import pytest
 import validate_building_guards as V
+from shared.paths import REPO_ROOT as _MOD_ROOT
 
 
 def _scan(script):
@@ -19,6 +23,12 @@ def _scan(script):
 
 def _messages(script):
     return [message for _, _, message in _scan(script)]
+
+
+def _scan_province(script):
+    scanner = V.Scanner(V._sanitize(script))
+    scanner.check_province_building_triggers()
+    return scanner.findings
 
 
 # --- unguarded effects --------------------------------------------------
@@ -155,8 +165,9 @@ def test_random_list_factor_zero_guard_does_not_leak_to_sibling_bucket():
     assert "arms_factory" in findings[0][2]
 
 
-def test_any_core_state_preselection_guard_is_clean():
-    """Form D: common/national_focus/turkey.txt's country-scope pre-selection."""
+def test_any_core_state_preselection_does_not_guard_random_core_state():
+    """common/national_focus/turkey.txt: `any_core_state` proves some state has
+    the factory, never that the state random_core_state picks does."""
     script = (
         "if = {\n"
         "\tlimit = {\n"
@@ -170,6 +181,40 @@ def test_any_core_state_preselection_guard_is_clean():
         "\t\t\tlevel = 1\n"
         "\t\t}\n"
         "\t}\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert "arms_factory" in findings[0][2]
+
+
+def test_state_selector_with_its_own_limit_is_clean():
+    script = (
+        "if = {\n"
+        "\tlimit = {\n"
+        "\t\tany_core_state = {\n"
+        "\t\t\tarms_factory > 1\n"
+        "\t\t}\n"
+        "\t}\n"
+        "\trandom_core_state = {\n"
+        "\t\tlimit = { arms_factory > 1 }\n"
+        "\t\tremove_building = {\n"
+        "\t\t\ttype = arms_factory\n"
+        "\t\t\tlevel = 1\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
+def test_fixed_state_scope_inherits_the_outer_guard():
+    """A numbered state names one specific state, so an outer limit on that
+    same state still holds inside it."""
+    script = (
+        "if = {\n"
+        "\tlimit = { 931 = { infrastructure > 0 } }\n"
+        "\t931 = { damage_building = { type = infrastructure damage = 2 } }\n"
         "}\n"
     )
     assert _scan(script) == []
@@ -296,6 +341,212 @@ def test_decision_available_does_not_guard_remove_effect():
     findings = _scan(script)
     assert len(findings) == 1
     assert "arms_factory" in findings[0][2]
+
+
+# --- the comparison must prove presence -----------------------------------
+
+
+def test_absence_comparison_in_a_limit_still_flags():
+    """`arms_factory < 1` guards the branch where the factory is *missing*."""
+    script = (
+        "if = {\n"
+        "\tlimit = { arms_factory < 1 }\n"
+        "\tremove_building = { type = arms_factory level = 1 }\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert "arms_factory" in findings[0][2]
+
+
+def test_at_most_zero_comparison_in_a_limit_still_flags():
+    script = (
+        "if = {\n"
+        "\tlimit = { arms_factory <= 0 }\n"
+        "\tremove_building = { type = arms_factory level = 1 }\n"
+        "}\n"
+    )
+    assert len(_scan(script)) == 1
+
+
+def test_equals_zero_comparison_in_a_limit_still_flags():
+    script = (
+        "if = {\n"
+        "\tlimit = { arms_factory == 0 }\n"
+        "\tremove_building = { type = arms_factory level = 1 }\n"
+        "}\n"
+    )
+    assert len(_scan(script)) == 1
+
+
+def test_at_least_one_and_exact_count_comparisons_are_clean():
+    script = (
+        "if = {\n"
+        "\tlimit = { arms_factory >= 1 }\n"
+        "\tremove_building = { type = arms_factory level = 1 }\n"
+        "}\n"
+        "if = {\n"
+        "\tlimit = { dockyard == 2 }\n"
+        "\tremove_building = { type = dockyard level = 1 }\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
+def test_or_branch_is_not_a_guard():
+    """Either branch may be the one that held, so neither proves presence."""
+    script = (
+        "if = {\n"
+        "\tlimit = {\n"
+        "\t\tOR = {\n"
+        "\t\t\tarms_factory > 0\n"
+        "\t\t\thas_idea = SOV_foreign_cars_idea1\n"
+        "\t\t}\n"
+        "\t}\n"
+        "\tremove_building = { type = arms_factory level = 1 }\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert "arms_factory" in findings[0][2]
+
+
+def test_negated_presence_check_is_not_a_guard():
+    script = (
+        "if = {\n"
+        "\tlimit = { NOT = { arms_factory > 0 } }\n"
+        "\tremove_building = { type = arms_factory level = 1 }\n"
+        "}\n"
+    )
+    assert len(_scan(script)) == 1
+
+
+def test_inverted_factor_zero_modifier_still_flags():
+    """events/Brazilian.txt's polarity slip: zeroing the weight when the
+    building is *present* leaves the bucket running only when it is absent."""
+    script = (
+        "random_list = {\n"
+        "\t10 = {\n"
+        "\t\tmodifier = {\n"
+        "\t\t\tfactor = 0\n"
+        "\t\t\tcheck_variable = { building_level@industrial_complex > 0 }\n"
+        "\t\t}\n"
+        "\t\tdamage_building = { type = industrial_complex damage = 0.5 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert "industrial_complex" in findings[0][2]
+
+
+def test_factor_zero_modifier_with_negated_presence_is_clean():
+    """`NOT = { X > 0 }` is the dual of the bare `X < 1` form."""
+    script = (
+        "random_list = {\n"
+        "\t10 = {\n"
+        "\t\tmodifier = {\n"
+        "\t\t\tfactor = 0\n"
+        "\t\t\tNOT = { industrial_complex > 0 }\n"
+        "\t\t}\n"
+        "\t\tremove_building = { type = industrial_complex level = 1 }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
+# --- province buildings in state-only triggers ------------------------------
+
+
+def test_province_building_in_non_damaged_building_level_is_flagged():
+    """The JAP_quake_damage case: naval_base is a province building, so the
+    trigger never validates and the game logs a load error."""
+    script = (
+        "if = {\n"
+        "\tlimit = { non_damaged_building_level = { building = naval_base level > 0 } }\n"
+        "\tdamage_building = { type = naval_base damage = 0.05 }\n"
+        "}\n"
+    )
+    findings = _scan_province(script)
+    assert len(findings) == 1
+    assert findings[0][0] == "province-building-state-trigger"
+    assert findings[0][1] == 2
+    assert "naval_base" in findings[0][2]
+
+
+def test_state_building_in_non_damaged_building_level_is_clean():
+    script = (
+        "if = {\n"
+        "\tlimit = { non_damaged_building_level = { building = air_base level > 0 } }\n"
+        "\tdamage_building = { type = air_base damage = 0.05 }\n"
+        "}\n"
+    )
+    assert _scan_province(script) == []
+
+
+def test_province_building_in_any_province_building_level_is_clean():
+    script = (
+        "if = {\n"
+        "\tlimit = { any_province_building_level = { building = naval_base level > 0 } }\n"
+        "\tdamage_building = { type = naval_base damage = 0.05 }\n"
+        "}\n"
+    )
+    assert _scan_province(script) == []
+
+
+def test_province_building_trigger_does_not_count_as_a_guard():
+    script = (
+        "if = {\n"
+        "\tlimit = { non_damaged_building_level = { building = naval_base level > 0 } }\n"
+        "\tdamage_building = { type = naval_base damage = 0.05 }\n"
+        "}\n"
+    )
+    findings = _scan(script)
+    assert len(findings) == 1
+    assert findings[0][0] == "unguarded-damage-building"
+
+
+@pytest.mark.parametrize("building", ["supply_node", "rail_way", "naval_supply_hub"])
+def test_supply_province_buildings_in_state_only_trigger_are_flagged(building):
+    script = (
+        "if = {\n"
+        f"\tlimit = {{ non_damaged_building_level = {{ building = {building} level > 0 }} }}\n"
+        f"\tdamage_building = {{ type = {building} damage = 0.05 }}\n"
+        "}\n"
+    )
+    findings = _scan_province(script)
+    assert len(findings) == 1
+    assert building in findings[0][2]
+
+
+def test_province_building_list_covers_every_province_max_building():
+    """`_PROVINCE_BUILDINGS` is a hand-kept mirror of the buildings that carry a
+    province_max level cap; this fails when a new one is added to the game."""
+    text = (_MOD_ROOT / "common" / "buildings" / "00_buildings.txt").read_text(
+        encoding="utf-8-sig"
+    )
+    declared = set()
+    building = None
+    for line in text.splitlines():
+        match = re.match(r"^\t([A-Za-z_][A-Za-z0-9_]*) = \{", line)
+        if match:
+            building = match.group(1)
+        elif building and re.search(r"\bprovince_max\s*=", line):
+            declared.add(building)
+    assert declared
+    assert declared <= V._PROVINCE_BUILDINGS
+
+
+def test_bare_comparison_guards_a_province_building():
+    script = (
+        "if = {\n"
+        "\tlimit = { naval_base > 0 }\n"
+        "\tdamage_building = { type = naval_base damage = 0.05 }\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+    assert _scan_province(script) == []
 
 
 # --- scan_file cache --------------------------------------------------------

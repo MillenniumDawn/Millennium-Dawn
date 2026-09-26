@@ -16,7 +16,7 @@ mod.
 | `tdebug`              | Toggle on-map tooltips (province IDs, state IDs, variable readouts) |
 | `tag TAG`             | Switch the country you control (e.g. `tag GER`)                     |
 | `observe` / `tag ---` | Drop into observer mode                                             |
-| `event <id>`          | Fire an event on the player (e.g. `event EUevent.3`)                |
+| `event <id>`          | Fire an event on the player (e.g. `event EUevent.4`)                |
 | `effect <script>`     | Run arbitrary effect script in the **player country** scope         |
 
 ### Running MD scripted effects
@@ -111,13 +111,6 @@ cores, applies pooled tech). As a member-state player:
 
 ```
 effect focus_EU111_QMV_result = yes
-```
-
-The legacy event path (`EUevent.3`) does the same thing but is currently unreferenced;
-fire it directly only for isolated testing:
-
-```
-event EUevent.3
 ```
 
 ### Test pooled technology transfer (`apply_USoE_technologies`)

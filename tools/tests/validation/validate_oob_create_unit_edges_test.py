@@ -28,7 +28,9 @@ def _esc(value):
     return _BS + '"' + value + _BS + '"'
 
 
-def _division(template: Optional[str] = "Militia", extra=""):
+def _division(
+    template: Optional[str] = "Militia", extra=" start_equipment_factor = 1.0"
+):
     body = "name = " + _esc("1st Brigade")
     if template is not None:
         body += " division_template = " + _esc(template)
@@ -378,6 +380,21 @@ def test_zero_factor_and_unknown_division_key_are_both_reported(tmp_path):
     assert _kinds(issues) == [
         "CREATE UNIT: equipment/manpower factor is zero",
         "CREATE UNIT: unknown key in division string",
+    ]
+
+
+def test_missing_equipment_factor_warns(tmp_path):
+    issues = _run(
+        tmp_path,
+        "capital_scope = {\n"
+        "\tcreate_unit = {\n"
+        f'\t\tdivision = "{_division(extra="")}"\n'
+        "\t\towner = ROOT\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert _kinds(issues) == [
+        "CREATE UNIT: division string lacks start_equipment_factor"
     ]
 
 

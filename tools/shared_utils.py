@@ -61,7 +61,7 @@ PARTY_SLOT_NAMES: Dict[int, str] = {
     1: "conservatism",
     2: "liberalism",
     3: "socialism",
-    4: "Communist-State",
+    4: "communist_state",
     5: "anarchist_communism",
     6: "Conservative",
     7: "Autocracy",
@@ -131,13 +131,11 @@ def log_message(
     print(formatted_message, file=sys.stderr)
 
 
-def create_standard_parser(description: str) -> argparse.ArgumentParser:
-    """Create a standard argument parser for Millennium Dawn tools"""
-    parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    parser.add_argument("input_file", help="Input file to process")
+def add_standard_file_arguments(
+    parser: argparse.ArgumentParser, *, input_help="Input file to process"
+):
+    """Add shared file arguments; --no-color remains specific to create_standard_parser."""
+    parser.add_argument("input_file", help=input_help)
     parser.add_argument(
         "-o", "--output", help="Output file (default: overwrites input)"
     )
@@ -145,6 +143,15 @@ def create_standard_parser(description: str) -> argparse.ArgumentParser:
         "-b", "--backup", action="store_true", help="Create backup before modifying"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+
+
+def create_standard_parser(description: str) -> argparse.ArgumentParser:
+    """Create a standard argument parser for Millennium Dawn tools"""
+    parser = argparse.ArgumentParser(
+        description=description,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    add_standard_file_arguments(parser)
     parser.add_argument(
         "--no-color", action="store_true", help="Disable ANSI color codes in output"
     )
@@ -347,6 +354,24 @@ def count_braces(text: str) -> Tuple[int, int]:
     return opens, closes
 
 
+def reindent_by_brace_depth(block_lines: List[str], indent: str = "") -> List[str]:
+    """Re-indent lines so each line's tab depth comes from brace nesting alone,
+    starting at *indent*. Blank lines are kept empty. Braces inside ``"..."``
+    strings or ``#`` comments do not shift the depth. Idempotent."""
+    out = []
+    depth = 0
+    for line in block_lines:
+        stripped = line.strip()
+        if not stripped:
+            out.append("")
+            continue
+        opens, closes = count_braces(stripped)
+        this_depth = depth - 1 if stripped.startswith("}") else depth
+        out.append(indent + "\t" * max(0, this_depth) + stripped)
+        depth = max(0, depth + opens - closes)
+    return out
+
+
 def collapse_ws_outside_quotes(text: str) -> str:
     """Collapse runs of whitespace outside double-quoted spans to single spaces,
     leaving text inside `"..."` byte-exact. Like `" ".join(text.split())` for
@@ -438,28 +463,29 @@ def collapse_or_compact(
     block_lines: List[str], indent: Optional[str] = None
 ) -> List[str]:
     """Render a ``key = { ... }`` block on one line when it reduces to a single
-    leaf assignment (even through nesting), else fall back to ``compact_block``.
+    leaf assignment (even through nesting), else compact it and reindent it by
+    brace depth.
 
     Single-leaf test (evaluated outside string literals and comments):
     ``leaves = (#"=<>") - (#"{")``; collapse iff ``leaves == 1`` and braces
     balance. Comparison operators ``<``/``>`` count as leaves alongside ``=`` so a
     block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. A bare
     token list (``focus = { A B C }``) counts as one leaf per token, so a
-    multi-line list stays multi-line. Bails to
-    ``compact_block`` if any line carries a ``#`` comment. When *indent* is None
-    the single-line form keeps the block's existing leading whitespace (from
-    ``block_lines[0]``); otherwise *indent* is used as the prefix.
+    multi-line list stays multi-line. Stays multi-line if any line carries a
+    ``#`` comment. When *indent* is None the output starts at the block's
+    existing leading whitespace (from ``block_lines[0]``); otherwise *indent* is
+    used as the prefix.
     """
     if not block_lines:
         return compact_block(block_lines)
 
-    for line in block_lines:
-        if strip_inline_comment(line) != line:
-            return compact_block(block_lines)
-
     if indent is None:
         first = block_lines[0]
         indent = first[: len(first) - len(first.lstrip())]
+
+    for line in block_lines:
+        if strip_inline_comment(line) != line:
+            return reindent_by_brace_depth(compact_block(block_lines), indent)
 
     text = " ".join(line.strip() for line in block_lines if line.strip())
 
@@ -479,12 +505,14 @@ def collapse_or_compact(
                 n_close += 1
 
     if n_open != n_close or n_leaf - n_open != 1:
-        return compact_block(collapse_nested_blocks(block_lines))
+        multi = compact_block(collapse_nested_blocks(block_lines))
+        return reindent_by_brace_depth(multi, indent)
 
     unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
     for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
         if len(group.split()) > 1:
-            return compact_block(collapse_nested_blocks(block_lines))
+            multi = compact_block(collapse_nested_blocks(block_lines))
+            return reindent_by_brace_depth(multi, indent)
 
     return [f"{indent}{_normalize_oneline_braces(text)}"]
 

@@ -36,7 +36,7 @@ def _scan_file(args) -> Optional[Tuple[str, str, str]]:
     except (OSError, UnicodeDecodeError) as exc:
         return (kind, rel, f"could not read the file: {exc}")
     try:
-        standardized = standardize_text(kind, current)
+        standardized = standardize_text(kind, current, mod_root=mod_path)
     except Exception as exc:  # pylint: disable=broad-except
         # A standardizer raising means the file cannot be checked at all, and
         # running the formatter on it would leave it half-rewritten.

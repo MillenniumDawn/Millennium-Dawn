@@ -67,7 +67,7 @@ def test_opener_line_comment_preserved():
     assert any("#DDR Programs" in line for line in out)
 
 
-def test_log_only_single_line_on_remove_not_stripped():
+def test_log_only_single_line_on_remove_stripped():
     out = _standardize_idea(
         [
             "\tfoo = {",
@@ -76,8 +76,21 @@ def test_log_only_single_line_on_remove_not_stripped():
             "\t}",
         ]
     )
+    assert not any("on_remove" in line for line in out)
+
+
+def test_packed_on_remove_log_beside_effect_kept():
+    out = _standardize_idea(
+        [
+            "\tfoo = {",
+            "\t\tpicture = x",
+            '\t\ton_remove = { log = "remove idea foo" add_stability = 0.1 }',
+            "\t}",
+        ]
+    )
     text = "\n".join(out)
     assert "remove idea foo" in text
+    assert "add_stability = 0.1" in text
 
 
 def test_packed_single_line_category_child_not_duplicated():

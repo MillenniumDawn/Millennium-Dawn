@@ -40,7 +40,12 @@ def _results_for(
     monkeypatch.setattr(
         validator,
         "_get_activation_removal_scan",
-        lambda: (set(), set(), set(), set(unlocked_categories)),
+        lambda: (
+            set(),
+            set(),
+            set(),
+            [("category", name, "cat.txt", 1) for name in unlocked_categories],
+        ),
         raising=False,
     )
     validator.validate_missing_localisation()
@@ -128,6 +133,14 @@ def test_ai_only_decision_with_loc_flagged(monkeypatch):
     assert all("AI-only decision has localisation key" in r for r in results)
     assert any("'dec_one'" in r for r in results)
     assert any("'dec_one_desc'" in r for r in results)
+
+
+def test_ai_only_decision_in_keep_list_with_loc_not_flagged(monkeypatch):
+    factory = decision_factory(
+        "monetary_policy_austerity = {\n\tvisible = {\n\t\tis_ai = yes\n\t}\n}"
+    )
+    results = _results_for([factory], {"monetary_policy_austerity"}, monkeypatch)
+    assert results == []
 
 
 def test_ai_only_by_category_exempt_from_missing(monkeypatch):

@@ -101,9 +101,15 @@ Steps:
 
    Run `git merge origin/main` and ensure the branch is up to date before creating a changelog entry or a pull request.
 
-8. **Update the changelog**
+8. **Update the changelog (mandatory)**
 
-   Run `/changelog` to add an entry under the current version in `Changelog.txt`. Commit the changelog update separately.
+   Every PR that touches game files gets exactly one BLUF line in `Changelog.txt` under the current version, in an existing category:
+
+   ```
+    - [TAG] <Past-tense verb> <what the player sees> (Issue #N)
+   ```
+
+   Lead with the outcome. No cause clauses, no second sentence, no file names, under 120 characters before the issue suffix. Follow `/changelog` for category and placement rules. Commit it separately as `Update Changelog.txt`. Skip only when the diff has no game files (tooling, CI, docs) and say so in the report.
 
 9. **Open or update the pull request**
 
@@ -134,4 +140,4 @@ Steps:
 
 10. **Report back**
 
-Output the PR URL, whether the PR was **created** or **updated**, and a one-paragraph summary of what was fixed or added.
+Output the PR URL, whether the PR was **created** or **updated**, the changelog line added (or why it was skipped), and a one-paragraph summary of what was fixed or added.

@@ -204,6 +204,7 @@ Non-English localisation is managed through [Paratranz](https://paratranz.cn/pro
 
 ## Related Resources
 
+- [Git & GitHub Desktop](/dev-resources/md-git-resources/): install GitHub Desktop and clone the mod.
 - [Developer Setup Guide](/dev-resources/developer-setup/): main developer guide for the mod.
 - [Code Stylization Guide](/dev-resources/code-stylization-guide/): formatting and code structure.
 - [Content Review Guide](/dev-resources/content-review-guide/): quality checklist.

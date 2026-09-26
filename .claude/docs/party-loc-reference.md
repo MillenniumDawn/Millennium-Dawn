@@ -26,7 +26,7 @@ documented at `MD_politics_view_parties_l_english.yml:38-61`.
 | 1    | `conservatism`               | `democratic`  | Conservatives                 |
 | 2    | `liberalism`                 | `democratic`  | Liberals                      |
 | 3    | `socialism`                  | `democratic`  | Social Democrats              |
-| 4    | `Communist-State`            | `communism`   | Communists                    |
+| 4    | `communist_state`            | `communism`   | Communists                    |
 | 5    | `anarchist_communism`        | `communism`   | Left-Wing Radicals            |
 | 6    | `Conservative`               | `communism`   | Reactionaries                 |
 | 7    | `Autocracy`                  | `communism`   | Autocrats                     |
@@ -47,8 +47,8 @@ documented at `MD_politics_view_parties_l_english.yml:38-61`.
 | 22   | `Nat_Autocracy`              | `nationalist` | Military Junta                |
 | 23   | `Monarchist`                 | `nationalist` | Monarchists                   |
 
-Case matters: `Communist-State` is hyphenated, `neutral_Social` and `oligarchism` are the
-only two with a lowercase first letter.
+Case matters: `neutral_Social` and `oligarchism` are the only two with a lowercase first
+letter.
 
 ## Key format
 
@@ -77,8 +77,10 @@ Rules:
 - Native names go in parentheses after the English name, one language per label
   (`Greek: …`, `Arabic: …`, `French: …`), abbreviation last.
 - `\n\n` is a literal backslash-n pair in the `.yml`, not a real newline.
-- Descriptions are encyclopedic and factual — founding year, founder, ideology, electoral
-  record, splits, EP group. No editorialising, no purple prose.
+- Descriptions are encyclopedic and factual, in the present tense, and describe the party as
+  it is under its own gate: ideology, what it campaigns on, where its leverage lies. No
+  forward references to a later rename, merger, dissolution or split — that is the next
+  gated variant's job. No editorialising, no purple prose.
 - Reference-quality tags to copy from: `MOR` (`:7936`), `ITA` (`:6934`), `GEO` (`:6470`).
 
 ## Icons
@@ -97,7 +99,7 @@ entirely** — the icon `defined_text` falls back to `generic.<slot>_icon` on it
 (`MOR.Caliphate` and `MOR.Vilayat_e_Faqih` are the precedent). Generic sprites are
 `GFX_generic_<slot>_small`, with two irregulars:
 
-- `Communist-State` → `£generic_Communist_State_small` (underscore, not the slot's hyphen)
+- `communist_state` → `£generic_Communist_State_small` (the sprite keeps its `Communist_State` spelling)
 - `Neutral_Muslim_Brotherhood` → `£muslim_brotherhood_small` (no `generic_` prefix)
 
 Never invent a `GFX_` name; an undefined sprite renders nothing.
@@ -117,9 +119,9 @@ Each is a switch whose lines are sorted **alphabetically by tag** and terminate 
 generic fallback:
 
 ```
-	text = { trigger = { original_tag = GRE } localization_key = GRE.conservatism }
-	…
-	text = { localization_key = generic.conservatism }
+ text = { trigger = { original_tag = GRE } localization_key = GRE.conservatism }
+ …
+ text = { localization_key = generic.conservatism }
 ```
 
 Add one line per block per party. Insert alphabetically; a misplaced line still works but
@@ -128,18 +130,35 @@ makes the next edit harder to review.
 Use `original_tag`, never `tag` — a civil-war split-off keeps its original tag and would
 otherwise lose its parties.
 
-## Date- and flag-gated variants
+## Flag-gated variants and their events
 
-**First match wins**, so the more specific line goes first and the pair stays adjacent:
+A mid-period identity change (rename, merger, dissolution, split) is a flag set by a flavour
+event, not a bare `date >` in the hook. The player sees the change happen, and the swap
+cannot drift from the event that explains it. **First match wins**, so the flag line goes
+first and the pair stays adjacent:
 
 ```
-	text = { trigger = { original_tag = DEN date < 2016.12.12 } localization_key = DEN.Nat_Fascism }
-	text = { trigger = { original_tag = DEN date > 2016.12.12 } localization_key = DEN.Nat_Fascism_2017 }
+ text = { trigger = { original_tag = BOT has_country_flag = BOT_business_botswana_formed } localization_key = BOT.oligarchism_2015 }
+ text = { trigger = { original_tag = BOT NOT = { has_country_flag = BOT_business_botswana_formed } } localization_key = BOT.oligarchism }
 ```
 
-Other precedents: `EST.Nat_Fascism` / `EST.Nat_Fascism2` (flag-gated on
-`EST_ekre_has_formed`), `ITA.Nat_Fascism` / `ITA.forza_nuova_loc_key` / `ITA.casapound_loc_key`
-(`check_variable = { Nat_Fascism_leader = N }`).
+The event (`events/Botswana.txt`, `Botswana_events.8`) is `is_triggered_only` and
+`fire_only_once`, checks `original_tag`, has no picture, and its single option sets the flag
+and runs `update_party_name = yes`. It is scheduled on the real date from
+`common/scripted_effects/00_yearly_effects.txt`:
+
+```
+trigger_year_2015_events = {
+ …
+ BOT = { country_event = { id = Botswana_events.8 days = 209 } }
+```
+
+Precedents: `brazil_flavour_events.14` (`BRA_democrats_party_formed`, PFL → Democratas),
+`Botswana_events.9` (`BOT_alliance_for_progressives_formed`), `EST.Nat_Fascism` /
+`EST.Nat_Fascism2` (`EST_ekre_has_formed`), `ITA.Nat_Fascism` / `ITA.forza_nuova_loc_key` /
+`ITA.casapound_loc_key` (`check_variable = { Nat_Fascism_leader = N }`). Older bare date
+gates such as `DEN.Nat_Fascism` / `DEN.Nat_Fascism_2017` (`date < 2016.12.12`) still exist;
+do not add new ones.
 
 Two traps:
 
@@ -177,4 +196,5 @@ Check by hand what it cannot see:
 2. Keys alphabetical within the block, leading space on every line, BOM intact.
 3. `history/countries/<TAG>*.txt` `party_pop_array^N` indices still line up with the slots
    they are commented as.
-4. In game: the politics view at the start date and at every date a gate splits on.
+4. In game: the politics view at the start date, then `event <Country>_events.N` from the
+   console for each new identity-change event and the politics view again.

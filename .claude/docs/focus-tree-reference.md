@@ -6,7 +6,9 @@ Focus tree conventions, structure, property order, and examples.
 
 - IDs use `TAG_focus_name`. Use `relative_position_id` beyond the root.
 - Include logging, `ai_will_do = { base = N }`, and the two-layer search filters
-  from [Search Filters](search-filters.md).
+  from [Search Filters](search-filters.md). The log belongs in a `completion_reward`
+  or `select_effect` that runs something; a block holding only a log is dead and
+  `check_common_mistakes.py` rejects it (#4456). Omit the block instead.
 - Omit defaults: `cost = 10`, `cancel_if_invalid = yes`, `continue_if_invalid = no`,
   and `available_if_capitulated = no`.
 - No empty `mutually_exclusive` or `available` blocks, or commented-out slot markers.
@@ -76,7 +78,7 @@ A **shared focus** lives in one tree file and appears in several countries' tree
 
 ### Conventions
 
-- **All-members focus** — omit `joint_trigger` and gate `available` with the membership trigger (e.g. `benelux_cooperation_trigger`). When omitted, the default joint set is every country that has the tree, so `joint_trigger = { is_benelux_country = yes }` is redundant. `06_Commonwealth_Shared.txt` ships 38 joint focuses this way: no `joint_trigger`, `available = { is_commonwealth_member = yes }`, rewards shared across all members.
+- **All-members focus** — omit `joint_trigger` and gate `available` with the membership trigger (e.g. `benelux_cooperation_trigger`). When omitted, the default joint set is every country that has the tree, so `joint_trigger = { is_benelux_country = yes }` is redundant.
 - **Country-specific focus** — gate `available` to that country **and** restrict the joint set with `joint_trigger = { original_tag = TAG }` (or an `OR` of tags). Do **not** rely on `available` alone here: the default joint set is structural (all tree-holders), so without a `joint_trigger` the other members can still receive shared completion and rewards when that country completes the focus. Keep the `joint_trigger` until this is verified in-game.
 
 Joint focuses pick a `text_icon` titlebar style matching the joint set (`JOINT_BEL_LUX_HOL_focus_style`, `JOINT_HOL_focus_style`, etc.), defined in `common/national_focus/00_titlebar_styles.txt`.

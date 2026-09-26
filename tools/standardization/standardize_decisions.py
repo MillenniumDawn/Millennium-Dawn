@@ -29,8 +29,7 @@ from shared_utils import (
 )
 
 # Decision/category IDs, unlike the property keywords PROP_NAME_RE matches, may
-# contain hyphens (e.g. `Communist-State_invite`) — verified against every ID in
-# common/decisions/. A header this can't read is surfaced as an error, not guessed.
+# contain hyphens. A header this can't read is surfaced as an error, not guessed.
 _HEADER_ID_RE = re.compile(r"^([\w-]+)\s*=")
 _ONE_LINE_EFFECT_RE = re.compile(r"^(\w+)\s*=\s*\{(.*)\}\s*$")
 _EFFECT_LOG_BLOCKS = frozenset(
@@ -132,8 +131,28 @@ def _split_one_line_effect(line: str) -> List[str] | None:
     return lines
 
 
+def _effect_has_statements(block_lines: List[str]) -> bool:
+    """True when an effect block runs anything besides its log line."""
+    block = block_lines
+    if len(block) == 1:
+        block = _split_one_line_effect(block[0]) or block
+    for line in block[1:-1]:
+        stripped = line.strip()
+        if (
+            stripped
+            and not stripped.startswith("#")
+            and not stripped.startswith("log =")
+        ):
+            return True
+    return False
+
+
 def ensure_effect_log(block_lines: List[str], decision_id: str) -> List[str]:
-    """Insert the decision log as the first statement of an effect block."""
+    """Insert the decision log as the first statement of an effect block.
+
+    An empty or log-only block is dropped: a log with nothing beside it
+    records an effect that never runs (#4456).
+    """
     if not block_lines:
         return block_lines
     block = block_lines
@@ -142,6 +161,8 @@ def ensure_effect_log(block_lines: List[str], decision_id: str) -> List[str]:
         if split is None:
             return block
         block = split
+    if not _effect_has_statements(block):
+        return []
     open_line = block[0]
     raw = open_line[:-1] if open_line.endswith("\n") else open_line
     tabs = len(raw) - len(raw.lstrip("\t"))
@@ -301,7 +322,8 @@ def format_decision(block_lines: List[str]) -> List[str]:
     only reliable source. Every body property is preserved in source order:
     block-valued properties are re-indented (or collapsed when a single leaf),
     single-line properties are whitespace-normalised, comments are kept verbatim.
-    A ``log`` line is injected into complete/remove/timeout/cancel when missing.
+    A ``log`` line is injected into complete/remove/timeout/cancel when missing;
+    an empty or log-only effect block is dropped.
     Header sits at one tab, body at two.
     """
     if not block_lines:
@@ -336,6 +358,9 @@ def format_decision(block_lines: List[str]) -> List[str]:
             block, next_i = extract_block(block_lines, i)
             if prop_name in _EFFECT_LOG_BLOCKS:
                 block = ensure_effect_log(block, did)
+                if not block:
+                    i = next_i
+                    continue
             elif prop_name == "ai_will_do":
                 block = convert_root_factor_to_base(block)
             rendered = _reindent_or_collapse(block, 2)
@@ -350,6 +375,11 @@ def format_decision(block_lines: List[str]) -> List[str]:
             pending = []
             i = next_i
         else:
+            if prop_name in _EFFECT_LOG_BLOCKS and not _effect_has_statements(
+                [block_lines[i]]
+            ):
+                i += 1
+                continue
             if prop_name in _EFFECT_LOG_BLOCKS and "log =" not in stripped:
                 logged = ensure_effect_log([block_lines[i]], did)
                 rendered = _reindent_or_collapse(logged, 2)

@@ -341,6 +341,7 @@ def test_hyphenated_focus_id_log_corrected():
             "\t\tid = TST_austria-este\n",
             "\t\tcompletion_reward = {\n",
             '\t\t\tlog = "[GetDateText]: [Root.GetName]: TST_Austria-este"\n',
+            "\t\t\tadd_political_power = 50\n",
             "\t\t}\n",
             "\t}\n",
         ]
@@ -518,6 +519,46 @@ def test_shared_and_joint_focuses_are_reindented_at_top_level(tmp_path):
         assert f"\tid = TST_{block_type}" in lines
         assert "\t\tadd_political_power = 1" in lines
         assert lines[-1] == "}"
+
+
+def test_focus_nested_lines_are_reindented_by_brace_depth(tmp_path):
+    # Issue #4650: lines inside a nested block kept the source's wrong depth.
+    source = tmp_path / "focus.txt"
+    output = tmp_path / "focus-output.txt"
+    source.write_text(
+        """focus_tree = {
+\tfocus = {
+\t\tid = TST_x
+\t\tcompletion_reward = {
+\t\t\tlog = "[GetDateText]: [Root.GetName]: Focus TST_x"
+\t\t\t34 = {
+\t\t\t\tadd_building_construction = {
+\t\t\t\ttype = infrastructure
+\t\t\t\tlevel = 1
+\t\t\t\t}
+\t\t\t}
+\t\t}
+\t\t\tcomplete_tooltip = {
+\t\t\tadd_political_power = 1
+\t\t\tadd_stability = 0.01
+\t\t\t}
+\t}
+}
+""",
+        encoding="utf-8",
+    )
+
+    assert standardize_focus_tree(str(source), str(output)) is True
+
+    lines = output.read_text(encoding="utf-8").splitlines()
+    assert "\t\t\t\tadd_building_construction = {" in lines
+    assert "\t\t\t\t\ttype = infrastructure" in lines
+    assert "\t\t\t\t\tlevel = 1" in lines
+    assert "\t\tcomplete_tooltip = {" in lines
+    assert "\t\t\tadd_stability = 0.01" in lines
+
+    assert standardize_focus_tree(str(output), str(output)) is True
+    assert output.read_text(encoding="utf-8").splitlines() == lines
 
 
 _INVALID_MODIFIER_TREE = """focus_tree = {
@@ -786,6 +827,13 @@ def test_effect_block_with_log_leaves_unloggable_blocks_alone():
     assert "log =" not in "".join(
         effect_block_with_log(["completion_reward = { add_political_power = 1 }"], "")
     )
+
+
+def test_effect_block_with_log_drops_empty_and_log_only_blocks():
+    assert effect_block_with_log(["\t\tcompletion_reward = { }"], "TST_x") == []
+    assert effect_block_with_log(['\t\tselect_effect = { log = "x" }'], "TST_x") == []
+    log_only = ["\t\tcompletion_reward = {\n", '\t\t\tlog = "x"\n', "\t\t}\n"]
+    assert effect_block_with_log(log_only, "TST_x") == []
 
 
 def test_effect_block_collapses_single_leaf_children():

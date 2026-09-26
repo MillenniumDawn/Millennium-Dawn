@@ -335,6 +335,11 @@ country_event = {
 					NOT = { has_country_flag = int_auto_reject_investment_flag }
 					NOT = { has_country_flag = not_investment_target }
 					NOT = { has_country_flag = recently_failed_to_invest }
+					OR = {
+						is_subject = no
+						is_subject_of = ROOT
+						AND = { is_subject = yes OVERLORD = { is_in_faction_with = ROOT } }
+					}
 				}
 				set_temp_variable = { AI_selected_country = THIS.id }
 				set_temp_variable = { AI_country_score = 0 }
@@ -373,9 +378,28 @@ country_event = {
 				if = { limit = { ROOT = { has_tech = reactor1 } }
 					set_temp_variable = { AI_has_reactor_tech = 1 }
 				}
+				# Count pending power projects as built (base GW each) so investors stop piling onto the same deficit
+				set_temp_variable = { pending_energy_gw = 0 }
+				for_each_scope_loop = {
+					array = controlled_states
+					for_each_loop = {
+						array = project_type_in_state
+						value = v
+						if = { limit = { check_variable = { v = 11 } } add_to_temp_variable = { pending_energy_gw = 0.5 } }
+						else_if = { limit = { check_variable = { v = 12 } } add_to_temp_variable = { pending_energy_gw = 2 } }
+						else_if = { limit = { check_variable = { v = 13 } } add_to_temp_variable = { pending_energy_gw = 4 } }
+					}
+				}
 				if = { limit = { check_variable = { energy_consumption > 0 } }
-					set_temp_variable = { energy_balance_ratio = energy_sum }
-					divide_temp_variable = { energy_balance_ratio = energy_consumption }
+					# energy_sum includes storage withdrawal, which would hide a real deficit
+					set_temp_variable = {
+						energy_balance_ratio = {
+							value = energy_sum
+							subtract = energy_withdrawal_from_storage
+							add = pending_energy_gw
+							divide = energy_consumption
+						}
+					}
 				}
 
 				# === Hoisted target-country invariants ===
@@ -397,16 +421,14 @@ country_event = {
 				set_temp_variable = { tgt_oil_imported = resource_imported@oil }
 				set_temp_variable = { tgt_renewable_mult = modifier@renewable_energy_gain_multiplier }
 				set_temp_variable = { tgt_threat = threat }
+				set_temp_variable = { tgt_nuclear_reactors = nuclear_reactors }
+				set_temp_variable = { tgt_enrichment_facilities = total_enrichment_facilities }
 
 				set_temp_variable = { tgt_civs_to_factories_ratio = 0 }
-				if = { limit = { check_variable = { tgt_num_factories > 0 } }
-					set_temp_variable = { tgt_civs_to_factories_ratio = num_of_civilian_factories }
-					divide_temp_variable = { tgt_civs_to_factories_ratio = tgt_num_factories }
-				}
 				set_temp_variable = { tgt_mils_to_factories_ratio = 0 }
 				if = { limit = { check_variable = { tgt_num_factories > 0 } }
-					set_temp_variable = { tgt_mils_to_factories_ratio = num_of_military_factories }
-					divide_temp_variable = { tgt_mils_to_factories_ratio = tgt_num_factories }
+					set_temp_variable = { tgt_civs_to_factories_ratio = { value = num_of_civilian_factories divide = tgt_num_factories } }
+					set_temp_variable = { tgt_mils_to_factories_ratio = { value = num_of_military_factories divide = tgt_num_factories } }
 				}
 
 				# Boolean caches (1 = true, 0 = false)
@@ -465,11 +487,11 @@ country_event = {
 							NOT = {
 								is_in_array = { array = projects_in_state value = ROOT.id }
 							}
-							# TODO: Add a check here at some point to make sure they're not a subject, if they are only invest if they are an allies subject or if they're your subject
 						}
 
 
 						AI_count_pending_projects = yes
+						AI_get_state_score_adjustment = yes
 
 						# Free Building Slot Buildings
 						if = { limit = { free_building_slots = { building = industrial_complex size > 0 include_locked = no } }
@@ -516,9 +538,6 @@ country_event = {
 						if = { limit = { check_variable = { AI_has_reactor_tech = 1 } check_variable = { tgt_can_build_reactors = 1 } }
 							AI_get_nuclear_reactor_score = yes
 						}
-
-						# Outside of Calculation
-						AI_edge_case_calculations = yes
 					}
 				}
 				}

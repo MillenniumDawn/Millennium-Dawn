@@ -150,7 +150,7 @@ SIN_government_of_singapore = {
 	SIN_riau_islands_crisis_mission = {
 		activation = { owns_state = 627 }
 		highlight_states = { highlight_states_trigger = { state = 627 } }
-		war_with_on_remove = IND
+		war_with_on_timeout = IND
 		days_mission_timeout = 180
 		fire_only_once = yes
 		selectable_mission = yes
@@ -366,6 +366,7 @@ SIN_balance_of_power_category = {
 					}
 				}
 				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				add_opinion_modifier = { target = ROOT modifier = declaration_of_friendship }
 			}
@@ -1423,5 +1424,49 @@ SIN_balance_of_power_category = {
 				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
+	}
+}
+
+SIN_ai_path_category = {
+	SIN_rally_the_workers_party = {
+		icon = generic_decision
+		cost = 25
+		days_re_enable = 30
+		visible = { has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^3 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIN_rally_the_workers_party"
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	SIN_workers_party_takes_the_country = {
+		icon = generic_decision
+		cost = 150
+		days_re_enable = 180
+		visible = { has_global_flag = SIN_OPPOSITION_VICTORY_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			western_social_democrats_are_in_power = no
+			check_variable = { party_pop_array^3 > 0.4 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision SIN_workers_party_takes_the_country"
+			set_temp_variable = { rul_party_temp = 3 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

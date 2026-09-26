@@ -11,6 +11,7 @@ import time
 from dataclasses import dataclass
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -25,6 +26,7 @@ from shared_utils import (
     compute_line_offsets,
     cpu_budget,
     create_validation_parser,
+    extract_block_from_text,
     find_line_number,
     get_staged_files,
     line_for_offset,
@@ -100,11 +102,16 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "ace_effectiveness_factor_tt",
         "agency_upgrade_time_tt",
         "air_ace_bonuses_factor_tt",
+        "air_bombing_targetting_tt",
+        "air_cas_efficiency_tt",
         "air_chief_cost_factor_tt",
         "air_fuel_consumption_factor_tt",
         "air_home_defence_factor_tt",
+        "air_intercept_efficiency_tt",
         "air_interception_detect_factor_tt",
         "air_range_factor_tt",
+        "air_strategic_bomber_bombing_factor_tt",
+        "air_superiority_efficiency_tt",
         "air_training_xp_gain_factor_tt",
         "air_weather_penalty_tt",
         "air_wing_xp_loss_when_killed_factor_tt",
@@ -112,11 +119,15 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "annex_cost_factor_tt",
         "army_armor_speed_factor_tt",
         "army_artillery_defence_factor_tt",
+        "army_attack_factor_tt",
         "army_attack_speed_factor_tt",
+        "army_bonus_air_superiority_factor_tt",
         "army_leader_start_attack_level_tt",
         "army_leader_start_defense_level_tt",
         "army_leader_start_logistics_level_tt",
         "army_leader_start_planning_level_tt",
+        "army_org_factor_tt",
+        "attrition_tt",
         "base_fuel_gain_factor_tt",
         "cic_construction_boost_factor_tt",
         "compliance_growth_on_our_occupied_states_tt",
@@ -124,50 +135,79 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "conversion_cost_civ_to_mil_factor_tt",
         "convoy_escort_efficiency_tt",
         "convoy_retreat_speed_tt",
+        "coordination_bonus_tt",
+        "democratic_drift_tt",
         "enemy_justify_war_goal_time_tt",
         "equipment_conversion_speed_tt",
+        "experience_gain_air_factor_tt",
+        "experience_gain_army_factor_tt",
+        "experience_gain_navy_factor_tt",
         "experience_gain_navy_tt",
         "fascism_drift_tt",
+        "fuel_gain_factor_tt",
+        "global_building_slots_factor_tt",
         "heat_attrition_factor_tt",
         "industry_free_repair_factor_tt",
         "industry_repair_factor_tt",
         "intel_from_combat_factor_tt",
         "land_bunker_effectiveness_factor_tt",
         "lend_lease_tension_tt",
+        "license_production_speed_tt",
+        "license_purchase_cost_tt",
         "local_factories_tt",
         "local_resource_gain_efficiency_per_infrastructure_tt",
+        "local_resources_factor_tt",
         "master_ideology_drift_tt",
         "max_dig_in_factor_tt",
         "max_dig_in_tt",
+        "max_fuel_factor_tt",
         "mechanized_attack_factor_tt",
         "military_industrial_organization_funds_gain_tt",
         "military_industrial_organization_research_bonus_tt",
         "military_leader_cost_factor_tt",
+        "min_export_tt",
         "minimum_training_level_tt",
+        "monthly_population_tt",
         "motorized_attack_factor_tt",
         "naval_critical_score_chance_factor_tt",
+        "naval_defense_factor_tt",
         "naval_enemy_fleet_size_ratio_penalty_factor_tt",
         "naval_mines_damage_factor_tt",
         "naval_mines_effect_reduction_tt",
+        "naval_speed_factor_tt",
         "naval_strike_targetting_factor_tt",
         "naval_torpedo_reveal_chance_factor_tt",
         "naval_torpedo_screen_penetration_factor_tt",
         "navy_intel_factor_tt",
         "navy_intel_to_others_tt",
+        "navy_max_range_factor_tt",
+        "navy_org_factor_tt",
         "navy_screen_attack_factor_tt",
         "navy_screen_defence_factor_tt",
         "non_core_manpower_tt",
+        "planning_speed_factor_tt",
+        "production_factory_efficiency_gain_factor_tt",
+        "production_factory_max_efficiency_factor_tt",
+        "production_factory_start_efficiency_factor_tt",
+        "production_lack_of_resource_penalty_factor_tt",
         "production_oil_factor_tt",
         "production_speed_facility_factor_tt",
+        "production_speed_fuel_silo_factor_tt",
+        "production_speed_infrastructure_factor_tt",
+        "production_speed_rail_way_factor_tt",
         "production_speed_supply_node_factor_tt",
         "production_speed_synthetic_refinery_factor_tt",
         "recruitable_population_tt",
+        "refit_speed_tt",
+        "research_speed_factor_tt",
         "resistance_activity_tt",
         "resistance_target_tt",
+        "screening_without_screens_tt",
         "special_forces_min_tt",
         "spotting_chance_tt",
         "state_production_speed_supply_node_factor_tt",
         "terrain_trait_xp_gain_factor_tt",
+        "training_time_factor_tt",
         # decisions_l_english.yml — shared cost-tooltip strings used as
         # custom_cost_text on MD decisions.
         "decision_cost_CP_15",
@@ -184,12 +224,20 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "USA_small_lobby_effort",
         "USA_special_measures",
         "USA_statehood_for_puerto_rico",
+        # game_rules_l_english.yml — vanilla game rule option name reused by MD.
+        "ETH_AI_BEHAVIOR",
+        # diplomacy_l_english.yml — vanilla opinion modifier names; MD redefines
+        # the modifiers in common/opinion_modifiers/generic_modifiers.txt but
+        # reuses the vanilla strings.
+        "same_ruling_party",
+        "unstable_alliance",
         # Vanilla focus names reused intact by MD focus trees (string fits the
         # in-game label — e.g. "Greater Finland", "Worker's Rights").
         "EST_new_economic_policy",  # ideas_l_english.yml
         "FIN_greater_finland",  # aat_focus_l_english.yml
         "GER_workers_rights",  # wuw_focus_l_english.yml
         "GER_workers_rights_desc",
+        "HOL_gateway_to_europe",  # mtg_focus_l_english.yml
         "ITA_all_roads_lead_to_rome",  # bba_focus_l_english.yml
         "ITA_all_roads_lead_to_rome_desc",
         "POL_armia_ludowa",  # focus_poland_l_english.yml
@@ -206,6 +254,8 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "SPA_a_great_spain_desc",
         "SPR_the_popular_front",  # lar_focus_l_english.yml
         "SPR_the_popular_front_desc",
+        "SWI_armed_neutrality",  # bba_focus_l_english.yml
+        "SWI_swiss_neutrality",  # bba_ideas_l_english.yml
         # lar_events_l_english.yml — live La Resistance systems reused by MD.
         "lar_collab_gov.1.d",
         "lar_collab_gov.1.t",
@@ -348,7 +398,7 @@ def case_mismatch(ref: str, ci_index: dict):
 
 
 # Trait definitions sit at one tab of indent inside the `leader_traits = { }`
-# wrapper. `-` is in the charset for `emerging_Communist-State`.
+# wrapper; `-` stays in the charset so a hyphenated name cannot truncate.
 LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
 
 
@@ -356,8 +406,8 @@ def parse_leader_trait_names(mod_path: str, subdir: str) -> Set[str]:
     """Collect every trait defined in the ``common/<subdir>/`` trait files.
 
     Covers both leader trait pools: ``country_leader`` (advisors and country
-    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen is
-    part of the name charset because ``emerging_Communist-State`` exists.
+    leaders) and ``unit_leader`` (generals, admirals, operatives). The hyphen
+    stays in the name charset so a hyphenated trait name cannot truncate.
     """
     names: Set[str] = set()
     trait_dir = os.path.join(mod_path, "common", subdir)
@@ -995,6 +1045,21 @@ class BaseValidator:
         ) as pool:
             return pool.map(func, items, chunksize=chunksize)
 
+    def staged_touches(self, dirs: Tuple[str, ...]) -> bool:
+        """True when any staged file sits under one of the mod-relative dirs."""
+        mod = Path(self.mod_path)
+        prefixes = tuple(d + "/" for d in dirs)
+        for f in self.staged_files or []:
+            p = Path(f)
+            abs_p = p if p.is_absolute() else mod / p
+            try:
+                rel = abs_p.resolve().relative_to(mod.resolve()).as_posix()
+            except ValueError:
+                continue
+            if rel.startswith(prefixes):
+                return True
+        return False
+
     def _collect_files(
         self,
         patterns: List[str],
@@ -1064,6 +1129,7 @@ class BaseValidator:
                 for f in glob.iglob(
                     os.path.join(self.mod_path, pattern), recursive=True
                 ):
+                    f = os.path.normpath(f)
                     if f not in seen:
                         seen.add(f)
                         files.append(f)
@@ -1097,18 +1163,29 @@ class BaseValidator:
         yml_files = self._collect_files(
             ["localisation/english/**/*.yml"], ignore_staged=True
         )
-        key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
-        all_keys: set = set()
-        for filepath in yml_files:
-            try:
-                with open(filepath, encoding="utf-8-sig", errors="replace") as f:
-                    text = f.read()
-            except Exception:
-                continue
-            all_keys.update(key_pattern.findall(text))
-        all_keys.update(KNOWN_VANILLA_LOC_KEYS)
-        self._loc_keys_memo = frozenset(all_keys)
-        return self._loc_keys_memo
+
+        def _build() -> frozenset:
+            key_pattern = re.compile(r"^[ \t]*([\w.\-]+)\s*:", re.MULTILINE)
+            all_keys: set = set()
+            for filepath in yml_files:
+                try:
+                    with open(filepath, encoding="utf-8-sig", errors="replace") as f:
+                        text = f.read()
+                except Exception:
+                    continue
+                all_keys.update(key_pattern.findall(text))
+            all_keys.update(KNOWN_VANILLA_LOC_KEYS)
+            return frozenset(all_keys)
+
+        keys = disk_cache.aggregate_cached(
+            self.mod_path,
+            "loc.english_keys",
+            yml_files,
+            _build,
+            namespace="loc",
+        )
+        self._loc_keys_memo = keys
+        return keys
 
     def run_validations(self):
         raise NotImplementedError("Subclasses must implement run_validations()")

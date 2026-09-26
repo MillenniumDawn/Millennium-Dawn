@@ -20,6 +20,13 @@ disk_cache.aggregate_cached(mod_path, key, tracked_files, factory_fn)
 | `per_file_cached_by_content` | `(len, sha1(content))` + namespace       | One result per source file, keyed on content not mtime |
 | `aggregate_cached`           | `(mtime_ns, size)` of every tracked file | Merged result that depends on the whole tree           |
 
+Row keys are checkout-relative when the file lives under `mod_path`. Vanilla
+install paths stay absolute, so a different HOI4 copy does not reuse those rows.
+Each payload records the checkout root that wrote it. Restoring the cache at
+another root rehomes embedded checkout paths; it does not rewrite vanilla paths.
+Sprite texture entries store the `texturefile` relative path and join it to the
+current `.gfx` root after a hit, so they cannot point at another tree.
+
 `per_file_cached_by_content` is preferred on CI, where git checkouts reset mtimes and make the stat-based key miss every entry. Supply the already-read content string; no extra file read.
 
 Most validators use `per_file_cached_by_content` indirectly via `BaseValidator.parse_files_cached()`, which handles file collection, comment stripping, and caching in one call. Direct `disk_cache.*` calls are mainly for aggregate scans or pool-worker paths that operate outside the standard parse loop.
@@ -32,7 +39,7 @@ loading a stale or corrupt cache fall back to recomputing.
 
 ```
 .validation_cache/
-  v5/
+  v9/
     cache.db        # single SQLite db: one row per (namespace, key)
     cache.db-wal
     cache.db-shm

@@ -11,7 +11,7 @@ Project slash commands for Claude Code. Each directory holds a `SKILL.md` whose 
 | `/changelog`           | Add branch changes to Changelog.txt                                  |
 | `/close-issue`         | Close a GitHub issue with a fix summary (explicit-only)              |
 | `/content-review`      | Check content against the MD content review checklist                |
-| `/country-ai-path`     | Standardise one country's AI path game rule (issue #3162)            |
+| `/country-ai-path`     | Build or standardise one country's AI path game rule                 |
 | `/dev-diary-mdx`       | Convert a dev-diary .docx to publish-ready .mdx                      |
 | `/fix-issue`           | Pick up a GitHub issue or task, fix it, open a PR                    |
 | `/lifecycle-check`     | Audit a country branch against the lifecycle checklist               |

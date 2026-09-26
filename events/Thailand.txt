@@ -575,10 +575,6 @@ country_event = {
 		name = thailand.14.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.14.a"
 		if = {
-			limit = { has_idea = SIA_kings_moral_authority }
-			remove_ideas = SIA_kings_moral_authority
-		}
-		if = {
 			limit = { NOT = { has_completed_focus = SIA_royal_succession_managed } }
 			if = {
 				limit = { has_idea = SIA_ninth_reign_zenith }
@@ -610,10 +606,6 @@ country_event = {
 		name = thailand.14.b
 		log = "[GetDateText]: [Root.GetName]: event thailand.14.b"
 		if = {
-			limit = { has_idea = SIA_kings_moral_authority }
-			remove_ideas = SIA_kings_moral_authority
-		}
-		if = {
 			limit = { NOT = { has_completed_focus = SIA_royal_succession_managed } }
 			if = {
 				limit = { has_idea = SIA_ninth_reign_zenith }
@@ -640,10 +632,6 @@ country_event = {
 	option = {
 		name = thailand.14.c
 		log = "[GetDateText]: [Root.GetName]: event thailand.14.c"
-		if = {
-			limit = { has_idea = SIA_kings_moral_authority }
-			remove_ideas = SIA_kings_moral_authority
-		}
 		if = {
 			limit = { NOT = { has_completed_focus = SIA_royal_succession_managed } }
 			if = {
@@ -709,7 +697,7 @@ country_event = {
 		create_country_leader = {
 			name = "Srettha Thavisin"
 			desc = "SIA_srettha_thavisin_desc"
-			picture = "generic.dds"
+			picture = "srettha_thavisin.dds"
 			ideology = neutral_Social
 			traits = {
 				neutrality_neutral_Social
@@ -727,7 +715,7 @@ country_event = {
 		create_country_leader = {
 			name = "Paetongtarn Shinawatra"
 			desc = "SIA_paetongtarn_shinawatra_desc"
-			picture = "generic.dds"
+			picture = "paetongtarn_shinawatra.dds"
 			ideology = neutral_Social
 			traits = {
 				neutrality_neutral_Social
@@ -984,7 +972,14 @@ country_event = {
 country_event = {
 	id = thailand.51
 	title = thailand.51.t
-	desc = thailand.51.d
+	desc = {
+		text = thailand.51.d
+		trigger = { NOT = { has_country_flag = SIA_imf_repayment_lapsed } }
+	}
+	desc = {
+		text = thailand.51.d_lapsed
+		trigger = { has_country_flag = SIA_imf_repayment_lapsed }
+	}
 	picture = GFX_stock_market
 	is_triggered_only = yes
 
@@ -993,10 +988,13 @@ country_event = {
 	option = {
 		name = thailand.51.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.51.a"
-		add_war_support = 0.02
-		set_party_index_to_ruling_party = yes
-		set_temp_variable = { party_popularity_increase = 0.10 }
-		change_relative_party_popularity = yes
+		if = {
+			limit = { NOT = { has_country_flag = SIA_imf_repayment_lapsed } }
+			add_war_support = 0.02
+			set_party_index_to_ruling_party = yes
+			set_temp_variable = { party_popularity_increase = 0.10 }
+			change_relative_party_popularity = yes
+		}
 	}
 }
 
@@ -1543,7 +1541,7 @@ country_event = {
 			name = thailand.65.t
 			bonus = 0.5
 			uses = 1
-			category = CAT_air_eqp
+			category = CAT_aircraft
 		}
 	}
 
@@ -2370,7 +2368,12 @@ country_event = {
 	option = {
 		name = thailand.350.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.350.a"
-		trigger = { has_country_flag = SIA_path_populist }
+		trigger = {
+			OR = {
+				SIA_populist_trunk_open = yes
+				SIA_communist_trunk_open = yes
+			}
+		}
 		complete_national_focus = SIA_iron_fist_doctrine
 		ai_chance = { base = 1 modifier = { factor = 5 is_historical_focus_on = yes } }
 	}
@@ -2378,7 +2381,7 @@ country_event = {
 	option = {
 		name = thailand.350.b
 		log = "[GetDateText]: [Root.GetName]: event thailand.350.b"
-		trigger = { has_country_flag = SIA_path_royalist }
+		trigger = { SIA_royalist_trunk_open = yes }
 		complete_national_focus = SIA_royal_development_projects
 		ai_chance = { base = 1 modifier = { factor = 5 is_historical_focus_on = yes } }
 	}
@@ -2387,7 +2390,10 @@ country_event = {
 		name = thailand.350.c
 		log = "[GetDateText]: [Root.GetName]: event thailand.350.c"
 		trigger = {
-			has_country_flag = SIA_path_democrat
+			OR = {
+				SIA_democrat_trunk_open = yes
+				SIA_reform_trunk_open = yes
+			}
 			has_stability > 0.45
 		}
 		complete_national_focus = SIA_peace_dialogue_initiative
@@ -2401,12 +2407,17 @@ country_event = {
 		trigger = {
 			OR = {
 				AND = {
-					NOT = { has_country_flag = SIA_path_populist }
-					NOT = { has_country_flag = SIA_path_royalist }
-					NOT = { has_country_flag = SIA_path_democrat }
+					NOT = { SIA_populist_trunk_open = yes }
+					NOT = { SIA_communist_trunk_open = yes }
+					NOT = { SIA_royalist_trunk_open = yes }
+					NOT = { SIA_democrat_trunk_open = yes }
+					NOT = { SIA_reform_trunk_open = yes }
 				}
 				AND = {
-					has_country_flag = SIA_path_democrat
+					OR = {
+						SIA_democrat_trunk_open = yes
+						SIA_reform_trunk_open = yes
+					}
 					NOT = { has_stability > 0.45 }
 				}
 			}
@@ -3645,7 +3656,7 @@ country_event = {
 # WAVE 5 - THE FLAME REKINDLED Communist path events: thailand.250-.253 Event IDs:.250 - The
 # Strike Breaks - general_strike resolution (government capitulates vs crackdown) .251 - The.
 
-# The Strike Breaks - fired 180d after SIA_general_strike completion Two outcomes: government
+# The Strike Breaks - fired 365d after SIA_general_strike completion Two outcomes: government
 # capitulates (peaceful path) or cracks down (armed path)
 country_event = {
 	id = thailand.250
@@ -3654,7 +3665,12 @@ country_event = {
 	picture = GFX_politics_protest
 	is_triggered_only = yes
 
-	trigger = { original_tag = SIA }
+	# Queued a day ahead by the weekly tick. A realignment in between abandons the red road, and
+	# the option force-completes SIA_people_seize_power past its own available.
+	trigger = {
+		original_tag = SIA
+		SIA_communist_road_open = yes
+	}
 
 	# The strike momentum reached 100 — the government blinks. Fired from the weekly on_action the
 	# moment SIA_strike_momentum tops out. Peaceful road to power.
@@ -3676,7 +3692,7 @@ country_event = {
 	}
 }
 
-# The Generals Restore Order - fired 180d after SIA_general_strike if the strike never forced
+# The Generals Restore Order - fired 365d after SIA_general_strike if the strike never forced
 # capitulation (SIA_strike_momentum < 100).
 country_event = {
 	id = thailand.259
@@ -3685,32 +3701,34 @@ country_event = {
 	picture = GFX_turkeycoup
 	is_triggered_only = yes
 
-	trigger = { original_tag = SIA }
+	# Capitulation, a seizure of power or a switch of trunk all retire the strike early; the
+	# deadline is then dead and must not surface an empty popup.
+	trigger = {
+		original_tag = SIA
+		has_country_flag = SIA_strike_active
+	}
 
 	option = {
 		name = thailand.259.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.259.a"
+		SIA_strike_cleanup_effect = yes
+		# The strike collapses and the army takes over — install the junta with the same protocol as
+		# the 2014 coup (NCPO, Nat_Autocracy idx 22).
+		set_temp_variable = { rul_party_temp = 22 }
+		set_temp_variable = { disable_elections = 1 }
+		change_ruling_party_effect = yes
 		if = {
-			limit = { has_country_flag = SIA_strike_active }
-			SIA_strike_cleanup_effect = yes
-			# The strike collapses and the army takes over — install the junta with the same protocol as
-			# the 2014 coup (NCPO, Nat_Autocracy idx 22).
-			set_temp_variable = { rul_party_temp = 22 }
-			set_temp_variable = { disable_elections = 1 }
-			change_ruling_party_effect = yes
-			if = {
-				limit = { NOT = { has_idea = SIA_junta_government } }
-				add_ideas = SIA_junta_government
-				SIA_junta_party_shift = yes
-			}
-			SIA_realign_to_royalist = yes
-			if = { limit = { has_idea = SIA_red_revival } remove_ideas = SIA_red_revival }
-			add_stability = -0.05
-			add_war_support = 0.05
-			add_command_power = 50
-			hidden_effect = {
-				news_event = { id = thailand_news.1 days = 1 }
-			}
+			limit = { NOT = { has_idea = SIA_junta_government } }
+			add_ideas = SIA_junta_government
+			SIA_junta_party_shift = yes
+		}
+		SIA_realign_to_royalist = yes
+		if = { limit = { has_idea = SIA_red_revival } remove_ideas = SIA_red_revival }
+		add_stability = -0.05
+		add_war_support = 0.05
+		add_command_power = 50
+		hidden_effect = {
+			news_event = { id = thailand_news.1 days = 1 }
 		}
 	}
 }
@@ -3786,10 +3804,6 @@ country_event = {
 		set_country_flag = SIA_republic_declared
 		add_stability = -0.10
 		add_war_support = 0.05
-		if = {
-			limit = { has_idea = SIA_kings_moral_authority }
-			remove_ideas = SIA_kings_moral_authority
-		}
 		if = {
 			limit = { has_idea = SIA_kings_moral_authority_2 }
 			remove_ideas = SIA_kings_moral_authority_2
@@ -5889,7 +5903,6 @@ country_event = {
 	option = {
 		name = thailand.420.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.420.a"
-		SIA_realign_to_populist = yes
 		add_political_power = 50
 	}
 }
@@ -5904,7 +5917,6 @@ country_event = {
 	option = {
 		name = thailand.421.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.421.a"
-		SIA_realign_to_royalist = yes
 		add_stability = 0.03
 	}
 }
@@ -5919,10 +5931,6 @@ country_event = {
 	option = {
 		name = thailand.422.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.422.a"
-		SIA_realign_to_reform = yes
-		# Realign sets SIA_path_reform, so the reform leader line (Thanathorn/Pita/ ...) can now
-		# install in place of the generic socialism PM the election seated.
-		set_leader = yes
 		add_political_power = 50
 	}
 }
@@ -5960,6 +5968,23 @@ country_event = {
 	}
 }
 
+# thailand.427 - the CPT takes government by the ballot, without the red road having been walked
+country_event = {
+	id = thailand.427
+	title = thailand.427.t
+	desc = thailand.427.d
+	picture = GFX_politics_protest
+	is_triggered_only = yes
+
+	trigger = { original_tag = SIA }
+
+	option = {
+		name = thailand.427.a
+		log = "[GetDateText]: [Root.GetName]: event thailand.427.a"
+		add_political_power = 50
+	}
+}
+
 country_event = {
 	id = thailand.424
 	title = thailand.424.t
@@ -5970,7 +5995,6 @@ country_event = {
 	option = {
 		name = thailand.424.a
 		log = "[GetDateText]: [Root.GetName]: event thailand.424.a"
-		SIA_realign_to_democrat = yes
 		add_stability = 0.03
 	}
 }

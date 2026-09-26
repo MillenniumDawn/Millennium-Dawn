@@ -158,3 +158,42 @@ def test_metadata_retains_event_without_id():
     assert len(metadata) == 1
     assert metadata[0]["id"] is None
     assert metadata[0]["file"] == "broken.txt"
+
+
+def test_undefined_fire_staged_mode_reports_only_staged_callers(tmp_path):
+    _write(tmp_path, "events/Ev.txt", DEFINITION)
+    staged = _write(
+        tmp_path, "common/staged.txt", "x = {\n\tcountry_event = ghost.1\n}\n"
+    )
+    _write(
+        tmp_path, "common/unstaged.txt", "x = {\n\tcountry_event = also_ghost.1\n}\n"
+    )
+    validator = Validator(
+        mod_path=str(tmp_path), use_colors=False, workers=1, staged_only=True
+    )
+    validator.staged_files = [staged]
+    validator.validate_undefined_event_fires()
+    messages = [issue.message for issue in validator._issues]
+    assert len(messages) == 1
+    assert "ghost.1" in messages[0]
+    assert "also_ghost.1" not in messages[0]
+
+
+def test_call_site_checks_skip_when_staged_file_has_no_fires(tmp_path, monkeypatch):
+    staged = _write(tmp_path, "common/ideas/x.txt", "idea = { allowed = yes }\n")
+    validator = Validator(
+        mod_path=str(tmp_path), use_colors=False, workers=1, staged_only=True
+    )
+    validator.staged_files = [staged]
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("call-site indexes should be skipped")
+
+    monkeypatch.setattr(validator, "_get_event_definition_types", _boom)
+    monkeypatch.setattr(validator, "_get_fire_only_once_ids", _boom)
+    monkeypatch.setattr(validator, "_get_major_event_ids", _boom)
+    validator.validate_event_fire_types()
+    validator.validate_undefined_event_fires()
+    validator.validate_fire_only_once_in_loop()
+    validator.validate_major_event_in_loop()
+    assert validator._issues == []

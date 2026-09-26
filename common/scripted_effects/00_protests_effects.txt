@@ -103,7 +103,8 @@ calculate_unrest_growth = {
 
 	add_to_variable = { var = protest_strength
 		value = { value = det_stability_drift
-			add = det_interest_drift
+			add = det_policy_drift
+			add = det_debt_interest_drift
 			add = det_war_drift
 			add = det_corruption_drift
 		}
@@ -176,7 +177,8 @@ calculate_unrest_growth = {
 MD_protests_calc_deterministic_drift = {
 	set_temp_variable = { det_spending_drift = 0 }
 	set_temp_variable = { det_stability_drift = 0 }
-	set_temp_variable = { det_interest_drift = 0 }
+	set_temp_variable = { det_policy_drift = 0 }
+	set_temp_variable = { det_debt_interest_drift = 0 }
 	set_temp_variable = { det_war_drift = 0 }
 	set_temp_variable = { det_corruption_drift = 0 }
 
@@ -200,8 +202,18 @@ MD_protests_calc_deterministic_drift = {
 	if = {
 		limit = { check_variable = { cb_policy_rate > 8.9 } }
 		set_temp_variable = {
-			det_interest_drift = {
+			det_policy_drift = {
 				value = cb_policy_rate
+				subtract = 8.9
+			}
+		}
+	}
+
+	if = {
+		limit = { check_variable = { interest_rate > 8.9 } }
+		set_temp_variable = {
+			det_debt_interest_drift = {
+				value = interest_rate
 				subtract = 8.9
 			}
 		}
@@ -241,7 +253,9 @@ MD_protests_calc_deterministic_drift = {
 	if = { limit = { is_ai = no has_country_flag = open_protests_screen }
 		set_variable = { drift_spending_last = det_spending_drift }
 		set_variable = { drift_stability_last = det_stability_drift }
-		set_variable = { drift_interest_last = det_interest_drift }
+		# Other languages still bind drift_interest_last to the policy-rate row.
+		set_variable = { drift_interest_last = det_policy_drift }
+		set_variable = { drift_debt_interest_last = det_debt_interest_drift }
 		set_variable = { drift_war_last = det_war_drift }
 		set_variable = { drift_corruption_last = det_corruption_drift }
 		set_variable = { drift_recession_last = 0 }
@@ -309,6 +323,7 @@ MD_protests_clear_display_vars = {
 	clear_variable = drift_spending_last
 	clear_variable = drift_stability_last
 	clear_variable = drift_interest_last
+	clear_variable = drift_debt_interest_last
 	clear_variable = drift_recession_last
 	clear_variable = drift_depression_last
 	clear_variable = drift_war_last
@@ -331,6 +346,7 @@ MD_protests_compute_drift_total = {
 			add = drift_spending_last
 			add = drift_stability_last
 			add = drift_interest_last
+			add = drift_debt_interest_last
 			add = drift_recession_last
 			add = drift_depression_last
 			add = drift_war_last

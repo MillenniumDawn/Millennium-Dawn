@@ -578,7 +578,7 @@ def _render_in_pr_section(
         errors,
         ctx,
         remaining,
-        open_by_default=True,
+        open_by_default=False,
         overflow_word="more error",
     )
     remaining = max(0, remaining - (len(errors) - error_overflow))
@@ -588,7 +588,7 @@ def _render_in_pr_section(
         warnings,
         ctx,
         remaining,
-        open_by_default=not errors,
+        open_by_default=False,
         overflow_word="more warning",
     )
     lines.extend(error_lines)
@@ -624,7 +624,7 @@ def _render_baseline_section(
         new_warnings,
         ctx,
         remaining,
-        open_by_default=not new_errors,
+        open_by_default=False,
     )
     lines.extend(error_lines)
     lines.extend(warning_lines)
