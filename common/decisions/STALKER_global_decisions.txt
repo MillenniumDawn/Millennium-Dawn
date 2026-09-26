@@ -1,0 +1,183 @@
+STALKER_global_zone_category = {
+	STALKER_export_artifacts = {
+		icon = GFX_decision_money_dec
+
+		visible = {
+			STALKER_controls_active_zone = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = STALKER_export_artifacts_available_tt
+				check_variable = { STALKER_artifact_stockpile > 4.99 }
+			}
+		}
+
+		cost = 25
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_export_artifacts"
+			custom_effect_tooltip = STALKER_export_artifacts_tt
+			hidden_effect = { STALKER_sell_artifacts_abroad = yes }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 15
+				check_variable = { STALKER_artifact_stockpile > 19.99 }
+			}
+		}
+	}
+
+	STALKER_buy_market_artifacts = {
+		icon = GFX_decision_money_dec
+
+		visible = {
+			NOT = { STALKER_controls_active_zone = yes }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = STALKER_buy_market_artifacts_available_tt
+				check_variable = { global.STALKER_market_artifacts > 4.99 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = STALKER_buy_market_artifacts_treasury_tt
+				set_temp_variable = { STALKER_purchase_cost = { value = global.STALKER_artifact_price multiply = 5 } }
+				check_variable = { treasury > STALKER_purchase_cost }
+			}
+			NOT = { has_dynamic_modifier = { modifier = STALKER_artifact_studies } }
+		}
+
+		cost = 25
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_buy_market_artifacts"
+			custom_effect_tooltip = STALKER_buy_market_artifacts_tt
+			hidden_effect = { STALKER_purchase_market_artifacts = yes }
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 10 }
+			}
+		}
+	}
+
+	STALKER_found_zone_consortium = {
+		icon = GFX_decision_generic_research
+
+		visible = {
+			STALKER_controls_active_zone = yes
+			NOT = { has_global_flag = STALKER_consortium_founded }
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_found_zone_consortium"
+			custom_effect_tooltip = STALKER_found_zone_consortium_tt
+			hidden_effect = {
+				set_global_flag = STALKER_consortium_founded
+				save_global_event_target_as = STALKER_consortium_founder
+				STALKER_add_consortium_member = yes
+				news_event = STALKER.50
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	STALKER_join_zone_consortium = {
+		icon = GFX_decision_generic_research
+
+		visible = {
+			has_global_flag = STALKER_consortium_founded
+			NOT = { is_in_array = { global.STALKER_consortium_members = THIS } }
+		}
+
+		cost = 50
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_join_zone_consortium"
+			custom_effect_tooltip = STALKER_join_zone_consortium_tt
+			hidden_effect = { STALKER_add_consortium_member = yes }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 10
+				STALKER_controls_active_zone = yes
+			}
+		}
+	}
+
+	STALKER_fund_consortium_containment = {
+		icon = GFX_decision_generic_nuclear
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			is_in_array = { global.STALKER_consortium_members = THIS }
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				NOT = { is_controlled_by = ROOT }
+				check_variable = { STALKER_zone_containment < 90 }
+				controller = {
+					exists = yes
+					is_in_array = { global.STALKER_consortium_members = THIS }
+				}
+			}
+		}
+
+		cost = 25
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_fund_consortium_containment in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_fund_consortium_containment_tt
+			hidden_effect = {
+				medium_expenditure = yes
+				FROM = {
+					add_to_variable = { STALKER_zone_containment = 10 }
+					add_to_variable = { STALKER_zone_bandits = -5 }
+					STALKER_clamp_zone_society = yes
+					controller = { add_opinion_modifier = { target = ROOT modifier = STALKER_ipsf_contribution } }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				add = 10
+				FROM = { check_variable = { STALKER_zone_containment < 30 } }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 10 }
+			}
+		}
+	}
+}
