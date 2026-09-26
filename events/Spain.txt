@@ -3130,7 +3130,13 @@ country_event = {
 			change_ruling_party_effect = yes
 		}
 		set_country_flag = SPR_constitutional_monarchy_flag
-		ai_chance = { base = 1 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_global_flag = SPR_MONARCHIST_FOCUS_PATH
+			}
+		}
 	}
 
 	# Return to Absolutism
@@ -3150,7 +3156,13 @@ country_event = {
 			change_ruling_party_effect = yes
 		}
 		set_country_flag = SPR_absolutist_monarchy_flag
-		ai_chance = { base = 1 }
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 20
+				has_global_flag = SPR_MONARCHIST_FOCUS_PATH
+			}
+		}
 	}
 }
 
@@ -4408,6 +4420,7 @@ country_event = {
 				86 = { add_manpower = -2000 }
 			}
 		}
+		set_country_flag = SPR_night_of_broken_barcelona_flag
 		set_country_flag = SPR_blueshirts_barcelona_flag
 		country_event = spain.87
 	}
@@ -4485,7 +4498,7 @@ country_event = {
 	option = {
 		name = spain.87.a
 		log = "[GetDateText]: [This.GetName]: spain.87.a executed"
-		if = { limit = { has_country_flag = SPR_night_of_broken_vitora_flag }
+		if = { limit = { has_country_flag = SPR_night_of_broken_barcelona_flag }
 			if = { limit = { has_country_flag = SPR_bar_choice_1 }
 				effect_tooltip = {
 					set_temp_variable = { party_index = 21 }
@@ -4493,7 +4506,7 @@ country_event = {
 					change_relative_party_popularity = yes
 					add_war_support = 0.05
 					add_political_power = 150
-					88 = { remove_core_of = CAT }
+					86 = { remove_core_of = CAT }
 				}
 			}
 			else = {
@@ -4502,7 +4515,7 @@ country_event = {
 					set_temp_variable = { party_popularity_increase = -0.05 }
 					change_relative_party_popularity = yes
 					add_stability = -0.02
-					88 = { add_manpower = -2000 }
+					86 = { add_manpower = -2000 }
 				}
 			}
 			clr_country_flag = SPR_bar_choice_1
@@ -4523,7 +4536,7 @@ country_event = {
 					set_temp_variable = { party_popularity_increase = -0.05 }
 					change_relative_party_popularity = yes
 					add_stability = -0.02
-					88 = { add_manpower = -2000 }
+					86 = { add_manpower = -2000 }
 				}
 			}
 			clr_country_flag = SPR_bar_choice_1
@@ -7067,5 +7080,51 @@ country_event = {
 		set_temp_variable = { party_index = 3 }
 		set_temp_variable = { party_popularity_increase = 0.03 }
 		change_relative_party_popularity = yes
+	}
+}
+
+country_event = {
+	id = spain.510
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		is_ai = yes
+		has_civil_war = no
+		SPR_ai_historical_path = yes
+		SPR_ai_not_historical_path = no
+		NOT = { has_country_flag = generic_election_killswitch }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event spain.510"
+		if = {
+			limit = { date > 2018.6.1 }
+			set_variable = { socialism_leader = 2 }
+			set_temp_variable = { rul_party_temp = 3 }
+		}
+		else_if = {
+			limit = { date > 2011.12.20 }
+			set_variable = { conservatism_leader = 1 }
+			set_temp_variable = { rul_party_temp = 1 }
+		}
+		else_if = {
+			limit = { date > 2004.4.16 }
+			set_variable = { socialism_leader = 1 }
+			set_temp_variable = { rul_party_temp = 3 }
+		}
+		else = {
+			set_variable = { conservatism_leader = 0 }
+			set_temp_variable = { rul_party_temp = 1 }
+		}
+
+		if = {
+			limit = { NOT = { is_in_array = { ruling_party = rul_party_temp } } }
+			change_ruling_party_effect = yes
+			set_elections_48_months = yes
+		}
+		else = {
+			set_leader = yes
+		}
 	}
 }

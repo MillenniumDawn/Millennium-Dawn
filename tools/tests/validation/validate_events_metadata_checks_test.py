@@ -3,6 +3,8 @@
 from shared.suite import write_under_str as _write
 from validate_events import Validator
 
+_PICTURE_FIX = "event has no picture, add `picture = GFX_<sprite>` below `desc =`"
+
 
 def _validator(tmp_path):
     return Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
@@ -46,7 +48,7 @@ def test_identical_event_bodies_are_not_collapsed(tmp_path):
     assert "B.txt" in joined
 
 
-def test_visible_country_and_news_events_without_pictures_are_reported(tmp_path):
+def test_visible_news_events_without_pictures_are_reported(tmp_path):
     _write(
         tmp_path,
         "events/Ev.txt",
@@ -62,12 +64,11 @@ def test_visible_country_and_news_events_without_pictures_are_reported(tmp_path)
     )
     v = _validator(tmp_path)
     v.validate_event_picture_omissions()
-    assert [(i.message, i.category, i.severity) for i in v._issues] == [
-        ("foo.2 - Ev.txt", "news-event-picture-omitted", "error"),
-        ("foo.1 - Ev.txt", "event-picture-omitted", "warning"),
+    assert [(i.message, i.category, i.severity, i.file, i.line) for i in v._issues] == [
+        (f"foo.2: {_PICTURE_FIX}", "news-event-picture-omitted", "error", "Ev.txt", 5),
     ]
     assert v.errors_found == 1
-    assert v.warnings_found == 1
+    assert v.warnings_found == 0
 
 
 def test_picture_omission_ignores_nested_portrait_pictures(tmp_path):
@@ -93,7 +94,7 @@ def test_picture_omission_ignores_nested_portrait_pictures(tmp_path):
     )
     v = _validator(tmp_path)
     v.validate_event_picture_omissions()
-    assert [issue.message for issue in v._issues] == ["nested.1 - Ev.txt"]
+    assert [issue.message for issue in v._issues] == [f"nested.1: {_PICTURE_FIX}"]
 
 
 def test_placeholder_event_pictures_are_errors(tmp_path):
@@ -433,6 +434,28 @@ def test_unreferenced_triggered_only_skips_exempt_ids(tmp_path):
     v = _validator(tmp_path)
     v.validate_triggered_only_unreferenced()
     assert [i.message for i in v._issues] == ["foo.9 - Ev.txt"]
+
+
+def test_unreferenced_skips_the_full_tree_scan_in_staged_mode(tmp_path, monkeypatch):
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "country_event = {\n"
+        "\tid = foo.9\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { name = foo.9.a }\n"
+        "}\n",
+    )
+    v = _validator(tmp_path)
+    v.staged_only = True
+    v.staged_files = [str(tmp_path / "events" / "Ev.txt")]
+
+    def _boom(*_args, **_kwargs):
+        raise AssertionError("unreferenced scan should be skipped on commit")
+
+    monkeypatch.setattr(v, "_pool_map", _boom)
+    v.validate_triggered_only_unreferenced()
+    assert v._issues == []
 
 
 def test_id_based_checks_skip_a_block_with_no_id(tmp_path):

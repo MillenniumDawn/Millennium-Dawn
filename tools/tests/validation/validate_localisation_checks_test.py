@@ -189,10 +189,11 @@ def test_loc_var_name_strips_scope_hops_and_rejects_non_variables():
     assert VL._loc_var_name("145.GRE_SUPPORT") == "GRE_SUPPORT"
     assert VL._loc_var_name("FROM.CONTROLLER:gdp_per_capita|Y") == "gdp_per_capita"
 
-    # engine value reads, not variables
-    assert VL._loc_var_name("modifier@conscription_factor|Y%2") == ""
-    assert VL._loc_var_name("resource@oil") == ""
-    assert VL._loc_var_name("cyber_defense_rating@var:target") == ""
+    # engine / scripted dynamic variables with a target
+    assert VL._loc_var_name("modifier@conscription_factor|Y%2") == "modifier"
+    assert VL._loc_var_name("resource@oil") == "resource"
+    assert VL._loc_var_name("cyber_defense_rating@var:target") == "cyber_defense_rating"
+    assert VL._loc_var_name("resource_improted@tungsten") == "resource_improted"
     # scopes, arrays and promotes
     assert VL._loc_var_name("ROOT") == ""
     assert VL._loc_var_name("var:FROM.influence_array^0") == ""
@@ -216,6 +217,8 @@ def test_unwritten_loc_variable_is_reported(tmp_path):
     reported = [str(i) for i in v._issues]
     assert any("never_written_var" in r for r in reported)
     assert not any("written_var|" in r or " written_var " in r for r in reported)
+    assert all(i.severity == VL.Severity.ERROR for i in v._issues)
+    assert all(i.category == "loc-unwritten-variable" for i in v._issues)
 
 
 # --- NOT-block extraction ---------------------------------------------------
@@ -536,3 +539,309 @@ def test_loc_variable_writes_include_history_and_state_scopes(
     validator.validate_variable_references()
     assert len(validator._issues) == 1
     assert "missing_var" in str(validator._issues[0])
+
+
+def _engine_doc(tmp_path, names):
+    path = (
+        tmp_path / "resources" / "documentation" / "dynamic_variables_documentation.md"
+    )
+    path.parent.mkdir(parents=True, exist_ok=True)
+    body = "# Dynamic Variables\n\n" + "".join(f"### {n}\n\n" for n in names)
+    path.write_text(body, encoding="utf-8")
+    VL._engine_loc_vars.cache_clear()
+
+
+def test_unwritten_targeted_loc_variable_is_reported(tmp_path):
+    """[?name@target] uses the prefix; a typo of a documented name is reported."""
+    _engine_doc(tmp_path, ["resource_imported"])
+    _english(
+        tmp_path,
+        "t_l_english.yml",
+        ' a_key: "[?resource_imported@oil|+0] [?resource_improted@tungsten|+0]"\n',
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_variable_references()
+    reported = [str(i) for i in v._issues]
+    assert any("resource_improted" in r for r in reported)
+    assert not any("resource_imported" in r for r in reported)
+
+
+def test_unknown_targeted_dynamic_variable_is_an_error(tmp_path):
+    """resource_improted@tungsten in check_variable must fail the suite."""
+    _engine_doc(tmp_path, ["resource_imported", "resource_produced"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "microchip_update = {\n"
+        "\tcheck_variable = { resource_produced@tungsten = 0 }\n"
+        "\tcheck_variable = { resource_improted@tungsten = 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    issues = v._issues
+    assert len(issues) == 1
+    assert issues[0].category == "unknown-dynamic-variable"
+    assert issues[0].severity == VL.Severity.ERROR
+    assert "resource_improted" in issues[0].message
+
+
+def test_written_targeted_variable_is_clean(tmp_path):
+    _engine_doc(tmp_path, ["resource_imported"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { recognition_pressure_end@var:open_state = 1 }\n"
+        "\tcheck_variable = { recognition_pressure_end@var:open_state > 0 }\n"
+        "\tcheck_variable = { resource_imported@oil > 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    assert v._issues == []
+
+
+def test_flag_at_scope_is_not_a_dynamic_variable(tmp_path):
+    _engine_doc(tmp_path, ["resource_imported"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\thas_country_flag = trade_agreement@ROOT\n"
+        "\tset_country_flag = {\n"
+        "\t\tflag = recognition_campaign_from@ROOT\n"
+        "\t\tdays = 210\n"
+        "\t}\n"
+        "\tcheck_variable = { resource_imported@steel > 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    assert v._issues == []
+
+
+def test_strength_ratio_is_an_extra_engine_var(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = { check_variable = { strength_ratio@THIS < 1.3 } }\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    assert v._issues == []
+
+
+def test_resources_typo_is_an_error(tmp_path):
+    _engine_doc(tmp_path, ["resource"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = { check_variable = { resources@composites < 0 } }\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_targeted_dynamic_variables()
+    assert any("resources" in i.message for i in v._issues)
+
+
+def test_unwritten_check_variable_is_an_error(tmp_path):
+    _engine_doc(tmp_path, ["num_days"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { written_var = 3 }\n"
+        "\tcheck_variable = { written_var > 0 }\n"
+        "\tcheck_variable = { never_written_var > 0 }\n"
+        "\tcheck_variable = { num_days > 5 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    issues = v._issues
+    assert len(issues) == 1
+    assert issues[0].category == "script-unwritten-variable"
+    assert issues[0].severity == VL.Severity.WARNING
+    assert "never_written_var" in issues[0].message
+
+
+def test_unwritten_has_variable_is_an_error(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { ruling_party = 1 }\n"
+        "\thas_variable = ruling_party\n"
+        "\thas_variable = missing_party\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    issues = v._issues
+    assert len(issues) == 1
+    assert "missing_party" in issues[0].message
+
+
+def _unwritten_names(tmp_path):
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    return {i.message.split(" - ")[0] for i in v._issues}
+
+
+def test_engine_random_and_vanilla_written_reads_are_known(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tcheck_variable = { random < 0.5 }\n"
+        "\thas_variable = historical_capital_for_country\n"
+        "\thas_variable = collaboration_formed_by\n"
+        "}\n",
+    )
+    assert _unwritten_names(tmp_path) == {"collaboration_formed_by"}
+
+
+def test_loop_binder_is_a_written_variable(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tfor_each_loop = { array = stations value = current_station_id }\n"
+        "\tcheck_variable = { current_station_id > 0 }\n"
+        "\tfind_highest_in_array = { array = gdp_array value = max index = max_index }\n"
+        "\tcheck_variable = { max > 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert v._issues == []
+
+
+def test_any_of_and_all_of_bind_value_only_inside_the_collection(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { existing_var = 1 }\n"
+        "\tany_of = { array = orbit_array value = sat_orbit_model\n"
+        "\t\tcheck_variable = { var = existing_var value = nested_unwritten }\n"
+        "\t\tother = { index = nested_unwritten_index }\n"
+        "\t}\n"
+        "\tall_of = { array = orbit_array value = another_orbit_model }\n"
+        "\tcheck_variable = { sat_orbit_model > 0 }\n"
+        "\tcheck_variable = { another_orbit_model > 0 }\n"
+        "\tcheck_variable = { nested_unwritten > 0 }\n"
+        "\tcheck_variable = { nested_unwritten_index > 0 }\n"
+        "\tother = { value = unbound_orbit_model }\n"
+        "\tcheck_variable = { unbound_orbit_model > 0 }\n"
+        "}\n",
+    )
+    assert _unwritten_names(tmp_path) == {
+        "nested_unwritten",
+        "nested_unwritten_index",
+        "unbound_orbit_model",
+    }
+
+
+def test_occupation_law_engine_values_are_not_global_exemptions(tmp_path):
+    reads = (
+        "\tcheck_variable = { uncapped_resistance_target > 0 }\n"
+        "\tcheck_variable = { resistance_target_without_law > 0 }\n"
+        "\tcheck_variable = { garrison_min_support_ratio > 0 }\n"
+    )
+    _txt(
+        tmp_path,
+        "common/occupation_laws/occupation_laws.txt",
+        "x = {\n" + reads + "}\n",
+    )
+    _txt(tmp_path, "common/decisions/other.txt", "x = {\n" + reads + "}\n")
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert len(v._issues) == 3
+    assert all("other.txt" in issue.message for issue in v._issues)
+
+
+def test_dynamic_list_value_binds_variable_but_unrelated_value_does_not(tmp_path):
+    _txt(
+        tmp_path,
+        "common/scripted_guis/menu.txt",
+        "scripted_gui = { menu = {\n"
+        "\tdynamic_lists = { topbar_menu = { array = Root.menu value = topbar_menu_v\n"
+        "\t\tother = { value = nested_menu_value }\n"
+        "\t} }\n"
+        "\tcheck_variable = { topbar_menu_v > 0 }\n"
+        "\tcheck_variable = { nested_menu_value > 0 }\n"
+        "\tcheck_variable = { missing_menu_v > 0 }\n"
+        "\tother = { value = unrelated_value }\n"
+        "\tcheck_variable = { unrelated_value > 0 }\n"
+        "} }\n",
+    )
+    assert _unwritten_names(tmp_path) == {
+        "missing_menu_v",
+        "nested_menu_value",
+        "unrelated_value",
+    }
+
+
+def test_number_prefixed_variable_writes_and_reads_match(tmp_path):
+    _txt(
+        tmp_path,
+        "common/decisions/campaign.txt",
+        "x = {\n"
+        "\tadd_to_variable = { var = 500_days_completed value = 1 }\n"
+        "\tcheck_variable = { 500_days_completed = 1 }\n"
+        "\thas_variable = 500_days_completed\n"
+        "\tcheck_variable = { 600_days_missing > 0 }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert len(v._issues) == 1
+    assert v._issues[0].message.startswith("600_days_missing - ")
+
+
+def test_check_variable_tooltip_and_script_constant_are_skipped(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tset_variable = { ENG_scottish_agitation = 1 }\n"
+        "\tset_variable = { var_GNSS_mil_system_idx = 1 }\n"
+        "\tcheck_variable = {\n"
+        "\t\ttooltip = ENG_scottish_agitation_rising_tt\n"
+        "\t\tvar = ENG_scottish_agitation\n"
+        "\t\tvalue = 9\n"
+        "\t\tcompare = greater_than\n"
+        "\t}\n"
+        "\tcheck_variable = { var_GNSS_mil_system_idx > @GNSS_sat_idx_base }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert v._issues == []
+
+
+def test_token_compare_is_not_a_variable_read(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tadd_to_array = { md_alerts = 1 }\n"
+        "\tcheck_variable = { md_alerts^alert_idx = token:md_negative_nuclear_fuel }\n"
+        "}\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert v._issues == []
+
+
+def test_check_variable_targeted_typo_is_not_double_counted(tmp_path):
+    _engine_doc(tmp_path, ["resource_imported"])
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = { check_variable = { resource_improted@tungsten = 0 } }\n",
+    )
+    v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    v.validate_unwritten_script_variables()
+    assert v._issues == []

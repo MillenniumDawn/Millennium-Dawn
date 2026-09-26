@@ -19,8 +19,10 @@ from common_utils import render_standardized
 from standardize_decisions import DecisionStandardizer
 from standardize_events import EventStandardizer
 from standardize_focus_tree import format_focus_tree_lines
+from standardize_history import HistoryStandardizer
 from standardize_ideas import IdeaStandardizer
 from standardize_mio import MIOStandardizer
+from standardize_technologies import TechnologyStandardizer
 
 # Path prefix -> standardizer kind. `common/decisions/` covers `categories/`
 # too; DecisionStandardizer handles both shapes.
@@ -30,6 +32,8 @@ ROUTES: Tuple[Tuple[str, str], ...] = (
     ("common/decisions/", "decision"),
     ("common/ideas/", "idea"),
     ("common/military_industrial_organization/", "mio"),
+    ("common/technologies/", "technology"),
+    ("history/", "history"),
 )
 
 _STANDARDIZERS = {
@@ -37,6 +41,8 @@ _STANDARDIZERS = {
     "decision": DecisionStandardizer,
     "idea": IdeaStandardizer,
     "mio": MIOStandardizer,
+    "technology": TechnologyStandardizer,
+    "history": HistoryStandardizer,
 }
 
 
@@ -55,22 +61,30 @@ def kind_for_path(path: str) -> Optional[str]:
     return None
 
 
-def standardize_lines(kind: str, lines: List[str]) -> Optional[List[str]]:
+def standardize_lines(
+    kind: str, lines: List[str], mod_root: Optional[str] = None
+) -> Optional[List[str]]:
     """Standardize already-read lines, or None when this file has no blocks."""
     if kind == "focus":
         output_lines, _ = format_focus_tree_lines(lines)
         return output_lines
+    if kind == "history":
+        return HistoryStandardizer(verbose=False, mod_root=mod_root).standardize_lines(
+            lines
+        )
     return _STANDARDIZERS[kind](verbose=False).standardize_lines(lines)
 
 
-def standardize_text(kind: str, text: str) -> Optional[str]:
+def standardize_text(
+    kind: str, text: str, mod_root: Optional[str] = None
+) -> Optional[str]:
     """Return the file text the standardizer would write, or None for a no-op.
 
     None means the file holds no block of this kind, which is the same case
     the file-writing path reports as "skipping file write".
     """
     # keepends matches what the file path's readlines() hands the standardizers.
-    output_lines = standardize_lines(kind, text.splitlines(keepends=True))
+    output_lines = standardize_lines(kind, text.splitlines(keepends=True), mod_root)
     if output_lines is None:
         return None
     return render_standardized(output_lines)
