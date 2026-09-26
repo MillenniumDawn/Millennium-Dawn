@@ -315,6 +315,12 @@ clamps each at 100, refreshes belief location and lead age, and reveals the affi
 organization when applicable. OEF, Iraq, ISIS, Soleimani, political-roster, and
 annual-opportunity content uses these adapters or its documented Off-mode fallback.
 
+STALKER Zone crises reach TOP through `STALKER_check_top_zone_crisis`, which reads a
+state ID in `STALKER_top_state` and sets `STALKER_top_zone_crisis`. A Zone is in crisis
+during an emission, below 30 containment, or above 79 activity. Proposal risks take -15
+exposure and +10 harm before their caps. Resolution adds 10 to the intelligence roll,
+clamped at 100, and 10 to the tactical or facility chance. Harnesses stub the hook to 0.
+
 ## Operations-center interface
 
 The existing Counter-Terror screen retains an explicit Dossiers entry. The operations

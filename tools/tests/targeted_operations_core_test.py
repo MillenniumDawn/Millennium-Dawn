@@ -55,6 +55,9 @@ class TargetScript(TargetedScript):
                 _named_block(succession, "TOP_select_authored_successor")
             )
         )
+        self.effects["STALKER_check_top_zone_crisis"] = [
+            ("set_temp_variable", "=", [("STALKER_top_zone_crisis", "=", "0")])
+        ]
         self.triggers = _parse_race_script(
             (
                 ROOT / "common/scripted_triggers/01_targeted_operations_triggers.txt"

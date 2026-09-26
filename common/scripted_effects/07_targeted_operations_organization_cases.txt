@@ -192,12 +192,16 @@ TOP_calculate_organization_proposal_risks = {
 	if = { limit = { check_variable = { TOP_proposal_doctrine = 1 } } subtract_from_variable = { TOP_proposal_exposure_score = 10 } }
 	else_if = { limit = { check_variable = { TOP_proposal_doctrine = 3 } } add_to_variable = { TOP_proposal_exposure_score = 5 } }
 	else_if = { limit = { check_variable = { TOP_proposal_doctrine = 4 } } add_to_variable = { TOP_proposal_exposure_score = 10 } }
+	set_temp_variable = { STALKER_top_state = TOP_proposal_state }
+	STALKER_check_top_zone_crisis = yes
+	if = { limit = { check_variable = { STALKER_top_zone_crisis = 1 } } subtract_from_variable = { TOP_proposal_exposure_score = 15 } }
 	clamp_variable = { var = TOP_proposal_exposure_score min = 0 max = 100 }
 	set_variable = { TOP_proposal_harm_risk = { value = 100 subtract = TOP_proposal_pattern } }
 	if = { limit = { check_variable = { TOP_proposal_host_posture = 4 } } subtract_from_variable = { TOP_proposal_harm_risk = 10 } }
 	if = { limit = { check_variable = { TOP_proposal_rigor = 2 } } subtract_from_variable = { TOP_proposal_harm_risk = 10 } }
 	if = { limit = { check_variable = { TOP_proposal_doctrine = 3 } } add_to_variable = { TOP_proposal_harm_risk = 5 } }
 	else_if = { limit = { check_variable = { TOP_proposal_doctrine = 4 } } add_to_variable = { TOP_proposal_harm_risk = 10 } }
+	if = { limit = { check_variable = { STALKER_top_zone_crisis = 1 } } add_to_variable = { TOP_proposal_harm_risk = 10 } }
 	if = { limit = { check_variable = { TOP_proposal_harm_risk > 40 } } set_variable = { TOP_proposal_harm_risk = 40 } }
 	clamp_variable = { var = TOP_proposal_harm_risk min = 0 max = 100 }
 }
@@ -401,6 +405,10 @@ TOP_resolve_organization_operation = {
 	set_temp_variable = { TOP_intelligence_roll = 0 }
 	set_temp_variable = { TOP_report_enqueue_impact = 0 }
 	randomize_temp_variable = { var = TOP_intelligence_roll min = 1 max = 100 distribution = uniform }
+	set_temp_variable = { STALKER_top_state = TOP_org_case_state^TOP_group_target }
+	STALKER_check_top_zone_crisis = yes
+	if = { limit = { check_variable = { STALKER_top_zone_crisis = 1 } } add_to_temp_variable = { TOP_intelligence_roll = 10 } }
+	clamp_temp_variable = { var = TOP_intelligence_roll min = 1 max = 100 }
 	set_temp_variable = { TOP_result = 1 }
 	if = {
 		limit = { check_variable = { TOP_intelligence_roll > TOP_org_case_verification^TOP_group_target } }
@@ -431,6 +439,7 @@ TOP_resolve_organization_operation = {
 			limit = { check_variable = { global.TOP_group_disruption_type^TOP_group_target = 2 } check_variable = { global.TOP_group_disruption_until^TOP_group_target > global.TOP_clock } }
 			add_to_temp_variable = { TOP_operation_chance = 10 }
 		}
+		if = { limit = { check_variable = { STALKER_top_zone_crisis = 1 } } add_to_temp_variable = { TOP_operation_chance = 10 } }
 		clamp_temp_variable = { var = TOP_operation_chance min = 5 max = 90 }
 		random = {
 			chance = TOP_operation_chance
