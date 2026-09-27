@@ -696,10 +696,10 @@ news_event = {
 }
 
 country_event = {
-	id = STALKER.30
-	title = STALKER.30.t
-	desc = STALKER.30.d
-	picture = GFX_UKR_warehouse_explosions_novobohdanivka
+	id = STALKER.27
+	title = STALKER.27.t
+	desc = STALKER.27.d
+	picture = GFX_libya_militia_training
 	is_triggered_only = yes
 
 	trigger = {
@@ -712,17 +712,139 @@ country_event = {
 	}
 
 	option = {
+		name = STALKER.27.a
+		log = "[GetDateText]: [This.GetName]: STALKER.27.a executed"
+		custom_effect_tooltip = STALKER.27.a_tt
+		hidden_effect = {
+			event_target:STALKER_zone_event_target = {
+				if = {
+					limit = { is_controlled_by = ROOT }
+					add_to_variable = { STALKER_zone_bandits = -25 }
+					add_to_variable = { STALKER_zone_duty = 10 }
+					add_to_variable = { STALKER_zone_containment = 10 }
+					add_to_variable = { STALKER_zone_stalkers = -10 }
+					STALKER_clamp_zone_society = yes
+				}
+			}
+		}
+		ai_chance = { base = 60 }
+	}
+
+	option = {
+		name = STALKER.27.b
+		log = "[GetDateText]: [This.GetName]: STALKER.27.b executed"
+		custom_effect_tooltip = STALKER.27.b_tt
+		hidden_effect = {
+			event_target:STALKER_zone_event_target = {
+				if = {
+					limit = { is_controlled_by = ROOT }
+					add_to_variable = { STALKER_zone_bandits = -15 }
+					add_to_variable = { STALKER_zone_freedom = 10 }
+					add_to_variable = { STALKER_zone_stalkers = 10 }
+					add_to_variable = { STALKER_zone_exploitation = 5 }
+					add_to_variable = { STALKER_zone_containment = -5 }
+					STALKER_clamp_zone_society = yes
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		ai_chance = { base = 30 }
+	}
+
+	option = {
+		name = STALKER.27.c
+		trigger = {
+			check_variable = { global.STALKER_smuggled_artifacts > 4.99 }
+			event_target:STALKER_zone_event_target = { is_controlled_by = ROOT }
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.27.c executed"
+		custom_effect_tooltip = STALKER.27.c_tt
+		hidden_effect = {
+			if = {
+				limit = {
+					check_variable = { global.STALKER_smuggled_artifacts > 4.99 }
+					event_target:STALKER_zone_event_target = { is_controlled_by = ROOT }
+				}
+				add_to_variable = { global.STALKER_smuggled_artifacts = -5 }
+				add_to_variable = { STALKER_artifact_stockpile = 5 }
+				event_target:STALKER_zone_event_target = {
+					add_to_variable = { STALKER_zone_bandits = 10 }
+					add_to_variable = { STALKER_zone_containment = -10 }
+					STALKER_clamp_zone_society = yes
+				}
+			}
+		}
+		ai_chance = { base = 10 }
+	}
+
+	option = {
+		name = STALKER.27.e
+		trigger = { check_variable = { STALKER_xlab_stage > 1 } }
+		log = "[GetDateText]: [This.GetName]: STALKER.27.e executed"
+		custom_effect_tooltip = STALKER.27.e_tt
+		hidden_effect = {
+			event_target:STALKER_zone_event_target = {
+				if = {
+					limit = { is_controlled_by = ROOT }
+					add_to_variable = { STALKER_zone_bandits = -20 }
+					add_to_variable = { STALKER_zone_containment = 5 }
+					add_to_variable = { STALKER_zone_exploitation = 5 }
+					STALKER_clamp_zone_society = yes
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+country_event = {
+	id = STALKER.30
+	title = STALKER.30.t
+	desc = STALKER.30.d
+	picture = GFX_UKR_warehouse_explosions_novobohdanivka
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		has_global_flag = STALKER_battle_for_the_zone
+		NOT = { has_global_flag = STALKER_2022_outcome_resolved }
+		NOT = { check_variable = { global.STALKER_2022_battle_route > 0 } }
+		has_event_target = STALKER_zone_event_target
+		event_target:STALKER_zone_event_target = {
+			STALKER_is_active_zone_anchor = yes
+			is_controlled_by = ROOT
+		}
+	}
+
+	option = {
 		name = STALKER.30.a
+		trigger = {
+			NOT = { has_global_flag = STALKER_2022_outcome_resolved }
+			NOT = { check_variable = { global.STALKER_2022_battle_route > 0 } }
+		}
 		log = "[GetDateText]: [This.GetName]: STALKER.30.a executed"
-		custom_effect_tooltip = STALKER.30.a_tt
+		if = {
+			limit = { STALKER_global_zones_enabled = yes }
+			custom_effect_tooltip = STALKER.30.a_tt
+		}
+		if = {
+			limit = { NOT = { STALKER_global_zones_enabled = yes } }
+			custom_effect_tooltip = STALKER.30.a_tt_contained
+		}
 		hidden_effect = {
 			event_target:STALKER_zone_event_target = {
 				if = {
 					limit = {
+						NOT = { has_global_flag = STALKER_2022_outcome_resolved }
+						NOT = { check_variable = { global.STALKER_2022_battle_route > 0 } }
 						STALKER_is_active_zone_anchor = yes
 						is_controlled_by = ROOT
 					}
-					ROOT = { add_political_power = -50 }
+					ROOT = {
+						set_variable = { global.STALKER_2022_battle_route = 1 }
+						add_political_power = -50
+					}
 					add_to_variable = { STALKER_zone_containment = 20 }
 					add_to_variable = { STALKER_zone_stalkers = -10 }
 					STALKER_clamp_zone_society = yes
@@ -748,15 +870,29 @@ country_event = {
 
 	option = {
 		name = STALKER.30.b
+		trigger = {
+			NOT = { has_global_flag = STALKER_2022_outcome_resolved }
+			NOT = { check_variable = { global.STALKER_2022_battle_route > 0 } }
+		}
 		log = "[GetDateText]: [This.GetName]: STALKER.30.b executed"
-		custom_effect_tooltip = STALKER.30.b_tt
+		if = {
+			limit = { STALKER_global_zones_enabled = yes }
+			custom_effect_tooltip = STALKER.30.b_tt
+		}
+		if = {
+			limit = { NOT = { STALKER_global_zones_enabled = yes } }
+			custom_effect_tooltip = STALKER.30.b_tt_contained
+		}
 		hidden_effect = {
 			event_target:STALKER_zone_event_target = {
 				if = {
 					limit = {
+						NOT = { has_global_flag = STALKER_2022_outcome_resolved }
+						NOT = { check_variable = { global.STALKER_2022_battle_route > 0 } }
 						STALKER_is_active_zone_anchor = yes
 						is_controlled_by = ROOT
 					}
+					ROOT = { set_variable = { global.STALKER_2022_battle_route = 2 } }
 					add_to_variable = { STALKER_zone_containment = 10 }
 					add_to_variable = { STALKER_zone_exploitation = 10 }
 					add_to_variable = { STALKER_zone_freedom = -10 }
@@ -776,15 +912,29 @@ country_event = {
 
 	option = {
 		name = STALKER.30.c
+		trigger = {
+			NOT = { has_global_flag = STALKER_2022_outcome_resolved }
+			NOT = { check_variable = { global.STALKER_2022_battle_route > 0 } }
+		}
 		log = "[GetDateText]: [This.GetName]: STALKER.30.c executed"
-		custom_effect_tooltip = STALKER.30.c_tt
+		if = {
+			limit = { STALKER_global_zones_enabled = yes }
+			custom_effect_tooltip = STALKER.30.c_tt
+		}
+		if = {
+			limit = { NOT = { STALKER_global_zones_enabled = yes } }
+			custom_effect_tooltip = STALKER.30.c_tt_contained
+		}
 		hidden_effect = {
 			event_target:STALKER_zone_event_target = {
 				if = {
 					limit = {
+						NOT = { has_global_flag = STALKER_2022_outcome_resolved }
+						NOT = { check_variable = { global.STALKER_2022_battle_route > 0 } }
 						STALKER_is_active_zone_anchor = yes
 						is_controlled_by = ROOT
 					}
+					ROOT = { set_variable = { global.STALKER_2022_battle_route = 3 } }
 					add_to_variable = { STALKER_zone_stalkers = 10 }
 					add_to_variable = { STALKER_zone_bandits = 10 }
 					STALKER_clamp_zone_society = yes
@@ -828,7 +978,21 @@ news_event = {
 news_event = {
 	id = STALKER.32
 	title = STALKER.32.t
-	desc = STALKER.32.d
+	desc = {
+		trigger = { check_variable = { global.STALKER_2022_battle_route = 2 } }
+		text = STALKER.32.d_ward
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_2022_battle_route = 3 } }
+		text = STALKER.32.d_stalkers
+	}
+	desc = {
+		trigger = {
+			NOT = { check_variable = { global.STALKER_2022_battle_route = 2 } }
+			NOT = { check_variable = { global.STALKER_2022_battle_route = 3 } }
+		}
+		text = STALKER.32.d
+	}
 	picture = GFX_UN_emergency_meeting
 	major = yes
 	is_triggered_only = yes
@@ -839,7 +1003,14 @@ news_event = {
 country_event = {
 	id = STALKER.33
 	title = STALKER.33.t
-	desc = STALKER.33.d
+	desc = {
+		trigger = { check_variable = { STALKER_xlab_stage > 3 } }
+		text = STALKER.33.d_known
+	}
+	desc = {
+		trigger = { NOT = { check_variable = { STALKER_xlab_stage > 3 } } }
+		text = STALKER.33.d
+	}
 	picture = GFX_nuclear_power_plant
 	is_triggered_only = yes
 
@@ -911,6 +1082,30 @@ country_event = {
 			}
 		}
 	}
+
+	option = {
+		name = STALKER.33.c
+		trigger = { check_variable = { STALKER_xlab_stage > 3 } }
+		log = "[GetDateText]: [This.GetName]: STALKER.33.c executed"
+		custom_effect_tooltip = STALKER.33.c_tt
+		hidden_effect = {
+			event_target:STALKER_zone_event_target = {
+				if = {
+					limit = {
+						STALKER_is_active_zone_anchor = yes
+						is_controlled_by = ROOT
+					}
+					add_to_variable = { STALKER_zone_containment = 15 }
+					add_to_variable = { STALKER_zone_exploitation = 10 }
+					add_to_variable = { STALKER_zone_activity = -10 }
+					STALKER_clamp_zone_society = yes
+					clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		ai_chance = { base = 100 }
+	}
 }
 
 # Routing events: the yearly dispatch fires these on 1 March and 1 November 2022, and each reaches the Zone's controller at that moment.
@@ -939,13 +1134,29 @@ country_event = {
 	trigger = {
 		STALKER_scenario_enabled = yes
 		has_global_flag = STALKER_battle_for_the_zone
-		NOT = { has_global_flag = STALKER_kaimanov_outcome }
+		NOT = { has_global_flag = STALKER_2022_outcome_resolved }
 	}
 
 	immediate = {
 		log = "[GetDateText]: [This.GetName]: STALKER.35 immediate executed"
-		STALKER_trigger_kaimanov_outcome = yes
+		if = {
+			limit = { check_variable = { global.STALKER_2022_battle_route = 1 } }
+			STALKER_trigger_military_sealing_outcome = yes
+		}
+		else = { STALKER_trigger_kaimanov_outcome = yes }
+		STALKER_schedule_2022_aftermath = yes
 	}
+}
+
+news_event = {
+	id = STALKER.36
+	title = STALKER.36.t
+	desc = STALKER.36.d
+	picture = GFX_UKR_warehouse_explosions_novobohdanivka
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = STALKER.36.a }
 }
 
 country_event = {

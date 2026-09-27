@@ -20,8 +20,57 @@ STALKER_begin_battle_for_the_zone = {
 	}
 }
 
+STALKER_apply_2022_zone_outcome_profile = {
+	if = {
+		limit = {
+			has_global_flag = STALKER_global_proliferation
+			check_variable = { STALKER_zone_id > 1 }
+			check_variable = { global.STALKER_2022_battle_route = 2 }
+		}
+		add_to_variable = { STALKER_zone_activity = -10 }
+		add_to_variable = { STALKER_zone_containment = 15 }
+	}
+	else_if = {
+		limit = {
+			has_global_flag = STALKER_global_proliferation
+			check_variable = { STALKER_zone_id > 1 }
+			check_variable = { global.STALKER_2022_battle_route = 3 }
+		}
+		add_to_variable = { STALKER_zone_activity = 15 }
+		add_to_variable = { STALKER_zone_containment = -10 }
+	}
+	clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+	STALKER_clamp_zone_society = yes
+}
+
+# The military sealing route ends the crisis without Kaimanov or global proliferation.
+STALKER_trigger_military_sealing_outcome = {
+	set_global_flag = STALKER_2022_outcome_resolved
+	log = "[GetDateText]: STALKER military sealing outcome reached"
+	for_each_scope_loop = {
+		array = global.STALKER_active_zone_anchors
+		if = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+			}
+			add_to_variable = { STALKER_zone_activity = -20 }
+			add_to_variable = { STALKER_zone_containment = 15 }
+			add_to_variable = { STALKER_zone_stalkers = 10 }
+			clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+			STALKER_clamp_zone_society = yes
+			if = {
+				limit = { controller = { exists = yes } }
+				controller = { STALKER_refresh_zone_administration = yes }
+			}
+		}
+	}
+	news_event = STALKER.36
+}
+
 # Skif spares the Doctor and enters the eighth pod: geographic containment of the original Zone fails.
 STALKER_trigger_kaimanov_outcome = {
+	set_global_flag = STALKER_2022_outcome_resolved
 	set_global_flag = STALKER_kaimanov_outcome
 	log = "[GetDateText]: STALKER Kaimanov outcome reached"
 	news_event = STALKER.31
