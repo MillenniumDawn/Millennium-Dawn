@@ -37,6 +37,7 @@ country_event = {
 
 	option = {
 		name = STALKER.1.a
+		unlock_decision_category_tooltip = STALKER_zone_management_category
 		custom_effect_tooltip = STALKER_military_policy_tt
 		hidden_effect = {
 			if = {
@@ -61,6 +62,7 @@ country_event = {
 
 	option = {
 		name = STALKER.1.b
+		unlock_decision_category_tooltip = STALKER_zone_management_category
 		custom_effect_tooltip = STALKER_scientific_policy_tt
 		hidden_effect = {
 			if = {
@@ -201,7 +203,6 @@ country_event = {
 	option = {
 		name = STALKER.4.a
 		log = "[GetDateText]: [This.GetName]: STALKER.4.a executed"
-		add_political_power = -25
 		custom_effect_tooltip = STALKER.4.a_tt
 		hidden_effect = {
 			event_target:STALKER_zone_event_target = {
@@ -210,13 +211,20 @@ country_event = {
 						STALKER_is_active_zone_anchor = yes
 						is_controlled_by = ROOT
 					}
+					ROOT = { add_political_power = -25 }
 					add_to_variable = { STALKER_zone_bandits = -15 }
 					add_to_variable = { STALKER_zone_stalkers = -5 }
 					STALKER_clamp_zone_society = yes
 				}
 			}
 		}
-		ai_chance = { base = 60 }
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 0
+				has_political_power < 25
+			}
+		}
 	}
 
 	option = {
@@ -405,7 +413,6 @@ country_event = {
 		name = STALKER.12.a
 		log = "[GetDateText]: [This.GetName]: STALKER.12.a executed"
 		custom_effect_tooltip = STALKER_xlab_stage_reward_tt
-		add_political_power = -50
 		custom_effect_tooltip = STALKER.12.a_tt
 		hidden_effect = {
 			if = {
@@ -416,6 +423,7 @@ country_event = {
 							STALKER_is_active_zone_anchor = yes
 							is_controlled_by = ROOT
 						}
+						ROOT = { add_political_power = -50 }
 						add_to_variable = { STALKER_zone_exploitation = 10 }
 						add_to_variable = { STALKER_zone_stalkers = 10 }
 						STALKER_clamp_zone_society = yes
@@ -424,7 +432,13 @@ country_event = {
 				}
 			}
 		}
-		ai_chance = { base = 50 }
+		ai_chance = {
+			base = 50
+			modifier = {
+				factor = 0
+				has_political_power < 50
+			}
+		}
 	}
 
 	option = {
@@ -482,9 +496,9 @@ country_event = {
 		custom_effect_tooltip = STALKER.13.b_tt
 		hidden_effect = {
 			set_country_flag = STALKER_mdst_compartmentalised
-			random_list = {
-				40 = { country_event = { id = STALKER.15 days = 365 } }
-				60 = { }
+			random = {
+				chance = 40
+				country_event = { id = STALKER.15 days = 365 }
 			}
 		}
 		ai_chance = { base = 40 }
@@ -512,9 +526,9 @@ country_event = {
 
 	immediate = {
 		log = "[GetDateText]: [This.GetName]: STALKER.14 immediate executed"
-		random_list = {
-			50 = { set_country_flag = STALKER_mdst_network_exposed }
-			50 = { }
+		random = {
+			chance = 50
+			set_country_flag = STALKER_mdst_network_exposed
 		}
 	}
 
@@ -582,7 +596,14 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: STALKER.20.a executed"
 		custom_effect_tooltip = STALKER.20.a_tt
 		hidden_effect = { add_dynamic_modifier = { modifier = STALKER_artifact_studies days = 90 } }
-		ai_chance = { base = 50 }
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_event_target = STALKER_zone_controller_target
+				has_opinion = { target = event_target:STALKER_zone_controller_target value < 0 }
+			}
+		}
 	}
 
 	option = {
@@ -593,7 +614,13 @@ country_event = {
 		}
 		log = "[GetDateText]: [This.GetName]: STALKER.20.b executed"
 		event_target:STALKER_zone_controller_target = { add_opinion_modifier = { target = ROOT modifier = STALKER_returned_artifacts } }
-		ai_chance = { base = 50 }
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_opinion = { target = event_target:STALKER_zone_controller_target value > 24 }
+			}
+		}
 	}
 }
 
@@ -679,6 +706,14 @@ country_event = {
 		ai_chance = {
 			base = 50
 			modifier = {
+				add = 30
+				has_opinion = { target = event_target:STALKER_ipsf_host value > 24 }
+			}
+			modifier = {
+				factor = 0.2
+				has_opinion = { target = event_target:STALKER_ipsf_host value < 0 }
+			}
+			modifier = {
 				factor = 0
 				has_active_mission = bankruptcy_incoming_collapse
 			}
@@ -687,7 +722,13 @@ country_event = {
 
 	option = {
 		name = STALKER.23.b
-		ai_chance = { base = 50 }
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_opinion = { target = event_target:STALKER_ipsf_host value < 0 }
+			}
+		}
 	}
 }
 
