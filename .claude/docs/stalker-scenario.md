@@ -17,6 +17,21 @@ Add content to the subsystem that owns it, and touch shared files only through t
 - **Target `main`.** The scenario landed on `main` with #372; `feature/stalker-global-zones-4791`
   is retired. Merge STALKER PRs one at a time, and merge the latest `main` into each one first.
 
+## Canon
+
+Player-facing text follows GSC Game World's games. GSC's own pages carry little lore, so check
+names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wiki and Game8.
+
+- Use STALKER 2 spellings: Chornobyl, and Dr. Kaymanov, the Doctor.
+- In the Kaymanov ending, Skif defies Strelok, spares the Doctor, enters the eighth
+  C-Consciousness pod and cedes control to the Zone. New Zones then form around the world.
+- The Ward is SIRCAA's private army under Colonel Korshunov. SIRCAA does the research.
+- The Spark follows Scar and seeks the Shining Zone. Noon is former Monolith under Strider.
+- The IPSF is the International Perimeter Security Force.
+- The in-game scientists are the Ecologists.
+- Not canon, and specific to this scenario's design: "Project X" and MDST. Keep them clearly
+  framed as this scenario's own inventions.
+
 ## Subsystems
 
 - **Core Zone (1–9):** `STALKER.txt`; loc `MD_STALKER_l_english.yml`; `STALKER_decisions.txt`;
