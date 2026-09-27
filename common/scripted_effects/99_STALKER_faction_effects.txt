@@ -21,6 +21,36 @@ STALKER_update_zone_factions = {
 	}
 	add_to_variable = { STALKER_zone_military = { value = STALKER_military_target subtract = STALKER_zone_military multiply = 0.1 } }
 	STALKER_clamp_zone_society = yes
+	# Only the original Zone has the Ward and the Spark, from the 2022 battle onward.
+	if = {
+		limit = { has_variable = STALKER_zone_ward }
+		set_temp_variable = {
+			STALKER_ward_target = {
+				value = STALKER_zone_containment
+				multiply = 0.4
+				add = { value = STALKER_zone_scientists multiply = 0.2 }
+				add = 10
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		add_to_variable = { STALKER_zone_ward = { value = STALKER_ward_target subtract = STALKER_zone_ward multiply = 0.1 } }
+		set_temp_variable = {
+			STALKER_spark_target = {
+				value = STALKER_zone_activity
+				multiply = 0.4
+				subtract = { value = STALKER_zone_containment multiply = 0.3 }
+				add = 10
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		add_to_variable = { STALKER_zone_spark = { value = STALKER_spark_target subtract = STALKER_zone_spark multiply = 0.1 } }
+		clamp_variable = { var = STALKER_zone_ward min = 0 max = 100 }
+		clamp_variable = { var = STALKER_zone_spark min = 0 max = 100 }
+		add_to_variable = { STALKER_zone_bandits = { value = STALKER_zone_ward multiply = -0.02 } }
+		add_to_variable = { STALKER_zone_activity = { value = STALKER_zone_spark multiply = 0.02 } }
+		clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+		STALKER_clamp_zone_society = yes
+	}
 	if = {
 		limit = { check_variable = { STALKER_zone_war_type > 0 } }
 		STALKER_progress_zone_war = yes
@@ -34,7 +64,8 @@ STALKER_update_zone_factions = {
 	}
 }
 
-# Rivals go to war when both are strong and neither clearly leads: Duty and Freedom (1), or the military and bandits (2).
+# Rivals go to war when both are strong and neither clearly leads: Duty and Freedom (1), the military and bandits (2),
+# or the Ward and the Spark (3).
 STALKER_check_zone_war_start = {
 	set_temp_variable = { STALKER_war_gap = { value = STALKER_zone_duty subtract = STALKER_zone_freedom } }
 	if = {
@@ -63,6 +94,23 @@ STALKER_check_zone_war_start = {
 				chance = 10
 				set_variable = { STALKER_zone_war_type = 2 }
 				STALKER_begin_zone_war = yes
+			}
+		}
+		else_if = {
+			limit = { has_variable = STALKER_zone_ward }
+			set_temp_variable = { STALKER_war_gap = { value = STALKER_zone_ward subtract = STALKER_zone_spark } }
+			if = {
+				limit = {
+					check_variable = { STALKER_zone_ward > 34 }
+					check_variable = { STALKER_zone_spark > 34 }
+					check_variable = { STALKER_war_gap < 10 }
+					check_variable = { STALKER_war_gap > -10 }
+				}
+				random = {
+					chance = 10
+					set_variable = { STALKER_zone_war_type = 3 }
+					STALKER_begin_zone_war = yes
+				}
 			}
 		}
 	}
@@ -106,6 +154,13 @@ STALKER_resolve_zone_war = {
 		}
 		set_temp_variable = { STALKER_war_winner = 1 }
 	}
+	else_if = {
+		limit = {
+			check_variable = { STALKER_zone_war_type = 3 }
+			check_variable = { STALKER_zone_ward > STALKER_zone_spark }
+		}
+		set_temp_variable = { STALKER_war_winner = 1 }
+	}
 	if = {
 		limit = { check_variable = { STALKER_zone_war_type = 1 } }
 		if = {
@@ -117,6 +172,20 @@ STALKER_resolve_zone_war = {
 			add_to_variable = { STALKER_zone_freedom = 15 }
 			add_to_variable = { STALKER_zone_duty = -25 }
 		}
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_war_type = 3 } }
+		if = {
+			limit = { check_variable = { STALKER_war_winner = 1 } }
+			add_to_variable = { STALKER_zone_ward = 15 }
+			add_to_variable = { STALKER_zone_spark = -25 }
+		}
+		else = {
+			add_to_variable = { STALKER_zone_spark = 15 }
+			add_to_variable = { STALKER_zone_ward = -25 }
+		}
+		clamp_variable = { var = STALKER_zone_ward min = 0 max = 100 }
+		clamp_variable = { var = STALKER_zone_spark min = 0 max = 100 }
 	}
 	else = {
 		if = {
