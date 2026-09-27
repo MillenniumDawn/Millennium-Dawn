@@ -5,6 +5,10 @@ STALKER_initialize_zone_society = {
 	set_variable = { STALKER_zone_bandits = 30 }
 	set_variable = { STALKER_zone_artifact_haul = 0 }
 	set_variable = { STALKER_zone_black_market = 0 }
+	if = {
+		limit = { check_variable = { STALKER_zone_id = 1 } }
+		set_variable = { STALKER_zone_monolith = 15 }
+	}
 }
 
 STALKER_clamp_zone_society = {
@@ -12,6 +16,7 @@ STALKER_clamp_zone_society = {
 	clamp_variable = { var = STALKER_zone_duty min = 0 max = 100 }
 	clamp_variable = { var = STALKER_zone_freedom min = 0 max = 100 }
 	clamp_variable = { var = STALKER_zone_bandits min = 0 max = 100 }
+	clamp_variable = { var = STALKER_zone_monolith min = 0 max = 100 }
 	clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
 	clamp_variable = { var = STALKER_zone_exploitation min = 0 max = 100 }
 }
@@ -47,6 +52,7 @@ STALKER_update_zone_society = {
 			add = { value = STALKER_zone_freedom multiply = 0.3 }
 			subtract = { value = STALKER_zone_containment multiply = 0.3 }
 			subtract = { value = STALKER_zone_duty multiply = 0.2 }
+			subtract = { value = STALKER_zone_monolith multiply = 0.3 }
 			add = 25
 			clamp = { min = 0 max = 100 }
 		}
@@ -71,6 +77,19 @@ STALKER_update_zone_society = {
 		clamp_temp_variable = { var = STALKER_bandit_target min = 0 max = 100 }
 	}
 	add_to_variable = { STALKER_zone_bandits = { value = STALKER_bandit_target subtract = STALKER_zone_bandits multiply = 0.1 } }
+	if = {
+		limit = { check_variable = { STALKER_zone_id = 1 } }
+		set_temp_variable = {
+			STALKER_monolith_target = {
+				value = STALKER_zone_activity
+				subtract = STALKER_zone_containment
+				multiply = 0.3
+				add = 10
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		add_to_variable = { STALKER_zone_monolith = { value = STALKER_monolith_target subtract = STALKER_zone_monolith multiply = 0.1 } }
+	}
 	STALKER_clamp_zone_society = yes
 }
 
@@ -163,6 +182,24 @@ STALKER_roll_zone_society_events = {
 				set_state_flag = { flag = STALKER_black_market_cooldown value = 1 days = 365 }
 				save_event_target_as = STALKER_zone_event_target
 				controller = { country_event = STALKER.4 }
+			}
+		}
+		if = {
+			limit = {
+				NOT = { has_state_flag = STALKER_monolith_event_cooldown }
+				check_variable = { STALKER_zone_monolith > 19 }
+			}
+			random = {
+				chance = 5
+				set_state_flag = { flag = STALKER_monolith_event_cooldown value = 1 days = 365 }
+				save_event_target_as = STALKER_zone_event_target
+				if = {
+					limit = { check_variable = { STALKER_zone_monolith > 39 } }
+					controller = { country_event = STALKER.70 }
+				}
+				else = {
+					controller = { country_event = STALKER.71 }
+				}
 			}
 		}
 		if = {
