@@ -1,0 +1,70 @@
+# How the rest of the world reacts to the Zones: diplomacy before Kaimanov, casualties among foreign teams.
+STALKER_monthly_world_pulse = {
+	if = {
+		limit = {
+			NOT = { has_global_flag = STALKER_kaimanov_outcome }
+			NOT = { has_global_flag = STALKER_ipsf_formed }
+			NOT = { has_global_flag = STALKER_great_power_talks_cooldown }
+			any_of_scopes = {
+				array = global.STALKER_active_zone_anchors
+				check_variable = { STALKER_zone_id = 1 }
+				check_variable = { STALKER_zone_containment < 40 }
+			}
+		}
+		random = {
+			chance = 10
+			set_global_flag = { flag = STALKER_great_power_talks_cooldown value = 1 days = 730 }
+			random_scope_in_array = {
+				array = global.STALKER_active_zone_anchors
+				limit = {
+					check_variable = { STALKER_zone_id = 1 }
+					controller = { exists = yes }
+				}
+				controller = { save_global_event_target_as = STALKER_zone_host_target }
+			}
+			if = {
+				limit = { country_exists = USA }
+				USA = { country_event = STALKER.132 }
+			}
+			if = {
+				limit = { country_exists = SOV }
+				SOV = { country_event = STALKER.133 }
+			}
+		}
+	}
+	if = {
+		limit = { NOT = { has_global_flag = STALKER_expedition_casualty_cooldown } }
+		random = {
+			chance = 3
+			random_country = {
+				limit = {
+					has_country_flag = STALKER_zone_research_access
+					NOT = { STALKER_controls_active_zone = yes }
+				}
+				set_global_flag = { flag = STALKER_expedition_casualty_cooldown value = 1 days = 365 }
+				save_global_event_target_as = STALKER_casualty_country
+				random_scope_in_array = {
+					array = global.STALKER_active_zone_anchors
+					limit = { controller = { exists = yes } }
+					controller = { save_event_target_as = STALKER_zone_controller_target }
+				}
+				country_event = STALKER.134
+				news_event = STALKER.135
+			}
+		}
+	}
+}
+
+# A catastrophic emission (containment already below 20) makes world news, at most once a year.
+STALKER_report_major_emission = {
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_containment < 20 }
+			NOT = { has_global_flag = STALKER_major_emission_news_cooldown }
+			controller = { exists = yes }
+		}
+		set_global_flag = { flag = STALKER_major_emission_news_cooldown value = 1 days = 365 }
+		save_global_event_target_as = STALKER_news_zone_target
+		controller = { news_event = STALKER.130 }
+	}
+}
