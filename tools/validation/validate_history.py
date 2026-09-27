@@ -1084,7 +1084,7 @@ def validate_country_dlc_techs(
 
     A tech gated `NOT has_dlc = "X"` (the non-DLC fallback, e.g. SP_arty_0) must
     not be set in any reachable DLC configuration where X is active; a tech
-    gated `has_dlc = "X"` (a DLC-only tech, e.g. nsb_artillery_0) must not be
+    gated `has_dlc = "X"` (a DLC-only tech, e.g. nsb_artillery_1) must not be
     set where X is inactive. Granting it anyway force-enables equipment whose
     tech branch is disabled, duplicating the active-DLC designer's equipment.
 

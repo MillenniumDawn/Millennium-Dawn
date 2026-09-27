@@ -1894,17 +1894,8 @@ GER_imperial_bloc_invites = {
 
 GER_V_fall_Decision = {
 	GER_Declare_V_Fall = {
-		available = {
-			OR = {
-				has_defensive_war = yes
-				threat > 0.6
-				any_of_scopes = {
-					array = potential_and_current_enemies
-					tooltip = TT_IS_BEING_JUSTIFIED_AGAINST
-					is_justifying_wargoal_against = GER
-				}
-			}
-		}
+		visible = { NOT = { has_country_flag = GER_V_fall } }
+		available = { GER_V_Fall_justified = yes }
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_Declare_V_Fall"
@@ -2215,57 +2206,33 @@ GER_V_fall_Decision = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision GER_end_V_Fall"
-			clr_country_flag = GER_V_fall
-			add_ideas = german_legacy
-			if = {
-				limit = { NOT = { has_completed_focus = GER_nuclear_rearmarment } }
-				set_country_flag = GER_no_nuclear
-				custom_effect_tooltip = GER_end_V_Fall_nuclear_TT
-				add_ideas = nuclear_energy
-			}
-			add_stability = 0.1
-			remove_ideas = GER_idea_V_Fall
-			if = {
-				limit = { has_idea = defence_03 }
-				swap_ideas = { remove_idea = defence_03 add_idea = defence_02 }
-			}
-			else_if = {
-				limit = { has_idea = defence_04 }
-				swap_ideas = { remove_idea = defence_04 add_idea = defence_02 }
-			}
-			else_if = {
-				limit = { has_idea = defence_05 }
-				swap_ideas = { remove_idea = defence_05 add_idea = defence_02 }
-			}
-			else_if = {
-				limit = { has_idea = defence_06 }
-				swap_ideas = { remove_idea = defence_06 add_idea = defence_02 }
-			}
-			decrease_policing_budget = yes
-			decrease_conscription_effect = yes
-			GER = {
-				every_country_division = {
-					limit = { division_has_majority_template = Mot_Inf_Bat }
-					PREV = {
-						delete_unit_template_and_units = {
-							division_template = "Heimatschutzbrigade"
-							disband = yes
-						}
-					}
-				}
-				every_country_division = {
-					limit = { division_has_majority_template = armor_Bat }
-					PREV = {
-						delete_unit_template_and_units = {
-							division_template = "Inactive Brigade"
-							disband = yes
-						}
-					}
-				}
+			GER_end_V_Fall_effect = yes
+		}
+
+		# The AI leaves it to GER_V_Fall_lapse so it does not flip-flop around the threat threshold.
+		ai_will_do = { base = 0 }
+	}
+
+	GER_V_Fall_lapse = {
+		available = { always = no }
+		activation = {
+			has_country_flag = GER_V_fall
+			GER_V_Fall_justified = no
+		}
+		days_mission_timeout = 90
+		is_good = no
+
+		cancel_trigger = {
+			OR = {
+				NOT = { has_country_flag = GER_V_fall }
+				GER_V_Fall_justified = yes
 			}
 		}
 
-		ai_will_do = { base = 100 }
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision GER_V_Fall_lapse"
+			GER_end_V_Fall_effect = yes
+		}
 	}
 }
 
