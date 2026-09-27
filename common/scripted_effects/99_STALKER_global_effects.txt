@@ -1,0 +1,33 @@
+# After Kaimanov, the registered reference-map Zones awaken one at a time rather than all at once.
+STALKER_monthly_proliferation_pulse = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			has_global_flag = STALKER_global_proliferation
+		}
+		random = {
+			chance = 50
+			random_scope_in_array = {
+				array = global.STALKER_zone_anchor_states
+				limit = {
+					STALKER_is_zone_location = yes
+					NOT = { check_variable = { STALKER_zone_id = 1 } }
+					NOT = { STALKER_is_active_zone = yes }
+					NOT = { has_state_flag = STALKER_zone_policy_pending }
+				}
+				STALKER_awaken_reference_zone = yes
+			}
+		}
+	}
+}
+
+STALKER_awaken_reference_zone = {
+	log = "[GetDateText]: STALKER reference Zone [?STALKER_zone_id] awakens in [THIS.GetName]"
+	set_state_flag = STALKER_zone_policy_pending
+	if = {
+		limit = { controller = { exists = yes } }
+		save_event_target_as = STALKER_zone_event_target
+		controller = { country_event = STALKER.1 }
+	}
+	else = { STALKER_activate_zone = yes }
+}

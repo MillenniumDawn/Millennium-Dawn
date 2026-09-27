@@ -1,0 +1,42 @@
+# Mutants drift toward a level set by activity against containment, and prey on the stalkers already inside.
+STALKER_update_zone_mutants = {
+	set_temp_variable = {
+		STALKER_mutant_target = {
+			value = STALKER_zone_activity
+			subtract = STALKER_zone_containment
+			multiply = 0.4
+			add = 15
+			clamp = { min = 0 max = 100 }
+		}
+	}
+	add_to_variable = { STALKER_zone_mutants = { value = STALKER_mutant_target subtract = STALKER_zone_mutants multiply = 0.1 } }
+	clamp_variable = { var = STALKER_zone_mutants min = 0 max = 100 }
+	add_to_variable = { STALKER_zone_stalkers = { value = STALKER_zone_mutants multiply = -0.05 } }
+	STALKER_clamp_zone_society = yes
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_mutants > 49 }
+			NOT = { has_state_flag = STALKER_mutant_breach_cooldown }
+			controller = { exists = yes }
+		}
+		random = {
+			chance = 5
+			STALKER_mutant_breach = yes
+		}
+	}
+}
+
+# A breach needs a neighbouring state the Zone's controller also holds; without one, nothing happens and no cooldown starts.
+STALKER_mutant_breach = {
+	controller = { save_event_target_as = STALKER_mutant_controller }
+	save_event_target_as = STALKER_zone_event_target
+	random_neighbor_state = {
+		limit = {
+			is_controlled_by = event_target:STALKER_mutant_controller
+			NOT = { has_dynamic_modifier = { modifier = STALKER_mutant_incursion } }
+		}
+		add_dynamic_modifier = { modifier = STALKER_mutant_incursion days = 60 }
+		PREV = { set_state_flag = { flag = STALKER_mutant_breach_cooldown value = 1 days = 365 } }
+		event_target:STALKER_mutant_controller = { country_event = STALKER.90 }
+	}
+}

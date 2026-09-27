@@ -1,0 +1,77 @@
+STALKER_mdst_category = {
+	STALKER_purge_mdst_channels = {
+		icon = GFX_decision_generic_police_action
+
+		visible = {
+			STALKER_scenario_enabled = yes
+			has_variable = STALKER_mdst_penetration
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = STALKER_purge_mdst_channels_available_tt
+				check_variable = { STALKER_mdst_penetration > 4 }
+			}
+		}
+
+		cost = 75
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_purge_mdst_channels"
+			add_stability = -0.02
+			custom_effect_tooltip = STALKER_purge_mdst_channels_tt
+			hidden_effect = {
+				add_to_variable = { STALKER_mdst_penetration = -25 }
+				clamp_variable = { var = STALKER_mdst_penetration min = 0 max = 80 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 15
+				check_variable = { STALKER_mdst_penetration > 39 }
+			}
+		}
+	}
+
+	STALKER_warn_foreign_government = {
+		icon = GFX_decision_generic_break_treaty
+		target_array = global.majors
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			has_variable = STALKER_mdst_penetration
+		}
+
+		target_trigger = {
+			FROM = {
+				exists = yes
+				NOT = { tag = ROOT }
+				NOT = { has_war_with = ROOT }
+				NOT = { has_variable = STALKER_mdst_penetration }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_warn_foreign_government to [FROM.GetName]"
+			custom_effect_tooltip = STALKER_warn_foreign_government_tt
+			hidden_effect = {
+				add_to_variable = { STALKER_mdst_penetration = -5 }
+				clamp_variable = { var = STALKER_mdst_penetration min = 0 max = 80 }
+				FROM = {
+					STALKER_expose_mdst_penetration = yes
+					country_event = STALKER.81
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+		}
+	}
+}
