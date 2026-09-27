@@ -1,0 +1,50 @@
+STALKER_schedule_2022_aftermath = {
+	for_each_scope_loop = {
+		array = global.STALKER_active_zone_anchors
+		if = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+			}
+			if = {
+				limit = { controller = { exists = yes } }
+				controller = { country_event = { id = STALKER.37 days = 365 } }
+			}
+			else = { ROOT = { country_event = { id = STALKER.37 days = 365 } } }
+		}
+	}
+}
+
+STALKER_dispatch_2022_aftermath = {
+	for_each_scope_loop = {
+		array = global.STALKER_active_zone_anchors
+		if = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+			}
+			if = {
+				limit = { controller = { exists = yes } }
+				save_event_target_as = STALKER_zone_event_target
+				controller = { country_event = STALKER.38 }
+			}
+			else = { ROOT = { country_event = { id = STALKER.37 days = 90 } } }
+		}
+	}
+}
+
+STALKER_resolve_2022_aftermath = {
+	if = {
+		limit = {
+			has_event_target = STALKER_zone_event_target
+			event_target:STALKER_zone_event_target = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+				is_controlled_by = ROOT
+			}
+		}
+		set_global_flag = STALKER_2022_aftermath_resolved
+		STALKER_refresh_zone_administration = yes
+	}
+	else = { STALKER_dispatch_2022_aftermath = yes }
+}
