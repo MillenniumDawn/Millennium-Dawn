@@ -1,0 +1,87 @@
+# A barely contained, highly active Zone spills into neighbouring states; a well-held one pulls back.
+STALKER_monthly_footprint_pulse = {
+	for_each_scope_loop = {
+		array = global.STALKER_active_zone_anchors
+		if = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				NOT = { has_state_flag = STALKER_footprint_cooldown }
+				controller = { exists = yes }
+			}
+			if = {
+				limit = {
+					check_variable = { STALKER_zone_activity > 74 }
+					check_variable = { STALKER_zone_containment < 40 }
+					NOT = { check_variable = { STALKER_zone_footprint^num > 2 } }
+				}
+				random = {
+					chance = 10
+					STALKER_spread_zone_footprint = yes
+				}
+			}
+			else_if = {
+				limit = {
+					check_variable = { STALKER_zone_containment > 69 }
+					check_variable = { STALKER_zone_activity < 40 }
+					check_variable = { STALKER_zone_footprint^num > 0 }
+				}
+				random = {
+					chance = 10
+					STALKER_recede_zone_footprint = yes
+				}
+			}
+		}
+	}
+}
+
+STALKER_spread_zone_footprint = {
+	controller = { save_event_target_as = STALKER_footprint_controller }
+	save_event_target_as = STALKER_zone_event_target
+	random_neighbor_state = {
+		limit = {
+			is_controlled_by = event_target:STALKER_footprint_controller
+			NOT = { STALKER_is_zone_location = yes }
+			NOT = { has_state_flag = STALKER_zone_footprint }
+		}
+		set_state_flag = STALKER_zone_footprint
+		set_variable = { STALKER_footprint_anchor = PREV }
+		add_dynamic_modifier = { modifier = STALKER_zone_presence }
+		save_event_target_as = STALKER_footprint_event_target
+		PREV = {
+			add_to_array = { STALKER_zone_footprint = PREV }
+			set_state_flag = { flag = STALKER_footprint_cooldown value = 1 days = 180 }
+		}
+		log = "[GetDateText]: STALKER Zone [?PREV.STALKER_zone_id] spreads into [THIS.GetName]"
+		event_target:STALKER_footprint_controller = {
+			STALKER_refresh_zone_administration = yes
+			country_event = STALKER.110
+		}
+	}
+}
+
+# The newest footprint state is released first.
+STALKER_recede_zone_footprint = {
+	set_state_flag = { flag = STALKER_footprint_cooldown value = 1 days = 180 }
+	set_temp_variable = { STALKER_footprint_last = { value = STALKER_zone_footprint^num subtract = 1 } }
+	set_temp_variable = { STALKER_footprint_state = STALKER_zone_footprint^STALKER_footprint_last }
+	remove_from_array = { array = STALKER_zone_footprint index = STALKER_footprint_last }
+	save_event_target_as = STALKER_zone_event_target
+	var:STALKER_footprint_state = {
+		clr_state_flag = STALKER_zone_footprint
+		clear_variable = STALKER_footprint_anchor
+		if = {
+			limit = { has_dynamic_modifier = { modifier = STALKER_zone_presence } }
+			remove_dynamic_modifier = { modifier = STALKER_zone_presence }
+		}
+		save_event_target_as = STALKER_footprint_event_target
+		log = "[GetDateText]: STALKER Zone recedes from [THIS.GetName]"
+	}
+	if = {
+		limit = { controller = { exists = yes } }
+		controller = {
+			STALKER_refresh_zone_administration = yes
+			country_event = STALKER.111
+		}
+	}
+}
