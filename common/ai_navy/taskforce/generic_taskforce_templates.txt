@@ -191,17 +191,11 @@ PatrolReconForce_1 = {
 	}
 }
 
-# Frigate-led patrol for mid-tier navies. Every other naval_patrol min is a hull the
-# default role ratios rarely build (stealth/screen destroyers, subs) or a corvette --
-# a frigate-and-cruiser navy could staff NO dominance objective beyond one corvette
-# group and hoarded its entire battle line in reserve (observed: PAN 33/51 ships
-# unassigned, region floor ~237 vs ~7 fielded).
+# Frigate-led patrol: no other naval_patrol minimum accepts the hulls a default-ratio navy owns.
 FrigatePatrolGroup = {
 	mission = { naval_patrol }
 
-	# Must outbid CoastalPatrolGroup (3): when a navy owns frigates, the frigate-led
-	# group is the one whose optimal mass can clear a wartime dominance bar (~237);
-	# corvette-only navies cannot form this and fall through to the corvette group.
+	# Outbids CoastalPatrolGroup so a frigate navy fields its heavier group first.
 	ai_will_do = {
 		factor = 4
 	}
@@ -212,8 +206,6 @@ FrigatePatrolGroup = {
 		}
 	}
 
-	# Cruiser slot is capital: carries the reach budget and dodges the screen cap the
-	# same way CoastalPatrolGroup's destroyer slot does.
 	optimal_composition = {
 		cruiser = {
 			amount = 2
@@ -227,10 +219,7 @@ FrigatePatrolGroup = {
 	}
 }
 
-# Destroyer-led patrol: absorbed and blue-water navies are destroyer-heavy, and no
-# other naval_patrol min accepts a plain destroyer (frigate/corvette/stealth/screen
-# mins miss them) -- the USE's inherited DDG blocks sat in reserve against a frigate
-# vacancy. Capital destroyer carries the reach budget like the other groups' leads.
+# Destroyer-led patrol: no other naval_patrol minimum accepts a plain destroyer.
 DestroyerPatrolGroup = {
 	mission = { naval_patrol }
 
@@ -257,9 +246,7 @@ DestroyerPatrolGroup = {
 	}
 }
 
-# Coastal patrol for smaller navies — patrol boats and corvettes. Min is corvette, not patrol
-# boat: default_naval_role_ratios builds no patrol boats, and an unformable min here hoards every
-# later hull in reserve (see _documentation.md on formation order).
+# Coastal patrol for small navies. Minimum is a corvette: default role ratios build no patrol boats.
 CoastalPatrolGroup = {
 	mission = { naval_patrol }
 
@@ -273,14 +260,7 @@ CoastalPatrolGroup = {
 		}
 	}
 
-	# Corvette/frigate counts sized so a single fully-reinforced group can hold a littoral zone's
-	# dominance floor by itself — the patrol_boat slots never fill for default-ratio navies, and
-	# total screens must stay within SCREEN_SHIPS_PER_TASK_FORCE (8).
-	# The destroyer slot is the reach-budget carrier: the C9 budget counts only task forces
-	# holding a capital_ship hull, and without a slot here a minor's lone destroyer rots in
-	# reserve where the budget never sees it. Capital, so it doesn't count against the screen cap.
-	# Same 80% rule as CorvetteGroup: the old destroyer/patrol_boat/2-frigate slots capped a
-	# corvette navy at 5/9 and no optional patrol group ever formed.
+	# Sized so one full group holds a littoral floor; screens stay within SCREEN_SHIPS_PER_TASK_FORCE.
 	optimal_composition = {
 		corvette = {
 			amount = 7
@@ -369,13 +349,7 @@ CorvetteGroup = {
 		}
 	}
 
-	# Reinforcement grows a formed taskforce toward optimal, and the goal AI often fields only ONE
-	# patrol taskforce per region objective (need min=1) — so per-TF hull mass is what decides
-	# whether a patrol ever accrues the region's naval-dominance floor (~158 littoral + AI margin).
-	# 3 hulls plateaued below the bar in testing; 6+2 clears it.
-	# Optional task forces form only when the reserve can fill >= 80% of this total
-	# (1 - AI_TASKFORCE_REQUIRED_RESERVE_RATIO); a corvette-only navy filled 6/8 and
-	# never formed a second group while 18 corvettes rotted in reserve.
+	# 7+1 clears a littoral floor on its own; 3 hulls plateaued below it.
 	optimal_composition = {
 		corvette = {
 			amount = 7
@@ -401,10 +375,7 @@ SubmarineReconPatrol = {
 	}
 }
 
-# Vanilla keeps naval_invasion_support on dedicated single-mission taskforces (ENG/JAP/USA
-# pattern) — appending the mission to escort/patrol mission lists left those taskforces idle and
-# unassignable in testing. Corvette and frigate variants are separate because min_composition is
-# conjunctive; frigate-only navies like Mexico cannot satisfy a corvette minimum.
+# Single-mission like vanilla's invasion-support groups; corvette and frigate variants because minimums are conjunctive.
 LightInvasionSupportGroup = {
 	mission = { naval_invasion_support }
 
@@ -431,9 +402,7 @@ LightInvasionSupportGroup = {
 FrigateInvasionSupportGroup = {
 	mission = { naval_invasion_support }
 
-	# DELIBERATE 0: frigates belong to FrigatePatrolGroup (dominance is the launch
-	# gate); this escort variant forming first starved patrols of the same scarce
-	# hulls. LightInvasionSupportGroup covers the landing-escort role from corvettes.
+	# Deliberate 0: frigates go to FrigatePatrolGroup, since dominance is the launch gate.
 	ai_will_do = {
 		factor = 0
 	}

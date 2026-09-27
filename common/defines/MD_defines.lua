@@ -549,15 +549,7 @@
 		0,0, -- NUCLEAR
 		0,0, -- SAM
 	}
-	-- Vanilla 0.60. The launch gate E3 needs friendly dominance in every crossed region to reach
-	-- floor x r/(1-r) = 1.5x the terrain floor, EVEN WITH NO ENEMY AT SEA. The AI never supplies that:
-	-- its patrol demand on a region is ceil(enemy dominance / patrol yield), so against a docked or
-	-- navy-less enemy it stations at most one patrol group on the crossing and the landing never
-	-- launches (Panama vs Haiti, 17 of 237.68 points for 2.5 years; the 2023 Libya coalition, four
-	-- majors staged from Calabria holding 116-147 of 462.60 in the Central Mediterranean for months).
-	-- At 0.20 an empty ocean crossing needs ~62 points and a littoral one ~25: one patrol group,
-	-- which any ally's coast-defense patrols leak into a shared sea. A contested sea still needs
-	-- friendly >= enemy. Sea-region control loosens to a 1:4 majority.
+	-- Vanilla 0.60: a landing needs 1.5x the floor in every crossed sea even with no enemy afloat, which the AI never stations.
 	NDefines.NNavy.DOMINANCE_CONTROLLED_THRESHOLD_RATIO = 0.20
 	NDefines.NNavy.NAVAL_INVASION_PLAN_CAP = 4
 	NDefines.NNavy.COMBAT_MAX_GROUPS = 1 -- 1
