@@ -320,6 +320,8 @@ state ID in `STALKER_top_state` and sets `STALKER_top_zone_crisis`. A Zone is in
 during an emission, below 30 containment, or above 79 activity. Proposal risks take -15
 exposure and +10 harm before their caps. Resolution adds 10 to the intelligence roll,
 clamped at 100, and 10 to the tactical or facility chance. Harnesses stub the hook to 0.
+
+After a person is captured or killed, or a facility is damaged, in an active Zone, STALKER_apply_top_zone_disturbance adds 10 activity and removes 10 containment, then clamps the state values and refreshes the controller Zone Administration modifier. No-contact, wrong-location, failed-sabotage, inactive-state, and scenario-off results leave the Zone unchanged. The consequence runs only on the one-time physical result path, so delayed attribution updates cannot apply it again and TOP frozen case snapshot remains intact.
 The Package tab appends `[STALKER_top_package_zone_crisis]`, which names the crisis
 when the selected subject's believed lead state holds one.
 

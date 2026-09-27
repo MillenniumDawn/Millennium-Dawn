@@ -39,6 +39,8 @@ class TargetScript(TargetedScript):
             "07_targeted_operations_organization_cases.txt",
             "08_targeted_operations_resolution.txt",
             "09_targeted_operations_depth.txt",
+            "99_STALKER_society_effects.txt",
+            "99_STALKER_top_effects.txt",
         ):
             self.effects.update(
                 _parse_race_script(
@@ -109,6 +111,13 @@ class TargetScript(TargetedScript):
                 ).read_text(encoding="utf-8")
             )
         )
+        self.triggers.update(
+            _parse_race_script(
+                (
+                    ROOT / "common/scripted_triggers/99_STALKER_scripted_triggers.txt"
+                ).read_text(encoding="utf-8")
+            )
+        )
         self.countries, self.globals, self.temps = {}, {}, {}
         self.scope_stack, self.events = [], []
         self.global_flags, self.external = {}, Counter()
@@ -146,6 +155,7 @@ class TargetScript(TargetedScript):
             "TOP_initialize_doctrine",
             "TOP_seed_public_subjects",
             "international_systems_force_update",
+            "STALKER_refresh_zone_administration",
         }
         manifest = json.loads(
             (ROOT / "tools/data/targeted_operations.json").read_text(encoding="utf-8")
@@ -299,6 +309,8 @@ class TargetScript(TargetedScript):
             )
         elif key == "raid_show_target_intervention_check":
             result = operand == "yes"
+        elif key == "has_state_flag":
+            result = self._flag(self.countries[identifier]["flags"], operand)
         elif key == "TOP_authored_role_eligible":
             # No longer parameterised: the caller sets TOP_role_target,
             # because the engine cannot substitute $PARAM$ for a trigger.
@@ -513,6 +525,17 @@ class TargetScript(TargetedScript):
         ):
             variables[f"TOP_{field}"][ident] = value
         return variables
+
+    def activate_stalker_zone(self, state=101, *, activity=70, containment=40):
+        self.global_flags["GLOBAL_STALKER_zone_registry_initialized"] = None
+        self.countries[state]["flags"].update(
+            STALKER_zone_active=None,
+            STALKER_zone_anchor=None,
+        )
+        self.countries[state]["vars"].update(
+            STALKER_zone_activity=activity,
+            STALKER_zone_containment=containment,
+        )
 
     def organization_truth(self, group=12, *, host=2, state=101, public=False):
         if public:
@@ -757,6 +780,83 @@ def test_facility_sabotage_damages_the_map_without_removing_a_person(objective):
     assert script.globals["TOP_group_disruption_type"][2] == objective
     assert script.globals["TOP_group_disruption_until"][2] == 90
     assert script.globals["TOP_status"] == original_person_status
+
+
+def test_successful_person_operation_disturbs_an_active_stalker_zone():
+    script = TargetScript()
+    variables = script.authorize(method=1, state=101)
+    state = script.countries[101]["vars"]
+    script.activate_stalker_zone()
+    snapshot = variables["TOP_case_state"][11]
+    script.temps["TOP_tier"] = 2
+
+    script.run("TOP_resolve_person_operation", 1)
+
+    assert variables["TOP_case_result"][11] == 3
+    assert state["STALKER_zone_activity"] == 80
+    assert state["STALKER_zone_containment"] == 30
+    assert variables["TOP_case_state"][11] == snapshot
+    assert script.external["STALKER_refresh_zone_administration", 2] == 1
+
+
+def test_successful_organization_sabotage_disturbs_an_active_stalker_zone():
+    script = TargetScript()
+    variables = script.authorize_organization(objective=1, host=2, state=101)
+    state = script.countries[101]["vars"]
+    script.activate_stalker_zone()
+
+    script.run("TOP_resolve_organization_operation", 1)
+
+    assert variables["TOP_archive_result"][0] == 11
+    assert state["STALKER_zone_activity"] == 80
+    assert state["STALKER_zone_containment"] == 30
+    assert script.external["STALKER_refresh_zone_administration", 2] == 1
+
+
+def test_no_contact_person_operation_does_not_disturb_a_stalker_zone():
+    script = TargetScript()
+    variables = script.authorize(method=1, state=101)
+    state = script.countries[101]["vars"]
+    script.activate_stalker_zone()
+    variables["TOP_case_identity"][11] = 0
+    script.temps["TOP_tier"] = 2
+
+    script.run("TOP_resolve_person_operation", 1)
+
+    assert variables["TOP_case_result"][11] == 1
+    assert state["STALKER_zone_activity"] == 70
+    assert state["STALKER_zone_containment"] == 40
+    assert script.external["STALKER_refresh_zone_administration", 2] == 0
+
+
+def test_successful_person_operation_leaves_zone_unchanged_when_scenario_is_off():
+    script = TargetScript()
+    variables = script.authorize(method=1, state=101)
+    state = script.countries[101]["vars"]
+    state.update(STALKER_zone_activity=70, STALKER_zone_containment=40)
+    state_flags = script.countries[101]["flags"]
+    state_flags.update(STALKER_zone_active=None, STALKER_zone_anchor=None)
+    script.temps["TOP_tier"] = 2
+
+    script.run("TOP_resolve_person_operation", 1)
+
+    assert variables["TOP_case_result"][11] == 3
+    assert state["STALKER_zone_activity"] == 70
+    assert state["STALKER_zone_containment"] == 40
+    assert script.external["STALKER_refresh_zone_administration", 2] == 0
+
+
+def test_top_zone_disturbance_clamps_society_bounds():
+    script = TargetScript()
+    script.authorize(method=1, state=101)
+    state = script.countries[101]["vars"]
+    script.activate_stalker_zone(activity=95, containment=5)
+    script.temps["TOP_tier"] = 2
+
+    script.run("TOP_resolve_person_operation", 1)
+
+    assert state["STALKER_zone_activity"] == 100
+    assert state["STALKER_zone_containment"] == 0
 
 
 @pytest.mark.parametrize(
