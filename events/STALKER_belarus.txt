@@ -1,0 +1,229 @@
+add_namespace = STALKER
+
+country_event = {
+	id = STALKER.60
+	title = STALKER.60.t
+	desc = STALKER.60.d
+	picture = GFX_generic_nuclear_smuggling
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		original_tag = BLR
+	}
+
+	immediate = {
+		log = "[GetDateText]: [This.GetName]: STALKER.60 immediate executed"
+		add_to_variable = { global.STALKER_smuggled_artifacts = 3 }
+		698 = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				add_to_variable = { STALKER_zone_bandits = 5 }
+				STALKER_clamp_zone_society = yes
+			}
+		}
+	}
+
+	option = {
+		name = STALKER.60.a
+		log = "[GetDateText]: [This.GetName]: STALKER.60.a executed"
+		add_political_power = -25
+		custom_effect_tooltip = STALKER.60.a_tt
+		hidden_effect = {
+			add_to_variable = { STALKER_polesie_security = 10 }
+			clamp_variable = { var = STALKER_polesie_security min = 0 max = 100 }
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 0
+				has_political_power < 25
+			}
+		}
+	}
+
+	option = {
+		name = STALKER.60.b
+		log = "[GetDateText]: [This.GetName]: STALKER.60.b executed"
+		custom_effect_tooltip = STALKER.60.b_tt
+		ai_chance = { base = 40 }
+	}
+}
+
+country_event = {
+	id = STALKER.61
+	title = STALKER.61.t
+	desc = STALKER.61.d
+	picture = GFX_crime_fighting
+	is_triggered_only = yes
+
+	option = {
+		name = STALKER.61.a
+		log = "[GetDateText]: [This.GetName]: STALKER.61.a executed"
+		add_stability = 0.02
+		custom_effect_tooltip = STALKER.61.a_tt
+		hidden_effect = {
+			add_to_variable = { global.STALKER_smuggled_artifacts = -10 }
+			clamp_variable = { var = global.STALKER_smuggled_artifacts min = 0 max = 1000 }
+			add_to_variable = { STALKER_artifact_stockpile = 5 }
+			698 = {
+				if = {
+					limit = { STALKER_is_active_zone_anchor = yes }
+					add_to_variable = { STALKER_zone_bandits = -10 }
+					STALKER_clamp_zone_society = yes
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = STALKER.62
+	title = STALKER.62.t
+	desc = STALKER.62.d
+	picture = GFX_crime_fighting
+	is_triggered_only = yes
+
+	option = {
+		name = STALKER.62.a
+		log = "[GetDateText]: [This.GetName]: STALKER.62.a executed"
+		add_political_power = -50
+		custom_effect_tooltip = STALKER.62.a_tt
+		hidden_effect = {
+			add_to_variable = { STALKER_polesie_security = 15 }
+			clamp_variable = { var = STALKER_polesie_security min = 0 max = 100 }
+			add_to_variable = { global.STALKER_smuggled_artifacts = -5 }
+			clamp_variable = { var = global.STALKER_smuggled_artifacts min = 0 max = 1000 }
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				factor = 0
+				has_political_power < 50
+			}
+		}
+	}
+
+	option = {
+		name = STALKER.62.b
+		log = "[GetDateText]: [This.GetName]: STALKER.62.b executed"
+		custom_effect_tooltip = STALKER.62.b_tt
+		hidden_effect = {
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+			add_to_variable = { STALKER_polesie_security = -10 }
+			clamp_variable = { var = STALKER_polesie_security min = 0 max = 100 }
+			add_to_variable = { global.STALKER_smuggled_artifacts = 5 }
+		}
+		ai_chance = { base = 40 }
+	}
+}
+
+country_event = {
+	id = STALKER.63
+	title = STALKER.63.t
+	desc = STALKER.63.d
+	picture = GFX_SLO_peacekeepers
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		has_event_target = STALKER_commission_proposer
+		event_target:STALKER_commission_proposer = { exists = yes }
+		NOT = { has_global_flag = STALKER_joint_zone_commission }
+		698 = {
+			STALKER_is_active_zone_anchor = yes
+			is_controlled_by = ROOT
+		}
+	}
+
+	option = {
+		name = STALKER.63.a
+		log = "[GetDateText]: [This.GetName]: STALKER.63.a executed"
+		custom_effect_tooltip = STALKER.63.a_tt
+		hidden_effect = {
+			if = {
+				limit = {
+					NOT = { has_global_flag = STALKER_joint_zone_commission }
+					698 = {
+						STALKER_is_active_zone_anchor = yes
+						is_controlled_by = ROOT
+					}
+				}
+				set_global_flag = STALKER_joint_zone_commission
+				698 = {
+					add_to_variable = { STALKER_zone_containment = 10 }
+					add_to_variable = { STALKER_zone_bandits = -5 }
+					STALKER_clamp_zone_society = yes
+				}
+				event_target:STALKER_commission_proposer = {
+					add_opinion_modifier = { target = ROOT modifier = STALKER_granted_zone_access }
+					STALKER_grant_zone_research_access = yes
+					add_to_variable = { STALKER_polesie_security = 10 }
+					clamp_variable = { var = STALKER_polesie_security min = 0 max = 100 }
+					country_event = STALKER.65
+				}
+			}
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_opinion = { target = event_target:STALKER_commission_proposer value > 24 }
+			}
+			modifier = {
+				factor = 0.2
+				has_opinion = { target = event_target:STALKER_commission_proposer value < 0 }
+			}
+		}
+	}
+
+	option = {
+		name = STALKER.63.b
+		log = "[GetDateText]: [This.GetName]: STALKER.63.b executed"
+		custom_effect_tooltip = STALKER.63.b_tt
+		hidden_effect = {
+			event_target:STALKER_commission_proposer = {
+				add_opinion_modifier = { target = ROOT modifier = STALKER_refused_zone_access }
+				country_event = STALKER.66
+			}
+		}
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 40
+				has_opinion = { target = event_target:STALKER_commission_proposer value < 0 }
+			}
+		}
+	}
+}
+
+country_event = {
+	id = STALKER.64
+	title = STALKER.64.t
+	desc = STALKER.64.d
+	picture = GFX_crime_fighting
+	is_triggered_only = yes
+
+	option = { name = STALKER.64.a }
+}
+
+country_event = {
+	id = STALKER.65
+	title = STALKER.65.t
+	desc = STALKER.65.d
+	picture = GFX_SLO_peacekeepers
+	is_triggered_only = yes
+
+	option = { name = STALKER.65.a }
+}
+
+country_event = {
+	id = STALKER.66
+	title = STALKER.66.t
+	desc = STALKER.66.d
+	picture = GFX_SLO_peacekeepers
+	is_triggered_only = yes
+
+	option = { name = STALKER.66.a }
+}
