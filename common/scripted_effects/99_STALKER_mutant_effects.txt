@@ -21,22 +21,22 @@ STALKER_update_zone_mutants = {
 		}
 		random = {
 			chance = 5
-			set_state_flag = { flag = STALKER_mutant_breach_cooldown value = 1 days = 365 }
 			STALKER_mutant_breach = yes
 		}
 	}
 }
 
-# A breach spills into one neighbouring state that the Zone's controller also holds.
+# A breach needs a neighbouring state the Zone's controller also holds; without one, nothing happens and no cooldown starts.
 STALKER_mutant_breach = {
 	controller = { save_event_target_as = STALKER_mutant_controller }
+	save_event_target_as = STALKER_zone_event_target
 	random_neighbor_state = {
 		limit = {
 			is_controlled_by = event_target:STALKER_mutant_controller
 			NOT = { has_dynamic_modifier = { modifier = STALKER_mutant_incursion } }
 		}
 		add_dynamic_modifier = { modifier = STALKER_mutant_incursion days = 60 }
+		PREV = { set_state_flag = { flag = STALKER_mutant_breach_cooldown value = 1 days = 365 } }
+		event_target:STALKER_mutant_controller = { country_event = STALKER.90 }
 	}
-	save_event_target_as = STALKER_zone_event_target
-	controller = { country_event = STALKER.90 }
 }
