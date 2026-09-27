@@ -1,5 +1,5 @@
 StrikeForce_1 = {
-	mission = { naval_strike naval_patrol }
+	mission = { naval_strike }
 
 	allowed = { NOT = { original_tag = USA } }
 
@@ -48,7 +48,7 @@ StrikeForce_1 = {
 }
 
 StrikeForce_2 = {
-	mission = { naval_strike naval_patrol }
+	mission = { naval_strike }
 
 	allowed = { original_tag = USA }
 
@@ -98,7 +98,7 @@ StrikeForce_2 = {
 
 # Surface combatant group for nations without carriers — battleship-led
 SurfaceActionGroup = {
-	mission = { naval_strike naval_patrol }
+	mission = { naval_strike }
 
 	ai_will_do = {
 		factor = 0.8
@@ -173,7 +173,7 @@ PatrolReconForce_1 = {
 		factor = 5
 	}
 
-	mission = { naval_patrol convoy_escort }
+	mission = { naval_patrol }
 
 	min_composition = {
 		screen_destroyer = {
@@ -191,26 +191,99 @@ PatrolReconForce_1 = {
 	}
 }
 
-# Coastal patrol for smaller navies — patrol boats and corvettes
-CoastalPatrolGroup = {
-	mission = { naval_patrol convoy_escort }
+# Frigate-led patrol for mid-tier navies. Every other naval_patrol min is a hull the
+# default role ratios rarely build (stealth/screen destroyers, subs) or a corvette --
+# a frigate-and-cruiser navy could staff NO dominance objective beyond one corvette
+# group and hoarded its entire battle line in reserve (observed: PAN 33/51 ships
+# unassigned, region floor ~237 vs ~7 fielded).
+FrigatePatrolGroup = {
+	mission = { naval_patrol }
+
+	# Must outbid CoastalPatrolGroup (3): when a navy owns frigates, the frigate-led
+	# group is the one whose optimal mass can clear a wartime dominance bar (~237);
+	# corvette-only navies cannot form this and fall through to the corvette group.
+	ai_will_do = {
+		factor = 4
+	}
+
+	min_composition = {
+		frigate = {
+			amount = 1
+		}
+	}
+
+	# Cruiser slot is capital: carries the reach budget and dodges the screen cap the
+	# same way CoastalPatrolGroup's destroyer slot does.
+	optimal_composition = {
+		cruiser = {
+			amount = 2
+		}
+		frigate = {
+			amount = 6
+		}
+		corvette = {
+			amount = 2
+		}
+	}
+}
+
+# Destroyer-led patrol: absorbed and blue-water navies are destroyer-heavy, and no
+# other naval_patrol min accepts a plain destroyer (frigate/corvette/stealth/screen
+# mins miss them) -- the USE's inherited DDG blocks sat in reserve against a frigate
+# vacancy. Capital destroyer carries the reach budget like the other groups' leads.
+DestroyerPatrolGroup = {
+	mission = { naval_patrol }
 
 	ai_will_do = {
 		factor = 3
 	}
 
 	min_composition = {
-		patrol_boat = {
+		destroyer = {
 			amount = 1
 		}
 	}
 
 	optimal_composition = {
-		patrol_boat = {
-			amount = 3
-		}
-		corvette = {
+		destroyer = {
 			amount = 2
+		}
+		screen_destroyer = {
+			amount = 4
+		}
+		frigate = {
+			amount = 2
+		}
+	}
+}
+
+# Coastal patrol for smaller navies — patrol boats and corvettes. Min is corvette, not patrol
+# boat: default_naval_role_ratios builds no patrol boats, and an unformable min here hoards every
+# later hull in reserve (see _documentation.md on formation order).
+CoastalPatrolGroup = {
+	mission = { naval_patrol }
+
+	ai_will_do = {
+		factor = 3
+	}
+
+	min_composition = {
+		corvette = {
+			amount = 1
+		}
+	}
+
+	# Corvette/frigate counts sized so a single fully-reinforced group can hold a littoral zone's
+	# dominance floor by itself — the patrol_boat slots never fill for default-ratio navies, and
+	# total screens must stay within SCREEN_SHIPS_PER_TASK_FORCE (8).
+	# The destroyer slot is the reach-budget carrier: the C9 budget counts only task forces
+	# holding a capital_ship hull, and without a slot here a minor's lone destroyer rots in
+	# reserve where the budget never sees it. Capital, so it doesn't count against the screen cap.
+	# Same 80% rule as CorvetteGroup: the old destroyer/patrol_boat/2-frigate slots capped a
+	# corvette navy at 5/9 and no optional patrol group ever formed.
+	optimal_composition = {
+		corvette = {
+			amount = 7
 		}
 		frigate = {
 			amount = 1
@@ -288,7 +361,7 @@ MissileSubGroup = {
 }
 
 CorvetteGroup = {
-	mission = { convoy_escort naval_patrol }
+	mission = { convoy_escort }
 
 	min_composition = {
 		corvette = {
@@ -296,9 +369,16 @@ CorvetteGroup = {
 		}
 	}
 
+	# Reinforcement grows a formed taskforce toward optimal, and the goal AI often fields only ONE
+	# patrol taskforce per region objective (need min=1) — so per-TF hull mass is what decides
+	# whether a patrol ever accrues the region's naval-dominance floor (~158 littoral + AI margin).
+	# 3 hulls plateaued below the bar in testing; 6+2 clears it.
+	# Optional task forces form only when the reserve can fill >= 80% of this total
+	# (1 - AI_TASKFORCE_REQUIRED_RESERVE_RATIO); a corvette-only navy filled 6/8 and
+	# never formed a second group while 18 corvettes rotted in reserve.
 	optimal_composition = {
 		corvette = {
-			amount = 3
+			amount = 7
 		}
 		frigate = {
 			amount = 1
@@ -317,6 +397,59 @@ SubmarineReconPatrol = {
 	optimal_composition = {
 		attack_submarine = {
 			amount = 1
+		}
+	}
+}
+
+# Vanilla keeps naval_invasion_support on dedicated single-mission taskforces (ENG/JAP/USA
+# pattern) — appending the mission to escort/patrol mission lists left those taskforces idle and
+# unassignable in testing. Corvette and frigate variants are separate because min_composition is
+# conjunctive; frigate-only navies like Mexico cannot satisfy a corvette minimum.
+LightInvasionSupportGroup = {
+	mission = { naval_invasion_support }
+
+	ai_will_do = {
+		factor = 1
+	}
+
+	min_composition = {
+		corvette = {
+			amount = 1
+		}
+	}
+
+	optimal_composition = {
+		corvette = {
+			amount = 3
+		}
+		frigate = {
+			amount = 1
+		}
+	}
+}
+
+FrigateInvasionSupportGroup = {
+	mission = { naval_invasion_support }
+
+	# DELIBERATE 0: frigates belong to FrigatePatrolGroup (dominance is the launch
+	# gate); this escort variant forming first starved patrols of the same scarce
+	# hulls. LightInvasionSupportGroup covers the landing-escort role from corvettes.
+	ai_will_do = {
+		factor = 0
+	}
+
+	min_composition = {
+		frigate = {
+			amount = 1
+		}
+	}
+
+	optimal_composition = {
+		frigate = {
+			amount = 2
+		}
+		corvette = {
+			amount = 2
 		}
 	}
 }
