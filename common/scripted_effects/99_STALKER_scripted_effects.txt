@@ -189,3 +189,89 @@ STALKER_trigger_emission = {
 		}
 	}
 }
+
+STALKER_monthly_perimeter_breach_pulse = {
+	if = {
+		limit = { STALKER_scenario_enabled = yes }
+		698 = {
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					check_variable = { STALKER_zone_id = 1 }
+					has_state_flag = STALKER_perimeter_breach_active
+					NOT = { has_state_flag = STALKER_perimeter_breach_preparation }
+				}
+				STALKER_resolve_perimeter_breach = yes
+			}
+			else_if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					check_variable = { STALKER_zone_id = 1 }
+					NOT = { has_state_flag = STALKER_zone_policy_pending }
+					NOT = { has_state_flag = STALKER_perimeter_breach_active }
+					NOT = { has_state_flag = STALKER_perimeter_breach_cooldown }
+					NOT = { check_variable = { STALKER_zone_activity < 65 } }
+					NOT = { check_variable = { STALKER_zone_containment > 30 } }
+				}
+				log = "[GetDateText]: Perimeter breach started in [THIS.GetName]"
+				set_state_flag = STALKER_perimeter_breach_active
+				set_state_flag = { flag = STALKER_perimeter_breach_preparation value = 1 days = 90 }
+				if = {
+					limit = { controller = { exists = yes is_ai = no } }
+					save_event_target_as = STALKER_zone_event_target
+					controller = { country_event = STALKER.6 }
+				}
+			}
+		}
+	}
+}
+
+STALKER_resolve_perimeter_breach = {
+	if = {
+		limit = { has_state_flag = STALKER_perimeter_breach_active }
+		log = "[GetDateText]: Perimeter breach resolved in [THIS.GetName]"
+		clr_state_flag = STALKER_perimeter_breach_active
+		clr_state_flag = STALKER_perimeter_patrol_used
+		set_state_flag = { flag = STALKER_perimeter_breach_cooldown value = 1 days = 365 }
+		if = {
+			limit = {
+				NOT = { check_variable = { STALKER_zone_containment < 40 } }
+				check_variable = { STALKER_zone_activity < 65 }
+			}
+			add_to_variable = { STALKER_zone_containment = 5 }
+			add_to_variable = { STALKER_zone_bandits = -5 }
+			STALKER_clamp_zone_society = yes
+			if = {
+				limit = { controller = { exists = yes } }
+				controller = {
+					STALKER_refresh_zone_administration = yes
+					if = {
+						limit = { is_ai = no }
+						PREV = { save_event_target_as = STALKER_zone_event_target }
+						country_event = STALKER.7
+					}
+				}
+			}
+		}
+		else = {
+			add_to_variable = { STALKER_zone_activity = 10 }
+			add_to_variable = { STALKER_zone_bandits = 10 }
+			add_to_variable = { STALKER_zone_containment = -10 }
+			add_dynamic_modifier = { modifier = STALKER_emission_disruption days = 60 }
+			STALKER_clamp_zone_society = yes
+			clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+			if = {
+				limit = { controller = { exists = yes } }
+				controller = {
+					add_stability = -0.02
+					STALKER_refresh_zone_administration = yes
+					if = {
+						limit = { is_ai = no }
+						PREV = { save_event_target_as = STALKER_zone_event_target }
+						country_event = STALKER.8
+					}
+				}
+			}
+		}
+	}
+}

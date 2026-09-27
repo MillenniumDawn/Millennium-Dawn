@@ -32,6 +32,10 @@ STALKER_zone_management_category = {
 		ai_will_do = {
 			base = 5
 			modifier = {
+				add = 80
+				FROM = { has_state_flag = STALKER_perimeter_breach_active }
+			}
+			modifier = {
 				add = 15
 				FROM = { check_variable = { STALKER_zone_activity > 39 } }
 			}
@@ -53,6 +57,69 @@ STALKER_zone_management_category = {
 				check_variable = { treasury < 10 }
 			}
 		}
+	}
+
+	STALKER_emergency_perimeter_patrol = {
+		icon = GFX_decision_generic_police_action
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+				has_state_flag = STALKER_perimeter_breach_active
+				NOT = { has_state_flag = STALKER_perimeter_patrol_used }
+				is_controlled_by = ROOT
+			}
+		}
+
+		available = {
+			hidden_trigger = {
+				FROM = {
+					STALKER_is_active_zone_anchor = yes
+					has_state_flag = STALKER_perimeter_breach_active
+					NOT = { has_state_flag = STALKER_perimeter_patrol_used }
+					is_controlled_by = ROOT
+				}
+			}
+		}
+
+		cost = 25
+		days_re_enable = 1
+
+		complete_effect = {
+			if = {
+				limit = {
+					FROM = {
+						STALKER_is_active_zone_anchor = yes
+						has_state_flag = STALKER_perimeter_breach_active
+						NOT = { has_state_flag = STALKER_perimeter_patrol_used }
+						is_controlled_by = ROOT
+					}
+				}
+				log = "[GetDateText]: [Root.GetName]: Decision STALKER_emergency_perimeter_patrol in [FROM.GetName]"
+				custom_effect_tooltip = STALKER_emergency_perimeter_patrol_tt
+				FROM = {
+					set_state_flag = STALKER_perimeter_patrol_used
+					add_to_variable = { STALKER_zone_containment = 10 }
+					add_to_variable = { STALKER_zone_activity = -5 }
+					add_to_variable = { STALKER_zone_bandits = -5 }
+					add_to_variable = { STALKER_zone_exploitation = -5 }
+					STALKER_clamp_zone_society = yes
+					clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+
+		ai_will_do = { base = 100 }
 	}
 
 	STALKER_cordon_crackdown = {
@@ -94,6 +161,10 @@ STALKER_zone_management_category = {
 
 		ai_will_do = {
 			base = 5
+			modifier = {
+				add = 25
+				FROM = { has_state_flag = STALKER_perimeter_breach_active }
+			}
 			modifier = {
 				add = 25
 				FROM = { check_variable = { STALKER_zone_bandits > 49 } }
@@ -148,6 +219,10 @@ STALKER_zone_management_category = {
 
 		ai_will_do = {
 			base = 5
+			modifier = {
+				factor = 0
+				FROM = { has_state_flag = STALKER_perimeter_breach_active }
+			}
 			modifier = {
 				add = 10
 				FROM = { check_variable = { STALKER_zone_exploitation < 20 } }
