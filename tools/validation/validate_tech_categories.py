@@ -158,8 +158,11 @@ _LEGACY_CATEGORIES = {
 _CATEGORY_ASSIGN_RE = re.compile(r"\bcategory\s*=\s*((?i:cat_)\w+)")
 
 # research_bonus = { CAT_x = 0.05 } — the keys are categories. ai_focuses and
-# ai_strategy_plans weight categories the same way in research = { CAT_x = 5.0 }.
-_KEYED_BLOCK_RE = re.compile(r"\b(?:research_bonus|research)\s*=\s*\{")
+# ai_strategy_plans weight categories the same way in research = { CAT_x = 5.0 },
+# and a tech's ai_research_weights = { CAT_x = 3 } does too.
+_KEYED_BLOCK_RE = re.compile(
+    r"\b(?:research_bonus|research|ai_research_weights)\s*=\s*\{"
+)
 _KEYED_CATEGORY_RE = re.compile(r"((?i:cat_)\w+)\s*=")
 
 # MIO research_categories = { CAT_x CAT_y } and, in tech files only, a tech's
