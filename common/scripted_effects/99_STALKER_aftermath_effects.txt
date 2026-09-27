@@ -6,11 +6,27 @@ STALKER_schedule_2022_aftermath = {
 				STALKER_is_active_zone_anchor = yes
 				check_variable = { STALKER_zone_id = 1 }
 			}
-			if = {
-				limit = { controller = { exists = yes } }
-				controller = { country_event = { id = STALKER.37 days = 365 } }
+			set_state_flag = { flag = STALKER_2022_aftermath_delay days = 365 value = 1 }
+		}
+	}
+}
+
+STALKER_check_2022_aftermath = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+			has_global_flag = STALKER_2022_outcome_resolved
+			NOT = { has_global_flag = STALKER_2022_aftermath_resolved }
+		}
+		every_controlled_state = {
+			limit = {
+				STALKER_is_active_zone_anchor = yes
+				check_variable = { STALKER_zone_id = 1 }
+				NOT = { has_state_flag = STALKER_2022_aftermath_delay }
+				NOT = { has_state_flag = STALKER_2022_aftermath_due }
 			}
-			else = { ROOT = { country_event = { id = STALKER.37 days = 365 } } }
+			ROOT = { country_event = STALKER.37 }
 		}
 	}
 }
@@ -22,13 +38,14 @@ STALKER_dispatch_2022_aftermath = {
 			limit = {
 				STALKER_is_active_zone_anchor = yes
 				check_variable = { STALKER_zone_id = 1 }
+				NOT = { has_state_flag = STALKER_2022_aftermath_delay }
 			}
+			set_state_flag = STALKER_2022_aftermath_due
 			if = {
 				limit = { controller = { exists = yes } }
 				save_event_target_as = STALKER_zone_event_target
 				controller = { country_event = STALKER.38 }
 			}
-			else = { ROOT = { country_event = { id = STALKER.37 days = 90 } } }
 		}
 	}
 }
@@ -40,9 +57,11 @@ STALKER_resolve_2022_aftermath = {
 			event_target:STALKER_zone_event_target = {
 				STALKER_is_active_zone_anchor = yes
 				check_variable = { STALKER_zone_id = 1 }
+				has_state_flag = STALKER_2022_aftermath_due
 				is_controlled_by = ROOT
 			}
 		}
+		event_target:STALKER_zone_event_target = { clr_state_flag = STALKER_2022_aftermath_due }
 		set_global_flag = STALKER_2022_aftermath_resolved
 		STALKER_refresh_zone_administration = yes
 	}
