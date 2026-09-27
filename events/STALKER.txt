@@ -1206,6 +1206,7 @@ country_event = {
 		STALKER_scenario_enabled = yes
 		has_event_target = STALKER_commission_proposer
 		event_target:STALKER_commission_proposer = { exists = yes }
+		NOT = { has_global_flag = STALKER_joint_zone_commission }
 		698 = {
 			STALKER_is_active_zone_anchor = yes
 			is_controlled_by = ROOT
@@ -1240,7 +1241,17 @@ country_event = {
 				}
 			}
 		}
-		ai_chance = { base = 60 }
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_opinion = { target = event_target:STALKER_commission_proposer value > 24 }
+			}
+			modifier = {
+				factor = 0.2
+				has_opinion = { target = event_target:STALKER_commission_proposer value < 0 }
+			}
+		}
 	}
 
 	option = {
@@ -1250,11 +1261,16 @@ country_event = {
 		hidden_effect = {
 			event_target:STALKER_commission_proposer = {
 				add_opinion_modifier = { target = ROOT modifier = STALKER_refused_zone_access }
-				set_country_flag = { flag = STALKER_commission_refused value = 1 days = 365 }
 				country_event = STALKER.66
 			}
 		}
-		ai_chance = { base = 40 }
+		ai_chance = {
+			base = 30
+			modifier = {
+				add = 40
+				has_opinion = { target = event_target:STALKER_commission_proposer value < 0 }
+			}
+		}
 	}
 }
 
