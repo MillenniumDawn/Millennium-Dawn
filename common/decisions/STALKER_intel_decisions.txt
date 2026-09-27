@@ -1,0 +1,51 @@
+STALKER_zone_management_category = {
+	STALKER_expel_foreign_agents = {
+		icon = GFX_decision_generic_police_action
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_foreign_intel > 29 }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_expel_foreign_agents in [FROM.GetName]"
+			custom_effect_tooltip = STALKER_expel_foreign_agents_tt
+			hidden_effect = {
+				FROM = {
+					add_to_variable = { STALKER_zone_foreign_intel = -40 }
+					clamp_variable = { var = STALKER_zone_foreign_intel min = 0 max = 100 }
+				}
+				every_country = {
+					limit = {
+						has_country_flag = STALKER_zone_research_access
+						NOT = { tag = ROOT }
+					}
+					add_opinion_modifier = { target = ROOT modifier = STALKER_expelled_our_agents }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				add = 15
+				FROM = { check_variable = { STALKER_zone_foreign_intel > 59 } }
+			}
+		}
+	}
+}

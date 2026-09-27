@@ -1,0 +1,143 @@
+# Scientists follow exploitation and flee bandits; the military follows containment and resents Freedom.
+STALKER_update_zone_factions = {
+	set_temp_variable = {
+		STALKER_scientist_target = {
+			value = STALKER_zone_exploitation
+			multiply = 0.4
+			subtract = { value = STALKER_zone_bandits multiply = 0.3 }
+			add = 10
+			clamp = { min = 0 max = 100 }
+		}
+	}
+	add_to_variable = { STALKER_zone_scientists = { value = STALKER_scientist_target subtract = STALKER_zone_scientists multiply = 0.1 } }
+	set_temp_variable = {
+		STALKER_military_target = {
+			value = STALKER_zone_containment
+			multiply = 0.5
+			subtract = { value = STALKER_zone_freedom multiply = 0.2 }
+			add = 10
+			clamp = { min = 0 max = 100 }
+		}
+	}
+	add_to_variable = { STALKER_zone_military = { value = STALKER_military_target subtract = STALKER_zone_military multiply = 0.1 } }
+	STALKER_clamp_zone_society = yes
+	if = {
+		limit = { check_variable = { STALKER_zone_war_type > 0 } }
+		STALKER_progress_zone_war = yes
+	}
+	else_if = {
+		limit = {
+			NOT = { has_state_flag = STALKER_zone_war_cooldown }
+			controller = { exists = yes }
+		}
+		STALKER_check_zone_war_start = yes
+	}
+}
+
+# Rivals go to war when both are strong and neither clearly leads: Duty and Freedom (1), or the military and bandits (2).
+STALKER_check_zone_war_start = {
+	set_temp_variable = { STALKER_war_gap = { value = STALKER_zone_duty subtract = STALKER_zone_freedom } }
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_duty > 34 }
+			check_variable = { STALKER_zone_freedom > 34 }
+			check_variable = { STALKER_war_gap < 10 }
+			check_variable = { STALKER_war_gap > -10 }
+		}
+		random = {
+			chance = 10
+			set_variable = { STALKER_zone_war_type = 1 }
+			STALKER_begin_zone_war = yes
+		}
+	}
+	else = {
+		set_temp_variable = { STALKER_war_gap = { value = STALKER_zone_military subtract = STALKER_zone_bandits } }
+		if = {
+			limit = {
+				check_variable = { STALKER_zone_military > 34 }
+				check_variable = { STALKER_zone_bandits > 34 }
+				check_variable = { STALKER_war_gap < 10 }
+				check_variable = { STALKER_war_gap > -10 }
+			}
+			random = {
+				chance = 10
+				set_variable = { STALKER_zone_war_type = 2 }
+				STALKER_begin_zone_war = yes
+			}
+		}
+	}
+}
+
+STALKER_begin_zone_war = {
+	set_variable = { STALKER_zone_war_stage = 1 }
+	log = "[GetDateText]: STALKER war type [?STALKER_zone_war_type] begins in [THIS.GetName]"
+	save_event_target_as = STALKER_zone_event_target
+	controller = { country_event = STALKER.120 }
+}
+
+# Each war month bleeds the Zone; every other month on average the war moves on, and after stage 3 it is decided.
+STALKER_progress_zone_war = {
+	add_to_variable = { STALKER_zone_stalkers = -3 }
+	add_to_variable = { STALKER_zone_containment = -3 }
+	STALKER_clamp_zone_society = yes
+	random = {
+		chance = 50
+		add_to_variable = { STALKER_zone_war_stage = 1 }
+	}
+	if = {
+		limit = { check_variable = { STALKER_zone_war_stage > 3 } }
+		STALKER_resolve_zone_war = yes
+	}
+}
+
+STALKER_resolve_zone_war = {
+	set_temp_variable = { STALKER_war_winner = 2 }
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_war_type = 1 }
+			check_variable = { STALKER_zone_duty > STALKER_zone_freedom }
+		}
+		set_temp_variable = { STALKER_war_winner = 1 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { STALKER_zone_war_type = 2 }
+			check_variable = { STALKER_zone_military > STALKER_zone_bandits }
+		}
+		set_temp_variable = { STALKER_war_winner = 1 }
+	}
+	if = {
+		limit = { check_variable = { STALKER_zone_war_type = 1 } }
+		if = {
+			limit = { check_variable = { STALKER_war_winner = 1 } }
+			add_to_variable = { STALKER_zone_duty = 15 }
+			add_to_variable = { STALKER_zone_freedom = -25 }
+		}
+		else = {
+			add_to_variable = { STALKER_zone_freedom = 15 }
+			add_to_variable = { STALKER_zone_duty = -25 }
+		}
+	}
+	else = {
+		if = {
+			limit = { check_variable = { STALKER_war_winner = 1 } }
+			add_to_variable = { STALKER_zone_military = 15 }
+			add_to_variable = { STALKER_zone_bandits = -25 }
+		}
+		else = {
+			add_to_variable = { STALKER_zone_bandits = 15 }
+			add_to_variable = { STALKER_zone_military = -25 }
+		}
+	}
+	STALKER_clamp_zone_society = yes
+	set_variable = { STALKER_zone_war_winner = STALKER_war_winner }
+	set_variable = { STALKER_zone_last_war_type = STALKER_zone_war_type }
+	set_state_flag = { flag = STALKER_zone_war_cooldown value = 1 days = 730 }
+	save_event_target_as = STALKER_zone_event_target
+	if = {
+		limit = { controller = { exists = yes } }
+		controller = { country_event = STALKER.121 }
+	}
+	set_variable = { STALKER_zone_war_type = 0 }
+	set_variable = { STALKER_zone_war_stage = 0 }
+}
