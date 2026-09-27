@@ -45,10 +45,12 @@ Add content to the subsystem that owns it, and touch shared files only through t
   `99_STALKER_footprint_effects.txt`.
 - **Factions (120–129):** `STALKER_factions.txt`; loc `_factions_`;
   `99_STALKER_faction_effects.txt`.
+- **World reaction (130–139):** `STALKER_world.txt`; loc `_world_`;
+  `99_STALKER_world_effects.txt`.
 
 Localisation file names are `MD_STALKER_<subsystem>_l_english.yml`.
 
-The next free block is 130–139. Decision categories are one file each in
+The next free block is 140–149. Decision categories are one file each in
 `common/decisions/categories/00_STALKER_*_category.txt`. Dynamic modifiers are one file per
 subsystem in `common/dynamic_modifiers/00_STALKER_*dynamic_modifiers.txt`.
 
