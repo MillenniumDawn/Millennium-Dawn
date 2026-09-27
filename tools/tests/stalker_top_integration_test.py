@@ -55,6 +55,7 @@ def test_zone_crisis_lowers_organization_exposure():
         == 15
     )
 
+
 @pytest.mark.parametrize("method", [1, 2])
 def test_zone_crisis_adds_native_success_bonus_without_replacing_disruption(method):
     calm = TargetScript()
