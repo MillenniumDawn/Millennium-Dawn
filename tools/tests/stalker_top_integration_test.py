@@ -1,5 +1,7 @@
+import pytest
 from great_ai_race_state_model_test import _parse_race_script
 from targeted_operations_authorization_test import ReviewScript
+from targeted_operations_core_test import TargetScript
 
 ZONE_CRISIS = _parse_race_script(
     "x = { set_temp_variable = { STALKER_top_zone_crisis = 1 } }"
@@ -52,3 +54,17 @@ def test_zone_crisis_lowers_organization_exposure():
         - crisis.actor["TOP_proposal_exposure_score"]
         == 15
     )
+
+@pytest.mark.parametrize("method", [1, 2])
+def test_zone_crisis_adds_native_success_bonus_without_replacing_disruption(method):
+    calm = TargetScript()
+    calm_variables = calm.authorize(method=method)
+    assert calm_variables["TOP_case_native_success_bonus"][11] == 0
+
+    crisis = TargetScript()
+    crisis.effects["STALKER_check_top_zone_crisis"] = ZONE_CRISIS
+    group = int(crisis.globals["TOP_affiliation"][11])
+    crisis.globals["TOP_group_disruption_type"][group] = 2
+    crisis.globals["TOP_group_disruption_until"][group] = 90
+    crisis_variables = crisis.authorize(method=method)
+    assert crisis_variables["TOP_case_native_success_bonus"][11] == 20
