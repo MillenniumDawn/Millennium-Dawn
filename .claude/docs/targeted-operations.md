@@ -320,6 +320,8 @@ state ID in `STALKER_top_state` and sets `STALKER_top_zone_crisis`. A Zone is in
 during an emission, below 30 containment, or above 79 activity. Proposal risks take -15
 exposure and +10 harm before their caps. Resolution adds 10 to the intelligence roll,
 clamped at 100, and 10 to the tactical or facility chance. Harnesses stub the hook to 0.
+The Package tab appends `[STALKER_top_package_zone_crisis]`, which names the crisis
+when the selected subject's believed lead state holds one.
 
 ## Operations-center interface
 
