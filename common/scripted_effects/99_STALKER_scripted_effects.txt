@@ -53,6 +53,7 @@ STALKER_refresh_zone_administration = {
 		save_event_target_as = STALKER_zone_administrator
 		set_variable = { STALKER_zone_upkeep_factor = 0 }
 		set_variable = { STALKER_zone_research_factor = 0 }
+		set_variable = { STALKER_zone_garrison_factor = 0 }
 		if = {
 			limit = { check_variable = { global.STALKER_active_zone_anchors^num > 0 } }
 			for_each_scope_loop = {
@@ -65,6 +66,17 @@ STALKER_refresh_zone_administration = {
 					event_target:STALKER_zone_administrator = {
 						add_to_variable = { STALKER_zone_upkeep_factor = 0.01 }
 						add_to_variable = { STALKER_zone_research_factor = PREV.STALKER_zone_exploitation }
+						add_to_variable = { STALKER_zone_garrison_factor = -0.005 }
+					}
+				}
+			}
+			for_each_scope_loop = {
+				array = global.STALKER_active_zone_anchors
+				for_each_scope_loop = {
+					array = STALKER_zone_footprint
+					if = {
+						limit = { is_controlled_by = event_target:STALKER_zone_administrator }
+						event_target:STALKER_zone_administrator = { add_to_variable = { STALKER_zone_garrison_factor = -0.0025 } }
 					}
 				}
 			}

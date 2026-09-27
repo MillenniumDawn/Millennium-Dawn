@@ -13,12 +13,9 @@ Add content to the subsystem that owns it, and touch shared files only through t
   used by two or more subsystems live in the core file `MD_STALKER_l_english.yml`.
 - **Monthly work.** Add a line to `STALKER_monthly_pulse` in
   `common/scripted_effects/99_STALKER_pulse_effects.txt`. Do not add lines to `MD_on_actions.txt`.
-- **Changelog.** STALKER feature PRs into `feature/stalker-global-zones-4791` do not edit
-  `Changelog.txt`. The scenario keeps one STALKER entry, rewritten when it lands on `main` and
-  again when it is ported upstream. This is the one exception to the one-line-per-PR rule in
-  `AGENTS.md`.
-- **One integration branch.** Feature PRs target `feature/stalker-global-zones-4791`. Do not push
-  to it directly. Merge PRs one at a time, and merge the latest base into each one first.
+- **Changelog.** Each STALKER PR adds one BLUF line to `Changelog.txt`, as `AGENTS.md` requires.
+- **Target `main`.** The scenario landed on `main` with #372; `feature/stalker-global-zones-4791`
+  is retired. Merge STALKER PRs one at a time, and merge the latest `main` into each one first.
 
 ## Subsystems
 
@@ -44,10 +41,12 @@ Add content to the subsystem that owns it, and touch shared files only through t
   `99_STALKER_mutant_effects.txt`.
 - **Crossover (100–109):** `STALKER_crossover.txt`; loc `_crossover_`;
   `99_STALKER_meme_effects.txt`.
+- **Footprint (110–119):** `STALKER_footprint.txt`; loc `_footprint_`;
+  `99_STALKER_footprint_effects.txt`.
 
 Localisation file names are `MD_STALKER_<subsystem>_l_english.yml`.
 
-The next free block is 110–119. Decision categories are one file each in
+The next free block is 120–129. Decision categories are one file each in
 `common/decisions/categories/00_STALKER_*_category.txt`. Dynamic modifiers are one file per
 subsystem in `common/dynamic_modifiers/00_STALKER_*dynamic_modifiers.txt`.
 
