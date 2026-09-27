@@ -93,6 +93,7 @@ All files below live in `.claude/docs/`.
 | `performance-patterns.md`          | Hoisting, dirty counters, clamp-before-divide, early-outs    |
 | `refactor-checklist.md`            | Rename/migration sweeps: namespaces, GUI/GFX refs, tags      |
 | `scripted-gui-patterns.md`         | `dynamic_lists`, loc dispatchers, dirty-var standard         |
+| `stalker-scenario.md`              | STALKER files, event-ID blocks, hooks, merge rules           |
 | `scripted-gui-rules.md`            | scripted_gui mechanics: structure, dirty-var perf, AI        |
 | `scripting-edge-cases.md`          | Niche pitfalls: temp-var defaults, `^index`, vacant office   |
 | `search-filters.md`                | Every `FOCUS_FILTER_*`, Israel subcats, common mistakes      |
