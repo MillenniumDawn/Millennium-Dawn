@@ -825,7 +825,10 @@ country_event = {
 						STALKER_is_active_zone_anchor = yes
 						is_controlled_by = ROOT
 					}
-					ROOT = { add_political_power = -50 }
+					ROOT = {
+						set_variable = { global.STALKER_2022_battle_route = 1 }
+						add_political_power = -50
+					}
 					add_to_variable = { STALKER_zone_containment = 20 }
 					add_to_variable = { STALKER_zone_stalkers = -10 }
 					STALKER_clamp_zone_society = yes
@@ -860,6 +863,7 @@ country_event = {
 						STALKER_is_active_zone_anchor = yes
 						is_controlled_by = ROOT
 					}
+					ROOT = { set_variable = { global.STALKER_2022_battle_route = 2 } }
 					add_to_variable = { STALKER_zone_containment = 10 }
 					add_to_variable = { STALKER_zone_exploitation = 10 }
 					add_to_variable = { STALKER_zone_freedom = -10 }
@@ -888,6 +892,7 @@ country_event = {
 						STALKER_is_active_zone_anchor = yes
 						is_controlled_by = ROOT
 					}
+					ROOT = { set_variable = { global.STALKER_2022_battle_route = 3 } }
 					add_to_variable = { STALKER_zone_stalkers = 10 }
 					add_to_variable = { STALKER_zone_bandits = 10 }
 					STALKER_clamp_zone_society = yes
@@ -925,7 +930,21 @@ news_event = {
 news_event = {
 	id = STALKER.32
 	title = STALKER.32.t
-	desc = STALKER.32.d
+	desc = {
+		trigger = { check_variable = { global.STALKER_2022_battle_route = 2 } }
+		text = STALKER.32.d_ward
+	}
+	desc = {
+		trigger = { check_variable = { global.STALKER_2022_battle_route = 3 } }
+		text = STALKER.32.d_stalkers
+	}
+	desc = {
+		trigger = {
+			NOT = { check_variable = { global.STALKER_2022_battle_route = 2 } }
+			NOT = { check_variable = { global.STALKER_2022_battle_route = 3 } }
+		}
+		text = STALKER.32.d
+	}
 	picture = GFX_UN_emergency_meeting
 	major = yes
 	is_triggered_only = yes
@@ -1067,13 +1086,28 @@ country_event = {
 	trigger = {
 		STALKER_scenario_enabled = yes
 		has_global_flag = STALKER_battle_for_the_zone
-		NOT = { has_global_flag = STALKER_kaimanov_outcome }
+		NOT = { has_global_flag = STALKER_2022_outcome_resolved }
 	}
 
 	immediate = {
 		log = "[GetDateText]: [This.GetName]: STALKER.35 immediate executed"
-		STALKER_trigger_kaimanov_outcome = yes
+		if = {
+			limit = { check_variable = { global.STALKER_2022_battle_route = 1 } }
+			STALKER_trigger_military_sealing_outcome = yes
+		}
+		else = { STALKER_trigger_kaimanov_outcome = yes }
 	}
+}
+
+news_event = {
+	id = STALKER.36
+	title = STALKER.36.t
+	desc = STALKER.36.d
+	picture = GFX_UKR_warehouse_explosions_novobohdanivka
+	major = yes
+	is_triggered_only = yes
+
+	option = { name = STALKER.36.a }
 }
 
 country_event = {
