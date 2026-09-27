@@ -1,0 +1,30 @@
+# Reads STALKER_top_state, a state ID from Targeted Operations, and sets STALKER_top_zone_crisis.
+STALKER_check_top_zone_crisis = {
+	set_temp_variable = { STALKER_top_zone_crisis = 0 }
+	if = {
+		limit = { STALKER_top_state_in_crisis = yes }
+		set_temp_variable = { STALKER_top_zone_crisis = 1 }
+	}
+}
+
+STALKER_apply_top_zone_disturbance = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			check_variable = { STALKER_top_state > 0 }
+		}
+		var:STALKER_top_state = {
+			if = {
+				limit = { STALKER_is_active_zone_anchor = yes }
+				add_to_variable = { STALKER_zone_activity = 10 }
+				add_to_variable = { STALKER_zone_containment = -10 }
+				clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+				STALKER_clamp_zone_society = yes
+				if = {
+					limit = { controller = { exists = yes } }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+	}
+}
