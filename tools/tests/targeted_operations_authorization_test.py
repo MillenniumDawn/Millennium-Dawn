@@ -63,6 +63,9 @@ class ReviewScript(TargetedScript):
             TOP_get_defensive_modifiers=[],
             TOP_get_organization_defensive_modifiers=[],
             TOP_get_protection_country=[],
+            STALKER_check_top_zone_crisis=[
+                ("set_temp_variable", "=", [("STALKER_top_zone_crisis", "=", "0")])
+            ],
         )
         self.triggers = _parse_race_script(source(TRIGGER_PATH))
         core_triggers = _parse_race_script(
