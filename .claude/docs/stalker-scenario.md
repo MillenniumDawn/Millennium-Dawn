@@ -38,8 +38,13 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
   have no marker on it and are this scenario's own additions. Zone 31 (Aksai Chin) was added
   after a placement check found its marker unassigned. The map is a guideline, not a cap: add
   Zones where lore or gameplay calls for them, and note each addition in the placement table.
-- Not canon, and specific to this scenario's design: "Project X" and MDST. Keep them clearly
-  framed as this scenario's own inventions.
+- Project X and MDST are canon (STALKER 2). Project X was the state Noosphere programme the
+  Regulatory Board funded after 1991. Its scientists defied the Board in 2006 and created the
+  Zone by accident; the Board shut Project X down and the scientists carried on as MDST, the
+  Ministry of Defense and Secret Technologies. MDST created the Monolith and the S.T.A.L.K.E.R.
+  agents, keeps the X-Network running and serves the C-Consciousness. MDST is not SIRCAA, the
+  Ward or Malachite. Its reach into state institutions (MDST penetration) is this scenario's
+  own mechanic.
 
 ## Subsystems
 
