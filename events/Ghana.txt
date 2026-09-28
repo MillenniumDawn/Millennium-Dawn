@@ -203,7 +203,10 @@ country_event = {
 				limit = { check_variable = { GAH_togoland_grievance < 1 } }
 				country_event = { id = ghana.7 days = 120 random_days = 60 }
 			}
-			else = { clear_variable = GAH_togoland_grievance }
+			else = {
+				clear_variable = GAH_togoland_grievance
+				country_event = { id = ghana.8 days = 180 random_days = 90 }
+			}
 		}
 		ai_chance = { base = 2 }
 	}
@@ -243,7 +246,10 @@ country_event = {
 				limit = { check_variable = { GAH_togoland_grievance > 3 } }
 				country_event = { id = ghana.5 days = 60 random_days = 60 }
 			}
-			else = { clear_variable = GAH_togoland_grievance }
+			else = {
+				clear_variable = GAH_togoland_grievance
+				country_event = { id = ghana.8 days = 180 random_days = 90 }
+			}
 		}
 		ai_chance = { base = 0 }
 	}
@@ -356,19 +362,11 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		has_civil_war = yes
-		any_other_country = {
-			original_tag = ROOT
-			has_civil_war = yes
-			has_cosmetic_tag = GAH_WTG
-		}
-	}
-
 	# Finish it by force.
 	option = {
 		name = ghana.6.a
 		log = "[GetDateText]: [This.GetName]: ghana.6.a executed"
+		trigger = { GAH_volta_war_is_on = yes }
 		add_stability = -0.02
 		add_war_support = 0.05
 		random_other_country = {
@@ -391,6 +389,7 @@ country_event = {
 	option = {
 		name = ghana.6.b
 		log = "[GetDateText]: [This.GetName]: ghana.6.b executed"
+		trigger = { GAH_volta_war_is_on = yes }
 		add_political_power = -100
 		add_stability = 0.02
 		random_other_country = {
@@ -407,6 +406,19 @@ country_event = {
 		}
 		hidden_effect = { news_event = { id = ghana_news.3 hours = 6 } }
 		ai_chance = { base = 5 }
+	}
+
+	# The militias settled it before Accra had to choose.
+	option = {
+		name = ghana.6.c
+		log = "[GetDateText]: [This.GetName]: ghana.6.c executed"
+		trigger = { GAH_volta_war_is_on = no }
+		345 = {
+			add_compliance = 10
+			cancel_resistance = yes
+		}
+		hidden_effect = { news_event = { id = ghana_news.3 hours = 6 } }
+		ai_chance = { base = 10 }
 	}
 }
 
@@ -448,9 +460,28 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: ghana.7.b executed"
 		add_political_power = 25
 		345 = { add_compliance = 10 }
-		hidden_effect = { clear_variable = GAH_togoland_grievance }
+		hidden_effect = {
+			clear_variable = GAH_togoland_grievance
+			country_event = { id = ghana.8 days = 180 random_days = 90 }
+		}
 		ai_chance = { base = 3 }
 	}
+}
+
+# Terminal branches leave the region's resistance to fade; this closes it once the crisis is past.
+country_event = {
+	id = ghana.8
+	is_triggered_only = yes
+	fire_only_once = yes
+	hidden = yes
+
+	trigger = {
+		owns_state = 345
+		controls_state = 345
+		has_civil_war = no
+	}
+
+	immediate = { 345 = { cancel_resistance = yes } }
 }
 
 # ---------------------------------------------------------------------------- news
@@ -466,11 +497,12 @@ news_event = {
 	major = yes
 	is_triggered_only = yes
 
-	trigger = {
+	# Africa, the superpowers and Ghana's own influencers.
+	show_major = {
 		OR = {
 			has_country_flag = african_nation_flag
 			has_idea = super_power
-			FROM = { influence_higher_20 = yes }
+			is_in_array = { array = ROOT.influence_array value = THIS }
 		}
 	}
 
@@ -485,14 +517,13 @@ news_event = {
 	major = yes
 	is_triggered_only = yes
 
-	# One tier wider than ghana_news.1: a shooting war in a stable democracy is great-power
-	# news, a border raid is not.
-	trigger = {
+	# One tier wider than ghana_news.1: a shooting war in a stable democracy is great-power news.
+	show_major = {
 		OR = {
 			has_country_flag = african_nation_flag
 			has_idea = great_power
 			has_idea = super_power
-			FROM = { influence_higher_20 = yes }
+			is_in_array = { array = ROOT.influence_array value = THIS }
 		}
 	}
 
