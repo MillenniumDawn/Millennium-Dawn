@@ -32,7 +32,8 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
 - Reference-map Zones follow the #4791 reference image, which shows 27 outbreak markers besides
   Chornobyl. Zones 5 (New Mexico), 12 (Paraguayan Chaco), 15 (Wielkopolska) and 27 (Lake Mungo)
   have no marker on it and are this scenario's own additions. Zone 31 (Aksai Chin) was added
-  after a placement check found its marker unassigned.
+  after a placement check found its marker unassigned. The map is a guideline, not a cap: add
+  Zones where lore or gameplay calls for them, and note each addition in the placement table.
 - Not canon, and specific to this scenario's design: "Project X" and MDST. Keep them clearly
   framed as this scenario's own inventions.
 
