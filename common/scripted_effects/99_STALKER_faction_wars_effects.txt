@@ -1,0 +1,162 @@
+# GSC's pre-launch Faction Wars Discord event (November 2024): SIRCAA asked every faction to bring in Tearlings,
+# thanked the faction that gathered the most, and paid every faction a share.
+STALKER_monthly_faction_wars_pulse = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			check_variable = { global.STALKER_active_zone_anchors^num > 0 }
+		}
+		for_each_scope_loop = {
+			array = global.STALKER_active_zone_anchors
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					has_variable = STALKER_zone_ward
+				}
+				if = {
+					limit = { has_variable = STALKER_zone_tearling_months }
+					STALKER_gather_tearlings = yes
+				}
+				else_if = {
+					limit = {
+						NOT = { has_state_flag = STALKER_tearling_cooldown }
+						controller = { exists = yes }
+					}
+					random = {
+						chance = 5
+						STALKER_start_tearling_drive = yes
+					}
+				}
+			}
+		}
+	}
+}
+
+STALKER_start_tearling_drive = {
+	set_variable = { STALKER_zone_tearling_months = 3 }
+	set_variable = { STALKER_zone_tearling_backed = 0 }
+	set_variable = { STALKER_zone_tearlings_stalkers = 0 }
+	set_variable = { STALKER_zone_tearlings_duty = 0 }
+	set_variable = { STALKER_zone_tearlings_freedom = 0 }
+	set_variable = { STALKER_zone_tearlings_scientists = 0 }
+	set_variable = { STALKER_zone_tearlings_bandits = 0 }
+	save_event_target_as = STALKER_zone_event_target
+	controller = { country_event = STALKER.150 }
+}
+
+# Each faction gathers in proportion to its strength, with luck; the faction the controller backs gathers 5 more.
+STALKER_gather_tearlings = {
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	add_to_variable = { STALKER_zone_tearlings_stalkers = { value = STALKER_zone_stalkers multiply = 0.2 add = STALKER_tearling_roll } }
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	add_to_variable = { STALKER_zone_tearlings_duty = { value = STALKER_zone_duty multiply = 0.2 add = STALKER_tearling_roll } }
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	add_to_variable = { STALKER_zone_tearlings_freedom = { value = STALKER_zone_freedom multiply = 0.2 add = STALKER_tearling_roll } }
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	add_to_variable = { STALKER_zone_tearlings_scientists = { value = STALKER_zone_scientists multiply = 0.2 add = STALKER_tearling_roll } }
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	add_to_variable = { STALKER_zone_tearlings_bandits = { value = STALKER_zone_bandits multiply = 0.2 add = STALKER_tearling_roll } }
+	if = {
+		limit = { check_variable = { STALKER_zone_tearling_backed = 1 } }
+		add_to_variable = { STALKER_zone_tearlings_stalkers = 5 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_tearling_backed = 2 } }
+		add_to_variable = { STALKER_zone_tearlings_duty = 5 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_tearling_backed = 3 } }
+		add_to_variable = { STALKER_zone_tearlings_freedom = 5 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_tearling_backed = 4 } }
+		add_to_variable = { STALKER_zone_tearlings_scientists = 5 }
+	}
+	add_to_variable = { STALKER_zone_tearling_months = -1 }
+	if = {
+		limit = { check_variable = { STALKER_zone_tearling_months < 1 } }
+		STALKER_resolve_tearling_drive = yes
+	}
+}
+
+# Leader codes: 1 loners, 2 Duty, 3 Freedom, 4 Ecologists, 5 bandits. Ties go to the earlier code.
+STALKER_resolve_tearling_drive = {
+	set_variable = { STALKER_zone_tearling_leader = 1 }
+	set_variable = { STALKER_zone_tearling_best = STALKER_zone_tearlings_stalkers }
+	if = {
+		limit = { check_variable = { STALKER_zone_tearlings_duty > STALKER_zone_tearling_best } }
+		set_variable = { STALKER_zone_tearling_leader = 2 }
+		set_variable = { STALKER_zone_tearling_best = STALKER_zone_tearlings_duty }
+	}
+	if = {
+		limit = { check_variable = { STALKER_zone_tearlings_freedom > STALKER_zone_tearling_best } }
+		set_variable = { STALKER_zone_tearling_leader = 3 }
+		set_variable = { STALKER_zone_tearling_best = STALKER_zone_tearlings_freedom }
+	}
+	if = {
+		limit = { check_variable = { STALKER_zone_tearlings_scientists > STALKER_zone_tearling_best } }
+		set_variable = { STALKER_zone_tearling_leader = 4 }
+		set_variable = { STALKER_zone_tearling_best = STALKER_zone_tearlings_scientists }
+	}
+	if = {
+		limit = { check_variable = { STALKER_zone_tearlings_bandits > STALKER_zone_tearling_best } }
+		set_variable = { STALKER_zone_tearling_leader = 5 }
+		set_variable = { STALKER_zone_tearling_best = STALKER_zone_tearlings_bandits }
+	}
+	add_to_variable = { STALKER_zone_stalkers = 3 }
+	add_to_variable = { STALKER_zone_duty = 3 }
+	add_to_variable = { STALKER_zone_freedom = 3 }
+	add_to_variable = { STALKER_zone_scientists = 3 }
+	add_to_variable = { STALKER_zone_bandits = 3 }
+	if = {
+		limit = { check_variable = { STALKER_zone_tearling_leader = 1 } }
+		add_to_variable = { STALKER_zone_stalkers = 10 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_tearling_leader = 2 } }
+		add_to_variable = { STALKER_zone_duty = 10 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_tearling_leader = 3 } }
+		add_to_variable = { STALKER_zone_freedom = 10 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_tearling_leader = 4 } }
+		add_to_variable = { STALKER_zone_scientists = 10 }
+	}
+	else = {
+		add_to_variable = { STALKER_zone_bandits = 10 }
+	}
+	add_to_variable = { STALKER_zone_ward = 5 }
+	clamp_variable = { var = STALKER_zone_ward min = 0 max = 100 }
+	STALKER_clamp_zone_society = yes
+	set_state_flag = { flag = STALKER_tearling_cooldown value = 1 days = 730 }
+	if = {
+		limit = { controller = { exists = yes } }
+		if = {
+			limit = { check_variable = { STALKER_zone_tearling_backed = STALKER_zone_tearling_leader } }
+			controller = { add_political_power = 50 }
+		}
+		controller = {
+			set_variable = {
+				STALKER_tearlings_total = {
+					value = PREV.STALKER_zone_tearlings_stalkers
+					add = PREV.STALKER_zone_tearlings_duty
+					add = PREV.STALKER_zone_tearlings_freedom
+					add = PREV.STALKER_zone_tearlings_scientists
+					add = PREV.STALKER_zone_tearlings_bandits
+				}
+			}
+			set_variable = { STALKER_tearlings_best = PREV.STALKER_zone_tearling_best }
+		}
+		save_event_target_as = STALKER_zone_event_target
+		controller = { country_event = STALKER.151 }
+	}
+	clear_variable = STALKER_zone_tearling_months
+	clear_variable = STALKER_zone_tearlings_stalkers
+	clear_variable = STALKER_zone_tearlings_duty
+	clear_variable = STALKER_zone_tearlings_freedom
+	clear_variable = STALKER_zone_tearlings_scientists
+	clear_variable = STALKER_zone_tearlings_bandits
+	clear_variable = STALKER_zone_tearling_best
+}

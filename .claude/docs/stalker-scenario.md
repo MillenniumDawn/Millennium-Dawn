@@ -29,6 +29,10 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
 - The Spark follows Scar and seeks the Shining Zone. Noon is former Monolith under Strider.
 - The IPSF is the International Perimeter Security Force.
 - The in-game scientists are the Ecologists.
+- Faction Wars and Tearlings come from GSC's pre-launch Discord event in the official
+  S.T.A.L.K.E.R. server (announcements of 9, 11 and 17 November 2024). SIRCAA asked every
+  faction to bring in Tearlings, common crystals long logged as worthless. The Free Stalkers
+  delivered the most, 331 of 1,232, and every faction got a share of the rewards.
 - Not canon, and specific to this scenario's design: "Project X" and MDST. Keep them clearly
   framed as this scenario's own inventions.
 
@@ -64,10 +68,12 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
   `99_STALKER_world_effects.txt`.
 - **Foreign intelligence (140–149):** `STALKER_intel.txt`; loc `_intel_`;
   `99_STALKER_intel_effects.txt`.
+- **Faction Wars (150–159):** `STALKER_faction_wars.txt`; loc `_faction_wars_`;
+  `99_STALKER_faction_wars_effects.txt`.
 
 Localisation file names are `MD_STALKER_<subsystem>_l_english.yml`.
 
-The next free block is 150–159. Decision categories are one file each in
+The next free block is 160–169. Decision categories are one file each in
 `common/decisions/categories/00_STALKER_*_category.txt`. Dynamic modifiers are one file per
 subsystem in `common/dynamic_modifiers/00_STALKER_*dynamic_modifiers.txt`.
 
