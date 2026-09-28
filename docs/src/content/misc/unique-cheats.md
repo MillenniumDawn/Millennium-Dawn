@@ -90,14 +90,44 @@ These match the cheat decisions, which call the same effects.
 | `effect cheat_dismantle_saudi_faction`   | Dismantles Saudi Arabia's faction.                             |
 | `effect cheat_add_satellites`            | Adds 20 of every satellite model.                              |
 
+### Ruling Party
+
+Each command makes that subideology your ruling party and adds 50% to its popularity and its outlook. The party cheat decisions call the same effects.
+
+| Outlook     | Command                                         | Generic party                 |
+| ----------- | ----------------------------------------------- | ----------------------------- |
+| Western     | `effect cheat_party_western_autocracy`          | Pro-Western Autocrats         |
+| Western     | `effect cheat_party_conservatism`               | Conservatives                 |
+| Western     | `effect cheat_party_liberalism`                 | Liberals                      |
+| Western     | `effect cheat_party_socialism`                  | Social Democrats              |
+| Emerging    | `effect cheat_party_communist_state`            | Communists                    |
+| Emerging    | `effect cheat_party_anarchist_communism`        | Left-Wing Radicals            |
+| Emerging    | `effect cheat_party_conservative`               | Reactionaries                 |
+| Emerging    | `effect cheat_party_autocracy`                  | Autocrats                     |
+| Emerging    | `effect cheat_party_mod_vilayat_e_faqih`        | Moderate Shiite Revolutionary |
+| Emerging    | `effect cheat_party_vilayat_e_faqih`            | Hardline Shiite Revolutionary |
+| Salafist    | `effect cheat_party_kingdom`                    | Pro-Establishment Salafism    |
+| Salafist    | `effect cheat_party_caliphate`                  | Salafi Jihadism               |
+| Non-Aligned | `effect cheat_party_neutral_muslim_brotherhood` | Moderate Islamists            |
+| Non-Aligned | `effect cheat_party_neutral_autocracy`          | Non-Aligned Autocrats         |
+| Non-Aligned | `effect cheat_party_neutral_conservatism`       | Conservatives                 |
+| Non-Aligned | `effect cheat_party_oligarchism`                | Oligarchs                     |
+| Non-Aligned | `effect cheat_party_neutral_libertarian`        | Libertarians                  |
+| Non-Aligned | `effect cheat_party_neutral_green`              | Greens                        |
+| Non-Aligned | `effect cheat_party_neutral_social`             | Socialist Democrats           |
+| Non-Aligned | `effect cheat_party_neutral_communism`          | Communists                    |
+| Nationalist | `effect cheat_party_nat_populism`               | Right Wing Populists          |
+| Nationalist | `effect cheat_party_nat_fascism`                | Fascists                      |
+| Nationalist | `effect cheat_party_nat_autocracy`              | Military Junta                |
+| Nationalist | `effect cheat_party_monarchist`                 | Monarchists                   |
+
+Countries rename many of these parties, so the name in your politics screen may differ from the generic one.
+
 ### Other Cheat Decisions
 
-Most of the other cheat decisions already have a console command:
+The rest of the cheat decisions already have a console command:
 
 - Manpower: `manpower <amount>`.
 - Operatives: `add_ideas operatives1`, `add_ideas operatives5` or `add_ideas operatives10`.
 - Max internal faction opinion: `effect set_to_max_internal_faction_opinions`.
 - Cheaper internal faction changes: `add_ideas GAME_RULE_reduce_internal_factions_cost`.
-- Party popularity: `add_party_popularity`, covered under Political Cheats.
-
-The party decisions also switch your ruling subideology. That part has no console version, so use the decisions for it.
