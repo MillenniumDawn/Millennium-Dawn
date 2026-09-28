@@ -28,3 +28,50 @@ STALKER_apply_top_zone_disturbance = {
 		}
 	}
 }
+
+# Reads TOP_group_target after a facility operation. Organizations 35 to 37 are the STALKER entries in
+# tools/data/targeted_operations.json.
+STALKER_apply_top_organization_sabotage = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			check_variable = { TOP_group_target > 34 }
+			check_variable = { TOP_group_target < 38 }
+			check_variable = { global.TOP_group_state^TOP_group_target > 0 }
+		}
+		set_temp_variable = { STALKER_top_state = global.TOP_group_state^TOP_group_target }
+		if = {
+			limit = { check_variable = { TOP_group_target = 35 } }
+			var:STALKER_top_state = {
+				if = {
+					limit = { STALKER_is_active_zone_anchor = yes }
+					add_to_variable = { STALKER_zone_monolith = -15 }
+					STALKER_clamp_zone_society = yes
+				}
+			}
+		}
+		else_if = {
+			limit = { check_variable = { TOP_group_target = 36 } }
+			var:STALKER_top_state = {
+				if = {
+					limit = { STALKER_is_active_zone_anchor = yes }
+					add_to_variable = { STALKER_zone_bandits = -10 }
+					add_to_variable = { STALKER_zone_containment = 5 }
+					STALKER_clamp_zone_society = yes
+				}
+			}
+		}
+		else = {
+			var:STALKER_top_state = {
+				if = {
+					limit = {
+						STALKER_is_active_zone_anchor = yes
+						has_variable = STALKER_zone_ward
+					}
+					add_to_variable = { STALKER_zone_ward = -10 }
+					clamp_variable = { var = STALKER_zone_ward min = 0 max = 100 }
+				}
+			}
+		}
+	}
+}

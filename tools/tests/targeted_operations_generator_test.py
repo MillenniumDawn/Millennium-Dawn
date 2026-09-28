@@ -51,6 +51,8 @@ def manifest():
         "consequence_profile",
         "duplicate_successor",
         "incomplete_successor",
+        "fixed_state_without_state",
+        "empty_activation_condition",
     ],
 )
 def test_manifest_rejects_ambiguous_or_cross_group_identities(
@@ -119,6 +121,11 @@ def test_manifest_rejects_ambiguous_or_cross_group_identities(
         leader["role_eligibility"]["office_keys"] = []
     elif defect == "consequence_profile":
         data["targets"][0]["consequence_profile"] = "political_leader"
+    elif defect == "fixed_state_without_state":
+        fixed = next(g for g in data["groups"] if g["location_policy"] == "fixed_state")
+        del fixed["state"]
+    elif defect == "empty_activation_condition":
+        data["groups"][0]["activation_condition"] = " "
     elif defect == "duplicate_successor":
         data["targets"][0]["successors"].append(data["targets"][0]["successors"][0])
     else:
@@ -366,9 +373,9 @@ def test_registry_emits_legacy_and_three_axis_person_and_organization_state(mani
     registry = output["common/scripted_effects/01_targeted_operations_registry.txt"]
     assert "global.TOP_registry_capacity = 161" in registry
     for field in GENERATOR.GROUP_FIELDS:
-        assert f"resize_array = {{ global.TOP_group_{field} = 35 }}" in registry
+        assert f"resize_array = {{ global.TOP_group_{field} = 38 }}" in registry
     for field in GENERATOR.ORG_COUNTRY_FIELDS:
-        assert f"resize_array = {{ TOP_org_{field} = 35 }}" in registry
+        assert f"resize_array = {{ TOP_org_{field} = 38 }}" in registry
     generated = range(manifest["generated_start"], manifest["generated_end"])
     assert set(generated) == set(range(65, 129))
     for ident in generated:
@@ -427,7 +434,7 @@ def test_registry_emits_legacy_and_three_axis_person_and_organization_state(mani
     resize = _named_block(registry, "TOP_resize_country_arrays")
     assert "set_variable" not in resize
     assert "resize_array = { TOP_lead_report_clock = 161 }" in resize
-    assert "resize_array = { TOP_org_lead_report_clock = 35 }" in resize
+    assert "resize_array = { TOP_org_lead_report_clock = 38 }" in resize
     successors = output["common/scripted_effects/01_targeted_operations_successors.txt"]
     assert "TOP_person_129" not in successors
 
@@ -520,7 +527,7 @@ def test_manifest_declares_classes_location_policy_and_2027_2032_roster(manifest
     assert groups["tpusa"]["group_class"] == "civilian_organization"
     assert groups["tpusa"]["public_identity"] is True
     for group in manifest["groups"]:
-        if group["id"] >= 25:
+        if 25 <= group["id"] <= 34:
             assert "ct_id" not in group
             assert group["group_class"] == "political_executive"
             assert group["public_identity"] is True
@@ -569,3 +576,32 @@ def test_non_ct_organizations_activate_on_their_authored_windows(manifest):
         assert f"global.TOP_group_window^{group['id']} = 1" in window
         if "ct_id" not in group:
             assert f"global.TOP_group_created^{group['id']} = 1" in window
+
+
+def test_stalker_organizations_sit_in_the_zone_and_wait_for_their_gate(manifest):
+    groups = {group["key"]: group for group in manifest["groups"]}
+    registry = GENERATOR.render(manifest)[
+        "common/scripted_effects/01_targeted_operations_registry.txt"
+    ]
+    expected = {
+        "stalker_monolith": (35, "STALKER_top_zone_organization_active = yes"),
+        "stalker_artifact_smugglers": (
+            36,
+            "STALKER_top_zone_organization_active = yes",
+        ),
+        "stalker_sircaa": (37, "STALKER_top_sircaa_active = yes"),
+    }
+    for key, (ident, condition) in expected.items():
+        group = groups[key]
+        assert group["id"] == ident
+        assert group["location_policy"] == "fixed_state"
+        assert group["state"] == 698
+        activation = _named_block(registry, f"TOP_activate_group_{ident}")
+        assert condition in activation
+        location = _named_block(registry, f"TOP_choose_location_{ident}")
+        assert (
+            "698 = { set_temp_variable = { ROOT.TOP_activation_state = THIS } }"
+            in location
+        )
+        assert "random_controlled_state" not in location
+    assert "STALKER_" not in _named_block(registry, "TOP_activate_group_1")
