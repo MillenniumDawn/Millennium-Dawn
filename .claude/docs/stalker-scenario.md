@@ -92,7 +92,9 @@ where possible; they are what an upstream port has to carry.
   of STALKER.34 and STALKER.35.
 - `common/scripted_effects/00_startup_effects.txt`: the artifact MIO in MD's starting MIO sizing.
 - Targeted Operations: `STALKER_check_top_zone_crisis` calls in the TOP proposal and resolution
-  effects, and `[STALKER_top_package_zone_crisis]` in the package-page localisation. See
+  effects, `STALKER_apply_top_organization_sabotage` in the organization resolution, the three
+  STALKER organizations in `tools/data/targeted_operations.json`, and
+  `[STALKER_top_package_zone_crisis]` in the package-page localisation. See
   [Targeted Operations](targeted-operations.md).
 - `localisation/english/MD_game_rules_l_english.yml`: the three STALKER rules.
 
