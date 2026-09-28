@@ -75,12 +75,13 @@ def _run_tst(mod, monkeypatch, *args):
     mod.main()
 
 
+PROD_VAR_RE = re.compile(r"productivity_state_var = (\d+)")
+
+
 def _productivity_values(repo):
     values = {}
     for path in (repo / "history" / "states").iterdir():
-        match = re.search(
-            r"productivity_state_var = (\d+)", path.read_text(encoding="utf-8")
-        )
+        match = PROD_VAR_RE.search(path.read_text(encoding="utf-8"))
         if match:
             values[path.name] = int(match.group(1))
     return values
@@ -568,7 +569,7 @@ class TestCliMain:
         changed = []
         for f in (redist_mini_repo / "history" / "states").iterdir():
             text = f.read_text(encoding="utf-8")
-            m = re.search(r"productivity_state_var = (\d+)", text)
+            m = PROD_VAR_RE.search(text)
             if m and int(m.group(1)) not in (1000, 999):
                 changed.append(f.name)
         # TST has 3 states — at least one should have moved.
