@@ -21,7 +21,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass, field
-from typing import Dict, List
+from typing import Dict, List, Set
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 
@@ -70,7 +70,7 @@ class TagCensus:
     by_definition: Dict[str, int] = field(default_factory=dict)
 
 
-def census_file(path: str, capital_defs: set) -> TagCensus:
+def census_file(path: str, capital_defs: Set[str]) -> TagCensus:
     filename = os.path.basename(path)
     tag_match = _TAG_FROM_FILENAME.match(filename)
     tag = tag_match.group(1) if tag_match else filename
@@ -135,8 +135,6 @@ def main() -> int:
     print()
     rows = zero_capital if args.zero_only else results
     for r in rows:
-        if r.total == 0 and args.zero_only:
-            continue
         print(f"{r.tag:4s} total={r.total:3d} capital={r.capital:3d}")
     return 0
 
