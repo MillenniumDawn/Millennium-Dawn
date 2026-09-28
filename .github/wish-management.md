@@ -23,8 +23,8 @@ check, and the commands used to build the board.
 | Last check-in  | board date          | Set at the quarterly ping                                                                                          |
 | Developers     | assignees           | One, or two for a tagteam                                                                                          |
 
-`issue-triage.yml` sets the Type and Region labels from the Kind and Region sections of
-the Focus Trees template.
+`issue-triage.yml` sets the Type and Region labels from the Kind and Region answers of
+the Focus Trees form.
 
 ## Views
 
