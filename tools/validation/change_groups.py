@@ -95,6 +95,7 @@ _FULL_SUITE_EXACT = {
     "bun.lock",
     ".jscpd.json",
     ".claude/docs/typo-watchlist.md",
+    "validation_config.json",
 }
 _FULL_SUITE_PREFIXES = (
     "tools/validation/",

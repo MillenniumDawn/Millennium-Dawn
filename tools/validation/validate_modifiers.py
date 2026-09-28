@@ -18,6 +18,7 @@ from shared_utils import (
     compute_line_offsets,
     extract_block_from_text,
     line_for_offset,
+    validation_config,
 )
 from validator_common import (
     BaseValidator,
@@ -655,11 +656,9 @@ _UNBALANCED_INFLATION_VAR = "inflation_rate_var"
 _UNBALANCED_INFLATION_START_CAP = 0.50
 
 # Documented ROI exceptions, as "owner::key". A single reward above the ROI
-# cap must justify itself here; undocumented ones fail the opt-in check.
+# cap must justify itself there; undocumented ones fail the opt-in check.
 _UNBALANCED_ROI_EXCEPTIONS: FrozenSet[str] = frozenset(
-    {
-        # No documented exceptions yet — triage --unbalanced-modifiers output first.
-    }
+    validation_config("validate_modifiers", "unbalanced_roi_exceptions")
 )
 
 _NUMERIC_BARE_ASSIGNMENT_RE = re.compile(
@@ -1056,7 +1055,7 @@ class Validator(BaseValidator):
 
         Opt-in: pass --unbalanced-modifiers. Each cap applies per direct
         assignment: ROI over 3% (needs a documented entry in
-        _UNBALANCED_ROI_EXCEPTIONS), productivity growth over 25%,
+        validation_config.json unbalanced_roi_exceptions), productivity growth over 25%,
         game-start policy rate above the 20 cap, game-start inflation
         above 50%.
         """
@@ -1081,7 +1080,8 @@ class Validator(BaseValidator):
                     (
                         f"{where}: {key} = {value:g} exceeds the 3% "
                         "single-reward cap (document an exception in "
-                        "_UNBALANCED_ROI_EXCEPTIONS if intended, issue #4370)",
+                        "validation_config.json unbalanced_roi_exceptions if "
+                        "intended, issue #4370)",
                         rel,
                         lineno,
                     )
