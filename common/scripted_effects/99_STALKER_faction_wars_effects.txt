@@ -19,6 +19,7 @@ STALKER_monthly_faction_wars_pulse = {
 				}
 				else_if = {
 					limit = {
+						has_global_flag = STALKER_2022_outcome_resolved
 						NOT = { has_state_flag = STALKER_tearling_cooldown }
 						controller = { exists = yes }
 					}
@@ -35,6 +36,7 @@ STALKER_monthly_faction_wars_pulse = {
 STALKER_start_tearling_drive = {
 	set_variable = { STALKER_zone_tearling_months = 3 }
 	set_variable = { STALKER_zone_tearling_backed = 0 }
+	clear_variable = STALKER_zone_tearling_backer
 	set_variable = { STALKER_zone_tearlings_stalkers = 0 }
 	set_variable = { STALKER_zone_tearlings_duty = 0 }
 	set_variable = { STALKER_zone_tearlings_freedom = 0 }
@@ -46,15 +48,15 @@ STALKER_start_tearling_drive = {
 
 # Each faction gathers in proportion to its strength, with luck; the faction the controller backs gathers 5 more.
 STALKER_gather_tearlings = {
-	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 6 integer = yes }
 	add_to_variable = { STALKER_zone_tearlings_stalkers = { value = STALKER_zone_stalkers multiply = 0.2 add = STALKER_tearling_roll } }
-	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 6 integer = yes }
 	add_to_variable = { STALKER_zone_tearlings_duty = { value = STALKER_zone_duty multiply = 0.2 add = STALKER_tearling_roll } }
-	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 6 integer = yes }
 	add_to_variable = { STALKER_zone_tearlings_freedom = { value = STALKER_zone_freedom multiply = 0.2 add = STALKER_tearling_roll } }
-	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 6 integer = yes }
 	add_to_variable = { STALKER_zone_tearlings_scientists = { value = STALKER_zone_scientists multiply = 0.2 add = STALKER_tearling_roll } }
-	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 5 }
+	set_temp_variable_to_random = { var = STALKER_tearling_roll min = 0 max = 6 integer = yes }
 	add_to_variable = { STALKER_zone_tearlings_bandits = { value = STALKER_zone_bandits multiply = 0.2 add = STALKER_tearling_roll } }
 	if = {
 		limit = { check_variable = { STALKER_zone_tearling_backed = 1 } }
@@ -81,6 +83,11 @@ STALKER_gather_tearlings = {
 
 # Leader codes: 1 loners, 2 Duty, 3 Freedom, 4 Ecologists, 5 bandits. Ties go to the earlier code.
 STALKER_resolve_tearling_drive = {
+	round_variable = STALKER_zone_tearlings_stalkers
+	round_variable = STALKER_zone_tearlings_duty
+	round_variable = STALKER_zone_tearlings_freedom
+	round_variable = STALKER_zone_tearlings_scientists
+	round_variable = STALKER_zone_tearlings_bandits
 	set_variable = { STALKER_zone_tearling_leader = 1 }
 	set_variable = { STALKER_zone_tearling_best = STALKER_zone_tearlings_stalkers }
 	if = {
@@ -131,26 +138,36 @@ STALKER_resolve_tearling_drive = {
 	clamp_variable = { var = STALKER_zone_ward min = 0 max = 100 }
 	STALKER_clamp_zone_society = yes
 	set_state_flag = { flag = STALKER_tearling_cooldown value = 1 days = 730 }
+	set_variable = {
+		global.STALKER_tearlings_total = {
+			value = STALKER_zone_tearlings_stalkers
+			add = STALKER_zone_tearlings_duty
+			add = STALKER_zone_tearlings_freedom
+			add = STALKER_zone_tearlings_scientists
+			add = STALKER_zone_tearlings_bandits
+		}
+	}
+	set_variable = { global.STALKER_tearlings_best = STALKER_zone_tearling_best }
+	save_event_target_as = STALKER_zone_event_target
 	if = {
 		limit = { controller = { exists = yes } }
+		controller = { country_event = STALKER.151 }
+	}
+	if = {
+		limit = {
+			has_variable = STALKER_zone_tearling_backer
+			var:STALKER_zone_tearling_backer = { exists = yes }
+		}
 		if = {
 			limit = { check_variable = { STALKER_zone_tearling_backed = STALKER_zone_tearling_leader } }
-			controller = { add_political_power = 50 }
+			var:STALKER_zone_tearling_backer = { add_political_power = 50 }
 		}
-		controller = {
-			set_variable = {
-				STALKER_tearlings_total = {
-					value = PREV.STALKER_zone_tearlings_stalkers
-					add = PREV.STALKER_zone_tearlings_duty
-					add = PREV.STALKER_zone_tearlings_freedom
-					add = PREV.STALKER_zone_tearlings_scientists
-					add = PREV.STALKER_zone_tearlings_bandits
-				}
+		var:STALKER_zone_tearling_backer = {
+			if = {
+				limit = { NOT = { controls_state = PREV } }
+				country_event = STALKER.151
 			}
-			set_variable = { STALKER_tearlings_best = PREV.STALKER_zone_tearling_best }
 		}
-		save_event_target_as = STALKER_zone_event_target
-		controller = { country_event = STALKER.151 }
 	}
 	clear_variable = STALKER_zone_tearling_months
 	clear_variable = STALKER_zone_tearlings_stalkers
