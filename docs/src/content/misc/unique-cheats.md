@@ -66,3 +66,12 @@ The economy panel updates right away. The normal weekly and monthly updates keep
 | `effect cheat_add_trains`         | 200 trains.                                                                                                                                                                                             |
 
 These grant each equipment type by archetype, so the game picks the model. Tanks, aircraft and ships are designs, so use the vanilla `add_equipment <amount> <equipment>` command with a specific variant instead.
+
+### Voting
+
+| Command                       | What it does                                                                                                                                      |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `effect cheat_eu_ai_vote_yes` | Every AI member votes yes on every EU council vote. This is the same switch as the EU cheat decision.                                             |
+| `effect cheat_un_ai_vote_yes` | Every AI country votes yes on every UN General Assembly and Security Council vote, including recognition votes. Permanent members no longer veto. |
+
+These apply to every vote, not only the ones you propose, so AI proposals pass too. Neither can be turned off in the same save. Countries that appear after you run `cheat_un_ai_vote_yes` vote normally until you run it again.
