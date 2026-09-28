@@ -49,6 +49,7 @@ Open the console and type `effect <name>`. The cheat runs on the country you are
 
 | Command                                | What it does                                                                   |
 | -------------------------------------- | ------------------------------------------------------------------------------ |
+| `effect cheat_motherlode`              | Adds 10,000 to the treasury.                                                   |
 | `effect cheat_reset_economy`           | Runs all four resets below.                                                    |
 | `effect cheat_reset_inflation`         | Sets inflation to 0% and clears the last four quarters of inflation history.   |
 | `effect cheat_clear_debt`              | Sets debt to 0, which also clears interest payments.                           |
@@ -75,3 +76,28 @@ These grant each equipment type by archetype, so the game picks the model. Tanks
 | `effect cheat_un_ai_vote_yes` | Every AI country votes yes on every UN General Assembly and Security Council vote, including recognition votes. Permanent members no longer veto. |
 
 These apply to every vote, not only the ones you propose, so AI proposals pass too. Neither can be turned off in the same save. Countries that appear after you run `cheat_un_ai_vote_yes` vote normally until you run it again.
+
+### Factions and Satellites
+
+These match the cheat decisions, which call the same effects.
+
+| Command                                  | What it does                                                   |
+| ---------------------------------------- | -------------------------------------------------------------- |
+| `effect cheat_dismantle_all_factions`    | Dismantles every faction.                                      |
+| `effect cheat_dismantle_nato`            | Dismantles NATO and removes NATO membership from every member. |
+| `effect cheat_dismantle_russian_faction` | Dismantles Russia's faction.                                   |
+| `effect cheat_dismantle_iranian_faction` | Dismantles Iran's faction.                                     |
+| `effect cheat_dismantle_saudi_faction`   | Dismantles Saudi Arabia's faction.                             |
+| `effect cheat_add_satellites`            | Adds 20 of every satellite model.                              |
+
+### Other Cheat Decisions
+
+Most of the other cheat decisions already have a console command:
+
+- Manpower: `manpower <amount>`.
+- Operatives: `add_ideas operatives1`, `add_ideas operatives5` or `add_ideas operatives10`.
+- Max internal faction opinion: `effect set_to_max_internal_faction_opinions`.
+- Cheaper internal faction changes: `add_ideas GAME_RULE_reduce_internal_factions_cost`.
+- Party popularity: `add_party_popularity`, covered under Political Cheats.
+
+The party decisions also switch your ruling subideology. That part has no console version, so use the decisions for it.
