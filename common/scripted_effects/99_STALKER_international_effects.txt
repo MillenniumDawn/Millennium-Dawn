@@ -25,7 +25,8 @@ STALKER_monthly_international_pulse = {
 	}
 }
 
-# Smuggled artifacts pool globally; every five can surface as a foreign customs seizure.
+# Smuggled artifacts pool globally; every five can surface as a foreign customs seizure. The seizure is traced
+# to the Zone whose black market leaked the most last month.
 STALKER_roll_artifact_seizure = {
 	if = {
 		limit = {
@@ -34,10 +35,22 @@ STALKER_roll_artifact_seizure = {
 		}
 		random = {
 			chance = 25
-			random_scope_in_array = {
+			set_temp_variable = { STALKER_seizure_state = 0 }
+			set_temp_variable = { STALKER_seizure_best = 0 }
+			for_each_scope_loop = {
 				array = global.STALKER_active_zone_anchors
-				limit = { controller = { exists = yes } }
-				controller = { save_event_target_as = STALKER_zone_controller_target }
+				if = {
+					limit = {
+						controller = { exists = yes }
+						check_variable = { STALKER_zone_black_market > ROOT.STALKER_seizure_best }
+					}
+					set_temp_variable = { ROOT.STALKER_seizure_best = STALKER_zone_black_market }
+					set_temp_variable = { ROOT.STALKER_seizure_state = THIS }
+				}
+			}
+			if = {
+				limit = { check_variable = { STALKER_seizure_state > 0 } }
+				var:STALKER_seizure_state = { controller = { save_event_target_as = STALKER_zone_controller_target } }
 			}
 			random_scope_in_array = {
 				array = global.majors
