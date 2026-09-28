@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import write_text_under
+from shared_utils import VALIDATION_CONFIG_PATH, write_text_under
 
 # Bump to invalidate every entry after a schema change. v5 replaced the
 # one-pickle-per-entry layout with a single SQLite db; prune_old_versions drops
@@ -203,6 +203,7 @@ def _fingerprint_paths(namespace: str) -> list[Path]:
         Path(__file__),
         Path(__file__).parent.parent / "shared_utils.py",
         Path(__file__).parent / "validator_common.py",
+        Path(VALIDATION_CONFIG_PATH),
     ]
     prefix = namespace.split(".", 1)[0]
     owner = _VALIDATOR_NAMESPACES.get(prefix)
