@@ -306,12 +306,15 @@ def test_opener_comment_survives():
     )
 
 
+_TECH_HEADER_RE = re.compile(r"\s*(\w+)\s*=\s*\{")
+
+
 def _tech_ids(text):
     ids = []
     depth = 0
     for line in text.splitlines():
         code = line.split("#", 1)[0]
-        match = re.match(r"\s*(\w+)\s*=\s*\{", code)
+        match = _TECH_HEADER_RE.match(code)
         if match and depth == 1:
             ids.append(match.group(1))
         depth += code.count("{") - code.count("}")
