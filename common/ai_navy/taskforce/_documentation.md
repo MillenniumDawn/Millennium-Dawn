@@ -18,7 +18,7 @@ generic_taskforce_1 = {
 		# SCOPE = COUNTRY
 		factor = 1
 	}
-	mission = { naval_patrol convoy_escort } # A list of applicable missions this taskforce can perform
+	mission = { naval_patrol } # The single mission this taskforce performs; the engine asserts on more than one
 	min_composition = { # The minimum composition before the goal system can form this taskforce
 		frigate = {
 			amount = 1
