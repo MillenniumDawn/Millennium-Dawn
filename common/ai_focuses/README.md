@@ -89,3 +89,36 @@ The engine sets these before the weights apply. `ai_focus_<x>_factor` modifiers
 | `military_equipment`    | 75 at peace, 100 at war                                           | `ai_focus_military_equipment_factor`    |
 
 `naval`, `naval_air`, `aviation` and `military_advancements` drop by 25% at peace.
+
+## Tech weights
+
+The focus weights above steer which categories the AI wants in each situation. A
+tech's own `ai_will_do` in `common/technologies/` sets its value and timing. Keep
+both on these scales so neither swamps the other.
+
+| `ai_will_do` base | Use for                                                  |
+| ----------------- | -------------------------------------------------------- |
+| 0                 | Never (placeholders, content the AI cannot use)          |
+| 1                 | Default. The focus weights decide                        |
+| 3                 | Preferred (SAMs, transport helicopters, battery storage) |
+| 5                 | Core progression (chassis, reactors, microchips, rail)   |
+| 10                | Top economy or catch-up (rail terminals, energy, fuel)   |
+| 20                | Only the 1965 starter unlocks                            |
+
+- Modifier order: context factors and bonuses first, `factor = 0` gates last, so a
+  gate always wins. No `add` above 10.
+- Date gate: `factor = 0.5` while `date < start_year`, `factor = 0` while
+  `date < start_year - 2`. Techs from 2000 or earlier need none. Missiles and space
+  also keep an era damper (x0.5 before 2015, x0.2 before 2010).
+- GDP per capita ladder: x1.5 above 20, x2 above 50, x3 above 90. High-tech lines
+  drop to 0 below 7 unless `ai_research_exempt_from_gdp_gate` (majors and
+  regional-or-larger powers).
+- `is_populous_developing_country` (over 100 million people, GDP per capita under 20) cuts AI and electrification techs to x0.25 for five years after their start
+  year. Surplus labor makes worker savings and extra population energy use a
+  poor trade early.
+- `ai_research_weights = { CAT_x = N }` on an entry tech (first reactor, first
+  microchip plant, rail terminals, helicopter operations) pulls the AI toward the
+  rest of that line. The keys are tech categories, not resources.
+- Nuclear weapon techs sit at 0.25 and drop to 0 unless `rule_nuclear_weapons` is
+  `allowed`. The `disabled` option also hides them through `allow_branch` and the
+  nuclear weapon special projects through `allowed`.
