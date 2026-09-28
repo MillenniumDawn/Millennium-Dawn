@@ -4,6 +4,7 @@
 
 import argparse
 import bisect
+import json
 import logging
 import os
 import re
@@ -54,6 +55,30 @@ _LEVEL_COLORS = {
 # Default skip patterns shared across validators. Individual validators can
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
+
+VALIDATION_CONFIG_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "validation_config.json",
+)
+VALIDATION_CONFIG_VERSION = 1
+
+
+@lru_cache(maxsize=None)
+def _load_validation_config() -> Dict[str, Any]:
+    with open(VALIDATION_CONFIG_PATH, encoding="utf-8") as handle:
+        config = json.load(handle)
+    if config.get("version") != VALIDATION_CONFIG_VERSION:
+        raise ValueError(
+            f"{VALIDATION_CONFIG_PATH}: expected version "
+            f"{VALIDATION_CONFIG_VERSION}, found {config.get('version')!r}"
+        )
+    return config
+
+
+def validation_config(validator: str, key: str) -> Dict[str, str]:
+    """Return one validation_config.json suppression list as entry -> reason."""
+    return _load_validation_config()[validator][key]
+
 
 # ruling_party 0-23. Slot 0 is Western Autocracy.
 PARTY_SLOT_NAMES: Dict[int, str] = {

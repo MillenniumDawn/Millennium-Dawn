@@ -21,7 +21,7 @@ from equipment_module_slots import (
     blank_comments,
     parse_duplicate_archetypes,
 )
-from shared_utils import FileOpener, find_matching_brace
+from shared_utils import FileOpener, find_matching_brace, validation_config
 from validator_common import BaseValidator, Severity, run_validator_main
 
 EQUIPMENT_GLOB = "common/units/equipment/**/*.txt"
@@ -38,15 +38,10 @@ _ACCUMULATOR = "equipment_operative_cost"
 # and missile batteries carry land_air_wing_size instead and no map icon.
 _LAND_MARKER = "map_icon_category"
 
-# Archetypes deliberately charged nothing, with the reason each one is exempt.
 # Anything not listed here that a land battalion needs is a finding.
-UPKEEP_EXEMPT: Dict[str, str] = {
-    "zombie": "event-spawned infection, never produced or stockpiled",
-    "zombie_runner": "event-spawned infection, never produced or stockpiled",
-    "zombie_brute": "event-spawned infection, never produced or stockpiled",
-    "HACS_equipment": "build_cost_ic 99999999 — never buildable by design",
-    "CHIMERA_equipment": "event-granted special content, outside the economy",
-}
+UPKEEP_EXEMPT: Dict[str, str] = validation_config(
+    "validate_equipment_upkeep", "upkeep_exempt"
+)
 
 _NEED_KEYS = ("need", "essential")
 _TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
@@ -289,7 +284,8 @@ class Validator(BaseValidator):
 
         stale = [
             (
-                f"'{archetype}' is on UPKEEP_EXEMPT ({UPKEEP_EXEMPT[archetype]}) but "
+                f"'{archetype}' is on upkeep_exempt in validation_config.json "
+                f"({UPKEEP_EXEMPT[archetype]}) but "
                 f"now has a {_ACCUMULATOR} entry — drop the exemption",
                 MONEY_FILE,
                 acc_line,

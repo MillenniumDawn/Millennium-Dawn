@@ -15,6 +15,7 @@ from multiprocessing import Pool
 from typing import Dict, List, Tuple
 
 import disk_cache
+from shared_utils import validation_config
 from validator_common import (
     BaseValidator,
     DataCleaner,
@@ -462,23 +463,9 @@ class Validator(BaseValidator):
         if self.min_references:
             self.log(f"Minimum references required: {self.min_references}")
 
-        FALSE_POSITIVES = [
-            "value",
-            "days",
-            "months",
-            "years",
-            "hours",
-            "@",
-            "[",
-            "{",
-            "var:",
-            "temp_",
-            "^",
-            # Used: read via check_variable in ZAM_political_leaders but the
-            # reference scan misses it; suppress rather than delete a live var.
-            "anarchist_communism_leader",
-        ]
-        self.validate_set_variables(FALSE_POSITIVES)
+        self.validate_set_variables(
+            list(validation_config("validate_set_variables", "false_positives"))
+        )
 
 
 def add_extra_args(parser):

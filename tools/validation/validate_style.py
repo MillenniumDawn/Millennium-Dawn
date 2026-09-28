@@ -25,7 +25,7 @@ from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import strip_inline_comment
+from shared_utils import strip_inline_comment, validation_config
 from validator_common import BaseValidator, Severity, run_validator_main
 
 _SCAN_PATTERNS = [
@@ -61,13 +61,10 @@ _RE_INVISIBLE_EFFECT = re.compile(
 _RE_INVISIBLE_BLOCK = re.compile(r"^(?:hidden_effect|limit)\s*=\s*\{")
 _RE_TRANSPARENT_BLOCK = re.compile(r"^(?:if|else|else_if)\s*=\s*\{")
 
-# EH is the Event Horizon generic tree's mod-wide domain prefix, not a tag.
-_SHARED_FOCUS_PREFIXES = ("USoE", "POTEF", "AFRICAN_UNION", "GENERIC", "EH")
-
-# common/national_focus/00_generic_dummy.txt is a structurally inert placeholder
-# tree (country = { factor = 0 }), never assigned to a TAG, used only as a
-# workaround for the base-game joint-focus mechanic, not a real focus.
-_EXEMPT_FOCUS_IDS = {"dummy_focus"}
+_SHARED_FOCUS_PREFIXES = tuple(
+    validation_config("validate_style", "shared_focus_prefixes")
+)
+_EXEMPT_FOCUS_IDS = frozenset(validation_config("validate_style", "exempt_focus_ids"))
 
 
 def split_code_and_comment(line: str) -> Tuple[str, str]:

@@ -22,6 +22,7 @@ from shared_utils import (
     iter_statements,
     read_text_strict,
     strip_comments,
+    validation_config,
 )
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -248,8 +249,10 @@ _TYPO_WATCHLIST: Dict[str, str] = {
     "seperated": "separated",
 }
 
-# Exact-phrase substrings exempt from typo flagging (populate as intentional uses surface).
-_TYPO_EXEMPTIONS: Set[str] = set()
+# Exact-phrase substrings exempt from typo flagging.
+_TYPO_EXEMPTIONS: Set[str] = set(
+    validation_config("validate_localisation", "typo_exemptions")
+)
 
 _TYPO_RE = re.compile(
     r"\b(?:" + "|".join(re.escape(t) for t in _TYPO_WATCHLIST) + r")\b",

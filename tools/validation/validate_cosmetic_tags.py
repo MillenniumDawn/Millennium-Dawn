@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
+from shared_utils import validation_config
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -355,34 +356,22 @@ class Validator(BaseValidator):
             )
             return
 
-        # Tags containing [ or { are from meta_effect text blocks and should be ignored
-        PATTERN_FALSE_POSITIVES = ["[", "{"]
-        # Tags that are generated dynamically via meta_effects (e.g. [ROOTTAG]_REB)
-        # and so never appear as literal set_cosmetic_tag = TAG calls
-        META_EFFECT_TAGS = [
-            "PER_REB",  # from [ROOTTAG]_REB
-            "GER_AUTH_S",  # from [ROOTTAG]_AUTH_S
-            "CRO_Serbian_Krajina",  # checked in scripted loc but set externally
-            "ENG_England",  # checked in formable nations but never set
-        ]
-        KNOWN_BUGS = []
-        # Tags set in focus trees that lack cosmetic.txt/flag definitions (incomplete)
-        INCOMPLETE_TAGS = [
-            "BSH_limonka",  # 05_bashkiriya.txt - nationalist fascist override
-            "BSH_REB_S_nationalist",  # 05_bashkiriya.txt - nationalist junta override
-            "TAT_REB_S_nationalist",  # Tatarstan.txt - nationalist junta override
-        ]
+        pattern, meta_effect, known_bugs, incomplete = (
+            list(validation_config("validate_cosmetic_tags", key))
+            for key in (
+                "pattern_false_positives",
+                "meta_effect_tags",
+                "known_bugs",
+                "incomplete_tags",
+            )
+        )
         # validate_missing uses _collect_files() which respects staged mode
-        self.validate_missing_cosmetic_tags(PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS)
+        self.validate_missing_cosmetic_tags(pattern + meta_effect)
 
         # Cross-reference checks scan all .tga/.yml files — skip in staged mode
         if not self.staged_only:
-            self.validate_unused_cosmetic_tags(
-                PATTERN_FALSE_POSITIVES + KNOWN_BUGS + INCOMPLETE_TAGS
-            )
-            self.validate_unused_cosmetic_tag_colors(
-                PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS
-            )
+            self.validate_unused_cosmetic_tags(pattern + known_bugs + incomplete)
+            self.validate_unused_cosmetic_tag_colors(pattern + meta_effect)
 
 
 if __name__ == "__main__":
