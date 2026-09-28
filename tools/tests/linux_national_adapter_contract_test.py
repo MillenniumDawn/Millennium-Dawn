@@ -80,6 +80,11 @@ NATIONAL_LOCALISATION = {
     "SOV": "linux_system_events.2.d_SOV",
 }
 
+TAG_PATTERNS = {
+    tag: re.compile(rf"^\|\s*{re.escape(tag)}\s*\|", re.MULTILINE)
+    for tag in ("ENG", "GER", "FRA", "BRA", "RAJ", "SOV", "CHI", "POL", "VEN")
+}
+
 
 def _extract_block(text: str, brace_index: int) -> str:
     depth = 0
@@ -525,7 +530,7 @@ def test_adapter_source_register_covers_every_national_integration():
     for source in required_sources:
         assert source in adapter_doc
     for tag in ("ENG", "GER", "FRA", "BRA", "RAJ", "SOV", "CHI", "POL", "VEN"):
-        assert re.search(rf"^\|\s*{re.escape(tag)}\s*\|", adapter_doc, re.MULTILINE)
+        assert TAG_PATTERNS[tag].search(adapter_doc)
     assert "linux-national-adapters.md" in reference
     assert "OpenHarmony or Android-compatibility state" in adapter_doc
 
