@@ -13,12 +13,24 @@ Add content to the subsystem that owns it, and touch shared files only through t
   used by two or more subsystems live in the core file `MD_STALKER_l_english.yml`.
 - **Monthly work.** Add a line to `STALKER_monthly_pulse` in
   `common/scripted_effects/99_STALKER_pulse_effects.txt`. Do not add lines to `MD_on_actions.txt`.
-- **Changelog.** STALKER feature PRs into `feature/stalker-global-zones-4791` do not edit
-  `Changelog.txt`. The scenario keeps one STALKER entry, rewritten when it lands on `main` and
-  again when it is ported upstream. This is the one exception to the one-line-per-PR rule in
-  `AGENTS.md`.
-- **One integration branch.** Feature PRs target `feature/stalker-global-zones-4791`. Do not push
-  to it directly. Merge PRs one at a time, and merge the latest base into each one first.
+- **Changelog.** Each STALKER PR adds one BLUF line to `Changelog.txt`, as `AGENTS.md` requires.
+- **Target `main`.** The scenario landed on `main` with #372; `feature/stalker-global-zones-4791`
+  is retired. Merge STALKER PRs one at a time, and merge the latest `main` into each one first.
+
+## Canon
+
+Player-facing text follows GSC Game World's games. GSC's own pages carry little lore, so check
+names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wiki and Game8.
+
+- Use STALKER 2 spellings: Chornobyl, and Dr. Kaymanov, the Doctor.
+- In the Kaymanov ending, Skif defies Strelok, spares the Doctor, enters the eighth
+  C-Consciousness pod and cedes control to the Zone. New Zones then form around the world.
+- The Ward is SIRCAA's private army under Colonel Korshunov. SIRCAA does the research.
+- The Spark follows Scar and seeks the Shining Zone. Noon is former Monolith under Strider.
+- The IPSF is the International Perimeter Security Force.
+- The in-game scientists are the Ecologists.
+- Not canon, and specific to this scenario's design: "Project X" and MDST. Keep them clearly
+  framed as this scenario's own inventions.
 
 ## Subsystems
 
@@ -44,10 +56,18 @@ Add content to the subsystem that owns it, and touch shared files only through t
   `99_STALKER_mutant_effects.txt`.
 - **Crossover (100–109):** `STALKER_crossover.txt`; loc `_crossover_`;
   `99_STALKER_meme_effects.txt`.
+- **Footprint (110–119):** `STALKER_footprint.txt`; loc `_footprint_`;
+  `99_STALKER_footprint_effects.txt`.
+- **Factions (120–129):** `STALKER_factions.txt`; loc `_factions_`;
+  `99_STALKER_faction_effects.txt`.
+- **World reaction (130–139):** `STALKER_world.txt`; loc `_world_`;
+  `99_STALKER_world_effects.txt`.
+- **Foreign intelligence (140–149):** `STALKER_intel.txt`; loc `_intel_`;
+  `99_STALKER_intel_effects.txt`.
 
 Localisation file names are `MD_STALKER_<subsystem>_l_english.yml`.
 
-The next free block is 110–119. Decision categories are one file each in
+The next free block is 150–159. Decision categories are one file each in
 `common/decisions/categories/00_STALKER_*_category.txt`. Dynamic modifiers are one file per
 subsystem in `common/dynamic_modifiers/00_STALKER_*dynamic_modifiers.txt`.
 
