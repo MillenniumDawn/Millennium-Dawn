@@ -10,8 +10,8 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
+from shared_utils import DEFAULT_EXTRA_SKIP_PATTERNS
 from validator_common import (
-    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
     DataCleaner,

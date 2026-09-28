@@ -17,6 +17,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache
 from image_size import read_image_size
 from shared_utils import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     blank_quoted_strings,
     extract_block_from_text,
     get_staged_files,
@@ -25,7 +26,6 @@ from shared_utils import (
 )
 from sprite_index import build_sprite_index, build_sprite_texture_index
 from validator_common import (
-    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     FileOpener,
     Severity,
