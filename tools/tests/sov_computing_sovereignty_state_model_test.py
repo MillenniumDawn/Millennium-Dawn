@@ -167,7 +167,7 @@ TECH_PROJECT_CONSUMERS = {
 TECH_CONTEXT_GATES = {
     "SOV_computing_sovereignty_domestic_enterprise_software": (
         {
-            "has_tech = computing4",
+            "has_tech = computing_4",
             "has_country_flag = SOV_computing_sovereignty_1c_ecosystem_active",
         },
         set(),
@@ -180,7 +180,7 @@ TECH_CONTEXT_GATES = {
         },
     ),
     "SOV_computing_sovereignty_cloud_software_stack": (
-        {"has_tech = computing5"},
+        {"has_tech = computing_5"},
         {
             "has_idea = SOV_yandex_idea",
             "has_completed_focus = SOV_economic_destiny_yandex",
