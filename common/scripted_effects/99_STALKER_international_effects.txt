@@ -48,9 +48,16 @@ STALKER_roll_artifact_seizure = {
 					set_temp_variable = { ROOT.STALKER_seizure_state = THIS }
 				}
 			}
+			set_temp_variable = { STALKER_seizure_original = 0 }
 			if = {
 				limit = { check_variable = { STALKER_seizure_state > 0 } }
-				var:STALKER_seizure_state = { controller = { save_event_target_as = STALKER_zone_controller_target } }
+				var:STALKER_seizure_state = {
+					controller = { save_event_target_as = STALKER_zone_controller_target }
+					if = {
+						limit = { state = 698 }
+						set_temp_variable = { ROOT.STALKER_seizure_original = 1 }
+					}
+				}
 			}
 			random_scope_in_array = {
 				array = global.majors
@@ -60,14 +67,22 @@ STALKER_roll_artifact_seizure = {
 				}
 				set_global_flag = { flag = STALKER_artifact_seizure_cooldown value = 1 days = 180 }
 				add_to_variable = { global.STALKER_smuggled_artifacts = -5 }
+				save_event_target_as = STALKER_seizing_country
 				country_event = STALKER.20
+			}
+			if = {
+				limit = {
+					has_global_flag = STALKER_artifact_seizure_cooldown
+					check_variable = { STALKER_seizure_original = 1 }
+				}
+				event_target:STALKER_seizing_country = { STALKER_top_seizure_lead = yes }
 			}
 		}
 	}
 }
 
 STALKER_send_access_request = {
-	save_event_target_as = STALKER_zone_event_target
+	STALKER_target_zone = yes
 	controller = { save_event_target_as = STALKER_zone_controller_target }
 	random_scope_in_array = {
 		array = global.majors
