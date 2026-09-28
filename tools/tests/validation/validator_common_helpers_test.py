@@ -5,6 +5,7 @@ import logging
 import os
 
 import pytest
+import shared_utils
 import validator_common as VC
 
 
@@ -13,6 +14,10 @@ class _Dummy(VC.BaseValidator):
 
     def run_validations(self):
         pass
+
+
+def test_default_skip_patterns_remain_a_public_reexport():
+    assert VC.DEFAULT_EXTRA_SKIP_PATTERNS is shared_utils.DEFAULT_EXTRA_SKIP_PATTERNS
 
 
 @pytest.fixture

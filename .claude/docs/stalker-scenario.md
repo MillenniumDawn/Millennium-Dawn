@@ -29,6 +29,10 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
 - The Spark follows Scar and seeks the Shining Zone. Noon is former Monolith under Strider.
 - The IPSF is the International Perimeter Security Force.
 - The in-game scientists are the Ecologists.
+- Faction Wars and Tearlings come from GSC's pre-launch Discord event in the official
+  S.T.A.L.K.E.R. server (announcements of 9, 11 and 17 November 2024). SIRCAA asked every
+  faction to bring in Tearlings, common crystals long logged as worthless. The Free Stalkers
+  delivered the most, 331 of 1,232, and every faction got a share of the rewards.
 - Reference-map Zones follow the #4791 reference image, which shows 27 outbreak markers besides
   Chornobyl. Zones 5 (New Mexico), 12 (Paraguayan Chaco), 15 (Wielkopolska) and 27 (Lake Mungo)
   have no marker on it and are this scenario's own additions. Zone 31 (Aksai Chin) was added
@@ -69,10 +73,12 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
   `99_STALKER_world_effects.txt`.
 - **Foreign intelligence (140–149):** `STALKER_intel.txt`; loc `_intel_`;
   `99_STALKER_intel_effects.txt`.
+- **Faction Wars (150–159):** `STALKER_faction_wars.txt`; loc `_faction_wars_`;
+  `99_STALKER_faction_wars_effects.txt`.
 
 Localisation file names are `MD_STALKER_<subsystem>_l_english.yml`.
 
-The next free block is 150–159. Decision categories are one file each in
+The next free block is 160–169. Decision categories are one file each in
 `common/decisions/categories/00_STALKER_*_category.txt`. Dynamic modifiers are one file per
 subsystem in `common/dynamic_modifiers/00_STALKER_*dynamic_modifiers.txt`.
 
@@ -86,7 +92,9 @@ where possible; they are what an upstream port has to carry.
   of STALKER.34 and STALKER.35.
 - `common/scripted_effects/00_startup_effects.txt`: the artifact MIO in MD's starting MIO sizing.
 - Targeted Operations: `STALKER_check_top_zone_crisis` calls in the TOP proposal and resolution
-  effects, and `[STALKER_top_package_zone_crisis]` in the package-page localisation. See
+  effects, `STALKER_apply_top_organization_sabotage` in the organization resolution, the three
+  STALKER organizations in `tools/data/targeted_operations.json`, and
+  `[STALKER_top_package_zone_crisis]` in the package-page localisation. See
   [Targeted Operations](targeted-operations.md).
 - `localisation/english/MD_game_rules_l_english.yml`: the three STALKER rules.
 

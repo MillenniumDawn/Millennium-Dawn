@@ -41,7 +41,7 @@ python tools/generators/generate_targeted_operations.py --check
 
 Person and organization IDs are permanent and must never be recycled. The current
 manifest has person capacity 161, permanent IDs through 160, generated successor
-IDs 65 through 128, and 34 organization records. Zero is reserved. Organizations
+IDs 65 through 128, and 37 organization records. Zero is reserved. Organizations
 remain in their own registry and never consume a person ID.
 
 The four organization classes are:
@@ -50,6 +50,10 @@ The four organization classes are:
 - `state_security`
 - `political_executive`
 - `civilian_organization`
+
+A group may also set `activation_condition`, a scripted trigger added to its monthly
+activation check, and the `fixed_state` location policy with a `state` ID, which places it
+in that state instead of a random state of its host. The STALKER organizations use both.
 
 `ct_id` is an optional intelligence source. It is not an activation, discovery,
 display, collection, or authority prerequisite. IRGC/Quds Force, IRGC high command,
@@ -322,6 +326,15 @@ exposure and +10 harm before their caps. Resolution adds 10 to the intelligence 
 clamped at 100, and 10 to the tactical or facility chance. Harnesses stub the hook to 0.
 
 After a person is captured or killed, or a facility is damaged, in an active Zone, STALKER_apply_top_zone_disturbance adds 10 activity and removes 10 containment, then clamps the state values and refreshes the controller Zone Administration modifier. No-contact, wrong-location, failed-sabotage, inactive-state, and scenario-off results leave the Zone unchanged. The consequence runs only on the one-time physical result path, so delayed attribution updates cannot apply it again and TOP frozen case snapshot remains intact.
+Organizations 35 to 37 are the Monolith, the Zone artifact smugglers, and SIRCAA. They sit in
+the original Zone's anchor state (698) and activate only while that Zone is active; SIRCAA also
+waits for the Ward. A damaged facility then calls STALKER_apply_top_organization_sabotage:
+the Monolith loses 15 influence, the smugglers cost the bandits 10 and add 5 containment, and
+SIRCAA's Ward loses 10.
+A group with an activation condition is marked created only when that condition passes, and
+`fixed_state` groups skip the monthly relocation. Human countries with Zone research access get a
+15-point lead on the Monolith and the smugglers once they are placed (`STALKER_monthly_top_pulse`),
+since neither is public or tied to a registered person.
 The Package tab appends `[STALKER_top_package_zone_crisis]`, which names the crisis
 when the selected subject's believed lead state holds one.
 

@@ -80,6 +80,7 @@ GROUP_FIELDS = (
     "disruption_type",
     "disruption_until",
     "facility_objectives",
+    "fixed_state",
 )
 ORG_COUNTRY_FIELDS = (
     "known",
@@ -110,12 +111,12 @@ GROUP_CLASS_IDS = {
     "civilian_organization": 4,
 }
 GROUP_CLASSES = set(GROUP_CLASS_IDS)
-LOCATION_POLICIES = {"group_hq", "country_capital", "target_state"}
+LOCATION_POLICIES = {"group_hq", "country_capital", "target_state", "fixed_state"}
 CLASS_LOCATION_POLICIES = {
-    "militant_network": {"group_hq"},
+    "militant_network": {"group_hq", "fixed_state"},
     "state_security": {"country_capital", "target_state"},
     "political_executive": {"country_capital", "target_state"},
-    "civilian_organization": {"country_capital", "target_state"},
+    "civilian_organization": {"country_capital", "target_state", "fixed_state"},
 }
 FACILITY_OBJECTIVE_BITS = {"command": 1, "training": 2, "funding": 4}
 FACILITY_OBJECTIVE_DEFAULTS = {
@@ -173,6 +174,9 @@ STABLE_GROUP_KEYS = (
     "saudi_executive",
     "israel_premiership",
     "venezuela_presidency",
+    "stalker_monolith",
+    "stalker_artifact_smugglers",
+    "stalker_sircaa",
 )
 STABLE_TARGET_KEYS = (
     "osama_bin_laden",
@@ -434,6 +438,15 @@ def load_manifest(root: Path) -> dict:
             raise ValueError(
                 f"Location policy does not match class for group {group['id']}"
             )
+        if group["location_policy"] == "fixed_state" and (
+            type(group.get("state")) is not int or group["state"] < 1
+        ):
+            raise ValueError(f"Fixed-state group lacks a state: {group['id']}")
+        if "activation_condition" in group and (
+            type(group["activation_condition"]) is not str
+            or not group["activation_condition"].strip()
+        ):
+            raise ValueError(f"Empty activation condition for group {group['id']}")
         if "ct_id" in group and group["group_class"] != "militant_network":
             raise ValueError(
                 f"Only militant networks can use a CT identity: {group['id']}"
@@ -530,6 +543,8 @@ def registry(data: dict) -> str:
             f"set_variable = {{ global.TOP_group_public_identity^{gid} = {int(group['public_identity'])} }}",
             f"set_variable = {{ global.TOP_group_facility_objectives^{gid} = {group_objective_mask(data, group)} }}",
         ]
+        if group["location_policy"] == "fixed_state":
+            lines.append(f"set_variable = {{ global.TOP_group_fixed_state^{gid} = 1 }}")
     for target in data["targets"]:
         ident = target["id"]
         lines += [
@@ -588,7 +603,9 @@ def registry(data: dict) -> str:
             + [
                 f"set_variable = {{ global.TOP_group_created^{g['id']} = 1 }}"
                 for g in data["groups"]
-                if g["year"] == year and "ct_id" not in g
+                if g["year"] == year
+                and "ct_id" not in g
+                and "activation_condition" not in g
             ],
         )
     output += "\n" + block(
@@ -613,6 +630,8 @@ def registry(data: dict) -> str:
             conditions.append(
                 "OR = { ISI = { exists = yes } has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded IRQ = { has_war = yes } }"
             )
+        if "activation_condition" in group:
+            conditions.append(group["activation_condition"])
         lines = ["if = {", "\tlimit = { " + " ".join(conditions) + " }"]
         lines += [
             f"\tTOP_choose_location_{gid} = yes",
@@ -622,6 +641,8 @@ def registry(data: dict) -> str:
             f"\t\tset_variable = {{ global.TOP_group_state^{gid} = TOP_activation_state }}",
             f"\t\tset_variable = {{ global.TOP_group_host^{gid} = TOP_activation_host }}",
         ]
+        if "activation_condition" in group:
+            lines.append(f"\t\tset_variable = {{ global.TOP_group_created^{gid} = 1 }}")
         for target in (t for t in data["targets"] if t["group"] == gid):
             ident = target["id"]
             role_gate = (
@@ -658,6 +679,15 @@ def registry(data: dict) -> str:
             + [group["host"]]
             + group.get("regional_hosts", [])
         )
+        if group["location_policy"] == "fixed_state":
+            state = group["state"]
+            location += [
+                "if = {",
+                f"	limit = {{ {state} = {{ controller = {{ exists = yes }} }} }}",
+                f"	{state} = {{ set_temp_variable = {{ ROOT.TOP_activation_state = THIS }} }}",
+                "}",
+            ]
+            hosts = {}
         for host in hosts:
             if group["location_policy"] == "country_capital":
                 location += [
