@@ -597,3 +597,24 @@ def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch, write
         runpy.run_path(V.__file__, run_name="__main__")
 
     assert exit_info.value.code == 0
+
+
+def test_process_file_for_math_precision_exception_handling(tmp_path):
+    # Non-existent file raises OSError when read, which should be caught returning []
+    non_existent = str(tmp_path / "does_not_exist.txt")
+    assert V.process_file_for_math_precision((non_existent, str(tmp_path))) == []
+
+    # Non-OSError exceptions (e.g. ValueError or TypeError) must not be masked
+    existing = tmp_path / "valid.txt"
+    existing.write_text("add = 0.1234567\n", encoding="utf-8")
+
+    def bad_scan(*args, **kwargs):
+        raise ValueError("Unexpected error")
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(V, "_scan_math_precision_text", bad_scan)
+    try:
+        with pytest.raises(ValueError, match="Unexpected error"):
+            V.process_file_for_math_precision((str(existing), str(tmp_path)))
+    finally:
+        monkeypatch.undo()
