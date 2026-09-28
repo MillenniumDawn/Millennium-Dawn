@@ -110,7 +110,7 @@ def test_reconciliation_visits_real_groups_without_overwriting_saved_registry_st
 
     assert script.globals["TOP_group_created"][:4] == [1, 1, 1, 0]
     assert script.globals["TOP_status"] == statuses
-    assert len(script.globals["TOP_group_created"]) == 35
+    assert len(script.globals["TOP_group_created"]) == 38
 
 
 def test_resuming_collection_preserves_the_package_and_review_snapshot():
