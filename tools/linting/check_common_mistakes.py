@@ -482,7 +482,7 @@ def _scan_global_refs(root_dir):
                         decisions.add(m.group(1))
                     for m in _RE_SET_NATION_FLAG.finditer(content):
                         nation_flags.add(m.group(1))
-                except Exception:
+                except OSError:
                     pass
     return focuses, decisions, nation_flags
 
