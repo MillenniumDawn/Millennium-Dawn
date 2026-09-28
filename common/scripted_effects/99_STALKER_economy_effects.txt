@@ -17,6 +17,21 @@ STALKER_purchase_market_artifacts = {
 	clamp_variable = { var = global.STALKER_artifact_price min = 0.1 max = 0.5 }
 }
 
+# The world price drifts back toward 0.2 once the post-Kaymanov market has set it.
+STALKER_monthly_market_pulse = {
+	if = {
+		limit = { has_global_flag = STALKER_global_proliferation }
+		if = {
+			limit = { check_variable = { global.STALKER_artifact_price < 0.195 } }
+			add_to_variable = { global.STALKER_artifact_price = 0.005 }
+		}
+		else_if = {
+			limit = { check_variable = { global.STALKER_artifact_price > 0.205 } }
+			add_to_variable = { global.STALKER_artifact_price = -0.005 }
+		}
+	}
+}
+
 STALKER_add_consortium_member = {
 	add_to_array = { global.STALKER_consortium_members = THIS }
 	add_dynamic_modifier = { modifier = STALKER_consortium_membership }
