@@ -118,6 +118,12 @@ class TargetScript(TargetedScript):
                 ).read_text(encoding="utf-8")
             )
         )
+        # The STALKER organization gates scope into state 698; the harness keeps those groups inactive.
+        for name in (
+            "STALKER_top_zone_organization_active",
+            "STALKER_top_sircaa_active",
+        ):
+            self.triggers[name] = [("always", "=", "no")]
         self.countries, self.globals, self.temps = {}, {}, {}
         self.scope_stack, self.events = [], []
         self.global_flags, self.external = {}, Counter()
