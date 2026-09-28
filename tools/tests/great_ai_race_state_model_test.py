@@ -845,6 +845,12 @@ class RaceScript:
                     if key == "clamp_temp_variable"
                     else self._scope(data["var"], identifier)
                 )
+                # HOI4 logs "Unknow variable" for clamp_variable on an unset variable.
+                if key == "clamp_variable":
+                    exists = (
+                        name < len(scope) if isinstance(scope, list) else name in scope
+                    )
+                    assert exists, f"clamp_variable on unset {data['var']}"
                 value = self.value(data["var"], identifier)
                 if "min" in data:
                     value = max(value, self.value(data["min"], identifier))

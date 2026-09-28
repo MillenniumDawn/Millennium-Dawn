@@ -542,6 +542,18 @@ class TargetScript(TargetedScript):
             STALKER_zone_activity=activity,
             STALKER_zone_containment=containment,
         )
+        # Zone activation seeds the society that STALKER_clamp_zone_society clamps.
+        for faction in (
+            "stalkers",
+            "duty",
+            "freedom",
+            "bandits",
+            "monolith",
+            "scientists",
+            "military",
+            "exploitation",
+        ):
+            self.countries[state]["vars"].setdefault(f"STALKER_zone_{faction}", 0)
 
     def organization_truth(self, group=12, *, host=2, state=101, public=False):
         if public:
