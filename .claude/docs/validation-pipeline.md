@@ -32,7 +32,7 @@ The CI validator list lives in `validator_batches.py`, so the batch jobs and pre
 - Matching depends on the list. Most match whole names, `*_prefixes` and `equipment_bonus_instant_exempt` match name starts, the `validate_variables`, `validate_set_variables`, and `validate_scripted_localisation` lists match substrings (so a short entry can swallow real names), and `false_positive_patterns` holds regexes.
 - `shared_utils.validation_config(validator, key)` returns one list. A missing file, section, or key raises, and so does a `version` other than 1.
 - Rule sets that describe the engine (block keywords, vanilla loc keys, placeholder textures, naming-convention prefixes) stay in code. Only lists that silence findings on specific content belong in the config.
-- A config edit behaves like a validator edit. The file is in every disk-cache fingerprint and the CI validator hash, `change_groups.py` runs the full suite for it, and every CI checkout plus `staged_sparse_profile.txt` includes it. `config_drift_test.py` pins that wiring. The workshop publisher excludes it.
+- A config edit behaves like a validator edit. The file is in every disk-cache fingerprint and the CI validator hash, `change_groups.py` runs the full suite for it, and every CI checkout plus `staged_sparse_profile.txt` includes it. CI also scans existing focus files when the config changes; style checks on other files remain diff-scoped. `config_drift_test.py` pins that wiring. The workshop publisher excludes it.
 
 ## The split
 

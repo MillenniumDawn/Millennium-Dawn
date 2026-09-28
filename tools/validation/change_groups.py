@@ -195,6 +195,7 @@ def classify(paths: Iterable[str], dispatch: bool = False) -> Dict[str, object]:
     )
     result["style_files"] = style_files
     result["style"] = bool(style_files)
+    result["style_config"] = "validation_config.json" in normalized
     return result
 
 

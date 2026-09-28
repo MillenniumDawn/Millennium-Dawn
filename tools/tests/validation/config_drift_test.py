@@ -615,6 +615,17 @@ def test_validation_config_reaches_every_validator_run():
     profile = (VALIDATION_DIR / "staged_sparse_profile.txt").read_text(encoding="utf-8")
     assert "/validation_config.json" in profile.split()
     assert classify(["validation_config.json"])["full_suite"] is True
+    assert workflow["jobs"]["detect-changes"]["outputs"]["style_config"] == (
+        "${{ steps.groups.outputs.style_config }}"
+    )
+    steps = workflow["jobs"]["mod-tests"]["steps"]
+    collect = next(s for s in steps if s.get("name") == "Collect style-relevant files")
+    assert "needs.detect-changes.outputs.style_config" in collect["env"]["STYLE_CONFIG"]
+    assert "find common/national_focus -type f -name '*.txt'" in collect["run"]
+    style = next(s for s in steps if s.get("name") == "Run style check")
+    mistakes = next(s for s in steps if s.get("name") == "Run common-mistakes check")
+    assert "has-files" in style["if"]
+    assert "has-changed-files" in mistakes["if"]
 
 
 def test_baseline_saves_only_after_clean_diff():
