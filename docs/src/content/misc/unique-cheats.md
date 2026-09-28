@@ -40,3 +40,29 @@ This section handles all of our economic system cheats/debugging effects.
 `set_var debt 0` - Sets the countries current debt to 0
 
 `set_var int_investments 10000` - Sets the countries international investments to 10000
+
+## Console Effect Cheats
+
+Open the console and type `effect <name> = yes`. The cheat runs on the country you are playing. To use it on another country, switch with `tag <TAG>` first.
+
+### Economy
+
+| Command                                      | What it does                                                                   |
+| -------------------------------------------- | ------------------------------------------------------------------------------ |
+| `effect cheat_reset_economy = yes`           | Runs all four resets below.                                                    |
+| `effect cheat_reset_inflation = yes`         | Sets inflation to 0% and clears the last four quarters of inflation history.   |
+| `effect cheat_clear_debt = yes`              | Sets debt to 0, which also clears interest payments.                           |
+| `effect cheat_reset_treasury = yes`          | Sets the treasury to 0. Use `set_var treasury <amount>` for a specific amount. |
+| `effect cheat_reset_currency_strength = yes` | Sets currency strength to 1.0 (par) and removes the inflation it was adding.   |
+
+The economy panel updates right away. The normal weekly and monthly updates keep running, so inflation and currency strength start moving again from the reset value.
+
+### Equipment
+
+| Command                                 | What it adds                                                                                                                                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `effect cheat_add_land_equipment = yes` | 10,000 infantry weapons, 5,000 utility vehicles, 2,500 each of command and control, light anti-tank and anti-air, and 1,000 each of heavy anti-tank, artillery, heavy utility vehicles and land drones. |
+| `effect cheat_add_convoys = yes`        | 500 convoys.                                                                                                                                                                                            |
+| `effect cheat_add_trains = yes`         | 200 trains.                                                                                                                                                                                             |
+
+These grant each equipment type by archetype, so the game picks the model. Tanks, aircraft and ships are designs, so use the vanilla `add_equipment <amount> <equipment>` command with a specific variant instead.
