@@ -23,6 +23,8 @@ check, and the commands used to build the board.
 | Last check-in  | board date          | Set at the quarterly ping                                                                                          |
 | Developers     | assignees           | One, or two for a tagteam                                                                                          |
 
+`issue-triage.yml` sets the Type and Region labels from the Focus tree form's Kind and
+Region answers.
 
 ## Views
 
@@ -39,9 +41,9 @@ check, and the commands used to build the board.
    country until a rework closes.
 2. Open Per council member. Rebalance mentors so no one carries more than a handful.
 3. Open Region coverage. Flag empty regions to the Discord.
-4. Filter on `label:needs-check-in`. Ping each assignee, set Last check-in to today. The
-   label clears itself on the next comment or commit. `check-in-reminder.yml` applies it
-   after 90 days without activity and never closes anything.
+4. Sort claimed wishes by Last check-in. Add `needs-check-in` to any quiet for 90 days,
+   ping the assignee, and set Last check-in to today. Remove the label once they reply.
+   Nothing is closed.
 
 ## Building the board
 
