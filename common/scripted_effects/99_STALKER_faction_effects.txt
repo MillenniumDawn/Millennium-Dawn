@@ -51,6 +51,56 @@ STALKER_update_zone_factions = {
 		clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
 		STALKER_clamp_zone_society = yes
 	}
+	# Clear Sky studies the emissions and damps anomalous activity until it falls, as in canon, a few years in.
+	if = {
+		limit = {
+			has_variable = STALKER_zone_clear_sky
+			check_variable = { STALKER_zone_clear_sky > 0 }
+		}
+		set_temp_variable = {
+			STALKER_clear_sky_target = {
+				value = STALKER_zone_activity
+				multiply = 0.3
+				subtract = { value = STALKER_zone_bandits multiply = 0.2 }
+				add = 10
+				clamp = { min = 1 max = 100 }
+			}
+		}
+		add_to_variable = { STALKER_zone_clear_sky = { value = STALKER_clear_sky_target subtract = STALKER_zone_clear_sky multiply = 0.1 } }
+		clamp_variable = { var = STALKER_zone_clear_sky min = 1 max = 100 }
+		add_to_variable = { STALKER_zone_activity = { value = STALKER_zone_clear_sky multiply = -0.02 } }
+		clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+		add_to_variable = { STALKER_zone_clear_sky_months = 1 }
+		if = {
+			limit = {
+				check_variable = { STALKER_zone_clear_sky_months > 35 }
+				controller = { exists = yes }
+			}
+			random = {
+				chance = 10
+				set_variable = { STALKER_zone_clear_sky = 0 }
+				set_global_flag = STALKER_scar_survived
+				save_event_target_as = STALKER_zone_event_target
+				controller = { country_event = STALKER.122 }
+			}
+		}
+	}
+	# Noon, former Monolith soldiers, wears down its old brothers and draws on the stalkers around it.
+	if = {
+		limit = { has_variable = STALKER_zone_noon }
+		set_temp_variable = {
+			STALKER_noon_target = {
+				value = STALKER_zone_stalkers
+				multiply = 0.2
+				add = 5
+				clamp = { min = 0 max = 100 }
+			}
+		}
+		add_to_variable = { STALKER_zone_noon = { value = STALKER_noon_target subtract = STALKER_zone_noon multiply = 0.1 } }
+		clamp_variable = { var = STALKER_zone_noon min = 0 max = 100 }
+		add_to_variable = { STALKER_zone_monolith = { value = STALKER_zone_noon multiply = -0.03 } }
+		STALKER_clamp_zone_society = yes
+	}
 	if = {
 		limit = { check_variable = { STALKER_zone_war_type > 0 } }
 		STALKER_progress_zone_war = yes
@@ -209,4 +259,21 @@ STALKER_resolve_zone_war = {
 	}
 	set_variable = { STALKER_zone_war_type = 0 }
 	set_variable = { STALKER_zone_war_stage = 0 }
+}
+
+# Beating the Monolith back can break some fighters' conditioning; the first defectors found Noon.
+STALKER_monolith_defections = {
+	random = {
+		chance = 50
+		if = {
+			limit = {
+				NOT = { has_variable = STALKER_zone_noon }
+				controller = { exists = yes }
+			}
+			save_event_target_as = STALKER_zone_event_target
+			controller = { country_event = STALKER.123 }
+		}
+		add_to_variable = { STALKER_zone_noon = 10 }
+		clamp_variable = { var = STALKER_zone_noon min = 0 max = 100 }
+	}
 }
