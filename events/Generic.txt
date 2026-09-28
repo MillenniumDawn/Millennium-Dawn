@@ -768,3 +768,38 @@ country_event = {
 	}
 
 }
+
+# Guarantee review after a party change; only ideology-mismatched guarantees end.
+country_event = {
+	id = generic.8
+	hidden = yes
+	is_triggered_only = yes
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: generic.8 guarantee review after government change"
+		every_other_country = {
+			limit = {
+				is_guaranteed_by = ROOT
+				NOT = { has_government = ROOT }
+			}
+			ROOT = {
+				diplomatic_relation = {
+					country = PREV
+					relation = guarantee
+					active = no
+				}
+			}
+		}
+		every_other_country = {
+			limit = {
+				has_guaranteed = ROOT
+				NOT = { has_government = ROOT }
+			}
+			diplomatic_relation = {
+				country = ROOT
+				relation = guarantee
+				active = no
+			}
+		}
+	}
+}
