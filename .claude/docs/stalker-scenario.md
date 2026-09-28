@@ -68,7 +68,10 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
 - **Crossover (100–109):** `STALKER_crossover.txt`; loc `_crossover_`;
   `99_STALKER_meme_effects.txt`.
 - **Footprint (110–119):** `STALKER_footprint.txt`; loc `_footprint_`;
-  `99_STALKER_footprint_effects.txt`.
+  `99_STALKER_footprint_effects.txt`. Zones spread, recede and drift; anchors never move, because event
+  text names a Zone through literal state IDs. A reference Zone at its full footprint can split once:
+  its oldest footprint state becomes a new Zone with the parent's ID plus 100, named "the borderlands
+  of" the parent.
 - **Factions (120–129):** `STALKER_factions.txt`; loc `_factions_`;
   `99_STALKER_faction_effects.txt`.
 - **World reaction (130–139):** `STALKER_world.txt`; loc `_world_`;
