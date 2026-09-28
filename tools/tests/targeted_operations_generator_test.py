@@ -612,3 +612,18 @@ def test_stalker_organizations_sit_in_the_zone_and_wait_for_their_gate(manifest)
         assert "random_controlled_state" not in location
         assert f"global.TOP_group_fixed_state^{ident} = 1" in registry
     assert "STALKER_" not in _named_block(registry, "TOP_activate_group_1")
+
+
+def test_every_later_window_year_is_opened_by_the_yearly_dispatch(manifest):
+    yearly = (ROOT / "common/scripted_effects/00_yearly_effects.txt").read_text(
+        encoding="utf-8"
+    )
+    years = {target["activation_year"] for target in manifest["targets"]} | {
+        group["year"] for group in manifest["groups"]
+    }
+    missing = [
+        year
+        for year in sorted(years)
+        if year > 2000 and f"TOP_open_windows_{year} = yes" not in yearly
+    ]
+    assert missing == []
