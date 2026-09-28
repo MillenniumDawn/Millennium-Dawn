@@ -40,7 +40,7 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
   Zones where lore or gameplay calls for them, and note each addition in the placement table. The
   Randomized rule option registers each reference Zone with a 60% chance and swaps in the recorded
   alternative sites (Zone IDs 32 to 37) at random.
-- Project X and MDST are canon (STALKER 2). Project X was the state Noosphere programme the
+- Project X and MDST are canon (STALKER 2). Project X was the state Noosphere program the
   Regulatory Board funded after 1991. Its scientists defied the Board in 2006 and created the
   Zone by accident; the Board shut Project X down and the scientists carried on as MDST, the
   Ministry of Defense and Secret Technologies. MDST created the Monolith and the S.T.A.L.K.E.R.
