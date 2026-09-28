@@ -33,6 +33,11 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
   S.T.A.L.K.E.R. server (announcements of 9, 11 and 17 November 2024). SIRCAA asked every
   faction to bring in Tearlings, common crystals long logged as worthless. The Free Stalkers
   delivered the most, 331 of 1,232, and every faction got a share of the rewards.
+- Reference-map Zones follow the #4791 reference image, which shows 27 outbreak markers besides
+  Chornobyl. Zones 5 (New Mexico), 12 (Paraguayan Chaco), 15 (Wielkopolska) and 27 (Lake Mungo)
+  have no marker on it and are this scenario's own additions. Zone 31 (Aksai Chin) was added
+  after a placement check found its marker unassigned. The map is a guideline, not a cap: add
+  Zones where lore or gameplay calls for them, and note each addition in the placement table.
 - Not canon, and specific to this scenario's design: "Project X" and MDST. Keep them clearly
   framed as this scenario's own inventions.
 
