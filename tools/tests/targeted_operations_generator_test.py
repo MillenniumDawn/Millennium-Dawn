@@ -574,8 +574,14 @@ def test_non_ct_organizations_activate_on_their_authored_windows(manifest):
     for group in manifest["groups"]:
         window = _named_block(registry, f"TOP_open_windows_{group['year']}")
         assert f"global.TOP_group_window^{group['id']} = 1" in window
-        if "ct_id" not in group:
-            assert f"global.TOP_group_created^{group['id']} = 1" in window
+        created = f"global.TOP_group_created^{group['id']} = 1"
+        if "activation_condition" in group:
+            assert created not in window
+            assert created in _named_block(
+                registry, f"TOP_activate_group_{group['id']}"
+            )
+        elif "ct_id" not in group:
+            assert created in window
 
 
 def test_stalker_organizations_sit_in_the_zone_and_wait_for_their_gate(manifest):
@@ -604,4 +610,5 @@ def test_stalker_organizations_sit_in_the_zone_and_wait_for_their_gate(manifest)
             in location
         )
         assert "random_controlled_state" not in location
+        assert f"global.TOP_group_fixed_state^{ident} = 1" in registry
     assert "STALKER_" not in _named_block(registry, "TOP_activate_group_1")

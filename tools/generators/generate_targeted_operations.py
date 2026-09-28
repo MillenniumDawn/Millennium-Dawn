@@ -80,6 +80,7 @@ GROUP_FIELDS = (
     "disruption_type",
     "disruption_until",
     "facility_objectives",
+    "fixed_state",
 )
 ORG_COUNTRY_FIELDS = (
     "known",
@@ -542,6 +543,8 @@ def registry(data: dict) -> str:
             f"set_variable = {{ global.TOP_group_public_identity^{gid} = {int(group['public_identity'])} }}",
             f"set_variable = {{ global.TOP_group_facility_objectives^{gid} = {group_objective_mask(data, group)} }}",
         ]
+        if group["location_policy"] == "fixed_state":
+            lines.append(f"set_variable = {{ global.TOP_group_fixed_state^{gid} = 1 }}")
     for target in data["targets"]:
         ident = target["id"]
         lines += [
@@ -600,7 +603,9 @@ def registry(data: dict) -> str:
             + [
                 f"set_variable = {{ global.TOP_group_created^{g['id']} = 1 }}"
                 for g in data["groups"]
-                if g["year"] == year and "ct_id" not in g
+                if g["year"] == year
+                and "ct_id" not in g
+                and "activation_condition" not in g
             ],
         )
     output += "\n" + block(
@@ -636,6 +641,8 @@ def registry(data: dict) -> str:
             f"\t\tset_variable = {{ global.TOP_group_state^{gid} = TOP_activation_state }}",
             f"\t\tset_variable = {{ global.TOP_group_host^{gid} = TOP_activation_host }}",
         ]
+        if "activation_condition" in group:
+            lines.append(f"\t\tset_variable = {{ global.TOP_group_created^{gid} = 1 }}")
         for target in (t for t in data["targets"] if t["group"] == gid):
             ident = target["id"]
             role_gate = (

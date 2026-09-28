@@ -331,6 +331,10 @@ the original Zone's anchor state (698) and activate only while that Zone is acti
 waits for the Ward. A damaged facility then calls STALKER_apply_top_organization_sabotage:
 the Monolith loses 15 influence, the smugglers cost the bandits 10 and add 5 containment, and
 SIRCAA's Ward loses 10.
+A group with an activation condition is marked created only when that condition passes, and
+`fixed_state` groups skip the monthly relocation. Human countries with Zone research access get a
+15-point lead on the Monolith and the smugglers once they are placed (`STALKER_monthly_top_pulse`),
+since neither is public or tied to a registered person.
 The Package tab appends `[STALKER_top_package_zone_crisis]`, which names the crisis
 when the selected subject's believed lead state holds one.
 
