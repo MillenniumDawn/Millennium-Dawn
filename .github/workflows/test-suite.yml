@@ -51,6 +51,7 @@ env:
     .github/actions/setup-md-python/action.yml
     CLAUDE.md
     pyproject.toml
+    validation_config.json
     *.mod
     .workspace-manifest
     .validation_cache
@@ -88,6 +89,7 @@ jobs:
       docs: ${{ steps.groups.outputs.docs }}
       style: ${{ steps.groups.outputs.style }}
       style_files: ${{ steps.groups.outputs.style_files }}
+      style_config: ${{ steps.groups.outputs.style_config }}
       tools: ${{ steps.groups.outputs.tools }}
       file-paths: ${{ steps.groups.outputs.file-paths }}
       full_suite: ${{ steps.groups.outputs.full_suite }}
@@ -302,6 +304,7 @@ jobs:
             .github/actions/setup-md-python/action.yml
             CLAUDE.md
             pyproject.toml
+            validation_config.json
             *.mod
           sparse-checkout-cone-mode: false
 
@@ -325,6 +328,7 @@ jobs:
             .github/actions/setup-md-python/action.yml
             CLAUDE.md
             pyproject.toml
+            validation_config.json
             *.mod
           key: >-
             md-sparse-v2-${{ runner.os }}-${{
@@ -345,7 +349,8 @@ jobs:
         id: toolshash
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**',
-          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+          'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore shared validator disk cache
         id: valcache
@@ -394,6 +399,7 @@ jobs:
             .github/actions/setup-md-python/action.yml
             CLAUDE.md
             pyproject.toml
+            validation_config.json
             *.mod
           key: >-
             md-sparse-v2-${{ runner.os }}-${{
@@ -445,6 +451,7 @@ jobs:
           sparse-checkout: |
             tools
             pyproject.toml
+            validation_config.json
             .pre-commit-config.yaml
             .claude/docs/typo-watchlist.md
             .github/actions/setup-md-python/action.yml
@@ -572,7 +579,8 @@ jobs:
           steps.dependencies.outcome == 'success'
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**',
-          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+          'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Create staged integration worktree
         id: staged-worktree
@@ -784,15 +792,22 @@ jobs:
           steps.setup-python.outcome == 'success'
         env:
           STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style_files }}
+          STYLE_CONFIG: ${{ needs.detect-changes.outputs.style_config }}
         run: |
           printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
             | grep -vE \
               '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
-            > style_files.txt || true
+            > changed_style_files.txt || true
+          if [ -s changed_style_files.txt ]; then
+            echo "has-changed-files=true" >> "$GITHUB_OUTPUT"
+          fi
+          cp changed_style_files.txt style_files.txt
+          if [ "$STYLE_CONFIG" = true ]; then
+            find common/national_focus -type f -name '*.txt' >> style_files.txt
+          fi
+          sort -u -o style_files.txt style_files.txt
           if [ -s style_files.txt ]; then
             echo "has-files=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has-files=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run style check
@@ -807,9 +822,9 @@ jobs:
       - name: Run common-mistakes check
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-files == 'true'
+          steps.style-files.outputs.has-changed-files == 'true'
         run: |
-          tr '\n' '\0' < style_files.txt | xargs -0 -r \
+          tr '\n' '\0' < changed_style_files.txt | xargs -0 -r \
             python3 tools/linting/check_common_mistakes.py \
             --output validation-common-mistakes.log
 
@@ -820,6 +835,12 @@ jobs:
         run: |
           test -f validation-style-check.log
           test -f validation-style-check.json
+
+      - name: Verify common-mistakes results
+        if: >-
+          always() && !cancelled() && matrix.batch == 'core' &&
+          steps.style-files.outputs.has-changed-files == 'true'
+        run: |
           test -f validation-common-mistakes.log
           test -f validation-common-mistakes.json
 
@@ -870,7 +891,7 @@ jobs:
       - name: Upload common-mistakes results
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-files == 'true'
+          steps.style-files.outputs.has-changed-files == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: validation-common-mistakes-results
@@ -939,13 +960,15 @@ jobs:
             tools/report_lib
             tools/validation
             tools/shared_utils.py
+            validation_config.json
           sparse-checkout-cone-mode: false
 
       - name: Compute validator code hash
         id: toolshash
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**',
-          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+          'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore validation baseline
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9

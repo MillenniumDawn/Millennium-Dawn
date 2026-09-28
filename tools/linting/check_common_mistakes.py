@@ -446,6 +446,7 @@ from shared_utils import (
     print_timing_summary,
     run_with_pool,
     strip_inline_comment,
+    validation_config,
 )
 
 
@@ -2138,9 +2139,9 @@ def _check_nor_block(lines):
     return issues
 
 
-# on_daily_BOS predates the rule below and is left in place deliberately; it is
-# the example .claude/rules/general-rules.md points at as the shape not to copy.
-_AI_DAILY_CACHE_ALLOWLIST = frozenset({"on_daily_BOS"})
+_AI_DAILY_CACHE_ALLOWLIST = frozenset(
+    validation_config("check_common_mistakes", "ai_daily_cache_allowlist")
+)
 
 _RE_ON_DAILY_TAG = re.compile(r"^\s*(on_daily_[A-Z]{3}[A-Z_]*)\s*=\s*\{")
 _RE_SET_COUNTRY_FLAG = re.compile(r"\bset_country_flag\s*=\s*(\S+)")
