@@ -17,7 +17,7 @@ TECH_GATES = {
     "gen_5_medium": frozenset({("require", BBA)}),
     "gen_5_large": frozenset({("require", BBA)}),
     "Strike_fighter5": frozenset({("forbid", BBA)}),
-    "nsb_artillery_0": frozenset({("require", NSB)}),
+    "nsb_artillery_1": frozenset({("require", NSB)}),
     "SP_arty_0": frozenset({("forbid", NSB)}),
     "ungated_tech": frozenset(),
 }
@@ -182,10 +182,10 @@ def test_tech_in_gated_and_ungated_folder_is_not_gated(tmp_path):
 def test_allow_branch_gate_without_folder(tmp_path):
     tech_gates, _ = _tech_gates(
         tmp_path,
-        '\tencryption1 = {\n\t\tallow_branch = { NOT = { has_dlc = "La Resistance" } }\n\t}\n',
+        '\tencryption_1 = {\n\t\tallow_branch = { NOT = { has_dlc = "La Resistance" } }\n\t}\n',
         {},
     )
-    assert tech_gates["encryption1"] == frozenset({("forbid", "La Resistance")})
+    assert tech_gates["encryption_1"] == frozenset({("forbid", "La Resistance")})
 
 
 def test_category_gated_only_when_every_member_shares_the_gate(tmp_path):
@@ -302,7 +302,7 @@ def test_nested_else_inverts_its_enclosing_if():
         f'\t\tlimit = {{ NOT = {{ has_dlc = "{NSB}" }} }}\n'
         + _bonus("SP_arty_0", "\t\t")
         + "\t\telse = {\n"
-        + _bonus("nsb_artillery_0", "\t\t\t")
+        + _bonus("nsb_artillery_1", "\t\t\t")
         + "\t\t}\n"
         "\t}\n"
         "}\n"

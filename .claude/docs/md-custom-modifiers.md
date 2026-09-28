@@ -81,6 +81,18 @@ Country-tag-specific modifiers (prefixed `CZE_`, `ITA_`, `JAP_`) must only appea
 | `foreign_influence_monthly_domestic_independence_gain_modifier` |
 | `foreign_influence_monthly_domestic_independence_gain_factor`   |
 
+## Internal Factions (`internal_factions_modifier_definitions.txt`): country scope
+
+Three number modifiers per faction. `<faction>` is the faction idea name: `small_medium_business_owners`, `international_bankers`, `oligarchs`, `industrial_conglomerates`, `fossil_fuel_industry`, `intelligence_community`, `the_military`, `defense_industry`, `maritime_industry`, `wahabi_ulema`, `the_priesthood`, `the_ulema`, `the_clergy`, `communist_cadres`, `farmers`, `landowners`, `labour_unions`, `foreign_jihadis`, `iranian_quds_force`, `saudi_royal_family`, `chaebols`, `wall_street`, `the_donju`.
+
+| Modifier                       | Effect                                                                                                          |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `if_<faction>_monthly_opinion` | Added to opinion every month, even when the no-decay game rule is on                                            |
+| `if_<faction>_minimum_opinion` | Decay floor becomes 50 + value; hard floor becomes the value itself. Negative values only lower the decay floor |
+| `if_<faction>_maximum_opinion` | Ceiling becomes 100 + value. Use negative values; opinion never goes above 100                                  |
+
+Values stack across every source. `change_<faction>_opinion` (Wahhabi Ulema: `change_the_wahabi_ulema_opinion`) and `monthly_tick_internal_factions_opinion` in `00_internal_faction_effects.txt` read them, and the monthly tick recomputes `<faction>_opinion_min` from the minimum modifier. Put a faction floor or cap on the idea as one of these modifiers. Do not set `<faction>_opinion_min` or add a `custom_modifier_tooltip` for it.
+
 ## Migration (`migration_modifier_definitions.txt`) — country scope
 
 | Modifier                       |

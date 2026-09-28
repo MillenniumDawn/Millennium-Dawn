@@ -109,6 +109,55 @@ AFG_domestic_decisions = {
 
 		ai_will_do = { base = 10 }
 	}
+
+	AFG_request_american_return = {
+		allowed = { original_tag = AFG }
+		icon = GFX_decision_generic_operation
+
+		visible = {
+			is_subject = no
+			no_jihadist_government = yes
+			country_exists = USA
+			USA = { has_country_flag = USA_withdrew_from_afghanistan }
+		}
+
+		available = {
+			NOT = { has_war_with = USA }
+			custom_trigger_tooltip = {
+				tooltip = AFG_taliban_threat_overwhelming_tt
+				OR = {
+					has_war_with = TAL
+					check_variable = { taliban_strength > 49 }
+				}
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_request_american_return"
+			USA = { country_event = { id = department_of_state.201 days = 1 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = AFG_american_return_tt }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				add = 20
+				check_variable = { taliban_strength > 74 }
+			}
+			modifier = {
+				add = 50
+				has_war_with = TAL
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = USA value < -25 }
+			}
+		}
+	}
 }
 
 AFG_northern_alliance_taloqan_siege = {
@@ -633,7 +682,7 @@ AFG_pashtunistan_decisions = {
 		}
 
 		cost = 75
-		war_with_target_on_remove = yes
+		war_with_on_remove = PAK
 		days_remove = 45
 
 		complete_effect = {

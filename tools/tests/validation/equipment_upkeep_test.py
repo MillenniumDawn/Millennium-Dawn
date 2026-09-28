@@ -81,7 +81,7 @@ def test_costed_archetype_passes(tmp_path):
 
 def test_uncosted_archetype_is_reported(tmp_path):
     battalions = _MBT_BATTALION + (
-        "\tSP_R_Arty_Bat = {\n"
+        "\tSP_R_arty_Bat = {\n"
         "\t\tmap_icon_category = armored\n"
         "\t\tneed = { medium_tank_rocket_chassis = 12 }\n"
         "\t}\n"
@@ -90,7 +90,7 @@ def test_uncosted_archetype_is_reported(tmp_path):
     messages = _messages(v, "uncosted-land-equipment")
     assert len(messages) == 1
     assert "medium_tank_rocket_chassis" in messages[0]
-    assert "SP_R_Arty_Bat" in messages[0]
+    assert "SP_R_arty_Bat" in messages[0]
     assert v.errors_found == 1
 
 
@@ -120,7 +120,7 @@ def test_variant_resolves_to_its_archetype(tmp_path):
 
 def test_transport_reference_is_checked(tmp_path):
     battalions = _MBT_BATTALION + (
-        "\tSP_R_Arty_Bat = {\n"
+        "\tSP_R_arty_Bat = {\n"
         "\t\tmap_icon_category = armored\n"
         "\t\ttransport = medium_tank_rocket_chassis\n"
         "\t}\n"
@@ -168,7 +168,7 @@ def test_air_wing_equipment_is_out_of_scope(tmp_path):
 
 def test_missing_accumulator_is_reported_once(tmp_path):
     battalions = _MBT_BATTALION + (
-        "\tSP_R_Arty_Bat = {\n"
+        "\tSP_R_arty_Bat = {\n"
         "\t\tmap_icon_category = armored\n"
         "\t\tneed = { medium_tank_rocket_chassis = 12 }\n"
         "\t}\n"

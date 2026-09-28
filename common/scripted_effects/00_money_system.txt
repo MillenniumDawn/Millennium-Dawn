@@ -818,6 +818,10 @@ calculate_tax_gain = {
 calculate_additional_income_rate = {
 	set_variable = { additional_income_rate = 0 }
 
+	if = { limit = { has_idea = bitcoin }
+		add_to_variable = { additional_income_rate = global.bitcoin_reserve_income }
+	}
+
 	# Apply seigniorage_income_modifier as a multiplier on the issuer base:
 	# income = base × (1 + modifier). When no decision is active modifier = 0,
 	# so the factor is 1.0 and the base is unchanged.
@@ -1518,6 +1522,11 @@ calculate_additional_income_rate = {
 	# Iraq
 	else_if = {
 		limit = { original_tag = IRQ }
+		if = {
+			limit = { has_idea = PER_irgc_black_market_exploits }
+			set_variable = { additional_income_irgc_black_market = { value = gdp_total multiply = 0.002 } }	#10% of GDP yearly estimated weekly
+			add_to_variable = { additional_income_rate = additional_income_irgc_black_market }
+		}
 		if = {
 			limit = { has_idea = IRQ_mosque_income_idea }
 			set_variable = { additional_income_IRQ_mosque_donations = 0.200 }
@@ -2478,7 +2487,7 @@ update_tension_premium = {
 }
 
 calculate_debt_fx_factor = {
-	set_temp_variable = { debt_fx_factor = 1 }
+	set_variable = { debt_fx_factor = 1 }
 	if = {
 		limit = {
 			OR = {
@@ -2492,10 +2501,12 @@ calculate_debt_fx_factor = {
 				has_idea = british_pound
 				has_idea = swiss_frank
 				has_idea = gulden
+				has_idea = brazilian_real
+				has_idea = bitcoin
 			}
 		}
-		set_temp_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
-		clamp_temp_variable = { var = debt_fx_factor max = @max_debt_fx_factor }
+		set_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
+		clamp_variable = { var = debt_fx_factor max = @max_debt_fx_factor }
 	}
 }
 
@@ -2515,6 +2526,7 @@ calculate_interest_rate = {
 		set_variable = { threat_interest_premium = 0 }
 		set_variable = { adjusted_tension_premium = 0 }
 		set_variable = { interest_rate_clamp_adjustment = 0 }
+		set_variable = { debt_fx_factor = 1 }
 	}
 	else = {
 		# Country has debt - calculate interest rate, debt_rate, and debt_ratio
