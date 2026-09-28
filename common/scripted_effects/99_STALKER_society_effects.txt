@@ -23,6 +23,8 @@ STALKER_clamp_zone_society = {
 	clamp_variable = { var = STALKER_zone_military min = 0 max = 100 }
 	clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
 	clamp_variable = { var = STALKER_zone_exploitation min = 0 max = 100 }
+	STALKER_update_zone_leader = yes
+	add_to_variable = { global.STALKER_zone_overview_dirty = 1 }
 }
 
 STALKER_monthly_society_pulse = {
@@ -228,52 +230,104 @@ STALKER_roll_zone_society_events = {
 }
 
 # Records which faction holds the most influence, so readouts can name it without comparing every pair.
+# A tie at the top records 0, which the readouts show as Contested.
 STALKER_update_zone_leader = {
-	set_variable = { STALKER_zone_leader = 1 }
+	set_temp_variable = { STALKER_leader = 1 }
 	set_temp_variable = { STALKER_lead = STALKER_zone_duty }
+	set_temp_variable = { STALKER_lead_tied = 0 }
 	if = {
 		limit = { check_variable = { STALKER_zone_freedom > STALKER_lead } }
-		set_variable = { STALKER_zone_leader = 2 }
+		set_temp_variable = { STALKER_leader = 2 }
 		set_temp_variable = { STALKER_lead = STALKER_zone_freedom }
+		set_temp_variable = { STALKER_lead_tied = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_freedom = STALKER_lead } }
+		set_temp_variable = { STALKER_lead_tied = 1 }
 	}
 	if = {
 		limit = { check_variable = { STALKER_zone_bandits > STALKER_lead } }
-		set_variable = { STALKER_zone_leader = 3 }
+		set_temp_variable = { STALKER_leader = 3 }
 		set_temp_variable = { STALKER_lead = STALKER_zone_bandits }
+		set_temp_variable = { STALKER_lead_tied = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_bandits = STALKER_lead } }
+		set_temp_variable = { STALKER_lead_tied = 1 }
 	}
 	if = {
 		limit = { check_variable = { STALKER_zone_monolith > STALKER_lead } }
-		set_variable = { STALKER_zone_leader = 4 }
+		set_temp_variable = { STALKER_leader = 4 }
 		set_temp_variable = { STALKER_lead = STALKER_zone_monolith }
+		set_temp_variable = { STALKER_lead_tied = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_monolith = STALKER_lead } }
+		set_temp_variable = { STALKER_lead_tied = 1 }
 	}
 	if = {
 		limit = { check_variable = { STALKER_zone_scientists > STALKER_lead } }
-		set_variable = { STALKER_zone_leader = 5 }
+		set_temp_variable = { STALKER_leader = 5 }
 		set_temp_variable = { STALKER_lead = STALKER_zone_scientists }
+		set_temp_variable = { STALKER_lead_tied = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_scientists = STALKER_lead } }
+		set_temp_variable = { STALKER_lead_tied = 1 }
 	}
 	if = {
 		limit = { check_variable = { STALKER_zone_military > STALKER_lead } }
-		set_variable = { STALKER_zone_leader = 6 }
+		set_temp_variable = { STALKER_leader = 6 }
 		set_temp_variable = { STALKER_lead = STALKER_zone_military }
+		set_temp_variable = { STALKER_lead_tied = 0 }
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_military = STALKER_lead } }
+		set_temp_variable = { STALKER_lead_tied = 1 }
 	}
 	if = {
 		limit = { has_variable = STALKER_zone_ward check_variable = { STALKER_zone_ward > STALKER_lead } }
-		set_variable = { STALKER_zone_leader = 7 }
+		set_temp_variable = { STALKER_leader = 7 }
 		set_temp_variable = { STALKER_lead = STALKER_zone_ward }
+		set_temp_variable = { STALKER_lead_tied = 0 }
+	}
+	else_if = {
+		limit = { has_variable = STALKER_zone_ward check_variable = { STALKER_zone_ward = STALKER_lead } }
+		set_temp_variable = { STALKER_lead_tied = 1 }
 	}
 	if = {
 		limit = { has_variable = STALKER_zone_spark check_variable = { STALKER_zone_spark > STALKER_lead } }
-		set_variable = { STALKER_zone_leader = 8 }
+		set_temp_variable = { STALKER_leader = 8 }
 		set_temp_variable = { STALKER_lead = STALKER_zone_spark }
+		set_temp_variable = { STALKER_lead_tied = 0 }
+	}
+	else_if = {
+		limit = { has_variable = STALKER_zone_spark check_variable = { STALKER_zone_spark = STALKER_lead } }
+		set_temp_variable = { STALKER_lead_tied = 1 }
 	}
 	if = {
 		limit = { has_variable = STALKER_zone_clear_sky check_variable = { STALKER_zone_clear_sky > STALKER_lead } }
-		set_variable = { STALKER_zone_leader = 9 }
+		set_temp_variable = { STALKER_leader = 9 }
 		set_temp_variable = { STALKER_lead = STALKER_zone_clear_sky }
+		set_temp_variable = { STALKER_lead_tied = 0 }
+	}
+	else_if = {
+		limit = { has_variable = STALKER_zone_clear_sky check_variable = { STALKER_zone_clear_sky = STALKER_lead } }
+		set_temp_variable = { STALKER_lead_tied = 1 }
 	}
 	if = {
 		limit = { has_variable = STALKER_zone_noon check_variable = { STALKER_zone_noon > STALKER_lead } }
-		set_variable = { STALKER_zone_leader = 10 }
+		set_temp_variable = { STALKER_leader = 10 }
 		set_temp_variable = { STALKER_lead = STALKER_zone_noon }
+		set_temp_variable = { STALKER_lead_tied = 0 }
 	}
+	else_if = {
+		limit = { has_variable = STALKER_zone_noon check_variable = { STALKER_zone_noon = STALKER_lead } }
+		set_temp_variable = { STALKER_lead_tied = 1 }
+	}
+	if = {
+		limit = { check_variable = { STALKER_lead_tied = 1 } }
+		set_temp_variable = { STALKER_leader = 0 }
+	}
+	set_variable = { STALKER_zone_leader = STALKER_leader }
 }
