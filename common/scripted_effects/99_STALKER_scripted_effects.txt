@@ -1,0 +1,188 @@
+STALKER_initialize_zone_registry = {
+	if = {
+		limit = {
+			has_game_rule = { rule = rule_stalker_scenario option = ENABLED }
+			NOT = { has_global_flag = GLOBAL_STALKER_zone_registry_initialized }
+		}
+		STALKER_register_zone_001_ukraine = yes
+		STALKER_register_reference_map_zones = yes
+		set_global_flag = GLOBAL_STALKER_zone_registry_initialized
+	}
+}
+
+STALKER_activate_zone = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			STALKER_is_zone_location = yes
+			has_state_flag = STALKER_zone_anchor
+			NOT = { STALKER_is_active_zone = yes }
+		}
+		log = "[GetDateText]: Activated STALKER Zone [?STALKER_zone_id] in [THIS.GetName]"
+		set_state_flag = STALKER_zone_active
+		add_dynamic_modifier = { modifier = STALKER_zone_presence }
+		if = {
+			limit = { NOT = { is_in_array = { global.STALKER_active_zone_states = THIS } } }
+			add_to_array = { global.STALKER_active_zone_states = THIS }
+		}
+		if = {
+			limit = { has_state_flag = STALKER_zone_anchor }
+			set_variable = { STALKER_zone_activity = 60 }
+			set_variable = { STALKER_zone_containment = 30 }
+			set_variable = { STALKER_zone_exploitation = 0 }
+			set_state_flag = STALKER_first_emission_pending
+			set_state_flag = { flag = STALKER_emission_cooldown value = 1 days = 90 }
+			if = {
+				limit = { NOT = { is_in_array = { global.STALKER_active_zone_anchors = THIS } } }
+				add_to_array = { global.STALKER_active_zone_anchors = THIS }
+			}
+			if = {
+				limit = { controller = { exists = yes } }
+				controller = { STALKER_refresh_zone_administration = yes }
+			}
+		}
+	}
+}
+
+STALKER_refresh_zone_administration = {
+	if = {
+		limit = { STALKER_scenario_enabled = yes }
+		save_event_target_as = STALKER_zone_administrator
+		set_variable = { STALKER_zone_upkeep_factor = 0 }
+		set_variable = { STALKER_zone_research_factor = 0 }
+		set_variable = { STALKER_zone_garrison_factor = 0 }
+		if = {
+			limit = { check_variable = { global.STALKER_active_zone_anchors^num > 0 } }
+			for_each_scope_loop = {
+				array = global.STALKER_active_zone_anchors
+				if = {
+					limit = {
+						STALKER_is_active_zone_anchor = yes
+						is_controlled_by = event_target:STALKER_zone_administrator
+					}
+					event_target:STALKER_zone_administrator = {
+						add_to_variable = { STALKER_zone_upkeep_factor = 0.01 }
+						add_to_variable = { STALKER_zone_research_factor = PREV.STALKER_zone_exploitation }
+						add_to_variable = { STALKER_zone_garrison_factor = -0.005 }
+					}
+				}
+			}
+			multiply_variable = { STALKER_zone_research_factor = 0.0005 }
+		}
+		if = {
+			limit = { check_variable = { STALKER_zone_upkeep_factor > 0 } }
+			if = {
+				limit = { NOT = { has_dynamic_modifier = { modifier = STALKER_zone_administration } } }
+				add_dynamic_modifier = { modifier = STALKER_zone_administration }
+			}
+		}
+		else_if = {
+			limit = { has_dynamic_modifier = { modifier = STALKER_zone_administration } }
+			remove_dynamic_modifier = { modifier = STALKER_zone_administration }
+		}
+	}
+}
+
+STALKER_reinforce_containment = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			STALKER_is_active_zone_anchor = yes
+			NOT = { has_state_flag = STALKER_zone_policy_pending }
+		}
+		log = "[GetDateText]: Reinforced STALKER Zone containment in [THIS.GetName]"
+		add_to_variable = { STALKER_zone_containment = 20 }
+		add_to_variable = { STALKER_zone_activity = -10 }
+		add_to_variable = { STALKER_zone_exploitation = -5 }
+		clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
+		clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+		clamp_variable = { var = STALKER_zone_exploitation min = 0 max = 100 }
+		if = {
+			limit = { controller = { exists = yes } }
+			controller = { STALKER_refresh_zone_administration = yes }
+		}
+	}
+}
+
+STALKER_monthly_emission_pulse = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			check_variable = { global.STALKER_active_zone_anchors^num > 0 }
+		}
+		for_each_scope_loop = {
+			array = global.STALKER_active_zone_anchors
+			if = {
+				limit = {
+					STALKER_is_active_zone_anchor = yes
+					NOT = { has_state_flag = STALKER_zone_policy_pending }
+					NOT = { has_state_flag = STALKER_emission_cooldown }
+				}
+				if = {
+					limit = {
+						has_state_flag = STALKER_first_emission_pending
+						NOT = { has_state_flag = STALKER_first_emission_occurred }
+					}
+					clr_state_flag = STALKER_first_emission_pending
+					set_state_flag = STALKER_first_emission_occurred
+					STALKER_trigger_emission = yes
+				}
+				else = {
+					set_temp_variable = { STALKER_emission_chance = STALKER_zone_activity }
+					add_to_temp_variable = { STALKER_emission_chance = STALKER_zone_exploitation }
+					subtract_from_temp_variable = { STALKER_emission_chance = STALKER_zone_containment }
+					multiply_temp_variable = { STALKER_emission_chance = 0.2 }
+					clamp_temp_variable = { var = STALKER_emission_chance min = 2 max = 20 }
+					random = {
+						chance = STALKER_emission_chance
+						STALKER_trigger_emission = yes
+					}
+				}
+			}
+		}
+	}
+}
+
+STALKER_trigger_emission = {
+	if = {
+		limit = {
+			STALKER_scenario_enabled = yes
+			STALKER_is_active_zone_anchor = yes
+			NOT = { has_state_flag = STALKER_zone_policy_pending }
+			NOT = { has_state_flag = STALKER_emission_cooldown }
+		}
+		log = "[GetDateText]: STALKER emission triggered in [THIS.GetName]"
+		set_state_flag = { flag = STALKER_emission_cooldown value = 1 days = 180 }
+		add_dynamic_modifier = { modifier = STALKER_emission_disruption days = 60 }
+		if = {
+			limit = {
+				check_variable = { STALKER_zone_containment < 40 }
+				infrastructure > 0
+			}
+			damage_building = {
+				type = infrastructure
+				damage = 1
+			}
+		}
+		add_to_variable = { STALKER_zone_activity = 5 }
+		add_to_variable = { STALKER_zone_containment = -5 }
+		clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+		clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
+		if = {
+			limit = { controller = { exists = yes } }
+			controller = {
+				add_stability = -0.01
+				if = {
+					limit = { PREV = { check_variable = { STALKER_zone_containment < 20 } } }
+					add_stability = -0.01
+				}
+				STALKER_refresh_zone_administration = yes
+				if = {
+					limit = { is_ai = no }
+					PREV = { save_event_target_as = STALKER_zone_event_target }
+					country_event = STALKER.2
+				}
+			}
+		}
+	}
+}

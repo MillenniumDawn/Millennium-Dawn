@@ -1,0 +1,163 @@
+add_namespace = STALKER
+
+country_event = {
+	id = STALKER.1
+	title = STALKER.1.t
+	desc = STALKER.1.d
+	picture = GFX_nuclear_power_plant
+	is_triggered_only = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		has_event_target = STALKER_zone_event_target
+		event_target:STALKER_zone_event_target = {
+			STALKER_is_zone_location = yes
+			has_state_flag = STALKER_zone_policy_pending
+			is_controlled_by = ROOT
+		}
+	}
+
+	immediate = { event_target:STALKER_zone_event_target = { STALKER_activate_zone = yes } }
+
+	option = {
+		name = STALKER.1.a
+		unlock_decision_category_tooltip = STALKER_zone_management_category
+		custom_effect_tooltip = STALKER_military_policy_tt
+		hidden_effect = {
+			if = {
+				limit = {
+					event_target:STALKER_zone_event_target = {
+						has_state_flag = STALKER_zone_policy_pending
+						is_controlled_by = ROOT
+					}
+				}
+				log = "[GetDateText]: [This.GetName]: STALKER.1.a executed"
+				small_expenditure = yes
+				event_target:STALKER_zone_event_target = {
+					clr_state_flag = STALKER_zone_policy_pending
+					add_to_variable = { STALKER_zone_containment = 30 }
+					clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
+					clamp_variable = { var = STALKER_zone_exploitation min = 0 max = 100 }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		ai_chance = { base = 80 }
+	}
+
+	option = {
+		name = STALKER.1.b
+		unlock_decision_category_tooltip = STALKER_zone_management_category
+		custom_effect_tooltip = STALKER_scientific_policy_tt
+		hidden_effect = {
+			if = {
+				limit = {
+					event_target:STALKER_zone_event_target = {
+						has_state_flag = STALKER_zone_policy_pending
+						is_controlled_by = ROOT
+					}
+				}
+				log = "[GetDateText]: [This.GetName]: STALKER.1.b executed"
+				small_expenditure = yes
+				event_target:STALKER_zone_event_target = {
+					clr_state_flag = STALKER_zone_policy_pending
+					add_to_variable = { STALKER_zone_exploitation = 30 }
+					clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
+					clamp_variable = { var = STALKER_zone_exploitation min = 0 max = 100 }
+					controller = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+		ai_chance = { base = 20 }
+	}
+}
+
+country_event = {
+	id = STALKER.2
+	title = STALKER.2.t
+	desc = STALKER.2.d
+	picture = GFX_UKR_warehouse_explosions_main
+	is_triggered_only = yes
+	minor_flavor = yes
+
+	trigger = {
+		STALKER_scenario_enabled = yes
+		has_event_target = STALKER_zone_event_target
+		event_target:STALKER_zone_event_target = {
+			STALKER_is_active_zone_anchor = yes
+			is_controlled_by = ROOT
+		}
+	}
+
+	option = { name = STALKER.2.a }
+
+	option = {
+		name = STALKER.2.b
+		trigger = {
+			NOT = { has_political_power < 50 }
+			has_event_target = STALKER_zone_event_target
+			event_target:STALKER_zone_event_target = {
+				STALKER_is_active_zone_anchor = yes
+				is_controlled_by = ROOT
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.2.b executed"
+		custom_effect_tooltip = STALKER.2.b_tt
+		hidden_effect = {
+			if = {
+				limit = {
+					NOT = { has_political_power < 50 }
+					has_event_target = STALKER_zone_event_target
+					event_target:STALKER_zone_event_target = {
+						STALKER_is_active_zone_anchor = yes
+						is_controlled_by = ROOT
+					}
+				}
+				add_political_power = -50
+				event_target:STALKER_zone_event_target = {
+					add_to_variable = { STALKER_zone_containment = 15 }
+					add_to_variable = { STALKER_zone_activity = -10 }
+					add_to_variable = { STALKER_zone_exploitation = -5 }
+					clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
+					clamp_variable = { var = STALKER_zone_exploitation min = 0 max = 100 }
+					clamp_variable = { var = STALKER_zone_activity min = 0 max = 100 }
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+	}
+
+	option = {
+		name = STALKER.2.c
+		trigger = {
+			NOT = { has_political_power < 25 }
+			has_event_target = STALKER_zone_event_target
+			event_target:STALKER_zone_event_target = {
+				STALKER_is_active_zone_anchor = yes
+				is_controlled_by = ROOT
+			}
+		}
+		log = "[GetDateText]: [This.GetName]: STALKER.2.c executed"
+		custom_effect_tooltip = STALKER.2.c_tt
+		hidden_effect = {
+			if = {
+				limit = {
+					NOT = { has_political_power < 25 }
+					has_event_target = STALKER_zone_event_target
+					event_target:STALKER_zone_event_target = {
+						STALKER_is_active_zone_anchor = yes
+						is_controlled_by = ROOT
+					}
+				}
+				add_political_power = -25
+				event_target:STALKER_zone_event_target = {
+					add_to_variable = { STALKER_zone_exploitation = 15 }
+					add_to_variable = { STALKER_zone_containment = -5 }
+					clamp_variable = { var = STALKER_zone_containment min = 0 max = 100 }
+					clamp_variable = { var = STALKER_zone_exploitation min = 0 max = 100 }
+					ROOT = { STALKER_refresh_zone_administration = yes }
+				}
+			}
+		}
+	}
+}

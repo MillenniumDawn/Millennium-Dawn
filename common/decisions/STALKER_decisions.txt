@@ -1,0 +1,57 @@
+STALKER_zone_management_category = {
+	STALKER_reinforce_zone_containment = {
+		icon = GFX_decision_generic_nuclear
+		state_target = yes
+		target_array = global.STALKER_active_zone_anchors
+		on_map_mode = map_and_decisions_view
+
+		target_root_trigger = {
+			STALKER_scenario_enabled = yes
+			STALKER_controls_active_zone = yes
+		}
+
+		target_trigger = {
+			FROM = {
+				STALKER_is_active_zone_anchor = yes
+				NOT = { has_state_flag = STALKER_zone_policy_pending }
+				is_controlled_by = ROOT
+				check_variable = { STALKER_zone_containment < 80 }
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision STALKER_reinforce_zone_containment in [FROM.GetName]"
+			small_expenditure = yes
+			custom_effect_tooltip = STALKER_reinforce_zone_containment_tt
+			hidden_effect = { FROM = { STALKER_reinforce_containment = yes } }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 15
+				FROM = { check_variable = { STALKER_zone_activity > 39 } }
+			}
+			modifier = {
+				add = 30
+				FROM = {
+					OR = {
+						check_variable = { STALKER_zone_containment < 40 }
+						check_variable = { STALKER_zone_exploitation > 29 }
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 10 }
+			}
+		}
+	}
+}
