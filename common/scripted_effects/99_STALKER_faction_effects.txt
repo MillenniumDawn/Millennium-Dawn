@@ -115,7 +115,7 @@ STALKER_update_zone_factions = {
 }
 
 # Rivals go to war when both are strong and neither clearly leads: Duty and Freedom (1), the military and bandits (2),
-# or the Ward and the Spark (3).
+# the Ward and the Spark (3), or Noon and the Monolith (4).
 STALKER_check_zone_war_start = {
 	set_temp_variable = { STALKER_war_gap = { value = STALKER_zone_duty subtract = STALKER_zone_freedom } }
 	if = {
@@ -161,6 +161,27 @@ STALKER_check_zone_war_start = {
 					set_variable = { STALKER_zone_war_type = 3 }
 					STALKER_begin_zone_war = yes
 				}
+			}
+		}
+	}
+	# Noon runs smaller than the other factions, so its war with the Monolith needs less strength to start.
+	if = {
+		limit = {
+			check_variable = { STALKER_zone_war_type = 0 }
+			has_variable = STALKER_zone_noon
+			check_variable = { STALKER_zone_noon > 24 }
+			check_variable = { STALKER_zone_monolith > 24 }
+		}
+		set_temp_variable = { STALKER_war_gap = { value = STALKER_zone_noon subtract = STALKER_zone_monolith } }
+		if = {
+			limit = {
+				check_variable = { STALKER_war_gap < 15 }
+				check_variable = { STALKER_war_gap > -15 }
+			}
+			random = {
+				chance = 10
+				set_variable = { STALKER_zone_war_type = 4 }
+				STALKER_begin_zone_war = yes
 			}
 		}
 	}
@@ -211,6 +232,13 @@ STALKER_resolve_zone_war = {
 		}
 		set_temp_variable = { STALKER_war_winner = 1 }
 	}
+	else_if = {
+		limit = {
+			check_variable = { STALKER_zone_war_type = 4 }
+			check_variable = { STALKER_zone_noon > STALKER_zone_monolith }
+		}
+		set_temp_variable = { STALKER_war_winner = 1 }
+	}
 	if = {
 		limit = { check_variable = { STALKER_zone_war_type = 1 } }
 		if = {
@@ -222,6 +250,19 @@ STALKER_resolve_zone_war = {
 			add_to_variable = { STALKER_zone_freedom = 15 }
 			add_to_variable = { STALKER_zone_duty = -25 }
 		}
+	}
+	else_if = {
+		limit = { check_variable = { STALKER_zone_war_type = 4 } }
+		if = {
+			limit = { check_variable = { STALKER_war_winner = 1 } }
+			add_to_variable = { STALKER_zone_noon = 15 }
+			add_to_variable = { STALKER_zone_monolith = -25 }
+		}
+		else = {
+			add_to_variable = { STALKER_zone_monolith = 15 }
+			add_to_variable = { STALKER_zone_noon = -25 }
+		}
+		clamp_variable = { var = STALKER_zone_noon min = 0 max = 100 }
 	}
 	else_if = {
 		limit = { check_variable = { STALKER_zone_war_type = 3 } }
