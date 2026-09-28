@@ -18,13 +18,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from shared_utils import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     extract_block_from_text,
     iter_statements,
     read_text_strict,
     strip_comments,
 )
 from validator_common import (
-    DEFAULT_EXTRA_SKIP_PATTERNS,
     KNOWN_VANILLA_LOC_KEYS,
     BaseValidator,
     FileOpener,

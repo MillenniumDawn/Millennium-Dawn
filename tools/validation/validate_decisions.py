@@ -23,6 +23,7 @@ from linting.check_common_mistakes import (
     _war_at_scope,
 )
 from shared_utils import (
+    DEFAULT_EXTRA_SKIP_PATTERNS,
     ai_only_decision_categories,
     atomic_write_text,
     blank_quoted_strings,
@@ -38,7 +39,6 @@ from shared_utils import (
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validator_common import (
-    DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
     FileOpener,
