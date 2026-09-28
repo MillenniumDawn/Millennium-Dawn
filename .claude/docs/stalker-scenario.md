@@ -44,7 +44,9 @@ names and events against the in-game text as documented by the S.T.A.L.K.E.R. Wi
 ## Subsystems
 
 - **Core Zone (1–9):** `STALKER.txt`; loc `MD_STALKER_l_english.yml`; `STALKER_decisions.txt`;
-  `99_STALKER_scripted_effects.txt`, `_society_`, `_zone_placements`, `_pulse_`, `_top_`.
+  `99_STALKER_scripted_effects.txt`, `_society_`, `_zone_placements`, `_pulse_`, `_top_`. The Zone overview panel is
+  `01_STALKER_zone_overview_gui.txt` with `interface/STALKER_zone_overview.gui`, embedded in the Zone
+  management category.
 - **X-Labs (10–19):** `STALKER_xlabs.txt`; loc `_xlabs_`; `STALKER_xlab_decisions.txt`;
   `99_STALKER_xlab_effects.txt`.
 - **International (20–29):** `STALKER_international.txt`; loc `_international_`;
