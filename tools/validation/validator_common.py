@@ -15,8 +15,8 @@ from typing import Any, Callable, Dict, List, Optional, Set, Tuple, TypeVar, cas
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
+from shared_utils import DEFAULT_EXTRA_SKIP_PATTERNS as DEFAULT_EXTRA_SKIP_PATTERNS
 from shared_utils import (
-    DEFAULT_EXTRA_SKIP_PATTERNS,
     Colors,
     DataCleaner,
     FileOpener,

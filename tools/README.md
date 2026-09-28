@@ -180,7 +180,7 @@ tools/
 1. Create `tools/validation/validate_<topic>.py`.
 2. Subclass `BaseValidator` from `validator_common`. Implement `run_validations(self, files: List[str]) -> None`.
 3. Use `self.add_error(category, message, file, line)` for structured issues. The PR report renderer picks these up for inline annotations.
-4. Use `DEFAULT_EXTRA_SKIP_PATTERNS` from `validator_common` for `EXTRA_SKIP_PATTERNS` (extend with domain-specific patterns if needed).
+4. Use `DEFAULT_EXTRA_SKIP_PATTERNS` from `shared_utils` for `EXTRA_SKIP_PATTERNS` (extend with domain-specific patterns if needed).
 5. Wire into CI: add a `ValidatorSpec` for it in `tools/validation/validator_batches.py` (batch, changed-file groups, `--strict`). This is the gate for most validators — they run CI-only.
 6. Decide if it should also run on `git commit`. Heavy cross-reference validators stay CI-only. A fast validator can join the commit-stage set: add it to the `_REGISTRY` in `tools/precommit_validate.py` (with its path rules and `--strict` flag) and pin its selection in `tools/tests/precommit_validate_test.py`. The `config_drift_test` enforces that every validator runs on pre-commit or CI.
 7. Add tests in `tools/tests/validation/`.
@@ -194,10 +194,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.dirname(__file__))
 
 import disk_cache
+from shared_utils import DEFAULT_EXTRA_SKIP_PATTERNS
 from validator_common import (
     BaseValidator,
     Colors,
-    DEFAULT_EXTRA_SKIP_PATTERNS,
     Severity,
     run_validator_main,
     should_skip_file,
