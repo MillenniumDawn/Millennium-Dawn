@@ -70,12 +70,12 @@ These grant each equipment type by archetype, so the game picks the model. Tanks
 
 ### Voting
 
-| Command                       | What it does                                                                                                                                      |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `effect cheat_eu_ai_vote_yes` | Every AI member votes yes on every EU council vote. This is the same switch as the EU cheat decision.                                             |
-| `effect cheat_un_ai_vote_yes` | Every AI country votes yes on every UN General Assembly and Security Council vote, including recognition votes. Permanent members no longer veto. |
+| Command                       | What it does                                                                                                                         |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `effect cheat_eu_ai_vote_yes` | Every AI member votes yes on every EU council vote. This is the same switch as the EU cheat decision.                                |
+| `effect cheat_un_ai_vote_yes` | AI voters vote yes in UN General Assembly and Security Council votes, including recognition votes. Permanent members no longer veto. |
 
-These apply to every vote, not only the ones you propose, so AI proposals pass too. Neither can be turned off in the same save. Countries that appear after you run `cheat_un_ai_vote_yes` vote normally until you run it again.
+These apply to every vote, not only the ones you propose, so AI proposals pass too. The subject of a Security Council vote does not vote. A permanent-seat applicant abstains in the General Assembly vote on its own application. Neither cheat has an off switch. Countries that appear after you run `cheat_un_ai_vote_yes` vote normally until you run it again.
 
 ### Factions and Satellites
 
