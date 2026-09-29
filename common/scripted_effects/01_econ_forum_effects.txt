@@ -83,6 +83,11 @@ econ_forum_monthly_update = {
 				}
 				econ_forum_convene_summit = yes
 			}
+			# Personal invitations close a month out so every reply resolves before the summit.
+			else_if = {
+				limit = { check_variable = { ef_gap = 1 } }
+				set_variable = { global.econ_forum_invites_left^ef_i = 0 }
+			}
 		}
 	}
 }
@@ -189,7 +194,7 @@ econ_forum_send_personal_invitation = {
 econ_forum_notify_invitee = {
 	set_temp_variable = { ef_inviter = global.econ_forum_host^ef_i }
 	var:ef_inviter = { save_event_target_as = econ_forum_inviter }
-	country_event = { id = econ_forum.2 days = 1 }
+	country_event = econ_forum.2
 }
 
 # Invitee scope, from econ_forum.2. ef_answer is 3 (ministers), 4 (head of government) or -1 (decline).
@@ -654,7 +659,7 @@ econ_forum_record_attendance = {
 	set_variable = { econ_forum_status^ef_i = 0 }
 }
 
-# Attendee scope. Investors follow the delegation home; the best forum attended in the last year sets the bonus.
+# Attendee scope. Investors follow the delegation home. A stronger bonus still running keeps its own expiry.
 econ_forum_grant_delegation_bonus = {
 	set_temp_variable = { ef_bonus = { value = ef_prestige multiply = -0.0005 } }
 	if = {
@@ -663,13 +668,14 @@ econ_forum_grant_delegation_bonus = {
 	}
 	if = {
 		limit = {
-			has_dynamic_modifier = { modifier = econ_forum_delegation_modifier }
-			check_variable = { econ_forum_investor_bonus < ef_bonus }
+			OR = {
+				NOT = { has_dynamic_modifier = { modifier = econ_forum_delegation_modifier } }
+				NOT = { check_variable = { econ_forum_investor_bonus < ef_bonus } }
+			}
 		}
-		set_temp_variable = { ef_bonus = econ_forum_investor_bonus }
+		set_variable = { econ_forum_investor_bonus = ef_bonus }
+		add_dynamic_modifier = { modifier = econ_forum_delegation_modifier days = 365 }
 	}
-	set_variable = { econ_forum_investor_bonus = ef_bonus }
-	add_dynamic_modifier = { modifier = econ_forum_delegation_modifier days = 365 }
 }
 
 # Host scope, state-led forums only. Delegations leave with a better view of the host, sign investment

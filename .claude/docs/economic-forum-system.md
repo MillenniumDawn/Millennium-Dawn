@@ -97,7 +97,9 @@ it keeps 95% of its prestige.
    invitations from several forums never collide. A human host gets
    `econ_forum.1` and the decisions. An AI host runs `econ_forum_ai_prepare`.
 2. **Host decisions** (human host):
-   - Invite a regional power: 15 PP, +15 attendance chance.
+   - Invite a regional power: 15 PP, +15 attendance chance. Invitations close a
+     month before the summit so every reply resolves in time.
+   - Paid replies to an invitation need the political power they cost.
    - Buy a sponsor package: 3.0 treasury and 10 PP for 5 corporate points.
    - Book a headline speaker: 50 PP, a roll of `60 + (ours - rival) / 2`,
      clamped to 20-90. A speaker landed while the WEF is also preparing is taken
