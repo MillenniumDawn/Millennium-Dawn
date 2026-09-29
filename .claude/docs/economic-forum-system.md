@@ -115,8 +115,9 @@ it keeps 95% of its prestige.
    `3 + prestige / 25` personal invitations. Standing invitations go to last
    year's attendees, core members and, above 60 prestige, every country in
    `global.PR_regional_or_greater_powers`. A human invitee gets `econ_forum.2`,
-   which carries the host as the event target `econ_forum_inviter`, so
-   invitations from several forums never collide. A human host gets
+   Each invitation queues its forum id in `econ_forum_invite_queue` and each
+   event claims the oldest one in `immediate`, saving the host as
+   `econ_forum_inviter`, so invitations from several forums never collide. A human host gets
    `econ_forum.1` and the decisions. An AI host runs `econ_forum_ai_prepare`.
 2. **Host decisions** (human host):
    - Invite a regional power (15 PP) or a neighbor outside that pool (10 PP),
@@ -133,8 +134,8 @@ it keeps 95% of its prestige.
 
 Outside preparation a host can reschedule once every two years (50 PP): the month
 after its strongest rival's (counter-programming) or six months after it.
-A new month one or two months away opens preparation at once; one month away
-leaves no time for personal invitations.
+Founding or rescheduling a summit one or two months away opens preparation at
+once; one month away leaves no time for personal invitations.
 
 ## AI Attendance
 
