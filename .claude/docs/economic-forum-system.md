@@ -112,7 +112,8 @@ it keeps 95% of its prestige.
 Outside preparation a host can reschedule once every two years (50 PP): the month
 after its strongest rival's (counter-programming) or six months after it.
 Founding or rescheduling a summit one or two months away opens preparation at
-once; one month away leaves no time for personal invitations.
+once; one month away leaves no time for personal invitations, for AI hosts too. A
+reschedule that lands on the current month refunds its 50 PP and starts no cooldown.
 
 ## AI Attendance
 
@@ -164,7 +165,7 @@ government, but only to forums with prestige 30 or more, or as a core member.
   them is a great or super power, `econ_forum_news.3` fires.
 - Once per campaign: `econ_forum_news.5` when a challenger reaches 50 prestige,
   `econ_forum_news.2` when one passes the WEF, and `econ_forum_news.4` when the
-  WEF retakes first place. Before 21 April 2025 the WEF news names Klaus Schwab.
+  WEF retakes first place, checked after every summit. Before 21 April 2025 the WEF news names Klaus Schwab.
 
 ## Adding a Forum
 

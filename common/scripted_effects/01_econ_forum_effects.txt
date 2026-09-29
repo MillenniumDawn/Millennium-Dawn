@@ -108,6 +108,11 @@ econ_forum_open_preparation = {
 	set_variable = { global.econ_forum_speakers^ef_i = 0 }
 	set_variable = { global.econ_forum_track_count^ef_i = 0 }
 	set_variable = { global.econ_forum_invites_left^ef_i = { value = global.econ_forum_prestige^ef_i divide = 25 round = yes add = 3 } }
+	# Opened one month out by a founding or reschedule: no time for personal invitations.
+	if = {
+		limit = { check_variable = { ef_gap = 1 } }
+		set_variable = { global.econ_forum_invites_left^ef_i = 0 }
+	}
 	for_loop_effect = {
 		end = 6
 		value = ef_t
@@ -336,10 +341,6 @@ econ_forum_open_if_due = {
 		}
 		set_temp_variable = { ef_host = THIS.id }
 		econ_forum_open_preparation = yes
-		if = {
-			limit = { check_variable = { ef_gap = 1 } }
-			set_variable = { global.econ_forum_invites_left^ef_i = 0 }
-		}
 	}
 }
 
@@ -351,10 +352,21 @@ econ_forum_reschedule = {
 		set_temp_variable = { ef_new_month = { value = global.econ_forum_month^ef_rival add = ef_offset subtract = 1 } }
 		modulo_temp_variable = { ef_new_month = 12 }
 		add_to_temp_variable = { ef_new_month = 1 }
+	}
+	if = {
+		limit = {
+			OR = {
+				check_variable = { ef_rival = -1 }
+				check_variable = { global.econ_forum_month^ef_i = ef_new_month }
+			}
+		}
+		add_political_power = 50
+	}
+	else = {
 		set_variable = { global.econ_forum_month^ef_i = ef_new_month }
 		econ_forum_open_if_due = yes
+		set_country_flag = { flag = econ_forum_rescheduled value = 1 days = 730 }
 	}
-	set_country_flag = { flag = econ_forum_rescheduled value = 1 days = 730 }
 }
 
 econ_forum_convene_summit = {
@@ -552,13 +564,25 @@ econ_forum_check_milestones = {
 	}
 	if = {
 		limit = {
-			check_variable = { ef_i = 0 }
 			has_global_flag = econ_forum_davos_overtaken
 			NOT = { has_global_flag = econ_forum_davos_reasserted }
 		}
-		econ_forum_find_rival = yes
+		set_temp_variable = { ef_top_challenger = 0 }
+		for_loop_effect = {
+			start = 1
+			end = global.econ_forum_host^num
+			value = ef_j
+
+			if = {
+				limit = {
+					check_variable = { global.econ_forum_host^ef_j > 0 }
+					check_variable = { global.econ_forum_prestige^ef_j > ef_top_challenger }
+				}
+				set_temp_variable = { ef_top_challenger = global.econ_forum_prestige^ef_j }
+			}
+		}
 		if = {
-			limit = { check_variable = { global.econ_forum_prestige^0 > ef_rival_prestige } }
+			limit = { check_variable = { global.econ_forum_prestige^0 > ef_top_challenger } }
 			set_global_flag = econ_forum_davos_reasserted
 			news_event = econ_forum_news.4
 		}
