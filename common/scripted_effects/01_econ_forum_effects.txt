@@ -268,9 +268,15 @@ econ_forum_notify_invitee = {
 }
 
 # Invitee scope, from econ_forum.2. ef_answer is 3 (ministers), 4 (head of government) or -1 (decline); ef_cost is
-# the political power the option charged, refunded when the forum changed hands or closed meanwhile.
+# the political power the option charged, refunded when the forum changed hands or closed meanwhile. The seat
+# saved by the event pins the reply to the forum that sent it.
 econ_forum_answer_invitation = {
 	set_temp_variable = { ef_i = -1 }
+	set_temp_variable = { ef_invite_seat = 0 }
+	if = {
+		limit = { has_event_target = econ_forum_invite_seat }
+		event_target:econ_forum_invite_seat = { set_temp_variable = { ef_invite_seat = THIS } }
+	}
 	event_target:econ_forum_inviter = {
 		if = {
 			limit = { has_variable = econ_forum_hosted }
@@ -281,6 +287,8 @@ econ_forum_answer_invitation = {
 	if = {
 		limit = {
 			check_variable = { ef_i > -1 }
+			NOT = { check_variable = { ef_invite_seat = 0 } }
+			check_variable = { global.econ_forum_seat^ef_i = ef_invite_seat }
 			check_variable = { global.econ_forum_host^ef_i = ef_inviter_id }
 			check_variable = { global.econ_forum_preparing^ef_i = 1 }
 			check_variable = { econ_forum_status^ef_i > 0 }

@@ -66,8 +66,9 @@ Founding costs 100 PP (Boao 50) and needs stability above 40% and peace.
 A forum follows its seat. When the seat state's owner is not the host, the old
 host loses the forum, alive or not, and the cycle in progress is cancelled. The
 seat owner takes it over and `econ_forum_news.6` fires, unless it already hosts a
-forum; then the forum stands vacant until its seat owner is free. An invitation
-answered after its forum changed hands or closed is refunded and does nothing.
+forum; then the forum stands vacant, still listed with its prestige, until its seat
+owner is free. Each invitation event keeps its forum's seat, so a reply answered
+after its forum changed hands or closed is refunded and does nothing.
 
 Per-country arrays use the same forum index:
 
