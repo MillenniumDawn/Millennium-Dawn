@@ -55,6 +55,8 @@
 @population_tax_adjuster = 0.008
 # Maximum exchange-rate multiplier on reserve-currency debt service
 @max_debt_fx_factor = 2
+# Near-zero GDP would otherwise give ratios in the thousands; no trigger checks above 2.5
+@max_debt_ratio = 5
 # Target share of gross income used for debt service after a financial collapse
 @financial_collapse_debt_service_target = 0.75
 
@@ -2613,6 +2615,7 @@ calculate_interest_rate = {
 			limit = { check_variable = { gdp_total > 0 } }
 			divide_variable = { debt_ratio = gdp_total }
 		}
+		clamp_variable = { var = debt_ratio max = @max_debt_ratio }
 	}
 
 	# Remove high interest modifier if interest rate dropped below 15%
@@ -4591,6 +4594,17 @@ update_display = {
 
 	set_variable = { treasury_rate = { value = display_income subtract = display_expense } }
 
+	# Lets AI deficit checks scale with the size of the economy.
+	if = { limit = { check_variable = { display_income > 0 } }
+		set_variable = { budget_balance_ratio = { value = treasury_rate divide = display_income } }
+	}
+	else_if = { limit = { check_variable = { treasury_rate < 0 } }
+		set_variable = { budget_balance_ratio = -1 }
+	}
+	else = {
+		set_variable = { budget_balance_ratio = 0 }
+	}
+
 	if = { limit = { is_in_array = { global.arabic_countries = THIS.id } }
 		calculate_monthly_arab_spring_change = yes
 	}
@@ -6239,29 +6253,37 @@ calculate_tax_adjustments = {
 
 	# --- TAX INCREASES (deficit response) ---
 
-	# Population tax: raise at mild deficit (treasury_rate < -1)
-	# Skip if low stability unless deficit is severe (< -5)
+	# Population tax: raise at mild deficit (< -1, or 3% of income)
+	# Skip if low stability unless deficit is severe (< -5, or 15% of income)
 	if = {
 		limit = {
-			check_variable = { treasury_rate < -1 }
+			OR = {
+				check_variable = { treasury_rate < -1 }
+				check_variable = { budget_balance_ratio < -0.03 }
+			}
 			check_variable = { population_tax_rate < 40 }
 			OR = {
 				has_stability > 0.24
 				check_variable = { treasury_rate < -5 }
+				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
 		set_temp_variable = { pop_tax_change = 1 }
 	}
 
-	# Corporate tax: raise at moderate deficit (treasury_rate < -2)
+	# Corporate tax: raise at moderate deficit (< -2, or 6% of income)
 	# Only after population tax reaches a moderate level (> 24), or at severe deficit regardless
 	if = {
 		limit = {
-			check_variable = { treasury_rate < -2 }
+			OR = {
+				check_variable = { treasury_rate < -2 }
+				check_variable = { budget_balance_ratio < -0.06 }
+			}
 			check_variable = { corporate_tax_rate < 50 }
 			OR = {
 				check_variable = { population_tax_rate > 24 }
 				check_variable = { treasury_rate < -5 }
+				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
 		set_temp_variable = { corp_tax_change = 1 }
@@ -6299,7 +6321,10 @@ calculate_tax_adjustments = {
 	# Prefer lowering corporate tax first (it drags productivity and investment)
 	if = {
 		limit = {
-			check_variable = { treasury_rate > 2 }
+			OR = {
+				check_variable = { treasury_rate > 2 }
+				check_variable = { budget_balance_ratio > 0.10 }
+			}
 			check_variable = { debt_ratio < 0.30 }
 			check_variable = { interest_rate < 5 }
 			check_variable = { pop_tax_change = 0 }
