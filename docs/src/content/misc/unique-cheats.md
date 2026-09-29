@@ -43,7 +43,7 @@ This section handles all of our economic system cheats/debugging effects.
 
 ## Console Effect Cheats
 
-Open the console and type `effect <name>`. The cheat runs on the country you are playing. To use it on another country, switch with `tag <TAG>` first.
+Open the console and type `effect <name>`. Country-specific cheats run on the country you are playing. To use one on another country, switch with `tag <TAG>` first. Cheats described as affecting every country run globally.
 
 ### Economy
 
@@ -58,6 +58,17 @@ Open the console and type `effect <name>`. The cheat runs on the country you are
 
 The economy panel updates right away. The normal weekly and monthly updates keep running, so inflation and currency strength start moving again from the reset value.
 
+### Offsite Factories
+
+Each command adds the same number of offsite civilian and military factories to your country:
+
+- `effect cheat_add_offsite_factories_1`: one of each.
+- `effect cheat_add_offsite_factories_2`: two of each.
+- `effect cheat_add_offsite_factories_3`: three of each.
+- `effect cheat_add_offsite_factories_5`: five of each.
+
+The free factories game rule calls these effects for every human player at startup. Console use affects only the country you control and can be repeated.
+
 ### Equipment
 
 | Command                           | What it adds                                                                                                                                                                                            |
@@ -67,6 +78,10 @@ The economy panel updates right away. The normal weekly and monthly updates keep
 | `effect cheat_add_trains`         | 200 trains.                                                                                                                                                                                             |
 
 These grant each equipment type by archetype, so the game picks the model. Tanks, aircraft and ships are designs, so use the vanilla `add_equipment <amount> <equipment>` command with a specific variant instead.
+
+### AI Political Power
+
+Use `effect cheat_add_ai_political_power_250`, `effect cheat_add_ai_political_power_500` or `effect cheat_add_ai_political_power_1000` to grant that much political power to every current AI country. The AI starting political power game rule calls the same effects. Repeating a command grants the amount again; newly created AI countries are unaffected until you run it again.
 
 ### Voting
 
