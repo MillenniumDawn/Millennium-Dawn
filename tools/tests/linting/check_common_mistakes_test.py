@@ -47,6 +47,7 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   44. on_daily_TAG blocks that only refresh country flags for the AI to read
   45. per-tag war brakes already covered by MD_avoid_new_wars_when_outmatched
   46. has_opinion_modifier only accepts a modifier ID, not a block
+  47. stat comparisons with the wrong trigger name (stability -> has_stability)
 """
 
 import os
@@ -97,6 +98,7 @@ from check_common_mistakes import (
     _check_redundant_avoid_starting_wars,
     _check_retired_ideology_flags,
     _check_tautological_or,
+    _check_wrong_stat_trigger,
     _equipment_bonus_enum,
     _equipment_names,
     _files_need_global_refs,
@@ -3767,6 +3769,49 @@ assert_finds(
     ],
     0,
     "scalar, quoted, and commented has_opinion_modifier forms not flagged",
+)
+
+# 47. Stat comparisons with the wrong trigger name.
+
+print("\n── wrong stat trigger name ──")
+
+assert_finds(
+    _check_wrong_stat_trigger,
+    [
+        "\tavailable = { emerging_reactionaries_are_in_power = yes stability > 0.5 }\n",
+        "\twar_support < 0.3\n",
+        "\tpolitical_power > 50\n",
+        "\thas_command_power > 20\n",
+    ],
+    4,
+    "bare stat names and has_command_power flagged",
+)
+assert_finds(
+    _check_wrong_stat_trigger,
+    [
+        "\thas_stability > 0.5\n",
+        "\tcommand_power > 20\n",
+        "\tcheck_variable = { stability > 0.6 }\n",
+        "\tcheck_variable = {\n",
+        "\t\tstability < 0.1\n",
+        "\t}\n",
+        "\tstability = 0.05\n",
+        "\tmax_manpower > 5\n",
+        "\t# stability > 0.5\n",
+    ],
+    0,
+    "has_ triggers, variable blocks, modifiers, and comments not flagged",
+)
+assert_finds(
+    _check_wrong_stat_trigger,
+    [
+        "\tcheck_variable = {\n",
+        "\t\tstability < 0.1\n",
+        "\t}\n",
+        "\tstability > 0.5\n",
+    ],
+    1,
+    "comparison after a closed variable block flagged",
 )
 
 # 42. Regressions from the review of the two checks above.
