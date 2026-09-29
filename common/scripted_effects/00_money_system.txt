@@ -5245,15 +5245,6 @@ calculate_gdp = {
 	set_temp_variable = { workers_per_internet_station = 0.012 }
 	set_temp_variable = { workers_per_rail_terminal = 0.015 }
 
-	set_temp_variable = {
-		mil_facs_worker_requirement_multiplier = {
-			value = 1
-			add = modifier@mil_facs_worker_requirement_modifier
-			add = modifier@buildings_worker_requirement_modifier
-			clamp = { min = 0.10 max = @math_expressions_max }
-		}
-	}
-
 	# Power Plants — allocated first so the grid is staffed before any industrial demand
 	# Nuclear Reactors
 	if = { limit = { check_variable = { nuclear_reactors = 0 } }
@@ -5371,31 +5362,23 @@ calculate_gdp = {
 		}
 	}
 
+	set_temp_variable = {
+		mil_facs_worker_requirement_multiplier = {
+			value = 1
+			add = modifier@mil_facs_worker_requirement_modifier
+			add = modifier@buildings_worker_requirement_modifier
+			clamp = { min = 0.10 max = @math_expressions_max }
+		}
+	}
+	set_temp_variable = { workers_per_mil_fac = { value = workers_per_mil_fac multiply = mil_facs_worker_requirement_multiplier } }
+	set_temp_variable = { workers_per_dockyard = { value = workers_per_dockyard multiply = mil_facs_worker_requirement_multiplier } }
+	set_variable = { workers_per_mil_fac_display = { value = workers_per_mil_fac multiply = 1000 } }
+	set_variable = { workers_per_dockyard_display = { value = workers_per_dockyard multiply = 1000 } }
 
 	if = { limit = { check_variable = { military_factory_total = 0 } }
 		set_variable = { military_factories_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_mil_fac_display = {
-				value = workers_per_mil_fac
-				multiply = mil_facs_worker_requirement_multiplier
-				multiply = 1000
-			}
-		}
 	}
 	else = {
-		set_temp_variable = {
-			workers_per_mil_fac = {
-				value = workers_per_mil_fac
-				multiply = mil_facs_worker_requirement_multiplier
-			}
-		}
-		set_variable = {
-			workers_per_mil_fac_display = {
-				value = workers_per_mil_fac
-				multiply = 1000
-			}
-		}
-
 		set_temp_variable = {
 			max_workers_in_mil_facs = {
 				value = military_factory_total
@@ -5420,28 +5403,8 @@ calculate_gdp = {
 
 	if = { limit = { check_variable = { naval_factory_total = 0 } }
 		set_variable = { naval_factories_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_dockyard_display = {
-				value = workers_per_dockyard
-				multiply = mil_facs_worker_requirement_multiplier
-				multiply = 1000
-			}
-		}
 	}
 	else = {
-		set_temp_variable = {
-			workers_per_dockyard = {
-				value = workers_per_dockyard
-				multiply = mil_facs_worker_requirement_multiplier
-			}
-		}
-		set_variable = {
-			workers_per_dockyard_display = {
-				value = workers_per_dockyard
-				multiply = 1000
-			}
-		}
-
 		set_temp_variable = {
 			max_workers_in_dockyards = {
 				value = naval_factory_total
@@ -5471,16 +5434,12 @@ calculate_gdp = {
 			add = 1
 		}
 	}
-	set_temp_variable = { workers_per_civ_fac = { value = workers_per_civ_fac multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_office = { value = workers_per_office multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_agriculture_district = { value = workers_per_agriculture_district multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_microchip_plant = { value = workers_per_microchip_plant multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_composite_plant = { value = workers_per_composite_plant multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_synthetic_refinery = { value = workers_per_synthetic_refinery multiply = worker_requirement_gdp_multiplier } }
+	set_variable = { worker_requirement_gdp_multiplier_display = { value = worker_requirement_gdp_multiplier subtract = 1 } }
 
 	set_temp_variable = {
 		workers_per_civ_fac = {
 			value = workers_per_civ_fac
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@civ_facs_worker_requirement_modifier
@@ -5489,12 +5448,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_civ_fac_display = {
-			value = workers_per_civ_fac
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_civ_fac_display = { value = workers_per_civ_fac multiply = 1000 } }
 
 	if = { limit = { check_variable = { industrial_complex_total = 0 } }
 		set_variable = { civilian_factories_manpower_fulfillment = 1 }
@@ -5525,6 +5479,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_office = {
 			value = workers_per_office
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@offices_worker_requirement_modifier
@@ -5533,12 +5488,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_office_display = {
-			value = workers_per_office
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_office_display = { value = workers_per_office multiply = 1000 } }
 
 	if = { limit = { check_variable = { office_park_total = 0 } }
 		set_variable = { offices_manpower_fulfillment = 1 }
@@ -5569,6 +5519,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_agriculture_district = {
 			value = workers_per_agriculture_district
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@agriculture_district_worker_requirement_modifier
@@ -5577,12 +5528,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_agriculture_district_display = {
-			value = workers_per_agriculture_district
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_agriculture_district_display = { value = workers_per_agriculture_district multiply = 1000 } }
 
 	if = { limit = { check_variable = { agriculture_district_total = 0 } }
 		set_variable = { agriculture_district_manpower_fulfillment = 1 }
@@ -5614,6 +5560,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_microchip_plant = {
 			value = workers_per_microchip_plant
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@microchip_plant_worker_requirement_modifier
@@ -5622,12 +5569,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_microchip_plant_display = {
-			value = workers_per_microchip_plant
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_microchip_plant_display = { value = workers_per_microchip_plant multiply = 1000 } }
 
 	if = { limit = { check_variable = { microchip_plant_total = 0 } }
 		set_variable = { microchip_plant_manpower_fulfillment = 1 }
@@ -5659,6 +5601,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_composite_plant = {
 			value = workers_per_composite_plant
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@composite_plant_worker_requirement_modifier
@@ -5667,12 +5610,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_composite_plant_display = {
-			value = workers_per_composite_plant
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_composite_plant_display = { value = workers_per_composite_plant multiply = 1000 } }
 
 	if = { limit = { check_variable = { composite_plant_total = 0 } }
 		set_variable = { composite_plant_manpower_fulfillment = 1 }
@@ -5704,6 +5642,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_synthetic_refinery = {
 			value = workers_per_synthetic_refinery
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@synthetic_refinery_worker_requirement_modifier
@@ -5712,12 +5651,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_synthetic_refinery_display = {
-			value = workers_per_synthetic_refinery
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_synthetic_refinery_display = { value = workers_per_synthetic_refinery multiply = 1000 } }
 
 	if = { limit = { check_variable = { synthetic_refinery_total = 0 } }
 		set_variable = { synthetic_refinery_manpower_fulfillment = 1 }

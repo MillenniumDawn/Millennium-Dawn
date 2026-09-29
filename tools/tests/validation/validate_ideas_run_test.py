@@ -166,6 +166,36 @@ def test_quality_report_ignores_an_issue_type_it_has_no_message_for(tmp_path):
     assert [issue.line for issue in validator._issues] == [4]
 
 
+def test_non_instant_bonus_is_skipped_for_configured_idea_prefixes(
+    tmp_path, monkeypatch
+):
+    _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
+    monkeypatch.setattr(validate_ideas, "_INSTANT_EXEMPT_PREFIXES", ("sp_",))
+    validator = _validator(tmp_path)
+
+    validator.validate_idea_quality(
+        {
+            str(tmp_path / "common" / "ideas" / "quality.txt"): [
+                IdeaIssue(
+                    "sp_idea", "country", 4, "equipment-bonus-not-instant", "convoy"
+                ),
+                IdeaIssue(
+                    "TAG_idea", "country", 9, "equipment-bonus-not-instant", "convoy"
+                ),
+            ]
+        }
+    )
+
+    assert [(issue.line, issue.message) for issue in validator._issues] == [
+        (
+            9,
+            "'TAG_idea' equipment_bonus convoy has no instant = yes (the bonus"
+            " only reaches newly created variants; add instant = yes, or exempt"
+            " the idea in validation_config.json)",
+        )
+    ]
+
+
 def test_character_idea_tokens_join_the_defined_set(tmp_path):
     _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
     _write(
