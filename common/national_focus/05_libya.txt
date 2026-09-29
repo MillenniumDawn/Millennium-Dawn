@@ -893,7 +893,7 @@ focus_tree = {
 					producer = SOV
 				}
 				add_equipment_to_stockpile = {
-					type = Anti_tank_0
+					type = Anti_tank_1
 					amount = 50
 					producer = SOV
 				}
@@ -1479,6 +1479,12 @@ focus_tree = {
 		will_lead_to_war_with = CHA
 
 		search_filters = { FOCUS_FILTER_ANNEXATION }
+		bypass = {
+			OR = {
+				NOT = { country_exists = CHA }
+				CHA = { is_subject_of = ROOT }
+			}
+		}
 
 		available = {
 			is_subject = no
@@ -3644,15 +3650,21 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_peoples_intelligence_agency"
 			if = {
-				limit = { has_intelligence_agency = yes }
-				set_temp_variable = { temp_opinion = 10 }
-				change_intelligence_community_opinion = yes
-			}
-			else = {
+				limit = { has_intelligence_agency = no }
 				create_intelligence_agency = {
 					name = "Mukhabarat el-Jamahiriya"
 					icon = GFX_intelligence_agency_logo_lba
 				}
+			}
+			else_if = {
+				limit = {
+					NOT = { has_done_agency_upgrade = upgrade_passive_defense }
+				}
+				upgrade_intelligence_agency = upgrade_passive_defense
+			}
+			else = {
+				set_temp_variable = { temp_opinion = 10 }
+				change_intelligence_community_opinion = yes
 			}
 		}
 
@@ -4351,6 +4363,7 @@ focus_tree = {
 					modifier = declaration_of_friendship
 				}
 				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 		}
@@ -4880,7 +4893,7 @@ focus_tree = {
 			modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
 				type = medium_tank_chassis_0
-				variant_name = "T-55"
+				variant_name = "T-55A"
 				amount = 200
 				producer = SOV
 			}
@@ -4891,13 +4904,13 @@ focus_tree = {
 				producer = SOV
 			}
 			add_equipment_to_stockpile = {
-				type = medium_tank_amphibious_chassis_1
+				type = medium_tank_amphibious_chassis_0
 				variant_name = "BTR-60PB"
 				amount = 250
 				producer = SOV
 			}
 			add_equipment_to_stockpile = {
-				type = artillery_0 #D-30
+				type = artillery_1 #D-30
 				amount = 100
 				producer = SOV
 			}
@@ -9053,12 +9066,12 @@ focus_tree = {
 				producer = SOV
 			}
 			add_equipment_to_stockpile = {
-				type = Anti_tank_0
+				type = Anti_tank_1
 				amount = 150
 				producer = SOV
 			}
 			add_equipment_to_stockpile = {
-				type = Heavy_Anti_tank_0
+				type = Heavy_Anti_tank_1
 				amount = 50
 				producer = SOV
 			}
@@ -9602,6 +9615,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus LBA_neighbourly_politics"
 			every_neighbor_country = {
 				set_temp_variable = { percent_change = 1 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 		}
@@ -10053,7 +10067,29 @@ focus_tree = {
 			custom_effect_tooltip = LBA_submission_accepted_tt
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0.5
+				85 = {
+					OWNER = {
+						has_idea = NATO_member
+						strength_ratio = { tag = ROOT ratio > 0.85 }
+					}
+				}
+			}
+			modifier = {
+				factor = 0.5
+				85 = {
+					OWNER = {
+						OR = {
+							has_idea = NATO_member
+							strength_ratio = { tag = ROOT ratio > 1.0 }
+						}
+					}
+				}
+			}
+		}
 	}
 
 	focus = {
@@ -10112,7 +10148,29 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 10 }
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0.5
+				144 = {
+					OWNER = {
+						has_idea = NATO_member
+						strength_ratio = { tag = ROOT ratio > 0.85 }
+					}
+				}
+			}
+			modifier = {
+				factor = 0.5
+				144 = {
+					OWNER = {
+						OR = {
+							has_idea = NATO_member
+							strength_ratio = { tag = ROOT ratio > 1.0 }
+						}
+					}
+				}
+			}
+		}
 	}
 
 	focus = {
@@ -12408,6 +12466,10 @@ focus_tree = {
 			base = 10
 			modifier = { factor = 25 LBA_ai_gaddafi_union_path = yes }
 			modifier = { factor = 0 LBA_ai_not_gaddafi_union_path = yes }
+			modifier = {
+				factor = 0.5
+				strength_ratio = { tag = GUI ratio < 1.0 }
+			}
 		}
 	}
 
@@ -12448,6 +12510,10 @@ focus_tree = {
 			base = 10
 			modifier = { factor = 25 LBA_ai_gaddafi_union_path = yes }
 			modifier = { factor = 0 LBA_ai_not_gaddafi_union_path = yes }
+			modifier = {
+				factor = 0.5
+				strength_ratio = { tag = CDI ratio < 1.0 }
+			}
 		}
 	}
 
@@ -16094,7 +16160,7 @@ focus_tree = {
 				}
 				395 = {
 					create_unit = {
-						division = "name = \"Al-Saiqa\" division_template = \"Al-Saiqa\" start_experience_factor = 0.8 start_equipment_factor = 1.0 force_equipment_variants = { infantry_weapons_1 = { owner = SOV } cnc_equipment_1 = { owner = SOV } Anti_tank_0 = { owner = SOV } Anti_Air_0 = { owner = SOV } } "
+						division = "name = \"Al-Saiqa\" division_template = \"Al-Saiqa\" start_experience_factor = 0.8 start_equipment_factor = 1.0 force_equipment_variants = { infantry_weapons_1 = { owner = SOV } cnc_equipment_1 = { owner = SOV } Anti_tank_1 = { owner = SOV } Anti_Air_0 = { owner = SOV } } "
 						owner = ROOT
 						prioritize_location = 11954
 					}
@@ -18452,6 +18518,7 @@ focus_tree = {
 				limit = { is_muslim_brotherhood = yes }
 				set_temp_variable = { percent_change = 5 }
 				set_temp_variable = { tag_index = PREV }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 		}
@@ -18646,7 +18713,7 @@ focus_tree = {
 								producer = SOV
 							}
 							add_equipment_to_stockpile = {
-								type = Anti_tank_0
+								type = Anti_tank_1
 								amount = 50
 								producer = SOV
 							}
@@ -18679,7 +18746,7 @@ focus_tree = {
 						producer = SOV
 					}
 					add_equipment_to_stockpile = {
-						type = Anti_tank_0
+						type = Anti_tank_1
 						amount = 50
 						producer = SOV
 					}
@@ -19053,6 +19120,7 @@ focus_tree = {
 					is_muslim_brotherhood = no
 				}
 				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 		}

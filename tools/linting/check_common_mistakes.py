@@ -284,6 +284,7 @@ _RE_TAG_SCOPE = re.compile(r"^[A-Z]{2,3}$")
 _LOGIC_SCOPE_TOKENS = {"AND", "OR", "NOT"}
 _OWNER_RESET_SCOPE_TOKENS = {"ROOT", "THIS"}
 _FOREIGN_COUNTRY_SCOPE_TOKENS = {
+    "FROM",
     "OWNER",
     "create_dynamic_country",
     "owner",
@@ -445,6 +446,7 @@ from shared_utils import (
     print_timing_summary,
     run_with_pool,
     strip_inline_comment,
+    validation_config,
 )
 
 
@@ -481,7 +483,7 @@ def _scan_global_refs(root_dir):
                         decisions.add(m.group(1))
                     for m in _RE_SET_NATION_FLAG.finditer(content):
                         nation_flags.add(m.group(1))
-                except Exception:
+                except OSError:
                     pass
     return focuses, decisions, nation_flags
 
@@ -616,7 +618,7 @@ def _scope_is_owner(stack):
     Innermost foreign scope wins (a sponsored proxy war); an explicit reset
     (ROOT/THIS/owner tag) wins over anything outside it; anything enclosing a
     display-only tooltip never fires, so it never counts as the owner."""
-    if "tooltip" in stack:
+    if "tooltip" in stack or "inapplicable" in stack:
         return False
     for kind in reversed(stack):
         if kind == "foreign":
@@ -629,24 +631,48 @@ def _scope_is_owner(stack):
 def _war_at_scope(text, owner_tag):
     """True if create_wargoal/declare_war_on fires at the owner's scope."""
     stack = []
+    openers = []
+    previous_owner_if = {}
     last_ident = None
     opener_pending = None
-    for tok in _RE_SCRIPT_TOKEN.findall(text):
+    for match in _RE_SCRIPT_TOKEN.finditer(text):
+        tok = match.group(0)
         if tok == "=":
             opener_pending = last_ident
         elif tok == "{":
-            stack.append(_scope_frame_kind(opener_pending, owner_tag))
+            opener = opener_pending
+            limit = None
+            if opener in ("if", "else_if"):
+                limit = re.match(
+                    r"\s*limit\s*=\s*\{\s*(?:original_tag|tag)\s*=\s*([A-Z]{2,3})\s*\}",
+                    text[match.end() :],
+                )
+            blocked_by_previous = bool(
+                opener in ("else", "else_if") and previous_owner_if.get(len(stack))
+            )
+            owner_if = (
+                bool(limit and owner_tag == limit.group(1)) or blocked_by_previous
+            )
+            impossible = (limit and owner_tag != limit.group(1)) or blocked_by_previous
+            stack.append(
+                "inapplicable" if impossible else _scope_frame_kind(opener, owner_tag)
+            )
+            openers.append((opener, owner_if))
+            previous_owner_if.pop(len(stack) - 1, None)
             opener_pending = None
             last_ident = None
         elif tok == "}":
             if stack:
                 stack.pop()
+                opener, owner_if = openers.pop()
+                previous_owner_if[len(stack)] = (
+                    owner_if if opener in ("if", "else_if") else False
+                )
             opener_pending = None
             last_ident = None
         else:
-            if tok == "create_wargoal" or tok == "declare_war_on":
-                if _scope_is_owner(stack):
-                    return True
+            if tok in ("create_wargoal", "declare_war_on") and _scope_is_owner(stack):
+                return True
             last_ident = tok
             opener_pending = None
     return False
@@ -770,27 +796,25 @@ def _build_event_index(root_dir):
     return index
 
 
-def _get_event_block(event_id, event_blocks=None):
-    """Return the definition block text for an event id, or None.
-
-    Tests inject event_blocks (id -> text); live runs resolve against the
-    events/ tree with misses cached, so an unresolvable id simply ends the
-    chain instead of erroring.
-    """
+def _get_event_block(event_id, event_blocks=None, event_index=None):
+    """Return the definition block text for an event id, or None."""
     if event_blocks is not None:
         return event_blocks.get(event_id)
-    if event_id in _EVENT_BLOCKS:
-        return _EVENT_BLOCKS[event_id]
     global _EVENT_INDEX, _EVENT_INDEX_BUILT
-    if not _EVENT_INDEX_BUILT:
-        try:
-            root_dir = get_root_dir()
-        except Exception:
-            root_dir = None
-        _EVENT_INDEX = _build_event_index(root_dir)
-        _EVENT_INDEX_BUILT = True
+    if event_index is None:
+        if not _EVENT_INDEX_BUILT:
+            try:
+                root_dir = get_root_dir()
+            except Exception:
+                root_dir = None
+            _EVENT_INDEX = _build_event_index(root_dir)
+            _EVENT_INDEX_BUILT = True
+        event_index = _EVENT_INDEX
+    filepath = event_index.get(event_id)
+    key = (filepath, event_id)
+    if key in _EVENT_BLOCKS:
+        return _EVENT_BLOCKS[key]
     block = None
-    filepath = _EVENT_INDEX.get(event_id)
     if filepath:
         try:
             with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
@@ -802,12 +826,12 @@ def _get_event_block(event_id, event_blocks=None):
             if id_match and id_match.group(1) == event_id:
                 block = candidate
                 break
-    _EVENT_BLOCKS[event_id] = block
+    _EVENT_BLOCKS[key] = block
     return block
 
 
 def _event_chain_leads_to_war(
-    event_id, owner_tag, event_blocks=None, _seen=None, _depth=0
+    event_id, owner_tag, event_blocks=None, _seen=None, _depth=0, event_index=None
 ):
     """Follow a sent event (and its chained sends) for owner-scope war.
 
@@ -820,14 +844,14 @@ def _event_chain_leads_to_war(
     if _depth > _EVENT_CHAIN_MAX_DEPTH or event_id in _seen:
         return False, []
     _seen = _seen | {event_id}
-    block = _get_event_block(event_id, event_blocks)
+    block = _get_event_block(event_id, event_blocks, event_index)
     if not block:
         return False, []
     if _war_at_scope(block, owner_tag):
         return True, [event_id]
     for sent_id in _owner_scope_event_sends(block, owner_tag):
         leads, chain = _event_chain_leads_to_war(
-            sent_id, owner_tag, event_blocks, _seen, _depth + 1
+            sent_id, owner_tag, event_blocks, _seen, _depth + 1, event_index
         )
         if leads:
             return True, [event_id] + chain
@@ -2115,9 +2139,9 @@ def _check_nor_block(lines):
     return issues
 
 
-# on_daily_BOS predates the rule below and is left in place deliberately; it is
-# the example .claude/rules/general-rules.md points at as the shape not to copy.
-_AI_DAILY_CACHE_ALLOWLIST = frozenset({"on_daily_BOS"})
+_AI_DAILY_CACHE_ALLOWLIST = frozenset(
+    validation_config("check_common_mistakes", "ai_daily_cache_allowlist")
+)
 
 _RE_ON_DAILY_TAG = re.compile(r"^\s*(on_daily_[A-Z]{3}[A-Z_]*)\s*=\s*\{")
 _RE_SET_COUNTRY_FLAG = re.compile(r"\bset_country_flag\s*=\s*(\S+)")

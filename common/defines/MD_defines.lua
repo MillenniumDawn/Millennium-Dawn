@@ -352,7 +352,7 @@
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
 	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
 	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.45 -- 1.00
-	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.7 -- 0.7
+	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.665 -- 0.7
 	NDefines.NMilitary.SUPPLY_GRACE = 96 -- 72
 	NDefines.NMilitary.MAX_OUT_OF_SUPPLY_DAYS = 45 -- 30
 	NDefines.NMilitary.OUT_OF_SUPPLY_SPEED = -0.6	-- -0.8
@@ -734,7 +734,7 @@
 	NDefines.NNavy.CONVOY_LOSS_HISTORY_TIMEOUT_MONTHS = 3 -- 6; halve convoy loss history retention
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.01                        -- war score gained for every manpower killed when sinking a ship
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.01   --0.04                       -- war score gained for every IC of the sunk ship
-	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 1.25  --10                       -- war score gained for every sunk convoy
+	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 0.75  --10                       -- war score gained for every sunk convoy
 
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_RANGE_FACTOR = 0.42 -- bonus factor applied to task force's range when underway replenishment is activated (e.g. 0.2 means +20%) -- 0.42 base game
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_CONVOY_COST_PER_FUEL = 0.42 -- Cost in convoys for underway replenishment multiplied by max daily fuel consumption (rounded up) -- 0.42 base game
@@ -1011,12 +1011,13 @@
 	NDefines.NRaids.MAX_TARGETS_TO_UPDATE_PER_FRAME = 25 -- 100
 
 	-- AI Research Stuff
+	-- See common/ai_focuses/README.md for more diligent information about the research weights
 	NDefines.NAI.RESEARCH_WEIGHT_TRUNCATION_THRESHOLD = 0.5 -- Reduced this from 0.75
 	NDefines.NAI.RESEARCH_DAYS_BETWEEN_WEIGHT_UPDATE = 20 -- 7
 	NDefines.NAI.MAX_AHEAD_RESEARCH_PENALTY = 4 -- 2 --Buffing to double so it penalizes more
 	NDefines.NAI.RESEARCH_BASE_DAYS = 350 -- 60
 	NDefines.NAI.RESEARCH_YEARS_BEHIND_FACTOR = 0.30 -- Try to stay on the cutting edge where possible
-	NDefines.NAI.RESEARCH_NEEDS_FACTOR = 0.05
+	NDefines.NAI.RESEARCH_NEEDS_FACTOR = 0.125 -- 0.05 before the ai_focuses weights were divided by 2.5
 	NDefines.NAI.RESEARCH_LENGTH_FACTOR = 2.5
 
 	-- AI Peace Conference
