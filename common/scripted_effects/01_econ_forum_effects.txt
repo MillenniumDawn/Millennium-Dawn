@@ -333,6 +333,21 @@ econ_forum_reschedule = {
 		modulo_temp_variable = { ef_new_month = 12 }
 		add_to_temp_variable = { ef_new_month = 1 }
 		set_variable = { global.econ_forum_month^ef_i = ef_new_month }
+		# The monthly tick only opens preparation two months out, so a summit one or two months away opens it now.
+		set_temp_variable = { ef_gap = { value = ef_new_month subtract = global.month add = 12 } }
+		modulo_temp_variable = { ef_gap = 12 }
+		if = {
+			limit = {
+				check_variable = { ef_gap > 0 }
+				check_variable = { ef_gap < 3 }
+			}
+			set_temp_variable = { ef_host = THIS.id }
+			econ_forum_open_preparation = yes
+			if = {
+				limit = { check_variable = { ef_gap = 1 } }
+				set_variable = { global.econ_forum_invites_left^ef_i = 0 }
+			}
+		}
 	}
 	set_country_flag = { flag = econ_forum_rescheduled value = 1 days = 730 }
 }
@@ -347,7 +362,8 @@ econ_forum_convene_summit = {
 	set_temp_variable = { ef_skip_leader = 0 }
 	clear_temp_array = ef_attendees
 
-	# A more prestigious forum meeting within a month of ours draws attention away, and we draw headlines from it.
+	# A more prestigious forum meeting within a month of ours draws attention away. If it met just before us,
+	# we are counter-programming it and draw headlines and heads of government from it.
 	set_temp_variable = { ef_clash = 0 }
 	set_temp_variable = { ef_clash_forum = -1 }
 	for_loop_effect = {
@@ -370,7 +386,18 @@ econ_forum_convene_summit = {
 					}
 				}
 				set_temp_variable = { ef_clash = 20 }
-				set_temp_variable = { ef_clash_forum = ef_j }
+				if = {
+					limit = {
+						OR = {
+							check_variable = { ef_distance > 10 }
+							AND = {
+								check_variable = { ef_distance = 0 }
+								check_variable = { ef_j < ef_i }
+							}
+						}
+					}
+					set_temp_variable = { ef_clash_forum = ef_j }
+				}
 			}
 		}
 	}

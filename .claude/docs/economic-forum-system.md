@@ -110,6 +110,8 @@ it keeps 95% of its prestige.
 
 Outside preparation a host can reschedule once every two years (50 PP): the month
 after its strongest rival's (counter-programming) or six months after it.
+A new month one or two months away opens preparation at once; one month away
+leaves no time for personal invitations.
 
 ## AI Attendance
 
@@ -140,7 +142,8 @@ government, but only to forums with prestige 30 or more, or as a core member.
   30. A forum leads a track when its sector prestige beats every other active
   forum's.
 - Speakers: `5 per speaker + prestige × 0.1`.
-- Counter-programming: +5 when a more prestigious forum met within a month.
+- Counter-programming: +5 when a more prestigious forum met the month before, or
+  earlier in the same month's tick.
 - Score = the sum, capped at 100. New prestige = `old + (score - old) × 0.3`.
 
 ## Rewards and Rivalry
@@ -156,7 +159,7 @@ government, but only to forums with prestige 30 or more, or as a core member.
   `econ_forum_deal@<attendee>` for 365 days, which adds 25 to that attendee's AI
   investment score for the host, like a trade agreement.
 - Each head of government a counter-programmed summit draws who did not lead a
-  delegation to the clashing rival costs the rival 1 prestige, up to 5. If one of
+  delegation to the rival that just met costs the rival 1 prestige, up to 5. If one of
   them is a great or super power, `econ_forum_news.3` fires.
 - Once per campaign: `econ_forum_news.5` when a challenger reaches 50 prestige,
   `econ_forum_news.2` when one passes the WEF, and `econ_forum_news.4` when the
