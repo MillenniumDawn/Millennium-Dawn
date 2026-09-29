@@ -41,6 +41,7 @@ econ_forum_setup = {
 
 	resize_array = { array = global.econ_forum_seat value = 0 size = 8 }
 	resize_array = { array = global.econ_forum_preparing value = 0 size = 8 }
+	resize_array = { array = global.econ_forum_months_since value = 12 size = 8 }
 	resize_array = { array = global.econ_forum_invites_left value = 0 size = 8 }
 	resize_array = { array = global.econ_forum_sponsors value = 0 size = 8 }
 	resize_array = { array = global.econ_forum_speakers value = 0 size = 8 }
@@ -97,11 +98,16 @@ econ_forum_monthly_update = {
 				check_variable = { ef_host > 0 }
 				var:ef_host = { exists = yes }
 			}
+			add_to_variable = { global.econ_forum_months_since^ef_i = 1 }
 			set_temp_variable = { ef_gap = { value = global.econ_forum_month^ef_i subtract = global.month add = 12 } }
 			modulo_temp_variable = { ef_gap = 12 }
+			set_temp_variable = { ef_after_last = { value = global.econ_forum_months_since^ef_i add = ef_gap } }
 
 			if = {
-				limit = { check_variable = { ef_gap = 2 } }
+				limit = {
+					check_variable = { ef_gap = 2 }
+					econ_forum_summit_spacing_ok = yes
+				}
 				econ_forum_open_preparation = yes
 			}
 			else_if = {
@@ -446,10 +452,12 @@ econ_forum_find_rival = {
 econ_forum_open_if_due = {
 	set_temp_variable = { ef_gap = { value = global.econ_forum_month^ef_i subtract = global.month add = 12 } }
 	modulo_temp_variable = { ef_gap = 12 }
+	set_temp_variable = { ef_after_last = { value = global.econ_forum_months_since^ef_i add = ef_gap } }
 	if = {
 		limit = {
 			check_variable = { ef_gap > 0 }
 			check_variable = { ef_gap < 3 }
+			econ_forum_summit_spacing_ok = yes
 		}
 		set_temp_variable = { ef_host = THIS.id }
 		econ_forum_open_preparation = yes
@@ -596,6 +604,7 @@ econ_forum_convene_summit = {
 	set_variable = { global.econ_forum_last_score^ef_i = ef_score }
 	set_variable = { global.econ_forum_preparing^ef_i = 0 }
 	set_variable = { global.econ_forum_invites_left^ef_i = 0 }
+	set_variable = { global.econ_forum_months_since^ef_i = 0 }
 
 	# Tracks on the program move toward the score; the rest fade.
 	for_loop_effect = {

@@ -146,6 +146,10 @@ treasury is above 10 and one speaker attempt (50 PP) when it has more than 150 P
 The World Economic Forum is private: its partners fund 15 corporate points and two
 speaker attempts every cycle, whatever Switzerland can afford.
 
+A summit always comes at least 11 months after the forum's previous one
+(`econ_forum_months_since`), so rescheduling right after a summit waits for the next
+cycle instead of holding a second summit that year.
+
 ## AI Attendance
 
 `econ_forum_ai_decide_attendance`, clamped to 0-95:
