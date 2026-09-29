@@ -405,6 +405,8 @@ Two monetary policy decisions are available (AI-controlled nations use these aut
 - **Expand Money Supply**: Increases seigniorage income by 25% and weakens currency strength by 0.05. Cannot be used alongside Austerity Measures or while on the gold standard. Lasts 180 days with a 365-day cooldown.
 - **Austerity Measures**: Strengthens currency by 0.04. Lasts 120 days with a 180-day cooldown. Cannot be used alongside Expand Money Supply.
 
+The AI expands the money supply only when its treasury is negative, its currency is above its base strength and inflation is under 5%. It uses austerity measures when inflation is above 5% and its currency is below its base strength.
+
 ---
 
 ## Inflation
