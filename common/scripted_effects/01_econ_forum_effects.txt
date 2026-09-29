@@ -752,6 +752,8 @@ econ_forum_reward_host = {
 
 		add_opinion_modifier = { target = PREV modifier = econ_forum_attended_summit }
 		PREV = { set_country_flag = { flag = econ_forum_deal@PREV value = 1 days = 365 } }
+		if = { limit = { NOT = { is_in_array = { econ_forum_deal_hosts = PREV } } } add_to_array = { econ_forum_deal_hosts = PREV } }
+		if = { limit = { NOT = { is_in_array = { investment_targets = PREV } } } add_to_array = { investment_targets = PREV } }
 		add_to_temp_variable = { ef_deals = 1 }
 		set_temp_variable = { percent_change = ef_influence }
 		if = {
@@ -773,8 +775,30 @@ econ_forum_found = {
 	set_variable = { global.econ_forum_prestige^ef_i = 15 }
 	set_variable = { econ_forum_hosted = ef_i }
 	econ_forum_init_track_prestige = yes
-	set_variable = { global.econ_forum_news_forum = ef_i }
-	set_variable = { global.econ_forum_news_host = THIS.id }
 	news_event = { id = econ_forum_news.1 days = 1 }
 	econ_forum_open_if_due = yes
+}
+
+# Investor scope, after the yearly investment target rebuild. Keeps every host this country holds a live forum
+# agreement with among its investment targets, and drops agreements that expired or whose host is gone.
+econ_forum_add_deal_targets = {
+	clear_temp_array = ef_valid_deals
+	for_each_scope_loop = {
+		array = econ_forum_deal_hosts
+
+		if = {
+			limit = {
+				exists = yes
+				has_country_flag = econ_forum_deal@PREV
+			}
+			add_to_temp_array = { ef_valid_deals = THIS }
+			if = { limit = { NOT = { is_in_array = { PREV.investment_targets = THIS } } } add_to_array = { PREV.investment_targets = THIS } }
+		}
+	}
+	clear_array = econ_forum_deal_hosts
+	for_each_scope_loop = {
+		array = ef_valid_deals
+
+		add_to_array = { PREV.econ_forum_deal_hosts = THIS }
+	}
 }
