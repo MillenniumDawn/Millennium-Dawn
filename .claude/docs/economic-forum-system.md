@@ -147,8 +147,9 @@ The World Economic Forum is private: its partners fund 15 corporate points and t
 speaker attempts every cycle, whatever Switzerland can afford.
 
 A summit always comes at least 11 months after the forum's previous one
-(`econ_forum_months_since`), so rescheduling right after a summit waits for the next
-cycle instead of holding a second summit that year.
+(`econ_forum_months_since`, which counts calendar months for every founded forum,
+vacant or not), so rescheduling right after a summit waits for the next cycle
+instead of holding a second summit that year.
 
 ## AI Attendance
 

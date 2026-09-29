@@ -91,6 +91,7 @@ econ_forum_monthly_update = {
 		set_temp_variable = { ef_host = global.econ_forum_host^ef_i }
 		if = {
 			limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
+			add_to_variable = { global.econ_forum_months_since^ef_i = 1 }
 			econ_forum_check_succession = yes
 		}
 		if = {
@@ -98,7 +99,6 @@ econ_forum_monthly_update = {
 				check_variable = { ef_host > 0 }
 				var:ef_host = { exists = yes }
 			}
-			add_to_variable = { global.econ_forum_months_since^ef_i = 1 }
 			set_temp_variable = { ef_gap = { value = global.econ_forum_month^ef_i subtract = global.month add = 12 } }
 			modulo_temp_variable = { ef_gap = 12 }
 			set_temp_variable = { ef_after_last = { value = global.econ_forum_months_since^ef_i add = ef_gap } }
@@ -151,10 +151,10 @@ econ_forum_check_succession = {
 			limit = { var:ef_seat_owner = { NOT = { has_variable = econ_forum_hosted } } }
 			set_variable = { global.econ_forum_host^ef_i = ef_seat_owner }
 			set_temp_variable = { ef_host = ef_seat_owner }
-			var:ef_host = { set_variable = { econ_forum_hosted = ef_i } }
-			set_variable = { global.econ_forum_news_forum = ef_i }
-			set_variable = { global.econ_forum_news_host = ef_host }
-			news_event = econ_forum_news.6
+			var:ef_host = {
+				set_variable = { econ_forum_hosted = ef_i }
+				news_event = econ_forum_news.6
+			}
 		}
 		else = {
 			set_variable = { global.econ_forum_host^ef_i = 0 }
