@@ -549,6 +549,8 @@
 		0,0, -- NUCLEAR
 		0,0, -- SAM
 	}
+	-- Vanilla 0.60 demands 1.5x the floor in empty seas the AI never patrols.
+	NDefines.NNavy.DOMINANCE_CONTROLLED_THRESHOLD_RATIO = 0.20
 	NDefines.NNavy.NAVAL_INVASION_PLAN_CAP = 4
 	NDefines.NNavy.COMBAT_MAX_GROUPS = 1 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 2 -- 1
