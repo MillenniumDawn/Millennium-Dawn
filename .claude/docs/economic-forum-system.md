@@ -165,7 +165,8 @@ government, but only to forums with prestige 30 or more, or as a core member.
   them is a great or super power, `econ_forum_news.3` fires.
 - Once per campaign: `econ_forum_news.5` when a challenger reaches 50 prestige,
   `econ_forum_news.2` when one passes the WEF, and `econ_forum_news.4` when the
-  WEF retakes first place, checked after every summit. Before 21 April 2025 the WEF news names Klaus Schwab.
+  WEF retakes first place, checked after every summit. Before 21 April 2025 the
+  WEF news names Klaus Schwab.
 
 ## Adding a Forum
 
