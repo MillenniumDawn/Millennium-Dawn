@@ -68,6 +68,7 @@ All files below live in `.claude/docs/`.
 | `decision-reference.md`            | Decision structure, targeted-decision perf, examples         |
 | `diplomatic-action-reference.md`   | Scripted diplomatic actions: files, ROOT/THIS/PREV scopes    |
 | `dynamic-modifier-tooltips.md`     | `adds_` vs `modifies_dynamic_modifier_tt` tooltips           |
+| `economic-forum-system.md`        | Economic forums: registry, yearly cycle, scoring, rewards    |
 | `energy-power-balance.md`          | Power-per-cost + tech S-curves; read before energy edits     |
 | `entity-system.md`                 | Mesh→entity→animation chain, pdxmesh naming, landmarks       |
 | `event-reference.md`               | Event types, TT*IF*\* tooltips, `random_events` dispatch     |
