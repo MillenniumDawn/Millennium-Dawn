@@ -60,6 +60,8 @@ the flag `econ_forum_preparing`. One country hosts at most one forum.
 2. **Host decisions** (human host): invite a regional power (15 PP, +15 attendance
    chance), buy a sponsor package (3.0 treasury and 10 PP for 5 corporate points)
    and book a headline speaker (50 PP, a roll against the strongest rival).
+   Personal invitations close a month before the summit, so every reply
+   resolves in time. Paid replies need the political power they cost.
 3. **Summit** in the summit month. AI invitees roll attendance, every invitee is
    tallied, the score is computed and prestige moves 30% of the way to it.
 
