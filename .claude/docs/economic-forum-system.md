@@ -2,8 +2,10 @@
 
 Economic forums are yearly summits that compete for governments, companies and
 headline speakers (Issue #4802). The World Economic Forum is the incumbent. The
-St. Petersburg International Economic Forum runs from the start, and V4 countries
-and China can found the Visegrád Economic Conference and the Boao Forum for Asia.
+St. Petersburg International Economic Forum runs from the start. Six more forums
+wait for a founder: the Visegrád Economic Conference, the Boao Forum for Asia, the
+Global South Economic Forum, the African Development Conference, the Arctic
+Economic Forum and the Transatlantic Technology Forum.
 A forum is a registry slot, not an event chain, so a new forum is data plus
 localisation.
 
@@ -30,6 +32,7 @@ temp variable `ef_i`, and a program track id in `ef_t`.
 | Array                       | Meaning                                         |
 | --------------------------- | ----------------------------------------------- |
 | `econ_forum_host`           | Host country id; 0 until founded                |
+| `econ_forum_seat`           | Seat state: the host's capital when registered  |
 | `econ_forum_state_led`      | 1 when a government runs it and gains from it   |
 | `econ_forum_prestige`       | 0-100 standing                                  |
 | `econ_forum_month`          | Summit month (1-12)                             |
@@ -44,16 +47,25 @@ temp variable `ef_i`, and a program track id in `ef_t`.
 | `econ_forum_last_ministers` | Ministerial delegations at the last summit      |
 | `econ_forum_last_score`     | Score of the last summit                        |
 
-| Id  | Forum                                       | Host    | Month | Start prestige |
-| --- | ------------------------------------------- | ------- | ----- | -------------- |
-| 0   | World Economic Forum                        | SWI     | 1     | 80             |
-| 1   | Visegrád Economic Conference                | Founder | 9     | 15 on founding |
-| 2   | St. Petersburg International Economic Forum | SOV     | 6     | 35             |
-| 3   | Boao Forum for Asia                         | CHI     | 3     | 15 on founding |
+| Id  | Forum                               | Month | Founder            | Core members        |
+| --- | ----------------------------------- | ----- | ------------------ | ------------------- |
+| 0   | World Economic Forum                | 1     | SWI, prestige 80   | None                |
+| 1   | Visegrád Economic Conference        | 9     | POL, CZE, HUN, SLO | V4                  |
+| 2   | St. Petersburg Intl. Economic Forum | 6     | SOV, prestige 35   | BLR KAZ ARM KYR TAJ |
+| 3   | Boao Forum for Asia                 | 3     | CHI, from 2001     | Asian nations       |
+| 4   | Global South Economic Forum         | 11    | Developing power   | Developing powers   |
+| 5   | African Development Conference      | 5     | Sub-Saharan power  | Sub-Saharan         |
+| 6   | Arctic Economic Forum               | 10    | Arctic nation      | Arctic nations      |
+| 7   | Transatlantic Technology Forum      | 4     | NATO power         | NATO members        |
 
-Only the World Economic Forum is private. The other three are state-led. Core
-members, always invited: V4 for Visegrád; BLR, KAZ, ARM, KYR and TAJ for St.
-Petersburg; every country with `asian_nation_flag` for Boao.
+Only the World Economic Forum is private; the rest are state-led. Founded forums
+start at 15 prestige. A developing power is a regional power with GDP per capita
+under 20. The Arctic nations are NRY, DEN, ICE, FIN, SWE, CAN, SOV and USA.
+Founding costs 100 PP (Boao 50) and needs stability above 40% and peace.
+
+A forum follows its seat. When the host no longer exists or no longer owns the
+seat state, the seat's owner takes the forum over, unless it already hosts one.
+The cycle in progress is cancelled and `econ_forum_news.6` fires.
 
 Per-country arrays use the same forum index:
 
@@ -79,10 +91,20 @@ most one forum.
 | 5     | Development              | GDP per capita under 7                        |
 
 A host puts up to three tracks on each program (10 PP each). An AI host runs its
-forum's identity: WEF AI, finance and development; Visegrád energy, defense and
-infrastructure; St. Petersburg energy, finance and infrastructure; Boao AI,
-infrastructure and development. Identity tracks start at the forum's prestige,
-the others at half.
+forum's three strongest tracks. Each forum starts with three identity tracks at its
+prestige and the rest at half, so an AI host opens with its identity and then
+follows whatever its summits build:
+
+| Forum          | Identity tracks                      |
+| -------------- | ------------------------------------ |
+| WEF            | AI, finance, development             |
+| Visegrád       | Energy, defense, infrastructure      |
+| St. Petersburg | Energy, finance, infrastructure      |
+| Boao           | AI, infrastructure, development      |
+| Global South   | Energy, infrastructure, development  |
+| African        | Finance, infrastructure, development |
+| Arctic         | Energy, defense, infrastructure      |
+| Transatlantic  | AI, finance, defense                 |
 
 After each summit a track on the program moves 40% toward the score; a track off
 it keeps 95% of its prestige.
@@ -97,7 +119,8 @@ it keeps 95% of its prestige.
    invitations from several forums never collide. A human host gets
    `econ_forum.1` and the decisions. An AI host runs `econ_forum_ai_prepare`.
 2. **Host decisions** (human host):
-   - Invite a regional power: 15 PP, +15 attendance chance. Invitations close a
+   - Invite a regional power (15 PP) or a neighbor outside that pool (10 PP),
+     +15 attendance chance. Invitations close a
      month before the summit so every reply resolves in time.
    - Paid replies to an invitation need the political power they cost.
    - Buy a sponsor package: 3.0 treasury and 10 PP for 5 corporate points.
@@ -168,21 +191,23 @@ government, but only to forums with prestige 30 or more, or as a core member.
 ## Adding a Forum
 
 1. Append one entry to every registry array in `econ_forum_setup`, raise the
-   `size = 4` values there and in `econ_forum_ensure_country_arrays`, and the
-   `size = 24` track arrays by six.
+   `size = 8` values there, the `^num < 8` checks in
+   `econ_forum_ensure_country_arrays` and `econ_forum_can_be_invited`, and the
+   `size = 48` track arrays by six.
 2. Add its core members to `econ_forum_is_core_member` and its identity to
    `econ_forum_track_in_identity`.
-3. Add the name key and a branch to each `econ_forum_name_*` scripted loc, and a
-   standing line to `econ_forum_category_desc`.
-4. Add a founding decision or a startup host, and the host's tag to the
-   `allowed` block of `econ_forum_category`.
+3. Add the name key and a branch to each `econ_forum_name_*` scripted loc, a
+   `econ_forum_preparation_<id>` key and branch, and a standing line to
+   `econ_forum_category_desc`.
+4. Add a founding decision calling `econ_forum_found`, or register a startup
+   host with `econ_forum_register_host`, and make the founder see
+   `econ_forum_category`.
 
 ## Known Limits and Next Phases
 
-- A dead host stalls its forum. Host succession is not implemented.
-- Invitations only reach regional powers or greater.
-- AI hosts neither reschedule nor adapt their program.
+- AI hosts do not reschedule.
+- A seat owner that already hosts a forum cannot inherit a second one, so that
+  forum stalls until the seat changes hands again.
 
-Next, from #4802: a company roster once #4357 lands, player-founded forums,
-forums splitting after political disputes, and AI hosts that pick tracks by
-sector leadership.
+Next, from #4802: a company roster once #4357 lands, and forums splitting after
+political disputes.

@@ -3,13 +3,22 @@
 # Every effect below takes the forum id in the temp variable ef_i and, for program tracks, the track id in ef_t.
 
 # STARTUP ONLY: build the forum registry. 0 World Economic Forum, 1 Visegrad Economic Conference,
-# 2 St. Petersburg International Economic Forum, 3 Boao Forum for Asia.
+# 2 St. Petersburg International Economic Forum, 3 Boao Forum for Asia, 4 Global South Economic Forum,
+# 5 African Development Conference, 6 Arctic Economic Forum, 7 Transatlantic Technology Forum.
 econ_forum_setup = {
 	add_to_array = { global.econ_forum_host = SWI }
 	add_to_array = { global.econ_forum_host = 0 }
 	add_to_array = { global.econ_forum_host = SOV }
 	add_to_array = { global.econ_forum_host = 0 }
+	add_to_array = { global.econ_forum_host = 0 }
+	add_to_array = { global.econ_forum_host = 0 }
+	add_to_array = { global.econ_forum_host = 0 }
+	add_to_array = { global.econ_forum_host = 0 }
 	add_to_array = { global.econ_forum_state_led = 0 }
+	add_to_array = { global.econ_forum_state_led = 1 }
+	add_to_array = { global.econ_forum_state_led = 1 }
+	add_to_array = { global.econ_forum_state_led = 1 }
+	add_to_array = { global.econ_forum_state_led = 1 }
 	add_to_array = { global.econ_forum_state_led = 1 }
 	add_to_array = { global.econ_forum_state_led = 1 }
 	add_to_array = { global.econ_forum_state_led = 1 }
@@ -17,28 +26,43 @@ econ_forum_setup = {
 	add_to_array = { global.econ_forum_prestige = 0 }
 	add_to_array = { global.econ_forum_prestige = 35 }
 	add_to_array = { global.econ_forum_prestige = 0 }
+	add_to_array = { global.econ_forum_prestige = 0 }
+	add_to_array = { global.econ_forum_prestige = 0 }
+	add_to_array = { global.econ_forum_prestige = 0 }
+	add_to_array = { global.econ_forum_prestige = 0 }
 	add_to_array = { global.econ_forum_month = 1 }
 	add_to_array = { global.econ_forum_month = 9 }
 	add_to_array = { global.econ_forum_month = 6 }
 	add_to_array = { global.econ_forum_month = 3 }
+	add_to_array = { global.econ_forum_month = 11 }
+	add_to_array = { global.econ_forum_month = 5 }
+	add_to_array = { global.econ_forum_month = 10 }
+	add_to_array = { global.econ_forum_month = 4 }
 
-	resize_array = { array = global.econ_forum_preparing value = 0 size = 4 }
-	resize_array = { array = global.econ_forum_invites_left value = 0 size = 4 }
-	resize_array = { array = global.econ_forum_sponsors value = 0 size = 4 }
-	resize_array = { array = global.econ_forum_speakers value = 0 size = 4 }
-	resize_array = { array = global.econ_forum_track_count value = 0 size = 4 }
-	resize_array = { array = global.econ_forum_last_heads value = 0 size = 4 }
-	resize_array = { array = global.econ_forum_last_ministers value = 0 size = 4 }
-	resize_array = { array = global.econ_forum_last_score value = 0 size = 4 }
+	resize_array = { array = global.econ_forum_seat value = 0 size = 8 }
+	resize_array = { array = global.econ_forum_preparing value = 0 size = 8 }
+	resize_array = { array = global.econ_forum_invites_left value = 0 size = 8 }
+	resize_array = { array = global.econ_forum_sponsors value = 0 size = 8 }
+	resize_array = { array = global.econ_forum_speakers value = 0 size = 8 }
+	resize_array = { array = global.econ_forum_track_count value = 0 size = 8 }
+	resize_array = { array = global.econ_forum_last_heads value = 0 size = 8 }
+	resize_array = { array = global.econ_forum_last_ministers value = 0 size = 8 }
+	resize_array = { array = global.econ_forum_last_score value = 0 size = 8 }
 	# Six program tracks per forum, indexed forum * 6 + track.
-	resize_array = { array = global.econ_forum_tracks value = 0 size = 24 }
-	resize_array = { array = global.econ_forum_track_prestige value = 0 size = 24 }
+	resize_array = { array = global.econ_forum_tracks value = 0 size = 48 }
+	resize_array = { array = global.econ_forum_track_prestige value = 0 size = 48 }
 
-	SWI = { set_variable = { econ_forum_hosted = 0 } }
-	SOV = { set_variable = { econ_forum_hosted = 2 } }
 	set_temp_variable = { ef_i = 0 }
-	econ_forum_init_track_prestige = yes
+	SWI = { econ_forum_register_host = yes }
 	set_temp_variable = { ef_i = 2 }
+	SOV = { econ_forum_register_host = yes }
+}
+
+# Country scope, temp ef_i set. Makes this country the forum's host, seats it in the capital and seeds its tracks.
+econ_forum_register_host = {
+	set_variable = { global.econ_forum_host^ef_i = THIS.id }
+	set_variable = { econ_forum_hosted = ef_i }
+	capital_scope = { set_variable = { global.econ_forum_seat^ef_i = THIS } }
 	econ_forum_init_track_prestige = yes
 }
 
@@ -64,6 +88,10 @@ econ_forum_monthly_update = {
 		value = ef_i
 
 		set_temp_variable = { ef_host = global.econ_forum_host^ef_i }
+		if = {
+			limit = { check_variable = { ef_host > 0 } }
+			econ_forum_check_succession = yes
+		}
 		if = {
 			limit = {
 				check_variable = { ef_host > 0 }
@@ -92,13 +120,46 @@ econ_forum_monthly_update = {
 	}
 }
 
+# A forum follows its seat: when the host is gone or has lost the seat state, the seat's owner takes the forum
+# over unless it already hosts one. The cycle in progress is cancelled. Updates ef_host.
+econ_forum_check_succession = {
+	set_temp_variable = { ef_seat_owner = 0 }
+	if = {
+		limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
+		var:global.econ_forum_seat^ef_i = {
+			OWNER = { set_temp_variable = { ef_seat_owner = THIS.id } }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { ef_seat_owner > 0 }
+			NOT = { check_variable = { ef_seat_owner = ef_host } }
+			var:ef_seat_owner = { NOT = { has_variable = econ_forum_hosted } }
+		}
+		if = {
+			limit = { var:ef_host = { exists = yes } }
+			var:ef_host = {
+				clear_variable = econ_forum_hosted
+				clr_country_flag = econ_forum_preparing
+			}
+		}
+		set_variable = { global.econ_forum_preparing^ef_i = 0 }
+		set_variable = { global.econ_forum_host^ef_i = ef_seat_owner }
+		set_temp_variable = { ef_host = ef_seat_owner }
+		var:ef_host = { set_variable = { econ_forum_hosted = ef_i } }
+		set_variable = { global.econ_forum_news_forum = ef_i }
+		set_variable = { global.econ_forum_news_host = ef_host }
+		news_event = econ_forum_news.6
+	}
+}
+
 # Country scope. One slot per forum; raise the sizes with the registry.
 econ_forum_ensure_country_arrays = {
 	if = {
-		limit = { check_variable = { econ_forum_status^num < 4 } }
-		resize_array = { array = econ_forum_status value = 0 size = 4 }
-		resize_array = { array = econ_forum_last value = 0 size = 4 }
-		resize_array = { array = econ_forum_streak value = 0 size = 4 }
+		limit = { check_variable = { econ_forum_status^num < 8 } }
+		resize_array = { array = econ_forum_status value = 0 size = 8 }
+		resize_array = { array = econ_forum_last value = 0 size = 8 }
+		resize_array = { array = econ_forum_streak value = 0 size = 8 }
 	}
 }
 
@@ -237,14 +298,31 @@ econ_forum_refresh_view = {
 	}
 }
 
-# Host scope, AI only. Runs the forum's own program and spends what the host can afford.
+# Host scope, AI only. Runs the forum's three strongest tracks and spends what the host can afford.
 econ_forum_ai_prepare = {
 	for_loop_effect = {
-		end = 6
-		value = ef_t
+		end = 3
+		value = ef_pick
 
+		set_temp_variable = { ef_best = -1 }
+		set_temp_variable = { ef_best_prestige = -1 }
+		for_loop_effect = {
+			end = 6
+			value = ef_t
+
+			set_temp_variable = { ef_idx = { value = ef_i multiply = 6 add = ef_t } }
+			if = {
+				limit = {
+					check_variable = { global.econ_forum_tracks^ef_idx = 0 }
+					check_variable = { global.econ_forum_track_prestige^ef_idx > ef_best_prestige }
+				}
+				set_temp_variable = { ef_best = ef_t }
+				set_temp_variable = { ef_best_prestige = global.econ_forum_track_prestige^ef_idx }
+			}
+		}
 		if = {
-			limit = { econ_forum_track_in_identity = yes }
+			limit = { check_variable = { ef_best > -1 } }
+			set_temp_variable = { ef_t = ef_best }
 			econ_forum_select_track = yes
 		}
 	}
@@ -731,10 +809,8 @@ econ_forum_reward_host = {
 
 # Founder scope. Registers the founder as host of forum ef_i.
 econ_forum_found = {
-	set_variable = { global.econ_forum_host^ef_i = THIS.id }
 	set_variable = { global.econ_forum_prestige^ef_i = 15 }
-	set_variable = { econ_forum_hosted = ef_i }
-	econ_forum_init_track_prestige = yes
+	econ_forum_register_host = yes
 	set_variable = { global.econ_forum_news_forum = ef_i }
 	set_variable = { global.econ_forum_news_host = THIS.id }
 	news_event = { id = econ_forum_news.1 days = 1 }

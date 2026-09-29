@@ -66,6 +66,145 @@ econ_forum_category = {
 		ai_will_do = { base = 20 }
 	}
 
+	econ_forum_found_global_south = {
+		icon = GFX_decision_attract_foreign_investor
+		cost = 100
+		fire_only_once = yes
+
+		visible = {
+			check_variable = { gdp_per_capita < 20 }
+			is_in_array = { global.PR_regional_or_greater_powers = THIS.id }
+			NOT = { has_variable = econ_forum_hosted }
+			check_variable = { global.econ_forum_host^4 = 0 }
+		}
+
+		available = {
+			has_stability > 0.4
+			has_war = no
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision econ_forum_found_global_south"
+			custom_effect_tooltip = econ_forum_found_global_south_tt
+			hidden_effect = {
+				set_temp_variable = { ef_i = 4 }
+				econ_forum_found = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_political_power < 150
+			}
+		}
+	}
+
+	econ_forum_found_african = {
+		icon = GFX_decision_attract_foreign_investor
+		cost = 100
+		fire_only_once = yes
+
+		visible = {
+			has_country_flag = sub_saharan_nation_flag
+			is_in_array = { global.PR_regional_or_greater_powers = THIS.id }
+			NOT = { has_variable = econ_forum_hosted }
+			check_variable = { global.econ_forum_host^5 = 0 }
+		}
+
+		available = {
+			has_stability > 0.4
+			has_war = no
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision econ_forum_found_african"
+			custom_effect_tooltip = econ_forum_found_african_tt
+			hidden_effect = {
+				set_temp_variable = { ef_i = 5 }
+				econ_forum_found = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_political_power < 150
+			}
+		}
+	}
+
+	econ_forum_found_arctic = {
+		icon = GFX_decision_attract_foreign_investor
+		cost = 100
+		fire_only_once = yes
+
+		visible = {
+			econ_forum_is_arctic_nation = yes
+			NOT = { has_variable = econ_forum_hosted }
+			check_variable = { global.econ_forum_host^6 = 0 }
+		}
+
+		available = {
+			has_stability > 0.4
+			has_war = no
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision econ_forum_found_arctic"
+			custom_effect_tooltip = econ_forum_found_arctic_tt
+			hidden_effect = {
+				set_temp_variable = { ef_i = 6 }
+				econ_forum_found = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_political_power < 150
+			}
+		}
+	}
+
+	econ_forum_found_transatlantic = {
+		icon = GFX_decision_attract_foreign_investor
+		cost = 100
+		fire_only_once = yes
+
+		visible = {
+			has_idea = NATO_member
+			is_in_array = { global.PR_regional_or_greater_powers = THIS.id }
+			NOT = { has_variable = econ_forum_hosted }
+			check_variable = { global.econ_forum_host^7 = 0 }
+		}
+
+		available = {
+			has_stability > 0.4
+			has_war = no
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision econ_forum_found_transatlantic"
+			custom_effect_tooltip = econ_forum_found_transatlantic_tt
+			hidden_effect = {
+				set_temp_variable = { ef_i = 7 }
+				econ_forum_found = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_political_power < 150
+			}
+		}
+	}
+
 	econ_forum_invite_government = {
 		icon = GFX_decision_invite_to_federation_button
 		cost = 15
@@ -85,6 +224,36 @@ econ_forum_category = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision econ_forum_invite_government"
+			custom_effect_tooltip = econ_forum_invite_government_tt
+			hidden_effect = {
+				set_temp_variable = { ef_i = econ_forum_hosted }
+				add_to_variable = { global.econ_forum_invites_left^ef_i = -1 }
+				FROM = { econ_forum_send_personal_invitation = yes }
+			}
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	econ_forum_invite_neighbor = {
+		icon = GFX_decision_invite_to_federation_button
+		cost = 10
+
+		target_array = neighbors_owned
+		target_root_trigger = {
+			has_country_flag = econ_forum_preparing
+			check_variable = { global.econ_forum_invites_left^econ_forum_hosted > 0 }
+		}
+		target_trigger = {
+			FROM = {
+				NOT = { is_in_array = { global.PR_regional_or_greater_powers = THIS.id } }
+				NOT = { has_war_with = ROOT }
+				econ_forum_can_be_invited = yes
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision econ_forum_invite_neighbor"
 			custom_effect_tooltip = econ_forum_invite_government_tt
 			hidden_effect = {
 				set_temp_variable = { ef_i = econ_forum_hosted }
