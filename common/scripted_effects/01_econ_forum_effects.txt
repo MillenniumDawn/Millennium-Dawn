@@ -89,7 +89,7 @@ econ_forum_monthly_update = {
 
 		set_temp_variable = { ef_host = global.econ_forum_host^ef_i }
 		if = {
-			limit = { check_variable = { ef_host > 0 } }
+			limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
 			econ_forum_check_succession = yes
 		}
 		if = {
@@ -120,36 +120,40 @@ econ_forum_monthly_update = {
 	}
 }
 
-# A forum follows its seat: when the host is gone or has lost the seat state, the seat's owner takes the forum
-# over unless it already hosts one. The cycle in progress is cancelled. Updates ef_host.
+# A forum follows its seat. When the seat state's owner is not the host, the old host loses the forum, alive or
+# not, and the cycle in progress is cancelled. The seat owner takes it over unless it already hosts a forum; then
+# the forum stands vacant until its seat owner is free. Updates ef_host.
 econ_forum_check_succession = {
 	set_temp_variable = { ef_seat_owner = 0 }
-	if = {
-		limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
-		var:global.econ_forum_seat^ef_i = {
-			OWNER = { set_temp_variable = { ef_seat_owner = THIS.id } }
-		}
+	var:global.econ_forum_seat^ef_i = {
+		OWNER = { set_temp_variable = { ef_seat_owner = THIS.id } }
 	}
 	if = {
 		limit = {
 			check_variable = { ef_seat_owner > 0 }
 			NOT = { check_variable = { ef_seat_owner = ef_host } }
-			var:ef_seat_owner = { NOT = { has_variable = econ_forum_hosted } }
 		}
 		if = {
-			limit = { var:ef_host = { exists = yes } }
+			limit = { check_variable = { ef_host > 0 } }
 			var:ef_host = {
 				clear_variable = econ_forum_hosted
 				clr_country_flag = econ_forum_preparing
 			}
 		}
 		set_variable = { global.econ_forum_preparing^ef_i = 0 }
-		set_variable = { global.econ_forum_host^ef_i = ef_seat_owner }
-		set_temp_variable = { ef_host = ef_seat_owner }
-		var:ef_host = { set_variable = { econ_forum_hosted = ef_i } }
-		set_variable = { global.econ_forum_news_forum = ef_i }
-		set_variable = { global.econ_forum_news_host = ef_host }
-		news_event = econ_forum_news.6
+		if = {
+			limit = { var:ef_seat_owner = { NOT = { has_variable = econ_forum_hosted } } }
+			set_variable = { global.econ_forum_host^ef_i = ef_seat_owner }
+			set_temp_variable = { ef_host = ef_seat_owner }
+			var:ef_host = { set_variable = { econ_forum_hosted = ef_i } }
+			set_variable = { global.econ_forum_news_forum = ef_i }
+			set_variable = { global.econ_forum_news_host = ef_host }
+			news_event = econ_forum_news.6
+		}
+		else = {
+			set_variable = { global.econ_forum_host^ef_i = 0 }
+			set_temp_variable = { ef_host = 0 }
+		}
 	}
 }
 
@@ -263,16 +267,29 @@ econ_forum_notify_invitee = {
 	country_event = econ_forum.2
 }
 
-# Invitee scope, from econ_forum.2. ef_answer is 3 (ministers), 4 (head of government) or -1 (decline).
+# Invitee scope, from econ_forum.2. ef_answer is 3 (ministers), 4 (head of government) or -1 (decline); ef_cost is
+# the political power the option charged, refunded when the forum changed hands or closed meanwhile.
 econ_forum_answer_invitation = {
-	event_target:econ_forum_inviter = { set_temp_variable = { ef_i = econ_forum_hosted } }
+	set_temp_variable = { ef_i = -1 }
+	event_target:econ_forum_inviter = {
+		if = {
+			limit = { has_variable = econ_forum_hosted }
+			set_temp_variable = { ef_i = econ_forum_hosted }
+			set_temp_variable = { ef_inviter_id = THIS.id }
+		}
+	}
 	if = {
 		limit = {
+			check_variable = { ef_i > -1 }
+			check_variable = { global.econ_forum_host^ef_i = ef_inviter_id }
 			check_variable = { global.econ_forum_preparing^ef_i = 1 }
 			check_variable = { econ_forum_status^ef_i > 0 }
 			check_variable = { econ_forum_status^ef_i < 3 }
 		}
 		set_variable = { econ_forum_status^ef_i = ef_answer }
+	}
+	else = {
+		add_political_power = ef_cost
 	}
 }
 

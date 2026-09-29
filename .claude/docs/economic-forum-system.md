@@ -63,9 +63,11 @@ start at 15 prestige. A developing power is a regional power with GDP per capita
 under 20. The Arctic nations are NRY, DEN, ICE, FIN, SWE, CAN, SOV and USA.
 Founding costs 100 PP (Boao 50) and needs stability above 40% and peace.
 
-A forum follows its seat. When the host no longer exists or no longer owns the
-seat state, the seat's owner takes the forum over, unless it already hosts one.
-The cycle in progress is cancelled and `econ_forum_news.6` fires.
+A forum follows its seat. When the seat state's owner is not the host, the old
+host loses the forum, alive or not, and the cycle in progress is cancelled. The
+seat owner takes it over and `econ_forum_news.6` fires, unless it already hosts a
+forum; then the forum stands vacant until its seat owner is free. An invitation
+answered after its forum changed hands or closed is refunded and does nothing.
 
 Per-country arrays use the same forum index:
 
@@ -210,7 +212,7 @@ government, but only to forums with prestige 30 or more, or as a core member.
 
 - AI hosts do not reschedule.
 - A seat owner that already hosts a forum cannot inherit a second one, so that
-  forum stalls until the seat changes hands again.
+  forum stands vacant until the seat changes hands or its owner stops hosting.
 
 Next, from #4802: a company roster once #4357 lands, and forums splitting after
 political disputes.
