@@ -60,6 +60,10 @@ econ_forum_init_track_prestige = {
 
 # Global monthly tick. Preparation opens two months before a forum's summit month.
 econ_forum_monthly_update = {
+	every_country = {
+		limit = { check_variable = { econ_forum_deal_hosts^num > 0 } }
+		econ_forum_add_deal_targets = yes
+	}
 	for_loop_effect = {
 		end = global.econ_forum_host^num
 		value = ef_i
@@ -166,6 +170,7 @@ econ_forum_open_preparation = {
 		set_country_flag = econ_forum_preparing
 		if = {
 			limit = { is_ai = no }
+			set_variable = { econ_forum_prep_months = ef_gap }
 			econ_forum_refresh_view = yes
 			country_event = econ_forum.1
 		}
@@ -422,6 +427,7 @@ econ_forum_convene_summit = {
 				set_temp_variable = { ef_clash = 20 }
 				if = {
 					limit = {
+						check_variable = { global.econ_forum_months_since^ef_j < 2 }
 						OR = {
 							check_variable = { ef_distance > 10 }
 							AND = {
@@ -526,10 +532,11 @@ econ_forum_convene_summit = {
 		clamp_variable = { var = global.econ_forum_prestige^ef_clash_forum min = 0 max = 100 }
 		if = {
 			limit = { check_variable = { ef_skip_leader > 0 } }
-			set_variable = { global.econ_forum_news_forum = ef_i }
-			set_variable = { global.econ_forum_news_rival = ef_clash_forum }
-			set_variable = { global.econ_forum_news_leader = ef_skip_leader }
-			news_event = econ_forum_news.3
+			var:ef_host = {
+				set_variable = { econ_forum_news_rival = ef_clash_forum }
+				set_variable = { econ_forum_news_leader = ef_skip_leader }
+				news_event = econ_forum_news.3
+			}
 		}
 	}
 
@@ -565,9 +572,7 @@ econ_forum_check_milestones = {
 			check_variable = { global.econ_forum_prestige^ef_i > 49 }
 		}
 		set_global_flag = econ_forum_challenger_rising
-		set_variable = { global.econ_forum_news_forum = ef_i }
-		set_variable = { global.econ_forum_news_host = ef_host }
-		news_event = econ_forum_news.5
+		var:ef_host = { news_event = econ_forum_news.5 }
 	}
 	if = {
 		limit = {
@@ -576,9 +581,7 @@ econ_forum_check_milestones = {
 			check_variable = { global.econ_forum_prestige^ef_i > global.econ_forum_prestige^0 }
 		}
 		set_global_flag = econ_forum_davos_overtaken
-		set_variable = { global.econ_forum_news_forum = ef_i }
-		set_variable = { global.econ_forum_news_host = ef_host }
-		news_event = econ_forum_news.2
+		var:ef_host = { news_event = econ_forum_news.2 }
 	}
 	if = {
 		limit = {
@@ -788,8 +791,8 @@ econ_forum_found = {
 	econ_forum_open_if_due = yes
 }
 
-# Investor scope, after the yearly investment target rebuild. Keeps every host this country holds a live forum
-# agreement with among its investment targets, and drops agreements that expired or whose host is gone.
+# Investor scope, after the yearly investment target rebuild and every month. Keeps every host this country
+# holds a live forum agreement with among its investment targets, and removes hosts whose agreement expired.
 econ_forum_add_deal_targets = {
 	clear_temp_array = ef_valid_deals
 	for_each_scope_loop = {
@@ -802,6 +805,10 @@ econ_forum_add_deal_targets = {
 			}
 			add_to_temp_array = { ef_valid_deals = THIS }
 			if = { limit = { NOT = { is_in_array = { PREV.investment_targets = THIS } } } add_to_array = { PREV.investment_targets = THIS } }
+		}
+		else_if = {
+			limit = { is_in_array = { PREV.investment_targets = THIS } }
+			remove_from_array = { PREV.investment_targets = THIS }
 		}
 	}
 	clear_array = econ_forum_deal_hosts
