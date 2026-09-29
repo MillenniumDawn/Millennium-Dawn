@@ -245,11 +245,14 @@ country_event = {
 	option = {
 		name = ethiopia.7.a
 		log = "[GetDateText]: [This.GetName]: ethiopia.7.a executed"
-		233 = {
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
+		if = {
+			limit = { has_tech = railway_system_02 }
+			233 = {
+				add_building_construction = {
+					type = rail_terminal
+					level = 1
+					instant_build = yes
+				}
 			}
 		}
 	}
@@ -297,11 +300,14 @@ country_event = {
 	option = {
 		name = ethiopia.9.a
 		log = "[GetDateText]: [This.GetName]: ethiopia.9.a executed"
-		233 = {
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
+		if = {
+			limit = { has_tech = railway_system_02 }
+			233 = {
+				add_building_construction = {
+					type = rail_terminal
+					level = 1
+					instant_build = yes
+				}
 			}
 		}
 	}
@@ -319,25 +325,18 @@ country_event = {
 	option = {
 		name = ethiopia.10.a
 		log = "[GetDateText]: [This.GetName]: ethiopia.10.a executed"
-		233 = {
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
-			}
+		build_railway = {
+			start_state = 233
+			target_state = 234
 		}
-		234 = {
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
-			}
-		}
-		236 = {
-			add_building_construction = {
-				type = infrastructure
-				level = 1
-				instant_build = yes
+		if = {
+			limit = { has_tech = railway_system_02 }
+			233 = {
+				add_building_construction = {
+					type = rail_terminal
+					level = 1
+					instant_build = yes
+				}
 			}
 		}
 	}
@@ -951,6 +950,329 @@ country_event = {
 }
 
 
+### MILITARY ASSISTANCE REQUESTS ###
+# Ethiopia requests Chinese military assistance
+country_event = {
+	id = ethiopia.26
+	title = ethiopia.26.t
+	desc = ethiopia.26.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = CHI
+		FROM = { original_tag = ETH }
+	}
+
+	# FULL ARMS PACKAGE #
+	option = {
+		name = ethiopia.26.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.26.a executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		custom_effect_tooltip = ethiopia.26.a_tt
+		send_equipment = {
+			equipment = infantry_weapons_1
+			amount = 1200
+			target = FROM
+		}
+		send_equipment = {
+			equipment = APC_1
+			amount = 100
+			target = FROM
+		}
+		send_equipment = {
+			equipment = util_vehicle_1
+			amount = 150
+			target = FROM
+		}
+		FROM = {
+			set_temp_variable = { treasury_change = -45.00 }
+			modify_treasury_effect = yes
+		}
+		set_temp_variable = { treasury_change = 45.00 }
+		modify_treasury_effect = yes
+		reverse_add_opinion_modifier = { target = FROM modifier = military_aid }
+		hidden_effect = {
+			FROM = { country_event = { id = ethiopia.27 days = 1 } }
+			news_event = { id = ethiopia_news.1 hours = 12 }
+		}
+		ai_chance = {
+			base = 60
+			modifier = {
+				add = 30
+				has_opinion = { target = FROM value > 15 }
+			}
+			modifier = {
+				factor = 2
+				sender_influence_higher_5 = yes
+			}
+			modifier = {
+				factor = 0.25
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	# LIMITED SMALL ARMS ONLY #
+	option = {
+		name = ethiopia.26.b
+		log = "[GetDateText]: [This.GetName]: ethiopia.26.b executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		custom_effect_tooltip = ethiopia.26.b_tt
+		send_equipment = {
+			equipment = infantry_weapons_1
+			amount = 500
+			target = FROM
+		}
+		FROM = {
+			set_temp_variable = { treasury_change = -12.00 }
+			modify_treasury_effect = yes
+		}
+		set_temp_variable = { treasury_change = 12.00 }
+		modify_treasury_effect = yes
+		reverse_add_opinion_modifier = { target = FROM modifier = military_aid }
+		hidden_effect = {
+			FROM = { country_event = { id = ethiopia.28 days = 1 } }
+			news_event = { id = ethiopia_news.1 hours = 12 }
+		}
+		ai_chance = {
+			base = 35
+			modifier = {
+				factor = 0.25
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	# REFUSE #
+	option = {
+		name = ethiopia.26.c
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		custom_effect_tooltip = ethiopia.26.c_tt
+		hidden_effect = {
+			FROM = { country_event = { id = ethiopia.29 days = 1 } }
+			news_event = { id = ethiopia_news.9 hours = 12 }
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				factor = 2
+				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = FROM value > 25 }
+			}
+		}
+	}
+}
+
+# Addis Ababa receives Beijing's answer
+country_event = {
+	id = ethiopia.27
+	title = ethiopia.27.t
+	desc = ethiopia.27.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	option = {
+		name = ethiopia.27.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.27.a executed"
+		add_political_power = 10
+	}
+}
+
+country_event = {
+	id = ethiopia.28
+	title = ethiopia.28.t
+	desc = ethiopia.28.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	option = {
+		name = ethiopia.28.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.28.a executed"
+		add_political_power = 10
+	}
+}
+
+country_event = {
+	id = ethiopia.29
+	title = ethiopia.29.t
+	desc = ethiopia.29.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	option = {
+		name = ethiopia.29.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.29.a executed"
+		add_opinion_modifier = { target = CHI modifier = military_aid_denied }
+	}
+}
+
+# Ethiopia requests American military assistance
+country_event = {
+	id = ethiopia.30
+	title = ethiopia.30.t
+	desc = ethiopia.30.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = USA
+		FROM = { original_tag = ETH }
+	}
+
+	# FULL AID PACKAGE #
+	option = {
+		name = ethiopia.30.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.30.a executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		custom_effect_tooltip = ethiopia.30.a_tt
+		send_equipment = {
+			equipment = infantry_weapons_2
+			amount = 800
+			target = FROM
+		}
+		send_equipment = {
+			equipment = APC_1
+			amount = 50
+			target = FROM
+		}
+		send_equipment = {
+			equipment = util_vehicle_1
+			amount = 100
+			target = FROM
+		}
+		FROM = {
+			army_experience = 15
+			air_experience = 5
+		}
+		reverse_add_opinion_modifier = { target = FROM modifier = military_aid }
+		hidden_effect = {
+			FROM = { country_event = { id = ethiopia.31 days = 1 } }
+			news_event = { id = ethiopia_news.2 hours = 12 }
+		}
+		ai_chance = {
+			base = 50
+			modifier = {
+				add = 30
+				has_opinion = { target = FROM value > 15 }
+			}
+			modifier = {
+				factor = 2
+				sender_influence_higher_5 = yes
+			}
+			modifier = {
+				factor = 0.25
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	# REDUCED AID PACKAGE #
+	option = {
+		name = ethiopia.30.b
+		log = "[GetDateText]: [This.GetName]: ethiopia.30.b executed"
+		custom_effect_tooltip = TT_IF_WE_ACCEPT
+		custom_effect_tooltip = ethiopia.30.b_tt
+		send_equipment = {
+			equipment = infantry_weapons_1
+			amount = 400
+			target = FROM
+		}
+		FROM = {
+			army_experience = 10
+		}
+		reverse_add_opinion_modifier = { target = FROM modifier = military_aid }
+		hidden_effect = {
+			FROM = { country_event = { id = ethiopia.32 days = 1 } }
+			news_event = { id = ethiopia_news.2 hours = 12 }
+		}
+		ai_chance = {
+			base = 45
+			modifier = {
+				factor = 0.25
+				has_opinion = { target = FROM value < 0 }
+			}
+		}
+	}
+
+	# REFUSE #
+	option = {
+		name = ethiopia.30.c
+		custom_effect_tooltip = TT_IF_WE_DECLINE
+		custom_effect_tooltip = ethiopia.30.c_tt
+		hidden_effect = {
+			FROM = { country_event = { id = ethiopia.33 days = 1 } }
+			news_event = { id = ethiopia_news.10 hours = 12 }
+		}
+		ai_chance = {
+			base = 15
+			modifier = {
+				factor = 2
+				has_opinion = { target = FROM value < 0 }
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = FROM value > 25 }
+			}
+		}
+	}
+}
+
+# Addis Ababa receives Washington's answer
+country_event = {
+	id = ethiopia.31
+	title = ethiopia.31.t
+	desc = ethiopia.31.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	option = {
+		name = ethiopia.31.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.31.a executed"
+		add_political_power = 10
+	}
+}
+
+country_event = {
+	id = ethiopia.32
+	title = ethiopia.32.t
+	desc = ethiopia.32.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	option = {
+		name = ethiopia.32.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.32.a executed"
+		add_political_power = 10
+	}
+}
+
+country_event = {
+	id = ethiopia.33
+	title = ethiopia.33.t
+	desc = ethiopia.33.d
+	picture = GFX_weapons_arms1
+
+	is_triggered_only = yes
+
+	option = {
+		name = ethiopia.33.a
+		log = "[GetDateText]: [This.GetName]: ethiopia.33.a executed"
+		add_opinion_modifier = { target = USA modifier = military_aid_denied }
+	}
+}
+
+
 ### NEWS EVENTS ###
 	#Ethiopia gains Chinese Military Assistance
 	news_event = {
@@ -1069,5 +1391,35 @@ country_event = {
 
 		option = {
 			name = ethiopia_news.8.a
+		}
+	}
+
+	#Beijing refuses Ethiopia's arms request
+	news_event = {
+		id = ethiopia_news.9
+		title = ethiopia_news.9.t
+		desc = ethiopia_news.9.d
+		picture = GFX_news_ethiopian_military
+
+		major = yes
+		is_triggered_only = yes
+
+		option = {
+			name = ethiopia_news.9.a
+		}
+	}
+
+	#Washington refuses Ethiopia's aid request
+	news_event = {
+		id = ethiopia_news.10
+		title = ethiopia_news.10.t
+		desc = ethiopia_news.10.d
+		picture = GFX_news_ethiopian_military
+
+		major = yes
+		is_triggered_only = yes
+
+		option = {
+			name = ethiopia_news.10.a
 		}
 	}
