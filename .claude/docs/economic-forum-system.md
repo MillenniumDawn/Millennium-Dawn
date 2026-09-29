@@ -140,6 +140,11 @@ or rescheduling a summit one or two months away opens preparation at once; one
 month away leaves no time for personal invitations, for AI hosts too. A reschedule
 that lands on the current month refunds its 50 PP and starts no cooldown.
 
+An AI host of a state-led forum buys one sponsor package (3.0 treasury) when its
+treasury is above 10 and one speaker attempt (50 PP) when it has more than 150 PP.
+The World Economic Forum is private: its partners fund 15 corporate points and two
+speaker attempts every cycle, whatever Switzerland can afford.
+
 ## AI Attendance
 
 `econ_forum_ai_decide_attendance`, clamped to 0-95:
