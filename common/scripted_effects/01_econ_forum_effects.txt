@@ -765,7 +765,11 @@ econ_forum_reward_host = {
 		add_opinion_modifier = { target = PREV modifier = econ_forum_attended_summit }
 		PREV = { set_country_flag = { flag = econ_forum_deal@PREV value = 1 days = 365 } }
 		if = { limit = { NOT = { is_in_array = { econ_forum_deal_hosts = PREV } } } add_to_array = { econ_forum_deal_hosts = PREV } }
-		if = { limit = { NOT = { is_in_array = { investment_targets = PREV } } } add_to_array = { investment_targets = PREV } }
+		if = {
+			limit = { NOT = { is_in_array = { investment_targets = PREV } } }
+			add_to_array = { investment_targets = PREV }
+			add_to_array = { econ_forum_deal_inserted = PREV }
+		}
 		add_to_temp_variable = { ef_deals = 1 }
 		set_temp_variable = { percent_change = ef_influence }
 		if = {
@@ -804,11 +808,17 @@ econ_forum_add_deal_targets = {
 				has_country_flag = econ_forum_deal@PREV
 			}
 			add_to_temp_array = { ef_valid_deals = THIS }
-			if = { limit = { NOT = { is_in_array = { PREV.investment_targets = THIS } } } add_to_array = { PREV.investment_targets = THIS } }
+			if = {
+				limit = { NOT = { is_in_array = { PREV.investment_targets = THIS } } }
+				add_to_array = { PREV.investment_targets = THIS }
+				add_to_array = { PREV.econ_forum_deal_inserted = THIS }
+			}
 		}
+		# Only a target the agreement itself added leaves with it; permanent, random, friend and ally picks stay.
 		else_if = {
-			limit = { is_in_array = { PREV.investment_targets = THIS } }
-			remove_from_array = { PREV.investment_targets = THIS }
+			limit = { is_in_array = { PREV.econ_forum_deal_inserted = THIS } }
+			remove_from_array = { PREV.econ_forum_deal_inserted = THIS }
+			if = { limit = { is_in_array = { PREV.investment_targets = THIS } } remove_from_array = { PREV.investment_targets = THIS } }
 		}
 	}
 	clear_array = econ_forum_deal_hosts
