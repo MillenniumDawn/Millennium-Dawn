@@ -1,20 +1,121 @@
 # Economic forums (Issue #4802). See 01_econ_forum_effects.txt.
+# Program tracks: 0 AI and technology, 1 energy, 2 finance, 3 defense industry, 4 infrastructure and trade, 5 development.
 
-# Country scope, temp ef_i set. Founding members the forum always invites.
+# Country scope, temp ef_i set. Members the forum always invites.
 econ_forum_is_core_member = {
-	check_variable = { ef_i = 1 }
 	OR = {
-		original_tag = POL
-		original_tag = CZE
-		original_tag = HUN
-		original_tag = SLO
+		AND = {
+			check_variable = { ef_i = 1 }
+			OR = {
+				original_tag = POL
+				original_tag = CZE
+				original_tag = HUN
+				original_tag = SLO
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 2 }
+			OR = {
+				original_tag = BLR
+				original_tag = KAZ
+				original_tag = ARM
+				original_tag = KYR
+				original_tag = TAJ
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 3 }
+			has_country_flag = asian_nation_flag
+		}
+	}
+}
+
+# Temps ef_i and ef_t set. The tracks each forum runs when its host is AI, and its starting strengths.
+econ_forum_track_in_identity = {
+	OR = {
+		AND = {
+			check_variable = { ef_i = 0 }
+			OR = {
+				check_variable = { ef_t = 0 }
+				check_variable = { ef_t = 2 }
+				check_variable = { ef_t = 5 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 1 }
+			OR = {
+				check_variable = { ef_t = 1 }
+				check_variable = { ef_t = 3 }
+				check_variable = { ef_t = 4 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 2 }
+			OR = {
+				check_variable = { ef_t = 1 }
+				check_variable = { ef_t = 2 }
+				check_variable = { ef_t = 4 }
+			}
+		}
+		AND = {
+			check_variable = { ef_i = 3 }
+			OR = {
+				check_variable = { ef_t = 0 }
+				check_variable = { ef_t = 4 }
+				check_variable = { ef_t = 5 }
+			}
+		}
+	}
+}
+
+# Country scope, temp ef_t set. Whether track ef_t matters to this government.
+econ_forum_interested_in_track = {
+	OR = {
+		AND = {
+			check_variable = { ef_t = 0 }
+			check_variable = { gdp_per_capita > 19.999 }
+		}
+		AND = {
+			check_variable = { ef_t = 1 }
+			OR = {
+				check_variable = { energy_balance < 0 }
+				check_variable = { oil_exports > 1 }
+			}
+		}
+		AND = {
+			check_variable = { ef_t = 2 }
+			OR = {
+				check_variable = { gdp_total > 499 }
+				check_variable = { gdp_per_capita > 49.999 }
+			}
+		}
+		AND = {
+			check_variable = { ef_t = 3 }
+			OR = {
+				has_war = yes
+				has_idea = defence_04
+				has_idea = defence_05
+				has_idea = defence_06
+				has_idea = defence_07
+				has_idea = defence_08
+				has_idea = defence_09
+			}
+		}
+		AND = {
+			check_variable = { ef_t = 4 }
+			check_variable = { gdp_per_capita < 20 }
+		}
+		AND = {
+			check_variable = { ef_t = 5 }
+			check_variable = { gdp_per_capita < 7 }
+		}
 	}
 }
 
 # Invitee scope, PREV is the host. True while the invitee has no personal invitation, reply or refusal this cycle.
 econ_forum_can_be_invited = {
 	OR = {
-		check_variable = { econ_forum_status^num < 2 }
+		check_variable = { econ_forum_status^num < 4 }
 		AND = {
 			check_variable = { econ_forum_status^PREV.econ_forum_hosted > -1 }
 			check_variable = { econ_forum_status^PREV.econ_forum_hosted < 2 }

@@ -1,27 +1,60 @@
 # ECONOMIC FORUMS: yearly summit institutions that compete for attendance and prestige (Issue #4802).
 # Data model and tuning: .claude/docs/economic-forum-system.md
-# Every effect below takes the forum id in the temp variable ef_i.
+# Every effect below takes the forum id in the temp variable ef_i and, for program tracks, the track id in ef_t.
 
-# STARTUP ONLY: build the forum registry. Forum 0 is the World Economic Forum, forum 1 the Visegrad Economic Conference.
+# STARTUP ONLY: build the forum registry. 0 World Economic Forum, 1 Visegrad Economic Conference,
+# 2 St. Petersburg International Economic Forum, 3 Boao Forum for Asia.
 econ_forum_setup = {
 	add_to_array = { global.econ_forum_host = SWI }
 	add_to_array = { global.econ_forum_host = 0 }
+	add_to_array = { global.econ_forum_host = SOV }
+	add_to_array = { global.econ_forum_host = 0 }
 	add_to_array = { global.econ_forum_state_led = 0 }
+	add_to_array = { global.econ_forum_state_led = 1 }
+	add_to_array = { global.econ_forum_state_led = 1 }
 	add_to_array = { global.econ_forum_state_led = 1 }
 	add_to_array = { global.econ_forum_prestige = 80 }
 	add_to_array = { global.econ_forum_prestige = 0 }
+	add_to_array = { global.econ_forum_prestige = 35 }
+	add_to_array = { global.econ_forum_prestige = 0 }
 	add_to_array = { global.econ_forum_month = 1 }
 	add_to_array = { global.econ_forum_month = 9 }
+	add_to_array = { global.econ_forum_month = 6 }
+	add_to_array = { global.econ_forum_month = 3 }
 
-	resize_array = { array = global.econ_forum_preparing value = 0 size = 2 }
-	resize_array = { array = global.econ_forum_invites_left value = 0 size = 2 }
-	resize_array = { array = global.econ_forum_sponsors value = 0 size = 2 }
-	resize_array = { array = global.econ_forum_speakers value = 0 size = 2 }
-	resize_array = { array = global.econ_forum_last_heads value = 0 size = 2 }
-	resize_array = { array = global.econ_forum_last_ministers value = 0 size = 2 }
-	resize_array = { array = global.econ_forum_last_score value = 0 size = 2 }
+	resize_array = { array = global.econ_forum_preparing value = 0 size = 4 }
+	resize_array = { array = global.econ_forum_invites_left value = 0 size = 4 }
+	resize_array = { array = global.econ_forum_sponsors value = 0 size = 4 }
+	resize_array = { array = global.econ_forum_speakers value = 0 size = 4 }
+	resize_array = { array = global.econ_forum_track_count value = 0 size = 4 }
+	resize_array = { array = global.econ_forum_last_heads value = 0 size = 4 }
+	resize_array = { array = global.econ_forum_last_ministers value = 0 size = 4 }
+	resize_array = { array = global.econ_forum_last_score value = 0 size = 4 }
+	# Six program tracks per forum, indexed forum * 6 + track.
+	resize_array = { array = global.econ_forum_tracks value = 0 size = 24 }
+	resize_array = { array = global.econ_forum_track_prestige value = 0 size = 24 }
 
 	SWI = { set_variable = { econ_forum_hosted = 0 } }
+	SOV = { set_variable = { econ_forum_hosted = 2 } }
+	set_temp_variable = { ef_i = 0 }
+	econ_forum_init_track_prestige = yes
+	set_temp_variable = { ef_i = 2 }
+	econ_forum_init_track_prestige = yes
+}
+
+# A forum's own tracks start at its prestige, the others at half.
+econ_forum_init_track_prestige = {
+	for_loop_effect = {
+		end = 6
+		value = ef_t
+
+		set_temp_variable = { ef_idx = { value = ef_i multiply = 6 add = ef_t } }
+		set_variable = { global.econ_forum_track_prestige^ef_idx = { value = global.econ_forum_prestige^ef_i multiply = 0.5 } }
+		if = {
+			limit = { econ_forum_track_in_identity = yes }
+			set_variable = { global.econ_forum_track_prestige^ef_idx = global.econ_forum_prestige^ef_i }
+		}
+	}
 }
 
 # Global monthly tick. Preparation opens two months before a forum's summit month.
@@ -57,10 +90,10 @@ econ_forum_monthly_update = {
 # Country scope. One slot per forum; raise the sizes with the registry.
 econ_forum_ensure_country_arrays = {
 	if = {
-		limit = { check_variable = { econ_forum_status^num < 2 } }
-		resize_array = { array = econ_forum_status value = 0 size = 2 }
-		resize_array = { array = econ_forum_last value = 0 size = 2 }
-		resize_array = { array = econ_forum_streak value = 0 size = 2 }
+		limit = { check_variable = { econ_forum_status^num < 4 } }
+		resize_array = { array = econ_forum_status value = 0 size = 4 }
+		resize_array = { array = econ_forum_last value = 0 size = 4 }
+		resize_array = { array = econ_forum_streak value = 0 size = 4 }
 	}
 }
 
@@ -68,7 +101,15 @@ econ_forum_open_preparation = {
 	set_variable = { global.econ_forum_preparing^ef_i = 1 }
 	set_variable = { global.econ_forum_sponsors^ef_i = 0 }
 	set_variable = { global.econ_forum_speakers^ef_i = 0 }
+	set_variable = { global.econ_forum_track_count^ef_i = 0 }
 	set_variable = { global.econ_forum_invites_left^ef_i = { value = global.econ_forum_prestige^ef_i divide = 25 round = yes add = 3 } }
+	for_loop_effect = {
+		end = 6
+		value = ef_t
+
+		set_temp_variable = { ef_idx = { value = ef_i multiply = 6 add = ef_t } }
+		set_variable = { global.econ_forum_tracks^ef_idx = 0 }
+	}
 
 	# Recurring guests and core members are invited automatically; an indispensable forum invites every regional power.
 	every_country = {
@@ -109,6 +150,7 @@ econ_forum_open_preparation = {
 		set_country_flag = econ_forum_preparing
 		if = {
 			limit = { is_ai = no }
+			econ_forum_refresh_view = yes
 			country_event = econ_forum.1
 		}
 		else = {
@@ -125,26 +167,82 @@ econ_forum_send_invitation = {
 		set_variable = { econ_forum_status^ef_i = 1 }
 		if = {
 			limit = { is_ai = no }
-			set_variable = { econ_forum_invited_to = ef_i }
-			set_variable = { econ_forum_invited_by = global.econ_forum_host^ef_i }
-			country_event = { id = econ_forum.2 days = 1 }
+			econ_forum_notify_invitee = yes
 		}
 	}
 }
 
+# A personal invitation upgrades a standing one; a human invitee who already has the event is not asked twice.
 econ_forum_send_personal_invitation = {
 	econ_forum_ensure_country_arrays = yes
-	set_variable = { econ_forum_status^ef_i = 2 }
 	if = {
-		limit = { is_ai = no }
-		set_variable = { econ_forum_invited_to = ef_i }
-		set_variable = { econ_forum_invited_by = global.econ_forum_host^ef_i }
-		country_event = { id = econ_forum.2 days = 1 }
+		limit = {
+			is_ai = no
+			check_variable = { econ_forum_status^ef_i = 0 }
+		}
+		econ_forum_notify_invitee = yes
+	}
+	set_variable = { econ_forum_status^ef_i = 2 }
+}
+
+# Invitee scope. The event carries its host as an event target, so invitations from several forums never collide.
+econ_forum_notify_invitee = {
+	set_temp_variable = { ef_inviter = global.econ_forum_host^ef_i }
+	var:ef_inviter = { save_event_target_as = econ_forum_inviter }
+	country_event = { id = econ_forum.2 days = 1 }
+}
+
+# Invitee scope, from econ_forum.2. ef_answer is 3 (ministers), 4 (head of government) or -1 (decline).
+econ_forum_answer_invitation = {
+	event_target:econ_forum_inviter = { set_temp_variable = { ef_i = econ_forum_hosted } }
+	if = {
+		limit = {
+			check_variable = { global.econ_forum_preparing^ef_i = 1 }
+			check_variable = { econ_forum_status^ef_i > 0 }
+			check_variable = { econ_forum_status^ef_i < 3 }
+		}
+		set_variable = { econ_forum_status^ef_i = ef_answer }
 	}
 }
 
-# Host scope, AI only. Spends what the host can afford on the coming summit.
+# Selects track ef_t for forum ef_i while fewer than three are on the program.
+econ_forum_select_track = {
+	set_temp_variable = { ef_idx = { value = ef_i multiply = 6 add = ef_t } }
+	if = {
+		limit = {
+			check_variable = { global.econ_forum_tracks^ef_idx = 0 }
+			check_variable = { global.econ_forum_track_count^ef_i < 3 }
+		}
+		set_variable = { global.econ_forum_tracks^ef_idx = 1 }
+		add_to_variable = { global.econ_forum_track_count^ef_i = 1 }
+	}
+}
+
+# Host scope. Copies the forum's program and sector prestige into arrays the decision text can read.
+econ_forum_refresh_view = {
+	resize_array = { array = econ_forum_view_selected value = 0 size = 6 }
+	resize_array = { array = econ_forum_view_prestige value = 0 size = 6 }
+	for_loop_effect = {
+		end = 6
+		value = ef_t
+
+		set_temp_variable = { ef_idx = { value = ef_i multiply = 6 add = ef_t } }
+		set_variable = { econ_forum_view_selected^ef_t = global.econ_forum_tracks^ef_idx }
+		set_variable = { econ_forum_view_prestige^ef_t = global.econ_forum_track_prestige^ef_idx }
+	}
+}
+
+# Host scope, AI only. Runs the forum's own program and spends what the host can afford.
 econ_forum_ai_prepare = {
+	for_loop_effect = {
+		end = 6
+		value = ef_t
+
+		if = {
+			limit = { econ_forum_track_in_identity = yes }
+			econ_forum_select_track = yes
+		}
+	}
 	if = {
 		limit = { check_variable = { treasury > 10 } }
 		set_temp_variable = { treasury_change = -3 }
@@ -175,13 +273,29 @@ econ_forum_ai_prepare = {
 }
 
 # Host scope. A headline speaker is harder to land the further the strongest rival forum is ahead.
+# Landing one while the World Economic Forum is also preparing takes one of its speakers.
 econ_forum_try_book_speaker = {
 	econ_forum_find_rival = yes
 	set_temp_variable = { ef_chance = { value = global.econ_forum_prestige^ef_i subtract = ef_rival_prestige divide = 2 add = 60 clamp = { min = 20 max = 90 } } }
 	set_temp_variable_to_random = { var = ef_roll min = 0 max = 100 }
+	set_variable = { econ_forum_speaker_result = 0 }
 	if = {
 		limit = { check_variable = { ef_roll < ef_chance } }
 		add_to_variable = { global.econ_forum_speakers^ef_i = 1 }
+		set_variable = { econ_forum_speaker_result = 1 }
+		if = {
+			limit = {
+				NOT = { check_variable = { ef_i = 0 } }
+				check_variable = { global.econ_forum_preparing^0 = 1 }
+				check_variable = { global.econ_forum_speakers^0 > 0 }
+			}
+			add_to_variable = { global.econ_forum_speakers^0 = -1 }
+			set_variable = { econ_forum_speaker_result = 2 }
+		}
+	}
+	if = {
+		limit = { is_ai = no }
+		country_event = econ_forum.4
 	}
 }
 
@@ -205,16 +319,32 @@ econ_forum_find_rival = {
 	}
 }
 
+# Host scope. Moves the summit ef_offset months after the strongest rival's: 1 counter-programs it, 6 avoids it.
+econ_forum_reschedule = {
+	econ_forum_find_rival = yes
+	if = {
+		limit = { check_variable = { ef_rival > -1 } }
+		set_temp_variable = { ef_new_month = { value = global.econ_forum_month^ef_rival add = ef_offset subtract = 1 } }
+		modulo_temp_variable = { ef_new_month = 12 }
+		add_to_temp_variable = { ef_new_month = 1 }
+		set_variable = { global.econ_forum_month^ef_i = ef_new_month }
+	}
+	set_country_flag = { flag = econ_forum_rescheduled value = 1 days = 730 }
+}
+
 econ_forum_convene_summit = {
 	set_temp_variable = { ef_host = global.econ_forum_host^ef_i }
 	set_temp_variable = { ef_prestige = global.econ_forum_prestige^ef_i }
 	set_temp_variable = { ef_points = 0 }
 	set_temp_variable = { ef_heads = 0 }
 	set_temp_variable = { ef_ministers = 0 }
+	set_temp_variable = { ef_poached = 0 }
+	set_temp_variable = { ef_skip_leader = 0 }
 	clear_temp_array = ef_attendees
 
-	# A more prestigious forum meeting within a month of ours draws attention away.
+	# A more prestigious forum meeting within a month of ours draws attention away, and we draw headlines from it.
 	set_temp_variable = { ef_clash = 0 }
+	set_temp_variable = { ef_clash_forum = -1 }
 	for_loop_effect = {
 		end = global.econ_forum_host^num
 		value = ef_j
@@ -235,6 +365,7 @@ econ_forum_convene_summit = {
 					}
 				}
 				set_temp_variable = { ef_clash = 20 }
+				set_temp_variable = { ef_clash_forum = ef_j }
 			}
 		}
 	}
@@ -257,10 +388,46 @@ econ_forum_convene_summit = {
 		econ_forum_record_attendance = yes
 	}
 
+	# Leading every other active forum in a track on the program adds 3 corporate points.
+	set_temp_variable = { ef_sector_points = 0 }
+	for_loop_effect = {
+		end = 6
+		value = ef_t
+
+		set_temp_variable = { ef_idx = { value = ef_i multiply = 6 add = ef_t } }
+		if = {
+			limit = { check_variable = { global.econ_forum_tracks^ef_idx = 1 } }
+			set_temp_variable = { ef_leads = 1 }
+			for_loop_effect = {
+				end = global.econ_forum_host^num
+				value = ef_j
+
+				set_temp_variable = { ef_jdx = { value = ef_j multiply = 6 add = ef_t } }
+				if = {
+					limit = {
+						NOT = { check_variable = { ef_j = ef_i } }
+						check_variable = { global.econ_forum_host^ef_j > 0 }
+						NOT = { check_variable = { global.econ_forum_track_prestige^ef_idx > global.econ_forum_track_prestige^ef_jdx } }
+					}
+					set_temp_variable = { ef_leads = 0 }
+				}
+			}
+			if = {
+				limit = { check_variable = { ef_leads = 1 } }
+				add_to_temp_variable = { ef_sector_points = 3 }
+			}
+		}
+	}
+
 	set_temp_variable = { ef_government = { value = ef_points multiply = 0.6 min = 60 } }
-	set_temp_variable = { ef_corporate = { value = ef_prestige multiply = 0.15 add = global.econ_forum_sponsors^ef_i min = 30 } }
+	set_temp_variable = { ef_corporate = { value = ef_prestige multiply = 0.15 add = global.econ_forum_sponsors^ef_i add = ef_sector_points min = 30 } }
 	set_temp_variable = { ef_speaker_points = { value = global.econ_forum_speakers^ef_i multiply = 5 add = { value = ef_prestige multiply = 0.1 } } }
-	set_temp_variable = { ef_score = { value = ef_government add = ef_corporate add = ef_speaker_points clamp = { min = 0 max = 100 } } }
+	set_temp_variable = { ef_score = { value = ef_government add = ef_corporate add = ef_speaker_points } }
+	if = {
+		limit = { check_variable = { ef_clash_forum > -1 } }
+		add_to_temp_variable = { ef_score = 5 }
+	}
+	clamp_temp_variable = { var = ef_score min = 0 max = 100 }
 
 	set_variable = { global.econ_forum_prestige^ef_i = { value = ef_score subtract = ef_prestige multiply = 0.3 add = ef_prestige clamp = { min = 0 max = 100 } } }
 	set_variable = { global.econ_forum_last_heads^ef_i = ef_heads }
@@ -269,8 +436,39 @@ econ_forum_convene_summit = {
 	set_variable = { global.econ_forum_preparing^ef_i = 0 }
 	set_variable = { global.econ_forum_invites_left^ef_i = 0 }
 
+	# Tracks on the program move toward the score; the rest fade.
+	for_loop_effect = {
+		end = 6
+		value = ef_t
+
+		set_temp_variable = { ef_idx = { value = ef_i multiply = 6 add = ef_t } }
+		if = {
+			limit = { check_variable = { global.econ_forum_tracks^ef_idx = 1 } }
+			set_variable = { global.econ_forum_track_prestige^ef_idx = { value = ef_score subtract = global.econ_forum_track_prestige^ef_idx multiply = 0.4 add = global.econ_forum_track_prestige^ef_idx } }
+		}
+		else = {
+			multiply_variable = { global.econ_forum_track_prestige^ef_idx = 0.95 }
+		}
+	}
+
+	# Heads of government we drew away from a clashing rival cost it a point of prestige each, up to 5.
+	if = {
+		limit = { check_variable = { ef_poached > 0 } }
+		set_temp_variable = { ef_rival_loss = { value = ef_poached min = 5 } }
+		subtract_from_variable = { global.econ_forum_prestige^ef_clash_forum = ef_rival_loss }
+		clamp_variable = { var = global.econ_forum_prestige^ef_clash_forum min = 0 max = 100 }
+		if = {
+			limit = { check_variable = { ef_skip_leader > 0 } }
+			set_variable = { global.econ_forum_news_forum = ef_i }
+			set_variable = { global.econ_forum_news_rival = ef_clash_forum }
+			set_variable = { global.econ_forum_news_leader = ef_skip_leader }
+			news_event = econ_forum_news.3
+		}
+	}
+
 	var:ef_host = {
 		clr_country_flag = econ_forum_preparing
+		set_temp_variable = { ef_deals = 0 }
 		if = {
 			limit = { check_variable = { global.econ_forum_state_led^ef_i = 1 } }
 			econ_forum_reward_host = yes
@@ -282,11 +480,28 @@ econ_forum_convene_summit = {
 			set_variable = { econ_forum_report_heads = ef_heads }
 			set_variable = { econ_forum_report_ministers = ef_ministers }
 			set_variable = { econ_forum_report_score = ef_score }
+			set_variable = { econ_forum_report_deals = ef_deals }
+			econ_forum_refresh_view = yes
 			country_event = econ_forum.3
 		}
 	}
 
-	# First time a challenger outranks the World Economic Forum.
+	econ_forum_check_milestones = yes
+}
+
+# News for the rivalry with the World Economic Forum. Each fires once per campaign.
+econ_forum_check_milestones = {
+	if = {
+		limit = {
+			NOT = { check_variable = { ef_i = 0 } }
+			NOT = { has_global_flag = econ_forum_challenger_rising }
+			check_variable = { global.econ_forum_prestige^ef_i > 49 }
+		}
+		set_global_flag = econ_forum_challenger_rising
+		set_variable = { global.econ_forum_news_forum = ef_i }
+		set_variable = { global.econ_forum_news_host = ef_host }
+		news_event = econ_forum_news.5
+	}
 	if = {
 		limit = {
 			NOT = { check_variable = { ef_i = 0 } }
@@ -297,6 +512,19 @@ econ_forum_convene_summit = {
 		set_variable = { global.econ_forum_news_forum = ef_i }
 		set_variable = { global.econ_forum_news_host = ef_host }
 		news_event = econ_forum_news.2
+	}
+	if = {
+		limit = {
+			check_variable = { ef_i = 0 }
+			has_global_flag = econ_forum_davos_overtaken
+			NOT = { has_global_flag = econ_forum_davos_reasserted }
+		}
+		econ_forum_find_rival = yes
+		if = {
+			limit = { check_variable = { global.econ_forum_prestige^0 > ef_rival_prestige } }
+			set_global_flag = econ_forum_davos_reasserted
+			news_event = econ_forum_news.4
+		}
 	}
 }
 
@@ -327,6 +555,21 @@ econ_forum_ai_decide_attendance = {
 	if = {
 		limit = { has_war_with = event_target:econ_forum_host_target }
 		add_to_temp_variable = { ef_chance = -100 }
+	}
+
+	# Each track on the program that matters to us adds a tenth of the forum's standing in it.
+	for_loop_effect = {
+		end = 6
+		value = ef_t
+
+		set_temp_variable = { ef_idx = { value = ef_i multiply = 6 add = ef_t } }
+		if = {
+			limit = {
+				check_variable = { global.econ_forum_tracks^ef_idx = 1 }
+				econ_forum_interested_in_track = yes
+			}
+			add_to_temp_variable = { ef_chance = { value = global.econ_forum_track_prestige^ef_idx multiply = 0.1 } }
+		}
 	}
 
 	# Heads of government spend their attention: each other forum they led a delegation to costs 10.
@@ -374,6 +617,23 @@ econ_forum_record_attendance = {
 			limit = { check_variable = { econ_forum_status^ef_i = 4 } }
 			add_to_temp_variable = { ef_heads = 1 }
 			add_to_temp_variable = { ef_points = { value = ef_weight multiply = 2 } }
+			if = {
+				limit = {
+					check_variable = { ef_clash_forum > -1 }
+					NOT = { check_variable = { econ_forum_last^ef_clash_forum = 4 } }
+				}
+				add_to_temp_variable = { ef_poached = 1 }
+				if = {
+					limit = {
+						check_variable = { ef_skip_leader = 0 }
+						OR = {
+							has_idea = super_power
+							has_idea = great_power
+						}
+					}
+					set_temp_variable = { ef_skip_leader = THIS.id }
+				}
+			}
 		}
 		else = {
 			add_to_temp_variable = { ef_ministers = 1 }
@@ -412,13 +672,16 @@ econ_forum_grant_delegation_bonus = {
 	add_dynamic_modifier = { modifier = econ_forum_delegation_modifier days = 365 }
 }
 
-# Host scope, state-led forums only. Delegations leave with a better view of the host, which gains influence scaled by prestige.
+# Host scope, state-led forums only. Delegations leave with a better view of the host, sign investment
+# agreements that steer their AI investors toward it for a year, and the host gains influence scaled by prestige.
 econ_forum_reward_host = {
 	set_temp_variable = { ef_influence = { value = ef_prestige multiply = 0.02 } }
 	for_each_scope_loop = {
 		array = ef_attendees
 
 		add_opinion_modifier = { target = PREV modifier = econ_forum_attended_summit }
+		PREV = { set_country_flag = { flag = econ_forum_deal@PREV value = 1 days = 365 } }
+		add_to_temp_variable = { ef_deals = 1 }
 		set_temp_variable = { percent_change = ef_influence }
 		if = {
 			limit = { check_variable = { econ_forum_last^ef_i = 4 } }
@@ -438,6 +701,7 @@ econ_forum_found = {
 	set_variable = { global.econ_forum_host^ef_i = THIS.id }
 	set_variable = { global.econ_forum_prestige^ef_i = 15 }
 	set_variable = { econ_forum_hosted = ef_i }
+	econ_forum_init_track_prestige = yes
 	set_variable = { global.econ_forum_news_forum = ef_i }
 	set_variable = { global.econ_forum_news_host = THIS.id }
 	news_event = { id = econ_forum_news.1 days = 1 }
