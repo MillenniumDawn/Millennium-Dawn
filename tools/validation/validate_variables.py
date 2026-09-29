@@ -30,6 +30,7 @@ from shared_utils import (
     line_for_offset,
     read_text_under,
     strip_comments,
+    validation_config,
 )
 
 # Focus block/reward walking is owned by the focus-tree validator — reuse it
@@ -313,10 +314,8 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
         return ([], [])
 
     try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
         return ([], [])
 
     cleaned = re.sub(r"#[^\n]*", "", text)
@@ -349,10 +348,8 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     if should_skip_file(filename):
         return []
     try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
         return []
 
     # Quote-aware comment strip, then blank quoted-string interiors so a `#` or a
@@ -629,11 +626,9 @@ def collect_clamp_ranges(
     if should_skip_file(filename):
         return [], [], []
     try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
         cleaned = blank_quoted_strings(strip_comments(text))
-    except Exception:
+    except OSError:
         return [], [], []
     return _scan_clamp_harvest_text(cleaned)
 
@@ -688,11 +683,9 @@ def process_file_for_clamp_conflicts(args) -> List[str]:
     if should_skip_file(filename):
         return []
     try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
         cleaned = blank_quoted_strings(strip_comments(text))
-    except Exception:
+    except OSError:
         return []
     rel = os.path.relpath(filename, mod_path)
     return _resolve_clamp_checks(_extract_clamp_checks(cleaned, rel), rel, ranges)
@@ -992,10 +985,8 @@ def collect_dynamic_modifier_vars(args: Tuple[str, str]) -> List[Tuple[str, str]
     """
     filename, _mod_path = args
     try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
         return []
     cleaned = blank_quoted_strings(strip_comments(text))
     return _scan_dynamic_harvest_text(cleaned)
@@ -1032,10 +1023,8 @@ def process_file_for_variable_tooltips(
     if should_skip_file(filename):
         return []
     try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
         return []
 
     cleaned = blank_quoted_strings(strip_comments(text))
@@ -1465,10 +1454,8 @@ def process_file_for_orphan_money(
     if should_skip_file(filename):
         return []
     try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
         return []
 
     # Quote-aware strip — the naive regex strip broke brace tracking in every
@@ -1635,10 +1622,8 @@ def _scan_shared_file(args) -> Tuple:
     if should_skip_file(filename):
         return _EMPTY_SHARED_RESULT
     try:
-        from pathlib import Path as _Path
-
-        text = _Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
+    except OSError:
         return _EMPTY_SHARED_RESULT
     rel = os.path.relpath(filename, mod_path)
 
@@ -2405,7 +2390,7 @@ class Validator(BaseValidator):
             try:
                 with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
                     text = blank_quoted_strings(strip_comments(fh.read()))
-            except Exception:
+            except OSError:
                 continue
             for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
                 name = m.group(1)
@@ -2612,11 +2597,13 @@ class Validator(BaseValidator):
     ):
         self._log_section("Checking missing event targets (used but not set)...")
 
-        FALSE_POSITIVES = ["."]
+        false_positives = validation_config(
+            "validate_variables", "missing_event_target_false_positives"
+        )
         results = []
         used_targets = (
             DataCleaner.clear_false_positives_partial_match(
-                list(used_paths.keys()), tuple(FALSE_POSITIVES)
+                list(used_paths.keys()), tuple(false_positives)
             )
             or []
         )
@@ -2655,12 +2642,14 @@ class Validator(BaseValidator):
     ):
         self._log_section("Checking unused event targets (set but not used)...")
 
-        FALSE_POSITIVES = ["wca_usa_floyd_olson", "wca_usa_al_smith", "target_value"]
+        false_positives = validation_config(
+            "validate_variables", "unused_event_target_false_positives"
+        )
         results = []
         potential_results = []
         set_targets = (
             DataCleaner.clear_false_positives_partial_match(
-                list(set_paths.keys()), tuple(FALSE_POSITIVES)
+                list(set_paths.keys()), tuple(false_positives)
             )
             or []
         )
@@ -2746,68 +2735,20 @@ class Validator(BaseValidator):
         )
         self.log(f"  Found {len(all_txt_files)} .txt files")
 
-        FALSE_POSITIVES_GENERIC = ["@", "[", "{"]
-        FALSE_POSITIVES_COUNTRY = [
-            "@",
-            "[",
-            "{",
-            "ire_got_guarantee",
-            "ire_rejected_guarantee",
-            "nfa_rebelled",
-            "ire_alliance_refused",
-            "nfa_previously_rebelled",
-            "rom_deal",
-            "rus_can_core",
-            "sent_volunteers",
-            "china_refused_alliance",
-            "_QMV_voted",
-            "recognised_opponent_",
-            "rival_government_",
-            "_QMV",
-            "trade_agreement",
-            "mutual_investment_treaty_",
-            "libya_casablanca_accords_signed_by_",
-            "_EP_agenda",
-            "initiated_blockade_",
-        ]
-        FALSE_POSITIVES_GLOBAL = [
-            "@",
-            "[",
-            "{",
-            "kr_current_version",
-            "_QMV_result",
-            "_QMV_voted",
-        ]
-        FALSE_POSITIVES_COUNTRY_UNUSED = [
-            "@",
-            "[",
-            "{",
-            "saf_antagonise_",
-            "default_puppet",
-            "_QMV_voted",
-            "_EP_approval",
-            "recognised_opponent_",
-        ]
+        generic, country, global_, country_unused = (
+            list(validation_config("validate_variables", key))
+            for key in (
+                "flag_false_positives_generic",
+                "flag_false_positives_country",
+                "flag_false_positives_global",
+                "flag_false_positives_country_unused",
+            )
+        )
 
         for flag_type, fp_cleared, fp_missing, fp_unused in [
-            (
-                "country",
-                FALSE_POSITIVES_COUNTRY,
-                FALSE_POSITIVES_COUNTRY,
-                FALSE_POSITIVES_COUNTRY_UNUSED,
-            ),
-            (
-                "global",
-                FALSE_POSITIVES_GENERIC,
-                FALSE_POSITIVES_GENERIC,
-                FALSE_POSITIVES_GLOBAL,
-            ),
-            (
-                "state",
-                FALSE_POSITIVES_GENERIC,
-                FALSE_POSITIVES_GENERIC,
-                FALSE_POSITIVES_GENERIC,
-            ),
+            ("country", country, country, country_unused),
+            ("global", generic, generic, global_),
+            ("state", generic, generic, generic),
         ]:
             # One scan per flag_type instead of six separate pool scans.
             set_paths, used_paths, cleared_paths = Variables.get_all_flags(
