@@ -110,10 +110,10 @@ it keeps 95% of its prestige.
    tallied, the score is computed and prestige moves 30% toward it.
 
 Outside preparation a host can reschedule once every two years (50 PP): the month
-after its strongest rival's (counter-programming) or six months after it.
-Founding or rescheduling a summit one or two months away opens preparation at
-once; one month away leaves no time for personal invitations, for AI hosts too. A
-reschedule that lands on the current month refunds its 50 PP and starts no cooldown.
+after its strongest rival's (counter-programming) or six months after it. Founding
+or rescheduling a summit one or two months away opens preparation at once; one
+month away leaves no time for personal invitations, for AI hosts too. A reschedule
+that lands on the current month refunds its 50 PP and starts no cooldown.
 
 ## AI Attendance
 
