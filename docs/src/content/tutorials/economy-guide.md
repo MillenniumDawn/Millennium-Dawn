@@ -361,11 +361,22 @@ Choosing **No Foreign Reserve** eliminates foreign debt denomination effects and
 
 ### Currency Strength
 
-Currency strength is recalculated monthly based on three factors:
+Currency strength is recalculated monthly. Each currency is pulled back toward its **base strength**, while your economy pushes it up or down:
 
-1. **Budget Balance**: A budget surplus appreciates your currency; a deficit depreciates it
-2. **Debt-to-GDP Ratio**: High debt weakens your currency
-3. **Stability**: Political instability drives capital flight and currency depreciation
+| Factor             | Effect                                                                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real interest rate | A policy rate more than 1 point above inflation supports your currency. A lower rate weakens it.                                                                |
+| Debt interest rate | The part of your debt's interest rate not set by the policy rate weakens your currency once it passes 5 points, and quickly past 10. Having no debt is neutral. |
+| Inflation          | Up to 5% is neutral. Above 5% the penalty grows quickly and is severe by 20%.                                                                                   |
+| Stability          | Stability above 50% strengthens your currency, and stability below 50% weakens it.                                                                              |
+| Economic cycle     | A boom or fast growth helps. Stagnation, recession and depression hurt.                                                                                         |
+| War                | Losing a war or fighting a civil war weakens your currency.                                                                                                     |
+| Sanctions          | International sanctions weaken your currency.                                                                                                                   |
+| Financial collapse | Your currency is weaker for three years after a financial collapse.                                                                                             |
+| Reserve issuers    | Each country using your currency as its reserve strengthens it slightly.                                                                                        |
+| Safe havens        | While world tension stays above 50%, the US dollar and Japanese yen strengthen slightly, and the Swiss franc a little more.                                     |
+
+Your base strength starts at your country's historical value and slowly follows your currency. It rises at half the speed it falls, so trust is lost faster than it is earned. Years of good management raise the level your currency settles at, and years of bad management lower it.
 
 Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. Its effects include:
 
@@ -450,13 +461,16 @@ What matters for inflation is the **real rate** -- the difference between the po
 
 The AI adjusts the policy rate automatically based on inflation:
 
-| Condition           | AI Action                     |
-| ------------------- | ----------------------------- |
-| Inflation above 10% | Raises policy rate toward 20% |
-| Inflation above 5%  | Raises policy rate toward 15% |
-| Inflation below 1%  | Lowers policy rate toward 1%  |
+| Condition                                          | AI Action                                     |
+| -------------------------------------------------- | --------------------------------------------- |
+| Inflation above 10%                                | Raises policy rate toward 20%                 |
+| Inflation above 5%                                 | Raises policy rate toward 15%                 |
+| Inflation above 1%, rate under inflation + 1 point | Raises policy rate toward inflation + 1 point |
+| Inflation below 1%                                 | Lowers policy rate toward 1%                  |
 
 Players can adjust the policy rate manually to respond faster or pursue different monetary strategies than the AI default.
+
+The real rate also moves your currency. See [Currency Strength](#currency-strength).
 
 ### Currency and Inflation
 

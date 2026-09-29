@@ -55,6 +55,8 @@
 @population_tax_adjuster = 0.008
 # Maximum exchange-rate multiplier on reserve-currency debt service
 @max_debt_fx_factor = 2
+# Near-zero GDP would otherwise give ratios in the thousands; no trigger checks above 2.5
+@max_debt_ratio = 5
 # Target share of gross income used for debt service after a financial collapse
 @financial_collapse_debt_service_target = 0.75
 
@@ -2613,6 +2615,7 @@ calculate_interest_rate = {
 			limit = { check_variable = { gdp_total > 0 } }
 			divide_variable = { debt_ratio = gdp_total }
 		}
+		clamp_variable = { var = debt_ratio max = @max_debt_ratio }
 	}
 
 	# Remove high interest modifier if interest rate dropped below 15%
