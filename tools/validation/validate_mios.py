@@ -52,7 +52,7 @@ from typing import (
 
 from equipment_module_slots import blank_comments
 from equipment_stats import EquipmentStatIndex, build_equipment_stat_index
-from shared_utils import get_staged_files
+from shared_utils import get_staged_files, validation_config
 from sprite_index import build_sprite_index
 from validate_style import _is_escaped, split_code_and_comment
 from validator_common import BaseValidator, run_validator_main
@@ -73,22 +73,8 @@ ORG_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
 TAG_PREFIX_RE = re.compile(r"^([A-Z]{3})_")
 SHARED_PREFIXES = ("GENERIC_", "generic_")
 
-# Shared generic trees are wider than the country-MIO grid; their branch roots are
-# absolute-positioned lane origins at x = 10..16 and their children stay relative.
 X_BOUNDS_EXEMPT_ORGS = frozenset(
-    {
-        "generic_AFV_equipment_organization",
-        "generic_air_equipment_organization",
-        "generic_fixed_wing_and_helicopter_equipment_organization",
-        "generic_infantry_equipment_organization",
-        "generic_mixed_naval_equipment_organization",
-        "generic_naval_equipment_organization",
-        "generic_naval_light_equipment_organization",
-        "generic_small_naval_Manufacturer",
-        "generic_specialized_helicopter_aa_at_organization",
-        "generic_tank_equipment_organization",
-        "generic_utility_vehicle_manufacturer",
-    }
+    validation_config("validate_mios", "x_bounds_exempt_orgs")
 )
 
 ORIGINAL_TAG_RE = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{1,7})\b")
@@ -214,7 +200,9 @@ NON_NAVAL_PRODUCTION_KEYS = frozenset(
 # hunch. The open candidates are the naval *_factor keys
 # (naval_light_gun_hit_chance_factor, naval_heavy_gun_hit_chance_factor,
 # naval_torpedo_damage_reduction_factor, naval_weather_penalty_factor).
-ZERO_BASE_EXEMPT_STATS: FrozenSet[str] = frozenset()
+ZERO_BASE_EXEMPT_STATS: FrozenSet[str] = frozenset(
+    validation_config("validate_mios", "zero_base_exempt_stats")
+)
 
 # organization_modifier keys the engine reads as a factor, so 0.15 is +15% and a
 # whole number is a dropped decimal point, not a strong bonus. Helsing SE shipped
