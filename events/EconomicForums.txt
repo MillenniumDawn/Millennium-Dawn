@@ -17,13 +17,23 @@ country_event = {
 	}
 }
 
-# An invitation to another forum's summit. The event target econ_forum_inviter is the host.
+# An invitation to another forum's summit. Claims the oldest queued forum and saves its host as econ_forum_inviter.
 country_event = {
 	id = econ_forum.2
 	title = econ_forum.2.t
 	desc = econ_forum.2.d
 	picture = GFX_economic_forum_aze
 	is_triggered_only = yes
+
+	trigger = { check_variable = { econ_forum_invite_queue^num > 0 } }
+
+	immediate = {
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_invite_queue^0 }
+			remove_from_array = { array = econ_forum_invite_queue index = 0 }
+			var:global.econ_forum_host^ef_i = { save_event_target_as = econ_forum_inviter }
+		}
+	}
 
 	option = {
 		name = econ_forum.2.a

@@ -190,10 +190,10 @@ econ_forum_send_personal_invitation = {
 	set_variable = { econ_forum_status^ef_i = 2 }
 }
 
-# Invitee scope. The event carries its host as an event target, so invitations from several forums never collide.
+# Invitee scope. Queues the forum id; each econ_forum.2 claims the oldest queued forum in its immediate, so
+# invitations from several forums never overwrite each other.
 econ_forum_notify_invitee = {
-	set_temp_variable = { ef_inviter = global.econ_forum_host^ef_i }
-	var:ef_inviter = { save_event_target_as = econ_forum_inviter }
+	add_to_array = { econ_forum_invite_queue = ef_i }
 	country_event = econ_forum.2
 }
 
@@ -324,6 +324,25 @@ econ_forum_find_rival = {
 	}
 }
 
+# Host scope. The monthly tick only opens preparation two months out, so a summit that is now one or two months
+# away opens it at once. One month out leaves no time for personal invitations.
+econ_forum_open_if_due = {
+	set_temp_variable = { ef_gap = { value = global.econ_forum_month^ef_i subtract = global.month add = 12 } }
+	modulo_temp_variable = { ef_gap = 12 }
+	if = {
+		limit = {
+			check_variable = { ef_gap > 0 }
+			check_variable = { ef_gap < 3 }
+		}
+		set_temp_variable = { ef_host = THIS.id }
+		econ_forum_open_preparation = yes
+		if = {
+			limit = { check_variable = { ef_gap = 1 } }
+			set_variable = { global.econ_forum_invites_left^ef_i = 0 }
+		}
+	}
+}
+
 # Host scope. Moves the summit ef_offset months after the strongest rival's: 1 counter-programs it, 6 avoids it.
 econ_forum_reschedule = {
 	econ_forum_find_rival = yes
@@ -333,21 +352,7 @@ econ_forum_reschedule = {
 		modulo_temp_variable = { ef_new_month = 12 }
 		add_to_temp_variable = { ef_new_month = 1 }
 		set_variable = { global.econ_forum_month^ef_i = ef_new_month }
-		# The monthly tick only opens preparation two months out, so a summit one or two months away opens it now.
-		set_temp_variable = { ef_gap = { value = ef_new_month subtract = global.month add = 12 } }
-		modulo_temp_variable = { ef_gap = 12 }
-		if = {
-			limit = {
-				check_variable = { ef_gap > 0 }
-				check_variable = { ef_gap < 3 }
-			}
-			set_temp_variable = { ef_host = THIS.id }
-			econ_forum_open_preparation = yes
-			if = {
-				limit = { check_variable = { ef_gap = 1 } }
-				set_variable = { global.econ_forum_invites_left^ef_i = 0 }
-			}
-		}
+		econ_forum_open_if_due = yes
 	}
 	set_country_flag = { flag = econ_forum_rescheduled value = 1 days = 730 }
 }
@@ -738,4 +743,5 @@ econ_forum_found = {
 	set_variable = { global.econ_forum_news_forum = ef_i }
 	set_variable = { global.econ_forum_news_host = THIS.id }
 	news_event = { id = econ_forum_news.1 days = 1 }
+	econ_forum_open_if_due = yes
 }
