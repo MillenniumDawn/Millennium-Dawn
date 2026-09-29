@@ -270,6 +270,8 @@ quarterly_inflation_calculation = {
 			is_ai = yes
 			NOT = { has_country_flag = temp_cb_rate_changed }
 		}
+		# Currency strength treats a policy rate 1 point above inflation as neutral.
+		set_temp_variable = { neutral_cb_rate = { value = inflation_rate_var multiply = 100 add = 1 } }
 		if = {
 			limit = {
 				check_variable = { inflation_rate_var > 0.10 }
@@ -282,6 +284,15 @@ quarterly_inflation_calculation = {
 			limit = {
 				check_variable = { inflation_rate_var > 0.05 }
 				check_variable = { cb_policy_rate < 15 }
+			}
+			add_to_variable = { cb_policy_rate = 1 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+		else_if = {
+			limit = {
+				check_variable = { inflation_rate_var > 0.01 }
+				check_variable = { cb_policy_rate < neutral_cb_rate }
+				check_variable = { cb_policy_rate < 20 }
 			}
 			add_to_variable = { cb_policy_rate = 1 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
