@@ -17,7 +17,7 @@ TECH_GATES = {
     "gen_5_medium": frozenset({("require", BBA)}),
     "gen_5_large": frozenset({("require", BBA)}),
     "Strike_fighter5": frozenset({("forbid", BBA)}),
-    "nsb_artillery_0": frozenset({("require", NSB)}),
+    "nsb_artillery_1": frozenset({("require", NSB)}),
     "SP_arty_0": frozenset({("forbid", NSB)}),
     "ungated_tech": frozenset(),
 }
@@ -302,7 +302,7 @@ def test_nested_else_inverts_its_enclosing_if():
         f'\t\tlimit = {{ NOT = {{ has_dlc = "{NSB}" }} }}\n'
         + _bonus("SP_arty_0", "\t\t")
         + "\t\telse = {\n"
-        + _bonus("nsb_artillery_0", "\t\t\t")
+        + _bonus("nsb_artillery_1", "\t\t\t")
         + "\t\t}\n"
         "\t}\n"
         "}\n"

@@ -22,6 +22,7 @@ from shared_utils import (
     iter_statements,
     read_text_strict,
     strip_comments,
+    validation_config,
 )
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -248,8 +249,10 @@ _TYPO_WATCHLIST: Dict[str, str] = {
     "seperated": "separated",
 }
 
-# Exact-phrase substrings exempt from typo flagging (populate as intentional uses surface).
-_TYPO_EXEMPTIONS: Set[str] = set()
+# Exact-phrase substrings exempt from typo flagging.
+_TYPO_EXEMPTIONS: Set[str] = set(
+    validation_config("validate_localisation", "typo_exemptions")
+)
 
 _TYPO_RE = re.compile(
     r"\b(?:" + "|".join(re.escape(t) for t in _TYPO_WATCHLIST) + r")\b",
@@ -711,14 +714,19 @@ _HAS_VARIABLE_RE = re.compile(r"\bhas_variable\s*=\s*([^\s{}]+)")
 _CHECK_VAR_TOKEN_RE = re.compile(r"(?:[A-Za-z_]|[0-9]+_)[\w.:@^]*")
 _CHECK_VAR_TOOLTIP_RE = re.compile(r"\btooltip\s*=\s*\S+")
 _CHECK_VAR_CONSTANT_RE = re.compile(r"(?<![A-Za-z0-9_])@[A-Za-z_][\w]*")
-# The engine supplies these temporary values only while scoring occupation laws.
-_OCCUPATION_LAW_CONTEXT_VARS = frozenset(
-    {
-        "uncapped_resistance_target",
-        "resistance_target_without_law",
-        "garrison_min_support_ratio",
-    }
-)
+# Reads that are valid only in one file, keyed by basename.
+_FILE_SCOPED_READ_VARS = {
+    # The engine supplies these temporary values only while scoring occupation laws.
+    "occupation_laws.txt": frozenset(
+        {
+            "uncapped_resistance_target",
+            "resistance_target_without_law",
+            "garrison_min_support_ratio",
+        }
+    ),
+    # Vanilla autonomy state copy; vanilla instantiate_collaboration_government writes it.
+    "lar_collaboration_government.txt": frozenset({"collaboration_formed_by"}),
+}
 _CHECK_VAR_KEYWORDS = frozenset(
     {
         "var",
@@ -1413,9 +1421,8 @@ class Validator(BaseValidator):
             chunksize=30,
         ):
             for name, basename, number in hits:
-                if name not in known and not (
-                    basename == "occupation_laws.txt"
-                    and name in _OCCUPATION_LAW_CONTEXT_VARS
+                if name not in known and name not in _FILE_SCOPED_READ_VARS.get(
+                    basename, ()
                 ):
                     results.append((f"{name} - {basename}", basename, number))
 
