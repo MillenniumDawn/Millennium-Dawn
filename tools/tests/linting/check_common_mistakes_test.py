@@ -63,6 +63,7 @@ from check_common_mistakes import (
     _check_add_to_faction_country,
     _check_ai_daily_flag_cache,
     _check_any_country_member_array,
+    _check_bare_statement_token,
     _check_building_missing_province,
     _check_check_expr_bad_operand,
     _check_check_var_ge_le,
@@ -4486,6 +4487,46 @@ def test_event_chain_revisits_shared_event_with_more_depth_remaining():
         True,
         ["start.1", "shared.1", "war.1"],
     )
+
+
+# 46. Bare scripted trigger/effect call missing "= yes" (#4997)
+
+assert_finds(
+    _check_bare_statement_token,
+    ["\tNOT = { GER_ai_not_historical_path }\n"],
+    1,
+    "one-line bare call in NOT flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["\tOR = {\n", "\t\tsome_trigger\n", "\t}\n"],
+    1,
+    "multi-line bare call in OR flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["\tNOT = { GER_ai_not_historical_path = yes }\n"],
+    0,
+    "call with = yes not flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["tags = { GER FRA }\n", "mutually_exclusive = { a b }\n"],
+    0,
+    "list blocks not flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["mission_type_stats = { limit = { cas attack_logistics } }\n"],
+    0,
+    "mission_type_stats limit list not flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["color = { 10 20 30 }\n", "limit = { # stray_word\n", "}\n"],
+    0,
+    "numbers and comments not flagged",
+)
 
 
 # Summary
