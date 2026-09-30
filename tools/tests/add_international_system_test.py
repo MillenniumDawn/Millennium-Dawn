@@ -683,3 +683,39 @@ def test_main_requires_the_tab_details(tmp_path, monkeypatch):
 
     with pytest.raises(SystemExit):
         module.main(["forums"])
+
+
+def test_styled_premades_keep_their_art_at_other_sizes(tmp_path):
+    image, module, repo, art = _art(tmp_path)
+    image.new("RGBA", (26, 27), (200, 150, 90, 255)).save(
+        art / "ledger_icon_small_missile.dds"
+    )
+
+    module.add_system(str(repo), "forums", "Forums", "Forums.", icon="missile")
+
+    with image.open(art / "ledger_icon_small_forums.dds") as icon:
+        icon = icon.convert("RGBA")
+        assert icon.size == (28, 27)
+        assert icon.getpixel((14, 13)) == (200, 150, 90, 255)
+        assert icon.getpixel((0, 13))[3] == 0
+
+
+def test_a_fully_transparent_icon_is_refused_before_writing(tmp_path):
+    image, module, repo, _ = _art(tmp_path)
+    blank = tmp_path / "blank.png"
+    image.new("RGBA", (40, 40), (0, 0, 0, 0)).save(blank)
+
+    with pytest.raises(module.ToolError, match="no visible pixels"):
+        module.add_system(str(repo), "forums", "Forums", "Forums.", icon=str(blank))
+
+    assert not (repo / "localisation").exists()
+
+
+def test_the_art_helper_is_hidden_from_the_tool_launcher():
+    from shared.paths import TOOLS_DIR
+
+    spec = importlib.util.spec_from_file_location("run_launcher", TOOLS_DIR / "run.py")
+    launcher = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(launcher)
+
+    assert "international_system_art" not in launcher.find_all_tools()

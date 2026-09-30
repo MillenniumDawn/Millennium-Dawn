@@ -86,6 +86,16 @@ def restyle(image):
     return out
 
 
+def centred(image):
+    """Place already-styled art on the tab icon canvas without recolouring it."""
+    if image.size[0] > ICON_SIZE[0] or image.size[1] > ICON_SIZE[1]:
+        image.thumbnail(ICON_SIZE, Image.Resampling.LANCZOS)
+    canvas = Image.new("RGBA", ICON_SIZE)
+    offset = ((ICON_SIZE[0] - image.size[0]) // 2, (ICON_SIZE[1] - image.size[1]) // 2)
+    canvas.paste(image, offset)
+    return canvas
+
+
 def tab_icon(repo, source):
     """Return the 28x27 tab icon for a premade name or an image path."""
     if source in PREMADE_ICONS:
@@ -95,12 +105,16 @@ def tab_icon(repo, source):
         path, styled = os.path.join(repo, source), False
     with Image.open(path) as image:
         image = image.convert("RGBA")
-        if source not in PREMADE_ICONS and image.getchannel("A").getextrema()[0] == 255:
-            raise ValueError(
-                "custom icon has no transparency; use a PNG with a transparent background"
-            )
-        if styled and image.size == ICON_SIZE:
-            return image
+        if source not in PREMADE_ICONS:
+            alpha = image.getchannel("A")
+            if alpha.getextrema()[0] == 255:
+                raise ValueError(
+                    "custom icon has no transparency; use a PNG with a transparent background"
+                )
+            if alpha.point(lambda value: 255 if value > 16 else 0).getbbox() is None:
+                raise ValueError("custom icon has no visible pixels")
+        if styled:
+            return centred(image)
         return restyle(image)
 
 
