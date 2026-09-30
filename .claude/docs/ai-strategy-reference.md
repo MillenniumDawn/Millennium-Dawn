@@ -196,7 +196,7 @@ Authoritative token reference: vanilla `common/ai_strategy/_documentation.md` (i
 `declare_war` weights the AI's desire to **open** a war on one target. Two consequences:
 
 - **There is no generic form.** It requires `id = TAG`; `target =` is not accepted, and `dont_declare_war` is not a token at all (absent from vanilla `_documentation.md`, which lists only `declare_war` and `dont_join_wars_with`). The targetless equivalent is `avoid_starting_wars`.
-- **`enable = { has_war_with = TARGET }` makes it a no-op** — you cannot declare war on a country you are already fighting. Gate on `has_wargoal_against = X` + `NOT = { has_war_with = X }` instead, as `MD_war_declaration_ai.txt` and `BOS_avoid_unready_war_with_cro` do.
+- **`enable = { has_war_with = TARGET }` makes it a no-op** — you cannot declare war on a country you are already fighting. Gate on `has_wargoal_against = X` + `NOT = { has_war_with = X }` instead, as `MD_war_declaration_ai.txt` does. Country AI path work adds no per-TAG war block (see the `country-ai-path` skill, write.md §7).
 
 306 `TAG_cancel_war_TARGET` blocks carrying that no-op gate were deleted from 18 files and replaced by one mod-wide block in `MD_war_declaration_ai.txt`:
 
