@@ -212,7 +212,7 @@ def wire_script(script, key, order, var):
         f"\t\t\t\tinternational_systems_update = yes\n"
         f"\t\t\t}}\n"
     )
-    effects = insert_after_neighbour(
+    effects = insert_after_previous(
         effects, key, order, "_gui_ledger_button_click", handler
     )
 
@@ -220,22 +220,18 @@ def wire_script(script, key, order, var):
     prop_start, prop_end = find_block(body, r"\bproperties\s*=\s*\{")
     properties = body[prop_start:prop_end]
     prop = f"\t\t\t{key}_gui_ledger_button = {{\n\t\t\t\tframe = {var}\n\t\t\t}}\n"
-    properties = insert_after_neighbour(
+    properties = insert_after_previous(
         properties, key, order, "_gui_ledger_button", prop
     )
     body = body[:prop_start] + properties + body[prop_end:]
     return script[:gui_start] + body + script[gui_end:]
 
 
-def insert_after_neighbour(block, key, order, suffix, new_text):
-    """Insert `new_text` after the previous tab's entry, or before the next tab's."""
-    slot = order.index(key)
-    if slot > 0:
-        _, end = find_block(block, rf"\b{order[slot - 1]}{suffix}\s*=\s*\{{")
-        at = block.index("\n", end) + 1
-    else:
-        start, _ = find_block(block, rf"\b{order[1]}{suffix}\s*=\s*\{{")
-        at = line_start(block, start)
+def insert_after_previous(block, key, order, suffix, new_text):
+    """Insert `new_text` after the entry of the tab before the new one."""
+    previous = order[order.index(key) - 1]
+    _, end = find_block(block, rf"\b{previous}{suffix}\s*=\s*\{{")
+    at = block.index("\n", end) + 1
     return block[:at] + new_text + block[at:]
 
 
