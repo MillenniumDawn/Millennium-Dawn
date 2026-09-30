@@ -945,3 +945,52 @@ econ_forum_add_deal_targets = {
 		add_to_array = { PREV.econ_forum_deal_hosts = THIS }
 	}
 }
+
+econ_forum_build_screen = {
+	clear_array = econ_forum_screen_rows
+	for_loop_effect = {
+		end = global.econ_forum_host^num
+		value = ef_i
+
+		if = {
+			limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
+			set_temp_variable = { ef_prestige = global.econ_forum_prestige^ef_i }
+			set_temp_variable = { ef_pos = 0 }
+			for_each_loop = {
+				array = econ_forum_screen_rows
+				value = ef_row
+
+				set_temp_variable = { ef_row_prestige = global.econ_forum_prestige^ef_row }
+				if = {
+					limit = { check_variable = { ef_row_prestige > ef_prestige } }
+					add_to_temp_variable = { ef_pos = 1 }
+				}
+			}
+			add_to_array = { array = econ_forum_screen_rows value = ef_i index = ef_pos }
+		}
+	}
+	clear_array = econ_forum_screen_tracks
+	resize_array = { array = econ_forum_screen_leader value = -1 size = 6 }
+	for_loop_effect = {
+		end = 6
+		value = ef_t
+
+		add_to_array = { econ_forum_screen_tracks = ef_t }
+		set_temp_variable = { ef_best = -1 }
+		for_each_loop = {
+			array = econ_forum_screen_rows
+			value = ef_row
+
+			if = {
+				limit = { check_variable = { global.econ_forum_host^ef_row > 0 } }
+				set_temp_variable = { ef_idx = { value = ef_row multiply = 6 add = ef_t } }
+				set_temp_variable = { ef_track = global.econ_forum_track_prestige^ef_idx }
+				if = {
+					limit = { check_variable = { ef_track > ef_best } }
+					set_temp_variable = { ef_best = ef_track }
+					set_variable = { econ_forum_screen_leader^ef_t = ef_row }
+				}
+			}
+		}
+	}
+}
