@@ -5,9 +5,8 @@
    two lines and rewrote double quotes to single quotes).
 2. validate_oob_units.Validator.validate_air_wing_names_template_loc —
    air_wing_names_template = KEY must resolve to a defined English loc key.
-3. validate_modifiers.Validator.validate_dynamic_modifier_name_loc — a dynamic
-   modifier with a _TT/_desc loc entry must also have the bare-name key (the
-   in-game header renders it).
+3. validate_modifiers.Validator.validate_dynamic_modifier_name_loc — every
+   dynamic modifier must have a bare-name key (in-game tooltips render it).
 """
 
 from validate_localisation import Issue, process_yml_for_syntax
@@ -117,6 +116,22 @@ def test_dynamic_modifier_missing_bare_key_flagged(tmp_path):
         "}\n",
     )
     _write_loc_file(tmp_path, ["test_dynamic_modifier_TT"])
+
+    validator = ModifiersValidator(mod_path=str(tmp_path), use_colors=False)
+    validator.validate_dynamic_modifier_name_loc()
+
+    assert len(validator._issues) == 1
+    issue = validator._issues[0]
+    assert issue.category == "dynamic-modifier-name-loc"
+    assert "test_dynamic_modifier" in issue.message
+
+
+def test_dynamic_modifier_without_any_loc_flagged(tmp_path):
+    _write_dynamic_modifier(
+        tmp_path,
+        "test_dynamic_modifier = {\n\tstability_factor = 0.1\n}\n",
+    )
+    _write_loc_file(tmp_path, [])
 
     validator = ModifiersValidator(mod_path=str(tmp_path), use_colors=False)
     validator.validate_dynamic_modifier_name_loc()
