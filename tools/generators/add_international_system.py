@@ -296,7 +296,7 @@ def make_narrow_sprite(repo):
     source = os.path.join(repo, ART_DIR, "missiles_gui_ledger_btn.dds")
     target = os.path.join(repo, ART_DIR, "missiles_gui_ledger_btn_narrow.dds")
     if os.path.exists(target):
-        return
+        return None
     (_, wide, _), (_, narrow, _) = LAYOUTS
     edge = narrow // 2
     with Image.open(source) as image:
@@ -311,10 +311,19 @@ def make_narrow_sprite(repo):
                 (frame * narrow + edge, 0),
             )
         out.save(target)
+    return f"{ART_DIR}/missiles_gui_ledger_btn_narrow.dds"
+
+
+def loc_value(text):
+    """Quote-escape a localisation value; a newline cannot be written into one."""
+    if "\n" in text or "\r" in text:
+        raise ToolError("tab text must be a single line")
+    return text.replace('"', '\\"')
 
 
 def stub_files(key, name, title, description, var):
     upper = key.upper()
+    name, title, description = loc_value(name), loc_value(title), loc_value(description)
     gui = (
         "guiTypes = {\n"
         "\tcontainerWindowType = {\n"
@@ -403,12 +412,16 @@ def add_system(repo, key, name, description, title=None, after=None):
     files[SCREEN_SCRIPT] = wire_script(files[SCREEN_SCRIPT], key, order, var)
     files[TITLE_LOC] = add_title(files[TITLE_LOC], key, var)
     files[SCREEN_GFX] = add_sprites(files[SCREEN_GFX], key, sprite)
-    if sprite == NARROW_SPRITE:
-        make_narrow_sprite(repo)
     files.update(stubs)
+    openers = direct_openers(repo)
+    written = sorted(files)
+    if sprite == NARROW_SPRITE:
+        narrow = make_narrow_sprite(repo)
+        if narrow:
+            written.append(narrow)
     for path, text in files.items():
         atomic_write_bytes(os.path.join(repo, path), text.encode("utf-8"))
-    return sorted(files), order, direct_openers(repo)
+    return written, order, openers
 
 
 def main(argv=None):

@@ -168,9 +168,13 @@ def test_switches_to_the_narrow_sprite_when_the_strip_overflows(tmp_path):
         art / "missiles_gui_ledger_btn.dds"
     )
 
-    _, order, _ = module.add_system(str(repo), "forums", "Forums", "Forums.")
+    written, order, _ = module.add_system(str(repo), "forums", "Forums", "Forums.")
 
     assert order[-1] == "forums"
+    assert (
+        "gfx/interface/scripted_gui/missiles/missiles_gui_ledger_btn_narrow.dds"
+        in written
+    )
     gui = _read(repo, "interface/MD_countrymissilesview.gui")
     assert gui.count('quadTextureSprite ="GFX_missiles_gui_ledger_btn_narrow"') == 7
     assert re.findall(r"position = \{ x = (\d+) y = 0 \}", gui)[-1] == "372"
@@ -197,6 +201,41 @@ def test_rejects_bad_requests_without_writing(tmp_path, key, after, keys, messag
 
     with pytest.raises(module.ToolError, match=message):
         module.add_system(str(repo), key, "Forums", "Forums.", after=after)
+
+    assert _read(repo, "interface/MD_countrymissilesview.gui") == before
+    assert not (repo / "localisation").exists()
+
+
+def test_escapes_quotes_in_localisation(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+
+    module.add_system(str(repo), "forums", 'The "G7" Forum', 'Track the "G7" forum.')
+
+    loc = _read(repo, "localisation/english/MD_international_forums_l_english.yml")
+    assert 'FORUMS_GUI_LEDGER_TT_DELAYED: "Track the \\"G7\\" forum."' in loc
+    assert 'IS_title_forums: "THE \\"G7\\" FORUM"' in loc
+
+
+def test_rejects_multiline_text_without_writing(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+    before = _read(repo, "interface/MD_countrymissilesview.gui")
+
+    with pytest.raises(module.ToolError, match="single line"):
+        module.add_system(str(repo), "forums", "Forums", "Two\nlines.")
+
+    assert _read(repo, "interface/MD_countrymissilesview.gui") == before
+
+
+def test_unreadable_script_stops_before_writing(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+    (repo / "common/scripted_effects/broken.txt").write_bytes(b"\xff\xfe bad")
+    before = _read(repo, "interface/MD_countrymissilesview.gui")
+
+    with pytest.raises(UnicodeDecodeError):
+        module.add_system(str(repo), "forums", "Forums", "Forums.")
 
     assert _read(repo, "interface/MD_countrymissilesview.gui") == before
     assert not (repo / "localisation").exists()
