@@ -20,7 +20,25 @@ export interface OgPageData {
 
 const DEFAULT_DESCRIPTION = SITE_DESCRIPTION;
 
-async function getStaticPages(): Promise<OgPageData[]> {
+export async function getAllOgPages(): Promise<OgPageData[]> {
+  const [
+    contentPages,
+    countryEntries,
+    changelogEntries,
+    devDiaryEntries,
+    tutorialEntries,
+    resourceEntries,
+    miscEntries,
+  ] = await Promise.all([
+    getCollection("pages"),
+    getCollection("countries"),
+    getCollection("changelogSections"),
+    getCollection("devDiaries"),
+    getCollection("tutorials"),
+    getCollection("resources"),
+    getCollection("misc"),
+  ]);
+
   const pages: OgPageData[] = [
     ...Object.values(STATIC_PAGE_META).map((page) => ({
       slug: page.ogSlug,
@@ -29,7 +47,6 @@ async function getStaticPages(): Promise<OgPageData[]> {
     })),
   ];
 
-  const contentPages = await getCollection("pages");
   for (const entry of contentPages) {
     const permalink = getGenericPagePermalink(entry);
     pages.push({
@@ -38,22 +55,6 @@ async function getStaticPages(): Promise<OgPageData[]> {
       description: entry.data.description ?? DEFAULT_DESCRIPTION,
     });
   }
-
-  return pages;
-}
-
-async function collectDynamicPages(): Promise<OgPageData[]> {
-  const pages: OgPageData[] = [];
-
-  const [countryEntries, changelogEntries, devDiaryEntries, tutorialEntries, resourceEntries, miscEntries] =
-    await Promise.all([
-      getCollection("countries"),
-      getCollection("changelogSections"),
-      getCollection("devDiaries"),
-      getCollection("tutorials"),
-      getCollection("resources"),
-      getCollection("misc"),
-    ]);
 
   for (const entry of countryEntries) {
     pages.push({
@@ -109,9 +110,4 @@ async function collectDynamicPages(): Promise<OgPageData[]> {
   }
 
   return pages;
-}
-
-export async function getAllOgPages(): Promise<OgPageData[]> {
-  const [staticPages, dynamicPages] = await Promise.all([getStaticPages(), collectDynamicPages()]);
-  return [...staticPages, ...dynamicPages];
 }
