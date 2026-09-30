@@ -305,10 +305,12 @@ Metrics, reference analysis, and review tools.
 
 Content generation tools.
 
-| Script                          | Description                                                                                          |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **add_international_system.py** | Adds a tab to the International Systems screen: strip layout, open/close wiring, title and stub files |
-| **generate_tribute_ideas.py**   | Generates tribute idea definitions and localisation for all countries                                |
+| Script                          | Description                                                                                                                                                                                                                                         |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **add_international_system.py** | Adds a tab to the International Systems screen: strip layout, open/close wiring, title and stub files. `--icon` takes a premade icon (`--list-icons`) or a transparent image and converts it to the tab style; `--preview` draws the strip to a PNG |
+| **generate_tribute_ideas.py**   | Generates tribute idea definitions and localisation for all countries                                                                                                                                                                               |
+
+Premade tab icons reuse existing mod art, including icons already used elsewhere in the UI. Custom images must have a transparent background; opaque logos and unreadable image files are rejected before any files are written.
 
 ### Publishing (`publishing/`)
 

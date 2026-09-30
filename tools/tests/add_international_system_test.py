@@ -1,5 +1,7 @@
 import importlib.util
+import json
 import re
+import sys
 
 import pytest
 
@@ -497,3 +499,223 @@ def test_main_exits_with_the_error(tmp_path, monkeypatch):
 
     with pytest.raises(SystemExit, match="ERROR: key 'Bad' must be lower_snake_case"):
         module.main(["Bad", "Forums", "--description", "Forums."])
+
+
+def _art(tmp_path, keys=("space", "un")):
+    """A strip with real images: the wide sprite, one styled premade and one category icon."""
+    image = pytest.importorskip("PIL.Image")
+    module = _module()
+    repo = _repo(tmp_path, keys)
+    art = repo / "gfx/interface/scripted_gui/missiles"
+    (art / "ledger_icon_small_forums.dds").unlink()
+    image.new("RGBA", (180, 53), (40, 40, 40, 255)).save(
+        art / "missiles_gui_ledger_btn.dds"
+    )
+    image.new("RGBA", (28, 27), (200, 150, 90, 255)).save(
+        art / "ledger_icon_small_missile.dds"
+    )
+    category = repo / "gfx/interface/decisions/decision_categories"
+    category.mkdir(parents=True)
+    emblem = image.new("RGBA", (64, 64))
+    emblem.paste((250, 250, 250, 255), (16, 16, 48, 48))
+    emblem.save(category / "decision_category_generic_industry.dds")
+    return image, module, repo, art
+
+
+def test_a_premade_icon_is_written_as_the_tab_icon(tmp_path):
+    image, module, repo, art = _art(tmp_path)
+
+    written, _, _ = module.add_system(
+        str(repo), "forums", "Forums", "Forums.", icon="missile"
+    )
+
+    assert "gfx/interface/scripted_gui/missiles/ledger_icon_small_forums.dds" in written
+    with image.open(art / "ledger_icon_small_forums.dds") as icon:
+        assert icon.size == (28, 27)
+        assert icon.convert("RGBA").getpixel((5, 5)) == (200, 150, 90, 255)
+
+
+def test_other_images_are_fitted_and_recoloured(tmp_path):
+    image, module, repo, art = _art(tmp_path)
+    logo = tmp_path / "logo.png"
+    emblem = image.new("RGBA", (120, 70))
+    emblem.paste((255, 255, 255, 255), (10, 10, 110, 60))
+    emblem.save(logo)
+
+    module.add_system(str(repo), "forums", "Forums", "Forums.", icon=str(logo))
+
+    with image.open(art / "ledger_icon_small_forums.dds") as icon:
+        icon = icon.convert("RGBA")
+        assert icon.size == (28, 27)
+        red, green, blue, alpha = icon.getpixel((14, 13))
+        assert alpha == 255 and red > green > blue
+        assert icon.getpixel((14, 1))[3] == 0
+
+
+@pytest.mark.parametrize("preview", [False, True])
+@pytest.mark.parametrize(
+    ("filename", "mode", "message"),
+    [
+        ("logo.jpg", "RGB", "no transparency"),
+        ("logo.png", "RGB", "no transparency"),
+        ("opaque.png", "RGBA", "no transparency"),
+        ("README.md", None, "cannot identify image"),
+        ("broken.png", None, "cannot identify image"),
+    ],
+)
+def test_invalid_custom_icons_report_cli_errors_without_writing(
+    tmp_path, monkeypatch, filename, mode, message, preview
+):
+    image, module, repo, _ = _art(tmp_path)
+    logo = repo / filename
+    if mode:
+        image.new(mode, (200, 100), "white").save(logo)
+    else:
+        _write(logo, "This is not an image.\n")
+    before = {p: p.read_bytes() for p in repo.rglob("*") if p.is_file()}
+    monkeypatch.setattr(module, "REPO_ROOT", repo)
+    args = ["forums", "Forums", "--description", "Forums.", "--icon", filename]
+    output = tmp_path / "strip.png"
+    if preview:
+        args.extend(["--preview", str(output)])
+
+    with pytest.raises(SystemExit, match=f"ERROR: .*{message}"):
+        module.main(args)
+
+    assert {p: p.read_bytes() for p in repo.rglob("*") if p.is_file()} == before
+    assert not output.exists()
+
+
+def test_the_catalog_lists_only_premade_icons_this_repo_has(tmp_path):
+    _, module, repo, _ = _art(tmp_path)
+    art_module = sys.modules["international_system_art"]
+
+    catalog = art_module.icon_catalog(str(repo))
+
+    assert [entry["name"] for entry in catalog] == ["missile", "industry"]
+    assert all(entry["png"] for entry in catalog)
+
+
+@pytest.mark.parametrize(
+    ("setup", "icon", "message"),
+    [
+        (lambda art: None, "no_such_icon", "unknown icon"),
+        (
+            lambda art: (art / "ledger_icon_small_forums.dds").write_bytes(b"x"),
+            "missile",
+            "drop --icon",
+        ),
+    ],
+)
+def test_bad_icon_requests_stop_without_writing(tmp_path, setup, icon, message):
+    _, module, repo, art = _art(tmp_path)
+    setup(art)
+
+    with pytest.raises(module.ToolError, match=message):
+        module.add_system(str(repo), "forums", "Forums", "Forums.", icon=icon)
+
+    assert not (repo / "localisation").exists()
+
+
+@pytest.mark.parametrize(
+    ("keys", "icon_x"), [(("space", "un"), 31), (tuple("abcdef"), 20)]
+)
+def test_preview_draws_the_strip_and_writes_nothing_else(tmp_path, keys, icon_x):
+    image, module, repo, art = _art(tmp_path, keys)
+    gfx = _read(repo, "interface/MD_countrymissilesview.gfx")
+    _write(
+        repo / "interface/MD_countrymissilesview.gfx",
+        gfx.replace(
+            f'name = "GFX_ledger_icon_small_{keys[0]}"',
+            f'name = "GFX_ledger_icon_small_{keys[0]}"\n\t\ttexturefile = '
+            '"gfx/interface/scripted_gui/missiles/ledger_icon_small_missile.dds"',
+        ),
+    )
+    before = {p: p.read_bytes() for p in repo.rglob("*") if p.is_file()}
+    preview = tmp_path / "strip.png"
+
+    written, order, _ = module.add_system(
+        str(repo), "forums", "Forums", "Forums.", icon="missile", preview=str(preview)
+    )
+
+    assert written == [str(preview)] and order[-1] == "forums"
+    assert {p: p.read_bytes() for p in repo.rglob("*") if p.is_file()} == before
+    with image.open(preview) as strip:
+        assert strip.size[0] == 550
+        assert strip.convert("RGBA").getpixel((10 + icon_x + 5, 4 + 12 + 5)) == (
+            200,
+            150,
+            90,
+            255,
+        )
+
+
+def test_preview_reuses_an_existing_narrow_sprite_and_the_icon_on_disk(tmp_path):
+    image, module, repo, art = _full_strip(tmp_path)
+    image.new("RGBA", (136, 53), (9, 9, 9, 255)).save(
+        art / "missiles_gui_ledger_btn_narrow.dds"
+    )
+    image.new("RGBA", (28, 27), (1, 200, 1, 255)).save(
+        art / "ledger_icon_small_forums.dds"
+    )
+    preview = tmp_path / "strip.png"
+
+    module.add_system(str(repo), "forums", "Forums", "Forums.", preview=str(preview))
+
+    with image.open(preview) as strip:
+        strip = strip.convert("RGBA")
+        assert strip.getpixel((10 + 6 * 62 + 20 + 5, 4 + 12 + 5)) == (1, 200, 1, 255)
+
+
+def test_main_lists_the_premade_icons_as_json(tmp_path, monkeypatch, capsys):
+    _, module, repo, _ = _art(tmp_path)
+    monkeypatch.setattr(module, "REPO_ROOT", repo)
+
+    assert module.main(["--list-icons"]) == 0
+
+    names = [entry["name"] for entry in json.loads(capsys.readouterr().out)]
+    assert names == ["missile", "industry"]
+
+
+def test_main_requires_the_tab_details(tmp_path, monkeypatch):
+    module = _module()
+    monkeypatch.setattr(module, "REPO_ROOT", _repo(tmp_path))
+
+    with pytest.raises(SystemExit):
+        module.main(["forums"])
+
+
+def test_styled_premades_keep_their_art_at_other_sizes(tmp_path):
+    image, module, repo, art = _art(tmp_path)
+    image.new("RGBA", (26, 27), (200, 150, 90, 255)).save(
+        art / "ledger_icon_small_missile.dds"
+    )
+
+    module.add_system(str(repo), "forums", "Forums", "Forums.", icon="missile")
+
+    with image.open(art / "ledger_icon_small_forums.dds") as icon:
+        icon = icon.convert("RGBA")
+        assert icon.size == (28, 27)
+        assert icon.getpixel((14, 13)) == (200, 150, 90, 255)
+        assert icon.getpixel((0, 13))[3] == 0
+
+
+def test_a_fully_transparent_icon_is_refused_before_writing(tmp_path):
+    image, module, repo, _ = _art(tmp_path)
+    blank = tmp_path / "blank.png"
+    image.new("RGBA", (40, 40), (0, 0, 0, 0)).save(blank)
+
+    with pytest.raises(module.ToolError, match="no visible pixels"):
+        module.add_system(str(repo), "forums", "Forums", "Forums.", icon=str(blank))
+
+    assert not (repo / "localisation").exists()
+
+
+def test_the_art_helper_is_hidden_from_the_tool_launcher():
+    from shared.paths import TOOLS_DIR
+
+    spec = importlib.util.spec_from_file_location("run_launcher", TOOLS_DIR / "run.py")
+    launcher = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(launcher)
+
+    assert "international_system_art" not in launcher.find_all_tools()

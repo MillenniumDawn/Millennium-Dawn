@@ -51,6 +51,7 @@ HIDDEN = {
     "equipment_stats",
     "guard_scan",
     "image_size",
+    "international_system_art",
     "sprite_index",
     "standardize_api",
     "validator_batches",
