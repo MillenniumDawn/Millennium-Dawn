@@ -22,6 +22,7 @@ from shared_utils import (
     get_staged_files,
     strip_comments,
     strip_inline_comment,
+    validation_config,
 )
 from sprite_index import build_sprite_index, build_sprite_texture_index
 from validator_common import (
@@ -913,10 +914,9 @@ _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 # Statements an option can carry that change no game state. `trigger` gates the
 # option's visibility and `ai_chance` weights the AI's pick; neither runs an effect.
 # Triggered-only events the engine dispatches with no script reference to find.
-# lar_collab_gov.1 is the vanilla La Resistance event behind the live
-# operation_collaboration_government system, fired on collaboration-government
-# creation; MD keeps it so the operation still has its event.
-_EXEMPT_UNREFERENCED_EVENT_IDS = frozenset({"lar_collab_gov.1"})
+_EXEMPT_UNREFERENCED_EVENT_IDS = frozenset(
+    validation_config("validate_events", "exempt_unreferenced_event_ids")
+)
 
 _OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
 # A scope key is an effect too: `652 = { ... }` opens a state scope and `"LGN" = { ... }`
