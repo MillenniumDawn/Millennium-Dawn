@@ -209,7 +209,7 @@ def test_only_unlocalised_flags_reported(tmp_path):
     issue = v._issues[0]
     assert "ENG_unknown_flag" in issue.message
     assert "ENG_known_flag" not in issue.message
-    assert issue.severity == V.Severity.WARNING
+    assert issue.severity == V.Severity.ERROR
     assert issue.category == "unlocalised-available-flag"
 
 

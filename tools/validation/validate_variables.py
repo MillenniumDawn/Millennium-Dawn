@@ -421,6 +421,10 @@ _PLAYER_FACING_GLOBS = [
 _AVAILABLE_FLAG_RE = re.compile(
     r"\bhas_(country|global)_flag\s*=\s*(?:\{\s*flag\s*=\s*)?([A-Za-z_][A-Za-z0-9_.@]*)"
 )
+# `tooltip = KEY` directly inside a custom_trigger_tooltip. Negated, the engine
+# renders KEY_NOT instead, and shows that raw token when it has no loc entry.
+_TRIGGER_TOOLTIP_KEY_RE = re.compile(r"\btooltip\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)")
+_TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(yes|no)\b")
 
 
 # Variable effects that render a tooltip line. The `*_temp_variable` forms are
@@ -770,23 +774,129 @@ def _available_exempt_spans(
     return _span_index(object_level + _ai_only_branch_spans(cleaned))
 
 
-def _scan_available_text(
-    cleaned: str, rel: str, ai_categories: AbstractSet[str]
-) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str, str]]]:
-    exempt = _available_exempt_spans(cleaned, rel, ai_categories)
+def _requirement_events(
+    cleaned: str, trigger_names: AbstractSet[str]
+) -> List[Tuple[int, int, object]]:
+    """Flag checks (3), custom_trigger_tooltip keys (4) and scripted-trigger
+    calls (5), merged with the scope open/close events."""
     events: List[Tuple[int, int, object]] = _scope_events(cleaned)
+    for m in _AVAILABLE_FLAG_RE.finditer(cleaned):
+        if "@" not in m.group(2):
+            events.append((m.start(), 3, (m.group(1), m.group(2))))
+    if "custom_trigger_tooltip" in cleaned:
+        for m in _TRIGGER_TOOLTIP_KEY_RE.finditer(cleaned):
+            events.append((m.start(), 4, m.group(1)))
+    if trigger_names:
+        for m in _TRIGGER_CALL_RE.finditer(cleaned):
+            if m.group(1) in trigger_names:
+                events.append((m.start(), 5, (m.group(1), m.group(2) == "no")))
+    return events
+
+
+def _requirement_block(stack: List[str]) -> Tuple[str, bool] | None:
+    """Innermost player-facing block around a check, and whether an odd number
+    of NOT blocks sit between them. None when a tooltip wrapper intervenes."""
+    negated = False
+    for token in reversed(stack):
+        if token in _TOOLTIP_WRAPPER_TOKENS:
+            return None
+        if token in _PLAYER_FACING_BLOCKS:
+            return token, negated
+        if token == "NOT":
+            negated = not negated
+    return None
+
+
+def _scan_trigger_body_requirements(
+    body: str, trigger_names: AbstractSet[str]
+) -> Tuple[Set[Tuple], List[Tuple[str, bool]]]:
+    """Requirement lines one scripted trigger renders itself, plus the calls
+    it makes, each with its NOT parity inside the body.
+
+    Items are ("flag", kind, name) and ("tooltip", key, negated).
+    """
+    events = _requirement_events(body, trigger_names)
+    events.sort(key=lambda e: (e[0], e[1]))
+    stack: List[str] = []
+    items: Set[Tuple] = set()
+    calls: List[Tuple[str, bool]] = []
+    for _pos, kind, tok in events:
+        if kind == 0:
+            stack.append(cast(str, tok))
+            continue
+        if kind == 1:
+            if stack:
+                stack.pop()
+            continue
+        outer = stack
+        if kind == 4:
+            if not stack or stack[-1] != "custom_trigger_tooltip":
+                continue
+            outer = stack[:-1]
+        if any(t in _TOOLTIP_WRAPPER_TOKENS for t in outer):
+            continue
+        negated = outer.count("NOT") % 2 == 1
+        if kind == 3:
+            flag_kind, flag = cast(Tuple[str, str], tok)
+            items.add(("flag", flag_kind, flag))
+        elif kind == 4:
+            items.add(("tooltip", cast(str, tok), negated))
+        else:
+            name, called_no = cast(Tuple[str, bool], tok)
+            calls.append((name, negated != called_no))
+    return items, calls
+
+
+def _resolve_trigger_requirements(
+    direct: Dict[str, Tuple[Set[Tuple], List[Tuple[str, bool]]]],
+) -> Dict[str, frozenset]:
+    """Fold each scripted trigger's calls into its own requirement lines, so a
+    call site sees every flag and tooltip the engine expands it into."""
+    resolved: Dict[str, frozenset] = {}
+
+    def resolve(name: str, active: frozenset) -> frozenset:
+        if name in resolved:
+            return resolved[name]
+        if name in active:
+            return frozenset()
+        items, calls = direct[name]
+        out = set(items)
+        for callee, negated in calls:
+            for item in resolve(callee, active | {name}):
+                if item[0] == "tooltip":
+                    out.add(("tooltip", item[1], item[2] != negated))
+                else:
+                    out.add(item)
+        resolved[name] = frozenset(out)
+        return resolved[name]
+
+    return {name: items for name in direct if (items := resolve(name, frozenset()))}
+
+
+def _scan_available_text(
+    cleaned: str,
+    rel: str,
+    ai_categories: AbstractSet[str],
+    requirements: Dict[str, frozenset] | None = None,
+) -> Tuple[
+    List[Tuple[str, str, int]],
+    List[Tuple[str, str, int, str, str, str]],
+    List[Tuple[str, str, int, str]],
+]:
+    requirements = requirements or {}
+    exempt = _available_exempt_spans(cleaned, rel, ai_categories)
+    events = _requirement_events(cleaned, requirements.keys())
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
         open_idx = m.end() - 1
         body = cleaned[open_idx : _matching_brace(cleaned, open_idx)]
         if not _INLINE_TOOLTIP_RE.search(body):
             events.append((m.start(), 2, ""))
-    for m in _AVAILABLE_FLAG_RE.finditer(cleaned):
-        events.append((m.start(), 3, (m.group(1), m.group(2))))
     events.sort(key=lambda e: (e[0], e[1]))
 
     stack: List[str] = []
     untooltipped: List[Tuple[str, str, int]] = []
-    flags: List[Tuple[str, str, int, str, str]] = []
+    flags: List[Tuple[str, str, int, str, str, str]] = []
+    negated_tooltips: List[Tuple[str, str, int, str]] = []
     for pos, kind, tok in events:
         if kind == 0:
             stack.append(cast(str, tok))
@@ -815,27 +925,40 @@ def _scan_available_text(
                     break
         elif kind == 3:
             flag_kind, flag = cast(Tuple[str, str], tok)
-            if "@" in flag:
+            ctx = _requirement_block(stack)
+            if ctx:
+                line = cleaned[:pos].count("\n") + 1
+                flags.append((flag, rel, line, flag_kind, ctx[0], ""))
+        elif kind == 4:
+            if not stack or stack[-1] != "custom_trigger_tooltip":
                 continue
-            for token in reversed(stack):
-                if token in _TOOLTIP_WRAPPER_TOKENS:
-                    break
-                if token in _PLAYER_FACING_BLOCKS:
-                    flags.append(
-                        (flag, rel, cleaned[:pos].count("\n") + 1, flag_kind, token)
-                    )
-                    break
-    return untooltipped, flags
+            ctx = _requirement_block(stack[:-1])
+            if ctx and ctx[1]:
+                line = cleaned[:pos].count("\n") + 1
+                negated_tooltips.append((f"{tok}_NOT", rel, line, ctx[0]))
+        elif kind == 5:
+            name, called_no = cast(Tuple[str, bool], tok)
+            ctx = _requirement_block(stack)
+            if not ctx:
+                continue
+            block, negated = ctx[0], ctx[1] != called_no
+            line = cleaned[:pos].count("\n") + 1
+            for item in requirements[name]:
+                if item[0] == "flag":
+                    flags.append((item[2], rel, line, item[1], block, name))
+                elif item[2] != negated:
+                    negated_tooltips.append((f"{item[1]}_NOT", rel, line, block))
+    return untooltipped, flags, negated_tooltips
 
 
 def _scan_available_file(
     args: Tuple[str, str, AbstractSet[str]],
-) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str, str]]]:
-    """Extract both available-block checks from one comment-stripped source."""
+) -> Tuple[List, List, List]:
+    """Extract the available-block checks from one comment-stripped source."""
     filename, mod_path, ai_categories = args
     cleaned = _read_script_text(filename)
     if cleaned is None:
-        return [], []
+        return [], [], []
     rel = os.path.relpath(filename, mod_path)
     return _scan_available_text(cleaned, rel, ai_categories)
 
@@ -1610,6 +1733,7 @@ _EMPTY_SHARED_RESULT: Tuple = (
     [],
     [],
     ([], []),
+    [],
 )
 
 
@@ -1623,9 +1747,18 @@ def _scan_shared_file(args) -> Tuple:
     the file set per section is unchanged. Flag syntax keeps its naive strip.
     Returns (math, orphan, treasury, clamp_found, clamp_temp, clamp_persist,
     clamp_checks, avail_unt, avail_flags, scripted, var_tooltips, missing,
-    (flag_days, flag_long)).
+    (flag_days, flag_long), avail_negated_tooltips).
     """
-    filename, mod_path, mask, ai_categories, flagged_names, consumer_map, backing = args
+    (
+        filename,
+        mod_path,
+        mask,
+        ai_categories,
+        flagged_names,
+        consumer_map,
+        backing,
+        requirements,
+    ) = args
     if should_skip_file(filename):
         return _EMPTY_SHARED_RESULT
     try:
@@ -1670,6 +1803,7 @@ def _scan_shared_file(args) -> Tuple:
     clamp_checks: List = []
     avail_unt: List = []
     avail_flags: List = []
+    avail_negated: List = []
     scripted_issues: List = []
     var_tooltip_issues: List = []
     missing_issues: List = []
@@ -1686,7 +1820,9 @@ def _scan_shared_file(args) -> Tuple:
         clamp_found, clamp_temp, clamp_persist = _scan_clamp_harvest_text(blanked)
         clamp_checks = _extract_clamp_checks(blanked, rel)
     if mask & _F_AVAILABLE:
-        avail_unt, avail_flags = _scan_available_text(blanked, rel, ai_categories)
+        avail_unt, avail_flags, avail_negated = _scan_available_text(
+            blanked, rel, ai_categories, requirements
+        )
     if mask & _F_SCRIPTED:
         if flagged_names:
             scripted_issues = _scan_scripted_trigger_text(
@@ -1713,6 +1849,7 @@ def _scan_shared_file(args) -> Tuple:
         var_tooltip_issues,
         missing_issues,
         flag_pair,
+        avail_negated,
     )
 
 
@@ -2164,6 +2301,7 @@ class Validator(BaseValidator):
 
         ai_categories = self._get_ai_only_categories()
         flagged_names = self._collect_scripted_trigger_flag_names()
+        requirements = self._collect_scripted_trigger_requirements()
         effect_files = self._collect_files(
             ["common/scripted_effects/**/*.txt"], ignore_staged=True
         )
@@ -2196,6 +2334,7 @@ class Validator(BaseValidator):
             "clamp": [],
             "avail_unt": [],
             "avail_flags": [],
+            "avail_negated": [],
             "scripted": [],
             "var_tooltips": [],
             "missing": [],
@@ -2258,6 +2397,7 @@ class Validator(BaseValidator):
                     flagged_names,
                     consumer_map,
                     backing,
+                    requirements,
                 )
             )
         results = self._pool_map(_scan_shared_file, args_list, chunksize=30)
@@ -2281,12 +2421,14 @@ class Validator(BaseValidator):
                 tooltip_i,
                 missing_i,
                 flag_pair,
+                negated_i,
             ) = res
             empty["math"].extend(math_i)
             empty["orphan"].extend(orphan_i)
             empty["treasury"].extend(treasury_i)
             empty["avail_unt"].extend(unt)
             empty["avail_flags"].extend(flags)
+            empty["avail_negated"].extend(negated_i)
             empty["scripted"].extend(scripted_i)
             empty["var_tooltips"].extend(tooltip_i)
             empty["missing"].extend(missing_i)
@@ -2335,10 +2477,11 @@ class Validator(BaseValidator):
 
     def validate_unlocalised_available_flags(self):
         """Flag `has_country_flag` / `has_global_flag` in `available`,
-        `cancel_trigger` or `bypass` whose flag has no loc key (WARNING).
+        `cancel_trigger` or `bypass` whose flag has no loc key (ERROR).
 
         HOI4 renders the requirement line from a loc key named after the flag;
-        with no key the player reads the raw token.
+        with no key the player reads the raw token. A scripted-trigger call
+        expands into the flags its body checks, so those count too.
         """
         self._log_section("Checking for unlocalised flags in requirement blocks...")
         shared_flags = self._get_shared_scan()["avail_flags"]
@@ -2346,16 +2489,17 @@ class Validator(BaseValidator):
 
         seen: Set[Tuple[str, str]] = set()
         issues = []
-        for flag, rel, line, flag_kind, block in shared_flags:
+        for flag, rel, line, flag_kind, block, via in shared_flags:
             if flag in loc_keys:
                 continue
             key = (flag, rel)
             if key in seen:
                 continue
             seen.add(key)
+            where = f"`{block}` via scripted trigger {via}" if via else f"`{block}`"
             issues.append(
                 (
-                    f"has_{flag_kind}_flag = {flag} in `{block}` has no localisation"
+                    f"has_{flag_kind}_flag = {flag} in {where} has no localisation"
                     " key - the player sees the raw flag name; add a loc key named"
                     " after the flag",
                     rel,
@@ -2367,32 +2511,57 @@ class Validator(BaseValidator):
             issues,
             "✓ No unlocalised flags in requirement blocks",
             "flags checked in `available`/`cancel_trigger`/`bypass` with no localisation key (the player sees the raw token):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="unlocalised-available-flag",
         )
 
-    def _collect_scripted_trigger_flag_names(self) -> frozenset:
-        """Names of common/scripted_triggers/** definitions whose body checks a
-        global flag that is not already under a tooltip wrapper.
+    def validate_negated_trigger_tooltips(self):
+        """Flag a custom_trigger_tooltip rendered under NOT in `available`,
+        `cancel_trigger` or `bypass` whose `KEY_NOT` has no loc key (ERROR).
 
-        A `custom_trigger_tooltip` / `custom_override_tooltip` / `hidden_trigger`
-        around the flag inside the definition already renders or hides the
-        requirement line, so a bare `<name> = yes` call is not a finding.
-        Narrowed to `has_global_flag` only (not `has_country_flag`): a
-        repo-wide measurement against both produced 270 pre-existing hits
-        outside the border-war files, versus ~2 for the sibling
-        unlocalised-available-flag check. Harvested repo-wide even in staged
-        mode: the scripted trigger's own definition and the decision/focus
-        that calls it bare in `available` are almost never in the same file.
+        Negated, the engine looks up `KEY_NOT` instead of `KEY` and shows the
+        raw token when it is missing. The NOT often sits one or more scripted
+        triggers away from the tooltip, so calls are resolved through them.
         """
-        memo = getattr(self, "_scripted_trigger_flag_names_memo", None)
+        self._log_section("Checking negated trigger tooltips in requirement blocks...")
+        negated = self._get_shared_scan()["avail_negated"]
+        loc_keys = self._load_localisation_keys()
+
+        seen: Set[Tuple[str, str]] = set()
+        issues = []
+        for key, rel, line, block in negated:
+            if key in loc_keys or (key, rel) in seen:
+                continue
+            seen.add((key, rel))
+            issues.append(
+                (
+                    f"custom_trigger_tooltip renders negated in `{block}`, so the"
+                    f" player sees the raw token {key}; add that localisation key",
+                    rel,
+                    line,
+                )
+            )
+
+        self._report(
+            issues,
+            "✓ No unlocalised negated trigger tooltips in requirement blocks",
+            "negated custom_trigger_tooltip with no `_NOT` localisation key (the player sees the raw token):",
+            severity=Severity.ERROR,
+            category="unlocalised-negated-trigger-tooltip",
+        )
+
+    def _scripted_trigger_bodies(self) -> Dict[str, str]:
+        """Body text of every common/scripted_triggers/** definition, keyed by
+        name. Harvested repo-wide even in staged mode: a definition and the
+        decision or focus that calls it are almost never in the same file."""
+        memo = getattr(self, "_scripted_trigger_bodies_memo", None)
         if memo is not None:
             return memo
 
         files = self._collect_files(
             ["common/scripted_triggers/**/*.txt"], ignore_staged=True
         )
-        names: Set[str] = set()
+        bodies: Dict[str, str] = {}
         for fp in files:
             try:
                 with open(fp, "r", encoding="utf-8-sig", errors="replace") as fh:
@@ -2404,11 +2573,50 @@ class Validator(BaseValidator):
                 if name in HOI4_BUILTIN_BLOCKS:
                     continue
                 body, _ = extract_block_from_text(text, m.start())
-                if body and _scripted_trigger_body_has_unwrapped_global_flag(body):
-                    names.add(name)
+                if body:
+                    bodies[name] = bodies.get(name, "") + "\n" + body
 
-        self._scripted_trigger_flag_names_memo = frozenset(names)
+        self._scripted_trigger_bodies_memo = bodies
+        return bodies
+
+    def _collect_scripted_trigger_flag_names(self) -> frozenset:
+        """Names of scripted triggers whose body checks a global flag that is
+        not already under a tooltip wrapper.
+
+        A `custom_trigger_tooltip` / `custom_override_tooltip` / `hidden_trigger`
+        around the flag inside the definition already renders or hides the
+        requirement line, so a bare `<name> = yes` call is not a finding.
+        Narrowed to `has_global_flag` only (not `has_country_flag`): a
+        repo-wide measurement against both produced 270 pre-existing hits
+        outside the border-war files, versus ~2 for the sibling
+        unlocalised-available-flag check.
+        """
+        memo = getattr(self, "_scripted_trigger_flag_names_memo", None)
+        if memo is not None:
+            return memo
+
+        self._scripted_trigger_flag_names_memo = frozenset(
+            name
+            for name, body in self._scripted_trigger_bodies().items()
+            if _scripted_trigger_body_has_unwrapped_global_flag(body)
+        )
         return self._scripted_trigger_flag_names_memo
+
+    def _collect_scripted_trigger_requirements(self) -> Dict[str, frozenset]:
+        """Every flag and custom_trigger_tooltip a scripted trigger expands
+        into in a requirement line, resolved through nested calls."""
+        memo = getattr(self, "_scripted_trigger_requirements_memo", None)
+        if memo is not None:
+            return memo
+
+        bodies = self._scripted_trigger_bodies()
+        names = frozenset(bodies)
+        direct = {
+            name: _scan_trigger_body_requirements(body, names)
+            for name, body in bodies.items()
+        }
+        self._scripted_trigger_requirements_memo = _resolve_trigger_requirements(direct)
+        return self._scripted_trigger_requirements_memo
 
     def validate_untooltipped_available_scripted_trigger(self):
         """Flag bare scripted-trigger calls in `available` whose body checks a
@@ -2719,6 +2927,7 @@ class Validator(BaseValidator):
         self.validate_clamp_range_conflicts()
         self.validate_untooltipped_available_checks()
         self.validate_unlocalised_available_flags()
+        self.validate_negated_trigger_tooltips()
         self.validate_untooltipped_available_scripted_trigger()
         self.validate_variable_tooltip_keys()
         self.validate_missing_variable_tooltips()
