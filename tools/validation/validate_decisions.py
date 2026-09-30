@@ -35,6 +35,7 @@ from shared_utils import (
     read_text_strict,
     strip_comments,
     strip_inline_comment,
+    validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validator_common import (
@@ -204,22 +205,8 @@ def _resolved_sprite(kind: str, value: str, sprites: SpriteSizeIndex) -> Optiona
     return None
 
 
-# Bespoke cartel map icons drawn at 52x40 on purpose; accepted as-is.
 _SLOT_EXEMPT_SPRITES = frozenset(
-    {
-        "GFX_decision_sinaloa_high",
-        "GFX_decision_sinaloa_medium",
-        "GFX_decision_sinaloa_low",
-        "GFX_decision_sinaloa_none",
-        "GFX_decision_tamaulpas_high",
-        "GFX_decision_tamaulpas_medium",
-        "GFX_decision_tamaulpas_low",
-        "GFX_decision_tamaulpas_none",
-        "GFX_decision_tierra_caliente_high",
-        "GFX_decision_tierra_caliente_medium",
-        "GFX_decision_tierra_caliente_low",
-        "GFX_decision_tierra_caliente_none",
-    }
+    validation_config("validate_decisions", "slot_exempt_sprites")
 )
 
 _MOD_ART_HINT = "resize with tools/assets/resize_decision_icons.py"
@@ -901,9 +888,8 @@ def _is_effectively_ai_only(
     return dec.ai_only or dec_id in ai_only_by_category
 
 
-# AI-only decisions whose name keys stay on purpose.
 _AI_ONLY_LOC_KEEP = frozenset(
-    {"monetary_policy_austerity", "monetary_policy_expand_money_supply"}
+    validation_config("validate_decisions", "ai_only_loc_keep")
 )
 
 
@@ -3266,7 +3252,7 @@ class Validator(BaseValidator):
             results,
             "✓ All decision icons use art sized for their slot",
             "Decision icons using art from the wrong slot:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="decision-icon-slot-mismatch",
         )
 

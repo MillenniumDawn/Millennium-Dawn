@@ -133,6 +133,24 @@ def test_cancel_always_no_and_log_only_on_add_are_recorded():
     ]
 
 
+def test_equipment_bonus_without_instant_is_recorded_per_equipment():
+    text = (
+        "ideas = {\n\tcountry = {\n\t\tBONUS_idea = {\n\t\t\tequipment_bonus = {\n"
+        "\t\t\t\tinfantry_weapons_type = { soft_attack = 0.05 instant = yes }\n"
+        "\t\t\t\tartillery_equipment = {\n\t\t\t\t\tsoft_attack = 0.05\n\t\t\t\t}\n"
+        "\t\t\t\tinstant_tank = { build_cost_ic = -0.1 instant = no }\n"
+        "\t\t\t}\n\t\t}\n\t}\n}\n"
+    )
+
+    issues = _parse_ideas_from_text(text, NO_CATEGORIES)[1]
+
+    assert [(i.idea_name, i.line, i.detail) for i in issues] == [
+        ("BONUS_idea", 6, "artillery_equipment"),
+        ("BONUS_idea", 9, "instant_tank"),
+    ]
+    assert {i.issue_type for i in issues} == {"equipment-bonus-not-instant"}
+
+
 def test_dynamic_token_names_are_loaded(tmp_path):
     _write(
         tmp_path,
