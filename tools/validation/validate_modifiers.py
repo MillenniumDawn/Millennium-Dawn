@@ -994,7 +994,7 @@ class Validator(BaseValidator):
             results,
             "✓ All dynamic modifiers have a bare-name loc key",
             "Dynamic modifiers missing a loc key:",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="dynamic-modifier-name-loc",
         )
 
