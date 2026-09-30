@@ -43,8 +43,9 @@ BUTTON_NAME_RE = re.compile(r'name\s*=\s*"(\w+)_gui_ledger_button"')
 FRAME_RE = re.compile(r"(\w+)_gui_ledger_button\s*=\s*\{\s*frame\s*=\s*(\w+)\s*\}")
 TAB_CLEAR_RE = re.compile(r"^\t*clear_variable = var_open_MD_\w+_gui\n", re.M)
 OPENER_RE = re.compile(r"set_variable = \{ (var_open_MD_\w+_gui) = 2 \}")
-# Loc tokens whose case matters: [scope.Function], $key$, £sprite and §colour codes.
-LOC_TOKEN_RE = re.compile(r"(\[[^\]]*\]|\$[^$]*\$|£\w+|§.)")
+# Loc tokens whose case matters: [scope.Function], $key$, £sprite, §colour codes
+# and backslash escapes such as \n.
+LOC_TOKEN_RE = re.compile(r"(\[[^\]]*\]|\$[^$]*\$|£\w+|§.|\\.)")
 LOC_KEY_RE = re.compile(r"^\s*([\w.]+):\d*\s", re.M)
 
 
@@ -442,6 +443,8 @@ def add_system(repo, key, name, description, title=None, after=None):
             raise ToolError(f"{path} already exists")
 
     files[SCREEN_GUI], order, sprite = layout_strip(files[SCREEN_GUI], key, after)
+    if re.search(rf"\b{var}\b", files[SCREEN_SCRIPT] + files[TITLE_LOC]):
+        raise ToolError(f"{var} is already used by the screen")
     if f'"GFX_ledger_icon_small_{key}"' in files[SCREEN_GFX]:
         raise ToolError(f"sprite GFX_ledger_icon_small_{key} is already defined")
     files[SCREEN_SCRIPT] = wire_script(files[SCREEN_SCRIPT], key, order, var)

@@ -277,6 +277,7 @@ def test_default_title_keeps_loc_tokens_as_written(tmp_path):
         module.default_title("$Some_Key$ £my_icon §Yhot§!")
         == "$Some_Key$ £my_icon §YHOT§!"
     )
+    assert module.default_title("Economic\\nForums") == "ECONOMIC\\nFORUMS"
 
 
 def test_rejects_keys_whose_sprite_already_exists(tmp_path):
@@ -304,3 +305,25 @@ def test_tab_name_uses_the_key_term_colour(tmp_path):
 
     loc = _read(repo, "localisation/english/MD_international_forums_l_english.yml")
     assert 'FORUMS_GUI_LEDGER_TT: "§YEconomic Forums§!"' in loc
+
+
+def test_rejects_keys_that_alias_existing_tab_state(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+    script = repo / "common/scripted_guis/00_missiles_scripted_guis.txt"
+    _write(
+        script,
+        _read(repo, "common/scripted_guis/00_missiles_scripted_guis.txt").replace(
+            "set_variable = { var_open_MD_space_gui = 2 }",
+            "set_variable = { var_open_MD_space_gui = 2 }\n"
+            "\t\t\t\tset_variable = { var_open_MD_orbit_gui = 2 }",
+        ),
+    )
+    icon = repo / "gfx/interface/scripted_gui/missiles/ledger_icon_small_orbit.dds"
+    icon.write_bytes(b"dds")
+    before = _read(repo, "common/scripted_guis/00_missiles_scripted_guis.txt")
+
+    with pytest.raises(module.ToolError, match="already used"):
+        module.add_system(str(repo), "orbit", "Forums", "Forums.")
+
+    assert _read(repo, "common/scripted_guis/00_missiles_scripted_guis.txt") == before
