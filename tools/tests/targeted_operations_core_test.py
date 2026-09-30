@@ -179,7 +179,7 @@ class TargetScript(TargetedScript):
             self.country(ident, tag=tag)
             self.countries[ident].update(states=[], exists=ident != 0)
         self.countries[1]["techs"].update(
-            {"special_forces_tech_1", "decryption1", "decryption2"}
+            {"special_forces_tech_1", "decryption_1", "decryption_2"}
         )
         self.countries[1]["vars"]["political_power"] = 500
         self.state(100, 1)
