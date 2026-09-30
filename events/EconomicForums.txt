@@ -5,7 +5,14 @@ add_namespace = econ_forum_news
 country_event = {
 	id = econ_forum.1
 	title = econ_forum.1.t
-	desc = econ_forum.1.d
+	desc = {
+		text = econ_forum.1.d_short
+		trigger = { check_variable = { econ_forum_prep_months = 1 } }
+	}
+	desc = {
+		text = econ_forum.1.d
+		trigger = { NOT = { check_variable = { econ_forum_prep_months = 1 } } }
+	}
 	picture = GFX_economic_forum_aze
 	is_triggered_only = yes
 
@@ -17,7 +24,7 @@ country_event = {
 	}
 }
 
-# An invitation to another forum's summit. econ_forum_invited_to holds the forum id.
+# An invitation to another forum's summit. Claims the oldest queued forum and saves its host as econ_forum_inviter.
 country_event = {
 	id = econ_forum.2
 	title = econ_forum.2.t
@@ -25,9 +32,18 @@ country_event = {
 	picture = GFX_economic_forum_aze
 	is_triggered_only = yes
 
-	trigger = {
-		check_variable = { econ_forum_status^econ_forum_invited_to > 0 }
-		check_variable = { econ_forum_status^econ_forum_invited_to < 3 }
+	trigger = { check_variable = { econ_forum_invite_queue^num > 0 } }
+
+	immediate = {
+		hidden_effect = {
+			set_temp_variable = { ef_i = econ_forum_invite_queue^0 }
+			remove_from_array = { array = econ_forum_invite_queue index = 0 }
+			var:global.econ_forum_host^ef_i = { save_event_target_as = econ_forum_inviter }
+			if = {
+				limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
+				var:global.econ_forum_seat^ef_i = { save_event_target_as = econ_forum_invite_seat }
+			}
+		}
 	}
 
 	option = {
@@ -36,7 +52,11 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: econ_forum.2.a executed"
 		add_political_power = -20
 		custom_effect_tooltip = econ_forum_send_head_tt
-		set_variable = { econ_forum_status^econ_forum_invited_to = 4 }
+		hidden_effect = {
+			set_temp_variable = { ef_answer = 4 }
+			set_temp_variable = { ef_cost = 20 }
+			econ_forum_answer_invitation = yes
+		}
 		ai_chance = { base = 1 }
 	}
 
@@ -46,14 +66,22 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: econ_forum.2.b executed"
 		add_political_power = -5
 		custom_effect_tooltip = econ_forum_send_ministers_tt
-		set_variable = { econ_forum_status^econ_forum_invited_to = 3 }
+		hidden_effect = {
+			set_temp_variable = { ef_answer = 3 }
+			set_temp_variable = { ef_cost = 5 }
+			econ_forum_answer_invitation = yes
+		}
 		ai_chance = { base = 2 }
 	}
 
 	option = {
 		name = econ_forum.2.c
 		log = "[GetDateText]: [This.GetName]: econ_forum.2.c executed"
-		set_variable = { econ_forum_status^econ_forum_invited_to = -1 }
+		hidden_effect = {
+			set_temp_variable = { ef_answer = -1 }
+			set_temp_variable = { ef_cost = 0 }
+			econ_forum_answer_invitation = yes
+		}
 		ai_chance = { base = 1 }
 	}
 }
@@ -75,6 +103,32 @@ country_event = {
 
 	option = {
 		name = econ_forum.3.a
+		ai_chance = { base = 1 }
+	}
+}
+
+# Result of courting a headline speaker.
+country_event = {
+	id = econ_forum.4
+	title = econ_forum.4.t
+	desc = {
+		text = econ_forum.4.d_poached
+		trigger = { check_variable = { econ_forum_speaker_result = 2 } }
+	}
+	desc = {
+		text = econ_forum.4.d_booked
+		trigger = { check_variable = { econ_forum_speaker_result = 1 } }
+	}
+	desc = {
+		text = econ_forum.4.d_declined
+		trigger = { check_variable = { econ_forum_speaker_result = 0 } }
+	}
+	picture = GFX_economic_forum_aze
+	minor_flavor = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum.4.a
 		ai_chance = { base = 1 }
 	}
 }
@@ -104,5 +158,75 @@ news_event = {
 
 	option = {
 		name = econ_forum_news.2.a
+	}
+}
+
+# A great power's head of government picks a counter-programmed summit over the forum it clashed with.
+news_event = {
+	id = econ_forum_news.3
+	title = econ_forum_news.3.t
+	desc = econ_forum_news.3.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.3.a
+	}
+}
+
+# The World Economic Forum retakes first place after being overtaken.
+news_event = {
+	id = econ_forum_news.4
+	title = econ_forum_news.4.t
+	desc = {
+		text = econ_forum_news.4.d_schwab
+		trigger = { date < 2025.4.21 }
+	}
+	desc = {
+		text = econ_forum_news.4.d
+		trigger = { NOT = { date < 2025.4.21 } }
+	}
+	picture = GFX_news_trade_agreement
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.4.a
+	}
+}
+
+# A challenger forum reaches 50 prestige for the first time.
+news_event = {
+	id = econ_forum_news.5
+	title = econ_forum_news.5.t
+	desc = {
+		text = econ_forum_news.5.d_schwab
+		trigger = { date < 2025.4.21 }
+	}
+	desc = {
+		text = econ_forum_news.5.d
+		trigger = { NOT = { date < 2025.4.21 } }
+	}
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.5.a
+	}
+}
+
+# A forum's seat changed owner, so the forum moved to a new host.
+news_event = {
+	id = econ_forum_news.6
+	title = econ_forum_news.6.t
+	desc = econ_forum_news.6.d
+	picture = GFX_news_press_conference
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = econ_forum_news.6.a
 	}
 }
