@@ -9,6 +9,7 @@
    dynamic modifier must have a bare-name key (in-game tooltips render it).
 """
 
+import pytest
 from validate_localisation import Issue, process_yml_for_syntax
 from validate_modifiers import Validator as ModifiersValidator
 from validate_oob_units import Validator as OOBValidator
@@ -107,31 +108,23 @@ def _write_dynamic_modifier(tmp_path, body):
     (dm_dir / "00_test_dynamic_modifiers.txt").write_text(body, encoding="utf-8")
 
 
-def test_dynamic_modifier_missing_bare_key_flagged(tmp_path):
-    _write_dynamic_modifier(
-        tmp_path,
-        "test_dynamic_modifier = {\n"
-        "\tenable = { always = yes }\n"
-        "\tstability_factor = 0.1\n"
-        "}\n",
-    )
-    _write_loc_file(tmp_path, ["test_dynamic_modifier_TT"])
-
-    validator = ModifiersValidator(mod_path=str(tmp_path), use_colors=False)
-    validator.validate_dynamic_modifier_name_loc()
-
-    assert len(validator._issues) == 1
-    issue = validator._issues[0]
-    assert issue.category == "dynamic-modifier-name-loc"
-    assert "test_dynamic_modifier" in issue.message
-
-
-def test_dynamic_modifier_without_any_loc_flagged(tmp_path):
-    _write_dynamic_modifier(
-        tmp_path,
-        "test_dynamic_modifier = {\n\tstability_factor = 0.1\n}\n",
-    )
-    _write_loc_file(tmp_path, [])
+@pytest.mark.parametrize(
+    ("body", "loc_keys"),
+    [
+        (
+            "test_dynamic_modifier = {\n"
+            "\tenable = { always = yes }\n"
+            "\tstability_factor = 0.1\n"
+            "}\n",
+            ["test_dynamic_modifier_TT"],
+        ),
+        ("test_dynamic_modifier = {\n\tstability_factor = 0.1\n}\n", []),
+    ],
+    ids=["only_tt_key", "no_loc"],
+)
+def test_dynamic_modifier_missing_bare_key_flagged(tmp_path, body, loc_keys):
+    _write_dynamic_modifier(tmp_path, body)
+    _write_loc_file(tmp_path, loc_keys)
 
     validator = ModifiersValidator(mod_path=str(tmp_path), use_colors=False)
     validator.validate_dynamic_modifier_name_loc()
