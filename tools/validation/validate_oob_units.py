@@ -25,6 +25,7 @@ from equipment_module_slots import (
     _scalar,
     blank_comments,
     build_equipment_index,
+    check_created_variant_upgrades,
     check_created_variants,
     parse_variant_names,
 )
@@ -49,6 +50,7 @@ _VARIANT_SLOT_CATEGORIES = {
     "missing_required_module": "SHIP VARIANT: required slot left empty",
     "count_limit_exceeded": "SHIP VARIANT: module count limit exceeded",
     "forbidden_equipment_type": "SHIP VARIANT: module forbidden on hull type",
+    "unsupported_upgrade": "SHIP VARIANT: unsupported upgrade",
 }
 
 _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
@@ -59,6 +61,7 @@ _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
     "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
     "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
     "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
+    "unsupported_upgrade": "EQUIPMENT VARIANT: unsupported upgrade",
 }
 
 # Every directory where a create_equipment_variant effect actually appears.
@@ -2157,7 +2160,10 @@ class Validator(BaseValidator):
             if "create_equipment_variant" not in content:
                 continue
 
-            for f in check_created_variants(content, index):
+            findings = check_created_variants(
+                content, index
+            ) + check_created_variant_upgrades(content, index)
+            for f in findings:
                 labels = (
                     _VARIANT_SLOT_CATEGORIES
                     if f.hull in index.ship_hulls
