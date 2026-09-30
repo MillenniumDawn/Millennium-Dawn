@@ -363,3 +363,138 @@ def test_rejects_keys_whose_window_already_exists(tmp_path):
         module.add_system(str(repo), "forums", "Forums", "Forums.")
 
     assert _read(repo, "interface/MD_countrymissilesview.gui") == before
+
+
+def test_adding_an_eighth_tab_reuses_the_narrow_sprite(tmp_path):
+    image = pytest.importorskip("PIL.Image")
+    module = _module()
+    repo = _repo(tmp_path, ("a", "b", "c", "d", "e", "f"))
+    art = repo / "gfx/interface/scripted_gui/missiles"
+    image.new("RGBA", (180, 53), (1, 2, 3, 255)).save(
+        art / "missiles_gui_ledger_btn.dds"
+    )
+    (art / "ledger_icon_small_race.dds").write_bytes(b"dds")
+    module.add_system(str(repo), "forums", "Forums", "Forums.")
+
+    written, order, _ = module.add_system(str(repo), "race", "Race", "Race.")
+
+    assert order[-2:] == ["forums", "race"]
+    assert not any(path.endswith("btn_narrow.dds") for path in written)
+    gfx = _read(repo, "interface/MD_countrymissilesview.gfx")
+    assert gfx.count('"GFX_missiles_gui_ledger_btn_narrow"') == 1
+
+
+def test_wires_a_handler_that_clears_nothing_yet(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path, ("space",))
+
+    module.add_system(str(repo), "forums", "Forums", "Forums.")
+
+    script = _read(repo, "common/scripted_guis/00_missiles_scripted_guis.txt")
+    handler = re.search(
+        r"space_gui_ledger_button_click = \{.*?\n\t\t\t\}", script, re.S
+    )
+    assert "clear_variable = var_open_MD_forums_gui" in handler.group(0)
+
+
+def _break(path, old, new=""):
+    def mutate(repo):
+        text = _read(repo, path)
+        assert old in text
+        _write(repo / path, text.replace(old, new, 1))
+
+    return mutate
+
+
+GUI = "interface/MD_countrymissilesview.gui"
+SCRIPT = "common/scripted_guis/00_missiles_scripted_guis.txt"
+TITLES = "common/scripted_localisation/01_international_scripted_localisation.txt"
+
+
+@pytest.mark.parametrize(
+    ("mutate", "message"),
+    [
+        (_break(GUI, '"missiles_gui_ledger_menu"', '"other_menu"'), "could not find"),
+        (
+            _break(GUI, 'name = "un_gui_ledger_button"', 'label = "un"'),
+            "unnamed tab button",
+        ),
+        (
+            _break(
+                SCRIPT,
+                "un_gui_ledger_button = {\n\t\t\t\tframe = var_open_MD_UN_gui\n\t\t\t}\n",
+            ),
+            "no frame",
+        ),
+        (_break(TITLES, "name = name_of_menu", "name = other_menu"), "name_of_menu"),
+        (_break(SCRIPT, "\t}\n}\n"), "unbalanced"),
+    ],
+)
+def test_malformed_screen_files_stop_without_writing(tmp_path, mutate, message):
+    module = _module()
+    repo = _repo(tmp_path)
+    mutate(repo)
+    before = {path: _read(repo, path) for path in (GUI, SCRIPT, TITLES)}
+
+    with pytest.raises(module.ToolError, match=message):
+        module.add_system(str(repo), "forums", "Forums", "Forums.")
+
+    assert {path: _read(repo, path) for path in before} == before
+    assert not (repo / "localisation").exists()
+
+
+def test_strip_with_a_missing_icon_stops(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+    gui = _read(repo, GUI)
+    start = gui.index('\t\t\ticonType = {\n\t\t\t\tname ="icon_un"')
+    end = gui.index("}", start) + 1
+    _write(repo / GUI, gui[:start] + gui[end:])
+
+    with pytest.raises(module.ToolError, match="without an icon"):
+        module.add_system(str(repo), "forums", "Forums", "Forums.")
+
+
+def test_refuses_an_existing_stub_file(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+    _write(repo / "interface/MD_international_forums.gui", "guiTypes = {\n}\n")
+
+    with pytest.raises(
+        module.ToolError, match="MD_international_forums.gui already exists"
+    ):
+        module.add_system(str(repo), "forums", "Forums", "Forums.")
+
+
+def test_main_reports_the_result(tmp_path, monkeypatch, capsys):
+    module = _module()
+    repo = _repo(tmp_path)
+    monkeypatch.setattr(module, "REPO_ROOT", repo)
+
+    assert (
+        module.main(
+            [
+                "forums",
+                "Economic Forums",
+                "--description",
+                "Forums.",
+                "--after",
+                "space",
+            ]
+        )
+        == 0
+    )
+
+    out = capsys.readouterr().out
+    assert "Tabs: space, forums, un" in out
+    assert "  wrote interface/MD_international_forums.gui" in out
+    assert "  common/scripted_effects/opener.txt:2" in out
+
+
+def test_main_exits_with_the_error(tmp_path, monkeypatch):
+    module = _module()
+    repo = _repo(tmp_path)
+    monkeypatch.setattr(module, "REPO_ROOT", repo)
+
+    with pytest.raises(SystemExit, match="ERROR: key 'Bad' must be lower_snake_case"):
+        module.main(["Bad", "Forums", "--description", "Forums."])
