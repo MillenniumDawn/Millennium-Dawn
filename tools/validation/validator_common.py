@@ -95,6 +95,9 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "recruit_in_asia",
         "recruit_in_australia",
         "recruit_in_india",
+        # resistance_and_occupation_l_english.yml: MD redefines the vanilla
+        # sabotaged_resources dynamic modifier and keeps its name string.
+        "sabotaged_resources",
         # modifiers_l_english.yml — variable-effect tooltip rows inherited by
         # MD focus, decision, event, and idea effects.
         "acclimatization_cold_climate_gain_factor_tt",

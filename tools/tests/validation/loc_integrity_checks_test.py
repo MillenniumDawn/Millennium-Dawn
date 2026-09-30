@@ -13,6 +13,7 @@ import pytest
 from validate_localisation import Issue, process_yml_for_syntax
 from validate_modifiers import Validator as ModifiersValidator
 from validate_oob_units import Validator as OOBValidator
+from validator_common import Severity
 
 
 def _write_yml(tmp_path, name, value_line):
@@ -132,6 +133,7 @@ def test_dynamic_modifier_missing_bare_key_flagged(tmp_path, body, loc_keys):
     assert len(validator._issues) == 1
     issue = validator._issues[0]
     assert issue.category == "dynamic-modifier-name-loc"
+    assert issue.severity == Severity.ERROR
     assert "test_dynamic_modifier" in issue.message
 
 
