@@ -538,7 +538,9 @@ def test_a_premade_icon_is_written_as_the_tab_icon(tmp_path):
 def test_other_images_are_fitted_and_recoloured(tmp_path):
     image, module, repo, art = _art(tmp_path)
     logo = tmp_path / "logo.png"
-    image.new("RGBA", (100, 50), (255, 255, 255, 255)).save(logo)
+    emblem = image.new("RGBA", (120, 70))
+    emblem.paste((255, 255, 255, 255), (10, 10, 110, 60))
+    emblem.save(logo)
 
     module.add_system(str(repo), "forums", "Forums", "Forums.", icon=str(logo))
 
@@ -548,6 +550,40 @@ def test_other_images_are_fitted_and_recoloured(tmp_path):
         red, green, blue, alpha = icon.getpixel((14, 13))
         assert alpha == 255 and red > green > blue
         assert icon.getpixel((14, 1))[3] == 0
+
+
+@pytest.mark.parametrize("preview", [False, True])
+@pytest.mark.parametrize(
+    ("filename", "mode", "message"),
+    [
+        ("logo.jpg", "RGB", "no transparency"),
+        ("logo.png", "RGB", "no transparency"),
+        ("opaque.png", "RGBA", "no transparency"),
+        ("README.md", None, "cannot identify image"),
+        ("broken.png", None, "cannot identify image"),
+    ],
+)
+def test_invalid_custom_icons_report_cli_errors_without_writing(
+    tmp_path, monkeypatch, filename, mode, message, preview
+):
+    image, module, repo, _ = _art(tmp_path)
+    logo = repo / filename
+    if mode:
+        image.new(mode, (200, 100), "white").save(logo)
+    else:
+        _write(logo, "This is not an image.\n")
+    before = {p: p.read_bytes() for p in repo.rglob("*") if p.is_file()}
+    monkeypatch.setattr(module, "REPO_ROOT", repo)
+    args = ["forums", "Forums", "--description", "Forums.", "--icon", filename]
+    output = tmp_path / "strip.png"
+    if preview:
+        args.extend(["--preview", str(output)])
+
+    with pytest.raises(SystemExit, match=f"ERROR: .*{message}"):
+        module.main(args)
+
+    assert {p: p.read_bytes() for p in repo.rglob("*") if p.is_file()} == before
+    assert not output.exists()
 
 
 def test_the_catalog_lists_only_premade_icons_this_repo_has(tmp_path):

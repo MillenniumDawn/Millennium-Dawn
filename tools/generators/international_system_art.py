@@ -1,8 +1,8 @@
 """Tab icons and strip previews for add_international_system.py.
 
-Premade icons are existing mod art: the unused ledger icons, already in the tab
-style, and generic decision-category icons recoloured to match. Any other image,
-such as an organisation's logo, goes through the same recolouring.
+Premade icons reuse existing mod art: ledger icons already in the tab style,
+including icons used elsewhere in the UI, and generic decision-category icons
+recoloured to match. Custom images need transparency around their artwork.
 """
 
 import base64
@@ -94,8 +94,13 @@ def tab_icon(repo, source):
     else:
         path, styled = os.path.join(repo, source), False
     with Image.open(path) as image:
+        image = image.convert("RGBA")
+        if source not in PREMADE_ICONS and image.getchannel("A").getextrema()[0] == 255:
+            raise ValueError(
+                "custom icon has no transparency; use a PNG with a transparent background"
+            )
         if styled and image.size == ICON_SIZE:
-            return image.convert("RGBA")
+            return image
         return restyle(image)
 
 

@@ -9,10 +9,10 @@ Usage:
     python tools/generators/add_international_system.py forums "Economic Forums" \
         --description "Track the world's economic forums." --after un --icon handshake
 
---icon takes a premade icon name (--list-icons) or any image, such as a logo,
-and writes it in the tab style. Without it, the tool expects a 28x27 icon at
-gfx/interface/scripted_gui/missiles/ledger_icon_small_<key>.dds. --preview
-draws the resulting tab strip to a PNG and changes nothing else.
+--icon takes a premade icon name (--list-icons) or an image with a transparent
+background, such as a logo, and writes it in the tab style. Without it, the tool
+expects a 28x27 icon at gfx/interface/scripted_gui/missiles/ledger_icon_small_<key>.dds.
+--preview draws the resulting tab strip to a PNG and changes nothing else.
 """
 
 import argparse
@@ -324,7 +324,10 @@ def resolve_icon(repo, key, icon):
         raise ToolError(
             f"unknown icon {icon!r}: use a premade name (--list-icons) or an image path"
         )
-    return tab_icon(repo, icon)
+    try:
+        return tab_icon(repo, icon)
+    except (OSError, ValueError) as error:
+        raise ToolError(f"cannot use icon {icon!r}: {error}") from error
 
 
 def write_preview(repo, key, gui, gfx, sprite, icon, preview):
@@ -548,7 +551,8 @@ def main(argv=None):
         "--after", help="existing tab key to place the new tab after; defaults to last"
     )
     parser.add_argument(
-        "--icon", help="premade icon name or an image path, converted to the tab style"
+        "--icon",
+        help="premade icon name or a transparent image path, converted to the tab style",
     )
     parser.add_argument(
         "--preview",
