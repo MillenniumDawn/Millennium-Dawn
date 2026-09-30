@@ -231,6 +231,10 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         # reuses the vanilla strings.
         "same_ruling_party",
         "unstable_alliance",
+        # military_raids_l_english.yml — vanilla raid kept in
+        # common/raids/land_infiltration_raids.txt.
+        "raid_type_rescue_captured_general",
+        "raid_type_rescue_captured_general_desc",
         # Vanilla focus names reused intact by MD focus trees (string fits the
         # in-game label — e.g. "Greater Finland", "Worker's Rights").
         "EST_new_economic_policy",  # ideas_l_english.yml

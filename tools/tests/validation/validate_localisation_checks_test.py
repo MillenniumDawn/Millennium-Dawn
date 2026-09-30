@@ -439,6 +439,75 @@ def test_opinion_modifier_scan_tolerates_a_vanished_file(tmp_path, monkeypatch):
     }
 
 
+# --- raids ------------------------------------------------------------------
+
+
+def _raid_files(tmp_path):
+    _txt(
+        tmp_path,
+        "common/raids/00_test.txt",
+        "types = {\n"
+        "\tlocalised_raid = {\n\t\tcategory = test_raids\n\t}\n"
+        "\tunlocalised_raid = {\n\t\tcategory = test_raids\n\t}\n"
+        "}\n",
+    )
+    _txt(
+        tmp_path,
+        "common/raids/categories/00_test.txt",
+        "categories = {\n\ttest_raids = {\n\t\tintel_source = army\n\t}\n}\n",
+    )
+
+
+def test_raid_without_name_or_desc_is_a_warning(tmp_path):
+    _raid_files(tmp_path)
+    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_raid_localisation(
+        {
+            "raid_type_localised_raid": "Raid",
+            "raid_type_localised_raid_desc": "Desc",
+            "raid_type_unlocalised_raid": "Raid",
+            "raid_category_test_raids": "Test Raids",
+        },
+        set(),
+    )
+
+    assert validator.errors_found == 0
+    assert [i.message for i in validator._issues] == [
+        "raid_type_unlocalised_raid_desc - 00_test.txt: raid without localisation"
+    ]
+    assert validator._issues[0].category == "missing-raid-localisation"
+
+
+def test_raid_category_without_localisation_is_flagged(tmp_path):
+    _raid_files(tmp_path)
+    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_raid_localisation({}, set())
+
+    assert {i.message.split(" - ")[0] for i in validator._issues} == {
+        "raid_category_test_raids",
+        "raid_type_localised_raid",
+        "raid_type_localised_raid_desc",
+        "raid_type_unlocalised_raid",
+        "raid_type_unlocalised_raid_desc",
+    }
+
+
+def test_raid_localised_by_scripted_or_vanilla_loc_is_clean(tmp_path):
+    _txt(
+        tmp_path,
+        "common/raids/00_test.txt",
+        "types = {\n"
+        "\trescue_captured_general = {\n\t}\n"
+        "\tscripted_raid = {\n\t}\n"
+        "}\n",
+    )
+    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_raid_localisation(
+        {}, {"raid_type_scripted_raid", "raid_type_scripted_raid_desc"}
+    )
+    assert validator._issues == []
+
+
 # --- staged mode ------------------------------------------------------------
 
 
