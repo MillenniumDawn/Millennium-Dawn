@@ -18,11 +18,10 @@ import os
 import re
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-TOOLS_DIR = os.path.join(REPO_ROOT, "tools")
-if TOOLS_DIR not in sys.path:
-    sys.path.insert(0, TOOLS_DIR)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from shared.paths import REPO_ROOT
 from shared_utils import atomic_write_bytes, read_text_strict
 
 SCREEN_GUI = "interface/MD_countrymissilesview.gui"
@@ -428,7 +427,12 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         written, order, openers = add_system(
-            REPO_ROOT, args.key, args.name, args.description, args.title, args.after
+            str(REPO_ROOT),
+            args.key,
+            args.name,
+            args.description,
+            args.title,
+            args.after,
         )
     except ToolError as error:
         sys.exit(f"ERROR: {error}")
