@@ -43,6 +43,9 @@ BUTTON_NAME_RE = re.compile(r'name\s*=\s*"(\w+)_gui_ledger_button"')
 FRAME_RE = re.compile(r"(\w+)_gui_ledger_button\s*=\s*\{\s*frame\s*=\s*(\w+)\s*\}")
 TAB_CLEAR_RE = re.compile(r"^\t*clear_variable = var_open_MD_\w+_gui\n", re.M)
 OPENER_RE = re.compile(r"set_variable = \{ (var_open_MD_\w+_gui) = 2 \}")
+# Loc tokens whose case matters: [scope.Function], $key$, £sprite and §colour codes.
+LOC_TOKEN_RE = re.compile(r"(\[[^\]]*\]|\$[^$]*\$|£\w+|§.)")
+LOC_KEY_RE = re.compile(r"^\s*([\w.]+):\d*\s", re.M)
 
 
 class ToolError(Exception):
@@ -375,6 +378,26 @@ def stub_files(key, name, title, description, var):
     }
 
 
+def default_title(name):
+    """Capitalise the name for the header, leaving loc tokens as written."""
+    parts = LOC_TOKEN_RE.split(name)
+    return "".join(
+        part if index % 2 else part.upper() for index, part in enumerate(parts)
+    )
+
+
+def taken_loc_keys(repo, keys):
+    """Return the keys already defined in English localisation."""
+    folder = os.path.join(repo, "localisation", "english")
+    taken = set()
+    for folder_path, _, files in os.walk(folder):
+        for file in files:
+            if file.endswith(".yml"):
+                path = os.path.join(folder_path, file)
+                taken.update(LOC_KEY_RE.findall(read_text_strict(path)))
+    return sorted(set(keys) & taken)
+
+
 def direct_openers(repo):
     """List script lines outside the ledger strip that open a tab directly."""
     found = []
@@ -403,7 +426,17 @@ def add_system(repo, key, name, description, title=None, after=None):
         path: read_text_strict(os.path.join(repo, path), "utf-8")
         for path in (SCREEN_GUI, SCREEN_GFX, SCREEN_SCRIPT, TITLE_LOC)
     }
-    stubs = stub_files(key, name, title or name.upper(), description, var)
+    stubs = stub_files(key, name, title or default_title(name), description, var)
+    upper = key.upper()
+    loc_keys = (
+        f"{upper}_GUI_LEDGER_TT",
+        f"{upper}_GUI_LEDGER_TT_DELAYED",
+        f"IS_title_{key}",
+        f"IS_{key}_placeholder",
+    )
+    taken = taken_loc_keys(repo, loc_keys)
+    if taken:
+        raise ToolError(f"loc key(s) already defined: {', '.join(taken)}")
     for path in stubs:
         if os.path.exists(os.path.join(repo, path)):
             raise ToolError(f"{path} already exists")

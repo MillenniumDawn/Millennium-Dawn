@@ -248,3 +248,32 @@ def test_requires_the_icon_first(tmp_path):
 
     with pytest.raises(module.ToolError, match="add the tab icon first"):
         module.add_system(str(repo), "forums", "Forums", "Forums.")
+
+
+def test_rejects_keys_whose_loc_ids_already_exist(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+    _write(
+        repo / "localisation/english/MD_international_l_english.yml",
+        '\ufeffl_english:\n IS_title_forums: "FORUMS"\n',
+    )
+    before = _read(repo, "interface/MD_countrymissilesview.gui")
+
+    with pytest.raises(module.ToolError, match="IS_title_forums"):
+        module.add_system(str(repo), "forums", "Forums", "Forums.")
+
+    assert _read(repo, "interface/MD_countrymissilesview.gui") == before
+
+
+def test_default_title_keeps_loc_tokens_as_written(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+
+    module.add_system(str(repo), "forums", "[ROOT.GetAdjective] Forum", "Forums.")
+
+    loc = _read(repo, "localisation/english/MD_international_forums_l_english.yml")
+    assert 'IS_title_forums: "[ROOT.GetAdjective] FORUM"' in loc
+    assert (
+        module.default_title("$Some_Key$ £my_icon §Yhot§!")
+        == "$Some_Key$ £my_icon §YHOT§!"
+    )
