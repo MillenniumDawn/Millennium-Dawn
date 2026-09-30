@@ -277,3 +277,30 @@ def test_default_title_keeps_loc_tokens_as_written(tmp_path):
         module.default_title("$Some_Key$ £my_icon §Yhot§!")
         == "$Some_Key$ £my_icon §YHOT§!"
     )
+
+
+def test_rejects_keys_whose_sprite_already_exists(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+    gfx = _read(repo, "interface/MD_countrymissilesview.gfx")
+    sprite = '\tspriteType = {\n\t\tname = "GFX_ledger_icon_small_forums"\n\t}\n'
+    _write(
+        repo / "interface/MD_countrymissilesview.gfx",
+        gfx[: gfx.rindex("}")] + sprite + "}\n",
+    )
+    before = _read(repo, "interface/MD_countrymissilesview.gui")
+
+    with pytest.raises(module.ToolError, match="GFX_ledger_icon_small_forums"):
+        module.add_system(str(repo), "forums", "Forums", "Forums.")
+
+    assert _read(repo, "interface/MD_countrymissilesview.gui") == before
+
+
+def test_tab_name_uses_the_key_term_colour(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+
+    module.add_system(str(repo), "forums", "Economic Forums", "Forums.")
+
+    loc = _read(repo, "localisation/english/MD_international_forums_l_english.yml")
+    assert 'FORUMS_GUI_LEDGER_TT: "§YEconomic Forums§!"' in loc

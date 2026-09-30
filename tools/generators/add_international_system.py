@@ -366,7 +366,7 @@ def stub_files(key, name, title, description, var):
     )
     loc = (
         "﻿l_english:\n"
-        f' {upper}_GUI_LEDGER_TT: "§C{name}§!"\n'
+        f' {upper}_GUI_LEDGER_TT: "§Y{name}§!"\n'
         f' {upper}_GUI_LEDGER_TT_DELAYED: "{description}"\n'
         f' IS_title_{key}: "{title}"\n'
         f' IS_{key}_placeholder: "{name}"\n'
@@ -442,6 +442,8 @@ def add_system(repo, key, name, description, title=None, after=None):
             raise ToolError(f"{path} already exists")
 
     files[SCREEN_GUI], order, sprite = layout_strip(files[SCREEN_GUI], key, after)
+    if f'"GFX_ledger_icon_small_{key}"' in files[SCREEN_GFX]:
+        raise ToolError(f"sprite GFX_ledger_icon_small_{key} is already defined")
     files[SCREEN_SCRIPT] = wire_script(files[SCREEN_SCRIPT], key, order, var)
     files[TITLE_LOC] = add_title(files[TITLE_LOC], key, var)
     files[SCREEN_GFX] = add_sprites(files[SCREEN_GFX], key, sprite)
