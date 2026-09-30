@@ -168,6 +168,8 @@ IMPACT_ONLY_SPECS: Tuple[ValidatorSpec, ...] = (
 _IMPACT_ONLY_BY_SCRIPT = {spec.script: spec for spec in IMPACT_ONLY_SPECS}
 _IMPACT_EXCLUDED_SCRIPTS = {
     "validate_unused_textures.py",
+    # Reads gfx/models and gfx/entities, which the CI workspace does not ship.
+    "validate_mesh_textures.py",
     "validate_tools.py",
     "validate_staged.py",
     # Manual-only: the standardization report is deliberately unwired from
