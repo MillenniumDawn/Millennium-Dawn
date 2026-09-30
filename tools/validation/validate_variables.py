@@ -2412,7 +2412,7 @@ class Validator(BaseValidator):
 
     def validate_untooltipped_available_scripted_trigger(self):
         """Flag bare scripted-trigger calls in `available` whose body checks a
-        flag with no tooltip wrapper (WARNING).
+        flag with no tooltip wrapper (ERROR).
 
         One hop further out than ``validate_unlocalised_available_flags``: a
         bare flag check at least renders the raw token, but a bare call to a
@@ -2430,7 +2430,7 @@ class Validator(BaseValidator):
             issues,
             "✓ No untooltipped scripted-trigger calls in requirement blocks",
             "bare scripted-trigger call in `available`/`cancel_trigger`/`bypass` whose body checks a flag directly, with no tooltip wrapper (the player sees no requirement line at all):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="untooltipped-available-scripted-trigger",
         )
 
