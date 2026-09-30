@@ -144,6 +144,7 @@ econ_forum_monthly_update = {
 			}
 		}
 	}
+	econ_forum_refresh_open_screens = yes
 }
 
 # A forum follows its seat. When the seat state's owner is not the host, the old host loses the forum, alive or
@@ -910,6 +911,7 @@ econ_forum_found = {
 	econ_forum_register_host = yes
 	news_event = { id = econ_forum_news.1 days = 1 }
 	econ_forum_open_if_due = yes
+	econ_forum_refresh_open_screens = yes
 }
 
 # Investor scope, after the yearly investment target rebuild and every month. Keeps every host this country
@@ -946,51 +948,75 @@ econ_forum_add_deal_targets = {
 	}
 }
 
+# Temps are es_* so rebuilding from inside a forum effect never clobbers its ef_* loop variables.
 econ_forum_build_screen = {
 	clear_array = econ_forum_screen_rows
 	for_loop_effect = {
 		end = global.econ_forum_host^num
-		value = ef_i
+		value = es_i
 
 		if = {
-			limit = { NOT = { check_variable = { global.econ_forum_seat^ef_i = 0 } } }
-			set_temp_variable = { ef_prestige = global.econ_forum_prestige^ef_i }
-			set_temp_variable = { ef_pos = 0 }
+			limit = { NOT = { check_variable = { global.econ_forum_seat^es_i = 0 } } }
+			set_temp_variable = { es_prestige = global.econ_forum_prestige^es_i }
+			set_temp_variable = { es_pos = 0 }
 			for_each_loop = {
 				array = econ_forum_screen_rows
-				value = ef_row
+				value = es_row
 
-				set_temp_variable = { ef_row_prestige = global.econ_forum_prestige^ef_row }
+				set_temp_variable = { es_row_prestige = global.econ_forum_prestige^es_row }
 				if = {
-					limit = { check_variable = { ef_row_prestige > ef_prestige } }
-					add_to_temp_variable = { ef_pos = 1 }
+					limit = { check_variable = { es_row_prestige > es_prestige } }
+					add_to_temp_variable = { es_pos = 1 }
 				}
 			}
-			add_to_array = { array = econ_forum_screen_rows value = ef_i index = ef_pos }
+			add_to_array = { array = econ_forum_screen_rows value = es_i index = es_pos }
 		}
 	}
 	clear_array = econ_forum_screen_tracks
 	resize_array = { array = econ_forum_screen_leader value = -1 size = 6 }
 	for_loop_effect = {
 		end = 6
-		value = ef_t
+		value = es_t
 
-		add_to_array = { econ_forum_screen_tracks = ef_t }
-		set_temp_variable = { ef_best = -1 }
+		add_to_array = { econ_forum_screen_tracks = es_t }
+		set_temp_variable = { es_best = -1 }
+		set_temp_variable = { es_tied = 0 }
 		for_each_loop = {
 			array = econ_forum_screen_rows
-			value = ef_row
+			value = es_row
 
 			if = {
-				limit = { check_variable = { global.econ_forum_host^ef_row > 0 } }
-				set_temp_variable = { ef_idx = { value = ef_row multiply = 6 add = ef_t } }
-				set_temp_variable = { ef_track = global.econ_forum_track_prestige^ef_idx }
+				limit = { check_variable = { global.econ_forum_host^es_row > 0 } }
+				set_temp_variable = { es_idx = { value = es_row multiply = 6 add = es_t } }
+				set_temp_variable = { es_track = global.econ_forum_track_prestige^es_idx }
 				if = {
-					limit = { check_variable = { ef_track > ef_best } }
-					set_temp_variable = { ef_best = ef_track }
-					set_variable = { econ_forum_screen_leader^ef_t = ef_row }
+					limit = { check_variable = { es_track > es_best } }
+					set_temp_variable = { es_best = es_track }
+					set_temp_variable = { es_tied = 0 }
+					set_variable = { econ_forum_screen_leader^es_t = es_row }
+				}
+				else_if = {
+					limit = { check_variable = { es_track = es_best } }
+					set_temp_variable = { es_tied = 1 }
 				}
 			}
 		}
+		# Summits credit a sector lead only when one forum strictly beats every other.
+		if = {
+			limit = { check_variable = { es_tied = 1 } }
+			set_variable = { econ_forum_screen_leader^es_t = -1 }
+		}
+	}
+}
+
+econ_forum_refresh_open_screens = {
+	every_country = {
+		limit = {
+			is_ai = no
+			has_country_flag = open_MD_countrymissilesview
+			check_variable = { var_open_MD_forums_gui = 2 }
+		}
+		econ_forum_build_screen = yes
+		international_systems_update = yes
 	}
 }
