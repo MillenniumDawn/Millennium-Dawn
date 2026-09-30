@@ -47,6 +47,7 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   44. on_daily_TAG blocks that only refresh country flags for the AI to read
   45. per-tag war brakes already covered by MD_avoid_new_wars_when_outmatched
   46. has_opinion_modifier only accepts a modifier ID, not a block
+  47. stat comparisons with the wrong trigger name (stability -> has_stability)
 """
 
 import os
@@ -62,6 +63,7 @@ from check_common_mistakes import (
     _check_add_to_faction_country,
     _check_ai_daily_flag_cache,
     _check_any_country_member_array,
+    _check_bare_statement_token,
     _check_building_missing_province,
     _check_check_expr_bad_operand,
     _check_check_var_ge_le,
@@ -97,6 +99,7 @@ from check_common_mistakes import (
     _check_redundant_avoid_starting_wars,
     _check_retired_ideology_flags,
     _check_tautological_or,
+    _check_wrong_stat_trigger,
     _equipment_bonus_enum,
     _equipment_names,
     _files_need_global_refs,
@@ -3769,6 +3772,49 @@ assert_finds(
     "scalar, quoted, and commented has_opinion_modifier forms not flagged",
 )
 
+# 47. Stat comparisons with the wrong trigger name.
+
+print("\n── wrong stat trigger name ──")
+
+assert_finds(
+    _check_wrong_stat_trigger,
+    [
+        "\tavailable = { emerging_reactionaries_are_in_power = yes stability > 0.5 }\n",
+        "\twar_support < 0.3\n",
+        "\tpolitical_power > 50\n",
+        "\thas_command_power > 20\n",
+    ],
+    4,
+    "bare stat names and has_command_power flagged",
+)
+assert_finds(
+    _check_wrong_stat_trigger,
+    [
+        "\thas_stability > 0.5\n",
+        "\tcommand_power > 20\n",
+        "\tcheck_variable = { stability > 0.6 }\n",
+        "\tcheck_variable = {\n",
+        "\t\tstability < 0.1\n",
+        "\t}\n",
+        "\tstability = 0.05\n",
+        "\tmax_manpower > 5\n",
+        "\t# stability > 0.5\n",
+    ],
+    0,
+    "has_ triggers, variable blocks, modifiers, and comments not flagged",
+)
+assert_finds(
+    _check_wrong_stat_trigger,
+    [
+        "\tcheck_variable = {\n",
+        "\t\tstability < 0.1\n",
+        "\t}\n",
+        "\tstability > 0.5\n",
+    ],
+    1,
+    "comparison after a closed variable block flagged",
+)
+
 # 42. Regressions from the review of the two checks above.
 
 print("\n── ai fallback edge cases ──")
@@ -4441,6 +4487,46 @@ def test_event_chain_revisits_shared_event_with_more_depth_remaining():
         True,
         ["start.1", "shared.1", "war.1"],
     )
+
+
+# 46. Bare scripted trigger/effect call missing "= yes" (#4997)
+
+assert_finds(
+    _check_bare_statement_token,
+    ["\tNOT = { GER_ai_not_historical_path }\n"],
+    1,
+    "one-line bare call in NOT flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["\tOR = {\n", "\t\tsome_trigger\n", "\t}\n"],
+    1,
+    "multi-line bare call in OR flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["\tNOT = { GER_ai_not_historical_path = yes }\n"],
+    0,
+    "call with = yes not flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["tags = { GER FRA }\n", "mutually_exclusive = { a b }\n"],
+    0,
+    "list blocks not flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["mission_type_stats = { limit = { cas attack_logistics } }\n"],
+    0,
+    "mission_type_stats limit list not flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["color = { 10 20 30 }\n", "limit = { # stray_word\n", "}\n"],
+    0,
+    "numbers and comments not flagged",
+)
 
 
 # Summary
