@@ -96,7 +96,7 @@ class ReviewScript(TargetedScript):
                 "ai": False,
                 "tag": {0: "---", 1: "USA", 2: "YEM", 3: "PAK", 100: "STATE"}[country],
                 "flags": {},
-                "techs": {"special_forces_tech_1", "decryption1"},
+                "techs": {"special_forces_tech_1", "decryption_1"},
                 "missions": set(),
                 "power": 200,
                 "authority": True,
@@ -641,7 +641,7 @@ def test_all_methods_reach_review_with_required_capabilities(method):
 
 @pytest.mark.parametrize(
     "method,tech",
-    ((2, "special_forces_tech_1"), (4, "special_forces_tech_1"), (3, "decryption1")),
+    ((2, "special_forces_tech_1"), (4, "special_forces_tech_1"), (3, "decryption_1")),
 )
 def test_missing_capability_cannot_bypass_review_backend(method, tech):
     review = ReviewScript()
@@ -923,7 +923,7 @@ def test_novichok_is_a_russia_only_high_exposure_timed_method():
     assert "TOP_identity_confidence^TOP_selected > 89" in startable
     assert "TOP_access_method = 7" in access
     assert "original_tag = SOV" in access
-    assert "has_tech = decryption2" in access
+    assert "has_tech = decryption_2" in access
     assert "TOP_proposal_method < 8" in review
     assert "TOP_proposal_method = 7" in review
     assert "TOP_person_access_available = yes" in review
