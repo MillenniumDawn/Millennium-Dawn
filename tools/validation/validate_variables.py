@@ -397,10 +397,15 @@ _TOOLTIP_WRAPPER_TOKENS = frozenset(
 # check_variable takes its own inline `tooltip = KEY`, which renders the same
 # requirement line a wrapper would. `\b` does not match custom_trigger_tooltip.
 _INLINE_TOOLTIP_RE = re.compile(r"\btooltip\s*=")
-_PLAYER_FACING_BLOCK = "available"
+# Trigger blocks the engine renders as requirement lines: `available`, a
+# decision's or mission's `cancel_trigger`, and a focus's `bypass`.
+_PLAYER_FACING_BLOCKS = frozenset({"available", "cancel_trigger", "bypass"})
+# The gating check_variable scan stays on `available`: widening it adds a
+# pre-existing ERROR backlog in `cancel_trigger` / `bypass`.
+_CHECK_VARIABLE_BLOCK = "available"
 # Column-0 blocks in a decisions file are the decision categories.
 _CATEGORY_OPEN_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
-# Both `available` scans cover the same player-facing object types.
+# All player-facing trigger scans cover the same object types.
 _PLAYER_FACING_GLOBS = [
     "common/decisions/**/*.txt",
     "common/national_focus/*.txt",
@@ -767,7 +772,7 @@ def _available_exempt_spans(
 
 def _scan_available_text(
     cleaned: str, rel: str, ai_categories: AbstractSet[str]
-) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str]]]:
+) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str, str]]]:
     exempt = _available_exempt_spans(cleaned, rel, ai_categories)
     events: List[Tuple[int, int, object]] = _scope_events(cleaned)
     for m in _UNTOOLTIPPED_TRIGGER_RE.finditer(cleaned):
@@ -781,7 +786,7 @@ def _scan_available_text(
 
     stack: List[str] = []
     untooltipped: List[Tuple[str, str, int]] = []
-    flags: List[Tuple[str, str, int, str]] = []
+    flags: List[Tuple[str, str, int, str, str]] = []
     for pos, kind, tok in events:
         if kind == 0:
             stack.append(cast(str, tok))
@@ -796,7 +801,7 @@ def _scan_available_text(
             for token in reversed(stack):
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break
-                if token == _PLAYER_FACING_BLOCK:
+                if token == _CHECK_VARIABLE_BLOCK:
                     line = cleaned[:pos].count("\n") + 1
                     untooltipped.append(
                         (
@@ -815,15 +820,17 @@ def _scan_available_text(
             for token in reversed(stack):
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break
-                if token == _PLAYER_FACING_BLOCK:
-                    flags.append((flag, rel, cleaned[:pos].count("\n") + 1, flag_kind))
+                if token in _PLAYER_FACING_BLOCKS:
+                    flags.append(
+                        (flag, rel, cleaned[:pos].count("\n") + 1, flag_kind, token)
+                    )
                     break
     return untooltipped, flags
 
 
 def _scan_available_file(
     args: Tuple[str, str, AbstractSet[str]],
-) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str]]]:
+) -> Tuple[List[Tuple[str, str, int]], List[Tuple[str, str, int, str, str]]]:
     """Extract both available-block checks from one comment-stripped source."""
     filename, mod_path, ai_categories = args
     cleaned = _read_script_text(filename)
@@ -841,7 +848,7 @@ def process_file_for_untooltipped_available_checks(
 
 def process_file_for_available_flags(
     args: Tuple[str, str, AbstractSet[str]],
-) -> List[Tuple[str, str, int, str]]:
+) -> List[Tuple[str, str, int, str, str]]:
     return _scan_available_file(args)[1]
 
 
@@ -918,11 +925,11 @@ def _scan_scripted_trigger_text(
             for token in reversed(stack):
                 if token in _TOOLTIP_WRAPPER_TOKENS:
                     break
-                if token == _PLAYER_FACING_BLOCK:
+                if token in _PLAYER_FACING_BLOCKS:
                     line = cleaned[:pos].count("\n") + 1
                     issues.append(
                         (
-                            f"{tok} = yes in `available` resolves to a scripted"
+                            f"{tok} = yes in `{token}` resolves to a scripted"
                             " trigger that checks a flag directly - the player"
                             " sees no requirement line at all; wrap it in"
                             " custom_trigger_tooltip = { tooltip = KEY ... }",
@@ -2327,19 +2334,19 @@ class Validator(BaseValidator):
         )
 
     def validate_unlocalised_available_flags(self):
-        """Flag `has_country_flag` / `has_global_flag` in `available` whose flag
-        has no loc key (WARNING).
+        """Flag `has_country_flag` / `has_global_flag` in `available`,
+        `cancel_trigger` or `bypass` whose flag has no loc key (WARNING).
 
         HOI4 renders the requirement line from a loc key named after the flag;
         with no key the player reads the raw token.
         """
-        self._log_section("Checking for unlocalised flags in available blocks...")
+        self._log_section("Checking for unlocalised flags in requirement blocks...")
         shared_flags = self._get_shared_scan()["avail_flags"]
         loc_keys = self._load_localisation_keys()
 
         seen: Set[Tuple[str, str]] = set()
         issues = []
-        for flag, rel, line, flag_kind in shared_flags:
+        for flag, rel, line, flag_kind, block in shared_flags:
             if flag in loc_keys:
                 continue
             key = (flag, rel)
@@ -2348,7 +2355,7 @@ class Validator(BaseValidator):
             seen.add(key)
             issues.append(
                 (
-                    f"has_{flag_kind}_flag = {flag} in `available` has no localisation"
+                    f"has_{flag_kind}_flag = {flag} in `{block}` has no localisation"
                     " key - the player sees the raw flag name; add a loc key named"
                     " after the flag",
                     rel,
@@ -2358,8 +2365,8 @@ class Validator(BaseValidator):
 
         self._report(
             issues,
-            "✓ No unlocalised flags in available blocks",
-            "flags checked in `available` with no localisation key (the player sees the raw token):",
+            "✓ No unlocalised flags in requirement blocks",
+            "flags checked in `available`/`cancel_trigger`/`bypass` with no localisation key (the player sees the raw token):",
             severity=Severity.WARNING,
             category="unlocalised-available-flag",
         )
@@ -2416,13 +2423,13 @@ class Validator(BaseValidator):
         not a finding.
         """
         self._log_section(
-            "Checking for untooltipped scripted-trigger calls in available blocks..."
+            "Checking for untooltipped scripted-trigger calls in requirement blocks..."
         )
         issues = self._get_shared_scan()["scripted"]
         self._report(
             issues,
-            "✓ No untooltipped scripted-trigger calls in available blocks",
-            "bare scripted-trigger call in `available` whose body checks a flag directly, with no tooltip wrapper (the player sees no requirement line at all):",
+            "✓ No untooltipped scripted-trigger calls in requirement blocks",
+            "bare scripted-trigger call in `available`/`cancel_trigger`/`bypass` whose body checks a flag directly, with no tooltip wrapper (the player sees no requirement line at all):",
             severity=Severity.WARNING,
             category="untooltipped-available-scripted-trigger",
         )
