@@ -9,6 +9,7 @@ synthetic hull/module fixtures.
 
 from equipment_module_slots import (
     build_indexes,
+    check_created_variant_upgrades,
     check_created_variants,
     check_target_variants,
 )
@@ -1018,3 +1019,139 @@ def test_category_reference_charges_the_category_limit():
 def test_unknown_reference_charges_no_limit():
     content = _variant("lim_tank_hull_1", "\t\t\t\tgun_slot = not_a_module\n")
     assert _kinds(content) == ["unknown_module"]
+
+
+# --- unsupported variant upgrades -------------------------------------------
+
+# The archetype lists test_nsb_upgrade; hull_1 inherits it, hull_2 declares its
+# own list, and the duplicate clones the whole family (the SIBMAS shape).
+UPGRADE_HULLS = """
+equipments = {
+\tup_tank = {
+\t\tis_archetype = yes
+\t\tupgrades = { test_nsb_upgrade }
+\t}
+\tup_tank_1 = {
+\t\tarchetype = up_tank
+\t}
+\tup_tank_2 = {
+\t\tarchetype = up_tank
+\t\tupgrades = { other_upgrade }
+\t}
+\tup_tank_3 = {
+\t\tarchetype = up_tank
+\t\tparent = up_tank_2
+\t}
+\tup_slotted_1 = {
+\t\tarchetype = up_tank
+\t\tmodule_slots = {
+\t\t\tgun_slot = {
+\t\t\t\tupgrades = { nested_upgrade }
+\t\t\t}
+\t\t}
+\t}
+}
+duplicate_archetypes = {
+\tup_clone = {
+\t\tarchetype = up_tank
+\t}
+}
+"""
+
+
+def _upgrade_index():
+    return build_indexes([UPGRADE_HULLS], [])
+
+
+def _upgraded(hull, upgrades_body):
+    return (
+        "create_equipment_variant = {\n"
+        '\tname = "Upgraded"\n'
+        f"\ttype = {hull}\n"
+        "\tupgrades = {\n"
+        f"{upgrades_body}"
+        "\t}\n"
+        "}\n"
+    )
+
+
+def _upgrade_findings(hull, upgrades_body):
+    return check_created_variant_upgrades(
+        _upgraded(hull, upgrades_body), _upgrade_index()
+    )
+
+
+def test_unsupported_upgrade_is_flagged_with_engine_wording():
+    findings = _upgrade_findings("up_tank_1", "\t\tlegacy_upgrade = 0\n")
+    assert [f.kind for f in findings] == ["unsupported_upgrade"]
+    assert findings[0].line == 5
+    assert findings[0].message == (
+        "'Upgraded' - Type 'up_tank_1' does not support upgrades 'legacy_upgrade'"
+    )
+
+
+def test_supported_upgrade_on_inherited_list_passes():
+    assert _upgrade_findings("up_tank_1", "\t\ttest_nsb_upgrade = 2\n") == []
+
+
+def test_only_the_unsupported_upgrade_is_flagged():
+    findings = _upgrade_findings(
+        "up_tank_1", "\t\ttest_nsb_upgrade = 2\n\t\tlegacy_upgrade = 1\n"
+    )
+    assert [f.message.rsplit("'", 2)[1] for f in findings] == ["legacy_upgrade"]
+
+
+def test_own_upgrade_list_overrides_the_archetype():
+    assert _upgrade_findings("up_tank_2", "\t\tother_upgrade = 1\n") == []
+    findings = _upgrade_findings("up_tank_2", "\t\ttest_nsb_upgrade = 1\n")
+    assert [f.kind for f in findings] == ["unsupported_upgrade"]
+
+
+def test_parent_upgrade_list_wins_over_the_archetype():
+    assert _upgrade_findings("up_tank_3", "\t\tother_upgrade = 1\n") == []
+    findings = _upgrade_findings("up_tank_3", "\t\ttest_nsb_upgrade = 1\n")
+    assert [f.kind for f in findings] == ["unsupported_upgrade"]
+
+
+def test_nested_upgrades_block_is_not_the_equipment_list():
+    assert _upgrade_findings("up_slotted_1", "\t\ttest_nsb_upgrade = 1\n") == []
+    assert [
+        f.kind for f in _upgrade_findings("up_slotted_1", "\t\tnested_upgrade = 1\n")
+    ] == ["unsupported_upgrade"]
+
+
+def test_cloned_family_inherits_upgrades():
+    assert _upgrade_findings("up_clone_1", "\t\ttest_nsb_upgrade = 1\n") == []
+    assert [
+        f.kind for f in _upgrade_findings("up_clone_2", "\t\ttest_nsb_upgrade = 1\n")
+    ] == ["unsupported_upgrade"]
+    assert [
+        f.kind for f in _upgrade_findings("up_clone_1", "\t\tlegacy_upgrade = 1\n")
+    ] == ["unsupported_upgrade"]
+
+
+def test_variant_of_unknown_type_has_no_upgrade_finding():
+    assert _upgrade_findings("not_a_type", "\t\tlegacy_upgrade = 1\n") == []
+
+
+def test_type_without_any_upgrade_list_is_skipped():
+    index = build_indexes([HULLS], [MODULES])
+    content = _upgraded("test_ship_hull_1", "\t\tlegacy_upgrade = 1\n")
+    assert check_created_variant_upgrades(content, index) == []
+
+
+def test_oob_validator_reports_unsupported_upgrade(tmp_path):
+    from validate_oob_units import Validator as OobValidator
+
+    issues = _variant_issues(
+        tmp_path,
+        UPGRADE_HULLS,
+        "common/national_focus/07_test.txt",
+        _upgraded("up_tank_1", "\t\tlegacy_upgrade = 0\n\t\ttest_nsb_upgrade = 1\n"),
+        OobValidator,
+        "EQUIPMENT VARIANT: unsupported upgrade",
+    )
+    assert len(issues) == 1
+    assert issues[0].severity == "error"
+    assert issues[0].file == "common/national_focus/07_test.txt"
+    assert "legacy_upgrade" in issues[0].message
