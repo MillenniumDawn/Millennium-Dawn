@@ -97,6 +97,17 @@ def _repo(tmp_path, keys=("space", "un")):
     return repo
 
 
+def _full_strip(tmp_path):
+    """A six-tab strip with the wide tab sprite on disk, so a seventh tab goes narrow."""
+    image = pytest.importorskip("PIL.Image")
+    repo = _repo(tmp_path, ("a", "b", "c", "d", "e", "f"))
+    art = repo / "gfx/interface/scripted_gui/missiles"
+    image.new("RGBA", (180, 53), (1, 2, 3, 255)).save(
+        art / "missiles_gui_ledger_btn.dds"
+    )
+    return image, _module(), repo, art
+
+
 def _read(repo, path):
     with open(repo / path, encoding="utf-8", newline="") as handle:
         return handle.read()
@@ -160,13 +171,7 @@ def test_adds_a_wired_tab_after_the_anchor(tmp_path):
 
 
 def test_switches_to_the_narrow_sprite_when_the_strip_overflows(tmp_path):
-    image = pytest.importorskip("PIL.Image")
-    module = _module()
-    repo = _repo(tmp_path, ("a", "b", "c", "d", "e", "f"))
-    art = repo / "gfx/interface/scripted_gui/missiles"
-    image.new("RGBA", (180, 53), (1, 2, 3, 255)).save(
-        art / "missiles_gui_ledger_btn.dds"
-    )
+    image, module, repo, art = _full_strip(tmp_path)
 
     written, order, _ = module.add_system(str(repo), "forums", "Forums", "Forums.")
 
@@ -366,13 +371,7 @@ def test_rejects_keys_whose_window_already_exists(tmp_path):
 
 
 def test_adding_an_eighth_tab_reuses_the_narrow_sprite(tmp_path):
-    image = pytest.importorskip("PIL.Image")
-    module = _module()
-    repo = _repo(tmp_path, ("a", "b", "c", "d", "e", "f"))
-    art = repo / "gfx/interface/scripted_gui/missiles"
-    image.new("RGBA", (180, 53), (1, 2, 3, 255)).save(
-        art / "missiles_gui_ledger_btn.dds"
-    )
+    image, module, repo, art = _full_strip(tmp_path)
     (art / "ledger_icon_small_race.dds").write_bytes(b"dds")
     module.add_system(str(repo), "forums", "Forums", "Forums.")
 
