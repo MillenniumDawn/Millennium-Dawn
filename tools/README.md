@@ -305,9 +305,10 @@ Metrics, reference analysis, and review tools.
 
 Content generation tools.
 
-| Script                        | Description                                                           |
-| ----------------------------- | --------------------------------------------------------------------- |
-| **generate_tribute_ideas.py** | Generates tribute idea definitions and localisation for all countries |
+| Script                          | Description                                                                                          |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| **add_international_system.py** | Adds a tab to the International Systems screen: strip layout, open/close wiring, title and stub files |
+| **generate_tribute_ideas.py**   | Generates tribute idea definitions and localisation for all countries                                |
 
 ### Publishing (`publishing/`)
 

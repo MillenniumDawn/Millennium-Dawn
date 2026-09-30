@@ -609,7 +609,7 @@ class RaceScript:
                 member = (
                     identifier if value == "THIS" else self.value(value, identifier)
                 )
-                result = member in self.value(name, identifier)
+                result = member in (self.value(name, identifier) or [])
             elif key == "has_tech":
                 result = operand in country["techs"]
             elif key == "can_research":
