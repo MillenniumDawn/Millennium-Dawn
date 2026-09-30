@@ -68,7 +68,7 @@ def restyle(image):
     size = (max(1, round(image.size[0] * scale)), max(1, round(image.size[1] * scale)))
     fitted = Image.new("RGBA", ICON_SIZE)
     fitted.paste(
-        image.resize(size, Image.LANCZOS),
+        image.resize(size, Image.Resampling.LANCZOS),
         ((width - size[0]) // 2, (height - size[1]) // 2),
     )
     out = Image.new("RGBA", ICON_SIZE)
