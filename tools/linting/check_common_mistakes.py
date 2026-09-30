@@ -28,6 +28,8 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     (display_individual_scopes loops exempt -- conversion collapses their output)
   - is_in_faction = TAG (boolean trigger misused with a tag; should be is_in_faction_with)
   - has_trade_agreement_with (not a valid trigger; MD uses has_country_flag = trade_agreement@TAG)
+  - Stat comparisons with the wrong trigger name (stability > 0.5 -> has_stability,
+    has_command_power -> command_power); bare names inside variable blocks are game variables
   - Dynamic triggers inside decision allowed blocks (allowed is evaluated once at game start)
   - is_X_nation triggers in runtime contexts (available, effect, limit) — use has_country_flag = X_flag instead
   - check_variable with inline >= or <= (silently mis-parsed; use compare = ... or a strict inequality)
@@ -333,6 +335,24 @@ _RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
 )
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
 _RE_TRADE_AGREEMENT_WITH = re.compile(r"\bhas_trade_agreement_with\s*=")
+_WRONG_STAT_TRIGGERS = {
+    "stability": "has_stability",
+    "war_support": "has_war_support",
+    "political_power": "has_political_power",
+    "manpower": "has_manpower",
+    "army_experience": "has_army_experience",
+    "navy_experience": "has_navy_experience",
+    "air_experience": "has_air_experience",
+    "legitimacy": "has_legitimacy",
+    "fuel": "has_fuel",
+    "has_command_power": "command_power",
+    "has_threat": "threat",
+    "has_surrender_progress": "surrender_progress",
+}
+_RE_WRONG_STAT_TRIGGER = re.compile(
+    r"(?<![\w.:@])(" + "|".join(_WRONG_STAT_TRIGGERS) + r")\s*([<>])"
+)
+_RE_VARIABLE_BLOCK_OPEN = re.compile(r"\b(?:\w*_variable|check_expr)\s*=\s*\{")
 # add_to_faction adds the ARGUMENT country to the current scope's faction, so it
 # takes a country tag or scope ref -- never a faction id (add_to_faction = BRICS
 # is a no-op; BRICS is a faction, not a country). The value captures identifier
@@ -2114,6 +2134,36 @@ def _check_every_owned_controlled_state(lines):
                     "every_owned_controlled_state does not exist -- use every_controlled_state",
                 )
             )
+    return issues
+
+
+def _check_wrong_stat_trigger(lines):
+    """Flag stat comparisons that use a nonexistent trigger name.
+
+    The engine drops the unknown trigger, so the gate is never enforced. Inside
+    check_variable and similar blocks the bare names are valid game variables.
+    """
+    issues = []
+    depth = 0
+    variable_depth = None
+    for line_num, line in enumerate(lines, 1):
+        code = _code_for_depth(line)
+        if variable_depth is None:
+            if _RE_VARIABLE_BLOCK_OPEN.search(code):
+                variable_depth = depth
+            else:
+                for match in _RE_WRONG_STAT_TRIGGER.finditer(code):
+                    wrong, op = match.groups()
+                    right = _WRONG_STAT_TRIGGERS[wrong]
+                    issues.append(
+                        (
+                            line_num,
+                            f"{wrong} {op} is not a trigger -- use {right} {op}",
+                        )
+                    )
+        depth += code.count("{") - code.count("}")
+        if variable_depth is not None and depth <= variable_depth:
+            variable_depth = None
     return issues
 
 
@@ -3976,6 +4026,7 @@ def check_file(filepath):
     issues.extend(_check_check_expr_bad_operand(lines))
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
+    issues.extend(_check_wrong_stat_trigger(lines))
     issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
