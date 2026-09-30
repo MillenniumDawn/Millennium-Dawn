@@ -414,6 +414,19 @@ _PLAYER_FACING_GLOBS = [
     "common/operations/*.txt",
     "common/special_projects/**/*.txt",
     "common/scripted_diplomatic_actions/*.txt",
+    "common/characters/*.txt",
+    "common/continuous_focus/*.txt",
+    "common/doctrines/**/*.txt",
+    "common/factions/**/*.txt",
+    "common/focus_inlay_windows/*.txt",
+    "common/intelligence_agencies/*.txt",
+    "common/intelligence_agency_upgrades/**/*.txt",
+    "common/occupation_laws/*.txt",
+    "common/raids/*.txt",
+    "common/resistance_activity/*.txt",
+    "common/technology_sharing/*.txt",
+    "common/unit_medals/*.txt",
+    "common/wargoals/*.txt",
 ]
 # Shorthand and long form, both flag types: `has_country_flag = X` /
 # `has_global_flag = { flag = X value > 0 }`. Group 1 is the flag kind
