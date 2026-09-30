@@ -701,6 +701,15 @@ def test_engine_random_and_vanilla_written_reads_are_known(tmp_path):
     assert _unwritten_names(tmp_path) == {"collaboration_formed_by"}
 
 
+def test_collaboration_formed_by_is_allowed_in_vanilla_autonomy_file(tmp_path):
+    _txt(
+        tmp_path,
+        "common/autonomous_states/lar_collaboration_government.txt",
+        "x = {\n\thas_variable = collaboration_formed_by\n}\n",
+    )
+    assert _unwritten_names(tmp_path) == set()
+
+
 def test_loop_binder_is_a_written_variable(tmp_path):
     _txt(
         tmp_path,
