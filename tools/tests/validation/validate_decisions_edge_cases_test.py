@@ -428,6 +428,11 @@ def test_full_run_with_both_opt_in_checks(tmp_path, write_path):
     categories = {issue.category for issue in validator._issues}
 
     assert "decision-icon-slot-mismatch" in categories
+    assert all(
+        i.severity == V.Severity.ERROR
+        for i in validator._issues
+        if i.category == "decision-icon-slot-mismatch"
+    )
     assert "unannounced-decision-category" in categories
     assert any("cat_main" in i.message for i in validator._issues)
     assert any(
