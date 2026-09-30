@@ -327,3 +327,39 @@ def test_rejects_keys_that_alias_existing_tab_state(tmp_path):
         module.add_system(str(repo), "orbit", "Forums", "Forums.")
 
     assert _read(repo, "common/scripted_guis/00_missiles_scripted_guis.txt") == before
+
+
+@pytest.mark.parametrize("description", ["Use C:\\Temp.", "Tab\\tstop."])
+def test_rejects_unsupported_backslash_escapes(tmp_path, description):
+    module = _module()
+    repo = _repo(tmp_path)
+
+    with pytest.raises(module.ToolError, match="backslash"):
+        module.add_system(str(repo), "forums", "Forums", description)
+
+    assert not (repo / "localisation").exists()
+
+
+def test_keeps_the_newline_escape(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+
+    module.add_system(str(repo), "forums", "Forums", "One.\\nTwo.")
+
+    loc = _read(repo, "localisation/english/MD_international_forums_l_english.yml")
+    assert 'FORUMS_GUI_LEDGER_TT_DELAYED: "One.\\nTwo."' in loc
+
+
+def test_rejects_keys_whose_window_already_exists(tmp_path):
+    module = _module()
+    repo = _repo(tmp_path)
+    _write(
+        repo / "interface/other.gui",
+        'guiTypes = {\n\tcontainerWindowType = {\n\t\tname = "MD_forums_system_window"\n\t}\n}\n',
+    )
+    before = _read(repo, "interface/MD_countrymissilesview.gui")
+
+    with pytest.raises(module.ToolError, match="MD_forums_system_window"):
+        module.add_system(str(repo), "forums", "Forums", "Forums.")
+
+    assert _read(repo, "interface/MD_countrymissilesview.gui") == before

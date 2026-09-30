@@ -322,6 +322,8 @@ def loc_value(text):
     """Quote-escape a localisation value; a newline cannot be written into one."""
     if "\n" in text or "\r" in text:
         raise ToolError("tab text must be a single line")
+    if re.search(r"\\(?!n)", text):
+        raise ToolError("the only backslash escape tab text may use is \\n")
     return text.replace('"', '\\"')
 
 
@@ -399,6 +401,22 @@ def taken_loc_keys(repo, keys):
     return sorted(set(keys) & taken)
 
 
+def taken_gui_names(repo, key):
+    """Return the stub's window and scripted GUI names that already exist."""
+    window, gui = f"MD_{key}_system_window", f"MD_{key}_system_gui"
+    taken = set()
+    for folder, suffix, pattern, name in (
+        ("interface", ".gui", rf'name\s*=\s*"{window}"', window),
+        (os.path.join("common", "scripted_guis"), ".txt", rf"\b{gui}\s*=\s*\{{", gui),
+    ):
+        for folder_path, _, files in os.walk(os.path.join(repo, folder)):
+            for file in files:
+                path = os.path.join(folder_path, file)
+                if file.endswith(suffix) and re.search(pattern, read_text_strict(path)):
+                    taken.add(name)
+    return sorted(taken)
+
+
 def direct_openers(repo):
     """List script lines outside the ledger strip that open a tab directly."""
     found = []
@@ -441,6 +459,9 @@ def add_system(repo, key, name, description, title=None, after=None):
     for path in stubs:
         if os.path.exists(os.path.join(repo, path)):
             raise ToolError(f"{path} already exists")
+    taken = taken_gui_names(repo, key)
+    if taken:
+        raise ToolError(f"GUI name(s) already defined: {', '.join(taken)}")
 
     files[SCREEN_GUI], order, sprite = layout_strip(files[SCREEN_GUI], key, after)
     if re.search(rf"\b{var}\b", files[SCREEN_SCRIPT] + files[TITLE_LOC]):
