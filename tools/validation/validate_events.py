@@ -224,6 +224,18 @@ def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, 
     ]
 
 
+def _extract_cost_blind_options(filename: str) -> List[Tuple[str, str, int]]:
+    """Pool worker: (message, basename, line) for options whose AI weight ignores a cost."""
+    text = _read_cleaned_text(filename)
+    if text is None:
+        return []
+    basename = os.path.basename(filename)
+    return [
+        (f"{name} - flat ai_chance ignores the {costs} cost", basename, line)
+        for name, line, costs in find_cost_blind_options(text)
+    ]
+
+
 _ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
 
 
@@ -1001,6 +1013,105 @@ def find_option_logs_without_effects(text: str) -> List[Tuple[str, int]]:
     return out
 
 
+# Blocks that keep the option's own country scope. A cost inside any other block
+# (`FROM = { ... }`, a state scope, a trigger) is not paid by the country choosing.
+_OWN_SCOPE_BLOCKS = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "hidden_effect",
+        "effect_tooltip",
+        "random",
+        "random_list",
+        "set_temp_variable",
+        "ROOT",
+        "THIS",
+    }
+)
+_BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
+_OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
+_AI_CHANCE_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
+_OPTION_COST_RES = (
+    (
+        "treasury",
+        re.compile(
+            r"\btreasury_change\s*=\s*-[\s\S]*\bmodify_treasury_effect\s*=\s*yes"
+            r"|\b(?:small|medium|large)_expenditure\s*=\s*yes"
+        ),
+    ),
+    ("political power", re.compile(r"\badd_political_power\s*=\s*-")),
+    ("stability", re.compile(r"\badd_stability\s*=\s*-")),
+    ("war support", re.compile(r"\badd_war_support\s*=\s*-")),
+)
+
+
+def _split_option(body: str) -> Tuple[str, Optional[str], int]:
+    """(own-scope effects, ai_chance body, ai_chance offset) of one option body."""
+    own: List[str] = []
+    ai_chance: Optional[str] = None
+    ai_offset = -1
+    depth = 0
+    cursor = 0
+    skip: Optional[Tuple[int, int, Optional[str]]] = None
+    for m in _BLOCK_TOKEN_RE.finditer(body):
+        if m.group(0) != "}":
+            depth += 1
+            key = m.group(1)
+            own_scope = key in _OWN_SCOPE_BLOCKS or (key is not None and key.isdigit())
+            if skip is None and not own_scope:
+                own.append(body[cursor : m.start()])
+                skip = (depth, m.end(), key)
+            continue
+        if skip is not None and skip[0] == depth:
+            if skip[2] == "ai_chance" and depth == 1:
+                ai_chance = body[skip[1] : m.start()]
+                ai_offset = skip[1]
+            cursor = m.end()
+            skip = None
+        depth -= 1
+    if skip is None:
+        own.append(body[cursor:])
+    return " ".join(own), ai_chance, ai_offset
+
+
+def find_cost_blind_options(text: str) -> List[Tuple[str, int, str]]:
+    """(option name, 1-based line, costs) for options whose AI weight ignores a cost.
+
+    Reports an option of a multi-option event when it charges its own country and
+    its `ai_chance` has no `modifier`, so the AI pays as readily broke as flush.
+    A missing `ai_chance` is the flat default weight. The line is the `ai_chance`
+    when there is one, since that is where the fix goes.
+    """
+    code = blank_quoted_strings(text)
+    out: List[Tuple[str, int, str]] = []
+    for _eid, body, start in _iter_event_bodies(code):
+        base = code.index("{", start) + 1
+        options = [
+            (match.end(), _matching_brace(body, match.end() - 1))
+            for match in _OPTION_OPEN_RE.finditer(body)
+        ]
+        if len(options) < 2:
+            continue
+        for opt_start, opt_end in options:
+            own, ai_chance, ai_offset = _split_option(body[opt_start:opt_end])
+            if ai_chance is not None and _AI_CHANCE_MODIFIER_RE.search(ai_chance):
+                continue
+            costs = [kind for kind, cost_re in _OPTION_COST_RES if cost_re.search(own)]
+            if not costs:
+                continue
+            name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
+            anchor = base + opt_start + max(ai_offset, 0)
+            out.append(
+                (
+                    name.group(1) if name else "unnamed option",
+                    code.count("\n", 0, anchor) + 1,
+                    ", ".join(costs),
+                )
+            )
+    return out
+
+
 def _extract_random_event_ids(text: str) -> set:
     """Find event IDs referenced inside ``random_events = { ... }`` blocks.
 
@@ -1104,8 +1215,9 @@ class Validator(BaseValidator):
     TITLE = "EVENT VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, check_ai_chance_costs: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
+        self.check_ai_chance_costs = check_ai_chance_costs
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._random_events_cache: Optional[set] = None
         self._probability_rolled_cache: Optional[set] = None
@@ -2365,6 +2477,34 @@ class Validator(BaseValidator):
             category="event-option-log-without-effect",
         )
 
+    def validate_ai_chance_ignores_cost(self):
+        """Flag options whose flat `ai_chance` ignores what the option costs.
+
+        Off unless `--check-ai-chance-costs` is passed: the backlog is mod-wide
+        (#5096), so the check stays out of CI until it is worked down.
+        """
+        if not self.check_ai_chance_costs:
+            self._log_section(
+                "Skipping AI weight cost check (pass --check-ai-chance-costs to enable)"
+            )
+            return
+        self._log_section("Checking event options for AI weights that ignore costs...")
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+        results: List[Tuple[str, str, int]] = []
+        for sub in self._pool_map(_extract_cost_blind_options, files):
+            results.extend(sub)
+        self._report(
+            sorted(results, key=lambda r: (r[1], r[2])),
+            "✓ No event AI weights ignoring option costs",
+            "Event options with a cost and a flat ai_chance (add a modifier for"
+            " affordability or for the situation the cost solves):",
+            Severity.WARNING,
+            category="event-ai-chance-ignores-cost",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
@@ -2388,7 +2528,21 @@ class Validator(BaseValidator):
         self.validate_fire_only_once_in_loop()
         self.validate_major_event_in_loop()
         self.validate_option_log_without_effect()
+        self.validate_ai_chance_ignores_cost()
+
+
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--check-ai-chance-costs",
+        action="store_true",
+        dest="check_ai_chance_costs",
+        help="Report event options whose flat ai_chance ignores the option's cost",
+    )
 
 
 if __name__ == "__main__":
-    run_validator_main(Validator, "Validate events in Millennium Dawn mod")
+    run_validator_main(
+        Validator,
+        "Validate events in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
+    )
