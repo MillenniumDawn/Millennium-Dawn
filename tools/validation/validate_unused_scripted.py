@@ -11,6 +11,7 @@ from typing import List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from shared_utils import validation_config
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -31,124 +32,18 @@ _CUSTOM_TT_REF_RE = re.compile(
     r"custom_(?:effect|trigger)_tooltip\s*=\s*([A-Za-z_]\w*)\b"
 )
 
-# Name patterns for known false positives — referenced by the game engine,
-# called dynamically, or serving as convention-based callbacks rather than being
-# explicitly invoked via `name = yes` in script files.
-FALSE_POSITIVE_PATTERN_SOURCES = [
-    r"^trigger_year_",  # Year-based triggers, engine-referenced
-    r"^EU_update_AI_focus_.*_voting_modifier$",  # EU voting AI, dynamically called
-    r"_accepted$",  # Focus accepted callbacks (engine convention)
-    r"^DIPLOMACY_.*_ENABLE_TRIGGER",  # Game rule triggers, engine-referenced
-    r"^is_diplomatic_action_valid_",  # Diplo-action validity gates, engine-referenced by action token
+FALSE_POSITIVE_PATTERNS = [
+    re.compile(p)
+    for p in validation_config("validate_unused_scripted", "false_positive_patterns")
 ]
-FALSE_POSITIVE_PATTERNS = [re.compile(p) for p in FALSE_POSITIVE_PATTERN_SOURCES]
-
-# Individual definitions with no caller by design: engine-read override points,
-# or preset/utility names kept available for content authors.
 FALSE_POSITIVE_NAMES = frozenset(
-    {
-        # Vanilla engine hooks — read by the engine, never called from script
-        "should_initiate_resistance",
-        "should_activate_active_crypto_bonuses",
-        "should_not_activate_active_crypto_bonuses",
-        # MIO catalog meta-dispatch empty-token-key fallback
-        "_unlock_btn_enabled",
-        # Conscription-law preset kept for parity with its three called siblings
-        "set_partial_draft_effect",
-        # 00_alert_triggers.txt
-        "has_md_alert",
-        # 00_continent_triggers.txt
-        "is_in_the_americas",
-        "is_in_the_caribbean",
-        # 00_cyber_triggers.txt
-        "cyber_target_not_on_cooldown",
-        # 00_debt_ratio_triggers.txt
-        "gdp_debt_ratio_lower_5",
-        # 00_economic_triggers.txt
-        "ai_has_acceptable_surplus",
-        "ai_has_acceptable_deficit_factories",
-        "interest_rate_lower_than_5_5",
-        "inflation_rate_lower_than_2",
-        "debt_higher_than_30",
-        "gdp_per_capita_greater_than_2",
-        "gdp_per_capita_greater_than_7",
-        "gdp_total_greater_than_7000",
-        # MD_antarctica_station_module_triggers.txt
-        "antarctica_is_life_support_slot_selected",
-        "antarctica_is_fuel_storage_slot_selected",
-        "antarctica_is_laboratory_slot_selected",
-        # 00_budget_effects.txt
-        "disable_debt_rate_payments",
-        "enable_debt_rate_payments",
-        # 00_ct_effects.txt
-        "add_new_org",
-        # 00_economic_system_utilities.txt
-        "disable_corporate_tax_rate_change",
-        "enable_corporate_tax_rate_change",
-        # 00_generic_ideas_scripted_effects.txt
-        "upgrade_western_boost_idea",
-        "upgrade_emerging_boost_idea",
-        "upgrade_nationalist_boost_idea",
-        "upgrade_salafist_boost_idea",
-        # 00_influence_scripted_effects.txt
-        "economic_exploitation_action",
-        # 00_internal_faction_effects.txt
-        "reset_all_internal_faction_opinions",
-        # 00_pp_scripted_effects.txt
-        "lose_pp_for_6_months",
-        "lose_pp_for_5_months",
-        # 00_sanctions_scripted_effects.txt
-        "increase_sanctions",
-    }
+    validation_config("validate_unused_scripted", "false_positive_names")
 )
-
-# Dead code deliberately retained pending tracked implementation work.
-# Remove entries here as each mechanic is implemented and gains real callers.
 PENDING_IMPLEMENTATION_NAMES = frozenset(
-    {
-        # Brazil Amazon acreage adjustment hooks
-        "BRA_target_acreage_effect",
-        "BRA_acre_rate_gain_effect",
-        "BRA_acre_rate_loss_effect",
-        # US Congress elections — pending the American midterm elections issue (#2719)
-        "USA_congress_remove_state",
-        "USA_election_senate",
-        "USA_election_house",
-        "USA_return_majority",
-        "USA_flip_support",
-        "usa_congress_oppposition_elections",
-    }
+    validation_config("validate_unused_scripted", "pending_implementation_names")
 )
-
-# Files whose definitions are entirely engine-referenced (all contents are false positives)
 FALSE_POSITIVE_FILES = frozenset(
-    {
-        "00_game_rule_triggers.txt",
-        # Internal faction opinion triggers — a convention-based preset library
-        # (enthusiastic_X / positive_X / indifferent_X / negative_X / hostile_X
-        # for every internal faction). Kept fully populated so any content that
-        # wants to check a faction mood level has a ready-made trigger, even if
-        # many are not currently referenced anywhere in the mod.
-        "00_internal_factions_trigger.txt",
-        # Dummy effect existing only to suppress false positives on dynamically
-        # built flag/variable names; deliberately never called.
-        "!_cwtools_dummy_effects.txt",
-        # Convention/preset libraries
-        "00_scripted_triggers.txt",
-        "00_law_blocking_triggers.txt",
-        "00_influence_scripted_triggers.txt",
-        "01_political_triggers.txt",
-        "01_international_triggers.txt",
-        "05_misc_mechanic_scripted_triggers.txt",
-        "MD_Country_Groups_Triggers.txt",
-        "MD_missile_scripted_triggers.txt",
-        "MD_regional_owned_triggers.txt",
-        "MD_regional_triggers.txt",
-        "00_scripted_effects.txt",
-        "00_law_blocking_effects.txt",
-        # Gates for DLC-owned music playlists; MD ships no playlist that calls them.
-        "00_music_dlc_compatibility_triggers.txt",
-    }
+    validation_config("validate_unused_scripted", "false_positive_files")
 )
 
 

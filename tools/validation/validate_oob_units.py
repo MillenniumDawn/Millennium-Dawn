@@ -25,6 +25,7 @@ from equipment_module_slots import (
     _scalar,
     blank_comments,
     build_equipment_index,
+    check_created_variant_upgrades,
     check_created_variants,
     parse_variant_names,
 )
@@ -49,6 +50,7 @@ _VARIANT_SLOT_CATEGORIES = {
     "missing_required_module": "SHIP VARIANT: required slot left empty",
     "count_limit_exceeded": "SHIP VARIANT: module count limit exceeded",
     "forbidden_equipment_type": "SHIP VARIANT: module forbidden on hull type",
+    "unsupported_upgrade": "SHIP VARIANT: unsupported upgrade",
 }
 
 _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
@@ -59,6 +61,7 @@ _EQUIPMENT_VARIANT_SLOT_CATEGORIES = {
     "missing_required_module": "EQUIPMENT VARIANT: required slot left empty",
     "count_limit_exceeded": "EQUIPMENT VARIANT: module count limit exceeded",
     "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
+    "unsupported_upgrade": "EQUIPMENT VARIANT: unsupported upgrade",
 }
 
 # Every directory where a create_equipment_variant effect actually appears.
@@ -1742,6 +1745,10 @@ def _check_created_units(
     raw = _read_text(filepath, mod_path)
     if not raw:
         return []
+    if "create_unit" not in raw:
+        # Most candidates never mention it; the strip and block parse below
+        # would find no create_unit node anyway.
+        return []
     content = strip_comments(raw)
     nodes = disk_cache.per_file_cached_by_content(
         mod_path,
@@ -2153,7 +2160,10 @@ class Validator(BaseValidator):
             if "create_equipment_variant" not in content:
                 continue
 
-            for f in check_created_variants(content, index):
+            findings = check_created_variants(
+                content, index
+            ) + check_created_variant_upgrades(content, index)
+            for f in findings:
                 labels = (
                     _VARIANT_SLOT_CATEGORIES
                     if f.hull in index.ship_hulls

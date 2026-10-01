@@ -35,6 +35,18 @@ def test_validation_tool_change_runs_full_suite(path):
     assert groups["style"] is False
 
 
+def test_validation_config_change_requests_focus_style_scan():
+    groups = change_groups.classify(["validation_config.json"])
+
+    assert groups["full_suite"] is True
+    assert groups["style_config"] is True
+    assert groups["style_files"] == []
+    assert (
+        change_groups.classify(["tools/validation/change_groups.py"])["style_config"]
+        is False
+    )
+
+
 def test_non_validation_tool_change_skips_full_suite():
     groups = change_groups.classify(["tools/assets/dds_compression_audit.py"])
 
@@ -143,6 +155,23 @@ def test_unshipped_path_skips_index_validation():
 
     assert groups["file-paths"] is False
     assert groups["content"] is False
+    assert groups["docs"] is True
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "docs/src/content/changelogSections/v2-0-changes.md",
+        "tools/docs_checks/check_perf_budgets.py",
+        ".github/workflows/docs-quality.yml",
+    ),
+)
+def test_docs_change_runs_docs_quality(path):
+    groups = change_groups.classify([path])
+
+    assert groups["docs"] is True
+    assert groups["content"] is False
+    assert groups["full_suite"] is False
 
 
 @pytest.mark.parametrize(

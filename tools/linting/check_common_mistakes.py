@@ -28,6 +28,8 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     (display_individual_scopes loops exempt -- conversion collapses their output)
   - is_in_faction = TAG (boolean trigger misused with a tag; should be is_in_faction_with)
   - has_trade_agreement_with (not a valid trigger; MD uses has_country_flag = trade_agreement@TAG)
+  - Stat comparisons with the wrong trigger name (stability > 0.5 -> has_stability,
+    has_command_power -> command_power); bare names inside variable blocks are game variables
   - Dynamic triggers inside decision allowed blocks (allowed is evaluated once at game start)
   - is_X_nation triggers in runtime contexts (available, effect, limit) — use has_country_flag = X_flag instead
   - check_variable with inline >= or <= (silently mis-parsed; use compare = ... or a strict inequality)
@@ -60,6 +62,7 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     the engine rejects the effect and the building is never placed
   - NOR = { ... } (not a HOI4 trigger keyword; silently never matches)
   - is_at_war = yes/no (not a HOI4 trigger; use has_war)
+  - has_opinion_modifier = { ... } (the trigger takes a single modifier ID)
   - max_iterations inside while_loop_effect (silently ignored by the engine)
   - var:x^i array-index shorthand (needs the full variable name)
   - limit as a direct child of an else block (else takes no condition, so the
@@ -76,6 +79,8 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - has_active_mission / has_active_decision / has_active_timed_decision naming
     no decision (the trigger reads false forever)
   - add_opinion_modifier / add_relation_modifier naming an undefined modifier
+  - a bare word inside a trigger/effect block (NOT = { my_trigger }), a
+    scripted call missing "= yes" that the parser rejects
 """
 
 import json
@@ -112,6 +117,7 @@ _RE_CHECK_EXPR_BAD_OPERAND = re.compile(
 _RE_EVERY_OWNED_CONTROLLED_STATE = re.compile(r"\bevery_owned_controlled_state\b")
 _RE_NOR = re.compile(r"\bNOR\s*=\s*\{")
 _RE_IS_AT_WAR = re.compile(r"\bis_at_war\s*=\s*(?:yes|no)\b")
+_RE_HAS_OPINION_MODIFIER_BLOCK = re.compile(r"\bhas_opinion_modifier\s*=\s*\{")
 _RE_WHILE_LOOP_OPEN = re.compile(r"\bwhile_loop_effect\s*=\s*\{")
 _RE_MAX_ITERATIONS = re.compile(r"\bmax_iterations\s*=")
 # var:x^i needs the full variable name; a one-letter base is the shorthand the
@@ -251,10 +257,53 @@ _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
 _RE_WILL_LEAD_TO_WAR = re.compile(r"\bwill_lead_to_war_with\b")
 _RE_SCRIPT_TOKEN = re.compile(r"[{}=]|[A-Za-z_][\w:.@]*")
 _RE_QUOTED_STRING = re.compile(r'"[^"]*"')
+# Event sends from effects: braced `country_event = { id = X days = N }` (the id
+# may sit on a later line, hence [^}]*? with DOTALL) or bare `country_event = X`.
+# Delayed sends (days/hours) still lead to war, so they resolve the same way.
+_RE_EVENT_SEND = re.compile(
+    r"\b(?:country_event|news_event)\s*=\s*(?:\{[^}]*?id\s*=\s*([\w.]+)|([\w.]+))",
+    re.DOTALL,
+)
+_RE_EVENT_DEFINITION_OPEN = re.compile(r"\b(?:country_event|news_event)\s*=\s*\{")
+_RE_EVENT_ID = re.compile(r"\bid\s*=\s*([\w.]+)")
+# Markers that only appear in an event DEFINITION, never in an effect send:
+# sends carry id/days/hours, definitions carry title/triggers/options.
+_RE_EVENT_DEFINITION_MARKER = re.compile(r"\b(?:title|is_triggered_only|option)\s*=")
+# effect_tooltip only displays; a country_event nested in one never fires.
+_TOOLTIP_SCOPE_OPENERS = {"effect_tooltip", "custom_effect_tooltip"}
+# Focus -> event -> event hops followed before giving up. Deeper chains are
+# gameplay telephone; the focus still needs the hint, but resolving further is
+# not worth the scan.
+_EVENT_CHAIN_MAX_DEPTH = 3
 # Tokens for the leader-rotation tree parser: braces, the comparison operators a
 # limit can use, and everything else as one word (ideology names carry '-').
 _RE_SCRIPT_NODE = re.compile(r"[{}]|[<>]=?|=|[^\s{}=<>]+")
 _NODE_OPERATORS = {"=", "<", ">", "<=", ">="}
+# Blocks whose children are all key = value statements; a lone word there is a
+# scripted trigger/effect call missing "= yes".
+_STATEMENT_BLOCK_KEYS = {
+    "NOT",
+    "OR",
+    "AND",
+    "limit",
+    "trigger",
+    "available",
+    "allowed",
+    "visible",
+    "potential",
+    "if",
+    "else_if",
+    "else",
+    "hidden_trigger",
+    "hidden_effect",
+    "immediate",
+    "option",
+    "effect",
+    "completion_reward",
+}
+# mission_type_stats = { limit = { cas ... } } lists mission types.
+_LIST_PARENT_KEYS = {"mission_type_stats"}
+_RE_BARE_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _TIER_KEYWORDS = {"if", "else_if"}
 _LEADER_EFFECT_PREFIX = "set_leader_"
 _LEADER_COUNTER_SUFFIX = "_leader"
@@ -264,6 +313,10 @@ _RE_TAG_SCOPE = re.compile(r"^[A-Z]{2,3}$")
 _LOGIC_SCOPE_TOKENS = {"AND", "OR", "NOT"}
 _OWNER_RESET_SCOPE_TOKENS = {"ROOT", "THIS"}
 _FOREIGN_COUNTRY_SCOPE_TOKENS = {
+    "FROM",
+    "OWNER",
+    "create_dynamic_country",
+    "owner",
     "random_country",
     "random_other_country",
     "every_country",
@@ -274,6 +327,9 @@ _FOREIGN_COUNTRY_SCOPE_TOKENS = {
     "random_enemy_country",
     "every_subject_country",
     "random_subject_country",
+    # A country created mid-effect acts as itself, so a war it declares on the
+    # focus owner is the new state's, not the owner's.
+    "create_dynamic_country",
 }
 _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
 _RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")
@@ -306,6 +362,24 @@ _RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
 )
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
 _RE_TRADE_AGREEMENT_WITH = re.compile(r"\bhas_trade_agreement_with\s*=")
+_WRONG_STAT_TRIGGERS = {
+    "stability": "has_stability",
+    "war_support": "has_war_support",
+    "political_power": "has_political_power",
+    "manpower": "has_manpower",
+    "army_experience": "has_army_experience",
+    "navy_experience": "has_navy_experience",
+    "air_experience": "has_air_experience",
+    "legitimacy": "has_legitimacy",
+    "fuel": "has_fuel",
+    "has_command_power": "command_power",
+    "has_threat": "threat",
+    "has_surrender_progress": "surrender_progress",
+}
+_RE_WRONG_STAT_TRIGGER = re.compile(
+    r"(?<![\w.:@])(" + "|".join(_WRONG_STAT_TRIGGERS) + r")\s*([<>])"
+)
+_RE_VARIABLE_BLOCK_OPEN = re.compile(r"\b(?:\w*_variable|check_expr)\s*=\s*\{")
 # add_to_faction adds the ARGUMENT country to the current scope's faction, so it
 # takes a country tag or scope ref -- never a faction id (add_to_faction = BRICS
 # is a no-op; BRICS is a faction, not a country). The value captures identifier
@@ -419,6 +493,7 @@ from shared_utils import (
     print_timing_summary,
     run_with_pool,
     strip_inline_comment,
+    validation_config,
 )
 
 
@@ -455,7 +530,7 @@ def _scan_global_refs(root_dir):
                         decisions.add(m.group(1))
                     for m in _RE_SET_NATION_FLAG.finditer(content):
                         nation_flags.add(m.group(1))
-                except Exception:
+                except OSError:
                     pass
     return focuses, decisions, nation_flags
 
@@ -584,6 +659,72 @@ def _focus_owner_tag(code):
     return None
 
 
+def _scope_is_owner(stack):
+    """True when a scope stack resolves to the focus owner's country.
+
+    Innermost foreign scope wins (a sponsored proxy war); an explicit reset
+    (ROOT/THIS/owner tag) wins over anything outside it; anything enclosing a
+    display-only tooltip never fires, so it never counts as the owner."""
+    if "tooltip" in stack or "inapplicable" in stack:
+        return False
+    for kind in reversed(stack):
+        if kind == "foreign":
+            return False
+        if kind == "reset":
+            return True
+    return True
+
+
+def _war_at_scope(text, owner_tag):
+    """True if create_wargoal/declare_war_on fires at the owner's scope."""
+    stack = []
+    openers = []
+    previous_owner_if = {}
+    last_ident = None
+    opener_pending = None
+    for match in _RE_SCRIPT_TOKEN.finditer(text):
+        tok = match.group(0)
+        if tok == "=":
+            opener_pending = last_ident
+        elif tok == "{":
+            opener = opener_pending
+            limit = None
+            if opener in ("if", "else_if"):
+                limit = re.match(
+                    r"\s*limit\s*=\s*\{\s*(?:original_tag|tag)\s*=\s*([A-Z]{2,3})\s*\}",
+                    text[match.end() :],
+                )
+            blocked_by_previous = bool(
+                opener in ("else", "else_if") and previous_owner_if.get(len(stack))
+            )
+            owner_if = (
+                bool(limit and owner_tag == limit.group(1)) or blocked_by_previous
+            )
+            impossible = (limit and owner_tag != limit.group(1)) or blocked_by_previous
+            stack.append(
+                "inapplicable" if impossible else _scope_frame_kind(opener, owner_tag)
+            )
+            openers.append((opener, owner_if))
+            previous_owner_if.pop(len(stack) - 1, None)
+            opener_pending = None
+            last_ident = None
+        elif tok == "}":
+            if stack:
+                stack.pop()
+                opener, owner_if = openers.pop()
+                previous_owner_if[len(stack)] = (
+                    owner_if if opener in ("if", "else_if") else False
+                )
+            opener_pending = None
+            last_ident = None
+        else:
+            if tok in ("create_wargoal", "declare_war_on") and _scope_is_owner(stack):
+                return True
+            last_ident = tok
+            opener_pending = None
+    return False
+
+
 def _war_declared_at_owner_scope(code):
     """True if a create_wargoal/declare_war fires at the focus owner's scope.
 
@@ -595,14 +736,43 @@ def _war_declared_at_owner_scope(code):
     """
     owner_tag = _focus_owner_tag(code)
     text = _RE_QUOTED_STRING.sub('""', "\n".join(code))
+    return _war_at_scope(text, owner_tag)
+
+
+def _owner_scope_event_sends(text, owner_tag):
+    """Event ids a block sends while scoped to the focus owner's country.
+
+    A send inside a foreign-country scope runs as that country, so a war in
+    the sent event is theirs, not the owner's. A send inside effect_tooltip
+    never fires (display-only). Both are skipped."""
+    blank = _RE_QUOTED_STRING.sub('""', text)
+    pending = sorted(
+        (
+            (match.group(1) or match.group(2), match.start())
+            for match in _RE_EVENT_SEND.finditer(blank)
+        ),
+        key=lambda send: send[1],
+    )
+    found = []
+    if not pending:
+        return found
     stack = []
     last_ident = None
     opener_pending = None
-    for tok in _RE_SCRIPT_TOKEN.findall(text):
+    idx = 0
+    for tok_match in _RE_SCRIPT_TOKEN.finditer(blank):
+        while idx < len(pending) and pending[idx][1] < tok_match.start():
+            if _scope_is_owner(stack):
+                found.append(pending[idx][0])
+            idx += 1
+        tok = tok_match.group(0)
         if tok == "=":
             opener_pending = last_ident
         elif tok == "{":
-            stack.append(_scope_frame_kind(opener_pending, owner_tag))
+            if opener_pending in _TOOLTIP_SCOPE_OPENERS:
+                stack.append("tooltip")
+            else:
+                stack.append(_scope_frame_kind(opener_pending, owner_tag))
             opener_pending = None
             last_ident = None
         elif tok == "}":
@@ -611,29 +781,143 @@ def _war_declared_at_owner_scope(code):
             opener_pending = None
             last_ident = None
         else:
-            if tok == "create_wargoal" or tok == "declare_war_on":
-                in_foreign = False
-                for kind in reversed(stack):
-                    if kind == "foreign":
-                        in_foreign = True
-                        break
-                    if kind == "reset":
-                        break
-                if not in_foreign:
-                    return True
             last_ident = tok
             opener_pending = None
-    return False
+    while idx < len(pending):
+        if _scope_is_owner(stack):
+            found.append(pending[idx][0])
+        idx += 1
+    return list(dict.fromkeys(found))
 
 
-def _check_focus_missing_war_hint(lines):
-    """Flag focus blocks that declare war but carry no will_lead_to_war_with hint.
+_EVENT_INDEX: dict = {}
+_EVENT_INDEX_BUILT = False
+_EVENT_BLOCKS: dict = {}
+
+
+def _iter_event_definitions(content):
+    """Yield definition block texts for country_event/news_event in content."""
+    blank = "\n".join(_code_for_depth(line) for line in content.splitlines())
+    block_end = 0
+    for open_match in _RE_EVENT_DEFINITION_OPEN.finditer(blank):
+        if open_match.start() < block_end:
+            continue
+        depth = 0
+        idx = open_match.end() - 1
+        while idx < len(blank):
+            if blank[idx] == "{":
+                depth += 1
+            elif blank[idx] == "}":
+                depth -= 1
+                if depth == 0:
+                    block_end = idx + 1
+                    yield blank[open_match.start() : block_end]
+                    break
+            idx += 1
+
+
+def _build_event_index(root_dir):
+    """Map event id -> defining file for every event definition in events/."""
+    index = {}
+    if not root_dir:
+        return index
+    events_dir = os.path.join(root_dir, "events")
+    if not os.path.isdir(events_dir):
+        return index
+    for dirpath, _, filenames in os.walk(events_dir):
+        for filename in filenames:
+            if not filename.endswith(".txt"):
+                continue
+            filepath = os.path.join(dirpath, filename)
+            try:
+                with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
+                    content = handle.read()
+            except OSError:
+                continue
+            for block in _iter_event_definitions(content):
+                if not _RE_EVENT_DEFINITION_MARKER.search(block):
+                    continue
+                id_match = _RE_EVENT_ID.search(block)
+                if id_match:
+                    index.setdefault(id_match.group(1), filepath)
+    return index
+
+
+def _get_event_block(event_id, event_blocks=None, event_index=None):
+    """Return the definition block text for an event id, or None."""
+    if event_blocks is not None:
+        return event_blocks.get(event_id)
+    global _EVENT_INDEX, _EVENT_INDEX_BUILT
+    if event_index is None:
+        if not _EVENT_INDEX_BUILT:
+            try:
+                root_dir = get_root_dir()
+            except Exception:
+                root_dir = None
+            _EVENT_INDEX = _build_event_index(root_dir)
+            _EVENT_INDEX_BUILT = True
+        event_index = _EVENT_INDEX
+    filepath = event_index.get(event_id)
+    key = (filepath, event_id)
+    if key in _EVENT_BLOCKS:
+        return _EVENT_BLOCKS[key]
+    block = None
+    if filepath:
+        try:
+            with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
+                content = handle.read()
+        except OSError:
+            content = ""
+        for candidate in _iter_event_definitions(content):
+            id_match = _RE_EVENT_ID.search(candidate)
+            if id_match and id_match.group(1) == event_id:
+                block = candidate
+                break
+    _EVENT_BLOCKS[key] = block
+    return block
+
+
+def _event_chain_leads_to_war(
+    event_id, owner_tag, event_blocks=None, _seen=None, _depth=0, event_index=None
+):
+    """Follow a sent event (and its chained sends) for owner-scope war.
+
+    Returns (leads_to_war, chain): chain lists the event ids from the
+    focus-sent event down to the one declaring war (wargoal grants count as
+    demands leading to war). Unresolvable ids end the chain quietly.
+    """
+    if _seen is None:
+        _seen = set()
+    if _depth > _EVENT_CHAIN_MAX_DEPTH or event_id in _seen:
+        return False, []
+    _seen = _seen | {event_id}
+    block = _get_event_block(event_id, event_blocks, event_index)
+    if not block:
+        return False, []
+    if _war_at_scope(block, owner_tag):
+        return True, [event_id]
+    for sent_id in _owner_scope_event_sends(block, owner_tag):
+        leads, chain = _event_chain_leads_to_war(
+            sent_id, owner_tag, event_blocks, _seen, _depth + 1, event_index
+        )
+        if leads:
+            return True, [event_id] + chain
+    return False, []
+
+
+def _check_focus_missing_war_hint(lines, event_blocks=None):
+    """Flag focus blocks that lead to war but carry no will_lead_to_war_with hint.
 
     A focus whose completion_reward calls create_wargoal/declare_war at the
     OWNER's scope should set will_lead_to_war_with = TAG so the AI prepares for
-    the war. create_wargoal inside an effect_tooltip still counts; a war effect
-    nested in another country's scope (a sponsored proxy war) does not. The hint
-    anywhere in the block clears the focus.
+    the war -- and so should a focus whose completion_reward sends an event
+    (country_event/news_event) whose immediate/option effects, or a chained
+    event they send in turn, declare war at the owner's scope. Wargoal grants
+    count: they are demands that lead to war. create_wargoal inside an
+    effect_tooltip still counts; a war effect nested in another country's scope
+    (a sponsored proxy war, including an event sent TO another country) does
+    not. The hint anywhere in the block clears the focus. Live runs resolve
+    events against the events/ tree; tests inject event_blocks (id -> text).
     """
     issues = []
     i = 0
@@ -643,11 +927,11 @@ def _check_focus_missing_war_hint(lines):
             start = i
             block, i = _get_block(lines, start)
             code = [strip_inline_comment(bl) for bl in block]
-            if _war_declared_at_owner_scope(code) and not any(
-                _RE_WILL_LEAD_TO_WAR.search(c) for c in code
-            ):
-                id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
-                focus_id = id_match.group(1) if id_match else "<unknown>"
+            if any(_RE_WILL_LEAD_TO_WAR.search(c) for c in code):
+                continue
+            id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
+            focus_id = id_match.group(1) if id_match else "<unknown>"
+            if _war_declared_at_owner_scope(code):
                 issues.append(
                     (
                         start + 1,
@@ -655,6 +939,23 @@ def _check_focus_missing_war_hint(lines):
                         " -- add will_lead_to_war_with = TAG so the AI prepares for war",
                     )
                 )
+                continue
+            text = "\n".join(code)
+            owner_tag = _focus_owner_tag(code)
+            for sent_id in _owner_scope_event_sends(text, owner_tag):
+                leads, chain = _event_chain_leads_to_war(
+                    sent_id, owner_tag, event_blocks
+                )
+                if leads:
+                    issues.append(
+                        (
+                            start + 1,
+                            f"Focus {focus_id} sends event {' -> '.join(chain)} leading to"
+                            " war but has no will_lead_to_war_with"
+                            " -- add will_lead_to_war_with = TAG so the AI prepares for war",
+                        )
+                    )
+                    break
         else:
             i += 1
     return issues
@@ -1863,6 +2164,36 @@ def _check_every_owned_controlled_state(lines):
     return issues
 
 
+def _check_wrong_stat_trigger(lines):
+    """Flag stat comparisons that use a nonexistent trigger name.
+
+    The engine drops the unknown trigger, so the gate is never enforced. Inside
+    check_variable and similar blocks the bare names are valid game variables.
+    """
+    issues = []
+    depth = 0
+    variable_depth = None
+    for line_num, line in enumerate(lines, 1):
+        code = _code_for_depth(line)
+        if variable_depth is None:
+            if _RE_VARIABLE_BLOCK_OPEN.search(code):
+                variable_depth = depth
+            else:
+                for match in _RE_WRONG_STAT_TRIGGER.finditer(code):
+                    wrong, op = match.groups()
+                    right = _WRONG_STAT_TRIGGERS[wrong]
+                    issues.append(
+                        (
+                            line_num,
+                            f"{wrong} {op} is not a trigger -- use {right} {op}",
+                        )
+                    )
+        depth += code.count("{") - code.count("}")
+        if variable_depth is not None and depth <= variable_depth:
+            variable_depth = None
+    return issues
+
+
 def _check_nor_block(lines):
     """Flag NOR, which is not a HOI4 trigger keyword.
 
@@ -1885,9 +2216,9 @@ def _check_nor_block(lines):
     return issues
 
 
-# on_daily_BOS predates the rule below and is left in place deliberately; it is
-# the example .claude/rules/general-rules.md points at as the shape not to copy.
-_AI_DAILY_CACHE_ALLOWLIST = frozenset({"on_daily_BOS"})
+_AI_DAILY_CACHE_ALLOWLIST = frozenset(
+    validation_config("check_common_mistakes", "ai_daily_cache_allowlist")
+)
 
 _RE_ON_DAILY_TAG = re.compile(r"^\s*(on_daily_[A-Z]{3}[A-Z_]*)\s*=\s*\{")
 _RE_SET_COUNTRY_FLAG = re.compile(r"\bset_country_flag\s*=\s*(\S+)")
@@ -2060,6 +2391,20 @@ def _check_invalid_is_at_war(lines):
                 (
                     line_num,
                     "is_at_war is not a HOI4 trigger -- use has_war = yes/no",
+                )
+            )
+    return issues
+
+
+def _check_has_opinion_modifier_block(lines):
+    """Flag block-form has_opinion_modifier, which only accepts a modifier ID."""
+    issues = []
+    for line_num, line in enumerate(lines, 1):
+        if _RE_HAS_OPINION_MODIFIER_BLOCK.search(_code_for_depth(line)):
+            issues.append(
+                (
+                    line_num,
+                    "has_opinion_modifier takes a modifier ID, not a block",
                 )
             )
     return issues
@@ -3096,13 +3441,57 @@ def _parse_script_nodes(tokens, i):
     return children, i
 
 
-def _parse_script_tree(lines):
-    tokens = [
+def _script_tokens(lines):
+    return [
         (m.group(0), line_num)
         for line_num, line in enumerate(lines, 1)
         for m in _RE_SCRIPT_NODE.finditer(_code_for_depth(line))
     ]
-    return _parse_script_nodes(tokens, 0)[0]
+
+
+def _parse_script_tree(lines):
+    return _parse_script_nodes(_script_tokens(lines), 0)[0]
+
+
+def _check_bare_statement_token(lines):
+    """Flag a lone word inside a trigger/effect block (NOT = { my_trigger }).
+    The parser rejects it as an unexpected token; the call needs "= yes".
+    """
+    tokens = _script_tokens(lines)
+    issues = []
+    stack = []
+    i = 0
+    n = len(tokens)
+    while i < n:
+        tok, line = tokens[i]
+        if tok == "{":
+            opened_by_key = i >= 2 and tokens[i - 1][0] in _NODE_OPERATORS
+            stack.append(tokens[i - 2][0] if opened_by_key else None)
+            i += 1
+            continue
+        if tok == "}":
+            if stack:
+                stack.pop()
+            i += 1
+            continue
+        if i + 1 < n and tokens[i + 1][0] in _NODE_OPERATORS:
+            i += 2 if i + 2 < n and tokens[i + 2][0] == "{" else 3
+            continue
+        if (
+            stack
+            and stack[-1] in _STATEMENT_BLOCK_KEYS
+            and not (len(stack) > 1 and stack[-2] in _LIST_PARENT_KEYS)
+            and _RE_BARE_IDENTIFIER.match(tok)
+        ):
+            issues.append(
+                (
+                    line,
+                    f'bare "{tok}" inside {stack[-1]} = {{ }}: '
+                    'add "= yes" to call the scripted trigger/effect',
+                )
+            )
+        i += 1
+    return issues
 
 
 def _first_child(node, key):
@@ -3708,7 +4097,9 @@ def check_file(filepath):
     issues.extend(_check_check_expr_bad_operand(lines))
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
+    issues.extend(_check_wrong_stat_trigger(lines))
     issues.extend(_check_invalid_is_at_war(lines))
+    issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
     issues.extend(_check_var_index_shorthand(lines))
     issues.extend(_check_else_with_limit(lines))
@@ -3721,6 +4112,7 @@ def check_file(filepath):
         issues.extend(_check_every_owned_controlled_state(lines))
         issues.extend(_check_building_missing_province(lines))
         issues.extend(_check_nested_province_block(lines))
+        issues.extend(_check_bare_statement_token(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 

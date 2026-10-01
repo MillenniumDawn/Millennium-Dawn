@@ -63,6 +63,12 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ),
         ValidatorSpec("oob-units", "validate_oob_units.py", ("oob",)),
         ValidatorSpec("equipment-upkeep", "validate_equipment_upkeep.py", ("oob",)),
+        ValidatorSpec(
+            "equipment-variants",
+            "validate_equipment_variants.py",
+            ("common", "events", "history"),
+            strict=False,
+        ),
         ValidatorSpec("ai-roles", "validate_ai_roles.py", ("ai-strategy",)),
         ValidatorSpec("ai-navy", "validate_ai_navy.py", ("ai-navy",)),
         ValidatorSpec("ai-equipment", "validate_ai_equipment.py", ("ai-equipment",)),
@@ -117,8 +123,16 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "validate_dynamic_modifier_guards.py",
             ("common", "events"),
         ),
+        ValidatorSpec(
+            "influence-calls", "validate_influence_calls.py", ("common", "events")
+        ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
         ValidatorSpec("country-names", "validate_country_names.py", ("common",)),
+        ValidatorSpec(
+            "ai-path-rules",
+            "validate_ai_path_rules.py",
+            ("national-focus", "common", "history"),
+        ),
         ValidatorSpec(
             "party-loc",
             "validate_party_loc.py",
@@ -154,6 +168,8 @@ IMPACT_ONLY_SPECS: Tuple[ValidatorSpec, ...] = (
 _IMPACT_ONLY_BY_SCRIPT = {spec.script: spec for spec in IMPACT_ONLY_SPECS}
 _IMPACT_EXCLUDED_SCRIPTS = {
     "validate_unused_textures.py",
+    # Reads gfx/models and gfx/entities, which the CI workspace does not ship.
+    "validate_mesh_textures.py",
     "validate_tools.py",
     "validate_staged.py",
     # Manual-only: the standardization report is deliberately unwired from

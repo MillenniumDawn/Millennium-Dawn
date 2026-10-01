@@ -75,6 +75,7 @@ AI tooling is welcome. The full policy is on the [Developer Setup Guide](https:/
 
 - [Documentation Site](https://millenniumdawn.github.io/Millennium-Dawn/) — all guides, tutorials, and reference docs
 - [Discord](http://discord.gg/millenniumdawn) — team communication
+- [Git & GitHub Desktop](https://millenniumdawn.github.io/Millennium-Dawn/dev-resources/md-git-resources/) — install GitHub Desktop and clone the mod
 - [tools/README.md](./tools/README.md) — dev tools directory layout
 
 ---

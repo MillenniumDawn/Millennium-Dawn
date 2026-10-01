@@ -397,11 +397,11 @@ def test_modifier_factor_untouched_in_ai_will_do():
 
 
 def test_hyphenated_decision_id_preserved_and_idempotent():
-    # Regression: `Communist-State_invite` was misread by the \w+-only header
+    # Regression: a hyphenated decision id was misread by the \w+-only header
     # regex and silently rewritten to the literal ID `decision`.
     block = _decision(
         [
-            "\tCommunist-State_invite = {",
+            "\tTest-State_invite = {",
             "\t\tcomplete_effect = {",
             "\t\t\tadd_political_power = 10",
             "\t\t}",
@@ -409,9 +409,9 @@ def test_hyphenated_decision_id_preserved_and_idempotent():
         ]
     )
     out = format_decision(block)
-    assert out[0].strip() == "Communist-State_invite = {"
+    assert out[0].strip() == "Test-State_invite = {"
     text = "\n".join(out)
-    assert 'Decision Communist-State_invite"' in text
+    assert 'Decision Test-State_invite"' in text
 
     reparsed = format_decision([l + "\n" for l in out])
     assert reparsed == out
@@ -421,10 +421,10 @@ def test_hyphenated_decision_ids_survive_full_category_pass():
     category = _decision(
         [
             "Coalition_decisions = {",
-            "\tCommunist-State_invite = {",
+            "\tTest-State_invite = {",
             "\t\ticon = generic_decision",
             "\t}",
-            "\tCommunist-State_remove = {",
+            "\tTest-State_remove = {",
             "\t\ticon = generic_decision",
             "\t}",
             "}",
@@ -434,8 +434,8 @@ def test_hyphenated_decision_ids_survive_full_category_pass():
     out = std.format_block(std.extract_properties(category))
     assert _ids(out) == [
         "Coalition_decisions",
-        "Communist-State_invite",
-        "Communist-State_remove",
+        "Test-State_invite",
+        "Test-State_remove",
     ]
 
 

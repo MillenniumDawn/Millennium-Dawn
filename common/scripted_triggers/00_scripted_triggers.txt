@@ -50,52 +50,18 @@ controls_a_state_with_geothermal = {
 	}
 }
 
+# We can only check the industrial_complex to reduce the number of any_owned state checks since this is a case of the
+# industrial_complex is shared and as such if this is true then you can't build other buildings
+# - Bird
 no_building_slots = {
 	custom_trigger_tooltip = {
 		tooltip = TT_NO_BUILDING_SLOTS
 		NOT = {
-			OR = {
-				any_owned_state = {
-					free_building_slots = {
-						building = industrial_complex
-						size > 0
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = dockyard
-						size > 0
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = renewable_energy_infra
-						size > 0
-						include_locked = no
-					}
-				}
-				#any_owned_state = {
-				#	free_building_slots = {
-				#		building = fuel_silo
-				#		size > 0
-				#		include_locked = no
-				#	}
-				#}
-				any_owned_state = {
-					free_building_slots = {
-						building = nuclear_reactor
-						size > 0
-						include_locked = no
-					}
+			any_owned_state = {
+				free_building_slots = {
+					building = industrial_complex
+					size > 0
+					include_locked = no
 				}
 			}
 		}
@@ -106,48 +72,11 @@ max_1_building_slots = {
 	custom_trigger_tooltip = {
 		tooltip = TT_MAX_1_BUILDING_SLOTS
 		NOT = {
-			OR = {
-				any_owned_state = {
-					free_building_slots = {
-						building = industrial_complex
-						size > 1
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = arms_factory
-						size > 1
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = dockyard
-						size > 1
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = renewable_energy_infra
-						size > 1
-						include_locked = no
-					}
-				}
-				#any_owned_state = {
-				#	free_building_slots = {
-				#		building = fuel_silo
-				#		size > 1
-				#		include_locked = no
-				#	}
-				#}
-				any_owned_state = {
-					free_building_slots = {
-						building = nuclear_reactor
-						size > 1
-						include_locked = no
-					}
+			any_owned_state = {
+				free_building_slots = {
+					building = industrial_complex
+					size > 1
+					include_locked = no
 				}
 			}
 		}
@@ -506,6 +435,34 @@ ai_is_threatened = {
 		threat > 0.30
 		check_variable = { potential_and_current_enemies^num > 0 }
 	}
+}
+
+# rule_nuclear_weapons lets this country receive nuclear weapons
+nuclear_grant_allowed = {
+	OR = {
+		has_game_rule = { rule = rule_nuclear_weapons option = allowed }
+		AND = {
+			has_game_rule = { rule = rule_nuclear_weapons option = ai_disabled }
+			is_ai = no
+		}
+	}
+}
+
+# Tech ai_will_do: large economies skip the low GDP per capita research zero
+ai_research_exempt_from_gdp_gate = {
+	OR = {
+		is_major = yes
+		has_idea = regional_power
+		has_idea = large_power
+		has_idea = great_power
+		has_idea = super_power
+	}
+}
+
+# Labor surplus makes worker-saving and pop-energy-heavy techs pay off later
+is_populous_developing_country = {
+	check_variable = { population_total_m > 100 }
+	check_variable = { gdp_per_capita < 20 }
 }
 
 # UAR GDP Share Check

@@ -19,6 +19,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 
 | Name                 | Discord                         | GitHub            | PDX           | Email                         |
 | -------------------- | ------------------------------- | ----------------- | ------------- | ----------------------------- |
+| Denys Markin         | -                               | @denys-markin     | -             | -                             |
 | Jason Breen          | -                               | @JasonBreen       | -             | -                             |
 | kotru21              | -                               | @kotru21          | -             | -                             |
 | Ted52                | @Ted52                          | @Ted52            | -             | -                             |
@@ -193,7 +194,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 | Imperialist          | @x_imperialist                  | @imperialistx2    | -             | -                             |
 | Barracuda            | @Barracuda                      | @SBeausoleil      | -             | -                             |
 | JohnsonvilleF221     | @JohnsonvilleF221               | @JohnsonvilleF221 | -             | -                             |
-
+| Skjold               | @Skjold                         | @Skjold89         | -             | -                             |
 
 # Fellow Modders/Teams
 

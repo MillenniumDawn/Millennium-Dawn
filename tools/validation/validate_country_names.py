@@ -46,7 +46,7 @@ class Validator(BaseValidator):
         tag_files = sorted(glob.glob(str(mod / COUNTRY_TAG_DIR / "*.txt")))
         if not tag_files:
             return
-        if self.staged_only and not self._touches_scope():
+        if self.staged_only and not self.staged_touches((COUNTRY_TAG_DIR, NAMES_DIR)):
             return
 
         named: Set[str] = set()
@@ -79,19 +79,6 @@ class Validator(BaseValidator):
             f"  Scanned {tags_seen} tags | {len(named)} names blocks | "
             f"{findings} findings"
         )
-
-    def _touches_scope(self) -> bool:
-        mod = Path(self.mod_path)
-        for f in self.staged_files or []:
-            p = Path(f)
-            abs_p = p if p.is_absolute() else mod / p
-            try:
-                rel = abs_p.resolve().relative_to(mod.resolve()).as_posix()
-            except ValueError:
-                continue
-            if rel.startswith((COUNTRY_TAG_DIR + "/", NAMES_DIR + "/")):
-                return True
-        return False
 
 
 if __name__ == "__main__":

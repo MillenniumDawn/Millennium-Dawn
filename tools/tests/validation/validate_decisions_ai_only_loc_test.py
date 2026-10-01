@@ -135,6 +135,14 @@ def test_ai_only_decision_with_loc_flagged(monkeypatch):
     assert any("'dec_one_desc'" in r for r in results)
 
 
+def test_ai_only_decision_in_keep_list_with_loc_not_flagged(monkeypatch):
+    factory = decision_factory(
+        "monetary_policy_austerity = {\n\tvisible = {\n\t\tis_ai = yes\n\t}\n}"
+    )
+    results = _results_for([factory], {"monetary_policy_austerity"}, monkeypatch)
+    assert results == []
+
+
 def test_ai_only_by_category_exempt_from_missing(monkeypatch):
     factory = decision_factory("dec_one = {\n\tcost = 25\n}")
     results = _results_for(

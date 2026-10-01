@@ -231,7 +231,7 @@ def test_worker_covers_all_six_effects(tmp_path):
 			add_tech_bonus = { name = TAG_focus_a bonus = 0.1 uses = 1 category = CAT_industry }
 			add_equipment_bonus = { name = TAG_focus_a bonus = { armor = { armor_value = 3 } } }
 			add_design_template_bonus = { name = TAG_focus_a uses = 1 cost_factor = 0.4 }
-			add_doctrine_cost_reduction = { name = TAG_focus_a cost_reduction = 0.5 uses = 1 category = CAT_land_doctrine }
+			add_doctrine_cost_reduction = { name = TAG_focus_a cost_reduction = 0.5 uses = 1 category = land_doctrine }
 			add_daily_mastery = { name = TAG_focus_a amount = 0.15 days = 360 folder = naval }
 			add_mastery_bonus = { name = TAG_focus_a bonus = 0.1 days = 90 folder = land }
 		}
@@ -389,7 +389,7 @@ def test_owner_token_check_matches_decision_token(tmp_path):
 	TAG_the_decision = {
 		complete_effect = {
 			add_tech_bonus = { name = TAG_the_decision bonus = 0.5 uses = 1 category = CAT_industry }
-			add_doctrine_cost_reduction = { name = TAG_other_thing cost_reduction = 0.5 uses = 1 category = CAT_land_doctrine }
+			add_doctrine_cost_reduction = { name = TAG_other_thing cost_reduction = 0.5 uses = 1 category = land_doctrine }
 		}
 	}
 }
@@ -412,7 +412,7 @@ country_event = {
 	option = {
 		name = test.1.a
 		add_tech_bonus = { name = test.1.t bonus = 0.5 uses = 1 category = CAT_industry }
-		add_doctrine_cost_reduction = { name = test.1 cost_reduction = 0.5 uses = 1 category = CAT_land_doctrine }
+		add_doctrine_cost_reduction = { name = test.1 cost_reduction = 0.5 uses = 1 category = land_doctrine }
 		add_daily_mastery = { name = test.2.t amount = 0.15 days = 360 folder = naval }
 	}
 }

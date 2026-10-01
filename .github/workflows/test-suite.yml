@@ -8,7 +8,7 @@ run-name: >-
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -51,6 +51,7 @@ env:
     .github/actions/setup-md-python/action.yml
     CLAUDE.md
     pyproject.toml
+    validation_config.json
     *.mod
     .workspace-manifest
     .validation_cache
@@ -85,8 +86,10 @@ jobs:
       map-adjacency: ${{ steps.groups.outputs.map-adjacency }}
       mod: ${{ steps.groups.outputs.mod }}
       content: ${{ steps.groups.outputs.content }}
+      docs: ${{ steps.groups.outputs.docs }}
       style: ${{ steps.groups.outputs.style }}
       style_files: ${{ steps.groups.outputs.style_files }}
+      style_config: ${{ steps.groups.outputs.style_config }}
       tools: ${{ steps.groups.outputs.tools }}
       file-paths: ${{ steps.groups.outputs.file-paths }}
       full_suite: ${{ steps.groups.outputs.full_suite }}
@@ -301,6 +304,7 @@ jobs:
             .github/actions/setup-md-python/action.yml
             CLAUDE.md
             pyproject.toml
+            validation_config.json
             *.mod
           sparse-checkout-cone-mode: false
 
@@ -324,6 +328,7 @@ jobs:
             .github/actions/setup-md-python/action.yml
             CLAUDE.md
             pyproject.toml
+            validation_config.json
             *.mod
           key: >-
             md-sparse-v2-${{ runner.os }}-${{
@@ -344,7 +349,8 @@ jobs:
         id: toolshash
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**',
-          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+          'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore shared validator disk cache
         id: valcache
@@ -393,6 +399,7 @@ jobs:
             .github/actions/setup-md-python/action.yml
             CLAUDE.md
             pyproject.toml
+            validation_config.json
             *.mod
           key: >-
             md-sparse-v2-${{ runner.os }}-${{
@@ -402,7 +409,13 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: prepared-workspace
-          path: ${{ env.WORKSPACE_PATHS }}
+          # Music audio is ~80% of this artifact and no validator reads it.
+          # The gated music/*.txt playlists stay included.
+          path: |
+            ${{ env.WORKSPACE_PATHS }}
+            !music/**/*.ogg
+            !music/**/*.mp3
+            !music/**/*.wav
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
@@ -438,6 +451,7 @@ jobs:
           sparse-checkout: |
             tools
             pyproject.toml
+            validation_config.json
             .pre-commit-config.yaml
             .claude/docs/typo-watchlist.md
             .github/actions/setup-md-python/action.yml
@@ -565,7 +579,8 @@ jobs:
           steps.dependencies.outcome == 'success'
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**',
-          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+          'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Create staged integration worktree
         id: staged-worktree
@@ -777,15 +792,22 @@ jobs:
           steps.setup-python.outcome == 'success'
         env:
           STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style_files }}
+          STYLE_CONFIG: ${{ needs.detect-changes.outputs.style_config }}
         run: |
           printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
             | grep -vE \
               '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
-            > style_files.txt || true
+            > changed_style_files.txt || true
+          if [ -s changed_style_files.txt ]; then
+            echo "has-changed-files=true" >> "$GITHUB_OUTPUT"
+          fi
+          cp changed_style_files.txt style_files.txt
+          if [ "$STYLE_CONFIG" = true ]; then
+            find common/national_focus -type f -name '*.txt' >> style_files.txt
+          fi
+          sort -u -o style_files.txt style_files.txt
           if [ -s style_files.txt ]; then
             echo "has-files=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has-files=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run style check
@@ -800,9 +822,9 @@ jobs:
       - name: Run common-mistakes check
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-files == 'true'
+          steps.style-files.outputs.has-changed-files == 'true'
         run: |
-          tr '\n' '\0' < style_files.txt | xargs -0 -r \
+          tr '\n' '\0' < changed_style_files.txt | xargs -0 -r \
             python3 tools/linting/check_common_mistakes.py \
             --output validation-common-mistakes.log
 
@@ -813,6 +835,12 @@ jobs:
         run: |
           test -f validation-style-check.log
           test -f validation-style-check.json
+
+      - name: Verify common-mistakes results
+        if: >-
+          always() && !cancelled() && matrix.batch == 'core' &&
+          steps.style-files.outputs.has-changed-files == 'true'
+        run: |
           test -f validation-common-mistakes.log
           test -f validation-common-mistakes.json
 
@@ -863,7 +891,7 @@ jobs:
       - name: Upload common-mistakes results
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-files == 'true'
+          steps.style-files.outputs.has-changed-files == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: validation-common-mistakes-results
@@ -882,6 +910,16 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  docs-quality:
+    name: Docs quality
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.docs == 'true' ||
+      needs.detect-changes.outputs.full_suite == 'true'
+    uses: ./.github/workflows/docs-quality.yml
+    permissions:
+      contents: read
+
   report:
     name: Test suite report
     runs-on: ubuntu-latest
@@ -891,6 +929,7 @@ jobs:
       - prepare-workspace
       - tools-tests
       - mod-tests
+      - docs-quality
     if: ${{ always() && !cancelled() }}
     permissions:
       contents: read
@@ -921,13 +960,15 @@ jobs:
             tools/report_lib
             tools/validation
             tools/shared_utils.py
+            validation_config.json
           sparse-checkout-cone-mode: false
 
       - name: Compute validator code hash
         id: toolshash
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**',
-          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+          'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore validation baseline
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
@@ -999,3 +1040,35 @@ jobs:
           name: validation-report
           path: report.md
           retention-days: 30
+
+  gate:
+    name: Test suite gate
+    needs:
+      - detect-changes
+      - validate-paths
+      - prepare-workspace
+      - tools-tests
+      - mod-tests
+      - docs-quality
+      - report
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail when required validation jobs do not pass
+        if: >-
+          needs.detect-changes.result != 'success' ||
+          (needs.validate-paths.result != 'success' &&
+          needs.validate-paths.result != 'skipped') ||
+          (needs.prepare-workspace.result != 'success' &&
+          needs.prepare-workspace.result != 'skipped') ||
+          (needs.tools-tests.result != 'success' &&
+          needs.tools-tests.result != 'skipped') ||
+          (needs.mod-tests.result != 'success' &&
+          needs.mod-tests.result != 'skipped') ||
+          (needs.docs-quality.result != 'success' &&
+          needs.docs-quality.result != 'skipped') ||
+          needs.report.result != 'success'
+        run: exit 1
+
+      - name: Confirm validation result
+        run: echo "Every selected validation job passed."

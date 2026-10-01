@@ -73,6 +73,7 @@ GROUP_PATTERNS = {
         "music/**/*.txt",
     ],
     "mod": ["*.mod"],
+    "docs": ["docs/**", "tools/docs_checks/**", ".github/workflows/docs-quality.yml"],
     "map-adjacency": ["map/adjacency_rules.txt"],
     "content": [
         "common/**",
@@ -94,6 +95,7 @@ _FULL_SUITE_EXACT = {
     "bun.lock",
     ".jscpd.json",
     ".claude/docs/typo-watchlist.md",
+    "validation_config.json",
 }
 _FULL_SUITE_PREFIXES = (
     "tools/validation/",
@@ -193,6 +195,7 @@ def classify(paths: Iterable[str], dispatch: bool = False) -> Dict[str, object]:
     )
     result["style_files"] = style_files
     result["style"] = bool(style_files)
+    result["style_config"] = "validation_config.json" in normalized
     return result
 
 
