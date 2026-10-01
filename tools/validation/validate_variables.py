@@ -27,6 +27,7 @@ from shared_utils import (
     has_flat_is_ai,
     is_ai_only_block,
     iter_direct_child_blocks,
+    iter_statements,
     line_for_offset,
     read_text_under,
     strip_comments,
@@ -434,9 +435,8 @@ _PLAYER_FACING_GLOBS = [
 _AVAILABLE_FLAG_RE = re.compile(
     r"\bhas_(country|global)_flag\s*=\s*(?:\{\s*flag\s*=\s*)?([A-Za-z_][A-Za-z0-9_.@]*)"
 )
-# `tooltip = KEY` directly inside a custom_trigger_tooltip. Negated, the engine
-# renders KEY_NOT instead, and shows that raw token when it has no loc entry.
-_TRIGGER_TOOLTIP_KEY_RE = re.compile(r"\btooltip\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)")
+_TRIGGER_TOOLTIP_OPEN_RE = re.compile(r"\bcustom_(?:trigger|override)_tooltip\s*=\s*\{")
+_TRIGGER_TOOLTIP_KEY_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_.]*")
 _TRIGGER_CALL_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(yes|no)\b")
 
 
@@ -790,15 +790,26 @@ def _available_exempt_spans(
 def _requirement_events(
     cleaned: str, trigger_names: AbstractSet[str]
 ) -> List[Tuple[int, int, object]]:
-    """Flag checks (3), custom_trigger_tooltip keys (4) and scripted-trigger
-    calls (5), merged with the scope open/close events."""
+    """Flag checks (3), negative tooltip keys (4) and scripted-trigger calls
+    (5), merged with the scope open/close events."""
     events: List[Tuple[int, int, object]] = _scope_events(cleaned)
     for m in _AVAILABLE_FLAG_RE.finditer(cleaned):
         if "@" not in m.group(2):
             events.append((m.start(), 3, (m.group(1), m.group(2))))
-    if "custom_trigger_tooltip" in cleaned:
-        for m in _TRIGGER_TOOLTIP_KEY_RE.finditer(cleaned):
-            events.append((m.start(), 4, m.group(1)))
+    for m in _TRIGGER_TOOLTIP_OPEN_RE.finditer(cleaned):
+        body, _ = extract_block_from_text(cleaned, m.start())
+        keys = {
+            key: scalar
+            for key, scalar, _block in iter_statements(body)
+            if key in {"tooltip", "not_tooltip"}
+            and scalar
+            and _TRIGGER_TOOLTIP_KEY_RE.fullmatch(scalar)
+        }
+        negative_key = keys.get("not_tooltip")
+        if negative_key is None and "tooltip" in keys:
+            negative_key = f"{keys['tooltip']}_NOT"
+        if negative_key:
+            events.append((m.start(), 4, negative_key))
     if trigger_names:
         for m in _TRIGGER_CALL_RE.finditer(cleaned):
             if m.group(1) in trigger_names:
@@ -826,7 +837,7 @@ def _scan_trigger_body_requirements(
     """Requirement lines one scripted trigger renders itself, plus the calls
     it makes, each with its NOT parity inside the body.
 
-    Items are ("flag", kind, name) and ("tooltip", key, negated).
+    Items are ("flag", kind, name) and ("tooltip", negative_key, negated).
     """
     events = _requirement_events(body, trigger_names)
     events.sort(key=lambda e: (e[0], e[1]))
@@ -841,14 +852,9 @@ def _scan_trigger_body_requirements(
             if stack:
                 stack.pop()
             continue
-        outer = stack
-        if kind == 4:
-            if not stack or stack[-1] != "custom_trigger_tooltip":
-                continue
-            outer = stack[:-1]
-        if any(t in _TOOLTIP_WRAPPER_TOKENS for t in outer):
+        if any(t in _TOOLTIP_WRAPPER_TOKENS for t in stack):
             continue
-        negated = outer.count("NOT") % 2 == 1
+        negated = stack.count("NOT") % 2 == 1
         if kind == 3:
             flag_kind, flag = cast(Tuple[str, str], tok)
             items.add(("flag", flag_kind, flag))
@@ -943,12 +949,10 @@ def _scan_available_text(
                 line = cleaned[:pos].count("\n") + 1
                 flags.append((flag, rel, line, flag_kind, ctx[0], ""))
         elif kind == 4:
-            if not stack or stack[-1] != "custom_trigger_tooltip":
-                continue
-            ctx = _requirement_block(stack[:-1])
+            ctx = _requirement_block(stack)
             if ctx and ctx[1]:
                 line = cleaned[:pos].count("\n") + 1
-                negated_tooltips.append((f"{tok}_NOT", rel, line, ctx[0]))
+                negated_tooltips.append((cast(str, tok), rel, line, ctx[0]))
         elif kind == 5:
             name, called_no = cast(Tuple[str, bool], tok)
             ctx = _requirement_block(stack)
@@ -960,7 +964,7 @@ def _scan_available_text(
                 if item[0] == "flag":
                     flags.append((item[2], rel, line, item[1], block, name))
                 elif item[2] != negated:
-                    negated_tooltips.append((f"{item[1]}_NOT", rel, line, block))
+                    negated_tooltips.append((item[1], rel, line, block))
     return untooltipped, flags, negated_tooltips
 
 
@@ -2529,12 +2533,12 @@ class Validator(BaseValidator):
         )
 
     def validate_negated_trigger_tooltips(self):
-        """Flag a custom_trigger_tooltip rendered under NOT in `available`,
-        `cancel_trigger` or `bypass` whose `KEY_NOT` has no loc key (ERROR).
+        """Flag a custom trigger tooltip rendered under NOT in `available`,
+        `cancel_trigger` or `bypass` whose negative key has no loc key (ERROR).
 
-        Negated, the engine looks up `KEY_NOT` instead of `KEY` and shows the
-        raw token when it is missing. The NOT often sits one or more scripted
-        triggers away from the tooltip, so calls are resolved through them.
+        The engine uses `not_tooltip` when set, otherwise `KEY_NOT`. Both
+        custom_trigger_tooltip and custom_override_tooltip follow this rule.
+        The NOT can sit inside nested scripted triggers, so calls are resolved.
         """
         self._log_section("Checking negated trigger tooltips in requirement blocks...")
         negated = self._get_shared_scan()["avail_negated"]
@@ -2548,7 +2552,7 @@ class Validator(BaseValidator):
             seen.add((key, rel))
             issues.append(
                 (
-                    f"custom_trigger_tooltip renders negated in `{block}`, so the"
+                    f"Custom trigger tooltip renders negated in `{block}`, so the"
                     f" player sees the raw token {key}; add that localisation key",
                     rel,
                     line,
@@ -2558,7 +2562,7 @@ class Validator(BaseValidator):
         self._report(
             issues,
             "✓ No unlocalised negated trigger tooltips in requirement blocks",
-            "negated custom_trigger_tooltip with no `_NOT` localisation key (the player sees the raw token):",
+            "negated custom trigger tooltip with no negative localisation key (the player sees the raw token):",
             severity=Severity.ERROR,
             category="unlocalised-negated-trigger-tooltip",
         )
