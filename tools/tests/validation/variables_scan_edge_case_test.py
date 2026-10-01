@@ -205,7 +205,7 @@ def test_clamp_conflicts_survive_an_unreadable_path(tmp_path):
 
 def test_available_scan_skips_non_script_directories(tmp_path):
     args = (str(_skipped(tmp_path)), str(tmp_path), frozenset())
-    assert V._scan_available_file(args) == ([], [])
+    assert V._scan_available_file(args) == ([], [], [])
 
 
 def test_check_variable_outside_available_is_not_flagged(tmp_path):
