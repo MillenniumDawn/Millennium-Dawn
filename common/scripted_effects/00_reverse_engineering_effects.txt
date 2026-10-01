@@ -1,3 +1,5 @@
+# Hull tech lists mirror enable_equipments in NSB_armor.txt, helicopter_techs.txt and BBA_aircraft.txt.
+
 # reverse_engineering_studied_index: 0-based position of the studied hull in reverse_engineering_techs, -1 for none.
 reverse_engineering_grant_bonuses = {
 	if = { limit = { has_idea = edu_05 } set_temp_variable = { reverse_engineering_education = 1 } }
@@ -53,7 +55,6 @@ reverse_engineering_grant_tech_bonus = {
 }
 
 reverse_engineering_notify = {
-	set_country_flag = { flag = reverse_engineering_cooldown days = 180 value = 1 }
 	if = {
 		limit = {
 			is_ai = no
@@ -76,13 +77,8 @@ reverse_engineering_grant_mbt = {
 	set_temp_variable = { reverse_engineering_one_back_bonus = 0.5 }
 	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.2 }
 	reverse_engineering_grant_bonuses = yes
-	reverse_engineering_armored_head_start = yes
-}
-
-reverse_engineering_armored_head_start = {
 	if = {
 		limit = {
-			check_variable = { reverse_engineering_studied_index > -1 }
 			NOT = { is_special_project_completed = sp:sp_armoured_vehicle_project }
 			NOT = { has_country_flag = reverse_engineered_sp_armoured_vehicle_project }
 		}
@@ -104,28 +100,8 @@ reverse_engineering_grant_attack_helicopter = {
 	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
 	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
 	reverse_engineering_grant_bonuses = yes
-	reverse_engineering_helicopter_head_start = yes
-}
-
-reverse_engineering_grant_transport_helicopter = {
-	add_to_temp_array = { reverse_engineering_techs = token:nsb_transport_helicopter_1 }
-	add_to_temp_array = { reverse_engineering_techs = token:nsb_transport_helicopter_2 }
-	add_to_temp_array = { reverse_engineering_techs = token:nsb_transport_helicopter_3 }
-	add_to_temp_array = { reverse_engineering_techs = token:nsb_transport_helicopter_4 }
-	add_to_temp_array = { reverse_engineering_techs = token:nsb_transport_helicopter_5 }
-	add_to_temp_array = { reverse_engineering_techs = token:nsb_transport_helicopter_6 }
-	add_to_temp_array = { reverse_engineering_techs = token:nsb_transport_helicopter_7 }
-	set_temp_variable = { reverse_engineering_two_back_bonus = 0.45 }
-	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
-	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
-	reverse_engineering_grant_bonuses = yes
-	reverse_engineering_helicopter_head_start = yes
-}
-
-reverse_engineering_helicopter_head_start = {
 	if = {
 		limit = {
-			check_variable = { reverse_engineering_studied_index > -1 }
 			NOT = { is_special_project_completed = sp:sp_helicopter_project }
 			NOT = { has_country_flag = reverse_engineered_sp_helicopter_project }
 		}
@@ -181,7 +157,6 @@ reverse_engineering_grant_large_airframe = {
 reverse_engineering_aircraft_head_start = {
 	if = {
 		limit = {
-			check_variable = { reverse_engineering_studied_index > -1 }
 			NOT = { is_special_project_completed = sp:sp_aircraft_project }
 			NOT = { has_country_flag = reverse_engineered_sp_aircraft_project }
 		}
@@ -202,41 +177,9 @@ reverse_engineering_aircraft_head_start = {
 	}
 }
 
-# Purchase contract scope; needs var_temp_buyer from on_contract_started.
+# Purchase contract scope; needs var_temp_buyer from on_contract_started. Role airframes are duplicate_archetypes.
 reverse_engineering_study_contract = {
 	if = {
-		limit = { var:var_temp_buyer = { NOT = { has_country_flag = reverse_engineering_cooldown } } }
-		set_temp_variable = { reverse_engineering_purchase = 1 }
-		if = { limit = { has_dlc = "No Step Back" } reverse_engineering_study_designer_land_contract = yes }
-		else = { var:var_temp_buyer = { reverse_engineering_study_legacy_land = yes } }
-		if = { limit = { has_dlc = "By Blood Alone" } reverse_engineering_study_designer_air_contract = yes }
-		else = { var:var_temp_buyer = { reverse_engineering_study_legacy_air = yes } }
-	}
-}
-
-reverse_engineering_study_designer_land_contract = {
-	if = {
-		limit = {
-			OR = {
-				contract_contains_equipment = transport_helicopter_1
-				contract_contains_equipment = transport_helicopter_2
-				contract_contains_equipment = transport_helicopter_3
-				contract_contains_equipment = transport_helicopter_4
-				contract_contains_equipment = transport_helicopter_5
-				contract_contains_equipment = transport_helicopter_6
-				contract_contains_equipment = transport_helicopter_7
-			}
-		}
-		if = { limit = { contract_contains_equipment = transport_helicopter_7 } set_temp_variable = { reverse_engineering_studied_index = 6 } }
-		else_if = { limit = { contract_contains_equipment = transport_helicopter_6 } set_temp_variable = { reverse_engineering_studied_index = 5 } }
-		else_if = { limit = { contract_contains_equipment = transport_helicopter_5 } set_temp_variable = { reverse_engineering_studied_index = 4 } }
-		else_if = { limit = { contract_contains_equipment = transport_helicopter_4 } set_temp_variable = { reverse_engineering_studied_index = 3 } }
-		else_if = { limit = { contract_contains_equipment = transport_helicopter_3 } set_temp_variable = { reverse_engineering_studied_index = 2 } }
-		else_if = { limit = { contract_contains_equipment = transport_helicopter_2 } set_temp_variable = { reverse_engineering_studied_index = 1 } }
-		else = { set_temp_variable = { reverse_engineering_studied_index = 0 } }
-		var:var_temp_buyer = { reverse_engineering_grant_transport_helicopter = yes }
-	}
-	else_if = {
 		limit = {
 			OR = {
 				contract_contains_equipment = medium_tank_chassis
@@ -366,10 +309,7 @@ reverse_engineering_study_designer_land_contract = {
 		else = { set_temp_variable = { reverse_engineering_studied_index = -1 } }
 		var:var_temp_buyer = { reverse_engineering_grant_attack_helicopter = yes }
 	}
-}
-
-reverse_engineering_study_designer_air_contract = {
-	if = {
+	else_if = {
 		limit = {
 			OR = {
 				contract_contains_equipment = small_plane_airframe
@@ -713,17 +653,6 @@ reverse_engineering_study_designer_air_contract = {
 # Winner's scope from on_capitulation; ROOT is the capitulated country.
 reverse_engineering_study_capitulated_country = {
 	if = {
-		limit = { NOT = { has_country_flag = reverse_engineering_cooldown } }
-		set_temp_variable = { reverse_engineering_purchase = 0 }
-		if = { limit = { has_dlc = "No Step Back" } reverse_engineering_study_designer_land_country = yes }
-		else = { reverse_engineering_study_legacy_land = yes }
-		if = { limit = { has_dlc = "By Blood Alone" } reverse_engineering_study_designer_air_country = yes }
-		else = { reverse_engineering_study_legacy_air = yes }
-	}
-}
-
-reverse_engineering_study_designer_land_country = {
-	if = {
 		limit = { ROOT = { has_tech = mbt_tech } }
 		if = { limit = { ROOT = { has_tech = mbt_tech_6 } } set_temp_variable = { reverse_engineering_studied_index = 6 } }
 		else_if = { limit = { ROOT = { has_tech = mbt_tech_5 } } set_temp_variable = { reverse_engineering_studied_index = 5 } }
@@ -745,20 +674,6 @@ reverse_engineering_study_designer_land_country = {
 		else = { set_temp_variable = { reverse_engineering_studied_index = 0 } }
 		reverse_engineering_grant_attack_helicopter = yes
 	}
-	if = {
-		limit = { ROOT = { has_tech = nsb_transport_helicopter_1 } }
-		if = { limit = { ROOT = { has_tech = nsb_transport_helicopter_7 } } set_temp_variable = { reverse_engineering_studied_index = 6 } }
-		else_if = { limit = { ROOT = { has_tech = nsb_transport_helicopter_6 } } set_temp_variable = { reverse_engineering_studied_index = 5 } }
-		else_if = { limit = { ROOT = { has_tech = nsb_transport_helicopter_5 } } set_temp_variable = { reverse_engineering_studied_index = 4 } }
-		else_if = { limit = { ROOT = { has_tech = nsb_transport_helicopter_4 } } set_temp_variable = { reverse_engineering_studied_index = 3 } }
-		else_if = { limit = { ROOT = { has_tech = nsb_transport_helicopter_3 } } set_temp_variable = { reverse_engineering_studied_index = 2 } }
-		else_if = { limit = { ROOT = { has_tech = nsb_transport_helicopter_2 } } set_temp_variable = { reverse_engineering_studied_index = 1 } }
-		else = { set_temp_variable = { reverse_engineering_studied_index = 0 } }
-		reverse_engineering_grant_transport_helicopter = yes
-	}
-}
-
-reverse_engineering_study_designer_air_country = {
 	if = {
 		limit = { ROOT = { has_tech = gen_3_light } }
 		if = { limit = { ROOT = { has_tech = gen_8_light } } set_temp_variable = { reverse_engineering_studied_index = 5 } }
