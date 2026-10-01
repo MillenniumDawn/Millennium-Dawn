@@ -29,10 +29,21 @@ def _edits(base, other):
     ]
 
 
+def _join_inserts(first, second):
+    """Join two insertions at one spot, dropping one that the other already contains."""
+    for outer, inner in ((first, second), (second, first)):
+        if any(
+            outer[start : start + len(inner)] == inner
+            for start in range(len(outer) - len(inner) + 1)
+        ):
+            return outer
+    return first + second
+
+
 def merge_sequences(base, ours, theirs):
     """Apply both sides' edits to base; None when they touch or border each other.
 
-    Insertions at the same spot are both kept, ours first.
+    Insertions at the same spot are both kept, ours first, unless one contains the other.
     """
     edits = []
     for side, other in enumerate((ours, theirs)):
@@ -42,29 +53,37 @@ def merge_sequences(base, ours, theirs):
     merged = []
     position = 0
     previous = None
-    previous_insert = None
+    inserted_at = None
+    inserted = []
     for i1, i2, _side, items in edits:
         if previous == (i1, i2, items):
             continue
-        if previous is not None and (
-            i1 < position or (i1 == position and not previous_insert == i1 == i2)
-        ):
+        if inserted_at == i1 == i2:
+            del merged[len(merged) - len(inserted) :]
+            items = _join_inserts(inserted, items)
+        elif previous is not None and i1 <= position:
             return None
         merged.extend(base[position:i1])
         merged.extend(items)
         position = i2
         previous = (i1, i2, items)
-        previous_insert = i1 if i1 == i2 else None
+        inserted_at, inserted = (i1, items) if i1 == i2 else (None, [])
     merged.extend(base[position:])
     return merged
 
 
 def merge_line(base, ours, theirs):
-    merged = merge_sequences(
-        TOKEN_PATTERN.findall(base),
-        TOKEN_PATTERN.findall(ours),
-        TOKEN_PATTERN.findall(theirs),
-    )
+    """Merge two edits of one entry; when both sides changed it, both may only add words."""
+    base, ours, theirs = (TOKEN_PATTERN.findall(line) for line in (base, ours, theirs))
+    if (
+        ours != base
+        and theirs != base
+        and any(
+            i1 != i2 for side in (ours, theirs) for i1, i2, _items in _edits(base, side)
+        )
+    ):
+        return None
+    merged = merge_sequences(base, ours, theirs)
     return None if merged is None else "".join(merged)
 
 
@@ -109,7 +128,9 @@ def resolve_hunk(base, ours, theirs):
         their_index = their_pairs.get(base_index)
         if their_index is None:
             if our_index is not None:
-                return None
+                if ours[our_index] != base_line:
+                    return None
+                merged[our_index] = None
             continue
         if our_index is None:
             if theirs[their_index] != base_line:
@@ -120,15 +141,32 @@ def resolve_hunk(base, ours, theirs):
             return None
         merged[our_index] = line
 
-    present = {line.strip() for line in merged if line.strip()}
+    their_bases = {j: i for i, j in their_pairs.items()}
+    present = {line.strip() for line in merged if line and line.strip()}
+    before = {}
     for index in their_added:
         line = theirs[index]
         if line.strip() in present:
             continue
-        merged.append(line)
         if line.strip():
             present.add(line.strip())
-    return merged
+        # Keep the PR's line ahead of the next entry it already shared with base.
+        anchor = next(
+            (
+                our_pairs[their_bases[j]]
+                for j in range(index + 1, len(theirs))
+                if their_bases.get(j) in our_pairs
+            ),
+            len(merged),
+        )
+        before.setdefault(anchor, []).append(line)
+
+    result = []
+    for index, line in enumerate(merged + [None]):
+        result.extend(before.get(index, []))
+        if line is not None:
+            result.append(line)
+    return result
 
 
 def merge_text(base, ours, theirs):

@@ -70,6 +70,48 @@ def test_pr_deleting_an_entry_main_edited_stays_unresolved():
     assert merge_text(base, ours, theirs) is None
 
 
+def test_main_replacing_an_entry_the_pr_edited_stays_unresolved():
+    base = changelog(TANK_LINE.format(""))
+    ours = changelog(" - [GER] Added the Puma IFV variant\n")
+    theirs = changelog(TANK_LINE.format(" (Issue #7)"))
+
+    assert merge_text(base, ours, theirs) is None
+
+
+def test_pr_replacing_an_entry_main_edited_stays_unresolved():
+    base = changelog(TANK_LINE.format(""))
+    ours = changelog(TANK_LINE.format(" (Issue #1)"))
+    theirs = changelog(" - [GER] Added the Puma IFV variant\n")
+
+    assert merge_text(base, ours, theirs) is None
+
+
+def test_tag_both_sides_added_is_not_duplicated():
+    base = changelog(PARTY_LINE.format(""))
+    ours = changelog(PARTY_LINE.format(", FIJ"))
+    theirs = changelog(PARTY_LINE.format(", FIJ, GEO"))
+
+    assert merge_text(base, ours, theirs) == changelog(PARTY_LINE.format(", FIJ, GEO"))
+
+
+def test_pr_deleting_an_entry_main_left_alone_merges():
+    base = changelog(" - Old\n")
+    ours = changelog(" - Old\n", " - Main\n")
+    theirs = changelog()
+
+    assert merge_text(base, ours, theirs) == changelog(" - Main\n")
+
+
+def test_pr_entry_keeps_its_place_between_main_edits():
+    base = changelog(TANK_LINE.format(""), PARTY_LINE.format(""))
+    ours = changelog(TANK_LINE.format(" (Issue #1)"), PARTY_LINE.format(", FIJ"))
+    theirs = changelog(TANK_LINE.format(""), " - New\n", PARTY_LINE.format(""))
+
+    assert merge_text(base, ours, theirs) == changelog(
+        TANK_LINE.format(" (Issue #1)"), " - New\n", PARTY_LINE.format(", FIJ")
+    )
+
+
 def commit_changelog(repository, branch, text):
     run_git(repository, "checkout", "--quiet", "-B", branch, "base")
     (repository / "Changelog.txt").write_bytes(text.encode("utf-8"))
