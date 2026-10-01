@@ -43,9 +43,31 @@ def test_repeated_literal_reports_once_per_file():
     assert _tokens(text) == [("token:a_b", 1)]
 
 
-def test_runtime_built_token_not_flagged():
-    text = "set_variable = { x = token:topbar_[THIS.GetTag] }\n"
+@pytest.mark.parametrize(
+    "text",
+    [
+        "set_variable = { x = token:topbar_[THIS.GetTag] }\n",
+        "set_variable = { x = token:gen_$LEVEL$_light }\n",
+        "set_variable = { x = modifier@TST_$MOD$_factor }\n",
+    ],
+)
+def test_runtime_built_token_not_flagged(text):
     assert _tokens(text) == []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "set_variable = { x = token:TST_a. }\n",
+        'desc = "Uses num_equipment@TST_a."\n',
+        'desc = "num_equipment@TST_a- and more"\n',
+    ],
+)
+def test_trailing_punctuation_is_not_part_of_the_token(text):
+    assert _tokens(text, {"TST_a"}) == []
+    assert [token.split(":")[-1].split("@")[-1] for token, _ in _tokens(text)] == [
+        "TST_a"
+    ]
 
 
 @pytest.mark.parametrize(
@@ -92,7 +114,7 @@ def test_validator_reports_unregistered_tokens_as_errors(tmp_path, write_path):
         "\tadd_to_temp_array = { techs = token:gen_3_light }\n"
         "\tadd_to_temp_array = { techs = token:gen_7_light }\n"
         "\t# add_to_temp_array = { techs = token:commented_out }\n"
-        '\tlog = "token:in_a_string"\n'
+        '\tlog = "[GetDateText]: [?modifier@TST_logged_factor]"\n'
         "}\n",
     )
     validator = V.Validator(str(tmp_path), use_colors=False, workers=1)
@@ -107,10 +129,45 @@ def test_validator_reports_unregistered_tokens_as_errors(tmp_path, write_path):
             "unregistered-dynamic-token",
             V.Severity.ERROR,
             "common/scripted_effects/tokens.txt",
-            3,
+            line,
         )
+        for line in (3, 5)
     ]
     assert validator._issues[0].message.startswith("token:gen_7_light ")
+    assert validator._issues[1].message.startswith("modifier@TST_logged_factor ")
+
+
+@pytest.mark.parametrize(
+    ("path", "content", "line"),
+    [
+        (
+            "history/countries/TST - Test.txt",
+            "set_variable = { x = modifier@TST_custom_factor }\n",
+            1,
+        ),
+        (
+            "events/tst.txt",
+            "TST_demo = {\n\tset_variable = { x = token:TST_custom_factor }\n}\n",
+            2,
+        ),
+        (
+            "interface/tst.gui",
+            "guiTypes = {\n"
+            "\t# instantTextBoxType\n"
+            '\ttext = "[?modifier@TST_custom_factor|%0=+]"\n'
+            "}\n",
+            3,
+        ),
+    ],
+)
+def test_every_scanned_root_reports(tmp_path, write_path, path, content, line):
+    write_path(tmp_path, _REGISTRY, "gen_3_light\n")
+    write_path(tmp_path, path, content)
+    validator = V.Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator.validate_unregistered_dynamic_tokens()
+
+    assert [(issue.file, issue.line) for issue in validator._issues] == [(path, line)]
 
 
 def test_english_localisation_is_scanned(tmp_path, write_path):
@@ -119,9 +176,9 @@ def test_english_localisation_is_scanned(tmp_path, write_path):
         tmp_path,
         "localisation/english/tst_l_english.yml",
         "l_english:\n"
+        ' # TST_c: "[?modifier@TST_commented_out]"\n'
         ' TST_a: "[?days_mission_timeout@TST_mission] days"\n'
-        ' TST_b: "[?modifier@TST_custom_factor|%1]"\n'
-        ' # TST_c: "[?modifier@TST_commented_out]"\n',
+        ' TST_b: "[?modifier@TST_custom_factor|%1]"\n',
     )
     write_path(
         tmp_path,
@@ -139,7 +196,7 @@ def test_english_localisation_is_scanned(tmp_path, write_path):
         (
             "modifier@TST_custom_factor",
             "localisation/english/tst_l_english.yml",
-            3,
+            4,
         )
     ]
 

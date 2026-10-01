@@ -364,10 +364,10 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
 
 
 # A token the engine has not been told about logs "Token X is a dynamic token,
-# this can cause OOS" at load, once per use. Script and localisation name tokens
-# two ways: a `token:X` literal, and the `@X` target of the game variables below
-# (the ones resources/documentation/dynamic_variables_documentation.md gives a
-# token target).
+# this can cause OOS" at load, once per use. Script, localisation and GUI text
+# name tokens two ways: a `token:X` literal, and the `@X` target of the game
+# variables below (the ones resources/documentation/dynamic_variables_documentation.md
+# gives a token target).
 _TOKEN_TARGET_GAME_VARS = (
     "avg_units_acclimation",
     "building_level",
@@ -404,7 +404,9 @@ _TOKEN_TARGET_GAME_VARS = (
     "unit_modifier",
 )
 _TOKEN_REF_RE = re.compile(
-    r"\b(?:token:|(?:" + "|".join(_TOKEN_TARGET_GAME_VARS) + r")@)([A-Za-z0-9_.\-]+)"
+    r"\b(?:token:|(?:"
+    + "|".join(_TOKEN_TARGET_GAME_VARS)
+    + r")@)([A-Za-z0-9_]+(?:[.\-][A-Za-z0-9_]+)*)"
 )
 
 # Vanilla names the engine already knows, so they log nothing unregistered. This
@@ -481,8 +483,9 @@ def _scan_dynamic_tokens_text(
     seen: Set[str] = set()
     for m in _TOKEN_REF_RE.finditer(cleaned):
         token = m.group(1)
-        # `token:prefix_[SCOPE]` and `party_popularity@var:x` name no literal token.
-        if cleaned.startswith(("[", "@", ":"), m.end()):
+        # `token:prefix_[SCOPE]`, `token:prefix_$PARAM$` and
+        # `party_popularity@var:x` name no literal token.
+        if cleaned.startswith(("[", "$", ":"), m.end()):
             continue
         if token in registered or token in _ENGINE_KNOWN_TOKENS or token in seen:
             continue
@@ -1934,7 +1937,6 @@ def _scan_shared_file(args) -> Tuple:
         | _F_SCRIPTED
         | _F_VAR_TOOLTIP
         | _F_MISSING
-        | _F_TOKEN
     )
     need_stripped = mask & (
         _F_ORPHAN
@@ -1972,9 +1974,8 @@ def _scan_shared_file(args) -> Tuple:
     token_issues: List = []
 
     if mask & _F_TOKEN:
-        # Localisation values are quoted, so they are scanned unblanked.
-        token_text = stripped if filename.endswith(".yml") else blanked
-        token_issues = _scan_dynamic_tokens_text(token_text, rel, registered_tokens)
+        # Unblanked: localisation, GUI text and log strings name tokens in quotes.
+        token_issues = _scan_dynamic_tokens_text(stripped, rel, registered_tokens)
     if mask & _F_MATH:
         math_issues = _scan_math_precision_text(blanked, rel)
     if mask & _F_ORPHAN:
@@ -2086,7 +2087,7 @@ def _merge_three_dicts(
 
 class Validator(BaseValidator):
     TITLE = "VARIABLE AND EVENT TARGET VALIDATION"
-    STAGED_EXTENSIONS = [".txt", ".yml"]
+    STAGED_EXTENSIONS = [".txt", ".yml", ".gui"]
 
     def __init__(self, mod_path: str, **kwargs):
         self.redundant_focus_flags = kwargs.pop("redundant_focus_flags", False)
@@ -2497,7 +2498,9 @@ class Validator(BaseValidator):
         available_files = self._collect_files(_PLAYER_FACING_GLOBS)
         tooltip_files = self._collect_files(tooltip_patterns)
         flag_files = self._collect_files(math_patterns)
-        loc_files = self._collect_files(["localisation/english/**/*.yml"])
+        display_text_files = self._collect_files(
+            ["localisation/english/**/*.yml", "interface/**/*.gui"]
+        )
 
         union = list(
             dict.fromkeys(
@@ -2508,7 +2511,7 @@ class Validator(BaseValidator):
                 + available_files
                 + tooltip_files
                 + flag_files
-                + loc_files
+                + display_text_files
             )
         )
         empty: Dict[str, List] = {
@@ -2556,11 +2559,11 @@ class Validator(BaseValidator):
         available_set = set(available_files)
         tooltip_set = set(tooltip_files)
         flag_set = set(flag_files)
-        loc_set = set(loc_files)
+        display_text_set = set(display_text_files)
         args_list = []
         for f in union:
             mask = 0
-            if f in loc_set:
+            if f in display_text_set:
                 mask |= _F_TOKEN
             if f in math_set:
                 mask |= _F_MATH | _F_TOKEN
