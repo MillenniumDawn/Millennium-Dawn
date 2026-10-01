@@ -27,7 +27,6 @@ These are formed through the dedicated formable nations decision system.
 | Baltic Union     | BLT    | Lithuania, Latvia, Estonia                                    | Northern Europe |
 | Scandinavia      | SCA    | Sweden, Denmark, Norway, Finland, Iceland, Greenland          | Northern Europe |
 | Benelux          | HBL    | Netherlands, Belgium, Luxembourg                              | Western Europe  |
-| Iberia           | IBR    | Spain, Portugal, Catalonia, Galicia                           | Southern Europe |
 | Austria-Hungary  | AUSHUN | Austria, Hungary, Slovakia, Czech Republic, Slovenia, Croatia | Central Europe  |
 | North Sea Empire | NORDEM | Denmark, England, Norway                                      | Northern Europe |
 | Angevin Empire   | AVG    | England, France                                               | Western Europe  |
@@ -82,6 +81,19 @@ The **United Arab Republic** can be proclaimed by any sufficiently powerful Arab
 
 The forming nation must hold at least regional power status. Other Arab nations can then be invited to join or may leave the union over time. If too many members leave, the UAR collapses.
 
+### Iberian Union
+
+**Spain** or **Portugal** forms the **Iberian Union** (IBR) through a shared focus tree, The Dream of Iberia. Its first focus forms the union: it renames the country, gives cores on every Spanish and Portuguese state you own, and starts regional sectarianism. It needs you to own and fully control all of mainland Spain, the Balearic Islands and mainland Portugal. Portugal also needs its own Iberian Union focus first, unless Spain no longer exists.
+
+Every union state has a sectarianism score from 0% to 100%. Each week it moves by the union's sectarian growth plus the state's own. Select a state on the map in the decision tab to act on it:
+
+- **Integration** decisions raise its sectarianism now but lower its sectarian growth.
+- **Concession** decisions lower it now but raise its sectarian growth.
+- **Language class funding** lowers the union's sectarian growth, for an ongoing cost. Below 40% stability the union's sectarian growth cannot go below 0%.
+- **Focuses** such as A Common Curriculum and the Madrid-Lisbon High-Speed Line lower it too. The High-Speed Line needs level 6 railways from Madrid to Lisbon.
+
+Once sectarianism is 0% in every state, the Proclaim the Iberian Union focus ends the system and grants National Unity for two years. A state that reaches 100% declares independence once if it has a nation to break away as. You can let it go or go to war to take it back. A state with no such nation falls into unrest instead.
+
 ### Visegrad Federation
 
 **Poland** can pursue unification of the Visegrad Group (Poland, Czech Republic, Slovakia, Hungary) through its unique focus tree path (`POL_closeup_of_the_visegrad_group`). This uses a dedicated decision category rather than the standard formable nations system.
@@ -97,4 +109,4 @@ The forming nation must hold at least regional power status. Other Arab nations 
 - Formable nations use **cosmetic tags**, meaning your country keeps its original tag for gameplay purposes but displays the new name and flag.
 - The formable nations game rule must be enabled (it is by default).
 - A separate game rule controls whether multiple countries can form the same nation in one game.
-- Some formable nations (like Iberia) have additional restrictions tied to specific focus tree paths.
+- The formable nations game rule also disables the Iberian Union tree.

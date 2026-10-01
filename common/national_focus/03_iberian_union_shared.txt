@@ -1,0 +1,395 @@
+shared_focus = {
+	id = IBR_dream_of_iberia
+	icon = iberian_summit
+	x = 127
+	y = 10
+	offset = {
+		x = -64
+		y = 6
+		trigger = { original_tag = SPR }
+	}
+	cost = 5
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+	available = {
+		IBR_controls_iberia = yes
+		OR = {
+			original_tag = SPR
+			has_completed_focus = POR_iberian_union
+			AND = {
+				original_tag = POR
+				NOT = { country_exists = SPR }
+			}
+		}
+		custom_trigger_tooltip = {
+			tooltip = IBR_not_usoe_tt
+			NOT = { has_country_flag = USoE }
+		}
+		custom_trigger_tooltip = {
+			tooltip = IBR_formables_enabled_tt
+			NOT = { has_global_flag = GAME_RULE_disable_formable_nations }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_dream_of_iberia"
+		custom_effect_tooltip = IBR_union_cores_tt
+		hidden_effect = {
+			every_owned_state = {
+				limit = {
+					OR = {
+						is_spain_state = yes
+						is_portugal_state = yes
+					}
+				}
+				add_core_of = ROOT
+			}
+		}
+		# A European Federation member keeps its EFS branding; EFS_update_flag never runs twice
+		if = {
+			limit = {
+				has_country_flag = EFS_flag_change
+				has_idea = EU_member
+			}
+			set_cosmetic_tag = EFS_IBR
+		}
+		else = {
+			set_cosmetic_tag = IBR
+		}
+		custom_effect_tooltip = IBR_dream_of_iberia_tt
+		unlock_decision_category_tooltip = IBR_dream_category
+		custom_effect_tooltip = {
+			localization_key = adds_dynamic_modifier_tt
+			MODIFIER = IBR_divided_peninsula
+		}
+		set_variable = { IBR_union_growth = 0.25 tooltip = IBR_sectarian_growth_change_tt }
+		custom_effect_tooltip = IBR_division_stability_tt
+		hidden_effect = {
+			set_country_flag = is_IBR
+			mark_formed_country_formable = yes
+			clr_country_flag = dynamic_flag
+			clr_country_flag = dynamic_rebel_flag
+			IBR_setup_states = yes
+			IBR_seed_sectarianism = yes
+			IBR_update_average = yes
+			add_dynamic_modifier = { modifier = IBR_divided_peninsula }
+			IBR_update_map_dirty = yes
+			# A Portugal that conquered the peninsula skipped POR_iberian_union, which the Gates of Iberia need
+			if = {
+				limit = {
+					original_tag = POR
+					NOT = { has_completed_focus = POR_iberian_union }
+				}
+				unlock_national_focus = POR_iberian_union
+			}
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_common_curriculum
+	icon = focus_generic_education
+	x = -2
+	y = 1
+	relative_position_id = IBR_dream_of_iberia
+	cost = 4
+	prerequisite = { focus = IBR_dream_of_iberia }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_common_curriculum"
+		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_all_change_tt }
+		custom_effect_tooltip = IBR_common_curriculum_tt
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = IBR_divided_peninsula
+		}
+		add_to_variable = { IBR_union_growth = -0.2 tooltip = IBR_sectarian_growth_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_all = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_iberian_broadcasting
+	icon = goal_JAP_analogue_television
+	x = 2
+	y = 1
+	relative_position_id = IBR_dream_of_iberia
+	cost = 4
+	prerequisite = { focus = IBR_dream_of_iberia }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_PROPAGANDA }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_iberian_broadcasting"
+		add_stability = 0.02
+		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_all_change_tt }
+		hidden_effect = { IBR_change_sectarianism_all = yes }
+		# The nation that was absorbed gets a second cut
+		if = {
+			limit = { original_tag = SPR }
+			set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_portugal_change_tt }
+			hidden_effect = { IBR_change_sectarianism_portugal = yes }
+		}
+		else = {
+			set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_spain_change_tt }
+			hidden_effect = { IBR_change_sectarianism_spain = yes }
+		}
+		hidden_effect = { IBR_update_map_dirty = yes }
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_single_market
+	icon = customs_union
+	x = 0
+	y = 1
+	relative_position_id = IBR_dream_of_iberia
+	cost = 4
+	prerequisite = { focus = IBR_dream_of_iberia }
+	search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_TRADE }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_single_market"
+		add_timed_idea = {
+			idea = IBR_single_market_idea
+			days = 730
+		}
+		set_temp_variable = { IBR_sect_change = -3 tooltip = IBR_sectarianism_all_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_all = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_charter_of_the_nations
+	icon = SPR_nuestra_identidad
+	x = -1
+	y = 1
+	relative_position_id = IBR_common_curriculum
+	cost = 4
+	prerequisite = { focus = IBR_common_curriculum }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_charter_of_the_nations"
+		add_stability = 0.03
+		set_temp_variable = { IBR_sect_change = -15 tooltip = IBR_sectarianism_charter_change_tt }
+		hidden_effect = {
+			86 = { IBR_change_sectarianism = yes }
+			88 = { IBR_change_sectarianism = yes }
+			1041 = { IBR_change_sectarianism = yes }
+			944 = { IBR_change_sectarianism = yes }
+			94 = { IBR_change_sectarianism = yes }
+			92 = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_capital_lisbon
+	icon = flag_portugal
+	x = -1
+	y = 1
+	relative_position_id = IBR_iberian_broadcasting
+	cost = 4
+	prerequisite = { focus = IBR_iberian_broadcasting }
+	mutually_exclusive = { focus = IBR_capital_madrid }
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+	available = {
+		96 = {
+			is_owned_by = ROOT
+			is_fully_controlled_by = ROOT
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_capital_lisbon"
+		set_capital = { state = 96 }
+		add_victory_points = {
+			province = 11805
+			value = 5
+		}
+		set_temp_variable = { IBR_sect_change = -10 tooltip = IBR_sectarianism_portugal_change_tt }
+		hidden_effect = { IBR_change_sectarianism_portugal = yes }
+		set_temp_variable = { IBR_sect_change = 5 tooltip = IBR_sectarianism_castile_change_tt }
+		hidden_effect = {
+			91 = { IBR_change_sectarianism = yes }
+			90 = { IBR_change_sectarianism = yes }
+			970 = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 3
+			original_tag = POR
+		}
+	}
+}
+
+shared_focus = {
+	id = IBR_capital_madrid
+	icon = spain
+	x = 1
+	y = 1
+	relative_position_id = IBR_iberian_broadcasting
+	cost = 4
+	prerequisite = { focus = IBR_iberian_broadcasting }
+	mutually_exclusive = { focus = IBR_capital_lisbon }
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SECTARIANISM }
+
+	available = {
+		91 = {
+			is_owned_by = ROOT
+			is_fully_controlled_by = ROOT
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_capital_madrid"
+		set_capital = { state = 91 }
+		add_victory_points = {
+			province = 9767
+			value = 5
+		}
+		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_spain_change_tt }
+		hidden_effect = { IBR_change_sectarianism_spain = yes }
+		set_temp_variable = { IBR_sect_change = 10 tooltip = IBR_sectarianism_portugal_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_portugal = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = {
+		base = 5
+		modifier = {
+			factor = 3
+			original_tag = SPR
+		}
+		modifier = {
+			factor = 0.1
+			any_of_scopes = {
+				array = global.IBR_states
+				is_portugal_state = yes
+				check_variable = { IBR_sectarianism > 85 }
+			}
+		}
+	}
+}
+
+shared_focus = {
+	id = IBR_madrid_lisbon_high_speed
+	icon = grants_for_high_speed_trains
+	x = -1
+	y = 1
+	relative_position_id = IBR_single_market
+	cost = 4
+	prerequisite = { focus = IBR_single_market }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_INFRASTRUCTURE }
+
+	available = {
+		has_railway_level = { state = 91 level = 6 }
+		has_railway_level = { state = 968 level = 6 }
+		has_railway_level = { state = 1056 level = 6 }
+		has_railway_level = { state = 96 level = 6 }
+		has_railway_connection = { start_state = 91 target_state = 96 }
+		NOT = { has_completed_focus = IBR_proclaim_the_iberian_union }
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_madrid_lisbon_high_speed"
+		set_temp_variable = { IBR_sect_change = -10 tooltip = IBR_sectarianism_rail_change_tt }
+		custom_effect_tooltip = {
+			localization_key = modifies_dynamic_modifier_tt
+			MODIFIER = IBR_divided_peninsula
+		}
+		add_to_variable = { IBR_union_growth = -0.5 tooltip = IBR_sectarian_growth_change_tt }
+		hidden_effect = {
+			91 = { IBR_change_sectarianism = yes }
+			968 = { IBR_change_sectarianism = yes }
+			1056 = { IBR_change_sectarianism = yes }
+			96 = { IBR_change_sectarianism = yes }
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_common_citizenship
+	icon = CHI_passport
+	x = 0
+	y = 3
+	relative_position_id = IBR_dream_of_iberia
+	cost = 4
+	prerequisite = { focus = IBR_capital_lisbon focus = IBR_capital_madrid }
+	prerequisite = { focus = IBR_charter_of_the_nations }
+	prerequisite = { focus = IBR_single_market }
+	search_filters = { FOCUS_FILTER_SECTARIANISM FOCUS_FILTER_STABILITY }
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_common_citizenship"
+		add_political_power = 75
+		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_all_change_tt }
+		hidden_effect = {
+			IBR_change_sectarianism_all = yes
+			IBR_update_map_dirty = yes
+		}
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_proclaim_the_iberian_union
+	icon = focus_generic_free_iberia
+	x = 0
+	y = 1
+	relative_position_id = IBR_common_citizenship
+	cost = 5
+	prerequisite = { focus = IBR_common_citizenship }
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+	available = {
+		IBR_controls_union_states = yes
+		IBR_sectarianism_resolved = yes
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_proclaim_the_iberian_union"
+		custom_effect_tooltip = IBR_project_ends_tt
+		IBR_end_project = yes
+		if = {
+			limit = { original_tag = POR }
+			hidden_effect = { POR_open_hispanosphere = yes }
+		}
+		add_timed_idea = {
+			idea = IBR_national_unity
+			days = 730
+		}
+		hidden_effect = { news_event = { id = iberian_union.2 hours = 6 } }
+	}
+
+	ai_will_do = { base = 100 }
+}

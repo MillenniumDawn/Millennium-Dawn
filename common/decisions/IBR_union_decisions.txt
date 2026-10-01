@@ -1,0 +1,294 @@
+IBR_dream_category = {
+	IBR_raise_language_funding = {
+		icon = GFX_decision_ISR_education_button
+		cost = 25
+		visible = { check_variable = { IBR_language_funding < 3 } }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IBR_language_funding_curriculum_tt
+				OR = {
+					check_variable = { IBR_language_funding < 1 }
+					has_completed_focus = IBR_common_curriculum
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IBR_raise_language_funding"
+			if = {
+				limit = { check_variable = { IBR_language_funding < 1 } }
+				add_ideas = IBR_language_classes_1
+			}
+			else_if = {
+				limit = { check_variable = { IBR_language_funding < 2 } }
+				swap_ideas = { remove_idea = IBR_language_classes_1 add_idea = IBR_language_classes_2 }
+			}
+			else = {
+				swap_ideas = { remove_idea = IBR_language_classes_2 add_idea = IBR_language_classes_3 }
+			}
+			hidden_effect = {
+				add_to_variable = { IBR_language_funding = 1 }
+				IBR_update_map_dirty = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	IBR_cut_language_funding = {
+		icon = GFX_decision_cuba_education_button
+		cost = 0
+		visible = { check_variable = { IBR_language_funding > 0 } }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IBR_cut_language_funding"
+			if = {
+				limit = { check_variable = { IBR_language_funding < 2 } }
+				remove_ideas = IBR_language_classes_1
+			}
+			else_if = {
+				limit = { check_variable = { IBR_language_funding < 3 } }
+				swap_ideas = { remove_idea = IBR_language_classes_2 add_idea = IBR_language_classes_1 }
+			}
+			else = {
+				swap_ideas = { remove_idea = IBR_language_classes_3 add_idea = IBR_language_classes_2 }
+			}
+			hidden_effect = {
+				subtract_from_variable = { IBR_language_funding = 1 }
+				IBR_update_map_dirty = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 20
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	IBR_iberian_civic_service = {
+		icon = GFX_decision_generic_nationalism
+		cost = 25
+		visible = { has_variable = IBR_selected_state }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_state_in_union_tt
+				var:IBR_selected_state = {
+					is_in_array = { global.IBR_states = THIS }
+					is_owned_by = ROOT
+					is_fully_controlled_by = ROOT
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_civic_service_ready_tt
+				var:IBR_selected_state = { NOT = { has_state_flag = IBR_civic_service_recent } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_drift_above_min_tt
+				var:IBR_selected_state = { check_variable = { IBR_sect_drift > -1 } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IBR_iberian_civic_service"
+			set_temp_variable = { IBR_sect_change = 5 tooltip = IBR_selected_sectarianism_change_tt }
+			set_temp_variable = { IBR_drift_change = -0.25 tooltip = IBR_selected_growth_change_tt }
+			hidden_effect = {
+				var:IBR_selected_state = {
+					set_state_flag = { flag = IBR_civic_service_recent days = 60 value = 1 }
+					IBR_change_sectarianism = yes
+					IBR_change_drift = yes
+				}
+				IBR_update_map_dirty = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				var:IBR_selected_state = {
+					check_variable = { IBR_sectarianism > 0 }
+					check_variable = { IBR_sectarianism < 60 }
+				}
+			}
+			# A state whose growth concessions pushed up needs integrating back down, whatever its score
+			modifier = {
+				add = 5
+				var:IBR_selected_state = {
+					check_variable = { IBR_sect_drift > 0 }
+					check_variable = { IBR_sectarianism < 90 }
+				}
+			}
+		}
+	}
+
+	IBR_centralised_schooling = {
+		icon = GFX_decision_ISR_centralisation_button
+		cost = 50
+		visible = { has_variable = IBR_selected_state }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_state_in_union_tt
+				var:IBR_selected_state = {
+					is_in_array = { global.IBR_states = THIS }
+					is_owned_by = ROOT
+					is_fully_controlled_by = ROOT
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_centralised_schooling_ready_tt
+				var:IBR_selected_state = { NOT = { has_state_flag = IBR_centralised_schooling_recent } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_drift_above_min_tt
+				var:IBR_selected_state = { check_variable = { IBR_sect_drift > -1 } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IBR_centralised_schooling"
+			set_temp_variable = { IBR_sect_change = 10 tooltip = IBR_selected_sectarianism_change_tt }
+			set_temp_variable = { IBR_drift_change = -0.5 tooltip = IBR_selected_growth_change_tt }
+			hidden_effect = {
+				var:IBR_selected_state = {
+					set_state_flag = { flag = IBR_centralised_schooling_recent days = 90 value = 1 }
+					IBR_change_sectarianism = yes
+					IBR_change_drift = yes
+				}
+				IBR_update_map_dirty = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 5
+				var:IBR_selected_state = {
+					check_variable = { IBR_sectarianism > 0 }
+					check_variable = { IBR_sectarianism < 50 }
+				}
+			}
+		}
+	}
+
+	IBR_regional_subsidies = {
+		icon = GFX_decision_money_dec
+		custom_cost_trigger = { check_variable = { treasury > 1.99 } }
+		custom_cost_text = cost_2_0
+		visible = { has_variable = IBR_selected_state }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_state_in_union_tt
+				var:IBR_selected_state = {
+					is_in_array = { global.IBR_states = THIS }
+					is_owned_by = ROOT
+					is_fully_controlled_by = ROOT
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_state_sectarian_tt
+				var:IBR_selected_state = { check_variable = { IBR_sectarianism > 0 } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_regional_subsidies_ready_tt
+				var:IBR_selected_state = { NOT = { has_state_flag = IBR_regional_subsidies_recent } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_drift_below_max_tt
+				var:IBR_selected_state = { check_variable = { IBR_sect_drift < 1 } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IBR_regional_subsidies"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_temp_variable = { IBR_sect_change = -10 tooltip = IBR_selected_sectarianism_change_tt }
+			set_temp_variable = { IBR_drift_change = 0.25 tooltip = IBR_selected_growth_change_tt }
+			hidden_effect = {
+				var:IBR_selected_state = {
+					set_state_flag = { flag = IBR_regional_subsidies_recent days = 60 value = 1 }
+					IBR_change_sectarianism = yes
+					IBR_change_drift = yes
+				}
+				IBR_update_map_dirty = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				var:IBR_selected_state = { check_variable = { IBR_sectarianism > 79 } }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	IBR_autonomy_statute = {
+		icon = GFX_decision_generic_political_discourse
+		cost = 75
+		visible = { has_variable = IBR_selected_state }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_state_in_union_tt
+				var:IBR_selected_state = {
+					is_in_array = { global.IBR_states = THIS }
+					is_owned_by = ROOT
+					is_fully_controlled_by = ROOT
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_state_sectarian_tt
+				var:IBR_selected_state = { check_variable = { IBR_sectarianism > 0 } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_autonomy_statute_ready_tt
+				var:IBR_selected_state = { NOT = { has_state_flag = IBR_autonomy_statute_recent } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = IBR_selected_drift_below_max_tt
+				var:IBR_selected_state = { check_variable = { IBR_sect_drift < 1 } }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision IBR_autonomy_statute"
+			set_temp_variable = { IBR_sect_change = -20 tooltip = IBR_selected_sectarianism_change_tt }
+			set_temp_variable = { IBR_drift_change = 0.5 tooltip = IBR_selected_growth_change_tt }
+			hidden_effect = {
+				var:IBR_selected_state = {
+					set_state_flag = { flag = IBR_autonomy_statute_recent days = 120 value = 1 }
+					IBR_change_sectarianism = yes
+					IBR_change_drift = yes
+				}
+				IBR_update_map_dirty = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = {
+				add = 10
+				var:IBR_selected_state = { check_variable = { IBR_sectarianism > 84 } }
+			}
+		}
+	}
+}

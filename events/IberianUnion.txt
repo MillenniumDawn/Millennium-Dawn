@@ -1,0 +1,105 @@
+add_namespace = iberian_union
+
+# iberian_union.1 to iberian_union.2: the shared Dream of Iberia tree, fired for Spain or Portugal
+
+# A union state has reached 100 sectarianism. ROOT owns the union; IBR_seceding_state and IBR_seceding_tag are set by IBR_weekly_tick.
+country_event = {
+	id = iberian_union.1
+	title = iberian_union.1.t
+	desc = iberian_union.1.d
+	picture = GFX_2017_catalan_refer
+
+	is_triggered_only = yes
+
+	trigger = { has_country_flag = IBR_secession_pending }
+
+	option = {
+		name = iberian_union.1.a
+		log = "[GetDateText]: [This.GetName]: iberian_union.1.a executed"
+		add_stability = -0.05
+		custom_effect_tooltip = IBR_secession_accept_tt
+		hidden_effect = {
+			clr_country_flag = IBR_secession_pending
+			IBR_release_seceding_state = yes
+			var:IBR_seceding_state = { remove_from_array = { global.IBR_states = THIS } }
+			if = {
+				limit = { check_variable = { IBR_selected_state = IBR_seceding_state } }
+				clear_variable = IBR_selected_state
+			}
+			IBR_update_average = yes
+			IBR_update_map_dirty = yes
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 3
+				has_war = yes
+			}
+			modifier = {
+				factor = 3
+				has_army_size = { size < 24 }
+			}
+			modifier = {
+				factor = 0.3
+				has_army_size = { size > 47 }
+			}
+		}
+	}
+
+	option = {
+		name = iberian_union.1.b
+		log = "[GetDateText]: [This.GetName]: iberian_union.1.b executed"
+		add_war_support = 0.05
+		custom_effect_tooltip = IBR_secession_war_tt
+		hidden_effect = {
+			clr_country_flag = IBR_secession_pending
+			IBR_release_seceding_state = yes
+			var:IBR_seceding_state = { set_state_flag = IBR_independence_war }
+			declare_war_on = {
+				target = var:IBR_seceding_tag
+				type = annex_everything
+			}
+			if = {
+				limit = { check_variable = { IBR_selected_state = IBR_seceding_state } }
+				clear_variable = IBR_selected_state
+			}
+			IBR_update_map_dirty = yes
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				factor = 0.2
+				has_war = yes
+			}
+			modifier = {
+				factor = 3
+				has_army_size = { size > 23 }
+			}
+			modifier = {
+				factor = 1.5
+				has_stability > 0.5
+			}
+		}
+	}
+}
+
+# Proclamation news. FROM is the new union.
+news_event = {
+	id = iberian_union.2
+	title = iberian_union.2.t
+	desc = iberian_union.2.d
+	picture = GFX_iberia_united_news
+
+	major = yes
+	is_triggered_only = yes
+
+	option = {
+		name = iberian_union.2.a
+		trigger = { has_country_flag = is_IBR }
+	}
+
+	option = {
+		name = iberian_union.2.b
+		trigger = { NOT = { has_country_flag = is_IBR } }
+	}
+}

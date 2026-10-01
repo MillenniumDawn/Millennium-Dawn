@@ -961,7 +961,7 @@ def _find_formable_commitment_rows(
     Every decision in the formables file carries an ``ai_will_do`` gate
     comparing ``formable_committed_size`` against that formable's full state
     count, and the commit sites (integrate_start / update_flag complete_effect,
-    the IBR/ANZ remove_effects, Spain's focus tree) store the same id/size
+    the ANZ remove_effects) store the same id/size
     pair. The counts exist only as inlined literals, so editing an
     update_flag's state list silently corrupts the ratchet ordering — this
     recomputes each count from the update_flag ``available`` block and diffs
