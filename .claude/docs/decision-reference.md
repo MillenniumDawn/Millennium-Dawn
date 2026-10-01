@@ -240,9 +240,9 @@ Every decision in `common/decisions/formable_nation_decisions.txt` carries an AI
  }
 ```
 
-Commit writes (`hidden_effect` setting both variables) live in every `integrate_start` and `update_flag` `complete_effect`; IBR/ANZ (which have no `integrate_start`) commit from their integrate decisions' `remove_effect`, and Spain's `SPR_solidify_the_iberian_union` focus commits IBR — those delayed/ungated sites guard the write with `compare = less_than` so they never downgrade a larger commitment. NORDEM/AVG/ANZ gates carry an extra exemption so a CANZUK commitment stranded by the EU guard cannot block its fallback formables, and `CANZUK_integrate_start` is AI-blocked while EU-blocked.
+Commit writes (`hidden_effect` setting both variables) live in every `integrate_start` and `update_flag` `complete_effect`; ANZ (which has no `integrate_start`) commits from its integrate decisions' `remove_effect`, and that delayed site guards the write with `compare = less_than` so it never downgrades a larger commitment. The Iberian Union is a shared focus tree, not a decision formable, and commits nothing (id 5 is retired). NORDEM/AVG/ANZ gates carry an extra exemption so a CANZUK commitment stranded by the EU guard cannot block its fallback formables, and `CANZUK_integrate_start` is AI-blocked while EU-blocked.
 
-A **new formable** must wire all of this: gate on every decision, commit in `integrate_start`/`update_flag`, a fresh unique id, and size = its `update_flag` state-list count. **Editing an `update_flag` state list requires updating that formable's size literal at every gate/commit site.** `validate_decisions.py` (`validate_formable_commitment_sync`) recomputes the counts and gates on any drift, missing gate, or id collision — including the Spain focus literals.
+A **new formable** must wire all of this: gate on every decision, commit in `integrate_start`/`update_flag`, a fresh unique id, and size = its `update_flag` state-list count. **Editing an `update_flag` state list requires updating that formable's size literal at every gate/commit site.** `validate_decisions.py` (`validate_formable_commitment_sync`) recomputes the counts and gates on any drift, missing gate, or id collision, including literals in focus trees and scripted effects.
 
 ## Example: Basic Decision
 
