@@ -1,16 +1,6 @@
-# A country that buys a tank, helicopter or aircraft hull, or defeats a country that has researched one,
-# gets one-use research bonuses on that hull's technology and on every earlier generation it lacks.
-# Two or more generations back / one back / studied generation: tanks 90/50/20%, helicopters and
-# aircraft 45/25/10%, set per family below. Education below edu_05 cuts each bonus by 20% per law step.
-# Without the hull family's special project, it also gets a one-time head start on that project:
-# 50% at edu_05, scaled down the same way.
-# The tech lists mirror enable_equipments in NSB_armor.txt, helicopter_techs.txt and BBA_aircraft.txt.
-# Role airframes (CAS, strike, fighter, maritime patrol...) are duplicate_archetypes of the base airframes.
+# Hull tech lists mirror enable_equipments in NSB_armor.txt, helicopter_techs.txt and BBA_aircraft.txt.
 
-# Country scope. Walks temp array reverse_engineering_techs (one hull family, oldest first) up to
-# temp variable reverse_engineering_studied_index, the 0-based array position of the studied hull.
-# Callers set the index to -1 when the family matched but no generation with a technology did.
-# Also sets reverse_engineering_head_start for the family's special project.
+# reverse_engineering_studied_index: 0-based position of the studied hull in reverse_engineering_techs, -1 for none.
 reverse_engineering_grant_bonuses = {
 	if = { limit = { has_idea = edu_05 } set_temp_variable = { reverse_engineering_education = 1 } }
 	else_if = { limit = { has_idea = edu_04 } set_temp_variable = { reverse_engineering_education = 0.8 } }
@@ -45,8 +35,6 @@ reverse_engineering_grant_bonuses = {
 	clear_temp_array = reverse_engineering_techs
 }
 
-# Country scope. Reads temp variables reverse_engineering_tech (a technology token) and reverse_engineering_bonus.
-# The flag grants each technology once per country.
 reverse_engineering_grant_tech_bonus = {
 	meta_effect = {
 		text = {
@@ -73,12 +61,10 @@ reverse_engineering_notify = {
 			NOT = { has_country_flag = reverse_engineering_report_pending }
 		}
 		set_country_flag = { flag = reverse_engineering_report_pending days = 1 value = 1 }
-		log = "[GetDateText]: [THIS.GetName]: reverse_engineering.1 fired"
 		country_event = { id = reverse_engineering.1 }
 	}
 }
 
-# Hull families. Country scope, called once the family matched and reverse_engineering_studied_index is set.
 reverse_engineering_grant_mbt = {
 	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech }
 	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_1 }
@@ -167,7 +153,7 @@ reverse_engineering_grant_large_airframe = {
 	reverse_engineering_aircraft_head_start = yes
 }
 
-# Country scope, after an airframe family matched. Gen 5 and later airframes also need stealth research.
+# Gen 5+ airframes (index 2 and up) also need stealth research.
 reverse_engineering_aircraft_head_start = {
 	if = {
 		limit = {
@@ -190,7 +176,7 @@ reverse_engineering_aircraft_head_start = {
 	}
 }
 
-# Purchase contract scope. Called from on_contract_started after var_temp_buyer is set.
+# Purchase contract scope; needs var_temp_buyer from on_contract_started. Role airframes are duplicate_archetypes.
 reverse_engineering_study_contract = {
 	if = {
 		limit = {
@@ -663,8 +649,7 @@ reverse_engineering_study_contract = {
 	}
 }
 
-# Winner's scope from on_capitulation, where ROOT is the capitulated country.
-# Each outer limit holds the family's first technology, so the inner ladder always sets the index.
+# Winner's scope from on_capitulation; ROOT is the capitulated country.
 reverse_engineering_study_capitulated_country = {
 	if = {
 		limit = { ROOT = { has_tech = mbt_tech } }
