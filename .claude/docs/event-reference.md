@@ -88,7 +88,7 @@ An option that charges the country (treasury, debt, a tax rate change, political
   add_political_power = -50
   ai_chance = {
    base = 5
-   modifier = { factor = 0 has_political_power < 50 }
+   modifier = { factor = 0.25 ai_is_in_dire_straits = yes }
   }
  }
 
@@ -105,7 +105,7 @@ An option that charges the country (treasury, debt, a tax rate change, political
 
 - Treasury and debt: `has_active_mission = bankruptcy_incoming_collapse` and `ai_has_high_deficit = yes`. A charge built with math (`treasury_change = gdp_total` then a negative `multiply_temp_variable`) needs them as much as a literal one, and so does a scripted effect that charges internally (`one_office_construction`, `small_expenditure`).
 - Tax rate: a change in either direction counts (`modify_corporate_tax_rate_effect`, `modify_population_tax_rate_effect`). A cut gives up income, so use the treasury triggers. For a raise, check the rate itself (`check_variable = { corporate_tax_rate > N }`) so the AI does not stack raises.
-- Political power: `has_political_power < N`, with N at or above the cost so the AI never goes negative.
+- Political power: `ai_is_in_dire_straits = yes` (defensive or civil war, stability under 30%, or the bankruptcy collapse mission). Political power can go negative, so do not check the balance and do not hide the option behind a `trigger`. Lower the weight when the country has worse problems to spend it on.
 - Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
 
 The German BfV events from #5083 in `events/Germany.txt` are the reference. `validate_events.py --check-ai-chance-costs` reports the options that still need this as `event-ai-chance-ignores-cost`. The check is off by default. `validation-pipeline.md` has the rule and #5106 tracks the backlog by file.
