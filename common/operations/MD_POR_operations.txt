@@ -1,0 +1,294 @@
+POR_operation_directed_rising = {
+	icon = GFX_operations_coup_government
+	map_icon = GFX_operations_coup_government_map
+	name = POR_operation_directed_rising
+	desc = POR_operation_directed_rising_desc
+	priority = 1
+
+	days = 90
+	network_strength = 70
+	operatives = 3
+
+	visible = {
+		FROM = {
+			exists = yes
+			is_in_array = { ROOT.POR_network_target_array = THIS.id }
+		}
+	}
+
+	available = {
+		has_completed_focus = POR_directed_rising
+		NOT = { has_completed_focus = POR_remain_in_europe }
+		custom_trigger_tooltip = {
+			tooltip = POR_ops_gate_tt
+			FROM = { POR_ops_target_open = yes }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_no_rising_running_tt
+			NOT = { has_country_flag = POR_rising_running }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_ops_cap_tt
+			check_variable = { POR_shadow_clients^num < POR_ops_cap }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_no_civil_war_tt
+			FROM = { has_civil_war = no }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_independent_tt
+			FROM = { is_subject = no }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_at_peace_tt
+			NOT = { has_war_with = FROM }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_not_in_faction_tt
+			NOT = { is_in_faction_with = FROM }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_other_government_tt
+			FROM = { NOT = { has_government = ROOT } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_no_cooldown_tt
+			FROM = { NOT = { has_country_flag = POR_client_cooldown@ROOT } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_no_treaty_tt
+			FROM = { NOT = { has_country_flag = POR_treaty@ROOT } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_raid_recent_tt
+			FROM = { has_country_flag = POR_raid_recent@ROOT }
+		}
+		network_strength = { target = FROM value > 69 }
+		custom_trigger_tooltip = {
+			tooltip = POR_op_army_token_tt
+			has_operation_token = { tag = FROM token = token_army }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_civilian_token_tt
+			has_operation_token = { tag = FROM token = token_civilian }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_influence_30_tt
+			FROM = { influence_higher_30 = yes }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_operation_directed_rising_cost_tt
+			check_variable = { treasury > 11.9 }
+		}
+	}
+
+	equipment = {
+		infantry_weapons_type = 5000
+	}
+
+	risk_chance = 0.50
+	experience = 4
+	outcome_extra_chance = 0.20
+	risk_modifiers = { operation_risk }
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_coup_cost }
+
+	on_start = { # SCOPE_OPERATION
+		ROOT = {
+			set_country_flag = { flag = POR_rising_running days = 120 value = 1 }
+			set_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
+			FROM = { POR_score_client = yes }
+			set_temp_variable = { POR_heat_add = 6 }
+			POR_add_exposure = yes
+		}
+	}
+
+	outcome_execute = { # SCOPE_OPERATION
+		ROOT = {
+			set_variable = { POR_rising_target = FROM.id }
+			POR_start_client_civil_war = yes
+			country_event = { id = portugal.73 hours = 12 }
+		}
+	}
+
+	# outcome_extra_execute replaces outcome_execute rather than adding to it, so it starts the rising too.
+	outcome_extra_execute = { # SCOPE_OPERATION
+		ROOT = {
+			set_variable = { POR_rising_target = FROM.id }
+			POR_start_client_civil_war = yes
+			country_event = { id = portugal.73 hours = 12 }
+			set_temp_variable = { treasury_change = 4 }
+			modify_treasury_effect = yes
+			army_experience = 25
+		}
+	}
+
+	outcome_potential = {
+		custom_effect_tooltip = POR_operation_directed_rising_outcome_tt
+	}
+
+	phases = { # infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = { base = 25 }
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 20
+				ROOT = { has_war = no }
+				FROM = { has_war = no }
+			}
+		}
+	}
+	phases = { # infiltrate military
+		infiltrate_military_bribe = { base = 25 }
+		infiltrate_military_seduction = { base = 25 }
+		infiltrate_military_ideological_supporter = {
+			base = 25
+			modifier = {
+				FROM = { has_government = ROOT }
+				factor = 0
+			}
+		}
+	}
+	phases = { # exfiltration
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = { base = 25 }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = {
+			factor = 0
+			check_variable = { POR_shadow_exposure > 54 }
+		}
+	}
+}
+
+POR_operation_false_flag = {
+	icon = GFX_operations_targeted_sabotage
+	map_icon = GFX_operations_targeted_sabotage_map
+	name = POR_operation_false_flag
+	desc = POR_operation_false_flag_desc
+	priority = 2
+
+	days = 45
+	network_strength = 35
+	operatives = 2
+
+	visible = {
+		FROM = {
+			exists = yes
+			is_in_array = { ROOT.POR_network_target_array = THIS.id }
+		}
+	}
+
+	available = {
+		has_completed_focus = POR_special_actions_detachment
+		NOT = { has_completed_focus = POR_remain_in_europe }
+		custom_trigger_tooltip = {
+			tooltip = POR_ops_gate_tt
+			FROM = { POR_ops_target_open = yes }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_no_civil_war_tt
+			FROM = { has_civil_war = no }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_independent_tt
+			FROM = { is_subject = no }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_target_at_peace_tt
+			NOT = { has_war_with = FROM }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_no_raid_recent_tt
+			FROM = { NOT = { has_country_flag = POR_raid_recent@ROOT } }
+		}
+		custom_trigger_tooltip = {
+			tooltip = POR_op_civilian_token_tt
+			has_operation_token = { tag = FROM token = token_civilian }
+		}
+	}
+
+	requirements = {
+		FROM = { any_owned_state = { is_capital = no } }
+	}
+	selection_target = {
+		targets = { FROM }
+	}
+	selection_target_state = {
+		is_capital = no
+	}
+
+	equipment = {
+		infantry_weapons_type = 500
+	}
+
+	risk_chance = 0.40
+	experience = 3
+	outcome_extra_chance = 0.20
+	risk_modifiers = { operation_risk }
+	outcome_modifiers = { operation_outcome }
+	cost_modifiers = { operation_cost }
+
+	on_start = { # SCOPE_OPERATION
+		ROOT = {
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_temp_variable = { POR_heat_add = 4 }
+			POR_add_exposure = yes
+		}
+	}
+
+	outcome_execute = { # SCOPE_OPERATION
+		FROM = {
+			set_country_flag = { flag = POR_raid_recent@ROOT days = 180 value = 1 }
+			country_event = { id = portugal.72 days = 2 }
+		}
+	}
+
+	# Replaces outcome_execute rather than adding to it, so it does the same.
+	outcome_extra_execute = { # SCOPE_OPERATION
+		FROM = {
+			set_country_flag = { flag = POR_raid_recent@ROOT days = 180 value = 1 }
+			country_event = { id = portugal.72 days = 2 }
+		}
+	}
+
+	outcome_potential = {
+		custom_effect_tooltip = POR_operation_false_flag_outcome_tt
+	}
+
+	phases = { # infiltration
+		infiltration_border = { base = 25 }
+		infiltration_submarine = { base = 25 }
+		infiltration_diplomatic = {
+			base = 25
+			modifier = {
+				factor = 20
+				ROOT = { has_war = no }
+				FROM = { has_war = no }
+			}
+		}
+	}
+	phases = { # the raid itself
+		targeted_sabotage_plant_explosives = { base = 90 }
+		targeted_sabotage_organize_more_meetings = { base = 10 }
+	}
+	phases = { # exfiltration
+		exfiltration_border = { base = 30 }
+		exfiltration_go_to_ground = { base = 30 }
+		exfiltration_submarine_pickup = { base = 25 }
+	}
+
+	ai_will_do = {
+		base = 3
+		modifier = {
+			factor = 0
+			check_variable = { POR_shadow_exposure > 59 }
+		}
+	}
+}
