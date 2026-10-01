@@ -404,6 +404,23 @@ def case_mismatch(ref: str, ci_index: dict):
     return hit if (hit is not None and hit != ref) else None
 
 
+DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
+_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
+
+
+def load_dynamic_token_names(mod_path: str) -> Set[str]:
+    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
+    path = os.path.join(mod_path, DYNAMIC_TOKEN_FILE)
+    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
+    if not text:
+        return set()
+    return {
+        line.strip()
+        for line in text.splitlines()
+        if _DYNAMIC_TOKEN_LINE.match(line.strip())
+    }
+
+
 # Trait definitions sit at one tab of indent inside the `leader_traits = { }`
 # wrapper; `-` stays in the charset so a hyphenated name cannot truncate.
 LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
