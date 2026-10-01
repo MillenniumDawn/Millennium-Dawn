@@ -1,9 +1,14 @@
-"""Regressions for the unregistered `token:` literal check in validate_variables.
+"""Regressions for the unregistered dynamic token check in validate_variables.
 
-A `token:X` literal missing from common/synchronized_dynamic_tokens/MD_tokens.txt
-makes the engine log "Token X is a dynamic token, this can cause OOS" at load.
+A token missing from common/synchronized_dynamic_tokens/MD_tokens.txt makes the
+engine log "Token X is a dynamic token, this can cause OOS" at load. Script names
+tokens as `token:X` literals and as the `@X` target of token game variables.
 """
 
+import runpy
+import sys
+
+import pytest
 import validate_variables as V
 
 _REGISTRY = "common/synchronized_dynamic_tokens/MD_tokens.txt"
@@ -43,6 +48,41 @@ def test_runtime_built_token_not_flagged():
     assert _tokens(text) == []
 
 
+@pytest.mark.parametrize(
+    "ref",
+    [
+        "modifier@TST_custom_factor",
+        "FROM.modifier@TST_custom_factor",
+        "resource_produced@TST_custom_factor",
+        "THIS.building_level@TST_custom_factor",
+        "num_battalions_with_type@TST_custom_factor",
+        "party_popularity_100@TST_custom_factor",
+    ],
+)
+def test_unregistered_game_variable_target_flagged(ref):
+    text = f"check_variable = {{ {ref} > 0 }}\n"
+    assert _tokens(text) == [(ref.split(".")[-1], 1)]
+    assert _tokens(text, {"TST_custom_factor"}) == []
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Engine-known tokens need no registration.
+        "check_variable = { resource@steel > 0 }\n",
+        "check_variable = { party_popularity@democratic > 0.5 }\n",
+        "check_variable = { modifier@political_power_gain > 0 }\n",
+        # `@` after an ordinary variable is a scope, not a token target.
+        "set_variable = { coup_party@ROOT = 1 }\n",
+        "set_variable = { my_resource@TST_custom_factor = 1 }\n",
+        # The target is read from a variable.
+        "set_temp_variable = { size = party_popularity@var:ideology }\n",
+    ],
+)
+def test_other_at_forms_not_flagged(text):
+    assert _tokens(text) == []
+
+
 def test_validator_reports_unregistered_tokens_as_errors(tmp_path, write_path):
     write_path(tmp_path, _REGISTRY, "gen_3_light\n")
     write_path(
@@ -71,6 +111,40 @@ def test_validator_reports_unregistered_tokens_as_errors(tmp_path, write_path):
         )
     ]
     assert validator._issues[0].message.startswith("token:gen_7_light ")
+
+
+@pytest.mark.parametrize(
+    ("registry", "exit_code"),
+    [("gen_3_light\n", 1), ("gen_3_light\nTST_custom_factor\n", 0)],
+)
+def test_unregistered_token_fails_a_strict_run(
+    tmp_path, monkeypatch, write_path, registry, exit_code
+):
+    """CI runs the validator with --strict, so one finding must fail the job."""
+    write_path(tmp_path, _REGISTRY, registry)
+    write_path(
+        tmp_path,
+        "common/scripted_effects/tokens.txt",
+        "TST_demo = {\n\tset_variable = { x = modifier@TST_custom_factor }\n}\n",
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            V.__file__,
+            "--path",
+            str(tmp_path),
+            "--workers",
+            "1",
+            "--no-color",
+            "--strict",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(V.__file__, run_name="__main__")
+
+    assert exit_info.value.code == exit_code
 
 
 def test_missing_registry_reports_every_literal(tmp_path, write_path):

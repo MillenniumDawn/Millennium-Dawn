@@ -363,9 +363,114 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     return _scan_math_precision_text(cleaned, rel)
 
 
-# A `token:X` literal the engine has not been told about logs "Token X is a
-# dynamic token, this can cause OOS" at load, once per literal.
-_TOKEN_LITERAL_RE = re.compile(r"\btoken:([A-Za-z0-9_.\-]+)")
+# A token the engine has not been told about logs "Token X is a dynamic token,
+# this can cause OOS" at load, once per use. Script names tokens two ways: a
+# `token:X` literal, and the `@X` target of the game variables below (the ones
+# resources/documentation/dynamic_variables_documentation.md gives a token target).
+_TOKEN_TARGET_GAME_VARS = (
+    "avg_units_acclimation",
+    "building_level",
+    "damaged_building_level",
+    "days_decision_timeout",
+    "days_mission_timeout",
+    "faction_resource_extracted",
+    "global_resource_extracted",
+    "leader_modifier",
+    "modifier",
+    "non_damaged_building_level",
+    "num_armies_with_type",
+    "num_battalions_with_type",
+    "num_deployed_planes_with_type",
+    "num_equipment",
+    "num_equipment_in_armies",
+    "num_equipment_in_armies_k",
+    "num_ships_with_type",
+    "num_target_equipment",
+    "num_target_equipment_in_armies",
+    "num_target_equipment_in_armies_k",
+    "num_units_defensive_combats_on",
+    "num_units_offensive_combats_against",
+    "num_units_on_climate",
+    "num_units_with_type",
+    "party_popularity",
+    "party_popularity_100",
+    "resource",
+    "resource_consumed",
+    "resource_exported",
+    "resource_imported",
+    "resource_produced",
+    "sum_unit_terrain_modifier",
+    "unit_modifier",
+)
+_TOKEN_REF_RE = re.compile(
+    r"\b(?:token:|(?:" + "|".join(_TOKEN_TARGET_GAME_VARS) + r")@)([A-Za-z0-9_.\-]+)"
+)
+
+# Tokens the engine already knows, so they log nothing unregistered. This is the
+# set in use and absent from MD_tokens.txt when the check landed; nearly all are
+# vanilla names. A new token belongs in MD_tokens.txt, not here.
+_ENGINE_KNOWN_TOKENS = frozenset(
+    {
+        # buildings
+        "air_base",
+        "arms_factory",
+        "dockyard",
+        "fuel_silo",
+        "industrial_complex",
+        "infrastructure",
+        "naval_base",
+        "nuclear_reactor",
+        "rail_way",
+        "rocket_site",
+        "supply_node",
+        "synthetic_refinery",
+        # modifiers
+        "agency_upgrade_time",
+        "commando_trait_chance_factor",
+        "consumer_goods_expected_value",
+        "consumer_goods_factor",
+        "industrial_capacity_dockyard",
+        "industrial_capacity_factory",
+        "local_resources_factor",
+        "political_power_factor",
+        "political_power_gain",
+        "production_speed_buildings_factor",
+        "research_speed_factor",
+        "stability_factor",
+        "stability_weekly",
+        "war_support_factor",
+        # equipment, unit and ship types
+        "Missile",
+        "Special_Forces",
+        "artillery_equipment",
+        "capital",
+        "carrier",
+        "convoy",
+        "heavy_tank_chassis",
+        "medium_plane_airframe",
+        "medium_tank_chassis",
+        "small_plane_airframe",
+        "small_plane_cas_airframe",
+        "small_plane_naval_bomber_airframe",
+        "support_ship",
+        # ideologies
+        "communism",
+        "democratic",
+        "fascism",
+        "neutrality",
+        "ruling_party",
+        # terrain and climate
+        "cold_climate",
+        "fort",
+        # resources
+        "aluminium",
+        "chromium",
+        "oil",
+        "rubber",
+        "steel",
+        "tungsten",
+    }
+)
 
 
 def _scan_dynamic_tokens_text(
@@ -373,19 +478,20 @@ def _scan_dynamic_tokens_text(
 ) -> List[Tuple[str, str, int]]:
     issues: List[Tuple[str, str, int]] = []
     seen: Set[str] = set()
-    for m in _TOKEN_LITERAL_RE.finditer(cleaned):
+    for m in _TOKEN_REF_RE.finditer(cleaned):
         token = m.group(1)
-        # `token:prefix_[SCOPE]` is built at runtime and has no literal name.
-        if cleaned.startswith(("[", "@"), m.end()):
+        # `token:prefix_[SCOPE]` and `party_popularity@var:x` name no literal token.
+        if cleaned.startswith(("[", "@", ":"), m.end()):
             continue
-        if token in registered or token in seen:
+        if token in registered or token in _ENGINE_KNOWN_TOKENS or token in seen:
             continue
         seen.add(token)
         line = cleaned[: m.start()].count("\n") + 1
         issues.append(
             (
-                f"token:{token} is not registered in {DYNAMIC_TOKEN_FILE}"
-                " (the engine logs a dynamic-token OOS warning at load)",
+                f"{m.group(0)} uses a token that is not registered in"
+                f" {DYNAMIC_TOKEN_FILE} (the engine logs a dynamic-token OOS"
+                " warning at load)",
                 rel,
                 line,
             )
@@ -2251,13 +2357,13 @@ class Validator(BaseValidator):
         )
 
     def validate_unregistered_dynamic_tokens(self):
-        """Flag `token:X` literals missing from MD_tokens.txt (ERROR)."""
-        self._log_section("Checking token: literals against MD_tokens.txt...")
+        """Flag `token:X` and `<game var>@X` tokens missing from MD_tokens.txt (ERROR)."""
+        self._log_section("Checking script tokens against MD_tokens.txt...")
         issues = self._get_shared_scan()["tokens"]
         self._report(
             issues,
             "✓ No unregistered dynamic tokens found",
-            "token: literals missing from the synchronized dynamic token list (error.log spam and OOS risk):",
+            "tokens missing from the synchronized dynamic token list (error.log spam and OOS risk):",
             severity=Severity.ERROR,
             category="unregistered-dynamic-token",
         )
