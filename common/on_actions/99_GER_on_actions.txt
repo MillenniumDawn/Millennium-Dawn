@@ -40,62 +40,6 @@ on_actions = {
 	}
 	on_weekly_GER = {
 		effect = {
-			# BfV department status flags
-			if = {
-				limit = { has_country_flag = GER_LEFTWING_DEPT_COLLAPSING }
-				set_country_flag = GER_LEFTISTS_ARE_RADICAL
-				clr_country_flag = GER_LEFTISTS_ARE_CONTROLLED
-				clr_country_flag = GER_LEFTISTS_ARE_ACTIVE
-			}
-			else_if = {
-				limit = { has_country_flag = GER_LEFTWING_DEPT_STABLE }
-				set_country_flag = GER_LEFTISTS_ARE_CONTROLLED
-				clr_country_flag = GER_LEFTISTS_ARE_RADICAL
-				clr_country_flag = GER_LEFTISTS_ARE_ACTIVE
-			}
-			else_if = {
-				limit = { has_country_flag = GER_LEFTWING_DEPT_UNSTABLE }
-				set_country_flag = GER_LEFTISTS_ARE_ACTIVE
-				clr_country_flag = GER_LEFTISTS_ARE_CONTROLLED
-				clr_country_flag = GER_LEFTISTS_ARE_RADICAL
-			}
-			if = {
-				limit = { has_country_flag = GER_RIGHTWING_DEPT_COLLAPSING }
-				set_country_flag = GER_RIGHTISTS_ARE_RADICAL
-				clr_country_flag = GER_RIGHTISTS_ARE_CONTROLLED
-				clr_country_flag = GER_RIGHTISTS_ARE_ACTIVE
-			}
-			else_if = {
-				limit = { has_country_flag = GER_RIGHTWING_DEPT_STABLE }
-				set_country_flag = GER_RIGHTISTS_ARE_CONTROLLED
-				clr_country_flag = GER_RIGHTISTS_ARE_RADICAL
-				clr_country_flag = GER_RIGHTISTS_ARE_ACTIVE
-			}
-			else_if = {
-				limit = { has_country_flag = GER_RIGHTWING_DEPT_UNSTABLE }
-				set_country_flag = GER_RIGHTISTS_ARE_ACTIVE
-				clr_country_flag = GER_RIGHTISTS_ARE_CONTROLLED
-				clr_country_flag = GER_RIGHTISTS_ARE_RADICAL
-			}
-			if = {
-				limit = { has_country_flag = GER_ISLAMIST_DEPT_COLLAPSING }
-				set_country_flag = GER_ISLAMISTS_ARE_RADICAL
-				clr_country_flag = GER_ISLAMISTS_ARE_CONTROLLED
-				clr_country_flag = GER_ISLAMISTS_ARE_ACTIVE
-			}
-			else_if = {
-				limit = { has_country_flag = GER_ISLAMIST_DEPT_STABLE }
-				set_country_flag = GER_ISLAMISTS_ARE_CONTROLLED
-				clr_country_flag = GER_ISLAMISTS_ARE_RADICAL
-				clr_country_flag = GER_ISLAMISTS_ARE_ACTIVE
-			}
-			else_if = {
-				limit = { has_country_flag = GER_ISLAMIST_DEPT_UNSTABLE }
-				set_country_flag = GER_ISLAMISTS_ARE_ACTIVE
-				clr_country_flag = GER_ISLAMISTS_ARE_CONTROLLED
-				clr_country_flag = GER_ISLAMISTS_ARE_RADICAL
-			}
-
 			# Paper army → formidable army
 			if = {
 				limit = {
@@ -108,140 +52,74 @@ on_actions = {
 				country_event = germany.2343
 			}
 
-			# BfV leftwing department
+			# BfV department tiers: 0 collapsed (permanent), 1 collapsing, 2 unstable, 3 stable
 			if = {
-				limit = { NOT = { has_country_flag = GER_LEFTWING_DEPT_COLLAPSED } }
-				if = {
-					limit = { check_variable = { GER_leftwing_department_status > 50 } }
-					set_variable = { GER_leftwing_department_status = 50 }
+				limit = { check_variable = { GER_leftwing_department_tier > 0 } }
+				clamp_variable = { var = GER_leftwing_department_status min = 0 max = 50 }
+				set_variable = {
+					GER_leftwing_department_tier = {
+						value = { value = GER_leftwing_department_status greater_than = 0 }
+						add = { value = GER_leftwing_department_status greater_than = 10 }
+						add = { value = GER_leftwing_department_status greater_than = 30 }
+					}
 				}
 				if = {
-					limit = { check_variable = { GER_leftwing_department_status < 1 } }
+					limit = { check_variable = { GER_leftwing_department_tier = 0 } }
 					country_event = { id = germany.234 days = 1 }
-					set_country_flag = GER_LEFTWING_DEPT_COLLAPSED
-					set_variable = { GER_leftwing_department_status = 0 }
-					clr_country_flag = GER_LEFTWING_DEPT_STABLE
-					clr_country_flag = GER_LEFTWING_DEPT_UNSTABLE
-					clr_country_flag = GER_LEFTWING_DEPT_COLLAPSING
 					remove_ideas = GER_idea_bfv_leftwing_low
 					remove_ideas = GER_idea_bfv_leftwing_med
 					remove_ideas = GER_idea_bfv_leftwing_high
 				}
-				if = {
-					limit = { check_variable = { GER_leftwing_department_status > 30 } }
-					set_country_flag = GER_LEFTWING_DEPT_STABLE
-					clr_country_flag = GER_LEFTWING_DEPT_UNSTABLE
-					clr_country_flag = GER_LEFTWING_DEPT_COLLAPSING
-				}
-				else_if = {
-					limit = { check_variable = { GER_leftwing_department_status > 10 } }
-					set_country_flag = GER_LEFTWING_DEPT_UNSTABLE
-					clr_country_flag = GER_LEFTWING_DEPT_STABLE
-					clr_country_flag = GER_LEFTWING_DEPT_COLLAPSING
-				}
-				else_if = {
-					limit = { check_variable = { GER_leftwing_department_status > 0 } }
-					set_country_flag = GER_LEFTWING_DEPT_COLLAPSING
-					clr_country_flag = GER_LEFTWING_DEPT_STABLE
-					clr_country_flag = GER_LEFTWING_DEPT_UNSTABLE
-				}
 			}
-
-			# BfV rightwing department
 			if = {
-				limit = { NOT = { has_country_flag = GER_RIGHTWING_DEPT_COLLAPSED } }
-				if = {
-					limit = { check_variable = { GER_rightwing_department_status > 50 } }
-					set_variable = { GER_rightwing_department_status = 50 }
+				limit = { check_variable = { GER_rightwing_department_tier > 0 } }
+				clamp_variable = { var = GER_rightwing_department_status min = 0 max = 50 }
+				set_variable = {
+					GER_rightwing_department_tier = {
+						value = { value = GER_rightwing_department_status greater_than = 0 }
+						add = { value = GER_rightwing_department_status greater_than = 10 }
+						add = { value = GER_rightwing_department_status greater_than = 30 }
+					}
 				}
 				if = {
-					limit = { check_variable = { GER_rightwing_department_status < 1 } }
+					limit = { check_variable = { GER_rightwing_department_tier = 0 } }
 					country_event = { id = germany.234 days = 1 }
-					set_country_flag = GER_RIGHTWING_DEPT_COLLAPSED
-					set_variable = { GER_rightwing_department_status = 0 }
-					clr_country_flag = GER_RIGHTWING_DEPT_STABLE
-					clr_country_flag = GER_RIGHTWING_DEPT_UNSTABLE
-					clr_country_flag = GER_RIGHTWING_DEPT_COLLAPSING
 					remove_ideas = GER_idea_bfv_rightwing_low
 					remove_ideas = GER_idea_bfv_rightwing_med
 					remove_ideas = GER_idea_bfv_rightwing_high
 				}
-				if = {
-					limit = { check_variable = { GER_rightwing_department_status > 30 } }
-					set_country_flag = GER_RIGHTWING_DEPT_STABLE
-					clr_country_flag = GER_RIGHTWING_DEPT_UNSTABLE
-					clr_country_flag = GER_RIGHTWING_DEPT_COLLAPSING
-				}
-				else_if = {
-					limit = { check_variable = { GER_rightwing_department_status > 10 } }
-					set_country_flag = GER_RIGHTWING_DEPT_UNSTABLE
-					clr_country_flag = GER_RIGHTWING_DEPT_STABLE
-					clr_country_flag = GER_RIGHTWING_DEPT_COLLAPSING
-				}
-				else_if = {
-					limit = { check_variable = { GER_rightwing_department_status > 0 } }
-					set_country_flag = GER_RIGHTWING_DEPT_COLLAPSING
-					clr_country_flag = GER_RIGHTWING_DEPT_STABLE
-					clr_country_flag = GER_RIGHTWING_DEPT_UNSTABLE
-				}
 			}
-
-			# BfV islamist department
 			if = {
-				limit = { NOT = { has_country_flag = GER_ISLAMIST_DEPT_COLLAPSED } }
-				if = {
-					limit = { check_variable = { GER_islamist_department_status > 50 } }
-					set_variable = { GER_islamist_department_status = 50 }
+				limit = { check_variable = { GER_islamist_department_tier > 0 } }
+				clamp_variable = { var = GER_islamist_department_status min = 0 max = 50 }
+				set_variable = {
+					GER_islamist_department_tier = {
+						value = { value = GER_islamist_department_status greater_than = 0 }
+						add = { value = GER_islamist_department_status greater_than = 10 }
+						add = { value = GER_islamist_department_status greater_than = 30 }
+					}
 				}
 				if = {
-					limit = { check_variable = { GER_islamist_department_status < 1 } }
-					set_country_flag = GER_ISLAMIST_DEPT_COLLAPSED
-					set_variable = { GER_islamist_department_status = 0 }
-					clr_country_flag = GER_ISLAMIST_DEPT_STABLE
-					clr_country_flag = GER_ISLAMIST_DEPT_UNSTABLE
-					clr_country_flag = GER_ISLAMIST_DEPT_COLLAPSING
+					limit = { check_variable = { GER_islamist_department_tier = 0 } }
+					country_event = { id = germany.414 days = 30 }
 					remove_ideas = GER_idea_bfv_islamist_low
 					remove_ideas = GER_idea_bfv_islamist_med
 					remove_ideas = GER_idea_bfv_islamist_high
-					country_event = { id = germany.414 days = 30 }
-				}
-				if = {
-					limit = { check_variable = { GER_islamist_department_status > 30 } }
-					set_country_flag = GER_ISLAMIST_DEPT_STABLE
-					clr_country_flag = GER_ISLAMIST_DEPT_UNSTABLE
-					clr_country_flag = GER_ISLAMIST_DEPT_COLLAPSING
-				}
-				else_if = {
-					limit = { check_variable = { GER_islamist_department_status > 10 } }
-					set_country_flag = GER_ISLAMIST_DEPT_UNSTABLE
-					clr_country_flag = GER_ISLAMIST_DEPT_STABLE
-					clr_country_flag = GER_ISLAMIST_DEPT_COLLAPSING
-				}
-				else_if = {
-					limit = { check_variable = { GER_islamist_department_status > 0 } }
-					set_country_flag = GER_ISLAMIST_DEPT_COLLAPSING
-					clr_country_flag = GER_ISLAMIST_DEPT_STABLE
-					clr_country_flag = GER_ISLAMIST_DEPT_UNSTABLE
 				}
 			}
 
 			GER_bfv_update_spending_ideas = yes
 
-			# Department warning event
-			if = {
-				limit = {
-					NOT = {
-						OR = {
-							has_country_flag = GER_RIGHTWING_DEPT_COLLAPSED
-							has_country_flag = GER_LEFTWING_DEPT_COLLAPSED
-						}
-					}
-					OR = {
-						check_variable = { GER_rightwing_department_status < 20 }
-						check_variable = { GER_leftwing_department_status < 20 }
-						check_variable = { GER_islamist_department_status < 20 }
-					}
+			# Department warning event: no department collapsed and the weakest is collapsing
+			set_temp_variable = {
+				GER_lowest_department_tier = {
+					value = GER_leftwing_department_tier
+					min = GER_rightwing_department_tier
+					min = GER_islamist_department_tier
 				}
+			}
+			if = {
+				limit = { check_variable = { GER_lowest_department_tier = 1 } }
 				country_event = germany.238
 			}
 
@@ -738,19 +616,35 @@ on_actions = {
 			# BfV system monthly events
 			if = {
 				limit = {
-					NOT = {
-						OR = {
-							has_country_flag = GER_LEFTWING_DEPT_COLLAPSED
-							has_country_flag = GER_ISLAMIST_DEPT_COLLAPSED
-							has_country_flag = GER_RIGHTWING_DEPT_COLLAPSED
-						}
-					}
+					check_variable = { GER_leftwing_department_tier > 0 }
+					check_variable = { GER_islamist_department_tier > 0 }
+					check_variable = { GER_rightwing_department_tier > 0 }
 				}
 				GER_bfv_events = yes
 			}
 			if = {
 				limit = { has_country_flag = GER_war_on_terror_started }
 				GER_wot_random_events = yes
+			}
+
+			# AI BfV spending: LOW on the department its game rule path needs collapsed, the rest HIGH until stable, then MED
+			if = {
+				limit = { is_ai = yes }
+				set_variable = { GER_islamist_spending_level = { value = 2 add = { value = GER_islamist_department_tier less_than = 3 } } }
+				if = {
+					limit = { GER_ai_irredentist_path = yes }
+					set_variable = { GER_rightwing_spending_level = 1 }
+					set_variable = { GER_leftwing_spending_level = 3 }
+				}
+				else_if = {
+					limit = { has_global_flag = GER_SOCIALIST_FOCUS_PATH }
+					set_variable = { GER_leftwing_spending_level = 1 }
+					set_variable = { GER_rightwing_spending_level = 3 }
+				}
+				else = {
+					set_variable = { GER_rightwing_spending_level = { value = 2 add = { value = GER_rightwing_department_tier less_than = 3 } } }
+					set_variable = { GER_leftwing_spending_level = { value = 2 add = { value = GER_leftwing_department_tier less_than = 3 } } }
+				}
 			}
 
 			# BfV spending decay (low spending)
