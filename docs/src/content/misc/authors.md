@@ -19,6 +19,7 @@ The following page is a non-exhaustive list of contributors from over the years 
 
 | Name                 | Discord                         | GitHub            | PDX           | Email                         |
 | -------------------- | ------------------------------- | ----------------- | ------------- | ----------------------------- |
+| Denys Markin         | -                               | @denys-markin     | -             | -                             |
 | Jason Breen          | -                               | @JasonBreen       | -             | -                             |
 | kotru21              | -                               | @kotru21          | -             | -                             |
 | Ted52                | @Ted52                          | @Ted52            | -             | -                             |
