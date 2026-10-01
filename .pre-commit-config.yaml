@@ -168,7 +168,7 @@ repos:
           -o python_files=*_test.py
         language: system
         files: >-
-          ^(tools/|pyproject.toml|.pre-commit-config.yaml|.(github|claude)/)
+          ^(tools/|pyproject.toml|validation_config.json|.pre-commit-config.yaml|.(github|claude)/)
         pass_filenames: false
         stages: [pre-push]
       # --- MD-specific hooks ---
@@ -214,6 +214,16 @@ repos:
           --strict --no-color
         language: system
         files: '\.mod$'
+        pass_filenames: false
+      - id: md-validate-mesh-textures
+        name: MD Validate 3D model textures
+        # Commit-stage only: the CI workspace ships no gfx/models or
+        # gfx/entities, so this hook is the gate.
+        entry: >-
+          python3 tools/validation/validate_mesh_textures.py --staged --strict
+          --no-color
+        language: system
+        files: '^gfx/(models|entities)/'
         pass_filenames: false
       - id: md-validate-unused-textures
         name: MD Validate unused textures (slow; manual)

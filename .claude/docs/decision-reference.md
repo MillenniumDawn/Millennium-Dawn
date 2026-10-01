@@ -159,7 +159,7 @@ The same holds for an **AI-only category** — one whose own `visible` / `availa
   }
 ```
 
-`validate_variables.py` backs this: its three `available`-block checks — `untooltipped-available-check`, `unlocalised-available-flag` and `untooltipped-available-scripted-trigger` — skip AI-only decisions and every decision inside an AI-only category, using the same depth-0 `is_ai = yes` rule as above.
+`validate_variables.py` backs this: its four `available`-block checks — `untooltipped-available-check`, `unlocalised-available-flag`, `unlocalised-negated-trigger-tooltip` and `untooltipped-available-scripted-trigger` — skip AI-only decisions and every decision inside an AI-only category, using the same depth-0 `is_ai = yes` rule as above.
 
 ## Announcing a Category
 

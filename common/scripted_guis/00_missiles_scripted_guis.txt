@@ -145,6 +145,7 @@ scripted_gui = {
 						check_variable = { var_open_MD_state_recog = 0 }
 						check_variable = { var_open_MD_un_aid = 0 }
 						check_variable = { var_open_MD_un_council = 0 }
+						check_variable = { var_open_MD_un_assembly = 0 }
 					}
 					set_variable = { var_open_MD_state_recog = 2 }
 				}
@@ -5579,10 +5580,12 @@ scripted_gui = {
 					NOT = { has_idea = at_member }
 				}
 				NOT = { has_idea = ANT_kicked_from_treaty_idea }
+				NOT = { has_country_flag = antarctica_treaty_join_pending }
 				has_political_power > 200
 			}
 			antarctica_treaty_join_atcp_button_click_enabled = {
 				has_idea = at_member
+				has_country_flag = antarctica_has_active_station
 				NOT = {
 					OR = {
 						has_country_flag = antarctica_atcp_application_pending
@@ -5635,6 +5638,8 @@ scripted_gui = {
 			antarctica_treaty_join_button_click = {
 				log = "[GetDateText]: [Root.GetName]: Join Antarctica Treaty GUI"
 				add_political_power = -200
+				set_country_flag = antarctica_treaty_join_pending
+				add_to_variable = { global.missile_ui_updated = 1 }
 				news_event = MD_antarctica_news.1
 				custom_effect_tooltip = join_antarctica_treaty_tt
 				effect_tooltip = { add_ideas = at_member }
@@ -5648,6 +5653,8 @@ scripted_gui = {
 			antarctica_treaty_leave_button_click = {
 				log = "[GetDateText]: [Root.GetName]: Leave Antarctica Treaty GUI"
 				add_political_power = -200
+				set_country_flag = antarctica_treaty_leave_pending
+				add_to_variable = { global.missile_ui_updated = 1 }
 				news_event = MD_antarctica_news.3
 				custom_effect_tooltip = leave_antarctica_treaty_tt
 				effect_tooltip = { remove_ideas = at_member }
@@ -5726,7 +5733,10 @@ scripted_gui = {
 				NOT = { has_country_flag = antarctica_treaty_leave_pending }
 				OR = {
 					has_country_flag = antarctica_has_active_station
-					check_variable = { global.antarctica_station_display_capacity_remaining > 0 }
+					AND = {
+						has_idea = at_member
+						check_variable = { global.antarctica_station_display_capacity_remaining > 0 }
+					}
 				}
 			}
 

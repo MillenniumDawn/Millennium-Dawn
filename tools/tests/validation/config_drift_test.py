@@ -124,6 +124,8 @@ CI_EXEMPT = {
     "validate_style.py",
     "validate_standardization.py",
     "validate_unused_textures.py",
+    # The CI workspace ships no gfx/models or gfx/entities.
+    "validate_mesh_textures.py",
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
 }
@@ -251,6 +253,7 @@ def test_tools_checkout_exposes_consumed_configuration():
     required = {
         "tools",
         "pyproject.toml",
+        "validation_config.json",
         ".pre-commit-config.yaml",
         ".claude/docs/typo-watchlist.md",
         ".github/actions/setup-md-python/action.yml",
@@ -591,6 +594,40 @@ def test_validator_cache_restores_are_source_hash_scoped():
     assert expected in VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
     baseline = "md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
     assert baseline in CI_WORKFLOW.read_text(encoding="utf-8")
+
+
+def test_validation_config_reaches_every_validator_run():
+    text = CI_WORKFLOW.read_text(encoding="utf-8")
+    workflow = yaml.safe_load(text)
+    assert "validation_config.json" in workflow["env"]["WORKSPACE_PATHS"].split()
+    for job, step_name in (
+        ("prepare-workspace", "Checkout PR workspace"),
+        ("report", "Checkout report tooling"),
+    ):
+        checkout = next(
+            step
+            for step in workflow["jobs"][job]["steps"]
+            if step.get("name") == step_name
+        )
+        assert "validation_config.json" in checkout["with"]["sparse-checkout"].split()
+    for source in (text, VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")):
+        hashes = re.findall(r"hashFiles\('tools/validation/\*\*',[^)]*\)", source)
+        assert hashes
+        assert all("'validation_config.json'" in h for h in hashes)
+    profile = (VALIDATION_DIR / "staged_sparse_profile.txt").read_text(encoding="utf-8")
+    assert "/validation_config.json" in profile.split()
+    assert classify(["validation_config.json"])["full_suite"] is True
+    assert workflow["jobs"]["detect-changes"]["outputs"]["style_config"] == (
+        "${{ steps.groups.outputs.style_config }}"
+    )
+    steps = workflow["jobs"]["mod-tests"]["steps"]
+    collect = next(s for s in steps if s.get("name") == "Collect style-relevant files")
+    assert "needs.detect-changes.outputs.style_config" in collect["env"]["STYLE_CONFIG"]
+    assert "find common/national_focus -type f -name '*.txt'" in collect["run"]
+    style = next(s for s in steps if s.get("name") == "Run style check")
+    mistakes = next(s for s in steps if s.get("name") == "Run common-mistakes check")
+    assert "has-files" in style["if"]
+    assert "has-changed-files" in mistakes["if"]
 
 
 def test_baseline_saves_only_after_clean_diff():
