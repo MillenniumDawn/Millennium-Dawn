@@ -1,0 +1,3186 @@
+# Portuguese shadow operations.
+# Clients are never fascist: on_declare_war hands a fascist civil war spawn to the jihadist conversion hooks.
+
+POR_shadow_startup = {
+	set_variable = { POR_shadow_exposure = 0 }
+	set_variable = { POR_exposure_tier = 0 }
+	set_variable = { POR_exposure_breach_bonus = 0 }
+	set_variable = { POR_ops_cap = 2 }
+
+	set_variable = { POR_ideological_development = 0 }
+	set_variable = { POR_ideology_tier = 0 }
+	set_variable = { POR_fiscal_path = 0 }
+	set_variable = { POR_industrial_path = 0 }
+	set_variable = { POR_social_path = 0 }
+	set_variable = { POR_deficit_path = 0 }
+	set_variable = { POR_banking_path = 0 }
+	set_variable = { POR_energy_path = 0 }
+	set_variable = { POR_public_works_path = 0 }
+	set_variable = { POR_labour_path = 0 }
+	set_variable = { POR_health_path = 0 }
+	set_variable = { POR_education_path = 0 }
+	set_variable = { POR_housing_path = 0 }
+	set_variable = { POR_conscience_path = 0 }
+	POR_update_blocs = yes
+	POR_watch_party_flip = yes
+
+	clear_array = POR_network_target_array
+	clear_array = POR_held_state_owners
+	set_variable = { POR_ops_selected = AGL.id }
+	if = { limit = { country_exists = AGL } add_to_array = { POR_network_target_array = AGL.id } }
+	if = { limit = { country_exists = UNI } add_to_array = { POR_network_target_array = UNI.id } }
+	if = { limit = { country_exists = MOZ } add_to_array = { POR_network_target_array = MOZ.id } }
+	if = { limit = { country_exists = GUB } add_to_array = { POR_network_target_array = GUB.id } }
+	if = { limit = { country_exists = VER } add_to_array = { POR_network_target_array = VER.id } }
+	if = { limit = { country_exists = SAO } add_to_array = { POR_network_target_array = SAO.id } }
+	if = { limit = { country_exists = TIM } add_to_array = { POR_network_target_array = TIM.id } }
+	if = { limit = { country_exists = BRA } add_to_array = { POR_network_target_array = BRA.id } }
+	if = { limit = { country_exists = SPR } add_to_array = { POR_network_target_array = SPR.id } }
+
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = POR_shadow_network } } }
+		add_dynamic_modifier = { modifier = POR_shadow_network }
+	}
+
+	every_other_country = {
+		limit = {
+			portuguese_speaking = yes
+			NOT = { has_idea = POR_lusophone_community_idea }
+		}
+		add_ideas = POR_lusophone_community_idea
+	}
+}
+
+# Target scope, ROOT = POR: writes POR_reward_mult and POR_heat_mult as temps on ROOT.
+POR_score_client = {
+	set_temp_variable = { ROOT.POR_udg = 0 }
+	if = { limit = { has_idea = non_power } add_to_temp_variable = { ROOT.POR_udg = 3 } }
+	else_if = { limit = { has_idea = minor_power } add_to_temp_variable = { ROOT.POR_udg = 2 } }
+	else_if = { limit = { has_idea = regional_power } add_to_temp_variable = { ROOT.POR_udg = 1 } }
+
+	if = {
+		limit = { check_variable = { deployed_army_manpower_k < ROOT.deployed_army_manpower_k } }
+		add_to_temp_variable = { ROOT.POR_udg = 1 }
+	}
+	if = {
+		limit = { check_variable = { ROOT.gdp_total > gdp_total } }
+		add_to_temp_variable = { ROOT.POR_udg = 1 }
+	}
+	if = {
+		limit = { has_war = yes surrender_progress > 0.20 }
+		add_to_temp_variable = { ROOT.POR_udg = 1 }
+	}
+
+	set_temp_variable = { ROOT.POR_prh = 0 }
+	if = { limit = { has_idea = non_state_actor } add_to_temp_variable = { ROOT.POR_prh = 3 } }
+	else_if = { limit = { has_idea = lacks_international_recognition } add_to_temp_variable = { ROOT.POR_prh = 2 } }
+
+	if = { limit = { has_idea = Massive_International_Sanctions } add_to_temp_variable = { ROOT.POR_prh = 3 } }
+	else_if = { limit = { has_idea = international_sanctions } add_to_temp_variable = { ROOT.POR_prh = 2 } }
+	else_if = {
+		limit = { OR = { has_idea = Western_Sanctions has_idea = Reduced_Western_Sanctions } }
+		add_to_temp_variable = { ROOT.POR_prh = 1 }
+	}
+
+	if = {
+		limit = {
+			OR = {
+				has_idea = unsc_restricted_volunteers_too
+				has_dynamic_modifier = { modifier = united_nations_security_council_sanctions }
+			}
+		}
+		add_to_temp_variable = { ROOT.POR_prh = 2 }
+	}
+
+	ROOT = {
+		clamp_temp_variable = { var = POR_udg min = 0 max = 6 }
+		clamp_temp_variable = { var = POR_prh min = 0 max = 6 }
+
+		set_temp_variable = { POR_reward_mult = POR_udg }
+		multiply_temp_variable = { POR_reward_mult = 0.10 }
+		set_temp_variable = { POR_prh_term = POR_prh }
+		multiply_temp_variable = { POR_prh_term = 0.10 }
+		add_to_temp_variable = { POR_reward_mult = POR_prh_term }
+		add_to_temp_variable = { POR_reward_mult = 1 }
+		if = {
+			limit = { has_completed_focus = POR_cause_of_the_oppressed }
+			add_to_temp_variable = { POR_reward_mult = 0.25 }
+		}
+		clamp_temp_variable = { var = POR_reward_mult min = 1 max = 2.45 }
+
+		# Only the pariah term raises exposure: backing an underdog is no scandal in Brussels.
+		set_temp_variable = { POR_heat_mult = POR_prh }
+		multiply_temp_variable = { POR_heat_mult = 0.25 }
+		add_to_temp_variable = { POR_heat_mult = 1 }
+	}
+}
+
+# POR scope. Takes POR_heat_add, scaled by POR_heat_mult when a target was scored.
+POR_add_exposure = {
+	# Unset when the caller scored no client.
+	if = {
+		limit = { check_variable = { POR_heat_mult = 0 } }
+		set_temp_variable = { POR_heat_mult = 1 }
+	}
+	multiply_temp_variable = { POR_heat_add = POR_heat_mult }
+	add_to_variable = { POR_shadow_exposure = POR_heat_add }
+	clamp_variable = { var = POR_shadow_exposure min = 0 max = 100 }
+}
+
+POR_update_exposure_tier = {
+	add_to_variable = { POR_ops_filter_dirty = 1 }
+	clamp_variable = { var = POR_shadow_exposure min = 0 max = 100 }
+
+	if = { limit = { check_variable = { POR_shadow_exposure > 74 } } set_variable = { POR_exposure_tier = 4 } }
+	else_if = { limit = { check_variable = { POR_shadow_exposure > 54 } } set_variable = { POR_exposure_tier = 3 } }
+	else_if = { limit = { check_variable = { POR_shadow_exposure > 34 } } set_variable = { POR_exposure_tier = 2 } }
+	else_if = { limit = { check_variable = { POR_shadow_exposure > 14 } } set_variable = { POR_exposure_tier = 1 } }
+	else = { set_variable = { POR_exposure_tier = 0 } }
+
+	if = {
+		limit = { check_variable = { POR_exposure_tier = 0 } }
+		set_variable = { POR_exposure_breach_bonus = 0 }
+		if = {
+			limit = { has_dynamic_modifier = { modifier = POR_eu_exposure_modifier } }
+			remove_dynamic_modifier = { modifier = POR_eu_exposure_modifier }
+		}
+	}
+	else = {
+		if = {
+			limit = { NOT = { has_dynamic_modifier = { modifier = POR_eu_exposure_modifier } } }
+			add_dynamic_modifier = { modifier = POR_eu_exposure_modifier }
+		}
+
+		set_variable = { POR_exposure_trade_opinion_factor = POR_exposure_tier }
+		multiply_variable = { POR_exposure_trade_opinion_factor = -0.05 }
+		set_variable = { POR_exposure_political_power_factor = POR_exposure_trade_opinion_factor }
+
+		set_variable = { POR_exposure_foreign_influence_defense_modifier = 0 }
+		if = {
+			limit = { check_variable = { POR_exposure_tier > 1 } }
+			set_variable = { POR_exposure_foreign_influence_defense_modifier = -0.05 }
+		}
+
+		set_variable = { POR_exposure_interest_rate_multiplier_modifier = 0 }
+		set_variable = { POR_exposure_stability_factor = 0 }
+		set_variable = { POR_exposure_breach_bonus = 0 }
+
+		if = {
+			limit = { check_variable = { POR_exposure_tier = 3 } }
+			set_variable = { POR_exposure_interest_rate_multiplier_modifier = 1.0 }
+			set_variable = { POR_exposure_breach_bonus = 4 }
+		}
+		else_if = {
+			limit = { check_variable = { POR_exposure_tier = 4 } }
+			set_variable = { POR_exposure_interest_rate_multiplier_modifier = 2.0 }
+			set_variable = { POR_exposure_stability_factor = -0.05 }
+			set_variable = { POR_exposure_breach_bonus = 6 }
+		}
+	}
+
+	# Tier 3 is where the breach bonus first crosses the EU serious-breach threshold.
+	if = {
+		limit = {
+			check_variable = { POR_exposure_tier > 2 }
+			has_idea = EU_member
+			NOT = { has_completed_focus = POR_remain_in_europe }
+			NOT = { has_country_flag = POR_ultimatum_issued }
+			NOT = { has_country_flag = Article_50 }
+		}
+		set_country_flag = POR_ultimatum_issued
+		activate_mission = POR_brussels_ultimatum
+		country_event = { id = portugal.75 hours = 6 }
+	}
+}
+
+POR_prune_shadow_arrays = {
+	clear_temp_array = POR_dropped_ids
+
+	if = {
+		limit = { check_variable = { POR_shadow_clients^num > 0 } }
+		for_each_scope_loop = {
+			array = POR_shadow_clients
+			if = {
+				limit = {
+					OR = {
+						NOT = { exists = yes }
+						NOT = { has_country_flag = POR_shadow_client }
+					}
+				}
+				add_to_temp_array = { PREV.POR_dropped_ids = THIS.id }
+			}
+		}
+		for_each_loop = {
+			array = POR_dropped_ids
+			value = v
+			remove_from_array = { POR_shadow_clients = v }
+		}
+	}
+
+	clear_temp_array = POR_dropped_ids
+
+	if = {
+		limit = { check_variable = { POR_lusophone_subjects^num > 0 } }
+		for_each_scope_loop = {
+			array = POR_lusophone_subjects
+			if = {
+				limit = {
+					OR = {
+						NOT = { exists = yes }
+						NOT = { is_subject_of = PREV }
+					}
+				}
+				add_to_temp_array = { PREV.POR_dropped_ids = THIS.id }
+			}
+		}
+		for_each_loop = {
+			array = POR_dropped_ids
+			value = v
+			remove_from_array = { POR_lusophone_subjects = v }
+		}
+	}
+
+}
+
+# FROM = target. Not the start_civil_war_against_* helpers: they find the rebel by original_tag = ROOT.
+POR_start_client_civil_war = {
+	FROM = {
+		POR_score_client = yes
+
+		set_variable = { POR_cw_size = 0.7 }
+		if = {
+			limit = { ROOT = { network_strength = { target = PREV value > 89 } } }
+			set_variable = { POR_cw_size = 0.9 }
+		}
+		else_if = {
+			limit = { ROOT = { network_strength = { target = PREV value > 79 } } }
+			set_variable = { POR_cw_size = 0.8 }
+		}
+		multiply_variable = { POR_cw_size = 0.55 }
+		if = {
+			limit = { ROOT = { has_completed_focus = POR_open_road } }
+			add_to_variable = { POR_cw_size = 0.08 }
+		}
+		if = {
+			limit = { ROOT = { has_completed_focus = POR_discreet_road } }
+			subtract_from_variable = { POR_cw_size = 0.10 }
+		}
+
+		set_variable = { POR_cw_underdog = ROOT.POR_reward_mult }
+		subtract_from_variable = { POR_cw_underdog = 1 }
+		multiply_variable = { POR_cw_underdog = 0.25 }
+		subtract_from_variable = { POR_cw_size = POR_cw_underdog }
+		clamp_variable = { var = POR_cw_size min = 0.15 max = 0.60 }
+
+		set_variable = { POR_cw_army = POR_cw_size }
+		if = {
+			limit = { ROOT = { has_operation_token = { tag = PREV token = token_army } } }
+			add_to_variable = { POR_cw_army = 0.25 }
+		}
+		clamp_variable = { var = POR_cw_army min = 0.15 max = 0.75 }
+
+		set_country_flag = { flag = POR_client_cooldown@ROOT days = 1825 value = 1 }
+		ROOT = {
+			remove_operation_token = { tag = PREV token = token_civilian }
+			remove_operation_token = { tag = PREV token = token_army }
+		}
+	}
+
+	if = {
+		limit = { has_government = democratic }
+		FROM = {
+			start_civil_war = {
+				ideology = democratic
+				size = POR_cw_size
+				army_ratio = POR_cw_army
+				navy_ratio = POR_cw_size
+				air_ratio = POR_cw_size
+				set_country_flag = POR_client_fresh
+				set_country_flag = POR_shadow_client
+			}
+			hidden_effect = { add_popularity = { ideology = democratic popularity = -0.5 } }
+			recalculate_party = yes
+			update_majority_threshold = yes
+		}
+		set_temp_variable = { POR_client_slot = 1 }
+	}
+	else_if = {
+		limit = { has_government = communism }
+		FROM = {
+			start_civil_war = {
+				ideology = communism
+				size = POR_cw_size
+				army_ratio = POR_cw_army
+				navy_ratio = POR_cw_size
+				air_ratio = POR_cw_size
+				set_country_flag = POR_client_fresh
+				set_country_flag = POR_shadow_client
+			}
+			hidden_effect = { add_popularity = { ideology = communism popularity = -0.5 } }
+			recalculate_party = yes
+			update_majority_threshold = yes
+		}
+		set_temp_variable = { POR_client_slot = 5 }
+	}
+	else_if = {
+		limit = { has_government = nationalist }
+		FROM = {
+			start_civil_war = {
+				ideology = nationalist
+				size = POR_cw_size
+				army_ratio = POR_cw_army
+				navy_ratio = POR_cw_size
+				air_ratio = POR_cw_size
+				set_country_flag = POR_client_fresh
+				set_country_flag = POR_shadow_client
+			}
+			hidden_effect = { add_popularity = { ideology = nationalist popularity = -0.5 } }
+			recalculate_party = yes
+			update_majority_threshold = yes
+		}
+		set_temp_variable = { POR_client_slot = 23 }
+	}
+	else = {
+		FROM = {
+			start_civil_war = {
+				ideology = neutrality
+				size = POR_cw_size
+				army_ratio = POR_cw_army
+				navy_ratio = POR_cw_size
+				air_ratio = POR_cw_size
+				set_country_flag = POR_client_fresh
+				set_country_flag = POR_shadow_client
+			}
+			hidden_effect = { add_popularity = { ideology = neutrality popularity = -0.5 } }
+			recalculate_party = yes
+			update_majority_threshold = yes
+		}
+		set_temp_variable = { POR_client_slot = 14 }
+	}
+
+	POR_install_client_politics = yes
+}
+
+# Outside the start_civil_war list: its order against on_declare_war's politics copy is undocumented.
+POR_install_client_politics = {
+	every_country = {
+		limit = { has_country_flag = POR_client_fresh }
+		clr_country_flag = POR_client_fresh
+		ROOT = { set_variable = { POR_rising_rebels = PREV.id } }
+
+		start_politics_input = yes
+		set_variable = { ruling_party = ROOT.POR_client_slot }
+		set_temp_variable = { _client_slot = ROOT.POR_client_slot }
+		set_variable = { party_pop_array^_client_slot = 0.7 }
+
+		if = {
+			limit = { ROOT = { has_government = democratic } }
+			set_popularities = {
+				democratic = 70
+				communism = 10
+				neutrality = 10
+				fascism = 0
+				nationalist = 10
+			}
+			set_politics = {
+				ruling_party = democratic
+				elections_allowed = no
+			}
+		}
+		else_if = {
+			limit = { ROOT = { has_government = communism } }
+			set_popularities = {
+				democratic = 10
+				communism = 70
+				neutrality = 10
+				fascism = 0
+				nationalist = 10
+			}
+			set_politics = {
+				ruling_party = communism
+				elections_allowed = no
+			}
+		}
+		else_if = {
+			limit = { ROOT = { has_government = nationalist } }
+			set_popularities = {
+				democratic = 10
+				communism = 10
+				neutrality = 10
+				fascism = 0
+				nationalist = 70
+			}
+			set_politics = {
+				ruling_party = nationalist
+				elections_allowed = no
+			}
+		}
+		else = {
+			set_popularities = {
+				democratic = 10
+				communism = 10
+				neutrality = 70
+				fascism = 0
+				nationalist = 10
+			}
+			set_politics = {
+				ruling_party = neutrality
+				elections_allowed = no
+			}
+		}
+
+		hidden_effect = {
+			startup_politics = yes
+			set_leader = yes
+			recalculate_party = yes
+			hold_elections = yes
+		}
+
+		init_influence = yes
+		set_variable = { domestic_influence_amount = 70 }
+		add_to_array = { influence_array = ROOT }
+		add_to_array = { influence_array_val = 30 }
+		sort_influence = yes
+
+		add_opinion_modifier = { target = ROOT modifier = supported_us_in_the_coup }
+
+		set_country_flag = POR_client_pending_puppet
+		set_variable = { POR_client_overlord_id = ROOT.id }
+
+		country_event = { id = portugal.30 hours = 6 }
+	}
+}
+
+# A dynamic tag that wins its war holds no cores, which means a permanent compliance crisis.
+POR_client_core_repair = {
+	every_owned_state = {
+		limit = { NOT = { is_core_of = PREV } }
+		add_core_of = PREV
+	}
+	un_recog_setup_check = yes
+}
+
+POR_update_money_ideas = {
+	if = {
+		limit = {
+			check_variable = { POR_lusophone_subjects^num > 0 }
+			NOT = { has_idea = POR_overseas_income_money }
+		}
+		add_ideas = POR_overseas_income_money
+	}
+	else_if = {
+		limit = {
+			check_variable = { POR_lusophone_subjects^num < 1 }
+			has_idea = POR_overseas_income_money
+		}
+		remove_ideas = POR_overseas_income_money
+	}
+
+	if = {
+		limit = {
+			OR = {
+				check_variable = { POR_shadow_clients^num > 0 }
+				check_variable = { POR_lusophone_subjects^num > 0 }
+			}
+			NOT = { has_idea = POR_overseas_expense_money }
+		}
+		add_ideas = POR_overseas_expense_money
+	}
+	else_if = {
+		limit = {
+			check_variable = { POR_shadow_clients^num < 1 }
+			check_variable = { POR_lusophone_subjects^num < 1 }
+			has_idea = POR_overseas_expense_money
+		}
+		remove_ideas = POR_overseas_expense_money
+	}
+
+	if = {
+		limit = {
+			has_completed_focus = POR_camoes_institute
+			NOT = { has_idea = POR_lusophony_money }
+		}
+		add_ideas = POR_lusophony_money
+	}
+
+	if = {
+		limit = {
+			check_variable = { nations_we_sent_volunteers_to^num > 0 }
+			NOT = { has_idea = POR_legion_money }
+		}
+		add_ideas = POR_legion_money
+	}
+	else_if = {
+		limit = {
+			check_variable = { nations_we_sent_volunteers_to^num < 1 }
+			has_idea = POR_legion_money
+		}
+		remove_ideas = POR_legion_money
+	}
+
+	if = {
+		limit = {
+			has_idea = POR_macau_rent_expense_money
+			OR = {
+				NOT = { country_exists = MAC }
+				NOT = { country_exists = CHI }
+				NOT = { MAC = { is_subject_of = ROOT } }
+			}
+		}
+		POR_end_macau_lease = yes
+	}
+}
+
+POR_apply_client_tier = {
+	set_temp_variable = { POR_tier_wanted = 0 }
+	if = { limit = { ROOT = { network_strength = { target = PREV value > 69 } } } set_temp_variable = { POR_tier_wanted = 3 } }
+	else_if = { limit = { ROOT = { network_strength = { target = PREV value > 39 } } } set_temp_variable = { POR_tier_wanted = 2 } }
+	else_if = { limit = { ROOT = { network_strength = { target = PREV value > 19 } } } set_temp_variable = { POR_tier_wanted = 1 } }
+	if = { limit = { is_subject_of = ROOT } set_temp_variable = { POR_tier_wanted = 0 } }
+
+	if = {
+		limit = {
+			check_variable = { POR_tier_wanted = 0 }
+			OR = {
+				has_idea = POR_lusophone_presence_1
+				has_idea = POR_lusophone_presence_2
+				has_idea = POR_lusophone_presence_3
+			}
+		}
+		remove_ideas = { POR_lusophone_presence_1 POR_lusophone_presence_2 POR_lusophone_presence_3 }
+	}
+	else_if = {
+		limit = {
+			check_variable = { POR_tier_wanted = 1 }
+			NOT = { has_idea = POR_lusophone_presence_1 }
+		}
+		remove_ideas = { POR_lusophone_presence_2 POR_lusophone_presence_3 }
+		add_ideas = POR_lusophone_presence_1
+	}
+	else_if = {
+		limit = {
+			check_variable = { POR_tier_wanted = 2 }
+			NOT = { has_idea = POR_lusophone_presence_2 }
+		}
+		remove_ideas = { POR_lusophone_presence_1 POR_lusophone_presence_3 }
+		add_ideas = POR_lusophone_presence_2
+	}
+	else_if = {
+		limit = {
+			check_variable = { POR_tier_wanted = 3 }
+			NOT = { has_idea = POR_lusophone_presence_3 }
+		}
+		remove_ideas = { POR_lusophone_presence_1 POR_lusophone_presence_2 }
+		add_ideas = POR_lusophone_presence_3
+	}
+}
+
+POR_update_intervention_load = {
+
+	if = {
+		limit = { check_variable = { nations_we_sent_volunteers_to^num < 1 } }
+		clear_variable = POR_intervention_fuel
+		clear_variable = POR_intervention_upkeep
+		clear_variable = POR_intervention_supply
+		if = {
+			limit = { has_dynamic_modifier = { modifier = POR_weight_of_distance } }
+			remove_dynamic_modifier = { modifier = POR_weight_of_distance }
+		}
+	}
+	else = {
+		if = {
+			limit = { NOT = { has_dynamic_modifier = { modifier = POR_weight_of_distance } } }
+			add_dynamic_modifier = { modifier = POR_weight_of_distance }
+		}
+
+		set_variable = { POR_intervention_extra = nations_we_sent_volunteers_to^num }
+		subtract_from_variable = { POR_intervention_extra = 1 }
+
+		set_variable = { POR_intervention_fuel = POR_intervention_extra }
+		multiply_variable = { POR_intervention_fuel = 0.35 }
+		add_to_variable = { POR_intervention_fuel = 0.75 }
+		clamp_variable = { var = POR_intervention_fuel min = 0 max = 2.5 }
+
+		set_variable = { POR_intervention_upkeep = POR_intervention_extra }
+		multiply_variable = { POR_intervention_upkeep = 0.20 }
+		add_to_variable = { POR_intervention_upkeep = 0.35 }
+		clamp_variable = { var = POR_intervention_upkeep min = 0 max = 1.5 }
+
+		set_variable = { POR_intervention_supply = POR_intervention_extra }
+		multiply_variable = { POR_intervention_supply = 0.05 }
+		add_to_variable = { POR_intervention_supply = 0.15 }
+		clamp_variable = { var = POR_intervention_supply min = 0 max = 0.5 }
+	}
+}
+
+POR_update_overseas_doctrine = {
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = POR_overseas_doctrine } } }
+		add_dynamic_modifier = { modifier = POR_overseas_doctrine }
+	}
+
+	set_variable = { POR_ttx_all = POR_shadow_clients^num }
+	add_to_variable = { POR_ttx_all = nations_we_sent_volunteers_to^num }
+	multiply_variable = { POR_ttx_all = 0.25 }
+	clamp_variable = { var = POR_ttx_all min = 0 max = 1 }
+
+	set_variable = { POR_ttx_jungle = 0 }
+	set_variable = { POR_ttx_ranger = 0 }
+	set_variable = { POR_ttx_hills = 0 }
+	set_variable = { POR_ttx_marine = 0 }
+
+	for_each_scope_loop = {
+		array = POR_shadow_clients
+		if = {
+			limit = {
+				OR = {
+					original_tag = GUB
+					original_tag = SAO
+				}
+			}
+			set_variable = { PREV.POR_ttx_jungle = 0.50 }
+		}
+		if = {
+			limit = { original_tag = TIM }
+			set_variable = { PREV.POR_ttx_hills = 0.50 }
+		}
+		if = {
+			limit = {
+				OR = {
+					original_tag = AGL
+					original_tag = MOZ
+				}
+			}
+			set_variable = { PREV.POR_ttx_ranger = 0.50 }
+		}
+		if = {
+			limit = {
+				OR = {
+					original_tag = VER
+					original_tag = SAO
+				}
+			}
+			set_variable = { PREV.POR_ttx_marine = 0.50 }
+		}
+	}
+}
+
+# A fully banned slate stores -1, so clamp before adding.
+POR_bloc_add_slot = {
+	clamp_temp_variable = { var = POR_bloc_slot min = 0 max = 1 }
+	add_to_temp_variable = { POR_bloc_acc = POR_bloc_slot }
+}
+
+# Uses the election result: recalculate_party renormalises party_pop_array to the five ideology groups.
+POR_update_blocs = {
+	# Left: PS, CDU, Bloco de Esquerda, PCTP, POUS
+	set_temp_variable = { POR_bloc_acc = 0 }
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^3 }
+	POR_bloc_add_slot = yes
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^5 }
+	POR_bloc_add_slot = yes
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^18 }
+	POR_bloc_add_slot = yes
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^19 }
+	POR_bloc_add_slot = yes
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^4 }
+	POR_bloc_add_slot = yes
+	set_variable = { POR_bloc_left = POR_bloc_acc }
+
+	# Right: PSD, CDS-PP, the liberals, PNR, Braganca
+	set_temp_variable = { POR_bloc_acc = 0 }
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^1 }
+	POR_bloc_add_slot = yes
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^14 }
+	POR_bloc_add_slot = yes
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^2 }
+	POR_bloc_add_slot = yes
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^20 }
+	POR_bloc_add_slot = yes
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^23 }
+	POR_bloc_add_slot = yes
+	set_variable = { POR_bloc_right = POR_bloc_acc }
+
+	# Centre: PS, PSD
+	set_temp_variable = { POR_bloc_acc = 0 }
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^3 }
+	POR_bloc_add_slot = yes
+	set_temp_variable = { POR_bloc_slot = party_pop_elect_array^1 }
+	POR_bloc_add_slot = yes
+	set_variable = { POR_bloc_centre = POR_bloc_acc }
+
+	clear_variable = POR_bloc_slot
+	clear_variable = POR_bloc_acc
+}
+
+# Takes POR_ideo_add.
+POR_raise_ideological_development = {
+	if = {
+		limit = { check_variable = { POR_ideo_add = 0 } }
+		set_temp_variable = { POR_ideo_add = 2 }
+	}
+	# Tooltipped by hand: the raw change prints an empty "which grants:" block at tier 0.
+	custom_effect_tooltip = POR_ideological_development_up_tt
+	hidden_effect = {
+		add_to_variable = { POR_ideological_development = POR_ideo_add }
+		clamp_variable = { var = POR_ideological_development min = 0 max = 100 }
+		clear_variable = POR_ideo_add
+		POR_update_ideology_tier = yes
+	}
+}
+
+POR_update_ideology_tier = {
+	if = {
+		limit = {
+			check_variable = { POR_ideological_development > 0 }
+			NOT = { has_dynamic_modifier = { modifier = POR_ideology_modifier } }
+		}
+		add_dynamic_modifier = { modifier = POR_ideology_modifier }
+	}
+
+	if = { limit = { check_variable = { POR_ideological_development > 79 } } set_variable = { POR_ideology_tier = 4 } }
+	else_if = { limit = { check_variable = { POR_ideological_development > 59 } } set_variable = { POR_ideology_tier = 3 } }
+	else_if = { limit = { check_variable = { POR_ideological_development > 39 } } set_variable = { POR_ideology_tier = 2 } }
+	else_if = { limit = { check_variable = { POR_ideological_development > 19 } } set_variable = { POR_ideology_tier = 1 } }
+	else = { set_variable = { POR_ideology_tier = 0 } }
+
+	# Shares its field with the ideology focuses, so last week's share comes out first.
+	if = {
+		limit = { NOT = { has_variable = POR_ideology_tier_drift } }
+		set_variable = { POR_ideology_tier_drift = 0 }
+	}
+	subtract_from_variable = { POR_ideology_drift_defence_factor = POR_ideology_tier_drift }
+	set_variable = { POR_ideology_tier_drift = POR_ideology_tier }
+	multiply_variable = { POR_ideology_tier_drift = -0.03 }
+	add_to_variable = { POR_ideology_drift_defence_factor = POR_ideology_tier_drift }
+}
+
+# Not on_government_change: PS, PSD and the liberals share the democratic group, so it never fires.
+POR_watch_party_flip = {
+	set_party_index_to_ruling_party = yes
+
+	if = {
+		limit = { NOT = { has_variable = POR_last_ruling_party } }
+		set_variable = { POR_last_ruling_party = party_index }
+	}
+	if = {
+		limit = { NOT = { check_variable = { POR_last_ruling_party = party_index } } }
+		set_temp_variable = { POR_ideo_add = 5 }
+		# Crossing an outlook group is a bigger shock than an alternation inside one.
+		if = {
+			limit = {
+				OR = {
+					AND = {
+						check_variable = { POR_last_ruling_party < 4 }
+						check_variable = { party_index > 3 }
+					}
+					AND = {
+						check_variable = { POR_last_ruling_party > 3 }
+						check_variable = { party_index < 4 }
+					}
+				}
+			}
+			set_temp_variable = { POR_ideo_add = 8 }
+		}
+		POR_raise_ideological_development = yes
+		news_event = { id = portugal_news.7 hours = 6 }
+	}
+	set_variable = { POR_last_ruling_party = party_index }
+	clear_variable = party_index
+}
+
+# Repealing a tax code.
+# uncomplete_national_focus keeps the reward, so undo ideas and rates first, then focuses deepest first.
+
+POR_abandon_fiscal_path_1 = {
+	if = {
+		limit = { check_variable = { POR_fiscal_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_fiscal_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_progressive_property_tax }
+			subtract_from_variable = { POR_pfin_tax_gain_multiplier_modifier = 0.04 tooltip = tax_gain_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_consumer_goods_factor = -0.01 tooltip = consumer_goods_factor_tt }
+			subtract_from_variable = { POR_pfin_return_on_investment_modifier = -0.003 tooltip = return_on_investment_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_land_register }
+			subtract_from_variable = { POR_pfin_tax_gain_multiplier_modifier = 0.05 tooltip = tax_gain_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_political_manipulation_corruption_factor = -0.05 tooltip = political_manipulation_corruption_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_wealth_tax }
+			subtract_from_variable = { POR_pfin_tax_gain_multiplier_modifier = 0.10 tooltip = tax_gain_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_productivity_growth_modifier = 0.15 tooltip = productivity_growth_modifier_tt }
+			subtract_from_variable = { POR_pfin_return_on_investment_modifier = -0.01 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_pfin_foreign_influence_defense_modifier = -0.05 tooltip = foreign_influence_defense_modifier_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_progressive_property_tax }
+			set_temp_variable = { corp_change = -2 }
+			modify_corporate_tax_rate_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_land_register }
+			set_temp_variable = { temp_opinion = 5 }
+			change_landowners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_wealth_tax }
+			set_temp_variable = { corp_change = -3 }
+			modify_corporate_tax_rate_effect = yes
+			set_temp_variable = { temp_opinion = 15 }
+			change_landowners_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_wealth_tax }
+			uncomplete_national_focus = { focus = POR_wealth_tax refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_land_register }
+			uncomplete_national_focus = { focus = POR_land_register refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_progressive_property_tax }
+			uncomplete_national_focus = { focus = POR_progressive_property_tax refund_political_power = no }
+		}
+
+		set_variable = { POR_fiscal_path = 0 }
+
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_fiscal_path_2 = {
+	if = {
+		limit = { check_variable = { POR_fiscal_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_fiscal_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_broadening_the_income_tax }
+			subtract_from_variable = { POR_pfin_tax_gain_multiplier_modifier = 0.05 tooltip = tax_gain_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_stability_factor = -0.02 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_general_vat }
+			subtract_from_variable = { POR_pfin_tax_gain_multiplier_modifier = 0.06 tooltip = tax_gain_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_consumer_goods_factor = 0.03 tooltip = consumer_goods_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_flat_tax }
+			subtract_from_variable = { POR_pfin_return_on_investment_modifier = 0.01 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_pfin_tax_gain_multiplier_modifier = -0.02 tooltip = tax_gain_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_productivity_growth_modifier = -0.15 tooltip = productivity_growth_modifier_tt }
+			subtract_from_variable = { POR_pfin_stability_factor = -0.04 tooltip = stability_factor_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_broadening_the_income_tax }
+			set_temp_variable = { pop_change = -3 }
+			modify_population_tax_rate_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_general_vat }
+			set_temp_variable = { pop_change = -2 }
+			modify_population_tax_rate_effect = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_flat_tax }
+			set_temp_variable = { corp_change = 8 }
+			modify_corporate_tax_rate_effect = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_flat_tax }
+			uncomplete_national_focus = { focus = POR_flat_tax refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_general_vat }
+			uncomplete_national_focus = { focus = POR_general_vat refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_broadening_the_income_tax }
+			uncomplete_national_focus = { focus = POR_broadening_the_income_tax refund_political_power = no }
+		}
+
+		set_variable = { POR_fiscal_path = 0 }
+
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+# Repealing a fiscal consolidation.
+# One-off gains are reversed, or re-taking the focus would farm them; one-off costs are not refunded.
+
+POR_abandon_deficit_path_1 = {
+	if = {
+		limit = { check_variable = { POR_deficit_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_deficit_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_constancio_commission }
+			subtract_from_variable = { POR_pfin_political_manipulation_corruption_factor = -0.10 tooltip = political_manipulation_corruption_factor_tt }
+			subtract_from_variable = { POR_pfin_stability_factor = -0.03 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_rectifying_budget }
+			subtract_from_variable = { POR_pfin_tax_gain_multiplier_modifier = 0.04 tooltip = tax_gain_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_clean_exit }
+			subtract_from_variable = { POR_pfin_interest_rate_multiplier_modifier = -1.0 tooltip = interest_rate_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_political_power_gain = 0.05 tooltip = political_power_gain_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_rectifying_budget }
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_clean_exit }
+			uncomplete_national_focus = { focus = POR_clean_exit refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_rectifying_budget }
+			uncomplete_national_focus = { focus = POR_rectifying_budget refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_constancio_commission }
+			uncomplete_national_focus = { focus = POR_constancio_commission refund_political_power = no }
+		}
+
+		set_variable = { POR_deficit_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_deficit_path_2 = {
+	if = {
+		limit = { check_variable = { POR_deficit_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_deficit_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_extraordinary_measures }
+			subtract_from_variable = { POR_pfin_tax_gain_multiplier_modifier = 0.03 tooltip = tax_gain_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_political_manipulation_corruption_factor = 0.08 tooltip = political_manipulation_corruption_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_the_stupid_pact }
+			subtract_from_variable = { POR_pfin_political_power_gain = 0.10 tooltip = political_power_gain_tt }
+			subtract_from_variable = { POR_pfin_trade_opinion_factor = -0.10 tooltip = trade_opinion_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_reverse_impoverishment }
+			subtract_from_variable = { POR_pfin_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+			subtract_from_variable = { POR_pfin_stability_factor = 0.05 tooltip = stability_factor_tt }
+			subtract_from_variable = { POR_pfin_productivity_growth_modifier = 0.05 tooltip = productivity_growth_modifier_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_the_stupid_pact }
+			add_to_variable = { POR_pfin_interest_rate_multiplier_modifier = -0.5 }
+		}
+		if = {
+			limit = { has_completed_focus = POR_reverse_impoverishment }
+			set_temp_variable = { temp_opinion = -15 }
+			change_labour_unions_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_reverse_impoverishment }
+			uncomplete_national_focus = { focus = POR_reverse_impoverishment refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_the_stupid_pact }
+			uncomplete_national_focus = { focus = POR_the_stupid_pact refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_extraordinary_measures }
+			uncomplete_national_focus = { focus = POR_extraordinary_measures refund_political_power = no }
+		}
+
+		set_variable = { POR_deficit_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_banking_path_1 = {
+	if = {
+		limit = { check_variable = { POR_banking_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_banking_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_nationalisation_of_the_bpn }
+			subtract_from_variable = { POR_pfin_return_on_investment_modifier = 0.005 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_pfin_interest_rate_multiplier_modifier = 0.5 tooltip = interest_rate_multiplier_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_recapitalising_the_caixa }
+			subtract_from_variable = { POR_pfin_return_on_investment_modifier = 0.005 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_pfin_civilian_factories_productivity = 0.03 tooltip = civilian_factories_productivity_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_public_development_bank }
+			subtract_from_variable = { POR_pfin_return_on_investment_modifier = 0.01 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_pfin_production_speed_buildings_factor = 0.05 tooltip = production_speed_buildings_factor_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_nationalisation_of_the_bpn }
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_public_development_bank }
+			set_temp_variable = { temp_opinion = -5 }
+			change_small_medium_business_owners_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_public_development_bank }
+			uncomplete_national_focus = { focus = POR_public_development_bank refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_recapitalising_the_caixa }
+			uncomplete_national_focus = { focus = POR_recapitalising_the_caixa refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_nationalisation_of_the_bpn }
+			uncomplete_national_focus = { focus = POR_nationalisation_of_the_bpn refund_political_power = no }
+		}
+
+		set_variable = { POR_banking_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_banking_path_2 = {
+	if = {
+		limit = { check_variable = { POR_banking_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_banking_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_liquidation_of_the_bpp }
+			subtract_from_variable = { POR_pfin_interest_rate_multiplier_modifier = -0.25 tooltip = interest_rate_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_stability_factor = -0.03 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_resolution_of_the_bes }
+			subtract_from_variable = { POR_pfin_interest_rate_multiplier_modifier = 0.25 tooltip = interest_rate_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pfin_political_manipulation_corruption_factor = 0.05 tooltip = political_manipulation_corruption_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_sale_of_the_novo_banco }
+			subtract_from_variable = { POR_pfin_return_on_investment_modifier = 0.008 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_pfin_foreign_influence_defense_modifier = -0.05 tooltip = foreign_influence_defense_modifier_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_liquidation_of_the_bpp }
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_sale_of_the_novo_banco }
+			uncomplete_national_focus = { focus = POR_sale_of_the_novo_banco refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_resolution_of_the_bes }
+			uncomplete_national_focus = { focus = POR_resolution_of_the_bes refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_liquidation_of_the_bpp }
+			uncomplete_national_focus = { focus = POR_liquidation_of_the_bpp refund_political_power = no }
+		}
+
+		set_variable = { POR_banking_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_industrial_path_1 = {
+	if = {
+		limit = { check_variable = { POR_industrial_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_industrial_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_parpublica }
+			subtract_from_variable = { POR_pind_production_speed_buildings_factor = 0.05 tooltip = production_speed_buildings_factor_tt }
+			subtract_from_variable = { POR_pind_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_efacec }
+			subtract_from_variable = { POR_pind_civilian_factories_productivity = 0.04 tooltip = civilian_factories_productivity_tt }
+			subtract_from_variable = { POR_pind_return_on_investment_modifier = -0.003 tooltip = return_on_investment_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_national_tap }
+			subtract_from_variable = { POR_pind_foreign_influence_continent_modifier = 0.05 tooltip = foreign_influence_continent_modifier_tt }
+			subtract_from_variable = { POR_pind_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_parpublica }
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_efacec }
+			set_temp_variable = { temp_opinion = -5 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_national_tap }
+			set_temp_variable = { temp_opinion = -10 }
+			change_labour_unions_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_national_tap }
+			uncomplete_national_focus = { focus = POR_national_tap refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_efacec }
+			uncomplete_national_focus = { focus = POR_efacec refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_parpublica }
+			uncomplete_national_focus = { focus = POR_parpublica refund_political_power = no }
+		}
+
+		set_variable = { POR_industrial_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+# The sale proceeds and foreign stake are reversed, or a player could flip for the money.
+POR_abandon_industrial_path_2 = {
+	if = {
+		limit = { check_variable = { POR_industrial_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_industrial_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_privatisation_programme }
+			subtract_from_variable = { POR_pind_return_on_investment_modifier = 0.008 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_pind_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_post_office_and_the_airports }
+			subtract_from_variable = { POR_pind_return_on_investment_modifier = 0.005 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_pind_civilian_factories_productivity = -0.02 tooltip = civilian_factories_productivity_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_end_of_parpublica }
+			subtract_from_variable = { POR_pind_return_on_investment_modifier = 0.008 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_pind_foreign_influence_defense_modifier = -0.05 tooltip = foreign_influence_defense_modifier_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_privatisation_programme }
+			set_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = -6 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_post_office_and_the_airports }
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = -5 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_end_of_parpublica }
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = -8 }
+			modify_international_investment_effect = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_end_of_parpublica }
+			uncomplete_national_focus = { focus = POR_end_of_parpublica refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_post_office_and_the_airports }
+			uncomplete_national_focus = { focus = POR_post_office_and_the_airports refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_privatisation_programme }
+			uncomplete_national_focus = { focus = POR_privatisation_programme refund_political_power = no }
+		}
+
+		set_variable = { POR_industrial_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+# Built power stations stay: country flags stop a re-taken focus granting them again.
+POR_abandon_energy_path_1 = {
+	if = {
+		limit = { check_variable = { POR_energy_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_energy_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_wind_gamble }
+			subtract_from_variable = { POR_pind_renewable_energy_gain_multiplier = 0.10 tooltip = renewable_energy_gain_multiplier_tt }
+			subtract_from_variable = { POR_pind_energy_use_multiplier = -0.03 tooltip = energy_use_multiplier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_end_of_coal }
+			subtract_from_variable = { POR_pind_renewable_energy_gain_multiplier = 0.10 tooltip = renewable_energy_gain_multiplier_tt }
+			subtract_from_variable = { POR_pind_fossil_pp_energy_generation_modifier = -0.25 tooltip = fossil_pp_energy_generation_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_hydrogen_of_sines }
+			subtract_from_variable = { POR_pind_renewable_energy_gain_multiplier = 0.15 tooltip = renewable_energy_gain_multiplier_tt }
+			subtract_from_variable = { POR_pind_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+		}
+
+		if = {
+			limit = {
+				has_completed_focus = POR_end_of_coal
+				has_idea = full_environmental_protections
+			}
+			swap_ideas = { remove_idea = full_environmental_protections add_idea = partial_environmental_protections }
+		}
+		if = {
+			limit = { has_completed_focus = POR_end_of_coal }
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_hydrogen_of_sines }
+			uncomplete_national_focus = { focus = POR_hydrogen_of_sines refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_end_of_coal }
+			uncomplete_national_focus = { focus = POR_end_of_coal refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_wind_gamble }
+			uncomplete_national_focus = { focus = POR_wind_gamble refund_political_power = no }
+		}
+
+		set_variable = { POR_energy_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_energy_path_2 = {
+	if = {
+		limit = { check_variable = { POR_energy_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_energy_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_combined_cycle }
+			subtract_from_variable = { POR_pind_fossil_pp_energy_generation_modifier = 0.15 tooltip = fossil_pp_energy_generation_modifier_tt }
+			subtract_from_variable = { POR_pind_energy_gain_multiplier = 0.05 tooltip = energy_gain_multiplier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_alqueva_dam }
+			subtract_from_variable = { POR_pind_hydroelectric_power_generation_modifier = 0.15 tooltip = hydroelectric_power_generation_modifier_tt }
+			subtract_from_variable = { POR_pind_agricolture_productivity_modifier = 0.10 tooltip = agricolture_productivity_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_nuclear_station }
+			subtract_from_variable = { POR_pind_nuclear_energy_generation_modifier = 0.20 tooltip = nuclear_energy_generation_modifier_tt }
+			subtract_from_variable = { POR_pind_stability_factor = -0.03 tooltip = stability_factor_tt }
+		}
+
+		if = {
+			limit = {
+				has_completed_focus = POR_nuclear_station
+				has_idea = nuclear_energy
+			}
+			swap_ideas = { remove_idea = nuclear_energy add_idea = non_nuclear_power }
+		}
+		if = {
+			limit = { has_completed_focus = POR_combined_cycle }
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_alqueva_dam }
+			set_temp_variable = { temp_opinion = -10 }
+			change_landowners_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_nuclear_station }
+			uncomplete_national_focus = { focus = POR_nuclear_station refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_alqueva_dam }
+			uncomplete_national_focus = { focus = POR_alqueva_dam refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_combined_cycle }
+			uncomplete_national_focus = { focus = POR_combined_cycle refund_political_power = no }
+		}
+
+		set_variable = { POR_energy_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_public_works_path_1 = {
+	if = {
+		limit = { check_variable = { POR_public_works_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_public_works_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_high_speed_rail }
+			subtract_from_variable = { POR_pind_production_speed_infrastructure_factor = 0.10 tooltip = production_speed_infrastructure_factor_tt }
+			subtract_from_variable = { POR_pind_consumer_goods_factor = 0.02 tooltip = consumer_goods_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_new_airport }
+			subtract_from_variable = { POR_pind_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+			subtract_from_variable = { POR_pind_foreign_influence_continent_modifier = 0.05 tooltip = foreign_influence_continent_modifier_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_high_speed_rail }
+			set_temp_variable = { temp_opinion = -10 }
+			change_labour_unions_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_new_airport }
+			uncomplete_national_focus = { focus = POR_new_airport refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_high_speed_rail }
+			uncomplete_national_focus = { focus = POR_high_speed_rail refund_political_power = no }
+		}
+
+		set_variable = { POR_public_works_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_public_works_path_2 = {
+	if = {
+		limit = { check_variable = { POR_public_works_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_public_works_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_renegotiate_the_ppps }
+			subtract_from_variable = { POR_pind_political_manipulation_corruption_factor = -0.08 tooltip = political_manipulation_corruption_factor_tt }
+			subtract_from_variable = { POR_pind_infrastructure_cost_multiplier_modifier = -0.10 tooltip = infrastructure_cost_multiplier_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_cancel_the_tgv }
+			subtract_from_variable = { POR_pind_interest_rate_multiplier_modifier = -0.25 tooltip = interest_rate_multiplier_modifier_tt }
+			subtract_from_variable = { POR_pind_production_speed_infrastructure_factor = -0.05 tooltip = production_speed_infrastructure_factor_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_renegotiate_the_ppps }
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_cancel_the_tgv }
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = {
+				has_completed_focus = POR_renegotiate_the_ppps
+				has_idea = standard_maintenance
+			}
+			swap_ideas = { remove_idea = standard_maintenance add_idea = extensive_maintenance }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_cancel_the_tgv }
+			uncomplete_national_focus = { focus = POR_cancel_the_tgv refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_renegotiate_the_ppps }
+			uncomplete_national_focus = { focus = POR_renegotiate_the_ppps refund_political_power = no }
+		}
+
+		set_variable = { POR_public_works_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_labour_path_1 = {
+	if = {
+		limit = { check_variable = { POR_labour_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_labour_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_labour_code_2009 }
+			subtract_from_variable = { POR_pind_stability_factor = 0.04 tooltip = stability_factor_tt }
+			subtract_from_variable = { POR_pind_production_speed_buildings_factor = -0.03 tooltip = production_speed_buildings_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_minimum_wage }
+			subtract_from_variable = { POR_pind_consumer_goods_factor = -0.03 tooltip = consumer_goods_factor_tt }
+			subtract_from_variable = { POR_pind_stability_factor = 0.04 tooltip = stability_factor_tt }
+			subtract_from_variable = { POR_pind_civilian_factories_productivity = -0.03 tooltip = civilian_factories_productivity_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_minimum_wage }
+			set_temp_variable = { pop_change = -2 }
+			modify_population_tax_rate_effect = yes
+			set_temp_variable = { temp_opinion = -15 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = 15 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_labour_code_2009 }
+			set_temp_variable = { temp_opinion = -15 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = 10 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = {
+				has_completed_focus = POR_labour_code_2009
+				has_idea = comprehensive_regulations
+			}
+			swap_ideas = { remove_idea = comprehensive_regulations add_idea = strong_regulations }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_minimum_wage }
+			uncomplete_national_focus = { focus = POR_minimum_wage refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_labour_code_2009 }
+			uncomplete_national_focus = { focus = POR_labour_code_2009 refund_political_power = no }
+		}
+
+		set_variable = { POR_labour_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+# Deepest law step first; the second re-tests has_idea because the first swap feeds it.
+POR_abandon_labour_path_2 = {
+	if = {
+		limit = { check_variable = { POR_labour_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_labour_path_2_tt
+
+		if = {
+			limit = {
+				has_completed_focus = POR_law_23_of_2012
+				has_idea = light_regulations
+			}
+			swap_ideas = { remove_idea = light_regulations add_idea = standard_regulations }
+		}
+		if = {
+			limit = {
+				has_completed_focus = POR_labour_code_2003
+				has_idea = standard_regulations
+			}
+			swap_ideas = { remove_idea = standard_regulations add_idea = strong_regulations }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_labour_code_2003 }
+			subtract_from_variable = { POR_pind_civilian_factories_productivity = 0.04 tooltip = civilian_factories_productivity_tt }
+			subtract_from_variable = { POR_pind_stability_factor = -0.03 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_law_23_of_2012 }
+			subtract_from_variable = { POR_pind_civilian_factories_productivity = 0.06 tooltip = civilian_factories_productivity_tt }
+			subtract_from_variable = { POR_pind_productivity_growth_modifier = 0.05 tooltip = productivity_growth_modifier_tt }
+			subtract_from_variable = { POR_pind_stability_factor = -0.06 tooltip = stability_factor_tt }
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_labour_code_2003 }
+			set_temp_variable = { temp_opinion = 15 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = -10 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_law_23_of_2012 }
+			set_temp_variable = { temp_opinion = 20 }
+			change_labour_unions_opinion = yes
+			set_temp_variable = { temp_opinion = -15 }
+			change_small_medium_business_owners_opinion = yes
+		}
+
+		if = {
+			limit = { has_completed_focus = POR_law_23_of_2012 }
+			uncomplete_national_focus = { focus = POR_law_23_of_2012 refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_labour_code_2003 }
+			uncomplete_national_focus = { focus = POR_labour_code_2003 refund_political_power = no }
+		}
+
+		set_variable = { POR_labour_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_health_path_1 = {
+	if = {
+		limit = { check_variable = { POR_health_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_health_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_basic_health_law }
+			subtract_from_variable = { POR_psoc_expected_healthcare_modifier = -0.1 tooltip = expected_healthcare_modifier_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = 0.03 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_end_of_the_partnerships }
+			subtract_from_variable = { POR_psoc_health_cost_multiplier_modifier = 0.08 tooltip = health_cost_multiplier_modifier_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = 0.04 tooltip = stability_factor_tt }
+			subtract_from_variable = { POR_psoc_monthly_population = 0.02 tooltip = monthly_population_tt }
+		}
+		if = {
+			limit = {
+				has_completed_focus = POR_end_of_the_partnerships
+				has_idea = fully_nationalized_healthcare
+			}
+			swap_ideas = { remove_idea = fully_nationalized_healthcare add_idea = partially_nationalized_healthcare }
+		}
+		if = {
+			limit = { has_completed_focus = POR_end_of_the_partnerships }
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_end_of_the_partnerships }
+			uncomplete_national_focus = { focus = POR_end_of_the_partnerships refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_basic_health_law }
+			uncomplete_national_focus = { focus = POR_basic_health_law refund_political_power = no }
+		}
+		set_variable = { POR_health_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_health_path_2 = {
+	if = {
+		limit = { check_variable = { POR_health_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_health_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_basic_law_of_2002 }
+			subtract_from_variable = { POR_psoc_health_cost_multiplier_modifier = -0.10 tooltip = health_cost_multiplier_modifier_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = -0.02 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_hospital_ppps }
+			subtract_from_variable = { POR_psoc_health_cost_multiplier_modifier = -0.05 tooltip = health_cost_multiplier_modifier_tt }
+			subtract_from_variable = { POR_psoc_return_on_investment_modifier = 0.003 tooltip = return_on_investment_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_basic_law_of_2002 }
+			increase_healthcare_budget = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = {
+				has_completed_focus = POR_hospital_ppps
+				has_idea = partially_privatized_healthcare
+			}
+			swap_ideas = { remove_idea = partially_privatized_healthcare add_idea = partially_nationalized_healthcare }
+		}
+		if = {
+			limit = { has_completed_focus = POR_hospital_ppps }
+			set_temp_variable = { temp_opinion = -4 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_hospital_ppps }
+			uncomplete_national_focus = { focus = POR_hospital_ppps refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_basic_law_of_2002 }
+			uncomplete_national_focus = { focus = POR_basic_law_of_2002 refund_political_power = no }
+		}
+		set_variable = { POR_health_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_education_path_1 = {
+	if = {
+		limit = { check_variable = { POR_education_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_education_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_compulsory_schooling }
+			subtract_from_variable = { POR_psoc_research_speed_factor = 0.04 tooltip = research_speed_factor_tt }
+			subtract_from_variable = { POR_psoc_education_cost_multiplier_modifier = 0.08 tooltip = education_cost_multiplier_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_education_technology_plan }
+			subtract_from_variable = { POR_psoc_research_speed_factor = 0.04 tooltip = research_speed_factor_tt }
+			subtract_from_variable = { POR_psoc_productivity_growth_modifier = 0.05 tooltip = productivity_growth_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_education_technology_plan }
+			set_temp_variable = { temp_opinion = -3 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_education_technology_plan }
+			uncomplete_national_focus = { focus = POR_education_technology_plan refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_compulsory_schooling }
+			uncomplete_national_focus = { focus = POR_compulsory_schooling refund_political_power = no }
+		}
+		set_variable = { POR_education_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_education_path_2 = {
+	if = {
+		limit = { check_variable = { POR_education_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_education_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_association_contracts }
+			subtract_from_variable = { POR_psoc_education_cost_multiplier_modifier = -0.10 tooltip = education_cost_multiplier_modifier_tt }
+			subtract_from_variable = { POR_psoc_research_speed_factor = -0.02 tooltip = research_speed_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_curricular_rigour }
+			subtract_from_variable = { POR_psoc_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = -0.02 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_association_contracts }
+			increase_education_budget = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_curricular_rigour }
+			set_temp_variable = { temp_opinion = 5 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_curricular_rigour }
+			uncomplete_national_focus = { focus = POR_curricular_rigour refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_association_contracts }
+			uncomplete_national_focus = { focus = POR_association_contracts refund_political_power = no }
+		}
+		set_variable = { POR_education_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_housing_path_1 = {
+	if = {
+		limit = { check_variable = { POR_housing_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_housing_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_basic_housing_law }
+			subtract_from_variable = { POR_psoc_stability_factor = 0.03 tooltip = stability_factor_tt }
+			subtract_from_variable = { POR_psoc_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_compulsory_letting }
+			subtract_from_variable = { POR_psoc_monthly_population = 0.05 tooltip = monthly_population_tt }
+			subtract_from_variable = { POR_psoc_return_on_investment_modifier = -0.015 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = -0.05 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_compulsory_letting }
+			set_temp_variable = { temp_opinion = 10 }
+			change_landowners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_compulsory_letting }
+			set_temp_variable = { temp_opinion = -6 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_compulsory_letting }
+			uncomplete_national_focus = { focus = POR_compulsory_letting refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_basic_housing_law }
+			uncomplete_national_focus = { focus = POR_basic_housing_law refund_political_power = no }
+		}
+		set_variable = { POR_housing_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_housing_path_2 = {
+	if = {
+		limit = { check_variable = { POR_housing_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_housing_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_new_lease_regime }
+			subtract_from_variable = { POR_psoc_return_on_investment_modifier = 0.006 tooltip = return_on_investment_modifier_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = -0.03 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_short_let_accommodation }
+			subtract_from_variable = { POR_psoc_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+			subtract_from_variable = { POR_psoc_consumer_goods_factor = 0.03 tooltip = consumer_goods_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_new_lease_regime }
+			set_temp_variable = { temp_opinion = -6 }
+			change_landowners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_short_let_accommodation }
+			set_temp_variable = { temp_opinion = -5 }
+			change_small_medium_business_owners_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_short_let_accommodation }
+			uncomplete_national_focus = { focus = POR_short_let_accommodation refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_new_lease_regime }
+			uncomplete_national_focus = { focus = POR_new_lease_regime refund_political_power = no }
+		}
+		set_variable = { POR_housing_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_social_path_1 = {
+	if = {
+		limit = { check_variable = { POR_social_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_social_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_social_insertion_income }
+			subtract_from_variable = { POR_psoc_stability_factor = 0.04 tooltip = stability_factor_tt }
+			subtract_from_variable = { POR_psoc_social_cost_multiplier_modifier = 0.06 tooltip = social_cost_multiplier_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_abolish_sustainability_factor }
+			subtract_from_variable = { POR_psoc_stability_factor = 0.06 tooltip = stability_factor_tt }
+			subtract_from_variable = { POR_psoc_social_cost_multiplier_modifier = 0.15 tooltip = social_cost_multiplier_modifier_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_abolish_sustainability_factor }
+			decrease_social_spending = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_social_insertion_income }
+			set_temp_variable = { temp_opinion = -5 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_abolish_sustainability_factor }
+			set_temp_variable = { temp_opinion = -8 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_abolish_sustainability_factor }
+			uncomplete_national_focus = { focus = POR_abolish_sustainability_factor refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_social_insertion_income }
+			uncomplete_national_focus = { focus = POR_social_insertion_income refund_political_power = no }
+		}
+		set_variable = { POR_social_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_social_path_2 = {
+	if = {
+		limit = { check_variable = { POR_social_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_social_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_sustainability_factor }
+			subtract_from_variable = { POR_psoc_social_cost_multiplier_modifier = -0.15 tooltip = social_cost_multiplier_modifier_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = -0.04 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_resources_test }
+			subtract_from_variable = { POR_psoc_social_cost_multiplier_modifier = -0.08 tooltip = social_cost_multiplier_modifier_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = -0.03 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_sustainability_factor }
+			increase_social_spending = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_sustainability_factor }
+			set_temp_variable = { temp_opinion = 10 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_resources_test }
+			set_temp_variable = { temp_opinion = 6 }
+			change_labour_unions_opinion = yes
+		}
+		if = {
+			limit = { has_completed_focus = POR_resources_test }
+			uncomplete_national_focus = { focus = POR_resources_test refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_sustainability_factor }
+			uncomplete_national_focus = { focus = POR_sustainability_factor refund_political_power = no }
+		}
+		set_variable = { POR_social_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_conscience_path_1 = {
+	if = {
+		limit = { check_variable = { POR_conscience_path = 1 } }
+
+		custom_effect_tooltip = POR_abandon_conscience_path_1_tt
+
+		if = {
+			limit = { has_completed_focus = POR_referendum_of_2007 }
+			subtract_from_variable = { POR_psoc_monthly_population = 0.02 tooltip = monthly_population_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = -0.02 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_marriage_equality }
+			subtract_from_variable = { POR_psoc_political_power_gain = 0.05 tooltip = political_power_gain_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = -0.02 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_marriage_equality }
+			uncomplete_national_focus = { focus = POR_marriage_equality refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_referendum_of_2007 }
+			uncomplete_national_focus = { focus = POR_referendum_of_2007 refund_political_power = no }
+		}
+		set_variable = { POR_conscience_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+POR_abandon_conscience_path_2 = {
+	if = {
+		limit = { check_variable = { POR_conscience_path = 2 } }
+
+		custom_effect_tooltip = POR_abandon_conscience_path_2_tt
+
+		if = {
+			limit = { has_completed_focus = POR_concordat_of_2004 }
+			subtract_from_variable = { POR_psoc_stability_factor = 0.04 tooltip = stability_factor_tt }
+			subtract_from_variable = { POR_psoc_political_power_gain = 0.03 tooltip = political_power_gain_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_defence_of_life }
+			subtract_from_variable = { POR_psoc_monthly_population = 0.04 tooltip = monthly_population_tt }
+			subtract_from_variable = { POR_psoc_stability_factor = -0.03 tooltip = stability_factor_tt }
+		}
+		if = {
+			limit = { has_completed_focus = POR_defence_of_life }
+			uncomplete_national_focus = { focus = POR_defence_of_life refund_political_power = no }
+		}
+		if = {
+			limit = { has_completed_focus = POR_concordat_of_2004 }
+			uncomplete_national_focus = { focus = POR_concordat_of_2004 refund_political_power = no }
+		}
+		set_variable = { POR_conscience_path = 0 }
+		set_temp_variable = { POR_ideo_add = 6 }
+		POR_raise_ideological_development = yes
+	}
+}
+
+# Takes POR_ideo_sub.
+POR_cool_ideological_development = {
+	if = {
+		limit = { check_variable = { POR_ideo_sub = 0 } }
+		set_temp_variable = { POR_ideo_sub = 10 }
+	}
+	custom_effect_tooltip = POR_ideological_development_down_tt
+	hidden_effect = {
+		subtract_from_variable = { POR_ideological_development = POR_ideo_sub }
+		clamp_variable = { var = POR_ideological_development min = 0 max = 100 }
+		clear_variable = POR_ideo_sub
+		POR_update_ideology_tier = yes
+	}
+}
+
+# The ideology modifier has no fascism drift field, so fascism pulls nationalist.
+POR_pull_towards_ruling_outlook = {
+	if = {
+		limit = { has_government = communism }
+		add_to_variable = { POR_ideology_communism_drift = 0.05 tooltip = communism_drift_tt }
+	}
+	else_if = {
+		limit = { OR = { has_government = nationalist has_government = fascism } }
+		add_to_variable = { POR_ideology_nationalist_drift = 0.05 tooltip = nationalist_drift_tt }
+	}
+	else_if = {
+		limit = { has_government = neutrality }
+		add_to_variable = { POR_ideology_neutrality_drift = 0.05 tooltip = neutrality_drift_tt }
+	}
+	else = {
+		add_to_variable = { POR_ideology_democratic_drift = 0.05 tooltip = democratic_drift_tt }
+	}
+}
+
+# Weekly cache, because focus triggers cannot compute any of this.
+POR_update_ideology_support = {
+	set_party_index_to_ruling_party = yes
+	set_temp_variable = { outlook_party_index = party_index }
+	set_outlook_from_party_index = yes
+	set_variable = { POR_ruling_outlook = outlook_id }
+	set_outlook_popularity_from_id = yes
+	set_variable = { POR_ruling_outlook_support = outlook_popularity }
+
+	set_outlook_popularity_array = yes
+	set_temp_variable = { POR_rev_best = 0 }
+	set_temp_variable = { POR_rev_best_id = -1 }
+	for_loop_effect = {
+		start = 0
+		end = 5
+		value = POR_o
+		if = {
+			limit = {
+				NOT = { check_variable = { POR_o = POR_ruling_outlook } }
+				check_variable = { outlook_popularity_by_id^POR_o > POR_rev_best }
+			}
+			set_temp_variable = { POR_rev_best = outlook_popularity_by_id^POR_o }
+			set_temp_variable = { POR_rev_best_id = POR_o }
+		}
+	}
+	set_variable = { POR_revolt_support = POR_rev_best }
+	set_variable = { POR_revolt_outlook = POR_rev_best_id }
+
+	set_temp_variable = { POR_slot_start = 0 }
+	set_temp_variable = { POR_slot_end = 0 }
+	if = {
+		limit = { check_variable = { POR_revolt_outlook = 0 } }
+		set_temp_variable = { POR_slot_start = 0 }
+		set_temp_variable = { POR_slot_end = 4 }
+	}
+	else_if = {
+		limit = { check_variable = { POR_revolt_outlook = 1 } }
+		set_temp_variable = { POR_slot_start = 4 }
+		set_temp_variable = { POR_slot_end = 10 }
+	}
+	else_if = {
+		limit = { check_variable = { POR_revolt_outlook = 2 } }
+		set_temp_variable = { POR_slot_start = 10 }
+		set_temp_variable = { POR_slot_end = 12 }
+	}
+	else_if = {
+		limit = { check_variable = { POR_revolt_outlook = 3 } }
+		set_temp_variable = { POR_slot_start = 12 }
+		set_temp_variable = { POR_slot_end = 20 }
+	}
+	else_if = {
+		limit = { check_variable = { POR_revolt_outlook = 4 } }
+		set_temp_variable = { POR_slot_start = 20 }
+		set_temp_variable = { POR_slot_end = 24 }
+	}
+
+	set_temp_variable = { POR_rev_party_pop = 0 }
+	set_temp_variable = { POR_rev_party_id = -1 }
+	for_loop_effect = {
+		start = POR_slot_start
+		end = POR_slot_end
+		value = POR_p
+		if = {
+			limit = { check_variable = { party_pop_array^POR_p > POR_rev_party_pop } }
+			set_temp_variable = { POR_rev_party_pop = party_pop_array^POR_p }
+			set_temp_variable = { POR_rev_party_id = POR_p }
+		}
+	}
+	set_variable = { POR_revolt_party = POR_rev_party_id }
+
+	set_temp_variable = { POR_opp_pop = 0 }
+	set_temp_variable = { POR_opp_id = -1 }
+	for_loop_effect = {
+		start = 0
+		end = 24
+		value = POR_q
+		if = {
+			limit = {
+				NOT = { check_variable = { POR_q = party_index } }
+				check_variable = { party_pop_array^POR_q > POR_opp_pop }
+			}
+			set_temp_variable = { POR_opp_pop = party_pop_array^POR_q }
+			set_temp_variable = { POR_opp_id = POR_q }
+		}
+	}
+	set_variable = { POR_opposition_party = POR_opp_id }
+	clear_variable = party_index
+}
+
+# Reads the displaced side first, because change_ruling_party_effect rewrites it.
+POR_run_revolution = {
+	POR_update_ideology_support = yes
+	set_temp_variable = { POR_rev_outlook_old = POR_ruling_outlook }
+	set_temp_variable = { POR_rev_size = POR_ruling_outlook_support }
+	multiply_temp_variable = { POR_rev_size = 0.8 }
+	clamp_temp_variable = { var = POR_rev_size min = 0.15 max = 0.55 }
+
+	set_temp_variable = { rul_party_temp = POR_revolt_party }
+	set_temp_variable = { change_leader_temp = 0 }
+	set_temp_variable = { disable_elections = 0 }
+	change_ruling_party_effect = yes
+
+	# A fascist spawn goes to the jihadist chain in on_declare_war, so the far right revolts as nationalist.
+	set_country_flag = no_leader_change
+	if = {
+		limit = { check_variable = { POR_rev_outlook_old = 0 } }
+		start_civil_war = { ideology = democratic size = POR_rev_size }
+	}
+	else_if = {
+		limit = { check_variable = { POR_rev_outlook_old = 1 } }
+		start_civil_war = { ideology = communism size = POR_rev_size }
+	}
+	else_if = {
+		limit = { check_variable = { POR_rev_outlook_old = 3 } }
+		start_civil_war = { ideology = neutrality size = POR_rev_size }
+	}
+	else = {
+		start_civil_war = { ideology = nationalist size = POR_rev_size }
+	}
+	clr_country_flag = no_leader_change
+
+	add_stability = -0.20
+	add_war_support = 0.10
+	set_temp_variable = { int_investment_change = -20 }
+	modify_international_investment_effect = yes
+	set_temp_variable = { debt_change = 20 }
+	modify_debt_effect = yes
+	set_variable = { protest_strength = 0 }
+	set_temp_variable = { POR_ideo_add = 15 }
+	POR_raise_ideological_development = yes
+	news_event = { id = portugal_news.8 hours = 6 }
+}
+
+# State scope, ROOT = POR. Records the owner so the claim comes due when its war ends.
+POR_take_civil_war_state = {
+	set_state_flag = POR_held_state
+	owner = {
+		PREV = { set_variable = { POR_held_owner = PREV.id } }
+		add_to_array = { ROOT.POR_held_state_owners = THIS.id }
+		add_opinion_modifier = { target = ROOT modifier = border_tensions }
+	}
+	ROOT = {
+		transfer_state = PREV
+		set_temp_variable = { POR_heat_add = 10 }
+		POR_add_exposure = yes
+	}
+}
+
+# One per week, with the claimant passed as FROM so a second landing cannot overwrite it.
+POR_check_held_states = {
+	if = {
+		limit = { check_variable = { POR_held_state_owners^num > 0 } }
+		random_scope_in_array = {
+			array = POR_held_state_owners
+			limit = {
+				OR = {
+					NOT = { exists = yes }
+					AND = { has_war = no has_civil_war = no }
+				}
+			}
+			ROOT = { remove_from_array = { POR_held_state_owners = PREV.id } }
+			if = {
+				limit = {
+					exists = yes
+					NOT = { has_country_flag = POR_shadow_client }
+					NOT = { is_subject_of = ROOT }
+				}
+				ROOT = { country_event = { id = portugal.42 days = 7 } }
+			}
+			else = {
+				ROOT = { country_event = { id = portugal.41 days = 7 } }
+			}
+		}
+	}
+}
+
+# FROM is the country asking for it.
+POR_return_held_state = {
+	every_owned_state = {
+		limit = {
+			has_state_flag = POR_held_state
+			check_variable = { POR_held_owner = FROM.id }
+		}
+		clr_state_flag = POR_held_state
+		clear_variable = POR_held_owner
+		FROM = { transfer_state = PREV }
+	}
+	FROM = {
+		remove_opinion_modifier = { target = ROOT modifier = border_tensions }
+		add_opinion_modifier = { target = ROOT modifier = eased_border_tensions }
+	}
+	set_temp_variable = { POR_heat_add = -8 }
+	POR_add_exposure = yes
+}
+
+POR_keep_held_state = {
+	every_owned_state = {
+		limit = {
+			has_state_flag = POR_held_state
+			check_variable = { POR_held_owner = FROM.id }
+		}
+		clr_state_flag = POR_held_state
+		clear_variable = POR_held_owner
+		add_claim_by = FROM
+	}
+	FROM = {
+		add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security }
+		create_wargoal = { type = take_claimed_state target = ROOT }
+	}
+	add_war_support = 0.05
+	set_temp_variable = { POR_heat_add = 15 }
+	POR_add_exposure = yes
+}
+
+# The rising takes Portugal's outlook so it has a government to join.
+POR_run_madrid_coup = {
+	set_country_flag = POR_madrid_coup_launched
+	set_temp_variable = { POR_madrid_size = 0.35 }
+	if = {
+		limit = { check_variable = { POR_ideological_development > 79 } }
+		set_temp_variable = { POR_madrid_size = 0.45 }
+	}
+	if = {
+		limit = { has_government = communism }
+		SPR = {
+			start_civil_war = {
+				ideology = communism
+				size = POR_madrid_size
+				set_country_flag = POR_shadow_client
+			}
+		}
+	}
+	else_if = {
+		limit = { has_government = nationalist }
+		SPR = {
+			start_civil_war = {
+				ideology = nationalist
+				size = POR_madrid_size
+				set_country_flag = POR_shadow_client
+			}
+		}
+	}
+	else_if = {
+		limit = { has_government = neutrality }
+		SPR = {
+			start_civil_war = {
+				ideology = neutrality
+				size = POR_madrid_size
+				set_country_flag = POR_shadow_client
+			}
+		}
+	}
+	else = {
+		SPR = {
+			start_civil_war = {
+				ideology = democratic
+				size = POR_madrid_size
+				set_country_flag = POR_shadow_client
+			}
+		}
+	}
+	set_temp_variable = { POR_heat_add = 30 }
+	POR_add_exposure = yes
+	news_event = { id = portugal_news.9 hours = 12 }
+}
+
+# Backing a side in somebody else's civil war.
+# Sides are marked with flags, not stored ids: on_civil_war_end only hands us the winner.
+
+# All three run in the side's scope with ROOT = POR.
+
+POR_mark_backed = {
+	set_country_flag = POR_backed_by_portugal
+	clr_country_flag = POR_opposed_by_portugal
+	add_opinion_modifier = { target = ROOT modifier = supported_our_claim }
+}
+
+POR_mark_opposed = {
+	set_country_flag = POR_opposed_by_portugal
+	clr_country_flag = POR_backed_by_portugal
+	add_opinion_modifier = { target = ROOT modifier = supported_opposition }
+}
+
+# Takes POR_commit_heat. The multiplier lives on this side so a later commitment cannot overwrite it.
+POR_commit_here = {
+	POR_score_client = yes
+	set_variable = { POR_backing_mult@ROOT = ROOT.POR_reward_mult }
+	POR_mark_backed = yes
+	if = {
+		limit = { OR = { original_tag = AGL original_tag = UNI } }
+		ROOT = { set_country_flag = POR_took_side_in_angola }
+	}
+
+	ROOT = {
+		if = {
+			limit = { check_variable = { POR_commit_heat = 0 } }
+			set_temp_variable = { POR_commit_heat = 10 }
+		}
+		set_temp_variable = { POR_heat_add = POR_commit_heat }
+		POR_add_exposure = yes
+		clear_variable = POR_commit_heat
+		custom_effect_tooltip = POR_commit_to_a_side_tt
+	}
+}
+
+# Winner's scope, from on_civil_war_end and civil_war_cleanup_angola; ROOT is not POR here.
+POR_resolve_backing = {
+	if = {
+		limit = {
+			has_country_flag = POR_backed_by_portugal
+			country_exists = POR
+		}
+		clr_country_flag = POR_backed_by_portugal
+		if = {
+			limit = { NOT = { has_variable = POR_backing_mult@POR } }
+			set_variable = { POR_backing_mult@POR = 1 }
+		}
+		set_temp_variable = { POR_pay = 25 }
+		multiply_temp_variable = { POR_pay = POR_backing_mult@POR }
+		round_temp_variable = POR_pay
+
+		add_opinion_modifier = { target = POR modifier = ideological_alliance }
+		reverse_add_opinion_modifier = { target = POR modifier = ideological_alliance }
+
+		POR = {
+			set_variable = { POR_backing_pay = PREV.POR_pay }
+			set_variable = { POR_backing_winner = PREV.id }
+			if = {
+				limit = { NOT = { is_in_array = { POR_network_target_array = PREV.id } } }
+				add_to_array = { POR_network_target_array = PREV.id }
+			}
+			country_event = { id = portugal.70 hours = 6 }
+		}
+		clear_variable = POR_backing_mult@POR
+	}
+	else_if = {
+		limit = {
+			has_country_flag = POR_opposed_by_portugal
+			country_exists = POR
+		}
+		clr_country_flag = POR_opposed_by_portugal
+		add_opinion_modifier = { target = POR modifier = supported_opposition }
+		POR = {
+			remove_operation_token = { tag = PREV token = token_civilian }
+			remove_operation_token = { tag = PREV token = token_army }
+			set_temp_variable = { percent_change = -10 }
+			set_temp_variable = { tag_index = THIS.id }
+			set_temp_variable = { influence_target = PREV.id }
+			change_influence_percentage = yes
+			set_temp_variable = { POR_heat_add = 12 }
+			POR_add_exposure = yes
+			country_event = { id = portugal.71 hours = 6 }
+		}
+		clear_variable = POR_backing_mult@POR
+	}
+}
+
+# State scope; the controller pays.
+POR_state_industrial_complex = {
+	add_extra_state_shared_building_slots = 1
+	add_building_construction = {
+		type = industrial_complex
+		level = 1
+		instant_build = yes
+	}
+	CONTROLLER = {
+		if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+POR_state_two_industrial_complexes = {
+	add_extra_state_shared_building_slots = 2
+	add_building_construction = {
+		type = industrial_complex
+		level = 2
+		instant_build = yes
+	}
+	CONTROLLER = {
+		if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+			set_temp_variable = { treasury_change = -15 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+POR_state_dockyard = {
+	add_extra_state_shared_building_slots = 1
+	add_building_construction = {
+		type = dockyard
+		level = 1
+		instant_build = yes
+	}
+	CONTROLLER = {
+		if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+			set_temp_variable = { treasury_change = -7.5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+POR_state_offices = {
+	add_extra_state_shared_building_slots = 1
+	add_building_construction = {
+		type = offices
+		level = 1
+		instant_build = yes
+	}
+	add_building_construction = {
+		type = fossil_powerplant
+		level = 1
+		instant_build = yes
+	}
+	CONTROLLER = {
+		if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+			set_temp_variable = { treasury_change = -12 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+POR_state_agriculture_district = {
+	add_extra_state_shared_building_slots = 1
+	add_building_construction = {
+		type = agriculture_district
+		level = 1
+		instant_build = yes
+	}
+	CONTROLLER = {
+		if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+			set_temp_variable = { treasury_change = -3.75 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+POR_improve_public_debt = {
+	if = {
+		limit = { has_idea = POR_public_debt_1 }
+		swap_ideas = { remove_idea = POR_public_debt_1 add_idea = POR_public_debt_2 }
+	}
+	else_if = {
+		limit = { has_idea = POR_public_debt_2 }
+		swap_ideas = { remove_idea = POR_public_debt_2 add_idea = POR_public_debt_3 }
+	}
+	else_if = {
+		limit = { has_idea = POR_public_debt_3 }
+		remove_ideas = POR_public_debt_3
+	}
+}
+
+POR_improve_low_value_economy = {
+	if = {
+		limit = { has_idea = POR_low_value_economy_1 }
+		swap_ideas = { remove_idea = POR_low_value_economy_1 add_idea = POR_low_value_economy_2 }
+	}
+	else_if = {
+		limit = { has_idea = POR_low_value_economy_2 }
+		swap_ideas = { remove_idea = POR_low_value_economy_2 add_idea = POR_low_value_economy_3 }
+	}
+	else_if = {
+		limit = { has_idea = POR_low_value_economy_3 }
+		remove_ideas = POR_low_value_economy_3
+	}
+}
+
+POR_improve_heavy_state = {
+	if = {
+		limit = { has_idea = POR_heavy_state_1 }
+		swap_ideas = { remove_idea = POR_heavy_state_1 add_idea = POR_heavy_state_2 }
+	}
+	else_if = {
+		limit = { has_idea = POR_heavy_state_2 }
+		swap_ideas = { remove_idea = POR_heavy_state_2 add_idea = POR_heavy_state_3 }
+	}
+	else_if = {
+		limit = { has_idea = POR_heavy_state_3 }
+		remove_ideas = POR_heavy_state_3
+	}
+}
+
+POR_improve_emigration = {
+	if = {
+		limit = { has_idea = POR_emigration_1 }
+		swap_ideas = { remove_idea = POR_emigration_1 add_idea = POR_emigration_2 }
+	}
+	else_if = {
+		limit = { has_idea = POR_emigration_2 }
+		remove_ideas = POR_emigration_2
+	}
+}
+
+# ENG scope, FROM = POR. Billed by ships received, since prefer_name may substitute a lost hull.
+POR_sell_royal_navy_ships = {
+	FROM = {
+		set_temp_variable = { POR_had_corvette = num_ships_with_type@corvette }
+		set_temp_variable = { POR_had_frigate = num_ships_with_type@frigate }
+		set_temp_variable = { POR_had_helicopter_operator = num_ships_with_type@helicopter_operator }
+		set_temp_variable = { POR_had_attack_submarine = num_ships_with_type@attack_submarine }
+	}
+	hidden_effect = {
+		transfer_ship = { prefer_name = "HMS Ledbury (M30)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Brocklesby (M33)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Chiddingfold (M37)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Cattistock (M31)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Hurworth (M39)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Brecon (M29)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Middleton (M34)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Atherstone (M38)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Blazer (P279)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Ranger (P293)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Exploit (P167)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Archer (P264)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Raider (P275)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Dasher (P280)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Puncher (P291)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Biter (P270)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Pursuer (P273)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Example (P165)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Trumpeter (P294)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Tracker (P274)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Smiter (P272)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Explorer (P164)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Express (P163)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Charger (P292)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Leeds Castle (P258)" type = corvette target = POR exclude_refitting = no }
+		transfer_ship = { prefer_name = "HMS Dumbarton Castle (P265)" type = corvette target = POR exclude_refitting = no }
+		if = {
+			limit = { check_variable = { POR_sale_everything = 1 } }
+			transfer_ship = { prefer_name = "HMS Cornwall (F99)" type = frigate target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Campbeltown (F86)" type = frigate target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Chatham (F87)" type = frigate target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Cumberland (F85)" type = frigate target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Coventry (F98)" type = frigate target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Sheffield (F96)" type = frigate target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Invincible (R05)" type = helicopter_operator target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Illustrious (R06)" type = helicopter_operator target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Ark Royal (R07)" type = helicopter_operator target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Fearless (L10)" type = helicopter_operator target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Sceptre (S104)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Spartan (S105)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Sovereign (S108)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Superb (S109)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Splendid (S106)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Trafalgar (S107)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Turbulent (S87)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Tireless (S88)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Torbay (S90)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Trenchant (S91)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Talent (S92)" type = attack_submarine target = POR exclude_refitting = no }
+			transfer_ship = { prefer_name = "HMS Triumph (S93)" type = attack_submarine target = POR exclude_refitting = no }
+		}
+	}
+	hidden_effect = {
+		FROM = {
+			set_temp_variable = { POR_ship_bill = 0 }
+			set_temp_variable = { POR_bill_part = num_ships_with_type@corvette }
+			subtract_from_temp_variable = { POR_bill_part = POR_had_corvette }
+			multiply_temp_variable = { POR_bill_part = 0.5 }
+			add_to_temp_variable = { POR_ship_bill = POR_bill_part }
+			set_temp_variable = { POR_bill_part = num_ships_with_type@frigate }
+			subtract_from_temp_variable = { POR_bill_part = POR_had_frigate }
+			multiply_temp_variable = { POR_bill_part = 2 }
+			add_to_temp_variable = { POR_ship_bill = POR_bill_part }
+			set_temp_variable = { POR_bill_part = num_ships_with_type@helicopter_operator }
+			subtract_from_temp_variable = { POR_bill_part = POR_had_helicopter_operator }
+			multiply_temp_variable = { POR_bill_part = 6 }
+			add_to_temp_variable = { POR_ship_bill = POR_bill_part }
+			set_temp_variable = { POR_bill_part = num_ships_with_type@attack_submarine }
+			subtract_from_temp_variable = { POR_bill_part = POR_had_attack_submarine }
+			multiply_temp_variable = { POR_bill_part = 1.5 }
+			add_to_temp_variable = { POR_ship_bill = POR_bill_part }
+			set_temp_variable = { treasury_change = POR_ship_bill }
+			multiply_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+		set_temp_variable = { treasury_change = POR_ship_bill }
+		modify_treasury_effect = yes
+	}
+}
+
+POR_recognise_luanda_terms = {
+	set_temp_variable = { POR_commit_heat = 10 }
+	AGL = { POR_commit_here = yes }
+	UNI = { POR_mark_opposed = yes }
+	set_temp_variable = { percent_change = 8 }
+	set_temp_variable = { tag_index = ROOT.id }
+	set_temp_variable = { influence_target = AGL.id }
+	change_influence_percentage = yes
+	set_temp_variable = { treasury_change = -5 }
+	modify_treasury_effect = yes
+}
+
+POR_support_unita_terms = {
+	set_temp_variable = { POR_commit_heat = 20 }
+	UNI = { POR_commit_here = yes }
+	AGL = { POR_mark_opposed = yes }
+	set_temp_variable = { percent_change = 10 }
+	set_temp_variable = { tag_index = ROOT.id }
+	set_temp_variable = { influence_target = UNI.id }
+	change_influence_percentage = yes
+	set_temp_variable = { treasury_change = -5 }
+	modify_treasury_effect = yes
+}
+
+POR_bissau_pact_terms = {
+	custom_effect_tooltip = POR_treaty_effect_tt
+	GUB = {
+		set_country_flag = POR_treaty@ROOT
+		add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+		reverse_add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+		add_opinion_modifier = { target = ROOT modifier = POR_standing_treaty_trade }
+	}
+	set_temp_variable = { percent_change = 10 }
+	set_temp_variable = { tag_index = ROOT.id }
+	set_temp_variable = { influence_target = GUB.id }
+	change_influence_percentage = yes
+	set_temp_variable = { int_investment_change = 8 }
+	modify_international_investment_effect = yes
+	set_temp_variable = { treasury_change = -6 }
+	modify_treasury_effect = yes
+}
+
+POR_maputo_partnership_terms = {
+	custom_effect_tooltip = POR_treaty_effect_tt
+	MOZ = {
+		set_country_flag = POR_treaty@ROOT
+		add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+		reverse_add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+		add_opinion_modifier = { target = ROOT modifier = POR_standing_treaty_trade }
+	}
+	set_temp_variable = { percent_change = 10 }
+	set_temp_variable = { tag_index = ROOT.id }
+	set_temp_variable = { influence_target = MOZ.id }
+	change_influence_percentage = yes
+	set_temp_variable = { int_investment_change = 12 }
+	modify_international_investment_effect = yes
+	set_temp_variable = { treasury_change = -8 }
+	modify_treasury_effect = yes
+}
+
+POR_treaty_of_dili_terms = {
+	custom_effect_tooltip = POR_treaty_effect_tt
+	TIM = {
+		set_country_flag = POR_treaty@ROOT
+		add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+		reverse_add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+		add_opinion_modifier = { target = ROOT modifier = POR_standing_treaty_trade }
+	}
+	set_temp_variable = { percent_change = 10 }
+	set_temp_variable = { tag_index = ROOT.id }
+	set_temp_variable = { influence_target = TIM.id }
+	change_influence_percentage = yes
+	set_temp_variable = { int_investment_change = 8 }
+	modify_international_investment_effect = yes
+	set_temp_variable = { treasury_change = -5 }
+	modify_treasury_effect = yes
+}
+
+POR_malabo_accord_terms = {
+	custom_effect_tooltip = POR_treaty_effect_tt
+	EGU = {
+		set_country_flag = POR_treaty@ROOT
+		add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+		reverse_add_opinion_modifier = { target = ROOT modifier = established_diplomatic_relations }
+		add_opinion_modifier = { target = ROOT modifier = POR_standing_treaty_trade }
+	}
+	set_temp_variable = { percent_change = 10 }
+	set_temp_variable = { tag_index = ROOT.id }
+	set_temp_variable = { influence_target = EGU.id }
+	change_influence_percentage = yes
+	set_temp_variable = { int_investment_change = 10 }
+	modify_international_investment_effect = yes
+	set_temp_variable = { treasury_change = -6 }
+	modify_treasury_effect = yes
+}
+
+POR_end_macau_lease = {
+	custom_effect_tooltip = POR_macau_rent_ends_tt
+	hidden_effect = { remove_ideas = POR_macau_rent_expense_money }
+	if = {
+		limit = { country_exists = CHI }
+		CHI = {
+			if = {
+				limit = { has_idea = POR_macau_rent_income_money }
+				hidden_effect = { remove_ideas = POR_macau_rent_income_money }
+			}
+			if = {
+				limit = { has_idea = POR_macau_free_port_trade }
+				remove_ideas = POR_macau_free_port_trade
+			}
+		}
+	}
+	set_temp_variable = { int_investment_change = { value = int_investments clamp = { min = 0 max = 60 } multiply = -1 } }
+	modify_international_investment_effect = yes
+}
+
+# Macau has no port, so its garrison is raised in place.
+POR_macau_start_border_war = {
+	hidden_effect = {
+		if = {
+			limit = { NOT = { has_template = "Macau Garrison" } }
+			division_template = {
+				name = "Macau Garrison"
+				regiments = {
+					L_Inf_Bat = { x = 0 y = 0 }
+					L_Inf_Bat = { x = 0 y = 1 }
+					L_Inf_Bat = { x = 0 y = 2 }
+				}
+				support = {
+					L_Engi_Comp = { x = 0 y = 0 }
+				}
+			}
+		}
+		1106 = {
+			create_unit = {
+				division = "name = \"1st Macau Garrison\" division_template = \"Macau Garrison\" start_experience_factor = 0.3 start_equipment_factor = 1.0"
+				owner = ROOT
+				prioritize_location = 14388
+			}
+			create_unit = {
+				division = "name = \"2nd Macau Garrison\" division_template = \"Macau Garrison\" start_experience_factor = 0.3 start_equipment_factor = 1.0"
+				owner = ROOT
+				prioritize_location = 14388
+			}
+		}
+	}
+	start_border_war = {
+		change_state_after_war = no
+		combat_width = 40
+		minimum_duration_in_days = 14
+		attacker = {
+			state = 532
+			num_provinces = 1
+		}
+		defender = {
+			state = 1106
+			num_provinces = 1
+			on_win = portugal.100
+			on_lose = portugal.101
+			on_cancel = portugal.102
+			modifier = 0.25
+		}
+	}
+	custom_effect_tooltip = POR_macau_border_war_tt
+	hidden_effect = { country_event = { id = portugal.103 days = 90 } }
+}
+
+POR_macau_china_answers = {
+	if = {
+		limit = { country_exists = CHI }
+		CHI = { country_event = { id = portugal.95 days = 1 } }
+		custom_effect_tooltip = TT_EFFECTS_FROM_EVENT
+		effect_tooltip = { custom_effect_tooltip = POR_china_responds_tt }
+	}
+}
+
+# Railway and internet technology unlock these levels; a state with none left gets that research instead.
+POR_state_infrastructure = {
+	if = {
+		limit = { free_building_slots = { building = infrastructure size > 0 } }
+		add_building_construction = {
+			type = infrastructure
+			level = 1
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -3.5 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+	else = {
+		custom_effect_tooltip = POR_building_level_locked_tt
+		ROOT = {
+			add_tech_bonus = { name = POR_public_works_research bonus = 0.25 uses = 1 category = CAT_infrastructure }
+		}
+	}
+}
+
+POR_state_network_infrastructure = {
+	if = {
+		limit = { free_building_slots = { building = internet_station size > 0 } }
+		add_building_construction = {
+			type = internet_station
+			level = 1
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -3 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+	else = {
+		custom_effect_tooltip = POR_building_level_locked_tt
+		ROOT = {
+			add_tech_bonus = { name = POR_public_works_research bonus = 0.25 uses = 1 category = CAT_internet }
+		}
+	}
+}
+
+POR_state_rail_terminal = {
+	if = {
+		limit = { free_building_slots = { building = rail_terminal size > 0 } }
+		add_building_construction = {
+			type = rail_terminal
+			level = 1
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -2.5 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+	else = {
+		custom_effect_tooltip = POR_building_level_locked_tt
+		ROOT = {
+			add_tech_bonus = { name = POR_public_works_research bonus = 0.25 uses = 1 category = CAT_infrastructure }
+		}
+	}
+}
+
+POR_state_air_base = {
+	if = {
+		limit = { free_building_slots = { building = air_base size > 0 } }
+		add_building_construction = {
+			type = air_base
+			level = 1
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -3 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+}
+
+POR_state_radar_station = {
+	if = {
+		limit = { free_building_slots = { building = radar_station size > 0 } }
+		add_building_construction = {
+			type = radar_station
+			level = 1
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -1.75 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+}
+
+POR_state_fossil_powerplant = {
+	if = {
+		limit = { free_building_slots = { building = fossil_powerplant size > 0 } }
+		add_building_construction = {
+			type = fossil_powerplant
+			level = 1
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -3.25 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+}
+
+POR_state_renewable_energy_infra = {
+	if = {
+		limit = { free_building_slots = { building = renewable_energy_infra size > 0 } }
+		add_building_construction = {
+			type = renewable_energy_infra
+			level = 1
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -8.5 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+}
+
+POR_state_three_renewable_energy_infra = {
+	if = {
+		limit = { free_building_slots = { building = renewable_energy_infra size > 2 } }
+		add_building_construction = {
+			type = renewable_energy_infra
+			level = 3
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -25.5 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+}
+
+POR_state_nuclear_reactor = {
+	if = {
+		limit = { free_building_slots = { building = nuclear_reactor size > 0 } }
+		add_building_construction = {
+			type = nuclear_reactor
+			level = 1
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -9 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+}
+
+# One energy or industrial grid per state: both belong to building group infrastructure_keystone.
+POR_state_energy_infrastructure = {
+	if = {
+		limit = {
+			energy_infrastructure < 1
+			industrial_infrastructure < 1
+		}
+		add_extra_state_shared_building_slots = 1
+		add_building_construction = {
+			type = energy_infrastructure
+			level = 1
+			instant_build = yes
+		}
+		CONTROLLER = {
+			if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+				set_temp_variable = { treasury_change = -6.5 }
+				modify_treasury_effect = yes
+			}
+		}
+	}
+}
+
+# Weekly: portugal.108 follows seven days after we fully hold state 374 at war with Morocco.
+POR_tangier_watch = {
+	if = {
+		limit = {
+			has_country_flag = POR_tangier_goal
+			owns_state = 374
+		}
+		clr_country_flag = POR_tangier_goal
+		clr_country_flag = POR_tangier_offered
+	}
+	else_if = {
+		limit = {
+			has_country_flag = POR_tangier_goal
+			NOT = { has_country_flag = POR_tangier_offered }
+			NOT = { has_country_flag = POR_tangier_pending }
+			has_war_with = MOR
+			374 = { is_fully_controlled_by = ROOT }
+		}
+		# Outlasts the event delay, so an offer that lapses on recapture can be scheduled again.
+		set_country_flag = { flag = POR_tangier_pending value = 1 days = 8 }
+		country_event = { id = portugal.108 days = 7 }
+	}
+	else_if = {
+		limit = {
+			has_country_flag = POR_tangier_goal
+			has_country_flag = POR_tangier_offered
+			NOT = { has_war_with = MOR }
+		}
+		clr_country_flag = POR_tangier_offered
+	}
+}
+
+# Granter's scope: gives POR the rights to one resource state it does not hold yet.
+POR_grant_resource_rights = {
+	set_temp_variable = { POR_rights_state = 0 }
+	random_owned_controlled_state = {
+		limit = {
+			NOT = { has_resources_rights = { receiver = POR } }
+			OR = {
+				has_resources_amount = { resource = oil amount > 0 }
+				has_resources_amount = { resource = aluminium amount > 0 }
+				has_resources_amount = { resource = rubber amount > 0 }
+				has_resources_amount = { resource = tungsten amount > 0 }
+				has_resources_amount = { resource = steel amount > 0 }
+				has_resources_amount = { resource = chromium amount > 0 }
+			}
+		}
+		set_temp_variable = { POR_rights_state = THIS.id }
+	}
+	if = {
+		limit = { check_variable = { POR_rights_state > 0 } }
+		give_resource_rights = { receiver = POR state = POR_rights_state }
+	}
+}
+
+POR_open_hispanosphere = {
+	if = {
+		limit = {
+			country_exists = ADO
+			NOT = { is_in_array = { POR_network_target_array = ADO.id } }
+		}
+		add_to_array = { POR_network_target_array = ADO.id }
+	}
+	if = {
+		limit = {
+			country_exists = MOR
+			NOT = { is_in_array = { POR_network_target_array = MOR.id } }
+		}
+		add_to_array = { POR_network_target_array = MOR.id }
+	}
+	if = {
+		limit = {
+			country_exists = MEX
+			NOT = { is_in_array = { POR_network_target_array = MEX.id } }
+		}
+		add_to_array = { POR_network_target_array = MEX.id }
+	}
+	if = {
+		limit = {
+			country_exists = GUA
+			NOT = { is_in_array = { POR_network_target_array = GUA.id } }
+		}
+		add_to_array = { POR_network_target_array = GUA.id }
+	}
+	if = {
+		limit = {
+			country_exists = HON
+			NOT = { is_in_array = { POR_network_target_array = HON.id } }
+		}
+		add_to_array = { POR_network_target_array = HON.id }
+	}
+	if = {
+		limit = {
+			country_exists = ELS
+			NOT = { is_in_array = { POR_network_target_array = ELS.id } }
+		}
+		add_to_array = { POR_network_target_array = ELS.id }
+	}
+	if = {
+		limit = {
+			country_exists = NIC
+			NOT = { is_in_array = { POR_network_target_array = NIC.id } }
+		}
+		add_to_array = { POR_network_target_array = NIC.id }
+	}
+	if = {
+		limit = {
+			country_exists = COS
+			NOT = { is_in_array = { POR_network_target_array = COS.id } }
+		}
+		add_to_array = { POR_network_target_array = COS.id }
+	}
+	if = {
+		limit = {
+			country_exists = PAN
+			NOT = { is_in_array = { POR_network_target_array = PAN.id } }
+		}
+		add_to_array = { POR_network_target_array = PAN.id }
+	}
+	if = {
+		limit = {
+			country_exists = CUB
+			NOT = { is_in_array = { POR_network_target_array = CUB.id } }
+		}
+		add_to_array = { POR_network_target_array = CUB.id }
+	}
+	if = {
+		limit = {
+			country_exists = DOM
+			NOT = { is_in_array = { POR_network_target_array = DOM.id } }
+		}
+		add_to_array = { POR_network_target_array = DOM.id }
+	}
+	if = {
+		limit = {
+			country_exists = VEN
+			NOT = { is_in_array = { POR_network_target_array = VEN.id } }
+		}
+		add_to_array = { POR_network_target_array = VEN.id }
+	}
+	if = {
+		limit = {
+			country_exists = COL
+			NOT = { is_in_array = { POR_network_target_array = COL.id } }
+		}
+		add_to_array = { POR_network_target_array = COL.id }
+	}
+	if = {
+		limit = {
+			country_exists = ECU
+			NOT = { is_in_array = { POR_network_target_array = ECU.id } }
+		}
+		add_to_array = { POR_network_target_array = ECU.id }
+	}
+	if = {
+		limit = {
+			country_exists = PRU
+			NOT = { is_in_array = { POR_network_target_array = PRU.id } }
+		}
+		add_to_array = { POR_network_target_array = PRU.id }
+	}
+	if = {
+		limit = {
+			country_exists = BOL
+			NOT = { is_in_array = { POR_network_target_array = BOL.id } }
+		}
+		add_to_array = { POR_network_target_array = BOL.id }
+	}
+	if = {
+		limit = {
+			country_exists = CHL
+			NOT = { is_in_array = { POR_network_target_array = CHL.id } }
+		}
+		add_to_array = { POR_network_target_array = CHL.id }
+	}
+	if = {
+		limit = {
+			country_exists = ARG
+			NOT = { is_in_array = { POR_network_target_array = ARG.id } }
+		}
+		add_to_array = { POR_network_target_array = ARG.id }
+	}
+	if = {
+		limit = {
+			country_exists = URG
+			NOT = { is_in_array = { POR_network_target_array = URG.id } }
+		}
+		add_to_array = { POR_network_target_array = URG.id }
+	}
+	if = {
+		limit = {
+			country_exists = PAR
+			NOT = { is_in_array = { POR_network_target_array = PAR.id } }
+		}
+		add_to_array = { POR_network_target_array = PAR.id }
+	}
+	if = {
+		limit = {
+			country_exists = PHI
+			NOT = { is_in_array = { POR_network_target_array = PHI.id } }
+		}
+		add_to_array = { POR_network_target_array = PHI.id }
+	}
+	if = {
+		limit = {
+			country_exists = SHA
+			NOT = { is_in_array = { POR_network_target_array = SHA.id } }
+		}
+		add_to_array = { POR_network_target_array = SHA.id }
+	}
+	add_to_variable = { POR_ops_filter_dirty = 1 }
+}

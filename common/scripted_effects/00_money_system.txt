@@ -835,6 +835,20 @@ calculate_additional_income_rate = {
 	}
 	else = { set_variable = { seigniorage_income_display = 0 } }
 	# Additional incomes, set income amount as a variable (weekly gain)
+	if = { limit = { original_tag = POR }
+		if = {
+			limit = { check_variable = { POR_lusophone_subjects^num > 0 } }
+			set_variable = { POR_overseas_income = POR_lusophone_subjects^num }
+			multiply_variable = { POR_overseas_income = 0.120 }
+			add_to_variable = { additional_income_rate = POR_overseas_income }
+		}
+		if = {
+			limit = { has_completed_focus = POR_camoes_institute }
+			set_variable = { POR_lusophone_income = gdp_total }
+			multiply_variable = { POR_lusophone_income = 0.0015 }
+			add_to_variable = { additional_income_rate = POR_lusophone_income }
+		}
+	}
 	if = { limit = { original_tag = GRN }
 		if = {
 			limit = { has_idea = GRN_idea_colonial_subsidy }
@@ -2456,14 +2470,21 @@ calculate_additional_income_rate = {
 		add_to_variable = { additional_income_rate = additional_income_GRE_creditor }
 	}
 
-	# Interest on Belt and Road loans (China is the only creditor; ledger at the end of 05_CHI_scripted_effects.txt)
-	if = {
-		limit = {
-			original_tag = CHI
-			check_variable = { CHI_bri_loan_income > 0 }
+	if = { limit = { original_tag = CHI }
+		# Interest on Belt and Road loans (China is the only creditor; ledger at the end of 05_CHI_scripted_effects.txt)
+		if = {
+			limit = { check_variable = { CHI_bri_loan_income > 0 } }
+			set_variable = { additional_income_CHI_bri_loans = CHI_bri_loan_income }
+			add_to_variable = { additional_income_rate = additional_income_CHI_bri_loans }
 		}
-		set_variable = { additional_income_CHI_bri_loans = CHI_bri_loan_income }
-		add_to_variable = { additional_income_rate = additional_income_CHI_bri_loans }
+		if = {
+			limit = {
+				has_idea = POR_macau_rent_income_money
+				POR = { has_idea = POR_macau_rent_expense_money }
+			}
+			set_variable = { POR_macau_rent_income = 0.231 }
+			add_to_variable = { additional_income_rate = POR_macau_rent_income }
+		}
 	}
 
 	# Energy Load Sharing Income
@@ -3614,7 +3635,42 @@ calculate_additional_expense_rate = {
 		add_to_variable = { additional_expenses_rate = additional_expense_bri_loan }
 	}
 
+	# Iberian language classes (shared Dream of Iberia tree), per funding tier
+	if = {
+		limit = { check_variable = { IBR_language_funding > 0 } }
+		set_variable = { IBR_language_classes_expense = { value = gdp_total multiply = 0.00004 multiply = IBR_language_funding } }
+		add_to_variable = { additional_expenses_rate = IBR_language_classes_expense }
+	}
+
 	# Additional expenses, set expense amount as a variable (weekly gain)
+	if = { limit = { original_tag = POR }
+		if = {
+			limit = {
+				OR = {
+					check_variable = { POR_shadow_clients^num > 0 }
+					check_variable = { POR_lusophone_subjects^num > 0 }
+				}
+			}
+			set_variable = { POR_overseas_expense = POR_shadow_clients^num }
+			multiply_variable = { POR_overseas_expense = 0.250 }
+			set_variable = { POR_subject_upkeep = POR_lusophone_subjects^num }
+			multiply_variable = { POR_subject_upkeep = 0.150 }
+			add_to_variable = { POR_overseas_expense = POR_subject_upkeep }
+			add_to_variable = { additional_expenses_rate = POR_overseas_expense }
+		}
+		if = {
+			limit = { check_variable = { nations_we_sent_volunteers_to^num > 0 } }
+			set_variable = { POR_legion_expense = nations_we_sent_volunteers_to^num }
+			multiply_variable = { POR_legion_expense = 0.200 }
+			add_to_variable = { additional_expenses_rate = POR_legion_expense }
+		}
+		if = {
+			limit = { has_idea = POR_macau_rent_expense_money }
+			set_variable = { POR_macau_rent_expense = 0.231 }
+			add_to_variable = { additional_expenses_rate = POR_macau_rent_expense }
+		}
+	}
+
 	# Generic Propaganda Campaign Decisions
 	# AI do not use the propganda campaigns at all. Wrap them in a check to minimize checking.
 	if = { limit = { is_ai = no }

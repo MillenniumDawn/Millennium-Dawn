@@ -1,0 +1,496 @@
+# AI path ownership. Internal to ai_will_do, so no tooltips and no loc keys.
+
+POR_ai_alt_path = {
+	OR = {
+		has_global_flag = POR_LUSOPHONE_FOCUS_PATH
+		has_global_flag = POR_IMPERIAL_FOCUS_PATH
+	}
+}
+
+POR_ai_not_lusophone_path = {
+	NOT = { has_global_flag = POR_LUSOPHONE_FOCUS_PATH }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = POR_HISTORICAL_FOCUS_PATH
+		has_global_flag = POR_IMPERIAL_FOCUS_PATH
+	}
+}
+
+POR_ai_not_imperial_path = {
+	NOT = { has_global_flag = POR_IMPERIAL_FOCUS_PATH }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = POR_HISTORICAL_FOCUS_PATH
+		has_global_flag = POR_LUSOPHONE_FOCUS_PATH
+	}
+}
+
+# Both alt paths run the Lusophone spine; only the imperial one takes it to a war.
+POR_ai_shadow_path = {
+	POR_ai_alt_path = yes
+}
+
+POR_ai_not_shadow_path = {
+	NOT = { POR_ai_alt_path = yes }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = POR_HISTORICAL_FOCUS_PATH
+	}
+}
+
+# POR_update_blocs recomputes these weekly from the last election result.
+POR_bloc_left_has_majority = {
+	check_variable = { POR_bloc_left > majority_threshold }
+}
+
+POR_bloc_right_has_majority = {
+	check_variable = { POR_bloc_right > majority_threshold }
+}
+
+POR_bloc_centre_has_majority = {
+	check_variable = { POR_bloc_centre > majority_threshold }
+}
+
+POR_ideology_tier_1 = {
+	check_variable = { POR_ideological_development > 19 }
+}
+
+POR_ideology_tier_2 = {
+	check_variable = { POR_ideological_development > 39 }
+}
+
+POR_ideology_tier_3 = {
+	check_variable = { POR_ideological_development > 59 }
+}
+
+POR_ideology_tier_4 = {
+	check_variable = { POR_ideological_development > 79 }
+}
+
+POR_ruling_party_has_support = {
+	check_variable = { party_pop_array^ruling_party > 0.15 }
+}
+
+POR_has_an_opposition = {
+	check_variable = { POR_opposition_party > -1 }
+}
+
+# Cached weekly by POR_update_ideology_support.
+POR_revolt_has_support = {
+	check_variable = { POR_revolt_party > -1 }
+	check_variable = { POR_revolt_support > 0.34 }
+}
+
+# PS (slot 3) counts as Atlanticist, not left.
+POR_the_left_governs = {
+	OR = {
+		check_variable = { ruling_party = 4 }
+		check_variable = { ruling_party = 5 }
+		check_variable = { ruling_party = 18 }
+		check_variable = { ruling_party = 19 }
+	}
+}
+
+POR_the_atlanticists_govern = {
+	OR = {
+		check_variable = { ruling_party = 1 }
+		check_variable = { ruling_party = 2 }
+		check_variable = { ruling_party = 3 }
+	}
+}
+
+POR_the_national_right_governs = {
+	OR = {
+		check_variable = { ruling_party = 14 }
+		check_variable = { ruling_party = 20 }
+		check_variable = { ruling_party = 22 }
+		check_variable = { ruling_party = 23 }
+	}
+}
+
+# Open when uncommitted, already on it, or the other bloc holds a majority to reverse it.
+POR_fiscal_path_1_open = {
+	OR = {
+		check_variable = { POR_fiscal_path = 0 }
+		check_variable = { POR_fiscal_path = 1 }
+		AND = {
+			check_variable = { POR_fiscal_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_fiscal_path_2_open = {
+	OR = {
+		check_variable = { POR_fiscal_path = 0 }
+		check_variable = { POR_fiscal_path = 2 }
+		AND = {
+			check_variable = { POR_fiscal_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_deficit_path_1_open = {
+	OR = {
+		check_variable = { POR_deficit_path = 0 }
+		check_variable = { POR_deficit_path = 1 }
+		AND = {
+			check_variable = { POR_deficit_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_deficit_path_2_open = {
+	OR = {
+		check_variable = { POR_deficit_path = 0 }
+		check_variable = { POR_deficit_path = 2 }
+		AND = {
+			check_variable = { POR_deficit_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_banking_path_1_open = {
+	OR = {
+		check_variable = { POR_banking_path = 0 }
+		check_variable = { POR_banking_path = 1 }
+		AND = {
+			check_variable = { POR_banking_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_banking_path_2_open = {
+	OR = {
+		check_variable = { POR_banking_path = 0 }
+		check_variable = { POR_banking_path = 2 }
+		AND = {
+			check_variable = { POR_banking_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_industrial_path_1_open = {
+	OR = {
+		check_variable = { POR_industrial_path = 0 }
+		check_variable = { POR_industrial_path = 1 }
+		AND = {
+			check_variable = { POR_industrial_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_industrial_path_2_open = {
+	OR = {
+		check_variable = { POR_industrial_path = 0 }
+		check_variable = { POR_industrial_path = 2 }
+		AND = {
+			check_variable = { POR_industrial_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_energy_path_1_open = {
+	OR = {
+		check_variable = { POR_energy_path = 0 }
+		check_variable = { POR_energy_path = 1 }
+		AND = {
+			check_variable = { POR_energy_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_energy_path_2_open = {
+	OR = {
+		check_variable = { POR_energy_path = 0 }
+		check_variable = { POR_energy_path = 2 }
+		AND = {
+			check_variable = { POR_energy_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_public_works_path_1_open = {
+	OR = {
+		check_variable = { POR_public_works_path = 0 }
+		check_variable = { POR_public_works_path = 1 }
+		AND = {
+			check_variable = { POR_public_works_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_public_works_path_2_open = {
+	OR = {
+		check_variable = { POR_public_works_path = 0 }
+		check_variable = { POR_public_works_path = 2 }
+		AND = {
+			check_variable = { POR_public_works_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_labour_path_1_open = {
+	OR = {
+		check_variable = { POR_labour_path = 0 }
+		check_variable = { POR_labour_path = 1 }
+		AND = {
+			check_variable = { POR_labour_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_labour_path_2_open = {
+	OR = {
+		check_variable = { POR_labour_path = 0 }
+		check_variable = { POR_labour_path = 2 }
+		AND = {
+			check_variable = { POR_labour_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_health_path_1_open = {
+	OR = {
+		check_variable = { POR_health_path = 0 }
+		check_variable = { POR_health_path = 1 }
+		AND = {
+			check_variable = { POR_health_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_health_path_2_open = {
+	OR = {
+		check_variable = { POR_health_path = 0 }
+		check_variable = { POR_health_path = 2 }
+		AND = {
+			check_variable = { POR_health_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_education_path_1_open = {
+	OR = {
+		check_variable = { POR_education_path = 0 }
+		check_variable = { POR_education_path = 1 }
+		AND = {
+			check_variable = { POR_education_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_education_path_2_open = {
+	OR = {
+		check_variable = { POR_education_path = 0 }
+		check_variable = { POR_education_path = 2 }
+		AND = {
+			check_variable = { POR_education_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_housing_path_1_open = {
+	OR = {
+		check_variable = { POR_housing_path = 0 }
+		check_variable = { POR_housing_path = 1 }
+		AND = {
+			check_variable = { POR_housing_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_housing_path_2_open = {
+	OR = {
+		check_variable = { POR_housing_path = 0 }
+		check_variable = { POR_housing_path = 2 }
+		AND = {
+			check_variable = { POR_housing_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_social_path_1_open = {
+	OR = {
+		check_variable = { POR_social_path = 0 }
+		check_variable = { POR_social_path = 1 }
+		AND = {
+			check_variable = { POR_social_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_social_path_2_open = {
+	OR = {
+		check_variable = { POR_social_path = 0 }
+		check_variable = { POR_social_path = 2 }
+		AND = {
+			check_variable = { POR_social_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_conscience_path_1_open = {
+	OR = {
+		check_variable = { POR_conscience_path = 0 }
+		check_variable = { POR_conscience_path = 1 }
+		AND = {
+			check_variable = { POR_conscience_path = 2 }
+			POR_bloc_left_has_majority = yes
+		}
+	}
+}
+
+POR_conscience_path_2_open = {
+	OR = {
+		check_variable = { POR_conscience_path = 0 }
+		check_variable = { POR_conscience_path = 2 }
+		AND = {
+			check_variable = { POR_conscience_path = 1 }
+			POR_bloc_right_has_majority = yes
+		}
+	}
+}
+
+POR_madrid_is_ready = {
+	SPR = {
+		has_civil_war = no
+		NOT = { has_war_with = ROOT }
+		OR = {
+			has_idea = Massive_International_Sanctions
+			check_variable = { stability < 0.4 }
+		}
+	}
+	network_strength = { target = SPR value > 59 }
+	has_operation_token = { tag = SPR token = token_civilian }
+	has_operation_token = { tag = SPR token = token_army }
+	POR_ideology_tier_3 = yes
+	check_variable = { POR_shadow_clients^num > 1 }
+}
+
+POR_madrid_cedes = {
+	any_country = {
+		original_tag = SPR
+		has_country_flag = POR_shadow_client
+		has_civil_war = no
+		has_government = ROOT
+	}
+}
+
+POR_galicia_is_ready = {
+	OR = {
+		SPR = { has_civil_war = yes }
+		POR_madrid_cedes = yes
+	}
+}
+
+POR_spanish_spoils_open = {
+	country_exists = SPR
+	OR = {
+		has_war_with = SPR
+		AND = {
+			SPR = { has_civil_war = yes }
+			any_country = {
+				original_tag = SPR
+				OR = {
+					has_country_flag = POR_shadow_client
+					has_country_flag = POR_backed_by_portugal
+				}
+			}
+		}
+	}
+}
+
+# EU112 keeps members' EU_member under a global flag; EU111 merges them into one USoE country.
+POR_federation_without_us = {
+	NOT = { has_idea = EU_member }
+	NOT = { has_country_flag = USoE }
+	OR = {
+		has_global_flag = european_federation
+		any_other_country = { has_country_flag = USoE }
+	}
+}
+
+# Democratic and communist governments cannot declare war on their own ideology.
+POR_ideology_allows_war_on_spain = {
+	OR = {
+		has_government = nationalist
+		has_government = neutrality
+		has_government = fascism
+		NOT = { SPR = { has_government = ROOT } }
+	}
+}
+
+POR_ideology_allows_war_on_morocco = {
+	OR = {
+		has_government = nationalist
+		has_government = neutrality
+		has_government = fascism
+		NOT = { MOR = { has_government = ROOT } }
+	}
+}
+
+# Target scope: open after POR's hostile focus, or the Iberian Union for the Hispanic world.
+POR_ops_target_open = {
+	OR = {
+		AND = { original_tag = AGL POR = { has_completed_focus = POR_support_unita } }
+		AND = { original_tag = UNI POR = { has_completed_focus = POR_recognise_luanda } }
+		AND = { original_tag = MOZ POR = { has_completed_focus = POR_return_of_renamo } }
+		AND = { original_tag = GUB POR = { has_completed_focus = POR_night_of_the_generals } }
+		AND = { original_tag = VER POR = { has_completed_focus = POR_question_of_praia } }
+		AND = { original_tag = SAO POR = { has_completed_focus = POR_sixteenth_of_july } }
+		AND = { original_tag = TIM POR = { has_completed_focus = POR_petitioners } }
+		AND = { original_tag = CAB POR = { has_completed_focus = POR_malongo_fields } }
+		AND = { original_tag = EGU POR = { has_completed_focus = POR_severo_motos_hour } }
+		AND = { original_tag = BRA POR = { has_completed_focus = POR_contest_for_luanda } }
+		AND = { original_tag = SPR POR = { has_completed_focus = POR_almaraz_complaint } }
+		AND = {
+			OR = {
+				original_tag = ADO
+				original_tag = MOR
+				original_tag = MEX
+				original_tag = GUA
+				original_tag = HON
+				original_tag = ELS
+				original_tag = NIC
+				original_tag = COS
+				original_tag = PAN
+				original_tag = CUB
+				original_tag = DOM
+				original_tag = VEN
+				original_tag = COL
+				original_tag = ECU
+				original_tag = PRU
+				original_tag = BOL
+				original_tag = CHL
+				original_tag = ARG
+				original_tag = URG
+				original_tag = PAR
+				original_tag = PHI
+				original_tag = SHA
+			}
+			POR = { has_completed_focus = IBR_proclaim_the_iberian_union }
+		}
+	}
+}
