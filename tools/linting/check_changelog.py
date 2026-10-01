@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""Check that the top version of Changelog.txt keeps its entries ordered.
+
+Within each category, untagged entries come first, then [TAG] entries in
+alphabetical order of their first tag.
+"""
+
+import re
+import sys
+from pathlib import Path
+
+VERSION_RE = re.compile(r"^v\d+\.\d+")
+CATEGORY_RE = re.compile(r"^\s*[^\s-][^:]*:\s*$")
+ENTRY_RE = re.compile(r"^\s*- ")
+TAG_RE = re.compile(r"^\s*- \[([^\]/]+)")
+
+
+def check_lines(lines):
+    """Return error messages for out-of-order entries in the top version."""
+    errors = []
+    seen_version = False
+    previous = None
+    for lineno, line in enumerate(lines, start=1):
+        if VERSION_RE.match(line):
+            if seen_version:
+                break
+            seen_version = True
+            continue
+        if CATEGORY_RE.match(line):
+            previous = None
+            continue
+        if not ENTRY_RE.match(line):
+            continue
+        match = TAG_RE.match(line)
+        tag = match.group(1) if match else None
+        if previous is not None:
+            prev_lineno, prev_tag = previous
+            if prev_tag is not None and tag is None:
+                errors.append(
+                    f"line {lineno}: untagged entry must come before "
+                    f"[{prev_tag}] (line {prev_lineno})"
+                )
+            elif prev_tag is not None and tag.lower() < prev_tag.lower():
+                errors.append(
+                    f"line {lineno}: [{tag}] must come before "
+                    f"[{prev_tag}] (line {prev_lineno})"
+                )
+        previous = (lineno, tag)
+    return errors
+
+
+def main():
+    path = Path(sys.argv[1] if len(sys.argv) > 1 else "Changelog.txt")
+    try:
+        lines = path.read_text(encoding="utf-8-sig").splitlines()
+    except OSError as e:
+        print(f"{path}: Unreadable - {e}", file=sys.stderr)
+        return 1
+
+    errors = check_lines(lines)
+    for error in errors:
+        print(f"{path}: {error}", file=sys.stderr)
+    if errors:
+        print(
+            "\nKeep untagged entries first in each category, then [TAG] "
+            "entries in alphabetical order.",
+            file=sys.stderr,
+        )
+    return 1 if errors else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
