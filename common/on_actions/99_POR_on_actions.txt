@@ -1,0 +1,109 @@
+on_actions = {
+	# ROOT is the winner, FROM the annexed side. Puppet here, not mid-war, where it blocks volunteers.
+	on_civil_war_end = {
+		effect = {
+			POR_resolve_backing = yes
+
+			if = {
+				limit = {
+					country_exists = POR
+					POR = { is_in_array = { POR_held_state_owners = FROM.id } }
+				}
+				POR = {
+					remove_from_array = { POR_held_state_owners = FROM.id }
+					if = {
+						limit = { NOT = { is_in_array = { POR_held_state_owners = ROOT.id } } }
+						add_to_array = { POR_held_state_owners = ROOT.id }
+					}
+					every_owned_state = {
+						limit = {
+							has_state_flag = POR_held_state
+							check_variable = { POR_held_owner = FROM.id }
+						}
+						set_variable = { POR_held_owner = ROOT.id }
+					}
+				}
+			}
+
+			if = {
+				limit = {
+					country_exists = POR
+					POR = { is_in_array = { POR_network_target_array = ROOT.id } }
+				}
+				set_country_flag = { flag = POR_after_civil_war value = 1 days = 1095 }
+			}
+
+			if = {
+				limit = { has_country_flag = POR_client_pending_puppet }
+				clr_country_flag = POR_client_pending_puppet
+				POR_client_core_repair = yes
+				news_event = { id = portugal_news.2 hours = 6 }
+				var:POR_client_overlord_id = {
+					set_autonomy = {
+						target = PREV
+						autonomy_state = autonomy_associated_state
+						end_wars = no
+						end_civil_wars = yes
+					}
+					country_event = { id = portugal.32 hours = 8 }
+				}
+				clear_variable = POR_client_overlord_id
+			}
+
+			if = {
+				limit = {
+					FROM = { has_country_flag = POR_shadow_client }
+					NOT = { has_country_flag = POR_shadow_client }
+				}
+				FROM = {
+					if = {
+						limit = { check_variable = { POR_client_overlord_id > 0 } }
+						var:POR_client_overlord_id = { country_event = { id = portugal.34 hours = 8 } }
+					}
+				}
+				if = { limit = { country_exists = POR } add_opinion_modifier = { target = POR modifier = supported_opposition } }
+			}
+		}
+	}
+
+	on_weekly_POR = {
+		effect = {
+			if = {
+				limit = {
+					has_completed_focus = IBR_dream_of_iberia
+					NOT = { has_completed_focus = IBR_proclaim_the_iberian_union }
+				}
+				IBR_weekly_tick = yes
+			}
+
+			POR_update_blocs = yes
+			POR_watch_party_flip = yes
+			POR_update_ideology_tier = yes
+			POR_update_ideology_support = yes
+
+			POR_prune_shadow_arrays = yes
+			POR_update_intervention_load = yes
+
+			for_each_scope_loop = {
+				array = POR_network_target_array
+				POR_apply_client_tier = yes
+			}
+
+			POR_update_overseas_doctrine = yes
+			POR_update_money_ideas = yes
+			POR_tangier_watch = yes
+
+			if = {
+				limit = {
+					check_variable = { POR_shadow_clients^num = 0 }
+					check_variable = { nations_we_sent_volunteers_to^num = 0 }
+					check_variable = { POR_shadow_exposure > 0 }
+				}
+				subtract_from_variable = { POR_shadow_exposure = 0.5 }
+			}
+
+			POR_check_held_states = yes
+			POR_update_exposure_tier = yes
+		}
+	}
+}
