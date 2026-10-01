@@ -7,6 +7,7 @@ adapted for Millennium Dawn with multiprocessing.
 
 import bisect
 import glob
+import math
 import os
 import re
 import sys
@@ -239,6 +240,55 @@ def _icon_type_message(
         f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> {sprite} is "
         f"{size[0]}x{size[1]}, which is {_SLOT_LABEL[actual]} art; a "
         f"{_SLOT_LABEL[kind]} is {_SLOT_TYPICAL_SIZE[kind]} ({hint})"
+    )
+
+
+# A category description that opens with a text icon (`£name` draws GFX_name)
+# shows the art at native size, centred on its text line. `full_text` starts 6px
+# down in hoi_16mbs, whose lines are 16px (interface/countrydecisionview.gui:158),
+# so each leading `\n` lowers the art 16px. The 480x73 banners overhang the box by
+# about 7px behind their one newline and read fine, so 8px is allowed; a 480x225
+# picture behind the same padding covers the category header (#4315).
+_DESC_LEADING_ICON_RE = re.compile(
+    r'^[ \t]*([\w.\-]+)_desc:\d*[ \t]*"((?:\\n|[ \t])*)£(\w+)', re.MULTILINE
+)
+_DESC_LINE_HEIGHT = 16
+_DESC_HEADROOM = 6 + _DESC_LINE_HEIGHT // 2 + 8
+
+
+def _desc_image_min_newlines(height: int) -> int:
+    """Leading newlines a description needs above art of this pixel height."""
+    return max(0, math.ceil((height / 2 - _DESC_HEADROOM) / _DESC_LINE_HEIGHT))
+
+
+def _leading_desc_icons(text: str) -> List[Tuple[str, int, str, int]]:
+    """Return (owner, leading newlines, icon, line) for each `<owner>_desc`
+    value in a localisation file that opens with a text icon."""
+    return [
+        (
+            m.group(1),
+            m.group(2).count("\\n"),
+            m.group(3),
+            text.count("\n", 0, m.start()) + 1,
+        )
+        for m in _DESC_LEADING_ICON_RE.finditer(text)
+    ]
+
+
+def _desc_image_message(
+    owner: str, newlines: int, icon: str, sprites: SpriteSizeIndex
+) -> Optional[str]:
+    """Return a finding when the art opening a category description sits too
+    high. An icon that resolves to no measurable sprite is not reported."""
+    size = sprites.size(f"GFX_{icon}")
+    if size is None:
+        return None
+    needed = _desc_image_min_newlines(size[1])
+    if newlines >= needed:
+        return None
+    return (
+        f"{owner}_desc: £{icon} is {size[0]}x{size[1]} behind {newlines} leading "
+        f"\\n, so it overlaps the category header; it needs {needed}"
     )
 
 
@@ -3256,6 +3306,36 @@ class Validator(BaseValidator):
             category="decision-icon-slot-mismatch",
         )
 
+    def validate_category_desc_images(self):
+        """Flag category descriptions whose opening art overlaps the header."""
+        self._log_section("Checking category description images clear the header...")
+
+        categories = parse_decision_categories(self.mod_path, lowercase=False)
+        sprites = build_sprite_size_index(self.mod_path, self._pool_map)
+        files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
+
+        results = []
+        for filepath in files:
+            text = read_text_strict(filepath)
+            for owner, newlines, icon, line in _leading_desc_icons(text):
+                if owner not in categories:
+                    continue
+                msg = _desc_image_message(owner, newlines, icon, sprites)
+                if msg:
+                    results.append(
+                        (msg, os.path.relpath(filepath, self.mod_path), line)
+                    )
+
+        self._report(
+            results,
+            "✓ All category description images clear the header",
+            "Category description images overlapping the header:",
+            Severity.WARNING,
+            category="category-desc-image-overlap",
+        )
+
     def run_validations(self):
         if self.staged_only:
             # Decision checks parse all 200+ decision files even for structural
@@ -3302,6 +3382,7 @@ class Validator(BaseValidator):
         self.validate_orphaned_target_modifiers()
         self.validate_formable_commitment_sync()
         self.validate_icon_types()
+        self.validate_category_desc_images()
 
         if self.missing_icons:
             self.validate_missing_icons()
