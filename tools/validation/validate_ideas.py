@@ -28,6 +28,7 @@ from validator_common import (
     Severity,
     case_mismatch,
     casefold_index,
+    load_dynamic_token_names,
     run_validator_main,
     should_skip_file,
 )
@@ -611,25 +612,6 @@ _IDEA_REF_META = re.compile(
     r"\s*=\s*([A-Za-z0-9_.\-]+)\[",
     re.IGNORECASE,
 )
-
-# Dynamic-token ideas are applied at runtime via `add_ideas = var:<token>`, where
-# the literal name lives only in this registry and never next to an add_ideas
-# keyword. Treat any name registered here as referenced.
-_DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
-_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
-
-
-def _load_dynamic_token_names(mod_path: str) -> Set[str]:
-    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
-    path = os.path.join(mod_path, _DYNAMIC_TOKEN_FILE)
-    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
-    if not text:
-        return set()
-    return {
-        line.strip()
-        for line in text.splitlines()
-        if _DYNAMIC_TOKEN_LINE.match(line.strip())
-    }
 
 
 def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
@@ -1323,7 +1305,9 @@ class Validator(BaseValidator):
         referenced: Set[str] = set()
         for sub in ref_lists:
             referenced.update(sub)
-        referenced.update(_load_dynamic_token_names(self.mod_path))
+        # Dynamic-token ideas are applied via `add_ideas = var:<token>`, so the
+        # literal name lives only in the registry. Treat those as referenced.
+        referenced.update(load_dynamic_token_names(self.mod_path))
 
         # Prefixes from meta-effect references (`idea = tribute_idea_[ROOTTAG]`).
         # Any candidate whose name starts with one is built at runtime, not dead.
