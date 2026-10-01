@@ -89,6 +89,12 @@ jobs:
               failed=$((failed + 1))
               continue
             fi
+            # The union merge keeps both sides but not their order.
+            if ! gh workflow run changelog-lint.yml --ref "$head"; then
+              echo "::warning::PR #$num changelog lint could not be dispatched"
+              failed=$((failed + 1))
+              continue
+            fi
             echo "PR #$num: merged main and resolved Changelog.txt"
             fixed=$((fixed + 1))
           done <<< "$prs"
