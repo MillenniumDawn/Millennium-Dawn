@@ -10,7 +10,7 @@ import re
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -226,6 +226,14 @@ def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, 
 
 _ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
 
+# Per-worker copy of costly_scripted_effects, set once by the Pool initializer.
+_W_COSTLY_EFFECTS: Dict[str, str] = {}
+
+
+def _init_costly_effects(effects: Dict[str, str]) -> None:
+    global _W_COSTLY_EFFECTS
+    _W_COSTLY_EFFECTS = effects
+
 
 def _extract_cost_blind_options(filename: str) -> List[Tuple[str, str, int]]:
     """Pool worker: (message, basename, line) for options whose AI weight ignores a cost."""
@@ -240,7 +248,9 @@ def _extract_cost_blind_options(filename: str) -> List[Tuple[str, str, int]]:
             basename,
             line,
         )
-        for name, line, costs, all_gated in find_cost_blind_options(text)
+        for name, line, costs, all_gated in find_cost_blind_options(
+            text, _W_COSTLY_EFFECTS
+        )
     ]
 
 
@@ -1034,70 +1044,135 @@ _OWN_SCOPE_BLOCKS = frozenset(
         "random_list",
         "ROOT",
         "THIS",
-        # The money temp variables and the effects that build them (_money_costs).
+    }
+)
+# Kept whole: the math block nested in one (`x = { value = ... }`) is not a scope.
+_VARIABLE_EFFECTS = frozenset(
+    {
         "set_temp_variable",
         "multiply_temp_variable",
         "divide_temp_variable",
-        "treasury_change",
-        "debt_change",
-        "int_investment_change",
+        "add_to_variable",
+        "subtract_from_variable",
     }
 )
 _BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
 _OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
 _AI_CHANCE_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
-_OPTION_COST_RES = (
-    ("political power", re.compile(r"\badd_political_power\s*=\s*-")),
-    ("stability", re.compile(r"\badd_stability\s*=\s*-")),
-    ("war support", re.compile(r"\badd_war_support\s*=\s*-")),
-)
 
-# Scripted effect -> (temp variable it applies, whether a negative value is the cost, label).
+# Stored variable -> (whether a negative change is the cost, label).
 # Debt is the odd one out: adding to it is what hurts.
-_MONEY_EFFECTS = {
-    "modify_treasury_effect": ("treasury_change", True, "treasury"),
-    "modify_debt_effect": ("debt_change", False, "debt"),
-    "modify_international_investment_effect": (
-        "int_investment_change",
-        True,
-        "international investment",
-    ),
+_MONEY_VARIABLES = {
+    "treasury": (True, "treasury"),
+    "debt": (False, "debt"),
+    "int_investments": (True, "international investment"),
 }
-_MONEY_STEP_RE = re.compile(
-    r"\b(set|multiply|divide)_temp_variable\s*=\s*\{\s*"
-    r"(treasury_change|debt_change|int_investment_change)\s*=\s*"
-    r"(\{[^{}]*\}|[^\s{}]+)"
-    r"|\b(modify_(?:treasury|debt|international_investment)_effect"
-    r"|(?:small|medium|large)_expenditure)\s*=\s*yes"
+_STAT_COSTS = {
+    "add_political_power": "political power",
+    "add_stability": "stability",
+    "add_war_support": "war support",
+}
+_COST_ORDER = (
+    *(kind for _neg, kind in _MONEY_VARIABLES.values()),
+    *_STAT_COSTS.values(),
 )
-_NEGATIVE_FACTOR_RE = re.compile(r"\b(?:value|multiply|divide)\s*=\s*-")
+_OPERAND = r"(\{[^{}]*\}|[^\s{}]+)"
+_MONEY_WRITE = (
+    r"\b(add_to|subtract_from)_variable\s*=\s*\{\s*(treasury|debt|int_investments)\s*="
+)
+_STAT_COST = r"\b(add_political_power|add_stability|add_war_support)\s*=\s*-"
+_COST_STEP_RE = re.compile(
+    r"\b(set|multiply|divide)_temp_variable\s*=\s*\{\s*([^\s={}]+)\s*=\s*"
+    + _OPERAND
+    + "|"
+    + _MONEY_WRITE
+    + r"\s*"
+    + _OPERAND
+    + "|"
+    + _STAT_COST
+    + r"|\b([A-Za-z_]\w*)\s*=\s*yes\b"
+)
+_DIRECT_COST_RE = re.compile(_MONEY_WRITE + "|" + _STAT_COST)
+_EFFECT_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*yes\b")
+_SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z_][\w.]*)\s*=\s*\{", re.MULTILINE)
+_MATH_VALUE_RE = re.compile(r"\bvalue\s*=\s*([^\s{}]+)")
+_NEGATIVE_FACTOR_RE = re.compile(r"\b(?:multiply|divide)\s*=\s*-")
 
 
-def _money_costs(own: str) -> List[str]:
-    """Money the option takes from its country, following each temp variable's sign.
+def _is_negative(operand: str, negative: Dict[str, bool]) -> bool:
+    """Sign of a variable-effect operand. A variable nothing has set counts as positive."""
+    if not operand.startswith("{"):
+        return operand.startswith("-") or negative.get(operand, False)
+    value = _MATH_VALUE_RE.search(operand)
+    base = _is_negative(value.group(1), negative) if value else False
+    return base != (len(_NEGATIVE_FACTOR_RE.findall(operand)) % 2 == 1)
+
+
+def _option_costs(
+    own: str,
+    effects: Dict[str, str],
+    negative: Dict[str, bool],
+    stack: Tuple[str, ...] = (),
+) -> Set[str]:
+    """What these effects cost the country running them, read in script order.
 
     Charges are rarely a plain negative literal: `treasury_change` is often set to
     a GDP variable and negated by `multiply_temp_variable`, or built in one math
-    block (`{ value = gdp_total multiply = -0.03 }`). A variable operand is taken
-    as positive, so only the literal signs decide.
+    block (`{ value = gdp_total multiply = -0.03 }`), then applied by a scripted
+    effect. So this tracks the sign of every temp variable and follows calls into
+    `effects` (see costly_scripted_effects), which share the caller's temp
+    variables the way the game does. The cost itself is always a write to a stored
+    money variable or a negative stat effect.
     """
-    negative: Dict[str, bool] = {}
-    costs: List[str] = []
-    for m in _MONEY_STEP_RE.finditer(own):
-        op, var, expr, effect = m.groups()
-        if effect is None:
-            if expr.startswith("{"):
-                flips = len(_NEGATIVE_FACTOR_RE.findall(expr)) % 2 == 1
-            else:
-                flips = expr.startswith("-")
+    costs: Set[str] = set()
+    for m in _COST_STEP_RE.finditer(own):
+        op, var, expr, write, stored, operand, stat, call = m.groups()
+        if op:
+            flips = _is_negative(expr, negative)
             negative[var] = flips if op == "set" else negative.get(var, False) != flips
-        elif effect.endswith("_expenditure"):
-            costs.append("treasury")
-        else:
-            var, negative_costs, kind = _MONEY_EFFECTS[effect]
-            if negative.get(var) is negative_costs:
-                costs.append(kind)
-    return list(dict.fromkeys(costs))
+        elif write:
+            negative_costs, kind = _MONEY_VARIABLES[stored]
+            change_is_negative = _is_negative(operand, negative) != (
+                write == "subtract_from"
+            )
+            if change_is_negative is negative_costs:
+                costs.add(kind)
+        elif stat:
+            costs.add(_STAT_COSTS[stat])
+        elif call in effects and call not in stack:
+            costs |= _option_costs(effects[call], effects, negative, (*stack, call))
+    return costs
+
+
+def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
+    """Own-scope body of every scripted effect that can charge the country calling it.
+
+    That is an effect that writes a money variable or lowers a stat itself, or
+    calls one that does. `modify_treasury_effect` and the `*_expenditure` presets
+    are found this way, not listed by hand.
+    """
+    bodies: Dict[str, str] = {}
+    for text in texts:
+        code = blank_quoted_strings(text)
+        pos = 0
+        while True:
+            m = _SCRIPTED_EFFECT_DEF_RE.search(code, pos)
+            end = _matching_brace(code, m.end() - 1) if m else -1
+            if m is None or end == -1:
+                break
+            bodies[m.group(1)] = _split_option(code[m.end() : end])[0]
+            pos = end
+    costly = {name for name, body in bodies.items() if _DIRECT_COST_RE.search(body)}
+    while True:
+        callers = {
+            name
+            for name, body in bodies.items()
+            if name not in costly
+            and not costly.isdisjoint(_EFFECT_CALL_RE.findall(body))
+        }
+        if not callers:
+            return {name: bodies[name] for name in costly}
+        costly |= callers
 
 
 def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
@@ -1106,16 +1181,22 @@ def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]
     blocks: Dict[Optional[str], Tuple[int, str]] = {}
     depth = 0
     cursor = 0
+    kept_whole = 0
     skip: Optional[Tuple[int, int, Optional[str]]] = None
     for m in _BLOCK_TOKEN_RE.finditer(body):
         if m.group(0) != "}":
             depth += 1
             key = m.group(1)
-            own_scope = key in _OWN_SCOPE_BLOCKS or (key is not None and key.isdigit())
-            if skip is None and not own_scope:
+            if skip is not None or kept_whole:
+                continue
+            if key in _VARIABLE_EFFECTS:
+                kept_whole = depth
+            elif key not in _OWN_SCOPE_BLOCKS and not (key or "").isdigit():
                 own.append(body[cursor : m.start()])
                 skip = (depth, m.end(), key)
             continue
+        if kept_whole == depth:
+            kept_whole = 0
         if skip is not None and skip[0] == depth:
             if depth == 1:
                 blocks[skip[2]] = (skip[1], body[skip[1] : m.start()])
@@ -1127,7 +1208,9 @@ def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]
     return " ".join(own), blocks
 
 
-def find_cost_blind_options(text: str) -> List[Tuple[str, int, str, bool]]:
+def find_cost_blind_options(
+    text: str, effects: Dict[str, str]
+) -> List[Tuple[str, int, str, bool]]:
     """(option name, 1-based line, costs, all gated) for AI weights that ignore a cost.
 
     Reports an option of a multi-option event when it charges its own country and
@@ -1135,7 +1218,8 @@ def find_cost_blind_options(text: str) -> List[Tuple[str, int, str, bool]]:
     A missing `ai_chance` is the flat default weight. The line is the `ai_chance`
     when there is one, since that is where the fix goes. `all gated` marks an event
     where every option has a `trigger`: those may be variants the AI never chooses
-    between, so the finding needs a look before it is fixed.
+    between, so the finding needs a look before it is fixed. `effects` comes from
+    costly_scripted_effects.
     """
     code = blank_quoted_strings(text)
     out: List[Tuple[str, int, str, bool]] = []
@@ -1155,9 +1239,7 @@ def find_cost_blind_options(text: str) -> List[Tuple[str, int, str, bool]]:
             ai_offset, ai_chance = blocks.get("ai_chance", (0, ""))
             if _AI_CHANCE_MODIFIER_RE.search(ai_chance):
                 continue
-            costs = _money_costs(own) + [
-                kind for kind, cost_re in _OPTION_COST_RES if cost_re.search(own)
-            ]
+            costs = _option_costs(own, effects, {})
             if not costs:
                 continue
             name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
@@ -1165,7 +1247,7 @@ def find_cost_blind_options(text: str) -> List[Tuple[str, int, str, bool]]:
                 (
                     name.group(1) if name else "unnamed option",
                     code.count("\n", 0, base + opt_start + ai_offset) + 1,
-                    ", ".join(costs),
+                    ", ".join(kind for kind in _COST_ORDER if kind in costs),
                     all_gated,
                 )
             )
@@ -2553,8 +2635,17 @@ class Validator(BaseValidator):
         if not files:
             self.log("  No event files in scope — skipping")
             return
+        effect_texts = (
+            _read_cleaned_text(path)
+            for path in self._collect_files(
+                ["common/scripted_effects/**/*.txt"], ignore_staged=True
+            )
+        )
+        effects = costly_scripted_effects(text for text in effect_texts if text)
         results: List[Tuple[str, str, int]] = []
-        for sub in self._pool_map(_extract_cost_blind_options, files):
+        for sub in self._pool_map_init(
+            _extract_cost_blind_options, files, _init_costly_effects, (effects,)
+        ):
             results.extend(sub)
         self._report(
             sorted(results, key=lambda r: (r[1], r[2])),

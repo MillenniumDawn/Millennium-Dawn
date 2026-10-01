@@ -4,7 +4,12 @@ import argparse
 
 import pytest
 from shared.suite import write_under_str as _write
-from validate_events import Validator, _add_extra_args, find_cost_blind_options
+from validate_events import (
+    Validator,
+    _add_extra_args,
+    costly_scripted_effects,
+    find_cost_blind_options,
+)
 
 _FLAT = "\t\tai_chance = { base = 5 }\n"
 _AWARE = (
@@ -14,6 +19,62 @@ _AWARE = (
     "\t\t}\n"
 )
 _PP_COST = "\t\tadd_political_power = -50\n"
+
+# The shapes of the real effects in common/scripted_effects/00_budget_effects.txt.
+_SCRIPTED_EFFECTS = (
+    "modify_treasury_effect = {\n"
+    "\tif = {\n"
+    "\t\tlimit = { NOT = { has_country_flag = MD_skip_treasury_cost } }\n"
+    "\t\tadd_to_variable = { treasury = treasury_change }\n"
+    "\t}\n"
+    "}\n"
+    "modify_debt_effect = {\n"
+    "\tadd_to_variable = { debt = debt_change }\n"
+    "\tclamp_variable = { var = debt min = 0 }\n"
+    "}\n"
+    "modify_international_investment_effect = {\n"
+    "\tadd_to_variable = { int_investments = int_investment_change }\n"
+    "}\n"
+    "small_expenditure = {\n"
+    "\tset_temp_variable = { treasury_change = "
+    "{ value = gdp_total multiply = -0.002 } }\n"
+    "\tmodify_treasury_effect = yes\n"
+    "}\n"
+    "one_office_construction = {\n"
+    "\tevery_controlled_state = { add_extra_state_shared_building_slots = 1 }\n"
+    "\tif = {\n"
+    "\t\tlimit = { NOT = { check_variable = { skip_payment = 1 } } }\n"
+    "\t\tset_temp_variable = { treasury_change = -12 }\n"
+    "\t\tmodify_treasury_effect = yes\n"
+    "\t}\n"
+    "}\n"
+    "two_office_construction = {\n"
+    "\tone_office_construction = yes\n"
+    "\tone_office_construction = yes\n"
+    "}\n"
+    "lose_pp_for_15_days = {\n"
+    "\tadd_political_power = -25\n"
+    "}\n"
+    "TAG_pay_or_defer = {\n"
+    "\tset_temp_variable = { treasury_change = debt_change }\n"
+    "\tmultiply_temp_variable = { treasury_change = -1 }\n"
+    "\tmodify_treasury_effect = yes\n"
+    "}\n"
+    "TAG_bill_the_neighbour = {\n"
+    "\tFROM = {\n"
+    "\t\tset_temp_variable = { treasury_change = -5 }\n"
+    "\t\tmodify_treasury_effect = yes\n"
+    "\t}\n"
+    "}\n"
+    "TAG_loops_forever = {\n"
+    "\tadd_stability = -0.01\n"
+    "\tTAG_loops_forever = yes\n"
+    "}\n"
+    "increase_economic_growth = {\n"
+    "\tadd_political_power = 10\n"
+    "}\n"
+)
+_EFFECTS = costly_scripted_effects([_SCRIPTED_EFFECTS])
 
 
 def _option(name: str, body: str) -> str:
@@ -33,6 +94,10 @@ def _two_options(cost_body: str) -> str:
     return _event(_option("foo.1.a", cost_body), _option("foo.1.b", _FLAT))
 
 
+def _found(text: str):
+    return find_cost_blind_options(text, _EFFECTS)
+
+
 def _validator(tmp_path, **kwargs):
     return Validator(mod_path=str(tmp_path), use_colors=False, workers=1, **kwargs)
 
@@ -47,6 +112,20 @@ def test_flat_weight_on_a_costed_option_is_flagged(tmp_path):
     assert v._issues[0].category == "event-ai-chance-ignores-cost"
     assert v.warnings_found == 1
     assert v.errors_found == 0
+
+
+def test_validator_reads_the_mods_scripted_effects(tmp_path):
+    _write(tmp_path, "common/scripted_effects/00_budget_effects.txt", _SCRIPTED_EFFECTS)
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        _two_options("\t\tone_office_construction = yes\n" + _FLAT),
+    )
+    v = _validator(tmp_path, check_ai_chance_costs=True)
+    v.validate_ai_chance_ignores_cost()
+    assert [i.message for i in v._issues] == [
+        "foo.1.a - flat ai_chance ignores the treasury cost"
+    ]
 
 
 def test_check_is_off_without_the_flag(tmp_path):
@@ -70,7 +149,7 @@ def test_empty_tree_reports_nothing(tmp_path):
 
 
 def test_modifier_on_the_costed_option_is_clean():
-    assert find_cost_blind_options(_two_options(_PP_COST + _AWARE)) == []
+    assert _found(_two_options(_PP_COST + _AWARE)) == []
 
 
 def test_modifier_on_another_option_does_not_cover_the_costed_one():
@@ -78,17 +157,15 @@ def test_modifier_on_another_option_does_not_cover_the_costed_one():
         _option("foo.1.a", _PP_COST + _FLAT),
         _option("foo.1.b", _AWARE),
     )
-    assert [found[0] for found in find_cost_blind_options(text)] == ["foo.1.a"]
+    assert [found[0] for found in _found(text)] == ["foo.1.a"]
 
 
 def test_single_option_event_is_clean():
-    assert find_cost_blind_options(_event(_option("foo.1.a", _PP_COST + _FLAT))) == []
+    assert _found(_event(_option("foo.1.a", _PP_COST + _FLAT))) == []
 
 
 def test_missing_ai_chance_is_flat_and_reports_the_option_line():
-    assert find_cost_blind_options(_two_options(_PP_COST)) == [
-        ("foo.1.a", 5, "political power", False)
-    ]
+    assert _found(_two_options(_PP_COST)) == [("foo.1.a", 5, "political power", False)]
 
 
 _GATE = "\t\ttrigger = { has_country_flag = foo_flag }\n"
@@ -99,7 +176,7 @@ def test_event_with_every_option_gated_is_marked_for_review(tmp_path):
         _option("foo.1.a", _GATE + _PP_COST + _FLAT),
         _option("foo.1.b", "\t\ttrigger = { NOT = { has_country_flag = foo_flag } }\n"),
     )
-    assert find_cost_blind_options(text) == [("foo.1.a", 9, "political power", True)]
+    assert _found(text) == [("foo.1.a", 9, "political power", True)]
     _write(tmp_path, "events/Ev.txt", text)
     v = _validator(tmp_path, check_ai_chance_costs=True)
     v.validate_ai_chance_ignores_cost()
@@ -110,7 +187,7 @@ def test_event_with_every_option_gated_is_marked_for_review(tmp_path):
 
 
 def test_gated_option_with_an_always_visible_sibling_is_not_marked():
-    found = find_cost_blind_options(_two_options(_GATE + _PP_COST + _FLAT))
+    found = _found(_two_options(_GATE + _PP_COST + _FLAT))
     assert found == [("foo.1.a", 9, "political power", False)]
 
 
@@ -141,6 +218,12 @@ def test_gated_option_with_an_always_visible_sibling_is_not_marked():
             "treasury",
         ),
         (
+            "\t\tset_temp_variable = { our_cost = -5 }\n"
+            "\t\tset_temp_variable = { treasury_change = our_cost }\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
             "\t\tset_temp_variable = { debt_change = 10 }\n"
             "\t\tmodify_debt_effect = yes\n",
             "debt",
@@ -163,9 +246,23 @@ def test_gated_option_with_an_always_visible_sibling_is_not_marked():
             "\t\tmodify_treasury_effect = yes\n",
             "treasury",
         ),
+        ("\t\tadd_to_variable = { treasury = -5 }\n", "treasury"),
+        ("\t\tsubtract_from_variable = { treasury = loan_amount }\n", "treasury"),
+        ("\t\tadd_to_variable = { debt = 5 }\n", "debt"),
+        (
+            "\t\tsubtract_from_variable = { int_investments = 5 }\n",
+            "international investment",
+        ),
         ("\t\tsmall_expenditure = yes\n", "treasury"),
-        ("\t\tmedium_expenditure = yes\n", "treasury"),
-        ("\t\tlarge_expenditure = yes\n", "treasury"),
+        ("\t\tone_office_construction = yes\n", "treasury"),
+        ("\t\ttwo_office_construction = yes\n", "treasury"),
+        ("\t\tlose_pp_for_15_days = yes\n", "political power"),
+        (
+            "\t\tset_temp_variable = { debt_change = 3 }\n"
+            "\t\tTAG_pay_or_defer = yes\n",
+            "treasury",
+        ),
+        ("\t\tTAG_loops_forever = yes\n", "stability"),
         ("\t\tadd_stability = -0.02\n", "stability"),
         ("\t\tadd_war_support = -0.05\n", "war support"),
         (
@@ -177,13 +274,13 @@ def test_gated_option_with_an_always_visible_sibling_is_not_marked():
         ),
         ("\t\thidden_effect = { add_political_power = -25 }\n", "political power"),
         (
-            "\t\tlarge_expenditure = yes\n" + _PP_COST + "\t\tadd_stability = -0.02\n",
+            "\t\tadd_stability = -0.02\n" + _PP_COST + "\t\tsmall_expenditure = yes\n",
             "treasury, political power, stability",
         ),
     ],
 )
 def test_cost_kinds_are_detected(effects, costs):
-    found = find_cost_blind_options(_two_options(effects + _FLAT))
+    found = _found(_two_options(effects + _FLAT))
     assert [(name, kinds) for name, _line, kinds, _gated in found] == [
         ("foo.1.a", costs)
     ]
@@ -215,13 +312,34 @@ def test_cost_kinds_are_detected(effects, costs):
         "\t\tmodify_debt_effect = yes\n",
         "\t\tset_temp_variable = { int_investment_change = 5 }\n"
         "\t\tmodify_international_investment_effect = yes\n",
+        "\t\tadd_to_variable = { treasury = SOV.treasury }\n",
+        "\t\tsubtract_from_variable = { debt = debt_bailout }\n",
+        "\t\tadd_to_variable = { TAG_other_variable = -5 }\n",
+        "\t\tincrease_economic_growth = yes\n",
+        "\t\tTAG_bill_the_neighbour = yes\n",
+        "\t\tTAG_unknown_effect = yes\n",
         "\t\tFROM = { add_political_power = -50 }\n",
+        "\t\tFROM = { one_office_construction = yes }\n",
         "\t\tevery_other_country = { add_stability = -0.02 }\n",
         '\t\tlog = "add_political_power = -50"\n',
     ],
 )
 def test_not_a_cost_to_the_choosing_country(effects):
-    assert find_cost_blind_options(_two_options(effects + _FLAT)) == []
+    assert _found(_two_options(effects + _FLAT)) == []
+
+
+def test_only_effects_that_can_charge_the_caller_are_kept():
+    assert set(_EFFECTS) == {
+        "modify_treasury_effect",
+        "modify_debt_effect",
+        "modify_international_investment_effect",
+        "small_expenditure",
+        "one_office_construction",
+        "two_office_construction",
+        "lose_pp_for_15_days",
+        "TAG_pay_or_defer",
+        "TAG_loops_forever",
+    }
 
 
 def test_commented_cost_is_ignored_by_the_validator(tmp_path):
@@ -244,4 +362,4 @@ def test_reference_pattern_is_clean_and_its_flat_sibling_is_flagged():
     )
     decline = "\t\tadd_stability = -0.02\n\t\tai_chance = { base = 1 }\n"
     text = _event(_option("foo.1.a", pay), _option("foo.1.b", decline))
-    assert find_cost_blind_options(text) == [("foo.1.b", 17, "stability", False)]
+    assert _found(text) == [("foo.1.b", 17, "stability", False)]

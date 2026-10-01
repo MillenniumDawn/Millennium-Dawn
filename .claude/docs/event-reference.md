@@ -103,7 +103,7 @@ An option that charges the country (treasury, debt, political power, stability, 
  }
 ```
 
-- Treasury and debt: `has_active_mission = bankruptcy_incoming_collapse` and `ai_has_high_deficit = yes`. A charge built with math (`treasury_change = gdp_total` then a negative `multiply_temp_variable`) needs them as much as a literal one.
+- Treasury and debt: `has_active_mission = bankruptcy_incoming_collapse` and `ai_has_high_deficit = yes`. A charge built with math (`treasury_change = gdp_total` then a negative `multiply_temp_variable`) needs them as much as a literal one, and so does a scripted effect that charges internally (`one_office_construction`, `small_expenditure`).
 - Political power: `has_political_power < N`, with N at or above the cost so the AI never goes negative.
 - Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
 
