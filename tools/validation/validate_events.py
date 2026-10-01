@@ -224,6 +224,9 @@ def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, 
     ]
 
 
+_ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
+
+
 def _extract_cost_blind_options(filename: str) -> List[Tuple[str, str, int]]:
     """Pool worker: (message, basename, line) for options whose AI weight ignores a cost."""
     text = _read_cleaned_text(filename)
@@ -231,8 +234,13 @@ def _extract_cost_blind_options(filename: str) -> List[Tuple[str, str, int]]:
         return []
     basename = os.path.basename(filename)
     return [
-        (f"{name} - flat ai_chance ignores the {costs} cost", basename, line)
-        for name, line, costs in find_cost_blind_options(text)
+        (
+            f"{name} - flat ai_chance ignores the {costs} cost"
+            + (_ALL_GATED_NOTE if all_gated else ""),
+            basename,
+            line,
+        )
+        for name, line, costs, all_gated in find_cost_blind_options(text)
     ]
 
 
@@ -1024,33 +1032,78 @@ _OWN_SCOPE_BLOCKS = frozenset(
         "effect_tooltip",
         "random",
         "random_list",
-        "set_temp_variable",
         "ROOT",
         "THIS",
+        # The money temp variables and the effects that build them (_money_costs).
+        "set_temp_variable",
+        "multiply_temp_variable",
+        "divide_temp_variable",
+        "treasury_change",
+        "debt_change",
+        "int_investment_change",
     }
 )
 _BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
 _OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
 _AI_CHANCE_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
 _OPTION_COST_RES = (
-    (
-        "treasury",
-        re.compile(
-            r"\btreasury_change\s*=\s*-[\s\S]*\bmodify_treasury_effect\s*=\s*yes"
-            r"|\b(?:small|medium|large)_expenditure\s*=\s*yes"
-        ),
-    ),
     ("political power", re.compile(r"\badd_political_power\s*=\s*-")),
     ("stability", re.compile(r"\badd_stability\s*=\s*-")),
     ("war support", re.compile(r"\badd_war_support\s*=\s*-")),
 )
 
+# Scripted effect -> (temp variable it applies, whether a negative value is the cost, label).
+# Debt is the odd one out: adding to it is what hurts.
+_MONEY_EFFECTS = {
+    "modify_treasury_effect": ("treasury_change", True, "treasury"),
+    "modify_debt_effect": ("debt_change", False, "debt"),
+    "modify_international_investment_effect": (
+        "int_investment_change",
+        True,
+        "international investment",
+    ),
+}
+_MONEY_STEP_RE = re.compile(
+    r"\b(set|multiply|divide)_temp_variable\s*=\s*\{\s*"
+    r"(treasury_change|debt_change|int_investment_change)\s*=\s*"
+    r"(\{[^{}]*\}|[^\s{}]+)"
+    r"|\b(modify_(?:treasury|debt|international_investment)_effect"
+    r"|(?:small|medium|large)_expenditure)\s*=\s*yes"
+)
+_NEGATIVE_FACTOR_RE = re.compile(r"\b(?:value|multiply|divide)\s*=\s*-")
 
-def _split_option(body: str) -> Tuple[str, Optional[str], int]:
-    """(own-scope effects, ai_chance body, ai_chance offset) of one option body."""
+
+def _money_costs(own: str) -> List[str]:
+    """Money the option takes from its country, following each temp variable's sign.
+
+    Charges are rarely a plain negative literal: `treasury_change` is often set to
+    a GDP variable and negated by `multiply_temp_variable`, or built in one math
+    block (`{ value = gdp_total multiply = -0.03 }`). A variable operand is taken
+    as positive, so only the literal signs decide.
+    """
+    negative: Dict[str, bool] = {}
+    costs: List[str] = []
+    for m in _MONEY_STEP_RE.finditer(own):
+        op, var, expr, effect = m.groups()
+        if effect is None:
+            if expr.startswith("{"):
+                flips = len(_NEGATIVE_FACTOR_RE.findall(expr)) % 2 == 1
+            else:
+                flips = expr.startswith("-")
+            negative[var] = flips if op == "set" else negative.get(var, False) != flips
+        elif effect.endswith("_expenditure"):
+            costs.append("treasury")
+        else:
+            var, negative_costs, kind = _MONEY_EFFECTS[effect]
+            if negative.get(var) is negative_costs:
+                costs.append(kind)
+    return list(dict.fromkeys(costs))
+
+
+def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
+    """(own-scope effects, option-level blocks left out of them as key -> (offset, body))."""
     own: List[str] = []
-    ai_chance: Optional[str] = None
-    ai_offset = -1
+    blocks: Dict[Optional[str], Tuple[int, str]] = {}
     depth = 0
     cursor = 0
     skip: Optional[Tuple[int, int, Optional[str]]] = None
@@ -1064,27 +1117,28 @@ def _split_option(body: str) -> Tuple[str, Optional[str], int]:
                 skip = (depth, m.end(), key)
             continue
         if skip is not None and skip[0] == depth:
-            if skip[2] == "ai_chance" and depth == 1:
-                ai_chance = body[skip[1] : m.start()]
-                ai_offset = skip[1]
+            if depth == 1:
+                blocks[skip[2]] = (skip[1], body[skip[1] : m.start()])
             cursor = m.end()
             skip = None
         depth -= 1
     if skip is None:
         own.append(body[cursor:])
-    return " ".join(own), ai_chance, ai_offset
+    return " ".join(own), blocks
 
 
-def find_cost_blind_options(text: str) -> List[Tuple[str, int, str]]:
-    """(option name, 1-based line, costs) for options whose AI weight ignores a cost.
+def find_cost_blind_options(text: str) -> List[Tuple[str, int, str, bool]]:
+    """(option name, 1-based line, costs, all gated) for AI weights that ignore a cost.
 
     Reports an option of a multi-option event when it charges its own country and
     its `ai_chance` has no `modifier`, so the AI pays as readily broke as flush.
     A missing `ai_chance` is the flat default weight. The line is the `ai_chance`
-    when there is one, since that is where the fix goes.
+    when there is one, since that is where the fix goes. `all gated` marks an event
+    where every option has a `trigger`: those may be variants the AI never chooses
+    between, so the finding needs a look before it is fixed.
     """
     code = blank_quoted_strings(text)
-    out: List[Tuple[str, int, str]] = []
+    out: List[Tuple[str, int, str, bool]] = []
     for _eid, body, start in _iter_event_bodies(code):
         base = code.index("{", start) + 1
         options = [
@@ -1093,20 +1147,26 @@ def find_cost_blind_options(text: str) -> List[Tuple[str, int, str]]:
         ]
         if len(options) < 2:
             continue
-        for opt_start, opt_end in options:
-            own, ai_chance, ai_offset = _split_option(body[opt_start:opt_end])
-            if ai_chance is not None and _AI_CHANCE_MODIFIER_RE.search(ai_chance):
+        splits = [
+            _split_option(body[opt_start:opt_end]) for opt_start, opt_end in options
+        ]
+        all_gated = all("trigger" in blocks for _own, blocks in splits)
+        for (opt_start, opt_end), (own, blocks) in zip(options, splits):
+            ai_offset, ai_chance = blocks.get("ai_chance", (0, ""))
+            if _AI_CHANCE_MODIFIER_RE.search(ai_chance):
                 continue
-            costs = [kind for kind, cost_re in _OPTION_COST_RES if cost_re.search(own)]
+            costs = _money_costs(own) + [
+                kind for kind, cost_re in _OPTION_COST_RES if cost_re.search(own)
+            ]
             if not costs:
                 continue
             name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
-            anchor = base + opt_start + max(ai_offset, 0)
             out.append(
                 (
                     name.group(1) if name else "unnamed option",
-                    code.count("\n", 0, anchor) + 1,
+                    code.count("\n", 0, base + opt_start + ai_offset) + 1,
                     ", ".join(costs),
+                    all_gated,
                 )
             )
     return out

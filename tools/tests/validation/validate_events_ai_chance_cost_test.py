@@ -78,9 +78,7 @@ def test_modifier_on_another_option_does_not_cover_the_costed_one():
         _option("foo.1.a", _PP_COST + _FLAT),
         _option("foo.1.b", _AWARE),
     )
-    assert [name for name, _line, _costs in find_cost_blind_options(text)] == [
-        "foo.1.a"
-    ]
+    assert [found[0] for found in find_cost_blind_options(text)] == ["foo.1.a"]
 
 
 def test_single_option_event_is_clean():
@@ -89,8 +87,31 @@ def test_single_option_event_is_clean():
 
 def test_missing_ai_chance_is_flat_and_reports_the_option_line():
     assert find_cost_blind_options(_two_options(_PP_COST)) == [
-        ("foo.1.a", 5, "political power")
+        ("foo.1.a", 5, "political power", False)
     ]
+
+
+_GATE = "\t\ttrigger = { has_country_flag = foo_flag }\n"
+
+
+def test_event_with_every_option_gated_is_marked_for_review(tmp_path):
+    text = _event(
+        _option("foo.1.a", _GATE + _PP_COST + _FLAT),
+        _option("foo.1.b", "\t\ttrigger = { NOT = { has_country_flag = foo_flag } }\n"),
+    )
+    assert find_cost_blind_options(text) == [("foo.1.a", 9, "political power", True)]
+    _write(tmp_path, "events/Ev.txt", text)
+    v = _validator(tmp_path, check_ai_chance_costs=True)
+    v.validate_ai_chance_ignores_cost()
+    assert [i.message for i in v._issues] == [
+        "foo.1.a - flat ai_chance ignores the political power cost"
+        " (every option has a trigger; check the AI sees more than one)"
+    ]
+
+
+def test_gated_option_with_an_always_visible_sibling_is_not_marked():
+    found = find_cost_blind_options(_two_options(_GATE + _PP_COST + _FLAT))
+    assert found == [("foo.1.a", 9, "political power", False)]
 
 
 @pytest.mark.parametrize(
@@ -98,6 +119,47 @@ def test_missing_ai_chance_is_flat_and_reports_the_option_line():
     [
         (
             "\t\tset_temp_variable = { treasury_change = -15.00 }\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tset_temp_variable = { treasury_change = gdp_total }\n"
+            "\t\tmultiply_temp_variable = { treasury_change = -0.01 }\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tset_temp_variable = { treasury_change = GER.gdp_per_capita }\n"
+            "\t\tdivide_temp_variable = { treasury_change = -2 }\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tset_temp_variable = { treasury_change = "
+            "{ value = gdp_total multiply = -0.03 } }\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tset_temp_variable = { debt_change = 10 }\n"
+            "\t\tmodify_debt_effect = yes\n",
+            "debt",
+        ),
+        (
+            "\t\tset_temp_variable = { debt_change = ROOT.gdp_per_capita }\n"
+            "\t\tmultiply_temp_variable = { debt_change = 0.5 }\n"
+            "\t\tmodify_debt_effect = yes\n",
+            "debt",
+        ),
+        (
+            "\t\tset_temp_variable = { int_investment_change = -5 }\n"
+            "\t\tmodify_international_investment_effect = yes\n",
+            "international investment",
+        ),
+        (
+            "\t\tset_temp_variable = { treasury_change = 5 }\n"
+            "\t\tmodify_treasury_effect = yes\n"
+            "\t\tset_temp_variable = { treasury_change = -5 }\n"
             "\t\tmodify_treasury_effect = yes\n",
             "treasury",
         ),
@@ -122,7 +184,9 @@ def test_missing_ai_chance_is_flat_and_reports_the_option_line():
 )
 def test_cost_kinds_are_detected(effects, costs):
     found = find_cost_blind_options(_two_options(effects + _FLAT))
-    assert [(name, kinds) for name, _line, kinds in found] == [("foo.1.a", costs)]
+    assert [(name, kinds) for name, _line, kinds, _gated in found] == [
+        ("foo.1.a", costs)
+    ]
 
 
 @pytest.mark.parametrize(
@@ -133,6 +197,24 @@ def test_cost_kinds_are_detected(effects, costs):
         "\t\tset_temp_variable = { treasury_change = 15 }\n"
         "\t\tmodify_treasury_effect = yes\n",
         "\t\tset_temp_variable = { treasury_change = -15 }\n",
+        "\t\tmodify_treasury_effect = yes\n",
+        "\t\tset_temp_variable = { treasury_change = gdp_total }\n"
+        "\t\tmodify_treasury_effect = yes\n",
+        "\t\tset_temp_variable = { treasury_change = -5 }\n"
+        "\t\tmultiply_temp_variable = { treasury_change = -1 }\n"
+        "\t\tmodify_treasury_effect = yes\n",
+        "\t\tset_temp_variable = { treasury_change = "
+        "{ value = gdp_total multiply = 0.09 } }\n"
+        "\t\tmodify_treasury_effect = yes\n",
+        "\t\tset_temp_variable = { treasury_change = -15 }\n"
+        "\t\tFROM = { modify_treasury_effect = yes }\n",
+        "\t\tset_temp_variable = { debt_change = -10 }\n"
+        "\t\tmodify_debt_effect = yes\n",
+        "\t\tset_temp_variable = { debt_change = "
+        "{ value = debt_bailout multiply = -1 } }\n"
+        "\t\tmodify_debt_effect = yes\n",
+        "\t\tset_temp_variable = { int_investment_change = 5 }\n"
+        "\t\tmodify_international_investment_effect = yes\n",
         "\t\tFROM = { add_political_power = -50 }\n",
         "\t\tevery_other_country = { add_stability = -0.02 }\n",
         '\t\tlog = "add_political_power = -50"\n',
@@ -162,4 +244,4 @@ def test_reference_pattern_is_clean_and_its_flat_sibling_is_flagged():
     )
     decline = "\t\tadd_stability = -0.02\n\t\tai_chance = { base = 1 }\n"
     text = _event(_option("foo.1.a", pay), _option("foo.1.b", decline))
-    assert find_cost_blind_options(text) == [("foo.1.b", 17, "stability")]
+    assert find_cost_blind_options(text) == [("foo.1.b", 17, "stability", False)]
