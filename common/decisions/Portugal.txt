@@ -1,0 +1,1291 @@
+POR_shadow_ops_category = {
+
+	POR_brussels_ultimatum = {
+		activation = { always = no }
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_ultimatum_answered_tt
+				OR = {
+					has_completed_focus = POR_remain_in_europe
+					has_completed_focus = POR_atlantic_exit
+				}
+			}
+		}
+
+		days_mission_timeout = 365
+		is_good = no
+		fire_only_once = yes
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_brussels_ultimatum"
+			custom_effect_tooltip = POR_ultimatum_answered_effect_tt
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_brussels_ultimatum timed out"
+			set_temp_variable = { POR_heat_add = 15 }
+			POR_add_exposure = yes
+			add_stability = -0.10
+			add_political_power = -100
+			news_event = { id = portugal_news.12 hours = 6 }
+		}
+	}
+
+	POR_cultivate_influence = {
+		icon = GFX_decision_generic_political_discourse
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { is_owned_by = FROM }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 25
+		days_remove = 30
+		days_re_enable = 60
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU BRA SPR ADO MOR MEX GUA HON ELS NIC COS PAN CUB DOM VEN COL ECU PRU BOL CHL ARG URG PAR PHI SHA }
+		targets_dynamic = yes
+		target_array = POR_network_target_array
+
+		# the flag filter in the category: show this target unless another country is selected
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = FROM.id }
+			}
+		}
+
+		target_trigger = {
+			FROM = { exists = yes }
+			is_in_array = { POR_network_target_array = FROM.id }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_ops_gate_tt
+				FROM = { POR_ops_target_open = yes }
+			}
+			has_completed_focus = POR_lusophone_realpolitik
+			NOT = { has_completed_focus = POR_remain_in_europe }
+			FROM = {
+				is_subject = no
+				NOT = { has_war_with = ROOT }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_cultivate_influence_tt
+				check_variable = { treasury > 1.4 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_cultivate_influence [FROM.GetName]"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_cultivate_influence [FROM.GetName]"
+			if = {
+				limit = { FROM = { exists = yes } }
+				FROM = { POR_score_client = yes }
+				set_temp_variable = { percent_change = 3 }
+				if = {
+					limit = { has_completed_focus = POR_friends_of_the_regime }
+					add_to_temp_variable = { percent_change = 1.5 }
+				}
+				multiply_temp_variable = { percent_change = POR_reward_mult }
+				set_temp_variable = { tag_index = ROOT.id }
+				set_temp_variable = { influence_target = FROM.id }
+				change_influence_percentage = yes
+				if = {
+					limit = { has_completed_focus = POR_open_road }
+					set_temp_variable = { POR_heat_add = 1 }
+					POR_add_exposure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 3
+				FROM = { influence_higher_20 = yes }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_arm_our_friends = {
+		icon = GFX_decision_generic_army_support
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { is_owned_by = FROM }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 40
+		days_remove = 30
+		days_re_enable = 180
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU BRA SPR ADO MOR MEX GUA HON ELS NIC COS PAN CUB DOM VEN COL ECU PRU BOL CHL ARG URG PAR PHI SHA }
+		targets_dynamic = yes
+		target_array = POR_network_target_array
+
+		# the flag filter in the category: show this target unless another country is selected
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = FROM.id }
+			}
+		}
+
+		target_trigger = {
+			FROM = { exists = yes }
+			OR = {
+				is_in_array = { POR_network_target_array = FROM.id }
+				is_in_array = { POR_shadow_clients = FROM.id }
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_ops_gate_tt
+				FROM = { POR_ops_target_open = yes }
+			}
+			has_completed_focus = POR_lusophone_realpolitik
+			NOT = { has_completed_focus = POR_remain_in_europe }
+			FROM = { NOT = { has_war_with = ROOT } }
+			network_strength = { target = FROM value > 19 }
+			has_equipment = { infantry_weapons_1 > 999 }
+			custom_trigger_tooltip = {
+				tooltip = POR_arm_our_friends_tt
+				check_variable = { treasury > 0.9 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_arm_our_friends [FROM.GetName]"
+			set_temp_variable = { treasury_change = -1.0 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_arm_our_friends [FROM.GetName]"
+			if = {
+				limit = { FROM = { exists = yes } }
+				send_equipment = {
+					equipment = infantry_weapons_1
+					target = FROM
+					amount = 1000
+				}
+				FROM = { POR_score_client = yes }
+				set_temp_variable = { POR_heat_add = 1 }
+				POR_add_exposure = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_buy_the_officer_corps = {
+		icon = GFX_decision_generic_intelligence_operation
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { is_owned_by = FROM }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 75
+		days_remove = 60
+		days_re_enable = 365
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU BRA SPR ADO MOR MEX GUA HON ELS NIC COS PAN CUB DOM VEN COL ECU PRU BOL CHL ARG URG PAR PHI SHA }
+		targets_dynamic = yes
+		target_array = POR_network_target_array
+
+		# the flag filter in the category: show this target unless another country is selected
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = FROM.id }
+			}
+		}
+
+		target_trigger = {
+			FROM = { exists = yes }
+			is_in_array = { POR_network_target_array = FROM.id }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_ops_gate_tt
+				FROM = { POR_ops_target_open = yes }
+			}
+			has_completed_focus = POR_officer_network
+			NOT = { has_completed_focus = POR_remain_in_europe }
+			FROM = {
+				is_subject = no
+				NOT = { has_war_with = ROOT }
+			}
+			network_strength = { target = FROM value > 39 }
+			custom_trigger_tooltip = {
+				tooltip = POR_army_not_yet_infiltrated_tt
+				NOT = { has_operation_token = { tag = FROM token = token_army } }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_buy_the_officer_corps_tt
+				check_variable = { treasury > 1.9 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_buy_the_officer_corps [FROM.GetName]"
+			set_temp_variable = { treasury_change = -2.0 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_buy_the_officer_corps [FROM.GetName]"
+			if = {
+				limit = { FROM = { exists = yes } }
+				FROM = { POR_score_client = yes }
+				add_operation_token = { tag = FROM token = token_army }
+				set_temp_variable = { POR_heat_add = 2 }
+				POR_add_exposure = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_burn_the_dossier = {
+		icon = GFX_decision_generic_nationalism
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { is_owned_by = FROM }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 50
+		days_remove = 30
+		days_re_enable = 180
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU BRA SPR ADO MOR MEX GUA HON ELS NIC COS PAN CUB DOM VEN COL ECU PRU BOL CHL ARG URG PAR PHI SHA }
+		targets_dynamic = yes
+		target_array = POR_network_target_array
+
+		# the flag filter in the category: show this target unless another country is selected
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = FROM.id }
+			}
+		}
+
+		target_trigger = {
+			FROM = { exists = yes }
+			is_in_array = { POR_network_target_array = FROM.id }
+		}
+
+		available = {
+			has_completed_focus = POR_lusophone_realpolitik
+			custom_trigger_tooltip = {
+				tooltip = POR_exposure_above_10_tt
+				check_variable = { POR_shadow_exposure > 9 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_has_infiltration_tt
+				OR = {
+					has_operation_token = { tag = FROM token = token_civilian }
+					has_operation_token = { tag = FROM token = token_army }
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_burn_the_dossier [FROM.GetName]"
+			remove_operation_token = { tag = FROM token = token_civilian }
+			remove_operation_token = { tag = FROM token = token_army }
+			subtract_from_variable = { POR_shadow_exposure = 15 }
+			clamp_variable = { var = POR_shadow_exposure min = 0 max = 100 }
+			POR_update_exposure_tier = yes
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 10
+				check_variable = { POR_shadow_exposure > 54 }
+			}
+		}
+	}
+
+	POR_aid_landing_ground = {
+		icon = GFX_decision_generic_air
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { state = 1031 }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 75
+		days_remove = 30
+
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = BRA.id }
+			}
+			NOT = { owns_state = 1031 }
+		}
+
+		available = {
+			has_completed_focus = POR_nationals_at_risk
+			NOT = { has_completed_focus = POR_remain_in_europe }
+			custom_trigger_tooltip = {
+				tooltip = POR_brazil_in_civil_war_tt
+				any_country = {
+					original_tag = BRA
+					has_civil_war = yes
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_aid_landing_ground_state_tt
+				1031 = {
+					owner = {
+						original_tag = BRA
+						NOT = { has_war_with = ROOT }
+					}
+					controller = { original_tag = BRA }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_aid_landing_ground_tt
+				check_variable = { treasury > 9.9 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_aid_landing_ground"
+			set_temp_variable = { treasury_change = -10 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_aid_landing_ground"
+			if = {
+				limit = {
+					1031 = {
+						owner = {
+							original_tag = BRA
+							NOT = { has_war_with = ROOT }
+						}
+						controller = { original_tag = BRA }
+					}
+				}
+				1031 = {
+					POR_take_civil_war_state = yes
+					add_building_construction = {
+						type = air_base
+						level = 2
+						instant_build = yes
+					}
+				}
+				news_event = { id = portugal_news.10 hours = 8 }
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 0
+				POR_ai_not_imperial_path = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_protect_galicians = {
+		icon = GFX_decision_generic_form_nation
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { state = 944 }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 100
+		days_remove = 30
+
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = SPR.id }
+			}
+			NOT = { owns_state = 944 }
+		}
+
+		available = {
+			has_completed_focus = POR_nationals_at_risk
+			NOT = { has_completed_focus = POR_remain_in_europe }
+			custom_trigger_tooltip = {
+				tooltip = POR_spain_in_civil_war_tt
+				any_country = {
+					original_tag = SPR
+					has_civil_war = yes
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_protect_galicians_state_tt
+				944 = {
+					owner = {
+						original_tag = SPR
+						NOT = { has_war_with = ROOT }
+					}
+					controller = { original_tag = SPR }
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_protect_galicians"
+			if = {
+				limit = {
+					944 = {
+						owner = {
+							original_tag = SPR
+							NOT = { has_war_with = ROOT }
+						}
+						controller = { original_tag = SPR }
+					}
+				}
+				every_country = {
+					limit = {
+						original_tag = SPR
+						NOT = { tag = ROOT }
+					}
+					add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security }
+				}
+				944 = { POR_take_civil_war_state = yes }
+				news_event = { id = portugal_news.11 hours = 8 }
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 0
+				POR_ai_not_imperial_path = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_secure_cahora_bassa = {
+		icon = GFX_decision_generic_electricity
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { state = 262 }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 75
+		days_remove = 30
+
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = MOZ.id }
+			}
+			NOT = { owns_state = 262 }
+		}
+
+		available = {
+			has_completed_focus = POR_nationals_at_risk
+			NOT = { has_completed_focus = POR_remain_in_europe }
+			custom_trigger_tooltip = {
+				tooltip = POR_mozambique_in_civil_war_tt
+				any_country = {
+					original_tag = MOZ
+					has_civil_war = yes
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_secure_cahora_bassa_state_tt
+				262 = {
+					owner = {
+						original_tag = MOZ
+						NOT = { has_war_with = ROOT }
+					}
+					controller = { original_tag = MOZ }
+				}
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_secure_cahora_bassa_tt
+				check_variable = { treasury > 5.9 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_secure_cahora_bassa"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_secure_cahora_bassa"
+			if = {
+				limit = {
+					262 = {
+						owner = {
+							original_tag = MOZ
+							NOT = { has_war_with = ROOT }
+						}
+						controller = { original_tag = MOZ }
+					}
+				}
+				262 = { POR_take_civil_war_state = yes }
+				news_event = { id = portugal_news.20 hours = 8 }
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 0
+				POR_ai_not_imperial_path = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_madrid_operation_decision = {
+		icon = GFX_decision_generic_nationalism
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { is_owned_by = SPR }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 250
+		days_remove = 180
+
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = SPR.id }
+			}
+			NOT = { has_country_flag = POR_madrid_coup_launched }
+			country_exists = SPR
+		}
+
+		available = {
+			has_completed_focus = POR_madrid_operation
+			custom_trigger_tooltip = {
+				tooltip = POR_madrid_is_ready_tt
+				POR_madrid_is_ready = yes
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_madrid_operation_decision_tt
+				check_variable = { treasury > 19.9 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_madrid_operation_decision"
+			set_temp_variable = { treasury_change = -20 }
+			modify_treasury_effect = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_madrid_operation_decision"
+			if = {
+				limit = {
+					country_exists = SPR
+					SPR = { has_civil_war = no }
+				}
+				POR_run_madrid_coup = yes
+			}
+			else = { custom_effect_tooltip = POR_madrid_coup_aborted_tt }
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_destabilise = {
+		icon = GFX_decision_generic_civil_support
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { is_owned_by = FROM }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 50
+		days_remove = 45
+		days_re_enable = 120
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU BRA SPR ADO MOR MEX GUA HON ELS NIC COS PAN CUB DOM VEN COL ECU PRU BOL CHL ARG URG PAR PHI SHA }
+		targets_dynamic = yes
+		target_array = POR_network_target_array
+
+		# the flag filter in the category: show this target unless another country is selected
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = FROM.id }
+			}
+		}
+
+		target_trigger = {
+			FROM = { exists = yes }
+			is_in_array = { POR_network_target_array = FROM.id }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_ops_gate_tt
+				FROM = { POR_ops_target_open = yes }
+			}
+			has_completed_focus = POR_war_by_proxy
+			NOT = { has_completed_focus = POR_remain_in_europe }
+			FROM = {
+				is_subject = no
+				NOT = { has_war_with = ROOT }
+			}
+			network_strength = { target = FROM value > 49 }
+			custom_trigger_tooltip = {
+				tooltip = POR_has_civilian_infiltration_tt
+				has_operation_token = { tag = FROM token = token_civilian }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_destabilise_tt
+				check_variable = { treasury > 2.9 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_destabilise [FROM.GetName]"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_destabilise [FROM.GetName]"
+			if = {
+				limit = { FROM = { exists = yes } }
+				FROM = { add_stability = -0.08 }
+				set_temp_variable = { POR_heat_add = 3 }
+				POR_add_exposure = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 0
+				POR_ai_not_shadow_path = yes
+			}
+			modifier = {
+				factor = 0
+				check_variable = { POR_shadow_exposure > 54 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_impose_protectorate = {
+		icon = GFX_decision_generic_operation
+		on_map_mode = map_and_decisions_view
+		highlight_states = {
+			highlight_states_trigger = { is_owned_by = FROM }
+			highlight_color_before_active = 2
+			highlight_color_while_active = 3
+		}
+
+		cost = 100
+		days_remove = 60
+		days_re_enable = 365
+		war_with_target_on_remove = yes
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU BRA SPR ADO MOR MEX GUA HON ELS NIC COS PAN CUB DOM VEN COL ECU PRU BOL CHL ARG URG PAR PHI SHA }
+		targets_dynamic = yes
+		target_array = POR_network_target_array
+
+		# the flag filter in the category: show this target unless another country is selected
+		visible = {
+			OR = {
+				is_ai = yes
+				NOT = { has_variable = POR_ops_selected }
+				check_variable = { POR_ops_selected = FROM.id }
+			}
+		}
+
+		target_trigger = {
+			FROM = { exists = yes }
+			is_in_array = { POR_network_target_array = FROM.id }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_ops_gate_tt
+				FROM = { POR_ops_target_open = yes }
+			}
+			has_completed_focus = POR_protectorate
+			custom_trigger_tooltip = {
+				tooltip = POR_ideology_allows_war_tt
+				OR = {
+					has_government = nationalist
+					has_government = neutrality
+					has_government = fascism
+					FROM = { NOT = { has_government = ROOT } }
+				}
+			}
+			NOT = { has_completed_focus = POR_remain_in_europe }
+			FROM = {
+				is_subject = no
+				NOT = { has_war_with = ROOT }
+				custom_trigger_tooltip = {
+					tooltip = POR_after_civil_war_tt
+					has_country_flag = POR_after_civil_war
+				}
+				has_stability < 0.30
+				influence_higher_50 = yes
+			}
+			network_strength = { target = FROM value > 69 }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_impose_protectorate [FROM.GetName]"
+			if = {
+				limit = {
+					FROM = {
+						exists = yes
+						is_subject = no
+						NOT = { has_war_with = ROOT }
+					}
+				}
+				set_temp_variable = { wargoal_on = FROM }
+				set_temp_variable = { wargoal_type = 2 }
+				add_threat_from_wargoal_effect = yes
+				create_wargoal = {
+					type = puppet_wargoal_focus
+					target = FROM
+					expire = 365
+				}
+				FROM = { add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security } }
+				set_temp_variable = { POR_heat_add = 15 }
+				POR_add_exposure = yes
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 0
+				POR_ai_not_imperial_path = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+}
+
+POR_overseas_school_category = {
+
+	POR_jungle_tour = {
+		icon = GFX_decision_generic_military
+
+		cost = 50
+		days_remove = 120
+		days_re_enable = 365
+		fixed_random_seed = no
+
+		visible = {
+			NOT = { has_decision = POR_jungle_tour }
+			NOT = { has_decision = POR_bush_war_tour }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_tour_needs_a_war_tt
+				OR = {
+					check_variable = { POR_shadow_clients^num > 0 }
+					check_variable = { nations_we_sent_volunteers_to^num > 0 }
+				}
+			}
+			any_army_leader = {
+				is_field_marshal = no
+				NOT = { has_trait = jungle_rat }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_tour_tt
+				check_variable = { treasury > 1.4 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_jungle_tour"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_jungle_tour"
+			random_army_leader = {
+				limit = {
+					is_field_marshal = no
+					NOT = { has_trait = jungle_rat }
+				}
+				random_list = {
+					70 = {
+						add_unit_leader_trait = jungle_rat
+						gain_xp = 100
+					}
+					30 = { gain_xp = 50 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	POR_bush_war_tour = {
+		icon = GFX_decision_generic_military
+
+		cost = 50
+		days_remove = 120
+		days_re_enable = 365
+		fixed_random_seed = no
+
+		visible = {
+			NOT = { has_decision = POR_jungle_tour }
+			NOT = { has_decision = POR_bush_war_tour }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = POR_tour_needs_a_war_tt
+				OR = {
+					check_variable = { POR_shadow_clients^num > 0 }
+					check_variable = { nations_we_sent_volunteers_to^num > 0 }
+				}
+			}
+			any_army_leader = {
+				is_field_marshal = no
+				NOT = { has_trait = ranger }
+			}
+			custom_trigger_tooltip = {
+				tooltip = POR_tour_tt
+				check_variable = { treasury > 1.4 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_bush_war_tour"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_bush_war_tour"
+			random_army_leader = {
+				limit = {
+					is_field_marshal = no
+					NOT = { has_trait = ranger }
+				}
+				random_list = {
+					70 = {
+						add_unit_leader_trait = ranger
+						gain_xp = 100
+					}
+					30 = { gain_xp = 50 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+}
+
+POR_federation_category = {
+
+	POR_summon_to_the_conference = {
+		icon = GFX_decision_generic_political_discourse
+
+		cost = 100
+		days_re_enable = 365
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU }
+		targets_dynamic = yes
+		target_array = POR_lusophone_subjects
+
+		target_root_trigger = {
+			has_completed_focus = POR_imperial_conference
+		}
+
+		target_trigger = {
+			FROM = {
+				exists = yes
+				is_subject_of = ROOT
+				NOT = { has_country_flag = POR_federation_decided }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_summon_to_the_conference [FROM.GetName]"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			FROM = { country_event = { id = portugal.60 days = 3 } }
+		}
+
+		ai_will_do = { base = 10 }
+	}
+
+	POR_apply_pressure = {
+		icon = GFX_decision_generic_nationalism
+
+		cost = 200
+		days_re_enable = 180
+
+		targets = { AGL UNI MOZ GUB VER SAO TIM CAB EGU }
+		targets_dynamic = yes
+		target_array = POR_lusophone_subjects
+
+		target_root_trigger = {
+			has_completed_focus = POR_imperial_conference
+		}
+
+		target_trigger = {
+			FROM = {
+				exists = yes
+				is_subject_of = ROOT
+				has_country_flag = POR_federation_decided
+				NOT = { has_country_flag = POR_federation_willing }
+				check_variable = { POR_federation_pressure < 2 }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_apply_pressure [FROM.GetName]"
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			FROM = {
+				add_to_variable = { POR_federation_pressure = 1 }
+				clr_country_flag = POR_federation_decided
+				add_stability = -0.05
+				add_opinion_modifier = { target = ROOT modifier = supported_opposition }
+				country_event = { id = portugal.60 days = 3 }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+}
+
+POR_spanish_spoils_category = {
+
+	POR_seize_galicia = {
+		icon = GFX_decision_generic_form_nation
+
+		cost = 150
+
+		visible = {
+			NOT = { owns_state = 944 }
+		}
+
+		available = {
+			OR = {
+				944 = { is_controlled_by = ROOT }
+				custom_trigger_tooltip = {
+					tooltip = POR_madrid_government_cedes_tt
+					944 = {
+						owner = {
+							original_tag = SPR
+							has_country_flag = POR_shadow_client
+							has_civil_war = no
+							has_government = ROOT
+						}
+					}
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_seize_galicia"
+			every_country = {
+				limit = {
+					original_tag = SPR
+					NOT = { tag = ROOT }
+				}
+				add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security }
+			}
+			transfer_state = 944
+			add_stability = -0.03
+			news_event = { id = portugal_news.11 hours = 6 }
+			set_temp_variable = { POR_heat_add = 15 }
+			POR_add_exposure = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	POR_seize_ceuta = {
+		icon = GFX_decision_generic_naval
+
+		cost = 100
+
+		visible = {
+			NOT = { owns_state = 495 }
+			OR = {
+				has_war_with = SPR
+				SPR = { has_civil_war = yes }
+			}
+		}
+
+		available = {
+			OR = {
+				495 = { is_controlled_by = ROOT }
+				495 = {
+					owner = {
+						original_tag = SPR
+						has_civil_war = yes
+						NOT = { has_war_with = ROOT }
+					}
+					controller = { original_tag = SPR }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_seize_ceuta"
+			every_country = {
+				limit = {
+					original_tag = SPR
+					NOT = { tag = ROOT }
+				}
+				add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security }
+			}
+			transfer_state = 495
+			add_stability = -0.03
+			if = {
+				limit = { country_exists = MOR }
+				MOR = { add_opinion_modifier = { target = ROOT modifier = diplomatic_distance } }
+			}
+			set_temp_variable = { POR_heat_add = 15 }
+			POR_add_exposure = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	POR_seize_canary_islands = {
+		icon = GFX_decision_generic_naval
+
+		cost = 125
+
+		visible = {
+			NOT = { owns_state = 95 }
+			OR = {
+				has_war_with = SPR
+				SPR = { has_civil_war = yes }
+			}
+		}
+
+		available = {
+			OR = {
+				95 = { is_controlled_by = ROOT }
+				95 = {
+					owner = {
+						original_tag = SPR
+						has_civil_war = yes
+						NOT = { has_war_with = ROOT }
+					}
+					controller = { original_tag = SPR }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_seize_canary_islands"
+			every_country = {
+				limit = {
+					original_tag = SPR
+					NOT = { tag = ROOT }
+				}
+				add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security }
+			}
+			transfer_state = 95
+			add_stability = -0.03
+			set_temp_variable = { POR_heat_add = 15 }
+			POR_add_exposure = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	POR_seize_balearic_islands = {
+		icon = GFX_decision_generic_naval
+
+		cost = 100
+
+		visible = {
+			NOT = { owns_state = 94 }
+			OR = {
+				has_war_with = SPR
+				SPR = { has_civil_war = yes }
+			}
+		}
+
+		available = {
+			OR = {
+				94 = { is_controlled_by = ROOT }
+				94 = {
+					owner = {
+						original_tag = SPR
+						has_civil_war = yes
+						NOT = { has_war_with = ROOT }
+					}
+					controller = { original_tag = SPR }
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_seize_balearic_islands"
+			every_country = {
+				limit = {
+					original_tag = SPR
+					NOT = { tag = ROOT }
+				}
+				add_opinion_modifier = { target = ROOT modifier = imminent_danger_to_national_security }
+			}
+			transfer_state = 94
+			add_stability = -0.03
+			set_temp_variable = { POR_heat_add = 15 }
+			POR_add_exposure = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+}
+
+# Not Portugal's decisions: these belong to the countries it works on.
+POR_counter_intelligence_category = {
+
+	POR_purge_the_network = {
+		icon = GFX_decision_generic_arrest
+
+		cost = 125
+		days_remove = 90
+		days_re_enable = 730
+
+		visible = {
+			country_exists = POR
+			OR = {
+				has_idea = POR_lusophone_presence_2
+				has_idea = POR_lusophone_presence_3
+			}
+		}
+
+		available = {
+			has_civil_war = no
+			NOT = { has_war_with = POR }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision POR_purge_the_network"
+			add_stability = -0.05
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove POR_purge_the_network"
+			POR = {
+				remove_operation_token = { tag = ROOT token = token_civilian }
+				remove_operation_token = { tag = ROOT token = token_army }
+			}
+			clr_country_flag = POR_raid_recent@POR
+			add_opinion_modifier = { target = POR modifier = accused_of_interference }
+			set_temp_variable = { percent_change = -8 }
+			set_temp_variable = { tag_index = POR.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+			POR = {
+				set_temp_variable = { POR_heat_add = 10 }
+				POR_add_exposure = yes
+				country_event = { id = portugal.74 hours = 12 }
+			}
+		}
+
+		ai_will_do = {
+			base = 50
+			modifier = {
+				factor = 2
+				has_idea = POR_lusophone_presence_3
+			}
+		}
+	}
+}
