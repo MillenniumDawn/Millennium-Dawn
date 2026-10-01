@@ -364,9 +364,10 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
 
 
 # A token the engine has not been told about logs "Token X is a dynamic token,
-# this can cause OOS" at load, once per use. Script names tokens two ways: a
-# `token:X` literal, and the `@X` target of the game variables below (the ones
-# resources/documentation/dynamic_variables_documentation.md gives a token target).
+# this can cause OOS" at load, once per use. Script and localisation name tokens
+# two ways: a `token:X` literal, and the `@X` target of the game variables below
+# (the ones resources/documentation/dynamic_variables_documentation.md gives a
+# token target).
 _TOKEN_TARGET_GAME_VARS = (
     "avg_units_acclimation",
     "building_level",
@@ -406,9 +407,9 @@ _TOKEN_REF_RE = re.compile(
     r"\b(?:token:|(?:" + "|".join(_TOKEN_TARGET_GAME_VARS) + r")@)([A-Za-z0-9_.\-]+)"
 )
 
-# Tokens the engine already knows, so they log nothing unregistered. This is the
-# set in use and absent from MD_tokens.txt when the check landed; nearly all are
-# vanilla names. A new token belongs in MD_tokens.txt, not here.
+# Vanilla names the engine already knows, so they log nothing unregistered. This
+# is the set in use and absent from MD_tokens.txt when the check landed. A new
+# token belongs in MD_tokens.txt, not here.
 _ENGINE_KNOWN_TOKENS = frozenset(
     {
         # buildings
@@ -427,11 +428,13 @@ _ENGINE_KNOWN_TOKENS = frozenset(
         # modifiers
         "agency_upgrade_time",
         "commando_trait_chance_factor",
+        "conscription_factor",
         "consumer_goods_expected_value",
         "consumer_goods_factor",
         "industrial_capacity_dockyard",
         "industrial_capacity_factory",
         "local_resources_factor",
+        "min_export",
         "political_power_factor",
         "political_power_gain",
         "production_speed_buildings_factor",
@@ -439,9 +442,7 @@ _ENGINE_KNOWN_TOKENS = frozenset(
         "stability_factor",
         "stability_weekly",
         "war_support_factor",
-        # equipment, unit and ship types
-        "Missile",
-        "Special_Forces",
+        # equipment and ship types
         "artillery_equipment",
         "capital",
         "carrier",
@@ -1971,7 +1972,9 @@ def _scan_shared_file(args) -> Tuple:
     token_issues: List = []
 
     if mask & _F_TOKEN:
-        token_issues = _scan_dynamic_tokens_text(blanked, rel, registered_tokens)
+        # Localisation values are quoted, so they are scanned unblanked.
+        token_text = stripped if filename.endswith(".yml") else blanked
+        token_issues = _scan_dynamic_tokens_text(token_text, rel, registered_tokens)
     if mask & _F_MATH:
         math_issues = _scan_math_precision_text(blanked, rel)
     if mask & _F_ORPHAN:
@@ -2494,6 +2497,7 @@ class Validator(BaseValidator):
         available_files = self._collect_files(_PLAYER_FACING_GLOBS)
         tooltip_files = self._collect_files(tooltip_patterns)
         flag_files = self._collect_files(math_patterns)
+        loc_files = self._collect_files(["localisation/english/**/*.yml"])
 
         union = list(
             dict.fromkeys(
@@ -2504,6 +2508,7 @@ class Validator(BaseValidator):
                 + available_files
                 + tooltip_files
                 + flag_files
+                + loc_files
             )
         )
         empty: Dict[str, List] = {
@@ -2551,9 +2556,12 @@ class Validator(BaseValidator):
         available_set = set(available_files)
         tooltip_set = set(tooltip_files)
         flag_set = set(flag_files)
+        loc_set = set(loc_files)
         args_list = []
         for f in union:
             mask = 0
+            if f in loc_set:
+                mask |= _F_TOKEN
             if f in math_set:
                 mask |= _F_MATH | _F_TOKEN
             if f in orphan_set:

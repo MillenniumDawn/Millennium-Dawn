@@ -113,6 +113,37 @@ def test_validator_reports_unregistered_tokens_as_errors(tmp_path, write_path):
     assert validator._issues[0].message.startswith("token:gen_7_light ")
 
 
+def test_english_localisation_is_scanned(tmp_path, write_path):
+    write_path(tmp_path, _REGISTRY, "TST_mission\n")
+    write_path(
+        tmp_path,
+        "localisation/english/tst_l_english.yml",
+        "l_english:\n"
+        ' TST_a: "[?days_mission_timeout@TST_mission] days"\n'
+        ' TST_b: "[?modifier@TST_custom_factor|%1]"\n'
+        ' # TST_c: "[?modifier@TST_commented_out]"\n',
+    )
+    write_path(
+        tmp_path,
+        "localisation/french/tst_l_french.yml",
+        'l_french:\n TST_a: "[?modifier@TST_other_factor]"\n',
+    )
+    validator = V.Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator.validate_unregistered_dynamic_tokens()
+
+    assert [
+        (issue.message.split(" ", 1)[0], issue.file, issue.line)
+        for issue in validator._issues
+    ] == [
+        (
+            "modifier@TST_custom_factor",
+            "localisation/english/tst_l_english.yml",
+            3,
+        )
+    ]
+
+
 @pytest.mark.parametrize(
     ("registry", "exit_code"),
     [("gen_3_light\n", 1), ("gen_3_light\nTST_custom_factor\n", 0)],
