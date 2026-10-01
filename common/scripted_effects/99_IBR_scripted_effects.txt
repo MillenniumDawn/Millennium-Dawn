@@ -1,0 +1,449 @@
+# Iberian union project. Each state in global.IBR_states holds IBR_sectarianism (0-100) and IBR_sect_drift (-1 to 1 per week).
+
+IBR_setup_states = {
+	clear_array = global.IBR_states
+	86 = { add_to_array = { global.IBR_states = THIS } }
+	87 = { add_to_array = { global.IBR_states = THIS } }
+	88 = { add_to_array = { global.IBR_states = THIS } }
+	89 = { add_to_array = { global.IBR_states = THIS } }
+	90 = { add_to_array = { global.IBR_states = THIS } }
+	91 = { add_to_array = { global.IBR_states = THIS } }
+	92 = { add_to_array = { global.IBR_states = THIS } }
+	93 = { add_to_array = { global.IBR_states = THIS } }
+	94 = { add_to_array = { global.IBR_states = THIS } }
+	944 = { add_to_array = { global.IBR_states = THIS } }
+	968 = { add_to_array = { global.IBR_states = THIS } }
+	969 = { add_to_array = { global.IBR_states = THIS } }
+	970 = { add_to_array = { global.IBR_states = THIS } }
+	971 = { add_to_array = { global.IBR_states = THIS } }
+	1040 = { add_to_array = { global.IBR_states = THIS } }
+	1041 = { add_to_array = { global.IBR_states = THIS } }
+	1042 = { add_to_array = { global.IBR_states = THIS } }
+	96 = { add_to_array = { global.IBR_states = THIS } }
+	97 = { add_to_array = { global.IBR_states = THIS } }
+	1055 = { add_to_array = { global.IBR_states = THIS } }
+	1056 = { add_to_array = { global.IBR_states = THIS } }
+	1057 = { add_to_array = { global.IBR_states = THIS } }
+}
+
+# Country scope, ROOT is the founder. Run after IBR_setup_states.
+IBR_seed_sectarianism = {
+	86 = { set_variable = { IBR_sectarianism = 75 } }
+	88 = { set_variable = { IBR_sectarianism = 70 } }
+	1041 = { set_variable = { IBR_sectarianism = 50 } }
+	94 = { set_variable = { IBR_sectarianism = 45 } }
+	944 = { set_variable = { IBR_sectarianism = 40 } }
+	92 = { set_variable = { IBR_sectarianism = 35 } }
+	87 = { set_variable = { IBR_sectarianism = 20 } }
+	89 = { set_variable = { IBR_sectarianism = 20 } }
+	93 = { set_variable = { IBR_sectarianism = 20 } }
+	971 = { set_variable = { IBR_sectarianism = 20 } }
+	968 = { set_variable = { IBR_sectarianism = 15 } }
+	1040 = { set_variable = { IBR_sectarianism = 15 } }
+	90 = { set_variable = { IBR_sectarianism = 10 } }
+	91 = { set_variable = { IBR_sectarianism = 10 } }
+	969 = { set_variable = { IBR_sectarianism = 10 } }
+	970 = { set_variable = { IBR_sectarianism = 10 } }
+	1042 = { set_variable = { IBR_sectarianism = 10 } }
+	97 = { set_variable = { IBR_sectarianism = 55 } }
+	1056 = { set_variable = { IBR_sectarianism = 55 } }
+	96 = { set_variable = { IBR_sectarianism = 50 } }
+	1057 = { set_variable = { IBR_sectarianism = 50 } }
+	1055 = { set_variable = { IBR_sectarianism = 45 } }
+	for_each_scope_loop = {
+		array = global.IBR_states
+		clear_variable = IBR_sect_drift
+		clr_state_flag = IBR_independence_declared
+		clr_state_flag = IBR_independence_war
+	}
+	# The nation that was absorbed resents the union more
+	set_temp_variable = { IBR_sect_change = 20 }
+	if = {
+		limit = { original_tag = SPR }
+		IBR_change_sectarianism_portugal = yes
+		# Spain's regional cultural policy carries over into these states' seeds
+		set_temp_variable = { IBR_sect_change = { value = 50 subtract = SPR_culture_opinion^0 multiply = 0.5 } }
+		86 = { IBR_change_sectarianism = yes }
+		set_temp_variable = { IBR_sect_change = { value = 50 subtract = SPR_culture_opinion^1 multiply = 0.5 } }
+		88 = { IBR_change_sectarianism = yes }
+		set_temp_variable = { IBR_sect_change = { value = 50 subtract = SPR_culture_opinion^2 multiply = 0.5 } }
+		944 = { IBR_change_sectarianism = yes }
+		set_temp_variable = { IBR_sect_change = { value = 50 subtract = SPR_culture_opinion^3 multiply = 0.5 } }
+		93 = { IBR_change_sectarianism = yes }
+	}
+	else = {
+		IBR_change_sectarianism_spain = yes
+	}
+}
+
+# State scope. Input: temp IBR_sect_change.
+IBR_change_sectarianism = {
+	set_variable = { IBR_sectarianism = { value = IBR_sectarianism add = IBR_sect_change clamp = { min = 0 max = 100 } } }
+	# Fractional drift would otherwise leave a falling state stuck just above the 0 the final focus needs
+	if = {
+		limit = {
+			check_variable = { IBR_sect_change < 0 }
+			check_variable = { IBR_sectarianism < 0.5 }
+		}
+		set_variable = { IBR_sectarianism = 0 }
+	}
+}
+
+# State scope. Input: temp IBR_drift_change.
+IBR_change_drift = {
+	set_variable = { IBR_sect_drift = { value = IBR_sect_drift add = IBR_drift_change clamp = { min = -1 max = 1 } } }
+}
+
+# Country scope. Input: temp IBR_sect_change.
+IBR_change_sectarianism_all = {
+	for_each_scope_loop = {
+		array = global.IBR_states
+		IBR_change_sectarianism = yes
+	}
+}
+
+# Country scope. Input: temp IBR_sect_change.
+IBR_change_sectarianism_portugal = {
+	for_each_scope_loop = {
+		array = global.IBR_states
+		if = {
+			limit = { is_portugal_state = yes }
+			IBR_change_sectarianism = yes
+		}
+	}
+}
+
+# Country scope. Input: temp IBR_sect_change.
+IBR_change_sectarianism_spain = {
+	for_each_scope_loop = {
+		array = global.IBR_states
+		if = {
+			limit = { is_spain_state = yes }
+			IBR_change_sectarianism = yes
+		}
+	}
+}
+
+# Country scope. Output: temp IBR_country_drift, the union's sectarian growth every state shares.
+IBR_calc_country_drift = {
+	# A focus or decision may have just changed an idea or IBR_union_growth
+	force_update_dynamic_modifier = yes
+	set_temp_variable = { IBR_country_drift = modifier@IBR_sectarian_growth }
+	if = {
+		limit = {
+			has_stability < 0.4
+			check_variable = { IBR_country_drift < 0 }
+		}
+		set_temp_variable = { IBR_country_drift = 0 }
+	}
+}
+
+# State scope. Input: temp IBR_country_drift. Output: temp IBR_weekly_change.
+IBR_calc_weekly_change = {
+	set_temp_variable = { IBR_weekly_change = { value = IBR_sect_drift add = IBR_country_drift } }
+	if = {
+		limit = { NOT = { is_fully_controlled_by = OWNER } }
+		add_to_temp_variable = { IBR_weekly_change = 0.5 }
+	}
+}
+
+# Country scope. Also refreshes each state's IBR_sect_weekly and the selected-state display copies.
+IBR_update_map_dirty = {
+	IBR_calc_country_drift = yes
+	for_each_scope_loop = {
+		array = global.IBR_states
+		IBR_calc_weekly_change = yes
+		set_variable = { IBR_sect_weekly = IBR_weekly_change }
+	}
+	if = {
+		limit = { has_variable = IBR_selected_state }
+		var:IBR_selected_state = {
+			set_variable = { PREV.IBR_selected_sectarianism = IBR_sectarianism }
+			set_variable = { PREV.IBR_selected_drift = IBR_sect_weekly }
+		}
+	}
+	if = {
+		limit = { check_variable = { IBR_map_dirty < 10000 } }
+		add_to_variable = { IBR_map_dirty = 1 }
+	}
+	else = {
+		set_variable = { IBR_map_dirty = 1 }
+	}
+}
+
+# Country scope.
+IBR_update_average = {
+	set_temp_variable = { IBR_sect_total = 0 }
+	set_temp_variable = { IBR_state_count = 0 }
+	for_each_scope_loop = {
+		array = global.IBR_states
+		if = {
+			limit = { is_owned_by = ROOT }
+			add_to_temp_variable = { IBR_sect_total = IBR_sectarianism }
+			add_to_temp_variable = { IBR_state_count = 1 }
+		}
+	}
+	if = {
+		limit = { check_variable = { IBR_state_count > 0 } }
+		set_variable = { IBR_sectarianism_avg = { value = IBR_sect_total divide = IBR_state_count } }
+	}
+	if = {
+		limit = { check_variable = { IBR_sectarianism_avg > 59.99 } }
+		set_variable = { IBR_division_stability = -0.12 }
+	}
+	else_if = {
+		limit = { check_variable = { IBR_sectarianism_avg > 44.99 } }
+		set_variable = { IBR_division_stability = -0.10 }
+	}
+	else_if = {
+		limit = { check_variable = { IBR_sectarianism_avg > 29.99 } }
+		set_variable = { IBR_division_stability = -0.07 }
+	}
+	else_if = {
+		limit = { check_variable = { IBR_sectarianism_avg > 14.99 } }
+		set_variable = { IBR_division_stability = -0.04 }
+	}
+	else = {
+		set_variable = { IBR_division_stability = -0.02 }
+	}
+}
+
+# State scope, ROOT is the owner. Output: temp IBR_secession_found and IBR_secession_tag.
+IBR_find_secession_tag = {
+	set_temp_variable = { IBR_secession_found = 1 }
+	if = {
+		limit = { is_core_of = CAT NOT = { ROOT = { tag = CAT } } }
+		set_temp_variable = { IBR_secession_tag = CAT }
+	}
+	else_if = {
+		limit = { is_core_of = NAV NOT = { ROOT = { tag = NAV } } }
+		set_temp_variable = { IBR_secession_tag = NAV }
+	}
+	else_if = {
+		limit = { is_core_of = GAL is_spain_state = yes NOT = { ROOT = { tag = GAL } } }
+		set_temp_variable = { IBR_secession_tag = GAL }
+	}
+	else_if = {
+		limit = { is_core_of = SPA NOT = { ROOT = { tag = SPA } } }
+		set_temp_variable = { IBR_secession_tag = SPA }
+	}
+	else_if = {
+		limit = { is_core_of = POR is_portugal_state = yes NOT = { ROOT = { tag = POR } } }
+		set_temp_variable = { IBR_secession_tag = POR }
+	}
+	else_if = {
+		limit = { is_core_of = SPR is_spain_state = yes NOT = { ROOT = { tag = SPR } } }
+		set_temp_variable = { IBR_secession_tag = SPR }
+	}
+	else = {
+		set_temp_variable = { IBR_secession_found = 0 }
+	}
+}
+
+# Country scope. release grants every core, so all but the seceding state are handed back.
+IBR_release_seceding_state = {
+	capital_scope = { save_event_target_as = IBR_old_capital }
+	var:IBR_seceding_state = { set_state_flag = IBR_seceding }
+	if = {
+		limit = { check_variable = { IBR_seceding_tag = CAT } }
+		if = {
+			limit = { country_exists = CAT }
+			var:IBR_seceding_state = { transfer_state_to = CAT }
+		}
+		else = {
+			release = CAT
+			CAT = { every_owned_state = { limit = { NOT = { has_state_flag = IBR_seceding } } transfer_state_to = ROOT } }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { IBR_seceding_tag = NAV } }
+		if = {
+			limit = { country_exists = NAV }
+			var:IBR_seceding_state = { transfer_state_to = NAV }
+		}
+		else = {
+			release = NAV
+			NAV = { every_owned_state = { limit = { NOT = { has_state_flag = IBR_seceding } } transfer_state_to = ROOT } }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { IBR_seceding_tag = SPA } }
+		if = {
+			limit = { country_exists = SPA }
+			var:IBR_seceding_state = { transfer_state_to = SPA }
+		}
+		else = {
+			release = SPA
+			SPA = { every_owned_state = { limit = { NOT = { has_state_flag = IBR_seceding } } transfer_state_to = ROOT } }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { IBR_seceding_tag = POR } }
+		if = {
+			limit = { country_exists = POR }
+			var:IBR_seceding_state = { transfer_state_to = POR }
+		}
+		else = {
+			release = POR
+			POR = { every_owned_state = { limit = { NOT = { has_state_flag = IBR_seceding } } transfer_state_to = ROOT } }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { IBR_seceding_tag = GAL } }
+		if = {
+			limit = { country_exists = GAL }
+			var:IBR_seceding_state = { transfer_state_to = GAL }
+		}
+		else = {
+			release = GAL
+			GAL = { every_owned_state = { limit = { NOT = { has_state_flag = IBR_seceding } } transfer_state_to = ROOT } }
+		}
+	}
+	else_if = {
+		limit = { check_variable = { IBR_seceding_tag = SPR } }
+		if = {
+			limit = { country_exists = SPR }
+			var:IBR_seceding_state = { transfer_state_to = SPR }
+		}
+		else = {
+			release = SPR
+			SPR = { every_owned_state = { limit = { NOT = { has_state_flag = IBR_seceding } } transfer_state_to = ROOT } }
+		}
+	}
+	var:IBR_seceding_state = { clr_state_flag = IBR_seceding }
+	# release takes our capital when it is a core of the released tag
+	event_target:IBR_old_capital = {
+		if = {
+			limit = {
+				is_owned_by = ROOT
+				is_capital = no
+			}
+			ROOT = { set_capital = { state = PREV } }
+		}
+	}
+}
+
+# Country scope, from on_weekly_SPR / on_weekly_POR while the project runs.
+IBR_weekly_tick = {
+	IBR_calc_country_drift = yes
+	set_temp_variable = { IBR_unrest_states = 0 }
+	set_temp_variable = { IBR_declared_now = 0 }
+	set_temp_variable = { IBR_highest_sect = -1 }
+	for_each_scope_loop = {
+		array = global.IBR_states
+		if = {
+			limit = { has_state_flag = IBR_independence_war }
+			if = {
+				limit = { is_owned_by = ROOT }
+				clr_state_flag = IBR_independence_war
+				set_temp_variable = { IBR_sect_change = { value = 60 subtract = IBR_sectarianism } }
+				IBR_change_sectarianism = yes
+				clear_variable = IBR_sect_drift
+			}
+			# The war ended without the state coming back, so it has left the union for good
+			else_if = {
+				limit = { NOT = { OWNER = { has_war_with = ROOT } } }
+				add_to_temp_array = { IBR_lost_states = THIS }
+			}
+		}
+		if = {
+			limit = { is_owned_by = ROOT }
+			IBR_calc_weekly_change = yes
+			set_temp_variable = { IBR_sect_change = IBR_weekly_change }
+			IBR_change_sectarianism = yes
+			if = {
+				limit = { check_variable = { IBR_sectarianism > 99.99 } }
+				if = {
+					limit = { has_state_flag = IBR_independence_declared }
+					add_to_temp_variable = { IBR_unrest_states = 1 }
+				}
+				else = {
+					IBR_find_secession_tag = yes
+					if = {
+						limit = { check_variable = { IBR_secession_found = 0 } }
+						add_to_temp_variable = { IBR_unrest_states = 1 }
+					}
+					else_if = {
+						limit = {
+							check_variable = { IBR_declared_now = 0 }
+							NOT = { ROOT = { has_country_flag = IBR_secession_pending } }
+						}
+						set_temp_variable = { IBR_declared_now = 1 }
+						set_state_flag = IBR_independence_declared
+						set_variable = { ROOT.IBR_seceding_state = THIS }
+						set_variable = { ROOT.IBR_seceding_tag = IBR_secession_tag }
+						ROOT = {
+							set_country_flag = { flag = IBR_secession_pending days = 30 value = 1 }
+							country_event = { id = iberian_union.1 hours = 6 }
+						}
+					}
+				}
+			}
+			# The AI has no map, so it works on the state closest to breaking away
+			if = {
+				limit = {
+					ROOT = { is_ai = yes }
+					check_variable = { IBR_sectarianism > IBR_highest_sect }
+				}
+				set_temp_variable = { IBR_highest_sect = IBR_sectarianism }
+				set_variable = { ROOT.IBR_selected_state = THIS }
+			}
+		}
+	}
+	for_each_scope_loop = {
+		array = IBR_lost_states
+		remove_from_array = { global.IBR_states = THIS }
+		clr_state_flag = IBR_independence_war
+	}
+	if = {
+		limit = {
+			check_variable = { IBR_unrest_states > 0 }
+			NOT = { has_idea = IBR_regional_unrest }
+		}
+		add_ideas = IBR_regional_unrest
+	}
+	else_if = {
+		limit = {
+			check_variable = { IBR_unrest_states < 1 }
+			has_idea = IBR_regional_unrest
+		}
+		remove_ideas = IBR_regional_unrest
+	}
+	IBR_update_average = yes
+	IBR_update_map_dirty = yes
+}
+
+# Country scope. The weekly tick and decision category stop on their own once the proclamation focus is done.
+IBR_end_project = {
+	if = { limit = { has_dynamic_modifier = { modifier = IBR_divided_peninsula } } remove_dynamic_modifier = { modifier = IBR_divided_peninsula } }
+	if = { limit = { has_idea = IBR_language_classes_1 } remove_ideas = IBR_language_classes_1 }
+	if = { limit = { has_idea = IBR_language_classes_2 } remove_ideas = IBR_language_classes_2 }
+	if = { limit = { has_idea = IBR_language_classes_3 } remove_ideas = IBR_language_classes_3 }
+	if = { limit = { has_idea = IBR_regional_unrest } remove_ideas = IBR_regional_unrest }
+	hidden_effect = {
+		# IBR_language_funding also drives calculate_additional_expense_rate
+		clear_variable = IBR_language_funding
+		clear_variable = IBR_union_growth
+		clear_variable = IBR_division_stability
+		clear_variable = IBR_sectarianism_avg
+		clear_variable = IBR_selected_state
+		clear_variable = IBR_selected_sectarianism
+		clear_variable = IBR_selected_drift
+		clear_variable = IBR_seceding_state
+		clear_variable = IBR_seceding_tag
+		clear_variable = IBR_map_dirty
+		clr_country_flag = IBR_secession_pending
+		for_each_scope_loop = {
+			array = global.IBR_states
+			clear_variable = IBR_sectarianism
+			clear_variable = IBR_sect_drift
+			clear_variable = IBR_sect_weekly
+			clr_state_flag = IBR_independence_declared
+			clr_state_flag = IBR_independence_war
+			clr_state_flag = IBR_civic_service_recent
+			clr_state_flag = IBR_centralised_schooling_recent
+			clr_state_flag = IBR_regional_subsidies_recent
+			clr_state_flag = IBR_autonomy_statute_recent
+		}
+	}
+}

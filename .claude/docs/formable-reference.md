@@ -10,7 +10,7 @@ that represents a union.
 
 | Term                          | Meaning                                                     |
 | ----------------------------- | ----------------------------------------------------------- |
-| Decision formable             | One of the 23 categories in `formable_nation_decisions.txt` |
+| Decision formable             | One of the 22 categories in `formable_nation_decisions.txt` |
 | Special formable              | A union that commits through `commit_special_formable`      |
 | `is_<TAG>`                    | Country flag: started formable `<TAG>`. Never cleared       |
 | `<TAG>_exists`                | Global flag: someone started `<TAG>`. Never cleared         |
@@ -60,7 +60,7 @@ when the identity is abandoned or revoked.
 - Writers: the `on_add` of `reshaping_national_identity` (every decision-formable start),
   `commit_special_formable`, both UAR announces, and the national-identity cosmetic
   sites (German empires, Iranic and Tajik unions, Vanguard, and similar).
-- Readers, all `visible`: the 23 formable categories, `different_country_flags_category`,
+- Readers, all `visible`: the 22 formable categories, `different_country_flags_category`,
   and both UAR announces.
 
 The latch is a one-way visibility cut for players and AI. The ratchet is an AI-only
@@ -83,16 +83,18 @@ Flags, the idea, and the commit are set at click, in a `complete_effect`. A
 `remove_effect` only cores, annexes, and sets `integrated_<SUB>`. An idea added when a
 timer ends can land after a special formable and strand.
 
-IBR and ANZ have no `integrate_start` or `buy_core_state`. The first `integrate_<SUB>`
-click is the start. Its `complete_effect` sets the flags, adds the idea, and commits, all
-behind `NOT is_<TAG>`.
+ANZ has no `integrate_start` or `buy_core_state`. The first `integrate_<SUB>` click is
+the start. Its `complete_effect` sets the flags, adds the idea, and commits, all behind
+`NOT is_<TAG>`.
 
-Spain also enters IBR by focus. `SPR_declare_the_iberian_union` sets `IBR_exists` and the
-cosmetic and carries the ratchet gate in `ai_will_do`. `SPR_solidify_the_iberian_union`
-sets `is_IBR`, latches, and makes a guarded commit. Neither adds the idea nor reads the
-formable game rule. `spain.60` sets the cosmetic and removes the idea with it, because
-`IBR_update_flag` hides once the cosmetic is held. IBR stays a decision commitment, not a
-sentinel.
+### Iberian Union
+
+Iberia is not a decision formable. The shared tree `03_iberian_union_shared.txt`, listed
+by SPR and POR, replaced the IBR decisions. Its root `IBR_dream_of_iberia` sets `is_IBR`,
+the cosmetic (`IBR`, or `EFS_IBR` for an EFS member), and the latch, and needs the
+formable game rule off. It sets no `IBR_exists`, no idea, and no ratchet commit, because
+SPR and POR belong to no decision formable. Id 5 is retired. `spain.60` declares intent
+with no cosmetic, and `SPR_solidify_the_iberian_union` only cores POR and ADO.
 
 ### External readers
 
@@ -133,8 +135,8 @@ Commit, in every `integrate_start` and `update_flag` `complete_effect`:
 	}
 ```
 
-Guarded commit, for an ungated site that must not downgrade a larger commitment. Only
-`SPR_solidify_the_iberian_union` uses it:
+Guarded commit, for an ungated site that must not downgrade a larger commitment. No site
+uses it now:
 
 ```
 	hidden_effect = {
@@ -254,18 +256,18 @@ worldwide, and the idea alone strands an EU member before any federation exists.
 
 | Rule                                           | Effect                                         |
 | ---------------------------------------------- | ---------------------------------------------- |
-| `rule_disable_formable_nations`                | Hides the 23 categories and the UAR category   |
+| `rule_disable_formable_nations`                | Hides the 22 categories and the UAR category   |
 | `rule_disable_eu`                              | No EU, so EU111 and EU112 are unreachable      |
 | `rule_enable_ai_european_union_end_game_paths` | `no` stops the AI proposing agendas 110 to 112 |
 | `rule_event_horizon_scenario`                  | Enables the Event Horizon chain                |
 
-The formable rule hides categories only. Every special formable and focus union stays
-formable under it. The end-game-paths rule is the only AI kill switch for USoE and EFS.
+The formable rule hides categories and the Iberian Union root. Every special formable
+and other focus union stays formable under it. The end-game-paths rule is the only AI kill switch for USoE and EFS.
 Check it first when the AI never federates.
 
 ## Known traps and accepted behavior
 
-- Player-side clobber: `SCA`, `IBR`, `HBL`, `NORDEM`, `AUSHUN`, and `AVG` `update_flag`
+- Player-side clobber: `SCA`, `HBL`, `NORDEM`, `AUSHUN`, and `AVG` `update_flag`
   have no EU guard, so a player can click one after EFS branding and lose it for good.
   A guard there must be `EU_is_federation_member`, never `EU_member` alone.
 - EFS variants exist only for IBR, SCA, and BLT. Other completed formables get a plain
@@ -292,12 +294,13 @@ New decision formable:
 1. Add the category with the standard latch-aware `visible`.
 2. Add the four decision shapes. `integrate_start` sets `is_<TAG>` and `<TAG>_exists`
    and adds the idea. `update_flag` sets the cosmetic and removes the idea.
-3. Take the next free id below 100. Size is the `update_flag` state-list count.
+3. Take the next free id below 100. Id 5 (IBR) is retired. Size is the `update_flag`
+   state-list count.
 4. Gate every decision. Commit in `integrate_start` and `update_flag`. Use a guarded
    commit on any ungated site. Never set flags, the idea, or a commit in a
    `remove_effect`.
 5. Editing an `update_flag` state list means updating the size literal at every gate
-   and commit site, including the Spain focus for IBR.
+   and commit site.
 6. If an EU guard hides the `update_flag`, AI-block `integrate_start` under the same
    condition and extend the exemption to any fallback formable.
 
