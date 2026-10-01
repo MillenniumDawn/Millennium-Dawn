@@ -62,6 +62,30 @@ Bugfix:
     assert check_lines(lines) == []
 
 
+def test_multi_tag_entry_sorts_with_its_first_tag():
+    lines = _lines("""
+v2.0.1
+
+Bugfix:
+ - [CHI/NKO] Fixed a joint focus
+ - [CHI] Fixed a Chinese focus
+""")
+    assert check_lines(lines) == []
+
+
+def test_indented_category_header_starts_new_order():
+    lines = _lines("""
+v2.0.1
+
+Content:
+ - [USA] Added an American event
+
+  Bugfix:
+ - [ALG] Fixed an Algerian tooltip
+""")
+    assert check_lines(lines) == []
+
+
 def test_each_category_is_checked_separately():
     lines = _lines("""
 v2.0.1
@@ -99,6 +123,16 @@ def test_main_reports_errors(tmp_path, monkeypatch, capsys):
     monkeypatch.setattr(check_changelog.sys, "argv", ["check_changelog", str(path)])
     assert check_changelog.main() == 1
     assert "[ENG] must come before [FRA]" in capsys.readouterr().err
+
+
+def test_main_ignores_older_versions_with_bom(tmp_path, monkeypatch):
+    path = tmp_path / "Changelog.txt"
+    path.write_text(
+        "v2.0.1\n\nContent:\n - [ENG] B\n\nv2.0.0\n\nContent:\n - [FRA] A\n - [ENG] B\n",
+        encoding="utf-8-sig",
+    )
+    monkeypatch.setattr(check_changelog.sys, "argv", ["check_changelog", str(path)])
+    assert check_changelog.main() == 0
 
 
 def test_main_passes_clean_file(tmp_path, monkeypatch):

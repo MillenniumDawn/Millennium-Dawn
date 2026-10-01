@@ -10,9 +10,9 @@ import sys
 from pathlib import Path
 
 VERSION_RE = re.compile(r"^v\d+\.\d+")
-CATEGORY_RE = re.compile(r"^\S[^:]*:\s*$")
+CATEGORY_RE = re.compile(r"^\s*[^\s-][^:]*:\s*$")
 ENTRY_RE = re.compile(r"^\s*- ")
-TAG_RE = re.compile(r"^\s*- \[([^\]]+)\]")
+TAG_RE = re.compile(r"^\s*- \[([^\]/]+)")
 
 
 def check_lines(lines):
@@ -52,7 +52,7 @@ def check_lines(lines):
 def main():
     path = Path(sys.argv[1] if len(sys.argv) > 1 else "Changelog.txt")
     try:
-        lines = path.read_text(encoding="utf-8").splitlines()
+        lines = path.read_text(encoding="utf-8-sig").splitlines()
     except OSError as e:
         print(f"{path}: Unreadable - {e}", file=sys.stderr)
         return 1
