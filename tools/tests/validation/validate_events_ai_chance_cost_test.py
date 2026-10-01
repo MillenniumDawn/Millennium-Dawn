@@ -9,6 +9,7 @@ from validate_events import (
     _add_extra_args,
     costly_scripted_effects,
     find_cost_blind_options,
+    stored_variable_signs,
 )
 
 _FLAT = "\t\tai_chance = { base = 5 }\n"
@@ -73,8 +74,19 @@ _SCRIPTED_EFFECTS = (
     "increase_economic_growth = {\n"
     "\tadd_political_power = 10\n"
     "}\n"
+    "modify_corporate_tax_rate_effect = {\n"
+    "\tset_temp_variable = { calculator_diff = 0 }\n"
+    "\tif = {\n"
+    "\t\tlimit = { check_variable = { corp_change < 0 } }\n"
+    "\t\tsubtract_from_temp_variable = { calculator_diff = corp_change }\n"
+    "\t\tadd_to_temp_variable = { corp_change = calculator_diff }\n"
+    "\t}\n"
+    "\tadd_to_variable = { var = corporate_tax_rate value = corp_change }\n"
+    "}\n"
 )
 _EFFECTS = costly_scripted_effects([_SCRIPTED_EFFECTS])
+# What stored_variable_signs reports for a variable only ever set negative.
+_STORED = stored_variable_signs(["set_variable = { TAG_project_cost = -4 }\n"])
 
 
 def _option(name: str, body: str) -> str:
@@ -95,7 +107,7 @@ def _two_options(cost_body: str) -> str:
 
 
 def _found(text: str):
-    return find_cost_blind_options(text, _EFFECTS)
+    return find_cost_blind_options(text, _EFFECTS, _STORED)
 
 
 def _validator(tmp_path, **kwargs):
@@ -246,8 +258,68 @@ def test_gated_option_with_an_always_visible_sibling_is_not_marked():
             "\t\tmodify_treasury_effect = yes\n",
             "treasury",
         ),
+        (
+            "\t\tset_temp_variable = { needed_money = 0 }\n"
+            "\t\tsubtract_from_temp_variable = { needed_money = 4.5 }\n"
+            "\t\tset_temp_variable = { treasury_change = needed_money }\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tset_temp_variable = { treasury_change = 5 }\n"
+            "\t\tif = {\n"
+            "\t\t\tlimit = { has_war = yes }\n"
+            "\t\t\tset_temp_variable = { treasury_change = -5 }\n"
+            "\t\t}\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tif = {\n"
+            "\t\t\tlimit = { has_war = yes }\n"
+            "\t\t\tset_temp_variable = { treasury_change = 5 }\n"
+            "\t\t}\n"
+            "\t\telse = {\n"
+            "\t\t\tset_temp_variable = { treasury_change = -5 }\n"
+            "\t\t}\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tset_temp_variable = { treasury_change = gdp_total }\n"
+            "\t\trandom_list = {\n"
+            "\t\t\t50 = { multiply_temp_variable = { treasury_change = -1 } }\n"
+            "\t\t\t50 = { }\n"
+            "\t\t}\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
+        (
+            "\t\tset_temp_variable = { treasury_change = FROM.TAG_project_cost }\n"
+            "\t\tmodify_treasury_effect = yes\n",
+            "treasury",
+        ),
         ("\t\tadd_to_variable = { treasury = -5 }\n", "treasury"),
+        ("\t\tadd_to_variable = { var = treasury value = -5 }\n", "treasury"),
         ("\t\tsubtract_from_variable = { treasury = loan_amount }\n", "treasury"),
+        (
+            "\t\tset_temp_variable = { corp_change = 10 }\n"
+            "\t\tmodify_corporate_tax_rate_effect = yes\n",
+            "tax rate",
+        ),
+        (
+            "\t\tset_temp_variable = { corp_change = -5 }\n"
+            "\t\tmodify_corporate_tax_rate_effect = yes\n",
+            "tax rate",
+        ),
+        ("\t\tsubtract_from_variable = { population_tax_rate = 5 }\n", "tax rate"),
+        (
+            "\t\tmeta_effect = {\n"
+            "\t\t\ttext = { add_stability = -[LOSS] }\n"
+            '\t\t\tLOSS = "0.05"\n'
+            "\t\t}\n",
+            "stability",
+        ),
         ("\t\tadd_to_variable = { debt = 5 }\n", "debt"),
         (
             "\t\tsubtract_from_variable = { int_investments = 5 }\n",
@@ -312,6 +384,37 @@ def test_cost_kinds_are_detected(effects, costs):
         "\t\tmodify_debt_effect = yes\n",
         "\t\tset_temp_variable = { int_investment_change = 5 }\n"
         "\t\tmodify_international_investment_effect = yes\n",
+        "\t\tset_temp_variable = { treasury_change = 0 }\n"
+        "\t\tmodify_treasury_effect = yes\n",
+        "\t\tadd_to_variable = { debt = 0 }\n",
+        "\t\tset_temp_variable = { treasury_change = TAG_income }\n"
+        "\t\tmodify_treasury_effect = yes\n",
+        "\t\tif = {\n"
+        "\t\t\tlimit = { has_war = yes }\n"
+        "\t\t\tset_temp_variable = { treasury_change = 5 }\n"
+        "\t\t}\n"
+        "\t\telse = {\n"
+        "\t\t\tset_temp_variable = { treasury_change = 10 }\n"
+        "\t\t}\n"
+        "\t\tmodify_treasury_effect = yes\n",
+        "\t\tset_temp_variable = { relief = int_investments }\n"
+        "\t\tif = {\n"
+        "\t\t\tlimit = { check_variable = { relief > debt } }\n"
+        "\t\t\tsubtract_from_temp_variable = { relief = debt }\n"
+        "\t\t\tadd_to_variable = { treasury = relief }\n"
+        "\t\t}\n"
+        "\t\telse = {\n"
+        "\t\t\tsubtract_from_variable = { debt = relief }\n"
+        "\t\t}\n",
+        "\t\tif = {\n"
+        "\t\t\tlimit = { has_war = yes }\n"
+        "\t\t\tset_temp_variable = { treasury_change = -5 }\n"
+        "\t\t\telse = {\n"
+        "\t\t\t\tmodify_treasury_effect = yes\n"
+        "\t\t\t}\n"
+        "\t\t}\n",
+        "\t\tset_variable = { treasury = 100 }\n",
+        "\t\tadd_to_temp_variable = { treasury = -5 }\n",
         "\t\tadd_to_variable = { treasury = SOV.treasury }\n",
         "\t\tsubtract_from_variable = { debt = debt_bailout }\n",
         "\t\tadd_to_variable = { TAG_other_variable = -5 }\n",
@@ -339,7 +442,46 @@ def test_only_effects_that_can_charge_the_caller_are_kept():
         "lose_pp_for_15_days",
         "TAG_pay_or_defer",
         "TAG_loops_forever",
+        "modify_corporate_tax_rate_effect",
     }
+
+
+def test_stored_variable_signs_keeps_what_is_set_negative():
+    text = (
+        "set_variable = { TAG_cost = -4 }\n"
+        "set_variable = { var = FROM.TAG_other value = -2 }\n"
+        "set_variable = { TAG_income = 3 }\n"
+        "set_variable = { TAG_mixed = -1 }\n"
+        "set_variable = { TAG_mixed = 2 }\n"
+        "set_variable = { TAG_copy = TAG_cost }\n"
+        "set_temp_variable = { TAG_temp = -1 }\n"
+    )
+    assert stored_variable_signs([text]) == {
+        "TAG_cost": 1,
+        "TAG_other": 1,
+        "TAG_mixed": 3,
+    }
+
+
+def test_validator_reads_stored_signs_from_the_whole_mod(tmp_path):
+    _write(tmp_path, "common/scripted_effects/00_budget_effects.txt", _SCRIPTED_EFFECTS)
+    _write(
+        tmp_path,
+        "common/decisions/TAG.txt",
+        "TAG_decision = {\n"
+        "\tcomplete_effect = { set_variable = { TAG_rail_cost = -4 } }\n"
+        "}\n",
+    )
+    body = (
+        "\t\tset_temp_variable = { treasury_change = TAG_rail_cost }\n"
+        "\t\tmodify_treasury_effect = yes\n"
+    )
+    _write(tmp_path, "events/Ev.txt", _two_options(body + _FLAT))
+    v = _validator(tmp_path, check_ai_chance_costs=True)
+    v.validate_ai_chance_ignores_cost()
+    assert [i.message for i in v._issues] == [
+        "foo.1.a - flat ai_chance ignores the treasury cost"
+    ]
 
 
 def test_commented_cost_is_ignored_by_the_validator(tmp_path):

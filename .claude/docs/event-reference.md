@@ -66,7 +66,7 @@ Only an option that runs effects gets a log — a dismiss option carrying nothin
 
 ## Example: Cost-Aware AI Weights
 
-An option that charges the country (treasury, debt, political power, stability, or war support) needs an `ai_chance` that looks at whether the country can pay. A flat `ai_chance = { base = N }` makes the AI pay as often on the way to bankruptcy as it does with a full treasury. Set the base to the sensible default, then add modifiers for affordability and for the situation the cost is meant to solve:
+An option that charges the country (treasury, debt, a tax rate change, political power, stability, or war support) needs an `ai_chance` that looks at whether the country can pay. A flat `ai_chance = { base = N }` makes the AI pay as often on the way to bankruptcy as it does with a full treasury. Set the base to the sensible default, then add modifiers for affordability and for the situation the cost is meant to solve:
 
 ```
  option = {
@@ -104,6 +104,7 @@ An option that charges the country (treasury, debt, political power, stability, 
 ```
 
 - Treasury and debt: `has_active_mission = bankruptcy_incoming_collapse` and `ai_has_high_deficit = yes`. A charge built with math (`treasury_change = gdp_total` then a negative `multiply_temp_variable`) needs them as much as a literal one, and so does a scripted effect that charges internally (`one_office_construction`, `small_expenditure`).
+- Tax rate: a change in either direction counts (`modify_corporate_tax_rate_effect`, `modify_population_tax_rate_effect`). A cut gives up income, so use the treasury triggers. For a raise, check the rate itself (`check_variable = { corporate_tax_rate > N }`) so the AI does not stack raises.
 - Political power: `has_political_power < N`, with N at or above the cost so the AI never goes negative.
 - Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
 
