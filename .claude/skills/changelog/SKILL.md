@@ -31,6 +31,7 @@ Steps:
    - 1 space + `- ` before each entry (e.g., ` - [SER] Fixed focus prerequisite`)
    - Prefix with `[TAG]` when the change is country-specific
    - No tag prefix for global/system changes
+   - Within a category, untagged entries come first, then `[TAG]` entries in alphabetical order of their first tag (`tools/linting/check_changelog.py` enforces this in CI)
    - One bullet per PR; group related micro-changes into that single bullet
    - Use past tense ("Added", "Fixed", "Reduced", "Reworked")
    - Be specific: name the focus, event, decision, or mechanic affected
