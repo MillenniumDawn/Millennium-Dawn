@@ -29,7 +29,10 @@ jobs:
           ref: main
           fetch-depth: 0
           filter: blob:none
-          sparse-checkout: .github
+          sparse-checkout: |
+            .github
+            tools/merge_changelog.py
+          sparse-checkout-cone-mode: false
 
       - name: Merge main into changelog-only conflicts
         env:
@@ -39,8 +42,10 @@ jobs:
           GIT_COMMITTER_NAME: github-actions[bot]
           GIT_COMMITTER_EMAIL: 41898283+github-actions[bot]@users.noreply.github.com
         run: |
-          # Applies regardless of whether the PR branch carries the .gitattributes line.
-          echo "Changelog.txt merge=union" > .git/info/attributes
+          # Overrides the repo's merge=union so edited entries merge instead of duplicating.
+          echo "Changelog.txt merge=changelog" > .git/info/attributes
+          git config merge.changelog.driver \
+            "python3 $GITHUB_WORKSPACE/tools/merge_changelog.py %O %A %B"
           base_sha=$(git rev-parse origin/main)
           pulls_url="repos/$GH_REPO/pulls?state=open&base=main&per_page=100"
           # Fork branches cannot be pushed with the workflow token.
@@ -65,7 +70,7 @@ jobs:
             git fetch --no-tags --quiet origin "refs/heads/$head"
             head_sha=$(git rev-parse FETCH_HEAD)
             if ! tree=$(git merge-tree --write-tree origin/main "$head_sha"); then
-              echo "PR #$num has non-changelog conflicts, skipping"
+              echo "PR #$num has conflicts that cannot be auto-resolved, skipping"
               skipped=$((skipped + 1))
               continue
             fi
@@ -81,6 +86,12 @@ jobs:
                 -f pr_number="$num" -f head_sha="$commit" \
                 -f base_sha="$base_sha"; then
               echo "::warning::PR #$num validation could not be dispatched"
+              failed=$((failed + 1))
+              continue
+            fi
+            # The union merge keeps both sides but not their order.
+            if ! gh workflow run changelog-lint.yml --ref "$head"; then
+              echo "::warning::PR #$num changelog lint could not be dispatched"
               failed=$((failed + 1))
               continue
             fi
