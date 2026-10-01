@@ -1,22 +1,25 @@
 # A country that buys a tank, helicopter or aircraft hull, or defeats a country that has researched one,
-# gets one-use research bonuses on that hull's technology and on every earlier generation it lacks:
-# 90% two or more generations back, 50% one back, and 20% (tanks) or 10% (helicopters, aircraft) for the
-# studied generation. Education below edu_05 cuts each bonus by 10% per law step.
-# Without the hull family's special project, it also gets a one-time 50% head start on that project.
+# gets one-use research bonuses on that hull's technology and on every earlier generation it lacks.
+# Two or more generations back / one back / studied generation: tanks 90/50/20%, helicopters and
+# aircraft 45/25/10%, set per family below. Education below edu_05 cuts each bonus by 20% per law step.
+# Without the hull family's special project, it also gets a one-time head start on that project:
+# 50% at edu_05, scaled down the same way.
 # The tech lists mirror enable_equipments in NSB_armor.txt, helicopter_techs.txt and BBA_aircraft.txt.
 # Role airframes (CAS, strike, fighter, maritime patrol...) are duplicate_archetypes of the base airframes.
 
 # Country scope. Walks temp array reverse_engineering_techs (one hull family, oldest first) up to
 # temp variable reverse_engineering_studied_index, the 0-based array position of the studied hull.
 # Callers set the index to -1 when the family matched but no generation with a technology did.
+# Also sets reverse_engineering_head_start for the family's special project.
 reverse_engineering_grant_bonuses = {
+	if = { limit = { has_idea = edu_05 } set_temp_variable = { reverse_engineering_education = 1 } }
+	else_if = { limit = { has_idea = edu_04 } set_temp_variable = { reverse_engineering_education = 0.8 } }
+	else_if = { limit = { has_idea = edu_03 } set_temp_variable = { reverse_engineering_education = 0.6 } }
+	else_if = { limit = { has_idea = edu_02 } set_temp_variable = { reverse_engineering_education = 0.4 } }
+	else = { set_temp_variable = { reverse_engineering_education = 0.2 } }
+	set_temp_variable = { reverse_engineering_head_start = { value = 0.5 multiply = reverse_engineering_education } }
 	if = {
 		limit = { check_variable = { reverse_engineering_studied_index > -1 } }
-		if = { limit = { has_idea = edu_05 } set_temp_variable = { reverse_engineering_education = 1 } }
-		else_if = { limit = { has_idea = edu_04 } set_temp_variable = { reverse_engineering_education = 0.9 } }
-		else_if = { limit = { has_idea = edu_03 } set_temp_variable = { reverse_engineering_education = 0.8 } }
-		else_if = { limit = { has_idea = edu_02 } set_temp_variable = { reverse_engineering_education = 0.7 } }
-		else = { set_temp_variable = { reverse_engineering_education = 0.6 } }
 		for_each_loop = {
 			array = reverse_engineering_techs
 			value = reverse_engineering_tech
@@ -24,12 +27,12 @@ reverse_engineering_grant_bonuses = {
 			set_temp_variable = { reverse_engineering_generations_back = { value = reverse_engineering_studied_index subtract = reverse_engineering_index } }
 			if = {
 				limit = { check_variable = { reverse_engineering_generations_back > 1 } }
-				set_temp_variable = { reverse_engineering_bonus = { value = 0.9 multiply = reverse_engineering_education } }
+				set_temp_variable = { reverse_engineering_bonus = { value = reverse_engineering_two_back_bonus multiply = reverse_engineering_education } }
 				reverse_engineering_grant_tech_bonus = yes
 			}
 			else_if = {
 				limit = { check_variable = { reverse_engineering_generations_back = 1 } }
-				set_temp_variable = { reverse_engineering_bonus = { value = 0.5 multiply = reverse_engineering_education } }
+				set_temp_variable = { reverse_engineering_bonus = { value = reverse_engineering_one_back_bonus multiply = reverse_engineering_education } }
 				reverse_engineering_grant_tech_bonus = yes
 			}
 			else_if = {
@@ -83,6 +86,8 @@ reverse_engineering_grant_mbt = {
 	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_4 }
 	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_5 }
 	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_6 }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.9 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.5 }
 	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.2 }
 	reverse_engineering_grant_bonuses = yes
 	if = {
@@ -91,7 +96,7 @@ reverse_engineering_grant_mbt = {
 			NOT = { has_country_flag = reverse_engineered_sp_armoured_vehicle_project }
 		}
 		set_country_flag = reverse_engineered_sp_armoured_vehicle_project
-		sp:sp_armoured_vehicle_project = { add_project_progress_ratio = 0.5 }
+		sp:sp_armoured_vehicle_project = { add_project_progress_ratio = var:reverse_engineering_head_start }
 		reverse_engineering_notify = yes
 	}
 }
@@ -104,6 +109,8 @@ reverse_engineering_grant_attack_helicopter = {
 	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_5 }
 	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_6 }
 	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_7 }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.45 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
 	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
 	reverse_engineering_grant_bonuses = yes
 	if = {
@@ -112,7 +119,7 @@ reverse_engineering_grant_attack_helicopter = {
 			NOT = { has_country_flag = reverse_engineered_sp_helicopter_project }
 		}
 		set_country_flag = reverse_engineered_sp_helicopter_project
-		sp:sp_helicopter_project = { add_project_progress_ratio = 0.5 }
+		sp:sp_helicopter_project = { add_project_progress_ratio = var:reverse_engineering_head_start }
 		reverse_engineering_notify = yes
 	}
 }
@@ -124,6 +131,8 @@ reverse_engineering_grant_light_airframe = {
 	add_to_temp_array = { reverse_engineering_techs = token:gen_6_light }
 	add_to_temp_array = { reverse_engineering_techs = token:gen_7_light }
 	add_to_temp_array = { reverse_engineering_techs = token:gen_8_light }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.45 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
 	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
 	reverse_engineering_grant_bonuses = yes
 	reverse_engineering_aircraft_head_start = yes
@@ -136,6 +145,8 @@ reverse_engineering_grant_medium_airframe = {
 	add_to_temp_array = { reverse_engineering_techs = token:gen_6_medium }
 	add_to_temp_array = { reverse_engineering_techs = token:gen_7_medium }
 	add_to_temp_array = { reverse_engineering_techs = token:gen_8_medium }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.45 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
 	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
 	reverse_engineering_grant_bonuses = yes
 	reverse_engineering_aircraft_head_start = yes
@@ -148,6 +159,8 @@ reverse_engineering_grant_large_airframe = {
 	add_to_temp_array = { reverse_engineering_techs = token:gen_6_large }
 	add_to_temp_array = { reverse_engineering_techs = token:gen_7_large }
 	add_to_temp_array = { reverse_engineering_techs = token:gen_8_large }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.45 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
 	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
 	reverse_engineering_grant_bonuses = yes
 	reverse_engineering_aircraft_head_start = yes
@@ -161,7 +174,7 @@ reverse_engineering_aircraft_head_start = {
 			NOT = { has_country_flag = reverse_engineered_sp_aircraft_project }
 		}
 		set_country_flag = reverse_engineered_sp_aircraft_project
-		sp:sp_aircraft_project = { add_project_progress_ratio = 0.5 }
+		sp:sp_aircraft_project = { add_project_progress_ratio = var:reverse_engineering_head_start }
 		reverse_engineering_notify = yes
 	}
 	if = {
@@ -171,7 +184,7 @@ reverse_engineering_aircraft_head_start = {
 			NOT = { has_country_flag = reverse_engineered_sp_stealth_technology }
 		}
 		set_country_flag = reverse_engineered_sp_stealth_technology
-		sp:sp_stealth_technology = { add_project_progress_ratio = 0.5 }
+		sp:sp_stealth_technology = { add_project_progress_ratio = var:reverse_engineering_head_start }
 		reverse_engineering_notify = yes
 	}
 }
