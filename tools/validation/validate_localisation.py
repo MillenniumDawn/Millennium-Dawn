@@ -22,6 +22,7 @@ from shared_utils import (
     iter_statements,
     read_text_strict,
     strip_comments,
+    validation_config,
 )
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -76,10 +77,10 @@ _PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
 # `KEY:0 "value"` lines across two lines and rewrote double quotes to single
 # quotes. Paradox YAML is not real YAML — both mangle silently in-game rather
 # than erroring, so they must be caught here.
-# Opinion modifiers sit exactly one level under the file's `opinion_modifiers
-# = { }` wrapper. Spaces are accepted alongside the tab MD actually uses, but
+# Opinion modifiers, raid types, and raid categories sit exactly one level under
+# their file's wrapper block (`opinion_modifiers`, `types`, `categories`). Spaces are accepted alongside the tab MD actually uses, but
 # only one level deep — `\s+` would swallow blank lines and match nested blocks.
-_OPINION_MODIFIER_RE = re.compile(
+_TOP_LEVEL_BLOCK_RE = re.compile(
     r"^(?:\t| {1,4})([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE
 )
 _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
@@ -248,8 +249,10 @@ _TYPO_WATCHLIST: Dict[str, str] = {
     "seperated": "separated",
 }
 
-# Exact-phrase substrings exempt from typo flagging (populate as intentional uses surface).
-_TYPO_EXEMPTIONS: Set[str] = set()
+# Exact-phrase substrings exempt from typo flagging.
+_TYPO_EXEMPTIONS: Set[str] = set(
+    validation_config("validate_localisation", "typo_exemptions")
+)
 
 _TYPO_RE = re.compile(
     r"\b(?:" + "|".join(re.escape(t) for t in _TYPO_WATCHLIST) + r")\b",
@@ -711,14 +714,19 @@ _HAS_VARIABLE_RE = re.compile(r"\bhas_variable\s*=\s*([^\s{}]+)")
 _CHECK_VAR_TOKEN_RE = re.compile(r"(?:[A-Za-z_]|[0-9]+_)[\w.:@^]*")
 _CHECK_VAR_TOOLTIP_RE = re.compile(r"\btooltip\s*=\s*\S+")
 _CHECK_VAR_CONSTANT_RE = re.compile(r"(?<![A-Za-z0-9_])@[A-Za-z_][\w]*")
-# The engine supplies these temporary values only while scoring occupation laws.
-_OCCUPATION_LAW_CONTEXT_VARS = frozenset(
-    {
-        "uncapped_resistance_target",
-        "resistance_target_without_law",
-        "garrison_min_support_ratio",
-    }
-)
+# Reads that are valid only in one file, keyed by basename.
+_FILE_SCOPED_READ_VARS = {
+    # The engine supplies these temporary values only while scoring occupation laws.
+    "occupation_laws.txt": frozenset(
+        {
+            "uncapped_resistance_target",
+            "resistance_target_without_law",
+            "garrison_min_support_ratio",
+        }
+    ),
+    # Vanilla autonomy state copy; vanilla instantiate_collaboration_government writes it.
+    "lar_collaboration_government.txt": frozenset({"collaboration_formed_by"}),
+}
 _CHECK_VAR_KEYWORDS = frozenset(
     {
         "var",
@@ -1335,7 +1343,7 @@ class Validator(BaseValidator):
             except OSError:
                 continue
             basename = os.path.basename(filepath)
-            for match in _OPINION_MODIFIER_RE.finditer(text):
+            for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
                 name = match.group(1)
                 if name not in modifiers:
                     modifiers[name] = basename
@@ -1357,6 +1365,41 @@ class Validator(BaseValidator):
             "Opinion modifiers without localisation:",
             severity=Severity.WARNING,
             category="missing-opinion-modifier-localisation",
+        )
+
+    def validate_raid_localisation(self, loc_keys: Dict, scripted_loc_keys: set):
+        self._log_section("Checking raid localisation...")
+
+        required: Dict[str, str] = {}
+        for patterns, suffixes in (
+            (["common/raids/*.txt"], ("raid_type_{}", "raid_type_{}_desc")),
+            (["common/raids/categories/*.txt"], ("raid_category_{}",)),
+        ):
+            for filepath in self._collect_files(patterns, ignore_staged=True):
+                try:
+                    text = FileOpener.open_text_file(
+                        filepath, lowercase=False, strip_comments_flag=True
+                    )
+                except OSError:
+                    continue
+                basename = os.path.basename(filepath)
+                for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                    for suffix in suffixes:
+                        required.setdefault(suffix.format(match.group(1)), basename)
+
+        missing = [
+            f"{key} - {basename}: raid without localisation"
+            for key, basename in sorted(required.items())
+            if key not in loc_keys
+            and key not in scripted_loc_keys
+            and key not in VANILLA_LOC_KEYS
+        ]
+        self._report(
+            missing,
+            "✓ All raids have localisation",
+            "Raids without localisation:",
+            severity=Severity.WARNING,
+            category="missing-raid-localisation",
         )
 
     def _script_txt_files(self) -> List[str]:
@@ -1413,9 +1456,8 @@ class Validator(BaseValidator):
             chunksize=30,
         ):
             for name, basename, number in hits:
-                if name not in known and not (
-                    basename == "occupation_laws.txt"
-                    and name in _OCCUPATION_LAW_CONTEXT_VARS
+                if name not in known and name not in _FILE_SCOPED_READ_VARS.get(
+                    basename, ()
                 ):
                     results.append((f"{name} - {basename}", basename, number))
 
@@ -1479,6 +1521,7 @@ class Validator(BaseValidator):
                 loc_keys, skipped_keys, scripted_loc_keys
             )
             self.validate_opinion_modifiers(loc_keys, scripted_loc_keys)
+            self.validate_raid_localisation(loc_keys, scripted_loc_keys)
             self.validate_variable_references()
             self.validate_unwritten_script_variables()
             self.validate_targeted_dynamic_variables()

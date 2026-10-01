@@ -95,6 +95,9 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         "recruit_in_asia",
         "recruit_in_australia",
         "recruit_in_india",
+        # resistance_and_occupation_l_english.yml: MD redefines the vanilla
+        # sabotaged_resources dynamic modifier and keeps its name string.
+        "sabotaged_resources",
         # modifiers_l_english.yml — variable-effect tooltip rows inherited by
         # MD focus, decision, event, and idea effects.
         "acclimatization_cold_climate_gain_factor_tt",
@@ -231,6 +234,10 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
         # reuses the vanilla strings.
         "same_ruling_party",
         "unstable_alliance",
+        # military_raids_l_english.yml — vanilla raid kept in
+        # common/raids/land_infiltration_raids.txt.
+        "raid_type_rescue_captured_general",
+        "raid_type_rescue_captured_general_desc",
         # Vanilla focus names reused intact by MD focus trees (string fits the
         # in-game label — e.g. "Greater Finland", "Worker's Rights").
         "EST_new_economic_policy",  # ideas_l_english.yml
