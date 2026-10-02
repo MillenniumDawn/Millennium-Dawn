@@ -1656,13 +1656,18 @@ class Validator(BaseValidator):
             return memo
         self._log_section("Sharing per-file reads across event call-site checks...")
 
-        full_files = [f for f, _ in self._get_fire_scan_args()]
         scoped_files = [f for f, _ in self._get_scoped_fire_scan_args()]
         use_full = (not self.staged_only) or self._needs_full_call_site_scan()
+        # A staged run with no event file staged scans only its own callers.
+        full_files = [f for f, _ in self._get_fire_scan_args()] if use_full else []
         union = full_files if use_full else scoped_files
 
-        fof_ids = frozenset(self._get_fire_only_once_ids())
-        major_ids = frozenset(self._get_major_event_ids())
+        # The in-loop scans only run on scoped files.
+        fof_ids: frozenset = frozenset()
+        major_ids: frozenset = frozenset()
+        if scoped_files:
+            fof_ids = frozenset(self._get_fire_only_once_ids())
+            major_ids = frozenset(self._get_major_event_ids())
         count_tracked: frozenset = frozenset()
         if not self.staged_only:
             meta, _ = self._get_event_metadata()

@@ -7,6 +7,7 @@ file, line and message.
 """
 
 import pytest
+import validate_events as E
 import validate_scripted_localisation as SL
 import validate_variables as V
 
@@ -278,3 +279,134 @@ def test_variables_staged_decision_still_reads_every_repo_index(tmp_path, write_
             16,
         ),
     ]
+
+
+# --- events ----------------------------------------------------------------
+
+_EVENTS = (
+    "add_namespace = tst\n"
+    "country_event = {\n\tid = tst.1\n\tis_triggered_only = yes\n"
+    "\tfire_only_once = yes\n\toption = { name = tst.1.a }\n}\n"
+    "news_event = {\n\tid = tst.2\n\tis_triggered_only = yes\n"
+    "\tmajor = yes\n\toption = { name = tst.2.a }\n}\n"
+)
+
+_CALLER = (
+    "TST_category = {\n"
+    "\tTST_decision = {\n"
+    "\t\tcomplete_effect = {\n"
+    "\t\t\tevery_country = {\n"
+    "\t\t\t\tcountry_event = tst.1\n"
+    "\t\t\t\tnews_event = tst.2\n"
+    "\t\t\t}\n"
+    "\t\t\tcountry_event = { id = tst.1 }\n"
+    "\t\t\tcountry_event = tst.2\n"
+    "\t\t\tcountry_event = ghost.9\n"
+    "\t\t}\n"
+    "\t}\n"
+    "}\n"
+)
+
+
+def _events_validator(tmp_path, write_path, staged_rel):
+    paths = {
+        "events/tst.txt": write_path(tmp_path, "events/tst.txt", _EVENTS),
+        "common/decisions/dec.txt": write_path(
+            tmp_path, "common/decisions/dec.txt", _CALLER
+        ),
+    }
+    validator = E.Validator(str(tmp_path), use_colors=False, workers=1)
+    return _staged(validator, *(paths[rel] for rel in staged_rel))
+
+
+def test_events_run_with_no_script_staged_builds_no_call_site_index(
+    tmp_path, write_path, monkeypatch
+):
+    validator = _events_validator(tmp_path, write_path, ())
+    _forbid(
+        monkeypatch,
+        validator,
+        "_get_fire_scan_args",
+        "_get_fire_only_once_ids",
+        "_get_major_event_ids",
+    )
+
+    validator.run_validations()
+
+    assert _rows(validator) == []
+
+
+_CALLER_FINDINGS = [
+    (
+        "Long-form event calls with only id (use shorthand instead)",
+        "country_event = { id = tst.1 } → use shorthand `country_event = tst.1`",
+        "common/decisions/dec.txt",
+        8,
+    ),
+    (
+        "fire-only-once-in-loop",
+        "fire_only_once event tst.1 fired inside an every_*/for_each_* iterator"
+        " (only the first recipient gets it; drop fire_only_once or fire it"
+        " outside the loop)",
+        "common/decisions/dec.txt",
+        5,
+    ),
+    (
+        "major-event-in-loop",
+        "major event tst.2 fired inside an every_*/for_each_* iterator (each"
+        " iteration broadcasts to every country; fire it once outside the loop)",
+        "common/decisions/dec.txt",
+        6,
+    ),
+]
+
+_TYPE_AND_UNDEFINED = [
+    (
+        "event-fire-type-mismatch",
+        "tst.2 - fired with country_event, defined as news_event",
+        "common/decisions/dec.txt",
+        9,
+    ),
+    (
+        "undefined-event-fire",
+        "ghost.9 - fired from common/decisions/dec.txt:10, no event defines it",
+        "",
+        0,
+    ),
+]
+
+
+def test_events_staged_caller_still_reads_unstaged_event_flags(tmp_path, write_path):
+    validator = _events_validator(tmp_path, write_path, ["common/decisions/dec.txt"])
+
+    validator.run_validations()
+
+    assert _rows(validator) == sorted(_CALLER_FINDINGS + _TYPE_AND_UNDEFINED)
+
+
+def test_events_staged_event_file_still_scans_unstaged_callers(tmp_path, write_path):
+    validator = _events_validator(tmp_path, write_path, ["events/tst.txt"])
+
+    validator.run_validations()
+
+    assert _rows(validator) == sorted(
+        _TYPE_AND_UNDEFINED
+        + [
+            (
+                "missing-event-localisation",
+                f"{eid} - tst.txt: missing loc key '{eid}.a'",
+                "",
+                0,
+            )
+            for eid in ("tst.1", "tst.2")
+        ]
+        + [
+            (
+                "news-event-picture-omitted",
+                "tst.2: event has no picture, add `picture = GFX_<sprite>` below"
+                " `desc =`",
+                "tst.txt",
+                8,
+            )
+        ]
+    )
