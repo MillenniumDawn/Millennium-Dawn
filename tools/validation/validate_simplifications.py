@@ -1151,7 +1151,8 @@ class Validator(BaseValidator):
             patterns = _OWNER_SCOPE_PATTERNS
         else:
             patterns = _ALL_SCAN_PATTERNS
-        files = self._collect_files(patterns)
+        # A staged list can name one file twice; report it once.
+        files = list(dict.fromkeys(self._collect_files(patterns)))
         parsed = self._pool_map(
             _scan_path,
             [(path, self.mod_path, self.owner_scope_only) for path in files],

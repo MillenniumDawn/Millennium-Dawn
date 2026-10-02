@@ -1415,6 +1415,16 @@ def test_quoted_braces_and_hashes_do_not_split_blocks(tmp_path, write_path):
     assert _run(tmp_path) == [("events/quoted.txt", 3, _MERGE_USA)]
 
 
+def test_a_file_collected_twice_is_reported_once(tmp_path, monkeypatch, write_path):
+    path = write_path(
+        tmp_path, "events/twice.txt", "USA = { a = yes }\nUSA = { b = yes }\n"
+    )
+    monkeypatch.setattr(
+        vs.Validator, "_collect_files", lambda self, patterns: [str(path), str(path)]
+    )
+    assert _run(tmp_path) == [("events/twice.txt", 2, _MERGE_USA)]
+
+
 def test_crlf_file_reports_its_first_and_unterminated_last_line(tmp_path, write_path):
     write_path(
         tmp_path,
