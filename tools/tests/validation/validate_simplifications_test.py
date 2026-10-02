@@ -29,36 +29,40 @@ from validate_simplifications import (
 )
 
 
+def _script(text):
+    return vs._Script(strip_comments(text))
+
+
 def _merge_lines(text):
-    return sorted(line for line, _ in _find_mergeable(strip_comments(text)))
+    return sorted(line for line, _ in _find_mergeable(_script(text)))
 
 
 def _expansion(text):
-    return [(tag, flat) for _, tag, flat in _find_scope_expansion(strip_comments(text))]
+    return [(tag, flat) for _, tag, flat in _find_scope_expansion(_script(text))]
 
 
 def _random(text):
-    return [chance for _, chance in _find_two_bucket_random(strip_comments(text))]
+    return [chance for _, chance in _find_two_bucket_random(_script(text))]
 
 
 def _count(text):
-    return [(line, n) for line, n in _find_count_collapsible(strip_comments(text))]
+    return [(line, n) for line, n in _find_count_collapsible(_script(text))]
 
 
 def _empty(text):
-    return [kw for _, kw in _find_empty_trigger_blocks(strip_comments(text))]
+    return [kw for _, kw in _find_empty_trigger_blocks(_script(text))]
 
 
 def _gov(text):
-    return [rep for _, rep in _find_government_match(strip_comments(text))]
+    return [rep for _, rep in _find_government_match(_script(text))]
 
 
 def _not(text):
-    return [(line, n) for line, n in _find_bare_not(strip_comments(text))]
+    return [(line, n) for line, n in _find_bare_not(_script(text))]
 
 
 def _controlled(text):
-    return list(_find_random_controlled_shortcut(strip_comments(text)))
+    return list(_find_random_controlled_shortcut(_script(text)))
 
 
 def _all_five(target, scoped_tmpl):
@@ -918,11 +922,11 @@ def test_clean_tree_reports_nothing(tmp_path, write_path):
 
 
 def _owner_focus(text):
-    return sorted((line, m) for m, line in _scan_focus_file(strip_comments(text)))
+    return sorted((line, m) for m, line in _scan_focus_file(_script(text)))
 
 
 def _owner_decision(text):
-    return sorted((line, m) for m, line in _scan_decision_file(strip_comments(text)))
+    return sorted((line, m) for m, line in _scan_decision_file(_script(text)))
 
 
 def _strict_chi_tree(focus_text):
@@ -1356,3 +1360,149 @@ def test_cli_entry_point_exits_zero(tmp_path, monkeypatch, write_path):
         runpy.run_path(vs.__file__, run_name="__main__")
 
     assert exit_info.value.code == 0
+
+
+# --- shared brace index, keyword scans, pool, and disk cache ----------------
+
+_MERGE_USA = "consecutive `USA = { }` blocks can be merged into one"
+_NOT_TWO = (
+    "NOT with 2 children is ambiguous (semantics disputed NAND vs NOR); "
+    "write `NOT = { OR = { ... } }` or one NOT per trigger"
+)
+
+# Quoted braces, a brace-only string, an escaped quote, an unclosed block, a
+# stray close, and an unterminated string.
+_TRICKY_BRACES = (
+    'a = { log = "}" b = { c = 1 } }\n'
+    'd = { log = "x = { y" e = { } }\n'
+    'm = { log = "{ }" }\n'
+    'f = { s = "esc \\" {" g = { } }\n'
+    "h = { open = { i = 1 }\n"
+    '} } j = { "unterminated { k = { } }'
+)
+
+
+def _findings(validator):
+    return [(issue.file, issue.line, issue.message) for issue in validator._issues]
+
+
+def _run(root, **kwargs):
+    validator = vs.Validator(str(root), use_colors=False, workers=1, **kwargs)
+    validator.run_validations()
+    return _findings(validator)
+
+
+def test_block_end_matches_extract_block_from_text_for_every_brace_and_limit():
+    src = _script(_TRICKY_BRACES)
+    text = src.text
+    checked = 0
+    for brace in (i for i, char in enumerate(text) if char == "{"):
+        for limit in range(brace + 1, len(text) + 1):
+            expected = vs.extract_block_from_text(text[:limit], brace)[1]
+            assert src.block_end(brace, limit) == expected, (brace, limit)
+            checked += 1
+    assert checked > 1000
+
+
+def test_quoted_braces_and_hashes_do_not_split_blocks(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "events/quoted.txt",
+        "# USA = { a = yes } USA = { b = yes }\n"
+        'USA = { log = "} # {" a = yes }\n'
+        "USA = { b = yes } # NOT = { a = 1 b = 2 }\n",
+    )
+    assert _run(tmp_path) == [("events/quoted.txt", 3, _MERGE_USA)]
+
+
+def test_crlf_file_reports_its_first_and_unterminated_last_line(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "common/scripted_triggers/crlf.txt",
+        "NOT = { tag = USA tag = GER }\r\nUSA = { a = yes }\r\nUSA = { b = yes }",
+    )
+    assert _run(tmp_path) == [
+        ("common/scripted_triggers/crlf.txt", 3, _MERGE_USA),
+        ("common/scripted_triggers/crlf.txt", 1, _NOT_TWO),
+    ]
+
+
+def test_keyword_blocks_need_a_word_boundary():
+    nots = "xNOT = { a = 1 b = 2 }\n_NOT = { a = 1 b = 2 }\n.NOT = { a = 1 b = 2 }"
+    assert _not(nots) == [(3, 2)]
+    empties = "xvisible = { }\nnot_allowed = { }\navailable = { }"
+    assert _find_empty_trigger_blocks(_script(empties)) == [(3, "available")]
+
+
+def test_scope_expansion_gate_opens_on_either_trigger():
+    # The only `exists` is in a comment, so is_puppet alone must open the gate;
+    # the spaceless form must open it too.
+    text = "# exists = yes\nUSA = { has_war = yes }\nGER = { is_puppet=yes }"
+    assert _find_scope_expansion(_script(text)) == [(3, "GER", "is_puppet_of = GER")]
+
+
+def test_government_gate_opens_on_spaceless_has_government():
+    clauses = "".join(
+        f"\tAND = {{ has_government={i} FROM = {{ has_government={i} }} }}\n"
+        for i in sorted(vs._GOV_IDEOS)
+    )
+    text = "\nOR = {\n" + clauses + "}\n"
+    assert _find_government_match(_script(text)) == [(2, "has_government = FROM")]
+
+
+def test_pooled_run_matches_in_process_findings_and_order(
+    tmp_path, monkeypatch, write_path
+):
+    # 61 files cross the pool threshold and span two map chunks.
+    for index in range(60):
+        write_path(
+            tmp_path,
+            f"events/pool_{index:02}.txt",
+            "\n" * index + "USA = { a = yes }\nUSA = { b = yes }\n",
+        )
+    write_path(tmp_path, "common/ai_strategy/pool.txt", "NOT = { tag = USA tag = GER }")
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+
+    pooled = vs.Validator(str(tmp_path), use_colors=False, workers=2)
+    assert pooled.workers == 2
+    try:
+        pooled.run_validations()
+        assert pooled._pool is not None, "the scan must run in the worker pool"
+    finally:
+        if pooled._pool is not None:
+            pooled._pool.terminate()
+            pooled._pool.join()
+    in_process = _run(tmp_path)
+
+    assert _findings(pooled) == in_process
+    assert sorted(in_process) == sorted(
+        [(f"events/pool_{index:02}.txt", index + 2, _MERGE_USA) for index in range(60)]
+        + [("common/ai_strategy/pool.txt", 1, _NOT_TWO)]
+    )
+
+
+def test_disk_cache_reuses_findings_until_the_content_changes(
+    tmp_path, monkeypatch, write_path
+):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    merge = "USA = { a = yes }\nUSA = { b = yes }\n"
+    path = write_path(tmp_path, "events/cached.txt", merge)
+    scanned = []
+    original = vs._scan_composite
+
+    def counting(text, rel):
+        scanned.append(rel)
+        return original(text, rel)
+
+    monkeypatch.setattr(vs, "_scan_composite", counting)
+    cold = _run(tmp_path)
+    assert scanned == ["events/cached.txt"]
+
+    scanned.clear()
+    assert _run(tmp_path) == cold == [("events/cached.txt", 2, _MERGE_USA)]
+    assert scanned == [], "the warm run must read the cached findings"
+
+    write_path(tmp_path, "events/cached.txt", "\n" + merge)
+    vs.FileOpener.invalidate(str(path))  # in-process reads are memoized per path
+    assert _run(tmp_path) == [("events/cached.txt", 3, _MERGE_USA)]
+    assert scanned == ["events/cached.txt"]

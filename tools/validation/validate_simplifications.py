@@ -43,11 +43,20 @@ import fnmatch
 import os
 import re
 import sys
+from bisect import bisect_left
+from functools import cached_property
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+import disk_cache
+
 # strip_comments is re-exported here so validate_simplifications_test can import it.
-from shared_utils import extract_block_from_text, strip_comments  # noqa: F401
+from shared_utils import (  # noqa: F401
+    FileOpener,
+    extract_block_from_text,
+    find_matching_brace,
+    strip_comments,
+)
 from validator_common import BaseValidator, Severity, run_validator_main
 
 _SCAN_PATTERNS = [
@@ -73,7 +82,76 @@ _NOT_SCAN_PATTERNS = [
 
 # Matches `HEADER = {`. The header charset covers tags, state ids, magic scopes,
 # and variable/target scopes (var:x, event_target:y, global.event_target:z^0).
-_OPEN_RE = re.compile(r"([\w.:^@\[\]-]+)\s*=\s*\{")
+# Every search starts at a brace or the text start, so the lookbehind and the
+# possessive runs only stop re retrying each suffix of a key that is not
+# followed by `= {`; the matches are unchanged.
+_OPEN_RE = re.compile(r"(?<![\w.:^@\[\]-])([\w.:^@\[\]-]++)\s*+=\s*+\{")
+_BRACE_OR_QUOTE_RE = re.compile(r'[{}"]')
+_NEWLINE_RE = re.compile("\n")
+
+
+class _Script:
+    """One comment-stripped file whose brace pairs are matched in one pass.
+
+    The block walkers pass absolute (start, end) spans of ``text`` instead of
+    slicing out each body, so a block is brace-matched once per file rather
+    than once per nesting level, and lines are counted only for findings.
+    """
+
+    def __init__(self, text: str):
+        self.text = text
+
+    @cached_property
+    def _close(self) -> dict[int, int]:
+        """`{` offset -> matching `}` offset, or -1 when it never closes. A `{`
+        inside a quoted string has no entry."""
+        text = self.text
+        close: dict[int, int] = {}
+        stack: list[int] = []
+        in_str = False
+        for m in _BRACE_OR_QUOTE_RE.finditer(text):
+            i = m.start()
+            char = m.group()
+            if char == '"':
+                if text[i - 1] != "\\":
+                    in_str = not in_str
+            elif in_str:
+                continue
+            elif char == "{":
+                stack.append(i)
+            elif stack:
+                close[stack.pop()] = i
+        for i in stack:
+            close[i] = -1
+        return close
+
+    @cached_property
+    def _newlines(self) -> list[int]:
+        return [m.start() for m in _NEWLINE_RE.finditer(self.text)]
+
+    def block_end(self, brace: int, limit: int) -> int:
+        """Index just past the `}` matching the `{` at *brace*, or -1 when it
+        does not close before *limit*: what extract_block_from_text returns
+        for that brace in ``text[:limit]``."""
+        close = self._close.get(brace)
+        if close is None:
+            # A quoted brace: match it as the per-block scan did, from outside a string.
+            found = find_matching_brace(self.text[brace:limit], 0)
+            return -1 if found == -1 else brace + found + 1
+        return close + 1 if 0 <= close < limit else -1
+
+    def line(self, pos: int) -> int:
+        return bisect_left(self._newlines, pos) + 1
+
+
+def _keyword_block_re(*keywords: str) -> re.Pattern[str]:
+    """Compile `KEYWORD = {` for any of *keywords*, captured as group 1, with a
+    word boundary before it. Written literal-first, so re jumps to candidates
+    instead of testing a boundary at every offset; each lookbehind is that
+    boundary."""
+    alternatives = "|".join(rf"{keyword}(?<!\w{keyword})" for keyword in keywords)
+    return re.compile(rf"({alternatives})\s*=\s*\{{")
+
 
 # Magic scopes that resolve to a single deterministic target. Dotted chains of
 # these (PREV.PREV, ROOT.CAPITAL) are deterministic too.
@@ -120,46 +198,50 @@ def _effectively_empty(body: str) -> bool:
     return True
 
 
-def _find_scope_expansion(text: str):
+def _find_scope_expansion(src: _Script):
     """Return (line, tag, flat_form) for each `TAG = { single trigger }` block
     that collapses to a flat country trigger."""
+    text = src.text
+    if not any(trigger in text for trigger, _ in _FLAT_EQUIV):
+        return []
     results = []
     for m in _TAG_BLOCK_RE.finditer(text):
         tag = m.group(1)
         if tag in _NOT_TAGS:
             continue
-        body, end = extract_block_from_text(text, m.end() - 1)
+        end = src.block_end(m.end() - 1, len(text))
         if end == -1:
             continue
-        sm = _SINGLE_TRIGGER_RE.match(body.strip())
+        sm = _SINGLE_TRIGGER_RE.match(text[m.end() : end - 1].strip())
         if not sm:
             continue
         flat = _FLAT_EQUIV.get((sm.group(1), sm.group(2)))
         if flat:
-            line = text.count("\n", 0, m.start()) + 1
-            results.append((line, tag, flat.format(tag=tag)))
+            results.append((src.line(m.start()), tag, flat.format(tag=tag)))
     return results
 
 
 # random_list with exactly two weight buckets where one is empty is a Bernoulli
 # trial in the wrong syntax; it collapses to a single `random = { chance = N }`.
 # Three+ buckets, or two non-empty buckets, must stay (see AGENTS.md).
-_RANDOM_LIST_RE = re.compile(r"\brandom_list\s*=\s*\{")
+_RANDOM_LIST_RE = _keyword_block_re("random_list")
 _WEIGHT_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
 _MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
 
 
-def _find_two_bucket_random(text: str):
+def _find_two_bucket_random(src: _Script):
     """Return (line, chance) for each two-bucket random_list with one empty
     bucket, where chance is the probability the non-empty bucket fires.
 
     Buckets containing ``modifier = { }`` blocks are skipped — ``random = {}
     chance = N`` has no modifier support, so the conversion is not valid."""
+    text = src.text
     results = []
     for m in _RANDOM_LIST_RE.finditer(text):
-        body, end = extract_block_from_text(text, m.end() - 1)
+        end = src.block_end(m.end() - 1, len(text))
         if end == -1:
             continue
+        body = text[m.end() : end - 1]
         buckets = []  # (weight, is_empty, has_modifier) for each direct-child bucket
         pos = 0
         malformed = False
@@ -194,8 +276,7 @@ def _find_two_bucket_random(text: str):
         if total <= 0:
             continue
         chance = round(100 * non_empty[0][0] / total)
-        line = text.count("\n", 0, m.start()) + 1
-        results.append((line, chance))
+        results.append((src.line(m.start()), chance))
     return results
 
 
@@ -206,41 +287,42 @@ def _find_two_bucket_random(text: str):
 # already covered by the same-scope merge detector, and merging random scopes
 # would change the spawn target. Blocks that already carry their own `count` are
 # skipped so the suggested total is never wrong.
-_CREATE_UNIT_RE = re.compile(r"\bcreate_unit\s*=\s*\{")
+_CREATE_UNIT_RE = _keyword_block_re("create_unit")
 _HAS_COUNT_RE = re.compile(r"\bcount\s*=")
 
 
-def _find_count_collapsible(text: str):
+def _find_count_collapsible(src: _Script):
     """Return (line, run_len) for each run of 2+ identical adjacent create_unit
     blocks that collapse into one block with `count = run_len`. *line* is the
     first block in the run."""
+    text = src.text
     results = []
     pos = 0
-    run_start_line = None
+    run_start = 0
     run_norm = None
     run_len = 0
     prev_end = None
 
     def flush():
         if run_len >= 2:
-            results.append((run_start_line, run_len))
+            results.append((src.line(run_start), run_len))
 
     while True:
         m = _CREATE_UNIT_RE.search(text, pos)
         if not m:
             break
-        body, end = extract_block_from_text(text, m.end() - 1)
+        end = src.block_end(m.end() - 1, len(text))
         if end == -1:
             break
+        body = text[m.end() : end - 1]
         has_count = bool(_HAS_COUNT_RE.search(body))
         norm = None if has_count else re.sub(r"\s+", "", body)
-        line = text.count("\n", 0, m.start()) + 1
         adjacent = prev_end is not None and text[prev_end : m.start()].strip() == ""
         if adjacent and norm is not None and norm == run_norm:
             run_len += 1
         else:
             flush()
-            run_start_line = line
+            run_start = m.start()
             run_norm = norm
             run_len = 1
         prev_end = end
@@ -252,20 +334,20 @@ def _find_count_collapsible(text: str):
 # Empty `visible` / `available` / `allowed` blocks fall through to the engine
 # default (visible, available, allowed), so an effectively-empty one is dead
 # weight that can be deleted outright.
-_EMPTY_BLOCK_RE = re.compile(r"\b(visible|available|allowed)\s*=\s*\{")
+_EMPTY_BLOCK_RE = _keyword_block_re("visible", "available", "allowed")
 
 
-def _find_empty_trigger_blocks(text: str):
+def _find_empty_trigger_blocks(src: _Script):
     """Return (line, keyword) for each effectively-empty visible/available/
     allowed block."""
+    text = src.text
     results = []
     for m in _EMPTY_BLOCK_RE.finditer(text):
-        body, end = extract_block_from_text(text, m.end() - 1)
+        end = src.block_end(m.end() - 1, len(text))
         if end == -1:
             continue
-        if _effectively_empty(body):
-            line = text.count("\n", 0, m.start()) + 1
-            results.append((line, m.group(1)))
+        if _effectively_empty(text[m.end() : end - 1]):
+            results.append((src.line(m.start()), m.group(1)))
     return results
 
 
@@ -292,7 +374,7 @@ def _find_empty_trigger_blocks(text: str):
 _GOV_IDEOS = frozenset(
     {"democratic", "communism", "fascism", "neutrality", "nationalist"}
 )
-_OR_BLOCK_RE = re.compile(r"\bOR\s*=\s*\{")
+_OR_BLOCK_RE = _keyword_block_re("OR")
 _HAS_GOV_RE = re.compile(r"\bhas_government\s*=\s*(\w+)")
 _GOV_ONLY_RE = re.compile(r"has_government\s*=\s*(\w+)\s*$")
 _NOT_GOV_RE = re.compile(r"NOT\s*=\s*\{(.*)\}\s*$", re.DOTALL)
@@ -364,14 +446,18 @@ def _parse_gov_clause(body: str):
     return (name, "DIFF" if sense else "SAME", ideology)
 
 
-def _find_government_match(text: str):
+def _find_government_match(src: _Script):
     """Return (line, replacement) for each exhaustive government-match `OR`
     block that collapses to a single `has_government` comparison."""
+    text = src.text
+    if "has_government" not in text:
+        return []
     results = []
     for m in _OR_BLOCK_RE.finditer(text):
-        body, end = extract_block_from_text(text, m.end() - 1)
+        end = src.block_end(m.end() - 1, len(text))
         if end == -1:
             continue
+        body = text[m.end() : end - 1]
         clauses = []
         spans = []
         pos = 0
@@ -414,14 +500,14 @@ def _find_government_match(text: str):
             if next(iter(senses)) == "SAME"
             else f"NOT = {{ has_government = {target} }}"
         )
-        results.append((text.count("\n", 0, m.start()) + 1, replacement))
+        results.append((src.line(m.start()), replacement))
     return results
 
 
 # Bare multi-child NOT is ambiguous: the project doc reads it as NAND, cwtools
 # as NOR (see AGENTS.md "NOT blocks and NOR"). A single child — one trigger or
 # one explicit AND/OR wrapper — is unambiguous and never flagged.
-_NOT_RE = re.compile(r"\bNOT\s*=\s*\{")
+_NOT_RE = _keyword_block_re("NOT")
 _CHILD_KEY_RE = re.compile(r"[\w.:^@\[\]-]+\s*(?:>=|<=|=|>|<)\s*")
 _VALUE_RE = re.compile(r"\S+")
 
@@ -462,20 +548,21 @@ def _count_children(body: str) -> int:
     return count
 
 
-def _find_bare_not(text: str):
+def _find_bare_not(src: _Script):
     """Return (line, child_count) for each `NOT = { ... }` with 2+ direct
     children. A single child — a lone trigger or an explicit AND/OR wrapper —
     is unambiguous and not flagged. finditer walks the whole file, so a NOT
     nested inside another block (OR, if, a second NOT) is found independently
     of its container."""
+    text = src.text
     results = []
     for m in _NOT_RE.finditer(text):
-        body, end = extract_block_from_text(text, m.end() - 1)
+        end = src.block_end(m.end() - 1, len(text))
         if end == -1:
             continue
-        count = _count_children(body)
+        count = _count_children(text[m.end() : end - 1])
         if count >= 2:
-            results.append((text.count("\n", 0, m.start()) + 1, count))
+            results.append((src.line(m.start()), count))
     return results
 
 
@@ -498,28 +585,32 @@ def _is_mergeable_scope(header: str) -> bool:
     return _is_magic_chain(header)
 
 
-def _find_mergeable(text: str, base_line: int = 0, parent: str = ""):
+def _find_mergeable(
+    src: _Script, start: int = 0, end: int | None = None, parent: str = ""
+):
     """Return (line, header) for every block that repeats its immediately
     preceding sibling's deterministic scope. Recurses into every block body so
     nested scopes are covered; only direct siblings at one depth are compared.
 
-    *parent* is the header of the enclosing block; merging is suppressed under
-    OR-like / weighted parents where siblings are not a plain AND list.
+    *start*/*end* bound the body walked, the whole file by default. *parent*
+    is the header of the enclosing block; merging is suppressed under OR-like
+    / weighted parents where siblings are not a plain AND list.
     """
+    text = src.text
+    if end is None:
+        end = len(text)
     results = []
-    pos = 0
-    n = len(text)
+    pos = start
     prev_header = None
     prev_end = None  # index just past the previous sibling's closing brace
     safe_context = parent not in _NO_MERGE_PARENTS
-    while pos < n:
-        m = _OPEN_RE.search(text, pos)
+    while pos < end:
+        m = _OPEN_RE.search(text, pos, end)
         if not m:
             break
         header = m.group(1)
-        open_brace = m.end() - 1
-        body, end = extract_block_from_text(text, open_brace)
-        if end == -1:
+        block_end = src.block_end(m.end() - 1, end)
+        if block_end == -1:
             break
 
         if (
@@ -529,16 +620,13 @@ def _find_mergeable(text: str, base_line: int = 0, parent: str = ""):
             and _is_mergeable_scope(header)
             and text[prev_end : m.start()].strip() == ""
         ):
-            line = base_line + text.count("\n", 0, m.start()) + 1
-            results.append((line, header))
+            results.append((src.line(m.start()), header))
 
-        body_start = open_brace + 1
-        child_base = base_line + text.count("\n", 0, body_start)
-        results.extend(_find_mergeable(body, child_base, header))
+        results.extend(_find_mergeable(src, m.end(), block_end - 1, header))
 
         prev_header = header
-        prev_end = end
-        pos = end
+        prev_end = block_end
+        pos = block_end
     return results
 
 
@@ -547,7 +635,7 @@ def _find_mergeable(text: str, base_line: int = 0, parent: str = ""):
 # engine-native `random_controlled_state` iterator (scoped to that country),
 # which skips the world scan. Nested under AND/OR/NOT is left alone: those
 # are not a plain controller filter. Extra sibling limits stay on the rewrite.
-_RANDOM_STATE_RE = re.compile(r"\brandom_state\s*=\s*\{")
+_RANDOM_STATE_RE = _keyword_block_re("random_state")
 _CHILD_HEAD_RE = re.compile(r"([\w.:^@\[\]-]+)\s*(?:>=|<=|=|>|<)\s*")
 _TAG_ONLY_RE = re.compile(r"^tag\s*=\s*(\S+)$")
 
@@ -600,17 +688,18 @@ def _controller_limit_detail(limit_body: str):
     return None
 
 
-def _find_random_controlled_shortcut(text: str):
+def _find_random_controlled_shortcut(src: _Script):
     """Return (line, detail) for each `random_state` whose own limit has a
     controller-tag / is_controlled_by check that collapses to
     `random_controlled_state`."""
+    text = src.text
     results = []
     for m in _RANDOM_STATE_RE.finditer(text):
-        body, end = extract_block_from_text(text, m.end() - 1)
+        end = src.block_end(m.end() - 1, len(text))
         if end == -1:
             continue
         limit_body = None
-        for name, value, is_block in _iter_direct_assignments(body):
+        for name, value, is_block in _iter_direct_assignments(text[m.end() : end - 1]):
             if is_block and name == "limit":
                 limit_body = value
                 break
@@ -618,7 +707,7 @@ def _find_random_controlled_shortcut(text: str):
             continue
         detail = _controller_limit_detail(limit_body)
         if detail:
-            results.append((text.count("\n", 0, m.start()) + 1, detail))
+            results.append((src.line(m.start()), detail))
     return results
 
 
@@ -690,30 +779,32 @@ _OWNER_GATE_TRANSPARENT = frozenset(
 )
 
 
-def _collect_owner_atoms(text: str) -> tuple[set[str], set[str]]:
+def _collect_owner_atoms(
+    src: _Script, start: int, end: int
+) -> tuple[set[str], set[str]]:
     """Return (strict_tags, orig_tags) for `tag = X` / `original_tag = X`
-    triggers not nested under a scope-changing or sense-changing block.
-    AND-like wrappers don't block collection; country, state, magic, or
-    iterator scopes do (atoms there describe another scope), as do OR and NOT
-    (which dilute or invert the identity the atom asserts)."""
+    triggers in text[start:end] not nested under a scope-changing or
+    sense-changing block. AND-like wrappers don't block collection; country,
+    state, magic, or iterator scopes do (atoms there describe another scope),
+    as do OR and NOT (which dilute or invert the identity the atom asserts)."""
+    text = src.text
     strict: set[str] = set()
     orig: set[str] = set()
-    pos = 0
+    pos = start
     while True:
-        m = _OPEN_RE.search(text, pos)
-        gap = text[pos : m.start() if m else len(text)]
-        for gm in _OWNER_ATOM_RE.finditer(gap):
+        m = _OPEN_RE.search(text, pos, end)
+        for gm in _OWNER_ATOM_RE.finditer(text, pos, m.start() if m else end):
             (strict if gm.group(1) == "tag" else orig).add(gm.group(2))
         if not m:
             break
-        body, end = extract_block_from_text(text, m.end() - 1)
-        if end == -1:
+        block_end = src.block_end(m.end() - 1, end)
+        if block_end == -1:
             break
         if m.group(1) in _OWNER_GATE_TRANSPARENT:
-            s, o = _collect_owner_atoms(body)
+            s, o = _collect_owner_atoms(src, m.end(), block_end - 1)
             strict |= s
             orig |= o
-        pos = end
+        pos = block_end
     return strict, orig
 
 
@@ -745,30 +836,31 @@ def _liftable_owner_block(body: str) -> bool:
 
 
 def _walk_owner_scope(
-    body: str,
+    src: _Script,
+    start: int,
+    end: int,
     owner: str,
     strict: bool,
     findings: list,
-    start_line: int,
-    scope_owner: bool = True,
     or_depth: int = 0,
     gate_site: bool = False,
 ) -> None:
     """Append (message, line) for redundant owner-scope blocks and
-    always-true owner checks. *body* starts at file line *start_line*;
-    scope, OR/NOT depth, and gate-site state thread through transparent
-    wrappers, while any other block drops to non-owner scope."""
-    pos = 0
+    always-true owner checks in the owner-scope body text[start:end]. OR/NOT
+    depth and gate-site state thread through transparent wrappers. Any other
+    block leaves the owner scope, where nothing is flagged, so it is skipped."""
+    text = src.text
+    pos = start
     while True:
-        m = _OPEN_RE.search(body, pos)
-        gap = body[pos : m.start() if m else len(body)]
-        if scope_owner and or_depth == 0 and not gate_site:
-            for gm in _OWNER_ATOM_RE.finditer(gap):
+        m = _OPEN_RE.search(text, pos, end)
+        if or_depth == 0 and not gate_site:
+            for gm in _OWNER_ATOM_RE.finditer(text, pos, m.start() if m else end):
                 kind, tag = gm.group(1), gm.group(2)
                 if tag != owner:
                     continue
                 if kind == "original_tag" or strict:
-                    line = start_line + gap.count("\n", 0, gm.start())
+                    # Skips earlier siblings' newlines when pos > start; kept as is.
+                    line = src.line(start) + text.count("\n", pos, gm.start())
                     findings.append(
                         (
                             f"`{kind} = {tag}` always true in this owner scope; remove it",
@@ -778,133 +870,135 @@ def _walk_owner_scope(
         if not m:
             break
         header = m.group(1)
-        inner, end = extract_block_from_text(body, m.end() - 1)
-        if end == -1:
+        block_end = src.block_end(m.end() - 1, end)
+        if block_end == -1:
             break
-        line = start_line + body.count("\n", 0, m.start())
-        child_line = start_line + body.count("\n", 0, m.end())
         if header in _OWNER_TRANSPARENT:
             _walk_owner_scope(
-                inner,
+                src,
+                m.end(),
+                block_end - 1,
                 owner,
                 strict,
                 findings,
-                child_line,
-                scope_owner,
                 or_depth + (header in _OR_LIKE_HEADERS),
                 gate_site or header in _GATE_SITE_HEADERS,
             )
-        elif header == owner and scope_owner and strict:
-            if _liftable_owner_block(inner):
+        elif header == owner and strict:
+            if _liftable_owner_block(text[m.end() : block_end - 1]):
                 findings.append(
                     (
                         f"`{owner} = {{ ... }}` already runs in the `{owner}` scope; "
                         "remove the wrapper",
-                        line,
+                        src.line(m.start()),
                     )
                 )
             else:
                 _walk_owner_scope(
-                    inner, owner, strict, findings, child_line, True, or_depth, False
+                    src, m.end(), block_end - 1, owner, strict, findings, or_depth
                 )
-        else:
-            _walk_owner_scope(
-                inner, owner, strict, findings, child_line, False, or_depth, False
-            )
-        pos = end
+        pos = block_end
 
 
-def _top_level_blocks(text: str, names, start_line: int = 1):
-    """Yield (header, body, body_start_line) for each depth-0 block. *names*
-    None matches every header. Callers always land on depth 0 by jumping
-    block to block."""
-    pos = 0
+def _top_level_blocks(src: _Script, names, start: int = 0, end: int | None = None):
+    """Yield (header, body_start, body_end) for each depth-0 block of
+    text[start:end]. *names* None matches every header. Callers always land
+    on depth 0 by jumping block to block."""
+    text = src.text
+    if end is None:
+        end = len(text)
+    pos = start
     while True:
-        m = _OPEN_RE.search(text, pos)
+        m = _OPEN_RE.search(text, pos, end)
         if not m:
             break
-        body, end = extract_block_from_text(text, m.end() - 1)
-        if end == -1:
+        block_end = src.block_end(m.end() - 1, end)
+        if block_end == -1:
             break
         if names is None or m.group(1) in names:
-            yield m.group(1), body, start_line + text.count("\n", 0, m.end())
-        pos = end
+            yield m.group(1), m.end(), block_end - 1
+        pos = block_end
 
 
-def _direct_gate_atoms(body: str) -> tuple[set[str], set[str]]:
+def _direct_gate_atoms(src: _Script, start: int, end: int) -> tuple[set[str], set[str]]:
     """Owner atoms from direct-child `allowed` / `allow_branch` blocks."""
     strict: set[str] = set()
     orig: set[str] = set()
-    for _, abody, _ in _top_level_blocks(body, _GATE_SITE_HEADERS):
-        s, o = _collect_owner_atoms(abody)
+    for _, gate_start, gate_end in _top_level_blocks(
+        src, _GATE_SITE_HEADERS, start, end
+    ):
+        s, o = _collect_owner_atoms(src, gate_start, gate_end)
         strict |= s
         orig |= o
     return strict, orig
 
 
-def _scan_focus_file(text: str) -> list:
+def _scan_focus_file(src: _Script) -> list:
     """Return [(message, line)] for redundant owner scopes in one focus file.
     Ownership comes from the single `focus_tree` country gate, narrowed by
     each focus's own `allow_branch`; `joint_focus` blocks are never scanned."""
     findings: list = []
-    trees = list(_top_level_blocks(text, {"focus_tree"}))
+    trees = list(_top_level_blocks(src, {"focus_tree"}))
     if len(trees) != 1:
         return findings
-    _, tbody, tline = trees[0]
-    countries = list(_top_level_blocks(tbody, {"country"}))
+    _, tree_start, tree_end = trees[0]
+    countries = list(_top_level_blocks(src, {"country"}, tree_start, tree_end))
     if len(countries) > 1:
         return findings
-    base = _collect_owner_atoms(countries[0][1]) if countries else (set(), set())
-    blocks = list(_top_level_blocks(tbody, {"focus"}, tline))
-    blocks += list(_top_level_blocks(text, {"focus"}))
-    for _, fbody, fline in blocks:
-        s, o = _direct_gate_atoms(fbody)
+    base = (
+        _collect_owner_atoms(src, countries[0][1], countries[0][2])
+        if countries
+        else (set(), set())
+    )
+    blocks = list(_top_level_blocks(src, {"focus"}, tree_start, tree_end))
+    blocks += list(_top_level_blocks(src, {"focus"}))
+    for _, start, end in blocks:
+        s, o = _direct_gate_atoms(src, start, end)
         owner = _owner_from_atoms(base[0] | s, base[1] | o)
         if owner is None:
             continue
-        _walk_owner_scope(fbody, owner[0], owner[1], findings, fline)
+        _walk_owner_scope(src, start, end, owner[0], owner[1], findings)
     return findings
 
 
-def _scan_decision_file(text: str) -> list:
+def _scan_decision_file(src: _Script) -> list:
     """Return [(message, line)] for redundant owner scopes in one decisions
     file. Ownership comes from each decision's own `allowed`, extended with
     the enclosing `*_category` block's `allowed` when nested."""
     findings: list = []
-    for header, body, bline in _top_level_blocks(text, None):
+    for header, start, end in _top_level_blocks(src, None):
         if header.endswith("_category"):
-            cstrict, corig = _direct_gate_atoms(body)
-            for dheader, dbody, dline in _top_level_blocks(body, None, bline):
+            cstrict, corig = _direct_gate_atoms(src, start, end)
+            for dheader, dstart, dend in _top_level_blocks(src, None, start, end):
                 if dheader.endswith("_category"):
                     continue
                 if dheader in _GATE_SITE_HEADERS:
                     continue  # gate definition, not a decision
-                s, o = _direct_gate_atoms(dbody)
+                s, o = _direct_gate_atoms(src, dstart, dend)
                 owner = _owner_from_atoms(cstrict | s, corig | o)
                 if owner is None:
                     continue
-                _walk_owner_scope(dbody, owner[0], owner[1], findings, dline)
+                _walk_owner_scope(src, dstart, dend, owner[0], owner[1], findings)
         else:
-            owner = _owner_from_atoms(*_direct_gate_atoms(body))
+            owner = _owner_from_atoms(*_direct_gate_atoms(src, start, end))
             if owner is None:
                 continue
-            _walk_owner_scope(body, owner[0], owner[1], findings, bline)
+            _walk_owner_scope(src, start, end, owner[0], owner[1], findings)
     return findings
 
 
-def _scan_file(text: str, path: str):
-    """Return [(message, line)] for one comment-stripped file. Pure function of
-    *text*, so parse_files_cached can content-cache it."""
+def _scan_file(src: _Script):
+    """Return [(message, line)] for one comment-stripped file."""
     findings = []
-    for line, header in _find_mergeable(text):
+    for line, header in _find_mergeable(src):
         findings.append(
             (f"consecutive `{header} = {{ }}` blocks can be merged into one", line)
         )
-    for line, tag, flat in _find_scope_expansion(text):
+    for line, tag, flat in _find_scope_expansion(src):
         findings.append(
             (f"`{tag} = {{ ... }}` scope opened for one trigger; use `{flat}`", line)
         )
-    for line, chance in _find_two_bucket_random(text):
+    for line, chance in _find_two_bucket_random(src):
         findings.append(
             (
                 f"two-bucket random_list with an empty bucket; use "
@@ -912,7 +1006,7 @@ def _scan_file(text: str, path: str):
                 line,
             )
         )
-    for line, run_len in _find_count_collapsible(text):
+    for line, run_len in _find_count_collapsible(src):
         findings.append(
             (
                 f"{run_len} identical adjacent `create_unit` blocks; collapse "
@@ -920,18 +1014,18 @@ def _scan_file(text: str, path: str):
                 line,
             )
         )
-    for line, keyword in _find_empty_trigger_blocks(text):
+    for line, keyword in _find_empty_trigger_blocks(src):
         findings.append(
             (f"empty `{keyword} = {{ }}` block is redundant; remove it", line)
         )
-    for line, replacement in _find_government_match(text):
+    for line, replacement in _find_government_match(src):
         findings.append(
             (
                 f"ideology enumeration over all five governments; use `{replacement}`",
                 line,
             )
         )
-    for line, detail in _find_random_controlled_shortcut(text):
+    for line, detail in _find_random_controlled_shortcut(src):
         findings.append(
             (
                 f"`random_state` limited by `{detail}`; use `random_controlled_state`",
@@ -941,13 +1035,13 @@ def _scan_file(text: str, path: str):
     return findings
 
 
-def _scan_bare_not(text: str, path: str):
+def _scan_bare_not(src: _Script):
     """Return [(message, line)] for the bare multi-child NOT check. Separate
     from _scan_file: NOT lives in trigger contexts across all of common/ (the
     founding bug was in an ai_strategy allowed block), so this check scans
     wider than the effect-bearing files the other detectors target."""
     findings = []
-    for line, count in _find_bare_not(text):
+    for line, count in _find_bare_not(src):
         findings.append(
             (
                 f"NOT with {count} children is ambiguous (semantics disputed "
@@ -998,29 +1092,47 @@ def _matches_relative_pattern(path: str, patterns) -> bool:
 
 def _scan_composite(text: str, path: str):
     """Run the simplification passes after one content read/cache lookup."""
+    src = _Script(text)
     findings = []
     if _matches_relative_pattern(path, _SCAN_PATTERNS):
-        findings.extend(_scan_file(text, path))
+        findings.extend(_scan_file(src))
     if _matches_relative_pattern(path, _NOT_SCAN_PATTERNS):
-        findings.extend(_scan_bare_not(text, path))
+        findings.extend(_scan_bare_not(src))
     if _matches_relative_pattern(path, _FOCUS_PATTERNS):
-        findings.extend(_scan_focus_file(text))
+        findings.extend(_scan_focus_file(src))
     if _matches_relative_pattern(path, _DECISION_PATTERNS):
-        findings.extend(_scan_decision_file(text))
+        findings.extend(_scan_decision_file(src))
     return findings
 
 
 def _scan_owner_scope_only(text: str, path: str):
     """Run just the redundant owner-scope pass (focus trees + decisions)."""
+    src = _Script(text)
     findings = []
     if _matches_relative_pattern(path, _FOCUS_PATTERNS):
-        findings.extend(_scan_focus_file(text))
+        findings.extend(_scan_focus_file(src))
     if _matches_relative_pattern(path, _DECISION_PATTERNS):
-        findings.extend(_scan_decision_file(text))
+        findings.extend(_scan_decision_file(src))
     return findings
 
 
 _OWNER_SCOPE_PATTERNS = list(dict.fromkeys(_FOCUS_PATTERNS + _DECISION_PATTERNS))
+
+
+def _scan_path(args: tuple[str, str, bool]):
+    """Pool worker: content-cached findings for one file. The cache key must
+    differ per pass set, since the same content yields different findings
+    under --owner-scope-only."""
+    path, mod_path, owner_scope_only = args
+    text = FileOpener.open_text_file(path, strip_comments_flag=True)
+    rel = os.path.relpath(path, mod_path)
+    if owner_scope_only:
+        namespace, scan = "simplifications.owner-scope", _scan_owner_scope_only
+    else:
+        namespace, scan = "simplifications.composite", _scan_composite
+    return disk_cache.per_file_cached_by_content(
+        mod_path, namespace, path, text, lambda: scan(text, rel)
+    )
 
 
 class Validator(BaseValidator):
@@ -1033,28 +1145,22 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         self._log_section("Scanning for simplification opportunities...")
-        # All passes share one comment-stripped read per file; the cache key
-        # must differ per pass set, since the same content yields different
-        # findings under --owner-scope-only.
+        # All passes share one comment-stripped read per file.
         if self.owner_scope_only:
             self._log_section("Owner-scope pass only (--owner-scope-only).")
             patterns = _OWNER_SCOPE_PATTERNS
-            cache_key = "simplifications.owner-scope"
-            scan_fn = _scan_owner_scope_only
         else:
             patterns = _ALL_SCAN_PATTERNS
-            cache_key = "simplifications.composite"
-            scan_fn = _scan_composite
-        parsed = self.parse_files_cached(
-            patterns,
-            cache_key,
-            lambda text, path: scan_fn(text, os.path.relpath(path, self.mod_path)),
+        files = self._collect_files(patterns)
+        parsed = self._pool_map(
+            _scan_path,
+            [(path, self.mod_path, self.owner_scope_only) for path in files],
         )
         self.log(f"Scanned {len(parsed)} files for simplification opportunities")
 
         self._log_section("Collecting and reporting results...")
         results = []
-        for path, findings in parsed.items():
+        for path, findings in zip(files, parsed):
             rel = os.path.relpath(path, self.mod_path)
             for message, line in findings:
                 results.append((message, rel, line))
