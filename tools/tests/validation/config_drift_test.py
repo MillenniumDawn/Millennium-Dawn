@@ -225,6 +225,18 @@ def test_tools_quality_runs_beside_the_test_matrix():
         assert command not in test_commands
 
 
+def test_tools_tests_install_only_the_test_group():
+    setup = "Set up Python and dependencies"
+    assert workflow_step("tools-tests", setup)["with"]["group"] == "test"
+    assert "group" not in workflow_step("tools-quality", setup)["with"]
+    action = yaml.safe_load(SETUP_MD_PYTHON.read_text(encoding="utf-8"))
+    assert action["inputs"]["group"]["default"] == "dev"
+    lint = set(dev_setup._group_packages("dev")) - set(
+        dev_setup._group_packages("test")
+    )
+    assert {spec.split("==")[0] for spec in lint} == {"ruff", "black", "mypy", "pylint"}
+
+
 def test_python_version_declarations_agree():
     major, minor = dev_setup.MIN_PYTHON
     assert (major, minor) == (3, 12)

@@ -388,11 +388,13 @@ def test_group_packages_reads_the_named_group(monkeypatch, tmp_path):
         pyproject,
         "[dependency-groups]\n"
         'runtime = [\n  "requests>=2.32",\n  "pillow",\n]\n'
-        'dev = [\n  "pytest>=9.1.0",\n]\n',
+        'test = [\n  "pytest>=9.1.0",\n]\n'
+        'dev = [\n  {include-group = "test"},\n  "ruff",\n]\n',
     )
     monkeypatch.setattr(dev_setup, "PYPROJECT", pyproject)
 
     assert dev_setup._group_packages("runtime") == ["requests>=2.32", "pillow"]
+    assert dev_setup._group_packages("dev") == ["pytest>=9.1.0", "ruff"]
     assert dev_setup._group_packages("analysis") == []
 
 
@@ -460,13 +462,15 @@ def test_check_group_maps_distribution_names_to_import_names(monkeypatch, capsys
         return object()
 
     monkeypatch.setattr(
-        dev_setup, "_group_packages", lambda _group: ["pillow>=11", "pyyaml", "ruff"]
+        dev_setup,
+        "_group_packages",
+        lambda _group: ["pillow>=11", "pyyaml", "ruff", "pytest-xdist"],
     )
     monkeypatch.setattr(dev_setup.importlib.util, "find_spec", fake_find_spec)
     monkeypatch.setattr(dev_setup.importlib.metadata, "version", lambda _name: "11.1.0")
 
     assert dev_setup._check_group("runtime", "Tool dependencies") is True
-    assert imported == ["PIL", "yaml", "ruff"]
+    assert imported == ["PIL", "yaml", "ruff", "xdist"]
     assert "Tool dependencies: OK" in capsys.readouterr().out
 
 

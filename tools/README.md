@@ -17,6 +17,7 @@ pip install --group dev       # pytest (xdist, cov), coverage, pyyaml, Ruff, Bla
 ```
 
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
+`dev` includes a smaller `test` group, which is all the CI test jobs install.
 
 Python quality checks run on `tools/` in pre-commit and CI:
 
