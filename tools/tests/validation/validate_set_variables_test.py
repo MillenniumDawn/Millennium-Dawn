@@ -12,10 +12,12 @@ import pytest
 import validate_set_variables
 from shared.suite import write_under as _write
 from validate_set_variables import (
+    _DYNAMIC_REF_RE,
     SetVariables,
     Validator,
     _count_refs_in_text,
     _dynamic_ref_pattern,
+    _dynamic_refs,
     _pass2_init,
     _resolve_mod_root,
     _scan_set_variables,
@@ -154,6 +156,25 @@ def test_dynamic_reference_patterns_need_a_literal_anchor():
     assert patterns == {r"^tag_dyn_\w+_var$"}
 
 
+@pytest.mark.parametrize(
+    ("text", "refs"),
+    [
+        ("a[x]b:c[y]", ["a[x]b", ":c[y]"]),
+        ("ab[ cd[x]", ["cd[x]"]),
+        ("[[x]]", ["[[x]"]),
+        ("x..y[z].w", ["x..y[z].w"]),
+        ("ökosteuer_[i]_var", ["ökosteuer_[i]_var"]),
+        ("a_[x]_b_[y]_c", ["a_[x]_b_", "[y]_c"]),
+        ("tail [open", []),
+        ("[]", []),
+        ("set = { foo_[i] }\r\nbar.[j]", ["foo_[i]", "bar.[j]"]),
+    ],
+)
+def test_dynamic_refs_match_a_full_regex_scan(text, refs):
+    assert list(_dynamic_refs(text)) == refs
+    assert refs == [m.group() for m in _DYNAMIC_REF_RE.finditer(text)]
+
+
 def test_dynamic_pattern_strips_a_scope_prefix_but_keeps_the_global_namespace():
     assert _dynamic_ref_pattern("this.foo_[i]") == r"^foo_\w+$"
     assert _dynamic_ref_pattern("global.foo_[i]") == r"^global\.foo_\w+$"
@@ -221,6 +242,95 @@ def test_only_the_unread_variable_is_reported(tmp_path):
         ("TAG_dead_var (refs: 0)", "common/scripted_effects/vars.txt", 3)
     ]
     assert validator.errors_found == 1
+
+
+def test_one_worker_run_collects_targets_in_process(tmp_path, monkeypatch):
+    def no_pool(*_args, **_kwargs):
+        raise AssertionError("one worker must not start a pool")
+
+    monkeypatch.setattr(validate_set_variables, "Pool", no_pool)
+    validator = _mod_with_variables(tmp_path)
+
+    validator.run_validations()
+
+    assert _findings(validator) == [
+        ("TAG_dead_var (refs: 0)", "common/scripted_effects/vars.txt", 3)
+    ]
+
+
+EDGE_SETTERS = """setup_effect = {
+\tset_variable = { TAG_first_var = 1 }
+\tset_variable = { TAG_slot_3_var = 1 }
+\tset_variable = { TAG_commented_var = 1 }
+\tset_variable = { TAG_quoted_var = 1 }
+\tset_variable = { TAG_dotted_var = 1 }
+\tset_variable = { TAG_longer_var = 1 }
+}
+"""
+
+EDGE_READERS = (
+    "check_variable = { TAG_first_var > 0 }\r\n"
+    "# check_variable = { TAG_commented_var > 0 }\r\n"
+    'log = "[THIS.TAG_dotted_var]"\r\n'
+    "check_variable = { TAG_longer_var_2 > 0 }\r\n"
+    "check_variable = { var = TAG_slot_[index]_var value = 1 }"
+)
+
+
+def test_reads_on_edge_lines_and_in_quotes_count_but_comments_do_not(tmp_path):
+    _write(tmp_path, "common/scripted_effects/vars.txt", EDGE_SETTERS)
+    _write(tmp_path, "common/scripted_effects/reads.txt", EDGE_READERS)
+    _write(
+        tmp_path,
+        "localisation/english/MD_test_l_english.yml",
+        ' l_english:\n TEST_key:0 "50# {[?TAG_quoted_var|0]"\n',
+    )
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator.run_validations()
+
+    assert _findings(validator) == [
+        ("TAG_commented_var (refs: 0)", "common/scripted_effects/vars.txt", 4),
+        ("TAG_longer_var (refs: 0)", "common/scripted_effects/vars.txt", 7),
+    ]
+
+
+def test_pooled_reference_scan_matches_the_in_process_scan(
+    tmp_path, monkeypatch, pool_sizes
+):
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    setters = "".join(
+        f"\tset_variable = {{ TAG_v{index:02}_var = 1 }}\n" for index in range(12)
+    )
+    _write(tmp_path, "common/scripted_effects/vars.txt", f"e = {{\n{setters}}}\n")
+    for index in range(0, 12, 2):
+        _write(
+            tmp_path,
+            f"common/scripted_effects/read{index:02}.txt",
+            f"check_variable = {{ TAG_v{index:02}_var > 0 }}\n",
+        )
+    for index in range(6):
+        _write(tmp_path, f"events/filler{index}.txt", "e = { log = filler }\n")
+
+    def run(workers):
+        validator = Validator(str(tmp_path), use_colors=False, workers=workers)
+        validator.run_all_validations()
+        return _findings(validator)
+
+    pooled = run(2)
+    assert pool_sizes == [2, 2]
+    assert (
+        pooled
+        == run(1)
+        == [
+            (
+                f"TAG_v{index:02}_var (refs: 0)",
+                "common/scripted_effects/vars.txt",
+                index + 2,
+            )
+            for index in range(1, 12, 2)
+        ]
+    )
 
 
 def test_min_refs_widens_the_report_to_thinly_used_variables(tmp_path):

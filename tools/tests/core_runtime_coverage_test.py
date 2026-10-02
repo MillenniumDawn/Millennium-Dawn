@@ -585,6 +585,7 @@ def test_run_tool_main_success_backup_and_failures(tmp_path, monkeypatch, capsys
 
 
 def test_run_validator_main_cli_paths_and_strict(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
     captured = {}
 
     class Validator:
@@ -1002,6 +1003,7 @@ def test_reports_format_issues_and_persistence(tmp_path):
 
 
 def test_suite_scheduling_reports_crash_and_main_cli(tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
     validators = [("first", "first.py", "First"), ("second", "second.py", "Second")]
     monkeypatch.setattr(suite, "split_cpu_budget", lambda tasks: (1, 1))
 

@@ -9,7 +9,7 @@ a guard on a focus with no money cost is flagged as unneeded.
 """
 
 import validate_focus_tree
-from validate_focus_tree import Validator, _extract_ai_guard_data
+from validate_focus_tree import Validator, _FocusFile
 
 
 def _write_focus_file(tmp_path, content):
@@ -82,7 +82,7 @@ STAFFABLE_MAP = {"one_random_industrial_complex": frozenset({"industrial_complex
 
 
 def _guard_data(fpath, tmp_path, staffable=STAFFABLE_MAP, money=frozenset()):
-    return _extract_ai_guard_data((str(fpath), str(tmp_path), staffable, money))
+    return _FocusFile(str(fpath), str(tmp_path)).ai_guards(staffable, money)
 
 
 def _write_worker_focus(tmp_path, reward, modifiers=""):
