@@ -1403,7 +1403,7 @@ def scan_probability_rolled_fires(
         return set()
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+    except OSError:
         return set()
     cleaned = re.sub(r"#[^\n]*", "", text)
     ids: set = set()

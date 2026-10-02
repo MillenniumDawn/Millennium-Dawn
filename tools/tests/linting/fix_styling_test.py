@@ -271,12 +271,13 @@ def git_repo(tmp_path):
     _git(tmp_path, "init", "-q")
     _git(tmp_path, "config", "user.email", "test@example.com")
     _git(tmp_path, "config", "user.name", "Test")
+    _write(tmp_path / ".gitattributes", "*.txt text eol=lf\n")
     legacy = (
         "attacker = 0.25\t\t\t# aligned legacy comment\n"
         "\t\tlegacy_aligned_line = 1\t\t# stays untouched\n"
     )
     (tmp_path / "focus.txt").write_text(legacy, encoding="utf-8", newline="")
-    _git(tmp_path, "add", "focus.txt")
+    _git(tmp_path, "add", "focus.txt", ".gitattributes")
     _git(tmp_path, "commit", "-q", "-m", "legacy")
     return tmp_path
 

@@ -265,6 +265,8 @@ def test_tools_checkout_exposes_consumed_configuration():
         "docs/src/content/resources/developer-setup.md",
     }
     assert required <= sparse
+    assert checkout["with"]["fetch-depth"] == 1
+    assert checkout["with"]["filter"] == "blob:none"
 
 
 def test_file_paths_run_in_a_lightweight_index_job():
@@ -375,15 +377,31 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
         and step.get("with", {}).get("path")
         and "sparse" in step.get("id", "")
     )
-    assert "md-sparse-v2-${{ runner.os }}" in cache["with"]["key"]
+    assert "md-sparse-v3-${{ runner.os }}" in cache["with"]["key"]
     assert "needs.detect-changes.outputs.head-sha" in cache["with"]["key"]
+    assert "restore-keys" not in cache["with"]
+    assert cache["with"]["path"] == "${{ env.WORKSPACE_PATHS }}"
+    assert checkout["with"]["fetch-depth"] == 1
+    assert checkout["with"]["sparse-checkout"] == (
+        "/tools/validation/ci_workspace_profile.txt"
+    )
+    materialize = next(
+        step
+        for step in prepare["steps"]
+        if step.get("name", "").startswith("Materialize")
+    )
+    assert materialize["if"] == "steps.sparse-cache.outputs.cache-hit != 'true'"
+    assert "git sparse-checkout set --no-cone --stdin" in materialize["run"]
+    assert "ci_workspace_profile.txt" in materialize["run"]
+    assert prepare["steps"].index(cache) < prepare["steps"].index(materialize)
     valcache = next(
         step
         for step in prepare["steps"]
         if "actions/cache/restore@" in step.get("uses", "")
         and "validation_cache" in step.get("with", {}).get("path", "")
     )
-    assert "full_suite != 'true'" in valcache["if"]
+    assert "if" not in valcache
+    assert "MD_NO_CACHE" not in prepare["env"]
     assert "steps.toolshash.outputs.hash" in valcache["with"]["key"]
     assert "base-sha" not in valcache["with"]["key"]
 
@@ -600,20 +618,24 @@ def test_validation_config_reaches_every_validator_run():
     text = CI_WORKFLOW.read_text(encoding="utf-8")
     workflow = yaml.safe_load(text)
     assert "validation_config.json" in workflow["env"]["WORKSPACE_PATHS"].split()
-    for job, step_name in (
-        ("prepare-workspace", "Checkout PR workspace"),
-        ("report", "Checkout report tooling"),
-    ):
-        checkout = next(
-            step
-            for step in workflow["jobs"][job]["steps"]
-            if step.get("name") == step_name
-        )
-        assert "validation_config.json" in checkout["with"]["sparse-checkout"].split()
+    profile = (VALIDATION_DIR / "ci_workspace_profile.txt").read_text(encoding="utf-8")
+    assert "/validation_config.json" in profile.split()
+    checkout = next(
+        step
+        for step in workflow["jobs"]["report"]["steps"]
+        if step.get("name") == "Checkout report tooling"
+    )
+    assert "validation_config.json" in checkout["with"]["sparse-checkout"].split()
     for source in (text, VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")):
-        hashes = re.findall(r"hashFiles\('tools/validation/\*\*',[^)]*\)", source)
+        hashes = re.findall(
+            r"hashFiles\('tools/validation/\*\*/\*\.py',[^)]*\)", source
+        )
         assert hashes
-        assert all("'validation_config.json'" in h for h in hashes)
+        assert all(
+            "'validation_config.json'" in h and "'tools/validation/**/*.txt'" in h
+            for h in hashes
+        )
+        assert "'tools/validation/**'" not in source
     profile = (VALIDATION_DIR / "staged_sparse_profile.txt").read_text(encoding="utf-8")
     assert "/validation_config.json" in profile.split()
     assert classify(["validation_config.json"])["full_suite"] is True

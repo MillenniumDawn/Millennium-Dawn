@@ -88,6 +88,18 @@ python3 tools/run.py publish_workshop release --full      # pass args through
 python3 tools/run.py gfx_entry_generator                  # works on any platform
 ```
 
+### Fix changelog ordering
+
+```bash
+python3 tools/merge_changelog.py --fix
+```
+
+This sorts only the current version's entries within each category. Untagged
+entries come first, followed by the first country tag. Equal tags keep their
+order. Older versions, entry text, and duplicate entries are left alone. Resolve
+conflict markers first. The Git merge driver also applies this ordering after a
+successful merge.
+
 ### Validation timing baselines
 
 Save the Actions data without timing instrumentation:

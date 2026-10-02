@@ -268,3 +268,39 @@ def test_unparsable_module_stays_conservative(tmp_path):
     graph = vb._build_import_graph(nodes)
 
     assert graph["validation/validate_broken"] == set()
+
+
+def test_import_graph_is_not_built_for_non_import_selections(monkeypatch):
+    def unexpected_graph(*args):
+        pytest.fail("selection does not need an import graph")
+
+    monkeypatch.setattr(vb, "_build_import_graph", unexpected_graph)
+    batch, adhoc = vb.select_for_changed_files(
+        [
+            "common/decisions/whatever.txt",
+            ".claude/docs/typo-watchlist.md",
+            "tools/validation/validate_style.py",
+            "tools/validation/validate_unused_textures.py",
+        ]
+    )
+    assert [spec.name for spec in batch] == ["localisation", "style"]
+    assert adhoc == []
+
+
+def test_import_graph_is_built_once_per_selection_not_cached_across_calls(monkeypatch):
+    original = vb._build_import_graph
+    calls = []
+
+    def build(nodes):
+        calls.append(nodes)
+        return original(nodes)
+
+    monkeypatch.setattr(vb, "_build_import_graph", build)
+    changed = [
+        "tools/validation/validate_tech_categories.py",
+        "tools/validation/equipment_stats.py",
+    ]
+    first = vb.select_for_changed_files(changed)
+    assert len(calls) == 1
+    assert vb.select_for_changed_files(changed) == first
+    assert len(calls) == 2
