@@ -74,26 +74,38 @@ def _iter_blocks(text: str, lo: int, hi: int):
         pos = close + 1
 
 
+_DEPTH_EVENT_RE = re.compile(r'["{}]')
+
+
 def _depth0_text(text: str, lo: int, hi: int) -> str:
     """The ``text[lo:hi]`` span with every nested ``{...}`` block removed, so a
-    regex sees only this block's own scalar assignments."""
+    regex sees only this block's own scalar assignments.
+
+    A quote toggles string state unless a backslash precedes it, and braces
+    inside a string are kept as text.
+    """
     out: List[str] = []
     depth = 0
     in_str = False
-    i = lo
-    while i < hi:
+    run_start = lo
+    # Depth only changes at a quote or brace, so copy the runs between them.
+    for m in _DEPTH_EVENT_RE.finditer(text, lo, hi):
+        i = m.start()
         c = text[i]
-        if c == '"' and text[i - 1] != "\\":
-            in_str = not in_str
+        if depth == 0:
+            out.append(text[run_start:i])
+        run_start = i + 1
+        if c == '"' or in_str:
+            if c == '"' and text[i - 1] != "\\":
+                in_str = not in_str
             if depth == 0:
                 out.append(c)
-        elif c == "{" and not in_str:
+        elif c == "{":
             depth += 1
-        elif c == "}" and not in_str:
+        else:
             depth -= 1
-        elif depth == 0:
-            out.append(c)
-        i += 1
+    if depth == 0:
+        out.append(text[run_start:hi])
     return "".join(out)
 
 

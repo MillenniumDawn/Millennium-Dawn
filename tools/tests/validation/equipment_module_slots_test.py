@@ -7,7 +7,10 @@ module->category, module-driven slot unlocks) and each finding kind against
 synthetic hull/module fixtures.
 """
 
+import random
+
 from equipment_module_slots import (
+    _depth0_text,
     _iter_named_blocks,
     blank_comments,
     build_indexes,
@@ -1201,3 +1204,42 @@ def test_named_block_walk_reaches_the_last_block_past_unrelated_siblings():
         'name = "Middle"',
         'name = "Last"',
     ]
+
+
+def _walk_depth0_text(text, lo, hi):
+    """The per-character walk _depth0_text replaced."""
+    out = []
+    depth = 0
+    in_str = False
+    for i in range(lo, hi):
+        c = text[i]
+        if c == '"' and text[i - 1] != "\\":
+            in_str = not in_str
+            if depth == 0:
+                out.append(c)
+        elif c == "{" and not in_str:
+            depth += 1
+        elif c == "}" and not in_str:
+            depth -= 1
+        elif depth == 0:
+            out.append(c)
+    return "".join(out)
+
+
+def test_depth0_text_matches_the_character_walk():
+    """Quoted braces stay text, an escaped quote does not toggle, a stray `}`
+    hides the rest, and index 0 checks the last character for a backslash."""
+    rng = random.Random(20261002)
+    fixed = ['"a{b}"\\', 'x = { y } z "{" w', "} a { b", '\\" { "} c']
+    texts = fixed + [
+        "".join(rng.choice('{}"\\ a=\n') for _ in range(rng.randint(0, 24)))
+        for _ in range(300)
+    ]
+    for text in texts:
+        for lo in range(len(text) + 1):
+            for hi in range(lo, len(text) + 1):
+                assert _depth0_text(text, lo, hi) == _walk_depth0_text(text, lo, hi), (
+                    text,
+                    lo,
+                    hi,
+                )
