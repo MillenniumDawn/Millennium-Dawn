@@ -9,7 +9,6 @@ import re
 
 import pytest
 import validate_localisation as VL
-import validator_common
 from shared.suite import write_under_str
 
 
@@ -258,17 +257,9 @@ def _pooled_tree(tmp_path):
         )
 
 
-def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch):
+def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch, pool_sizes):
     monkeypatch.setenv("MD_MAX_WORKERS", "2")
     _pooled_tree(tmp_path)
-    real_pool = validator_common.Pool
-    pools = []
-
-    def counting_pool(*args, **kwargs):
-        pools.append(kwargs.get("processes"))
-        return real_pool(*args, **kwargs)
-
-    monkeypatch.setattr(validator_common, "Pool", counting_pool)
 
     def run(workers):
         validator = _validator(tmp_path, workers=workers)
@@ -276,7 +267,7 @@ def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch):
         return _rows(validator)
 
     pooled = run(2)
-    assert pools and set(pools) == {2}
+    assert pool_sizes and set(pool_sizes) == {2}
     assert pooled == run(1)
     # Files come back in directory order, so compare each check's rows as a set.
     assert sorted(pooled) == sorted(

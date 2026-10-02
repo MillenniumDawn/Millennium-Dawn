@@ -10,7 +10,6 @@ import sys
 
 import pytest
 import validate_set_variables
-import validator_common
 from shared.suite import write_under as _write
 from validate_set_variables import (
     _DYNAMIC_REF_RE,
@@ -296,7 +295,9 @@ def test_reads_on_edge_lines_and_in_quotes_count_but_comments_do_not(tmp_path):
     ]
 
 
-def test_pooled_reference_scan_matches_the_in_process_scan(tmp_path, monkeypatch):
+def test_pooled_reference_scan_matches_the_in_process_scan(
+    tmp_path, monkeypatch, pool_sizes
+):
     monkeypatch.setenv("MD_MAX_WORKERS", "2")
     setters = "".join(
         f"\tset_variable = {{ TAG_v{index:02}_var = 1 }}\n" for index in range(12)
@@ -310,14 +311,6 @@ def test_pooled_reference_scan_matches_the_in_process_scan(tmp_path, monkeypatch
         )
     for index in range(6):
         _write(tmp_path, f"events/filler{index}.txt", "e = { log = filler }\n")
-    real_pool = validator_common.Pool
-    pools = []
-
-    def counting_pool(*args, **kwargs):
-        pools.append(kwargs.get("processes"))
-        return real_pool(*args, **kwargs)
-
-    monkeypatch.setattr(validator_common, "Pool", counting_pool)
 
     def run(workers):
         validator = Validator(str(tmp_path), use_colors=False, workers=workers)
@@ -325,7 +318,7 @@ def test_pooled_reference_scan_matches_the_in_process_scan(tmp_path, monkeypatch
         return _findings(validator)
 
     pooled = run(2)
-    assert pools == [2, 2]
+    assert pool_sizes == [2, 2]
     assert (
         pooled
         == run(1)
