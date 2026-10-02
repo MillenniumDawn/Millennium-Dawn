@@ -47,15 +47,7 @@ _SLOC_DEFS = (
 )
 
 
-def test_scripted_loc_without_a_staged_definition_skips_the_usage_scan(
-    tmp_path, write_path, monkeypatch
-):
-    write_path(tmp_path, "common/scripted_localisation/defs.txt", _SLOC_DEFS)
-    yml = write_path(
-        tmp_path,
-        "localisation/english/use_l_english.yml",
-        'l_english:\n key: "[UsedLoc] [GhostLoc]"\n',
-    )
+def _forbid_repo_usage_scan(monkeypatch):
     usage_scan = SL.ScriptedLocalisation.get_all_used_localisations
 
     def staged_usage_only(*args, staged_files=None, **kwargs):
@@ -66,6 +58,18 @@ def test_scripted_loc_without_a_staged_definition_skips_the_usage_scan(
     monkeypatch.setattr(
         SL.ScriptedLocalisation, "get_all_used_localisations", staged_usage_only
     )
+
+
+def test_scripted_loc_without_a_staged_definition_skips_the_usage_scan(
+    tmp_path, write_path, monkeypatch
+):
+    write_path(tmp_path, "common/scripted_localisation/defs.txt", _SLOC_DEFS)
+    yml = write_path(
+        tmp_path,
+        "localisation/english/use_l_english.yml",
+        'l_english:\n key: "[UsedLoc] [GhostLoc]"\n',
+    )
+    _forbid_repo_usage_scan(monkeypatch)
     validator = _staged(SL.Validator(str(tmp_path), use_colors=False, workers=4), yml)
     _forbid(monkeypatch, validator, "_get_pool")
 
@@ -98,6 +102,96 @@ def test_staged_scripted_loc_definition_still_reads_unstaged_consumers(
             5,
         )
     ]
+
+
+_GETTER_YML = "localisation/english/use_l_english.yml"
+
+
+def _getter_repo(tmp_path, write_path, documented, call):
+    """Docs listing *documented* getters and one loc line making *call*."""
+    write_path(tmp_path, SL._LOC_OBJECTS_DOC, documented)
+    return write_path(tmp_path, _GETTER_YML, f'l_english:\n key: "{call}"\n')
+
+
+def _getter_row(member, spelling):
+    message = f"'{member}' is not the documented getter spelling '{spelling}'"
+    return ("loc-getter-spelling", message, _GETTER_YML, 2)
+
+
+def test_staged_definition_feeds_the_getter_and_unused_checks(tmp_path, write_path):
+    """The getter check accepts a Get-named loc from an unstaged definition file."""
+    yml = _getter_repo(
+        tmp_path, write_path, "**GetName**\n", "[ROOT.GetOwnLoc] [ROOT.Getname]"
+    )
+    write_path(
+        tmp_path,
+        "common/scripted_localisation/other.txt",
+        "defined_text = {\n\tname = GetOwnLoc\n}\n",
+    )
+    defs = write_path(
+        tmp_path,
+        "common/scripted_localisation/defs.txt",
+        "defined_text = {\n\tname = OrphanLoc\n}\n",
+    )
+    validator = _staged(
+        SL.Validator(str(tmp_path), use_colors=False, workers=1), defs, yml
+    )
+
+    validator.run_validations()
+
+    assert _rows(validator) == [
+        _getter_row("Getname", "GetName"),
+        (
+            "unused-scripted-loc",
+            "orphanloc",
+            "common/scripted_localisation/defs.txt",
+            2,
+        ),
+    ]
+
+
+def test_staged_documentation_drives_the_getter_check_without_the_usage_scan(
+    tmp_path, write_path, monkeypatch
+):
+    _getter_repo(
+        tmp_path,
+        write_path,
+        "**GetName**\n**GetNewGetter**\n",
+        "[ROOT.GetNewGetter] [ROOT.Getnewgetter]",
+    )
+    write_path(tmp_path, "localisation/english/other_l_english.yml", "[ROOT.Getname]\n")
+    _forbid_repo_usage_scan(monkeypatch)
+
+    def staged_run(*paths):
+        # Through the real staged filter, which drops the .md from the list.
+        monkeypatch.setenv("MD_STAGED_FILES", "\n".join(paths))
+        validator = SL.Validator(
+            str(tmp_path), use_colors=False, staged_only=True, workers=4
+        )
+        _forbid(monkeypatch, validator, "_get_pool")
+        validator.run_validations()
+        return _rows(validator)
+
+    assert staged_run(SL._LOC_OBJECTS_DOC, _GETTER_YML) == [
+        _getter_row("Getnewgetter", "GetNewGetter")
+    ]
+    assert staged_run(SL._LOC_OBJECTS_DOC) == []
+
+
+def test_unrelated_staged_file_reads_no_loc_for_the_getter_check(
+    tmp_path, write_path, monkeypatch
+):
+    _getter_repo(tmp_path, write_path, "**GetName**\n", "[ROOT.Getname] [GhostLoc]")
+    write_path(tmp_path, "common/scripted_localisation/defs.txt", _SLOC_DEFS)
+    txt = write_path(tmp_path, "common/ideas/unrelated.txt", "ideas = {\n}\n")
+    _forbid_repo_usage_scan(monkeypatch)
+    _forbid(monkeypatch, SL, "process_file_for_getter_refs")
+    validator = _staged(SL.Validator(str(tmp_path), use_colors=False, workers=4), txt)
+    _forbid(monkeypatch, validator, "_get_pool")
+
+    validator.run_validations()
+
+    assert _rows(validator) == []
 
 
 # --- variables -------------------------------------------------------------
