@@ -43,8 +43,10 @@ EXTRA_SKIP_PATTERNS = DEFAULT_EXTRA_SKIP_PATTERNS + ["00_operations", "MD_dm_mod
 VANILLA_LOC_KEYS = KNOWN_VANILLA_LOC_KEYS
 
 
-def _should_skip(filename: str) -> bool:
-    return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
+    return should_skip_file(
+        filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS, mod_path=mod_path
+    )
 
 
 # --- Multiprocessing helpers ---
@@ -67,20 +69,22 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
 _SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
 _LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
 _NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
-# A § followed by whitespace and a digit is a prose section sign (e.g. a legal
-# citation like "15 U.S.C. § 1"), never a color code; game markup never puts a
-# space after §. Requiring the digit keeps a dangling/broken code (§ before a
-# word, quote, or line end) flagged instead of silently exempted.
-_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+# `§§` is the engine's escape for a literal section sign ("15 U.S.C. §§ 1"
+# renders "15 U.S.C. § 1"). A single § always starts a color code, even before
+# a space: in game (1.19.3) "§ 1" drops the space, logs "Could not find
+# coloring for character ' '" every frame, and shows no §. So only the escaped
+# pair is exempt from the color checks; a bare § before whitespace is flagged.
+_LITERAL_SECTION_SIGN_RE = re.compile(r"§§")
+_SECTION_SIGN_BEFORE_SPACE_RE = re.compile(r"§\s")
 
 # A formatter (Prettier/pre-commit --all-files) once split Paradox loc
 # `KEY:0 "value"` lines across two lines and rewrote double quotes to single
 # quotes. Paradox YAML is not real YAML — both mangle silently in-game rather
 # than erroring, so they must be caught here.
-# Opinion modifiers sit exactly one level under the file's `opinion_modifiers
-# = { }` wrapper. Spaces are accepted alongside the tab MD actually uses, but
+# Opinion modifiers, raid types, and raid categories sit exactly one level under
+# their file's wrapper block (`opinion_modifiers`, `types`, `categories`). Spaces are accepted alongside the tab MD actually uses, but
 # only one level deep — `\s+` would swallow blank lines and match nested blocks.
-_OPINION_MODIFIER_RE = re.compile(
+_TOP_LEVEL_BLOCK_RE = re.compile(
     r"^(?:\t| {1,4})([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE
 )
 _MANGLED_KEY_NO_VALUE_RE = re.compile(r"^\s*\w[\w.\-]*:\d*\s*$")
@@ -135,8 +139,16 @@ def _scan_syntax_text(
         if "\u00a7" in line:
             key_match = _LINE_KEY_RE.match(line)
             key = key_match.group(1) if key_match else None
-            color_line = _PROSE_SECTION_SIGN_RE.sub("", line)
+            color_line = _LITERAL_SECTION_SIGN_RE.sub("", line)
             if "\u00a7" not in color_line:
+                continue
+            if _SECTION_SIGN_BEFORE_SPACE_RE.search(color_line):
+                out.append(
+                    (
+                        f"{basename}, line {line_idx + 2}, colors - \u00a7 before whitespace is read as a color code; write \u00a7\u00a7 for a literal \u00a7",
+                        key,
+                    )
+                )
                 continue
             count = color_line.count("\u00a7")
             if count % 2 != 0:
@@ -316,6 +328,16 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
                     line=line_idx + 2,
                 )
             )
+        if value.count('\\"') % 2:
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-unbalanced-quote",
+                    message='Odd number of \\" in loc value: an opening or closing quote is missing',
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
     return results
 
 
@@ -416,12 +438,16 @@ def get_all_colors(mod_path: str) -> List[str]:
 # _txt_refs_init plants them as worker globals once per worker instead.
 _W_VALID_KEYS: frozenset = frozenset()
 _W_SCRIPTED_KEYS: frozenset = frozenset()
+_W_MOD_PATH: Optional[str] = None
 
 
-def _txt_refs_init(valid_keys: frozenset, scripted_keys: frozenset) -> None:
-    global _W_VALID_KEYS, _W_SCRIPTED_KEYS
+def _txt_refs_init(
+    valid_keys: frozenset, scripted_keys: frozenset, mod_path: Optional[str] = None
+) -> None:
+    global _W_VALID_KEYS, _W_SCRIPTED_KEYS, _W_MOD_PATH
     _W_VALID_KEYS = valid_keys
     _W_SCRIPTED_KEYS = scripted_keys
+    _W_MOD_PATH = mod_path
 
 
 def process_txt_for_loc_key_refs(filename: str) -> List[str]:
@@ -430,7 +456,7 @@ def process_txt_for_loc_key_refs(filename: str) -> List[str]:
     Reads the valid/scripted key sets from worker globals (set by
     _txt_refs_init), so the large set is shipped once per worker, not per task.
     """
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=_W_MOD_PATH):
         return []
     valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
     text_file = FileOpener.open_text_file(
@@ -844,7 +870,7 @@ def process_txt_for_custom_tt_refs(filename: str) -> List[str]:
 
     Valid/scripted key sets come from worker globals set by _txt_refs_init.
     """
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=_W_MOD_PATH):
         return []
     valid_keys, scripted_keys = _W_VALID_KEYS, _W_SCRIPTED_KEYS
     text_file = FileOpener.open_text_file(
@@ -891,7 +917,7 @@ def _extract_not_blocks(text: str) -> List[str]:
 
 
 def process_file_for_orphan_tt_refs(
-    args: Tuple,
+    args: Tuple, *, mod_path: Optional[str] = None
 ) -> Tuple[set, List[str], set]:
     """Pool worker: collect tooltip references and dynamic patterns from one file.
 
@@ -902,7 +928,7 @@ def process_file_for_orphan_tt_refs(
     negation lookup.
     """
     filename, patterns = args
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return set(), [], set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
@@ -931,7 +957,7 @@ def _get_skipped_loc_keys(mod_path: str) -> set:
     filepath = str(Path(mod_path) / "localisation" / "english") + "/"
     keys = set()
     for filename in glob.iglob(filepath + "**/*.yml", recursive=True):
-        if not _should_skip(filename):
+        if not _should_skip(filename, mod_path=mod_path):
             continue
         text_file = FileOpener.open_text_file(
             filename, lowercase=False, strip_comments_flag=True
@@ -970,7 +996,8 @@ class Validator(BaseValidator):
 
     def _get_yml_files(self) -> List[str]:
         return self._collect_files(
-            ["localisation/english/**/*.yml"], extra_skip=_should_skip
+            ["localisation/english/**/*.yml"],
+            extra_skip=functools.partial(_should_skip, mod_path=self.mod_path),
         )
 
     def _collect_substitution_keys(self, yml_files: List[str]) -> frozenset:
@@ -1101,14 +1128,17 @@ class Validator(BaseValidator):
 
     def validate_prose_conventions(self):
         self._log_section(
-            "Checking localisation prose conventions (em dashes, backtick apostrophes)..."
+            "Checking localisation prose conventions (em dashes, backtick apostrophes, quotes)..."
         )
 
         em_dash_results: List[Issue] = []
         backtick_results: List[Issue] = []
+        quote_results: List[Issue] = []
         for issue in self._get_shared_yml_scan()["prose"]:
             if issue.category == "loc-em-dash":
                 em_dash_results.append(issue)
+            elif issue.category == "loc-unbalanced-quote":
+                quote_results.append(issue)
             else:
                 backtick_results.append(issue)
 
@@ -1126,6 +1156,13 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
             category="loc-backtick-apostrophe",
         )
+        self._report(
+            quote_results,
+            '✓ No unbalanced \\" quotes in localisation values',
+            'Unbalanced \\" quotes in localisation values:',
+            severity=Severity.WARNING,
+            category="loc-unbalanced-quote",
+        )
 
     def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
         """Scan txt files with a worker that needs the valid/scripted key sets,
@@ -1135,7 +1172,7 @@ class Validator(BaseValidator):
             worker,
             txt_files,
             _txt_refs_init,
-            (frozenset(loc_keys), frozenset(scripted_loc_keys)),
+            (frozenset(loc_keys), frozenset(scripted_loc_keys), self.mod_path),
             chunksize=30,
         )
 
@@ -1182,7 +1219,7 @@ class Validator(BaseValidator):
         for filename in glob.iglob(
             os.path.join(self.mod_path, "**", "*.txt"), recursive=True
         ):
-            if _should_skip(filename):
+            if _should_skip(filename, mod_path=self.mod_path):
                 continue
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
@@ -1263,7 +1300,9 @@ class Validator(BaseValidator):
             (f, gui_patterns) for f in gui_files
         ]
         all_scan_results = self._pool_map(
-            process_file_for_orphan_tt_refs, args_list, chunksize=30
+            functools.partial(process_file_for_orphan_tt_refs, mod_path=self.mod_path),
+            args_list,
+            chunksize=30,
         )
 
         # Dynamic-key patterns (compiled regexes) collected from meta_effect
@@ -1343,7 +1382,7 @@ class Validator(BaseValidator):
             except OSError:
                 continue
             basename = os.path.basename(filepath)
-            for match in _OPINION_MODIFIER_RE.finditer(text):
+            for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
                 name = match.group(1)
                 if name not in modifiers:
                     modifiers[name] = basename
@@ -1365,6 +1404,41 @@ class Validator(BaseValidator):
             "Opinion modifiers without localisation:",
             severity=Severity.WARNING,
             category="missing-opinion-modifier-localisation",
+        )
+
+    def validate_raid_localisation(self, loc_keys: Dict, scripted_loc_keys: set):
+        self._log_section("Checking raid localisation...")
+
+        required: Dict[str, str] = {}
+        for patterns, suffixes in (
+            (["common/raids/*.txt"], ("raid_type_{}", "raid_type_{}_desc")),
+            (["common/raids/categories/*.txt"], ("raid_category_{}",)),
+        ):
+            for filepath in self._collect_files(patterns, ignore_staged=True):
+                try:
+                    text = FileOpener.open_text_file(
+                        filepath, lowercase=False, strip_comments_flag=True
+                    )
+                except OSError:
+                    continue
+                basename = os.path.basename(filepath)
+                for match in _TOP_LEVEL_BLOCK_RE.finditer(text):
+                    for suffix in suffixes:
+                        required.setdefault(suffix.format(match.group(1)), basename)
+
+        missing = [
+            f"{key} - {basename}: raid without localisation"
+            for key, basename in sorted(required.items())
+            if key not in loc_keys
+            and key not in scripted_loc_keys
+            and key not in VANILLA_LOC_KEYS
+        ]
+        self._report(
+            missing,
+            "✓ All raids have localisation",
+            "Raids without localisation:",
+            severity=Severity.WARNING,
+            category="missing-raid-localisation",
         )
 
     def _script_txt_files(self) -> List[str]:
@@ -1486,6 +1560,7 @@ class Validator(BaseValidator):
                 loc_keys, skipped_keys, scripted_loc_keys
             )
             self.validate_opinion_modifiers(loc_keys, scripted_loc_keys)
+            self.validate_raid_localisation(loc_keys, scripted_loc_keys)
             self.validate_variable_references()
             self.validate_unwritten_script_variables()
             self.validate_targeted_dynamic_variables()

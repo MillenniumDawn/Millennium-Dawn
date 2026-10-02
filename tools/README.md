@@ -13,7 +13,7 @@ in `pyproject.toml` under `[dependency-groups]`. Install them from the repo root
 
 ```bash
 pip install --group runtime   # requests, pillow (for the scripts that need them)
-pip install --group dev       # pytest, coverage, pyyaml, Ruff, Black, Pylint, mypy
+pip install --group dev       # pytest (xdist, cov), coverage, pyyaml, Ruff, Black, Pylint, mypy
 ```
 
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
@@ -21,13 +21,16 @@ pip install --group dev       # pytest, coverage, pyyaml, Ruff, Black, Pylint, m
 Python quality checks run on `tools/` in pre-commit and CI:
 
 ```bash
-python -m coverage run --branch -m pytest
+python -m pytest -n auto --cov --cov-branch --cov-report= --cov-fail-under=0
 python -m coverage report
 ruff check tools
 black --check tools
-pylint tools --reports=no --score=no
+pylint tools -j 0 --reports=no --score=no
 mypy
 ```
+
+`-n auto` and `-j 0` use every core. `coverage report` owns the coverage
+threshold, so the pytest run only collects.
 
 Black is the canonical formatter. Mypy checks the typed report and validator-core
 surfaces declared in `pyproject.toml`; the remaining scripts are migrated in
@@ -71,6 +74,8 @@ platform-native writes. `.gitattributes` and `.editorconfig` keep the repository
 ### Regression Tests
 
 Tests belong under `tools/tests/` and end in `_test.py`; `test_*.py` is not collected.
+The suite runs in parallel workers, so a test writes only under `tmp_path`, never
+into the real repository tree. Another worker may be scanning that tree.
 Add regression coverage with changed validator, fixer, or report behavior. Run
 `python -m pytest` before merging any `tools/` change, and fix failures in the same
 change. Never delete, skip, or weaken a test to reach green. A correct behavior change
@@ -87,6 +92,18 @@ python3 tools/run.py find_idea common/ideas/Greek.txt    # partial names work to
 python3 tools/run.py publish_workshop release --full      # pass args through
 python3 tools/run.py gfx_entry_generator                  # works on any platform
 ```
+
+### Fix changelog ordering
+
+```bash
+python3 tools/merge_changelog.py --fix
+```
+
+This sorts only the current version's entries within each category. Untagged
+entries come first, followed by the first country tag. Equal tags keep their
+order. Older versions, entry text, and duplicate entries are left alone. Resolve
+conflict markers first. The Git merge driver also applies this ordering after a
+successful merge.
 
 ### Validation timing baselines
 
@@ -305,9 +322,12 @@ Metrics, reference analysis, and review tools.
 
 Content generation tools.
 
-| Script                        | Description                                                           |
-| ----------------------------- | --------------------------------------------------------------------- |
-| **generate_tribute_ideas.py** | Generates tribute idea definitions and localisation for all countries |
+| Script                          | Description                                                                                                                                                                                                                                         |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **add_international_system.py** | Adds a tab to the International Systems screen: strip layout, open/close wiring, title and stub files. `--icon` takes a premade icon (`--list-icons`) or a transparent image and converts it to the tab style; `--preview` draws the strip to a PNG |
+| **generate_tribute_ideas.py**   | Generates tribute idea definitions and localisation for all countries                                                                                                                                                                               |
+
+Premade tab icons reuse existing mod art, including icons already used elsewhere in the UI. Custom images must have a transparent background; opaque logos and unreadable image files are rejected before any files are written.
 
 ### Publishing (`publishing/`)
 
@@ -356,6 +376,7 @@ Hook entry points, CI tools, shared libraries, and other scripts that stay at th
 | **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                                                                                                                                                                    |
 | **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| **merge_changelog.py**            | CI: git merge driver the changelog conflict fixer uses to merge `Changelog.txt` entries without duplicating edited lines                                                                                                                                                                                                                                                                                                                                                                               |
 | **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse helpers (`add_standard_file_arguments`, `create_validation_parser`, `create_linting_parser`, `create_standard_parser`), entry points (`run_validator_main`, `run_tool_main`), `find_hoi4_install()` (`$HOI4_PATH`, then Steam's `libraryfolders.vdf`, the VS Code HOI4 extension `installPath` settings, then fixed paths), `extract_block_from_text()`. |

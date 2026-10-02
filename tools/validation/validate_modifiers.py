@@ -743,7 +743,7 @@ def _check_file_for_unknown_modifiers(
     Returns a list of (modifier_name, rel_path, line_number) tuples.
     """
     filepath, known_good, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -952,7 +952,7 @@ class Validator(BaseValidator):
             ["common/dynamic_modifiers/**/*.txt"], ignore_staged=ignore_staged
         )
         for filepath in files:
-            if should_skip_file(filepath):
+            if should_skip_file(filepath, mod_path=self.mod_path):
                 continue
             text = FileOpener.open_text_file(
                 filepath, lowercase=False, strip_comments_flag=True
@@ -961,9 +961,9 @@ class Validator(BaseValidator):
                 yield filepath, os.path.relpath(filepath, self.mod_path), text
 
     def validate_dynamic_modifier_name_loc(self):
-        """Check that dynamic modifiers with a _TT/_desc loc entry also have a
-        bare-name loc key — the in-game modifier header renders the bare key,
-        so a missing one shows the literal token to players."""
+        """Check that every dynamic modifier has a bare-name loc key. The
+        modifier header, breakdown tooltips and `MODIFIER = X` tooltips render
+        the bare key, so a missing one shows the literal token to players."""
         self._log_section("Checking dynamic modifier name loc references...")
 
         loc_keys = self._load_localisation_keys()
@@ -980,12 +980,11 @@ class Validator(BaseValidator):
                 lambda text=text: _extract_dynamic_modifier_names(text),
             )
             for name, lineno in names:
-                has_tt_or_desc = f"{name}_TT" in loc_keys or f"{name}_desc" in loc_keys
-                if has_tt_or_desc and name not in loc_keys:
+                if name not in loc_keys:
                     results.append(
                         (
-                            f"Dynamic modifier '{name}' has a _TT/_desc loc entry but "
-                            f"no bare '{name}' key (in-game header shows the literal token)",
+                            f"Dynamic modifier '{name}' has no English loc key "
+                            f"(in-game tooltips show the literal token)",
                             rel,
                             lineno,
                         )
@@ -993,9 +992,9 @@ class Validator(BaseValidator):
 
         self._report(
             results,
-            "✓ All dynamic modifiers with _TT/_desc loc have a bare-name key",
-            "Dynamic modifiers missing a bare-name loc key:",
-            severity=Severity.WARNING,
+            "✓ All dynamic modifiers have a bare-name loc key",
+            "Dynamic modifiers missing a loc key:",
+            severity=Severity.ERROR,
             category="dynamic-modifier-name-loc",
         )
 
@@ -1162,7 +1161,7 @@ class Validator(BaseValidator):
         """(key, value, rel, lineno, owner) bare numerics in pattern files."""
         found = []
         for filepath in self._collect_files(patterns):
-            if should_skip_file(filepath):
+            if should_skip_file(filepath, mod_path=self.mod_path):
                 continue
             text = FileOpener.open_text_file(
                 filepath, lowercase=False, strip_comments_flag=True
