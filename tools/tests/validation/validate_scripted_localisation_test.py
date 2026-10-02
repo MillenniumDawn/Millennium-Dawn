@@ -440,6 +440,38 @@ def test_gfx_icon_check_in_staged_mode_reads_only_staged_files(tmp_path):
     assert not any("GFX_other_missing" in m for m in messages)
 
 
+def test_one_worker_run_scans_in_process(tmp_path, monkeypatch):
+    _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n\tname = UsedLoc\n}\n"
+        "defined_text = {\n\tname = OrphanLoc\n}\n",
+    )
+    gui = tmp_path / "interface" / "use.gui"
+    gui.parent.mkdir()
+    gui.write_text('text = "[UsedLoc]"\ntext = "[GhostLoc]"\n', encoding="utf-8")
+
+    def no_pool(*_args, **_kwargs):
+        raise AssertionError("one worker must not start a pool")
+
+    monkeypatch.setattr(V, "Pool", no_pool)
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert [
+        (issue.category, issue.message, issue.file, issue.line)
+        for issue in validator._issues
+    ] == [
+        ("missing-scripted-loc", "ghostloc", "interface/use.gui", 2),
+        (
+            "unused-scripted-loc",
+            "orphanloc",
+            "common/scripted_localisation/defs.txt",
+            5,
+        ),
+    ]
+
+
 class _InlinePool:
     """Stand-in for the validator's shared worker pool: maps in-process."""
 

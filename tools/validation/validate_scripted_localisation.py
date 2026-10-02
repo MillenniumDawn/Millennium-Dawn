@@ -187,6 +187,16 @@ def process_file_for_used_localisations(
     return (localisations, paths)
 
 
+def _map_files(func, args_list, workers, pool, chunksize):
+    """Use the caller's pool, map in-process for one worker, else a transient pool."""
+    if pool is not None:
+        return pool.map(func, args_list, chunksize=chunksize)
+    if workers == 1:
+        return [func(args) for args in args_list]
+    with Pool(processes=workers) as p:
+        return p.map(func, args_list, chunksize=chunksize)
+
+
 class ScriptedLocalisation:
     @classmethod
     def get_all_defined_localisations(
@@ -212,11 +222,9 @@ class ScriptedLocalisation:
             files_to_scan = glob.glob(pattern)
 
         args_list = [(f, lowercase, mod_path) for f in files_to_scan]
-        p = pool if pool else Pool(processes=workers)
-        results = p.map(process_file_for_defined_localisations, args_list, chunksize=10)
-        if not pool:
-            p.close()
-            p.join()
+        results = _map_files(
+            process_file_for_defined_localisations, args_list, workers, pool, 10
+        )
 
         for locs_list, paths_dict in results:
             localisations.extend(locs_list)
@@ -264,11 +272,9 @@ class ScriptedLocalisation:
             files_to_scan = gui_files + yml_files + txt_files
 
         args_list = [(f, search_names, lowercase, mod_path) for f in files_to_scan]
-        p = pool if pool else Pool(processes=workers)
-        results = p.map(process_file_for_used_localisations, args_list, chunksize=50)
-        if not pool:
-            p.close()
-            p.join()
+        results = _map_files(
+            process_file_for_used_localisations, args_list, workers, pool, 50
+        )
 
         found_names = set()
         for locs_list, paths_dict in results:

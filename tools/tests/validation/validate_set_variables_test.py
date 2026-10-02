@@ -223,6 +223,20 @@ def test_only_the_unread_variable_is_reported(tmp_path):
     assert validator.errors_found == 1
 
 
+def test_one_worker_run_collects_targets_in_process(tmp_path, monkeypatch):
+    def no_pool(*_args, **_kwargs):
+        raise AssertionError("one worker must not start a pool")
+
+    monkeypatch.setattr(validate_set_variables, "Pool", no_pool)
+    validator = _mod_with_variables(tmp_path)
+
+    validator.run_validations()
+
+    assert _findings(validator) == [
+        ("TAG_dead_var (refs: 0)", "common/scripted_effects/vars.txt", 3)
+    ]
+
+
 def test_min_refs_widens_the_report_to_thinly_used_variables(tmp_path):
     _write(tmp_path, "common/scripted_effects/vars.txt", SETTERS)
     _write(tmp_path, "common/scripted_effects/reads.txt", READERS)
