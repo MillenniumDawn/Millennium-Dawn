@@ -447,11 +447,16 @@ The script uses `git log --diff-filter=ACM` to determine which files changed, co
 both version banner keys in all ten production frontend locale files inside the
 staging copy. Accepted values are `X.Y.Z`, legacy suffixes such as `X.Y.Zb` or
 `X.Y.Zrc1`, and SemVer prereleases such as `X.Y.Z-beta.5`. One leading `v` or
-`V` is optional. A diff publish with `--version` carries all ten banner files
-even when they are not part of the diff. Without `--version`, a diff publish
-prunes them as usual. Missing, excluded, duplicate, or malformed banners abort
-before upload rather than uploading a mismatch. The repo's own files are never
-touched.
+`V` is optional.
+
+The committed banners end with a `DEV` marker (`开发版` in Simplified Chinese).
+Beta uploads change it to `BETA` and release uploads strip it, with or without
+`--version`. Test uploads keep it.
+
+A diff publish carries all ten banner files whenever it rewrites them, even when
+they are not part of the diff. A test diff publish without `--version` prunes
+them as usual. Missing, excluded, duplicate, or malformed banners abort before
+upload rather than uploading a mismatch. The repo's own files are never touched.
 
 ### What Gets Excluded
 
