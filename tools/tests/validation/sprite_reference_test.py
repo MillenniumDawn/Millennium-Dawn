@@ -4,7 +4,7 @@ reference extractors.
 
 from sprite_index import _names_in_file
 from validate_events import _EVENT_PICTURE_REF, _extract_event_pictures
-from validate_focus_tree import _extract_focus_icons
+from validate_focus_tree import _FocusFile
 
 
 def _write(tmp_path, name, text):
@@ -82,7 +82,7 @@ def test_extract_focus_icons_bare_and_gfx(tmp_path):
         "}\n",
     )
     by_id = {
-        fid: icon for fid, icon, _fp, _line in _extract_focus_icons((f, str(tmp_path)))
+        fid: icon for fid, icon, _fp, _line in _FocusFile(f, str(tmp_path)).icons()
     }
     assert by_id == {
         "f_money": "money",
@@ -101,5 +101,5 @@ def test_extract_focus_icons_shared_focus(tmp_path):
         "shared.txt",
         "shared_focus = {\n id = s_focus\n icon = welfare\n x = 1\n y = 1\n}\n",
     )
-    icons = _extract_focus_icons((f, str(tmp_path)))
+    icons = _FocusFile(f, str(tmp_path)).icons()
     assert icons and icons[0][0] == "s_focus" and icons[0][1] == "welfare"

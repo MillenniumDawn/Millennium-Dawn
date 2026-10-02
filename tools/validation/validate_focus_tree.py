@@ -5,7 +5,18 @@ import os
 import re
 import sys
 from collections import defaultdict
-from typing import Any, Dict, FrozenSet, Iterator, List, Optional, Set, Tuple
+from functools import cached_property
+from typing import (
+    Any,
+    Dict,
+    FrozenSet,
+    Iterator,
+    List,
+    NamedTuple,
+    Optional,
+    Set,
+    Tuple,
+)
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -22,11 +33,24 @@ from validator_common import (
     strip_comments,
 )
 
+
+def _keyword_re(keyword: str, rest: str) -> re.Pattern[str]:
+    """Compile `\\b<keyword><rest>` led by the keyword itself.
+
+    A leading `\\b` makes the engine try every offset; led by the literal it
+    skips between occurrences, and the lookbehind checks the same boundary.
+    """
+    return re.compile(keyword + r"(?<=\b" + keyword + ")" + rest)
+
+
 # Opening of a focus_tree or top-level focus definition block
 # (shared_focus and joint_focus are both standalone definitions that can be
 # referenced as prerequisites — they live outside any focus_tree wrapper)
-_FOCUS_TREE_START = re.compile(r"\bfocus_tree\s*=\s*\{")
-_SHARED_FOCUS_DEF_START = re.compile(r"\b(?:shared_focus|joint_focus)\s*=\s*\{")
+_FOCUS_TREE_START = _keyword_re("focus_tree", r"\s*=\s*\{")
+# Same as `\b(?:shared_focus|joint_focus)`, led by its first letters.
+_SHARED_FOCUS_DEF_START = re.compile(
+    r"(?:shared|joint)_focus(?:(?<=\bshared_focus)|(?<=\bjoint_focus))\s*=\s*\{"
+)
 
 # A single `key: "value"` localisation line, version suffix optional.
 _LOC_LINE_RE = re.compile(r'^[ \t]*([\w.\-]+)\s*:\d*\s*"(.*)"[ \t]*$')
@@ -55,7 +79,7 @@ def _fmt_codes(codes: List[str]) -> str:
 
 
 # focus ID extraction
-_FOCUS_ID_RE = re.compile(r"\bfocus\s*=\s*\{")
+_FOCUS_ID_RE = _keyword_re("focus", r"\s*=\s*\{")
 _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 
 # focus icon: `icon = X` or `icon = "GFX X"`. The value resolves verbatim to a
@@ -65,27 +89,27 @@ _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 # the engine matches the sprite name verbatim (a quoted value with a space is a
 # real, distinct sprite name, not two tokens).
 _FOCUS_BLOCK_START = re.compile(r"\b(?:focus|shared_focus|joint_focus)\s*=\s*\{")
-_ICON_LINE_RE = re.compile(r'\bicon\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
-_RELATIVE_POSITION_RE = re.compile(r"\brelative_position_id\s*=\s*(\S+)")
+_ICON_LINE_RE = _keyword_re("icon", r'\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
+_RELATIVE_POSITION_RE = _keyword_re("relative_position_id", r"\s*=\s*(\S+)")
 
 # prerequisite blocks: prerequisite = { focus = A  focus = B }
-_PREREQ_BLOCK_RE = re.compile(r"\bprerequisite\s*=\s*\{([^}]*)\}", re.DOTALL)
+_PREREQ_BLOCK_RE = _keyword_re("prerequisite", r"\s*=\s*\{([^}]*)\}")
 _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 
 # shared_focus reference inside a focus_tree block (not a definition)
-_SHARED_REF_RE = re.compile(r"\bshared_focus\s*=\s*(\w+)")
+_SHARED_REF_RE = _keyword_re("shared_focus", r"\s*=\s*(\w+)")
 
 # completion_reward, incl. the joint-focus reward variants
-_REWARD_BLOCK_RE = re.compile(
-    r"\bcompletion_reward(?:_joint_originator|_joint_member)?\s*=\s*\{"
+_REWARD_BLOCK_RE = _keyword_re(
+    "completion_reward", r"(?:_joint_originator|_joint_member)?\s*=\s*\{"
 )
 
 # PP malus in completion_reward (focus time is the cost — AGENTS.md).
 # Occurrences inside an effect_tooltip = { } subtree preview a PP change
 # applied elsewhere (e.g. a select_effect) rather than executing it, so
 # they are not flagged.
-_EFFECT_TOOLTIP_START = re.compile(r"\beffect_tooltip\s*=\s*\{")
-_PP_MALUS_RE = re.compile(r"\badd_political_power\s*=\s*(-\d+(?:\.\d+)?)\b")
+_EFFECT_TOOLTIP_START = _keyword_re("effect_tooltip", r"\s*=\s*\{")
+_PP_MALUS_RE = _keyword_re("add_political_power", r"\s*=\s*(-\d+(?:\.\d+)?)\b")
 
 _PP_MALUS_EXEMPT_FOCUS_IDS = frozenset(
     validation_config("validate_focus_tree", "pp_malus_exempt_focus_ids")
@@ -128,8 +152,8 @@ _MIL_ECON_RESEARCH_FILTERS = frozenset(
     }
 )
 
-_AI_WILL_DO_START = re.compile(r"\bai_will_do\s*=\s*\{")
-_MODIFIER_START = re.compile(r"\bmodifier\s*=\s*\{")
+_AI_WILL_DO_START = _keyword_re("ai_will_do", r"\s*=\s*\{")
+_MODIFIER_START = _keyword_re("modifier", r"\s*=\s*\{")
 _FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
 _CAN_STAFF_NO_RE = re.compile(r"\b(can_staff_an_\w+)\s*=\s*no\b")
 _CAN_STAFF_NOT_YES_RE = re.compile(
@@ -138,7 +162,7 @@ _CAN_STAFF_NOT_YES_RE = re.compile(
 _BANKRUPTCY_GUARD_RE = re.compile(
     r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
 )
-_ADD_BUILDING_START = re.compile(r"\badd_building_construction\s*=\s*\{")
+_ADD_BUILDING_START = _keyword_re("add_building_construction", r"\s*=\s*\{")
 _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # Money spend (MD budget system): treasury_change is set (a literal, a `{ }`
 # computed value, or a bare-identifier reference to another variable — the
@@ -150,8 +174,8 @@ _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # mutates the running value in a way that can't be summed statically, so it
 # forces the segment unknown rather than being read as a fresh set.
 _TREASURY_CHANGE_RE = re.compile(
-    r"\btreasury_change\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_][\w.]*)"
-    r"|\bvar\s*=\s*treasury_change\b"
+    r"treasury_change(?<=\btreasury_change)\s*=\s*(-?\d+(?:\.\d+)?|\{|[A-Za-z_][\w.]*)"
+    r"|var(?<=\bvar)\s*=\s*treasury_change\b"
 )
 _TREASURY_SET_VERBS = frozenset({"set_temp_variable", "set_variable"})
 _TREASURY_MUTATE_VERBS = frozenset(
@@ -180,9 +204,11 @@ _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # the treasury). Group 1 is the suffix, empty for the plain form; a non-empty
 # suffix applies an amount that can't be computed statically, so it forces the
 # segment unknown. The `_tt` loc key is never called with `= yes`.
-_MODIFY_TREASURY_RE = re.compile(r"\bmodify_treasury_effect(\w*)\s*=\s*yes\b")
-_MODIFY_DEBT_RE = re.compile(r"\bmodify_debt_effect\s*=\s*yes\b")
-_SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^{}]*)\}")
+_MODIFY_TREASURY_RE = _keyword_re("modify_treasury_effect", r"(\w*)\s*=\s*yes\b")
+_MODIFY_DEBT_RE = _keyword_re("modify_debt_effect", r"\s*=\s*yes\b")
+_SEARCH_FILTERS_RE = _keyword_re("search_filters", r"\s*=\s*\{([^{}]*)\}")
+_BRACE_RE = re.compile(r"[{}]")
+_BRACE_OR_QUOTE_RE = re.compile(r'["{}]')
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 
@@ -197,7 +223,7 @@ _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 # TT_IF_THIS_ACCEPTS and TT_IF_EACH_ACCEPTS are the same preview worded for one
 # named target and for a fan-out; the former renders [THIS.GetNameWithFlag], so
 # it sits inside the target's scope block rather than beside its effect_tooltip.
-_COUNTRY_EVENT_RE = re.compile(r"\bcountry_event\b")
+_COUNTRY_EVENT_RE = _keyword_re("country_event", r"\b")
 _TT_IF_THEY_ACCEPT_RE = re.compile(
     r"\b(?:TT_IF_THEY_ACCEPT|TT_IF_THIS_ACCEPTS"
     r"|TT_IF_EACH_ACCEPTS|TT_EFFECTS_FROM_EVENT)\b"
@@ -210,8 +236,8 @@ _FIRE_TARGET_RE = re.compile(r"country_event\s*=\s*(?:\{[^{}]*?\bid\s*=\s*)?([\w
 # inside an option is a fire, and would otherwise index x as optionless.
 _EVENT_BLOCK_RE = re.compile(r"^(country_event|news_event)\s*=\s*\{", re.M)
 _EVENT_ID_RE = re.compile(r"\bid\s*=\s*([\w.]+)")
-_EVENT_OPTION_RE = re.compile(r"\boption\s*=\s*\{")
-_EVENT_HIDDEN_RE = re.compile(r"\bhidden\s*=\s*yes\b")
+_EVENT_OPTION_RE = _keyword_re("option", r"\s*=\s*\{")
+_EVENT_HIDDEN_RE = _keyword_re("hidden", r"\s*=\s*yes\b")
 _OPTION_TRIGGER_RE = re.compile(r"\btrigger\s*=\s*\{")
 _NEGATION_RE = re.compile(r"\bNOT\s*=\s*\{")
 # Option bookkeeping that is not an outcome: the label, the log line, the AI
@@ -221,7 +247,7 @@ _OPTION_LOG_RE = re.compile(r"\blog\s*=\s*\"[^\"]*\"")
 _OPTION_INERT_BLOCK_RE = re.compile(r"\b(?:ai_chance|trigger)\s*=\s*\{")
 # `tag = XXX` / `original_tag = XXX`, in a focus_tree's `country = { }` block
 # (the owner) and in an event option's `trigger = { }` (the recipient).
-_FT_COUNTRY_BLOCK_RE = re.compile(r"\bcountry\s*=\s*\{")
+_FT_COUNTRY_BLOCK_RE = _keyword_re("country", r"\s*=\s*\{")
 _TAG_ASSIGN_RE = re.compile(r"\b(?:original_)?tag\s*=\s*([A-Z]{3})\b")
 _LITERAL_TAG_RE = re.compile(r"^[A-Z]{3}$")
 # Iterators that step over other countries (every_country, random_other_country,
@@ -249,30 +275,20 @@ _NON_TAG_KEYWORDS = frozenset({"AND", "NOT", "NOR"})
 
 
 def _top_level_search_filters(body: str) -> Set[str]:
-    """Extract top-level search filter tokens from a focus block."""
+    """Extract top-level search filter tokens from a focus block.
+
+    Depth counts every brace before a candidate, with a stray `}` clamped at
+    the top level.
+    """
     depth = 0
-    i = 0
-    while i < len(body):
-        ch = body[i]
-        if ch == "{":
-            depth += 1
-            i += 1
-            continue
-        if ch == "}":
-            depth = max(0, depth - 1)
-            i += 1
-            continue
+    counted = 0
+    for m in _SEARCH_FILTERS_RE.finditer(body):
+        for brace in _BRACE_RE.finditer(body, counted, m.start()):
+            depth = depth + 1 if brace.group() == "{" else max(0, depth - 1)
+        counted = m.start()
         if depth == 0:
-            m = _SEARCH_FILTERS_RE.match(body, i)
-            if m:
-                return set(m.group(1).split())
-        i += 1
+            return set(m.group(1).split())
     return set()
-
-
-def _line_of(text: str, pos: int) -> int:
-    """Return the 1-based line number of *pos* in *text*."""
-    return text[:pos].count("\n") + 1
 
 
 def _label_before_brace(body: str, brace_idx: int) -> Optional[str]:
@@ -498,7 +514,7 @@ def _body_money_cost(
             unknown = True
             break
 
-    if money_effects:
+    if money_effects and not money_effects.isdisjoint(_REWARD_KEY_RE.findall(body)):
         for m in _REWARD_KEY_RE.finditer(body):
             if m.group(1) in money_effects and not previewed(m.start()):
                 has_cost = True
@@ -554,6 +570,21 @@ def _parse_scripted_effect_file(
         if _body_money_cost(body, frozenset())[1]:
             money.add(name)
     return bodies, staffable, frozenset(money)
+
+
+def _scripted_effect_facts(
+    args: Tuple[str, str],
+) -> Tuple[Dict[str, str], Dict[str, FrozenSet[str]], FrozenSet[str]]:
+    """Pool worker: one scripted-effect file's bodies, builders and spenders."""
+    filepath, mod_path = args
+    text = _read_scripted_effect_file(filepath, mod_path)
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        "focus_tree.scripted_effects",
+        filepath,
+        text,
+        lambda: _parse_scripted_effect_file(text),
+    )
 
 
 def _resolve_scripted_effect_chains(
@@ -641,6 +672,48 @@ def _is_flavor_only(option_bodies: List[str]) -> bool:
     return True
 
 
+def _notification_ids_in_file(args: Tuple[str, str]) -> List[str]:
+    """Pool worker: ids of the events in one file that the target cannot answer."""
+    filepath, mod_path = args
+    raw = _read_mod_text(filepath, mod_path)
+    if not raw:
+        return []
+    text = strip_comments(raw)
+
+    def _compute() -> List[str]:
+        found: List[str] = []
+        for m in _EVENT_BLOCK_RE.finditer(text):
+            body, end = _extract_block(text, m.start())
+            if end == -1:
+                continue
+            idm = _EVENT_ID_RE.search(body)
+            if not idm:
+                continue
+            options: List[str] = []
+            opos = 0
+            while True:
+                om = _EVENT_OPTION_RE.search(body, opos)
+                if not om:
+                    break
+                obody, oend = _extract_block(body, om.start())
+                if oend == -1:
+                    break
+                options.append(obody)
+                opos = oend
+            if (
+                len(options) < 2
+                or _EVENT_HIDDEN_RE.search(body)
+                or _is_tag_routed(options)
+                or _is_flavor_only(options)
+            ):
+                found.append(idm.group(1))
+        return found
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "focus_tree.notification_events.v4", filepath, text, _compute
+    )
+
+
 def _country_event_target_is_foreign(
     body: str, ce_pos: int, owner_tags: FrozenSet[str]
 ) -> bool:
@@ -680,31 +753,76 @@ def _country_event_target_is_foreign(
         pos = opener
 
 
-def _parse_focus_ids_from_block(block: str) -> List[Tuple[str, int, List[List[str]]]]:
-    """Parse all focus = { ... } blocks from a tree/shared block body.
+def _brace_pairs(text: str) -> Dict[int, int]:
+    """Map each `{` outside a quoted string to its matching `}`, or -1.
+
+    One pass gives what find_matching_brace returns for every brace recorded
+    here. A `{` inside a string is left out, so callers fall back to that scan.
+    """
+    pairs: Dict[int, int] = {}
+    stack: List[int] = []
+    in_str = False
+    for m in _BRACE_OR_QUOTE_RE.finditer(text):
+        i = m.start()
+        c = text[i]
+        if c == '"':
+            if i == 0 or text[i - 1] != "\\":
+                in_str = not in_str
+        elif in_str:
+            continue
+        elif c == "{":
+            stack.append(i)
+        elif stack:
+            pairs[stack.pop()] = i
+    pairs.update(dict.fromkeys(stack, -1))
+    return pairs
+
+
+def _block_at(
+    text: str, start: int, pairs: Optional[Dict[int, int]]
+) -> Tuple[str, int]:
+    """extract_block_from_text, read from *pairs* when they hold the brace."""
+    if pairs is not None:
+        open_pos = text.find("{", start)
+        close = pairs.get(open_pos)
+        if close is not None:
+            if close == -1:
+                return "", -1
+            return text[open_pos + 1 : close], close + 1
+    return _extract_block(text, start)
+
+
+def _parse_focus_ids_from_block(
+    text: str, start: int, end: int, pairs: Dict[int, int]
+) -> List[Tuple[str, int, List[List[str]]]]:
+    """Parse all focus = { ... } blocks in text[start:end], a tree body.
 
     Returns a list of (focus_id, relative_line_offset, prerequisite_groups).
     prerequisite_groups is a list of lists — each inner list is the OR-group
-    of focus IDs from one prerequisite = { ... } block.
+    of focus IDs from one prerequisite = { ... } block. A focus that does not
+    close inside the tree body is skipped.
     """
     results: List[Tuple[str, int, List[List[str]]]] = []
-    search_start = 0
+    search_start = start
+    line_offset = 0
+    counted = start
     while True:
-        m = _FOCUS_ID_RE.search(block, search_start)
+        m = _FOCUS_ID_RE.search(text, search_start, end)
         if not m:
             break
-        body, end = _extract_block(block, m.start())
-        if not body:
+        body, body_end = _block_at(text, m.start(), pairs)
+        if not body or body_end > end:
             search_start = m.end()
             continue
 
         id_match = _ID_LINE_RE.search(body)
         if not id_match:
-            search_start = end
+            search_start = body_end
             continue
 
         focus_id = id_match.group(1)
-        line_offset = block[: m.start()].count("\n")
+        line_offset += text.count("\n", counted, m.start())
+        counted = m.start()
 
         prereq_groups: List[List[str]] = []
         for pb in _PREREQ_BLOCK_RE.finditer(body):
@@ -713,67 +831,12 @@ def _parse_focus_ids_from_block(block: str) -> List[Tuple[str, int, List[List[st
                 prereq_groups.append(group)
 
         results.append((focus_id, line_offset, prereq_groups))
-        search_start = end
+        search_start = body_end
     return results
 
 
-def parse_focus_file(args: Tuple[str, str]) -> Dict:
-    """Read one focus tree file and return its parsed structure, content-cached."""
-    filepath, mod_path = args
-    raw = _read_mod_text(filepath, mod_path)
-    if not raw:
-        return {"filepath": filepath, "trees": [], "shared_defs": {}}
-    text = strip_comments(raw)
-    return disk_cache.per_file_cached_by_content(
-        mod_path,
-        "focus_tree.parse",
-        filepath,
-        text,
-        lambda: _parse_focus_text(text, filepath),
-    )
-
-
-def _extract_focus_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, int]]:
-    """Pool worker: return (focus_id, icon, filepath, line) for each focus.
-
-    Takes the first `icon =` inside each focus/shared_focus/joint_focus block.
-    Focuses that omit `icon` (or use a dynamic `[...]` value) are skipped.
-    """
-    filepath, mod_path = args
-    raw = _read_mod_text(filepath, mod_path)
-    if not raw:
-        return []
-    text = strip_comments(raw)
-
-    def _compute() -> List[Tuple[str, str, str, int]]:
-        out: List[Tuple[str, str, str, int]] = []
-        pos = 0
-        while True:
-            m = _FOCUS_BLOCK_START.search(text, pos)
-            if not m:
-                break
-            body, end = _extract_block(text, m.start())
-            if not body:
-                pos = m.end()
-                continue
-            idm = _ID_LINE_RE.search(body)
-            icm = _ICON_LINE_RE.search(body)
-            if idm and icm:
-                icon = icm.group(1) if icm.group(1) is not None else icm.group(2)
-                if "[" not in icon and "]" not in icon:
-                    out.append(
-                        (idm.group(1), icon, filepath, _line_of(text, m.start()))
-                    )
-            pos = end
-        return out
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path, "focus_tree.icons", filepath, text, _compute
-    )
-
-
 def _iter_focus_blocks_with_id(
-    text: str,
+    text: str, *, pairs: Optional[Dict[int, int]] = None
 ) -> Iterator[Tuple[Optional[str], str, int, int]]:
     """Yield (focus_id, body, start, end) for each focus/shared/joint block in
     *text*.
@@ -782,14 +845,14 @@ def _iter_focus_blocks_with_id(
     themselves whether that means skip the block or fall back to a default.
     start/end are the block's absolute offsets in *text*, valid both for
     line-number reporting and as search bounds for a nested walk (e.g.
-    _iter_reward_blocks).
+    _iter_reward_blocks). *pairs*, from _brace_pairs(text), saves the walk.
     """
     pos = 0
     while True:
         m = _FOCUS_BLOCK_START.search(text, pos)
         if not m:
             return
-        body, end = _extract_block(text, m.start())
+        body, end = _block_at(text, m.start(), pairs)
         if not body:
             pos = m.end()
             continue
@@ -799,20 +862,21 @@ def _iter_focus_blocks_with_id(
 
 
 def _iter_reward_blocks(
-    text: str, start: int, end: int
+    text: str, start: int, end: int, *, pairs: Optional[Dict[int, int]] = None
 ) -> Iterator[Tuple[str, int, int]]:
     """Yield (body, start, end) for each completion_reward* block in
     text[start:end].
 
     Searched over the focus's absolute span in *text* rather than a copy of
     its body, so the yielded offsets stay valid for line-number reporting.
+    *pairs*, from _brace_pairs(text), saves the walk.
     """
     pos = start
     while True:
         m = _REWARD_BLOCK_RE.search(text, pos, end)
         if not m:
             return
-        body, body_end = _extract_block(text, m.start())
+        body, body_end = _block_at(text, m.start(), pairs)
         if not body or body_end > end:
             pos = m.end()
             continue
@@ -820,10 +884,129 @@ def _iter_reward_blocks(
         pos = body_end
 
 
-def _extract_ai_guard_data(
-    args: Tuple[str, str, Dict[str, FrozenSet[str]], FrozenSet[str]],
+class _FocusBlock(NamedTuple):
+    focus_id: Optional[str]
+    body: str
+    start: int
+    end: int
+    line: int
+
+    def line_at(self, text: str, pos: int) -> int:
+        """Line of *pos*, an offset at or after the block start."""
+        return self.line + text.count("\n", self.start, pos)
+
+
+class _FocusFile:
+    """One focus file, read and comment-stripped once for every per-file scan.
+
+    Each scan keeps its own disk-cache entry, so a scripted-effect or event
+    change recomputes only the scans that depend on it.
+    """
+
+    def __init__(self, filepath: str, mod_path: str) -> None:
+        self.filepath = filepath
+        self.mod_path = mod_path
+        raw = _read_mod_text(filepath, mod_path)
+        self.text = strip_comments(raw) if raw else ""
+
+    @cached_property
+    def pairs(self) -> Dict[int, int]:
+        return _brace_pairs(self.text)
+
+    @cached_property
+    def blocks(self) -> List[_FocusBlock]:
+        """Every focus/shared/joint block, with the line of its start."""
+        blocks: List[_FocusBlock] = []
+        line = 1
+        counted = 0
+        for focus_id, body, start, end in _iter_focus_blocks_with_id(
+            self.text, pairs=self.pairs
+        ):
+            line += self.text.count("\n", counted, start)
+            counted = start
+            blocks.append(_FocusBlock(focus_id, body, start, end, line))
+        return blocks
+
+    def _cached(self, tag: str, scan, *payload, fingerprint: Optional[str] = None):
+        content = self.text if fingerprint is None else f"{self.text}\x00{fingerprint}"
+        return disk_cache.per_file_cached_by_content(
+            self.mod_path, tag, self.filepath, content, lambda: scan(self, *payload)
+        )
+
+    def parse(self) -> Dict:
+        return self._cached("focus_tree.parse", _parse_focus_text)
+
+    def icons(self) -> List[Tuple[str, str, str, int]]:
+        return self._cached("focus_tree.icons", _scan_focus_icons)
+
+    def relative_positions(self) -> List[Tuple[str, Optional[str], str, int]]:
+        return self._cached("focus_tree.relative_positions", _scan_relative_positions)
+
+    def missing_search_filters(self) -> List[Tuple[str, str, int]]:
+        return self._cached(
+            "focus_tree.search_filters.v1", _scan_missing_search_filters
+        )
+
+    def ai_guards(
+        self, staffable_map: Dict[str, FrozenSet[str]], money_effects: FrozenSet[str]
+    ) -> List[Dict]:
+        # The maps are part of the key, so entries invalidate when
+        # scripted-effect definitions change.
+        fingerprint = (
+            ";".join(
+                f"{name}:{','.join(sorted(types))}"
+                for name, types in sorted(staffable_map.items())
+            )
+            + "|"
+            + ",".join(sorted(money_effects))
+        )
+        return self._cached(
+            "focus_tree.ai_guards.v7",
+            _scan_ai_guards,
+            staffable_map,
+            money_effects,
+            fingerprint=fingerprint,
+        )
+
+    def cross_country_fires(self, notifications: FrozenSet[str]) -> List[Dict]:
+        return self._cached(
+            "focus_tree.cross_country_tt.v6",
+            _scan_cross_country_fires,
+            notifications,
+            fingerprint=";".join(sorted(notifications)),
+        )
+
+    def pp_malus(self) -> List[Tuple[str, str, int]]:
+        return self._cached("focus_tree.pp_malus", _scan_pp_malus)
+
+    def structural(self) -> List[Tuple[str, str, str, int]]:
+        return self._cached("focus_tree.structural", _scan_focus_structural)
+
+
+def _scan_focus_icons(source: _FocusFile) -> List[Tuple[str, str, str, int]]:
+    """Return (focus_id, icon, filepath, line) for each focus.
+
+    Takes the first `icon =` inside each focus/shared_focus/joint_focus block.
+    Focuses that omit `icon` (or use a dynamic `[...]` value) are skipped.
+    """
+    out: List[Tuple[str, str, str, int]] = []
+    for focus_id, body, _, _, line in source.blocks:
+        if focus_id is None:
+            continue
+        icm = _ICON_LINE_RE.search(body)
+        if icm:
+            icon = icm.group(1) if icm.group(1) is not None else icm.group(2)
+            if "[" not in icon and "]" not in icon:
+                out.append((focus_id, icon, source.filepath, line))
+    return out
+
+
+def _scan_ai_guards(
+    source: _FocusFile,
+    staffable_map: Dict[str, FrozenSet[str]],
+    money_effects: FrozenSet[str],
 ) -> List[Dict]:
-    """Pool worker: per-focus facts for the ai_will_do guard checks.
+    """Per-focus facts for the ai_will_do guard checks.
 
     Returns one dict per focus: id, line, search filters, the staffable
     building types its rewards construct (directly or via a scripted effect
@@ -834,169 +1017,132 @@ def _extract_ai_guard_data(
     (a cross-country offer settled in the event), and the
     guard triggers present in factor = 0 ai_will_do modifiers (both the
     `X = no` and `NOT = { X = yes }` forms; guards hidden behind wrapper
-    scripted triggers are not recognized). The staffable and money-effect maps
-    are folded into the cache tag so entries invalidate when scripted-effect
-    definitions change.
+    scripted triggers are not recognized).
     """
-    filepath, mod_path, staffable_map, money_effects = args
-    raw = _read_mod_text(filepath, mod_path)
-    if not raw:
-        return []
-    text = strip_comments(raw)
-    fingerprint = (
-        ";".join(
-            f"{name}:{','.join(sorted(types))}"
-            for name, types in sorted(staffable_map.items())
-        )
-        + "|"
-        + ",".join(sorted(money_effects))
-    )
+    out: List[Dict] = []
+    for focus_id, fbody, fstart, fend, fline in source.blocks:
+        if focus_id is None:
+            continue
 
-    def _compute() -> List[Dict]:
-        out: List[Dict] = []
-        for focus_id, fbody, fstart, fend in _iter_focus_blocks_with_id(text):
-            if focus_id is None:
-                continue
+        sf = _top_level_search_filters(fbody)
 
-            sf = _top_level_search_filters(fbody)
+        buildings: Set[str] = set()
+        spend = 0.0
+        has_cost = False
+        unknown_cost = False
+        previewed_cost = False
+        for rbody, _, _ in _iter_reward_blocks(
+            source.text, fstart, fend, pairs=source.pairs
+        ):
+            # An effect_tooltip previewing someone else's construction is
+            # not this focus building anything.
+            spans = _effect_tooltip_spans(rbody, 0, len(rbody))
 
-            buildings: Set[str] = set()
-            spend = 0.0
-            has_cost = False
-            unknown_cost = False
-            previewed_cost = False
-            for rbody, _, _ in _iter_reward_blocks(text, fstart, fend):
-                # An effect_tooltip previewing someone else's construction is
-                # not this focus building anything.
-                spans = _effect_tooltip_spans(rbody, 0, len(rbody))
+            def previewed(i: int, spans=spans) -> bool:
+                return any(s <= i < e for s, e in spans)
 
-                def previewed(i: int, spans=spans) -> bool:
-                    return any(s <= i < e for s, e in spans)
-
+            keys = _REWARD_KEY_RE.findall(rbody)
+            if not staffable_map.keys().isdisjoint(keys):
                 for km in _REWARD_KEY_RE.finditer(rbody):
                     if km.group(1) in staffable_map and not previewed(km.start()):
                         buildings.update(staffable_map[km.group(1)])
-                bpos = 0
-                while True:
-                    bm = _ADD_BUILDING_START.search(rbody, bpos)
-                    if not bm:
-                        break
-                    bbody, bend = _extract_block(rbody, bm.start())
-                    if not bbody:
-                        bpos = bm.end()
-                        continue
-                    if not previewed(bm.start()):
-                        buildings.update(
-                            t
-                            for t in _TYPE_LINE_RE.findall(bbody)
-                            if t in _STAFFABLE_TRIGGERS
-                        )
-                    bpos = bend
-                s, hc, u = _body_money_cost(rbody, money_effects)
-                spend += s
-                has_cost = has_cost or hc
-                unknown_cost = unknown_cost or u
-                previewed_cost = previewed_cost or any(
-                    _body_money_cost(
-                        rbody[rbody.index("{", s0) + 1 : e0 - 1], money_effects
-                    )[1]
-                    for s0, e0 in spans
-                )
-
-            guards: Set[str] = set()
-            am = _AI_WILL_DO_START.search(fbody)
-            if am:
-                abody, _ = _extract_block(fbody, am.start())
-                if abody:
-                    mpos = 0
-                    while True:
-                        mm = _MODIFIER_START.search(abody, mpos)
-                        if not mm:
-                            break
-                        mbody, mend = _extract_block(abody, mm.start())
-                        if not mbody:
-                            mpos = mm.end()
-                            continue
-                        factor_zero = any(
-                            _enclosing_block_label(mbody, fm.start())[0] is None
-                            for fm in _FACTOR_ZERO_RE.finditer(mbody)
-                        )
-                        if factor_zero:
-                            for gm in _CAN_STAFF_NO_RE.finditer(mbody):
-                                if _is_conjunctive_guard(mbody, gm.start(1)):
-                                    guards.add(gm.group(1))
-                            for gm in _CAN_STAFF_NOT_YES_RE.finditer(mbody):
-                                if _is_conjunctive_guard(
-                                    mbody, gm.start(1), negated=True
-                                ):
-                                    guards.add(gm.group(1))
-                            for gm in _BANKRUPTCY_GUARD_RE.finditer(mbody):
-                                if _is_conjunctive_guard(mbody, gm.start()):
-                                    guards.add("bankruptcy_incoming_collapse")
-                        mpos = mend
-
-            out.append(
-                {
-                    "id": focus_id,
-                    "file": filepath,
-                    "line": _line_of(text, fstart),
-                    "filters": sf,
-                    "buildings": buildings,
-                    "guards": guards,
-                    "spend": spend,
-                    "has_cost": has_cost,
-                    "unknown": unknown_cost,
-                    "previewed_cost": previewed_cost,
-                }
+            # Previews hold a subset of the reward's keys, so a reward calling
+            # no money effect costs the same without them.
+            called_money = (
+                frozenset() if money_effects.isdisjoint(keys) else money_effects
             )
-        return out
+            bpos = 0
+            while True:
+                bm = _ADD_BUILDING_START.search(rbody, bpos)
+                if not bm:
+                    break
+                bbody, bend = _extract_block(rbody, bm.start())
+                if not bbody:
+                    bpos = bm.end()
+                    continue
+                if not previewed(bm.start()):
+                    buildings.update(
+                        t
+                        for t in _TYPE_LINE_RE.findall(bbody)
+                        if t in _STAFFABLE_TRIGGERS
+                    )
+                bpos = bend
+            s, hc, u = _body_money_cost(rbody, called_money)
+            spend += s
+            has_cost = has_cost or hc
+            unknown_cost = unknown_cost or u
+            previewed_cost = previewed_cost or any(
+                _body_money_cost(
+                    rbody[rbody.index("{", s0) + 1 : e0 - 1], called_money
+                )[1]
+                for s0, e0 in spans
+            )
 
-    return disk_cache.per_file_cached_by_content(
-        mod_path,
-        "focus_tree.ai_guards.v7",
-        filepath,
-        text + "\x00" + fingerprint,
-        _compute,
-    )
+        guards: Set[str] = set()
+        am = _AI_WILL_DO_START.search(fbody)
+        if am:
+            abody, _ = _extract_block(fbody, am.start())
+            if abody:
+                mpos = 0
+                while True:
+                    mm = _MODIFIER_START.search(abody, mpos)
+                    if not mm:
+                        break
+                    mbody, mend = _extract_block(abody, mm.start())
+                    if not mbody:
+                        mpos = mm.end()
+                        continue
+                    factor_zero = any(
+                        _enclosing_block_label(mbody, fm.start())[0] is None
+                        for fm in _FACTOR_ZERO_RE.finditer(mbody)
+                    )
+                    if factor_zero:
+                        for gm in _CAN_STAFF_NO_RE.finditer(mbody):
+                            if _is_conjunctive_guard(mbody, gm.start(1)):
+                                guards.add(gm.group(1))
+                        for gm in _CAN_STAFF_NOT_YES_RE.finditer(mbody):
+                            if _is_conjunctive_guard(mbody, gm.start(1), negated=True):
+                                guards.add(gm.group(1))
+                        for gm in _BANKRUPTCY_GUARD_RE.finditer(mbody):
+                            if _is_conjunctive_guard(mbody, gm.start()):
+                                guards.add("bankruptcy_incoming_collapse")
+                    mpos = mend
+
+        out.append(
+            {
+                "id": focus_id,
+                "file": source.filepath,
+                "line": fline,
+                "filters": sf,
+                "buildings": buildings,
+                "guards": guards,
+                "spend": spend,
+                "has_cost": has_cost,
+                "unknown": unknown_cost,
+                "previewed_cost": previewed_cost,
+            }
+        )
+    return out
 
 
-def _cached_focus_scan(args: Tuple[str, str], cache_tag: str, scan):
-    filepath, mod_path = args
-    raw = _read_mod_text(filepath, mod_path)
-    if not raw:
-        return []
-    text = strip_comments(raw)
-    return disk_cache.per_file_cached_by_content(
-        mod_path, cache_tag, filepath, text, lambda: scan(text, filepath)
-    )
-
-
-def _scan_missing_search_filters(
-    text: str, filepath: str
-) -> List[Tuple[str, str, int]]:
-    return [
-        (focus_id, filepath, _line_of(text, fstart))
-        for focus_id, fbody, fstart, _ in _iter_focus_blocks_with_id(text)
-        if focus_id is not None and not _top_level_search_filters(fbody)
-    ]
-
-
-def _extract_focus_search_filters(
-    args: Tuple[str, str],
-) -> List[Tuple[str, str, int]]:
-    """Pool worker: focus blocks that omit a top-level search_filters block.
+def _scan_missing_search_filters(source: _FocusFile) -> List[Tuple[str, str, int]]:
+    """Focus blocks that omit a top-level search_filters block.
 
     The focus standard is checked on the focus block itself and not inside
     nested reward blocks.
     """
-    return _cached_focus_scan(
-        args, "focus_tree.search_filters.v1", _scan_missing_search_filters
-    )
+    return [
+        (block.focus_id, source.filepath, block.line)
+        for block in source.blocks
+        if block.focus_id is not None and not _top_level_search_filters(block.body)
+    ]
 
 
-def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[Dict]:
-    """Pool worker: focuses whose completion_reward fires an event to another
-    nation without a TT_IF_THEY_ACCEPT tooltip.
+def _scan_cross_country_fires(
+    source: _FocusFile, notifications: FrozenSet[str]
+) -> List[Dict]:
+    """Focuses whose completion_reward fires an event to another nation
+    without a TT_IF_THEY_ACCEPT tooltip.
 
     *notifications* holds the ids of events the target cannot answer — hidden,
     or a single option — so there is nothing for the player to accept and the
@@ -1005,157 +1151,138 @@ def _extract_cross_country_fires(args: Tuple[str, str, FrozenSet[str]]) -> List[
 
     Returns one dict (id, file, line) per non-compliant focus.
     """
-    filepath, mod_path, notifications = args
-    raw = _read_mod_text(filepath, mod_path)
-    if not raw:
+    text = source.text
+    if "country_event" not in text:
         return []
-    text = strip_comments(raw)
-    fingerprint = ";".join(sorted(notifications))
+    owner_tags: Set[str] = set()
+    for cm in _FT_COUNTRY_BLOCK_RE.finditer(text):
+        cbody, _ = _block_at(text, cm.start(), source.pairs)
+        if cbody:
+            owner_tags.update(_TAG_ASSIGN_RE.findall(cbody))
+    owner_frozen = frozenset(owner_tags)
 
-    def _compute() -> List[Dict]:
-        owner_tags: Set[str] = set()
-        for cm in _FT_COUNTRY_BLOCK_RE.finditer(text):
-            cbody, _ = _extract_block(text, cm.start())
-            if cbody:
-                owner_tags.update(_TAG_ASSIGN_RE.findall(cbody))
-        owner_frozen = frozenset(owner_tags)
+    out: List[Dict] = []
+    for focus_id, fbody, fstart, fend, fline in source.blocks:
+        if focus_id is None or "country_event" not in fbody:
+            continue
 
-        out: List[Dict] = []
-        for focus_id, _, fstart, fend in _iter_focus_blocks_with_id(text):
-            if focus_id is None:
-                continue
-
-            flagged = False
-            for rbody, _, _ in _iter_reward_blocks(text, fstart, fend):
-                if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
-                    # A fire inside an effect_tooltip is a preview of something
-                    # that happens elsewhere (a decision, another focus), not a
-                    # fire this reward makes, so it needs no tooltip of its own.
-                    preview_spans = _effect_tooltip_spans(rbody, 0, len(rbody))
-                    for ce in _COUNTRY_EVENT_RE.finditer(rbody):
-                        if any(s <= ce.start() < e for s, e in preview_spans):
-                            continue
-                        tm = _FIRE_TARGET_RE.match(rbody, ce.start())
-                        if tm and tm.group(1) in notifications:
-                            continue
-                        if _country_event_target_is_foreign(
-                            rbody, ce.start(), owner_frozen
-                        ):
-                            flagged = True
-                            break
-                if flagged:
-                    break
-
+        flagged = False
+        for rbody, _, _ in _iter_reward_blocks(text, fstart, fend, pairs=source.pairs):
+            if not _TT_IF_THEY_ACCEPT_RE.search(rbody):
+                # A fire inside an effect_tooltip is a preview of something
+                # that happens elsewhere (a decision, another focus), not a
+                # fire this reward makes, so it needs no tooltip of its own.
+                preview_spans = _effect_tooltip_spans(rbody, 0, len(rbody))
+                for ce in _COUNTRY_EVENT_RE.finditer(rbody):
+                    if any(s <= ce.start() < e for s, e in preview_spans):
+                        continue
+                    tm = _FIRE_TARGET_RE.match(rbody, ce.start())
+                    if tm and tm.group(1) in notifications:
+                        continue
+                    if _country_event_target_is_foreign(
+                        rbody, ce.start(), owner_frozen
+                    ):
+                        flagged = True
+                        break
             if flagged:
-                out.append(
-                    {
-                        "id": focus_id,
-                        "file": filepath,
-                        "line": _line_of(text, fstart),
-                    }
-                )
-        return out
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path,
-        "focus_tree.cross_country_tt.v6",
-        filepath,
-        text + "\x00" + fingerprint,
-        _compute,
-    )
-
-
-def _scan_pp_malus(text: str, filepath: str) -> List[Tuple[str, str, int]]:
-    out: List[Tuple[str, str, int]] = []
-    for focus_id, _, fstart, fend in _iter_focus_blocks_with_id(text):
-        focus_id = focus_id if focus_id is not None else "?"
-        for _, rstart, rend in _iter_reward_blocks(text, fstart, fend):
-            tooltip_spans = _effect_tooltip_spans(text, rstart, rend)
-            for match in _PP_MALUS_RE.finditer(text, rstart, rend):
-                if not any(
-                    start <= match.start() < end for start, end in tooltip_spans
-                ):
-                    out.append((focus_id, filepath, _line_of(text, match.start())))
-    return out
-
-
-_FOCUS_DEFAULT_WRITE_RE = re.compile(
-    r"\b(?:cancel_if_invalid\s*=\s*yes|continue_if_invalid\s*=\s*no"
-    r"|available_if_capitulated\s*=\s*no)\b"
-)
-_AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
-_RE_BYPASS_BLOCK = re.compile(r"\bbypass\s*=\s*\{")
-_RE_EMPTY_MUTEX = re.compile(r"\bmutually_exclusive\s*=\s*\{\s*\}")
-_RE_EMPTY_AVAILABLE = re.compile(r"\bavailable\s*=\s*\{\s*\}")
-
-
-def _scan_focus_structural(text: str, filepath: str) -> List[Tuple[str, str, str, int]]:
-    """Scan focus blocks for default writes, dead gates, and empty blocks."""
-    out: List[Tuple[str, str, str, int]] = []
-    for focus_id, body, start, _end in _iter_focus_blocks_with_id(text):
-        focus_id = focus_id if focus_id is not None else "?"
-        for m in _FOCUS_DEFAULT_WRITE_RE.finditer(body):
-            line = _line_of(text, start + m.start())
-            out.append((f"default-write:{m.group()}", focus_id, filepath, line))
-        always_no = None
-        for match in _AVAILABLE_BLOCK_START.finditer(body):
-            available_body, end = _extract_block(body, match.start())
-            if end != -1 and re.fullmatch(r"\s*always\s*=\s*no\s*", available_body):
-                always_no = match
                 break
-        if always_no and _RE_BYPASS_BLOCK.search(body):
-            line = _line_of(text, start + always_no.start())
-            out.append(("always-no-bypass", focus_id, filepath, line))
-        for pattern in (_RE_EMPTY_MUTEX, _RE_EMPTY_AVAILABLE):
-            for m in pattern.finditer(body):
-                line = _line_of(text, start + m.start())
-                out.append(("empty-block", focus_id, filepath, line))
+
+        if flagged:
+            out.append({"id": focus_id, "file": source.filepath, "line": fline})
     return out
 
 
-def _extract_focus_structural(args: Tuple[str, str]) -> List[Tuple[str, str, str, int]]:
-    return _cached_focus_scan(args, "focus_tree.structural", _scan_focus_structural)
-
-
-def _extract_pp_malus(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
-    """Pool worker: return (focus_id, filepath, line) for each negative,
-    literal add_political_power inside a focus's completion_reward.
+def _scan_pp_malus(source: _FocusFile) -> List[Tuple[str, str, int]]:
+    """Return (focus_id, filepath, line) for each negative, literal
+    add_political_power inside a focus's completion_reward.
 
     Occurrences inside an effect_tooltip = { } subtree are skipped — those
     preview a PP change applied elsewhere (e.g. a select_effect) rather
     than executing the malus.
     """
-    return _cached_focus_scan(args, "focus_tree.pp_malus", _scan_pp_malus)
+    text = source.text
+    out: List[Tuple[str, str, int]] = []
+    for block in source.blocks:
+        if not _PP_MALUS_RE.search(text, block.start, block.end):
+            continue
+        focus_id = block.focus_id if block.focus_id is not None else "?"
+        for _, rstart, rend in _iter_reward_blocks(
+            text, block.start, block.end, pairs=source.pairs
+        ):
+            tooltip_spans = _effect_tooltip_spans(text, rstart, rend)
+            for match in _PP_MALUS_RE.finditer(text, rstart, rend):
+                if not any(
+                    start <= match.start() < end for start, end in tooltip_spans
+                ):
+                    line = block.line_at(text, match.start())
+                    out.append((focus_id, source.filepath, line))
+    return out
+
+
+_DEFAULT_WRITE_KEYS = (
+    "cancel_if_invalid",
+    "continue_if_invalid",
+    "available_if_capitulated",
+)
+_FOCUS_DEFAULT_WRITE_RE = re.compile(
+    r"\b(?:cancel_if_invalid\s*=\s*yes|continue_if_invalid\s*=\s*no"
+    r"|available_if_capitulated\s*=\s*no)\b"
+)
+_AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
+_ALWAYS_NO_BODY_RE = re.compile(r"\s*always\s*=\s*no\s*")
+_RE_BYPASS_BLOCK = re.compile(r"\bbypass\s*=\s*\{")
+_RE_EMPTY_MUTEX = _keyword_re("mutually_exclusive", r"\s*=\s*\{\s*\}")
+_RE_EMPTY_AVAILABLE = _keyword_re("available", r"\s*=\s*\{\s*\}")
+
+
+def _scan_focus_structural(source: _FocusFile) -> List[Tuple[str, str, str, int]]:
+    """Scan focus blocks for default writes, dead gates, and empty blocks."""
+    text = source.text
+    filepath = source.filepath
+    out: List[Tuple[str, str, str, int]] = []
+    for block in source.blocks:
+        body = block.body
+        focus_id = block.focus_id if block.focus_id is not None else "?"
+        if any(key in body for key in _DEFAULT_WRITE_KEYS):
+            for m in _FOCUS_DEFAULT_WRITE_RE.finditer(body):
+                line = block.line_at(text, block.start + m.start())
+                out.append((f"default-write:{m.group()}", focus_id, filepath, line))
+        always_no = None
+        if "always" in body:
+            for match in _AVAILABLE_BLOCK_START.finditer(body):
+                available_body, end = _extract_block(body, match.start())
+                if end != -1 and _ALWAYS_NO_BODY_RE.fullmatch(available_body):
+                    always_no = match
+                    break
+        if always_no and _RE_BYPASS_BLOCK.search(body):
+            line = block.line_at(text, block.start + always_no.start())
+            out.append(("always-no-bypass", focus_id, filepath, line))
+        for pattern in (_RE_EMPTY_MUTEX, _RE_EMPTY_AVAILABLE):
+            for m in pattern.finditer(body):
+                line = block.line_at(text, block.start + m.start())
+                out.append(("empty-block", focus_id, filepath, line))
+    return out
 
 
 def _scan_relative_positions(
-    text: str, filepath: str
+    source: _FocusFile,
 ) -> List[Tuple[str, Optional[str], str, int]]:
     """Return (focus_id, relative_position_id target or None, filepath, line)
     for every focus block with an id, in file order."""
     out: List[Tuple[str, Optional[str], str, int]] = []
-    for focus_id, body, start, _end in _iter_focus_blocks_with_id(text):
-        if focus_id is None:
+    for block in source.blocks:
+        if block.focus_id is None:
             continue
-        m = _RELATIVE_POSITION_RE.search(body)
+        m = _RELATIVE_POSITION_RE.search(block.body)
         if m:
-            out.append(
-                (focus_id, m.group(1), filepath, _line_of(text, start + m.start()))
-            )
+            line = block.line_at(source.text, block.start + m.start())
+            out.append((block.focus_id, m.group(1), source.filepath, line))
         else:
-            out.append((focus_id, None, filepath, _line_of(text, start)))
+            out.append((block.focus_id, None, source.filepath, block.line))
     return out
 
 
-def _extract_relative_positions(
-    args: Tuple[str, str],
-) -> List[Tuple[str, Optional[str], str, int]]:
-    return _cached_focus_scan(
-        args, "focus_tree.relative_positions", _scan_relative_positions
-    )
-
-
-def _parse_focus_text(text: str, filepath: str) -> Dict:
+def _parse_focus_text(source: _FocusFile) -> Dict:
     """Parse comment-stripped focus tree text into a structured result dict.
 
     Keys:
@@ -1167,6 +1294,8 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
       "focuses"       — list of (focus_id, abs_line, prereq_groups)
       "shared_refs"   — set of shared_focus IDs referenced inside the tree
     """
+    text = source.text
+    filepath = source.filepath
     result: Dict[str, Any] = {
         "filepath": filepath,
         "trees": [],
@@ -1175,18 +1304,21 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
 
     # --- collect shared_focus definitions (top-level) ---
     pos = 0
+    abs_line = 1
+    counted = 0
     while True:
         m = _SHARED_FOCUS_DEF_START.search(text, pos)
         if not m:
             break
-        body, end = _extract_block(text, m.start())
+        body, end = _block_at(text, m.start(), source.pairs)
         if not body:
             pos = m.end()
             continue
         id_match = _ID_LINE_RE.search(body)
         if id_match:
             sfid = id_match.group(1)
-            abs_line = _line_of(text, m.start())
+            abs_line += text.count("\n", counted, m.start())
+            counted = m.start()
             prereq_groups: List[List[str]] = []
             for pb in _PREREQ_BLOCK_RE.finditer(body):
                 group = _PREREQ_FOCUS_RE.findall(pb.group(1))
@@ -1208,15 +1340,17 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
         m = _FOCUS_TREE_START.search(text, pos)
         if not m:
             break
-        body, end = _extract_block(text, m.start())
+        body, end = _block_at(text, m.start(), source.pairs)
         if not body:
             pos = m.end()
             continue
 
+        tree_line = text.count("\n", 0, m.start()) + 1
         tree_focuses: List[Tuple[str, int, List[List[str]]]] = []
-        for focus_id, line_offset, prereq_groups in _parse_focus_ids_from_block(body):
-            abs_line = _line_of(text, m.start()) + line_offset
-            tree_focuses.append((focus_id, abs_line, prereq_groups))
+        for focus_id, line_offset, prereq_groups in _parse_focus_ids_from_block(
+            text, end - 1 - len(body), end - 1, source.pairs
+        ):
+            tree_focuses.append((focus_id, tree_line + line_offset, prereq_groups))
 
         # shared_focus references inside the tree (not definitions)
         shared_refs: Set[str] = set()
@@ -1238,6 +1372,32 @@ def _parse_focus_text(text: str, filepath: str) -> Dict:
     return result
 
 
+def _scan_focus_file(
+    args: Tuple[
+        str, str, Dict[str, FrozenSet[str]], FrozenSet[str], FrozenSet[str], bool
+    ],
+) -> Dict[str, Any]:
+    """Pool worker: every per-file focus scan from one read of the file."""
+    filepath, mod_path, staffable_map, money_effects, notifications, icons = args
+    source = _FocusFile(filepath, mod_path)
+    return {
+        "parse": source.parse(),
+        "relative_positions": source.relative_positions(),
+        "missing_search_filters": source.missing_search_filters(),
+        "ai_guards": source.ai_guards(staffable_map, money_effects),
+        "cross_country_fires": source.cross_country_fires(notifications),
+        "pp_malus": source.pp_malus(),
+        "structural": source.structural(),
+        "icons": source.icons() if icons else [],
+    }
+
+
+# (all_focuses, focus_info): see Validator._build_focus_registry.
+_FocusRegistry = Tuple[
+    Dict[str, List[Tuple[str, int]]], Dict[str, Tuple[str, int, List[List[str]]]]
+]
+
+
 class Validator(BaseValidator):
     TITLE = "FOCUS TREE STRUCTURAL VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".yml"]
@@ -1245,9 +1405,12 @@ class Validator(BaseValidator):
     def __init__(self, mod_path: str, **kwargs):
         self.missing_icons = kwargs.pop("missing_icons", False)
         super().__init__(mod_path, **kwargs)
-        self._parsed_cache: Optional[List[Dict]] = None
+        self._scans: Optional[List[Dict[str, Any]]] = None
+        self._registry: Optional[_FocusRegistry] = None
         self._staged_paths: Optional[Set[str]] = None
-        self._scripted_effect_data = None
+        self._scripted_effect_data: Optional[
+            Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]
+        ] = None
 
     # -----------------------------------------------------------------------
     # Data collection
@@ -1280,32 +1443,48 @@ class Validator(BaseValidator):
         rel = os.path.relpath(filepath, self.mod_path)
         return rel in staged
 
-    def _iter_reportable_dicts(
-        self, data_lists: List[List[Dict]]
-    ) -> Iterator[Tuple[Dict, str]]:
-        """Yield (d, rel_path) for each dict in *data_lists* whose file is
-        reportable, flattening the per-file sublists from a pool map.
-        """
-        for sub in data_lists:
-            for d in sub:
-                if not self._is_reportable(d["file"]):
-                    continue
-                yield d, os.path.relpath(d["file"], self.mod_path)
+    def _focus_scans(self) -> List[Dict[str, Any]]:
+        """Every per-file focus scan, from one pool pass over the focus files."""
+        if self._scans is None:
+            staffable, money = self._scripted_effect_data_for_guards()
+            notifications = self._notification_event_ids()
+            files = self._collect_files(
+                ["common/national_focus/*.txt"], ignore_staged=True
+            )
+            self._scans = self._pool_map(
+                _scan_focus_file,
+                [
+                    (
+                        f,
+                        self.mod_path,
+                        staffable,
+                        money,
+                        notifications,
+                        self.missing_icons,
+                    )
+                    for f in files
+                ],
+                chunksize=10,
+            )
+        return self._scans
+
+    def _reportable_results(self, key: str) -> Iterator[Tuple[str, List]]:
+        """Yield (rel_path, results) for each reportable file's *key* scan."""
+        for scan in self._focus_scans():
+            filepath = scan["parse"]["filepath"]
+            if scan[key] and self._is_reportable(filepath):
+                yield os.path.relpath(filepath, self.mod_path), scan[key]
 
     def _get_parsed_files(self) -> List[Dict]:
-        if self._parsed_cache is not None:
-            return self._parsed_cache
-        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        self._parsed_cache = self._pool_map(
-            parse_focus_file, [(f, self.mod_path) for f in files], chunksize=10
-        )
-        return self._parsed_cache
+        return [scan["parse"] for scan in self._focus_scans()]
 
-    def _build_focus_registry(
-        self, parsed_files: List[Dict]
-    ) -> Tuple[
-        Dict[str, List[Tuple[str, int]]], Dict[str, Tuple[str, int, List[List[str]]]]
-    ]:
+    def _focus_registry(self) -> _FocusRegistry:
+        """The registry of every parsed file, built once for all the checks."""
+        if self._registry is None:
+            self._registry = self._build_focus_registry(self._get_parsed_files())
+        return self._registry
+
+    def _build_focus_registry(self, parsed_files: List[Dict]) -> _FocusRegistry:
         """Build two lookup structures from parsed data.
 
         Returns:
@@ -1338,8 +1517,7 @@ class Validator(BaseValidator):
     def validate_duplicate_focus_ids(self):
         self._log_section("Checking for duplicate focus IDs...")
 
-        parsed = self._get_parsed_files()
-        all_focuses, _ = self._build_focus_registry(parsed)
+        all_focuses, _ = self._focus_registry()
 
         results = []
         for focus_id, locations in sorted(all_focuses.items()):
@@ -1377,7 +1555,7 @@ class Validator(BaseValidator):
 
         parsed = self._get_parsed_files()
         # Build global set of all defined focus IDs for missing-prereq resolution
-        _, focus_info = self._build_focus_registry(parsed)
+        _, focus_info = self._focus_registry()
         all_defined: FrozenSet[str] = frozenset(focus_info.keys())
 
         results = []
@@ -1437,7 +1615,7 @@ class Validator(BaseValidator):
         )
 
         parsed = self._get_parsed_files()
-        _, focus_info = self._build_focus_registry(parsed)
+        _, focus_info = self._focus_registry()
         all_defined: FrozenSet[str] = frozenset(focus_info.keys())
         defined_ci = casefold_index(all_defined)
 
@@ -1523,8 +1701,7 @@ class Validator(BaseValidator):
             "Checking for missing localisation keys (focus ID and _desc)..."
         )
 
-        parsed = self._get_parsed_files()
-        _, focus_info = self._build_focus_registry(parsed)
+        _, focus_info = self._focus_registry()
 
         # Load all English loc keys (always full repo scan)
         loc_keys = self._load_localisation_keys()
@@ -1534,15 +1711,12 @@ class Validator(BaseValidator):
 
         results = []
         for focus_id, (fp, line, _) in sorted(focus_info.items()):
-            if not self._is_reportable(fp):
+            missing_keys = [
+                key for key in (focus_id, f"{focus_id}_desc") if key not in loc_keys
+            ]
+            if not missing_keys or not self._is_reportable(fp):
                 continue
             rel = os.path.relpath(fp, self.mod_path)
-            missing_keys = []
-            if focus_id not in loc_keys:
-                missing_keys.append(focus_id)
-            desc_key = f"{focus_id}_desc"
-            if desc_key not in loc_keys:
-                missing_keys.append(desc_key)
             for key in missing_keys:
                 results.append(
                     (
@@ -1595,8 +1769,7 @@ class Validator(BaseValidator):
     def validate_focus_loc_colors(self):
         self._log_section("Checking focus localisation against the color palette...")
 
-        parsed = self._get_parsed_files()
-        _, focus_info = self._build_focus_registry(parsed)
+        _, focus_info = self._focus_registry()
         wanted = frozenset(
             [fid for fid in focus_info] + [f"{fid}_desc" for fid in focus_info]
         )
@@ -1657,22 +1830,11 @@ class Validator(BaseValidator):
     def validate_missing_search_filters(self):
         self._log_section("Checking for focus blocks missing search_filters...")
 
-        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        missing_lists = self._pool_map(
-            _extract_focus_search_filters,
-            [(f, self.mod_path) for f in files],
-            chunksize=10,
-        )
-
-        results = []
-        for sub in missing_lists:
-            for focus_id, fp, line in sub:
-                if not self._is_reportable(fp):
-                    continue
-                rel = os.path.relpath(fp, self.mod_path)
-                results.append(
-                    (f"Focus '{focus_id}' missing search_filters", rel, line)
-                )
+        results = [
+            (f"Focus '{focus_id}' missing search_filters", rel, line)
+            for rel, missing in self._reportable_results("missing_search_filters")
+            for focus_id, _fp, line in missing
+        ]
 
         self._report(
             results,
@@ -1686,7 +1848,11 @@ class Validator(BaseValidator):
     # Check 5c: ai_will_do staffing / bankruptcy guards
     # -----------------------------------------------------------------------
 
-    def _scripted_effect_data_for_guards(self):
+    def _scripted_effect_data_for_guards(
+        self,
+    ) -> Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]:
+        """(staffable map, money-effect names), both resolved through call
+        chains from one read of common/scripted_effects/."""
         if self._scripted_effect_data is not None:
             return self._scripted_effect_data
 
@@ -1696,23 +1862,18 @@ class Validator(BaseValidator):
         fx_files = self._collect_files(
             ["common/scripted_effects/*.txt"], ignore_staged=True
         )
-        for filepath in fx_files:
-            text = _read_scripted_effect_file(filepath, self.mod_path)
-            bodies, staffable, money = disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                "focus_tree.scripted_effects",
-                filepath,
-                text,
-                lambda text=text: _parse_scripted_effect_file(text),
-            )
+        per_file = self._pool_map(
+            _scripted_effect_facts,
+            [(filepath, self.mod_path) for filepath in fx_files],
+            chunksize=10,
+        )
+        for bodies, staffable, money in per_file:
             effect_bodies.update(bodies)
             direct_staffable.update(staffable)
             direct_money.update(money)
 
-        self._scripted_effect_data = (
-            effect_bodies,
-            direct_staffable,
-            frozenset(direct_money),
+        self._scripted_effect_data = _resolve_scripted_effect_chains(
+            effect_bodies, direct_staffable, frozenset(direct_money)
         )
         return self._scripted_effect_data
 
@@ -1723,11 +1884,7 @@ class Validator(BaseValidator):
         add_building_construction of a staffable type, so new builder-effect
         variants are picked up without a hardcoded list.
         """
-        effect_bodies, direct_staffable, _ = self._scripted_effect_data_for_guards()
-        mapping, _ = _resolve_scripted_effect_chains(
-            effect_bodies, direct_staffable, frozenset()
-        )
-        return mapping
+        return self._scripted_effect_data_for_guards()[0]
 
     def _money_cost_effect_names(self) -> FrozenSet[str]:
         """Scripted-effect names that (transitively) reduce the treasury or
@@ -1739,9 +1896,7 @@ class Validator(BaseValidator):
         (non-literal) treasury_change is treated as a cost even though its sign
         is unknown, so a handful of computed-income effects may be included.
         """
-        effect_bodies, _, direct_money = self._scripted_effect_data_for_guards()
-        _, money = _resolve_scripted_effect_chains(effect_bodies, {}, direct_money)
-        return money
+        return self._scripted_effect_data_for_guards()[1]
 
     def validate_ai_will_do_guards(self):
         """Flag focuses missing (or carrying an unneeded) ai_will_do guard.
@@ -1770,12 +1925,10 @@ class Validator(BaseValidator):
                 "can_staff detection limited to direct add_building_construction",
                 "warning",
             )
-        money_effects = self._money_cost_effect_names()
-        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        data_lists = self._pool_map(
-            _extract_ai_guard_data,
-            [(f, self.mod_path, staffable, money_effects) for f in files],
-            chunksize=10,
+        reportable = (
+            (d, rel)
+            for rel, facts in self._reportable_results("ai_guards")
+            for d in facts
         )
 
         staff_results = []
@@ -1785,7 +1938,7 @@ class Validator(BaseValidator):
         unknown_spend_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
         unneeded_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
         miscategorized_by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
-        for d, rel in self._iter_reportable_dicts(data_lists):
+        for d, rel in reportable:
             unguarded = sorted(
                 b for b in d["buildings"] if _STAFFABLE_TRIGGERS[b] not in d["guards"]
             )
@@ -1886,52 +2039,13 @@ class Validator(BaseValidator):
         Firing one of these into a foreign scope is a notification, not an
         offer, so it never needs a TT_IF_THEY_ACCEPT tooltip.
         """
-        ids: Set[str] = set()
-        for fp in self._collect_files(["events/*.txt"], ignore_staged=True):
-            raw = _read_mod_text(fp, self.mod_path)
-            if not raw:
-                continue
-            text = strip_comments(raw)
-
-            def _compute(text=text) -> List[str]:
-                found: List[str] = []
-                for m in _EVENT_BLOCK_RE.finditer(text):
-                    body, end = _extract_block(text, m.start())
-                    if end == -1:
-                        continue
-                    idm = _EVENT_ID_RE.search(body)
-                    if not idm:
-                        continue
-                    options: List[str] = []
-                    opos = 0
-                    while True:
-                        om = _EVENT_OPTION_RE.search(body, opos)
-                        if not om:
-                            break
-                        obody, oend = _extract_block(body, om.start())
-                        if oend == -1:
-                            break
-                        options.append(obody)
-                        opos = oend
-                    if (
-                        len(options) < 2
-                        or _EVENT_HIDDEN_RE.search(body)
-                        or _is_tag_routed(options)
-                        or _is_flavor_only(options)
-                    ):
-                        found.append(idm.group(1))
-                return found
-
-            ids.update(
-                disk_cache.per_file_cached_by_content(
-                    self.mod_path,
-                    "focus_tree.notification_events.v4",
-                    fp,
-                    text,
-                    _compute,
-                )
-            )
-        return frozenset(ids)
+        files = self._collect_files(["events/*.txt"], ignore_staged=True)
+        per_file = self._pool_map(
+            _notification_ids_in_file,
+            [(fp, self.mod_path) for fp in files],
+            chunksize=10,
+        )
+        return frozenset(event_id for ids in per_file for event_id in ids)
 
     def validate_cross_country_event_tooltips(self):
         """Flag focuses that fire an event to another nation without a
@@ -1946,17 +2060,9 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking cross-country event fires for TT_IF_THEY_ACCEPT...")
 
-        notifications = self._notification_event_ids()
-        files = self._collect_files(["common/national_focus/*.txt"])
-        data_lists = self._pool_map(
-            _extract_cross_country_fires,
-            [(f, self.mod_path, notifications) for f in files],
-            chunksize=10,
-        )
-
         by_file: Dict[str, List[Tuple[str, int]]] = defaultdict(list)
-        for d, rel in self._iter_reportable_dicts(data_lists):
-            by_file[rel].append((d["id"], d["line"]))
+        for rel, fires in self._reportable_results("cross_country_fires"):
+            by_file[rel].extend((d["id"], d["line"]) for d in fires)
 
         results = []
         for rel, hits in sorted(by_file.items()):
@@ -1993,28 +2099,18 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for PP malus in focus completion_reward...")
 
-        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        data_lists = self._pool_map(
-            _extract_pp_malus, [(f, self.mod_path) for f in files], chunksize=10
-        )
-
-        results = []
-        for sub in data_lists:
-            for focus_id, fp, line in sub:
-                if focus_id in _PP_MALUS_EXEMPT_FOCUS_IDS:
-                    continue
-                if not self._is_reportable(fp):
-                    continue
-                rel = os.path.relpath(fp, self.mod_path)
-                results.append(
-                    (
-                        f"Focus '{focus_id}' completion_reward applies a PP"
-                        " malus (negative add_political_power) — focus time"
-                        " is the cost; verify this is intended",
-                        rel,
-                        line,
-                    )
-                )
+        results = [
+            (
+                f"Focus '{focus_id}' completion_reward applies a PP"
+                " malus (negative add_political_power) — focus time"
+                " is the cost; verify this is intended",
+                rel,
+                line,
+            )
+            for rel, maluses in self._reportable_results("pp_malus")
+            for focus_id, _fp, line in maluses
+            if focus_id not in _PP_MALUS_EXEMPT_FOCUS_IDS
+        ]
 
         self._report(
             results,
@@ -2039,16 +2135,12 @@ class Validator(BaseValidator):
         # per-tree graph silently drops those edges and misses cycles that pass
         # through them.
         adjacency: Dict[str, Set[str]] = defaultdict(set)
-        node_info: Dict[str, Tuple[str, int, str]] = {}
+        node_info: Dict[str, Tuple[int, str]] = {}
 
         def _register(focus_id: str, line: int, filepath: str) -> None:
             adjacency.setdefault(focus_id, set())
             if focus_id not in node_info:
-                node_info[focus_id] = (
-                    os.path.relpath(filepath, self.mod_path),
-                    line,
-                    filepath,
-                )
+                node_info[focus_id] = (line, filepath)
 
         for pf in parsed:
             fp = pf["filepath"]
@@ -2088,14 +2180,14 @@ class Validator(BaseValidator):
             cycle_key = frozenset(cycle)
             if cycle_key in reported_cycles:
                 return
-            if not any(self._is_reportable(node_info[n][2]) for n in cycle):
+            if not any(self._is_reportable(node_info[n][1]) for n in cycle):
                 return
             reported_cycles.add(cycle_key)
-            rel, line, _fp = node_info[cycle[0]]
+            line, fp = node_info[cycle[0]]
             results.append(
                 (
                     f"Dependency cycle detected: {' -> '.join(cycle)}",
-                    rel,
+                    os.path.relpath(fp, self.mod_path),
                     line,
                 )
             )
@@ -2164,22 +2256,13 @@ class Validator(BaseValidator):
                 "warning",
             )
             return
-        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        icon_lists = self._pool_map(
-            _extract_focus_icons, [(f, self.mod_path) for f in files]
-        )
 
-        results = []
-        for sub in icon_lists:
-            for focus_id, icon, fp, line in sub:
-                if icon in sprites:
-                    continue
-                if not self._is_reportable(fp):
-                    continue
-                rel = os.path.relpath(fp, self.mod_path)
-                results.append(
-                    (f"Missing icon sprite '{icon}' for focus '{focus_id}'", rel, line)
-                )
+        results = [
+            (f"Missing icon sprite '{icon}' for focus '{focus_id}'", rel, line)
+            for rel, icons in self._reportable_results("icons")
+            for focus_id, icon, _fp, line in icons
+            if icon not in sprites
+        ]
 
         self._report(
             results,
@@ -2193,17 +2276,9 @@ class Validator(BaseValidator):
         """Flag default writes, dead gates, and empty focus blocks."""
         self._log_section("Checking focus structural defaults and dead gates...")
 
-        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        data_lists = self._pool_map(
-            _extract_focus_structural, [(f, self.mod_path) for f in files], chunksize=10
-        )
-
         by_kind: Dict[str, List[Tuple[str, str, int]]] = defaultdict(list)
-        for sub in data_lists:
-            for kind, focus_id, fp, line in sub:
-                if not self._is_reportable(fp):
-                    continue
-                rel = os.path.relpath(fp, self.mod_path)
+        for rel, entries in self._reportable_results("structural"):
+            for kind, focus_id, _fp, line in entries:
                 by_kind[kind].append((focus_id, rel, line))
 
         default_writes = [
@@ -2265,13 +2340,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking relative_position_id targets and file order...")
 
-        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
-        data_lists = self._pool_map(
-            _extract_relative_positions,
-            [(f, self.mod_path) for f in files],
-            chunksize=10,
-        )
-
+        data_lists = [scan["relative_positions"] for scan in self._focus_scans()]
         defined = {focus_id for sub in data_lists for focus_id, _, _, _ in sub}
         forward = []
         missing = []
