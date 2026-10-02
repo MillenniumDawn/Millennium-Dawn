@@ -146,10 +146,9 @@ python3 tools/run.py validation_timing_report timing-*.json
 The report lists each real Actions job and step, overall run span, and summed
 job time. It ignores synthetic Checks API jobs that have no `steps`, excludes
 incomplete or unsuccessful runs from summaries, and keeps revisions, cache
-modes, and job/step outcomes separate. Existing section timers, CI artifact
-logs, and the per-validator `start_seconds`, `end_seconds`, and `cpu_seconds`
-in each batch's `batch-manifest.json` are the timing mechanism. Add no other
-subprocess timers. `databaseId` plus positive integer `attempt` identifies
+modes, and job/step outcomes separate. Existing section timers and CI artifact
+logs are the timing mechanism. Do not instrument subprocess elapsed time with
+parent wait timestamps. `databaseId` plus positive integer `attempt` identifies
 an export, so duplicate files are ignored while distinct reruns are retained.
 Run history alone is not a controlled baseline and does not establish a
 performance gain. No workflow scheduling, worker count, checkout scope, or cache

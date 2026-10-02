@@ -3,8 +3,8 @@
 Two consumers share this runner: the coding pipeline's batch jobs select by
 detect-changes output groups (--batch with --changed-groups), and the PR
 impact scan selects by changed files (--impact). A batch-manifest.json beside
-the per-validators' log/sidecar pairs records the selection, execution
-outcome, and per-validator wall and CPU time for the trusted reporter.
+the per-validators' log/sidecar pairs records the selection and execution
+outcome for the trusted reporter.
 """
 
 import argparse
@@ -13,12 +13,7 @@ import os
 import subprocess
 import sys
 import time
-from typing import Dict, List, NamedTuple, Optional, Set, TextIO, Tuple
-
-try:
-    import resource
-except ImportError:  # Windows has no rusage; the batch only runs on Linux CI.
-    resource = None
+from typing import Dict, List, Optional, Set, TextIO, Tuple
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -30,15 +25,6 @@ from validator_batches import BATCHES, ValidatorSpec, select_for_changed_files
 RESULT_PREFIX = "validation-"
 MANIFEST_NAME = "batch-manifest.json"
 _POLL_SECONDS = 0.05
-
-
-class _Outcome(NamedTuple):
-    returncode: int
-    status: str
-    detail: str
-    start: float
-    end: float
-    cpu: Optional[float]
 
 
 def parse_changed_groups(raw: str) -> Optional[Set[str]]:
@@ -95,48 +81,27 @@ def classify_result(spec, returncode: int, output_dir: str) -> Tuple[str, str]:
     return "ok", ""
 
 
-def _poll_with_cpu(proc: subprocess.Popen) -> Tuple[Optional[int], Optional[float]]:
-    """Poll a child and return its exit code and CPU seconds once it is done.
-
-    poll() is what reaps the child, so the RUSAGE_CHILDREN delta across this one
-    call is that child's CPU alone, even when several finish together.
-    """
-    if resource is None:
-        return proc.poll(), None
-    before = resource.getrusage(resource.RUSAGE_CHILDREN)
-    returncode = proc.poll()
-    after = resource.getrusage(resource.RUSAGE_CHILDREN)
-    cpu = (after.ru_utime - before.ru_utime) + (after.ru_stime - before.ru_stime)
-    return returncode, cpu
-
-
 def _write_manifest(
     mode: str,
     batch: Optional[str],
     specs: List[ValidatorSpec],
-    outcomes: Dict[str, _Outcome],
+    outcomes: Dict[str, Tuple[int, str, str]],
     output_dir: str,
 ) -> None:
-    results = []
-    for spec in specs:
-        outcome = outcomes[spec.name]
-        results.append(
-            {
-                "name": spec.name,
-                "script": spec.script,
-                "strict": spec.strict,
-                "returncode": outcome.returncode,
-                "status": outcome.status,
-                "start_seconds": round(outcome.start, 2),
-                "end_seconds": round(outcome.end, 2),
-                "cpu_seconds": None if outcome.cpu is None else round(outcome.cpu, 2),
-            }
-        )
     manifest = {
         "mode": mode,
         "batch": batch,
         "selected": [spec.name for spec in specs],
-        "results": results,
+        "results": [
+            {
+                "name": spec.name,
+                "script": spec.script,
+                "strict": spec.strict,
+                "returncode": outcomes[spec.name][0],
+                "status": outcomes[spec.name][1],
+            }
+            for spec in specs
+        ],
     }
     path = os.path.join(output_dir, MANIFEST_NAME)
     with open(path, "w", encoding="utf-8", newline="") as handle:
@@ -163,10 +128,8 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
     processes: Dict[str, Tuple[subprocess.Popen, TextIO]] = {}
     pending = list(specs)
     failures: List[str] = []
-    outcomes: Dict[str, _Outcome] = {}
+    outcomes: Dict[str, Tuple[int, str, str]] = {}
     specs_by_name = {spec.name: spec for spec in specs}
-    batch_start = time.monotonic()
-    started: Dict[str, float] = {}
 
     def launch_next() -> None:
         if pending:
@@ -177,7 +140,6 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
             if spec.runner == "standalone":
                 script = "run_impact_standalone.py"
                 spec_flags = ["--validator", spec.name] + spec_flags
-            started[spec.name] = time.monotonic() - batch_start
             processes[spec.name] = run_all_validators.launch_validator(
                 script,
                 gate + child_flags + spec_flags,
@@ -194,17 +156,14 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
     report_index = 0
     while processes:
         completed_name = None
-        cpu = None
         while completed_name is None:
             for name, (proc, _) in processes.items():
-                polled, cpu = _poll_with_cpu(proc)
-                if polled is not None:
+                if proc.poll() is not None:
                     completed_name = name
                     break
             if completed_name is None:
                 # Polling waits portably for completion without a second scheduler.
                 time.sleep(_POLL_SECONDS)
-        end = time.monotonic() - batch_start
 
         proc, stderr_fh = processes.pop(completed_name)
         returncode = proc.wait()
@@ -213,21 +172,13 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
 
         spec = specs_by_name[completed_name]
         status, detail = classify_result(spec, returncode, args.output_dir)
-        start = started[spec.name]
-        outcomes[spec.name] = _Outcome(returncode, status, detail, start, end, cpu)
-        cpu_text = "n/a" if cpu is None else f"{cpu:.2f}s"
-        print(
-            f"Finished {spec.name} at {end:.2f}s: "
-            f"{end - start:.2f}s wall, {cpu_text} CPU",
-            flush=True,
-        )
+        outcomes[spec.name] = (returncode, status, detail)
 
         while report_index < len(specs):
             report_spec = specs[report_index]
             if report_spec.name not in outcomes:
                 break
-            report_status = outcomes[report_spec.name].status
-            report_detail = outcomes[report_spec.name].detail
+            _, report_status, report_detail = outcomes[report_spec.name]
             if report_status == "ok":
                 print(f"OK {report_spec.name} ({report_spec.script})", flush=True)
             else:

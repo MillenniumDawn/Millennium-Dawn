@@ -406,32 +406,6 @@ def test_manifest_only_empty_batch_is_not_a_legacy_run(tmp_path):
     assert all(run.status == "passed" for run in runs.values())
 
 
-@pytest.mark.parametrize("cpu_seconds", [41.5, None])
-def test_manifest_with_per_result_timing_loads(tmp_path, cpu_seconds):
-    batch = tmp_path / "validation-results" / "validation-batch-core-results"
-    batch.mkdir(parents=True)
-    write_log(batch, "variables", "✓ VALIDATION COMPLETE - NO ISSUES FOUND\n")
-    write_sidecar(batch, "variables", [])
-    result = {
-        "name": "variables",
-        "script": "validate_variables.py",
-        "strict": False,
-        "returncode": 0,
-        "status": "ok",
-        "start_seconds": 0.01,
-        "end_seconds": 12.34,
-        "cpu_seconds": cpu_seconds,
-    }
-    manifest = {"mode": "batch", "batch": "core", "selected": ["variables"]}
-    write_text(batch / MANIFEST_NAME, json.dumps({**manifest, "results": [result]}))
-
-    runs = load_all(str(tmp_path / "validation-results"))
-
-    assert [(run.name, run.status, run.strict) for run in runs] == [
-        ("variables", "passed", False)
-    ]
-
-
 def test_malformed_manifest_only_batch_is_reported(tmp_path):
     root = tmp_path / "validation-results"
     batch = root / "nested" / "validation-batch-bad-results"

@@ -154,9 +154,7 @@ def test_missing_result_files_fail_the_run(tmp_path, monkeypatch, capsys):
 
     assert code == 1
     assert "missing" in capsys.readouterr().out
-    missing = _manifest_results(tmp_path)["events"]
-    assert missing["status"] == "missing"
-    _assert_timed(missing)
+    assert _manifest_results(tmp_path)["events"]["status"] == "missing"
 
 
 def test_concurrency_stays_bounded(tmp_path, monkeypatch):
@@ -244,14 +242,9 @@ STUB_VALIDATOR = """
 import json
 import os
 import sys
-import time
 
 if os.environ.get('STUB_CRASH'):
     raise RuntimeError('stub crashed')
-time.sleep(float(os.environ.get('STUB_SLEEP', '0')))
-burn_until = time.process_time() + float(os.environ.get('STUB_BURN', '0'))
-while time.process_time() < burn_until:
-    pass
 args = sys.argv[1:]
 out = args[args.index('--output') + 1]
 issues = json.loads(os.environ.get('STUB_ISSUES', '[]'))
@@ -290,14 +283,6 @@ def _manifest_results(out_dir):
         return {entry["name"]: entry for entry in json.load(handle)["results"]}
 
 
-def _assert_timed(entry):
-    assert 0 <= entry["start_seconds"] <= entry["end_seconds"]
-    if sys.platform == "win32":
-        assert entry["cpu_seconds"] is None
-    else:
-        assert entry["cpu_seconds"] >= 0
-
-
 def test_real_subprocess_launch_honors_output_names_and_exit_codes(
     tmp_path, monkeypatch, capsys
 ):
@@ -326,27 +311,6 @@ def test_real_subprocess_launch_honors_output_names_and_exit_codes(
     assert "RuntimeError: stub crashed" in capsys.readouterr().err
     crashed = _manifest_results(out_dir)["stub"]
     assert (crashed["status"], crashed["returncode"]) == ("crash", 1)
-    _assert_timed(crashed)
-
-
-def test_manifest_times_each_child_that_finishes_alongside_another(
-    tmp_path, monkeypatch, capsys
-):
-    args, out_dir = _stub_batch(tmp_path, monkeypatch)
-    monkeypatch.setenv("STUB_SLEEP", "0.2")
-    monkeypatch.setenv("STUB_BURN", "0.3")
-
-    assert rvb.run_batch([_spec("a"), _spec("b")], args) == 0
-
-    output = capsys.readouterr().out
-    for name, entry in _manifest_results(out_dir).items():
-        _assert_timed(entry)
-        assert entry["end_seconds"] - entry["start_seconds"] >= 0.5
-        # Each child carries its own CPU, not zero and not its neighbour's too.
-        if entry["cpu_seconds"] is not None:
-            assert 0.3 <= entry["cpu_seconds"] < 0.6
-        assert f"Finished {name} at " in output
-    assert output.count("s wall, ") == 2
 
 
 def test_standalone_spec_runs_through_the_impact_adapter(tmp_path):
@@ -514,8 +478,6 @@ def test_manifest_records_selection_and_execution_outcomes(
     assert results["events"]["strict"] is True
     assert results["variables"]["status"] == "crash"
     assert results["variables"]["returncode"] == 2
-    for entry in results.values():
-        _assert_timed(entry)
 
 
 def test_stub_batch_artifact_loads_end_to_end(tmp_path, monkeypatch):
