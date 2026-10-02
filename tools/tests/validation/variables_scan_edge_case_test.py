@@ -77,9 +77,15 @@ def test_flag_scan_returns_nothing_for_an_empty_file(tmp_path):
     )
 
 
-def test_unsupported_flag_type_is_rejected(tmp_path):
-    with pytest.raises(ValueError, match="Unsupported flag_type"):
-        V.Variables.get_all_flags(str(tmp_path), flag_type="character", workers=1)
+def test_flag_pass_scans_only_the_supported_flag_types(tmp_path):
+    path = _write(
+        tmp_path / "common" / "scripted_effects" / "flags.txt",
+        "set_country_flag = TST_c\nset_character_flag = TST_ch\n",
+    )
+
+    flags, _targets = V.process_file_for_flags_and_targets((str(path), str(tmp_path)))
+
+    assert list(flags) == ["country", "global", "state"]
 
 
 # --- set_*_flag syntax -----------------------------------------------------
@@ -583,22 +589,6 @@ def test_localisation_scan_skips_non_script_directories(tmp_path):
     assert V._scan_targets_in_loc((str(path), ("x",))) == set()
 
 
-def test_staged_target_scan_only_reads_staged_txt_files(tmp_path):
-    txt = _write(
-        tmp_path / "events" / "ev.txt",
-        "save_event_target_as = TST_staged\n",
-    )
-    yml = _write(
-        tmp_path / "localisation" / "english" / "a_l_english.yml", "l_english:\n"
-    )
-
-    set_paths, _used, _cleared = V.EventTargets.get_all_targets(
-        str(tmp_path), staged_files=[str(txt), str(yml)], workers=1
-    )
-
-    assert set(set_paths) == {"TST_staged"}
-
-
 def test_localisation_scan_finds_every_reference_form_outside_comments(tmp_path):
     path = _write(
         tmp_path / "localisation" / "english" / "tst_l_english.yml",
@@ -639,22 +629,6 @@ def test_flags_and_targets_worker_matches_the_separate_workers(tmp_path):
     }
     assert targets == V.process_file_for_all_targets((path, False, mod))
     assert set(flags["global"][1]) == {"TST_one_g"}
-
-
-def test_one_worker_flag_scan_stays_in_process_and_matches_the_pool(
-    tmp_path, monkeypatch
-):
-    _flag_fixture(tmp_path)
-    pooled = V.Variables.get_all_flags(str(tmp_path), flag_type="state", workers=2)
-
-    def no_pool(*_args, **_kwargs):
-        raise AssertionError("one worker must not start a pool")
-
-    monkeypatch.setattr(V, "Pool", no_pool)
-    in_process = V.Variables.get_all_flags(str(tmp_path), flag_type="state", workers=1)
-
-    assert in_process == pooled
-    assert set(in_process[2]) == {"TST_one_s", "TST_two_s"}
 
 
 # --- shared per-file indexes -----------------------------------------------

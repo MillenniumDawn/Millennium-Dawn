@@ -8,7 +8,6 @@ import os
 import re
 import sys
 from functools import cached_property, partial
-from multiprocessing import Pool
 from pathlib import Path
 from typing import AbstractSet, Dict, List, Optional, Set, Tuple, cast
 
@@ -1898,21 +1897,6 @@ def process_file_for_flags_and_targets(
     return flags, process_file_for_all_targets((filename, False, mod_path))
 
 
-def _map_with_optional_pool(func, args_list, workers, pool, chunksize=50):
-    """Reuse the caller's pool when given; otherwise spin up a transient one.
-
-    Keeps the helper usable as a standalone library function while letting
-    BaseValidator subclasses pass `self._pool` to avoid spawning a second
-    worker pool inside run_validations().
-    """
-    if pool is not None:
-        return pool.map(func, args_list, chunksize=chunksize)
-    if workers == 1:
-        return [func(args) for args in args_list]
-    with Pool(processes=workers) as p:
-        return p.map(func, args_list, chunksize=chunksize)
-
-
 # Bitmask selecting which section scans apply to one file in the shared pass.
 # The parent builds the mask from set membership so each file runs exactly the
 # scans its own section file list would have run — no more, no fewer.
@@ -2068,57 +2052,6 @@ def _scan_shared_file(args) -> Tuple:
         avail_negated,
         token_issues,
     )
-
-
-class Variables:
-    @classmethod
-    def get_all_flags(
-        cls,
-        mod_path,
-        lowercase=False,
-        flag_type="country",
-        staged_files=None,
-        workers=None,
-        files_to_scan=None,
-        pool=None,
-    ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
-        if flag_type not in ("country", "state", "global"):
-            raise ValueError(f"Unsupported flag_type: {flag_type!r}")
-        if files_to_scan is None:
-            files_to_scan = _collect_txt_files(mod_path, staged_files)
-
-        args_list = [(f, lowercase, flag_type, mod_path) for f in files_to_scan]
-        results = _map_with_optional_pool(
-            process_file_for_all_flags, args_list, workers, pool
-        )
-        return _merge_three_dicts(results)
-
-
-class EventTargets:
-    @classmethod
-    def get_all_targets(
-        cls,
-        mod_path,
-        lowercase=False,
-        staged_files=None,
-        workers=None,
-        files_to_scan=None,
-        pool=None,
-    ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
-        if files_to_scan is None:
-            files_to_scan = _collect_txt_files(mod_path, staged_files)
-
-        args_list = [(f, lowercase, mod_path) for f in files_to_scan]
-        results = _map_with_optional_pool(
-            process_file_for_all_targets, args_list, workers, pool
-        )
-        return _merge_three_dicts(results)
-
-
-def _collect_txt_files(mod_path: str, staged_files) -> List[str]:
-    if staged_files is not None:
-        return [f for f in staged_files if f.endswith(".txt")]
-    return list(glob.iglob(os.path.join(mod_path, "**", "*.txt"), recursive=True))
 
 
 def _merge_three_dicts(

@@ -11,6 +11,7 @@ import sys
 
 import pytest
 import validate_variables as V
+import validator_common
 
 
 def _found(validator):
@@ -678,6 +679,48 @@ def test_pooled_run_matches_the_in_process_run(tmp_path, write_path, monkeypatch
         "treasury-state-scope",
     }
     assert len(in_process) >= 12 * 4
+
+
+def test_full_run_collects_event_targets_from_txt_files(tmp_path, write_path):
+    write_path(tmp_path, "events/ev.txt", "save_event_target_as = TST_staged\n")
+    write_path(tmp_path, "localisation/english/a_l_english.yml", "l_english:\n")
+    validator = _validator(tmp_path)
+
+    validator.run_validations()
+
+    assert _found(validator) == [("TST_staged", "events/ev.txt", 1)]
+
+
+def test_one_worker_flag_pass_stays_in_process_and_matches_the_pool(
+    tmp_path, write_path, monkeypatch
+):
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    expected = []
+    for index in range(12):
+        flag = f"TST_{index:02}"
+        rel = f"common/scripted_effects/{flag}.txt"
+        write_path(
+            tmp_path,
+            rel,
+            f"set_country_flag = {flag}\nhas_global_flag = {flag}_g\n"
+            f"clr_state_flag = {flag}_s\nsave_event_target_as = {flag}_t\n",
+        )
+        expected += [
+            ("variables", name, rel, line)
+            for line, name in enumerate(
+                (flag, f"{flag}_g", f"{flag}_s", f"{flag}_t"), 1
+            )
+        ]
+    pooled = _full_run(tmp_path, workers=2)
+
+    def no_pool(*_args, **_kwargs):
+        raise AssertionError("one worker must not start a pool")
+
+    monkeypatch.setattr(validator_common, "Pool", no_pool)
+    in_process = _full_run(tmp_path, workers=1)
+
+    assert in_process == pooled
+    assert in_process == sorted(expected)
 
 
 def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch, write_path):
