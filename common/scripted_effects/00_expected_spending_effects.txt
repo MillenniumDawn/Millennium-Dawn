@@ -70,7 +70,8 @@ calculate_expected_spending_frames = {
 	}
 
 	set_temp_variable = { current_spending = military_law }
-	set_temp_variable = { expected_spending = expected_military_sp }
+	set_temp_variable = { expected_spending = { value = expected_military_sp add = 1 } }
+	if = { limit = { has_idea = no_military } set_temp_variable = { expected_spending = 1 } }
 	for_loop_effect = {
 		start = 1
 		end = 11
@@ -321,13 +322,13 @@ calculate_expected_military_spending = {
 
 # Read off the engine-maintained hostility arrays, so it lapses on its own once they empty.
 add_security_pressure_to_expected_military = {
+	# Only a major crisis drops the security terms; the moderate gate flips monthly.
 	if = {
 		limit = {
 			NOT = {
 				OR = {
 					has_idea = no_military
 					ai_has_major_economic_problems = yes
-					ai_has_moderate_economic_problems = yes
 				}
 			}
 		}
@@ -795,13 +796,14 @@ give_in_to_protestors_effect = {
 		block_social_decrease = yes
 	}
 
+	set_temp_variable = { held_military_level = { value = military_law subtract = 1 } }
 	if = {
 		limit = {
-			check_variable = { expected_military_sp > military_law }
+			check_variable = { expected_military_sp > held_military_level }
 		}
 
 		set_temp_variable = { buf = expected_military_sp }
-		subtract_from_temp_variable = { buf = military_law }
+		subtract_from_temp_variable = { buf = held_military_level }
 		set_temp_variable = { diff = buf }
 		multiply_temp_variable = { buf = 50 }
 		add_to_temp_variable = { pp_loss = buf }
@@ -853,7 +855,8 @@ give_in_to_protestors_effect = {
 		if = { limit = { check_variable = { expected_welfare_spending < social_law } }
 			decrease_social_spending = yes
 		}
-		if = { limit = { check_variable = { expected_military_sp < military_law } }
+		set_temp_variable = { held_military_level = { value = military_law subtract = 1 } }
+		if = { limit = { check_variable = { expected_military_sp < held_military_level } }
 			decrease_military_spending = yes
 		}
 	}

@@ -549,6 +549,8 @@
 		0,0, -- NUCLEAR
 		0,0, -- SAM
 	}
+	-- Vanilla 0.60 demands 1.5x the floor in empty seas the AI never patrols.
+	NDefines.NNavy.DOMINANCE_CONTROLLED_THRESHOLD_RATIO = 0.20
 	NDefines.NNavy.NAVAL_INVASION_PLAN_CAP = 4
 	NDefines.NNavy.COMBAT_MAX_GROUPS = 1 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 2 -- 1
@@ -1106,6 +1108,9 @@
 	-- NIntel Defines
 	NDefines.NIntel.RADAR_INTEL_STACKING_FACTOR = 0.6							-- (Normaly 0.5) Used when multiple radars cover the same province
 	NDefines.NIntel.RECON_PLANE_INTEL_BASE = 0.024								-- (normaly 0.02) intel base amount for a strategic area per plane
+	NDefines.NIntel.INTEL_TO_SHOW_GRAND_DOCTRINE = { 0.3, 0.3, 0.3 } -- minimum value to show grand doctrine { army, navy, air }
+	NDefines.NIntel.INTEL_TO_SHOW_SUBDOCTRINES = { 0.5, 0.5, 0.5 } -- minimum value to show subdoctrines { army, navy, air }
+	NDefines.NIntel.INTEL_TO_SHOW_MASTERY = { 0.7, 0.7, 0.7 } -- minimum value to show mastery levels { army, navy, air }
 
 	-- NChracter defines
 	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief", }
@@ -1156,7 +1161,7 @@
 		100, -- MINES SWEEPING
 		0, -- TRAIN
 		100, -- RESERVE_FLEET
-		200, -- NAVAL INVASION SUPPORT
+		100, -- NAVAL INVASION SUPPORT
 	}
 
 	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.05					-- 0.1
@@ -1205,5 +1210,32 @@
 	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 2						-- Maximum number of medium term goals a faction can have at any one time
 	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 2						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
+	NDefines.NFactions.FACTION_DOCTRINE_SHARING_UNLOCK_COST = 1               -- Cost of unlocking doctrine sharing for one folder
+	NDefines.NFactions.DOCTRINE_SHARING_BASE_MASTERY_GAIN_MONTHLY = 10        -- When doctrine sharing is enabled, this is the base amount of mastery gained monthly
+	NDefines.NFactions.DOCTRINE_SHARING_MONTHLY_MASTERY_GAIN_PER_COMMANDER = 2 -- When doctrine sharing is enabled, each theater commander increases the montly mastery gain by this much
 	NDefines.NFactions.FACTION_TAKE_OVER_RELUCTANCE_VERSUS_HUMAN_INFLUENCE = 2.5
 	NDefines.NFactions.FACTION_ASSIGN_SCIENTIST_COST = 75
+
+	NDefines.NDoctrines.DEFAULT_REWARD_MASTERY = 100.0                         -- How much mastery is required for unlocking a doctrine reward, if no override is set
+	NDefines.NDoctrines.BASE_MASTERY_GAIN_TARGET_MANPOWER = 100000.0           -- Beyond this amount of manpower contributing to mastery, mastery gain will start having diminishing returns (see doctrines documentation)
+	NDefines.NDoctrines.TRAINING_MASTERY_GAIN_FACTOR = 0.1                     -- How much training contributes to doctrine mastery relative to combat/missions
+	NDefines.NDoctrines.MAX_MONTHLY_MASTERY_GAIN = 40.0                        -- Monthly mastery gain will not exceed this value
+	NDefines.NDoctrines.MIN_MASTERY_GAIN_PER_DAY = 0.0                         -- If we have any mastery gain, it will be boosted to be at least this much per day (lower cap)
+	NDefines.NDoctrines.MASTERY_BAR_ANIMATION_SPEED_PER_DAILY_MASTERY = 4.0    -- Multiplier of how fast the mastery bar animates based on daily mastery gain
+	NDefines.NDoctrines.MASTERY_BAR_MAX_ANIMATION_SPEED = 40.0                 -- Max speed of the mastery bar animation
+	NDefines.NDoctrines.MASTERY_BANK_CONVERSION_RATE = 0.25                    -- The rate at which mastery gained when a track is finished or empty is "banked"
+	NDefines.NDoctrines.MASTERY_BANK_MAX = 200.0                               -- The maximum amount of mastery that can be banked
+	NDefines.NDoctrines.MILITARY_ATTACHE_MASTERY_TRANSFER_FACTOR = 0.1         -- For each mastery track, military attaches will add this fraction of their visiting country's mastery gain (from units only) in that track
+	NDefines.NDoctrines.THEATER_COMMANDER_UNITS_MASTERY_GAIN_FACTOR_PER_SKILL = 0.01  -- Unit in a theater commander's theater will contribute this fraction of their mastery gain to the theater commander's country, for each skill point they have in attack + defense
+	NDefines.NDoctrines.NAVAL_MISSION_MASTERY_GAIN_FACTORS = {  -- Mastery gain from naval missions is reduced, just like training
+	0.0, -- HOLD
+	0.2, -- PATROL
+	0.05, -- STRIKE FORCE
+	0.3, -- CONVOY RAIDING
+	0.2, -- CONVOY ESCORT
+	0.2, -- MINES PLANTING
+	0.2, -- MINES SWEEPING
+	0.0, -- TRAIN # NOT USED - handled by TRAINING_MASTERY_GAIN_FACTOR
+	0.0, -- RESERVE_FLEET
+	0.0, -- NAVAL_INVASION_SUPPORT
+	}

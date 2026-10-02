@@ -28,6 +28,8 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     (display_individual_scopes loops exempt -- conversion collapses their output)
   - is_in_faction = TAG (boolean trigger misused with a tag; should be is_in_faction_with)
   - has_trade_agreement_with (not a valid trigger; MD uses has_country_flag = trade_agreement@TAG)
+  - Stat comparisons with the wrong trigger name (stability > 0.5 -> has_stability,
+    has_command_power -> command_power); bare names inside variable blocks are game variables
   - Dynamic triggers inside decision allowed blocks (allowed is evaluated once at game start)
   - is_X_nation triggers in runtime contexts (available, effect, limit) — use has_country_flag = X_flag instead
   - check_variable with inline >= or <= (silently mis-parsed; use compare = ... or a strict inequality)
@@ -77,6 +79,8 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
   - has_active_mission / has_active_decision / has_active_timed_decision naming
     no decision (the trigger reads false forever)
   - add_opinion_modifier / add_relation_modifier naming an undefined modifier
+  - a bare word inside a trigger/effect block (NOT = { my_trigger }), a
+    scripted call missing "= yes" that the parser rejects
 """
 
 import json
@@ -261,6 +265,7 @@ _RE_EVENT_SEND = re.compile(
     re.DOTALL,
 )
 _RE_EVENT_DEFINITION_OPEN = re.compile(r"\b(?:country_event|news_event)\s*=\s*\{")
+_RE_BRACE = re.compile(r"[{}]")
 _RE_EVENT_ID = re.compile(r"\bid\s*=\s*([\w.]+)")
 # Markers that only appear in an event DEFINITION, never in an effect send:
 # sends carry id/days/hours, definitions carry title/triggers/options.
@@ -275,6 +280,31 @@ _EVENT_CHAIN_MAX_DEPTH = 3
 # limit can use, and everything else as one word (ideology names carry '-').
 _RE_SCRIPT_NODE = re.compile(r"[{}]|[<>]=?|=|[^\s{}=<>]+")
 _NODE_OPERATORS = {"=", "<", ">", "<=", ">="}
+# Blocks whose children are all key = value statements; a lone word there is a
+# scripted trigger/effect call missing "= yes".
+_STATEMENT_BLOCK_KEYS = {
+    "NOT",
+    "OR",
+    "AND",
+    "limit",
+    "trigger",
+    "available",
+    "allowed",
+    "visible",
+    "potential",
+    "if",
+    "else_if",
+    "else",
+    "hidden_trigger",
+    "hidden_effect",
+    "immediate",
+    "option",
+    "effect",
+    "completion_reward",
+}
+# mission_type_stats = { limit = { cas ... } } lists mission types.
+_LIST_PARENT_KEYS = {"mission_type_stats"}
+_RE_BARE_IDENTIFIER = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
 _TIER_KEYWORDS = {"if", "else_if"}
 _LEADER_EFFECT_PREFIX = "set_leader_"
 _LEADER_COUNTER_SUFFIX = "_leader"
@@ -333,6 +363,24 @@ _RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
 )
 _RE_IS_IN_FACTION_TAG = re.compile(r"\bis_in_faction\s*=\s*(?!yes\b|no\b)(\w+)")
 _RE_TRADE_AGREEMENT_WITH = re.compile(r"\bhas_trade_agreement_with\s*=")
+_WRONG_STAT_TRIGGERS = {
+    "stability": "has_stability",
+    "war_support": "has_war_support",
+    "political_power": "has_political_power",
+    "manpower": "has_manpower",
+    "army_experience": "has_army_experience",
+    "navy_experience": "has_navy_experience",
+    "air_experience": "has_air_experience",
+    "legitimacy": "has_legitimacy",
+    "fuel": "has_fuel",
+    "has_command_power": "command_power",
+    "has_threat": "threat",
+    "has_surrender_progress": "surrender_progress",
+}
+_RE_WRONG_STAT_TRIGGER = re.compile(
+    r"(?<![\w.:@])(" + "|".join(_WRONG_STAT_TRIGGERS) + r")\s*([<>])"
+)
+_RE_VARIABLE_BLOCK_OPEN = re.compile(r"\b(?:\w*_variable|check_expr)\s*=\s*\{")
 # add_to_faction adds the ARGUMENT country to the current scope's faction, so it
 # takes a country tag or scope ref -- never a faction id (add_to_faction = BRICS
 # is a no-op; BRICS is a faction, not a country). The value captures identifier
@@ -542,6 +590,8 @@ def _code_for_depth(line):
     placeholder); left unblanked it would drift the depth count for whatever
     manual brace-tracking scans past it.
     """
+    if '"' not in line:
+        return strip_inline_comment(line)
     return _RE_QUOTED_STRING.sub('""', strip_inline_comment(line))
 
 
@@ -756,17 +806,15 @@ def _iter_event_definitions(content):
         if open_match.start() < block_end:
             continue
         depth = 0
-        idx = open_match.end() - 1
-        while idx < len(blank):
-            if blank[idx] == "{":
+        for brace in _RE_BRACE.finditer(blank, open_match.end() - 1):
+            if brace.group() == "{":
                 depth += 1
-            elif blank[idx] == "}":
+            else:
                 depth -= 1
                 if depth == 0:
-                    block_end = idx + 1
+                    block_end = brace.end()
                     yield blank[open_match.start() : block_end]
                     break
-            idx += 1
 
 
 def _build_event_index(root_dir):
@@ -811,23 +859,23 @@ def _get_event_block(event_id, event_blocks=None, event_index=None):
             _EVENT_INDEX_BUILT = True
         event_index = _EVENT_INDEX
     filepath = event_index.get(event_id)
-    key = (filepath, event_id)
-    if key in _EVENT_BLOCKS:
-        return _EVENT_BLOCKS[key]
-    block = None
-    if filepath:
+    if not filepath:
+        return None
+    blocks = _EVENT_BLOCKS.get(filepath)
+    if blocks is None:
         try:
             with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
                 content = handle.read()
         except OSError:
             content = ""
+        # Parse the file once: a tree sends many events from the same file.
+        blocks = {}
         for candidate in _iter_event_definitions(content):
             id_match = _RE_EVENT_ID.search(candidate)
-            if id_match and id_match.group(1) == event_id:
-                block = candidate
-                break
-    _EVENT_BLOCKS[key] = block
-    return block
+            if id_match:
+                blocks.setdefault(id_match.group(1), candidate)
+        _EVENT_BLOCKS[filepath] = blocks
+    return blocks.get(event_id)
 
 
 def _event_chain_leads_to_war(
@@ -2117,6 +2165,36 @@ def _check_every_owned_controlled_state(lines):
     return issues
 
 
+def _check_wrong_stat_trigger(lines):
+    """Flag stat comparisons that use a nonexistent trigger name.
+
+    The engine drops the unknown trigger, so the gate is never enforced. Inside
+    check_variable and similar blocks the bare names are valid game variables.
+    """
+    issues = []
+    depth = 0
+    variable_depth = None
+    for line_num, line in enumerate(lines, 1):
+        code = _code_for_depth(line)
+        if variable_depth is None:
+            if _RE_VARIABLE_BLOCK_OPEN.search(code):
+                variable_depth = depth
+            else:
+                for match in _RE_WRONG_STAT_TRIGGER.finditer(code):
+                    wrong, op = match.groups()
+                    right = _WRONG_STAT_TRIGGERS[wrong]
+                    issues.append(
+                        (
+                            line_num,
+                            f"{wrong} {op} is not a trigger -- use {right} {op}",
+                        )
+                    )
+        depth += code.count("{") - code.count("}")
+        if variable_depth is not None and depth <= variable_depth:
+            variable_depth = None
+    return issues
+
+
 def _check_nor_block(lines):
     """Flag NOR, which is not a HOI4 trigger keyword.
 
@@ -3364,13 +3442,57 @@ def _parse_script_nodes(tokens, i):
     return children, i
 
 
-def _parse_script_tree(lines):
-    tokens = [
+def _script_tokens(lines):
+    return [
         (m.group(0), line_num)
         for line_num, line in enumerate(lines, 1)
         for m in _RE_SCRIPT_NODE.finditer(_code_for_depth(line))
     ]
-    return _parse_script_nodes(tokens, 0)[0]
+
+
+def _parse_script_tree(lines):
+    return _parse_script_nodes(_script_tokens(lines), 0)[0]
+
+
+def _check_bare_statement_token(lines):
+    """Flag a lone word inside a trigger/effect block (NOT = { my_trigger }).
+    The parser rejects it as an unexpected token; the call needs "= yes".
+    """
+    tokens = _script_tokens(lines)
+    issues = []
+    stack = []
+    i = 0
+    n = len(tokens)
+    while i < n:
+        tok, line = tokens[i]
+        if tok == "{":
+            opened_by_key = i >= 2 and tokens[i - 1][0] in _NODE_OPERATORS
+            stack.append(tokens[i - 2][0] if opened_by_key else None)
+            i += 1
+            continue
+        if tok == "}":
+            if stack:
+                stack.pop()
+            i += 1
+            continue
+        if i + 1 < n and tokens[i + 1][0] in _NODE_OPERATORS:
+            i += 2 if i + 2 < n and tokens[i + 2][0] == "{" else 3
+            continue
+        if (
+            stack
+            and stack[-1] in _STATEMENT_BLOCK_KEYS
+            and not (len(stack) > 1 and stack[-2] in _LIST_PARENT_KEYS)
+            and _RE_BARE_IDENTIFIER.match(tok)
+        ):
+            issues.append(
+                (
+                    line,
+                    f'bare "{tok}" inside {stack[-1]} = {{ }}: '
+                    'add "= yes" to call the scripted trigger/effect',
+                )
+            )
+        i += 1
+    return issues
 
 
 def _first_child(node, key):
@@ -3976,6 +4098,7 @@ def check_file(filepath):
     issues.extend(_check_check_expr_bad_operand(lines))
     issues.extend(_check_random_select_amount_literal(lines))
     issues.extend(_check_nor_block(lines))
+    issues.extend(_check_wrong_stat_trigger(lines))
     issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
@@ -3990,6 +4113,7 @@ def check_file(filepath):
         issues.extend(_check_every_owned_controlled_state(lines))
         issues.extend(_check_building_missing_province(lines))
         issues.extend(_check_nested_province_block(lines))
+        issues.extend(_check_bare_statement_token(lines))
 
     return [(filepath, ln, msg) for ln, msg in issues]
 

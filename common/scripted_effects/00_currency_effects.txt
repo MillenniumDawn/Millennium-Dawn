@@ -2,10 +2,35 @@
 # multipliers it drives, and reserve-currency seigniorage and ROI bonuses.
 
 # Script Constants
-# Monthly currency_strength drift: each input scaled by one sensitivity, then summed.
-@currency_trade_sensitivity = 0.00005
-@currency_debt_sensitivity = 0.02
-@currency_stability_sensitivity = 0.003
+# Fundamentals push currency_strength each month; a pull draws it back toward currency_strength_base.
+@currency_pull = 0.01
+@currency_base_rise = 0.002
+@currency_base_fall = 0.004
+@currency_real_rate_neutral = 0.01
+@currency_real_rate_sensitivity = 0.1
+@currency_debt_risk_neutral = 5
+@currency_debt_risk_span = 10
+@currency_debt_risk_cap = 20
+@currency_debt_risk_penalty = -0.01
+@currency_high_inflation = 0.05
+@currency_inflation_penalty_span = 0.15
+@currency_inflation_penalty = -0.015
+@currency_inflation_penalty_cap = 0.25
+@currency_stability_neutral = 0.5
+@currency_stability_sensitivity = 0.01
+@currency_depression = -0.006
+@currency_recession = -0.003
+@currency_stagnation = -0.001
+@currency_fast_growth = 0.001
+@currency_boom = 0.002
+@currency_losing_war = -0.004
+@currency_civil_war = -0.01
+@currency_sanctions = -0.003
+@currency_financial_collapse = -0.004
+@currency_adopter_support = 0.00002
+@currency_haven_tension = 0.5
+@currency_haven_usd_jpy = 0.002
+@currency_haven_chf = 0.003
 @currency_inflation_sensitivity = 0.05
 
 # Seigniorage income, in-game B/week.
@@ -33,6 +58,9 @@
 currency_startup = {
 	if = { limit = { NOT = { has_variable = currency_strength } }
 		set_variable = { currency_strength = 1.0 }
+	}
+	if = { limit = { NOT = { has_variable = currency_strength_base } }
+		set_variable = { currency_strength_base = currency_strength }
 	}
 	update_currency_issuers = yes
 }
@@ -134,74 +162,200 @@ update_currency_issuers = {
 
 # Runs monthly for every country (on_monthly in MD_on_actions.txt).
 calculate_currency_strength = {
-	# treasury_rate is display_income minus display_expense, refreshed weekly.
-	set_temp_variable = {
-		trade_contrib = {
-			value = 0
-			add = treasury_rate
-			multiply = @currency_trade_sensitivity
+	set_temp_variable = { inflation_pressure = 0 }
+	if = { limit = { check_variable = { inflation_rate_var > @currency_high_inflation } }
+		set_temp_variable = {
+			inflation_excess = {
+				value = inflation_rate_var
+				min = @currency_inflation_penalty_cap
+				subtract = @currency_high_inflation
+				divide = @currency_inflation_penalty_span
+			}
+		}
+		set_temp_variable = {
+			inflation_pressure = {
+				value = inflation_excess
+				multiply = inflation_excess
+				multiply = @currency_inflation_penalty
+			}
 		}
 	}
 
-	set_temp_variable = {
-		debt_contrib = {
-			value = 0
-			subtract = debt_ratio
-			multiply = @currency_debt_sensitivity
+	# Excludes the policy-rate share, or raising the policy rate would cancel its own support.
+	set_temp_variable = { debt_risk_pressure = 0 }
+	set_temp_variable = { debt_risk = { value = interest_rate subtract = cb_rate_premium } }
+	if = { limit = { check_variable = { debt_risk > @currency_debt_risk_neutral } }
+		set_temp_variable = {
+			debt_risk = {
+				value = debt_risk
+				min = @currency_debt_risk_cap
+				subtract = @currency_debt_risk_neutral
+				divide = @currency_debt_risk_span
+			}
+		}
+		set_temp_variable = {
+			debt_risk_pressure = {
+				value = debt_risk
+				multiply = debt_risk
+				multiply = @currency_debt_risk_penalty
+			}
 		}
 	}
 
-	set_temp_variable = {
-		stab_contrib = {
-			value = 0
-			add = stability
-			multiply = @currency_stability_sensitivity
+	set_temp_variable = { cycle_pressure = 0 }
+	if = { limit = { has_idea = depression }
+		set_temp_variable = { cycle_pressure = @currency_depression }
+	}
+	else_if = { limit = { has_idea = recession }
+		set_temp_variable = { cycle_pressure = @currency_recession }
+	}
+	else_if = { limit = { has_idea = stagnation }
+		set_temp_variable = { cycle_pressure = @currency_stagnation }
+	}
+	else_if = { limit = { has_idea = fast_growth }
+		set_temp_variable = { cycle_pressure = @currency_fast_growth }
+	}
+	else_if = { limit = { has_idea = economic_boom }
+		set_temp_variable = { cycle_pressure = @currency_boom }
+	}
+
+	set_temp_variable = { event_pressure = 0 }
+	if = { limit = { surrender_progress > 0.1 }
+		add_to_temp_variable = { event_pressure = @currency_losing_war }
+	}
+	if = { limit = { has_civil_war = yes }
+		add_to_temp_variable = { event_pressure = @currency_civil_war }
+	}
+	if = {
+		limit = {
+			OR = {
+				has_idea = international_sanctions
+				has_idea = Massive_International_Sanctions
+				has_idea = NKO_international_sanctions_idea
+				has_idea = Western_Sanctions
+				has_idea = Reduced_Western_Sanctions
+				has_country_flag = SOV_western_sanctions
+				has_country_flag = PER_sanctioned
+			}
 		}
+		add_to_temp_variable = { event_pressure = @currency_sanctions }
+	}
+	if = { limit = { has_country_flag = recent_financial_collapse }
+		add_to_temp_variable = { event_pressure = @currency_financial_collapse }
+	}
+
+	set_temp_variable = { issuer_adopters = 0 }
+	if = { limit = { has_country_flag = is_usd_issuer }
+		set_temp_variable = { issuer_adopters = global.usd_reserve_adoption_count }
+	}
+	else_if = { limit = { has_country_flag = is_eur_issuer }
+		set_temp_variable = { issuer_adopters = global.eur_reserve_adoption_count }
+	}
+	else_if = { limit = { has_country_flag = is_cny_issuer }
+		set_temp_variable = { issuer_adopters = global.cny_reserve_adoption_count }
+	}
+	else_if = { limit = { has_country_flag = is_rub_issuer }
+		set_temp_variable = { issuer_adopters = global.rub_reserve_adoption_count }
+	}
+	else_if = { limit = { has_country_flag = is_jpy_issuer }
+		set_temp_variable = { issuer_adopters = global.jpy_reserve_adoption_count }
+	}
+	else_if = { limit = { has_country_flag = is_gbp_issuer }
+		set_temp_variable = { issuer_adopters = global.gbp_reserve_adoption_count }
+	}
+	else_if = { limit = { has_country_flag = is_chf_issuer }
+		set_temp_variable = { issuer_adopters = global.chf_reserve_adoption_count }
+	}
+	else_if = { limit = { has_country_flag = is_nlg_issuer }
+		set_temp_variable = { issuer_adopters = global.nlg_reserve_adoption_count }
+	}
+	else_if = { limit = { has_country_flag = is_brl_issuer }
+		set_temp_variable = { issuer_adopters = global.brl_reserve_adoption_count }
+	}
+
+	set_temp_variable = { haven_weight = 0 }
+	if = { limit = { has_country_flag = is_chf_issuer }
+		set_temp_variable = { haven_weight = @currency_haven_chf }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_country_flag = is_usd_issuer
+				has_country_flag = is_jpy_issuer
+			}
+		}
+		set_temp_variable = { haven_weight = @currency_haven_usd_jpy }
 	}
 
 	set_temp_variable = {
 		currency_delta = {
-			value = 0
-			add = trade_contrib
-			add = debt_contrib
-			add = stab_contrib
+			value = cb_policy_rate
+			divide = 100
+			subtract = inflation_rate_var
+			subtract = @currency_real_rate_neutral
+			clamp = { min = -0.05 max = 0.05 }
+			multiply = @currency_real_rate_sensitivity
+			add = debt_risk_pressure
+			add = inflation_pressure
+			add = {
+				value = stability
+				subtract = @currency_stability_neutral
+				multiply = @currency_stability_sensitivity
+			}
+			add = cycle_pressure
+			add = event_pressure
+			add = {
+				value = issuer_adopters
+				multiply = @currency_adopter_support
+			}
+			add = {
+				value = global.threat
+				subtract = @currency_haven_tension
+				max = 0
+				multiply = haven_weight
+			}
+			subtract = {
+				value = currency_strength
+				subtract = currency_strength_base
+				multiply = @currency_pull
+			}
 		}
 	}
 	clamp_temp_variable = { var = currency_delta min = -0.01 max = 0.02 }
 
 	# Issuers and hard-money standards drift within a tighter band.
 	if = { limit = { has_country_flag = is_usd_issuer }
-		clamp_variable = { var = currency_delta min = -0.005 max = 0.02 }
+		clamp_temp_variable = { var = currency_delta min = -0.005 max = 0.02 }
 	}
 	else_if = { limit = { has_country_flag = is_eur_issuer }
-		clamp_variable = { var = currency_delta min = -0.007 max = 0.015 }
+		clamp_temp_variable = { var = currency_delta min = -0.007 max = 0.015 }
 	}
 	else_if = { limit = { has_country_flag = is_rub_issuer }
-		clamp_variable = { var = currency_delta min = -0.01 max = 0.012 }
+		clamp_temp_variable = { var = currency_delta min = -0.01 max = 0.012 }
 	}
 	else_if = { limit = { has_country_flag = is_gbp_issuer }
-		clamp_variable = { var = currency_delta min = -0.008 max = 0.013 }
+		clamp_temp_variable = { var = currency_delta min = -0.008 max = 0.013 }
 	}
 	else_if = { limit = { has_country_flag = is_jpy_issuer }
-		clamp_variable = { var = currency_delta min = -0.008 max = 0.012 }
+		clamp_temp_variable = { var = currency_delta min = -0.008 max = 0.012 }
 	}
 	else_if = { limit = { has_country_flag = is_chf_issuer }
-		clamp_variable = { var = currency_delta min = -0.004 max = 0.010 }
+		clamp_temp_variable = { var = currency_delta min = -0.004 max = 0.010 }
 	}
 	else_if = { limit = { has_country_flag = is_nlg_issuer }
-		clamp_variable = { var = currency_delta min = -0.004 max = 0.010 }
+		clamp_temp_variable = { var = currency_delta min = -0.004 max = 0.010 }
 	}
 	else_if = { limit = { has_country_flag = is_brl_issuer }
-		clamp_variable = { var = currency_delta min = -0.01 max = 0.015 }
+		clamp_temp_variable = { var = currency_delta min = -0.01 max = 0.015 }
 	}
 	else_if = { limit = { has_idea = gold_standard_back }
-		clamp_variable = { var = currency_delta min = -0.005 max = 0.008 }
+		clamp_temp_variable = { var = currency_delta min = -0.005 max = 0.008 }
 	}
 	else_if = { limit = { has_idea = silver_standard }
-		clamp_variable = { var = currency_delta min = -0.008 max = 0.012 }
+		clamp_temp_variable = { var = currency_delta min = -0.008 max = 0.012 }
 	}
 	else_if = { limit = { has_idea = bi_metal_standard }
-		clamp_variable = { var = currency_delta min = -0.010 max = 0.015 }
+		clamp_temp_variable = { var = currency_delta min = -0.010 max = 0.015 }
 	}
 
 	add_to_variable = { currency_strength = currency_delta }
@@ -227,6 +381,27 @@ calculate_currency_strength = {
 	}
 
 	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+
+	if = { limit = { check_variable = { currency_strength > currency_strength_base } }
+		add_to_variable = {
+			var = currency_strength_base
+			value = {
+				value = currency_strength
+				subtract = currency_strength_base
+				multiply = @currency_base_rise
+			}
+		}
+	}
+	else = {
+		add_to_variable = {
+			var = currency_strength_base
+			value = {
+				value = currency_strength
+				subtract = currency_strength_base
+				multiply = @currency_base_fall
+			}
+		}
+	}
 
 	# A currency below par (weak) adds inflation pressure; above par eases it.
 	set_variable = {

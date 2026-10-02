@@ -72,6 +72,56 @@ jobs:
               );
             }
 
+      - name: Label focus tree wishes
+        uses: >-
+          actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const body = context.payload.issue.body || '';
+            const answer = heading => {
+              const match = body.match(
+                new RegExp(`^### ${heading}\\s*\\n+([^\\n]+)`, 'm')
+              );
+              return match ? match[1].trim() : '';
+            };
+
+            const kinds = {
+              'New country': 'type:new-country',
+              'Rework': 'type:rework',
+            };
+            const regions = {
+              'Africa': 'region:africa',
+              'Latin America': 'region:latin-america',
+              'East Asia': 'region:east-asia',
+              'Middle East': 'region:middle-east',
+              'Europe': 'region:europe',
+              'Other': 'region:other',
+            };
+
+            const labels = [kinds[answer('Kind')], regions[answer('Region')]]
+              .filter(Boolean);
+            if (labels.length === 0) {
+              return;
+            }
+
+            try {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                labels,
+              });
+              console.log(
+                `Added ${labels.join(', ')} to #${context.issue.number}`
+              );
+            } catch (err) {
+              core.warning(
+                `wish labels skipped for #${context.issue.number}: ` +
+                err.message
+              );
+            }
+
       - name: Checkout composite action
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
