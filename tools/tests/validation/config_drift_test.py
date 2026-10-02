@@ -146,6 +146,7 @@ def test_test_suite_replaces_old_workflows():
         "validate-paths",
         "prepare-workspace",
         "tools-tests",
+        "tools-quality",
         "mod-tests",
         "docs-quality",
         "report",
@@ -190,21 +191,38 @@ def test_mod_tests_matrix_lists_every_batch():
     assert sorted(matrix) == sorted(BATCHES)
 
 
-def test_tools_linux_runs_quality_suite():
+def _job_commands(workflow, job):
+    return "\n".join(step.get("run", "") for step in workflow["jobs"][job]["steps"])
+
+
+def test_tools_linux_collects_coverage():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     matrix = workflow["jobs"]["tools-tests"]["strategy"]["matrix"]["include"]
-    linux = next(entry for entry in matrix if entry["os"] == "Linux")
-    assert linux["quality"] is True
-    assert {entry["os"] for entry in matrix} == {"Linux", "macOS", "Windows"}
-    steps = workflow["jobs"]["tools-tests"]["steps"]
-    commands = "\n".join(step.get("run", "") for step in steps)
+    assert {entry["os"]: entry["coverage"] for entry in matrix} == {
+        "Linux": True,
+        "macOS": False,
+        "Windows": False,
+    }
+    commands = _job_commands(workflow, "tools-tests")
     assert "-n auto --cov --cov-branch" in commands
     assert "coverage report" in commands
+
+
+def test_tools_quality_runs_beside_the_test_matrix():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    quality = workflow["jobs"]["tools-quality"]
+    assert quality["needs"] == ["detect-changes"]
+    assert quality["if"] == workflow["jobs"]["tools-tests"]["if"]
+    commands = _job_commands(workflow, "tools-quality")
     for command in ("ruff check tools", "black --check tools", "pylint tools", "mypy"):
         assert command in commands
     assert "bun run jscpd" in commands
     assert "staged_validators_test.py" in commands
     assert "staged_validators_real_test.py" in commands
+    assert "tools/validate_tools.py --strict" in commands
+    test_commands = _job_commands(workflow, "tools-tests")
+    for command in ("ruff check", "black --check", "pylint", "bun run jscpd"):
+        assert command not in test_commands
 
 
 def test_python_version_declarations_agree():
@@ -563,17 +581,26 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     )
 
 
-def test_tools_sidecars_have_stable_schema():
+@pytest.mark.parametrize(
+    ("job", "artifact"),
+    [
+        ("tools-tests", "tools-tests-${{ matrix.os }}-results"),
+        ("tools-quality", "tools-quality-results"),
+    ],
+)
+def test_tools_sidecars_have_stable_schema(job, artifact):
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    steps = workflow["jobs"]["tools-tests"]["steps"]
+    steps = workflow["jobs"][job]["steps"]
     sidecar = next(step for step in steps if step.get("id") == "suite-sidecar")
     assert "suite-run.json" in sidecar["run"]
     for field in ('"suite":"tools"', '"status"', '"errors"', '"warnings"', '"issues"'):
         assert field in sidecar["run"]
-    upload = next(
-        step for step in steps if step.get("name") == "Upload tools test results"
-    )
-    assert upload["with"]["name"] == "tools-tests-${{ matrix.os }}-results"
+    # A step the sidecar does not count can fail without failing the report.
+    for step in steps:
+        if "id" in step and step is not sidecar:
+            assert f"steps.{step['id']}.outcome" in sidecar["run"], step["id"]
+    upload = next(step for step in steps if "upload-artifact@" in step.get("uses", ""))
+    assert upload["with"]["name"] == artifact
 
 
 def test_nightly_dispatches_test_suite_and_matches_its_runs():
