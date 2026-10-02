@@ -622,7 +622,7 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
     forms. Content-cached.
     """
     filepath, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -647,12 +647,13 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
 def _check_file_for_refs(args: Tuple[str, frozenset, dict, str]) -> List[str]:
     """Pool worker: return undefined idea references found in one file.
 
+    Exclusions use mod_path so worktree ancestors do not hide content.
     *defined_ci* maps lower-cased idea name -> canonical name; a ref that misses
     case-sensitively but hits here is a case mismatch that works on Windows and
     silently fails on Linux, so it gets a distinct, louder message.
     """
     filepath, defined_ideas_frozen, defined_ci, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
