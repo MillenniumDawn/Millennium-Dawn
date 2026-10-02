@@ -33,15 +33,13 @@ _LOC_LINE_RE = re.compile(r'^[ \t]*([\w.\-]+)\s*:\d*\s*"(.*)"[ \t]*$')
 # Focus descriptions may highlight a term (§Y), mark a gain (§G) or a cost (§R);
 # titles carry no color at all. See .claude/docs/localisation-rules.md.
 _DESC_PALETTE = frozenset("YGR")
-# A § followed by whitespace and a digit is a prose section sign (a legal
-# citation like "15 U.S.C. § 1"), never markup — same exemption as the sibling
-# check in validate_localisation.py.
-_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+# `§§` is a literal section sign, not a color code (see validate_localisation.py).
+_LITERAL_SECTION_SIGN_RE = re.compile(r"§§")
 
 
 def _color_codes(value: str) -> List[str]:
     """Return the color codes opened in *value*, ignoring resets."""
-    cleaned = _PROSE_SECTION_SIGN_RE.sub("", value)
+    cleaned = _LITERAL_SECTION_SIGN_RE.sub("", value)
     return [c for c in re.findall("§(.)", cleaned) if c != "!"]
 
 

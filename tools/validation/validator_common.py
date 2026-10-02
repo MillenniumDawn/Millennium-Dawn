@@ -404,6 +404,23 @@ def case_mismatch(ref: str, ci_index: dict):
     return hit if (hit is not None and hit != ref) else None
 
 
+DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
+_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
+
+
+def load_dynamic_token_names(mod_path: str) -> Set[str]:
+    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
+    path = os.path.join(mod_path, DYNAMIC_TOKEN_FILE)
+    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
+    if not text:
+        return set()
+    return {
+        line.strip()
+        for line in text.splitlines()
+        if _DYNAMIC_TOKEN_LINE.match(line.strip())
+    }
+
+
 # Trait definitions sit at one tab of indent inside the `leader_traits = { }`
 # wrapper; `-` stays in the charset so a hyphenated name cannot truncate.
 LEADER_TRAIT_DEF_RE = re.compile(r"^\t([\w\-]+)\s*=\s*\{", re.MULTILINE)
@@ -608,7 +625,7 @@ class BaseValidator:
 
     Common workflow in ``run_validations``:
       1. Iterate over ``files``.
-      2. Call ``should_skip_file(path, EXTRA_SKIP_PATTERNS)`` to filter.
+      2. Filter with ``should_skip_file(path, mod_path=self.mod_path)``.
       3. Use ``disk_cache.per_file_cached_by_content()`` for expensive per-file work.
       4. Call ``self.add_error(category, message, file, line)`` for each issue found.
 
@@ -984,7 +1001,7 @@ class BaseValidator:
         def _build():
             index: Dict[str, List[str]] = {}
             for filename in tracked:
-                if should_skip_file(filename):
+                if should_skip_file(filename, mod_path=self.mod_path):
                     continue
                 index.setdefault(os.path.basename(filename), []).append(filename)
             return index
@@ -1141,15 +1158,7 @@ class BaseValidator:
                         seen.add(f)
                         files.append(f)
 
-        # should_skip_file matches on path segments, and unconditionally skips
-        # any ".claude"/".git" segment. Checking against the mod_path-relative
-        # path (not the absolute one) keeps that rule scoped to a nested
-        # worktree/config dir *discovered while scanning* — it must not also
-        # trigger just because mod_path itself lives under .claude/worktrees/
-        # (this environment's own worktree convention).
-        result = [
-            f for f in files if not should_skip_file(os.path.relpath(f, self.mod_path))
-        ]
+        result = [f for f in files if not should_skip_file(f, mod_path=self.mod_path)]
         if extra_skip is not None:
             result = [f for f in result if not extra_skip(f)]
         return result

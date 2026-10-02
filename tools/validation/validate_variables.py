@@ -7,9 +7,10 @@ import glob
 import os
 import re
 import sys
+from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
-from typing import AbstractSet, Dict, List, Set, Tuple, cast
+from typing import AbstractSet, Dict, List, Optional, Set, Tuple, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -38,12 +39,14 @@ from shared_utils import (
 # rather than growing a second focus parser here.
 from validate_focus_tree import _iter_focus_blocks_with_id, _iter_reward_blocks
 from validator_common import (
+    DYNAMIC_TOKEN_FILE,
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
     DataCleaner,
     FileOpener,
     Severity,
     find_line_number,
+    load_dynamic_token_names,
     run_validator_main,
     should_skip_file,
 )
@@ -75,8 +78,10 @@ _MATH_PRECISION_SHORTHAND_RE = re.compile(
 )
 
 
-def _read_script_text(filename: str, *, blank_strings: bool = True) -> str | None:
-    if should_skip_file(filename):
+def _read_script_text(
+    filename: str, mod_path: str, *, blank_strings: bool = True
+) -> str | None:
+    if should_skip_file(filename, mod_path=mod_path):
         return None
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -140,7 +145,7 @@ def process_file_for_all_flags(
     args: Tuple[str, bool, str, str],
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
     filename, lowercase, flag_type, mod_path = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return {}, {}, {}
     text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
@@ -269,7 +274,7 @@ def _scan_focus_flag_sites(text: str, rel: str, in_focus_dir: bool):
 def process_file_for_focus_flag_sites(args: Tuple[str, str]):
     """Pool worker for the redundant focus-flag check. See _scan_focus_flag_sites."""
     filename, mod_path = args
-    text = _read_script_text(filename)
+    text = _read_script_text(filename, mod_path)
     if text is None or "country_flag" not in text:
         return {}, {}, set(), set(), set()
     rel = os.path.relpath(filename, mod_path)
@@ -311,7 +316,7 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
     """
     filename, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], [])
 
     try:
@@ -346,7 +351,7 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     Returns a list of 'rel:line - description' strings.
     """
     filename, mod_path = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -359,6 +364,146 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     cleaned = blank_quoted_strings(strip_comments(text))
     rel = os.path.relpath(filename, mod_path)
     return _scan_math_precision_text(cleaned, rel)
+
+
+# A token the engine has not been told about logs "Token X is a dynamic token,
+# this can cause OOS" at load, once per use. Script, localisation and GUI text
+# name tokens two ways: a `token:X` literal, and the `@X` target of the game
+# variables below (the ones resources/documentation/dynamic_variables_documentation.md
+# gives a token target).
+_TOKEN_TARGET_GAME_VARS = (
+    "avg_units_acclimation",
+    "building_level",
+    "damaged_building_level",
+    "days_decision_timeout",
+    "days_mission_timeout",
+    "faction_resource_extracted",
+    "global_resource_extracted",
+    "leader_modifier",
+    "modifier",
+    "non_damaged_building_level",
+    "num_armies_with_type",
+    "num_battalions_with_type",
+    "num_deployed_planes_with_type",
+    "num_equipment",
+    "num_equipment_in_armies",
+    "num_equipment_in_armies_k",
+    "num_ships_with_type",
+    "num_target_equipment",
+    "num_target_equipment_in_armies",
+    "num_target_equipment_in_armies_k",
+    "num_units_defensive_combats_on",
+    "num_units_offensive_combats_against",
+    "num_units_on_climate",
+    "num_units_with_type",
+    "party_popularity",
+    "party_popularity_100",
+    "resource",
+    "resource_consumed",
+    "resource_exported",
+    "resource_imported",
+    "resource_produced",
+    "sum_unit_terrain_modifier",
+    "unit_modifier",
+)
+_TOKEN_REF_RE = re.compile(
+    r"\b(?:token:|(?:"
+    + "|".join(_TOKEN_TARGET_GAME_VARS)
+    + r")@)([A-Za-z0-9_]+(?:[.\-][A-Za-z0-9_]+)*)"
+)
+
+# Vanilla names the engine already knows, so they log nothing unregistered. This
+# is the set in use and absent from MD_tokens.txt when the check landed. A new
+# token belongs in MD_tokens.txt, not here.
+_ENGINE_KNOWN_TOKENS = frozenset(
+    {
+        # buildings
+        "air_base",
+        "arms_factory",
+        "dockyard",
+        "fuel_silo",
+        "industrial_complex",
+        "infrastructure",
+        "naval_base",
+        "nuclear_reactor",
+        "rail_way",
+        "rocket_site",
+        "supply_node",
+        "synthetic_refinery",
+        # modifiers
+        "agency_upgrade_time",
+        "commando_trait_chance_factor",
+        "conscription_factor",
+        "consumer_goods_expected_value",
+        "consumer_goods_factor",
+        "industrial_capacity_dockyard",
+        "industrial_capacity_factory",
+        "local_resources_factor",
+        "min_export",
+        "political_power_factor",
+        "political_power_gain",
+        "production_speed_buildings_factor",
+        "research_speed_factor",
+        "stability_factor",
+        "stability_weekly",
+        "war_support_factor",
+        # equipment and ship types
+        "artillery_equipment",
+        "capital",
+        "carrier",
+        "convoy",
+        "heavy_tank_chassis",
+        "medium_plane_airframe",
+        "medium_tank_chassis",
+        "small_plane_airframe",
+        "small_plane_cas_airframe",
+        "small_plane_naval_bomber_airframe",
+        "support_ship",
+        # ideologies
+        "communism",
+        "democratic",
+        "fascism",
+        "neutrality",
+        "ruling_party",
+        # terrain and climate
+        "cold_climate",
+        "fort",
+        # resources
+        "aluminium",
+        "chromium",
+        "oil",
+        "rubber",
+        "steel",
+        "tungsten",
+    }
+)
+
+
+def _scan_dynamic_tokens_text(
+    cleaned: str, rel: str, registered: AbstractSet[str]
+) -> List[Tuple[str, str, int]]:
+    issues: List[Tuple[str, str, int]] = []
+    seen: Set[str] = set()
+    for m in _TOKEN_REF_RE.finditer(cleaned):
+        token = m.group(1)
+        # `token:prefix_[SCOPE]`, `token:prefix_$PARAM$` and
+        # `party_popularity@var:x` name no literal token.
+        if cleaned.startswith(("[", "$", ":"), m.end()):
+            continue
+        if token in registered or token in _ENGINE_KNOWN_TOKENS or token in seen:
+            continue
+        seen.add(token)
+        line = cleaned[: m.start()].count("\n") + 1
+        issues.append(
+            (
+                f"{m.group(0)} uses a token that is not registered in"
+                f" {DYNAMIC_TOKEN_FILE} (the engine logs a dynamic-token OOS"
+                " warning at load)",
+                rel,
+                line,
+            )
+        )
+    return issues
 
 
 # A variable clamped to a literal range can never hold a value outside it, so a
@@ -644,8 +789,8 @@ def collect_clamp_ranges(
     args: Tuple[str, str],
 ) -> Tuple[List[Tuple[str, float, float]], List[str], List[str]]:
     """Pool worker: harvest ``clamp_variable`` min/max pairs and variable writes."""
-    filename, _mod_path = args
-    if should_skip_file(filename):
+    filename, mod_path = args
+    if should_skip_file(filename, mod_path=mod_path):
         return [], [], []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -702,7 +847,7 @@ def _resolve_clamp_checks(
 def process_file_for_clamp_conflicts(args) -> List[str]:
     """Pool worker: flag check_variable comparisons that contradict a clamp range."""
     filename, mod_path, ranges = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -973,7 +1118,7 @@ def _scan_available_file(
 ) -> Tuple[List, List, List]:
     """Extract the available-block checks from one comment-stripped source."""
     filename, mod_path, ai_categories = args
-    cleaned = _read_script_text(filename)
+    cleaned = _read_script_text(filename, mod_path)
     if cleaned is None:
         return [], [], []
     rel = os.path.relpath(filename, mod_path)
@@ -1095,7 +1240,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
     filename, mod_path, flagged_names, ai_categories = args
     if not flagged_names:
         return []
-    cleaned = _read_script_text(filename)
+    cleaned = _read_script_text(filename, mod_path)
     if cleaned is None:
         return []
     rel = os.path.relpath(filename, mod_path)
@@ -1167,7 +1312,7 @@ def process_file_for_variable_tooltips(
     and does the missing-key filtering.
     """
     filename, mod_path = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -1220,7 +1365,7 @@ def process_file_for_missing_variable_tooltips(
     write swallows the tooltip, so it wins over the enclosing rendered block.
     """
     filename, mod_path, backing = args
-    cleaned = _read_script_text(filename)
+    cleaned = _read_script_text(filename, mod_path)
     if cleaned is None:
         return []
     rel = os.path.relpath(filename, mod_path)
@@ -1361,7 +1506,7 @@ def process_file_for_treasury_scope(
     owner/CONTROLLER/tag/ROOT opener suppresses the finding.
     """
     filename, mod_path = args
-    cleaned = _read_script_text(filename, blank_strings=False)
+    cleaned = _read_script_text(filename, mod_path, blank_strings=False)
     if cleaned is None:
         return []
     if not any(k in cleaned for k in _TREASURY_EFFECT_KEYWORDS):
@@ -1598,7 +1743,7 @@ def process_file_for_orphan_money(
     caller) are skipped.
     """
     filename, mod_path, consumer_map = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -1668,7 +1813,7 @@ def process_file_for_all_targets(
     """
     filename, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ({}, {}, {})
 
     text_file = FileOpener.open_text_file(
@@ -1686,12 +1831,14 @@ def process_file_for_all_targets(
     )
 
 
-def _scan_targets_in_loc(args: Tuple[str, Tuple[str, ...]]) -> set:
+def _scan_targets_in_loc(
+    args: Tuple[str, Tuple[str, ...]], *, mod_path: Optional[str] = None
+) -> set:
     """Return which of `potential_targets` appear as [target.GetName]-style loc
     references in one yml file. Pooled; the union across files is order-
     independent, matching the old single-process accumulator exactly."""
     filename, potential_targets = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=True, strip_comments_flag=True
@@ -1735,6 +1882,7 @@ _F_SCRIPTED = 32
 _F_VAR_TOOLTIP = 64
 _F_MISSING = 128
 _F_FLAG_SYNTAX = 256
+_F_TOKEN = 512
 
 _EMPTY_SHARED_RESULT: Tuple = (
     [],
@@ -1751,6 +1899,7 @@ _EMPTY_SHARED_RESULT: Tuple = (
     [],
     ([], []),
     [],
+    [],
 )
 
 
@@ -1764,7 +1913,7 @@ def _scan_shared_file(args) -> Tuple:
     the file set per section is unchanged. Flag syntax keeps its naive strip.
     Returns (math, orphan, treasury, clamp_found, clamp_temp, clamp_persist,
     clamp_checks, avail_unt, avail_flags, scripted, var_tooltips, missing,
-    (flag_days, flag_long), avail_negated_tooltips).
+    (flag_days, flag_long), avail_negated_tooltips, tokens).
     """
     (
         filename,
@@ -1775,8 +1924,9 @@ def _scan_shared_file(args) -> Tuple:
         consumer_map,
         backing,
         requirements,
+        registered_tokens,
     ) = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return _EMPTY_SHARED_RESULT
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -1802,6 +1952,7 @@ def _scan_shared_file(args) -> Tuple:
         | _F_SCRIPTED
         | _F_VAR_TOOLTIP
         | _F_MISSING
+        | _F_TOKEN
     )
     need_naive = mask & _F_FLAG_SYNTAX
     if not (need_blanked or need_stripped or need_naive):
@@ -1825,7 +1976,11 @@ def _scan_shared_file(args) -> Tuple:
     var_tooltip_issues: List = []
     missing_issues: List = []
     flag_pair: Tuple = ([], [])
+    token_issues: List = []
 
+    if mask & _F_TOKEN:
+        # Unblanked: localisation, GUI text and log strings name tokens in quotes.
+        token_issues = _scan_dynamic_tokens_text(stripped, rel, registered_tokens)
     if mask & _F_MATH:
         math_issues = _scan_math_precision_text(blanked, rel)
     if mask & _F_ORPHAN:
@@ -1867,6 +2022,7 @@ def _scan_shared_file(args) -> Tuple:
         missing_issues,
         flag_pair,
         avail_negated,
+        token_issues,
     )
 
 
@@ -1936,7 +2092,7 @@ def _merge_three_dicts(
 
 class Validator(BaseValidator):
     TITLE = "VARIABLE AND EVENT TARGET VALIDATION"
-    STAGED_EXTENSIONS = [".txt", ".yml"]
+    STAGED_EXTENSIONS = [".txt", ".yml", ".gui"]
 
     def __init__(self, mod_path: str, **kwargs):
         self.redundant_focus_flags = kwargs.pop("redundant_focus_flags", False)
@@ -2209,6 +2365,18 @@ class Validator(BaseValidator):
             category="math-precision",
         )
 
+    def validate_unregistered_dynamic_tokens(self):
+        """Flag `token:X` and `<game var>@X` tokens missing from MD_tokens.txt (ERROR)."""
+        self._log_section("Checking script tokens against MD_tokens.txt...")
+        issues = self._get_shared_scan()["tokens"]
+        self._report(
+            issues,
+            "✓ No unregistered dynamic tokens found",
+            "tokens missing from the synchronized dynamic token list (error.log spam and OOS risk):",
+            severity=Severity.ERROR,
+            category="unregistered-dynamic-token",
+        )
+
     def validate_orphan_money_setters(self):
         """Flag money-variable setters whose value is never consumed (WARNING).
 
@@ -2324,6 +2492,9 @@ class Validator(BaseValidator):
         )
         consumer_map = build_money_consumer_map(effect_files, self.mod_path)
         backing = self._collect_dynamic_modifier_vars()
+        registered_tokens: frozenset = frozenset()
+        if os.path.isfile(os.path.join(self.mod_path, DYNAMIC_TOKEN_FILE)):
+            registered_tokens = frozenset(load_dynamic_token_names(self.mod_path))
 
         math_files = self._collect_files(math_patterns)
         orphan_files = self._collect_files(orphan_patterns)
@@ -2332,6 +2503,9 @@ class Validator(BaseValidator):
         available_files = self._collect_files(_PLAYER_FACING_GLOBS)
         tooltip_files = self._collect_files(tooltip_patterns)
         flag_files = self._collect_files(math_patterns)
+        display_text_files = self._collect_files(
+            ["localisation/english/**/*.yml", "interface/**/*.gui"]
+        )
 
         union = list(
             dict.fromkeys(
@@ -2342,6 +2516,7 @@ class Validator(BaseValidator):
                 + available_files
                 + tooltip_files
                 + flag_files
+                + display_text_files
             )
         )
         empty: Dict[str, List] = {
@@ -2357,6 +2532,7 @@ class Validator(BaseValidator):
             "missing": [],
             "flag_days": [],
             "flag_long": [],
+            "tokens": [],
         }
         if not union:
             self._shared_scan_memo = empty
@@ -2388,11 +2564,14 @@ class Validator(BaseValidator):
         available_set = set(available_files)
         tooltip_set = set(tooltip_files)
         flag_set = set(flag_files)
+        display_text_set = set(display_text_files)
         args_list = []
         for f in union:
             mask = 0
+            if f in display_text_set:
+                mask |= _F_TOKEN
             if f in math_set:
-                mask |= _F_MATH
+                mask |= _F_MATH | _F_TOKEN
             if f in orphan_set:
                 mask |= _F_ORPHAN
             if f in treasury_set:
@@ -2415,6 +2594,7 @@ class Validator(BaseValidator):
                     consumer_map,
                     backing,
                     requirements,
+                    registered_tokens,
                 )
             )
         results = self._pool_map(_scan_shared_file, args_list, chunksize=30)
@@ -2439,7 +2619,9 @@ class Validator(BaseValidator):
                 missing_i,
                 flag_pair,
                 negated_i,
+                token_i,
             ) = res
+            empty["tokens"].extend(token_i)
             empty["math"].extend(math_i)
             empty["orphan"].extend(orphan_i)
             empty["treasury"].extend(treasury_i)
@@ -2900,7 +3082,7 @@ class Validator(BaseValidator):
         targets_tuple = tuple(potential_results)
         targets_used_in_loc: set = set()
         for found in self._pool_map(
-            _scan_targets_in_loc,
+            partial(_scan_targets_in_loc, mod_path=self.mod_path),
             [(f, targets_tuple) for f in yml_files_to_scan],
             chunksize=30,
         ):
@@ -2939,6 +3121,7 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         self.validate_math_precision()
+        self.validate_unregistered_dynamic_tokens()
         self.validate_orphan_money_setters()
         self.validate_treasury_state_scope()
         self.validate_clamp_range_conflicts()

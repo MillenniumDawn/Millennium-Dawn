@@ -179,6 +179,7 @@ _IMPACT_EXCLUDED_SCRIPTS = {
 _REFERENCE_FILES = {
     ".claude/docs/typo-watchlist.md": ("localisation",),
     "resources/documentation/modifiers_documentation.md": ("modifiers",),
+    "resources/documentation/loc_objects_documentation.md": ("scripted-localisation",),
 }
 
 _SCRIPT_PATH_RE = re.compile(r"^tools/validation/(validate_[\w-]+\.py)$")
@@ -306,11 +307,18 @@ def select_for_changed_files(
 ) -> Tuple[List[ValidatorSpec], List[ValidatorSpec]]:
     """Select ordinary batches, impact-only checks, and safe ad-hoc validators."""
 
-    graph = _build_import_graph()
+    nodes = _tool_nodes()
+    graph: Optional[Dict[str, Set[str]]] = None
     selected: Set[str] = set()
     selected_impact: Set[str] = set()
     adhoc: List[ValidatorSpec] = []
     seen_adhoc: Set[str] = set()
+
+    def importers_for(node: str) -> Set[str]:
+        nonlocal graph
+        if graph is None:
+            graph = _build_import_graph(nodes)
+        return _validators_importing(node, graph)
 
     def add(name: str) -> None:
         selected.add(name)
@@ -346,7 +354,7 @@ def select_for_changed_files(
             spec = _SPEC_BY_NODE.get(node)
             if spec is not None:
                 add(spec.name)
-                for name in _validators_importing(node, graph):
+                for name in importers_for(node):
                     add(name)
             elif os.path.isfile(os.path.join(VALIDATION_DIR, script)):
                 source = os.path.join(VALIDATION_DIR, script)
@@ -365,8 +373,8 @@ def select_for_changed_files(
             if path.startswith("tools/") and path.endswith(".py")
             else ""
         )
-        if node and node in graph:
-            importers = _validators_importing(node, graph)
+        if node and node in nodes:
+            importers = importers_for(node)
             for name in importers:
                 add(name)
             if node in {"shared_utils", "validation/validator_common"}:
