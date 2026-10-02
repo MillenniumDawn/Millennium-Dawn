@@ -3,7 +3,7 @@ per-file check runs from that one source.
 
 These pin the exact findings that path produces (file, line, message), the
 brace pairs against find_matching_brace, the iterators validate_variables
-imports, the pooled run, and the disk cache.
+imports, the pooled run, the disk cache, and what a staged run reads.
 """
 
 import random
@@ -534,3 +534,111 @@ def test_cache_hits_when_warm_and_recomputes_only_the_changed_file(
         "Focus 'TAG_renamed' missing search_filters",
     ) in changed
     assert [row for row in changed if "TAG_other" in row[3]] == []
+
+
+# ---------------------------------------------------------------------------
+# Staged runs
+# ---------------------------------------------------------------------------
+
+STAGED_PATH = f"{FOCUS_DIR}/staged.txt"
+UNSTAGED_PATH = f"{FOCUS_DIR}/unstaged.txt"
+PER_FILE_SCANS = (
+    "_scan_missing_search_filters",
+    "_scan_ai_guards",
+    "_scan_cross_country_fires",
+    "_scan_pp_malus",
+    "_scan_focus_structural",
+    "_scan_focus_icons",
+)
+
+
+def _staged_mod(tmp_path):
+    """A staged file that fires an offer and anchors on a focus defined only in
+    the unstaged file, which carries findings of its own."""
+    staged = _write(
+        tmp_path,
+        STAGED_PATH,
+        "focus_tree = {\n"
+        "\tcountry = { tag = SWE }\n"
+        "\tfocus = {\n"
+        "\t\tid = TAG_staged\n"
+        "\t\tsearch_filters = { FOCUS_FILTER_POLITICAL }\n"
+        "\t\trelative_position_id = TAG_elsewhere\n"
+        "\t\tcompletion_reward = { GER = { country_event = offer.1 } }\n"
+        "\t}\n"
+        "}\n",
+    )
+    _write(
+        tmp_path,
+        UNSTAGED_PATH,
+        "focus_tree = { focus = { id = TAG_elsewhere"
+        " completion_reward = { add_political_power = -5 } } }\n",
+    )
+    _write(tmp_path, "localisation/english/focus_l_english.yml", "l_english:\n")
+    _write(tmp_path, "common/scripted_effects/fx.txt", "fx = { add_stability = 1 }\n")
+    _write(tmp_path, "events/ev.txt", "country_event = { id = ev.1 hidden = yes }\n")
+    return staged
+
+
+def _staged_run(tmp_path, staged_files):
+    validator = V.Validator(
+        mod_path=str(tmp_path), use_colors=False, workers=1, missing_icons=True
+    )
+    validator.staged_only = True
+    validator.staged_files = staged_files
+    validator.run_validations()
+    return _rows(validator)
+
+
+def _never(*_args, **_kwargs):
+    raise AssertionError("a staged run read what it cannot report")
+
+
+def test_staged_run_checks_only_the_staged_focus_file(tmp_path, monkeypatch):
+    staged = _staged_mod(tmp_path)
+    scanned = {name: [] for name in PER_FILE_SCANS}
+    for name in PER_FILE_SCANS:
+        original = getattr(V, name)
+
+        def record(source, *payload, name=name, original=original):
+            scanned[name].append(source.filepath)
+            return original(source, *payload)
+
+        monkeypatch.setattr(V, name, record)
+    monkeypatch.setattr(V.Validator, "_load_focus_loc_values", _never)
+
+    _staged_run(tmp_path, [staged])
+
+    assert scanned == {name: [staged] for name in PER_FILE_SCANS}
+
+
+def test_staged_run_with_no_focus_file_reads_nothing(tmp_path, monkeypatch):
+    _staged_mod(tmp_path)
+    loc = str(tmp_path / "localisation/english/focus_l_english.yml")
+    for name in (
+        "_parse_focus_text",
+        "_scripted_effect_facts",
+        "_notification_ids_in_file",
+        *PER_FILE_SCANS,
+    ):
+        monkeypatch.setattr(V, name, _never)
+    for method in ("_load_focus_loc_values", "_load_localisation_keys"):
+        monkeypatch.setattr(V.Validator, method, _never)
+
+    assert _staged_run(tmp_path, [loc]) == []
+
+
+def test_staged_run_reports_the_staged_files_findings(tmp_path):
+    """The offer still fires, the anchor resolves against the unstaged file,
+    and the unstaged file's own PP malus stays out."""
+    staged = _staged_mod(tmp_path)
+
+    assert _staged_run(tmp_path, [staged]) == [
+        (
+            "missing-cross-country-tooltip",
+            STAGED_PATH,
+            3,
+            "1 focus(es) fire an event to another nation without a"
+            " TT_IF_THEY_ACCEPT tooltip: TAG_staged (line 3)",
+        )
+    ]

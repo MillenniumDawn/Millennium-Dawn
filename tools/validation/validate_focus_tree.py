@@ -1374,15 +1374,32 @@ def _parse_focus_text(source: _FocusFile) -> Dict:
 
 def _scan_focus_file(
     args: Tuple[
-        str, str, Dict[str, FrozenSet[str]], FrozenSet[str], FrozenSet[str], bool
+        str, str, Dict[str, FrozenSet[str]], FrozenSet[str], FrozenSet[str], bool, bool
     ],
 ) -> Dict[str, Any]:
-    """Pool worker: every per-file focus scan from one read of the file."""
-    filepath, mod_path, staffable_map, money_effects, notifications, icons = args
+    """Pool worker: every per-file focus scan from one read of the file.
+
+    A file whose findings are not reported only feeds the repo-wide focus
+    registry and relative_position_id targets.
+    """
+    (
+        filepath,
+        mod_path,
+        staffable_map,
+        money_effects,
+        notifications,
+        icons,
+        reportable,
+    ) = args
     source = _FocusFile(filepath, mod_path)
-    return {
+    indexes = {
         "parse": source.parse(),
         "relative_positions": source.relative_positions(),
+    }
+    if not reportable:
+        return indexes
+    return {
+        **indexes,
         "missing_search_filters": source.missing_search_filters(),
         "ai_guards": source.ai_guards(staffable_map, money_effects),
         "cross_country_fires": source.cross_country_fires(notifications),
@@ -1444,35 +1461,43 @@ class Validator(BaseValidator):
         return rel in staged
 
     def _focus_scans(self) -> List[Dict[str, Any]]:
-        """Every per-file focus scan, from one pool pass over the focus files."""
-        if self._scans is None:
-            staffable, money = self._scripted_effect_data_for_guards()
-            notifications = self._notification_event_ids()
-            files = self._collect_files(
-                ["common/national_focus/*.txt"], ignore_staged=True
-            )
-            self._scans = self._pool_map(
-                _scan_focus_file,
-                [
-                    (
-                        f,
-                        self.mod_path,
-                        staffable,
-                        money,
-                        notifications,
-                        self.missing_icons,
-                    )
-                    for f in files
-                ],
-                chunksize=10,
-            )
+        """Every per-file focus scan, from one pool pass over the focus files.
+
+        Only reportable files get the per-file checks. With none, as in a
+        staged run that touches no focus file, nothing is scanned at all.
+        """
+        if self._scans is not None:
+            return self._scans
+        files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
+        reportable = [self._is_reportable(f) for f in files]
+        if not any(reportable):
+            self._scans = []
+            return self._scans
+        staffable, money = self._scripted_effect_data_for_guards()
+        notifications = self._notification_event_ids()
+        self._scans = self._pool_map(
+            _scan_focus_file,
+            [
+                (
+                    f,
+                    self.mod_path,
+                    staffable,
+                    money,
+                    notifications,
+                    self.missing_icons,
+                    report,
+                )
+                for f, report in zip(files, reportable)
+            ],
+            chunksize=10,
+        )
         return self._scans
 
     def _reportable_results(self, key: str) -> Iterator[Tuple[str, List]]:
         """Yield (rel_path, results) for each reportable file's *key* scan."""
         for scan in self._focus_scans():
             filepath = scan["parse"]["filepath"]
-            if scan[key] and self._is_reportable(filepath):
+            if self._is_reportable(filepath) and scan[key]:
                 yield os.path.relpath(filepath, self.mod_path), scan[key]
 
     def _get_parsed_files(self) -> List[Dict]:
@@ -1703,11 +1728,13 @@ class Validator(BaseValidator):
 
         _, focus_info = self._focus_registry()
 
-        # Load all English loc keys (always full repo scan)
-        loc_keys = self._load_localisation_keys()
-        self.log(
-            f"  Found {len(focus_info)} focuses, {len(loc_keys)} localisation keys"
-        )
+        loc_keys: FrozenSet[str] = frozenset()
+        if focus_info:
+            # Load all English loc keys (always full repo scan)
+            loc_keys = self._load_localisation_keys()
+            self.log(
+                f"  Found {len(focus_info)} focuses, {len(loc_keys)} localisation keys"
+            )
 
         results = []
         for focus_id, (fp, line, _) in sorted(focus_info.items()):
@@ -1773,7 +1800,12 @@ class Validator(BaseValidator):
         wanted = frozenset(
             [fid for fid in focus_info] + [f"{fid}_desc" for fid in focus_info]
         )
-        loc_values = self._load_focus_loc_values(wanted)
+        loc_files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
+        # Findings land on the loc file, which a staged run never reports.
+        reportable = any(self._is_reportable(f) for f in loc_files)
+        loc_values = self._load_focus_loc_values(wanted) if reportable else {}
 
         title_results = []
         desc_results = []
@@ -1918,18 +1950,17 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking ai_will_do staffing/bankruptcy guards...")
 
-        staffable = self._staffable_effect_map()
-        if not staffable:
+        reportable = [
+            (d, rel)
+            for rel, facts in self._reportable_results("ai_guards")
+            for d in facts
+        ]
+        if reportable and not self._staffable_effect_map():
             self.log(
                 "  No builder effects found under common/scripted_effects/ — "
                 "can_staff detection limited to direct add_building_construction",
                 "warning",
             )
-        reportable = (
-            (d, rel)
-            for rel, facts in self._reportable_results("ai_guards")
-            for d in facts
-        )
 
         staff_results = []
         underguarded_by_file: Dict[str, List[Tuple[str, int, float]]] = defaultdict(
