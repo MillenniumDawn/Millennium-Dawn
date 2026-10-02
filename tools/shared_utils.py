@@ -115,6 +115,11 @@ PARTY_SLOT_NAMES: Dict[int, str] = {
 CPU_BUDGET_FRACTION = 0.75
 
 
+def running_in_ci() -> bool:
+    """True on a CI runner, which has its cores to itself."""
+    return os.environ.get("CI", "").strip().lower() in ("1", "true")
+
+
 def cpu_budget() -> int:
     """Cores this repo's tooling may occupy at once, never the whole machine.
 
@@ -125,7 +130,7 @@ def cpu_budget() -> int:
     if override.isdigit() and int(override) > 0:
         return int(override)
     cores = os.cpu_count() or 1
-    if os.environ.get("CI", "").strip().lower() in ("1", "true"):
+    if running_in_ci():
         return cores
     return max(1, int(cores * CPU_BUDGET_FRACTION))
 
