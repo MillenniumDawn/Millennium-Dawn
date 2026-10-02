@@ -335,7 +335,9 @@ class Validator(BaseValidator):
                 for filename in glob.iglob(search_path + "/**/*.txt", recursive=True):
                     # should_skip_file ignores gfx/ wholesale; here we want it,
                     # because that is where the texture databases live.
-                    if dir_name != "gfx" and should_skip_file(filename):
+                    if dir_name != "gfx" and should_skip_file(
+                        filename, mod_path=self.mod_path
+                    ):
                         continue
                     game_files.append(filename)
 

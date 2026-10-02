@@ -2714,6 +2714,11 @@ update_military_rate = {
 	## Calculate the cost of fielded military ##
 	### Land ###
 	#Below sets up the personnel cost for mil spending based on how many battalions a country has (divided into special, elite, regular and irregular units)
+	# Reset, or a country with no army reuses the previous country's counts when several run in one effect
+	set_temp_variable = { special_btn = 0 }
+	set_temp_variable = { elite_btn = 0 }
+	set_temp_variable = { regular_btn = 0 }
+	set_temp_variable = { irregular_btn = 0 }
 	if = { limit = { check_variable = { num_battalions > 0 } }
 		#Count number of special units
 		set_temp_variable = { special_btn = num_battalions_with_type@Special_Forces }
@@ -3227,26 +3232,28 @@ update_military_rate = {
 	subtract_from_variable = { defence_breakdown_industry_gdp_modifier = 1 }	#Working with percentages
 	set_variable = { defence_breakdown_personnel_gdp_modifier = { value = gdp_defence_modifier_personnel multiply = 7.752 subtract = 1 } }	#7.752 = minimum modifier; -1 to work with percentages
 
+	# 0.0000003 to 0.0000015 of GDP a day by capability tier, in whole units so no literal risks rounding to zero.
 	set_variable = {
 		defence_breakdown_cyber = {
 			value = gdp_total
+			divide = 1000
 			multiply = {
 				value = 0
 				if = {
 					limit = { value = cyber_capability greater_than = 11 }
-					add = 0.00005
+					add = 5
 				}
 				if = {
 					limit = { value = cyber_capability greater_than = 7 }
-					add = 0.00004
+					add = 4
 				}
 				if = {
 					limit = { value = cyber_capability greater_than = 3 }
-					add = 0.00003
+					add = 3
 				}
 				if = {
 					limit = { value = cyber_capability greater_than = 0 }
-					add = 0.00003
+					add = 3
 				}
 			}
 			multiply = {
@@ -3254,6 +3261,7 @@ update_military_rate = {
 				add = modifier@cyber_cost_multiplier_modifier
 			}
 			multiply = 7
+			divide = 10000
 		}
 	}
 
