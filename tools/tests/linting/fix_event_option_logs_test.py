@@ -110,16 +110,26 @@ def test_non_event_path_is_skipped(tmp_path):
 
 
 def test_cli_dry_run_reports_completion(tmp_path):
-    # The CLI walks the whole mod tree (--root is derived from the script path),
-    # so this only pins the entry point, not a per-fixture count.
+    # Without --files the CLI walks the real mod tree (its root comes from the
+    # script path), so the fixture is passed explicitly.
     root = _events_tree(tmp_path)
-    _write(root / "events" / "Ev.txt", _event("\t\tname = foo.1.a\n"))
+    event = root / "events" / "Ev.txt"
+    _write(event, _event("\t\tname = foo.1.a\n"))
 
     result = subprocess.run(
-        [sys.executable, str(_CLI), "--mode", "all", "--dry-run", "--workers", "1"],
+        [
+            sys.executable,
+            str(_CLI),
+            "--dry-run",
+            "--workers",
+            "1",
+            "--files",
+            str(event),
+        ],
         capture_output=True,
         text=True,
         cwd=str(root),
     )
     assert result.returncode == 0, result.stderr
     assert "Fix Event Option Logs" in result.stdout
+    assert "Processed 1 files" in result.stdout

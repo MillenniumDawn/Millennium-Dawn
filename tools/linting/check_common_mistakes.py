@@ -87,7 +87,9 @@ import json
 import os
 import re
 import sys
-from functools import lru_cache
+from bisect import bisect_left, bisect_right
+from functools import cached_property, lru_cache
+from itertools import accumulate
 
 _RE_THREAT = re.compile(r"(?<!\w)threat\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_WAR_SUPPORT = re.compile(r"(?<!\w)has_war_support\s*([><]=?)\s*(\d+\.?\d*)")
@@ -265,6 +267,7 @@ _RE_EVENT_SEND = re.compile(
     re.DOTALL,
 )
 _RE_EVENT_DEFINITION_OPEN = re.compile(r"\b(?:country_event|news_event)\s*=\s*\{")
+_RE_BRACE = re.compile(r"[{}]")
 _RE_EVENT_ID = re.compile(r"\bid\s*=\s*([\w.]+)")
 # Markers that only appear in an event DEFINITION, never in an effect send:
 # sends carry id/days/hours, definitions carry title/triggers/options.
@@ -522,16 +525,18 @@ def _scan_global_refs(root_dir):
                 try:
                     with open(fp, "r", encoding="utf-8", errors="replace") as f:
                         content = f.read()
-                    for m in _RE_COMPLETE_FOCUS.finditer(content):
-                        focuses.add(m.group(1))
-                    for m in _RE_UNLOCK_FOCUS.finditer(content):
-                        focuses.add(m.group(1))
-                    for m in _RE_ACTIVATE_DECISION.finditer(content):
-                        decisions.add(m.group(1))
-                    for m in _RE_SET_NATION_FLAG.finditer(content):
-                        nation_flags.add(m.group(1))
                 except OSError:
-                    pass
+                    continue
+                # A \b-led pattern gets no literal-prefix scan, so test the
+                # literal every match contains before running it.
+                if "complete_national_focus" in content:
+                    focuses.update(_RE_COMPLETE_FOCUS.findall(content))
+                if "unlock_national_focus" in content:
+                    focuses.update(_RE_UNLOCK_FOCUS.findall(content))
+                if "activate_decision" in content:
+                    decisions.update(_RE_ACTIVATE_DECISION.findall(content))
+                if "_nation_flag" in content:
+                    nation_flags.update(_RE_SET_NATION_FLAG.findall(content))
     return focuses, decisions, nation_flags
 
 
@@ -589,7 +594,118 @@ def _code_for_depth(line):
     placeholder); left unblanked it would drift the depth count for whatever
     manual brace-tracking scans past it.
     """
+    if '"' not in line:
+        return strip_inline_comment(line)
     return _RE_QUOTED_STRING.sub('""', strip_inline_comment(line))
+
+
+class _Source(list):
+    """A file's lines plus what the checks derive from them, each built once.
+
+    code is each line without its comment (strip_inline_comment) and
+    depth_code also blanks quoted strings (_code_for_depth). The rest is
+    derived on first use, since file-level gates skip many checks.
+    """
+
+    def __init__(self, lines):
+        super().__init__(lines)
+        self.raw = "".join(lines)
+        self.code = [strip_inline_comment(line) for line in lines]
+        self.depth_code = [
+            _RE_QUOTED_STRING.sub('""', code) if '"' in code else code
+            for code in self.code
+        ]
+
+    @cached_property
+    def starts(self):
+        """Offset of each line in raw, plus one past the end."""
+        return list(accumulate(map(len, self), initial=0))
+
+    @cached_property
+    def text(self):
+        """depth_code joined one line per line, for whole-file block scans."""
+        return "".join([code.rstrip("\n") + "\n" for code in self.depth_code])
+
+    @cached_property
+    def delta(self):
+        """Net braces per line of depth_code, as _get_block counts them."""
+        return [code.count("{") - code.count("}") for code in self.depth_code]
+
+    @cached_property
+    def opens(self):
+        return [code.count("{") for code in self.code]
+
+    @cached_property
+    def closes(self):
+        return [code.count("}") for code in self.code]
+
+    @cached_property
+    def brace_lines(self):
+        """Indexes of the lines whose code has a brace."""
+        return [i for i, code in enumerate(self.code) if "{" in code or "}" in code]
+
+    @cached_property
+    def tokens(self):
+        """(token, 1-based line) pairs of depth_code for the script-tree parser."""
+        return [
+            (token, line_num)
+            for line_num, code in enumerate(self.depth_code, 1)
+            for token in _RE_SCRIPT_NODE.findall(code)
+        ]
+
+    @cached_property
+    def tree(self):
+        return _parse_script_nodes(self.tokens, 0)[0]
+
+
+def _source(lines):
+    """lines as a _Source, so a check called on a plain list still works."""
+    return lines if isinstance(lines, _Source) else _Source(lines)
+
+
+def _lines_with(src, *literals):
+    """Indexes, in order, of the lines whose raw text contains any literal.
+
+    A check may visit only these lines when each of its findings needs one of
+    the literals on that line. code and depth_code are cut from the raw line,
+    so a literal with no quote in it is in the raw line whenever it is in either.
+    """
+    found = set()
+    for literal in literals:
+        pos = src.raw.find(literal)
+        while pos != -1:
+            index = bisect_right(src.starts, pos) - 1
+            found.add(index)
+            pos = src.raw.find(literal, src.starts[index + 1])
+    return sorted(found)
+
+
+def _block_end(src, start):
+    """Index after the block opening at src[start], counted as _get_block does."""
+    delta = src.delta
+    depth = delta[start]
+    j = start + 1
+    n = len(delta)
+    while depth > 0 and j < n:
+        depth += delta[j]
+        j += 1
+    return j
+
+
+def _outer_blocks(src, candidates, opener):
+    """Yield (start, end, match) for each candidate line opener(start) matches.
+
+    A line inside a block already yielded is skipped, which is the walk a
+    `while i < n` loop makes when it jumps past each block it handles.
+    """
+    end = 0
+    for start in candidates:
+        if start < end:
+            continue
+        match = opener(start)
+        if match:
+            end = _block_end(src, start)
+            yield start, end, match
 
 
 def _check_focus_available_always_no(lines):
@@ -604,33 +720,32 @@ def _check_focus_available_always_no(lines):
     Only flags when available=always-no AND no mechanism is present,
     meaning the focus is permanently unreachable.
     """
+    src = _source(lines)
     issues = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        if _RE_FOCUS_BLOCK_OPEN.match(lines[i]):
-            start = i
-            block, i = _get_block(lines, start)
-            norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(block))
-            if _RE_AVAILABLE_ALWAYS_NO.search(norm):
-                id_match = _RE_FOCUS_ID_IN_BLOCK.search(norm)
-                focus_id = id_match.group(1) if id_match else None
-                has_bypass = bool(_RE_BYPASS_OPEN.search(norm))
-                script_completed = focus_id and focus_id in _SCRIPT_COMPLETED_FOCUSES
-                if not has_bypass and not script_completed:
-                    for k, bl in enumerate(block):
-                        if _RE_AVAILABLE_OPEN.search(bl):
-                            issues.append(
-                                (
-                                    start + k + 1,
-                                    "available = { always = no } with no bypass, complete_national_focus,"
-                                    " or unlock_national_focus -- focus is permanently unreachable;"
-                                    " add a bypass block or reach it via complete/unlock_national_focus",
-                                )
+    for start, end, _match in _outer_blocks(
+        src,
+        _lines_with(src, "focus"),
+        lambda i: _RE_FOCUS_BLOCK_OPEN.match(src[i]),
+    ):
+        block = src[start:end]
+        norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(block))
+        if _RE_AVAILABLE_ALWAYS_NO.search(norm):
+            id_match = _RE_FOCUS_ID_IN_BLOCK.search(norm)
+            focus_id = id_match.group(1) if id_match else None
+            has_bypass = bool(_RE_BYPASS_OPEN.search(norm))
+            script_completed = focus_id and focus_id in _SCRIPT_COMPLETED_FOCUSES
+            if not has_bypass and not script_completed:
+                for k, bl in enumerate(block):
+                    if _RE_AVAILABLE_OPEN.search(bl):
+                        issues.append(
+                            (
+                                start + k + 1,
+                                "available = { always = no } with no bypass, complete_national_focus,"
+                                " or unlock_national_focus -- focus is permanently unreachable;"
+                                " add a bypass block or reach it via complete/unlock_national_focus",
                             )
-                            break
-        else:
-            i += 1
+                        )
+                        break
     return issues
 
 
@@ -803,17 +918,15 @@ def _iter_event_definitions(content):
         if open_match.start() < block_end:
             continue
         depth = 0
-        idx = open_match.end() - 1
-        while idx < len(blank):
-            if blank[idx] == "{":
+        for brace in _RE_BRACE.finditer(blank, open_match.end() - 1):
+            if brace.group() == "{":
                 depth += 1
-            elif blank[idx] == "}":
+            else:
                 depth -= 1
                 if depth == 0:
-                    block_end = idx + 1
+                    block_end = brace.end()
                     yield blank[open_match.start() : block_end]
                     break
-            idx += 1
 
 
 def _build_event_index(root_dir):
@@ -858,23 +971,23 @@ def _get_event_block(event_id, event_blocks=None, event_index=None):
             _EVENT_INDEX_BUILT = True
         event_index = _EVENT_INDEX
     filepath = event_index.get(event_id)
-    key = (filepath, event_id)
-    if key in _EVENT_BLOCKS:
-        return _EVENT_BLOCKS[key]
-    block = None
-    if filepath:
+    if not filepath:
+        return None
+    blocks = _EVENT_BLOCKS.get(filepath)
+    if blocks is None:
         try:
             with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
                 content = handle.read()
         except OSError:
             content = ""
+        # Parse the file once: a tree sends many events from the same file.
+        blocks = {}
         for candidate in _iter_event_definitions(content):
             id_match = _RE_EVENT_ID.search(candidate)
-            if id_match and id_match.group(1) == event_id:
-                block = candidate
-                break
-    _EVENT_BLOCKS[key] = block
-    return block
+            if id_match:
+                blocks.setdefault(id_match.group(1), candidate)
+        _EVENT_BLOCKS[filepath] = blocks
+    return blocks.get(event_id)
 
 
 def _event_chain_leads_to_war(
@@ -919,66 +1032,59 @@ def _check_focus_missing_war_hint(lines, event_blocks=None):
     not. The hint anywhere in the block clears the focus. Live runs resolve
     events against the events/ tree; tests inject event_blocks (id -> text).
     """
+    src = _source(lines)
     issues = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        if _RE_FOCUS_BLOCK_OPEN.match(lines[i]):
-            start = i
-            block, i = _get_block(lines, start)
-            code = [strip_inline_comment(bl) for bl in block]
-            if any(_RE_WILL_LEAD_TO_WAR.search(c) for c in code):
-                continue
-            id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
-            focus_id = id_match.group(1) if id_match else "<unknown>"
-            if _war_declared_at_owner_scope(code):
+    for start, end, _match in _outer_blocks(
+        src,
+        _lines_with(src, "focus"),
+        lambda i: _RE_FOCUS_BLOCK_OPEN.match(src[i]),
+    ):
+        code = src.code[start:end]
+        if any(_RE_WILL_LEAD_TO_WAR.search(c) for c in code):
+            continue
+        id_match = _RE_FOCUS_ID_IN_BLOCK.search("".join(code))
+        focus_id = id_match.group(1) if id_match else "<unknown>"
+        text = "\n".join(code)
+        # The scope walk only returns True on one of these two tokens.
+        if (
+            "create_wargoal" in text or "declare_war_on" in text
+        ) and _war_declared_at_owner_scope(code):
+            issues.append(
+                (
+                    start + 1,
+                    f"Focus {focus_id} has create_wargoal but no will_lead_to_war_with"
+                    " -- add will_lead_to_war_with = TAG so the AI prepares for war",
+                )
+            )
+            continue
+        owner_tag = _focus_owner_tag(code)
+        for sent_id in _owner_scope_event_sends(text, owner_tag):
+            leads, chain = _event_chain_leads_to_war(sent_id, owner_tag, event_blocks)
+            if leads:
                 issues.append(
                     (
                         start + 1,
-                        f"Focus {focus_id} has create_wargoal but no will_lead_to_war_with"
+                        f"Focus {focus_id} sends event {' -> '.join(chain)} leading to"
+                        " war but has no will_lead_to_war_with"
                         " -- add will_lead_to_war_with = TAG so the AI prepares for war",
                     )
                 )
-                continue
-            text = "\n".join(code)
-            owner_tag = _focus_owner_tag(code)
-            for sent_id in _owner_scope_event_sends(text, owner_tag):
-                leads, chain = _event_chain_leads_to_war(
-                    sent_id, owner_tag, event_blocks
-                )
-                if leads:
-                    issues.append(
-                        (
-                            start + 1,
-                            f"Focus {focus_id} sends event {' -> '.join(chain)} leading to"
-                            " war but has no will_lead_to_war_with"
-                            " -- add will_lead_to_war_with = TAG so the AI prepares for war",
-                        )
-                    )
-                    break
-        else:
-            i += 1
+                break
     return issues
 
 
-def _push_not_or_frame(stack, code, last_end, match_start):
-    """Push a new (is_or, is_not, {}) frame for an opening brace onto `stack`.
+def _iter_mutex_conflicts(codes, rows, token_pattern, entry_for_match):
+    """Yield (line, group, values, is_not) for conflicting AND-frame entries.
 
-    `is_not`/`is_or` come from whichever of NOT=/OR= immediately precedes the
-    brace in the text since `last_end`. Shared by the mutex-contradiction
-    scanners below, which differ only in what they collect per frame.
+    rows must hold every index of codes where token_pattern can match; the
+    other lines carry no token and leave the frames alone. A frame keeps the
+    text before its brace and reads NOT=/OR= from it only when it closes
+    holding entries.
     """
-    preceding = code[last_end:match_start]
-    is_not = bool(_RE_NOT_EQ.search(preceding))
-    is_or = bool(_RE_OR_EQ.search(preceding))
-    stack.append((is_or, is_not, {}))
-
-
-def _iter_mutex_conflicts(lines, token_pattern, clean_line, entry_for_match):
-    """Yield (line, group, values, is_not) for conflicting AND-frame entries."""
-    stack = [(False, False, {})]
-    for line_number, line in enumerate(lines, 1):
-        code = clean_line(line)
+    stack = [("", {})]
+    for row in rows:
+        line_number = row + 1
+        code = codes[row]
         if not code.strip():
             continue
 
@@ -986,10 +1092,11 @@ def _iter_mutex_conflicts(lines, token_pattern, clean_line, entry_for_match):
         for match in token_pattern.finditer(code):
             token = match.group(0)
             if token == "{":
-                _push_not_or_frame(stack, code, last_end, match.start())
+                stack.append((code[last_end : match.start()], {}))
             elif token == "}" and len(stack) > 1:
-                is_or, is_not, entries_by_group = stack.pop()
-                if not is_or:
+                preceding, entries_by_group = stack.pop()
+                if entries_by_group and not _RE_OR_EQ.search(preceding):
+                    is_not = bool(_RE_NOT_EQ.search(preceding))
                     for group, entries in entries_by_group.items():
                         values = {value for _, value in entries}
                         if len(values) > 1:
@@ -998,17 +1105,24 @@ def _iter_mutex_conflicts(lines, token_pattern, clean_line, entry_for_match):
                 entry = entry_for_match(match)
                 if entry is not None:
                     group, value = entry
-                    stack[-1][2].setdefault(group, []).append((line_number, value))
+                    stack[-1][1].setdefault(group, []).append((line_number, value))
             last_end = match.end()
 
 
 def _check_mutually_exclusive_contradictions(lines):
     """Flag blocks with multiple values of a single-valued trigger at the same AND depth."""
+    src = _source(lines)
+    # A conflict needs two entries of one trigger, each its own occurrence.
+    if all(src.raw.count(t) < 2 for t in _MUTUALLY_EXCLUSIVE_TRIGGERS):
+        return []
     issues = []
+    rows = sorted(
+        set(src.brace_lines).union(_lines_with(src, *_MUTUALLY_EXCLUSIVE_TRIGGERS))
+    )
     for line, trigger, values, is_not in _iter_mutex_conflicts(
-        lines,
+        src.depth_code,
+        rows,
         _RE_MUTEX_TRIGGER_TOKEN,
-        lambda value: _RE_QUOTED_STRING.sub('""', strip_inline_comment(value)),
         lambda match: (match.group(1), match.group(2)),
     ):
         values_text = ", ".join(sorted(values))
@@ -1030,6 +1144,9 @@ def _check_mutually_exclusive_contradictions(lines):
 
 def _check_has_idea_mutex_in_not_block(lines):
     """Flag NOT/AND blocks containing 2+ has_idea checks from the same mutex group."""
+    src = _source(lines)
+    if not any(idea in src.raw for idea in _IDEA_TO_MUTEX_GROUP):
+        return []
     issues = []
 
     def idea_entry(match):
@@ -1037,8 +1154,9 @@ def _check_has_idea_mutex_in_not_block(lines):
         group = _IDEA_TO_MUTEX_GROUP.get(idea)
         return (group, idea) if group is not None else None
 
+    rows = sorted(set(src.brace_lines).union(_lines_with(src, "has_idea")))
     for line, group, ideas, is_not in _iter_mutex_conflicts(
-        lines, _RE_MUTEX_TOKEN, strip_inline_comment, idea_entry
+        src.code, rows, _RE_MUTEX_TOKEN, idea_entry
     ):
         ideas_text = ", ".join(sorted(ideas))
         if is_not:
@@ -1179,11 +1297,18 @@ def _check_country_exists_scope_contradiction(lines):
     # children entries: (line, kind, tag) where kind is "country_exists"
     # (raw, inside a NOT), "not_country_exists" (emitted from a closed NOT),
     # or "scope_switch" (emitted from a closed country-scope block).
+    src = _source(lines)
+    # Every finding comes from a country_exists token.
+    if "country_exists" not in src.raw:
+        return issues
     stack = [[False, False, "", 0, [], []]]
 
-    for i, line in enumerate(lines):
-        code = _code_for_depth(line)
+    for i, code in enumerate(src.depth_code):
         if not code.strip():
+            continue
+        # A line with no token only adds its text to the open frame.
+        if "{" not in code and "}" not in code and "country_exists" not in code:
+            stack[-1][5].append(code)
             continue
         last_end = 0
         for m in _RE_CE_TOKEN.finditer(code):
@@ -1191,8 +1316,8 @@ def _check_country_exists_scope_contradiction(lines):
             preceding = code[last_end : m.start()]
             stack[-1][5].append(preceding)
             if tok == "{":
-                is_not = bool(_RE_NOT_EQ.search(preceding))
-                is_or = bool(_RE_OR_EQ.search(preceding))
+                is_not = "NOT" in preceding and bool(_RE_NOT_EQ.search(preceding))
+                is_or = "OR" in preceding and bool(_RE_OR_EQ.search(preceding))
                 opens_tag = ""
                 if not is_not and not is_or:
                     sm = _RE_CE_SCOPE_TAG.search(preceding)
@@ -1279,82 +1404,56 @@ def _check_decision_available_always_no(lines):
 
     Only flags when available=always-no AND none of the above are present.
     """
+    src = _source(lines)
     issues = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        code = strip_inline_comment(lines[i])
-        # Category block: starts at column 0 with a word and {
-        if _RE_TOPLEVEL_WORD.match(lines[i]) and "{" in code:
-            cat_start = i
-            cat_block, i = _get_block(lines, cat_start)
-            k = 1  # skip category header line
-            while k < len(cat_block) - 1:  # skip closing } line
-                bl = cat_block[k]
-                bl_code = strip_inline_comment(bl)
-                if _RE_INDENTED_WORD.match(bl) and "{" in bl_code:
-                    dec_block, next_k = _get_block(cat_block, k)
-                    norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(dec_block))
-                    dec_id_match = _RE_BLOCK_ID.match(cat_block[k])
-                    dec_id = dec_id_match.group(1) if dec_id_match else None
-                    if (
-                        _RE_DECISION_MARKER.search(norm)
-                        and _RE_AVAILABLE_ALWAYS_NO.search(norm)
-                        and not _RE_VISIBLE_ALWAYS_NO.search(norm)
-                        and not _RE_DAYS_MISSION_TIMEOUT.search(norm)
-                        and (
-                            dec_id is None or dec_id not in _SCRIPT_COMPLETED_DECISIONS
+    for start, end in _iter_decision_subblocks(src):
+        dec_block = src[start:end]
+        norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(dec_block))
+        dec_id_match = _RE_BLOCK_ID.match(src[start])
+        dec_id = dec_id_match.group(1) if dec_id_match else None
+        if (
+            _RE_DECISION_MARKER.search(norm)
+            and _RE_AVAILABLE_ALWAYS_NO.search(norm)
+            and not _RE_VISIBLE_ALWAYS_NO.search(norm)
+            and not _RE_DAYS_MISSION_TIMEOUT.search(norm)
+            and (dec_id is None or dec_id not in _SCRIPT_COMPLETED_DECISIONS)
+        ):
+            for p, dbl in enumerate(dec_block):
+                if _RE_AVAILABLE_OPEN.search(dbl):
+                    issues.append(
+                        (
+                            start + p + 1,
+                            "available = { always = no } without visible = { always = no }"
+                            " -- add visible = { always = no } for script-triggered decisions,"
+                            " or set a real available condition",
                         )
-                    ):
-                        for p, dbl in enumerate(dec_block):
-                            if _RE_AVAILABLE_OPEN.search(dbl):
-                                issues.append(
-                                    (
-                                        cat_start + k + p + 1,
-                                        "available = { always = no } without visible = { always = no }"
-                                        " -- add visible = { always = no } for script-triggered decisions,"
-                                        " or set a real available condition",
-                                    )
-                                )
-                                break
-                    k = next_k
-                else:
-                    k += 1
-        else:
-            i += 1
+                    )
+                    break
     return issues
 
 
-def _iter_decision_subblocks(lines):
-    """Yield (cat_start, k, cat_block, dec_block) for each decision sub-block.
+def _iter_decision_subblocks(src):
+    """Yield (start, end) for each decision sub-block of a _Source.
 
-    Walks toplevel category blocks and, one level in, every indented child
-    block -- the category/decision layout of common/decisions/ files. Shared
-    by _check_decision_allowed_dynamic and _find_decision_log_mismatches.
+    Walks toplevel category blocks (a column-0 word and {) and, one level in,
+    every indented child block -- the category/decision layout of
+    common/decisions/ files. A decision ends inside its category, so its
+    absolute end matches a walk over the category's own lines.
     """
-    i = 0
-    n = len(lines)
-    while i < n:
-        code = strip_inline_comment(lines[i])
-        if (
-            _RE_TOPLEVEL_WORD.match(lines[i])
-            and "{" in code
-            and not lines[i].lstrip().startswith("#")
+    brace = src.brace_lines
+    for cat_start, cat_end, _match in _outer_blocks(
+        src,
+        brace,
+        lambda i: _RE_TOPLEVEL_WORD.match(src[i]) and "{" in src.code[i],
+    ):
+        # Children sit after the header line and before the closing line.
+        inner = brace[bisect_right(brace, cat_start) : bisect_left(brace, cat_end - 1)]
+        for start, end, _match in _outer_blocks(
+            src,
+            inner,
+            lambda k: _RE_INDENTED_WORD.match(src[k]) and "{" in src.code[k],
         ):
-            cat_start = i
-            cat_block, i = _get_block(lines, cat_start)
-            k = 1
-            while k < len(cat_block) - 1:
-                bl = cat_block[k]
-                bl_code = strip_inline_comment(bl)
-                if _RE_INDENTED_WORD.match(bl) and "{" in bl_code:
-                    dec_block, next_k = _get_block(cat_block, k)
-                    yield cat_start, k, cat_block, dec_block
-                    k = next_k
-                else:
-                    k += 1
-        else:
-            i += 1
+            yield start, end
 
 
 def _check_decision_allowed_dynamic(lines):
@@ -1366,16 +1465,17 @@ def _check_decision_allowed_dynamic(lines):
 
     Only checks files in common/decisions/.
     """
+    src = _source(lines)
     issues = []
-    for cat_start, k, _cat_block, dec_block in _iter_decision_subblocks(lines):
-        norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(dec_block))
+    for start, end in _iter_decision_subblocks(src):
+        norm = _RE_WHITESPACE_COLLAPSE.sub(" ", "".join(src[start:end]))
         if not _RE_DECISION_MARKER.search(norm):
             continue
         in_allowed = False
         allowed_depth = 0
-        for p, dbl in enumerate(dec_block):
-            dbl_code = strip_inline_comment(dbl)
-            delta = dbl_code.count("{") - dbl_code.count("}")
+        for row in range(start, end):
+            dbl_code = src.code[row]
+            delta = src.opens[row] - src.closes[row]
             # if/else, not two ifs: the opening line's delta must
             # only be counted once (via the entry branch), or
             # allowed_depth never returns to <=0 at the block's
@@ -1397,7 +1497,7 @@ def _check_decision_allowed_dynamic(lines):
                     if trigger not in ("original_tag", "tag"):
                         issues.append(
                             (
-                                cat_start + k + p + 1,
+                                row + 1,
                                 f"dynamic trigger '{trigger}' in decision allowed block -- allowed is evaluated once at game start; move to available",
                             )
                         )
@@ -1431,20 +1531,24 @@ def _check_consecutive_scope_blocks(lines):
     min_depth_since_close = 999999
     # Track OR/NOT/AND depths
     logic_depths = set()
+    src = _source(lines)
 
-    for i, line in enumerate(lines):
+    for i, line in enumerate(src):
+        opens = src.opens[i]
+        closes = src.closes[i]
+        # A braceless line can only end a pending tag pair; with none pending
+        # it changes no state (both openers below need a brace in code).
+        if prev_tag is None and not opens and not closes:
+            continue
         lineno = i + 1
-        code = strip_inline_comment(line)
+        code = src.code[i]
         stripped = code.strip()
 
         # Detect logic keyword scopes
         if _RE_LOGIC_SCOPE.match(code):
             logic_depths.add(depth + 1)
 
-        m_tag_open = _RE_COUNTRY_SCOPE_OPEN.match(line)
-
-        opens = code.count("{")
-        closes = code.count("}")
+        m_tag_open = _RE_COUNTRY_SCOPE_OPEN.match(line) if opens else None
 
         # Push opens
         for k in range(opens):
@@ -1506,7 +1610,12 @@ def _check_consecutive_scope_blocks(lines):
                 logic_depths.discard(d)
 
         # Non-blank, non-scope lines reset prev_tag at the same indent
-        if stripped and not m_tag_open and not _RE_CLOSE_BRACE_LINE.match(line):
+        if (
+            prev_tag is not None
+            and stripped
+            and not m_tag_open
+            and not _RE_CLOSE_BRACE_LINE.match(line)
+        ):
             indent_match = _RE_LEADING_INDENT.match(line)
             line_indent = indent_match.group(1) if indent_match else ""
             if line_indent == prev_indent:
@@ -1531,13 +1640,19 @@ def _check_embargo_dlc_guard(lines):
     # visible/allowed) instead marks that gate's PARENT, since the gate covers the
     # whole enclosing object and every sibling effect in it.
     stack = []
+    src = _source(lines)
+    # Every finding is an embargo token; other lines matter only for their
+    # braces or a has_dlc guard.
+    if "_embargo" not in src.raw:
+        return issues
+    rows = sorted(set(src.brace_lines).union(_lines_with(src, "has_dlc", "_embargo")))
 
-    for i, line in enumerate(lines):
+    for i in rows:
         # Blank quoted strings so a stray { or } in a log/loc string can't desync
         # the if/guard stack; keep the BBA guard literal so its token still matches.
         code = _RE_QUOTED_STRING.sub(
             lambda mm: mm.group(0) if mm.group(0) == '"By Blood Alone"' else '""',
-            strip_inline_comment(line),
+            src.code[i],
         )
         last_end = 0
         for m in _RE_DLC_TOKEN.finditer(code):
@@ -1597,12 +1712,13 @@ def _check_divide_variable_zero_guard(lines):
     depth_stack = []  # stack of (depth, set_of_vars_guarded_at_this_depth)
     # Track the last if-block's checked variable for else-block inference
     last_if_checked_var = None
+    src = _source(lines)
+    if "divide_variable" not in src.raw:
+        return issues
 
-    for i, line in enumerate(lines):
-        code = strip_inline_comment(line)
-
-        opens = code.count("{")
-        closes = code.count("}")
+    for i, code in enumerate(src.code):
+        opens = src.opens[i]
+        closes = src.closes[i]
 
         # Detect if-block checking a variable = 0 or < threshold
         if _RE_IF_OPEN.search(code):
@@ -1677,36 +1793,34 @@ def _check_duplicate_add_to_variable(lines):
     double-adds (e.g., intentionally adding 0.10 twice) should use the summed
     value directly.
     """
+    src = _source(lines)
     issues = []
-    prev_stripped = None
-    prev_lineno = None
-    for i, line in enumerate(lines):
-        stripped = line.strip()
-        if not stripped or stripped.startswith("#"):
-            # Blank lines and comments break the consecutive chain
-            prev_stripped = None
-            continue
-        if (
-            _RE_ADD_TO_VAR.match(line)
-            and prev_stripped is not None
-            and stripped == prev_stripped
-        ):
+    for i in _lines_with(src, "add_to_"):
+        # A matching line is neither blank nor a comment, so an equal previous
+        # line is the unbroken chain the duplicate needs.
+        if i and _RE_ADD_TO_VAR.match(src[i]) and src[i - 1].strip() == src[i].strip():
             issues.append(
                 (
                     i + 1,
                     f"duplicate consecutive add_to_variable line (same as line"
-                    f" {prev_lineno}) -- likely copy-paste error; use the"
+                    f" {i}) -- likely copy-paste error; use the"
                     f" combined value in a single line",
                 )
             )
-        prev_stripped = stripped
-        prev_lineno = i + 1
     return issues
 
 
-def _option_has_no_effects(block_lines):
+def _option_has_no_effects(src, start, end):
+    """Whether the option block at src[start:end] holds nothing but a log."""
+    tokens = src.tokens
+    first = bisect_left(tokens, start + 1, key=lambda token: token[1])
+    after = bisect_left(tokens, end + 1, key=lambda token: token[1])
     option = next(
-        (node for node in _parse_script_tree(block_lines) if node.key == "option"),
+        (
+            node
+            for node in _parse_script_nodes(tokens[first:after], 0)[0]
+            if node.key == "option"
+        ),
         None,
     )
     if option is None:
@@ -1725,26 +1839,34 @@ def _check_empty_log_only_blocks(lines):
     it. Both the multi-line and the packed `key = { log = "..." }` shape are
     read; an empty block is left to the missing-log checks.
     """
+    src = _source(lines)
     issues = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        match = _RE_LOGGED_EFFECT_BLOCK_OPEN.search(strip_inline_comment(lines[i]))
-        if match is None:
-            i += 1
-            continue
-        block_lines, next_i = _get_block(lines, i)
+    # Each finding needs a log statement in the block.
+    if "log" not in src.raw:
+        return issues
+    openers = _lines_with(
+        src,
+        "option",
+        "_effect",
+        "on_add",
+        "on_remove",
+        "completion_reward",
+        "immediate",
+    )
+    for start, end, match in _outer_blocks(
+        src, openers, lambda i: _RE_LOGGED_EFFECT_BLOCK_OPEN.search(src.code[i])
+    ):
         if match.group(1) == "option":
-            log_only = _option_has_no_effects(block_lines)
+            log_only = _option_has_no_effects(src, start, end)
         else:
-            if len(block_lines) == 1:
-                code = strip_inline_comment(block_lines[0])
+            if end - start == 1:
+                code = src.code[start]
                 inner = code[match.end() : code.rindex("}")].strip()
                 content_lines = [inner] if inner else []
             else:
                 content_lines = []
-                for line in block_lines[1:-1]:
-                    code = strip_inline_comment(line).strip()
+                for code in src.code[start + 1 : end - 1]:
+                    code = code.strip()
                     if code:
                         content_lines.append(code)
             log_only = bool(content_lines) and all(
@@ -1754,12 +1876,11 @@ def _check_empty_log_only_blocks(lines):
         if log_only:
             issues.append(
                 (
-                    i + 1,
+                    start + 1,
                     f'log = "..." is the only effect in this {match.group(1)} block -- '
                     "delete the block (a log records an effect that never runs)",
                 )
             )
-        i = next_i
     return issues
 
 
@@ -1778,16 +1899,21 @@ def _check_is_x_nation_runtime(lines, filepath=""):
     """
     if "common/scripted_triggers" in filepath.replace("\\", "/"):
         return []
+    src = _source(lines)
+    if "_nation" not in src.raw:
+        return []
     issues = []
     in_allowed = False
     allowed_depth = 0
     brace_depth = 0
 
-    for i, line in enumerate(lines, 1):
-        code = strip_inline_comment(line)
+    # Lines with no brace and no trigger move no depth and open no allowed.
+    for row in sorted(set(src.brace_lines).union(_lines_with(src, "_nation"))):
+        i = row + 1
+        code = src.code[row]
 
-        opens = code.count("{")
-        closes = code.count("}")
+        opens = src.opens[row]
+        closes = src.closes[row]
 
         # Check for allowed / possible block start (possible = game-start gate too)
         if (
@@ -1883,25 +2009,29 @@ def _check_on_add_array_symmetry(lines):
     are grouped by the innermost open block at their line.
     """
     issues = []
+    src = _source(lines)
+    # A finding is an add_to_array inside an on_add block.
+    if "on_add" not in src.raw or "add_to_array" not in src.raw:
+        return issues
     stack = []
     groups = {}
-    for i, raw in enumerate(lines):
-        code = strip_inline_comment(raw)
+    # A hook opens a brace, so braceless lines touch neither hooks nor stack.
+    for i in src.brace_lines:
+        code = src.code[i]
         m = _RE_ON_HOOK_OPEN.search(code)
         if m:
             parent = stack[-1] if stack else -1
-            block, _ = _get_block(lines, i)
-            text = " ".join(strip_inline_comment(b) for b in block)
+            text = " ".join(src.code[i : _block_end(src, i)])
             entry = groups.setdefault(parent, {"adds": [], "removes": set()})
             if m.group(1) == "add":
                 for arr in _RE_ADD_TO_GLOBAL_ARRAY.findall(text):
                     entry["adds"].append((arr, i + 1))
             else:
                 entry["removes"].update(_RE_REMOVE_FROM_GLOBAL_ARRAY.findall(text))
-        for ch in code:
+        for ch in _RE_BRACE.findall(code):
             if ch == "{":
                 stack.append(i)
-            elif ch == "}" and stack:
+            elif stack:
                 stack.pop()
     for entry in groups.values():
         for arr, ln in entry["adds"]:
@@ -1927,75 +2057,71 @@ def _check_every_country_member_array(lines):
     every_country Over Bloc Membership".
     """
     issues = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        open_match = _RE_EVERY_COUNTRY_OPEN.match(lines[i])
-        if open_match:
-            open_line = i
-            block, next_i = _get_block(lines, i)
-            # Display-only loops: for_each_scope_loop's tooltip param collapses
-            # the per-country output these loops exist to render.
-            if any(
-                "display_individual_scopes" in strip_inline_comment(bl) for bl in block
+    src = _source(lines)
+    # A finding needs a member has_idea in the loop's limit.
+    if "has_idea" not in src.raw:
+        return issues
+    for open_line, end, open_match in _outer_blocks(
+        src,
+        _lines_with(src, "every_"),
+        lambda i: _RE_EVERY_COUNTRY_OPEN.match(src[i]),
+    ):
+        block_code = src.code[open_line:end]
+        # Display-only loops: for_each_scope_loop's tooltip param collapses
+        # the per-country output these loops exist to render.
+        if any("display_individual_scopes" in bc for bc in block_code):
+            continue
+        # Only check the first-level limit block, not nested if-limits.
+        # The limit is typically within the first 5 lines of every_country.
+        limit_text = ""
+        depth = 0
+        in_limit = False
+        limit_depth_start = 0
+        for bc in block_code[:30]:
+            # Only match the every_country's own limit (depth == 1,
+            # i.e. directly inside every_country = { }).
+            # Reject lines where limit is preceded by if/else on the
+            # same line (those are nested limits, not the top-level one).
+            if (
+                _RE_LIMIT_OPEN.search(bc)
+                and depth == 1
+                and not in_limit
+                and not _RE_IF_ELSE_OPEN.search(bc)
             ):
-                i = next_i
-                continue
-            # Only check the first-level limit block, not nested if-limits.
-            # The limit is typically within the first 5 lines of every_country.
-            limit_text = ""
-            depth = 0
-            in_limit = False
-            limit_depth_start = 0
-            for bl in block[:30]:
-                bc = strip_inline_comment(bl)
-                # Only match the every_country's own limit (depth == 1,
-                # i.e. directly inside every_country = { }).
-                # Reject lines where limit is preceded by if/else on the
-                # same line (those are nested limits, not the top-level one).
-                if (
-                    _RE_LIMIT_OPEN.search(bc)
-                    and depth == 1
-                    and not in_limit
-                    and not _RE_IF_ELSE_OPEN.search(bc)
-                ):
-                    in_limit = True
-                    limit_depth_start = depth
-                if in_limit:
-                    limit_text += " " + bc.strip()
-                    depth += bc.count("{") - bc.count("}")
-                    if depth <= limit_depth_start:
-                        break
-                else:
-                    depth += bc.count("{") - bc.count("}")
+                in_limit = True
+                limit_depth_start = depth
+            if in_limit:
+                limit_text += " " + bc.strip()
+                depth += bc.count("{") - bc.count("}")
+                if depth <= limit_depth_start:
+                    break
+            else:
+                depth += bc.count("{") - bc.count("}")
 
-            hits = _match_member_ideas(limit_text)
-            if hits:
-                ideas = ", ".join(idea for idea, _ in hits)
-                arrays = sorted({array for _, array in hits})
-                token = open_match.group(1)
-                guard = (
-                    " and keep the self-exclusion as if = { limit = { NOT = { tag = ROOT } } }"
-                    if token == "every_other_country"
-                    else ""
+        hits = _match_member_ideas(limit_text)
+        if hits:
+            ideas = ", ".join(idea for idea, _ in hits)
+            arrays = sorted({array for _, array in hits})
+            token = open_match.group(1)
+            guard = (
+                " and keep the self-exclusion as if = { limit = { NOT = { tag = ROOT } } }"
+                if token == "every_other_country"
+                else ""
+            )
+            if len(arrays) == 1:
+                advice = (
+                    f"use for_each_scope_loop = {{ array = {arrays[0]} }}"
+                    f" instead (narrower iteration, better performance){guard}"
                 )
-                if len(arrays) == 1:
-                    advice = (
-                        f"use for_each_scope_loop = {{ array = {arrays[0]} }}"
-                        f" instead (narrower iteration, better performance){guard}"
-                    )
-                else:
-                    advice = (
-                        f"split into one for_each_scope_loop per array"
-                        f" ({', '.join(arrays)}) with mutual-exclusion guards"
-                        f" (see simplification-patterns.md){guard}"
-                    )
-                issues.append(
-                    (open_line + 1, f"{token} with has_idea = {ideas} -- {advice}")
+            else:
+                advice = (
+                    f"split into one for_each_scope_loop per array"
+                    f" ({', '.join(arrays)}) with mutual-exclusion guards"
+                    f" (see simplification-patterns.md){guard}"
                 )
-            i = next_i
-        else:
-            i += 1
+            issues.append(
+                (open_line + 1, f"{token} with has_idea = {ideas} -- {advice}")
+            )
     return issues
 
 
@@ -2009,37 +2135,36 @@ def _check_any_country_member_array(lines):
     OR = { <condition> exists = no } guard.
     """
     issues = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        open_match = _RE_ANY_COUNTRY_OPEN.match(lines[i])
-        if open_match:
-            open_line = i
-            block, next_i = _get_block(lines, i)
-            body = " ".join(strip_inline_comment(bl).strip() for bl in block[:30])
-            hits = _match_member_ideas(body)
-            if hits:
-                ideas = ", ".join(idea for idea, _ in hits)
-                arrays = sorted({array for _, array in hits})
-                if len(arrays) == 1:
-                    advice = f"use any_of_scopes = {{ array = {arrays[0]} }} instead"
-                else:
-                    advice = (
-                        f"use one any_of_scopes per array"
-                        f" ({', '.join(arrays)}) inside an OR instead"
-                    )
-                issues.append(
-                    (
-                        open_line + 1,
-                        f"{open_match.group(1)} with has_idea = {ideas} -- {advice}"
-                        f" (checks only members; when negating or using"
-                        f" all_of_scopes, add OR = {{ ... exists = no }} --"
-                        f" stale array entries do not auto-skip in triggers)",
-                    )
+    src = _source(lines)
+    # A finding needs a member has_idea in the loop body.
+    if "has_idea" not in src.raw:
+        return issues
+    for open_line, end, open_match in _outer_blocks(
+        src,
+        _lines_with(src, "any_"),
+        lambda i: _RE_ANY_COUNTRY_OPEN.match(src[i]),
+    ):
+        body = " ".join(code.strip() for code in src.code[open_line:end][:30])
+        hits = _match_member_ideas(body)
+        if hits:
+            ideas = ", ".join(idea for idea, _ in hits)
+            arrays = sorted({array for _, array in hits})
+            if len(arrays) == 1:
+                advice = f"use any_of_scopes = {{ array = {arrays[0]} }} instead"
+            else:
+                advice = (
+                    f"use one any_of_scopes per array"
+                    f" ({', '.join(arrays)}) inside an OR instead"
                 )
-            i = next_i
-        else:
-            i += 1
+            issues.append(
+                (
+                    open_line + 1,
+                    f"{open_match.group(1)} with has_idea = {ideas} -- {advice}"
+                    f" (checks only members; when negating or using"
+                    f" all_of_scopes, add OR = {{ ... exists = no }} --"
+                    f" stale array entries do not auto-skip in triggers)",
+                )
+            )
     return issues
 
 
@@ -2056,57 +2181,59 @@ def _check_influence_setter_scope(lines):
     ROOT.id / THIS.id and are intentionally omitted across the codebase.
     """
     issues = []
-    if not any(
-        _RE_PERCENT_CHANGE_SETTER.search(strip_inline_comment(ln)) for ln in lines
-    ):
+    src = _source(lines)
+    setters = [
+        i
+        for i in _lines_with(src, "percent_change")
+        if _RE_PERCENT_CHANGE_SETTER.search(src.code[i])
+    ]
+    if not setters:
         return issues
 
     file_has_call = any(
-        _RE_CHANGE_INFLUENCE_CALL.search(strip_inline_comment(ln)) for ln in lines
+        _RE_CHANGE_INFLUENCE_CALL.search(src.code[i])
+        for i in _lines_with(src, "percentage")
     )
     if not file_has_call:
-        for i, line in enumerate(lines, 1):
-            if _RE_PERCENT_CHANGE_SETTER.search(strip_inline_comment(line)):
-                issues.append(
-                    (
-                        i,
-                        "percent_change is set but change_influence_percentage = yes is never "
-                        "called in this file -- the setter is a silent no-op",
-                    )
+        for i in setters:
+            issues.append(
+                (
+                    i + 1,
+                    "percent_change is set but change_influence_percentage = yes is never "
+                    "called in this file -- the setter is a silent no-op",
                 )
+            )
         return issues
 
-    i = 0
-    n = len(lines)
-    while i < n:
-        if _RE_INFLUENCE_LOOP_OPEN.match(strip_inline_comment(lines[i])):
-            block, next_i = _get_block(lines, i)
-            block_code = [strip_inline_comment(bl) for bl in block]
-            has_setter = any(_RE_PERCENT_CHANGE_SETTER.search(c) for c in block_code)
-            has_call = any(_RE_CHANGE_INFLUENCE_CALL.search(c) for c in block_code)
-            if has_setter and not has_call:
-                issues.append(
-                    (
-                        i + 1,
-                        "percent_change set inside a country-iteration loop with no "
-                        "change_influence_percentage = yes in the same loop -- the call must "
-                        "live inside the loop or it runs on stale/default values",
-                    )
+    for start, end, _match in _outer_blocks(
+        src,
+        _lines_with(src, "country"),
+        lambda i: _RE_INFLUENCE_LOOP_OPEN.match(src.code[i]),
+    ):
+        block_code = src.code[start:end]
+        has_setter = any(_RE_PERCENT_CHANGE_SETTER.search(c) for c in block_code)
+        has_call = any(_RE_CHANGE_INFLUENCE_CALL.search(c) for c in block_code)
+        if has_setter and not has_call:
+            issues.append(
+                (
+                    start + 1,
+                    "percent_change set inside a country-iteration loop with no "
+                    "change_influence_percentage = yes in the same loop -- the call must "
+                    "live inside the loop or it runs on stale/default values",
                 )
-            i = next_i
-        else:
-            i += 1
+            )
     return issues
 
 
 def _check_check_var_ge_le(lines):
     """Flag check_variable blocks using inline >= or <= (silently mis-parsed)."""
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if line.strip().startswith("#"):
+    for i in _lines_with(src, "check_variable"):
+        line_num = i + 1
+        if src[i].strip().startswith("#"):
             continue
-        code_part = strip_inline_comment(line) if "#" in line else line
-        cv_match = _RE_CHECK_VAR_GE_LE.search(code_part)
+        cv_match = _RE_CHECK_VAR_GE_LE.search(src.code[i])
         if cv_match:
             op = cv_match.group(1)
             kind = "greater_than_or_equals" if op == ">=" else "less_than_or_equals"
@@ -2123,41 +2250,39 @@ def _check_check_var_ge_le(lines):
 def _check_check_expr_bad_operand(lines):
     """Flag check_expr operands chained with a raw >/< comparator symbol
     (a check_variable-style leftover) instead of block form or a bare scalar."""
+    src = _source(lines)
     issues = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        if _RE_CHECK_EXPR_OPEN.search(strip_inline_comment(lines[i])):
-            start = i
-            block, i = _get_block(lines, start)
-            for k, bl in enumerate(block):
-                m = _RE_CHECK_EXPR_BAD_OPERAND.search(strip_inline_comment(bl))
-                if m:
-                    op, sym = m.group(1), m.group(2)
-                    issues.append(
-                        (
-                            start + k + 1,
-                            f"check_expr operand '{op}' chained with a raw '{sym}' -- "
-                            f"use block form {op} = {{ value = X }} or a bare scalar "
-                            f"({op} = X), not '{op} {sym} X'",
-                        )
+    for start, end, _match in _outer_blocks(
+        src,
+        _lines_with(src, "check_expr"),
+        lambda i: _RE_CHECK_EXPR_OPEN.search(src.code[i]),
+    ):
+        for row in range(start, end):
+            m = _RE_CHECK_EXPR_BAD_OPERAND.search(src.code[row])
+            if m:
+                op, sym = m.group(1), m.group(2)
+                issues.append(
+                    (
+                        row + 1,
+                        f"check_expr operand '{op}' chained with a raw '{sym}' -- "
+                        f"use block form {op} = {{ value = X }} or a bare scalar "
+                        f"({op} = X), not '{op} {sym} X'",
                     )
-        else:
-            i += 1
+                )
     return issues
 
 
 def _check_every_owned_controlled_state(lines):
     """Flag every_owned_controlled_state, which does not exist -- use every_controlled_state."""
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if line.strip().startswith("#"):
+    for i in _lines_with(src, "every_owned_controlled_state"):
+        if src[i].strip().startswith("#"):
             continue
-        code_part = strip_inline_comment(line) if "#" in line else line
-        if _RE_EVERY_OWNED_CONTROLLED_STATE.search(code_part):
+        if _RE_EVERY_OWNED_CONTROLLED_STATE.search(src.code[i]):
             issues.append(
                 (
-                    line_num,
+                    i + 1,
                     "every_owned_controlled_state does not exist -- use every_controlled_state",
                 )
             )
@@ -2171,10 +2296,17 @@ def _check_wrong_stat_trigger(lines):
     check_variable and similar blocks the bare names are valid game variables.
     """
     issues = []
+    src = _source(lines)
+    # A wrong-stat match needs a < or > on its own line.
+    if "<" not in src.raw and ">" not in src.raw:
+        return issues
     depth = 0
     variable_depth = None
-    for line_num, line in enumerate(lines, 1):
-        code = _code_for_depth(line)
+    # Braceless lines with no comparison move no depth and open no block.
+    rows = sorted(set(src.brace_lines).union(_lines_with(src, "<", ">")))
+    for row in rows:
+        line_num = row + 1
+        code = src.depth_code[row]
         if variable_depth is None:
             if _RE_VARIABLE_BLOCK_OPEN.search(code):
                 variable_depth = depth
@@ -2188,7 +2320,7 @@ def _check_wrong_stat_trigger(lines):
                             f"{wrong} {op} is not a trigger -- use {right} {op}",
                         )
                     )
-        depth += code.count("{") - code.count("}")
+        depth += src.delta[row]
         if variable_depth is not None and depth <= variable_depth:
             variable_depth = None
     return issues
@@ -2200,15 +2332,15 @@ def _check_nor_block(lines):
     It parses as an unknown trigger and silently never matches. "Neither A nor
     B" is separate NOT blocks, or NOT = { OR = { A B } }.
     """
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if "NOR" not in line or line.strip().startswith("#"):
+    for i in _lines_with(src, "NOR"):
+        if src[i].strip().startswith("#"):
             continue
-        code_part = strip_inline_comment(line) if "#" in line else line
-        if _RE_NOR.search(code_part):
+        if _RE_NOR.search(src.code[i]):
             issues.append(
                 (
-                    line_num,
+                    i + 1,
                     "NOR is not a HOI4 trigger keyword -- use separate NOT blocks "
                     "or NOT = { OR = { ... } }",
                 )
@@ -2251,25 +2383,22 @@ def _check_ai_daily_flag_cache(lines, filepath=""):
     if "common/on_actions" not in filepath.replace("\\", "/"):
         return []
 
+    src = _source(lines)
     issues = []
-    i = 0
-    while i < len(lines):
-        header = _RE_ON_DAILY_TAG.match(_code_for_depth(lines[i]))
-        if not header:
-            i += 1
-            continue
-        block, next_idx = _get_block(lines, i)
+    for i, next_idx, header in _outer_blocks(
+        src,
+        _lines_with(src, "on_daily_"),
+        lambda row: _RE_ON_DAILY_TAG.match(src.depth_code[row]),
+    ):
         name = header.group(1)
         if name in _AI_DAILY_CACHE_ALLOWLIST:
-            i = next_idx
             continue
 
         set_flags, clr_flags = set(), set()
         does_real_work = False
         limit_depth = None
         depth = 0
-        for offset, raw in enumerate(block):
-            code = _code_for_depth(raw)
+        for offset, code in enumerate(src.depth_code[i:next_idx]):
             stripped = code.strip()
             head = _RE_STATEMENT_HEAD.match(stripped)
             token = head.group(1) if head else None
@@ -2282,7 +2411,7 @@ def _check_ai_daily_flag_cache(lines, filepath=""):
                     clr_flags.update(_RE_CLR_COUNTRY_FLAG.findall(code))
                     if token not in _AI_DAILY_CACHE_STRUCTURAL:
                         does_real_work = True
-            depth += code.count("{") - code.count("}")
+            depth += src.delta[i + offset]
             if limit_depth is not None and depth <= limit_depth:
                 limit_depth = None
 
@@ -2296,7 +2425,6 @@ def _check_ai_daily_flag_cache(lines, filepath=""):
                     "lazily; write the condition inline instead of caching it daily",
                 )
             )
-        i = next_idx
     return issues
 
 
@@ -2322,28 +2450,33 @@ def _check_redundant_avoid_starting_wars(lines, filepath=""):
     ):
         return []
 
+    src = _source(lines)
     issues = []
-    i = 0
-    while i < len(lines):
-        header = _RE_AI_STRATEGY_BLOCK.match(_code_for_depth(lines[i]))
-        if not header or lines[i].startswith((" ", "\t")):
-            i += 1
-            continue
-        block, next_idx = _get_block(lines, i)
-        text = "\n".join(_code_for_depth(ln) for ln in block)
+    # A finding needs both the ratio gate and the strategy type it brakes.
+    if "enemies_strength_ratio" not in src.raw or "avoid_starting_wars" not in src.raw:
+        return issues
+    for i, next_idx, header in _outer_blocks(
+        src,
+        src.brace_lines,
+        lambda row: not src[row].startswith((" ", "\t"))
+        and _RE_AI_STRATEGY_BLOCK.match(src.depth_code[row]),
+    ):
+        block_code = src.depth_code[i:next_idx]
+        text = "\n".join(block_code)
         enable_idx = next(
             (
-                k
-                for k, ln in enumerate(block)
-                if _code_for_depth(ln).strip().startswith("enable")
+                i + k
+                for k, code in enumerate(block_code)
+                if code.strip().startswith("enable")
             ),
             None,
         )
         if enable_idx is None:
-            i = next_idx
             continue
+        # The enable block closes inside the strategy, so its absolute end
+        # is the one a walk over the strategy's own lines finds.
         enable_text = "\n".join(
-            _code_for_depth(ln) for ln in _get_block(block, enable_idx)[0]
+            src.depth_code[enable_idx : _block_end(src, enable_idx)]
         )
         ratio = _RE_ENEMIES_STRENGTH_RATIO.search(enable_text)
         types = set(_RE_AI_STRATEGY_TYPE.findall(text))
@@ -2362,34 +2495,33 @@ def _check_redundant_avoid_starting_wars(lines, filepath=""):
                     "a tick that block does not already own",
                 )
             )
-        i = next_idx
     return issues
 
 
 def _find_brace_close(text, open_pos):
-    """Return the index in `text` of the brace matching the one at `open_pos`.
+    """Return the index in `text` of the brace matching the `{` at `open_pos`.
 
     Depth-counts every `{`/`}` from `open_pos` onward with no quote
     awareness. Returns `len(text)` if the braces never balance. Shared by
     the whole-file brace scans below.
     """
-    depth, i = 0, open_pos
-    while i < len(text):
-        depth += (text[i] == "{") - (text[i] == "}")
+    depth = 0
+    for brace in _RE_BRACE.finditer(text, open_pos):
+        depth += 1 if brace.group() == "{" else -1
         if not depth:
-            break
-        i += 1
-    return i
+            return brace.start()
+    return len(text)
 
 
 def _check_invalid_is_at_war(lines):
     """Flag is_at_war, which the engine rejects as an unknown trigger."""
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if _RE_IS_AT_WAR.search(_code_for_depth(line)):
+    for i in _lines_with(src, "is_at_war"):
+        if _RE_IS_AT_WAR.search(src.depth_code[i]):
             issues.append(
                 (
-                    line_num,
+                    i + 1,
                     "is_at_war is not a HOI4 trigger -- use has_war = yes/no",
                 )
             )
@@ -2398,12 +2530,13 @@ def _check_invalid_is_at_war(lines):
 
 def _check_has_opinion_modifier_block(lines):
     """Flag block-form has_opinion_modifier, which only accepts a modifier ID."""
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if _RE_HAS_OPINION_MODIFIER_BLOCK.search(_code_for_depth(line)):
+    for i in _lines_with(src, "has_opinion_modifier"):
+        if _RE_HAS_OPINION_MODIFIER_BLOCK.search(src.depth_code[i]):
             issues.append(
                 (
-                    line_num,
+                    i + 1,
                     "has_opinion_modifier takes a modifier ID, not a block",
                 )
             )
@@ -2417,7 +2550,10 @@ def _check_while_loop_max_iterations(lines):
     safety bound that isn't there. Use `break = <var>` instead.
     """
     issues = []
-    text = "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
+    src = _source(lines)
+    if "while_loop_effect" not in src.raw:
+        return issues
+    text = src.text
     for match in _RE_WHILE_LOOP_OPEN.finditer(text):
         i = _find_brace_close(text, match.end() - 1)
         body = text[match.end() : i]
@@ -2435,15 +2571,15 @@ def _check_while_loop_max_iterations(lines):
 
 def _check_var_index_shorthand(lines):
     """Flag var:x^i shorthand -- an array read needs the full variable name."""
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if "var:" not in line or line.strip().startswith("#"):
+    for i in _lines_with(src, "var:"):
+        if src[i].strip().startswith("#"):
             continue
-        code_part = strip_inline_comment(line) if "#" in line else line
-        for match in _RE_VAR_INDEX_SHORTHAND.finditer(code_part):
+        for match in _RE_VAR_INDEX_SHORTHAND.finditer(src.code[i]):
             issues.append(
                 (
-                    line_num,
+                    i + 1,
                     f"var:{match.group(1)}^ is the shorthand form -- write the "
                     f"full array name, e.g. var:my_array^i",
                 )
@@ -2499,10 +2635,13 @@ def _check_building_missing_province(lines, mod_root=None):
     and the building is never placed -- the focus or decision silently does nothing.
     """
     issues = []
+    src = _source(lines)
+    if "add_building_construction" not in src.raw:
+        return issues
     provincial = _provincial_building_types(mod_root)
     # Brace-matched over the whole file rather than per line: a construction
     # block spans lines, and two single-line blocks can share one line.
-    text = "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
+    text = src.text
     for match in _RE_ADD_BUILDING_OPEN.finditer(text):
         i = _find_brace_close(text, match.end() - 1)
         body = text[match.end() : i]
@@ -2523,20 +2662,9 @@ def _check_building_missing_province(lines, mod_root=None):
     return issues
 
 
-def _joined_code(lines):
-    """Comment-stripped, quote-blanked text of the file, one line per line."""
-    return "".join(_code_for_depth(line).rstrip("\n") + "\n" for line in lines)
-
-
 def _block_body(text, body_start):
     """Body of the block whose opening brace is the character before body_start."""
-    depth, i = 0, body_start - 1
-    while i < len(text):
-        depth += (text[i] == "{") - (text[i] == "}")
-        if not depth:
-            break
-        i += 1
-    return text[body_start:i]
+    return text[body_start : _find_brace_close(text, body_start - 1)]
 
 
 def _direct_child_matches(body, pattern):
@@ -2668,7 +2796,10 @@ def _check_else_with_limit(lines):
     author meant else_if.
     """
     issues = []
-    text = _joined_code(lines)
+    src = _source(lines)
+    if "else" not in src.raw or "limit" not in src.raw:
+        return issues
+    text = src.text
     for match in _RE_ELSE_OPEN.finditer(text):
         body = _block_body(text, match.end())
         for limit in _direct_child_matches(body, _RE_LIMIT_OPEN):
@@ -2690,7 +2821,10 @@ def _check_nested_province_block(lines):
     single province is `province = <id>`.
     """
     issues = []
-    text = _joined_code(lines)
+    src = _source(lines)
+    if "add_building_construction" not in src.raw:
+        return issues
+    text = src.text
     for match in _RE_ADD_BUILDING_OPEN.finditer(text):
         body = _block_body(text, match.end())
         for nested in _RE_NESTED_PROVINCE.finditer(body):
@@ -2714,14 +2848,16 @@ def _check_log_nested_quote(lines):
     and the engine reads the rest as effect tokens ("Unknown effect-type:
     Excellent"). The log line takes one quoted string and nothing else.
     """
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if "log" not in line or line.strip().startswith("#"):
+    for i in _lines_with(src, "log"):
+        line = src[i]
+        if line.strip().startswith("#"):
             continue
         if _RE_LOG_MULTI_QUOTE.search(line):
             issues.append(
                 (
-                    line_num,
+                    i + 1,
                     "log string contains a second quoted run -- it closes the value "
                     "early and the engine parses the remainder as effects; keep the "
                     "log to one quoted string",
@@ -2740,7 +2876,10 @@ def _check_equipment_bonus(lines):
     culprit -- MD renamed them.
     """
     issues = []
-    text = _joined_code(lines)
+    src = _source(lines)
+    if "add_equipment_bonus" not in src.raw:
+        return issues
+    text = src.text
     for match in _RE_EQUIPMENT_BONUS_OPEN.finditer(text):
         enum = _equipment_bonus_enum()
         body = _block_body(text, match.end())
@@ -2778,7 +2917,11 @@ def _check_equipment_type_defined(lines):
     support_equipment) or a miscased variant is a silent no-op.
     """
     issues = []
-    text = _joined_code(lines)
+    src = _source(lines)
+    # Every opener alternative starts add_equipment_ or is send_equipment.
+    if "add_equipment_" not in src.raw and "send_equipment" not in src.raw:
+        return issues
+    text = src.text
     for match in _RE_EQUIPMENT_EFFECT_OPEN.finditer(text):
         body = _block_body(text, match.end())
         type_match = _RE_BUILDING_TYPE.search(body)
@@ -2806,17 +2949,18 @@ def _check_active_decision_defined(lines):
     "Invalid decision in has_active_timed_decision trigger" and reads as false
     forever, so whatever it guards fires unconditionally.
     """
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if "has_active_" not in line or line.strip().startswith("#"):
+    for i in _lines_with(src, "has_active_"):
+        if src[i].strip().startswith("#"):
             continue
-        for match in _RE_ACTIVE_DECISION.finditer(_code_for_depth(line)):
+        for match in _RE_ACTIVE_DECISION.finditer(src.depth_code[i]):
             ids = _decision_ids()
             if ids is None or match.group(2) in ids:
                 continue
             issues.append(
                 (
-                    line_num,
+                    i + 1,
                     f"{match.group(1)} = {match.group(2)} names no decision in "
                     f"common/decisions/ -- the trigger is always false",
                 )
@@ -2838,7 +2982,10 @@ def _check_modifier_ref_defined(lines):
         "opinion": ("common/opinion_modifiers/", _opinion_modifier_names),
         "relation": ("common/modifiers/", _static_modifier_names),
     }
-    text = _joined_code(lines)
+    src = _source(lines)
+    if "add_relation_modifier" not in src.raw and "add_opinion_modifier" not in src.raw:
+        return issues
+    text = src.text
     for match in _RE_RELATION_MODIFIER.finditer(text):
         directory, load = sources[match.group(1)]
         names = load()
@@ -2878,17 +3025,17 @@ def _check_add_to_faction_country(lines):
     faction, not a country. To add a member to a bloc, scope to a faction member
     and pass the new member's tag.
     """
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if "add_to_faction" not in line or line.strip().startswith("#"):
+    for i in _lines_with(src, "add_to_faction"):
+        if src[i].strip().startswith("#"):
             continue
-        code_part = _code_for_depth(line)
-        for m in _RE_ADD_TO_FACTION.finditer(code_part):
+        for m in _RE_ADD_TO_FACTION.finditer(src.depth_code[i]):
             value = m.group(1)
             if not _add_to_faction_value_ok(value):
                 issues.append(
                     (
-                        line_num,
+                        i + 1,
                         f"add_to_faction = {value} is not a country -- add_to_faction "
                         f"takes a country tag or scope (ROOT/FROM/PREV/THIS/var:), not a "
                         f"faction name; it adds that country to the current scope's faction",
@@ -2901,15 +3048,15 @@ def _check_create_faction_deprecated(lines):
     """Flag create_faction = X, deprecated in MD in favor of
     create_faction_from_template for DLC compatibility.
     """
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if "create_faction" not in line or line.strip().startswith("#"):
+    for i in _lines_with(src, "create_faction"):
+        if src[i].strip().startswith("#"):
             continue
-        code_part = _code_for_depth(line)
-        if _RE_CREATE_FACTION_DEPRECATED.search(code_part):
+        if _RE_CREATE_FACTION_DEPRECATED.search(src.depth_code[i]):
             issues.append(
                 (
-                    line_num,
+                    i + 1,
                     "create_faction is deprecated -- use create_faction_from_template "
                     "= TEMPLATE instead for DLC compatibility",
                 )
@@ -2919,16 +3066,16 @@ def _check_create_faction_deprecated(lines):
 
 def _check_random_select_amount_literal(lines):
     """Flag random_select_amount set to anything but an integer literal."""
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if line.strip().startswith("#"):
+    for i in _lines_with(src, "random_select_amount"):
+        if src[i].strip().startswith("#"):
             continue
-        code_part = strip_inline_comment(line) if "#" in line else line
-        m = _RE_RANDOM_SELECT_AMOUNT.search(code_part)
+        m = _RE_RANDOM_SELECT_AMOUNT.search(src.code[i])
         if m and not _RE_BARE_INT.match(m.group(1)):
             issues.append(
                 (
-                    line_num,
+                    i + 1,
                     f"random_select_amount = {m.group(1)} is not an integer literal -- "
                     f"random_select_amount requires a literal int",
                 )
@@ -2938,12 +3085,13 @@ def _check_random_select_amount_literal(lines):
 
 def _check_tautological_or(lines):
     """Flag OR = { X = yes X = no } blocks, which are always true."""
+    src = _source(lines)
     issues = []
-    for line_num, line in enumerate(lines, 1):
-        if line.strip().startswith("#"):
+    for i in _lines_with(src, "OR"):
+        line_num = i + 1
+        if src[i].strip().startswith("#"):
             continue
-        code_part = strip_inline_comment(line) if "#" in line else line
-        or_match = _RE_TAUTOLOGICAL_OR.search(code_part)
+        or_match = _RE_TAUTOLOGICAL_OR.search(src.code[i])
         if (
             or_match
             and or_match.group(1) == or_match.group(3)
@@ -2971,32 +3119,28 @@ def _find_focus_log_mismatches(lines):
     sibling's id, not a copy-paste bug. Shared by _check_focus_log_id and
     fix_log_ids.py so both use the same detection.
     """
+    src = _source(lines)
     results = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        if _RE_FOCUS_ANY_BLOCK_OPEN.match(lines[i]):
-            start = i
-            block, i = _get_block(lines, start)
-            code_lines = [strip_inline_comment(bl) for bl in block]
-            text = "".join(code_lines)
-            id_match = _RE_FOCUS_ID_IN_BLOCK.search(text)
-            if not id_match:
-                continue
-            focus_id = id_match.group(1)
-            suppressed = set(_RE_COMPLETE_FOCUS.findall(text)) | set(
-                _RE_UNLOCK_FOCUS.findall(text)
-            )
-            for k, cl in enumerate(code_lines):
-                m = _RE_LOG_FOCUS_TOKEN.search(cl)
-                if m:
-                    token = m.group(1)
-                    if token != focus_id and token not in suppressed:
-                        results.append(
-                            (start + k, m.start(1), m.end(1), focus_id, token)
-                        )
-        else:
-            i += 1
+    for start, end, _match in _outer_blocks(
+        src,
+        _lines_with(src, "focus"),
+        lambda i: _RE_FOCUS_ANY_BLOCK_OPEN.match(src[i]),
+    ):
+        code_lines = src.code[start:end]
+        text = "".join(code_lines)
+        id_match = _RE_FOCUS_ID_IN_BLOCK.search(text)
+        if not id_match:
+            continue
+        focus_id = id_match.group(1)
+        suppressed = set(_RE_COMPLETE_FOCUS.findall(text)) | set(
+            _RE_UNLOCK_FOCUS.findall(text)
+        )
+        for k, cl in enumerate(code_lines):
+            m = _RE_LOG_FOCUS_TOKEN.search(cl)
+            if m:
+                token = m.group(1)
+                if token != focus_id and token not in suppressed:
+                    results.append((start + k, m.start(1), m.end(1), focus_id, token))
     return results
 
 
@@ -3047,19 +3191,19 @@ def _find_decision_log_mismatches(lines):
     same category/decision traversal as _check_decision_allowed_dynamic.
     Shared by _check_decision_log_id and fix_log_ids.py.
     """
+    src = _source(lines)
     results = []
-    for cat_start, k, cat_block, dec_block in _iter_decision_subblocks(lines):
-        dec_id_match = _RE_BLOCK_ID.match(cat_block[k])
+    for start, end in _iter_decision_subblocks(src):
+        dec_id_match = _RE_BLOCK_ID.match(src[start])
         dec_id = dec_id_match.group(1) if dec_id_match else None
         if not dec_id:
             continue
-        for p, dbl in enumerate(dec_block):
-            dbl_code = strip_inline_comment(dbl)
-            token_span = _decision_log_token_span(dbl_code)
+        for row in range(start, end):
+            token_span = _decision_log_token_span(src.code[row])
             if token_span:
                 token, tstart, tend = token_span
                 if token != dec_id:
-                    results.append((cat_start + k + p, tstart, tend, dec_id, token))
+                    results.append((row, tstart, tend, dec_id, token))
     return results
 
 
@@ -3099,75 +3243,69 @@ def _check_event_log_id(lines):
     `country_event = { id = X days = N }` is a scheduling effect call, not a
     definition, and is skipped since it never starts at column 0.
     """
+    src = _source(lines)
     issues = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        if _RE_EVENT_DEF_OPEN.match(lines[i]):
-            start = i
-            block, i = _get_block(lines, start)
-            event_id = None
-            for bl in block:
-                m = _RE_EVENT_ID_IN_BLOCK.match(strip_inline_comment(bl))
-                if m:
-                    event_id = m.group(1)
+    option_rows = _lines_with(src, "option")
+    for start, end, _match in _outer_blocks(
+        src,
+        _lines_with(src, "_event"),
+        lambda i: _RE_EVENT_DEF_OPEN.match(src[i]),
+    ):
+        event_id = None
+        for code in src.code[start:end]:
+            m = _RE_EVENT_ID_IN_BLOCK.match(code)
+            if m:
+                event_id = m.group(1)
+                break
+        if not event_id:
+            continue
+        # Options sit after the header line and before the closing line, and
+        # each closes inside the event.
+        inner = option_rows[
+            bisect_right(option_rows, start) : bisect_left(option_rows, end - 1)
+        ]
+        for opt_start, opt_end, _option in _outer_blocks(
+            src, inner, lambda j: _RE_OPTION_BLOCK_OPEN.search(src.code[j])
+        ):
+            own_name = None
+            for code in src.code[opt_start:opt_end]:
+                nm = _RE_OPTION_NAME_IN_BLOCK.match(code)
+                if nm:
+                    own_name = nm.group(1)
                     break
-            if not event_id:
-                continue
-            j = 1
-            block_n = len(block)
-            while j < block_n - 1:
-                bl_code = strip_inline_comment(block[j])
-                if _RE_OPTION_BLOCK_OPEN.search(bl_code):
-                    opt_block, next_j = _get_block(block, j)
-                    own_name = None
-                    for obl in opt_block:
-                        nm = _RE_OPTION_NAME_IN_BLOCK.match(strip_inline_comment(obl))
-                        if nm:
-                            own_name = nm.group(1)
-                            break
-                    own_suffix = None
-                    if own_name and own_name.startswith(event_id + "."):
-                        own_suffix = own_name[len(event_id) + 1 :]
-                    for p, obl in enumerate(opt_block):
-                        obl_code = strip_inline_comment(obl)
-                        m = _RE_LOG_EVENT_TOKEN.search(obl_code)
-                        if not m:
-                            continue
-                        token = m.group(1)
-                        if own_name and token == own_name:
-                            continue
-                        if token == event_id:
-                            om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
-                            if (
-                                om
-                                and own_suffix
-                                and om.group(1).lower() != own_suffix.lower()
-                            ):
-                                issues.append(
-                                    (
-                                        start + j + p + 1,
-                                        f"log says Option {om.group(1)} but "
-                                        f"this option's own name is "
-                                        f"{own_name} -- fix the option "
-                                        f"letter",
-                                    )
-                                )
-                            continue
-                        if own_name:
-                            issues.append(
-                                (
-                                    start + j + p + 1,
-                                    f"log references Event {token}, but this "
-                                    f"option's own name is {own_name} -- "
-                                    f"likely copy-paste; fix the log id",
-                                )
+            own_suffix = None
+            if own_name and own_name.startswith(event_id + "."):
+                own_suffix = own_name[len(event_id) + 1 :]
+            for row in range(opt_start, opt_end):
+                obl_code = src.code[row]
+                m = _RE_LOG_EVENT_TOKEN.search(obl_code)
+                if not m:
+                    continue
+                token = m.group(1)
+                if own_name and token == own_name:
+                    continue
+                if token == event_id:
+                    om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
+                    if om and own_suffix and om.group(1).lower() != own_suffix.lower():
+                        issues.append(
+                            (
+                                row + 1,
+                                f"log says Option {om.group(1)} but "
+                                f"this option's own name is "
+                                f"{own_name} -- fix the option "
+                                f"letter",
                             )
-                    j = next_j
-                else:
-                    j += 1
-        else:
-            i += 1
+                        )
+                    continue
+                if own_name:
+                    issues.append(
+                        (
+                            row + 1,
+                            f"log references Event {token}, but this "
+                            f"option's own name is {own_name} -- "
+                            f"likely copy-paste; fix the log id",
+                        )
+                    )
     return issues
 
 
@@ -3326,17 +3464,19 @@ def _option_unavailable_under_bankruptcy(option_block):
 def _check_event_ai_historical_bankruptcy_fallback(lines):
     """Require an eligible AI fallback when bankruptcy disables event spending."""
     issues = []
-    i = 0
-    while i < len(lines):
-        if not _RE_EVENT_DEF_OPEN.match(lines[i]):
-            i += 1
-            continue
-
-        start = i
-        event_block, i = _get_block(lines, start)
+    src = _source(lines)
+    # A finding needs one option zeroed on the bankruptcy mission itself.
+    if "bankruptcy_incoming_collapse" not in src.raw:
+        return issues
+    for start, end, _match in _outer_blocks(
+        src,
+        _lines_with(src, "_event"),
+        lambda i: _RE_EVENT_DEF_OPEN.match(src[i]),
+    ):
+        event_block = src[start:end]
         event_id = None
-        for line in event_block:
-            match = _RE_EVENT_ID_IN_BLOCK.match(strip_inline_comment(line))
+        for code in src.code[start:end]:
+            match = _RE_EVENT_ID_IN_BLOCK.match(code)
             if match:
                 event_id = match.group(1)
                 break
@@ -3379,29 +3519,26 @@ def _check_hidden_trigger_in_ctt(lines):
     hidden_trigger adds a redundant nesting level with no effect.
     """
     issues = []
-    i = 0
-    n = len(lines)
-    while i < n:
-        code = _code_for_depth(lines[i])
-        if _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN.search(code):
-            depth = code.count("{") - code.count("}")
-            j = i + 1
-            while depth > 0 and j < n:
-                c2 = _code_for_depth(lines[j])
-                if depth == 1 and _RE_HIDDEN_TRIGGER_OPEN.search(c2):
-                    issues.append(
-                        (
-                            j + 1,
-                            "hidden_trigger = { } directly inside "
-                            "custom_trigger_tooltip is redundant -- unwrap its "
-                            "children to the tooltip's own depth",
-                        )
+    src = _source(lines)
+    if "hidden_trigger" not in src.raw:
+        return issues
+    for start, end, _match in _outer_blocks(
+        src,
+        _lines_with(src, "custom_trigger_tooltip"),
+        lambda i: _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN.search(src.depth_code[i]),
+    ):
+        depth = src.delta[start]
+        for j in range(start + 1, end):
+            if depth == 1 and _RE_HIDDEN_TRIGGER_OPEN.search(src.depth_code[j]):
+                issues.append(
+                    (
+                        j + 1,
+                        "hidden_trigger = { } directly inside "
+                        "custom_trigger_tooltip is redundant -- unwrap its "
+                        "children to the tooltip's own depth",
                     )
-                depth += c2.count("{") - c2.count("}")
-                j += 1
-            i = j
-        else:
-            i += 1
+                )
+            depth += src.delta[j]
     return issues
 
 
@@ -3441,23 +3578,11 @@ def _parse_script_nodes(tokens, i):
     return children, i
 
 
-def _script_tokens(lines):
-    return [
-        (m.group(0), line_num)
-        for line_num, line in enumerate(lines, 1)
-        for m in _RE_SCRIPT_NODE.finditer(_code_for_depth(line))
-    ]
-
-
-def _parse_script_tree(lines):
-    return _parse_script_nodes(_script_tokens(lines), 0)[0]
-
-
 def _check_bare_statement_token(lines):
     """Flag a lone word inside a trigger/effect block (NOT = { my_trigger }).
     The parser rejects it as an unexpected token; the call needs "= yes".
     """
-    tokens = _script_tokens(lines)
+    tokens = _source(lines).tokens
     issues = []
     stack = []
     i = 0
@@ -3789,6 +3914,12 @@ def _check_retired_ideology_flags(lines):
     retired_flags = {f"set_{name}" for name in PARTY_SLOT_NAMES.values()}
     operations = {"has_country_flag", "set_country_flag", "clr_country_flag"}
     issues = []
+    src = _source(lines)
+    # Each finding is a flag operation whose value token is a retired flag.
+    if "_country_flag" not in src.raw or not any(
+        flag in src.raw for flag in retired_flags
+    ):
+        return issues
 
     def walk(nodes):
         for node in nodes:
@@ -3809,7 +3940,7 @@ def _check_retired_ideology_flags(lines):
                 )
             walk(node.children)
 
-    walk(_parse_script_tree(lines))
+    walk(src.tree)
     return sorted(issues)
 
 
@@ -3821,7 +3952,7 @@ def _check_leader_rotation(lines):
     authored one.
     """
     issues = []
-    for root in _parse_script_tree(lines):
+    for root in _source(lines).tree:
         if not root.key.startswith(_LEADER_EFFECT_PREFIX):
             continue
         branches = []
@@ -3878,7 +4009,7 @@ def check_file(filepath):
 
     try:
         with open(filepath, "r", encoding="utf-8", errors="replace") as f:
-            lines = f.readlines()
+            lines = _Source(f.readlines())
     except Exception:
         return issues
 
@@ -3904,12 +4035,28 @@ def check_file(filepath):
     allowed_block_depth = 0
     allowed_block_lines = []
 
-    for line_num, line in enumerate(lines, 1):
+    # Idea files track categories on every line. Elsewhere each check below
+    # fires only on a line holding its literal.
+    if is_ideas:
+        rows = range(len(lines))
+    else:
+        rows = _lines_with(
+            lines,
+            "threat",
+            "has_war_support",
+            "has_stability",
+            "ai_will_do",
+            "is_in_faction",
+            "has_trade_agreement_with",
+            "/",
+        )
+    for row in rows:
+        line_num = row + 1
+        line = lines[row]
         stripped = line.strip()
 
         if is_ideas:
-            depth_code = _code_for_depth(line)
-            brace_depth += depth_code.count("{") - depth_code.count("}")
+            brace_depth += lines.delta[row]
 
             if _RE_IDEAS_BLOCK.match(stripped):
                 ideas_depth = brace_depth - 1
@@ -3923,7 +4070,7 @@ def check_file(filepath):
         if stripped.startswith("#"):
             continue
 
-        code_part = strip_inline_comment(line) if "#" in line else line
+        code_part = lines.code[row]
 
         # threat is 0.0-1.0; exclude add_threat/named_threat which use absolute values
         threat_match = _RE_THREAT.search(code_part)
@@ -4038,7 +4185,7 @@ def check_file(filepath):
                 )
             )
 
-        div_match = _RE_DIVISION.search(_RE_QUOTED_STRING.sub('""', code_part))
+        div_match = _RE_DIVISION.search(lines.depth_code[row])
         if div_match:
             divisor = int(div_match.group(1))
             multiplier = 1.0 / divisor

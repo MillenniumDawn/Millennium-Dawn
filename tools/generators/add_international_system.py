@@ -7,13 +7,16 @@ new system. Build the system's content inside the generated stub files.
 
 Usage:
     python tools/generators/add_international_system.py forums "Economic Forums" \
-        --description "Track the world's economic forums." --after un
+        --description "Track the world's economic forums." --after un --icon handshake
 
-Before running, add a 28x27 icon at
-gfx/interface/scripted_gui/missiles/ledger_icon_small_<key>.dds.
+--icon takes a premade icon name (--list-icons) or an image with a transparent
+background, such as a logo, and writes it in the tab style. Without it, the tool
+expects a 28x27 icon at gfx/interface/scripted_gui/missiles/ledger_icon_small_<key>.dds.
+--preview draws the resulting tab strip to a PNG and changes nothing else.
 """
 
 import argparse
+import json
 import os
 import re
 import sys
@@ -21,6 +24,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 from shared.paths import REPO_ROOT
 from shared_utils import atomic_write_bytes, read_text_strict
 
@@ -290,28 +294,74 @@ def add_sprites(gfx, key, sprite):
 
 
 def make_narrow_sprite(repo):
-    """Cut the middle out of each wide tab frame to build the narrow sprite."""
-    from PIL import Image
+    """Build the narrow tab sprite from the wide one, once."""
+    from international_system_art import narrow_frames
 
-    source = os.path.join(repo, ART_DIR, "missiles_gui_ledger_btn.dds")
     target = os.path.join(repo, ART_DIR, "missiles_gui_ledger_btn_narrow.dds")
     if os.path.exists(target):
         return None
     (_, wide, _), (_, narrow, _) = LAYOUTS
-    edge = narrow // 2
-    with Image.open(source) as image:
-        image = image.convert("RGBA")
-        height = image.size[1]
-        out = Image.new("RGBA", (narrow * 2, height))
-        for frame in range(2):
-            left = frame * wide
-            out.paste(image.crop((left, 0, left + edge, height)), (frame * narrow, 0))
-            out.paste(
-                image.crop((left + wide - (narrow - edge), 0, left + wide, height)),
-                (frame * narrow + edge, 0),
-            )
-        out.save(target)
+    narrow_frames(repo, wide, narrow).save(target)
     return f"{ART_DIR}/missiles_gui_ledger_btn_narrow.dds"
+
+
+def resolve_icon(repo, key, icon):
+    """Return the converted icon for --icon, or None to use the one on disk."""
+    target = os.path.join(repo, ART_DIR, f"ledger_icon_small_{key}.dds")
+    if icon is None:
+        if not os.path.exists(target):
+            raise ToolError(
+                f"add the tab icon first ({ART_DIR}/ledger_icon_small_{key}.dds) or pass --icon"
+            )
+        return None
+    if os.path.exists(target):
+        raise ToolError(
+            f"{ART_DIR}/ledger_icon_small_{key}.dds already exists; drop --icon to use it"
+        )
+    from international_system_art import PREMADE_ICONS, tab_icon
+
+    if icon not in PREMADE_ICONS and not os.path.isfile(os.path.join(repo, icon)):
+        raise ToolError(
+            f"unknown icon {icon!r}: use a premade name (--list-icons) or an image path"
+        )
+    try:
+        return tab_icon(repo, icon)
+    except (OSError, ValueError) as error:
+        raise ToolError(f"cannot use icon {icon!r}: {error}") from error
+
+
+def write_preview(repo, key, gui, gfx, sprite, icon, preview):
+    """Draw the new strip to `preview` without touching the repo."""
+    from international_system_art import narrow_frames, render_strip
+    from PIL import Image
+
+    start, end = find_block(
+        gui, r'containerWindowType\s*=\s*\{\s*name\s*=\s*"missiles_gui_ledger_menu"'
+    )
+    (_, wide, _), (_, narrow, _) = LAYOUTS
+    art = os.path.join(repo, ART_DIR)
+    if sprite == WIDE_SPRITE:
+        frames, width = (
+            Image.open(os.path.join(art, "missiles_gui_ledger_btn.dds")),
+            wide,
+        )
+    elif os.path.exists(os.path.join(art, "missiles_gui_ledger_btn_narrow.dds")):
+        frames = Image.open(os.path.join(art, "missiles_gui_ledger_btn_narrow.dds"))
+        width = narrow
+    else:
+        frames, width = narrow_frames(repo, wide, narrow), narrow
+    if icon is None:
+        icon = Image.open(os.path.join(art, f"ledger_icon_small_{key}.dds"))
+    strip = render_strip(
+        repo,
+        gui[start:end],
+        gfx,
+        frames.convert("RGBA"),
+        width,
+        key,
+        icon.convert("RGBA"),
+    )
+    strip.save(preview)
 
 
 def loc_value(text):
@@ -428,14 +478,12 @@ def direct_openers(repo):
     return found
 
 
-def add_system(repo, key, name, description, title=None, after=None):
+def add_system(
+    repo, key, name, description, title=None, after=None, icon=None, preview=None
+):
     if not KEY_RE.match(key):
         raise ToolError(f"key {key!r} must be lower_snake_case")
-    icon = os.path.join(repo, ART_DIR, f"ledger_icon_small_{key}.dds")
-    if not os.path.exists(icon):
-        raise ToolError(
-            f"add the tab icon first: {ART_DIR}/ledger_icon_small_{key}.dds"
-        )
+    new_icon = resolve_icon(repo, key, icon)
     var = f"var_open_MD_{key}_gui"
     files = {
         path: read_text_strict(os.path.join(repo, path), "utf-8")
@@ -469,7 +517,15 @@ def add_system(repo, key, name, description, title=None, after=None):
     files[SCREEN_GFX] = add_sprites(files[SCREEN_GFX], key, sprite)
     files.update(stubs)
     openers = direct_openers(repo)
+    if preview is not None:
+        write_preview(
+            repo, key, files[SCREEN_GUI], files[SCREEN_GFX], sprite, new_icon, preview
+        )
+        return [preview], order, openers
     written = sorted(files)
+    if new_icon is not None:
+        new_icon.save(os.path.join(repo, ART_DIR, f"ledger_icon_small_{key}.dds"))
+        written.append(f"{ART_DIR}/ledger_icon_small_{key}.dds")
     if sprite == NARROW_SPRITE:
         narrow = make_narrow_sprite(repo)
         if narrow:
@@ -483,16 +539,37 @@ def main(argv=None):
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("key", help="lower_snake_case id, e.g. forums")
-    parser.add_argument("name", help='tab tooltip name, e.g. "Economic Forums"')
-    parser.add_argument("--description", required=True, help="delayed tooltip text")
+    parser.add_argument("key", nargs="?", help="lower_snake_case id, e.g. forums")
+    parser.add_argument(
+        "name", nargs="?", help='tab tooltip name, e.g. "Economic Forums"'
+    )
+    parser.add_argument("--description", help="delayed tooltip text")
     parser.add_argument(
         "--title", help="screen header; defaults to the name in capitals"
     )
     parser.add_argument(
         "--after", help="existing tab key to place the new tab after; defaults to last"
     )
+    parser.add_argument(
+        "--icon",
+        help="premade icon name or a transparent image path, converted to the tab style",
+    )
+    parser.add_argument(
+        "--preview",
+        metavar="PNG",
+        help="draw the new tab strip here; write nothing else",
+    )
+    parser.add_argument(
+        "--list-icons", action="store_true", help="print the premade icons as JSON"
+    )
     args = parser.parse_args(argv)
+    if args.list_icons:
+        from international_system_art import icon_catalog
+
+        print(json.dumps(icon_catalog(str(REPO_ROOT))))
+        return 0
+    if not (args.key and args.name and args.description):
+        parser.error("key, name and --description are required")
     try:
         written, order, openers = add_system(
             str(REPO_ROOT),
@@ -501,6 +578,8 @@ def main(argv=None):
             args.description,
             args.title,
             args.after,
+            args.icon,
+            args.preview,
         )
     except ToolError as error:
         sys.exit(f"ERROR: {error}")

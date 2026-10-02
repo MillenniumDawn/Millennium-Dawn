@@ -1,6 +1,9 @@
 """Unit tests for shared_utils.extract_block brace-balancing."""
 
-from shared_utils import blank_quoted_strings, extract_block
+import random
+
+import pytest
+from shared_utils import blank_quoted_strings, extract_block, find_matching_brace
 
 
 def _split(text):
@@ -140,3 +143,99 @@ def test_blank_quoted_strings_keep_start_preserves_one_string():
     assert 'has_dlc = "By Blood Alone"' in out
     assert "hide me" not in out
     assert 'log = "' in out
+
+
+# --- the bulk scanners against the per-character loops they replaced --------
+
+
+def _reference_blank_quoted_strings(text, keep_start=None):
+    if '"' not in text:
+        return text
+    out = list(text)
+    in_str = False
+    start = -1
+    keep = keep_start or ()
+    for i, c in enumerate(text):
+        if c == '"' and (i == 0 or text[i - 1] != "\\"):
+            if not in_str:
+                start = i
+            in_str = not in_str
+        elif in_str and c != "\n" and start not in keep:
+            out[i] = " "
+    return "".join(out)
+
+
+def _reference_find_matching_brace(text, open_idx):
+    # Every character from open_idx, negative offsets included.
+    level, quoted, pos = 0, False, open_idx
+    while pos < len(text):
+        char = text[pos]
+        toggles = char == '"' and text[pos - 1] != "\\"
+        quoted ^= toggles
+        if not quoted and not toggles and char in "{}":
+            level += 1 if char == "{" else -1
+            if char == "}" and level == 0:
+                return pos
+        pos += 1
+    return -1
+
+
+_SCANNER_CASES = {
+    "brace in a string": 'a = { log = "x } y {" b = 1 }\n',
+    "hash in a string": 'a = { log = "#1 } done" }\n',
+    "comment with braces": "a = { b = 1 } # c = { d }\n}\n",
+    "unbalanced": "a = { b = { c = 1 }\n",
+    "three deep": "a = {\n\tb = {\n\t\tc = { d = 1 }\n\t}\n}\n",
+    "first and last line": '{ "x" }\nmid\n{ "y" }',
+    "empty": "",
+    "no trailing newline": 'a = { log = "q" }',
+    "crlf": 'a = {\r\n\tlog = "x\r\ny"\r\n}\r\n',
+    "escaped quote": 'log = "a \\"b\\" { c"\nd = { }\n',
+    "backslash run before a quote": 'log = "a\\\\" b = { "c\\\\\\"" }\n',
+    "unterminated string": 'a = { log = "never closed }\n',
+    "adjacent strings": 'a = { "one""two" "" }\n',
+    "quote first": '"{" = { x }',
+}
+
+
+@pytest.mark.parametrize("text", _SCANNER_CASES.values(), ids=_SCANNER_CASES.keys())
+def test_blank_quoted_strings_matches_the_reference_loop(text):
+    quotes = [i for i, c in enumerate(text) if c == '"']
+    for keep in [None, set(quotes)] + [{q} for q in quotes]:
+        assert blank_quoted_strings(text, keep) == _reference_blank_quoted_strings(
+            text, keep
+        )
+
+
+def _brace_outcome(find, text, open_idx):
+    # A quote at text[-len] makes both versions index before the text.
+    try:
+        return find(text, open_idx)
+    except IndexError:
+        return "IndexError"
+
+
+def _same_brace_outcome(text, open_idx):
+    return _brace_outcome(find_matching_brace, text, open_idx) == _brace_outcome(
+        _reference_find_matching_brace, text, open_idx
+    )
+
+
+@pytest.mark.parametrize("text", _SCANNER_CASES.values(), ids=_SCANNER_CASES.keys())
+def test_find_matching_brace_matches_the_reference_loop(text):
+    # Negative offsets walk the tail first, as indexing from the end does.
+    for open_idx in range(-len(text) - 1, len(text) + 2):
+        assert _same_brace_outcome(text, open_idx), open_idx
+
+
+def test_text_scanners_match_their_reference_loops_on_random_input():
+    rng = random.Random(20261002)
+    alphabet = ['"', "\\", "{", "}", "#", "a", " ", "\n", "\r"]
+    for _ in range(3000):
+        text = "".join(rng.choice(alphabet) for _ in range(rng.randint(0, 20)))
+        keep = {i for i, c in enumerate(text) if c == '"' and rng.random() < 0.5}
+        assert blank_quoted_strings(text, keep) == _reference_blank_quoted_strings(
+            text, keep
+        ), repr(text)
+        open_idx = rng.randint(-len(text) - 1, len(text) + 1)
+        assert _same_brace_outcome(text, open_idx), (text, open_idx)

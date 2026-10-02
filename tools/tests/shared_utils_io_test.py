@@ -21,6 +21,60 @@ def test_adjacency_rules_count_as_game_logic_but_map_stays_ignored():
     assert U.should_skip_file("resources/vanilla/map/adjacency_rules.txt")
 
 
+@pytest.mark.parametrize(
+    "checkout",
+    [
+        "repo",
+        ".claude/worktrees/repo",
+        ".git/worktrees/repo",
+        "tools/repo",
+        "resources/repo",
+        "docs/repo",
+        "gfx/repo",
+        "map/repo",
+    ],
+)
+def test_exclusions_ignore_checkout_ancestors(tmp_path, checkout):
+    root = tmp_path / checkout
+    assert not U.should_skip_file(str(root / "events/event.txt"), mod_path=str(root))
+    assert not U.should_skip_file(
+        str(root / "map/adjacency_rules.txt"), mod_path=str(root)
+    )
+    assert not U.should_skip_file("events/event.txt", mod_path=str(root))
+
+
+@pytest.mark.parametrize(
+    "relative",
+    [
+        ".claude/worktrees/stale/events/event.txt",
+        ".git/worktrees/stale/events/event.txt",
+        "events/.claude/stale.txt",
+        "common/.git/stale.txt",
+        "resources/vanilla/events/event.txt",
+        "tools/fixture.txt",
+        "docs/example.txt",
+        "map/colors.txt",
+        "resources/vanilla/map/adjacency_rules.txt",
+    ],
+)
+def test_exclusions_still_apply_inside_a_worktree(tmp_path, relative):
+    root = tmp_path / ".claude/worktrees/repo"
+    assert U.should_skip_file(str(root / relative), mod_path=str(root))
+    assert U.should_skip_file(relative, mod_path=str(root))
+
+
+def test_extra_exclusions_ignore_checkout_ancestors(tmp_path):
+    root = tmp_path / "excluded-fixture/repo"
+    assert not U.should_skip_file(
+        str(root / "events/event.txt"), ["excluded-fixture"], mod_path=str(root)
+    )
+    assert U.should_skip_file(
+        str(root / "events/excluded-fixture/event.txt"),
+        ["excluded-fixture"],
+        mod_path=str(root),
+    )
+
+
 def test_strict_read_rejects_malformed_bytes(tmp_path):
     path = tmp_path / "bad.txt"
     path.write_bytes(b"ok\xff")

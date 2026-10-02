@@ -743,7 +743,7 @@ def _check_file_for_unknown_modifiers(
     Returns a list of (modifier_name, rel_path, line_number) tuples.
     """
     filepath, known_good, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -952,7 +952,7 @@ class Validator(BaseValidator):
             ["common/dynamic_modifiers/**/*.txt"], ignore_staged=ignore_staged
         )
         for filepath in files:
-            if should_skip_file(filepath):
+            if should_skip_file(filepath, mod_path=self.mod_path):
                 continue
             text = FileOpener.open_text_file(
                 filepath, lowercase=False, strip_comments_flag=True
@@ -994,7 +994,7 @@ class Validator(BaseValidator):
             results,
             "✓ All dynamic modifiers have a bare-name loc key",
             "Dynamic modifiers missing a loc key:",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="dynamic-modifier-name-loc",
         )
 
@@ -1161,7 +1161,7 @@ class Validator(BaseValidator):
         """(key, value, rel, lineno, owner) bare numerics in pattern files."""
         found = []
         for filepath in self._collect_files(patterns):
-            if should_skip_file(filepath):
+            if should_skip_file(filepath, mod_path=self.mod_path):
                 continue
             text = FileOpener.open_text_file(
                 filepath, lowercase=False, strip_comments_flag=True

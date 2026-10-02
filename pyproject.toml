@@ -113,13 +113,21 @@ pretty = true
 # tools/requirements.txt and tools/report_lib/requirements-dev.txt.
 # A few tools import these at runtime; everything else is stdlib-only.
 runtime = ["requests==2.34.2", "pillow==12.2.0"]
-# Lint, format, and test tooling. Ruff checks Python correctness/imports;
-# Black is the sole formatter; Pylint checks correctness diagnostics and mypy
-# checks the typed report and validator-core surfaces.
-dev = [
+# What the suite itself needs, and all the CI test jobs install. pytest-xdist
+# runs the suite across cores; pytest-cov collects coverage from those workers.
+test = [
   "pytest>=9.1.0",
+  "pytest-xdist==3.8.0",
+  "pytest-cov==7.0.0",
+  "pre-commit==4.6.2",
   "coverage==7.10.7",
   "pyyaml>=6.0.3",
+]
+# The test group plus lint and format tooling. Ruff checks Python
+# correctness/imports; Black is the sole formatter; Pylint checks correctness
+# diagnostics and mypy checks the typed report and validator-core surfaces.
+dev = [
+  {include-group = "test"},
   "ruff==0.15.17",
   "black==26.5.1",
   "mypy==2.3.0",
