@@ -107,7 +107,7 @@ v2.0.1
 Content:
  - [ALG] Added an Algerian event
 
-v2.0.0
+v2.0.1
 
 Content:
  - [USA] Added an American event
@@ -128,7 +128,7 @@ def test_main_reports_errors(tmp_path, monkeypatch, capsys):
 def test_main_ignores_older_versions_with_bom(tmp_path, monkeypatch):
     path = tmp_path / "Changelog.txt"
     path.write_text(
-        "v2.0.1\n\nContent:\n - [ENG] B\n\nv2.0.0\n\nContent:\n - [FRA] A\n - [ENG] B\n",
+        "v2.0.1\n\nContent:\n - [ENG] B\n\nv2.0.1\n\nContent:\n - [FRA] A\n - [ENG] B\n",
         encoding="utf-8-sig",
     )
     monkeypatch.setattr(check_changelog.sys, "argv", ["check_changelog", str(path)])
@@ -141,14 +141,14 @@ def test_sort_preserves_entries_spacing_and_older_versions():
         " - [USA] U\r\n\r\n - Global\r\n"
         " - [chi/NKO] C1\r\n - [CHI] C2\r\n"
         "Bugfix:\r\n - [FRA] F\r\n - [ENG] E\r\n"
-        "v2.0.0\r\nContent:\r\n - [USA] Old\r\n - Global old\r\n"
+        "v2.0.1\r\nContent:\r\n - [USA] Old\r\n - Global old\r\n"
     )
     expected = (
         "\ufeffv2.0.1\r\n\r\nContent:\r\n"
         " - Global\r\n\r\n - [chi/NKO] C1\r\n"
         " - [CHI] C2\r\n - [USA] U\r\n"
         "Bugfix:\r\n - [ENG] E\r\n - [FRA] F\r\n"
-        "v2.0.0\r\nContent:\r\n - [USA] Old\r\n - Global old\r\n"
+        "v2.0.1\r\nContent:\r\n - [USA] Old\r\n - Global old\r\n"
     )
     ordered = order_lines(original.splitlines(keepends=True))
     assert "".join(ordered) == expected
