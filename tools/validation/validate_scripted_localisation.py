@@ -16,6 +16,7 @@ from validator_common import (
     Colors,
     DataCleaner,
     FileOpener,
+    Issue,
     Severity,
     find_line_number,
     run_validator_main,
@@ -134,6 +135,56 @@ def _scan_loc_tokens(
 ) -> Set[str]:
     bracketed, explicit = _scan_loc_token_candidates(text, is_scripted_loc_file)
     return _filter_bracket_loc_candidates(bracketed, defined_names or set()) | explicit
+
+
+_LOC_OBJECTS_DOC = os.path.join(
+    "resources", "documentation", "loc_objects_documentation.md"
+)
+_DOC_GETTER_RE = re.compile(r"^\*\*(\w+)\*\*\s*$", re.MULTILINE)
+# Vanilla defined_text that the mod's replace/ strings call but does not ship.
+_VANILLA_SCRIPTED_LOCS = frozenset({"GetCountryContinent"})
+
+
+def _documented_getters(mod_path: str) -> frozenset:
+    try:
+        with open(
+            os.path.join(mod_path, _LOC_OBJECTS_DOC), "r", encoding="utf-8"
+        ) as handle:
+            return frozenset(_DOC_GETTER_RE.findall(handle.read()))
+    except OSError:
+        return frozenset()
+
+
+def _getter_spelling_message(
+    member: str, defined_lower: Set[str], documented: frozenset
+) -> str:
+    """Why a bracket member is neither a scripted loc nor a documented getter, or ""."""
+    if (
+        member in documented
+        or member in _VANILLA_SCRIPTED_LOCS
+        or member.lower() in defined_lower
+    ):
+        return ""
+    spelling = next((g for g in documented if g.lower() == member.lower()), None)
+    if spelling:
+        return f"'{member}' is not the documented getter spelling '{spelling}'"
+    if member.lower().startswith("get"):
+        return (
+            f"'{member}' is neither a defined scripted localisation "
+            "nor a documented engine getter"
+        )
+    return ""
+
+
+def process_file_for_getter_refs(filename: str) -> List[Tuple[str, int]]:
+    """Pool worker: (member, line) for every [SCOPE.Member] call in one file."""
+    text = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    return [
+        (match.group(2), text.count("\n", 0, match.start()) + 1)
+        for match in _BRACKET_LOC_RE.finditer(text)
+    ]
 
 
 def process_file_for_used_localisations(
@@ -472,6 +523,48 @@ class Validator(BaseValidator):
             category="gfx-icon",
         )
 
+    def validate_getter_spelling(self, defined_locs: List[str]):
+        self._log_section("Checking engine getter spelling in localisation...")
+
+        documented = _documented_getters(self.mod_path)
+        if not documented:
+            self.log(
+                f"{_LOC_OBJECTS_DOC} not found — skipping getter spelling check",
+                "warning",
+            )
+            return
+
+        defined_lower = {name.lower() for name in defined_locs}
+        files = self._collect_files(
+            ["localisation/english/**/*.yml", "interface/**/*.gui"],
+            extra_skip=lambda f: should_skip_file(f, mod_path=self.mod_path),
+        )
+        results = []
+        for filename, refs in zip(
+            files, self._pool_map(process_file_for_getter_refs, files)
+        ):
+            rel_path = os.path.relpath(filename, self.mod_path)
+            for member, line in refs:
+                message = _getter_spelling_message(member, defined_lower, documented)
+                if message:
+                    results.append(
+                        Issue(
+                            severity=Severity.WARNING,
+                            category="loc-getter-spelling",
+                            message=message,
+                            file=rel_path,
+                            line=line,
+                        )
+                    )
+
+        self._report(
+            results,
+            "✓ All getter calls use a defined scripted loc or documented getter",
+            "Getter calls that are neither scripted loc nor documented getters:",
+            Severity.WARNING,
+            category="loc-getter-spelling",
+        )
+
     def run_validations(self):
         if self.staged_only and not self.staged_files:
             self.log(
@@ -538,6 +631,7 @@ class Validator(BaseValidator):
         self.validate_unused_scripted_localisations(
             false_positives, defined_locs, defined_paths, all_used_locs
         )
+        self.validate_getter_spelling(all_defined_locs)
 
         # GFX icon check scans all interface/*.gfx files — skip in staged mode
         if not self.staged_only:

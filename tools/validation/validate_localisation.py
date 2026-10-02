@@ -69,11 +69,13 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
 _SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
 _LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
 _NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
-# A § followed by whitespace and a digit is a prose section sign (e.g. a legal
-# citation like "15 U.S.C. § 1"), never a color code; game markup never puts a
-# space after §. Requiring the digit keeps a dangling/broken code (§ before a
-# word, quote, or line end) flagged instead of silently exempted.
-_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+# `§§` is the engine's escape for a literal section sign ("15 U.S.C. §§ 1"
+# renders "15 U.S.C. § 1"). A single § always starts a color code, even before
+# a space: in game (1.19.3) "§ 1" drops the space, logs "Could not find
+# coloring for character ' '" every frame, and shows no §. So only the escaped
+# pair is exempt from the color checks; a bare § before whitespace is flagged.
+_LITERAL_SECTION_SIGN_RE = re.compile(r"§§")
+_SECTION_SIGN_BEFORE_SPACE_RE = re.compile(r"§\s")
 
 # A formatter (Prettier/pre-commit --all-files) once split Paradox loc
 # `KEY:0 "value"` lines across two lines and rewrote double quotes to single
@@ -137,8 +139,16 @@ def _scan_syntax_text(
         if "\u00a7" in line:
             key_match = _LINE_KEY_RE.match(line)
             key = key_match.group(1) if key_match else None
-            color_line = _PROSE_SECTION_SIGN_RE.sub("", line)
+            color_line = _LITERAL_SECTION_SIGN_RE.sub("", line)
             if "\u00a7" not in color_line:
+                continue
+            if _SECTION_SIGN_BEFORE_SPACE_RE.search(color_line):
+                out.append(
+                    (
+                        f"{basename}, line {line_idx + 2}, colors - \u00a7 before whitespace is read as a color code; write \u00a7\u00a7 for a literal \u00a7",
+                        key,
+                    )
+                )
                 continue
             count = color_line.count("\u00a7")
             if count % 2 != 0:
@@ -314,6 +324,16 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
                     severity=Severity.WARNING,
                     category="loc-backtick-apostrophe",
                     message="Backtick used as apostrophe in loc value: use ' instead",
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+        if value.count('\\"') % 2:
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-unbalanced-quote",
+                    message='Odd number of \\" in loc value: an opening or closing quote is missing',
                     file=basename,
                     line=line_idx + 2,
                 )
@@ -1108,14 +1128,17 @@ class Validator(BaseValidator):
 
     def validate_prose_conventions(self):
         self._log_section(
-            "Checking localisation prose conventions (em dashes, backtick apostrophes)..."
+            "Checking localisation prose conventions (em dashes, backtick apostrophes, quotes)..."
         )
 
         em_dash_results: List[Issue] = []
         backtick_results: List[Issue] = []
+        quote_results: List[Issue] = []
         for issue in self._get_shared_yml_scan()["prose"]:
             if issue.category == "loc-em-dash":
                 em_dash_results.append(issue)
+            elif issue.category == "loc-unbalanced-quote":
+                quote_results.append(issue)
             else:
                 backtick_results.append(issue)
 
@@ -1132,6 +1155,13 @@ class Validator(BaseValidator):
             "Backtick used as apostrophe in localisation values:",
             severity=Severity.WARNING,
             category="loc-backtick-apostrophe",
+        )
+        self._report(
+            quote_results,
+            '✓ No unbalanced \\" quotes in localisation values',
+            'Unbalanced \\" quotes in localisation values:',
+            severity=Severity.WARNING,
+            category="loc-unbalanced-quote",
         )
 
     def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):

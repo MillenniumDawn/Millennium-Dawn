@@ -432,6 +432,7 @@ novalue:0
 bracket:0 "[broken"
 typo:0 "seperate [ROOT.GetName] $VALUE$"
 prose:0 "bad — `"
+unbalanced:0 "said \\"go."
 clean:0 "§Yok§!"
 """,
     )
@@ -453,6 +454,7 @@ clean:0 "§Yok§!"
     assert {item.category for item in prose_results} == {
         "loc-em-dash",
         "loc-backtick-apostrophe",
+        "loc-unbalanced-quote",
     }
     _write(
         tmp_path,
@@ -527,6 +529,7 @@ novalue:0
 bracket:0 "[broken"
 typo:0 "seperate"
 prose:0 "bad — `"
+unbalanced:0 "said \\"go."
 sub_a:0 "§Y"
 orphan_tt:0 "never used"
 used_tt:0 "used"
@@ -585,6 +588,7 @@ tooltip = dynamic_[TAG]_tt
     assert "loc-typo-watchlist" in categories
     assert "loc-em-dash" in categories
     assert "loc-backtick-apostrophe" in categories
+    assert "loc-unbalanced-quote" in categories
     assert any("missing_key" in issue.message for issue in validator._issues)
     assert any("orphan_tt" in issue.message for issue in validator._issues)
     assert any("resistance_bad" in issue.message for issue in validator._issues)

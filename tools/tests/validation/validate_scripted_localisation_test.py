@@ -1,5 +1,7 @@
 """Focused regressions for scripted-localisation invocation scanning."""
 
+from pathlib import Path
+
 import validate_scripted_localisation as V
 
 
@@ -529,3 +531,103 @@ def test_usage_scan_ignores_non_english_localisation(tmp_path):
 
     assert "englishonly" in used
     assert "frenchonly" not in used
+
+
+DOCUMENTED = frozenset({"GetName", "GetNameWithFlag", "GetAdjective", "Owner"})
+
+
+def test_getter_spelling_accepts_documented_and_defined_members():
+    for member in ("GetName", "GetNameWithFlag", "Owner", "GetCountryContinent"):
+        assert V._getter_spelling_message(member, set(), DOCUMENTED) == ""
+    assert (
+        V._getter_spelling_message("GetProjectStatus", {"getprojectstatus"}, DOCUMENTED)
+        == ""
+    )
+
+
+def test_getter_spelling_names_the_documented_spelling():
+    assert V._getter_spelling_message("Getname", set(), DOCUMENTED) == (
+        "'Getname' is not the documented getter spelling 'GetName'"
+    )
+    assert "'GetNameWithFlag'" in V._getter_spelling_message(
+        "GetNamewithFlag", set(), DOCUMENTED
+    )
+    assert "'Owner'" in V._getter_spelling_message("OWNER", set(), DOCUMENTED)
+
+
+def test_getter_spelling_reports_unknown_get_members_only():
+    assert "neither a defined scripted localisation" in V._getter_spelling_message(
+        "GetAdj", set(), DOCUMENTED
+    )
+    # Undefined non-get members belong to the missing-scripted-loc check.
+    assert V._getter_spelling_message("MissingLoc", set(), DOCUMENTED) == ""
+
+
+def test_documented_getters_read_the_vanilla_reference(tmp_path):
+    assert V._documented_getters(str(tmp_path)) == frozenset()
+    doc = tmp_path / V._LOC_OBJECTS_DOC
+    doc.parent.mkdir(parents=True)
+    doc.write_text(
+        "## Country\n\n### Properties\n**GetName**\n\nGets the name.\n",
+        encoding="utf-8",
+    )
+    assert V._documented_getters(str(tmp_path)) == frozenset({"GetName"})
+
+
+def test_documented_getters_cover_the_repository_reference():
+    repo = Path(__file__).resolve().parents[3]
+    documented = V._documented_getters(str(repo))
+    assert {"GetName", "GetNameWithFlag", "GetFlag", "GetCallsign"} <= documented
+
+
+def test_getter_refs_report_member_and_line(tmp_path):
+    path = tmp_path / "consumer_l_english.yml"
+    path.write_text(
+        'l_english:\n key: "[ROOT.GetName] [?var|0]"\n # [FROM.Getname]\n'
+        ' other: "[FROM.CONTROLLER.Getname]"\n',
+        encoding="utf-8-sig",
+    )
+    assert V.process_file_for_getter_refs(str(path)) == [
+        ("GetName", 2),
+        ("Getname", 4),
+    ]
+
+
+def _getter_mod(tmp_path):
+    english = tmp_path / "localisation" / "english"
+    english.mkdir(parents=True)
+    (english / "a_l_english.yml").write_text(
+        'l_english:\n key: "[ROOT.GetName] [THIS.Getname] [ROOT.GetDefinedLoc]"\n',
+        encoding="utf-8-sig",
+    )
+    interface = tmp_path / "interface"
+    interface.mkdir()
+    (interface / "a.gui").write_text('text = "[GetAdj]"\n')
+    return tmp_path
+
+
+def test_getter_spelling_check_warns_per_call(tmp_path):
+    mod = _getter_mod(tmp_path)
+    doc = mod / V._LOC_OBJECTS_DOC
+    doc.parent.mkdir(parents=True)
+    doc.write_text("**GetName**\n", encoding="utf-8")
+
+    validator = V.Validator(mod_path=str(mod), use_colors=False, workers=1)
+    validator.validate_getter_spelling(["GetDefinedLoc"])
+
+    found = {
+        (issue.file.replace("\\", "/"), issue.line, issue.severity, issue.category)
+        for issue in validator._issues
+    }
+    assert found == {
+        ("localisation/english/a_l_english.yml", 2, "warning", "loc-getter-spelling"),
+        ("interface/a.gui", 1, "warning", "loc-getter-spelling"),
+    }
+
+
+def test_getter_spelling_check_skips_without_the_reference(tmp_path):
+    validator = V.Validator(
+        mod_path=str(_getter_mod(tmp_path)), use_colors=False, workers=1
+    )
+    validator.validate_getter_spelling([])
+    assert validator._issues == []
