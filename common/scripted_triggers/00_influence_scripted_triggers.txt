@@ -2,23 +2,17 @@
 is_influencer = {
 	custom_trigger_tooltip = {
 		tooltip = is_influencer_tt
-		any_of_scopes = {
-			array = influence_array
-			tag = ROOT
-		}
+		is_in_array = { influence_array = ROOT }
 	}
 }
 
 is_top3_influencer = {
 	custom_trigger_tooltip = {
 		tooltip = is_top_three_influencer_tt
-		any_of = {
-			array = influence_array
-			value = v
-			index = i
-
-			check_variable = { i < 3 }
-			var:v = { tag = ROOT }
+		OR = {
+			check_variable = { influence_array^0 = ROOT }
+			check_variable = { influence_array^1 = ROOT }
+			check_variable = { influence_array^2 = ROOT }
 		}
 	}
 }
@@ -26,14 +20,19 @@ is_top3_influencer = {
 is_top3_twenty_influencer = {
 	custom_trigger_tooltip = {
 		tooltip = top_three_twenty_percent_influencer_tt
-		any_of = {
-			array = influence_array
-			value = v
-			index = i
-
-			check_variable = { i < 3 }
-			var:v = { tag = ROOT }
-			check_variable = { influence_array_val^i > 19.999 }
+		OR = {
+			AND = {
+				check_variable = { influence_array^0 = ROOT }
+				check_variable = { influence_array_val^0 > 19.999 }
+			}
+			AND = {
+				check_variable = { influence_array^1 = ROOT }
+				check_variable = { influence_array_val^1 > 19.999 }
+			}
+			AND = {
+				check_variable = { influence_array^2 = ROOT }
+				check_variable = { influence_array_val^2 > 19.999 }
+			}
 		}
 	}
 }
@@ -41,14 +40,19 @@ is_top3_twenty_influencer = {
 is_top3_thirty_influencer = {
 	custom_trigger_tooltip = {
 		tooltip = top_three_thirty_percent_influencer_tt
-		any_of = {
-			array = influence_array
-			value = v
-			index = i
-
-			check_variable = { i < 3 }
-			var:v = { tag = ROOT }
-			check_variable = { influence_array_val^i > 29.999 }
+		OR = {
+			AND = {
+				check_variable = { influence_array^0 = ROOT }
+				check_variable = { influence_array_val^0 > 29.999 }
+			}
+			AND = {
+				check_variable = { influence_array^1 = ROOT }
+				check_variable = { influence_array_val^1 > 29.999 }
+			}
+			AND = {
+				check_variable = { influence_array^2 = ROOT }
+				check_variable = { influence_array_val^2 > 29.999 }
+			}
 		}
 	}
 }
@@ -86,49 +90,6 @@ is_top5_influencer = {
 			check_variable = { influence_array^2 = ROOT }
 			check_variable = { influence_array^3 = ROOT }
 			check_variable = { influence_array^4 = ROOT }
-		}
-	}
-}
-
-is_same_government = {
-	if = { limit = { ROOT = { has_government = democratic } }
-		has_government = democratic
-	}
-	else_if = { limit = { ROOT = { has_government = nationalist } }
-		has_government = nationalist
-	}
-	else_if = { limit = { ROOT = { has_government = communism } }
-		has_government = communism
-	}
-	else_if = { limit = { ROOT = { has_government = neutrality } }
-		has_government = neutrality
-	}
-	else_if = { limit = { ROOT = { has_government = fascism } }
-		has_government = fascism
-	}
-}
-
-is_same_government_PREV = {
-	OR = {
-		AND = {
-			PREV = { has_government = democratic }
-			has_government = democratic
-		}
-		AND = {
-			PREV = { has_government = nationalist }
-			has_government = nationalist
-		}
-		AND = {
-			PREV = { has_government = communism }
-			has_government = communism
-		}
-		AND = {
-			PREV = { has_government = neutrality }
-			has_government = neutrality
-		}
-		AND = {
-			PREV = { has_government = fascism }
-			has_government = fascism
 		}
 	}
 }
@@ -425,6 +386,25 @@ influence_higher_90 = {
 	}
 }
 
+influence_less_5 = {
+	custom_trigger_tooltip = {
+		tooltip = influence_less_5_tt
+		OR = {
+			NOT = {
+				is_in_array = { array = ROOT.influence_array value = THIS }
+			}
+			any_of = {
+				array = ROOT.influence_array
+				value = v
+				index = i
+
+				var:v = { tag = THIS }
+				check_variable = { ROOT.influence_array_val^i < 5 }
+			}
+		}
+	}
+}
+
 influence_less_10 = {
 	custom_trigger_tooltip = {
 		tooltip = influence_less_10_tt
@@ -543,7 +523,7 @@ influence_less_70 = {
 coup_is_available = {
 	check_variable = { influence_array^0 = PREV }
 	check_variable = { influence_array_val^0 > 49.999 }
-	is_same_government = no
+	NOT = { has_government = PREV }
 	NOT = { is_subject_of = PREV }
 	has_war = no
 	has_opinion = { target = PREV value < 49 }
@@ -606,12 +586,19 @@ manipulate_politics_action_available = {
 make_puppet_action_available = {
 	check_variable = { influence_array^0 = PREV }
 	check_variable = { influence_array_val^0 > 80.999 } #84.999
-	is_same_government = yes
+	has_government = PREV
 	NOT = { is_subject_of = PREV }
 	NOT = { has_war = yes }
 	has_game_rule = {
 		rule = rule_disable_ai_influence_puppeting
 		option = no
+	}
+	if = {
+		limit = {
+			original_tag = NKO
+			PREV = { original_tag = CHI }
+		}
+		always = no
 	}
 }
 

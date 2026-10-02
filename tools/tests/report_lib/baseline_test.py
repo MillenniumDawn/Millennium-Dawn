@@ -1,0 +1,352 @@
+"""Tests for `report_lib.baseline`."""
+
+import json
+
+from report_lib import (
+    Severity,
+    classify,
+    load_baseline,
+    load_changed_files,
+    load_issues,
+    tag_changed_files,
+    write_baseline,
+)
+from report_lib.baseline import META_FILENAME, issue_key
+from shared.suite import issue_dict, make_issue, write_text
+from shared.suite import write_slug_json as _write_sidecar
+
+
+def _issue_dict(severity, file="a.txt", line=1, message="m", category="missing_key"):
+    return issue_dict(
+        severity, file=file, line=line, message=message, category=category
+    )
+
+
+def _write_meta(path, toolshash="h"):
+    write_text(path / META_FILENAME, json.dumps({"toolshash": toolshash}))
+
+
+def _baseline(path, issues=None, toolshash="h"):
+    _write_meta(path, toolshash)
+    if issues is not None:
+        _write_sidecar(path, "events", issues)
+    baseline = load_baseline(str(path), toolshash)
+    assert baseline is not None
+    return baseline
+
+
+def test_load_baseline_returns_none_without_meta(tmp_path):
+    _write_sidecar(tmp_path, "events", [_issue_dict("error")])
+    assert load_baseline(str(tmp_path)) is None
+
+
+def test_load_baseline_returns_none_on_toolshash_mismatch(tmp_path):
+    _write_meta(tmp_path, "old-hash")
+    assert load_baseline(str(tmp_path), "new-hash") is None
+
+
+def test_load_baseline_loads_and_dedupes_sidecars(tmp_path):
+    _write_meta(tmp_path)
+    dup = _issue_dict("error")
+    _write_sidecar(tmp_path, "events", [dup])
+    _write_sidecar(tmp_path, "localisation", [dup])
+    baseline = load_baseline(str(tmp_path), "h")
+    assert baseline is not None
+    # Cross-validator duplicates collapse before keys are built.
+    assert len(baseline.keys) == 1
+    assert baseline.meta["toolshash"] == "h"
+
+
+def test_issue_key_requires_location():
+    assert issue_key(make_issue()) is not None
+    assert issue_key(make_issue(file="", line=0)) is None
+    assert issue_key(make_issue(line=-3)) is None
+
+
+def test_classify_tags_new_and_existing(tmp_path):
+    baseline = _baseline(
+        tmp_path,
+        [
+            _issue_dict("error", file="old.txt", line=1, message="old finding"),
+            _issue_dict("warning", file="warn.txt", line=3, message="known warning"),
+        ],
+    )
+
+    issues = [
+        make_issue(file="old.txt", line=1, message="old finding"),
+        make_issue(file="new.txt", line=1, message="new finding"),
+        make_issue(
+            severity=Severity.WARNING,
+            file="new.txt",
+            line=2,
+            message="new warning",
+        ),
+        make_issue(
+            severity=Severity.WARNING,
+            file="warn.txt",
+            line=3,
+            message="known warning",
+        ),
+    ]
+    stats = classify(issues, baseline)
+
+    assert [i.baseline_status for i in issues] == [
+        "existing",
+        "new",
+        "new",
+        "existing",
+    ]
+    assert stats.new_errors == 1
+    assert stats.new_warnings == 1
+    assert stats.existing_errors == 1
+    assert stats.existing_warnings == 1
+    assert stats.unclassified == 0
+    assert stats.new_issues == issues[1:3]
+
+
+def test_classify_escalated_severity_counts_as_new(tmp_path):
+    # Severity is part of the key: a warning on main that a PR escalates to
+    # an error must alarm as a new error, not read as existing.
+    baseline = _baseline(
+        tmp_path,
+        [_issue_dict("warning", file="a.txt", line=1, message="escalated")],
+    )
+
+    stats = classify([make_issue(file="a.txt", line=1, message="escalated")], baseline)
+    assert stats.new_errors == 1
+    assert stats.existing_errors == 0
+
+
+def test_classify_leaves_unkeyable_issues_untagged(tmp_path):
+    baseline = _baseline(tmp_path)
+
+    unkeyable = make_issue(file="", line=0, message="no location")
+    stats = classify([unkeyable], baseline)
+
+    assert unkeyable.baseline_status is None
+    assert stats.unclassified == 1
+
+
+def test_load_issues_ignores_non_list_json(tmp_path):
+    (tmp_path / "notes.json").write_text('{"not": "a list"}', encoding="utf-8")
+    assert load_issues(str(tmp_path)) == []
+
+
+def test_load_issues_skips_unparseable_sidecars(tmp_path):
+    (tmp_path / "broken.json").write_text("not json", encoding="utf-8")
+    (tmp_path / "events.json").write_text(
+        json.dumps([_issue_dict("error")]), encoding="utf-8"
+    )
+    issues = load_issues(str(tmp_path))
+    # The broken sidecar is skipped, not fatal: one validator with a
+    # truncated upload must not crash the PR report or the nightly diff.
+    assert len(issues) == 1
+
+
+def test_load_issues_skips_non_dict_entries(tmp_path):
+    (tmp_path / "events.json").write_text(
+        json.dumps(
+            [
+                _issue_dict("error"),
+                None,
+                "garbage",
+                42,
+                _issue_dict("warning", file="b.txt", line=2, message="second"),
+            ]
+        ),
+        encoding="utf-8",
+    )
+    issues = load_issues(str(tmp_path))
+    # Non-dict entries are dropped, not fatal: a malformed sidecar element
+    # must not kill the whole report job via AttributeError.
+    assert [i.file for i in issues] == ["a.txt", "b.txt"]
+    assert [i.severity for i in issues] == ["error", "warning"]
+
+
+def test_from_dict_coerces_non_numeric_line_to_zero(tmp_path):
+    from report_lib import Issue
+
+    issue = Issue.from_dict(
+        {
+            "severity": "error",
+            "category": "c",
+            "message": "m",
+            "file": "f.txt",
+            "line": "abc",
+        }
+    )
+    assert issue.line == 0
+    assert issue.has_location is False
+
+
+def test_load_baseline_returns_none_when_meta_not_a_dict(tmp_path):
+    (tmp_path / META_FILENAME).write_text("[1, 2, 3]", encoding="utf-8")
+    assert load_baseline(str(tmp_path), "h") is None
+
+
+def test_load_baseline_returns_none_on_unreadable_meta(tmp_path):
+    (tmp_path / META_FILENAME).write_text("{broken", encoding="utf-8")
+    assert load_baseline(str(tmp_path), "h") is None
+
+
+def test_classify_with_empty_baseline_marks_everything_new(tmp_path):
+    # An all-clean main run stores only meta (no sidecars): any PR finding
+    # is new by definition.
+    stats = classify(
+        [
+            make_issue(file="a.txt", line=1, message="first"),
+            make_issue(
+                severity=Severity.WARNING,
+                file="b.txt",
+                line=2,
+                message="second",
+            ),
+        ],
+        _baseline(tmp_path),
+    )
+
+    assert stats.new_errors == 1
+    assert stats.new_warnings == 1
+    assert stats.existing_errors == 0
+    assert stats.unclassified == 0
+
+
+def test_classify_counts_mixed_unclassified_and_new(tmp_path):
+    stats = classify(
+        [
+            make_issue(file="a.txt", line=1, message="keyed"),
+            make_issue(file="", line=0, message="no location"),
+        ],
+        _baseline(tmp_path),
+    )
+
+    assert stats.new_errors == 1
+    assert stats.unclassified == 1
+    assert len(stats.new_issues) == 1
+
+
+def test_write_baseline_copies_sidecars_writes_meta_and_prunes(tmp_path):
+    current = tmp_path / "current"
+    current.mkdir()
+    _write_sidecar(current, "events", [_issue_dict("error")])
+
+    output = tmp_path / "baseline"
+    output.mkdir()
+    # A stale sidecar from a validator that no longer runs.
+    _write_sidecar(output, "removed-validator", [_issue_dict("error")])
+
+    write_baseline(str(current), str(output), {"toolshash": "h"})
+
+    assert (output / "events.json").is_file()
+    assert not (output / "removed-validator.json").exists()
+    meta = json.loads((output / META_FILENAME).read_text(encoding="utf-8"))
+    assert meta["toolshash"] == "h"
+
+
+def test_write_baseline_over_empty_sidecar_dir_prunes_all(tmp_path):
+    current = tmp_path / "current"
+    current.mkdir()
+    output = tmp_path / "baseline"
+    output.mkdir()
+    _write_sidecar(output, "events", [_issue_dict("error")])
+
+    # All-clean run: no sidecars at all, so the baseline collapses to the
+    # meta file only — the empty findings set.
+    write_baseline(str(current), str(output), {"toolshash": "h"})
+
+    assert not (output / "events.json").exists()
+    assert (output / META_FILENAME).is_file()
+    baseline = load_baseline(str(output), "h")
+    assert baseline is not None
+    assert baseline.keys == set()
+
+
+def test_build_report_annotates_new_vs_existing(tmp_path):
+    # End-to-end wiring: the report generator classifies against a restored
+    # baseline and both bodies carry the NEW/EXISTING signal.
+    import generate_validation_report
+    from report_lib import ReportContext
+
+    results = tmp_path / "validation-results" / "validation-events-results"
+    results.mkdir(parents=True)
+    (results / "validation-events.log").write_text(
+        "VALIDATION COMPLETE", encoding="utf-8"
+    )
+    (results / "validation-events.json").write_text(
+        json.dumps(
+            [
+                _issue_dict("error", file="old.txt", message="old finding"),
+                _issue_dict("error", file="new.txt", message="new finding"),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    baseline = _baseline(
+        tmp_path / "baseline",
+        [_issue_dict("error", file="old.txt", message="old finding")],
+    )
+
+    ctx = ReportContext(
+        pr_number="42",
+        commit_sha="abc1234deadbeef",  # pragma: allowlist secret
+        repo="MillenniumDawn/Millennium-Dawn",
+    )
+    body, step_body, _runs, deduped, _trunc, stats = (
+        generate_validation_report.build_report(
+            str(tmp_path / "validation-results"), ctx, baseline
+        )
+    )
+
+    assert stats is not None
+    assert stats.new_errors == 1
+    assert stats.existing_errors == 1
+    assert "1 new error against the main baseline" in body
+    assert "## New Findings Introduced by this branch." in body
+    assert "## New Findings Introduced by this branch." in step_body
+    assert len(deduped) == 2
+
+
+def test_tag_changed_files_sets_in_diff():
+    issues = [
+        make_issue(file="events/MD_x.txt"),
+        make_issue(file="events/other.txt"),
+        make_issue(file=""),
+    ]
+    tag_changed_files(issues, {"events/MD_x.txt"})
+    assert issues[0].in_diff is True
+    assert issues[1].in_diff is False
+    assert issues[2].in_diff is False
+
+
+def test_tag_changed_files_normalises_slashes():
+    issue = make_issue(file="events\\MD_x.txt")
+    tag_changed_files([issue], {"events/MD_x.txt"})
+    assert issue.in_diff is True
+
+
+def test_load_changed_files_skips_blank_lines(tmp_path):
+    path = tmp_path / "changed-files.txt"
+    path.write_text("a.txt\n\nb.txt\n", encoding="utf-8")
+    assert load_changed_files(str(path)) == {"a.txt", "b.txt"}
+
+
+def test_load_changed_files_missing_path_is_empty(tmp_path):
+    assert load_changed_files(str(tmp_path / "missing.txt")) == set()
+
+
+def test_classify_then_tag_marks_both_axes(tmp_path):
+    baseline = _baseline(
+        tmp_path,
+        [_issue_dict("error", file="old.txt", line=1, message="old finding")],
+    )
+    issues = [
+        make_issue(file="old.txt", line=1, message="old finding"),
+        make_issue(file="new.txt", line=1, message="new finding"),
+    ]
+    classify(issues, baseline)
+    tag_changed_files(issues, {"new.txt"})
+    assert issues[0].baseline_status == "existing"
+    assert issues[0].in_diff is False
+    assert issues[1].baseline_status == "new"
+    assert issues[1].in_diff is True

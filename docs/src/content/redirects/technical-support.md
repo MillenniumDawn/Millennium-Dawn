@@ -4,7 +4,7 @@ permalink: /technical-support/
 redirect_to: /support/
 seo: false
 robots: noindex, nofollow
-toc: 'off'
+toc: "off"
 ---
 
 This page has moved to [/support/](/support/).

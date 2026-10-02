@@ -4,8 +4,6 @@ page_id: changelog-v1-4-changes
 order: 5
 ---
 
-# v1.4 Changes
-
 ## v1.4.0
 
 Balance
@@ -69,5 +67,3 @@ Politics
 - Namibia is now Emerging Radical Socialist
 - Angola is now Emerging Radical Socialist
 - Italian Ruling Party is now correct for the start
-
-

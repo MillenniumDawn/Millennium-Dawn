@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 37
 flag_image: /assets/images/flags/japan.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: JAP
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '15'
-  - label: Total Factories
-    value: '97'
-  - label: Military Ind.
-    value: '12'
-  - label: Civilian Ind.
-    value: '77'
-  - label: Naval Dockyards
-    value: '8'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $528 Billions
-  - label: Debt
-    value: $6627
-  - label: Investments
-    value: $497
+  - section: Overview
+    stats:
+      - label: Tag
+        value: JAP
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "15"
+      - label: Total Factories
+        value: "97"
+      - label: Military Ind.
+        value: "12"
+      - label: Civilian Ind.
+        value: "77"
+      - label: Naval Dockyards
+        value: "8"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $528 Billions
+      - label: Debt
+        value: $6627
+      - label: Investments
+        value: $497
 ---
 
 Japan is a country surrounded only by water, its only border is Okinawa Base owned by the US. It starts with a Population of 126.93 Millions.

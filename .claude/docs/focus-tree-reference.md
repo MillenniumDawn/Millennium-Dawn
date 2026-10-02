@@ -1,0 +1,265 @@
+# Focus Tree Reference
+
+Focus tree conventions, structure, property order, and examples.
+
+## Authoring Rules
+
+- IDs use `TAG_focus_name`. Use `relative_position_id` beyond the root.
+- Include logging, `ai_will_do = { base = N }`, and the two-layer search filters
+  from [Search Filters](search-filters.md). The log belongs in a `completion_reward`
+  or `select_effect` that runs something; a block holding only a log is dead and
+  `check_common_mistakes.py` rejects it (#4456). Omit the block instead.
+- Omit defaults: `cost = 10`, `cancel_if_invalid = yes`, `continue_if_invalid = no`,
+  and `available_if_capitulated = no`.
+- No empty `mutually_exclusive` or `available` blocks, or commented-out slot markers.
+- Limit permanent effects to five. Use timed ideas for additional bonuses.
+- Match `available` to a reachable bypass condition; never pair a bypass with
+  `available = { always = no }`.
+- Apply the spending-based bankruptcy guard below. Focus duration is not money cost.
+
+## File Naming
+
+| Prefix   | Usage                                        |
+| -------- | -------------------------------------------- |
+| `00_`    | System requirements only (e.g., titlebar)    |
+| `01-04_` | Shared/joint trees (EU, African Union, etc.) |
+| `05_`    | Country-specific trees                       |
+
+Prefix number forces load order: shared trees load before country-specific ones.
+
+## Focus Tree Container
+
+```
+focus_tree = {
+ id = greece_focus
+
+ country = {
+  factor = 0
+  modifier = {
+   tag = GRE
+   add = 100
+  }
+ }
+
+ shared_focus = USoE001
+ shared_focus = POTEF001
+
+ continuous_focus_position = { x = 2350 y = 1200 }
+}
+```
+
+## Required Property Order
+
+```
+1.  id                          (always first)
+2.  icon                        (always second)
+3.  x, y coordinates
+4.  relative_position_id
+5.  cost
+6.  allow_branch
+7.  prerequisite / mutually_exclusive
+8.  search_filters
+9.  available / bypass / cancel
+10. completion_reward / select_effect / bypass_effect
+11. ai_will_do                  (ALWAYS LAST)
+```
+
+## Shared and Joint Focuses
+
+A **shared focus** lives in one tree file and appears in several countries' trees, each pulling it in via `shared_focus = X` inside their `focus_tree`. A **joint focus** (`joint_focus = { ... }`) is a shared focus that additionally **shares completion**: when one joint country completes it, it is marked complete for every country in its joint set.
+
+`joint_trigger` defines the **joint set** — it is evaluated per country and determines who shares completion and receives the rewards. It is **not** a selection gate; who can actually pick the focus is still governed by `available` / `visible` / `prerequisite` / `allow_branch`, exactly as in a normal focus.
+
+| Reward block                         | Fires on                                         |
+| ------------------------------------ | ------------------------------------------------ |
+| `completion_reward`                  | every joint country                              |
+| `completion_reward_joint_originator` | only the country that directly completed it      |
+| `completion_reward_joint_member`     | every joint country **other than** the completer |
+
+### Conventions
+
+- **All-members focus** — omit `joint_trigger` and gate `available` with the membership trigger (e.g. `benelux_cooperation_trigger`). When omitted, the default joint set is every country that has the tree, so `joint_trigger = { is_benelux_country = yes }` is redundant.
+- **Country-specific focus** — gate `available` to that country **and** restrict the joint set with `joint_trigger = { original_tag = TAG }` (or an `OR` of tags). Do **not** rely on `available` alone here: the default joint set is structural (all tree-holders), so without a `joint_trigger` the other members can still receive shared completion and rewards when that country completes the focus. Keep the `joint_trigger` until this is verified in-game.
+
+Joint focuses pick a `text_icon` titlebar style matching the joint set (`JOINT_BEL_LUX_HOL_focus_style`, `JOINT_HOL_focus_style`, etc.), defined in `common/national_focus/00_titlebar_styles.txt`.
+
+Focus **titles carry no `§` color codes**, and descriptions use only `§Y` / `§G` / `§R` — see [Color Codes](localisation-rules.md#color-codes).
+
+## Example: Basic Focus
+
+```
+focus = {
+ id = SER_free_market_capitalism
+ icon = blr_market_economy
+
+ x = 5
+ y = 3
+ relative_position_id = SER_free_elections
+
+ cost = 5
+
+ prerequisite = { focus = SER_western_approach }
+ search_filters = { FOCUS_FILTER_POLITICAL }
+
+ available = {
+  western_liberals_are_in_power = yes
+ }
+
+ completion_reward = {
+  log = "[GetDateText]: [Root.GetName]: Focus SER_free_market_capitalism"
+  add_ideas = SER_free_market_idea
+ }
+
+ ai_will_do = {
+  base = 1
+ }
+}
+```
+
+## Example: Bankruptcy Guard in `ai_will_do`
+
+A focus whose `completion_reward` spends money must prevent the AI from queueing it during financial collapse. The gate is the reward's actual money cost (a negative `treasury_change` applied via `modify_treasury_effect` summing to ~5bn or more, or a money-costing scripted/building effect), not the focus `cost` field, which is completion time. Do this in `ai_will_do`, not `available`, so the player is never blocked. A guard on a focus with no money cost is flagged as unneeded, so add it only where the reward actually spends:
+
+```
+focus = {
+ id = ISR_milk_and_honey
+ # ...
+ cost = 10
+ completion_reward = {
+  # ... spends treasury:
+  set_temp_variable = { treasury_change = -20 }
+  modify_treasury_effect = yes
+ }
+ ai_will_do = {
+  base = 3
+  modifier = {
+   factor = 0
+   has_active_mission = bankruptcy_incoming_collapse
+  }
+ }
+}
+```
+
+## Example: `available` Matching `bypass` Pattern
+
+Never use `available = { always = no }` on a focus that also has a `bypass`. Set `available` to match or approximate the bypass condition:
+
+```
+focus = {
+ id = ISR_operation_defensive_shield
+
+ available = {
+  has_country_flag = ISR_start_operation
+ }
+
+ bypass = {
+  has_country_flag = ISR_start_operation
+ }
+ # ...
+}
+```
+
+## Cross-Country Event Tooltips
+
+When a focus fires an event to another country, add the `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` tooltip pattern — full rules and examples in `.claude/docs/event-reference.md` (Cross-Country Event Tooltips).
+
+## Example: `country_exists` Guard + Wargoal
+
+Always check `country_exists` before targeting another country with wargoals:
+
+```
+available = {
+ country_exists = USA
+ NOT = { has_war_with = USA }
+ # ideology checks...
+}
+
+completion_reward = {
+ log = "[GetDateText]: [This.GetName]: focus ISR_down_with_imperialism executed"
+ set_temp_variable = { wargoal_on = USA }
+ set_temp_variable = { wargoal_type = 1 }
+ add_threat_from_wargoal_effect = yes
+ create_wargoal = {
+  type = topple_government
+  target = USA
+  expire = 365
+ }
+}
+```
+
+## Building Effects (Scripted)
+
+All buildings in effects need monetary cost — use scripted effects from `common/scripted_effects/00_scripted_effects.txt`, not raw `add_building_construction`.
+
+### State Scope (predefined state)
+
+```
+117 = {
+ one_state_industrial_complex = yes
+}
+```
+
+### Random Scope (any owned state)
+
+```
+one_random_industrial_complex = yes
+two_random_industrial_complex = yes
+```
+
+### Available Building Effects
+
+Random effects:
+
+| Building               | Random Effect                       |
+| ---------------------- | ----------------------------------- |
+| Civilian Factory       | `one_random_industrial_complex`     |
+| Military Factory       | `one_random_arms_factory`           |
+| Dockyard               | `one_random_dockyard`               |
+| Offices                | `one_office_construction`           |
+| Infrastructure         | `one_random_infrastructure`         |
+| Air Base               | `one_air_base`                      |
+| Network Infrastructure | `one_random_network_infrastructure` |
+| Anti-Air/SAM           | `one_anti_air`                      |
+| Radar                  | `one_radar_station`                 |
+| Nuclear Reactor        | `one_random_nuclear_reactor`        |
+| Agriculture District   | `one_random_agriculture_district`   |
+
+State-scope effects:
+
+| Building               | State Scope Effect                 |
+| ---------------------- | ---------------------------------- |
+| Civilian Factory       | `one_state_industrial_complex`     |
+| Military Factory       | `one_state_arms_factory`           |
+| Dockyard               | `one_state_dockyard`               |
+| Offices                | `one_state_office_construction`    |
+| Infrastructure         | `one_state_infrastructure`         |
+| Air Base               | `one_state_air_base`               |
+| Network Infrastructure | `one_state_network_infrastructure` |
+| Anti-Air/SAM           | `one_state_anti_air`               |
+| Radar                  | `one_state_radar_station`          |
+| Nuclear Reactor        | `one_state_nuclear_reactor`        |
+| Agriculture District   | `one_state_agriculture_district`   |
+
+### Building Costs (includes building slot at $1.00)
+
+| Building                            | Cost   |
+| ----------------------------------- | ------ |
+| Civilian/Military Factory, Dockyard | $7.50  |
+| Offices                             | $12.00 |
+| Commercialized Agriculture          | $3.75  |
+| Infrastructure                      | $3.50  |
+| Air Base                            | $2.50  |
+| SAM Site                            | $3.25  |
+| Renewable Infrastructure            | $8.50  |
+| Fuel Silo                           | $3.00  |
+| Radar                               | $1.75  |
+| Network Infrastructure              | $3.00  |
+| Missile Site                        | $3.00  |
+| Nuclear Reactor                     | $9.00  |
+| Fossil Powerplant                   | $2.25  |
+| Microchip Plant                     | $10.50 |
+| Composite Plant                     | $7.50  |
+
+Cost includes a building slot ($1.00). To give a building without a slot, subtract $1.00.
+
+For the full scripted effects library (economic, political, influence, energy), see `docs/src/content/resources/scripted-effects-reference.md`.

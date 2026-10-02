@@ -1,28 +1,71 @@
 ---
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import type { CollectionEntry } from "astro:content";
 import type { GetStaticPaths } from "astro";
-import { RedirectLayout } from "@/app/layouts";
+import { RedirectLayout, MarkdownDocLayout } from "@/app/layouts";
+import {
+  genericPageSlug,
+  getGenericPageEntries,
+  getGenericPagePermalink,
+} from "@/shared/lib/routing/generic-page-routes";
+import MarkdownContent from "@/shared/ui/MarkdownContent.astro";
 
-interface Props {
-  entry: CollectionEntry<"redirects">;
-}
+type SlugRouteProps =
+  | { kind: "redirect"; entry: CollectionEntry<"redirects"> }
+  | { kind: "page"; entry: CollectionEntry<"pages"> };
 
 export const getStaticPaths: GetStaticPaths = async () => {
-  const entries = await getCollection("redirects");
-  return entries.map((entry) => ({
+  const [redirects, pages] = await Promise.all([getCollection("redirects"), getGenericPageEntries()]);
+
+  const redirectPaths = redirects.map((entry) => ({
     params: { slug: entry.data.permalink.replace(/^\/+|\/+$/g, "") },
-    props: { entry },
+    props: { kind: "redirect" as const, entry },
   }));
+
+  const pagePaths = pages.map((entry) => ({
+    params: { slug: genericPageSlug(entry) },
+    props: { kind: "page" as const, entry },
+  }));
+
+  const slugs = new Set<string>();
+  for (const route of [...redirectPaths, ...pagePaths]) {
+    const slug = route.params.slug;
+    if (slugs.has(slug)) {
+      throw new Error(`Duplicate catch-all slug: ${slug}`);
+    }
+    slugs.add(slug);
+  }
+
+  return [...redirectPaths, ...pagePaths];
 };
 
-const { entry }: Props = Astro.props;
-const fromPath = entry.data.permalink;
+const props = Astro.props as SlugRouteProps;
+
+let pageEntry: CollectionEntry<"pages"> | null = null;
+let pageContent: Awaited<ReturnType<typeof render>> | null = null;
+
+if (props.kind === "page") {
+  pageEntry = props.entry;
+  pageContent = await render(props.entry);
+}
 ---
 
-<RedirectLayout
-  title={entry.data.title}
-  fromPath={fromPath}
-  toPath={entry.data.redirect_to}
-  robots={entry.data.robots}
-/>
+{
+  props.kind === "redirect" ? (
+    <RedirectLayout
+      title={props.entry.data.title}
+      fromPath={props.entry.data.permalink}
+      toPath={props.entry.data.redirect_to}
+      robots={props.entry.data.robots}
+    />
+  ) : pageEntry && pageContent ? (
+    <MarkdownDocLayout
+      entry={pageEntry}
+      canonicalPath={getGenericPagePermalink(pageEntry)}
+      headings={pageContent.headings}
+      showPageTitle
+    >
+      <MarkdownContent Content={pageContent.Content} />
+    </MarkdownDocLayout>
+  ) : null
+}

@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 11
 flag_image: /assets/images/flags/canada.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: CAN
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '13'
-  - label: Total Factories
-    value: '11'
-  - label: Military Ind.
-    value: '5'
-  - label: Civilian Ind.
-    value: '4'
-  - label: Naval Dockyards
-    value: '2'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $47 Billions
-  - label: Debt
-    value: $804 Billions
-  - label: Investments
-    value: $289 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: CAN
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "13"
+      - label: Total Factories
+        value: "11"
+      - label: Military Ind.
+        value: "5"
+      - label: Civilian Ind.
+        value: "4"
+      - label: Naval Dockyards
+        value: "2"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $47 Billions
+      - label: Debt
+        value: $804 Billions
+      - label: Investments
+        value: $289 Billions
 ---
 
 Canada is a country surrounded by the US from the west, Alaska, and the south.
@@ -47,7 +47,7 @@ Canada starts with 13 Divisions.
 
 ## National Spirits
 
-In addition to the default ones, plus the NATO Membership, G7 Member and Commonwelth of Nations Member, Canada has 3 Unique  National Spirits
+In addition to the default ones, plus the NATO Membership, G7 Member and Commonwelth of Nations Member, Canada has 3 Unique National Spirits
 
 ### Spirits
 

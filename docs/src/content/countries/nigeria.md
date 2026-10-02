@@ -5,28 +5,28 @@ unique_focus_tree: true
 grid_order: 45
 flag_image: /assets/images/flags/nigeria.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: NIG
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '9'
-  - label: Total Factories
-    value: '2'
-  - label: Military Ind.
-    value: '1'
-  - label: Civilian Ind.
-    value: '1'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $5 Billions
-  - label: Debt
-    value: $291 Billions
-  - label: Investments
-    value: $3 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: NIG
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "9"
+      - label: Total Factories
+        value: "2"
+      - label: Military Ind.
+        value: "1"
+      - label: Civilian Ind.
+        value: "1"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $5 Billions
+      - label: Debt
+        value: $291 Billions
+      - label: Investments
+        value: $3 Billions
 ---
 
 Nigeria is a country surrounded by Benin from the West, Niger from the North, Chad from the North-East and Cameroon from the East. It starts with a population of 123.66 Millions.

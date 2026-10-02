@@ -1,13 +1,17 @@
 ---
 import type { ImageMetadata } from "astro";
-import { Picture } from "astro:assets";
-import { resolveImageSource } from "@/shared/lib/image-assets";
+import { getImage, Picture } from "astro:assets";
+import { LIGHTBOX_FULL_SRC_ATTR } from "@/shared/config/lightbox-dom";
+import { getInternalImageAsset, resolveImageSource } from "@/shared/lib/media/image-assets";
+import { withBase } from "@/shared/lib/routing/urls";
 
 type ImageFormat = "avif" | "webp";
 
 interface Props {
   src: string | ImageMetadata;
   alt?: string;
+  /** When true, image is decorative (alt empty) - adds role="presentation" and aria-hidden for accessibility */
+  decorative?: boolean;
   loading?: "lazy" | "eager";
   decoding?: "async" | "auto" | "sync";
   sizes?: string;
@@ -17,11 +21,14 @@ interface Props {
   class?: string;
   wrapperClass?: string;
   formats?: ImageFormat[];
+  /** Absolute or site-prefixed URL to the original file for the image lightbox (skips responsive `currentSrc`). */
+  lightboxFullSrc?: string;
 }
 
 const {
   src,
   alt = "",
+  decorative = false,
   loading = "lazy",
   decoding = "async",
   sizes = "100vw",
@@ -31,25 +38,82 @@ const {
   class: className,
   wrapperClass,
   formats = ["avif", "webp"],
+  lightboxFullSrc,
 }: Props = Astro.props;
 
 const resolvedSrc = resolveImageSource(src);
-const pictureClassName = [wrapperClass, "block"].filter(Boolean).join(" ");
-const imageClassName = ["h-auto", "max-w-full", "rounded", className].filter(Boolean).join(" ");
-const isStringSource = typeof resolvedSrc === "string";
-const resolvedWidth = width ?? (isStringSource ? undefined : resolvedSrc.width);
-const resolvedHeight = height ?? (isStringSource ? undefined : resolvedSrc.height);
+
+/* Layout/centering for content images: `#main-content` in app.css */
+const pictureClassName = [wrapperClass?.trim()].filter(Boolean).join(" ");
+const imageClassName = className?.trim() ? className.trim() : "rounded";
+const isMetadataSource = typeof resolvedSrc !== "string";
+const resolvedWidth = width ?? (isMetadataSource ? resolvedSrc.width : undefined);
+const resolvedHeight = height ?? (isMetadataSource ? resolvedSrc.height : undefined);
 
 if (!resolvedWidth || !resolvedHeight) {
-  throw new Error("ResponsiveImage requires width and height for string sources.");
+  throw new Error("ResponsiveImage requires width and height.");
+}
+
+const resolvedAlt = decorative ? "" : alt;
+const pictureAttrs = decorative ? { role: "presentation" as const, "aria-hidden": "true" as const } : {};
+const pictureAttributes = {
+  class: pictureClassName,
+  ...pictureAttrs,
+  ...(lightboxFullSrc ? { [LIGHTBOX_FULL_SRC_ATTR]: lightboxFullSrc } : {}),
+};
+
+/** Astro asset URLs are root-relative; prefix with the GitHub Pages base when needed. */
+function publicationAssetUrl(path: string): string {
+  return path.startsWith("/") ? withBase(path) : path;
+}
+
+let optimizedSources: { type: string; srcset: string }[] | null = null;
+let optimizedFallbackSrc: string | null = null;
+
+if (isMetadataSource) {
+  const sourceEntries = await Promise.all(
+    formats.map(async (format) => {
+      const image = await getImage({
+        src: resolvedSrc,
+        format,
+        width: resolvedWidth,
+        height: resolvedHeight,
+      });
+      return { type: `image/${format}`, srcset: publicationAssetUrl(image.src) };
+    }),
+  );
+  const fallback = await getImage({
+    src: resolvedSrc,
+    width: resolvedWidth,
+    height: resolvedHeight,
+  });
+  optimizedSources = sourceEntries;
+  optimizedFallbackSrc = publicationAssetUrl(fallback.src);
 }
 ---
 
 {
-  isStringSource ? (
+  isMetadataSource && optimizedSources && optimizedFallbackSrc ? (
+    <picture {...pictureAttributes}>
+      {optimizedSources.map((source) => (
+        <source type={source.type} srcset={source.srcset} sizes={sizes} />
+      ))}
+      <img
+        src={optimizedFallbackSrc}
+        alt={resolvedAlt}
+        width={resolvedWidth}
+        height={resolvedHeight}
+        loading={loading}
+        decoding={decoding}
+        fetchpriority={fetchpriority}
+        sizes={sizes}
+        class={imageClassName}
+      />
+    </picture>
+  ) : typeof resolvedSrc === "string" && !getInternalImageAsset(resolvedSrc) ? (
     <Picture
       src={resolvedSrc}
-      alt={alt}
+      alt={resolvedAlt}
       width={resolvedWidth}
       height={resolvedHeight}
       loading={loading}
@@ -59,22 +123,21 @@ if (!resolvedWidth || !resolvedHeight) {
       formats={formats}
       layout="constrained"
       class={imageClassName}
-      pictureAttributes={{ class: pictureClassName }}
+      pictureAttributes={pictureAttributes}
     />
   ) : (
-    <Picture
-      src={resolvedSrc}
-      alt={alt}
-      width={resolvedWidth}
-      height={resolvedHeight}
-      loading={loading}
-      decoding={decoding}
-      fetchpriority={fetchpriority}
-      sizes={sizes}
-      formats={formats}
-      layout="constrained"
-      class={imageClassName}
-      pictureAttributes={{ class: pictureClassName }}
-    />
+    <picture {...pictureAttributes}>
+      <img
+        src={publicationAssetUrl(typeof resolvedSrc === "string" ? resolvedSrc : resolvedSrc.src)}
+        alt={resolvedAlt}
+        width={resolvedWidth}
+        height={resolvedHeight}
+        loading={loading}
+        decoding={decoding}
+        fetchpriority={fetchpriority}
+        sizes={sizes}
+        class={imageClassName}
+      />
+    </picture>
   )
 }

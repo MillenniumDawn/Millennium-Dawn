@@ -1,4 +1,11 @@
+---
+name: changelog
+description: "Summarize branch changes vs main and add them to Changelog.txt under the current version's existing categories. Use when asked to update the changelog or add changelog entries. Optional version argument (e.g. v1.13.0) starts a new version heading."
+---
+
 Summarize all changes on the current branch compared to main and add them to `Changelog.txt`.
+
+Optional argument: a version string (e.g. `v1.13.0`) to start a new version heading above the current top-most one. Without it, entries are appended under the existing top-most version.
 
 Requested arguments: $ARGUMENTS
 
@@ -14,34 +21,23 @@ Steps:
    git diff origin/main...HEAD
    ```
 
-3. Analyze every change and classify each into one of these categories (skip empty categories):
-   - **Achievements** — New or changed achievements
-   - **AI** — AI behavior, strategy, or decision-making changes
-   - **Balance** — Stat tweaks, modifier adjustments, cost/value changes
-   - **Bugfix** — Bug fixes, crash fixes, typo corrections
-   - **Content** — New focus trees, events, decisions, ideas, MIOs, countries, or significant new gameplay
-   - **Database** — Country history, OOBs, state data, technology assignments
-   - **Documentation** — Docs, guides, modding resources
-   - **Factions** — Faction mechanics, membership, leadership changes
-   - **Game Rules** — New or modified game rules
-   - **Graphics** — GFX, icons, portraits, sprites, 3D models
-   - **Localization** — Localisation strings, translations, formatting
-   - **Map** — Map changes, state boundaries, provinces, map modes
-   - **Music** — New or changed music tracks, sound triggers
-   - **Performance** — Optimizations, removed redundant triggers, on_action improvements
-   - **Quality of Life** — QoL improvements, UI polish, tooltips
-   - **Sound** — Sound effects and audio changes
-   - **Technology** — Tech tree changes, research categories
-   - **User Interface** — UI layout, scripted GUIs, interface definitions
+3. Scan `Changelog.txt` for all category headings (lines matching ` CategoryName:`) and collect them. **Only use categories that already exist in the file.** Do not invent new names. If a change doesn't fit any existing category, use the closest match. Typical categories: Achievements, AI, Balance, Bugfix, Content, Database, Factions, Game Rules, Graphics, Localization, Map, Map Modes, Performance, Quality of Life, Sound, Technology, User Interface.
+
+   Classify each change into one existing category (skip empty categories). Focus on user-facing and gameplay-relevant changes; omit internal refactors or implementation details that don't affect the player unless they have meaningful performance or correctness impact.
 
 4. Write each entry following the `Changelog.txt` format:
-   - 1 space before category name, followed by a colon (e.g., ` AI:`)
-   - 2 spaces + `- ` before each entry (e.g., `  - [SER] Fixed focus prerequisite`)
+   - BLUF, one line: ` - [TAG] <Past-tense verb> <what the player sees> (Issue #N)`. Lead with the outcome. No cause clauses ("which left...", "because..."), no "It now..." follow-up sentence, no before/after numbers unless they are the change itself. Aim for under 120 characters before the issue suffix. Depth belongs in the commit and PR body.
+   - Category name followed by a colon at column 0 (e.g., `Bugfix:`)
+   - 1 space + `- ` before each entry (e.g., ` - [SER] Fixed focus prerequisite`)
    - Prefix with `[TAG]` when the change is country-specific
    - No tag prefix for global/system changes
-   - One bullet per distinct change; group related micro-changes into a single bullet
+   - Within a category, untagged entries come first, then `[TAG]` entries in alphabetical order of their first tag (`tools/linting/check_changelog.py` enforces this in CI)
+   - One bullet per PR; group related micro-changes into that single bullet
    - Use past tense ("Added", "Fixed", "Reduced", "Reworked")
    - Be specific: name the focus, event, decision, or mechanic affected
    - Mention issue numbers if referenced in commits (e.g., `(Issue #330)`)
+   - No em dashes; end the sentence with a period instead
+
+   What NOT to write: padding filler ("Fixed an issue where the AI would not behave correctly" — say what specifically, e.g. "Fixed AI sending volunteers to countries it cannot reach"); internal terminology players don't know ("immediate block", "trigger scope"); future tense ("Will add" — use "Added"); a duplicate of an entry already covering the same change.
 
 5. Insert the new entries into `Changelog.txt` under the existing top-most version heading. Merge into existing categories if they already exist; append new categories after existing ones. Do not create a new version heading unless $ARGUMENTS contains a version string (e.g., `v1.13.0`), in which case add a new version heading above the current top-most one.

@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 12
 flag_image: /assets/images/flags/china.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: CHI
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '90'
-  - label: Total Factories
-    value: '129'
-  - label: Military Ind.
-    value: '28'
-  - label: Civilian Ind.
-    value: '90'
-  - label: Naval Dockyards
-    value: '11'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $252 Billions
-  - label: Debt
-    value: $1066 Billions
-  - label: Investments
-    value: $36.8 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: CHI
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "90"
+      - label: Total Factories
+        value: "129"
+      - label: Military Ind.
+        value: "28"
+      - label: Civilian Ind.
+        value: "90"
+      - label: Naval Dockyards
+        value: "11"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $252 Billions
+      - label: Debt
+        value: $1066 Billions
+      - label: Investments
+        value: $36.8 Billions
 ---
 
 China is a country surrounded by Mongolia from the North, Russia from the North-North East, Korea DPR from the "East", Kazakhstan from the North-West, Kyrgyzstan, Tajikistan, The Afghan Northern Alliance and Pakistan from the West, India from the South-South West and Nepal, Bhutan, Kachin State, Wa State, Myanmar, Laos and Vietnam from the South. It starts with a Population of 1.27 Billions.

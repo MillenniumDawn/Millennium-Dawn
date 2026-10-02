@@ -10,10 +10,10 @@ May be a bit laggy and RAM-consuming depending on log size
 
 How to use:
 
-* Download archive
-* Unpack it
-* Install .net 6.0 runtime https://dotnet.microsoft.com/en-us/download/dotnet/6.0
-* Check readme file
-* Use exe file
+- Download archive
+- Unpack it
+- Install .net 6.0 runtime https://dotnet.microsoft.com/en-us/download/dotnet/6.0
+- Check readme file
+- Use exe file
 
 [CrocsLoggerTool.zip](/assets/downloads/tools/CrocsLoggerTool.zip)

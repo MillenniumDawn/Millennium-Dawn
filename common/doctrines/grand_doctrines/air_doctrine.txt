@@ -5,33 +5,44 @@ local_airspace_defense = {
 	description = GRAND_DOCTRINE_LOCAL_AIRSPACE_DEFENCE_DESC
 	icon = GFX_doctrine_local_airspace_defense
 	available = {
-		always = yes
+		if = {
+			limit = { original_tag = JAP }
+			OR = {
+				has_completed_focus = JAP_article_nine_transition_comittee
+				power_balance_value = {
+					id = JAP_article_nine
+					value > -0.20
+				}
+			}
+		}
 	}
 
 	xp_cost = 100
 	xp_type = air
 
 	ai_will_do = {
-		base = 1
+		base = 3
 		modifier = {
-			factor = 0
+			add = 3
+			NOT = { is_major_power = yes }
+		}
+		modifier = {
+			add = 5
+			check_variable = { potential_and_current_enemies^num > 0 }
+		}
+		modifier = {
+			factor = 0.5
+			has_expansionist_government = yes
+			is_major_power = yes
+		}
+		modifier = {
+			add = 30
 			OR = {
-				NOT = { original_tag = USA }
-				AND = {
-					original_tag = USA
-					has_idea = NATO_member
-				}
+				original_tag = CHI
+				original_tag = GER
+				original_tag = JAP
+				original_tag = KOR
 			}
-		}
-		modifier = {
-			add = 15
-			USA = { has_idea = NATO_member }
-			has_idea = NATO_member
-		}
-		modifier = {
-			add = 15
-			original_tag = JAP
-			has_idea = article_nine_jap
 		}
 	}
 
@@ -47,38 +58,38 @@ local_airspace_defense = {
 
 
 	# EFFECTS
-	air_home_defence_factor = 0.15
-	air_superiority_efficiency = 0.1
+	air_home_defence_factor = 0.25
+	air_superiority_efficiency = 0.15
 
 	milestones = {
-		{
-			air_manpower_requirement_factor = -0.15
-			air_fuel_consumption_factor = -0.15
-		}
 		{
 			effect = {
 				add_ideas = dedicated_air_force_manufacturing_hidden_spirit
 			}
 		}
 		{
+			air_manpower_requirement_factor = -0.15
+			air_fuel_consumption_factor = -0.15
+		}
+		{
 			static_anti_air_damage_factor = 0.10
-			 static_anti_air_hit_chance_factor = 0.10
-			 industry_air_damage_factor = -0.15
+			static_anti_air_hit_chance_factor = 0.10
+			industry_air_damage_factor = -0.15
 		}
 		{
 			production_cost_air_base_factor = -0.25
-			 production_speed_air_base_factor = 0.25
-			 repair_speed_air_base_factor = 0.50
+			production_speed_air_base_factor = 0.25
+			repair_speed_air_base_factor = 0.50
 		}
 		{
 			industry_air_damage_factor = -0.15
-			 static_anti_air_hit_chance_factor = 0.15
+			static_anti_air_hit_chance_factor = 0.15
 		}
 		{
 			air_training_xp_gain_factor = 0.25
-			 air_untrained_pilots_penalty_factor = -0.25
-			 air_wing_xp_loss_when_killed_factor = -0.25
-			 experience_gain_air_factor = 0.25
+			air_untrained_pilots_penalty_factor = -0.25
+			air_wing_xp_loss_when_killed_factor = -0.25
+			experience_gain_air_factor = 0.25
 		}
 	}
 }
@@ -90,7 +101,16 @@ strategic_destruction = {
 	description = GRAND_DOCTRINE_STRATEGIC_DESTRUCTION_DESC
 	icon = GFX_doctrine_strategic_destruction
 	available = {
-		always = yes
+		if = {
+			limit = { original_tag = JAP }
+			OR = {
+				has_completed_focus = JAP_article_nine_transition_comittee
+				power_balance_value = {
+					id = JAP_article_nine
+					value > -0.20
+				}
+			}
+		}
 	}
 
 	xp_cost = 100
@@ -99,15 +119,18 @@ strategic_destruction = {
 	ai_will_do = {
 		base = 1
 		modifier = {
-			factor = 0
-			OR = {
-				has_idea = non_power
-				has_idea = minor_power
-			}
+			add = 5
+			has_expansionist_government = yes
+			num_of_military_factories > 40
 		}
 		modifier = {
-			add = 15
-			original_tag = SOV
+			add = 5
+			has_war = yes
+			num_of_military_factories > 40
+		}
+		modifier = {
+			factor = 0
+			NOT = { is_major_power = yes }
 		}
 	}
 
@@ -117,7 +140,7 @@ strategic_destruction = {
 		heavy_aircraft
 		heavy_aircraft
 		strike_aircraft
-		multirole_aircraft
+		fighter_aircraft
 	}
 
 	# EFFECTS
@@ -170,7 +193,16 @@ air_battlefield_support = {
 	description = GRAND_DOCTRINE_AIR_BATTLEFIELD_SUPPORT_DESC
 	icon = GFX_doctrine_air_battlefield_support
 	available = {
-		always = yes
+		if = {
+			limit = { original_tag = JAP }
+			OR = {
+				has_completed_focus = JAP_article_nine_transition_comittee
+				power_balance_value = {
+					id = JAP_article_nine
+					value > -0.20
+				}
+			}
+		}
 	}
 
 	xp_cost = 100
@@ -179,15 +211,22 @@ air_battlefield_support = {
 	ai_will_do = {
 		base = 1
 		modifier = {
-			factor = 0
-			OR = {
-				has_idea = non_power
-				has_idea = minor_power
-			}
+			add = 5
+			has_war = yes
+			num_of_military_factories > 20
 		}
 		modifier = {
-			add = 15
-			original_tag = USA
+			add = 3
+			has_government = democratic
+			is_major_power = yes
+		}
+		modifier = {
+			factor = 0
+			has_government = communism
+		}
+		modifier = {
+			factor = 0
+			is_non_power = yes
 		}
 	}
 
@@ -243,7 +282,16 @@ air_supremacy = {
 	description = GRAND_DOCTRINE_AIR_SUPREMACY_DESC
 	icon = GFX_doctrine_air_supremacy
 	available = {
-		always = yes
+		if = {
+			limit = { original_tag = JAP }
+			OR = {
+				has_completed_focus = JAP_article_nine_transition_comittee
+				power_balance_value = {
+					id = JAP_article_nine
+					value > -0.20
+				}
+			}
+		}
 	}
 
 	xp_cost = 100
@@ -252,11 +300,25 @@ air_supremacy = {
 	ai_will_do = {
 		base = 1
 		modifier = {
-			factor = 0
+			add = 5
+			is_major_power = yes
+			num_of_military_factories > 40
+		}
+		modifier = {
+			add = 5
+			has_expansionist_government = yes
+			is_faction_leader = yes
+		}
+		modifier = {
+			add = 30
 			OR = {
-				has_idea = non_power
-				has_idea = minor_power
+				original_tag = USA
+				original_tag = ISR
 			}
+		}
+		modifier = {
+			factor = 0
+			is_non_power = yes
 		}
 	}
 
@@ -302,14 +364,23 @@ air_supremacy = {
 	}
 }
 
-mixed_role_air_force = {
+autonomous_air_operations = {
 	folder = air
 
-	name = GRAND_DOCTRINE_MIXED_ROLE
-	description = GRAND_DOCTRINE_MIXED_ROLE_DESC
-	icon = GFX_doctrine_mixed_role_air_force
+	name = GRAND_DOCTRINE_AUTONOMOUS_AIR
+	description = GRAND_DOCTRINE_AUTONOMOUS_AIR_DESC
+	icon = GFX_doctrine_drone_designs
 	available = {
-		always = yes
+		if = {
+			limit = { original_tag = JAP }
+			OR = {
+				has_completed_focus = JAP_article_nine_transition_comittee
+				power_balance_value = {
+					id = JAP_article_nine
+					value > -0.20
+				}
+			}
+		}
 	}
 
 	xp_cost = 100
@@ -318,21 +389,134 @@ mixed_role_air_force = {
 	ai_will_do = {
 		base = 1
 		modifier = {
-			add = 15
+			add = 5
+			num_of_military_factories > 35
+			date > 2015.1.1
+		}
+		modifier = {
+			add = 30
 			OR = {
-				original_tag = USA
-				original_tag = FRA
-				original_tag = ENG
-				original_tag = GER
-				original_tag = CHI
+				original_tag = TUR
+				original_tag = PER
 			}
 		}
 		modifier = {
 			factor = 0
-			OR = {
-				has_idea = non_power
-				has_idea = minor_power
+			is_non_power = yes
+		}
+	}
+
+	tracks = {
+		training_and_ops
+		aircraft_design
+		drone_warfare
+		drone_warfare
+		strike_aircraft
+		multirole_aircraft
+	}
+
+	# EFFECTS
+	air_superiority_detect_factor = 0.15
+	air_manpower_requirement_factor = -0.10
+
+	milestones = {
+		{
+			equipment_bonus = {
+				small_plane_suicide_airframe = {
+					air_ground_attack = 0.1
+					instant = yes
+				}
+				cv_small_plane_suicide_airframe = {
+					air_ground_attack = 0.1
+					instant = yes
+				}
+				medium_plane_suicide_airframe = {
+					air_ground_attack = 0.1
+					instant = yes
+				}
 			}
+		}
+		{
+			air_bombing_targetting = 0.10
+			air_mission_xp_gain_factor = 0.10
+		}
+		{
+			equipment_bonus = {
+				small_plane_suicide_airframe = {
+					air_attack = 0.1
+					instant = yes
+				}
+				cv_small_plane_suicide_airframe = {
+					air_attack = 0.1
+					instant = yes
+				}
+				medium_plane_suicide_airframe = {
+					air_bombing = 0.1
+					instant = yes
+				}
+			}
+
+		}
+		{
+			enemy_army_bonus_air_superiority_factor = -0.1
+			air_fuel_consumption_factor = -0.10
+		}
+		{
+			air_cas_efficiency = 0.10
+			air_cas_present_factor = 0.1
+		}
+		{
+			air_wing_xp_loss_when_killed_factor = -0.20
+			air_mission_efficiency = 0.10
+		}
+	}
+}
+
+mixed_role_air_force = {
+	folder = air
+
+	name = GRAND_DOCTRINE_MIXED_ROLE
+	description = GRAND_DOCTRINE_MIXED_ROLE_DESC
+	icon = GFX_doctrine_mixed_role_air_force
+	available = {
+		if = {
+			limit = { original_tag = JAP }
+			OR = {
+				has_completed_focus = JAP_article_nine_transition_comittee
+				power_balance_value = {
+					id = JAP_article_nine
+					value > -0.20
+				}
+			}
+		}
+	}
+
+	xp_cost = 100
+	xp_type = air
+
+	ai_will_do = {
+		base = 3
+		modifier = {
+			add = 5
+			has_government = democratic
+			is_major_power = yes
+		}
+		modifier = {
+			add = 5
+			is_minor_power = yes
+			num_of_military_factories > 10
+		}
+		modifier = {
+			add = 30
+			OR = {
+				original_tag = FRA
+				original_tag = ITA
+				original_tag = RAJ
+			}
+		}
+		modifier = {
+			factor = 0
+			is_non_power = yes
 		}
 	}
 
@@ -340,8 +524,8 @@ mixed_role_air_force = {
 		training_and_ops
 		aircraft_design
 		multirole_aircraft
-		heavy_aircraft
-		strike_aircraft
+		multirole_aircraft
+		multirole_aircraft
 		fighter_aircraft
 	}
 
@@ -375,6 +559,98 @@ mixed_role_air_force = {
 		{
 			ground_attack_factor = 0.05
 			air_night_penalty = -0.05
+		}
+	}
+}
+
+integrated_air_warfare = {
+	folder = air
+
+	name = GRAND_DOCTRINE_INTEGRATED_AIR_WARFARE
+	description = GRAND_DOCTRINE_INTEGRATED_AIR_WARFARE_DESC
+	icon = GFX_doctrine_air_superiority_fighters
+	available = {
+		if = {
+			limit = { original_tag = JAP }
+			OR = {
+				has_completed_focus = JAP_article_nine_transition_comittee
+				power_balance_value = {
+					id = JAP_article_nine
+					value > -0.20
+				}
+			}
+		}
+	}
+
+	xp_cost = 100
+	xp_type = air
+
+	ai_will_do = {
+		base = 1
+		modifier = {
+			add = 5
+			is_major_power = yes
+			num_of_military_factories > 30
+		}
+		modifier = {
+			add = 3
+			has_war = yes
+			is_major_power = yes
+		}
+		modifier = {
+			add = 30
+			OR = {
+				original_tag = ENG
+				original_tag = SOV
+			}
+		}
+		modifier = {
+			factor = 0
+			is_non_power = yes
+		}
+	}
+
+	tracks = {
+		training_and_ops
+		aircraft_design
+		fighter_aircraft
+		fighter_aircraft
+		strike_aircraft
+		heavy_aircraft
+	}
+
+	# EFFECTS
+	air_superiority_efficiency = 0.15
+	air_cas_efficiency = 0.1
+
+	milestones = {
+		{
+			ace_effectiveness_factor = 0.05
+			air_training_xp_gain_factor = 0.15
+		}
+		{
+			production_cost_air_base_factor = -0.15
+			repair_speed_air_base_factor = 0.25
+		}
+		{
+			air_escort_efficiency = 0.15
+			category_fighter = {
+				 air_attack = 0.05
+			 }
+		}
+		{
+			enemy_army_bonus_air_superiority_factor = -0.1
+			air_interception_detect_factor = 0.1
+		}
+		{
+			category_CAS = {
+				 air_ground_attack = 0.1
+				 air_defence = 0.05
+			 }
+		}
+		{
+			air_cas_present_factor = 0.1
+			ground_attack_factor = 0.05
 		}
 	}
 }

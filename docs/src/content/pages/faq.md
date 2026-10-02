@@ -1,12 +1,10 @@
 ---
 title: FAQ
-description: 'Frequently asked questions about Millennium Dawn: A Modern Day mod for Hearts of Iron IV.'
+description: "Frequently asked questions about Millennium Dawn: A Modern Day mod for Hearts of Iron IV."
 permalink: /faq/
 ---
 
-# Frequently Asked Questions
-
-For the [Troubleshooting Guide](/player-tutorials/troubleshooting-guide).
+For the [Troubleshooting Guide](/player-tutorials/troubleshooting-guide/).
 
 ## General Questions
 
@@ -52,7 +50,9 @@ Disable any submods. Many visual or gameplay issues are caused by submod conflic
 
 ### How do I download the mod with an older game version?
 
-Backwards compatible versions are available on our GitHub Releases page.
+Check [GitHub Releases](https://github.com/MillenniumDawn/Millennium-Dawn/releases)
+for a release supporting your HOI4 version. Follow [manual installation](/getting-started/#manual-installation)
+and keep only one copy of Millennium Dawn enabled.
 
 ### Will you add current real-world events to the game?
 

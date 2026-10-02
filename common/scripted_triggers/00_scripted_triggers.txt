@@ -1,3 +1,27 @@
+faction_goal_member_metrics_needed = {
+	OR = {
+		has_faction_goal = faction_goal_transform_nato_forces
+		has_faction_goal = faction_goal_transform_eap_forces
+		has_faction_goal = faction_goal_an_armored_fist
+		has_faction_goal = faction_goal_an_infantry_army
+		has_faction_goal = faction_goal_joint_military_exercises
+		has_faction_goal = faction_goal_high_seas_fleet
+		has_faction_goal = faction_goal_marine_corps
+		has_faction_goal = faction_goal_airborne_corps
+		has_faction_goal = faction_goal_submarine_force
+		has_faction_goal = faction_goal_convoy_escort_force
+		has_faction_goal = faction_goal_air_superiority
+		has_faction_goal = faction_goal_unlock_research
+		has_faction_goal = faction_goal_unlock_military
+		has_faction_goal = faction_goal_nato_gdp_per_capita
+		has_faction_goal = faction_goal_crush_the_democracy
+		has_faction_goal = faction_goal_defeat_of_communism
+		has_faction_goal = faction_goal_defeat_of_fascism
+		has_faction_goal = faction_goal_defeat_of_anti_communists
+		has_faction_goal = faction_goal_long_live_the_revolution
+	}
+}
+
 is_available_to_collaboration_government = { # occupied_countries.1 should be updated along with this
 	NOT = {
 		any_country_with_original_tag = {
@@ -26,52 +50,18 @@ controls_a_state_with_geothermal = {
 	}
 }
 
+# We can only check the industrial_complex to reduce the number of any_owned state checks since this is a case of the
+# industrial_complex is shared and as such if this is true then you can't build other buildings
+# - Bird
 no_building_slots = {
 	custom_trigger_tooltip = {
 		tooltip = TT_NO_BUILDING_SLOTS
 		NOT = {
-			OR = {
-				any_owned_state = {
-					free_building_slots = {
-						building = industrial_complex
-						size > 0
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = arms_factory
-						size > 0
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = dockyard
-						size > 0
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = renewable_energy_infra
-						size > 0
-						include_locked = no
-					}
-				}
-				#any_owned_state = {
-				#	free_building_slots = {
-				#		building = fuel_silo
-				#		size > 0
-				#		include_locked = no
-				#	}
-				#}
-				any_owned_state = {
-					free_building_slots = {
-						building = nuclear_reactor
-						size > 0
-						include_locked = no
-					}
+			any_owned_state = {
+				free_building_slots = {
+					building = industrial_complex
+					size > 0
+					include_locked = no
 				}
 			}
 		}
@@ -82,48 +72,11 @@ max_1_building_slots = {
 	custom_trigger_tooltip = {
 		tooltip = TT_MAX_1_BUILDING_SLOTS
 		NOT = {
-			OR = {
-				any_owned_state = {
-					free_building_slots = {
-						building = industrial_complex
-						size > 1
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = arms_factory
-						size > 1
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = dockyard
-						size > 1
-						include_locked = no
-					}
-				}
-				any_owned_state = {
-					free_building_slots = {
-						building = renewable_energy_infra
-						size > 1
-						include_locked = no
-					}
-				}
-				#any_owned_state = {
-				#	free_building_slots = {
-				#		building = fuel_silo
-				#		size > 1
-				#		include_locked = no
-				#	}
-				#}
-				any_owned_state = {
-					free_building_slots = {
-						building = nuclear_reactor
-						size > 1
-						include_locked = no
-					}
+			any_owned_state = {
+				free_building_slots = {
+					building = industrial_complex
+					size > 1
+					include_locked = no
 				}
 			}
 		}
@@ -135,14 +88,6 @@ has_more_than_num_trade_agreement = {
 	custom_trigger_tooltip = {
 		tooltip = more_than_1_signed_trade_agreement
 		check_variable = { signed_trade_agreements > num_agreement }
-	}
-}
-
-# Check Treasury Amount
-has_more_than_temp_treasury = {
-	custom_trigger_tooltip = {
-		tooltip = has_more_than_temp_treasury_tt
-		check_variable = { treasury > temp_treasury }
 	}
 }
 
@@ -262,30 +207,6 @@ controls_or_subject_of = {
 	}
 }
 
-has_same_ideology = {
-	custom_trigger_tooltip = {
-		tooltip = has_same_ideology_tt
-		OR = {
-			AND = {
-				has_government = democratic
-				ROOT = { has_government = democratic }
-			}
-			AND = {
-				has_government = fascism
-				ROOT = { has_government = fascism }
-			}
-			AND = {
-				has_government = communism
-				ROOT = { has_government = communism }
-			}
-			AND = {
-				has_government = neutrality
-				ROOT = { has_government = neutrality }
-			}
-		}
-	}
-}
-
 is_major_not_original_tag_root = {
 	is_major = yes
 	hidden_trigger = {
@@ -352,20 +273,6 @@ can_ROOT_get_wargoal_on_THIS = {
 	NOT = { is_subject_of = ROOT }
 }
 
-has_specialist_level_trigger = {
-	skill > 5
-	skill < 6
-}
-
-has_expert_level_trigger = {
-	skill > 6
-	skill < 7
-}
-
-has_genius_level_trigger = {
-	skill > 7
-}
-
 state_has_any_resource = {
 	OR = {
 		has_resources_amount = {
@@ -406,12 +313,14 @@ state_has_any_resource = {
 #Expected scopes: Target country is THIS, country getting wargoal is PREV
 country_can_be_reasonable_target_of_wargoal = {
 	NOT = {
-		has_war_with = ROOT
-		is_in_faction_with = PREV
-		has_guaranteed = PREV
-		is_guaranteed_by = PREV
-		has_non_aggression_pact_with = PREV
-		is_subject_of = PREV
+		OR = {
+			has_war_with = ROOT
+			is_in_faction_with = PREV
+			has_guaranteed = PREV
+			is_guaranteed_by = PREV
+			has_non_aggression_pact_with = PREV
+			is_subject_of = PREV
+		}
 	}
 }
 
@@ -424,25 +333,20 @@ country_can_be_reasonable_target_of_wargoal = {
 
 calculate_ai_interest = {
 	# Even if the country has treasury, we want to add the input cost to the debt to ensure we are getting the right end interest rate
-	set_temp_variable = { debt_temp = debt }
-	add_to_temp_variable = { debt_temp = input_cost }
-
-	set_temp_variable = { interest_rate_temp = debt_temp }
-	divide_temp_variable = { interest_rate_temp = gdp_total }
-	multiply_temp_variable = { interest_rate_temp = 10 }
-
-	set_temp_variable = { interest_rate_temp_multiplier = modifier@interest_rate_multiplier_modifier }
-	add_to_temp_variable = { interest_rate_temp = interest_rate_temp_multiplier }
-	check_variable = { interest_rate_temp > interest_rate_check }
-}
-Is_Muslim_Country = {
-	ROOT = {
-		OR = {
-			has_idea = sunni
-			has_idea = shia
-			has_idea = ibadi
-			has_idea = sufi_islam
+	set_temp_variable = {
+		debt_temp = {
+			value = debt
+			add = input_cost
 		}
+	}
+
+	check_expr = {
+		value = 0
+		add = debt_temp
+		divide = gdp_total
+		multiply = 10
+		add = modifier@interest_rate_multiplier_modifier
+		greater_than = { value = interest_rate_check }
 	}
 }
 
@@ -453,15 +357,14 @@ STATE_productivity_higher_than_999 = {
 	}
 }
 
-not_locked_faction = {
+is_locked_faction = {
 	custom_trigger_tooltip = {
-		tooltip = not_in_a_locked_faction_TT
-		hidden_trigger = {
-			OR = {
-				has_idea = NATO_member
-				has_idea = CSTO_member
-				has_idea = faction_resistance_axis_member
-			}
+		tooltip = is_locked_faction_tt
+		OR = {
+			has_idea = NATO_member
+			has_idea = CSTO_member
+			has_idea = UNASUL_member
+			has_idea = faction_resistance_axis_member
 		}
 	}
 }
@@ -484,13 +387,13 @@ currently_has_a_5_year_plan_selected = {
 
 election_notification_scripted_trigger = {
 	OR = {
-		AND = { PREV = { is_North_America = yes } is_North_America = yes }
-		AND = { PREV = { is_South_America = yes } is_South_America = yes }
-		AND = { PREV = { is_in_array = { global.is_middle_eastern_nation = THIS.id } } is_in_array = { global.is_middle_eastern_nation = THIS.id } }
-		AND = { PREV = { is_in_array = { global.is_african_nation = THIS.id } } is_in_array = { global.is_african_nation = THIS.id } }
-		AND = { PREV = { is_european_nation = yes } is_european_nation = yes }
-		AND = { PREV = { is_asian_nation = yes } is_asian_nation = yes }
-		AND = { PREV = { is_oceania_nation = yes } is_oceania_nation = yes }
+		AND = { PREV = { has_country_flag = north_america_nation_flag } has_country_flag = north_america_nation_flag }
+		AND = { PREV = { has_country_flag = south_america_nation_flag } has_country_flag = south_america_nation_flag }
+		AND = { PREV = { has_country_flag = middle_east_nation_flag } has_country_flag = middle_east_nation_flag }
+		AND = { PREV = { has_country_flag = african_nation_flag } has_country_flag = african_nation_flag }
+		AND = { PREV = { has_country_flag = european_nation_flag } has_country_flag = european_nation_flag }
+		AND = { PREV = { has_country_flag = asian_nation_flag } has_country_flag = asian_nation_flag }
+		AND = { PREV = { has_country_flag = oceania_nation_flag } has_country_flag = oceania_nation_flag }
 	}
 }
 
@@ -508,6 +411,271 @@ we_are_being_justified_against_or_wargoal_against_us = {
 		OR = {
 			is_justifying_wargoal_against = PREV
 			has_wargoal_against = PREV
+		}
+	}
+}
+
+is_currently_importing_any_resources = {
+	custom_trigger_tooltip = {
+		tooltip = is_currently_importing_any_resources_tt
+		OR = {
+			check_variable = { resource_imported@oil > 0 }
+			check_variable = { resource_imported@aluminium > 0 }
+			check_variable = { resource_imported@rubber > 0 }
+			check_variable = { resource_imported@steel > 0 }
+			check_variable = { resource_imported@tungsten > 0 }
+			check_variable = { resource_imported@chromium > 0 }
+		}
+	}
+}
+
+ai_is_threatened = {
+	OR = {
+		has_war = yes
+		threat > 0.30
+		check_variable = { potential_and_current_enemies^num > 0 }
+	}
+}
+
+# rule_nuclear_weapons lets this country receive nuclear weapons
+nuclear_grant_allowed = {
+	OR = {
+		has_game_rule = { rule = rule_nuclear_weapons option = allowed }
+		AND = {
+			has_game_rule = { rule = rule_nuclear_weapons option = ai_disabled }
+			is_ai = no
+		}
+	}
+}
+
+# Tech ai_will_do: large economies skip the low GDP per capita research zero
+ai_research_exempt_from_gdp_gate = {
+	OR = {
+		is_major = yes
+		has_idea = regional_power
+		has_idea = large_power
+		has_idea = great_power
+		has_idea = super_power
+	}
+}
+
+# Labor surplus makes worker-saving and pop-energy-heavy techs pay off later
+is_populous_developing_country = {
+	check_variable = { population_total_m > 100 }
+	check_variable = { gdp_per_capita < 20 }
+}
+
+# UAR GDP Share Check
+# Checks if ROOT's UAR GDP share exceeds the threshold (40%)
+# Uses total_uar_gdp and global.total_arabic_gdp variables; denominator floored at 1 to prevent division by zero
+uar_has_required_gdp_share = {
+	custom_trigger_tooltip = {
+		tooltip = UAR_unite_uar_tt
+		check_expr = {
+			value = total_uar_gdp
+			divide = { value = global.total_arabic_gdp max = 1 }
+			greater_than = { value = 0.40 }
+		}
+	}
+}
+
+# Random construction location triggers
+# Shared by the one_/two_/three_/four_ random building helpers in 00_scripted_effects.txt.
+# Each gates a state as a valid drop spot for a random instant-build: owned by the builder,
+# has a free slot, and is in the home area (or no home-area state has a free slot, so any owned state qualifies).
+
+# All shared-slot buildings (arms factory, civilian factory, offices, refineries, plants, agriculture, etc.)
+# draw from the same pooled state building slots, so one slot check covers them all.
+free_shared_building_slots = {
+	is_owned_by = PREV
+	free_building_slots = { building = industrial_complex size > 0 include_locked = yes }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = industrial_complex size > 0 include_locked = yes }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+dockyard_random_build_loc = {
+	is_owned_by = PREV
+	is_coastal = yes
+	free_building_slots = { building = dockyard size > 0 include_locked = yes }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = dockyard size > 0 include_locked = yes }
+					is_coastal = yes
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+infrastructure_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = infrastructure size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = infrastructure size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+nuclear_reactor_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = nuclear_reactor size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = nuclear_reactor size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+enrichment_facility_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = enrichment_facility size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = enrichment_facility size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+renewable_energy_infra_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = renewable_energy_infra size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = renewable_energy_infra size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+air_base_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = air_base size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = air_base size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+radar_station_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = radar_station size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = radar_station size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+anti_air_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = anti_air_building size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = anti_air_building size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+network_infrastructure_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = internet_station size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = internet_station size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+fuel_reserve_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = fuel_silo size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = fuel_silo size > 0 }
+					is_in_home_area = yes
+				}
+			}
+		}
+	}
+}
+
+fossil_powerplant_random_build_loc = {
+	is_owned_by = PREV
+	free_building_slots = { building = fossil_powerplant size > 0 }
+	OR = {
+		is_in_home_area = yes
+		NOT = {
+			owner = {
+				any_owned_state = {
+					free_building_slots = { building = fossil_powerplant size > 0 }
+					is_in_home_area = yes
+				}
+			}
 		}
 	}
 }

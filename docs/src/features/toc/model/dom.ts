@@ -1,4 +1,4 @@
-import { buildTocTree, type TocHeadingLike, type TocTreeItem } from "@/shared/lib/toc";
+import { buildTocTree, type TocHeadingLike, type TocTreeItem } from "@/shared/lib/content/toc";
 import { TOC_ATTRS, TOC_HEADING_RANGE, TOC_SELECTORS, TOC_STATES } from "../lib/config";
 import { renderTocTreeHtml } from "../lib/render";
 
@@ -23,9 +23,7 @@ function toTocHeading(heading: HTMLHeadingElement): TocHeadingLike | null {
 export type { TocTreeItem };
 
 export function buildTree(headings: HTMLHeadingElement[]): TocTreeItem[] {
-  const tocHeadings = headings
-    .map(toTocHeading)
-    .filter((heading): heading is TocHeadingLike => heading !== null);
+  const tocHeadings = headings.map(toTocHeading).filter((heading): heading is TocHeadingLike => heading !== null);
 
   return buildTocTree(tocHeadings, TOC_HEADING_RANGE);
 }

@@ -5,28 +5,28 @@ unique_focus_tree: true
 grid_order: 43
 flag_image: /assets/images/flags/myanmar.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: BRM
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '25'
-  - label: Total Factories
-    value: '3'
-  - label: Military Ind.
-    value: '1'
-  - label: Civilian Ind.
-    value: '2'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $3 Billions
-  - label: Debt
-    value: $151 Billions
-  - label: Investments
-    value: $0.01 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: BRM
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "25"
+      - label: Total Factories
+        value: "3"
+      - label: Military Ind.
+        value: "1"
+      - label: Civilian Ind.
+        value: "2"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $3 Billions
+      - label: Debt
+        value: $151 Billions
+      - label: Investments
+        value: $0.01 Billions
 ---
 
 Myanmar is a country surrounded by India and Bangladesh from the West, Kachin State from the North, Wa State from the North-East, China, Laos, Shan State, Karen State from the East and Thailand from the South. It starts with a Population of 39.51 Millions.

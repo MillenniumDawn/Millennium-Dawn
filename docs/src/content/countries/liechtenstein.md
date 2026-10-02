@@ -5,24 +5,24 @@ unique_focus_tree: true
 grid_order: 42
 flag_image: /assets/images/flags/liechtenstein.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: LIC
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '0'
-  - label: Total Factories
-    value: '0'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $5 Billions
-  - label: Debt
-    value: $0 Billions
-  - label: Investments
-    value: $19.85 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: LIC
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "0"
+      - label: Total Factories
+        value: "0"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $5 Billions
+      - label: Debt
+        value: $0 Billions
+      - label: Investments
+        value: $19.85 Billions
 ---
 
 Liechtenstein is a country surrounded by Switzerland from the North, West and South, and Austria from the East. It starts with a Population of 33.32K.

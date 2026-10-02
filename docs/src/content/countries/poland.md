@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 48
 flag_image: /assets/images/flags/poland.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: POL
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '18'
-  - label: Total Factories
-    value: '15'
-  - label: Military Ind.
-    value: '5'
-  - label: Civilian Ind.
-    value: '9'
-  - label: Naval Dockyards
-    value: '1'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $43 Billions
-  - label: Debt
-    value: $222 Billions
-  - label: Investments
-    value: $0 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: POL
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "18"
+      - label: Total Factories
+        value: "15"
+      - label: Military Ind.
+        value: "5"
+      - label: Civilian Ind.
+        value: "9"
+      - label: Naval Dockyards
+        value: "1"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $43 Billions
+      - label: Debt
+        value: $222 Billions
+      - label: Investments
+        value: $0 Billions
 ---
 
 Poland is a country surrounded by Germany from the West, Czech Republic and Slovakia from the South, Ukraine from the South-East, Belarus from the East and Russia and Lithuania from the North. It starts with a Population of 38.47 Millions.

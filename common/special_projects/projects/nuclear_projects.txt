@@ -23,6 +23,15 @@ sp_nuclear_energy = {
 				nuclear_technology = 1
 				popup = no
 			}
+			add_to_array = { global.enrichment_countries = THIS.id }
+			set_variable = { var_reactor_material_stockpile = 300 }
+			set_country_flag = enabled_nuclear_reactor_fuel_production
+		}
+		facility_state_effects = {
+			set_building_level = {
+				type = enrichment_facility
+				level = 1
+			}
 		}
 	}
 
@@ -41,7 +50,7 @@ sp_nuclear_energy = {
 	}
 
 	ai_will_do = {
-		base = 1
+		base = 25
 	}
 }
 sp_thorium_nuclear_fuel = {
@@ -97,7 +106,7 @@ sp_thorium_nuclear_fuel = {
 	ai_will_do = {
 		base = 1
 		modifier = {
-			add = 10
+			add = 25
 			FROM = {
 				has_nuclear_reactors = yes
 			}
@@ -176,7 +185,7 @@ sp_fusion_reactors = {
 	ai_will_do = {
 		base = 1
 		modifier = {
-			add = 10
+			add = 25
 			has_nuclear_reactors = yes
 		}
 		modifier = {
@@ -186,7 +195,7 @@ sp_fusion_reactors = {
 	}
 }
 sp_nuclear_bomb = {
-	allowed = { always = yes }
+	allowed = { NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } } }
 	icon = GFX_sp_nuclear_bomb
 
 	specialization = specialization_air
@@ -226,11 +235,36 @@ sp_nuclear_bomb = {
 	}
 
 	ai_will_do = {
-		base = 1
+		base = 0.25
+		modifier = {
+			factor = 6
+			ROOT = {
+				OR = {
+					has_idea = large_power
+					has_idea = great_power
+					has_idea = super_power
+					is_major = yes
+				}
+			}
+		}
+
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
+		}
+		modifier = {
+			factor = 0
+			NOT = { has_game_rule = { rule = rule_nuclear_weapons option = allowed } }
+		}
 	}
 }
 sp_nuclear_warhead_program = {
-	allowed = { has_dlc = "Gotterdammerung" }
+	allowed = {
+		has_dlc = "Gotterdammerung"
+		NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } }
+	}
 	specialization = specialization_air
 
 	project_tags = sp_tag_nuclear_weapons
@@ -238,34 +272,21 @@ sp_nuclear_warhead_program = {
 	available = {
 		FROM = {
 			has_tech = ballistic_missile
-			if = {
-				limit = {
-					tag = GER
-				}
-				NOT = { has_country_flag = GER_no_nuclear }
-			}
+			if = { limit = { original_tag = GER } NOT = { has_country_flag = GER_no_nuclear } }
 		}
 	}
 
-	special_project_parent = {
-		sp_nuclear_bomb
-	}
+	special_project_parent = { sp_nuclear_bomb }
 
-	breakthrough_cost = {
-		specialization_nuclear = 3
-	}
+	breakthrough_cost = { specialization_air = 3 }
 
 	prototype_time = sp_time.prototype.very_long
 
 	complexity = sp_complexity.insane
 
 	project_output = {
-		country_effects = {
-			custom_effect_tooltip = sp_nuclear_warhead_program_tt
-		}
-		enable_equipment_modules = {
-			spec_nuclear_consent
-		}
+		country_effects = { custom_effect_tooltip = sp_nuclear_warhead_program_tt }
+		enable_equipment_modules = { spec_nuclear_consent }
 	}
 
 	generic_prototype_rewards = {
@@ -297,9 +318,7 @@ sp_nuclear_warhead_program = {
 				max = 100
 			}
 
-			weight = {
-				base = 1
-			}
+			weight = { base = 1 }
 
 			option = {
 				token = sp_improved_nuclear_ballistic_warhead_delivery_systems_option
@@ -325,6 +344,28 @@ sp_nuclear_warhead_program = {
 	}
 
 	ai_will_do = {
-		base = 1
+		base = 0.25
+		modifier = {
+			factor = 6
+			ROOT = {
+				OR = {
+					has_idea = large_power
+					has_idea = great_power
+					has_idea = super_power
+					is_major = yes
+				}
+			}
+		}
+
+		modifier = {
+			factor = 0
+			ROOT = {
+				NOT = { ai_for_units_is_not_disabled = yes }
+			}
+		}
+		modifier = {
+			factor = 0
+			NOT = { has_game_rule = { rule = rule_nuclear_weapons option = allowed } }
+		}
 	}
 }

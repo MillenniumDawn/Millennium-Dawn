@@ -4,7 +4,7 @@ permalink: /countries-list/
 redirect_to: /countries/
 seo: false
 robots: noindex, nofollow
-toc: 'off'
+toc: "off"
 ---
 
 This page has moved to [/countries/](/countries/).

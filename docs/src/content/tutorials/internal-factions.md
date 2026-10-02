@@ -3,8 +3,6 @@ title: Internal Factions Guide
 description: Guide for the Internal Factions system in Millennium Dawn.
 ---
 
-# Internal Factions Guide
-
 Internal Factions represent powerful interest groups within your country. Each faction has an opinion score from 0 to 100, where 50 is neutral. Higher opinion unlocks stronger dynamic bonuses; low opinion reduces or reverses them. Factions cost **1500 Political Power** to add (reducible by the "Reduce Internal Faction Costs" game rule).
 
 You can only have **one active faction at a time**. Switching removes the old faction and replaces it with the new one.
@@ -12,6 +10,7 @@ You can only have **one active faction at a time**. Switching removes the old fa
 ## Table of Contents
 
 - [How Opinion Works](#how-opinion-works)
+  - [Opinion Modifiers](#opinion-modifiers)
 - [Economic Factions](#economic-factions)
   - [Small & Medium Business Owners](#small--medium-business-owners)
   - [International Bankers](#international-bankers)
@@ -50,8 +49,8 @@ You can only have **one active faction at a time**. Switching removes the old fa
 
 Opinion represents how satisfied a faction is with the ruling government. It decays monthly toward its minimum threshold if not actively maintained.
 
-- **Starting Opinion**: 60 when you first add a faction
-- **Minimum Threshold**: 50 for most factions (the floor opinion decays toward)
+- **Starting Opinion**: 60 when you add a faction during play. Factions a country starts the game with begin at 50 unless its history sets another value
+- **Minimum Threshold**: 50 by default (the floor opinion decays toward). Decay never pushes opinion below it and never lifts opinion that is already lower
 - **Opinion Ranges**:
   - **Hostile**: 0–30
   - **Negative**: 31–49
@@ -59,9 +58,15 @@ Opinion represents how satisfied a faction is with the ruling government. It dec
   - **Positive**: 70–89
   - **Enthusiastic**: 90–100
 
-**Autocrat Bonus**: Autocratic governments (Western Autocrats, Emerging Autocrats, Neutral Autocrats, Fascists, Military Junta) receive **double opinion changes** from events and decisions.
+**Autocrat Bonus**: Autocratic governments (Western Autocrats, Emerging Autocrats, Neutral Autocrats, Fascists, Military Junta) receive **double positive opinion changes** from events and decisions. Negative opinion changes are not doubled.
 
-Ideas that increase a faction's minimum opinion also raise the floor that monthly decay targets, effectively sustaining higher opinion levels passively.
+### Opinion Modifiers
+
+Laws, national spirits and focuses can shift a faction's limits. They show on the idea as one of three modifiers, and values from different sources add together:
+
+- **Minimum Opinion of (faction)**: Raises the minimum threshold to 50 plus the value, and opinion can never drop below the value itself. A negative value lowers the threshold instead. Example: Reasonable Defense gives The Military +5, so it decays to 55 and never falls under 5.
+- **Maximum Opinion of (faction)**: Caps opinion at 100 plus the value. Only negative values do anything.
+- **Opinion of (faction) per Month**: Added every month, even when the "Internal Faction Opinion Monthly Tick Amount" game rule turns decay off.
 
 ---
 
@@ -69,7 +74,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Small & Medium Business Owners
 
-**Available for**: Most nations (not available to WAG, KOR, NKO — those use unique variants)
+**Available for**: Most nations (not available to KOR, NKO. Those use unique variants)
 
 **Dynamic Bonuses** (scale with opinion):
 
@@ -157,7 +162,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Industrial Conglomerates
 
-**Available for**: Most nations — not available to former Soviet/oligarch states (SOV, UKR, KAZ, BLR, ARM, GEO, UZB, TRK, KYR, MLV, PMR, NOV, SOO, ABK, SYR, EGY), which use Oligarchs instead
+**Available for**: Most nations, not available to former Soviet/oligarch states (SOV, UKR, KAZ, BLR, ARM, GEO, UZB, TRK, KYR, MLV, PMR, NOV, SOO, ABK, SYR, EGY), which use Oligarchs instead
 
 **Static Bonuses**:
 
@@ -297,7 +302,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 **Minimum Opinion Bonuses**:
 
-- Defense spending level increases minimum opinion (+5% per tier from "Reasonable Defense" to "Total War Economy")
+- Defense spending level increases minimum opinion (+5 per tier, from +5 at "Reasonable Defense" to +35 at "Total War Economy")
 
 **Events**:
 
@@ -308,7 +313,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 **Decisions**:
 
-- **Allow Foreign Nationals**: -5 opinion, +5% conscription factor, +15% migration rate
+- **Allow Foreign Nationals**: -5 opinion, +5% conscription factor, +15% migration rate, maximum opinion capped at 95 while active
 - **Repeal Foreign Nationals**: +5 opinion
 
 ---
@@ -490,7 +495,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 **Decisions**:
 
 - **Encourage Religion in Government**: +5 opinion, +5% ruling outlook popularity
-- **Impose Taxes on Religious Institutions**: -15 opinion, +10 opinion for Communist Cadres
+- **Impose Taxes on Religious Institutions**: -15 opinion, +10 opinion for Communist Cadres, maximum opinion capped at 95 while active
 - **Repeal Religious Taxes**: +5 opinion
 
 ---
@@ -607,7 +612,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 ### Iranian Quds Force
 
-**Available for**: Iranian proxies — Iraq, Hamas, Hezbollah, Syria, Houthis, Yemen, Kurdistan, Lebanon, Afghanistan, Taliban, Tajikistan, and Gulf states
+**Available for**: Iranian proxies, Iraq, Hamas, Hezbollah, Syria, Houthis, Yemen, Kurdistan, Lebanon, Afghanistan, Taliban, Tajikistan, and Gulf states
 
 **Availability**: Requires Communism, Neutrality, or Nationalist government
 
@@ -671,7 +676,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 **Available for**: South Korea only (replaces Small & Medium Business Owners)
 
-**Note**: Minimum opinion is **60** (higher floor than most factions)
+**Note**: Decays no lower than **60** (Minimum Opinion +10)
 
 **Static Bonuses**:
 
@@ -693,7 +698,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 1. **Prioritize factions that match your playstyle**: Economic factions accelerate building; military factions improve combat readiness.
 
-2. **Autocratic governments get double opinion gains**: This makes maintaining high opinion significantly easier.
+2. **Autocratic governments get double positive opinion gains**: This makes maintaining high opinion significantly easier, though negative changes still hit at normal rate.
 
 3. **Opinion decays monthly**: Neglecting a faction will see it drift back toward its minimum threshold. Use decisions and events to maintain it.
 
@@ -701,7 +706,7 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 5. **Keep 75–150 PP available**: Faction-related decisions are time-sensitive and appear as events you need to act on.
 
-6. **Conflicting factions**: Labour Unions and business owner factions (SMBO, Industrial Conglomerates) often have opposing interests — choose based on your economic strategy.
+6. **Conflicting factions**: Labour Unions and business owner factions (SMBO, Industrial Conglomerates) often have opposing interests, choose based on your economic strategy.
 
 7. **Religious factions are strong for stability**: The political power and population growth bonuses are among the best in the game for civilian buildup.
 
@@ -727,18 +732,18 @@ Ideas that increase a faction's minimum opinion also raise the floor that monthl
 
 | Faction                        | Category         | Key Bonus                            | Availability Restriction               |
 | ------------------------------ | ---------------- | ------------------------------------ | -------------------------------------- |
-| Small & Medium Business Owners | Economic         | +15% civ construction, +20% civ tax  | Not WAG, KOR, NKO                      |
+| Small & Medium Business Owners | Economic         | +15% civ construction, +20% civ tax  | Not KOR, NKO                           |
 | International Bankers          | Economic         | -1 interest rate, +20% trade op.     | Not USA                                |
-| Fossil Fuel Industry           | Economic         | +25% fuel gain                       | —                                      |
+| Fossil Fuel Industry           | Economic         | +25% fuel gain                       | ,                                      |
 | Industrial Conglomerates       | Economic         | +15% infra construction              | Not oligarch/post-Soviet states        |
 | Oligarchs                      | Economic         | +20% local resources                 | Oligarch/post-Soviet states only       |
 | Maritime Industry              | Militaristic     | +20% dockyard speed and capacity     | Requires coastal state                 |
-| Defense Industry               | Militaristic     | +15% mil factory productivity        | —                                      |
+| Defense Industry               | Militaristic     | +15% mil factory productivity        | ,                                      |
 | The Military                   | Militaristic     | +10% army morale, -25% pers. cost    | Requires military idea                 |
 | Intelligence Community         | Militaristic     | +15% intel factors, +20% crypto      | Not Pakistan                           |
 | Labour Unions                  | Special Interest | +25% political power                 | Not Nationalist or Fascist governments |
-| Landowners                     | Special Interest | +15% local resources                 | —                                      |
-| Farmers                        | Special Interest | +20% population growth               | —                                      |
+| Landowners                     | Special Interest | +15% local resources                 | ,                                      |
+| Farmers                        | Special Interest | +20% population growth               | ,                                      |
 | Communist Cadres               | Special Interest | +25% mobilization speed              | Communist governments only             |
 | The Priesthood                 | Religious        | +30% political power, +25% pop.      | Buddhism, Hinduism, Shinto, Cheondoism |
 | The Ulema                      | Religious        | +30% political power, +25% pop.      | Sunni, Ibadi, Sufi, Shia Islam         |

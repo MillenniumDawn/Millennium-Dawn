@@ -131,7 +131,7 @@ raid_type_id = {
         # list of equipment archetypes and numbers
         # Having this equipment (in stockpile) is a precondition for *creating* the raid, and
         # will be collected after a raid is created
-		transport_plane_equipment = 5
+		large_plane_air_transport_airframe = 5
 
 		nukes = 1					# number of nukes (if using nukes)
     }

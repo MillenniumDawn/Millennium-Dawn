@@ -1,0 +1,360 @@
+#!/usr/bin/env python3
+"""Validate that `damage_building` / `remove_building` effects are guarded by a
+check that the named building actually exists.
+
+Calling either effect against a building the state/country doesn't have spams
+`error.log` and, at the scale MD runs raids and random-list decisions,
+degrades performance across the campaign (issue #2806).
+
+The rule: the `type = <building>` an effect names must also be proven present
+by a trigger sitting between the effect and the top of its enclosing script
+tree. "Proven present" is read strictly:
+
+  - Only a comparison that cannot hold at level zero counts: `X > 0` (or any
+    higher bound), `X >= 1`, `X == 1`. `X < 1`, `X <= 0`, `X == 0` and `X != 0`
+    prove nothing about presence.
+  - A comparison inside `NOT` / `OR` / `NAND` / `NOR` / `count_triggers` proves
+    nothing -- a disjunct may be the branch that did not hold.
+  - A comparison inside an `any_*` / `all_*` scope block proves nothing about
+    the scope the effect runs in. `any_core_state = { arms_factory > 1 }` says
+    some state has one, never that the selected state does.
+
+The mod's accepted guard idioms, all derived from live usage:
+
+  - A bare building-count comparison in an enclosing `limit`. That is the
+    `if = { limit = { fuel_silo > 0 } ... }` form every `common/raids/` site
+    uses, and the same `limit` on a scoped iterator (`random_owned_state =
+    { limit = { dockyard > 0 } ... }`, `every_owned_state`,
+    `random_core_state`, `random_controlled_state`, ...).
+  - `non_damaged_building_level = { building = X ... }` or
+    `any_province_building_level = { building = X ... }` (also accepts
+    `has_building` / `num_of_buildings`, both unused today) anywhere in the
+    limit, however deeply nested.
+  - A sibling `modifier = { factor = 0  X < 1 }` zeroing a `random_list`
+    bucket's weight when the building is absent. The polarity is inverted
+    there: the bucket runs only when the condition fails, so it is the
+    *absence* comparison that proves presence.
+
+A state selector (`random_owned_state`, `every_core_state`, ...) picks a state
+of its own, so proof gathered outside it does not carry in: each one must
+carry its own `limit` naming the building. Fixed scopes (`652 = { ... }`,
+`var:target_state = { ... }`) do inherit, since they name one specific state.
+
+`non_damaged_building_level` and `num_of_buildings` only resolve *state*
+buildings. Naming a province building in one is a load-time error -- the game
+logs `Not a valid state building: building` and the trigger never validates --
+so those two are additionally reported, and do not count as a guard. Use the
+bare `naval_base > 0` comparison or `any_province_building_level` instead.
+
+`trigger` / `available` / `visible` / `allowed` are not guards: a
+country-level `any_owned_state = { arms_factory > 0 }` does not prove the
+state the effect runs on has that building. `effect_tooltip` subtrees are
+skipped because they only preview effects and never execute.
+
+This is WARNING-only while the rule remains in rollout.
+"""
+
+import os
+import re
+import sys
+from typing import List, Set, Tuple
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
+from guard_scan import SKIP_BLOCKS as _SKIP_BLOCKS  # noqa: E402
+from guard_scan import Context, report_findings  # noqa: E402
+from guard_scan import sanitize as _sanitize  # noqa: E402
+from shared_utils import compute_line_offsets, line_for_offset
+from validator_common import BaseValidator, _child_blocks, run_validator_main
+
+_TYPE_RE = re.compile(r"\btype\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
+_COMPARISON_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*(>=|<=|==|!=|>|<)\s*(-?\d+)")
+_BUILDING_FIELD_RE = re.compile(r"\b(?:building|type)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
+_FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?\b")
+# A comparison inside any of these cannot stand on its own: the branch that
+# held may be another one, or the whole thing may be negated.
+_UNPROVEN_IN = frozenset({"not", "or", "nand", "nor", "count_triggers"})
+# Scope blocks that quantify over states other than the one in hand.
+_QUANTIFIER_SCOPE_RE = re.compile(r"^(?:any|all)_")
+# Scopes that pick their own state, so an outer guard says nothing about them.
+_STATE_SELECTOR_RE = re.compile(r"^(?:random|every)_\w*state\w*$")
+
+_BUILDING_EFFECTS = {
+    "damage_building": "unguarded-damage-building",
+    "remove_building": "unguarded-remove-building",
+}
+# Field-based building presence triggers -- name the building via `building =`
+# or `type =` rather than a bare comparison. has_building/num_of_buildings
+# have no live usage in the mod; kept for future-proofing.
+_NAMED_BUILDING_TRIGGERS = frozenset(
+    {
+        "non_damaged_building_level",
+        "any_province_building_level",
+        "has_building",
+        "num_of_buildings",
+    }
+)
+# Triggers that read the state building list and cannot resolve a province
+# building. Naming one is a load-time parser error, not just a weak guard.
+_STATE_ONLY_BUILDING_TRIGGERS = frozenset(
+    {"non_damaged_building_level", "num_of_buildings"}
+)
+# Every building carrying a `province_max` level cap in
+# common/buildings/00_buildings.txt. building_guards_test keeps this in sync.
+_PROVINCE_BUILDINGS = frozenset(
+    {
+        "air_facility",
+        "bunker",
+        "canal_locks",
+        "coastal_bunker",
+        "dam",
+        "dam_mountain",
+        "land_facility",
+        "naval_base",
+        "naval_facility",
+        "naval_headquarters",
+        "naval_supply_hub",
+        "nuclear_facility",
+        "rail_way",
+        "supply_node",
+    }
+)
+
+
+def _proves_present(operator: str, value: int) -> bool:
+    """Whether `<building> <operator> <value>` can only hold at level 1 or more."""
+    if operator == ">":
+        return value >= 0
+    if operator in (">=", "=="):
+        return value >= 1
+    return False
+
+
+def _proves_absent(operator: str, value: int) -> bool:
+    """Whether `<building> <operator> <value>` can only hold at level 0."""
+    if operator == "<":
+        return value <= 1
+    if operator == "<=":
+        return value <= 0
+    if operator == "==":
+        return value == 0
+    return False
+
+
+def _find_province_building_triggers(text: str) -> List[Tuple[int, str, str]]:
+    """`(offset, trigger, building)` for state-only triggers naming a province
+    building, anywhere in ``text``."""
+    found: List[Tuple[int, str, str]] = []
+    for name, _, body_start, body_end in _child_blocks(text, 0, len(text)):
+        if name in _STATE_ONLY_BUILDING_TRIGGERS:
+            for building in _BUILDING_FIELD_RE.findall(text[body_start:body_end]):
+                if building in _PROVINCE_BUILDINGS:
+                    found.append((body_start, name, building))
+        else:
+            found.extend(
+                (offset + body_start, trigger, building)
+                for offset, trigger, building in _find_province_building_triggers(
+                    text[body_start:body_end]
+                )
+            )
+    return found
+
+
+def _comparisons_outside_blocks(text: str, proves) -> Set[str]:
+    """Names compared at this level only, with nested block bodies excluded so
+    a `NOT` or `OR` subtree cannot leak its comparisons upwards."""
+    names: Set[str] = set()
+    cursor = 0
+    for _, name_start, _, body_end in _child_blocks(text, 0, len(text)):
+        names |= {
+            match.group(1)
+            for match in _COMPARISON_RE.finditer(text, cursor, name_start)
+            if proves(match.group(2), int(match.group(3)))
+        }
+        cursor = body_end + 1
+    names |= {
+        match.group(1)
+        for match in _COMPARISON_RE.finditer(text, cursor)
+        if proves(match.group(2), int(match.group(3)))
+    }
+    return names
+
+
+def _extract_building_guards(text: str) -> Set[str]:
+    """Building type names proven present by triggers anywhere in ``text``.
+
+    Combines the presence-comparison idiom (`fuel_silo > 0`) with the
+    field-based triggers, whose value only appears as `building = X` /
+    `type = X` inside a named child block. Negated, disjunctive and
+    other-state subtrees are skipped: none of them proves the building is
+    there when the effect runs.
+    """
+    buildings = _comparisons_outside_blocks(text, _proves_present)
+    for name, _, body_start, body_end in _child_blocks(text, 0, len(text)):
+        body = text[body_start:body_end]
+        if name in _NAMED_BUILDING_TRIGGERS:
+            named = set(_BUILDING_FIELD_RE.findall(body))
+            if name in _STATE_ONLY_BUILDING_TRIGGERS:
+                named -= _PROVINCE_BUILDINGS
+            buildings.update(named)
+        elif name.lower() in _UNPROVEN_IN or _QUANTIFIER_SCOPE_RE.match(name.lower()):
+            continue
+        else:
+            buildings.update(_extract_building_guards(body))
+    return buildings
+
+
+def _extract_absent_buildings(text: str) -> Set[str]:
+    """Building type names proven *absent* by triggers anywhere in ``text``.
+
+    Only used on a `factor = 0` modifier body, where the polarity flips: the
+    random_list bucket runs when the condition fails, so proving absence here
+    proves presence at the effect. `NOT = { X > 0 }` is the exact dual of the
+    bare `X < 1` and counts the same way.
+    """
+    buildings = _comparisons_outside_blocks(text, _proves_absent)
+    for name, _, body_start, body_end in _child_blocks(text, 0, len(text)):
+        body = text[body_start:body_end]
+        if name.lower() == "not":
+            buildings.update(_extract_building_guards(body))
+        elif name.lower() in _UNPROVEN_IN:
+            continue
+        else:
+            buildings.update(_extract_absent_buildings(body))
+    return buildings
+
+
+class Scanner:
+    """Walks one file's script tree, tracking buildings proven present."""
+
+    def __init__(self, text: str):
+        self.text = text
+        self.offsets = compute_line_offsets(text)
+        self.findings: List[Tuple[str, int, str]] = []
+
+    def check_province_building_triggers(self):
+        for offset, trigger, building in _find_province_building_triggers(self.text):
+            line = line_for_offset(self.offsets, offset)
+            message = (
+                f"{trigger} = {{ building = {building} ... }} cannot resolve "
+                f"{building}, which is a province building; use "
+                f"`{building} > 0` or any_province_building_level"
+            )
+            self.findings.append(("province-building-state-trigger", line, message))
+
+    def _check_effect(
+        self, effect: str, category: str, body_start: int, body_end: int, ctx: Context
+    ):
+        match = _TYPE_RE.search(self.text[body_start:body_end])
+        if not match:
+            return
+        building = match.group(1)
+        if building in ctx.present:
+            return
+        line = line_for_offset(self.offsets, body_start)
+        message = (
+            f"{effect} = {{ type = {building} ... }} is not guarded by a check "
+            f"that {building} exists"
+        )
+        self.findings.append((category, line, message))
+
+    def _buildings_from_limit(self, body_start: int, body_end: int) -> Set[str]:
+        for sub, _, s_start, s_end in _child_blocks(self.text, body_start, body_end):
+            if sub == "limit":
+                return _extract_building_guards(self.text[s_start:s_end])
+        return set()
+
+    def walk(self, start: int, end: int, ctx: Context):
+        blocks = _child_blocks(self.text, start, end)
+
+        gate_buildings: Set[str] = set()
+        for name, _, body_start, body_end in blocks:
+            if name == "modifier":
+                body = self.text[body_start:body_end]
+                if _FACTOR_ZERO_RE.search(body):
+                    gate_buildings |= _extract_absent_buildings(body)
+        ctx = ctx.apply(gate_buildings)
+
+        for name, _, body_start, body_end in blocks:
+            if name in _SKIP_BLOCKS or name == "modifier":
+                continue
+            category = _BUILDING_EFFECTS.get(name)
+            if category is not None:
+                self._check_effect(name, category, body_start, body_end, ctx)
+                continue
+            inherited = Context() if _STATE_SELECTOR_RE.match(name) else ctx
+            self.walk(
+                body_start,
+                body_end,
+                inherited.apply(self._buildings_from_limit(body_start, body_end)),
+            )
+
+
+def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
+    """Return (category, relative path, line, message) for one content file."""
+    filepath, mod_path = args
+    try:
+        with open(filepath, encoding="utf-8-sig", errors="replace") as handle:
+            raw = handle.read()
+    except OSError:
+        return []
+    if not any(
+        token in raw
+        for token in (
+            "damage_building",
+            "remove_building",
+            *_STATE_ONLY_BUILDING_TRIGGERS,
+        )
+    ):
+        return []
+
+    def compute():
+        scanner = Scanner(_sanitize(raw))
+        scanner.walk(0, len(scanner.text), Context())
+        scanner.check_province_building_triggers()
+        return scanner.findings
+
+    findings = disk_cache.per_file_cached_by_content(
+        mod_path, "building_guards_scan_v5", filepath, raw, compute
+    )
+    relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
+    return [(category, relative, line, message) for category, line, message in findings]
+
+
+class Validator(BaseValidator):
+    TITLE = "BUILDING GUARD VALIDATION"
+    STAGED_EXTENSIONS = [".txt"]
+
+    def validate_building_guards(self):
+        self._log_section("damage_building / remove_building existence guards")
+        files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
+        results = self._pool_map(scan_file, [(f, self.mod_path) for f in files])
+        rows = sorted(row for rows in results for row in rows)
+
+        report_findings(
+            self,
+            [row for row in rows if row[0] != "province-building-state-trigger"],
+            self.add_warning,
+            "unguarded building effect(s)",
+            "All damage_building/remove_building effects are guarded",
+        )
+
+        self._log_section("province buildings named in state-only triggers")
+        report_findings(
+            self,
+            [row for row in rows if row[0] == "province-building-state-trigger"],
+            self.add_warning,
+            "province building(s) named in a state-only trigger",
+            "No province buildings named in state-only building triggers",
+        )
+
+    def run_validations(self):
+        self.validate_building_guards()
+
+
+if __name__ == "__main__":
+    run_validator_main(
+        Validator,
+        "Validate that damage_building/remove_building effects are guarded by a "
+        "building-existence check",
+    )

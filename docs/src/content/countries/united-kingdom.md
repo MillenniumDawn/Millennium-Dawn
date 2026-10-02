@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 63
 flag_image: /assets/images/flags/united_kingdom.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: ENG
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '17'
-  - label: Total Factories
-    value: '60'
-  - label: Military Ind.
-    value: '24'
-  - label: Civilian Ind.
-    value: '27'
-  - label: Naval Dockyards
-    value: '9'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $74 Billions
-  - label: Debt
-    value: $879 Billions
-  - label: Investments
-    value: $1239 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: ENG
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "17"
+      - label: Total Factories
+        value: "60"
+      - label: Military Ind.
+        value: "24"
+      - label: Civilian Ind.
+        value: "27"
+      - label: Naval Dockyards
+        value: "9"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $74 Billions
+      - label: Debt
+        value: $879 Billions
+      - label: Investments
+        value: $1239 Billions
 ---
 
 The United Kingdom is a country surrounded mainly by water. Its only borders are Ireland and Spain. It starts with a Population of 58.98 Millions.

@@ -1,7 +1,8 @@
-﻿focus_tree = {
+focus_tree = {
 	id = generic_focus
 	country = { factor = 2 }
 	continuous_focus_position = { x = 5 y = 830 }
+
 	default = no
 	reset_on_civilwar = yes
 
@@ -20,8 +21,11 @@
 	shared_focus = CZE_SLO_open_political_court
 	# Sahrawi Mini Tree
 	shared_focus = SHA_cross_the_sand_wall
-	# Commonwealth Tree
-	shared_focus = CMW_Aso_Rock_Declaration
+	# MERCOSUR Tree
+	shared_focus = BRA_americas_unity
+
+	# Benelux shared tree
+	shared_focus = BNL_benelux_union_treaty
 
 	# Focus Shortcut
 	shortcut = {
@@ -71,6 +75,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_cabinet_reform
 		icon = government_beu
@@ -152,9 +157,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -212,9 +215,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -240,8 +241,7 @@
 			}
 			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.015 }
+				set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.015 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = 2 }
 				AGRI_protection_update = yes
@@ -254,6 +254,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -275,8 +279,8 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_expand_the_secret_service"
 			add_tech_bonus = {
-				name = CAT_nvg
-				category = CAT_nvg
+				name = GENERIC_expand_the_secret_service
+				category = CAT_night_vision
 				uses = 1
 				bonus = 0.25
 			}
@@ -291,9 +295,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -310,11 +312,7 @@
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 
-		available = {
-			any_owned_state = {
-				radar_station < 6
-			}
-		}
+		available = { any_owned_state = { radar_station < 6 } }
 
 		bypass_if_unavailable = yes
 
@@ -379,9 +377,7 @@
 
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
 
-		available = {
-			has_at_least_regional_power_status = yes
-		}
+		available = { has_at_least_regional_power_status = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_counter_terrorism_operations"
@@ -417,17 +413,13 @@
 
 		cost = 10
 
+		allow_branch = { has_dlc = "La Resistance" }
+
 		prerequisite = { focus = GENERIC_counter_terrorism_operations }
 
 		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INTERNAL_FACTION }
 
-		available = {
-			has_intelligence_agency = yes
-		}
-
-		allow_branch = {
-			has_dlc = "La Resistance"
-		}
+		available = { has_intelligence_agency = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_cyber_warfare_program"
@@ -439,7 +431,7 @@
 				name = GENERIC_cyber_warfare_program
 				uses = 1
 				bonus = 0.25
-				category = CAT_internet_tech
+				category = CAT_internet
 			}
 			set_temp_variable = { temp_opinion = 5 }
 			change_intelligence_community_opinion = yes
@@ -484,17 +476,20 @@
 				limit = { NOT = { has_war_with = ROOT } }
 				add_opinion_modifier = { target = PREV modifier = supports_us_2 }
 				reverse_add_opinion_modifier = { target = PREV modifier = supports_us_2 }
-				set_temp_variable = { influence_target = THIS.id }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			custom_effect_tooltip = influence_on_neighbors_tt
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.03 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.03 } }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -559,9 +554,9 @@
 			modifier = {
 				factor = 5
 				OR = {
-					has_idea = paralyzing_corruption
-					has_idea = crippling_corruption
-					has_idea = rampant_corruption
+					has_idea = corruption_level_10
+					has_idea = corruption_level_09
+					has_idea = corruption_level_08
 				}
 			}
 		}
@@ -582,9 +577,7 @@
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-		available = {
-			has_tech = internet1
-		}
+		available = { has_tech = internet_1 }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_network_infrastructure"
@@ -593,12 +586,16 @@
 				name = GENERIC_network_infrastructure
 				uses = 1
 				bonus = 0.25
-				category = CAT_internet_tech
+				category = CAT_internet
 			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -622,8 +619,7 @@
 			add_ideas = generic_decentralization
 			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.005 }
+				set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.005 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = 1 }
 				AGRI_protection_update = yes
@@ -633,6 +629,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -656,9 +656,7 @@
 			add_ideas = generic_centralization
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -681,9 +679,7 @@
 			add_political_power = 100
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -781,6 +777,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_non_aligned
 		icon = neutrality
@@ -809,10 +806,9 @@
 			recalculate_party = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_the_nationalist_rise
 		icon = fascism
@@ -1051,9 +1047,7 @@
 			recalculate_party = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -1088,10 +1082,9 @@
 			recalculate_party = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_the_conservative_approach
 		icon = improve_relations
@@ -1124,9 +1117,7 @@
 			recalculate_party = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -1161,10 +1152,9 @@
 			recalculate_party = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_jihad
 		icon = jihad
@@ -1300,9 +1290,7 @@
 			add_political_power = 75
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -1330,7 +1318,7 @@
 					has_opinion = { target = ROOT value > -50 }
 				}
 				add_opinion_modifier = { target = ROOT modifier = improve_trade }
-				set_temp_variable = { influence_target = THIS.id }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			custom_effect_tooltip = influence_on_neighbors_tt
@@ -1341,20 +1329,15 @@
 			change_chaebols_opinion = yes
 			change_wall_street_opinion = yes
 			if = { limit = { is_agrarian_economy = yes }
-				set_temp_variable = { crop_type = 0 }
 				set_temp_variable = { price_change = 3 }
-				AGRI_price_change_effect = yes
-				set_temp_variable = { crop_type = 1 }
-				set_temp_variable = { price_change = 3 }
-				AGRI_price_change_effect = yes
+				AGRI_price_change_all_crops = yes
 				AGRI_update_math_variables = yes
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_alignment_debate
 		icon = diplomacy
@@ -1371,10 +1354,9 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_alignment_debate"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			every_neighbor_country = {
 				limit = {
 					NOT = { has_war_with = ROOT }
@@ -1383,14 +1365,13 @@
 						value > 9
 					}
 				}
-				add_relative_party_popularity = yes
+				change_relative_party_popularity = yes
 			}
 		}
 
-		ai_will_do = {
-			base = 3
-		}
+		ai_will_do = { base = 3 }
 	}
+
 	focus = {
 		id = GENERIC_neutrality
 		icon = neutrality
@@ -1461,6 +1442,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_interventionism
 		icon = political_pressure
@@ -1525,6 +1507,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_build_fortifications
 		icon = city_fort
@@ -1552,6 +1535,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_militarism
 		icon = conscription
@@ -1583,6 +1567,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_peaceful_emergence
 		icon = construction
@@ -1614,6 +1599,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_revanchism
 		icon = fallen_soldiers
@@ -1625,6 +1611,8 @@
 		cost = 10
 
 		prerequisite = { focus = GENERIC_militarism }
+
+		search_filters = { FOCUS_FILTER_POLITICAL }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_revanchism"
@@ -1655,14 +1643,9 @@
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-		available = {
-			any_owned_state = {
-				infrastructure < 5
-			}
-		}
+		available = { any_owned_state = { infrastructure < 5 } }
 
 		bypass_if_unavailable = yes
-
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_build_roads"
@@ -1675,8 +1658,13 @@
 				factor = 0.5
 				check_variable = { interest_rate > 14.99 }
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_build_railways
 		icon = Generic_Railroads
@@ -1704,6 +1692,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_build_highways
 		icon = highway_repairs
@@ -1718,11 +1707,7 @@
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-		available = {
-			any_owned_state = {
-				infrastructure < 5
-			}
-		}
+		available = { any_owned_state = { infrastructure < 5 } }
 
 		bypass_if_unavailable = yes
 
@@ -1737,8 +1722,13 @@
 				factor = 0.5
 				check_variable = { interest_rate > 14.99 }
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_expand_urban_areas
 		icon = construction_engineering
@@ -1771,12 +1761,8 @@
 			}
 			modify_treasury_effect = yes
 			if = { limit = { is_agrarian_economy = yes }
-				set_temp_variable = { crop_type = 0 }
 				set_temp_variable = { price_change = -7 }
-				AGRI_price_change_effect = yes
-				set_temp_variable = { crop_type = 1 }
-				set_temp_variable = { price_change = -7 }
-				AGRI_price_change_effect = yes
+				AGRI_price_change_all_crops = yes
 				set_temp_variable = { temp_opinion = -12 }
 				change_farmers_opinion = yes
 				AGRI_update_math_variables = yes
@@ -1794,6 +1780,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -1823,10 +1813,9 @@
 			change_wall_street_opinion = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_increase_resource_production
 		icon = resource_extraction
@@ -2004,17 +1993,12 @@
 			}
 			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.005 }
+				set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.005 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = 1 }
 				AGRI_protection_update = yes
 				set_temp_variable = { allocation_change = -0.05 }
-				set_temp_variable = { crop_type = 0 }
-				AGRI_allocation_change_effect = yes
-				set_temp_variable = { allocation_change = 0.05 }
-				set_temp_variable = { crop_type = 1 }
-				AGRI_allocation_change_effect = yes
+				AGRI_shift_crop_allocation = yes
 				set_temp_variable = { temp_opinion = 2 }
 				change_farmers_opinion = yes
 				AGRI_update_math_variables = yes
@@ -2029,15 +2013,19 @@
 			change_oligarchs_opinion = yes
 			change_defense_industry_opinion = yes
 			change_landowners_opinion = yes
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = -0.001 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.001 } }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_economic_autonomy
 		icon = gold_standard
@@ -2057,10 +2045,9 @@
 			add_ideas = economic_autonomy
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_autarky
 		icon = GENERIC_austerity_measures
@@ -2083,9 +2070,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -2108,9 +2093,11 @@
 			if = {
 				limit = {
 					NOT = {
-						has_idea = economic_boom
-						has_idea = fast_growth
-						has_idea = stable_growth
+						OR = {
+							has_idea = economic_boom
+							has_idea = fast_growth
+							has_idea = stable_growth
+						}
 					}
 				}
 				increase_economic_growth = yes
@@ -2119,17 +2106,12 @@
 				remove_idea = economic_autonomy2
 				add_idea = economic_autonomy3
 			}
-			set_temp_variable = { debt_change = debt }
-			multiply_temp_variable = { debt_change = -0.03 }
+			set_temp_variable = { debt_change = { value = debt multiply = -0.03 } }
 			modify_debt_effect = yes
 			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
-				set_temp_variable = { crop_type = 0 }
 				set_temp_variable = { price_change = 5 }
-				AGRI_price_change_effect = yes
-				set_temp_variable = { crop_type = 1 }
-				set_temp_variable = { price_change = 5 }
-				AGRI_price_change_effect = yes
+				AGRI_price_change_all_crops = yes
 				set_temp_variable = { temp_opinion = 1 }
 				change_farmers_opinion = yes
 				AGRI_update_math_variables = yes
@@ -2141,6 +2123,10 @@
 			modifier = {
 				factor = 5
 				gdp_debt_ratio_higher_50 = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2163,8 +2149,7 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_productivity_measures"
 			set_temp_variable = { temp_productivity_change = 25 }
 			flat_productivity_change_effect = yes
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = -0.03 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.03 } }
 			modify_treasury_effect = yes
 		}
 
@@ -2173,6 +2158,10 @@
 			modifier = {
 				factor = 3
 				check_variable = { overall_productivity < 1000 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2197,9 +2186,7 @@
 			add_ideas = idea_generic_worker_productivity
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -2222,9 +2209,7 @@
 			add_ideas = idea_generic_the_manpower_solution
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -2253,9 +2238,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -2283,9 +2266,7 @@
 			change_international_bankers_opinion = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -2327,6 +2308,10 @@
 				factor = 0.5
 				check_variable = { interest_rate > 14.99 }
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -2362,6 +2347,10 @@
 				factor = 0.5
 				check_variable = { interest_rate > 14.99 }
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -2395,6 +2384,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_attract_foreign_investors
 		icon = union_representation_act
@@ -2414,9 +2404,7 @@
 			add_ideas = idea_focus_generic_public_service_investment
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -2433,14 +2421,11 @@
 
 		search_filters = { FOCUS_FILTER_INDUSTRY }
 
-		available = {
-			gdp_debt_ratio_higher_50 = yes
-		}
+		available = { gdp_debt_ratio_higher_50 = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_debt_refactoring"
-			set_temp_variable = { debt_change = debt }
-			multiply_temp_variable = { debt_change = 0.05 }
+			set_temp_variable = { debt_change = { value = debt multiply = 0.05 } }
 			clamp_temp_variable = { var = debt_change min = 0 max = 100 }
 			modify_debt_effect = yes
 			add_timed_idea = {
@@ -2458,6 +2443,10 @@
 			modifier = {
 				factor = 5
 				gdp_debt_ratio_higher_50 = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2490,7 +2479,15 @@
 			base = 1
 			modifier = {
 				factor = 0
+				can_staff_an_agriculture_district = no
+			}
+			modifier = {
+				factor = 0
 				check_variable = { total_unemployed_percentage_display < 0.01 }
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2512,7 +2509,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_subsistence_agriculture_investments"
-			set_temp_variable = { temp_change = 3 }
+			set_temp_variable = { temp_opinion = 3 }
 			change_farmers_opinion = yes
 			swap_ideas = {
 				remove_idea = agricultural_investments
@@ -2545,7 +2542,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_focus_towards_the_subsistence"
-			set_temp_variable = { temp_change = 3 }
+			set_temp_variable = { temp_opinion = 3 }
 			change_farmers_opinion = yes
 			swap_ideas = {
 				remove_idea = agricultural_investments2
@@ -2579,7 +2576,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_commercialized_agriculture_investments"
-			set_temp_variable = { temp_change = 3 }
+			set_temp_variable = { temp_opinion = 3 }
 			change_farmers_opinion = yes
 			two_random_agriculture_district = yes
 		}
@@ -2587,8 +2584,16 @@
 		ai_will_do = {
 			base = 1
 			modifier = {
+				factor = 0
+				can_staff_an_agriculture_district = no
+			}
+			modifier = {
 				factor = 2
 				is_agrarian_economy = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2609,7 +2614,7 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_encourage_more_commercial_agriculture"
-			set_temp_variable = { temp_change = 3 }
+			set_temp_variable = { temp_opinion = 3 }
 			change_farmers_opinion = yes
 			swap_ideas = {
 				remove_idea = agricultural_investments
@@ -2641,11 +2646,11 @@
 			focus = GENERIC_encourage_more_commercial_agriculture
 		}
 
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_INDUSTRY }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_a_new_breadbasket"
-			set_temp_variable = { temp_change = 5 }
+			set_temp_variable = { temp_opinion = 5 }
 			change_farmers_opinion = yes
 			set_temp_variable = { skip_payment = 1 }
 			one_random_agriculture_district = yes
@@ -2654,8 +2659,16 @@
 		ai_will_do = {
 			base = 1
 			modifier = {
+				factor = 0
+				can_staff_an_agriculture_district = no
+			}
+			modifier = {
 				factor = 2
 				is_agrarian_economy = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2678,15 +2691,12 @@
 
 		available = {
 			if = { limit = { is_ai = no }
-				custom_trigger_tooltip = {
-					tooltip = 50_total_gdp_tt
-					check_variable = { gdp_total > 50 }
-				}
+				gdp_total_greater_than_50 = yes
 				has_war = no
 				has_offensive_war = no
 			}
 			else = {
-				check_variable = { interest_rate < 14.999 }
+				interest_rate_lower_than_15 = yes
 			}
 		}
 
@@ -2711,6 +2721,10 @@
 				factor = 0
 				can_staff_an_industrial_complex = no
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 	# Microchip RND
@@ -2725,11 +2739,10 @@
 		cost = 6.8
 
 		prerequisite = { focus = GENERIC_mobilize_the_working_class }
+
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
 
-		available = {
-			nuclear_facility > 0
-		}
+		available = { nuclear_facility > 0 }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_microchip_research_and_development"
@@ -2768,9 +2781,7 @@
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_WAR_SUPPORT }
 
-		available = {
-			is_special_project_completed = sp:sp_microchip_production
-		}
+		available = { is_special_project_completed = sp:sp_microchip_production }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_microchip_domestic_production"
@@ -2781,7 +2792,11 @@
 			base = 3
 			modifier = {
 				factor = 0
-				can_staff_an_industrial_complex = no
+				can_staff_an_microchip_plant = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2803,7 +2818,7 @@
 				has_war = no
 			}
 			else = {
-				check_variable = { interest_rate < 14.999 }
+				interest_rate_lower_than_15 = yes
 			}
 		}
 
@@ -2839,8 +2854,13 @@
 				factor = 0
 				can_staff_an_industrial_complex = no
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_heavy_industry_investments
 		icon = tank_production
@@ -2856,10 +2876,7 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 95_total_gdp_tt
-				check_variable = { gdp_total > 95 }
-			}
+			gdp_total_greater_than_95 = yes
 			has_war = no
 		}
 
@@ -2897,6 +2914,10 @@
 				factor = 0
 				can_staff_an_arms_industry = no
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -2925,6 +2946,10 @@
 				factor = 2
 				check_variable = { resource_imported@rubber > 0 }
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -2943,10 +2968,7 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 150_total_gdp_tt
-				check_variable = { gdp_total > 150 }
-			}
+			gdp_total_greater_than_150 = yes
 			has_war = no
 		}
 
@@ -2984,6 +3006,10 @@
 				factor = 0
 				can_staff_an_arms_industry = no
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -3002,10 +3028,7 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 200_total_gdp_tt
-				check_variable = { gdp_total > 200 }
-			}
+			gdp_total_greater_than_200 = yes
 			has_war = no
 		}
 
@@ -3073,6 +3096,10 @@
 				factor = 5
 				has_an_energy_deficit = yes
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -3111,6 +3138,10 @@
 			modifier = {
 				factor = 5
 				has_an_energy_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -3197,7 +3228,7 @@
 
 		prerequisite = { focus = GENERIC_renewable_retooling }
 
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_renewable_infrastructure"
@@ -3228,6 +3259,10 @@
 				factor = 0
 				check_variable = { interest_rate > 8 }
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -3245,9 +3280,7 @@
 
 		search_filters = { FOCUS_FILTER_POWER_INFRASTRUCTURE }
 
-		available = {
-			controls_a_state_with_hydroelectric = yes
-		}
+		available = { controls_a_state_with_hydroelectric = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_hydroelectric_energy_expansion"
@@ -3255,8 +3288,7 @@
 				idea = hydroelectric_energy_production_idea
 				days = 1095
 			}
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = -0.007 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.007 } }
 			modify_treasury_effect = yes
 		}
 
@@ -3269,6 +3301,10 @@
 			modifier = {
 				factor = 5
 				has_an_energy_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -3287,9 +3323,7 @@
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 
-		available = {
-			controls_a_state_with_geothermal = yes
-		}
+		available = { controls_a_state_with_geothermal = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_geothermal_energy_expansion"
@@ -3297,8 +3331,7 @@
 				idea = geothermal_energy_production_idea
 				days = 1095
 			}
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = -0.007 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.007 } }
 			modify_treasury_effect = yes
 		}
 
@@ -3311,6 +3344,10 @@
 			modifier = {
 				factor = 5
 				has_an_energy_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -3332,9 +3369,7 @@
 
 		search_filters = { FOCUS_FILTER_POWER_INFRASTRUCTURE }
 
-		available = {
-			has_tech = utility_scale_battery_storage
-		}
+		available = { has_tech = utility_scale_battery_storage }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_battery_park_investments"
@@ -3349,6 +3384,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -3392,6 +3431,10 @@
 				factor = 5
 				has_an_energy_deficit = yes
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -3409,9 +3452,7 @@
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
 
-		available = {
-			has_tech = reactor1
-		}
+		available = { has_tech = reactor1 }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_nuclear_energy_expansions_two"
@@ -3430,6 +3471,10 @@
 			modifier = {
 				factor = 5
 				has_an_energy_deficit = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -3459,6 +3504,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -3487,6 +3536,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -3513,9 +3566,7 @@
 			change_labour_unions_opinion = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -3542,9 +3593,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	# SATISFY THE MIDDLE CLASS
@@ -3560,13 +3609,10 @@
 
 		prerequisite = { focus = GENERIC_mobilize_the_working_class }
 
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY FOCUS_FILTER_INDUSTRY }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 95_total_gdp_tt
-				check_variable = { gdp_total > 95 }
-			}
+			gdp_total_greater_than_95 = yes
 			has_civil_war = no
 			has_offensive_war = no
 		}
@@ -3590,18 +3636,22 @@
 			change_wall_street_opinion = yes
 			newline = yes
 			if = { limit = { is_agrarian_economy = yes }
-				set_temp_variable = { crop_type = 0 }
 				set_temp_variable = { price_change = 2 }
-				AGRI_price_change_effect = yes
-				set_temp_variable = { crop_type = 1 }
-				set_temp_variable = { price_change = 2 }
-				AGRI_price_change_effect = yes
+				AGRI_price_change_all_crops = yes
 				AGRI_update_math_variables = yes
 			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				can_staff_an_offices = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -3638,10 +3688,9 @@
 			change_the_clergy_opinion = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_emphasize_separation_of_church_and_state
 		icon = focus_secular
@@ -3659,10 +3708,9 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_emphasize_separation_of_church_and_state"
-			set_party_index_to_ruling_party = yes
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 			newline = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_the_priesthood_opinion = yes
@@ -3670,15 +3718,19 @@
 			change_the_wahabi_ulema_opinion = yes
 			change_the_clergy_opinion = yes
 			newline = yes
-			set_temp_variable = { treasury_change = gdp_total }
-			multiply_temp_variable = { treasury_change = 0.01 }
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.01 } }
 			modify_treasury_effect = yes
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_please_the_upper_class
 		icon = champagne_green
@@ -3708,10 +3760,9 @@
 			change_wall_street_opinion = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_assure_intellectual_freedoms
 		icon = examine_foreign_science
@@ -3737,10 +3788,9 @@
 			generic_research_buff = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_invest_in_biofuels
 		icon = green_biomass_plant
@@ -3768,17 +3818,12 @@
 			}
 			# Agricultural economy effects
 			if = { limit = { is_agrarian_economy = yes }
-				set_temp_variable = { treasury_change = gdp_total }
-				multiply_temp_variable = { treasury_change = -0.005 }
+				set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.005 } }
 				modify_treasury_effect = yes
 				set_temp_variable = { AGRI_protections_change = 1 }
 				AGRI_protection_update = yes
 				set_temp_variable = { allocation_change = 0.075 }
-				set_temp_variable = { crop_type = 0 }
-				AGRI_allocation_change_effect = yes
-				set_temp_variable = { allocation_change = -0.075 }
-				set_temp_variable = { crop_type = 1 }
-				AGRI_allocation_change_effect = yes
+				AGRI_shift_crop_allocation = yes
 				set_temp_variable = { temp_opinion = 7 }
 				change_farmers_opinion = yes
 				AGRI_update_math_variables = yes
@@ -3802,6 +3847,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_import_foreign_automobiles
 		icon = bmw_car
@@ -3820,19 +3866,18 @@
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_import_foreign_automobiles"
 			add_political_power = 100
 			add_tech_bonus = {
-				name = CAT_afv
-				category = CAT_util
-				category = CAT_afv
-				category = CAT_ifv
+				name = GENERIC_import_foreign_automobiles
+				category = CAT_utility_vehicles
+				category = CAT_armored_fighting_vehicles
+				category = CAT_infantry_fighting_vehicles
 				bonus = 0.25
 				uses = 2
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_create_an_automotive_industry
 		icon = industry
@@ -3848,10 +3893,7 @@
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 135_total_gdp_tt
-				check_variable = { gdp_total > 135 }
-			}
+			gdp_total_greater_than_135 = yes
 			has_war = no
 		}
 
@@ -3938,6 +3980,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_assure_access_to_education
 		icon = scientific_exchange
@@ -3952,12 +3995,7 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = 135_total_gdp_tt
-				check_variable = { gdp_total > 135 }
-			}
-		}
+		available = { gdp_total_greater_than_135 = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_assure_access_to_education"
@@ -3980,6 +4018,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_expand_the_universities
 		icon = economic_sciencer
@@ -3995,12 +4034,7 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = 160_total_gdp_tt
-				check_variable = { gdp_total > 160 }
-			}
-		}
+		available = { gdp_total_greater_than_160 = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_expand_the_universities"
@@ -4014,10 +4048,9 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_artificial_intelligence_investments
 		icon = economic_tech
@@ -4033,11 +4066,8 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 200_total_gdp_tt
-				check_variable = { gdp_total > 200 }
-			}
-			has_tech = early_ai_robotics
+			gdp_total_greater_than_200 = yes
+			has_tech = artificial_intelligence_5
 		}
 
 		completion_reward = {
@@ -4047,7 +4077,7 @@
 				name = GENERIC_artificial_intelligence_investments
 				uses = 2
 				bonus = 0.5
-				category = CAT_ai
+				category = CAT_artificial_intelligence
 			}
 		}
 
@@ -4057,12 +4087,9 @@
 				add = 5
 				check_variable = { total_unemployed_percentage_display < 0.02 }
 			}
-			modifier = {
-				factor = 0
-				has_active_mission = bankruptcy_incoming_collapse
-			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_industrial_research_task_forces
 		icon = tech_sharing
@@ -4078,22 +4105,16 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = {
-			custom_trigger_tooltip = {
-				tooltip = 200_total_gdp_tt
-				check_variable = { gdp_total > 200 }
-			}
-		}
+		available = { gdp_total_greater_than_200 = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_industrial_research_task_forces"
 			generic_research_buff = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_domestic_vehicle_research
 		icon = Tank_sheep
@@ -4114,22 +4135,30 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 200_total_gdp_tt
-				check_variable = { gdp_total > 200 }
-			}
+			gdp_total_greater_than_200 = yes
 			NOT = { has_facility_specialization = specialization_land }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_domestic_vehicle_research"
 			one_random_land_facility = yes
+			newline = yes
+			generate_scientist_character = {
+				skills = {
+					specialization_land = 1
+				}
+			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_domestic_naval_research
 		icon = naval_upgrade
@@ -4150,10 +4179,7 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 200_total_gdp_tt
-				check_variable = { gdp_total > 200 }
-			}
+			gdp_total_greater_than_200 = yes
 			any_owned_state = {
 				is_coastal = yes
 			}
@@ -4163,12 +4189,23 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_domestic_naval_research"
 			one_random_naval_facility = yes
+			newline = yes
+			generate_scientist_character = {
+				skills = {
+					specialization_naval = 1
+				}
+			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_domestic_aircraft_research
 		icon = jet_engine
@@ -4189,22 +4226,30 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 200_total_gdp_tt
-				check_variable = { gdp_total > 200 }
-			}
+			gdp_total_greater_than_200 = yes
 			NOT = { has_facility_specialization = specialization_air }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_domestic_aircraft_research"
 			one_random_air_facility = yes
+			newline = yes
+			generate_scientist_character = {
+				skills = {
+					specialization_air = 1
+				}
+			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_secret_weapons_program
 		icon = nuclear_science
@@ -4225,20 +4270,27 @@
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
 		available = {
-			custom_trigger_tooltip = {
-				tooltip = 200_total_gdp_tt
-				check_variable = { gdp_total > 200 }
-			}
+			gdp_total_greater_than_200 = yes
 			NOT = { has_facility_specialization = specialization_nuclear }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_secret_weapons_program"
 			one_random_nuclear_facility = yes
+			newline = yes
+			generate_scientist_character = {
+				skills = {
+					specialization_nuclear = 1
+				}
+			}
 		}
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -4254,9 +4306,7 @@
 
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION }
 
-		available = {
-			controls_a_coastal_state = yes
-		}
+		available = { controls_a_coastal_state = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_reform"
@@ -4290,6 +4340,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_combined_military_defense_industries
 		icon = factory_complex
@@ -4311,7 +4362,8 @@
 			set_temp_variable = { temp_opinion = 5 }
 			change_defense_industry_opinion = yes
 			change_maritime_industry_opinion = yes
-			one_random_arms_factory_free = yes
+			set_temp_variable = { skip_payment = 1 }
+			one_random_arms_factory = yes
 		}
 
 		ai_will_do = {
@@ -4324,8 +4376,17 @@
 					can_staff_an_arms_industry = no
 				}
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_arms_industry = no
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_naval_bases
 		icon = navy2
@@ -4340,9 +4401,7 @@
 
 		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
 
-		available = {
-			controls_a_coastal_state = yes
-		}
+		available = { controls_a_coastal_state = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_bases"
@@ -4366,16 +4425,23 @@
 				factor = 0
 				disabled_ai_unit_list = yes
 			}
+			# Zero-dockyard coastal nations are exempt: their only path to a first yard.
 			modifier = {
 				factor = 0
 				num_of_civilian_factories < 10
+				num_of_naval_factories > 0
 			}
 			modifier = {
 				factor = 0
 				check_variable = { total_unemployed_percentage_display < 0.02 }
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_submarines
 		icon = submarines
@@ -4398,17 +4464,16 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_submarines"
 			add_tech_bonus = {
-				name = CAT_sub
+				name = GENERIC_submarines
 				uses = 2
 				bonus = 0.5
-				category = CAT_sub
+				category = CAT_submarines
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_surface_ships
 		icon = frigates
@@ -4432,17 +4497,16 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_surface_ships"
 			add_tech_bonus = {
-				name = CAT_surface_ship
+				name = GENERIC_surface_ships
 				uses = 2
 				bonus = 0.5
-				category = CAT_surface_ship
+				category = CAT_surface_ships
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_dockyards
 		icon = naval_dockyard
@@ -4481,12 +4545,26 @@
 				factor = 0
 				OR = {
 					disabled_ai_unit_list = yes
-					num_of_civilian_factories < 15
 					can_staff_an_dockyard = no
 				}
 			}
+			# Zero-dockyard coastal nations are exempt: their only path to a first yard.
+			modifier = {
+				factor = 0
+				num_of_civilian_factories < 15
+				num_of_naval_factories > 0
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0
+				can_staff_an_dockyard = no
+			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_nuclear_submarines
 		icon = Generic_Submarine1
@@ -4509,10 +4587,10 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_nuclear_submarines"
 			add_tech_bonus = {
-				name = CAT_nuke_sub
+				name = GENERIC_nuclear_submarines
 				uses = 2
 				bonus = 0.5
-				category = CAT_sub
+				category = CAT_submarines
 			}
 			if = {
 				limit = { has_doctrine = escort_attack_subs }
@@ -4537,10 +4615,9 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_naval_doctrine_innovations
 		icon = naval_upgrade
@@ -4577,6 +4654,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_aircraft_carriers
 		icon = carriers2
@@ -4606,7 +4684,7 @@
 				name = GENERIC_aircraft_carriers
 				uses = 2
 				bonus = 0.5
-				category = CAT_carrier
+				category = CAT_aircraft_carriers
 			}
 		}
 
@@ -4721,6 +4799,10 @@
 				factor = 0
 				can_staff_an_dockyard = no
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -4780,9 +4862,7 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = {
-			controls_a_coastal_state = yes
-		}
+		available = { controls_a_coastal_state = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_vessel_production"
@@ -4794,9 +4874,7 @@
 			change_maritime_industry_opinion = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -4814,9 +4892,7 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = {
-			is_special_project_completed = sp:sp_composite_production
-		}
+		available = { is_special_project_completed = sp:sp_composite_production }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_composite_industrial_expansion"
@@ -4825,6 +4901,14 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				can_staff_an_composite_plant = no
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -4851,9 +4935,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -4870,9 +4952,7 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = {
-			controls_a_coastal_state = yes
-		}
+		available = { controls_a_coastal_state = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_naval_doctrine_expertise"
@@ -4916,9 +4996,7 @@
 			add_ideas = convoy_production_bonus
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -4935,9 +5013,7 @@
 
 		search_filters = { FOCUS_FILTER_RESEARCH }
 
-		available = {
-			controls_a_coastal_state = yes
-		}
+		available = { controls_a_coastal_state = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_establish_a_marine_corps"
@@ -4986,10 +5062,10 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_submarine_expansion_project"
 			add_tech_bonus = {
-				name = GENERIC_nuclear_submarines
+				name = GENERIC_submarine_expansion_project
 				uses = 2
 				bonus = 0.5
-				category = CAT_sub
+				category = CAT_submarines
 			}
 			if = {
 				limit = { has_doctrine = escort_attack_subs }
@@ -5090,24 +5166,22 @@
 				name = GENERIC_air_force_reform
 				uses = 1
 				bonus = 0.25
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 			add_mastery = {
 				amount = 25
 				folder = air
 			}
-
-			if = { limit = { has_dlc = "By Blood Alone" }
+			if = { limit = { NOT = { is_special_project_completed = sp:sp_aircraft_project } }
 				sp:sp_aircraft_project = {
 					add_project_progress_ratio = 0.10
 				}
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_fighter_planes
 		icon = fighter_plane
@@ -5130,7 +5204,7 @@
 				name = GENERIC_fighter_planes
 				uses = 2
 				bonus = 0.5
-				category = CAT_air_eqp
+				category = CAT_aircraft
 			}
 		}
 
@@ -5142,6 +5216,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_air_base
 		icon = fighter_plane
@@ -5166,10 +5241,9 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_air_doctrine_innovations
 		icon = air_doctrine
@@ -5196,10 +5270,9 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_satellite_programs
 		icon = weaponized_satellites
@@ -5219,30 +5292,16 @@
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_satellite_programs"
-			if = { limit = { has_completed_space_program = no }
-				if = {
-					limit = { has_dlc = "Gotterdammerung" }
-					sp:sp_space_program_gdm = {
-						add_project_progress_ratio = 0.15
-					}
-				}
-				else = {
-					sp:sp_space_program_non_gdm = {
-						add_project_progress_ratio = 0.15
-					}
-				}
-			}
+			add_space_program_progress = yes
 			add_tech_bonus = {
 				name = GENERIC_satellite_programs
 				uses = 2
 				bonus = 0.50
-				category = CAT_satellite
+				category = CAT_satellites
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -5314,7 +5373,7 @@
 					name = GENERIC_capital_defense_scheme
 					uses = 1
 					bonus = 0.25
-					category = CAT_sam
+					category = CAT_surface_to_air_missiles
 				}
 			}
 		}
@@ -5328,6 +5387,10 @@
 			modifier = {
 				add = 5
 				has_war = yes
+			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -5383,6 +5446,10 @@
 				add = 5
 				has_war = yes
 			}
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -5417,7 +5484,7 @@
 				name = GENERIC_countermeasures_against_aircraft
 				uses = 1
 				bonus = 0.75
-				category = CAT_aa
+				category = CAT_anti_air
 			}
 			if = {
 				limit = {
@@ -5435,6 +5502,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -5459,6 +5530,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -5489,7 +5564,7 @@
 				name = GENERIC_bomber_planes
 				uses = 1
 				bonus = 0.35
-				category = CAT_large_plane
+				category = CAT_heavy_aircraft
 			}
 		}
 
@@ -5501,6 +5576,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_drones
 		icon = drone2
@@ -5524,15 +5600,14 @@
 				name = GENERIC_drones
 				uses = 2
 				bonus = 0.5
-				category = CAT_l_drone
-				category = CAT_a_uav
+				category = CAT_land_drones
+				category = CAT_air_drones
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_domestic_drone_production
 		icon = drone
@@ -5557,9 +5632,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -5583,6 +5656,10 @@
 
 		ai_will_do = {
 			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
 		}
 	}
 
@@ -5621,13 +5698,11 @@
 				name = GENERIC_domestic_helicopter_production
 				uses = 1
 				bonus = 0.25
-				category = CAT_heli
+				category = CAT_helicopters
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -5657,13 +5732,11 @@
 				name = GENERIC_domestic_attack_helicopter_production
 				uses = 2
 				bonus = 0.35
-				category = CAT_atk_heli
+				category = CAT_attack_helicopters
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -5691,7 +5764,7 @@
 				name = GENERIC_develop_air_cavalry_doctrines
 				uses = 1
 				bonus = 0.35
-				category = CAT_heli
+				category = CAT_helicopters
 			}
 			random_army_leader = {
 				limit = { NOT = { has_trait = air_cavalry_leader } }
@@ -5699,9 +5772,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -5726,14 +5797,13 @@
 				name = GENERIC_manpads
 				uses = 2
 				bonus = 0.5
-				category = CAT_l_aa
+				category = CAT_manpads
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_air_doctrine_expertise
 		icon = air_doctrine
@@ -5757,9 +5827,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -5782,9 +5850,7 @@
 			add_ideas = establishing_a_paratrooper_corps_idea
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	#Army Reform
@@ -5808,10 +5874,9 @@
 			increase_military_spending = yes
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_military_emergency
 		icon = tanks2
@@ -5821,6 +5886,8 @@
 		relative_position_id = GENERIC_army_reform
 
 		cost = 2
+
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS }
 
 		available = {
 			OR = {
@@ -5839,9 +5906,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -5878,9 +5943,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -5908,10 +5971,9 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_military_exercises
 		icon = military_mission
@@ -5932,10 +5994,9 @@
 			add_war_support = 0.05
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_military_education_reform
 		icon = recruitment
@@ -5959,9 +6020,7 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	focus = {
@@ -5986,7 +6045,7 @@
 				name = GENERIC_infantry_equipment_development
 				uses = 2
 				bonus = 0.5
-				category = CAT_inf_wep
+				category = CAT_small_arms
 			}
 			add_timed_idea = {
 				days = 365
@@ -5994,10 +6053,9 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_land_doctrine_expertise
 		icon = army_doctrine
@@ -6044,6 +6102,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_artillery_experiments
 		icon = artillery
@@ -6066,7 +6125,7 @@
 				name = GENERIC_artillery_experiments
 				uses = 2
 				bonus = 0.5
-				category = CAT_arty
+				category = CAT_towed_artillery
 			}
 		}
 
@@ -6081,6 +6140,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_uniform_improvements
 		icon = general_staff
@@ -6113,10 +6173,9 @@
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_utility_vehicles
 		icon = generic_utility_vehice
@@ -6137,14 +6196,13 @@
 				name = GENERIC_utility_vehicles
 				uses = 2
 				bonus = 0.5
-				category = CAT_util
+				category = CAT_utility_vehicles
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_special_forces_training_programmes
 		icon = special_forces
@@ -6167,7 +6225,7 @@
 			air_experience = 25
 			add_mastery = {
 				amount = 35
-				folder = elite_forces
+				folder = special_forces
 			}
 		}
 
@@ -6175,10 +6233,11 @@
 			base = 1
 			modifier = {
 				factor = 0
-				NOT = { has_doctrine = special_elite_forces }
+				NOT = { has_doctrine = special_forces_mixed }
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_rangers_and_light_infantry
 		icon = army_recruting
@@ -6197,10 +6256,16 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_rangers_and_light_infantry"
 			add_ideas = light_infantry_special_forces_idea
-			if = { limit = { has_doctrine = ranger_forces_doctrine }
+			if = { limit = { has_doctrine = forest_ranger_doctrine }
 				add_mastery = {
 					amount = 35
-					sub_doctrine = ranger_forces_doctrine
+					sub_doctrine = forest_ranger_doctrine
+				}
+			}
+			if = { limit = { has_doctrine = jungle_ranger_doctrine }
+				add_mastery = {
+					amount = 35
+					sub_doctrine = jungle_ranger_doctrine
 				}
 			}
 		}
@@ -6209,10 +6274,11 @@
 			base = 1
 			modifier = {
 				factor = 0
-				NOT = { has_doctrine = special_elite_forces }
+				NOT = { has_doctrine = special_forces_mixed }
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_specialized_mechanized_battalions
 		icon = ifv
@@ -6237,10 +6303,11 @@
 			base = 1
 			modifier = {
 				factor = 0
-				NOT = { has_doctrine = special_elite_forces }
+				NOT = { has_doctrine = special_forces_mixed }
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_self_propelled_artillery
 		icon = Generic_SPG
@@ -6264,7 +6331,7 @@
 				name = GENERIC_self_propelled_artillery
 				uses = 2
 				bonus = 0.5
-				category = CAT_sp_r_arty
+				category = CAT_self_propelled_artillery
 			}
 		}
 
@@ -6279,6 +6346,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_self_propelled_anti_air
 		icon = army_antiair
@@ -6298,17 +6366,16 @@
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus GENERIC_self_propelled_anti_air"
 			add_tech_bonus = {
-				name = GENERIC_self_propelled_artillery
+				name = GENERIC_self_propelled_anti_air
 				uses = 2
 				bonus = 0.5
-				category = CAT_aa
+				category = CAT_anti_air
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
+
 	focus = {
 		id = GENERIC_develop_armor_prototypes
 		icon = tanks4
@@ -6356,6 +6423,7 @@
 			}
 		}
 	}
+
 	focus = {
 		id = GENERIC_countermeasures_against_armored_units
 		icon = generic_atgm
@@ -6378,12 +6446,10 @@
 				name = GENERIC_countermeasures_against_armored_units
 				uses = 2
 				bonus = 0.5
-				category = CAT_at
+				category = CAT_anti_tank
 			}
 		}
 
-		ai_will_do = {
-			base = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 }

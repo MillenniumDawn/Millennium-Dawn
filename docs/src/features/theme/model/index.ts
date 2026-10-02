@@ -30,7 +30,7 @@ function persistTheme(theme: ThemeMode): void {
 export function applyThemePreference(): void {
   const html = document.documentElement;
   const stored = readStoredTheme();
-  const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+  const prefersDark = window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
   applyThemeMode(html, resolveThemeMode(stored, prefersDark));
 }
 

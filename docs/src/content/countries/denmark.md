@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 16
 flag_image: /assets/images/flags/denmark.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: DEN
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '4'
-  - label: Total Factories
-    value: '6'
-  - label: Military Ind.
-    value: '1'
-  - label: Civilian Ind.
-    value: '4'
-  - label: Naval Dockyards
-    value: '1'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $23 Billions
-  - label: Debt
-    value: $149 Billions
-  - label: Investments
-    value: $77.4 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: DEN
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "4"
+      - label: Total Factories
+        value: "6"
+      - label: Military Ind.
+        value: "1"
+      - label: Civilian Ind.
+        value: "4"
+      - label: Naval Dockyards
+        value: "1"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $23 Billions
+      - label: Debt
+        value: $149 Billions
+      - label: Investments
+        value: $77.4 Billions
 ---
 
 Denmark is a country surrounded by Sweden from the East and Germany from the South. It starts with a Population of 5.35 Millions.

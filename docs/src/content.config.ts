@@ -1,8 +1,9 @@
-import { defineCollection, z } from "astro:content";
+import { defineCollection } from "astro:content";
+import { z } from "astro/zod";
 import { glob } from "astro/loaders";
 import { baseDocSchema, infoboxSchema, internalPathSchema, slugSchema } from "./schemas/base";
 import {
-  devDiaryArchiveSchema,
+  devDiaryExternalSchema,
   homeSchema,
   knownSubmodsSchema,
   navigationSchema,
@@ -49,13 +50,17 @@ const resources = defineCollection({
 const devDiarySchema = baseDocSchema.extend({
   author: z.string(),
   date: z.coerce.date(),
+  version: z
+    .string()
+    .regex(/^v\d+\.\d+$/, 'Expected format "vMAJOR.MINOR" (e.g. v2.0)'),
   tags: z.array(z.string()).default([]),
   page_id: z.string().default("dev-diary"),
   body_class: z.string().default("dev-diary-page"),
 });
 
 const devDiaries = defineCollection({
-  loader: glob({ pattern: "**/*.md", base: "./src/content/devDiaries" }),
+  /** MDX so `MarkdownContent` can map `img` → `MarkdownImage` (plain `.md` bodies compile to HTML only). */
+  loader: glob({ pattern: "**/*.{md,mdx}", base: "./src/content/devDiaries" }),
   schema: devDiarySchema,
 });
 
@@ -97,9 +102,9 @@ const home = defineCollection({
   schema: homeSchema,
 });
 
-const devDiaryArchive = defineCollection({
-  loader: glob({ pattern: "**/*.yml", base: "./src/content/devDiaryArchive" }),
-  schema: devDiaryArchiveSchema,
+const devDiaryExternal = defineCollection({
+  loader: glob({ pattern: "**/*.yml", base: "./src/content/devDiaryExternal" }),
+  schema: devDiaryExternalSchema,
 });
 
 const knownSubmods = defineCollection({
@@ -120,6 +125,6 @@ export const collections = {
   release,
   sections,
   home,
-  devDiaryArchive,
+  devDiaryExternal,
   knownSubmods,
 };

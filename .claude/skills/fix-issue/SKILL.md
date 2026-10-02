@@ -1,11 +1,18 @@
-Find an open GitHub issue that is actionable and fix it, then open a pull request.
+---
+name: fix-issue
+description: 'Find an actionable open GitHub issue (or take an issue number or quoted task), implement the fix, commit, update the changelog, and open or update a PR. Use when asked to fix an issue or pick up work from the tracker, e.g. "/fix-issue 1354".'
+---
 
-Supported arguments: an issue number to fix a specific issue, or none to auto-select one.
+Find an actionable open GitHub issue (a bug, or a well-scoped task or content request), implement it, then open a pull request. Only take on work small and well-specified enough to implement confidently from the issue plus repo context, with no design or balance decisions left open. If no actionable issue remains, scan the codebase for common bug patterns instead.
+
+Supported arguments: an issue number, a short task description in quotes (for well-scoped work with no GitHub issue), or none to auto-select an issue.
 Requested arguments: $ARGUMENTS
 
 Steps:
 
-1. **Find an issue to fix**
+1. **Pick the work**
+
+   If a quoted task description is given, treat it as the work item and skip the issue search (still apply the scope guard below).
 
    If an issue number is given, fetch it directly:
 
@@ -13,25 +20,36 @@ Steps:
    gh issue view <number> --json title,body,labels,comments
    ```
 
-   Otherwise, list open bugs and pick one that is not already covered by an open PR:
+   Otherwise, list open issues and pick one not already covered by an open PR:
 
    ```
    gh issue list --state open --limit 40
    gh pr list --state open
    ```
 
-   Prefer issues labelled `bug` with a clear reproduction path. Skip issues that already have an open PR or are vague with no reproduction steps.
+   Eligible work is either a **bug** with a clear reproduction path, or a **task / content / enhancement** that is concrete and well-specified (clear outcome, names the country, system, or files it touches, and a sibling implementation exists to mirror).
 
-2. **Understand the bug**
+   **Scope guard: only proceed if the work is small and unambiguous.** Skip it (and say why) when the issue is vague or has no acceptance criteria; needs a design or balance decision that is the user's or team's call; requires new art, audio, or map assets you cannot author; spans many systems or countries; or is a large feature better split into its own PR. When in doubt, report the issue back rather than guess.
 
-   Read the issue body carefully. Identify:
-   - The specific behaviour that is wrong
-   - The expected behaviour
-   - Any country, decision, event, or system named in the report
+   **If no actionable issue remains** (all too vague, graphical, engine-level crashes, out of scope, or already covered), scan the codebase for common bug patterns instead: work through the "Scan patterns" section of `.claude/docs/bug-patterns.md`.
+
+   When working a codebase-scanned bug or a quoted task with no issue number, omit the `Closes #` line from the PR since there is no issue to reference.
+
+   Once the issue passes the scope guard, claim it so nobody duplicates the work:
+
+   ```
+   gh issue edit <number> --add-assignee @me
+   ```
+
+   `@me` resolves to the authenticated account — never hardcode a login. Skip this for a quoted task or a codebase-scanned bug, which have no issue to assign.
+
+2. **Understand the work**
+
+   Read the issue body (or the task description). For a bug, identify the wrong behaviour, the expected behaviour, and any country, decision, event, or system named. For a task, identify the desired outcome, its acceptance criteria, and which files or systems it touches.
 
 3. **Locate the relevant code**
 
-   Search for the named decisions, effects, triggers, scripted GUIs, or on_actions:
+   Search for the named decisions, effects, triggers, scripted GUIs, or on_actions. If not found, do a wider search:
 
    ```
    grep -rn "keyword" common/ events/ --include="*.txt" -l
@@ -39,57 +57,87 @@ Steps:
 
    Read the files involved. Understand the data flow before touching anything.
 
-4. **Diagnose the root cause**
+4. **Diagnose or plan** (planning model)
 
-   Trace through the logic to find exactly where the wrong value is produced or the wrong branch is taken. Do not guess — confirm the cause in the code before writing a fix.
+   Do this yourself, on the strongest available model. For a bug, trace the logic to find exactly where the wrong value is produced or the wrong branch is taken; confirm the cause in code before writing a fix, do not guess. For a task, plan the change against existing patterns: find a sibling implementation to mirror (a comparable focus, event, decision, idea, or MIO) and reuse its structure and conventions.
 
-5. **Fix the bug**
+   Produce a concrete **edit list**: the exact files, the exact lines or blocks to change, and the precise new text for each. Resolve every ambiguity here (values, variable names, loc keys, ordering) so the implementation step has no decisions left to make. Also note any related-but-out-of-scope issues you spot, and what to leave untouched.
 
-   Make the minimal change needed. Follow all rules in CLAUDE.md:
+5. **Implement the change** (implementation model)
+
+   Once the edit list is fully resolved, hand the mechanical implementation to a **Sonnet subagent** (the `Agent` tool with `model: sonnet`; use `head-mod-developer` or another fitting agent type). Planning stays on the strong model; only the typing-out is delegated. Give the subagent the full edit list verbatim, the convention reminders below, an explicit instruction to stay strictly within the listed files, and concrete verification commands (greps that must return a specific count, etc.) to run and report back.
+
+   If the edit is trivial enough that delegation adds no value (a single one-line change), just make it directly.
+
+   Make the smallest change that resolves the issue, whether a bug fix or new/edited content. For content, follow the matching system conventions in `AGENTS.md` and the relevant `.claude/docs/` reference (focus trees, events, decisions, ideas, MIOs, localisation), and add every required loc key. Follow the project conventions (`AGENTS.md`):
    - Tabs for indentation
-   - No magic numbers — use variables
+   - No magic numbers; use variables
    - No empty blocks, no commented-out code
-   - Only add a comment if the fix is non-obvious
+   - Only add a comment if the change is non-obvious
 
-   Do not refactor surrounding code or fix unrelated issues in the same commit.
+   Do not refactor surrounding code or fix unrelated issues in the same commit. After the subagent returns, verify its diff scope yourself (`git diff --stat`) before committing, since subagents can edit outside their brief.
 
 6. **Commit**
 
-   Create a branch, stage only the files changed for this fix, and commit:
+   **Always branch from `main`.** Never commit onto whatever branch the session happens to start on — a leftover branch from earlier work carries its own unmerged commits and its own open PR, and the new work lands inside them.
 
    ```
-   git checkout -b fix/<short-description>
+   git fetch origin
+   git checkout -b <slug> origin/main
+   ```
+
+   `<slug>` is a short kebab-case description of the work (`naval-mio-production-bonus`, `png-art-format-validator`), not an issue number — the number belongs in the commit subject and the PR body. Do this before staging anything; uncommitted work follows the checkout across.
+
+   Then stage only the files changed for this work and commit. Use an accurate verb (`Fix` for a bug, `Add` or `Implement` for a task):
+
+   ```
    git add <files>
-   git commit -m "Fix <short description> (#<issue number>)
+   git commit -m "<verb> <short description> (#<issue number>)
 
-   <one or two sentences explaining root cause and fix>
-
-   Co-Authored-By: Claude <noreply@anthropic.com>"
+   <one or two sentences: a bug's root cause and fix, or what a task added or changed>
    ```
 
 7. **Ensure branch is up to date**
 
    Run `git merge origin/main` and ensure the branch is up to date before creating a changelog entry or a pull request.
 
-8. **Update the changelog**
+8. **Update the changelog (mandatory)**
 
-   Run `/changelog` to add an entry for the fix under the current version in `Changelog.txt`. Commit the changelog update separately.
+   Every PR that touches game files gets exactly one BLUF line in `Changelog.txt` under the current version, in an existing category:
 
-9. **Open a pull request**
+   ```
+    - [TAG] <Past-tense verb> <what the player sees> (Issue #N)
+   ```
 
-   Push the branch and create a PR that closes the issue:
+   Lead with the outcome. No cause clauses, no second sentence, no file names, under 120 characters before the issue suffix. Follow `/changelog` for category and placement rules. Commit it separately as `Update Changelog.txt`. Skip only when the diff has no game files (tooling, CI, docs) and say so in the report.
+
+9. **Open or update the pull request**
+
+   Push the branch first:
 
    ```
    git push -u origin <branch>
-   gh pr create --title "Fix <short description> (#<issue number>)" --body "..."
    ```
 
-   PR body must include:
-   - Closes #<issue number>
-   - **Root cause** — what was wrong and why
-   - **Fix** — what was changed and how it resolves it
-   - **Test plan** — steps to verify the fix in-game
+   Then check whether an open PR already exists for this branch:
+
+   ```
+   gh pr list --head <branch> --state open --json number,url,body
+   ```
+
+   **a. If no open PR exists**: hand off to `/open-pr <issue number>`. That skill is the single source of truth for the create path (AngriestBird-format body, draft PR, changelog). Do not duplicate its logic here.
+
+   **b. If an open PR already exists**: rewrite its body in AngriestBird format and apply with `gh pr edit <PR#> --body "..."`. Do NOT create a second PR. Preserve everything already there — every `Closes #N` line, every existing `####` section bullet, any test-plan section (extend it via `/test-plan`) — and append the new work under the matching section. Format per `/open-pr` step 5 — it is the single source of truth.
+
+   Apply with a heredoc to keep formatting intact:
+
+   ```
+   gh pr edit <PR#> --body "$(cat <<'EOF'
+   <full rewritten body>
+   EOF
+   )"
+   ```
 
 10. **Report back**
 
-Output the PR URL and a one-paragraph summary of the root cause and fix.
+Output the PR URL, whether the PR was **created** or **updated**, the changelog line added (or why it was skipped), and a one-paragraph summary of what was fixed or added.

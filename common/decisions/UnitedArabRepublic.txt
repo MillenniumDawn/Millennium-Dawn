@@ -4,6 +4,7 @@ form_UAR_category = {
 		cost = 200
 
 		visible = {
+			NOT = { has_country_flag = formed_country_formable }
 			NOT = { has_global_flag = neo_baathist_uar_formed }
 			NOT = {
 				is_baathist_uar = yes
@@ -21,6 +22,7 @@ form_UAR_category = {
 				has_idea = great_power
 				has_idea = super_power
 			}
+			60_percent_government_popularity = yes
 			custom_trigger_tooltip = {
 				NOT = { has_global_flag = neo_baathist_uar_formed }
 				tooltip = neo_baathist_uar_not_formed_tt
@@ -39,26 +41,22 @@ form_UAR_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_announce_neo_baathist_uar"
 			set_global_flag = neo_baathist_uar_formed
 			set_country_flag = formed_neo_baathist_uar
+			mark_formed_country_formable = yes
 			set_cosmetic_tag = UAR_communism
+			set_temp_variable = { special_formable_id = 103 }
+			commit_special_formable = yes
 			custom_effect_tooltip = create_uar_effect_tt
 			custom_effect_tooltip = announce_uar_warning_tt
-			# Calculate the total GDP of all Arabic countries
-			set_variable = { total_arabic_gdp = 0 }
-			for_each_scope_loop = {
-				array = global.arabic_countries
-				add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
-			}
-			# Calculate the GDP of UAR and their puppets
-			set_variable = { total_uar_gdp = gdp_total }
-			for_each_scope_loop = {
-				array = ROOT.subjects
-				add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
-			}
+			update_arabic_country_gdp_total_effect = yes
 			hidden_effect = { news_event = { id = UAR_news.1 hours = 6 } }
 		}
 
 		ai_will_do = {
 			base = 100
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 
 	}
@@ -67,6 +65,7 @@ form_UAR_category = {
 		cost = 200
 
 		visible = {
+			NOT = { has_country_flag = formed_country_formable }
 			NOT = { has_global_flag = baathist_uar_formed }
 			NOT = {
 				is_neo_baathist_uar = yes
@@ -102,26 +101,22 @@ form_UAR_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_announce_baathist_uar"
 			set_global_flag = baathist_uar_formed
 			set_country_flag = formed_baathist_uar
+			mark_formed_country_formable = yes
 			set_cosmetic_tag = UAR_nationalist
+			set_temp_variable = { special_formable_id = 103 }
+			commit_special_formable = yes
 			custom_effect_tooltip = create_uar_effect_tt
 			custom_effect_tooltip = announce_uar_warning_tt
-			#Calculate the total GDP of all Arabic countries
-			set_variable = { total_arabic_gdp = 0 }
-			for_each_scope_loop = {
-				array = global.arabic_countries
-				add_to_variable = { ROOT.total_arabic_gdp = THIS.gdp_total }
-			}
-			#Calculate the GDP of UAR and their puppets
-			set_variable = { total_uar_gdp = gdp_total }
-			for_each_scope_loop = {
-				array = ROOT.subjects
-				add_to_variable = { ROOT.total_uar_gdp = THIS.gdp_total }
-			}
+			update_arabic_country_gdp_total_effect = yes
 			hidden_effect = { news_event = { id = UAR_news.1 hours = 6 } }
 		}
 
 		ai_will_do = {
 			base = 100
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 
 	}
@@ -131,14 +126,16 @@ form_UAR_category = {
 
 		target_array = global.arabic_countries
 
-		visible = {
+		target_root_trigger = {
 			is_neo_baathist_uar = yes
 		}
 
 		target_trigger = {
-			FROM = { is_subject = no }
-			FROM = { NOT = { is_baathist_uar = yes } }
-			FROM = { exists = yes }
+			FROM = {
+				is_subject = no
+				NOT = { is_baathist_uar = yes }
+				exists = yes
+			}
 		}
 
 		days_re_enable = 365
@@ -282,6 +279,10 @@ form_UAR_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 
 	}
@@ -291,14 +292,16 @@ form_UAR_category = {
 
 		target_array = global.arabic_countries
 
-		visible = {
+		target_root_trigger = {
 			is_baathist_uar = yes
 		}
 
 		target_trigger = {
-			FROM = { is_subject = no }
-			FROM = { NOT = { is_neo_baathist_uar = yes } }
-			FROM = { exists = yes }
+			FROM = {
+				is_subject = no
+				NOT = { is_neo_baathist_uar = yes }
+				exists = yes
+			}
 		}
 
 		days_re_enable = 365
@@ -442,6 +445,10 @@ form_UAR_category = {
 
 		ai_will_do = {
 			base = 100
+			modifier = {
+				factor = 0
+				is_historical_focus_on = yes
+			}
 		}
 
 	}
@@ -451,9 +458,11 @@ form_UAR_category = {
 		target_array = global.arabic_countries
 
 		target_trigger = {
-			FROM = { is_subject_of = ROOT }
-			FROM = { has_autonomy_state = autonomy_uar_state }
-			FROM = { OVERLORD = { has_country_flag = formed_neo_baathist_uar } }
+			FROM = {
+				is_subject_of = ROOT
+				has_autonomy_state = autonomy_uar_state
+				OVERLORD = { has_country_flag = formed_neo_baathist_uar }
+			}
 			if = {
 				limit = {
 					ROOT = { original_tag = LBA }
@@ -513,25 +522,11 @@ form_UAR_category = {
 				OR = {
 					FROM = { nationalist_fascist_are_in_power = yes }
 					FROM = {
-						NOT = {
-							emerging_autocracy_are_in_power = yes
-							AND = {
-								has_government = communism
-								influence_higher_10 = yes
-							}
-							AND = {
-								has_government = neutrality
-								influence_higher_30 = yes
-							}
-							AND = {
-								has_government = nationalist
-								influence_higher_40 = yes
-							}
-							AND = {
-								has_government = democratic
-								influence_higher_50 = yes
-							}
-						}
+						NOT = { emerging_autocracy_are_in_power = yes }
+						NOT = { OR = { has_government = communism influence_higher_10 = yes } }
+						NOT = { OR = { has_government = neutrality influence_higher_30 = yes } }
+						NOT = { OR = { has_government = nationalist influence_higher_40 = yes } }
+						NOT = { OR = { has_government = democratic influence_higher_50 = yes } }
 					}
 				}
 			}
@@ -539,25 +534,11 @@ form_UAR_category = {
 				OR = {
 					FROM = { nationalist_fascist_are_in_power = yes }
 					FROM = {
-						NOT = {
-							emerging_autocracy_are_in_power = yes
-							AND = {
-								has_government = communism
-								influence_higher_20 = yes
-							}
-							AND = {
-								has_government = neutrality
-								influence_higher_40 = yes
-							}
-							AND = {
-								has_government = nationalist
-								influence_higher_50 = yes
-							}
-							AND = {
-								has_government = democratic
-								influence_higher_60 = yes
-							}
-						}
+						NOT = { emerging_autocracy_are_in_power = yes }
+						NOT = { OR = { has_government = communism influence_higher_20 = yes } }
+						NOT = { OR = { has_government = neutrality influence_higher_40 = yes } }
+						NOT = { OR = { has_government = nationalist influence_higher_50 = yes } }
+						NOT = { OR = { has_government = democratic influence_higher_60 = yes } }
 					}
 				}
 			}
@@ -576,8 +557,8 @@ form_UAR_category = {
 			OR = {
 				FROM = { NOT = { has_autonomy_state = autonomy_uar_state } }
 				AND = {
-					FROM = { nationalist_fascist_are_in_power = no }
 					FROM = {
+						nationalist_fascist_are_in_power = no
 						OR = {
 							emerging_autocracy_are_in_power = yes
 							AND = {
@@ -615,7 +596,6 @@ form_UAR_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_country_leaves_neo_baathist_uar"
 			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = ROOT }
 			set_temp_variable = { influence_target = FROM }
 			change_influence_percentage = yes
 		}
@@ -627,9 +607,11 @@ form_UAR_category = {
 		target_array = global.arabic_countries
 
 		target_trigger = {
-			FROM = { is_subject_of = ROOT }
-			FROM = { has_autonomy_state = autonomy_uar_state }
-			FROM = { OVERLORD = { has_country_flag = formed_baathist_uar } }
+			FROM = {
+				is_subject_of = ROOT
+				has_autonomy_state = autonomy_uar_state
+				OVERLORD = { has_country_flag = formed_baathist_uar }
+			}
 			if = {
 				limit = {
 					ROOT = { original_tag = LBA }
@@ -686,58 +668,30 @@ form_UAR_category = {
 						}
 					}
 				}
-				OR = {
-					FROM = { emerging_autocracy_are_in_power = yes }
-					FROM = {
-						NOT = {
-							nationalist_fascist_are_in_power = yes
-							AND = {
-								has_government = nationalist
-								influence_higher_10 = yes
-							}
-							AND = {
-								has_government = neutrality
-								influence_higher_30 = yes
-							}
-							AND = {
-								has_government = communism
-								influence_higher_40 = yes
-							}
-							AND = {
-								has_government = democratic
-								influence_higher_50 = yes
-							}
-						}
+				FROM = {
+					OR = {
+						emerging_autocracy_are_in_power = yes
+						NOT = { nationalist_fascist_are_in_power = yes }
+						NOT = { OR = { has_government = nationalist influence_higher_10 = yes } }
+						NOT = { OR = { has_government = neutrality influence_higher_30 = yes } }
+						NOT = { OR = { has_government = communism influence_higher_40 = yes } }
+						NOT = { OR = { has_government = democratic influence_higher_50 = yes } }
 					}
 				}
 			}
 			else = {
-				OR = {
-					FROM = { emerging_autocracy_are_in_power = yes }
-					FROM = {
-						NOT = {
-							nationalist_fascist_are_in_power = yes
-							AND = {
-								has_government = nationalist
-								influence_higher_20 = yes
-							}
-							AND = {
-								has_government = neutrality
-								influence_higher_40 = yes
-							}
-							AND = {
-								has_government = communism
-								influence_higher_50 = yes
-							}
-							AND = {
-								has_government = democratic
-								influence_higher_60 = yes
-							}
-						}
+				FROM = {
+					OR = {
+						emerging_autocracy_are_in_power = yes
+						NOT = { nationalist_fascist_are_in_power = yes }
+						NOT = { OR = { has_government = nationalist influence_higher_20 = yes } }
+						NOT = { OR = { has_government = neutrality influence_higher_40 = yes } }
+						NOT = { OR = { has_government = communism influence_higher_50 = yes } }
+						NOT = { OR = { has_government = democratic influence_higher_60 = yes } }
 					}
 				}
 			}
-			FROM = { exists = yes }
+			country_exists = FROM
 		}
 
 		activation = {
@@ -752,8 +706,8 @@ form_UAR_category = {
 			OR = {
 				FROM = { NOT = { has_autonomy_state = autonomy_uar_state } }
 				AND = {
-					FROM = { emerging_autocracy_are_in_power = no }
 					FROM = {
+						emerging_autocracy_are_in_power = no
 						OR = {
 							nationalist_fascist_are_in_power = yes
 							AND = {
@@ -791,7 +745,6 @@ form_UAR_category = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision complete UAR_country_leaves_baathist_uar"
 			set_temp_variable = { percent_change = 5 }
-			set_temp_variable = { tag_index = ROOT }
 			set_temp_variable = { influence_target = FROM }
 			change_influence_percentage = yes
 		}
@@ -817,8 +770,11 @@ form_UAR_category = {
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout UAR_neo_baathist_uar_falls_apart"
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
+			clear_variable = formable_committed_id
+			clear_variable = formable_committed_size
 			clr_country_flag = formed_neo_baathist_uar
-			clr_global_Flag = neo_baathist_uar_formed
+			clr_global_flag = neo_baathist_uar_formed
 			every_subject_country = {
 				limit = {
 					OR = {
@@ -843,7 +799,7 @@ form_UAR_category = {
 			set_temp_variable = { party_index = 7 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 	}
@@ -867,8 +823,11 @@ form_UAR_category = {
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision timeout UAR_baathist_uar_falls_apart"
 			drop_cosmetic_tag = yes
+			clear_variable = dynamic_flag_variant
+			clear_variable = formable_committed_id
+			clear_variable = formable_committed_size
 			clr_country_flag = formed_baathist_uar
-			clr_global_Flag = baathist_uar_formed
+			clr_global_flag = baathist_uar_formed
 			every_subject_country = {
 				limit = {
 					OR = {
@@ -893,7 +852,7 @@ form_UAR_category = {
 			set_temp_variable = { party_index = 20 }
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
-			add_relative_party_popularity = yes
+			change_relative_party_popularity = yes
 		}
 
 	}
@@ -902,7 +861,7 @@ form_UAR_category = {
 
 		target_array = global.arabic_countries
 
-		visible = {
+		target_root_trigger = {
 			OR = {
 				is_neo_baathist_uar = yes
 				is_baathist_uar = yes
@@ -912,8 +871,6 @@ form_UAR_category = {
 		target_trigger = {
 			FROM = { is_subject_of = ROOT }
 		}
-
-
 
 		days_remove = 90
 
@@ -964,6 +921,8 @@ form_UAR_category = {
 		cost = 100
 
 		fire_only_once = yes
+		war_with_on_complete = PREV
+		war_with_on_complete = ROOT
 
 		visible = {
 			is_neo_baathist_uar = yes
@@ -971,12 +930,7 @@ form_UAR_category = {
 
 		available = {
 			has_country_flag = formed_neo_baathist_uar
-			set_temp_variable = { gdp_share = total_uar_gdp }
-			divide_temp_variable = { gdp_share = total_arabic_gdp }
-			custom_trigger_tooltip = {
-				tooltip = UAR_unite_uar_tt
-				check_variable = { gdp_share > 0.40 }
-			}
+			uar_has_required_gdp_share = yes
 		}
 
 		complete_effect = {
@@ -987,7 +941,7 @@ form_UAR_category = {
 			clr_country_flag = formed_neo_baathist_uar
 			every_subject_country = {
 				limit = {
-					is_arabic_nation = yes
+					has_country_flag = arabic_nation_flag
 				}
 				every_owned_state = {
 					limit = {
@@ -1004,7 +958,7 @@ form_UAR_category = {
 			}
 			random_country = {
 				limit = {
-					is_arabic_nation = yes
+					has_country_flag = arabic_nation_flag
 					has_country_flag = formed_baathist_uar
 				}
 				country_event = { id = UAR.7 hours = 6 }
@@ -1015,6 +969,10 @@ form_UAR_category = {
 					}
 				}
 				ROOT = {
+					set_temp_variable = { wargoal_by = ROOT }
+					set_temp_variable = { wargoal_on = PREV }
+					set_temp_variable = { wargoal_type = 2 }
+					add_threat_from_wargoal_effect = yes
 					create_wargoal = {
 						target = PREV
 						type = annex_everything
@@ -1023,7 +981,7 @@ form_UAR_category = {
 			}
 			every_country = {
 				limit = {
-					is_arabic_nation = yes
+					has_country_flag = arabic_nation_flag
 					NOT = { has_country_flag = formed_neo_baathist_uar }
 					NOT = { has_country_flag = united_neo_baathist_uar }
 					NOT = { has_country_flag = formed_baathist_uar }
@@ -1058,6 +1016,8 @@ form_UAR_category = {
 		cost = 100
 
 		fire_only_once = yes
+		war_with_on_complete = PREV
+		war_with_on_complete = ROOT
 
 		visible = {
 			is_baathist_uar = yes
@@ -1065,12 +1025,7 @@ form_UAR_category = {
 
 		available = {
 			has_country_flag = formed_baathist_uar
-			set_temp_variable = { gdp_share = total_uar_gdp }
-			divide_temp_variable = { gdp_share = total_arabic_gdp }
-			custom_trigger_tooltip = {
-				tooltip = UAR_unite_uar_tt
-				check_variable = { gdp_share > 0.40 }
-			}
+			uar_has_required_gdp_share = yes
 		}
 
 		complete_effect = {
@@ -1081,7 +1036,7 @@ form_UAR_category = {
 			clr_country_flag = formed_baathist_uar
 			every_subject_country = {
 				limit = {
-					is_arabic_nation = yes
+					has_country_flag = arabic_nation_flag
 				}
 				every_owned_state = {
 					limit = {
@@ -1098,7 +1053,7 @@ form_UAR_category = {
 			}
 			random_country = {
 				limit = {
-					is_arabic_nation = yes
+					has_country_flag = arabic_nation_flag
 					has_country_flag = formed_neo_baathist_uar
 				}
 				country_event = { id = UAR.7 hours = 6 }
@@ -1109,6 +1064,10 @@ form_UAR_category = {
 					}
 				}
 				ROOT = {
+					set_temp_variable = { wargoal_by = ROOT }
+					set_temp_variable = { wargoal_on = PREV }
+					set_temp_variable = { wargoal_type = 2 }
+					add_threat_from_wargoal_effect = yes
 					create_wargoal = {
 						target = PREV
 						type = annex_everything
@@ -1117,7 +1076,7 @@ form_UAR_category = {
 			}
 			every_country = {
 				limit = {
-					is_arabic_nation = yes
+					has_country_flag = arabic_nation_flag
 					NOT = { has_country_flag = formed_neo_baathist_uar }
 					NOT = { has_country_flag = formed_baathist_uar }
 					NOT = { has_country_flag = united_baathist_uar }
@@ -1793,6 +1752,7 @@ form_UAR_category = {
 				}
 			}
 		}
+		ai_will_do = { base = 0 }
 	}
 
 	#Iraq, 26.14 million

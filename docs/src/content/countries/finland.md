@@ -5,30 +5,30 @@ unique_focus_tree: true
 grid_order: 22
 flag_image: /assets/images/flags/finland.png
 infobox:
-- section: Overview
-  stats:
-  - label: Tag
-    value: FIN
-- section: Military & Industry
-  stats:
-  - label: Divisions
-    value: '9'
-  - label: Total Factories
-    value: '6'
-  - label: Military Ind.
-    value: '1'
-  - label: Civilian Ind.
-    value: '4'
-  - label: Naval Dockyards
-    value: '1'
-- section: Economy
-  stats:
-  - label: Treasury
-    value: $12 Billions
-  - label: Debt
-    value: $95 Billions
-  - label: Investments
-    value: $83.9 Billions
+  - section: Overview
+    stats:
+      - label: Tag
+        value: FIN
+  - section: Military & Industry
+    stats:
+      - label: Divisions
+        value: "9"
+      - label: Total Factories
+        value: "6"
+      - label: Military Ind.
+        value: "1"
+      - label: Civilian Ind.
+        value: "4"
+      - label: Naval Dockyards
+        value: "1"
+  - section: Economy
+    stats:
+      - label: Treasury
+        value: $12 Billions
+      - label: Debt
+        value: $95 Billions
+      - label: Investments
+        value: $83.9 Billions
 ---
 
 Finland its a country surrounded by Russia from the East, Norway from the North and Sweden from the West. It starts off with a population of 5.24 Millions.

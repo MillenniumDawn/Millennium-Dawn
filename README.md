@@ -33,7 +33,7 @@ We also take open source contributions of any form whether they be localization,
 3. Make changes following style guidelines
 4. Run pre-commit hooks
 5. Update [Changelog.txt](./Changelog.txt)
-6. Add yourself to [AUTHORS.md](./docs/misc/authors.md)
+6. Add yourself to [AUTHORS.md](./docs/src/content/misc/authors.md)
 7. Submit a pull request
 
 See [Contributing](./CONTRIBUTING.md) for more details including stylization, pre-commit information and more.
@@ -57,11 +57,11 @@ docs/            - Development documentation
 
 ## Documentation
 
-| Topic               | Location                                                                                       |
-| ------------------- | ---------------------------------------------------------------------------------------------- |
-| Code Style          | [docs/dev-resources/code-stylization-guide.md](./docs/dev-resources/code-stylization-guide.md) |
-| Modifiers & Effects | [docs/dev-resources/code-resource.md](./docs/dev-resources/code-resource.md)                   |
-| Game Rules          | [docs/dev-resources/game-rules.md](./docs/dev-resources/game-rules.md)                         |
+| Topic               | Location                                                                                                    |
+| ------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Code Style          | [docs/src/content/resources/code-stylization-guide.md](./docs/src/content/resources/code-stylization-guide.md) |
+| Modifiers & Effects | [docs/src/content/resources/code-resource.md](./docs/src/content/resources/code-resource.md)                   |
+| Game Rules          | [docs/src/content/tutorials/game-rules.md](./docs/src/content/tutorials/game-rules.md)                         |
 
 ## License
 

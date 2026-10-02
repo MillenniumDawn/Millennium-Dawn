@@ -1,8 +1,6 @@
-import { z } from "astro:content";
+import { z } from "astro/zod";
 
-export const internalPathSchema = z
-  .string()
-  .regex(/^\/[A-Za-z0-9/_.-]*$/, "Expected a root-relative path");
+export const internalPathSchema = z.string().regex(/^\/[A-Za-z0-9/_.-]*$/, "Expected a root-relative path");
 
 export const hrefSchema = z
   .string()
@@ -38,6 +36,7 @@ export const baseDocSchema = z.object({
   hidden: z.boolean().optional(),
   kind: z.string().optional(),
   order: z.number().int().optional(),
+  last_updated: z.coerce.date().optional(),
 });
 
 function resolveInfoboxGroupKind(
@@ -56,11 +55,7 @@ function resolveInfoboxGroupKind(
 }
 
 function normalizeInfoboxLabel(label: string): string {
-  return label
-    .trim()
-    .toLowerCase()
-    .replace(/\./g, "")
-    .replace(/\s+/g, " ");
+  return label.trim().toLowerCase().replace(/\./g, "").replace(/\s+/g, " ");
 }
 
 function resolveInfoboxStatKey(label: string): z.infer<typeof infoboxStatKeySchema> | undefined {
@@ -90,24 +85,41 @@ function resolveInfoboxStatKey(label: string): z.infer<typeof infoboxStatKeySche
   }
 }
 
-export const infoboxSchema = z.array(
-  z
-    .object({
-      section: z.string(),
-      kind: infoboxGroupKindSchema.optional(),
-      stats: z.array(
-        z.object({
-          label: z.string(),
-          value: z.string(),
-        }),
-      ),
-    })
-    .transform((group) => ({
-      ...group,
-      stats: group.stats.map((stat) => ({
-        ...stat,
-        key: resolveInfoboxStatKey(stat.label),
-      })),
-      kind: resolveInfoboxGroupKind(group.section, group.kind),
+const infoboxGroupSchema = z
+  .object({
+    section: z.string(),
+    kind: infoboxGroupKindSchema.optional(),
+    stats: z.array(
+      z.object({
+        label: z.string(),
+        value: z.string(),
+      }),
+    ),
+  })
+  .transform((group) => ({
+    ...group,
+    stats: group.stats.map((stat) => ({
+      ...stat,
+      key: resolveInfoboxStatKey(stat.label),
     })),
-);
+    kind: resolveInfoboxGroupKind(group.section, group.kind),
+  }));
+
+export const infoboxSchema = z
+  .array(infoboxGroupSchema)
+  .superRefine((groups, ctx) => {
+    for (const [groupIndex, group] of groups.entries()) {
+      if (group.kind !== "military_industry" && group.kind !== "economy") continue;
+
+      for (const [statIndex, stat] of group.stats.entries()) {
+        if (stat.key) continue;
+
+        ctx.addIssue({
+          code: "custom",
+          path: [groupIndex, "stats", statIndex, "label"],
+          message: `Unknown infobox label "${stat.label}" in section "${group.section}". Use the exact labels listed in CONTRIBUTING.md.`,
+        });
+      }
+    }
+  })
+  .default([]);

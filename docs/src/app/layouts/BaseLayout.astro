@@ -4,9 +4,10 @@ import type { MarkdownHeading } from "astro";
 import { HeadSeo, Header, Footer } from "@/widgets/site-shell";
 import { Breadcrumbs } from "@/widgets/breadcrumbs";
 import { TocSidebar } from "@/features/toc";
-import { buildSeoMeta } from "@/lib/seo";
-import { ensureTrailingSlash, stripBase } from "@/lib/urls";
-import { SITE_DESCRIPTION, SITE_TITLE } from "@/shared/config/site";
+import type { ArticleSeoMeta } from "@/shared/lib/seo";
+import { buildBreadcrumbListJsonLd, buildSeoMeta } from "@/shared/lib/seo";
+import { ensureTrailingSlash, stripBase } from "@/shared/lib/routing/urls";
+import { SITE_DESCRIPTION, SITE_LANGUAGE, SITE_TITLE } from "@/shared/config/site";
 import { BACK_TO_TOP_CLASS, INVERSE_FOCUS_RING_CLASS, LAYOUT_CONTAINER_CLASS } from "@/shared/ui/tailwind";
 
 import "@/styles/tailwind.css";
@@ -22,6 +23,9 @@ interface Props {
   bodyClass?: string;
   canonicalPath?: string;
   headings?: MarkdownHeading[];
+  ogType?: "website" | "article";
+  seoArticle?: ArticleSeoMeta;
+  extraJsonLd?: Record<string, unknown>[];
 }
 
 const {
@@ -34,6 +38,9 @@ const {
   bodyClass,
   canonicalPath,
   headings = [],
+  ogType,
+  seoArticle,
+  extraJsonLd = [],
 }: Props = Astro.props;
 
 const navigationEntry = await getEntry("navigation", "index");
@@ -49,17 +56,28 @@ const currentPath = ensureTrailingSlash(stripBase(Astro.url.pathname));
 const pageSlug = pageId ?? title.toLowerCase().replace(/[^a-z0-9]+/g, "-");
 const resolvedBodyClass = bodyClass ?? pageSlug;
 
+const resolvedCanonicalPath = canonicalPath ?? currentPath;
+const breadcrumbJsonLd = buildBreadcrumbListJsonLd({
+  path: currentPath,
+  title,
+  sections: sectionsEntry.data,
+});
+const mergedExtraJsonLd = [...extraJsonLd, ...(breadcrumbJsonLd ? [breadcrumbJsonLd] : [])];
+
 const seoMeta = buildSeoMeta({
   title: `${title} - ${SITE_TITLE}`,
   description,
-  canonicalPath: canonicalPath ?? currentPath,
+  canonicalPath: resolvedCanonicalPath,
   robots,
   seo,
+  ogType,
+  article: seoArticle,
+  extraJsonLd: mergedExtraJsonLd,
 });
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang={SITE_LANGUAGE}>
   <head>
     <HeadSeo seo={seoMeta} />
     <slot name="head" />
@@ -82,13 +100,12 @@ const seoMeta = buildSeoMeta({
     >
       Skip to main content
     </a>
-    <Header
-      title={SITE_TITLE}
-      navItems={navigationEntry.data.main}
-      currentPath={currentPath}
-    />
+    <Header title={SITE_TITLE} navItems={navigationEntry.data.main} currentPath={currentPath} />
 
-    <div class:list={["block w-full min-h-[calc(100dvh-var(--header-height,77px))]", toc !== "off" && "wide:flex"]} id="page-layout">
+    <div
+      class:list={["block w-full min-h-[calc(100dvh-var(--header-height,77px))]", toc !== "off" && "wide:flex"]}
+      id="page-layout"
+    >
       {toc !== "off" && <TocSidebar tocMode={toc} headings={headings} />}
 
       <main
@@ -119,11 +136,7 @@ const seoMeta = buildSeoMeta({
       initSite();
     </script>
 
-    <button
-      class={BACK_TO_TOP_CLASS}
-      aria-label="Back to top"
-      type="button"
-    >
+    <button class={BACK_TO_TOP_CLASS} aria-label="Back to top" type="button">
       <svg class="size-5" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
         <path d="M12 4l-8 8h5v8h6v-8h5z" fill="currentColor"></path>
       </svg>

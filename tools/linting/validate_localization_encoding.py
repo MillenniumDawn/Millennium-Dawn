@@ -1,0 +1,203 @@
+#!/usr/bin/env python3
+"""Validate and optionally fix UTF-8 BOM encoding for HOI4 localisation files."""
+
+import argparse
+import codecs
+import os
+import sys
+from pathlib import Path
+from typing import List
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import atomic_write_bytes
+
+
+class LocalizationValidator:
+    """Validates and fixes UTF-8 BOM encoding for HOI4 localization files."""
+
+    def __init__(self, fix_mode: bool = False):
+        self.fix_mode = fix_mode
+        self.errors: List[str] = []
+        self.fixed: List[str] = []
+        self.valid: List[str] = []
+
+    def validate_file(self, file_path: Path) -> bool:
+        """
+        Validate a single localization file.
+
+        Args:
+            file_path: Path to the file to validate
+
+        Returns:
+            True if file is valid or was fixed, False if errors occurred
+        """
+        try:
+            # Binary mode so the BOM bytes are visible rather than stripped on decode
+            with open(file_path, "rb") as f:
+                content = f.read()
+
+            has_bom = content.startswith(codecs.BOM_UTF8)
+            duplicate_bom = content.startswith(codecs.BOM_UTF8 * 2)
+
+            if not has_bom or duplicate_bom:
+                if self.fix_mode:
+                    return self._fix_file(file_path, content)
+                problem = (
+                    "Duplicate UTF-8 BOM" if duplicate_bom else "Missing UTF-8 BOM"
+                )
+                self.errors.append(
+                    f"{file_path}: {problem} (HOI4 requires exactly one)"
+                )
+                return False
+
+            try:
+                with open(file_path, "r", encoding="utf-8-sig") as f:
+                    f.read()
+                self.valid.append(f"{file_path}: Correct UTF-8 with BOM encoding")
+                return True
+
+            except UnicodeDecodeError as e:
+                self.errors.append(f"{file_path}: Invalid UTF-8 encoding: {e}")
+                return False
+
+        except Exception as e:
+            self.errors.append(f"{file_path}: Unexpected error: {e}")
+            return False
+
+    def _fix_file(self, file_path: Path, content: bytes) -> bool:
+        """
+        Fix a file by adding UTF-8 BOM.
+
+        Args:
+            file_path: Path to the file to fix
+            content: Original file content
+
+        Returns:
+            True if file was fixed successfully, False otherwise
+        """
+        try:
+            while content.startswith(codecs.BOM_UTF8):
+                content = content[len(codecs.BOM_UTF8) :]
+            content.decode("utf-8")
+            atomic_write_bytes(str(file_path), codecs.BOM_UTF8 + content)
+
+            self.fixed.append(f"{file_path}: Normalized UTF-8 BOM")
+            return True
+
+        except UnicodeDecodeError as e:
+            self.errors.append(f"{file_path}: Cannot fix - invalid UTF-8: {e}")
+            return False
+        except Exception as e:
+            self.errors.append(f"{file_path}: Error while fixing: {e}")
+            return False
+
+    def validate_files(self, files: List[Path]) -> bool:
+        """
+        Validate multiple files.
+
+        Args:
+            files: List of file paths to validate
+
+        Returns:
+            True if all files are valid or were fixed, False if any errors occurred
+        """
+        all_valid = True
+
+        for file_path in files:
+            if not file_path.exists():
+                self.errors.append(f"{file_path}: File not found")
+                all_valid = False
+                continue
+
+            if not self.validate_file(file_path):
+                all_valid = False
+
+        return all_valid
+
+    def print_summary(self):
+        """Print a summary of validation results."""
+        if self.valid:
+            for msg in self.valid:
+                print(msg)
+
+        if self.fixed:
+            for msg in self.fixed:
+                print(msg)
+
+        if self.errors:
+            for msg in self.errors:
+                print(msg, file=sys.stderr)
+
+        total = len(self.valid) + len(self.fixed) + len(self.errors)
+        if total > 1:
+            print(
+                f"\nSummary: {len(self.valid)} valid, {len(self.fixed)} fixed, {len(self.errors)} errors"
+            )
+
+
+def find_english_localization_files() -> List[Path]:
+    """Find all English localization files in the project."""
+    patterns = [
+        "localisation/english/*.yml",
+        "localisation/*_l_english.yml",  # Alternative naming pattern
+        "localisation/english/**/*.yml",  # Nested directories
+    ]
+
+    files: List[Path] = []
+    project_root = Path.cwd()
+
+    for pattern in patterns:
+        files.extend(project_root.glob(pattern))
+
+    return sorted(set(files))
+
+
+def main():
+    """Main entry point for the script."""
+    parser = argparse.ArgumentParser(
+        description="Validate UTF-8 BOM encoding for HOI4 localization files",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python validate_localization_encoding.py
+  python validate_localization_encoding.py --fix
+  python validate_localization_encoding.py file1.yml file2.yml
+  python validate_localization_encoding.py --fix localisation/english/*.yml
+        """,
+    )
+
+    parser.add_argument(
+        "--fix",
+        action="store_true",
+        help="Automatically add UTF-8 BOM to files that are missing it",
+    )
+
+    parser.add_argument(
+        "files",
+        nargs="*",
+        help="Files to validate (default: all English localization files)",
+    )
+
+    args = parser.parse_args()
+
+    if args.files:
+        files = [Path(f) for f in args.files]
+    else:
+        files = find_english_localization_files()
+        if not files:
+            print("No English localization files found", file=sys.stderr)
+            print(
+                "Expected patterns: localisation/english/*.yml or localisation/*_l_english.yml",
+                file=sys.stderr,
+            )
+            return 1
+
+    validator = LocalizationValidator(fix_mode=args.fix)
+    success = validator.validate_files(files)
+    validator.print_summary()
+
+    return 0 if success else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

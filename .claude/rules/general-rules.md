@@ -1,34 +1,20 @@
-# File Encoding
+# Shared Guidance
 
-- All `.txt` files (focus trees, events, decisions, ideas, etc.) must be saved as **UTF-8 without BOM**.
-- Only `.yml` localisation files use UTF-8 **with** BOM.
-- When creating or editing `.txt` files, never add a BOM byte sequence (`EF BB BF`).
+Follow `AGENTS.md` for scope, KISS, formatting, validation, and BLUF output.
+Keep this always-loaded file short. Scripting recipes belong in the references below,
+not in another prompt.
 
-# HOI4 Scripting — Quick Reference
+## Read for the Task
 
-For the full reference (variables, arrays, loops, collections, formatted loc), read `.claude/docs/hoi4-data-structures.md`.
+- Scripting: `.claude/docs/hoi4-data-structures.md` for scope, variables, arrays, and math;
+  `.claude/docs/scripting-edge-cases.md` for engine traps and guards.
+- Repeated branches or hot paths: `.claude/docs/simplification-patterns.md` and
+  `.claude/docs/performance-patterns.md`.
+- Renames and shared-state changes: `.claude/docs/refactor-checklist.md`.
+- Review: `.claude/docs/bug-patterns.md` and `.claude/docs/known-false-positives.md`.
+- 3D models, entities, landmarks: `.claude/docs/entity-system.md`.
+- Power plants, energy techs, renewable balance: `.claude/docs/energy-power-balance.md`.
+- Other domains: the task links in `AGENTS.md` and `.claude/docs/documentation-references.md`.
 
-## Scope Keywords
-
-| Keyword      | Meaning                                                      |
-| ------------ | ------------------------------------------------------------ |
-| `THIS`       | Current scope (usually implicit)                             |
-| `ROOT`       | Original scope at block start (event, focus, decision)       |
-| `PREV`       | Previous scope before last scope change (`PREV.PREV` chains) |
-| `FROM`       | Sender scope (in events: `FROM` = event sender)              |
-| `OWNER`      | Owner of current state scope                                 |
-| `CONTROLLER` | Controller of current state scope                            |
-| `CAPITAL`    | Capital state of current country scope                       |
-
-## Variables (basics)
-
-- **Persistent:** `set_variable = { var = X value = Y }` — stored on scope, survives saves
-- **Temporary:** `set_temp_variable = { var = X value = Y }` — current block only
-- **Global:** `set_global_variable = { var = X value = Y }` — read via `global.X`
-- **Arrays:** `my_array^0` (literal index), `my_array^i` (dynamic index)
-- **Scoping:** `var:my_var = { ... }` or `var:my_array^i = { ... }` — never `var:v^i`
-
-# Documentation References
-
-For more comprehensive HOI4 scripting docs (effects, triggers, modifiers, wiki links), read `.claude/docs/documentation-references.md`.
-
+Verify identifiers against their definitions before using them. Check exact case,
+caller scope, and tooltip behavior. Existing usage is a clue, not proof of correctness.
