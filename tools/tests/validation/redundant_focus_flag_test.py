@@ -407,6 +407,28 @@ def test_reader_list_truncates_after_eight_shown(tmp_path, write_path):
 # --- wiring ----------------------------------------------------------------
 
 
+@pytest.mark.parametrize("enabled", [True, False])
+def test_full_run_reports_the_flag_only_when_enabled(tmp_path, write_path, enabled):
+    _tree(write_path, tmp_path, _focus("\t\t\tset_country_flag = tag_done\n"))
+    _reader(write_path, tmp_path, "d = { available = { has_country_flag = tag_done } }")
+    validator = _validator(tmp_path, redundant_focus_flags=enabled)
+
+    validator.run_validations()
+
+    found = [
+        (issue.message, issue.file, issue.line)
+        for issue in validator._issues
+        if issue.category == "redundant-focus-flag"
+    ]
+    expected = (
+        "tag_done - set only by focus TAG_focus; replace 1 read(s) with"
+        " `has_completed_focus = TAG_focus`: common/decisions/tag.txt:1"
+    )
+    assert found == (
+        [(expected, "common/national_focus/05_tag.txt", 6)] if enabled else []
+    )
+
+
 def test_check_is_opt_in(tmp_path, monkeypatch):
     validator = _validator(tmp_path)
     called = []

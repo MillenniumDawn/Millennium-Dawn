@@ -578,6 +578,108 @@ def test_full_run_reports_the_flag_lifecycle(tmp_path, write_path):
     ]
 
 
+def _issue_rows(validator):
+    return sorted(
+        (issue.category, issue.message, issue.file, issue.line)
+        for issue in validator._issues
+    )
+
+
+def _full_run(tmp_path, workers=1):
+    validator = V.Validator(
+        str(tmp_path), use_colors=False, workers=workers, redundant_focus_flags=True
+    )
+    try:
+        validator.run_validations()
+        assert (validator._pool is not None) == (workers > 1)
+    finally:
+        if validator._pool is not None:
+            validator._pool.terminate()
+            validator._pool.join()
+    return _issue_rows(validator)
+
+
+def test_flag_target_and_focus_caches_hit_then_follow_new_content(
+    tmp_path, write_path, monkeypatch
+):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    write_path(
+        tmp_path,
+        "common/national_focus/tree.txt",
+        "focus = {\n"
+        "\tid = TST_focus\n"
+        "\tcompletion_reward = {\n"
+        "\t\tset_country_flag = TST_done\n"
+        "\t\tsave_event_target_as = TST_target\n"
+        "\t}\n"
+        "}\n",
+    )
+    reader = write_path(
+        tmp_path,
+        "common/decisions/dec.txt",
+        "d = { available = { has_country_flag = TST_done } }\n",
+    )
+    cold = _full_run(tmp_path)
+
+    def miss(*_args):
+        raise AssertionError("expected a cache hit")
+
+    with monkeypatch.context() as patch:
+        for scan in (
+            "_scan_flags_in_file",
+            "_scan_targets_in_text",
+            "_scan_focus_flag_sites",
+        ):
+            patch.setattr(V, scan, miss)
+        warm = _full_run(tmp_path)
+
+    write_path(
+        tmp_path,
+        "common/decisions/dec.txt",
+        "d = { available = { has_country_flag = TST_other } }\n",
+    )
+    # A fresh process would read the edit; drop this process's in-memory copy.
+    V.FileOpener.invalidate(str(reader))
+    changed = _full_run(tmp_path)
+
+    assert warm == cold
+    assert [row[0] for row in cold].count("redundant-focus-flag") == 1
+    assert ("variables", "TST_other", "common/decisions/dec.txt", 1) in changed
+    assert ("variables", "TST_done", "common/national_focus/tree.txt", 4) in changed
+    assert "redundant-focus-flag" not in [row[0] for row in changed]
+
+
+def test_pooled_run_matches_the_in_process_run(tmp_path, write_path, monkeypatch):
+    # Past the pool threshold of ten files, so the shared scan really fans out.
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    for index in range(12):
+        write_path(
+            tmp_path,
+            f"common/decisions/dec{index}.txt",
+            f"TST_category_{index} = {{\n"
+            f"\tTST_decision_{index} = {{\n"
+            "\t\tavailable = { check_variable = { TST_v > 5 } }\n"
+            "\t\tcomplete_effect = {\n"
+            "\t\t\tadd_to_variable = { TST_v = 0.1234567 }\n"
+            "\t\t\trandom_owned_state = { modify_treasury_effect = yes }\n"
+            f"\t\t\tset_country_flag = {{ flag = TST_flag_{index} }}\n"
+            "\t\t}\n"
+            "\t}\n"
+            "}\n",
+        )
+
+    in_process = _full_run(tmp_path, workers=1)
+    pooled = _full_run(tmp_path, workers=2)
+
+    assert pooled == in_process
+    assert {row[0] for row in in_process} >= {
+        "untooltipped-available-check",
+        "math-precision",
+        "treasury-state-scope",
+    }
+    assert len(in_process) >= 12 * 4
+
+
 def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch, write_path):
     write_path(
         tmp_path,
