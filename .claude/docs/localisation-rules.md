@@ -58,6 +58,11 @@ When polishing values, preserve formatting and substitution tokens byte-for-byte
 
 These are syntax examples, not identifiers to copy. Resolve every name before use.
 
+Write getters in their documented spelling from
+`resources/documentation/loc_objects_documentation.md` (`GetNameWithFlag`, not
+`GetNamewithFlag`). Tests cannot prove that dynamic text renders; after changing it,
+run the [Localisation Smoke Checklist](loc-smoke-checklist.md).
+
 ## Color Codes
 
 A color code is `§X`, closed by `§!`. The mod uses **three** of them, chosen by what the text means, never by taste:
@@ -130,7 +135,7 @@ Every starting national spirit the player can fix (negative or mixed, and someth
 
 ## YAML Validity
 
-HOI4 loc files are checked by `check-yaml` in the pre-commit hook. The HOI4 format is not strict YAML, so several patterns cause parse failures:
+HOI4 loc files are checked by `check-yaml` in the pre-commit hook, and `tools/linting/fix_loc_yaml.py` checks quotes, tabs, and indentation in the pre-commit hook and in CI. The HOI4 format is not strict YAML, so several patterns cause parse failures:
 
 - **Embedded double quotes**: `"He called it "important""` is invalid. Use `\"important\"` or rephrase to remove the inner quotes.
 - **Mixed indentation**: all keys must be consistently indented (all with 1 leading space, or all without). Mixing makes YAML see two separate mappings. Remove stray spaces.

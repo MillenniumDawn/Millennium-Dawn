@@ -179,6 +179,7 @@ _IMPACT_EXCLUDED_SCRIPTS = {
 _REFERENCE_FILES = {
     ".claude/docs/typo-watchlist.md": ("localisation",),
     "resources/documentation/modifiers_documentation.md": ("modifiers",),
+    "resources/documentation/loc_objects_documentation.md": ("scripted-localisation",),
 }
 
 _SCRIPT_PATH_RE = re.compile(r"^tools/validation/(validate_[\w-]+\.py)$")

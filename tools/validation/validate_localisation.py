@@ -318,6 +318,16 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
                     line=line_idx + 2,
                 )
             )
+        if value.count('\\"') % 2:
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-unbalanced-quote",
+                    message='Odd number of \\" in loc value: an opening or closing quote is missing',
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
     return results
 
 
@@ -1108,14 +1118,17 @@ class Validator(BaseValidator):
 
     def validate_prose_conventions(self):
         self._log_section(
-            "Checking localisation prose conventions (em dashes, backtick apostrophes)..."
+            "Checking localisation prose conventions (em dashes, backtick apostrophes, quotes)..."
         )
 
         em_dash_results: List[Issue] = []
         backtick_results: List[Issue] = []
+        quote_results: List[Issue] = []
         for issue in self._get_shared_yml_scan()["prose"]:
             if issue.category == "loc-em-dash":
                 em_dash_results.append(issue)
+            elif issue.category == "loc-unbalanced-quote":
+                quote_results.append(issue)
             else:
                 backtick_results.append(issue)
 
@@ -1132,6 +1145,13 @@ class Validator(BaseValidator):
             "Backtick used as apostrophe in localisation values:",
             severity=Severity.WARNING,
             category="loc-backtick-apostrophe",
+        )
+        self._report(
+            quote_results,
+            '✓ No unbalanced \\" quotes in localisation values',
+            'Unbalanced \\" quotes in localisation values:',
+            severity=Severity.WARNING,
+            category="loc-unbalanced-quote",
         )
 
     def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
