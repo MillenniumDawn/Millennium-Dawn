@@ -43,7 +43,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, NamedTuple, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -583,10 +583,13 @@ def _parse_module_assignments(
 def _iter_named_blocks(text: str, lo: int, hi: int, name: str):
     """Yield ``(body_lo, body_hi)`` for every ``name = { ... }`` block at any
     nesting depth of the ``text[lo:hi]`` span."""
-    for key, blo, bhi, _ in _iter_blocks(text, lo, hi):
+    last = text.rfind(name, lo, hi)
+    for key, blo, bhi, header in _iter_blocks(text, lo, hi):
+        if header > last:
+            return
         if key == name:
             yield blo, bhi
-        else:
+        elif text.find(name, blo, bhi) != -1:
             yield from _iter_named_blocks(text, blo, bhi, name)
 
 
@@ -756,11 +759,12 @@ def _check_variant(
         return
     if hull is None:
         return
+    mods_line = text.count("\n", 0, mods_span[0]) + 1
     if hull not in index.hull_slots:
         if require_known_hull:
             findings.append(
                 Finding(
-                    text.count("\n", 0, mods_span[0]) + 1,
+                    mods_line,
                     "unknown_hull",
                     f"variant type '{hull}' is not a defined hull",
                     hull,
@@ -781,7 +785,7 @@ def _check_variant(
                 unlocked.setdefault(slot, set()).update(cats)
 
     for slot, refs, off in assignments:
-        line = text.count("\n", 0, off) + 1
+        line = mods_line + text.count("\n", mods_span[0], off)
         if slot not in slots:
             findings.append(
                 Finding(
@@ -849,30 +853,39 @@ def _check_variant(
         filled = {
             slot for slot, refs, _ in assignments if any(ref != "empty" for ref in refs)
         }
-        _flag_required_slots(
-            findings, slots, hull, text.count("\n", 0, mods_span[0]) + 1, filled
-        )
+        _flag_required_slots(findings, slots, hull, mods_line, filled)
 
-    _flag_count_limits(
-        findings,
-        index,
-        hull,
-        assignments,
-        text.count("\n", 0, mods_span[0]) + 1,
+    _flag_count_limits(findings, index, hull, assignments, mods_line)
+
+
+class CreatedVariants(NamedTuple):
+    """Comment-blanked file text and the body span of each created variant."""
+
+    text: str
+    spans: List[Tuple[int, int]]
+
+
+def created_variant_spans(content: str) -> CreatedVariants:
+    """Walk *content* once for every ``create_equipment_variant`` block.
+
+    The created-variant checks and the name index all read this one result.
+    """
+    text = blank_comments(content)
+    return CreatedVariants(
+        text, list(_iter_named_blocks(text, 0, len(text), "create_equipment_variant"))
     )
 
 
 def _check_all(
-    content: str,
+    text: str,
+    spans: Iterable[Tuple[int, int]],
     index: EquipmentIndex,
-    block: str,
     *,
     require_known_hull: bool,
     require_filled_slots: bool,
 ) -> List[Finding]:
-    text = blank_comments(content)
     findings: List[Finding] = []
-    for vlo, vhi in _iter_named_blocks(text, 0, len(text), block):
+    for vlo, vhi in spans:
         _check_variant(
             text,
             vlo,
@@ -895,16 +908,19 @@ def check_target_variants(content: str, index: EquipmentIndex) -> List[Finding]:
     slots are checked too: a template that leaves one empty cannot be matched
     by any design the AI produces, so the roles it covers quietly degrade.
     """
+    text = blank_comments(content)
     return _check_all(
-        content,
+        text,
+        _iter_named_blocks(text, 0, len(text), "target_variant"),
         index,
-        "target_variant",
         require_known_hull=True,
         require_filled_slots=True,
     )
 
 
-def check_created_variants(content: str, index: EquipmentIndex) -> List[Finding]:
+def check_created_variants(
+    variants: CreatedVariants, index: EquipmentIndex
+) -> List[Finding]:
     """Same slot/category check for ``create_equipment_variant`` effects, which
     are what focus rewards, events, decisions and history files use.
 
@@ -919,24 +935,24 @@ def check_created_variants(content: str, index: EquipmentIndex) -> List[Finding]
     filled, including when the block carries no ``modules`` at all.
     """
     return _check_all(
-        content,
+        variants.text,
+        variants.spans,
         index,
-        "create_equipment_variant",
         require_known_hull=False,
         require_filled_slots=True,
     )
 
 
 def check_created_variant_upgrades(
-    content: str, index: EquipmentIndex
+    variants: CreatedVariants, index: EquipmentIndex
 ) -> List[Finding]:
     """Flag ``upgrades = { key = N }`` entries the variant's equipment type does
     not list in its own ``upgrades`` block (the engine logs "Type 'X' does not
     support upgrades 'Y'"). A type with no resolvable upgrade list is skipped.
     """
-    text = blank_comments(content)
+    text = variants.text
     findings: List[Finding] = []
-    for vlo, vhi in _iter_named_blocks(text, 0, len(text), "create_equipment_variant"):
+    for vlo, vhi in variants.spans:
         etype = _scalar(text, vlo, vhi, "type")
         if not etype:
             continue
@@ -963,15 +979,15 @@ def check_created_variant_upgrades(
     return findings
 
 
-def parse_variant_names(content: str) -> List[Tuple[str, str, int]]:
-    """``(type, name, line)`` for every ``create_equipment_variant`` in *content*.
+def parse_variant_names(variants: CreatedVariants) -> List[Tuple[str, str, int]]:
+    """``(type, name, line)`` for every ``create_equipment_variant`` block.
 
     Blocks missing either field are skipped: an OOB ``version_name`` lookup can
     never resolve to them.
     """
-    text = blank_comments(content)
+    text = variants.text
     out: List[Tuple[str, str, int]] = []
-    for vlo, vhi in _iter_named_blocks(text, 0, len(text), "create_equipment_variant"):
+    for vlo, vhi in variants.spans:
         etype = _scalar(text, vlo, vhi, "type")
         name = _quoted_scalar(text, vlo, vhi, "name")
         if etype and name:
