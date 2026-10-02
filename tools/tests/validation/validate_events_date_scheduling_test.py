@@ -397,7 +397,9 @@ def test_get_probability_rolled_ids_wiring(tmp_path, monkeypatch):
     monkeypatch.setattr(validator, "_pool_map", fake_pool_map)
     assert validator._get_probability_rolled_ids() == {"foo.1"}
     assert validator._get_probability_rolled_ids() == {"foo.1"}  # cached
-    assert calls == [V.scan_probability_rolled_fires]
+    assert len(calls) == 1
+    assert calls[0].func is V.scan_probability_rolled_fires
+    assert calls[0].keywords == {"mod_path": validator.mod_path}
 
 
 # --- redundant date bounds on scheduled events ---

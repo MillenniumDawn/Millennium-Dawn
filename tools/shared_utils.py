@@ -642,9 +642,14 @@ def create_backup(filename: str) -> str:
 
 
 def should_skip_file(
-    filename: str, extra_skip_patterns: Optional[List[str]] = None
+    filename: str,
+    extra_skip_patterns: Optional[List[str]] = None,
+    *,
+    mod_path: Optional[str] = None,
 ) -> bool:
-    """Check if a file should be skipped during processing."""
+    """Match exclusions inside the checkout, not its ancestor directories."""
+    if mod_path is not None and os.path.isabs(filename):
+        filename = os.path.relpath(filename, mod_path)
     ignored_dirs = {".git", ".claude", "gfx", "tools", "resources", "docs", "map"}
     content_roots = {"common", "events", "history", "interface", "localisation"}
     normalized_path = filename.replace("\\", "/").strip("/")
