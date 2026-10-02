@@ -96,6 +96,7 @@ ROOT_ONLY_EXCLUDES = {
     "Millennium_Dawn.mod",
     "bun.lock",
     "package.json",
+    "validation_config.json",
     "docs",
     "tools",
     "resources",

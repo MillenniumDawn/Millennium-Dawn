@@ -8,7 +8,7 @@ run-name: >-
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -51,9 +51,11 @@ env:
     .github/actions/setup-md-python/action.yml
     CLAUDE.md
     pyproject.toml
+    validation_config.json
     *.mod
-    .workspace-manifest
-    .validation_cache
+    !music/**/*.ogg
+    !music/**/*.mp3
+    !music/**/*.wav
 
 jobs:
   detect-changes:
@@ -88,6 +90,7 @@ jobs:
       docs: ${{ steps.groups.outputs.docs }}
       style: ${{ steps.groups.outputs.style }}
       style_files: ${{ steps.groups.outputs.style_files }}
+      style_config: ${{ steps.groups.outputs.style_config }}
       tools: ${{ steps.groups.outputs.tools }}
       file-paths: ${{ steps.groups.outputs.file-paths }}
       full_suite: ${{ steps.groups.outputs.full_suite }}
@@ -274,8 +277,6 @@ jobs:
     env:
       PR_NUMBER: ${{ inputs.pr_number || github.event.pull_request.number }}
       HEAD_SHA: ${{ needs.detect-changes.outputs.head-sha }}
-      MD_NO_CACHE: >-
-        ${{ needs.detect-changes.outputs.full_suite == 'true' && '1' || '' }}
     steps:
       - name: Checkout PR workspace
         id: checkout
@@ -283,56 +284,26 @@ jobs:
         with:
           repository: ${{ needs.detect-changes.outputs.checkout-repository }}
           ref: ${{ needs.detect-changes.outputs.checkout-ref }}
-          fetch-depth: 0
+          fetch-depth: 1
           filter: blob:none
           persist-credentials: false
-          sparse-checkout: |
-            common
-            events
-            history
-            localisation
-            interface
-            gfx/flags
-            gfx/interface/decisions
-            map/adjacency_rules.txt
-            music
-            tools
-            resources/documentation
-            .claude
-            .github/actions/setup-md-python/action.yml
-            CLAUDE.md
-            pyproject.toml
-            *.mod
+          sparse-checkout: /tools/validation/ci_workspace_profile.txt
           sparse-checkout-cone-mode: false
 
       - name: Restore sparse workspace cache
         id: sparse-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: |
-            common
-            events
-            history
-            localisation
-            interface
-            gfx/flags
-            gfx/interface/decisions
-            map/adjacency_rules.txt
-            music
-            tools
-            resources/documentation
-            .claude
-            .github/actions/setup-md-python/action.yml
-            CLAUDE.md
-            pyproject.toml
-            *.mod
+          path: ${{ env.WORKSPACE_PATHS }}
           key: >-
-            md-sparse-v2-${{ runner.os }}-${{
+            md-sparse-v3-${{ runner.os }}-${{
             needs.detect-changes.outputs.head-sha }}
 
       - name: Materialize sparse workspace on cache miss
         if: steps.sparse-cache.outputs.cache-hit != 'true'
-        run: git sparse-checkout reapply
+        run: >-
+          git sparse-checkout set --no-cone --stdin
+          < tools/validation/ci_workspace_profile.txt
 
       - name: Reject links in PR workspace
         run: |
@@ -344,12 +315,12 @@ jobs:
       - name: Compute validator code hash
         id: toolshash
         run: >-
-          echo "hash=${{ hashFiles('tools/validation/**',
-          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+          echo "hash=${{ hashFiles('tools/validation/**/*.py',
+          'tools/validation/**/*.txt', 'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore shared validator disk cache
         id: valcache
-        if: needs.detect-changes.outputs.full_suite != 'true'
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_cache
@@ -378,38 +349,19 @@ jobs:
         if: steps.sparse-cache.outputs.cache-hit != 'true'
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: |
-            common
-            events
-            history
-            localisation
-            interface
-            gfx/flags
-            gfx/interface/decisions
-            map/adjacency_rules.txt
-            music
-            tools
-            resources/documentation
-            .claude
-            .github/actions/setup-md-python/action.yml
-            CLAUDE.md
-            pyproject.toml
-            *.mod
+          path: ${{ env.WORKSPACE_PATHS }}
           key: >-
-            md-sparse-v2-${{ runner.os }}-${{
+            md-sparse-v3-${{ runner.os }}-${{
             needs.detect-changes.outputs.head-sha }}
 
       - name: Upload prepared workspace
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: prepared-workspace
-          # Music audio is ~80% of this artifact and no validator reads it.
-          # The gated music/*.txt playlists stay included.
           path: |
             ${{ env.WORKSPACE_PATHS }}
-            !music/**/*.ogg
-            !music/**/*.mp3
-            !music/**/*.wav
+            .workspace-manifest
+            .validation_cache
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
@@ -440,19 +392,22 @@ jobs:
         with:
           repository: ${{ needs.detect-changes.outputs.checkout-repository }}
           ref: ${{ needs.detect-changes.outputs.checkout-ref }}
-          fetch-depth: 0
+          fetch-depth: 1
+          filter: blob:none
           persist-credentials: false
           sparse-checkout: |
             tools
             pyproject.toml
+            validation_config.json
             .pre-commit-config.yaml
             .claude/docs/typo-watchlist.md
             .github/actions/setup-md-python/action.yml
             common
             events
             history
-            localisation
-            resources
+            localisation/english
+            localisation/*/MD_frontend_l_*.yml
+            resources/documentation
             package.json
             bun.lock
             .jscpd.json
@@ -463,6 +418,8 @@ jobs:
             .github/workflows/docs-quality.yml
             .github/workflows/pr-housekeeping.yml
             .github/workflows/issue-triage.yml
+            .github/workflows/changelog-conflict-fixer.yml
+            .github/workflows/changelog-lint.yml
             docs/src/content/resources/developer-setup.md
           sparse-checkout-cone-mode: false
 
@@ -484,9 +441,11 @@ jobs:
         if: >-
           always() && !cancelled() && matrix.quality == true &&
           steps.dependencies.outcome == 'success'
+        # coverage report below owns the threshold, so pytest-cov only collects.
         run: >-
-          python -m coverage run --branch -m pytest tools/tests
-          -o addopts= -o 'python_files=*_test.py' -v
+          python -m pytest tools/tests -o addopts=
+          -o 'python_files=*_test.py' -q --durations=20 -n auto
+          --cov --cov-branch --cov-report= --cov-fail-under=0
 
       - name: Report coverage
         id: coverage-report
@@ -502,7 +461,7 @@ jobs:
           steps.dependencies.outcome == 'success'
         run: >-
           python -m pytest tools/tests -o addopts=
-          -o 'python_files=*_test.py' -v
+          -o 'python_files=*_test.py' -q --durations=20 -n auto
 
       - name: Run ruff
         id: ruff
@@ -523,7 +482,7 @@ jobs:
         if: >-
           always() && !cancelled() && matrix.quality == true &&
           steps.dependencies.outcome == 'success'
-        run: pylint tools --output-format=github --reports=no --score=no
+        run: pylint tools -j 0 --output-format=github --reports=no --score=no
 
       - name: Run mypy
         id: mypy
@@ -561,7 +520,7 @@ jobs:
           always() && !cancelled() && matrix.quality == true &&
           steps.dependencies.outcome == 'success'
         run: >-
-          git fetch --no-tags
+          git fetch --no-tags --depth=1 --filter=blob:none
           "https://github.com/${{ github.repository }}.git"
           "${{ github.sha }}"
 
@@ -571,8 +530,9 @@ jobs:
           always() && !cancelled() && matrix.quality == true &&
           steps.dependencies.outcome == 'success'
         run: >-
-          echo "hash=${{ hashFiles('tools/validation/**',
-          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+          echo "hash=${{ hashFiles('tools/validation/**/*.py',
+          'tools/validation/**/*.txt', 'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Create staged integration worktree
         id: staged-worktree
@@ -710,6 +670,8 @@ jobs:
       - name: Set up Python
         id: setup-python
         uses: ./.github/actions/setup-md-python
+        with:
+          install: "false"
 
       - name: Download party localisation scope
         if: matrix.batch == 'targeted-b'
@@ -784,15 +746,22 @@ jobs:
           steps.setup-python.outcome == 'success'
         env:
           STYLE_FILES_JSON: ${{ needs.detect-changes.outputs.style_files }}
+          STYLE_CONFIG: ${{ needs.detect-changes.outputs.style_config }}
         run: |
           printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
             | grep -vE \
               '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
-            > style_files.txt || true
+            > changed_style_files.txt || true
+          if [ -s changed_style_files.txt ]; then
+            echo "has-changed-files=true" >> "$GITHUB_OUTPUT"
+          fi
+          cp changed_style_files.txt style_files.txt
+          if [ "$STYLE_CONFIG" = true ]; then
+            find common/national_focus -type f -name '*.txt' >> style_files.txt
+          fi
+          sort -u -o style_files.txt style_files.txt
           if [ -s style_files.txt ]; then
             echo "has-files=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has-files=false" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Run style check
@@ -807,9 +776,9 @@ jobs:
       - name: Run common-mistakes check
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-files == 'true'
+          steps.style-files.outputs.has-changed-files == 'true'
         run: |
-          tr '\n' '\0' < style_files.txt | xargs -0 -r \
+          tr '\n' '\0' < changed_style_files.txt | xargs -0 -r \
             python3 tools/linting/check_common_mistakes.py \
             --output validation-common-mistakes.log
 
@@ -820,6 +789,12 @@ jobs:
         run: |
           test -f validation-style-check.log
           test -f validation-style-check.json
+
+      - name: Verify common-mistakes results
+        if: >-
+          always() && !cancelled() && matrix.batch == 'core' &&
+          steps.style-files.outputs.has-changed-files == 'true'
+        run: |
           test -f validation-common-mistakes.log
           test -f validation-common-mistakes.json
 
@@ -828,6 +803,12 @@ jobs:
           always() && !cancelled() && matrix.batch == 'core' &&
           steps.setup-python.outcome == 'success'
         run: python3 tools/linting/validate_localization_encoding.py
+
+      - name: Check localisation YAML syntax
+        if: >-
+          always() && !cancelled() && matrix.batch == 'core' &&
+          steps.setup-python.outcome == 'success'
+        run: python3 tools/linting/fix_loc_yaml.py
 
       - name: Check .mod file encoding
         if: >-
@@ -870,7 +851,7 @@ jobs:
       - name: Upload common-mistakes results
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-files == 'true'
+          steps.style-files.outputs.has-changed-files == 'true'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: validation-common-mistakes-results
@@ -939,13 +920,15 @@ jobs:
             tools/report_lib
             tools/validation
             tools/shared_utils.py
+            validation_config.json
           sparse-checkout-cone-mode: false
 
       - name: Compute validator code hash
         id: toolshash
         run: >-
-          echo "hash=${{ hashFiles('tools/validation/**',
-          'tools/shared_utils.py') }}" >> "$GITHUB_OUTPUT"
+          echo "hash=${{ hashFiles('tools/validation/**/*.py',
+          'tools/validation/**/*.txt', 'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore validation baseline
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9

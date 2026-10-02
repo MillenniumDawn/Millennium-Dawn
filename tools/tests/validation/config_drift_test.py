@@ -124,6 +124,8 @@ CI_EXEMPT = {
     "validate_style.py",
     "validate_standardization.py",
     "validate_unused_textures.py",
+    # The CI workspace ships no gfx/models or gfx/entities.
+    "validate_mesh_textures.py",
     "validate_file_paths.py",
     "validate_mod_descriptors.py",
 }
@@ -196,7 +198,7 @@ def test_tools_linux_runs_quality_suite():
     assert {entry["os"] for entry in matrix} == {"Linux", "macOS", "Windows"}
     steps = workflow["jobs"]["tools-tests"]["steps"]
     commands = "\n".join(step.get("run", "") for step in steps)
-    assert "coverage run" in commands
+    assert "-n auto --cov --cov-branch" in commands
     assert "coverage report" in commands
     for command in ("ruff check tools", "black --check tools", "pylint tools", "mypy"):
         assert command in commands
@@ -251,6 +253,7 @@ def test_tools_checkout_exposes_consumed_configuration():
     required = {
         "tools",
         "pyproject.toml",
+        "validation_config.json",
         ".pre-commit-config.yaml",
         ".claude/docs/typo-watchlist.md",
         ".github/actions/setup-md-python/action.yml",
@@ -262,6 +265,10 @@ def test_tools_checkout_exposes_consumed_configuration():
         "docs/src/content/resources/developer-setup.md",
     }
     assert required <= sparse
+    # Whole trees would add ~590 MB of translations and art no test reads.
+    assert not {"localisation", "resources"} & sparse
+    assert checkout["with"]["fetch-depth"] == 1
+    assert checkout["with"]["filter"] == "blob:none"
 
 
 def test_file_paths_run_in_a_lightweight_index_job():
@@ -372,15 +379,31 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
         and step.get("with", {}).get("path")
         and "sparse" in step.get("id", "")
     )
-    assert "md-sparse-v2-${{ runner.os }}" in cache["with"]["key"]
+    assert "md-sparse-v3-${{ runner.os }}" in cache["with"]["key"]
     assert "needs.detect-changes.outputs.head-sha" in cache["with"]["key"]
+    assert "restore-keys" not in cache["with"]
+    assert cache["with"]["path"] == "${{ env.WORKSPACE_PATHS }}"
+    assert checkout["with"]["fetch-depth"] == 1
+    assert checkout["with"]["sparse-checkout"] == (
+        "/tools/validation/ci_workspace_profile.txt"
+    )
+    materialize = next(
+        step
+        for step in prepare["steps"]
+        if step.get("name", "").startswith("Materialize")
+    )
+    assert materialize["if"] == "steps.sparse-cache.outputs.cache-hit != 'true'"
+    assert "git sparse-checkout set --no-cone --stdin" in materialize["run"]
+    assert "ci_workspace_profile.txt" in materialize["run"]
+    assert prepare["steps"].index(cache) < prepare["steps"].index(materialize)
     valcache = next(
         step
         for step in prepare["steps"]
         if "actions/cache/restore@" in step.get("uses", "")
         and "validation_cache" in step.get("with", {}).get("path", "")
     )
-    assert "full_suite != 'true'" in valcache["if"]
+    assert "if" not in valcache
+    assert "MD_NO_CACHE" not in prepare["env"]
     assert "steps.toolshash.outputs.hash" in valcache["with"]["key"]
     assert "base-sha" not in valcache["with"]["key"]
 
@@ -413,6 +436,7 @@ def test_mod_core_runs_extra_checks_after_batch():
         "Run style check",
         "Run common-mistakes check",
         "Check localisation UTF-8 BOM",
+        "Check localisation YAML syntax",
         "Check .mod file encoding",
         "Check mod descriptor replace_path sync",
     ):
@@ -421,6 +445,8 @@ def test_mod_core_runs_extra_checks_after_batch():
         assert names.index(name) > batch_index
     style = next(step for step in steps if step.get("name") == "Run style check")
     assert "MD_STAGED_FILES" in style["run"]
+    loc_yaml = steps[names.index("Check localisation YAML syntax")]
+    assert loc_yaml["run"] == "python3 tools/linting/fix_loc_yaml.py"
 
 
 def test_report_job_posts_comment_and_checks():
@@ -593,6 +619,44 @@ def test_validator_cache_restores_are_source_hash_scoped():
     assert baseline in CI_WORKFLOW.read_text(encoding="utf-8")
 
 
+def test_validation_config_reaches_every_validator_run():
+    text = CI_WORKFLOW.read_text(encoding="utf-8")
+    workflow = yaml.safe_load(text)
+    assert "validation_config.json" in workflow["env"]["WORKSPACE_PATHS"].split()
+    profile = (VALIDATION_DIR / "ci_workspace_profile.txt").read_text(encoding="utf-8")
+    assert "/validation_config.json" in profile.split()
+    checkout = next(
+        step
+        for step in workflow["jobs"]["report"]["steps"]
+        if step.get("name") == "Checkout report tooling"
+    )
+    assert "validation_config.json" in checkout["with"]["sparse-checkout"].split()
+    for source in (text, VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")):
+        hashes = re.findall(
+            r"hashFiles\('tools/validation/\*\*/\*\.py',[^)]*\)", source
+        )
+        assert hashes
+        assert all(
+            "'validation_config.json'" in h and "'tools/validation/**/*.txt'" in h
+            for h in hashes
+        )
+        assert "'tools/validation/**'" not in source
+    profile = (VALIDATION_DIR / "staged_sparse_profile.txt").read_text(encoding="utf-8")
+    assert "/validation_config.json" in profile.split()
+    assert classify(["validation_config.json"])["full_suite"] is True
+    assert workflow["jobs"]["detect-changes"]["outputs"]["style_config"] == (
+        "${{ steps.groups.outputs.style_config }}"
+    )
+    steps = workflow["jobs"]["mod-tests"]["steps"]
+    collect = next(s for s in steps if s.get("name") == "Collect style-relevant files")
+    assert "needs.detect-changes.outputs.style_config" in collect["env"]["STYLE_CONFIG"]
+    assert "find common/national_focus -type f -name '*.txt'" in collect["run"]
+    style = next(s for s in steps if s.get("name") == "Run style check")
+    mistakes = next(s for s in steps if s.get("name") == "Run common-mistakes check")
+    assert "has-files" in style["if"]
+    assert "has-changed-files" in mistakes["if"]
+
+
 def test_baseline_saves_only_after_clean_diff():
     config = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
     job = config["jobs"]["build-cache"]
@@ -619,7 +683,15 @@ def test_tools_quality_checks_are_wired_in_precommit_and_ci():
     assert "pylint tools" in text
     assert "mypy" in text
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    for package in ("black==", "coverage==", "mypy==", "pylint==", "ruff=="):
+    for package in (
+        "black==",
+        "coverage==",
+        "mypy==",
+        "pylint==",
+        "pytest-cov==",
+        "pytest-xdist==",
+        "ruff==",
+    ):
         assert package in pyproject
     assert Coverage().config.include_namespace_packages is True
 
@@ -637,7 +709,7 @@ def test_pytest_collection_gate_cannot_self_exclude():
     assert "python_files=*_test.py" in prepush_suite
     text = CI_WORKFLOW.read_text(encoding="utf-8")
     assert "tools/tests/collection_layout_test.py" in text
-    assert "coverage run" in text
+    assert "--cov --cov-branch" in text
     assert "python_files=*_test.py" in text
 
 

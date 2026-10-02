@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from shared_utils import extract_block_from_text as _extract_block
-from shared_utils import read_text_under
+from shared_utils import read_text_under, validation_config
 from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
@@ -33,15 +33,13 @@ _LOC_LINE_RE = re.compile(r'^[ \t]*([\w.\-]+)\s*:\d*\s*"(.*)"[ \t]*$')
 # Focus descriptions may highlight a term (§Y), mark a gain (§G) or a cost (§R);
 # titles carry no color at all. See .claude/docs/localisation-rules.md.
 _DESC_PALETTE = frozenset("YGR")
-# A § followed by whitespace and a digit is a prose section sign (a legal
-# citation like "15 U.S.C. § 1"), never markup — same exemption as the sibling
-# check in validate_localisation.py.
-_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+# `§§` is a literal section sign, not a color code (see validate_localisation.py).
+_LITERAL_SECTION_SIGN_RE = re.compile(r"§§")
 
 
 def _color_codes(value: str) -> List[str]:
     """Return the color codes opened in *value*, ignoring resets."""
-    cleaned = _PROSE_SECTION_SIGN_RE.sub("", value)
+    cleaned = _LITERAL_SECTION_SIGN_RE.sub("", value)
     return [c for c in re.findall("§(.)", cleaned) if c != "!"]
 
 
@@ -87,64 +85,8 @@ _REWARD_BLOCK_RE = re.compile(
 _EFFECT_TOOLTIP_START = re.compile(r"\beffect_tooltip\s*=\s*\{")
 _PP_MALUS_RE = re.compile(r"\badd_political_power\s*=\s*(-\d+(?:\.\d+)?)\b")
 
-# Focuses whose PP malus is the intended mechanic rather than an oversight: the
-# Italian technocrat policy tree charges PP to enact a policy and gates the
-# focus on having it banked (available = { ... has_political_power > N }).
 _PP_MALUS_EXEMPT_FOCUS_IDS = frozenset(
-    {
-        "ITA_a_devout_state",
-        "ITA_a_secular_state",
-        "ITA_abolish_perfect_bicameralism",
-        "ITA_abolish_school_religion_teaching",
-        "ITA_abolish_the_provinces",
-        "ITA_allow_euthanasia",
-        "ITA_allow_same_sex_marriage",
-        "ITA_anti_corruption_measures",
-        "ITA_build_waste_incinerators",
-        "ITA_carbon_tax",
-        "ITA_cash_bonus_to_18_year_olds",
-        "ITA_classical_education",
-        "ITA_constitutionalise_secularism",
-        "ITA_constitutionalise_social_rights",
-        "ITA_defund_school_laboratories",
-        "ITA_economic_support_for_the_church",
-        "ITA_encourage_immigration",
-        "ITA_european_speech",
-        "ITA_fire_excessive_government_employees",
-        "ITA_impose_better_checks_on_magistrates",
-        "ITA_increase_competition",
-        "ITA_increase_funding_for_research",
-        "ITA_increase_pension_age_requirements",
-        "ITA_introduce_meritocracy",
-        "ITA_italian_federation",
-        "ITA_ius_scholae",
-        "ITA_ius_soli",
-        "ITA_legalize_all_drugs",
-        "ITA_legalize_light_drugs",
-        "ITA_let_companies_fail",
-        "ITA_let_salaries_decrease",
-        "ITA_limit_8xmille",
-        "ITA_merge_small_municipalities",
-        "ITA_modern_education",
-        "ITA_modify_article_18",
-        "ITA_privatize_museum_system",
-        "ITA_privatize_water_distribution",
-        "ITA_protect_migrant_rights",
-        "ITA_protect_prisoners_rights",
-        "ITA_recalculate_baby_pensions",
-        "ITA_reduce_expenses",
-        "ITA_reduce_judgement_times",
-        "ITA_reopen_brothels",
-        "ITA_safeguard_teachers_privileges",
-        "ITA_school_mass_hiring",
-        "ITA_sell_government_shares_in_companies",
-        "ITA_shift_taxation_from_income_to_property",
-        "ITA_simplify_legal_code",
-        "ITA_stimulate_growth",
-        "ITA_stop_building_abuse",
-        "ITA_tax_church_property",
-        "ITA_with_europe",
-    }
+    validation_config("validate_focus_tree", "pp_malus_exempt_focus_ids")
 )
 
 # ai_will_do staffing/bankruptcy guards (issue #2233 + the AGENTS.md

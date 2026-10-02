@@ -9,12 +9,14 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
+from shared_utils import validation_config
 from validate_gfx_references import sprite_names_from_gfx_text
 from validator_common import (
     BaseValidator,
     Colors,
     DataCleaner,
     FileOpener,
+    Issue,
     Severity,
     find_line_number,
     run_validator_main,
@@ -38,7 +40,7 @@ def process_file_for_defined_localisations(
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], {})
 
     if "00_scripted_localisation_FR_loc" in filename:
@@ -135,12 +137,62 @@ def _scan_loc_tokens(
     return _filter_bracket_loc_candidates(bracketed, defined_names or set()) | explicit
 
 
+_LOC_OBJECTS_DOC = os.path.join(
+    "resources", "documentation", "loc_objects_documentation.md"
+)
+_DOC_GETTER_RE = re.compile(r"^\*\*(\w+)\*\*\s*$", re.MULTILINE)
+# Vanilla defined_text that the mod's replace/ strings call but does not ship.
+_VANILLA_SCRIPTED_LOCS = frozenset({"GetCountryContinent"})
+
+
+def _documented_getters(mod_path: str) -> frozenset:
+    try:
+        with open(
+            os.path.join(mod_path, _LOC_OBJECTS_DOC), "r", encoding="utf-8"
+        ) as handle:
+            return frozenset(_DOC_GETTER_RE.findall(handle.read()))
+    except OSError:
+        return frozenset()
+
+
+def _getter_spelling_message(
+    member: str, defined_lower: Set[str], documented: frozenset
+) -> str:
+    """Why a bracket member is neither a scripted loc nor a documented getter, or ""."""
+    if (
+        member in documented
+        or member in _VANILLA_SCRIPTED_LOCS
+        or member.lower() in defined_lower
+    ):
+        return ""
+    spelling = next((g for g in documented if g.lower() == member.lower()), None)
+    if spelling:
+        return f"'{member}' is not the documented getter spelling '{spelling}'"
+    if member.lower().startswith("get"):
+        return (
+            f"'{member}' is neither a defined scripted localisation "
+            "nor a documented engine getter"
+        )
+    return ""
+
+
+def process_file_for_getter_refs(filename: str) -> List[Tuple[str, int]]:
+    """Pool worker: (member, line) for every [SCOPE.Member] call in one file."""
+    text = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    return [
+        (match.group(2), text.count("\n", 0, match.start()) + 1)
+        for match in _BRACKET_LOC_RE.finditer(text)
+    ]
+
+
 def process_file_for_used_localisations(
     args: Tuple[str, Set[str], bool, str],
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, search_names, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], {})
 
     basename = os.path.basename(filename)
@@ -367,10 +419,9 @@ class Validator(BaseValidator):
             "Checking unused scripted localisations (defined but not used)..."
         )
 
-        # Preemptive slot libraries — defined for all possible slots even if only a
-        # subset are active.  Suppress unused warnings for the unoccupied slots rather
-        # than requiring every slot to have a live caller.
-        UNUSED_ONLY_FALSE_POSITIVES = ("eu_parl_pg_party_",)
+        unused_only = validation_config(
+            "validate_scripted_localisation", "unused_only_false_positives"
+        )
 
         defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
         defined_locs_lower = [loc.lower() for loc in defined_locs]
@@ -379,7 +430,7 @@ class Validator(BaseValidator):
         defined_locs_lower = (
             DataCleaner.clear_false_positives_partial_match(
                 defined_locs_lower,
-                tuple(false_positives) + tuple(UNUSED_ONLY_FALSE_POSITIVES),
+                tuple(false_positives) + tuple(unused_only),
             )
             or []
         )
@@ -472,6 +523,48 @@ class Validator(BaseValidator):
             category="gfx-icon",
         )
 
+    def validate_getter_spelling(self, defined_locs: List[str]):
+        self._log_section("Checking engine getter spelling in localisation...")
+
+        documented = _documented_getters(self.mod_path)
+        if not documented:
+            self.log(
+                f"{_LOC_OBJECTS_DOC} not found — skipping getter spelling check",
+                "warning",
+            )
+            return
+
+        defined_lower = {name.lower() for name in defined_locs}
+        files = self._collect_files(
+            ["localisation/english/**/*.yml", "interface/**/*.gui"],
+            extra_skip=lambda f: should_skip_file(f, mod_path=self.mod_path),
+        )
+        results = []
+        for filename, refs in zip(
+            files, self._pool_map(process_file_for_getter_refs, files)
+        ):
+            rel_path = os.path.relpath(filename, self.mod_path)
+            for member, line in refs:
+                message = _getter_spelling_message(member, defined_lower, documented)
+                if message:
+                    results.append(
+                        Issue(
+                            severity=Severity.WARNING,
+                            category="loc-getter-spelling",
+                            message=message,
+                            file=rel_path,
+                            line=line,
+                        )
+                    )
+
+        self._report(
+            results,
+            "✓ All getter calls use a defined scripted loc or documented getter",
+            "Getter calls that are neither scripted loc nor documented getters:",
+            Severity.WARNING,
+            category="loc-getter-spelling",
+        )
+
     def run_validations(self):
         if self.staged_only and not self.staged_files:
             self.log(
@@ -480,33 +573,10 @@ class Validator(BaseValidator):
             )
             return
 
-        FALSE_POSITIVES = [
-            "root.getname",
-            "this.getname",
-            "from.getname",
-            "prev.getname",
-            "root.getadjective",
-            "this.getadjective",
-            "from.getadjective",
-            "getdatetext",
-            "getyear",
-            "getmonth",
-            "getday",
-            # These are matched as substrings, so suffix entries like "tt"/"_desc" used to
-            # swallow real names (party_name_by_index_delayed_tt, opposition_party_desc,
-            # sat_N_det_tt_loc) — engine getters are already filtered by the get* prefix rule.
-            "euxxx_ep_agenda",
-            # Plain loc keys used as $KEY$ nested substitution wrappers in formable
-            # state integration tooltips \u2014 not scripted localisations
-            "gip",
-            "gis",
-            "\u00a7",
-            "\u00a3",
-            "$",
-            "var:",
-            "@",
-            "[",
-        ]
+        # Entries match as substrings, so a short suffix entry swallows real names.
+        false_positives = list(
+            validation_config("validate_scripted_localisation", "false_positives")
+        )
 
         all_defined_locs, all_defined_paths = (
             ScriptedLocalisation.get_all_defined_localisations(
@@ -556,11 +626,12 @@ class Validator(BaseValidator):
             missing_locs, missing_paths = all_used_locs, all_used_paths
 
         self.validate_missing_scripted_localisations(
-            FALSE_POSITIVES, all_defined_locs, missing_locs, missing_paths
+            false_positives, all_defined_locs, missing_locs, missing_paths
         )
         self.validate_unused_scripted_localisations(
-            FALSE_POSITIVES, defined_locs, defined_paths, all_used_locs
+            false_positives, defined_locs, defined_paths, all_used_locs
         )
+        self.validate_getter_spelling(all_defined_locs)
 
         # GFX icon check scans all interface/*.gfx files — skip in staged mode
         if not self.staged_only:
