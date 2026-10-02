@@ -60,8 +60,10 @@ These are syntax examples, not identifiers to copy. Resolve every name before us
 
 Write getters in their documented spelling from
 `resources/documentation/loc_objects_documentation.md` (`GetNameWithFlag`, not
-`GetNamewithFlag`). Tests cannot prove that dynamic text renders; after changing it,
-run the [Localisation Smoke Checklist](loc-smoke-checklist.md).
+`GetNamewithFlag`). The engine matches built-in getters case-insensitively, so a
+case variant still renders, but an unknown getter (`GetAdj`) renders as nothing and
+logs no error. Tests cannot prove that dynamic text renders; after changing it, run
+the [Localisation Smoke Checklist](loc-smoke-checklist.md).
 
 ## Color Codes
 
@@ -78,6 +80,7 @@ Rules:
 - **Focus titles take no color at all.** The node's own frame already conveys state, so a colored title only competes with it. Color belongs in the description and the tooltip.
 - `§H` renders the identical RGB to `§Y` (`255 189 0` in `interface/core.gfx`). Write `§Y`.
 - The `§0`–`§9` gradient codes exist for graph series. Never use them in prose.
+- A literal section sign is written `§§` (`15 U.S.C. §§ 1` renders `15 U.S.C. § 1`). A single `§` always starts a color code, even before a space: `§ 1` drops the space, shows no `§`, and floods `error.log` with `Could not find coloring for character ' '`.
 - Do not build a per-country palette (a color per political party, per branch, per coup path). It reads as noise once a player moves between trees.
 - Colour only the term that carries the meaning, not the whole sentence.
 - One exception: text that **names a color the player can see elsewhere** picks the code matching that rendered color. `GCC_map_mode_tooltip_delayed` labels its map-mode legend `§CTeal§!` because the map really is teal.
