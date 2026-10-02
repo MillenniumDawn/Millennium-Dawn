@@ -491,36 +491,18 @@ class Validator(BaseValidator):
             validation_config("validate_scripted_localisation", "false_positives")
         )
 
-        all_defined_locs, all_defined_paths = (
-            ScriptedLocalisation.get_all_defined_localisations(
-                mod_path=self.mod_path,
-                lowercase=False,
-                return_paths=True,
-                staged_files=None,
-                workers=self.workers,
-                pool=self._get_pool(),
-            )
-        )
-        all_used_locs, all_used_paths = ScriptedLocalisation.get_all_used_localisations(
-            mod_path=self.mod_path,
-            defined_names=set(all_defined_locs),
-            lowercase=False,
-            return_paths=True,
-            staged_files=None,
-            workers=self.workers,
-            pool=self._get_pool(),
-        )
-
-        # Missing refs are staged-scope; unused checks need full-repo consumers.
         if self.staged_only:
+            # Staged scans cover a handful of files, so they map in-process.
+            all_defined_locs = ScriptedLocalisation.get_all_defined_localisations(
+                mod_path=self.mod_path, lowercase=False, workers=1
+            )
             defined_locs, defined_paths = (
                 ScriptedLocalisation.get_all_defined_localisations(
                     mod_path=self.mod_path,
                     lowercase=False,
                     return_paths=True,
                     staged_files=self.staged_files,
-                    workers=self.workers,
-                    pool=self._get_pool(),
+                    workers=1,
                 )
             )
             missing_locs, missing_paths = (
@@ -530,11 +512,42 @@ class Validator(BaseValidator):
                     lowercase=False,
                     return_paths=True,
                     staged_files=self.staged_files,
+                    workers=1,
+                )
+            )
+            # The unused check reports staged definitions only, so it needs the
+            # repo-wide consumer scan only when a definition file is staged.
+            all_used_locs: List[str] = []
+            if defined_locs:
+                all_used_locs = ScriptedLocalisation.get_all_used_localisations(
+                    mod_path=self.mod_path,
+                    defined_names=set(all_defined_locs),
+                    lowercase=False,
+                    workers=self.workers,
+                    pool=self._get_pool(),
+                )
+        else:
+            all_defined_locs, all_defined_paths = (
+                ScriptedLocalisation.get_all_defined_localisations(
+                    mod_path=self.mod_path,
+                    lowercase=False,
+                    return_paths=True,
+                    staged_files=None,
                     workers=self.workers,
                     pool=self._get_pool(),
                 )
             )
-        else:
+            all_used_locs, all_used_paths = (
+                ScriptedLocalisation.get_all_used_localisations(
+                    mod_path=self.mod_path,
+                    defined_names=set(all_defined_locs),
+                    lowercase=False,
+                    return_paths=True,
+                    staged_files=None,
+                    workers=self.workers,
+                    pool=self._get_pool(),
+                )
+            )
             defined_locs, defined_paths = all_defined_locs, all_defined_paths
             missing_locs, missing_paths = all_used_locs, all_used_paths
 
