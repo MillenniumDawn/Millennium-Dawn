@@ -98,7 +98,7 @@ def _staged_fetch(tmp_path):
         source.as_uri(),
         str(checkout),
     )
-    fetch = workflow_step("tools-tests", "Fetch PR head for staged integration")
+    fetch = workflow_step("tools-quality", "Fetch PR head for staged integration")
     command = shlex.split(
         substitute_expressions(
             fetch["run"],
@@ -133,7 +133,7 @@ def test_staged_worktree_step_checks_out_only_the_staged_profile(tmp_path):
     for profile in ("staged_sparse_profile.txt", "ci_workspace_profile.txt"):
         body = (REPO_ROOT / "tools/validation" / profile).read_text(encoding="utf-8")
         write_under_str(checkout, f"tools/validation/{profile}", body)
-    step = workflow_step("tools-tests", "Create staged integration worktree")
+    step = workflow_step("tools-quality", "Create staged integration worktree")
     script = substitute_expressions(
         step["run"],
         {
