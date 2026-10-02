@@ -440,6 +440,15 @@ def test_gfx_icon_check_in_staged_mode_reads_only_staged_files(tmp_path):
     assert not any("GFX_other_missing" in m for m in messages)
 
 
+def _run_rows(tmp_path):
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    return [
+        (issue.category, issue.message, issue.file, issue.line)
+        for issue in validator._issues
+    ]
+
+
 def test_one_worker_run_scans_in_process(tmp_path, monkeypatch):
     _write_sloc(
         tmp_path,
@@ -455,13 +464,8 @@ def test_one_worker_run_scans_in_process(tmp_path, monkeypatch):
         raise AssertionError("one worker must not start a pool")
 
     monkeypatch.setattr(V, "Pool", no_pool)
-    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
 
-    assert [
-        (issue.category, issue.message, issue.file, issue.line)
-        for issue in validator._issues
-    ] == [
+    assert _run_rows(tmp_path) == [
         ("missing-scripted-loc", "ghostloc", "interface/use.gui", 2),
         (
             "unused-scripted-loc",
@@ -569,13 +573,7 @@ def test_missing_references_in_one_file_are_reported_in_name_order(tmp_path):
     gui.parent.mkdir()
     gui.write_text("".join(f'text = "[{name}]"\n' for name in names), encoding="utf-8")
 
-    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-
-    assert [
-        (issue.category, issue.message, issue.file, issue.line)
-        for issue in validator._issues
-    ] == [
+    assert _run_rows(tmp_path) == [
         ("missing-scripted-loc", name, "interface/use.gui", names.index(name) + 1)
         for name in sorted(names)
     ]
