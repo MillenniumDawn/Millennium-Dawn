@@ -10,7 +10,7 @@ import re
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -221,6 +221,47 @@ def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, 
         return []
     return [
         (name, filename, line) for name, line in find_option_logs_without_effects(text)
+    ]
+
+
+_ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
+
+# Per-worker copies of costly_scripted_effects and stored_variable_signs, set
+# once by the Pool initializer.
+_W_COSTLY_EFFECTS: Dict[str, str] = {}
+_W_STORED_SIGNS: Dict[str, int] = {}
+
+
+def _init_cost_lookups(effects: Dict[str, str], stored: Dict[str, int]) -> None:
+    global _W_COSTLY_EFFECTS, _W_STORED_SIGNS
+    _W_COSTLY_EFFECTS = effects
+    _W_STORED_SIGNS = stored
+
+
+def _scan_stored_variable_signs(filename: str) -> Dict[str, int]:
+    """Pool worker: stored_variable_signs for one file."""
+    text = _read_cleaned_text(filename)
+    if text is None or "set_variable" not in text:
+        return {}
+    return stored_variable_signs([text])
+
+
+def _extract_cost_blind_options(filename: str) -> List[Tuple[str, str, int]]:
+    """Pool worker: (message, basename, line) for options whose AI weight ignores a cost."""
+    text = _read_cleaned_text(filename)
+    if text is None:
+        return []
+    basename = os.path.basename(filename)
+    return [
+        (
+            f"{name} - flat ai_chance ignores the {costs} cost"
+            + (_ALL_GATED_NOTE if all_gated else ""),
+            basename,
+            line,
+        )
+        for name, line, costs, all_gated in find_cost_blind_options(
+            text, _W_COSTLY_EFFECTS, _W_STORED_SIGNS
+        )
     ]
 
 
@@ -1001,6 +1042,311 @@ def find_option_logs_without_effects(text: str) -> List[Tuple[str, int]]:
     return out
 
 
+# Blocks that keep the option's own country scope. A cost inside any other block
+# (`FROM = { ... }`, a state scope, a trigger) is not paid by the country choosing.
+_OWN_SCOPE_BLOCKS = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "hidden_effect",
+        "effect_tooltip",
+        "random",
+        "random_list",
+        "meta_effect",
+        "text",
+        "ROOT",
+        "THIS",
+    }
+)
+_VARIABLE_OPS = ("set", "add_to", "subtract_from", "multiply", "divide")
+# Kept whole: the math block nested in one (`x = { value = ... }`) is not a scope.
+_VARIABLE_EFFECTS = frozenset(
+    f"{op}_{temp}variable" for op in _VARIABLE_OPS for temp in ("", "temp_")
+)
+_BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
+_OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
+_AI_CHANCE_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
+
+# Signs a value can have, as bits. Zero has neither, so a zero change costs nothing.
+_NEG, _POS = 1, 2
+
+# Stored variable -> (signs of a change that cost the country, label). Debt is the
+# odd one out: adding to it is what hurts. A tax rate change costs either way.
+_COST_VARIABLES = {
+    "treasury": (_NEG, "treasury"),
+    "debt": (_POS, "debt"),
+    "int_investments": (_NEG, "international investment"),
+    "corporate_tax_rate": (_NEG | _POS, "tax rate"),
+    "population_tax_rate": (_NEG | _POS, "tax rate"),
+}
+_STAT_COSTS = {
+    "add_political_power": "political power",
+    "add_stability": "stability",
+    "add_war_support": "war support",
+}
+_COST_ORDER = (
+    *dict.fromkeys(kind for _cost_signs, kind in _COST_VARIABLES.values()),
+    *_STAT_COSTS.values(),
+)
+# `{ x = operand }` or the long form `{ var = x value = operand }`.
+_VARIABLE_ARGS = (
+    r"\s*=\s*\{\s*(?:var\s*=\s*(?P<long>[^\s={}]+)\s+value\s*=\s*"
+    r"|(?P<short>[^\s={}]+)\s*=\s*)(?P<operand>\{[^{}]*\}|[^\s{}]+)"
+)
+_STAT_COST = r"\b(?P<stat>add_political_power|add_stability|add_war_support)\s*=\s*-"
+_COST_STEP_RE = re.compile(
+    r"\b(?P<op>"
+    + "|".join(_VARIABLE_OPS)
+    + r")_(?P<temp>temp_)?variable"
+    + _VARIABLE_ARGS
+    + "|"
+    + _STAT_COST
+    + r"|\b(?P<call>[A-Za-z_]\w*)\s*=\s*yes\b"
+    r"|\b(?P<branch>if|else_if|else|random|\d+)\s*=\s*\{"
+)
+_DIRECT_COST_RE = re.compile(
+    r"\b(?:add_to|subtract_from)_variable\s*=\s*\{\s*(?:var\s*=\s*)?(?:"
+    + "|".join(_COST_VARIABLES)
+    + r")\b|"
+    + _STAT_COST
+)
+_EFFECT_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*yes\b")
+_SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z_][\w.]*)\s*=\s*\{", re.MULTILINE)
+_MATH_TERM_RE = re.compile(r"\b(value|add|subtract|multiply|divide)\s*=\s*([^\s{}]+)")
+_STORED_LITERAL_RE = re.compile(
+    r"\bset_variable\s*=\s*\{\s*(?:var\s*=\s*([^\s={}]+)\s+value\s*=\s*"
+    r"|([^\s={}]+)\s*=\s*)(-?[\d.]+)\s*\}"
+)
+
+
+def _flip(signs: int) -> int:
+    return ((signs & _NEG) << 1) | ((signs & _POS) >> 1)
+
+
+def _combine(op: str, signs: int, term: int) -> int:
+    """Signs `signs` can have after one variable op (or math-block term) with `term`.
+
+    Adding or subtracting only decides the sign of a value that was zero
+    (`needed_money = 0`, then `subtract 4.5`). A value that already has a sign
+    keeps it: script subtracts a part from a whole (`bailout - debt`) far more
+    often than it crosses zero, and calling that negative would invent a charge.
+    """
+    if op in ("set", "value"):
+        return term
+    if op in ("multiply", "divide"):
+        return (signs if term & _POS else 0) | (_flip(signs) if term & _NEG else 0)
+    return signs or (_flip(term) if op.startswith("subtract") else term)
+
+
+def _stored_name(variable: str) -> str:
+    """`FROM.LBA_cost^2` -> `LBA_cost`: the name a stored variable is set under."""
+    return variable.rsplit(".", 1)[-1].split("^", 1)[0]
+
+
+def _signs(operand: str, known: Dict[str, int], stored: Dict[str, int]) -> int:
+    """Signs a variable-effect operand can have.
+
+    `known` is what this run of effects has set. `stored` is stored_variable_signs.
+    Anything else is a stored value like `gdp_total` and counts as positive.
+    """
+    if operand.startswith("{"):
+        signs = 0
+        for op, term in _MATH_TERM_RE.findall(operand):
+            signs = _combine(op, signs, _signs(term, known, stored))
+        return signs
+    if operand[0] in "-.0123456789":
+        if not operand.strip("-.0"):
+            return 0
+        return _NEG if operand[0] == "-" else _POS
+    if operand in known:
+        return known[operand]
+    return stored.get(_stored_name(operand), _POS)
+
+
+def _effect_costs(
+    text: str,
+    effects: Dict[str, str],
+    known: Dict[str, int],
+    stored: Dict[str, int],
+    stack: Tuple[str, ...] = (),
+) -> Set[str]:
+    """What these effects cost the country running them, read in script order.
+
+    Charges are rarely a plain negative literal: `treasury_change` is often set to
+    a GDP variable and negated by `multiply_temp_variable`, or built in one math
+    block (`{ value = gdp_total multiply = -0.03 }`), then applied by a scripted
+    effect. So this tracks the signs every variable can have and follows calls
+    into `effects` (see costly_scripted_effects), which share the caller's temp
+    variables the way the game does. A branch (`if`, `random`, a `random_list`
+    bucket) may or may not run, so what it sets is added to what was possible
+    before it, and an `else` starts from what held before its `if`. The cost
+    itself is always a write to a stored variable in _COST_VARIABLES or a negative
+    stat effect.
+    """
+    costs: Set[str] = set()
+    # Also right for the old `if = { ... else = { ... } }` form: this call is the `if`.
+    before_if = dict(known)
+    pos = 0
+    while True:
+        m = _COST_STEP_RE.search(text, pos)
+        if m is None:
+            return costs
+        pos = m.end()
+        end = _matching_brace(text, pos - 1) if m["branch"] else -1
+        if end != -1:
+            if m["branch"] == "if":
+                before_if = dict(known)
+            branch = dict(before_if if m["branch"].startswith("else") else known)
+            costs |= _effect_costs(text[pos:end], effects, branch, stored, stack)
+            for variable, signs in branch.items():
+                known[variable] = signs | known.get(variable, 0)
+            pos = end
+        elif m["stat"]:
+            costs.add(_STAT_COSTS[m["stat"]])
+        elif m["call"]:
+            call = m["call"]
+            if call in effects and call not in stack:
+                costs |= _effect_costs(
+                    effects[call], effects, known, stored, (*stack, call)
+                )
+        elif m["op"]:
+            target = m["long"] or m["short"]
+            term = _signs(m["operand"], known, stored)
+            if target not in _COST_VARIABLES or m["temp"]:
+                current = 0 if m["op"] == "set" else _signs(target, known, stored)
+                known[target] = _combine(m["op"], current, term)
+            elif m["op"] in ("add_to", "subtract_from"):
+                cost_signs, kind = _COST_VARIABLES[target]
+                if _combine(m["op"], 0, term) & cost_signs:
+                    costs.add(kind)
+
+
+def stored_variable_signs(texts: Iterable[str]) -> Dict[str, int]:
+    """Stored variables some script sets to a negative literal -> the signs it is set to.
+
+    An option that reads `treasury_change = TAG_project_cost` charges the country
+    only if the stored value is negative, and that is decided wherever the mod
+    sets it (`set_variable = { TAG_project_cost = -4 }`), not in the option.
+    """
+    seen: Dict[str, int] = {}
+    for text in texts:
+        for long_name, short_name, literal in _STORED_LITERAL_RE.findall(text):
+            name = _stored_name(long_name or short_name)
+            seen[name] = seen.get(name, 0) | _signs(literal, {}, {})
+    return {name: signs for name, signs in seen.items() if signs & _NEG}
+
+
+def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
+    """Own-scope body of every scripted effect that can charge the country calling it.
+
+    That is an effect that writes a money variable or lowers a stat itself, or
+    calls one that does. `modify_treasury_effect` and the `*_expenditure` presets
+    are found this way, not listed by hand.
+    """
+    bodies: Dict[str, str] = {}
+    for text in texts:
+        code = blank_quoted_strings(text)
+        pos = 0
+        while True:
+            m = _SCRIPTED_EFFECT_DEF_RE.search(code, pos)
+            end = _matching_brace(code, m.end() - 1) if m else -1
+            if m is None or end == -1:
+                break
+            bodies[m.group(1)] = _split_option(code[m.end() : end])[0]
+            pos = end
+    costly = {name for name, body in bodies.items() if _DIRECT_COST_RE.search(body)}
+    while True:
+        callers = {
+            name
+            for name, body in bodies.items()
+            if name not in costly
+            and not costly.isdisjoint(_EFFECT_CALL_RE.findall(body))
+        }
+        if not callers:
+            return {name: bodies[name] for name in costly}
+        costly |= callers
+
+
+def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
+    """(own-scope effects, option-level blocks left out of them as key -> (offset, body))."""
+    own: List[str] = []
+    blocks: Dict[Optional[str], Tuple[int, str]] = {}
+    depth = 0
+    cursor = 0
+    kept_whole = 0
+    skip: Optional[Tuple[int, int, Optional[str]]] = None
+    for m in _BLOCK_TOKEN_RE.finditer(body):
+        if m.group(0) != "}":
+            depth += 1
+            key = m.group(1)
+            if skip is not None or kept_whole:
+                continue
+            if key in _VARIABLE_EFFECTS:
+                kept_whole = depth
+            elif key not in _OWN_SCOPE_BLOCKS and not (key or "").isdigit():
+                own.append(body[cursor : m.start()])
+                skip = (depth, m.end(), key)
+            continue
+        if kept_whole == depth:
+            kept_whole = 0
+        if skip is not None and skip[0] == depth:
+            if depth == 1:
+                blocks[skip[2]] = (skip[1], body[skip[1] : m.start()])
+            cursor = m.end()
+            skip = None
+        depth -= 1
+    if skip is None:
+        own.append(body[cursor:])
+    return " ".join(own), blocks
+
+
+def find_cost_blind_options(
+    text: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> List[Tuple[str, int, str, bool]]:
+    """(option name, 1-based line, costs, all gated) for AI weights that ignore a cost.
+
+    Reports an option of a multi-option event when it charges its own country and
+    its `ai_chance` has no `modifier`, so the AI pays as readily broke as flush.
+    A missing `ai_chance` is the flat default weight. The line is the `ai_chance`
+    when there is one, since that is where the fix goes. `all gated` marks an event
+    where every option has a `trigger`: those may be variants the AI never chooses
+    between, so the finding needs a look before it is fixed. `effects` comes from
+    costly_scripted_effects and `stored` from stored_variable_signs.
+    """
+    code = blank_quoted_strings(text)
+    out: List[Tuple[str, int, str, bool]] = []
+    for _eid, body, start in _iter_event_bodies(code):
+        base = code.index("{", start) + 1
+        options = [
+            (match.end(), _matching_brace(body, match.end() - 1))
+            for match in _OPTION_OPEN_RE.finditer(body)
+        ]
+        if len(options) < 2:
+            continue
+        splits = [
+            _split_option(body[opt_start:opt_end]) for opt_start, opt_end in options
+        ]
+        all_gated = all("trigger" in blocks for _own, blocks in splits)
+        for (opt_start, opt_end), (own, blocks) in zip(options, splits):
+            ai_offset, ai_chance = blocks.get("ai_chance", (0, ""))
+            if _AI_CHANCE_MODIFIER_RE.search(ai_chance):
+                continue
+            costs = _effect_costs(own, effects, {}, stored)
+            if not costs:
+                continue
+            name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
+            out.append(
+                (
+                    name.group(1) if name else "unnamed option",
+                    code.count("\n", 0, base + opt_start + ai_offset) + 1,
+                    ", ".join(kind for kind in _COST_ORDER if kind in costs),
+                    all_gated,
+                )
+            )
+    return out
+
+
 def _extract_random_event_ids(text: str) -> set:
     """Find event IDs referenced inside ``random_events = { ... }`` blocks.
 
@@ -1104,8 +1450,9 @@ class Validator(BaseValidator):
     TITLE = "EVENT VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, check_ai_chance_costs: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
+        self.check_ai_chance_costs = check_ai_chance_costs
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
         self._random_events_cache: Optional[set] = None
         self._probability_rolled_cache: Optional[set] = None
@@ -2365,6 +2712,54 @@ class Validator(BaseValidator):
             category="event-option-log-without-effect",
         )
 
+    def validate_ai_chance_ignores_cost(self):
+        """Flag options whose flat `ai_chance` ignores what the option costs.
+
+        Off unless `--check-ai-chance-costs` is passed: the backlog is mod-wide
+        (#5096), so the check stays out of CI until it is worked down.
+        """
+        if not self.check_ai_chance_costs:
+            self._log_section(
+                "Skipping AI weight cost check (pass --check-ai-chance-costs to enable)"
+            )
+            return
+        self._log_section("Checking event options for AI weights that ignore costs...")
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+        effect_texts = (
+            _read_cleaned_text(path)
+            for path in self._collect_files(
+                ["common/scripted_effects/**/*.txt"], ignore_staged=True
+            )
+        )
+        effects = costly_scripted_effects(text for text in effect_texts if text)
+        stored: Dict[str, int] = {}
+        script_files = self._collect_files(
+            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+            ignore_staged=True,
+        )
+        for found in self._pool_map(_scan_stored_variable_signs, script_files):
+            for name, signs in found.items():
+                stored[name] = stored.get(name, 0) | signs
+        results: List[Tuple[str, str, int]] = []
+        for sub in self._pool_map_init(
+            _extract_cost_blind_options,
+            files,
+            _init_cost_lookups,
+            (effects, stored),
+        ):
+            results.extend(sub)
+        self._report(
+            sorted(results, key=lambda r: (r[1], r[2])),
+            "✓ No event AI weights ignoring option costs",
+            "Event options with a cost and a flat ai_chance (add a modifier for"
+            " affordability or for the situation the cost solves):",
+            Severity.WARNING,
+            category="event-ai-chance-ignores-cost",
+        )
+
     def run_validations(self):
         self.validate_unsupported_title_desc()
         self.validate_missing_triggered_only()
@@ -2388,7 +2783,21 @@ class Validator(BaseValidator):
         self.validate_fire_only_once_in_loop()
         self.validate_major_event_in_loop()
         self.validate_option_log_without_effect()
+        self.validate_ai_chance_ignores_cost()
+
+
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--check-ai-chance-costs",
+        action="store_true",
+        dest="check_ai_chance_costs",
+        help="Report event options whose flat ai_chance ignores the option's cost",
+    )
 
 
 if __name__ == "__main__":
-    run_validator_main(Validator, "Validate events in Millennium Dawn mod")
+    run_validator_main(
+        Validator,
+        "Validate events in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
+    )
