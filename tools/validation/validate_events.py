@@ -9,6 +9,7 @@ import os
 import re
 import sys
 from collections import Counter
+from functools import partial
 from pathlib import Path
 from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple
 
@@ -184,13 +185,17 @@ def _picture_format_message(
     )
 
 
-def _should_skip(filename: str) -> bool:
-    return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
+    return should_skip_file(
+        filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS, mod_path=mod_path
+    )
 
 
-def _read_cleaned_text(filename: str, *, skip: bool = True) -> Optional[str]:
+def _read_cleaned_text(
+    filename: str, *, skip: bool = True, mod_path: Optional[str] = None
+) -> Optional[str]:
     """Read a mod file and strip ``#`` comments, or return ``None`` on failure."""
-    if skip and _should_skip(filename):
+    if skip and _should_skip(filename, mod_path=mod_path):
         return None
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -199,9 +204,11 @@ def _read_cleaned_text(filename: str, *, skip: bool = True) -> Optional[str]:
     return re.sub(r"#[^\n]*", "", text)
 
 
-def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
+def _extract_event_pictures(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
     """Pool worker: return (sprite, filename, line) for each event picture ref."""
-    text = _read_cleaned_text(filename)
+    text = _read_cleaned_text(filename, mod_path=mod_path)
     if text is None:
         return []
     out: List[Tuple[str, str, int]] = []
@@ -211,9 +218,11 @@ def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
     return out
 
 
-def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, int]]:
+def _extract_option_logs_without_effects(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
     """Pool worker: (option name, filename, line) for logs in effect-free options."""
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -238,17 +247,21 @@ def _init_cost_lookups(effects: Dict[str, str], stored: Dict[str, int]) -> None:
     _W_STORED_SIGNS = stored
 
 
-def _scan_stored_variable_signs(filename: str) -> Dict[str, int]:
+def _scan_stored_variable_signs(
+    filename: str, *, mod_path: Optional[str] = None
+) -> Dict[str, int]:
     """Pool worker: stored_variable_signs for one file."""
-    text = _read_cleaned_text(filename)
+    text = _read_cleaned_text(filename, mod_path=mod_path)
     if text is None or "set_variable" not in text:
         return {}
     return stored_variable_signs([text])
 
 
-def _extract_cost_blind_options(filename: str) -> List[Tuple[str, str, int]]:
+def _extract_cost_blind_options(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
     """Pool worker: (message, basename, line) for options whose AI weight ignores a cost."""
-    text = _read_cleaned_text(filename)
+    text = _read_cleaned_text(filename, mod_path=mod_path)
     if text is None:
         return []
     basename = os.path.basename(filename)
@@ -573,10 +586,10 @@ def _event_trigger_body(body: str) -> Optional[str]:
 
 
 def _events_with_trigger_date(
-    filename: str, pattern: "re.Pattern[str]"
+    filename: str, pattern: "re.Pattern[str]", mod_path: Optional[str]
 ) -> List[Tuple[str, str, int]]:
     """(id, file, line) of every event whose own trigger matches `pattern`."""
-    cleaned = _read_cleaned_text(filename)
+    cleaned = _read_cleaned_text(filename, mod_path=mod_path)
     if cleaned is None:
         return []
 
@@ -590,24 +603,30 @@ def _events_with_trigger_date(
     return out
 
 
-def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+def scan_date_gated_events(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
     """Pool worker: events whose own trigger carries a `date >` bound."""
-    return _events_with_trigger_date(args[0], _DATE_LOWER_BOUND_RE)
+    return _events_with_trigger_date(args[0], _DATE_LOWER_BOUND_RE, mod_path)
 
 
-def scan_date_bounded_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+def scan_date_bounded_events(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
     """Pool worker: events whose own trigger carries any `date` comparison."""
-    return _events_with_trigger_date(args[0], _DATE_BOUND_RE)
+    return _events_with_trigger_date(args[0], _DATE_BOUND_RE, mod_path)
 
 
-def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
+def scan_event_fire_graph(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str]]:
     """Pool worker: (parent_id, child_id) for every event fired from an event.
 
     Lets a chain event inherit whatever schedules its parent, so only the head
     of a chain needs a scheduling entry.
     """
     filename = args[0]
-    cleaned = _read_cleaned_text(filename)
+    cleaned = _read_cleaned_text(filename, mod_path=mod_path)
     if cleaned is None:
         return []
 
@@ -626,7 +645,7 @@ def _stat_cached_scan(mod_path: str, namespace: str, filename: str, scanner):
         mod_path,
         namespace,
         filename,
-        lambda: scanner((filename, frozenset())),
+        lambda: scanner((filename, frozenset()), mod_path=mod_path),
     )
 
 
@@ -791,7 +810,7 @@ def _scan_tracked_events_in_loop(
 ) -> List[str]:
     """Flag tracked event IDs fired inside an every_*/for_each_* iterator."""
     filename, tracked_ids, mod_path = args
-    if not tracked_ids or _should_skip(filename):
+    if not tracked_ids or _should_skip(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -843,7 +862,7 @@ def _scan_long_form_text(cleaned: str, filename: str, mod_path: str) -> List[str
 def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
     """Pool worker: find id-only long-form event calls in one .txt file."""
     filename, mod_path = args
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -876,7 +895,7 @@ def _scan_shared_call_site_file(args) -> Tuple:
     Returns (longform, invalid, typed, counts, dynamic, fof, major).
     """
     filename, mod_path, mask, count_tracked, fof_ids, major_ids = args
-    if mask == 0 or _should_skip(filename):
+    if mask == 0 or _should_skip(filename, mod_path=mod_path):
         return _EMPTY_SHARED_CALL_SITE_RESULT
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -1370,7 +1389,9 @@ _RANDOM_BLOCK_PATTERN = re.compile(r"\brandom\s*=\s*\{")
 _CHANCE_PATTERN = re.compile(r"\bchance\s*=")
 
 
-def scan_probability_rolled_fires(args: Tuple[str, frozenset]) -> Set[str]:
+def scan_probability_rolled_fires(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> Set[str]:
     """Pool worker: event IDs fired inside a `random = { chance = N ... }` poll.
 
     A chance-rolled on_action poll emulates MTTH: each tick it rolls a chance
@@ -1378,11 +1399,11 @@ def scan_probability_rolled_fires(args: Tuple[str, frozenset]) -> Set[str]:
     slot, so the date-gated scheduling check must not flag it as dead content.
     """
     filename = args[0]
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return set()
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+    except OSError:
         return set()
     cleaned = re.sub(r"#[^\n]*", "", text)
     ids: set = set()
@@ -1747,7 +1768,7 @@ class Validator(BaseValidator):
         files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
         ids: set = set()
         for result in self._pool_map(
-            scan_probability_rolled_fires,
+            partial(scan_probability_rolled_fires, mod_path=self.mod_path),
             [(f, frozenset()) for f in files],
             chunksize=30,
         ):
@@ -1994,7 +2015,11 @@ class Validator(BaseValidator):
             (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
         ]
         gated: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(scan_date_gated_events, gated_args, chunksize=10):
+        for result in self._pool_map(
+            partial(scan_date_gated_events, mod_path=self.mod_path),
+            gated_args,
+            chunksize=10,
+        ):
             gated.extend(result)
         self.log(f"  Found {len(gated)} events with a date > guard")
 
@@ -2084,7 +2109,9 @@ class Validator(BaseValidator):
         ]
         bounded: List[Tuple[str, str, int]] = []
         for result in self._pool_map(
-            scan_date_bounded_events, bounded_args, chunksize=10
+            partial(scan_date_bounded_events, mod_path=self.mod_path),
+            bounded_args,
+            chunksize=10,
         ):
             bounded.extend(result)
         self.log(f"  Found {len(bounded)} events with a date bound")
@@ -2579,7 +2606,9 @@ class Validator(BaseValidator):
                 "warning",
             )
             return
-        refs = self._pool_map(_extract_event_pictures, files)
+        refs = self._pool_map(
+            partial(_extract_event_pictures, mod_path=self.mod_path), files
+        )
 
         results: List[str] = []
         seen: Set[Tuple[str, str, int]] = set()
@@ -2700,7 +2729,9 @@ class Validator(BaseValidator):
             self.log("  No event files in scope — skipping")
             return
         results: List[str] = []
-        for sub in self._pool_map(_extract_option_logs_without_effects, files):
+        for sub in self._pool_map(
+            partial(_extract_option_logs_without_effects, mod_path=self.mod_path), files
+        ):
             for name, filename, line in sub:
                 results.append(f"{os.path.basename(filename)}:{line} - {name}")
         self._report(
@@ -2729,7 +2760,7 @@ class Validator(BaseValidator):
             self.log("  No event files in scope — skipping")
             return
         effect_texts = (
-            _read_cleaned_text(path)
+            _read_cleaned_text(path, mod_path=self.mod_path)
             for path in self._collect_files(
                 ["common/scripted_effects/**/*.txt"], ignore_staged=True
             )
@@ -2740,12 +2771,14 @@ class Validator(BaseValidator):
             ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
             ignore_staged=True,
         )
-        for found in self._pool_map(_scan_stored_variable_signs, script_files):
+        for found in self._pool_map(
+            partial(_scan_stored_variable_signs, mod_path=self.mod_path), script_files
+        ):
             for name, signs in found.items():
                 stored[name] = stored.get(name, 0) | signs
         results: List[Tuple[str, str, int]] = []
         for sub in self._pool_map_init(
-            _extract_cost_blind_options,
+            partial(_extract_cost_blind_options, mod_path=self.mod_path),
             files,
             _init_cost_lookups,
             (effects, stored),

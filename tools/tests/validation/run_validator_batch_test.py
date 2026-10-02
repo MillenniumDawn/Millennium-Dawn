@@ -160,6 +160,27 @@ def test_concurrency_stays_bounded(tmp_path, monkeypatch):
     assert max(peak) == 2
 
 
+def test_ci_runner_gives_each_validator_the_whole_budget(tmp_path, monkeypatch):
+    workers = []
+
+    def launch(_script, flags, _output_dir, name, _mod_path, **_kwargs):
+        workers.append(flags[flags.index("--workers") + 1])
+        for suffix, body in ((".log", "log"), (".json", "[]")):
+            (tmp_path / f"{name}{suffix}").write_text(body, encoding="utf-8")
+        return _Process(), _FakeStream()
+
+    specs = [_spec(f"v{i}") for i in range(6)]
+    monkeypatch.setattr(rvb.run_all_validators, "launch_validator", launch)
+    monkeypatch.setenv("MD_MAX_WORKERS", "4")
+
+    monkeypatch.delenv("CI", raising=False)
+    assert rvb.run_batch(specs, _Args(tmp_path)) == 0
+    monkeypatch.setenv("CI", "true")
+    assert rvb.run_batch(specs, _Args(tmp_path)) == 0
+
+    assert workers == ["1"] * 6 + ["4"] * 6
+
+
 def test_refills_slot_when_any_validator_finishes_first(tmp_path, monkeypatch, capsys):
     events = []
     poll_counts = {}

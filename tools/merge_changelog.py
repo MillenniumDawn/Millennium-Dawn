@@ -6,8 +6,10 @@ sides adding or extending changelog entries. Exits 1 when a conflict needs a
 human, so the caller skips the merge instead of duplicating entries.
 
 Register it as: merge_changelog.py %O %A %B
+Fix top-version ordering: merge_changelog.py --fix [Changelog.txt]
 """
 
+import argparse
 import difflib
 import re
 import subprocess
@@ -15,6 +17,9 @@ import sys
 import tempfile
 from pathlib import Path
 
+from linting.check_changelog import order_lines
+
+CONFLICT_RE = re.compile(r"^(?:<<<<<<< |\|{7} |=======\s*$|>>>>>>> )", re.M)
 TOKEN_PATTERN = re.compile(r"\w+|\s+|[^\w\s]")
 # Minimum difflib ratio for a changed line to count as an edit, not a new entry.
 SIMILARITY = 0.6
@@ -109,7 +114,7 @@ def _align(base, other):
         for i in range(i1, i2):
             scores = [(_similarity(base[i], other[j]), j) for j in range(start, j2)]
             score, j = max(scores, key=lambda item: item[0], default=(0, None))
-            if score < SIMILARITY:
+            if j is None or score < SIMILARITY:
                 continue
             added.extend(range(start, j))
             pairs[i] = j
@@ -216,16 +221,35 @@ def merge_text(base, ours, theirs):
 
 
 def main():
-    if len(sys.argv) != 4:
-        print("usage: merge_changelog.py BASE OURS THEIRS", file=sys.stderr)
-        return 2
-    base, ours, theirs = (Path(arg) for arg in sys.argv[1:])
-    merged = merge_text(
-        *(path.read_bytes().decode("utf-8") for path in (base, ours, theirs))
-    )
-    if merged is None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--fix", action="store_true", help="Fix top-version ordering")
+    parser.add_argument("paths", nargs="*", metavar="PATH")
+    args = parser.parse_args()
+    if args.fix and len(args.paths) > 1:
+        parser.error("--fix accepts at most one changelog path")
+    if not args.fix and len(args.paths) != 3:
+        parser.error("merge driver requires BASE OURS THEIRS")
+    try:
+        if args.fix:
+            ours = Path(args.paths[0] if args.paths else "Changelog.txt")
+            merged = ours.read_bytes().decode("utf-8")
+        else:
+            base, ours, theirs = (Path(arg) for arg in args.paths)
+            merged = merge_text(
+                *(path.read_bytes().decode("utf-8") for path in (base, ours, theirs))
+            )
+        if merged is None:
+            return 1
+        if CONFLICT_RE.search(merged):
+            print("Resolve changelog conflict markers before sorting.", file=sys.stderr)
+            return 1
+        ordered = "".join(order_lines(merged.splitlines(keepends=True)))
+        ours.write_bytes(ordered.encode("utf-8"))
+    except (OSError, UnicodeError) as error:
+        print(f"Cannot update changelog: {error}", file=sys.stderr)
         return 1
-    ours.write_bytes(merged.encode("utf-8"))
+    if args.fix:
+        print(f"Fixed changelog ordering: {ours}")
     return 0
 
 

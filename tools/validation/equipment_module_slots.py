@@ -938,7 +938,9 @@ def check_created_variant_upgrades(
     findings: List[Finding] = []
     for vlo, vhi in _iter_named_blocks(text, 0, len(text), "create_equipment_variant"):
         etype = _scalar(text, vlo, vhi, "type")
-        allowed = index.hull_upgrades.get(etype) if etype else None
+        if not etype:
+            continue
+        allowed = index.hull_upgrades.get(etype)
         if allowed is None:
             continue
         name = _quoted_scalar(text, vlo, vhi, "name") or ""

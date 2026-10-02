@@ -11,6 +11,7 @@ import math
 import os
 import re
 import sys
+from functools import partial
 from pathlib import Path
 from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
 
@@ -61,8 +62,10 @@ _DECISION_REFERENCE_SOURCE_PATTERNS = (
 _LITERAL_ID_TOKEN = r"[\w-]+"
 
 
-def _should_skip(filename: str) -> bool:
-    return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
+    return should_skip_file(
+        filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS, mod_path=mod_path
+    )
 
 
 _TARGETED_BLOCK_RE = re.compile(
@@ -520,7 +523,9 @@ def _flat_flag_gates(block: str) -> Set[str]:
     return flags
 
 
-def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, list]:
+def _scan_activations_and_removals(
+    filename: str, *, mod_path: Optional[str] = None
+) -> Tuple[set, set, set, list]:
     """Single-read worker: (activated, missions, removed, unlock refs).
 
     Combines the activation, external-removal and unlock-tooltip scans so the
@@ -528,7 +533,7 @@ def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, list]:
     element holds (kind, name, line) for every reference that tells the player a
     decision or category it has unlocked; the caller adds the file path.
     """
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return set(), set(), set(), []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
@@ -555,7 +560,7 @@ def _load_scripted_localisation_keys(mod_path: str) -> set:
     keys = set()
     pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
     for filename in glob.iglob(pattern):
-        if _should_skip(filename):
+        if _should_skip(filename, mod_path=mod_path):
             continue
         text_file = FileOpener.open_text_file(
             filename, lowercase=False, strip_comments_flag=True
@@ -1596,7 +1601,11 @@ class Validator(BaseValidator):
             file_refs,
         ) in zip(
             all_files,
-            self._pool_map(_scan_activations_and_removals, all_files, chunksize=30),
+            self._pool_map(
+                partial(_scan_activations_and_removals, mod_path=self.mod_path),
+                all_files,
+                chunksize=30,
+            ),
         ):
             activated_decisions |= decision_set
             activated_missions |= mission_set
@@ -2451,7 +2460,7 @@ class Validator(BaseValidator):
         results = []
         dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
         for filename in sorted(glob.iglob(dec_filepath + "/**/*.txt", recursive=True)):
-            if _should_skip(filename):
+            if _should_skip(filename, mod_path=self.mod_path):
                 continue
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
@@ -3176,7 +3185,7 @@ class Validator(BaseValidator):
         for parts in _COMMIT_SCAN_DIRS:
             pattern = os.path.join(self.mod_path, *parts, "**", "*.txt")
             for filename in glob.iglob(pattern, recursive=True):
-                if _should_skip(filename):
+                if _should_skip(filename, mod_path=self.mod_path):
                     continue
                 if os.path.basename(filename) == _FORMABLE_DECISIONS_BASENAME:
                     continue

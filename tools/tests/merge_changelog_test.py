@@ -2,6 +2,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+import merge_changelog
+import pytest
+from check_changelog import check_lines
 from merge_changelog import merge_text
 from shared.suite import initialize_git_repository, run_git
 
@@ -153,3 +156,77 @@ def test_merge_tree_uses_the_driver(tmp_path):
     assert merged == changelog(PARTY_LINE.format(", FIJ, GEO"))
 
     assert merge_tree(tmp_path, "main-side", "pr-clash").returncode == 1
+
+
+def _run_main(monkeypatch, *args):
+    monkeypatch.setattr(sys, "argv", [str(SCRIPT), *(str(arg) for arg in args)])
+    return merge_changelog.main()
+
+
+def test_fix_cli_sorts_without_losing_duplicates_or_touching_history(
+    tmp_path, monkeypatch, capsys
+):
+    path = tmp_path / "Changelog.txt"
+    old = "\nv2.0.0\nContent:\n - [USA] Old\n - Global old\n"
+    path.write_bytes(
+        changelog(" - [USA] U\n", " - Global\n", " - Global\n").encode() + old.encode()
+    )
+    monkeypatch.chdir(tmp_path)
+    assert _run_main(monkeypatch, "--fix") == 0
+    assert (
+        path.read_bytes()
+        == (changelog(" - Global\n", " - Global\n", " - [USA] U\n") + old).encode()
+    )
+    assert "Fixed changelog ordering" in capsys.readouterr().out
+    first = path.read_bytes()
+    assert _run_main(monkeypatch, "--fix", path) == 0
+    assert path.read_bytes() == first
+
+
+def test_driver_cli_sorts_both_sides_insertions(tmp_path, monkeypatch):
+    base, ours, theirs = (tmp_path / name for name in ("base", "ours", "theirs"))
+    base.write_bytes(changelog().encode())
+    ours.write_bytes(changelog(" - [USA] U\n").encode())
+    theirs.write_bytes(changelog(" - [ENG] E\n", " - Global\n").encode())
+    assert _run_main(monkeypatch, base, ours, theirs) == 0
+    assert (
+        ours.read_bytes()
+        == changelog(" - Global\n", " - [ENG] E\n", " - [USA] U\n").encode()
+    )
+    assert check_lines(ours.read_text(encoding="utf-8").splitlines()) == []
+
+
+def test_driver_cli_leaves_unresolved_edits_untouched(tmp_path, monkeypatch):
+    paths = [tmp_path / name for name in ("base", "ours", "theirs")]
+    for path, color in zip(paths, ("red", "blue", "green")):
+        path.write_bytes(changelog(f" - Added a {color} tank\n").encode())
+    original = paths[1].read_bytes()
+    assert _run_main(monkeypatch, *paths) == 1
+    assert paths[1].read_bytes() == original
+
+
+@pytest.mark.parametrize(
+    "marker", ["<<<<<<< ours", "||||||| base", "=======", ">>>>>>> theirs"]
+)
+def test_fix_cli_refuses_conflict_markers(tmp_path, monkeypatch, marker):
+    path = tmp_path / "Changelog.txt"
+    original = changelog(f"{marker}\n", " - [USA] U\n", " - Global\n").encode()
+    path.write_bytes(original)
+    assert _run_main(monkeypatch, "--fix", path) == 1
+    assert path.read_bytes() == original
+
+
+@pytest.mark.parametrize("content", [None, b"\xff"])
+def test_fix_cli_reports_unreadable_input(tmp_path, monkeypatch, capsys, content):
+    path = tmp_path / "Changelog.txt"
+    if content is not None:
+        path.write_bytes(content)
+    assert _run_main(monkeypatch, "--fix", path) == 1
+    assert "Cannot update changelog" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("args", [[], ["--fix", "a", "b"]])
+def test_cli_rejects_invalid_arguments(monkeypatch, args):
+    with pytest.raises(SystemExit) as exc:
+        _run_main(monkeypatch, *args)
+    assert exc.value.code == 2

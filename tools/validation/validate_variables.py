@@ -7,9 +7,10 @@ import glob
 import os
 import re
 import sys
+from functools import partial
 from multiprocessing import Pool
 from pathlib import Path
-from typing import AbstractSet, Dict, List, Set, Tuple, cast
+from typing import AbstractSet, Dict, List, Optional, Set, Tuple, cast
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -77,8 +78,10 @@ _MATH_PRECISION_SHORTHAND_RE = re.compile(
 )
 
 
-def _read_script_text(filename: str, *, blank_strings: bool = True) -> str | None:
-    if should_skip_file(filename):
+def _read_script_text(
+    filename: str, mod_path: str, *, blank_strings: bool = True
+) -> str | None:
+    if should_skip_file(filename, mod_path=mod_path):
         return None
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -142,7 +145,7 @@ def process_file_for_all_flags(
     args: Tuple[str, bool, str, str],
 ) -> Tuple[Dict[str, str], Dict[str, str], Dict[str, str]]:
     filename, lowercase, flag_type, mod_path = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return {}, {}, {}
     text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
@@ -271,7 +274,7 @@ def _scan_focus_flag_sites(text: str, rel: str, in_focus_dir: bool):
 def process_file_for_focus_flag_sites(args: Tuple[str, str]):
     """Pool worker for the redundant focus-flag check. See _scan_focus_flag_sites."""
     filename, mod_path = args
-    text = _read_script_text(filename)
+    text = _read_script_text(filename, mod_path)
     if text is None or "country_flag" not in text:
         return {}, {}, set(), set(), set()
     rel = os.path.relpath(filename, mod_path)
@@ -313,7 +316,7 @@ def process_file_for_flag_syntax(args: Tuple[str, str]) -> Tuple[List[str], List
     """
     filename, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], [])
 
     try:
@@ -348,7 +351,7 @@ def process_file_for_math_precision(args: Tuple[str, str]) -> List[str]:
     Returns a list of 'rel:line - description' strings.
     """
     filename, mod_path = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -786,8 +789,8 @@ def collect_clamp_ranges(
     args: Tuple[str, str],
 ) -> Tuple[List[Tuple[str, float, float]], List[str], List[str]]:
     """Pool worker: harvest ``clamp_variable`` min/max pairs and variable writes."""
-    filename, _mod_path = args
-    if should_skip_file(filename):
+    filename, mod_path = args
+    if should_skip_file(filename, mod_path=mod_path):
         return [], [], []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -844,7 +847,7 @@ def _resolve_clamp_checks(
 def process_file_for_clamp_conflicts(args) -> List[str]:
     """Pool worker: flag check_variable comparisons that contradict a clamp range."""
     filename, mod_path, ranges = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -1115,7 +1118,7 @@ def _scan_available_file(
 ) -> Tuple[List, List, List]:
     """Extract the available-block checks from one comment-stripped source."""
     filename, mod_path, ai_categories = args
-    cleaned = _read_script_text(filename)
+    cleaned = _read_script_text(filename, mod_path)
     if cleaned is None:
         return [], [], []
     rel = os.path.relpath(filename, mod_path)
@@ -1237,7 +1240,7 @@ def process_file_for_untooltipped_available_scripted_trigger(
     filename, mod_path, flagged_names, ai_categories = args
     if not flagged_names:
         return []
-    cleaned = _read_script_text(filename)
+    cleaned = _read_script_text(filename, mod_path)
     if cleaned is None:
         return []
     rel = os.path.relpath(filename, mod_path)
@@ -1309,7 +1312,7 @@ def process_file_for_variable_tooltips(
     and does the missing-key filtering.
     """
     filename, mod_path = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -1362,7 +1365,7 @@ def process_file_for_missing_variable_tooltips(
     write swallows the tooltip, so it wins over the enclosing rendered block.
     """
     filename, mod_path, backing = args
-    cleaned = _read_script_text(filename)
+    cleaned = _read_script_text(filename, mod_path)
     if cleaned is None:
         return []
     rel = os.path.relpath(filename, mod_path)
@@ -1503,7 +1506,7 @@ def process_file_for_treasury_scope(
     owner/CONTROLLER/tag/ROOT opener suppresses the finding.
     """
     filename, mod_path = args
-    cleaned = _read_script_text(filename, blank_strings=False)
+    cleaned = _read_script_text(filename, mod_path, blank_strings=False)
     if cleaned is None:
         return []
     if not any(k in cleaned for k in _TREASURY_EFFECT_KEYWORDS):
@@ -1740,7 +1743,7 @@ def process_file_for_orphan_money(
     caller) are skipped.
     """
     filename, mod_path, consumer_map = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -1810,7 +1813,7 @@ def process_file_for_all_targets(
     """
     filename, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ({}, {}, {})
 
     text_file = FileOpener.open_text_file(
@@ -1828,12 +1831,14 @@ def process_file_for_all_targets(
     )
 
 
-def _scan_targets_in_loc(args: Tuple[str, Tuple[str, ...]]) -> set:
+def _scan_targets_in_loc(
+    args: Tuple[str, Tuple[str, ...]], *, mod_path: Optional[str] = None
+) -> set:
     """Return which of `potential_targets` appear as [target.GetName]-style loc
     references in one yml file. Pooled; the union across files is order-
     independent, matching the old single-process accumulator exactly."""
     filename, potential_targets = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return set()
     text_file = FileOpener.open_text_file(
         filename, lowercase=True, strip_comments_flag=True
@@ -1921,7 +1926,7 @@ def _scan_shared_file(args) -> Tuple:
         requirements,
         registered_tokens,
     ) = args
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return _EMPTY_SHARED_RESULT
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -3077,7 +3082,7 @@ class Validator(BaseValidator):
         targets_tuple = tuple(potential_results)
         targets_used_in_loc: set = set()
         for found in self._pool_map(
-            _scan_targets_in_loc,
+            partial(_scan_targets_in_loc, mod_path=self.mod_path),
             [(f, targets_tuple) for f in yml_files_to_scan],
             chunksize=30,
         ):

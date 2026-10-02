@@ -1,8 +1,13 @@
 """Event options whose flat ai_chance ignores what the option costs (issue #5096)."""
 
 import argparse
+import subprocess
+import sys
+from multiprocessing import get_context
+from pathlib import Path
 
 import pytest
+import validator_common
 from shared.suite import write_under_str as _write
 from validate_events import (
     Validator,
@@ -112,6 +117,58 @@ def _found(text: str):
 
 def _validator(tmp_path, **kwargs):
     return Validator(mod_path=str(tmp_path), use_colors=False, workers=1, **kwargs)
+
+
+@pytest.mark.parametrize("checkout", ["repo", ".claude/worktrees/repo"])
+@pytest.mark.parametrize("workers", [1, 2])
+def test_worktree_cost_scans_reach_serial_and_parallel_workers(
+    tmp_path, monkeypatch, checkout, workers
+):
+    root = tmp_path / checkout
+    for number in range(10):
+        _write(root, f"events/{number}.txt", _two_options(_PP_COST + _FLAT))
+    _write(
+        root,
+        ".claude/worktrees/stale/events/ignored.txt",
+        _two_options(_PP_COST + _FLAT),
+    )
+    _write(root, "resources/vanilla/events/ignored.txt", _two_options(_PP_COST + _FLAT))
+    v = _validator(root, check_ai_chance_costs=True)
+    v.workers = workers
+    monkeypatch.setattr(v, "run_validations", v.validate_ai_chance_ignores_cost)
+    monkeypatch.setattr(validator_common, "Pool", get_context("spawn").Pool)
+
+    v.run_all_validations()
+
+    assert len(v._issues) == 10
+    assert {issue.category for issue in v._issues} == {"event-ai-chance-ignores-cost"}
+    assert all("foo.1.a" in issue.message for issue in v._issues)
+    assert v._pool is None
+
+
+def test_cli_path_under_worktrees_reports_known_cost_defect(tmp_path):
+    root = tmp_path / ".claude/worktrees/repo"
+    _write(root, "events/Ev.txt", _two_options(_PP_COST + _FLAT))
+    script = Path(__file__).resolve().parents[2] / "validation/validate_events.py"
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--path",
+            str(root),
+            "--check-ai-chance-costs",
+            "--workers",
+            "1",
+            "--no-color",
+            "--no-cache",
+        ],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    assert "foo.1.a - flat ai_chance ignores the political power cost" in result.stderr
 
 
 def test_flat_weight_on_a_costed_option_is_flagged(tmp_path):
@@ -330,8 +387,7 @@ def test_gated_option_with_an_always_visible_sibling_is_not_marked():
         ("\t\ttwo_office_construction = yes\n", "treasury"),
         ("\t\tlose_pp_for_15_days = yes\n", "political power"),
         (
-            "\t\tset_temp_variable = { debt_change = 3 }\n"
-            "\t\tTAG_pay_or_defer = yes\n",
+            "\t\tset_temp_variable = { debt_change = 3 }\n\t\tTAG_pay_or_defer = yes\n",
             "treasury",
         ),
         ("\t\tTAG_loops_forever = yes\n", "stability"),
@@ -377,8 +433,7 @@ def test_cost_kinds_are_detected(effects, costs):
         "\t\tmodify_treasury_effect = yes\n",
         "\t\tset_temp_variable = { treasury_change = -15 }\n"
         "\t\tFROM = { modify_treasury_effect = yes }\n",
-        "\t\tset_temp_variable = { debt_change = -10 }\n"
-        "\t\tmodify_debt_effect = yes\n",
+        "\t\tset_temp_variable = { debt_change = -10 }\n\t\tmodify_debt_effect = yes\n",
         "\t\tset_temp_variable = { debt_change = "
         "{ value = debt_bailout multiply = -1 } }\n"
         "\t\tmodify_debt_effect = yes\n",

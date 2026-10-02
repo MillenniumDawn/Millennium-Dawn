@@ -1,5 +1,5 @@
 import check_changelog
-from check_changelog import check_lines
+from check_changelog import check_lines, order_lines
 
 
 def _lines(text):
@@ -133,6 +133,35 @@ def test_main_ignores_older_versions_with_bom(tmp_path, monkeypatch):
     )
     monkeypatch.setattr(check_changelog.sys, "argv", ["check_changelog", str(path)])
     assert check_changelog.main() == 0
+
+
+def test_sort_preserves_entries_spacing_and_older_versions():
+    original = (
+        "\ufeffv2.0.1\r\n\r\nContent:\r\n"
+        " - [USA] U\r\n\r\n - Global\r\n"
+        " - [chi/NKO] C1\r\n - [CHI] C2\r\n"
+        "Bugfix:\r\n - [FRA] F\r\n - [ENG] E\r\n"
+        "v2.0.0\r\nContent:\r\n - [USA] Old\r\n - Global old\r\n"
+    )
+    expected = (
+        "\ufeffv2.0.1\r\n\r\nContent:\r\n"
+        " - Global\r\n\r\n - [chi/NKO] C1\r\n"
+        " - [CHI] C2\r\n - [USA] U\r\n"
+        "Bugfix:\r\n - [ENG] E\r\n - [FRA] F\r\n"
+        "v2.0.0\r\nContent:\r\n - [USA] Old\r\n - Global old\r\n"
+    )
+    ordered = order_lines(original.splitlines(keepends=True))
+    assert "".join(ordered) == expected
+    assert check_lines(ordered) == []
+    assert order_lines(ordered) == ordered
+    assert order_lines([]) == []
+
+
+def test_sort_preserves_an_absent_final_newline():
+    original = "v2.0.1\nContent:\n - [USA] U\n - Global"
+    assert "".join(order_lines(original.splitlines(keepends=True))) == (
+        "v2.0.1\nContent:\n - Global\n - [USA] U"
+    )
 
 
 def test_main_passes_clean_file(tmp_path, monkeypatch):

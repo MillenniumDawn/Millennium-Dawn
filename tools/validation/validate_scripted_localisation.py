@@ -39,7 +39,7 @@ def process_file_for_defined_localisations(
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], {})
 
     if "00_scripted_localisation_FR_loc" in filename:
@@ -141,7 +141,7 @@ def process_file_for_used_localisations(
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, search_names, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], {})
 
     basename = os.path.basename(filename)

@@ -268,6 +268,25 @@ def test_collect_files_dedupes_nested_dir_patterns(dummy, write_path, tmp_path):
     assert len(files) == 1
 
 
+@pytest.mark.parametrize("staged_only", [False, True])
+def test_worktree_collection_and_basename_index_use_checkout_root(
+    tmp_path, write_path, monkeypatch, staged_only
+):
+    root = tmp_path / ".claude/worktrees/repo"
+    kept = write_path(root, "events/kept.txt", "wanted_item = yes\n")
+    nested = write_path(root, ".claude/worktrees/stale/events/nested.txt", "ignored")
+    write_path(root, "resources/vanilla/events/reference.txt", "ignored")
+    monkeypatch.setenv(
+        "MD_STAGED_FILES", "events/kept.txt\n.claude/worktrees/stale/events/nested.txt"
+    )
+    v = _Dummy(str(root), use_colors=False, workers=1, staged_only=staged_only)
+
+    assert v._collect_files(["**/*.txt"]) == [str(kept)]
+    assert v._basename_index(("**/*.txt",)) == {"kept.txt": [str(kept)]}
+    assert v.get_full_path("kept.txt", "wanted_item") == str(kept)
+    assert str(nested) not in v._collect_files(["**/*.txt"])
+
+
 def test_pool_map_falls_back_to_sequential_without_a_pool(tmp_path, monkeypatch):
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, workers=2)
     monkeypatch.setattr(v, "_get_pool", lambda: None)

@@ -21,7 +21,7 @@ def check_lines(lines):
     seen_version = False
     previous = None
     for lineno, line in enumerate(lines, start=1):
-        if VERSION_RE.match(line):
+        if VERSION_RE.match(line.lstrip("\ufeff")):
             if seen_version:
                 break
             seen_version = True
@@ -40,13 +40,44 @@ def check_lines(lines):
                     f"line {lineno}: untagged entry must come before "
                     f"[{prev_tag}] (line {prev_lineno})"
                 )
-            elif prev_tag is not None and tag.lower() < prev_tag.lower():
+            elif (
+                prev_tag is not None
+                and tag is not None
+                and tag.lower() < prev_tag.lower()
+            ):
                 errors.append(
                     f"line {lineno}: [{tag}] must come before "
                     f"[{prev_tag}] (line {prev_lineno})"
                 )
         previous = (lineno, tag)
     return errors
+
+
+def order_lines(lines):
+    """Stable-sort entry lines in each top-version category; keep other lines intact."""
+    ordered = list(lines)
+    groups = [[]]
+    seen_version = False
+    for index, line in enumerate(lines):
+        if VERSION_RE.match(line.lstrip("\ufeff")):
+            if seen_version:
+                break
+            seen_version = True
+        elif CATEGORY_RE.match(line):
+            groups.append([])
+        elif ENTRY_RE.match(line):
+            groups[-1].append(index)
+    for indexes in groups:
+        entries = sorted(
+            (lines[index] for index in indexes),
+            key=lambda line: (
+                match.group(1).lower() if (match := TAG_RE.match(line)) else ""
+            ),
+        )
+        for index, entry in zip(indexes, entries):
+            ending = lines[index][len(lines[index].rstrip("\r\n")) :]
+            ordered[index] = entry.rstrip("\r\n") + ending
+    return ordered
 
 
 def main():
@@ -63,7 +94,8 @@ def main():
     if errors:
         print(
             "\nKeep untagged entries first in each category, then [TAG] "
-            "entries in alphabetical order.",
+            "entries in alphabetical order.\n"
+            "Quick fix: python3 tools/merge_changelog.py --fix",
             file=sys.stderr,
         )
     return 1 if errors else 0
