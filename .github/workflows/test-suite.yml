@@ -53,9 +53,6 @@ env:
     pyproject.toml
     validation_config.json
     *.mod
-    !music/**/*.ogg
-    !music/**/*.mp3
-    !music/**/*.wav
 
 jobs:
   detect-changes:
@@ -159,7 +156,27 @@ jobs:
           sparse-checkout: |
             tools/validation/collect_changed_files.py
             tools/validation/change_groups.py
+            tools/validation/ci_workspace_profile.txt
+            tools/validation/staged_sparse_profile.txt
+            /pyproject.toml
+            /validation_config.json
           sparse-checkout-cone-mode: false
+
+      - name: Check CI tooling contract
+        run: |
+          missing=()
+          for path in tools/validation/ci_workspace_profile.txt \
+              tools/validation/staged_sparse_profile.txt validation_config.json; do
+            test -f "$path" || missing+=("$path")
+          done
+          for package in pytest-xdist pytest-cov; do
+            grep -Fq "\"$package" pyproject.toml || missing+=("$package")
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::This branch predates the CI tooling contract" \
+              "(missing ${missing[*]}). Merge main into it."
+            exit 1
+          fi
 
       - name: Fetch PR base revision
         env:
@@ -290,17 +307,7 @@ jobs:
           sparse-checkout: /tools/validation/ci_workspace_profile.txt
           sparse-checkout-cone-mode: false
 
-      - name: Restore sparse workspace cache
-        id: sparse-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: ${{ env.WORKSPACE_PATHS }}
-          key: >-
-            md-sparse-v3-${{ runner.os }}-${{
-            needs.detect-changes.outputs.head-sha }}
-
-      - name: Materialize sparse workspace on cache miss
-        if: steps.sparse-cache.outputs.cache-hit != 'true'
+      - name: Materialize sparse workspace
         run: >-
           git sparse-checkout set --no-cone --stdin
           < tools/validation/ci_workspace_profile.txt
@@ -345,24 +352,18 @@ jobs:
             echo "cache=$CACHE_KEY"
           } | tee .workspace-manifest
 
-      - name: Save sparse workspace cache
-        if: steps.sparse-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: ${{ env.WORKSPACE_PATHS }}
-          key: >-
-            md-sparse-v3-${{ runner.os }}-${{
-            needs.detect-changes.outputs.head-sha }}
+      - name: Pack prepared workspace
+        # Word splitting on WORKSPACE_PATHS is intended; it also expands *.mod.
+        run: >-
+          tar --zstd -cf "$RUNNER_TEMP/prepared-workspace.tar.zst"
+          $WORKSPACE_PATHS .workspace-manifest .validation_cache
 
       - name: Upload prepared workspace
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: prepared-workspace
-          path: |
-            ${{ env.WORKSPACE_PATHS }}
-            .workspace-manifest
-            .validation_cache
-          include-hidden-files: true
+          path: ${{ runner.temp }}/prepared-workspace.tar.zst
+          compression-level: 0
           if-no-files-found: error
           retention-days: 1
 
@@ -379,13 +380,13 @@ jobs:
         include:
           - os: Linux
             runner: ubuntu-latest
-            quality: true
+            coverage: true
           - os: macOS
             runner: macos-latest
-            quality: false
+            coverage: false
           - os: Windows
             runner: windows-latest
-            quality: false
+            coverage: false
     steps:
       - name: Checkout tools test tree
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -427,7 +428,8 @@ jobs:
         id: dependencies
         uses: ./.github/actions/setup-md-python
         with:
-          analysis: ${{ matrix.quality }}
+          analysis: ${{ matrix.coverage }}
+          group: test
 
       - name: Verify pytest collection configuration
         id: collection
@@ -439,7 +441,7 @@ jobs:
       - name: Run unit tests with coverage
         id: unit
         if: >-
-          always() && !cancelled() && matrix.quality == true &&
+          always() && !cancelled() && matrix.coverage == true &&
           steps.dependencies.outcome == 'success'
         # coverage report below owns the threshold, so pytest-cov only collects.
         run: >-
@@ -450,147 +452,18 @@ jobs:
       - name: Report coverage
         id: coverage-report
         if: >-
-          always() && !cancelled() && matrix.quality == true &&
+          always() && !cancelled() && matrix.coverage == true &&
           steps.dependencies.outcome == 'success'
         run: python -m coverage report
 
       - name: Run cross-platform unit tests
         id: cross-platform
         if: >-
-          always() && !cancelled() && matrix.quality == false &&
+          always() && !cancelled() && matrix.coverage == false &&
           steps.dependencies.outcome == 'success'
         run: >-
           python -m pytest tools/tests -o addopts=
           -o 'python_files=*_test.py' -q --durations=20 -n auto
-
-      - name: Run ruff
-        id: ruff
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.dependencies.outcome == 'success'
-        run: ruff check tools --output-format=github
-
-      - name: Check formatting (black)
-        id: black
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.dependencies.outcome == 'success'
-        run: black --check tools
-
-      - name: Run pylint
-        id: pylint
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.dependencies.outcome == 'success'
-        run: pylint tools -j 0 --output-format=github --reports=no --score=no
-
-      - name: Run mypy
-        id: mypy
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.dependencies.outcome == 'success'
-        run: mypy
-
-      - name: Setup Bun
-        id: bun
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.dependencies.outcome == 'success'
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
-        with:
-          bun-version: "1.3.14"
-
-      - name: Install duplication dependencies
-        id: bun-deps
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.bun.outcome == 'success'
-        run: bun install --frozen-lockfile
-
-      - name: Run jscpd
-        id: jscpd
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.bun-deps.outcome == 'success'
-        run: bun run jscpd
-
-      - name: Fetch merge revision for staged integration
-        id: staged-fetch
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.dependencies.outcome == 'success'
-        run: >-
-          git fetch --no-tags --depth=1 --filter=blob:none
-          "https://github.com/${{ github.repository }}.git"
-          "${{ github.sha }}"
-
-      - name: Compute staged validator code hash
-        id: staged-toolshash
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.dependencies.outcome == 'success'
-        run: >-
-          echo "hash=${{ hashFiles('tools/validation/**/*.py',
-          'tools/validation/**/*.txt', 'tools/shared_utils.py',
-          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
-
-      - name: Create staged integration worktree
-        id: staged-worktree
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.staged-fetch.outcome == 'success'
-        run: |
-          worktree="${{ runner.temp }}/md-staged-validator-test"
-          git worktree add --detach --no-checkout \
-            "$worktree" "${{ github.sha }}"
-          # Anchored patterns: a bare `interface` would also match the 1.8 GB
-          # gfx/interface art tree, so every entry is root-anchored (see
-          # tools/validation/staged_sparse_profile.txt).
-          git -C "$worktree" sparse-checkout init --no-cone
-          git -C "$worktree" sparse-checkout set --stdin \
-            < tools/validation/staged_sparse_profile.txt
-          git -C "$worktree" checkout "${{ github.sha }}"
-          test -d "$worktree/gfx/flags" || \
-            { echo "::error::sparse worktree missing gfx/flags"; exit 1; }
-          test ! -e "$worktree/gfx/interface" || \
-            { echo "::error::sparse worktree leaked gfx/interface"; exit 1; }
-
-      - name: Restore staged validator disk cache
-        id: staged-valcache
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.staged-worktree.outcome == 'success'
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: ${{ runner.temp }}/md-staged-validator-test/.validation_cache
-          key: >-
-            md-valcache-v1-${{ runner.os }}-${{
-            steps.staged-toolshash.outputs.hash }}
-          restore-keys: >-
-            md-valcache-v1-${{ runner.os }}-${{
-            steps.staged-toolshash.outputs.hash }}-
-
-      - name: Run staged-validator integration
-        id: staged
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.staged-worktree.outcome == 'success'
-        working-directory: ${{ runner.temp }}/md-staged-validator-test
-        env:
-          MD_RUN_STAGED_INTEGRATION: "1"
-        run: >-
-          python -m pytest tools/tests/staged_validators_test.py
-          tools/tests/staged_validators_real_test.py
-          tools/tests/staged_sparse_coverage_test.py -q
-
-      - name: Run tools validation
-        id: validate-tools
-        if: >-
-          always() && !cancelled() && matrix.quality == true &&
-          steps.dependencies.outcome == 'success'
-        run: >-
-          python tools/validate_tools.py --strict --no-color --output
-          tools_validation.log
 
       - name: Write tools suite sidecar
         id: suite-sidecar
@@ -603,20 +476,7 @@ jobs:
             "${{ steps.collection.outcome }}" \
             "${{ steps.unit.outcome }}" \
             "${{ steps.coverage-report.outcome }}" \
-            "${{ steps.cross-platform.outcome }}" \
-            "${{ steps.ruff.outcome }}" \
-            "${{ steps.black.outcome }}" \
-            "${{ steps.pylint.outcome }}" \
-            "${{ steps.mypy.outcome }}" \
-            "${{ steps.bun.outcome }}" \
-            "${{ steps.bun-deps.outcome }}" \
-            "${{ steps.jscpd.outcome }}" \
-            "${{ steps.staged-fetch.outcome }}" \
-            "${{ steps.staged-toolshash.outcome }}" \
-            "${{ steps.staged-worktree.outcome }}" \
-            "${{ steps.staged-valcache.outcome }}" \
-            "${{ steps.staged.outcome }}" \
-            "${{ steps.validate-tools.outcome }}"; do
+            "${{ steps.cross-platform.outcome }}"; do
             if [ "$outcome" = "failure" ]; then
               failed=$((failed + 1))
             fi
@@ -649,6 +509,192 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  # Its own job, so lint and staged integration do not queue behind the tests.
+  tools-quality:
+    name: Tools quality
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.full_suite == 'true' ||
+      needs.detect-changes.outputs.tools == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout tools quality tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          fetch-depth: 1
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            pyproject.toml
+            validation_config.json
+            package.json
+            bun.lock
+            .jscpd.json
+            .github/actions/setup-md-python/action.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python and dependencies
+        id: dependencies
+        uses: ./.github/actions/setup-md-python
+        with:
+          analysis: "true"
+
+      - name: Run ruff
+        id: ruff
+        if: always() && !cancelled() && steps.dependencies.outcome == 'success'
+        run: ruff check tools --output-format=github
+
+      - name: Check formatting (black)
+        id: black
+        if: always() && !cancelled() && steps.dependencies.outcome == 'success'
+        run: black --check tools
+
+      - name: Run pylint
+        id: pylint
+        if: always() && !cancelled() && steps.dependencies.outcome == 'success'
+        run: pylint tools -j 0 --output-format=github --reports=no --score=no
+
+      - name: Run mypy
+        id: mypy
+        if: always() && !cancelled() && steps.dependencies.outcome == 'success'
+        run: mypy
+
+      - name: Setup Bun
+        id: bun
+        if: always() && !cancelled() && steps.dependencies.outcome == 'success'
+        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
+        with:
+          bun-version: "1.3.14"
+
+      - name: Install duplication dependencies
+        id: bun-deps
+        if: always() && !cancelled() && steps.bun.outcome == 'success'
+        run: bun install --frozen-lockfile
+
+      - name: Run jscpd
+        id: jscpd
+        if: always() && !cancelled() && steps.bun-deps.outcome == 'success'
+        run: bun run jscpd
+
+      - name: Fetch PR head for staged integration
+        id: staged-fetch
+        if: always() && !cancelled() && steps.dependencies.outcome == 'success'
+        run: >-
+          git fetch --no-tags --depth=1 --filter=blob:none
+          "https://github.com/${{
+          needs.detect-changes.outputs.checkout-repository }}.git"
+          "${{ needs.detect-changes.outputs.head-sha }}"
+
+      - name: Compute staged validator code hash
+        id: staged-toolshash
+        if: always() && !cancelled() && steps.dependencies.outcome == 'success'
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**/*.py',
+          'tools/validation/**/*.txt', 'tools/shared_utils.py',
+          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Create staged integration worktree
+        id: staged-worktree
+        if: always() && !cancelled() && steps.staged-fetch.outcome == 'success'
+        run: |
+          worktree="${{ runner.temp }}/md-staged-validator-test"
+          head_sha="${{ needs.detect-changes.outputs.head-sha }}"
+          git worktree add --detach --no-checkout "$worktree" "$head_sha"
+          # Anchored patterns: a bare `interface` would also match the 1.8 GB
+          # gfx/interface art tree, so every entry is root-anchored (see
+          # tools/validation/staged_sparse_profile.txt).
+          git -C "$worktree" sparse-checkout init --no-cone
+          git -C "$worktree" sparse-checkout set --stdin \
+            < tools/validation/staged_sparse_profile.txt
+          git -C "$worktree" checkout "$head_sha"
+          test -d "$worktree/gfx/flags" || \
+            { echo "::error::sparse worktree missing gfx/flags"; exit 1; }
+          test ! -e "$worktree/gfx/interface" || \
+            { echo "::error::sparse worktree leaked gfx/interface"; exit 1; }
+
+      - name: Restore staged validator disk cache
+        id: staged-valcache
+        if: >-
+          always() && !cancelled() &&
+          steps.staged-worktree.outcome == 'success'
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: ${{ runner.temp }}/md-staged-validator-test/.validation_cache
+          key: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.staged-toolshash.outputs.hash }}
+          restore-keys: >-
+            md-valcache-v1-${{ runner.os }}-${{
+            steps.staged-toolshash.outputs.hash }}-
+
+      - name: Run staged-validator integration
+        id: staged
+        if: >-
+          always() && !cancelled() &&
+          steps.staged-worktree.outcome == 'success'
+        working-directory: ${{ runner.temp }}/md-staged-validator-test
+        env:
+          MD_RUN_STAGED_INTEGRATION: "1"
+        run: >-
+          python -m pytest tools/tests/staged_validators_test.py
+          tools/tests/staged_validators_real_test.py
+          tools/tests/staged_sparse_coverage_test.py -q
+
+      - name: Run tools validation
+        id: validate-tools
+        if: always() && !cancelled() && steps.dependencies.outcome == 'success'
+        run: >-
+          python tools/validate_tools.py --strict --no-color --output
+          tools_validation.log
+
+      - name: Write tools quality sidecar
+        id: suite-sidecar
+        if: always() && !cancelled()
+        run: |
+          failed=0
+          for outcome in \
+            "${{ steps.dependencies.outcome }}" \
+            "${{ steps.ruff.outcome }}" \
+            "${{ steps.black.outcome }}" \
+            "${{ steps.pylint.outcome }}" \
+            "${{ steps.mypy.outcome }}" \
+            "${{ steps.bun.outcome }}" \
+            "${{ steps.bun-deps.outcome }}" \
+            "${{ steps.jscpd.outcome }}" \
+            "${{ steps.staged-fetch.outcome }}" \
+            "${{ steps.staged-toolshash.outcome }}" \
+            "${{ steps.staged-worktree.outcome }}" \
+            "${{ steps.staged-valcache.outcome }}" \
+            "${{ steps.staged.outcome }}" \
+            "${{ steps.validate-tools.outcome }}"; do
+            if [ "$outcome" = "failure" ]; then
+              failed=$((failed + 1))
+            fi
+          done
+          status=passed
+          if [ "$failed" -gt 0 ]; then
+            status=failed
+          fi
+          {
+            printf '{"suite":"tools","job":"Tools quality",'
+            printf '"name":"tools-quality","title":"Tools quality",'
+            printf '"status":"%s","errors":%d,"warnings":0,' \
+              "$status" "$failed"
+            printf '"issues":[]}\n'
+          } > suite-run.json
+
+      - name: Upload tools quality results
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: tools-quality-results
+          path: suite-run.json
+          if-no-files-found: error
+          retention-days: 7
+
   mod-tests:
     name: Mod tests (${{ matrix.batch }})
     needs: [detect-changes, prepare-workspace]
@@ -665,7 +711,17 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: prepared-workspace
-          path: .
+          path: ${{ runner.temp }}
+
+      - name: Extract prepared workspace
+        run: |
+          archive="$RUNNER_TEMP/prepared-workspace.tar.zst"
+          # Only regular files and directories; a link could point outside.
+          if tar --zstd -tvf "$archive" | grep -q '^[^-d]'; then
+            echo "::error::Prepared workspace holds a link or special file"
+            exit 1
+          fi
+          tar --zstd -xf "$archive"
 
       - name: Set up Python
         id: setup-python
@@ -888,6 +944,7 @@ jobs:
       - validate-paths
       - prepare-workspace
       - tools-tests
+      - tools-quality
       - mod-tests
       - docs-quality
     if: ${{ always() && !cancelled() }}
@@ -1008,6 +1065,7 @@ jobs:
       - validate-paths
       - prepare-workspace
       - tools-tests
+      - tools-quality
       - mod-tests
       - docs-quality
       - report
@@ -1023,6 +1081,8 @@ jobs:
           needs.prepare-workspace.result != 'skipped') ||
           (needs.tools-tests.result != 'success' &&
           needs.tools-tests.result != 'skipped') ||
+          (needs.tools-quality.result != 'success' &&
+          needs.tools-quality.result != 'skipped') ||
           (needs.mod-tests.result != 'success' &&
           needs.mod-tests.result != 'skipped') ||
           (needs.docs-quality.result != 'success' &&

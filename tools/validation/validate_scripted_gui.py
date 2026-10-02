@@ -522,7 +522,7 @@ class Validator(BaseValidator):
         all_gui_names = set(self._gui_elements.keys())
         seen: Set[Tuple[str, str, str, int]] = set()
         for block in self._sgui_blocks:
-            for elem, kind in block["handlers"]:
+            for elem, kind in sorted(block["handlers"]):
                 if elem in all_gui_names:
                     continue
                 # Skip placeholder / template patterns (meta_effect substitution)
