@@ -561,3 +561,21 @@ def test_usage_scan_ignores_non_english_localisation(tmp_path):
 
     assert "englishonly" in used
     assert "frenchonly" not in used
+
+
+def test_missing_references_in_one_file_are_reported_in_name_order(tmp_path):
+    names = [f"gone_{letter}" for letter in "jihgfedcba"]
+    gui = tmp_path / "interface" / "use.gui"
+    gui.parent.mkdir()
+    gui.write_text("".join(f'text = "[{name}]"\n' for name in names), encoding="utf-8")
+
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert [
+        (issue.category, issue.message, issue.file, issue.line)
+        for issue in validator._issues
+    ] == [
+        ("missing-scripted-loc", name, "interface/use.gui", names.index(name) + 1)
+        for name in sorted(names)
+    ]

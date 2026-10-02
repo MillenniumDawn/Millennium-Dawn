@@ -182,7 +182,7 @@ def process_file_for_used_localisations(
     if not found_original:
         return ([], {})
 
-    localisations = list(found_original)
+    localisations = sorted(found_original)
     paths = {name: basename for name in found_original}
     return (localisations, paths)
 
