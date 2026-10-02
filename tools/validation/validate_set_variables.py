@@ -15,6 +15,7 @@ from multiprocessing import Pool
 from typing import Dict, List, Tuple
 
 import disk_cache
+from shared_utils import validation_config
 from validator_common import (
     BaseValidator,
     DataCleaner,
@@ -120,7 +121,7 @@ def _scan_set_variables(text: str) -> List[str]:
 def process_file_for_set_variables(
     filename: str, lowercase: bool, mod_path: str
 ) -> Tuple[List[str], Dict[str, str]]:
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return [], {}
     text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
@@ -271,7 +272,7 @@ def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
 def count_all_variables_in_file(filename: str) -> Tuple[Dict[str, int], set]:
     # Per-worker globals (set by _pass2_init) hold the tracked maps and cache
     # namespace, so each task carries only the filename string.
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=_W_MOD_PATH):
         return {}, set()
     text = FileOpener.open_text_file(filename, lowercase=True, strip_comments_flag=True)
     if not text:
@@ -462,23 +463,9 @@ class Validator(BaseValidator):
         if self.min_references:
             self.log(f"Minimum references required: {self.min_references}")
 
-        FALSE_POSITIVES = [
-            "value",
-            "days",
-            "months",
-            "years",
-            "hours",
-            "@",
-            "[",
-            "{",
-            "var:",
-            "temp_",
-            "^",
-            # Used: read via check_variable in ZAM_political_leaders but the
-            # reference scan misses it; suppress rather than delete a live var.
-            "anarchist_communism_leader",
-        ]
-        self.validate_set_variables(FALSE_POSITIVES)
+        self.validate_set_variables(
+            list(validation_config("validate_set_variables", "false_positives"))
+        )
 
 
 def add_extra_args(parser):

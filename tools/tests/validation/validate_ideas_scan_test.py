@@ -12,13 +12,12 @@ from validate_ideas import (
     _extract_idea_refs_from_blocks,
     _extract_swap_idea_refs,
     _idea_categories_frame_count,
-    _load_dynamic_token_names,
     _on_add_is_log_only,
     _parse_ideas_from_file,
     _parse_ideas_from_text,
     _scan_idea_refs_for_unused,
 )
-from validator_common import casefold_index
+from validator_common import casefold_index, load_dynamic_token_names
 
 NO_CATEGORIES: frozenset = frozenset()
 
@@ -133,6 +132,24 @@ def test_cancel_always_no_and_log_only_on_add_are_recorded():
     ]
 
 
+def test_equipment_bonus_without_instant_is_recorded_per_equipment():
+    text = (
+        "ideas = {\n\tcountry = {\n\t\tBONUS_idea = {\n\t\t\tequipment_bonus = {\n"
+        "\t\t\t\tinfantry_weapons_type = { soft_attack = 0.05 instant = yes }\n"
+        "\t\t\t\tartillery_equipment = {\n\t\t\t\t\tsoft_attack = 0.05\n\t\t\t\t}\n"
+        "\t\t\t\tinstant_tank = { build_cost_ic = -0.1 instant = no }\n"
+        "\t\t\t}\n\t\t}\n\t}\n}\n"
+    )
+
+    issues = _parse_ideas_from_text(text, NO_CATEGORIES)[1]
+
+    assert [(i.idea_name, i.line, i.detail) for i in issues] == [
+        ("BONUS_idea", 6, "artillery_equipment"),
+        ("BONUS_idea", 9, "instant_tank"),
+    ]
+    assert {i.issue_type for i in issues} == {"equipment-bonus-not-instant"}
+
+
 def test_dynamic_token_names_are_loaded(tmp_path):
     _write(
         tmp_path,
@@ -140,13 +157,13 @@ def test_dynamic_token_names_are_loaded(tmp_path):
         "TOKEN_one\nTOKEN_two\n\nnot a token line\n",
     )
 
-    assert _load_dynamic_token_names(str(tmp_path)) == {"TOKEN_one", "TOKEN_two"}
+    assert load_dynamic_token_names(str(tmp_path)) == {"TOKEN_one", "TOKEN_two"}
 
 
 def test_dynamic_token_names_from_an_empty_registry(tmp_path):
     _write(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", "")
 
-    assert _load_dynamic_token_names(str(tmp_path)) == set()
+    assert load_dynamic_token_names(str(tmp_path)) == set()
 
 
 def test_unused_scan_captures_literal_and_meta_references(tmp_path):

@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
+from shared_utils import validation_config
 from validate_gfx_references import sprite_names_from_gfx_text
 from validator_common import (
     BaseValidator,
@@ -38,7 +39,7 @@ def process_file_for_defined_localisations(
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], {})
 
     if "00_scripted_localisation_FR_loc" in filename:
@@ -140,7 +141,7 @@ def process_file_for_used_localisations(
 ) -> Tuple[List[str], Dict[str, str]]:
     filename, search_names, lowercase, mod_path = args
 
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return ([], {})
 
     basename = os.path.basename(filename)
@@ -367,10 +368,9 @@ class Validator(BaseValidator):
             "Checking unused scripted localisations (defined but not used)..."
         )
 
-        # Preemptive slot libraries — defined for all possible slots even if only a
-        # subset are active.  Suppress unused warnings for the unoccupied slots rather
-        # than requiring every slot to have a live caller.
-        UNUSED_ONLY_FALSE_POSITIVES = ("eu_parl_pg_party_",)
+        unused_only = validation_config(
+            "validate_scripted_localisation", "unused_only_false_positives"
+        )
 
         defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
         defined_locs_lower = [loc.lower() for loc in defined_locs]
@@ -379,7 +379,7 @@ class Validator(BaseValidator):
         defined_locs_lower = (
             DataCleaner.clear_false_positives_partial_match(
                 defined_locs_lower,
-                tuple(false_positives) + tuple(UNUSED_ONLY_FALSE_POSITIVES),
+                tuple(false_positives) + tuple(unused_only),
             )
             or []
         )
@@ -480,33 +480,10 @@ class Validator(BaseValidator):
             )
             return
 
-        FALSE_POSITIVES = [
-            "root.getname",
-            "this.getname",
-            "from.getname",
-            "prev.getname",
-            "root.getadjective",
-            "this.getadjective",
-            "from.getadjective",
-            "getdatetext",
-            "getyear",
-            "getmonth",
-            "getday",
-            # These are matched as substrings, so suffix entries like "tt"/"_desc" used to
-            # swallow real names (party_name_by_index_delayed_tt, opposition_party_desc,
-            # sat_N_det_tt_loc) — engine getters are already filtered by the get* prefix rule.
-            "euxxx_ep_agenda",
-            # Plain loc keys used as $KEY$ nested substitution wrappers in formable
-            # state integration tooltips \u2014 not scripted localisations
-            "gip",
-            "gis",
-            "\u00a7",
-            "\u00a3",
-            "$",
-            "var:",
-            "@",
-            "[",
-        ]
+        # Entries match as substrings, so a short suffix entry swallows real names.
+        false_positives = list(
+            validation_config("validate_scripted_localisation", "false_positives")
+        )
 
         all_defined_locs, all_defined_paths = (
             ScriptedLocalisation.get_all_defined_localisations(
@@ -556,10 +533,10 @@ class Validator(BaseValidator):
             missing_locs, missing_paths = all_used_locs, all_used_paths
 
         self.validate_missing_scripted_localisations(
-            FALSE_POSITIVES, all_defined_locs, missing_locs, missing_paths
+            false_positives, all_defined_locs, missing_locs, missing_paths
         )
         self.validate_unused_scripted_localisations(
-            FALSE_POSITIVES, defined_locs, defined_paths, all_used_locs
+            false_positives, defined_locs, defined_paths, all_used_locs
         )
 
         # GFX icon check scans all interface/*.gfx files — skip in staged mode

@@ -6,10 +6,12 @@
 import glob
 import os
 import re
+from functools import partial
 from pathlib import Path
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import disk_cache
+from shared_utils import validation_config
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -33,8 +35,10 @@ MD_IDEOLOGY_SUFFIXES = [
 ]
 
 
-def _should_skip(filename: str) -> bool:
-    return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
+    return should_skip_file(
+        filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS, mod_path=mod_path
+    )
 
 
 # --- Multiprocessing helpers ---
@@ -95,10 +99,12 @@ def process_file_for_both_cosmetic_tags(
     )
 
 
-def process_file_for_has_cosmetic_tag_lookup(args: Tuple[str, frozenset]) -> Set[str]:
+def process_file_for_has_cosmetic_tag_lookup(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> Set[str]:
     """Return subset of tags_to_find referenced via has_cosmetic_tag = TAG in this file."""
     filename, tags_to_find = args
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return set()
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -108,13 +114,15 @@ def process_file_for_has_cosmetic_tag_lookup(args: Tuple[str, frozenset]) -> Set
     if "has_cosmetic_tag =" not in cleaned:
         return set()
     all_matches = set(re.findall(r"has_cosmetic_tag = (\S+)", cleaned))
-    return tags_to_find & all_matches
+    return all_matches & tags_to_find
 
 
-def process_file_for_cosmetic_tag_in_loc(args: Tuple[str, frozenset]) -> Dict[str, int]:
+def process_file_for_cosmetic_tag_in_loc(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> Dict[str, int]:
     """Return {tag: count} for cosmetic tag references in a yml localisation file."""
     filename, tags_to_find = args
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return {}
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -140,7 +148,9 @@ class Validator(BaseValidator):
         # Cached so validate_missing + validate_unused share one repo walk
         # instead of each running its own pool scan.
         def _build():
-            files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
+            files = self._collect_files(
+                ["**/*.txt"], extra_skip=partial(_should_skip, mod_path=self.mod_path)
+            )
             args_list = [(f, False, self.mod_path) for f in files]
             scan_results = self._pool_map(
                 process_file_for_both_cosmetic_tags, args_list
@@ -183,7 +193,9 @@ class Validator(BaseValidator):
         # change adding `has_cosmetic_tag = X` would false-positive whenever
         # the `set_cosmetic_tag = X` definition lives in an unmodified file.
         all_files = self._collect_files(
-            ["**/*.txt"], extra_skip=_should_skip, ignore_staged=True
+            ["**/*.txt"],
+            extra_skip=partial(_should_skip, mod_path=self.mod_path),
+            ignore_staged=True,
         )
         remaining_tags = list(cosmetic_tags.keys())
         args_list = [(f, False, remaining_tags) for f in all_files]
@@ -193,9 +205,7 @@ class Validator(BaseValidator):
             for tag, count in counts.items():
                 cosmetic_tags[tag] += count
 
-        cosmetic_tags = DataCleaner.clear_false_positives(
-            cosmetic_tags, tuple(false_positives)
-        )
+        DataCleaner.clear_false_positives(cosmetic_tags, tuple(false_positives))
         missing = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
         if missing:
@@ -252,7 +262,11 @@ class Validator(BaseValidator):
             # Pool scan over txt files for has_cosmetic_tag = TAG references
             args_list = [(f, remaining_tags) for f in files]
             txt_results = self._pool_map(
-                process_file_for_has_cosmetic_tag_lookup, args_list, chunksize=30
+                partial(
+                    process_file_for_has_cosmetic_tag_lookup, mod_path=self.mod_path
+                ),
+                args_list,
+                chunksize=30,
             )
             for found_set in txt_results:
                 for tag in found_set:
@@ -268,18 +282,22 @@ class Validator(BaseValidator):
                         os.path.join(self.mod_path, "**", "*.yml"), recursive=True
                     )
                 )
-                yml_files = [f for f in yml_files if not _should_skip(f)]
+                yml_files = [
+                    f for f in yml_files if not _should_skip(f, mod_path=self.mod_path)
+                ]
                 args_list = [(f, remaining_tags) for f in yml_files]
                 yml_results = self._pool_map(
-                    process_file_for_cosmetic_tag_in_loc, args_list, chunksize=30
+                    partial(
+                        process_file_for_cosmetic_tag_in_loc, mod_path=self.mod_path
+                    ),
+                    args_list,
+                    chunksize=30,
                 )
                 for counts in yml_results:
                     for tag, count in counts.items():
                         cosmetic_tags[tag] += count
 
-        cosmetic_tags = DataCleaner.clear_false_positives(
-            cosmetic_tags, tuple(false_positives)
-        )
+        DataCleaner.clear_false_positives(cosmetic_tags, tuple(false_positives))
         unused = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
         if unused:
@@ -320,11 +338,11 @@ class Validator(BaseValidator):
             )
             return
 
-        cosmetic_tags = DataCleaner.clear_false_positives(
-            cosmetic_tags, tuple(false_positives)
-        )
+        DataCleaner.clear_false_positives(cosmetic_tags, tuple(false_positives))
 
-        files = self._collect_files(["**/*.txt"], extra_skip=_should_skip)
+        files = self._collect_files(
+            ["**/*.txt"], extra_skip=partial(_should_skip, mod_path=self.mod_path)
+        )
         remaining_tags = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
         if remaining_tags:
             args_list = [(f, False, remaining_tags) for f in files]
@@ -355,34 +373,22 @@ class Validator(BaseValidator):
             )
             return
 
-        # Tags containing [ or { are from meta_effect text blocks and should be ignored
-        PATTERN_FALSE_POSITIVES = ["[", "{"]
-        # Tags that are generated dynamically via meta_effects (e.g. [ROOTTAG]_REB)
-        # and so never appear as literal set_cosmetic_tag = TAG calls
-        META_EFFECT_TAGS = [
-            "PER_REB",  # from [ROOTTAG]_REB
-            "GER_AUTH_S",  # from [ROOTTAG]_AUTH_S
-            "CRO_Serbian_Krajina",  # checked in scripted loc but set externally
-            "ENG_England",  # checked in formable nations but never set
-        ]
-        KNOWN_BUGS = []
-        # Tags set in focus trees that lack cosmetic.txt/flag definitions (incomplete)
-        INCOMPLETE_TAGS = [
-            "BSH_limonka",  # 05_bashkiriya.txt - nationalist fascist override
-            "BSH_REB_S_nationalist",  # 05_bashkiriya.txt - nationalist junta override
-            "TAT_REB_S_nationalist",  # Tatarstan.txt - nationalist junta override
-        ]
+        pattern, meta_effect, known_bugs, incomplete = (
+            list(validation_config("validate_cosmetic_tags", key))
+            for key in (
+                "pattern_false_positives",
+                "meta_effect_tags",
+                "known_bugs",
+                "incomplete_tags",
+            )
+        )
         # validate_missing uses _collect_files() which respects staged mode
-        self.validate_missing_cosmetic_tags(PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS)
+        self.validate_missing_cosmetic_tags(pattern + meta_effect)
 
         # Cross-reference checks scan all .tga/.yml files — skip in staged mode
         if not self.staged_only:
-            self.validate_unused_cosmetic_tags(
-                PATTERN_FALSE_POSITIVES + KNOWN_BUGS + INCOMPLETE_TAGS
-            )
-            self.validate_unused_cosmetic_tag_colors(
-                PATTERN_FALSE_POSITIVES + META_EFFECT_TAGS
-            )
+            self.validate_unused_cosmetic_tags(pattern + known_bugs + incomplete)
+            self.validate_unused_cosmetic_tag_colors(pattern + meta_effect)
 
 
 if __name__ == "__main__":

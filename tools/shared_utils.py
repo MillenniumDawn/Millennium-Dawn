@@ -4,6 +4,7 @@
 
 import argparse
 import bisect
+import json
 import logging
 import os
 import re
@@ -55,6 +56,30 @@ _LEVEL_COLORS = {
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
 
+VALIDATION_CONFIG_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "validation_config.json",
+)
+VALIDATION_CONFIG_VERSION = 1
+
+
+@lru_cache(maxsize=None)
+def _load_validation_config() -> Dict[str, Any]:
+    with open(VALIDATION_CONFIG_PATH, encoding="utf-8") as handle:
+        config = json.load(handle)
+    if config.get("version") != VALIDATION_CONFIG_VERSION:
+        raise ValueError(
+            f"{VALIDATION_CONFIG_PATH}: expected version "
+            f"{VALIDATION_CONFIG_VERSION}, found {config.get('version')!r}"
+        )
+    return config
+
+
+def validation_config(validator: str, key: str) -> Dict[str, str]:
+    """Return one validation_config.json suppression list as entry -> reason."""
+    return _load_validation_config()[validator][key]
+
+
 # ruling_party 0-23. Slot 0 is Western Autocracy.
 PARTY_SLOT_NAMES: Dict[int, str] = {
     0: "Western_Autocracy",
@@ -90,6 +115,11 @@ PARTY_SLOT_NAMES: Dict[int, str] = {
 CPU_BUDGET_FRACTION = 0.75
 
 
+def running_in_ci() -> bool:
+    """True on a CI runner, which has its cores to itself."""
+    return os.environ.get("CI", "").strip().lower() in ("1", "true")
+
+
 def cpu_budget() -> int:
     """Cores this repo's tooling may occupy at once, never the whole machine.
 
@@ -100,7 +130,7 @@ def cpu_budget() -> int:
     if override.isdigit() and int(override) > 0:
         return int(override)
     cores = os.cpu_count() or 1
-    if os.environ.get("CI", "").strip().lower() in ("1", "true"):
+    if running_in_ci():
         return cores
     return max(1, int(cores * CPU_BUDGET_FRACTION))
 
@@ -617,9 +647,14 @@ def create_backup(filename: str) -> str:
 
 
 def should_skip_file(
-    filename: str, extra_skip_patterns: Optional[List[str]] = None
+    filename: str,
+    extra_skip_patterns: Optional[List[str]] = None,
+    *,
+    mod_path: Optional[str] = None,
 ) -> bool:
-    """Check if a file should be skipped during processing."""
+    """Match exclusions inside the checkout, not its ancestor directories."""
+    if mod_path is not None and os.path.isabs(filename):
+        filename = os.path.relpath(filename, mod_path)
     ignored_dirs = {".git", ".claude", "gfx", "tools", "resources", "docs", "map"}
     content_roots = {"common", "events", "history", "interface", "localisation"}
     normalized_path = filename.replace("\\", "/").strip("/")
