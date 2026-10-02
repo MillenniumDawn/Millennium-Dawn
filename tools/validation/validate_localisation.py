@@ -68,12 +68,15 @@ def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
 
 _SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
 _LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
-_NOT_OPEN_RE = re.compile(r"\bNOT\s*=\s*\{")
-# A § followed by whitespace and a digit is a prose section sign (e.g. a legal
-# citation like "15 U.S.C. § 1"), never a color code; game markup never puts a
-# space after §. Requiring the digit keeps a dangling/broken code (§ before a
-# word, quote, or line end) flagged instead of silently exempted.
-_PROSE_SECTION_SIGN_RE = re.compile(r"§(?=\s+\d)")
+# Literal first so sre can scan for it; the look-behind stands in for a leading \b.
+_NOT_OPEN_RE = re.compile(r"NOT(?<!\wNOT)\s*=\s*\{")
+# `§§` is the engine's escape for a literal section sign ("15 U.S.C. §§ 1"
+# renders "15 U.S.C. § 1"). A single § always starts a color code, even before
+# a space: in game (1.19.3) "§ 1" drops the space, logs "Could not find
+# coloring for character ' '" every frame, and shows no §. So only the escaped
+# pair is exempt from the color checks; a bare § before whitespace is flagged.
+_LITERAL_SECTION_SIGN_RE = re.compile(r"§§")
+_SECTION_SIGN_BEFORE_SPACE_RE = re.compile(r"§\s")
 
 # A formatter (Prettier/pre-commit --all-files) once split Paradox loc
 # `KEY:0 "value"` lines across two lines and rewrote double quotes to single
@@ -137,8 +140,16 @@ def _scan_syntax_text(
         if "\u00a7" in line:
             key_match = _LINE_KEY_RE.match(line)
             key = key_match.group(1) if key_match else None
-            color_line = _PROSE_SECTION_SIGN_RE.sub("", line)
+            color_line = _LITERAL_SECTION_SIGN_RE.sub("", line)
             if "\u00a7" not in color_line:
+                continue
+            if _SECTION_SIGN_BEFORE_SPACE_RE.search(color_line):
+                out.append(
+                    (
+                        f"{basename}, line {line_idx + 2}, colors - \u00a7 before whitespace is read as a color code; write \u00a7\u00a7 for a literal \u00a7",
+                        key,
+                    )
+                )
                 continue
             count = color_line.count("\u00a7")
             if count % 2 != 0:
@@ -260,6 +271,9 @@ _TYPO_RE = re.compile(
     r"\b(?:" + "|".join(re.escape(t) for t in _TYPO_WATCHLIST) + r")\b",
     re.IGNORECASE,
 )
+_TYPO_WORDS = frozenset(_TYPO_WATCHLIST)
+_TYPO_LENGTHS = frozenset(len(typo) for typo in _TYPO_WORDS)
+_WORD_TOKEN_RE = re.compile(r"\w+")
 _TYPO_VALUE_RE = re.compile(r'^\s*[\w.\-]+:\d*\s*"(.*)"')
 _TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+")
 
@@ -281,10 +295,17 @@ def _scan_typos_text(text: str, basename: str) -> List[str]:
         if any(exempt in value for exempt in _TYPO_EXEMPTIONS):
             continue
         prose = _TYPO_RUNTIME_REFERENCE_RE.sub("", value)
-        for m in _TYPO_RE.finditer(prose):
-            correction = _TYPO_WATCHLIST[m.group(0).lower()]
+        # Watchlist words are all word characters, so each _TYPO_RE match is
+        # one whole \w+ token; on ASCII text IGNORECASE is plain lowercasing.
+        tokens = _WORD_TOKEN_RE.findall(prose)
+        if prose.isascii() and _TYPO_WORDS.isdisjoint(map(str.lower, tokens)):
+            continue
+        for token in tokens:
+            if len(token) not in _TYPO_LENGTHS or not _TYPO_RE.fullmatch(token):
+                continue
+            correction = _TYPO_WATCHLIST[token.lower()]
             results.append(
-                f"{basename} - line {line_idx + 2} - '{m.group(0)}' -> '{correction}'"
+                f"{basename} - line {line_idx + 2} - '{token}' -> '{correction}'"
             )
     return results
 
@@ -314,6 +335,16 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
                     severity=Severity.WARNING,
                     category="loc-backtick-apostrophe",
                     message="Backtick used as apostrophe in loc value: use ' instead",
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+        if value.count('\\"') % 2:
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category="loc-unbalanced-quote",
+                    message='Odd number of \\" in loc value: an opening or closing quote is missing',
                     file=basename,
                     line=line_idx + 2,
                 )
@@ -465,6 +496,14 @@ def process_txt_for_loc_key_refs(filename: str) -> List[str]:
     return results
 
 
+def _scan_txt_key_refs(filename: str) -> Tuple[List[str], List[str]]:
+    """Pool worker: loc-key and custom-tooltip refs; the second scan reuses
+    FileOpener's copy of the text the first one read."""
+    return process_txt_for_loc_key_refs(filename), process_txt_for_custom_tt_refs(
+        filename
+    )
+
+
 def _trigger_tooltip_keys(text: str) -> List[str]:
     """Keys from every custom_trigger_tooltip, past any nested trigger body."""
     keys: List[str] = []
@@ -547,6 +586,10 @@ def _engine_loc_vars(mod_path: str) -> frozenset:
     return frozenset(_DOC_HEADING_RE.findall(body)) | _EXTRA_ENGINE_LOC_VARS
 
 
+_SCOPE_HOP_RE = re.compile(r"[A-Za-z_]\w*")
+_TAG_RE = re.compile(r"[A-Z]{3}")
+
+
 def _loc_var_name(raw: str) -> str:
     """The variable a `[?...]` names, or "" for a promote or scope.
 
@@ -561,7 +604,7 @@ def _loc_var_name(raw: str) -> str:
     name = name.split("^", 1)[0]
     while ":" in name:
         head, _, tail = name.partition(":")
-        if not re.fullmatch(r"[A-Za-z_]\w*", head):
+        if not _SCOPE_HOP_RE.fullmatch(head):
             break
         name = tail
     parts = [seg for seg in name.split(".") if seg]
@@ -569,7 +612,7 @@ def _loc_var_name(raw: str) -> str:
         return ""  # a promote such as .GetName, not a variable read
     while len(parts) > 1 and (
         parts[0].lower() in _VAR_SCOPE_WORDS
-        or re.fullmatch(r"[A-Z]{3}", parts[0])
+        or _TAG_RE.fullmatch(parts[0])
         or parts[0].isdigit()
     ):
         parts.pop(0)
@@ -577,10 +620,10 @@ def _loc_var_name(raw: str) -> str:
     # A scope hop can sit behind the dotted prefix too: FROM.CONTROLLER:var.
     while ":" in name:
         head, _, tail = name.partition(":")
-        if not re.fullmatch(r"[A-Za-z_]\w*", head):
+        if not _SCOPE_HOP_RE.fullmatch(head):
             break
         name = tail
-    if not name or name.lower() in _VAR_SCOPE_WORDS or re.fullmatch(r"[A-Z]{3}", name):
+    if not name or name.lower() in _VAR_SCOPE_WORDS or _TAG_RE.fullmatch(name):
         return ""
     if len(name) < 3 or name.endswith("_array") or "." in name:
         return ""
@@ -596,7 +639,11 @@ def process_txt_for_var_writes(args: Tuple[str]) -> Set[str]:
     if not text:
         return set()
     written: Set[str] = set()
-    for raw in _LOC_VAR_WRITE_RE.findall(text) + _LOC_VAR_ARRAY_RE.findall(text):
+    # Every write effect name contains "variable", every array one "_array".
+    raws = _LOC_VAR_WRITE_RE.findall(text) if "variable" in text else []
+    if "_array" in text:
+        raws += _LOC_VAR_ARRAY_RE.findall(text)
+    for raw in raws:
         written.add(raw.split("^")[0].split(".")[-1])
         name = _loc_var_name(raw)
         if name:
@@ -715,7 +762,7 @@ _COLLECTION_BIND_OPEN_RE = re.compile(
     r"\b(?:for_each_loop|for_each_scope_loop|for_loop_effect|while_loop_effect|"
     r"find_highest_in_array|find_lowest_in_array|any_of|all_of)\s*=\s*\{"
 )
-_CHECK_VARIABLE_OPEN_RE = re.compile(r"\bcheck_variable\s*=\s*\{")
+_CHECK_VARIABLE_OPEN_RE = re.compile(r"check_variable(?<!\wcheck_variable)\s*=\s*\{")
 _HAS_VARIABLE_RE = re.compile(r"\bhas_variable\s*=\s*([^\s{}]+)")
 _CHECK_VAR_TOKEN_RE = re.compile(r"(?:[A-Za-z_]|[0-9]+_)[\w.:@^]*")
 _CHECK_VAR_TOOLTIP_RE = re.compile(r"\btooltip\s*=\s*\S+")
@@ -773,6 +820,9 @@ def _scan_script_var_reads_text(text: str, basename: str) -> List[Tuple[str, str
             if name:
                 out.append((name, basename, number))
     search_from = 0
+    # Blocks come in file order, so count only the newlines since the last one.
+    line_pos = 0
+    lineno = 1
     while True:
         match = _CHECK_VARIABLE_OPEN_RE.search(text, search_from)
         if not match:
@@ -783,7 +833,8 @@ def _scan_script_var_reads_text(text: str, basename: str) -> List[Tuple[str, str
         search_from = end
         if "[" in body:
             continue
-        lineno = text.count("\n", 0, match.start()) + 1
+        lineno += text.count("\n", line_pos, match.start())
+        line_pos = match.start()
         body = _CHECK_VAR_TOOLTIP_RE.sub("", body)
         body = _CHECK_VAR_CONSTANT_RE.sub("", body)
         for raw in _CHECK_VAR_TOKEN_RE.findall(body):
@@ -930,6 +981,78 @@ def process_file_for_orphan_tt_refs(
                     negated_refs.add(m.strip('"'))
 
     return referenced, dynamic_raw, negated_refs
+
+
+_RESISTANCE_BLOCK_RE = re.compile(
+    r"^(\t+)add_resistance_target = (\{\n.*?)^\1\}", re.MULTILINE | re.DOTALL
+)
+_RESISTANCE_TOOLTIP_RE = re.compile(r"tooltip = ([^\t \n]+)")
+
+
+def _scan_resistance_tooltips(filename: str, mod_path: str) -> List[Tuple[str, str]]:
+    """Per add_resistance_target block, ``(tooltip, "")``, or ``("", message)``
+    when the block has no tooltip, in file order."""
+    if _should_skip(filename, mod_path=mod_path):
+        return []
+    text_file = FileOpener.open_text_file(
+        filename, lowercase=False, strip_comments_flag=True
+    )
+    if "add_resistance_target = {" not in text_file:
+        return []
+    hits: List[Tuple[str, str]] = []
+    for match in _RESISTANCE_BLOCK_RE.findall(text_file):
+        body = match[1]
+        if "tooltip =" in body:
+            tooltips = _RESISTANCE_TOOLTIP_RE.findall(body)
+            if tooltips:
+                hits.append((tooltips[0], ""))
+        else:
+            snippet = body.replace("\n", " ").replace("\t", "")[:80]
+            hits.append(
+                ("", f"{snippet} - {os.path.basename(filename)} - missing tooltip")
+            )
+    return hits
+
+
+_TXT_TOOLTIP_PATTERNS = [
+    r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)",
+    r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)",
+    r"tooltip\s*=\s*(\S+)",
+    r"localization_key\s*=\s*(\S+)",
+]
+_GUI_TOOLTIP_PATTERNS = [
+    r'(?:pdx_tooltip|pdx_tooltip_delayed|tooltip|text|buttonText)\s*=\s*"([^"]+)"',
+    r"(?:tooltip|text|buttonText)\s*=\s*(\S+)",
+]
+
+
+def _scan_shared_txt_file(args: Tuple[str, str, bool, bool]) -> Tuple:
+    """Pool worker: the tooltip and variable scans for one .txt file, one read.
+
+    Each scan is the worker its own check used, so findings are unchanged;
+    FileOpener serves the later scans the text the first one read.
+    ``tooltips`` marks a file the tooltip checks scan, ``script`` one the
+    variable checks scan. Returns (resistance, orphan_refs, var_writes,
+    var_reads, targeted_vars).
+    """
+    filename, mod_path, tooltips, script = args
+    if tooltips:
+        refs: Tuple = (
+            _scan_resistance_tooltips(filename, mod_path),
+            process_file_for_orphan_tt_refs(
+                (filename, _TXT_TOOLTIP_PATTERNS), mod_path=mod_path
+            ),
+        )
+    else:
+        refs = ([], (set(), [], set()))
+    if not script:
+        return (*refs, set(), [], [])
+    return (
+        *refs,
+        process_txt_for_var_writes((filename,)),
+        process_txt_for_script_var_reads((filename,)),
+        process_txt_for_targeted_vars((filename,)),
+    )
 
 
 def _get_skipped_loc_keys(mod_path: str) -> set:
@@ -1108,14 +1231,17 @@ class Validator(BaseValidator):
 
     def validate_prose_conventions(self):
         self._log_section(
-            "Checking localisation prose conventions (em dashes, backtick apostrophes)..."
+            "Checking localisation prose conventions (em dashes, backtick apostrophes, quotes)..."
         )
 
         em_dash_results: List[Issue] = []
         backtick_results: List[Issue] = []
+        quote_results: List[Issue] = []
         for issue in self._get_shared_yml_scan()["prose"]:
             if issue.category == "loc-em-dash":
                 em_dash_results.append(issue)
+            elif issue.category == "loc-unbalanced-quote":
+                quote_results.append(issue)
             else:
                 backtick_results.append(issue)
 
@@ -1133,30 +1259,46 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
             category="loc-backtick-apostrophe",
         )
-
-    def _scan_txt_refs(self, worker, txt_files, loc_keys, scripted_loc_keys):
-        """Scan txt files with a worker that needs the valid/scripted key sets,
-        shipped once per worker (loc_keys is ~200k entries; per-task shipping
-        pickled it ~23 MB per chunk)."""
-        return self._pool_map_init(
-            worker,
-            txt_files,
-            _txt_refs_init,
-            (frozenset(loc_keys), frozenset(scripted_loc_keys), self.mod_path),
-            chunksize=30,
+        self._report(
+            quote_results,
+            '✓ No unbalanced \\" quotes in localisation values',
+            'Unbalanced \\" quotes in localisation values:',
+            severity=Severity.WARNING,
+            category="loc-unbalanced-quote",
         )
+
+    def _txt_files(self) -> List[str]:
+        return self.cached("txt_files", lambda: self._collect_files(["**/*.txt"]))
+
+    def _get_txt_key_refs(
+        self, loc_keys: Dict, scripted_loc_keys: set
+    ) -> List[Tuple[List[str], List[str]]]:
+        """Both key-reference checks from one pass that reads each .txt once.
+
+        The valid/scripted key sets ship once per worker (loc_keys is ~200k
+        entries; per-task shipping pickled it ~23 MB per chunk).
+        """
+        memo = getattr(self, "_txt_key_refs_memo", None)
+        if memo is None or memo[0] is not loc_keys or memo[1] is not scripted_loc_keys:
+            refs = self._pool_map_init(
+                _scan_txt_key_refs,
+                self._txt_files(),
+                _txt_refs_init,
+                (frozenset(loc_keys), frozenset(scripted_loc_keys), self.mod_path),
+                chunksize=30,
+            )
+            memo = (loc_keys, scripted_loc_keys, refs)
+            self._txt_key_refs_memo = memo
+        return memo[2]
 
     def validate_localization_key_references(
         self, loc_keys: Dict, scripted_loc_keys: set
     ):
         self._log_section("Checking localization_key references...")
 
-        txt_files = self._collect_files(["**/*.txt"])
-        all_results = self._scan_txt_refs(
-            process_txt_for_loc_key_refs, txt_files, loc_keys, scripted_loc_keys
-        )
+        all_results = self._get_txt_key_refs(loc_keys, scripted_loc_keys)
 
-        results = sorted({k for file_res in all_results for k in file_res})
+        results = sorted({k for file_res, _tt in all_results for k in file_res})
         self._report(
             results,
             "✓ All localization_key references are valid",
@@ -1168,56 +1310,58 @@ class Validator(BaseValidator):
     ):
         self._log_section("Checking custom tooltip references...")
 
-        txt_files = self._collect_files(["**/*.txt"])
-        all_results = self._scan_txt_refs(
-            process_txt_for_custom_tt_refs, txt_files, loc_keys, scripted_loc_keys
-        )
+        all_results = self._get_txt_key_refs(loc_keys, scripted_loc_keys)
 
-        results = sorted({r for file_res in all_results for r in file_res})
+        results = sorted({r for _keys, file_res in all_results for r in file_res})
         self._report(
             results,
             "✓ All custom tooltip references are valid",
             "Custom tooltip references not found in localisation:",
         )
 
+    def _get_shared_txt_scan(self) -> Dict[str, list]:
+        """Read each .txt file once for the tooltip and script-variable checks.
+
+        Each check gets its per-file results in its own file order, so
+        findings are unchanged.
+        """
+        memo = getattr(self, "_shared_txt_memo", None)
+        if memo is not None:
+            return memo
+        txt_files = self._txt_files()
+        script_files = self._script_txt_files()
+        tooltip_set = set(txt_files)
+        script_set = set(script_files)
+        files = txt_files + [f for f in script_files if f not in tooltip_set]
+        args_list = [
+            (f, self.mod_path, f in tooltip_set, f in script_set) for f in files
+        ]
+        scans = dict(
+            zip(files, self._pool_map(_scan_shared_txt_file, args_list, chunksize=30))
+        )
+        memo = {
+            "resistance": [scans[f][0] for f in txt_files],
+            "orphan_refs": [scans[f][1] for f in txt_files],
+            "var_writes": [scans[f][2] for f in script_files],
+            "var_reads": [scans[f][3] for f in script_files],
+            "targeted_vars": [scans[f][4] for f in script_files],
+        }
+        self._shared_txt_memo = memo
+        return memo
+
     def validate_add_resistance_tooltip(self, loc_keys: Dict):
         self._log_section("Checking add_resistance_target tooltip localisation...")
 
-        pattern = r"^(\t+)add_resistance_target = (\{\n.*?)^\1\}"
         results = []
-
-        for filename in glob.iglob(
-            os.path.join(self.mod_path, "**", "*.txt"), recursive=True
-        ):
-            if _should_skip(filename, mod_path=self.mod_path):
-                continue
-            text_file = FileOpener.open_text_file(
-                filename, lowercase=False, strip_comments_flag=True
-            )
-            if "add_resistance_target = {" not in text_file:
-                continue
-
-            matches = re.findall(pattern, text_file, flags=re.MULTILINE | re.DOTALL)
-            for match in matches:
-                body = match[1]
-                if "tooltip =" in body:
-                    tt = re.findall(r"tooltip = ([^\t \n]+)", body)
-                    if tt:
-                        tt = tt[0]
-                        if tt in loc_keys:
-                            if "$VALUE|=-%0$" not in loc_keys[tt]:
-                                results.append(
-                                    f"{tt} - missing $VALUE|=-%0$ in loc value"
-                                )
-                        else:
-                            if tt.startswith("OTT_"):
-                                continue
-                            results.append(f"{tt} - localization key not found")
-                else:
-                    snippet = body.replace("\n", " ").replace("\t", "")[:80]
-                    results.append(
-                        f"{snippet} - {os.path.basename(filename)} - missing tooltip"
-                    )
+        for hits in self._get_shared_txt_scan()["resistance"]:
+            for tt, missing in hits:
+                if missing:
+                    results.append(missing)
+                elif tt in loc_keys:
+                    if "$VALUE|=-%0$" not in loc_keys[tt]:
+                        results.append(f"{tt} - missing $VALUE|=-%0$ in loc value")
+                elif not tt.startswith("OTT_"):
+                    results.append(f"{tt} - localization key not found")
 
         self._report(
             results,
@@ -1253,25 +1397,10 @@ class Validator(BaseValidator):
 
         # 1. Collect all tooltip keys referenced in script, GUI, and scripted loc files.
         referenced_in_scripts: set = set(scripted_loc_keys)
-        txt_patterns = [
-            r"custom_effect_tooltip\s*=\s*(?!\{)(\S+)",
-            r"custom_trigger_tooltip\s*=\s*\{[^}]*?tooltip\s*=\s*(\S+)",
-            r"tooltip\s*=\s*(\S+)",
-            r"localization_key\s*=\s*(\S+)",
-        ]
-        gui_patterns = [
-            r'(?:pdx_tooltip|pdx_tooltip_delayed|tooltip|text|buttonText)\s*=\s*"([^"]+)"',
-            r"(?:tooltip|text|buttonText)\s*=\s*(\S+)",
-        ]
-
-        txt_files = self._collect_files(["**/*.txt"])
         gui_files = self._collect_files(["**/*.gui"])
-        args_list = [(f, txt_patterns) for f in txt_files] + [
-            (f, gui_patterns) for f in gui_files
-        ]
-        all_scan_results = self._pool_map(
+        all_scan_results = self._get_shared_txt_scan()["orphan_refs"] + self._pool_map(
             functools.partial(process_file_for_orphan_tt_refs, mod_path=self.mod_path),
-            args_list,
+            [(f, _GUI_TOOLTIP_PATTERNS) for f in gui_files],
             chunksize=30,
         )
 
@@ -1421,11 +1550,7 @@ class Validator(BaseValidator):
         if memo is not None:
             return memo
         written: Set[str] = set()
-        for names in self._pool_map(
-            process_txt_for_var_writes,
-            [(f,) for f in self._script_txt_files()],
-            chunksize=30,
-        ):
+        for names in self._get_shared_txt_scan()["var_writes"]:
             written |= names
         self._script_written_vars = written
         return written
@@ -1459,11 +1584,7 @@ class Validator(BaseValidator):
             | _VANILLA_WRITTEN_VARS
         )
         results = []
-        for hits in self._pool_map(
-            process_txt_for_script_var_reads,
-            [(f,) for f in self._script_txt_files()],
-            chunksize=30,
-        ):
+        for hits in self._get_shared_txt_scan()["var_reads"]:
             for name, basename, number in hits:
                 if name not in known and name not in _FILE_SCOPED_READ_VARS.get(
                     basename, ()
@@ -1484,11 +1605,7 @@ class Validator(BaseValidator):
 
         known = self._script_written_variables() | _engine_loc_vars(self.mod_path)
         results = []
-        for hits in self._pool_map(
-            process_txt_for_targeted_vars,
-            [(f,) for f in self._script_txt_files()],
-            chunksize=30,
-        ):
+        for hits in self._get_shared_txt_scan()["targeted_vars"]:
             for prefix, basename, number in hits:
                 if prefix not in known:
                     results.append((f"{prefix} - {basename}", basename, number))

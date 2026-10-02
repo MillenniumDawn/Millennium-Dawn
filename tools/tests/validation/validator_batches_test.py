@@ -121,6 +121,39 @@ def test_shared_infrastructure_selects_every_validator():
 
 
 @pytest.mark.usefixtures("reuse_repository_import_graph")
+def test_validator_common_change_selects_the_impact_checks_it_feeds():
+    batch, adhoc = vb.select_for_changed_files(["tools/validation/validator_common.py"])
+    impact = {spec.name for spec in vb.IMPACT_ONLY_SPECS}
+    assert {spec.name for spec in batch} & impact == {
+        "file-paths",
+        "style",
+        "mod-descriptors",
+    }
+    assert adhoc == []
+
+
+@pytest.mark.usefixtures("reuse_repository_import_graph")
+def test_leaf_validation_tooling_selects_every_check(repository_import_graph):
+    # Nothing imports the batch runner, so no importer bounds what it can break.
+    assert not vb._transitive_importers(
+        repository_import_graph, "validation/run_validator_batch"
+    )
+    batch, adhoc = vb.select_for_changed_files(
+        ["tools/validation/run_validator_batch.py"]
+    )
+    assert {spec.name for spec in batch} == {
+        spec.name for spec in vb.ALL_SPECS + vb.IMPACT_ONLY_SPECS
+    }
+    assert adhoc == []
+
+
+def test_report_library_change_selects_every_batch_validator():
+    batch, adhoc = vb.select_for_changed_files(["tools/report_lib/loader.py"])
+    assert [spec.name for spec in batch] == [spec.name for spec in vb.ALL_SPECS]
+    assert adhoc == []
+
+
+@pytest.mark.usefixtures("reuse_repository_import_graph")
 def test_leaf_shared_module_selects_only_its_importers():
     batch, _ = vb.select_for_changed_files(["tools/validation/equipment_stats.py"])
     assert {spec.name for spec in batch} == {"ideas", "mios"}
@@ -166,7 +199,7 @@ def test_renamed_validator_runs_only_under_its_new_name(tmp_path, monkeypatch):
             "tools/validation/validate_renamed_thing.py",
         ]
     )
-    assert all(spec.name != "events" for spec in batch)
+    assert batch == []
     assert [spec.name for spec in adhoc] == ["renamed-thing"]
 
 
@@ -250,11 +283,12 @@ def test_import_graph_parses_comma_and_relative_imports(tmp_path):
     # AST graph must catch both, or validators silently drop off selection.
     (tmp_path / "validation").mkdir()
     (tmp_path / "shared_utils.py").write_text("", encoding="utf-8")
+    # The known module comes second so a first-alias-only reading misses it.
     (tmp_path / "validation/validate_comma.py").write_text(
-        "import shared_utils, other_module\n", encoding="utf-8"
+        "import other_module, shared_utils\n", encoding="utf-8"
     )
     (tmp_path / "validation/validate_relative.py").write_text(
-        "from . import validate_comma\nfrom .shared_utils import thing\n",
+        "from . import other_module, validate_comma\nfrom .shared_utils import thing\n",
         encoding="utf-8",
     )
     nodes = {
@@ -278,6 +312,8 @@ def test_module_importers_follow_the_transitive_chain(repository_import_graph):
     graph = {node: edges.copy() for node, edges in repository_import_graph.items()}
     importers = vb._transitive_importers(graph, "validation/equipment_stats")
     assert {"validation/validate_ideas", "validation/validate_mios"} <= importers
+    chain = {"leaf": set(), "middle": {"leaf"}, "top": {"middle"}, "other": set()}
+    assert vb._transitive_importers(chain, "leaf") == {"middle", "top"}
 
 
 def test_unparsable_module_stays_conservative(tmp_path):
@@ -287,7 +323,9 @@ def test_unparsable_module_stays_conservative(tmp_path):
     (tmp_path / "validation/validate_broken.py").write_text(
         "def broken(:\n", encoding="utf-8"
     )
-    nodes = {"validation/validate_broken": str(tmp_path / "validation/broken.py")}
+    nodes = {
+        "validation/validate_broken": str(tmp_path / "validation/validate_broken.py")
+    }
 
     graph = vb._build_import_graph(nodes)
 

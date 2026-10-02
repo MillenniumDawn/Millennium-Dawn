@@ -53,9 +53,6 @@ env:
     pyproject.toml
     validation_config.json
     *.mod
-    !music/**/*.ogg
-    !music/**/*.mp3
-    !music/**/*.wav
 
 jobs:
   detect-changes:
@@ -159,7 +156,27 @@ jobs:
           sparse-checkout: |
             tools/validation/collect_changed_files.py
             tools/validation/change_groups.py
+            tools/validation/ci_workspace_profile.txt
+            tools/validation/staged_sparse_profile.txt
+            /pyproject.toml
+            /validation_config.json
           sparse-checkout-cone-mode: false
+
+      - name: Check CI tooling contract
+        run: |
+          missing=()
+          for path in tools/validation/ci_workspace_profile.txt \
+              tools/validation/staged_sparse_profile.txt validation_config.json; do
+            test -f "$path" || missing+=("$path")
+          done
+          for package in pytest-xdist pytest-cov; do
+            grep -Fq "\"$package" pyproject.toml || missing+=("$package")
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "::error::This branch predates the CI tooling contract" \
+              "(missing ${missing[*]}). Merge main into it."
+            exit 1
+          fi
 
       - name: Fetch PR base revision
         env:
@@ -290,17 +307,7 @@ jobs:
           sparse-checkout: /tools/validation/ci_workspace_profile.txt
           sparse-checkout-cone-mode: false
 
-      - name: Restore sparse workspace cache
-        id: sparse-cache
-        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: ${{ env.WORKSPACE_PATHS }}
-          key: >-
-            md-sparse-v3-${{ runner.os }}-${{
-            needs.detect-changes.outputs.head-sha }}
-
-      - name: Materialize sparse workspace on cache miss
-        if: steps.sparse-cache.outputs.cache-hit != 'true'
+      - name: Materialize sparse workspace
         run: >-
           git sparse-checkout set --no-cone --stdin
           < tools/validation/ci_workspace_profile.txt
@@ -345,24 +352,18 @@ jobs:
             echo "cache=$CACHE_KEY"
           } | tee .workspace-manifest
 
-      - name: Save sparse workspace cache
-        if: steps.sparse-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
-        with:
-          path: ${{ env.WORKSPACE_PATHS }}
-          key: >-
-            md-sparse-v3-${{ runner.os }}-${{
-            needs.detect-changes.outputs.head-sha }}
+      - name: Pack prepared workspace
+        # Word splitting on WORKSPACE_PATHS is intended; it also expands *.mod.
+        run: >-
+          tar --zstd -cf "$RUNNER_TEMP/prepared-workspace.tar.zst"
+          $WORKSPACE_PATHS .workspace-manifest .validation_cache
 
       - name: Upload prepared workspace
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: prepared-workspace
-          path: |
-            ${{ env.WORKSPACE_PATHS }}
-            .workspace-manifest
-            .validation_cache
-          include-hidden-files: true
+          path: ${{ runner.temp }}/prepared-workspace.tar.zst
+          compression-level: 0
           if-no-files-found: error
           retention-days: 1
 
@@ -514,15 +515,16 @@ jobs:
           steps.bun-deps.outcome == 'success'
         run: bun run jscpd
 
-      - name: Fetch merge revision for staged integration
+      - name: Fetch PR head for staged integration
         id: staged-fetch
         if: >-
           always() && !cancelled() && matrix.quality == true &&
           steps.dependencies.outcome == 'success'
         run: >-
           git fetch --no-tags --depth=1 --filter=blob:none
-          "https://github.com/${{ github.repository }}.git"
-          "${{ github.sha }}"
+          "https://github.com/${{
+          needs.detect-changes.outputs.checkout-repository }}.git"
+          "${{ needs.detect-changes.outputs.head-sha }}"
 
       - name: Compute staged validator code hash
         id: staged-toolshash
@@ -541,15 +543,15 @@ jobs:
           steps.staged-fetch.outcome == 'success'
         run: |
           worktree="${{ runner.temp }}/md-staged-validator-test"
-          git worktree add --detach --no-checkout \
-            "$worktree" "${{ github.sha }}"
+          head_sha="${{ needs.detect-changes.outputs.head-sha }}"
+          git worktree add --detach --no-checkout "$worktree" "$head_sha"
           # Anchored patterns: a bare `interface` would also match the 1.8 GB
           # gfx/interface art tree, so every entry is root-anchored (see
           # tools/validation/staged_sparse_profile.txt).
           git -C "$worktree" sparse-checkout init --no-cone
           git -C "$worktree" sparse-checkout set --stdin \
             < tools/validation/staged_sparse_profile.txt
-          git -C "$worktree" checkout "${{ github.sha }}"
+          git -C "$worktree" checkout "$head_sha"
           test -d "$worktree/gfx/flags" || \
             { echo "::error::sparse worktree missing gfx/flags"; exit 1; }
           test ! -e "$worktree/gfx/interface" || \
@@ -665,7 +667,17 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: prepared-workspace
-          path: .
+          path: ${{ runner.temp }}
+
+      - name: Extract prepared workspace
+        run: |
+          archive="$RUNNER_TEMP/prepared-workspace.tar.zst"
+          # Only regular files and directories; a link could point outside.
+          if tar --zstd -tvf "$archive" | grep -q '^[^-d]'; then
+            echo "::error::Prepared workspace holds a link or special file"
+            exit 1
+          fi
+          tar --zstd -xf "$archive"
 
       - name: Set up Python
         id: setup-python
@@ -803,6 +815,12 @@ jobs:
           always() && !cancelled() && matrix.batch == 'core' &&
           steps.setup-python.outcome == 'success'
         run: python3 tools/linting/validate_localization_encoding.py
+
+      - name: Check localisation YAML syntax
+        if: >-
+          always() && !cancelled() && matrix.batch == 'core' &&
+          steps.setup-python.outcome == 'success'
+        run: python3 tools/linting/fix_loc_yaml.py
 
       - name: Check .mod file encoding
         if: >-
