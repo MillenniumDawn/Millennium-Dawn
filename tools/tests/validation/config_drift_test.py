@@ -1,6 +1,7 @@
 """Drift guards for validator declarations and the validation workflows."""
 
 import re
+import sys
 
 import dev_setup
 import pytest
@@ -9,6 +10,7 @@ from change_groups import GROUP_PATTERNS, classify
 from coverage import Coverage
 from precommit_validate import _REGISTRY
 from shared.paths import REPO_ROOT, VALIDATION_DIR
+from shared.suite import run_bash_step, workflow_step, write_under_str
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
@@ -152,8 +154,6 @@ def test_test_suite_replaces_old_workflows():
     assert "pull_request" in _workflow_trigger(CI_WORKFLOW)
     assert "pull_request_target" not in _workflow_trigger(CI_WORKFLOW)
     leftovers = [CI_WORKFLOW.parent / name for name in OLD_WORKFLOWS]
-    if any(path.exists() for path in leftovers):
-        pytest.skip("old workflow deletion is pending parent cleanup")
     assert not [path for path in leftovers if path.exists()]
 
 
@@ -354,7 +354,7 @@ def test_dispatch_forces_all_content_groups():
     assert "< changed-files.txt" in script
 
 
-def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
+def test_prepare_workspace_materializes_pr_code_on_every_run():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     prepare = workflow["jobs"]["prepare-workspace"]
     checkout = next(
@@ -372,17 +372,11 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
     assert not any(
         "validate_file_paths.py" in (step.get("run") or "") for step in prepare["steps"]
     )
-    cache = next(
-        step
-        for step in prepare["steps"]
-        if "actions/cache/restore@" in step.get("uses", "")
-        and step.get("with", {}).get("path")
-        and "sparse" in step.get("id", "")
+    # An exact-head workspace cache never hit: each head has a new key.
+    assert "md-sparse" not in CI_WORKFLOW.read_text(encoding="utf-8")
+    assert not any(
+        "actions/cache/save@" in step.get("uses", "") for step in prepare["steps"]
     )
-    assert "md-sparse-v3-${{ runner.os }}" in cache["with"]["key"]
-    assert "needs.detect-changes.outputs.head-sha" in cache["with"]["key"]
-    assert "restore-keys" not in cache["with"]
-    assert cache["with"]["path"] == "${{ env.WORKSPACE_PATHS }}"
     assert checkout["with"]["fetch-depth"] == 1
     assert checkout["with"]["sparse-checkout"] == (
         "/tools/validation/ci_workspace_profile.txt"
@@ -392,10 +386,9 @@ def test_prepare_workspace_is_pr_code_and_cache_scoped_to_head():
         for step in prepare["steps"]
         if step.get("name", "").startswith("Materialize")
     )
-    assert materialize["if"] == "steps.sparse-cache.outputs.cache-hit != 'true'"
+    assert "if" not in materialize
     assert "git sparse-checkout set --no-cone --stdin" in materialize["run"]
     assert "ci_workspace_profile.txt" in materialize["run"]
-    assert prepare["steps"].index(cache) < prepare["steps"].index(materialize)
     valcache = next(
         step
         for step in prepare["steps"]
@@ -475,6 +468,73 @@ def test_suite_gate_requires_every_validation_job():
     for job in gate["needs"]:
         assert f"needs.{job}.result" in failure_step["if"]
     assert failure_step["run"] == "exit 1"
+
+
+def test_gate_steps_cannot_be_switched_off():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    # The report job's downloads tolerate missing artifacts on purpose.
+    gated = set(workflow["jobs"]["gate"]["needs"]) - {"report"} | {"gate"}
+    for name in sorted(gated):
+        job = workflow["jobs"][name]
+        assert "continue-on-error" not in job, name
+        for step in job.get("steps", []):
+            label = f"{name}: {step.get('name') or step.get('id')}"
+            assert "continue-on-error" not in step, label
+            condition = str(step.get("if", "")).replace("${{", "").replace("}}", "")
+            assert condition.strip().lower() != "false", label
+
+
+CONTRACT_FILES = (
+    "tools/validation/ci_workspace_profile.txt",
+    "tools/validation/staged_sparse_profile.txt",
+    "validation_config.json",
+    "pyproject.toml",
+)
+
+
+def _contract_guard():
+    return workflow_step("detect-changes", "Check CI tooling contract")["run"]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.parametrize(
+    "dropped",
+    [None, *CONTRACT_FILES[:3], "pytest-xdist", "pytest-cov"],
+)
+def test_detect_changes_stops_a_head_without_the_ci_contract(tmp_path, dropped):
+    for relative in CONTRACT_FILES:
+        if relative != dropped:
+            body = (REPO_ROOT / relative).read_text(encoding="utf-8")
+            if relative == "pyproject.toml" and dropped:
+                body = "".join(
+                    line
+                    for line in body.splitlines(keepends=True)
+                    if f'"{dropped}' not in line
+                )
+            write_under_str(tmp_path, relative, body)
+
+    result = run_bash_step(_contract_guard(), tmp_path)
+
+    if dropped is None:
+        assert result.returncode == 0, result.stdout
+    else:
+        assert result.returncode == 1
+        assert "predates the CI tooling contract" in result.stdout
+        assert dropped in result.stdout
+
+
+def test_contract_guard_covers_what_the_workflow_reads_from_the_head():
+    text = CI_WORKFLOW.read_text(encoding="utf-8")
+    guard = _contract_guard()
+    checkout = workflow_step("detect-changes", "Checkout PR head")
+    sparse = {path.lstrip("/") for path in checkout["with"]["sparse-checkout"].split()}
+    profiles = set(re.findall(r"tools/validation/\w+_profile\.txt", text))
+    assert profiles
+    for path in sorted(profiles) + ["validation_config.json", "pyproject.toml"]:
+        assert path in sparse, path
+        assert path in guard, path
+    assert "-n auto" in text and "pytest-xdist" in guard
+    assert "--cov" in text and "pytest-cov" in guard
 
 
 def test_report_restores_baseline_for_full_and_dispatch_runs():
