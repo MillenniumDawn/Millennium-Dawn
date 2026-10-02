@@ -1,7 +1,9 @@
 """Regression fixtures for the localisation errors fixed by hand in #5094 and #5091.
 
 Each pre-fix string must be reported by a validator check and its corrected
-counterpart must pass (issues #5097 and #5101). The strings are copied verbatim
+counterpart must pass (issues #5097 and #5101). USA_econ_event.22.d is the
+exception: #5094 dropped the bare § that the engine read as a color code, and
+the citation now uses the escaped `§§` (checked in game, 1.19.3). The strings are copied verbatim
 from the commits before and after each fix; georg.1000.d is cut to the
 sentences around its quote.
 """
@@ -10,7 +12,7 @@ from pathlib import Path
 
 import pytest
 from fix_loc_yaml import check_line
-from validate_localisation import _scan_prose_text
+from validate_localisation import _scan_prose_text, process_yml_for_syntax
 from validate_scripted_localisation import (
     _documented_getters,
     _getter_spelling_message,
@@ -169,3 +171,18 @@ def test_5094_bare_quote_fails_the_yaml_lint(key):
 def test_5091_malformed_opening_quote_is_reported():
     assert len(_quote_findings(BLR_BEFORE_5091)) == 1
     assert _quote_findings(BLR_AFTER_5091) == []
+
+
+def _syntax_findings(tmp_path, line):
+    path = tmp_path / f"syntax{len(list(tmp_path.iterdir()))}_l_english.yml"
+    path.write_text(f"l_english:\n {line}\n", encoding="utf-8-sig")
+    return process_yml_for_syntax((str(path), ["Y", "R", "G"], frozenset()))
+
+
+def test_5094_bare_section_sign_is_reported(tmp_path):
+    before = BEFORE_5094["USA_econ_event.22.d"]
+    escaped = before.replace("(15 U.S.C. § 1)", "(15 U.S.C. §§ 1)")
+    assert escaped != before
+    assert len(_syntax_findings(tmp_path, before)) == 1
+    assert _syntax_findings(tmp_path, AFTER_5094["USA_econ_event.22.d"]) == []
+    assert _syntax_findings(tmp_path, escaped) == []
