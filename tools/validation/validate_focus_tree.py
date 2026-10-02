@@ -792,6 +792,14 @@ def _block_at(
     return _extract_block(text, start)
 
 
+def _prereq_groups(body: str) -> List[List[str]]:
+    groups = (
+        _PREREQ_FOCUS_RE.findall(block.group(1))
+        for block in _PREREQ_BLOCK_RE.finditer(body)
+    )
+    return [group for group in groups if group]
+
+
 def _parse_focus_ids_from_block(
     text: str, start: int, end: int, pairs: Dict[int, int]
 ) -> List[Tuple[str, int, List[List[str]]]]:
@@ -824,13 +832,7 @@ def _parse_focus_ids_from_block(
         line_offset += text.count("\n", counted, m.start())
         counted = m.start()
 
-        prereq_groups: List[List[str]] = []
-        for pb in _PREREQ_BLOCK_RE.finditer(body):
-            group = _PREREQ_FOCUS_RE.findall(pb.group(1))
-            if group:
-                prereq_groups.append(group)
-
-        results.append((focus_id, line_offset, prereq_groups))
+        results.append((focus_id, line_offset, _prereq_groups(body)))
         search_start = body_end
     return results
 
@@ -1319,11 +1321,7 @@ def _parse_focus_text(source: _FocusFile) -> Dict:
             sfid = id_match.group(1)
             abs_line += text.count("\n", counted, m.start())
             counted = m.start()
-            prereq_groups: List[List[str]] = []
-            for pb in _PREREQ_BLOCK_RE.finditer(body):
-                group = _PREREQ_FOCUS_RE.findall(pb.group(1))
-                if group:
-                    prereq_groups.append(group)
+            prereq_groups = _prereq_groups(body)
             # Store shared focus definition for the global duplicate check and
             # prerequisite resolution.  We also expose (line, filepath) so the
             # caller can report accurate locations.

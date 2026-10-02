@@ -1,14 +1,11 @@
 """Tests for missing search_filters reporting in validate_focus_tree."""
 
+from shared.suite import write_text
 from validate_focus_tree import Validator, _FocusFile
 
 
 def _write_focus_file(tmp_path, content):
-    nf_dir = tmp_path / "common" / "national_focus"
-    nf_dir.mkdir(parents=True, exist_ok=True)
-    fpath = nf_dir / "test.txt"
-    fpath.write_text(content, encoding="utf-8")
-    return fpath
+    return write_text(tmp_path / "common" / "national_focus" / "test.txt", content)
 
 
 def _run_validator(tmp_path, content):
