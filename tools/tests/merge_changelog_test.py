@@ -167,7 +167,7 @@ def test_fix_cli_sorts_without_losing_duplicates_or_touching_history(
     tmp_path, monkeypatch, capsys
 ):
     path = tmp_path / "Changelog.txt"
-    old = "\nv2.0.0\nContent:\n - [USA] Old\n - Global old\n"
+    old = "\nv2.0.1\nContent:\n - [USA] Old\n - Global old\n"
     path.write_bytes(
         changelog(" - [USA] U\n", " - Global\n", " - Global\n").encode() + old.encode()
     )

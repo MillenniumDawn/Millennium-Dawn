@@ -68,8 +68,8 @@ FRONTEND_LOCALES = (
     "spanish",
 )
 
-# An existing version token inside those values, e.g. v2.0.0, v1.12.3b, or
-# v2.0.0-beta.1. Boundaries prevent a partial match from leaving a suffix behind.
+# An existing version token inside those values, e.g. v2.0.1, v1.12.3b, or
+# v2.0.1-beta.1. Boundaries prevent a partial match from leaving a suffix behind.
 _VERSION_NUMBER = r"(?:0|[1-9][0-9]*)"
 _PRERELEASE_IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z][0-9A-Za-z-]*)"
 _VERSION_BODY = (

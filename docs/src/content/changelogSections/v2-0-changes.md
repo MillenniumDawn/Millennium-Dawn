@@ -4,9 +4,9 @@ page_id: changelog-v2-0-changes
 order: 14
 ---
 
-## v2.0.0 - "The Millennium Renaissance"
+## v2.0.1 - "The Millennium Renaissance"
 
-v2.0.0
+v2.0.1
 
 Content:
 
