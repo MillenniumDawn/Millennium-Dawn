@@ -3,6 +3,7 @@
 from pathlib import Path
 
 import validate_scripted_localisation as V
+from shared.suite import write_under
 
 
 def test_scripted_loc_keeps_and_reports_undefined_bracketed_invocation(tmp_path):
@@ -442,6 +443,42 @@ def test_gfx_icon_check_in_staged_mode_reads_only_staged_files(tmp_path):
     assert not any("GFX_other_missing" in m for m in messages)
 
 
+def _run_rows(tmp_path):
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    return [
+        (issue.category, issue.message, issue.file, issue.line)
+        for issue in validator._issues
+    ]
+
+
+def test_one_worker_run_scans_in_process(tmp_path, monkeypatch):
+    _write_sloc(
+        tmp_path,
+        "defs.txt",
+        "defined_text = {\n\tname = UsedLoc\n}\n"
+        "defined_text = {\n\tname = OrphanLoc\n}\n",
+    )
+    gui = tmp_path / "interface" / "use.gui"
+    gui.parent.mkdir()
+    gui.write_text('text = "[UsedLoc]"\ntext = "[GhostLoc]"\n', encoding="utf-8")
+
+    def no_pool(*_args, **_kwargs):
+        raise AssertionError("one worker must not start a pool")
+
+    monkeypatch.setattr(V, "Pool", no_pool)
+
+    assert _run_rows(tmp_path) == [
+        ("missing-scripted-loc", "ghostloc", "interface/use.gui", 2),
+        (
+            "unused-scripted-loc",
+            "orphanloc",
+            "common/scripted_localisation/defs.txt",
+            5,
+        ),
+    ]
+
+
 class _InlinePool:
     """Stand-in for the validator's shared worker pool: maps in-process."""
 
@@ -531,6 +568,18 @@ def test_usage_scan_ignores_non_english_localisation(tmp_path):
 
     assert "englishonly" in used
     assert "frenchonly" not in used
+
+
+def test_missing_references_in_one_file_are_reported_in_name_order(tmp_path):
+    names = [f"gone_{letter}" for letter in "jihgfedcba"]
+    gui = tmp_path / "interface" / "use.gui"
+    gui.parent.mkdir()
+    gui.write_text("".join(f'text = "[{name}]"\n' for name in names), encoding="utf-8")
+
+    assert _run_rows(tmp_path) == [
+        ("missing-scripted-loc", name, "interface/use.gui", names.index(name) + 1)
+        for name in sorted(names)
+    ]
 
 
 DOCUMENTED = frozenset({"GetName", "GetNameWithFlag", "GetAdjective", "Owner"})
@@ -631,3 +680,98 @@ def test_getter_spelling_check_skips_without_the_reference(tmp_path):
     )
     validator.validate_getter_spelling([])
     assert validator._issues == []
+
+
+def _run_getter_check(tmp_path, monkeypatch, workers=1):
+    """Full run whose getter check must take every call from the usage scan."""
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=workers)
+    pool_map = validator._pool_map
+
+    def no_second_read(func, args_list, *args, **kwargs):
+        assert not (func is V.process_file_for_getter_refs and args_list)
+        return pool_map(func, args_list, *args, **kwargs)
+
+    monkeypatch.setattr(validator, "_pool_map", no_second_read)
+    validator.run_all_validations()
+    return [
+        (issue.message, issue.file.replace("\\", "/"), issue.line)
+        for issue in validator._issues
+        if issue.category == "loc-getter-spelling"
+    ]
+
+
+def test_getter_check_reads_first_last_and_crlf_lines_from_the_usage_scan(
+    tmp_path, monkeypatch
+):
+    write_under(tmp_path, V._LOC_OBJECTS_DOC, "**GetName**\n\n**GetFlag**\n")
+    write_under(
+        tmp_path,
+        "interface/edges.gui",
+        '[ROOT.Getname]\ntext = "x"\ntext = "[GetFlags]"',
+    )
+    write_under(
+        tmp_path,
+        "localisation/english/crlf_l_english.yml",
+        'l_english:\r\n a:0 "[ROOT.GetName]"\r\n'
+        ' b:0 "[FROM.GETFLAG] [Root.GetName]"\r\n c:0 "[THIS.Getflag]"',
+    )
+
+    assert _run_getter_check(tmp_path, monkeypatch) == [
+        (
+            "'GETFLAG' is not the documented getter spelling 'GetFlag'",
+            "localisation/english/crlf_l_english.yml",
+            3,
+        ),
+        (
+            "'Getflag' is not the documented getter spelling 'GetFlag'",
+            "localisation/english/crlf_l_english.yml",
+            4,
+        ),
+        (
+            "'Getname' is not the documented getter spelling 'GetName'",
+            "interface/edges.gui",
+            1,
+        ),
+        (
+            "'GetFlags' is neither a defined scripted localisation "
+            "nor a documented engine getter",
+            "interface/edges.gui",
+            3,
+        ),
+    ]
+
+
+def test_pooled_getter_check_matches_the_in_process_run(
+    tmp_path, monkeypatch, pool_sizes
+):
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    write_under(tmp_path, V._LOC_OBJECTS_DOC, "**GetName**\n")
+    for index in range(12):
+        write_under(
+            tmp_path,
+            f"interface/g{index:02}.gui",
+            "\n" * index + f'text = "[ROOT.Getname{index}] [ROOT.GETNAME]"\n',
+        )
+
+    pooled = _run_getter_check(tmp_path, monkeypatch, workers=2)
+
+    assert pool_sizes and set(pool_sizes) == {2}
+    assert pooled == _run_getter_check(tmp_path, monkeypatch)
+    # Files come back in directory order, so compare the rows as a set.
+    assert sorted(pooled) == sorted(
+        row
+        for index in range(12)
+        for row in (
+            (
+                f"'Getname{index}' is neither a defined scripted localisation "
+                "nor a documented engine getter",
+                f"interface/g{index:02}.gui",
+                index + 1,
+            ),
+            (
+                "'GETNAME' is not the documented getter spelling 'GetName'",
+                f"interface/g{index:02}.gui",
+                index + 1,
+            ),
+        )
+    )

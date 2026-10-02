@@ -5,6 +5,7 @@ scanned, which paths are exempt, and turning `(path, line, message)` triples
 into mod-relative findings.
 """
 
+import importlib
 import runpy
 import sys
 
@@ -31,6 +32,48 @@ def test_mistake_is_reported_with_relative_path_and_line(tmp_path):
     ]
     assert "is_in_faction_with = GER" in validator._issues[0].message
     assert validator.errors_found == 1
+
+
+def _findings(validator):
+    return [(i.file, i.line, i.message) for i in validator._issues]
+
+
+def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch):
+    # Ten files clear the pool threshold; the nation finding only appears when
+    # _init_worker hands each worker the flag set scanned from the whole tree.
+    for index in range(10):
+        _write(tmp_path, f"events/TST_{index:02}.txt", FACTION_MISTAKE)
+    _write(
+        tmp_path,
+        "common/scripted_effects/nation.txt",
+        "TST_effect = {\n\tif = { limit = { is_arab_nation = yes } }\n}\n",
+    )
+    _write(
+        tmp_path,
+        "common/scripted_effects/flags.txt",
+        "TST_flags = {\n\tset_country_flag = arab_nation_flag\n}\n",
+    )
+    checker = importlib.import_module(common_mistakes.check_file.__module__)
+    # Forked workers inherit these, so only _init_worker can fill them in.
+    for name in (
+        "_SCRIPT_COMPLETED_FOCUSES",
+        "_SCRIPT_COMPLETED_DECISIONS",
+        "_REAL_NATION_FLAGS",
+    ):
+        monkeypatch.setattr(checker, name, set())
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+
+    pooled = common_mistakes.Validator(str(tmp_path), use_colors=False, workers=2)
+    assert pooled.workers == 2
+    pooled.run_validations()
+    in_process = _validator(tmp_path)
+    in_process.run_validations()
+
+    assert _findings(pooled) == _findings(in_process)
+    assert sorted((file, line) for file, line, _message in _findings(pooled)) == [
+        ("common/scripted_effects/nation.txt", 2),
+        *((f"events/TST_{index:02}.txt", 2) for index in range(10)),
+    ]
 
 
 def test_events_and_history_trees_are_scanned(tmp_path):

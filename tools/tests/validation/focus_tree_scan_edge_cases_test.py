@@ -32,26 +32,23 @@ def test_read_mod_text_returns_empty_instead_of_raising(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "worker",
-    [
-        V._extract_focus_icons,
-        V._extract_pp_malus,
-        V._extract_focus_search_filters,
-    ],
+    "scan",
+    ["icons", "pp_malus", "missing_search_filters", "structural", "relative_positions"],
 )
-def test_worker_returns_empty_for_an_unreadable_file(tmp_path, worker):
-    assert worker((str(tmp_path / MISSING), str(tmp_path))) == []
+def test_worker_returns_empty_for_an_unreadable_file(tmp_path, scan):
+    source = V._FocusFile(str(tmp_path / MISSING), str(tmp_path))
+    assert getattr(source, scan)() == []
 
 
 def test_payload_workers_return_empty_for_an_unreadable_file(tmp_path):
-    path = str(tmp_path / MISSING)
-    assert V._extract_ai_guard_data((path, str(tmp_path), {}, frozenset())) == []
-    assert V._extract_cross_country_fires((path, str(tmp_path), frozenset())) == []
+    source = V._FocusFile(str(tmp_path / MISSING), str(tmp_path))
+    assert source.ai_guards({}, frozenset()) == []
+    assert source.cross_country_fires(frozenset()) == []
 
 
 def test_parse_focus_file_returns_an_empty_structure_for_an_unreadable_file(tmp_path):
     path = str(tmp_path / MISSING)
-    assert V.parse_focus_file((path, str(tmp_path))) == {
+    assert V._FocusFile(path, str(tmp_path)).parse() == {
         "filepath": path,
         "trees": [],
         "shared_defs": {},
@@ -113,7 +110,7 @@ focus_tree = {
 
 def test_empty_blocks_and_id_less_focuses_are_skipped_by_the_parser(tmp_path):
     path = _write(tmp_path, "common/national_focus/test.txt", EMPTY_BLOCKS)
-    parsed = V.parse_focus_file((path, str(tmp_path)))
+    parsed = V._FocusFile(path, str(tmp_path)).parse()
 
     assert parsed["shared_defs"] == {
         "TAG_shared_s": {"line": 6, "filepath": path, "prereq_groups": []}
@@ -131,16 +128,16 @@ def test_empty_blocks_and_id_less_focuses_are_skipped_by_the_parser(tmp_path):
 
 def test_empty_blocks_are_skipped_by_the_per_focus_workers(tmp_path):
     path = _write(tmp_path, "common/national_focus/test.txt", EMPTY_BLOCKS)
-    args = (path, str(tmp_path))
+    source = V._FocusFile(path, str(tmp_path))
 
-    assert V._extract_focus_icons(args) == []
-    assert V._extract_pp_malus(args) == []
-    assert V._extract_focus_search_filters(args) == []
+    assert source.icons() == []
+    assert source.pp_malus() == []
+    assert source.missing_search_filters() == []
 
 
 def test_empty_reward_and_ai_will_do_blocks_yield_no_guard_facts(tmp_path):
     path = _write(tmp_path, "common/national_focus/test.txt", EMPTY_BLOCKS)
-    data = V._extract_ai_guard_data((path, str(tmp_path), {}, frozenset()))
+    data = V._FocusFile(path, str(tmp_path)).ai_guards({}, frozenset())
 
     assert [d["id"] for d in data] == [
         "TAG_shared_s",
@@ -171,7 +168,7 @@ CROSS_COUNTRY_EMPTY = """focus_tree = {
 def test_cross_country_worker_handles_an_empty_country_block(tmp_path):
     """With no owner tag declared, a literal tag scope is still foreign."""
     path = _write(tmp_path, "common/national_focus/test.txt", CROSS_COUNTRY_EMPTY)
-    data = V._extract_cross_country_fires((path, str(tmp_path), frozenset()))
+    data = V._FocusFile(path, str(tmp_path)).cross_country_fires(frozenset())
     assert [d["id"] for d in data] == ["TAG_focus_a"]
 
 
@@ -303,7 +300,7 @@ def test_negated_staff_guard_under_or_is_not_a_veto(tmp_path):
     """An OR branch can be satisfied by something else, so the factor = 0 does
     not fire specifically on the staffing check."""
     path = _write(tmp_path, "common/national_focus/test.txt", STAFF_GUARD_UNDER_OR)
-    data = V._extract_ai_guard_data((path, str(tmp_path), {}, frozenset()))
+    data = V._FocusFile(path, str(tmp_path)).ai_guards({}, frozenset())
 
     assert data[0]["buildings"] == {"arms_factory"}
     assert data[0]["guards"] == set()
