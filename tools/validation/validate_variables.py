@@ -2461,18 +2461,6 @@ class Validator(BaseValidator):
         clamp_patterns = ["common/**/*.txt", "events/**/*.txt"]
         tooltip_patterns = ["common/**/*.txt", "events/**/*.txt"]
 
-        ai_categories = self._get_ai_only_categories()
-        flagged_names = self._collect_scripted_trigger_flag_names()
-        requirements = self._collect_scripted_trigger_requirements()
-        effect_files = self._collect_files(
-            ["common/scripted_effects/**/*.txt"], ignore_staged=True
-        )
-        consumer_map = build_money_consumer_map(effect_files, self.mod_path)
-        backing = self._collect_dynamic_modifier_vars()
-        registered_tokens: frozenset = frozenset()
-        if os.path.isfile(os.path.join(self.mod_path, DYNAMIC_TOKEN_FILE)):
-            registered_tokens = frozenset(load_dynamic_token_names(self.mod_path))
-
         math_files = self._collect_files(math_patterns)
         orphan_files = self._collect_files(orphan_patterns)
         treasury_files = self._collect_files(treasury_patterns)
@@ -2515,10 +2503,30 @@ class Validator(BaseValidator):
             self._shared_scan_memo = empty
             return empty
 
+        # Each repo-wide harvest feeds only its own sections, so a staged run
+        # builds just the ones its staged files reach.
+        ai_categories: frozenset = frozenset()
+        flagged_names: frozenset = frozenset()
+        requirements: Dict[str, frozenset] = {}
+        if available_files:
+            ai_categories = self._get_ai_only_categories()
+            flagged_names = self._collect_scripted_trigger_flag_names()
+            requirements = self._collect_scripted_trigger_requirements()
+        consumer_map: Dict[str, frozenset] = {}
+        if orphan_files:
+            effect_files = self._collect_files(
+                ["common/scripted_effects/**/*.txt"], ignore_staged=True
+            )
+            consumer_map = build_money_consumer_map(effect_files, self.mod_path)
+        backing = self._collect_dynamic_modifier_vars()
+        registered_tokens: frozenset = frozenset()
+        if os.path.isfile(os.path.join(self.mod_path, DYNAMIC_TOKEN_FILE)):
+            registered_tokens = frozenset(load_dynamic_token_names(self.mod_path))
+
         repo_ranges: Dict[str, Tuple[float, float]] = {}
         repo_temp: Set[str] = set()
         repo_persist: Set[str] = set()
-        if self.staged_only:
+        if self.staged_only and clamp_files:
             clamp_repo = self._collect_files(clamp_patterns, ignore_staged=True)
             for file_ranges, temp_written, persist_written in self._pool_map(
                 collect_clamp_ranges,
@@ -2661,7 +2669,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking for unlocalised flags in requirement blocks...")
         shared_flags = self._get_shared_scan()["avail_flags"]
-        loc_keys = self._load_localisation_keys()
+        loc_keys = self._load_localisation_keys() if shared_flags else frozenset()
 
         seen: Set[Tuple[str, str]] = set()
         issues = []
@@ -2701,7 +2709,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking negated trigger tooltips in requirement blocks...")
         negated = self._get_shared_scan()["avail_negated"]
-        loc_keys = self._load_localisation_keys()
+        loc_keys = self._load_localisation_keys() if negated else frozenset()
 
         seen: Set[Tuple[str, str]] = set()
         issues = []
@@ -2855,7 +2863,7 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking variable effect tooltip keys...")
         shared_tooltips = self._get_shared_scan()["var_tooltips"]
-        loc_keys = self._load_localisation_keys()
+        loc_keys = self._load_localisation_keys() if shared_tooltips else frozenset()
 
         seen: Set[Tuple[str, str]] = set()
         issues: List[Tuple[str, str, int]] = []
@@ -2893,7 +2901,7 @@ class Validator(BaseValidator):
         if not backing and not shared_missing:
             self.log("✓ No untooltipped dynamic modifier writes found")
             return
-        loc_keys = self._load_localisation_keys()
+        loc_keys = self._load_localisation_keys() if shared_missing else frozenset()
 
         issues: List[Tuple[str, str, int]] = []
         for effect, name, keys, rel, line in shared_missing:
