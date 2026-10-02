@@ -6,6 +6,7 @@ under OR / random_list / count_triggers, and never for non-deterministic
 (random_*) or iterator scopes.
 """
 
+import os
 import runpy
 import sys
 
@@ -690,15 +691,13 @@ def test_two_bare_government_checks_in_one_clause_not_flagged():
 
 
 def test_quoted_brace_inside_a_clause_not_flagged():
-    text = "OR = {\n" '  AND = { has_government = democratic  log = "x = {" }\n' "}\n"
+    text = 'OR = {\n  AND = { has_government = democratic  log = "x = {" }\n}\n'
     assert _gov(text) == []
 
 
 def test_bare_not_without_a_scope_block_not_flagged():
     text = (
-        "OR = {\n"
-        "  AND = { has_government = democratic  NOT = { has_war = yes } }\n"
-        "}\n"
+        "OR = {\n  AND = { has_government = democratic  NOT = { has_war = yes } }\n}\n"
     )
     assert _gov(text) == []
 
@@ -1251,7 +1250,7 @@ def test_decision_conflicting_gates_not_flagged():
 
 
 def test_owner_scope_lines_account_for_leading_lines():
-    text = "# a comment line\n" "\n" + _strict_chi_tree(
+    text = "# a comment line\n\n" + _strict_chi_tree(
         "\tfocus = {\n"
         "\t\tid = CHI_test\n"
         "\t\tcompletion_reward = {\n"
@@ -1506,7 +1505,7 @@ def test_disk_cache_reuses_findings_until_the_content_changes(
 
     monkeypatch.setattr(vs, "_scan_composite", counting)
     cold = _run(tmp_path)
-    assert scanned == ["events/cached.txt"]
+    assert scanned == [os.path.normpath("events/cached.txt")]
 
     scanned.clear()
     assert _run(tmp_path) == cold == [("events/cached.txt", 2, _MERGE_USA)]
@@ -1515,4 +1514,4 @@ def test_disk_cache_reuses_findings_until_the_content_changes(
     write_path(tmp_path, "events/cached.txt", "\n" + merge)
     vs.FileOpener.invalidate(str(path))  # in-process reads are memoized per path
     assert _run(tmp_path) == [("events/cached.txt", 3, _MERGE_USA)]
-    assert scanned == ["events/cached.txt"]
+    assert scanned == [os.path.normpath("events/cached.txt")]

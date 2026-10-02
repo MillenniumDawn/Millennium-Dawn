@@ -6,6 +6,8 @@ staged file that does need it, proving the check still fires with the same
 file, line and message.
 """
 
+import os
+
 import pytest
 import validate_events as E
 import validate_scripted_localisation as SL
@@ -42,8 +44,7 @@ def _no_shared_staged_list(monkeypatch):
 # --- scripted localisation -------------------------------------------------
 
 _SLOC_DEFS = (
-    "defined_text = {\n\tname = UsedLoc\n}\n"
-    "defined_text = {\n\tname = OrphanLoc\n}\n"
+    "defined_text = {\n\tname = UsedLoc\n}\ndefined_text = {\n\tname = OrphanLoc\n}\n"
 )
 
 
@@ -250,6 +251,7 @@ def test_variables_staged_localisation_builds_no_script_index(
         "_get_ai_only_categories",
         "_collect_scripted_trigger_flag_names",
         "_collect_scripted_trigger_requirements",
+        "_collect_dynamic_modifier_vars",
         "_load_localisation_keys",
     )
 
@@ -463,7 +465,8 @@ _TYPE_AND_UNDEFINED = [
     ),
     (
         "undefined-event-fire",
-        "ghost.9 - fired from common/decisions/dec.txt:10, no event defines it",
+        f"ghost.9 - fired from {os.path.normpath('common/decisions/dec.txt')}:10, "
+        "no event defines it",
         "",
         0,
     ),

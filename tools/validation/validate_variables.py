@@ -2459,15 +2459,12 @@ class Validator(BaseValidator):
             "events/**/*.txt",
         ]
         clamp_patterns = ["common/**/*.txt", "events/**/*.txt"]
-        tooltip_patterns = ["common/**/*.txt", "events/**/*.txt"]
 
         math_files = self._collect_files(math_patterns)
         orphan_files = self._collect_files(orphan_patterns)
         treasury_files = self._collect_files(treasury_patterns)
         clamp_files = self._collect_files(clamp_patterns)
         available_files = self._collect_files(_PLAYER_FACING_GLOBS)
-        tooltip_files = self._collect_files(tooltip_patterns)
-        flag_files = self._collect_files(math_patterns)
         display_text_files = self._collect_files(
             ["localisation/english/**/*.yml", "interface/**/*.gui"]
         )
@@ -2479,8 +2476,6 @@ class Validator(BaseValidator):
                 + treasury_files
                 + clamp_files
                 + available_files
-                + tooltip_files
-                + flag_files
                 + display_text_files
             )
         )
@@ -2518,7 +2513,7 @@ class Validator(BaseValidator):
                 ["common/scripted_effects/**/*.txt"], ignore_staged=True
             )
             consumer_map = build_money_consumer_map(effect_files, self.mod_path)
-        backing = self._collect_dynamic_modifier_vars()
+        backing = self._collect_dynamic_modifier_vars() if clamp_files else {}
         registered_tokens: frozenset = frozenset()
         if os.path.isfile(os.path.join(self.mod_path, DYNAMIC_TOKEN_FILE)):
             registered_tokens = frozenset(load_dynamic_token_names(self.mod_path))
@@ -2547,8 +2542,6 @@ class Validator(BaseValidator):
         treasury_set = set(treasury_files)
         clamp_set = set(clamp_files)
         available_set = set(available_files)
-        tooltip_set = set(tooltip_files)
-        flag_set = set(flag_files)
         display_text_set = set(display_text_files)
         args_list = []
         for f in union:
@@ -2556,19 +2549,15 @@ class Validator(BaseValidator):
             if f in display_text_set:
                 mask |= _F_TOKEN
             if f in math_set:
-                mask |= _F_MATH | _F_TOKEN
+                mask |= _F_MATH | _F_TOKEN | _F_FLAG_SYNTAX
             if f in orphan_set:
                 mask |= _F_ORPHAN
             if f in treasury_set:
                 mask |= _F_TREASURY
             if f in clamp_set:
-                mask |= _F_CLAMP
+                mask |= _F_CLAMP | _F_VAR_TOOLTIP | _F_MISSING
             if f in available_set:
                 mask |= _F_AVAILABLE | _F_SCRIPTED
-            if f in tooltip_set:
-                mask |= _F_VAR_TOOLTIP | _F_MISSING
-            if f in flag_set:
-                mask |= _F_FLAG_SYNTAX
             args_list.append(
                 (
                     f,
@@ -2897,10 +2886,6 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking dynamic modifier writes for tooltips...")
         shared_missing = self._get_shared_scan()["missing"]
-        backing = self._collect_dynamic_modifier_vars()
-        if not backing and not shared_missing:
-            self.log("✓ No untooltipped dynamic modifier writes found")
-            return
         loc_keys = self._load_localisation_keys() if shared_missing else frozenset()
 
         issues: List[Tuple[str, str, int]] = []
