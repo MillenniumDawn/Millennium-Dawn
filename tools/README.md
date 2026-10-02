@@ -13,7 +13,7 @@ in `pyproject.toml` under `[dependency-groups]`. Install them from the repo root
 
 ```bash
 pip install --group runtime   # requests, pillow (for the scripts that need them)
-pip install --group dev       # pytest, coverage, pyyaml, Ruff, Black, Pylint, mypy
+pip install --group dev       # pytest (xdist, cov), coverage, pyyaml, Ruff, Black, Pylint, mypy
 ```
 
 `python tools/dev_setup.py` installs these for you as part of the dev setup.
@@ -21,13 +21,16 @@ pip install --group dev       # pytest, coverage, pyyaml, Ruff, Black, Pylint, m
 Python quality checks run on `tools/` in pre-commit and CI:
 
 ```bash
-python -m coverage run --branch -m pytest
+python -m pytest -n auto --cov --cov-branch --cov-report= --cov-fail-under=0
 python -m coverage report
 ruff check tools
 black --check tools
-pylint tools --reports=no --score=no
+pylint tools -j 0 --reports=no --score=no
 mypy
 ```
+
+`-n auto` and `-j 0` use every core. `coverage report` owns the coverage
+threshold, so the pytest run only collects.
 
 Black is the canonical formatter. Mypy checks the typed report and validator-core
 surfaces declared in `pyproject.toml`; the remaining scripts are migrated in
@@ -71,6 +74,8 @@ platform-native writes. `.gitattributes` and `.editorconfig` keep the repository
 ### Regression Tests
 
 Tests belong under `tools/tests/` and end in `_test.py`; `test_*.py` is not collected.
+The suite runs in parallel workers, so a test writes only under `tmp_path`, never
+into the real repository tree. Another worker may be scanning that tree.
 Add regression coverage with changed validator, fixer, or report behavior. Run
 `python -m pytest` before merging any `tools/` change, and fix failures in the same
 change. Never delete, skip, or weaken a test to reach green. A correct behavior change

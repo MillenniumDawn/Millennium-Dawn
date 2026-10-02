@@ -198,7 +198,7 @@ def test_tools_linux_runs_quality_suite():
     assert {entry["os"] for entry in matrix} == {"Linux", "macOS", "Windows"}
     steps = workflow["jobs"]["tools-tests"]["steps"]
     commands = "\n".join(step.get("run", "") for step in steps)
-    assert "coverage run" in commands
+    assert "-n auto --cov --cov-branch" in commands
     assert "coverage report" in commands
     for command in ("ruff check tools", "black --check tools", "pylint tools", "mypy"):
         assert command in commands
@@ -265,6 +265,8 @@ def test_tools_checkout_exposes_consumed_configuration():
         "docs/src/content/resources/developer-setup.md",
     }
     assert required <= sparse
+    # Whole trees would add ~590 MB of translations and art no test reads.
+    assert not {"localisation", "resources"} & sparse
     assert checkout["with"]["fetch-depth"] == 1
     assert checkout["with"]["filter"] == "blob:none"
 
@@ -678,7 +680,15 @@ def test_tools_quality_checks_are_wired_in_precommit_and_ci():
     assert "pylint tools" in text
     assert "mypy" in text
     pyproject = (REPO_ROOT / "pyproject.toml").read_text(encoding="utf-8")
-    for package in ("black==", "coverage==", "mypy==", "pylint==", "ruff=="):
+    for package in (
+        "black==",
+        "coverage==",
+        "mypy==",
+        "pylint==",
+        "pytest-cov==",
+        "pytest-xdist==",
+        "ruff==",
+    ):
         assert package in pyproject
     assert Coverage().config.include_namespace_packages is True
 
@@ -696,7 +706,7 @@ def test_pytest_collection_gate_cannot_self_exclude():
     assert "python_files=*_test.py" in prepush_suite
     text = CI_WORKFLOW.read_text(encoding="utf-8")
     assert "tools/tests/collection_layout_test.py" in text
-    assert "coverage run" in text
+    assert "--cov --cov-branch" in text
     assert "python_files=*_test.py" in text
 
 

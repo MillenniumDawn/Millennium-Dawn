@@ -405,8 +405,9 @@ jobs:
             common
             events
             history
-            localisation
-            resources
+            localisation/english
+            localisation/*/MD_frontend_l_*.yml
+            resources/documentation
             package.json
             bun.lock
             .jscpd.json
@@ -440,9 +441,11 @@ jobs:
         if: >-
           always() && !cancelled() && matrix.quality == true &&
           steps.dependencies.outcome == 'success'
+        # coverage report below owns the threshold, so pytest-cov only collects.
         run: >-
-          python -m coverage run --branch -m pytest tools/tests
-          -o addopts= -o 'python_files=*_test.py' -q --durations=20
+          python -m pytest tools/tests -o addopts=
+          -o 'python_files=*_test.py' -q --durations=20 -n auto
+          --cov --cov-branch --cov-report= --cov-fail-under=0
 
       - name: Report coverage
         id: coverage-report
@@ -458,7 +461,7 @@ jobs:
           steps.dependencies.outcome == 'success'
         run: >-
           python -m pytest tools/tests -o addopts=
-          -o 'python_files=*_test.py' -q --durations=20
+          -o 'python_files=*_test.py' -q --durations=20 -n auto
 
       - name: Run ruff
         id: ruff
@@ -479,7 +482,7 @@ jobs:
         if: >-
           always() && !cancelled() && matrix.quality == true &&
           steps.dependencies.outcome == 'success'
-        run: pylint tools --output-format=github --reports=no --score=no
+        run: pylint tools -j 0 --output-format=github --reports=no --score=no
 
       - name: Run mypy
         id: mypy
