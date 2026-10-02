@@ -188,9 +188,10 @@ def test_cli_dry_run_reports_completion(tmp_path):
     focus = root / "common/national_focus/cli.txt"
     _write(focus, "focus_tree = { id = TST_cli }\n")
 
-    result = _run(root, "--dry-run", "--workers", "1")
+    result = _run(root, "--dry-run", "--workers", "1", "--files", str(focus))
     assert result.returncode == 0
     assert "Fix Log IDs" in result.stdout
+    assert "Processed 1 files" in result.stdout
 
 
 def test_apply_returns_zero_for_unknown_path(tmp_path):
