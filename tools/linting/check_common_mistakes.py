@@ -265,6 +265,7 @@ _RE_EVENT_SEND = re.compile(
     re.DOTALL,
 )
 _RE_EVENT_DEFINITION_OPEN = re.compile(r"\b(?:country_event|news_event)\s*=\s*\{")
+_RE_BRACE = re.compile(r"[{}]")
 _RE_EVENT_ID = re.compile(r"\bid\s*=\s*([\w.]+)")
 # Markers that only appear in an event DEFINITION, never in an effect send:
 # sends carry id/days/hours, definitions carry title/triggers/options.
@@ -589,6 +590,8 @@ def _code_for_depth(line):
     placeholder); left unblanked it would drift the depth count for whatever
     manual brace-tracking scans past it.
     """
+    if '"' not in line:
+        return strip_inline_comment(line)
     return _RE_QUOTED_STRING.sub('""', strip_inline_comment(line))
 
 
@@ -803,17 +806,15 @@ def _iter_event_definitions(content):
         if open_match.start() < block_end:
             continue
         depth = 0
-        idx = open_match.end() - 1
-        while idx < len(blank):
-            if blank[idx] == "{":
+        for brace in _RE_BRACE.finditer(blank, open_match.end() - 1):
+            if brace.group() == "{":
                 depth += 1
-            elif blank[idx] == "}":
+            else:
                 depth -= 1
                 if depth == 0:
-                    block_end = idx + 1
+                    block_end = brace.end()
                     yield blank[open_match.start() : block_end]
                     break
-            idx += 1
 
 
 def _build_event_index(root_dir):
@@ -858,23 +859,23 @@ def _get_event_block(event_id, event_blocks=None, event_index=None):
             _EVENT_INDEX_BUILT = True
         event_index = _EVENT_INDEX
     filepath = event_index.get(event_id)
-    key = (filepath, event_id)
-    if key in _EVENT_BLOCKS:
-        return _EVENT_BLOCKS[key]
-    block = None
-    if filepath:
+    if not filepath:
+        return None
+    blocks = _EVENT_BLOCKS.get(filepath)
+    if blocks is None:
         try:
             with open(filepath, "r", encoding="utf-8", errors="replace") as handle:
                 content = handle.read()
         except OSError:
             content = ""
+        # Parse the file once: a tree sends many events from the same file.
+        blocks = {}
         for candidate in _iter_event_definitions(content):
             id_match = _RE_EVENT_ID.search(candidate)
-            if id_match and id_match.group(1) == event_id:
-                block = candidate
-                break
-    _EVENT_BLOCKS[key] = block
-    return block
+            if id_match:
+                blocks.setdefault(id_match.group(1), candidate)
+        _EVENT_BLOCKS[filepath] = blocks
+    return blocks.get(event_id)
 
 
 def _event_chain_leads_to_war(

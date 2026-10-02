@@ -121,7 +121,7 @@ def _scan_set_variables(text: str) -> List[str]:
 def process_file_for_set_variables(
     filename: str, lowercase: bool, mod_path: str
 ) -> Tuple[List[str], Dict[str, str]]:
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return [], {}
     text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
@@ -272,7 +272,7 @@ def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
 def count_all_variables_in_file(filename: str) -> Tuple[Dict[str, int], set]:
     # Per-worker globals (set by _pass2_init) hold the tracked maps and cache
     # namespace, so each task carries only the filename string.
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=_W_MOD_PATH):
         return {}, set()
     text = FileOpener.open_text_file(filename, lowercase=True, strip_comments_flag=True)
     if not text:
