@@ -1,6 +1,6 @@
 # common/scripted_effects/md_submod_defense_effects.txt
 
-md_submod_defense_graph_init = {
+md_sample_defense_metrics = {
 	set_temp_variable = { def_ann = defence_gain }
 	multiply_temp_variable = { def_ann = 52 }
 	set_variable = { md_current_defense_spending = def_ann }
@@ -11,26 +11,18 @@ md_submod_defense_graph_init = {
 	divide_temp_variable = { def_p = gdp_denom }
 	multiply_temp_variable = { def_p = 100 }
 	set_variable = { md_current_defense_pct = def_p }
+}
+
+md_submod_defense_graph_init = {
+	md_sample_defense_metrics = yes
 
 	resize_array = { array = defense_spend_array value = md_current_defense_spending size = 120 }
 	resize_array = { array = defense_pct_array value = md_current_defense_pct size = 120 }
-
-	set_variable = { defense_spend_array^0 = md_current_defense_spending }
-	set_variable = { defense_pct_array^0 = md_current_defense_pct }
 }
 
 # 1. THE DEFENSE MONTHLY SHIFTER (Self-Healing)
 md_submod_defense_graph_on_monthly = {
-	set_temp_variable = { def_ann = defence_gain }
-	multiply_temp_variable = { def_ann = 52 }
-	set_variable = { md_current_defense_spending = def_ann }
-
-	set_temp_variable = { def_p = md_current_defense_spending }
-	set_temp_variable = { gdp_denom = gdp_total }
-	if = { limit = { check_variable = { gdp_denom < 0.01 } } set_temp_variable = { gdp_denom = 0.01 } }
-	divide_temp_variable = { def_p = gdp_denom }
-	multiply_temp_variable = { def_p = 100 }
-	set_variable = { md_current_defense_pct = def_p }
+	md_sample_defense_metrics = yes
 
 	if = {
 		limit = { NOT = { check_variable = { defense_spend_array^num > 0 } } }
@@ -49,16 +41,7 @@ md_submod_defense_graph_on_monthly = {
 
 # 2. THE MATH TRANSLATOR & FAILSAFE
 update_md_flaxbeard_defense_graph = {
-	set_temp_variable = { def_ann = defence_gain }
-	multiply_temp_variable = { def_ann = 52 }
-	set_variable = { md_current_defense_spending = def_ann }
-
-	set_temp_variable = { def_p = md_current_defense_spending }
-	set_temp_variable = { gdp_denom = gdp_total }
-	if = { limit = { check_variable = { gdp_denom < 0.01 } } set_temp_variable = { gdp_denom = 0.01 } }
-	divide_temp_variable = { def_p = gdp_denom }
-	multiply_temp_variable = { def_p = 100 }
-	set_variable = { md_current_defense_pct = def_p }
+	md_sample_defense_metrics = yes
 
 	if = {
 		limit = { NOT = { check_variable = { defense_spend_array^num > 0 } } }
@@ -94,7 +77,7 @@ update_md_flaxbeard_defense_graph = {
 
 	# LEFT AXIS: Defense Spending ($B/yr)
 	set_temp_variable = { true_max = defense_spend_array^0 }
-	set_temp_variable = { true_min = defense_spend_array^0 } 
+	set_temp_variable = { true_min = defense_spend_array^0 }
 	set_temp_variable = { max_jump = 0 }
 
 	for_each_loop = {
@@ -132,7 +115,7 @@ update_md_flaxbeard_defense_graph = {
 	}
 	else = {
 		set_temp_variable = { pad = data_diff }
-		multiply_temp_variable = { pad = 0.1 } 
+		multiply_temp_variable = { pad = 0.1 }
 		set_temp_variable = { high = true_max }
 		add_to_temp_variable = { high = pad }
 		set_temp_variable = { low = true_min }
@@ -140,31 +123,10 @@ update_md_flaxbeard_defense_graph = {
 	}
 
 	if = { limit = { check_variable = { low < 0 } } set_temp_variable = { low = 0 } }
-	set_temp_variable = { diff = high }
-	subtract_from_temp_variable = { diff = low }
-	if = { limit = { check_variable = { diff < 0.01 } } set_temp_variable = { diff = 0.01 } }
-
-	# DYNAMIC ANTI-TEAR ZOOM 
-	set_temp_variable = { safe_diff = max_jump }
-	multiply_temp_variable = { safe_diff = 45 }
-	divide_temp_variable = { safe_diff = 10 }
-
-	if = {
-		limit = { check_variable = { diff < safe_diff } }
-		set_temp_variable = { shortfall = safe_diff }
-		subtract_from_temp_variable = { shortfall = diff }
-		divide_temp_variable = { shortfall = 2 }
-
-		add_to_temp_variable = { high = shortfall }
-		subtract_from_temp_variable = { low = shortfall }
-		if = { limit = { check_variable = { low < 0 } } set_temp_variable = { low = 0 } }
-		set_temp_variable = { diff = high }
-		subtract_from_temp_variable = { diff = low }
-	}
+	md_apply_axis_zoom_and_step = yes
+	if = { limit = { check_variable = { low < 0 } } set_temp_variable = { low = 0 } }
 
 	# LEFT Y-AXIS LABELS ($B/yr)
-	set_temp_variable = { step = diff }
-	multiply_temp_variable = { step = 0.1 } 
 	set_temp_variable = { buf = low }
 	for_loop_effect = {
 		start = 0 end = 11
@@ -180,38 +142,27 @@ update_md_flaxbeard_defense_graph = {
 
 		if = {
 			limit = { check_variable = { i > current_gdp_graph_end } }
-			add_to_array = { md_flax_offsets_defense_blue = 1000 } 
-			add_to_array = { md_flax_offsets_defense_red = 1000 } 
+			add_to_array = { md_flax_offsets_defense_blue = 1000 }
+			add_to_array = { md_flax_offsets_defense_red = 1000 }
 			add_to_array = { md_flax_slopes_defense = 50 }
 		}
 		else = {
 			set_temp_variable = { y1_val = v }
-			subtract_from_temp_variable = { y1_val = low }
-			divide_temp_variable = { y1_val = diff } 
-			set_temp_variable = { y1_px = y1_val }
-			multiply_temp_variable = { y1_px = 450 }
-
 			set_temp_variable = { next_i = i }
 			add_to_temp_variable = { next_i = 1 }
 
 			if = {
-				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
 				set_temp_variable = { y2_val = defense_spend_array^next_i }
 			}
 			else = {
-				set_temp_variable = { y2_val = v } 
+				set_temp_variable = { y2_val = v }
 			}
 
-			subtract_from_temp_variable = { y2_val = low }
-			divide_temp_variable = { y2_val = diff } 
-			set_temp_variable = { y2_px = y2_val }
-			multiply_temp_variable = { y2_px = 450 } 
-
-			set_temp_variable = { offset = y1_px }
-			multiply_temp_variable = { offset = -1 }
+			md_calc_segment_math = yes
 
 			if = {
-				limit = { check_variable = { y2_val < y1_val } } # Down = Red
+				limit = { check_variable = { is_falling = 1 } } # Down = Red
 				add_to_array = { md_flax_offsets_defense_red = offset }
 				add_to_array = { md_flax_offsets_defense_blue = 1000 }
 			}
@@ -220,22 +171,13 @@ update_md_flaxbeard_defense_graph = {
 				add_to_array = { md_flax_offsets_defense_red = 1000 }
 			}
 
-			set_temp_variable = { slope = y2_px }
-			subtract_from_temp_variable = { slope = y1_px }
-			divide_temp_variable = { slope = 2 }
-			add_to_temp_variable = { slope = 50 }
-
-			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
-			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
-
-			round_variable = slope
 			add_to_array = { md_flax_slopes_defense = slope }
 		}
 	}
 
 	# RIGHT AXIS: Defense % of GDP (Dynamic Scaling)
 	set_temp_variable = { true_max_pct = defense_pct_array^0 }
-	set_temp_variable = { true_min_pct = defense_pct_array^0 } 
+	set_temp_variable = { true_min_pct = defense_pct_array^0 }
 	set_temp_variable = { max_jump_pct = 0 }
 
 	for_each_loop = {
@@ -273,39 +215,25 @@ update_md_flaxbeard_defense_graph = {
 	}
 	else = {
 		set_temp_variable = { pad_pct = data_diff_pct }
-		multiply_temp_variable = { pad_pct = 0.1 } 
+		multiply_temp_variable = { pad_pct = 0.1 }
 		set_temp_variable = { high_pct = true_max_pct }
 		add_to_temp_variable = { high_pct = pad_pct }
 		set_temp_variable = { low_pct = true_min_pct }
 		subtract_from_temp_variable = { low_pct = pad_pct }
 	}
 
-	if = { limit = { check_variable = { low_pct < 0 } } set_temp_variable = { low_pct = 0 } }
-	set_temp_variable = { diff_pct = high_pct }
-	subtract_from_temp_variable = { diff_pct = low_pct }
-	if = { limit = { check_variable = { diff_pct < 0.01 } } set_temp_variable = { diff_pct = 0.01 } }
+	set_temp_variable = { high = high_pct }
+	set_temp_variable = { low = low_pct }
+	set_temp_variable = { max_jump = max_jump_pct }
+	if = { limit = { check_variable = { low < 0 } } set_temp_variable = { low = 0 } }
+	md_apply_axis_zoom_and_step = yes
+	if = { limit = { check_variable = { low < 0 } } set_temp_variable = { low = 0 } }
 
-	# DYNAMIC ANTI-TEAR ZOOM 
-	set_temp_variable = { safe_diff_pct = max_jump_pct }
-	multiply_temp_variable = { safe_diff_pct = 45 }
-	divide_temp_variable = { safe_diff_pct = 10 }
-
-	if = {
-		limit = { check_variable = { diff_pct < safe_diff_pct } }
-		set_temp_variable = { shortfall_pct = safe_diff_pct }
-		subtract_from_temp_variable = { shortfall_pct = diff_pct }
-		divide_temp_variable = { shortfall_pct = 2 }
-
-		add_to_temp_variable = { high_pct = shortfall_pct }
-		subtract_from_temp_variable = { low_pct = shortfall_pct }
-		if = { limit = { check_variable = { low_pct < 0 } } set_temp_variable = { low_pct = 0 } }
-		set_temp_variable = { diff_pct = high_pct }
-		subtract_from_temp_variable = { diff_pct = low_pct }
-	}
+	set_temp_variable = { low_pct = low }
+	set_temp_variable = { diff_pct = diff }
+	set_temp_variable = { step_pct = step }
 
 	# RIGHT Y-AXIS LABELS (% of GDP)
-	set_temp_variable = { step_pct = diff_pct }
-	multiply_temp_variable = { step_pct = 0.1 } 
 	set_temp_variable = { buf_pct = low_pct }
 	for_loop_effect = {
 		start = 0 end = 11
@@ -314,6 +242,8 @@ update_md_flaxbeard_defense_graph = {
 	}
 
 	# 2. DRAW DEFENSE % OF GDP LINE (Green on up, Red on down) — Dynamic Right Axis
+	set_temp_variable = { low = low_pct }
+	set_temp_variable = { diff = diff_pct }
 	for_each_loop = {
 		array = defense_pct_array
 		value = v
@@ -321,56 +251,38 @@ update_md_flaxbeard_defense_graph = {
 
 		if = {
 			limit = { check_variable = { i > current_gdp_graph_end } }
-			add_to_array = { md_flax_offsets_defense_pct_green = 1000 } 
-			add_to_array = { md_flax_offsets_defense_pct_red = 1000 } 
+			add_to_array = { md_flax_offsets_defense_pct_green = 1000 }
+			add_to_array = { md_flax_offsets_defense_pct_red = 1000 }
 			add_to_array = { md_flax_slopes_defense_pct = 50 }
 		}
 		else = {
 			set_temp_variable = { y1_val = v }
-			subtract_from_temp_variable = { y1_val = low_pct }
-			divide_temp_variable = { y1_val = diff_pct } 
-			set_temp_variable = { y1_px = y1_val }
-			multiply_temp_variable = { y1_px = 450 }
-
 			set_temp_variable = { next_i = i }
 			add_to_temp_variable = { next_i = 1 }
 
 			if = {
-				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
 				set_temp_variable = { y2_val = defense_pct_array^next_i }
 			}
 			else = {
-				set_temp_variable = { y2_val = v } 
+				set_temp_variable = { y2_val = v }
 			}
 
-			subtract_from_temp_variable = { y2_val = low_pct }
-			divide_temp_variable = { y2_val = diff_pct } 
-			set_temp_variable = { y2_px = y2_val }
-			multiply_temp_variable = { y2_px = 450 } 
-
-			set_temp_variable = { offset = y1_px }
-			multiply_temp_variable = { offset = -1 }
+			md_calc_segment_math = yes
 
 			if = {
-				limit = { check_variable = { y2_val < y1_val } } 
+				limit = { check_variable = { is_falling = 1 } }
 				add_to_array = { md_flax_offsets_defense_pct_red = offset }
 				add_to_array = { md_flax_offsets_defense_pct_green = 1000 }
 			}
-			else = { 
+			else = {
 				add_to_array = { md_flax_offsets_defense_pct_green = offset }
 				add_to_array = { md_flax_offsets_defense_pct_red = 1000 }
 			}
 
-			set_temp_variable = { slope = y2_px }
-			subtract_from_temp_variable = { slope = y1_px }
-			divide_temp_variable = { slope = 2 }
-			add_to_temp_variable = { slope = 50 }
-
-			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
-			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
-
-			round_variable = slope
 			add_to_array = { md_flax_slopes_defense_pct = slope }
 		}
 	}
+
+	gdp_graph_update_dirty_var = yes
 }

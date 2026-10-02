@@ -1,13 +1,12 @@
-	# common/scripted_effects/md_submod_gdp_effects.txt
+# common/scripted_effects/md_submod_gdp_effects.txt
 
-	update_md_flaxbeard_gdp_graph = {
-		md_submod_heal_corrupted_arrays = yes
-		clear_array = md_flax_offsets_green
-		clear_array = md_flax_offsets_red
-		clear_array = md_flax_slopes
+update_md_flaxbeard_gdp_graph = {
+	clear_array = md_flax_offsets_green
+	clear_array = md_flax_offsets_red
+	clear_array = md_flax_slopes
 
-		# --- YOY (JANUARY-ONLY SNAPSHOT) ---
-		set_temp_variable = { months_since_jan = global.month }
+	# --- YOY (JANUARY-ONLY SNAPSHOT) ---
+	set_temp_variable = { months_since_jan = global.month }
 	subtract_from_temp_variable = { months_since_jan = 1 }
 
 	set_temp_variable = { recent_jan_idx = current_gdp_graph_end }
@@ -28,17 +27,12 @@
 
 	# Calculate % Change using the billions we just calculated
 	set_variable = { md_yoy_gdp_change = md_yoy_gdp_change_billions }
-	if = {
-		limit = {
-			check_variable = { prev_jan_gdp > 0 }
-		}
-		divide_variable = { md_yoy_gdp_change = prev_jan_gdp }
-		multiply_variable = { md_yoy_gdp_change = 100 }
-	}
+	divide_variable = { md_yoy_gdp_change = prev_jan_gdp }
+	multiply_variable = { md_yoy_gdp_change = 100 }
 	# ---------------------------------------------
 
 	set_temp_variable = { true_max = gdp_array^0 }
-	set_temp_variable = { true_min = gdp_array^0 } 
+	set_temp_variable = { true_min = gdp_array^0 }
 	set_temp_variable = { max_jump = 0 }
 
 	# 1. FIND BOUNDS & MAXIMUM SPIKE
@@ -77,34 +71,17 @@
 	}
 	else = {
 		set_temp_variable = { pad = data_diff }
-		multiply_temp_variable = { pad = 0.1 } 
+		multiply_temp_variable = { pad = 0.1 }
 		set_temp_variable = { high = true_max }
 		add_to_temp_variable = { high = pad }
 		set_temp_variable = { low = true_min }
 		subtract_from_temp_variable = { low = pad }
 	}
-	set_temp_variable = { diff = high }
-	subtract_from_temp_variable = { diff = low }
 
-	# 3. DYNAMIC ANTI-TEAR ZOOM
-	set_temp_variable = { safe_diff = max_jump }
-	multiply_temp_variable = { safe_diff = 45 }
-	divide_temp_variable = { safe_diff = 10 }
-
-	if = {
-		limit = { check_variable = { diff < safe_diff } }
-		set_temp_variable = { shortfall = safe_diff }
-		subtract_from_temp_variable = { shortfall = diff }
-		divide_temp_variable = { shortfall = 2 }
-
-		add_to_temp_variable = { high = shortfall }
-		subtract_from_temp_variable = { low = shortfall }
-		set_temp_variable = { diff = safe_diff }
-	}
+	# 3. DYNAMIC ANTI-TEAR ZOOM & STEP
+	md_apply_axis_zoom_and_step = yes
 
 	# 4. Y-AXIS LABELS
-	set_temp_variable = { step = diff }
-	multiply_temp_variable = { step = 0.1 } 
 	set_temp_variable = { buf = low }
 	for_loop_effect = {
 		start = 0 end = 11
@@ -120,38 +97,27 @@
 
 		if = {
 			limit = { check_variable = { i > current_gdp_graph_end } }
-			add_to_array = { md_flax_offsets_green = 1000 } 
-			add_to_array = { md_flax_offsets_red = 1000 } 
+			add_to_array = { md_flax_offsets_green = 1000 }
+			add_to_array = { md_flax_offsets_red = 1000 }
 			add_to_array = { md_flax_slopes = 50 }
 		}
 		else = {
 			set_temp_variable = { y1_val = v }
-			subtract_from_temp_variable = { y1_val = low }
-			divide_temp_variable = { y1_val = diff } 
-			set_temp_variable = { y1_px = y1_val }
-			multiply_temp_variable = { y1_px = 450 }
-
 			set_temp_variable = { next_i = i }
 			add_to_temp_variable = { next_i = 1 }
 
 			if = {
-				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
 				set_temp_variable = { y2_val = gdp_array^next_i }
 			}
 			else = {
-				set_temp_variable = { y2_val = v } 
+				set_temp_variable = { y2_val = v }
 			}
 
-			subtract_from_temp_variable = { y2_val = low }
-			divide_temp_variable = { y2_val = diff } 
-			set_temp_variable = { y2_px = y2_val }
-			multiply_temp_variable = { y2_px = 450 } 
-
-			set_temp_variable = { offset = y1_px }
-			multiply_temp_variable = { offset = -1 }
+			md_calc_segment_math = yes
 
 			if = {
-				limit = { check_variable = { y2_val < y1_val } }
+				limit = { check_variable = { is_falling = 1 } }
 				add_to_array = { md_flax_offsets_red = offset }
 				add_to_array = { md_flax_offsets_green = 1000 }
 			}
@@ -160,16 +126,9 @@
 				add_to_array = { md_flax_offsets_red = 1000 }
 			}
 
-			set_temp_variable = { slope = y2_px }
-			subtract_from_temp_variable = { slope = y1_px }
-			divide_temp_variable = { slope = 2 }
-			add_to_temp_variable = { slope = 50 }
-
-			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
-			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
-
-			round_variable = slope
 			add_to_array = { md_flax_slopes = slope }
 		}
 	}
+
+	gdp_graph_update_dirty_var = yes
 }

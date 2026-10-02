@@ -4,10 +4,9 @@ md_submod_inflation_graph_init = {
 	set_temp_variable = { init_infl_pct = inflation_rate_var }
 	multiply_temp_variable = { init_infl_pct = 100 }
 	resize_array = { array = inflation_array value = init_infl_pct size = 120 }
-	set_variable = { inflation_array^0 = init_infl_pct }
 }
 
-# 1. THE INFLATION MONTHLY SHIFTER (Self-Healing)
+# 1. THE INFLATION MONTHLY RECORDER
 md_submod_inflation_graph_on_monthly = {
 	set_temp_variable = { current_infl_pct = inflation_rate_var }
 	multiply_temp_variable = { current_infl_pct = 100 }
@@ -52,7 +51,7 @@ update_md_flaxbeard_inflation_graph = {
 	# ---------------------------------------------
 
 	set_temp_variable = { true_max = inflation_array^0 }
-	set_temp_variable = { true_min = inflation_array^0 } 
+	set_temp_variable = { true_min = inflation_array^0 }
 	set_temp_variable = { max_jump = 0 }
 
 	# FIND BOUNDS & MAXIMUM SPIKE
@@ -78,51 +77,10 @@ update_md_flaxbeard_inflation_graph = {
 		}
 	}
 
-	set_temp_variable = { data_diff = true_max }
-	subtract_from_temp_variable = { data_diff = true_min }
-
-	# FAILSAFE PADDING
-	if = {
-		limit = { check_variable = { data_diff < 1 } }
-		set_temp_variable = { high = true_max }
-		add_to_temp_variable = { high = 1.0 }
-		set_temp_variable = { low = true_min }
-		subtract_from_temp_variable = { low = 1.0 }
-	}
-	else = {
-		set_temp_variable = { pad = data_diff }
-		multiply_temp_variable = { pad = 0.1 } # 10% padding
-		set_temp_variable = { high = true_max }
-		add_to_temp_variable = { high = pad }
-		set_temp_variable = { low = true_min }
-		subtract_from_temp_variable = { low = pad }
-	}
-
-	set_temp_variable = { diff = high }
-	subtract_from_temp_variable = { diff = low }
-
-	# ====================================================
-	# DYNAMIC ANTI-TEAR ZOOM 
-	# ====================================================
-	set_temp_variable = { safe_diff = max_jump }
-	multiply_temp_variable = { safe_diff = 45 }
-	divide_temp_variable = { safe_diff = 10 }
-
-	if = {
-		limit = { check_variable = { diff < safe_diff } }
-		set_temp_variable = { shortfall = safe_diff }
-		subtract_from_temp_variable = { shortfall = diff }
-		divide_temp_variable = { shortfall = 2 }
-
-		add_to_temp_variable = { high = shortfall }
-		subtract_from_temp_variable = { low = shortfall }
-		set_temp_variable = { diff = safe_diff }
-	}
-	# ====================================================
+	# PADDING, ANTI-TEAR ZOOM & STEP
+	md_calc_standard_axis = yes
 
 	# Y-AXIS LABELS
-	set_temp_variable = { step = diff }
-	multiply_temp_variable = { step = 0.1 } 
 	set_temp_variable = { buf = low }
 	for_loop_effect = {
 		start = 0 end = 11
@@ -138,35 +96,24 @@ update_md_flaxbeard_inflation_graph = {
 
 		if = {
 			limit = { check_variable = { i > current_gdp_graph_end } }
-			add_to_array = { md_flax_offsets_inflation_green = 1000 } 
-			add_to_array = { md_flax_offsets_inflation_red = 1000 } 
+			add_to_array = { md_flax_offsets_inflation_green = 1000 }
+			add_to_array = { md_flax_offsets_inflation_red = 1000 }
 			add_to_array = { md_flax_slopes_inflation = 50 }
 		}
 		else = {
 			set_temp_variable = { y1_val = v }
-			subtract_from_temp_variable = { y1_val = low }
-			divide_temp_variable = { y1_val = diff } 
-			set_temp_variable = { y1_px = y1_val }
-			multiply_temp_variable = { y1_px = 450 }
-
 			set_temp_variable = { next_i = i }
 			add_to_temp_variable = { next_i = 1 }
 
 			if = {
-				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
 				set_temp_variable = { y2_val = inflation_array^next_i }
 			}
 			else = {
-				set_temp_variable = { y2_val = v } 
+				set_temp_variable = { y2_val = v }
 			}
 
-			subtract_from_temp_variable = { y2_val = low }
-			divide_temp_variable = { y2_val = diff } 
-			set_temp_variable = { y2_px = y2_val }
-			multiply_temp_variable = { y2_px = 450 } 
-
-			set_temp_variable = { offset = y1_px }
-			multiply_temp_variable = { offset = -1 }
+			md_calc_segment_math = yes
 
 			# Note: For Inflation, going UP is BAD (Red), going DOWN is GOOD (Green)
 			if = {
@@ -179,16 +126,9 @@ update_md_flaxbeard_inflation_graph = {
 				add_to_array = { md_flax_offsets_inflation_red = 1000 }
 			}
 
-			set_temp_variable = { slope = y2_px }
-			subtract_from_temp_variable = { slope = y1_px }
-			divide_temp_variable = { slope = 2 }
-			add_to_temp_variable = { slope = 50 }
-
-			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
-			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
-
-			round_variable = slope
 			add_to_array = { md_flax_slopes_inflation = slope }
 		}
 	}
+
+	gdp_graph_update_dirty_var = yes
 }

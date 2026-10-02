@@ -2,10 +2,9 @@
 
 md_submod_debt_graph_init = {
 	resize_array = { array = debt_array value = debt size = 120 }
-	set_variable = { debt_array^0 = debt }
 }
 
-# 1. THE DEBT MONTHLY SHIFTER (Self-Healing)
+# 1. THE DEBT MONTHLY RECORDER
 md_submod_debt_graph_on_monthly = {
 	if = {
 		limit = { NOT = { check_variable = { debt_array^num > 0 } } }
@@ -55,7 +54,7 @@ update_md_flaxbeard_debt_graph = {
 	# ---------------------------------------------
 
 	set_temp_variable = { true_max = debt_array^0 }
-	set_temp_variable = { true_min = debt_array^0 } 
+	set_temp_variable = { true_min = debt_array^0 }
 	set_temp_variable = { max_jump = 0 }
 
 	# FIND BOUNDS & MAXIMUM SPIKE
@@ -91,7 +90,7 @@ update_md_flaxbeard_debt_graph = {
 		set_temp_variable = { pad = true_max }
 
 		# Absolute value for padding in case debt is negative
-		if = { limit = { check_variable = { pad < 0 } } multiply_temp_variable = { pad = -1 } } 
+		if = { limit = { check_variable = { pad < 0 } } multiply_temp_variable = { pad = -1 } }
 		multiply_temp_variable = { pad = 0.1 } # 10% padding
 		if = { limit = { check_variable = { pad < 10 } } set_temp_variable = { pad = 10 } } # Minimum 10B padding
 
@@ -102,38 +101,16 @@ update_md_flaxbeard_debt_graph = {
 	else = {
 		# Standard padding
 		set_temp_variable = { pad = data_diff }
-		multiply_temp_variable = { pad = 0.1 } 
+		multiply_temp_variable = { pad = 0.1 }
 		set_temp_variable = { high = true_max }
 		add_to_temp_variable = { high = pad }
 		set_temp_variable = { low = true_min }
 		subtract_from_temp_variable = { low = pad }
 	}
 
-	set_temp_variable = { diff = high }
-	subtract_from_temp_variable = { diff = low }
-
-	# ====================================================
-	# RESTORED DYNAMIC ANTI-TEAR ZOOM 
-	# ====================================================
-	set_temp_variable = { safe_diff = max_jump }
-	multiply_temp_variable = { safe_diff = 45 }
-	divide_temp_variable = { safe_diff = 10 }
-
-	if = {
-		limit = { check_variable = { diff < safe_diff } }
-		set_temp_variable = { shortfall = safe_diff }
-		subtract_from_temp_variable = { shortfall = diff }
-		divide_temp_variable = { shortfall = 2 }
-
-		add_to_temp_variable = { high = shortfall }
-		subtract_from_temp_variable = { low = shortfall }
-		set_temp_variable = { diff = safe_diff }
-	}
-	# ====================================================
+	md_apply_axis_zoom_and_step = yes
 
 	# Y-AXIS LABELS
-	set_temp_variable = { step = diff }
-	multiply_temp_variable = { step = 0.1 } 
 	set_temp_variable = { buf = low }
 	for_loop_effect = {
 		start = 0 end = 11
@@ -150,35 +127,24 @@ update_md_flaxbeard_debt_graph = {
 
 		if = {
 			limit = { check_variable = { i > current_gdp_graph_end } }
-			add_to_array = { md_flax_offsets_debt_green = 1000 } 
-			add_to_array = { md_flax_offsets_debt_red = 1000 } 
+			add_to_array = { md_flax_offsets_debt_green = 1000 }
+			add_to_array = { md_flax_offsets_debt_red = 1000 }
 			add_to_array = { md_flax_slopes_debt = 50 }
 		}
 		else = {
 			set_temp_variable = { y1_val = v }
-			subtract_from_temp_variable = { y1_val = low }
-			divide_temp_variable = { y1_val = diff } 
-			set_temp_variable = { y1_px = y1_val }
-			multiply_temp_variable = { y1_px = 450 }
-
 			set_temp_variable = { next_i = i }
 			add_to_temp_variable = { next_i = 1 }
 
 			if = {
-				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
 				set_temp_variable = { y2_val = debt_array^next_i }
 			}
 			else = {
-				set_temp_variable = { y2_val = v } 
+				set_temp_variable = { y2_val = v }
 			}
 
-			subtract_from_temp_variable = { y2_val = low }
-			divide_temp_variable = { y2_val = diff } 
-			set_temp_variable = { y2_px = y2_val }
-			multiply_temp_variable = { y2_px = 450 } 
-
-			set_temp_variable = { offset = y1_px }
-			multiply_temp_variable = { offset = -1 }
+			md_calc_segment_math = yes
 
 			# Note: For Debt, going UP is BAD (Red), going DOWN is GOOD (Green)
 			if = {
@@ -191,16 +157,9 @@ update_md_flaxbeard_debt_graph = {
 				add_to_array = { md_flax_offsets_debt_red = 1000 }
 			}
 
-			set_temp_variable = { slope = y2_px }
-			subtract_from_temp_variable = { slope = y1_px }
-			divide_temp_variable = { slope = 2 }
-			add_to_temp_variable = { slope = 50 }
-
-			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
-			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
-
-			round_variable = slope
 			add_to_array = { md_flax_slopes_debt = slope }
 		}
 	}
+
+	gdp_graph_update_dirty_var = yes
 }

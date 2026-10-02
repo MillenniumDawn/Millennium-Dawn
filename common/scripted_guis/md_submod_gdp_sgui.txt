@@ -5,97 +5,50 @@ scripted_gui = {
 	# ---------------------------------------------------------
 	md_submod_open_button_sgui = {
 		window_name = "md_submod_open_button_container"
-		parent_window_name = "MapmodesInterface_Ingame" 
+		parent_window_name = "MapmodesInterface_Ingame"
 		context_type = player_context
+		dirty = gdp_graph_dirty_var
+		visible = {
+			has_game_rule = { rule = disable_gdp_graph option = no }
+		}
 
 		effects = {
 			md_flax_open_button_click = {
 				if = {
-					limit = { 
-						NOT = { has_country_flag = md_show_flax_graph }
-						NOT = { has_country_flag = md_show_flax_graph_gdpc }
-						NOT = { has_country_flag = md_show_flax_graph_prod }
-						NOT = { has_country_flag = md_show_flax_graph_debt }
-						NOT = { has_country_flag = md_show_flax_graph_inflation }
-						NOT = { has_country_flag = md_show_flax_graph_pop }
-						NOT = { has_country_flag = md_show_flax_graph_budget }
-						NOT = { has_country_flag = md_show_flax_graph_energy }
-						NOT = { has_country_flag = md_show_flax_graph_defense }
-						NOT = { has_country_flag = md_show_flax_graph_trade }
+					limit = {
+						check_variable = { md_graph_tab > 0 }
 					}
-					# Defaults to opening the main GDP tab
-					set_country_flag = md_show_flax_graph
-					update_md_flaxbeard_gdp_graph = yes 
+					# If ANY tab is open, close them all
+					md_close_all_graph_tabs = yes
 				}
 				else = {
-					# If ANY tab is open, close them all
-					clr_country_flag = md_show_flax_graph
-					clr_country_flag = md_show_flax_graph_gdpc
-					clr_country_flag = md_show_flax_graph_prod
-					clr_country_flag = md_show_flax_graph_debt
-					clr_country_flag = md_show_flax_graph_inflation
-					clr_country_flag = md_show_flax_graph_pop
-					clr_country_flag = md_show_flax_graph_budget
-					clr_country_flag = md_show_flax_graph_energy
-					clr_country_flag = md_show_flax_graph_defense
-					clr_country_flag = md_show_flax_graph_trade
+					# Defaults to opening the main GDP tab
+					md_open_tab_gdp = yes
 				}
 			}
 		}
 	}
 
-	# 2. THE MAIN GDP TAB
+	# ---------------------------------------------------------
+	# 2. THE MAIN GDP TAB (md_graph_tab = 1)
+	# ---------------------------------------------------------
 	md_submod_line_graph_gui = {
 		window_name = "md_gdp_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 1 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph }
-			open_gdpc_graph_click = {
-				clr_country_flag = md_show_flax_graph
-				set_country_flag = md_show_flax_graph_gdpc
-				update_md_flaxbeard_gdpc_graph = yes
-			}
-			open_prod_graph_click = {
-				clr_country_flag = md_show_flax_graph
-				set_country_flag = md_show_flax_graph_prod
-				update_md_flaxbeard_prod_graph = yes
-			}
-			open_debt_graph_click = {
-				clr_country_flag = md_show_flax_graph
-				set_country_flag = md_show_flax_graph_debt
-				update_md_flaxbeard_debt_graph = yes
-			}
-			open_inflation_graph_click = {
-				clr_country_flag = md_show_flax_graph
-				set_country_flag = md_show_flax_graph_inflation
-				update_md_flaxbeard_inflation_graph = yes
-			}
-			open_pop_graph_click = {
-				clr_country_flag = md_show_flax_graph
-				set_country_flag = md_show_flax_graph_pop
-				update_md_flaxbeard_pop_graph = yes
-			}
-			open_budget_graph_click = {
-				clr_country_flag = md_show_flax_graph
-				set_country_flag = md_show_flax_graph_budget
-				update_md_flaxbeard_budget_graph = yes
-			}
-			open_energy_graph_click = {
-				clr_country_flag = md_show_flax_graph
-				set_country_flag = md_show_flax_graph_energy
-				update_md_flaxbeard_energy_graph = yes
-			}
-			open_defense_graph_click = {
-				clr_country_flag = md_show_flax_graph
-				set_country_flag = md_show_flax_graph_defense
-				update_md_flaxbeard_defense_graph = yes
-			}
-			open_trade_graph_click = {
-				clr_country_flag = md_show_flax_graph
-				set_country_flag = md_show_flax_graph_trade
-				update_md_flaxbeard_trade_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments = {
@@ -111,58 +64,26 @@ scripted_gui = {
 		}
 	}
 
-	# 3. THE GDP PER CAPITA TAB
+	# ---------------------------------------------------------
+	# 3. THE GDP PER CAPITA TAB (md_graph_tab = 2)
+	# ---------------------------------------------------------
 	md_submod_line_graph_gdpc_gui = {
 		window_name = "md_gdpc_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph_gdpc }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 2 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph_gdpc }
-			open_gdp_graph_click = {
-				clr_country_flag = md_show_flax_graph_gdpc
-				set_country_flag = md_show_flax_graph
-				update_md_flaxbeard_gdp_graph = yes
-			}
-			open_prod_graph_click = {
-				clr_country_flag = md_show_flax_graph_gdpc
-				set_country_flag = md_show_flax_graph_prod
-				update_md_flaxbeard_prod_graph = yes
-			}
-			open_debt_graph_click = {
-				clr_country_flag = md_show_flax_graph_gdpc
-				set_country_flag = md_show_flax_graph_debt
-				update_md_flaxbeard_debt_graph = yes
-			}
-			open_inflation_graph_click = {
-				clr_country_flag = md_show_flax_graph_gdpc
-				set_country_flag = md_show_flax_graph_inflation
-				update_md_flaxbeard_inflation_graph = yes
-			}
-			open_pop_graph_click = {
-				clr_country_flag = md_show_flax_graph_gdpc
-				set_country_flag = md_show_flax_graph_pop
-				update_md_flaxbeard_pop_graph = yes
-			}
-			open_budget_graph_click = {
-				clr_country_flag = md_show_flax_graph_gdpc
-				set_country_flag = md_show_flax_graph_budget
-				update_md_flaxbeard_budget_graph = yes
-			}
-			open_energy_graph_click = {
-				clr_country_flag = md_show_flax_graph_gdpc
-				set_country_flag = md_show_flax_graph_energy
-				update_md_flaxbeard_energy_graph = yes
-			}
-			open_defense_graph_click = {
-				clr_country_flag = md_show_flax_graph_gdpc
-				set_country_flag = md_show_flax_graph_defense
-				update_md_flaxbeard_defense_graph = yes
-			}
-			open_trade_graph_click = {
-				clr_country_flag = md_show_flax_graph_gdpc
-				set_country_flag = md_show_flax_graph_trade
-				update_md_flaxbeard_trade_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments_gdpc = {
@@ -178,58 +99,26 @@ scripted_gui = {
 		}
 	}
 
-	# 4. THE PRODUCTIVITY TAB
+	# ---------------------------------------------------------
+	# 4. THE INDUSTRIAL PRODUCTION TAB (md_graph_tab = 3)
+	# ---------------------------------------------------------
 	md_submod_line_graph_prod_gui = {
 		window_name = "md_prod_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph_prod }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 3 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph_prod }
-			open_gdp_graph_click = {
-				clr_country_flag = md_show_flax_graph_prod
-				set_country_flag = md_show_flax_graph
-				update_md_flaxbeard_gdp_graph = yes
-			}
-			open_gdpc_graph_click = {
-				clr_country_flag = md_show_flax_graph_prod
-				set_country_flag = md_show_flax_graph_gdpc
-				update_md_flaxbeard_gdpc_graph = yes
-			}
-			open_debt_graph_click = {
-				clr_country_flag = md_show_flax_graph_prod
-				set_country_flag = md_show_flax_graph_debt
-				update_md_flaxbeard_debt_graph = yes
-			}
-			open_inflation_graph_click = {
-				clr_country_flag = md_show_flax_graph_prod
-				set_country_flag = md_show_flax_graph_inflation
-				update_md_flaxbeard_inflation_graph = yes
-			}
-			open_pop_graph_click = {
-				clr_country_flag = md_show_flax_graph_prod
-				set_country_flag = md_show_flax_graph_pop
-				update_md_flaxbeard_pop_graph = yes
-			}
-			open_budget_graph_click = {
-				clr_country_flag = md_show_flax_graph_prod
-				set_country_flag = md_show_flax_graph_budget
-				update_md_flaxbeard_budget_graph = yes
-			}
-			open_energy_graph_click = {
-				clr_country_flag = md_show_flax_graph_prod
-				set_country_flag = md_show_flax_graph_energy
-				update_md_flaxbeard_energy_graph = yes
-			}
-			open_defense_graph_click = {
-				clr_country_flag = md_show_flax_graph_prod
-				set_country_flag = md_show_flax_graph_defense
-				update_md_flaxbeard_defense_graph = yes
-			}
-			open_trade_graph_click = {
-				clr_country_flag = md_show_flax_graph_prod
-				set_country_flag = md_show_flax_graph_trade
-				update_md_flaxbeard_trade_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments_prod = {
@@ -245,58 +134,26 @@ scripted_gui = {
 		}
 	}
 
-	# 5. THE DEBT TAB
+	# ---------------------------------------------------------
+	# 5. THE NATIONAL DEBT TAB (md_graph_tab = 4)
+	# ---------------------------------------------------------
 	md_submod_line_graph_debt_gui = {
 		window_name = "md_debt_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph_debt }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 4 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph_debt }
-			open_gdp_graph_click = {
-				clr_country_flag = md_show_flax_graph_debt
-				set_country_flag = md_show_flax_graph
-				update_md_flaxbeard_gdp_graph = yes
-			}
-			open_gdpc_graph_click = {
-				clr_country_flag = md_show_flax_graph_debt
-				set_country_flag = md_show_flax_graph_gdpc
-				update_md_flaxbeard_gdpc_graph = yes
-			}
-			open_prod_graph_click = {
-				clr_country_flag = md_show_flax_graph_debt
-				set_country_flag = md_show_flax_graph_prod
-				update_md_flaxbeard_prod_graph = yes
-			}
-			open_inflation_graph_click = {
-				clr_country_flag = md_show_flax_graph_debt
-				set_country_flag = md_show_flax_graph_inflation
-				update_md_flaxbeard_inflation_graph = yes
-			}
-			open_pop_graph_click = {
-				clr_country_flag = md_show_flax_graph_debt
-				set_country_flag = md_show_flax_graph_pop
-				update_md_flaxbeard_pop_graph = yes
-			}
-			open_budget_graph_click = {
-				clr_country_flag = md_show_flax_graph_debt
-				set_country_flag = md_show_flax_graph_budget
-				update_md_flaxbeard_budget_graph = yes
-			}
-			open_energy_graph_click = {
-				clr_country_flag = md_show_flax_graph_debt
-				set_country_flag = md_show_flax_graph_energy
-				update_md_flaxbeard_energy_graph = yes
-			}
-			open_defense_graph_click = {
-				clr_country_flag = md_show_flax_graph_debt
-				set_country_flag = md_show_flax_graph_defense
-				update_md_flaxbeard_defense_graph = yes
-			}
-			open_trade_graph_click = {
-				clr_country_flag = md_show_flax_graph_debt
-				set_country_flag = md_show_flax_graph_trade
-				update_md_flaxbeard_trade_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments_debt = {
@@ -312,58 +169,26 @@ scripted_gui = {
 		}
 	}
 
-	# 6. THE INFLATION TAB
+	# ---------------------------------------------------------
+	# 6. THE INFLATION TAB (md_graph_tab = 5)
+	# ---------------------------------------------------------
 	md_submod_line_graph_inflation_gui = {
 		window_name = "md_inflation_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph_inflation }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 5 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph_inflation }
-			open_gdp_graph_click = {
-				clr_country_flag = md_show_flax_graph_inflation
-				set_country_flag = md_show_flax_graph
-				update_md_flaxbeard_gdp_graph = yes
-			}
-			open_gdpc_graph_click = {
-				clr_country_flag = md_show_flax_graph_inflation
-				set_country_flag = md_show_flax_graph_gdpc
-				update_md_flaxbeard_gdpc_graph = yes
-			}
-			open_prod_graph_click = {
-				clr_country_flag = md_show_flax_graph_inflation
-				set_country_flag = md_show_flax_graph_prod
-				update_md_flaxbeard_prod_graph = yes
-			}
-			open_debt_graph_click = {
-				clr_country_flag = md_show_flax_graph_inflation
-				set_country_flag = md_show_flax_graph_debt
-				update_md_flaxbeard_debt_graph = yes
-			}
-			open_pop_graph_click = {
-				clr_country_flag = md_show_flax_graph_inflation
-				set_country_flag = md_show_flax_graph_pop
-				update_md_flaxbeard_pop_graph = yes
-			}
-			open_budget_graph_click = {
-				clr_country_flag = md_show_flax_graph_inflation
-				set_country_flag = md_show_flax_graph_budget
-				update_md_flaxbeard_budget_graph = yes
-			}
-			open_energy_graph_click = {
-				clr_country_flag = md_show_flax_graph_inflation
-				set_country_flag = md_show_flax_graph_energy
-				update_md_flaxbeard_energy_graph = yes
-			}
-			open_defense_graph_click = {
-				clr_country_flag = md_show_flax_graph_inflation
-				set_country_flag = md_show_flax_graph_defense
-				update_md_flaxbeard_defense_graph = yes
-			}
-			open_trade_graph_click = {
-				clr_country_flag = md_show_flax_graph_inflation
-				set_country_flag = md_show_flax_graph_trade
-				update_md_flaxbeard_trade_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments_inflation = {
@@ -379,58 +204,26 @@ scripted_gui = {
 		}
 	}
 
-	# 7. THE DEMOGRAPHICS & LABOR TAB
+	# ---------------------------------------------------------
+	# 7. THE DEMOGRAPHICS & EMPLOYMENT TAB (md_graph_tab = 6)
+	# ---------------------------------------------------------
 	md_submod_line_graph_pop_gui = {
 		window_name = "md_pop_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph_pop }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 6 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph_pop }
-			open_gdp_graph_click = {
-				clr_country_flag = md_show_flax_graph_pop
-				set_country_flag = md_show_flax_graph
-				update_md_flaxbeard_gdp_graph = yes
-			}
-			open_gdpc_graph_click = {
-				clr_country_flag = md_show_flax_graph_pop
-				set_country_flag = md_show_flax_graph_gdpc
-				update_md_flaxbeard_gdpc_graph = yes
-			}
-			open_prod_graph_click = {
-				clr_country_flag = md_show_flax_graph_pop
-				set_country_flag = md_show_flax_graph_prod
-				update_md_flaxbeard_prod_graph = yes
-			}
-			open_debt_graph_click = {
-				clr_country_flag = md_show_flax_graph_pop
-				set_country_flag = md_show_flax_graph_debt
-				update_md_flaxbeard_debt_graph = yes
-			}
-			open_inflation_graph_click = {
-				clr_country_flag = md_show_flax_graph_pop
-				set_country_flag = md_show_flax_graph_inflation
-				update_md_flaxbeard_inflation_graph = yes
-			}
-			open_budget_graph_click = {
-				clr_country_flag = md_show_flax_graph_pop
-				set_country_flag = md_show_flax_graph_budget
-				update_md_flaxbeard_budget_graph = yes
-			}
-			open_energy_graph_click = {
-				clr_country_flag = md_show_flax_graph_pop
-				set_country_flag = md_show_flax_graph_energy
-				update_md_flaxbeard_energy_graph = yes
-			}
-			open_defense_graph_click = {
-				clr_country_flag = md_show_flax_graph_pop
-				set_country_flag = md_show_flax_graph_defense
-				update_md_flaxbeard_defense_graph = yes
-			}
-			open_trade_graph_click = {
-				clr_country_flag = md_show_flax_graph_pop
-				set_country_flag = md_show_flax_graph_trade
-				update_md_flaxbeard_trade_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments_pop = {
@@ -462,58 +255,26 @@ scripted_gui = {
 		}
 	}
 
-	# 8. THE BUDGET TAB
+	# ---------------------------------------------------------
+	# 8. THE BUDGET TAB (md_graph_tab = 7)
+	# ---------------------------------------------------------
 	md_submod_line_graph_budget_gui = {
 		window_name = "md_budget_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph_budget }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 7 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph_budget }
-			open_gdp_graph_click = {
-				clr_country_flag = md_show_flax_graph_budget
-				set_country_flag = md_show_flax_graph
-				update_md_flaxbeard_gdp_graph = yes
-			}
-			open_gdpc_graph_click = {
-				clr_country_flag = md_show_flax_graph_budget
-				set_country_flag = md_show_flax_graph_gdpc
-				update_md_flaxbeard_gdpc_graph = yes
-			}
-			open_prod_graph_click = {
-				clr_country_flag = md_show_flax_graph_budget
-				set_country_flag = md_show_flax_graph_prod
-				update_md_flaxbeard_prod_graph = yes
-			}
-			open_debt_graph_click = {
-				clr_country_flag = md_show_flax_graph_budget
-				set_country_flag = md_show_flax_graph_debt
-				update_md_flaxbeard_debt_graph = yes
-			}
-			open_inflation_graph_click = {
-				clr_country_flag = md_show_flax_graph_budget
-				set_country_flag = md_show_flax_graph_inflation
-				update_md_flaxbeard_inflation_graph = yes
-			}
-			open_pop_graph_click = {
-				clr_country_flag = md_show_flax_graph_budget
-				set_country_flag = md_show_flax_graph_pop
-				update_md_flaxbeard_pop_graph = yes
-			}
-			open_energy_graph_click = {
-				clr_country_flag = md_show_flax_graph_budget
-				set_country_flag = md_show_flax_graph_energy
-				update_md_flaxbeard_energy_graph = yes
-			}
-			open_defense_graph_click = {
-				clr_country_flag = md_show_flax_graph_budget
-				set_country_flag = md_show_flax_graph_defense
-				update_md_flaxbeard_defense_graph = yes
-			}
-			open_trade_graph_click = {
-				clr_country_flag = md_show_flax_graph_budget
-				set_country_flag = md_show_flax_graph_trade
-				update_md_flaxbeard_trade_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments_revenue = {
@@ -545,58 +306,26 @@ scripted_gui = {
 		}
 	}
 
-	# 9. THE ENERGY GRID TAB
+	# ---------------------------------------------------------
+	# 9. THE ENERGY TAB (md_graph_tab = 8)
+	# ---------------------------------------------------------
 	md_submod_line_graph_energy_gui = {
 		window_name = "md_energy_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph_energy }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 8 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph_energy }
-			open_gdp_graph_click = {
-				clr_country_flag = md_show_flax_graph_energy
-				set_country_flag = md_show_flax_graph
-				update_md_flaxbeard_gdp_graph = yes
-			}
-			open_gdpc_graph_click = {
-				clr_country_flag = md_show_flax_graph_energy
-				set_country_flag = md_show_flax_graph_gdpc
-				update_md_flaxbeard_gdpc_graph = yes
-			}
-			open_prod_graph_click = {
-				clr_country_flag = md_show_flax_graph_energy
-				set_country_flag = md_show_flax_graph_prod
-				update_md_flaxbeard_prod_graph = yes
-			}
-			open_debt_graph_click = {
-				clr_country_flag = md_show_flax_graph_energy
-				set_country_flag = md_show_flax_graph_debt
-				update_md_flaxbeard_debt_graph = yes
-			}
-			open_inflation_graph_click = {
-				clr_country_flag = md_show_flax_graph_energy
-				set_country_flag = md_show_flax_graph_inflation
-				update_md_flaxbeard_inflation_graph = yes
-			}
-			open_pop_graph_click = {
-				clr_country_flag = md_show_flax_graph_energy
-				set_country_flag = md_show_flax_graph_pop
-				update_md_flaxbeard_pop_graph = yes
-			}
-			open_budget_graph_click = {
-				clr_country_flag = md_show_flax_graph_energy
-				set_country_flag = md_show_flax_graph_budget
-				update_md_flaxbeard_budget_graph = yes
-			}
-			open_defense_graph_click = {
-				clr_country_flag = md_show_flax_graph_energy
-				set_country_flag = md_show_flax_graph_defense
-				update_md_flaxbeard_defense_graph = yes
-			}
-			open_trade_graph_click = {
-				clr_country_flag = md_show_flax_graph_energy
-				set_country_flag = md_show_flax_graph_trade
-				update_md_flaxbeard_trade_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments_energy_gen = {
@@ -626,58 +355,26 @@ scripted_gui = {
 		}
 	}
 
-	# 10. THE DEFENSE SPENDING TAB
+	# ---------------------------------------------------------
+	# 10. THE DEFENSE SPENDING TAB (md_graph_tab = 9)
+	# ---------------------------------------------------------
 	md_submod_line_graph_defense_gui = {
 		window_name = "md_defense_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph_defense }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 9 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph_defense }
-			open_gdp_graph_click = {
-				clr_country_flag = md_show_flax_graph_defense
-				set_country_flag = md_show_flax_graph
-				update_md_flaxbeard_gdp_graph = yes
-			}
-			open_gdpc_graph_click = {
-				clr_country_flag = md_show_flax_graph_defense
-				set_country_flag = md_show_flax_graph_gdpc
-				update_md_flaxbeard_gdpc_graph = yes
-			}
-			open_prod_graph_click = {
-				clr_country_flag = md_show_flax_graph_defense
-				set_country_flag = md_show_flax_graph_prod
-				update_md_flaxbeard_prod_graph = yes
-			}
-			open_debt_graph_click = {
-				clr_country_flag = md_show_flax_graph_defense
-				set_country_flag = md_show_flax_graph_debt
-				update_md_flaxbeard_debt_graph = yes
-			}
-			open_inflation_graph_click = {
-				clr_country_flag = md_show_flax_graph_defense
-				set_country_flag = md_show_flax_graph_inflation
-				update_md_flaxbeard_inflation_graph = yes
-			}
-			open_pop_graph_click = {
-				clr_country_flag = md_show_flax_graph_defense
-				set_country_flag = md_show_flax_graph_pop
-				update_md_flaxbeard_pop_graph = yes
-			}
-			open_budget_graph_click = {
-				clr_country_flag = md_show_flax_graph_defense
-				set_country_flag = md_show_flax_graph_budget
-				update_md_flaxbeard_budget_graph = yes
-			}
-			open_energy_graph_click = {
-				clr_country_flag = md_show_flax_graph_defense
-				set_country_flag = md_show_flax_graph_energy
-				update_md_flaxbeard_energy_graph = yes
-			}
-			open_trade_graph_click = {
-				clr_country_flag = md_show_flax_graph_defense
-				set_country_flag = md_show_flax_graph_trade
-				update_md_flaxbeard_trade_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments_defense = {
@@ -701,58 +398,26 @@ scripted_gui = {
 		}
 	}
 
-	# 11. THE TRADE BALANCE TAB
+	# ---------------------------------------------------------
+	# 11. THE TRADE TAB (md_graph_tab = 10)
+	# ---------------------------------------------------------
 	md_submod_line_graph_trade_gui = {
 		window_name = "md_trade_graph_container"
 		context_type = player_context
-		visible = { has_country_flag = md_show_flax_graph_trade }
+		dirty = gdp_graph_dirty_var
+		visible = { check_variable = { md_graph_tab = 10 } }
 		effects = {
-			close_gdp_screen_click = { clr_country_flag = md_show_flax_graph_trade }
-			open_gdp_graph_click = {
-				clr_country_flag = md_show_flax_graph_trade
-				set_country_flag = md_show_flax_graph
-				update_md_flaxbeard_gdp_graph = yes
-			}
-			open_gdpc_graph_click = {
-				clr_country_flag = md_show_flax_graph_trade
-				set_country_flag = md_show_flax_graph_gdpc
-				update_md_flaxbeard_gdpc_graph = yes
-			}
-			open_prod_graph_click = {
-				clr_country_flag = md_show_flax_graph_trade
-				set_country_flag = md_show_flax_graph_prod
-				update_md_flaxbeard_prod_graph = yes
-			}
-			open_debt_graph_click = {
-				clr_country_flag = md_show_flax_graph_trade
-				set_country_flag = md_show_flax_graph_debt
-				update_md_flaxbeard_debt_graph = yes
-			}
-			open_inflation_graph_click = {
-				clr_country_flag = md_show_flax_graph_trade
-				set_country_flag = md_show_flax_graph_inflation
-				update_md_flaxbeard_inflation_graph = yes
-			}
-			open_pop_graph_click = {
-				clr_country_flag = md_show_flax_graph_trade
-				set_country_flag = md_show_flax_graph_pop
-				update_md_flaxbeard_pop_graph = yes
-			}
-			open_budget_graph_click = {
-				clr_country_flag = md_show_flax_graph_trade
-				set_country_flag = md_show_flax_graph_budget
-				update_md_flaxbeard_budget_graph = yes
-			}
-			open_energy_graph_click = {
-				clr_country_flag = md_show_flax_graph_trade
-				set_country_flag = md_show_flax_graph_energy
-				update_md_flaxbeard_energy_graph = yes
-			}
-			open_defense_graph_click = {
-				clr_country_flag = md_show_flax_graph_trade
-				set_country_flag = md_show_flax_graph_defense
-				update_md_flaxbeard_defense_graph = yes
-			}
+			close_gdp_screen_click = { md_close_all_graph_tabs = yes }
+			open_gdp_graph_click = { md_open_tab_gdp = yes }
+			open_gdpc_graph_click = { md_open_tab_gdpc = yes }
+			open_prod_graph_click = { md_open_tab_prod = yes }
+			open_debt_graph_click = { md_open_tab_debt = yes }
+			open_inflation_graph_click = { md_open_tab_inflation = yes }
+			open_pop_graph_click = { md_open_tab_pop = yes }
+			open_budget_graph_click = { md_open_tab_budget = yes }
+			open_energy_graph_click = { md_open_tab_energy = yes }
+			open_defense_graph_click = { md_open_tab_defense = yes }
+			open_trade_graph_click = { md_open_tab_trade = yes }
 		}
 		dynamic_lists = {
 			md_line_segments_trade_exp = {

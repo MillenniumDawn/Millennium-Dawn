@@ -1,6 +1,6 @@
 # common/scripted_effects/md_submod_budget_effects.txt
 
-md_submod_budget_graph_init = {
+md_sample_budget_metrics = {
 	set_temp_variable = { m_rev = display_income }
 	multiply_temp_variable = { m_rev = 4.33 }
 	set_variable = { md_current_monthly_revenue = m_rev }
@@ -12,29 +12,19 @@ md_submod_budget_graph_init = {
 	set_temp_variable = { m_bal = treasury_rate }
 	multiply_temp_variable = { m_bal = 4.33 }
 	set_variable = { md_current_monthly_balance = m_bal }
+}
+
+md_submod_budget_graph_init = {
+	md_sample_budget_metrics = yes
 
 	resize_array = { array = revenue_array value = md_current_monthly_revenue size = 120 }
 	resize_array = { array = expense_array value = md_current_monthly_expense size = 120 }
 	resize_array = { array = budget_balance_array value = md_current_monthly_balance size = 120 }
-
-	set_variable = { revenue_array^0 = md_current_monthly_revenue }
-	set_variable = { expense_array^0 = md_current_monthly_expense }
-	set_variable = { budget_balance_array^0 = md_current_monthly_balance }
 }
 
 # 1. THE BUDGET MONTHLY SHIFTER (Self-Healing)
 md_submod_budget_graph_on_monthly = {
-	set_temp_variable = { m_rev = display_income }
-	multiply_temp_variable = { m_rev = 4.33 }
-	set_variable = { md_current_monthly_revenue = m_rev }
-
-	set_temp_variable = { m_exp = display_expense }
-	multiply_temp_variable = { m_exp = 4.33 }
-	set_variable = { md_current_monthly_expense = m_exp }
-
-	set_temp_variable = { m_bal = treasury_rate }
-	multiply_temp_variable = { m_bal = 4.33 }
-	set_variable = { md_current_monthly_balance = m_bal }
+	md_sample_budget_metrics = yes
 
 	if = {
 		limit = { NOT = { check_variable = { revenue_array^num > 0 } } }
@@ -56,17 +46,7 @@ md_submod_budget_graph_on_monthly = {
 
 # 2. THE MATH TRANSLATOR & FAILSAFE
 update_md_flaxbeard_budget_graph = {
-	set_temp_variable = { m_rev = display_income }
-	multiply_temp_variable = { m_rev = 4.33 }
-	set_variable = { md_current_monthly_revenue = m_rev }
-
-	set_temp_variable = { m_exp = display_expense }
-	multiply_temp_variable = { m_exp = 4.33 }
-	set_variable = { md_current_monthly_expense = m_exp }
-
-	set_temp_variable = { m_bal = treasury_rate }
-	multiply_temp_variable = { m_bal = 4.33 }
-	set_variable = { md_current_monthly_balance = m_bal }
+	md_sample_budget_metrics = yes
 
 	if = {
 		limit = { NOT = { check_variable = { revenue_array^num > 0 } } }
@@ -85,23 +65,9 @@ update_md_flaxbeard_budget_graph = {
 	clear_array = md_flax_offsets_balance_red
 	clear_array = md_flax_slopes_balance
 
-	# --- YOY (JANUARY-ONLY SNAPSHOT) ---
-	set_temp_variable = { months_since_jan = global.month }
-	subtract_from_temp_variable = { months_since_jan = 1 }
-
-	set_temp_variable = { recent_jan_idx = current_gdp_graph_end }
-	subtract_from_temp_variable = { recent_jan_idx = months_since_jan }
-	if = { limit = { check_variable = { recent_jan_idx < 0 } } set_temp_variable = { recent_jan_idx = 0 } }
-
-	set_temp_variable = { prev_jan_idx = recent_jan_idx }
-	subtract_from_temp_variable = { prev_jan_idx = 12 }
-	if = { limit = { check_variable = { prev_jan_idx < 0 } } set_temp_variable = { prev_jan_idx = 0 } }
-
-	# ---------------------------------------------
-
 	# FIND BOUNDS (Revenue, Expense, and Balance all share same axis in $B/mo)
 	set_temp_variable = { true_max = revenue_array^0 }
-	set_temp_variable = { true_min = budget_balance_array^0 } 
+	set_temp_variable = { true_min = budget_balance_array^0 }
 	set_temp_variable = { max_jump = 0 }
 
 	for_each_loop = {
@@ -170,49 +136,10 @@ update_md_flaxbeard_budget_graph = {
 		}
 	}
 
-	set_temp_variable = { data_diff = true_max }
-	subtract_from_temp_variable = { data_diff = true_min }
-
-	# FAILSAFE PADDING
-	if = {
-		limit = { check_variable = { data_diff < 1 } }
-		set_temp_variable = { high = true_max }
-		add_to_temp_variable = { high = 1.0 }
-		set_temp_variable = { low = true_min }
-		subtract_from_temp_variable = { low = 1.0 }
-	}
-	else = {
-		set_temp_variable = { pad = data_diff }
-		multiply_temp_variable = { pad = 0.1 } 
-		set_temp_variable = { high = true_max }
-		add_to_temp_variable = { high = pad }
-		set_temp_variable = { low = true_min }
-		subtract_from_temp_variable = { low = pad }
-	}
-
-	set_temp_variable = { diff = high }
-	subtract_from_temp_variable = { diff = low }
-	if = { limit = { check_variable = { diff < 0.01 } } set_temp_variable = { diff = 0.01 } }
-
-	# DYNAMIC ANTI-TEAR ZOOM 
-	set_temp_variable = { safe_diff = max_jump }
-	multiply_temp_variable = { safe_diff = 45 }
-	divide_temp_variable = { safe_diff = 10 }
-
-	if = {
-		limit = { check_variable = { diff < safe_diff } }
-		set_temp_variable = { shortfall = safe_diff }
-		subtract_from_temp_variable = { shortfall = diff }
-		divide_temp_variable = { shortfall = 2 }
-
-		add_to_temp_variable = { high = shortfall }
-		subtract_from_temp_variable = { low = shortfall }
-		set_temp_variable = { diff = safe_diff }
-	}
+	# PADDING, ANTI-TEAR ZOOM & STEP
+	md_calc_standard_axis = yes
 
 	# Y-AXIS LABELS ($B/mo)
-	set_temp_variable = { step = diff }
-	multiply_temp_variable = { step = 0.1 } 
 	set_temp_variable = { buf = low }
 	for_loop_effect = {
 		start = 0 end = 11
@@ -228,38 +155,27 @@ update_md_flaxbeard_budget_graph = {
 
 		if = {
 			limit = { check_variable = { i > current_gdp_graph_end } }
-			add_to_array = { md_flax_offsets_revenue_green = 1000 } 
-			add_to_array = { md_flax_offsets_revenue_red = 1000 } 
+			add_to_array = { md_flax_offsets_revenue_green = 1000 }
+			add_to_array = { md_flax_offsets_revenue_red = 1000 }
 			add_to_array = { md_flax_slopes_revenue = 50 }
 		}
 		else = {
 			set_temp_variable = { y1_val = v }
-			subtract_from_temp_variable = { y1_val = low }
-			divide_temp_variable = { y1_val = diff } 
-			set_temp_variable = { y1_px = y1_val }
-			multiply_temp_variable = { y1_px = 450 }
-
 			set_temp_variable = { next_i = i }
 			add_to_temp_variable = { next_i = 1 }
 
 			if = {
-				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
 				set_temp_variable = { y2_val = revenue_array^next_i }
 			}
 			else = {
-				set_temp_variable = { y2_val = v } 
+				set_temp_variable = { y2_val = v }
 			}
 
-			subtract_from_temp_variable = { y2_val = low }
-			divide_temp_variable = { y2_val = diff } 
-			set_temp_variable = { y2_px = y2_val }
-			multiply_temp_variable = { y2_px = 450 } 
-
-			set_temp_variable = { offset = y1_px }
-			multiply_temp_variable = { offset = -1 }
+			md_calc_segment_math = yes
 
 			if = {
-				limit = { check_variable = { y2_val < y1_val } } # Revenue down = Red
+				limit = { check_variable = { is_falling = 1 } } # Revenue down = Red
 				add_to_array = { md_flax_offsets_revenue_red = offset }
 				add_to_array = { md_flax_offsets_revenue_green = 1000 }
 			}
@@ -268,15 +184,6 @@ update_md_flaxbeard_budget_graph = {
 				add_to_array = { md_flax_offsets_revenue_red = 1000 }
 			}
 
-			set_temp_variable = { slope = y2_px }
-			subtract_from_temp_variable = { slope = y1_px }
-			divide_temp_variable = { slope = 2 }
-			add_to_temp_variable = { slope = 50 }
-
-			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
-			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
-
-			round_variable = slope
 			add_to_array = { md_flax_slopes_revenue = slope }
 		}
 	}
@@ -289,35 +196,24 @@ update_md_flaxbeard_budget_graph = {
 
 		if = {
 			limit = { check_variable = { i > current_gdp_graph_end } }
-			add_to_array = { md_flax_offsets_expense_red = 1000 } 
-			add_to_array = { md_flax_offsets_expense_green = 1000 } 
+			add_to_array = { md_flax_offsets_expense_red = 1000 }
+			add_to_array = { md_flax_offsets_expense_green = 1000 }
 			add_to_array = { md_flax_slopes_expense = 50 }
 		}
 		else = {
 			set_temp_variable = { y1_val = v }
-			subtract_from_temp_variable = { y1_val = low }
-			divide_temp_variable = { y1_val = diff } 
-			set_temp_variable = { y1_px = y1_val }
-			multiply_temp_variable = { y1_px = 450 }
-
 			set_temp_variable = { next_i = i }
 			add_to_temp_variable = { next_i = 1 }
 
 			if = {
-				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
 				set_temp_variable = { y2_val = expense_array^next_i }
 			}
 			else = {
-				set_temp_variable = { y2_val = v } 
+				set_temp_variable = { y2_val = v }
 			}
 
-			subtract_from_temp_variable = { y2_val = low }
-			divide_temp_variable = { y2_val = diff } 
-			set_temp_variable = { y2_px = y2_val }
-			multiply_temp_variable = { y2_px = 450 } 
-
-			set_temp_variable = { offset = y1_px }
-			multiply_temp_variable = { offset = -1 }
+			md_calc_segment_math = yes
 
 			if = {
 				limit = { check_variable = { y2_val > y1_val } } # Expense up = Red
@@ -329,15 +225,6 @@ update_md_flaxbeard_budget_graph = {
 				add_to_array = { md_flax_offsets_expense_red = 1000 }
 			}
 
-			set_temp_variable = { slope = y2_px }
-			subtract_from_temp_variable = { slope = y1_px }
-			divide_temp_variable = { slope = 2 }
-			add_to_temp_variable = { slope = 50 }
-
-			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
-			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
-
-			round_variable = slope
 			add_to_array = { md_flax_slopes_expense = slope }
 		}
 	}
@@ -350,38 +237,27 @@ update_md_flaxbeard_budget_graph = {
 
 		if = {
 			limit = { check_variable = { i > current_gdp_graph_end } }
-			add_to_array = { md_flax_offsets_balance_green = 1000 } 
-			add_to_array = { md_flax_offsets_balance_red = 1000 } 
+			add_to_array = { md_flax_offsets_balance_green = 1000 }
+			add_to_array = { md_flax_offsets_balance_red = 1000 }
 			add_to_array = { md_flax_slopes_balance = 50 }
 		}
 		else = {
 			set_temp_variable = { y1_val = v }
-			subtract_from_temp_variable = { y1_val = low }
-			divide_temp_variable = { y1_val = diff } 
-			set_temp_variable = { y1_px = y1_val }
-			multiply_temp_variable = { y1_px = 450 }
-
 			set_temp_variable = { next_i = i }
 			add_to_temp_variable = { next_i = 1 }
 
 			if = {
-				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } } 
+				limit = { NOT = { check_variable = { next_i > current_gdp_graph_end } } }
 				set_temp_variable = { y2_val = budget_balance_array^next_i }
 			}
 			else = {
-				set_temp_variable = { y2_val = v } 
+				set_temp_variable = { y2_val = v }
 			}
 
-			subtract_from_temp_variable = { y2_val = low }
-			divide_temp_variable = { y2_val = diff } 
-			set_temp_variable = { y2_px = y2_val }
-			multiply_temp_variable = { y2_px = 450 } 
-
-			set_temp_variable = { offset = y1_px }
-			multiply_temp_variable = { offset = -1 }
+			md_calc_segment_math = yes
 
 			if = {
-				limit = { check_variable = { y1_val < 0 } } # Deficit = Red
+				limit = { check_variable = { v < 0 } } # Deficit = Red
 				add_to_array = { md_flax_offsets_balance_red = offset }
 				add_to_array = { md_flax_offsets_balance_green = 1000 }
 			}
@@ -390,16 +266,9 @@ update_md_flaxbeard_budget_graph = {
 				add_to_array = { md_flax_offsets_balance_red = 1000 }
 			}
 
-			set_temp_variable = { slope = y2_px }
-			subtract_from_temp_variable = { slope = y1_px }
-			divide_temp_variable = { slope = 2 }
-			add_to_temp_variable = { slope = 50 }
-
-			if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
-			if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
-
-			round_variable = slope
 			add_to_array = { md_flax_slopes_balance = slope }
 		}
 	}
+
+	gdp_graph_update_dirty_var = yes
 }
