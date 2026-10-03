@@ -115,6 +115,54 @@ def test_pr_entry_keeps_its_place_between_main_edits():
     )
 
 
+def test_pr_entry_stays_in_its_category_when_main_adds_the_next_one():
+    graphics = "\nGraphics:\n - Main icon\n"
+    base = changelog(" - A\n")
+    ours = changelog(" - A\n", " - Main entry\n", graphics)
+    theirs = changelog(" - A\n", " - PR entry\n")
+
+    assert merge_text(base, ours, theirs) == changelog(
+        " - A\n", " - Main entry\n", " - PR entry\n", graphics
+    )
+
+
+def test_pr_entry_joins_the_category_both_sides_added():
+    database = "\nDatabase:\n - Main unit\n"
+    base = changelog(" - A\n")
+    ours = changelog(" - A\n", "\nGraphics:\n - Main icon\n", database)
+    theirs = changelog(" - A\n", "\nGraphics:\n - PR icon\n")
+
+    assert merge_text(base, ours, theirs) == changelog(
+        " - A\n", "\nGraphics:\n - Main icon\n", " - PR icon\n", database
+    )
+
+
+def test_pr_category_main_lacks_keeps_its_entries():
+    graphics = "\nGraphics:\n - Main icon\n"
+    database = "\nDatabase:\n - PR unit\n"
+    base = changelog(" - A\n")
+
+    assert merge_text(
+        base, changelog(" - A\n", graphics), changelog(" - A\n", database)
+    ) == changelog(" - A\n", graphics, database)
+
+
+def test_pr_entry_follows_its_category_into_the_version_main_started():
+    ours = "v2.0.2\n\nContent:\n - New feature\n{}\nBugfix:\n - New fix\n"
+    theirs = changelog(" - A\n", " - PR entry\n")
+
+    assert merge_text(changelog(" - A\n"), ours.format(""), theirs) == ours.format(
+        " - PR entry\n"
+    )
+
+
+def test_pr_entry_whose_category_main_dropped_stays_unresolved():
+    ours = "v2.0.2\n\nBugfix:\n - New fix\n"
+    theirs = changelog(" - A\n", " - PR entry\n")
+
+    assert merge_text(changelog(" - A\n"), ours, theirs) is None
+
+
 def commit_changelog(repository, branch, text):
     run_git(repository, "checkout", "--quiet", "-B", branch, "base")
     (repository / "Changelog.txt").write_bytes(text.encode("utf-8"))
