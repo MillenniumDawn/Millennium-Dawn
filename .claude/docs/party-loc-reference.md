@@ -1,24 +1,21 @@
 # Party Localisation Reference
 
-How a country's political parties are named, described, and iconified in the MD politics
-view. Read before adding or reworking any `TAG.<subideology>` key.
+Read before adding or reworking any `TAG.<subideology>` key. Three files are involved:
 
-Three files are always involved:
+- `localisation/english/MD_politics_view_parties_l_english.yml`: name, icon, and
+  description strings.
+- `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`: the
+  per-tag hooks that select them.
+- `interface/MD_parties_icons.gfx`: the `GFX_<TAG>_<party>` sprites.
 
-- `localisation/english/MD_politics_view_parties_l_english.yml` — the name / icon / desc strings
-- `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt` — the per-tag
-  hooks that select them
-- `interface/MD_parties_icons.gfx` — the `GFX_<TAG>_<party>` sprites
-
-**A loc key with no hook is dead.** Writing the `.yml` block is only half the job — the
-politics view never reads `TAG.conservatism` directly, it calls `[conservatism_L]`, which
-resolves through the scripted-localisation switch. This is the single most common mistake.
+A loc key with no hook is dead. The politics view calls `[conservatism_L]`, which
+resolves through the scripted-localisation switch. It never reads `TAG.conservatism`
+directly.
 
 ## The 24 subideologies
 
-Defined in `common/ideologies/00_ideologies.txt`. The `^N` index is the country's
-`party_pop_array` slot, set in `history/countries/<TAG>*.txt`; the index↔slot mapping is
-documented at `MD_politics_view_parties_l_english.yml:38-61`.
+Defined in `common/ideologies/00_ideologies.txt`. `^N` is the country's `party_pop_array`
+slot, set in `history/countries/<TAG>*.txt`.
 
 | `^N` | Subideology                  | Ideology      | Generic label                 |
 | ---- | ---------------------------- | ------------- | ----------------------------- |
@@ -47,154 +44,97 @@ documented at `MD_politics_view_parties_l_english.yml:38-61`.
 | 22   | `Nat_Autocracy`              | `nationalist` | Military Junta                |
 | 23   | `Monarchist`                 | `nationalist` | Monarchists                   |
 
-Case matters: `neutral_Social` and `oligarchism` are the only two with a lowercase first
+Case matters. `neutral_Social` and `oligarchism` are the only two with a lowercase first
 letter.
 
 ## Key format
 
 ```
- TAG.subideology: "£PARTY_ICON (ABBRV) - Party Name"
- TAG.subideology_icon: "£PARTY_ICON"
- TAG.subideology_desc: "(Ideology Group) - Party Name (Native: Nativename, ABBRV)\n\nDescription."
-```
-
-Worked example (`MOR`, `MD_politics_view_parties_l_english.yml:7939`):
-
-```
  MOR.conservatism: "£MOR_NRI (RNI) - National Rally of Independents"
  MOR.conservatism_icon: "£MOR_NRI"
- MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (Arabic: Altajamue Alwataniu Lil'ahrar, French: Rassemblement National des Indépendants, RNI)\n\nNominally a social-democratic party, the party often cooperates with other parties with liberal orientation…"
+ MOR.conservatism_desc: "(Classic Liberalism) - National Rally of Independents (Arabic: Altajamue Alwataniu Lil'ahrar, French: Rassemblement National des Indépendants, RNI)\n\nDescription."
 ```
 
-Rules:
-
-- Every line carries a **leading space** before the key. The file is UTF-8 **with** BOM.
-- All of a tag's keys sit in **one contiguous block**, placed alphabetically by tag among
-  its neighbours, and ordered inside the block by `^N` index.
-- `(Ideology Group)` in the desc is the party's real-world ideological label
-  (`Liberal Conservatism`, `Democratic Socialism`, `Salafi Jihadism`), not the MD
-  subideology token.
-- Native names go in parentheses after the English name, one language per label
-  (`Greek: …`, `Arabic: …`, `French: …`), abbreviation last.
-- `\n\n` is a literal backslash-n pair in the `.yml`, not a real newline.
-- Descriptions are encyclopedic and factual, in the present tense, and describe the party as
-  it is under its own gate: ideology, what it campaigns on, where its leverage lies. No
-  forward references to a later rename, merger, dissolution or split — that is the next
-  gated variant's job. No editorialising, no purple prose.
-- Reference-quality tags to copy from: `MOR` (`:7936`), `ITA` (`:6934`), `GEO` (`:6470`).
+- Every line has a leading space before the key.
+- A tag's keys sit in one contiguous block, placed alphabetically by tag and ordered
+  inside the block by `^N`.
+- `(Ideology Group)` is the party's real-world label (`Liberal Conservatism`,
+  `Salafi Jihadism`), not the MD subideology token.
+- Native names follow the English name, one language per label, abbreviation last.
+- `\n\n` is a literal backslash-n pair in the `.yml`.
+- Descriptions are factual and present tense, and describe the party as it is under its
+  own gate. No forward references to a later rename, merger, or split.
+- Tags to copy from: `MOR`, `ITA`, `GEO`.
 
 ## Icons
 
-A party gets an `_icon` key **only** when a tag-specific sprite exists — i.e. a
-`spriteType` in `interface/MD_parties_icons.gfx` backed by a real `.dds` under
-`gfx/texticons/parties_icons/<country>/`. Verify before writing the reference:
+A party gets an `_icon` key only when a tag sprite exists: a `spriteType` in
+`interface/MD_parties_icons.gfx` backed by a `.dds` under
+`gfx/texticons/parties_icons/<country>/`. Never invent a `GFX_` name.
 
-```bash
-grep -n 'name = "GFX_TAG_' interface/MD_parties_icons.gfx
-ls gfx/texticons/parties_icons/<country>/
-```
-
-With no tag sprite, use the generic one inline in the name key and **omit the `_icon` key
-entirely** — the icon `defined_text` falls back to `generic.<slot>_icon` on its own
-(`MOR.Caliphate` and `MOR.Vilayat_e_Faqih` are the precedent). Generic sprites are
+With no tag sprite, use the generic one inline in the name key and omit the `_icon`
+key. The icon hook falls back to `generic.<slot>_icon`. Generic sprites are
 `GFX_generic_<slot>_small`, with two irregulars:
 
-- `communist_state` → `£generic_Communist_State_small` (the sprite keeps its `Communist_State` spelling)
-- `Neutral_Muslim_Brotherhood` → `£muslim_brotherhood_small` (no `generic_` prefix)
+- `communist_state` uses `£generic_Communist_State_small`.
+- `Neutral_Muslim_Brotherhood` uses `£muslim_brotherhood_small`.
 
-Never invent a `GFX_` name; an undefined sprite renders nothing.
+## Hooks
 
-## The three hook blocks
-
-`common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt` holds three
-`defined_text` blocks per subideology:
-
-| Block           | Selects     | Example name         |
-| --------------- | ----------- | -------------------- |
-| `<slot>_L`      | Party name  | `conservatism_L`     |
-| `<slot>_L_desc` | Description | `Nat_Fascism_L_desc` |
-| `<slot>_L_icon` | Sprite      | `Monarchist_L_icon`  |
-
-Each is a switch whose lines are sorted **alphabetically by tag** and terminate in a
+Each subideology has three `defined_text` blocks: `<slot>_L` (name), `<slot>_L_desc`,
+and `<slot>_L_icon`. Each is a switch sorted alphabetically by tag that ends in a
 generic fallback:
 
 ```
  text = { trigger = { original_tag = GRE } localization_key = GRE.conservatism }
- …
  text = { localization_key = generic.conservatism }
 ```
 
-Add one line per block per party. Insert alphabetically; a misplaced line still works but
-makes the next edit harder to review.
+Add one line per block per party. Use `original_tag`, never `tag`, so a civil-war
+split-off keeps its parties.
 
-Use `original_tag`, never `tag` — a civil-war split-off keeps its original tag and would
-otherwise lose its parties.
+## Flag-gated variants
 
-## Flag-gated variants and their events
-
-A mid-period identity change (rename, merger, dissolution, split) is a flag set by a flavour
-event, not a bare `date >` in the hook. The player sees the change happen, and the swap
-cannot drift from the event that explains it. **First match wins**, so the flag line goes
-first and the pair stays adjacent:
+A mid-period identity change (rename, merger, dissolution, split) is a flag set by a
+flavor event, not a bare `date >` in the hook. First match wins, so the flag line goes
+first:
 
 ```
  text = { trigger = { original_tag = BOT has_country_flag = BOT_business_botswana_formed } localization_key = BOT.oligarchism_2015 }
  text = { trigger = { original_tag = BOT NOT = { has_country_flag = BOT_business_botswana_formed } } localization_key = BOT.oligarchism }
 ```
 
-The event (`events/Botswana.txt`, `Botswana_events.8`) is `is_triggered_only` and
-`fire_only_once`, checks `original_tag`, has no picture, and its single option sets the flag
-and runs `update_party_name = yes`. It is scheduled on the real date from
-`common/scripted_effects/00_yearly_effects.txt`:
+The event (`Botswana_events.8` is the reference) is `is_triggered_only` and
+`fire_only_once`, checks `original_tag`, has no picture, and its one option sets the
+flag and runs `update_party_name = yes`. Schedule it on the real date in
+`common/scripted_effects/00_yearly_effects.txt`.
 
-```
-trigger_year_2015_events = {
- …
- BOT = { country_event = { id = Botswana_events.8 days = 209 } }
-```
-
-Precedents: `brazil_flavour_events.14` (`BRA_democrats_party_formed`, PFL → Democratas),
-`Botswana_events.9` (`BOT_alliance_for_progressives_formed`), `EST.Nat_Fascism` /
-`EST.Nat_Fascism2` (`EST_ekre_has_formed`), `ITA.Nat_Fascism` / `ITA.forza_nuova_loc_key` /
-`ITA.casapound_loc_key` (`check_variable = { Nat_Fascism_leader = N }`). Older bare date
-gates such as `DEN.Nat_Fascism` / `DEN.Nat_Fascism_2017` (`date < 2016.12.12`) still exist;
-do not add new ones.
-
-Two traps:
-
-- **Split the icon hook too.** A date-split name with an unconditional `_icon` hook shows
-  the old party's logo next to the new party's name.
-- **Watch the tag in copy-pasted gate lines.** A `GER`→`GRE` typo in exactly this position
-  left Germany showing the generic "Fascists" post-2023 while Greece rendered the German
-  party "Die Heimat" — silent, since both tags are valid.
+- Split the icon hook too, or the old logo shows beside the new name.
+- Check the tag in copied gate lines. A `GER` for `GRE` typo is silent, since both tags
+  are valid.
+- Older bare date gates exist. Do not add new ones.
 
 ## Choosing parties
 
-Only use organisations that really existed in the 2000–2025 window. If a slot has no real
-counterpart in that country, **leave it generic** rather than inventing one — a generic
-label is honest, an invented party is not.
+Use only organisations that existed in the 2000 to 2025 window. If a slot has no real
+counterpart, leave it generic.
 
-Non-party entities are acceptable where the slot has no electoral equivalent and MD
-precedent exists: employers' confederations for `oligarchism` (`MOR.Autocracy` = CGEM),
-`<Country> Armed Forces` for `Nat_Autocracy` (`ITA.Nat_Autocracy` = Forze Armate Italiane),
-and the royal house for `Monarchist`. Say what the entity actually is in its description.
+Non-party entities are acceptable where MD precedent exists: employers' confederations
+for `oligarchism`, `<Country> Armed Forces` for `Nat_Autocracy`, and the royal house for
+`Monarchist`. Say what the entity is in its description.
 
-## Verification checklist
+## Verification
 
 ```bash
 python tools/validation/validate_party_loc.py --tag TAG
 ```
 
-covers the name and description formats, the loc-key ↔ hook pairing in both directions, the
-icon/name sprite agreement, miscased subideologies, and duplicate `original_tag` gates. It never
-reports a missing slot — an unfilled one is meant to fall through to the generic label.
+It covers the name and description formats, key and hook pairing, icon agreement,
+miscased subideologies, and duplicate gates. It never reports a missing slot. Check by
+hand:
 
-Check by hand what it cannot see:
-
-1. Every `£sprite` resolves: `grep -rn 'name = "GFX_<name>"' interface/` (repo-wide, this is
-   `validate_gfx_references.py`).
-2. Keys alphabetical within the block, leading space on every line, BOM intact.
-3. `history/countries/<TAG>*.txt` `party_pop_array^N` indices still line up with the slots
-   they are commented as.
-4. In game: the politics view at the start date, then `event <Country>_events.N` from the
-   console for each new identity-change event and the politics view again.
+1. Every `£sprite` resolves in `interface/`.
+2. Keys are alphabetical within the block, with the leading space and BOM intact.
+3. `party_pop_array^N` indices in `history/countries/<TAG>*.txt` match their slots.
+4. In game: the politics view at the start date, then after `event <id>` for each new
+   identity-change event.
