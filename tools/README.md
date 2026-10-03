@@ -361,10 +361,11 @@ Tests live in `tests/report_lib/` and run on every PR via the `test-suite.yml` w
 
 ### Tests (`tests/`)
 
-| Script                             | Description                                                      |
-| ---------------------------------- | ---------------------------------------------------------------- |
-| **staged_validators_test.py**      | Tests staged validators using synthetic temporary files          |
-| **staged_validators_real_test.py** | Tests staged validators against real mod files with known issues |
+| Script                             | Description                                                       |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| **staged_validators_test.py**      | Tests staged validators using synthetic temporary files           |
+| **staged_validators_real_test.py** | Tests staged validators against real mod files with known issues  |
+| **staged_harness_test.py**         | Checks that both harnesses fail on a crash, timeout, or no result |
 
 Tests for individual validators live in `tests/validation/`:
 
