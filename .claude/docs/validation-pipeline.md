@@ -3,9 +3,9 @@
 Pre-commit and CI run different hook sets. A change can pass locally and fail CI, or
 the reverse. Read this before wiring, judging, or debugging a validator.
 
-What one validator checks, its severities, and its backlog are in
+What one validator checks, its exemptions, and its known gaps are in
 [Validator Check Notes](validator-check-notes.md). Search that file for the script or
-category name. Do not read it whole.
+category name. Do not read it whole. Track a backlog in a GitHub issue, not in a doc.
 
 ## Hard gate
 

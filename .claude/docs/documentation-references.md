@@ -98,4 +98,4 @@ All files below live in `.claude/docs/`.
 | `typo-watchlist.md`              | Recurring localisation typos to check in review              |
 | `un-system-reference.md`         | UN votes/elections: invariants, new-resolution recipe        |
 | `validation-pipeline.md`         | Pre-commit vs CI rules, config, vanilla data refresh         |
-| `validator-check-notes.md`       | Per-validator checks, severities, backlogs; search by name   |
+| `validator-check-notes.md`       | Per-validator checks, exemptions, gaps; search by name       |
