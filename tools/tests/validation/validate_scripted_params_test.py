@@ -19,6 +19,7 @@ import sys
 
 import pytest
 import validate_scripted_params as vsp
+from shared_utils import collapse_or_compact
 from validate_scripted_params import _validate_call_sites_in_file
 
 
@@ -1012,6 +1013,28 @@ _SEMANTIC_FIXTURES = {
         "\ttest_effect = yes test_effect = yes\n}\n",
         [(_SHARED, 3)],
     ),
+    "weighted_wrapper": ("25 = { test_effect = yes }\n", [(_MISSING, 1)]),
+    "wrapper_with_comment": (
+        'hidden_effect = { test_effect = yes } # " } test_effect = yes\n',
+        [(_MISSING, 1)],
+    ),
+    "nested_wrapper": (
+        "hidden_effect = { ROOT = { test_effect = yes } }\n",
+        [(_MISSING, 1)],
+    ),
+    "closing_brace": ("option = {\ntest_effect = yes }\n", [(_MISSING, 2)]),
+    "call_before_setter": (
+        "option = { test_effect = yes set_temp_variable = { amount = 1 } }\n",
+        [(_SHARED, 1), (_MISSING, 1)],
+    ),
+    "inline_limit": (
+        "if = { limit = { always = yes } test_effect = yes }\n",
+        [(_SHARED, 1), (_MISSING, 1)],
+    ),
+    "empty_sibling": (
+        "test_effect = yes hidden_effect = { }\n",
+        [(_SHARED, 1), (_MISSING, 1)],
+    ),
 }
 
 
@@ -1034,10 +1057,8 @@ def test_semantic_fixture_agrees_uncached_cold_and_warm(tmp_path, monkeypatch, f
     assert [(category, line) for category, _message, line in uncached] == expected
 
 
-@pytest.mark.parametrize("audit, shared_lines", [(False, [2]), (True, [2, 3])])
-def test_shared_line_calls_warn_and_the_audit_flag_widens_them(
-    tmp_path, audit, shared_lines
-):
+@pytest.mark.parametrize("audit", [False, True])
+def test_shared_line_calls_gate_and_audit_additions_only_warn(tmp_path, audit):
     _write(
         tmp_path / "common" / "scripted_effects" / "effects.txt",
         "# Parameters:\n# - amount: how much\ntest_effect = {\n}\nplain_effect = {\n}\n",
@@ -1056,10 +1077,120 @@ def test_shared_line_calls_warn_and_the_audit_flag_widens_them(
     )
     validator.run_validations()
 
+    expected = [(_SHARED, vsp.Severity.ERROR, 2)]
+    if audit:
+        expected.append(("audit-call-shares-line", vsp.Severity.WARNING, 3))
     assert [
         (issue.category, issue.severity, issue.line) for issue in validator._issues
-    ] == [(_SHARED, vsp.Severity.WARNING, line) for line in shared_lines]
-    assert validator.errors_found == 0
+    ] == expected
+    assert validator.errors_found == 1
+    assert validator.warnings_found == int(audit)
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        "plain_effect = yes test_effect = yes",
+        "test_effect = yes plain_effect = yes",
+        "test_effect = yes test_effect = yes",
+    ],
+)
+def test_contracted_call_owns_a_mixed_audit_line(tmp_path, calls):
+    path = tmp_path / "mixed.txt"
+    _write(path, "set_temp_variable = { amount = 1 }\n" + calls + "\n")
+    findings = _validate_call_sites_in_file(
+        (str(path), _AMOUNT_CONTRACT, str(tmp_path), frozenset(), {"plain_effect"})
+    )
+    assert [(category, line) for category, _message, line in findings] == [(_SHARED, 2)]
+    assert "'test_effect'" in findings[0][1]
+
+
+@pytest.mark.parametrize("wrapper", ["25", "hidden_effect", "ROOT", "var:target"])
+def test_single_leaf_formatter_output_passes_the_call_rule(tmp_path, wrapper):
+    block = [f"{wrapper} = {{", "\ttest_effect = yes", "}"]
+    rendered = collapse_or_compact(block)
+    assert rendered == [f"{wrapper} = {{ test_effect = yes }}"]
+    assert collapse_or_compact(rendered) == rendered
+    path = tmp_path / "formatted.txt"
+    _write(path, "set_temp_variable = { amount = 1 }\n" + rendered[0] + "\n")
+    assert (
+        _validate_call_sites_in_file(
+            (str(path), _AMOUNT_CONTRACT, str(tmp_path), frozenset(), frozenset())
+        )
+        == []
+    )
+
+
+def test_splitting_statements_preserves_influence_values_and_errors(
+    tmp_path, cip_contract
+):
+    statements = [
+        "option = {",
+        "set_temp_variable = { percent_change = 2.00 }",
+        "set_temp_variable = { tag_index = USA }",
+        "set_temp_variable = { influence_target = USA }",
+        "change_influence_percentage = yes",
+        "set_temp_variable = { tag_index = ZZZ }",
+        "change_influence_percentage = yes",
+        "}",
+    ]
+    token_sequences = []
+    for separator in (" ", "\n"):
+        script = separator.join(statements)
+        path = tmp_path / "influence.txt"
+        _write(path, script)
+        token_sequences.append(
+            [(kind, name, rhs) for kind, _line, name, rhs in vsp._tokenize(script)]
+        )
+        findings = _validate_call_sites_in_file(
+            (str(path), cip_contract, str(tmp_path), _TEST_VALID_TAGS, frozenset())
+        )
+        assert [
+            category for category, _message, _line in findings if category != _SHARED
+        ] == [
+            "identical-influence-params",
+            "invalid-influence-tag",
+        ]
+    assert token_sequences[0] == token_sequences[1]
+
+
+@pytest.mark.parametrize("audit", [False, True])
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize(
+    "script, fails",
+    [
+        ("hidden_effect = { plain_effect = yes }", False),
+        ("plain_effect = yes add_stability = 0.1", False),
+        (
+            "set_temp_variable = { amount = 1 }\n"
+            "test_effect = yes add_stability = 0.1",
+            True,
+        ),
+        (
+            "set_temp_variable = { amount = 1 }\n"
+            "hidden_effect = { test_effect = yes }",
+            False,
+        ),
+        ("test_effect = yes", True),
+    ],
+)
+def test_cli_keeps_audit_advisory_without_weakening_errors(
+    tmp_path, monkeypatch, audit, strict, script, fails
+):
+    _write(
+        tmp_path / "common" / "scripted_effects" / "contracts.txt",
+        "# Parameters:\n# - amount: required\ntest_effect = { }\nplain_effect = { }\n",
+    )
+    _write(tmp_path / "events" / "calls.txt", script + "\n")
+    argv = [vsp.__file__, "--path", str(tmp_path), "--workers", "1", "--no-color"]
+    if audit:
+        argv.append("--audit-shared-lines")
+    if strict:
+        argv.append("--strict")
+    monkeypatch.setattr(sys, "argv", argv)
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(vsp.__file__, run_name="__main__")
+    assert exit_info.value.code == int(strict and fails)
 
 
 def test_validator_reports_every_unreadable_input_as_an_error(tmp_path):
