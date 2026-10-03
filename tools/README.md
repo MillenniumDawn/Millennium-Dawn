@@ -102,9 +102,14 @@ python3 tools/merge_changelog.py --fix
 
 This sorts only the current version's entries within each category. Untagged
 entries come first, followed by the first country tag. Equal tags keep their
-order. Older versions, entry text, and duplicate entries are left alone. Resolve
+order. Blank lines between entries are dropped and repeated blank lines become
+one. Older versions, entry text, and duplicate entries are left alone. Resolve
 conflict markers first. The Git merge driver also applies this ordering after a
 successful merge.
+
+The merge driver keeps a PR's new entry in the category the PR put it under. If
+main started a new version, the entry moves to the same category there. A PR
+whose category main no longer has is skipped for a human to resolve.
 
 ### Validation timing baselines
 
