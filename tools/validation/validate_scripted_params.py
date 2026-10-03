@@ -13,6 +13,7 @@ import re
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
+from shared_utils import blank_quoted_strings
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -132,6 +133,14 @@ _CALL_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\s*=\s*yes\b")
 # Numeric scopes (741 = {) must open a block, or their close pops the wrong one.
 _KW_OPEN_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=\s*\{")
 
+_READ_ERRORS = (OSError, UnicodeDecodeError)
+
+
+def _unreadable(filepath: str, mod_path: str, exc: Exception) -> str:
+    """Describe an input that could not be read, in the `file:line - text` form."""
+    rel = os.path.relpath(filepath, mod_path)
+    return f"{rel}:0 - cannot read file ({type(exc).__name__})"
+
 
 def _normalize_influence_value(value: str) -> str:
     """Normalize a tag_index / influence_target value for identity comparison.
@@ -185,15 +194,17 @@ _MISCASED_TAG_RE = re.compile(r"[A-Za-z]{3}")
 _NUMERIC_RE = re.compile(r"-?\d+(\.\d+)?")
 
 
-def _load_valid_country_tags(mod_path: str) -> "frozenset[str]":
+def _load_valid_country_tags(mod_path: str) -> Tuple["frozenset[str]", List[str]]:
     """Load valid country tags and tag aliases as one accept-set.
 
     Tags come from common/country_tags/*.txt (`TAG = "path"`); aliases from
     common/country_tag_aliases/*.txt (`ALIAS = { ... }`).  Aliases are real
     references at runtime — e.g. STC / NTR are aliases, not typos — so the
-    tag-validity check accepts both.
+    tag-validity check accepts both.  Also returns the files that could not
+    be read.
     """
     valid: Set[str] = set()
+    unreadable: List[str] = []
     tag_re = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"')
     for fp in glob.glob(os.path.join(mod_path, "common", "country_tags", "*.txt")):
         try:
@@ -202,8 +213,8 @@ def _load_valid_country_tags(mod_path: str) -> "frozenset[str]":
                     m = tag_re.match(line)
                     if m:
                         valid.add(m.group(1))
-        except Exception:
-            continue
+        except _READ_ERRORS as exc:
+            unreadable.append(_unreadable(fp, mod_path, exc))
     alias_re = re.compile(r"^\s*([A-Za-z0-9_]{3})\s*=\s*\{")
     for fp in glob.glob(
         os.path.join(mod_path, "common", "country_tag_aliases", "*.txt")
@@ -214,9 +225,9 @@ def _load_valid_country_tags(mod_path: str) -> "frozenset[str]":
                     m = alias_re.match(line)
                     if m:
                         valid.add(m.group(1))
-        except Exception:
-            continue
-    return frozenset(valid)
+        except _READ_ERRORS as exc:
+            unreadable.append(_unreadable(fp, mod_path, exc))
+    return frozenset(valid), unreadable
 
 
 def _is_invalid_influence_tag(value: str, valid_tags: "frozenset[str]") -> bool:
@@ -255,12 +266,11 @@ def _parse_effect_contracts_from_file(
         # Parameters:
         # - param_name: description
         effect_name = {
+
+    A read or decode error propagates so the caller can report the file.
     """
-    try:
-        with open(filepath, "r", encoding="utf-8-sig") as fh:
-            content = fh.read()
-    except Exception:
-        return {}
+    with open(filepath, "r", encoding="utf-8-sig") as fh:
+        content = fh.read()
 
     contracts: Dict[str, Dict[str, List[str]]] = {}
     lines = content.splitlines()
@@ -383,7 +393,7 @@ def _normalize_multiline_set_temp(text: str) -> str:
 
 
 def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
-    """Tokenize comment-stripped script text into a flat token list.
+    """Tokenize script text, comments stripped and quotes blanked, into tokens.
 
     Each token is (kind, line_number, value, rhs):
       "set_temp"   — set_temp_variable = { NAME = RHS }  (value=NAME, rhs=RHS)
@@ -403,11 +413,6 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
     lines = text.splitlines()
 
     for lineno, raw in enumerate(lines, start=1):
-        # Inline comment stripping
-        ci = raw.find("#")
-        if ci >= 0:
-            raw = raw[:ci]
-
         line_tokens = []
         for m in _SET_TEMP_RE.finditer(raw):
             line_tokens.append(
@@ -459,10 +464,11 @@ def _validate_call_sites_in_file(
     try:
         with open(filepath, "r", encoding="utf-8-sig") as fh:
             raw = fh.read()
-    except Exception:
-        return []
+    except _READ_ERRORS as exc:
+        return [("unreadable-input", _unreadable(filepath, mod_path, exc), 0)]
 
-    text = strip_comments(raw)
+    # A quoted log can hold a `#`, a brace, or text shaped like a call.
+    text = blank_quoted_strings(strip_comments(raw))
     rel = os.path.relpath(filepath, mod_path)
 
     # Quick pre-check: does this file reference any contracted effect?
@@ -626,10 +632,12 @@ class Validator(BaseValidator):
         super().__init__(*args, **kwargs)
         self._contracts: Dict[str, Dict[str, List[str]]] = {}
         self._valid_tags: "frozenset[str]" = frozenset()
+        self._unreadable: List[str] = []
 
     def _build_tag_set(self):
         """Load valid country tags + aliases for the tag-validity check."""
-        self._valid_tags = _load_valid_country_tags(self.mod_path)
+        self._valid_tags, unreadable = _load_valid_country_tags(self.mod_path)
+        self._unreadable.extend(unreadable)
         self.log(f"  Valid country tags + aliases:     {len(self._valid_tags)}")
 
     def _build_contracts(self):
@@ -645,7 +653,11 @@ class Validator(BaseValidator):
         )
         discovered = 0
         for filepath in sorted(effect_files):
-            parsed = _parse_effect_contracts_from_file(filepath)
+            try:
+                parsed = _parse_effect_contracts_from_file(filepath)
+            except _READ_ERRORS as exc:
+                self._unreadable.append(_unreadable(filepath, self.mod_path, exc))
+                continue
             for eff_name, contract in parsed.items():
                 if eff_name not in self._contracts and contract["required"]:
                     self._contracts[eff_name] = contract
@@ -692,6 +704,8 @@ class Validator(BaseValidator):
                     identical_param_results.append(message)
                 elif category == "invalid-influence-tag":
                     invalid_tag_results.append(message)
+                elif category == "unreadable-input":
+                    self._unreadable.append(message)
 
         self._report(
             missing_param_results,
@@ -729,6 +743,14 @@ class Validator(BaseValidator):
         self._build_contracts()
         self._build_tag_set()
         self._validate_callers()
+        # A scripted effect file is read as a contract source and as a caller.
+        self._report(
+            sorted(set(self._unreadable)),
+            "All scripted effect inputs were readable",
+            "Inputs that could not be read, so nothing in them was validated:",
+            severity=Severity.ERROR,
+            category="unreadable-input",
+        )
 
 
 if __name__ == "__main__":
