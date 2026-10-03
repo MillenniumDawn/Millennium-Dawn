@@ -1160,14 +1160,7 @@ def strip_comments(text: str) -> str:
         if line.lstrip().startswith("#"):
             result.append("")
             continue
-        in_quote = False
-        for i, ch in enumerate(line):
-            if ch == '"':
-                in_quote = not in_quote
-            elif ch == "#" and not in_quote:
-                line = line[:i]
-                break
-        result.append(line)
+        result.append(strip_inline_comment(line))
     return "\n".join(result)
 
 

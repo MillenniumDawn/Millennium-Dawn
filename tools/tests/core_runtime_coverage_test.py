@@ -407,6 +407,7 @@ def test_file_opener_cleaners_and_line_helpers(tmp_path, monkeypatch, capsys):
     assert U.find_line_number(str(path), "KEY") == 1
     assert U.find_line_number(str(path), "missing") == 0
     assert U.strip_comments('a # x\n# whole\nlog = "# keep"') == 'a \n\nlog = "# keep"'
+    assert U.strip_comments('log = "a \\" # keep" # x') == 'log = "a \\" # keep" '
     assert U.blank_quoted_strings('x = "a { b }"\nyes', {4}) == 'x = "a { b }"\nyes'
 
     assert U.DataCleaner.clear_false_positives({"a": 1, "b": 2}, ("b", "gone")) == {
