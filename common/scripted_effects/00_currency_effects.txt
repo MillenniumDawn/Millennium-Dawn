@@ -273,7 +273,13 @@ calculate_currency_strength = {
 			divide = 100
 			subtract = inflation_rate_var
 			subtract = @currency_real_rate_neutral
-			clamp = { min = -0.10 max = 0.05 }
+			# The floor rises with the rate, so a higher rate still helps when inflation is far above it.
+			clamp = {
+				min = 0.05
+				max = {
+					value = cb_policy_rate multiply = 0.0025 subtract = 0.10
+				}
+			}
 			multiply = @currency_real_rate_sensitivity
 			add = debt_risk_pressure
 			add = {

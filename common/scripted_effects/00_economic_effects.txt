@@ -425,9 +425,13 @@ quarterly_inflation_calculation = {
 	set_temp_variable = {
 		expectations_vulnerability = {
 			value = 0.9
-			# Each policy rate point cuts a fixed share, so the rate still works when inflation is far above it.
-			subtract = { value = cb_policy_rate multiply = 0.025 }
-			add = { value = excess_deficit_ratio multiply = 5 clamp = { min = 0 max = 0.5 } }
+			# Each policy rate point cuts a fixed share at any inflation level; an excess deficit halves it at most.
+			subtract = {
+				value = 1
+				subtract = { value = excess_deficit_ratio multiply = 5 clamp = { min = 0 max = 0.5 } }
+				multiply = cb_policy_rate
+				multiply = 0.025
+			}
 			# Below 1 so inflation decays once its drivers stop; at 1 or above it feeds itself.
 			clamp = { min = 0.25 max = 0.9 }
 		}
@@ -577,17 +581,27 @@ quarterly_inflation_calculation = {
 		}
 		set_temp_variable = { neutral_cb_rate_lower = { value = neutral_cb_rate subtract = 0.5 } }
 		set_temp_variable = { neutral_cb_rate_upper = { value = neutral_cb_rate add = 0.5 } }
-		# Hike faster when far below neutral, or a high-inflation start takes years to respond.
+		# Move faster when far from neutral, or the rate takes years to follow inflation up or down.
 		set_temp_variable = { neutral_cb_rate_far_below = { value = neutral_cb_rate subtract = 5 } }
+		set_temp_variable = { neutral_cb_rate_far_above = { value = neutral_cb_rate add = 5 } }
+		# The AI stops hiking at 20, or the rate's debt interest outweighs the inflation cut. Players can go to 30.
 		if = {
-			limit = { check_variable = { cb_policy_rate < neutral_cb_rate_far_below } }
+			limit = {
+				check_variable = { cb_policy_rate < neutral_cb_rate_far_below }
+				check_variable = { cb_policy_rate < 18 }
+			}
 			add_to_variable = { cb_policy_rate = 3 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+		else_if = {
+			limit = { check_variable = { cb_policy_rate > neutral_cb_rate_far_above } }
+			subtract_from_variable = { cb_policy_rate = 3 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
 		}
 		else_if = {
 			limit = {
 				check_variable = { cb_policy_rate < neutral_cb_rate_lower }
-				check_variable = { cb_policy_rate < 30 }
+				check_variable = { cb_policy_rate < 20 }
 			}
 			add_to_variable = { cb_policy_rate = 1 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
