@@ -260,6 +260,8 @@ _TYPO_WATCHLIST: Dict[str, str] = {
     "seperation": "separation",
     "seperate": "separate",
     "seperated": "separated",
+    "actionns": "actions",
+    "annexd": "annexed",
 }
 
 # Exact-phrase substrings exempt from typo flagging.
@@ -274,24 +276,24 @@ _TYPO_RE = re.compile(
 _TYPO_WORDS = frozenset(_TYPO_WATCHLIST)
 _TYPO_LENGTHS = frozenset(len(typo) for typo in _TYPO_WORDS)
 _WORD_TOKEN_RE = re.compile(r"\w+")
-_TYPO_VALUE_RE = re.compile(r'^\s*[\w.\-]+:\d*\s*"(.*)"')
+_TYPO_VALUE_RE = re.compile(r'^\s*([\w.\-]+):\d*\s*"(.*)"')
 _TYPO_RUNTIME_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$[\w.@|+\-]+\$|£[\w.@\-]+")
 
 
-def _iter_loc_values(text: str) -> Iterator[Tuple[int, str]]:
-    """Yield (line_idx, value) for each non-blank body line with a quoted value."""
+def _iter_loc_values(text: str) -> Iterator[Tuple[int, str, str]]:
+    """Yield (line_idx, key, value) for each non-blank body line with a quoted value."""
     for line_idx, line in enumerate(text.split("\n")[1:]):
         if not line.strip():
             continue
         value_match = _TYPO_VALUE_RE.match(line)
         if not value_match:
             continue
-        yield line_idx, value_match.group(1)
+        yield line_idx, value_match.group(1), value_match.group(2)
 
 
 def _scan_typos_text(text: str, basename: str) -> List[str]:
     results = []
-    for line_idx, value in _iter_loc_values(text):
+    for line_idx, _, value in _iter_loc_values(text):
         if any(exempt in value for exempt in _TYPO_EXEMPTIONS):
             continue
         prose = _TYPO_RUNTIME_REFERENCE_RE.sub("", value)
@@ -316,9 +318,73 @@ def process_yml_for_typos(args: Tuple[str]) -> List[str]:
     return _scan_typos_text(text, os.path.basename(filename))
 
 
+_PROSE_COLOR_RE = re.compile(r"§(?:\[[^\]]*\]|\$[^$\s]+\$|[A-Za-z0-9!])")
+_PROSE_REFERENCE_RE = re.compile(r"\[[^\]]*\]|\$\$|\$[^$\s]+\$|£[\w.@|+\-]+")
+_PROSE_WORD_RE = re.compile(r"\b[^\W\d_]+(?:['’][^\W\d_]+)*\b")
+_TRIPLED_LETTER_RE = re.compile(r"([a-z])\1{2}")
+_ROMAN_WORD_RE = re.compile(r"[ivxlcdm]+")
+_PLACEHOLDER_VALUES = frozenset({"TODO", "TBD", "TDA", "WIP", "PLACEHOLDER"})
+_DANGLING_WORDS = frozenset(
+    "a an the and or but of to with for from at by into onto than because "
+    "although if while whose which our their your its them".split()
+)
+_REPEATED_WORD_EXEMPTIONS = frozenset(
+    validation_config("validate_localisation", "repeated_word_exemptions")
+)
+_STRETCHED_WORD_EXEMPTIONS = frozenset(
+    validation_config("validate_localisation", "stretched_word_exemptions")
+)
+_DANGLING_DESCRIPTION_EXEMPTIONS = frozenset(
+    validation_config("validate_localisation", "dangling_description_exemptions")
+)
+
+
+def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
+    if value in _PLACEHOLDER_VALUES:
+        yield "loc-placeholder", f"{key}: placeholder value '{value}' needs finished text"
+    # Runtime text is opaque, not empty; deleting it invents adjacency and endings.
+    prose = _PROSE_COLOR_RE.sub("", value.replace("§§", "\0"))
+    prose = _PROSE_REFERENCE_RE.sub("\0", prose).replace(r"\n", "\n")
+    previous = None
+    previous_folded = None
+    has_tripled_letter = _TRIPLED_LETTER_RE.search(prose) is not None
+    for match in _PROSE_WORD_RE.finditer(prose):
+        word = match.group()
+        folded = word.casefold()
+        if (
+            previous is not None
+            and folded == previous_folded
+            and prose[previous.end() : match.start()].strip(" \t") == ""
+            and f"{key}:{folded}" not in _REPEATED_WORD_EXEMPTIONS
+        ):
+            yield "loc-repeated-word", f"{key}: repeated word '{word}' (review in context)"
+        if (
+            has_tripled_letter
+            and word.isascii()
+            and word.islower()
+            and _TRIPLED_LETTER_RE.search(word)
+            and not _ROMAN_WORD_RE.fullmatch(word)
+            and word not in _STRETCHED_WORD_EXEMPTIONS
+        ):
+            yield "loc-tripled-letter", f"{key}: tripled letter in '{word}' (review in context)"
+        previous = match
+        previous_folded = folded
+    if (
+        key.endswith(("_desc", ".d"))
+        and previous is not None
+        and previous.group().lower() in _DANGLING_WORDS
+        and not prose[previous.end() :].strip()
+        and f"{key}:{previous.group().lower()}" not in _DANGLING_DESCRIPTION_EXEMPTIONS
+    ):
+        yield (
+            "loc-dangling-description",
+            f"{key}: description ends on '{previous.group()}' without punctuation; check for cut-off text",
+        )
+
+
 def _scan_prose_text(text: str, basename: str) -> List[Issue]:
     results: List[Issue] = []
-    for line_idx, value in _iter_loc_values(text):
+    for line_idx, key, value in _iter_loc_values(text):
         for _ in range(value.count("\u2014")):
             results.append(
                 Issue(
@@ -349,6 +415,17 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
                     line=line_idx + 2,
                 )
             )
+        for category, message in _prose_findings(key, value):
+            results.append(
+                Issue(
+                    severity=Severity.WARNING,
+                    category=category,
+                    message=message,
+                    file=basename,
+                    line=line_idx + 2,
+                )
+            )
+
     return results
 
 
@@ -1230,42 +1307,27 @@ class Validator(BaseValidator):
         )
 
     def validate_prose_conventions(self):
-        self._log_section(
-            "Checking localisation prose conventions (em dashes, backtick apostrophes, quotes)..."
-        )
-
-        em_dash_results: List[Issue] = []
-        backtick_results: List[Issue] = []
-        quote_results: List[Issue] = []
+        self._log_section("Checking localisation prose conventions...")
+        categories = {
+            "loc-em-dash": "Em dashes",
+            "loc-backtick-apostrophe": "Backtick apostrophes",
+            "loc-unbalanced-quote": "Unbalanced escaped quotes",
+            "loc-repeated-word": "Repeated words",
+            "loc-tripled-letter": "Tripled letters",
+            "loc-placeholder": "Placeholder values",
+            "loc-dangling-description": "Possibly cut-off descriptions",
+        }
+        grouped: Dict[str, List[Issue]] = {category: [] for category in categories}
         for issue in self._get_shared_yml_scan()["prose"]:
-            if issue.category == "loc-em-dash":
-                em_dash_results.append(issue)
-            elif issue.category == "loc-unbalanced-quote":
-                quote_results.append(issue)
-            else:
-                backtick_results.append(issue)
-
-        self._report(
-            em_dash_results,
-            "✓ No em dashes in localisation values",
-            "Em dashes in localisation values:",
-            severity=Severity.WARNING,
-            category="loc-em-dash",
-        )
-        self._report(
-            backtick_results,
-            "✓ No backtick-as-apostrophe in localisation values",
-            "Backtick used as apostrophe in localisation values:",
-            severity=Severity.WARNING,
-            category="loc-backtick-apostrophe",
-        )
-        self._report(
-            quote_results,
-            '✓ No unbalanced \\" quotes in localisation values',
-            'Unbalanced \\" quotes in localisation values:',
-            severity=Severity.WARNING,
-            category="loc-unbalanced-quote",
-        )
+            grouped[issue.category].append(issue)
+        for category, label in categories.items():
+            self._report(
+                grouped[category],
+                f"✓ No {label.lower()} in localisation values",
+                f"{label} in localisation values:",
+                severity=Severity.WARNING,
+                category=category,
+            )
 
     def _txt_files(self) -> List[str]:
         return self.cached("txt_files", lambda: self._collect_files(["**/*.txt"]))
