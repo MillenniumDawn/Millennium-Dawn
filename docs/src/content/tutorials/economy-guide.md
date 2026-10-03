@@ -361,13 +361,13 @@ Choosing **No Foreign Reserve** eliminates foreign debt denomination effects and
 
 ### Currency Strength
 
-Currency strength is recalculated monthly. Each currency is pulled back toward its **base strength**, while your economy pushes it up or down:
+Currency strength is recalculated monthly and moves by a share of its current level, so a weak currency moves in smaller steps. Each currency is pulled back toward its **base strength**, while your economy pushes it up or down:
 
 | Factor             | Effect                                                                                                                                                          |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Real interest rate | A policy rate more than 1 point above inflation supports your currency. A lower rate weakens it.                                                                |
 | Debt interest rate | The part of your debt's interest rate not set by the policy rate weakens your currency once it passes 5 points, and quickly past 10. Having no debt is neutral. |
-| Inflation          | Up to 5% is neutral. Above 5% the penalty grows quickly and is severe by 20%.                                                                                   |
+| Inflation          | Weakens your currency through the real interest rate. A policy rate that keeps pace with inflation shields it.                                                  |
 | Stability          | Stability above 50% strengthens your currency, and stability below 50% weakens it.                                                                              |
 | Economic cycle     | A boom or fast growth helps. Stagnation, recession and depression hurt.                                                                                         |
 | War                | Losing a war or fighting a civil war weakens your currency.                                                                                                     |
