@@ -178,11 +178,16 @@ def scan_text(raw: str) -> List[Finding]:
     """Scan script text; returns (line, category, message)."""
     text = blank_quoted_strings(blank_comments(raw))
     findings: List[Finding] = []
+    # Matches come in file order, so count only the newlines since the last one.
+    line = 1
+    line_pos = 0
     for m in VAR_EFFECT_RE.finditer(text):
+        line += text.count("\n", line_pos, m.start())
+        line_pos = m.start()
         block, end = extract_block_from_text(text, m.end() - 1)
         if end == -1:
             continue
-        _scan_effect_block(block, text.count("\n", 0, m.start()) + 1, findings)
+        _scan_effect_block(block, line, findings)
     return findings
 
 

@@ -17,10 +17,6 @@ def _write(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8", newline="")
 
 
-def _repo_root() -> Path:
-    return Path(__file__).resolve().parents[3]
-
-
 def _shared_tree(tmp_path: Path) -> Path:
     """Build a tiny mod tree the CLI can walk."""
     root = tmp_path / "mod"
@@ -192,9 +188,10 @@ def test_cli_dry_run_reports_completion(tmp_path):
     focus = root / "common/national_focus/cli.txt"
     _write(focus, "focus_tree = { id = TST_cli }\n")
 
-    result = _run(root, "--dry-run", "--workers", "1")
+    result = _run(root, "--dry-run", "--workers", "1", "--files", str(focus))
     assert result.returncode == 0
     assert "Fix Log IDs" in result.stdout
+    assert "Processed 1 files" in result.stdout
 
 
 def test_apply_returns_zero_for_unknown_path(tmp_path):
@@ -209,31 +206,29 @@ def test_apply_returns_zero_for_unknown_path(tmp_path):
     assert count == 0
 
 
-def test_cli_writes_fix_when_target_is_repo_root(tmp_path):
-    # The CLI walks the entire mod tree (default --root), so just place a
-    # focus file with a mismatched log under the standard layout and let it
-    # be rewritten by the live parser.
-    target = (
-        _repo_root()
-        / "common"
-        / "national_focus"
-        / "_fixture_fix_log_ids_test_focus.txt"
+def test_cli_writes_fix_across_the_mod_root(tmp_path, monkeypatch):
+    # The sweep derives its root from the script path, so a script path inside
+    # a temporary tree keeps the write out of the real repository.
+    import fix_log_ids
+
+    root = _shared_tree(tmp_path)
+    target = root / "common/national_focus/focus.txt"
+    _write(
+        target,
+        (
+            "focus_tree = {\n"
+            "    id = TST_log_id_fix\n"
+            "    focus = {\n"
+            "        id = TST_log_id_fix\n"
+            '        log = "[GetDateText]: [Root.GetName]: Focus TST_other_id"\n'
+            "    }\n"
+            "}\n"
+        ),
     )
-    original_content = (
-        "focus_tree = {\n"
-        "    id = TST_log_id_fix\n"
-        "    focus = {\n"
-        "        id = TST_log_id_fix\n"
-        '        log = "[GetDateText]: [Root.GetName]: Focus TST_other_id"\n'
-        "    }\n"
-        "}\n"
-    )
-    _write(target, original_content)
-    try:
-        result = _run(_repo_root(), "--workers", "1")
-        assert result.returncode == 0
-        body = target.read_text(encoding="utf-8")
-        assert "TST_other_id" not in body
-        assert 'Focus TST_log_id_fix"' in body
-    finally:
-        target.unlink(missing_ok=True)
+    script = root / "tools" / "linting" / "fix_log_ids.py"
+    monkeypatch.setattr(sys, "argv", [str(script), "--workers", "1"])
+
+    assert fix_log_ids.main() == 0
+    body = target.read_text(encoding="utf-8")
+    assert "TST_other_id" not in body
+    assert 'Focus TST_log_id_fix"' in body
