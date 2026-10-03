@@ -108,7 +108,7 @@ decisions already deliver the party, and a walker over an undated roster install
 Never pass `change_leader_temp = 1`; never inline `create_country_leader`.
 
 **AI hardening pass**, mandatory. `ai_is_threatened` weighting on combat-capacity focuses
-(`.claude/docs/ai-strategy-reference.md`, the `ai_is_threatened` section); bankruptcy / `can_staff`
+(`.claude/docs/ai-strategy-reference.md`, "Threat and unit caps"); bankruptcy / `can_staff`
 guards on spending focuses (run `tools/validation/validate_focus_tree.py --path .` first — it may
 already be clean, and it flags guards on focuses that spend nothing). The pass lives in focus
 weights, `available` and guards only: **write no `common/ai_strategy/` war block** — the general

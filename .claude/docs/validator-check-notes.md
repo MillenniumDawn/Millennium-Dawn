@@ -157,7 +157,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   - Known gaps: a stored variable whose negative value comes from math or an array reads
     as positive, a `[TOKEN]` in a `meta_effect` body is not substituted, and
     single-option events are never reported.
-  - Fix pattern: `event-reference.md`, "Cost-Aware AI Weights".
+  - Fix pattern: `event-reference.md`, "Cost-aware AI weights".
 - Event pictures: both event windows draw `event_picture` at native size.
   `event-picture-format-mismatch` (ERROR) classifies by aspect ratio, not name: country
   art up to 1.45, news art from 2.0. The band between is not reported. For a sprite

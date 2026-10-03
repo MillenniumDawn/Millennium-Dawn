@@ -44,6 +44,10 @@ instructions belong in `docs/src/content/pages/` or `tutorials/`; contributor gu
 belongs in `docs/src/content/resources/`. Do not move internal review procedures into
 player guides.
 
+Docs hold rules, shapes, and traps. Open backlogs, finding counts, and change history
+go in GitHub issues and commit messages, not in a doc. Do not copy inventories the
+script files already hold, and do not cite line numbers.
+
 Write the answer or action first where useful. Keep prose terse and tables readable
 in plaintext: pad columns using the repo's Prettier settings and keep each whole
 padded row within 100 characters. Shorten cells or use a list instead of a wide table.
@@ -79,7 +83,7 @@ All files below live in `.claude/docs/`.
 | `loading-screen-system.md`       | Loading rotation vs menu picker, `GFX_<x>_small`, generator  |
 | `loc-smoke-checklist.md`         | In-game checks for dynamic loc that tests cannot prove       |
 | `localisation-rules.md`          | English `.yml` rules: BOM, file naming, key formatting       |
-| `md-custom-modifiers.md`         | Non-vanilla modifier keys, grouped by category               |
+| `md-custom-modifiers.md`         | Where custom modifier keys live; faction opinion keys        |
 | `meta-effect-patterns.md`        | `meta_effect`/`meta_trigger` dispatch; `[!]` tooltips        |
 | `mio-reference.md`               | MIO structure, per-block modifier keys, trait-grid rules     |
 | `music-system.md`                | Stations, playlists, chance weights, radio GUI wiring        |

@@ -3,52 +3,41 @@ name: adversarial-review
 description: "Adversarial edge-case hunt over the branch diff or a single file: challenges every change for unhandled scenarios, silent failures, scope/timing/variable traps, and logic gaps rule-based review misses. Use when asked to adversarially review, stress-test, or find edge cases in a change."
 ---
 
-Run an adversarial edge-case review on the current branch diff or a single file. Actively challenge every change by asking "what could go wrong?" and hunt for unhandled scenarios, silent failures, and logic gaps that rule-based reviews miss.
+**Syntax:** `/adversarial-review [file_path]`. Without a path, review every file the
+branch changes against `main`.
 
-**Syntax:** `/adversarial-review [file_path]`
+Do not check compliance against known rules. Imagine every way the change could break
+in practice.
 
-- With `file_path`: adversarial review on that file.
-- Without argument: adversarial review on all changed files on the current branch vs `main`.
+## 1. Gather context
 
-## Role
+`git log origin/main..HEAD --oneline` and `git diff origin/main...HEAD`. Identify the
+changed files and their types.
 
-You are the adversarial reviewer. Don't verify compliance against known rules. Imagine every way the change could break in practice and force the author to defend or fix it.
+If the diff touches `tools/**`, dispatch `tools-reviewer` in parallel with the list of
+changed tooling files, and fold its findings into the report.
 
-## Execution
+## 2. Challenge every changed block
 
-### 1. Gather context
+Apply both sections of `.claude/docs/bug-patterns.md`, plus the relevant parts of
+`.claude/docs/scripting-edge-cases.md` and `.claude/docs/hoi4-data-structures.md`. Flag
+every question whose answer is "no, it is not handled".
 
-- `git log origin/main..HEAD --oneline`
-- `git diff origin/main...HEAD`
-- Identify changed files and their types.
+## 3. Output
 
-### 1a. Dispatch tools-reviewer for any tools/\*\* changes
+Lead with the findings, or "No findings in the reviewed scope." Per file:
 
-If `git diff --name-only origin/main...HEAD` includes any path under `tools/` (linting, validation, standardization, shared_utils, etc.), dispatch the `tools-reviewer` subagent in parallel with your own review of content files. Pass it the list of changed tooling files.
+1. The path and type.
+2. A numbered issue list with category labels (`[Scope]`, `[Timing]`, `[Variable]`,
+   `[Silent]`, `[Cross-Country]`, `[GUI]`, `[Content]`) and line numbers.
+3. For each issue: the exact scenario that breaks, what happens to the player or game
+   state, and a suggested defense, or a note that the omission looks intentional.
 
-The tools-reviewer covers Python-specific concerns (Correctness, Duplication, Performance, Robustness, Consistency, Style, Wiring) that this skill's HOI4-scripting checklists do not. Fold its findings into your final report for a single combined review.
+Mark anything that could corrupt a save, soft-lock the player, or crash the GUI
+`[critical]`. State what was not verified.
 
-Skip this step when no `tools/**` files changed.
-
-### 2. Challenge every changed block
-
-Apply the full catalog in `.claude/docs/bug-patterns.md` — both the "Adversarial questions" and "Scan patterns" sections — plus the relevant sections of `.claude/docs/scripting-edge-cases.md` and `.claude/docs/hoi4-data-structures.md`. For each question, if the answer is "no, it's not handled", flag it.
-
-### 3. Output
-
-For each file reviewed, report:
-
-1. **File** — path and type.
-2. **Issues** — numbered list with category labels (`[Scope]`, `[Timing]`, `[Variable]`, `[Silent]`, `[Cross-Country]`, `[GUI]`, `[Content]`) and line numbers.
-3. **Edge case** — the exact scenario that breaks.
-4. **Impact** — what happens to the player or game state when it hits.
-5. **Suggested defense** — guard, rewrite, or note if the omission is intentional.
-
-Mark anything that could corrupt save state, soft-lock the player, or crash the GUI as **[critical]**.
-
-Lead with the findings or "No findings in the reviewed scope." State verification
-limits rather than claiming every edge case is handled.
-
-When the branch has an open PR, a body (title and description) that does not match the diff is a **[blocker]** and rejects the PR until the body describes what the code actually does: name what the body claims that the diff lacks or what the diff contains that the body omits. A missing or empty body counts as not matching.
+When the branch has an open PR, a title or body that does not match the diff is a
+`[blocker]`. Name what the body claims that the diff lacks and what the diff contains
+that the body omits. A missing body counts.
 
 End with `BLUF`.
