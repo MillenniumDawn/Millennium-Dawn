@@ -276,3 +276,13 @@ The `docs` target is a straight file copy with no reformatting, so `diff -r reso
 ## Tooling deprecation watch
 
 - `pre-commit/mirrors-prettier` is archived upstream. Maintained fork: `rbubley/mirrors-prettier`. Migrate next time the prettier pin needs touching.
+
+## English prose rollout (#5127)
+
+The localisation shared yml worker also runs repeated-word, lowercase
+tripled-letter, exact-placeholder, and dangling-description checks. All four are
+WARNING; the existing core batch, staged selection, worker budget, and strictness
+are unchanged. No new pass or hook is required. See the Prose warnings section in
+`localisation-rules.md` for boundaries, reviewed exemptions, audit counts, and the
+four remaining content decisions. Typo-watchlist entries now also include
+`actionns` and `annexd`; the existing documentation-coverage test pins them.
