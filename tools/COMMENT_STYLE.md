@@ -1,9 +1,8 @@
 # Comment Style — Python tooling
 
 These rules apply to every Python script under `tools/` (validators, linters,
-standardizers, helpers). The HOI4 scripting equivalent lives in
-`.claude/rules/general-rules.md` under the **Comments** section; this file is
-its Python counterpart.
+standardizers, helpers). The HOI4 scripting equivalent is the comment
+rule in `AGENTS.md`; this file is its Python counterpart.
 
 ## The rule
 

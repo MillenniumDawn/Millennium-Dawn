@@ -40,7 +40,7 @@ SOV.my_var         # read from another scope
 
 ### Temporary variables
 
-Exist only for the current scripted block. Prefixed with `temp_` in effects but accessed by name.
+Exist only for the current scripted block. Prefixed with `temp_` in effects but accessed by name. They belong to no scope: read, write, and check them by bare name from any scope. A `ROOT.` or `PREV.` prefix breaks the read, and a `ROOT = { check_variable = ... }` wrapper adds nothing.
 
 ```
 set_temp_variable = { var = my_temp value = 10 }
@@ -210,9 +210,9 @@ if = { limit = { value = x  equals = 0 }  add = 15 }
 
 ### Verifying a new construct
 
-A statement listed in `resources/documentation/script_math_functions.md` is valid. For anything else, the engine accepts it or silently zeroes it, so grep MD and vanilla for precedent first. No hits in either means no evidence it parses. Operand forms confirmed working: `array^i`, `array^num`, nested operand blocks, and `ROOT.`/`THIS.`/`PREV.` reads.
+A statement listed in `resources/documentation/script_math_functions.md` is valid. For anything else, the engine accepts it or silently zeroes it, so grep MD and vanilla for precedent first. No hits in either means no evidence it parses. Operand forms confirmed working: `array^i`, `array^num`, nested operand blocks, `ROOT.`/`THIS.`/`PREV.` reads, and targeted game variables (`opinion@PREV`, `building_level@X`, `modifier@X`). Those are plain variables: use them directly, with no temp copy.
 
-**`FROM.<var>` reads return 0 inside an expression.** They parse cleanly, then zero the whole expression at runtime. Copy the value to a temp first: `set_temp_variable = { bailout_cost = FROM.debt_bailout }` then `set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.75 } }`.
+**`FROM.<var>` reads return 0 inside an expression.** They parse cleanly, then zero the whole expression at runtime. Copy the value to a temp first: `set_temp_variable = { bailout_cost = FROM.debt_bailout }` then `set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.75 } }`. Only `FROM.` needs the copy.
 
 `validate_math_expressions.py` warns in CI on the sibling form and on `FROM` reads.
 

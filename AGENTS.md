@@ -9,6 +9,8 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
   to diverge; do not modify them or flag missing, stale, or mismatched English keys.
 - `resources/` is reference-only. Do not modify it unless explicitly asked.
 - Keep edits within the requested scope.
+- Verify identifiers against their definitions before using them: exact case, caller
+  scope, and tooltip behavior. Existing usage is a clue, not proof.
 - Every PR that changes game files adds exactly one BLUF `Changelog.txt` line under the
   current version, in an existing category. Skills may define their own exception.
 - Do not add attribution trailers or tool-generated footers, or sign commits.
@@ -46,6 +48,8 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 - Script: tabs, opening brace on the same line, closing brace at the outer indent,
   one blank line between elements. Keep simple checks on one line.
 - `.txt`: UTF-8 without BOM. English localisation `.yml`: UTF-8 with BOM.
+- Name new identifiers in lowercase after any `TAG_` prefix, even when they wrap a
+  mixed-case id (`cheat_party_western_autocracy`). Do not rename existing ids.
 - Match surrounding style. Naming and examples:
   [Code Stylization Guide](docs/src/content/resources/code-stylization-guide.md).
 - Python writes and review rules: [tools/README.md](tools/README.md).
@@ -64,30 +68,24 @@ Millennium Dawn is a Hearts of Iron IV mod (2000-present). Game data lives in
 
 ## Read for the Task
 
-Read the relevant references before editing, not the entire catalog. Paths below are
-under `.claude/docs/` unless stated otherwise.
+Read the relevant references before editing, not the entire catalog. Bare filenames
+are under `.claude/docs/`.
 
-- All scripting: [Data Structures](.claude/docs/hoi4-data-structures.md) and
-  [Scripting Edge Cases](.claude/docs/scripting-edge-cases.md).
-- Focuses: [Focus Trees](.claude/docs/focus-tree-reference.md) and
-  [Search Filters](.claude/docs/search-filters.md).
-- Events: [Events](.claude/docs/event-reference.md). Decisions:
-  [Decisions](.claude/docs/decision-reference.md).
-- Ideas: [Ideas](.claude/docs/idea-reference.md). MIOs: [MIOs](.claude/docs/mio-reference.md).
-- AI strategies/templates/equipment: [AI Strategy](.claude/docs/ai-strategy-reference.md)
-  and [AI Equipment](.claude/docs/ai-equipment-reference.md).
-- English strings: [Localisation](.claude/docs/localisation-rules.md); party keys also
-  need [Party Localisation](.claude/docs/party-loc-reference.md).
-- GUI: [Rules](.claude/docs/scripted-gui-rules.md) and
-  [Patterns](.claude/docs/scripted-gui-patterns.md).
-- UN voting/elections/recognition: [UN System](.claude/docs/un-system-reference.md).
-  Formables, EU end-states, UAR, union cosmetics: [Formables](.claude/docs/formable-reference.md).
-- Intelligence upgrades: [Upgrade README](common/intelligence_agency_upgrades/README.md).
-  Loading/menu art: [Loading Screens](.claude/docs/loading-screen-system.md).
-- Hot paths or repeated branches: [Performance](.claude/docs/performance-patterns.md)
-  and [Simplification](.claude/docs/simplification-patterns.md).
-- Reviews: [Known False Positives](.claude/docs/known-false-positives.md) and
-  [Bug Patterns](.claude/docs/bug-patterns.md). Renames: [Refactor Checklist](.claude/docs/refactor-checklist.md).
-- Subagents: [Agent Conventions](.claude/docs/agent-conventions.md).
-- Other systems, art, OOBs, namelists, and content standards:
-  [Documentation Index](.claude/docs/documentation-references.md).
+- All scripting: `hoi4-data-structures.md` and `scripting-edge-cases.md`.
+- Focuses: `focus-tree-reference.md` and `search-filters.md`.
+- Events: `event-reference.md`. Decisions: `decision-reference.md`.
+- Ideas: `idea-reference.md`. MIOs: `mio-reference.md`.
+- AI strategies, templates, equipment: `ai-strategy-reference.md` and
+  `ai-equipment-reference.md`.
+- English strings: `localisation-rules.md`; party keys also need `party-loc-reference.md`.
+- GUI: `scripted-gui-rules.md` and `scripted-gui-patterns.md`.
+- UN voting, elections, recognition: `un-system-reference.md`. Formables, EU end-states,
+  UAR, union cosmetics: `formable-reference.md`.
+- Intelligence upgrades: `common/intelligence_agency_upgrades/README.md`.
+  Loading and menu art: `loading-screen-system.md`.
+- 3D models, entities, landmarks: `entity-system.md`. Power plants, energy techs,
+  renewable balance: `energy-power-balance.md`.
+- Hot paths or repeated branches: `performance-patterns.md` and `simplification-patterns.md`.
+- Reviews: `known-false-positives.md` and `bug-patterns.md`. Renames: `refactor-checklist.md`.
+- Subagents: `agent-conventions.md`.
+- Other systems, art, OOBs, namelists, and content standards: `documentation-references.md`.

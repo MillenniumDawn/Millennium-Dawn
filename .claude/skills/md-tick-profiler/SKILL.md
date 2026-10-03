@@ -1,6 +1,6 @@
 ---
 name: md-tick-profiler
-description: Visualize and explain MD's recurring per-tick scripted workload (the daily/weekly/monthly on_action hooks and everything they run) as an interactive flamegraph sized by script ops with file:line links, plus a text report and bounded static spot checks. Use for any question about MD performance, lag, tick cost, on_actions, "what runs each day/week/month", why the game is slow, or profiling the mod — even without the word "profiler".
+description: Profile MD's recurring per-tick scripted workload (the daily/weekly/monthly on_action hooks and everything they run) as a flamegraph sized by script ops, plus a text report. Use for any question about MD performance, lag, tick cost, on_actions, or why the game is slow, even without the word "profiler".
 user-invocable: true
 allowed-tools:
   - Bash

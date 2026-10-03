@@ -107,8 +107,11 @@ An option that charges the country (treasury, debt, a tax rate change, political
 - Tax rate: a change in either direction counts (`modify_corporate_tax_rate_effect`, `modify_population_tax_rate_effect`). A cut gives up income, so use the treasury triggers. For a raise, check the rate itself (`check_variable = { corporate_tax_rate > N }`) so the AI does not stack raises.
 - Political power: `has_active_mission = bankruptcy_incoming_collapse`, the same check as treasury. Political power can go negative, so do not check the balance and do not hide the option behind a `trigger`. An option that already has the bankruptcy modifier for a treasury cost does not need a second one.
 - Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
+- Country paths: weigh choices by the `TAG_ai_behavior` path triggers first. Use the sitting government only under No Path, or where the check mirrors a focus `available` gate.
+- Give every event at least one option that stays above zero when the country is broke. Decisions that charge the treasury need the same checks in `ai_will_do`.
+- A cost audit changes AI weights only. Ask before adding an option `trigger` to enforce a cost (`has_political_power`, `has_equipment`) or converting hand-typed costs to presets such as `small_expenditure`.
 
-The German BfV events from #5083 in `events/Germany.txt` are the reference. `validate_events.py --check-ai-chance-costs` reports the options that still need this as `event-ai-chance-ignores-cost`. The check is off by default. `validation-pipeline.md` has the rule and #5106 tracks the backlog by file.
+The German BfV events from #5083 in `events/Germany.txt` are the reference. `validate_events.py --check-ai-chance-costs` reports the options that still need this as `event-ai-chance-ignores-cost`. The check is off by default. `validator-check-notes.md` has the rule and #5106 tracks the backlog by file.
 
 ## Example: Multi-Option Cross-Country Event
 

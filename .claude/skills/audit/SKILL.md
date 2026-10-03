@@ -1,6 +1,6 @@
 ---
 name: audit
-description: "Comprehensive pre-merge review of one file or the whole branch diff: dispatches parallel reviewer agents (correctness, adversarial edge cases, performance, simplification, content) and merges findings. Use when asked to audit or fully review a branch or file. Replaces /review-branch."
+description: "Comprehensive pre-merge review of one file or the whole branch diff: dispatches parallel reviewer agents (correctness, adversarial edge cases, performance, simplification, content) and merges findings. Use when asked to audit or fully review a branch or file."
 ---
 
 Run a comprehensive review of a single file or the entire branch diff (correctness, edge cases, simplification, performance, and content design) by dispatching the canonical reviewers in parallel and merging their findings. This is the single Millennium Dawn pre-merge review command; it absorbs the former `/review-branch`.

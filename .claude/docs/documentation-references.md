@@ -51,13 +51,13 @@ For website frontmatter, headings, and links, read `docs/CONTRIBUTING.md`.
 
 ### Naming Scheme
 
-Most filenames end in one of four suffixes: `-reference` (structure or valid-key lookup), `-rules` (must-follow conventions), `-patterns` (recipe/refactor catalogs), or `-system` (subsystem architecture). A handful of docs use a plain descriptive name instead when none of those fit (`agent-conventions.md`, `debug-commands.md`, `typo-watchlist.md`, `validation-pipeline.md`).
+Most filenames end in one of four suffixes: `-reference` (structure or valid-key lookup), `-rules` (must-follow conventions), `-patterns` (recipe/refactor catalogs), or `-system` (subsystem architecture). A few docs use a plain descriptive name when none of those fit.
 
 All files below live in `.claude/docs/`.
 
 | File                             | Contents                                                     |
 | -------------------------------- | ------------------------------------------------------------ |
-| `agent-conventions.md`           | Rules for `.claude/agents/` definitions: anti-rules, reading |
+| `agent-conventions.md`           | Agent roles: task reading, boundaries, BLUF handoffs         |
 | `ai-equipment-reference.md`      | AI equipment variants: role templates, coverage errors       |
 | `ai-strategy-reference.md`       | Unit production: 5 layers, on_action entries, plan files     |
 | `bug-patterns.md`                | Known bug patterns: scan signatures, diff-review questions   |
@@ -97,25 +97,5 @@ All files below live in `.claude/docs/`.
 | `sound-system.md`                | Sound defs, combat sounds, voicelines, compressors           |
 | `typo-watchlist.md`              | Recurring localisation typos to check in review              |
 | `un-system-reference.md`         | UN votes/elections: invariants, new-resolution recipe        |
-| `validation-pipeline.md`         | Pre-commit vs Test Suite CI divergence; deprecation watch    |
-
-Detail moved out of the table:
-
-- `agent-conventions.md`: task-specific reading, role boundaries, and BLUF handoffs.
-- `ai-equipment-reference.md` role-template structure keys: `category`/`roles`/`priority`.
-- `entity-system.md` landmark buildings: state-file placement, `map/buildings.txt` spawn points, `provinces.bmp` validation, heightmap-calibrated y, rendering gotchas; plus a division-designer performance note.
-- `formable-reference.md` paths: 23 decision formables, EU111 USoE, EU112 EFS, UAR, Yugoslavia, United States of Africa, Event Horizon, focus-tree unions; plus known traps and maintenance rules.
-- `music-system.md` stations: Main, Regional, UKR-RUS war, Synthwave.
-- `scripted-gui-patterns.md`: the dirty-variable standard is `update_<system>_dirty_variable`; checkbox swap = filter-checkbox image swap; ✓/✗ tooltips are per-entry.
-- `scripting-edge-cases.md`: trigger semantics, relief signs, equipment transfers, guards,
-  and effect scope interpolation. `FROM` in events fired from on_actions or
-  `random_scope_in_array` defaults to the firing scope.
-- `sound-system.md` also covers adding voicelines and audio-file requirements.
-
-## AI Agent Definitions
-
-Agents live in `.claude/agents/` (10 definitions); the session agent list carries their descriptions.
-
-## Repository Access
-
-Use `gh` CLI commands for GitHub operations: `gh issue list`, `gh pr list`, `gh pr view`.
+| `validation-pipeline.md`         | Pre-commit vs CI rules, config, vanilla data refresh         |
+| `validator-check-notes.md`       | Per-validator checks, severities, backlogs; search by name   |

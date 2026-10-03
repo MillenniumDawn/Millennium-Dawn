@@ -76,6 +76,18 @@ Pdxmesh naming follows the `MD_` prefix convention (e.g., `MD_mechanized`, `MD_i
 
 Shared weapon/accessory entities (`*_weapon_*_entity`, `cigarette_entity`, vehicle entities) are `attach`ed by soldier entities and referenced across many files.
 
+## Mesh texture lookups
+
+Run `tools/validation/validate_mesh_textures.py` instead of a hand-rolled scan. Before
+reporting a missing or empty texture in a `.mesh`, or copying textures between folders:
+
+- The engine finds mesh textures by filename anywhere under `gfx/`, not only in the
+  mesh's own folder. Vanilla relies on this.
+- Empty diffuse, normal, or spec names on `Collision` shader materials are by design.
+  A slot absent from a material is also fine.
+- Skip `#`-commented `pdxmesh` blocks, and apply `meshsettings` (`name` is the shape,
+  `index` the mesh within it) before flagging.
+
 ## The division designer model selector (performance note)
 
 The 3D model selector in the division designer (`interface/divisiondesignerview.gui`, window `div_template_select_model`, gridbox `buttons_grid`) is **engine-native** — no scripted GUI, no `dynamic_lists`, no `dirty` variable. The engine enumerates unit entities to build the list, so total entity count drives how heavy it is to open. MD ships ~25,000 entities versus vanilla's ~575.

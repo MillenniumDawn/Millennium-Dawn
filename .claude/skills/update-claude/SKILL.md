@@ -49,7 +49,7 @@ Filter ruthlessly — only propose additions that:
 Read the current state of:
 
 - `CLAUDE.md` and `AGENTS.md` routing: do their pointers still reach the right guidance?
-- `.claude/rules/general-rules.md`: has implementation detail crept back in?
+- Always-loaded files (`AGENTS.md`, unscoped `.claude/rules/*.md`): has implementation detail crept back in?
 - `.claude/docs/localisation-rules.md` — any gaps?
 - `AGENTS.md` — any conventions needing updates?
 
