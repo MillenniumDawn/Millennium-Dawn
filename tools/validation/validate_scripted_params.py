@@ -13,7 +13,7 @@ import re
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
-from shared_utils import blank_quoted_strings
+from shared_utils import blank_quoted_strings, get_staged_files
 from validate_unused_scripted import extract_definitions
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
@@ -34,6 +34,13 @@ _CALLER_PATTERNS = [
     "events/**/*.txt",
     "history/**/*.txt",
 ]
+
+# A staged change here can break a caller that did not change.
+_DEPENDENCY_DIRS = (
+    "common/scripted_effects",
+    "common/country_tags",
+    "common/country_tag_aliases",
+)
 
 # Hardcoded contracts for well-documented effects. Auto-discovery fills in
 # additional contracts from "# Parameters:" comment blocks.
@@ -658,6 +665,16 @@ class Validator(BaseValidator):
         self._contracts: Dict[str, Dict[str, List[str]]] = {}
         self._valid_tags: "frozenset[str]" = frozenset()
         self._unreadable: List[str] = []
+        if self.staged_only:
+            # A deleted or renamed contract or tag file is a dependency change too.
+            self.staged_files = (
+                get_staged_files(
+                    self.mod_path,
+                    extensions=self.STAGED_EXTENSIONS,
+                    include_missing=True,
+                )
+                or []
+            )
 
     def _build_tag_set(self):
         """Load valid country tags + aliases for the tag-validity check."""
@@ -711,7 +728,15 @@ class Validator(BaseValidator):
             self.log("  No contracts found — nothing to validate")
             return
 
-        files = self._collect_files(_CALLER_PATTERNS)
+        rescan = self.staged_touches(_DEPENDENCY_DIRS)
+        if rescan:
+            self.log("  Contract or tag source staged: rescanning every caller")
+        # Staged deletions are listed too and have nothing to scan.
+        files = self._collect_files(
+            _CALLER_PATTERNS,
+            extra_skip=lambda path: not os.path.isfile(path),
+            ignore_staged=rescan,
+        )
         self.log(f"  Scanning {len(files)} files for effect calls")
 
         audit_names = frozenset(self._audit_names)
