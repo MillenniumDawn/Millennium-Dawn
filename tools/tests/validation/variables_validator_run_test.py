@@ -11,6 +11,7 @@ import sys
 
 import pytest
 import validate_variables as V
+import validator_common
 
 
 def _found(validator):
@@ -578,6 +579,150 @@ def test_full_run_reports_the_flag_lifecycle(tmp_path, write_path):
     ]
 
 
+def _issue_rows(validator):
+    return sorted(
+        (issue.category, issue.message, issue.file, issue.line)
+        for issue in validator._issues
+    )
+
+
+def _full_run(tmp_path, workers=1):
+    validator = V.Validator(
+        str(tmp_path), use_colors=False, workers=workers, redundant_focus_flags=True
+    )
+    try:
+        validator.run_validations()
+        assert (validator._pool is not None) == (workers > 1)
+    finally:
+        if validator._pool is not None:
+            validator._pool.terminate()
+            validator._pool.join()
+    return _issue_rows(validator)
+
+
+def test_flag_target_and_focus_caches_hit_then_follow_new_content(
+    tmp_path, write_path, monkeypatch
+):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    write_path(
+        tmp_path,
+        "common/national_focus/tree.txt",
+        "focus = {\n"
+        "\tid = TST_focus\n"
+        "\tcompletion_reward = {\n"
+        "\t\tset_country_flag = TST_done\n"
+        "\t\tsave_event_target_as = TST_target\n"
+        "\t}\n"
+        "}\n",
+    )
+    reader = write_path(
+        tmp_path,
+        "common/decisions/dec.txt",
+        "d = { available = { has_country_flag = TST_done } }\n",
+    )
+    cold = _full_run(tmp_path)
+
+    def miss(*_args):
+        raise AssertionError("expected a cache hit")
+
+    with monkeypatch.context() as patch:
+        for scan in (
+            "_scan_flags_in_file",
+            "_scan_targets_in_text",
+            "_scan_focus_flag_sites",
+        ):
+            patch.setattr(V, scan, miss)
+        warm = _full_run(tmp_path)
+
+    write_path(
+        tmp_path,
+        "common/decisions/dec.txt",
+        "d = { available = { has_country_flag = TST_other } }\n",
+    )
+    # A fresh process would read the edit; drop this process's in-memory copy.
+    V.FileOpener.invalidate(str(reader))
+    changed = _full_run(tmp_path)
+
+    assert warm == cold
+    assert [row[0] for row in cold].count("redundant-focus-flag") == 1
+    assert ("variables", "TST_other", "common/decisions/dec.txt", 1) in changed
+    assert ("variables", "TST_done", "common/national_focus/tree.txt", 4) in changed
+    assert "redundant-focus-flag" not in [row[0] for row in changed]
+
+
+def test_pooled_run_matches_the_in_process_run(tmp_path, write_path, monkeypatch):
+    # Past the pool threshold of ten files, so the shared scan really fans out.
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    for index in range(12):
+        write_path(
+            tmp_path,
+            f"common/decisions/dec{index}.txt",
+            f"TST_category_{index} = {{\n"
+            f"\tTST_decision_{index} = {{\n"
+            "\t\tavailable = { check_variable = { TST_v > 5 } }\n"
+            "\t\tcomplete_effect = {\n"
+            "\t\t\tadd_to_variable = { TST_v = 0.1234567 }\n"
+            "\t\t\trandom_owned_state = { modify_treasury_effect = yes }\n"
+            f"\t\t\tset_country_flag = {{ flag = TST_flag_{index} }}\n"
+            "\t\t}\n"
+            "\t}\n"
+            "}\n",
+        )
+
+    in_process = _full_run(tmp_path, workers=1)
+    pooled = _full_run(tmp_path, workers=2)
+
+    assert pooled == in_process
+    assert {row[0] for row in in_process} >= {
+        "untooltipped-available-check",
+        "math-precision",
+        "treasury-state-scope",
+    }
+    assert len(in_process) >= 12 * 4
+
+
+def test_full_run_collects_event_targets_from_txt_files(tmp_path, write_path):
+    write_path(tmp_path, "events/ev.txt", "save_event_target_as = TST_staged\n")
+    write_path(tmp_path, "localisation/english/a_l_english.yml", "l_english:\n")
+    validator = _validator(tmp_path)
+
+    validator.run_validations()
+
+    assert _found(validator) == [("TST_staged", "events/ev.txt", 1)]
+
+
+def test_one_worker_flag_pass_stays_in_process_and_matches_the_pool(
+    tmp_path, write_path, monkeypatch
+):
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    expected = []
+    for index in range(12):
+        flag = f"TST_{index:02}"
+        rel = f"common/scripted_effects/{flag}.txt"
+        write_path(
+            tmp_path,
+            rel,
+            f"set_country_flag = {flag}\nhas_global_flag = {flag}_g\n"
+            f"clr_state_flag = {flag}_s\nsave_event_target_as = {flag}_t\n",
+        )
+        expected += [
+            ("variables", name, rel, line)
+            for line, name in enumerate(
+                (flag, f"{flag}_g", f"{flag}_s", f"{flag}_t"), 1
+            )
+        ]
+    pooled = _full_run(tmp_path, workers=2)
+
+    def no_pool(*_args, **_kwargs):
+        raise AssertionError("one worker must not start a pool")
+
+    monkeypatch.setattr(validator_common, "Pool", no_pool)
+    in_process = _full_run(tmp_path, workers=1)
+
+    assert in_process == pooled
+    assert in_process == sorted(expected)
+
+
 def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch, write_path):
     write_path(
         tmp_path,
@@ -597,3 +742,24 @@ def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch, write
         runpy.run_path(V.__file__, run_name="__main__")
 
     assert exit_info.value.code == 0
+
+
+def test_process_file_for_math_precision_exception_handling(tmp_path):
+    # Non-existent file raises OSError when read, which should be caught returning []
+    non_existent = str(tmp_path / "does_not_exist.txt")
+    assert V.process_file_for_math_precision((non_existent, str(tmp_path))) == []
+
+    # Non-OSError exceptions (e.g. ValueError or TypeError) must not be masked
+    existing = tmp_path / "valid.txt"
+    existing.write_text("add = 0.1234567\n", encoding="utf-8")
+
+    def bad_scan(*args, **kwargs):
+        raise ValueError("Unexpected error")
+
+    monkeypatch = pytest.MonkeyPatch()
+    monkeypatch.setattr(V, "_scan_math_precision_text", bad_scan)
+    try:
+        with pytest.raises(ValueError, match="Unexpected error"):
+            V.process_file_for_math_precision((str(existing), str(tmp_path)))
+    finally:
+        monkeypatch.undo()
