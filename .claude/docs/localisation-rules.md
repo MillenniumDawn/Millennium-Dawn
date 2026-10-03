@@ -229,15 +229,13 @@ exempted 52 intentional repetitions, and added missing periods to 94 complete
 descriptions. These were punctuation fixes, not recovered cut-off sentences.
 Three Serbian disaster-event descriptions were written from their existing event
 titles and options, without adding dates, casualties, rewards, or other new facts.
-The remaining four warnings require content decisions:
+The last four warnings were cleared in a follow-up:
 
-- `SER_crop_field_production_desc` and `promoted_from_the_ranks_desc`: no supporting
-  in-repository script consumers were found; keep their placeholders visible until
-  their intended use is established.
-- `PAN.oligarchism`: `Calor Calor` has no corroborating description to establish
-  whether this is an intentional name.
-- `CSA.Western_Autocracy_desc`: `parry of of` sits inside a sentence whose intended
-  wording is unclear; deleting one word alone would not repair the sentence.
+- `SER_crop_field_production_desc` and `promoted_from_the_ranks_desc`: no script
+  consumers exist, so both descriptions were written from their titles.
+- `PAN.oligarchism`: the cartel's name is `Calor-Calor`, hyphenated.
+- `CSA.Western_Autocracy_desc`: `parry of of whatever their main platform` became
+  `play off whatever their main platform is`.
 
 The original ticket's 36/15/76 counts are historical. #5152 had already corrected
 its `the the`, `seeeker`, `actionns`, and `annexd` examples; regression fixtures
