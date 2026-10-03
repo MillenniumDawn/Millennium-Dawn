@@ -372,6 +372,13 @@ def test_date_gated_check_reports_error_severity(monkeypatch):
     assert validator.last_severity == V.Severity.ERROR
 
 
+def _on_actions_validator(tmp_path, monkeypatch, body):
+    path = _write(tmp_path, "common/on_actions/99_GER.txt", body)
+    validator = _FakeValidator(str(tmp_path))
+    monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: [path])
+    return validator
+
+
 def test_get_probability_rolled_ids_wiring(tmp_path, monkeypatch):
     """The wrapper scans on_actions files and caches the result."""
     body = """on_actions = {
@@ -385,9 +392,7 @@ def test_get_probability_rolled_ids_wiring(tmp_path, monkeypatch):
 \t}
 }
 """
-    f = _write(tmp_path, "common/on_actions/99_GER.txt", body)
-    validator = _FakeValidator("/tmp")
-    monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: [f])
+    validator = _on_actions_validator(tmp_path, monkeypatch, body)
     calls = []
 
     def fake_pool_map(fn, args, **kw):
@@ -397,7 +402,9 @@ def test_get_probability_rolled_ids_wiring(tmp_path, monkeypatch):
     monkeypatch.setattr(validator, "_pool_map", fake_pool_map)
     assert validator._get_probability_rolled_ids() == {"foo.1"}
     assert validator._get_probability_rolled_ids() == {"foo.1"}  # cached
-    assert calls == [V.scan_probability_rolled_fires]
+    assert len(calls) == 1
+    assert calls[0].func is V.scan_probability_rolled_fires
+    assert calls[0].keywords == {"mod_path": validator.mod_path}
 
 
 # --- redundant date bounds on scheduled events ---
@@ -520,8 +527,6 @@ def test_get_random_event_ids_wiring(tmp_path, monkeypatch):
 \t}
 }
 """
-    f = _write(tmp_path, "common/on_actions/99_GER.txt", body)
-    validator = _FakeValidator("/tmp")
-    monkeypatch.setattr(validator, "_collect_files", lambda *a, **kw: [f])
+    validator = _on_actions_validator(tmp_path, monkeypatch, body)
     assert validator._get_random_event_ids() == {"foo.1"}
     assert validator._get_random_event_ids() == {"foo.1"}  # cached

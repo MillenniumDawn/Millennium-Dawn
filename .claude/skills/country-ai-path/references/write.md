@@ -399,40 +399,25 @@ wrong when the target sits inside a group next to the incumbent.
 
 ## 7. AI strategy — war weighting
 
-**Reuse mod-wide strategies first.** `MD_war_declaration_ai.txt`, `MD_combat_ai_strategies.txt` and
-`MD_econ_ai.txt` carry blocks without `allowed` that already run for every country. Before writing a
-per-TAG block, grep them for the same `enable`; if one exists, the country needs nothing. If the
-country needs a different threshold or an extra `ai_strategy` line, widen the generic block so the
-next country gets it too. A per-TAG block exists only for a condition the generic files do not
-express (a named target, a country focus, a country flag).
+**Write none.** An AI path PR adds no war block to `common/ai_strategy/`: no per-target readiness
+gate (`TAG_avoid_unready_war_with_X`, `TAG_prepare_war_with_X`), no `declare_war` / `conquer`
+hold-and-release tiers, no `avoid_starting_wars`, no losing-war brake. War-goal declaration is
+already covered by the general suite in `MD_war_declaration_ai.txt` (mod-wide restraint without
+`allowed`, plus the named rivalry pairings) and the engine's own wargoal handling. Review rejected
+every per-TAG variant: Sweden #4287, Syria #4342, Bolivia #5014 ("Unneeded AI strategies"), and
+earlier ROM #3586, SAU #3705, UKR #4346. `DEN.txt`, `BOS.txt`, `ARM.txt`, `HOL.txt:57`,
+`SOV_avoid_starting_wars` and `BLR_avoid_starting_wars` are legacy, not models.
 
-`declare_war` is target-keyed (`id = TAG`) and weights only **opening** a war. There is no
-`dont_declare_war` token and no targetless form. A `declare_war` block gated on
-`has_war_with = TARGET` is a no-op. The 306 `TAG_cancel_war_TARGET` blocks across
-ITA/LIC/TUR/JAP/GER/HOL/ENG/SWE/CHI/BUL/CUB/IND/CAN/VEN/COL/ETH/GUY/KOR are that bug — never copy
-one, never add one.
+**When a focus war fires too early**, fix it in the focus: a strength check in `available` (Bolivia's
+`BOL_revenge_of_1879` reads `fighting_army_strength_ratio = { tag = CHL ratio > 1.2 }`) or a
+killswitch / factor in `ai_will_do`. If the mod-wide brake is genuinely too weak for every country,
+that is a separate PR against `MD_war_declaration_ai.txt`, not a per-TAG block.
 
-**Losing-war brake: already mod-wide.** `MD_avoid_new_wars_while_losing` (`has_war = yes` +
-`surrender_progress > 0.15`) and `MD_avoid_new_wars_when_outmatched` (`has_war = yes` +
-`enemies_strength_ratio > 0.75`) in `MD_war_declaration_ai.txt` cover every country. Never add a
-`TAG_hold_new_wars_while_losing`, `TAG_cancel_war_neighbours` or per-tag `avoid_starting_wars`
-block on the same trigger — review rejected exactly that on Sweden (#4287), and `HOL.txt:57`,
-`SOV_avoid_starting_wars`, `BLR_avoid_starting_wars` are the legacy shape, not models. A country
-that needs a harder brake changes the generic block's value or threshold.
-
-**Pre-war readiness gate, per target.** Enable on `has_wargoal_against = X` +
-`NOT = { has_war_with = X }` + a strength or size check, then `declare_war id = X` negative to hold
-and positive to release. `MD_war_declaration_ai.txt`, `BOS_avoid_unready_war_with_cro` /
-`BOS_prepare_war_with_cro` are the references. Cache anything containing `any_of_scopes` behind a
-country flag and have `enable` read only the flag.
-
-**Strength semantics.** `enemies_strength_ratio` rises as your enemies get stronger (MD's peace-deal
-triggers read `> 1.7` as losing, `> 2.0` as massively outgunned), while
-`strength_ratio = { tag = X ratio < 1 }` means you are weaker than X. `avoid_starting_wars` is
-additive with `conquer`, not a standalone peacefulness dial — read the surrounding `conquer` values
-before picking a sign or magnitude. A per-tag `avoid_starting_wars` stricter than the mod-wide
-`MD_avoid_new_wars_when_outmatched` (`enemies_strength_ratio > 0.75`) is a strict subset and can
-never fire.
+**Pre-existing blocks** in `common/ai_strategy/TAG.txt` stay untouched unless they are the
+`declare_war`-on-`has_war_with` bug below. `declare_war` is target-keyed and weights only
+**opening** a war, so a block gated on `has_war_with = TARGET` is a no-op. The 306
+`TAG_cancel_war_TARGET` blocks across ITA/LIC/TUR/JAP/GER/HOL/ENG/SWE/CHI/BUL/CUB/IND/CAN/VEN/COL/
+ETH/GUY/KOR are that bug — never copy one, never add one.
 
 **Never** add an `on_daily_<TAG>` pass that caches booleans into country flags for `enable` or
 `ai_will_do` to read. Both are already evaluated lazily; a daily cache costs more and lags real

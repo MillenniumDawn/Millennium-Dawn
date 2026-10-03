@@ -64,6 +64,52 @@ Each option's log must match its own ID — copy-paste errors between `.a` and `
 
 Only an option that runs effects gets a log — a dismiss option carrying nothing but `name`, `trigger` and `ai_chance` logs a state change that never happened, and `validate_events` reports it as `event-option-log-without-effect`. The same goes for `immediate`: a log-only `immediate` block is rejected by `check_common_mistakes.py` (#4456), so omit the block.
 
+## Example: Cost-Aware AI Weights
+
+An option that charges the country (treasury, debt, a tax rate change, political power, stability, or war support) needs an `ai_chance` that looks at whether the country can pay. A flat `ai_chance = { base = N }` makes the AI pay as often on the way to bankruptcy as it does with a full treasury. Set the base to the sensible default, then add modifiers for affordability and for the situation the cost is meant to solve:
+
+```
+ option = {
+  name = tag_ns.N.a
+  log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
+  set_temp_variable = { treasury_change = -15 }
+  modify_treasury_effect = yes
+  ai_chance = {
+   base = 10
+   modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+   modifier = { factor = 0.5 ai_has_high_deficit = yes }
+   modifier = { factor = 3 check_variable = { TAG_department_tier < 3 } }   # the problem the money fixes
+  }
+ }
+
+ option = {
+  name = tag_ns.N.b
+  log = "[GetDateText]: [This.GetName]: tag_ns.N.b executed"
+  add_political_power = -50
+  ai_chance = {
+   base = 5
+   modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+  }
+ }
+
+ option = {
+  name = tag_ns.N.c
+  log = "[GetDateText]: [This.GetName]: tag_ns.N.c executed"
+  add_stability = -0.02
+  ai_chance = {
+   base = 1
+   modifier = { factor = 0 has_stability < 0.3 }
+  }
+ }
+```
+
+- Treasury and debt: `has_active_mission = bankruptcy_incoming_collapse` and `ai_has_high_deficit = yes`. A charge built with math (`treasury_change = gdp_total` then a negative `multiply_temp_variable`) needs them as much as a literal one, and so does a scripted effect that charges internally (`one_office_construction`, `small_expenditure`).
+- Tax rate: a change in either direction counts (`modify_corporate_tax_rate_effect`, `modify_population_tax_rate_effect`). A cut gives up income, so use the treasury triggers. For a raise, check the rate itself (`check_variable = { corporate_tax_rate > N }`) so the AI does not stack raises.
+- Political power: `has_active_mission = bankruptcy_incoming_collapse`, the same check as treasury. Political power can go negative, so do not check the balance and do not hide the option behind a `trigger`. An option that already has the bankruptcy modifier for a treasury cost does not need a second one.
+- Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
+
+The German BfV events from #5083 in `events/Germany.txt` are the reference. `validate_events.py --check-ai-chance-costs` reports the options that still need this as `event-ai-chance-ignores-cost`. The check is off by default. `validation-pipeline.md` has the rule and #5106 tracks the backlog by file.
+
 ## Example: Multi-Option Cross-Country Event
 
 When an event fires to a different country than the one that initiated the action, AI weighting must reflect that country's situation (opinion, influence, ideology), never base-only random chance. Here `SNDR` is the sender (whoever fired the event) and the receiver is the current scope (`This`):

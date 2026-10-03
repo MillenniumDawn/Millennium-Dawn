@@ -35,6 +35,18 @@ def test_validation_tool_change_runs_full_suite(path):
     assert groups["style"] is False
 
 
+def test_validation_config_change_requests_focus_style_scan():
+    groups = change_groups.classify(["validation_config.json"])
+
+    assert groups["full_suite"] is True
+    assert groups["style_config"] is True
+    assert groups["style_files"] == []
+    assert (
+        change_groups.classify(["tools/validation/change_groups.py"])["style_config"]
+        is False
+    )
+
+
 def test_non_validation_tool_change_skips_full_suite():
     groups = change_groups.classify(["tools/assets/dds_compression_audit.py"])
 

@@ -239,6 +239,36 @@ def test_clamp_and_modulo_effects_are_out_of_scope():
     assert scan_text(script) == []
 
 
+def _sibling(ops):
+    return (
+        f"math statements ({ops}) sit beside var/value instead of inside the "
+        "expression — this parses as 0.0 silently; wrap them in value = { ... } "
+        "(short form) or <var> = { ... } (long form)"
+    )
+
+
+def test_findings_keep_their_lines_across_quotes_comments_and_crlf():
+    script = "\r\n".join(
+        [
+            "set_variable = { X = 0 add = Y }",
+            'log = "# { set_variable = { var = q add = 1 }"',
+            "# set_variable = { var = c add = 2 }",
+            "add_to_variable = {",
+            "\tvar = A",
+            "\tmin = 0",
+            "}",
+            "set_variable = { unclosed = {",
+            "multiply_variable = { var = Z value = 1 divide = 2 }",
+        ]
+    )
+
+    assert scan_text(script) == [
+        (1, "math-sibling-operator", _sibling("add")),
+        (4, "math-sibling-operator", _sibling("min")),
+        (9, "math-sibling-operator", _sibling("divide")),
+    ]
+
+
 def _validator(tmp_path):
     return Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
 
@@ -253,6 +283,34 @@ def test_validator_reports_file_and_line(tmp_path):
         ("math-sibling-operator", "common/scripted_effects/traps.txt", 1)
     ]
     assert all(i.severity == "warning" for i in v._issues)
+
+
+def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch, pool_sizes):
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    for index in range(12):
+        _write(
+            tmp_path,
+            f"common/scripted_effects/f{index:02}.txt",
+            "\n" * index + "set_variable = { X = 0 add = Y }\n",
+        )
+
+    def run(workers):
+        v = Validator(str(tmp_path), use_colors=False, workers=workers, no_cache=True)
+        v.run_all_validations()
+        return [(i.category, i.message, i.file, i.line) for i in v._issues]
+
+    pooled = run(2)
+    assert pool_sizes == [2]
+    assert pooled == run(1)
+    assert sorted(pooled) == [
+        (
+            "math-sibling-operator",
+            _sibling("add"),
+            f"common/scripted_effects/f{index:02}.txt",
+            index + 1,
+        )
+        for index in range(12)
+    ]
 
 
 def test_clean_repo_is_a_clean_pass(tmp_path):

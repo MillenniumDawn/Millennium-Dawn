@@ -10,7 +10,11 @@ from typing import List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text, find_unquoted_block_end
+from shared_utils import (
+    extract_block_from_text,
+    find_unquoted_block_end,
+    validation_config,
+)
 from validator_common import (
     BaseValidator,
     Severity,
@@ -71,13 +75,8 @@ _STATE_DRIVEN_DATE_POLL_GATE_RE = re.compile(
 )
 _PULSE_ON_ACTIONS = ("on_daily", "on_weekly", "on_monthly")
 _FACTION_GOAL_STARTUP_EVENT = "faction_goal_cache.2"
-# Dated polls intentionally kept as retries outside the yearly event table.
 _DATE_POLL_EXEMPT_IDS = frozenset(
-    {
-        "ast_elections_howard_placeholders.1",
-        "ast_elections_howard_placeholders.2",
-        "the_new_look_rudd.1",
-    }
+    validation_config("validate_on_actions", "date_poll_exempt_ids")
 )
 
 

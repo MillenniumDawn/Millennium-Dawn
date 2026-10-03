@@ -36,7 +36,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import write_text_under
+from shared_utils import VALIDATION_CONFIG_PATH, write_text_under
 
 # Bump to invalidate every entry after a schema change. v5 replaced the
 # one-pickle-per-entry layout with a single SQLite db; prune_old_versions drops
@@ -54,16 +54,17 @@ CACHE_VERSION = 9
 _VALIDATOR_NAMESPACES = {
     "agency": "validate_agency_upgrades.py",
     "agency_upgrades": "validate_agency_upgrades.py",
-    "building_guards_scan_v3": "validate_building_guards.py",
+    "building_guards_scan_v5": "validate_building_guards.py",
     "cosmetic": "validate_cosmetic_tags.py",
     "decisions": "validate_decisions.py",
-    "dlc_guards": "validate_dlc_guards.py",
+    "dlc_guards_scan": "validate_dlc_guards.py",
     "dynamic_modifier_guards_scan_v1": "validate_dynamic_modifier_guards.py",
     "events": "validate_events.py",
     "focus_tree": "validate_focus_tree.py",
     "gfx_ref": "validate_gfx_references.py",
     "history_techs": "validate_history.py",
     "ideas": "validate_ideas.py",
+    "influence_calls_scan_v2": "validate_influence_calls.py",
     "loc": "validate_localisation.py",
     "math_expr": "validate_math_expressions.py",
     "modifiers": "validate_modifiers.py",
@@ -72,6 +73,7 @@ _VALIDATOR_NAMESPACES = {
     "party_loc": "validate_party_loc.py",
     "scripted_gui": "validate_scripted_gui.py",
     "sgui": "validate_scripted_gui.py",
+    "scripted_loc": "validate_scripted_localisation.py",
     "scripted_params": "validate_scripted_params.py",
     "set_variables": "validate_set_variables.py",
     "simplifications": "validate_simplifications.py",
@@ -89,11 +91,15 @@ _CACHE_RECORD = "md.cache.v9"
 # These helpers are called inside cached computations, so their source changes
 # must invalidate the owning namespace without making unrelated namespaces cold.
 _HELPER_DEPENDENCIES = {
-    "building_guards_scan_v3": ("guard_scan.py",),
+    "building_guards_scan_v5": ("guard_scan.py",),
+    "dlc_guards_scan": ("validate_history.py",),
     "dynamic_modifier_guards_scan_v1": ("guard_scan.py",),
+    "ideas": ("equipment_module_slots.py",),
+    "influence_calls_scan_v2": ("guard_scan.py",),
     "math_expr": ("equipment_module_slots.py",),
     "oob_units": ("equipment_module_slots.py",),
     "sprite_index": ("validate_gfx_references.py",),
+    "variables": ("validate_focus_tree.py",),
 }
 
 
@@ -203,6 +209,7 @@ def _fingerprint_paths(namespace: str) -> list[Path]:
         Path(__file__),
         Path(__file__).parent.parent / "shared_utils.py",
         Path(__file__).parent / "validator_common.py",
+        Path(VALIDATION_CONFIG_PATH),
     ]
     prefix = namespace.split(".", 1)[0]
     owner = _VALIDATOR_NAMESPACES.get(prefix)

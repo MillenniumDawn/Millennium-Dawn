@@ -22,9 +22,10 @@ These are settled; do not ask about them again.
 
 - **No TAG given:** run `gh issue view 3895 --json body -q .body`, take the first `- [ ]`
   tag, and work that one tag only.
-- **Branch:** always a fresh `3895-party-loc-batch-N` off `origin/main`, where N is one
-  more than the highest existing local or remote `3895-party-loc-batch-*`. Never reuse or
-  extend an old batch branch.
+- **Branch:** always `git fetch origin main` first, then
+  `git switch -c 3895-party-loc-batch-N origin/main`, where N is one more than the highest
+  existing local or remote `3895-party-loc-batch-*`. Never branch from a stale
+  `origin/main`, and never reuse or extend an old batch branch.
 - **Research, then re-verify:** one research agent per tag, then a separate fresh agent
   re-verifies every party, slot fit and gate date against sources. Only after that is the
   mapping presented for confirmation (step 3).

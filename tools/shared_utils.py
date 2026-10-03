@@ -4,6 +4,7 @@
 
 import argparse
 import bisect
+import json
 import logging
 import os
 import re
@@ -15,6 +16,7 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 from functools import lru_cache
+from itertools import chain
 from pathlib import Path
 from typing import (
     Any,
@@ -55,6 +57,30 @@ _LEVEL_COLORS = {
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
 
+VALIDATION_CONFIG_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "validation_config.json",
+)
+VALIDATION_CONFIG_VERSION = 1
+
+
+@lru_cache(maxsize=None)
+def _load_validation_config() -> Dict[str, Any]:
+    with open(VALIDATION_CONFIG_PATH, encoding="utf-8") as handle:
+        config = json.load(handle)
+    if config.get("version") != VALIDATION_CONFIG_VERSION:
+        raise ValueError(
+            f"{VALIDATION_CONFIG_PATH}: expected version "
+            f"{VALIDATION_CONFIG_VERSION}, found {config.get('version')!r}"
+        )
+    return config
+
+
+def validation_config(validator: str, key: str) -> Dict[str, str]:
+    """Return one validation_config.json suppression list as entry -> reason."""
+    return _load_validation_config()[validator][key]
+
+
 # ruling_party 0-23. Slot 0 is Western Autocracy.
 PARTY_SLOT_NAMES: Dict[int, str] = {
     0: "Western_Autocracy",
@@ -90,6 +116,11 @@ PARTY_SLOT_NAMES: Dict[int, str] = {
 CPU_BUDGET_FRACTION = 0.75
 
 
+def running_in_ci() -> bool:
+    """True on a CI runner, which has its cores to itself."""
+    return os.environ.get("CI", "").strip().lower() in ("1", "true")
+
+
 def cpu_budget() -> int:
     """Cores this repo's tooling may occupy at once, never the whole machine.
 
@@ -100,7 +131,7 @@ def cpu_budget() -> int:
     if override.isdigit() and int(override) > 0:
         return int(override)
     cores = os.cpu_count() or 1
-    if os.environ.get("CI", "").strip().lower() in ("1", "true"):
+    if running_in_ci():
         return cores
     return max(1, int(cores * CPU_BUDGET_FRACTION))
 
@@ -260,6 +291,9 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
     return block_lines, i  # position AFTER the block, not i-1
 
 
+_BRACE_OR_QUOTE_RE = re.compile(r'["{}]')
+
+
 def find_matching_brace(text: str, open_idx: int) -> int:
     """Return the index of the ``}`` matching the ``{`` at *open_idx*.
 
@@ -269,9 +303,12 @@ def find_matching_brace(text: str, open_idx: int) -> int:
     """
     depth = 0
     in_str = False
-    i = open_idx
-    n = len(text)
-    while i < n:
+    # Jump between quotes and braces; a negative offset walks the tail first.
+    offsets = chain(
+        range(open_idx, 0),
+        (m.start() for m in _BRACE_OR_QUOTE_RE.finditer(text, max(open_idx, 0))),
+    )
+    for i in offsets:
         c = text[i]
         if c == '"' and text[i - 1] != "\\":
             in_str = not in_str
@@ -282,7 +319,6 @@ def find_matching_brace(text: str, open_idx: int) -> int:
                 depth -= 1
                 if depth == 0:
                     return i
-        i += 1
     return -1
 
 
@@ -617,9 +653,14 @@ def create_backup(filename: str) -> str:
 
 
 def should_skip_file(
-    filename: str, extra_skip_patterns: Optional[List[str]] = None
+    filename: str,
+    extra_skip_patterns: Optional[List[str]] = None,
+    *,
+    mod_path: Optional[str] = None,
 ) -> bool:
-    """Check if a file should be skipped during processing."""
+    """Match exclusions inside the checkout, not its ancestor directories."""
+    if mod_path is not None and os.path.isabs(filename):
+        filename = os.path.relpath(filename, mod_path)
     ignored_dirs = {".git", ".claude", "gfx", "tools", "resources", "docs", "map"}
     content_roots = {"common", "events", "history", "interface", "localisation"}
     normalized_path = filename.replace("\\", "/").strip("/")
@@ -1130,6 +1171,10 @@ def strip_comments(text: str) -> str:
     return "\n".join(result)
 
 
+# A `"` opens or closes a string unless a backslash escapes it.
+_STRING_QUOTE_RE = re.compile(r'(?<!\\)"')
+
+
 def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> str:
     """Replace the interior of double-quoted strings with spaces.
 
@@ -1146,18 +1191,25 @@ def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> st
     """
     if '"' not in text:
         return text
-    out = list(text)
-    in_str = False
-    start = -1
     keep = keep_start or ()
-    for i, c in enumerate(text):
-        if c == '"' and (i == 0 or text[i - 1] != "\\"):
-            if not in_str:
-                start = i
-            in_str = not in_str
-        elif in_str and c != "\n" and start not in keep:
-            out[i] = " "
-    return "".join(out)
+    quotes = [m.start() for m in _STRING_QUOTE_RE.finditer(text)]
+    # An unterminated last string runs to the end of the text.
+    quotes.append(len(text))
+    pieces = []
+    done = 0
+    for open_idx, close_idx in zip(quotes[::2], quotes[1::2]):
+        if open_idx in keep:
+            continue
+        interior = text[open_idx + 1 : close_idx]
+        pieces.append(text[done : open_idx + 1])
+        if "\n" in interior:
+            interior = "\n".join(" " * len(part) for part in interior.split("\n"))
+        else:
+            interior = " " * len(interior)
+        pieces.append(interior)
+        done = close_idx
+    pieces.append(text[done:])
+    return "".join(pieces)
 
 
 def flat_block_text(block: str) -> str:

@@ -267,7 +267,7 @@ def test_patch_frontend_version_rewrites_every_locale(tmp_path, capsys):
             ]
             assert len(matches) == 1
             assert matches[0].count("v1.2.3") == 1
-            assert "v2.0.0" not in matches[0]
+            assert "v2.0.1 DEV" not in matches[0]
         assert 'VERSION_MD_DATE: "Release Date: 11th September 2026"' in text
     assert "10/10 frontend files rewritten" in capsys.readouterr().out
 
@@ -296,16 +296,43 @@ def test_patch_frontend_version_replaces_a_complete_prerelease_token(tmp_path):
 
     for rel in EXPECTED_FRONTEND_PATHS:
         text = (tmp_path / rel).read_text(encoding="utf-8")
-        assert text.count("v2.0.0-beta.5") == 2
-        assert "v2.0.0-beta.1" not in text
+        assert text.count("v2.0.1-beta.5") == 2
+        assert "v2.0.1-beta.1" not in text
+
+
+@pytest.mark.parametrize("marker", [" BETA", ""], ids=["beta", "release"])
+def test_patch_frontend_version_replaces_the_dev_marker_in_every_locale(
+    tmp_path, marker
+):
+    paths = _write_frontend_tree(tmp_path)
+
+    pw.patch_frontend_version(tmp_path, "2.1.0", marker)
+
+    for path in paths:
+        text = path.read_text(encoding="utf-8")
+        assert text.count(f'v2.1.0{marker}"') == 2
+        assert "DEV" not in text
+        assert "开发版" not in text
+
+
+def test_patch_frontend_version_relabels_without_a_version(tmp_path, capsys):
+    paths = _write_frontend_tree(tmp_path)
+
+    pw.patch_frontend_version(tmp_path, None, " BETA")
+
+    for path in paths:
+        assert path.read_text(encoding="utf-8").count('v2.0.0 BETA"') == 2
+    assert "repo version BETA (10/10 frontend files rewritten)" in (
+        capsys.readouterr().out
+    )
 
 
 @pytest.mark.parametrize(
     "source,expected",
     [
-        ("v2.0.0", ["v2.0.0"]),
+        ("v2.0.1 DEV", ["v2.0.1 DEV"]),
         ("v1.12.3b", ["v1.12.3b"]),
-        ("v2.0.0-beta.1", ["v2.0.0-beta.1"]),
+        ("v2.0.1-beta.1", ["v2.0.1-beta.1"]),
     ],
 )
 def test_version_token_matches_complete_supported_formats(source, expected):
@@ -315,10 +342,10 @@ def test_version_token_matches_complete_supported_formats(source, expected):
 @pytest.mark.parametrize(
     "source",
     [
-        "xv2.0.0",
-        "_v2.0.0",
-        "v2.0.0+build.1",
-        "v2.0.0_beta",
+        "xv2.0.1 DEV",
+        "_v2.0.1 DEV",
+        "v2.0.1+build.1",
+        "v2.0.1_beta",
     ],
 )
 def test_version_token_rejects_partial_matches(source):
@@ -337,7 +364,7 @@ def test_version_token_rejects_partial_matches(source):
             "123456789012345678901234567890.987654321098765432109876543210.111111111111111111111111111111",
         ),
         ("v1.12.3b", "1.12.3b"),
-        ("V2.0.0-beta.5", "2.0.0-beta.5"),
+        ("v2.0.1-beta.5", "2.0.0-beta.5"),
     ],
 )
 def test_normalize_version_accepts_supported_formats(value, expected):
@@ -391,23 +418,23 @@ def test_patch_frontend_version_rejects_a_missing_file_without_partial_writes(tm
         ),
         (
             (
-                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n',
-                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n'
-                b' VERSION_MD: "Duplicate v2.0.0"\n',
+                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.1 DEV"\n',
+                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.1 DEV"\n'
+                b' VERSION_MD: "Duplicate v2.0.1 DEV"\n',
             ),
             "VERSION_MD must appear exactly once",
         ),
         (
             (
-                b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
+                b' VERSION_MD_LOADING: "Version: v2.0.1 DEV"',
                 b' VERSION_MD_LOADING: "Version: missing DEV"',
             ),
             "VERSION_MD_LOADING must contain exactly one",
         ),
         (
             (
-                b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
-                b' VERSION_MD_LOADING: "Version: v2.0.0 and v2.0.0 DEV"',
+                b' VERSION_MD_LOADING: "Version: v2.0.1 DEV"',
+                b' VERSION_MD_LOADING: "Version: v2.0.1 and v2.0.1 DEV"',
             ),
             "VERSION_MD_LOADING must contain exactly one",
         ),
@@ -461,6 +488,10 @@ def test_real_frontend_files_match_the_fixed_production_locale_contract():
             assert (
                 len(pw.VERSION_TOKEN.findall(matches[0])) == 1
             ), f"{rel}: {key} must have exactly one complete version token"
+            banner = pw.BANNER_VERSION.search(matches[0])
+            assert (
+                banner and banner["marker"]
+            ), f"{rel}: {key} must follow its version with a dev marker"
 
 
 # ---------------------------------------------------------------------------
@@ -1233,7 +1264,27 @@ def test_main_patches_the_version_banner_when_version_given(tmp_path, monkeypatc
 def test_main_leaves_the_version_banner_alone_without_version(tmp_path, monkeypatch):
     staged = _main_staged(tmp_path, monkeypatch, "test", "--full", "--username", "u")
 
-    assert 'VERSION_MD_LOADING: "Version: v2.0.0 DEV"' in staged["frontend"]
+    assert 'VERSION_MD_LOADING: "Version: v2.0.1 DEV"' in staged["frontend"]
+    assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
+
+
+@pytest.mark.parametrize(
+    "target,args,expected",
+    [
+        ("beta", (), "Version: v2.0.0 BETA"),
+        ("beta", ("--version", "1.2.3"), "Version: v1.2.3 BETA"),
+        ("release", (), "Version: v2.0.0"),
+        ("release", ("--version", "1.2.3"), "Version: v1.2.3"),
+    ],
+)
+def test_main_labels_the_version_banner_for_the_target(
+    tmp_path, monkeypatch, target, args, expected
+):
+    staged = _main_staged(
+        tmp_path, monkeypatch, target, "--full", "--username", "u", *args
+    )
+
+    assert f'VERSION_MD_LOADING: "{expected}"\n' in staged["frontend"]
     assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
 
 
@@ -1304,13 +1355,13 @@ def test_main_diff_publish_with_version_ships_the_patched_banner(
         "1.2.3",
     )
 
-    assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in staged["banner"]
+    assert 'VERSION_MD_LOADING: "Version: v1.2.3 BETA"' in staged["banner"]
     assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
     assert staged["kept_event"] is True
     assert "10/10 frontend files rewritten" in capsys.readouterr().out
 
 
-def test_main_diff_publish_without_version_still_prunes_the_banner(
+def test_main_beta_diff_publish_without_version_ships_the_relabeled_banner(
     tmp_path, monkeypatch
 ):
     staged = _main_diff_staged(
@@ -1318,6 +1369,25 @@ def test_main_diff_publish_without_version_still_prunes_the_banner(
         monkeypatch,
         {"events/foo.txt"},
         "beta",
+        "--base-ref",
+        "v1",
+        "--username",
+        "u",
+    )
+
+    assert 'VERSION_MD_LOADING: "Version: v2.0.0 BETA"' in staged["banner"]
+    assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
+    assert staged["kept_event"] is True
+
+
+def test_main_test_diff_publish_without_version_still_prunes_the_banner(
+    tmp_path, monkeypatch
+):
+    staged = _main_diff_staged(
+        tmp_path,
+        monkeypatch,
+        {"events/foo.txt"},
+        "test",
         "--base-ref",
         "v1",
         "--username",
@@ -1364,6 +1434,7 @@ def test_main_no_default_excludes_is_honoured(tmp_path, monkeypatch):
         seen["excludes"] = set(excludes)
         mod_dir = dest_parent / "mod"
         mod_dir.mkdir()
+        _write_frontend_tree(mod_dir)
         write_text(mod_dir / "descriptor.mod", "name=x\n")
         (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
         return mod_dir

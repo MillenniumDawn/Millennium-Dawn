@@ -8,6 +8,7 @@ rather than the crash or false positive.
 """
 
 import os
+import re
 
 import pytest
 import validate_variables as V
@@ -76,9 +77,15 @@ def test_flag_scan_returns_nothing_for_an_empty_file(tmp_path):
     )
 
 
-def test_unsupported_flag_type_is_rejected(tmp_path):
-    with pytest.raises(ValueError, match="Unsupported flag_type"):
-        V.Variables.get_all_flags(str(tmp_path), flag_type="character", workers=1)
+def test_flag_pass_scans_only_the_supported_flag_types(tmp_path):
+    path = _write(
+        tmp_path / "common" / "scripted_effects" / "flags.txt",
+        "set_country_flag = TST_c\nset_character_flag = TST_ch\n",
+    )
+
+    flags, _targets = V.process_file_for_flags_and_targets((str(path), str(tmp_path)))
+
+    assert list(flags) == ["country", "global", "state"]
 
 
 # --- set_*_flag syntax -----------------------------------------------------
@@ -205,7 +212,7 @@ def test_clamp_conflicts_survive_an_unreadable_path(tmp_path):
 
 def test_available_scan_skips_non_script_directories(tmp_path):
     args = (str(_skipped(tmp_path)), str(tmp_path), frozenset())
-    assert V._scan_available_file(args) == ([], [])
+    assert V._scan_available_file(args) == ([], [], [])
 
 
 def test_check_variable_outside_available_is_not_flagged(tmp_path):
@@ -582,17 +589,266 @@ def test_localisation_scan_skips_non_script_directories(tmp_path):
     assert V._scan_targets_in_loc((str(path), ("x",))) == set()
 
 
-def test_staged_target_scan_only_reads_staged_txt_files(tmp_path):
-    txt = _write(
-        tmp_path / "events" / "ev.txt",
-        "save_event_target_as = TST_staged\n",
+def test_localisation_scan_finds_every_reference_form_outside_comments(tmp_path):
+    path = _write(
+        tmp_path / "localisation" / "english" / "tst_l_english.yml",
+        "l_english:\n"
+        ' a:0 "[TST_A.GetName] [event_target:TST_B.GetAdjective]"\n'
+        ' b:0 "[TST_C.GetAdjective] [Event_Target:tst_d.getname]"\n'
+        ' # c:0 "[TST_E.GetName]"\n',
     )
-    yml = _write(
-        tmp_path / "localisation" / "english" / "a_l_english.yml", "l_english:\n"
+    targets = ("TST_A", "TST_B", "TST_C", "TST_D", "TST_E", "TST_F")
+
+    found = V._scan_targets_in_loc((str(path), targets))
+
+    assert found == {"TST_A", "TST_B", "TST_C", "TST_D"}
+
+
+# --- flag and target pass --------------------------------------------------
+
+
+def _flag_fixture(tmp_path):
+    for name, flag in (("a", "TST_one"), ("b", "TST_two")):
+        _write(
+            tmp_path / "common" / "scripted_effects" / f"{name}.txt",
+            f"set_country_flag = {flag}\nhas_global_flag = {flag}_g\n"
+            f"clr_state_flag = {flag}_s\nsave_event_target_as = {flag}_t\n",
+        )
+
+
+def test_flags_and_targets_worker_matches_the_separate_workers(tmp_path):
+    _flag_fixture(tmp_path)
+    path = str(tmp_path / "common" / "scripted_effects" / "a.txt")
+    mod = str(tmp_path)
+
+    flags, targets = V.process_file_for_flags_and_targets((path, mod))
+
+    assert flags == {
+        flag_type: V.process_file_for_all_flags((path, False, flag_type, mod))
+        for flag_type in ("country", "global", "state")
+    }
+    assert targets == V.process_file_for_all_targets((path, False, mod))
+    assert set(flags["global"][1]) == {"TST_one_g"}
+
+
+# --- shared per-file indexes -----------------------------------------------
+
+
+def _reference_scope_stack(text, pos):
+    """Openers enclosing ``pos``, innermost first, by the original sorted walk."""
+    events = [(m.end() - 1, m.group(1)) for m in V._SCOPE_OPEN_RE.finditer(text)]
+    events += [(m.start(), None) for m in re.finditer(r"\}", text)]
+    stack = []
+    for at, token in sorted(events, key=lambda event: event[0]):
+        if at >= pos:
+            break
+        if token is not None:
+            stack.append(token)
+        elif stack:
+            stack.pop()
+    return stack[::-1]
+
+
+_INDEX_CASES = {
+    "brace in a string": 'outer = { log = "x } y" inner = { c = 1 } }\n',
+    "hash in a string": 'outer = { log = "#}" inner = { } }\n',
+    "comment with braces": "outer = { b = 1 } # skip = { d }\nnext = { }\n",
+    "unbalanced": "} } outer = { middle = { c = 1 }\n",
+    "three deep": "outer = {\n\tmiddle = {\n\t\tinner = { d = 1 }\n\t}\n}\n",
+    "first and last line": "first = { y }\n\nlast = { w }",
+    "empty": "",
+    "no trailing newline": "outer = { inner = { } }",
+    "crlf": "outer = {\r\n\tinner = {\r\n\t}\r\n}\r\n",
+    "odd openers": "ab = { x.y = { 1.5={ } } a = bc = { } = { } }",
+}
+
+
+@pytest.mark.parametrize("text", _INDEX_CASES.values(), ids=_INDEX_CASES.keys())
+def test_scope_index_matches_the_sorted_event_walk(text):
+    index = V._ScopeIndex(text)
+    for pos in range(len(text) + 1):
+        assert index.stack_at(pos) == _reference_scope_stack(text, pos), pos
+
+
+@pytest.mark.parametrize("text", _INDEX_CASES.values(), ids=_INDEX_CASES.keys())
+def test_source_line_matches_a_count_from_the_start(text):
+    src = V._Source(text, "x.txt")
+    forward = list(range(len(text) + 1))
+    for pos in forward + forward[::-1] + forward[::3]:
+        assert src.line(pos) == text.count("\n", 0, pos) + 1, pos
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["set_x = a", "aset_x = b", "_set_x = c", "x\nset_x = d", "set_x = e set_x = f"]
+    + ["éset_x = g", "set_xset_x = h", ""],
+)
+def test_literal_first_pattern_keeps_the_leading_word_boundary(text):
+    fast = V._word_start_re("set_x", r"\s*=\s*(\w+)")
+    plain = re.compile(r"\bset_x\s*=\s*(\w+)")
+
+    assert [(m.span(), m.groups()) for m in fast.finditer(text)] == [
+        (m.span(), m.groups()) for m in plain.finditer(text)
+    ]
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_treasury_scan_reports_the_first_and_last_line(tmp_path, newline):
+    lines = [
+        "random_owned_state = { modify_treasury_effect = yes }",
+        "TAG = { every_state = { owner = { modify_treasury_effect = yes } } }",
+        "every_state = {",
+        "modify_treasury_effect = yes }",
+    ]
+    path = _write(tmp_path / "events" / "ev.txt", newline.join(lines))
+
+    issues = V.process_file_for_treasury_scope((str(path), str(tmp_path)))
+
+    assert [
+        (line, "random_owned_state" in message) for message, _rel, line in issues
+    ] == [
+        (1, True),
+        (4, False),
+    ]
+
+
+def test_focus_flag_sets_belong_to_the_reward_that_holds_them():
+    text = (
+        "focus_tree = {\n"
+        "\tfocus = {\n"
+        "\t\tid = TST_first\n"
+        "\t\tcompletion_reward = { set_country_flag = TST_a }\n"
+        "\t}\n"
+        "\tset_country_flag = TST_between\n"
+        "\tfocus = {\n"
+        "\t\tid = TST_second\n"
+        "\t\tcompletion_reward = { set_country_flag = TST_c }\n"
+        "\t}\n"
+        "}\n"
+        "set_country_flag = TST_after"
     )
 
-    set_paths, _used, _cleared = V.EventTargets.get_all_targets(
-        str(tmp_path), staged_files=[str(txt), str(yml)], workers=1
+    set_sites = V._scan_focus_flag_sites(text, "f.txt", True)[0]
+
+    assert set_sites == {
+        "TST_a": [("f.txt", 4, "TST_first", None)],
+        "TST_between": [("f.txt", 6, None, "not-in-focus")],
+        "TST_c": [("f.txt", 9, "TST_second", None)],
+        "TST_after": [("f.txt", 12, None, "not-in-focus")],
+    }
+
+
+def test_focus_flag_read_past_the_last_brace_has_no_scope():
+    text = (
+        "SAZ = { has_country_flag = TST_inside }\n"
+        "SAZ = {\n"
+        "\thas_country_flag = TST_open"
     )
 
-    assert set(set_paths) == {"TST_staged"}
+    read_sites = V._scan_focus_flag_sites(text, "d.txt", False)[1]
+
+    assert read_sites == {
+        "TST_inside": [("d.txt", 1, "SAZ")],
+        "TST_open": [("d.txt", 3, None)],
+    }
+
+
+# --- mod-relative skip rules -----------------------------------------------
+
+# Each worker gets one file that yields a result. The mod root sits inside a
+# `docs/` folder, so a worker that dropped mod_path would skip the file.
+_SKIP_RULE_CASES = {
+    "flags": (
+        "common/scripted_effects/a.txt",
+        "set_country_flag = TST_a\n",
+        lambda f, m: V.process_file_for_all_flags((f, False, "country", m))[0],
+    ),
+    "flag syntax": (
+        "common/scripted_effects/b.txt",
+        "set_country_flag = { flag = TST_b }\n",
+        lambda f, m: V.process_file_for_flag_syntax((f, m))[1],
+    ),
+    "math precision": (
+        "common/scripted_effects/c.txt",
+        "add = 0.1234567\n",
+        lambda f, m: V.process_file_for_math_precision((f, m)),
+    ),
+    "clamp harvest": (
+        "common/scripted_effects/d.txt",
+        "clamp_variable = { var = TST_v min = 0 max = 10 }\n",
+        lambda f, m: V.collect_clamp_ranges((f, m))[0],
+    ),
+    "clamp conflicts": (
+        "events/e.txt",
+        "check_variable = { TST_v > 50 }\n",
+        lambda f, m: V.process_file_for_clamp_conflicts((f, m, {"TST_v": (0.0, 9.0)})),
+    ),
+    "variable tooltips": (
+        "events/g.txt",
+        "set_variable = { TST_v = 1 tooltip = TST_tt }\n",
+        lambda f, m: V.process_file_for_variable_tooltips((f, m)),
+    ),
+    "orphan money": (
+        "events/h.txt",
+        "option = {\n\tset_temp_variable = { treasury_change = 5 }\n}\n",
+        lambda f, m: V.process_file_for_orphan_money((f, m, MONEY_CONSUMERS)),
+    ),
+    "event targets": (
+        "events/i.txt",
+        "save_event_target_as = TST_t\n",
+        lambda f, m: V.process_file_for_all_targets((f, False, m))[0],
+    ),
+    "localisation targets": (
+        "localisation/english/x_l_english.yml",
+        'l_english:\n a:0 "[TST_t.GetName]"\n',
+        lambda f, m: V._scan_targets_in_loc((f, ("TST_t",)), mod_path=m),
+    ),
+    "focus flags": (
+        "common/national_focus/f.txt",
+        "focus = {\n\tid = TST_f\n\tcompletion_reward = { set_country_flag = TST_f }\n}\n",
+        lambda f, m: V.process_file_for_focus_flag_sites((f, m))[0],
+    ),
+    "available checks": (
+        "common/decisions/j.txt",
+        "c = {\n\td = {\n\t\tavailable = { check_variable = { TST_v > 5 } }\n\t}\n}\n",
+        lambda f, m: V._scan_available_file((f, m, frozenset()))[0],
+    ),
+    "scripted trigger calls": (
+        "common/decisions/k.txt",
+        "c = {\n\td = {\n\t\tavailable = { TST_border = yes }\n\t}\n}\n",
+        lambda f, m: V.process_file_for_untooltipped_available_scripted_trigger(
+            (f, m, frozenset({"TST_border"}), frozenset())
+        ),
+    ),
+    "missing variable tooltips": (
+        "events/l.txt",
+        "option = { add_to_variable = { TST_pp = 1 } }\n",
+        lambda f, m: V.process_file_for_missing_variable_tooltips(
+            (f, m, {"TST_pp": ("political_power_factor",)})
+        ),
+    ),
+    "treasury scope": (
+        "events/n.txt",
+        "option = { random_owned_state = { modify_treasury_effect = yes } }\n",
+        lambda f, m: V.process_file_for_treasury_scope((f, m)),
+    ),
+    "shared scan": (
+        "common/scripted_effects/s.txt",
+        "add = 0.1234567\n",
+        lambda f, m: V._scan_shared_file(
+            (f, m, V._F_MATH, frozenset(), frozenset(), {}, {}, {}, frozenset())
+        )[0],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "rel, content, scan", _SKIP_RULE_CASES.values(), ids=_SKIP_RULE_CASES.keys()
+)
+def test_workers_apply_skip_rules_relative_to_the_mod_root(
+    tmp_path, rel, content, scan
+):
+    mod = tmp_path / "docs" / "mod"
+    path = _write(mod / rel, content)
+
+    assert scan(str(path), str(mod))
