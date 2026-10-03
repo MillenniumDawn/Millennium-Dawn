@@ -13,7 +13,7 @@ import re
 from typing import Dict, List, Set, Tuple
 
 import disk_cache
-from shared_utils import blank_quoted_strings
+from shared_utils import blank_quoted_strings, get_staged_files
 from validate_unused_scripted import extract_definitions
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
@@ -34,6 +34,13 @@ _CALLER_PATTERNS = [
     "events/**/*.txt",
     "history/**/*.txt",
 ]
+
+# A staged change here can break a caller that did not change.
+_DEPENDENCY_DIRS = (
+    "common/scripted_effects",
+    "common/country_tags",
+    "common/country_tag_aliases",
+)
 
 # Hardcoded contracts for well-documented effects. Auto-discovery fills in
 # additional contracts from "# Parameters:" comment blocks.
@@ -131,6 +138,10 @@ _SET_TEMP_RE = re.compile(
     r"\bset_temp_variable\s*=\s*\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([^}]+?)\s*\}",
 )
 _CALL_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\s*=\s*yes\b")
+_SINGLE_CALL_LINE_RE = re.compile(
+    r"(?:[A-Za-z0-9_:.@^+-]+\s*=\s*\{\s*)*"
+    r"[A-Za-z][A-Za-z0-9_]*\s*=\s*yes\s*(?:\}\s*)*"
+)
 # Numeric scopes (741 = {) must open a block, or their close pops the wrong one.
 _KW_OPEN_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=\s*\{")
 
@@ -460,8 +471,8 @@ def _validate_call_sites_in_file(
 ) -> List[Tuple[str, str, int]]:
     """Validate one file for missing required params and orphaned sets.
 
-    A contracted call must sit on its own line. ``audit_names`` extends that
-    to uncontracted effects; it is empty outside --audit-shared-lines.
+    A call may share its line with enclosing wrappers and closing braces,
+    but not other statements. ``audit_names`` checks uncontracted effects too.
 
     Returns a list of (category, message, line_number) tuples.
     """
@@ -490,6 +501,11 @@ def _validate_call_sites_in_file(
     tokens = disk_cache.per_file_cached_by_content(
         mod_path, "scripted_params.tokens", filepath, text, lambda: _tokenize(text)
     )
+    contracted_lines = {
+        line
+        for kind, line, name, _rhs in tokens
+        if kind == "call" and name in contracts
+    }
 
     # Scope stack.  Each frame:
     #   "scope_changing": bool — True if opened by a scope-changing keyword
@@ -554,16 +570,19 @@ def _validate_call_sites_in_file(
         elif kind == "call":
             contracted = value in contracts
             if (
-                (contracted or value in audit_names)
+                (
+                    contracted
+                    or (value in audit_names and lineno not in contracted_lines)
+                )
                 and lineno not in shared_lines
-                and not _CALL_RE.fullmatch(lines[lineno - 1].strip())
+                and not _SINGLE_CALL_LINE_RE.fullmatch(lines[lineno - 1].strip())
             ):
                 shared_lines.add(lineno)
                 results.append(
                     (
-                        "call-shares-line",
+                        "call-shares-line" if contracted else "audit-call-shares-line",
                         f"{rel}:{lineno} - '{value}' shares its line with other "
-                        f"script; put the call on its own line",
+                        f"statements; put the call on its own line",
                         lineno,
                     )
                 )
@@ -658,6 +677,16 @@ class Validator(BaseValidator):
         self._contracts: Dict[str, Dict[str, List[str]]] = {}
         self._valid_tags: "frozenset[str]" = frozenset()
         self._unreadable: List[str] = []
+        if self.staged_only:
+            # A deleted or renamed contract or tag file is a dependency change too.
+            self.staged_files = (
+                get_staged_files(
+                    self.mod_path,
+                    extensions=self.STAGED_EXTENSIONS,
+                    include_missing=True,
+                )
+                or []
+            )
 
     def _build_tag_set(self):
         """Load valid country tags + aliases for the tag-validity check."""
@@ -711,7 +740,15 @@ class Validator(BaseValidator):
             self.log("  No contracts found — nothing to validate")
             return
 
-        files = self._collect_files(_CALLER_PATTERNS)
+        rescan = self.staged_touches(_DEPENDENCY_DIRS)
+        if rescan:
+            self.log("  Contract or tag source staged: rescanning every caller")
+        # Staged deletions are listed too and have nothing to scan.
+        files = self._collect_files(
+            _CALLER_PATTERNS,
+            extra_skip=lambda path: not os.path.isfile(path),
+            ignore_staged=rescan,
+        )
         self.log(f"  Scanning {len(files)} files for effect calls")
 
         audit_names = frozenset(self._audit_names)
@@ -728,6 +765,7 @@ class Validator(BaseValidator):
         identical_param_results = []
         invalid_tag_results = []
         shared_line_results = []
+        audit_shared_line_results = []
 
         for file_results in all_results:
             for category, message, _line in file_results:
@@ -741,6 +779,8 @@ class Validator(BaseValidator):
                     invalid_tag_results.append(message)
                 elif category == "call-shares-line":
                     shared_line_results.append(message)
+                elif category == "audit-call-shares-line":
+                    audit_shared_line_results.append(message)
                 elif category == "unreadable-input":
                     self._unreadable.append(message)
 
@@ -778,11 +818,19 @@ class Validator(BaseValidator):
 
         self._report(
             shared_line_results,
-            "Every checked effect call sits on its own line",
-            "Effect calls sharing a line with other script:",
-            severity=Severity.WARNING,
+            "No contracted effect calls share a line with other statements",
+            "Contracted effect calls sharing a line with other statements:",
+            severity=Severity.ERROR,
             category="call-shares-line",
         )
+        if self.audit_shared_lines:
+            self._report(
+                audit_shared_line_results,
+                "No uncontracted effect calls share a line with other statements",
+                "Uncontracted effect calls sharing a line with other statements:",
+                severity=Severity.WARNING,
+                category="audit-call-shares-line",
+            )
 
     def run_validations(self):
         self._build_contracts()
@@ -803,8 +851,8 @@ def _add_extra_args(parser):
         "--audit-shared-lines",
         action="store_true",
         dest="audit_shared_lines",
-        help="Also warn on every scripted effect call that shares its line with "
-        "other script, not only the contracted ones",
+        help="Also warn on uncontracted scripted effect calls that share a line "
+        "with other statements; contracted calls remain errors",
     )
 
 
