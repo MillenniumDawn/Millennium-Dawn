@@ -45,6 +45,4 @@ Keep each role to its purpose, task-specific reading, boundaries, and useful han
 requirements. Do not copy scripting examples, toolchain versions, helper inventories,
 or shared output templates into it. Update the owning reference instead.
 
-Player instructions belong in `docs/src/content/pages/` or `tutorials/`; contributor
-instructions belong in `docs/src/content/resources/`. Keep internal agent procedures
-out of player guides. See `docs/CONTRIBUTING.md` for site links and content rules.
+Where player and contributor guidance goes: `documentation-references.md`.
