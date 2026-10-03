@@ -1539,13 +1539,18 @@ def process_file_for_treasury_scope(
     return _scan_treasury_text(_Source(cleaned, rel))
 
 
-# Money-system input variables and the scripted effect that consumes each.
-# A set_temp_variable of one of these with no consumer call afterwards in the
-# same effect block is a dead setter — the money never moves (Sweden_foci.57).
+# Input variables and the scripted effect that consumes each. A
+# set_temp_variable of one of these with no consumer call afterwards in the
+# same effect block is a dead setter — the money never moves (Sweden_foci.57),
+# or the party popularity never changes (SyriaFocus.88).
 _MONEY_EFFECT_PAIRS = {
     "treasury_change": "modify_treasury_effect",
     "debt_change": "modify_debt_effect",
     "int_investment_change": "modify_international_investment_effect",
+    "party_popularity_increase": "change_relative_party_popularity",
+}
+_NEVER_CONSUMED_OUTCOME = {
+    "party_popularity_increase": "the party popularity never changes"
 }
 _MONEY_SETTER_RE = re.compile(
     r"set_temp_variable\s*=\s*\{\s*(" + "|".join(_MONEY_EFFECT_PAIRS) + r")\s*="
@@ -1744,7 +1749,8 @@ def _scan_orphan_money_text(
                 (
                     f"set_temp_variable {var} is never consumed — no"
                     f" {_MONEY_EFFECT_PAIRS[var]} (or wrapper) follows in the"
-                    f" same effect block, so the money never moves",
+                    f" same effect block, so"
+                    f" {_NEVER_CONSUMED_OUTCOME.get(var, 'the money never moves')}",
                     rel,
                     line,
                 )
@@ -2355,21 +2361,21 @@ class Validator(BaseValidator):
         )
 
     def validate_orphan_money_setters(self):
-        """Flag money-variable setters whose value is never consumed (WARNING).
+        """Flag input-variable setters whose value is never consumed (WARNING).
 
         set_temp_variable of treasury_change/debt_change/int_investment_change
-        must be followed, within the same effect block, by the matching
-        modify_*_effect call or a wrapper that consumes it — otherwise the
-        setter is dead and the transfer silently never happens. A setter
-        re-written at the same brace depth before the consumer runs is
-        equally dead (clobbered).
+        or party_popularity_increase must be followed, within the same effect
+        block, by the matching effect call or a wrapper that consumes it —
+        otherwise the setter is dead and the transfer or popularity change
+        silently never happens. A setter re-written at the same brace depth
+        before the consumer runs is equally dead (clobbered).
         """
-        self._log_section("Checking for orphan money-variable setters...")
+        self._log_section("Checking for orphan input-variable setters...")
         issues = self._get_shared_scan()["orphan"]
         self._report(
             issues,
-            "✓ No orphan money-variable setters found",
-            "Dead money-variable setters (never consumed, or overwritten before the consumer runs — the money never moves):",
+            "✓ No orphan input-variable setters found",
+            "Dead input-variable setters (never consumed, or overwritten before the consumer runs — the effect never applies):",
             severity=Severity.WARNING,
             category="orphan-money-setter",
         )

@@ -2470,6 +2470,74 @@ assert_finds(
     "nested country_event scheduling call not treated as a definition",
 )
 
+# "<option name> executed" form, no "Event" word: copy-pasted sibling letter -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = SyriaFocus.97\n",
+        "\toption = {\n",
+        "\t\tname = SyriaFocus.97.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: SyriaFocus.97.a executed"\n',
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = SyriaFocus.97.b #fight them\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: SyriaFocus.97.a executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "executed-form log copy-pasted from a sibling option flagged",
+)
+
+# Bare event id before "executed" names no option letter -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = SyriaFocus.24\n",
+        "\toption = {\n",
+        "\t\tname = SyriaFocus.24.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: SyriaFocus.24 executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "executed-form log naming the bare event id not flagged",
+)
+
+# Option named by a loc key has no suffix for the log to disagree with -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.5\n",
+        "\toption = {\n",
+        "\t\tname = TST_shared_ok\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.5.a executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "executed-form log in a loc-key-named option not flagged",
+)
+
+# Undotted word before "executed" is prose, not an id -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.6\n",
+        "\toption = {\n",
+        "\t\tname = tst.6.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: purge executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "undotted word before executed not flagged",
+)
+
 
 # 15d. hidden_trigger inside custom_trigger_tooltip (Check E1)
 

@@ -247,6 +247,10 @@ _RE_AI_ASSIGNMENT = re.compile(r"\b([A-Za-z_]+)\s*=\s*([-A-Za-z0-9_.]+)")
 # forms below rather than assuming the bare id alone.
 _RE_LOG_EVENT_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bEvent\s+([\w.]+)', re.IGNORECASE)
 _RE_LOG_EVENT_OPTION_SUFFIX = re.compile(r"\s+Option\s+([a-zA-Z])\b", re.IGNORECASE)
+# A third convention drops the "Event" word: "SyriaFocus.97.a executed".
+_RE_LOG_EXECUTED_TOKEN = re.compile(
+    r'log\s*=\s*"[^"]*?([\w.]+)\s+executed\b', re.IGNORECASE
+)
 _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
 _RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
 _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
@@ -3226,25 +3230,9 @@ def _check_decision_log_id(lines):
     return issues
 
 
-def _check_event_log_id(lines):
-    """Flag log = "...Event <token>..." lines inside a country_event /
-    news_event / operative_leader_event / unit_leader_event block where token
-    matches neither the block's own id nor the enclosing option's own declared
-    `name = ` (its real identity), or -- for the bare-id form -- where a
-    separate "Option <x>" phrase names a letter that doesn't match the suffix
-    of that same `name = `.
-
-    Ground-truthed against the option's own `name = ` line rather than a
-    computed sequential letter: option lettering isn't always contiguous
-    (e.g. singapore.101 skips from .c straight to .e), so a position-based
-    a/b/c/... expectation would false-positive on those.
-
-    Only top-level event definitions count (column 0); a nested
-    `country_event = { id = X days = N }` is a scheduling effect call, not a
-    definition, and is skipped since it never starts at column 0.
-    """
-    src = _source(lines)
-    issues = []
+def _iter_event_options(src):
+    """Yield (event_id, own_name, opt_start, opt_end) for each option of a
+    top-level event definition. own_name is None for an option with no name."""
     option_rows = _lines_with(src, "option")
     for start, end, _match in _outer_blocks(
         src,
@@ -3273,39 +3261,95 @@ def _check_event_log_id(lines):
                 if nm:
                     own_name = nm.group(1)
                     break
-            own_suffix = None
-            if own_name and own_name.startswith(event_id + "."):
-                own_suffix = own_name[len(event_id) + 1 :]
-            for row in range(opt_start, opt_end):
-                obl_code = src.code[row]
-                m = _RE_LOG_EVENT_TOKEN.search(obl_code)
-                if not m:
-                    continue
-                token = m.group(1)
-                if own_name and token == own_name:
-                    continue
-                if token == event_id:
-                    om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
-                    if om and own_suffix and om.group(1).lower() != own_suffix.lower():
-                        issues.append(
-                            (
-                                row + 1,
-                                f"log says Option {om.group(1)} but "
-                                f"this option's own name is "
-                                f"{own_name} -- fix the option "
-                                f"letter",
-                            )
-                        )
-                    continue
-                if own_name:
+            yield event_id, own_name, opt_start, opt_end
+
+
+def _find_event_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, own_name, bad_token) for each
+    `log = "...<token> executed"` line in an event option whose dotted token is
+    neither the option's own name nor the event id.
+
+    Only options named id.suffix are checked: an option named by a loc key has
+    no letter for the log to disagree with. The "Event <token>" form is left to
+    _check_event_log_id. Shared by _check_event_log_id and fix_log_ids.py.
+    """
+    src = _source(lines)
+    results = []
+    for event_id, own_name, opt_start, opt_end in _iter_event_options(src):
+        if not own_name or not own_name.startswith(event_id + "."):
+            continue
+        for row in range(opt_start, opt_end):
+            code = src.code[row]
+            if _RE_LOG_EVENT_TOKEN.search(code):
+                continue
+            m = _RE_LOG_EXECUTED_TOKEN.search(code)
+            if m and "." in m.group(1) and m.group(1) not in (own_name, event_id):
+                results.append((row, m.start(1), m.end(1), own_name, m.group(1)))
+    return results
+
+
+def _check_event_log_id(lines):
+    """Flag log = "...Event <token>..." lines inside a country_event /
+    news_event / operative_leader_event / unit_leader_event block where token
+    matches neither the block's own id nor the enclosing option's own declared
+    `name = ` (its real identity), or -- for the bare-id form -- where a
+    separate "Option <x>" phrase names a letter that doesn't match the suffix
+    of that same `name = `. The "<token> executed" form, with no "Event" word,
+    comes from _find_event_log_mismatches.
+
+    Ground-truthed against the option's own `name = ` line rather than a
+    computed sequential letter: option lettering isn't always contiguous
+    (e.g. singapore.101 skips from .c straight to .e), so a position-based
+    a/b/c/... expectation would false-positive on those.
+
+    Only top-level event definitions count (column 0); a nested
+    `country_event = { id = X days = N }` is a scheduling effect call, not a
+    definition, and is skipped since it never starts at column 0.
+    """
+    src = _source(lines)
+    issues = []
+    for event_id, own_name, opt_start, opt_end in _iter_event_options(src):
+        own_suffix = None
+        if own_name and own_name.startswith(event_id + "."):
+            own_suffix = own_name[len(event_id) + 1 :]
+        for row in range(opt_start, opt_end):
+            obl_code = src.code[row]
+            m = _RE_LOG_EVENT_TOKEN.search(obl_code)
+            if not m:
+                continue
+            token = m.group(1)
+            if own_name and token == own_name:
+                continue
+            if token == event_id:
+                om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
+                if om and own_suffix and om.group(1).lower() != own_suffix.lower():
                     issues.append(
                         (
                             row + 1,
-                            f"log references Event {token}, but this "
-                            f"option's own name is {own_name} -- "
-                            f"likely copy-paste; fix the log id",
+                            f"log says Option {om.group(1)} but "
+                            f"this option's own name is "
+                            f"{own_name} -- fix the option "
+                            f"letter",
                         )
                     )
+                continue
+            if own_name:
+                issues.append(
+                    (
+                        row + 1,
+                        f"log references Event {token}, but this "
+                        f"option's own name is {own_name} -- "
+                        f"likely copy-paste; fix the log id",
+                    )
+                )
+    for line_idx, _s, _e, own_name, token in _find_event_log_mismatches(src):
+        issues.append(
+            (
+                line_idx + 1,
+                f"log references {token}, but this option's own name is "
+                f"{own_name} -- likely copy-paste; fix the log id",
+            )
+        )
     return issues
 
 
