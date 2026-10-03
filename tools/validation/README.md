@@ -58,7 +58,7 @@ Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 | **validate_scientist_traits.py**      | Every scientist trait resolves to a medal sprite MD defines (`icon = X`, else `GFX_<token>`); sprites declared only in the vanilla file MD replaces; stale `#TODO: ICON` markers (all WARNING)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | **validate_scripted_gui.py**          | Scripted GUI window/property names are defined; referenced effects/triggers exist                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | **validate_scripted_localisation.py** | Scripted loc keys used but not defined; defined but never referenced; missing GFX icons                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| **validate_scripted_params.py**       | Every call site of a scripted effect that documents required temp variables sets them, in a scope the call can still see them from. Call sites are scanned across `common/`, `events/` and `history/`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **validate_scripted_params.py**       | Every call site of a scripted effect that documents required temp variables sets them, in a scope the call can still see them from. Call sites are scanned across `common/`, `events/` and `history/`. Quoted text and comments are ignored. An input that cannot be read is an `unreadable-input` ERROR. A contracted call that shares its line with other script is a `call-shares-line` WARNING; opt-in `--audit-shared-lines` extends that to every scripted effect call                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | **validate_standardization.py**       | Files the project standardizers would rewrite — focus trees, events, decisions, ideas, MIOs. Runs the owning standardizer from `tools/standardization/` in memory and diffs its output against the file, so the check cannot drift from the formatter. Manual-only (unwired from pre-commit and CI); `--all` scans the whole repo (a backlog of ~745 files). A standardizer that raises is an ERROR, since running it would leave the file half-rewritten                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | **validate_style.py**                 | Brace matching, indent/bracket balance, spacing/quotes, focus ID format, event log standards                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | **validate_simplifications.py**       | Suggests merging consecutive same-scope blocks (`TAG = { } TAG = { }`, state ids, `PREV`, `var:`); WARNING-only, skips OR/random_list contexts. Opt-in: `--owner-scope-only` (only the redundant owner-scope pass over focus trees and decisions)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -242,6 +242,91 @@ Module-level constants and pool-worker functions (those passed to `_pool_map`) m
 | `MD_LOG_LEVEL`                                                                                                                       | env var   | Set to `ERROR` / `WARNING` (default) / `INFO` to control per-validator verbosity                                                                                                                                                                           |
 
 ---
+
+## Focus coordinate warnings
+
+`validate_focus_tree.py` reports `focus-coordinate-overlap` when two static focuses
+in the same assembled tree share a row and are less than two columns apart.
+Both exact stacks and neighboring positions are checked, including every pair
+between stacked groups. Findings include the tree, both IDs, resolved coordinates
+and source locations. These are WARNINGs, including under `--strict`.
+
+The existing per-file read/cache pass supplies geometry. Each tree imports its
+explicit `shared_focus` references plus shared/joint descendants whose shared
+prerequisites have been imported. The shared registry spans files, so cross-file
+shared branches and relative anchors resolve in their host tree. Unimported
+fragments and other trees are never coordinate targets or collision partners.
+Repeated imports do not duplicate a focus; duplicate definitions are ambiguous.
+This covers standalone shared/joint definitions used by the audited MD files.
+Nested focus-group containers and nested prerequisite groups supported by the
+VSCode preview are not expanded. Neither occurs in the audited MD files; this
+validator does not claim complete preview or engine-layout parity.
+
+Relative chains use iterative memoization, including failed resolutions. Signed
+decimal coordinates are preserved exactly, without rounding to integer columns.
+Missing or nonnumeric coordinates, missing anchors/imports, duplicate definitions
+and cycles produce `focus-coordinate-unresolved` WARNINGs. Dependents of a broken
+anchor remain unresolved, with one diagnostic for the root cause per tree.
+Existing duplicate-ID and missing/forward-relative-target ERROR checks remain.
+
+Missing `x` or `y` is deliberately unknown, not an assumed zero. The existing
+`tools/analysis/focus_overlap_report.py` defaults omitted axes to zero, while
+[MD MCP's resolver](https://github.com/MillenniumDawn/millennium-dawn-mcp/blob/d3de458fca7c58c74c301df22d373177dc8fdb17/src/md_mcp/analysis/focus_layout.py#L111)
+rejects them. No engine-backed default has been established for this validator;
+the warning identifies a coverage gap, not a proven content defect. Two existing
+Czech focuses omit `x`, leaving their 29 combined tree instances unresolved.
+
+Dynamic layout is not simulated. Any focus with an `offset`, and every relative
+descendant of it, is skipped. A focus with `allow_branch`, and every prerequisite
+descendant that could depend on that gate, is skipped conservatively, including
+alternative prerequisite paths. This can omit real problems but avoids claiming
+that hypothetical static positions are drawn together. `available` and
+`mutually_exclusive` alone do not exempt icons. No content-specific exemptions
+were added; the remaining candidates stay visible for review.
+
+In staged mode, changed country trees and all shared-consuming trees are checked
+after any focus-file change. Rechecking shared consumers is intentional: removing
+or reparenting a shared descendant can erase its old dependency from the current
+registry. Deleted focus paths are retained; a deletion rechecks all trees.
+Staging no focus files runs no geometry scan. Per-file cached records are reused,
+but assembly and geometry are recomputed so changed imports cannot leave stale
+results. The separate scenario report remains useful for dynamic investigations.
+
+### Measured backlog for #5126
+
+At `f99f2055f069e41c6f51623c82d2fcc6a7f7338b`, 114 files contain 106 trees and
+32,684 assembled focus instances (a shared focus counts once in each host tree).
+The check resolves 32,655 instances, skips 9,814 resolved dynamic instances and
+checks 22,841 static instances. Gated instances number 8,373 and offset-dependent
+instances 8,996; these overlap and must not be added. There are no missing shared
+imports. The two unresolved root diagnostics account for 29 unresolved instances.
+
+The static backlog is **8 candidate pairs across 5 trees**:
+
+| Tree                            | Candidate pairs                                                                                                        |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| San Marino                      | `SMA_healthy_people` / `SMA_vatican_union`                                                                             |
+| Czech Republic                  | `CZE_2000st_apc` / `CZE_2000st_ifv`; `CZE_2000st_utility_vehichles` / `CZE_2000st_tank_modernization`                  |
+| Generic                         | `GENERIC_eastern_emergence` / `GENERIC_non_aligned`; `GENERIC_the_rising_powers` / `GENERIC_the_conservative_approach` |
+| Ukrainian provisional republics | `DRP_dnieper_logistics` / `UKR_prp_emergency_economy`; `DRP_moscow_alignment` / `UKR_prp_utilities_repair`             |
+| USA                             | `USA_net_zero_green_house` / `USA_new_path_ways_for_greens`                                                            |
+
+Removing dynamic exclusions yields 543 raw pairs, not 543 established bugs. The
+eight static candidates have not been repositioned or exempted without in-game
+review. The Brazil pre-#5122 fixture reports its one-column pair; the corrected
+two-column spacing passes. Fractional coordinates account for four candidates
+missed by the earlier integer-only exploratory scan.
+
+Run `MD_LOG_LEVEL=INFO python tools/validation/validate_focus_tree.py --path .
+--workers 1 --no-color` on one line to print counts with findings. Existing
+unrelated validator errors can still make the complete validator exit nonzero.
+
+Three cold-cache and three warm-cache measurements on the same 114 files with
+Python 3.12.14 and one worker compared the existing parse/relative-position scans
+with those same scans plus geometry. Median times were 0.911s versus 2.658s cold,
+and 0.226s versus 0.471s warm. These measure this scan component, not the full
+validator or CI; they are not a speedup claim. Resolution avoids recursive depth
+limits, and sorted row buckets enumerate only pairs within the spacing window.
 
 ## Credits
 

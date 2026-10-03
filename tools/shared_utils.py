@@ -1160,14 +1160,7 @@ def strip_comments(text: str) -> str:
         if line.lstrip().startswith("#"):
             result.append("")
             continue
-        in_quote = False
-        for i, ch in enumerate(line):
-            if ch == '"':
-                in_quote = not in_quote
-            elif ch == "#" and not in_quote:
-                line = line[:i]
-                break
-        result.append(line)
+        result.append(strip_inline_comment(line))
     return "\n".join(result)
 
 
@@ -1288,9 +1281,10 @@ def iter_statement_ops(
             index = close + 1
             continue
         if cursor < length and body[cursor] == '"':
-            stop = body.find('"', cursor + 1)
-            if stop == -1:
+            closing_quote = _STRING_QUOTE_RE.search(body, cursor + 1)
+            if closing_quote is None:
                 return
+            stop = closing_quote.start()
             yield key, operator, body[cursor + 1 : stop], None
             index = stop + 1
             continue

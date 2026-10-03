@@ -187,3 +187,24 @@ Each entry is wrong form → correct form:
 ## Recurring Typos
 
 See [`.claude/docs/typo-watchlist.md`](.claude/docs/typo-watchlist.md) for the full list. Check it when reviewing localisation files.
+
+## Prose warnings
+
+`validate_localisation.py` warns on these English-value checks, even under
+`--strict`. They are review prompts, not automatic rewrites:
+
+- `loc-repeated-word`: the same word twice in a row (`the the`). Names, grammar, and
+  deliberate speech can be valid.
+- `loc-tripled-letter`: three identical letters in a lowercase word, usually a typo.
+- `loc-placeholder`: a value that is only `TODO`, `TBD`, `TDA`, `WIP`, or
+  `PLACEHOLDER`. Write the real text.
+- `loc-dangling-description`: an `_desc` or `.d` value that ends without punctuation
+  on a word like `the`, `of`, `with`, or `them`. This is a heuristic. A complete
+  sentence can end in `them` or a preposition. Read it before adding a period;
+  a period on cut-off text is not a fix.
+
+Reviewed exceptions live in `validation_config.json` under `validate_localisation`:
+`repeated_word_exemptions` and `dangling_description_exemptions` take
+`key:lowercase-word` entries, and `stretched_word_exemptions` takes whole words.
+Every entry needs a reason. Do not exempt a whole file or a placeholder just to
+clear a report.

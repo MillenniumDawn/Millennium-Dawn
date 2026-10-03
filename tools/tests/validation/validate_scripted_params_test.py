@@ -70,7 +70,7 @@ def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
     fpath = focus_dir / "test_focus.txt"
     _write(fpath, caller_body)
     results = _validate_call_sites_in_file(
-        (str(fpath), contracts, str(mod_path), frozenset(valid_tags))
+        (str(fpath), contracts, str(mod_path), frozenset(valid_tags), frozenset())
     )
     out = []
     for cat, msg, _line in results:
@@ -489,19 +489,17 @@ def test_change_influence_percentage_identical_with_distant_set_is_filtered(
 ):
     """The 20-line proximity window filters out scope-tracking false positives.
 
-    The validator's frame-based scope tracking keeps a temp var from a
-    previous focus's completion_reward visible to the current call, even
-    though it wouldn't be in scope at runtime.  Tagging a stale
-    `tag_index` from 25+ lines back as identical to the current
-    `influence_target` would create noise; the proximity window prevents
-    that.
+    The validator's frame-based scope tracking keeps a temp var from an
+    earlier block it does not reset (a previous scripted effect) visible to
+    the current call, even though it wouldn't be in scope at runtime.
+    Tagging a stale `tag_index` from 25+ lines back as identical to the
+    current `influence_target` would create noise; the proximity window
+    prevents that.
     """
     body = (
         "shared_focus = {\n"
         "    completion_reward = {\n"
-        # Stale tag_index, 25+ lines back from the call.  At runtime this
-        # would NOT be in scope (different focus's completion_reward),
-        # but the validator's scope tracking is too coarse to know that.
+        # Stale tag_index, 25+ lines back from the call.
         "        set_temp_variable = { tag_index = TAI }\n"
         + ("        add_political_power = 0.01\n" * 25)
         + "        set_temp_variable = { percent_change = 2 }\n"
@@ -672,8 +670,9 @@ def test_invalid_tag_placeholder_TAG_is_flagged(tmp_path, cip_contract):
 # --- contract auto-discovery ----------------------------------------------
 
 
-def test_contract_parser_returns_nothing_for_an_unreadable_file(tmp_path):
-    assert vsp._parse_effect_contracts_from_file(str(tmp_path / "gone.txt")) == {}
+def test_contract_parser_raises_for_an_unreadable_file(tmp_path):
+    with pytest.raises(OSError):
+        vsp._parse_effect_contracts_from_file(str(tmp_path / "gone.txt"))
 
 
 def test_contract_parser_skips_blank_and_separator_comment_lines(tmp_path):
@@ -777,12 +776,13 @@ def test_tag_set_accepts_both_country_tags_and_aliases(tmp_path):
         "STC = {\n\toriginal_tag = YEM\n}\n",
     )
 
-    assert vsp._load_valid_country_tags(str(tmp_path)) == frozenset(
-        {"USA", "GER", "STC"}
+    assert vsp._load_valid_country_tags(str(tmp_path)) == (
+        frozenset({"USA", "GER", "STC"}),
+        [],
     )
 
 
-def test_tag_set_skips_unreadable_entries(tmp_path):
+def test_tag_set_reports_unreadable_entries(tmp_path):
     """A directory sitting where a .txt is expected must not abort the scan."""
     _write(
         tmp_path / "common" / "country_tags" / "00_countries.txt",
@@ -792,14 +792,18 @@ def test_tag_set_skips_unreadable_entries(tmp_path):
     (tmp_path / "common" / "country_tag_aliases").mkdir(parents=True)
     (tmp_path / "common" / "country_tag_aliases" / "broken.txt").mkdir()
 
-    assert vsp._load_valid_country_tags(str(tmp_path)) == frozenset({"USA"})
+    valid, unreadable = vsp._load_valid_country_tags(str(tmp_path))
+
+    assert valid == frozenset({"USA"})
+    assert len(unreadable) == 2
+    assert all("cannot read file" in message for message in unreadable)
 
 
 # --- call-site scanning edge cases ----------------------------------------
 
 
 def test_hash_inside_a_quoted_log_does_not_swallow_the_call(tmp_path, cip_contract):
-    """strip_comments keeps a `#` inside quotes; the tokenizer must drop it itself."""
+    """A `#` inside quotes is not a comment."""
     body = (
         "shared_focus = {\n"
         "    completion_reward = {\n"
@@ -847,16 +851,15 @@ def test_file_naming_no_contracted_effect_is_skipped(tmp_path, cip_contract):
     assert _issues(body, cip_contract, tmp_path) == []
 
 
-def test_unreadable_caller_file_yields_no_findings(tmp_path, cip_contract):
+def test_unreadable_caller_file_is_reported(tmp_path, cip_contract):
     path = tmp_path / "common" / "national_focus" / "test_focus.txt"
     path.mkdir(parents=True)
 
-    assert (
-        _validate_call_sites_in_file(
-            (str(path), cip_contract, str(tmp_path), frozenset())
-        )
-        == []
+    results = _validate_call_sites_in_file(
+        (str(path), cip_contract, str(tmp_path), frozenset(), frozenset())
     )
+
+    assert [category for category, _message, _line in results] == ["unreadable-input"]
 
 
 def test_stray_close_brace_does_not_desync_scope_tracking(tmp_path, cip_contract):
@@ -871,6 +874,214 @@ def test_stray_close_brace_does_not_desync_scope_tracking(tmp_path, cip_contract
         "}\n"
     )
     assert _issues(body, cip_contract, tmp_path) == []
+
+
+@pytest.mark.parametrize("block", sorted(vsp.EFFECT_BLOCK_KEYWORDS))
+def test_temp_variable_does_not_leak_into_the_next_effect_block(
+    tmp_path, cip_contract, block
+):
+    body = (
+        "container = {\n"
+        f"    {block} = {{ set_temp_variable = {{ percent_change = 5 }} }}\n"
+        f"    {block} = {{ change_influence_percentage = yes }}\n"
+        "}\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(
+        category == "missing-required-param" and "percent_change" in message
+        for category, message in issues
+    )
+
+
+def test_numeric_scope_close_does_not_end_the_effect_block(tmp_path, cip_contract):
+    body = (
+        "shared_focus = { completion_reward = { "
+        "set_temp_variable = { percent_change = 5 } "
+        "741 = { add_extra_state_shared_building_slots = 1 } "
+        "change_influence_percentage = yes } }\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
+def test_temp_opinion_set_by_an_earlier_focus_does_not_hide_temp_change(tmp_path):
+    """Regression for #5122: five GENERIC_ agriculture rewards set temp_change."""
+    _write(
+        tmp_path / "common" / "scripted_effects" / "test_effect.txt",
+        "# Parameters:\n"
+        "# - temp_opinion: signed opinion change\n"
+        "change_farmers_opinion = {\n}\n",
+    )
+    agriculture_focus = (
+        "\tfocus = {\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tset_temp_variable = { temp_change = 3 }\n"
+        "\t\t\tchange_farmers_opinion = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    _write(
+        tmp_path / "common" / "national_focus" / "00_generic.txt",
+        "focus_tree = {\n"
+        "\tfocus = {\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tset_temp_variable = { temp_opinion = 10 }\n"
+        "\t\t\tchange_farmers_opinion = yes\n"
+        "\t\t}\n"
+        "\t}\n" + agriculture_focus * 5 + "}\n",
+    )
+
+    issues = _missing_required_param_issues(tmp_path)
+    assert [issue.line for issue in issues] == [11, 17, 23, 29, 35]
+    assert all("'temp_opinion'" in issue.message for issue in issues)
+
+
+# --- quote, comment and unreadable-input handling (#5184) ------------------
+
+_AMOUNT_CONTRACT = {"test_effect": {"required": ["amount"], "optional": []}}
+
+_MISSING = "missing-required-param"
+_SHARED = "call-shares-line"
+
+# name -> (script, expected (category, line) findings in order)
+_SEMANTIC_FIXTURES = {
+    "quoted_call": ('option = {\n\tlog = "test_effect = yes"\n}\n', []),
+    "quoted_set_temp": (
+        'option = {\n\tlog = "set_temp_variable = { amount = 1 }"\n'
+        "\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
+    "quoted_hash_same_line": (
+        'option = {\n\tlog = "# text" test_effect = yes\n}\n',
+        [(_SHARED, 2), (_MISSING, 2)],
+    ),
+    "escaped_quote_before_hash": (
+        'option = {\n\tlog = "a \\" # b" test_effect = yes\n}\n',
+        [(_SHARED, 2), (_MISSING, 2)],
+    ),
+    "escaped_quote_then_comment": (
+        'option = {\n\tlog = "a \\" b" # test_effect = yes\n\ttest_effect = yes\n}\n',
+        [(_MISSING, 3)],
+    ),
+    "quoted_braces": (
+        "option = {\n\tset_temp_variable = { amount = 1 }\n"
+        '\tlog = "} } {"\n\ttest_effect = yes\n}\n',
+        [],
+    ),
+    "commented_set_temp": (
+        "option = {\n\t# set_temp_variable = { amount = 1 }\n\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
+    "trailing_comment_call": (
+        "option = {\n\tadd_stability = 0.05 # test_effect = yes\n}\n",
+        [],
+    ),
+    "trailing_comment_after_call": (
+        "option = {\n\ttest_effect = yes # needs amount\n}\n",
+        [(_MISSING, 2)],
+    ),
+    "multiline_set_temp": (
+        "option = {\n\tset_temp_variable = {\n\t\tamount = 1\n\t}\n"
+        "\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "multiline_other_set_temp": (
+        "option = {\n\tset_temp_variable = {\n\t\tother = 1\n\t}\n"
+        "\ttest_effect = yes\n}\n",
+        [(_MISSING, 5)],
+    ),
+    "multiline_string": (
+        'option = {\n\tlog = "first\n\ttest_effect = yes"\n\ttest_effect = yes\n}\n',
+        [(_MISSING, 4)],
+    ),
+    "bom_crlf": (
+        '\N{ZERO WIDTH NO-BREAK SPACE}option = {\r\n\tlog = "# x"\r\n'
+        "\ttest_effect = yes\r\n}\r\n",
+        [(_MISSING, 3)],
+    ),
+    "truncated_block": ("option = {\n\ttest_effect = yes", [(_MISSING, 2)]),
+    "truncated_string": (
+        'option = {\n\ttest_effect = yes\n\tlog = "test_effect = yes',
+        [(_MISSING, 2)],
+    ),
+    "packed_block": (
+        "option = { set_temp_variable = { amount = 1 } test_effect = yes }\n",
+        [(_SHARED, 1)],
+    ),
+    "two_calls_one_line": (
+        "option = {\n\tset_temp_variable = { amount = 1 }\n"
+        "\ttest_effect = yes test_effect = yes\n}\n",
+        [(_SHARED, 3)],
+    ),
+}
+
+
+@pytest.mark.parametrize("fixture", sorted(_SEMANTIC_FIXTURES))
+def test_semantic_fixture_agrees_uncached_cold_and_warm(tmp_path, monkeypatch, fixture):
+    script, expected = _SEMANTIC_FIXTURES[fixture]
+    path = tmp_path / "events" / "fixture.txt"
+    _write(path, script)
+    args = (str(path), _AMOUNT_CONTRACT, str(tmp_path), frozenset(), frozenset())
+
+    monkeypatch.setenv("MD_NO_CACHE", "1")
+    uncached = _validate_call_sites_in_file(args)
+    monkeypatch.delenv("MD_NO_CACHE")
+    cold = _validate_call_sites_in_file(args)
+    # A warm run must reuse the cached tokens.
+    monkeypatch.delattr(vsp, "_tokenize")
+    warm = _validate_call_sites_in_file(args)
+
+    assert uncached == cold == warm
+    assert [(category, line) for category, _message, line in uncached] == expected
+
+
+@pytest.mark.parametrize("audit, shared_lines", [(False, [2]), (True, [2, 3])])
+def test_shared_line_calls_warn_and_the_audit_flag_widens_them(
+    tmp_path, audit, shared_lines
+):
+    _write(
+        tmp_path / "common" / "scripted_effects" / "effects.txt",
+        "# Parameters:\n# - amount: how much\ntest_effect = {\n}\nplain_effect = {\n}\n",
+    )
+    _write(
+        tmp_path / "events" / "caller.txt",
+        "option = {\n"
+        "\tset_temp_variable = { amount = 1 } test_effect = yes\n"
+        "\tif = { limit = { always = yes } plain_effect = yes }\n"
+        "\tplain_effect = yes\n"
+        "}\n",
+    )
+
+    validator = vsp.Validator(
+        str(tmp_path), use_colors=False, workers=1, audit_shared_lines=audit
+    )
+    validator.run_validations()
+
+    assert [
+        (issue.category, issue.severity, issue.line) for issue in validator._issues
+    ] == [(_SHARED, vsp.Severity.WARNING, line) for line in shared_lines]
+    assert validator.errors_found == 0
+
+
+def test_validator_reports_every_unreadable_input_as_an_error(tmp_path):
+    """Invalid UTF-8 after a real call used to return no findings."""
+    for relative in (
+        "common/scripted_effects/broken.txt",
+        "common/country_tags/broken.txt",
+        "events/broken.txt",
+    ):
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"option = {\n\tchange_influence_percentage = yes\n}\n\xff\n")
+
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert [(issue.category, issue.file) for issue in validator._issues] == [
+        ("unreadable-input", "common/country_tags/broken.txt"),
+        ("unreadable-input", "common/scripted_effects/broken.txt"),
+        ("unreadable-input", "events/broken.txt"),
+    ]
+    assert validator.errors_found == 3
 
 
 # --- validator wiring ------------------------------------------------------

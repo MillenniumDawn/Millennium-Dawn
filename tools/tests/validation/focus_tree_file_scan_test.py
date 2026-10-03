@@ -90,6 +90,20 @@ SCAN_FINDINGS = [
         "Focus 'TAG_offer' uses relative_position_id 'TAG_defaults', which is"
         " defined later in the file - move 'TAG_defaults' above it",
     ),
+    *[
+        (
+            "focus-coordinate-unresolved",
+            SCAN_PATH,
+            line,
+            f"Focus tree 'tree_a': focus '{name}' has missing or nonnumeric coordinates",
+        )
+        for name, line in (
+            ("TAG_defaults", 32),
+            ("TAG_nested", 14),
+            ("TAG_offer", 26),
+            ("TAG_quoted", 6),
+        )
+    ],
     (
         "missing-search-filters",
         SCAN_PATH,
@@ -174,7 +188,7 @@ def test_a_file_whose_tokens_sit_only_in_comments_reports_nothing(tmp_path):
         "focus_tree = {\n"
         "\tcountry = { tag = SWE }\n"
         "\tfocus = {\n"
-        "\t\tid = TAG_commented\n"
+        "\t\tid = TAG_commented x = 0 y = 0\n"
         "\t\tsearch_filters = { FOCUS_FILTER_POLITICAL }\n"
         "\t\t# cancel_if_invalid = yes available = { always = no } bypass = { }\n"
         "\t\tcompletion_reward = {\n"
@@ -208,7 +222,7 @@ def test_money_effect_called_only_inside_a_preview_keeps_the_guard(tmp_path):
         SCAN_PATH,
         "focus_tree = {\n"
         "\tfocus = {\n"
-        "\t\tid = TAG_preview\n"
+        "\t\tid = TAG_preview x = 0 y = 0\n"
         "\t\tsearch_filters = { FOCUS_FILTER_POLITICAL }\n"
         "\t\tcompletion_reward = {\n"
         "\t\t\teffect_tooltip = { spend_money_effect = yes }\n"
@@ -483,7 +497,9 @@ def test_pooled_run_matches_the_in_process_run_in_order(tmp_path):
         "Focus 'TAG_calls' builds dockyard but its ai_will_do has no factor = 0"
         " modifier with can_staff_an_dockyard = no",
     ) in in_process
-    pp_malus = SCAN_FINDINGS[6]
+    pp_malus = next(
+        row for row in SCAN_FINDINGS if row[0] == "pp-malus-completion-reward"
+    )
     assert (pp_malus[0], f"{FOCUS_DIR}/scan_11.txt", 11, pp_malus[3]) in in_process
     assert "missing-cross-country-tooltip" not in {row[0] for row in in_process}
 
@@ -635,10 +651,16 @@ def test_staged_run_reports_the_staged_files_findings(tmp_path):
 
     assert _staged_run(tmp_path, [staged]) == [
         (
+            "focus-coordinate-unresolved",
+            STAGED_PATH,
+            3,
+            "Focus tree 'tree at line 1': focus 'TAG_staged' has missing or nonnumeric coordinates",
+        ),
+        (
             "missing-cross-country-tooltip",
             STAGED_PATH,
             3,
             "1 focus(es) fire an event to another nation without a"
             " TT_IF_THEY_ACCEPT tooltip: TAG_staged (line 3)",
-        )
+        ),
     ]
