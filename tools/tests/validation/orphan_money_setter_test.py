@@ -140,6 +140,40 @@ def test_clobbered_setter_is_flagged(tmp_path):
     assert "overwritten" in issues[0][0]
 
 
+def test_party_popularity_setter_clobbered_before_the_call_is_flagged(tmp_path):
+    # SyriaFocus.88 shape: two parties set up back to back, one call
+    cmap = _setup(tmp_path)
+    reward = (
+        "set_temp_variable = { party_index = 20 }\n"
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.30 }\n"
+        "\t\t\tset_temp_variable = { party_index = 5 }\n"
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.10 }\n"
+        "\t\t\tchange_relative_party_popularity = yes"
+    )
+    issues = _lines(tmp_path, reward, cmap)
+    assert [line for _msg, _rel, line in issues] == [10]
+    assert "party_popularity_increase is overwritten" in issues[0][0]
+
+
+def test_party_popularity_setter_with_a_call_after_each_is_clean(tmp_path):
+    cmap = _setup(tmp_path)
+    reward = (
+        "set_temp_variable = { party_popularity_increase = 0.30 }\n"
+        "\t\t\tchange_relative_party_popularity = yes\n"
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.10 }\n"
+        "\t\t\tchange_relative_party_popularity = yes"
+    )
+    assert _lines(tmp_path, reward, cmap) == []
+
+
+def test_party_popularity_setter_with_no_call_names_the_outcome(tmp_path):
+    cmap = _setup(tmp_path)
+    reward = "set_temp_variable = { party_popularity_increase = 0.05 }"
+    issues = _lines(tmp_path, reward, cmap)
+    assert len(issues) == 1
+    assert issues[0][0].endswith("so the party popularity never changes")
+
+
 def test_clobber_seen_across_intervening_block(tmp_path):
     # ALG_algerian_investments shape: nested blocks between the two writes
     cmap = _setup(tmp_path)

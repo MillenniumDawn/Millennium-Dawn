@@ -44,6 +44,36 @@ def test_focus_finder_dispatches_to_focus_and_decision():
     assert _finder_for("common/ideas/x.txt") is None
 
 
+def test_finder_dispatches_event_files_only_under_an_events_directory():
+    from check_common_mistakes import _find_event_log_mismatches as event_fn
+    from fix_log_ids import _finder_for
+
+    assert _finder_for("events/Syria.txt") is event_fn
+    assert _finder_for("/abs/mod/events/sub/x.txt") is event_fn
+    assert _finder_for("common/on_actions/MD_events_on_actions.txt") is None
+
+
+def test_apply_rewrites_event_option_log_token(tmp_path):
+    from fix_log_ids import fix_file
+
+    event = tmp_path / "mod/events/tst.txt"
+    _write(
+        event,
+        (
+            "country_event = {\n"
+            "\tid = tst.97\n"
+            "\toption = {\n"
+            "\t\tname = tst.97.b\n"
+            '\t\tlog = "[GetDateText]: [This.GetName]: tst.97.a executed" #fight\n'
+            "\t}\n"
+            "}\n"
+        ),
+    )
+
+    assert fix_file(str(event)) == (str(event), 1)
+    assert 'GetName]: tst.97.b executed" #fight' in event.read_text(encoding="utf-8")
+
+
 def test_rewrite_line_replaces_innermost_span_first():
     from fix_log_ids import _rewrite_line
 

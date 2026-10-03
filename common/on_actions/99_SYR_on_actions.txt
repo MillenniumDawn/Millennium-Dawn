@@ -4,10 +4,12 @@ on_actions = {
 			#FSA deals with Al-Nusra
 			if = {
 				limit = {
+					NOT = { has_country_flag = fsa_approached_nus }
 					country_exists = NUS
 					NOT = { country_exists = SYR }
 					NOT = { has_war_with = NUS }
 				}
+				set_country_flag = fsa_approached_nus
 				country_event = { id = Syria.2 hours = 6 }
 			}
 			#Annex Al-Nusra if they are losing and we are not
@@ -17,9 +19,9 @@ on_actions = {
 					country_exists = SYR
 					NOT = { country_exists = ISI }
 					NOT = { SYR = { surrender_progress > 0.4 } }
-					NUS = { is_ai = yes }
 					surrender_progress < 0.4
 					NUS = {
+						is_ai = yes
 						surrender_progress > 0.6
 					}
 				}
@@ -37,9 +39,9 @@ on_actions = {
 					country_exists = SYR
 					NOT = { country_exists = ISI }
 					NOT = { SYR = { surrender_progress > 0.4 } }
-					FSA = { is_ai = yes }
 					surrender_progress < 0.6
 					FSA = {
+						is_ai = yes
 						surrender_progress > 0.45
 					}
 				}
@@ -58,27 +60,23 @@ on_actions = {
 					NOT = { is_subject_of = FSA }
 					NOT = { is_subject_of = NUS }
 				}
-				random_list = {
-					30 = {
-						modifier = {
-							factor = 0.67
-							OR = {
-								SYR = { has_idea = intelligence_community }
-								NUS = { has_idea = intelligence_community }
-								FSA = { has_idea = intelligence_community }
-							}
+				if = {
+					limit = {
+						OR = {
+							SYR = { has_idea = intelligence_community }
+							NUS = { has_idea = intelligence_community }
+							FSA = { has_idea = intelligence_community }
 						}
+					}
+					random = {
+						chance = 20
 						country_event = { id = SyriaDecisions.9 hours = 6 }
 					}
-					70 = {
-						modifier = {
-							factor = 1.14
-							OR = {
-								SYR = { has_idea = intelligence_community }
-								NUS = { has_idea = intelligence_community }
-								FSA = { has_idea = intelligence_community }
-							}
-						}
+				}
+				else = {
+					random = {
+						chance = 30
+						country_event = { id = SyriaDecisions.9 hours = 6 }
 					}
 				}
 			}
@@ -90,27 +88,23 @@ on_actions = {
 					NOT = { is_subject_of = FSA }
 					NOT = { is_subject_of = NUS }
 				}
-				random_list = {
-					20 = {
-						modifier = {
-							factor = 1.5
-							OR = {
-								SYR = { has_idea = intelligence_community }
-								NUS = { has_idea = intelligence_community }
-								FSA = { has_idea = intelligence_community }
-							}
+				if = {
+					limit = {
+						OR = {
+							SYR = { has_idea = intelligence_community }
+							NUS = { has_idea = intelligence_community }
+							FSA = { has_idea = intelligence_community }
 						}
+					}
+					random = {
+						chance = 30
 						country_event = { id = SyriaDecisions.14 hours = 6 }
 					}
-					80 = {
-						modifier = {
-							factor = 0.875
-							OR = {
-								SYR = { has_idea = intelligence_community }
-								NUS = { has_idea = intelligence_community }
-								FSA = { has_idea = intelligence_community }
-							}
-						}
+				}
+				else = {
+					random = {
+						chance = 20
+						country_event = { id = SyriaDecisions.14 hours = 6 }
 					}
 				}
 			}
@@ -128,25 +122,27 @@ on_actions = {
 		effect = {
 			if = {
 				limit = {
-					any_controlled_state = {
-						is_core_of = ALA
-					}
+					NOT = { has_country_flag = syr_alawite_uprising_queued }
 					OR = {
 						has_war_with = ROJ
 						has_war_with = DRU
 					}
+					any_controlled_state = { is_core_of = ALA }
 				}
+				set_country_flag = syr_alawite_uprising_queued
 				country_event = { id = SyriaFocus.26 days = 30 }
 			}
 			if = {
 				limit = {
+					NOT = { has_country_flag = syr_anime_boom_queued }
+					has_idea = syrian_digital_investment4
 					OR = {
 						has_idea = syria_japanese_anime
 						has_idea = syria_chinese_anime
 						has_idea = syria_domestic_anime
 					}
-					has_idea = syrian_digital_investment4
 				}
+				set_country_flag = syr_anime_boom_queued
 				country_event = { id = SyriaFocus.108 days = 30 }
 			}
 			# ISIS Spawns - Syrian Historical ISIS Spawn
@@ -189,7 +185,7 @@ on_actions = {
 						}
 						modifier = {
 							factor = 2
-							SYR = { surrender_progress > 0.5 }
+							surrender_progress > 0.5
 						}
 						modifier = {
 							factor = 10
@@ -210,15 +206,15 @@ on_actions = {
 					check_variable = { arab_spring > 249 }
 					NOT = { check_variable = { ruling_party = 12 } }
 					NOT = { has_country_flag = arab_spring_active }
+					NOT = { has_country_flag = AS_arab_spring_completed }
+					NOT = { has_global_flag = global_arab_spring_started }
+					has_war = no
 					NOT = {
 						any_of_scopes = {
 							array = global.arabic_countries
 							has_country_flag = arab_spring_active
 						}
 					}
-					NOT = { has_country_flag = AS_arab_spring_completed }
-					NOT = { has_global_flag = global_arab_spring_started }
-					has_war = no
 				}
 				set_country_flag = arab_spring_active
 				country_event = { id = arab_spring.0 days = 1 }
