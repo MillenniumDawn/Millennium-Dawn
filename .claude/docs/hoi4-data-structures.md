@@ -182,11 +182,17 @@ the pre-write value, since the full RHS evaluates before assignment.
 
 | Statement                                          | Effect                                     |
 | -------------------------------------------------- | ------------------------------------------ |
-| `add`, `subtract`, `multiply`, `divide`            | Arithmetic on the accumulator              |
+| `add`, `subtract`, `multiply`, `divide`, `mod`     | Arithmetic on the accumulator              |
+| `pow`, `root`, `log`                               | Approximate; `round = yes` for an integer  |
 | `min`, `max`                                       | Accumulator = min/max of itself and value  |
 | `clamp = { min = X max = Y }`                      | Bound accumulator (argument order matters) |
-| `greater_than`, `less_than`                        | Return `1.0`/`0.0`                         |
+| `lerp = { to = X alpha = Y }`                      | Interpolate toward `to`; `alpha` is 0 to 1 |
 | `round = yes`                                      | Round to nearest integer                   |
+| `sin`, `cos`, `tan`, `atan`, `atan2`               | Trigonometry in radians                    |
+| `equals`, `not_equals`                             | Return `1.0`/`0.0`                         |
+| `greater_than`, `less_than`                        | Return `1.0`/`0.0`                         |
+| `greater_than_or_equals`, `less_than_or_equals`    | Return `1.0`/`0.0`                         |
+| `and`, `or`, `xor`, `not = yes`                    | Boolean logic; return `1.0`/`0.0`          |
 | `if = { limit = { ... } ... } else = { ... }`      | `limit` is an expression; true if non-zero |
 | `every_collection = { named_collection = X  ... }` | Run statements per element of a collection |
 
@@ -196,37 +202,19 @@ Each operator's argument is itself a full expression, so they nest:
 greater_than = { value = num_units  multiply = 0.4 }   # accumulator > (num_units * 0.4)
 ```
 
-**Only `greater_than` and `less_than` are safe comparators.** `equals`, `not_equals`, `greater_than_or_equals`, and `less_than_or_equals` appear in Paradox-adjacent references, but the mod's one use of `equals` inside an `if`'s `limit` (`00_ct_effects.txt`, counter-terror `ambition_chance`) threw a load-time `script_math` error and zeroed the expression, killing every terror-org attack roll. Vanilla never uses anything but `less_than` here (10 uses, zero `equals`), and MD has 29 `greater_than` / 7 `less_than`. `validate_math_expressions.py` reports the sibling-operator, unsafe-comparator and `FROM`-read traps (all three classes on this page) as warnings.
-
-For an equality test, either rewrite as a strict inequality on an integer variable (`equals = 0` on a 0/1/2 value becomes `less_than = 1`), or hoist the branch out of the expression entirely and use a normal effect-level `if` with `check_variable`:
+Every comparator is valid anywhere in an expression, including an `if`'s `limit`. That `limit` is itself a math expression, so it starts with `value =`:
 
 ```
-# Inside the expression: works, but only with < and >
-if = { limit = { value = global.active_terror_org_reach^i  less_than = 1 }  add = 15 }
-
-# Hoisted out: unambiguous, and what to reach for when in doubt
-set_temp_variable = { ambition_chance = { value = v  subtract = { ... } } }
-if = {
-    limit = { check_variable = { global.active_terror_org_reach^i = 0 } }
-    add_to_temp_variable = { ambition_chance = 15 }
-}
-set_temp_variable = { ambition_chance = { value = ambition_chance  multiply = 0.2  round = yes } }
+if = { limit = { value = x  equals = 0 }  add = 15 }
 ```
-
-Re-assigning a variable from itself (`value = ambition_chance` above) is the standard way to continue an expression after a hoisted branch.
 
 ### Verifying a new construct
 
-The engine accepts a construct or silently zeroes it, so **grep for precedent before using anything unfamiliar** in a math expression:
+A statement listed in `resources/documentation/script_math_functions.md` is valid. For anything else, the engine accepts it or silently zeroes it, so grep MD and vanilla for precedent first. No hits in either means no evidence it parses. Operand forms confirmed working: `array^i`, `array^num`, nested operand blocks, and `ROOT.`/`THIS.`/`PREV.` reads.
 
-```bash
-grep -rn "your_construct" common/ | head        # does MD already ship it?
-grep -rn "your_construct" "$HOI4/common/" | head # does vanilla?
-```
+**`FROM.<var>` reads return 0 inside an expression.** They parse cleanly, then zero the whole expression at runtime. Copy the value to a temp first: `set_temp_variable = { bailout_cost = FROM.debt_bailout }` then `set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.75 } }`.
 
-No hits in either means no evidence it parses. Confirmed working in MD: `^num` as an operand (`01_BRICS_effects.txt:104`), nested operand blocks (`!_energy_effects.txt:254`, `00_influence_scripted_effects.txt:258`), `round = yes` (`bankruptcy_decisions.txt:139`), `clamp = { min max }` (`00_scripted_triggers.txt:494`), dynamic array indices (`array^i`), and `if` inside an expression (vanilla `factions/goals/faction_goals_short_term.txt:266`).
-
-Known broken: reading a variable through the event/on_action `FROM` binding (`value = FROM.debt_bailout`) inside a math expression. It parses cleanly (no `script_math` error) but reads 0 at runtime, zeroing the whole expression (#2464, bailout donors paid $0 but still gained influence); neither vanilla nor MD has a verified working use. `ROOT.`/`THIS.`/`PREV.` reads inside expressions do have working precedent (`00_money_system.txt:920`, `99_eu_scripted_effects.txt:1441`, `00_productivity_effects.txt:33`). Keep the math expression and hoist the FROM read into a plain temp copy it can reference: `set_temp_variable = { bailout_cost = FROM.debt_bailout }` then `set_temp_variable = { treasury_change = { value = bailout_cost  multiply = -0.75 } }`.
+`validate_math_expressions.py` warns in CI on the sibling form and on `FROM` reads.
 
 ## Loop Effects
 

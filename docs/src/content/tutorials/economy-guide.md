@@ -286,14 +286,14 @@ Social spending affects stability and the impact of unemployment.
 Your interest rate is determined by:
 
 ```
-Interest Rate = (Debt / GDP) × 10 + (Central Bank Policy Rate × 0.5) + modifiers
+Interest Rate = (Debt / GDP) × 10 + (Central Bank Policy Rate × 0.33) + modifiers
 ```
 
 - **Minimum interest rate**: 0.8%
 - **Maximum interest rate**: 50%
 - Modified by national spirits and modifiers
 
-The central bank policy rate contributes half its value to the interest rate. This means raising the policy rate to fight inflation also increases the cost of servicing debt, a tradeoff between controlling inflation and managing debt.
+The central bank policy rate contributes about a third of its value to the interest rate. This means raising the policy rate to fight inflation also increases the cost of servicing debt, a tradeoff between controlling inflation and managing debt.
 
 If your weekly balance is negative, or if a national focus or event causes you to spend more than your current funds, debt is automatically issued. The game borrows 1% of GDP plus the deficit, with a 1% fee applied to automatically borrowed funds.
 
