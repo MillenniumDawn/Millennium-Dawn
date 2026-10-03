@@ -1207,20 +1207,25 @@ def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeyp
     assert seen["verbose"] is False
 
 
+def _staged_mod(dest_parent, description_body):
+    mod_dir = dest_parent / "mod"
+    mod_dir.mkdir()
+    _write_frontend_tree(mod_dir)
+    if description_body is not None:
+        _write_description(mod_dir, description_body)
+    write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
+    (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
+    return mod_dir
+
+
 def _main_staged(tmp_path, monkeypatch, *args, description_body=None):
     _prepare_full_main(tmp_path, monkeypatch, *args)
     seen = {}
 
     def fake_copy(dest_parent, excludes):
-        mod_dir = dest_parent / "mod"
-        mod_dir.mkdir()
-        _write_frontend_tree(mod_dir)
-        if description_body is not None:
-            _write_description(mod_dir, description_body)
+        mod_dir = _staged_mod(dest_parent, description_body)
         if "english" in excludes:
             (mod_dir / "localisation/english/MD_frontend_l_english.yml").unlink()
-        write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
-        (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
         return mod_dir
 
     def fake_publish(mod_dir, *_args, **_kwargs):
@@ -1256,15 +1261,9 @@ def _main_diff_staged(tmp_path, monkeypatch, changed, *args, description_body=No
     seen = {}
 
     def fake_copy(dest_parent, _excludes):
-        mod_dir = dest_parent / "mod"
-        mod_dir.mkdir()
-        _write_frontend_tree(mod_dir)
-        if description_body is not None:
-            _write_description(mod_dir, description_body)
+        mod_dir = _staged_mod(dest_parent, description_body)
         (mod_dir / "events").mkdir()
         write_text(mod_dir / "events" / "foo.txt", "changed\n")
-        write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
-        (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
         return mod_dir
 
     def fake_publish(mod_dir, *_args, **_kwargs):
