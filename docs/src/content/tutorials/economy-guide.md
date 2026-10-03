@@ -283,21 +283,25 @@ Social spending affects stability and the impact of unemployment.
 
 ### Interest Rate Calculation
 
-Your interest rate is determined by:
+When you have debt, your annual interest rate is determined by:
 
 ```
 Interest Rate = (Debt / GDP) × 10 + (Central Bank Policy Rate × 0.33) + modifiers
 ```
 
-- **Minimum interest rate**: 0.8%
-- **Maximum interest rate**: 50%
-- Modified by national spirits and modifiers
+The modifiers include national spirits, current world tension, and the world tension your country has generated. Current world tension adds up to 5 percentage points. The premium for tension you generated decays by 3.5% each week.
 
-The central bank policy rate contributes about a third of its value to the interest rate. This means raising the policy rate to fight inflation also increases the cost of servicing debt, a tradeoff between controlling inflation and managing debt.
+- **Minimum interest rate with debt**: 0.8%
+- **Maximum interest rate with debt**: 50%
+- **Without debt**: The interest rate and weekly interest payment are both zero
+
+Each 1 percentage point increase in the policy rate adds 0.33 percentage points to debt interest before the minimum and maximum apply. A 6% policy rate therefore contributes 1.98 points. Raising the policy rate to fight inflation also increases debt costs, but by about a third of the rate change, not half.
+
+Hover over **Total Debt** to see the contributions from debt-to-GDP, national spirits, the policy rate, and both tension premiums. The tooltip also shows any adjustment from the minimum or maximum rate. Check **Interest on Debt** for the weekly payment, which also depends on your reserve currency and currency strength.
 
 If your weekly balance is negative, or if a national focus or event causes you to spend more than your current funds, debt is automatically issued. The game borrows 1% of GDP plus the deficit, with a 1% fee applied to automatically borrowed funds.
 
-For countries whose debt is denominated in a foreign reserve currency (USD, EUR, CNY, etc.), a weak domestic currency increases the real burden of debt repayment, while a strong currency reduces it.
+Debt under a reserve currency law is exposed to currency strength: a weak currency raises weekly interest payments, while a strong currency lowers them. **No Foreign Reserve** removes this exchange-rate adjustment, not the underlying interest rate. See [Reserve Currency](#reserve-currency) for the payment multiplier.
 
 ### High Interest Penalties
 
@@ -344,7 +348,7 @@ Millennium Dawn models a currency system where each country has a **currency str
 
 ### Reserve Currency
 
-Every country denominates its debt and trade in a reserve currency, chosen via the **Reserve Currency** law in the Politics window. The available options are:
+Choose your reserve currency through the **Reserve Currency** law in the Politics window. This choice affects investment returns, trade bonuses, and whether debt interest payments receive an exchange-rate adjustment. The available options include:
 
 | Currency             | Typical Adopters                           |
 | -------------------- | ------------------------------------------ |
@@ -357,7 +361,9 @@ Every country denominates its debt and trade in a reserve currency, chosen via t
 | Swiss Franc (CHF)    | Switzerland and Liechtenstein only         |
 | No Foreign Reserve   | Isolated or autarkic states                |
 
-Choosing **No Foreign Reserve** eliminates foreign debt denomination effects and grants a small political power bonus, but removes the reserve currency ROI and trade bonuses that come from being part of a major currency network.
+With a reserve currency, weekly debt interest is multiplied by **1 / currency strength**, capped at **2×**. A strength of 0.5 doubles the payment; a strength of 2.0 halves it. This changes the payment, not the displayed annual interest rate.
+
+Choosing **No Foreign Reserve** keeps that multiplier at **1×** and grants a small political power bonus, but removes the reserve currency ROI and trade bonuses that come from being part of a major currency network. Switching to a reserve currency restores the exchange-rate adjustment; switching back to No Foreign Reserve removes it.
 
 ### Currency Strength
 
@@ -453,16 +459,24 @@ The quarterly result is stored and averaged with the previous three quarters. Th
 
 ### Central Bank Policy Rate
 
-The **Central Bank Policy Rate** is a manually adjustable interest rate (0-30%) that represents your country's monetary policy stance. It starts at 3% for most countries.
+The **Central Bank Policy Rate** represents your country's monetary policy stance. The manual controls range from **0% to 30%**. Most countries start at 3%; Ukraine starts at 30% in January 2000.
+
+To change it:
+
+1. Open the Economic Preview and find **Policy Rate**.
+2. Keep more than 25 political power available. Each click spends 25 political power and raises or lowers the rate by **1 percentage point**.
+3. Wait **30 days** before another manual change. Increase is unavailable at 30%, and decrease is unavailable at 0%.
+
+Ukraine's National Bank rate-cut events can also lower the rate. Accepted cuts cannot take it below 0% and block another rate change for **60 days**. A later event can therefore lower a rate you raised manually; player-controlled countries do not receive the generic AI adjustment.
 
 The rate works on inflation in two ways:
 
-- **Against the neutral rate.** The neutral rate is inflation plus 0.5 to 2.5 points, and never above 30%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%. The effect stops at 3% either way.
+- **Against the neutral rate.** The neutral rate uses inflation or a low-inflation baseline, whichever is higher, plus 0.5 to 2.5 points. It is limited to 1-30%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%. The effect stops at 3% either way.
 - **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A large budget deficit raises the share again.
 
-The AI moves its rate toward the neutral rate once a quarter. It raises the rate three points when it is more than 5 points below neutral. Otherwise it moves one point up or down.
+AI-controlled countries move their rate toward neutral once a quarter, provided no rate-change cooldown is active. They raise the rate three points when it is more than 5 points below neutral. Otherwise they move one point up or down when more than half a point from neutral. Each AI change starts a 60-day cooldown.
 
-Players can adjust the policy rate manually to respond faster or pursue different monetary strategies than the AI default.
+Manual changes update debt costs immediately. Inflation responds at the next quarterly calculation and is averaged over four quarters, so do not expect a rate increase to remove inflation at once.
 
 The gap between your rate and inflation also moves your currency. See [Currency Strength](#currency-strength).
 
