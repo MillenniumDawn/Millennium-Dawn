@@ -47,6 +47,8 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   44. on_daily_TAG blocks that only refresh country flags for the AI to read
   45. per-tag war brakes already covered by MD_avoid_new_wars_when_outmatched
   46. has_opinion_modifier only accepts a modifier ID, not a block
+  47. stat comparisons with the wrong trigger name (stability -> has_stability)
+  48. exact findings per check, and the shared per-file source's edge cases
 """
 
 import os
@@ -55,6 +57,7 @@ import sys
 import tempfile
 
 import check_common_mistakes as common_mistakes
+import pytest
 from check_common_mistakes import (
     _RE_IS_X_NATION,
     _ai_zero_modifier_conditions,
@@ -62,6 +65,7 @@ from check_common_mistakes import (
     _check_add_to_faction_country,
     _check_ai_daily_flag_cache,
     _check_any_country_member_array,
+    _check_bare_statement_token,
     _check_building_missing_province,
     _check_check_expr_bad_operand,
     _check_check_var_ge_le,
@@ -69,17 +73,20 @@ from check_common_mistakes import (
     _check_country_exists_scope_contradiction,
     _check_create_faction_deprecated,
     _check_decision_allowed_dynamic,
+    _check_decision_available_always_no,
     _check_decision_log_id,
     _check_divide_variable_zero_guard,
     _check_duplicate_add_to_variable,
     _check_else_with_limit,
     _check_embargo_dlc_guard,
+    _check_empty_log_only_blocks,
     _check_equipment_bonus,
     _check_equipment_type_defined,
     _check_event_ai_historical_bankruptcy_fallback,
     _check_event_log_id,
     _check_every_country_member_array,
     _check_every_owned_controlled_state,
+    _check_focus_available_always_no,
     _check_focus_log_id,
     _check_focus_missing_war_hint,
     _check_has_idea_mutex_in_not_block,
@@ -87,16 +94,21 @@ from check_common_mistakes import (
     _check_hidden_trigger_in_ctt,
     _check_influence_setter_scope,
     _check_invalid_is_at_war,
+    _check_is_x_nation_runtime,
     _check_leader_rotation,
     _check_log_nested_quote,
     _check_modifier_ref_defined,
     _check_mutually_exclusive_contradictions,
     _check_nested_province_block,
+    _check_nor_block,
     _check_on_add_array_symmetry,
     _check_random_select_amount_literal,
     _check_redundant_avoid_starting_wars,
     _check_retired_ideology_flags,
     _check_tautological_or,
+    _check_var_index_shorthand,
+    _check_while_loop_max_iterations,
+    _check_wrong_stat_trigger,
     _equipment_bonus_enum,
     _equipment_names,
     _files_need_global_refs,
@@ -107,23 +119,25 @@ from check_common_mistakes import (
     classify_file_path,
 )
 
-passed = 0
-failed = 0
+# Each module-level case runs on import, in file order (later fixtures change
+# module state), and is reported under its own pytest id by test_case below.
+_CASES = []
 
 
 def assert_finds(check_fn, lines, expected_count, label):
-    global passed, failed
     result = check_fn(lines)
-    if len(result) == expected_count:
-        passed += 1
-        print(f"  PASS  {label}")
-    else:
-        failed += 1
-        print(
-            f"  FAIL  {label}: expected {expected_count} finding(s), got {len(result)}"
+    found = "".join(f"\n  line {ln}: {msg}" for ln, msg in result)
+    _CASES.append(
+        (
+            label,
+            len(result) == expected_count,
+            f"expected {expected_count} finding(s), got {len(result)}{found}",
         )
-        for ln, msg in result:
-            print(f"        line {ln}: {msg}")
+    )
+
+
+def assert_eq(actual, expected, label):
+    _CASES.append((label, actual == expected, f"expected {expected!r}, got {actual!r}"))
 
 
 # 1. Consecutive same-tag scope blocks
@@ -2905,7 +2919,11 @@ assert_finds(
 
 # AND directly under NOT is the sanctioned NAND disambiguation -- never redundant
 
-from cleanup_or import find_redundant_and_blocks, simplify_and_block
+from cleanup_or import (
+    find_redundant_and_blocks,
+    find_single_condition_or_blocks,
+    simplify_and_block,
+)
 
 _AND_UNDER_NOT = [
     "\ttrigger = {\n",
@@ -2918,13 +2936,11 @@ _AND_UNDER_NOT = [
     "\t}\n",
 ]
 assert_finds(find_redundant_and_blocks, _AND_UNDER_NOT, 0, "AND under NOT not flagged")
-_simplified = simplify_and_block(_AND_UNDER_NOT)
-if _simplified == _AND_UNDER_NOT:
-    passed += 1
-    print("  PASS  simplify_and_block keeps AND under NOT")
-else:
-    failed += 1
-    print("  FAIL  simplify_and_block keeps AND under NOT")
+assert_eq(
+    simplify_and_block(_AND_UNDER_NOT),
+    _AND_UNDER_NOT,
+    "simplify_and_block keeps AND under NOT",
+)
 
 _BARE_AND = [
     "\ttrigger = {\n",
@@ -3128,16 +3144,6 @@ assert_finds(
     1,
     "stray } in a log string inside the scope block still flagged",
 )
-
-
-def assert_eq(actual, expected, label):
-    global passed, failed
-    if actual == expected:
-        passed += 1
-        print(f"  PASS  {label}")
-    else:
-        failed += 1
-        print(f"  FAIL  {label}: expected {expected!r}, got {actual!r}")
 
 
 def _isx_nation_matches(lines):
@@ -3769,6 +3775,49 @@ assert_finds(
     "scalar, quoted, and commented has_opinion_modifier forms not flagged",
 )
 
+# 47. Stat comparisons with the wrong trigger name.
+
+print("\n── wrong stat trigger name ──")
+
+assert_finds(
+    _check_wrong_stat_trigger,
+    [
+        "\tavailable = { emerging_reactionaries_are_in_power = yes stability > 0.5 }\n",
+        "\twar_support < 0.3\n",
+        "\tpolitical_power > 50\n",
+        "\thas_command_power > 20\n",
+    ],
+    4,
+    "bare stat names and has_command_power flagged",
+)
+assert_finds(
+    _check_wrong_stat_trigger,
+    [
+        "\thas_stability > 0.5\n",
+        "\tcommand_power > 20\n",
+        "\tcheck_variable = { stability > 0.6 }\n",
+        "\tcheck_variable = {\n",
+        "\t\tstability < 0.1\n",
+        "\t}\n",
+        "\tstability = 0.05\n",
+        "\tmax_manpower > 5\n",
+        "\t# stability > 0.5\n",
+    ],
+    0,
+    "has_ triggers, variable blocks, modifiers, and comments not flagged",
+)
+assert_finds(
+    _check_wrong_stat_trigger,
+    [
+        "\tcheck_variable = {\n",
+        "\t\tstability < 0.1\n",
+        "\t}\n",
+        "\tstability > 0.5\n",
+    ],
+    1,
+    "comparison after a closed variable block flagged",
+)
+
 # 42. Regressions from the review of the two checks above.
 
 print("\n── ai fallback edge cases ──")
@@ -4393,18 +4442,13 @@ assert_finds(
 
 
 def test_event_chain_loads_definition_after_an_earlier_send(tmp_path, monkeypatch):
-    events = tmp_path / "events"
-    events.mkdir()
-    with open(events / "chain.txt", "w", encoding="utf-8", newline="") as handle:
-        handle.write(
-            "".join(_WAR_CHAIN_EVENTS.values()).replace(
-                "country_event = alg_chain.2", "country_event = { id = alg_chain.2 }"
-            )
-        )
-    monkeypatch.setattr(common_mistakes, "get_root_dir", lambda: str(tmp_path))
-    monkeypatch.setattr(common_mistakes, "_EVENT_INDEX_BUILT", False)
-    monkeypatch.setattr(common_mistakes, "_EVENT_INDEX", {})
-    monkeypatch.setattr(common_mistakes, "_EVENT_BLOCKS", {})
+    _use_event_tree(
+        monkeypatch,
+        tmp_path,
+        "".join(_WAR_CHAIN_EVENTS.values()).replace(
+            "country_event = alg_chain.2", "country_event = { id = alg_chain.2 }"
+        ),
+    )
     result = _check_focus_missing_war_hint(_chain_lines)
     assert len(result) == 1
     assert "alg_chain.1 -> alg_chain.2" in result[0][1]
@@ -4443,20 +4487,1162 @@ def test_event_chain_revisits_shared_event_with_more_depth_remaining():
     )
 
 
+# 46. Bare scripted trigger/effect call missing "= yes" (#4997)
+
+assert_finds(
+    _check_bare_statement_token,
+    ["\tNOT = { GER_ai_not_historical_path }\n"],
+    1,
+    "one-line bare call in NOT flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["\tOR = {\n", "\t\tsome_trigger\n", "\t}\n"],
+    1,
+    "multi-line bare call in OR flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["\tNOT = { GER_ai_not_historical_path = yes }\n"],
+    0,
+    "call with = yes not flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["tags = { GER FRA }\n", "mutually_exclusive = { a b }\n"],
+    0,
+    "list blocks not flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["mission_type_stats = { limit = { cas attack_logistics } }\n"],
+    0,
+    "mission_type_stats limit list not flagged",
+)
+assert_finds(
+    _check_bare_statement_token,
+    ["color = { 10 20 30 }\n", "limit = { # stray_word\n", "}\n"],
+    0,
+    "numbers and comments not flagged",
+)
+
+
+# 48. Exact findings per check. check_file shares one _Source per file and
+# skips a check, or a line, whose literal is absent, so each case pins the
+# exact (line, message) and covers every alternative a gate literal stands for.
+
+_DECISION_SHELL = ["TST_category = {\n", "\tTST_decision = {\n"]
+_DECISION_END = ["\t}\n", "}\n"]
+_ON_ACTIONS = "common/on_actions/TST_on_actions.txt"
+
+
+_LOG_ONLY = 'log = "..." is the only effect in this {} block -- delete the block (a log records an effect that never runs)'
+_REDUNDANT_AND = "redundant AND = { } wrapper (AND is the default scope) -- run tools/cleanup_or.py to fix"
+_EQUIPMENT_UNDEFINED = "{} type = tst_fake_equipment is not defined in common/units/equipment/ -- the effect is a silent no-op"
+_EMBARGO = '{} without has_dlc = "By Blood Alone" guard -- wrap in if = {{ limit = {{ has_dlc = "By Blood Alone" }} }}'
+_FOCUS_LOG = "log references Focus TST_b, but the enclosing focus is TST_a -- likely copy-paste; fix the log id"
+_FOCUS_WAR = "Focus TST_war has create_wargoal but no will_lead_to_war_with -- add will_lead_to_war_with = TAG so the AI prepares for war"
+_NO_PROVINCE = "add_building_construction type = naval_base has no province -- it is a provincial building, so the engine rejects the effect and nothing is built; add province = <id> or province = { all_provinces = yes ... }"
+_MAX_ITERATIONS = "max_iterations is not a valid while_loop_effect key -- the engine ignores it; bound the loop with its break variable"
+_DUPLICATE_ADD = "duplicate consecutive add_to_variable line (same as line {}) -- likely copy-paste error; use the combined value in a single line"
+_IS_X_NATION = "is_X_nation in runtime context -- use has_country_flag = {} for O(1) lookup (allowed = {{ }} is OK for game-start checks)"
+
+# Captured from the checker before the shared-_Source refactor.
+_EXPECTED = {
+    "single-condition OR": [
+        (
+            2,
+            "redundant OR = { } wrapper around single condition -- run tools/cleanup_or.py to fix",
+        )
+    ],
+    "redundant AND": [(2, _REDUNDANT_AND)],
+    "AND after a closed OR": [(5, _REDUNDANT_AND)],
+    "two tags in one AND": [
+        (
+            2,
+            "multiple 'tag' values in same AND block (CHI, USA) -- always false since a country has only one tag; wrap in OR = { } to match any",
+        )
+    ],
+    "two original_tags in one NOT": [
+        (
+            1,
+            "NOT = { } contains multiple 'original_tag' values (CHI, USA) -- always true since a country has only one original_tag; use separate NOT blocks or NOT = { OR = { ... } }",
+        )
+    ],
+    "two governments in one AND": [
+        (
+            1,
+            "multiple 'has_government' values in same AND block (communism, democratic) -- always false since a country has only one has_government; wrap in OR = { } to match any",
+        )
+    ],
+    "two intervention ideas in one NOT": [
+        (
+            2,
+            "NOT = { } contains multiple intervention_doctrine ideas (intervention_isolation, intervention_local_security) -- always true since they're mutually exclusive; use NOT = { OR = { ... } } or separate NOT blocks per idea",
+        )
+    ],
+    "NOT country_exists beside the same scope": [
+        (
+            2,
+            "AND block has NOT = { country_exists = GER } alongside a GER = { ... } scope switch -- always false (the scope fails when GER is absent, the NOT is only true then); use OR = { ... } to match either condition",
+        )
+    ],
+    "retired ideology flag": [
+        (
+            1,
+            "retired ideology flag set_conservatism -- gate on ruling_party (slot 0: western_autocrats_are_in_power)",
+        )
+    ],
+    "unreachable focus": [
+        (
+            3,
+            "available = { always = no } with no bypass, complete_national_focus, or unlock_national_focus -- focus is permanently unreachable; add a bypass block or reach it via complete/unlock_national_focus",
+        )
+    ],
+    "focus war without hint": [(1, _FOCUS_WAR)],
+    "focus declare_war_on without hint": [(1, _FOCUS_WAR)],
+    "focus log names another focus": [(3, _FOCUS_LOG)],
+    "shared_focus log names another focus": [(3, _FOCUS_LOG)],
+    "joint_focus log names another focus": [(3, _FOCUS_LOG)],
+    "unreachable decision": [
+        (
+            3,
+            "available = { always = no } without visible = { always = no } -- add visible = { always = no } for script-triggered decisions, or set a real available condition",
+        )
+    ],
+    "dynamic trigger in decision allowed": [
+        (
+            3,
+            "dynamic trigger 'has_political_power' in decision allowed block -- allowed is evaluated once at game start; move to available",
+        )
+    ],
+    "decision log names another decision": [
+        (
+            3,
+            "log references Decision TST_other, but the enclosing decision is TST_decision -- likely copy-paste; fix the log id",
+        )
+    ],
+    "every event option zeroed under bankruptcy": [
+        (
+            1,
+            "event tst.1 gives every AI option factor 0 under historical focus plus bankruptcy -- keep at least one sub-$5 or non-spending fallback eligible",
+        )
+    ],
+    "country_event log names another option": [
+        (
+            5,
+            "log references Event tst.1.b, but this option's own name is tst.1.a -- likely copy-paste; fix the log id",
+        )
+    ],
+    "news_event log names the wrong option letter": [
+        (
+            5,
+            "log says Option b but this option's own name is tst.1.a -- fix the option letter",
+        )
+    ],
+    "leader tier advances by two": [
+        (
+            4,
+            "tier conservatism_leader = 0 advances the counter by 2 -- every tier must advance it by exactly 1 (the tier index is not the step); 2 leaves later leaders unreachable",
+        )
+    ],
+    "hidden_trigger inside custom_trigger_tooltip": [
+        (
+            3,
+            "hidden_trigger = { } directly inside custom_trigger_tooltip is redundant -- unwrap its children to the tooltip's own depth",
+        )
+    ],
+    "consecutive tag scopes": [
+        (
+            5,
+            "consecutive SOV = { } blocks (first at line 1) -- merge into a single scope block to reduce tooltip nesting",
+        )
+    ],
+    "tag scope closed beside an effect": [],
+    "send_embargo unguarded": [(1, _EMBARGO.format("send_embargo"))],
+    "break_embargo unguarded": [(1, _EMBARGO.format("break_embargo"))],
+    "divide by an unguarded variable": [
+        (
+            1,
+            "divide_variable by 'tst_divisor' without a zero guard -- add check_variable = { tst_divisor > 0 } before dividing",
+        )
+    ],
+    "duplicate add_to_variable": [(2, _DUPLICATE_ADD.format(1))],
+    "duplicate add_to_temp_variable": [(3, _DUPLICATE_ADD.format(2))],
+    "every_country over a member idea": [
+        (
+            1,
+            "every_country with has_idea = EU_member -- use for_each_scope_loop = { array = global.EU_member } instead (narrower iteration, better performance)",
+        )
+    ],
+    "every_other_country over a member idea": [
+        (
+            1,
+            "every_other_country with has_idea = NATO_member -- use for_each_scope_loop = { array = global.nato_members } instead (narrower iteration, better performance) and keep the self-exclusion as if = { limit = { NOT = { tag = ROOT } } }",
+        )
+    ],
+    "any_country over a member idea": [
+        (
+            1,
+            "any_country with has_idea = NATO_member -- use any_of_scopes = { array = global.nato_members } instead (checks only members; when negating or using all_of_scopes, add OR = { ... exists = no } -- stale array entries do not auto-skip in triggers)",
+        )
+    ],
+    "any_other_country over a member idea": [
+        (
+            1,
+            "any_other_country with has_idea = EU_member -- use any_of_scopes = { array = global.EU_member } instead (checks only members; when negating or using all_of_scopes, add OR = { ... exists = no } -- stale array entries do not auto-skip in triggers)",
+        )
+    ],
+    "on_add adds what on_remove keeps": [
+        (
+            2,
+            "on_add adds to global.tst_members but the sibling on_remove never removes from it -- removing the idea leaves a stale array entry",
+        )
+    ],
+    "log-only option": [(1, _LOG_ONLY.format("option"))],
+    "log-only effect blocks": [
+        (1, _LOG_ONLY.format("complete_effect")),
+        (2, _LOG_ONLY.format("on_add")),
+        (3, _LOG_ONLY.format("on_remove")),
+        (4, _LOG_ONLY.format("completion_reward")),
+        (5, _LOG_ONLY.format("immediate")),
+    ],
+    "is_X_nation at runtime": [(1, _IS_X_NATION.format("arab_nation_flag"))],
+    "is_nation at runtime": [(2, _IS_X_NATION.format("nation_flag"))],
+    "daily flag cache": [
+        (
+            2,
+            "on_daily_TST only refreshes country flags (TST_war) -- ai_strategy enable and focus ai_will_do are already evaluated lazily; write the condition inline instead of caching it daily",
+        )
+    ],
+    "per-tag war brake": [
+        (
+            1,
+            "CUB_avoid_starting_wars gates avoid_starting_wars on enemies_strength_ratio > 0.9 -- a strict subset of MD_avoid_new_wars_when_outmatched (> 0.75), so it never fires on a tick that block does not already own",
+        )
+    ],
+    "percent_change without a call": [
+        (
+            1,
+            "percent_change is set but change_influence_percentage = yes is never called in this file -- the setter is a silent no-op",
+        )
+    ],
+    "percent_change set inside a random_country loop": [
+        (
+            1,
+            "percent_change set inside a country-iteration loop with no change_influence_percentage = yes in the same loop -- the call must live inside the loop or it runs on stale/default values",
+        )
+    ],
+    "check_variable >=": [
+        (
+            1,
+            "check_variable does not accept '>=' inline (silently mis-parsed) -- use compare = greater_than_or_equals or rewrite as a strict inequality",
+        )
+    ],
+    "add_to_faction a faction": [
+        (
+            1,
+            "add_to_faction = BRICS is not a country -- add_to_faction takes a country tag or scope (ROOT/FROM/PREV/THIS/var:), not a faction name; it adds that country to the current scope's faction",
+        )
+    ],
+    "create_faction": [
+        (
+            1,
+            "create_faction is deprecated -- use create_faction_from_template = TEMPLATE instead for DLC compatibility",
+        )
+    ],
+    "tautological OR": [
+        (
+            1,
+            "tautological OR = { has_war = yes has_war = no } is always true -- remove the OR (fold any intended amount into base = N)",
+        )
+    ],
+    "check_expr raw comparator": [
+        (
+            2,
+            "check_expr operand 'greater_than' chained with a raw '>' -- use block form greater_than = { value = X } or a bare scalar (greater_than = X), not 'greater_than > X'",
+        )
+    ],
+    "random_select_amount variable": [
+        (
+            1,
+            "random_select_amount = var:x is not an integer literal -- random_select_amount requires a literal int",
+        )
+    ],
+    "NOR": [
+        (
+            1,
+            "NOR is not a HOI4 trigger keyword -- use separate NOT blocks or NOT = { OR = { ... } }",
+        )
+    ],
+    "stability >": [(1, "stability > is not a trigger -- use has_stability >")],
+    "has_command_power <": [
+        (1, "has_command_power < is not a trigger -- use command_power <")
+    ],
+    "is_at_war": [(1, "is_at_war is not a HOI4 trigger -- use has_war = yes/no")],
+    "has_opinion_modifier block": [
+        (1, "has_opinion_modifier takes a modifier ID, not a block")
+    ],
+    "while_loop_effect max_iterations": [(2, _MAX_ITERATIONS)],
+    "while_loop_effect split across lines": [(2, _MAX_ITERATIONS)],
+    "var:x^i shorthand": [
+        (
+            1,
+            "var:a^ is the shorthand form -- write the full array name, e.g. var:my_array^i",
+        )
+    ],
+    "limit inside else": [
+        (
+            3,
+            "limit inside an else block -- else takes no condition, so the engine rejects the block and the branch never runs; use else_if",
+        )
+    ],
+    "log with a second quote": [
+        (
+            1,
+            "log string contains a second quoted run -- it closes the value early and the engine parses the remainder as effects; keep the log to one quoted string",
+        )
+    ],
+    "equipment bonus without a name": [
+        (
+            1,
+            "add_equipment_bonus has no name = <loc key> (or project) -- the engine drops the whole effect",
+        ),
+        (
+            1,
+            "add_equipment_bonus bonus type 'tst_not_a_bonus' is not in script_enum_equipment_bonus_type -- the engine rejects the bonus",
+        ),
+    ],
+    "stockpile of undefined equipment": [
+        (1, _EQUIPMENT_UNDEFINED.format("add_equipment_to_stockpile"))
+    ],
+    "send_equipment of undefined equipment": [
+        (1, _EQUIPMENT_UNDEFINED.format("send_equipment"))
+    ],
+    "production of undefined equipment": [
+        (1, _EQUIPMENT_UNDEFINED.format("add_equipment_production"))
+    ],
+    "subsidy of undefined equipment": [
+        (1, _EQUIPMENT_UNDEFINED.format("add_equipment_subsidy"))
+    ],
+    "has_active_mission naming nothing": [
+        (
+            1,
+            "has_active_mission = tst_fake_mission names no decision in common/decisions/ -- the trigger is always false",
+        )
+    ],
+    "undefined opinion modifier": [
+        (
+            1,
+            "add_opinion_modifier modifier = tst_fake_modifier is not defined in common/opinion_modifiers/ -- nothing is applied",
+        )
+    ],
+    "undefined relation modifier": [
+        (
+            1,
+            "add_relation_modifier modifier = tst_fake_modifier is not defined in common/modifiers/ -- nothing is applied",
+        )
+    ],
+    "every_owned_controlled_state": [
+        (1, "every_owned_controlled_state does not exist -- use every_controlled_state")
+    ],
+    "provincial building without province": [(1, _NO_PROVINCE)],
+    "add_building_construction split across lines": [(1, _NO_PROVINCE)],
+    "province block naming an id": [
+        (
+            3,
+            "province = { province = <id> } is not a valid selector -- the engine rejects the add_building token and nothing is built; write province = <id>",
+        )
+    ],
+    "bare trigger call": [
+        (
+            1,
+            'bare "tst_trigger" inside NOT = { }: add "= yes" to call the scripted trigger/effect',
+        )
+    ],
+}
+
+
+def _exact(case_id, check, lines, *args):
+    return pytest.param(check, lines, args, _EXPECTED[case_id], id=case_id)
+
+
+_EXACT_CASES = [
+    _exact(
+        "single-condition OR",
+        find_single_condition_or_blocks,
+        ["\ttrigger = {\n", "\t\tOR = { has_war = yes }\n", "\t}\n"],
+    ),
+    _exact(
+        "redundant AND",
+        find_redundant_and_blocks,
+        ["\ttrigger = {\n", "\t\tAND = { has_war = yes }\n", "\t}\n"],
+    ),
+    _exact(
+        "AND after a closed OR",
+        find_redundant_and_blocks,
+        [
+            "OR = {\n",
+            "\ta = yes\n",
+            "\tb = yes\n",
+            "}\n",
+            "AND = {\n",
+            "\tc = yes\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "two tags in one AND",
+        _check_mutually_exclusive_contradictions,
+        ["limit = {\n", "\ttag = USA\n", "\ttag = CHI\n", "}\n"],
+    ),
+    _exact(
+        "two original_tags in one NOT",
+        _check_mutually_exclusive_contradictions,
+        ["NOT = { original_tag = USA original_tag = CHI }\n"],
+    ),
+    _exact(
+        "two governments in one AND",
+        _check_mutually_exclusive_contradictions,
+        ["limit = { has_government = democratic has_government = communism }\n"],
+    ),
+    _exact(
+        "two intervention ideas in one NOT",
+        _check_has_idea_mutex_in_not_block,
+        [
+            "NOT = {\n",
+            "\thas_idea = intervention_isolation\n",
+            "\thas_idea = intervention_local_security\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "NOT country_exists beside the same scope",
+        _check_country_exists_scope_contradiction,
+        [
+            "available = {\n",
+            "\tNOT = { country_exists = GER }\n",
+            "\tGER = { has_war = yes }\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "retired ideology flag",
+        _check_retired_ideology_flags,
+        ["if = { limit = { has_country_flag = set_conservatism } }\n"],
+    ),
+    _exact(
+        "unreachable focus",
+        _check_focus_available_always_no,
+        [
+            "focus = {\n",
+            "\tid = TST_unreachable\n",
+            "\tavailable = { always = no }\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "focus war without hint",
+        _check_focus_missing_war_hint,
+        [
+            "focus = {\n",
+            "\tid = TST_war\n",
+            "\tcompletion_reward = { create_wargoal = { type = annex_everything target = GER } }\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "focus declare_war_on without hint",
+        _check_focus_missing_war_hint,
+        [
+            "focus = {\n",
+            "\tid = TST_war\n",
+            "\tcompletion_reward = { declare_war_on = { target = GER type = annex_everything } }\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "focus log names another focus",
+        _check_focus_log_id,
+        [
+            "focus = {\n",
+            "\tid = TST_a\n",
+            '\tlog = "[GetDateText]: Focus TST_b"\n',
+            "}\n",
+        ],
+    ),
+    _exact(
+        "shared_focus log names another focus",
+        _check_focus_log_id,
+        ["shared_focus = {\n", "\tid = TST_a\n", '\tlog = "Focus TST_b"\n', "}\n"],
+    ),
+    _exact(
+        "joint_focus log names another focus",
+        _check_focus_log_id,
+        ["joint_focus = {\n", "\tid = TST_a\n", '\tlog = "Focus TST_b"\n', "}\n"],
+    ),
+    _exact(
+        "unreachable decision",
+        _check_decision_available_always_no,
+        _DECISION_SHELL
+        + [
+            "\t\tavailable = { always = no }\n",
+            "\t\tcomplete_effect = { add_political_power = 10 }\n",
+        ]
+        + _DECISION_END,
+    ),
+    _exact(
+        "dynamic trigger in decision allowed",
+        _check_decision_allowed_dynamic,
+        _DECISION_SHELL
+        + [
+            "\t\tallowed = { has_political_power > 10 }\n",
+            "\t\tcomplete_effect = { add_political_power = 10 }\n",
+        ]
+        + _DECISION_END,
+    ),
+    _exact(
+        "decision log names another decision",
+        _check_decision_log_id,
+        _DECISION_SHELL
+        + ['\t\tcomplete_effect = { log = "[GetDateText]: Decision TST_other" }\n']
+        + _DECISION_END,
+    ),
+    _exact(
+        "every event option zeroed under bankruptcy",
+        _check_event_ai_historical_bankruptcy_fallback,
+        [
+            "news_event = {\n",
+            "\tid = tst.1\n",
+            "\toption = {\n",
+            "\t\tname = tst.1.a\n",
+            "\t\tai_chance = { base = 5 modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse } }\n",
+            "\t}\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "country_event log names another option",
+        _check_event_log_id,
+        [
+            "country_event = {\n",
+            "\tid = tst.1\n",
+            "\toption = {\n",
+            "\t\tname = tst.1.a\n",
+            '\t\tlog = "[GetDateText]: Event tst.1.b"\n',
+            "\t}\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "news_event log names the wrong option letter",
+        _check_event_log_id,
+        [
+            "news_event = {\n",
+            "\tid = tst.1\n",
+            "\toption = {\n",
+            "\t\tname = tst.1.a\n",
+            '\t\tlog = "Event tst.1 Option b"\n',
+            "\t}\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "leader tier advances by two",
+        _check_leader_rotation,
+        _rotation(_tier("conservatism_leader", 0, increment=2)),
+    ),
+    _exact(
+        "hidden_trigger inside custom_trigger_tooltip",
+        _check_hidden_trigger_in_ctt,
+        [
+            "custom_trigger_tooltip = {\n",
+            "\ttooltip = TST_tt\n",
+            "\thidden_trigger = { has_war = yes }\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "consecutive tag scopes",
+        _check_consecutive_scope_blocks,
+        [
+            "\tSOV = {\n",
+            "\t\tadd_stability = 0.05\n",
+            "\t}\n",
+            "\n",
+            "\tSOV = {\n",
+            "\t\tadd_war_support = 0.05\n",
+            "\t}\n",
+        ],
+    ),
+    _exact(
+        "tag scope closed beside an effect",
+        _check_consecutive_scope_blocks,
+        [
+            "\tSOV = {\n",
+            "\t\tadd_stability = 0.05\n",
+            "\t} add_political_power = 1\n",
+            "\n",
+            "\tSOV = {\n",
+            "\t\tadd_war_support = 0.05\n",
+            "\t}\n",
+        ],
+    ),
+    _exact(
+        "send_embargo unguarded", _check_embargo_dlc_guard, ["\tsend_embargo = GER\n"]
+    ),
+    _exact(
+        "break_embargo unguarded", _check_embargo_dlc_guard, ["\tbreak_embargo = GER\n"]
+    ),
+    _exact(
+        "divide by an unguarded variable",
+        _check_divide_variable_zero_guard,
+        ["\tdivide_variable = { tst_value = tst_divisor }\n"],
+    ),
+    _exact(
+        "duplicate add_to_variable",
+        _check_duplicate_add_to_variable,
+        ["\tadd_to_variable = { x = 1 }\n", "\tadd_to_variable = { x = 1 }\n"],
+    ),
+    _exact(
+        "duplicate add_to_temp_variable",
+        _check_duplicate_add_to_variable,
+        [
+            "x = 1\n",
+            "\tadd_to_temp_variable = { x = 1 }\n",
+            "\tadd_to_temp_variable = { x = 1 }\n",
+        ],
+    ),
+    _exact(
+        "every_country over a member idea",
+        _check_every_country_member_array,
+        [
+            "every_country = {\n",
+            "\tlimit = { has_idea = EU_member }\n",
+            "\tadd_political_power = 1\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "every_other_country over a member idea",
+        _check_every_country_member_array,
+        [
+            "\tevery_other_country = {\n",
+            "\t\tlimit = { has_idea = NATO_member }\n",
+            "\t}\n",
+        ],
+    ),
+    _exact(
+        "any_country over a member idea",
+        _check_any_country_member_array,
+        ["any_country = {\n", "\thas_idea = NATO_member\n", "}\n"],
+    ),
+    _exact(
+        "any_other_country over a member idea",
+        _check_any_country_member_array,
+        ["\tany_other_country = { has_idea = EU_member }\n"],
+    ),
+    _exact(
+        "on_add adds what on_remove keeps",
+        _check_on_add_array_symmetry,
+        [
+            "TST_idea = {\n",
+            "\ton_add = { add_to_array = { global.tst_members = THIS } }\n",
+            "\ton_remove = { add_political_power = 1 }\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "log-only option",
+        _check_empty_log_only_blocks,
+        [
+            "option = {\n",
+            "\tname = tst.1.a\n",
+            '\tlog = "Event tst.1 Option a"\n',
+            "}\n",
+        ],
+    ),
+    _exact(
+        "log-only effect blocks",
+        _check_empty_log_only_blocks,
+        [
+            'complete_effect = { log = "a" }\n',
+            'on_add = { log = "b" }\n',
+            'on_remove = { log = "c" }\n',
+            'completion_reward = { log = "d" }\n',
+            "immediate = {\n",
+            '\tlog = "e"\n',
+            "}\n",
+        ],
+    ),
+    _exact(
+        "is_X_nation at runtime",
+        _check_is_x_nation_runtime,
+        ["available = { is_arab_nation = yes }\n"],
+    ),
+    _exact(
+        "is_nation at runtime",
+        _check_is_x_nation_runtime,
+        ["available = {\n", "\tis_nation = yes\n", "}\n"],
+    ),
+    _exact(
+        "daily flag cache",
+        _check_ai_daily_flag_cache,
+        [
+            "on_actions = {\n",
+            "\ton_daily_TST = {\n",
+            "\t\teffect = {\n",
+            "\t\t\tif = { limit = { has_war = yes } set_country_flag = TST_war }\n",
+            "\t\t\telse = { clr_country_flag = TST_war }\n",
+            "\t\t}\n",
+            "\t}\n",
+            "}\n",
+        ],
+        _ON_ACTIONS,
+    ),
+    _exact(
+        "per-tag war brake",
+        _check_redundant_avoid_starting_wars,
+        _war_brake("0.9"),
+        "common/ai_strategy/TST.txt",
+    ),
+    _exact(
+        "percent_change without a call",
+        _check_influence_setter_scope,
+        ["\tset_temp_variable = { percent_change = 5 }\n"],
+    ),
+    _exact(
+        "percent_change set inside a random_country loop",
+        _check_influence_setter_scope,
+        [
+            "random_country = {\n",
+            "\tset_temp_variable = { percent_change = 5 }\n",
+            "}\n",
+            "change_influence_percentage = yes\n",
+        ],
+    ),
+    _exact(
+        "check_variable >=", _check_check_var_ge_le, ["\tcheck_variable = { x >= 1 }\n"]
+    ),
+    _exact(
+        "add_to_faction a faction",
+        _check_add_to_faction_country,
+        ["\tadd_to_faction = BRICS\n"],
+    ),
+    _exact(
+        "create_faction",
+        _check_create_faction_deprecated,
+        ["\tcreate_faction = TST_faction\n"],
+    ),
+    _exact(
+        "tautological OR",
+        _check_tautological_or,
+        ["\tOR = { has_war = yes has_war = no }\n"],
+    ),
+    _exact(
+        "check_expr raw comparator",
+        _check_check_expr_bad_operand,
+        ["check_expr = {\n", "\tgreater_than > 6\n", "}\n"],
+    ),
+    _exact(
+        "random_select_amount variable",
+        _check_random_select_amount_literal,
+        ["\trandom_select_amount = var:x\n"],
+    ),
+    _exact("NOR", _check_nor_block, ["\tNOR = { has_war = yes }\n"]),
+    _exact("stability >", _check_wrong_stat_trigger, ["\tstability > 0.5\n"]),
+    _exact(
+        "has_command_power <", _check_wrong_stat_trigger, ["\thas_command_power < 5\n"]
+    ),
+    _exact("is_at_war", _check_invalid_is_at_war, ["\tis_at_war = yes\n"]),
+    _exact(
+        "has_opinion_modifier block",
+        _check_has_opinion_modifier_block,
+        ["\thas_opinion_modifier = { target = GER }\n"],
+    ),
+    _exact(
+        "while_loop_effect max_iterations",
+        _check_while_loop_max_iterations,
+        ["while_loop_effect = {\n", "\tmax_iterations = 5\n", "}\n"],
+    ),
+    _exact(
+        "while_loop_effect split across lines",
+        _check_while_loop_max_iterations,
+        ["while_loop_effect\n", "= { max_iterations = 5 }\n"],
+    ),
+    _exact(
+        "var:x^i shorthand",
+        _check_var_index_shorthand,
+        ["\tset_variable = { x = var:a^i }\n"],
+    ),
+    _exact(
+        "limit inside else",
+        _check_else_with_limit,
+        [
+            "if = { limit = { has_war = yes } }\n",
+            "else = {\n",
+            "\tlimit = { has_war = no }\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "log with a second quote",
+        _check_log_nested_quote,
+        ['\tlog = "Focus x" # "note"\n'],
+    ),
+    _exact(
+        "equipment bonus without a name",
+        _check_equipment_bonus,
+        [
+            "add_equipment_bonus = {\n",
+            "\tbonus = { tst_not_a_bonus = { build_cost_ic = -0.1 } }\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "stockpile of undefined equipment",
+        _check_equipment_type_defined,
+        ["\tadd_equipment_to_stockpile = { type = tst_fake_equipment amount = 1 }\n"],
+    ),
+    _exact(
+        "send_equipment of undefined equipment",
+        _check_equipment_type_defined,
+        ["\tsend_equipment = { type = tst_fake_equipment amount = 1 target = GER }\n"],
+    ),
+    _exact(
+        "production of undefined equipment",
+        _check_equipment_type_defined,
+        [
+            "\tadd_equipment_production = { equipment = { type = tst_fake_equipment } }\n"
+        ],
+    ),
+    _exact(
+        "subsidy of undefined equipment",
+        _check_equipment_type_defined,
+        ["\tadd_equipment_subsidy = { type = tst_fake_equipment cic = 1 }\n"],
+    ),
+    _exact(
+        "has_active_mission naming nothing",
+        _check_active_decision_defined,
+        ["\thas_active_mission = tst_fake_mission\n"],
+    ),
+    _exact(
+        "undefined opinion modifier",
+        _check_modifier_ref_defined,
+        ["\tadd_opinion_modifier = { target = GER modifier = tst_fake_modifier }\n"],
+    ),
+    _exact(
+        "undefined relation modifier",
+        _check_modifier_ref_defined,
+        ["\tadd_relation_modifier = { target = GER modifier = tst_fake_modifier }\n"],
+    ),
+    _exact(
+        "every_owned_controlled_state",
+        _check_every_owned_controlled_state,
+        ["\tevery_owned_controlled_state = { add_manpower = 1 }\n"],
+    ),
+    _exact(
+        "provincial building without province",
+        _check_building_missing_province,
+        ["add_building_construction = { type = naval_base level = 1 }\n"],
+    ),
+    _exact(
+        "add_building_construction split across lines",
+        _check_building_missing_province,
+        ["add_building_construction\n", "= { type = naval_base level = 1 }\n"],
+    ),
+    _exact(
+        "province block naming an id",
+        _check_nested_province_block,
+        [
+            "add_building_construction = {\n",
+            "\ttype = bunker\n",
+            "\tprovince = { province = 123 }\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "bare trigger call", _check_bare_statement_token, ["\tNOT = { tst_trigger }\n"]
+    ),
+]
+
+
+@pytest.mark.parametrize("check, lines, args, expected", _EXACT_CASES)
+def test_exact_findings(monkeypatch, check, lines, args, expected):
+    monkeypatch.setattr(
+        common_mistakes, "_REAL_NATION_FLAGS", {"arab_nation_flag", "nation_flag"}
+    )
+    monkeypatch.setattr(common_mistakes, "_SCRIPT_COMPLETED_FOCUSES", set())
+    monkeypatch.setattr(common_mistakes, "_SCRIPT_COMPLETED_DECISIONS", set())
+    assert check(lines, *args) == expected
+
+
+def _write_under(root, rel_path, text):
+    path = root / rel_path
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline="") as handle:
+        handle.write(text)
+    return str(path)
+
+
+def _file_findings(tmp_path, rel_path, text):
+    return [
+        (line, message)
+        for _path, line, message in check_file(_write_under(tmp_path, rel_path, text))
+    ]
+
+
+_TRIGGERS = "common/scripted_triggers/tst.txt"
+_IS_AT_WAR = "is_at_war is not a HOI4 trigger -- use has_war = yes/no"
+_IDEA_DEFAULT = "allowed = { always = no } is the default for ideas in 'country' -- remove it (checked once at load; add_ideas bypasses it)"
+
+
+@pytest.mark.parametrize(
+    "rel_path, text, expected",
+    [
+        pytest.param(
+            _TRIGGERS,
+            "t = { threat > 50 }\n",
+            [
+                (
+                    1,
+                    "threat > 50.0 looks like a percentage -- threat is 0.0-1.0 (use 0.5?)",
+                )
+            ],
+            id="threat",
+        ),
+        pytest.param(
+            _TRIGGERS,
+            "t = { has_war_support > 50 has_stability < 20 }\n",
+            [
+                (
+                    1,
+                    "has_war_support > 50 looks like a percentage -- has_war_support is 0.0-1.0 (use 0.5?)",
+                ),
+                (
+                    1,
+                    "has_stability < 20 looks like a percentage -- has_stability is 0.0-1.0 (use 0.2?)",
+                ),
+            ],
+            id="war support and stability",
+        ),
+        pytest.param(
+            _TRIGGERS,
+            "t = { has_stability > 30 }\n",
+            [
+                (
+                    1,
+                    "has_stability > 30 looks like a percentage -- has_stability is 0.0-1.0 (use 0.3?)",
+                )
+            ],
+            id="stability",
+        ),
+        pytest.param(
+            "common/national_focus/tst.txt",
+            "focus = {\n\tid = TST_f\n\tai_will_do = { factor = 2 }\n}\n",
+            [
+                (
+                    3,
+                    "ai_will_do root-level 'factor =' should be 'base =' -- factor is only valid inside modifier = { } children",
+                )
+            ],
+            id="ai_will_do factor",
+        ),
+        pytest.param(
+            _TRIGGERS,
+            "t = { is_in_faction = GER }\n",
+            [
+                (
+                    1,
+                    "is_in_faction = GER is invalid -- is_in_faction takes yes/no; use is_in_faction_with = GER",
+                )
+            ],
+            id="is_in_faction tag",
+        ),
+        pytest.param(
+            _TRIGGERS,
+            "t = { has_trade_agreement_with = GER }\n",
+            [
+                (
+                    1,
+                    "has_trade_agreement_with is not a valid trigger -- use has_country_flag = trade_agreement@TAG",
+                )
+            ],
+            id="has_trade_agreement_with",
+        ),
+        pytest.param(
+            _TRIGGERS,
+            "e = { set_variable = { x = y / 100 } }\n",
+            [(1, "use multiplication instead of division (/ 100 -> * 0.01)")],
+            id="division",
+        ),
+        pytest.param(
+            _TRIGGERS,
+            "t = { has_war = yes } # threat > 50 / 100\n",
+            [],
+            id="literals only in a comment",
+        ),
+        pytest.param(
+            "common/ideas/tst.txt",
+            "ideas = {\n"
+            "\tcountry = {\n"
+            "\t\tTST_idea = {\n"
+            "\t\t\tallowed = { always = no }\n"
+            "\t\t\tallowed_civil_war = { always = no }\n"
+            "\t\t\tcancel = { always = no }\n"
+            "\t\t\tallowed = {\n"
+            "\t\t\t\talways = no\n"
+            "\t\t\t}\n"
+            "\t\t}\n"
+            "\t}\n"
+            "}\n",
+            [
+                (4, _IDEA_DEFAULT),
+                (5, "allowed_civil_war = { always = no } has no effect -- remove it"),
+                (
+                    6,
+                    "cancel = { always = no } is checked hourly and never true -- remove it (redundant default)",
+                ),
+                (7, _IDEA_DEFAULT),
+            ],
+            id="idea category defaults",
+        ),
+        pytest.param(_TRIGGERS, "", [], id="empty file"),
+        pytest.param(
+            _TRIGGERS,
+            "x = {\n\tthreat > 50 }",
+            [
+                (
+                    2,
+                    "threat > 50.0 looks like a percentage -- threat is 0.0-1.0 (use 0.5?)",
+                )
+            ],
+            id="no trailing newline",
+        ),
+    ],
+)
+def test_check_file_line_checks(tmp_path, rel_path, text, expected):
+    assert _file_findings(tmp_path, rel_path, text) == expected
+
+
+def test_source_keeps_a_hash_inside_quotes():
+    src = common_mistakes._Source(['\tlog = "a # b" x = { } # note\n'])
+    assert src.code == ['\tlog = "a # b" x = { } ']
+    assert src.depth_code == ['\tlog = "" x = { } ']
+    assert _check_invalid_is_at_war(['\tlog = "a # b" is_at_war = yes\n']) == [
+        (1, _IS_AT_WAR)
+    ]
+
+
+def test_quoted_brace_does_not_move_block_depth():
+    lines = [
+        "custom_trigger_tooltip = {\n",
+        '\tlog = "}"\n',
+        "\thidden_trigger = { has_war = yes }\n",
+        "}\n",
+    ]
+    assert common_mistakes._block_end(common_mistakes._Source(lines), 0) == 4
+    assert (
+        _check_hidden_trigger_in_ctt(lines)
+        == _EXPECTED["hidden_trigger inside custom_trigger_tooltip"]
+    )
+
+
+def test_token_only_in_a_comment_is_a_candidate_but_not_a_finding():
+    lines = ["\t# is_at_war = yes\n", "\tx = 1 # is_at_war = yes\n"]
+    src = common_mistakes._Source(lines)
+    assert common_mistakes._lines_with(src, "is_at_war") == [0, 1]
+    assert _check_invalid_is_at_war(lines) == []
+
+
+def test_tokens_on_the_first_and_last_line():
+    lines = ["is_at_war = yes\n", "x = 1\n", "is_at_war = no"]
+    src = common_mistakes._Source(lines)
+    assert common_mistakes._lines_with(src, "is_at_war", "x = 1") == [0, 1, 2]
+    assert _check_invalid_is_at_war(lines) == [(1, _IS_AT_WAR), (3, _IS_AT_WAR)]
+
+
+def test_match_on_a_line_with_a_trailing_comment():
+    assert _check_invalid_is_at_war(["\tis_at_war = yes # legacy\n"]) == [
+        (1, _IS_AT_WAR)
+    ]
+    # A comment cut drops the newline; the joined text still keeps one line per line.
+    assert _check_while_loop_max_iterations(
+        ["x = 1 # note\n", "while_loop_effect = { max_iterations = 5 }\n"]
+    ) == [(2, _MAX_ITERATIONS)]
+
+
+def test_empty_source():
+    src = common_mistakes._Source([])
+    assert (src.raw, src.text, src.starts, src.tokens, src.brace_lines) == (
+        "",
+        "",
+        [0],
+        [],
+        [],
+    )
+    assert common_mistakes._lines_with(src, "is_at_war") == []
+
+
+def test_source_without_a_trailing_newline():
+    lines = ["x = {\n", "\tis_at_war = yes }"]
+    assert common_mistakes._Source(lines).text == "x = {\n\tis_at_war = yes }\n"
+    assert _check_invalid_is_at_war(lines) == [(2, _IS_AT_WAR)]
+
+
+def _use_event_tree(monkeypatch, tmp_path, text):
+    """Point the event-chain lookup at a fresh events/ tree holding text."""
+    _write_under(tmp_path, "events/chain.txt", text)
+    monkeypatch.setattr(common_mistakes, "get_root_dir", lambda: str(tmp_path))
+    monkeypatch.setattr(common_mistakes, "_EVENT_INDEX_BUILT", False)
+    monkeypatch.setattr(common_mistakes, "_EVENT_INDEX", {})
+    monkeypatch.setattr(common_mistakes, "_EVENT_BLOCKS", {})
+
+
+def test_event_chain_uses_the_first_definition_of_a_repeated_id(tmp_path, monkeypatch):
+    _use_event_tree(
+        monkeypatch,
+        tmp_path,
+        "country_event = {\n"
+        "\tid = dup.1\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { declare_war_on = { target = MOR type = annex_everything } }\n"
+        "}\n"
+        "country_event = {\n"
+        "\tid = dup.1\n"
+        "\tis_triggered_only = yes\n"
+        "\toption = { add_political_power = 10 }\n"
+        "}\n",
+    )
+    lines = [
+        "focus = {\n",
+        "\tid = ALG_dup\n",
+        "\tcompletion_reward = { country_event = dup.1 }\n",
+        "}\n",
+    ]
+    assert _check_focus_missing_war_hint(lines) == [
+        (
+            1,
+            "Focus ALG_dup sends event dup.1 leading to war but has no"
+            " will_lead_to_war_with -- add will_lead_to_war_with = TAG so the AI"
+            " prepares for war",
+        )
+    ]
+
+
 # Summary
 
 
-def test_no_failures():
-    """pytest entry point: fails the suite if any module-level assertion failed."""
-    assert failed == 0, f"{failed} assertion(s) failed (see stdout)"
+@pytest.mark.parametrize(
+    "label, ok, detail", _CASES, ids=[label for label, _ok, _detail in _CASES]
+)
+def test_case(label, ok, detail):
+    assert ok, detail
 
 
 if __name__ == "__main__":
-    print(f"\n{'=' * 60}")
-    print(f"Results: {passed} passed, {failed} failed")
-    if failed:
-        print("SOME TESTS FAILED")
-        sys.exit(1)
-    else:
-        print("ALL TESTS PASSED")
-        sys.exit(0)
+    _failures = [(label, detail) for label, ok, detail in _CASES if not ok]
+    for _label, _detail in _failures:
+        print(f"FAIL  {_label}: {_detail}")
+    print(f"Results: {len(_CASES) - len(_failures)} passed, {len(_failures)} failed")
+    sys.exit(1 if _failures else 0)

@@ -58,6 +58,13 @@ When polishing values, preserve formatting and substitution tokens byte-for-byte
 
 These are syntax examples, not identifiers to copy. Resolve every name before use.
 
+Write getters in their documented spelling from
+`resources/documentation/loc_objects_documentation.md` (`GetNameWithFlag`, not
+`GetNamewithFlag`). The engine matches built-in getters case-insensitively, so a
+case variant still renders, but an unknown getter (`GetAdj`) renders as nothing and
+logs no error. Tests cannot prove that dynamic text renders; after changing it, run
+the [Localisation Smoke Checklist](loc-smoke-checklist.md).
+
 ## Color Codes
 
 A color code is `§X`, closed by `§!`. The mod uses **three** of them, chosen by what the text means, never by taste:
@@ -73,6 +80,7 @@ Rules:
 - **Focus titles take no color at all.** The node's own frame already conveys state, so a colored title only competes with it. Color belongs in the description and the tooltip.
 - `§H` renders the identical RGB to `§Y` (`255 189 0` in `interface/core.gfx`). Write `§Y`.
 - The `§0`–`§9` gradient codes exist for graph series. Never use them in prose.
+- A literal section sign is written `§§` (`15 U.S.C. §§ 1` renders `15 U.S.C. § 1`). A single `§` always starts a color code, even before a space: `§ 1` drops the space, shows no `§`, and floods `error.log` with `Could not find coloring for character ' '`.
 - Do not build a per-country palette (a color per political party, per branch, per coup path). It reads as noise once a player moves between trees.
 - Colour only the term that carries the meaning, not the whole sentence.
 - One exception: text that **names a color the player can see elsewhere** picks the code matching that rendered color. `GCC_map_mode_tooltip_delayed` labels its map-mode legend `§CTeal§!` because the map really is teal.
@@ -130,7 +138,7 @@ Every starting national spirit the player can fix (negative or mixed, and someth
 
 ## YAML Validity
 
-HOI4 loc files are checked by `check-yaml` in the pre-commit hook. The HOI4 format is not strict YAML, so several patterns cause parse failures:
+HOI4 loc files are checked by `check-yaml` in the pre-commit hook, and `tools/linting/fix_loc_yaml.py` checks quotes, tabs, and indentation in the pre-commit hook and in CI. The HOI4 format is not strict YAML, so several patterns cause parse failures:
 
 - **Embedded double quotes**: `"He called it "important""` is invalid. Use `\"important\"` or rephrase to remove the inner quotes.
 - **Mixed indentation**: all keys must be consistently indented (all with 1 leading space, or all without). Mixing makes YAML see two separate mappings. Remove stray spaces.
@@ -179,3 +187,24 @@ Each entry is wrong form → correct form:
 ## Recurring Typos
 
 See [`.claude/docs/typo-watchlist.md`](.claude/docs/typo-watchlist.md) for the full list. Check it when reviewing localisation files.
+
+## Prose warnings
+
+`validate_localisation.py` warns on these English-value checks, even under
+`--strict`. They are review prompts, not automatic rewrites:
+
+- `loc-repeated-word`: the same word twice in a row (`the the`). Names, grammar, and
+  deliberate speech can be valid.
+- `loc-tripled-letter`: three identical letters in a lowercase word, usually a typo.
+- `loc-placeholder`: a value that is only `TODO`, `TBD`, `TDA`, `WIP`, or
+  `PLACEHOLDER`. Write the real text.
+- `loc-dangling-description`: an `_desc` or `.d` value that ends without punctuation
+  on a word like `the`, `of`, `with`, or `them`. This is a heuristic. A complete
+  sentence can end in `them` or a preposition. Read it before adding a period;
+  a period on cut-off text is not a fix.
+
+Reviewed exceptions live in `validation_config.json` under `validate_localisation`:
+`repeated_word_exemptions` and `dangling_description_exemptions` take
+`key:lowercase-word` entries, and `stretched_word_exemptions` takes whole words.
+Every entry needs a reason. Do not exempt a whole file or a placeholder just to
+clear a report.

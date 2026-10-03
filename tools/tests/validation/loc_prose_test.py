@@ -1,7 +1,7 @@
 """Tests for the prose-convention check in validate_localisation.py.
 
-Flags em dashes (U+2014) and backtick-as-apostrophe inside loc VALUES only --
-keys and comments are never scanned.
+Flags em dashes (U+2014), backtick-as-apostrophe, and an odd count of \\" quotes
+inside loc VALUES only -- keys and comments are never scanned.
 """
 
 from validate_localisation import process_yml_for_prose
@@ -55,3 +55,15 @@ def test_both_violations_in_one_file(tmp_path):
     results = _hits(tmp_path, body)
     categories = sorted(r.category for r in results)
     assert categories == ["loc-backtick-apostrophe", "loc-em-dash"]
+
+
+def test_flags_odd_count_of_escaped_quotes(tmp_path):
+    results = _hits(tmp_path, 'l_english:\n key:0 "He said: \\"go now."\n')
+    assert [(r.category, r.line) for r in results] == [("loc-unbalanced-quote", 2)]
+
+
+def test_balanced_escaped_quotes_not_flagged(tmp_path):
+    results = _hits(
+        tmp_path, 'l_english:\n key:0 "He said: \\"go\\" and \\"stay\\"."\n'
+    )
+    assert results == []

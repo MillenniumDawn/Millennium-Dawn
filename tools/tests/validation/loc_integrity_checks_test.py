@@ -5,14 +5,15 @@
    two lines and rewrote double quotes to single quotes).
 2. validate_oob_units.Validator.validate_air_wing_names_template_loc —
    air_wing_names_template = KEY must resolve to a defined English loc key.
-3. validate_modifiers.Validator.validate_dynamic_modifier_name_loc — a dynamic
-   modifier with a _TT/_desc loc entry must also have the bare-name key (the
-   in-game header renders it).
+3. validate_modifiers.Validator.validate_dynamic_modifier_name_loc — every
+   dynamic modifier must have a bare-name key (in-game tooltips render it).
 """
 
+import pytest
 from validate_localisation import Issue, process_yml_for_syntax
 from validate_modifiers import Validator as ModifiersValidator
 from validate_oob_units import Validator as OOBValidator
+from validator_common import Severity
 
 
 def _write_yml(tmp_path, name, value_line):
@@ -108,15 +109,23 @@ def _write_dynamic_modifier(tmp_path, body):
     (dm_dir / "00_test_dynamic_modifiers.txt").write_text(body, encoding="utf-8")
 
 
-def test_dynamic_modifier_missing_bare_key_flagged(tmp_path):
-    _write_dynamic_modifier(
-        tmp_path,
-        "test_dynamic_modifier = {\n"
-        "\tenable = { always = yes }\n"
-        "\tstability_factor = 0.1\n"
-        "}\n",
-    )
-    _write_loc_file(tmp_path, ["test_dynamic_modifier_TT"])
+@pytest.mark.parametrize(
+    ("body", "loc_keys"),
+    [
+        (
+            "test_dynamic_modifier = {\n"
+            "\tenable = { always = yes }\n"
+            "\tstability_factor = 0.1\n"
+            "}\n",
+            ["test_dynamic_modifier_TT"],
+        ),
+        ("test_dynamic_modifier = {\n\tstability_factor = 0.1\n}\n", []),
+    ],
+    ids=["only_tt_key", "no_loc"],
+)
+def test_dynamic_modifier_missing_bare_key_flagged(tmp_path, body, loc_keys):
+    _write_dynamic_modifier(tmp_path, body)
+    _write_loc_file(tmp_path, loc_keys)
 
     validator = ModifiersValidator(mod_path=str(tmp_path), use_colors=False)
     validator.validate_dynamic_modifier_name_loc()
@@ -124,6 +133,7 @@ def test_dynamic_modifier_missing_bare_key_flagged(tmp_path):
     assert len(validator._issues) == 1
     issue = validator._issues[0]
     assert issue.category == "dynamic-modifier-name-loc"
+    assert issue.severity == Severity.ERROR
     assert "test_dynamic_modifier" in issue.message
 
 

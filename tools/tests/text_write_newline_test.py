@@ -102,6 +102,8 @@ def test_no_untranslated_text_writes():
 
 def test_allowlist_entries_still_exist():
     """A stale allowlist entry silently exempts whatever moves onto that line."""
+    if not _ALLOWLIST:
+        return
     live = set()
     for path in _python_sources():
         rel = os.path.relpath(path, REPO_ROOT).replace(os.sep, "/")

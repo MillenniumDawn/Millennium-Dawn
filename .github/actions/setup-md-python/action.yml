@@ -5,6 +5,10 @@ inputs:
     description: Install the optional analysis dependency group
     required: false
     default: "false"
+  group:
+    description: Dependency group to install beside runtime
+    required: false
+    default: dev
   install:
     description: Install pip groups after setting up Python
     required: false
@@ -19,15 +23,17 @@ runs:
         # The pip cache hashes a dependency manifest that sparse checkouts
         # without pyproject.toml do not have, and install: false caches nothing.
         cache: ${{ inputs.install == 'true' && 'pip' || '' }}
+        cache-dependency-path: pyproject.toml
     - name: Install Python dependencies
       if: inputs.install == 'true'
       shell: bash
       env:
         INSTALL_ANALYSIS: ${{ inputs.analysis }}
+        INSTALL_GROUP: ${{ inputs.group }}
       run: |
         python -m pip install --upgrade pip
         if [ "$INSTALL_ANALYSIS" = "true" ]; then
-          pip install --group dev --group runtime --group analysis
+          pip install --group "$INSTALL_GROUP" --group runtime --group analysis
         else
-          pip install --group dev --group runtime
+          pip install --group "$INSTALL_GROUP" --group runtime
         fi

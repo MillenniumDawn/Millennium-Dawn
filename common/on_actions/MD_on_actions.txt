@@ -40,7 +40,6 @@ on_actions = {
 				limit = { is_faction_leader = yes }
 				country_event = { id = faction_goal_cache.1 days = 1 }
 			}
-			calculate_energy_load_sharing = yes
 			if = {
 				limit = {
 					is_ai = no
@@ -1405,13 +1404,16 @@ on_actions = {
 	}
 
 	# ── Reserve Currency — Faction-Change Auto-Switch (AI only) ──────────────────────────────
-	# When an AI joins the Chinese, Russian, Japanese or British faction, switch to their currency.
-	# When an AI leaves, fall back to USD (the default global reserve).
+	# When an AI joins the Chinese, Russian, Japanese or British faction, switch to their currency,
+	# unless it issues and uses its own. When an AI leaves, fall back to USD (the default global reserve).
 	# ROOT = the country joining/leaving; FROM = the faction leader.
 	on_join_faction = {
 		effect = {
 			if = {
-				limit = { is_ai = yes }
+				limit = {
+					is_ai = yes
+					NOT = { uses_own_reserve_currency = yes }
+				}
 				if = {
 					limit = {
 						FROM = { tag = CHI }

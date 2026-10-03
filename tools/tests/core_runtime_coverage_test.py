@@ -407,6 +407,7 @@ def test_file_opener_cleaners_and_line_helpers(tmp_path, monkeypatch, capsys):
     assert U.find_line_number(str(path), "KEY") == 1
     assert U.find_line_number(str(path), "missing") == 0
     assert U.strip_comments('a # x\n# whole\nlog = "# keep"') == 'a \n\nlog = "# keep"'
+    assert U.strip_comments('log = "a \\" # keep" # x') == 'log = "a \\" # keep" '
     assert U.blank_quoted_strings('x = "a { b }"\nyes', {4}) == 'x = "a { b }"\nyes'
 
     assert U.DataCleaner.clear_false_positives({"a": 1, "b": 2}, ("b", "gone")) == {
@@ -585,6 +586,7 @@ def test_run_tool_main_success_backup_and_failures(tmp_path, monkeypatch, capsys
 
 
 def test_run_validator_main_cli_paths_and_strict(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
     captured = {}
 
     class Validator:
@@ -1002,6 +1004,7 @@ def test_reports_format_issues_and_persistence(tmp_path):
 
 
 def test_suite_scheduling_reports_crash_and_main_cli(tmp_path, monkeypatch, capsys):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
     validators = [("first", "first.py", "First"), ("second", "second.py", "Second")]
     monkeypatch.setattr(suite, "split_cpu_budget", lambda tasks: (1, 1))
 

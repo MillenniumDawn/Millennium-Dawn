@@ -12,9 +12,10 @@ import os
 import re
 from functools import partial
 from multiprocessing import Pool
-from typing import Dict, List, Tuple
+from typing import Dict, FrozenSet, Iterator, List, Tuple
 
 import disk_cache
+from shared_utils import validation_config
 from validator_common import (
     BaseValidator,
     DataCleaner,
@@ -120,7 +121,7 @@ def _scan_set_variables(text: str) -> List[str]:
 def process_file_for_set_variables(
     filename: str, lowercase: bool, mod_path: str
 ) -> Tuple[List[str], Dict[str, str]]:
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return [], {}
     text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
@@ -187,6 +188,24 @@ def _dynamic_ref_pattern(ref: str):
     return "^" + r"\w+".join(re.escape(part) for part in literals) + "$"
 
 
+def _dynamic_refs(text: str) -> Iterator[str]:
+    """Yield what `_DYNAMIC_REF_RE.finditer(text)` would, trying only offsets
+    that lead into a `[`. finditer backtracked through every word first."""
+    end = 0
+    bracket = text.find("[")
+    while bracket != -1:
+        start = bracket
+        while start > end and (text[start - 1].isalnum() or text[start - 1] in "_.:"):
+            start -= 1
+        m = _DYNAMIC_REF_RE.match(text, start)
+        if m is None:
+            bracket = text.find("[", bracket + 1)
+            continue
+        yield m.group()
+        end = m.end()
+        bracket = text.find("[", end)
+
+
 # Pass-2 per-worker state, populated once by _pass2_init via the Pool
 # initializer instead of being re-pickled in every task's args (the old args
 # tuple shipped the full ~3,900-element tracked set to each of ~8,800 files).
@@ -194,14 +213,19 @@ _W_MOD_PATH: str = ""
 _W_BARE: Dict[str, str] = {}
 _W_DOTTED: Dict[str, str] = {}
 _W_NAMESPACE: str = ""
+# Every word a count can start from: a bare name, or the X of a tracked global.X.
+_W_WORDS: FrozenSet[str] = frozenset()
 
 
 def _pass2_init(mod_path, bare_map, dotted_map, namespace):
-    global _W_MOD_PATH, _W_BARE, _W_DOTTED, _W_NAMESPACE
+    global _W_MOD_PATH, _W_BARE, _W_DOTTED, _W_NAMESPACE, _W_WORDS
     _W_MOD_PATH = mod_path
     _W_BARE = bare_map
     _W_DOTTED = dotted_map
     _W_NAMESPACE = namespace
+    _W_WORDS = frozenset(bare_map).union(
+        name[len("global.") :] for name in dotted_map if name.startswith("global.")
+    )
 
 
 def _is_definition(text: str, start: int) -> bool:
@@ -215,17 +239,19 @@ def _is_definition(text: str, start: int) -> bool:
 def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
     bare = _W_BARE
     dotted = _W_DOTTED
+    words = _W_WORDS
     counts: Dict[str, int] = {}
     dynamic_patterns: set = set()
-    if "[" in text:
-        for dm in _DYNAMIC_REF_RE.finditer(text):
-            pattern = _dynamic_ref_pattern(dm.group())
-            if pattern is not None:
-                dynamic_patterns.add(pattern)
+    for ref in _dynamic_refs(text):
+        pattern = _dynamic_ref_pattern(ref)
+        if pattern is not None:
+            dynamic_patterns.add(pattern)
     for m in _RUN_RE.finditer(text):
         run = m.group()
-        base = m.start()
         if "." not in run:
+            if run not in words:
+                continue
+            base = m.start()
             if not _is_definition(text, base):
                 orig = bare.get(run)
                 if orig is not None:
@@ -247,6 +273,9 @@ def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
         # tail segment is not also counted as a bare X. Any other segment
         # (THIS.foo, root.bar) is matched as a bare name, exactly as the old
         # `\bX\b` did for the inner token of a scope chain.
+        if words.isdisjoint(run.split(".")):
+            continue
+        base = m.start()
         segs = list(_WORD_RE.finditer(run))
         j = 0
         n = len(segs)
@@ -271,7 +300,7 @@ def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
 def count_all_variables_in_file(filename: str) -> Tuple[Dict[str, int], set]:
     # Per-worker globals (set by _pass2_init) hold the tracked maps and cache
     # namespace, so each task carries only the filename string.
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=_W_MOD_PATH):
         return {}, set()
     text = FileOpener.open_text_file(filename, lowercase=True, strip_comments_flag=True)
     if not text:
@@ -462,23 +491,9 @@ class Validator(BaseValidator):
         if self.min_references:
             self.log(f"Minimum references required: {self.min_references}")
 
-        FALSE_POSITIVES = [
-            "value",
-            "days",
-            "months",
-            "years",
-            "hours",
-            "@",
-            "[",
-            "{",
-            "var:",
-            "temp_",
-            "^",
-            # Used: read via check_variable in ZAM_political_leaders but the
-            # reference scan misses it; suppress rather than delete a live var.
-            "anarchist_communism_leader",
-        ]
-        self.validate_set_variables(FALSE_POSITIVES)
+        self.validate_set_variables(
+            list(validation_config("validate_set_variables", "false_positives"))
+        )
 
 
 def add_extra_args(parser):

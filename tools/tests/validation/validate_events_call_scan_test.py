@@ -8,9 +8,11 @@ the whole pool down and the check silently reports nothing.
 """
 
 import os
+from multiprocessing import get_context
 
 import pytest
 import validate_events as V
+import validator_common
 from shared.suite import write_under_str as _write
 
 
@@ -342,8 +344,11 @@ def test_event_fire_views_share_typed_scan(tmp_path, monkeypatch):
 
 def test_event_fires_hit_disk_cache_across_instances(tmp_path, monkeypatch):
     monkeypatch.delenv("MD_NO_CACHE", raising=False)
-    _write(tmp_path, "common/f.txt", "x = { country_event = foo.1 }\n")
-    first = _validator(tmp_path)._get_event_fires()
+    path = _write(
+        tmp_path,
+        "common/f.txt",
+        "x = {\n\tcountry_event = foo.1\n\tnews_event = { id = foo.2 }\n}\n",
+    )
     calls = []
     original = V._scan_typed_fires_text
 
@@ -352,9 +357,16 @@ def test_event_fires_hit_disk_cache_across_instances(tmp_path, monkeypatch):
         return original(cleaned, filename)
 
     monkeypatch.setattr(V, "_scan_typed_fires_text", wrapped)
+    first = _validator(tmp_path)._get_event_fires()
+    assert calls == [path], "the first instance must scan and write the cache"
+
+    monkeypatch.setattr(
+        V,
+        "_scan_typed_fires_text",
+        lambda *_a: pytest.fail("the second instance must read the cached fires"),
+    )
     second = _validator(tmp_path)._get_event_fires()
-    assert calls == []
-    assert [row[0] for row in second] == [row[0] for row in first]
+    assert second == first == [("foo.1", path, 2), ("foo.2", path, 3)]
 
 
 def test_event_definition_types_hit_disk_cache_across_instances(tmp_path, monkeypatch):
@@ -534,3 +546,330 @@ def test_run_validations_executes_every_check(tmp_path):
     assert v._issues == []
     assert v.errors_found == 0
     assert v.warnings_found == 0
+
+
+# ---------------------------------------------------------------------------
+# Shared call-site scan: prepared texts, line numbers, file gates, scope
+# ---------------------------------------------------------------------------
+
+_KEYWORDS = (
+    "country_event",
+    "news_event",
+    "state_event",
+    "unit_leader_event",
+    "operative_leader_event",
+)
+
+
+def _write_tree(root, files):
+    return {relative: _write(root, relative, text) for relative, text in files.items()}
+
+
+def _shared_scan(root, staged=(), workers=1):
+    v = V.Validator(mod_path=str(root), use_colors=False, workers=workers)
+    if staged:
+        v.staged_only = True
+        v.staged_files = list(staged)
+    return v._get_shared_call_site_scan()
+
+
+def _longform(rel, line, keyword, eid):
+    return (
+        f"{rel}:{line} - {keyword} = {{ id = {eid} }}"
+        f" → use shorthand `{keyword} = {eid}`"
+    )
+
+
+def _in_loop(rel, line, message, eid):
+    return f"{rel}:{line} - {message.format(eid=eid)}"
+
+
+CALL_EDGES = (
+    "news_event = first.1\n"
+    "country_event = second.1\n"
+    'log = "country_event = { id = quoted.1 }"\n'
+    "# country_event = commented.1\n"
+    "country_event { id = noeq.1 }\n"
+    "event_country = rev.1\n"
+    "country_event = { id = long.1 }\n"
+    "news_event = last.1"
+)
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_call_sites_keep_exact_lines_across_quotes_comments_and_file_edges(
+    tmp_path, newline
+):
+    """Fires and long-form calls read comment-stripped text, so a call in a
+    quoted string still counts there; malformed calls read quote-blanked text,
+    so it does not. The first line is a fire and the last has no newline."""
+    path = _write(tmp_path, "common/f.txt", CALL_EDGES.replace("\n", newline))
+    rel = os.path.join("common", "f.txt")
+    shared = _shared_scan(tmp_path)
+    assert shared["typed"] == [
+        ("first.1", "news_event", path, 1),
+        ("second.1", "country_event", path, 2),
+        ("last.1", "news_event", path, 8),
+        ("quoted.1", "country_event", path, 3),
+        ("long.1", "country_event", path, 7),
+    ]
+    assert shared["longform"] == [
+        _longform(rel, 3, "country_event", "quoted.1"),
+        _longform(rel, 7, "country_event", "long.1"),
+    ]
+    assert shared["invalid"] == [
+        ("missing-equals", "country_event", "noeq.1", path, 5),
+        ("reversed", "event_country", "rev.1", path, 6),
+    ]
+
+
+@pytest.mark.parametrize("keyword", _KEYWORDS)
+def test_every_event_keyword_reaches_each_call_site_scan(tmp_path, keyword):
+    reversed_keyword = "event_" + keyword.removesuffix("_event")
+    path = _write(
+        tmp_path,
+        "common/f.txt",
+        f"{keyword} = short.1\n"
+        f"{keyword} = {{ id = block.1 days = 1 }}\n"
+        f"{keyword} = {{ id = long.1 }}\n"
+        f"{keyword} {{ id = noeq.1 }}\n"
+        f"{keyword} = dyn.[EVENT_ID]\n"
+        f"{reversed_keyword} = rev.1\n",
+    )
+    shared = _shared_scan(tmp_path)
+    assert shared["typed"] == [
+        ("short.1", keyword, path, 1),
+        ("block.1", keyword, path, 2),
+        ("long.1", keyword, path, 3),
+    ]
+    assert shared["longform"] == [
+        _longform(os.path.join("common", "f.txt"), 3, keyword, "long.1")
+    ]
+    assert shared["invalid"] == [
+        ("missing-equals", keyword, "noeq.1", path, 4),
+        ("reversed", reversed_keyword, "rev.1", path, 6),
+    ]
+    assert shared["dynamic"] == {"dyn"}
+
+
+def test_reversed_call_in_a_file_without_event_keywords_is_still_scanned(tmp_path):
+    path = _write(tmp_path, "common/f.txt", "x = {\n\tevent_news = { id = rev.2 }\n}\n")
+    assert _shared_scan(tmp_path)["invalid"] == [
+        ("reversed", "event_news", "rev.2", path, 2)
+    ]
+
+
+def test_keyword_used_as_a_call_target_is_not_a_second_fire(tmp_path):
+    """The fire scan resumes after each match, so a keyword consumed as another
+    call's target never starts a fire of its own."""
+    _write(tmp_path, "common/f.txt", "country_event = news_event = foo.1\n")
+    assert _shared_scan(tmp_path)["typed"] == []
+
+
+STAGED_EVENTS = (
+    "country_event = {\n"
+    "\tid = st.1\n"
+    "\tis_triggered_only = yes\n"
+    "\tfire_only_once = yes\n"
+    "\toption = {\n"
+    "\t\tname = st.1.a\n"
+    "\t\tevery_country = {\n"
+    "\t\t\tcountry_event = st.1\n"
+    "\t\t\tnews_event = { id = st.2 }\n"
+    "\t\t}\n"
+    "\t\tcountry_event { id = st.2 }\n"
+    "\t}\n"
+    "}\n"
+    "news_event = {\n"
+    "\tid = st.2\n"
+    "\tis_triggered_only = yes\n"
+    "\tmajor = yes\n"
+    "}\n"
+)
+
+UNSTAGED_CALLER = (
+    "fx = {\n"
+    "\tcountry_event = { id = st.1 }\n"
+    "\tnews_event { id = st.2 }\n"
+    "\tevery_country = {\n"
+    "\t\tcountry_event = st.1\n"
+    "\t\tnews_event = st.2\n"
+    "\t}\n"
+    "}\n"
+)
+
+
+def test_staged_event_file_keeps_scoped_findings_to_staged_files(tmp_path):
+    """A staged events/ file widens the fire scan to every caller, but the
+    long-form, malformed and in-loop checks still report only staged files."""
+    paths = _write_tree(
+        tmp_path,
+        {
+            "events/Ev.txt": STAGED_EVENTS,
+            "common/scripted_effects/caller.txt": UNSTAGED_CALLER,
+        },
+    )
+    event, caller = paths["events/Ev.txt"], paths["common/scripted_effects/caller.txt"]
+    ev_rel = os.path.join("events", "Ev.txt")
+    caller_rel = os.path.join("common", "scripted_effects", "caller.txt")
+
+    full = _shared_scan(tmp_path)
+    assert [finding.split(" - ")[0] for finding in full["longform"]] == [
+        f"{caller_rel}:2",
+        f"{ev_rel}:9",
+    ]
+    assert [(f, line) for *_, f, line in full["invalid"]] == [(caller, 3), (event, 11)]
+    assert [finding.split(" - ")[0] for finding in full["fof"] + full["major"]] == [
+        f"{caller_rel}:5",
+        f"{ev_rel}:8",
+        f"{caller_rel}:6",
+        f"{ev_rel}:9",
+    ]
+
+    staged = _shared_scan(tmp_path, staged=[event])
+    assert staged["longform"] == [_longform(ev_rel, 9, "news_event", "st.2")]
+    assert staged["invalid"] == [("missing-equals", "country_event", "st.2", event, 11)]
+    assert staged["fof"] == [_in_loop(ev_rel, 8, V._FOF_IN_LOOP_MSG, "st.1")]
+    assert staged["major"] == [_in_loop(ev_rel, 9, V._MAJOR_IN_LOOP_MSG, "st.2")]
+    assert sorted(
+        (eid, line) for eid, _keyword, f, line in staged["typed"] if f == caller
+    ) == [("st.1", 2), ("st.1", 5), ("st.2", 6)]
+
+
+MOD_PATH_EVENTS = (
+    "country_event = {\n"
+    "\tid = mp.1\n"
+    "\tis_triggered_only = yes\n"
+    "\tfire_only_once = yes\n"
+    "\tpicture = GFX_missing\n"
+    "\ttrigger = { date > 2001.1.1 }\n"
+    "\timmediate = { country_event = mp.2 }\n"
+    "\toption = {\n"
+    "\t\tname = mp.1.a\n"
+    '\t\tlog = "mp.1.a"\n'
+    "\t}\n"
+    "}\n"
+) + "".join(
+    f"country_event = {{\n\tid = mp.{n}\n\tis_triggered_only = yes\n"
+    f"\ttrigger = {{ date > 200{n}.1.1 }}\n}}\n"
+    for n in (2, 3, 4)
+)
+
+
+def test_a_mod_root_inside_an_ignored_directory_is_still_scanned(tmp_path, monkeypatch):
+    """Every per-file worker checks skips relative to the mod root. Under a
+    `tools/` parent, an absolute-path check would skip the whole mod."""
+    root = tmp_path / "tools" / "mod"
+    _write_tree(
+        root,
+        {
+            "events/Ev.txt": MOD_PATH_EVENTS,
+            V._YEARLY_EFFECTS_REL: (
+                "MD_event_on_startup_events = {\n"
+                "\tevery_country = {\n"
+                "\t\tcountry_event = { id = mp.1 }\n"
+                "\t}\n"
+                "}\n"
+            ),
+            "common/on_actions/00_on_actions.txt": (
+                "on_actions = {\n\ton_daily = {\n\t\trandom = {\n"
+                "\t\t\tchance = 5\n\t\t\tcountry_event = mp.3\n\t\t}\n\t}\n}\n"
+            ),
+        },
+    )
+    monkeypatch.setattr(V, "build_sprite_index", lambda *a, **kw: _sprite_index())
+    v = _validator(root)
+    v.validate_event_pictures()
+    v.validate_option_log_without_effect()
+    v.validate_date_gated_scheduling()
+    v.validate_scheduled_date_bounds()
+    v.validate_event_call_long_form()
+    v.validate_fire_only_once_in_loop()
+
+    yearly = V._YEARLY_EFFECTS_REL
+    assert [(i.category, i.file, i.line, i.message) for i in v._issues] == [
+        ("missing-event-picture", "Ev.txt", 5, "GFX_missing"),
+        ("event-option-log-without-effect", "Ev.txt", 10, "mp.1.a"),
+        (
+            "date-gated-not-scheduled",
+            "",
+            0,
+            f"mp.4 - events/Ev.txt:23 has a date > guard but nothing schedules it"
+            f" from {yearly} (fired from: nothing)",
+        ),
+        (
+            "scheduled-event-date-bound",
+            "",
+            0,
+            f"mp.1 - events/Ev.txt:1 is scheduled from {yearly}, so the date bound"
+            " in its trigger is redundant (remove it; drop the trigger block if"
+            " nothing else is left)",
+        ),
+        (
+            "Long-form event calls with only id (use shorthand instead)",
+            yearly,
+            3,
+            _longform(yearly, 3, "country_event", "mp.1").split(" - ", 1)[1],
+        ),
+        (
+            "fire-only-once-in-loop",
+            yearly,
+            3,
+            V._FOF_IN_LOOP_MSG.format(eid="mp.1"),
+        ),
+    ]
+
+
+def _pooled_caller(number):
+    return (
+        f"fx_{number} = {{\n" + "\n" * number + "\tevery_country = {\n"
+        "\t\tcountry_event = st.1\n"
+        "\t\tnews_event = { id = st.2 }\n"
+        "\t}\n"
+        "\tcountry_event = { id = st.1 }\n"
+        "}\n"
+    )
+
+
+def test_pooled_shared_scan_matches_the_in_process_scan(tmp_path, monkeypatch):
+    """Enough files to cross the pool threshold: the workers must rebuild every
+    finding, line included, from their arguments alone."""
+    monkeypatch.setenv("MD_NO_CACHE", "1")
+    files = {"events/Ev.txt": STAGED_EVENTS}
+    files.update(
+        {f"common/scripted_effects/{n:02}.txt": _pooled_caller(n) for n in range(12)}
+    )
+    _write_tree(tmp_path, files)
+    spawn_pool = get_context("spawn").Pool
+    pools = []
+
+    def counting_pool(*args, **kwargs):
+        pools.append(kwargs.get("processes", args[0] if args else None))
+        return spawn_pool(*args, **kwargs)
+
+    monkeypatch.setattr(validator_common, "Pool", counting_pool)
+
+    def run(workers):
+        v = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=workers)
+        result = {}
+        monkeypatch.setattr(
+            v, "run_validations", lambda: result.update(v._get_shared_call_site_scan())
+        )
+        v.run_all_validations()
+        assert v._pool is None
+        return result
+
+    pooled = run(2)
+    assert pools == [2], "the shared scan did not run in a worker pool"
+    in_process = run(1)
+    assert pools == [2]
+    assert pooled == in_process
+    assert (len(pooled["fof"]), len(pooled["major"]), len(pooled["longform"])) == (
+        13,
+        13,
+        25,
+    )
+    rel = os.path.join("common", "scripted_effects", "11.txt")
+    assert _in_loop(rel, 14, V._FOF_IN_LOOP_MSG, "st.1") in pooled["fof"]
+    assert _in_loop(rel, 15, V._MAJOR_IN_LOOP_MSG, "st.2") in pooled["major"]
+    assert _longform(rel, 17, "country_event", "st.1") in pooled["longform"]

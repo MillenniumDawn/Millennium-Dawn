@@ -33,7 +33,8 @@ from report_lib import (  # noqa: E402
     Baseline,
     Issue,
     Severity,
-    issue_key,
+    classify,
+    count_keys,
     load_baseline,
     load_issues,
     write_baseline,
@@ -44,19 +45,19 @@ MAX_LISTED = 50
 
 
 def _split_new_findings(
-    current: Sequence[Issue], previous: Baseline
+    current: List[Issue], previous: Baseline
 ) -> Tuple[List[Issue], List[Issue]]:
     """Split current issues into (new errors, new warnings).
 
-    Findings whose key also exists in the previous baseline are existing.
-    Findings without a file/line can never match a key and count as new —
-    the alarm direction for the nightly check.
+    Findings classify tags existing are skipped. Findings without a
+    file/line can never match a key and count as new — the alarm direction
+    for the nightly check.
     """
+    classify(current, previous)
     new_errors: List[Issue] = []
     new_warnings: List[Issue] = []
     for issue in current:
-        key = issue_key(issue)
-        if key is not None and key in previous.keys:
+        if issue.baseline_status == "existing":
             continue
         if issue.severity == Severity.ERROR:
             new_errors.append(issue)
@@ -65,20 +66,11 @@ def _split_new_findings(
     return new_errors, new_warnings
 
 
-def _current_keys(current: Sequence[Issue]) -> set:
-    keys = set()
-    for issue in current:
-        key = issue_key(issue)
-        if key is not None:
-            keys.add(key)
-    return keys
-
-
 def _fixed_counts(current: Sequence[Issue], previous: Baseline) -> Tuple[int, int]:
     """(errors, warnings) present in the previous baseline but gone tonight."""
-    fixed = previous.keys - _current_keys(current)
-    fixed_errors = sum(1 for key in fixed if key[0] == Severity.ERROR)
-    return fixed_errors, len(fixed) - fixed_errors
+    fixed = previous.keys - count_keys(current)
+    fixed_errors = sum(n for key, n in fixed.items() if key[0] == Severity.ERROR)
+    return fixed_errors, fixed.total() - fixed_errors
 
 
 def _issue_line(issue: Issue) -> str:

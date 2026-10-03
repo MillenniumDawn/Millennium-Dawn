@@ -340,6 +340,10 @@ def find_single_condition_or_blocks(lines):
     i = 0
     while i < len(lines):
         line = lines[i]
+        # Both the line-start and the inline form need OR on the line.
+        if "OR" not in line:
+            i += 1
+            continue
         if re.match(r"^\s*OR\s*=\s*\{", line):
             block_lines, j = _collect_or_block(lines, i)
             inner = _extract_inner_text(block_lines)
@@ -378,12 +382,18 @@ def find_redundant_and_blocks(lines):
     are revealed after the outer is fixed by cleanup_or.py).
     """
     issues = []
+    if "AND" not in "".join(lines):
+        return issues
     i = 0
     n = len(lines)
     block_is_or = [False]
 
     while i < n:
         line = lines[i]
+        # Both openers need a brace, so a braceless line leaves the stack alone.
+        if "{" not in line and "}" not in line:
+            i += 1
+            continue
         code = strip_inline_comment(line)
 
         if _RE_AND_OPEN.match(line):

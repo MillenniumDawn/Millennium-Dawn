@@ -1,5 +1,8 @@
 """Tests for `validate_mios.py` (MIO organization definitions)."""
 
+import random
+import re
+
 import validate_mios as V
 
 
@@ -1431,3 +1434,359 @@ def test_unknown_parent_or_mutex_tokens_report_nothing(tmp_path):
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
     assert not v._issues
+
+
+# ---- edge-case files through a full run ------------------------------------
+
+_EDGE_TST = f"{V.ORG_DIR}/MD_TST_organizations.txt"
+_EDGE_TSU = f"{V.ORG_DIR}/MD_TSU_organizations.txt"
+_EDGE_FOCUS = "common/national_focus/05_edge.txt"
+
+# Line 1 is an org, line 2 a comment full of check tokens, line 5 hides a brace
+# and a `#` in a string, the trait nests three blocks deep, and the file ends
+# without a newline on an org whose quoted `{` never closes.
+_EDGE_TST_TEXT = (
+    "TST_first = { allowed = { original_tag = TST } on_complete = { } }\n"
+    "# TST_ghost = { trait = { token = TST_ghost_trait position = { x = 99 } }"
+    " icon = bad mio:TST_ghost }\n"
+    "TST_edge_org = {\n"
+    "\tallowed = { original_tag = GER }\n"
+    '\tdesc = "a {brace} and # hash"\n'
+    "\ticon = edge_icon # icon = in_comment\n"
+    "\ticon = GFX_missing_edge\n"
+    "\ttrait = {\n"
+    "\t\ttoken = TST_edge_trait\n"
+    "\t\tposition = { x = 12 y = 0 }\n"
+    "\t\ton_complete = {\n"
+    "\t\t\tif = { limit = { always = yes } }\n"
+    "\t\t}\n"
+    "\t}\n"
+    "}\n"
+    'TST_last = { allowed = { original_tag = TST } desc = "{" trait = {'
+    " token = TST_last_trait position = { x = 10 y = 0 } } }"
+)
+
+_EDGE_TSU_TEXT = (
+    "TSU_crlf_org = {\r\n"
+    "\tallowed = { original_tag = TSU }\r\n"
+    "\ttrait = { token = TSU_crlf_trait position = { x = 11 y = 1 } }\r\n"
+    "}\r\n"
+)
+
+# CRLF and read as bytes, so the `\r` stays in the scanned text.
+_EDGE_FOCUS_TEXT = (
+    "mio:TST_missing_first = { }\r\n"
+    "focus_tree = {\r\n"
+    "\tshared_focus = {\r\n"
+    "\t\tid = TSU_shared # mio:TST_commented\r\n"
+    '\t\tlog = "{ # mio:TST_in_string }"\r\n'
+    "\t\tcompletion_reward = {\r\n"
+    "\t\t\tdesign_team = mio:TST_edge_org\r\n"
+    "\t\t\tTST = { if = { limit = { always = yes } mio:TSU_crlf_org = { } } }\r\n"
+    "\t\t}\r\n"
+    "\t}\r\n"
+    "}\r\n"
+    "mio:TST_missing_last = { }"
+)
+
+
+def _unknown_reference(org_id, line):
+    return (
+        "mio-reference-unknown",
+        _EDGE_FOCUS,
+        line,
+        f"mio:{org_id} matches no MIO definition in {V.ORG_DIR}/ "
+        "(ids are case-sensitive)",
+    )
+
+
+def _nameless_trait(path, line, org_id, token):
+    return (
+        "trait-loc-missing",
+        path,
+        line,
+        f"trait '{token}' has no name and no '{org_id}_{token}' localisation key;"
+        f" add name = {token} plus a loc entry",
+    )
+
+
+def _x_bounds(path, line, x):
+    return (
+        "trait-x-bounds",
+        path,
+        line,
+        f"trait position x = {x} must stay inside 0..9",
+    )
+
+
+_EDGE_FINDINGS = [
+    (
+        "mio-icon-not-gfx",
+        _EDGE_TST,
+        6,
+        "icon = edge_icon is not a GFX_ sprite name; the engine renders a blank icon",
+    ),
+    (
+        "mio-icon-unresolved",
+        _EDGE_TST,
+        7,
+        "icon = GFX_missing_edge matches no spriteType in any interface/*.gfx "
+        "(mod or vanilla)",
+    ),
+    (
+        "on-complete-empty",
+        _EDGE_TST,
+        1,
+        "on_complete is empty; add expenditure_for_mio_upgrade = yes or custom effects",
+    ),
+    (
+        "org-allowed-tag",
+        _EDGE_TST,
+        3,
+        "MIO TST_edge_org must pin its tag with allowed = { original_tag = TST }",
+    ),
+    _x_bounds(_EDGE_TST, 10, 12),
+    _nameless_trait(_EDGE_TST, 8, "TST_edge_org", "TST_edge_trait"),
+    _x_bounds(_EDGE_TST, 16, 10),
+    _nameless_trait(_EDGE_TST, 16, "TST_last", "TST_last_trait"),
+    _x_bounds(_EDGE_TSU, 3, 11),
+    _nameless_trait(_EDGE_TSU, 3, "TSU_crlf_org", "TSU_crlf_trait"),
+    _unknown_reference("TST_missing_first", 1),
+    _unknown_reference("TST_in_string", 5),
+    (
+        "mio-reference-wrong-tag",
+        _EDGE_FOCUS,
+        7,
+        "mio:TST_edge_org is allowed only for GER, so it does not resolve in TSU scope",
+    ),
+    (
+        "mio-reference-wrong-tag",
+        _EDGE_FOCUS,
+        8,
+        "mio:TSU_crlf_org is allowed only for TSU, so it does not resolve in TST scope",
+    ),
+    _unknown_reference("TST_missing_last", 12),
+]
+
+
+def _write_edge_repo(tmp_path, write_path):
+    write_path(tmp_path, _EDGE_TST, _EDGE_TST_TEXT)
+    write_path(tmp_path, _EDGE_TSU, _EDGE_TSU_TEXT)
+    write_path(tmp_path, _EDGE_FOCUS, _EDGE_FOCUS_TEXT)
+    write_path(
+        tmp_path,
+        f"{V.COUNTRY_TAG_DIR}/00_countries.txt",
+        "TST = { }\nTSU = { }\nGER = { }\n",
+    )
+
+
+def _edge_rows(tmp_path, *, workers, sprites=None):
+    """Findings of one full run and whether it forked the worker pool."""
+    v = V.Validator(str(tmp_path), workers=workers)
+    if sprites is not None:
+        v._sprites = sprites
+    try:
+        v.run_validations()
+        pooled = v._pool is not None
+    finally:
+        if v._pool is not None:
+            v._pool.terminate()
+            v._pool.join()
+    return [(i.category, i.file, i.line, i.message) for i in v._issues], pooled
+
+
+def test_edge_case_files_report_exact_findings_in_order(tmp_path, write_path):
+    """Quoted braces and `#`, a token-filled comment, first and last lines, a
+    missing final newline, CRLF org and reference files, and a `shared_focus`
+    owner all keep their findings, lines and order."""
+    _write_edge_repo(tmp_path, write_path)
+
+    rows, _pooled = _edge_rows(tmp_path, workers=1, sprites=_sprite_set())
+
+    assert rows == _EDGE_FINDINGS
+
+
+def test_pooled_run_matches_the_in_process_run_in_order(
+    tmp_path, write_path, monkeypatch
+):
+    """Twelve .gfx files cross the pool threshold for the sprite index, which
+    also holds enough sprites to resolve icons."""
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    monkeypatch.setenv("MD_NO_CACHE", "1")
+    _write_edge_repo(tmp_path, write_path)
+    for index in range(12):
+        sprites = "".join(
+            f"\tspriteType = {{ name = GFX_pad_{index}_{n} }}\n" for n in range(100)
+        )
+        write_path(
+            tmp_path,
+            f"interface/pad_{index:02}.gfx",
+            f"spriteTypes = {{\n{sprites}}}\n",
+        )
+
+    in_process, forked = _edge_rows(tmp_path, workers=1)
+    pooled, pool_used = _edge_rows(tmp_path, workers=2)
+
+    assert (forked, pool_used) == (False, True)
+    assert pooled == in_process == _EDGE_FINDINGS
+
+
+# ---- equivalence with the character walks these scans replaced -------------
+
+
+def _walk_block_end(text, open_brace_end):
+    depth = 1
+    i = open_brace_end
+    while i < len(text) and depth > 0:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+        i += 1
+    return i
+
+
+def _walk_left_open_braces(text, pos):
+    """Every `{` a leftward walk from *pos* meets at depth zero, innermost first."""
+    found = []
+    depth = 0
+    for i in range(pos - 1, -1, -1):
+        if text[i] == "}":
+            depth += 1
+        elif text[i] == "{":
+            if depth:
+                depth -= 1
+            else:
+                found.append(i)
+    return found
+
+
+def _random_texts(pieces, seed, count=400, longest=30):
+    rng = random.Random(seed)
+    for _ in range(count):
+        yield "".join(rng.choice(pieces) for _ in range(rng.randint(0, longest)))
+
+
+def test_block_end_matches_the_character_walk():
+    fixed = ["", "}", "{", " { } }", "a { b { c { d } } } e", "{ { {", '" { "}']
+    for text in [*fixed, *_random_texts('{}"# a\n', seed=1)]:
+        for start in range(len(text) + 1):
+            assert V._block_end(text, start) == _walk_block_end(text, start), (
+                text,
+                start,
+            )
+
+
+def test_open_braces_match_the_leftward_walk():
+    fixed = ["} a { a } } a", "{ a { { a } a", "a } } { a"]
+    for text in [*fixed, *_random_texts("{}a\n", seed=2)]:
+        positions = [i for i, char in enumerate(text) if char == "a"]
+        for pos, stack in zip(positions, V._open_braces(text, positions)):
+            assert list(reversed(stack)) == _walk_left_open_braces(text, pos), (
+                text,
+                pos,
+            )
+
+
+def test_focus_spans_match_the_line_anchored_regex():
+    pieces = [
+        "focus = {",
+        "shared_focus = {",
+        "joint_focus={",
+        "has_completed_focus = {",
+        "focus_tree = {",
+        "focus\n=\n{",
+        "\t",
+        " ",
+        "\n",
+        "}",
+        "x",
+    ]
+    for text in _random_texts(pieces, seed=3):
+        expected = [
+            (m.start(), _walk_block_end(text, m.end()))
+            for m in V.FOCUS_BLOCK_RE.finditer(text)
+        ]
+        assert V._focus_spans(text) == expected, text
+
+
+_LOOKBEHIND_FORMS = [
+    (V.ORIGINAL_TAG_RE, r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{1,7})\b"),
+    (V._POSITION_BLOCK_RE, r"(?<![A-Za-z0-9_])position\s*=\s*\{([^{}]*)\}"),
+    (
+        V._RELATIVE_POSITION_RE,
+        r"(?<![A-Za-z0-9_])relative_position_id\s*=\s*([A-Za-z0-9_]+)",
+    ),
+    (
+        V._PARENT_BLOCK_RE,
+        r"(?<![A-Za-z0-9_])(all_parents|any_parent|parent)\s*=\s*\{([^{}]*)\}",
+    ),
+    (
+        V._MUTUALLY_EXCLUSIVE_RE,
+        r"(?<![A-Za-z0-9_])mutually_exclusive\s*=\s*\{([^{}]*)\}",
+    ),
+    (V.HEADER_TEXT_RE, r'(?<![A-Za-z0-9_])text\s*=\s*("[^"]*"|[^\s{}]+)'),
+    (V.NAME_RE, r"(?<![A-Za-z0-9_])name\s*=\s*([A-Za-z0-9_]+)"),
+    (V.TOKEN_RE, r"(?<![A-Za-z0-9_])token\s*=\s*([A-Za-z0-9_]+)"),
+    (V.MIO_REFERENCE_RE, r"(?<![A-Za-z0-9_])mio:([A-Za-z0-9_]+)"),
+    (V.BLOCK_TAG_RE, r"(?<![A-Za-z0-9_])(?:original_)?tag\s*=\s*([A-Z][A-Z0-9]{2})\b"),
+    (V.INCLUDE_RE, r"(?<![A-Za-z0-9_])include\s*=\s*([A-Za-z0-9_]+)"),
+]
+
+_PATTERN_PIECES = [
+    *(
+        "original_tag tag position relative_position_id all_parents any_parent"
+        " parent mutually_exclusive text name token mio: include trait"
+        " initial_trait GER x _ 1 é = { }"
+    ).split(),
+    " ",
+    '"',
+    "\n",
+]
+
+
+def test_literal_first_patterns_match_the_lookbehind_forms():
+    # `\b` counts a non-ASCII letter as a word character; the others do not.
+    fixed = ["éoriginal_tag = GER", "étoken = a", "xmio:a mio:b", "original_tag=GER"]
+    for text in [*fixed, *_random_texts(_PATTERN_PIECES, seed=4)]:
+        for new, old in _LOOKBEHIND_FORMS:
+            got = [(m.span(), m.groups()) for m in new.finditer(text)]
+            want = [(m.span(), m.groups()) for m in re.finditer(old, text)]
+            assert got == want, (old, text)
+        for keyword in ("trait", "initial_trait"):
+            opener = re.compile(r"(?<![A-Za-z0-9_])" + keyword + r"\s*=\s*\{")
+            want_blocks = [
+                (m.start(), text[m.end() : _walk_block_end(text, m.end()) - 1])
+                for m in opener.finditer(text)
+            ]
+            assert V._sub_blocks(text, keyword) == want_blocks, (keyword, text)
+
+
+def test_relative_position_scan_matches_the_depth_walk():
+    old = re.compile(r"(?<![A-Za-z0-9_])relative_position_id\s*=\s*([A-Za-z0-9_]+)")
+    pieces = ["relative_position_id = a", "relative_position_id = b", "{", "}", " "]
+    for text in _random_texts(pieces + ["_"], seed=5):
+        body = "trait = { token = t " + text + " }"
+        inner = V._sub_blocks(body, "trait")[0][1]
+        depth = 0
+        expected = None
+        for index, char in enumerate(inner):
+            if char in "{}":
+                depth += 1 if char == "{" else -1
+            elif depth == 0 and old.match(inner, index):
+                expected = old.match(inner, index).group(1)
+                break
+        assert V._parse_org_traits(body)["t"].rel == expected, text
+
+
+def test_icon_lines_match_counting_from_the_top():
+    pieces = ["icon = a", 'icon="b c"', "xicon = d", "# icon = e", '"', "#"]
+    for text in _random_texts(pieces + ["\n", "\r\n", "\x0c", " ", "{"], seed=6):
+        expected = []
+        offset = 0
+        for raw_line in text.splitlines():
+            code, _comment = V.split_code_and_comment(raw_line)
+            for match in V.ICON_ASSIGNMENT_RE.finditer(V._mask_strings(code)):
+                expected.append(text.count("\n", 0, offset + match.start()) + 1)
+            offset += len(raw_line) + 1
+        assert [line for _name, line in V._iter_icon_values(text)] == expected, text

@@ -37,7 +37,7 @@ LOC = (
     ' TAG_focus_b:0 "Clean title"\n'
     ' TAG_focus_b_desc:0 "Off palette §Lbad§! code"\n'
     ' TAG_focus_c:0 "Clean title c"\n'
-    ' TAG_focus_c_desc:0 "See 15 U.S.C. § 1 for details"\n'
+    ' TAG_focus_c_desc:0 "See 15 U.S.C. §§ 1 for details"\n'
 )
 
 
@@ -89,7 +89,7 @@ def test_desc_using_off_palette_color_is_flagged(tmp_path):
     ]
 
 
-def test_prose_section_sign_is_not_treated_as_a_color_code(tmp_path):
+def test_escaped_section_sign_is_not_treated_as_a_color_code(tmp_path):
     v = _run(tmp_path)
 
     flagged = [i for i in v._issues if "TAG_focus_c" in i.message]

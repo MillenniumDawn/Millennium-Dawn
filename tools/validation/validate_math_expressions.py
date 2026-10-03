@@ -6,17 +6,16 @@ A math expression is the value of a variable effect, wrapped in a block:
 `set_variable = { var = X value = { ... } }` (short form). The engine parses
 a malformed expression to 0.0 with no in-game signal — only `script_math`
 errors in error.log — and one bad expression desyncs the parser for the rest
-of the file. Three documented failure classes, nothing broader:
+of the file. Two documented failure classes, nothing broader:
 
 * math statements written as siblings of the effect's `var =`/`value =`
   instead of inside the expression block (hoi4-data-structures.md, "Do not
   write the math expression as siblings of `var = X`");
-* the unsafe comparators (`equals`, `not_equals`,
-  `greater_than_or_equals`, `less_than_or_equals`) inside an expression —
-  only `greater_than`/`less_than` parse there;
 * `FROM.<var>` reads inside an expression, which parse but return 0
-  (#2464). Effect-level `check_variable` comparators and plain
-  `set_temp_variable = { x = FROM.y }` copies are valid and not reported.
+  (#2464). Plain `set_temp_variable = { x = FROM.y }` copies are valid and
+  not reported.
+
+Statement names follow resources/documentation/script_math_functions.md.
 """
 
 import os
@@ -48,12 +47,30 @@ SIBLING_OPERATORS = frozenset(
         "subtract",
         "multiply",
         "divide",
+        "mod",
+        "pow",
+        "root",
+        "log",
         "min",
         "max",
         "clamp",
+        "lerp",
         "round",
+        "sin",
+        "cos",
+        "tan",
+        "atan",
+        "atan2",
+        "equals",
+        "not_equals",
         "greater_than",
         "less_than",
+        "greater_than_or_equals",
+        "less_than_or_equals",
+        "and",
+        "or",
+        "xor",
+        "not",
         "if",
         "else",
         "else_if",
@@ -62,13 +79,9 @@ SIBLING_OPERATORS = frozenset(
 )
 
 # Statements an expression subtree may recurse into. Anything else (an effect
-# keyword, a trigger such as check_variable) ends the descent, so comparators
-# legal at effect level are never judged as expression statements.
+# keyword, a trigger such as check_variable) ends the descent, so a FROM read
+# legal at effect level is never judged as an expression read.
 EXPR_STATEMENTS = SIBLING_OPERATORS | frozenset({"value", "limit", "named_collection"})
-
-UNSAFE_COMPARATORS = frozenset(
-    {"equals", "not_equals", "greater_than_or_equals", "less_than_or_equals"}
-)
 
 # A FROM-bound variable read: `FROM.debt_bailout`, `FROM.FROM.x`. A bare FROM
 # (scope block, scope comparison) is not a variable read.
@@ -116,22 +129,11 @@ def _iter_statements(text: str) -> Iterator[Tuple[str, str, bool, int]]:
 def _check_expression(
     expr: str, base_line: int, findings: List[Finding], depth: int = 0
 ) -> None:
-    """Report unsafe comparators and FROM reads in one expression subtree."""
+    """Report FROM reads in one expression subtree."""
     if depth > 20:
         return
     for key, value, is_block, offset in _iter_statements(expr):
         line = base_line + expr.count("\n", 0, offset)
-        if key in UNSAFE_COMPARATORS:
-            findings.append(
-                (
-                    line,
-                    "math-unsafe-comparator",
-                    f"`{key}` inside a math expression zeroes the whole "
-                    f"expression — only greater_than/less_than are safe there; "
-                    f"hoist the branch to an effect-level if with "
-                    f"check_variable",
-                )
-            )
         if not is_block and FROM_READ_RE.search(value):
             findings.append(
                 (
@@ -142,7 +144,7 @@ def _check_expression(
                     "effect level first",
                 )
             )
-        if is_block and (key in EXPR_STATEMENTS or key in UNSAFE_COMPARATORS):
+        if is_block and key in EXPR_STATEMENTS:
             _check_expression(value, line, findings, depth + 1)
 
 
@@ -178,11 +180,16 @@ def scan_text(raw: str) -> List[Finding]:
     """Scan script text; returns (line, category, message)."""
     text = blank_quoted_strings(blank_comments(raw))
     findings: List[Finding] = []
+    # Matches come in file order, so count only the newlines since the last one.
+    line = 1
+    line_pos = 0
     for m in VAR_EFFECT_RE.finditer(text):
+        line += text.count("\n", line_pos, m.start())
+        line_pos = m.start()
         block, end = extract_block_from_text(text, m.end() - 1)
         if end == -1:
             continue
-        _scan_effect_block(block, text.count("\n", 0, m.start()) + 1, findings)
+        _scan_effect_block(block, line, findings)
     return findings
 
 

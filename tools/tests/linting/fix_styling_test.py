@@ -7,11 +7,13 @@ explicit opt-ins. The file-level cases cover what fix_file writes back, what it
 can only report, and dry-run/apply agreement on BOM'd and CRLF files.
 """
 
+import json
 import os
 import runpy
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 import fix_styling
 import pytest
@@ -264,15 +266,18 @@ def _git(repo, *args):
 @pytest.fixture
 def git_repo(tmp_path):
     """A minimal repo with one committed legacy focus file."""
+    tmp_path = tmp_path / "repository with spaces"
+    tmp_path.mkdir()
     _git(tmp_path, "init", "-q")
     _git(tmp_path, "config", "user.email", "test@example.com")
     _git(tmp_path, "config", "user.name", "Test")
+    _write(tmp_path / ".gitattributes", "*.txt text eol=lf\n")
     legacy = (
         "attacker = 0.25\t\t\t# aligned legacy comment\n"
         "\t\tlegacy_aligned_line = 1\t\t# stays untouched\n"
     )
     (tmp_path / "focus.txt").write_text(legacy, encoding="utf-8", newline="")
-    _git(tmp_path, "add", "focus.txt")
+    _git(tmp_path, "add", "focus.txt", ".gitattributes")
     _git(tmp_path, "commit", "-q", "-m", "legacy")
     return tmp_path
 
@@ -426,8 +431,11 @@ def test_direct_changed_lines_fails_on_unstaged_worktree_edits(git_repo, monkeyp
 
 def test_precommit_stashes_unstaged_lines_without_restaging(git_repo):
     pre_commit = shutil.which("pre-commit")
-    if pre_commit is None:
-        pytest.skip("pre-commit is not installed")
+    assert pre_commit is not None, "Install the dev dependency group for pre-commit"
+    entry = (
+        f'"{Path(sys.executable).as_posix()}" '
+        f'"{Path(fix_styling.__file__).as_posix()}" --mode staged --changed-lines'
+    )
     config = git_repo / ".pre-commit-config.yaml"
     config.write_text(
         "repos:\n"
@@ -435,7 +443,7 @@ def test_precommit_stashes_unstaged_lines_without_restaging(git_repo):
         "  hooks:\n"
         "  - id: fix\n"
         "    name: fix\n"
-        f"    entry: {sys.executable} {fix_styling.__file__} --mode staged --changed-lines\n"
+        f"    entry: {json.dumps(entry)}\n"
         "    language: system\n"
         "    files: \\.txt$\n"
         "    pass_filenames: false\n",

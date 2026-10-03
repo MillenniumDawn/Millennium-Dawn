@@ -1,0 +1,707 @@
+# Hull tech lists mirror enable_equipments in NSB_armor.txt, helicopter_techs.txt and BBA_aircraft.txt.
+
+# reverse_engineering_studied_index: 0-based position of the studied hull in reverse_engineering_techs, -1 for none.
+reverse_engineering_grant_bonuses = {
+	if = { limit = { has_idea = edu_05 } set_temp_variable = { reverse_engineering_education = 1 } }
+	else_if = { limit = { has_idea = edu_04 } set_temp_variable = { reverse_engineering_education = 0.8 } }
+	else_if = { limit = { has_idea = edu_03 } set_temp_variable = { reverse_engineering_education = 0.6 } }
+	else_if = { limit = { has_idea = edu_02 } set_temp_variable = { reverse_engineering_education = 0.4 } }
+	else = { set_temp_variable = { reverse_engineering_education = 0.2 } }
+	set_temp_variable = { reverse_engineering_head_start = { value = 0.5 multiply = reverse_engineering_education } }
+	if = {
+		limit = { check_variable = { reverse_engineering_studied_index > -1 } }
+		for_each_loop = {
+			array = reverse_engineering_techs
+			value = reverse_engineering_tech
+			index = reverse_engineering_index
+			set_temp_variable = { reverse_engineering_generations_back = { value = reverse_engineering_studied_index subtract = reverse_engineering_index } }
+			if = {
+				limit = { check_variable = { reverse_engineering_generations_back > 1 } }
+				set_temp_variable = { reverse_engineering_bonus = { value = reverse_engineering_two_back_bonus multiply = reverse_engineering_education } }
+				reverse_engineering_grant_tech_bonus = yes
+			}
+			else_if = {
+				limit = { check_variable = { reverse_engineering_generations_back = 1 } }
+				set_temp_variable = { reverse_engineering_bonus = { value = reverse_engineering_one_back_bonus multiply = reverse_engineering_education } }
+				reverse_engineering_grant_tech_bonus = yes
+			}
+			else_if = {
+				limit = { check_variable = { reverse_engineering_generations_back = 0 } }
+				set_temp_variable = { reverse_engineering_bonus = { value = reverse_engineering_same_generation_bonus multiply = reverse_engineering_education } }
+				reverse_engineering_grant_tech_bonus = yes
+			}
+		}
+	}
+	clear_temp_array = reverse_engineering_techs
+}
+
+reverse_engineering_grant_tech_bonus = {
+	meta_effect = {
+		text = {
+			if = {
+				limit = {
+					NOT = { has_tech = [TECH] }
+					NOT = { is_researching_technology = [TECH] }
+					NOT = { has_country_flag = reverse_engineered_[TECH] }
+				}
+				set_country_flag = reverse_engineered_[TECH]
+				add_tech_bonus = { name = reverse_engineering_tech_bonus bonus = [BONUS] uses = 1 technology = [TECH] }
+				reverse_engineering_notify = yes
+			}
+		}
+		TECH = "[?reverse_engineering_tech.GetTokenKey]"
+		BONUS = "[?reverse_engineering_bonus|.2]"
+	}
+}
+
+reverse_engineering_notify = {
+	if = {
+		limit = {
+			is_ai = no
+			NOT = { has_country_flag = reverse_engineering_report_pending }
+		}
+		set_country_flag = { flag = reverse_engineering_report_pending days = 1 value = 1 }
+		country_event = reverse_engineering.1
+	}
+}
+
+reverse_engineering_grant_mbt = {
+	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech }
+	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_1 }
+	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_2 }
+	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_3 }
+	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_4 }
+	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_5 }
+	add_to_temp_array = { reverse_engineering_techs = token:mbt_tech_6 }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.9 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.5 }
+	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.2 }
+	reverse_engineering_grant_bonuses = yes
+	if = {
+		limit = {
+			NOT = { is_special_project_completed = sp:sp_armoured_vehicle_project }
+			NOT = { has_country_flag = reverse_engineered_sp_armoured_vehicle_project }
+		}
+		set_country_flag = reverse_engineered_sp_armoured_vehicle_project
+		sp:sp_armoured_vehicle_project = { add_project_progress_ratio = var:reverse_engineering_head_start }
+		reverse_engineering_notify = yes
+	}
+}
+
+reverse_engineering_grant_attack_helicopter = {
+	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_1 }
+	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_2 }
+	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_3 }
+	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_4 }
+	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_5 }
+	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_6 }
+	add_to_temp_array = { reverse_engineering_techs = token:nsb_attack_helicopter_tech_7 }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.45 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
+	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
+	reverse_engineering_grant_bonuses = yes
+	if = {
+		limit = {
+			NOT = { is_special_project_completed = sp:sp_helicopter_project }
+			NOT = { has_country_flag = reverse_engineered_sp_helicopter_project }
+		}
+		set_country_flag = reverse_engineered_sp_helicopter_project
+		sp:sp_helicopter_project = { add_project_progress_ratio = var:reverse_engineering_head_start }
+		reverse_engineering_notify = yes
+	}
+}
+
+reverse_engineering_grant_light_airframe = {
+	add_to_temp_array = { reverse_engineering_techs = token:gen_3_light }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_4_light }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_5_light }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_6_light }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_7_light }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_8_light }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.45 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
+	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
+	reverse_engineering_grant_bonuses = yes
+	reverse_engineering_aircraft_head_start = yes
+}
+
+reverse_engineering_grant_medium_airframe = {
+	add_to_temp_array = { reverse_engineering_techs = token:gen_3_medium }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_4_medium }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_5_medium }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_6_medium }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_7_medium }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_8_medium }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.45 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
+	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
+	reverse_engineering_grant_bonuses = yes
+	reverse_engineering_aircraft_head_start = yes
+}
+
+reverse_engineering_grant_large_airframe = {
+	add_to_temp_array = { reverse_engineering_techs = token:gen_3_large }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_4_large }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_5_large }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_6_large }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_7_large }
+	add_to_temp_array = { reverse_engineering_techs = token:gen_8_large }
+	set_temp_variable = { reverse_engineering_two_back_bonus = 0.45 }
+	set_temp_variable = { reverse_engineering_one_back_bonus = 0.25 }
+	set_temp_variable = { reverse_engineering_same_generation_bonus = 0.1 }
+	reverse_engineering_grant_bonuses = yes
+	reverse_engineering_aircraft_head_start = yes
+}
+
+# Gen 5+ airframes (index 2 and up) also need stealth research.
+reverse_engineering_aircraft_head_start = {
+	if = {
+		limit = {
+			NOT = { is_special_project_completed = sp:sp_aircraft_project }
+			NOT = { has_country_flag = reverse_engineered_sp_aircraft_project }
+		}
+		set_country_flag = reverse_engineered_sp_aircraft_project
+		sp:sp_aircraft_project = { add_project_progress_ratio = var:reverse_engineering_head_start }
+		reverse_engineering_notify = yes
+	}
+	if = {
+		limit = {
+			has_dlc = "By Blood Alone"
+			check_variable = { reverse_engineering_studied_index > 1 }
+			NOT = { is_special_project_completed = sp:sp_stealth_technology }
+			NOT = { has_country_flag = reverse_engineered_sp_stealth_technology }
+		}
+		set_country_flag = reverse_engineered_sp_stealth_technology
+		sp:sp_stealth_technology = { add_project_progress_ratio = var:reverse_engineering_head_start }
+		reverse_engineering_notify = yes
+	}
+}
+
+# Purchase contract scope; needs var_temp_buyer from on_contract_started. Role airframes are duplicate_archetypes.
+reverse_engineering_study_contract = {
+	if = {
+		limit = {
+			OR = {
+				contract_contains_equipment = medium_tank_chassis
+				contract_contains_equipment = medium_tank_aa_chassis
+				contract_contains_equipment = medium_tank_artillery_chassis
+				contract_contains_equipment = medium_tank_rocket_chassis
+				contract_contains_equipment = medium_tank_destroyer_chassis
+				contract_contains_equipment = medium_tank_flame_chassis
+				contract_contains_equipment = medium_tank_amphibious_chassis
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_tank_chassis_6
+					contract_contains_equipment = medium_tank_aa_chassis_6
+					contract_contains_equipment = medium_tank_artillery_chassis_6
+					contract_contains_equipment = medium_tank_rocket_chassis_6
+					contract_contains_equipment = medium_tank_destroyer_chassis_6
+					contract_contains_equipment = medium_tank_flame_chassis_6
+					contract_contains_equipment = medium_tank_amphibious_chassis_6
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 6 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_tank_chassis_5
+					contract_contains_equipment = medium_tank_aa_chassis_5
+					contract_contains_equipment = medium_tank_artillery_chassis_5
+					contract_contains_equipment = medium_tank_rocket_chassis_5
+					contract_contains_equipment = medium_tank_destroyer_chassis_5
+					contract_contains_equipment = medium_tank_flame_chassis_5
+					contract_contains_equipment = medium_tank_amphibious_chassis_5
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 5 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_tank_chassis_4
+					contract_contains_equipment = medium_tank_aa_chassis_4
+					contract_contains_equipment = medium_tank_artillery_chassis_4
+					contract_contains_equipment = medium_tank_rocket_chassis_4
+					contract_contains_equipment = medium_tank_destroyer_chassis_4
+					contract_contains_equipment = medium_tank_flame_chassis_4
+					contract_contains_equipment = medium_tank_amphibious_chassis_4
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 4 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_tank_chassis_3
+					contract_contains_equipment = medium_tank_aa_chassis_3
+					contract_contains_equipment = medium_tank_artillery_chassis_3
+					contract_contains_equipment = medium_tank_rocket_chassis_3
+					contract_contains_equipment = medium_tank_destroyer_chassis_3
+					contract_contains_equipment = medium_tank_flame_chassis_3
+					contract_contains_equipment = medium_tank_amphibious_chassis_3
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 3 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_tank_chassis_2
+					contract_contains_equipment = medium_tank_aa_chassis_2
+					contract_contains_equipment = medium_tank_artillery_chassis_2
+					contract_contains_equipment = medium_tank_rocket_chassis_2
+					contract_contains_equipment = medium_tank_destroyer_chassis_2
+					contract_contains_equipment = medium_tank_flame_chassis_2
+					contract_contains_equipment = medium_tank_amphibious_chassis_2
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 2 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_tank_chassis_1
+					contract_contains_equipment = medium_tank_aa_chassis_1
+					contract_contains_equipment = medium_tank_artillery_chassis_1
+					contract_contains_equipment = medium_tank_rocket_chassis_1
+					contract_contains_equipment = medium_tank_destroyer_chassis_1
+					contract_contains_equipment = medium_tank_flame_chassis_1
+					contract_contains_equipment = medium_tank_amphibious_chassis_1
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 1 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_tank_chassis_0
+					contract_contains_equipment = medium_tank_aa_chassis_0
+					contract_contains_equipment = medium_tank_artillery_chassis_0
+					contract_contains_equipment = medium_tank_rocket_chassis_0
+					contract_contains_equipment = medium_tank_destroyer_chassis_0
+					contract_contains_equipment = medium_tank_flame_chassis_0
+					contract_contains_equipment = medium_tank_amphibious_chassis_0
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 0 }
+		}
+		else = { set_temp_variable = { reverse_engineering_studied_index = -1 } }
+		var:var_temp_buyer = { reverse_engineering_grant_mbt = yes }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				contract_contains_equipment = heavy_tank_chassis
+				contract_contains_equipment = heavy_tank_amphibious_chassis
+			}
+		}
+		if = { limit = { OR = { contract_contains_equipment = heavy_tank_chassis_6 contract_contains_equipment = heavy_tank_amphibious_chassis_6 } } set_temp_variable = { reverse_engineering_studied_index = 6 } }
+		else_if = { limit = { OR = { contract_contains_equipment = heavy_tank_chassis_5 contract_contains_equipment = heavy_tank_amphibious_chassis_5 } } set_temp_variable = { reverse_engineering_studied_index = 5 } }
+		else_if = { limit = { OR = { contract_contains_equipment = heavy_tank_chassis_4 contract_contains_equipment = heavy_tank_amphibious_chassis_4 } } set_temp_variable = { reverse_engineering_studied_index = 4 } }
+		else_if = { limit = { OR = { contract_contains_equipment = heavy_tank_chassis_3 contract_contains_equipment = heavy_tank_amphibious_chassis_3 } } set_temp_variable = { reverse_engineering_studied_index = 3 } }
+		else_if = { limit = { OR = { contract_contains_equipment = heavy_tank_chassis_2 contract_contains_equipment = heavy_tank_amphibious_chassis_2 } } set_temp_variable = { reverse_engineering_studied_index = 2 } }
+		else_if = { limit = { OR = { contract_contains_equipment = heavy_tank_chassis_1 contract_contains_equipment = heavy_tank_amphibious_chassis_1 } } set_temp_variable = { reverse_engineering_studied_index = 1 } }
+		else_if = { limit = { OR = { contract_contains_equipment = heavy_tank_chassis_0 contract_contains_equipment = heavy_tank_amphibious_chassis_0 } } set_temp_variable = { reverse_engineering_studied_index = 0 } }
+		else = { set_temp_variable = { reverse_engineering_studied_index = -1 } }
+		var:var_temp_buyer = { reverse_engineering_grant_attack_helicopter = yes }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				contract_contains_equipment = small_plane_airframe
+				contract_contains_equipment = small_plane_cas_airframe
+				contract_contains_equipment = small_plane_strike_airframe
+				contract_contains_equipment = small_plane_naval_bomber_airframe
+				contract_contains_equipment = small_plane_suicide_airframe
+				contract_contains_equipment = cv_small_plane_airframe
+				contract_contains_equipment = cv_small_plane_cas_airframe
+				contract_contains_equipment = cv_small_plane_strike_airframe
+				contract_contains_equipment = cv_small_plane_naval_bomber_airframe
+				contract_contains_equipment = cv_small_plane_suicide_airframe
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = small_plane_airframe_6
+					contract_contains_equipment = small_plane_cas_airframe_6
+					contract_contains_equipment = small_plane_strike_airframe_6
+					contract_contains_equipment = small_plane_naval_bomber_airframe_6
+					contract_contains_equipment = small_plane_suicide_airframe_6
+					contract_contains_equipment = cv_small_plane_airframe_6
+					contract_contains_equipment = cv_small_plane_cas_airframe_6
+					contract_contains_equipment = cv_small_plane_strike_airframe_6
+					contract_contains_equipment = cv_small_plane_naval_bomber_airframe_6
+					contract_contains_equipment = cv_small_plane_suicide_airframe_6
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 5 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = small_plane_airframe_5
+					contract_contains_equipment = small_plane_cas_airframe_5
+					contract_contains_equipment = small_plane_strike_airframe_5
+					contract_contains_equipment = small_plane_naval_bomber_airframe_5
+					contract_contains_equipment = small_plane_suicide_airframe_5
+					contract_contains_equipment = cv_small_plane_airframe_5
+					contract_contains_equipment = cv_small_plane_cas_airframe_5
+					contract_contains_equipment = cv_small_plane_strike_airframe_5
+					contract_contains_equipment = cv_small_plane_naval_bomber_airframe_5
+					contract_contains_equipment = cv_small_plane_suicide_airframe_5
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 4 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = small_plane_airframe_4
+					contract_contains_equipment = small_plane_cas_airframe_4
+					contract_contains_equipment = small_plane_strike_airframe_4
+					contract_contains_equipment = small_plane_naval_bomber_airframe_4
+					contract_contains_equipment = small_plane_suicide_airframe_4
+					contract_contains_equipment = cv_small_plane_airframe_4
+					contract_contains_equipment = cv_small_plane_cas_airframe_4
+					contract_contains_equipment = cv_small_plane_strike_airframe_4
+					contract_contains_equipment = cv_small_plane_naval_bomber_airframe_4
+					contract_contains_equipment = cv_small_plane_suicide_airframe_4
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 3 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = small_plane_airframe_3
+					contract_contains_equipment = small_plane_cas_airframe_3
+					contract_contains_equipment = small_plane_strike_airframe_3
+					contract_contains_equipment = small_plane_naval_bomber_airframe_3
+					contract_contains_equipment = small_plane_suicide_airframe_3
+					contract_contains_equipment = cv_small_plane_airframe_3
+					contract_contains_equipment = cv_small_plane_cas_airframe_3
+					contract_contains_equipment = cv_small_plane_strike_airframe_3
+					contract_contains_equipment = cv_small_plane_naval_bomber_airframe_3
+					contract_contains_equipment = cv_small_plane_suicide_airframe_3
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 2 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = small_plane_airframe_2
+					contract_contains_equipment = small_plane_cas_airframe_2
+					contract_contains_equipment = small_plane_strike_airframe_2
+					contract_contains_equipment = small_plane_naval_bomber_airframe_2
+					contract_contains_equipment = small_plane_suicide_airframe_2
+					contract_contains_equipment = cv_small_plane_airframe_2
+					contract_contains_equipment = cv_small_plane_cas_airframe_2
+					contract_contains_equipment = cv_small_plane_strike_airframe_2
+					contract_contains_equipment = cv_small_plane_naval_bomber_airframe_2
+					contract_contains_equipment = cv_small_plane_suicide_airframe_2
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 1 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = small_plane_airframe_1
+					contract_contains_equipment = small_plane_cas_airframe_1
+					contract_contains_equipment = small_plane_strike_airframe_1
+					contract_contains_equipment = small_plane_naval_bomber_airframe_1
+					contract_contains_equipment = small_plane_suicide_airframe_1
+					contract_contains_equipment = cv_small_plane_airframe_1
+					contract_contains_equipment = cv_small_plane_cas_airframe_1
+					contract_contains_equipment = cv_small_plane_strike_airframe_1
+					contract_contains_equipment = cv_small_plane_naval_bomber_airframe_1
+					contract_contains_equipment = cv_small_plane_suicide_airframe_1
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 0 }
+		}
+		else = { set_temp_variable = { reverse_engineering_studied_index = -1 } }
+		var:var_temp_buyer = { reverse_engineering_grant_light_airframe = yes }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				contract_contains_equipment = medium_plane_airframe
+				contract_contains_equipment = medium_plane_fighter_airframe
+				contract_contains_equipment = medium_plane_cas_airframe
+				contract_contains_equipment = medium_plane_suicide_airframe
+				contract_contains_equipment = medium_plane_maritime_patrol_airframe
+				contract_contains_equipment = medium_plane_air_transport_airframe
+				contract_contains_equipment = cv_medium_plane_airframe
+				contract_contains_equipment = cv_medium_plane_fighter_airframe
+				contract_contains_equipment = cv_medium_plane_cas_airframe
+				contract_contains_equipment = cv_medium_plane_scout_airframe
+				contract_contains_equipment = cv_medium_plane_maritime_patrol_airframe
+				contract_contains_equipment = cv_medium_plane_air_transport_airframe
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_plane_airframe_6
+					contract_contains_equipment = medium_plane_fighter_airframe_6
+					contract_contains_equipment = medium_plane_cas_airframe_6
+					contract_contains_equipment = medium_plane_suicide_airframe_6
+					contract_contains_equipment = medium_plane_maritime_patrol_airframe_6
+					contract_contains_equipment = medium_plane_air_transport_airframe_6
+					contract_contains_equipment = cv_medium_plane_airframe_6
+					contract_contains_equipment = cv_medium_plane_fighter_airframe_6
+					contract_contains_equipment = cv_medium_plane_cas_airframe_6
+					contract_contains_equipment = cv_medium_plane_scout_airframe_6
+					contract_contains_equipment = cv_medium_plane_maritime_patrol_airframe_6
+					contract_contains_equipment = cv_medium_plane_air_transport_airframe_6
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 5 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_plane_airframe_5
+					contract_contains_equipment = medium_plane_fighter_airframe_5
+					contract_contains_equipment = medium_plane_cas_airframe_5
+					contract_contains_equipment = medium_plane_suicide_airframe_5
+					contract_contains_equipment = medium_plane_maritime_patrol_airframe_5
+					contract_contains_equipment = medium_plane_air_transport_airframe_5
+					contract_contains_equipment = cv_medium_plane_airframe_5
+					contract_contains_equipment = cv_medium_plane_fighter_airframe_5
+					contract_contains_equipment = cv_medium_plane_cas_airframe_5
+					contract_contains_equipment = cv_medium_plane_scout_airframe_5
+					contract_contains_equipment = cv_medium_plane_maritime_patrol_airframe_5
+					contract_contains_equipment = cv_medium_plane_air_transport_airframe_5
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 4 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_plane_airframe_4
+					contract_contains_equipment = medium_plane_fighter_airframe_4
+					contract_contains_equipment = medium_plane_cas_airframe_4
+					contract_contains_equipment = medium_plane_suicide_airframe_4
+					contract_contains_equipment = medium_plane_maritime_patrol_airframe_4
+					contract_contains_equipment = medium_plane_air_transport_airframe_4
+					contract_contains_equipment = cv_medium_plane_airframe_4
+					contract_contains_equipment = cv_medium_plane_fighter_airframe_4
+					contract_contains_equipment = cv_medium_plane_cas_airframe_4
+					contract_contains_equipment = cv_medium_plane_scout_airframe_4
+					contract_contains_equipment = cv_medium_plane_maritime_patrol_airframe_4
+					contract_contains_equipment = cv_medium_plane_air_transport_airframe_4
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 3 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_plane_airframe_3
+					contract_contains_equipment = medium_plane_fighter_airframe_3
+					contract_contains_equipment = medium_plane_cas_airframe_3
+					contract_contains_equipment = medium_plane_suicide_airframe_3
+					contract_contains_equipment = medium_plane_maritime_patrol_airframe_3
+					contract_contains_equipment = medium_plane_air_transport_airframe_3
+					contract_contains_equipment = cv_medium_plane_airframe_3
+					contract_contains_equipment = cv_medium_plane_fighter_airframe_3
+					contract_contains_equipment = cv_medium_plane_cas_airframe_3
+					contract_contains_equipment = cv_medium_plane_scout_airframe_3
+					contract_contains_equipment = cv_medium_plane_maritime_patrol_airframe_3
+					contract_contains_equipment = cv_medium_plane_air_transport_airframe_3
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 2 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_plane_airframe_2
+					contract_contains_equipment = medium_plane_fighter_airframe_2
+					contract_contains_equipment = medium_plane_cas_airframe_2
+					contract_contains_equipment = medium_plane_suicide_airframe_2
+					contract_contains_equipment = medium_plane_maritime_patrol_airframe_2
+					contract_contains_equipment = medium_plane_air_transport_airframe_2
+					contract_contains_equipment = cv_medium_plane_airframe_2
+					contract_contains_equipment = cv_medium_plane_fighter_airframe_2
+					contract_contains_equipment = cv_medium_plane_cas_airframe_2
+					contract_contains_equipment = cv_medium_plane_scout_airframe_2
+					contract_contains_equipment = cv_medium_plane_maritime_patrol_airframe_2
+					contract_contains_equipment = cv_medium_plane_air_transport_airframe_2
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 1 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = medium_plane_airframe_1
+					contract_contains_equipment = medium_plane_fighter_airframe_1
+					contract_contains_equipment = medium_plane_cas_airframe_1
+					contract_contains_equipment = medium_plane_suicide_airframe_1
+					contract_contains_equipment = medium_plane_maritime_patrol_airframe_1
+					contract_contains_equipment = medium_plane_air_transport_airframe_1
+					contract_contains_equipment = cv_medium_plane_airframe_1
+					contract_contains_equipment = cv_medium_plane_fighter_airframe_1
+					contract_contains_equipment = cv_medium_plane_cas_airframe_1
+					contract_contains_equipment = cv_medium_plane_scout_airframe_1
+					contract_contains_equipment = cv_medium_plane_maritime_patrol_airframe_1
+					contract_contains_equipment = cv_medium_plane_air_transport_airframe_1
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 0 }
+		}
+		else = { set_temp_variable = { reverse_engineering_studied_index = -1 } }
+		var:var_temp_buyer = { reverse_engineering_grant_medium_airframe = yes }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				contract_contains_equipment = large_plane_airframe
+				contract_contains_equipment = large_plane_maritime_patrol_airframe
+				contract_contains_equipment = large_plane_awacs_airframe
+				contract_contains_equipment = large_plane_cas_airframe
+				contract_contains_equipment = large_plane_air_transport_airframe
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = large_plane_airframe_6
+					contract_contains_equipment = large_plane_maritime_patrol_airframe_6
+					contract_contains_equipment = large_plane_awacs_airframe_6
+					contract_contains_equipment = large_plane_cas_airframe_6
+					contract_contains_equipment = large_plane_air_transport_airframe_6
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 5 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = large_plane_airframe_5
+					contract_contains_equipment = large_plane_maritime_patrol_airframe_5
+					contract_contains_equipment = large_plane_awacs_airframe_5
+					contract_contains_equipment = large_plane_cas_airframe_5
+					contract_contains_equipment = large_plane_air_transport_airframe_5
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 4 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = large_plane_airframe_4
+					contract_contains_equipment = large_plane_maritime_patrol_airframe_4
+					contract_contains_equipment = large_plane_awacs_airframe_4
+					contract_contains_equipment = large_plane_cas_airframe_4
+					contract_contains_equipment = large_plane_air_transport_airframe_4
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 3 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = large_plane_airframe_3
+					contract_contains_equipment = large_plane_maritime_patrol_airframe_3
+					contract_contains_equipment = large_plane_awacs_airframe_3
+					contract_contains_equipment = large_plane_cas_airframe_3
+					contract_contains_equipment = large_plane_air_transport_airframe_3
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 2 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = large_plane_airframe_2
+					contract_contains_equipment = large_plane_maritime_patrol_airframe_2
+					contract_contains_equipment = large_plane_awacs_airframe_2
+					contract_contains_equipment = large_plane_cas_airframe_2
+					contract_contains_equipment = large_plane_air_transport_airframe_2
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 1 }
+		}
+		else_if = {
+			limit = {
+				OR = {
+					contract_contains_equipment = large_plane_airframe_1
+					contract_contains_equipment = large_plane_maritime_patrol_airframe_1
+					contract_contains_equipment = large_plane_awacs_airframe_1
+					contract_contains_equipment = large_plane_cas_airframe_1
+					contract_contains_equipment = large_plane_air_transport_airframe_1
+				}
+			}
+			set_temp_variable = { reverse_engineering_studied_index = 0 }
+		}
+		else = { set_temp_variable = { reverse_engineering_studied_index = -1 } }
+		var:var_temp_buyer = { reverse_engineering_grant_large_airframe = yes }
+	}
+}
+
+# Winner's scope from on_capitulation; ROOT is the capitulated country.
+reverse_engineering_study_capitulated_country = {
+	if = {
+		limit = { ROOT = { has_tech = mbt_tech } }
+		if = { limit = { ROOT = { has_tech = mbt_tech_6 } } set_temp_variable = { reverse_engineering_studied_index = 6 } }
+		else_if = { limit = { ROOT = { has_tech = mbt_tech_5 } } set_temp_variable = { reverse_engineering_studied_index = 5 } }
+		else_if = { limit = { ROOT = { has_tech = mbt_tech_4 } } set_temp_variable = { reverse_engineering_studied_index = 4 } }
+		else_if = { limit = { ROOT = { has_tech = mbt_tech_3 } } set_temp_variable = { reverse_engineering_studied_index = 3 } }
+		else_if = { limit = { ROOT = { has_tech = mbt_tech_2 } } set_temp_variable = { reverse_engineering_studied_index = 2 } }
+		else_if = { limit = { ROOT = { has_tech = mbt_tech_1 } } set_temp_variable = { reverse_engineering_studied_index = 1 } }
+		else = { set_temp_variable = { reverse_engineering_studied_index = 0 } }
+		reverse_engineering_grant_mbt = yes
+	}
+	if = {
+		limit = { ROOT = { has_tech = nsb_attack_helicopter_tech_1 } }
+		if = { limit = { ROOT = { has_tech = nsb_attack_helicopter_tech_7 } } set_temp_variable = { reverse_engineering_studied_index = 6 } }
+		else_if = { limit = { ROOT = { has_tech = nsb_attack_helicopter_tech_6 } } set_temp_variable = { reverse_engineering_studied_index = 5 } }
+		else_if = { limit = { ROOT = { has_tech = nsb_attack_helicopter_tech_5 } } set_temp_variable = { reverse_engineering_studied_index = 4 } }
+		else_if = { limit = { ROOT = { has_tech = nsb_attack_helicopter_tech_4 } } set_temp_variable = { reverse_engineering_studied_index = 3 } }
+		else_if = { limit = { ROOT = { has_tech = nsb_attack_helicopter_tech_3 } } set_temp_variable = { reverse_engineering_studied_index = 2 } }
+		else_if = { limit = { ROOT = { has_tech = nsb_attack_helicopter_tech_2 } } set_temp_variable = { reverse_engineering_studied_index = 1 } }
+		else = { set_temp_variable = { reverse_engineering_studied_index = 0 } }
+		reverse_engineering_grant_attack_helicopter = yes
+	}
+	if = {
+		limit = { ROOT = { has_tech = gen_3_light } }
+		if = { limit = { ROOT = { has_tech = gen_8_light } } set_temp_variable = { reverse_engineering_studied_index = 5 } }
+		else_if = { limit = { ROOT = { has_tech = gen_7_light } } set_temp_variable = { reverse_engineering_studied_index = 4 } }
+		else_if = { limit = { ROOT = { has_tech = gen_6_light } } set_temp_variable = { reverse_engineering_studied_index = 3 } }
+		else_if = { limit = { ROOT = { has_tech = gen_5_light } } set_temp_variable = { reverse_engineering_studied_index = 2 } }
+		else_if = { limit = { ROOT = { has_tech = gen_4_light } } set_temp_variable = { reverse_engineering_studied_index = 1 } }
+		else = { set_temp_variable = { reverse_engineering_studied_index = 0 } }
+		reverse_engineering_grant_light_airframe = yes
+	}
+	if = {
+		limit = { ROOT = { has_tech = gen_3_medium } }
+		if = { limit = { ROOT = { has_tech = gen_8_medium } } set_temp_variable = { reverse_engineering_studied_index = 5 } }
+		else_if = { limit = { ROOT = { has_tech = gen_7_medium } } set_temp_variable = { reverse_engineering_studied_index = 4 } }
+		else_if = { limit = { ROOT = { has_tech = gen_6_medium } } set_temp_variable = { reverse_engineering_studied_index = 3 } }
+		else_if = { limit = { ROOT = { has_tech = gen_5_medium } } set_temp_variable = { reverse_engineering_studied_index = 2 } }
+		else_if = { limit = { ROOT = { has_tech = gen_4_medium } } set_temp_variable = { reverse_engineering_studied_index = 1 } }
+		else = { set_temp_variable = { reverse_engineering_studied_index = 0 } }
+		reverse_engineering_grant_medium_airframe = yes
+	}
+	if = {
+		limit = { ROOT = { has_tech = gen_3_large } }
+		if = { limit = { ROOT = { has_tech = gen_8_large } } set_temp_variable = { reverse_engineering_studied_index = 5 } }
+		else_if = { limit = { ROOT = { has_tech = gen_7_large } } set_temp_variable = { reverse_engineering_studied_index = 4 } }
+		else_if = { limit = { ROOT = { has_tech = gen_6_large } } set_temp_variable = { reverse_engineering_studied_index = 3 } }
+		else_if = { limit = { ROOT = { has_tech = gen_5_large } } set_temp_variable = { reverse_engineering_studied_index = 2 } }
+		else_if = { limit = { ROOT = { has_tech = gen_4_large } } set_temp_variable = { reverse_engineering_studied_index = 1 } }
+		else = { set_temp_variable = { reverse_engineering_studied_index = 0 } }
+		reverse_engineering_grant_large_airframe = yes
+	}
+}
