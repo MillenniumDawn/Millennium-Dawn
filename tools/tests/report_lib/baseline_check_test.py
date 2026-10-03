@@ -384,6 +384,32 @@ def test_split_new_findings(tmp_path):
     assert [i.message for i in new_warnings] == ["new warning"]
 
 
+def test_split_new_findings_counts_duplicate_instances(tmp_path):
+    previous = tmp_path / "prev"
+    _write_meta(previous)
+    _write_sidecar(
+        previous,
+        "events",
+        [
+            _issue_dict("error", line=5, message="dup"),
+            _issue_dict("error", line=9, message="dup"),
+        ],
+    )
+    baseline = load_baseline(str(previous), "h")
+    assert baseline is not None
+
+    # Both known copies shifted a line; only the third copy is new.
+    current = [
+        baseline_check.Issue.from_dict(_issue_dict("error", line=ln, message="dup"))
+        for ln in (6, 10, 40)
+    ]
+    new_errors, new_warnings = baseline_check._split_new_findings(current, baseline)
+    assert [i.line for i in new_errors] == [40]
+    assert new_warnings == []
+
+    assert baseline_check._fixed_counts(current[:1], baseline) == (1, 0)
+
+
 def test_unkeyable_findings_count_as_new(tmp_path):
     previous = tmp_path / "prev"
     _write_meta(previous)
