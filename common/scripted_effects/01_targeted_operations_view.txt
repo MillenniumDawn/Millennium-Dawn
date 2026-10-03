@@ -1,0 +1,152 @@
+TOP_open_dossiers = {
+	TOP_initialize_global = yes
+	TOP_country_initialize = yes
+	set_variable = { TOP_open = 1 }
+	set_variable = { TOP_security_open = 0 }
+	set_variable = { TOP_tab = 0 }
+	set_variable = { var_open_MD_CT_gui = 2 }
+	set_country_flag = open_MD_countrymissilesview
+	TOP_build_view = yes
+}
+
+TOP_build_view = {
+	clear_array = TOP_visible_members
+	set_variable = { TOP_view_subject_active = 0 }
+	set_variable = { TOP_view_package_ready = 0 }
+	set_variable = { TOP_view_authority_available = 0 }
+	set_variable = { TOP_view_access_available = 0 }
+	set_variable = { TOP_view_member_count = 0 }
+	set_variable = { TOP_view_case_days = 0 }
+	set_variable = { TOP_view_mission_days = 0 }
+	set_variable = { TOP_view_disruption_days = 0 }
+	set_variable = { TOP_view_collection_penalty = 0 }
+	set_variable = { TOP_view_protection_penalty = 0 }
+	set_variable = { TOP_view_exposure_bonus = 0 }
+	set_variable = { TOP_view_lead_age = 0 }
+	if = {
+		limit = { TOP_has_selected_target = yes }
+		set_temp_variable = { TOP_arg_target = TOP_selected }
+		TOP_load_case = yes
+		set_temp_variable = { TOP_target = TOP_selected }
+		TOP_refresh_person_lead_age = yes
+		set_variable = { TOP_view_lead_age = TOP_lead_age^TOP_selected }
+		TOP_get_defensive_modifiers = yes
+		set_variable = { TOP_view_collection_penalty = TOP_defensive_collection_penalty }
+		set_variable = { TOP_view_protection_penalty = TOP_defensive_success_penalty }
+		set_variable = { TOP_view_exposure_bonus = TOP_defensive_exposure_bonus }
+		set_temp_variable = { TOP_role_target = TOP_selected }
+		if = { limit = { check_variable = { global.TOP_status^TOP_selected = 1 } TOP_authored_role_eligible = yes } set_variable = { TOP_view_subject_active = 1 } }
+		if = { limit = { set_temp_variable = { TOP_arg_target = TOP_selected } TOP_person_package_ready = yes } set_variable = { TOP_view_package_ready = 1 } }
+		if = { limit = { set_temp_variable = { TOP_target = TOP_selected } TOP_person_operational_eligible = yes } set_variable = { TOP_view_authority_available = 1 } }
+		if = {
+			limit = { NOT = { check_variable = { TOP_lead_state^TOP_selected = 0 } } check_variable = { TOP_lead_host^TOP_selected > 0 } }
+			set_variable = { TOP_view_access_available = 1 }
+		}
+		set_variable = { TOP_view_case_days = { value = TOP_case_until^TOP_selected subtract = global.TOP_clock } }
+		clamp_variable = { var = TOP_view_case_days min = 0 max = 182 }
+		set_variable = { TOP_view_mission_days = { value = TOP_case_due^TOP_selected subtract = global.TOP_clock } }
+		clamp_variable = { var = TOP_view_mission_days min = 0 max = 28 }
+	}
+	else_if = {
+		limit = { TOP_has_selected_organization = yes }
+		set_temp_variable = { TOP_group_target = TOP_selected_organization }
+		TOP_refresh_organization_lead_age = yes
+		set_variable = { TOP_view_lead_age = TOP_org_lead_age^TOP_selected_organization }
+		if = { limit = { TOP_group_operational = yes } set_variable = { TOP_view_subject_active = 1 } }
+		if = { limit = { TOP_organization_package_ready = yes } set_variable = { TOP_view_package_ready = 1 } }
+		if = { limit = { TOP_organization_operational_eligible = yes } set_variable = { TOP_view_authority_available = 1 } }
+		set_temp_variable = { TOP_access_state = TOP_org_lead_state^TOP_selected_organization }
+		set_temp_variable = { TOP_access_host = TOP_org_lead_host^TOP_selected_organization }
+		if = { limit = { TOP_facility_access_available = yes } set_variable = { TOP_view_access_available = 1 } }
+		set_variable = { TOP_view_case_days = { value = TOP_org_case_until^TOP_selected_organization subtract = global.TOP_clock } }
+		clamp_variable = { var = TOP_view_case_days min = 0 max = 182 }
+		set_variable = { TOP_view_mission_days = { value = TOP_org_case_due^TOP_selected_organization subtract = global.TOP_clock } }
+		clamp_variable = { var = TOP_view_mission_days min = 0 max = 28 }
+		set_variable = { TOP_view_disruption_days = { value = global.TOP_group_disruption_until^TOP_selected_organization subtract = global.TOP_clock } }
+		clamp_variable = { var = TOP_view_disruption_days min = 0 max = 90 }
+		for_each_loop = {
+			array = TOP_dossiers
+			value = top_view_member
+			if = {
+				limit = { check_variable = { global.TOP_affiliation^top_view_member = TOP_selected_organization } check_variable = { TOP_known^top_view_member = 1 } }
+				add_to_variable = { TOP_view_member_count = 1 }
+				add_to_array = { TOP_visible_members = top_view_member }
+			}
+		}
+	}
+
+	clear_array = TOP_visible_people
+	clear_array = TOP_visible_organizations
+	clear_array = TOP_visible_archive
+	clear_array = TOP_visible_history
+	if = {
+		limit = { NOT = { check_variable = { TOP_kind_filter = 2 } } }
+		for_each_loop = {
+			array = TOP_dossiers
+			value = top_view_person
+			set_temp_variable = { TOP_role_target = top_view_person }
+			if = {
+				limit = {
+					OR = {
+						check_variable = { TOP_status_filter = 2 }
+						AND = {
+							check_variable = { TOP_status_filter = 0 }
+							OR = {
+								check_variable = { global.TOP_status^top_view_person > 1 }
+								AND = {
+									check_variable = { global.TOP_status^top_view_person = 1 }
+									TOP_authored_role_eligible = yes
+									OR = { check_variable = { TOP_package_state^top_view_person > 0 } check_variable = { TOP_case_phase^top_view_person > 0 } }
+								}
+							}
+						}
+						AND = {
+							check_variable = { TOP_status_filter = 1 }
+							check_variable = { global.TOP_status^top_view_person = 1 }
+							OR = {
+								NOT = { TOP_authored_role_eligible = yes }
+								AND = { check_variable = { TOP_package_state^top_view_person = 0 } check_variable = { TOP_case_phase^top_view_person = 0 } }
+							}
+						}
+					}
+				}
+				add_to_array = { TOP_visible_people = top_view_person }
+			}
+		}
+	}
+	if = {
+		limit = { NOT = { check_variable = { TOP_kind_filter = 1 } } }
+		for_each_loop = {
+			array = TOP_organization_dossiers
+			value = top_view_group
+			if = {
+				limit = {
+					OR = {
+						check_variable = { TOP_status_filter = 2 }
+						AND = { check_variable = { TOP_status_filter = 0 } OR = { check_variable = { TOP_org_package_state^top_view_group > 0 } check_variable = { TOP_org_case_phase^top_view_group > 0 } } }
+						AND = { check_variable = { TOP_status_filter = 1 } check_variable = { TOP_org_package_state^top_view_group = 0 } check_variable = { TOP_org_case_phase^top_view_group = 0 } }
+					}
+				}
+				add_to_array = { TOP_visible_organizations = top_view_group }
+			}
+		}
+	}
+	for_each_loop = { array = TOP_archive_rows value = top_view_archive add_to_array = { TOP_visible_archive = top_view_archive } }
+	if = {
+		limit = { check_variable = { TOP_tab = 6 } }
+		for_each_loop = {
+			array = TOP_history_rows
+			value = top_history_row
+			if = {
+				limit = {
+					OR = {
+						AND = { TOP_has_selected_target = yes check_variable = { TOP_history_subject_kind^top_history_row = 1 } check_variable = { TOP_history_subject_id^top_history_row = TOP_selected } }
+						AND = { TOP_has_selected_organization = yes check_variable = { TOP_history_subject_kind^top_history_row = 2 } check_variable = { TOP_history_subject_id^top_history_row = TOP_selected_organization } }
+					}
+				}
+				add_to_array = { TOP_visible_history = top_history_row }
+			}
+		}
+	}
+	TOP_refresh_view = yes
+}

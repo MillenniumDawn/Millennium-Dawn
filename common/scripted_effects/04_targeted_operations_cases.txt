@@ -1,0 +1,347 @@
+TOP_initialize_cases = {
+	resize_array = { TOP_case_host = global.TOP_registry_capacity }
+	resize_array = { TOP_case_state = global.TOP_registry_capacity }
+	resize_array = { TOP_case_method = global.TOP_registry_capacity }
+	resize_array = { TOP_case_until = global.TOP_registry_capacity }
+	resize_array = { TOP_case_consent = global.TOP_registry_capacity }
+	resize_array = { TOP_case_phase = global.TOP_registry_capacity }
+	resize_array = { TOP_case_due = global.TOP_registry_capacity }
+	resize_array = { TOP_case_sequence = global.TOP_registry_capacity }
+	resize_array = { TOP_case_facility = global.TOP_registry_capacity }
+	resize_array = { TOP_case_rigor = global.TOP_registry_capacity }
+	resize_array = { TOP_case_assurance = global.TOP_registry_capacity }
+	resize_array = { TOP_case_collecting = global.TOP_registry_capacity }
+	resize_array = { TOP_case_identity = global.TOP_registry_capacity }
+	resize_array = { TOP_case_location = global.TOP_registry_capacity }
+	resize_array = { TOP_case_pattern = global.TOP_registry_capacity }
+	resize_array = { TOP_case_lead_age = global.TOP_registry_capacity }
+	resize_array = { TOP_case_access = global.TOP_registry_capacity }
+	resize_array = { TOP_case_host_posture = global.TOP_registry_capacity }
+	resize_array = { TOP_case_doctrine = global.TOP_registry_capacity }
+	resize_array = { TOP_case_capability = global.TOP_registry_capacity }
+	resize_array = { TOP_case_protection = global.TOP_registry_capacity }
+	resize_array = { TOP_case_exposure_score = global.TOP_registry_capacity }
+	resize_array = { TOP_case_harm_risk = global.TOP_registry_capacity }
+	resize_array = { TOP_case_attribution = global.TOP_registry_capacity }
+	resize_array = { TOP_case_attribution_due = global.TOP_registry_capacity }
+	resize_array = { TOP_case_attribution_investigated = global.TOP_registry_capacity }
+	resize_array = { TOP_case_harm = global.TOP_registry_capacity }
+	resize_array = { TOP_case_result = global.TOP_registry_capacity }
+	resize_array = { TOP_case_archive_row = global.TOP_registry_capacity }
+	resize_array = { TOP_case_archive_token = global.TOP_registry_capacity }
+	resize_array = { TOP_case_native_prepared = global.TOP_registry_capacity }
+	resize_array = { TOP_case_native_success_bonus = global.TOP_registry_capacity }
+	resize_array = { TOP_case_native_success_penalty = global.TOP_registry_capacity }
+	resize_array = { TOP_case_oversight = global.TOP_registry_capacity }
+	resize_array = { TOP_case_oversight_open = global.TOP_registry_capacity }
+	resize_array = { TOP_case_crisis_opened = global.TOP_registry_capacity }
+	resize_array = { TOP_case_visit_token = global.TOP_registry_capacity }
+	resize_array = { TOP_case_visit_status = global.TOP_registry_capacity }
+	resize_array = { TOP_case_visit_story = global.TOP_registry_capacity }
+}
+
+# Reads TOP_arg_host.
+TOP_find_host_case = {
+	set_temp_variable = { TOP_host_case = 0 }
+	for_each_loop = {
+		array = TOP_active_cases
+		value = top_host_case_candidate
+		if = {
+			limit = { check_variable = { TOP_case_host^top_host_case_candidate = TOP_arg_host } check_variable = { TOP_case_phase^top_host_case_candidate > 0 } }
+			set_temp_variable = { TOP_host_case = top_host_case_candidate }
+		}
+	}
+}
+
+TOP_designate_selected = {
+	if = {
+		limit = { TOP_can_designate = yes }
+		add_political_power = -25
+		set_variable = { TOP_package_state^TOP_selected = 1 }
+		set_variable = { TOP_collection_focus^TOP_selected = 2 }
+		add_to_variable = { TOP_history_cycle^TOP_selected = 1 }
+		set_temp_variable = { TOP_arg_target = TOP_selected }
+		set_temp_variable = { TOP_history_current_event = 1 }
+		TOP_log_person_milestone = yes
+		TOP_build_view = yes
+	}
+}
+
+# Reads TOP_arg_target.
+TOP_open_person_review_case = {
+	add_to_variable = { TOP_case_counter = 1 }
+	set_variable = { TOP_case_sequence^TOP_arg_target = TOP_case_counter }
+	set_variable = { TOP_case_attribution_due^TOP_arg_target = 0 }
+	set_variable = { TOP_case_attribution_investigated^TOP_arg_target = 0 }
+	set_variable = { TOP_case_attribution^TOP_arg_target = 0 }
+	set_variable = { TOP_case_harm^TOP_arg_target = 0 }
+	set_variable = { TOP_case_result^TOP_arg_target = 0 }
+	set_variable = { TOP_case_archive_row^TOP_arg_target = 0 }
+	set_variable = { TOP_case_archive_token^TOP_arg_target = 0 }
+	set_variable = { TOP_case_oversight^TOP_arg_target = 0 }
+	set_variable = { TOP_case_oversight_open^TOP_arg_target = 0 }
+	set_variable = { TOP_case_crisis_opened^TOP_arg_target = 0 }
+	set_variable = { TOP_case_native_prepared^TOP_arg_target = 0 }
+	set_variable = { TOP_case_native_success_bonus^TOP_arg_target = 0 }
+	set_variable = { TOP_case_native_success_penalty^TOP_arg_target = 0 }
+	set_variable = { TOP_case_host^TOP_arg_target = TOP_lead_host^TOP_arg_target }
+	set_variable = { TOP_case_visit_token^TOP_arg_target = global.TOP_visit_token^TOP_arg_target }
+	set_variable = { TOP_case_visit_status^TOP_arg_target = global.TOP_visit_status^TOP_arg_target }
+	set_variable = { TOP_case_visit_story^TOP_arg_target = global.TOP_visit_story^TOP_arg_target }
+	set_variable = { TOP_case_phase^TOP_arg_target = 1 }
+	set_variable = { TOP_case_until^TOP_arg_target = { value = global.TOP_clock add = 42 } }
+	set_temp_variable = { TOP_history_current_event = 4 }
+	TOP_log_person_milestone = yes
+	if = { limit = { NOT = { is_in_array = { TOP_active_cases = TOP_arg_target } } } add_to_array = { TOP_active_cases = TOP_arg_target } }
+	TOP_enroll_pending_actor = yes
+}
+
+# Reads TOP_arg_target.
+TOP_load_case = {
+	# Flat values are an execution/display snapshot. Case arrays alone grant authority.
+	set_variable = { TOP_authorized_target = TOP_arg_target }
+	set_variable = { TOP_authorized_method = TOP_case_method^TOP_arg_target }
+	set_variable = { TOP_authorized_state = TOP_case_state^TOP_arg_target }
+	set_variable = { TOP_authorized_host = TOP_case_host^TOP_arg_target }
+	set_variable = { TOP_authorized_until = TOP_case_until^TOP_arg_target }
+	set_variable = { TOP_authorized_consent = TOP_case_consent^TOP_arg_target }
+	set_variable = { TOP_authorized_rigor = TOP_case_rigor^TOP_arg_target }
+	set_variable = { TOP_authorized_assurance = TOP_case_assurance^TOP_arg_target }
+	set_variable = { TOP_authorized_facility = TOP_case_facility^TOP_arg_target }
+	set_variable = { TOP_authorized_visit_token = TOP_case_visit_token^TOP_arg_target }
+	set_variable = { TOP_authorized_visit_status = TOP_case_visit_status^TOP_arg_target }
+	set_variable = { TOP_authorized_visit_story = TOP_case_visit_story^TOP_arg_target }
+	set_variable = { TOP_pending_target = 0 }
+	if = {
+		limit = { check_variable = { TOP_case_phase^TOP_arg_target = 3 } }
+		set_variable = { TOP_pending_target = TOP_arg_target }
+	}
+	set_variable = { TOP_pending_method = TOP_case_method^TOP_arg_target }
+	set_variable = { TOP_pending_state = TOP_case_state^TOP_arg_target }
+	set_variable = { TOP_pending_host = TOP_case_host^TOP_arg_target }
+	set_variable = { TOP_pending_facility = TOP_case_facility^TOP_arg_target }
+	set_variable = { TOP_pending_due = TOP_case_due^TOP_arg_target }
+}
+
+# Reads TOP_arg_sequence, TOP_arg_target.
+TOP_close_case = {
+	if = {
+		limit = { check_variable = { TOP_case_phase^TOP_arg_target > 0 } check_variable = { TOP_case_sequence^TOP_arg_target = TOP_arg_sequence } }
+		set_temp_variable = { TOP_history_current_event = 8 }
+		if = { limit = { check_variable = { TOP_history_current_reason = 0 } check_variable = { TOP_case_result^TOP_arg_target = 0 } check_variable = { global.TOP_status^TOP_arg_target > 1 } } set_temp_variable = { TOP_history_current_reason = 23 } }
+		if = { limit = { check_variable = { TOP_history_current_reason = 0 } check_variable = { TOP_case_phase^TOP_arg_target > 3 } } set_temp_variable = { TOP_history_current_reason = 24 } }
+		if = { limit = { check_variable = { TOP_history_current_reason = 0 } check_variable = { var = global.TOP_clock value = TOP_case_until^TOP_arg_target compare = greater_than_or_equals } check_variable = { TOP_case_phase^TOP_arg_target < 3 } } set_temp_variable = { TOP_history_current_reason = 22 } }
+		if = { limit = { check_variable = { TOP_history_current_reason = 0 } check_variable = { TOP_case_phase^TOP_arg_target = 3 } } set_temp_variable = { TOP_history_current_reason = 23 } }
+		TOP_log_person_milestone = yes
+		if = {
+			limit = { check_variable = { TOP_case_native_prepared^TOP_arg_target = 1 } check_variable = { TOP_case_method^TOP_arg_target > 0 } check_variable = { TOP_case_method^TOP_arg_target < 3 } }
+			# Only an unresolved prepared raid can still deliver a stale callback.
+			set_temp_variable = { TOP_binding_key = { value = TOP_arg_target multiply = 20000 } }
+			add_to_temp_variable = { TOP_binding_key = { value = TOP_case_state^TOP_arg_target multiply = 2 } }
+			add_to_temp_variable = { TOP_binding_key = TOP_case_method^TOP_arg_target }
+			if = {
+				limit = { NOT = { is_in_array = { TOP_retired_native_bindings = TOP_binding_key } } }
+				add_to_array = { TOP_retired_native_bindings = TOP_binding_key }
+			}
+		}
+		if = {
+			limit = { check_variable = { TOP_package_state^TOP_arg_target = 3 } }
+			set_variable = { TOP_package_state^TOP_arg_target = 1 }
+		}
+		set_variable = { TOP_case_phase^TOP_arg_target = 0 }
+		set_variable = { TOP_case_method^TOP_arg_target = 0 }
+		set_variable = { TOP_case_due^TOP_arg_target = 0 }
+		set_variable = { TOP_case_collecting^TOP_arg_target = 0 }
+		set_variable = { TOP_case_native_prepared^TOP_arg_target = 0 }
+		set_variable = { TOP_case_native_success_bonus^TOP_arg_target = 0 }
+		set_variable = { TOP_case_native_success_penalty^TOP_arg_target = 0 }
+		if = {
+			limit = {
+				check_variable = { TOP_operation_subject_kind = 1 }
+				check_variable = { TOP_operation_subject_id = TOP_arg_target }
+				check_variable = { TOP_operation_sequence = TOP_case_sequence^TOP_arg_target }
+			}
+			TOP_trace_slot_end = yes
+			set_variable = { TOP_operation_subject_kind = 0 }
+			set_variable = { TOP_operation_subject_id = 0 }
+			set_variable = { TOP_operation_sequence = 0 }
+		}
+		set_variable = { TOP_case_visit_token^TOP_arg_target = 0 }
+		set_variable = { TOP_case_visit_status^TOP_arg_target = 0 }
+		set_variable = { TOP_case_visit_story^TOP_arg_target = 0 }
+		remove_from_array = { TOP_active_cases = TOP_arg_target }
+		if = {
+			limit = { check_variable = { TOP_authorized_target = TOP_arg_target } }
+			set_variable = { TOP_authorized_target = 0 }
+			set_variable = { TOP_pending_target = 0 }
+		}
+		TOP_build_view = yes
+	}
+}
+
+TOP_finish_case = {
+	if = {
+		limit = { check_variable = { TOP_case_phase^TOP_target > 0 } }
+		if = {
+			limit = { check_variable = { TOP_operation_subject_kind = 1 } check_variable = { TOP_operation_subject_id = TOP_target } }
+			TOP_trace_slot_end = yes
+			set_variable = { TOP_operation_subject_kind = 0 }
+			set_variable = { TOP_operation_subject_id = 0 }
+			set_variable = { TOP_operation_sequence = 0 }
+		}
+		set_variable = { TOP_case_phase^TOP_target = 5 }
+		set_temp_variable = { TOP_arg_target = TOP_target }
+		set_temp_variable = { TOP_history_current_event = 7 }
+		set_temp_variable = { TOP_history_current_reason = TOP_case_result^TOP_target }
+		TOP_log_person_milestone = yes
+		if = {
+			limit = { is_in_array = { TOP_pending_assessments = TOP_target } }
+			set_variable = { TOP_case_phase^TOP_target = 4 }
+		}
+		set_variable = { TOP_case_due^TOP_target = 0 }
+		set_variable = { TOP_case_collecting^TOP_target = 0 }
+		TOP_enroll_pending_actor = yes
+		TOP_build_view = yes
+	}
+}
+
+# Reads TOP_arg_target.
+TOP_begin_person_operation = {
+	if = {
+		limit = { TOP_can_begin_person_operation = yes }
+		set_variable = { TOP_operation_subject_kind = 1 }
+		set_variable = { TOP_operation_subject_id = TOP_arg_target }
+		set_variable = { TOP_operation_sequence = TOP_case_sequence^TOP_arg_target }
+		TOP_trace_slot_begin = yes
+		set_variable = { TOP_case_phase^TOP_arg_target = 3 }
+		set_temp_variable = { TOP_history_current_event = 10 }
+		if = { limit = { check_variable = { TOP_case_method^TOP_arg_target < 3 } } set_temp_variable = { TOP_history_current_event = 6 } }
+		set_temp_variable = { TOP_history_current_reason = { value = TOP_case_method^TOP_arg_target add = 30 } }
+		TOP_log_person_milestone = yes
+		set_variable = { TOP_case_due^TOP_arg_target = 0 }
+		if = {
+			limit = { check_variable = { TOP_case_method^TOP_arg_target > 0 } check_variable = { TOP_case_method^TOP_arg_target < 3 } }
+			set_temp_variable = { TOP_target = TOP_arg_target }
+			TOP_get_defensive_modifiers = yes
+			set_variable = { TOP_case_native_success_bonus^TOP_arg_target = 0 }
+			set_variable = { TOP_case_native_success_penalty^TOP_arg_target = TOP_defensive_success_penalty }
+			set_temp_variable = { TOP_native_group = global.TOP_affiliation^TOP_arg_target }
+			if = {
+				limit = { check_variable = { global.TOP_group_disruption_type^TOP_native_group = 2 } check_variable = { global.TOP_group_disruption_until^TOP_native_group > global.TOP_clock } }
+				set_variable = { TOP_case_native_success_bonus^TOP_arg_target = 10 }
+			}
+			set_variable = { TOP_case_native_prepared^TOP_arg_target = 1 }
+		}
+		if = {
+			limit = { check_variable = { TOP_case_method^TOP_arg_target > 2 } }
+			set_variable = { TOP_case_due^TOP_arg_target = { value = global.TOP_clock add = 28 } }
+		}
+		set_temp_variable = { TOP_target = TOP_arg_target }
+		TOP_add_person_pressure_20 = yes
+		TOP_enroll_pending_actor = yes
+		TOP_refresh_view = yes
+	}
+}
+
+TOP_confirm_assessment = {
+	if = {
+		limit = { TOP_can_confirm_assessment = yes }
+		set_temp_variable = { TOP_arg_target = TOP_selected } set_temp_variable = { TOP_arg_sequence = TOP_case_sequence^TOP_selected } TOP_close_case = yes
+		TOP_build_view = yes
+	}
+}
+
+TOP_process_cases = {
+	clear_array = TOP_cases_to_close
+	for_each_loop = {
+		array = TOP_active_cases
+		value = top_timer_case
+		set_temp_variable = { TOP_target = top_timer_case }
+		set_temp_variable = { TOP_role_target = TOP_target }
+		if = {
+			limit = {
+				check_variable = { TOP_case_phase^TOP_target > 0 }
+				check_variable = { TOP_case_phase^TOP_target < 3 }
+				check_variable = { TOP_case_visit_status^TOP_target > 0 }
+				OR = {
+					check_variable = { global.TOP_visit_status^TOP_target = 0 }
+					NOT = { check_variable = { TOP_case_visit_token^TOP_target = global.TOP_visit_token^TOP_target } }
+					NOT = { check_variable = { TOP_case_visit_story^TOP_target = global.TOP_visit_story^TOP_target } }
+					NOT = { TOP_authored_role_eligible = yes }
+				}
+			}
+			add_to_array = { TOP_cases_to_close = top_timer_case }
+		}
+		if = {
+			limit = {
+				check_variable = { TOP_case_phase^TOP_target > 0 }
+				check_variable = { TOP_case_phase^TOP_target < 4 }
+				check_variable = { TOP_case_visit_status^TOP_target > 0 }
+				check_variable = { TOP_case_visit_token^TOP_target = global.TOP_visit_token^TOP_target }
+				check_variable = { TOP_case_visit_story^TOP_target = global.TOP_visit_story^TOP_target }
+			}
+			set_variable = { TOP_case_until^TOP_target = global.TOP_visit_execution_until^TOP_target }
+			if = {
+				limit = {
+					check_variable = { TOP_case_phase^TOP_target = 3 }
+					check_variable = { TOP_case_due^TOP_target < global.TOP_visit_start^TOP_target }
+				}
+				set_variable = { TOP_case_due^TOP_target = global.TOP_visit_start^TOP_target }
+			}
+		}
+		if = {
+			limit = { check_variable = { TOP_case_phase^TOP_target < 4 } check_variable = { global.TOP_status^TOP_target > 1 } }
+			if = {
+				limit = {
+					check_variable = { TOP_operation_subject_kind = 1 }
+					check_variable = { TOP_operation_subject_id = TOP_target }
+					check_variable = { TOP_operation_sequence = TOP_case_sequence^TOP_target }
+				}
+				TOP_trace_slot_end = yes
+				set_variable = { TOP_operation_subject_kind = 0 }
+				set_variable = { TOP_operation_subject_id = 0 }
+				set_variable = { TOP_operation_sequence = 0 }
+			}
+			# The case is no longer actionable, but another actor's physical result remains unknown.
+			set_variable = { TOP_assessment^TOP_target = 6 }
+			set_variable = { TOP_case_phase^TOP_target = 5 }
+		}
+		if = {
+			limit = {
+				check_variable = { TOP_case_phase^TOP_target = 3 }
+				check_variable = { TOP_case_method^TOP_target > 2 }
+				check_variable = { TOP_case_due^TOP_target > 0 }
+				check_variable = { var = global.TOP_clock value = TOP_case_due^TOP_target compare = greater_than_or_equals }
+			}
+			set_temp_variable = { TOP_case_visit_target = TOP_target }
+			if = {
+				limit = { NOT = { TOP_case_visit_waiting_for_arrival = yes } }
+				set_temp_variable = { TOP_arg_target = TOP_target } TOP_load_case = yes
+				set_temp_variable = { TOP_method = TOP_case_method^TOP_target }
+				set_temp_variable = { TOP_operation_state = TOP_case_state^TOP_target }
+				set_temp_variable = { TOP_facility_kind = TOP_case_facility^TOP_target }
+				if = { limit = { TOP_mission_binding_valid = yes } TOP_resolve_timed_case = yes }
+				else = { add_to_array = { TOP_cases_to_close = top_timer_case } }
+			}
+		}
+		if = {
+			limit = {
+				OR = {
+					AND = { check_variable = { TOP_case_phase^top_timer_case < 3 } check_variable = { var = global.TOP_clock value = TOP_case_until^top_timer_case compare = greater_than_or_equals } }
+					AND = { is_ai = yes check_variable = { TOP_case_phase^top_timer_case = 5 } }
+				}
+			}
+			if = { limit = { NOT = { is_in_array = { TOP_cases_to_close = top_timer_case } } } add_to_array = { TOP_cases_to_close = top_timer_case } }
+		}
+	}
+	for_each_loop = {
+		array = TOP_cases_to_close
+		value = top_timer_case
+		set_temp_variable = { TOP_arg_target = top_timer_case } set_temp_variable = { TOP_arg_sequence = TOP_case_sequence^top_timer_case } TOP_close_case = yes
+	}
+}
+
+TOP_resolve_timed_case = {
+	set_temp_variable = { TOP_tier = 0 }
+	TOP_complete_operation = yes
+}

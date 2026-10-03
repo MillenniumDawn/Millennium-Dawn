@@ -1,0 +1,193 @@
+# Reads TOP_arg_level. $TRACK$ was spliced into the variable name,
+# which a temp variable cannot express, so there is one per track.
+TOP_purchase_protection_policy = {
+	set_temp_variable = { TOP_security_requested_level = TOP_arg_level }
+	if = {
+		limit = { TOP_security_can_purchase = yes }
+		if = {
+			limit = { check_variable = { TOP_security_requested_level = 1 } }
+			add_political_power = -25
+			set_temp_variable = { treasury_change = -0.25 }
+		}
+		else_if = {
+			limit = { check_variable = { TOP_security_requested_level = 2 } }
+			add_political_power = -40
+			set_temp_variable = { treasury_change = -0.75 }
+		}
+		else = {
+			add_political_power = -60
+			set_temp_variable = { treasury_change = -1.5 }
+		}
+		modify_treasury_effect = yes
+		set_variable = { TOP_protection_level = TOP_arg_level }
+		set_variable = { TOP_protection_until = global.TOP_clock }
+		add_to_variable = { TOP_protection_until = 182 }
+		TOP_security_refresh_view = yes
+	}
+}
+
+# Reads TOP_arg_level. $TRACK$ was spliced into the variable name,
+# which a temp variable cannot express, so there is one per track.
+TOP_purchase_counterintelligence_policy = {
+	set_temp_variable = { TOP_security_requested_level = TOP_arg_level }
+	if = {
+		limit = { TOP_security_can_purchase = yes }
+		if = {
+			limit = { check_variable = { TOP_security_requested_level = 1 } }
+			add_political_power = -25
+			set_temp_variable = { treasury_change = -0.25 }
+		}
+		else_if = {
+			limit = { check_variable = { TOP_security_requested_level = 2 } }
+			add_political_power = -40
+			set_temp_variable = { treasury_change = -0.75 }
+		}
+		else = {
+			add_political_power = -60
+			set_temp_variable = { treasury_change = -1.5 }
+		}
+		modify_treasury_effect = yes
+		set_variable = { TOP_counterintelligence_level = TOP_arg_level }
+		set_variable = { TOP_counterintelligence_until = global.TOP_clock }
+		add_to_variable = { TOP_counterintelligence_until = 182 }
+		TOP_security_refresh_view = yes
+	}
+}
+
+TOP_security_stand_down = {
+	set_variable = { TOP_protection_level = 0 }
+	set_variable = { TOP_protection_until = 0 }
+	set_variable = { TOP_counterintelligence_level = 0 }
+	set_variable = { TOP_counterintelligence_until = 0 }
+	TOP_security_refresh_view = yes
+}
+
+TOP_security_refresh_view = {
+	if = {
+		limit = { is_ai = no }
+		set_variable = { TOP_protection_days = TOP_protection_until }
+		subtract_from_variable = { TOP_protection_days = global.TOP_clock }
+		clamp_variable = { var = TOP_protection_days min = 0 max = 182 }
+		set_variable = { TOP_counterintelligence_days = TOP_counterintelligence_until }
+		subtract_from_variable = { TOP_counterintelligence_days = global.TOP_clock }
+		clamp_variable = { var = TOP_counterintelligence_days min = 0 max = 182 }
+		add_to_variable = { TOP_security_dirty = 1 }
+	}
+}
+
+TOP_security_country_tick = {
+	TOP_refresh_vip_details = yes
+	if = {
+		limit = {
+			TOP_enabled = yes
+			is_ai = yes
+			TOP_has_protected_official = yes
+			has_war = yes
+			check_variable = { treasury > 2 }
+			has_political_power > 100
+		}
+		if = {
+			limit = { NOT = { TOP_protection_policy_active = yes } }
+			set_temp_variable = { TOP_arg_level = 1 } TOP_purchase_protection_policy = yes
+		}
+		if = {
+			limit = { NOT = { TOP_counterintelligence_policy_active = yes } }
+			set_temp_variable = { TOP_arg_level = 1 } TOP_purchase_counterintelligence_policy = yes
+		}
+	}
+	if = {
+		limit = { is_ai = no check_variable = { TOP_security_open = 1 } TOP_security_window_visible = yes }
+		TOP_security_refresh_view = yes
+	}
+}
+
+TOP_get_defensive_modifiers = {
+	set_temp_variable = { TOP_defensive_collection_penalty = 0 }
+	set_temp_variable = { TOP_defensive_success_penalty = 0 }
+	set_temp_variable = { TOP_defensive_exposure_bonus = 0 }
+	set_temp_variable = { TOP_security_actor = THIS }
+	set_temp_variable = { TOP_security_country = 0 }
+	TOP_get_protection_country = yes
+	if = {
+		limit = {
+			TOP_enabled = yes
+			check_variable = { TOP_security_country > 0 }
+			NOT = { check_variable = { TOP_security_country = TOP_security_actor } }
+			var:TOP_security_country = { exists = yes }
+		}
+		var:TOP_security_country = {
+			if = {
+				limit = { TOP_protection_policy_active = yes }
+				set_temp_variable = { PREV.TOP_defensive_success_penalty = TOP_protection_level }
+				multiply_temp_variable = { PREV.TOP_defensive_success_penalty = 5 }
+			}
+			if = {
+				limit = { TOP_counterintelligence_policy_active = yes }
+				set_temp_variable = { PREV.TOP_defensive_collection_penalty = TOP_counterintelligence_level }
+				multiply_temp_variable = { PREV.TOP_defensive_collection_penalty = 3 }
+				set_temp_variable = { PREV.TOP_defensive_exposure_bonus = TOP_counterintelligence_level }
+				multiply_temp_variable = { PREV.TOP_defensive_exposure_bonus = 5 }
+			}
+			if = {
+				limit = { is_in_array = { TOP_vip_assignments = PREV.TOP_target } check_variable = { TOP_vip_until^PREV.TOP_target > global.TOP_clock } }
+				add_to_temp_variable = { PREV.TOP_defensive_collection_penalty = 3 }
+				add_to_temp_variable = { PREV.TOP_defensive_success_penalty = 10 }
+				add_to_temp_variable = { PREV.TOP_defensive_exposure_bonus = 5 }
+			}
+		}
+	}
+	set_temp_variable = { TOP_security_group = global.TOP_affiliation^TOP_target }
+	TOP_get_effective_person_pressure = yes
+	if = {
+		limit = { check_variable = { global.TOP_consequence_profile^TOP_target > 1 } }
+		if = { limit = { check_variable = { TOP_effective_pressure > 24 } } add_to_temp_variable = { TOP_defensive_collection_penalty = 1 } add_to_temp_variable = { TOP_defensive_success_penalty = 2 } }
+		if = { limit = { check_variable = { TOP_effective_pressure > 49 } } add_to_temp_variable = { TOP_defensive_collection_penalty = 2 } add_to_temp_variable = { TOP_defensive_success_penalty = 3 } add_to_temp_variable = { TOP_defensive_exposure_bonus = 2 } }
+		if = { limit = { check_variable = { TOP_effective_pressure > 74 } } add_to_temp_variable = { TOP_defensive_collection_penalty = 2 } add_to_temp_variable = { TOP_defensive_success_penalty = 5 } add_to_temp_variable = { TOP_defensive_exposure_bonus = 3 } }
+	}
+	if = {
+		limit = { check_variable = { global.TOP_group_disruption_type^TOP_security_group = 3 } check_variable = { global.TOP_group_disruption_until^TOP_security_group > global.TOP_clock } }
+		subtract_from_temp_variable = { TOP_defensive_success_penalty = 5 }
+	}
+	clamp_temp_variable = { var = TOP_defensive_collection_penalty min = 0 max = 25 }
+	clamp_temp_variable = { var = TOP_defensive_success_penalty min = 0 max = 40 }
+	clamp_temp_variable = { var = TOP_defensive_exposure_bonus min = 0 max = 40 }
+}
+
+# Reads TOP_group_target and TOP_organization_security_host.
+TOP_get_organization_defensive_modifiers = {
+	set_temp_variable = { TOP_organization_defensive_collection_penalty = 0 }
+	set_temp_variable = { TOP_organization_defensive_success_penalty = 0 }
+	set_temp_variable = { TOP_organization_defensive_exposure_bonus = 0 }
+	set_temp_variable = { TOP_organization_security_actor = THIS }
+	if = {
+		limit = {
+			TOP_enabled = yes
+			check_variable = { TOP_organization_security_host > 0 }
+			NOT = { check_variable = { TOP_organization_security_host = TOP_organization_security_actor } }
+			var:TOP_organization_security_host = { exists = yes }
+		}
+		var:TOP_organization_security_host = {
+			if = {
+				limit = { TOP_protection_policy_active = yes }
+				set_temp_variable = { PREV.TOP_organization_defensive_success_penalty = TOP_protection_level }
+				multiply_temp_variable = { PREV.TOP_organization_defensive_success_penalty = 5 }
+			}
+			if = {
+				limit = { TOP_counterintelligence_policy_active = yes }
+				set_temp_variable = { PREV.TOP_organization_defensive_collection_penalty = TOP_counterintelligence_level }
+				multiply_temp_variable = { PREV.TOP_organization_defensive_collection_penalty = 3 }
+				set_temp_variable = { PREV.TOP_organization_defensive_exposure_bonus = TOP_counterintelligence_level }
+				multiply_temp_variable = { PREV.TOP_organization_defensive_exposure_bonus = 5 }
+			}
+		}
+	}
+	if = {
+		limit = { check_variable = { global.TOP_group_class^TOP_group_target = 2 } }
+		if = { limit = { check_variable = { global.TOP_group_pressure^TOP_group_target > 24 } } add_to_temp_variable = { TOP_organization_defensive_success_penalty = 2 } }
+		if = { limit = { check_variable = { global.TOP_group_pressure^TOP_group_target > 49 } } add_to_temp_variable = { TOP_organization_defensive_success_penalty = 3 } }
+		if = { limit = { check_variable = { global.TOP_group_pressure^TOP_group_target > 74 } } add_to_temp_variable = { TOP_organization_defensive_success_penalty = 5 } }
+	}
+	clamp_temp_variable = { var = TOP_organization_defensive_collection_penalty min = 0 max = 25 }
+	clamp_temp_variable = { var = TOP_organization_defensive_success_penalty min = 0 max = 40 }
+	clamp_temp_variable = { var = TOP_organization_defensive_exposure_bonus min = 0 max = 40 }
+}
