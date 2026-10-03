@@ -1,0 +1,63 @@
+# common/on_actions/md_submod_on_actions.txt
+
+on_actions = {
+	# 1. INITIALIZE THE ARRAYS AT GAME START
+	on_startup = {
+		effect = {
+			if = {
+				limit = {
+					has_game_rule = { rule = disable_gdp_graph option = no }
+				}
+				every_country = {
+					limit = { is_ai = no }
+					md_submod_debt_graph_init = yes
+					md_submod_inflation_graph_init = yes
+					md_submod_pop_graph_init = yes
+					md_submod_budget_graph_init = yes
+					md_submod_energy_graph_init = yes
+					md_submod_defense_graph_init = yes
+					md_submod_trade_graph_init = yes
+					gdp_graph_update_dirty_var = yes
+				}
+			}
+		}
+	}
+
+	# 2. THE MONTHLY SNAPSHOTS & CALCULATIONS (Fires exactly on the 1st!)
+	on_monthly = {
+		effect = {
+			if = {
+				limit = {
+					NOT = { has_game_rule = { rule = disable_gdp_graph option = yes } }
+				}
+				every_country = {
+					limit = { is_ai = no }
+
+					# 1. Synchronize date_scale, current_gdp_graph_end, and auto-shift when January arrives
+					md_sync_live_month_data = yes
+
+					# 2. Take the monthly data snapshots
+					md_submod_debt_graph_on_monthly = yes
+					md_submod_inflation_graph_on_monthly = yes
+					md_submod_pop_graph_on_monthly = yes
+					md_submod_budget_graph_on_monthly = yes
+					md_submod_energy_graph_on_monthly = yes
+					md_submod_defense_graph_on_monthly = yes
+					md_submod_trade_graph_on_monthly = yes
+
+					# Only recalculate visual line-drawing coordinates for the currently OPEN tab!
+					if = { limit = { check_variable = { md_graph_tab = 1 } } update_md_flaxbeard_gdp_graph = yes }
+					if = { limit = { check_variable = { md_graph_tab = 2 } } update_md_flaxbeard_gdpc_graph = yes }
+					if = { limit = { check_variable = { md_graph_tab = 3 } } update_md_flaxbeard_prod_graph = yes }
+					if = { limit = { check_variable = { md_graph_tab = 4 } } update_md_flaxbeard_debt_graph = yes }
+					if = { limit = { check_variable = { md_graph_tab = 5 } } update_md_flaxbeard_inflation_graph = yes }
+					if = { limit = { check_variable = { md_graph_tab = 6 } } update_md_flaxbeard_pop_graph = yes }
+					if = { limit = { check_variable = { md_graph_tab = 7 } } update_md_flaxbeard_budget_graph = yes }
+					if = { limit = { check_variable = { md_graph_tab = 8 } } update_md_flaxbeard_energy_graph = yes }
+					if = { limit = { check_variable = { md_graph_tab = 9 } } update_md_flaxbeard_defense_graph = yes }
+					if = { limit = { check_variable = { md_graph_tab = 10 } } update_md_flaxbeard_trade_graph = yes }
+				}
+			}
+		}
+	}
+}

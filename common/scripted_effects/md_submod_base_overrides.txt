@@ -1,0 +1,288 @@
+# common/scripted_effects/md_submod_base_overrides.txt
+# Overrides base Millennium Dawn's buggy 10-year array shift and smoothing logic.
+# Synchronizes all 10 graphs (GDP, GDP/C, Prod, Debt, Pop, Budget, Energy, Defense, Trade, Inflation).
+
+# (gdp_graph_shift_array is defined in 00_gdp_display_scripted_effects.txt to override base MD)
+
+# -------------------------------------------------------------
+# 2. SHARED AXIS BOUNDS & DYNAMIC ANTI-TEAR ZOOM CALCULATION
+# -------------------------------------------------------------
+# Input: high, low, max_jump (temp variables)
+# Output: high, low, diff, step (temp variables)
+md_apply_axis_zoom_and_step = {
+	set_temp_variable = { diff = high }
+	subtract_from_temp_variable = { diff = low }
+
+	# Dynamic Anti-Tear Zoom: prevent steep line segments from clipping beyond 450px bounds
+	set_temp_variable = { safe_diff = max_jump }
+	multiply_temp_variable = { safe_diff = 45 }
+	divide_temp_variable = { safe_diff = 10 }
+
+	if = {
+		limit = { check_variable = { diff < safe_diff } }
+		set_temp_variable = { shortfall = safe_diff }
+		subtract_from_temp_variable = { shortfall = diff }
+		divide_temp_variable = { shortfall = 2 }
+
+		add_to_temp_variable = { high = shortfall }
+		subtract_from_temp_variable = { low = shortfall }
+		set_temp_variable = { diff = safe_diff }
+	}
+
+	if = { limit = { check_variable = { diff < 0.01 } } set_temp_variable = { diff = 0.01 } }
+
+	set_temp_variable = { step = diff }
+	multiply_temp_variable = { step = 0.1 }
+}
+
+# Standard 10% padding + anti-tear zoom
+# Input: true_max, true_min, max_jump
+# Output: high, low, diff, step
+md_calc_standard_axis = {
+	set_temp_variable = { data_diff = true_max }
+	subtract_from_temp_variable = { data_diff = true_min }
+
+	if = {
+		limit = { check_variable = { data_diff < 1 } }
+		set_temp_variable = { high = true_max }
+		add_to_temp_variable = { high = 1.0 }
+		set_temp_variable = { low = true_min }
+		subtract_from_temp_variable = { low = 1.0 }
+	}
+	else = {
+		set_temp_variable = { pad = data_diff }
+		multiply_temp_variable = { pad = 0.1 }
+		set_temp_variable = { high = true_max }
+		add_to_temp_variable = { high = pad }
+		set_temp_variable = { low = true_min }
+		subtract_from_temp_variable = { low = pad }
+	}
+
+	md_apply_axis_zoom_and_step = yes
+}
+
+# -------------------------------------------------------------
+# 3. SHARED LINE SEGMENT PIXEL & SLOPE CALCULATION
+# -------------------------------------------------------------
+# Input: y1_val, y2_val, low, diff (temp variables)
+# Output: offset, slope, is_falling (temp variables)
+md_calc_segment_math = {
+	if = {
+		limit = { check_variable = { y2_val < y1_val } }
+		set_temp_variable = { is_falling = 1 }
+	}
+	else = {
+		set_temp_variable = { is_falling = 0 }
+	}
+
+	set_temp_variable = { y1_px = { value = y1_val subtract = low divide = diff multiply = 450 } }
+	set_temp_variable = { y2_px = { value = y2_val subtract = low divide = diff multiply = 450 } }
+
+	set_temp_variable = { offset = { value = y1_px multiply = -1 } }
+
+	set_temp_variable = { slope = { value = y2_px subtract = y1_px divide = 2 add = 50 } }
+	if = { limit = { check_variable = { slope > 100 } } set_temp_variable = { slope = 100 } }
+	if = { limit = { check_variable = { slope < 1 } } set_temp_variable = { slope = 1 } }
+	round_temp_variable = slope
+}
+
+# -------------------------------------------------------------
+# -------------------------------------------------------------
+# 4. CALENDAR-LOCKED AUTO-SYNC & HEAL
+# -------------------------------------------------------------
+md_sync_live_month_data = {
+	# 1. Advance date_scale and shift arrays if current_gdp_graph_end reaches Month 108 (Pointer 9),
+	# OR if the calendar year has caught up to or passed date_scale^9.
+	# The chart spans 108 months (Years 1-9 on Pointers 0-8, with Pointer 9 reserved for the end of the year).
+	if = {
+		limit = {
+			OR = {
+				check_variable = { current_gdp_graph_end > 107 }
+				AND = {
+					check_variable = { global.year > 1999 }
+					NOT = { check_variable = { date_scale^9 > global.year } }
+				}
+			}
+		}
+		gdp_graph_shift_array = yes
+	}
+
+	# Ensure current_gdp_graph_end accurately aligns with current calendar month within visible 9-year frame
+	if = {
+		limit = {
+			check_variable = { global.year > 1999 }
+			check_variable = { date_scale^0 > 1999 }
+		}
+		set_temp_variable = { target_slot = global.year }
+		subtract_from_temp_variable = { target_slot = date_scale^0 }
+		multiply_temp_variable = { target_slot = 12 }
+		set_temp_variable = { month_offset = global.month }
+		subtract_from_temp_variable = { month_offset = 1 }
+		add_to_temp_variable = { target_slot = month_offset }
+
+		if = {
+			limit = {
+				NOT = { check_variable = { target_slot < 0 } }
+				NOT = { check_variable = { target_slot > 107 } }
+			}
+			set_variable = { current_gdp_graph_end = target_slot }
+		}
+	}
+
+	# Clamp to valid 9-year visible range (0..107)
+	if = { limit = { check_variable = { current_gdp_graph_end < 0 } } set_variable = { current_gdp_graph_end = 0 } }
+	if = { limit = { check_variable = { current_gdp_graph_end > 107 } } set_variable = { current_gdp_graph_end = 107 } }
+
+	# 2. Always ensure the active calendar slot has the live economy values
+	set_variable = { gdp_array^current_gdp_graph_end = gdp_total }
+	set_variable = { gdpc_array^current_gdp_graph_end = gdp_per_capita }
+	set_variable = { prod_array^current_gdp_graph_end = overall_productivity }
+
+	# If slots right before current_gdp_graph_end had an artificial dip/corruption from old debug logic:
+	set_temp_variable = { steps = current_gdp_graph_end }
+	subtract_from_temp_variable = { steps = 95 }
+	if = {
+		limit = {
+			check_variable = { steps > 1 }
+			check_variable = { prod_array^96 < prod_array^95 }
+		}
+		set_temp_variable = { diff_prod = overall_productivity }
+		subtract_from_temp_variable = { diff_prod = prod_array^95 }
+		divide_temp_variable = { diff_prod = steps }
+
+		set_temp_variable = { diff_gdp = gdp_total }
+		subtract_from_temp_variable = { diff_gdp = gdp_array^95 }
+		divide_temp_variable = { diff_gdp = steps }
+
+		set_temp_variable = { diff_gdpc = gdp_per_capita }
+		subtract_from_temp_variable = { diff_gdpc = gdpc_array^95 }
+		divide_temp_variable = { diff_gdpc = steps }
+
+		set_temp_variable = { cur_g = gdp_array^95 }
+		set_temp_variable = { cur_c = gdpc_array^95 }
+		set_temp_variable = { cur_p = prod_array^95 }
+
+		for_loop_effect = {
+			start = 96
+			end = current_gdp_graph_end
+
+			add_to_temp_variable = { cur_g = diff_gdp }
+			add_to_temp_variable = { cur_c = diff_gdpc }
+			add_to_temp_variable = { cur_p = diff_prod }
+
+			set_variable = { gdp_array^v = cur_g }
+			set_variable = { gdpc_array^v = cur_c }
+			set_variable = { prod_array^v = cur_p }
+		}
+	}
+
+	# Also sync live custom arrays if initialized
+	# Must call sampling functions first to populate md_current_* variables
+	if = {
+		limit = { check_variable = { debt_array^num > 0 } }
+		set_variable = { debt_array^current_gdp_graph_end = debt }
+	}
+	if = {
+		limit = { check_variable = { inflation_array^num > 0 } }
+		set_temp_variable = { sync_infl_pct = inflation_rate_var }
+		multiply_temp_variable = { sync_infl_pct = 100 }
+		set_variable = { inflation_array^current_gdp_graph_end = sync_infl_pct }
+	}
+	if = {
+		limit = { check_variable = { pop_array^num > 0 } }
+		md_sample_pop_metrics = yes
+		set_variable = { pop_array^current_gdp_graph_end = population_total_m }
+		set_variable = { workforce_array^current_gdp_graph_end = workforce_total_display }
+		set_variable = { employment_array^current_gdp_graph_end = md_current_employment_rate }
+	}
+	if = {
+		limit = { check_variable = { revenue_array^num > 0 } }
+		md_sample_budget_metrics = yes
+		set_variable = { revenue_array^current_gdp_graph_end = md_current_monthly_revenue }
+		set_variable = { expense_array^current_gdp_graph_end = md_current_monthly_expense }
+		set_variable = { budget_balance_array^current_gdp_graph_end = md_current_monthly_balance }
+	}
+	if = {
+		limit = { check_variable = { energy_gen_array^num > 0 } }
+		md_sample_energy_metrics = yes
+		set_variable = { energy_gen_array^current_gdp_graph_end = md_current_energy_gen }
+		set_variable = { energy_con_array^current_gdp_graph_end = md_current_energy_con }
+		set_variable = { energy_bal_array^current_gdp_graph_end = md_current_energy_bal }
+	}
+	if = {
+		limit = { check_variable = { defense_spend_array^num > 0 } }
+		md_sample_defense_metrics = yes
+		set_variable = { defense_spend_array^current_gdp_graph_end = md_current_defense_spending }
+		set_variable = { defense_pct_array^current_gdp_graph_end = md_current_defense_pct }
+	}
+	if = {
+		limit = { check_variable = { trade_exports_array^num > 0 } }
+		md_sample_trade_metrics = yes
+		set_variable = { trade_exports_array^current_gdp_graph_end = md_current_monthly_exports }
+		set_variable = { trade_imports_array^current_gdp_graph_end = md_current_monthly_imports }
+		set_variable = { trade_balance_array^current_gdp_graph_end = md_current_monthly_trade_bal }
+	}
+}
+
+# -------------------------------------------------------------
+# 5. TAB STATE MACHINE & SWITCHING (md_graph_tab)
+# -------------------------------------------------------------
+# 0 = Closed
+# 1 = GDP, 2 = GDPC, 3 = Prod, 4 = Debt, 5 = Inflation
+# 6 = Pop, 7 = Budget, 8 = Energy, 9 = Defense, 10 = Trade
+
+md_open_tab_gdp = {
+	set_variable = { md_graph_tab = 1 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_gdp_graph = yes
+}
+md_open_tab_gdpc = {
+	set_variable = { md_graph_tab = 2 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_gdpc_graph = yes
+}
+md_open_tab_prod = {
+	set_variable = { md_graph_tab = 3 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_prod_graph = yes
+}
+md_open_tab_debt = {
+	set_variable = { md_graph_tab = 4 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_debt_graph = yes
+}
+md_open_tab_inflation = {
+	set_variable = { md_graph_tab = 5 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_inflation_graph = yes
+}
+md_open_tab_pop = {
+	set_variable = { md_graph_tab = 6 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_pop_graph = yes
+}
+md_open_tab_budget = {
+	set_variable = { md_graph_tab = 7 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_budget_graph = yes
+}
+md_open_tab_energy = {
+	set_variable = { md_graph_tab = 8 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_energy_graph = yes
+}
+md_open_tab_defense = {
+	set_variable = { md_graph_tab = 9 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_defense_graph = yes
+}
+md_open_tab_trade = {
+	set_variable = { md_graph_tab = 10 }
+	md_sync_live_month_data = yes
+	update_md_flaxbeard_trade_graph = yes
+}
+md_close_all_graph_tabs = {
+	set_variable = { md_graph_tab = 0 }
+	gdp_graph_update_dirty_var = yes
+}
+
