@@ -84,8 +84,7 @@ All files below live in `.claude/docs/`.
 | `mio-reference.md`               | MIO structure, per-block modifier keys, trait-grid rules     |
 | `music-system.md`                | Stations, playlists, chance weights, radio GUI wiring        |
 | `namelist-reference.md`          | Division/ship name-list files and mandatory groups           |
-| `oob-equipment-reference.md`     | OOB equipment types (NSB), stockpiles, variant errors        |
-| `oob-variants-reference.md`      | Full OOB + variant reference (`history/units/`)              |
+| `oob-variants-reference.md`      | OOB files, variants, type systems, slot and tech rules       |
 | `party-loc-reference.md`         | Politics-view party keys, subideology slots, loc hooks       |
 | `performance-patterns.md`        | Hoisting, dirty counters, clamp-before-divide, early-outs    |
 | `refactor-checklist.md`          | Rename/migration sweeps: namespaces, GUI/GFX refs, tags      |
