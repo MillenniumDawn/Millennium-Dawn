@@ -83,6 +83,23 @@ def test_escaped_quotes_cannot_supply_coordinates(tmp_path):
     assert (focus["x"], focus["y"]) == (0, 0)
 
 
+def test_dynamic_markers_and_prerequisites_survive_cached_scan(tmp_path):
+    path = write_focus(
+        tmp_path,
+        "focus_tree = { id = dynamic "
+        "focus = { id = gate x = 0 y = 0 allow_branch = { always = yes } } "
+        "focus = { id = moved x = 0 y = 0 offset = { x = 3 y = 0 } "
+        "prerequisite = { focus = gate ignored = other focus = {} } } }",
+    )
+    focuses = V._FocusFile(path, str(tmp_path)).layout()["trees"][0]["focuses"]
+    assert focuses[0]["allow_branch"] is True
+    assert focuses[1]["offset"] is True
+    assert focuses[1]["prerequisites"] == [["gate"]]
+    value = validator(tmp_path)
+    assert value.layout_counts["dynamic_skipped"] == 2
+    assert value.layout_counts["overlap_pairs"] == 0
+
+
 @pytest.mark.parametrize(
     "coordinates", ["y = 0", "x = invalid y = 0", "x = @column y = 0", "x = {} y = 0"]
 )

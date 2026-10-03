@@ -257,6 +257,10 @@ prerequisites have been imported. The shared registry spans files, so cross-file
 shared branches and relative anchors resolve in their host tree. Unimported
 fragments and other trees are never coordinate targets or collision partners.
 Repeated imports do not duplicate a focus; duplicate definitions are ambiguous.
+This covers standalone shared/joint definitions used by the audited MD files.
+Nested focus-group containers and nested prerequisite groups supported by the
+VSCode preview are not expanded. Neither occurs in the audited MD files; this
+validator does not claim complete preview or engine-layout parity.
 
 Relative chains use iterative memoization, including failed resolutions. Signed
 decimal coordinates are preserved exactly, without rounding to integer columns.
@@ -299,13 +303,13 @@ imports. The two unresolved root diagnostics account for 29 unresolved instances
 
 The static backlog is **8 candidate pairs across 5 trees**:
 
-| Tree | Candidate pairs |
-| --- | --- |
-| San Marino | `SMA_healthy_people` / `SMA_vatican_union` |
-| Czech Republic | `CZE_2000st_apc` / `CZE_2000st_ifv`; `CZE_2000st_utility_vehichles` / `CZE_2000st_tank_modernization` |
-| Generic | `GENERIC_eastern_emergence` / `GENERIC_non_aligned`; `GENERIC_the_rising_powers` / `GENERIC_the_conservative_approach` |
-| Ukrainian provisional republics | `DRP_dnieper_logistics` / `UKR_prp_emergency_economy`; `DRP_moscow_alignment` / `UKR_prp_utilities_repair` |
-| USA | `USA_net_zero_green_house` / `USA_new_path_ways_for_greens` |
+| Tree                            | Candidate pairs                                                                                                        |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| San Marino                      | `SMA_healthy_people` / `SMA_vatican_union`                                                                             |
+| Czech Republic                  | `CZE_2000st_apc` / `CZE_2000st_ifv`; `CZE_2000st_utility_vehichles` / `CZE_2000st_tank_modernization`                  |
+| Generic                         | `GENERIC_eastern_emergence` / `GENERIC_non_aligned`; `GENERIC_the_rising_powers` / `GENERIC_the_conservative_approach` |
+| Ukrainian provisional republics | `DRP_dnieper_logistics` / `UKR_prp_emergency_economy`; `DRP_moscow_alignment` / `UKR_prp_utilities_repair`             |
+| USA                             | `USA_net_zero_green_house` / `USA_new_path_ways_for_greens`                                                            |
 
 Removing dynamic exclusions yields 543 raw pairs, not 543 established bugs. The
 eight static candidates have not been repositioned or exempted without in-game
