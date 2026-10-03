@@ -382,6 +382,8 @@ Currency strength is recalculated monthly. Falls are a share of its current leve
 | Reserve issuers    | Each country using your currency as its reserve strengthens it slightly.                                                                                        |
 | Safe havens        | While world tension stays above 50%, the US dollar and Japanese yen strengthen slightly, and the Swiss franc a little more.                                     |
 
+At a policy rate of 0%, the real interest rate can pull your currency down by at most 1% a month. Each point of the rate takes 2.5% off that limit, so a rate of 20% halves it. A higher rate therefore helps even when inflation is far above it.
+
 Your base strength starts at your country's historical value and slowly follows your currency. It rises at half the speed it falls, so trust is lost faster than it is earned. Years of good management raise the level your currency settles at, and years of bad management lower it.
 
 Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. Its effects include:
@@ -472,9 +474,9 @@ Ukraine's National Bank rate-cut events can also lower the rate. Accepted cuts c
 The rate works on inflation in two ways:
 
 - **Against the neutral rate.** The neutral rate uses inflation or a low-inflation baseline, whichever is higher, plus 0.5 to 2.5 points. It is limited to 1-30%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%. The effect stops at 3% either way.
-- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A large budget deficit raises the share again.
+- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A budget deficit above the sustainable 2-8% of GDP shrinks each point's cut. At 10% of GDP over that level the cut is halved, and it goes no lower, so a deficit never cancels the rate.
 
-AI-controlled countries move their rate toward neutral once a quarter, provided no rate-change cooldown is active. They raise the rate three points when it is more than 5 points below neutral. Otherwise they move one point up or down when more than half a point from neutral. Each AI change starts a 60-day cooldown.
+AI-controlled countries move their rate toward neutral once a quarter, provided no rate-change cooldown is active. They move the rate three points when it is more than 5 points from neutral. Otherwise they move one point up or down when more than half a point from neutral. The AI never raises its rate above 20%, so only a player can take it to 30%. Each AI change starts a 60-day cooldown.
 
 Manual changes update debt costs immediately. Inflation responds at the next quarterly calculation and is averaged over four quarters, so do not expect a rate increase to remove inflation at once.
 
@@ -515,7 +517,7 @@ Inflation applies a dynamic modifier that scales with the inflation rate. The ef
 
 Inflation responds to multiple levers. Here are the main strategies:
 
-**Raise the central bank policy rate.** The most direct tool. Every point cuts how much inflation carries into the next quarter, even when inflation is far above the rate. The tradeoff is that high rates also raise debt interest and slow economic growth.
+**Raise the central bank policy rate.** The most direct tool. Every point cuts how much inflation carries into the next quarter, even when inflation is far above the rate. A large budget deficit can halve that cut, so fix the budget alongside it. The tradeoff is that high rates also raise debt interest and slow economic growth.
 
 **Raise taxes.** Higher tax rates dampen inflation by pulling money out of the economy. However, high corporate taxes reduce productivity growth, so this is a short-term fix with long-term costs.
 
