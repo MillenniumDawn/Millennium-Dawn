@@ -45,9 +45,10 @@ not December-to-December inflation.
 ## Starting policy rate
 
 `cb_policy_rate` is the central bank policy rate in whole percentage points. The GUI and the
-quarterly AI step it by 1 and clamp it to 0-20. The January 2000 start uses the official policy
+quarterly AI step it by 1 and clamp it to 0-30. The January 2000 start uses the official policy
 rate in force on **2000.1.1** where that instrument is documented. Half-percentage values round
-half up (5.50 becomes 6). Rates above 20 are stored as 20.
+half up (5.50 becomes 6). Rates above 30 are stored as 30. Ukraine starts at that cap.
+Russia, Turkey, and Romania stay at 20 from the previous gameplay ceiling.
 
 Euro-area founding members already sat at 3, which matches the ECB main refinancing rate of
 **3.00%**. Sweden (3.25%) and Denmark (about 3.3%, euro peg) also round to 3, so those files are
@@ -83,10 +84,10 @@ Negative policy rates are out of scope. The clamp still bottoms out at 0.
 | HUN |   15 | MNB base rate 14.50%                      |
 | POL |   17 | NBP reference rate 16.50%                 |
 | BRA |   19 | Copom SELIC target 19%                    |
-| SOV |   20 | CBR refinancing rate 55% (clamped)        |
-| TUR |   20 | CBRT overnight well above 20% (clamped)   |
-| UKR |   20 | NBU discount rate 45% (clamped)           |
-| ROM |   20 | NBR 1999 policy rates above 20% (clamped) |
+| SOV |   20 | CBR refinancing rate 55% (gameplay 20)    |
+| TUR |   20 | CBRT overnight well above 20%             |
+| ROM |   20 | NBR 1999 policy rates above 20%           |
+| UKR |   30 | NBU discount rate 45% (clamped)           |
 
 Greece had not yet joined the euro. The 10.75% rate is the 14-day intervention rate still in
 force on 2000.1.1. The Bank of Greece cut it to 9.75% on 26 January 2000. The Bank of England

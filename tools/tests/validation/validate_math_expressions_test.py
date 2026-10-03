@@ -91,7 +91,7 @@ def test_malformed_siblings_beside_scoped_assignment_are_flagged():
     assert [f[1] for f in findings] == ["math-sibling-operator"]
 
 
-def test_unsafe_comparator_and_from_read_in_nested_operands_are_flagged():
+def test_from_read_in_nested_operands_is_flagged():
     script = (
         "set_variable = {\n"
         "\tglobal.productivity = {\n"
@@ -103,10 +103,7 @@ def test_unsafe_comparator_and_from_read_in_nested_operands_are_flagged():
         "}\n"
     )
 
-    assert [f[1] for f in scan_text(script)] == [
-        "math-from-read",
-        "math-unsafe-comparator",
-    ]
+    assert [f[1] for f in scan_text(script)] == ["math-from-read"]
 
 
 def test_unknown_expression_blocks_do_not_leak_descendants():
@@ -124,29 +121,33 @@ def test_unknown_expression_blocks_do_not_leak_descendants():
     assert scan_text(script) == []
 
 
-def test_unsafe_comparator_inside_expression_is_flagged():
+def test_comparators_inside_expression_are_clean():
     script = (
         "set_temp_variable = {\n"
         "\tchance = {\n"
         "\t\tvalue = v\n"
         "\t\tif = { limit = { value = reach equals = 1 } add = 15 }\n"
+        "\t\tif = { limit = { value = reach not_equals = 2 } add = 5 }\n"
+        "\t\tadd = { value = y less_than_or_equals = 3 }\n"
+        "\t\tadd = { value = y greater_than_or_equals = 3 }\n"
         "\t}\n"
         "}\n"
     )
 
-    findings = scan_text(script)
-
-    assert [f[1] for f in findings] == ["math-unsafe-comparator"]
-    assert findings[0][0] == 4
+    assert scan_text(script) == []
 
 
-def test_unsafe_comparator_in_nested_operand_is_flagged():
-    script = (
-        "set_variable = { X = { value = 1 add = { value = y "
-        "less_than_or_equals = 3 } } }\n"
-    )
+def test_from_read_inside_comparator_operand_is_flagged():
+    script = "set_variable = { X = { value = 1 equals = { value = FROM.y } } }\n"
 
-    assert [f[1] for f in scan_text(script)] == ["math-unsafe-comparator"]
+    assert [f[1] for f in scan_text(script)] == ["math-from-read"]
+
+
+def test_comparator_beside_value_is_flagged_as_sibling():
+    findings = scan_text("set_variable = { X = 0 equals = Y }\n")
+
+    assert [f[1] for f in findings] == ["math-sibling-operator"]
+    assert "equals" in findings[0][2]
 
 
 def test_effect_level_check_variable_comparators_are_clean():

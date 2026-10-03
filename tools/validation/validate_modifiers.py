@@ -651,9 +651,10 @@ _UNBALANCED_PRODUCTIVITY_KEYS: FrozenSet[str] = frozenset(
 )
 _UNBALANCED_PRODUCTIVITY_CAP = 0.25
 _UNBALANCED_POLICY_RATE_VAR = "cb_policy_rate"
-_UNBALANCED_POLICY_RATE_CAP = 20  # central-bank clamp max in the economy GUI
+_UNBALANCED_POLICY_RATE_CAP = 30  # central-bank clamp max in the economy GUI
 _UNBALANCED_INFLATION_VAR = "inflation_rate_var"
 _UNBALANCED_INFLATION_START_CAP = 0.50
+_INFLATION_HISTORY_HARD_CAP = 1.0
 
 # Documented ROI exceptions, as "owner::key". A single reward above the ROI
 # cap must justify itself there; undocumented ones fail the opt-in check.
@@ -1055,7 +1056,7 @@ class Validator(BaseValidator):
         Opt-in: pass --unbalanced-modifiers. Each cap applies per direct
         assignment: ROI over 3% (needs a documented entry in
         validation_config.json unbalanced_roi_exceptions), productivity growth over 25%,
-        game-start policy rate above the 20 cap, game-start inflation
+        game-start policy rate above the 30 cap, game-start inflation
         above 50%.
         """
         self._log_section("Checking for unbalanced economy modifiers...")
@@ -1113,34 +1114,29 @@ class Validator(BaseValidator):
             category="unbalanced-productivity",
         )
 
-        rate_results = []
-        inflation_results = []
-        for key, value, rel, lineno, _owner in self._scan_unbalanced_entries(
-            self._UNBALANCED_HISTORY_PATTERNS
-        ):
-            if key == _UNBALANCED_POLICY_RATE_VAR and (
-                value > _UNBALANCED_POLICY_RATE_CAP
-            ):
-                rate_results.append(
-                    (
-                        f"Starting {_UNBALANCED_POLICY_RATE_VAR} = {value:g} "
-                        f"exceeds the {_UNBALANCED_POLICY_RATE_CAP} cap "
-                        "(redundant value set, issue #4370)",
-                        rel,
-                        lineno,
-                    )
-                )
-            elif key == _UNBALANCED_INFLATION_VAR and (
-                value > _UNBALANCED_INFLATION_START_CAP
-            ):
-                inflation_results.append(
-                    (
-                        f"Starting {_UNBALANCED_INFLATION_VAR} = {value:g} "
-                        "exceeds 50% (issue #4370)",
-                        rel,
-                        lineno,
-                    )
-                )
+        rate_results = [
+            (
+                f"Starting {_UNBALANCED_POLICY_RATE_VAR} = {value:g} "
+                f"exceeds the {_UNBALANCED_POLICY_RATE_CAP} cap "
+                "(redundant value set, issue #4370)",
+                rel,
+                lineno,
+            )
+            for value, rel, lineno in self._history_numeric_over_cap(
+                _UNBALANCED_POLICY_RATE_VAR, _UNBALANCED_POLICY_RATE_CAP
+            )
+        ]
+        inflation_results = [
+            (
+                f"Starting {_UNBALANCED_INFLATION_VAR} = {value:g} "
+                "exceeds 50% (issue #4370)",
+                rel,
+                lineno,
+            )
+            for value, rel, lineno in self._history_numeric_over_cap(
+                _UNBALANCED_INFLATION_VAR, _UNBALANCED_INFLATION_START_CAP
+            )
+        ]
 
         self._report(
             rate_results,
@@ -1156,6 +1152,38 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
             category="unbalanced-inflation",
         )
+
+    def validate_history_inflation_hard_cap(self):
+        """Flag game-start inflation_rate_var above 1.0. Always on."""
+        self._log_section("Checking history inflation_rate_var over 100%...")
+        results = [
+            (
+                f"Starting {_UNBALANCED_INFLATION_VAR} = {value:g} "
+                f"exceeds {_INFLATION_HISTORY_HARD_CAP:g} (100%)",
+                rel,
+                lineno,
+            )
+            for value, rel, lineno in self._history_numeric_over_cap(
+                _UNBALANCED_INFLATION_VAR, _INFLATION_HISTORY_HARD_CAP
+            )
+        ]
+        self._report(
+            results,
+            "No game-start inflation values above 100%",
+            "Game-start inflation values above 100%:",
+            severity=Severity.ERROR,
+            category="history-inflation-over-one",
+        )
+
+    def _history_numeric_over_cap(self, key, cap):
+        """History assignments of key whose literal value is above cap."""
+        hits = []
+        for scan_key, value, rel, lineno, _owner in self._scan_unbalanced_entries(
+            self._UNBALANCED_HISTORY_PATTERNS
+        ):
+            if scan_key == key and value > cap:
+                hits.append((value, rel, lineno))
+        return hits
 
     def _scan_unbalanced_entries(self, patterns):
         """(key, value, rel, lineno, owner) bare numerics in pattern files."""
@@ -1187,6 +1215,7 @@ class Validator(BaseValidator):
         self.validate_redundant_enable_gates()
         self.validate_dynamic_modifier_enable_blocks()
         self.validate_unbalanced_modifiers()
+        self.validate_history_inflation_hard_cap()
 
 
 def _add_extra_args(parser):
@@ -1196,7 +1225,7 @@ def _add_extra_args(parser):
         dest="unbalanced_modifiers",
         help="Enable balance caps on single-reward economy modifiers "
         "(issue #4370): ROI over 3 percent, productivity growth over "
-        "25 percent, game-start policy rate over 20, game-start "
+        "25 percent, game-start policy rate over 30, game-start "
         "inflation over 50 percent "
         "(off by default until the backlog is triaged)",
     )
