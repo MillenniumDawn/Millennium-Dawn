@@ -267,7 +267,7 @@ def test_patch_frontend_version_rewrites_every_locale(tmp_path, capsys):
             ]
             assert len(matches) == 1
             assert matches[0].count("v1.2.3") == 1
-            assert "v2.0.1 DEV" not in matches[0]
+            assert "v2.0.0" not in matches[0]
         assert 'VERSION_MD_DATE: "Release Date: 11th September 2026"' in text
     assert "10/10 frontend files rewritten" in capsys.readouterr().out
 
@@ -296,11 +296,13 @@ def test_patch_frontend_version_replaces_a_complete_prerelease_token(tmp_path):
 
     for rel in EXPECTED_FRONTEND_PATHS:
         text = (tmp_path / rel).read_text(encoding="utf-8")
-        assert text.count("v2.0.1-beta.5") == 2
-        assert "v2.0.1-beta.1" not in text
+        assert text.count("v2.0.0-beta.5") == 2
+        assert "v2.0.0-beta.1" not in text
 
 
-@pytest.mark.parametrize("marker", [" BETA", ""], ids=["beta", "release"])
+@pytest.mark.parametrize(
+    "marker", [" BETA", " TEST", ""], ids=["beta", "test", "release"]
+)
 def test_patch_frontend_version_replaces_the_dev_marker_in_every_locale(
     tmp_path, marker
 ):
@@ -330,7 +332,7 @@ def test_patch_frontend_version_relabels_without_a_version(tmp_path, capsys):
 @pytest.mark.parametrize(
     "source,expected",
     [
-        ("v2.0.1 DEV", ["v2.0.1 DEV"]),
+        ("v2.0.1 DEV", ["v2.0.1"]),
         ("v1.12.3b", ["v1.12.3b"]),
         ("v2.0.1-beta.1", ["v2.0.1-beta.1"]),
     ],
@@ -364,7 +366,7 @@ def test_version_token_rejects_partial_matches(source):
             "123456789012345678901234567890.987654321098765432109876543210.111111111111111111111111111111",
         ),
         ("v1.12.3b", "1.12.3b"),
-        ("v2.0.1-beta.5", "2.0.0-beta.5"),
+        ("v2.0.1-beta.5", "2.0.1-beta.5"),
     ],
 )
 def test_normalize_version_accepts_supported_formats(value, expected):
@@ -418,23 +420,23 @@ def test_patch_frontend_version_rejects_a_missing_file_without_partial_writes(tm
         ),
         (
             (
-                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.1 DEV"\n',
-                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.1 DEV"\n'
-                b' VERSION_MD: "Duplicate v2.0.1 DEV"\n',
+                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n',
+                b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.0 DEV"\n'
+                b' VERSION_MD: "Duplicate v2.0.0 DEV"\n',
             ),
             "VERSION_MD must appear exactly once",
         ),
         (
             (
-                b' VERSION_MD_LOADING: "Version: v2.0.1 DEV"',
+                b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
                 b' VERSION_MD_LOADING: "Version: missing DEV"',
             ),
             "VERSION_MD_LOADING must contain exactly one",
         ),
         (
             (
-                b' VERSION_MD_LOADING: "Version: v2.0.1 DEV"',
-                b' VERSION_MD_LOADING: "Version: v2.0.1 and v2.0.1 DEV"',
+                b' VERSION_MD_LOADING: "Version: v2.0.0 DEV"',
+                b' VERSION_MD_LOADING: "Version: v2.0.0 and v2.0.0 DEV"',
             ),
             "VERSION_MD_LOADING must contain exactly one",
         ),
@@ -452,6 +454,7 @@ def test_patch_frontend_version_rejects_malformed_frontend_banners(
     paths = _write_frontend_tree(tmp_path)
     english = tmp_path / "localisation/english/MD_frontend_l_english.yml"
     old, new = malformation
+    assert old in english.read_bytes()
     english.write_bytes(english.read_bytes().replace(old, new))
     before = {path: path.read_bytes() for path in paths}
 
@@ -1083,7 +1086,9 @@ def test_publish_verbose_echoes_the_vdf_and_steamcmd_stream(
 
 def test_main_exits_without_a_username(monkeypatch):
     monkeypatch.delenv("STEAM_USERNAME", raising=False)
-    monkeypatch.setattr(sys, "argv", ["publish_workshop.py", "test", "--full"])
+    monkeypatch.setattr(
+        sys, "argv", ["publish_workshop.py", "test", "--full", "--version", "1.2.3"]
+    )
 
     with pytest.raises(SystemExit, match="No username"):
         pw.main()
@@ -1093,7 +1098,16 @@ def test_main_refuses_a_diff_that_deletes_files(monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
-        ["publish_workshop.py", "test", "--base-ref", "v1", "--username", "u"],
+        [
+            "publish_workshop.py",
+            "test",
+            "--base-ref",
+            "v1",
+            "--username",
+            "u",
+            "--version",
+            "1.2.3",
+        ],
     )
     monkeypatch.setattr(pw, "get_deleted_files", lambda _ref: {"events/old.txt"})
 
@@ -1105,7 +1119,16 @@ def test_main_refuses_a_diff_with_no_publishable_files(tmp_path, monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
-        ["publish_workshop.py", "test", "--base-ref", "v1", "--username", "u"],
+        [
+            "publish_workshop.py",
+            "test",
+            "--base-ref",
+            "v1",
+            "--username",
+            "u",
+            "--version",
+            "1.2.3",
+        ],
     )
     monkeypatch.setattr(pw, "get_deleted_files", lambda _ref: set())
     monkeypatch.setattr(pw, "get_changed_files", lambda _ref: {"tools/secret.py"})
@@ -1154,7 +1177,9 @@ def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeyp
         (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
         return mod_dir
 
-    def fake_publish(mod_dir, username, mod_id, changenote, verbose=False):
+    def fake_publish(
+        mod_dir, username, mod_id, changenote, verbose=False, description=None
+    ):
         seen["descriptor"] = (mod_dir / "descriptor.mod").read_text(encoding="utf-8")
         seen["frontend_paths"] = {
             path.relative_to(mod_dir).as_posix()
@@ -1182,27 +1207,42 @@ def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeyp
     assert seen["verbose"] is False
 
 
-def _main_staged(tmp_path, monkeypatch, *args):
+def _staged_mod(dest_parent, description_body):
+    mod_dir = dest_parent / "mod"
+    mod_dir.mkdir()
+    _write_frontend_tree(mod_dir)
+    if description_body is not None:
+        _write_description(mod_dir, description_body)
+    write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
+    (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
+    return mod_dir
+
+
+def _main_staged(tmp_path, monkeypatch, *args, description_body=None):
     _prepare_full_main(tmp_path, monkeypatch, *args)
     seen = {}
 
     def fake_copy(dest_parent, excludes):
-        mod_dir = dest_parent / "mod"
-        mod_dir.mkdir()
-        _write_frontend_tree(mod_dir)
+        mod_dir = _staged_mod(dest_parent, description_body)
         if "english" in excludes:
             (mod_dir / "localisation/english/MD_frontend_l_english.yml").unlink()
-        write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
-        (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
         return mod_dir
 
     def fake_publish(mod_dir, *_args, **_kwargs):
+        seen["description"] = _kwargs.get("description")
+        seen["description_file"] = (
+            mod_dir / "descriptions/descriptions_EN.txt"
+        ).exists()
         seen["frontend"] = (
             mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
         ).read_text(encoding="utf-8")
         seen["frontend_paths"] = {
             path.relative_to(mod_dir).as_posix()
             for path in mod_dir.glob("localisation/*/MD_frontend_l_*.yml")
+        }
+        seen["frontends"] = {
+            rel: (mod_dir / rel).read_text(encoding="utf-8")
+            for rel in EXPECTED_FRONTEND_PATHS
         }
         seen["descriptor"] = (mod_dir / "descriptor.mod").read_text(encoding="utf-8")
 
@@ -1212,7 +1252,7 @@ def _main_staged(tmp_path, monkeypatch, *args):
     return seen
 
 
-def _main_diff_staged(tmp_path, monkeypatch, changed, *args):
+def _main_diff_staged(tmp_path, monkeypatch, changed, *args, description_body=None):
     monkeypatch.setattr(sys, "argv", ["publish_workshop.py", *args])
     monkeypatch.setattr(pw, "get_deleted_files", lambda _ref: set())
     monkeypatch.setattr(pw, "get_changed_files", lambda _ref: set(changed))
@@ -1221,16 +1261,16 @@ def _main_diff_staged(tmp_path, monkeypatch, changed, *args):
     seen = {}
 
     def fake_copy(dest_parent, _excludes):
-        mod_dir = dest_parent / "mod"
-        mod_dir.mkdir()
-        _write_frontend_tree(mod_dir)
+        mod_dir = _staged_mod(dest_parent, description_body)
         (mod_dir / "events").mkdir()
         write_text(mod_dir / "events" / "foo.txt", "changed\n")
-        write_text(mod_dir / "descriptor.mod", 'name="Old"\nversion="0.1"\n')
-        (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
         return mod_dir
 
     def fake_publish(mod_dir, *_args, **_kwargs):
+        seen["description"] = _kwargs.get("description")
+        seen["description_file"] = (
+            mod_dir / "descriptions/descriptions_EN.txt"
+        ).exists()
         loc = mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
         seen["banner"] = loc.read_text(encoding="utf-8") if loc.exists() else ""
         seen["frontend_paths"] = {
@@ -1257,23 +1297,43 @@ def test_main_patches_the_version_banner_when_version_given(tmp_path, monkeypatc
         "1.2.3",
     )
 
-    assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in staged["frontend"]
+    assert 'VERSION_MD_LOADING: "Version: v1.2.3 TEST"' in staged["frontend"]
     assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
 
 
-def test_main_leaves_the_version_banner_alone_without_version(tmp_path, monkeypatch):
-    staged = _main_staged(tmp_path, monkeypatch, "test", "--full", "--username", "u")
+@pytest.mark.parametrize("target", ["release", "beta", "test"])
+@pytest.mark.parametrize("mode", [(), ("--full",), ("--base-ref", "v1")])
+def test_main_requires_version_before_staging(monkeypatch, capsys, target, mode):
+    monkeypatch.setattr(
+        sys, "argv", ["publish_workshop.py", target, *mode, "--username", "u"]
+    )
+    monkeypatch.setattr(
+        pw.tempfile, "mkdtemp", lambda **_kwargs: pytest.fail("staging started")
+    )
+    with pytest.raises(SystemExit) as exc:
+        pw.main()
+    assert exc.value.code == 2
+    assert "--version" in capsys.readouterr().err
 
-    assert 'VERSION_MD_LOADING: "Version: v2.0.1 DEV"' in staged["frontend"]
+
+def test_main_defaults_to_full_upload(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        pw, "get_deleted_files", lambda *_args: pytest.fail("diff called")
+    )
+    staged = _main_staged(
+        tmp_path, monkeypatch, "release", "--username", "u", "--version", "1.2.3"
+    )
+    assert 'version="1.2.3"' in staged["descriptor"]
+    assert 'VERSION_MD_LOADING: "Version: v1.2.3"' in staged["frontend"]
     assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
 
 
 @pytest.mark.parametrize(
     "target,args,expected",
     [
-        ("beta", (), "Version: v2.0.0 BETA"),
+        ("beta", ("--version", "2.0.0"), "Version: v2.0.0 BETA"),
         ("beta", ("--version", "1.2.3"), "Version: v1.2.3 BETA"),
-        ("release", (), "Version: v2.0.0"),
+        ("release", ("--version", "2.0.0"), "Version: v2.0.0"),
         ("release", ("--version", "1.2.3"), "Version: v1.2.3"),
     ],
 )
@@ -1288,20 +1348,25 @@ def test_main_labels_the_version_banner_for_the_target(
     assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
 
 
-def test_main_ignores_a_leading_v_in_the_version(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    "target,marker", [("release", ""), ("beta", " BETA"), ("test", " TEST")]
+)
+@pytest.mark.parametrize(
+    "supplied,normalized",
+    [("v1.2.3", "1.2.3"), ("V2.0.1-beta.5", "2.0.1-beta.5"), ("v1.12.3b", "1.12.3b")],
+)
+def test_main_normalizes_descriptor_and_all_banners(
+    tmp_path, monkeypatch, target, marker, supplied, normalized
+):
     staged = _main_staged(
-        tmp_path,
-        monkeypatch,
-        "test",
-        "--full",
-        "--username",
-        "u",
-        "--version",
-        "v1.2.3",
+        tmp_path, monkeypatch, target, "--username", "u", "--version", supplied
     )
-
-    assert 'VERSION_MD_LOADING: "Version: v1.2.3 DEV"' in staged["frontend"]
-    assert 'version="1.2.3"' in staged["descriptor"]
+    assert f'version="{normalized}"' in staged["descriptor"]
+    assert f'name="{pw.MOD_NAMES[target]}"' in staged["descriptor"]
+    assert f'remote_file_id="{pw.MOD_IDS[target]}"' in staged["descriptor"]
+    assert set(staged["frontends"]) == EXPECTED_FRONTEND_PATHS
+    for body in staged["frontends"].values():
+        assert body.count(f'v{normalized}{marker}"') == 2
 
 
 def test_main_version_validation_happens_before_copy(tmp_path, monkeypatch):
@@ -1361,9 +1426,7 @@ def test_main_diff_publish_with_version_ships_the_patched_banner(
     assert "10/10 frontend files rewritten" in capsys.readouterr().out
 
 
-def test_main_beta_diff_publish_without_version_ships_the_relabeled_banner(
-    tmp_path, monkeypatch
-):
+def test_main_beta_diff_publish_ships_the_relabeled_banner(tmp_path, monkeypatch):
     staged = _main_diff_staged(
         tmp_path,
         monkeypatch,
@@ -1373,6 +1436,8 @@ def test_main_beta_diff_publish_without_version_ships_the_relabeled_banner(
         "v1",
         "--username",
         "u",
+        "--version",
+        "2.0.0",
     )
 
     assert 'VERSION_MD_LOADING: "Version: v2.0.0 BETA"' in staged["banner"]
@@ -1380,9 +1445,7 @@ def test_main_beta_diff_publish_without_version_ships_the_relabeled_banner(
     assert staged["kept_event"] is True
 
 
-def test_main_test_diff_publish_without_version_still_prunes_the_banner(
-    tmp_path, monkeypatch
-):
+def test_main_test_diff_publish_ships_the_test_banner(tmp_path, monkeypatch):
     staged = _main_diff_staged(
         tmp_path,
         monkeypatch,
@@ -1392,10 +1455,12 @@ def test_main_test_diff_publish_without_version_still_prunes_the_banner(
         "v1",
         "--username",
         "u",
+        "--version",
+        "2.0.0",
     )
 
-    assert staged["banner"] == ""
-    assert staged["frontend_paths"] == set()
+    assert 'VERSION_MD_LOADING: "Version: v2.0.0 TEST"' in staged["banner"]
+    assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
     assert staged["kept_event"] is True
 
 
@@ -1425,6 +1490,8 @@ def test_main_no_default_excludes_is_honoured(tmp_path, monkeypatch):
         "--full",
         "--username",
         "u",
+        "--version",
+        "1.2.3",
         "--no-default-excludes",
         "--verbose",
     )
@@ -1439,7 +1506,9 @@ def test_main_no_default_excludes_is_honoured(tmp_path, monkeypatch):
         (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
         return mod_dir
 
-    def fake_publish(mod_dir, username, mod_id, changenote, verbose=False):
+    def fake_publish(
+        mod_dir, username, mod_id, changenote, verbose=False, description=None
+    ):
         seen["mod_id"] = mod_id
         seen["verbose"] = verbose
 
@@ -1451,3 +1520,193 @@ def test_main_no_default_excludes_is_honoured(tmp_path, monkeypatch):
     assert seen["excludes"] == set()
     assert seen["mod_id"] == pw.MOD_IDS["beta"]
     assert seen["verbose"] is True
+
+
+@pytest.mark.parametrize("source_marker", [" DEV", " BETA", " TEST", " 开发版", ""])
+@pytest.mark.parametrize("target_marker", [" BETA", " TEST", ""])
+def test_banner_target_rewrite_is_repeatable(tmp_path, source_marker, target_marker):
+    bodies = {
+        lang: _frontend_body(lang)
+        .replace(" DEV", source_marker)
+        .replace(" 开发版", source_marker)
+        for lang in pw.FRONTEND_LOCALES
+    }
+    paths = _write_frontend_tree(tmp_path, bodies=bodies)
+    pw.patch_frontend_version(tmp_path, "3.4.5-beta.2", target_marker)
+    first = {path: path.read_bytes() for path in paths}
+    pw.patch_frontend_version(tmp_path, "3.4.5-beta.2", target_marker)
+    for path in paths:
+        assert path.read_bytes() == first[path]
+        assert (
+            path.read_text(encoding="utf-8").count(f'v3.4.5-beta.2{target_marker}"')
+            == 2
+        )
+        assert path.read_bytes().startswith(b"\xef\xbb\xbf")
+
+
+@pytest.mark.parametrize("verbose", [False, True])
+def test_publish_keeps_diagnostics_in_log_and_quiets_default_output(
+    tmp_path, monkeypatch, capsys, verbose
+):
+    _stub_publish_runtime(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        pw.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: _SteamProc(
+            ["Preparing workshop item", "Warning: example diagnostic"]
+        ),
+    )
+    pw.publish(_publish_mod(tmp_path), "user", "1", "note", verbose=verbose)
+    out = capsys.readouterr().out
+    assert "Warning: example diagnostic" in out
+    assert "Upload completed" in out
+    assert ("Phase timings" in out) is verbose
+    assert ("Preparing workshop item" in out) is verbose
+    log = next(tmp_path.glob("md_publish_*.log")).read_text(encoding="utf-8")
+    assert "Preparing workshop item" in log
+    assert "Warning: example diagnostic" in log
+    assert "Phase timings" in log
+    assert "--- workshop_upload.vdf ---" in log
+
+
+def test_spinner_does_not_start_animation_for_redirected_output(monkeypatch, capsys):
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: False)
+    monkeypatch.setattr(
+        pw.threading.Thread, "start", lambda _self: pytest.fail("animation started")
+    )
+    with pw.Spinner("Copying"):
+        pass
+    assert "+ Copying" in capsys.readouterr().out
+
+
+def test_main_rejects_conflicting_modes_before_staging(monkeypatch, capsys):
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "publish_workshop.py",
+            "release",
+            "--version",
+            "1.2.3",
+            "--full",
+            "--base-ref",
+            "v1",
+        ],
+    )
+    monkeypatch.setattr(
+        pw.tempfile, "mkdtemp", lambda **_kwargs: pytest.fail("staging started")
+    )
+    with pytest.raises(SystemExit) as exc:
+        pw.main()
+    assert exc.value.code == 2
+    assert "not allowed with argument" in capsys.readouterr().err
+
+
+_DESCRIPTION = (
+    "[b]Current Version:[/b] 2.0.0\n"
+    "[b]Current HOI4 Version:[/b] 1.19.*\n"
+    "[b]Expected Checksum:[/b] 8751\n"
+    "[url=https://example.invalid/v1.12.2]Tutorials for v1.12.*[/url]\n"
+    '[b]Café "quoted" \\ text[/b]\n'
+)
+
+
+def _write_description(root, body):
+    path = root / "descriptions/descriptions_EN.txt"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(body if isinstance(body, bytes) else body.encode("utf-8"))
+    return path
+
+
+@pytest.mark.parametrize("ending", ["\n", "\r\n"])
+def test_description_changes_only_current_version(tmp_path, ending):
+    body = _DESCRIPTION.replace("\n", ending)
+    path = _write_description(tmp_path, "\ufeff" + body)
+    before = path.read_bytes()
+    result = pw.read_description(tmp_path, "2.1.0-beta.5")
+    assert result == body.replace(
+        "[b]Current Version:[/b] 2.0.0", "[b]Current Version:[/b] 2.1.0-beta.5"
+    )
+    assert path.read_bytes() == before
+
+
+@pytest.mark.parametrize(
+    "body,error",
+    [
+        (None, "Cannot read English description"),
+        (b"\xff", "Cannot read English description"),
+        (" \n\t", "empty or contains a NUL"),
+        (_DESCRIPTION + "\0", "empty or contains a NUL"),
+        ("No version field", "exactly one Current Version"),
+        (
+            _DESCRIPTION + "[b]Current Version:[/b] 2.1.0\n",
+            "exactly one Current Version",
+        ),
+        (_DESCRIPTION.replace("2.0.0", "not a version"), "invalid Current Version"),
+        (_DESCRIPTION + "界" * 3000, "8000-byte limit"),
+    ],
+)
+def test_invalid_description_stops_before_upload(tmp_path, monkeypatch, body, error):
+    with pytest.raises(SystemExit, match=error):
+        _main_staged(
+            tmp_path,
+            monkeypatch,
+            "release",
+            "--username",
+            "u",
+            "--version",
+            "1.2.3",
+            "--sync-description",
+            description_body=body,
+        )
+
+
+@pytest.mark.parametrize("sync", [False, True])
+@pytest.mark.parametrize("mode", ["full", "diff"])
+def test_main_description_sync_is_opt_in_and_survives_diff_pruning(
+    tmp_path, monkeypatch, sync, mode
+):
+    args = ["test", "--username", "u", "--version", "V2.1.0-beta.5"]
+    if sync:
+        args.append("--sync-description")
+    if mode == "diff":
+        staged = _main_diff_staged(
+            tmp_path,
+            monkeypatch,
+            {"events/foo.txt"},
+            *args,
+            "--base-ref",
+            "v1",
+            description_body=_DESCRIPTION,
+        )
+        assert staged["description_file"] is False
+    else:
+        staged = _main_staged(
+            tmp_path, monkeypatch, *args, description_body=_DESCRIPTION
+        )
+    assert staged["description"] == (
+        _DESCRIPTION.replace("2.0.0", "2.1.0-beta.5") if sync else None
+    )
+
+
+@pytest.mark.parametrize("description", [None, _DESCRIPTION])
+def test_publish_vdf_description_preserves_unicode_and_escapes_text(
+    tmp_path, monkeypatch, description
+):
+    _stub_publish_runtime(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        pw.subprocess, "Popen", lambda *_args, **_kwargs: _SteamProc(["Success"])
+    )
+    pw.publish(
+        _publish_mod(tmp_path), "user", "2777133449", "notes", description=description
+    )
+    vdf = (tmp_path / "workshop_upload.vdf").read_text(encoding="utf-8")
+    if description is None:
+        assert '"description"' not in vdf
+    else:
+        assert '"description"     "' + pw.escape_vdf(description) + '"' in vdf
+        assert 'Café \\"quoted\\" \\\\ text' in vdf
+        assert "[b]Current Version:[/b] 2.0.0\\n" in vdf
+    assert '"title"' not in vdf
+    assert '"visibility"' not in vdf
+    assert '"publishedfileid" "2777133449"' in vdf
