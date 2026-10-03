@@ -25,6 +25,8 @@ import os
 import re
 import shlex
 import shutil
+import signal
+import stat
 import subprocess
 import sys
 import tarfile
@@ -151,6 +153,12 @@ ANYWHERE_EXCLUDES = {
 
 DEFAULT_EXCLUDES = ROOT_ONLY_EXCLUDES | ANYWHERE_EXCLUDES
 
+# Seconds a stopped child gets to exit before the next, harder step.
+STOP_TIMEOUT_SECS = 5
+
+# POSIX runs the upload in its own session so its whole process group can be stopped.
+OWN_GROUP = os.name == "posix"
+
 
 def normalize_version(value: str | None) -> str | None:
     """Validate a publish version and remove one optional leading ``v``."""
@@ -226,6 +234,55 @@ def find_steamcmd() -> Path:
     sys.exit("ERROR: steamcmd not found. Install it or add it to PATH.")
 
 
+def _signal_group(pgid: int, sig: int) -> bool:
+    """Signal a child's process group. False means nothing is left to signal."""
+    try:
+        os.killpg(pgid, sig)
+    except (ProcessLookupError, PermissionError):
+        # macOS reports EPERM for a group that holds only zombies.
+        return False
+    return True
+
+
+def _group_stopped(proc: subprocess.Popen) -> bool:
+    """Wait up to STOP_TIMEOUT_SECS for the child's process group to empty."""
+    deadline = time.monotonic() + STOP_TIMEOUT_SECS
+    while True:
+        # Reap the leader first; a zombie still counts as a group member.
+        proc.poll()
+        if not _signal_group(proc.pid, 0):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.05)
+
+
+def stop_process(proc: subprocess.Popen, own_group: bool = False) -> None:
+    """Stop a child, and its process group when it owns one, then reap it."""
+    stopped = True
+    if own_group:
+        # The group can outlive a wrapper that already exited.
+        for sig in (signal.SIGTERM, signal.SIGKILL):
+            stopped = not _signal_group(proc.pid, sig) or _group_stopped(proc)
+            if stopped:
+                break
+    elif proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(STOP_TIMEOUT_SECS)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+    for pipe in (proc.stdout, proc.stderr):
+        if pipe is not None:
+            pipe.close()
+    try:
+        proc.wait(STOP_TIMEOUT_SECS)
+    except subprocess.TimeoutExpired:
+        stopped = False
+    if not stopped:
+        print(f"  WARNING: Child process {proc.pid} is still running.")
+
+
 def git_diff_name_only(
     base_ref: str, diff_filter: str, find_renames: bool = True
 ) -> set[str]:
@@ -268,13 +325,18 @@ def get_deleted_files(base_ref: str) -> set[str]:
 
 def get_publishable_changed_files(mod_dir: Path, changed: set[str]) -> set[str]:
     """Return changed files that survived the copy/exclude step."""
-    return {
-        path.relative_to(mod_dir).as_posix()
-        for path in mod_dir.rglob("*")
-        if path.is_file()
-        and not path.is_symlink()
-        and path.relative_to(mod_dir).as_posix() in changed
-    }
+    root = mod_dir.resolve()
+    publishable = set()
+    for rel in changed:
+        path = (root / rel).resolve()
+        # Resolving leaves root/rel unchanged only without traversal or symlinks.
+        if (
+            path.is_file()
+            and path.is_relative_to(root)
+            and path.relative_to(root).as_posix() == rel
+        ):
+            publishable.add(rel)
+    return publishable
 
 
 def dir_stats(root: Path) -> tuple[int, int]:
@@ -310,7 +372,7 @@ def copy_repo(dest_parent: Path, excludes: set[str]) -> Path:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        assert proc.stdout is not None
+        assert proc.stdout is not None and proc.stderr is not None
         try:
             with tarfile.open(fileobj=proc.stdout, mode="r|") as archive:
                 for member in archive:
@@ -340,16 +402,11 @@ def copy_repo(dest_parent: Path, excludes: set[str]) -> Path:
                     with target.open("wb") as handle:
                         shutil.copyfileobj(source, handle)
                     os.chmod(target, member.mode)
-        except Exception:
-            proc.terminate()
-            proc.wait()
-            raise
-        finally:
             proc.stdout.close()
-        stderr = (
-            proc.stderr.read().decode("utf-8", errors="replace") if proc.stderr else ""
-        )
-        returncode = proc.wait()
+            stderr = proc.stderr.read().decode("utf-8", errors="replace")
+            returncode = proc.wait()
+        finally:
+            stop_process(proc)
         if returncode != 0:
             raise RuntimeError(f"git archive HEAD failed: {stderr.strip()}")
 
@@ -748,58 +805,66 @@ def publish(
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
+            start_new_session=OWN_GROUP,
         )
 
         assert proc.stdout is not None
-        with log_path.open("a", encoding="utf-8", newline="") as log_f:
-            log_f.write(f"\n=== Attempt {attempt}/{MAX_ATTEMPTS} ===\n")
-            log_f.flush()
-
-            for line in proc.stdout:
-                line = line.rstrip()
-                if not line:
-                    continue
-
-                log_f.write(line + "\n")
+        try:
+            with log_path.open("a", encoding="utf-8", newline="") as log_f:
+                log_f.write(f"\n=== Attempt {attempt}/{MAX_ATTEMPTS} ===\n")
                 log_f.flush()
 
-                low = line.lower()
-                if any(m in low for m in AUTH_ERROR_MARKERS):
-                    auth_failed = True
+                for line in proc.stdout:
+                    line = line.rstrip()
+                    if not line:
+                        continue
 
-                # Detect monotonic phase transitions from steamcmd output.
-                for i in range(phase_idx + 1, len(PHASES)):
-                    name, keywords = PHASES[i]
-                    if any(k in low for k in keywords):
-                        dt = time.time() - phase_start
-                        phase_timings.append((PHASES[phase_idx][0], dt))
+                    log_f.write(line + "\n")
+                    log_f.flush()
+
+                    low = line.lower()
+                    if any(m in low for m in AUTH_ERROR_MARKERS):
+                        auth_failed = True
+
+                    # Detect monotonic phase transitions from steamcmd output.
+                    for i in range(phase_idx + 1, len(PHASES)):
+                        name, keywords = PHASES[i]
+                        if any(k in low for k in keywords):
+                            dt = time.time() - phase_start
+                            phase_timings.append((PHASES[phase_idx][0], dt))
+                            print(
+                                f"  [{elapsed_str(start)}] + {PHASES[phase_idx][0]} done ({int(dt)}s)"
+                            )
+                            phase_idx = i
+                            phase_start = time.time()
+                            break
+
+                    # Per-line steamcmd echo is huge (hundreds of lines per upload);
+                    # the full stream is still captured in the log file. At default
+                    # verbosity we only surface lines that look like errors/warnings
+                    # so the user isn't blind if steamcmd is unhappy.
+                    if verbose:
                         print(
-                            f"  [{elapsed_str(start)}] + {PHASES[phase_idx][0]} done ({int(dt)}s)"
+                            f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}"
                         )
-                        phase_idx = i
-                        phase_start = time.time()
-                        break
+                    elif any(
+                        m in low
+                        for m in (
+                            "error",
+                            "warning",
+                            "failed",
+                            "fail ",
+                            "denied",
+                            "timeout",
+                        )
+                    ):
+                        print(
+                            f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}"
+                        )
 
-                # Per-line steamcmd echo is huge (hundreds of lines per upload);
-                # the full stream is still captured in the log file. At default
-                # verbosity we only surface lines that look like errors/warnings
-                # so the user isn't blind if steamcmd is unhappy.
-                if verbose:
-                    print(f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}")
-                elif any(
-                    m in low
-                    for m in (
-                        "error",
-                        "warning",
-                        "failed",
-                        "fail ",
-                        "denied",
-                        "timeout",
-                    )
-                ):
-                    print(f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}")
-
-        proc.wait()
+            proc.wait()
+        finally:
+            stop_process(proc, own_group=OWN_GROUP)
         last_returncode = proc.returncode or 0
         phase_timings.append((PHASES[phase_idx][0], time.time() - phase_start))
 
@@ -834,6 +899,36 @@ def publish(
         f"ERROR: steamcmd exited with code {last_returncode} "
         f"after {MAX_ATTEMPTS} attempts"
     )
+
+
+def remove_staging(tmp: Path) -> None:
+    """Remove this run's staging tree; warn instead of raising when it survives."""
+    shutil.rmtree(tmp, ignore_errors=True)
+    if not os.path.lexists(tmp):
+        return
+    try:
+        if not tmp.is_symlink():
+            # Read-only entries block removal; clear them on real paths in staging.
+            os.chmod(tmp, stat.S_IRWXU)
+            for root, dirs, files in os.walk(tmp):
+                for name in dirs + files:
+                    path = os.path.join(root, name)
+                    if not os.path.islink(path):
+                        os.chmod(path, stat.S_IRWXU)
+        shutil.rmtree(tmp)
+    except OSError as exc:
+        print(f"  WARNING: Could not remove staging directory {tmp}: {exc}")
+
+
+def _raise_exit(signum: int, _frame: object) -> None:
+    raise SystemExit(f"ERROR: Interrupted by signal {signum}")
+
+
+def exit_on_termination_signals() -> None:
+    """Turn kill and terminal hangup into SystemExit so cleanup still runs."""
+    for name in ("SIGTERM", "SIGHUP"):
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), _raise_exit)
 
 
 def main() -> None:
@@ -971,10 +1066,11 @@ def main() -> None:
             description=description,
         )
     finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+        remove_staging(tmp)
 
     print(f"\n  Total time: {elapsed_str(total_start)}\n")
 
 
 if __name__ == "__main__":
+    exit_on_termination_signals()
     main()

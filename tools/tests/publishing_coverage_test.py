@@ -13,9 +13,13 @@ scripted so nothing is ever uploaded or shelled out for real.
 from __future__ import annotations
 
 import io
+import os
+import signal
+import stat
 import subprocess
 import sys
 import tarfile
+import time
 from pathlib import Path, PurePosixPath
 
 import pytest
@@ -587,8 +591,14 @@ def test_validate_mod_files(tmp_path, present, missing):
             {"events/new_file.txt"},
             set(),
         ),
+        # A directory, traversal, or a non-canonical spelling is never a match.
+        (
+            {"events/existing.txt", "descriptor.mod"},
+            {"events", "../outside.txt", "events/../descriptor.mod", ""},
+            set(),
+        ),
     ],
-    ids=["changed_tracked", "changed_not_on_disk"],
+    ids=["changed_tracked", "changed_not_on_disk", "changed_unsafe"],
 )
 def test_get_publishable_changed_files(tmp_path, files_in_mod, changed, expected):
     mod_dir = tmp_path / "mod"
@@ -599,6 +609,51 @@ def test_get_publishable_changed_files(tmp_path, files_in_mod, changed, expected
         write_text(p, "content")
     result = pw.get_publishable_changed_files(mod_dir, changed)
     assert result == expected
+
+
+def test_get_publishable_changed_files_rejects_paths_outside_staging(tmp_path):
+    mod_dir = tmp_path / "mod"
+    mod_dir.mkdir()
+    outside = tmp_path / "outside.txt"
+    write_text(outside, "secret")
+
+    changed = {"../outside.txt", str(outside), outside.as_posix()}
+
+    assert pw.get_publishable_changed_files(mod_dir, changed) == set()
+
+
+def test_get_publishable_changed_files_rejects_symlinks(tmp_path):
+    mod_dir = tmp_path / "mod"
+    (mod_dir / "events").mkdir(parents=True)
+    write_text(mod_dir / "events" / "real.txt", "content")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    write_text(outside / "secret.txt", "secret")
+    try:
+        os.symlink(mod_dir / "events" / "real.txt", mod_dir / "events" / "link.txt")
+        os.symlink(outside, mod_dir / "escape", target_is_directory=True)
+    except OSError:
+        pytest.skip("symlinks unavailable")
+
+    changed = {"events/real.txt", "events/link.txt", "escape/secret.txt"}
+
+    assert pw.get_publishable_changed_files(mod_dir, changed) == {"events/real.txt"}
+
+
+def test_get_publishable_changed_files_does_not_scan_the_tree(tmp_path, monkeypatch):
+    mod_dir = tmp_path / "mod"
+    (mod_dir / "events").mkdir(parents=True)
+    write_text(mod_dir / "events" / "a.txt", "content")
+    write_text(mod_dir / "events" / "unchanged.txt", "content")
+
+    with monkeypatch.context() as scoped:
+        for name in ("scandir", "listdir", "walk"):
+            scoped.setattr(
+                os, name, lambda *_a, **_k: pytest.fail("staged tree was scanned")
+            )
+        result = pw.get_publishable_changed_files(mod_dir, {"events/a.txt"})
+
+    assert result == {"events/a.txt"}
 
 
 # ---------------------------------------------------------------------------
@@ -780,11 +835,17 @@ class _FakeArchiveProc:
         self.stderr = io.BytesIO(stderr)
         self.returncode = returncode
         self.terminated = False
+        self.exited = False
+
+    def poll(self):
+        return self.returncode if self.exited else None
 
     def terminate(self):
         self.terminated = True
+        self.exited = True
 
-    def wait(self):
+    def wait(self, timeout=None):
+        self.exited = True
         return self.returncode
 
 
@@ -964,9 +1025,13 @@ def test_prune_warns_when_a_file_cannot_be_removed(tmp_path, monkeypatch, capsys
 class _SteamProc:
     def __init__(self, lines, returncode=0):
         self.stdout = io.StringIO("".join(line + "\n" for line in lines))
+        self.stderr = None
         self.returncode = returncode
 
-    def wait(self):
+    def poll(self):
+        return self.returncode
+
+    def wait(self, timeout=None):
         return self.returncode
 
 
@@ -982,6 +1047,8 @@ def _stub_publish_runtime(tmp_path, monkeypatch):
     monkeypatch.setattr(pw, "find_steamcmd", lambda: Path("/bin/steamcmd"))
     monkeypatch.setattr(pw, "steam_login", lambda *_args, **_kwargs: None)
     monkeypatch.setattr(pw.tempfile, "gettempdir", lambda: str(tmp_path))
+    # Scripted children have no real process group to signal.
+    monkeypatch.setattr(pw, "OWN_GROUP", False)
 
 
 def _prepare_full_main(tmp_path, monkeypatch, *args):
@@ -1772,3 +1839,433 @@ def test_publish_vdf_description_preserves_unicode_and_escapes_text(
     assert '"title"' not in vdf
     assert '"visibility"' not in vdf
     assert '"publishedfileid" "2777133449"' in vdf
+
+
+# ---------------------------------------------------------------------------
+# Child process finalizers — harmless Python children, never SteamCMD
+# ---------------------------------------------------------------------------
+
+posix_only = pytest.mark.skipif(
+    os.name != "posix", reason="process groups are POSIX-only"
+)
+
+_CHILD = (
+    "import signal, sys, time\n"
+    "if sys.argv[1] == 'ignore':\n"
+    "    signal.signal(signal.SIGTERM, signal.SIG_IGN)\n"
+    "print('ready', flush=True)\n"
+    "time.sleep(60)\n"
+)
+
+_WRAPPER = (
+    "import subprocess, sys\n"
+    "child = subprocess.Popen([sys.executable, '-c', sys.argv[1], sys.argv[2]])\n"
+    "print(child.pid, flush=True)\n"
+    "if sys.argv[3] == 'wait':\n"
+    "    child.wait()\n"
+)
+
+
+def _spawn(*args, **kwargs):
+    return subprocess.Popen(
+        [sys.executable, "-c", *args],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        **kwargs,
+    )
+
+
+def _pid_gone(pid):
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return True
+        time.sleep(0.05)
+    return False
+
+
+def test_stop_process_terminates_a_running_child():
+    proc = _spawn(_CHILD, "obey")
+    assert proc.stdout.readline().strip() == b"ready"
+
+    pw.stop_process(proc)
+
+    assert proc.returncode not in (None, 0)
+    assert proc.stdout.closed and proc.stderr.closed
+
+
+def test_stop_process_leaves_a_finished_child_alone():
+    proc = _spawn("print('done')")
+    proc.wait()
+
+    pw.stop_process(proc)
+
+    assert proc.returncode == 0
+    assert proc.stdout.closed and proc.stderr.closed
+
+
+@posix_only
+def test_stop_process_kills_a_child_that_ignores_termination(monkeypatch):
+    monkeypatch.setattr(pw, "STOP_TIMEOUT_SECS", 0.5)
+    proc = _spawn(_CHILD, "ignore")
+    assert proc.stdout.readline().strip() == b"ready"
+    started = time.monotonic()
+
+    pw.stop_process(proc)
+
+    assert proc.returncode == -signal.SIGKILL
+    assert time.monotonic() - started < 10
+
+
+@posix_only
+@pytest.mark.parametrize(
+    "child_mode,wrapper_mode",
+    [("obey", "exit"), ("ignore", "wait"), ("ignore", "exit")],
+    ids=["wrapper_exits_first", "child_ignores_term", "both"],
+)
+def test_stop_process_stops_the_whole_group(
+    monkeypatch, capsys, child_mode, wrapper_mode
+):
+    monkeypatch.setattr(pw, "STOP_TIMEOUT_SECS", 0.5)
+    proc = _spawn(_WRAPPER, _CHILD, child_mode, wrapper_mode, start_new_session=True)
+    lines = {proc.stdout.readline().strip() for _ in range(2)}
+    assert b"ready" in lines
+    child_pid = int((lines - {b"ready"}).pop())
+    if wrapper_mode == "exit":
+        proc.wait()
+    started = time.monotonic()
+
+    pw.stop_process(proc, own_group=True)
+
+    assert time.monotonic() - started < 10
+    assert _pid_gone(child_pid), "the descendant outlived its wrapper"
+    assert proc.returncode is not None
+    assert proc.stdout.closed and proc.stderr.closed
+    assert "WARNING" not in capsys.readouterr().out
+
+
+@posix_only
+@pytest.mark.parametrize("error", [ProcessLookupError, PermissionError])
+def test_signal_group_reports_an_empty_group(monkeypatch, error):
+    def gone(_pgid, _sig):
+        raise error
+
+    monkeypatch.setattr(pw.os, "killpg", gone)
+
+    assert pw._signal_group(4242, 0) is False
+
+
+@posix_only
+def test_stop_process_warns_when_the_group_survives_escalation(monkeypatch, capsys):
+    signals = []
+    monkeypatch.setattr(pw, "STOP_TIMEOUT_SECS", 0)
+    monkeypatch.setattr(
+        pw, "_signal_group", lambda _pgid, sig: signals.append(sig) or True
+    )
+    proc = _SteamProc([])
+    proc.pid = 4242
+
+    pw.stop_process(proc, own_group=True)
+
+    assert [sig for sig in signals if sig] == [signal.SIGTERM, signal.SIGKILL]
+    assert "WARNING: Child process 4242 is still running." in capsys.readouterr().out
+
+
+def test_stop_process_warns_when_a_child_cannot_be_reaped(capsys):
+    class _StuckProc:
+        pid = 4242
+        stdout = stderr = None
+        killed = False
+
+        def poll(self):
+            return None
+
+        def terminate(self):
+            pass
+
+        def kill(self):
+            self.killed = True
+
+        def wait(self, timeout=None):
+            raise subprocess.TimeoutExpired("stuck", timeout)
+
+    proc = _StuckProc()
+
+    pw.stop_process(proc)
+
+    assert proc.killed
+    assert "WARNING: Child process 4242 is still running." in capsys.readouterr().out
+
+
+def test_copy_repo_closes_the_archive_pipes_without_terminating(tmp_path, monkeypatch):
+    proc = _archive_proc(
+        monkeypatch, _FakeArchiveProc(_tar_bytes([_file_member("a.txt", b"x\n")]))
+    )
+
+    pw.copy_repo(tmp_path / "publish", set())
+
+    assert not proc.terminated
+    assert proc.stdout.closed and proc.stderr.closed
+
+
+@pytest.mark.parametrize("failure", [KeyboardInterrupt, SystemExit])
+def test_copy_repo_stops_git_archive_when_interrupted(tmp_path, monkeypatch, failure):
+    proc = _archive_proc(monkeypatch, _FakeArchiveProc(_tar_bytes([])))
+
+    def interrupted(*_args, **_kwargs):
+        raise failure
+
+    monkeypatch.setattr(pw.tarfile, "open", interrupted)
+
+    with pytest.raises(failure):
+        pw.copy_repo(tmp_path / "publish", set())
+
+    assert proc.terminated
+    assert proc.stdout.closed and proc.stderr.closed
+
+
+@pytest.mark.parametrize("failure", [KeyboardInterrupt, SystemExit, OSError])
+def test_publish_stops_the_upload_group_and_keeps_the_log(
+    tmp_path, monkeypatch, failure
+):
+    _stub_publish_runtime(tmp_path, monkeypatch)
+    monkeypatch.setattr(pw, "OWN_GROUP", True)
+    stopped = []
+    monkeypatch.setattr(
+        pw,
+        "stop_process",
+        lambda proc, own_group=False: stopped.append((proc, own_group)),
+    )
+
+    class _FailingOutput:
+        def __iter__(self):
+            return self
+
+        def __next__(self):
+            raise failure
+
+    proc = _SteamProc([])
+    proc.stdout = _FailingOutput()
+    popen_kwargs = {}
+
+    def fake_popen(_cmd, **kwargs):
+        popen_kwargs.update(kwargs)
+        return proc
+
+    monkeypatch.setattr(pw.subprocess, "Popen", fake_popen)
+
+    with pytest.raises(failure):
+        pw.publish(_publish_mod(tmp_path), "user", "1", "note")
+
+    assert stopped == [(proc, True)]
+    assert popen_kwargs["start_new_session"] is True
+    log = next(tmp_path.glob("md_publish_*.log")).read_text(encoding="utf-8")
+    assert "--- workshop_upload.vdf ---" in log
+    assert "=== Attempt 1/3 ===" in log
+
+
+def test_publish_stops_every_retry_attempt(tmp_path, monkeypatch):
+    _stub_publish_runtime(tmp_path, monkeypatch)
+    monkeypatch.setattr(pw.time, "sleep", lambda _seconds: None)
+    procs = [
+        _SteamProc(["Uploading content failed"], returncode=1),
+        _SteamProc(["Committing update"]),
+    ]
+    remaining = iter(procs)
+    stopped = []
+    monkeypatch.setattr(
+        pw, "stop_process", lambda proc, own_group=False: stopped.append(proc)
+    )
+    monkeypatch.setattr(pw.subprocess, "Popen", lambda *_a, **_k: next(remaining))
+
+    pw.publish(_publish_mod(tmp_path), "user", "1", "note")
+
+    assert stopped == procs
+    log = next(tmp_path.glob("md_publish_*.log")).read_text(encoding="utf-8")
+    assert "=== Attempt 1/3 ===" in log
+    assert "=== Attempt 2/3 ===" in log
+
+
+def test_termination_signals_become_system_exit(monkeypatch):
+    installed = {}
+    monkeypatch.setattr(
+        pw.signal, "signal", lambda sig, handler: installed.update({sig: handler})
+    )
+
+    pw.exit_on_termination_signals()
+
+    assert signal.SIGTERM in installed
+    for sig, handler in installed.items():
+        with pytest.raises(SystemExit, match="Interrupted by signal"):
+            handler(sig, None)
+
+
+# ---------------------------------------------------------------------------
+# Staging cleanup
+# ---------------------------------------------------------------------------
+
+_FULL_ARGS = ("test", "--username", "u", "--version", "1.2.3")
+
+
+def test_remove_staging_ignores_a_missing_path(tmp_path, capsys):
+    pw.remove_staging(tmp_path / "gone")
+
+    assert capsys.readouterr().out == ""
+
+
+def test_remove_staging_clears_read_only_entries(tmp_path, capsys):
+    staging = tmp_path / "pub"
+    locked_dir = staging / "mod" / "events"
+    locked_dir.mkdir(parents=True)
+    write_text(locked_dir / "a.txt", "content")
+    os.chmod(locked_dir / "a.txt", stat.S_IREAD)
+    os.chmod(locked_dir, stat.S_IREAD | stat.S_IEXEC)
+
+    pw.remove_staging(staging)
+
+    assert not staging.exists()
+    assert capsys.readouterr().out == ""
+
+
+def test_remove_staging_leaves_symlink_targets_untouched(tmp_path):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    secret = outside / "secret.txt"
+    write_text(secret, "keep")
+    os.chmod(secret, stat.S_IREAD)
+    mode_before = secret.stat().st_mode
+    staging = tmp_path / "pub"
+    locked_dir = staging / "mod"
+    locked_dir.mkdir(parents=True)
+    try:
+        os.symlink(outside, locked_dir / "escape", target_is_directory=True)
+        os.symlink(secret, locked_dir / "secret-link")
+    except OSError:
+        pytest.skip("symlinks unavailable")
+    os.chmod(locked_dir, stat.S_IREAD | stat.S_IEXEC)
+
+    pw.remove_staging(staging)
+
+    assert not staging.exists()
+    assert secret.read_text(encoding="utf-8") == "keep"
+    assert secret.stat().st_mode == mode_before
+
+
+def test_remove_staging_refuses_a_symlinked_staging_path(tmp_path, capsys):
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    write_text(outside / "keep.txt", "keep")
+    staging = tmp_path / "pub"
+    try:
+        os.symlink(outside, staging, target_is_directory=True)
+    except OSError:
+        pytest.skip("symlinks unavailable")
+
+    pw.remove_staging(staging)
+
+    assert (outside / "keep.txt").read_text(encoding="utf-8") == "keep"
+    out = capsys.readouterr().out
+    assert f"WARNING: Could not remove staging directory {staging}" in out
+
+
+def test_remove_staging_warns_with_the_leftover_path(tmp_path, monkeypatch, capsys):
+    staging = tmp_path / "pub"
+    (staging / "mod").mkdir(parents=True)
+
+    def locked(_path, ignore_errors=False):
+        if not ignore_errors:
+            raise PermissionError("file in use")
+
+    monkeypatch.setattr(pw.shutil, "rmtree", locked)
+
+    pw.remove_staging(staging)
+
+    out = capsys.readouterr().out
+    assert f"WARNING: Could not remove staging directory {staging}: file in use" in out
+    assert staging.is_dir()
+
+
+def test_main_removes_staging_after_a_successful_run(tmp_path, monkeypatch):
+    _main_staged(tmp_path, monkeypatch, *_FULL_ARGS)
+
+    assert not (tmp_path / "pub").exists()
+
+
+@pytest.mark.parametrize("failure", [RuntimeError, KeyboardInterrupt, SystemExit])
+def test_main_removes_staging_when_the_upload_fails(tmp_path, monkeypatch, failure):
+    _prepare_full_main(tmp_path, monkeypatch, *_FULL_ARGS)
+    monkeypatch.setattr(pw, "copy_repo", lambda dest, _ex: _staged_mod(dest, None))
+
+    def failing_publish(*_args, **_kwargs):
+        raise failure
+
+    monkeypatch.setattr(pw, "publish", failing_publish)
+
+    with pytest.raises(failure):
+        pw.main()
+
+    assert not (tmp_path / "pub").exists()
+
+
+def test_main_removes_partial_staging_when_the_copy_fails(tmp_path, monkeypatch):
+    _prepare_full_main(tmp_path, monkeypatch, *_FULL_ARGS)
+
+    def partial_copy(dest_parent, _excludes):
+        (dest_parent / "mod" / "events").mkdir(parents=True)
+        write_text(dest_parent / "mod" / "events" / "half.txt", "partial")
+        raise RuntimeError("git archive HEAD failed")
+
+    monkeypatch.setattr(pw, "copy_repo", partial_copy)
+
+    with pytest.raises(RuntimeError, match="git archive HEAD failed"):
+        pw.main()
+
+    assert not (tmp_path / "pub").exists()
+
+
+def test_main_keeps_the_original_error_when_cleanup_fails(
+    tmp_path, monkeypatch, capsys
+):
+    _prepare_full_main(tmp_path, monkeypatch, *_FULL_ARGS)
+
+    def broken_copy(_dest_parent, _excludes):
+        raise RuntimeError("copy broke")
+
+    def locked(_path, ignore_errors=False):
+        if not ignore_errors:
+            raise PermissionError("file in use")
+
+    monkeypatch.setattr(pw, "copy_repo", broken_copy)
+    monkeypatch.setattr(pw.shutil, "rmtree", locked)
+
+    with pytest.raises(RuntimeError, match="copy broke"):
+        pw.main()
+
+    out = capsys.readouterr().out
+    assert f"WARNING: Could not remove staging directory {tmp_path / 'pub'}" in out
+
+
+def test_repeated_and_overlapping_runs_keep_separate_staging(tmp_path, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["publish_workshop.py", *_FULL_ARGS])
+    monkeypatch.setattr(pw.tempfile, "tempdir", str(tmp_path))
+    monkeypatch.setattr(pw, "copy_repo", lambda dest, _ex: _staged_mod(dest, None))
+    saved_log = tmp_path / "md_publish_earlier.log"
+    write_text(saved_log, "earlier run\n")
+    staged = []
+
+    def fake_publish(mod_dir, *_args, **_kwargs):
+        staged.append(mod_dir)
+        if len(staged) == 1:
+            # A second run starts and finishes while the first is still live.
+            pw.main()
+            assert mod_dir.is_dir(), "the inner run removed the outer staging"
+
+    monkeypatch.setattr(pw, "publish", fake_publish)
+
+    pw.main()
+    pw.main()
+
+    assert len({mod_dir.parent for mod_dir in staged}) == 3
+    assert list(tmp_path.glob("md_publish_*")) == [saved_log]
