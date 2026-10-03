@@ -873,6 +873,47 @@ def test_copy_repo_reports_a_failed_git_archive(tmp_path, monkeypatch):
         pw.copy_repo(tmp_path / "publish", set())
 
 
+def test_copy_repo_reports_an_unreadable_tracked_file(tmp_path, monkeypatch):
+    class _UnreadableMember:
+        name = "events/a.txt"
+
+        def issym(self):
+            return False
+
+        def islnk(self):
+            return False
+
+        def isdir(self):
+            return False
+
+        def isfile(self):
+            return True
+
+    class _UnreadableArchive:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def __iter__(self):
+            return iter([_UnreadableMember()])
+
+        def extractfile(self, _member):
+            return None
+
+    proc = _FakeArchiveProc(_tar_bytes([]))
+    _archive_proc(monkeypatch, proc)
+    monkeypatch.setattr(
+        pw.tarfile, "open", lambda *args, **kwargs: _UnreadableArchive()
+    )
+
+    with pytest.raises(RuntimeError, match="Could not read tracked file"):
+        pw.copy_repo(tmp_path / "publish", set())
+
+    assert proc.terminated, "the git archive child must be torn down on failure"
+
+
 def test_format_size_reaches_terabytes():
     assert pw.format_size(2 * 1024**4) == "2.0 TB"
 
@@ -1567,6 +1608,27 @@ def test_publish_keeps_diagnostics_in_log_and_quiets_default_output(
     assert "Warning: example diagnostic" in log
     assert "Phase timings" in log
     assert "--- workshop_upload.vdf ---" in log
+
+
+def test_publish_ignores_blank_steamcmd_lines(tmp_path, monkeypatch, capsys):
+    _stub_publish_runtime(tmp_path, monkeypatch)
+    monkeypatch.setattr(
+        pw.subprocess,
+        "Popen",
+        lambda *_args, **_kwargs: _SteamProc(
+            ["", "Uploading content", "", "Committing update", ""],
+            returncode=0,
+        ),
+    )
+
+    pw.publish(_publish_mod(tmp_path), "user", "1", "note")
+
+    assert "Upload completed" in capsys.readouterr().out
+    log = next(tmp_path.glob("md_publish_*.log")).read_text(encoding="utf-8")
+    streamed = log.split("=== Attempt 1/3 ===\n", 1)[1].split(
+        "\n  --- Phase timings", 1
+    )[0]
+    assert streamed.splitlines() == ["Uploading content", "Committing update"]
 
 
 def test_spinner_does_not_start_animation_for_redirected_output(monkeypatch, capsys):
