@@ -904,6 +904,7 @@ def main() -> None:
 
     # Validate before copying or staging anything.
     version = normalize_version(args.version)
+    assert version is not None
     marker = BANNER_MARKERS[args.target]
 
     mod_id = args.mod_id or MOD_IDS[args.target]
