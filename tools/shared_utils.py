@@ -1288,9 +1288,10 @@ def iter_statement_ops(
             index = close + 1
             continue
         if cursor < length and body[cursor] == '"':
-            stop = body.find('"', cursor + 1)
-            if stop == -1:
+            closing_quote = _STRING_QUOTE_RE.search(body, cursor + 1)
+            if closing_quote is None:
                 return
+            stop = closing_quote.start()
             yield key, operator, body[cursor + 1 : stop], None
             index = stop + 1
             continue
