@@ -332,9 +332,9 @@ Premade tab icons reuse existing mod art, including icons already used elsewhere
 
 ### Publishing (`publishing/`)
 
-| Script                  | Description                                               |
-| ----------------------- | --------------------------------------------------------- |
-| **publish_workshop.py** | Publishes the mod to the Steam Workshop (release or beta) |
+| Script                  | Description                                                      |
+| ----------------------- | ---------------------------------------------------------------- |
+| **publish_workshop.py** | Publishes the mod to the Steam Workshop (release, beta, or test) |
 
 See the [Workshop Publishing Guide](#workshop-publishing-guide) below for full usage details.
 
@@ -431,6 +431,17 @@ Same as above but targets the beta Workshop item:
 python3 tools/publishing/publish_workshop.py beta --version 1.12.3b
 ```
 
+#### Full Upload (test)
+
+Uploads to the test Workshop item with `TEST` banners:
+
+```bash
+python3 tools/publishing/publish_workshop.py test --version 2.0.1
+```
+
+All modes stage tracked `HEAD`; commit the intended content before publishing.
+The optional `--full` flag explicitly selects the default full upload.
+
 #### Diff-Only Upload (beta)
 
 Uploads only files changed since a given git ref. Useful for pushing incremental beta updates without re-uploading the entire mod:
@@ -506,6 +517,8 @@ Use `--exclude PATTERN` to add extra exclusions, or `--no-default-excludes` to s
 | `--no-default-excludes`     | Skip the built-in exclude list                                         |
 | `--sync-description`        | Update the English Workshop description from its tracked source        |
 | `--version VERSION`         | Required uploaded version. Invalid or incomplete banners abort.        |
+| `--changenote TEXT`         | Workshop update note, separate from the public description             |
+| `--verbose`                 | Print detailed timing, VDF, command, and SteamCMD output               |
 
 ### Workshop Mod IDs
 
@@ -513,6 +526,7 @@ Use `--exclude PATTERN` to add extra exclusions, or `--no-default-excludes` to s
 | ------- | ------------ |
 | release | `2777392649` |
 | beta    | `3374271790` |
+| test    | `2777133449` |
 
 ## Old Folder
 
