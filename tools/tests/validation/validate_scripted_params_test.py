@@ -489,19 +489,17 @@ def test_change_influence_percentage_identical_with_distant_set_is_filtered(
 ):
     """The 20-line proximity window filters out scope-tracking false positives.
 
-    The validator's frame-based scope tracking keeps a temp var from a
-    previous focus's completion_reward visible to the current call, even
-    though it wouldn't be in scope at runtime.  Tagging a stale
-    `tag_index` from 25+ lines back as identical to the current
-    `influence_target` would create noise; the proximity window prevents
-    that.
+    The validator's frame-based scope tracking keeps a temp var from an
+    earlier block it does not reset (a previous scripted effect) visible to
+    the current call, even though it wouldn't be in scope at runtime.
+    Tagging a stale `tag_index` from 25+ lines back as identical to the
+    current `influence_target` would create noise; the proximity window
+    prevents that.
     """
     body = (
         "shared_focus = {\n"
         "    completion_reward = {\n"
-        # Stale tag_index, 25+ lines back from the call.  At runtime this
-        # would NOT be in scope (different focus's completion_reward),
-        # but the validator's scope tracking is too coarse to know that.
+        # Stale tag_index, 25+ lines back from the call.
         "        set_temp_variable = { tag_index = TAI }\n"
         + ("        add_political_power = 0.01\n" * 25)
         + "        set_temp_variable = { percent_change = 2 }\n"
@@ -871,6 +869,65 @@ def test_stray_close_brace_does_not_desync_scope_tracking(tmp_path, cip_contract
         "}\n"
     )
     assert _issues(body, cip_contract, tmp_path) == []
+
+
+@pytest.mark.parametrize("block", sorted(vsp.EFFECT_BLOCK_KEYWORDS))
+def test_temp_variable_does_not_leak_into_the_next_effect_block(
+    tmp_path, cip_contract, block
+):
+    body = (
+        "container = {\n"
+        f"    {block} = {{ set_temp_variable = {{ percent_change = 5 }} }}\n"
+        f"    {block} = {{ change_influence_percentage = yes }}\n"
+        "}\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(
+        category == "missing-required-param" and "percent_change" in message
+        for category, message in issues
+    )
+
+
+def test_numeric_scope_close_does_not_end_the_effect_block(tmp_path, cip_contract):
+    body = (
+        "shared_focus = { completion_reward = { "
+        "set_temp_variable = { percent_change = 5 } "
+        "741 = { add_extra_state_shared_building_slots = 1 } "
+        "change_influence_percentage = yes } }\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
+def test_temp_opinion_set_by_an_earlier_focus_does_not_hide_temp_change(tmp_path):
+    """Regression for #5122: five GENERIC_ agriculture rewards set temp_change."""
+    _write(
+        tmp_path / "common" / "scripted_effects" / "test_effect.txt",
+        "# Parameters:\n"
+        "# - temp_opinion: signed opinion change\n"
+        "change_farmers_opinion = {\n}\n",
+    )
+    agriculture_focus = (
+        "\tfocus = {\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tset_temp_variable = { temp_change = 3 }\n"
+        "\t\t\tchange_farmers_opinion = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    _write(
+        tmp_path / "common" / "national_focus" / "00_generic.txt",
+        "focus_tree = {\n"
+        "\tfocus = {\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tset_temp_variable = { temp_opinion = 10 }\n"
+        "\t\t\tchange_farmers_opinion = yes\n"
+        "\t\t}\n"
+        "\t}\n" + agriculture_focus * 5 + "}\n",
+    )
+
+    issues = _missing_required_param_issues(tmp_path)
+    assert [issue.line for issue in issues] == [11, 17, 23, 29, 35]
+    assert all("'temp_opinion'" in issue.message for issue in issues)
 
 
 # --- validator wiring ------------------------------------------------------
