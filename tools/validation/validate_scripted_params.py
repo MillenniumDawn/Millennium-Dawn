@@ -109,11 +109,28 @@ SCOPE_CHANGING_KEYWORDS: Set[str] = {
     }
 }
 
+# Each of these runs as its own effect, so its temp variables are gone before
+# the next one runs.
+EFFECT_BLOCK_KEYWORDS: Set[str] = {
+    "completion_reward",
+    "select_effect",
+    "immediate",
+    "option",
+    "complete_effect",
+    "remove_effect",
+    "timeout_effect",
+    "cancel_effect",
+    "effect",
+    "on_add",
+    "on_remove",
+}
+
 _SET_TEMP_RE = re.compile(
     r"\bset_temp_variable\s*=\s*\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([^}]+?)\s*\}",
 )
 _CALL_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\s*=\s*yes\b")
-_KW_OPEN_RE = re.compile(r"\b([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*\{")
+# Numeric scopes (741 = {) must open a block, or their close pops the wrong one.
+_KW_OPEN_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=\s*\{")
 
 
 def _normalize_influence_value(value: str) -> str:
@@ -371,8 +388,8 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
     Each token is (kind, line_number, value, rhs):
       "set_temp"   — set_temp_variable = { NAME = RHS }  (value=NAME, rhs=RHS)
       "call"       — NAME = yes                           (value=NAME, rhs="")
-      "scope_open" — NAME = { (scope-changing)            (value=NAME, rhs="")
-      "plain_open" — NAME = { (non-scope-changing)        (value=NAME, rhs="")
+      "scope_open" — NAME = { (scope-changing or effect)  (value=NAME, rhs="")
+      "plain_open" — NAME = { (any other block)           (value=NAME, rhs="")
       "close"      — }                                    (value="",    rhs="")
     The rhs on a set_temp is the literal RHS string (whitespace stripped).
     It powers the identical-params check for change_influence_percentage; any
@@ -406,6 +423,7 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
                         (
                             "scope_open"
                             if kw.lower() in SCOPE_CHANGING_KEYWORDS
+                            or kw in EFFECT_BLOCK_KEYWORDS
                             else "plain_open"
                         ),
                         lineno,
@@ -557,9 +575,10 @@ def _validate_call_sites_in_file(
             # ROOT, influence_target -> THIS) are reliable and left alone.
             #
             # "Same block" is approximated by line proximity (<= 20 lines): the
-            # scope tracker can keep a temp var from a previous focus's
-            # completion_reward visible when it wouldn't be in scope at runtime,
-            # so the window suppresses those false positives while still catching
+            # scope tracker can keep a temp var from an earlier block it does not
+            # reset, such as a previous scripted effect, visible when it wouldn't
+            # be in scope at runtime, so the window suppresses those false
+            # positives while still catching
             # the leak-between-calls pattern (tag_index from call N-1 reused by
             # call N).  Values are normalized so "USA"/"USA.id" and the other
             # .id variants compare equal.
