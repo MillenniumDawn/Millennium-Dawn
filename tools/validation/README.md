@@ -243,6 +243,87 @@ Module-level constants and pool-worker functions (those passed to `_pool_map`) m
 
 ---
 
+## Focus coordinate warnings
+
+`validate_focus_tree.py` reports `focus-coordinate-overlap` when two static focuses
+in the same assembled tree share a row and are less than two columns apart.
+Both exact stacks and neighboring positions are checked, including every pair
+between stacked groups. Findings include the tree, both IDs, resolved coordinates
+and source locations. These are WARNINGs, including under `--strict`.
+
+The existing per-file read/cache pass supplies geometry. Each tree imports its
+explicit `shared_focus` references plus shared/joint descendants whose shared
+prerequisites have been imported. The shared registry spans files, so cross-file
+shared branches and relative anchors resolve in their host tree. Unimported
+fragments and other trees are never coordinate targets or collision partners.
+Repeated imports do not duplicate a focus; duplicate definitions are ambiguous.
+
+Relative chains use iterative memoization, including failed resolutions. Signed
+decimal coordinates are preserved exactly, without rounding to integer columns.
+Missing or nonnumeric coordinates, missing anchors/imports, duplicate definitions
+and cycles produce `focus-coordinate-unresolved` WARNINGs. Dependents of a broken
+anchor remain unresolved, with one diagnostic for the root cause per tree.
+Existing duplicate-ID and missing/forward-relative-target ERROR checks remain.
+
+Missing `x` or `y` is deliberately unknown, not an assumed zero. The existing
+`tools/analysis/focus_overlap_report.py` defaults omitted axes to zero, while
+[MD MCP's resolver](https://github.com/MillenniumDawn/millennium-dawn-mcp/blob/d3de458fca7c58c74c301df22d373177dc8fdb17/src/md_mcp/analysis/focus_layout.py#L111)
+rejects them. No engine-backed default has been established for this validator;
+the warning identifies a coverage gap, not a proven content defect. Two existing
+Czech focuses omit `x`, leaving their 29 combined tree instances unresolved.
+
+Dynamic layout is not simulated. Any focus with an `offset`, and every relative
+descendant of it, is skipped. A focus with `allow_branch`, and every prerequisite
+descendant that could depend on that gate, is skipped conservatively, including
+alternative prerequisite paths. This can omit real problems but avoids claiming
+that hypothetical static positions are drawn together. `available` and
+`mutually_exclusive` alone do not exempt icons. No content-specific exemptions
+were added; the remaining candidates stay visible for review.
+
+In staged mode, changed country trees and all shared-consuming trees are checked
+after any focus-file change. Rechecking shared consumers is intentional: removing
+or reparenting a shared descendant can erase its old dependency from the current
+registry. Deleted focus paths are retained; a deletion rechecks all trees.
+Staging no focus files runs no geometry scan. Per-file cached records are reused,
+but assembly and geometry are recomputed so changed imports cannot leave stale
+results. The separate scenario report remains useful for dynamic investigations.
+
+### Measured backlog for #5126
+
+At `f99f2055f069e41c6f51623c82d2fcc6a7f7338b`, 114 files contain 106 trees and
+32,684 assembled focus instances (a shared focus counts once in each host tree).
+The check resolves 32,655 instances, skips 9,814 resolved dynamic instances and
+checks 22,841 static instances. Gated instances number 8,373 and offset-dependent
+instances 8,996; these overlap and must not be added. There are no missing shared
+imports. The two unresolved root diagnostics account for 29 unresolved instances.
+
+The static backlog is **8 candidate pairs across 5 trees**:
+
+| Tree | Candidate pairs |
+| --- | --- |
+| San Marino | `SMA_healthy_people` / `SMA_vatican_union` |
+| Czech Republic | `CZE_2000st_apc` / `CZE_2000st_ifv`; `CZE_2000st_utility_vehichles` / `CZE_2000st_tank_modernization` |
+| Generic | `GENERIC_eastern_emergence` / `GENERIC_non_aligned`; `GENERIC_the_rising_powers` / `GENERIC_the_conservative_approach` |
+| Ukrainian provisional republics | `DRP_dnieper_logistics` / `UKR_prp_emergency_economy`; `DRP_moscow_alignment` / `UKR_prp_utilities_repair` |
+| USA | `USA_net_zero_green_house` / `USA_new_path_ways_for_greens` |
+
+Removing dynamic exclusions yields 543 raw pairs, not 543 established bugs. The
+eight static candidates have not been repositioned or exempted without in-game
+review. The Brazil pre-#5122 fixture reports its one-column pair; the corrected
+two-column spacing passes. Fractional coordinates account for four candidates
+missed by the earlier integer-only exploratory scan.
+
+Run `MD_LOG_LEVEL=INFO python tools/validation/validate_focus_tree.py --path .
+--workers 1 --no-color` on one line to print counts with findings. Existing
+unrelated validator errors can still make the complete validator exit nonzero.
+
+Three cold-cache and three warm-cache measurements on the same 114 files with
+Python 3.12.14 and one worker compared the existing parse/relative-position scans
+with those same scans plus geometry. Median times were 0.911s versus 2.658s cold,
+and 0.226s versus 0.471s warm. These measure this scan component, not the full
+validator or CI; they are not a speedup claim. Resolution avoids recursive depth
+limits, and sorted row buckets enumerate only pairs within the spacing window.
+
 ## Credits
 
 Based on Kaiserreich Autotests by [Pelmen323](https://github.com/Pelmen323), adapted for Millennium Dawn.

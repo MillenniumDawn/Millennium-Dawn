@@ -27,6 +27,12 @@ The CI validator list lives in `validator_batches.py`, so the batch jobs and pre
 
 ## Validation config
 
+Focus geometry runs inside the existing focus-tree validator at WARNING severity.
+It checks tree-scoped shared imports, excludes uncertain dynamic layouts and
+retains unresolved-chain diagnostics. Shared consumers are rechecked after staged
+focus changes, including removed definitions. See the
+[coordinate policy, backlog and timings](../../tools/validation/README.md#focus-coordinate-warnings).
+
 `validation_config.json` at the repo root holds every suppression list the validators read: false positives, exemptions, and known-good names. To add or drop an entry, edit the JSON, not the validator.
 
 - Shape: `version`, then one object per validator script (`validate_ideas`, `check_common_mistakes`, ...), each holding named lists. A list maps each entry to the reason it is exempt. Leave the reason empty only when nobody knows it.
