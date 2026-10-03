@@ -4,6 +4,79 @@ page_id: changelog-v2-0-changes
 order: 14
 ---
 
+## v2.0.2
+
+v2.0.2
+
+### AI
+
+- Reduced AI support and repair ship production with fleet-size and combined auxiliary limits. (Issue #5171)
+- [KUR] Made Iraq weigh war, stability, strength, opinion and influence before refusing Kurdish independence or autonomy (Issue #5143)
+
+### Balance
+
+- Reduced the starting inflation of BLR, EGY, CUB LAO, DRC, AGL, IND, SER so it's more stable for the nations to recover long term
+- Fixed inflation and currency strength feeding each other into runaway hyperinflation, and made each policy rate point cut a fixed share of inflation so the rate still works when inflation is above 20%
+- Reduced policy rate points' debt-interest contribution from 0.5 to 0.33 points (Issue #5190)
+- Raised the policy rate cap to 30% (Issue #5190)
+- A higher policy rate now always helps: an excess deficit can halve its inflation cut but no longer cancels it, each rate point softens the currency's monthly fall when inflation is far above the rate, and the AI cuts 3 points a quarter when more than 5 above neutral and no longer raises its rate above 20% (Issue #5207, #5208, #5209)
+- Reduced the income from Venezuela's Budding Petrostate making them an infinite money printer
+- 32 cell launchers can now be used with cruisers and smaller naval vessels
+- [CHI] Now starts with 14 shipyards
+- [JAP] Now starts with 14 shipyards
+- [KOR] Now starts with 15 shipyards
+- [SOV] Now starts with 24 shipyards
+- [UKR] Fix events, lowering Policy Rate leading to inflation
+
+### Bugfix
+
+- Fixed policy rate adjustments, and updated reserve-debt tracking (Issue #5190)
+- Standardized USA and Singapore influence call layout without changing effects. (Issue #5226)
+- Fixed faction opinion changes that did nothing or skipped the opinion limits in Myanmar, Cuba, India and UK focuses, restored the battery park from two Singapore reclamation focuses, and fixed broken influence changes in a Syrian focus and two Israeli events (Issue #5124)
+- Restored the DEV marker on the English in-game version banner so local builds show the dev version string
+- Fixed faction goals that track member forces, industry, and territory not showing or completing
+- Recon Rangers are now correctly enabled
+- Removed the duplicate clause from 30 OR blocks; the repeats that hid copy-paste errors now check ENG in the G7 AI lists, fascists in power for the Western Autocracy invite, state 715 for Russia's Nazbol focus, communist cadres opinion in Spain, ASEAN_Member for same-organization checks, and dead as well as exiled for two Libyan leaders (Issue #5268)
+- [CZE] Fixed omission that made Czech gasoline engines not usable for any variants
+- [GRE] Fixed austerity tensions spirit being given twice in some circumstances.
+- [ISR] Favor the Republican Party now gives Israel its political power and Likud popularity instead of the USA (Issue #5175)
+- [ISR] Likud visit events now name the current Israeli and Brazilian leaders
+- [ISR] World Populism events now boost the right-wing populists instead of the fascists, and the Hungarian event boosts Fidesz
+- [ISR] World Populism no longer sends Brazil the Washington visit event
+- [ISR] IAI Hunter drone now starts in its correct year 2000 configuration.
+- [JAP] Mitsubishi Aerospace now covers medium aircraft, so Japan's F-4EJ and F-15J fighters have a domestic MIO (Issue #5233)
+- [LBA] Prevent the African Union Meeting event at minimum corruption to avoid a pointless political power loss (Issue #4870)
+- [SIA] Ghosts of the Jungle now grants its Communist and Emerging Outlook support drive and the Ghosts of the CPT spirit; the path reset it runs was wiping both
+- [SOV] Incorrect setup production for utility vehicle fixed, as well as BMD-1P parent version.
+- [UKR] Ukraine now starts at the 30% policy rate cap, and National Bank of Ukraine rate cuts stop at 0% (Issue #5190)
+
+### Graphics
+
+- Fixed the double farm conversion option appearing without two convertible farms in owned and controlled states below the civilian factory cap
+- [UKR] Renamed 116 bare equipment icons to quoted GFX\_ form (same frame as GFX_MT_LBU) across tank/SPART profiles and designer pools so they resolve as GFX entries; also fixed an Australia date check, the invalid collection_size trigger in internal faction event 31, and v2.0 changelog markdown formatting
+
+### Localization
+
+- Fixed English prose typos, missing punctuation, and three Serbian disaster descriptions (Issue #5127)
+- Replaced two placeholder descriptions, renamed Panama's Calor-Calor cartel party, and fixed a garbled Dixie & Delta Party sentence (Issue #5127)
+- Updated the nuclear bomb logistics tooltip to properly explain how the MD nuclear system works, to remove UI confusion on the system.
+
+### Database
+
+- AK-74 Family - tweaked which models are used across the mod, less AK-74N in pre-existing OOB's, more AK-74M's in focus trees.
+- RPG-7 Family - changed all mod mentions to pull the RPG-7V model instead of base RPG-7, which uses upgrades.
+- [HEZ] Tweaked starting small arms to better represent weapons used in 2000.
+- [KAZ] Tweaked starting small arms to better represent stockpiles in 2000.
+- [SOV] Ongoing work to predefine equipment for all starting SOV units.
+- [SOV] Added small numbers of MRAP's to SOV starting OOB.
+- [UKR, GEO, BLR] Added small stockpiles of AS VAL's to each.
+
+### Performance
+
+- Reduced the number of checks per hour when evaluating whether the AI should be intervention laws for Neo-Imperialism
+- Reduced the number of any_neighbor_country in the French decisions reducing demand when the communist decisions are active for an AI
+- Inverted any_neighbor_country that is at war with ROOT calls to any enemy country is neighbor of to reduce the number of checks per hour on machines
+
 ## v2.0.1
 
 v2.0.1
