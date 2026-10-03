@@ -9,33 +9,19 @@ runs each validator with --staged, and checks that:
   3. Validators that should skip (no relevant files) exit cleanly (zero exit)
 
 Usage:
-    python3 tools/test_staged_validators.py
+    MD_RUN_STAGED_INTEGRATION=1 python -m pytest tools/tests/staged_validators_test.py
 
 All temporary files and git state are cleaned up automatically.
 """
 
 import os
-import subprocess
 import sys
-import time
 from unittest import SkipTest
 
 from _staged_integration_gate import require_staged_integration_enabled
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-# Maximum seconds a staged validator should take in CI
-MAX_TIME = 15.0
-# This validator intentionally scans the full repository in staged mode.
-TIME_BUDGETS = {"validate_scripted_localisation.py": 30.0}
-
-passed = 0
-failed = 0
-errors: list[str] = []
-
-
-def run(cmd, **kwargs):
-    return subprocess.run(cmd, capture_output=True, text=True, **kwargs)
+from shared.paths import REPO_ROOT
+from shared.staged_harness import StagedHarness, restore_all
+from shared.suite import run_git
 
 
 def _assert_safe_path(path):
@@ -45,81 +31,20 @@ def _assert_safe_path(path):
 
 def git_stage(path):
     _assert_safe_path(path)
-    run(["git", "add", path])
+    run_git(REPO_ROOT, "add", path)
 
 
 def git_unstage(path):
-    run(["git", "reset", "HEAD", path], cwd=REPO_ROOT)
+    run_git(REPO_ROOT, "reset", "HEAD", path)
 
 
 def git_restore(path):
     """Remove a file from the index and working tree if it was newly created."""
     _assert_safe_path(path)
-    run(["git", "reset", "HEAD", path], cwd=REPO_ROOT)
+    git_unstage(path)
     if os.path.exists(path):
         # pi-lens-ignore: python-path-traversal
         os.remove(path)
-
-
-def run_validator(
-    script, label, expect_issues=True, expected_path=None, expected_category=None
-):
-    """Run a validator with --staged and check the result."""
-    global passed, failed, errors
-
-    cmd = [
-        sys.executable,
-        f"tools/validation/{script}",
-        "--staged",
-        "--strict",
-        "--no-color",
-        "--workers",
-        "4",
-    ]
-
-    start = time.time()
-    result = run(cmd)
-    elapsed = time.time() - start
-
-    ok = True
-    status_parts = []
-    time_budget = TIME_BUDGETS.get(script, MAX_TIME)
-
-    if elapsed > time_budget:
-        ok = False
-        status_parts.append(f"TOO SLOW ({elapsed:.1f}s > {time_budget}s)")
-    else:
-        status_parts.append(f"{elapsed:.2f}s")
-
-    output = (result.stdout or "") + (result.stderr or "")
-    if expect_issues and result.returncode != 1:
-        ok = False
-        status_parts.append(
-            f"expected findings exit code 1 but got {result.returncode}"
-        )
-    elif expect_issues and expected_path and expected_path not in output:
-        ok = False
-        status_parts.append(f"missing expected path {expected_path}")
-    elif expect_issues and expected_category and expected_category not in output:
-        ok = False
-        status_parts.append(f"missing expected category {expected_category}")
-    elif not expect_issues and result.returncode != 0:
-        ok = False
-        status_parts.append(
-            f"expected clean pass but got exit code {result.returncode}"
-        )
-
-    if ok:
-        passed += 1
-        print(f"  PASS  {label} [{', '.join(status_parts)}]")
-    else:
-        failed += 1
-        msg = f"  FAIL  {label} [{', '.join(status_parts)}]"
-        errors.append(msg)
-        print(msg)
-        if result.stderr:
-            for line in result.stderr.strip().split("\n")[-5:]:
-                print(f"        {line}")
 
 
 # ── Test files with deliberate errors ──────────────────────────────────────
@@ -193,18 +118,19 @@ def create_test_files():
 
 
 def cleanup_test_files():
-    for path in TEST_FILES:
-        git_restore(path)
+    restore_all(TEST_FILES, git_restore)
 
 
 def main():
-    global passed, failed
+    harness = StagedHarness()
+    run_validator = harness.run_validator
 
     os.chdir(REPO_ROOT)
     print("Creating test files and staging them...\n")
-    create_test_files()
 
     try:
+        create_test_files()
+
         # ── Test 1: validators find issues in their relevant staged files ──
 
         print("Test: validators detect issues in staged files")
@@ -238,7 +164,7 @@ def main():
             "history techs validator finds bad tech dependency",
             expect_issues=True,
             expected_path=os.path.basename(TEST_HISTORY_FILE),
-            expected_category="missing technology prerequisites",
+            expected_category="History files with missing technology prerequisites",
         )
 
         print()
@@ -263,7 +189,7 @@ def main():
 
         # Unstage everything, stage only the loc file
         for path in TEST_FILES:
-            run(["git", "reset", "HEAD", path])
+            git_unstage(path)
         git_stage(TEST_LOC_FILE)
 
         run_validator(
@@ -305,16 +231,7 @@ def main():
         print("\nCleaning up test files...")
         cleanup_test_files()
 
-    print()
-    print("=" * 60)
-    print(f"Results: {passed} passed, {failed} failed")
-    if errors:
-        print("\nFailures:")
-        for e in errors:
-            print(e)
-    print("=" * 60)
-
-    return 1 if failed else 0
+    return harness.summary()
 
 
 # ── pytest entry points ─────────────────────────────────────────────────────
@@ -323,13 +240,7 @@ def main():
 
 
 def _index_is_clean() -> bool:
-    r = subprocess.run(
-        ["git", "diff", "--cached", "--name-only"],
-        cwd=REPO_ROOT,
-        capture_output=True,
-        text=True,
-    )
-    return r.returncode == 0 and not r.stdout.strip()
+    return not run_git(REPO_ROOT, "diff", "--cached", "--name-only").stdout.strip()
 
 
 def test_validator_scripts_exist():
