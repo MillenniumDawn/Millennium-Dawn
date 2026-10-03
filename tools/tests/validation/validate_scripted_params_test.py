@@ -70,7 +70,7 @@ def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
     fpath = focus_dir / "test_focus.txt"
     _write(fpath, caller_body)
     results = _validate_call_sites_in_file(
-        (str(fpath), contracts, str(mod_path), frozenset(valid_tags))
+        (str(fpath), contracts, str(mod_path), frozenset(valid_tags), frozenset())
     )
     out = []
     for cat, msg, _line in results:
@@ -856,7 +856,7 @@ def test_unreadable_caller_file_is_reported(tmp_path, cip_contract):
     path.mkdir(parents=True)
 
     results = _validate_call_sites_in_file(
-        (str(path), cip_contract, str(tmp_path), frozenset())
+        (str(path), cip_contract, str(tmp_path), frozenset(), frozenset())
     )
 
     assert [category for category, _message, _line in results] == ["unreadable-input"]
@@ -939,25 +939,28 @@ def test_temp_opinion_set_by_an_earlier_focus_does_not_hide_temp_change(tmp_path
 
 _AMOUNT_CONTRACT = {"test_effect": {"required": ["amount"], "optional": []}}
 
-# name -> (script, lines that call test_effect without amount)
+_MISSING = "missing-required-param"
+_SHARED = "call-shares-line"
+
+# name -> (script, expected (category, line) findings in order)
 _SEMANTIC_FIXTURES = {
     "quoted_call": ('option = {\n\tlog = "test_effect = yes"\n}\n', []),
     "quoted_set_temp": (
         'option = {\n\tlog = "set_temp_variable = { amount = 1 }"\n'
         "\ttest_effect = yes\n}\n",
-        [3],
+        [(_MISSING, 3)],
     ),
     "quoted_hash_same_line": (
         'option = {\n\tlog = "# text" test_effect = yes\n}\n',
-        [2],
+        [(_SHARED, 2), (_MISSING, 2)],
     ),
     "escaped_quote_before_hash": (
         'option = {\n\tlog = "a \\" # b" test_effect = yes\n}\n',
-        [2],
+        [(_SHARED, 2), (_MISSING, 2)],
     ),
     "escaped_quote_then_comment": (
         'option = {\n\tlog = "a \\" b" # test_effect = yes\n\ttest_effect = yes\n}\n',
-        [3],
+        [(_MISSING, 3)],
     ),
     "quoted_braces": (
         "option = {\n\tset_temp_variable = { amount = 1 }\n"
@@ -966,7 +969,7 @@ _SEMANTIC_FIXTURES = {
     ),
     "commented_set_temp": (
         "option = {\n\t# set_temp_variable = { amount = 1 }\n\ttest_effect = yes\n}\n",
-        [3],
+        [(_MISSING, 3)],
     ),
     "trailing_comment_call": (
         "option = {\n\tadd_stability = 0.05 # test_effect = yes\n}\n",
@@ -974,7 +977,7 @@ _SEMANTIC_FIXTURES = {
     ),
     "trailing_comment_after_call": (
         "option = {\n\ttest_effect = yes # needs amount\n}\n",
-        [2],
+        [(_MISSING, 2)],
     ),
     "multiline_set_temp": (
         "option = {\n\tset_temp_variable = {\n\t\tamount = 1\n\t}\n"
@@ -984,30 +987,40 @@ _SEMANTIC_FIXTURES = {
     "multiline_other_set_temp": (
         "option = {\n\tset_temp_variable = {\n\t\tother = 1\n\t}\n"
         "\ttest_effect = yes\n}\n",
-        [5],
+        [(_MISSING, 5)],
     ),
     "multiline_string": (
         'option = {\n\tlog = "first\n\ttest_effect = yes"\n\ttest_effect = yes\n}\n',
-        [4],
+        [(_MISSING, 4)],
     ),
     "bom_crlf": (
-        '﻿option = {\r\n\tlog = "# x"\r\n\ttest_effect = yes\r\n}\r\n',
-        [3],
+        '\N{ZERO WIDTH NO-BREAK SPACE}option = {\r\n\tlog = "# x"\r\n'
+        "\ttest_effect = yes\r\n}\r\n",
+        [(_MISSING, 3)],
     ),
-    "truncated_block": ("option = {\n\ttest_effect = yes", [2]),
+    "truncated_block": ("option = {\n\ttest_effect = yes", [(_MISSING, 2)]),
     "truncated_string": (
         'option = {\n\ttest_effect = yes\n\tlog = "test_effect = yes',
-        [2],
+        [(_MISSING, 2)],
+    ),
+    "packed_block": (
+        "option = { set_temp_variable = { amount = 1 } test_effect = yes }\n",
+        [(_SHARED, 1)],
+    ),
+    "two_calls_one_line": (
+        "option = {\n\tset_temp_variable = { amount = 1 }\n"
+        "\ttest_effect = yes test_effect = yes\n}\n",
+        [(_SHARED, 3)],
     ),
 }
 
 
 @pytest.mark.parametrize("fixture", sorted(_SEMANTIC_FIXTURES))
 def test_semantic_fixture_agrees_uncached_cold_and_warm(tmp_path, monkeypatch, fixture):
-    script, missing_lines = _SEMANTIC_FIXTURES[fixture]
+    script, expected = _SEMANTIC_FIXTURES[fixture]
     path = tmp_path / "events" / "fixture.txt"
     _write(path, script)
-    args = (str(path), _AMOUNT_CONTRACT, str(tmp_path), frozenset())
+    args = (str(path), _AMOUNT_CONTRACT, str(tmp_path), frozenset(), frozenset())
 
     monkeypatch.setenv("MD_NO_CACHE", "1")
     uncached = _validate_call_sites_in_file(args)
@@ -1018,9 +1031,35 @@ def test_semantic_fixture_agrees_uncached_cold_and_warm(tmp_path, monkeypatch, f
     warm = _validate_call_sites_in_file(args)
 
     assert uncached == cold == warm
-    assert [(category, line) for category, _message, line in uncached] == [
-        ("missing-required-param", line) for line in missing_lines
-    ]
+    assert [(category, line) for category, _message, line in uncached] == expected
+
+
+@pytest.mark.parametrize("audit, shared_lines", [(False, [2]), (True, [2, 3])])
+def test_shared_line_calls_warn_and_the_audit_flag_widens_them(
+    tmp_path, audit, shared_lines
+):
+    _write(
+        tmp_path / "common" / "scripted_effects" / "effects.txt",
+        "# Parameters:\n# - amount: how much\ntest_effect = {\n}\nplain_effect = {\n}\n",
+    )
+    _write(
+        tmp_path / "events" / "caller.txt",
+        "option = {\n"
+        "\tset_temp_variable = { amount = 1 } test_effect = yes\n"
+        "\tif = { limit = { always = yes } plain_effect = yes }\n"
+        "\tplain_effect = yes\n"
+        "}\n",
+    )
+
+    validator = vsp.Validator(
+        str(tmp_path), use_colors=False, workers=1, audit_shared_lines=audit
+    )
+    validator.run_validations()
+
+    assert [
+        (issue.category, issue.severity, issue.line) for issue in validator._issues
+    ] == [(_SHARED, vsp.Severity.WARNING, line) for line in shared_lines]
+    assert validator.errors_found == 0
 
 
 def test_validator_reports_every_unreadable_input_as_an_error(tmp_path):

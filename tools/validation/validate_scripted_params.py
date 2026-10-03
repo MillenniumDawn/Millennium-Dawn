@@ -14,6 +14,7 @@ from typing import Dict, List, Set, Tuple
 
 import disk_cache
 from shared_utils import blank_quoted_strings
+from validate_unused_scripted import extract_definitions
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -453,13 +454,18 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
 
 
 def _validate_call_sites_in_file(
-    args: Tuple[str, Dict[str, Dict[str, List[str]]], str, "frozenset[str]"],
+    args: Tuple[
+        str, Dict[str, Dict[str, List[str]]], str, "frozenset[str]", "frozenset[str]"
+    ],
 ) -> List[Tuple[str, str, int]]:
     """Validate one file for missing required params and orphaned sets.
 
+    A contracted call must sit on its own line. ``audit_names`` extends that
+    to uncontracted effects; it is empty outside --audit-shared-lines.
+
     Returns a list of (category, message, line_number) tuples.
     """
-    filepath, contracts, mod_path, valid_tags = args
+    filepath, contracts, mod_path, valid_tags, audit_names = args
 
     try:
         with open(filepath, "r", encoding="utf-8-sig") as fh:
@@ -473,9 +479,11 @@ def _validate_call_sites_in_file(
 
     # Quick pre-check: does this file reference any contracted effect?
     contracted_names = set(contracts.keys())
-    if not any(name in text for name in contracted_names):
+    if not audit_names and not any(name in text for name in contracted_names):
         return []
 
+    lines = text.splitlines()
+    shared_lines: Set[int] = set()
     results: List[Tuple[str, str, int]] = []
     # Cache the tokenisation (the expensive, contract-independent step); the
     # contract validation below runs per call against the cached tokens.
@@ -544,7 +552,22 @@ def _validate_call_sites_in_file(
                 )
 
         elif kind == "call":
-            if value not in contracts:
+            contracted = value in contracts
+            if (
+                (contracted or value in audit_names)
+                and lineno not in shared_lines
+                and not _CALL_RE.fullmatch(lines[lineno - 1].strip())
+            ):
+                shared_lines.add(lineno)
+                results.append(
+                    (
+                        "call-shares-line",
+                        f"{rel}:{lineno} - '{value}' shares its line with other "
+                        f"script; put the call on its own line",
+                        lineno,
+                    )
+                )
+            if not contracted:
                 continue
 
             contract = contracts[value]
@@ -628,8 +651,10 @@ class Validator(BaseValidator):
     TITLE = "SCRIPTED EFFECT PARAMETER VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, audit_shared_lines: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
+        self.audit_shared_lines = audit_shared_lines
+        self._audit_names: Set[str] = set()
         self._contracts: Dict[str, Dict[str, List[str]]] = {}
         self._valid_tags: "frozenset[str]" = frozenset()
         self._unreadable: List[str] = []
@@ -658,6 +683,13 @@ class Validator(BaseValidator):
             except _READ_ERRORS as exc:
                 self._unreadable.append(_unreadable(filepath, self.mod_path, exc))
                 continue
+            if self.audit_shared_lines:
+                self._audit_names.update(
+                    name
+                    for name, _file, _line in extract_definitions(
+                        (filepath, self.mod_path)
+                    )
+                )
             for eff_name, contract in parsed.items():
                 if eff_name not in self._contracts and contract["required"]:
                     self._contracts[eff_name] = contract
@@ -682,8 +714,10 @@ class Validator(BaseValidator):
         files = self._collect_files(_CALLER_PATTERNS)
         self.log(f"  Scanning {len(files)} files for effect calls")
 
+        audit_names = frozenset(self._audit_names)
         args_list = [
-            (f, self._contracts, self.mod_path, self._valid_tags) for f in files
+            (f, self._contracts, self.mod_path, self._valid_tags, audit_names)
+            for f in files
         ]
         all_results = self._pool_map(
             _validate_call_sites_in_file, args_list, chunksize=20
@@ -693,6 +727,7 @@ class Validator(BaseValidator):
         scope_violation_results = []
         identical_param_results = []
         invalid_tag_results = []
+        shared_line_results = []
 
         for file_results in all_results:
             for category, message, _line in file_results:
@@ -704,6 +739,8 @@ class Validator(BaseValidator):
                     identical_param_results.append(message)
                 elif category == "invalid-influence-tag":
                     invalid_tag_results.append(message)
+                elif category == "call-shares-line":
+                    shared_line_results.append(message)
                 elif category == "unreadable-input":
                     self._unreadable.append(message)
 
@@ -739,6 +776,14 @@ class Validator(BaseValidator):
             category="invalid-influence-tag",
         )
 
+        self._report(
+            shared_line_results,
+            "Every checked effect call sits on its own line",
+            "Effect calls sharing a line with other script:",
+            severity=Severity.WARNING,
+            category="call-shares-line",
+        )
+
     def run_validations(self):
         self._build_contracts()
         self._build_tag_set()
@@ -753,8 +798,19 @@ class Validator(BaseValidator):
         )
 
 
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--audit-shared-lines",
+        action="store_true",
+        dest="audit_shared_lines",
+        help="Also warn on every scripted effect call that shares its line with "
+        "other script, not only the contracted ones",
+    )
+
+
 if __name__ == "__main__":
     run_validator_main(
         Validator,
         "Validate scripted effect parameters in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
     )
