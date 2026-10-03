@@ -476,6 +476,32 @@ Default output shows upload progress, warnings, errors, and the saved log path.
 `--verbose` also prints detailed timing, VDF contents, the command, and SteamCMD
 output. Full diagnostics and timing remain in the log in either mode.
 
+#### Cleanup and Interrupted Runs
+
+Each run stages into its own `md_publish_*` directory under the system temp
+directory and removes it when the run ends: on success, on failure, on Ctrl+C,
+and on `kill` or a closed terminal. The `git archive` and SteamCMD children are
+stopped first. On Linux and macOS the upload runs in its own process group, so
+SteamCMD's child processes stop with it. The interactive login stays attached to
+your terminal, so Ctrl+C reaches it directly. On Windows only the SteamCMD
+process itself is stopped, and that path is not verified.
+
+Cleanup cannot run when the publisher is force-killed (`kill -9`, Task Manager)
+or the machine crashes.
+
+If staging cannot be removed, the tool prints a warning with the leftover path
+and still reports the original error. To recover by hand, check that no
+`steamcmd` process is still running, then delete that one directory. Do not
+delete other `md_publish_*` directories by name or age. Another run may own
+them.
+
+Upload logs are saved as `md_publish_*.log` in the same temp directory, outside
+staging. Retries append to the same log. Logs are never removed automatically,
+so delete them yourself once you no longer need them.
+
+Separate runs never share staging. That does not make two uploads to the same
+Workshop item safe to run at once.
+
 #### English Workshop Description
 
 Public Workshop descriptions stay unchanged unless `--sync-description` is supplied:
