@@ -346,17 +346,21 @@ def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
     prose = _PROSE_COLOR_RE.sub("", value.replace("§§", "\0"))
     prose = _PROSE_REFERENCE_RE.sub("\0", prose).replace(r"\n", "\n")
     previous = None
+    previous_folded = None
+    has_tripled_letter = _TRIPLED_LETTER_RE.search(prose) is not None
     for match in _PROSE_WORD_RE.finditer(prose):
         word = match.group()
+        folded = word.casefold()
         if (
             previous is not None
-            and word.casefold() == previous.group().casefold()
+            and folded == previous_folded
             and prose[previous.end() : match.start()].strip(" \t") == ""
-            and f"{key}:{word.casefold()}" not in _REPEATED_WORD_EXEMPTIONS
+            and f"{key}:{folded}" not in _REPEATED_WORD_EXEMPTIONS
         ):
             yield "loc-repeated-word", f"{key}: repeated word '{word}' (review in context)"
         if (
-            word.isascii()
+            has_tripled_letter
+            and word.isascii()
             and word.islower()
             and _TRIPLED_LETTER_RE.search(word)
             and not _ROMAN_WORD_RE.fullmatch(word)
@@ -364,6 +368,7 @@ def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
         ):
             yield "loc-tripled-letter", f"{key}: tripled letter in '{word}' (review in context)"
         previous = match
+        previous_folded = folded
     if (
         key.endswith(("_desc", ".d"))
         and previous is not None

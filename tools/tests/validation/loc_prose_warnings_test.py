@@ -198,3 +198,8 @@ def test_exact_historical_strings(fixture):
         issue.category for issue in VL._scan_prose_text(text, "historical.yml")
     ] == (fixture["categories"])
     assert len(VL._scan_typos_text(text, "historical.yml")) == fixture["typos"]
+
+
+@pytest.mark.parametrize("value", ["Straße STRASSE", "café CAFÉ", "we’re we’re ready"])
+def test_non_ascii_repetition_keeps_full_casefold_matching(value):
+    assert [issue.category for issue in _scan(value)] == ["loc-repeated-word"]
