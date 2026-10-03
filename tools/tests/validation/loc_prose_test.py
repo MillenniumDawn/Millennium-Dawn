@@ -59,7 +59,9 @@ def test_both_violations_in_one_file(tmp_path):
 
 def test_flags_odd_count_of_escaped_quotes(tmp_path):
     results = _hits(tmp_path, 'l_english:\n key:0 "He said: \\"go now."\n')
-    assert [(r.category, r.line) for r in results] == [("loc-unbalanced-quote", 2)]
+    assert [(r.category, r.severity, r.line) for r in results] == [
+        ("loc-unbalanced-quote", "error", 2)
+    ]
 
 
 def test_balanced_escaped_quotes_not_flagged(tmp_path):

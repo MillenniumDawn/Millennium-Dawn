@@ -125,7 +125,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_equipment_variants.py
 
-- `equipment-variant-unavailable` (WARNING): an effect sequence creates a named variant
+- `equipment-variant-unavailable` (ERROR): an effect sequence creates a named variant
   without an assured enabling technology, then uses it in `add_equipment_production`,
   `create_ship`, or `add_equipment_to_stockpile`. Technologies resolve through
   `enable_equipments`, not by matching ids.
@@ -144,7 +144,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   reachable from a scheduled ancestor, fires from focuses or decisions, `random_events`
   pools, and chance-rolled `random` polls. A `date <` bound alone is an expiry guard.
 - `event-fire-type-mismatch`, `malformed-event-fire` (ERROR).
-- `event-option-log-without-effect` (WARNING): an option holding only `name`, `log`,
+- `event-option-log-without-effect` (ERROR): an option holding only `name`, `log`,
   `trigger`, and `ai_chance`. `hidden_effect`, scope blocks, and tooltips count as
   effects. `tools/linting/fix_event_option_logs.py` shares the detection and deletes the
   lines.
@@ -163,7 +163,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   art up to 1.45, news art from 2.0. The band between is not reported. For a sprite
   shared by both windows, split it into a `news_`-prefixed and an unprefixed pair
   instead of editing call sites.
-- `hidden-event-picture` (WARNING), `news-event-picture-omitted` (ERROR),
+- `hidden-event-picture`, `news-event-picture-omitted`,
   `placeholder-event-picture` (ERROR). Only pictures at depth 0 of the event body count,
   so leader portraits inside `immediate` do not.
 
@@ -228,10 +228,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_localisation.py and validate_scripted_localisation.py
 
-- `loc-em-dash`, `loc-backtick-apostrophe`, `loc-unbalanced-quote` (WARNING) scan only the
-  quoted values in `localisation/english/`. Inch marks and quotes spanning paragraphs
-  are expected false positives of the quote check.
-- `loc-typo-watchlist` (WARNING): `typo-watchlist.md` entries in prose, excluding keys and
+- `loc-em-dash`, `loc-backtick-apostrophe` (WARNING), and `loc-unbalanced-quote` (ERROR)
+  scan only the quoted values in `localisation/english/`. Inch marks and quotes spanning
+  paragraphs are expected false positives of the quote check.
+- `loc-typo-watchlist` (ERROR): `typo-watchlist.md` entries in prose, excluding keys and
   runtime references. `it's` and `civilisation` are excluded as context-dependent.
 - Prose warnings (repeated word, tripled letter, exact placeholder, dangling
   description): see `localisation-rules.md`.
@@ -242,7 +242,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_math_expressions.py
 
-- `math-sibling-operator`, `math-from-read` (WARNING). The traps are in
+- `math-sibling-operator`, `math-from-read` (ERROR). The traps are in
   `hoi4-data-structures.md`. Plain `set_temp_variable = { x = FROM.y }` copies are valid.
 
 ## validate_mesh_textures.py
@@ -262,10 +262,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_mios.py
 
-- Gates: org-id format, `allowed = { original_tag = TAG }`, non-empty `on_complete`.
-  WARNING: initial-trait naming and trait-grid x above 9. Negative x is the standard
+- Gates: org-id format, `allowed = { original_tag = TAG }`, non-empty `on_complete`,
+  initial-trait naming, and trait-grid x above 9. Negative x is the standard
   first column. `generic_` orgs and `generic_` initial traits are exempt.
-- Trait geometry (WARNING): `trait-geometry-parent-row` (child on or above its parent's
+- Trait geometry (ERROR): `trait-geometry-parent-row` (child on or above its parent's
   row), `trait-geometry-mutex-row` (mutually exclusive traits on different rows),
   `trait-geometry-mutex-parents` (a `parent` or `all_parents` list naming two mutually
   exclusive traits locks the child out, `any_parent` is the fix). Unresolvable anchors
@@ -315,7 +315,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_oob_units.py and validate_ai_equipment.py
 
 - Every `create_equipment_variant` is slot-checked through `equipment_module_slots.py`
-  (ERROR): required slots, hull `module_count_limit`, `forbid_equipment_type`.
+  (ERROR): unknown hulls, slots, and modules, slot categories, required slots, hull
+  `module_count_limit`, `forbid_equipment_type`.
   `validate_ai_equipment.py` applies the same rules to `target_variant` designs.
 - `parent_version` is not resolved. A clean run on a `parent_version > 0` design is not
   proof the runtime design is legal.
