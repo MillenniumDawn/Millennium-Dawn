@@ -14,11 +14,13 @@ Pins these behaviors for change_influence_percentage:
      refs, array subscripts, numerics, and aliases are accepted.
 """
 
+import json
 import runpy
 import sys
 
 import pytest
 import validate_scripted_params as vsp
+from shared.suite import initialize_git_repository, run_git
 from shared_utils import collapse_or_compact
 from validate_scripted_params import _validate_call_sites_in_file
 
@@ -1284,3 +1286,136 @@ def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch):
         runpy.run_path(vsp.__file__, run_name="__main__")
 
     assert exit_info.value.code == 0
+
+
+# --- staged dependency rescans (#5185) -------------------------------------
+
+_EFFECT_FILE = "common/scripted_effects/e.txt"
+_TAG_FILE = "common/country_tags/00_countries.txt"
+_ALIAS_FILE = "common/country_tag_aliases/aliases.txt"
+_REQUIRES_AMOUNT = "# Parameters:\n# - amount: how much\ntest_effect = {\n}\n"
+_BARE_CALL = "option = {\n\ttest_effect = yes\n}\n"
+_INFLUENCE_CALL = (
+    "option = {\n"
+    "\tset_temp_variable = { percent_change = 5 }\n"
+    "\tset_temp_variable = { influence_target = ZZZ }\n"
+    "\tchange_influence_percentage = yes\n"
+    "}\n"
+)
+
+
+def _committed_tree(tmp_path, monkeypatch, files):
+    """Commit `files` as the base of a git repository at tmp_path."""
+    for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "MD_STAGED_FILES"):
+        monkeypatch.delenv(name, raising=False)
+    for relative, content in files.items():
+        _write(tmp_path / relative, content)
+    initialize_git_repository(tmp_path, *files)
+
+
+def _stage(tmp_path, relative, content):
+    """Stage new content for a file, or its deletion when content is None."""
+    if content is None:
+        run_git(tmp_path, "rm", relative)
+        return
+    _write(tmp_path / relative, content)
+    run_git(tmp_path, "add", relative)
+
+
+def _cli_findings(tmp_path, monkeypatch, *flags):
+    """Run the CLI on tmp_path and return each finding as (category, file, line)."""
+    output = tmp_path / "result.log"
+    argv = [vsp.__file__, "--path", str(tmp_path), "--workers", "1", "--no-color"]
+    monkeypatch.setattr(sys, "argv", [*argv, "--output", str(output), *flags])
+    with pytest.raises(SystemExit):
+        runpy.run_path(vsp.__file__, run_name="__main__")
+    with open(output.with_suffix(".json"), encoding="utf-8") as sidecar:
+        return sorted(
+            (issue["category"], issue["file"], issue["line"])
+            for issue in json.load(sidecar)
+        )
+
+
+def test_staged_contract_change_rechecks_unchanged_callers(tmp_path, monkeypatch):
+    """Staging only the contract used to report nothing for its callers."""
+    _committed_tree(
+        tmp_path,
+        monkeypatch,
+        {_EFFECT_FILE: "test_effect = {\n}\n", "events/e.txt": _BARE_CALL},
+    )
+    _stage(tmp_path, _EFFECT_FILE, _REQUIRES_AMOUNT)
+    cache = tmp_path / ".validation_cache"
+
+    full = _cli_findings(tmp_path, monkeypatch, "--no-cache")
+    uncached = _cli_findings(tmp_path, monkeypatch, "--staged", "--no-cache")
+    assert not cache.exists()
+    monkeypatch.delenv("MD_NO_CACHE")
+    cold = _cli_findings(tmp_path, monkeypatch, "--staged")
+    assert cache.exists()
+    warm = _cli_findings(tmp_path, monkeypatch, "--staged")
+
+    assert full == uncached == cold == warm == [(_MISSING, "events/e.txt", 2)]
+
+
+def test_staged_contract_removal_leaves_no_stale_warm_findings(tmp_path, monkeypatch):
+    """The rescan still runs, so findings from other contracts stay."""
+    _committed_tree(
+        tmp_path,
+        monkeypatch,
+        {
+            _EFFECT_FILE: _REQUIRES_AMOUNT,
+            "events/e.txt": _BARE_CALL,
+            "events/kept.txt": "option = {\n\tchange_influence_percentage = yes\n}\n",
+        },
+    )
+    kept = (_MISSING, "events/kept.txt", 2)
+    assert _cli_findings(tmp_path, monkeypatch) == [(_MISSING, "events/e.txt", 2), kept]
+
+    _stage(tmp_path, _EFFECT_FILE, None)
+
+    assert _cli_findings(tmp_path, monkeypatch, "--staged") == [kept]
+
+
+@pytest.mark.parametrize(
+    "dependency, base, staged",
+    [
+        (_TAG_FILE, 'ZZZ = "countries/ZZZ.txt"\n', 'ZZY = "countries/ZZZ.txt"\n'),
+        (_TAG_FILE, 'ZZZ = "countries/ZZZ.txt"\n', None),
+        (_ALIAS_FILE, "ZZZ = {\n}\n", "ZZY = {\n}\n"),
+        (_ALIAS_FILE, "ZZZ = {\n}\n", None),
+    ],
+    ids=["tag-renamed", "tag-file-deleted", "alias-renamed", "alias-file-deleted"],
+)
+def test_staged_tag_or_alias_change_rechecks_unchanged_callers(
+    tmp_path, monkeypatch, dependency, base, staged
+):
+    _committed_tree(
+        tmp_path, monkeypatch, {dependency: base, "events/e.txt": _INFLUENCE_CALL}
+    )
+    assert _cli_findings(tmp_path, monkeypatch) == []
+
+    _stage(tmp_path, dependency, staged)
+
+    assert _cli_findings(tmp_path, monkeypatch, "--staged") == [
+        ("invalid-influence-tag", "events/e.txt", 3)
+    ]
+
+
+def test_staged_caller_edit_scans_only_that_caller(tmp_path, monkeypatch):
+    """No dependency changed, so unchanged and deleted callers are left alone."""
+    _committed_tree(
+        tmp_path,
+        monkeypatch,
+        {
+            _EFFECT_FILE: _REQUIRES_AMOUNT,
+            "events/changed.txt": _BARE_CALL,
+            "events/unchanged.txt": _BARE_CALL,
+            "events/removed.txt": _BARE_CALL,
+        },
+    )
+    _stage(tmp_path, "events/changed.txt", "\n" + _BARE_CALL)
+    _stage(tmp_path, "events/removed.txt", None)
+
+    assert _cli_findings(tmp_path, monkeypatch, "--staged") == [
+        (_MISSING, "events/changed.txt", 3)
+    ]
