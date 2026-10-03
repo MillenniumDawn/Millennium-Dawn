@@ -361,13 +361,13 @@ Choosing **No Foreign Reserve** eliminates foreign debt denomination effects and
 
 ### Currency Strength
 
-Currency strength is recalculated monthly. Each currency is pulled back toward its **base strength**, while your economy pushes it up or down:
+Currency strength is recalculated monthly. Falls are a share of its current level, so a weak currency falls in smaller steps. Each currency is pulled back toward its **base strength**, while your economy pushes it up or down:
 
 | Factor             | Effect                                                                                                                                                          |
 | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Real interest rate | A policy rate more than 1 point above inflation supports your currency. A lower rate weakens it.                                                                |
 | Debt interest rate | The part of your debt's interest rate not set by the policy rate weakens your currency once it passes 5 points, and quickly past 10. Having no debt is neutral. |
-| Inflation          | Up to 5% is neutral. Above 5% the penalty grows quickly and is severe by 20%.                                                                                   |
+| Inflation          | Weakens your currency through the real interest rate. A policy rate that keeps pace with inflation shields it.                                                  |
 | Stability          | Stability above 50% strengthens your currency, and stability below 50% weakens it.                                                                              |
 | Economic cycle     | A boom or fast growth helps. Stagnation, recession and depression hurt.                                                                                         |
 | War                | Losing a war or fighting a civil war weakens your currency.                                                                                                     |
@@ -421,7 +421,7 @@ Six factors feed into the quarterly inflation calculation:
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **GDP/C Growth**             | Higher GDP per capita growth directly increases inflation pressure. A rapidly growing economy generates demand that pushes prices up.                   |
 | **Tax Rate**                 | Higher average tax rates reduce inflation pressure. Taxes act as a fiscal brake on the economy -- they pull money out of circulation.                   |
-| **Central Bank Policy Rate** | The _real_ policy rate (policy rate minus current inflation) is what matters. A positive real rate suppresses inflation; a negative real rate fuels it. |
+| **Central Bank Policy Rate** | Each point cuts how much of your inflation carries into the next quarter, at any inflation level. A rate under the neutral rate also adds to inflation. |
 | **Economic Cycle**           | Boom and fast growth stages add inflationary pressure. Depression and recession stages reduce it. Stable growth is neutral.                             |
 | **Budget Balance**           | A budget deficit increases inflation (simulating money printing to cover the gap). A budget surplus decreases it.                                       |
 | **Currency Strength**        | A weak currency (below 1.0) feeds additional inflation pressure through higher import costs. A strong currency suppresses it.                           |
@@ -434,7 +434,7 @@ Each quarter, the game calculates an inflation adjustment from the factors above
 
 1. **GDP/C growth contribution**: The base adjustment starts from last quarter's GDP per capita growth rate, scaled by your GDP per capita level. Higher GDP/C amplifies the effect of growth on prices.
 2. **Tax dampening**: The adjustment is reduced proportionally to your average tax rate. At higher tax rates, more of the growth-driven inflation is absorbed.
-3. **Policy rate effect**: The real central bank rate (policy rate minus inflation, with a 2% floor on inflation for this calculation) is subtracted. A tight monetary policy (real rate > 0) pulls inflation down; loose policy (real rate < 0) lets it rise.
+3. **Policy rate effect**: The policy rate is compared with a neutral rate and also cuts how much inflation carries into the next quarter. See [Central Bank Policy Rate](#central-bank-policy-rate).
 4. **Economic cycle**: The current cycle stage applies an additional adjustment, scaled by total government spending:
 
 | Cycle Stage   | Inflation Adjustment |
@@ -453,26 +453,18 @@ The quarterly result is stored and averaged with the previous three quarters. Th
 
 ### Central Bank Policy Rate
 
-The **Central Bank Policy Rate** is a manually adjustable interest rate (0-20%) that represents your country's monetary policy stance. It starts at 3% for all countries.
+The **Central Bank Policy Rate** is a manually adjustable interest rate (0-20%) that represents your country's monetary policy stance. It starts at 3% for most countries.
 
-What matters for inflation is the **real rate** -- the difference between the policy rate and the current inflation rate. For example:
+The rate works on inflation in two ways:
 
-- Policy rate 5%, inflation 3% = real rate +2% (tight, reduces inflation)
-- Policy rate 3%, inflation 5% = real rate -2% (loose, increases inflation)
-- Policy rate 2%, inflation 2% = real rate 0% (neutral)
+- **Against the neutral rate.** The neutral rate is inflation plus 0.5 to 2.5 points, and never above 20%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%. The effect stops at 3% either way.
+- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 40% at a rate of 20%. This works at any inflation level, so a high rate still pulls down inflation that is far above 20%. A large budget deficit raises the share again.
 
-The AI adjusts the policy rate automatically based on inflation:
-
-| Condition                                          | AI Action                                     |
-| -------------------------------------------------- | --------------------------------------------- |
-| Inflation above 10%                                | Raises policy rate toward 20%                 |
-| Inflation above 5%                                 | Raises policy rate toward 15%                 |
-| Inflation above 1%, rate under inflation + 1 point | Raises policy rate toward inflation + 1 point |
-| Inflation below 1%                                 | Lowers policy rate toward 1%                  |
+The AI moves its rate toward the neutral rate once a quarter. It raises the rate three points when it is more than 5 points below neutral. Otherwise it moves one point up or down.
 
 Players can adjust the policy rate manually to respond faster or pursue different monetary strategies than the AI default.
 
-The real rate also moves your currency. See [Currency Strength](#currency-strength).
+The gap between your rate and inflation also moves your currency. See [Currency Strength](#currency-strength).
 
 ### Currency and Inflation
 
@@ -509,7 +501,7 @@ Inflation applies a dynamic modifier that scales with the inflation rate. The ef
 
 Inflation responds to multiple levers. Here are the main strategies:
 
-**Raise the central bank policy rate.** The most direct tool. Increasing the policy rate above the inflation rate creates a positive real rate, which suppresses inflation over the following quarters. The tradeoff is that high rates also slow economic growth.
+**Raise the central bank policy rate.** The most direct tool. Every point cuts how much inflation carries into the next quarter, even when inflation is far above the rate. The tradeoff is that high rates also raise debt interest and slow economic growth.
 
 **Raise taxes.** Higher tax rates dampen inflation by pulling money out of the economy. However, high corporate taxes reduce productivity growth, so this is a short-term fix with long-term costs.
 
