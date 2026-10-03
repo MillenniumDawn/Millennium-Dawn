@@ -190,56 +190,21 @@ See [`.claude/docs/typo-watchlist.md`](.claude/docs/typo-watchlist.md) for the f
 
 ## Prose warnings
 
-`validate_localisation.py` reports these English-value checks as WARNING, including
-under `--strict`. They are review prompts, not automatic rewrites:
+`validate_localisation.py` warns on these English-value checks, even under
+`--strict`. They are review prompts, not automatic rewrites:
 
-- `loc-repeated-word`: case-insensitive adjacent whole words separated by spaces or
-  tabs. Punctuation and rendered newlines separate phrases; contractions remain
-  whole words. Names, grammatical repetitions, and deliberate speech can be valid.
-- `loc-tripled-letter`: three consecutive identical letters in an entirely
-  lowercase ASCII word. Uppercase/mixed-case words and Roman numerals are skipped.
-  Intentional stretched words are exempt by exact whole-word spelling.
-- `loc-placeholder`: a complete value exactly equal to `TODO`, `TBD`, `TDA`, `WIP`,
-  or `PLACEHOLDER`. Substrings and color-wrapped text are not this rule's target.
-- `loc-dangling-description`: an `_desc` or `.d` value ending without punctuation
-  on one of `a an the and or but of to with for from at by into onto than because
-although if while whose which our their your its them`. This is deliberately a
-  finite heuristic, not a grammar checker. A complete sentence can end in `them`
-  or a preposition; review the sentence before adding its missing final period.
-  Adding a period to incomplete text is not a fix.
-
-Color delimiters are removed for word checks while their visible contents remain.
-Bracket references, dollar substitutions, icons, literal `$$`/`§§`, and rendered
-newlines preserve boundaries. Runtime text is opaque: ignoring its contents must
-not join neighboring words or manufacture an unfinished sentence ending.
-Existing escaped-quote, em-dash, and backtick checks still use the original value.
+- `loc-repeated-word`: the same word twice in a row (`the the`). Names, grammar, and
+  deliberate speech can be valid.
+- `loc-tripled-letter`: three identical letters in a lowercase word, usually a typo.
+- `loc-placeholder`: a value that is only `TODO`, `TBD`, `TDA`, `WIP`, or
+  `PLACEHOLDER`. Write the real text.
+- `loc-dangling-description`: an `_desc` or `.d` value that ends without punctuation
+  on a word like `the`, `of`, `with`, or `them`. This is a heuristic. A complete
+  sentence can end in `them` or a preposition. Read it before adding a period;
+  a period on cut-off text is not a fix.
 
 Reviewed exceptions live in `validation_config.json` under `validate_localisation`:
-`repeated_word_exemptions` and `dangling_description_exemptions` use exact
-`key:lowercase-word` entries; `stretched_word_exemptions` uses whole words. Every
-entry needs a reason. Do not exempt a whole file or suppress a placeholder just to
-clear a report. The Romanian sentencing event deliberately continues into its
-option text, so its `to` ending is exempt.
-
-The #5127 audit used main `f99f2055f069e41c6f51623c82d2fcc6a7f7338b` (299 English
-files). Before cleanup the new rules found 111 repeated-word occurrences, eight
-tripled-letter typos, five placeholders, and 95 potentially dangling endings.
-Review corrected 57 repeated-word occurrences and all eight spelling errors,
-exempted 52 intentional repetitions, and added missing periods to 94 complete
-descriptions. These were punctuation fixes, not recovered cut-off sentences.
-Three Serbian disaster-event descriptions were written from their existing event
-titles and options, without adding dates, casualties, rewards, or other new facts.
-The remaining four warnings require content decisions:
-
-- `SER_crop_field_production_desc` and `promoted_from_the_ranks_desc`: no supporting
-  in-repository script consumers were found; keep their placeholders visible until
-  their intended use is established.
-- `PAN.oligarchism`: `Calor Calor` has no corroborating description to establish
-  whether this is an intentional name.
-- `CSA.Western_Autocracy_desc`: `parry of of` sits inside a sentence whose intended
-  wording is unclear; deleting one word alone would not repair the sentence.
-
-The original ticket's 36/15/76 counts are historical. #5152 had already corrected
-its `the the`, `seeeker`, `actionns`, and `annexd` examples; regression fixtures
-retain the exact before/after #5122 and after #5152 strings. `Toooitips` occurs only
-in comments and is outside these value-only rules.
+`repeated_word_exemptions` and `dangling_description_exemptions` take
+`key:lowercase-word` entries, and `stretched_word_exemptions` takes whole words.
+Every entry needs a reason. Do not exempt a whole file or a placeholder just to
+clear a report.
