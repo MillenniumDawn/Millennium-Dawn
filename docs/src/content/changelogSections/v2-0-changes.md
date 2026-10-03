@@ -1,10 +1,10 @@
 ---
-title: v2.0
+title: v2.0.0 - 'The Millennium Renaissance'
 page_id: changelog-v2-0-changes
 order: 14
 ---
 
-v2.0.1
+## v2.0.1
 
 Content:
 
@@ -446,8 +446,6 @@ Map:
 - [UKR] Added +1 airbase level in Lviv (700) and Khmelnytskyi (1240) to better recreate actual capacity in those regions
 
 ## v2.0.0 - "The Millennium Renaissance"
-
-v2.0.0
 
 Content:
 
