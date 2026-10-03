@@ -453,12 +453,12 @@ The quarterly result is stored and averaged with the previous three quarters. Th
 
 ### Central Bank Policy Rate
 
-The **Central Bank Policy Rate** is a manually adjustable interest rate (0-20%) that represents your country's monetary policy stance. It starts at 3% for most countries.
+The **Central Bank Policy Rate** is a manually adjustable interest rate (0-30%) that represents your country's monetary policy stance. It starts at 3% for most countries.
 
 The rate works on inflation in two ways:
 
-- **Against the neutral rate.** The neutral rate is inflation plus 0.5 to 2.5 points, and never above 20%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%. The effect stops at 3% either way.
-- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 40% at a rate of 20%. This works at any inflation level, so a high rate still pulls down inflation that is far above 20%. A large budget deficit raises the share again.
+- **Against the neutral rate.** The neutral rate is inflation plus 0.5 to 2.5 points, and never above 30%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%. The effect stops at 3% either way.
+- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A large budget deficit raises the share again.
 
 The AI moves its rate toward the neutral rate once a quarter. It raises the rate three points when it is more than 5 points below neutral. Otherwise it moves one point up or down.
 
