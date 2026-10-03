@@ -149,10 +149,16 @@ def test_scan_meta_constructed_names_needs_a_substituted_segment(tmp_path, write
 # ---- logging --------------------------------------------------------------
 
 
-@pytest.mark.parametrize("level", ["ERROR", "INFO", "WARNING"])
-def test_md_log_level_env_var_sets_the_module_threshold(monkeypatch, level):
+@pytest.mark.parametrize(
+    ("env", "level"),
+    [("error", "ERROR"), ("info", "INFO"), ("warning", "WARNING"), (None, "WARNING")],
+)
+def test_md_log_level_env_var_sets_the_module_threshold(monkeypatch, env, level):
     """The threshold is read at import, so it is env-driven, not settable later."""
-    monkeypatch.setenv("MD_LOG_LEVEL", level.lower())
+    if env is None:
+        monkeypatch.delenv("MD_LOG_LEVEL", raising=False)
+    else:
+        monkeypatch.setenv("MD_LOG_LEVEL", env)
     spec = importlib.util.spec_from_file_location("validator_common_probe", VC.__file__)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -250,7 +256,9 @@ def test_get_full_path_returns_none_when_unreadable(dummy, tmp_path):
 # ---- file collection ------------------------------------------------------
 
 
-def test_collect_files_staged_with_nothing_staged(tmp_path, monkeypatch):
+def test_collect_files_staged_with_nothing_staged(tmp_path, monkeypatch, write_path):
+    # A full scan would find this file, so an empty result proves the staged path.
+    write_path(tmp_path, "common/a.txt", "x")
     monkeypatch.setenv("MD_STAGED_FILES", "")
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, staged_only=True, workers=1)
     assert v._collect_files(["common/**/*.txt"]) == []

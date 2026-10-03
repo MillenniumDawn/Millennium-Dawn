@@ -14,6 +14,9 @@ Username is read from --username or the STEAM_USERNAME env var.
 X.Y.Z, legacy suffixes such as X.Y.Zb or X.Y.Zrc1, and SemVer prereleases such
 as X.Y.Z-beta.5. An optional leading v or V is ignored; omit the flag to ship
 whatever version is currently committed in the repo.
+
+The banner's DEV marker becomes BETA on beta uploads and is stripped on release
+uploads, with or without --version. Test uploads keep it.
 """
 
 import argparse
@@ -65,8 +68,8 @@ FRONTEND_LOCALES = (
     "spanish",
 )
 
-# An existing version token inside those values, e.g. v2.0.0, v1.12.3b, or
-# v2.0.0-beta.1. Boundaries prevent a partial match from leaving a suffix behind.
+# An existing version token inside those values, e.g. v2.0.1, v1.12.3b, or
+# v2.0.1-beta.1. Boundaries prevent a partial match from leaving a suffix behind.
 _VERSION_NUMBER = r"(?:0|[1-9][0-9]*)"
 _PRERELEASE_IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z][0-9A-Za-z-]*)"
 _VERSION_BODY = (
@@ -76,6 +79,13 @@ _VERSION_BODY = (
 )
 VERSION_TOKEN = re.compile(rf"(?<![A-Za-z0-9_])v{_VERSION_BODY}(?![A-Za-z0-9_.+-])")
 VERSION_VALUE = re.compile(rf"[vV]?{_VERSION_BODY}")
+
+# Committed banners mark dev builds after the version (simp_chinese uses 开发版).
+# Each target's banner shows its replacement marker; unlisted targets keep it.
+BANNER_VERSION = re.compile(
+    rf"(?P<token>{VERSION_TOKEN.pattern})(?P<marker> (?:DEV|开发版)(?!\w))?"
+)
+BANNER_MARKERS = {"release": "", "beta": " BETA"}
 
 # Files that must always be included (even if unchanged in diff mode).
 ALWAYS_KEEP = {"descriptor.mod", "thumbnail.png"}
@@ -496,8 +506,13 @@ def frontend_loc_files(mod_dir: Path) -> tuple[Path, ...]:
     )
 
 
-def patch_frontend_version(mod_dir: Path, version: str) -> None:
-    """Point every required in-game version banner at the uploaded version."""
+def patch_frontend_version(
+    mod_dir: Path, version: str | None, marker: str | None = None
+) -> None:
+    """Point every required in-game version banner at the uploaded version.
+
+    A marker replaces the banner's dev marker; None keeps the committed one.
+    """
     loc_files = frontend_loc_files(mod_dir)
     validated: list[tuple[Path, list[str]]] = []
 
@@ -530,11 +545,15 @@ def patch_frontend_version(mod_dir: Path, version: str) -> None:
                 )
         validated.append((loc_file, lines))
 
+    def rewrite(match: re.Match[str]) -> str:
+        token = f"v{version}" if version else match["token"]
+        return token + ((match["marker"] or "") if marker is None else marker)
+
     updated = 0
     for loc_file, lines in validated:
         patched = [
             (
-                VERSION_TOKEN.sub(lambda _match: f"v{version}", line, count=1)
+                BANNER_VERSION.sub(rewrite, line, count=1)
                 if line.split(":", 1)[0].strip() in VERSION_LOC_KEYS
                 else line
             )
@@ -545,8 +564,9 @@ def patch_frontend_version(mod_dir: Path, version: str) -> None:
                 handle.write("".join(patched))
             updated += 1
 
+    shown = (f"v{version}" if version else "repo version") + (marker or "")
     print(
-        f"  Version banner: v{version} "
+        f"  Version banner: {shown} "
         f"({updated}/{len(loc_files)} frontend files rewritten)"
     )
 
@@ -822,6 +842,8 @@ def main() -> None:
 
     # Validate before copying or staging anything.
     version = normalize_version(args.version)
+    marker = BANNER_MARKERS.get(args.target)
+    rewrite_banner = version is not None or marker is not None
 
     mod_id = args.mod_id or MOD_IDS[args.target]
     excludes = set() if args.no_default_excludes else set(DEFAULT_EXCLUDES)
@@ -858,7 +880,7 @@ def main() -> None:
                     "ERROR: No publishable mod files changed after excludes. "
                     "Use --full or adjust --exclude / --no-default-excludes."
                 )
-            if version:
+            if rewrite_banner:
                 # The banner lives in files a diff upload would otherwise drop.
                 publishable_changed |= {
                     loc_file.relative_to(mod_dir).as_posix()
@@ -871,9 +893,9 @@ def main() -> None:
         # Rewrite descriptor.mod so the shipped copy matches this target.
         patch_descriptor(mod_dir, MOD_NAMES[args.target], mod_id, version)
 
-        # Keep the menu/loading-screen version in step with the upload.
-        if version:
-            patch_frontend_version(mod_dir, version)
+        # Keep the menu/loading-screen version and label in step with the upload.
+        if rewrite_banner:
+            patch_frontend_version(mod_dir, version, marker)
 
         # Validate required files exist
         validate_mod_files(mod_dir)
