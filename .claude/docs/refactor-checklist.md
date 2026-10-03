@@ -1,124 +1,79 @@
-# Refactor Breaking-Change Checklist
+# Refactor Checklist
 
-Steps to verify a large-scale rename, refactor, or subsystem rewrite doesn't silently break the game. Run these **after** automated review and **before** declaring the PR ready.
+For a rename, migration, or subsystem rewrite. Run after automated review and before
+calling the PR ready.
 
-## 1. Prefix / Name Rename Verification
+## Renames
 
-When renaming a prefix (e.g., `AC_` -> `investments_`), verify no stale references remain anywhere in the repo.
+Search the whole repo for the old name, not only the changed files. Other subsystems,
+on_actions, and country overrides may reference it. Cover every kind of reference:
 
-```bash
-# Flags
-grep -rn "old_flag_name" common/ events/
-# Variables
-grep -rn "old_variable_name" common/ events/
-# Event IDs
-grep -rn "old_namespace\." common/ events/
-# Decision IDs
-grep -rn "old_decision_id" common/ events/
-# Scripted loc names
-grep -rn "old_scripted_loc_name" common/ localisation/
-# GUI window names
-grep -rn "old_window_name" interface/ common/scripted_guis/
-# GFX sprite names
-grep -rn "GFX_old_prefix" interface/ gfx/
-# Opinion modifiers
-grep -rn "old_opinion_modifier" common/ localisation/
-```
+- Flags, variables, event ids (`old_namespace.`), and decision ids in `common/` and
+  `events/`.
+- Scripted loc names and opinion modifiers in `common/` and `localisation/`.
+- GUI window names in `interface/` and `common/scripted_guis/`.
+- `GFX_` sprite names in `interface/` and `gfx/`.
 
-**Tip:** Search the **entire repo**, not just changed files. Other subsystems, `on_actions`, and country-specific overrides may reference the old names.
+## Array indices
 
-## 2. Array Index Semantic Verification
+For every `foo^bar` read, find where `bar` is set, confirm it is set before the call,
+and confirm it holds the kind of index the reader expects. Slot and type indices:
+`scripting-edge-cases.md`.
 
-When a function uses array subscripts (`^idx`), trace every caller to confirm `idx` holds the expected value.
+## Globals to an array
 
-For the index-type table (slot position vs lookup key) and naming semantics, see `.claude/docs/scripting-edge-cases.md` (Array Index Semantics). For every `foo^bar` read, find where `bar` is set, confirm it is set before the call, and verify it holds the kind of index the reader expects.
+- [ ] Every old global is updated in scripted effects, triggers, and scripted loc.
+- [ ] Loc strings using `[?global.old_name]` are updated. They fail silently to 0.
 
-## 3. Global Variable -> Array Migration
+## Changed preconditions
 
-When replacing individual globals with an array, check:
+When an effect's requirements change, check every caller:
 
-- [ ] Every old global reference in **scripted effects** is updated to the array lookup.
-- [ ] Every old global reference in **scripted triggers** is updated.
-- [ ] Every old global reference in **scripted localisation** is updated.
-- [ ] **Localisation strings** using `[?global.old_name]` are updated. These fail silently to 0.
-- [ ] Any **other mods or submods** that depend on this mod are checked (if applicable).
+- A variable or temp variable it now needs is set first, in the right scope.
+- An array it assumes is initialized before the first call.
+- Callers passing a sentinel such as `project = -1` do not enter the slot branch.
 
-## 4. Function Precondition Verification
+## Events and decisions
 
-When a function's requirements change, verify all callers meet the new preconditions.
-
-| Change                                | What to Check                                           |
-| ------------------------------------- | ------------------------------------------------------- |
-| Requires variable X to be set first   | Every caller sets X before calling                      |
-| Requires temp variable Y              | Every caller sets Y in the right scope                  |
-| Assumes array Z is initialized        | `resize_array` or `set_variable` runs before first call |
-| Expects `project > -1` for slot logic | Callers with `project = -1` don't enter the slot branch |
-
-## 5. Event Namespace and Option Consistency
-
-- [ ] `add_namespace = foo` at the top of the file matches every `country_event = { id = foo.N }`.
-- [ ] Every event option's `log =` string matches its `name =` key suffix (`.a`, `.b`, etc.).
-- [ ] Every option name key (`foo.N.a`, `foo.N.b`) has a matching loc entry.
-- [ ] Event title key is `foo.N.t`, description is `foo.N.d`.
-
-## 6. Decision Namespace Consistency
-
-- [ ] Every decision ID in `common/decisions/*.txt` has a matching loc entry.
-- [ ] Decision category names in `common/decisions/categories/*.txt` match the category referenced in decisions.
+- [ ] `add_namespace` matches every event id in the file.
+- [ ] Each option's `log` matches its own name suffix.
+- [ ] Every title, description, and option key has a loc entry.
+- [ ] Every decision id has a loc entry, and its category exists.
+- [ ] `days_remove` and `days_mission_timeout` reference a variable that exists at
+      activation.
 - [ ] `highlight_states_trigger` uses `THIS` or `ROOT` correctly for state scope.
-- [ ] `days_remove` / `days_mission_timeout` references a variable that exists at activation time.
 
-## 7. GUI and GFX Cross-Reference
+## GUI and GFX
 
-- [ ] Every `window_name` in `scripted_gui` has a matching `containerWindowType` in `.gui` files.
-- [ ] Every button `name` in `scripted_gui` `effects` matches a `buttonType` / `iconType` in `.gui`.
-- [ ] Every `spriteType` referenced in `.gui` has a matching `name` in `.gfx` files.
-- [ ] Every `.gfx` `texturefile` path points to an existing `.dds` file.
+- [ ] Every scripted GUI `window_name` has a matching `containerWindowType`.
+- [ ] Every button named in `effects` matches a `buttonType` or `iconType`.
+- [ ] Every sprite referenced in `.gui` is defined in a `.gfx`, and its `texturefile`
+      exists.
 
-## 8. Decision `visible` Block Performance
+## Scope safety
 
-- [ ] `visible = { always = no }` is fine for scripted-effect-only decisions.
-- [ ] Any non-trivial `visible` block is checked for `every_country` / `any_country` without a narrow array.
-- [ ] Complex `visible` blocks should be replaced with a cached flag set in `on_actions`.
+- [ ] `CONTROLLER` is used only in state scope.
+- [ ] `var:X = { ... }` is guarded when X may be unset.
+- [ ] Divisions guard the denominator.
+- [ ] No non-trivial decision `visible` block walks `every_country` or `any_country`.
 
-## 9. `ai_will_do` Syntax
+## Removing a country tag
 
-- [ ] `ai_will_do = { base = N }` is used, not `factor = N` at root level.
-- [ ] `ai_chance` inside event options also uses `base = N`.
+- [ ] `common/country_tags/00_countries.txt`: the tag definition.
+- [ ] `common/countries/TAG - Name.txt` and `history/countries/TAG - Name.txt`.
+- [ ] `common/countries/colors.txt`: the color entry.
+- [ ] `history/states/*.txt`: `add_core_of`, owner, and controller references.
+- [ ] `common/scripted_localisation/*_FR_loc.txt`: French article tag lists.
 
-## 10. Scope Safety
+Converting it to a cosmetic alias:
 
-- [ ] `CONTROLLER` is only used inside a **state scope**.
-- [ ] `var:X = { ... }` checks `exists = yes` when X might be 0 or -1 (uninitialized).
-- [ ] Division operations guard the denominator with `clamp_temp_variable` or a zero-check.
+- [ ] Add it to `common/country_tag_aliases/tag_aliases.txt` with `original_tag` and
+      the flag condition.
+- [ ] Move its color to `common/countries/cosmetic.txt`. `colors.txt` accepts only real
+      tags.
+- [ ] Check every `set_cosmetic_tag = TAG` call.
 
-## 11. Country Tag Removal / Consolidation
-
-When removing a country tag entirely (not just renaming), check every layer:
-
-### Files to update
-
-- [ ] `common/country_tags/00_countries.txt` — remove the tag definition
-- [ ] `common/countries/TAG - Name.txt` — delete the country file
-- [ ] `history/countries/TAG - Name.txt` — delete the history file
-- [ ] `common/countries/colors.txt` — remove the color entry (or move to `cosmetic.txt` if keeping as alias)
-- [ ] `history/states/*.txt` — remove `add_core_of = TAG` and owner/controller references
-- [ ] `common/scripted_localisation/*_FR_loc.txt` — remove from French article trigger tag lists
-
-### If converting to a cosmetic tag alias
-
-- [ ] Add entry to `common/country_tag_aliases/tag_aliases.txt` with `original_tag` and flag condition
-- [ ] Move color definition from `colors.txt` to `common/countries/cosmetic.txt` — `colors.txt` only accepts real country tags
-- [ ] Verify `set_cosmetic_tag = TAG` calls in events reference the alias correctly
-
-### Find-and-replace pitfalls
-
-- [ ] **Never** search-and-replace `tag = TAG ` in dense tag lists on `original_tag` lines — removing `tag = KAS ` from inside `original_tag = KAS original_tag = KAZ` leaves `original_original_tag = KAZ`. Process `tag =` and `original_tag =` lines separately.
-- [ ] After bulk replacement, grep for `original_original_` to catch doubled prefixes.
-
-### Cross-references to verify
-
-```bash
-# Find ALL remaining references to the removed tag
-grep -rn "TAG" common/ events/ history/ localisation/ interface/ --include="*.txt" --include="*.yml" | grep -v "tag_aliases\|cosmetic\|colors"
-```
+Never search-and-replace `tag = TAG ` across lines that also hold `original_tag`.
+Removing `tag = KAS ` from `original_tag = KAS original_tag = KAZ` leaves
+`original_original_tag = KAZ`. Handle the two separately, then grep for
+`original_original_`.
