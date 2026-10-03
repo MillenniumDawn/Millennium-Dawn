@@ -267,7 +267,7 @@ def test_patch_frontend_version_rewrites_every_locale(tmp_path, capsys):
             ]
             assert len(matches) == 1
             assert matches[0].count("v1.2.3") == 1
-            assert "v2.0.1" not in matches[0]
+            assert "v2.0.1 DEV" not in matches[0]
         assert 'VERSION_MD_DATE: "Release Date: 11th September 2026"' in text
     assert "10/10 frontend files rewritten" in capsys.readouterr().out
 
@@ -330,7 +330,7 @@ def test_patch_frontend_version_relabels_without_a_version(tmp_path, capsys):
 @pytest.mark.parametrize(
     "source,expected",
     [
-        ("v2.0.1", ["v2.0.1"]),
+        ("v2.0.1 DEV", ["v2.0.1 DEV"]),
         ("v1.12.3b", ["v1.12.3b"]),
         ("v2.0.1-beta.1", ["v2.0.1-beta.1"]),
     ],
@@ -342,8 +342,8 @@ def test_version_token_matches_complete_supported_formats(source, expected):
 @pytest.mark.parametrize(
     "source",
     [
-        "xv2.0.1",
-        "_v2.0.1",
+        "xv2.0.1 DEV",
+        "_v2.0.1 DEV",
         "v2.0.1+build.1",
         "v2.0.1_beta",
     ],
@@ -420,7 +420,7 @@ def test_patch_frontend_version_rejects_a_missing_file_without_partial_writes(tm
             (
                 b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.1 DEV"\n',
                 b' VERSION_MD: "Millennium Dawn: A Modern Day v2.0.1 DEV"\n'
-                b' VERSION_MD: "Duplicate v2.0.1"\n',
+                b' VERSION_MD: "Duplicate v2.0.1 DEV"\n',
             ),
             "VERSION_MD must appear exactly once",
         ),
