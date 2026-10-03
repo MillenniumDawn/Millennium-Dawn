@@ -5,18 +5,18 @@ publish_workshop.py - Publish Millennium Dawn to Steam Workshop.
 Usage:
   publish_workshop.py release --full --version 1.12.3
   publish_workshop.py beta --base-ref v1.12.3b --version 1.12.3b
-  publish_workshop.py release --full --username OtherUser
-  STEAM_USERNAME=MyUser publish_workshop.py beta --full
+  publish_workshop.py release --version 1.12.3 --username OtherUser
+  STEAM_USERNAME=MyUser publish_workshop.py beta --version 1.12.3b
 
 Username is read from --username or the STEAM_USERNAME env var.
---version rewrites version= in descriptor.mod and the in-game version banner
+Required --version rewrites version= in descriptor.mod and the in-game version banner
 (VERSION_MD_LOADING / VERSION_MD) for this upload only. Accepted values are
 X.Y.Z, legacy suffixes such as X.Y.Zb or X.Y.Zrc1, and SemVer prereleases such
-as X.Y.Z-beta.5. An optional leading v or V is ignored; omit the flag to ship
-whatever version is currently committed in the repo.
+as X.Y.Z-beta.5. An optional leading v or V is ignored. Full upload is the
+default; --base-ref selects a diff upload.
 
-The banner's DEV marker becomes BETA on beta uploads and is stripped on release
-uploads, with or without --version. Test uploads keep it.
+The banner shows BETA on beta uploads, TEST on test uploads, and no marker on
+release uploads. Existing DEV, BETA, or TEST markers are replaced.
 """
 
 import argparse
@@ -81,11 +81,11 @@ VERSION_TOKEN = re.compile(rf"(?<![A-Za-z0-9_])v{_VERSION_BODY}(?![A-Za-z0-9_.+-
 VERSION_VALUE = re.compile(rf"[vV]?{_VERSION_BODY}")
 
 # Committed banners mark dev builds after the version (simp_chinese uses 开发版).
-# Each target's banner shows its replacement marker; unlisted targets keep it.
+# Each target replaces any existing build marker.
 BANNER_VERSION = re.compile(
-    rf"(?P<token>{VERSION_TOKEN.pattern})(?P<marker> (?:DEV|开发版)(?!\w))?"
+    rf"(?P<token>{VERSION_TOKEN.pattern})(?P<marker> (?:DEV|BETA|TEST|开发版)(?!\w))?"
 )
-BANNER_MARKERS = {"release": "", "beta": " BETA"}
+BANNER_MARKERS = {"release": "", "beta": " BETA", "test": " TEST"}
 
 # Files that must always be included (even if unchanged in diff mode).
 ALWAYS_KEEP = {"descriptor.mod", "thumbnail.png"}
@@ -195,12 +195,14 @@ class Spinner:
             self._stop.wait(0.1)
 
     def __enter__(self) -> "Spinner":
-        self._thread.start()
+        if sys.stdout.isatty():
+            self._thread.start()
         return self
 
     def __exit__(self, exc_type: object, *_: object) -> None:
         self._stop.set()
-        self._thread.join()
+        if self._thread.ident is not None:
+            self._thread.join()
         dt = elapsed_str(self._start)
         status = "+" if exc_type is None else "x"
         label = self._label if exc_type is None else f"{self._label} failed"
@@ -430,7 +432,46 @@ def prune_unchanged(mod_dir: Path, changed: set[str], verbose: bool = False) -> 
     )
 
 
-def write_vdf(mod_dir: Path, mod_id: str, changenote: str) -> Path:
+def read_description(mod_dir: Path, version: str) -> str:
+    """Prepare English Workshop text from the tracked staging copy."""
+    source = mod_dir / "descriptions" / "descriptions_EN.txt"
+    try:
+        with source.open("r", encoding="utf-8-sig", newline="") as handle:
+            description = handle.read()
+    except (OSError, UnicodeError) as exc:
+        raise SystemExit(
+            f"ERROR: Cannot read English description {source}: {exc}"
+        ) from exc
+    if not description.strip() or "\0" in description:
+        raise SystemExit("ERROR: English description is empty or contains a NUL byte.")
+
+    prefix = "[b]Current Version:[/b]"
+    lines = description.splitlines(keepends=True)
+    version_lines = [i for i, line in enumerate(lines) if line.startswith(prefix)]
+    if len(version_lines) != 1:
+        raise SystemExit(
+            "ERROR: English description needs exactly one Current Version field."
+        )
+    index = version_lines[0]
+    pattern = re.compile(
+        rf"({re.escape(prefix)}[ \t]*)[vV]?{_VERSION_BODY}([ \t]*(?:\r?\n)?)"
+    )
+    if pattern.fullmatch(lines[index]) is None:
+        raise SystemExit(
+            "ERROR: English description has an invalid Current Version field."
+        )
+    lines[index] = pattern.sub(
+        lambda match: f"{match[1]}{version}{match[2]}", lines[index]
+    )
+    description = "".join(lines)
+    if len(description.encode("utf-8")) > 8000:
+        raise SystemExit("ERROR: English description exceeds Steam's 8000-byte limit.")
+    return description
+
+
+def write_vdf(
+    mod_dir: Path, mod_id: str, changenote: str, description: str | None = None
+) -> Path:
     vdf_path = mod_dir.parent / "workshop_upload.vdf"
     content = (
         f'"workshopitem"\n'
@@ -440,8 +481,10 @@ def write_vdf(mod_dir: Path, mod_id: str, changenote: str) -> Path:
         f'    "contentfolder"   "{escape_vdf(mod_dir)}"\n'
         f'    "previewfile"     "{escape_vdf(mod_dir / "thumbnail.png")}"\n'
         f'    "changenote"      "{escape_vdf(changenote)}"\n'
-        f"}}\n"
     )
+    if description is not None:
+        content += f'    "description"     "{escape_vdf(description)}"\n'
+    content += "}\n"
     with vdf_path.open("w", encoding="utf-8", newline="") as handle:
         handle.write(content)
     return vdf_path
@@ -511,7 +554,7 @@ def patch_frontend_version(
 ) -> None:
     """Point every required in-game version banner at the uploaded version.
 
-    A marker replaces the banner's dev marker; None keeps the committed one.
+    A marker replaces the banner's build marker; None keeps the committed one.
     """
     loc_files = frontend_loc_files(mod_dir)
     validated: list[tuple[Path, list[str]]] = []
@@ -582,14 +625,19 @@ def steam_login(steamcmd: Path, username: str) -> None:
 
 
 def publish(
-    mod_dir: Path, username: str, mod_id: str, changenote: str, verbose: bool = False
+    mod_dir: Path,
+    username: str,
+    mod_id: str,
+    changenote: str,
+    verbose: bool = False,
+    description: str | None = None,
 ) -> None:
     steamcmd = find_steamcmd()
 
     # Pre-login interactively so credentials are cached for the upload.
     steam_login(steamcmd, username)
 
-    vdf_path = write_vdf(mod_dir, mod_id, changenote)
+    vdf_path = write_vdf(mod_dir, mod_id, changenote, description)
 
     # Persistent log outside the temp content folder so it survives cleanup.
     with tempfile.NamedTemporaryFile(
@@ -755,10 +803,15 @@ def publish(
         last_returncode = proc.returncode or 0
         phase_timings.append((PHASES[phase_idx][0], time.time() - phase_start))
 
-        print(f"\n  --- Phase timings (attempt {attempt}) ---")
-        for name, dt in phase_timings:
-            print(f"    {name:<28}  {int(dt)}s")
-        print(f"    {'TOTAL':<28}  {elapsed_str(start)}\n")
+        timing_lines = [
+            f"\n  --- Phase timings (attempt {attempt}) ---",
+            *(f"    {name:<28}  {int(dt)}s" for name, dt in phase_timings),
+            f"    {'TOTAL':<28}  {elapsed_str(start)}\n",
+        ]
+        with log_path.open("a", encoding="utf-8", newline="") as log_f:
+            log_f.write("\n".join(timing_lines) + "\n")
+        if verbose:
+            print("\n".join(timing_lines))
 
         if proc.returncode == 0:
             print(
@@ -802,7 +855,8 @@ def main() -> None:
     parser.add_argument("--mod-id", help="Override the Workshop mod ID")
     parser.add_argument(
         "--version",
-        help="Override version= and the in-game banner. Accepts X.Y.Z, legacy "
+        required=True,
+        help="Set version= and the in-game banner. Accepts X.Y.Z, legacy "
         "suffixes (X.Y.Zb or X.Y.Zrc1), or SemVer prereleases "
         "(X.Y.Z-beta.5); one leading v/V is optional. Missing, excluded, or "
         "malformed banners abort before upload.",
@@ -815,6 +869,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--no-default-excludes", action="store_true", help="Skip built-in exclude list"
+    )
+    parser.add_argument(
+        "--sync-description",
+        action="store_true",
+        help="Update the English Workshop description from tracked descriptions/descriptions_EN.txt; "
+        "set only its Current Version field from --version (default: leave the public description unchanged).",
     )
     parser.add_argument(
         "--changenote",
@@ -830,9 +890,11 @@ def main() -> None:
         "is always written to the log file).",
     )
 
-    mode = parser.add_mutually_exclusive_group(required=True)
+    mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--base-ref", help="Git ref to diff against (changed files only)")
-    mode.add_argument("--full", action="store_true", help="Publish entire mod")
+    mode.add_argument(
+        "--full", action="store_true", help="Publish entire mod (default)"
+    )
 
     args = parser.parse_args()
 
@@ -842,8 +904,7 @@ def main() -> None:
 
     # Validate before copying or staging anything.
     version = normalize_version(args.version)
-    marker = BANNER_MARKERS.get(args.target)
-    rewrite_banner = version is not None or marker is not None
+    marker = BANNER_MARKERS[args.target]
 
     mod_id = args.mod_id or MOD_IDS[args.target]
     excludes = set() if args.no_default_excludes else set(DEFAULT_EXCLUDES)
@@ -867,7 +928,11 @@ def main() -> None:
 
             changed = get_changed_files(args.base_ref)
             print(f"  {len(changed)} file(s) changed since {args.base_ref}")
-            mod_dir = copy_repo(tmp, excludes)
+        mod_dir = copy_repo(tmp, excludes)
+        description = (
+            read_description(mod_dir, version) if args.sync_description else None
+        )
+        if args.base_ref:
             publishable_changed = get_publishable_changed_files(mod_dir, changed)
             skipped = sorted(changed - publishable_changed)
             if skipped:
@@ -880,28 +945,30 @@ def main() -> None:
                     "ERROR: No publishable mod files changed after excludes. "
                     "Use --full or adjust --exclude / --no-default-excludes."
                 )
-            if rewrite_banner:
-                # The banner lives in files a diff upload would otherwise drop.
-                publishable_changed |= {
-                    loc_file.relative_to(mod_dir).as_posix()
-                    for loc_file in frontend_loc_files(mod_dir)
-                }
+            publishable_changed |= {
+                loc_file.relative_to(mod_dir).as_posix()
+                for loc_file in frontend_loc_files(mod_dir)
+            }
             prune_unchanged(mod_dir, publishable_changed, verbose=args.verbose)
-        else:
-            mod_dir = copy_repo(tmp, excludes)
 
         # Rewrite descriptor.mod so the shipped copy matches this target.
         patch_descriptor(mod_dir, MOD_NAMES[args.target], mod_id, version)
 
         # Keep the menu/loading-screen version and label in step with the upload.
-        if rewrite_banner:
-            patch_frontend_version(mod_dir, version, marker)
+        patch_frontend_version(mod_dir, version, marker)
 
         # Validate required files exist
         validate_mod_files(mod_dir)
 
         print()
-        publish(mod_dir, username, mod_id, args.changenote, verbose=args.verbose)
+        publish(
+            mod_dir,
+            username,
+            mod_id,
+            args.changenote,
+            verbose=args.verbose,
+            description=description,
+        )
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
 

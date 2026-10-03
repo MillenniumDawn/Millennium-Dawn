@@ -90,7 +90,7 @@ Use `run.py` to run any tool by short name — no need to remember subdirectory 
 python3 tools/run.py --list                              # see all available tools
 python3 tools/run.py estimate_gdp USA --all              # run a tool by name
 python3 tools/run.py find_idea common/ideas/Greek.txt    # partial names work too
-python3 tools/run.py publish_workshop release --full      # pass args through
+python3 tools/run.py publish_workshop release --version 1.12.3  # pass args through
 python3 tools/run.py gfx_entry_generator                  # works on any platform
 ```
 
@@ -392,7 +392,7 @@ Hook entry points, CI tools, shared libraries, and other scripts that stay at th
 
 ## Workshop Publishing Guide
 
-`publishing/publish_workshop.py` handles uploading the mod to the Steam Workshop. It supports two targets (**release** and **beta**) and two modes (**full upload** and **diff-only upload**).
+`publishing/publish_workshop.py` handles uploading the mod to the Steam Workshop. It supports three targets (**release**, **beta**, and **test**). Full upload is the default; `--base-ref` selects a diff-only upload. Every upload requires `--version`.
 
 ### Prerequisites
 
@@ -408,7 +408,7 @@ Provide your Steam username in one of two ways:
 export STEAM_USERNAME=YourSteamUser
 
 # Or via CLI flag
-python3 tools/publishing/publish_workshop.py release --full --username YourSteamUser
+python3 tools/publishing/publish_workshop.py release --version 1.12.3 --username YourSteamUser
 ```
 
 SteamCMD will prompt for your password and Steam Guard code interactively.
@@ -420,7 +420,7 @@ SteamCMD will prompt for your password and Steam Guard code interactively.
 Uploads the entire mod (minus dev/CI files) to the release Workshop item:
 
 ```bash
-python3 tools/publishing/publish_workshop.py release --full
+python3 tools/publishing/publish_workshop.py release --version 1.12.3
 ```
 
 #### Full Upload (beta)
@@ -428,7 +428,7 @@ python3 tools/publishing/publish_workshop.py release --full
 Same as above but targets the beta Workshop item:
 
 ```bash
-python3 tools/publishing/publish_workshop.py beta --full
+python3 tools/publishing/publish_workshop.py beta --version 1.12.3b
 ```
 
 #### Diff-Only Upload (beta)
@@ -436,27 +436,54 @@ python3 tools/publishing/publish_workshop.py beta --full
 Uploads only files changed since a given git ref. Useful for pushing incremental beta updates without re-uploading the entire mod:
 
 ```bash
-python3 tools/publishing/publish_workshop.py beta --base-ref v1.12.3b
+python3 tools/publishing/publish_workshop.py beta --base-ref v1.12.3b --version 1.12.4b
 ```
 
-The script uses `git log --diff-filter=ACM` to determine which files changed, copies the full repo, then prunes unchanged files before uploading. `descriptor.mod` and `thumbnail.png` are always included.
+The script uses `git diff` against the base ref to identify changed files, copies
+tracked `HEAD`, then prunes unchanged files. Deletions require a full upload.
+`descriptor.mod` and `thumbnail.png` are always included.
 
 #### Version String
 
-`--version X.Y.Z` rewrites `version=` in the uploaded `descriptor.mod` and
+Required `--version X.Y.Z` rewrites `version=` in the uploaded `descriptor.mod` and
 both version banner keys in all ten production frontend locale files inside the
 staging copy. Accepted values are `X.Y.Z`, legacy suffixes such as `X.Y.Zb` or
 `X.Y.Zrc1`, and SemVer prereleases such as `X.Y.Z-beta.5`. One leading `v` or
 `V` is optional.
 
 The committed banners end with a `DEV` marker (`开发版` in Simplified Chinese).
-Beta uploads change it to `BETA` and release uploads strip it, with or without
-`--version`. Test uploads keep it.
+Beta uploads show `BETA`, test uploads show `TEST`, and release uploads have no
+build marker. Existing `DEV`, `BETA`, `TEST`, or `开发版` markers are replaced
+across all ten locales.
 
-A diff publish carries all ten banner files whenever it rewrites them, even when
-they are not part of the diff. A test diff publish without `--version` prunes
-them as usual. Missing, excluded, duplicate, or malformed banners abort before
+Every diff publish carries all ten banner files, even when they are not part
+of the diff. Missing, excluded, duplicate, or malformed banners abort before
 upload rather than uploading a mismatch. The repo's own files are never touched.
+
+Default output shows upload progress, warnings, errors, and the saved log path.
+`--verbose` also prints detailed timing, VDF contents, the command, and SteamCMD
+output. Full diagnostics and timing remain in the log in either mode.
+
+#### English Workshop Description
+
+Public Workshop descriptions stay unchanged unless `--sync-description` is supplied:
+
+```bash
+python3 tools/publishing/publish_workshop.py release --version 2.0.1 --sync-description
+```
+
+This reads `descriptions/descriptions_EN.txt` from tracked `HEAD` in the staging
+copy and sends it as the selected Workshop item's English description. Only the
+`[b]Current Version:[/b]` field is updated to the normalized `--version` value.
+Review and commit the source first: checksums, HOI4 compatibility, tutorial
+versions, links, and all other text are copied as written. The repository source
+is never modified, and neither the Workshop title nor visibility is changed.
+
+This opt-in works with full and diff uploads; the description is read before
+diff pruning. Missing or excluded files, invalid UTF-8, empty text, NUL bytes,
+missing/duplicate/malformed Current Version fields, or descriptions exceeding
+Steam's 8000-byte UTF-8 limit abort before Steam login. No translated descriptions
+are synchronized. `--changenote` remains the separate update note.
 
 ### What Gets Excluded
 
@@ -468,16 +495,17 @@ Use `--exclude PATTERN` to add extra exclusions, or `--no-default-excludes` to s
 
 ### Options Reference
 
-| Flag                    | Description                                                            |
-| ----------------------- | ---------------------------------------------------------------------- |
-| `release` / `beta`      | Which Workshop item to target                                          |
-| `--full`                | Upload the entire mod                                                  |
-| `--base-ref REF`        | Upload only files changed since REF (mutually exclusive with `--full`) |
-| `--username USER`       | Steam username (default: `$STEAM_USERNAME`)                            |
-| `--mod-id ID`           | Override the default Workshop mod ID                                   |
-| `--exclude PATTERN`     | Extra exclude pattern (repeatable)                                     |
-| `--no-default-excludes` | Skip the built-in exclude list                                         |
-| `--version VERSION`     | Override the uploaded version. Invalid or incomplete banners abort.    |
+| Flag                        | Description                                                            |
+| --------------------------- | ---------------------------------------------------------------------- |
+| `release` / `beta` / `test` | Which Workshop item to target                                          |
+| `--full`                    | Upload the entire mod (default)                                        |
+| `--base-ref REF`            | Upload only files changed since REF (mutually exclusive with `--full`) |
+| `--username USER`           | Steam username (default: `$STEAM_USERNAME`)                            |
+| `--mod-id ID`               | Override the default Workshop mod ID                                   |
+| `--exclude PATTERN`         | Extra exclude pattern (repeatable)                                     |
+| `--no-default-excludes`     | Skip the built-in exclude list                                         |
+| `--sync-description`        | Update the English Workshop description from its tracked source        |
+| `--version VERSION`         | Required uploaded version. Invalid or incomplete banners abort.        |
 
 ### Workshop Mod IDs
 
