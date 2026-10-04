@@ -58,7 +58,7 @@ Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 | **validate_scientist_traits.py**      | Every scientist trait resolves to a medal sprite MD defines (`icon = X`, else `GFX_<token>`); sprites declared only in the vanilla file MD replaces; stale `#TODO: ICON` markers (all WARNING)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | **validate_scripted_gui.py**          | Scripted GUI window/property names are defined; referenced effects/triggers exist                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | **validate_scripted_localisation.py** | Scripted loc keys used but not defined; defined but never referenced; missing GFX icons                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| **validate_scripted_params.py**       | Every call site of a scripted effect that documents required temp variables sets them, in a scope the call can still see them from. Call sites are scanned across `common/`, `events/` and `history/`. Quoted text and comments are ignored. An input that cannot be read is an `unreadable-input` ERROR. A contracted call that shares its line with other script is a `call-shares-line` WARNING; opt-in `--audit-shared-lines` extends that to every scripted effect call                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **validate_scripted_params.py**       | Every call site of a scripted effect that documents required temp variables sets them, in a scope the call can still see them from. Call sites are scanned across `common/`, `events/` and `history/`. Quoted text and comments are ignored. An input that cannot be read is an `unreadable-input` ERROR. A contracted call sharing a line with other statements is a `call-shares-line` ERROR. Single-call wrappers are accepted. Opt-in `--audit-shared-lines` reports uncontracted mixed lines as `audit-call-shares-line` WARNINGs. With `--staged`, a changed, deleted, or renamed scripted effect, country tag, or tag alias file rescans every caller                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | **validate_standardization.py**       | Files the project standardizers would rewrite — focus trees, events, decisions, ideas, MIOs. Runs the owning standardizer from `tools/standardization/` in memory and diffs its output against the file, so the check cannot drift from the formatter. Manual-only (unwired from pre-commit and CI); `--all` scans the whole repo (a backlog of ~745 files). A standardizer that raises is an ERROR, since running it would leave the file half-rewritten                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | **validate_style.py**                 | Brace matching, indent/bracket balance, spacing/quotes, focus ID format, event log standards                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | **validate_simplifications.py**       | Suggests merging consecutive same-scope blocks (`TAG = { } TAG = { }`, state ids, `PREV`, `var:`); WARNING-only, skips OR/random_list contexts. Opt-in: `--owner-scope-only` (only the redundant owner-scope pass over focus trees and decisions)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
@@ -242,6 +242,68 @@ Module-level constants and pool-worker functions (those passed to `_pool_map`) m
 | `MD_LOG_LEVEL`                                                                                                                       | env var   | Set to `ERROR` / `WARNING` (default) / `INFO` to control per-validator verbosity                                                                                                                                                                           |
 
 ---
+
+## Scripted effect call layout
+
+`validate_scripted_params.py` checks `NAME = yes` calls to effects with required
+parameter contracts by default. `call-shares-line` is an ERROR: a contracted call
+must not share its physical line with another statement. `--strict` gates it in
+CI. This is a readability policy, not an engine requirement for newlines.
+
+The same layout policy applies in the opt-in `--audit-shared-lines` scan, which
+also recognizes uncontracted scripted effects. Those additional findings use
+`audit-call-shares-line` at WARNING severity, even with `--strict`. The flag never
+downgrades contracted-call or parameter errors. A mixed line is reported once;
+if it contains both kinds of call, the contracted call owns the error regardless
+of call order. Counts are physical lines, not calls or defects.
+
+Accepted forms:
+
+- A call on its own line, with an optional trailing comment.
+- A single call inside one or more enclosing wrappers, including numeric random
+  weights, `hidden_effect`, country scopes and effect containers. For example,
+  `25 = { change_the_priesthood_opinion = yes }` and
+  `hidden_effect = { ROOT = { some_effect = yes } }` are accepted.
+- A call followed only by closing braces. Delimiters alone are not another
+  statement. Other validators still own structural validity.
+
+Split setters and calls, multiple calls, or another statement beside a call.
+`if = { limit = { always = yes } some_effect = yes }` still has another statement
+and is reported: ERROR for a contracted call, advisory in the uncontracted audit.
+Simple checks and parameter blocks may remain compact. The single-leaf output of
+`shared_utils.collapse_or_compact` agrees with these exceptions; no path-specific
+allowlist is used. Avoid whole-file standardizers for this cleanup because they
+also reorder properties and inject logging.
+
+### Rollout for #5226
+
+At baseline `6943d673c895625e8f523aa815f6657dcda77cbf`, the previous policy reported
+46 default lines in four files and 11,172 audit lines in 216 files. Expanding 32
+USA decision lines and one Singapore focus line, while keeping setters intact,
+clears the default backlog. Source tokens, their order and parsed setter values
+are unchanged. The remaining 13 former default findings are accepted wrappers:
+
+- `common/decisions/Burma.txt`: 1864, 1870, 1876, 1882, 1918, 1924, 1930, 1936,
+  1973, 1979, 1985 and 1991. Each is a weighted entry containing one call.
+- `common/national_focus/05_south_korea.txt`: 3206. One call in `hidden_effect`.
+
+After cleanup, default: 0 findings. Audit: 865 advisory lines in 33 files. The
+broad audit stays opt-in; its backlog is not promoted to a gate or rewritten.
+Built-in coverage is deferred separately: it needs an engine-versioned effect
+registry and effect/trigger/parameter context, not a check on every assignment.
+`resources/documentation/effects_documentation.md` is existing reference material.
+
+Coverage remains lexical: explicit effect parameter blocks and quoted call values
+are not recognized. Multiline strings containing `#`, explicit `var`/`value`
+setters and multiline setter RHS values have known parsing limitations. This
+change does not repair them or claim full control-flow analysis. In particular,
+keep a setter's body intact when splitting surrounding statements; expanding the
+setter itself can change the current checker's value-based diagnostics.
+
+Before extending CI coverage, compare cold and warm scans with the same revision,
+worker budget and dependencies. Reuse cached tokens; do not add another whole-tree
+parse solely for layout. Regression tests cover accepted wrappers, mixed calls,
+comments/quotes, source order, cache parity, formatter agreement and strict exits.
 
 ## Focus coordinate warnings
 
