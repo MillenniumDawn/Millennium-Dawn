@@ -142,10 +142,13 @@ def spreadsheet_report(mios: dict[str, MIO], output_file: str):
                 stat_values.append(report.boost.get_or_default(stat_name, ""))
                 stat_values.append(report.averaged_boost.get_or_default(stat_name, ""))
 
+            countries_cell = ", ".join(report.mio.countries)
+            if report.mio.required_flags:
+                countries_cell += f" (Requires: {', '.join(report.mio.required_flags)})"
             rows.append(
                 [
                     report.mio.token,
-                    ", ".join(report.mio.countries),
+                    countries_cell,
                     report.score,
                     report.n_traits,
                     *stat_values,

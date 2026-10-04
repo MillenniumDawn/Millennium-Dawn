@@ -167,6 +167,42 @@ def test_GivenAllowedCountries_WhenOriginalTagsAreParsed_ThenOnlyExplicitCountri
     assert parsed["ORG_scripted_only"].countries == set()
 
 
+def test_GivenFlagGatedMio_WhenParsed_ThenRequiredFlagsAreCollected(tmp_path):
+    org_path = tmp_path / "orgs"
+    org_path.mkdir()
+    (org_path / "flags.txt").write_text(
+        """
+        ORG_flag_only = {
+            allowed = { always = yes }
+
+            visible = {
+                OR = {
+                    has_country_flag = marshall_tractor_works_unlocked
+                    scripted_flag_gate = yes
+                }
+            }
+
+            available = {
+                if = {
+                    limit = {
+                        NOT = { has_country_flag = should_not_count }
+                    }
+                    has_country_flag = marshall_tractor_works_unlocked
+                }
+            }
+
+            equipment_type = { medium_tank_chassis }
+        }
+        """,
+        encoding="utf-8",
+    )
+
+    parsed = MIO.from_directory(org_path, {}, False)
+
+    assert parsed["ORG_flag_only"].countries == set()
+    assert parsed["ORG_flag_only"].required_flags == {"marshall_tractor_works_unlocked"}
+
+
 def test_GivenTraitHierarchy_WhenParsed_ThenParentSemanticsArePreserved(tmp_path):
     org_path = tmp_path / "orgs"
     org_path.mkdir()

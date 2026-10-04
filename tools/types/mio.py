@@ -88,6 +88,30 @@ def _iter_original_tags(value: object) -> list[str]:
     return dedupe_preserve_order(found)
 
 
+def _iter_required_country_flags(*values: object) -> list[str]:
+    """Collect positive has_country_flag checks from nested trigger structures."""
+    found: list[str] = []  # Country flags collected from allowed/visible/available.
+
+    def walk(node: object, *, negated: bool = False):
+        normalized = normalize_node(node)
+        if isinstance(normalized, dict):
+            for key, inner in normalized.items():
+                key_str = str(key)
+                is_not_branch = key_str == "NOT"
+                if key_str == "has_country_flag" and not negated:
+                    found.extend(token_list(inner))
+                    continue
+                walk(inner, negated=negated or is_not_branch)
+            return
+        if isinstance(normalized, list):
+            for item in normalized:
+                walk(item, negated=negated)
+
+    for value in values:
+        walk(value)
+    return dedupe_preserve_order(found)
+
+
 def _stats_value(value: object) -> object:
     """Coerce common script scalar forms into Python bool/int/float values."""
     return stats_value(value)
@@ -391,6 +415,8 @@ class MIO:
     include: str | None = None
     """Token of the MIO that is the basis for this one."""
     traits: list[Trait] = field(default_factory=list)
+    required_flags: set[str] = field(default_factory=set)
+    """Flags required for this MIO."""
 
     @staticmethod
     def _build_trait(
@@ -484,6 +510,11 @@ class MIO:
         countries = _iter_original_tags(
             data.get("allowed")
         )  # Country tags permitted to use this MIO.
+        required_flags = _iter_required_country_flags(
+            data.get("allowed"),
+            data.get("visible"),
+            data.get("available"),
+        )  # Country flags required by MIO visibility/availability logic.
         equipment_tokens = dedupe_preserve_order(
             token_list(data.get("equipment_type"))
         )  # Raw equipment scope tokens.
@@ -512,6 +543,7 @@ class MIO:
             research_categories=set(research_categories),
             include=include,
             traits=traits,
+            required_flags=set(required_flags),
         )
 
     @classmethod
