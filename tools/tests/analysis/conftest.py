@@ -210,13 +210,3 @@ def import_redistribute(import_estimate_gdp, monkeypatch, mini_repo: Path):
         mod, "STATES_DIR", str(mini_repo / "history" / "states"), raising=False
     )
     return mod
-
-
-@pytest.fixture
-def import_gdp_seeds(import_estimate_gdp, monkeypatch):
-    """Import tools.analysis.gdp_seeds on top of the redirected estimate_gdp."""
-    import importlib
-
-    monkeypatch.syspath_prepend(str(REPO_ROOT / "tools" / "analysis"))
-    sys.modules.pop("gdp_seeds", None)
-    return importlib.import_module("gdp_seeds")

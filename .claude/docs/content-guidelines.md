@@ -13,9 +13,7 @@ Quality checklist for new content. Full guides:
   tree before merging a new country.
 - Starting factories match real GDP PPP and must not be changed.
 - GDP per building and resource comes only from the `@gdp_*` constants in
-  `common/scripted_effects/00_money_system.txt`. After a history edit, run
-  `python3 tools/run.py gdp_seeds TAG` to get suggested `overall_productivity` and
-  `gdp_per_capita` seeds.
+  `common/scripted_effects/00_money_system.txt`.
 
 ## Political
 
