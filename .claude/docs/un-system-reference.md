@@ -1,6 +1,6 @@
 # UN System Reference
 
-Architecture and edit rules for the United Nations voting, membership, and election systems. Read this before touching any of the files below; the system is a distributed state machine and most of its historical bugs came from editing one piece without honoring the invariants.
+Edit rules for UN voting, membership, and elections. The system is a distributed state machine. Editing one piece without honoring the invariants below breaks it.
 
 ## Files
 
@@ -23,7 +23,7 @@ What each file owns:
 
 Key state: `global.current_ga_vote_type/nation`, `current_ongoing_ga_vote`, `un_ga_vote_cooldown` (50d GA / 20d SC), `global.un_2_3_number` (GA yes votes required, ceil of 2n/3), and `global.un_sc_required_yes` (SC yes votes required, ceil of 60% of eligible Council voters). Both are recomputed once at game start (`recompute_un_2_3_number` / `recompute_un_sc_required_yes` in the ABK startup block) and again whenever their chamber starts a vote.
 
-## Invariants (break these and you reintroduce fixed bugs)
+## Invariants
 
 - Exactly one mission holder per live vote. The finisher runs only from that mission, guarded by `has_ga_mission`/`has_sc_mission`; the else branch is a tooltip no-op by design.
 - **The Security Council vote subject is recused.** `is_eligible_current_sc_voter` excludes nonexistent countries and `global.current_sc_vote_nation` from mission-holder selection, manual vote events, and automatic voting in both UNSC.100 and recognition.11. `recompute_un_sc_required_yes` counts the same eligible set, so a seated subject neither votes nor raises the passage threshold. The subject still receives the result notification.
@@ -37,9 +37,9 @@ Key state: `global.current_ga_vote_type/nation`, `current_ongoing_ga_vote`, `un_
 - `global.security_council_members` is positional: elected seats at 0-9, permanent members from 10. Never remove an elected entry by value; `clear_united_nations_member_state` refills a dead elected member's slot with a qualified GA member so the January rotation stays aligned. Appended permanent entries may be removed by value.
 - **A veto is a flag, not a tally.** `has_passed_sc_vote` is "no `security_council_veto` AND at least `global.un_sc_required_yes` yes votes". The threshold is ceil(60% of eligible Council voters), preserving 9 required votes for a standard 15-member Council whether or not one seated member is the subject. The manual and automatic voting paths set the flag for an eligible permanent member's "no"; a permanent-member subject is recused and cannot veto. `sc_sway_direction_effect` recomputes the flag from all current permanent no-voters after moving a vote. Never infer it from the total no tally.
 - **Aborts must clear `sc_action_against@<subject>` before wiping `global.current_sc_vote_nation`.** That flag is what stops a nation being the subject of two proposals at once; leak it and the nation is immune to every future Security Council proposal for the rest of the campaign. The finisher already clears it; `un_abort_sc_vote` must too, and ordering matters because the abort clears the subject variable a few lines later.
-- **The Assembly and the Council have separate sway lockouts** (`has_had_current_un_ga_vote_swayed` / `has_had_current_un_sc_vote_swayed`). They shared one flag, so a GA vote concluding during a live SC vote lifted the Council's lockout and let a member be swayed twice. Do not re-merge them.
-- Known narrow hole: `update_security_council_peeps` (January rotation) rebuilds `global.security_council_members` with no ongoing-vote guard, so a mission holder rotated off mid-vote keeps `has_sc_mission` and `un_abort_sc_vote`'s disarm sweep cannot find it. Harmless today only because the 20-day cooldown outlasts the 5-day mission window. Shorten that cooldown and this becomes a live bug.
-- **Election candidate pools are never pruned.** Candidates come from the power-ranking regional arrays (`asian_nations`, `sub_saharan_nations`, `middle_eastern_nations`, `american_nations`) plus `sc_updates_euro_america`, all built once at startup — an annexed or capitulated country stays in them forever. Every candidate pick (`start_unsc_next_term_voting`, `un_sc_new_members_re_roll`), the seat confirmation in `un_sc_new_members_step_next`, the January seating prune in `update_security_council_peeps`, and the dead-seat backfill in `clear_united_nations_member_state` must keep their `exists = yes` / `has_capitulated = no` guards (#2428, #2429).
+- **The Assembly and the Council have separate sway lockouts** (`has_had_current_un_ga_vote_swayed` / `has_had_current_un_sc_vote_swayed`). A shared flag lets a GA vote that ends during a live SC vote lift the Council's lockout. Do not merge them.
+- Keep the SC cooldown (20 days) longer than the SC mission window (5 days). The January rotation in `update_security_council_peeps` has no ongoing-vote guard, so a shorter cooldown strands a mission holder rotated off mid-vote.
+- **Election candidate pools are never pruned.** Candidates come from the power-ranking regional arrays (`asian_nations`, `sub_saharan_nations`, `middle_eastern_nations`, `american_nations`) plus `sc_updates_euro_america`, all built once at startup — an annexed or capitulated country stays in them forever. Every candidate pick (`start_unsc_next_term_voting`, `un_sc_new_members_re_roll`), the seat confirmation in `un_sc_new_members_step_next`, the January seating prune in `update_security_council_peeps`, and the dead-seat backfill in `clear_united_nations_member_state` must keep their `exists = yes` / `has_capitulated = no` guards.
 - **Mission-holder picks must guard voter eligibility** (`is_eligible_current_sc_voter` for UNSC.100 and recognition.11; `exists = yes` for UN.100, recognition.14, and the reassignment sweeps in `clear_united_nations_member_state`). A dead holder never completes the finisher mission, so `current_ongoing_*_vote` is never cleared and all voting stalls for the rest of the campaign.
 - Permanent-seat applications are serialized by `unsc_permanent_seat_application_active` and `global.unsc_permanent_seat_applicant`. The lock begins when SC type 8 is submitted and is released only by rejection, canonical promotion, annexation cleanup, or the weekly stale-state watchdog. Never start a second formal application while it is set.
 - GA type 22 approval does not add `p5_member` directly. If an unrelated SC vote is live, promotion waits until that vote finishes or aborts. `unsc_promote_permanent_member` is the only non-startup ascension seam: it removes elected-seat candidacy/confirmation and queued type-6 votes, backfills an occupied elected slot 0-9, then grants `p5_member`.
@@ -53,7 +53,7 @@ Rules:
 
 - The chain advances only when the finished vote's subject equals `new_council_members^0` AND `electing_new_unsc_members` is set. Standalone type-6 votes only add to `confirmed_new_council_members`; they never re-roll or advance the chain.
 - Stalls self-heal: the weekly pulse re-queues `new_council_members^0` when the election flag is up with no live or queued type-6 vote, or dissolves the election when no candidates remain. Do not add other termination paths; route them here.
-- The GA cooldown strip during elections requires a type-6 entry somewhere in the queue. Removing that gate re-creates the #2305 vote storm.
+- The GA cooldown strip during elections requires a type-6 entry somewhere in the queue. Removing that gate causes a vote storm.
 
 ## Permanent-seat ascension lifecycle
 
@@ -109,8 +109,6 @@ Type 7 only calls `apply_united_nations_sanctions` if the subject doesn't alread
 
 SC outcomes apply to the **subject** (`var:global.current_sc_vote_nation`). There is no `sc_resolution_proposer` and you should not add one — the GA has `ga_resolution_proposer` because its result event fans out to every member, but the Council's does not need it. If a petitioner needs to react to the outcome, set a flag on the subject in the finisher and have the petitioner read it (this is how the Iraq chain works: `usa_petition_invasion_of_iraq` queues the vote, and `wot.15` triggers on `IRQ = { has_country_flag = unsc_material_breach }`).
 
-Passage is `has_passed_sc_vote`: no veto, and at least `global.un_sc_required_yes` yes votes. The threshold is recomputed as ceil(60% of current Council membership), preserving 9 of 15 while scaling with permanent-member expansion. Any permanent member voting no sets `security_council_veto` in its own option, so a veto is not a tally, it is a flag. Do not try to infer it by counting.
-
 ## Adding a new SC resolution type
 
 1. Take the next free SC id (9+). Add the outcome branch in `security_council_vote_finished`, in the pass chain **and** in the fail `else` chain if the petitioner needs to distinguish "rejected" from "still voting". Both branches set a flag on `var:global.current_sc_vote_nation`.
@@ -128,7 +126,3 @@ Passage is `has_passed_sc_vote`: no veto, and at least `global.un_sc_required_ye
 3. If yes-voters get a timed idea and no-voters get a choice, extend UN.410: triggered title/desc on `ga_resolution_vote_type`, a branch in the accept option's `add_timed_idea` chain, and the type range checks in ai_chance (they assume 10-21 today).
 4. Add scripted loc `un_ga_vote_on_desc_<id>` and `un_ga_vote_track_<id>` plus the AI proposal weighting in `un_ai_ga_consider_resolution`.
 5. Queue it via the `ga_new_vote_type`/`ga_new_vote_nation` temp vars and `update_ga_vote`.
-
-## History
-
-The 2026-07 overhaul (issue #2305) fixed the vote storm (election flag never expiring plus unconditional cooldown strip), the O(N^2) resolution reject sweep, per-member `meta_effect` dispatch, the 2/3 rounding, and consolidated 32 near-identical events into 3. The consolidation recipe is documented in `simplification-patterns.md` under "Consolidate Near-Identical Event Families".

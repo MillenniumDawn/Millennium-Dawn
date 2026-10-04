@@ -3,141 +3,101 @@ name: fix-issue
 description: 'Find an actionable open GitHub issue (or take an issue number or quoted task), implement the fix, commit, update the changelog, and open or update a PR. Use when asked to fix an issue or pick up work from the tracker, e.g. "/fix-issue 1354".'
 ---
 
-Find an actionable open GitHub issue (a bug, or a well-scoped task or content request), implement it, then open a pull request. Only take on work small and well-specified enough to implement confidently from the issue plus repo context, with no design or balance decisions left open. If no actionable issue remains, scan the codebase for common bug patterns instead.
+Implement one actionable issue and open a pull request. Take only work that is small
+and specified well enough to implement from the issue plus repo context, with no design
+or balance decision left open.
 
-Supported arguments: an issue number, a short task description in quotes (for well-scoped work with no GitHub issue), or none to auto-select an issue.
+Arguments: an issue number, a quoted task description, or none to auto-select.
 Requested arguments: $ARGUMENTS
 
-Steps:
+## 1. Pick the work
 
-1. **Pick the work**
+- A quoted task is the work item. Skip the issue search.
+- An issue number: `gh issue view <number> --json title,body,labels,comments`.
+- Otherwise list open issues and open PRs (`gh issue list --state open --limit 40`,
+  `gh pr list --state open`) and pick an issue no open PR covers.
 
-   If a quoted task description is given, treat it as the work item and skip the issue search (still apply the scope guard below).
+Eligible work is a bug with a clear reproduction, or a concrete task that names the
+country, system, or files it touches and has a sibling implementation to mirror.
 
-   If an issue number is given, fetch it directly:
+Skip the issue, and say why, when it is vague, needs a design or balance decision,
+needs new art, audio, or map assets, spans many systems or countries, or is a large
+feature. When in doubt, report it back.
 
-   ```
-   gh issue view <number> --json title,body,labels,comments
-   ```
+With no actionable issue left, work through the "Scan patterns" section of
+`.claude/docs/bug-patterns.md` instead.
 
-   Otherwise, list open issues and pick one not already covered by an open PR:
+Claim an issue that passes: `gh issue edit <number> --add-assignee @me`. Skip this for a
+quoted task or a scanned bug.
 
-   ```
-   gh issue list --state open --limit 40
-   gh pr list --state open
-   ```
+## 2. Diagnose or plan
 
-   Eligible work is either a **bug** with a clear reproduction path, or a **task / content / enhancement** that is concrete and well-specified (clear outcome, names the country, system, or files it touches, and a sibling implementation exists to mirror).
+Read the issue, then the code it names, and understand the data flow before editing.
 
-   **Scope guard: only proceed if the work is small and unambiguous.** Skip it (and say why) when the issue is vague or has no acceptance criteria; needs a design or balance decision that is the user's or team's call; requires new art, audio, or map assets you cannot author; spans many systems or countries; or is a large feature better split into its own PR. When in doubt, report the issue back rather than guess.
+- Bug: trace where the wrong value or branch comes from. Confirm the cause in code. Do
+  not guess.
+- Task: find a sibling implementation and reuse its structure.
 
-   **If no actionable issue remains** (all too vague, graphical, engine-level crashes, out of scope, or already covered), scan the codebase for common bug patterns instead: work through the "Scan patterns" section of `.claude/docs/bug-patterns.md`.
+Produce an edit list: the exact files, blocks, and new text, with every value, name,
+loc key, and ordering resolved. Note related out-of-scope problems and leave them alone.
 
-   When working a codebase-scanned bug or a quoted task with no issue number, omit the `Closes #` line from the PR since there is no issue to reference.
+## 3. Implement
 
-   Once the issue passes the scope guard, claim it so nobody duplicates the work:
+Make the smallest change that resolves the issue. Follow `AGENTS.md` and the matching
+`.claude/docs/` reference, and add every required loc key. Do not refactor nearby code
+or fix unrelated problems in the same commit.
 
-   ```
-   gh issue edit <number> --add-assignee @me
-   ```
+A one-line edit is made directly. For a larger edit list, the mechanical typing may go
+to a `head-mod-developer` subagent with the edit list verbatim, an instruction to stay
+within the listed files, and verification greps to report. Check its `git diff --stat`
+before committing.
 
-   `@me` resolves to the authenticated account — never hardcode a login. Skip this for a quoted task or a codebase-scanned bug, which have no issue to assign.
+## 4. Commit
 
-2. **Understand the work**
+Always branch from `main`, never from whatever branch the session started on:
 
-   Read the issue body (or the task description). For a bug, identify the wrong behaviour, the expected behaviour, and any country, decision, event, or system named. For a task, identify the desired outcome, its acceptance criteria, and which files or systems it touches.
+```
+git fetch origin
+git checkout -b <slug> origin/main
+```
 
-3. **Locate the relevant code**
+`<slug>` is a short kebab-case description, not an issue number. Stage only the files
+for this work:
 
-   Search for the named decisions, effects, triggers, scripted GUIs, or on_actions. If not found, do a wider search:
+```
+git commit -m "<Fix|Add|Implement> <short description> (#<issue>)" -m "<one or two sentences: the cause and fix, or what was added>"
+```
 
-   ```
-   grep -rn "keyword" common/ events/ --include="*.txt" -l
-   ```
+Then `git merge origin/main` so the branch is current before the changelog and PR.
 
-   Read the files involved. Understand the data flow before touching anything.
+## 5. Changelog
 
-4. **Diagnose or plan** (planning model)
+Every PR that touches game files gets exactly one BLUF line in `Changelog.txt`, placed
+by the `/changelog` rules and committed separately as `Update Changelog.txt`:
 
-   Do this yourself, on the strongest available model. For a bug, trace the logic to find exactly where the wrong value is produced or the wrong branch is taken; confirm the cause in code before writing a fix, do not guess. For a task, plan the change against existing patterns: find a sibling implementation to mirror (a comparable focus, event, decision, idea, or MIO) and reuse its structure and conventions.
+```
+ - [TAG] <Past-tense verb> <what the player sees> (Issue #N)
+```
 
-   Produce a concrete **edit list**: the exact files, the exact lines or blocks to change, and the precise new text for each. Resolve every ambiguity here (values, variable names, loc keys, ordering) so the implementation step has no decisions left to make. Also note any related-but-out-of-scope issues you spot, and what to leave untouched.
+Skip it only when the diff has no game files, and say so in the report.
 
-5. **Implement the change** (implementation model)
+## 6. Pull request
 
-   Once the edit list is fully resolved, hand the mechanical implementation to a **Sonnet subagent** (the `Agent` tool with `model: sonnet`; use `head-mod-developer` or another fitting agent type). Planning stays on the strong model; only the typing-out is delegated. Give the subagent the full edit list verbatim, the convention reminders below, an explicit instruction to stay strictly within the listed files, and concrete verification commands (greps that must return a specific count, etc.) to run and report back.
+Push, then check for an open PR on the branch:
 
-   If the edit is trivial enough that delegation adds no value (a single one-line change), just make it directly.
+```
+git push -u origin <branch>
+gh pr list --head <branch> --state open --json number,url,body
+```
 
-   Make the smallest change that resolves the issue, whether a bug fix or new/edited content. For content, follow the matching system conventions in `AGENTS.md` and the relevant `.claude/docs/` reference (focus trees, events, decisions, ideas, MIOs, localisation), and add every required loc key. Follow the project conventions (`AGENTS.md`):
-   - Tabs for indentation
-   - No magic numbers; use variables
-   - No empty blocks, no commented-out code
-   - Only add a comment if the change is non-obvious
+- No open PR: hand off to `/open-pr <issue number>`. It owns the create path.
+- An open PR exists: update its body in the `/open-pr` format with
+  `gh pr edit <PR#> --body-file <file>`. Do not create a second PR. Keep every
+  `Closes #N` line and any test-plan section already there.
 
-   Do not refactor surrounding code or fix unrelated issues in the same commit. After the subagent returns, verify its diff scope yourself (`git diff --stat`) before committing, since subagents can edit outside their brief.
+Omit `Closes #` for a quoted task or a scanned bug.
 
-6. **Commit**
+## 7. Report
 
-   **Always branch from `main`.** Never commit onto whatever branch the session happens to start on — a leftover branch from earlier work carries its own unmerged commits and its own open PR, and the new work lands inside them.
-
-   ```
-   git fetch origin
-   git checkout -b <slug> origin/main
-   ```
-
-   `<slug>` is a short kebab-case description of the work (`naval-mio-production-bonus`, `png-art-format-validator`), not an issue number — the number belongs in the commit subject and the PR body. Do this before staging anything; uncommitted work follows the checkout across.
-
-   Then stage only the files changed for this work and commit. Use an accurate verb (`Fix` for a bug, `Add` or `Implement` for a task):
-
-   ```
-   git add <files>
-   git commit -m "<verb> <short description> (#<issue number>)
-
-   <one or two sentences: a bug's root cause and fix, or what a task added or changed>
-   ```
-
-7. **Ensure branch is up to date**
-
-   Run `git merge origin/main` and ensure the branch is up to date before creating a changelog entry or a pull request.
-
-8. **Update the changelog (mandatory)**
-
-   Every PR that touches game files gets exactly one BLUF line in `Changelog.txt` under the current version, in an existing category:
-
-   ```
-    - [TAG] <Past-tense verb> <what the player sees> (Issue #N)
-   ```
-
-   Lead with the outcome. No cause clauses, no second sentence, no file names, under 120 characters before the issue suffix. Follow `/changelog` for category and placement rules. Commit it separately as `Update Changelog.txt`. Skip only when the diff has no game files (tooling, CI, docs) and say so in the report.
-
-9. **Open or update the pull request**
-
-   Push the branch first:
-
-   ```
-   git push -u origin <branch>
-   ```
-
-   Then check whether an open PR already exists for this branch:
-
-   ```
-   gh pr list --head <branch> --state open --json number,url,body
-   ```
-
-   **a. If no open PR exists**: hand off to `/open-pr <issue number>`. That skill is the single source of truth for the create path (AngriestBird-format body, draft PR, changelog). Do not duplicate its logic here.
-
-   **b. If an open PR already exists**: rewrite its body in AngriestBird format and apply with `gh pr edit <PR#> --body "..."`. Do NOT create a second PR. Preserve everything already there — every `Closes #N` line, every existing `####` section bullet, any test-plan section (extend it via `/test-plan`) — and append the new work under the matching section. Format per `/open-pr` step 5 — it is the single source of truth.
-
-   Apply with a heredoc to keep formatting intact:
-
-   ```
-   gh pr edit <PR#> --body "$(cat <<'EOF'
-   <full rewritten body>
-   EOF
-   )"
-   ```
-
-10. **Report back**
-
-Output the PR URL, whether the PR was **created** or **updated**, the changelog line added (or why it was skipped), and a one-paragraph summary of what was fixed or added.
+The PR URL, whether it was created or updated, the changelog line or why it was
+skipped, and a short summary of what was fixed or added.

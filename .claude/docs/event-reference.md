@@ -1,13 +1,16 @@
 # Event Reference
 
-Event conventions, structure, examples, and dispatch patterns.
+Scripted effects library: `docs/src/content/resources/scripted-effects-reference.md`.
 
-## Authoring Rules
+## Authoring rules
 
-- Use `is_triggered_only = yes` and wire the caller. MTTH weight modifiers in
-  `random_events` pools are a separate mechanism, described below.
-- Match every ID to the file's declared namespace and every option log to its own ID.
-  `tools/linting/fix_log_ids.py` can fix copied log IDs on scoped files.
+- Use `is_triggered_only = yes` and wire the caller. Never write open-fire MTTH events.
+  MTTH weights in `random_events` pools are a separate mechanism, described below.
+- Match every id to the file's declared namespace and every option log to its own id.
+  `tools/linting/fix_log_ids.py` fixes copied log ids.
+- Only an option that runs effects gets a log. Omit a log-only `immediate` block.
+- `fire_only_once = yes` does not stop an on_action from firing the event again. Guard
+  in the caller's `limit`, on state the event changes or on a flag set at queue time.
 - Only news events use `major = yes`. Fire one broadcast, never one per country
   through `every_country` or `every_other_country`.
 - Pure notifications use `minor_flavor = yes`. Batch repeated deliveries as described below.
@@ -16,10 +19,12 @@ Event conventions, structure, examples, and dispatch patterns.
 - Raw `add_building_construction` for `naval_base` requires a `province`.
   Building scripted effects charge treasury internally; do not charge twice.
 - New party entries also need the hooks in [Party Localisation](party-loc-reference.md).
+- Permanent effects on another nation come from an event, so the target gets a choice.
+  Aim for 10 to 15 flavor events per country.
 
-In every example below, replace `TAG`, `tag_ns`, and the namespace number with your event's values. `tag_ns` is whatever the file declared via `add_namespace = ...` at the top.
+In the examples, `tag_ns` is the namespace the file declares with `add_namespace`.
 
-## Example: Basic Triggered Event
+## Basic triggered event
 
 ```
 country_event = {
@@ -45,28 +50,21 @@ country_event = {
 }
 ```
 
-## Example: Per-Option Log Messages
-
-Each option's log must match its own ID — copy-paste errors between `.a` and `.b` (or `.b` and `.c`) are common:
+Conditional descriptions use `text =`, not `desc =`, inside the block:
 
 ```
- option = {
-  name = tag_ns.N.a
-  log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"  # .a not .b
-  add_political_power = 25
- }
- option = {
-  name = tag_ns.N.b
-  log = "[GetDateText]: [This.GetName]: tag_ns.N.b executed"  # .b not .a
-  add_stability = -0.02
- }
+desc = {
+ text = my_event.d_variant_a
+ trigger = { has_global_flag = chose_option_a }
+}
 ```
 
-Only an option that runs effects gets a log — a dismiss option carrying nothing but `name`, `trigger` and `ai_chance` logs a state change that never happened, and `validate_events` reports it as `event-option-log-without-effect`. The same goes for `immediate`: a log-only `immediate` block is rejected by `check_common_mistakes.py` (#4456), so omit the block.
+## Cost-aware AI weights
 
-## Example: Cost-Aware AI Weights
-
-An option that charges the country (treasury, debt, a tax rate change, political power, stability, or war support) needs an `ai_chance` that looks at whether the country can pay. A flat `ai_chance = { base = N }` makes the AI pay as often on the way to bankruptcy as it does with a full treasury. Set the base to the sensible default, then add modifiers for affordability and for the situation the cost is meant to solve:
+An option that charges the country (treasury, debt, a tax rate change, political power,
+stability, or war support) needs an `ai_chance` that checks whether the country can pay.
+Set the base to the sensible default, then add modifiers for affordability and for the
+problem the cost solves:
 
 ```
  option = {
@@ -78,7 +76,7 @@ An option that charges the country (treasury, debt, a tax rate change, political
    base = 10
    modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
    modifier = { factor = 0.5 ai_has_high_deficit = yes }
-   modifier = { factor = 3 check_variable = { TAG_department_tier < 3 } }   # the problem the money fixes
+   modifier = { factor = 3 check_variable = { TAG_department_tier < 3 } }
   }
  }
 
@@ -103,33 +101,28 @@ An option that charges the country (treasury, debt, a tax rate change, political
  }
 ```
 
-- Treasury and debt: `has_active_mission = bankruptcy_incoming_collapse` and `ai_has_high_deficit = yes`. A charge built with math (`treasury_change = gdp_total` then a negative `multiply_temp_variable`) needs them as much as a literal one, and so does a scripted effect that charges internally (`one_office_construction`, `small_expenditure`).
-- Tax rate: a change in either direction counts (`modify_corporate_tax_rate_effect`, `modify_population_tax_rate_effect`). A cut gives up income, so use the treasury triggers. For a raise, check the rate itself (`check_variable = { corporate_tax_rate > N }`) so the AI does not stack raises.
+- Treasury and debt: `has_active_mission = bankruptcy_incoming_collapse` and `ai_has_high_deficit = yes`. A charge built with math needs them as much as a literal one, and so does a scripted effect that charges internally (`one_office_construction`, `small_expenditure`).
+- Tax rate: a change in either direction counts. A cut gives up income, so use the treasury triggers. For a raise, check the rate itself (`check_variable = { corporate_tax_rate > N }`) so the AI does not stack raises.
 - Political power: `has_active_mission = bankruptcy_incoming_collapse`, the same check as treasury. Political power can go negative, so do not check the balance and do not hide the option behind a `trigger`. An option that already has the bankruptcy modifier for a treasury cost does not need a second one.
 - Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
+- Country paths: weigh choices by the `TAG_ai_behavior` path triggers first. Use the sitting government only under No Path, or where the check mirrors a focus `available` gate.
+- Give every event at least one option that stays above zero when the country is broke. Decisions that charge the treasury need the same checks in `ai_will_do`.
+- A cost audit changes AI weights only. Ask before adding an option `trigger` to enforce a cost (`has_political_power`, `has_equipment`) or converting hand-typed costs to presets such as `small_expenditure`.
 
-The German BfV events from #5083 in `events/Germany.txt` are the reference. `validate_events.py --check-ai-chance-costs` reports the options that still need this as `event-ai-chance-ignores-cost`. The check is off by default. `validation-pipeline.md` has the rule and #5106 tracks the backlog by file.
+The German BfV events in `events/Germany.txt` are the reference.
+`validate_events.py --check-ai-chance-costs` lists options that still need this.
 
-## Example: Multi-Option Cross-Country Event
+## Cross-country events
 
-When an event fires to a different country than the one that initiated the action, AI weighting must reflect that country's situation (opinion, influence, ideology), never base-only random chance. Here `SNDR` is the sender (whoever fired the event) and the receiver is the current scope (`This`):
+When an event fires to a different country than the one that started it, weigh the
+options by the receiver's situation (opinion, influence, ideology), never by base
+alone. `SNDR` is the sender:
 
 ```
-country_event = {
- id = tag_ns.N
- title = tag_ns.N.t
- desc = tag_ns.N.d
- picture = GFX_some_picture
- is_triggered_only = yes
- trigger = {
-  original_tag = TAG   # narrow to receiver if needed
- }
-
  option = { # reject
   name = tag_ns.N.a
   log = "[GetDateText]: [This.GetName]: tag_ns.N.a executed"
-  # rejection effects...
-  SNDR = { country_event = { id = tag_ns.M days = 1 } }   # tell sender we rejected
+  SNDR = { country_event = { id = tag_ns.M days = 1 } }
   ai_chance = {
    base = 15
    modifier = {
@@ -142,70 +135,58 @@ country_event = {
    }
   }
  }
+```
 
- option = { # accept
-  name = tag_ns.N.b
-  log = "[GetDateText]: [This.GetName]: tag_ns.N.b executed"
-  # acceptance effects...
-  SNDR = { country_event = { id = tag_ns.K days = 1 } }   # tell sender we accepted
-  ai_chance = {
-   base = 0
-   modifier = {
-    add = 5
-    factor = 2
-    sender_influence_higher_5 = yes
-   }
-  }
+Wrap follow-up fires to other countries in `hidden_effect` so chain consequences stay
+out of the option's tooltip:
+
+```
+ hidden_effect = {
+  OTHER = { country_event = { id = my_event.2 days = 1 } }
+  news_event = { id = my_news.1 days = 1 }
  }
-}
 ```
 
-## Historical Events (ETD System)
-
-Trigger date-based events via `common/scripted_effects/00_yearly_effects.txt`:
+When a focus reward or option fires an event to another country, show the outcome:
 
 ```
-# First year events
+OTHER = { country_event = { id = tag_ns.N days = 1 } }
+custom_effect_tooltip = TT_IF_THEY_ACCEPT
+effect_tooltip = { custom_effect_tooltip = TAG_deal_signed_tt }
+custom_effect_tooltip = TT_IF_THEY_REJECT
+effect_tooltip = { custom_effect_tooltip = TAG_sanctions_response_tt }
+```
+
+- Add `TT_IF_THEY_REJECT` only when rejection has real sender-side consequences. Never
+  write an empty reject block.
+- Inside the target's options use `TT_IF_WE_ACCEPT` and `TT_IF_WE_DECLINE`.
+- The keys are in `localisation/english/MD_tooltips_l_english.yml`.
+
+## Historical events
+
+Date-based events fire from `common/scripted_effects/00_yearly_effects.txt`:
+
+```
 MD_event_on_startup_events = {
  CAM = { country_event = { id = Cameroon.1 days = 50 random_days = 50 } }
 }
 
-# Specific year events
 trigger_year_2067_events = {
  USA = { country_event = { id = collapse_event.1 days = 30 random_days = 336 } }
 }
 ```
 
-When the intended recipient may no longer own the target state, use the owner-guard pattern (check expected owner, fall back to `random_country = { limit = { owns_state = X } }`).
+- An event whose `trigger` carries a `date > YYYY.M.D` lower bound must have an entry
+  here. The guard only blocks an early fire. A chain event fired by a scheduled parent
+  needs no entry.
+- When the intended recipient may no longer own the target state, check the expected
+  owner and fall back to `random_country = { limit = { owns_state = X } }`.
 
-An event whose own `trigger` carries a `date > YYYY.M.D` lower bound must have a scheduling entry here; the guard only blocks an early fire, it never causes one. `validate_events.py` enforces this (`date-gated-not-scheduled`); a chain event fired by an already-scheduled parent inherits its schedule and needs no entry of its own.
+## News events
 
-## Treasury/Debt/Productivity Effects
-
-Commonly used in event options:
-
-```
-# Modify treasury
-set_temp_variable = { treasury_change = -10.00 }
-modify_treasury_effect = yes
-
-# Preset expenditures
-small_expenditure = yes    # medium_expenditure, large_expenditure
-
-# Modify debt
-set_temp_variable = { debt_change = 0.1 }
-modify_debt_effect = yes
-
-# Adjust productivity
-set_temp_variable = { temp_productivity_change = 0.025 }
-flat_productivity_change_effect = yes
-```
-
-## News Events
-
-News events use `news_event` (not `country_event`) and `major = yes` so all countries see them. Separate the namespace from the parent events (e.g., `add_namespace = my_news` alongside `add_namespace = my_events`).
-
-Use option `trigger` blocks to give different response text to involved parties, regional neighbors, and the rest of the world. Every country must match exactly one option — ensure trigger conditions are exhaustive and mutually exclusive.
+News events use `news_event` with `major = yes` and their own namespace. Use option
+`trigger` blocks to give different text to the involved parties, neighbors, and everyone
+else. Every country must match exactly one option:
 
 ```
 news_event = {
@@ -222,137 +203,74 @@ news_event = {
  }
  option = {
   name = my_news.1.b
-  trigger = {
-   NOT = { original_tag = TAG }
-   capital_scope = { is_on_continent = CONTINENT }
-  }
- }
- option = {
-  name = my_news.1.c
-  trigger = {
-   NOT = { original_tag = TAG }
-   NOT = { capital_scope = { is_on_continent = CONTINENT } }
-  }
+  trigger = { NOT = { original_tag = TAG } }
  }
 }
 ```
 
-### Picture format
+Each event window draws its picture at native size. News art is wide (about 397x153)
+and country art is nearly square (about 217x163). Sprite names do not tell them apart,
+so check the texture before reusing a picture across the two types. A `hidden = yes`
+event takes no picture. `GFX_placeholder_events`, `GFX_placeholder_news`, and
+`GFX_news_md4` are drafting stand-ins.
 
-A news event's picture is a different shape from a country event's, and each window draws its picture at the texture's native size, so the wrong one overflows the frame or leaves a gap. News art is wide (`397x153` dominant, `400x150` and `500x250` also in use); country art is nearly square (`217x163` dominant). Sprite names do not tell them apart — `GFX_china_trade_war` is news art and `GFX_FRA_eiffel_tower_news` is not — so check the texture before reusing a picture across the two event types. `validate_events` → `event-picture-format-mismatch` (ERROR) reports a swap and fails CI.
-
-A `hidden = yes` event opens no window, so a `picture` on one is dead data and is reported as `hidden-event-picture`.
-
-`GFX_placeholder_events`, `GFX_placeholder_news` and `GFX_news_md4` are drafting stand-ins, not shippable art. Any event pointing at one is reported as `placeholder-event-picture` (ERROR).
-
-## Conditional Descriptions
-
-Use `text =` inside desc blocks for conditional descriptions, **not** `desc =`:
-
-```
-# Correct
-desc = {
- text = my_event.d_variant_a
- trigger = { has_global_flag = chose_option_a }
-}
-
-# Wrong — causes "Unexpected token: desc" error
-desc = {
- desc = my_event.d_variant_a
- trigger = { has_global_flag = chose_option_a }
-}
-```
-
-## Cross-Country Event Chains
-
-When firing follow-up events to other countries, wrap in `hidden_effect` so chain consequences don't appear in the firing option's tooltip:
-
-```
-option = {
- name = my_event.a
- add_war_support = 0.05
- hidden_effect = {
-  OTHER = { country_event = { id = my_event.2 days = 1 } }
-  news_event = { id = my_news.1 days = 1 }
- }
- ai_chance = { base = 80 }
-}
-```
-
-## Cross-Country Event Tooltips
-
-When a focus `completion_reward` or event option fires an event to another country, add `custom_effect_tooltip = TT_IF_THEY_ACCEPT` immediately after the fire, then `effect_tooltip = { ... }` showing the acceptance outcome:
-
-```
-OTHER = { country_event = { id = tag_ns.N days = 1 } }
-custom_effect_tooltip = TT_IF_THEY_ACCEPT
-effect_tooltip = { custom_effect_tooltip = TAG_deal_signed_tt }
-```
-
-Add `TT_IF_THEY_REJECT` + its own `effect_tooltip` **only** when rejection has real sender-side consequences (opinion penalty, retaliation, tariff, follow-up chain). If rejection just means "nothing happens," omit it — never write an empty reject block. When both branches have real outcomes, include both:
-
-```
-OTHER = { country_event = { id = tag_ns.N days = 1 } }
-custom_effect_tooltip = TT_IF_THEY_ACCEPT
-effect_tooltip = { custom_effect_tooltip = TAG_deal_signed_tt }
-custom_effect_tooltip = TT_IF_THEY_REJECT
-effect_tooltip = { custom_effect_tooltip = TAG_sanctions_response_tt }
-```
-
-Inside the **target's** event options, use `TT_IF_WE_ACCEPT` / `TT_IF_WE_DECLINE` the same way to preview each response's consequences for the responder.
-
-Keys are defined in `localisation/english/MD_tooltips_l_english.yml`:
-
-- `TT_IF_THEY_ACCEPT` / `TT_IF_THEY_REJECT` — outcomes of YOUR action firing to THEM
-- `TT_IF_WE_ACCEPT` / `TT_IF_WE_DECLINE` — inside the target's event option
-
-## `random_events` Dispatch (on_actions)
-
-Events registered inside an `on_actions` `random_events = { … }` block are picked by **weighted roll against the `0 = N` "nothing happens" slot**, not by MTTH alone:
+## `random_events` dispatch
 
 ```
 random_events = {
-    2500 = 0          # weight assigned to "no event fires" this tick
+    2500 = 0          # weight of "no event fires"
     100 = brotherhood.6
     100 = brotherhood.7
 }
 ```
 
-- A single roll runs each tick the parent `on_action` fires. Each candidate's chance is `weight / sum_of_weights`. The `0` slot exists so most ticks produce nothing.
-- `is_triggered_only = yes` events selected this way still check their own `trigger = { … }` block. If the trigger fails on the rolled country, **nothing fires that tick** — the roll does not retry. Tight triggers thin out effective fire rates a lot.
-- **`mean_time_to_happen` is NOT dead inside `random_events`**: the engine multiplies the candidate's effective weight by the MTTH `factor` modifiers that match the rolled scope. This lets you globally register an event but still tune per-country pacing via MTTH modifier blocks (e.g., "fire 1.5× more often when `neutrality > 0.40`"). Keep MTTH blocks on events listed in `random_events` whenever you want per-country weight tuning.
-- Prefer `random_events` over hand-rolled `random_list` inside on_action effects for systems that should fire across many countries — cheaper than iterating arrays and adds a uniform global cadence.
+- One roll runs each time the parent on_action fires. A candidate's chance is its
+  weight over the sum of weights.
+- The selected event still checks its own `trigger`. If it fails, nothing fires and the
+  roll does not retry.
+- `mean_time_to_happen` modifiers that match the rolled scope multiply the candidate's
+  weight. Keep them for per-country pacing.
+- Prefer `random_events` over a hand-rolled `random_list` in an on_action effect for
+  systems that fire across many countries.
 
-## Batched Notification Events
+## Batched notification events
 
-When many sources deliver the same kind of thing to one country (NATO aid to Ukraine, coalition funding, aid convoys), don't fire one event per delivery. Accumulate into per-category variables at the delivery site and fire a single batched report. Worked example: `UKR_queue_nato_aid_report` in `common/scripted_effects/99_UKR_scripted_effects.txt`, reported by `ukraine_nato_help.1`.
+When many sources deliver the same kind of thing to one country, accumulate into
+per-category variables at the delivery site and fire one report. Worked example:
+`UKR_queue_nato_aid_report` and `ukraine_nato_help.1`.
 
-Four rules make the batch safe:
+- Never put the payload in the report. Grant the money or equipment at the delivery
+  site. A report lost to annexation or a tag change would lose the payload with it.
+- Time the "report pending" flag:
+  `set_country_flag = { flag = X_report_pending days = N+1 value = 1 }` for an event
+  fired at `days = N`. An untimed flag wedges the system the first time an event drops.
+- Skip the event for AI owners and clear the accumulators.
+- Use `minor_flavor = yes` on the report.
 
-- **Never put the payload in the report.** Grant the money, equipment, or modifier at the delivery site. The event is a summary and nothing else. If the payload lives in the event option, a report lost to annexation, tag change, or a stuck flag loses the payload with it, and the delivery-site tooltip goes silent because `add_to_variable` renders nothing.
-- **Time the "report pending" flag.** `set_country_flag = { flag = X_report_pending days = N+1 value = 1 }` where the event fires at `days = N`. An untimed flag that only clears in the event option wedges the whole system permanently the first time an event is dropped, and every later delivery goes unreported forever.
-- **Skip the event for AI owners.** Guard on `is_ai = yes` and clear the accumulators instead of firing. Saves a popup resolution per window and keeps the variables from growing on AI games.
-- **`minor_flavor = yes`** on the report event so it lands as a corner notification rather than a blocking popup. Reports fire on a cadence, and a full popup every window is what makes the system feel spammy.
+## Reuse effect tooltips
 
-## Reuse Effect Tooltips Instead of Writing New Loc
-
-`effect_tooltip = { <the real effect> }` renders vanilla's own tooltip for an effect without executing it. Prefer it over hand-written `custom_effect_tooltip` keys whenever the thing you want to describe is an effect the engine already localises:
+`effect_tooltip = { <the real effect> }` renders the engine's own tooltip without
+running the effect. Prefer it over a new `custom_effect_tooltip` key:
 
 ```
-# Good — no new loc key, equipment names come from vanilla
 effect_tooltip = { add_equipment_to_stockpile = { type = infantry_weapons_type amount = UKR_aid_report_infantry } }
-
-# Avoid — a new key per category that has to be kept in sync by hand
-custom_effect_tooltip = UKR_aid_report_infantry_tt
 ```
 
-`amount` accepts a variable, so a report can render live totals. A `hidden_effect` setter is not visible to a following `effect_tooltip`, so when a scripted effect's tooltip reads a temp var, either set that var at effect level (accepting one blank line, as every other MD caller does) or write a small loc key that reads the persistent variable directly. Reserve `custom_effect_tooltip` for things with no effect behind them.
+`amount` accepts a variable. A `hidden_effect` setter is not visible to a following
+`effect_tooltip`, so set a temp the tooltip reads at effect level, or write a loc key
+that reads the persistent variable.
 
-## Content Guidelines for Events
+## Common scripted effects
 
-- All events targeting another nation need AI weighting based on opinion/influence
-- Aim for 10-15 flavour events per country — gameplay should not be "click focus, wait"
-- Cross-nation permanent effects should come from events (give target player agency)
-- Use `is_triggered_only = yes` for all triggered events — never open-fire MTTH events
+```
+set_temp_variable = { treasury_change = -10.00 }
+modify_treasury_effect = yes
 
-For the full scripted effects library, see `docs/src/content/resources/scripted-effects-reference.md`.
+small_expenditure = yes    # medium_expenditure, large_expenditure
+
+set_temp_variable = { debt_change = 0.1 }
+modify_debt_effect = yes
+
+set_temp_variable = { temp_productivity_change = 0.025 }
+flat_productivity_change_effect = yes
+```
