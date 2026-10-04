@@ -54,7 +54,7 @@ from typing import (
     Union,
 )
 
-from equipment_module_slots import _scalar, blank_comments, created_variant_spans
+from equipment_module_slots import _iter_named_blocks, _scalar, blank_comments
 from equipment_stats import EquipmentStatIndex, build_equipment_stat_index
 from shared_utils import get_staged_files, validation_config
 from sprite_index import build_sprite_index
@@ -1352,7 +1352,9 @@ class Validator(BaseValidator):
         airframe, or a typo) and an org with no equipment_type are skipped, so
         only a provable mismatch is reported.
         """
-        for lo, hi in created_variant_spans(text).spans:
+        for lo, hi in _iter_named_blocks(
+            text, 0, len(text), "create_equipment_variant"
+        ):
             team = DESIGN_TEAM_RE.search(text, lo, hi)
             variant_type = _scalar(text, lo, hi, "type")
             body = self._org_bodies.get(team.group(1)) if team else None
