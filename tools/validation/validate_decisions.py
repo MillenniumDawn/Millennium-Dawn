@@ -443,6 +443,9 @@ _MIDGAME_GATE_RE = re.compile(
     r"\b(?:has_country_flag|has_global_flag|has_completed_focus|has_idea)"
     r"\s*=\s*[A-Za-z0-9_]+|\bcheck_variable\b"
 )
+_UNANNOUNCED_CATEGORY_EXEMPT = frozenset(
+    validation_config("validate_decisions", "unannounced_category_exempt")
+)
 _FLAG_GATE_RE = re.compile(r"has_(?:country|global)_flag\s*=\s*([A-Za-z0-9_]+)")
 # Both the bare form and the timed `set_country_flag = { flag = X days = N }`.
 _SET_FLAG_RE = re.compile(
@@ -2628,6 +2631,8 @@ class Validator(BaseValidator):
         `unlock_decision_tooltip` on one of its decisions) in whatever turns it
         on. Without it a whole tab of decisions shows up with no indication of
         where it came from. AI-only categories are exempt: nobody is watching.
+        So are the `unannounced_category_exempt` config entries, which have
+        nothing a tooltip could announce.
         """
         self._log_section("Checking decision categories announce themselves...")
         self._report(
@@ -2648,6 +2653,8 @@ class Validator(BaseValidator):
         results = []
         for name, body in sorted(parse_decision_categories(self.mod_path).items()):
             if name in ai_only or name in announced:
+                continue
+            if name in _UNANNOUNCED_CATEGORY_EXEMPT:
                 continue
             # parse_decision_categories hands back `NAME = { ... }`, so unwrap
             # the header before looking for the category's own child blocks.

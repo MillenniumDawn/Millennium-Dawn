@@ -114,6 +114,10 @@ def test_variables_run_passes_the_redundant_focus_flag_scan():
     assert runner._VALIDATOR_EXTRA_FLAGS["variables"] == ["--redundant-focus-flags"]
 
 
+def test_decisions_run_passes_the_unannounced_category_scan():
+    assert runner._VALIDATOR_EXTRA_FLAGS["decisions"] == ["--unannounced-categories"]
+
+
 def test_oob_units_run_does_not_enable_missing_equipment_factor():
     assert "oob-units" not in runner._VALIDATOR_EXTRA_FLAGS
 
