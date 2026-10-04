@@ -1,6 +1,6 @@
 # Bug Patterns
 
-Deduplicated catalog of known MD/HOI4 bug patterns. Two sections: **Scan patterns** are greppable signatures for codebase sweeps (`/fix-issue` idle scans); **Adversarial questions** are what-could-go-wrong checks for reviewing a diff (`/adversarial-review`, `/audit`). Reviewers apply both sections.
+Scan patterns are greppable signatures for codebase sweeps. Adversarial questions are what-could-go-wrong checks for a diff. Reviewers apply both.
 
 Also read [Scripting Edge Cases](scripting-edge-cases.md) and
 [Data Structures](hoi4-data-structures.md) for scope, state, and trigger semantics.

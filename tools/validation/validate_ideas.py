@@ -28,6 +28,7 @@ from validator_common import (
     Severity,
     case_mismatch,
     casefold_index,
+    load_dynamic_token_names,
     run_validator_main,
     should_skip_file,
 )
@@ -612,25 +613,6 @@ _IDEA_REF_META = re.compile(
     re.IGNORECASE,
 )
 
-# Dynamic-token ideas are applied at runtime via `add_ideas = var:<token>`, where
-# the literal name lives only in this registry and never next to an add_ideas
-# keyword. Treat any name registered here as referenced.
-_DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
-_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
-
-
-def _load_dynamic_token_names(mod_path: str) -> Set[str]:
-    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
-    path = os.path.join(mod_path, _DYNAMIC_TOKEN_FILE)
-    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
-    if not text:
-        return set()
-    return {
-        line.strip()
-        for line in text.splitlines()
-        if _DYNAMIC_TOKEN_LINE.match(line.strip())
-    }
-
 
 def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
     """Pool worker: every idea name a file references, for the unused check.
@@ -640,7 +622,7 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
     forms. Content-cached.
     """
     filepath, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -665,12 +647,13 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
 def _check_file_for_refs(args: Tuple[str, frozenset, dict, str]) -> List[str]:
     """Pool worker: return undefined idea references found in one file.
 
+    Exclusions use mod_path so worktree ancestors do not hide content.
     *defined_ci* maps lower-cased idea name -> canonical name; a ref that misses
     case-sensitively but hits here is a case mismatch that works on Windows and
     silently fails on Linux, so it gets a distinct, louder message.
     """
     filepath, defined_ideas_frozen, defined_ci, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -1323,7 +1306,9 @@ class Validator(BaseValidator):
         referenced: Set[str] = set()
         for sub in ref_lists:
             referenced.update(sub)
-        referenced.update(_load_dynamic_token_names(self.mod_path))
+        # Dynamic-token ideas are applied via `add_ideas = var:<token>`, so the
+        # literal name lives only in the registry. Treat those as referenced.
+        referenced.update(load_dynamic_token_names(self.mod_path))
 
         # Prefixes from meta-effect references (`idea = tribute_idea_[ROOTTAG]`).
         # Any candidate whose name starts with one is built at runtime, not dead.

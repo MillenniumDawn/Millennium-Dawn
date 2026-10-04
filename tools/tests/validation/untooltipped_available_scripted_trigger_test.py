@@ -192,7 +192,7 @@ def test_index_builder_finds_flagged_trigger(tmp_path):
     assert len(v._issues) == 1
     issue = v._issues[0]
     assert "pak_raj_border_available" in issue.message
-    assert issue.severity == V.Severity.WARNING
+    assert issue.severity == V.Severity.ERROR
     assert issue.category == "untooltipped-available-scripted-trigger"
 
 

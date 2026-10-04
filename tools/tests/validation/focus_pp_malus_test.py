@@ -12,7 +12,7 @@ from shared.paths import REPO_ROOT as _MOD_ROOT
 from validate_focus_tree import (
     _PP_MALUS_EXEMPT_FOCUS_IDS,
     Validator,
-    _extract_pp_malus,
+    _FocusFile,
 )
 
 
@@ -44,7 +44,7 @@ def _ids(tmp_path, reward, extra=""):
     fpath = _write_focus_file(
         tmp_path, FOCUS_TEMPLATE.format(reward=reward, extra=extra)
     )
-    return {d[0] for d in _extract_pp_malus((str(fpath), str(tmp_path)))}
+    return {d[0] for d in _FocusFile(str(fpath), str(tmp_path)).pp_malus()}
 
 
 def test_negative_pp_in_completion_reward_is_flagged(tmp_path):

@@ -146,7 +146,9 @@ class Validator(BaseValidator):
 
         if self.staged_files:
             files = list(glob.iglob(search_path + "/**/*.txt", recursive=True))
-            files = [f for f in files if not should_skip_file(f)]
+            files = [
+                f for f in files if not should_skip_file(f, mod_path=self.mod_path)
+            ]
             staged_set = set(self.staged_files)
             files = [f for f in files if f in staged_set]
         else:

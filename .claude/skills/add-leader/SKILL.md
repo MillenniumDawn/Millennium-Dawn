@@ -3,49 +3,31 @@ name: add-leader
 description: 'Scaffold generals, field marshals, and admirals for a country using the MD count formulas and region skill ranges, writing character and recruit_character entries. Use when asked to add leaders, generals, or admirals for a TAG, e.g. "/add-leader NIG".'
 ---
 
-Scaffold generals, field marshals, and admirals for a country following the Millennium Dawn new-general-guidelines.
-
 **Syntax:** `/add-leader [TAG]`
 
-The authoritative guide is `docs/src/content/resources/new-general-guidelines.md`. Read it before starting.
+Read `docs/src/content/resources/new-general-guidelines.md` first. Count formulas,
+skill ranges, and portrait sizes are in `.claude/docs/content-guidelines.md`.
 
-## Execution
+## 1. Gather country data
 
-### 1. Gather country data
+- `history/units/TAG_*.txt`: count `division = { }` blocks and ship entries.
+- `history/countries/TAG*.txt`: major power, faction member, or NATO member.
+- `common/characters/TAG.txt`: existing generals, to avoid duplicates.
 
-Read for TAG:
+## 2. Counts and skills
 
-- OOB file(s) `history/units/TAG_*.txt`: count **division** entries for starting unit count. Each `division = { }` block is one unit.
-- History file `history/countries/TAG*.txt`: identify whether the country is a major power, faction member, or NATO member.
-- Existing character file `common/characters/TAG.txt`: check if generals already exist to avoid duplicates.
+- Apply the formulas. At least one general. No ships means no admirals.
+- Counts are per bookmark. With both 2000 and 2017 bookmarks, recruit extras in 2017
+  when more are needed and use `retire_character` when fewer.
+- Take the skill level from the region range. A historically notable commander may
+  exceed it.
+- A general at level X gets `(X - 1) * 3 + 4` points across `attack_skill`,
+  `defense_skill`, `planning_skill`, `logistics_skill`, and `maneuvering_skill`, each at
+  least 1.
 
-### 2. Calculate counts
+## 3. Character file
 
-```
-Generals    = ROUND(units / 15) + 1 + IsMajor + IsInFaction + IsNATO
-FieldMarshals = ROUND(generals / 3)
-Admirals    = ROUND(ships / 15)   # ships = total ship entries in OOB
-```
-
-- `IsMajor`, `IsInFaction`, `IsNATO` are each 1 if true, 0 if not.
-- Minimum 1 general even if the formula produces 0.
-- No ships, no admirals.
-- Counts are per bookmark. With both a 2000 and 2017 bookmark, calculate separately: recruit extras in 2017 if more are needed, use `retire_character` if fewer.
-
-### 3. Determine skill levels
-
-Use the region table from `.claude/docs/content-guidelines.md` (Generals & Admirals section) for the correct skill range. Exceptions are allowed for historically notable commanders; justify briefly in a file comment if you exceed the region range.
-
-### 4. Assign skill points
-
-Each general at skill level X gets `(X - 1) * 3 + 4` total skill points across:
-`attack_skill`, `defense_skill`, `planning_skill`, `logistics_skill`, `maneuvering_skill`
-
-Every skill must be at least 1. Distribute the rest to reflect real-world strengths.
-
-### 5. Write the character file
-
-Append to or create `common/characters/TAG.txt`. Follow this structure:
+Append to or create `common/characters/TAG.txt`:
 
 ```
 characters = {
@@ -68,10 +50,10 @@ characters = {
 			maneuvering_skill = N
 			legacy_id = -1
 		}
-		advisor = {                 # optional — for High Command / branch chiefs
+		advisor = {                 # optional, for high command and branch chiefs
 			slot = army_chief       # or high_command, navy_chief, air_chief
 			idea_token = TAG_general_firstname_lastname
-			ledger = army           # army / air / navy — only for high_command slot
+			ledger = army           # only for the high_command slot
 			allowed = { original_tag = TAG }
 			traits = { army_chief_of_defence_1 }
 			cost = 100
@@ -82,58 +64,21 @@ characters = {
 }
 ```
 
-**Naming rules:**
+- The `allowed` block uses `original_tag`, never `tag`.
+- The token suffix is `firstname_lastname`, with no initials or titles.
+- Portraits go in `gfx/leaders/TAG/`. List any that do not exist yet in the report.
+- Define an air chief even with no air force. Players cannot generate one mid-game.
 
-- `idea_token` must use `original_tag = TAG` in the `allowed` block, never `tag = TAG`
-- Use `firstname_lastname` as the idea_token suffix (no initials, no titles)
-- Field Marshals use `field_marshal = { }`, regular generals use `general = { }`
+## 4. Recruit entries
 
-**Portrait requirements:**
-
-- Large portrait: 156×210 px, `gfx/leaders/TAG/TAG_firstname_lastname.dds`
-- Small portrait: 38×51 px, same folder, `_small` suffix
-- If portraits don't exist yet, note them as needed in a comment for the user to supply before merge
-
-### 6. Write recruit_character entries
-
-In `history/countries/TAG*.txt`, add `recruit_character` lines under the correct bookmark:
+In `history/countries/TAG*.txt`, under the right bookmark:
 
 ```
-# 2000 bookmark
 recruit_character = TAG_general_firstname_lastname
-
-# 2017 bookmark (if count changes between bookmarks)
-recruit_character = TAG_general_firstname_extra
+retire_character = TAG_general_firstname_lastname   # 2017, when the count drops
 ```
 
-If a general should be retired between bookmarks, add under the 2017 entry:
+## 5. Report
 
-```
-retire_character = TAG_general_firstname_lastname
-```
-
-### 7. Create Air Chief even if no air force
-
-At least one Air Chief must be defined even with no air force, since players cannot generate them mid-game. Minimal entry:
-
-```
-advisor = {
-    slot = air_chief
-    idea_token = TAG_general_air_chief
-    allowed = { original_tag = TAG }
-    traits = { air_chief_all_weather_2 }
-    cost = 100
-    ai_will_do = { factor = 1 }
-}
-```
-
-### 8. Report output
-
-Summarise what was written:
-
-- General count (with formula breakdown)
-- Field marshal count
-- Admiral count
-- Characters with skill levels and traits
-- Files modified
-- Portraits still needed (names and sizes)
+General, field marshal, and admiral counts with the formula breakdown, each character's
+skill and traits, the files changed, and the portraits still needed.
