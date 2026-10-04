@@ -1362,6 +1362,7 @@ class Validator(BaseValidator):
             tokens = self._org_equipment_types(team.group(1), body)
             covered = {m for token in tokens for m in equipment.expand(token)}
             if not tokens or covered & {
+                variant_type,
                 archetype,
                 *equipment.types.get(archetype, ()),
                 *equipment.types.get(variant_type, ()),

@@ -378,13 +378,6 @@ def build_index(
             roots.add(entry.archetype)
         else:
             roots.add(name)
-    # A clone family keeps the source's numbering under the clone's own archetype.
-    for dup, dup_entry in duplicates.items():
-        src = dup_entry.archetype
-        for name, entry in entries.items():
-            if src and entry.archetype == src and name.startswith(src + "_"):
-                archetypes.setdefault(dup + name[len(src) :], dup)
-
     # A category resolves to the union of every equipment declaring it.
     for name, tokens in types.items():
         for category in tokens:

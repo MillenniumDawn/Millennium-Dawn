@@ -1059,7 +1059,10 @@ _COVERAGE_EQUIPMENT = """
 equipments = {
 \tsmall_plane_airframe = { is_archetype = yes }
 \tsmall_plane_airframe_1 = { archetype = small_plane_airframe }
-\tmedium_plane_airframe = { is_archetype = yes }
+\tmedium_plane_airframe = {
+\t\tis_archetype = yes
+\t\ttype = { test_fighter }
+\t}
 \tmedium_plane_airframe_1 = { archetype = medium_plane_airframe }
 }
 duplicate_archetypes = {
@@ -1120,6 +1123,23 @@ def test_design_team_type_listed_directly_passes(tmp_path, write_path):
 def test_design_team_type_covered_through_mio_cat_group_passes(tmp_path, write_path):
     issues = _coverage_issues(
         tmp_path, write_path, "mio_cat_test_medium", _team("medium_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_numbered_type_listed_directly_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path,
+        write_path,
+        "medium_plane_airframe_1",
+        _team("medium_plane_airframe_1"),
+    )
+    assert not issues
+
+
+def test_design_team_type_covered_through_category_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "test_fighter", _team("medium_plane_airframe_1")
     )
     assert not issues
 
