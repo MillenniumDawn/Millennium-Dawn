@@ -290,37 +290,104 @@ class TestAccessibility:
 
 
 class TestPerformance:
-    def test_run_checks_budgets_and_empty_index(self, tmp_path):
+    def test_run_checks_bundle_budgets(self, tmp_path):
         site = tmp_path / "site"
         site.mkdir()
         write(site / "small.txt", "ok")
         write(site / "small.css", "ok")
-        write(site / "small.png", "ok")
-        (site / "folder.html").mkdir()
+        (site / "folder.css").mkdir()
         assert perf.run(site) == (
             True,
             f"Performance budget checks passed for {site.resolve()}",
         )
         assert not perf.run(tmp_path / "missing")[0]
 
-        write(site / "index.html", "x" * (perf.INDEX_HTML_BUDGET + 1))
         write(site / "large.css", "x" * (perf.BUDGETS_BYTES[".css"] + 1))
         write(site / "large.js", "x" * (perf.BUDGETS_BYTES[".js"] + 1))
-        write(site / "large.html", "x" * (perf.BUDGETS_BYTES[".html"] + 1))
-        write(site / "large.jpg", "x" * (perf.MAX_IMAGE_BYTES + 1))
         passed, report = perf.run(site)
         assert not passed
-        assert report.count("exceeds") == 5
+        assert report.count("exceeds") == 2
+
+    def test_long_text_page_and_unused_image_pass(self, tmp_path):
+        site = tmp_path / "site"
+        entry = "<li>Fixed a bug in the economy</li>\n"
+        write(site / "changelog/index.html", entry * 30_000)
+        write(site / "assets/original.png", "x" * (perf.PAGE_BUDGET + 1))
+        assert (site / "changelog/index.html").stat().st_size > perf.INITIAL_BUDGET
+        assert perf.run(site)[0]
+
+    def test_page_budgets_split_eager_and_lazy_images(self, tmp_path):
+        site = tmp_path / "site"
+        write(site / "assets/big.png", "x" * (perf.INITIAL_BUDGET + 1))
+        write(site / "assets/huge.png", "x" * (perf.PAGE_BUDGET + 1))
+        write(site / "eager/index.html", '<img src="/base/assets/big.png">')
+        write(
+            site / "lazy/index.html",
+            '<img src="/base/assets/big.png" loading="lazy">',
+        )
+        write(
+            site / "gallery/index.html",
+            '<img src="../assets/huge.png" loading="lazy">',
+        )
+        passed, report = perf.run(site, "/base/")
+        assert not passed
+        assert report.count("exceeds") == 2
+        eager, gallery = sorted(report.splitlines()[1:])
+        assert "eager" in eager and "initial load budget" in eager
+        assert f"assets/big.png, {perf.INITIAL_BUDGET + 1} bytes" in eager
+        assert "gallery" in gallery and "page budget" in gallery
+
+    def test_weigh_page_counts_what_the_browser_fetches(self, tmp_path):
+        site = tmp_path / "site"
+        for name, size in {
+            "first.avif": 10,
+            "second.webp": 500,
+            "fallback.png": 900,
+            "small.png": 20,
+            "retina.png": 70,
+            "lazy.png": 3_000,
+            "video.mp4": 40_000,
+        }.items():
+            write(site / name, "x" * size)
+        css = write(site / "app.css", "body { color: red }\n" * 50)
+        script = write(site / "app.js", "console.log('x');\n" * 50)
+        preload = write(site / "chunk.js", "export const x = 1;\n" * 50)
+        page = write(
+            site / "page/index.html",
+            '<link rel="stylesheet" href="/app.css"><link rel="icon" href="/small.png">'
+            '<link rel="modulepreload" href="/chunk.js"><script src="/app.js"></script>'
+            "<script>inline()</script>"
+            '<picture><source srcset="/first.avif 1x, /missing.avif 2x">'
+            '<source srcset="/second.webp"><img src="/fallback.png"></picture>'
+            '<img src="/small.png" srcset="/small.png 1x, /retina.png 2x">'
+            '<img src="/retina.png"><img src="/lazy.png" loading="lazy">'
+            '<img src="/retina.png" loading="lazy">'
+            '<img src="https://example.com/x.png"><img src="data:image/png;base64,AA">'
+            '<img alt="no source"><video><source src="/video.mp4"></video>',
+        )
+        cache = {}
+        text = sum(
+            perf.transfer_size(path, {}) for path in (page, css, script, preload)
+        )
+        assert perf.transfer_size(css, cache) < css.stat().st_size
+        assert perf.weigh_page(page, site, "", cache) == (
+            text + 10 + 70,
+            text + 10 + 70 + 3_000,
+            site / "lazy.png",
+        )
 
     def test_cli_paths(self, monkeypatch, capsys, tmp_path):
         monkeypatch.setattr(sys, "argv", ["perf", "--site-dir", str(tmp_path)])
         assert perf.main() == 0
         assert "passed" in capsys.readouterr().out
-        monkeypatch.setattr(perf, "run", lambda _path: (False, "bad"))
+        monkeypatch.setattr(perf, "run", lambda _path, _baseurl: (False, "bad"))
         assert perf.main() == 1
         assert capsys.readouterr().out == "bad\n"
-        monkeypatch.setattr(sys, "argv", ["perf", "--site-dir", "s"])
-        assert perf.parse_args().site_dir == "s"
+        monkeypatch.setattr(
+            sys, "argv", ["perf", "--site-dir", "s", "--baseurl", "/base"]
+        )
+        args = perf.parse_args()
+        assert (args.site_dir, args.baseurl) == ("s", "/base")
 
 
 class TestSiteLinks:
