@@ -405,7 +405,7 @@ The **Currency Backing** law determines how your currency is anchored:
 | Bi-Metal Standard | +2%       | +1%           | Moderate volatility                      |
 | Fiat Currency     | -2%       | --            | +0.03 daily PP; highest flexibility      |
 
-Hard-money standards (gold, silver) dampen currency volatility and pull currency strength toward par (1.0) over time. However, they restrict monetary policy flexibility -- you cannot use the Expand Money Supply decision while on the gold standard.
+Hard-money standards dampen currency volatility and lift a currency at or below par (1.0) every month: gold and silver by 0.003, and a bi-metal standard by 0.002. The monthly fall is a share of the current level, so that lift stops the monthly slide at about 0.60 on gold, 0.38 on silver, and 0.20 on a bi-metal standard. However, they restrict monetary policy flexibility -- you cannot use the Expand Money Supply decision while on the gold standard.
 
 ### Monetary Policy Decisions
 
@@ -528,7 +528,7 @@ Inflation responds to multiple levers. Here are the main strategies:
 
 **Strengthen the currency.** Use Austerity Measures, reduce debt, or improve stability to push currency strength above 1.0. This eliminates the currency inflation channel.
 
-**Adopt a hard-money standard.** Gold and silver backing dampen currency volatility and pull it toward 1.0 over time, which indirectly reduces currency-driven inflation. However, hard-money standards restrict your ability to use the Expand Money Supply decision.
+**Adopt a hard-money standard.** Gold, silver, and bi-metal backing dampen currency volatility and pull it toward 1.0 over time, which indirectly reduces currency-driven inflation. However, hard-money standards restrict your ability to use the Expand Money Supply decision.
 
 **Avoid the Expand Money Supply decision during high inflation.** This decision amplifies the inflation adjustment and weakens the currency -- useful during deflation but dangerous during inflation.
 
