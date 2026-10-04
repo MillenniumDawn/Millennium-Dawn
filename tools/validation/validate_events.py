@@ -2335,7 +2335,7 @@ class Validator(BaseValidator):
             results,
             "✓ No hidden events with pictures",
             "Hidden events declaring a picture (hidden events display nothing — remove the field):",
-            Severity.WARNING,
+            Severity.ERROR,
             category="hidden-event-picture",
         )
 
@@ -2783,7 +2783,7 @@ class Validator(BaseValidator):
             "✓ No event option logs without effects",
             "Event options with a log but no effects (the option changes nothing"
             " — remove the log line):",
-            Severity.WARNING,
+            Severity.ERROR,
             category="event-option-log-without-effect",
         )
 

@@ -36,12 +36,6 @@ _EQUIPMENT_SLOT_CATEGORIES = {
     "forbidden_equipment_type": "EQUIPMENT VARIANT: module forbidden on hull type",
 }
 
-_SLOT_ERROR_KINDS = {
-    "missing_required_module",
-    "count_limit_exceeded",
-    "forbidden_equipment_type",
-}
-
 ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
 BLOCKED_FOR_RE = re.compile(r"blocked_for\s*=\s*\{([^}]*)\}", re.DOTALL)
 AVAILABLE_FOR_RE = re.compile(r"available_for\s*=\s*\{([^}]*)\}", re.DOTALL)
@@ -218,17 +212,6 @@ class Validator(BaseValidator):
     TITLE = "AI EQUIPMENT COVERAGE"
     STAGED_EXTENSIONS = [".txt"]
 
-    # WARNING until the ~390-site pre-existing backlog on main is cleared, then
-    # ERROR (measured 2026-08: 262 naval + 124 land/air). PR #2510 fixed the
-    # screen-hull fire-control class but left other category mismatches (light
-    # engines on destroyers, ESM on subs, mineclearing on corvettes, engine
-    # modules in weapon slots) untouched; the tank and plane templates came into
-    # scope later and carry their own share.
-    # A template that leaves a `required = yes` slot empty, exceeds a hull
-    # `module_count_limit`, or equips a module forbidden on that hull's types
-    # cannot be matched, so those are always hard errors regardless of backlog.
-    SLOT_SEVERITY = Severity.WARNING
-
     def run_validations(self):
         self._validate_coverage()
         self._validate_variant_modules()
@@ -269,11 +252,7 @@ class Validator(BaseValidator):
                 )
                 results.append(
                     Issue(
-                        severity=(
-                            Severity.ERROR
-                            if f.kind in _SLOT_ERROR_KINDS
-                            else self.SLOT_SEVERITY
-                        ),
+                        severity=Severity.ERROR,
                         category=labels[f.kind],
                         message=f.message,
                         file=rel,
@@ -285,7 +264,6 @@ class Validator(BaseValidator):
             results,
             "✓ All AI variant modules match their hull slot rules",
             "AI variant modules invalid for their hull slot:",
-            severity=self.SLOT_SEVERITY,
         )
 
     def _validate_history_consistency(self):

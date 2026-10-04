@@ -751,7 +751,7 @@ class Validator(BaseValidator):
             return
         prefix = org_id.split("_", 1)[0]
         if not name.startswith(prefix + "_") or not name.endswith("_trait"):
-            self.add_warning(
+            self.add_error(
                 "initial-trait-name",
                 f"initial_trait name '{name}' must be {prefix}_<name>_trait "
                 f"(e.g. {prefix}_norinco_trait)",
@@ -807,7 +807,7 @@ class Validator(BaseValidator):
             except ValueError:
                 continue
             if x > 9:
-                self.add_warning(
+                self.add_error(
                     "trait-x-bounds",
                     f"trait position x = {x} must stay inside 0..9",
                     rel,
@@ -886,7 +886,7 @@ class Validator(BaseValidator):
                     if parent_pos is None:
                         continue
                     if child_pos[1] <= parent_pos[1]:
-                        self.add_warning(
+                        self.add_error(
                             "trait-geometry-parent-row",
                             f"trait `{token}` sits on or above its parent "
                             f"`{parent}` (rows {child_pos[1]} vs "
@@ -907,7 +907,7 @@ class Validator(BaseValidator):
                     continue
                 if child_pos[1] != other_pos[1]:
                     self._reported_mutex_rows.add(row_pair)
-                    self.add_warning(
+                    self.add_error(
                         "trait-geometry-mutex-row",
                         f"mutually exclusive traits `{token}` and `{other}` "
                         f"sit on different rows ({child_pos[1]} vs "
@@ -931,7 +931,7 @@ class Validator(BaseValidator):
                     if pair in seen_pairs:
                         continue
                     seen_pairs.add(pair)
-                    self.add_warning(
+                    self.add_error(
                         "trait-geometry-mutex-parents",
                         f"trait `{token}` requires both `{parent}` and "
                         f"`{other}`, but they are mutually exclusive — the "

@@ -288,8 +288,8 @@ def test_full_run_on_fixture_dir(tmp_path):
     assert "org-id-format" not in by_cat
     assert by_cat["org-allowed-tag"].severity == "error"
     assert by_cat["on-complete-empty"].severity == "error"
-    assert by_cat["trait-x-bounds"].severity == "warning"
-    assert by_cat["initial-trait-name"].severity == "warning"
+    assert by_cat["trait-x-bounds"].severity == "error"
+    assert by_cat["initial-trait-name"].severity == "error"
     assert by_cat["trait-loc-missing"].severity == "error"
 
 
@@ -1326,7 +1326,9 @@ def test_child_on_or_above_parent_row_is_flagged(tmp_path):
 
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
-    assert [i.category for i in v._issues] == ["trait-geometry-parent-row"]
+    assert [(i.category, i.severity) for i in v._issues] == [
+        ("trait-geometry-parent-row", "error")
+    ]
     assert "`child`" in v._issues[0].message and "`root`" in v._issues[0].message
 
     v = _geometry_validator(tmp_path, _index(body))
@@ -1379,7 +1381,9 @@ def test_mutually_exclusive_traits_on_different_rows_are_flagged(tmp_path):
 
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
-    assert [i.category for i in v._issues] == ["trait-geometry-mutex-row"]
+    assert [(i.category, i.severity) for i in v._issues] == [
+        ("trait-geometry-mutex-row", "error")
+    ]
 
 
 def test_mutually_exclusive_traits_sharing_a_row_are_clean(tmp_path):
@@ -1403,7 +1407,9 @@ def test_all_parents_with_mutually_exclusive_parents_is_flagged(tmp_path):
 
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
-    assert [i.category for i in v._issues] == ["trait-geometry-mutex-parents"]
+    assert [(i.category, i.severity) for i in v._issues] == [
+        ("trait-geometry-mutex-parents", "error")
+    ]
     assert "any_parent" in v._issues[0].message
 
 
