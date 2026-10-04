@@ -30,8 +30,8 @@ def test_name_and_log_only_is_flagged(tmp_path):
         ("foo.1.a", "Ev.txt", 7)
     ]
     assert v._issues[0].category == "event-option-log-without-effect"
-    assert v.warnings_found == 1
-    assert v.errors_found == 0
+    assert v.errors_found == 1
+    assert v.warnings_found == 0
 
 
 def test_trigger_and_ai_chance_are_not_effects(tmp_path):
