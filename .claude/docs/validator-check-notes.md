@@ -339,7 +339,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   matches para, airborne, VDV, or desant lists a sub-unit without
   `can_be_parachuted = yes`, which stops the whole division from paradropping.
   Deliberate air-assault templates are named in `air_assault_templates` in the
-  config.
+  config. Staged mode checks only staged template files, so a `common/units/`
+  flag change surfaces on the full CI run.
 - New source directories: `config_drift_test.py` derives the routes from the
   `_*_SOURCE_PATTERNS` lists and fails until every route is updated.
 
