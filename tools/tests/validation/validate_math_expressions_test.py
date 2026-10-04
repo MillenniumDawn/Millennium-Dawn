@@ -283,7 +283,7 @@ def test_validator_reports_file_and_line(tmp_path):
     assert [(i.category, i.file, i.line) for i in v._issues] == [
         ("math-sibling-operator", "common/scripted_effects/traps.txt", 1)
     ]
-    assert all(i.severity == "warning" for i in v._issues)
+    assert all(i.severity == "error" for i in v._issues)
 
 
 def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch, pool_sizes):

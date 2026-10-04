@@ -50,8 +50,6 @@ bare `naval_base > 0` comparison or `any_province_building_level` instead.
 country-level `any_owned_state = { arms_factory > 0 }` does not prove the
 state the effect runs on has that building. `effect_tooltip` subtrees are
 skipped because they only preview effects and never execute.
-
-This is WARNING-only while the rule remains in rollout.
 """
 
 import os
@@ -334,7 +332,7 @@ class Validator(BaseValidator):
         report_findings(
             self,
             [row for row in rows if row[0] != "province-building-state-trigger"],
-            self.add_warning,
+            self.add_error,
             "unguarded building effect(s)",
             "All damage_building/remove_building effects are guarded",
         )
@@ -343,7 +341,7 @@ class Validator(BaseValidator):
         report_findings(
             self,
             [row for row in rows if row[0] == "province-building-state-trigger"],
-            self.add_warning,
+            self.add_error,
             "province building(s) named in a state-only trigger",
             "No province buildings named in state-only building triggers",
         )
