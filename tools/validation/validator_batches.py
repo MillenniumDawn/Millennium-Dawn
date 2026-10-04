@@ -59,7 +59,10 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     ),
     "targeted-a": (
         ValidatorSpec(
-            "decisions", "validate_decisions.py", ("decisions", "localisation")
+            "decisions",
+            "validate_decisions.py",
+            ("decisions", "localisation"),
+            args=("--unannounced-categories",),
         ),
         ValidatorSpec("oob-units", "validate_oob_units.py", ("oob",)),
         ValidatorSpec("equipment-upkeep", "validate_equipment_upkeep.py", ("oob",)),

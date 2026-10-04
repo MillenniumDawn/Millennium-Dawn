@@ -54,6 +54,12 @@ def test_variables_spec_carries_the_redundant_focus_flag_scan():
     assert spec.strict is True
 
 
+def test_decisions_spec_carries_the_unannounced_category_scan():
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "decisions")
+    assert spec.args == ("--unannounced-categories",)
+    assert spec.strict is True
+
+
 def test_selected_specs_filters_by_changed_groups():
     selected = {
         spec.name
