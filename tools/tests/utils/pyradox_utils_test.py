@@ -1,6 +1,6 @@
-from equipment import Equipment, LandEquipmentStats
-from mio import MIO, Trait
-from pyradox_utils import as_mapping, dedupe_preserve_order, normalize_node, stats_value, token_list
+from tools.types.equipment import Equipment, LandEquipmentStats
+from tools.types.mio import MIO, Trait
+from tools.utils.pyradox_utils import as_mapping, dedupe_preserve_order, normalize_node, stats_value, token_list
 
 
 def test_dedupe_preserve_order_keeps_first_seen_values():

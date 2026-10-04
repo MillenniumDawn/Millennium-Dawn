@@ -7,7 +7,6 @@ def test_GivenEquipmentTree_WhenReadEquipment_ThenReturnsEquipment():
     import pyradox
 
     raw = pyradox.parse("""
-        {
 		is_archetype = yes
 		is_buildable = no
 		type = infantry
@@ -48,7 +47,7 @@ def test_GivenEquipmentTree_WhenReadEquipment_ThenReturnsEquipment():
 		resources = {
 			steel = 1
 		}
-    }""")
+    """)
     parsed: Equipment = Equipment.read_equipment("infantry_weapons_type", raw, dict())
     assert parsed.is_archetype
     assert not parsed.is_buildable
@@ -70,7 +69,7 @@ def test_GivenEquipmentTree_WhenReadEquipment_ThenReturnsEquipment():
     assert parsed.stats.build_cost_ic == 0.31
 
 
-def test_GivenFile_WhenFromFile_ThenReturnFromFileReturnsAllEquipmentTagsAndTypeLists(tmp_path):
+def test_GivenEquipmentFile_WhenFromFile_ThenReturnsAllEquipmentTagsAndTypeLists(tmp_path):
     path = tmp_path / "equipment_file.txt"
     path.write_text(
         """
@@ -100,7 +99,7 @@ def test_GivenFile_WhenFromFile_ThenReturnFromFileReturnsAllEquipmentTagsAndType
     assert parsed["infantry_weapons_1"].stats.soft_attack == 2.5
 
 
-def test_GivenFile_WhenEquipmentInheritance_ThenUsesParentBlockBeforeOverride(tmp_path):
+def test_GivenEquipmentInheritance_WhenParsed_ThenParentBlockIsAppliedBeforeOverride(tmp_path):
     path = tmp_path / "inheritance.txt"
     path.write_text(
         """
@@ -131,7 +130,7 @@ def test_GivenFile_WhenEquipmentInheritance_ThenUsesParentBlockBeforeOverride(tm
     assert parsed["destroyer"].stats.lg_attack == 2
 
 
-def test_GivenDirectory_WhenFromDirectory_ThenParsesRecursiveTxtFilesAndCrossFileArchetypes(tmp_path):
+def test_GivenEquipmentDirectory_WhenFromDirectory_ThenParsesRecursiveFilesAndCrossFileArchetypes(tmp_path):
     root = tmp_path / "equipment_root"
     root.mkdir()
 

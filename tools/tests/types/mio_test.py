@@ -6,7 +6,7 @@ from tools.types.equipment import Equipment, LandEquipmentStats
 from tools.types.mio import EquipmentGroup, MIO
 
 
-def test_mio_and_trait_equipment_types_expand_groups(tmp_path):
+def test_GivenMioDefinition_WhenParsed_ThenEquipmentTypesAndTraitScopesExpand(tmp_path):
     org_path = tmp_path / "orgs"
     org_path.mkdir()
     (org_path / "mio.txt").write_text(
@@ -60,7 +60,7 @@ def test_mio_and_trait_equipment_types_expand_groups(tmp_path):
     assert trait_by_token["trait_limited"].applies_to == ["patrol_boat", "corvette"]
 
 
-def test_include_chain_trait_operations_and_top_level_delete(tmp_path):
+def test_GivenIncludedMio_WhenTraitOperationsAndTopLevelDeleteApply_ThenInheritedValuesAreUpdated(tmp_path):
     org_path = tmp_path / "orgs"
     org_path.mkdir()
     (org_path / "mio.txt").write_text(
@@ -112,7 +112,7 @@ def test_include_chain_trait_operations_and_top_level_delete(tmp_path):
     assert [trait.token for trait in child.traits] == ["trait_a", "trait_c"]
 
 
-def test_countries_only_from_explicit_original_tags(tmp_path):
+def test_GivenAllowedCountries_WhenOriginalTagsAreParsed_ThenOnlyExplicitCountriesAreIncluded(tmp_path):
     org_path = tmp_path / "orgs"
     org_path.mkdir()
     (org_path / "countries.txt").write_text(
@@ -142,7 +142,7 @@ def test_countries_only_from_explicit_original_tags(tmp_path):
     assert parsed["ORG_scripted_only"].countries == []
 
 
-def test_trait_parent_semantics_are_preserved(tmp_path):
+def test_GivenTraitHierarchy_WhenParsed_ThenParentSemanticsArePreserved(tmp_path):
     org_path = tmp_path / "orgs"
     org_path.mkdir()
     (org_path / "parents.txt").write_text(
@@ -192,7 +192,7 @@ def test_trait_parent_semantics_are_preserved(tmp_path):
     assert [trait.token for trait in traits["branch_c"].mutually_exclusive] == ["branch_b"]
 
 
-def test_include_cycle_raises_value_error(tmp_path):
+def test_GivenIncludeCycle_WhenMioIsParsed_ThenValueErrorIsRaised(tmp_path):
     org_path = tmp_path / "orgs"
     org_path.mkdir()
     (org_path / "cycle.txt").write_text(
@@ -214,7 +214,7 @@ def test_include_cycle_raises_value_error(tmp_path):
         MIO.from_directory(org_path, {})
 
 
-def test_bonus_stats_class_uses_equipment_scope(tmp_path):
+def test_GivenEquipmentScope_WhenBonusStatsAreBuilt_ThenTraitBonusUsesEquipmentStats(tmp_path):
     org_path = tmp_path / "orgs"
     org_path.mkdir()
     (org_path / "scope.txt").write_text(
