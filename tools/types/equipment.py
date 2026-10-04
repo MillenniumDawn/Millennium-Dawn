@@ -224,7 +224,8 @@ class NavalEquipmentStats(EquipmentStats):
 @dataclass(frozen=True, repr=False)
 class AirEquipmentStats(EquipmentStats):
     """Stats specific to air equipment."""
-
+    maximum_speed: Optional[float] = None
+    """Maximum speed of the aircraft."""
     air_attack: Optional[float] = None
     """Amount of damage done against other planes."""
     air_defence: Optional[float] = None
@@ -248,7 +249,10 @@ class AirEquipmentStats(EquipmentStats):
     """Influences carrier composition weight. (Unknown what exactly this affects, but is defined on the airframe)"""
     carrier_capable: Optional[bool] = None
     """Indicates whether the aircraft can operate from a carrier. (Defined on the airframe)"""
-
+    surface_detection: Optional[float] = None
+    """Represents the equipment's ability to detect ships."""
+    sub_detection: Optional[float] = None
+    """Represents the equipment's ability to detect submarines."""
 
 _LAND_TYPE_TOKENS = {
     "infantry",
