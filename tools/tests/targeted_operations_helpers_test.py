@@ -37,6 +37,10 @@ class TargetedScript(RaceScript):
         if key == "set_temp_variable":
             self.execute([statement], identifier)
             return True
+        if key == "country_exists":
+            return self.condition_statement(
+                (operand, "=", [("exists", "=", "yes")]), identifier
+            )
         if key in self.country_trigger_fields:
             actual = self.countries[identifier][self.country_trigger_fields[key]]
             return self.comparisons[comparison](actual, self.value(operand, identifier))
