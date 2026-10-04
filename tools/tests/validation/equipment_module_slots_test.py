@@ -593,7 +593,7 @@ def test_oob_validator_integration_reports_errors(tmp_path):
     assert "module_test_plain_fc" in issues[0].message
 
 
-def test_validator_integration_reports_warnings(tmp_path):
+def test_ai_validator_integration_reports_errors(tmp_path):
     issues = _variant_issues(
         tmp_path,
         HULLS,
@@ -607,7 +607,7 @@ def test_validator_integration_reports_warnings(tmp_path):
         "NAVAL VARIANT",
     )
     assert len(issues) == 1
-    assert issues[0].severity == "warning"
+    assert issues[0].severity == "error"
     assert issues[0].file == "common/ai_equipment/TST_naval.txt"
     assert "module_test_plain_fc" in issues[0].message
 
@@ -633,8 +633,7 @@ def test_oob_validator_reports_missing_required_slot(tmp_path):
 
 
 def test_ai_validator_missing_required_slot_is_error(tmp_path):
-    # A template that leaves a required slot empty can never be matched, so the
-    # AI validator escalates it above its usual slot-rule warning.
+    # A template that leaves a required slot empty can never be matched.
     issues = _variant_issues(
         tmp_path,
         REQUIRED_HULLS,
