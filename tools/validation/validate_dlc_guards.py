@@ -19,9 +19,15 @@ Gating is derived, not hardcoded:
   - A research category counts as gated only when every tech carrying it shares
     one gate.
   - `common/special_projects/projects/*.txt` -- a project's `allowed` block.
+  - A tech whose `allow` needs a DLC-gated special project inherits that gate.
 
 A named technology or project is an ERROR: it crashes the game. A fully gated
 category is a WARNING: it resolves to nothing and only wastes the bonus.
+
+A `has_tech` for a project-gated tech in a focus `available`/`allowed`/`visible`/
+`prerequisite`, or a decision `available`/`allowed`/`visible`, makes the object
+unreachable without the DLC (issue #5328). It is a WARNING. Techs gated only by a
+folder are out of scope, and `has_tech` under OR or NOT is not a requirement.
 """
 
 import glob
@@ -38,7 +44,10 @@ from shared_utils import (  # noqa: E402
     compute_line_offsets,
     line_for_offset,
 )
-from validate_history import _extract_dlc_conditions  # noqa: E402
+from validate_history import (  # noqa: E402
+    _SP_REQUIRED_RE,
+    _extract_dlc_conditions,
+)
 from validator_common import (  # noqa: E402
     BaseValidator,
     _child_blocks,
@@ -56,6 +65,7 @@ _FOLDER_NAME_RE = re.compile(r"\bname\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 _IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 _PURE_REQUIRE_RE = re.compile(r'^has_dlc = "[^"\n]+"$')
 _PURE_FORBID_RE = re.compile(r'^NOT = \{ has_dlc = "[^"\n]+" \}$')
+_HAS_TECH_RE = re.compile(r"\bhas_tech\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 
 # A has_dlc here gates the whole enclosing object, not just one branch body.
 _OBJECT_GATES = frozenset({"trigger", "available", "visible", "allowed"})
@@ -64,6 +74,11 @@ _SKIP_BLOCKS = frozenset(
     {"limit", "ai_will_do", "search_filters", "prerequisite", "mutually_exclusive"}
 )
 _BRANCHES = frozenset({"if", "else_if", "else"})
+# Blocks where a `has_tech` is a hard requirement. Under OR it is only one
+# alternative and under NOT it is not required at all.
+_FOCUS_AVAILABILITY = frozenset({"available", "allowed", "visible", "prerequisite"})
+_DECISION_AVAILABILITY = frozenset({"available", "allowed", "visible"})
+_NOT_REQUIRED = frozenset({"OR", "NOT"})
 # Naming a disabled technology or project crashes the game; a fully gated
 # category resolves to nothing and only wastes the bonus.
 _CRASHING = frozenset({"dlc_tech_bonus", "dlc_special_project"})
@@ -156,10 +171,13 @@ def parse_folder_gates(mod_path: str) -> Dict[str, Gates]:
     return gates
 
 
-def parse_tech_file(text: str, folder_gates: Dict[str, Gates]):
-    """Return (tech -> gates, tech -> categories) for one technology file."""
+def parse_tech_file(
+    text: str, folder_gates: Dict[str, Gates], project_gates: Dict[str, Gates]
+):
+    """Return (tech -> gates, tech -> categories, project-gated techs) for one file."""
     tech_gates: Dict[str, Gates] = {}
     tech_categories: Dict[str, Set[str]] = {}
+    project_techs: Set[str] = set()
     for name, _, body_start, body_end in _child_blocks(text, 0, len(text)):
         if name != "technologies":
             continue
@@ -171,6 +189,12 @@ def parse_tech_file(text: str, folder_gates: Dict[str, Gates]):
                 body = text[s_start:s_end]
                 if sub == "allow_branch":
                     conditions.extend(_extract_dlc_conditions(body))
+                elif sub == "allow":
+                    # Every project in `allow` must be completed, and no tech uses OR.
+                    for project in _SP_REQUIRED_RE.findall(body):
+                        if project in project_gates:
+                            conditions.extend(project_gates[project])
+                            project_techs.add(tech)
                 elif sub == "folder":
                     folder = _FOLDER_NAME_RE.search(body)
                     if folder:
@@ -183,14 +207,15 @@ def parse_tech_file(text: str, folder_gates: Dict[str, Gates]):
                 conditions.extend(next(iter(folder_sets)))
             tech_gates[tech] = frozenset(conditions)
             tech_categories[tech] = categories
-    return tech_gates, tech_categories
+    return tech_gates, tech_categories, project_techs
 
 
 def parse_tech_gates(
-    mod_path: str, folder_gates: Dict[str, Gates]
-) -> Tuple[Dict[str, Gates], Dict[str, Gates]]:
-    """Build the tech -> gates and category -> gates maps."""
+    mod_path: str, folder_gates: Dict[str, Gates], project_gates: Dict[str, Gates]
+) -> Tuple[Dict[str, Gates], Dict[str, Gates], Set[str]]:
+    """Build the tech -> gates and category -> gates maps and the project-gated techs."""
     tech_gates: Dict[str, Gates] = {}
+    project_techs: Set[str] = set()
     category_members: Dict[str, List[Gates]] = defaultdict(list)
     pattern = os.path.join(mod_path, "common", "technologies", "*.txt")
     for filepath in sorted(glob.iglob(pattern)):
@@ -199,8 +224,11 @@ def parse_tech_gates(
                 raw = handle.read()
         except OSError:
             continue
-        file_gates, file_categories = parse_tech_file(_sanitize(raw), folder_gates)
+        file_gates, file_categories, file_project_techs = parse_tech_file(
+            _sanitize(raw), folder_gates, project_gates
+        )
         tech_gates.update(file_gates)
+        project_techs |= file_project_techs
         for tech, categories in file_categories.items():
             for category in categories:
                 category_members[category].append(file_gates[tech])
@@ -212,7 +240,7 @@ def parse_tech_gates(
             shared = next(iter(unique))
             if shared:
                 category_gates[category] = shared
-    return tech_gates, category_gates
+    return tech_gates, category_gates, project_techs
 
 
 def parse_project_gates(mod_path: str) -> Dict[str, Gates]:
@@ -244,11 +272,15 @@ class Scanner:
         tech_gates: Dict[str, Gates],
         category_gates: Dict[str, Gates],
         project_gates: Dict[str, Gates],
+        project_techs: FrozenSet[str] = frozenset(),
+        availability: FrozenSet[str] = frozenset(),
     ):
         self.text = text
         self.tech_gates = tech_gates
         self.category_gates = category_gates
         self.project_gates = project_gates
+        self.project_techs = project_techs
+        self.availability = availability
         self.offsets = compute_line_offsets(text)
         self.findings: List[Tuple[str, int, str]] = []
 
@@ -264,13 +296,13 @@ class Scanner:
         for gate_kind, dlc in sorted(gates):
             if gate_kind == "require" and dlc not in ctx.present:
                 message = (
-                    f'{kind} {name} requires "{dlc}" but is not inside '
-                    f'if = {{ limit = {{ has_dlc = "{dlc}" }} }}'
+                    f'{kind} {name} requires "{dlc}" but has no has_dlc = "{dlc}" guard'
                 )
+
             elif gate_kind == "forbid" and dlc in ctx.present:
                 message = (
-                    f'{kind} {name} is unavailable with "{dlc}" but is granted '
-                    f'inside a has_dlc = "{dlc}" branch'
+                    f'{kind} {name} is unavailable with "{dlc}" but is used '
+                    f'inside a has_dlc = "{dlc}" guard'
                 )
             else:
                 continue
@@ -303,7 +335,29 @@ class Scanner:
                     ctx,
                 )
 
-    def walk(self, start: int, end: int, ctx: Context, chain: Conditions = ()):
+    def _has_tech(self, start: int, end: int, blocks, ctx: Context):
+        """Check the `has_tech` lines sitting directly in a block, not its children."""
+        for match in _HAS_TECH_RE.finditer(self.text, start, end):
+            tech = match.group(1)
+            nested = any(s <= match.start() <= e for _, s, _, e in blocks)
+            if tech in self.project_techs and not nested:
+                self._check(
+                    "dlc_has_tech",
+                    match.start(),
+                    "has_tech",
+                    tech,
+                    self.tech_gates[tech],
+                    ctx,
+                )
+
+    def walk(
+        self,
+        start: int,
+        end: int,
+        ctx: Context,
+        chain: Conditions = (),
+        required: bool = False,
+    ):
         blocks = _child_blocks(self.text, start, end)
         gate_conditions: Conditions = []
         for name, _, body_start, body_end in blocks:
@@ -312,12 +366,19 @@ class Scanner:
                     _extract_dlc_conditions(self.text[body_start:body_end])
                 )
         ctx = ctx.apply(gate_conditions)
+        if required:
+            self._has_tech(start, end, blocks, ctx)
 
         # HOI4 accepts `else` both as a sibling of its `if` and nested inside it,
         # so the enclosing branch seeds the ruled-out chain on the way in.
         chain = list(chain)
         for name, name_start, body_start, body_end in blocks:
+            if name in self.availability:
+                self.walk(body_start, body_end, ctx, required=True)
+                continue
             if name in _SKIP_BLOCKS or name in _OBJECT_GATES:
+                continue
+            if required and name in _NOT_REQUIRED:
                 continue
             if name == "add_tech_bonus":
                 self._tech_bonus(body_start, body_end, ctx)
@@ -329,7 +390,13 @@ class Scanner:
                     branch_ctx = ctx.apply(conditions)
                 else:
                     branch_ctx = ctx.invert(chain).apply(conditions)
-                self.walk(body_start, body_end, branch_ctx, conditions if pure else ())
+                self.walk(
+                    body_start,
+                    body_end,
+                    branch_ctx,
+                    conditions if pure else (),
+                    required,
+                )
                 if name == "else" or not pure:
                     # An impure branch cannot be inverted, and hides earlier ones too.
                     chain = []
@@ -347,15 +414,16 @@ class Scanner:
                         gates,
                         ctx,
                     )
-            self.walk(body_start, body_end, ctx)
+            self.walk(body_start, body_end, ctx, required=required)
 
 
 def _fingerprint_gates(
     tech_gates: Dict[str, Gates],
     category_gates: Dict[str, Gates],
     project_gates: Dict[str, Gates],
+    project_techs: Set[str],
 ) -> str:
-    """Stable digest of the three derived gate maps.
+    """Stable digest of the derived gate maps and the project-gated techs.
 
     Folded into ``scan_file``'s cache key so a `has_dlc` change anywhere in
     `common/technology_tags/`, `common/technologies/`, or
@@ -369,21 +437,27 @@ def _fingerprint_gates(
             for name, gate in sorted(gates.items())
         )
 
-    return "|".join(_fmt(g) for g in (tech_gates, category_gates, project_gates))
+    maps = "|".join(_fmt(g) for g in (tech_gates, category_gates, project_gates))
+    return f"{maps}|{','.join(sorted(project_techs))}"
 
 
 _TECH_GATES: Dict[str, Gates] = {}
 _CATEGORY_GATES: Dict[str, Gates] = {}
 _PROJECT_GATES: Dict[str, Gates] = {}
+_PROJECT_TECHS: FrozenSet[str] = frozenset()
 _GATE_FINGERPRINT = ""
 _MOD_PATH = ""
 
 
-def _init_worker(tech_gates, category_gates, project_gates, gate_fingerprint, mod_path):
-    global _TECH_GATES, _CATEGORY_GATES, _PROJECT_GATES, _GATE_FINGERPRINT, _MOD_PATH
+def _init_worker(
+    tech_gates, category_gates, project_gates, project_techs, gate_fingerprint, mod_path
+):
+    global _TECH_GATES, _CATEGORY_GATES, _PROJECT_GATES, _PROJECT_TECHS
+    global _GATE_FINGERPRINT, _MOD_PATH
     _TECH_GATES = tech_gates
     _CATEGORY_GATES = category_gates
     _PROJECT_GATES = project_gates
+    _PROJECT_TECHS = project_techs
     _GATE_FINGERPRINT = gate_fingerprint
     _MOD_PATH = mod_path
 
@@ -395,11 +469,24 @@ def scan_file(filepath: str) -> List[Tuple[str, str, int, str]]:
             raw = handle.read()
     except OSError:
         return []
-    if "add_tech_bonus" not in raw and "sp:" not in raw:
+    if "add_tech_bonus" not in raw and "sp:" not in raw and "has_tech" not in raw:
         return []
+    relative = os.path.relpath(filepath, _MOD_PATH).replace(os.sep, "/")
+    availability = frozenset()
+    if relative.startswith("common/national_focus/"):
+        availability = _FOCUS_AVAILABILITY
+    elif relative.startswith("common/decisions/") and "/categories/" not in relative:
+        availability = _DECISION_AVAILABILITY
 
     def compute():
-        scanner = Scanner(_sanitize(raw), _TECH_GATES, _CATEGORY_GATES, _PROJECT_GATES)
+        scanner = Scanner(
+            _sanitize(raw),
+            _TECH_GATES,
+            _CATEGORY_GATES,
+            _PROJECT_GATES,
+            _PROJECT_TECHS,
+            availability,
+        )
         scanner.walk(0, len(scanner.text), Context())
         return scanner.findings
 
@@ -410,7 +497,6 @@ def scan_file(filepath: str) -> List[Tuple[str, str, int, str]]:
         raw + "\x00" + _GATE_FINGERPRINT,
         compute,
     )
-    relative = os.path.relpath(filepath, _MOD_PATH).replace(os.sep, "/")
     return [(category, relative, line, message) for category, line, message in findings]
 
 
@@ -420,14 +506,18 @@ class Validator(BaseValidator):
     def validate_dlc_guards(self):
         self._log_section("DLC-gated technology and special project guards")
         folder_gates = parse_folder_gates(self.mod_path)
-        tech_gates, category_gates = parse_tech_gates(self.mod_path, folder_gates)
         project_gates = parse_project_gates(self.mod_path)
+        tech_gates, category_gates, project_techs = parse_tech_gates(
+            self.mod_path, folder_gates, project_gates
+        )
         self.log(
             f"  {len(folder_gates)} DLC-gated folders, {len(tech_gates)} technologies, "
             f"{len(category_gates)} gated categories, {len(project_gates)} gated projects"
         )
 
-        gate_fingerprint = _fingerprint_gates(tech_gates, category_gates, project_gates)
+        gate_fingerprint = _fingerprint_gates(
+            tech_gates, category_gates, project_gates, project_techs
+        )
         files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
         results = self._pool_map_init(
             scan_file,
@@ -437,6 +527,7 @@ class Validator(BaseValidator):
                 tech_gates,
                 category_gates,
                 project_gates,
+                frozenset(project_techs),
                 gate_fingerprint,
                 self.mod_path,
             ),
