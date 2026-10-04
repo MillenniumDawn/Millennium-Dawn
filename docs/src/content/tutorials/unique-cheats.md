@@ -47,14 +47,14 @@ Open the console and type `effect <name>`. Country-specific cheats run on the co
 
 ### Economy
 
-| Command                                | What it does                                                                   |
-| -------------------------------------- | ------------------------------------------------------------------------------ |
-| `effect cheat_motherlode`              | Adds 10,000 to the treasury.                                                   |
-| `effect cheat_reset_economy`           | Runs all four resets below.                                                    |
-| `effect cheat_reset_inflation`         | Sets inflation to 0% and clears the last four quarters of inflation history.   |
-| `effect cheat_clear_debt`              | Sets debt to 0, which also clears interest payments.                           |
-| `effect cheat_reset_treasury`          | Sets the treasury to 0. Use `set_var treasury <amount>` for a specific amount. |
-| `effect cheat_reset_currency_strength` | Sets currency strength to 1.0 (par) and removes the inflation it was adding.   |
+| Command                                | What it does                                                                                   |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `effect cheat_motherlode`              | Adds 10,000 to the treasury.                                                                   |
+| `effect cheat_reset_economy`           | Runs all four resets below.                                                                    |
+| `effect cheat_reset_inflation`         | Sets inflation to 0% and clears the last four quarters of inflation history.                   |
+| `effect cheat_clear_debt`              | Sets debt to 0, which also clears interest payments.                                           |
+| `effect cheat_reset_treasury`          | Sets the treasury to 0. Use `set_var treasury <amount>` for a specific amount.                 |
+| `effect cheat_reset_currency_strength` | Sets currency strength and base strength to 1.0 (par) and removes the inflation it was adding. |
 
 The economy panel updates right away. The normal weekly and monthly updates keep running, so inflation and currency strength start moving again from the reset value.
 
