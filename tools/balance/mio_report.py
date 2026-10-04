@@ -18,8 +18,8 @@ _TYPES_DIR = os.path.abspath(_TYPES_DIR)
 if _TYPES_DIR not in sys.path:
     sys.path.insert(0, _TYPES_DIR)
 
-from equipment import Equipment
-from mio import EquipmentGroup, MIO, BonusReport
+from equipment import AllEquipmentStats, Equipment
+from mio import MIO, BonusReport, EquipmentGroup
 
 
 def print_usage():
@@ -47,7 +47,7 @@ Available equipment types:""".format(REPORT_ALL=REPORT_ALL)
         print(f"     {tag}")
 
 
-def report_specific_equipment_type(equ_type: Equipment, mios: dict[str, MIO]):
+def report_specific_equipment_type(equ_type: Equipment, mios: dict[str, MIO], WEIGHTS: AllEquipmentStats):
     """Print ranked MIO bonus reports for one equipment archetype.
 
     Args:
@@ -60,7 +60,7 @@ def report_specific_equipment_type(equ_type: Equipment, mios: dict[str, MIO]):
     applies_to = dict[MIO, BonusReport]()
     for org_id, mio in mios.items():
         if equ_type.tag in mio.equipment_types:
-            boost = mio.sum_bonuses_for(equ_type)
+            boost = mio.sum_bonuses_for(equ_type, WEIGHTS)
             if not boost.is_empty():
                 applies_to[mio] = boost
     applies_to = dict(
@@ -70,11 +70,12 @@ def report_specific_equipment_type(equ_type: Equipment, mios: dict[str, MIO]):
         print(boost.to_pretty_display())
 
 
-def spreadsheet_report(mios: dict[str, MIO], output_file: str):
+def spreadsheet_report(mios: dict[str, MIO], WEIGHTS: AllEquipmentStats, output_file: str):
     """Generate an XLSX report for all MIOs across all archetype equipment.
 
     Args:
         mios: Mapping of MIO id to parsed MIO object to include in the report.
+        WEIGHTS: The weight vector to use when calculating MIO scores.
         output_file: Requested output path for the report. If the provided path
             does not end with ``.xlsx``, the extension is replaced automatically.
 
@@ -101,7 +102,7 @@ def spreadsheet_report(mios: dict[str, MIO], output_file: str):
             if equipment.tag not in mio.equipment_types:
                 continue
 
-            report = mio.sum_bonuses_for(equipment)
+            report = mio.sum_bonuses_for(equipment, WEIGHTS)
             if report.is_empty():
                 continue
             applicable_reports.append(report)
@@ -144,7 +145,7 @@ def spreadsheet_report(mios: dict[str, MIO], output_file: str):
 
             countries_cell = ", ".join(report.mio.countries)
             if report.mio.required_flags:
-                countries_cell += f" (Requires: {', '.join(report.mio.required_flags)})"
+                countries_cell += f"[{', '.join(report.mio.required_flags)}]"
             rows.append(
                 [
                     report.mio.token,
@@ -215,7 +216,7 @@ def spreadsheet_report(mios: dict[str, MIO], output_file: str):
         return candidate
 
     def compute_column_widths(
-        rows: list[list[object]], max_width: int = 50
+        rows: list[list[object]], max_width: int = 40
     ) -> list[int]:
         """Compute display widths from cell content for one sheet.
 
@@ -235,8 +236,7 @@ def spreadsheet_report(mios: dict[str, MIO], output_file: str):
                 value_text = str(value)
                 width_by_col[col_index] = max(width_by_col[col_index], len(value_text))
 
-        # Add a little breathing room and cap very long text columns.
-        return [min(max_width, width + 2) for width in width_by_col]
+        return [min(max_width, width) for width in width_by_col]
 
     def write_sheet(
         sheet: Any,
@@ -347,7 +347,7 @@ def spreadsheet_report(mios: dict[str, MIO], output_file: str):
                 number_columns={score_col, *stat_cols},
                 integer_columns={trait_count_col},
                 freeze_header=True,
-                widths_override={0: 32, 1: 10, 2: 4, 3: 12},
+                widths_override={0: 32},
             )
 
     print(
@@ -357,6 +357,27 @@ def spreadsheet_report(mios: dict[str, MIO], output_file: str):
 
 if __name__ == "__main__":
     REPORT_ALL = "REPORT_ALL"
+    WEIGHTS: AllEquipmentStats = AllEquipmentStats(
+        reliability=2,
+        soft_attack=1.5,
+        hard_attack=1.5,
+        ap_attack=1.2,
+        breakthrough=1.3,
+        defense=1.3,
+        air_attack=1.5,
+        max_strength=1.5,
+        lg_armor_piercing=1.2,
+        lg_attack=1.5,
+        hg_armor_piercing=1.2,
+        hg_attack=1.5,
+        torpedo_attack=1.5,
+        anti_air_attack=1.5,
+        carrier_size=5,
+        air_defence=1.5,
+        air_range=3,
+        air_agility=1.5,
+        air_superiority=1.3,
+    )
 
     ############################
     ### Main execution block ###
@@ -377,7 +398,7 @@ if __name__ == "__main__":
             output_file = sys.argv[2]
         else:
             output_file = "mio_report.xlsx"
-        spreadsheet_report(mios, output_file)
+        spreadsheet_report(mios, WEIGHTS, output_file)
     else:
         equipment = None
         try:
@@ -385,4 +406,4 @@ if __name__ == "__main__":
         except KeyError:
             print(f"Error: Equipment type '{sys.argv[1]}' not found.")
             sys.exit(1)
-        report_specific_equipment_type(equipment, mios)
+        report_specific_equipment_type(equipment, mios, WEIGHTS)

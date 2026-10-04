@@ -95,8 +95,11 @@ class EquipmentStats:
         except AttributeError:
             return default
 
-    def score(self) -> float:
+    def score(self, weights: Optional["EquipmentStats"] = None) -> float:
         """Calculate a score for the equipment based on its defined stats."""
+        if weights is None:
+            weights = AllEquipmentStats()
+
         total_score = 0.0
         negative_is_better = [
             "build_cost_ic",
@@ -110,9 +113,8 @@ class EquipmentStats:
             value = getattr(self, field.name)
             if value is not None:
                 if field.name in negative_is_better:
-                    total_score -= value
-                else:
-                    total_score += value
+                    value = abs(value)
+                total_score += value * weights.get_or_default(field.name, 1)
         return total_score
 
     def __repr__(self) -> str:
@@ -231,7 +233,7 @@ class AirEquipmentStats(EquipmentStats):
     air_defence: Optional[float] = None
     """How many hits a plane takes before being shot down."""
     air_range: Optional[float] = None
-    """Maximum operational range of the aircraft in kilometers."""
+    """Maximum operational range of the aircraft in kilometers. When a modifier, is a percentage."""
     air_agility: Optional[float] = None
     """How agile a plane is. Agility effects how easy it is to hit another plane, and avoid being hit"""
     air_ground_attack: Optional[float] = None
@@ -253,6 +255,12 @@ class AirEquipmentStats(EquipmentStats):
     """Represents the equipment's ability to detect ships."""
     sub_detection: Optional[float] = None
     """Represents the equipment's ability to detect submarines."""
+
+
+@dataclass(frozen=True, repr=False)
+class AllEquipmentStats(LandEquipmentStats, NavalEquipmentStats, AirEquipmentStats):
+    """Union of every stat field, for use as a cross-domain weight vector."""
+
 
 _LAND_TYPE_TOKENS = {
     "infantry",

@@ -636,7 +636,7 @@ class MIO:
             result[token] = mio
         return result
 
-    def sum_bonuses_for(self, equipment_type: Equipment) -> "BonusReport":
+    def sum_bonuses_for(self, equipment_type: Equipment, weights: Optional[EquipmentStats] = None) -> "BonusReport":
         """Calculate the total and per-stat average bonuses this MIO provides to a type.
 
         The aggregate bonus is the sum across all matching traits. The averaged report is
@@ -662,7 +662,7 @@ class MIO:
             mio=self,
             boost=total,
             n_traits=len(matching_traits),
-            score=total.score(),
+            score=total.score(weights),
             averaged_boost=average_boost,
         )
 
