@@ -335,6 +335,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `missing-template-ensure` (WARNING): a `create_unit` naming a template that
   `delete_unit_template_and_units` removes anywhere needs the template created earlier
   or a `has_template` guard. A scripted effect that creates or guards it also counts.
+- `airborne-template-not-parachutable` (WARNING): a `division_template` whose name
+  matches para, airborne, VDV, or desant lists a sub-unit without
+  `can_be_parachuted = yes`, which stops the whole division from paradropping.
+  Deliberate air-assault templates are named in `air_assault_templates` in the
+  config.
 - New source directories: `config_drift_test.py` derives the routes from the
   `_*_SOURCE_PATTERNS` lists and fails until every route is updated.
 
