@@ -408,7 +408,7 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
         if value.count('\\"') % 2:
             results.append(
                 Issue(
-                    severity=Severity.WARNING,
+                    severity=Severity.ERROR,
                     category="loc-unbalanced-quote",
                     message='Odd number of \\" in loc value: an opening or closing quote is missing',
                     file=basename,
@@ -1302,7 +1302,6 @@ class Validator(BaseValidator):
             results,
             "✓ No typo-watchlist matches in localisation",
             "Typo-watchlist matches in localisation values:",
-            severity=Severity.WARNING,
             category="loc-typo-watchlist",
         )
 
@@ -1325,7 +1324,6 @@ class Validator(BaseValidator):
                 grouped[category],
                 f"✓ No {label.lower()} in localisation values",
                 f"{label} in localisation values:",
-                severity=Severity.WARNING,
                 category=category,
             )
 
