@@ -13,9 +13,13 @@ from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from equipment_module_slots import blank_comments
+from equipment_module_slots import _iter_blocks, blank_comments
 from equipment_stats import build_equipment_stat_index, iter_type_archetype_stacks
-from shared_utils import normalize_path_separators
+from shared_utils import (
+    find_matching_brace,
+    normalize_path_separators,
+    validation_config,
+)
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -24,6 +28,7 @@ from validator_common import (
     Severity,
     case_mismatch,
     casefold_index,
+    load_dynamic_token_names,
     run_validator_main,
     should_skip_file,
 )
@@ -97,14 +102,11 @@ from shared_utils import (
     get_slotless_idea_categories as _get_slotless_idea_categories,
 )
 
-# Vanilla idea prefixes that we skip for undefined-reference checks
-# (game-engine built-ins, vanilla ideas, etc.)
-_VANILLA_IDEA_PREFIXES: Tuple[str, ...] = (
-    "generic_",
-    "neutrality_idea",
-    "democratic_idea",
-    "fascism_idea",
-    "communism_idea",
+_VANILLA_IDEA_PREFIXES: Tuple[str, ...] = tuple(
+    validation_config("validate_ideas", "vanilla_idea_prefixes")
+)
+_INSTANT_EXEMPT_PREFIXES: Tuple[str, ...] = tuple(
+    validation_config("validate_ideas", "equipment_bonus_instant_exempt")
 )
 
 
@@ -130,6 +132,8 @@ _ORIGINAL_TAG_IN_ALLOWED = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{2})
 _PICTURE_LINE = re.compile(r"^\s+picture\s*=", re.MULTILINE)
 _ON_ADD_BLOCK_START = re.compile(r"\bon_add\s*=\s*\{")
 _LOG_LINE = re.compile(r'^\s*log\s*=\s*"[^"]*"\s*$')
+_EQUIPMENT_BONUS_START = re.compile(r"\bequipment_bonus\s*=\s*\{")
+_INSTANT_YES = re.compile(r"\binstant\s*=\s*yes\b")
 _IDEA_CATEGORIES_SPRITE = re.compile(r'name\s*=\s*"GFX_idea_categories"')
 _NO_OF_FRAMES = re.compile(r"\bno[Oo]f[Ff]rames\s*=\s*(\d+)")
 
@@ -300,6 +304,19 @@ def _on_add_is_log_only(idea_text: str) -> bool:
         if non_log:
             return False
     return found_any
+
+
+def _non_instant_bonuses(idea_text: str) -> List[Tuple[int, str]]:
+    """Return (offset, equipment) for each equipment_bonus entry lacking instant = yes."""
+    found: List[Tuple[int, str]] = []
+    for m in _EQUIPMENT_BONUS_START.finditer(idea_text):
+        close = find_matching_brace(idea_text, m.end() - 1)
+        if close == -1:
+            continue
+        for name, lo, hi, header in _iter_blocks(idea_text, m.end(), close):
+            if not _INSTANT_YES.search(idea_text, lo, hi):
+                found.append((header, name))
+    return found
 
 
 @dataclass
@@ -477,6 +494,17 @@ def _parse_ideas_from_text(
                         )
                     )
 
+                for offset, equipment in _non_instant_bonuses(idea_text):
+                    issues.append(
+                        IdeaIssue(
+                            current_idea,
+                            cat,
+                            current_idea_line + idea_text.count("\n", 0, offset),
+                            "equipment-bonus-not-instant",
+                            detail=equipment,
+                        )
+                    )
+
                 current_idea = None
                 idea_lines = []
 
@@ -585,25 +613,6 @@ _IDEA_REF_META = re.compile(
     re.IGNORECASE,
 )
 
-# Dynamic-token ideas are applied at runtime via `add_ideas = var:<token>`, where
-# the literal name lives only in this registry and never next to an add_ideas
-# keyword. Treat any name registered here as referenced.
-_DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
-_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
-
-
-def _load_dynamic_token_names(mod_path: str) -> Set[str]:
-    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
-    path = os.path.join(mod_path, _DYNAMIC_TOKEN_FILE)
-    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
-    if not text:
-        return set()
-    return {
-        line.strip()
-        for line in text.splitlines()
-        if _DYNAMIC_TOKEN_LINE.match(line.strip())
-    }
-
 
 def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
     """Pool worker: every idea name a file references, for the unused check.
@@ -613,7 +622,7 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
     forms. Content-cached.
     """
     filepath, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -638,12 +647,13 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
 def _check_file_for_refs(args: Tuple[str, frozenset, dict, str]) -> List[str]:
     """Pool worker: return undefined idea references found in one file.
 
+    Exclusions use mod_path so worktree ancestors do not hide content.
     *defined_ci* maps lower-cased idea name -> canonical name; a ref that misses
     case-sensitively but hits here is a case mismatch that works on Windows and
     silently fails on Linux, so it gets a distinct, louder message.
     """
     filepath, defined_ideas_frozen, defined_ci, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -917,6 +927,16 @@ class Validator(BaseValidator):
                         issue.line,
                         f"'{issue.idea_name}' has on_add = {{ log = ... }} with no real effects"
                         " (drop the on_add block — tracing-only logs are dead weight)",
+                    )
+                elif issue.issue_type == "equipment-bonus-not-instant":
+                    if issue.idea_name.startswith(_INSTANT_EXEMPT_PREFIXES):
+                        continue
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' equipment_bonus {issue.detail} has no"
+                        " instant = yes (the bonus only reaches newly created variants;"
+                        " add instant = yes, or exempt the idea in validation_config.json)",
                     )
 
         self._report(
@@ -1286,7 +1306,9 @@ class Validator(BaseValidator):
         referenced: Set[str] = set()
         for sub in ref_lists:
             referenced.update(sub)
-        referenced.update(_load_dynamic_token_names(self.mod_path))
+        # Dynamic-token ideas are applied via `add_ideas = var:<token>`, so the
+        # literal name lives only in the registry. Treat those as referenced.
+        referenced.update(load_dynamic_token_names(self.mod_path))
 
         # Prefixes from meta-effect references (`idea = tribute_idea_[ROOTTAG]`).
         # Any candidate whose name starts with one is built at runtime, not dead.

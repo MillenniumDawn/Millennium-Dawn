@@ -224,13 +224,13 @@ def test_validator_scans_all_effect_sources(tmp_path, write_path, path):
     assert len(validator._issues) == 1
     issue = validator._issues[0]
     assert issue.category == "equipment-variant-unavailable"
-    assert issue.severity == "warning"
+    assert issue.severity == "error"
     assert issue.file.replace("\\", "/") == path
 
 
-def test_ci_registration_is_warning_only():
+def test_ci_registration_is_strict():
     spec = next(spec for spec in ALL_SPECS if spec.name == "equipment-variants")
-    assert not spec.strict
+    assert spec.strict
     assert set(spec.groups) == {"common", "events", "history"}
 
 

@@ -59,7 +59,10 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     ),
     "targeted-a": (
         ValidatorSpec(
-            "decisions", "validate_decisions.py", ("decisions", "localisation")
+            "decisions",
+            "validate_decisions.py",
+            ("decisions", "localisation"),
+            args=("--unannounced-categories",),
         ),
         ValidatorSpec("oob-units", "validate_oob_units.py", ("oob",)),
         ValidatorSpec("equipment-upkeep", "validate_equipment_upkeep.py", ("oob",)),
@@ -67,7 +70,6 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "equipment-variants",
             "validate_equipment_variants.py",
             ("common", "events", "history"),
-            strict=False,
         ),
         ValidatorSpec("ai-roles", "validate_ai_roles.py", ("ai-strategy",)),
         ValidatorSpec("ai-navy", "validate_ai_navy.py", ("ai-navy",)),
@@ -112,10 +114,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             strict=False,
         ),
         ValidatorSpec(
-            "building-guards",
-            "validate_building_guards.py",
-            ("common", "events"),
-            strict=False,
+            "building-guards", "validate_building_guards.py", ("common", "events")
         ),
         ValidatorSpec("dlc-guards", "validate_dlc_guards.py", ("common", "events")),
         ValidatorSpec(
@@ -168,6 +167,8 @@ IMPACT_ONLY_SPECS: Tuple[ValidatorSpec, ...] = (
 _IMPACT_ONLY_BY_SCRIPT = {spec.script: spec for spec in IMPACT_ONLY_SPECS}
 _IMPACT_EXCLUDED_SCRIPTS = {
     "validate_unused_textures.py",
+    # Reads gfx/models and gfx/entities, which the CI workspace does not ship.
+    "validate_mesh_textures.py",
     "validate_tools.py",
     "validate_staged.py",
     # Manual-only: the standardization report is deliberately unwired from
@@ -177,6 +178,7 @@ _IMPACT_EXCLUDED_SCRIPTS = {
 _REFERENCE_FILES = {
     ".claude/docs/typo-watchlist.md": ("localisation",),
     "resources/documentation/modifiers_documentation.md": ("modifiers",),
+    "resources/documentation/loc_objects_documentation.md": ("scripted-localisation",),
 }
 
 _SCRIPT_PATH_RE = re.compile(r"^tools/validation/(validate_[\w-]+\.py)$")
@@ -304,11 +306,18 @@ def select_for_changed_files(
 ) -> Tuple[List[ValidatorSpec], List[ValidatorSpec]]:
     """Select ordinary batches, impact-only checks, and safe ad-hoc validators."""
 
-    graph = _build_import_graph()
+    nodes = _tool_nodes()
+    graph: Optional[Dict[str, Set[str]]] = None
     selected: Set[str] = set()
     selected_impact: Set[str] = set()
     adhoc: List[ValidatorSpec] = []
     seen_adhoc: Set[str] = set()
+
+    def importers_for(node: str) -> Set[str]:
+        nonlocal graph
+        if graph is None:
+            graph = _build_import_graph(nodes)
+        return _validators_importing(node, graph)
 
     def add(name: str) -> None:
         selected.add(name)
@@ -344,7 +353,7 @@ def select_for_changed_files(
             spec = _SPEC_BY_NODE.get(node)
             if spec is not None:
                 add(spec.name)
-                for name in _validators_importing(node, graph):
+                for name in importers_for(node):
                     add(name)
             elif os.path.isfile(os.path.join(VALIDATION_DIR, script)):
                 source = os.path.join(VALIDATION_DIR, script)
@@ -363,8 +372,8 @@ def select_for_changed_files(
             if path.startswith("tools/") and path.endswith(".py")
             else ""
         )
-        if node and node in graph:
-            importers = _validators_importing(node, graph)
+        if node and node in nodes:
+            importers = importers_for(node)
             for name in importers:
                 add(name)
             if node in {"shared_utils", "validation/validator_common"}:

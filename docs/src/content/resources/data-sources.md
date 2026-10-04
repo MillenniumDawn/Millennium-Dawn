@@ -22,7 +22,8 @@ not December-to-December inflation.
   The 1999 general CPI entry is **0.17%**. This uses the published historical series in that report.
 - **Russia:** [OECD CPI index via FRED](https://fred.stlouisfed.org/series/RUSCPIALLMINMEI).
   December 1999 over December 1998 gives **36.6%** (index 18.395 over 13.470), matching the
-  Rosstat year-end figure. The mod uses this end-of-period rate instead of the **85.7%** annual average.
+  Rosstat year-end figure. The mod previously used **36.5%** instead of the **85.7%** annual
+  average; its **21.5%** starting value is a gameplay adjustment to reduce the output penalty.
 
 ### How the values are used
 
@@ -34,18 +35,20 @@ not December-to-December inflation.
   calculations replace one entry at a time, smoothing the first updates.
 - Angola and the Democratic Republic of the Congo have reported rates above **200%**. Their
   historical seeds are retained, but the quarterly calculation clamps inflation to **200%**.
-- Belarus and Russia use an end-of-period figure instead of the 1999 annual average, because
-  the yearly aggregate stalls the economy for the first two years. Belarus starts at **32.6%**.
-  Russia starts at **36.5%**, the December 1999 year-on-year CPI (see the Russia entry above).
+- Belarus previously used a **32.6%** end-of-period rate instead of the 1999 annual average.
+  Its starting rate is now **20%**; Russia starts at **21.5%** after a **36.5%** seed.
+- Iran starts at **17%** after a **20.071%** seed, and Turkey starts at **35%** after a
+  **64.867%** seed. These four lower rates are gameplay adjustments to output penalties.
 - The World Bank's Serbia series is not copied to Kosovo or Montenegro. Its combined West Bank
   and Gaza series is used for Palestine, not Israel or a separate Gaza tag.
 
 ## Starting policy rate
 
 `cb_policy_rate` is the central bank policy rate in whole percentage points. The GUI and the
-quarterly AI step it by 1 and clamp it to 0-20. The January 2000 start uses the official policy
+quarterly AI step it by 1 and clamp it to 0-30. The January 2000 start uses the official policy
 rate in force on **2000.1.1** where that instrument is documented. Half-percentage values round
-half up (5.50 becomes 6). Rates above 20 are stored as 20.
+half up (5.50 becomes 6). Rates above 30 are stored as 30. Ukraine starts at that cap.
+Russia, Turkey, and Romania stay at 20 from the previous gameplay ceiling.
 
 Euro-area founding members already sat at 3, which matches the ECB main refinancing rate of
 **3.00%**. Sweden (3.25%) and Denmark (about 3.3%, euro peg) also round to 3, so those files are
@@ -81,10 +84,10 @@ Negative policy rates are out of scope. The clamp still bottoms out at 0.
 | HUN |   15 | MNB base rate 14.50%                      |
 | POL |   17 | NBP reference rate 16.50%                 |
 | BRA |   19 | Copom SELIC target 19%                    |
-| SOV |   20 | CBR refinancing rate 55% (clamped)        |
-| TUR |   20 | CBRT overnight well above 20% (clamped)   |
-| UKR |   20 | NBU discount rate 45% (clamped)           |
-| ROM |   20 | NBR 1999 policy rates above 20% (clamped) |
+| SOV |   20 | CBR refinancing rate 55% (gameplay 20)    |
+| TUR |   20 | CBRT overnight well above 20%             |
+| ROM |   20 | NBR 1999 policy rates above 20%           |
+| UKR |   30 | NBU discount rate 45% (clamped)           |
 
 Greece had not yet joined the euro. The 10.75% rate is the 14-day intervention rate still in
 force on 2000.1.1. The Bank of Greece cut it to 9.75% on 26 January 2000. The Bank of England

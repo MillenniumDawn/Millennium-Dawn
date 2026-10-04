@@ -222,3 +222,28 @@ def test_dirty_bound_to_written_counter_is_clean(tmp_path, write_path):
     validator = _run(tmp_path)
 
     assert validator._issues == []
+
+
+def test_dead_handlers_are_reported_in_name_order(tmp_path, write_path):
+    names = [f"gone_{letter}" for letter in "jihgfedcba"]
+    write_path(
+        tmp_path,
+        "common/scripted_guis/main.txt",
+        "scripted_gui = {\n\tquiet = {\n\t\tcontext_type = player_context\n\t}\n"
+        "\tdead = {\n\t\tcontext_type = player_context\n"
+        + "".join(f"\t\t{name}_click = {{ }}\n" for name in names)
+        + "\t}\n}\n",
+    )
+
+    validator = _run(tmp_path)
+
+    assert [(i.category, i.message, i.file, i.line) for i in validator._issues] == [
+        (
+            "DEAD_HANDLER",
+            f"Scripted GUI in 'dead' references '{name}_click' but no "
+            f"button/icon named '{name}' exists in any .gui file",
+            "common/scripted_guis/main.txt",
+            5,
+        )
+        for name in sorted(names)
+    ]

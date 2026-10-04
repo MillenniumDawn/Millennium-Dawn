@@ -3,6 +3,7 @@
 import importlib.util
 import io
 import json
+import os
 import struct
 import subprocess
 import sys
@@ -12,7 +13,10 @@ from http.client import HTTPMessage
 from pathlib import Path
 from types import ModuleType
 
+import yaml
 from report_lib.models import Issue, Severity
+
+from shared.paths import REPO_ROOT
 
 
 def symlinks_available() -> bool:
@@ -59,6 +63,37 @@ def initialize_git_repository(repository, *paths):
     run_git(repository, "config", "diff.renames", "true")
     run_git(repository, "add", *paths)
     run_git(repository, "commit", "-m", "initial")
+
+
+TEST_SUITE_WORKFLOW = REPO_ROOT / ".github/workflows/test-suite.yml"
+
+
+def workflow_step(job: str, name: str) -> dict:
+    """Return one named step of a test-suite.yml job."""
+    workflow = yaml.safe_load(TEST_SUITE_WORKFLOW.read_text(encoding="utf-8"))
+    return next(
+        step for step in workflow["jobs"][job]["steps"] if step.get("name") == name
+    )
+
+
+def substitute_expressions(script: str, values: dict) -> str:
+    """Replace each `${{ expr }}` with its value; every expression must be known."""
+    for expression, value in values.items():
+        script = script.replace("${{ " + expression + " }}", value)
+    assert "${{" not in script, f"unsubstituted expression in: {script}"
+    return script
+
+
+def run_bash_step(script: str, cwd, env=None) -> subprocess.CompletedProcess:
+    """Run a workflow `run:` script the way an ubuntu runner does: `bash -e`."""
+    return subprocess.run(
+        ["bash", "-e", "-c", script],
+        cwd=cwd,
+        env={**os.environ, **(env or {})},
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
 
 
 def run_validator(validator_cls, tmp_path, **kwargs):

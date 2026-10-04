@@ -283,21 +283,25 @@ Social spending affects stability and the impact of unemployment.
 
 ### Interest Rate Calculation
 
-Your interest rate is determined by:
+When you have debt, your annual interest rate is determined by:
 
 ```
-Interest Rate = (Debt / GDP) × 10 + (Central Bank Policy Rate × 0.5) + modifiers
+Interest Rate = (Debt / GDP) × 10 + (Central Bank Policy Rate × 0.33) + modifiers
 ```
 
-- **Minimum interest rate**: 0.8%
-- **Maximum interest rate**: 50%
-- Modified by national spirits and modifiers
+The modifiers include national spirits, current world tension, and the world tension your country has generated. Current world tension adds up to 5 percentage points. The premium for tension you generated decays by 3.5% each week.
 
-The central bank policy rate contributes half its value to the interest rate. This means raising the policy rate to fight inflation also increases the cost of servicing debt, a tradeoff between controlling inflation and managing debt.
+- **Minimum interest rate with debt**: 0.8%
+- **Maximum interest rate with debt**: 50%
+- **Without debt**: The interest rate and weekly interest payment are both zero
+
+Each 1 percentage point increase in the policy rate adds 0.33 percentage points to debt interest before the minimum and maximum apply. A 6% policy rate therefore contributes 1.98 points. Raising the policy rate to fight inflation also increases debt costs, but by about a third of the rate change, not half.
+
+Hover over **Total Debt** to see the contributions from debt-to-GDP, national spirits, the policy rate, and both tension premiums. The tooltip also shows any adjustment from the minimum or maximum rate. Check **Interest on Debt** for the weekly payment, which also depends on your reserve currency and currency strength.
 
 If your weekly balance is negative, or if a national focus or event causes you to spend more than your current funds, debt is automatically issued. The game borrows 1% of GDP plus the deficit, with a 1% fee applied to automatically borrowed funds.
 
-For countries whose debt is denominated in a foreign reserve currency (USD, EUR, CNY, etc.), a weak domestic currency increases the real burden of debt repayment, while a strong currency reduces it.
+Debt under a reserve currency law is exposed to currency strength: a weak currency raises weekly interest payments, while a strong currency lowers them. **No Foreign Reserve** removes this exchange-rate adjustment, not the underlying interest rate. See [Reserve Currency](#reserve-currency) for the payment multiplier.
 
 ### High Interest Penalties
 
@@ -344,7 +348,7 @@ Millennium Dawn models a currency system where each country has a **currency str
 
 ### Reserve Currency
 
-Every country denominates its debt and trade in a reserve currency, chosen via the **Reserve Currency** law in the Politics window. The available options are:
+Choose your reserve currency through the **Reserve Currency** law in the Politics window. This choice affects investment returns, trade bonuses, and whether debt interest payments receive an exchange-rate adjustment. The available options include:
 
 | Currency             | Typical Adopters                           |
 | -------------------- | ------------------------------------------ |
@@ -357,15 +361,30 @@ Every country denominates its debt and trade in a reserve currency, chosen via t
 | Swiss Franc (CHF)    | Switzerland and Liechtenstein only         |
 | No Foreign Reserve   | Isolated or autarkic states                |
 
-Choosing **No Foreign Reserve** eliminates foreign debt denomination effects and grants a small political power bonus, but removes the reserve currency ROI and trade bonuses that come from being part of a major currency network.
+With a reserve currency, weekly debt interest is multiplied by **1 / currency strength**, capped at **2×**. A strength of 0.5 doubles the payment; a strength of 2.0 halves it. This changes the payment, not the displayed annual interest rate.
+
+Choosing **No Foreign Reserve** keeps that multiplier at **1×** and grants a small political power bonus, but removes the reserve currency ROI and trade bonuses that come from being part of a major currency network. Switching to a reserve currency restores the exchange-rate adjustment; switching back to No Foreign Reserve removes it.
 
 ### Currency Strength
 
-Currency strength is recalculated monthly based on three factors:
+Currency strength is recalculated monthly. Falls are a share of its current level, so a weak currency falls in smaller steps. Each currency is pulled back toward its **base strength**, while your economy pushes it up or down:
 
-1. **Budget Balance**: A budget surplus appreciates your currency; a deficit depreciates it
-2. **Debt-to-GDP Ratio**: High debt weakens your currency
-3. **Stability**: Political instability drives capital flight and currency depreciation
+| Factor             | Effect                                                                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real interest rate | A policy rate more than 1 point above inflation supports your currency. A lower rate weakens it.                                                                |
+| Debt interest rate | The part of your debt's interest rate not set by the policy rate weakens your currency once it passes 5 points, and quickly past 10. Having no debt is neutral. |
+| Inflation          | Weakens your currency through the real interest rate. A policy rate that keeps pace with inflation shields it.                                                  |
+| Stability          | Stability above 50% strengthens your currency, and stability below 50% weakens it.                                                                              |
+| Economic cycle     | A boom or fast growth helps. Stagnation, recession and depression hurt.                                                                                         |
+| War                | Losing a war or fighting a civil war weakens your currency.                                                                                                     |
+| Sanctions          | International sanctions weaken your currency.                                                                                                                   |
+| Financial collapse | Your currency is weaker for three years after a financial collapse.                                                                                             |
+| Reserve issuers    | Each country using your currency as its reserve strengthens it slightly.                                                                                        |
+| Safe havens        | While world tension stays above 50%, the US dollar and Japanese yen strengthen slightly, and the Swiss franc a little more.                                     |
+
+At a policy rate of 0%, the real interest rate can pull your currency down by at most 1% a month. Each point of the rate takes 2.5% off that limit, so a rate of 20% halves it. A higher rate therefore helps even when inflation is far above it.
+
+Your base strength starts at your country's historical value and slowly follows your currency. It rises at half the speed it falls, so trust is lost faster than it is earned. Years of good management raise the level your currency settles at, and years of bad management lower it.
 
 Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. Its effects include:
 
@@ -394,6 +413,8 @@ Two monetary policy decisions are available (AI-controlled nations use these aut
 - **Expand Money Supply**: Increases seigniorage income by 25% and weakens currency strength by 0.05. Cannot be used alongside Austerity Measures or while on the gold standard. Lasts 180 days with a 365-day cooldown.
 - **Austerity Measures**: Strengthens currency by 0.04. Lasts 120 days with a 180-day cooldown. Cannot be used alongside Expand Money Supply.
 
+The AI expands the money supply only when its treasury is negative, its currency is above its base strength and inflation is under 5%. It uses austerity measures when inflation is above 5% and its currency is below its base strength.
+
 ---
 
 ## Inflation
@@ -408,7 +429,7 @@ Six factors feed into the quarterly inflation calculation:
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **GDP/C Growth**             | Higher GDP per capita growth directly increases inflation pressure. A rapidly growing economy generates demand that pushes prices up.                   |
 | **Tax Rate**                 | Higher average tax rates reduce inflation pressure. Taxes act as a fiscal brake on the economy -- they pull money out of circulation.                   |
-| **Central Bank Policy Rate** | The _real_ policy rate (policy rate minus current inflation) is what matters. A positive real rate suppresses inflation; a negative real rate fuels it. |
+| **Central Bank Policy Rate** | Each point cuts how much of your inflation carries into the next quarter, at any inflation level. A rate under the neutral rate also adds to inflation. |
 | **Economic Cycle**           | Boom and fast growth stages add inflationary pressure. Depression and recession stages reduce it. Stable growth is neutral.                             |
 | **Budget Balance**           | A budget deficit increases inflation (simulating money printing to cover the gap). A budget surplus decreases it.                                       |
 | **Currency Strength**        | A weak currency (below 1.0) feeds additional inflation pressure through higher import costs. A strong currency suppresses it.                           |
@@ -421,7 +442,7 @@ Each quarter, the game calculates an inflation adjustment from the factors above
 
 1. **GDP/C growth contribution**: The base adjustment starts from last quarter's GDP per capita growth rate, scaled by your GDP per capita level. Higher GDP/C amplifies the effect of growth on prices.
 2. **Tax dampening**: The adjustment is reduced proportionally to your average tax rate. At higher tax rates, more of the growth-driven inflation is absorbed.
-3. **Policy rate effect**: The real central bank rate (policy rate minus inflation, with a 2% floor on inflation for this calculation) is subtracted. A tight monetary policy (real rate > 0) pulls inflation down; loose policy (real rate < 0) lets it rise.
+3. **Policy rate effect**: The policy rate is compared with a neutral rate and also cuts how much inflation carries into the next quarter. See [Central Bank Policy Rate](#central-bank-policy-rate).
 4. **Economic cycle**: The current cycle stage applies an additional adjustment, scaled by total government spending:
 
 | Cycle Stage   | Inflation Adjustment |
@@ -440,23 +461,26 @@ The quarterly result is stored and averaged with the previous three quarters. Th
 
 ### Central Bank Policy Rate
 
-The **Central Bank Policy Rate** is a manually adjustable interest rate (0-20%) that represents your country's monetary policy stance. It starts at 3% for all countries.
+The **Central Bank Policy Rate** represents your country's monetary policy stance. The manual controls range from **0% to 30%**. Most countries start at 3%; Ukraine starts at 30% in January 2000.
 
-What matters for inflation is the **real rate** -- the difference between the policy rate and the current inflation rate. For example:
+To change it:
 
-- Policy rate 5%, inflation 3% = real rate +2% (tight, reduces inflation)
-- Policy rate 3%, inflation 5% = real rate -2% (loose, increases inflation)
-- Policy rate 2%, inflation 2% = real rate 0% (neutral)
+1. Open the Economic Preview and find **Policy Rate**.
+2. Keep more than 25 political power available. Each click spends 25 political power and raises or lowers the rate by **1 percentage point**.
+3. Wait **30 days** before another manual change. Increase is unavailable at 30%, and decrease is unavailable at 0%.
 
-The AI adjusts the policy rate automatically based on inflation:
+Ukraine's National Bank rate-cut events can also lower the rate. Accepted cuts cannot take it below 0% and block another rate change for **60 days**. A later event can therefore lower a rate you raised manually; player-controlled countries do not receive the generic AI adjustment.
 
-| Condition           | AI Action                     |
-| ------------------- | ----------------------------- |
-| Inflation above 10% | Raises policy rate toward 20% |
-| Inflation above 5%  | Raises policy rate toward 15% |
-| Inflation below 1%  | Lowers policy rate toward 1%  |
+The rate works on inflation in two ways:
 
-Players can adjust the policy rate manually to respond faster or pursue different monetary strategies than the AI default.
+- **Against the neutral rate.** The neutral rate uses inflation or a low-inflation baseline, whichever is higher, plus 0.5 to 2.5 points. It is limited to 1-30%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%. The effect stops at 3% either way.
+- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A budget deficit above the sustainable 2-8% of GDP shrinks each point's cut. At 10% of GDP over that level the cut is halved, and it goes no lower, so a deficit never cancels the rate.
+
+AI-controlled countries move their rate toward neutral once a quarter, provided no rate-change cooldown is active. They move the rate three points when it is more than 5 points from neutral. Otherwise they move one point up or down when more than half a point from neutral. The AI never raises its rate above 20%, so only a player can take it to 30%. Each AI change starts a 60-day cooldown.
+
+Manual changes update debt costs immediately. Inflation responds at the next quarterly calculation and is averaged over four quarters, so do not expect a rate increase to remove inflation at once.
+
+The gap between your rate and inflation also moves your currency. See [Currency Strength](#currency-strength).
 
 ### Currency and Inflation
 
@@ -493,7 +517,7 @@ Inflation applies a dynamic modifier that scales with the inflation rate. The ef
 
 Inflation responds to multiple levers. Here are the main strategies:
 
-**Raise the central bank policy rate.** The most direct tool. Increasing the policy rate above the inflation rate creates a positive real rate, which suppresses inflation over the following quarters. The tradeoff is that high rates also slow economic growth.
+**Raise the central bank policy rate.** The most direct tool. Every point cuts how much inflation carries into the next quarter, even when inflation is far above the rate. A large budget deficit can halve that cut, so fix the budget alongside it. The tradeoff is that high rates also raise debt interest and slow economic growth.
 
 **Raise taxes.** Higher tax rates dampen inflation by pulling money out of the economy. However, high corporate taxes reduce productivity growth, so this is a short-term fix with long-term costs.
 

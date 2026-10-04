@@ -1,7 +1,7 @@
 """Tests for the opt-in --unbalanced-modifiers balance check (issue #4370).
 
 Caps apply per direct `key = number` assignment: ROI over 3%, productivity
-growth over 25%, game-start policy rate over 20, game-start inflation over 50%.
+growth over 25%, game-start policy rate over 30, game-start inflation over 50%.
 """
 
 import validate_modifiers as vm
@@ -106,7 +106,7 @@ def test_history_start_values_end_to_end(tmp_path):
     _write(
         tmp_path,
         "history/countries/ABC - Test.txt",
-        "set_variable = { cb_policy_rate = 25 }\n"
+        "set_variable = { cb_policy_rate = 31 }\n"
         "set_variable = { inflation_rate_var = 0.75 }\n",
     )
     _write(
@@ -120,6 +120,24 @@ def test_history_start_values_end_to_end(tmp_path):
     cats = _categories(validator)
     assert cats.count("unbalanced-policy-rate") == 1
     assert cats.count("unbalanced-inflation") == 1
+
+
+def test_history_inflation_hard_cap_always_on(tmp_path):
+    _write(
+        tmp_path,
+        "history/countries/ABC - Test.txt",
+        "set_variable = { inflation_rate_var = 1.1 }\n",
+    )
+    _write(
+        tmp_path,
+        "history/countries/DEF - Fine.txt",
+        "set_variable = { inflation_rate_var = 0.99 }\n",
+    )
+    validator = _validator(tmp_path, enabled=False)
+    validator.validate_history_inflation_hard_cap()
+    hits = [i for i in validator._issues if i.category == "history-inflation-over-one"]
+    assert len(hits) == 1
+    assert "1.1" in hits[0].message
 
 
 def test_flag_off_reports_nothing(tmp_path):
