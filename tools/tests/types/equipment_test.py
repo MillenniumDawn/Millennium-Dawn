@@ -3,7 +3,6 @@ from tools.types.equipment import Equipment, LandEquipmentStats
 
 
 def test_GivenEquipmentTree_WhenReadEquipment_ThenReturnsEquipment():
-    from tools.types import equipment
     import pyradox
 
     raw = pyradox.parse("""

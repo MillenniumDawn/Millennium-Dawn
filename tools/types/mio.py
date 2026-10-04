@@ -1,8 +1,8 @@
+import os
+import sys
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from pathlib import Path
-import sys
-import os
 from typing import Any, Optional, cast
 
 import pyradox
@@ -12,6 +12,13 @@ _UTILS_DIR = os.path.abspath(_UTILS_DIR)
 if _UTILS_DIR not in sys.path:
     sys.path.insert(0, _UTILS_DIR)
 
+from equipment import (
+    AirEquipmentStats,
+    Equipment,
+    EquipmentStats,
+    LandEquipmentStats,
+    NavalEquipmentStats,
+)
 from pyradox_utils import (
     as_mapping,
     as_trait_list,
@@ -20,14 +27,6 @@ from pyradox_utils import (
     parse_file,
     stats_value,
     token_list,
-)
-
-from equipment import (
-    Equipment,
-    AirEquipmentStats,
-    EquipmentStats,
-    LandEquipmentStats,
-    NavalEquipmentStats,
 )
 
 _SPECIAL_INCLUDE_KEYS = {
@@ -49,25 +48,29 @@ _NAVAL_STAT_KEYS = _field_names(NavalEquipmentStats)
 _AIR_STAT_KEYS = _field_names(AirEquipmentStats)
 _BASE_STAT_KEYS = _field_names(EquipmentStats)
 
+#########################
+### Parsing functions ###
+#########################
+
 
 def _expand_equipment_tokens(
     tokens: list[str], equipment_groups: dict[str, "EquipmentGroup"]
-) -> list[str]:
+) -> set[str]:
     """Expand group tokens to member equipment types, keeping raw tokens otherwise."""
-    expanded: list[str] = []
+    expanded: set[str] = set()
     for token in tokens:
         group = equipment_groups.get(token)
         if group is None:
-            expanded.append(token)
+            expanded.add(token)
             continue
-        expanded.extend(group.types)
-    return dedupe_preserve_order(expanded)
+        expanded.update(group.types)
+    return expanded
 
 
 def _iter_original_tags(value: object) -> list[str]:
     """Collect explicit original_tag values from an allowed-block structure."""
     normalized = normalize_node(value)
-    found: list[str] = []
+    found: list[str] = []  # Country tags collected from nested allowed blocks.
 
     def walk(node: object):
         if isinstance(node, dict):
@@ -112,21 +115,27 @@ def _parse_equipment_bonus(
     if not isinstance(mapping, dict):
         return stats_class() if stats_class is not None else EquipmentStats()
 
-    raw_stats = {str(key): _stats_value(inner) for key, inner in mapping.items()}
+    raw_stats = {
+        str(key): _stats_value(inner) for key, inner in mapping.items()
+    }  # Raw stat key -> normalized value.
     selected_class = stats_class or _detect_stats_class(set(raw_stats))
-    allowed = {item.name for item in fields(selected_class)}
+    allowed = {
+        item.name for item in fields(selected_class)
+    }  # Fields accepted by the selected stats dataclass.
     stat_values: dict[str, object] = {
         key: inner for key, inner in raw_stats.items() if key in allowed
-    }
+    }  # Filtered stat key -> value payload passed to dataclass constructor.
     return selected_class(**cast(Any, stat_values))
 
 
 def _detect_stats_class_from_equipment_scope(
-    applies_to: list[str],
+    applies_to: set[str],
     equipment_index: dict[str, Equipment],
 ) -> Optional[type[EquipmentStats]]:
     """Infer the best stats class from concrete equipment matched by scope tokens."""
-    resolved_classes: set[type[EquipmentStats]] = set()
+    resolved_classes: set[type[EquipmentStats]] = (
+        set()
+    )  # Stats dataclass types observed in applies_to scope.
     for token in applies_to:
         equipment = equipment_index.get(token)
         if equipment is None:
@@ -140,7 +149,9 @@ def _detect_stats_class_from_equipment_scope(
     return None
 
 
-def _merge_trait(base: dict[str, object], override: dict[str, object]) -> dict[str, object]:
+def _merge_trait(
+    base: dict[str, object], override: dict[str, object]
+) -> dict[str, object]:
     """Merge override_trait data into a base trait payload."""
     merged = deepcopy(base)
 
@@ -157,9 +168,11 @@ def _merge_trait(base: dict[str, object], override: dict[str, object]) -> dict[s
 
 def _apply_trait_operations(data: dict[str, object]) -> dict[str, object]:
     """Apply remove/override/add trait operations to one resolved org payload."""
-    traits = as_trait_list(data.get("trait"))
+    traits = as_trait_list(
+        data.get("trait")
+    )  # Mutable list of trait blocks for this resolved organization.
 
-    remove_tokens = set(token_list(data.get("remove_trait")))
+    remove_tokens = set(token_list(data.get("remove_trait")))  # Trait tokens to remove.
     if remove_tokens:
         traits = [
             trait
@@ -167,7 +180,9 @@ def _apply_trait_operations(data: dict[str, object]) -> dict[str, object]:
             if str(normalize_node(trait.get("token", ""))) not in remove_tokens
         ]
 
-    overrides = as_trait_list(data.get("override_trait"))
+    overrides = as_trait_list(
+        data.get("override_trait")
+    )  # Override trait blocks keyed by token.
     for override in overrides:
         token = str(normalize_node(override.get("token", "")))
         if not token:
@@ -186,7 +201,9 @@ def _apply_trait_operations(data: dict[str, object]) -> dict[str, object]:
 
     traits.extend(as_trait_list(data.get("add_trait")))
 
-    mutated = deepcopy(data)
+    mutated = deepcopy(
+        data
+    )  # Final resolved organization block after trait operations.
     if traits:
         mutated["trait"] = traits
     else:
@@ -197,14 +214,17 @@ def _apply_trait_operations(data: dict[str, object]) -> dict[str, object]:
     return mutated
 
 
-def _resolve_included_org(
+def _resolve_data(
     org_id: str,
     raw_orgs: dict[str, pyradox.Tree],
     cache: dict[str, dict[str, object]],
     active: set[str],
 ) -> dict[str, object]:
-    """Resolve one organization with include inheritance and trait mutations.
+    """Resolve the data for a given organization ID.
 
+    If the organization does not include another organization, its data is used as-is.
+
+    If the organization includes another organization, the included data is merged recursively.
     Applies include chains recursively, supports include-cycle detection, and
     executes trait operations (add/remove/override) on the effective tree.
     """
@@ -217,40 +237,55 @@ def _resolve_included_org(
         raise KeyError(f"Unknown MIO include target: {org_id}")
 
     active.add(org_id)
-    data = as_mapping(raw_orgs[org_id])
+    data = as_mapping(raw_orgs[org_id])  # Raw organization payload for org_id.
     include_name = data.get("include")
 
     if include_name is not None:
-        included_org = str(normalize_node(include_name))
-        if included_org not in raw_orgs:
-            raise KeyError(f"MIO '{org_id}' includes unknown organization '{included_org}'")
-
-        merged = _resolve_included_org(included_org, raw_orgs, cache, active)
-        delete_values = token_list(data.get("delete_included_values"))
-        for key in delete_values:
-            merged.pop(key, None)
-
-        for key, value in data.items():
-            if key in _SPECIAL_INCLUDE_KEYS:
-                continue
-            merged[key] = deepcopy(cast(object, value))
-
-        for key in ("add_trait", "remove_trait", "override_trait"):
-            if key in data:
-                merged[key] = deepcopy(cast(object, data[key]))
-
-        resolved = _apply_trait_operations(merged)
+        resolved = _resolve_inclusion(
+            org_id, raw_orgs, cache, active, data, include_name
+        )
     else:
         stripped = {
             key: deepcopy(value)
             for key, value in data.items()
             if key not in {"delete_included_values", "include"}
-        }
+        }  # Org payload with include-control keys removed.
         resolved = _apply_trait_operations(stripped)
 
     active.remove(org_id)
     cache[org_id] = deepcopy(resolved)
     return deepcopy(resolved)
+
+
+def _resolve_inclusion(org_id, raw_orgs, cache, active, data, include_name):
+    included_org = str(normalize_node(include_name))
+    if included_org not in raw_orgs:
+        raise KeyError(f"MIO '{org_id}' includes unknown organization '{included_org}'")
+
+    merged = _resolve_data(
+        included_org, raw_orgs, cache, active
+    )  # Effective payload inherited from included org.
+    delete_values = token_list(data.get("delete_included_values"))
+    for key in delete_values:
+        merged.pop(key, None)
+
+    for key, value in data.items():
+        if key in _SPECIAL_INCLUDE_KEYS:
+            continue
+        merged[key] = deepcopy(cast(object, value))
+
+    for key in ("add_trait", "remove_trait", "override_trait"):
+        if key in data:
+            merged[key] = deepcopy(cast(object, data[key]))
+
+    resolved = _apply_trait_operations(merged)
+    return resolved
+
+
+########################
+### Type Definitions ###
+########################
+
 
 @dataclass
 class EquipmentGroup:
@@ -262,11 +297,13 @@ class EquipmentGroup:
         name: Group token used in MIO equipment_type blocks.
         types: Expanded equipment archetype/type tokens contained by the group.
     """
+
     name: str
     types: list[str]
-    
-    @staticmethod
+
+    @classmethod
     def from_file(
+        cls,
         file_path: str = "common/equipment_groups/mio_equipment_groups.txt",
     ) -> dict[str, "EquipmentGroup"]:
         """Load equipment groups from a HOI4 group-definition file.
@@ -285,11 +322,12 @@ class EquipmentGroup:
             if not isinstance(value, pyradox.Tree):
                 continue
             parsed = as_mapping(value)
-            groups[token] = EquipmentGroup(
+            groups[token] = cls(
                 name=token,
                 types=dedupe_preserve_order(token_list(parsed.get("equipment_type"))),
             )
         return groups
+
 
 @dataclass
 class Trait:
@@ -309,9 +347,10 @@ class Trait:
         any_parent_tokens: Raw parent tokens parsed from any_parent blocks.
         mutually_exclusive_tokens: Raw mutually exclusive trait tokens.
     """
+
     token: str
     name: str
-    applies_to: list[str]
+    applies_to: set[str]
     """Expanded equipment tokens this trait applies to."""
     bonuses: EquipmentStats
     mutually_exclusive: list["Trait"] = field(default_factory=list)
@@ -323,19 +362,40 @@ class Trait:
     any_parent_tokens: list[str] = field(default_factory=list)
     mutually_exclusive_tokens: list[str] = field(default_factory=list)
 
-@dataclass
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, Trait):
+            return NotImplemented
+        return (
+            self.token == other.token
+            and self.name == other.name
+            and self.applies_to == other.applies_to
+        )
+
+    def __hash__(self) -> int:
+        return hash((self.token, self.name, frozenset(self.applies_to)))
+
+
+@dataclass(frozen=False)
 class MIO:
-    """Military Industrial Organization"""
-    name: str
-    countries: list[str]
-    equipment_types: list[str]
-    research_categories: list[str]
+    """Military Industrial Organization.
+
+    Mutable to allow additive modifications to the countries when parsing with
+    merge_generics.
+    """
+
+    token: str
+    """Token identifying this MIO."""
+    countries: set[str]
+    equipment_types: set[str]
+    research_categories: set[str]
+    include: str | None = None
+    """Token of the MIO that is the basis for this one."""
     traits: list[Trait] = field(default_factory=list)
 
     @staticmethod
     def _build_trait(
         trait_data: dict[str, object],
-        default_applies_to: list[str],
+        default_applies_to: set[str],
         equipment_groups: dict[str, EquipmentGroup],
         equipment_index: dict[str, Equipment],
     ) -> Trait:
@@ -352,10 +412,10 @@ class MIO:
         name = str(name_value) if name_value is not None else token
 
         limit_tokens = token_list(trait_data.get("limit_to_equipment_type"))
-        applies_to = (
+        applies_to: set[str] = (
             _expand_equipment_tokens(limit_tokens, equipment_groups)
             if limit_tokens
-            else list(default_applies_to)
+            else set(default_applies_to)
         )
 
         parent_tokens = dedupe_preserve_order(token_list(trait_data.get("parent")))
@@ -410,22 +470,29 @@ class MIO:
                 for token in trait.mutually_exclusive_tokens
                 if token in by_token
             ]
-        
 
-    @staticmethod
+    @classmethod
     def _from_resolved_data(
+        cls,
         name: str,
         data: dict[str, object],
         equipment_groups: dict[str, EquipmentGroup],
         equipment_index: dict[str, Equipment],
+        include: str | None = None,
     ) -> "MIO":
         """Build a fully typed MIO object from resolved raw organization data."""
-        countries = _iter_original_tags(data.get("allowed"))
-        equipment_tokens = dedupe_preserve_order(token_list(data.get("equipment_type")))
-        equipment_types = _expand_equipment_tokens(equipment_tokens, equipment_groups)
+        countries = _iter_original_tags(
+            data.get("allowed")
+        )  # Country tags permitted to use this MIO.
+        equipment_tokens = dedupe_preserve_order(
+            token_list(data.get("equipment_type"))
+        )  # Raw equipment scope tokens.
+        equipment_types = _expand_equipment_tokens(
+            equipment_tokens, equipment_groups
+        )  # Expanded equipment scope tokens.
         research_categories = dedupe_preserve_order(
             token_list(data.get("research_categories"))
-        )
+        )  # Research category tokens this MIO can affect.
 
         traits = [
             MIO._build_trait(
@@ -435,21 +502,56 @@ class MIO:
                 equipment_index,
             )
             for trait_data in as_trait_list(data.get("trait"))
-        ]
+        ]  # Fully parsed trait objects for this MIO.
         MIO._link_traits(traits)
 
-        return MIO(
-            name=name,
-            countries=countries,
-            equipment_types=equipment_types,
-            research_categories=research_categories,
+        return cls(
+            token=name,
+            countries=set(countries),
+            equipment_types=set(equipment_types),
+            research_categories=set(research_categories),
+            include=include,
             traits=traits,
         )
 
-    @staticmethod
+    @classmethod
+    def _parse_raw_organizations(
+        cls,
+        raw_orgs: dict[str, pyradox.Tree],
+        equipment_groups: dict[str, EquipmentGroup],
+        equipment_index: Optional[dict[str, Equipment]] = None,
+    ) -> dict[str, "MIO"]:
+        """Parse already-loaded raw organization trees into typed MIO objects."""
+        resolved_equipment_index = Equipment.get_equipment_index(equipment_index)
+
+        cache: dict[
+            str, dict[str, object]
+        ] = {}  # MIO token -> resolved include-expanded payload.
+        parsed: dict[str, MIO] = {}  # MIO token -> typed MIO object.
+        for org_id in raw_orgs:
+            raw_data = as_mapping(raw_orgs[org_id])
+            include_name = raw_data.get("include")
+            include_token = (
+                str(normalize_node(include_name)) if include_name is not None else None
+            )
+
+            resolved = _resolve_data(org_id, raw_orgs, cache, set())
+            parsed[org_id] = cls._from_resolved_data(
+                org_id,
+                resolved,
+                equipment_groups,
+                resolved_equipment_index,
+                include=include_token,
+            )
+
+        return parsed
+
+    @classmethod
     def from_directory(
+        cls,
         path: str | Path,
         equipment_groups: dict[str, EquipmentGroup],
+        merge_generics: bool,
         equipment_index: Optional[dict[str, Equipment]] = None,
     ) -> dict[str, "MIO"]:
         """Parse all MIO organizations in a directory tree.
@@ -467,9 +569,9 @@ class MIO:
         if not root.is_dir():
             raise NotADirectoryError(path)
 
-        resolved_equipment_index = Equipment.get_equipment_index(equipment_index)
-
-        raw_orgs: dict[str, pyradox.Tree] = {}
+        raw_orgs: dict[
+            str, pyradox.Tree
+        ] = {}  # MIO token -> raw pyradox tree from files.
         for file_path in sorted(root.rglob("*.txt")):
             if not file_path.is_file():
                 continue
@@ -480,63 +582,29 @@ class MIO:
                 if isinstance(value, pyradox.Tree):
                     raw_orgs[str(key)] = value
 
-        cache: dict[str, dict[str, object]] = {}
-        parsed: dict[str, MIO] = {}
-        for org_id in raw_orgs:
-            resolved = _resolve_included_org(org_id, raw_orgs, cache, set())
-            parsed[org_id] = MIO._from_resolved_data(
-                org_id,
-                resolved,
-                equipment_groups,
-                resolved_equipment_index,
-            )
-
-        return parsed
+        result = cls._parse_raw_organizations(
+            raw_orgs, equipment_groups, equipment_index
+        )
+        if merge_generics:
+            result = cls._merge_generics(result)
+        return result
 
     @staticmethod
-    def from_file(
-        file_path: str | Path,
-        equipment_groups: dict[str, EquipmentGroup],
-        equipment_index: Optional[dict[str, Equipment]] = None,
-    ) -> dict[str, "MIO"]:
-        """Parse all MIO organizations declared in one file.
-
-        Args:
-            file_path: Path to a single organization definition file.
-            equipment_groups: Group map used to expand equipment scopes.
-
-        Returns:
-            Mapping of organization token to parsed MIO object.
+    def _merge_generics(mios: dict[str, "MIO"]) -> dict[str, "MIO"]:
+        """Removes MIO that are just renamed generics.
+        Adds the countries of those MIO to the countries of the referenced generics.
         """
-        path = Path(file_path)
-        if not path.exists():
-            raise FileNotFoundError(file_path)
-        if path.is_dir():
-            raise IsADirectoryError(file_path)
+        result: dict[str, "MIO"] = dict()
+        for token, mio in mios.items():
+            if mio.include is not None:
+                included: "MIO" = mios[mio.include]
+                if included.traits == mio.traits:
+                    included.countries.update(mio.countries)
+                continue
+            result[token] = mio
+        return result
 
-        resolved_equipment_index = Equipment.get_equipment_index(equipment_index)
-
-        raw = parse_file(path)
-        raw_orgs: dict[str, pyradox.Tree] = {
-            str(key): cast(pyradox.Tree, raw[key])
-            for key in raw.keys()
-            if isinstance(raw[key], pyradox.Tree)
-        }
-
-        cache: dict[str, dict[str, object]] = {}
-        parsed: dict[str, MIO] = {}
-        for org_id in raw_orgs:
-            resolved = _resolve_included_org(org_id, raw_orgs, cache, set())
-            parsed[org_id] = MIO._from_resolved_data(
-                org_id,
-                resolved,
-                equipment_groups,
-                resolved_equipment_index,
-            )
-
-        return parsed
-    
-    def sum_bonuses_for(self, equipment_type: Equipment) -> 'BonusReport':
+    def sum_bonuses_for(self, equipment_type: Equipment) -> "BonusReport":
         """Calculate the total and per-stat average bonuses this MIO provides to a type.
 
         The aggregate bonus is the sum across all matching traits. The averaged report is
@@ -544,8 +612,10 @@ class MIO:
         contributions are excluded from that stat's denominator.
         """
         stats_class = type(equipment_type.stats)
-        total: EquipmentStats = stats_class()
-        matching_traits: list[Trait] = []
+        total: EquipmentStats = (
+            stats_class()
+        )  # Running total bonus accumulated across matching traits.
+        matching_traits: list[Trait] = []  # Traits that apply to equipment_type.
 
         for trait in self.traits:
             if equipment_type.tag not in trait.applies_to:
@@ -563,18 +633,21 @@ class MIO:
             score=total.score(),
             averaged_boost=average_boost,
         )
-    
+
     def __hash__(self) -> int:
-        return hash((self.name, str(self.countries), str(self.equipment_types)))
-    
+        return hash(
+            (self.token, frozenset(self.countries), frozenset(self.equipment_types))
+        )
+
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, MIO):
             return NotImplemented
         return (
-            self.name == other.name
+            self.token == other.token
             and self.countries == other.countries
             and self.equipment_types == other.equipment_types
         )
+
 
 @dataclass(frozen=True)
 class BonusReport:
@@ -588,13 +661,13 @@ class BonusReport:
     """The overall score of the boost, typically calculated from the EquipmentStats"""
     averaged_boost: EquipmentStats
     """The boost provided by the MIO averaged over the number of contributing traits"""
-    
+
     def is_empty(self) -> bool:
         """Check if no traits contributed to the boost."""
         return self.n_traits == 0
 
     def to_pretty_display(self) -> str:
-        buffer = f"MIO: {self.mio.name}, score: {self.score:.2f}, n_traits: {self.n_traits}\n"
+        buffer = f"MIO: {self.mio.token}, countries: [{', '.join(self.mio.countries)}], score: {self.score:.2f}, n_traits: {self.n_traits}\n"
         for field in fields(self.boost):
             if self.boost.get_or_default(field.name, None) is None:
                 continue

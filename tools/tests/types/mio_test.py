@@ -3,7 +3,7 @@
 import pytest
 
 from tools.types.equipment import Equipment, LandEquipmentStats
-from tools.types.mio import EquipmentGroup, MIO
+from tools.types.mio import MIO, EquipmentGroup
 
 
 def test_GivenMioDefinition_WhenParsed_ThenEquipmentTypesAndTraitScopesExpand(tmp_path):
@@ -46,18 +46,18 @@ def test_GivenMioDefinition_WhenParsed_ThenEquipmentTypesAndTraitScopesExpand(tm
         ),
     }
 
-    parsed = MIO.from_directory(org_path, groups)
+    parsed = MIO.from_directory(org_path, groups, False)
     mio = parsed["TEST_org"]
 
-    assert mio.equipment_types == [
+    assert mio.equipment_types == {
         "util_vehicle_type",
         "heavy_util_vehicle_type",
         "infantry_weapons_type",
-    ]
+    }
 
     trait_by_token = {trait.token: trait for trait in mio.traits}
     assert trait_by_token["trait_default"].applies_to == mio.equipment_types
-    assert trait_by_token["trait_limited"].applies_to == ["patrol_boat", "corvette"]
+    assert trait_by_token["trait_limited"].applies_to == {"patrol_boat", "corvette"}
 
 
 def test_GivenIncludedMio_WhenTraitOperationsAndTopLevelDeleteApply_ThenInheritedValuesAreUpdated(tmp_path):
@@ -105,11 +105,36 @@ def test_GivenIncludedMio_WhenTraitOperationsAndTopLevelDeleteApply_ThenInherite
         encoding="utf-8",
     )
 
-    parsed = MIO.from_directory(org_path, {})
+    parsed = MIO.from_directory(org_path, {}, False)
     child = parsed["CHILD_org"]
 
-    assert child.research_categories == []
+    assert child.research_categories == set()
     assert [trait.token for trait in child.traits] == ["trait_a", "trait_c"]
+
+
+def test_GivenIncludedMio_WhenParsed_ThenIncludeFieldPreservesRawIncludeToken(tmp_path):
+    org_path = tmp_path / "orgs"
+    org_path.mkdir()
+    (org_path / "include.txt").write_text(
+        """
+        BASE_org = {
+            allowed = { original_tag = BAS }
+            equipment_type = { base_type }
+        }
+
+        CHILD_org = {
+            include = BASE_org
+            allowed = { original_tag = CHD }
+            equipment_type = { child_type }
+        }
+        """,
+        encoding="utf-8",
+    )
+
+    parsed = MIO.from_directory(org_path, {}, False)
+
+    assert parsed["BASE_org"].include is None
+    assert parsed["CHILD_org"].include == "BASE_org"
 
 
 def test_GivenAllowedCountries_WhenOriginalTagsAreParsed_ThenOnlyExplicitCountriesAreIncluded(tmp_path):
@@ -136,10 +161,10 @@ def test_GivenAllowedCountries_WhenOriginalTagsAreParsed_ThenOnlyExplicitCountri
         encoding="utf-8",
     )
 
-    parsed = MIO.from_directory(org_path, {})
+    parsed = MIO.from_directory(org_path, {}, False)
 
-    assert parsed["ORG_with_tags"].countries == ["CHI", "HKG"]
-    assert parsed["ORG_scripted_only"].countries == []
+    assert parsed["ORG_with_tags"].countries == {"CHI", "HKG"}
+    assert parsed["ORG_scripted_only"].countries == set()
 
 
 def test_GivenTraitHierarchy_WhenParsed_ThenParentSemanticsArePreserved(tmp_path):
@@ -183,7 +208,7 @@ def test_GivenTraitHierarchy_WhenParsed_ThenParentSemanticsArePreserved(tmp_path
         encoding="utf-8",
     )
 
-    parsed = MIO.from_directory(org_path, {})
+    parsed = MIO.from_directory(org_path, {}, False)
     traits = {trait.token: trait for trait in parsed["ORG_parent"].traits}
 
     assert traits["branch_a"].parent is traits["root"]
@@ -211,7 +236,7 @@ def test_GivenIncludeCycle_WhenMioIsParsed_ThenValueErrorIsRaised(tmp_path):
     )
 
     with pytest.raises(ValueError, match="include cycle"):
-        MIO.from_directory(org_path, {})
+        MIO.from_directory(org_path, {}, False)
 
 
 def test_GivenEquipmentScope_WhenBonusStatsAreBuilt_ThenTraitBonusUsesEquipmentStats(tmp_path):
@@ -244,7 +269,12 @@ def test_GivenEquipmentScope_WhenBonusStatsAreBuilt_ThenTraitBonusUsesEquipmentS
         )
     }
 
-    parsed = MIO.from_directory(org_path, {}, equipment_index=equipment_index)
+    parsed = MIO.from_directory(
+        org_path,
+        {},
+        False,
+        equipment_index=equipment_index,
+    )
     trait = parsed["ALG_khenchela_arms_manufacturer"].traits[0]
 
     assert isinstance(trait.bonuses, LandEquipmentStats)

@@ -1,11 +1,10 @@
+import os
+import sys
 from dataclasses import dataclass, fields, replace
 from pathlib import Path
 from typing import Any, Optional, TypeAlias, TypeVar, cast
 
 import pyradox
-
-import os
-import sys
 
 _UTILS_DIR = os.path.join(os.path.dirname(__file__), "..", "utils")
 _UTILS_DIR = os.path.abspath(_UTILS_DIR)
@@ -18,6 +17,7 @@ RawEquipmentValue: TypeAlias = "pyradox.Tree | Equipment"
 RawEquipmentMap: TypeAlias = dict[str, RawEquipmentValue]
 RawEquipmentDict: TypeAlias = dict[str, object]
 
+
 @dataclass(frozen=True)
 class EquipmentStats:
     """Stats that all equipment types have in common.
@@ -26,6 +26,7 @@ class EquipmentStats:
 
     Wiki source: https://hoi4.paradoxwikis.com/Equipment_modding#All
     """
+
     lend_lease_cost: Optional[float] = None
     """Space taken up in convoys, measured in convoy units."""
     build_cost_ic: Optional[float] = None
@@ -41,7 +42,7 @@ class EquipmentStats:
 
     def applyFlatBonus(self, bonus: "EquipmentStats") -> "EquipmentStats":
         """Apply a flat bonus from another EquipmentStats object.
-        
+
         If a stat in the bonus object is None, it will be ignored.
 
         Args:
@@ -56,11 +57,11 @@ class EquipmentStats:
             increase = bonus.get_or_default(field.name, 0)
             if not increase:
                 continue
-            
+
             updates[field.name] = base + increase
 
         return replace(self, **updates)
-    
+
     def is_empty(self) -> bool:
         """Check if all stats are None."""
         return all(getattr(self, field.name) is None for field in fields(self))
@@ -81,8 +82,9 @@ class EquipmentStats:
             if samples:
                 averaged[field.name] = sum(samples) / len(samples)
         return cls(**cast(Any, averaged))
-    
+
     T = TypeVar("T")
+
     def get_or_default(self, attribute_name: str, default: T) -> float | T:
         """Get the value of an attribute, or return a default if it is None or doesn't exist."""
         try:
@@ -92,11 +94,18 @@ class EquipmentStats:
             return value
         except AttributeError:
             return default
-    
+
     def score(self) -> float:
         """Calculate a score for the equipment based on its defined stats."""
         total_score = 0.0
-        negative_is_better = ["build_cost_ic", "lend_lease_cost", "manpower", "sub_visibility", "surface_visibility", "fuel_consumption"]
+        negative_is_better = [
+            "build_cost_ic",
+            "lend_lease_cost",
+            "manpower",
+            "sub_visibility",
+            "surface_visibility",
+            "fuel_consumption",
+        ]
         for field in fields(self):
             value = getattr(self, field.name)
             if value is not None:
@@ -105,7 +114,7 @@ class EquipmentStats:
                 else:
                     total_score += value
         return total_score
-    
+
     def __repr__(self) -> str:
         non_none_fields = [
             f"\n    {field.name}={value:.2f}"
@@ -114,6 +123,7 @@ class EquipmentStats:
         ]
         joined = ",".join(non_none_fields)
         return f"{self.__class__.__name__}({joined})"
+
 
 @dataclass(frozen=True, repr=False)
 class LandEquipmentStats(EquipmentStats):
@@ -124,6 +134,7 @@ class LandEquipmentStats(EquipmentStats):
 
     Wiki source: https://hoi4.paradoxwikis.com/Equipment_modding#Land
     """
+
     reliability: Optional[float] = None
     maximum_speed: Optional[float] = None
     soft_attack: Optional[float] = None
@@ -158,6 +169,7 @@ class LandEquipmentStats(EquipmentStats):
     suppression: Optional[float] = None
     """Units with this equipment have this much increased suppression capability against population resistance."""
 
+
 @dataclass(frozen=True, repr=False)
 class NavalEquipmentStats(EquipmentStats):
     """Stats specific to naval equipment.
@@ -168,6 +180,7 @@ class NavalEquipmentStats(EquipmentStats):
     Wiki source: https://hoi4.paradoxwikis.com/Equipment_modding#Naval
     Additional source: common/units/equipment/modules/MD_ship_modules.txt
     """
+
     naval_speed: Optional[float] = None
     """Maximum speed in kilometres per hour of the ship, higher means faster in combat and contributes to evasion."""
     lg_armor_piercing: Optional[float] = None
@@ -207,9 +220,11 @@ class NavalEquipmentStats(EquipmentStats):
     carrier_size: Optional[float] = None
     """Carrier size - Number of planes that can operate from the ship."""
 
+
 @dataclass(frozen=True, repr=False)
 class AirEquipmentStats(EquipmentStats):
     """Stats specific to air equipment."""
+
     air_attack: Optional[float] = None
     """Amount of damage done against other planes."""
     air_defence: Optional[float] = None
@@ -233,6 +248,7 @@ class AirEquipmentStats(EquipmentStats):
     """Influences carrier composition weight. (Unknown what exactly this affects, but is defined on the airframe)"""
     carrier_capable: Optional[bool] = None
     """Indicates whether the aircraft can operate from a carrier. (Defined on the airframe)"""
+
 
 _LAND_TYPE_TOKENS = {
     "infantry",
@@ -276,6 +292,7 @@ _AIR_TYPE_TOKENS = {
     "suicide",
 }
 
+
 def _field_names(cls: type[EquipmentStats]) -> set[str]:
     return {field.name for field in fields(cls)}
 
@@ -292,11 +309,12 @@ class Equipment:
     """Equipment used by units.
     They are defined in common/units/equipment/**.txt files.
     """
+
     tag: str
     """Unique identifier for the equipment."""
     is_archetype: bool
     """Indicates if this equipment is an archetype."""
-    archetype: Optional['Equipment']
+    archetype: Optional["Equipment"]
     """Reference to the archetype equipment if this is not an archetype."""
     types: list[str]
     """List of equipment types this equipment belongs to."""
@@ -309,7 +327,7 @@ class Equipment:
         self,
         tag: str,
         is_archetype: bool,
-        archetype: Optional['Equipment'],
+        archetype: Optional["Equipment"],
         types: list[str],
         is_buildable: bool,
         stats: EquipmentStats,
@@ -334,13 +352,17 @@ class Equipment:
         return normalize_type(value)
 
     @staticmethod
-    def _merge_inherited_data(base_data: RawEquipmentDict, override_data: RawEquipmentDict) -> RawEquipmentDict:
+    def _merge_inherited_data(
+        base_data: RawEquipmentDict, override_data: RawEquipmentDict
+    ) -> RawEquipmentDict:
         merged = dict(base_data)
         merged.update(override_data)
         return merged
 
-    @staticmethod
-    def _resolve_reference(name: object, archetypes: RawEquipmentMap) -> Optional['Equipment']:
+    @classmethod
+    def _resolve_reference(
+        cls, name: object, archetypes: RawEquipmentMap
+    ) -> Optional["Equipment"]:
         if name is None:
             return None
         ref = archetypes.get(str(name))
@@ -349,11 +371,13 @@ class Equipment:
         if isinstance(ref, Equipment):
             return ref
         if isinstance(ref, pyradox.Tree):
-            return Equipment.read_equipment(str(name), ref, archetypes)
+            return cls.read_equipment(str(name), ref, archetypes)
         return None
 
     @staticmethod
-    def _as_python_data(raw_equipment: pyradox.Tree | RawEquipmentDict) -> RawEquipmentDict:
+    def _as_python_data(
+        raw_equipment: pyradox.Tree | RawEquipmentDict,
+    ) -> RawEquipmentDict:
         if isinstance(raw_equipment, dict):
             return raw_equipment
         if isinstance(raw_equipment, pyradox.Tree):
@@ -391,7 +415,9 @@ class Equipment:
         return LandEquipmentStats
 
     @staticmethod
-    def _read_stats(raw_equipment: pyradox.Tree, archetypes: RawEquipmentMap) -> EquipmentStats:
+    def _read_stats(
+        raw_equipment: pyradox.Tree, archetypes: RawEquipmentMap
+    ) -> EquipmentStats:
         raw_data = Equipment._as_python_data(raw_equipment)
         merged_data: RawEquipmentDict = {}
 
@@ -399,13 +425,17 @@ class Equipment:
         if archetype_name is not None and str(archetype_name) in archetypes:
             inherited = archetypes[str(archetype_name)]
             if isinstance(inherited, pyradox.Tree):
-                merged_data = Equipment._merge_inherited_data(merged_data, Equipment._as_python_data(inherited))
+                merged_data = Equipment._merge_inherited_data(
+                    merged_data, Equipment._as_python_data(inherited)
+                )
 
         parent_name = raw_data.get("parent")
         if parent_name is not None and str(parent_name) in archetypes:
             inherited = archetypes[str(parent_name)]
             if isinstance(inherited, pyradox.Tree):
-                merged_data = Equipment._merge_inherited_data(merged_data, Equipment._as_python_data(inherited))
+                merged_data = Equipment._merge_inherited_data(
+                    merged_data, Equipment._as_python_data(inherited)
+                )
 
         merged_data = Equipment._merge_inherited_data(merged_data, raw_data)
 
@@ -424,13 +454,19 @@ class Equipment:
             }
         )
 
-    @staticmethod
-    def read_equipment(tag: str, raw_equipment: pyradox.Tree, archetypes: RawEquipmentMap) -> "Equipment":
+    @classmethod
+    def read_equipment(
+        cls, tag: str, raw_equipment: pyradox.Tree, archetypes: RawEquipmentMap
+    ) -> "Equipment":
         if type(raw_equipment) is not pyradox.Tree:
-            raise TypeError(f"Unexpected equipment format for {tag}: {type(raw_equipment)!r}")
+            raise TypeError(
+                f"Unexpected equipment format for {tag}: {type(raw_equipment)!r}"
+            )
 
         raw_data = Equipment._as_python_data(raw_equipment)
-        archetype_ref = Equipment._resolve_reference(raw_data.get("archetype"), archetypes)
+        archetype_ref = Equipment._resolve_reference(
+            raw_data.get("archetype"), archetypes
+        )
         if archetype_ref is not None:
             archetype = archetype_ref
         else:
@@ -440,10 +476,10 @@ class Equipment:
         types = Equipment._normalize_type(raw_data.get("type"))
         stats = Equipment._read_stats(raw_equipment, archetypes)
         is_archetype = Equipment._normalize_bool(raw_data.get("is_archetype", False))
-        return Equipment(tag, is_archetype, archetype, types, is_buildable, stats)
+        return cls(tag, is_archetype, archetype, types, is_buildable, stats)
 
-    @staticmethod
-    def from_file(file_path: str) -> dict[str, 'Equipment']:
+    @classmethod
+    def from_file(cls, file_path: str) -> dict[str, "Equipment"]:
         """Parses all equipments data from a given file."""
         raw: pyradox.Tree = parse_file(file_path)
 
@@ -457,12 +493,14 @@ class Equipment:
             equip_by_tag[str(key)] = cast(pyradox.Tree, raw_entries[key])
 
         return {
-            key: Equipment.read_equipment(key, cast(pyradox.Tree, value), equip_by_tag)
+            key: cls.read_equipment(key, cast(pyradox.Tree, value), equip_by_tag)
             for key, value in equip_by_tag.items()
         }
 
-    @staticmethod
-    def from_directory(path: str | Path) -> dict[str, 'Equipment']:
+    @classmethod
+    def from_directory(
+        cls, path: str | Path = "common/units/equipment/"
+    ) -> dict[str, "Equipment"]:
         """Parses all equipment files in a directory tree, including cross-file archetype references."""
         root = Path(path)
         if not root.exists():
@@ -476,13 +514,15 @@ class Equipment:
                 continue
 
             raw: pyradox.Tree = parse_file(file_path)
-            raw_entries = cast(pyradox.Tree, raw["equipments"]) if "equipments" in raw else raw
+            raw_entries = (
+                cast(pyradox.Tree, raw["equipments"]) if "equipments" in raw else raw
+            )
 
             for key in raw_entries.keys():
                 equip_by_tag[str(key)] = cast(pyradox.Tree, raw_entries[key])
 
         return {
-            key: Equipment.read_equipment(key, cast(pyradox.Tree, value), equip_by_tag)
+            key: cls.read_equipment(key, cast(pyradox.Tree, value), equip_by_tag)
             for key, value in equip_by_tag.items()
         }
 
@@ -494,17 +534,22 @@ class Equipment:
             return _DEFAULT_EQUIPMENT_INDEX
 
         try:
-            _DEFAULT_EQUIPMENT_INDEX = Equipment.from_directory("common/units/equipment/")
+            _DEFAULT_EQUIPMENT_INDEX = Equipment.from_directory()
         except (FileNotFoundError, NotADirectoryError):
             _DEFAULT_EQUIPMENT_INDEX = {}
         return _DEFAULT_EQUIPMENT_INDEX
 
-    @staticmethod
+    @classmethod
     def get_equipment_index(
+        cls,
         equipment_index: Optional[dict[str, "Equipment"]] = None,
     ) -> dict[str, "Equipment"]:
         """Return a caller-provided index or the cached default singleton."""
-        return equipment_index if equipment_index is not None else Equipment.load_default_equipment_index()
+        return (
+            equipment_index
+            if equipment_index is not None
+            else Equipment.load_default_equipment_index()
+        )
 
 
 if __name__ == "__main__":
