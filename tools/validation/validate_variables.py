@@ -2874,12 +2874,12 @@ class Validator(BaseValidator):
             issues,
             "✓ No unlocalised variable effect tooltips found",
             "variable effect tooltips whose key has no localisation entry (the player sees the raw key):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="variable-tooltip-missing-loc",
         )
 
     def validate_missing_variable_tooltips(self):
-        """Flag dynamic-modifier writes with no `tooltip =` (WARNING).
+        """Flag dynamic-modifier writes with no `tooltip =` (ERROR).
 
         Without one the modifier changes silently — the player gets no line for
         it anywhere. Scoped to rendered effect blocks; see the pool worker.
@@ -2913,7 +2913,7 @@ class Validator(BaseValidator):
             issues,
             "✓ No untooltipped dynamic modifier writes found",
             "dynamic modifier writes in player-facing effect blocks with no `tooltip =` (the modifier changes silently):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="dynamic-modifier-tooltip-missing",
         )
 

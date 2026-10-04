@@ -397,8 +397,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     wrappers at any depth, `check_variable`'s inline `tooltip`, `visible` blocks, names
     containing `@`, AI-only decisions, and `if` branches whose `limit` holds an
     unconditional `is_ai = yes`.
-- `variable-tooltip-missing-loc` (WARNING): `tooltip = KEY` in a variable effect with no
-  English entry. `dynamic-modifier-tooltip-missing` (WARNING): an add or subtract on a
+- `variable-tooltip-missing-loc` (ERROR): `tooltip = KEY` in a variable effect with no
+  English entry. `dynamic-modifier-tooltip-missing` (ERROR): an add or subtract on a
   variable backing a dynamic modifier with no `tooltip`, in blocks the engine renders.
   `hidden_effect` suppresses both.
 
