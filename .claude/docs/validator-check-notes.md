@@ -154,6 +154,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `trigger`, and `ai_chance`. `hidden_effect`, scope blocks, and tooltips count as
   effects. `tools/linting/fix_event_option_logs.py` shares the detection and deletes the
   lines.
+- `event-option-log-id` (ERROR): an option log that cites another option's id, in the
+  `Event <id>` form or the canonical `<id> executed` form.
+  `tools/linting/fix_log_ids.py` shares the detection and rewrites the token. Exempt
+  option names live in `validation_config.json` `option_log_id_exempt`.
 - `event-ai-chance-ignores-cost` (WARNING, off by default, `--check-ai-chance-costs`,
   tracked in #5106): in an event with two or more options, an option that charges its
   own country and whose `ai_chance` has no `modifier`. Costs: lowering `treasury` or
