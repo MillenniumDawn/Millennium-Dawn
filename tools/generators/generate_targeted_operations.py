@@ -614,7 +614,7 @@ def registry(data: dict) -> str:
         ]
         if gid == 3:
             conditions.append(
-                "OR = { ISI = { exists = yes } has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded IRQ = { has_war = yes } }"
+                "OR = { country_exists = ISI has_global_flag = GLOBAL_operation_iraqi_freedom_succeeded IRQ = { has_war = yes } }"
             )
         lines = ["if = {", "\tlimit = { " + " ".join(conditions) + " }"]
         lines += [
