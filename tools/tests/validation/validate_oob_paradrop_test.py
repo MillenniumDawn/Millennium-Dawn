@@ -97,9 +97,23 @@ def test_non_airborne_template_with_the_same_unit_is_not_flagged(tmp_path):
 
 
 def test_allowlisted_air_assault_template_is_not_flagged(tmp_path, monkeypatch):
-    monkeypatch.setattr(V, "_AIR_ASSAULT_TEMPLATES", frozenset({"Airborne Brigade"}))
+    monkeypatch.setattr(
+        V,
+        "_AIR_ASSAULT_TEMPLATES",
+        frozenset({"history/units/SWE_2000.txt:Airborne Brigade"}),
+    )
     validator = _check(tmp_path, "Airborne Brigade", "SP_Arty_Bat")
     assert validator._issues == []
+
+
+def test_allowlist_entry_for_another_file_does_not_apply(tmp_path, monkeypatch):
+    monkeypatch.setattr(
+        V,
+        "_AIR_ASSAULT_TEMPLATES",
+        frozenset({"history/units/SYR_2000.txt:Airborne Brigade"}),
+    )
+    validator = _check(tmp_path, "Airborne Brigade", "SP_Arty_Bat")
+    assert validator.warnings_found == 1
 
 
 @pytest.mark.parametrize(

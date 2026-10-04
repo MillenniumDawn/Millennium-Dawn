@@ -1254,8 +1254,13 @@ def _check_paradrop_file(
 ) -> List[Issue]:
     filepath, mod_path, parachutable, name_res, allowlist = args
     rel = normalize_path_separators(os.path.relpath(filepath, mod_path))
+    # Allowlist keys are "<file>:<template name>", so a shared name in another
+    # country's OOB is still checked.
+    allowed_here = frozenset(
+        key[len(rel) + 1 :] for key in allowlist if key.startswith(rel + ":")
+    )
     findings = check_paradrop_templates(
-        _read_text(filepath, mod_path), parachutable, name_res, allowlist
+        _read_text(filepath, mod_path), parachutable, name_res, allowed_here
     )
     return [
         Issue(
