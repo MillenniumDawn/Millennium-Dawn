@@ -141,7 +141,7 @@ def test_shared_scan_reads_each_english_file_once_and_reports_every_category(
         tmp_path,
         "localisation/english/a_l_english.yml",
         'l_english:\n a: "the the seeeker — we`ll \\"wait"\n'
-        ' b: "WIP"\n c_desc: "which will require them"\n',
+        ' b: "WIP"\n c_desc: "which will require them"\n d: "seperate"\n',
     )
     write_under_str(tmp_path, "localisation/french/a.yml", 'l_french:\n a: "WIP"\n')
     calls = []
@@ -164,9 +164,14 @@ def test_shared_scan_reads_each_english_file_once_and_reports_every_category(
         "loc-em-dash",
         "loc-backtick-apostrophe",
         "loc-unbalanced-quote",
+        "loc-typo-watchlist",
     }
-    assert validator.errors_found == 0
-    assert validator.warnings_found == 7
+    assert {i.category for i in validator._issues if i.severity == Severity.ERROR} == {
+        "loc-unbalanced-quote",
+        "loc-typo-watchlist",
+    }
+    assert validator.errors_found == 2
+    assert validator.warnings_found == 6
 
 
 def test_staged_selection_does_not_expand_to_other_english_files(tmp_path, monkeypatch):
