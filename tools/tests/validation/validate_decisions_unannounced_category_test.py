@@ -17,10 +17,7 @@ def _write_mod(tmp_path, category_visible, unlock=None, category="md_test_catego
     categories.mkdir(parents=True)
     with (categories / "cat.txt").open("w", encoding="utf-8", newline="") as handle:
         handle.write(
-            f"{category} = {{\n"
-            "\ticon = GFX_decision_generic\n"
-            f"{category_visible}"
-            "}\n"
+            f"{category} = {{\n\ticon = GFX_decision_generic\n{category_visible}}}\n"
         )
     decisions = tmp_path / "common" / "decisions"
     with (decisions / "dec.txt").open("w", encoding="utf-8", newline="") as handle:
