@@ -104,6 +104,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `icon = X` passes if `X`, `GFX_decision_X`, or `GFX_X` exists. A category `icon = X`
   takes `GFX_decision_category_` instead. A category `picture` is the full sprite name.
   Needs a live install to avoid vanilla noise. The flag also drives the focus-tree check.
+- `unannounced-decision-category` (WARNING, opt-in `--unannounced-categories`, passed in
+  CI): a category whose `visible` waits on a flag, focus, idea, or variable, with no
+  `unlock_decision_category_tooltip` naming it and no `unlock_decision_tooltip` naming
+  one of its decisions. `unannounced_category_exempt` in the config lists categories
+  whose gate is granted only at game start.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.

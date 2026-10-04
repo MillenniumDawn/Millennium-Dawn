@@ -102,6 +102,14 @@ def test_ai_only_category_is_not_flagged(tmp_path):
     assert _findings(_write_mod(tmp_path, gate)) == []
 
 
+def test_config_exempt_category_is_not_flagged(tmp_path, monkeypatch):
+    # A gate granted only in history is on from day one, so no effect can announce it.
+    monkeypatch.setattr(
+        V, "_UNANNOUNCED_CATEGORY_EXEMPT", frozenset({"md_test_category"})
+    )
+    assert _findings(_write_mod(tmp_path, _FLAG_GATE)) == []
+
+
 def test_focus_gated_category_is_flagged(tmp_path):
     gate = "\tvisible = {\n\t\thas_completed_focus = md_other_focus\n\t}\n"
     out = _findings(_write_mod(tmp_path, gate))

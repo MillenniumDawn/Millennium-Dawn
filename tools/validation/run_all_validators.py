@@ -40,6 +40,7 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
 # off — its ~7.8k backlog would drown the report; run it on demand instead.
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
     "bonus-names": ["--name-not-owner-id"],
+    "decisions": ["--unannounced-categories"],
     "focus-tree": ["--missing-icons"],
     "variables": ["--redundant-focus-flags"],
 }
