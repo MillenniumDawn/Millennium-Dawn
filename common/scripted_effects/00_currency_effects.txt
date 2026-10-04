@@ -2,6 +2,9 @@
 # multipliers it drives, and reserve-currency seigniorage and ROI bonuses.
 
 # Script Constants
+@currency_strength_min = 0.15
+@currency_strength_max = 2.0
+
 # Fundamentals push currency_strength each month; a pull draws it back toward currency_strength_base.
 @currency_pull = 0.01
 @currency_base_rise = 0.002
@@ -155,6 +158,17 @@ update_currency_issuers = {
 		set_variable = { global.brl_issuer = THIS }
 		set_country_flag = is_brl_issuer
 	} }
+}
+
+# Run after every change to currency_strength. currency_strength_minimum_modifier is the floor itself, summed across sources.
+clamp_currency_strength = {
+	set_temp_variable = {
+		currency_strength_floor = {
+			value = modifier@currency_strength_minimum_modifier
+			clamp = { min = @currency_strength_min max = @currency_strength_max }
+		}
+	}
+	clamp_variable = { var = currency_strength min = currency_strength_floor max = @currency_strength_max }
 }
 
 # ── Monthly recalculation ─────────────────────────────────────────────────────
@@ -369,7 +383,7 @@ calculate_currency_strength = {
 		}
 	}
 
-	clamp_variable = { var = currency_strength min = 0.15 max = 2.0 }
+	clamp_currency_strength = yes
 
 	if = { limit = { check_variable = { currency_strength > currency_strength_base } }
 		add_to_variable = {
