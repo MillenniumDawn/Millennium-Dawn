@@ -284,6 +284,8 @@ _LAND_STAT_KEYS = _field_names(LandEquipmentStats)
 _NAVAL_STAT_KEYS = _field_names(NavalEquipmentStats)
 _AIR_STAT_KEYS = _field_names(AirEquipmentStats)
 
+_DEFAULT_EQUIPMENT_INDEX: Optional[dict[str, "Equipment"]] = None
+
 
 @dataclass
 class Equipment:
@@ -483,6 +485,26 @@ class Equipment:
             key: Equipment.read_equipment(key, cast(pyradox.Tree, value), equip_by_tag)
             for key, value in equip_by_tag.items()
         }
+
+    @staticmethod
+    def load_default_equipment_index() -> dict[str, "Equipment"]:
+        """Load and cache the default equipment index from mod equipment files."""
+        global _DEFAULT_EQUIPMENT_INDEX
+        if _DEFAULT_EQUIPMENT_INDEX is not None:
+            return _DEFAULT_EQUIPMENT_INDEX
+
+        try:
+            _DEFAULT_EQUIPMENT_INDEX = Equipment.from_directory("common/units/equipment/")
+        except (FileNotFoundError, NotADirectoryError):
+            _DEFAULT_EQUIPMENT_INDEX = {}
+        return _DEFAULT_EQUIPMENT_INDEX
+
+    @staticmethod
+    def get_equipment_index(
+        equipment_index: Optional[dict[str, "Equipment"]] = None,
+    ) -> dict[str, "Equipment"]:
+        """Return a caller-provided index or the cached default singleton."""
+        return equipment_index if equipment_index is not None else Equipment.load_default_equipment_index()
 
 
 if __name__ == "__main__":

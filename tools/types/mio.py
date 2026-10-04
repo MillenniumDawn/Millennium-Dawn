@@ -1,7 +1,6 @@
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from pathlib import Path
-import pprint
 import sys
 import os
 from typing import Any, Optional, cast
@@ -49,8 +48,6 @@ _LAND_STAT_KEYS = _field_names(LandEquipmentStats)
 _NAVAL_STAT_KEYS = _field_names(NavalEquipmentStats)
 _AIR_STAT_KEYS = _field_names(AirEquipmentStats)
 _BASE_STAT_KEYS = _field_names(EquipmentStats)
-
-_DEFAULT_EQUIPMENT_INDEX: Optional[dict[str, Equipment]] = None
 
 
 def _expand_equipment_tokens(
@@ -122,26 +119,6 @@ def _parse_equipment_bonus(
         key: inner for key, inner in raw_stats.items() if key in allowed
     }
     return selected_class(**cast(Any, stat_values))
-
-
-def _load_default_equipment_index() -> dict[str, Equipment]:
-    """Load and cache the default equipment index from mod equipment files."""
-    global _DEFAULT_EQUIPMENT_INDEX
-    if _DEFAULT_EQUIPMENT_INDEX is not None:
-        return _DEFAULT_EQUIPMENT_INDEX
-
-    try:
-        _DEFAULT_EQUIPMENT_INDEX = Equipment.from_directory("common/units/equipment/")
-    except (FileNotFoundError, NotADirectoryError):
-        _DEFAULT_EQUIPMENT_INDEX = {}
-    return _DEFAULT_EQUIPMENT_INDEX
-
-
-def _get_equipment_index(
-    equipment_index: Optional[dict[str, Equipment]] = None,
-) -> dict[str, Equipment]:
-    """Return caller-provided equipment index or the cached default singleton."""
-    return equipment_index if equipment_index is not None else _load_default_equipment_index()
 
 
 def _detect_stats_class_from_equipment_scope(
@@ -490,7 +467,7 @@ class MIO:
         if not root.is_dir():
             raise NotADirectoryError(path)
 
-        resolved_equipment_index = _get_equipment_index(equipment_index)
+        resolved_equipment_index = Equipment.get_equipment_index(equipment_index)
 
         raw_orgs: dict[str, pyradox.Tree] = {}
         for file_path in sorted(root.rglob("*.txt")):
@@ -537,7 +514,7 @@ class MIO:
         if path.is_dir():
             raise IsADirectoryError(file_path)
 
-        resolved_equipment_index = _get_equipment_index(equipment_index)
+        resolved_equipment_index = Equipment.get_equipment_index(equipment_index)
 
         raw = parse_file(path)
         raw_orgs: dict[str, pyradox.Tree] = {
@@ -624,38 +601,3 @@ class BonusReport:
             value = getattr(self.boost, field.name)
             buffer += f"  {field.name}: {value:.2f} (avg: {getattr(self.averaged_boost, field.name):.2f})\n"
         return buffer
-
-
-if __name__ == "__main__":
-    if len(sys.argv) == 1:
-        print("Usage: python mio.py <target_equipment_type>")
-        print("Available equipment types:")
-        tags = list()
-        for equipment in _get_equipment_index().values():
-            if equipment.is_archetype:
-                tags.append(equipment.tag)
-        tags = sorted(tags)
-        for tag in tags:
-            print(f"  {tag}")
-        sys.exit(1)
-
-    equipment_groups = EquipmentGroup.from_file()
-    mios = MIO.from_directory(
-        "common/military_industrial_organization/organizations",
-        equipment_groups,
-    )
-    print(f"Parsed {len(mios)} MIO organizations")
-    equ_type = _get_equipment_index()[sys.argv[1]]
-
-     # Contains all the MIO that apply to the specified equipment type, as well as how much they boost it
-    applies_to = dict[MIO, BonusReport]()
-    for org_id, mio in mios.items():
-        if equ_type.tag in mio.equipment_types:
-            boost = mio.sum_bonuses_for(equ_type)
-            if not boost.is_empty():
-                applies_to[mio] = boost
-    # Sort the applies_to dictionary by the score of the EquipmentStats in descending order
-    applies_to = dict(sorted(applies_to.items(), key=lambda item: item[1].score, reverse=True))
-    for mio, boost in applies_to.items():
-        print(boost.to_pretty_display())
-    

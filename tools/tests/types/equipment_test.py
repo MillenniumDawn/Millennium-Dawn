@@ -130,6 +130,12 @@ def test_GivenEquipmentInheritance_WhenParsed_ThenParentBlockIsAppliedBeforeOver
     assert parsed["destroyer"].stats.lg_attack == 2
 
 
+def test_GivenEquipmentIndexLoader_WhenCalled_ThenSharedSingletonIsAvailable():
+    assert callable(Equipment.load_default_equipment_index)
+    assert callable(Equipment.get_equipment_index)
+    assert Equipment.get_equipment_index() is Equipment.load_default_equipment_index()
+
+
 def test_GivenEquipmentDirectory_WhenFromDirectory_ThenParsesRecursiveFilesAndCrossFileArchetypes(tmp_path):
     root = tmp_path / "equipment_root"
     root.mkdir()
