@@ -93,9 +93,10 @@ _HISTORY_PRODUCTION_PATTERNS = [
 _OOB_EQUIPMENT_RE = re.compile(
     r"equipment\s*=\s*\{\s*([A-Za-z_]\w*)\s*=\s*\{([^{}]*)\}"
 )
+# Para, Parachute, Paracadutisti, Para-quedista; VDV and desant for Russian,
+# Ukrainian and Tajik airborne. \bpara skips "Separate Infantry BDE".
 _AIRBORNE_NAME_RES = tuple(
-    re.compile(pattern, re.I)
-    for pattern in validation_config("validate_oob_units", "airborne_name_patterns")
+    re.compile(pattern, re.I) for pattern in (r"\bpara", "airborne", "vdv", "desant")
 )
 _AIR_ASSAULT_TEMPLATES = frozenset(
     validation_config("validate_oob_units", "air_assault_templates")
