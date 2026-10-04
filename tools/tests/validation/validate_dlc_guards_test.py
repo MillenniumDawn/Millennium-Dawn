@@ -25,11 +25,10 @@ TECH_GATES = {
     "nsb_artillery_1": frozenset({("require", NSB)}),
     "SP_arty_0": frozenset({("forbid", NSB)}),
     "ungated_tech": frozenset(),
-    "solar_engines_1": frozenset({("require", BBA)}),
 }
 CATEGORY_GATES = {"CAT_air_engine": frozenset({("require", BBA)})}
 PROJECT_GATES = {"sp_stealth_technology": frozenset({("require", BBA)})}
-PROJECT_TECHS = frozenset({"solar_engines_1"})
+PROJECT_TECH_GATES = {"solar_engines_1": frozenset({("require", BBA)})}
 
 
 def _scan(script, availability=frozenset()):
@@ -38,7 +37,7 @@ def _scan(script, availability=frozenset()):
         TECH_GATES,
         CATEGORY_GATES,
         PROJECT_GATES,
-        PROJECT_TECHS,
+        PROJECT_TECH_GATES,
         availability,
     )
     scanner.walk(0, len(scanner.text), V.Context())
@@ -53,7 +52,7 @@ def test_poland_logistics_focus_uses_the_matching_aircraft_tree():
     mod_path = f"{REPO_ROOT}/"
     folder_gates = V.parse_folder_gates(mod_path)
     project_gates = V.parse_project_gates(mod_path)
-    tech_gates, category_gates, project_techs = V.parse_tech_gates(
+    tech_gates, category_gates, project_tech_gates = V.parse_tech_gates(
         mod_path, folder_gates, project_gates
     )
     path = REPO_ROOT / "common" / "national_focus" / "05_poland.txt"
@@ -62,15 +61,11 @@ def test_poland_logistics_focus_uses_the_matching_aircraft_tree():
         tech_gates,
         category_gates,
         project_gates,
-        frozenset(project_techs),
-        V._FOCUS_AVAILABILITY,
+        project_tech_gates,
+        V._AVAILABILITY,
     )
     scanner.walk(0, len(scanner.text), V.Context())
-    # Only POL_beginning_of_nuclear_warheads_research is unguarded; drop this
-    # expectation when that focus gets its has_dlc guard.
-    assert [(c, "CAT_nuclear_weapons" in m) for c, _, m in scanner.findings] == [
-        ("dlc_tech_bonus_category", True)
-    ]
+    assert scanner.findings == []
 
 
 def _bonus(tech, indent="\t"):
@@ -155,7 +150,7 @@ def test_parse_tech_gates_ignores_other_blocks_and_unreadable_files(tmp_path):
     )
     (tmp_path / "common" / "technologies" / "broken.txt").mkdir()
 
-    tech_gates, _categories, _project_techs = V.parse_tech_gates(
+    tech_gates, _categories, _project_tech_gates = V.parse_tech_gates(
         str(tmp_path) + "/",
         {"bba_aircraft_folder": frozenset({("require", BBA)})},
         {},
@@ -264,15 +259,18 @@ def test_parse_project_gates_skips_unreadable_files(tmp_path):
     }
 
 
-def test_tech_inherits_gate_from_its_special_project(tmp_path):
+def test_project_gated_tech_keeps_its_gate_apart_from_folder_gates(tmp_path):
     project_gates = {"sp_solar_engines": frozenset({("require", BBA)})}
-    tech_gates, _, project_techs = _tech_gates(
+    tech_gates, category_gates, project_tech_gates = _tech_gates(
         tmp_path,
         "\tsolar_engines_1 = {\n"
         "\t\tallow = { ROOT = { is_special_project_completed = sp:sp_solar_engines } }\n"
+        "\t\tcategories = { CAT_solar }\n"
         "\t}\n"
         "\tdirect_allow = {\n"
         "\t\tallow = { is_special_project_completed = sp:sp_solar_engines }\n"
+        "\t\tcategories = { CAT_solar }\n"
+        "\t\tfolder = { name = bba_aircraft_folder }\n"
         "\t}\n"
         "\topen_project_tech = {\n"
         "\t\tallow = { is_special_project_completed = sp:sp_open_project }\n"
@@ -282,14 +280,19 @@ def test_tech_inherits_gate_from_its_special_project(tmp_path):
         "\t\t\tif = { limit = { is_special_project_completed = sp:sp_solar_engines } }\n"
         "\t\t}\n"
         "\t}\n",
-        {},
+        {"bba_aircraft_folder": frozenset({("require", NSB)})},
         project_gates,
     )
-    assert tech_gates["solar_engines_1"] == frozenset({("require", BBA)})
-    assert tech_gates["direct_allow"] == frozenset({("require", BBA)})
+    # Folder gates alone feed the tech and category maps.
+    assert tech_gates["solar_engines_1"] == frozenset()
+    assert tech_gates["direct_allow"] == frozenset({("require", NSB)})
     assert tech_gates["open_project_tech"] == frozenset()
     assert tech_gates["limit_only"] == frozenset()
-    assert project_techs == {"solar_engines_1", "direct_allow"}
+    assert "CAT_solar" not in category_gates
+    assert project_tech_gates == {
+        "solar_engines_1": frozenset({("require", BBA)}),
+        "direct_allow": frozenset({("require", BBA)}),
+    }
 
 
 # --- guard walker -----------------------------------------------------------
@@ -495,13 +498,11 @@ def test_project_jxx_regression():
 
 # --- has_tech in availability ----------------------------------------------
 
-FOCUS = V._FOCUS_AVAILABILITY
-DECISION = V._DECISION_AVAILABILITY
+FOCUS = DECISION = V._AVAILABILITY
 FOCUS_AND_DECISION_BLOCKS = [
     (FOCUS, "available"),
     (FOCUS, "allowed"),
     (FOCUS, "visible"),
-    (FOCUS, "prerequisite"),
     (DECISION, "available"),
     (DECISION, "allowed"),
     (DECISION, "visible"),
@@ -572,7 +573,7 @@ def test_unguarded_project_tech_in_availability_is_flagged(availability, block):
 def test_availability_only_applies_to_its_own_file_type():
     assert _scan(_object(_has_tech(), "allowed")) == []
     assert _scan(_object(_has_tech(), "allowed"), DECISION) != []
-    assert _scan(_object(_has_tech(), "prerequisite"), DECISION) == []
+    assert _scan(_object(_has_tech(), "prerequisite"), FOCUS) == []
 
 
 @pytest.mark.parametrize("script", _GUARDED_SCRIPTS.values(), ids=_GUARDED_SCRIPTS)
@@ -586,6 +587,15 @@ def test_has_tech_guard_must_name_the_same_dlc():
     assert [c for c, _, _ in _scan(script, FOCUS)] == ["dlc_has_tech"]
 
 
+def test_has_dlc_inside_an_or_does_not_guard_the_object():
+    script = _object(
+        _nested("OR", f'\t\t\thas_dlc = "{BBA}"\n\t\t\thas_country_flag = a\n')
+        + _has_tech()
+    )
+
+    assert [c for c, _, _ in _scan(script, FOCUS)] == ["dlc_has_tech"]
+
+
 def test_has_tech_inside_scope_block_is_flagged_once():
     script = _object(_nested("ROOT", _inner_has_tech()))
 
@@ -595,8 +605,8 @@ def test_has_tech_inside_scope_block_is_flagged_once():
 def test_fingerprint_changes_with_the_project_gated_tech_set():
     gates = {"gen_5_light": frozenset({("require", BBA)})}
 
-    assert V._fingerprint_gates(gates, {}, {}, set()) != V._fingerprint_gates(
-        gates, {}, {}, {"gen_5_light"}
+    assert V._fingerprint_gates(gates, {}, {}, {}) != V._fingerprint_gates(
+        {}, {}, {}, gates
     )
 
 
@@ -642,16 +652,14 @@ def test_scan_file_cache_invalidates_when_gate_maps_change(tmp_path, monkeypatch
         ungated,
         {},
         {},
-        frozenset(),
-        V._fingerprint_gates(ungated, {}, {}, set()),
+        {},
+        V._fingerprint_gates(ungated, {}, {}, {}),
         mod_path,
     )
     assert V.scan_file(str(filepath)) == []
 
     gated = {"gen_5_light": frozenset({("require", BBA)})}
-    V._init_worker(
-        gated, {}, {}, frozenset(), V._fingerprint_gates(gated, {}, {}, set()), mod_path
-    )
+    V._init_worker(gated, {}, {}, {}, V._fingerprint_gates(gated, {}, {}, {}), mod_path)
     findings = V.scan_file(str(filepath))
     assert len(findings) == 1
     assert "gen_5_light" in findings[0][3]
@@ -668,7 +676,7 @@ def test_ungated_category_and_project_references_are_clean():
 
 
 def test_scan_file_skips_unreadable_and_irrelevant_files(tmp_path):
-    V._init_worker({}, {}, {}, frozenset(), "", str(tmp_path) + "/")
+    V._init_worker({}, {}, {}, {}, "", str(tmp_path) + "/")
     (tmp_path / "broken.txt").mkdir()
     plain = _write(tmp_path, "events/plain.txt", "country_event = { id = test.1 }\n")
 
@@ -677,7 +685,7 @@ def test_scan_file_skips_unreadable_and_irrelevant_files(tmp_path):
 
 
 def test_scan_file_checks_has_tech_only_in_focus_and_decision_files(tmp_path):
-    V._init_worker(TECH_GATES, {}, {}, PROJECT_TECHS, "", str(tmp_path) + "/")
+    V._init_worker(TECH_GATES, {}, {}, PROJECT_TECH_GATES, "", str(tmp_path) + "/")
     script = _object(_has_tech(), "available")
     paths = {
         "common/national_focus/05_test.txt": 1,

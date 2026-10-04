@@ -19,13 +19,15 @@ Gating is derived, not hardcoded:
   - A research category counts as gated only when every tech carrying it shares
     one gate.
   - `common/special_projects/projects/*.txt` -- a project's `allowed` block.
-  - A tech whose `allow` needs a DLC-gated special project inherits that gate.
+  - A tech whose `allow` needs a DLC-gated special project is project-gated.
+    That gate is kept apart from the folder gates, so it drives only the
+    `has_tech` check below and leaves tech and category gating unchanged.
 
 A named technology or project is an ERROR: it crashes the game. A fully gated
 category is a WARNING: it resolves to nothing and only wastes the bonus.
 
-A `has_tech` for a project-gated tech in a focus `available`/`allowed`/`visible`/
-`prerequisite`, or a decision `available`/`allowed`/`visible`, makes the object
+A `has_tech` for a project-gated tech in a focus or decision
+`available`/`allowed`/`visible` makes the object
 unreachable without the DLC (issue #5328). It is a WARNING. Techs gated only by a
 folder are out of scope, and `has_tech` under OR or NOT is not a requirement.
 """
@@ -78,8 +80,7 @@ _SKIP_BLOCKS = frozenset(
 _BRANCHES = frozenset({"if", "else_if", "else"})
 # Blocks where a `has_tech` is a hard requirement. Under OR, NOR, NAND or
 # count_triggers it is one alternative, and under NOT it is not required.
-_FOCUS_AVAILABILITY = frozenset({"available", "allowed", "visible", "prerequisite"})
-_DECISION_AVAILABILITY = frozenset({"available", "allowed", "visible"})
+_AVAILABILITY = frozenset({"available", "allowed", "visible"})
 _NOT_REQUIRED = frozenset({"OR", "NOT", "NOR", "NAND", "count_triggers"})
 # Naming a disabled technology or project crashes the game; a fully gated
 # category resolves to nothing and only wastes the bonus.
@@ -176,15 +177,16 @@ def parse_folder_gates(mod_path: str) -> Dict[str, Gates]:
 def parse_tech_file(
     text: str, folder_gates: Dict[str, Gates], project_gates: Dict[str, Gates]
 ):
-    """Return (tech -> gates, tech -> categories, project-gated techs) for one file."""
+    """Return (tech -> gates, tech -> categories, tech -> project gates) for one file."""
     tech_gates: Dict[str, Gates] = {}
     tech_categories: Dict[str, Set[str]] = {}
-    project_techs: Set[str] = set()
+    project_tech_gates: Dict[str, Gates] = {}
     for name, _, body_start, body_end in _child_blocks(text, 0, len(text)):
         if name != "technologies":
             continue
         for tech, _, t_start, t_end in _child_blocks(text, body_start, body_end):
             conditions: Conditions = []
+            project_conditions: Conditions = []
             folders: List[str] = []
             categories: Set[str] = set()
             for sub, _, s_start, s_end in _child_blocks(text, t_start, t_end):
@@ -194,9 +196,7 @@ def parse_tech_file(
                 elif sub == "allow":
                     # Every project in `allow` must be completed, and no tech uses OR.
                     for project in _SP_REQUIRED_RE.findall(body):
-                        if project in project_gates:
-                            conditions.extend(project_gates[project])
-                            project_techs.add(tech)
+                        project_conditions.extend(project_gates.get(project, ()))
                 elif sub == "folder":
                     folder = _FOLDER_NAME_RE.search(body)
                     if folder:
@@ -209,15 +209,17 @@ def parse_tech_file(
                 conditions.extend(next(iter(folder_sets)))
             tech_gates[tech] = frozenset(conditions)
             tech_categories[tech] = categories
-    return tech_gates, tech_categories, project_techs
+            if project_conditions:
+                project_tech_gates[tech] = frozenset(project_conditions)
+    return tech_gates, tech_categories, project_tech_gates
 
 
 def parse_tech_gates(
     mod_path: str, folder_gates: Dict[str, Gates], project_gates: Dict[str, Gates]
-) -> Tuple[Dict[str, Gates], Dict[str, Gates], Set[str]]:
-    """Build the tech -> gates and category -> gates maps and the project-gated techs."""
+) -> Tuple[Dict[str, Gates], Dict[str, Gates], Dict[str, Gates]]:
+    """Build the tech, category, and project-derived tech gate maps."""
     tech_gates: Dict[str, Gates] = {}
-    project_techs: Set[str] = set()
+    project_tech_gates: Dict[str, Gates] = {}
     category_members: Dict[str, List[Gates]] = defaultdict(list)
     pattern = os.path.join(mod_path, "common", "technologies", "*.txt")
     for filepath in sorted(glob.iglob(pattern)):
@@ -226,11 +228,11 @@ def parse_tech_gates(
                 raw = handle.read()
         except OSError:
             continue
-        file_gates, file_categories, file_project_techs = parse_tech_file(
+        file_gates, file_categories, file_project_gates = parse_tech_file(
             _sanitize(raw), folder_gates, project_gates
         )
         tech_gates.update(file_gates)
-        project_techs |= file_project_techs
+        project_tech_gates.update(file_project_gates)
         for tech, categories in file_categories.items():
             for category in categories:
                 category_members[category].append(file_gates[tech])
@@ -242,7 +244,7 @@ def parse_tech_gates(
             shared = next(iter(unique))
             if shared:
                 category_gates[category] = shared
-    return tech_gates, category_gates, project_techs
+    return tech_gates, category_gates, project_tech_gates
 
 
 def parse_project_gates(mod_path: str) -> Dict[str, Gates]:
@@ -274,14 +276,14 @@ class Scanner:
         tech_gates: Dict[str, Gates],
         category_gates: Dict[str, Gates],
         project_gates: Dict[str, Gates],
-        project_techs: FrozenSet[str] = frozenset(),
+        project_tech_gates: Dict[str, Gates] = {},
         availability: FrozenSet[str] = frozenset(),
     ):
         self.text = text
         self.tech_gates = tech_gates
         self.category_gates = category_gates
         self.project_gates = project_gates
-        self.project_techs = project_techs
+        self.project_tech_gates = project_tech_gates
         self.availability = availability
         self.offsets = compute_line_offsets(text)
         self.findings: List[Tuple[str, int, str]] = []
@@ -341,15 +343,17 @@ class Scanner:
         for match in _HAS_TECH_RE.finditer(self.text, start, end):
             tech = match.group(1)
             nested = any(s <= match.start() <= e for _, s, _, e in blocks)
-            if tech in self.project_techs and not nested:
-                self._check(
-                    "dlc_has_tech",
-                    match.start(),
-                    "has_tech",
-                    tech,
-                    self.tech_gates[tech],
-                    ctx,
-                )
+            gates = self.project_tech_gates.get(tech)
+            if gates and not nested:
+                self._check("dlc_has_tech", match.start(), "has_tech", tech, gates, ctx)
+
+    def _without_or(self, start: int, end: int) -> str:
+        """The gate body with OR blocks blanked: a has_dlc there is optional."""
+        body = list(self.text[start:end])
+        for name, _, b_start, b_end in _child_blocks(self.text, start, end):
+            if name == "OR":
+                body[b_start - start : b_end - start] = " " * (b_end - b_start)
+        return "".join(body)
 
     def walk(
         self,
@@ -364,7 +368,7 @@ class Scanner:
         for name, _, body_start, body_end in blocks:
             if name in _OBJECT_GATES:
                 gate_conditions.extend(
-                    _extract_dlc_conditions(self.text[body_start:body_end])
+                    _extract_dlc_conditions(self._without_or(body_start, body_end))
                 )
         ctx = ctx.apply(gate_conditions)
         if required:
@@ -422,9 +426,9 @@ def _fingerprint_gates(
     tech_gates: Dict[str, Gates],
     category_gates: Dict[str, Gates],
     project_gates: Dict[str, Gates],
-    project_techs: Set[str],
+    project_tech_gates: Dict[str, Gates],
 ) -> str:
-    """Stable digest of the derived gate maps and the project-gated techs.
+    """Stable digest of the derived gate maps.
 
     Folded into ``scan_file``'s cache key so a `has_dlc` change anywhere in
     `common/technology_tags/`, `common/technologies/`, or
@@ -438,27 +442,33 @@ def _fingerprint_gates(
             for name, gate in sorted(gates.items())
         )
 
-    maps = "|".join(_fmt(g) for g in (tech_gates, category_gates, project_gates))
-    return f"{maps}|{','.join(sorted(project_techs))}"
+    return "|".join(
+        _fmt(g) for g in (tech_gates, category_gates, project_gates, project_tech_gates)
+    )
 
 
 _TECH_GATES: Dict[str, Gates] = {}
 _CATEGORY_GATES: Dict[str, Gates] = {}
 _PROJECT_GATES: Dict[str, Gates] = {}
-_PROJECT_TECHS: FrozenSet[str] = frozenset()
+_PROJECT_TECH_GATES: Dict[str, Gates] = {}
 _GATE_FINGERPRINT = ""
 _MOD_PATH = ""
 
 
 def _init_worker(
-    tech_gates, category_gates, project_gates, project_techs, gate_fingerprint, mod_path
+    tech_gates,
+    category_gates,
+    project_gates,
+    project_tech_gates,
+    gate_fingerprint,
+    mod_path,
 ):
-    global _TECH_GATES, _CATEGORY_GATES, _PROJECT_GATES, _PROJECT_TECHS
+    global _TECH_GATES, _CATEGORY_GATES, _PROJECT_GATES, _PROJECT_TECH_GATES
     global _GATE_FINGERPRINT, _MOD_PATH
     _TECH_GATES = tech_gates
     _CATEGORY_GATES = category_gates
     _PROJECT_GATES = project_gates
-    _PROJECT_TECHS = project_techs
+    _PROJECT_TECH_GATES = project_tech_gates
     _GATE_FINGERPRINT = gate_fingerprint
     _MOD_PATH = mod_path
 
@@ -474,10 +484,10 @@ def scan_file(filepath: str) -> List[Tuple[str, str, int, str]]:
         return []
     relative = os.path.relpath(filepath, _MOD_PATH).replace(os.sep, "/")
     availability = frozenset()
-    if relative.startswith("common/national_focus/"):
-        availability = _FOCUS_AVAILABILITY
-    elif relative.startswith("common/decisions/") and "/categories/" not in relative:
-        availability = _DECISION_AVAILABILITY
+    if relative.startswith("common/national_focus/") or (
+        relative.startswith("common/decisions/") and "/categories/" not in relative
+    ):
+        availability = _AVAILABILITY
 
     def compute():
         scanner = Scanner(
@@ -485,7 +495,7 @@ def scan_file(filepath: str) -> List[Tuple[str, str, int, str]]:
             _TECH_GATES,
             _CATEGORY_GATES,
             _PROJECT_GATES,
-            _PROJECT_TECHS,
+            _PROJECT_TECH_GATES,
             availability,
         )
         scanner.walk(0, len(scanner.text), Context())
@@ -508,7 +518,7 @@ class Validator(BaseValidator):
         self._log_section("DLC-gated technology and special project guards")
         folder_gates = parse_folder_gates(self.mod_path)
         project_gates = parse_project_gates(self.mod_path)
-        tech_gates, category_gates, project_techs = parse_tech_gates(
+        tech_gates, category_gates, project_tech_gates = parse_tech_gates(
             self.mod_path, folder_gates, project_gates
         )
         self.log(
@@ -517,7 +527,7 @@ class Validator(BaseValidator):
         )
 
         gate_fingerprint = _fingerprint_gates(
-            tech_gates, category_gates, project_gates, project_techs
+            tech_gates, category_gates, project_gates, project_tech_gates
         )
         files = self._collect_files(["common/**/*.txt", "events/**/*.txt"])
         results = self._pool_map_init(
@@ -528,7 +538,7 @@ class Validator(BaseValidator):
                 tech_gates,
                 category_gates,
                 project_gates,
-                frozenset(project_techs),
+                project_tech_gates,
                 gate_fingerprint,
                 self.mod_path,
             ),
