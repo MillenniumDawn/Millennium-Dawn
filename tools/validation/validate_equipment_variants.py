@@ -3,7 +3,7 @@
 
 This is a local effect-flow check, not a whole-program proof. External scripted
 effects and focus prerequisites can establish availability too,
-so findings are warnings. All equipment types use the same engine contract.
+so findings need review. All equipment types use the same engine contract.
 """
 
 import os
@@ -441,7 +441,7 @@ class Validator(BaseValidator):
             results,
             "No locally deferred equipment variants consumed",
             "Equipment variants consumed without an assured unlock:",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="equipment-variant-unavailable",
         )
 

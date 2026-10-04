@@ -633,7 +633,7 @@ def test_run_reports_and_logs_each_unguarded_effect(tmp_path, write_path, monkey
     )
 
     assert [(i.severity, i.category) for i in validator._issues] == [
-        ("warning", "unguarded-damage-building")
+        ("error", "unguarded-damage-building")
     ]
     assert validator._issues[0].file == "events/test_events.txt"
     assert any(
