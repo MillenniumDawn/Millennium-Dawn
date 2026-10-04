@@ -381,6 +381,7 @@ Currency strength is recalculated monthly. Falls are a share of its current leve
 | Financial collapse | Your currency is weaker for three years after a financial collapse.                                                                                             |
 | Reserve issuers    | Each country using your currency as its reserve strengthens it slightly.                                                                                        |
 | Safe havens        | While world tension stays above 50%, the US dollar and Japanese yen strengthen slightly, and the Swiss franc a little more.                                     |
+| National spirits   | A spirit with a Currency Strength value moves the level your currency is pulled toward by that amount. The pull closes 1% of the gap a month.                   |
 
 At a policy rate of 0%, the real interest rate can pull your currency down by at most 1% a month. Each point of the rate takes 2.5% off that limit, so a rate of 20% halves it. A higher rate therefore helps even when inflation is far above it.
 
