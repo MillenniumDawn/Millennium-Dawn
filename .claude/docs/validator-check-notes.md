@@ -108,7 +108,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   CI): a category whose `visible` waits on a flag, focus, idea, or variable, with no
   `unlock_decision_category_tooltip` naming it and no `unlock_decision_tooltip` naming
   one of its decisions. `unannounced_category_exempt` in the config lists categories
-  whose gate is granted only at game start.
+  whose gate is granted only at game start, and balance of power categories that have
+  no name key to render.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.

@@ -2631,8 +2631,8 @@ class Validator(BaseValidator):
         `unlock_decision_tooltip` on one of its decisions) in whatever turns it
         on. Without it a whole tab of decisions shows up with no indication of
         where it came from. AI-only categories are exempt: nobody is watching.
-        So are the `unannounced_category_exempt` config entries, whose gate is
-        granted only at game start.
+        So are the `unannounced_category_exempt` config entries, which have
+        nothing a tooltip could announce.
         """
         self._log_section("Checking decision categories announce themselves...")
         self._report(
