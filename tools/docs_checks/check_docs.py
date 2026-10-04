@@ -135,7 +135,7 @@ def check_a11y() -> CheckResult:
 
 
 def check_perf() -> CheckResult:
-    return _dist_check("perf", lambda: _perf.run(DIST_DIR, SITE_BASEURL))
+    return _dist_check("perf", lambda: _perf.run(DIST_DIR))
 
 
 # Name-keyed so the dist-phase process pool only has to pickle a check name

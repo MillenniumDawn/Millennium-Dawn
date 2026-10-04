@@ -329,7 +329,7 @@ class TestPerformance:
             site / "gallery/index.html",
             '<img src="../assets/huge.png" loading="lazy">',
         )
-        passed, report = perf.run(site, "/base/")
+        passed, report = perf.run(site, "/base")
         assert not passed
         assert report.count("exceeds") == 2
         eager, gallery = sorted(report.splitlines()[1:])
@@ -380,14 +380,11 @@ class TestPerformance:
         monkeypatch.setattr(sys, "argv", ["perf", "--site-dir", str(tmp_path)])
         assert perf.main() == 0
         assert "passed" in capsys.readouterr().out
-        monkeypatch.setattr(perf, "run", lambda _path, _baseurl: (False, "bad"))
+        monkeypatch.setattr(perf, "run", lambda _path: (False, "bad"))
         assert perf.main() == 1
         assert capsys.readouterr().out == "bad\n"
-        monkeypatch.setattr(
-            sys, "argv", ["perf", "--site-dir", "s", "--baseurl", "/base"]
-        )
-        args = perf.parse_args()
-        assert (args.site_dir, args.baseurl) == ("s", "/base")
+        monkeypatch.setattr(sys, "argv", ["perf", "--site-dir", "s"])
+        assert perf.parse_args().site_dir == "s"
 
 
 class TestSiteLinks:

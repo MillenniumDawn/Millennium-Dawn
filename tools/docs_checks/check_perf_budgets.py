@@ -14,8 +14,11 @@ from pathlib import Path
 
 try:
     from check_site_links import iter_html_files, normalize_target
+
+    from common import SITE_BASEURL
 except ImportError:  # when imported as a package module
     from .check_site_links import iter_html_files, normalize_target
+    from .common import SITE_BASEURL
 
 # Shared bundles, on disk. Every page parses them.
 BUDGETS_BYTES = {
@@ -109,16 +112,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--site-dir", required=True, help="Path to generated site directory"
     )
-    parser.add_argument(
-        "--baseurl", default="", help="Site base path (e.g. /Millennium-Dawn)"
-    )
     return parser.parse_args()
 
 
-def run(site_dir: Path, baseurl: str = "") -> tuple[bool, str]:
+def run(site_dir: Path, baseurl: str = SITE_BASEURL) -> tuple[bool, str]:
     """Check built assets against perf budgets; return (passed, report)."""
     site_dir = site_dir.resolve()
-    baseurl = baseurl.rstrip("/")
     if not site_dir.exists():
         return False, f"ERROR: site directory does not exist: {site_dir}"
 
@@ -158,7 +157,7 @@ def run(site_dir: Path, baseurl: str = "") -> tuple[bool, str]:
 
 def main() -> int:
     args = parse_args()
-    passed, report = run(Path(args.site_dir), args.baseurl)
+    passed, report = run(Path(args.site_dir))
     print(report)
     return 0 if passed else 1
 
