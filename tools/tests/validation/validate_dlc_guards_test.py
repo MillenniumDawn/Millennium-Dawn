@@ -66,8 +66,11 @@ def test_poland_logistics_focus_uses_the_matching_aircraft_tree():
         V._FOCUS_AVAILABILITY,
     )
     scanner.walk(0, len(scanner.text), V.Context())
-    # POL_beginning_of_nuclear_warheads_research is a separate unguarded-category backlog.
-    assert [f for f in scanner.findings if "CAT_nuclear_weapons" not in f[2]] == []
+    # Only POL_beginning_of_nuclear_warheads_research is unguarded; drop this
+    # expectation when that focus gets its has_dlc guard.
+    assert [(c, "CAT_nuclear_weapons" in m) for c, _, m in scanner.findings] == [
+        ("dlc_tech_bonus_category", True)
+    ]
 
 
 def _bonus(tech, indent="\t"):
@@ -303,6 +306,16 @@ def test_ungated_tech_is_clean():
     assert _scan("completion_reward = {\n" + _bonus("ungated_tech") + "}\n") == []
 
 
+def test_tech_bonus_under_an_allow_branch_gate_is_clean():
+    script = (
+        "TST_moon = {\n"
+        f'\tallow_branch = {{ has_dlc = "{BBA}" }}\n'
+        "\tcompletion_reward = {\n" + _bonus("gen_5_light", "\t\t") + "\t}\n"
+        "}\n"
+    )
+    assert _scan(script) == []
+
+
 def test_guarded_tech_bonus_is_clean():
     script = (
         "completion_reward = {\n"
@@ -523,6 +536,13 @@ _GUARDED_SCRIPTS = {
         _nested("OR", _inner_has_tech() + "\t\t\thas_country_flag = a\n")
     ),
     "not_block": _object(_nested("NOT", _inner_has_tech())),
+    "nor_block": _object(_nested("NOR", _inner_has_tech())),
+    "count_triggers": _object(
+        _nested("count_triggers", "\t\t\tamount = 1\n" + _inner_has_tech())
+    ),
+    "allow_branch_gate": _object(
+        _has_tech(), extra=f'\tallow_branch = {{ has_dlc = "{BBA}" }}\n'
+    ),
     "ungated_tech": _object(_has_tech("ungated_tech")),
     "folder_gated_tech_out_of_scope": _object(_has_tech("gen_5_light")),
     "unknown_tech": _object(_has_tech("not_a_known_tech")),
@@ -570,6 +590,14 @@ def test_has_tech_inside_scope_block_is_flagged_once():
     script = _object(_nested("ROOT", _inner_has_tech()))
 
     assert [(c, ln) for c, ln, _ in _scan(script, FOCUS)] == [("dlc_has_tech", 4)]
+
+
+def test_fingerprint_changes_with_the_project_gated_tech_set():
+    gates = {"gen_5_light": frozenset({("require", BBA)})}
+
+    assert V._fingerprint_gates(gates, {}, {}, set()) != V._fingerprint_gates(
+        gates, {}, {}, {"gen_5_light"}
+    )
 
 
 # --- sanitize -----------------------------------------------------------

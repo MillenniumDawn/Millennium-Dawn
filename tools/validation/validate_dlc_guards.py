@@ -68,17 +68,19 @@ _PURE_FORBID_RE = re.compile(r'^NOT = \{ has_dlc = "[^"\n]+" \}$')
 _HAS_TECH_RE = re.compile(r"\bhas_tech\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 
 # A has_dlc here gates the whole enclosing object, not just one branch body.
-_OBJECT_GATES = frozenset({"trigger", "available", "visible", "allowed"})
+_OBJECT_GATES = frozenset(
+    {"trigger", "available", "visible", "allowed", "allow_branch"}
+)
 # Never contain effects; walking `limit` would re-read a branch condition as a gate.
 _SKIP_BLOCKS = frozenset(
     {"limit", "ai_will_do", "search_filters", "prerequisite", "mutually_exclusive"}
 )
 _BRANCHES = frozenset({"if", "else_if", "else"})
-# Blocks where a `has_tech` is a hard requirement. Under OR it is only one
-# alternative and under NOT it is not required at all.
+# Blocks where a `has_tech` is a hard requirement. Under OR, NOR, NAND or
+# count_triggers it is one alternative, and under NOT it is not required.
 _FOCUS_AVAILABILITY = frozenset({"available", "allowed", "visible", "prerequisite"})
 _DECISION_AVAILABILITY = frozenset({"available", "allowed", "visible"})
-_NOT_REQUIRED = frozenset({"OR", "NOT"})
+_NOT_REQUIRED = frozenset({"OR", "NOT", "NOR", "NAND", "count_triggers"})
 # Naming a disabled technology or project crashes the game; a fully gated
 # category resolves to nothing and only wastes the bonus.
 _CRASHING = frozenset({"dlc_tech_bonus", "dlc_special_project"})
@@ -298,7 +300,6 @@ class Scanner:
                 message = (
                     f'{kind} {name} requires "{dlc}" but has no has_dlc = "{dlc}" guard'
                 )
-
             elif gate_kind == "forbid" and dlc in ctx.present:
                 message = (
                     f'{kind} {name} is unavailable with "{dlc}" but is used '
