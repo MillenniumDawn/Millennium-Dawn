@@ -526,6 +526,21 @@ def test_non_ct_organizations_activate_on_their_authored_windows(manifest):
             assert f"global.TOP_group_created^{group['id']} = 1" in window
 
 
+def test_every_later_window_year_is_opened_by_the_yearly_dispatch(manifest):
+    yearly = (ROOT / "common/scripted_effects/00_yearly_effects.txt").read_text(
+        encoding="utf-8"
+    )
+    years = {target["activation_year"] for target in manifest["targets"]} | {
+        group["year"] for group in manifest["groups"]
+    }
+    missing = [
+        year
+        for year in sorted(years)
+        if year > 2000 and f"TOP_open_windows_{year} = yes" not in yearly
+    ]
+    assert missing == []
+
+
 def test_authored_movement_successors_get_office_adapters(manifest):
     output = GENERATOR.render(manifest)
     successors = output["common/scripted_effects/01_targeted_operations_successors.txt"]
