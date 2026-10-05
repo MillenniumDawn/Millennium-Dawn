@@ -431,6 +431,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   English entry. `dynamic-modifier-tooltip-missing` (ERROR): an add or subtract on a
   variable backing a dynamic modifier with no `tooltip`, in blocks the engine renders.
   `hidden_effect` suppresses both.
+- `orphan-money-setter` (ERROR): a `set_temp_variable` of `treasury_change`,
+  `debt_change`, `int_investment_change`, or `party_popularity_increase` with no consumer
+  call after it in the same effect block, or one overwritten at the same depth before
+  the call. Scans focuses, decisions, on_actions, ideas, and events. A wrapper counts
+  as a consumer only when it reads the variable before writing it, so
+  `move_party_popularity` does not. Setters in a scripted-effect body are skipped.
 
 ## Other tools
 

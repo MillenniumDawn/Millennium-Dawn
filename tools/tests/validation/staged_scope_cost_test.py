@@ -318,7 +318,7 @@ def test_variables_staged_decision_still_reads_every_repo_index(tmp_path, write_
             "orphan-money-setter",
             "set_temp_variable treasury_change is never consumed — no"
             " modify_treasury_effect (or wrapper) follows in the same effect"
-            " block, so the money never moves",
+            " block, so the value is never applied",
             rel,
             19,
         ),

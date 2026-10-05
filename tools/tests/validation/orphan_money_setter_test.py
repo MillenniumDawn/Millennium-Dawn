@@ -4,10 +4,12 @@ A set_temp_variable of treasury_change/debt_change/int_investment_change with
 no consumer call afterwards in the same effect block is a dead setter — the
 transfer silently never happens (Sweden_foci.57). Consumers are derived from
 scripted-effect bodies so wrappers (GRE_pay_or_defer) clear the setter too.
+party_popularity_increase and change_relative_party_popularity follow the
+same rule (issue #5320).
 """
 
 from shared.suite import variable_scan
-from validate_variables import build_money_consumer_map
+from validate_variables import Validator, build_money_consumer_map
 
 BASE_EFFECTS = """modify_treasury_effect = {
 	add_to_variable = { treasury = treasury_change }
@@ -39,6 +41,13 @@ outer_pay = {
 }
 outermost_pay = {
 	outer_pay = yes
+}
+change_relative_party_popularity = {
+	add_to_variable = { party_pop_array^party_index = party_popularity_increase }
+}
+move_party_popularity = {
+	set_temp_variable = { party_popularity_increase = _party_pop_delta }
+	change_relative_party_popularity = yes
 }
 """
 
@@ -327,10 +336,65 @@ def test_cancel_effect_is_a_container(tmp_path):
     assert len(issues) == 1
 
 
-def test_validator_reports_warning_not_error(tmp_path):
-    # WARNING severity is what keeps the repo backlog from failing CI --strict
-    from validate_variables import Validator
+def test_party_popularity_setter_needs_its_consumer(tmp_path):
+    cmap = _setup(tmp_path)
+    setter = "set_temp_variable = { party_popularity_increase = 0.45 }"
+    assert _lines(tmp_path, setter, cmap)[0][0].endswith("never applied")
+    consumed = setter + "\n\t\t\tchange_relative_party_popularity = yes"
+    assert _lines(tmp_path, consumed, cmap) == []
 
+
+def test_party_popularity_setter_clobbered_by_next_party(tmp_path):
+    # Syria shape: two parties set up back to back, one consumer call
+    cmap = _setup(tmp_path)
+    reward = (
+        "set_temp_variable = { party_index = 20 }\n"
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.30 }\n"
+        "\t\t\tset_temp_variable = { party_index = 5 }\n"
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.10 }\n"
+        "\t\t\tchange_relative_party_popularity = yes"
+    )
+    issues = _lines(tmp_path, reward, cmap)
+    assert [(i[2], "overwritten" in i[0]) for i in issues] == [(10, True)]
+
+
+def test_move_party_popularity_does_not_consume_the_setter(tmp_path):
+    # it writes party_popularity_increase itself, so the caller's value is lost
+    cmap = _setup(tmp_path)
+    assert "move_party_popularity" not in cmap["party_popularity_increase"]
+    reward = (
+        "set_temp_variable = { party_popularity_increase = 0.05 }\n"
+        "\t\t\tmove_party_popularity = yes"
+    )
+    assert len(_lines(tmp_path, reward, cmap)) == 1
+
+
+def test_idea_on_add_is_scanned_as_a_container(tmp_path):
+    _setup(tmp_path)
+    ideas_dir = tmp_path / "common" / "ideas"
+    ideas_dir.mkdir(parents=True, exist_ok=True)
+    fpath = ideas_dir / "test.txt"
+    fpath.write_text(
+        "ideas = {\n"
+        "\tcountry = {\n"
+        "\t\tTST_idea = {\n"
+        "\t\t\ton_add = {\n"
+        "\t\t\t\tset_temp_variable = { party_popularity_increase = 0.25 }\n"
+        "\t\t\t}\n"
+        "\t\t\ton_remove = {\n"
+        "\t\t\t\tchange_relative_party_popularity = yes\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+        encoding="utf-8",
+    )
+    v = Validator(str(tmp_path), use_colors=False, workers=1)
+    v.validate_orphan_money_setters()
+    assert [(i.file, i.line) for i in v._issues] == [("common/ideas/test.txt", 5)]
+
+
+def test_validator_reports_error(tmp_path):
     _setup(tmp_path)
     nf_dir = tmp_path / "common" / "national_focus"
     nf_dir.mkdir(parents=True, exist_ok=True)
@@ -340,5 +404,5 @@ def test_validator_reports_warning_not_error(tmp_path):
     )
     v = Validator(str(tmp_path), use_colors=False, workers=1)
     v.validate_orphan_money_setters()
-    assert v.warnings_found == 1
-    assert v.errors_found == 0
+    assert v.errors_found == 1
+    assert v.warnings_found == 0

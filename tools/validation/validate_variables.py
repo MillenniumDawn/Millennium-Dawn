@@ -1355,13 +1355,15 @@ def _scan_treasury_text(src: _Source) -> List[Tuple[str, str, int]]:
     return issues
 
 
-# Money-system input variables and the scripted effect that consumes each.
-# A set_temp_variable of one of these with no consumer call afterwards in the
-# same effect block is a dead setter — the money never moves (Sweden_foci.57).
+# Money-system and party-popularity input variables and the scripted effect
+# that consumes each. A set_temp_variable of one of these with no consumer call
+# afterwards in the same effect block is a dead setter — the value is never
+# applied (Sweden_foci.57).
 _MONEY_EFFECT_PAIRS = {
     "treasury_change": "modify_treasury_effect",
     "debt_change": "modify_debt_effect",
     "int_investment_change": "modify_international_investment_effect",
+    "party_popularity_increase": "change_relative_party_popularity",
 }
 _MONEY_SETTER_RE = re.compile(
     r"set_temp_variable\s*=\s*\{\s*(" + "|".join(_MONEY_EFFECT_PAIRS) + r")\s*="
@@ -1374,7 +1376,7 @@ _MONEY_SETTER_RE = re.compile(
 _EFFECT_CONTAINER_RE = re.compile(
     r"\b(?:completion_reward|select_effect|bypass_effect|option|immediate|"
     r"complete_effect|remove_effect|timeout_effect|cancel_effect|"
-    r"effect_tooltip|effect)\s*=\s*\{"
+    r"on_add|on_remove|effect_tooltip|effect)\s*=\s*\{"
 )
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
 # Value-producing writers only — add_to/multiply etc. read the existing value.
@@ -1566,7 +1568,7 @@ def _scan_orphan_money_text(
                 (
                     f"set_temp_variable {var} is never consumed — no"
                     f" {_MONEY_EFFECT_PAIRS[var]} (or wrapper) follows in the"
-                    f" same effect block, so the money never moves",
+                    f" same effect block, so the value is never applied",
                     rel,
                     line,
                 )
@@ -2117,22 +2119,22 @@ class Validator(BaseValidator):
         )
 
     def validate_orphan_money_setters(self):
-        """Flag money-variable setters whose value is never consumed (WARNING).
+        """Flag effect-input setters whose value is never consumed (ERROR).
 
         set_temp_variable of treasury_change/debt_change/int_investment_change
-        must be followed, within the same effect block, by the matching
-        modify_*_effect call or a wrapper that consumes it — otherwise the
-        setter is dead and the transfer silently never happens. A setter
-        re-written at the same brace depth before the consumer runs is
+        or party_popularity_increase must be followed, within the same effect
+        block, by the matching consumer call or a wrapper that consumes it —
+        otherwise the setter is dead and the change silently never happens. A
+        setter re-written at the same brace depth before the consumer runs is
         equally dead (clobbered).
         """
-        self._log_section("Checking for orphan money-variable setters...")
+        self._log_section("Checking for orphan effect-input setters...")
         issues = self._get_shared_scan()["orphan"]
         self._report(
             issues,
-            "✓ No orphan money-variable setters found",
-            "Dead money-variable setters (never consumed, or overwritten before the consumer runs — the money never moves):",
-            severity=Severity.WARNING,
+            "✓ No orphan effect-input setters found",
+            "Dead effect-input setters (never consumed, or overwritten before the consumer runs — the value is never applied):",
+            severity=Severity.ERROR,
             category="orphan-money-setter",
         )
 
@@ -2208,6 +2210,7 @@ class Validator(BaseValidator):
             "common/national_focus/*.txt",
             "common/decisions/**/*.txt",
             "common/on_actions/**/*.txt",
+            "common/ideas/**/*.txt",
             "events/**/*.txt",
         ]
         treasury_patterns = [
