@@ -121,7 +121,7 @@ from check_common_mistakes import (
 
 # Each module-level case runs on import, in file order (later fixtures change
 # module state), and is reported under its own pytest id by test_case below.
-_CASES = []
+_CASES: list = []
 
 
 def assert_finds(check_fn, lines, expected_count, label):
@@ -2470,19 +2470,35 @@ assert_finds(
     "nested country_event scheduling call not treated as a definition",
 )
 
-# "<option name> executed" form, no "Event" word: copy-pasted sibling letter -> flag
+# Canonical executed form matching own name -> no flag
 assert_finds(
     _check_event_log_id,
     [
         "country_event = {\n",
-        "\tid = SyriaFocus.97\n",
+        "\tid = tst.1\n",
         "\toption = {\n",
-        "\t\tname = SyriaFocus.97.a\n",
-        '\t\tlog = "[GetDateText]: [This.GetName]: SyriaFocus.97.a executed"\n',
+        "\t\tname = tst.1.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.a executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "executed-form log matching own name not flagged",
+)
+
+# Canonical executed form copy-pasted from a sibling option -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.1\n",
+        "\toption = {\n",
+        "\t\tname = tst.1.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.a executed"\n',
         "\t}\n",
         "\toption = {\n",
-        "\t\tname = SyriaFocus.97.b #fight them\n",
-        '\t\tlog = "[GetDateText]: [This.GetName]: SyriaFocus.97.a executed"\n',
+        "\t\tname = tst.1.b\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.a executed"\n',
         "\t}\n",
         "}\n",
     ],
@@ -2490,52 +2506,36 @@ assert_finds(
     "executed-form log copy-pasted from a sibling option flagged",
 )
 
-# Bare event id before "executed" names no option letter -> no flag
+# "option executed" phrasing citing another option -> flag
 assert_finds(
     _check_event_log_id,
     [
         "country_event = {\n",
-        "\tid = SyriaFocus.24\n",
+        "\tid = brotherhood.6\n",
         "\toption = {\n",
-        "\t\tname = SyriaFocus.24.a\n",
-        '\t\tlog = "[GetDateText]: [This.GetName]: SyriaFocus.24 executed"\n',
+        "\t\tname = brotherhood.6.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: brotherhood.6.b option executed"\n',
         "\t}\n",
         "}\n",
     ],
-    0,
-    "executed-form log naming the bare event id not flagged",
+    1,
+    "option-executed phrasing citing another option flagged",
 )
 
-# Option named by a loc key has no suffix for the log to disagree with -> no flag
+# Shared loc key from another event, log cites this event's dotted id -> no flag
 assert_finds(
     _check_event_log_id,
     [
-        "country_event = {\n",
-        "\tid = tst.5\n",
+        "news_event = {\n",
+        "\tid = isisNews.1302\n",
         "\toption = {\n",
-        "\t\tname = TST_shared_ok\n",
-        '\t\tlog = "[GetDateText]: [This.GetName]: tst.5.a executed"\n',
+        "\t\tname = isisNews.1301.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: isisNews.1302.a executed"\n',
         "\t}\n",
         "}\n",
     ],
     0,
-    "executed-form log in a loc-key-named option not flagged",
-)
-
-# Undotted word before "executed" is prose, not an id -> no flag
-assert_finds(
-    _check_event_log_id,
-    [
-        "country_event = {\n",
-        "\tid = tst.6\n",
-        "\toption = {\n",
-        "\t\tname = tst.6.a\n",
-        '\t\tlog = "[GetDateText]: [This.GetName]: purge executed"\n',
-        "\t}\n",
-        "}\n",
-    ],
-    0,
-    "undotted word before executed not flagged",
+    "shared loc name with this event's log id not flagged",
 )
 
 # A name = inside a child block is not the option's name -> no flag
@@ -2555,22 +2555,6 @@ assert_finds(
     ],
     0,
     "name = nested in a child block not taken as the option name",
-)
-
-# Option borrowed from another event, log names a third option -> flag
-assert_finds(
-    _check_event_log_id,
-    [
-        "country_event = {\n",
-        "\tid = spaceshuttle.2\n",
-        "\toption = {\n",
-        "\t\tname = USA_events.22.d1\n",
-        '\t\tlog = "[GetDateText]: [This.GetName]: USA_events.21.d1 executed"\n',
-        "\t}\n",
-        "}\n",
-    ],
-    1,
-    "executed-form log naming neither the borrowed option nor the event flagged",
 )
 
 # Bare id with no "executed" word, copy-pasted from another event -> flag
@@ -4775,6 +4759,12 @@ _EXPECTED = {
             "log says Option b but this option's own name is tst.1.a -- fix the option letter",
         )
     ],
+    "country_event executed-form log names another option": [
+        (
+            5,
+            "log references Event tst.1.a, but this option's own name is tst.1.b -- likely copy-paste; fix the log id",
+        )
+    ],
     "leader tier advances by two": [
         (
             4,
@@ -5178,6 +5168,19 @@ _EXACT_CASES = [
             "\toption = {\n",
             "\t\tname = tst.1.a\n",
             '\t\tlog = "Event tst.1 Option b"\n',
+            "\t}\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "country_event executed-form log names another option",
+        _check_event_log_id,
+        [
+            "country_event = {\n",
+            "\tid = tst.1\n",
+            "\toption = {\n",
+            "\t\tname = tst.1.b\n",
+            '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.a executed"\n',
             "\t}\n",
             "}\n",
         ],

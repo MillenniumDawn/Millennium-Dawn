@@ -6,9 +6,7 @@ _find_decision_log_mismatches / _find_event_log_mismatches (Check C) -- same
 core, so a clean run of the checker implies a clean run here and vice versa.
 Only the mismatched ID token inside the quoted log string is rewritten;
 complete/timeout/remove/cancel phrasing around it is left untouched. Scope:
-common/national_focus/, common/decisions/ and events/. For events the
-"<option name> executed" form and a bare trailing id are rewritten; the
-"Event <id> Option <letter>" form has no fixer.
+common/national_focus/, common/decisions/, and events/.
 """
 
 import os
@@ -37,7 +35,7 @@ def _finder_for(filepath):
         return _find_focus_log_mismatches
     if "common/decisions" in normalized:
         return _find_decision_log_mismatches
-    if "/events/" in f"/{normalized}":
+    if "events/" in normalized:
         return _find_event_log_mismatches
     return None
 

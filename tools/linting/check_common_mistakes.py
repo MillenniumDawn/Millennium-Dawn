@@ -242,14 +242,16 @@ _RE_AI_ASSIGNMENT = re.compile(r"\b([A-Za-z_]+)\s*=\s*([-A-Za-z0-9_.]+)")
 # own full dotted name standing in for the id ("event satellites.2.a" ==
 # namespace.number.letter). [\w.]+ is greedy, so on the second style it
 # swallows the trailing ".<letter>" into the token -- checked against both
-# forms below rather than assuming the bare id alone.
+# forms below rather than assuming the bare id alone. The canonical form omits
+# the Event word: "[GetDateText]: [This.GetName]: tag_ns.N.a executed".
 _RE_LOG_EVENT_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bEvent\s+([\w.]+)', re.IGNORECASE)
 _RE_LOG_EVENT_OPTION_SUFFIX = re.compile(r"\s+Option\s+([a-zA-Z])\b", re.IGNORECASE)
-# A third convention drops the "Event" word: "SyriaFocus.97.a executed", or the
-# id alone at the end of the string.
-_RE_LOG_EXECUTED_TOKEN = re.compile(
-    r'log\s*=\s*"[^"]*?([\w.]+)(?:\s+executed\b|")', re.IGNORECASE
+_RE_LOG_EVENT_EXECUTED_TOKEN = re.compile(
+    r'log\s*=\s*"[^"]*\]:\s*([\w.]+)\s+(?:option\s+)?executed',
+    re.IGNORECASE,
 )
+# The dotted id alone at the end of the string: "[This.GetName]: tag_ns.N.a".
+_RE_LOG_EVENT_BARE_TOKEN = re.compile(r'log\s*=\s*"[^"]*\]:\s*(\w+(?:\.\w+)+)"')
 _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
 _RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
 _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
@@ -3226,9 +3228,14 @@ def _check_decision_log_id(lines):
     return issues
 
 
-def _iter_event_options(src):
-    """Yield (event_id, own_name, opt_start, opt_end) for each option of a
-    top-level event definition. own_name is None for an option with no name."""
+def _iter_event_log_mismatches(lines):
+    """Yield (line_idx, start, end, replacement, token, own_name, kind).
+
+    kind is "id" when the log cites a different option/event id, or "letter"
+    when a bare event id is followed by the wrong "Option <letter>". Shared
+    by _find_event_log_mismatches and _check_event_log_id.
+    """
+    src = _source(lines)
     option_rows = _lines_with(src, "option")
     for start, end, _match in _outer_blocks(
         src,
@@ -3261,51 +3268,81 @@ def _iter_event_options(src):
                         own_name = nm.group(1)
                         break
                 depth += src.delta[row]
-            yield event_id, own_name, opt_start, opt_end
+            own_suffix = None
+            if own_name and own_name.startswith(event_id + "."):
+                own_suffix = own_name[len(event_id) + 1 :]
+            for row in range(opt_start, opt_end):
+                obl_code = src.code[row]
+                used_event_word = True
+                m = _RE_LOG_EVENT_TOKEN.search(obl_code)
+                if m is None:
+                    used_event_word = False
+                    m = _RE_LOG_EVENT_EXECUTED_TOKEN.search(
+                        obl_code
+                    ) or _RE_LOG_EVENT_BARE_TOKEN.search(obl_code)
+                if m is None:
+                    continue
+                token = m.group(1)
+                if own_name and token == own_name:
+                    continue
+                if token == event_id:
+                    if used_event_word:
+                        om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
+                        if (
+                            om
+                            and own_suffix
+                            and om.group(1).lower() != own_suffix.lower()
+                        ):
+                            yield (
+                                row,
+                                om.start(1),
+                                om.end(1),
+                                own_suffix,
+                                om.group(1),
+                                own_name,
+                                "letter",
+                            )
+                    continue
+                # News/cartel options often reuse another event's loc key in
+                # `name =` while the log cites this event's own dotted id.
+                this_event_dotted = token.startswith(event_id + ".")
+                name_is_this_event = bool(
+                    own_name and own_name.startswith(event_id + ".")
+                )
+                if this_event_dotted and not name_is_this_event:
+                    continue
+                if own_name:
+                    yield (
+                        row,
+                        m.start(1),
+                        m.end(1),
+                        own_name,
+                        token,
+                        own_name,
+                        "id",
+                    )
 
 
 def _find_event_log_mismatches(lines):
-    """Return (line_idx, tok_start, tok_end, own_name, bad_token) for each
-    `log = "...<token> executed"` or `log = "...<token>"` line in an event
-    option whose dotted token is neither the option's own name nor the event id.
+    """Return (line_idx, tok_start, tok_end, replacement, bad_token) for each
+    option log whose cited id doesn't match the option's own `name = `.
 
-    An option not named id.suffix (a loc key, or another event's option) has no
-    letter for the log to disagree with, so any id.suffix token passes there.
-    The "Event <token>" form is left to _check_event_log_id. Shared by
-    _check_event_log_id and fix_log_ids.py.
+    Shared by _check_event_log_id and fix_log_ids.py so both use the same
+    detection.
     """
-    src = _source(lines)
-    results = []
-    for event_id, own_name, opt_start, opt_end in _iter_event_options(src):
-        if not own_name:
-            continue
-        prefix = event_id + "."
-        borrowed = not own_name.startswith(prefix)
-        for row in range(opt_start, opt_end):
-            code = src.code[row]
-            if _RE_LOG_EVENT_TOKEN.search(code):
-                continue
-            m = _RE_LOG_EXECUTED_TOKEN.search(code)
-            if not m:
-                continue
-            token = m.group(1)
-            # A lone trailing dot is the end of a sentence, not an id.
-            if "." not in token.strip(".") or token in (own_name, event_id):
-                continue
-            if borrowed and token.startswith(prefix):
-                continue
-            results.append((row, m.start(1), m.end(1), own_name, token))
-    return results
+    return [
+        (row, start, end, replacement, token)
+        for row, start, end, replacement, token, _name, _kind in _iter_event_log_mismatches(
+            lines
+        )
+    ]
 
 
 def _check_event_log_id(lines):
-    """Flag log = "...Event <token>..." lines inside a country_event /
-    news_event / operative_leader_event / unit_leader_event block where token
-    matches neither the block's own id nor the enclosing option's own declared
-    `name = ` (its real identity), or -- for the bare-id form -- where a
-    separate "Option <x>" phrase names a letter that doesn't match the suffix
-    of that same `name = `. The "<token> executed" and bare-id forms, with no
-    "Event" word, come from _find_event_log_mismatches.
+    """Flag option logs whose cited id doesn't match the option's own name.
+
+    Covers `Event <token>` (with optional `Option <letter>`), and the
+    canonical `<id> executed` form that omits the Event word.
 
     Ground-truthed against the option's own `name = ` line rather than a
     computed sequential letter: option lettering isn't always contiguous
@@ -3316,50 +3353,27 @@ def _check_event_log_id(lines):
     `country_event = { id = X days = N }` is a scheduling effect call, not a
     definition, and is skipped since it never starts at column 0.
     """
-    src = _source(lines)
     issues = []
-    for event_id, own_name, opt_start, opt_end in _iter_event_options(src):
-        own_suffix = None
-        if own_name and own_name.startswith(event_id + "."):
-            own_suffix = own_name[len(event_id) + 1 :]
-        for row in range(opt_start, opt_end):
-            obl_code = src.code[row]
-            m = _RE_LOG_EVENT_TOKEN.search(obl_code)
-            if not m:
-                continue
-            token = m.group(1)
-            if own_name and token == own_name:
-                continue
-            if token == event_id:
-                om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
-                if om and own_suffix and om.group(1).lower() != own_suffix.lower():
-                    issues.append(
-                        (
-                            row + 1,
-                            f"log says Option {om.group(1)} but "
-                            f"this option's own name is "
-                            f"{own_name} -- fix the option "
-                            f"letter",
-                        )
-                    )
-                continue
-            if own_name:
-                issues.append(
-                    (
-                        row + 1,
-                        f"log references Event {token}, but this "
-                        f"option's own name is {own_name} -- "
-                        f"likely copy-paste; fix the log id",
-                    )
+    for row, _s, _e, _repl, token, own_name, kind in _iter_event_log_mismatches(lines):
+        if kind == "letter":
+            issues.append(
+                (
+                    row + 1,
+                    f"log says Option {token} but "
+                    f"this option's own name is "
+                    f"{own_name} -- fix the option "
+                    f"letter",
                 )
-    for line_idx, _s, _e, own_name, token in _find_event_log_mismatches(src):
-        issues.append(
-            (
-                line_idx + 1,
-                f"log references {token}, but this option's own name is "
-                f"{own_name} -- likely copy-paste; fix the log id",
             )
-        )
+        else:
+            issues.append(
+                (
+                    row + 1,
+                    f"log references Event {token}, but this "
+                    f"option's own name is {own_name} -- "
+                    f"likely copy-paste; fix the log id",
+                )
+            )
     return issues
 
 
