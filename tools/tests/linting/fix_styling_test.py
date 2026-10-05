@@ -18,6 +18,7 @@ from pathlib import Path
 import fix_styling
 import pytest
 from fix_styling import fix_file, fix_file_dry_run, fix_line
+from shared.suite import prevent_commit_signing_during_tests
 
 
 def _write(path, content):
@@ -258,8 +259,9 @@ def test_script_entry_point_exits_zero(tmp_path, monkeypatch):
 
 
 def _git(repo, *args):
+    git_args = prevent_commit_signing_during_tests(*args)
     return subprocess.run(
-        ["git", *args], cwd=repo, check=True, capture_output=True, text=True
+        ["git", *git_args], cwd=repo, check=True, capture_output=True, text=True
     )
 
 
