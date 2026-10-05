@@ -58,10 +58,18 @@ create_equipment_variant = {
     }
     upgrades = { tank_nsb_armor_upgrade = 2 }
     obsolete = yes
-    icon = "gfx/interface/technologies/TAG/LAND/image.dds"
+    icon = "GFX_TAG_LAND_image"
     model = "entity_name"
 }
 ```
+
+`icon` takes a `GFX_` sprite, never a raw `.dds` path. Raw-path plane icons crash the air
+battle window on macOS. Register the sprite in the matching `interface/*_profiles.gfx`
+file: `tank`, `afv`, `spart`, `helicopter`, `ship`, `infantry`, `utility_vehicle`, or
+`plane`. Name it after the texture path under `gfx/interface/technologies/`: drop the
+extension, write `+` as `plus`, and turn every other symbol into an underscore, as in
+`GFX_SOV_AIR_MiG_21Bis`. The designer pools in
+`gfx/interface/equipmentdesigner/graphic_db/` use the same sprite names.
 
 ## Aircraft
 
@@ -116,7 +124,7 @@ create_equipment_variant = {
         wingform_type_slot = wing_straight
     }
     obsolete = yes
-    icon = "gfx/interface/technologies/TAG/AIR/image.dds"
+    icon = "GFX_TAG_AIR_image"
 }
 ```
 
