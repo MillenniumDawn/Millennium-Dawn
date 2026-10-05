@@ -12,19 +12,13 @@ import pytest
 import validate_events as E
 import validate_scripted_localisation as SL
 import validate_variables as V
+from shared.suite import issue_rows as _rows
 
 
 def _staged(validator, *paths):
     validator.staged_only = True
     validator.staged_files = [str(path) for path in paths]
     return validator
-
-
-def _rows(validator):
-    return sorted(
-        (issue.category, issue.message, issue.file, issue.line)
-        for issue in validator._issues
-    )
 
 
 def _forbid(monkeypatch, target, *names):

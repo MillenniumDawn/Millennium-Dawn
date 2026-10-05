@@ -2,6 +2,9 @@
 
 import pytest
 
+# pyradox ships in the optional analysis group; only the Linux CI leg installs it.
+pytest.importorskip("pyradox")
+
 from tools.types.equipment import Equipment, LandEquipmentStats
 from tools.types.mio import MIO, EquipmentGroup
 
@@ -60,7 +63,9 @@ def test_GivenMioDefinition_WhenParsed_ThenEquipmentTypesAndTraitScopesExpand(tm
     assert trait_by_token["trait_limited"].applies_to == {"patrol_boat", "corvette"}
 
 
-def test_GivenIncludedMio_WhenTraitOperationsAndTopLevelDeleteApply_ThenInheritedValuesAreUpdated(tmp_path):
+def test_GivenIncludedMio_WhenTraitOperationsAndTopLevelDeleteApply_ThenInheritedValuesAreUpdated(
+    tmp_path,
+):
     org_path = tmp_path / "orgs"
     org_path.mkdir()
     (org_path / "mio.txt").write_text(
@@ -137,7 +142,9 @@ def test_GivenIncludedMio_WhenParsed_ThenIncludeFieldPreservesRawIncludeToken(tm
     assert parsed["CHILD_org"].include == "BASE_org"
 
 
-def test_GivenAllowedCountries_WhenOriginalTagsAreParsed_ThenOnlyExplicitCountriesAreIncluded(tmp_path):
+def test_GivenAllowedCountries_WhenOriginalTagsAreParsed_ThenOnlyExplicitCountriesAreIncluded(
+    tmp_path,
+):
     org_path = tmp_path / "orgs"
     org_path.mkdir()
     (org_path / "countries.txt").write_text(
@@ -248,9 +255,17 @@ def test_GivenTraitHierarchy_WhenParsed_ThenParentSemanticsArePreserved(tmp_path
     traits = {trait.token: trait for trait in parsed["ORG_parent"].traits}
 
     assert traits["branch_a"].parent is traits["root"]
-    assert [trait.token for trait in traits["branch_b"].all_parents] == ["root", "branch_a"]
-    assert [trait.token for trait in traits["branch_c"].any_parents] == ["branch_a", "branch_b"]
-    assert [trait.token for trait in traits["branch_c"].mutually_exclusive] == ["branch_b"]
+    assert [trait.token for trait in traits["branch_b"].all_parents] == [
+        "root",
+        "branch_a",
+    ]
+    assert [trait.token for trait in traits["branch_c"].any_parents] == [
+        "branch_a",
+        "branch_b",
+    ]
+    assert [trait.token for trait in traits["branch_c"].mutually_exclusive] == [
+        "branch_b"
+    ]
 
 
 def test_GivenIncludeCycle_WhenMioIsParsed_ThenValueErrorIsRaised(tmp_path):
@@ -275,7 +290,9 @@ def test_GivenIncludeCycle_WhenMioIsParsed_ThenValueErrorIsRaised(tmp_path):
         MIO.from_directory(org_path, {}, False)
 
 
-def test_GivenEquipmentScope_WhenBonusStatsAreBuilt_ThenTraitBonusUsesEquipmentStats(tmp_path):
+def test_GivenEquipmentScope_WhenBonusStatsAreBuilt_ThenTraitBonusUsesEquipmentStats(
+    tmp_path,
+):
     org_path = tmp_path / "orgs"
     org_path.mkdir()
     (org_path / "scope.txt").write_text(

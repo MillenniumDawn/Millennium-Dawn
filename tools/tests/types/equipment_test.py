@@ -1,4 +1,10 @@
 """Tests for the types/equipment.py module."""
+
+import pytest
+
+# pyradox ships in the optional analysis group; only the Linux CI leg installs it.
+pytest.importorskip("pyradox")
+
 from tools.types.equipment import Equipment, LandEquipmentStats
 
 
@@ -68,7 +74,9 @@ def test_GivenEquipmentTree_WhenReadEquipment_ThenReturnsEquipment():
     assert parsed.stats.build_cost_ic == 0.31
 
 
-def test_GivenEquipmentFile_WhenFromFile_ThenReturnsAllEquipmentTagsAndTypeLists(tmp_path):
+def test_GivenEquipmentFile_WhenFromFile_ThenReturnsAllEquipmentTagsAndTypeLists(
+    tmp_path,
+):
     path = tmp_path / "equipment_file.txt"
     path.write_text(
         """
@@ -98,7 +106,9 @@ def test_GivenEquipmentFile_WhenFromFile_ThenReturnsAllEquipmentTagsAndTypeLists
     assert parsed["infantry_weapons_1"].stats.soft_attack == 2.5
 
 
-def test_GivenEquipmentInheritance_WhenParsed_ThenParentBlockIsAppliedBeforeOverride(tmp_path):
+def test_GivenEquipmentInheritance_WhenParsed_ThenParentBlockIsAppliedBeforeOverride(
+    tmp_path,
+):
     path = tmp_path / "inheritance.txt"
     path.write_text(
         """
@@ -135,7 +145,9 @@ def test_GivenEquipmentIndexLoader_WhenCalled_ThenSharedSingletonIsAvailable():
     assert Equipment.get_equipment_index() is Equipment.load_default_equipment_index()
 
 
-def test_GivenEquipmentDirectory_WhenFromDirectory_ThenParsesRecursiveFilesAndCrossFileArchetypes(tmp_path):
+def test_GivenEquipmentDirectory_WhenFromDirectory_ThenParsesRecursiveFilesAndCrossFileArchetypes(
+    tmp_path,
+):
     root = tmp_path / "equipment_root"
     root.mkdir()
 

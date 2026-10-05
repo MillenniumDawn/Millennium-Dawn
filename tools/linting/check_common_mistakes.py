@@ -83,7 +83,6 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     scripted call missing "= yes" that the parser rejects
 """
 
-import json
 import os
 import re
 import sys
@@ -200,7 +199,6 @@ _RE_CATEGORY = re.compile(r"^(\w+)\s*=\s*\{")
 _RE_AVAILABLE_ALWAYS_NO = re.compile(r"\bavailable\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_VISIBLE_ALWAYS_NO = re.compile(r"\bvisible\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_BYPASS_OPEN = re.compile(r"\bbypass\s*=\s*\{")
-_RE_BYPASS_TRIVIAL = re.compile(r"\bbypass\s*=\s*\{\s*always\s*=\s*(?:yes|no)\s*\}")
 _RE_DECISION_MARKER = re.compile(
     r"\bcomplete_effect\s*=\s*\{|\bfire_only_once\s*=|\bactivation\s*=\s*\{|\bdays_mission_timeout\s*="
 )
@@ -244,9 +242,14 @@ _RE_AI_ASSIGNMENT = re.compile(r"\b([A-Za-z_]+)\s*=\s*([-A-Za-z0-9_.]+)")
 # own full dotted name standing in for the id ("event satellites.2.a" ==
 # namespace.number.letter). [\w.]+ is greedy, so on the second style it
 # swallows the trailing ".<letter>" into the token -- checked against both
-# forms below rather than assuming the bare id alone.
+# forms below rather than assuming the bare id alone. The canonical form omits
+# the Event word: "[GetDateText]: [This.GetName]: tag_ns.N.a executed".
 _RE_LOG_EVENT_TOKEN = re.compile(r'log\s*=\s*"[^"]*\bEvent\s+([\w.]+)', re.IGNORECASE)
 _RE_LOG_EVENT_OPTION_SUFFIX = re.compile(r"\s+Option\s+([a-zA-Z])\b", re.IGNORECASE)
+_RE_LOG_EVENT_EXECUTED_TOKEN = re.compile(
+    r'log\s*=\s*"[^"]*\]:\s*([\w.]+)\s+(?:option\s+)?executed',
+    re.IGNORECASE,
+)
 _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
 _RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
 _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
@@ -491,6 +494,7 @@ from shared_utils import (
     clean_filepath,
     collect_files_by_mode,
     create_linting_parser,
+    find_unquoted_brace_close,
     get_non_selectable_idea_categories,
     get_root_dir,
     print_timing_summary,
@@ -2505,12 +2509,8 @@ def _find_brace_close(text, open_pos):
     awareness. Returns `len(text)` if the braces never balance. Shared by
     the whole-file brace scans below.
     """
-    depth = 0
-    for brace in _RE_BRACE.finditer(text, open_pos):
-        depth += 1 if brace.group() == "{" else -1
-        if not depth:
-            return brace.start()
-    return len(text)
+    close = find_unquoted_brace_close(text, open_pos)
+    return len(text) if close == -1 else close
 
 
 def _check_invalid_is_at_war(lines):
@@ -3226,25 +3226,14 @@ def _check_decision_log_id(lines):
     return issues
 
 
-def _check_event_log_id(lines):
-    """Flag log = "...Event <token>..." lines inside a country_event /
-    news_event / operative_leader_event / unit_leader_event block where token
-    matches neither the block's own id nor the enclosing option's own declared
-    `name = ` (its real identity), or -- for the bare-id form -- where a
-    separate "Option <x>" phrase names a letter that doesn't match the suffix
-    of that same `name = `.
+def _iter_event_log_mismatches(lines):
+    """Yield (line_idx, start, end, replacement, token, own_name, kind).
 
-    Ground-truthed against the option's own `name = ` line rather than a
-    computed sequential letter: option lettering isn't always contiguous
-    (e.g. singapore.101 skips from .c straight to .e), so a position-based
-    a/b/c/... expectation would false-positive on those.
-
-    Only top-level event definitions count (column 0); a nested
-    `country_event = { id = X days = N }` is a scheduling effect call, not a
-    definition, and is skipped since it never starts at column 0.
+    kind is "id" when the log cites a different option/event id, or "letter"
+    when a bare event id is followed by the wrong "Option <letter>". Shared
+    by _find_event_log_mismatches and _check_event_log_id.
     """
     src = _source(lines)
-    issues = []
     option_rows = _lines_with(src, "option")
     for start, end, _match in _outer_blocks(
         src,
@@ -3278,34 +3267,105 @@ def _check_event_log_id(lines):
                 own_suffix = own_name[len(event_id) + 1 :]
             for row in range(opt_start, opt_end):
                 obl_code = src.code[row]
+                used_event_word = True
                 m = _RE_LOG_EVENT_TOKEN.search(obl_code)
-                if not m:
+                if m is None:
+                    used_event_word = False
+                    m = _RE_LOG_EVENT_EXECUTED_TOKEN.search(obl_code)
+                if m is None:
                     continue
                 token = m.group(1)
                 if own_name and token == own_name:
                     continue
                 if token == event_id:
-                    om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
-                    if om and own_suffix and om.group(1).lower() != own_suffix.lower():
-                        issues.append(
-                            (
-                                row + 1,
-                                f"log says Option {om.group(1)} but "
-                                f"this option's own name is "
-                                f"{own_name} -- fix the option "
-                                f"letter",
+                    if used_event_word:
+                        om = _RE_LOG_EVENT_OPTION_SUFFIX.match(obl_code, m.end())
+                        if (
+                            om
+                            and own_suffix
+                            and om.group(1).lower() != own_suffix.lower()
+                        ):
+                            yield (
+                                row,
+                                om.start(1),
+                                om.end(1),
+                                own_suffix,
+                                om.group(1),
+                                own_name,
+                                "letter",
                             )
-                        )
+                    continue
+                # News/cartel options often reuse another event's loc key in
+                # `name =` while the log cites this event's own dotted id.
+                this_event_dotted = token.startswith(event_id + ".")
+                name_is_this_event = bool(
+                    own_name and own_name.startswith(event_id + ".")
+                )
+                if this_event_dotted and not name_is_this_event:
                     continue
                 if own_name:
-                    issues.append(
-                        (
-                            row + 1,
-                            f"log references Event {token}, but this "
-                            f"option's own name is {own_name} -- "
-                            f"likely copy-paste; fix the log id",
-                        )
+                    yield (
+                        row,
+                        m.start(1),
+                        m.end(1),
+                        own_name,
+                        token,
+                        own_name,
+                        "id",
                     )
+
+
+def _find_event_log_mismatches(lines):
+    """Return (line_idx, tok_start, tok_end, replacement, bad_token) for each
+    option log whose cited id doesn't match the option's own `name = `.
+
+    Shared by _check_event_log_id and fix_log_ids.py so both use the same
+    detection.
+    """
+    return [
+        (row, start, end, replacement, token)
+        for row, start, end, replacement, token, _name, _kind in _iter_event_log_mismatches(
+            lines
+        )
+    ]
+
+
+def _check_event_log_id(lines):
+    """Flag option logs whose cited id doesn't match the option's own name.
+
+    Covers `Event <token>` (with optional `Option <letter>`), and the
+    canonical `<id> executed` form that omits the Event word.
+
+    Ground-truthed against the option's own `name = ` line rather than a
+    computed sequential letter: option lettering isn't always contiguous
+    (e.g. singapore.101 skips from .c straight to .e), so a position-based
+    a/b/c/... expectation would false-positive on those.
+
+    Only top-level event definitions count (column 0); a nested
+    `country_event = { id = X days = N }` is a scheduling effect call, not a
+    definition, and is skipped since it never starts at column 0.
+    """
+    issues = []
+    for row, _s, _e, _repl, token, own_name, kind in _iter_event_log_mismatches(lines):
+        if kind == "letter":
+            issues.append(
+                (
+                    row + 1,
+                    f"log says Option {token} but "
+                    f"this option's own name is "
+                    f"{own_name} -- fix the option "
+                    f"letter",
+                )
+            )
+        else:
+            issues.append(
+                (
+                    row + 1,
+                    f"log references Event {token}, but this "
+                    f"option's own name is {own_name} -- "
+                    f"likely copy-paste; fix the log id",
+                )
+            )
     return issues
 
 
@@ -4264,45 +4324,8 @@ def check_file(filepath):
     return [(filepath, ln, msg) for ln, msg in issues]
 
 
-_JSON_CATEGORY = "common-mistakes"
-
-
-def _add_output_arg(parser):
-    parser.add_argument(
-        "--output",
-        "-o",
-        help="Write the findings to this log file and a matching .json sidecar",
-    )
-
-
-def _write_report(output_path, lines, issues):
-    """Mirror BaseValidator: a text log plus a `<stem>.json` issue sidecar.
-
-    newline="" keeps Windows from turning the log into CRLF.
-    """
-    with open(output_path, "w", encoding="utf-8", newline="") as handle:
-        handle.write("\n".join(lines) + "\n")
-
-    payload = [
-        {
-            "severity": "error",
-            "category": _JSON_CATEGORY,
-            "message": message,
-            "file": clean_filepath(filepath).replace(os.sep, "/"),
-            "line": line_num,
-            "validator": _JSON_CATEGORY,
-        }
-        for filepath, line_num, message in issues
-    ]
-    sidecar = os.path.splitext(output_path)[0] + ".json"
-    with open(sidecar, "w", encoding="utf-8", newline="") as handle:
-        json.dump(payload, handle, indent=2)
-
-
 def main():
-    parser = create_linting_parser(
-        "Check for common HOI4 scripting mistakes", extra_args_fn=_add_output_arg
-    )
+    parser = create_linting_parser("Check for common HOI4 scripting mistakes")
     args = parser.parse_args()
 
     timings = []
@@ -4314,16 +4337,6 @@ def main():
 
     if not files_list:
         print("No files to check")
-        if args.output:
-            _write_report(
-                args.output,
-                [
-                    "COMMON MISTAKES CHECK",
-                    "",
-                    "✓ VALIDATION COMPLETE - 0 ERROR(S) - 0 WARNING(S)",
-                ],
-                [],
-            )
         return 0
 
     # The available=always-no and is_X_nation checks need completion refs and
@@ -4370,21 +4383,6 @@ def main():
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
-
-    if args.output:
-        # "  file:line - message" plus the VALIDATION COMPLETE tokens match what
-        # tools/report_lib/loader.py parses when a JSON sidecar is unavailable.
-        report_lines = ["COMMON MISTAKES CHECK", ""]
-        report_lines += [
-            f"  {clean_filepath(filepath).replace(os.sep, '/')}:{line_num} - {message}"
-            for filepath, line_num, message in sorted_issues
-        ]
-        marker = "✗" if sorted_issues else "✓"
-        report_lines += [
-            "",
-            f"{marker} VALIDATION COMPLETE - {len(sorted_issues)} ERROR(S) - 0 WARNING(S)",
-        ]
-        _write_report(args.output, report_lines, sorted_issues)
 
     if all_issues:
         print(f"Found {len(all_issues)} issue(s)")

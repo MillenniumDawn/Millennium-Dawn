@@ -13,6 +13,7 @@ unreachable without the DLC (issue #5328, the ENG moonbase focus in #5314).
 import pytest
 import validate_dlc_guards as V
 from shared.paths import REPO_ROOT
+from shared.suite import write_under as _write
 
 BBA = "By Blood Alone"
 NSB = "No Step Back"
@@ -79,13 +80,6 @@ def _bonus(tech, indent="\t"):
 
 
 # --- gate parsing -----------------------------------------------------------
-
-
-def _write(tmp_path, relative, body):
-    path = tmp_path.joinpath(*relative.split("/"))
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding="utf-8")
-    return path
 
 
 def test_parse_folder_gates_require_forbid_and_non_dlc(tmp_path):

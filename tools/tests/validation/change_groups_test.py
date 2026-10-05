@@ -48,7 +48,7 @@ def test_validation_config_change_requests_focus_style_scan():
 
 
 def test_non_validation_tool_change_skips_full_suite():
-    groups = change_groups.classify(["tools/assets/dds_compression_audit.py"])
+    groups = change_groups.classify(["tools/assets/resize_decision_icons.py"])
 
     assert groups["full_suite"] is False
     assert groups["tools"] is True
@@ -132,6 +132,24 @@ def test_graphics_and_map_paths_skip_expensive_content_job(path):
 
     assert groups["file-paths"] is True
     assert groups["content"] is False
+
+
+def test_graphic_db_change_runs_gfx_references_group():
+    groups = change_groups.classify(
+        ["gfx/interface/equipmentdesigner/graphic_db/00_plane_icons.txt"]
+    )
+
+    assert groups["graphic-db"] is True
+    assert groups["interface"] is False
+    assert groups["content"] is True
+
+
+def test_music_script_change_runs_common_mistakes_group():
+    groups = change_groups.classify(["music/MD_regional_music.txt"])
+
+    assert groups["music"] is True
+    assert groups["common"] is False
+    assert groups["content"] is True
 
 
 @pytest.mark.parametrize(
