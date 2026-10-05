@@ -9,6 +9,7 @@ synthetic hull/module fixtures.
 
 import random
 
+import pytest
 from equipment_module_slots import (
     _depth0_text,
     _iter_named_blocks,
@@ -593,7 +594,7 @@ def test_oob_validator_integration_reports_errors(tmp_path):
     assert "module_test_plain_fc" in issues[0].message
 
 
-def test_validator_integration_reports_warnings(tmp_path):
+def test_ai_validator_integration_reports_errors(tmp_path):
     issues = _variant_issues(
         tmp_path,
         HULLS,
@@ -607,7 +608,7 @@ def test_validator_integration_reports_warnings(tmp_path):
         "NAVAL VARIANT",
     )
     assert len(issues) == 1
-    assert issues[0].severity == "warning"
+    assert issues[0].severity == "error"
     assert issues[0].file == "common/ai_equipment/TST_naval.txt"
     assert "module_test_plain_fc" in issues[0].message
 
@@ -633,8 +634,7 @@ def test_oob_validator_reports_missing_required_slot(tmp_path):
 
 
 def test_ai_validator_missing_required_slot_is_error(tmp_path):
-    # A template that leaves a required slot empty can never be matched, so the
-    # AI validator escalates it above its usual slot-rule warning.
+    # A template that leaves a required slot empty can never be matched.
     issues = _variant_issues(
         tmp_path,
         REQUIRED_HULLS,
@@ -669,6 +669,33 @@ def test_ai_validator_count_limit_is_error(tmp_path):
     assert len(issues) == 1
     assert issues[0].severity == "error"
     assert "module_light_guns_category" in issues[0].message
+
+
+@pytest.mark.parametrize(
+    "modules_body, category",
+    [
+        (
+            "\t\t\t\tgun_slot = module_test_helipad\n",
+            "EQUIPMENT VARIANT: module category not allowed in slot",
+        ),
+        (
+            "\t\t\t\tgun_slot = module_test_exact_gun\n",
+            "EQUIPMENT VARIANT: module forbidden on hull type",
+        ),
+    ],
+)
+def test_ai_validator_non_ship_slot_findings_are_errors(
+    tmp_path, modules_body, category
+):
+    issues = _variant_issues(
+        tmp_path,
+        LIMIT_HULLS,
+        "common/ai_equipment/TST_land.txt",
+        _variant("lim_tank_hull_1", modules_body),
+        Validator,
+        "EQUIPMENT VARIANT",
+    )
+    assert [(i.severity, i.category) for i in issues] == [("error", category)]
 
 
 def test_two_guns_exceed_category_count_limit():

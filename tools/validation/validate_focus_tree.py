@@ -5,6 +5,7 @@ import os
 import re
 import sys
 from collections import defaultdict
+from decimal import Decimal
 from functools import cached_property
 from typing import (
     Any,
@@ -21,8 +22,14 @@ from typing import (
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from focus_geometry import analyze_layout
 from shared_utils import extract_block_from_text as _extract_block
-from shared_utils import read_text_under, validation_config
+from shared_utils import (
+    get_staged_files,
+    iter_statements,
+    read_text_under,
+    validation_config,
+)
 from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
@@ -942,6 +949,9 @@ class _FocusFile:
     def relative_positions(self) -> List[Tuple[str, Optional[str], str, int]]:
         return self._cached("focus_tree.relative_positions", _scan_relative_positions)
 
+    def layout(self) -> Dict:
+        return self._cached("focus_tree.layout.v1", _scan_focus_layout)
+
     def missing_search_filters(self) -> List[Tuple[str, str, int]]:
         return self._cached(
             "focus_tree.search_filters.v1", _scan_missing_search_filters
@@ -1282,6 +1292,90 @@ def _scan_relative_positions(
     return out
 
 
+def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
+    record: Dict[str, Any] = {
+        "id": None,
+        "file": filepath,
+        "line": block.line,
+        "x": None,
+        "y": None,
+        "relative": None,
+        "allow_branch": False,
+        "offset": False,
+        "prerequisites": [],
+    }
+    for key, scalar, body in iter_statements(block.body):
+        if key == "id":
+            record["id"] = scalar
+        elif key in ("x", "y"):
+            record[key] = (
+                Decimal(scalar)
+                if scalar and re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", scalar)
+                else None
+            )
+        elif key == "relative_position_id":
+            record["relative"] = scalar
+        elif key in ("allow_branch", "offset"):
+            record[key] = True
+        elif key == "prerequisite" and body is not None:
+            record["prerequisites"].append(
+                [
+                    value
+                    for name, value, _ in iter_statements(body)
+                    if name == "focus" and value
+                ]
+            )
+    return record
+
+
+def _scan_focus_layout(source: _FocusFile) -> Dict:
+    filepath = os.path.relpath(source.filepath, source.mod_path).replace(os.sep, "/")
+    result: Dict[str, Any] = {"filepath": filepath, "trees": [], "shared": []}
+    ranges = []
+    end = 0
+    for match in _FOCUS_TREE_START.finditer(source.text):
+        opening = source.text.find("{", match.start())
+        if match.start() < end or opening not in source.pairs:
+            continue
+        body, end = _block_at(source.text, match.start(), source.pairs)
+        if end == -1:
+            continue
+        line = source.text.count("\n", 0, match.start()) + 1
+        tree = {
+            "id": f"tree at line {line}",
+            "line": line,
+            "focuses": [],
+            "shared_refs": [],
+        }
+        for key, scalar, nested in iter_statements(body):
+            if key == "id" and scalar:
+                tree["id"] = scalar
+            elif key == "shared_focus":
+                refs = [scalar] if scalar else re.findall(r"[\w.-]+", nested or "")
+                tree["shared_refs"].extend(refs)
+        result["trees"].append(tree)
+        ranges.append((match.start(), end, tree))
+
+    tree_index = 0
+    for block in source.blocks:
+        if source.text.find("{", block.start) not in source.pairs:
+            continue
+        record = _layout_record(block, filepath)
+        if not record["id"]:
+            continue
+        while tree_index < len(ranges) and block.start >= ranges[tree_index][1]:
+            tree_index += 1
+        if (
+            tree_index < len(ranges)
+            and ranges[tree_index][0] < block.start < ranges[tree_index][1]
+        ):
+            if block.end <= ranges[tree_index][1]:
+                ranges[tree_index][2]["focuses"].append(record)
+        elif source.text.startswith(("shared_focus", "joint_focus"), block.start):
+            result["shared"].append(record)
+    return result
+
+
 def _parse_focus_text(source: _FocusFile) -> Dict:
     """Parse comment-stripped focus tree text into a structured result dict.
 
@@ -1391,6 +1485,7 @@ def _scan_focus_file(
     indexes = {
         "parse": source.parse(),
         "relative_positions": source.relative_positions(),
+        "layout": source.layout(),
     }
     if not reportable:
         return indexes
@@ -1421,9 +1516,19 @@ class Validator(BaseValidator):
         self._scans: Optional[List[Dict[str, Any]]] = None
         self._registry: Optional[_FocusRegistry] = None
         self._staged_paths: Optional[Set[str]] = None
+        self.layout_counts: Dict[str, int] = {}
         self._scripted_effect_data: Optional[
             Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]
         ] = None
+        if self.staged_only:
+            self.staged_files = (
+                get_staged_files(
+                    self.mod_path,
+                    extensions=self.STAGED_EXTENSIONS,
+                    include_missing=True,
+                )
+                or []
+            )
 
     # -----------------------------------------------------------------------
     # Data collection
@@ -1466,7 +1571,7 @@ class Validator(BaseValidator):
             return self._scans
         files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
         reportable = [self._is_reportable(f) for f in files]
-        if not any(reportable):
+        if not any(reportable) and not (self.staged_only and self._get_staged_paths()):
             self._scans = []
             return self._scans
         staffable, money = self._scripted_effect_data_for_guards()
@@ -2415,10 +2520,48 @@ class Validator(BaseValidator):
             category="relative-position-missing-target",
         )
 
+    def validate_focus_overlap(self):
+        self._log_section("Checking static focus coordinates...")
+        reportable = None
+        if self.staged_only:
+            reportable = {
+                path.replace(os.sep, "/") for path in self._get_staged_paths()
+            }
+            if any(
+                not os.path.isfile(os.path.join(self.mod_path, path))
+                for path in reportable
+            ):
+                reportable = None
+        layout = analyze_layout(
+            [scan["layout"] for scan in self._focus_scans()], reportable
+        )
+        self.layout_counts = layout["counts"]
+        self.log(
+            "Focus layout counts: "
+            + ", ".join(
+                f"{key}={value}" for key, value in sorted(self.layout_counts.items())
+            )
+        )
+        self._report(
+            layout["findings"],
+            "No static focus overlaps",
+            "Focuses less than two columns apart on the same row:",
+            Severity.WARNING,
+            category="focus-coordinate-overlap",
+        )
+        self._report(
+            layout["unresolved"],
+            "All focus coordinates resolved",
+            "Focus coordinates could not be resolved safely:",
+            Severity.WARNING,
+            category="focus-coordinate-unresolved",
+        )
+
     def run_validations(self):
         self.validate_duplicate_focus_ids()
         self.validate_missing_prerequisite_targets()
         self.validate_relative_position_targets()
+        self.validate_focus_overlap()
         self.validate_orphan_focuses()
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()

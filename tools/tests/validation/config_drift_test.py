@@ -826,11 +826,7 @@ def test_manual_texture_audit_always_runs():
 
 def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
-    assert sorted(spec.name for spec in ALL_SPECS if not spec.strict) == [
-        "building-guards",
-        "equipment-variants",
-        "simplifications",
-    ]
+    assert [spec.name for spec in ALL_SPECS if not spec.strict] == ["simplifications"]
 
 
 def test_ci_oob_units_does_not_enable_missing_equipment_factor():

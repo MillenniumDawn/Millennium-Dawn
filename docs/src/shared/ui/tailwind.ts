@@ -541,7 +541,7 @@ export const MARKDOWN_CLASSNAMES = {
   a: BASE_LINK_CLASS,
   ul: LIST_CLASS,
   ol: ORDERED_LIST_CLASS,
-  li: LIST_ITEM_CLASS,
+  li: "markdown-list-item",
   hr: "my-xl border-0 border-t border-border-light",
   blockquote: [
     "my-lg",
