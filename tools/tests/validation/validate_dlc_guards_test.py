@@ -4,8 +4,13 @@ A DLC-gated technology named by an `add_tech_bonus`, or a DLC-gated special
 project referenced with `sp:`, must sit behind a `has_dlc` guard: without the
 DLC the tooltip resolves into a disabled technology folder and the game crashes
 to desktop. Regression for the China `CHI_project_jxx` CTD (issue #2790).
+
+A `has_tech` for a technology gated through a DLC special project, required by a
+focus or decision availability block without a `has_dlc` guard, makes the focus
+unreachable without the DLC (issue #5328, the ENG moonbase focus in #5314).
 """
 
+import pytest
 import validate_dlc_guards as V
 from shared.paths import REPO_ROOT
 
@@ -23,10 +28,18 @@ TECH_GATES = {
 }
 CATEGORY_GATES = {"CAT_air_engine": frozenset({("require", BBA)})}
 PROJECT_GATES = {"sp_stealth_technology": frozenset({("require", BBA)})}
+PROJECT_TECH_GATES = {"solar_engines_1": frozenset({("require", BBA)})}
 
 
-def _scan(script):
-    scanner = V.Scanner(V._sanitize(script), TECH_GATES, CATEGORY_GATES, PROJECT_GATES)
+def _scan(script, availability=frozenset()):
+    scanner = V.Scanner(
+        V._sanitize(script),
+        TECH_GATES,
+        CATEGORY_GATES,
+        PROJECT_GATES,
+        PROJECT_TECH_GATES,
+        availability,
+    )
     scanner.walk(0, len(scanner.text), V.Context())
     return scanner.findings
 
@@ -38,14 +51,18 @@ def _messages(script):
 def test_poland_logistics_focus_uses_the_matching_aircraft_tree():
     mod_path = f"{REPO_ROOT}/"
     folder_gates = V.parse_folder_gates(mod_path)
-    tech_gates, category_gates = V.parse_tech_gates(mod_path, folder_gates)
     project_gates = V.parse_project_gates(mod_path)
+    tech_gates, category_gates, project_tech_gates = V.parse_tech_gates(
+        mod_path, folder_gates, project_gates
+    )
     path = REPO_ROOT / "common" / "national_focus" / "05_poland.txt"
     scanner = V.Scanner(
         V._sanitize(path.read_text(encoding="utf-8-sig")),
         tech_gates,
         category_gates,
         project_gates,
+        project_tech_gates,
+        V._AVAILABILITY,
     )
     scanner.walk(0, len(scanner.text), V.Context())
     assert scanner.findings == []
@@ -133,15 +150,17 @@ def test_parse_tech_gates_ignores_other_blocks_and_unreadable_files(tmp_path):
     )
     (tmp_path / "common" / "technologies" / "broken.txt").mkdir()
 
-    tech_gates, _categories = V.parse_tech_gates(
-        str(tmp_path) + "/", {"bba_aircraft_folder": frozenset({("require", BBA)})}
+    tech_gates, _categories, _project_tech_gates = V.parse_tech_gates(
+        str(tmp_path) + "/",
+        {"bba_aircraft_folder": frozenset({("require", BBA)})},
+        {},
     )
 
     assert tech_gates == {"gen_5_light": frozenset({("require", BBA)})}
 
 
 def test_category_shared_by_ungated_techs_only_is_not_gated(tmp_path):
-    _, category_gates = _tech_gates(
+    _, category_gates, _ = _tech_gates(
         tmp_path,
         "\tplain_one = {\n\t\tcategories = { CAT_open }\n\t}\n"
         "\tplain_two = {\n\t\tcategories = { CAT_open }\n\t}\n",
@@ -151,15 +170,15 @@ def test_category_shared_by_ungated_techs_only_is_not_gated(tmp_path):
     assert category_gates == {}
 
 
-def _tech_gates(tmp_path, body, folder_gates):
+def _tech_gates(tmp_path, body, folder_gates, project_gates=None):
     _write(
         tmp_path, "common/technologies/test.txt", "technologies = {\n" + body + "}\n"
     )
-    return V.parse_tech_gates(str(tmp_path) + "/", folder_gates)
+    return V.parse_tech_gates(str(tmp_path) + "/", folder_gates, project_gates or {})
 
 
 def test_tech_inherits_gate_from_its_folder(tmp_path):
-    tech_gates, _ = _tech_gates(
+    tech_gates, _, _ = _tech_gates(
         tmp_path,
         "\tgen_5_light = {\n\t\tfolder = { name = bba_aircraft_folder }\n\t}\n",
         {"bba_aircraft_folder": frozenset({("require", BBA)})},
@@ -168,7 +187,7 @@ def test_tech_inherits_gate_from_its_folder(tmp_path):
 
 
 def test_tech_in_gated_and_ungated_folder_is_not_gated(tmp_path):
-    tech_gates, _ = _tech_gates(
+    tech_gates, _, _ = _tech_gates(
         tmp_path,
         "\tshared_tech = {\n"
         "\t\tfolder = { name = bba_aircraft_folder }\n"
@@ -180,7 +199,7 @@ def test_tech_in_gated_and_ungated_folder_is_not_gated(tmp_path):
 
 
 def test_allow_branch_gate_without_folder(tmp_path):
-    tech_gates, _ = _tech_gates(
+    tech_gates, _, _ = _tech_gates(
         tmp_path,
         '\tencryption_1 = {\n\t\tallow_branch = { NOT = { has_dlc = "La Resistance" } }\n\t}\n',
         {},
@@ -189,7 +208,7 @@ def test_allow_branch_gate_without_folder(tmp_path):
 
 
 def test_category_gated_only_when_every_member_shares_the_gate(tmp_path):
-    _, category_gates = _tech_gates(
+    _, category_gates, _ = _tech_gates(
         tmp_path,
         "\tgen_5_light = {\n"
         "\t\tfolder = { name = bba_aircraft_folder }\n"
@@ -240,6 +259,42 @@ def test_parse_project_gates_skips_unreadable_files(tmp_path):
     }
 
 
+def test_project_gated_tech_keeps_its_gate_apart_from_folder_gates(tmp_path):
+    project_gates = {"sp_solar_engines": frozenset({("require", BBA)})}
+    tech_gates, category_gates, project_tech_gates = _tech_gates(
+        tmp_path,
+        "\tsolar_engines_1 = {\n"
+        "\t\tallow = { ROOT = { is_special_project_completed = sp:sp_solar_engines } }\n"
+        "\t\tcategories = { CAT_solar }\n"
+        "\t}\n"
+        "\tdirect_allow = {\n"
+        "\t\tallow = { is_special_project_completed = sp:sp_solar_engines }\n"
+        "\t\tcategories = { CAT_solar }\n"
+        "\t\tfolder = { name = bba_aircraft_folder }\n"
+        "\t}\n"
+        "\topen_project_tech = {\n"
+        "\t\tallow = { is_special_project_completed = sp:sp_open_project }\n"
+        "\t}\n"
+        "\tlimit_only = {\n"
+        "\t\ton_research_complete = {\n"
+        "\t\t\tif = { limit = { is_special_project_completed = sp:sp_solar_engines } }\n"
+        "\t\t}\n"
+        "\t}\n",
+        {"bba_aircraft_folder": frozenset({("require", NSB)})},
+        project_gates,
+    )
+    # Folder gates alone feed the tech and category maps.
+    assert tech_gates["solar_engines_1"] == frozenset()
+    assert tech_gates["direct_allow"] == frozenset({("require", NSB)})
+    assert tech_gates["open_project_tech"] == frozenset()
+    assert tech_gates["limit_only"] == frozenset()
+    assert "CAT_solar" not in category_gates
+    assert project_tech_gates == {
+        "solar_engines_1": frozenset({("require", BBA)}),
+        "direct_allow": frozenset({("require", BBA)}),
+    }
+
+
 # --- guard walker -----------------------------------------------------------
 
 
@@ -252,6 +307,16 @@ def test_unguarded_tech_bonus_is_flagged():
 
 def test_ungated_tech_is_clean():
     assert _scan("completion_reward = {\n" + _bonus("ungated_tech") + "}\n") == []
+
+
+def test_tech_bonus_under_an_allow_branch_gate_is_clean():
+    script = (
+        "TST_moon = {\n"
+        f'\tallow_branch = {{ has_dlc = "{BBA}" }}\n'
+        "\tcompletion_reward = {\n" + _bonus("gen_5_light", "\t\t") + "\t}\n"
+        "}\n"
+    )
+    assert _scan(script) == []
 
 
 def test_guarded_tech_bonus_is_clean():
@@ -431,6 +496,120 @@ def test_project_jxx_regression():
     assert categories.count("dlc_special_project") == 1
 
 
+# --- has_tech in availability ----------------------------------------------
+
+FOCUS = DECISION = V._AVAILABILITY
+FOCUS_AND_DECISION_BLOCKS = [
+    (FOCUS, "available"),
+    (FOCUS, "allowed"),
+    (FOCUS, "visible"),
+    (DECISION, "available"),
+    (DECISION, "allowed"),
+    (DECISION, "visible"),
+]
+
+
+def _object(body, block="available", extra=""):
+    return "TST_moon = {\n" f"\t{block} = {{\n{body}\t}}\n" f"{extra}" "}\n"
+
+
+def _has_tech(tech="solar_engines_1", indent="\t\t"):
+    return f"{indent}has_tech = {tech}\n"
+
+
+def _nested(name, body, indent="\t\t"):
+    return f"{indent}{name} = {{\n{body}{indent}}}\n"
+
+
+def _inner_has_tech():
+    return _has_tech(indent="\t\t\t")
+
+
+_GUARDED_SCRIPTS = {
+    "has_dlc_in_available": _object(f'\t\thas_dlc = "{BBA}"\n' + _has_tech()),
+    "has_dlc_in_visible": _object(
+        _has_tech(), extra=f'\tvisible = {{ has_dlc = "{BBA}" }}\n'
+    ),
+    "has_dlc_branch": _object(
+        _nested("if", f'\t\t\tlimit = {{ has_dlc = "{BBA}" }}\n' + _inner_has_tech())
+    ),
+    "or_alternative": _object(
+        _nested("OR", _inner_has_tech() + "\t\t\thas_country_flag = a\n")
+    ),
+    "not_block": _object(_nested("NOT", _inner_has_tech())),
+    "nor_block": _object(_nested("NOR", _inner_has_tech())),
+    "count_triggers": _object(
+        _nested("count_triggers", "\t\t\tamount = 1\n" + _inner_has_tech())
+    ),
+    "allow_branch_gate": _object(
+        _has_tech(), extra=f'\tallow_branch = {{ has_dlc = "{BBA}" }}\n'
+    ),
+    "ungated_tech": _object(_has_tech("ungated_tech")),
+    "folder_gated_tech_out_of_scope": _object(_has_tech("gen_5_light")),
+    "unknown_tech": _object(_has_tech("not_a_known_tech")),
+    "effect_if_limit": _object(
+        "",
+        extra=_nested(
+            "completion_reward",
+            _nested(
+                "if",
+                "\t\t\tlimit = { has_tech = solar_engines_1 }\n"
+                "\t\t\tadd_political_power = 10\n",
+            ),
+            "\t",
+        ),
+    ),
+}
+
+
+@pytest.mark.parametrize(("availability", "block"), FOCUS_AND_DECISION_BLOCKS)
+def test_unguarded_project_tech_in_availability_is_flagged(availability, block):
+    findings = _scan(_object(_has_tech(), block), availability)
+
+    assert [(category, line) for category, line, _ in findings] == [("dlc_has_tech", 3)]
+    assert f'requires "{BBA}"' in findings[0][2]
+
+
+def test_availability_only_applies_to_its_own_file_type():
+    assert _scan(_object(_has_tech(), "allowed")) == []
+    assert _scan(_object(_has_tech(), "allowed"), DECISION) != []
+    assert _scan(_object(_has_tech(), "prerequisite"), FOCUS) == []
+
+
+@pytest.mark.parametrize("script", _GUARDED_SCRIPTS.values(), ids=_GUARDED_SCRIPTS)
+def test_guarded_or_out_of_scope_has_tech_is_clean(script):
+    assert _scan(script, FOCUS) == []
+
+
+def test_has_tech_guard_must_name_the_same_dlc():
+    script = _object(f'\t\thas_dlc = "{NSB}"\n' + _has_tech())
+
+    assert [c for c, _, _ in _scan(script, FOCUS)] == ["dlc_has_tech"]
+
+
+def test_has_dlc_inside_an_or_does_not_guard_the_object():
+    script = _object(
+        _nested("OR", f'\t\t\thas_dlc = "{BBA}"\n\t\t\thas_country_flag = a\n')
+        + _has_tech()
+    )
+
+    assert [c for c, _, _ in _scan(script, FOCUS)] == ["dlc_has_tech"]
+
+
+def test_has_tech_inside_scope_block_is_flagged_once():
+    script = _object(_nested("ROOT", _inner_has_tech()))
+
+    assert [(c, ln) for c, ln, _ in _scan(script, FOCUS)] == [("dlc_has_tech", 4)]
+
+
+def test_fingerprint_changes_with_the_project_gated_tech_set():
+    gates = {"gen_5_light": frozenset({("require", BBA)})}
+
+    assert V._fingerprint_gates(gates, {}, {}, {}) != V._fingerprint_gates(
+        {}, {}, {}, gates
+    )
+
+
 # --- sanitize -----------------------------------------------------------
 
 
@@ -469,11 +648,18 @@ def test_scan_file_cache_invalidates_when_gate_maps_change(tmp_path, monkeypatch
     mod_path = str(tmp_path) + "/"
 
     ungated = {"gen_5_light": frozenset()}
-    V._init_worker(ungated, {}, {}, V._fingerprint_gates(ungated, {}, {}), mod_path)
+    V._init_worker(
+        ungated,
+        {},
+        {},
+        {},
+        V._fingerprint_gates(ungated, {}, {}, {}),
+        mod_path,
+    )
     assert V.scan_file(str(filepath)) == []
 
     gated = {"gen_5_light": frozenset({("require", BBA)})}
-    V._init_worker(gated, {}, {}, V._fingerprint_gates(gated, {}, {}), mod_path)
+    V._init_worker(gated, {}, {}, {}, V._fingerprint_gates(gated, {}, {}, {}), mod_path)
     findings = V.scan_file(str(filepath))
     assert len(findings) == 1
     assert "gen_5_light" in findings[0][3]
@@ -490,12 +676,31 @@ def test_ungated_category_and_project_references_are_clean():
 
 
 def test_scan_file_skips_unreadable_and_irrelevant_files(tmp_path):
-    V._init_worker({}, {}, {}, "", str(tmp_path) + "/")
+    V._init_worker({}, {}, {}, {}, "", str(tmp_path) + "/")
     (tmp_path / "broken.txt").mkdir()
     plain = _write(tmp_path, "events/plain.txt", "country_event = { id = test.1 }\n")
 
     assert V.scan_file(str(tmp_path / "broken.txt")) == []
     assert V.scan_file(str(plain)) == []
+
+
+def test_scan_file_checks_has_tech_only_in_focus_and_decision_files(tmp_path):
+    V._init_worker(TECH_GATES, {}, {}, PROJECT_TECH_GATES, "", str(tmp_path) + "/")
+    script = _object(_has_tech(), "available")
+    paths = {
+        "common/national_focus/05_test.txt": 1,
+        "common/decisions/Test.txt": 1,
+        "common/decisions/categories/Test.txt": 0,
+        "common/ideas/test.txt": 0,
+        "events/test.txt": 0,
+    }
+
+    counts = {
+        relative: len(V.scan_file(str(_write(tmp_path, relative, script))))
+        for relative in paths
+    }
+
+    assert counts == paths
 
 
 # --- validator wiring -------------------------------------------------------
@@ -524,7 +729,17 @@ def _dlc_repo(tmp_path):
     _write(
         tmp_path,
         "common/special_projects/projects/air.txt",
-        f'sp_stealth_technology = {{\n\tallowed = {{ has_dlc = "{BBA}" }}\n}}\n',
+        f'sp_stealth_technology = {{\n\tallowed = {{ has_dlc = "{BBA}" }}\n}}\n'
+        f'sp_solar_engines = {{\n\tallowed = {{ has_dlc = "{BBA}" }}\n}}\n',
+    )
+    _write(
+        tmp_path,
+        "common/technologies/solar.txt",
+        "technologies = {\n"
+        "\tsolar_engines_1 = {\n"
+        "\t\tallow = { is_special_project_completed = sp:sp_solar_engines }\n"
+        "\t}\n"
+        "}\n",
     )
 
 
@@ -588,3 +803,22 @@ def test_validator_stays_quiet_when_every_reference_is_guarded(tmp_path, monkeyp
 
     assert validator._issues == []
     assert any("sit behind a has_dlc guard" in line for line in validator.output_lines)
+
+
+def test_validator_reports_unguarded_project_tech_as_warning(tmp_path, monkeypatch):
+    import validator_common
+
+    monkeypatch.setattr(validator_common, "_LOG_LEVEL", "INFO")
+    _dlc_repo(tmp_path)
+    _write(
+        tmp_path,
+        "common/national_focus/05_test.txt",
+        "focus = {\n\tid = TST_moon\n\tavailable = { has_tech = solar_engines_1 }\n}\n",
+    )
+    validator = V.Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
+
+    validator.run_validations()
+
+    assert [(i.category, i.severity, i.line) for i in validator._issues] == [
+        ("dlc_has_tech", "warning", 3)
+    ]
