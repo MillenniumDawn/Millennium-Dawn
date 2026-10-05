@@ -117,6 +117,25 @@ def issue_categories(validator):
     return sorted(issue.category for issue in validator._issues)
 
 
+_YML_SECTIONS = ("brackets", "syntax", "mandatory", "typos", "prose", "var_refs")
+
+
+def yml_scan(path, section: str, valid_colors=()):
+    """One section of the localisation validator's shared scan of a single file."""
+    import validate_localisation
+
+    results = validate_localisation._scan_shared_yml_file(
+        (str(path), list(valid_colors))
+    )
+    return results[_YML_SECTIONS.index(section)]
+
+
+def yml_syntax(path, valid_colors, subst_keys=frozenset()):
+    """Syntax findings as the validator reports them: substitution keys exempt."""
+    pairs = yml_scan(path, "syntax", valid_colors)
+    return [finding for finding, key in pairs if key not in subst_keys]
+
+
 def collecting_validator(cls):
     """Wrap a Validator so `_report` appends to `.collected` instead of printing."""
 
