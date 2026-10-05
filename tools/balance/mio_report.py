@@ -44,22 +44,21 @@ WEIGHTS: AllEquipmentStats = AllEquipmentStats(
     air_superiority=1.3,
 )
 
+
 def print_usage():
     """Print command-line usage and list valid archetype equipment tags.
 
     This helper is used when no arguments are provided, or when users need a
     reminder of the accepted execution modes.
     """
-    print(
-        """
+    print("""
 Tool for analyzing MIO balance.
 Usage:
 python mio.py <target_equipment_type>
     Outputs a report to the console describing a ranking of MIOs affecting the target equipment type.
 python mio.py {REPORT_ALL} [output_file]
     Generates an Excel report for all MIOs, optionally specifying the output file.
-Available equipment types:""".format(REPORT_ALL=REPORT_ALL)
-    )
+Available equipment types:""".format(REPORT_ALL=REPORT_ALL))
     tags = list()
     for equipment in Equipment.get_equipment_index().values():
         if equipment.is_archetype:
@@ -69,7 +68,9 @@ Available equipment types:""".format(REPORT_ALL=REPORT_ALL)
         print(f"     {tag}")
 
 
-def report_specific_equipment_type(equ_type: Equipment, mios: dict[str, MIO], WEIGHTS: AllEquipmentStats):
+def report_specific_equipment_type(
+    equ_type: Equipment, mios: dict[str, MIO], WEIGHTS: AllEquipmentStats
+):
     """Print ranked MIO bonus reports for one equipment archetype.
 
     Args:
@@ -92,7 +93,9 @@ def report_specific_equipment_type(equ_type: Equipment, mios: dict[str, MIO], WE
         print(boost.to_pretty_display())
 
 
-def spreadsheet_report(mios: dict[str, MIO], WEIGHTS: AllEquipmentStats, output_file: str):
+def spreadsheet_report(
+    mios: dict[str, MIO], WEIGHTS: AllEquipmentStats, output_file: str
+):
     """Generate an XLSX report for all MIOs across all archetype equipment.
 
     Args:
