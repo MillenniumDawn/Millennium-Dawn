@@ -20,6 +20,9 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
     roster — ships are built in dockyards, which have no production efficiency
   * percentage-type organization_modifier keys stay inside -1..1 — a whole
     number there is a dropped decimal point that silently breaks the org
+  * a `create_equipment_variant` naming `design_team = mio:<org>` uses a type
+    the org's equipment_type covers (after `mio_cat_*` expansion and archetype
+    resolution), or the engine ignores the designer
   * every `mio:<org>` reference names a real org, and the org is reachable from
     the country whose script references it — an org pinned to another tag is
     simply absent in that scope, so the engine logs `was not found in country
@@ -51,7 +54,7 @@ from typing import (
     Union,
 )
 
-from equipment_module_slots import blank_comments
+from equipment_module_slots import _iter_named_blocks, _scalar, blank_comments
 from equipment_stats import EquipmentStatIndex, build_equipment_stat_index
 from shared_utils import get_staged_files, validation_config
 from sprite_index import build_sprite_index
@@ -174,6 +177,7 @@ def _iter_icon_values(text: str):
 # `industrial_manufacturer = mio:X`, the unlock tooltip, and the `mio:X = { }`
 # scope block.
 MIO_REFERENCE_RE = re.compile(_keyword("mio:") + r"([A-Za-z0-9_]+)")
+DESIGN_TEAM_RE = re.compile(_keyword("design_team") + r"\s*=\s*mio:([A-Za-z0-9_]+)")
 COUNTRY_TAG_DEF_RE = re.compile(r"^\s*([A-Z][A-Z0-9]{2})\s*=", re.MULTILINE)
 FOCUS_BLOCK_RE = re.compile(
     r"^[^\S\n]*(?:shared_focus|joint_focus|focus)\s*=\s*\{", re.MULTILINE
@@ -700,7 +704,9 @@ class Validator(BaseValidator):
                 continue
             reference_hits += 1
             rel = Path(filepath).relative_to(self.mod_path).as_posix()
-            self._check_mio_references(blank_comments(text), rel)
+            clean = blank_comments(text)
+            self._check_mio_references(clean, rel)
+            self._check_design_team_coverage(clean, rel, equipment)
 
         self.log(
             f"  Scanned {len(files) + len(bonus_files)} files | "
@@ -1335,6 +1341,43 @@ class Validator(BaseValidator):
                     rel,
                     line,
                 )
+
+    def _check_design_team_coverage(
+        self, text: str, rel: str, equipment: EquipmentStatIndex
+    ):
+        """Flag a `create_equipment_variant` whose `design_team = mio:<org>` org
+        does not list the variant's archetype, which the engine ignores.
+
+        A type the index cannot resolve to an archetype (a vanilla designer
+        airframe, or a typo) and an org with no equipment_type are skipped, so
+        only a provable mismatch is reported.
+        """
+        for lo, hi in _iter_named_blocks(
+            text, 0, len(text), "create_equipment_variant"
+        ):
+            team = DESIGN_TEAM_RE.search(text, lo, hi)
+            variant_type = _scalar(text, lo, hi, "type")
+            body = self._org_bodies.get(team.group(1)) if team else None
+            archetype = equipment.archetype_of(variant_type) if variant_type else None
+            if body is None or archetype is None:
+                continue
+            tokens = self._org_equipment_types(team.group(1), body)
+            covered = {m for token in tokens for m in equipment.expand(token)}
+            if not tokens or covered & {
+                variant_type,
+                archetype,
+                *equipment.types.get(archetype, ()),
+                *equipment.types.get(variant_type, ()),
+            }:
+                continue
+            self.add_warning(
+                "mio-design-team-type-uncovered",
+                f"design_team = mio:{team.group(1)} cannot design {variant_type}: "
+                f"its equipment_type does not cover {archetype}, so the engine "
+                f"ignores the designer",
+                rel,
+                text.count("\n", 0, team.start()) + 1,
+            )
 
     def _check_on_complete(self, body: str, rel: str, body_offset: int):
         for m in ON_COMPLETE_RE.finditer(body):

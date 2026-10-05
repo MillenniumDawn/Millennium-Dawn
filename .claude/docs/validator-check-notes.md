@@ -298,6 +298,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `mio-production-bonus-naval` (ERROR): everything the trait reaches is naval.
   `mio-production-bonus-partial-naval` (WARNING): mixed scope, a coverage note.
   `policies/` is out of scope because `same_as_mio` is not statically resolvable.
+- `mio-design-team-type-uncovered` (WARNING): a `create_equipment_variant` names
+  `design_team = mio:<org>` whose `equipment_type` does not cover the variant's
+  archetype after `mio_cat_*` expansion, so the engine ignores the designer. A type
+  the equipment index cannot resolve (a vanilla designer airframe) is skipped. A
+  staged org edit does not rescan unstaged references; the full CI run does.
 - A staged change in `policies/`, `common/country_leader/`, `common/units/equipment/`,
   `common/equipment_groups/`, or English loc rescans every org.
 
