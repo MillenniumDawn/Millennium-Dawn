@@ -1292,6 +1292,16 @@ def _scan_relative_positions(
     return out
 
 
+def _branch_terms(body: str) -> Set[str]:
+    terms = set()
+    for key, scalar, nested in iter_statements(body):
+        if nested is not None:
+            terms |= _branch_terms(nested)
+        elif scalar:
+            terms.add(f"{key}={scalar}")
+    return terms
+
+
 def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
     record: Dict[str, Any] = {
         "id": None,
@@ -1301,6 +1311,7 @@ def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
         "y": None,
         "relative": None,
         "allow_branch": False,
+        "branch_terms": [],
         "offset": False,
         "prerequisites": [],
     }
@@ -1317,6 +1328,8 @@ def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
             record["relative"] = scalar
         elif key in ("allow_branch", "offset"):
             record[key] = True
+            if key == "allow_branch" and body:
+                record["branch_terms"] = sorted(_branch_terms(body))
         elif key == "prerequisite" and body is not None:
             record["prerequisites"].append(
                 [
@@ -2555,6 +2568,13 @@ class Validator(BaseValidator):
             "Focus coordinates could not be resolved safely:",
             Severity.WARNING,
             category="focus-coordinate-unresolved",
+        )
+        self._report(
+            layout["branch_leaks"],
+            "No focus allow_branch shows a hidden branch",
+            "Focuses whose own allow_branch shows them under a hidden ancestor:",
+            Severity.WARNING,
+            category="focus-allow-branch-leak",
         )
 
     def run_validations(self):

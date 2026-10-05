@@ -193,6 +193,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   resolves focus positions in file order. Targets in another file are not checked.
 - Focus geometry (WARNING): see the
   [coordinate policy](../../tools/validation/README.md#focus-coordinate-warnings).
+- `focus-allow-branch-leak` (WARNING): a focus with its own `allow_branch` under an
+  ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
 
 ## validate_gfx_references.py
 
