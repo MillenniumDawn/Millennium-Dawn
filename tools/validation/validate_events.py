@@ -1761,14 +1761,13 @@ class Validator(BaseValidator):
         event_files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
 
         def _build() -> Dict[str, str]:
-            definitions: Dict[str, str] = {}
-            for result in self._pool_map(
-                scan_event_definition_types,
-                [(f, frozenset()) for f in event_files],
-                chunksize=20,
-            ):
-                definitions.update(result)
-            return definitions
+            return dict(
+                self._pool_flat_map(
+                    scan_event_definition_types,
+                    [(f, frozenset()) for f in event_files],
+                    chunksize=20,
+                )
+            )
 
         definitions = disk_cache.aggregate_cached(
             self.mod_path,
@@ -1828,13 +1827,13 @@ class Validator(BaseValidator):
         # Lookup pass: must scan full repo even in staged mode, mirroring
         # `_get_random_event_ids`.
         files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
-        ids: set = set()
-        for result in self._pool_map(
-            partial(scan_probability_rolled_fires, mod_path=self.mod_path),
-            [(f, frozenset()) for f in files],
-            chunksize=30,
-        ):
-            ids.update(result)
+        ids = set(
+            self._pool_flat_map(
+                partial(scan_probability_rolled_fires, mod_path=self.mod_path),
+                [(f, frozenset()) for f in files],
+                chunksize=30,
+            )
+        )
 
         self._probability_rolled_cache = ids
         return ids
@@ -2062,13 +2061,11 @@ class Validator(BaseValidator):
         gated_args = [
             (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
         ]
-        gated: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(
+        gated: List[Tuple[str, str, int]] = self._pool_flat_map(
             partial(scan_date_gated_events, mod_path=self.mod_path),
             gated_args,
             chunksize=10,
-        ):
-            gated.extend(result)
+        )
         self.log(f"  Found {len(gated)} events with a date > guard")
 
         results = []
@@ -2153,13 +2150,11 @@ class Validator(BaseValidator):
         bounded_args = [
             (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
         ]
-        bounded: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(
+        bounded: List[Tuple[str, str, int]] = self._pool_flat_map(
             partial(scan_date_bounded_events, mod_path=self.mod_path),
             bounded_args,
             chunksize=10,
-        ):
-            bounded.extend(result)
+        )
         self.log(f"  Found {len(bounded)} events with a date bound")
         if not bounded:
             self._report(

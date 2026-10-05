@@ -2101,11 +2101,7 @@ class Validator(BaseValidator):
             (f, self.canonical, self.canonical_lower, self.mod_path) for f in files
         ]
 
-        all_results = self._pool_map(validate_oob_file, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = self._pool_flat_map(validate_oob_file, args_list, chunksize=20)
 
         self._report(
             results,
@@ -2130,11 +2126,7 @@ class Validator(BaseValidator):
             (f, self.namelist_canonical, self.namelist_canonical_lower, self.mod_path)
             for f in files
         ]
-        all_results = self._pool_map(validate_namelist_file, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = self._pool_flat_map(validate_namelist_file, args_list, chunksize=20)
 
         # Namelist mismatches are reported as warnings (not errors) — many
         # legacy 00_*_names.txt files still carry vanilla-style block keys
@@ -2167,13 +2159,9 @@ class Validator(BaseValidator):
         self.log(f"  Found {len(group_keys)} division_names_group definitions")
 
         args_list = [(f, group_keys, group_keys_lower, self.mod_path) for f in files]
-        all_results = self._pool_map(
+        results = self._pool_flat_map(
             validate_oob_division_groups_file, args_list, chunksize=20
         )
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
 
         self._report(
             results,
@@ -2552,11 +2540,7 @@ class Validator(BaseValidator):
             )
             for f in files
         ]
-        all_results = self._pool_map(_check_created_units, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = self._pool_flat_map(_check_created_units, args_list, chunksize=20)
 
         if not self.missing_equipment_factor:
             self.log(
@@ -2588,11 +2572,7 @@ class Validator(BaseValidator):
             )
             for f in files
         ]
-        results = []
-        for file_results in self._pool_map(
-            _check_paradrop_file, args_list, chunksize=20
-        ):
-            results.extend(file_results)
+        results = self._pool_flat_map(_check_paradrop_file, args_list, chunksize=20)
 
         self._report(
             results,

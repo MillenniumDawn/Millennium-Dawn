@@ -213,9 +213,7 @@ class Validator(BaseValidator):
 
         self.log(f"  Found {len(cosmetic_tags)} unique has_cosmetic_tag references")
         if len(cosmetic_tags) == 0:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No cosmetic tag references found{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No cosmetic tag references found{Colors.ENDC}")
             return
 
         # Cross-reference resolution: a tag set in any file in the repo counts,
@@ -254,9 +252,7 @@ class Validator(BaseValidator):
 
         self.log(f"  Found {len(cosmetic_tags)} unique set_cosmetic_tag definitions")
         if len(cosmetic_tags) == 0:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No cosmetic tag definitions found{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No cosmetic tag definitions found{Colors.ENDC}")
             return
 
         cosmetic_file = Path(self.mod_path) / "common" / "countries" / "cosmetic.txt"
@@ -346,7 +342,7 @@ class Validator(BaseValidator):
         cosmetic_file = Path(self.mod_path) / "common" / "countries" / "cosmetic.txt"
         if not cosmetic_file.exists():
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}cosmetic.txt not found, skipping{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}cosmetic.txt not found, skipping{Colors.ENDC}",
                 "warning",
             )
             return
@@ -361,9 +357,7 @@ class Validator(BaseValidator):
 
         self.log(f"  Found {len(cosmetic_tags)} cosmetic tag color definitions")
         if len(cosmetic_tags) == 0:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No cosmetic tag colors found{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No cosmetic tag colors found{Colors.ENDC}")
             return
 
         for tag in false_positives:

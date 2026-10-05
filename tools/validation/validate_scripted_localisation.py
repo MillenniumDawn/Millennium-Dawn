@@ -434,7 +434,7 @@ class Validator(BaseValidator):
 
         if len(results) > 0:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Note: Some of these may be regular localisation keys rather than scripted localisation. Verify manually.{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Note: Some of these may be regular localisation keys rather than scripted localisation. Verify manually.{Colors.ENDC}",
                 "warning",
             )
             self._report(

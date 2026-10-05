@@ -493,13 +493,11 @@ class Validator(BaseValidator):
         self._log_section("Checking pulse on-actions for deterministic date polling...")
 
         on_actions_files = self._collect_files(["common/on_actions/**/*.txt"])
-        polls: List[Tuple[str, str, int, str]] = []
-        for result in self._pool_map(
+        polls: List[Tuple[str, str, int, str]] = self._pool_flat_map(
             _scan_date_polls_file,
             [(f, self.mod_path) for f in on_actions_files],
             chunksize=10,
-        ):
-            polls.extend(result)
+        )
 
         results = []
         for eid, block_name, line, filepath in sorted(polls, key=lambda x: x[2]):

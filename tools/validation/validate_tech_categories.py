@@ -406,9 +406,7 @@ class Validator(BaseValidator):
         )
 
         tech_files = self._collect_files([_TECH_GLOB], ignore_staged=True)
-        used: Set[str] = set()
-        for cats in self._pool_map(_tech_categories, [(f,) for f in tech_files]):
-            used.update(cats)
+        used = set(self._pool_flat_map(_tech_categories, [(f,) for f in tech_files]))
         self._report(
             [
                 (

@@ -464,7 +464,7 @@ class Validator(BaseValidator):
         text = strip_comments(_read(Path(self.mod_path) / SCRIPTED_GUI_FILE))
         if not text:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Missing {SCRIPTED_GUI_FILE} — skipping{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Missing {SCRIPTED_GUI_FILE} — skipping{Colors.ENDC}",
                 "warning",
             )
             return
@@ -491,7 +491,7 @@ class Validator(BaseValidator):
         text = strip_comments(_read(Path(self.mod_path) / SCRIPTED_TRIGGERS_FILE))
         if not text:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Missing {SCRIPTED_TRIGGERS_FILE} — skipping{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Missing {SCRIPTED_TRIGGERS_FILE} — skipping{Colors.ENDC}",
                 "warning",
             )
             return
@@ -552,7 +552,7 @@ class Validator(BaseValidator):
         if not triggers or not effects:
             missing = SCRIPTED_TRIGGERS_FILE if not triggers else SCRIPTED_EFFECTS_FILE
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Missing {missing} — skipping{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Missing {missing} — skipping{Colors.ENDC}",
                 "warning",
             )
             return

@@ -236,7 +236,7 @@ class Validator(BaseValidator):
                 return
             else:
                 self.log(
-                    f"{Colors.YELLOW if self.use_colors else ''}Warning: Provided HoI4 path does not exist: {self.hoi4_path}{Colors.ENDC if self.use_colors else ''}",
+                    f"{Colors.YELLOW}Warning: Provided HoI4 path does not exist: {self.hoi4_path}{Colors.ENDC}",
                     "warning",
                 )
                 self.hoi4_path = None
@@ -249,7 +249,7 @@ class Validator(BaseValidator):
             return
 
         self.log(
-            f"{Colors.YELLOW if self.use_colors else ''}Warning: Could not find HoI4 installation. Vanilla .gfx files will not be checked.{Colors.ENDC if self.use_colors else ''}",
+            f"{Colors.YELLOW}Warning: Could not find HoI4 installation. Vanilla .gfx files will not be checked.{Colors.ENDC}",
             "warning",
         )
         self.log("  Use --hoi4-path to specify the installation directory.")
@@ -575,17 +575,17 @@ class Validator(BaseValidator):
 
         if self.unused_count > 0:
             self.log(
-                f"\n  {Colors.YELLOW if self.use_colors else ''}Note: Unused textures may be legacy files that can be removed to reduce mod size.{Colors.ENDC if self.use_colors else ''}"
+                f"\n  {Colors.YELLOW}Note: Unused textures may be legacy files that can be removed to reduce mod size.{Colors.ENDC}"
             )
 
         if self.missing_count > 0:
             if self.hoi4_path:
                 self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}Note: Missing textures are not found in mod, vanilla textures, or vanilla .gfx files.{Colors.ENDC if self.use_colors else ''}"
+                    f"  {Colors.YELLOW}Note: Missing textures are not found in mod, vanilla textures, or vanilla .gfx files.{Colors.ENDC}"
                 )
             else:
                 self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}Note: Missing textures check is incomplete. Use --hoi4-path to check vanilla .gfx files.{Colors.ENDC if self.use_colors else ''}"
+                    f"  {Colors.YELLOW}Note: Missing textures check is incomplete. Use --hoi4-path to check vanilla .gfx files.{Colors.ENDC}"
                 )
         self.log(f"{'=' * 80}")
 
