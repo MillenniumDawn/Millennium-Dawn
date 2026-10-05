@@ -44,10 +44,17 @@ def imagemagick_available() -> bool:
     converter = load_tool_module("assets/md_art_convert.py")
     return converter.find_imagemagick("magick", "convert", "identify") is not None
 
+def prevent_commit_signing_during_tests(*args) -> tuple:
+    """Prevents git commit signing during tests."""
+    git_args = tuple(args)
+    if "pytest" in sys.modules and "commit" in args:
+        git_args += ("--no-gpg-sign",)
+    return git_args
 
 def run_git(repository, *args):
+    git_args = prevent_commit_signing_during_tests(*args)
     return subprocess.run(
-        ["git", *args],
+        ["git", *git_args],
         cwd=repository,
         check=True,
         capture_output=True,
