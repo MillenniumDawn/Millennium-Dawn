@@ -8,6 +8,7 @@ party_popularity_increase and change_relative_party_popularity follow the
 same rule (issue #5320).
 """
 
+import pytest
 from shared.suite import variable_scan
 from validate_variables import Validator, build_money_consumer_map
 
@@ -43,6 +44,10 @@ outermost_pay = {
 	outer_pay = yes
 }
 change_relative_party_popularity = {
+	if = {
+		limit = { check_variable = { party_popularity_increase > 1 } }
+		set_temp_variable = { party_popularity_increase = 1 }
+	}
 	add_to_variable = { party_pop_array^party_index = party_popularity_increase }
 }
 move_party_popularity = {
@@ -369,29 +374,49 @@ def test_move_party_popularity_does_not_consume_the_setter(tmp_path):
     assert len(_lines(tmp_path, reward, cmap)) == 1
 
 
-def test_idea_on_add_is_scanned_as_a_container(tmp_path):
+PARTY_SETTER = "set_temp_variable = { party_popularity_increase = 0.25 }"
+
+
+def _validator_rows(tmp_path, rel, text):
     _setup(tmp_path)
-    ideas_dir = tmp_path / "common" / "ideas"
-    ideas_dir.mkdir(parents=True, exist_ok=True)
-    fpath = ideas_dir / "test.txt"
-    fpath.write_text(
-        "ideas = {\n"
-        "\tcountry = {\n"
-        "\t\tTST_idea = {\n"
-        "\t\t\ton_add = {\n"
-        "\t\t\t\tset_temp_variable = { party_popularity_increase = 0.25 }\n"
-        "\t\t\t}\n"
-        "\t\t\ton_remove = {\n"
-        "\t\t\t\tchange_relative_party_popularity = yes\n"
-        "\t\t\t}\n"
-        "\t\t}\n"
-        "\t}\n"
-        "}\n",
-        encoding="utf-8",
-    )
+    fpath = tmp_path / rel
+    fpath.parent.mkdir(parents=True, exist_ok=True)
+    fpath.write_text(text, encoding="utf-8")
     v = Validator(str(tmp_path), use_colors=False, workers=1)
     v.validate_orphan_money_setters()
-    assert [(i.file, i.line) for i in v._issues] == [("common/ideas/test.txt", 5)]
+    return [(i.file, i.line) for i in v._issues]
+
+
+@pytest.mark.parametrize(
+    "rel, first, second",
+    [
+        ("common/ideas/test.txt", "on_add", "on_remove"),
+        ("common/bop/test.txt", "on_activate", "on_deactivate"),
+        ("common/scripted_guis/test.txt", "TST_a_click", "TST_a_right_click"),
+    ],
+)
+def test_effect_blocks_outside_focuses_and_events(tmp_path, rel, first, second):
+    # each block is its own execution, so neither setter sees the other's call
+    text = (
+        "outer = {\n"
+        f"\t{first} = {{\n\t\t{PARTY_SETTER}\n\t}}\n"
+        f"\t{second} = {{\n\t\t{PARTY_SETTER}\n"
+        "\t\tchange_relative_party_popularity = yes\n\t}\n"
+        f"\t{second} = {{\n\t\t{PARTY_SETTER}\n\t}}\n"
+        "}\n"
+    )
+    assert _validator_rows(tmp_path, rel, text) == [(rel, 3), (rel, 10)]
+
+
+def test_scripted_effect_body_is_a_container(tmp_path):
+    # the consumer in BASE_EFFECTS re-sets its own input and must stay clean
+    rel = "common/scripted_effects/test.txt"
+    text = (
+        f"TST_dead = {{\n\t{PARTY_SETTER}\n}}\n"
+        f"TST_applied = {{\n\t{PARTY_SETTER}\n"
+        "\tchange_relative_party_popularity = yes\n}\n"
+    )
+    assert _validator_rows(tmp_path, rel, text) == [(rel, 2)]
 
 
 def test_validator_reports_error(tmp_path):

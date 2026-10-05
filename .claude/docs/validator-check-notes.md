@@ -434,9 +434,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `orphan-money-setter` (ERROR): a `set_temp_variable` of `treasury_change`,
   `debt_change`, `int_investment_change`, or `party_popularity_increase` with no consumer
   call after it in the same effect block, or one overwritten at the same depth before
-  the call. Scans focuses, decisions, on_actions, ideas, and events. A wrapper counts
-  as a consumer only when it reads the variable before writing it, so
-  `move_party_popularity` does not. Setters in a scripted-effect body are skipped.
+  the call. Scans focuses, decisions, on_actions, ideas, balance of power, scripted
+  GUIs, scripted effects, and events. A wrapper counts as a consumer only when it reads
+  the variable before writing it, so `move_party_popularity` does not. A scripted
+  effect's body is one block, and a setter inside an effect that consumes the variable
+  itself is not reported.
 
 ## Other tools
 

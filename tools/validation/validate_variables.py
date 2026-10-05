@@ -1376,7 +1376,8 @@ _MONEY_SETTER_RE = re.compile(
 _EFFECT_CONTAINER_RE = re.compile(
     r"\b(?:completion_reward|select_effect|bypass_effect|option|immediate|"
     r"complete_effect|remove_effect|timeout_effect|cancel_effect|"
-    r"on_add|on_remove|effect_tooltip|effect)\s*=\s*\{"
+    r"on_add|on_remove|on_activate|on_deactivate|\w+_click|"
+    r"effect_tooltip|effect)\s*=\s*\{"
 )
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
 # Value-producing writers only — add_to/multiply etc. read the existing value.
@@ -1505,8 +1506,9 @@ def _scan_orphan_money_text(
     """Flag money-variable setters that are dead in their block: never consumed,
     or overwritten at the same depth before the consumer runs.
 
-    Setters outside any known effect container (loose scripted-effect bodies
-    that produce the value for their caller) are skipped.
+    In a scripted-effects file each effect body is a container too, except
+    for a setter inside an effect that consumes the variable itself. Setters
+    outside any known effect container are skipped.
     """
     setters = list(_MONEY_SETTER_RE.finditer(cleaned))
     if not setters:
@@ -1518,8 +1520,13 @@ def _scan_orphan_money_text(
         body, end = extract_block_from_text(cleaned, brace)
         if body:
             is_tooltip = cleaned.startswith("effect_tooltip", m.start())
-            spans.append((brace + 1, end, is_tooltip))
-    tooltip_spans = [(s, e) for s, e, is_tt in spans if is_tt]
+            spans.append((brace + 1, end, is_tooltip, ""))
+    if rel.replace("\\", "/").startswith("common/scripted_effects/"):
+        for m in _SCRIPTED_EFFECT_DEF_RE.finditer(cleaned):
+            body, end = extract_block_from_text(cleaned, m.end() - 1)
+            if body:
+                spans.append((m.end(), end, False, m.group(1)))
+    tooltip_spans = [(s, e) for s, e, is_tt, _ in spans if is_tt]
 
     consumer_res = {
         var: re.compile(
@@ -1533,12 +1540,14 @@ def _scan_orphan_money_text(
         holder_start = -1
         holder_end = -1
         holder_is_tooltip = False
-        for start, end, is_tt in spans:
+        holder_name = ""
+        for start, end, is_tt, name in spans:
             if start <= m.start() < end and start > holder_start:
                 holder_start = start
                 holder_end = end
                 holder_is_tooltip = is_tt
-        if holder_start < 0:
+                holder_name = name
+        if holder_start < 0 or holder_name in consumer_map[var]:
             continue
         if holder_is_tooltip:
             hits = list(consumer_res[var].finditer(cleaned, m.end(), holder_end))
@@ -2211,6 +2220,9 @@ class Validator(BaseValidator):
             "common/decisions/**/*.txt",
             "common/on_actions/**/*.txt",
             "common/ideas/**/*.txt",
+            "common/bop/**/*.txt",
+            "common/scripted_guis/**/*.txt",
+            "common/scripted_effects/**/*.txt",
             "events/**/*.txt",
         ]
         treasury_patterns = [
