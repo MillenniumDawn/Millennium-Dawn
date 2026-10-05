@@ -65,8 +65,17 @@ def test_worker_returns_empty_for_an_unreadable_file(tmp_path, worker, empty):
 
 @pytest.mark.parametrize("worker, empty", _SKIP_AWARE_WORKERS)
 def test_worker_skips_non_content_directories(tmp_path, worker, empty):
-    path = _write(tmp_path, "tools/helper.txt", "country_event = foo.1\n")
-    assert worker((path, frozenset())) == empty
+    event = (
+        "country_event = {\n"
+        "\tid = foo.1\n"
+        "\ttrigger = { date > 2005.1.1 }\n"
+        "\timmediate = { random = { chance = 5 country_event = foo.2 } }\n"
+        "}\n"
+    )
+    skipped = _write(tmp_path, "tools/helper.txt", event)
+    assert worker((skipped, frozenset())) == empty
+    read = _write(tmp_path, "events/helper.txt", event)
+    assert worker((read, frozenset())) != empty
 
 
 @pytest.mark.parametrize("section, empty", _CALL_SITE_EMPTY)
