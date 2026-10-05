@@ -1055,6 +1055,128 @@ def test_full_run_covers_orgs_policies_and_references(tmp_path, write_path):
     }
 
 
+_COVERAGE_EQUIPMENT = """
+equipments = {
+\tsmall_plane_airframe = { is_archetype = yes }
+\tsmall_plane_airframe_1 = { archetype = small_plane_airframe }
+\tmedium_plane_airframe = {
+\t\tis_archetype = yes
+\t\ttype = { test_fighter }
+\t}
+\tmedium_plane_airframe_1 = { archetype = medium_plane_airframe }
+}
+duplicate_archetypes = {
+\tsmall_plane_cas_airframe = { archetype = small_plane_airframe }
+}
+"""
+
+_COVERAGE_GROUPS = """
+mio_cat_test_medium = {
+\tequipment_type = {
+\t\tmedium_plane_airframe
+\t}
+}
+"""
+
+_COVERAGE_FILE = "history/countries/TST - Test.txt"
+
+
+def _coverage_issues(tmp_path, write_path, org_types, variant):
+    """Issues for one variant written against a TST_org listing *org_types*."""
+    write_path(
+        tmp_path,
+        f"{V.ORG_DIR}/MD_TST_organizations.txt",
+        f"TST_org = {{\n\tequipment_type = {{ {org_types} }}\n}}\n",
+    )
+    write_path(tmp_path, "common/units/equipment/MD_test.txt", _COVERAGE_EQUIPMENT)
+    write_path(tmp_path, "common/equipment_groups/mio_test.txt", _COVERAGE_GROUPS)
+    v = _validator(tmp_path)
+    v._org_bodies = v._load_org_bodies()
+    text = "create_equipment_variant = {\n" f"{variant}" "}\n"
+    v._check_design_team_coverage(
+        text, _COVERAGE_FILE, V.build_equipment_stat_index(str(tmp_path))
+    )
+    return v._issues
+
+
+def _team(variant_type, team="\tdesign_team = mio:TST_org\n"):
+    return f"\ttype = {variant_type}\n{team}"
+
+
+def test_design_team_type_outside_equipment_type_is_flagged(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "small_plane_airframe", _team("medium_plane_airframe_1")
+    )
+    assert [(i.category, i.severity, i.line) for i in issues] == [
+        ("mio-design-team-type-uncovered", "warning", 3)
+    ]
+    assert "medium_plane_airframe" in issues[0].message
+
+
+def test_design_team_type_listed_directly_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "medium_plane_airframe", _team("medium_plane_airframe")
+    )
+    assert not issues
+
+
+def test_design_team_type_covered_through_mio_cat_group_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "mio_cat_test_medium", _team("medium_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_numbered_type_listed_directly_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path,
+        write_path,
+        "medium_plane_airframe_1",
+        _team("medium_plane_airframe_1"),
+    )
+    assert not issues
+
+
+def test_design_team_type_covered_through_category_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "test_fighter", _team("medium_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_numbered_type_matches_its_archetype(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "small_plane_airframe", _team("small_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_clone_is_its_own_archetype(tmp_path, write_path):
+    org_types = "small_plane_airframe"
+    issues = _coverage_issues(
+        tmp_path, write_path, org_types, _team("small_plane_cas_airframe_1")
+    )
+    assert [i.category for i in issues] == ["mio-design-team-type-uncovered"]
+    assert "small_plane_cas_airframe" in issues[0].message
+
+
+def test_variant_without_design_team_is_not_flagged(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path,
+        write_path,
+        "small_plane_airframe",
+        _team("medium_plane_airframe_1", ""),
+    )
+    assert not issues
+
+
+def test_design_team_on_undefined_vanilla_type_is_skipped(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "small_plane_airframe", _team("fighter_equipment_1")
+    )
+    assert not issues
+
+
 def test_unreadable_and_undecodable_files_do_not_stop_the_run(tmp_path, write_path):
     _run_repo(tmp_path, write_path)
     (tmp_path / V.ORG_DIR / "broken.txt").mkdir()

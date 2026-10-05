@@ -91,7 +91,9 @@ python3 tools/run.py --list                              # see all available too
 python3 tools/run.py estimate_gdp USA --all              # run a tool by name
 python3 tools/run.py find_idea common/ideas/Greek.txt    # partial names work too
 python3 tools/run.py publish_workshop release --version 1.12.3  # pass args through
-python3 tools/run.py gfx_entry_generator                  # works on any platform
+python3 tools/run.py gfx_entry_generator                   # works on any platform
+python3 tools/balance/mio_report.py REPORT_ALL             # export an Excel MIO balance report
+python3 tools/balance/mio_report.py <equipment_archetype>  # rank MIOs for a specific archetype
 ```
 
 ### Fix changelog ordering
@@ -172,6 +174,7 @@ and targeted-b 115s. It is not a comparable baseline for this worktree.
 tools/
 ├── analysis/          Analysis, reference finders, metrics
 ├── assets/            DDS conversion, GFX generation, texture tools
+├── balance/           Balance reporting and spreadsheet analysis
 ├── generators/        Content generators (tribute ideas, focus names)
 ├── linting/           Style checkers, formatters, encoding validators
 ├── publishing/        Steam Workshop publishing
@@ -179,6 +182,7 @@ tools/
 ├── shared/            Test harness helpers and repo-anchored paths
 ├── standardization/   Auto-standardizers for focuses, events, decisions, ideas
 ├── tests/             All Python tests for tools/ (root scripts plus domain subdirs)
+├── types/             Type definitions
 ├── validation/        Content validators (events, decisions, variables, etc.)
 ├── shared_utils.py    Shared utilities (Colors, FileOpener, path helpers, arg parsers)
 ├── loc.py             Localisation utilities
