@@ -174,6 +174,19 @@ def test_shared_scan_reads_each_english_file_once_and_reports_every_category(
     assert validator.warnings_found == 6
 
 
+def test_typo_watchlist_match_is_an_error(tmp_path):
+    write_under_str(
+        tmp_path,
+        "localisation/english/a_l_english.yml",
+        'l_english:\n a: "seperate"\n',
+    )
+    validator = VL.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.validate_typo_watchlist()
+    assert [(i.severity, i.category) for i in validator._issues] == [
+        (Severity.ERROR, "loc-typo-watchlist")
+    ]
+
+
 def test_staged_selection_does_not_expand_to_other_english_files(tmp_path, monkeypatch):
     for name in ("selected", "untouched"):
         write_under_str(

@@ -9,6 +9,7 @@ synthetic hull/module fixtures.
 
 import random
 
+import pytest
 from equipment_module_slots import (
     _depth0_text,
     _iter_named_blocks,
@@ -668,6 +669,33 @@ def test_ai_validator_count_limit_is_error(tmp_path):
     assert len(issues) == 1
     assert issues[0].severity == "error"
     assert "module_light_guns_category" in issues[0].message
+
+
+@pytest.mark.parametrize(
+    "modules_body, category",
+    [
+        (
+            "\t\t\t\tgun_slot = module_test_helipad\n",
+            "EQUIPMENT VARIANT: module category not allowed in slot",
+        ),
+        (
+            "\t\t\t\tgun_slot = module_test_exact_gun\n",
+            "EQUIPMENT VARIANT: module forbidden on hull type",
+        ),
+    ],
+)
+def test_ai_validator_non_ship_slot_findings_are_errors(
+    tmp_path, modules_body, category
+):
+    issues = _variant_issues(
+        tmp_path,
+        LIMIT_HULLS,
+        "common/ai_equipment/TST_land.txt",
+        _variant("lim_tank_hull_1", modules_body),
+        Validator,
+        "EQUIPMENT VARIANT",
+    )
+    assert [(i.severity, i.category) for i in issues] == [("error", category)]
 
 
 def test_two_guns_exceed_category_count_limit():
