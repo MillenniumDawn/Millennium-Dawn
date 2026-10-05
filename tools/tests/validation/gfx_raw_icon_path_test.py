@@ -28,6 +28,13 @@ def _write(path: Path, body: str) -> None:
     path.write_text(body, encoding="utf-8")
 
 
+def _run(tmp_path):
+    _write(tmp_path / "interface" / "empty.gfx", "spriteTypes = {\n}\n")
+    validator = GfxReferenceValidator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+    return validator
+
+
 def test_quoted_and_plain_variant_icon_paths_are_flagged():
     text = (
         "create_equipment_variant = {\n"
@@ -91,7 +98,6 @@ def test_graphic_db_icons_flag_paths_and_ignore_models():
 
 
 def test_run_validations_flags_plain_variant_icon(tmp_path):
-    _write(tmp_path / "interface" / "empty.gfx", "spriteTypes = {\n}\n")
     _write(
         tmp_path / "history" / "countries" / "SOV.txt",
         "create_equipment_variant = {\n"
@@ -99,9 +105,7 @@ def test_run_validations_flags_plain_variant_icon(tmp_path):
         "\ticon = gfx/interface/technologies/SOV/AIR/Su-57.dds\n"
         "}\n",
     )
-    validator = GfxReferenceValidator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    issues = _categories(validator, "raw-icon-path")
+    issues = _categories(_run(tmp_path), "raw-icon-path")
     assert len(issues) == 1
     assert issues[0].severity == Severity.ERROR
     assert "Su-57.dds" in issues[0].message
@@ -109,7 +113,6 @@ def test_run_validations_flags_plain_variant_icon(tmp_path):
 
 
 def test_run_validations_flags_graphic_db_plain_path(tmp_path):
-    _write(tmp_path / "interface" / "empty.gfx", "spriteTypes = {\n}\n")
     _write(
         tmp_path / "gfx" / "interface" / "equipmentdesigner" / "graphic_db" / "00.txt",
         "pool = {\n"
@@ -119,16 +122,13 @@ def test_run_validations_flags_graphic_db_plain_path(tmp_path):
         "\t}\n"
         "}\n",
     )
-    validator = GfxReferenceValidator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    issues = _categories(validator, "raw-icon-path")
+    issues = _categories(_run(tmp_path), "raw-icon-path")
     assert len(issues) == 1
     assert "plain.dds" in issues[0].message
     assert "graphic_db" in issues[0].file.replace("\\", "/")
 
 
 def test_run_validations_accepts_sprite_icons(tmp_path):
-    _write(tmp_path / "interface" / "empty.gfx", "spriteTypes = {\n}\n")
     _write(
         tmp_path / "history" / "countries" / "SOV.txt",
         "create_equipment_variant = {\n"
@@ -140,6 +140,4 @@ def test_run_validations_accepts_sprite_icons(tmp_path):
         tmp_path / "gfx" / "interface" / "equipmentdesigner" / "graphic_db" / "00.txt",
         "pool = {\n\ticons = {\n\t\tGFX_SOV_AIR_Su_57\n\t}\n}\n",
     )
-    validator = GfxReferenceValidator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    assert _categories(validator, "raw-icon-path") == []
+    assert _categories(_run(tmp_path), "raw-icon-path") == []

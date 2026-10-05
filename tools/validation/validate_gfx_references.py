@@ -156,7 +156,7 @@ def _quoted_or_bare(match: re.Match) -> str:
 
 
 def _is_raw_icon_path(value: str) -> bool:
-    return bool(value) and _RAW_ICON_PATH.search(value) is not None
+    return _RAW_ICON_PATH.search(value) is not None
 
 
 # Property names are case-insensitive; quotes are optional. GFX_ stays exact.
@@ -752,38 +752,31 @@ def sprite_defs_from_gfx_text(raw: str) -> List[Tuple[str, str, int]]:
     return defs
 
 
-def raw_variant_icon_paths(text: str) -> List[Tuple[str, int]]:
-    """Return (value, line) for raw `icon =` paths in create_equipment_variant."""
+def _raw_paths_in_blocks(
+    text: str, opener: re.Pattern, token_re: re.Pattern
+) -> List[Tuple[str, int]]:
     stripped = _strip_comments(text)
     offsets = compute_line_offsets(stripped)
     hits: List[Tuple[str, int]] = []
-    for m in _CREATE_EQUIPMENT_VARIANT.finditer(stripped):
+    for m in opener.finditer(stripped):
         body, end = extract_block_from_text(stripped, m.end() - 1)
         if end == -1:
             continue
-        body_start = stripped.find("{", m.end() - 1) + 1
-        for im in _VARIANT_ICON.finditer(body):
-            value = _quoted_or_bare(im)
+        for tm in token_re.finditer(body):
+            value = _quoted_or_bare(tm)
             if _is_raw_icon_path(value):
-                hits.append((value, line_for_offset(offsets, body_start + im.start())))
+                hits.append((value, line_for_offset(offsets, m.end() + tm.start())))
     return hits
+
+
+def raw_variant_icon_paths(text: str) -> List[Tuple[str, int]]:
+    """Return (value, line) for raw `icon =` paths in create_equipment_variant."""
+    return _raw_paths_in_blocks(text, _CREATE_EQUIPMENT_VARIANT, _VARIANT_ICON)
 
 
 def raw_graphic_db_icon_paths(text: str) -> List[Tuple[str, int]]:
     """Return (value, line) for raw texture paths in `icons = { }` blocks."""
-    stripped = _strip_comments(text)
-    offsets = compute_line_offsets(stripped)
-    hits: List[Tuple[str, int]] = []
-    for m in _ICONS_BLOCK.finditer(stripped):
-        body, end = extract_block_from_text(stripped, m.end() - 1)
-        if end == -1:
-            continue
-        body_start = stripped.find("{", m.end() - 1) + 1
-        for tm in _BLOCK_TOKEN.finditer(body):
-            value = _quoted_or_bare(tm)
-            if _is_raw_icon_path(value):
-                hits.append((value, line_for_offset(offsets, body_start + tm.start())))
-    return hits
+    return _raw_paths_in_blocks(text, _ICONS_BLOCK, _BLOCK_TOKEN)
 
 
 def font_names_from_gfx_text(raw: str) -> Set[str]:
@@ -1738,18 +1731,13 @@ class Validator(BaseValidator):
         )
         if not self.staged_only:
             return files
-        staged_rel = {
-            os.path.relpath(
-                f if os.path.isabs(f) else os.path.join(self.mod_path, f),
-                self.mod_path,
-            ).replace("\\", "/")
-            for f in (self.staged_files or [])
-        }
-        return [
-            f
-            for f in files
-            if os.path.relpath(f, self.mod_path).replace("\\", "/") in staged_rel
-        ]
+
+        def _rel(path: str) -> str:
+            full = path if os.path.isabs(path) else os.path.join(self.mod_path, path)
+            return os.path.relpath(full, self.mod_path).replace("\\", "/")
+
+        staged_rel = {_rel(f) for f in (self.staged_files or [])}
+        return [f for f in files if _rel(f) in staged_rel]
 
     def _check_raw_icon_paths(self) -> None:
         self._log_section("Checking for raw texture paths in unit icons")

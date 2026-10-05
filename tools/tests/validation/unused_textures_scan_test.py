@@ -42,8 +42,8 @@ def _write_sprite(tmp_path, texture, quoted=True, write_texture=True):
     )
 
 
-def _run(tmp_path, **kwargs):
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1, **kwargs)
+def _run(tmp_path):
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     validator.run_validations()
     return validator
 

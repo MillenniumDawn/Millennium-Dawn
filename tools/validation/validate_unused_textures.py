@@ -43,6 +43,14 @@ _DOUBLE_SLASH = re.compile(r"/{2,}")
 _TEXT_ICON_REF = re.compile(r"£([A-Za-z0-9_.]+)")
 _SPRITE_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
 
+
+def _normalize_texture_path(texture_path: str) -> str:
+    texture_path = texture_path.replace("\\", "/").lstrip("/")
+    while "//" in texture_path:
+        texture_path = texture_path.replace("//", "/")
+    return texture_path
+
+
 TEXTURE_EXTENSIONS = [".dds", ".tga", ".png"]
 
 EXTRA_SKIP_PATTERNS = ["resources", "loadingscreens"]
@@ -113,9 +121,7 @@ def process_gfx_file(filename: str) -> Tuple[Set[str], Set[str]]:
         )
 
         def _add(texture_path: str) -> None:
-            texture_path = texture_path.replace("\\", "/").lstrip("/")
-            while "//" in texture_path:
-                texture_path = texture_path.replace("//", "/")
+            texture_path = _normalize_texture_path(texture_path)
             raw_references.add(texture_path)
             if texture_path in texture_files:
                 referenced_textures.add(texture_path)
@@ -161,10 +167,7 @@ def _sprite_name_to_texture(gfx_files: List[str]) -> Dict[str, str]:
             tf = _GFX_TEXTUREFILE.search(block)
             if not (nm and tf):
                 continue
-            texture_path = _quoted_or_bare(tf).replace("\\", "/").lstrip("/")
-            while "//" in texture_path:
-                texture_path = texture_path.replace("//", "/")
-            mapping[nm.group(1)] = texture_path
+            mapping[nm.group(1)] = _normalize_texture_path(_quoted_or_bare(tf))
     return mapping
 
 
