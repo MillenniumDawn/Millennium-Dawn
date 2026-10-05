@@ -76,12 +76,15 @@ def test_call_site_scan_is_empty_for_unreadable_and_ignored_files(
     tracked = frozenset({"foo.1"})
     gone = tmp_path / "events" / "gone.txt"
     assert call_site_scan(gone, section, tmp_path, tracked) == empty
-    skipped = _write(
-        tmp_path,
-        "tools/helper.txt",
-        "every_country = { country_event = { id = foo.1 } }\n",
+    calls = (
+        "every_country = { country_event = { id = foo.1 } }\n"
+        "country_event { id = foo.2 }\n"
+        "country_event = dyn.[EVENT_ID]\n"
     )
+    skipped = _write(tmp_path, "tools/helper.txt", calls)
     assert call_site_scan(skipped, section, tmp_path, tracked) == empty
+    read = _write(tmp_path, "common/helper.txt", calls)
+    assert call_site_scan(read, section, tmp_path, tracked) != empty
 
 
 def test_picture_worker_skips_unreadable_and_ignored_files(tmp_path):
@@ -326,11 +329,10 @@ def test_event_fire_views_share_typed_scan(tmp_path, monkeypatch):
     monkeypatch.setattr(V, "_scan_typed_fires_text", wrapped)
     v = _validator(tmp_path)
     fires = v._get_event_fires()
-    typed_fires = v._get_typed_event_fires()
+    typed_fires = v._get_shared_call_site_scan()["typed"]
 
     assert calls == [str(tmp_path / "common" / "f.txt")]
     assert fires is v._get_event_fires()
-    assert typed_fires is v._get_typed_event_fires()
     assert fires == [(eid, filename, line) for eid, _, filename, line in typed_fires]
     assert [f[0] for f in fires] == ["foo.1"]
     assert v._rel_posix(str(tmp_path / "common" / "f.txt")) == "common/f.txt"

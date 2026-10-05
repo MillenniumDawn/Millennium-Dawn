@@ -1382,7 +1382,6 @@ class Validator(BaseValidator):
         self._fire_scan_args_cache: Optional[List[Tuple[str, frozenset]]] = None
         self._fires_cache: Optional[List[Tuple[str, str, int]]] = None
         self._fire_sources_cache: Optional[Dict[str, Set[str]]] = None
-        self._typed_fires_cache: Optional[List[Tuple[str, str, str, int]]] = None
         self._definition_types_cache: Optional[Dict[str, str]] = None
         self._full_call_site_scan_cache: Optional[bool] = None
 
@@ -1611,13 +1610,6 @@ class Validator(BaseValidator):
                 sources.setdefault(eid, set()).add(rels[filename])
             self._fire_sources_cache = sources
         return self._fire_sources_cache
-
-    def _get_typed_event_fires(self) -> List[Tuple[str, str, str, int]]:
-        """Every literal event fire with its call keyword."""
-        if self._typed_fires_cache is not None:
-            return self._typed_fires_cache
-        self._typed_fires_cache = list(self._get_shared_call_site_scan()["typed"])
-        return self._typed_fires_cache
 
     def _get_event_definition_types(self) -> Dict[str, str]:
         """Return event declaration keywords from the full events tree."""

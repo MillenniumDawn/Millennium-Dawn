@@ -907,11 +907,10 @@ def _scan_shared_yml_file(args) -> Tuple:
 
     Reads the file once and shares the comment-stripped text across the
     brackets, syntax, mandatory, typo, and prose scans instead of one read
-    plus strip pass per check. Each scan calls the same ``_scan_*_text``
-    helper its standalone worker uses, so findings are unchanged. Variable
-    references scan the raw lines and substitution keys are harvested from
-    the same stripped text; the syntax color exemption resolves parent-side
-    once the repo-wide substitution set is known.
+    plus strip pass per check. Variable references scan the raw lines and
+    substitution keys are harvested from the same stripped text; the syntax
+    color exemption resolves parent-side once the repo-wide substitution set
+    is known.
     Returns (brackets, syntax_pairs, mandatory, typos, prose, var_refs, subst).
     """
     filename, valid_colors = args
@@ -1135,25 +1134,6 @@ class Validator(BaseValidator):
             ["localisation/english/**/*.yml"],
             extra_skip=functools.partial(_should_skip, mod_path=self.mod_path),
         )
-
-    def _collect_substitution_keys(self, yml_files: List[str]) -> frozenset:
-        """Return loc keys referenced via $KEY$ string interpolation.
-
-        These keys intentionally split § color codes across multiple values
-        (e.g. `gip` ends with §Y and `gis` supplies §!) so the per-key
-        §-balance check produces false positives. Caller skips that check
-        for any key in this set.
-        """
-        keys: set = set()
-        for filepath in yml_files:
-            try:
-                text = FileOpener.open_text_file(
-                    filepath, lowercase=False, strip_comments_flag=True
-                )
-            except Exception:
-                continue
-            keys.update(_SUBST_KEY_RE.findall(text))
-        return frozenset(keys)
 
     def _get_shared_yml_scan(self) -> dict:
         """Run every yml check in one pool pass over the yml file set.

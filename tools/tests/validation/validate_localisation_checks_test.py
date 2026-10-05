@@ -266,13 +266,6 @@ def test_skipped_file_without_the_english_header_is_ignored(tmp_path):
     assert VL._get_skipped_loc_keys(str(tmp_path)) == set()
 
 
-def test_substitution_key_scan_tolerates_an_unreadable_file(tmp_path):
-    good = _english(tmp_path, "subst_l_english.yml", 'l_english:\n A:0 "$gip$"\n')
-    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    keys = validator._collect_substitution_keys([str(tmp_path / "gone.yml"), good])
-    assert keys == frozenset({"gip"})
-
-
 # --- add_resistance_target tooltips -----------------------------------------
 
 

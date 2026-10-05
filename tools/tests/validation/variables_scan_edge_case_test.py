@@ -16,11 +16,6 @@ from shared.suite import variable_scan
 from shared.suite import write_text as _write
 
 
-def _skipped(tmp_path, name="src.txt"):
-    """A path validate_variables must never open (gfx/ is not game script)."""
-    return _write(tmp_path / "gfx" / name, "set_country_flag = TST_x\n")
-
-
 def _unreadable(tmp_path, name="src.txt"):
     """A directory where a .txt is expected — opening it raises."""
     path = tmp_path / name
@@ -48,17 +43,6 @@ def test_flag_scan_collects_set_used_and_cleared(tmp_path):
     assert set(set_paths) == {"TST_set_flag"}
     assert set(used_paths) == {"TST_read_flag"}
     assert set(cleared_paths) == {"TST_cleared_flag"}
-
-
-def test_flag_scan_skips_non_script_directories(tmp_path):
-    path = _skipped(tmp_path)
-    assert V.process_file_for_all_flags(
-        (str(path), False, "country", str(tmp_path))
-    ) == (
-        {},
-        {},
-        {},
-    )
 
 
 def test_flag_scan_returns_nothing_for_an_empty_file(tmp_path):
@@ -123,7 +107,7 @@ def test_dynamic_flag_matcher_only_expands_scope_substitutions():
     assert not patterns[0].match("accords_lowercase_left")
 
 
-# --- shared scan on paths it must not or cannot read ------------------------
+# --- shared scan on a path it cannot read -----------------------------------
 
 _SHARED_SECTION_EMPTY = {
     "math": [],
@@ -140,11 +124,8 @@ _SHARED_SECTION_EMPTY = {
 
 
 @pytest.mark.parametrize("section, empty", _SHARED_SECTION_EMPTY.items())
-@pytest.mark.parametrize("make_path", [_skipped, _unreadable])
-def test_shared_scan_is_empty_for_skipped_and_unreadable_paths(
-    tmp_path, make_path, section, empty
-):
-    assert variable_scan(make_path(tmp_path), section, tmp_path) == empty
+def test_shared_scan_is_empty_for_an_unreadable_path(tmp_path, section, empty):
+    assert variable_scan(_unreadable(tmp_path), section, tmp_path) == empty
 
 
 # --- brace matching --------------------------------------------------------
@@ -168,14 +149,6 @@ def test_clamp_without_a_max_is_not_a_range(tmp_path):
     found, _temp, _persistent = V.collect_clamp_ranges((str(path), str(tmp_path)))
 
     assert found == [("TST_full", 0.0, 100.0)]
-
-
-def test_clamp_harvest_skips_non_script_directories(tmp_path):
-    assert V.collect_clamp_ranges((str(_skipped(tmp_path)), str(tmp_path))) == (
-        [],
-        [],
-        [],
-    )
 
 
 def test_clamp_harvest_survives_an_unreadable_path(tmp_path):
@@ -455,16 +428,6 @@ def test_tag_alias_file_without_a_global_target_contributes_nothing(tmp_path):
     )
 
 
-def test_event_target_scan_skips_non_script_directories(tmp_path):
-    assert V.process_file_for_all_targets(
-        (str(_skipped(tmp_path)), False, str(tmp_path))
-    ) == (
-        {},
-        {},
-        {},
-    )
-
-
 def test_event_target_scan_returns_nothing_for_an_empty_file(tmp_path):
     path = _write(tmp_path / "events" / "empty.txt", "")
     assert V.process_file_for_all_targets((str(path), False, str(tmp_path))) == (
@@ -491,13 +454,6 @@ def test_localisation_without_a_getter_reference_matches_nothing(tmp_path):
         'l_english:\n TST_key:0 "plain text"\n',
     )
     assert V._scan_targets_in_loc((str(path), ("TST_shown",))) == set()
-
-
-def test_localisation_scan_skips_non_script_directories(tmp_path):
-    path = _write(
-        tmp_path / "gfx" / "tst_l_english.yml", 'l_english:\n a:0 "[x.GetName]"\n'
-    )
-    assert V._scan_targets_in_loc((str(path), ("x",))) == set()
 
 
 def test_localisation_scan_finds_every_reference_form_outside_comments(tmp_path):
@@ -724,6 +680,11 @@ _SKIP_RULE_CASES = {
         "c = {\n\td = {\n\t\tavailable = { check_variable = { TST_v > 5 } }\n\t}\n}\n",
         lambda f, m: variable_scan(f, "available", m),
     ),
+    "available flags": (
+        "common/decisions/m.txt",
+        "d = {\n\tavailable = {\n\t\thas_country_flag = TST_flag\n\t}\n}\n",
+        lambda f, m: variable_scan(f, "available_flags", m),
+    ),
     "scripted trigger calls": (
         "common/decisions/k.txt",
         "c = {\n\td = {\n\t\tavailable = { TST_border = yes }\n\t}\n}\n",
@@ -756,3 +717,13 @@ def test_workers_apply_skip_rules_relative_to_the_mod_root(
     path = _write(mod / rel, content)
 
     assert scan(str(path), str(mod))
+
+
+@pytest.mark.parametrize(
+    "rel, content, scan", _SKIP_RULE_CASES.values(), ids=_SKIP_RULE_CASES.keys()
+)
+def test_workers_skip_non_script_directories(tmp_path, rel, content, scan):
+    """Content the test above shows yields a result once it is read."""
+    path = _write(tmp_path / "gfx" / os.path.basename(rel), content)
+
+    assert not scan(str(path), str(tmp_path))

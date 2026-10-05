@@ -86,10 +86,9 @@ def test_definition_and_fire_types_are_retained(tmp_path):
 
 
 def test_type_mismatch_report_keeps_file_and_line(tmp_path):
-    caller = _write(tmp_path, "common/f.txt", "country_event = foo.1\n")
+    _write(tmp_path, "common/f.txt", "country_event = foo.1\n")
     validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     validator._definition_types_cache = {"foo.1": "news_event"}
-    validator._typed_fires_cache = [("foo.1", "country_event", caller, 1)]
 
     validator.validate_event_fire_types()
 
