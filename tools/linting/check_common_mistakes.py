@@ -250,9 +250,12 @@ _RE_LOG_EVENT_EXECUTED_TOKEN = re.compile(
     r'log\s*=\s*"[^"]*\]:\s*([\w.]+)\s+(?:option\s+)?executed',
     re.IGNORECASE,
 )
-# The dotted id alone at the end of the string: "[This.GetName]: tag_ns.N.a".
+# A bare event id at the end of the string needs a numeric id segment. Event
+# namespaces can end in digits (e.g. `md4` and `CZE_Army_2000`), but a token in
+# the version-like `v1.2` form is not an event id.
 _RE_LOG_EVENT_BARE_TOKEN = re.compile(
-    r'log\s*=\s*"[^"]*\]:\s*([A-Za-z_]\w*(?:\.\w+)+)"'
+    r'log\s*=\s*"[^"]*\]:\s*((?![vV]\d+\.\d+(?:\.[A-Za-z]\w*)?\")'
+    r'[A-Za-z_]\w*\.\d+(?:\.[A-Za-z]\w*)?)"'
 )
 _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
 _RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")

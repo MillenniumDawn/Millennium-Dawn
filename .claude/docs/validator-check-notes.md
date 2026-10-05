@@ -155,10 +155,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   effects. `tools/linting/fix_event_option_logs.py` shares the detection and deletes the
   lines.
 - `event-option-log-id` (ERROR): an option log that cites another option's id, in the
-  `Event <id>` form, the canonical `<id> executed` form, or a dotted id starting with
-  a letter or underscore alone at the end of the string. Numeric values such as dates
-  are ignored. The option name is read at its own depth, so a `name =` inside an effect
-  does not count.
+  `Event <id>` form, the canonical `<id> executed` form, or a bare event id ending in
+  a numeric id segment and optional letter-led suffix. Namespaces may end in digits;
+  version-like `v1.2` and dotted scopes such as `ROOT.capital` are ignored.
+  The option name is read at its own depth, so a `name =` inside an effect does not count.
   `tools/linting/fix_log_ids.py` shares the detection and rewrites the token. Exempt
   option names live in `validation_config.json` `option_log_id_exempt`.
 - `event-ai-chance-ignores-cost` (WARNING, off by default, `--check-ai-chance-costs`,

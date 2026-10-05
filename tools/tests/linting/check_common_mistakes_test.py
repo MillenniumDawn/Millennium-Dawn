@@ -2605,6 +2605,39 @@ assert_finds(
     "numeric dotted log ending not treated as an event id",
 )
 
+# Dotted scope and version tokens are not event ids -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.11\n",
+        "\toption = {\n",
+        "\t\tname = tst.11.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: ROOT.capital"\n',
+        '\t\tlog = "[GetDateText]: [This.GetName]: v1.2"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "non-event dotted log endings not treated as event ids",
+)
+
+# Event namespaces can end in digits; require the middle segment to be numeric.
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.12\n",
+        "\toption = {\n",
+        "\t\tname = tst.12.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: CZE_Army_2000.01"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "numeric namespace suffix does not hide a mismatched event id",
+)
+
 
 # 15d. hidden_trigger inside custom_trigger_tooltip (Check E1)
 

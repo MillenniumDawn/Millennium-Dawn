@@ -190,7 +190,30 @@ def test_apply_rewrites_event_executed_log_token(tmp_path):
     assert "tst.1.b executed" in body
 
 
-def test_apply_does_not_rewrite_numeric_dotted_log_ending(tmp_path):
+def test_apply_rewrites_bare_event_id_with_numeric_namespace_suffix(tmp_path):
+    from fix_log_ids import fix_file
+
+    event = tmp_path / "events/numeric-namespace.txt"
+    _write(
+        event,
+        (
+            "country_event = {\n"
+            "    id = tst.1\n"
+            "    option = {\n"
+            "        name = tst.1.b\n"
+            '        log = "[GetDateText]: [This.GetName]: CZE_Army_2000.01"\n'
+            "    }\n"
+            "}\n"
+        ),
+    )
+    _, count = fix_file(str(event))
+    assert count == 1
+    body = event.read_text(encoding="utf-8")
+    assert "CZE_Army_2000.01" not in body
+    assert "tst.1.b" in body
+
+
+def test_apply_does_not_rewrite_non_event_dotted_log_endings(tmp_path):
     from fix_log_ids import fix_file
 
     event = tmp_path / "events/date.txt"
@@ -200,6 +223,8 @@ def test_apply_does_not_rewrite_numeric_dotted_log_ending(tmp_path):
         "    option = {\n"
         "        name = tst.1.a\n"
         '        log = "[GetDateText]: [This.GetName]: 2025.5"\n'
+        '        log = "[GetDateText]: [This.GetName]: ROOT.capital"\n'
+        '        log = "[GetDateText]: [This.GetName]: v1.2"\n'
         "        add_political_power = 10\n"
         "    }\n"
         "}\n"
