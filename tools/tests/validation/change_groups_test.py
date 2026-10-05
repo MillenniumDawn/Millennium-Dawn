@@ -48,7 +48,7 @@ def test_validation_config_change_requests_focus_style_scan():
 
 
 def test_non_validation_tool_change_skips_full_suite():
-    groups = change_groups.classify(["tools/assets/dds_compression_audit.py"])
+    groups = change_groups.classify(["tools/assets/resize_decision_icons.py"])
 
     assert groups["full_suite"] is False
     assert groups["tools"] is True

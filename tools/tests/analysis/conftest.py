@@ -190,18 +190,3 @@ def import_pre_place(import_estimate_gdp, monkeypatch, mini_repo: Path):
         mod, "COMPOSITE_SEED_CSV", str(mini_repo / "seeds.csv"), raising=False
     )
     return mod
-
-
-@pytest.fixture
-def import_redistribute(import_estimate_gdp, monkeypatch, mini_repo: Path):
-    """Import tools.analysis.redistribute_productivity with STATES_DIR redirected."""
-    import importlib
-
-    tools_dir = str(REPO_ROOT / "tools" / "analysis")
-    monkeypatch.syspath_prepend(tools_dir)
-    sys.modules.pop("redistribute_productivity", None)
-    mod = importlib.import_module("redistribute_productivity")
-    monkeypatch.setattr(
-        mod, "STATES_DIR", str(mini_repo / "history" / "states"), raising=False
-    )
-    return mod

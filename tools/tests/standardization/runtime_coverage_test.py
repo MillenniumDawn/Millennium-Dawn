@@ -4,7 +4,6 @@ import argparse
 import sys
 from pathlib import Path
 
-import cleanup_effect_tooltip as effect_tooltip
 import cleanup_or
 import pytest
 import standardize_focus_tree as focus_tree
@@ -40,56 +39,6 @@ def _write(path: Path, text: str, *, encoding: str = "utf-8") -> None:
 def _read(path: Path, *, encoding: str = "utf-8") -> str:
     with open(path, "r", encoding=encoding, newline="") as handle:
         return handle.read()
-
-
-def test_effect_tooltip_check_inline_and_idempotence(tmp_path, capsys):
-    source = tmp_path / "effects.txt"
-    original = """root = {
-\teffect_tooltip = { custom_effect_tooltip = one custom_effect_tooltip = two }
-\tnested = { effect_tooltip = { custom_effect_tooltip = embedded } } # keep
-\teffect_tooltip = {
-\t\tcustom_effect_tooltip = three
-\t}
-\teffect_tooltip = { add_stability = 0.1 }
-}
-"""
-    _write(source, original)
-
-    issues = effect_tooltip.find_redundant_effect_tooltip_wrappers(
-        original.splitlines(keepends=True)
-    )
-    assert [line for line, _message in issues] == [2, 3, 4]
-
-    effect_tooltip.main([str(source)], check_only=True)
-    assert _read(source) == original
-    assert "Would collapse 3" in capsys.readouterr().out
-
-    assert effect_tooltip.main([str(source)]) == 3
-    output = _read(source)
-    assert output.count("custom_effect_tooltip = one") == 1
-    assert output.count("custom_effect_tooltip = two") == 1
-    assert "nested = { custom_effect_tooltip = embedded } # keep" in output
-    assert "custom_effect_tooltip = three" in output
-    assert "add_stability" in output
-    assert effect_tooltip.process_file(str(source)) == 0
-    assert _read(source) == output
-
-
-def test_effect_tooltip_malformed_and_decode_errors(tmp_path, capsys):
-    assert effect_tooltip._custom_tooltip_keys("") is None
-    assert effect_tooltip._custom_tooltip_keys("custom_effect_tooltip = { x }") is None
-    assert effect_tooltip._custom_tooltip_keys("# custom_effect_tooltip = x") is None
-    assert effect_tooltip._custom_tooltip_keys("custom_effect_tooltip = x") == ["x"]
-
-    line = 'x = { effect_tooltip = { custom_effect_tooltip = x } } # "# not code"\n'
-    fixed, count = effect_tooltip._fix_inline_line(line)
-    assert count == 1
-    assert fixed.endswith('# "# not code"\n')
-
-    invalid = tmp_path / "invalid.txt"
-    invalid.write_bytes(b"effect_tooltip = { custom_effect_tooltip = x }\n\xff")
-    assert effect_tooltip.process_file(str(invalid)) == 0
-    assert "undecodable UTF-8" in capsys.readouterr().err
 
 
 def test_cleanup_or_nested_context_detection_and_idempotence(tmp_path):
