@@ -6,9 +6,14 @@ and never used there is a dead setter: the value never reaches the effect
 parameter consumes it, with or without a contract of its own.
 """
 
+from pathlib import Path
+
 import pytest
 import validate_scripted_params as vsp
+from shared.suite import run_validator
 from shared.suite import write_text as _write
+
+ROOT = Path(__file__).resolve().parents[3]
 
 EFFECTS = """# Parameters:
 # - treasury_change: amount
@@ -38,9 +43,24 @@ read_then_reset = {
 	add_to_variable = { TST_total = treasury_change }
 	set_temp_variable = { treasury_change = 0 }
 }
+gated_write_wrapper = {
+	if = {
+		limit = { has_war = yes }
+		set_temp_variable = { treasury_change = 0 }
+	}
+	modify_treasury_effect = yes
+}
 overwriting_wrapper = {
 	set_temp_variable = { treasury_change = -5 }
 	modify_treasury_effect = yes
+}
+write_then_read = {
+	set_temp_variable = { var = treasury_change value = -5 }
+	add_to_variable = { treasury = treasury_change }
+}
+commented_reader = {
+	# add_to_variable = { treasury = treasury_change }
+	add_stability = 0.01
 }
 random_producer = {
 	set_temp_variable_to_random = {
@@ -85,8 +105,7 @@ def _issues(tmp_path, body, rel="events/test.txt"):
     _write(tmp_path / "common" / "scripted_effects" / "effects.txt", EFFECTS)
     _write(tmp_path / "common" / "scripted_triggers" / "triggers.txt", TRIGGERS)
     _write(tmp_path / rel, body)
-    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
+    validator = run_validator(vsp.Validator, tmp_path)
     return [i for i in validator._issues if i.category == "orphan-param-setter"]
 
 
@@ -115,7 +134,11 @@ def test_dead_setter_is_an_error_naming_the_declaring_effect(tmp_path):
         # a write that reads the parameter folds the caller's value forward
         ("negating_wrapper", False),
         ("read_then_reset", False),
+        # a write inside a branch may not run
+        ("gated_write_wrapper", False),
         ("overwriting_wrapper", True),
+        ("write_then_read", True),
+        ("commented_reader", True),
         # set_temp_variable_to_random produces its own value (ct_ai_seize_assets)
         ("random_producer", True),
         ("modify_debt_effect", True),
@@ -139,7 +162,35 @@ def test_setter_overwritten_before_use_is_dead(tmp_path):
     assert _findings(tmp_path, body) == [(4, "overwritten")]
 
 
+_DEAD_FORMS = {
+    "long form": "set_temp_variable = { var = treasury_change value = -10 }",
+    "add_to": "add_to_temp_variable = { treasury_change = -10 }",
+    "subtract_from": "subtract_from_temp_variable = { treasury_change = 10 }",
+}
+
+
+@pytest.mark.parametrize("setter", _DEAD_FORMS.values(), ids=_DEAD_FORMS.keys())
+def test_every_form_that_hands_over_a_value_is_a_setter(tmp_path, setter):
+    assert _findings(tmp_path, _option(setter)) == [(4, "never")]
+    assert _findings(tmp_path, _option(setter, PAY)) == []
+
+
+def test_long_form_write_overwrites_an_earlier_setter(tmp_path):
+    body = _option(
+        SET, "set_temp_variable = { var = treasury_change value = -20 }", PAY
+    )
+    assert _findings(tmp_path, body) == [(4, "overwritten")]
+
+
 _NOT_CLOBBERS = {
+    "used before the rewrite": (
+        SET,
+        PAY,
+        "set_temp_variable = { treasury_change = -20 }",
+        PAY,
+    ),
+    # Sweden shape: the cost is built up, then charged once
+    "accumulated": (SET, "add_to_temp_variable = { treasury_change = -3 }", PAY),
     "if and else arms": (
         "if = {",
         "\tlimit = { has_war = yes }",
@@ -181,6 +232,8 @@ _USES = {
     "check": ("if = { limit = { check_variable = { treasury_change < 0 } } }", False),
     "changing it": ("multiply_temp_variable = { treasury_change = 2 }", True),
     "clamping it": ("clamp_temp_variable = { var = treasury_change min = 0 }", True),
+    "commented-out call": ("# modify_treasury_effect = yes", True),
+    "quoted call": ('log = "modify_treasury_effect = yes treasury_change"', True),
 }
 
 
@@ -265,33 +318,43 @@ def test_use_in_a_sibling_option_does_not_count(tmp_path):
     assert _findings(tmp_path, body) == [(4, "never")]
 
 
-@pytest.mark.parametrize(
-    "rel, first, second",
-    [
-        ("common/national_focus/test.txt", "completion_reward", "bypass_effect"),
-        (
-            "common/national_focus/joint.txt",
-            "completion_reward_joint_originator",
-            "completion_reward_joint_member",
-        ),
-        ("common/decisions/test.txt", "remove_effect", "cancel_effect"),
-        ("common/operations/test.txt", "on_complete", "outcome_extra_execute"),
-        ("common/ideas/test.txt", "on_add", "on_remove"),
-        ("common/bop/test.txt", "on_activate", "on_deactivate"),
-        ("common/scripted_guis/test.txt", "TST_a_click", "TST_a_right_click"),
-    ],
-)
-def test_effect_blocks_in_every_script_tree(tmp_path, rel, first, second):
-    # each block is its own execution, so neither setter sees the other's call
+_BLOCKS = [
+    "completion_reward",
+    "completion_reward_joint_originator",
+    "completion_reward_joint_member",
+    "select_effect",
+    "bypass_effect",
+    "immediate",
+    "option",
+    "complete_effect",
+    "remove_effect",
+    "timeout_effect",
+    "cancel_effect",
+    "effect",
+    "on_add",
+    "on_remove",
+    "on_activate",
+    "on_deactivate",
+    "on_complete",
+    "outcome_extra_execute",
+]
+
+
+def test_block_list_names_every_effect_block_keyword():
+    assert set(_BLOCKS) == vsp.EFFECT_BLOCK_KEYWORDS
+
+
+@pytest.mark.parametrize("block", [*_BLOCKS, "TST_a_click", "TST_a_right_click"])
+def test_each_effect_block_is_its_own_execution(tmp_path, block):
+    # the first setter cannot see the call in the sibling block
     body = (
         "outer = {\n"
-        f"\t{first} = {{\n\t\t{PARTY_SET}\n\t}}\n"
-        f"\t{second} = {{\n\t\t{PARTY_SET}\n"
+        f"\t{block} = {{\n\t\t{PARTY_SET}\n\t}}\n"
+        f"\t{block} = {{\n\t\t{PARTY_SET}\n"
         "\t\tchange_relative_party_popularity = yes\n\t}\n"
-        f"\t{second} = {{\n\t\t{PARTY_SET}\n\t}}\n"
         "}\n"
     )
-    assert _findings(tmp_path, body, rel) == [(3, "never"), (10, "never")]
+    assert _findings(tmp_path, body, "common/ideas/test.txt") == [(3, "never")]
 
 
 def test_second_party_setup_overwrites_the_first(tmp_path):
@@ -310,3 +373,32 @@ def test_move_party_popularity_does_not_consume_the_setter(tmp_path):
     # it writes party_popularity_increase itself, so the caller's value is lost
     body = _option(PARTY_SET, "move_party_popularity = yes")
     assert _findings(tmp_path, body) == [(4, "never")]
+
+
+_BUDGET = "common/scripted_effects/00_budget_effects.txt"
+_POLITICS = "common/scripted_effects/00_MD_politicsview_scripted_effects.txt"
+
+
+@pytest.mark.parametrize(
+    "rel, effect, required, optional",
+    [
+        (_BUDGET, "modify_treasury_effect", ["treasury_change"], []),
+        (_BUDGET, "modify_debt_effect", ["debt_change"], []),
+        (
+            _BUDGET,
+            "modify_international_investment_effect",
+            ["int_investment_change"],
+            [],
+        ),
+        (
+            _POLITICS,
+            "change_relative_party_popularity",
+            [],
+            ["party_index", "party_popularity_increase", "temp_outlook_increase"],
+        ),
+    ],
+)
+def test_game_file_still_declares_the_contract(rel, effect, required, optional):
+    # the contract is a comment block, so a stray edit can switch the check off
+    contracts = vsp._parse_effect_contracts_from_file(str(ROOT / rel))
+    assert contracts[effect] == {"required": required, "optional": optional}

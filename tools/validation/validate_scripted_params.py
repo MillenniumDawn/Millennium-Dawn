@@ -154,7 +154,7 @@ _TEMP_WRITERS = (
     r"(?:set_temp_variable(?:_to_random)?|add_to_temp_variable"
     r"|subtract_from_temp_variable)"
 )
-_TEMP_TARGET = r"(?:var\s*=\s*(?=[a-zA-Z_]))?([a-zA-Z_][a-zA-Z0-9_]*)"
+_TEMP_TARGET = r"(?:var\s*=\s*)?([a-zA-Z_][a-zA-Z0-9_]*)"
 _SET_TEMP_RE = re.compile(
     r"\b" + _TEMP_WRITERS + r"\s*=\s*\{\s*" + _TEMP_TARGET + r"\s*=?\s*([^}]*?)\s*\}",
 )
@@ -696,11 +696,6 @@ _EFFECT_CONTAINER_RE = re.compile(
     + r"|effect_tooltip|\w+_click)\s*=\s*\{"
 )
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
-# Value-producing writers only. add_to/multiply etc. read the existing value.
-_WRITE_BEFORE_RE = re.compile(
-    r"(?:set_temp_variable|set_variable)\s*=\s*\{\s*$"
-    r"|set_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*$"
-)
 # A variable statement up to the operand it changes. That operand is not a read.
 _TARGET_BEFORE_RE = re.compile(
     r"\b(?:set|add_to|subtract_from|multiply|divide|modulo|round|clamp)"
@@ -712,23 +707,29 @@ _OPENER_WINDOW = 160
 
 @functools.lru_cache(maxsize=None)
 def _param_res(var: str) -> Tuple[re.Pattern, re.Pattern]:
-    """(any occurrence, value-producing write) patterns for one parameter."""
+    """(any occurrence, value-producing write) patterns for one parameter.
+
+    add_to/multiply etc. read the existing value, so they are not writes. The
+    write's last group is the parameter it sets.
+    """
     name = re.escape(var)
     return (
         re.compile(r"\b" + name + r"\b"),
         re.compile(
-            r"\b(?:set_temp_variable|set_variable)\s*=\s*\{\s*" + name + r"\s*="
-            r"|\bset_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*" + name + r"\b"
+            r"\b(?:set_temp_variable|set_variable)\s*=\s*\{\s*(?:var\s*=\s*)?"
+            r"(" + name + r")\s*(?:=|value\s*=)"
+            r"|\bset_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*(" + name + r")\b"
         ),
     )
 
 
 @functools.lru_cache(maxsize=None)
 def _setter_re(params: Tuple[str, ...]) -> re.Pattern:
+    """A statement that hands one of the parameters a value, short or long form."""
     return re.compile(
-        r"set_temp_variable\s*=\s*\{\s*("
+        r"\b(?:set|add_to|subtract_from)_temp_variable\s*=\s*\{\s*(?:var\s*=\s*)?("
         + "|".join(re.escape(p) for p in params)
-        + r")\s*="
+        + r")\s*(?:=|value\s*=)"
     )
 
 
@@ -772,9 +773,10 @@ def build_param_consumer_map(
     An effect consumes a parameter when the parameter's first appearance in
     its body is a read (add_to_variable r-value, multiply, check, ...) rather
     than a set_temp_variable/set_variable write. A wrapper that writes first
-    overwrites the caller's value and cannot consume it. Closed transitively
-    so wrappers of wrappers (GRE_pay_or_defer -> modify_debt_effect) count.
-    An effect needs no contract of its own to count.
+    overwrites the caller's value and cannot consume it. A write nested in a
+    branch may not run, so it does not count, the same as on the caller side.
+    Closed transitively so wrappers of wrappers (GRE_pay_or_defer ->
+    modify_debt_effect) count. An effect needs no contract of its own to count.
     """
     callers: Dict[str, List[Tuple[str, int]]] = {}
     for name, body in bodies.items():
@@ -783,21 +785,24 @@ def build_param_consumer_map(
 
     consumers: Dict[str, frozenset] = {}
     for var, effects in declared.items():
-        var_re = _param_res(var)[0]
+        var_re, write_re = _param_res(var)
         first_write: Dict[str, int] = {}
         known = set(effects)
         for name, body in bodies.items():
             if var not in body:
                 continue
+            # target position -> start of the statement that writes it
+            writes = {w.start(w.lastindex): w.start() for w in write_re.finditer(body)}
             read = write = None
             for om in var_re.finditer(body):
-                window = max(0, om.start() - _OPENER_WINDOW)
-                opener = _WRITE_BEFORE_RE.search(body, window, om.start())
-                if opener and not _reads_itself(body, opener.start(), var_re):
-                    if write is None:
-                        write = om.start()
-                elif read is None:
-                    read = om.start()
+                opener = writes.get(om.start())
+                if opener is None or _reads_itself(body, opener, var_re):
+                    if read is None:
+                        read = om.start()
+                elif write is None and body.count("{", 0, opener) == body.count(
+                    "}", 0, opener
+                ):
+                    write = om.start()
                 if read is not None and write is not None:
                     break
             if write is not None:
@@ -816,7 +821,7 @@ def build_param_consumer_map(
 
 
 def _has_sequential_rewrite(
-    cleaned: str, start: int, end: int, var: str, write_re: re.Pattern
+    cleaned: str, start: int, end: int, var_re: re.Pattern, write_re: re.Pattern
 ) -> bool:
     """Whether the setter's variable is re-set in [start, end) as a clobber.
 
@@ -828,7 +833,6 @@ def _has_sequential_rewrite(
     rewrites = [w.start() for w in write_re.finditer(cleaned, start, end)]
     if not rewrites:
         return False
-    var_re = _param_res(var)[0]
     ri = 0
     depth = 1  # start sits inside the setter's own braces
     for i in range(start, end):
@@ -903,7 +907,7 @@ def _scan_orphan_setters_text(
             )
         ]
         overwritten = bool(uses) and _has_sequential_rewrite(
-            cleaned, m.end(), min(uses), var, write_re
+            cleaned, m.end(), min(uses), var_re, write_re
         )
         if not uses or overwritten:
             found.append((var, overwritten, cleaned.count("\n", 0, m.start()) + 1))
@@ -921,7 +925,7 @@ def _scan_orphan_setters_in_file(
     except _READ_ERRORS:
         # The call-site pass reads the same file and reports it.
         return []
-    if "set_temp_variable" not in raw or not any(var in raw for var in consumers):
+    if "_temp_variable" not in raw or not any(var in raw for var in consumers):
         return []
 
     rel = os.path.relpath(filepath, mod_path)

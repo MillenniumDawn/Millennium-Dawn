@@ -1423,6 +1423,37 @@ def test_staged_tag_or_alias_change_rechecks_unchanged_callers(
     ]
 
 
+def test_staged_trigger_change_rechecks_unchanged_callers(tmp_path, monkeypatch):
+    """A trigger that stops reading a parameter leaves its callers' setters dead."""
+    trigger = "common/scripted_triggers/t.txt"
+    caller = (
+        "option = {\n"
+        "\tif = {\n"
+        "\t\tlimit = {\n"
+        "\t\t\tset_temp_variable = { amount = 5 }\n"
+        "\t\t\ttest_trigger = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    _committed_tree(
+        tmp_path,
+        monkeypatch,
+        {
+            _EFFECT_FILE: _REQUIRES_AMOUNT,
+            trigger: "test_trigger = {\n\tcheck_variable = { amount > 1 }\n}\n",
+            "events/e.txt": caller,
+        },
+    )
+    assert _cli_findings(tmp_path, monkeypatch) == []
+
+    _stage(tmp_path, trigger, "test_trigger = {\n\talways = yes\n}\n")
+
+    assert _cli_findings(tmp_path, monkeypatch, "--staged") == [
+        ("orphan-param-setter", "events/e.txt", 4)
+    ]
+
+
 def test_staged_caller_edit_scans_only_that_caller(tmp_path, monkeypatch):
     """No dependency changed, so unchanged and deleted callers are left alone."""
     _committed_tree(
