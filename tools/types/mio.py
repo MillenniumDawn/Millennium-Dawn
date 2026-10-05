@@ -700,9 +700,9 @@ class BonusReport:
 
     def to_pretty_display(self) -> str:
         buffer = f"MIO: {self.mio.token}, countries: [{', '.join(self.mio.countries)}], score: {self.score:.2f}, n_traits: {self.n_traits}\n"
-        for field in fields(self.boost):
-            if self.boost.get_or_default(field.name, None) is None:
+        for boosted in fields(self.boost):
+            if self.boost.get_or_default(boosted.name, None) is None:
                 continue
-            value = getattr(self.boost, field.name)
-            buffer += f"  {field.name}: {value:.2f} (avg: {getattr(self.averaged_boost, field.name):.2f})\n"
+            value = getattr(self.boost, boosted.name)
+            buffer += f"  {boosted.name}: {value:.2f} (avg: {getattr(self.averaged_boost, boosted.name):.2f})\n"
         return buffer

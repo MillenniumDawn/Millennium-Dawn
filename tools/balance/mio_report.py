@@ -21,6 +21,28 @@ if _TYPES_DIR not in sys.path:
 from equipment import AllEquipmentStats, Equipment
 from mio import MIO, BonusReport, EquipmentGroup
 
+REPORT_ALL = "REPORT_ALL"
+WEIGHTS: AllEquipmentStats = AllEquipmentStats(
+    reliability=2,
+    soft_attack=1.5,
+    hard_attack=1.5,
+    ap_attack=1.2,
+    breakthrough=1.3,
+    defense=1.3,
+    air_attack=1.5,
+    max_strength=1.5,
+    lg_armor_piercing=1.2,
+    lg_attack=1.5,
+    hg_armor_piercing=1.2,
+    hg_attack=1.5,
+    torpedo_attack=1.5,
+    anti_air_attack=1.5,
+    carrier_size=5,
+    air_defence=1.5,
+    air_range=3,
+    air_agility=1.5,
+    air_superiority=1.3,
+)
 
 def print_usage():
     """Print command-line usage and list valid archetype equipment tags.
@@ -356,28 +378,6 @@ def spreadsheet_report(mios: dict[str, MIO], WEIGHTS: AllEquipmentStats, output_
 
 
 if __name__ == "__main__":
-    REPORT_ALL = "REPORT_ALL"
-    WEIGHTS: AllEquipmentStats = AllEquipmentStats(
-        reliability=2,
-        soft_attack=1.5,
-        hard_attack=1.5,
-        ap_attack=1.2,
-        breakthrough=1.3,
-        defense=1.3,
-        air_attack=1.5,
-        max_strength=1.5,
-        lg_armor_piercing=1.2,
-        lg_attack=1.5,
-        hg_armor_piercing=1.2,
-        hg_attack=1.5,
-        torpedo_attack=1.5,
-        anti_air_attack=1.5,
-        carrier_size=5,
-        air_defence=1.5,
-        air_range=3,
-        air_agility=1.5,
-        air_superiority=1.3,
-    )
 
     ############################
     ### Main execution block ###
