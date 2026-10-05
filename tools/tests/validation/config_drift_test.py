@@ -880,19 +880,42 @@ def test_gfx_and_scripted_localisation_routes_are_preserved():
         "graphic-db",
     } <= set(_spec_for("validate_gfx_references.py").groups)
     assert "interface" in _spec_for("validate_scripted_localisation.py").groups
-    assert GROUP_PATTERNS["graphic-db"] == [
-        "gfx/interface/equipmentdesigner/graphic_db/**"
+
+
+_BATCH_GROUPS = sorted({group for spec in ALL_SPECS for group in spec.groups})
+
+
+def test_every_batch_group_change_starts_the_mod_tests_job():
+    # prepare-workspace and mod-tests only run on `content`.
+    outside = [
+        pattern
+        for group in _BATCH_GROUPS
+        for pattern in GROUP_PATTERNS[group]
+        if not classify([pattern.replace("**", "probe").replace("*", "probe")])[
+            "content"
+        ]
     ]
+    assert not outside
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.parametrize("full_suite", ("true", "false"))
+def test_every_batch_group_reaches_the_validator_batch(tmp_path, full_suite):
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
-    assert (
-        "gfx/interface/equipmentdesigner/graphic_db"
-        in workflow["env"]["WORKSPACE_PATHS"]
-    )
-    assert workflow["jobs"]["detect-changes"]["outputs"]["graphic-db"] == (
-        "${{ steps.groups.outputs.graphic-db }}"
-    )
-    profile = (VALIDATION_DIR / "ci_workspace_profile.txt").read_text(encoding="utf-8")
-    assert "/gfx/interface/equipmentdesigner/graphic_db/" in profile
+    outputs = workflow["jobs"]["detect-changes"]["outputs"]
+    step = workflow_step("mod-tests", "Compute changed validator groups")
+    env = {"GITHUB_OUTPUT": str(tmp_path / "output"), "G_FULL_SUITE": full_suite}
+    for group in _BATCH_GROUPS:
+        variable = "G_" + group.upper().replace("-", "_")
+        assert outputs[group] == f"${{{{ steps.groups.outputs.{group} }}}}"
+        assert f"outputs.{group} }}}}" in step["env"][variable]
+        env[variable] = "true"
+
+    result = run_bash_step(step["run"], tmp_path, env)
+
+    assert result.returncode == 0, result.stderr
+    emitted = (tmp_path / "output").read_text(encoding="utf-8")
+    assert set(_BATCH_GROUPS) <= set(emitted.removeprefix("groups=").split())
 
 
 def test_group_patterns_preserve_cross_reference_routes():

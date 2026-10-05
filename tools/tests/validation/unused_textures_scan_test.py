@@ -15,6 +15,7 @@ import os
 
 import pytest
 import validate_unused_textures as vut
+from shared.suite import run_validator
 from validate_unused_textures import Validator
 
 
@@ -40,12 +41,6 @@ def _write_sprite(tmp_path, texture, quoted=True, write_texture=True):
         tmp_path / "interface" / "icons.gfx",
         f'spriteType = {{\n\tname = "GFX_x"\n\ttexturefile = {tex}\n}}\n',
     )
-
-
-def _run(tmp_path):
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-    return validator
 
 
 # --- texture discovery ------------------------------------------------------
@@ -90,25 +85,23 @@ def test_gfx_reference_resolves_by_basename_for_entity_textures(tmp_path):
     assert raw == {"unit_diffuse.dds"}
 
 
-def test_gfx_file_resolves_unquoted_texturefile(tmp_path):
+def test_gfx_file_resolves_main_and_animation_textures_quoted_or_bare(tmp_path):
     path = _write(
         tmp_path / "interface" / "icons.gfx",
         "spriteTypes = {\n"
         "\tspriteType = {\n"
         "\t\tname = GFX_ok\n"
         "\t\ttexturefile = gfx/interface/used.dds\n"
+        "\t\tanimation = {\n"
+        '\t\t\tanimationtexturefile = "gfx/interface/shine.dds"\n'
+        "\t\t}\n"
         "\t}\n"
         "}\n",
     )
-    vut._textures_init(
-        str(tmp_path),
-        {"gfx/interface/used.dds"},
-        {"used.dds": ["gfx/interface/used.dds"]},
-    )
-    resolved, raw = vut.process_gfx_file(path)
+    textures = {"gfx/interface/used.dds", "gfx/interface/shine.dds"}
+    vut._textures_init(str(tmp_path), textures, {})
 
-    assert resolved == {"gfx/interface/used.dds"}
-    assert raw == {"gfx/interface/used.dds"}
+    assert vut.process_gfx_file(path) == (textures, textures)
 
 
 def test_unreadable_gfx_file_resolves_nothing(tmp_path):
@@ -363,13 +356,9 @@ def test_missing_texture_is_an_error_with_an_install(tmp_path):
 
 def test_full_run_reports_unused_and_missing_without_an_install(tmp_path):
     _write(tmp_path / "gfx" / "interface" / "orphan.dds")
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        'spriteType = {\n\tname = "GFX_x"\n\ttexturefile = "gfx/absent/icon.dds"\n}\n',
-    )
+    _write_sprite(tmp_path, "gfx/absent/icon.dds", write_texture=False)
 
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
+    validator = run_validator(Validator, tmp_path)
 
     assert validator.unused_count == 1
     assert validator.missing_count == 1
@@ -386,15 +375,9 @@ def test_full_run_with_an_install_scans_vanilla_too(tmp_path):
         'spriteType = {\n\tname = "GFX_v"\n\ttexturefile = "gfx/interface/vanilla.dds"\n}\n',
     )
     _write(tmp_path / "gfx" / "interface" / "orphan.dds")
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        'spriteType = {\n\tname = "GFX_x"\n\ttexturefile = "gfx/interface/vanilla.dds"\n}\n',
-    )
+    _write_sprite(tmp_path, "gfx/interface/vanilla.dds", write_texture=False)
 
-    validator = Validator(
-        mod_path=str(tmp_path), use_colors=False, workers=1, hoi4_path=str(install)
-    )
-    validator.run_validations()
+    validator = run_validator(Validator, tmp_path, hoi4_path=str(install))
 
     # The mod's reference points at vanilla art, so it is neither a mod texture
     # nor a missing one.
@@ -406,15 +389,9 @@ def test_full_run_with_an_install_scans_vanilla_too(tmp_path):
 def test_full_run_with_an_install_errors_on_a_reference_nothing_can_resolve(tmp_path):
     install = tmp_path / "hoi4"
     install.mkdir()
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        'spriteType = {\n\tname = "GFX_x"\n\ttexturefile = "gfx/absent/icon.dds"\n}\n',
-    )
+    _write_sprite(tmp_path, "gfx/absent/icon.dds", write_texture=False)
 
-    validator = Validator(
-        mod_path=str(tmp_path), use_colors=False, workers=1, hoi4_path=str(install)
-    )
-    validator.run_validations()
+    validator = run_validator(Validator, tmp_path, hoi4_path=str(install))
 
     assert validator.missing_count == 1
     assert validator.errors_found == 1
@@ -423,14 +400,14 @@ def test_full_run_with_an_install_errors_on_a_reference_nothing_can_resolve(tmp_
 @pytest.mark.parametrize("quoted", (True, False))
 def test_present_texturefile_is_used_quoted_or_not(tmp_path, quoted):
     _write_sprite(tmp_path, "gfx/interface/used.dds", quoted=quoted)
-    validator = _run(tmp_path)
+    validator = run_validator(Validator, tmp_path)
     assert (validator.unused_count, validator.missing_count) == (0, 0)
     assert validator._issues == []
 
 
 def test_unquoted_missing_texturefile_is_reported(tmp_path):
     _write_sprite(tmp_path, "gfx/absent/icon.dds", quoted=False, write_texture=False)
-    validator = _run(tmp_path)
+    validator = run_validator(Validator, tmp_path)
     assert validator.missing_count == 1
     assert "gfx/absent/icon.dds" in {issue.message for issue in validator._issues}
 

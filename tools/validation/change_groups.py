@@ -83,6 +83,7 @@ GROUP_PATTERNS = {
         "localisation/**",
         "interface/**",
         "gfx/interface/decisions/**",
+        "gfx/interface/equipmentdesigner/graphic_db/**",
         "music/**",
         "map/adjacency_rules.txt",
         "*.mod",

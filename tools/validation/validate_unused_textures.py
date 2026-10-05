@@ -42,6 +42,13 @@ _DOUBLE_SLASH = re.compile(r"/{2,}")
 # Loc text icons: £stem and £GFX_stem both resolve to spriteType GFX_stem.
 _TEXT_ICON_REF = re.compile(r"£([A-Za-z0-9_.]+)")
 _SPRITE_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
+# Every key a .gfx names a texture with, quoted or bare. Unanchored on purpose:
+# `animationtexturefile` counts as a reference too.
+_GFX_TEXTURE_REF = re.compile(
+    r"(?:texturefile|texture_(?:diffuse|normal|specular))\s*=\s*"
+    r'(?:"([^"]*)"|([^\s#{}]+))',
+    re.IGNORECASE,
+)
 
 
 def _normalize_texture_path(texture_path: str) -> str:
@@ -120,26 +127,16 @@ def process_gfx_file(filename: str) -> Tuple[Set[str], Set[str]]:
             filename, lowercase=False, strip_comments_flag=True
         )
 
-        def _add(texture_path: str) -> None:
-            texture_path = _normalize_texture_path(texture_path)
+        for match in _GFX_TEXTURE_REF.finditer(content):
+            texture_path = _normalize_texture_path(_quoted_or_bare(match))
             raw_references.add(texture_path)
             if texture_path in texture_files:
                 referenced_textures.add(texture_path)
-                return
-            ref_filename = os.path.basename(texture_path)
-            if ref_filename in filename_lookup:
-                for tex_path in filename_lookup[ref_filename]:
-                    referenced_textures.add(tex_path)
-
-        for match in _GFX_TEXTUREFILE.finditer(content):
-            _add(_quoted_or_bare(match))
-        for pattern in (
-            r'texture_diffuse\s*=\s*"([^"]+)"',
-            r'texture_normal\s*=\s*"([^"]+)"',
-            r'texture_specular\s*=\s*"([^"]+)"',
-        ):
-            for match in re.finditer(pattern, content, re.IGNORECASE):
-                _add(match.group(1))
+            else:
+                # Entity .gfx files name textures by basename alone.
+                referenced_textures.update(
+                    filename_lookup.get(os.path.basename(texture_path), ())
+                )
 
     except Exception:
         # Silently skip files that can't be read

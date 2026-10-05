@@ -141,7 +141,7 @@ def test_graphic_db_change_runs_gfx_references_group():
 
     assert groups["graphic-db"] is True
     assert groups["interface"] is False
-    assert groups["content"] is False
+    assert groups["content"] is True
 
 
 @pytest.mark.parametrize(

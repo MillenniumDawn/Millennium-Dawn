@@ -25,6 +25,7 @@ from shared_utils import (
     extract_block_from_text,
     find_hoi4_install,
     line_for_offset,
+    strip_comments,
     strip_inline_comment,
 )
 from validator_common import (
@@ -755,7 +756,8 @@ def sprite_defs_from_gfx_text(raw: str) -> List[Tuple[str, str, int]]:
 def _raw_paths_in_blocks(
     text: str, opener: re.Pattern, token_re: re.Pattern
 ) -> List[Tuple[str, int]]:
-    stripped = _strip_comments(text)
+    # Quote-aware: a `#` inside a variant name is not a comment.
+    stripped = strip_comments(text)
     offsets = compute_line_offsets(stripped)
     hits: List[Tuple[str, int]] = []
     for m in opener.finditer(stripped):
@@ -894,16 +896,15 @@ def _parse_raw_icon_hits(
 ) -> List[Tuple[str, str, int]]:
     filepath, mod_path = args
     raw = _read_raw(filepath)
-    if raw is None:
+    # Most script files never name the block; skip their hash and cache row.
+    if raw is None or needle not in raw:
         return []
-
-    def _compute() -> List[Tuple[str, str, int]]:
-        if needle not in raw:
-            return []
-        return [(value, filepath, line) for value, line in extract(raw)]
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, cache_key, filepath, raw, _compute
+        mod_path,
+        cache_key,
+        filepath,
+        raw,
+        lambda: [(value, filepath, line) for value, line in extract(raw)],
     )
 
 
@@ -1731,61 +1732,48 @@ class Validator(BaseValidator):
         )
         if not self.staged_only:
             return files
-
-        def _rel(path: str) -> str:
-            full = path if os.path.isabs(path) else os.path.join(self.mod_path, path)
-            return os.path.relpath(full, self.mod_path).replace("\\", "/")
-
-        staged_rel = {_rel(f) for f in (self.staged_files or [])}
-        return [f for f in files if _rel(f) in staged_rel]
+        # join() leaves an absolute staged path as it is.
+        staged = {
+            os.path.abspath(os.path.join(self.mod_path, f))
+            for f in self.staged_files or []
+        }
+        return [f for f in files if os.path.abspath(f) in staged]
 
     def _check_raw_icon_paths(self) -> None:
         self._log_section("Checking for raw texture paths in unit icons")
         variant_files = self._collect_files(
             ["events/**/*.txt", "common/**/*.txt", "history/**/*.txt"]
         )
-        variant_hits: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(
-            _parse_raw_variant_icons, [(f, self.mod_path) for f in variant_files]
+        for parser, files, site, where in (
+            (
+                _parse_raw_variant_icons,
+                variant_files,
+                "create_equipment_variant icon =",
+                "create_equipment_variant icon values",
+            ),
+            (
+                _parse_raw_graphic_db_icons,
+                self._graphic_db_files(),
+                "graphic_db icons entry",
+                "graphic_db icons blocks",
+            ),
         ):
-            variant_hits.extend(batch)
-        self._report(
-            [
-                (
-                    f"create_equipment_variant icon = '{value}' is a raw texture "
-                    "path; use a GFX_ sprite",
-                    os.path.relpath(filepath, self.mod_path),
-                    line,
-                )
-                for value, filepath, line in variant_hits
-            ],
-            ok_msg="No raw texture paths in create_equipment_variant icon values",
-            fail_msg="Raw texture paths in create_equipment_variant icon values:",
-            severity=Severity.ERROR,
-            category="raw-icon-path",
-        )
-
-        pool_hits: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(
-            _parse_raw_graphic_db_icons,
-            [(f, self.mod_path) for f in self._graphic_db_files()],
-        ):
-            pool_hits.extend(batch)
-        self._report(
-            [
-                (
-                    f"graphic_db icons entry '{value}' is a raw texture path; "
-                    "use a GFX_ sprite",
-                    os.path.relpath(filepath, self.mod_path),
-                    line,
-                )
-                for value, filepath, line in pool_hits
-            ],
-            ok_msg="No raw texture paths in graphic_db icons blocks",
-            fail_msg="Raw texture paths in graphic_db icons blocks:",
-            severity=Severity.ERROR,
-            category="raw-icon-path",
-        )
+            batches = self._pool_map(parser, [(f, self.mod_path) for f in files])
+            self._report(
+                [
+                    (
+                        f"{site} '{value}' is a raw texture path; use a GFX_ sprite",
+                        os.path.relpath(filepath, self.mod_path),
+                        line,
+                    )
+                    for batch in batches
+                    for value, filepath, line in batch
+                ],
+                ok_msg=f"No raw texture paths in {where}",
+                fail_msg=f"Raw texture paths in {where}:",
+                severity=Severity.ERROR,
+                category="raw-icon-path",
+            )
 
     def run_validations(self) -> None:
         defined, mod_defined = self._build_gfx_definitions()
