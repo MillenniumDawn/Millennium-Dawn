@@ -376,11 +376,30 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_scripted_params.py
 
+- Contracts come from the `# Parameters:` block above a scripted effect. Declare a
+  parameter there to have it checked. An effect with no block is never checked itself.
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
-- A staged change under `common/scripted_effects/`, `common/country_tags/`, or
-  `common/country_tag_aliases/` rescans every caller.
+- `missing-required-param` (ERROR): a call with a required parameter not set first.
+  `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
+  `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
+- `orphan-param-setter` (ERROR): a `set_temp_variable` of a declared parameter, required
+  or optional, that nothing uses afterwards in the same effect block, or that is
+  overwritten at the same depth before its first use.
+  - A use is a call to any scripted effect or trigger that reads the parameter before
+    writing it, contracted or not, or a direct read. `multiply_temp_variable` and the
+    other statements that only change it are not uses.
+  - `move_party_popularity` writes `party_popularity_increase` itself, so it does not
+    consume a caller's value.
+  - Not reported: a reset to `0`, a setter in a scripted effect's own body, and a
+    setter outside the blocks in `EFFECT_BLOCK_KEYWORDS`, `effect_tooltip`, and
+    scripted GUI `*_click`.
+  - A setter inside `effect_tooltip` must be used inside it. A runtime setter that only
+    feeds a later `effect_tooltip` preview is accepted.
+  - Known gap: a use in a sibling `if` or `else` arm counts.
+- A staged change under `common/scripted_effects/`, `common/scripted_triggers/`,
+  `common/country_tags/`, or `common/country_tag_aliases/` rescans every caller.
 - See the [layout policy](../../tools/validation/README.md#scripted-effect-call-layout).
 
 ## validate_style.py and check_common_mistakes.py
@@ -431,14 +450,6 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   English entry. `dynamic-modifier-tooltip-missing` (ERROR): an add or subtract on a
   variable backing a dynamic modifier with no `tooltip`, in blocks the engine renders.
   `hidden_effect` suppresses both.
-- `orphan-money-setter` (ERROR): a `set_temp_variable` of `treasury_change`,
-  `debt_change`, `int_investment_change`, or `party_popularity_increase` with no consumer
-  call after it in the same effect block, or one overwritten at the same depth before
-  the call. Scans focuses, decisions, on_actions, ideas, balance of power, scripted
-  GUIs, scripted effects, and events. A wrapper counts as a consumer only when it reads
-  the variable before writing it, so `move_party_popularity` does not. A scripted
-  effect's body is one block, and a setter inside an effect that consumes the variable
-  itself is not reported.
 
 ## Other tools
 

@@ -987,6 +987,33 @@ _SEMANTIC_FIXTURES = {
         "\ttest_effect = yes\n}\n",
         [(_MISSING, 5)],
     ),
+    "add_to_temp": (
+        "option = {\n\tadd_to_temp_variable = { amount = 1 }\n\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "subtract_from_temp": (
+        "option = {\n\tsubtract_from_temp_variable = { amount = 1 }\n"
+        "\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "long_form_set_temp": (
+        "option = {\n\tset_temp_variable = { var = amount value = 1 }\n"
+        "\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "multiline_random_set_temp": (
+        "option = {\n\tset_temp_variable_to_random = {\n\t\tvar = amount\n"
+        "\t\tmax = 8\n\t}\n\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "variable_named_var": (
+        "option = {\n\tset_temp_variable = { var = 1 }\n\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
+    "multiply_temp_sets_nothing": (
+        "option = {\n\tmultiply_temp_variable = { amount = 2 }\n\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
     "multiline_string": (
         'option = {\n\tlog = "first\n\ttest_effect = yes"\n\ttest_effect = yes\n}\n',
         [(_MISSING, 4)],
