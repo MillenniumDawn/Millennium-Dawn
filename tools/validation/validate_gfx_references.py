@@ -138,8 +138,26 @@ _GFX_NAME = re.compile(
     r'\bname\s*=\s*(?:"(GFX_[A-Za-z0-9_.@-]+)"|(GFX_[A-Za-z0-9_.@-]+))'
 )
 
-# textureFile / texturefile inside a sprite block — the art a definition points at.
-_GFX_TEXTUREFILE = re.compile(r'\btexture[fF]ile\s*=\s*"([^"]+)"', re.IGNORECASE)
+# textureFile / texturefile inside a sprite block — quoted or bare.
+_GFX_TEXTUREFILE = re.compile(
+    r'\btexture[fF]ile\s*=\s*(?:"([^"]*)"|([^\s#{}]+))',
+    re.IGNORECASE,
+)
+_CREATE_EQUIPMENT_VARIANT = re.compile(r"\bcreate_equipment_variant\s*=\s*\{")
+_VARIANT_ICON = re.compile(r'\bicon\s*=\s*(?:"([^"]*)"|([^\s#{}]+))')
+_ICONS_BLOCK = re.compile(r"\bicons\s*=\s*\{")
+_BLOCK_TOKEN = re.compile(r'"([^"]+)"|([^\s#{}]+)')
+_RAW_ICON_PATH = re.compile(r"[\\/]|\.(?:dds|tga|png)\Z", re.IGNORECASE)
+
+
+def _quoted_or_bare(match: re.Match) -> str:
+    quoted = match.group(1)
+    return quoted if quoted is not None else (match.group(2) or "")
+
+
+def _is_raw_icon_path(value: str) -> bool:
+    return bool(value) and _RAW_ICON_PATH.search(value) is not None
+
 
 # Property names are case-insensitive; quotes are optional. GFX_ stays exact.
 _GUI_REF = re.compile(
@@ -727,11 +745,45 @@ def sprite_defs_from_gfx_text(raw: str) -> List[Tuple[str, str, int]]:
             defs.append(
                 (
                     nm.group(1) or nm.group(2),
-                    tx.group(1) if tx else "",
+                    _quoted_or_bare(tx) if tx else "",
                     line_for_offset(offsets, m.start()),
                 )
             )
     return defs
+
+
+def raw_variant_icon_paths(text: str) -> List[Tuple[str, int]]:
+    """Return (value, line) for raw `icon =` paths in create_equipment_variant."""
+    stripped = _strip_comments(text)
+    offsets = compute_line_offsets(stripped)
+    hits: List[Tuple[str, int]] = []
+    for m in _CREATE_EQUIPMENT_VARIANT.finditer(stripped):
+        body, end = extract_block_from_text(stripped, m.end() - 1)
+        if end == -1:
+            continue
+        body_start = stripped.find("{", m.end() - 1) + 1
+        for im in _VARIANT_ICON.finditer(body):
+            value = _quoted_or_bare(im)
+            if _is_raw_icon_path(value):
+                hits.append((value, line_for_offset(offsets, body_start + im.start())))
+    return hits
+
+
+def raw_graphic_db_icon_paths(text: str) -> List[Tuple[str, int]]:
+    """Return (value, line) for raw texture paths in `icons = { }` blocks."""
+    stripped = _strip_comments(text)
+    offsets = compute_line_offsets(stripped)
+    hits: List[Tuple[str, int]] = []
+    for m in _ICONS_BLOCK.finditer(stripped):
+        body, end = extract_block_from_text(stripped, m.end() - 1)
+        if end == -1:
+            continue
+        body_start = stripped.find("{", m.end() - 1) + 1
+        for tm in _BLOCK_TOKEN.finditer(body):
+            value = _quoted_or_bare(tm)
+            if _is_raw_icon_path(value):
+                hits.append((value, line_for_offset(offsets, body_start + tm.start())))
+    return hits
 
 
 def font_names_from_gfx_text(raw: str) -> Set[str]:
@@ -838,6 +890,42 @@ def _parse_gfx_fonts(args: Tuple[str, str]) -> List[str]:
         filepath,
         raw,
         lambda: sorted(font_names_from_gfx_text(raw)),
+    )
+
+
+def _parse_raw_variant_icons(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+
+    def _compute() -> List[Tuple[str, str, int]]:
+        if "create_equipment_variant" not in raw:
+            return []
+        return [(value, filepath, line) for value, line in raw_variant_icon_paths(raw)]
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.raw_variant_icon", filepath, raw, _compute
+    )
+
+
+def _parse_raw_graphic_db_icons(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    if raw is None:
+        return []
+
+    def _compute() -> List[Tuple[str, str, int]]:
+        if "icons" not in raw:
+            return []
+        return [
+            (value, filepath, line) for value, line in raw_graphic_db_icon_paths(raw)
+        ]
+
+    return disk_cache.per_file_cached_by_content(
+        mod_path, "gfx_ref.raw_pool_icon", filepath, raw, _compute
     )
 
 
@@ -1635,6 +1723,80 @@ class Validator(BaseValidator):
             category="unused-sprite",
         )
 
+    def _graphic_db_files(self) -> List[str]:
+        files = glob.glob(
+            os.path.join(
+                self.mod_path,
+                "gfx",
+                "interface",
+                "equipmentdesigner",
+                "graphic_db",
+                "*.txt",
+            )
+        )
+        if not self.staged_only:
+            return files
+        staged_rel = {
+            os.path.relpath(
+                f if os.path.isabs(f) else os.path.join(self.mod_path, f),
+                self.mod_path,
+            ).replace("\\", "/")
+            for f in (self.staged_files or [])
+        }
+        return [
+            f
+            for f in files
+            if os.path.relpath(f, self.mod_path).replace("\\", "/") in staged_rel
+        ]
+
+    def _check_raw_icon_paths(self) -> None:
+        self._log_section("Checking for raw texture paths in unit icons")
+        variant_files = self._collect_files(
+            ["events/**/*.txt", "common/**/*.txt", "history/**/*.txt"]
+        )
+        variant_hits: List[Tuple[str, str, int]] = []
+        for batch in self._pool_map(
+            _parse_raw_variant_icons, [(f, self.mod_path) for f in variant_files]
+        ):
+            variant_hits.extend(batch)
+        self._report(
+            [
+                (
+                    f"create_equipment_variant icon = '{value}' is a raw texture "
+                    "path; use a GFX_ sprite",
+                    os.path.relpath(filepath, self.mod_path),
+                    line,
+                )
+                for value, filepath, line in variant_hits
+            ],
+            ok_msg="No raw texture paths in create_equipment_variant icon values",
+            fail_msg="Raw texture paths in create_equipment_variant icon values:",
+            severity=Severity.ERROR,
+            category="raw-icon-path",
+        )
+
+        pool_hits: List[Tuple[str, str, int]] = []
+        for batch in self._pool_map(
+            _parse_raw_graphic_db_icons,
+            [(f, self.mod_path) for f in self._graphic_db_files()],
+        ):
+            pool_hits.extend(batch)
+        self._report(
+            [
+                (
+                    f"graphic_db icons entry '{value}' is a raw texture path; "
+                    "use a GFX_ sprite",
+                    os.path.relpath(filepath, self.mod_path),
+                    line,
+                )
+                for value, filepath, line in pool_hits
+            ],
+            ok_msg="No raw texture paths in graphic_db icons blocks",
+            fail_msg="Raw texture paths in graphic_db icons blocks:",
+            severity=Severity.ERROR,
+            category="raw-icon-path",
+        )
+
     def run_validations(self) -> None:
         defined, mod_defined = self._build_gfx_definitions()
         # Case-insensitive index of mod-only sprites — never suggest a
@@ -1683,6 +1845,7 @@ class Validator(BaseValidator):
         # (mod + vanilla) is the index — £refs legitimately name vanilla sprites.
         loc_refs = self._collect_loc_refs()
         self._check_loc_ref_case(loc_refs, defined, casefold_index(defined))
+        self._check_raw_icon_paths()
 
         if not self.report_unused:
             self._log_section(

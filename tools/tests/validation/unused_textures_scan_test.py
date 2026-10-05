@@ -74,6 +74,27 @@ def test_gfx_reference_resolves_by_basename_for_entity_textures(tmp_path):
     assert raw == {"unit_diffuse.dds"}
 
 
+def test_gfx_file_resolves_unquoted_texturefile(tmp_path):
+    path = _write(
+        tmp_path / "interface" / "icons.gfx",
+        "spriteTypes = {\n"
+        "\tspriteType = {\n"
+        "\t\tname = GFX_ok\n"
+        "\t\ttexturefile = gfx/interface/used.dds\n"
+        "\t}\n"
+        "}\n",
+    )
+    vut._textures_init(
+        str(tmp_path),
+        {"gfx/interface/used.dds"},
+        {"used.dds": ["gfx/interface/used.dds"]},
+    )
+    resolved, raw = vut.process_gfx_file(path)
+
+    assert resolved == {"gfx/interface/used.dds"}
+    assert raw == {"gfx/interface/used.dds"}
+
+
 def test_unreadable_gfx_file_resolves_nothing(tmp_path):
     vut._textures_init(str(tmp_path), set(), {})
     assert vut.process_gfx_file(str(tmp_path / "absent.gfx")) == (set(), set())
@@ -88,6 +109,17 @@ def test_sprite_texture_map_skips_incomplete_and_unbalanced_blocks(tmp_path):
         '\tspriteType = {\n\t\tname = "GFX_no_texture"\n\t}\n'
         "}\n"
         '\tspriteType = {\n\t\tname = "GFX_unbalanced"\n',
+    )
+    assert vut._sprite_name_to_texture([path]) == {"GFX_ok": "gfx/a/b.dds"}
+
+
+def test_sprite_texture_map_reads_unquoted_texturefile(tmp_path):
+    path = _write(
+        tmp_path / "interface" / "icons.gfx",
+        "spriteTypes = {\n"
+        '\tspriteType = {\n\t\tname = "GFX_ok"\n'
+        "\t\ttexturefile = gfx/a/b.dds\n\t}\n"
+        "}\n",
     )
     assert vut._sprite_name_to_texture([path]) == {"GFX_ok": "gfx/a/b.dds"}
 
@@ -370,6 +402,39 @@ def test_full_run_with_an_install_errors_on_a_reference_nothing_can_resolve(tmp_
 
     assert validator.missing_count == 1
     assert validator.errors_found == 1
+
+
+def test_unquoted_texturefile_marks_the_texture_used(tmp_path):
+    _write(tmp_path / "gfx" / "interface" / "used.dds")
+    _write(
+        tmp_path / "interface" / "icons.gfx",
+        "spriteType = {\n"
+        '\tname = "GFX_x"\n'
+        "\ttexturefile = gfx/interface/used.dds\n"
+        "}\n",
+    )
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert (validator.unused_count, validator.missing_count) == (0, 0)
+    assert validator._issues == []
+
+
+def test_unquoted_missing_texturefile_is_reported(tmp_path):
+    _write(
+        tmp_path / "interface" / "icons.gfx",
+        "spriteType = {\n"
+        '\tname = "GFX_x"\n'
+        "\ttexturefile = gfx/absent/icon.dds\n"
+        "}\n",
+    )
+
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert validator.missing_count == 1
+    assert "gfx/absent/icon.dds" in {issue.message for issue in validator._issues}
 
 
 def test_clean_mod_reports_nothing(tmp_path):

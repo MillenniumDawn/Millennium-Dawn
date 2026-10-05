@@ -871,10 +871,28 @@ def test_mio_validator_runs_for_localisation_changes():
 
 
 def test_gfx_and_scripted_localisation_routes_are_preserved():
-    assert {"interface", "common", "events", "history", "localisation"} <= set(
-        _spec_for("validate_gfx_references.py").groups
-    )
+    assert {
+        "interface",
+        "common",
+        "events",
+        "history",
+        "localisation",
+        "graphic-db",
+    } <= set(_spec_for("validate_gfx_references.py").groups)
     assert "interface" in _spec_for("validate_scripted_localisation.py").groups
+    assert GROUP_PATTERNS["graphic-db"] == [
+        "gfx/interface/equipmentdesigner/graphic_db/**"
+    ]
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    assert (
+        "gfx/interface/equipmentdesigner/graphic_db"
+        in workflow["env"]["WORKSPACE_PATHS"]
+    )
+    assert workflow["jobs"]["detect-changes"]["outputs"]["graphic-db"] == (
+        "${{ steps.groups.outputs.graphic-db }}"
+    )
+    profile = (VALIDATION_DIR / "ci_workspace_profile.txt").read_text(encoding="utf-8")
+    assert "/gfx/interface/equipmentdesigner/graphic_db/" in profile
 
 
 def test_group_patterns_preserve_cross_reference_routes():

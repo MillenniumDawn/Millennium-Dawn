@@ -72,6 +72,11 @@ def test_selected_specs_filters_by_changed_groups():
     assert len(rvb.selected_specs("targeted-a", None)) == len(vb.BATCHES["targeted-a"])
 
 
+def test_graphic_db_group_selects_gfx_references():
+    selected = {spec.name for spec in rvb.selected_specs("targeted-b", {"graphic-db"})}
+    assert selected == {"gfx-references"}
+
+
 def test_selected_specs_rejects_unknown_batch():
     with pytest.raises(SystemExit, match="Unknown batch"):
         rvb.selected_specs("nope", None)

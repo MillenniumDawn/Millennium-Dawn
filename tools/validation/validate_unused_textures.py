@@ -18,7 +18,11 @@ from shared_utils import (
     find_hoi4_install,
     strip_inline_comment,
 )
-from validate_gfx_references import _GFX_SPRITE_TYPES
+from validate_gfx_references import (
+    _GFX_SPRITE_TYPES,
+    _GFX_TEXTUREFILE,
+    _quoted_or_bare,
+)
 from validator_common import (
     BaseValidator,
     Colors,
@@ -38,9 +42,6 @@ _DOUBLE_SLASH = re.compile(r"/{2,}")
 # Loc text icons: £stem and £GFX_stem both resolve to spriteType GFX_stem.
 _TEXT_ICON_REF = re.compile(r"£([A-Za-z0-9_.]+)")
 _SPRITE_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
-_SPRITE_TEXTUREFILE_IN_BLOCK = re.compile(
-    r'\btexturefile\s*=\s*"([^"]+)"', re.IGNORECASE
-)
 
 TEXTURE_EXTENSIONS = [".dds", ".tga", ".png"]
 
@@ -111,35 +112,28 @@ def process_gfx_file(filename: str) -> Tuple[Set[str], Set[str]]:
             filename, lowercase=False, strip_comments_flag=True
         )
 
-        # Pattern 1: texturefile = "path/to/file.ext" (interface .gfx files)
-        # Pattern 2: texture_diffuse/normal/specular = "file.ext" (entity .gfx files)
-        patterns = [
-            r'texturefile\s*=\s*"([^"]+)"',
+        def _add(texture_path: str) -> None:
+            texture_path = texture_path.replace("\\", "/").lstrip("/")
+            while "//" in texture_path:
+                texture_path = texture_path.replace("//", "/")
+            raw_references.add(texture_path)
+            if texture_path in texture_files:
+                referenced_textures.add(texture_path)
+                return
+            ref_filename = os.path.basename(texture_path)
+            if ref_filename in filename_lookup:
+                for tex_path in filename_lookup[ref_filename]:
+                    referenced_textures.add(tex_path)
+
+        for match in _GFX_TEXTUREFILE.finditer(content):
+            _add(_quoted_or_bare(match))
+        for pattern in (
             r'texture_diffuse\s*=\s*"([^"]+)"',
             r'texture_normal\s*=\s*"([^"]+)"',
             r'texture_specular\s*=\s*"([^"]+)"',
-        ]
-
-        for pattern in patterns:
-            matches = re.finditer(pattern, content, re.IGNORECASE)
-            for match in matches:
-                texture_path = match.group(1)
-                texture_path = texture_path.replace("\\", "/").lstrip("/")
-                while "//" in texture_path:
-                    texture_path = texture_path.replace("//", "/")
-
-                raw_references.add(texture_path)
-
-                # Check if this is a full path match
-                if texture_path in texture_files:
-                    referenced_textures.add(texture_path)
-                else:
-                    # Try to match by filename only (common for entity .gfx files)
-                    ref_filename = os.path.basename(texture_path)
-                    if ref_filename in filename_lookup:
-                        # Add all matching paths (there might be duplicates with same filename)
-                        for tex_path in filename_lookup[ref_filename]:
-                            referenced_textures.add(tex_path)
+        ):
+            for match in re.finditer(pattern, content, re.IGNORECASE):
+                _add(match.group(1))
 
     except Exception:
         # Silently skip files that can't be read
@@ -164,10 +158,10 @@ def _sprite_name_to_texture(gfx_files: List[str]) -> Dict[str, str]:
             if end == -1:
                 continue
             nm = _SPRITE_NAME_IN_BLOCK.search(block)
-            tf = _SPRITE_TEXTUREFILE_IN_BLOCK.search(block)
+            tf = _GFX_TEXTUREFILE.search(block)
             if not (nm and tf):
                 continue
-            texture_path = tf.group(1).replace("\\", "/").lstrip("/")
+            texture_path = _quoted_or_bare(tf).replace("\\", "/").lstrip("/")
             while "//" in texture_path:
                 texture_path = texture_path.replace("//", "/")
             mapping[nm.group(1)] = texture_path

@@ -210,7 +210,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   case-insensitively, so the icon is missing on Linux. `unused-sprite-case` (WARNING): a
   sprite whose only reference is miscased.
 - `duplicate-sprite`, `case-variant-sprite` (WARNING): the message says whether the blocks
-  share a texture.
+  share a texture. Unquoted `texturefile` values are read the same as quoted ones.
+- `raw-icon-path` (ERROR): `icon =` inside `create_equipment_variant`, or an entry in a
+  graphic*db `icons = { }` block, that is a texture path instead of a `GFX*`sprite.
+Quoted and unquoted, slash or backslash. Comments and focus-tree`icon =`are ignored.`\_documentation.info` is not scanned. Raw plane paths crash the macOS air battle window.
 - `undefined-font` (ERROR): a `.gui` font naming no `bitmapfont` renders in the default
   face. Vanilla names come from an install or `vanilla_fonts.txt`.
 - Sprite names in generator-managed `.gfx` files come from the texture filename. Rename

@@ -134,6 +134,16 @@ def test_graphics_and_map_paths_skip_expensive_content_job(path):
     assert groups["content"] is False
 
 
+def test_graphic_db_change_runs_gfx_references_group():
+    groups = change_groups.classify(
+        ["gfx/interface/equipmentdesigner/graphic_db/00_plane_icons.txt"]
+    )
+
+    assert groups["graphic-db"] is True
+    assert groups["interface"] is False
+    assert groups["content"] is False
+
+
 @pytest.mark.parametrize(
     "path",
     ("gfx/interface/decisions/politics/crisis.dds", "interface/MD_decisions.gfx"),

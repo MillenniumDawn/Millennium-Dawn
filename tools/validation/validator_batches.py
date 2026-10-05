@@ -100,7 +100,14 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "gfx-references",
             "validate_gfx_references.py",
-            ("interface", "common", "events", "history", "localisation"),
+            (
+                "interface",
+                "common",
+                "events",
+                "history",
+                "localisation",
+                "graphic-db",
+            ),
         ),
         ValidatorSpec("bonus-names", "validate_bonus_names.py", ("common", "events")),
         ValidatorSpec(
