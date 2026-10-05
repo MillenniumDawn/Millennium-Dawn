@@ -129,7 +129,6 @@ _AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
 # tags (`ISR_CW_0`) are caught, not just the 3-letter base tag.
 _TAG_IN_ALLOWED = re.compile(r"\btag\s*=\s*([A-Z][A-Z0-9_]{2,11})\b")
 _ORIGINAL_TAG_IN_ALLOWED = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{2})\b")
-_PICTURE_LINE = re.compile(r"^\s+picture\s*=", re.MULTILINE)
 _ON_ADD_BLOCK_START = re.compile(r"\bon_add\s*=\s*\{")
 _LOG_LINE = re.compile(r'^\s*log\s*=\s*"[^"]*"\s*$')
 _EQUIPMENT_BONUS_START = re.compile(r"\bequipment_bonus\s*=\s*\{")

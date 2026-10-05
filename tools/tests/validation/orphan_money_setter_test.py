@@ -6,10 +6,8 @@ transfer silently never happens (Sweden_foci.57). Consumers are derived from
 scripted-effect bodies so wrappers (GRE_pay_or_defer) clear the setter too.
 """
 
-from validate_variables import (
-    build_money_consumer_map,
-    process_file_for_orphan_money,
-)
+from shared.suite import variable_scan
+from validate_variables import build_money_consumer_map
 
 BASE_EFFECTS = """modify_treasury_effect = {
 	add_to_variable = { treasury = treasury_change }
@@ -73,7 +71,7 @@ def _lines(tmp_path, reward, consumer_map):
     nf_dir.mkdir(parents=True, exist_ok=True)
     fpath = nf_dir / "test.txt"
     fpath.write_text(FOCUS_TEMPLATE.format(reward=reward), encoding="utf-8")
-    return process_file_for_orphan_money((str(fpath), str(tmp_path), consumer_map))
+    return variable_scan(fpath, "orphan", tmp_path, consumer_map=consumer_map)
 
 
 def test_consumed_setter_is_clean(tmp_path):
@@ -306,7 +304,7 @@ def test_sibling_container_consumer_does_not_clear(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    issues = process_file_for_orphan_money((str(fpath), str(tmp_path), cmap))
+    issues = variable_scan(fpath, "orphan", tmp_path, consumer_map=cmap)
     assert len(issues) == 1
 
 
@@ -325,7 +323,7 @@ def test_cancel_effect_is_a_container(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    issues = process_file_for_orphan_money((str(fpath), str(tmp_path), cmap))
+    issues = variable_scan(fpath, "orphan", tmp_path, consumer_map=cmap)
     assert len(issues) == 1
 
 

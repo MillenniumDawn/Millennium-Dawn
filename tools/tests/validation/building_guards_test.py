@@ -645,6 +645,23 @@ def test_run_reports_and_logs_each_unguarded_effect(tmp_path, write_path, monkey
     )
 
 
+def test_run_reports_province_building_state_trigger_as_error(
+    tmp_path, write_path, monkeypatch
+):
+    validator = _run(
+        tmp_path,
+        write_path,
+        monkeypatch,
+        "if = {\n"
+        "\tlimit = { non_damaged_building_level = { building = naval_base level > 0 } }\n"
+        "}\n",
+    )
+
+    assert [(i.severity, i.category) for i in validator._issues] == [
+        ("error", "province-building-state-trigger")
+    ]
+
+
 def test_run_stays_quiet_when_every_effect_is_guarded(
     tmp_path, write_path, monkeypatch
 ):
