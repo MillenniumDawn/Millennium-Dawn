@@ -393,18 +393,24 @@ quarterly_inflation_calculation = {
 			clamp = { min = 0.5 max = 2.5 }
 		}
 	}
-	set_temp_variable = {
-		policy_inflation_reference = {
-			value = inflation_rate_var
-			max = inflation_expectations_anchor
-			multiply = 100
+	if = {
+		limit = { check_variable = { inflation_rate_var < 0 } }
+		set_temp_variable = { policy_inflation_reference = { value = inflation_rate_var multiply = 100 } }
+	}
+	else = {
+		set_temp_variable = {
+			policy_inflation_reference = {
+				value = inflation_rate_var
+				max = inflation_expectations_anchor
+				multiply = 100
+			}
 		}
 	}
 	set_temp_variable = {
 		neutral_cb_rate = {
 			value = policy_inflation_reference
 			add = natural_real_interest_rate
-			clamp = { min = 1 max = 30 }
+			clamp = { min = -10 max = 30 }
 		}
 	}
 	set_temp_variable = {
@@ -576,18 +582,24 @@ quarterly_inflation_calculation = {
 			is_ai = yes
 			NOT = { has_country_flag = temp_cb_rate_changed }
 		}
-		set_temp_variable = {
-			policy_inflation_reference = {
-				value = inflation_rate_var
-				max = inflation_expectations_anchor
-				multiply = 100
+		if = {
+			limit = { check_variable = { inflation_rate_var < 0 } }
+			set_temp_variable = { policy_inflation_reference = { value = inflation_rate_var multiply = 100 } }
+		}
+		else = {
+			set_temp_variable = {
+				policy_inflation_reference = {
+					value = inflation_rate_var
+					max = inflation_expectations_anchor
+					multiply = 100
+				}
 			}
 		}
 		set_temp_variable = {
 			neutral_cb_rate = {
 				value = policy_inflation_reference
 				add = natural_real_interest_rate
-				clamp = { min = 1 max = 30 }
+				clamp = { min = -10 max = 30 }
 			}
 		}
 		set_temp_variable = { neutral_cb_rate_lower = { value = neutral_cb_rate subtract = 0.5 } }
@@ -620,7 +632,7 @@ quarterly_inflation_calculation = {
 		else_if = {
 			limit = {
 				check_variable = { cb_policy_rate > neutral_cb_rate_upper }
-				check_variable = { cb_policy_rate > 1 }
+				check_variable = { cb_policy_rate > -10 }
 			}
 			subtract_from_variable = { cb_policy_rate = 1 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
