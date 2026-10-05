@@ -117,6 +117,13 @@ def issue_categories(validator):
     return sorted(issue.category for issue in validator._issues)
 
 
+def issue_rows(validator):
+    return sorted(
+        (issue.category, issue.message, issue.file, issue.line)
+        for issue in validator._issues
+    )
+
+
 _YML_SECTIONS = ("brackets", "syntax", "mandatory", "typos", "prose", "var_refs")
 
 
@@ -329,6 +336,15 @@ def write_under(root: Path, relative_path: str, content: str) -> Path:
 
 def write_under_str(root: Path, relative_path: str, content: str) -> str:
     return str(write_under(root, relative_path, content))
+
+
+def write_focus_file(root: Path, content: str) -> Path:
+    return write_under(root, "common/national_focus/test.txt", content)
+
+
+def write_yml(root: Path, name: str, value_line: str) -> str:
+    """One English localisation entry in a file that starts with a BOM."""
+    return write_under_str(root, name, f"﻿l_english:\n {value_line}\n")
 
 
 def read_text(path: Path) -> str:

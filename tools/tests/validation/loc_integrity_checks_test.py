@@ -10,17 +10,12 @@
 """
 
 import pytest
+from shared.suite import write_yml as _write_yml
 from shared.suite import yml_syntax
 from validate_localisation import Issue
 from validate_modifiers import Validator as ModifiersValidator
 from validate_oob_units import Validator as OOBValidator
 from validator_common import Severity
-
-
-def _write_yml(tmp_path, name, value_line):
-    p = tmp_path / name
-    p.write_text(f"l_english:\n {value_line}\n", encoding="utf-8-sig")
-    return str(p)
 
 
 def _issues_only(results):

@@ -12,6 +12,7 @@ import sys
 import pytest
 import validate_variables as V
 import validator_common
+from shared.suite import issue_rows as _issue_rows
 from shared.suite import variable_scan
 
 
@@ -578,13 +579,6 @@ def test_full_run_reports_the_flag_lifecycle(tmp_path, write_path):
         ("TST_never_set", "common/scripted_effects/flags.txt", 3),
         ("TST_read_only", "common/scripted_effects/flags.txt", 4),
     ]
-
-
-def _issue_rows(validator):
-    return sorted(
-        (issue.category, issue.message, issue.file, issue.line)
-        for issue in validator._issues
-    )
 
 
 def _full_run(tmp_path, workers=1):

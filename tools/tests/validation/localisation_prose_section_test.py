@@ -7,6 +7,7 @@ space. Checked in game (1.19.3, #5097): "15 U.S.C. § 1" renders
 character ' '" every frame, so a bare § before whitespace must be flagged.
 """
 
+from shared.suite import write_yml as _write_yml
 from shared.suite import yml_syntax
 from validate_localisation import _LITERAL_SECTION_SIGN_RE
 
@@ -24,12 +25,6 @@ def test_regex_keeps_single_section_sign():
 
 def test_regex_keeps_color_codes():
     assert _LITERAL_SECTION_SIGN_RE.sub("", f"{S}Yhello{S}!") == f"{S}Yhello{S}!"
-
-
-def _write_yml(tmp_path, name, value_line):
-    p = tmp_path / name
-    p.write_text(f"l_english:\n {value_line}\n", encoding="utf-8-sig")
-    return str(p)
 
 
 def _syntax(path):

@@ -13,13 +13,7 @@ import re
 import pytest
 import validate_variables as V
 from shared.suite import variable_scan
-
-
-def _write(path, content):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as file:
-        file.write(content)
-    return path
+from shared.suite import write_text as _write
 
 
 def _skipped(tmp_path, name="src.txt"):

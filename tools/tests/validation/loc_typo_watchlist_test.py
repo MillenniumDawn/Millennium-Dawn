@@ -7,14 +7,9 @@ VALUES only -- keys are never scanned. Context-dependent entries ("it's",
 
 import re
 
+from shared.suite import write_yml as _write_yml
 from shared.suite import yml_scan
 from validate_localisation import _TYPO_WATCHLIST
-
-
-def _write_yml(tmp_path, name, value_line):
-    p = tmp_path / name
-    p.write_text(f"l_english:\n {value_line}\n", encoding="utf-8-sig")
-    return str(p)
 
 
 def test_flags_typo_in_value_case_insensitively(tmp_path):
