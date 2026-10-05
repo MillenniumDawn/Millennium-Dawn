@@ -41,9 +41,11 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - The Test Suite runs on every PR to `main`, drafts included. Changes under
   `tools/validation/`, `tools/linting/`, `tools/shared_utils.py`, the workflow files,
   `resources/documentation/`, or `validation_config.json` force the full suite.
-- Style and common-mistakes checks are diff-scoped in CI. The nightly `main` baseline is
-  full-repo, so the PR report flags only new findings, and references orphaned by a
-  deleted definition surface on the nightly run.
+- The style check is diff-scoped in CI. The nightly `main` baseline is full-repo, so
+  the PR report flags only new findings, and references orphaned by a deleted
+  definition surface on the nightly run. Common mistakes run full-repo in the core batch
+  over `common`, `events`, `history`, and `music`. A `music/*.txt` change selects only
+  that validator, through the `music` group.
 - Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
   cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
 

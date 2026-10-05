@@ -27,8 +27,10 @@ from shared_utils import extract_block_from_text as _extract_block
 from shared_utils import (
     get_staged_files,
     iter_statements,
+    label_before_brace,
     read_text_under,
     validation_config,
+    word_start_re,
 )
 from sprite_index import build_sprite_index
 from validator_common import (
@@ -40,20 +42,10 @@ from validator_common import (
     strip_comments,
 )
 
-
-def _keyword_re(keyword: str, rest: str) -> re.Pattern[str]:
-    """Compile `\\b<keyword><rest>` led by the keyword itself.
-
-    A leading `\\b` makes the engine try every offset; led by the literal it
-    skips between occurrences, and the lookbehind checks the same boundary.
-    """
-    return re.compile(keyword + r"(?<=\b" + keyword + ")" + rest)
-
-
 # Opening of a focus_tree or top-level focus definition block
 # (shared_focus and joint_focus are both standalone definitions that can be
 # referenced as prerequisites — they live outside any focus_tree wrapper)
-_FOCUS_TREE_START = _keyword_re("focus_tree", r"\s*=\s*\{")
+_FOCUS_TREE_START = word_start_re("focus_tree", r"\s*=\s*\{")
 # Same as `\b(?:shared_focus|joint_focus)`, led by its first letters.
 _SHARED_FOCUS_DEF_START = re.compile(
     r"(?:shared|joint)_focus(?:(?<=\bshared_focus)|(?<=\bjoint_focus))\s*=\s*\{"
@@ -84,7 +76,7 @@ def _fmt_codes(codes: List[str]) -> str:
 
 
 # focus ID extraction
-_FOCUS_ID_RE = _keyword_re("focus", r"\s*=\s*\{")
+_FOCUS_ID_RE = word_start_re("focus", r"\s*=\s*\{")
 _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 
 # focus icon: `icon = X` or `icon = "GFX X"`. The value resolves verbatim to a
@@ -94,18 +86,18 @@ _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 # the engine matches the sprite name verbatim (a quoted value with a space is a
 # real, distinct sprite name, not two tokens).
 _FOCUS_BLOCK_START = re.compile(r"\b(?:focus|shared_focus|joint_focus)\s*=\s*\{")
-_ICON_LINE_RE = _keyword_re("icon", r'\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
-_RELATIVE_POSITION_RE = _keyword_re("relative_position_id", r"\s*=\s*(\S+)")
+_ICON_LINE_RE = word_start_re("icon", r'\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
+_RELATIVE_POSITION_RE = word_start_re("relative_position_id", r"\s*=\s*(\S+)")
 
 # prerequisite blocks: prerequisite = { focus = A  focus = B }
-_PREREQ_BLOCK_RE = _keyword_re("prerequisite", r"\s*=\s*\{([^}]*)\}")
+_PREREQ_BLOCK_RE = word_start_re("prerequisite", r"\s*=\s*\{([^}]*)\}")
 _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 
 # shared_focus reference inside a focus_tree block (not a definition)
-_SHARED_REF_RE = _keyword_re("shared_focus", r"\s*=\s*(\w+)")
+_SHARED_REF_RE = word_start_re("shared_focus", r"\s*=\s*(\w+)")
 
 # completion_reward, incl. the joint-focus reward variants
-_REWARD_BLOCK_RE = _keyword_re(
+_REWARD_BLOCK_RE = word_start_re(
     "completion_reward", r"(?:_joint_originator|_joint_member)?\s*=\s*\{"
 )
 
@@ -113,8 +105,8 @@ _REWARD_BLOCK_RE = _keyword_re(
 # Occurrences inside an effect_tooltip = { } subtree preview a PP change
 # applied elsewhere (e.g. a select_effect) rather than executing it, so
 # they are not flagged.
-_EFFECT_TOOLTIP_START = _keyword_re("effect_tooltip", r"\s*=\s*\{")
-_PP_MALUS_RE = _keyword_re("add_political_power", r"\s*=\s*(-\d+(?:\.\d+)?)\b")
+_EFFECT_TOOLTIP_START = word_start_re("effect_tooltip", r"\s*=\s*\{")
+_PP_MALUS_RE = word_start_re("add_political_power", r"\s*=\s*(-\d+(?:\.\d+)?)\b")
 
 _PP_MALUS_EXEMPT_FOCUS_IDS = frozenset(
     validation_config("validate_focus_tree", "pp_malus_exempt_focus_ids")
@@ -157,8 +149,8 @@ _MIL_ECON_RESEARCH_FILTERS = frozenset(
     }
 )
 
-_AI_WILL_DO_START = _keyword_re("ai_will_do", r"\s*=\s*\{")
-_MODIFIER_START = _keyword_re("modifier", r"\s*=\s*\{")
+_AI_WILL_DO_START = word_start_re("ai_will_do", r"\s*=\s*\{")
+_MODIFIER_START = word_start_re("modifier", r"\s*=\s*\{")
 _FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
 _CAN_STAFF_NO_RE = re.compile(r"\b(can_staff_an_\w+)\s*=\s*no\b")
 _CAN_STAFF_NOT_YES_RE = re.compile(
@@ -167,7 +159,7 @@ _CAN_STAFF_NOT_YES_RE = re.compile(
 _BANKRUPTCY_GUARD_RE = re.compile(
     r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
 )
-_ADD_BUILDING_START = _keyword_re("add_building_construction", r"\s*=\s*\{")
+_ADD_BUILDING_START = word_start_re("add_building_construction", r"\s*=\s*\{")
 _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # Money spend (MD budget system): treasury_change is set (a literal, a `{ }`
 # computed value, or a bare-identifier reference to another variable — the
@@ -209,9 +201,9 @@ _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # the treasury). Group 1 is the suffix, empty for the plain form; a non-empty
 # suffix applies an amount that can't be computed statically, so it forces the
 # segment unknown. The `_tt` loc key is never called with `= yes`.
-_MODIFY_TREASURY_RE = _keyword_re("modify_treasury_effect", r"(\w*)\s*=\s*yes\b")
-_MODIFY_DEBT_RE = _keyword_re("modify_debt_effect", r"\s*=\s*yes\b")
-_SEARCH_FILTERS_RE = _keyword_re("search_filters", r"\s*=\s*\{([^{}]*)\}")
+_MODIFY_TREASURY_RE = word_start_re("modify_treasury_effect", r"(\w*)\s*=\s*yes\b")
+_MODIFY_DEBT_RE = word_start_re("modify_debt_effect", r"\s*=\s*yes\b")
+_SEARCH_FILTERS_RE = word_start_re("search_filters", r"\s*=\s*\{([^{}]*)\}")
 _BRACE_RE = re.compile(r"[{}]")
 _BRACE_OR_QUOTE_RE = re.compile(r'["{}]')
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
@@ -228,7 +220,7 @@ _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 # TT_IF_THIS_ACCEPTS and TT_IF_EACH_ACCEPTS are the same preview worded for one
 # named target and for a fan-out; the former renders [THIS.GetNameWithFlag], so
 # it sits inside the target's scope block rather than beside its effect_tooltip.
-_COUNTRY_EVENT_RE = _keyword_re("country_event", r"\b")
+_COUNTRY_EVENT_RE = word_start_re("country_event", r"\b")
 _TT_IF_THEY_ACCEPT_RE = re.compile(
     r"\b(?:TT_IF_THEY_ACCEPT|TT_IF_THIS_ACCEPTS"
     r"|TT_IF_EACH_ACCEPTS|TT_EFFECTS_FROM_EVENT)\b"
@@ -241,8 +233,8 @@ _FIRE_TARGET_RE = re.compile(r"country_event\s*=\s*(?:\{[^{}]*?\bid\s*=\s*)?([\w
 # inside an option is a fire, and would otherwise index x as optionless.
 _EVENT_BLOCK_RE = re.compile(r"^(country_event|news_event)\s*=\s*\{", re.M)
 _EVENT_ID_RE = re.compile(r"\bid\s*=\s*([\w.]+)")
-_EVENT_OPTION_RE = _keyword_re("option", r"\s*=\s*\{")
-_EVENT_HIDDEN_RE = _keyword_re("hidden", r"\s*=\s*yes\b")
+_EVENT_OPTION_RE = word_start_re("option", r"\s*=\s*\{")
+_EVENT_HIDDEN_RE = word_start_re("hidden", r"\s*=\s*yes\b")
 _OPTION_TRIGGER_RE = re.compile(r"\btrigger\s*=\s*\{")
 _NEGATION_RE = re.compile(r"\bNOT\s*=\s*\{")
 # Option bookkeeping that is not an outcome: the label, the log line, the AI
@@ -252,7 +244,7 @@ _OPTION_LOG_RE = re.compile(r"\blog\s*=\s*\"[^\"]*\"")
 _OPTION_INERT_BLOCK_RE = re.compile(r"\b(?:ai_chance|trigger)\s*=\s*\{")
 # `tag = XXX` / `original_tag = XXX`, in a focus_tree's `country = { }` block
 # (the owner) and in an event option's `trigger = { }` (the recipient).
-_FT_COUNTRY_BLOCK_RE = _keyword_re("country", r"\s*=\s*\{")
+_FT_COUNTRY_BLOCK_RE = word_start_re("country", r"\s*=\s*\{")
 _TAG_ASSIGN_RE = re.compile(r"\b(?:original_)?tag\s*=\s*([A-Z]{3})\b")
 _LITERAL_TAG_RE = re.compile(r"^[A-Z]{3}$")
 # Iterators that step over other countries (every_country, random_other_country,
@@ -296,26 +288,6 @@ def _top_level_search_filters(body: str) -> Set[str]:
     return set()
 
 
-def _label_before_brace(body: str, brace_idx: int) -> Optional[str]:
-    """Return the `key` of a `key = {` opener whose `{` is at *brace_idx*.
-
-    Returns None for an anonymous block (no `=` before the brace), e.g. a
-    color/array literal.
-    """
-    j = brace_idx - 1
-    while j >= 0 and body[j] in " \t\r\n":
-        j -= 1
-    if j < 0 or body[j] != "=":
-        return None
-    j -= 1
-    while j >= 0 and body[j] in " \t\r\n":
-        j -= 1
-    end = j + 1
-    while j >= 0 and (body[j].isalnum() or body[j] in "_:.@"):
-        j -= 1
-    return body[j + 1 : end] or None
-
-
 def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
     """Return (label, open_brace_index) of the innermost block enclosing *pos*.
 
@@ -329,7 +301,7 @@ def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
             depth += 1
         elif c == "{":
             if depth == 0:
-                return _label_before_brace(body, i), i
+                return label_before_brace(body, i), i
             depth -= 1
         i -= 1
     return None, -1
@@ -1241,8 +1213,8 @@ _FOCUS_DEFAULT_WRITE_RE = re.compile(
 _AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
 _ALWAYS_NO_BODY_RE = re.compile(r"\s*always\s*=\s*no\s*")
 _RE_BYPASS_BLOCK = re.compile(r"\bbypass\s*=\s*\{")
-_RE_EMPTY_MUTEX = _keyword_re("mutually_exclusive", r"\s*=\s*\{\s*\}")
-_RE_EMPTY_AVAILABLE = _keyword_re("available", r"\s*=\s*\{\s*\}")
+_RE_EMPTY_MUTEX = word_start_re("mutually_exclusive", r"\s*=\s*\{\s*\}")
+_RE_EMPTY_AVAILABLE = word_start_re("available", r"\s*=\s*\{\s*\}")
 
 
 def _scan_focus_structural(source: _FocusFile) -> List[Tuple[str, str, str, int]]:

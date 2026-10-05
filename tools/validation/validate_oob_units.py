@@ -33,6 +33,7 @@ from equipment_module_slots import (
 )
 from shared_utils import (
     get_staged_files,
+    label_before_brace,
     normalize_path_separators,
     read_text_under,
     validation_config,
@@ -278,35 +279,6 @@ def _parse_canonical_units_file(content: str) -> Set[str]:
         i += 1
 
     return canonical
-
-
-def parse_canonical_units(mod_path: str) -> Set[str]:
-    """Build a set of canonical sub-unit names from common/units/*.txt.
-
-    Unit names are top-level identifiers inside sub_units = { ... } blocks.
-    """
-    canonical = set()
-    for sub_units, _, _ in _parse_canonical_unit_sources(mod_path):
-        canonical.update(sub_units)
-    return canonical
-
-
-def parse_canonical_namelist_keys(mod_path: str, sub_units: Set[str]) -> Set[str]:
-    """Return the set of valid namelist block keys.
-
-    A namelist block key is valid if it is either:
-      - a sub_unit name, OR
-      - an equipment-type name referenced in `need = { ... }` or
-        `need_equipment = { ... }` inside a sub_unit definition.
-
-    Air namelists use equipment-type keys (small_plane_airframe etc.) rather
-    than sub_unit names (light_fighter etc.), so the canonical set must
-    include both.
-    """
-    valid = set(sub_units)
-    for _, equipment_names, _ in _parse_canonical_unit_sources(mod_path):
-        valid.update(equipment_names)
-    return valid
 
 
 def _parse_equipment_names_file(content: str) -> Set[str]:
@@ -978,21 +950,6 @@ class _CreateUnitChecks:
         )
 
 
-def _label_before_brace(text: str, brace_idx: int) -> Optional[str]:
-    j = brace_idx - 1
-    while j >= 0 and text[j] in " \t\r\n":
-        j -= 1
-    if j < 0 or text[j] != "=":
-        return None
-    j -= 1
-    while j >= 0 and text[j] in " \t\r\n":
-        j -= 1
-    end = j + 1
-    while j >= 0 and (text[j].isalnum() or text[j] in "_:.@"):
-        j -= 1
-    return text[j + 1 : end] or None
-
-
 def _matching_braces(text: str) -> Dict[int, int]:
     stack = []
     pairs = {}
@@ -1027,7 +984,7 @@ def _build_block_nodes(text: str) -> List[Dict]:
         line += text.count("\n", counted_to, op)
         counted_to = op
         node: Dict[str, Any] = {
-            "label": _label_before_brace(text, op),
+            "label": label_before_brace(text, op),
             "start": op,
             "end": pairs[op],
             "line": line,
@@ -1785,7 +1742,7 @@ def _effect_template_closure(
             if start < top_end:
                 continue
             top_end = pairs[start]
-            label = _label_before_brace(content, start)
+            label = label_before_brace(content, start)
             if not label:
                 continue
             body = content[start:top_end]
@@ -2101,11 +2058,7 @@ class Validator(BaseValidator):
             (f, self.canonical, self.canonical_lower, self.mod_path) for f in files
         ]
 
-        all_results = self._pool_map(validate_oob_file, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = self._pool_flat_map(validate_oob_file, args_list, chunksize=20)
 
         self._report(
             results,
@@ -2130,11 +2083,7 @@ class Validator(BaseValidator):
             (f, self.namelist_canonical, self.namelist_canonical_lower, self.mod_path)
             for f in files
         ]
-        all_results = self._pool_map(validate_namelist_file, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = self._pool_flat_map(validate_namelist_file, args_list, chunksize=20)
 
         # Namelist mismatches are reported as warnings (not errors) — many
         # legacy 00_*_names.txt files still carry vanilla-style block keys
@@ -2167,13 +2116,9 @@ class Validator(BaseValidator):
         self.log(f"  Found {len(group_keys)} division_names_group definitions")
 
         args_list = [(f, group_keys, group_keys_lower, self.mod_path) for f in files]
-        all_results = self._pool_map(
+        results = self._pool_flat_map(
             validate_oob_division_groups_file, args_list, chunksize=20
         )
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
 
         self._report(
             results,
@@ -2552,11 +2497,7 @@ class Validator(BaseValidator):
             )
             for f in files
         ]
-        all_results = self._pool_map(_check_created_units, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = self._pool_flat_map(_check_created_units, args_list, chunksize=20)
 
         if not self.missing_equipment_factor:
             self.log(
@@ -2588,11 +2529,7 @@ class Validator(BaseValidator):
             )
             for f in files
         ]
-        results = []
-        for file_results in self._pool_map(
-            _check_paradrop_file, args_list, chunksize=20
-        ):
-            results.extend(file_results)
+        results = self._pool_flat_map(_check_paradrop_file, args_list, chunksize=20)
 
         self._report(
             results,

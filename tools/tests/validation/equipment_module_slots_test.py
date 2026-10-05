@@ -21,6 +21,7 @@ from equipment_module_slots import (
     created_variant_spans,
     parse_variant_names,
 )
+from shared.suite import write_under as _write
 from validate_ai_equipment import Validator
 
 # Archetype with three slots; hull_1 inherits, hull_2 overrides and adds a slot.
@@ -556,13 +557,6 @@ def test_target_variant_missing_required_slot_flagged():
         "\t\t\t\tfixed_ship_battery_slot = module_test_gun\n",
     )
     assert _kinds(content) == ["missing_required_module"]
-
-
-def _write(tmp_path, rel, body):
-    p = tmp_path / rel
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(body, encoding="utf-8")
-    return p
 
 
 def _variant_issues(tmp_path, hulls, rel, content, validator_cls, prefix):

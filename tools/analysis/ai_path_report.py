@@ -21,7 +21,7 @@ import sys
 from dataclasses import dataclass, field
 from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import (  # noqa: E402
     PARTY_SLOT_NAMES,

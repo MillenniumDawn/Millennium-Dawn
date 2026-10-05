@@ -7,18 +7,14 @@ VALUES only -- keys are never scanned. Context-dependent entries ("it's",
 
 import re
 
-from validate_localisation import _TYPO_WATCHLIST, process_yml_for_typos
-
-
-def _write_yml(tmp_path, name, value_line):
-    p = tmp_path / name
-    p.write_text(f"l_english:\n {value_line}\n", encoding="utf-8-sig")
-    return str(p)
+from shared.suite import write_yml as _write_yml
+from shared.suite import yml_scan
+from validate_localisation import _TYPO_WATCHLIST
 
 
 def test_flags_typo_in_value_case_insensitively(tmp_path):
     path = _write_yml(tmp_path, "a_l_english.yml", 'key:0 "The Airforce arrived."')
-    results = process_yml_for_typos((path,))
+    results = yml_scan(path, "typos")
     assert len(results) == 1
     assert "Airforce" in results[0]
     assert "Air Force" in results[0]
@@ -28,7 +24,7 @@ def test_does_not_flag_typo_inside_loc_key(tmp_path):
     path = _write_yml(
         tmp_path, "b_l_english.yml", 'TAG_airforce_idea:0 "Some correct value"'
     )
-    assert process_yml_for_typos((path,)) == []
+    assert yml_scan(path, "typos") == []
 
 
 def test_does_not_flag_runtime_references(tmp_path):
@@ -37,7 +33,7 @@ def test_does_not_flag_runtime_references(tmp_path):
         "runtime_l_english.yml",
         'key:0 "$Airforce$ [Unloyal] £Airforce [?defence_breakdown_airforce|-3] [additional_income_SOV_jirik_unloyal_party_idea2]"',
     )
-    assert process_yml_for_typos((path,)) == []
+    assert yml_scan(path, "typos") == []
 
 
 def test_still_flags_prose_around_runtime_references(tmp_path):
@@ -46,7 +42,7 @@ def test_still_flags_prose_around_runtime_references(tmp_path):
         "prose_l_english.yml",
         'key:0 "The Airforce uses [Airforce] and £Airforce."',
     )
-    results = process_yml_for_typos((path,))
+    results = yml_scan(path, "typos")
     assert len(results) == 1
     assert "Airforce" in results[0]
 
@@ -55,14 +51,14 @@ def test_does_not_flag_correct_spellings(tmp_path):
     path = _write_yml(
         tmp_path, "c_l_english.yml", 'key:0 "The Air Force will separate the units."'
     )
-    assert process_yml_for_typos((path,)) == []
+    assert yml_scan(path, "typos") == []
 
 
 def test_excluded_words_never_flagged(tmp_path):
     path = _write_yml(
         tmp_path, "d_l_english.yml", 'key:0 "It\'s a matter of civilisation."'
     )
-    assert process_yml_for_typos((path,)) == []
+    assert yml_scan(path, "typos") == []
 
 
 def test_typo_watchlist_covers_every_doc_token():

@@ -56,7 +56,12 @@ from typing import (
 
 from equipment_module_slots import _iter_named_blocks, _scalar, blank_comments
 from equipment_stats import EquipmentStatIndex, build_equipment_stat_index
-from shared_utils import get_staged_files, validation_config
+from shared_utils import (
+    blank_quoted_strings,
+    find_unquoted_block_end,
+    get_staged_files,
+    validation_config,
+)
 from sprite_index import build_sprite_index
 from validate_style import _is_escaped, split_code_and_comment
 from validator_common import BaseValidator, run_validator_main
@@ -132,20 +137,6 @@ NAME_RE = re.compile(_keyword("name") + r"\s*=\s*([A-Za-z0-9_]+)")
 TOKEN_RE = re.compile(_keyword("token") + r"\s*=\s*([A-Za-z0-9_]+)")
 
 
-def _mask_strings(code: str) -> str:
-    masked = []
-    in_string = False
-    for index, char in enumerate(code):
-        if char == '"' and not _is_escaped(code, index):
-            in_string = not in_string
-            masked.append('"')
-        elif in_string:
-            masked.append(" ")
-        else:
-            masked.append(char)
-    return "".join(masked)
-
-
 def _iter_icon_values(text: str):
     offset = 0
     line = 1
@@ -154,7 +145,7 @@ def _iter_icon_values(text: str):
         # Only a line holding the literal can match; skip the per-character mask.
         if "icon" in raw_line:
             code, _comment = split_code_and_comment(raw_line)
-            masked = _mask_strings(code)
+            masked = blank_quoted_strings(code)
             for match in ICON_ASSIGNMENT_RE.finditer(masked):
                 value = code[match.end() :].lstrip()
                 if value.startswith('"'):
@@ -263,17 +254,7 @@ def _block_end(text: str, open_brace_end: int) -> int:
     Braces are counted bare, quoted or not; an unclosed block runs to the end
     of *text*.
     """
-    depth = 1
-    pos = open_brace_end
-    # Depth only falls at a `}`, so hop between them and count the `{` skipped.
-    while True:
-        close = text.find("}", pos)
-        if close == -1:
-            return len(text)
-        depth += text.count("{", pos, close) - 1
-        if not depth:
-            return close + 1
-        pos = close + 1
+    return find_unquoted_block_end(text, open_brace_end)[0]
 
 
 def _open_braces(text: str, positions: Sequence[int]) -> List[Tuple[int, ...]]:

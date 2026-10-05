@@ -40,7 +40,6 @@ ROLE_RE = re.compile(r"roles\s*=\s*\{([^}]*)\}")
 BLOCKED_FOR_RE = re.compile(r"blocked_for\s*=\s*\{([^}]*)\}", re.DOTALL)
 AVAILABLE_FOR_RE = re.compile(r"available_for\s*=\s*\{([^}]*)\}", re.DOTALL)
 CATEGORY_RE = re.compile(r"category\s*=\s*(naval|land|air)")
-TEMPLATE_NAME_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
 HISTORY_RE = re.compile(r"^\s*history\s*=\s*yes\s*$", re.MULTILINE)
 
 # Keys that are design attributes rather than nested design blocks.

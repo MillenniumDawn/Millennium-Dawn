@@ -6,10 +6,7 @@ from typing import Any, Optional, TypeAlias, TypeVar, cast
 
 import pyradox
 
-_UTILS_DIR = os.path.join(os.path.dirname(__file__), "..", "utils")
-_UTILS_DIR = os.path.abspath(_UTILS_DIR)
-if _UTILS_DIR not in sys.path:
-    sys.path.insert(0, _UTILS_DIR)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "utils"))
 
 from pyradox_utils import normalize_bool, normalize_scalar, normalize_type, parse_file
 
@@ -226,6 +223,7 @@ class NavalEquipmentStats(EquipmentStats):
 @dataclass(frozen=True, repr=False)
 class AirEquipmentStats(EquipmentStats):
     """Stats specific to air equipment."""
+
     maximum_speed: Optional[float] = None
     """Maximum speed of the aircraft."""
     air_attack: Optional[float] = None
@@ -493,17 +491,16 @@ class Equipment:
     @classmethod
     def from_file(cls, file_path: str) -> dict[str, "Equipment"]:
         """Parses all equipments data from a given file."""
+        return cls._read_all(cls._raw_entries(file_path))
+
+    @staticmethod
+    def _raw_entries(file_path: str | Path) -> RawEquipmentMap:
         raw: pyradox.Tree = parse_file(file_path)
+        entries = cast(pyradox.Tree, raw["equipments"]) if "equipments" in raw else raw
+        return {str(key): cast(pyradox.Tree, entries[key]) for key in entries.keys()}
 
-        if "equipments" in raw:
-            raw_entries = cast(pyradox.Tree, raw["equipments"])
-        else:
-            raw_entries = raw
-
-        equip_by_tag: RawEquipmentMap = {}
-        for key in raw_entries.keys():
-            equip_by_tag[str(key)] = cast(pyradox.Tree, raw_entries[key])
-
+    @classmethod
+    def _read_all(cls, equip_by_tag: RawEquipmentMap) -> dict[str, "Equipment"]:
         return {
             key: cls.read_equipment(key, cast(pyradox.Tree, value), equip_by_tag)
             for key, value in equip_by_tag.items()
@@ -522,21 +519,10 @@ class Equipment:
 
         equip_by_tag: RawEquipmentMap = {}
         for file_path in sorted(root.rglob("*.txt")):
-            if not file_path.is_file():
-                continue
+            if file_path.is_file():
+                equip_by_tag.update(cls._raw_entries(file_path))
 
-            raw: pyradox.Tree = parse_file(file_path)
-            raw_entries = (
-                cast(pyradox.Tree, raw["equipments"]) if "equipments" in raw else raw
-            )
-
-            for key in raw_entries.keys():
-                equip_by_tag[str(key)] = cast(pyradox.Tree, raw_entries[key])
-
-        return {
-            key: cls.read_equipment(key, cast(pyradox.Tree, value), equip_by_tag)
-            for key, value in equip_by_tag.items()
-        }
+        return cls._read_all(equip_by_tag)
 
     @staticmethod
     def load_default_equipment_index() -> dict[str, "Equipment"]:

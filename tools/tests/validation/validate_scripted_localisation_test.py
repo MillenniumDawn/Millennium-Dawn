@@ -6,6 +6,12 @@ import validate_scripted_localisation as V
 from shared.suite import write_under
 
 
+def _scan_loc_tokens(text, is_scripted_loc_file, defined_names=frozenset()):
+    """The token scan as the used-localisation worker composes it."""
+    bracketed, explicit = V._scan_loc_token_candidates(text, is_scripted_loc_file)
+    return V._filter_bracket_loc_candidates(bracketed, defined_names) | explicit
+
+
 def test_scripted_loc_keeps_and_reports_undefined_bracketed_invocation(tmp_path):
     loc_dir = tmp_path / "common" / "scripted_localisation"
     loc_dir.mkdir(parents=True)
@@ -53,9 +59,7 @@ def test_digit_prefixed_defined_loc_is_tracked_via_gui(tmp_path):
     )
     assert used == ["991_maoist_influence"]
     assert paths == {"991_maoist_influence": "consumer.gui"}
-    assert V._scan_loc_tokens("[991_maoist_influence]", False) == {
-        "991_maoist_influence"
-    }
+    assert _scan_loc_tokens("[991_maoist_influence]", False) == {"991_maoist_influence"}
 
 
 def test_defined_bracketed_invocation_is_tracked(tmp_path):
@@ -100,7 +104,7 @@ def test_gui_keeps_undefined_bracketed_invocation(tmp_path):
 
 
 def test_scoped_bracketed_invocation_tracks_member_name():
-    assert V._scan_loc_tokens("[THIS.MD_auto_agency_status]", False) == {
+    assert _scan_loc_tokens("[THIS.MD_auto_agency_status]", False) == {
         "MD_auto_agency_status"
     }
 
@@ -108,13 +112,13 @@ def test_scoped_bracketed_invocation_tracks_member_name():
 def test_multi_scope_bracketed_invocation_tracks_member_name():
     # A map-mode tooltip scopes to a state, so the country scripted loc is only reachable
     # as [FROM.CONTROLLER.name]; a single-segment scope class reported it as unused.
-    assert V._scan_loc_tokens("[FROM.CONTROLLER.map_mode_ruling_party]", False) == {
+    assert _scan_loc_tokens("[FROM.CONTROLLER.map_mode_ruling_party]", False) == {
         "map_mode_ruling_party"
     }
 
 
 def test_unknown_lowercase_and_uppercase_bracket_calls_are_retained():
-    assert V._scan_loc_tokens("[status] [USA_STATUS]", False) == {
+    assert _scan_loc_tokens("[status] [USA_STATUS]", False) == {
         "status",
         "USA_STATUS",
     }
@@ -148,7 +152,7 @@ def test_engine_getters_are_not_scripted_loc_candidates(tmp_path):
 
 
 def test_defined_get_prefixed_scripted_loc_is_retained():
-    assert V._scan_loc_tokens("[GetProjectStatus]", False, {"GetProjectStatus"}) == {
+    assert _scan_loc_tokens("[GetProjectStatus]", False, {"GetProjectStatus"}) == {
         "GetProjectStatus"
     }
 
@@ -186,7 +190,7 @@ def test_builtin_and_ordinary_syntax_do_not_create_candidates():
         "text = [?country_var]\n"
         "text = $ORDINARY_LOC_KEY$\n"
     )
-    assert V._scan_loc_tokens(text, is_scripted_loc_file=True) == set()
+    assert _scan_loc_tokens(text, is_scripted_loc_file=True) == set()
 
 
 def test_hyphenated_scripted_loc_is_defined_and_used():
@@ -196,7 +200,7 @@ def test_hyphenated_scripted_loc_is_defined_and_used():
         "defined_text = { name = Test-State_valid }", "ideologies.txt"
     )
     assert defined == ["Test-State_valid"]
-    assert V._scan_loc_tokens("[Test-State_valid]", False) == {"Test-State_valid"}
+    assert _scan_loc_tokens("[Test-State_valid]", False) == {"Test-State_valid"}
 
 
 def test_reference_line_skips_substring_match(tmp_path):

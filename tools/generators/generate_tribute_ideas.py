@@ -5,14 +5,11 @@ import tempfile
 from pathlib import Path
 
 country_tag_list: list[str] = []
-inputpath = ""
 
 # Anchor to the repo (tools/generators/ -> repo root) with OS-correct
 # separators; the old `"..\\common\\country_tags"` literals were dead on Linux.
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-TOOLS_DIR = os.path.join(REPO_ROOT, "tools")
-if TOOLS_DIR not in sys.path:
-    sys.path.insert(0, TOOLS_DIR)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from shared_utils import atomic_write_bytes, read_text_strict
 
 TAG_DIR = os.path.join(REPO_ROOT, "common", "country_tags")

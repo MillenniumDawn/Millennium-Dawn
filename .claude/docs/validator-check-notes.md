@@ -212,7 +212,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   case-insensitively, so the icon is missing on Linux. `unused-sprite-case` (WARNING): a
   sprite whose only reference is miscased.
 - `duplicate-sprite`, `case-variant-sprite` (WARNING): the message says whether the blocks
-  share a texture.
+  share a texture. Unquoted `texturefile` values are read the same as quoted ones.
+- `raw-icon-path` (ERROR): `icon =` inside `create_equipment_variant`, or an entry in a
+  `graphic_db` `icons = { }` block, that is a texture path instead of a `GFX_` sprite.
+  Quoted and unquoted, slash or backslash. Comments and focus-tree `icon =` are ignored.
+  `_documentation.info` is not scanned. Raw plane paths crash the macOS air battle window.
 - `undefined-font` (ERROR): a `.gui` font naming no `bitmapfont` renders in the default
   face. Vanilla names come from an install or `vanilla_fonts.txt`.
 - Sprite names in generator-managed `.gfx` files come from the texture filename. Rename
@@ -377,7 +381,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_style.py and check_common_mistakes.py
 
-- Both are diff-scoped in the core job. `check_common_mistakes.py` reports ERROR only.
+- The style check is diff-scoped in the core job. Common mistakes run full-repo in the
+  core batch through `validate_common_mistakes.py` and report ERROR only. It scans
+  `common`, `events`, `history`, and `music`.
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.

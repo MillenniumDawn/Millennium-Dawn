@@ -20,6 +20,7 @@ from image_size import read_image_size
 from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
+    find_unquoted_brace_close,
     get_staged_files,
     strip_comments,
     strip_inline_comment,
@@ -313,24 +314,9 @@ _ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
 
 
 def _scan_event_id_counts_text(cleaned: str, tracked_ids: frozenset) -> Dict[str, int]:
+    """Whole-token counts: `foo.1` and its loc key `foo.1.t` are distinct tokens."""
     counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
     return {eid: counts[eid] for eid in tracked_ids.intersection(counts)}
-
-
-def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
-    """Pool worker: count occurrences of each tracked event ID in one file.
-
-    Tokenizes the file body ONCE and counts whole-token matches against the
-    tracked-ID set, rather than scanning the file once per tracked ID. The `.`
-    is part of an identifier token, so `ALG_civilwar.1` and its loc keys
-    `ALG_civilwar.1.t` / `.d` / `.a` tokenize as distinct tokens and don't
-    inflate each other's counts.
-    """
-    filename, tracked_ids = args
-    cleaned = _read_cleaned_text(filename)
-    if cleaned is None:
-        return {}
-    return _scan_event_id_counts_text(cleaned, tracked_ids)
 
 
 # Event IDs built at runtime by string interpolation never appear as a literal
@@ -371,19 +357,6 @@ _MISSING_EVENT_CALL_EQUALS_RE = re.compile(
 )
 
 
-def _matching_brace(text: str, open_pos: int) -> int:
-    depth = 0
-    pos = open_pos
-    while True:
-        close = text.find("}", pos)
-        if close == -1:
-            return -1
-        depth += text.count("{", pos, close) - 1
-        if depth == 0:
-            return close
-        pos = close + 1
-
-
 _ID_OR_BRACE_RE = re.compile(r"[{}]|\bid\s*=\s*([A-Za-z_][\w.]*)")
 
 
@@ -416,7 +389,7 @@ def _iter_typed_event_bodies(cleaned: str, *, require_id: bool = True):
     """
     for m in _keyword_matches(_EVENT_BLOCK_OPEN_RE, cleaned):
         ob = cleaned.index("{", m.end() - 1)
-        end = _matching_brace(cleaned, ob)
+        end = find_unquoted_brace_close(cleaned, ob)
         if end == -1:
             continue
         body = cleaned[ob + 1 : end]
@@ -432,15 +405,6 @@ def _iter_event_bodies(cleaned: str):
     """Yield (event_id, body, match_start) for defined events."""
     for eid, _event_type, body, start in _iter_typed_event_bodies(cleaned):
         yield eid, body, start
-
-
-def scan_event_definitions(args: Tuple[str, frozenset]) -> Set[str]:
-    """Pool worker: event IDs *defined* in one file."""
-    filename = args[0]
-    cleaned = _read_cleaned_text(filename, skip=False)
-    if cleaned is None:
-        return set()
-    return {eid for eid, _body, _start in _iter_event_bodies(cleaned) if eid}
 
 
 def scan_event_definition_types(
@@ -485,24 +449,6 @@ def _iter_fired_ids(text: str):
         yield eid, pos
 
 
-def _scan_fires_text(cleaned: str, filename: str) -> List[Tuple[str, str, int]]:
-    line = _line_lookup(cleaned)
-    return [(eid, filename, line(pos)) for eid, pos in _iter_fired_ids(cleaned)]
-
-
-def scan_event_fires(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
-    """Pool worker: every event ID fired from one file, as (id, file, line).
-
-    Only literal IDs are returned. An ID assembled at runtime (`UN.[ID]`) has no
-    literal form to resolve, so it is skipped rather than guessed at.
-    """
-    filename = args[0]
-    cleaned = _read_cleaned_text(filename)
-    if cleaned is None:
-        return []
-    return _scan_fires_text(cleaned, filename)
-
-
 def _scan_typed_fires_text(
     cleaned: str, filename: str
 ) -> List[Tuple[str, str, str, int]]:
@@ -511,17 +457,6 @@ def _scan_typed_fires_text(
         (eid, call_type, filename, line(pos))
         for eid, call_type, pos in _iter_typed_fires(cleaned)
     ]
-
-
-def scan_typed_event_fires(
-    args: Tuple[str, frozenset],
-) -> List[Tuple[str, str, str, int]]:
-    """Pool worker: literal event fires with their call keywords."""
-    filename = args[0]
-    cleaned = _read_cleaned_text(filename)
-    if cleaned is None:
-        return []
-    return _scan_typed_fires_text(cleaned, filename)
 
 
 def _scan_invalid_calls_text(
@@ -549,36 +484,8 @@ def _scan_invalid_calls_text(
     return results
 
 
-def scan_invalid_event_calls(
-    args: Tuple[str, frozenset],
-) -> List[Tuple[str, str, str, str, int]]:
-    """Pool worker: reversed keywords and event calls missing ``=``."""
-    filename = args[0]
-    if _should_skip(filename):
-        return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = blank_quoted_strings(strip_comments(text))
-    return _scan_invalid_calls_text(cleaned, filename)
-
-
 def _scan_dynamic_namespaces_text(cleaned: str) -> Set[str]:
     return {m.group(1) for m in _keyword_matches(_DYNAMIC_EVENT_NS_PATTERN, cleaned)}
-
-
-def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
-    """Pool worker: namespaces fired via string-interpolated event IDs in a file.
-
-    Any triggered-only event in a returned namespace is reachable through dynamic
-    dispatch and must not be reported as unreferenced.
-    """
-    filename = args[0]
-    cleaned = _read_cleaned_text(filename)
-    if cleaned is None:
-        return set()
-    return _scan_dynamic_namespaces_text(cleaned)
 
 
 # --- date-gated events and the event fire graph ---
@@ -609,7 +516,7 @@ def _event_trigger_body(body: str) -> Optional[str]:
         if depth != 0:
             continue
         ob = body.index("{", m.end() - 1)
-        end = _matching_brace(body, ob)
+        end = find_unquoted_brace_close(body, ob)
         return None if end == -1 else body[ob + 1 : end]
     return None
 
@@ -841,33 +748,6 @@ def _scan_in_loop_text(
     return fof, major
 
 
-def _scan_in_loop_file(
-    filename: str, mod_path: str, fof_ids: frozenset, major_ids: frozenset
-) -> Tuple[List[str], List[str]]:
-    if not (fof_ids or major_ids) or _should_skip(filename, mod_path=mod_path):
-        return [], []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return [], []
-    if not _has_event_call(text) or not any(opener in text for opener in _LOOP_OPENERS):
-        return [], []
-    cleaned = blank_quoted_strings(strip_comments(text))
-    return _scan_in_loop_text(cleaned, filename, mod_path, fof_ids, major_ids)
-
-
-def scan_fire_only_once_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
-    """Pool worker: flag fire_only_once events fired inside an iterator."""
-    filename, tracked_ids, mod_path = args
-    return _scan_in_loop_file(filename, mod_path, tracked_ids, frozenset())[0]
-
-
-def scan_major_event_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
-    """Pool worker: flag major events fired inside an iterator."""
-    filename, tracked_ids, mod_path = args
-    return _scan_in_loop_file(filename, mod_path, frozenset(), tracked_ids)[1]
-
-
 def _scan_long_form_text(cleaned: str, filename: str, mod_path: str) -> List[str]:
     rel = os.path.relpath(filename, mod_path)
     results = []
@@ -883,19 +763,6 @@ def _scan_long_form_text(cleaned: str, filename: str, mod_path: str) -> List[str
             f"{rel}:{line} - {m.group(1)} = {{ id = {m.group(2)} }} → use shorthand `{m.group(1)} = {m.group(2)}`"
         )
     return results
-
-
-def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
-    """Pool worker: find id-only long-form event calls in one .txt file."""
-    filename, mod_path = args
-    if _should_skip(filename, mod_path=mod_path):
-        return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
-    return _scan_long_form_text(cleaned, filename, mod_path)
 
 
 _C_LONGFORM = 1
@@ -914,10 +781,9 @@ def _scan_shared_call_site_file(args) -> Tuple:
 
     Reads the file once and shares the naive-stripped and quote-aware artifacts
     across long-form, invalid-call, typed-fire, count, dynamic-namespace, and
-    in-loop scans instead of one read plus strip pass per check. Each scan calls
-    the same ``_scan_*_text`` helper its standalone worker uses, gated by ``mask``
-    so the file set per check is unchanged. Typed fires and dynamic namespaces
-    keep their existing disk-cache namespaces.
+    in-loop scans instead of one read plus strip pass per check. Each scan is
+    gated by ``mask`` so the file set per check is unchanged. Typed fires and
+    dynamic namespaces keep their disk-cache namespaces.
     Returns (longform, invalid, typed, counts, dynamic, fof, major).
     """
     filename, mod_path, mask, count_tracked, fof_ids, major_ids = args
@@ -1243,7 +1109,7 @@ def _effect_costs(
         if m is None:
             return costs
         pos = m.end()
-        end = _matching_brace(text, pos - 1) if m["branch"] else -1
+        end = find_unquoted_brace_close(text, pos - 1) if m["branch"] else -1
         if end != -1:
             if m["branch"] == "if":
                 before_if = dict(known)
@@ -1300,7 +1166,7 @@ def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
         pos = 0
         while True:
             m = _SCRIPTED_EFFECT_DEF_RE.search(code, pos)
-            end = _matching_brace(code, m.end() - 1) if m else -1
+            end = find_unquoted_brace_close(code, m.end() - 1) if m else -1
             if m is None or end == -1:
                 break
             bodies[m.group(1)] = _split_option(code[m.end() : end])[0]
@@ -1370,7 +1236,7 @@ def find_cost_blind_options(
     for _eid, body, start in _iter_event_bodies(code):
         base = code.index("{", start) + 1
         options = [
-            (match.end(), _matching_brace(body, match.end() - 1))
+            (match.end(), find_unquoted_brace_close(body, match.end() - 1))
             for match in _OPTION_OPEN_RE.finditer(body)
         ]
         if len(options) < 2:
@@ -1516,7 +1382,6 @@ class Validator(BaseValidator):
         self._fire_scan_args_cache: Optional[List[Tuple[str, frozenset]]] = None
         self._fires_cache: Optional[List[Tuple[str, str, int]]] = None
         self._fire_sources_cache: Optional[Dict[str, Set[str]]] = None
-        self._typed_fires_cache: Optional[List[Tuple[str, str, str, int]]] = None
         self._definition_types_cache: Optional[Dict[str, str]] = None
         self._full_call_site_scan_cache: Optional[bool] = None
 
@@ -1644,9 +1509,8 @@ class Validator(BaseValidator):
         Reads each candidate file once and shares the naive-stripped and
         quote-aware artifacts across long-form, invalid-call, typed-fire,
         count, dynamic-namespace, and in-loop scans. Each file runs exactly the
-        scans its own check file list would have run (via ``mask``), and each
-        scan calls the same ``_scan_*_text`` helper its standalone worker uses,
-        so findings are unchanged. Typed fires derive untyped fires parent-side,
+        scans its own check file list selects (via ``mask``). Typed fires derive
+        untyped fires parent-side,
         and the two disk-cache namespaces are kept. Events-only passes (pictures,
         option logs, date gates, fire graph, definitions) and on_actions lookups
         keep their own file sets and stay separate.
@@ -1747,13 +1611,6 @@ class Validator(BaseValidator):
             self._fire_sources_cache = sources
         return self._fire_sources_cache
 
-    def _get_typed_event_fires(self) -> List[Tuple[str, str, str, int]]:
-        """Every literal event fire with its call keyword."""
-        if self._typed_fires_cache is not None:
-            return self._typed_fires_cache
-        self._typed_fires_cache = list(self._get_shared_call_site_scan()["typed"])
-        return self._typed_fires_cache
-
     def _get_event_definition_types(self) -> Dict[str, str]:
         """Return event declaration keywords from the full events tree."""
         if self._definition_types_cache is not None:
@@ -1761,14 +1618,13 @@ class Validator(BaseValidator):
         event_files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
 
         def _build() -> Dict[str, str]:
-            definitions: Dict[str, str] = {}
-            for result in self._pool_map(
-                scan_event_definition_types,
-                [(f, frozenset()) for f in event_files],
-                chunksize=20,
-            ):
-                definitions.update(result)
-            return definitions
+            return dict(
+                self._pool_flat_map(
+                    scan_event_definition_types,
+                    [(f, frozenset()) for f in event_files],
+                    chunksize=20,
+                )
+            )
 
         definitions = disk_cache.aggregate_cached(
             self.mod_path,
@@ -1828,13 +1684,13 @@ class Validator(BaseValidator):
         # Lookup pass: must scan full repo even in staged mode, mirroring
         # `_get_random_event_ids`.
         files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
-        ids: set = set()
-        for result in self._pool_map(
-            partial(scan_probability_rolled_fires, mod_path=self.mod_path),
-            [(f, frozenset()) for f in files],
-            chunksize=30,
-        ):
-            ids.update(result)
+        ids = set(
+            self._pool_flat_map(
+                partial(scan_probability_rolled_fires, mod_path=self.mod_path),
+                [(f, frozenset()) for f in files],
+                chunksize=30,
+            )
+        )
 
         self._probability_rolled_cache = ids
         return ids
@@ -2062,13 +1918,11 @@ class Validator(BaseValidator):
         gated_args = [
             (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
         ]
-        gated: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(
+        gated: List[Tuple[str, str, int]] = self._pool_flat_map(
             partial(scan_date_gated_events, mod_path=self.mod_path),
             gated_args,
             chunksize=10,
-        ):
-            gated.extend(result)
+        )
         self.log(f"  Found {len(gated)} events with a date > guard")
 
         results = []
@@ -2153,13 +2007,11 @@ class Validator(BaseValidator):
         bounded_args = [
             (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
         ]
-        bounded: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(
+        bounded: List[Tuple[str, str, int]] = self._pool_flat_map(
             partial(scan_date_bounded_events, mod_path=self.mod_path),
             bounded_args,
             chunksize=10,
-        ):
-            bounded.extend(result)
+        )
         self.log(f"  Found {len(bounded)} events with a date bound")
         if not bounded:
             self._report(

@@ -7,6 +7,7 @@ and unreadable-file fallbacks each one carries.
 """
 
 import validate_oob_units as V
+from shared.suite import write_under_str as _write
 
 _UNITS = """sub_units = {
 \t# a stripped comment leaves a blank line at depth 1
@@ -24,13 +25,6 @@ _UNITS = """sub_units = {
 \t}
 }
 """
-
-
-def _write(tmp_path, relative, body):
-    path = tmp_path / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding="utf-8")
-    return str(path)
 
 
 def _write_units(tmp_path):
@@ -51,15 +45,12 @@ def test_parse_canonical_units_file_skips_non_definition_lines():
     assert V._parse_canonical_units_file(_UNITS) == {"Arm_Inf_Bat", "Mech_Inf_Bat"}
 
 
-def test_parse_canonical_units_reads_the_units_directory(tmp_path):
+def test_namelist_keys_add_equipment_names_to_the_units_directory_names(tmp_path):
     _write_units(tmp_path)
-    assert V.parse_canonical_units(str(tmp_path)) == {"Arm_Inf_Bat", "Mech_Inf_Bat"}
-
-
-def test_parse_canonical_namelist_keys_adds_equipment_names(tmp_path):
-    _write_units(tmp_path)
-    sub_units = V.parse_canonical_units(str(tmp_path))
-    assert V.parse_canonical_namelist_keys(str(tmp_path), sub_units) == {
+    validator = V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator._build_canonical_units()
+    assert validator.canonical == {"Arm_Inf_Bat", "Mech_Inf_Bat"}
+    assert validator.namelist_canonical == {
         "Arm_Inf_Bat",
         "Mech_Inf_Bat",
         "infantry_weapons",

@@ -76,9 +76,10 @@ def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch):
     ]
 
 
-def test_events_and_history_trees_are_scanned(tmp_path):
+def test_events_history_and_music_trees_are_scanned(tmp_path):
     _write(tmp_path, "events/MD_test.txt", FACTION_MISTAKE)
     _write(tmp_path, "history/countries/GER - Germany.txt", FACTION_MISTAKE)
+    _write(tmp_path, "music/MD_test_songs.txt", FACTION_MISTAKE)
 
     validator = _validator(tmp_path)
     validator.run_validations()
@@ -86,6 +87,7 @@ def test_events_and_history_trees_are_scanned(tmp_path):
     assert sorted(i.file for i in validator._issues) == [
         "events/MD_test.txt",
         "history/countries/GER - Germany.txt",
+        "music/MD_test_songs.txt",
     ]
 
 

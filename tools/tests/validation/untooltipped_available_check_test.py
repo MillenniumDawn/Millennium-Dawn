@@ -8,7 +8,7 @@ explaining what is missing. It must sit under a tooltip wrapper.
 outright, so no tooltip renders either way.
 """
 
-import validate_variables as V
+from shared.suite import variable_scan
 
 # The AI-only exemption keys off the decisions path, so a test that wants it
 # has to write the file where decisions actually live.
@@ -19,9 +19,7 @@ def _findings(tmp_path, text, ai_categories=frozenset(), rel="src.txt"):
     f = tmp_path / rel
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(text, encoding="utf-8")
-    return V.process_file_for_untooltipped_available_checks(
-        (str(f), str(tmp_path), ai_categories)
-    )
+    return variable_scan(f, "available", tmp_path, ai_categories=ai_categories)
 
 
 def test_bare_check_in_available_flagged(tmp_path):
