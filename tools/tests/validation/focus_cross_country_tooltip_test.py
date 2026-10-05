@@ -1,5 +1,5 @@
 """Tests for the cross-country event tooltip check in validate_focus_tree
-(AGENTS.md "Cross-country event tooltips").
+(event-reference.md "Cross-country events").
 
 A completion_reward that fires a country_event into another nation's scope
 should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT. Fires to self (bare,

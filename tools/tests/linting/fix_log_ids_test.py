@@ -1,7 +1,7 @@
 """Behavioral tests for tools/linting/fix_log_ids.py.
 
-Rewrites mismatched log = "...Focus X" / "...Decision X" tokens inside the
-enclosing focus/decision block. Tests use real fixtures so the
+Rewrites mismatched log = "...Focus X" / "...Decision X" / event option
+tokens inside the enclosing block. Tests use real fixtures so the
 finder/writer pipeline is exercised, not mocked.
 """
 
@@ -33,11 +33,13 @@ def _run(root: Path, *args):
 
 def test_focus_finder_dispatches_to_focus_and_decision():
     from check_common_mistakes import _find_decision_log_mismatches as dec_fn
+    from check_common_mistakes import _find_event_log_mismatches as event_fn
     from check_common_mistakes import _find_focus_log_mismatches as focus_fn
     from fix_log_ids import _finder_for
 
     assert _finder_for("common/national_focus/y.txt") is focus_fn
     assert _finder_for("common/decisions/x.txt") is dec_fn
+    assert _finder_for("events/x.txt") is event_fn
     assert _finder_for("common/ideas/x.txt") is None
 
 
@@ -142,6 +144,52 @@ def test_apply_ignores_non_focus_decision_paths(tmp_path):
     path, count = fix_file(str(other))
     assert path == str(other)
     assert count == 0
+
+
+def test_apply_rewrites_event_executed_log_token(tmp_path):
+    from fix_log_ids import fix_file
+
+    event = tmp_path / "events/correct.txt"
+    _write(
+        event,
+        (
+            "country_event = {\n"
+            "    id = tst.1\n"
+            "    option = {\n"
+            "        name = tst.1.b\n"
+            '        log = "[GetDateText]: [This.GetName]: tst.1.a executed"\n'
+            "    }\n"
+            "}\n"
+        ),
+    )
+    _, count = fix_file(str(event))
+    assert count == 1
+    body = event.read_text(encoding="utf-8")
+    assert "tst.1.a" not in body
+    assert "tst.1.b executed" in body
+
+
+def test_apply_rewrites_event_option_letter(tmp_path):
+    from fix_log_ids import fix_file
+
+    event = tmp_path / "events/letter.txt"
+    _write(
+        event,
+        (
+            "news_event = {\n"
+            "    id = tst.1\n"
+            "    option = {\n"
+            "        name = tst.1.a\n"
+            '        log = "[GetDateText]: [Root.GetName]: Event tst.1 Option b"\n'
+            "    }\n"
+            "}\n"
+        ),
+    )
+    _, count = fix_file(str(event))
+    assert count == 1
+    body = event.read_text(encoding="utf-8")
+    assert "Option b" not in body
+    assert "Option a" in body
 
 
 def test_apply_rewrites_decision_log_token(tmp_path):

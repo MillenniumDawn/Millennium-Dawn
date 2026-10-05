@@ -14,8 +14,10 @@ from pathlib import Path
 from typing import Callable, Dict, Iterable, Iterator, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "linting"))
 
 import disk_cache
+from check_common_mistakes import _iter_event_log_mismatches
 from image_size import read_image_size
 from shared_utils import (
     blank_quoted_strings,
@@ -263,6 +265,32 @@ def _extract_option_logs_without_effects(
     return [
         (name, filename, line) for name, line in find_option_logs_without_effects(text)
     ]
+
+
+def _extract_event_log_id_mismatches(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: (message, filename, line) for option logs citing the wrong id."""
+    if _should_skip(filename, mod_path=mod_path):
+        return []
+    try:
+        lines = (
+            Path(filename)
+            .read_text(encoding="utf-8-sig", errors="replace")
+            .splitlines(keepends=True)
+        )
+    except OSError:
+        return []
+    results: List[Tuple[str, str, int]] = []
+    for row, _s, _e, _repl, token, own_name, kind in _iter_event_log_mismatches(lines):
+        if own_name in _OPTION_LOG_ID_EXEMPT:
+            continue
+        if kind == "letter":
+            message = f"{own_name} log says Option {token}"
+        else:
+            message = f"{own_name} log cites {token}"
+        results.append((message, filename, row + 1))
+    return results
 
 
 _ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
@@ -872,6 +900,9 @@ _OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 # Triggered-only events the engine dispatches with no script reference to find.
 _EXEMPT_UNREFERENCED_EVENT_IDS = frozenset(
     validation_config("validate_events", "exempt_unreferenced_event_ids")
+)
+_OPTION_LOG_ID_EXEMPT = frozenset(
+    validation_config("validate_events", "option_log_id_exempt")
 )
 
 _OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
@@ -2639,6 +2670,32 @@ class Validator(BaseValidator):
             category="event-option-log-without-effect",
         )
 
+    def validate_option_log_id(self):
+        """Flag option logs that cite another option's id.
+
+        Shares detection with check_common_mistakes._iter_event_log_mismatches
+        and tools/linting/fix_log_ids.py.
+        """
+        self._log_section("Checking event option logs for copied ids...")
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+        results: List[str] = []
+        for sub in self._pool_map(
+            partial(_extract_event_log_id_mismatches, mod_path=self.mod_path), files
+        ):
+            for message, filename, line in sub:
+                results.append(f"{os.path.basename(filename)}:{line} - {message}")
+        self._report(
+            sorted(results),
+            "✓ No event option logs citing another option's id",
+            "Event options whose log cites another option's id"
+            " (likely copy-paste — fix the log id):",
+            Severity.ERROR,
+            category="event-option-log-id",
+        )
+
     def validate_ai_chance_ignores_cost(self):
         """Flag options whose flat `ai_chance` ignores what the option costs.
 
@@ -2712,6 +2769,7 @@ class Validator(BaseValidator):
         self.validate_fire_only_once_in_loop()
         self.validate_major_event_in_loop()
         self.validate_option_log_without_effect()
+        self.validate_option_log_id()
         self.validate_ai_chance_ignores_cost()
 
 

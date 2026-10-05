@@ -535,7 +535,7 @@ def _scan_dynamic_tokens_text(
 # The sub-1 case is the same bug seen from the other side: a 0-1 scale value written
 # against a variable clamped to a wide integer range (taliban_strength > 0.19 on a
 # 0..100 clamp fires immediately instead of at 19%). Same failure class as the
-# `threat > 40` trap in general-rules.md.
+# `threat > 40` trap in scripting-edge-cases.md.
 _CLAMP_RE = re.compile(
     r"clamp_variable\s*=\s*\{(?P<body>[^{}]*?)\}",
     re.S,

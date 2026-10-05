@@ -177,8 +177,8 @@ _VAR_SCOPE_RE = re.compile(r"^(var|event_target|global\.event_target):")
 
 # Scope-expansion simplifications: a `TAG = { <single trigger> }` block whose
 # body is one trigger that has a flat country-scoped equivalent. Opening a TAG
-# scope just to check one boolean is an unnecessary scope switch (see AGENTS.md
-# "Minimize scope expansion"). Only single-condition bodies are flagged; a flat
+# scope just to check one boolean is an unnecessary scope switch (see
+# simplification-patterns.md). Only single-condition bodies are flagged; a flat
 # form with NOT/relative scopes (e.g. exists = no) is context-dependent and left
 # alone.
 _TAG_BLOCK_RE = re.compile(r"\b([A-Z]{3})\s*=\s*\{")
@@ -223,7 +223,7 @@ def _find_scope_expansion(src: _Script):
 
 # random_list with exactly two weight buckets where one is empty is a Bernoulli
 # trial in the wrong syntax; it collapses to a single `random = { chance = N }`.
-# Three+ buckets, or two non-empty buckets, must stay (see AGENTS.md).
+# Three+ buckets, or two non-empty buckets, must stay (see simplification-patterns.md).
 _RANDOM_LIST_RE = _keyword_block_re("random_list")
 _WEIGHT_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
 _MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
@@ -505,7 +505,7 @@ def _find_government_match(src: _Script):
 
 
 # Bare multi-child NOT is ambiguous: the project doc reads it as NAND, cwtools
-# as NOR (see AGENTS.md "NOT blocks and NOR"). A single child — one trigger or
+# as NOR (see scripting-edge-cases.md). A single child — one trigger or
 # one explicit AND/OR wrapper — is unambiguous and never flagged.
 _NOT_RE = _keyword_block_re("NOT")
 _CHILD_KEY_RE = re.compile(r"[\w.:^@\[\]-]+\s*(?:>=|<=|=|>|<)\s*")

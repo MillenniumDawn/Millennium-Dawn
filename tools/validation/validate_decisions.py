@@ -2730,7 +2730,7 @@ class Validator(BaseValidator):
     def validate_missing_log(self):
         """Flag decision effect blocks that carry no log line.
 
-        AGENTS.md / decision-reference.md require the log in every block the
+        decision-reference.md requires the log in every block the
         engine runs as a decision's effects (complete_effect, remove_effect,
         timeout_effect, cancel_effect):
         `log = "[GetDateText]: [Root.GetName]: Decision <ID>"`. An effect block
