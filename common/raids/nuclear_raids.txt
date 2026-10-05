@@ -3,7 +3,7 @@ types = {
 	tactical_nuclear_strike = {
 		allowed = { has_dlc = "Gotterdammerung" }
 		days_to_prepare = 1
-		days_re_enable = 10
+		days_re_enable = 60
 
 		category = nuclear_raids
 
@@ -191,6 +191,11 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
+				add = 2
+				longest_war_length > 2
+				surrender_progress > 0.25
+			}
+			modifier = {
 				add = 10
 				surrender_progress > 0.5
 			}
@@ -203,18 +208,27 @@ types = {
 				surrender_progress > 0.9
 			}
 			modifier = {
+				add = 1000
+				has_country_flag = has_been_nuked
+			}
+			modifier = {
+				factor = 0
+				longest_war_length < 3
+				NOT = { has_country_flag = has_been_nuked }
+				surrender_progress < 0.75
+			}
+			modifier = {
 				factor = 0
 				threat < 0.10
+				NOT = { has_country_flag = has_been_nuked }
 			}
-			# Alliance gate — nukes are a deterrent; don't strike a stronger bloc
-			# unless we are already desperate (surrender_progress >= 0.5 overrides caution).
 			modifier = {
 				factor = 0
 				raid_alliance_unfavorable = yes
 				surrender_progress < 0.5
+				NOT = { has_country_flag = has_been_nuked }
 			}
 			modifier = {
-				# Don't target anyone who is not a potential enemy
 				factor = 0
 				NOT = {
 					is_in_array = {
@@ -231,6 +245,7 @@ types = {
 		category = nuclear_raids
 
 		days_to_prepare = 1
+		days_re_enable = 180
 
 		command_power = 5 # command power allocation cost
 
@@ -531,8 +546,13 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
+				add = 2
+				longest_war_length > 5
+				surrender_progress > 0.4
+			}
+			modifier = {
 				add = 10
-				surrender_progress > 0.5
+				surrender_progress > 0.6
 			}
 			modifier = {
 				factor = 5
@@ -543,18 +563,27 @@ types = {
 				surrender_progress > 0.9
 			}
 			modifier = {
+				add = 2500
+				has_country_flag = has_been_nuked
+			}
+			modifier = {
+				factor = 0
+				longest_war_length < 6
+				NOT = { has_country_flag = has_been_nuked }
+				surrender_progress < 0.75
+			}
+			modifier = {
 				factor = 0
 				threat < 0.10
+				NOT = { has_country_flag = has_been_nuked }
 			}
-			# Alliance gate — nukes are a deterrent; don't strike a stronger bloc
-			# unless we are already desperate (surrender_progress >= 0.5 overrides caution).
 			modifier = {
 				factor = 0
 				raid_alliance_unfavorable = yes
 				surrender_progress < 0.5
+				NOT = { has_country_flag = has_been_nuked }
 			}
 			modifier = {
-				# Don't target anyone who is not a potential enemy
 				factor = 0
 				NOT = {
 					is_in_array = {
@@ -572,6 +601,7 @@ types = {
 		category = nuclear_raids
 
 		days_to_prepare = 1
+		days_re_enable = 365
 		#Nuclear powers WILL get aggressive if they are about to be conquered
 		#Realistic behavior, so people should be careful about how they push wars
 		#This should also include some more launch checks, but for now, this will work
@@ -593,8 +623,12 @@ types = {
 				has_war_with = ROOT
 			}
 			is_able_to_use_nuclear_strikes = yes
-			if = { limit = { has_idea = nuclear_power_def }
-				surrender_progress > 0.5
+			if = {
+				limit = { has_idea = nuclear_power_def }
+				OR = {
+					surrender_progress > 0.5
+					has_country_flag = has_been_nuked
+				}
 			}
 		}
 		launchable = {
@@ -887,25 +921,74 @@ types = {
 			base = 0
 			modifier = {
 				add = 10
-				surrender_progress > 0.75
+				longest_war_length > 11
+				surrender_progress > 0.7
+			}
+			modifier = {
+				add = 10
+				surrender_progress > 0.85
 			}
 			modifier = {
 				factor = 5
-				surrender_progress > 0.9
+				surrender_progress > 0.85
+			}
+			modifier = {
+				factor = 10
+				surrender_progress > 0.95
+			}
+			modifier = {
+				add = 1000
+				NOT = { surrender_progress < 0.85 }
+			}
+			modifier = {
+				add = 500
+				surrender_progress > 0.5
+				FROM = {
+					has_country_flag = nuclear_warning_from@ROOT
+					NOT = { has_country_flag = nuclear_warning_grace_from@ROOT }
+				}
+			}
+			modifier = {
+				add = 10000
+				has_country_flag = has_been_nuked
+			}
+			modifier = {
+				factor = 0
+				longest_war_length < 12
+				NOT = { has_country_flag = has_been_nuked }
+				surrender_progress < 0.85
+				NOT = {
+					FROM = {
+						has_country_flag = nuclear_warning_from@ROOT
+						NOT = { has_country_flag = nuclear_warning_grace_from@ROOT }
+					}
+				}
+			}
+			modifier = {
+				factor = 0
+				FROM = { has_country_flag = nuclear_warning_grace_from@ROOT }
+				NOT = { has_country_flag = has_been_nuked }
+				surrender_progress < 0.85
 			}
 			modifier = {
 				factor = 0
 				threat < 0.10
+				surrender_progress < 0.85
+				NOT = { has_country_flag = has_been_nuked }
+				NOT = {
+					FROM = {
+						has_country_flag = nuclear_warning_from@ROOT
+						NOT = { has_country_flag = nuclear_warning_grace_from@ROOT }
+					}
+				}
 			}
-			# Alliance gate — nukes are a deterrent; don't strike a stronger bloc
-			# unless we are already desperate (surrender_progress >= 0.5 overrides caution).
 			modifier = {
 				factor = 0
 				raid_alliance_unfavorable = yes
 				surrender_progress < 0.5
+				NOT = { has_country_flag = has_been_nuked }
 			}
 			modifier = {
-				# Don't target anyone who is not a potential enemy
 				factor = 0
 				NOT = {
 					is_in_array = {
