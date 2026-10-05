@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """Add a tab to the International Systems screen.
 
 Wires the tab button, icon, open/close logic and header title into the shared
