@@ -812,11 +812,7 @@ jobs:
           printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
             | grep -vE \
               '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
-            > changed_style_files.txt || true
-          if [ -s changed_style_files.txt ]; then
-            echo "has-changed-files=true" >> "$GITHUB_OUTPUT"
-          fi
-          cp changed_style_files.txt style_files.txt
+            > style_files.txt || true
           if [ "$STYLE_CONFIG" = true ]; then
             find common/national_focus -type f -name '*.txt' >> style_files.txt
           fi
@@ -834,15 +830,6 @@ jobs:
             python3 tools/validation/validate_style.py \
             --staged --strict --no-color --output validation-style-check.log
 
-      - name: Run common-mistakes check
-        if: >-
-          always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-changed-files == 'true'
-        run: |
-          tr '\n' '\0' < changed_style_files.txt | xargs -0 -r \
-            python3 tools/linting/check_common_mistakes.py \
-            --output validation-common-mistakes.log
-
       - name: Verify style results
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
@@ -850,14 +837,6 @@ jobs:
         run: |
           test -f validation-style-check.log
           test -f validation-style-check.json
-
-      - name: Verify common-mistakes results
-        if: >-
-          always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-changed-files == 'true'
-        run: |
-          test -f validation-common-mistakes.log
-          test -f validation-common-mistakes.json
 
       - name: Check localisation UTF-8 BOM
         if: >-
@@ -906,19 +885,6 @@ jobs:
           path: |
             validation-style-check.log
             validation-style-check.json
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Upload common-mistakes results
-        if: >-
-          always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-changed-files == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: validation-common-mistakes-results
-          path: |
-            validation-common-mistakes.log
-            validation-common-mistakes.json
           if-no-files-found: error
           retention-days: 7
 

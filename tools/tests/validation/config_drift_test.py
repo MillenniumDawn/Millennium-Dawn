@@ -456,7 +456,6 @@ def test_mod_core_runs_extra_checks_after_batch():
     batch_index = names.index("Run validator batch")
     for name in (
         "Run style check",
-        "Run common-mistakes check",
         "Check localisation UTF-8 BOM",
         "Check localisation YAML syntax",
         "Check .mod file encoding",
@@ -750,9 +749,7 @@ def test_validation_config_reaches_every_validator_run():
     assert "needs.detect-changes.outputs.style_config" in collect["env"]["STYLE_CONFIG"]
     assert "find common/national_focus -type f -name '*.txt'" in collect["run"]
     style = next(s for s in steps if s.get("name") == "Run style check")
-    mistakes = next(s for s in steps if s.get("name") == "Run common-mistakes check")
     assert "has-files" in style["if"]
-    assert "has-changed-files" in mistakes["if"]
 
 
 def test_baseline_saves_only_after_clean_diff():

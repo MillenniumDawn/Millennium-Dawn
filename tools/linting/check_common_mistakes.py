@@ -83,7 +83,6 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     scripted call missing "= yes" that the parser rejects
 """
 
-import json
 import os
 import re
 import sys
@@ -4260,45 +4259,8 @@ def check_file(filepath):
     return [(filepath, ln, msg) for ln, msg in issues]
 
 
-_JSON_CATEGORY = "common-mistakes"
-
-
-def _add_output_arg(parser):
-    parser.add_argument(
-        "--output",
-        "-o",
-        help="Write the findings to this log file and a matching .json sidecar",
-    )
-
-
-def _write_report(output_path, lines, issues):
-    """Mirror BaseValidator: a text log plus a `<stem>.json` issue sidecar.
-
-    newline="" keeps Windows from turning the log into CRLF.
-    """
-    with open(output_path, "w", encoding="utf-8", newline="") as handle:
-        handle.write("\n".join(lines) + "\n")
-
-    payload = [
-        {
-            "severity": "error",
-            "category": _JSON_CATEGORY,
-            "message": message,
-            "file": clean_filepath(filepath).replace(os.sep, "/"),
-            "line": line_num,
-            "validator": _JSON_CATEGORY,
-        }
-        for filepath, line_num, message in issues
-    ]
-    sidecar = os.path.splitext(output_path)[0] + ".json"
-    with open(sidecar, "w", encoding="utf-8", newline="") as handle:
-        json.dump(payload, handle, indent=2)
-
-
 def main():
-    parser = create_linting_parser(
-        "Check for common HOI4 scripting mistakes", extra_args_fn=_add_output_arg
-    )
+    parser = create_linting_parser("Check for common HOI4 scripting mistakes")
     args = parser.parse_args()
 
     timings = []
@@ -4310,16 +4272,6 @@ def main():
 
     if not files_list:
         print("No files to check")
-        if args.output:
-            _write_report(
-                args.output,
-                [
-                    "COMMON MISTAKES CHECK",
-                    "",
-                    "✓ VALIDATION COMPLETE - 0 ERROR(S) - 0 WARNING(S)",
-                ],
-                [],
-            )
         return 0
 
     # The available=always-no and is_X_nation checks need completion refs and
@@ -4366,21 +4318,6 @@ def main():
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
-
-    if args.output:
-        # "  file:line - message" plus the VALIDATION COMPLETE tokens match what
-        # tools/report_lib/loader.py parses when a JSON sidecar is unavailable.
-        report_lines = ["COMMON MISTAKES CHECK", ""]
-        report_lines += [
-            f"  {clean_filepath(filepath).replace(os.sep, '/')}:{line_num} - {message}"
-            for filepath, line_num, message in sorted_issues
-        ]
-        marker = "✗" if sorted_issues else "✓"
-        report_lines += [
-            "",
-            f"{marker} VALIDATION COMPLETE - {len(sorted_issues)} ERROR(S) - 0 WARNING(S)",
-        ]
-        _write_report(args.output, report_lines, sorted_issues)
 
     if all_issues:
         print(f"Found {len(all_issues)} issue(s)")
