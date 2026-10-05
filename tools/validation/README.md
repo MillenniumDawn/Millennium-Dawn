@@ -354,6 +354,15 @@ Staging no focus files runs no geometry scan. Per-file cached records are reused
 but assembly and geometry are recomputed so changed imports cannot leave stale
 results. The separate scenario report remains useful for dynamic investigations.
 
+`focus-allow-branch-leak` (WARNING) covers the gap gated focuses leave. A focus
+whose own `allow_branch` is true shows even when an ancestor's `allow_branch`
+hid its branch, so it floats on top of the visible path (#5042). The check
+hides each gated focus, follows prerequisites (a focus hides once one of its
+`prerequisite` groups is fully hidden), and stops at the first descendant with
+its own `allow_branch`. That descendant must repeat every `key = value` leaf of
+the ancestor's `allow_branch`, in any structure. `NOT` is not distinguished from
+a plain condition. It stays a WARNING until the existing backlog is cleared.
+
 ### Measured backlog for #5126
 
 At `f99f2055f069e41c6f51623c82d2fcc6a7f7338b`, 114 files contain 106 trees and
