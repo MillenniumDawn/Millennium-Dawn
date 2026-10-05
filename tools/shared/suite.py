@@ -136,6 +136,26 @@ def yml_syntax(path, valid_colors, subst_keys=frozenset()):
     return [finding for finding, key in pairs if key not in subst_keys]
 
 
+_CALL_SITE_SECTIONS = (
+    "longform",
+    "invalid",
+    "typed",
+    "counts",
+    "dynamic",
+    "fof",
+    "major",
+)
+
+
+def call_site_scan(path, section: str, mod_path, tracked=frozenset()):
+    """One section of the event validator's shared call-site scan of a single file."""
+    import validate_events
+
+    index = _CALL_SITE_SECTIONS.index(section)
+    args = (str(path), str(mod_path), 1 << index, tracked, tracked, tracked)
+    return validate_events._scan_shared_call_site_file(args)[index]
+
+
 def collecting_validator(cls):
     """Wrap a Validator so `_report` appends to `.collected` instead of printing."""
 

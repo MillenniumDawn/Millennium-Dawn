@@ -5,6 +5,7 @@ the same false positives.
 """
 
 import pytest
+from shared.suite import call_site_scan
 from validator_common import BaseValidator, Issue, Severity
 
 
@@ -22,7 +23,7 @@ def dummy_validator(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# count_event_ids_in_file token-accurate counting
+# Event ID count scan: token-accurate counting
 # File: validate_events.py
 # Contract:
 #   1. Returns ONLY IDs present in the file; callers pre-initialize the
@@ -34,12 +35,10 @@ def dummy_validator(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_count_event_ids_in_file_returns_only_present_ids(tmp_path):
+def test_event_id_count_returns_only_present_ids(tmp_path):
     """The real production function returns a dict containing only IDs that
     appear in the file. Absent IDs are NOT included — callers compensate by
     pre-initializing their aggregate dict with zero counts."""
-    from validate_events import count_event_ids_in_file
-
     events_dir = tmp_path / "events"
     events_dir.mkdir()
     fpath = events_dir / "test.txt"
@@ -53,20 +52,18 @@ def test_count_event_ids_in_file_returns_only_present_ids(tmp_path):
         "}\n"
     )
     tracked = frozenset(["test.1", "test.999"])
-    result = count_event_ids_in_file((str(fpath), tracked))
+    result = call_site_scan(fpath, "counts", tmp_path, tracked)
     assert "test.1" in result, "Event ID present in file must be in result"
     assert (
         "test.999" not in result
     ), "Absent ID must NOT be in result — caller pre-initializes zeros"
 
 
-def test_count_event_ids_in_file_dotted_id_not_inflated_by_loc_keys(tmp_path):
+def test_event_id_count_dotted_id_not_inflated_by_loc_keys(tmp_path):
     """A dotted event ID referenced ONLY by its own loc keys (test.1.t/.d/.a)
     must count as 1 — the bare definition. The tokenizer treats test.1 and
     test.1.t as distinct tokens, so the loc keys don't inflate the count and
     the event is correctly reported as unreferenced (count <= 1)."""
-    from validate_events import count_event_ids_in_file
-
     events_dir = tmp_path / "events"
     events_dir.mkdir()
     fpath = events_dir / "test.txt"
@@ -81,17 +78,15 @@ def test_count_event_ids_in_file_dotted_id_not_inflated_by_loc_keys(tmp_path):
         "}\n"
     )
     tracked = frozenset(["test.1"])
-    result = count_event_ids_in_file((str(fpath), tracked))
+    result = call_site_scan(fpath, "counts", tmp_path, tracked)
     assert result["test.1"] == 1, (
         "Old substring count would report 4 (matching test.1 inside test.1.t/.d/.a) "
         "and treat the event as referenced; token count must be 1"
     )
 
 
-def test_count_event_ids_in_file_handles_referenced_event(tmp_path):
+def test_event_id_count_handles_referenced_event(tmp_path):
     """When an event ID IS referenced, the count must be accurate."""
-    from validate_events import count_event_ids_in_file
-
     events_dir = tmp_path / "events"
     events_dir.mkdir()
     fpath = events_dir / "test.txt"
@@ -99,7 +94,7 @@ def test_count_event_ids_in_file_handles_referenced_event(tmp_path):
         "country_event = test.1\ncountry_event = test.1\ncountry_event = test.1\n"
     )
     tracked = frozenset(["test.1"])
-    result = count_event_ids_in_file((str(fpath), tracked))
+    result = call_site_scan(fpath, "counts", tmp_path, tracked)
     assert result["test.1"] == 3
 
 

@@ -9,15 +9,9 @@ indentation, because several event files indent their definitions one tab
 deeper than the norm.
 """
 
+from shared.suite import call_site_scan
 from shared.suite import write_under_str as _write
-from validate_events import (
-    Validator,
-    scan_event_definition_types,
-    scan_event_definitions,
-    scan_event_fires,
-    scan_invalid_event_calls,
-    scan_typed_event_fires,
-)
+from validate_events import Validator, scan_event_definition_types
 
 DEFINITION = """country_event = {
 \tid = foo.1
@@ -35,14 +29,18 @@ INDENTED_DEFINITION = """\tcountry_event = {
 """
 
 
+def _defined(path):
+    return {eid for eid, _type in scan_event_definition_types((path, frozenset()))}
+
+
 def test_definition_found(tmp_path):
     p = _write(tmp_path, "events/Ev.txt", DEFINITION)
-    assert scan_event_definitions((p, frozenset())) == {"foo.1"}
+    assert _defined(p) == {"foo.1"}
 
 
 def test_indented_definition_found(tmp_path):
     p = _write(tmp_path, "events/Ev.txt", INDENTED_DEFINITION)
-    assert scan_event_definitions((p, frozenset())) == {"deep.1"}
+    assert _defined(p) == {"deep.1"}
 
 
 def test_fire_block_is_not_a_definition(tmp_path):
@@ -51,7 +49,7 @@ def test_fire_block_is_not_a_definition(tmp_path):
         "common/f.txt",
         "x = {\n\tcountry_event = { id = foo.1 days = 3 }\n}\n",
     )
-    assert scan_event_definitions((p, frozenset())) == set()
+    assert _defined(p) == set()
 
 
 def test_fires_short_and_block_form(tmp_path):
@@ -64,7 +62,7 @@ def test_fires_short_and_block_form(tmp_path):
         "\tnews_event = { days = 2 id = reordered.1 }\n"
         "}\n",
     )
-    assert {f[0] for f in scan_event_fires((p, frozenset()))} == {
+    assert {f[0] for f in call_site_scan(p, "typed", tmp_path)} == {
         "short.1",
         "block.1",
         "reordered.1",
@@ -82,7 +80,7 @@ def test_definition_and_fire_types_are_retained(tmp_path):
     assert scan_event_definition_types((definition, frozenset())) == [
         ("foo.1", "news_event")
     ]
-    assert scan_typed_event_fires((caller, frozenset())) == [
+    assert call_site_scan(caller, "typed", tmp_path) == [
         ("foo.1", "country_event", caller, 1)
     ]
 
@@ -120,7 +118,7 @@ def test_reversed_and_missing_equals_calls_detected(tmp_path):
         "country_event { days = 3 id = foo.4 }\n",
     )
 
-    assert scan_invalid_event_calls((caller, frozenset())) == [
+    assert call_site_scan(caller, "invalid", tmp_path) == [
         ("reversed", "event_country", "foo.1", caller, 1),
         ("missing-equals", "country_event", "foo.2", caller, 2),
         ("reversed", "event_news", "foo.3", caller, 3),
@@ -131,12 +129,12 @@ def test_reversed_and_missing_equals_calls_detected(tmp_path):
 def test_interpolated_id_skipped(tmp_path):
     """`UN.[ID]` has no literal form to resolve, so it must not be reported."""
     p = _write(tmp_path, "common/f.txt", "x = {\n\tcountry_event = UN.[ID]\n}\n")
-    assert scan_event_fires((p, frozenset())) == []
+    assert call_site_scan(p, "typed", tmp_path) == []
 
 
 def test_commented_fire_ignored(tmp_path):
     p = _write(tmp_path, "common/f.txt", "x = {\n\t#country_event = dead.1\n}\n")
-    assert scan_event_fires((p, frozenset())) == []
+    assert call_site_scan(p, "typed", tmp_path) == []
 
 
 def test_metadata_retains_event_without_id():
