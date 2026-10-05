@@ -1,0 +1,30 @@
+ai_race_ai_needs_power_recovery = {
+	ai_race_ai_recovery_permitted = yes
+	check_variable = { ai_race_stage > 0 }
+	check_variable = { ai_race_current_power_ratio < 1 }
+}
+
+ai_race_ai_needs_fossil_fuel = {
+	ai_race_ai_needs_power_recovery = yes
+	check_variable = { number_of_fossil_pps > 0 }
+	has_fuel < 1000000
+	NOT = { has_country_flag = disable_fossil_fuel_power_plant_flag }
+	check_variable = { var = treasury value = 0.1 compare = greater_than_or_equals }
+	NOT = { has_country_flag = recently_bought_fuel }
+	NOT = { has_active_mission = energy_automatic_fuel_purchase }
+}
+
+ai_race_ai_needs_reactor_material = {
+	ai_race_ai_recovery_permitted = yes
+	check_variable = { ai_race_stage > 0 }
+	has_nuclear_reactors = yes
+	check_variable = { nuclear_fuel_consumption > 0 }
+	check_variable = { nuclear_fuel_consumption > total_nuclear_reactor_fuel_production }
+	check_variable = { var = treasury value = 4 compare = greater_than_or_equals }
+	set_temp_variable = { ai_race_ai_reactor_material_threshold = { value = nuclear_fuel_consumption multiply = 8 } }
+	check_variable = {
+		var = var_reactor_material_stockpile
+		value = ai_race_ai_reactor_material_threshold
+		compare = less_than
+	}
+}
