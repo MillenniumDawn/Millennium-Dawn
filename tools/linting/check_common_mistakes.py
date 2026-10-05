@@ -251,7 +251,9 @@ _RE_LOG_EVENT_EXECUTED_TOKEN = re.compile(
     re.IGNORECASE,
 )
 # The dotted id alone at the end of the string: "[This.GetName]: tag_ns.N.a".
-_RE_LOG_EVENT_BARE_TOKEN = re.compile(r'log\s*=\s*"[^"]*\]:\s*(\w+(?:\.\w+)+)"')
+_RE_LOG_EVENT_BARE_TOKEN = re.compile(
+    r'log\s*=\s*"[^"]*\]:\s*([A-Za-z_]\w*(?:\.\w+)+)"'
+)
 _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
 _RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
 _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")

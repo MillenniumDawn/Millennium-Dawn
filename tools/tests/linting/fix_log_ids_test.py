@@ -190,6 +190,26 @@ def test_apply_rewrites_event_executed_log_token(tmp_path):
     assert "tst.1.b executed" in body
 
 
+def test_apply_does_not_rewrite_numeric_dotted_log_ending(tmp_path):
+    from fix_log_ids import fix_file
+
+    event = tmp_path / "events/date.txt"
+    original = (
+        "country_event = {\n"
+        "    id = tst.1\n"
+        "    option = {\n"
+        "        name = tst.1.a\n"
+        '        log = "[GetDateText]: [This.GetName]: 2025.5"\n'
+        "        add_political_power = 10\n"
+        "    }\n"
+        "}\n"
+    )
+    _write(event, original)
+
+    assert fix_file(str(event)) == (str(event), 0)
+    assert event.read_text(encoding="utf-8") == original
+
+
 def test_apply_rewrites_event_option_letter(tmp_path):
     from fix_log_ids import fix_file
 

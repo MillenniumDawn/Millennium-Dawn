@@ -2589,6 +2589,22 @@ assert_finds(
     "log ending in a sentence period not flagged",
 )
 
+# A numeric dotted value is not an event id -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.10\n",
+        "\toption = {\n",
+        "\t\tname = tst.10.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: 2025.5"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "numeric dotted log ending not treated as an event id",
+)
+
 
 # 15d. hidden_trigger inside custom_trigger_tooltip (Check E1)
 
