@@ -1,5 +1,5 @@
 """Tests for the ai_will_do staffing/bankruptcy guard checks in
-validate_focus_tree (issue #2233 + the AGENTS.md bankruptcy convention).
+validate_focus_tree (issue #2233 + search-filters.md bankruptcy guard).
 
 A focus whose completion_reward builds a staffable building needs a
 factor = 0 ai_will_do modifier checking the matching can_staff_an_* trigger.
