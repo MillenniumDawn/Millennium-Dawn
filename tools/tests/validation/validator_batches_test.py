@@ -45,7 +45,9 @@ def test_batches_cover_every_ci_validator_exactly_once():
 
 def test_core_batch_selects_from_the_core_groups():
     for spec in vb.BATCHES["core"]:
-        assert set(spec.groups) == set(vb._CORE_GROUPS)
+        # Only common-mistakes also scans the music tree.
+        extra = {"music"} if spec.name == "common-mistakes" else set()
+        assert set(spec.groups) == set(vb._CORE_GROUPS) | extra
 
 
 def test_variables_spec_carries_the_redundant_focus_flag_scan():
@@ -70,6 +72,16 @@ def test_selected_specs_filters_by_changed_groups():
     assert selected == {"decisions", "mios"}
     # An unknown or empty group list selects the whole batch (dispatch flow).
     assert len(rvb.selected_specs("targeted-a", None)) == len(vb.BATCHES["targeted-a"])
+
+
+def test_graphic_db_group_selects_gfx_references():
+    selected = {spec.name for spec in rvb.selected_specs("targeted-b", {"graphic-db"})}
+    assert selected == {"gfx-references"}
+
+
+def test_music_group_selects_only_common_mistakes():
+    selected = {spec.name for spec in rvb.selected_specs("core", {"music"})}
+    assert selected == {"common-mistakes"}
 
 
 def test_selected_specs_rejects_unknown_batch():

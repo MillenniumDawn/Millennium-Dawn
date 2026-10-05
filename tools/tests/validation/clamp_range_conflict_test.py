@@ -9,6 +9,7 @@ at 19%.
 """
 
 import validate_variables as V
+from shared.suite import variable_scan
 
 
 def _harvest(tmp_path, text):
@@ -25,7 +26,8 @@ def _ranges(tmp_path, text):
 def _conflicts(tmp_path, text, ranges):
     f = tmp_path / "use.txt"
     f.write_text(text, encoding="utf-8")
-    return V.process_file_for_clamp_conflicts((str(f), str(tmp_path), ranges))
+    checks = variable_scan(f, "clamp_checks", tmp_path)
+    return V._resolve_clamp_checks(checks, "use.txt", ranges)
 
 
 def test_collects_clamp_range(tmp_path):

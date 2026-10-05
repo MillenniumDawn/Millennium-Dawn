@@ -23,14 +23,9 @@ import time
 from pathlib import Path, PurePosixPath
 
 import pytest
+from shared.suite import write_text
 
 from tools.publishing import publish_workshop as pw
-
-
-def write_text(path: Path, content: str) -> None:
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-
 
 # ---------------------------------------------------------------------------
 # Config / manifest constants
