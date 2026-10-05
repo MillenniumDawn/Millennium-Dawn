@@ -144,6 +144,14 @@ def test_graphic_db_change_runs_gfx_references_group():
     assert groups["content"] is True
 
 
+def test_music_script_change_runs_common_mistakes_group():
+    groups = change_groups.classify(["music/MD_regional_music.txt"])
+
+    assert groups["music"] is True
+    assert groups["common"] is False
+    assert groups["content"] is True
+
+
 @pytest.mark.parametrize(
     "path",
     ("gfx/interface/decisions/politics/crisis.dds", "interface/MD_decisions.gfx"),

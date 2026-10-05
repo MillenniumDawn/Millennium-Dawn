@@ -34,7 +34,9 @@ _CORE_GROUPS = (
 
 BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     "core": (
-        ValidatorSpec("common-mistakes", "validate_common_mistakes.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "common-mistakes", "validate_common_mistakes.py", (*_CORE_GROUPS, "music")
+        ),
         ValidatorSpec(
             "variables",
             "validate_variables.py",

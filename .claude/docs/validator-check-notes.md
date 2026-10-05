@@ -380,7 +380,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_style.py and check_common_mistakes.py
 
 - The style check is diff-scoped in the core job. Common mistakes run full-repo in the
-  core batch through `validate_common_mistakes.py` and report ERROR only.
+  core batch through `validate_common_mistakes.py` and report ERROR only. It scans
+  `common`, `events`, `history`, and `music`.
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
