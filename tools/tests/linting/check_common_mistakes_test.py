@@ -2538,6 +2538,73 @@ assert_finds(
     "undotted word before executed not flagged",
 )
 
+# A name = inside a child block is not the option's name -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.7\n",
+        "\toption = {\n",
+        "\t\tadd_tech_bonus = {\n",
+        "\t\t\tname = tst.7.title\n",
+        "\t\t}\n",
+        "\t\tname = tst.7.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.7.a executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "name = nested in a child block not taken as the option name",
+)
+
+# Option borrowed from another event, log names a third option -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = spaceshuttle.2\n",
+        "\toption = {\n",
+        "\t\tname = USA_events.22.d1\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: USA_events.21.d1 executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "executed-form log naming neither the borrowed option nor the event flagged",
+)
+
+# Bare id with no "executed" word, copy-pasted from another event -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.8\n",
+        "\toption = {\n",
+        "\t\tname = tst.8.c\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.c"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "bare-id log copy-pasted from another event flagged",
+)
+
+# A sentence ending in a period is prose, not a bare id -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.9\n",
+        "\toption = {\n",
+        "\t\tname = tst.9.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: The purge ended."\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "log ending in a sentence period not flagged",
+)
+
 
 # 15d. hidden_trigger inside custom_trigger_tooltip (Check E1)
 

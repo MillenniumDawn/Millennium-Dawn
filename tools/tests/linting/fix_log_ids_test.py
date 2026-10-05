@@ -71,6 +71,27 @@ def test_apply_rewrites_event_option_log_token(tmp_path):
     assert 'GetName]: tst.97.b executed" #fight' in event.read_text(encoding="utf-8")
 
 
+def test_apply_rewrites_bare_event_option_log_token(tmp_path):
+    from fix_log_ids import fix_file
+
+    event = tmp_path / "mod/events/tst.txt"
+    _write(
+        event,
+        (
+            "country_event = {\n"
+            "\tid = tst.6\n"
+            "\toption = {\n"
+            "\t\tname = tst.6.c\n"
+            '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.c"\n'
+            "\t}\n"
+            "}\n"
+        ),
+    )
+
+    assert fix_file(str(event)) == (str(event), 1)
+    assert 'GetName]: tst.6.c"\n' in event.read_text(encoding="utf-8")
+
+
 def test_rewrite_line_replaces_innermost_span_first():
     from fix_log_ids import _rewrite_line
 

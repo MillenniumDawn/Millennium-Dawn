@@ -401,9 +401,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   and a `#` comment swallowed into a `log` string.
 - Event log ids (ERROR): a `log` naming an event token must match the event id or the
   option's own `name =`. Also covers the `"<option name> executed"` form with no
-  `Event` word. Only options named `<event id>.<suffix>` are checked, since an option
-  named by a loc key has no letter to disagree with. `tools/linting/fix_log_ids.py`
-  shares the detection and rewrites this form in `events/` as well as focus and
+  `Event` word, and an id standing alone at the end of the string. The option name is
+  read at the option's own depth, so a `name =` inside an effect does not count. An
+  option named by a loc key or by another event's option has no letter to disagree
+  with, so any `<event id>.<suffix>` token passes there. `tools/linting/fix_log_ids.py`
+  shares the detection and rewrites these forms in `events/` as well as focus and
   decision logs.
 
 ## validate_variables.py
@@ -443,7 +445,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   no consumer call after it, or one overwritten at the same depth before the call,
   never moves the money. Also tracks `party_popularity_increase`, consumed by
   `change_relative_party_popularity`. Consumers include wrapper effects, and the
-  category name is unchanged to keep baselines comparable.
+  category name is unchanged to keep baselines comparable. Scans focuses, decisions,
+  ideas (`on_add`, `on_remove`), on_actions, and events.
 
 ## Other tools
 

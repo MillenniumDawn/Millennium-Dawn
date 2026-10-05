@@ -1379,7 +1379,7 @@ _MONEY_SETTER_RE = re.compile(
 _EFFECT_CONTAINER_RE = re.compile(
     r"\b(?:completion_reward|select_effect|bypass_effect|option|immediate|"
     r"complete_effect|remove_effect|timeout_effect|cancel_effect|"
-    r"effect_tooltip|effect)\s*=\s*\{"
+    r"on_add|on_remove|effect_tooltip|effect)\s*=\s*\{"
 )
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
 # Value-producing writers only — add_to/multiply etc. read the existing value.
@@ -2213,6 +2213,7 @@ class Validator(BaseValidator):
         orphan_patterns = [
             "common/national_focus/*.txt",
             "common/decisions/**/*.txt",
+            "common/ideas/**/*.txt",
             "common/on_actions/**/*.txt",
             "events/**/*.txt",
         ]

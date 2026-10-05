@@ -6,9 +6,9 @@ _find_decision_log_mismatches / _find_event_log_mismatches (Check C) -- same
 core, so a clean run of the checker implies a clean run here and vice versa.
 Only the mismatched ID token inside the quoted log string is rewritten;
 complete/timeout/remove/cancel phrasing around it is left untouched. Scope:
-common/national_focus/, common/decisions/ and events/. For events only the
-"<option name> executed" form is rewritten; the "Event <id> Option <letter>"
-form has no fixer.
+common/national_focus/, common/decisions/ and events/. For events the
+"<option name> executed" form and a bare trailing id are rewritten; the
+"Event <id> Option <letter>" form has no fixer.
 """
 
 import os
