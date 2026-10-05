@@ -125,16 +125,6 @@ def _scan_event_file(args: Tuple[str, str]) -> Tuple[Set[str], Set[str]]:
     )
 
 
-def _extract_random_events_ids(text: str) -> Set[str]:
-    """Return all event IDs found inside random_events = { ... } blocks."""
-    ids: Set[str] = set()
-    for m in _RANDOM_EVENTS_BLOCK_RE.finditer(text):
-        body, _ = extract_block_from_text(text, m.end() - 1)
-        for entry in _RANDOM_EVENT_ENTRY_RE.finditer(body):
-            ids.add(entry.group(1))
-    return ids
-
-
 # Opening of any control-flow or scope-change block that gates its body —
 # used to compute the "gate signature" for each event ref so duplicates in
 # mutually-exclusive branches or different target scopes aren't flagged.

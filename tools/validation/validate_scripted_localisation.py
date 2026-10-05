@@ -130,13 +130,6 @@ def _scan_loc_token_candidates(
     return bracketed, explicit
 
 
-def _scan_loc_tokens(
-    text: str, is_scripted_loc_file: bool, defined_names: Set[str] | None = None
-) -> Set[str]:
-    bracketed, explicit = _scan_loc_token_candidates(text, is_scripted_loc_file)
-    return _filter_bracket_loc_candidates(bracketed, defined_names or set()) | explicit
-
-
 _LOC_OBJECTS_DOC = os.path.join(
     "resources", "documentation", "loc_objects_documentation.md"
 )

@@ -281,35 +281,6 @@ def _parse_canonical_units_file(content: str) -> Set[str]:
     return canonical
 
 
-def parse_canonical_units(mod_path: str) -> Set[str]:
-    """Build a set of canonical sub-unit names from common/units/*.txt.
-
-    Unit names are top-level identifiers inside sub_units = { ... } blocks.
-    """
-    canonical = set()
-    for sub_units, _, _ in _parse_canonical_unit_sources(mod_path):
-        canonical.update(sub_units)
-    return canonical
-
-
-def parse_canonical_namelist_keys(mod_path: str, sub_units: Set[str]) -> Set[str]:
-    """Return the set of valid namelist block keys.
-
-    A namelist block key is valid if it is either:
-      - a sub_unit name, OR
-      - an equipment-type name referenced in `need = { ... }` or
-        `need_equipment = { ... }` inside a sub_unit definition.
-
-    Air namelists use equipment-type keys (small_plane_airframe etc.) rather
-    than sub_unit names (light_fighter etc.), so the canonical set must
-    include both.
-    """
-    valid = set(sub_units)
-    for _, equipment_names, _ in _parse_canonical_unit_sources(mod_path):
-        valid.update(equipment_names)
-    return valid
-
-
 def _parse_equipment_names_file(content: str) -> Set[str]:
     """Extract equipment-type names from `need`/`need_equipment` blocks in one file."""
     equipment = set()

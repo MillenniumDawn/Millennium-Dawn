@@ -371,17 +371,6 @@ def extract_focus_properties(focus_lines):
     return props
 
 
-def clean_block_lines(block_lines):
-    """Remove trailing blank lines from a block and return cleaned lines"""
-    if not block_lines:
-        return block_lines
-
-    while block_lines and block_lines[-1].strip() == "":
-        block_lines.pop()
-
-    return block_lines
-
-
 def _fix_log_id(line: str, focus_id: str) -> str:
     """Correct a log line: ensure 'Focus ' prefix and replace the focus ID."""
     return _LOG_FOCUS_RE.sub(rf"\g<1>Focus {focus_id}\g<3>", line)
