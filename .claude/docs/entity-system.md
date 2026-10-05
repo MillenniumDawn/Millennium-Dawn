@@ -26,7 +26,11 @@ The full form is `[<prefix>_]<suffix>_entity[_<terrain>]`, where `terrain` is an
 
 Do not copy an entity set once per tag. To give several tags a shared look, give them
 the same `graphical_culture` and define one `<graphical_culture>_*` set
-(`northamerican_gfx_infantryandvehicle.asset` serves every US breakaway). The division
+(`northamerican_gfx_infantryandvehicle.asset` serves every US breakaway). A new culture
+needs a line in `common/graphicalculturetype.txt`. Tags moved to it lose the old culture's
+fallbacks, so clone the old culture's entities for any unit type the shared set does not
+define (`donbas_gfx` does this for tanks, planes, and ships). Give each tierless sprite
+entity in a culture set `_1` to `_7` clones, or it matches every tier. The division
 designer's model selector is engine-native and enumerates every unit entity, so entity
 count drives how slow it is to open.
 
