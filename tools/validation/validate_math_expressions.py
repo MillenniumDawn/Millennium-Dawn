@@ -228,12 +228,12 @@ class Validator(BaseValidator):
         ):
             rel = os.path.relpath(path, self.mod_path)
             for line, category, message in file_findings:
-                self.add_warning(category, message, rel, line)
+                self.add_error(category, message, rel, line)
             total += len(file_findings)
         if not total:
             self.log("No math-expression traps found")
         else:
-            self.log(f"  {total} math-expression trap(s) found", "warning")
+            self.log(f"  {total} math-expression trap(s) found", "error")
 
 
 if __name__ == "__main__":

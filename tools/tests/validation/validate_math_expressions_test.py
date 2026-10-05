@@ -283,7 +283,22 @@ def test_validator_reports_file_and_line(tmp_path):
     assert [(i.category, i.file, i.line) for i in v._issues] == [
         ("math-sibling-operator", "common/scripted_effects/traps.txt", 1)
     ]
-    assert all(i.severity == "warning" for i in v._issues)
+    assert all(i.severity == "error" for i in v._issues)
+
+
+def test_validator_reports_math_from_read_as_error(tmp_path):
+    _write(
+        tmp_path,
+        "common/scripted_effects/from_read.txt",
+        "set_temp_variable = {\n\tchange = {\n\t\tvalue = FROM.debt_bailout\n\t}\n}\n",
+    )
+
+    v = _validator(tmp_path)
+    v.run_validations()
+
+    assert [(i.severity, i.category) for i in v._issues] == [
+        ("error", "math-from-read")
+    ]
 
 
 def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch, pool_sizes):
