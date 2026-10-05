@@ -101,7 +101,7 @@ _REWARD_BLOCK_RE = word_start_re(
     "completion_reward", r"(?:_joint_originator|_joint_member)?\s*=\s*\{"
 )
 
-# PP malus in completion_reward (focus time is the cost — AGENTS.md).
+# PP malus in completion_reward (focus time is the cost).
 # Occurrences inside an effect_tooltip = { } subtree preview a PP change
 # applied elsewhere (e.g. a select_effect) rather than executing it, so
 # they are not flagged.
@@ -112,8 +112,8 @@ _PP_MALUS_EXEMPT_FOCUS_IDS = frozenset(
     validation_config("validate_focus_tree", "pp_malus_exempt_focus_ids")
 )
 
-# ai_will_do staffing/bankruptcy guards (issue #2233 + the AGENTS.md
-# convention). Building type -> the scripted trigger
+# ai_will_do staffing/bankruptcy guards (issue #2233 +
+# search-filters.md). Building type -> the scripted trigger
 # (common/scripted_triggers/00_economic_triggers.txt) that an ai_will_do
 # factor = 0 modifier must check before the AI takes a focus building it.
 _STAFFABLE_TRIGGERS = {
@@ -209,7 +209,7 @@ _BRACE_OR_QUOTE_RE = re.compile(r'["{}]')
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 
-# Cross-country event tooltip check (AGENTS.md "Cross-country event tooltips"):
+# Cross-country event tooltip check (event-reference.md "Cross-country events"):
 # a completion_reward that fires a country_event into another nation's scope
 # should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT so the player sees the
 # acceptance outcome. Foreignness is decided by the fire's nearest enclosing
@@ -1326,7 +1326,7 @@ def _scan_focus_layout(source: _FocusFile) -> Dict:
         if end == -1:
             continue
         line = source.text.count("\n", 0, match.start()) + 1
-        tree = {
+        tree: Dict[str, Any] = {
             "id": f"tree at line {line}",
             "line": line,
             "focuses": [],
@@ -2168,7 +2168,7 @@ class Validator(BaseValidator):
         """Flag focuses that fire an event to another nation without a
         TT_IF_THEY_ACCEPT tooltip.
 
-        AGENTS.md "Cross-country event tooltips": when a completion_reward fires
+        event-reference.md "Cross-country events": when a completion_reward fires
         a country_event into a foreign scope, the player should see the outcome
         via custom_effect_tooltip = TT_IF_THEY_ACCEPT. Reported per file as a
         WARNING — the presence of the tooltip anywhere in the reward clears it,
@@ -2207,7 +2207,7 @@ class Validator(BaseValidator):
         """Flag a literal PP loss (add_political_power = -N) inside a focus's
         completion_reward.
 
-        Focus time is the cost (AGENTS.md) — a PP malus on completion is a
+        Focus time is the cost — a PP malus on completion is a
         balance choice needing per-site judgment, so this reports at WARNING
         only. Scope is the literal-negative-number pattern: variable forms
         and timed lose-PP ideas are not detected. effect_tooltip previews of
