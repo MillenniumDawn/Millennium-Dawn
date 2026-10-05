@@ -6,10 +6,7 @@ from typing import Any, Optional, TypeAlias, TypeVar, cast
 
 import pyradox
 
-_UTILS_DIR = os.path.join(os.path.dirname(__file__), "..", "utils")
-_UTILS_DIR = os.path.abspath(_UTILS_DIR)
-if _UTILS_DIR not in sys.path:
-    sys.path.insert(0, _UTILS_DIR)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "utils"))
 
 from pyradox_utils import normalize_bool, normalize_scalar, normalize_type, parse_file
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Add a tab to the International Systems screen.
 
 Wires the tab button, icon, open/close logic and header title into the shared
@@ -23,7 +22,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from shared.paths import REPO_ROOT
 from shared_utils import atomic_write_bytes, read_text_strict

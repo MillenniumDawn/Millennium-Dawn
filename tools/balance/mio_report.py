@@ -8,15 +8,8 @@ from typing import Any
 
 import xlsxwriter
 
-_UTILS_DIR = os.path.join(os.path.dirname(__file__), "..", "utils")
-_UTILS_DIR = os.path.abspath(_UTILS_DIR)
-if _UTILS_DIR not in sys.path:
-    sys.path.insert(0, _UTILS_DIR)
-
-_TYPES_DIR = os.path.join(os.path.dirname(__file__), "..", "types")
-_TYPES_DIR = os.path.abspath(_TYPES_DIR)
-if _TYPES_DIR not in sys.path:
-    sys.path.insert(0, _TYPES_DIR)
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "utils"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "types"))
 
 from equipment import AllEquipmentStats, Equipment
 from mio import MIO, BonusReport, EquipmentGroup
