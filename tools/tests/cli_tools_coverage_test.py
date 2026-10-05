@@ -14,7 +14,7 @@ from pathlib import Path
 
 import assign_mio_icons
 import pytest
-from shared.suite import symlinks_available
+from shared.suite import symlinks_available, write_text
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOLS = REPO_ROOT / "tools"
@@ -23,11 +23,6 @@ requires_symlinks = pytest.mark.skipif(
     not symlinks_available(),
     reason="creating a symlink needs Developer Mode or admin on Windows",
 )
-
-
-def write_text(path: Path, content: str) -> None:
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
 
 
 # ---------------------------------------------------------------------------

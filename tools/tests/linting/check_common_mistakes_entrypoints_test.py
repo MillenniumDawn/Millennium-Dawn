@@ -11,12 +11,7 @@ import sys
 
 import check_common_mistakes as checker
 import pytest
-
-
-def _write(path, content):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
+from shared.suite import write_text as _write
 
 
 def _script(*lines):

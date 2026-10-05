@@ -9,6 +9,7 @@ indentation, because several event files indent their definitions one tab
 deeper than the norm.
 """
 
+from shared.suite import write_under_str as _write
 from validate_events import (
     Validator,
     scan_event_definition_types,
@@ -17,14 +18,6 @@ from validate_events import (
     scan_invalid_event_calls,
     scan_typed_event_fires,
 )
-
-
-def _write(tmp_path, name, body):
-    p = tmp_path / name
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(body, encoding="utf-8")
-    return str(p)
-
 
 DEFINITION = """country_event = {
 \tid = foo.1

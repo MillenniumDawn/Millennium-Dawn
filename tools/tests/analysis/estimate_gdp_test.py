@@ -10,15 +10,9 @@ parses real text — no mocks.
 from __future__ import annotations
 
 import sys
-from pathlib import Path
 
 import pytest
-
-
-def write_text(path: Path, content: str) -> None:
-    """LF-only text write — mirrors the discipline in conftest.py."""
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
+from shared.suite import write_text
 
 
 def _parsed_states(mod, repo):

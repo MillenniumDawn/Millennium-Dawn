@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from shared.suite import write_text
 
 ANALYSIS_DIR = Path(__file__).resolve().parents[2] / "analysis"
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -28,12 +29,6 @@ def mini_repo(tmp_path: Path) -> Path:
     (tmp_path / "common" / "ideas").mkdir(parents=True)
     (tmp_path / "tools" / "analysis").mkdir(parents=True)
     return tmp_path
-
-
-def write_text(path: Path, content: str) -> None:
-    """Write text with the LF-only newline discipline required by AGENTS.md."""
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
 
 
 def _state_file(name: str, body: str) -> str:

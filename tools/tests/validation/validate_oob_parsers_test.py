@@ -7,6 +7,7 @@ and unreadable-file fallbacks each one carries.
 """
 
 import validate_oob_units as V
+from shared.suite import write_under_str as _write
 
 _UNITS = """sub_units = {
 \t# a stripped comment leaves a blank line at depth 1
@@ -24,13 +25,6 @@ _UNITS = """sub_units = {
 \t}
 }
 """
-
-
-def _write(tmp_path, relative, body):
-    path = tmp_path / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding="utf-8")
-    return str(path)
 
 
 def _write_units(tmp_path):
