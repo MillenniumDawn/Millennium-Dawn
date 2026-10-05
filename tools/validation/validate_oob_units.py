@@ -35,6 +35,7 @@ from shared_utils import (
     get_staged_files,
     normalize_path_separators,
     read_text_under,
+    validation_config,
 )
 from validator_common import (
     BaseValidator,
@@ -92,6 +93,15 @@ _HISTORY_PRODUCTION_PATTERNS = [
 _OOB_EQUIPMENT_RE = re.compile(
     r"equipment\s*=\s*\{\s*([A-Za-z_]\w*)\s*=\s*\{([^{}]*)\}"
 )
+# Para, Parachute, Paracadutisti, Para-quedista; VDV and desant for Russian,
+# Ukrainian and Tajik airborne. \bpara skips "Separate Infantry BDE".
+_AIRBORNE_NAME_RES = tuple(
+    re.compile(pattern, re.I) for pattern in (r"\bpara", "airborne", "vdv", "desant")
+)
+_AIR_ASSAULT_TEMPLATES = frozenset(
+    validation_config("validate_oob_units", "air_assault_templates")
+)
+_TEMPLATE_UNIT_BLOCKS = frozenset({"regiments", "regimental_support", "support"})
 _VERSION_NAME_RE = re.compile(r'\bversion_name\s*=\s*"([^"]*)"')
 _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
@@ -276,7 +286,7 @@ def parse_canonical_units(mod_path: str) -> Set[str]:
     Unit names are top-level identifiers inside sub_units = { ... } blocks.
     """
     canonical = set()
-    for sub_units, _ in _parse_canonical_unit_sources(mod_path):
+    for sub_units, _, _ in _parse_canonical_unit_sources(mod_path):
         canonical.update(sub_units)
     return canonical
 
@@ -294,7 +304,7 @@ def parse_canonical_namelist_keys(mod_path: str, sub_units: Set[str]) -> Set[str
     include both.
     """
     valid = set(sub_units)
-    for _, equipment_names in _parse_canonical_unit_sources(mod_path):
+    for _, equipment_names, _ in _parse_canonical_unit_sources(mod_path):
         valid.update(equipment_names)
     return valid
 
@@ -313,16 +323,31 @@ def _parse_equipment_names_file(content: str) -> Set[str]:
     return equipment
 
 
+def _parse_parachutable_units_file(content: str) -> Set[str]:
+    """Sub-unit names declared `can_be_parachuted = yes` in one units file."""
+    text = blank_comments(content)
+    parachutable = set()
+    for lo, hi in _iter_named_blocks(text, 0, len(text), "sub_units"):
+        for name, blo, bhi, _ in _iter_blocks(text, lo, hi):
+            if _scalar(text, blo, bhi, "can_be_parachuted") == "yes":
+                parachutable.add(name)
+    return parachutable
+
+
 def _parse_canonical_unit_source(
     content: str,
-) -> Tuple[Set[str], Set[str]]:
-    return _parse_canonical_units_file(content), _parse_equipment_names_file(content)
+) -> Tuple[Set[str], Set[str], Set[str]]:
+    return (
+        _parse_canonical_units_file(content),
+        _parse_equipment_names_file(content),
+        _parse_parachutable_units_file(content),
+    )
 
 
 def _parse_canonical_unit_sources(
     mod_path: str,
-) -> List[Tuple[Set[str], Set[str]]]:
-    """Parse each unit source once for both canonical unit indexes."""
+) -> List[Tuple[Set[str], Set[str], Set[str]]]:
+    """Parse each unit source once for the canonical and paradrop unit indexes."""
     units_dir = os.path.join(mod_path, "common", "units")
     parsed = []
     for filepath in glob.iglob(os.path.join(units_dir, "*.txt")):
@@ -330,7 +355,7 @@ def _parse_canonical_unit_sources(
 
         def compute(
             source_content: str = content,
-        ) -> Tuple[Set[str], Set[str]]:
+        ) -> Tuple[Set[str], Set[str], Set[str]]:
             return _parse_canonical_unit_source(source_content)
 
         parsed.append(
@@ -1185,6 +1210,74 @@ def division_template_entries(rel: str, raw: str) -> List[Tuple[str, Optional[st
     return entries
 
 
+def check_paradrop_templates(
+    raw: str,
+    parachutable: Set[str],
+    name_res: Tuple[re.Pattern, ...],
+    allowlist: FrozenSet[str],
+) -> List[Tuple[int, str, str, int]]:
+    """``(template_line, template, sub_unit, sub_unit_line)`` per airborne template
+    sub-unit lacking `can_be_parachuted = yes`; one pair per template and sub-unit.
+
+    One such sub-unit stops the whole division from paradropping.
+    """
+    if "division_template" not in raw or not any(p.search(raw) for p in name_res):
+        return []
+    text = strip_comments(raw)
+    nodes = _build_block_nodes(text)
+    findings = []
+    for idx, node in enumerate(nodes):
+        if node["label"] != "division_template":
+            continue
+        name = _static_template_name(nodes, text, idx)
+        if (
+            name is None
+            or name in allowlist
+            or not any(pattern.search(name) for pattern in name_res)
+        ):
+            continue
+        seen = set()
+        for block in node["children"]:
+            if nodes[block]["label"] not in _TEMPLATE_UNIT_BLOCKS:
+                continue
+            for unit_idx in nodes[block]["children"]:
+                unit = nodes[unit_idx]["label"]
+                if unit in parachutable or unit in seen:
+                    continue
+                seen.add(unit)
+                findings.append((node["line"], name, unit, nodes[unit_idx]["line"]))
+    return findings
+
+
+def _check_paradrop_file(
+    args: Tuple[str, str, Set[str], Tuple[re.Pattern, ...], FrozenSet[str]],
+) -> List[Issue]:
+    filepath, mod_path, parachutable, name_res, allowlist = args
+    rel = normalize_path_separators(os.path.relpath(filepath, mod_path))
+    # Allowlist keys are "<file>:<template name>", so a shared name in another
+    # country's OOB is still checked.
+    allowed_here = frozenset(
+        key[len(rel) + 1 :] for key in allowlist if key.startswith(rel + ":")
+    )
+    findings = check_paradrop_templates(
+        _read_text(filepath, mod_path), parachutable, name_res, allowed_here
+    )
+    return [
+        Issue(
+            severity=Severity.WARNING,
+            category="airborne-template-not-parachutable",
+            message=(
+                f"airborne template '{name}' (line {template_line}) uses "
+                f"'{unit}' without can_be_parachuted = yes, so the division "
+                f"cannot paradrop"
+            ),
+            file=rel,
+            line=unit_line,
+        )
+        for template_line, name, unit, unit_line in findings
+    ]
+
+
 def _read_division_template_entries(
     args: Tuple[str, str],
 ) -> List[Tuple[str, Optional[str]]]:
@@ -1954,6 +2047,7 @@ class Validator(BaseValidator):
         super().__init__(*args, **kwargs)
         self.canonical = set()
         self.canonical_lower = {}
+        self.parachutable = set()
         self.namelist_canonical = set()
         self.namelist_canonical_lower = {}
         self._variant_sources_by_scope: Dict[
@@ -1965,14 +2059,17 @@ class Validator(BaseValidator):
         self._log_section("Building canonical unit name set...")
 
         unit_sources = _parse_canonical_unit_sources(self.mod_path)
-        self.canonical = {name for sub_units, _ in unit_sources for name in sub_units}
+        self.canonical = {
+            name for sub_units, _, _ in unit_sources for name in sub_units
+        }
+        self.parachutable = {name for _, _, para in unit_sources for name in para}
         self.canonical_lower = {name.lower(): name for name in self.canonical}
 
         # Namelist keys also accept equipment-type names (air namelists use
         # `small_plane_airframe` rather than the sub_unit name `light_fighter`).
         self.namelist_canonical = set(self.canonical)
         self.namelist_canonical.update(
-            name for _, equipment_names in unit_sources for name in equipment_names
+            name for _, equipment_names, _ in unit_sources for name in equipment_names
         )
         self.namelist_canonical_lower = {
             name.lower(): name for name in self.namelist_canonical
@@ -2475,6 +2572,36 @@ class Validator(BaseValidator):
             "create_unit effects with structural problems:",
         )
 
+    def validate_airborne_templates(self):
+        """Warn when an airborne-named division_template cannot paradrop."""
+        self._log_section("Checking airborne division templates for paradrop...")
+
+        files = self._collect_files(_TEMPLATE_SOURCE_PATTERNS)
+        self.log(f"  Found {len(files)} files to check")
+        args_list = [
+            (
+                f,
+                self.mod_path,
+                self.parachutable,
+                _AIRBORNE_NAME_RES,
+                _AIR_ASSAULT_TEMPLATES,
+            )
+            for f in files
+        ]
+        results = []
+        for file_results in self._pool_map(
+            _check_paradrop_file, args_list, chunksize=20
+        ):
+            results.extend(file_results)
+
+        self._report(
+            results,
+            "✓ All airborne templates can paradrop",
+            "Airborne templates with non-parachutable sub-units:",
+            severity=Severity.WARNING,
+            category="airborne-template-not-parachutable",
+        )
+
     def run_validations(self):
         self._build_canonical_units()
         self.validate_unit_references()
@@ -2485,6 +2612,7 @@ class Validator(BaseValidator):
         self.validate_oob_variant_references()
         self.validate_load_oob_references()
         self.validate_created_units()
+        self.validate_airborne_templates()
 
 
 def _add_extra_args(parser):
