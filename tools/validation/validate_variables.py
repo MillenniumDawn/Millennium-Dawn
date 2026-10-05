@@ -2121,6 +2121,34 @@ class Validator(BaseValidator):
             patterns.append(re.compile(f"^{pattern_str}$"))
         return patterns
 
+    def _report_unmatched_flags(
+        self,
+        flag_type: str,
+        false_positives: list,
+        candidates: Dict[str, str],
+        counterparts: Dict[str, str],
+        effect: str,
+        ok_msg: str,
+        fail_msg: str,
+    ):
+        """Report candidates with no counterpart, located by their `<effect>` line."""
+        dynamic_patterns = self._build_dynamic_flag_matchers(list(counterparts))
+        results = []
+        for flag in drop_partial_matches(candidates, false_positives):
+            if flag in counterparts or any(p.match(flag) for p in dynamic_patterns):
+                continue
+            needle = f"{effect}_{flag_type}_flag = {flag}"
+            full_path = self.get_full_path(candidates[flag], needle)
+            if full_path:
+                results.append(
+                    {
+                        "flag": flag,
+                        "file": os.path.relpath(full_path, self.mod_path),
+                        "line": find_line_number(full_path, needle, lowercase=False),
+                    }
+                )
+        self._report_with_locations(results, ok_msg, fail_msg)
+
     def validate_cleared_flags(
         self,
         flag_type: str,
@@ -2129,27 +2157,12 @@ class Validator(BaseValidator):
         set_paths: Dict[str, str],
     ):
         self._log_section(f"Checking cleared {flag_type} flags that are never set...")
-
-        cleared_flags = drop_partial_matches(cleared_paths, false_positives)
-        dynamic_set_patterns = self._build_dynamic_flag_matchers(list(set_paths.keys()))
-
-        results = []
-        for flag in cleared_flags:
-            if flag in set_paths:
-                continue
-            if any(p.match(flag) for p in dynamic_set_patterns):
-                continue
-            basename = cleared_paths[flag]
-            full_path = self.get_full_path(basename, f"clr_{flag_type}_flag = {flag}")
-            if full_path:
-                rel_path = os.path.relpath(full_path, self.mod_path)
-                line_num = find_line_number(
-                    full_path, f"clr_{flag_type}_flag = {flag}", lowercase=False
-                )
-                results.append({"flag": flag, "file": rel_path, "line": line_num})
-
-        self._report_with_locations(
-            results,
+        self._report_unmatched_flags(
+            flag_type,
+            false_positives,
+            cleared_paths,
+            set_paths,
+            "clr",
             f"✓ No issues found with cleared {flag_type} flags",
             f"Cleared {flag_type} flags that are never set were encountered. Flags with @ are skipped.",
         )
@@ -2162,27 +2175,12 @@ class Validator(BaseValidator):
         set_paths: Dict[str, str],
     ):
         self._log_section(f"Checking missing {flag_type} flags (used but not set)...")
-
-        used_flags = drop_partial_matches(used_paths, false_positives)
-        dynamic_set_patterns = self._build_dynamic_flag_matchers(list(set_paths.keys()))
-
-        results = []
-        for flag in used_flags:
-            if flag in set_paths:
-                continue
-            if any(p.match(flag) for p in dynamic_set_patterns):
-                continue
-            basename = used_paths[flag]
-            full_path = self.get_full_path(basename, f"has_{flag_type}_flag = {flag}")
-            if full_path:
-                rel_path = os.path.relpath(full_path, self.mod_path)
-                line_num = find_line_number(
-                    full_path, f"has_{flag_type}_flag = {flag}", lowercase=False
-                )
-                results.append({"flag": flag, "file": rel_path, "line": line_num})
-
-        self._report_with_locations(
-            results,
+        self._report_unmatched_flags(
+            flag_type,
+            false_positives,
+            used_paths,
+            set_paths,
+            "has",
             f"✓ No issues found with missing {flag_type} flags",
             f"Missing {flag_type} flags were encountered - they are not set via 'set_{flag_type}_flag'. Flags with @ are skipped.",
         )
@@ -2195,29 +2193,12 @@ class Validator(BaseValidator):
         used_paths: Dict[str, str],
     ):
         self._log_section(f"Checking unused {flag_type} flags (set but not used)...")
-
-        set_flags = drop_partial_matches(set_paths, false_positives)
-        dynamic_used_patterns = self._build_dynamic_flag_matchers(
-            list(used_paths.keys())
-        )
-
-        results = []
-        for flag in set_flags:
-            if flag in used_paths:
-                continue
-            if any(p.match(flag) for p in dynamic_used_patterns):
-                continue
-            basename = set_paths[flag]
-            full_path = self.get_full_path(basename, f"set_{flag_type}_flag = {flag}")
-            if full_path:
-                rel_path = os.path.relpath(full_path, self.mod_path)
-                line_num = find_line_number(
-                    full_path, f"set_{flag_type}_flag = {flag}", lowercase=False
-                )
-                results.append({"flag": flag, "file": rel_path, "line": line_num})
-
-        self._report_with_locations(
-            results,
+        self._report_unmatched_flags(
+            flag_type,
+            false_positives,
+            set_paths,
+            used_paths,
+            "set",
             f"✓ No issues found with unused {flag_type} flags",
             f"Unused {flag_type} flags were encountered - they are not used via 'has_{flag_type}_flag' at least once. Flags with @ are skipped.",
         )

@@ -14,7 +14,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from _common import format_elapsed
 from shared_utils import (
     add_standard_file_arguments,
     atomic_write_text,
@@ -223,6 +222,14 @@ def read_lines_for_standardization(
         return None
 
     return lines
+
+
+def format_elapsed(seconds: float) -> str:
+    """Render an elapsed duration: `X.XX seconds` under a minute, else `Xm Y.YYs`."""
+    if seconds < 60:
+        return f"{seconds:.2f} seconds"
+    minutes = int(seconds // 60)
+    return f"{minutes}m {seconds % 60:.2f}s"
 
 
 def render_standardized(output_lines: List[str]) -> str:

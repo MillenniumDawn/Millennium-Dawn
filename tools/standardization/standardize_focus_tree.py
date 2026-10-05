@@ -11,12 +11,12 @@ import sys
 import time
 from typing import Any
 
-from _common import format_elapsed
 from common_utils import (
     PROP_NAME_RE,
     collapse_blank_runs,
     compact_icon,
     compact_search_filters,
+    format_elapsed,
     join_groups,
     read_lines_for_standardization,
     render_standardized,
