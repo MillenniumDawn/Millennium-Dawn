@@ -894,7 +894,9 @@ def test_every_batch_group_change_starts_the_mod_tests_job():
     assert not outside
 
 
-@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.skipif(
+    sys.platform != "linux", reason="the step needs bash 4, which only Linux ships"
+)
 @pytest.mark.parametrize("full_suite", ("true", "false"))
 def test_every_batch_group_reaches_the_validator_batch(tmp_path, full_suite):
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
