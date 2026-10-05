@@ -8,11 +8,43 @@ shows up with no indication of where it came from.
 
 import argparse
 
+import pytest
 import validate_decisions as V
 from shared.paths import REPO_ROOT
+from shared.suite import write_text
+
+# Where an announcement can live: one file under each scanned root, with `%s`
+# standing in for the effect.
+_SOURCES = {
+    "focus": (
+        "common/national_focus/test.txt",
+        "focus = {\n\tid = md_test_focus\n\tcompletion_reward = {\n\t\t%s\n\t}\n}\n",
+    ),
+    "event": (
+        "events/test.txt",
+        "country_event = {\n\tid = md_test.1\n\toption = {\n\t\t%s\n\t}\n}\n",
+    ),
+    "idea": (
+        "common/ideas/test.txt",
+        "ideas = {\n\tcountry = {\n\t\tmd_test_idea = {\n"
+        "\t\t\ton_add = {\n\t\t\t\t%s\n\t\t\t}\n\t\t}\n\t}\n}\n",
+    ),
+    "decision": (
+        "common/decisions/other.txt",
+        "md_other_category = {\n\tmd_other_decision = {\n"
+        "\t\tcomplete_effect = {\n\t\t\t%s\n\t\t}\n\t}\n}\n",
+    ),
+    "history": ("history/countries/md_test.txt", "%s\n"),
+}
 
 
-def _write_mod(tmp_path, category_visible, unlock=None, category="md_test_category"):
+def _write_mod(
+    tmp_path,
+    category_visible,
+    unlock=None,
+    category="md_test_category",
+    source="focus",
+):
     categories = tmp_path / "common" / "decisions" / "categories"
     categories.mkdir(parents=True)
     with (categories / "cat.txt").open("w", encoding="utf-8", newline="") as handle:
@@ -30,15 +62,8 @@ def _write_mod(tmp_path, category_visible, unlock=None, category="md_test_catego
             "}\n"
         )
     if unlock:
-        focus = tmp_path / "common" / "national_focus"
-        focus.mkdir(parents=True)
-        with (focus / "test.txt").open("w", encoding="utf-8", newline="") as handle:
-            handle.write(
-                "focus = {\n"
-                "\tid = md_test_focus\n"
-                f"\tcompletion_reward = {{\n\t\t{unlock}\n\t}}\n"
-                "}\n"
-            )
+        path, template = _SOURCES[source]
+        write_text(tmp_path / path, template % unlock)
     return V.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
 
 
@@ -106,6 +131,51 @@ def test_category_whose_decision_is_announced_is_not_flagged(tmp_path):
     assert _findings(validator) == []
 
 
+@pytest.mark.parametrize("source", _SOURCES)
+@pytest.mark.parametrize(
+    "unlock",
+    (
+        "unlock_decision_category_tooltip = md_test_category",
+        "unlock_decision_tooltip = { decision = md_test_decision }",
+    ),
+)
+def test_announcement_from_any_source_clears_the_finding(tmp_path, source, unlock):
+    validator = _write_mod(tmp_path, _FLAG_GATE, unlock=unlock, source=source)
+    assert _findings(validator) == []
+
+
+@pytest.mark.parametrize("source", _SOURCES)
+def test_source_without_the_call_is_still_flagged(tmp_path, source):
+    validator = _write_mod(
+        tmp_path, _FLAG_GATE, unlock="add_political_power = 10", source=source
+    )
+    assert len(_findings(validator)) == 1
+
+
+@pytest.mark.parametrize(
+    "not_an_announcement",
+    (
+        "# unlock_decision_category_tooltip = md_test_category",
+        'log = "unlock_decision_category_tooltip = md_test_category"',
+        "md_unlock_decision_category_tooltip = md_test_category",
+        "unlock_decision_category_tooltip = md_other_category",
+    ),
+)
+def test_lookalike_does_not_announce_the_category(tmp_path, not_an_announcement):
+    validator = _write_mod(tmp_path, _FLAG_GATE, unlock=not_an_announcement)
+    assert len(_findings(validator)) == 1
+
+
+def test_finding_is_a_warning_with_the_category(tmp_path):
+    validator = _write_mod(tmp_path, _FLAG_GATE)
+
+    validator.validate_unannounced_categories()
+
+    assert [(i.severity, i.category) for i in validator._issues] == [
+        (V.Severity.WARNING, "unannounced-decision-category")
+    ]
+
+
 def test_category_with_no_visible_block_is_not_flagged(tmp_path):
     assert _findings(_write_mod(tmp_path, "")) == []
 
@@ -137,8 +207,20 @@ def test_unannounced_category_exemptions_are_still_live():
     )
 
 
-def test_focus_gated_category_is_flagged(tmp_path):
-    gate = "\tvisible = {\n\t\thas_completed_focus = md_other_focus\n\t}\n"
+@pytest.mark.parametrize(
+    ("trigger", "reported"),
+    (
+        (
+            "has_completed_focus = md_other_focus",
+            "has_completed_focus = md_other_focus",
+        ),
+        ("has_global_flag = md_test_flag", "has_global_flag = md_test_flag"),
+        ("has_idea = md_test_idea", "has_idea = md_test_idea"),
+        ("check_variable = { md_test_var > 0 }", "check_variable"),
+    ),
+)
+def test_other_midgame_gate_is_flagged(tmp_path, trigger, reported):
+    gate = f"\tvisible = {{\n\t\t{trigger}\n\t}}\n"
     out = _findings(_write_mod(tmp_path, gate))
     assert len(out) == 1
-    assert "has_completed_focus = md_other_focus" in out[0]
+    assert f"becomes visible on {reported} but" in out[0]
