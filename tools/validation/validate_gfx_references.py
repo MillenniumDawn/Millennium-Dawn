@@ -15,7 +15,7 @@ import glob
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Callable, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -893,24 +893,11 @@ def _parse_gfx_fonts(args: Tuple[str, str]) -> List[str]:
     )
 
 
-def _parse_raw_variant_icons(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
-    filepath, mod_path = args
-    raw = _read_raw(filepath)
-    if raw is None:
-        return []
-
-    def _compute() -> List[Tuple[str, str, int]]:
-        if "create_equipment_variant" not in raw:
-            return []
-        return [(value, filepath, line) for value, line in raw_variant_icon_paths(raw)]
-
-    return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.raw_variant_icon", filepath, raw, _compute
-    )
-
-
-def _parse_raw_graphic_db_icons(
+def _parse_raw_icon_hits(
     args: Tuple[str, str],
+    cache_key: str,
+    needle: str,
+    extract: Callable[[str], List[Tuple[str, int]]],
 ) -> List[Tuple[str, str, int]]:
     filepath, mod_path = args
     raw = _read_raw(filepath)
@@ -918,14 +905,29 @@ def _parse_raw_graphic_db_icons(
         return []
 
     def _compute() -> List[Tuple[str, str, int]]:
-        if "icons" not in raw:
+        if needle not in raw:
             return []
-        return [
-            (value, filepath, line) for value, line in raw_graphic_db_icon_paths(raw)
-        ]
+        return [(value, filepath, line) for value, line in extract(raw)]
 
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.raw_pool_icon", filepath, raw, _compute
+        mod_path, cache_key, filepath, raw, _compute
+    )
+
+
+def _parse_raw_variant_icons(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    return _parse_raw_icon_hits(
+        args,
+        "gfx_ref.raw_variant_icon",
+        "create_equipment_variant",
+        raw_variant_icon_paths,
+    )
+
+
+def _parse_raw_graphic_db_icons(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    return _parse_raw_icon_hits(
+        args, "gfx_ref.raw_pool_icon", "icons", raw_graphic_db_icon_paths
     )
 
 

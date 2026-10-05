@@ -32,6 +32,22 @@ def _write(path, body="", binary=None):
     return str(path)
 
 
+def _write_sprite(tmp_path, texture, quoted=True, write_texture=True):
+    if write_texture:
+        _write(tmp_path / texture)
+    tex = f'"{texture}"' if quoted else texture
+    _write(
+        tmp_path / "interface" / "icons.gfx",
+        f'spriteType = {{\n\tname = "GFX_x"\n\ttexturefile = {tex}\n}}\n',
+    )
+
+
+def _run(tmp_path, **kwargs):
+    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1, **kwargs)
+    validator.run_validations()
+    return validator
+
+
 # --- texture discovery ------------------------------------------------------
 
 
@@ -404,51 +420,19 @@ def test_full_run_with_an_install_errors_on_a_reference_nothing_can_resolve(tmp_
     assert validator.errors_found == 1
 
 
-def test_unquoted_texturefile_marks_the_texture_used(tmp_path):
-    _write(tmp_path / "gfx" / "interface" / "used.dds")
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        "spriteType = {\n"
-        '\tname = "GFX_x"\n'
-        "\ttexturefile = gfx/interface/used.dds\n"
-        "}\n",
-    )
-
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-
+@pytest.mark.parametrize("quoted", (True, False))
+def test_present_texturefile_is_used_quoted_or_not(tmp_path, quoted):
+    _write_sprite(tmp_path, "gfx/interface/used.dds", quoted=quoted)
+    validator = _run(tmp_path)
     assert (validator.unused_count, validator.missing_count) == (0, 0)
     assert validator._issues == []
 
 
 def test_unquoted_missing_texturefile_is_reported(tmp_path):
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        "spriteType = {\n"
-        '\tname = "GFX_x"\n'
-        "\ttexturefile = gfx/absent/icon.dds\n"
-        "}\n",
-    )
-
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-
+    _write_sprite(tmp_path, "gfx/absent/icon.dds", quoted=False, write_texture=False)
+    validator = _run(tmp_path)
     assert validator.missing_count == 1
     assert "gfx/absent/icon.dds" in {issue.message for issue in validator._issues}
-
-
-def test_clean_mod_reports_nothing(tmp_path):
-    _write(tmp_path / "gfx" / "interface" / "used.dds")
-    _write(
-        tmp_path / "interface" / "icons.gfx",
-        'spriteType = {\n\tname = "GFX_x"\n\ttexturefile = "gfx/interface/used.dds"\n}\n',
-    )
-
-    validator = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    validator.run_validations()
-
-    assert (validator.unused_count, validator.missing_count) == (0, 0)
-    assert validator._issues == []
 
 
 def test_hoi4_path_argument_is_registered():
