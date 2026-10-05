@@ -5,7 +5,6 @@ import tempfile
 from pathlib import Path
 
 country_tag_list: list[str] = []
-inputpath = ""
 
 # Anchor to the repo (tools/generators/ -> repo root) with OS-correct
 # separators; the old `"..\\common\\country_tags"` literals were dead on Linux.

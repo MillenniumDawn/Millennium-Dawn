@@ -177,7 +177,6 @@ _IMPACT_EXCLUDED_SCRIPTS = {
     # Reads gfx/models and gfx/entities, which the CI workspace does not ship.
     "validate_mesh_textures.py",
     "validate_tools.py",
-    "validate_staged.py",
     # Manual-only: the standardization report is deliberately unwired from
     # pre-commit and CI; editing the script must not re-select it.
     "validate_standardization.py",

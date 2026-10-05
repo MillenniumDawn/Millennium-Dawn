@@ -8,14 +8,13 @@ Fixtures live in conftest.py (shared path/skip markers).
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path
 
 import assign_mio_icons
 import pytest
-from shared.suite import run_git, symlinks_available
+from shared.suite import symlinks_available
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOLS = REPO_ROOT / "tools"
@@ -450,52 +449,3 @@ class TestStandardizeStaged:
         )
         # Should exit 0 — nothing to do, nothing modified, no errors
         assert result.returncode == 0
-
-
-# ---------------------------------------------------------------------------
-# validate_staged.py
-# ---------------------------------------------------------------------------
-
-
-class TestValidateStaged:
-    """Tests for tools/validate_staged.py — pre-commit validation runner."""
-
-    def test_main_no_staged_files_or_skip_env(self, tmp_path, monkeypatch):
-        """With no staged files or MD_SKIP_VALIDATE=1, no validators run and exit 0."""
-        for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "MD_SKIP_VALIDATE"):
-            monkeypatch.delenv(name, raising=False)
-        run_git(tmp_path, "init")
-        result = subprocess.run(
-            [sys.executable, str(TOOLS / "validate_staged.py")],
-            capture_output=True,
-            text=True,
-            cwd=tmp_path,
-        )
-        assert result.returncode == 0
-        assert "Running " not in result.stdout
-
-        (tmp_path / "events").mkdir()
-        write_text(tmp_path / "events" / "example.txt", "add_namespace = example\n")
-        run_git(tmp_path, "add", "events/example.txt")
-        assert (
-            run_git(tmp_path, "diff", "--cached", "--name-only").stdout.strip()
-            == "events/example.txt"
-        )
-        result = subprocess.run(
-            [sys.executable, str(TOOLS / "validate_staged.py")],
-            capture_output=True,
-            text=True,
-            cwd=tmp_path,
-            env={**os.environ, "MD_SKIP_VALIDATE": "1"},
-        )
-        assert result.returncode == 0
-        assert "Running " not in result.stdout
-
-    def test_staged_file_routes_to_validator(self):
-        """A staged .yml file causes the localisation validator to be invoked."""
-        sys.path.insert(0, str(TOOLS))
-        from validate_staged import VALIDATORS
-
-        loc_validator = next(v for v in VALIDATORS if v["name"] == "localisation")
-        assert "validate_localisation.py" in loc_validator["cmd"][1]
-        assert loc_validator["suffix"] == ".yml"

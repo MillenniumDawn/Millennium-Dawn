@@ -35,10 +35,8 @@ _SCAN_PATTERNS = [
     "music/**/*.txt",
 ]
 
-_RE_COMMENT_QUOTE = re.compile(r'#.*["]+', re.M | re.I)
 _RE_NO_SP_OPEN = re.compile(r"([^\s]+)\{|\{([^\s]+)", re.M | re.I)
 _RE_NO_SP_CLOSE = re.compile(r"([^\s]+)\}|\}([^\s]+)", re.M | re.I)
-_RE_TAG_LINE = re.compile(r"^[A-Z]{3}", re.M | re.I)
 _RE_FOCUS_FORMAT = re.compile(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", re.M | re.U)
 _RE_NEWS_EVENT = re.compile(r"news_event\s*=\s*\{")
 _RE_OPTION = re.compile(r"\boption\s*=\s*\{")

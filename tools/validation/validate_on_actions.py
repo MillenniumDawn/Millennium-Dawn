@@ -23,9 +23,6 @@ from validator_common import (
     run_validator_main,
 )
 
-# Declared namespaces: add_namespace = foo
-_ADD_NAMESPACE_RE = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
-
 # Top-level event block openers (country_event, news_event, state_event, …).
 # Allow optional leading whitespace — some files indent the top-level blocks
 # with a tab (e.g. agricultural_events.txt).

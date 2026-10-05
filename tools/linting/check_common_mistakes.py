@@ -200,7 +200,6 @@ _RE_CATEGORY = re.compile(r"^(\w+)\s*=\s*\{")
 _RE_AVAILABLE_ALWAYS_NO = re.compile(r"\bavailable\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_VISIBLE_ALWAYS_NO = re.compile(r"\bvisible\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_BYPASS_OPEN = re.compile(r"\bbypass\s*=\s*\{")
-_RE_BYPASS_TRIVIAL = re.compile(r"\bbypass\s*=\s*\{\s*always\s*=\s*(?:yes|no)\s*\}")
 _RE_DECISION_MARKER = re.compile(
     r"\bcomplete_effect\s*=\s*\{|\bfire_only_once\s*=|\bactivation\s*=\s*\{|\bdays_mission_timeout\s*="
 )

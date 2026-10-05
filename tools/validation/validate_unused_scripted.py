@@ -259,12 +259,6 @@ class Validator(BaseValidator):
 
         return unused_effects, unused_triggers
 
-    def validate_unused_effects(self):
-        self._log_section("Checking for unused scripted effects...")
-
-    def validate_unused_triggers(self):
-        self._log_section("Checking for unused scripted triggers...")
-
     def run_validations(self):
         if self.staged_only:
             self.log(

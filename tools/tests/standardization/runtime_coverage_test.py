@@ -27,6 +27,7 @@ from common_utils import (
     join_groups,
     read_lines_for_standardization,
     resolve_output_file_and_backup,
+    run_standardizer,
     write_standardized_output,
 )
 
@@ -276,6 +277,27 @@ def test_common_utils_output_and_backup_edges(tmp_path, monkeypatch):
         resolve_output_file_and_backup(
             argparse.Namespace(input_file=str(source), output=None, backup=True)
         )
+
+
+def test_run_standardizer_writes_the_output_and_exits_on_failure(tmp_path, capsys):
+    source = tmp_path / "source.txt"
+    destination = tmp_path / "destination.txt"
+    _write(source, "thing = {\nvalue = yes\n}\n")
+
+    run_standardizer(
+        _MiniStandardizer, "mini", argv=[str(source), "-o", str(destination), "-v"]
+    )
+
+    assert _read(destination) == "thing = {\n\tvalue = yes\n}\n"
+    assert "Processing completed" in capsys.readouterr().err
+
+    class _Failing(_MiniStandardizer):
+        def standardize_file(self, *_args):
+            return False
+
+    with pytest.raises(SystemExit) as exit_info:
+        run_standardizer(_Failing, "mini", argv=[str(source)])
+    assert exit_info.value.code == 1
 
 
 _FOCUS_FIXTURE = """focus_tree = {

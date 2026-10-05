@@ -20,7 +20,6 @@ from validate_oob_units import (
     _VARIANT_SOURCE_PATTERNS,
 )
 from validate_scripted_params import _CALLER_PATTERNS
-from validate_staged import VALIDATORS as STAGED_VALIDATORS
 from validator_batches import ALL_SPECS, BATCHES, ValidatorSpec
 
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
@@ -946,10 +945,6 @@ def test_scripted_param_patterns_scan_every_script_root():
     }
     assert not sorted(set(SCRIPT_ROOTS) - whole_tree)
     caller_dirs = {pattern.split("*", 1)[0] for pattern in _CALLER_PATTERNS}
-    staged = next(
-        spec for spec in STAGED_VALIDATORS if spec["name"] == "scripted params"
-    )
-    assert caller_dirs <= set(staged["prefixes"])
     for directory in caller_dirs:
         sample = directory + "_scripted_param_probe.txt"
         assert classify([sample])["style"] is True

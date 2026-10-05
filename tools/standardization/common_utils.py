@@ -23,7 +23,6 @@ from shared_utils import (
     extract_block,
     log_message,
     normalize_spacing,
-    run_tool_main,
     strip_inline_comment,
 )
 
@@ -385,11 +384,12 @@ def create_standardizer_parser(description: str) -> argparse.ArgumentParser:
 
 def run_standardizer(standardizer_class, description: str, argv=None):
     """Run a standardizer with standard command line interface."""
-    parser = create_standardizer_parser(description)
-    run_tool_main(
-        standardizer_class,
-        description=description,
-        method_name="standardize_file",
-        argv=argv,
-        parser=parser,
-    )
+    args = create_standardizer_parser(description).parse_args(argv)
+    output_file = resolve_output_file_and_backup(args)
+    log_message("INFO", f"Starting processing of {args.input_file}", args.verbose)
+    standardizer = standardizer_class(verbose=args.verbose)
+    if standardizer.standardize_file(args.input_file, output_file):
+        log_message("SUCCESS", f"Processing completed: {output_file}")
+    else:
+        log_message("ERROR", "Processing failed")
+        sys.exit(1)

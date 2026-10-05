@@ -16,7 +16,6 @@ from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
-    DataCleaner,
     FileOpener,
     Severity,
     run_validator_main,
@@ -232,7 +231,8 @@ class Validator(BaseValidator):
             for tag, count in counts.items():
                 cosmetic_tags[tag] += count
 
-        DataCleaner.clear_false_positives(cosmetic_tags, tuple(false_positives))
+        for tag in false_positives:
+            cosmetic_tags.pop(tag, None)
         missing = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
         if missing:
@@ -324,7 +324,8 @@ class Validator(BaseValidator):
                     for tag, count in counts.items():
                         cosmetic_tags[tag] += count
 
-        DataCleaner.clear_false_positives(cosmetic_tags, tuple(false_positives))
+        for tag in false_positives:
+            cosmetic_tags.pop(tag, None)
         unused = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
         if unused:
@@ -365,7 +366,8 @@ class Validator(BaseValidator):
             )
             return
 
-        DataCleaner.clear_false_positives(cosmetic_tags, tuple(false_positives))
+        for tag in false_positives:
+            cosmetic_tags.pop(tag, None)
 
         files = self._txt_files()
         remaining_tags = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]

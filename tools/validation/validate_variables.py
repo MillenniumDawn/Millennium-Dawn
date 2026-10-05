@@ -39,9 +39,9 @@ from validator_common import (
     DYNAMIC_TOKEN_FILE,
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
-    DataCleaner,
     FileOpener,
     Severity,
+    drop_partial_matches,
     find_line_number,
     load_dynamic_token_names,
     run_validator_main,
@@ -2149,12 +2149,7 @@ class Validator(BaseValidator):
     ):
         self._log_section(f"Checking cleared {flag_type} flags that are never set...")
 
-        cleared_flags = (
-            DataCleaner.clear_false_positives_partial_match(
-                list(cleared_paths.keys()), tuple(false_positives)
-            )
-            or []
-        )
+        cleared_flags = drop_partial_matches(cleared_paths, false_positives)
         dynamic_set_patterns = self._build_dynamic_flag_matchers(list(set_paths.keys()))
 
         results = []
@@ -2187,12 +2182,7 @@ class Validator(BaseValidator):
     ):
         self._log_section(f"Checking missing {flag_type} flags (used but not set)...")
 
-        used_flags = (
-            DataCleaner.clear_false_positives_partial_match(
-                list(used_paths.keys()), tuple(false_positives)
-            )
-            or []
-        )
+        used_flags = drop_partial_matches(used_paths, false_positives)
         dynamic_set_patterns = self._build_dynamic_flag_matchers(list(set_paths.keys()))
 
         results = []
@@ -2225,12 +2215,7 @@ class Validator(BaseValidator):
     ):
         self._log_section(f"Checking unused {flag_type} flags (set but not used)...")
 
-        set_flags = (
-            DataCleaner.clear_false_positives_partial_match(
-                list(set_paths.keys()), tuple(false_positives)
-            )
-            or []
-        )
+        set_flags = drop_partial_matches(set_paths, false_positives)
         dynamic_used_patterns = self._build_dynamic_flag_matchers(
             list(used_paths.keys())
         )
@@ -2985,12 +2970,7 @@ class Validator(BaseValidator):
             "validate_variables", "missing_event_target_false_positives"
         )
         results = []
-        used_targets = (
-            DataCleaner.clear_false_positives_partial_match(
-                list(used_paths.keys()), tuple(false_positives)
-            )
-            or []
-        )
+        used_targets = drop_partial_matches(used_paths, false_positives)
 
         for target in used_targets:
             if target not in set_paths:
@@ -3031,12 +3011,7 @@ class Validator(BaseValidator):
         )
         results = []
         potential_results = []
-        set_targets = (
-            DataCleaner.clear_false_positives_partial_match(
-                list(set_paths.keys()), tuple(false_positives)
-            )
-            or []
-        )
+        set_targets = drop_partial_matches(set_paths, false_positives)
 
         for target in set_targets:
             if target not in used_paths:

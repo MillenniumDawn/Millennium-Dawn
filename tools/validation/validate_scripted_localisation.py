@@ -14,10 +14,10 @@ from validate_gfx_references import sprite_names_from_gfx_text
 from validator_common import (
     BaseValidator,
     Colors,
-    DataCleaner,
     FileOpener,
     Issue,
     Severity,
+    drop_partial_matches,
     find_line_number,
     run_validator_main,
     scan_meta_constructed_names,
@@ -406,14 +406,9 @@ class Validator(BaseValidator):
         )
 
         defined_locs_lower = [loc.lower() for loc in defined_locs]
-        used_locs_lower_raw = [loc.lower() for loc in used_locs]
         used_lower_to_original = {loc.lower(): loc for loc in used_locs}
-
-        used_locs_lower = (
-            DataCleaner.clear_false_positives_partial_match(
-                used_locs_lower_raw, tuple(false_positives)
-            )
-            or []
+        used_locs_lower = drop_partial_matches(
+            (loc.lower() for loc in used_locs), false_positives
         )
 
         results = []
@@ -466,15 +461,9 @@ class Validator(BaseValidator):
         )
 
         defined_lower_to_original = {loc.lower(): loc for loc in defined_locs}
-        defined_locs_lower = [loc.lower() for loc in defined_locs]
         used_locs_lower = [loc.lower() for loc in used_locs]
-
-        defined_locs_lower = (
-            DataCleaner.clear_false_positives_partial_match(
-                defined_locs_lower,
-                tuple(false_positives) + tuple(unused_only),
-            )
-            or []
+        defined_locs_lower = drop_partial_matches(
+            (loc.lower() for loc in defined_locs), (*false_positives, *unused_only)
         )
 
         results = []

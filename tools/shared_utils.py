@@ -5,7 +5,6 @@
 import argparse
 import bisect
 import json
-import logging
 import os
 import re
 import stat
@@ -23,6 +22,7 @@ from typing import (
     Callable,
     Container,
     Dict,
+    Iterable,
     Iterator,
     List,
     Optional,
@@ -165,7 +165,7 @@ def log_message(
 def add_standard_file_arguments(
     parser: argparse.ArgumentParser, *, input_help="Input file to process"
 ):
-    """Add shared file arguments; --no-color remains specific to create_standard_parser."""
+    """Add the shared input, --output, --backup, and --verbose arguments."""
     parser.add_argument("input_file", help=input_help)
     parser.add_argument(
         "-o", "--output", help="Output file (default: overwrites input)"
@@ -174,19 +174,6 @@ def add_standard_file_arguments(
         "-b", "--backup", action="store_true", help="Create backup before modifying"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
-
-
-def create_standard_parser(description: str) -> argparse.ArgumentParser:
-    """Create a standard argument parser for Millennium Dawn tools"""
-    parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    add_standard_file_arguments(parser)
-    parser.add_argument(
-        "--no-color", action="store_true", help="Disable ANSI color codes in output"
-    )
-    return parser
 
 
 def create_validation_parser(description: str) -> argparse.ArgumentParser:
@@ -1477,50 +1464,12 @@ class FileOpener:
         cls._cache.clear()
 
 
-class DataCleaner:
-    """Helper class for cleaning data structures"""
-
-    @classmethod
-    def clear_false_positives(cls, input_iter, false_positives: tuple = ()):
-        """Remove false positives from a dictionary or list"""
-        if isinstance(input_iter, dict):
-            if len(false_positives) > 0:
-                for key in false_positives:
-                    try:
-                        input_iter.pop(key)
-                    except KeyError:
-                        continue
-            return input_iter
-        elif isinstance(input_iter, list):
-            if len(false_positives) > 0:
-                return [i for i in input_iter if i not in false_positives]
-            return input_iter
-
-    @classmethod
-    def clear_false_positives_partial_match(
-        cls, input_iter, false_positives: tuple = ()
-    ):
-        """Remove items that partially match false positives"""
-        if isinstance(input_iter, dict):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-                for i in skip_list:
-                    if i in input_iter:
-                        input_iter.pop(i)
-            return input_iter
-        elif isinstance(input_iter, list):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-                input_iter = [i for i in input_iter if i not in skip_list]
-            return input_iter
+def drop_partial_matches(
+    names: Iterable[str], false_positives: Iterable[str]
+) -> List[str]:
+    """Return the names that contain none of the false-positive substrings."""
+    false_positives = tuple(false_positives)
+    return [name for name in names if not any(fp in name for fp in false_positives)]
 
 
 def timing_enabled() -> bool:
@@ -1937,62 +1886,6 @@ def get_staged_files(
         return None
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
-
-
-def run_tool_main(
-    tool_class,
-    description: str = "Run tool",
-    extra_args_fn=None,
-    method_name: str = "process_file",
-    argv=None,
-    parser=None,
-):
-    """Main entry point for single-file tools and standardizers.
-
-    Args:
-        tool_class: Class to instantiate (DataCleaner subclass or BaseStandardizer).
-        description: CLI description string.
-        extra_args_fn: Optional callback to add custom argparse arguments.
-        method_name: Method to call on the instance (default: "process_file").
-        argv: Argument list (default: sys.argv[1:]).
-        parser: Custom ArgumentParser (default: create_standard_parser).
-    """
-    if parser is None:
-        parser = create_standard_parser(description)
-    if extra_args_fn:
-        extra_args_fn(parser)
-    args = parser.parse_args(argv)
-
-    if not os.path.exists(args.input_file):
-        log_message("ERROR", f"File '{args.input_file}' does not exist")
-        sys.exit(1)
-
-    output_file = args.output if args.output else args.input_file
-
-    import inspect
-
-    sig = inspect.signature(tool_class.__init__)
-    valid_params = set(sig.parameters.keys()) - {"self"}
-    ctor_kwargs = {}
-    if "verbose" in valid_params:
-        ctor_kwargs["verbose"] = args.verbose
-    if "use_colors" in valid_params:
-        ctor_kwargs["use_colors"] = not getattr(args, "no_color", False)
-    tool = tool_class(**ctor_kwargs)
-
-    if args.backup:
-        backup_file = create_backup(args.input_file)
-        if not backup_file:
-            sys.exit(1)
-
-    log_message("INFO", f"Starting processing of {args.input_file}", args.verbose)
-
-    method = getattr(tool, method_name)
-    if method(args.input_file, output_file):
-        log_message("SUCCESS", f"Processing completed: {output_file}")
-    else:
-        log_message("ERROR", "Processing failed")
-        sys.exit(1)
 
 
 def run_validator_main(

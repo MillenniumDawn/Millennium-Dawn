@@ -103,10 +103,7 @@ def _iter_directory_paths(cpath, *parts):
 def _open_output(path, *, dry_run):
     if dry_run:
         return io.StringIO()
-    try:
-        return open(path, "w", encoding="utf-8", newline="")
-    except OSError:
-        raise
+    return open(path, "w", encoding="utf-8", newline="")
 
 
 def _open_output_or_raise(path, filename, *, dry_run):

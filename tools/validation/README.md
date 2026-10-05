@@ -224,7 +224,7 @@ All validators extend `BaseValidator` from `validator_common.py`. To add a new v
 5. Call `run_validator_main(YourValidator, "Description")` at the bottom
 6. `run_all_validators.py` auto-discovers it on the next run unless it is intentionally manual-only
 
-`validator_common.py` also provides `strip_comments()`, `FileOpener`, `DataCleaner`, `HOI4_BUILTIN_BLOCKS`, and `scan_meta_constructed_names()` for use in validators.
+`validator_common.py` also provides `strip_comments()`, `FileOpener`, `drop_partial_matches()`, `HOI4_BUILTIN_BLOCKS`, and `scan_meta_constructed_names()` for use in validators.
 
 Module-level constants and pool-worker functions (those passed to `_pool_map`) must be defined at the **top level** — not inside the validator class — so `multiprocessing.Pool` can pickle them. Classmethods on a validator subclass are not directly picklable; use standalone functions for pool dispatch.
 
