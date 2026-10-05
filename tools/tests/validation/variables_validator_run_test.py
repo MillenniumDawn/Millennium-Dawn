@@ -12,6 +12,7 @@ import sys
 import pytest
 import validate_variables as V
 import validator_common
+from shared.suite import variable_scan
 
 
 def _found(validator):
@@ -744,10 +745,9 @@ def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch, write
     assert exit_info.value.code == 0
 
 
-def test_process_file_for_math_precision_exception_handling(tmp_path):
+def test_shared_scan_masks_only_read_errors(tmp_path, monkeypatch):
     # Non-existent file raises OSError when read, which should be caught returning []
-    non_existent = str(tmp_path / "does_not_exist.txt")
-    assert V.process_file_for_math_precision((non_existent, str(tmp_path))) == []
+    assert variable_scan(tmp_path / "does_not_exist.txt", "math", tmp_path) == []
 
     # Non-OSError exceptions (e.g. ValueError or TypeError) must not be masked
     existing = tmp_path / "valid.txt"
@@ -756,10 +756,6 @@ def test_process_file_for_math_precision_exception_handling(tmp_path):
     def bad_scan(*args, **kwargs):
         raise ValueError("Unexpected error")
 
-    monkeypatch = pytest.MonkeyPatch()
     monkeypatch.setattr(V, "_scan_math_precision_text", bad_scan)
-    try:
-        with pytest.raises(ValueError, match="Unexpected error"):
-            V.process_file_for_math_precision((str(existing), str(tmp_path)))
-    finally:
-        monkeypatch.undo()
+    with pytest.raises(ValueError, match="Unexpected error"):
+        variable_scan(existing, "math", tmp_path)

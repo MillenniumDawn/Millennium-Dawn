@@ -12,6 +12,7 @@ import re
 
 import pytest
 import validate_variables as V
+from shared.suite import variable_scan
 
 
 def _write(path, content):
@@ -100,7 +101,7 @@ def test_flag_syntax_reports_days_without_value_and_long_form(tmp_path):
         "}\n",
     )
 
-    days, long_form = V.process_file_for_flag_syntax((str(path), str(tmp_path)))
+    days, long_form = variable_scan(path, "flag_syntax", tmp_path)
 
     relative = os.path.join("common", "scripted_effects", "syntax.txt")
     assert len(days) == 1 and "missing value field" in days[0]
@@ -114,20 +115,7 @@ def test_flag_syntax_accepts_days_with_value(tmp_path):
         tmp_path / "common" / "scripted_effects" / "ok.txt",
         "set_country_flag = { flag = TST_timed days = 30 value = 1 }\n",
     )
-    assert V.process_file_for_flag_syntax((str(path), str(tmp_path))) == ([], [])
-
-
-def test_flag_syntax_skips_non_script_directories(tmp_path):
-    assert V.process_file_for_flag_syntax((str(_skipped(tmp_path)), str(tmp_path))) == (
-        [],
-        [],
-    )
-
-
-def test_flag_syntax_survives_an_unreadable_path(tmp_path):
-    assert V.process_file_for_flag_syntax(
-        (str(_unreadable(tmp_path)), str(tmp_path))
-    ) == ([], [])
+    assert variable_scan(path, "flag_syntax", tmp_path) == ([], [])
 
 
 def test_dynamic_flag_matcher_only_expands_scope_substitutions():
@@ -141,21 +129,28 @@ def test_dynamic_flag_matcher_only_expands_scope_substitutions():
     assert not patterns[0].match("accords_lowercase_left")
 
 
-# --- math precision --------------------------------------------------------
+# --- shared scan on paths it must not or cannot read ------------------------
+
+_SHARED_SECTION_EMPTY = {
+    "math": [],
+    "orphan": [],
+    "treasury": [],
+    "clamp_checks": [],
+    "available": [],
+    "available_flags": [],
+    "scripted": [],
+    "var_tooltips": [],
+    "missing": [],
+    "flag_syntax": ([], []),
+}
 
 
-def test_math_precision_skips_non_script_directories(tmp_path):
-    assert (
-        V.process_file_for_math_precision((str(_skipped(tmp_path)), str(tmp_path)))
-        == []
-    )
-
-
-def test_math_precision_survives_an_unreadable_path(tmp_path):
-    assert (
-        V.process_file_for_math_precision((str(_unreadable(tmp_path)), str(tmp_path)))
-        == []
-    )
+@pytest.mark.parametrize("section, empty", _SHARED_SECTION_EMPTY.items())
+@pytest.mark.parametrize("make_path", [_skipped, _unreadable])
+def test_shared_scan_is_empty_for_skipped_and_unreadable_paths(
+    tmp_path, make_path, section, empty
+):
+    assert variable_scan(make_path(tmp_path), section, tmp_path) == empty
 
 
 # --- brace matching --------------------------------------------------------
@@ -197,22 +192,7 @@ def test_clamp_harvest_survives_an_unreadable_path(tmp_path):
     )
 
 
-def test_clamp_conflicts_skip_non_script_directories(tmp_path):
-    args = (str(_skipped(tmp_path)), str(tmp_path), {"TST_x": (0.0, 10.0)})
-    assert V.process_file_for_clamp_conflicts(args) == []
-
-
-def test_clamp_conflicts_survive_an_unreadable_path(tmp_path):
-    args = (str(_unreadable(tmp_path)), str(tmp_path), {"TST_x": (0.0, 10.0)})
-    assert V.process_file_for_clamp_conflicts(args) == []
-
-
 # --- available-block scanning ----------------------------------------------
-
-
-def test_available_scan_skips_non_script_directories(tmp_path):
-    args = (str(_skipped(tmp_path)), str(tmp_path), frozenset())
-    assert V._scan_available_file(args) == ([], [], [])
 
 
 def test_check_variable_outside_available_is_not_flagged(tmp_path):
@@ -227,22 +207,11 @@ def test_check_variable_outside_available_is_not_flagged(tmp_path):
         "}\n",
     )
 
-    args = (str(path), str(tmp_path), frozenset())
-    assert V.process_file_for_untooltipped_available_checks(args) == []
+    assert variable_scan(path, "available", tmp_path) == []
 
 
 def test_scripted_trigger_body_with_a_stray_close_brace():
     assert V._scripted_trigger_body_has_unwrapped_global_flag("} has_global_flag = x")
-
-
-def test_scripted_trigger_call_scan_skips_unreadable_paths(tmp_path):
-    args = (
-        str(_unreadable(tmp_path)),
-        str(tmp_path),
-        frozenset({"tst_border_available"}),
-        frozenset(),
-    )
-    assert V.process_file_for_untooltipped_available_scripted_trigger(args) == []
 
 
 def test_scripted_trigger_call_scan_survives_a_stray_close_brace(tmp_path):
@@ -258,13 +227,9 @@ def test_scripted_trigger_call_scan_survives_a_stray_close_brace(tmp_path):
         "}\n",
     )
 
-    args = (
-        str(path),
-        str(tmp_path),
-        frozenset({"tst_border_available"}),
-        frozenset(),
+    issues = variable_scan(
+        path, "scripted", tmp_path, flagged_names=frozenset({"tst_border_available"})
     )
-    issues = V.process_file_for_untooltipped_available_scripted_trigger(args)
 
     assert len(issues) == 1
     assert issues[0][2] == 5
@@ -302,39 +267,14 @@ def test_dynamic_modifier_scan_survives_an_unreadable_path(tmp_path):
 # --- variable tooltips -----------------------------------------------------
 
 
-def test_variable_tooltip_scan_skips_non_script_directories(tmp_path):
-    assert (
-        V.process_file_for_variable_tooltips((str(_skipped(tmp_path)), str(tmp_path)))
-        == []
-    )
-
-
-def test_variable_tooltip_scan_survives_an_unreadable_path(tmp_path):
-    assert (
-        V.process_file_for_variable_tooltips(
-            (str(_unreadable(tmp_path)), str(tmp_path))
-        )
-        == []
-    )
-
-
-def test_missing_tooltip_scan_skips_non_script_directories(tmp_path):
-    args = (
-        str(_skipped(tmp_path)),
-        str(tmp_path),
-        {"TST_pp": ("political_power_factor",)},
-    )
-    assert V.process_file_for_missing_variable_tooltips(args) == []
-
-
 def test_variable_write_without_a_target_is_ignored(tmp_path):
     path = _write(
         tmp_path / "common" / "national_focus" / "focus.txt",
         "my_focus = {\n\tcompletion_reward = {\n\t\tadd_to_variable = { }\n\t}\n}\n",
     )
 
-    args = (str(path), str(tmp_path), {"TST_pp": ("political_power_factor",)})
-    assert V.process_file_for_missing_variable_tooltips(args) == []
+    backing = {"TST_pp": ("political_power_factor",)}
+    assert variable_scan(path, "missing", tmp_path, backing=backing) == []
 
 
 # --- treasury scope classification -----------------------------------------
@@ -358,19 +298,12 @@ def test_scope_token_classification(token, parent, expected):
     assert V._classify_scope_token(token, parent) == expected
 
 
-def test_treasury_scan_skips_unreadable_paths(tmp_path):
-    assert (
-        V.process_file_for_treasury_scope((str(_unreadable(tmp_path)), str(tmp_path)))
-        == []
-    )
-
-
 def test_treasury_scan_skips_files_without_a_money_effect(tmp_path):
     path = _write(
         tmp_path / "common" / "national_focus" / "focus.txt",
         "my_focus = {\n\tcompletion_reward = {\n\t\tadd_stability = 0.05\n\t}\n}\n",
     )
-    assert V.process_file_for_treasury_scope((str(path), str(tmp_path))) == []
+    assert variable_scan(path, "treasury", tmp_path) == []
 
 
 def test_treasury_scan_survives_a_stray_close_brace(tmp_path):
@@ -378,7 +311,7 @@ def test_treasury_scan_survives_a_stray_close_brace(tmp_path):
         tmp_path / "common" / "national_focus" / "focus.txt",
         "}\nmodify_treasury_effect = yes\n",
     )
-    assert V.process_file_for_treasury_scope((str(path), str(tmp_path))) == []
+    assert variable_scan(path, "treasury", tmp_path) == []
 
 
 # --- money consumer map ----------------------------------------------------
@@ -431,23 +364,13 @@ MONEY_CONSUMERS = {
 }
 
 
-def test_orphan_money_scan_skips_non_script_directories(tmp_path):
-    args = (str(_skipped(tmp_path)), str(tmp_path), {"treasury_change": frozenset()})
-    assert V.process_file_for_orphan_money(args) == []
-
-
-def test_orphan_money_scan_survives_an_unreadable_path(tmp_path):
-    args = (str(_unreadable(tmp_path)), str(tmp_path), {"treasury_change": frozenset()})
-    assert V.process_file_for_orphan_money(args) == []
-
-
 def test_orphan_money_scan_skips_files_without_a_setter(tmp_path):
     path = _write(
         tmp_path / "events" / "ev.txt",
         "country_event = {\n\tid = tst.1\n\toption = {\n\t\tname = tst.1.a\n\t}\n}\n",
     )
-    args = (str(path), str(tmp_path), {"treasury_change": frozenset()})
-    assert V.process_file_for_orphan_money(args) == []
+    consumers = {"treasury_change": frozenset()}
+    assert variable_scan(path, "orphan", tmp_path, consumer_map=consumers) == []
 
 
 def test_setter_outside_any_effect_container_is_not_flagged(tmp_path):
@@ -462,10 +385,7 @@ def test_setter_outside_any_effect_container_is_not_flagged(tmp_path):
         "\tset_temp_variable = { debt_change = 5 }\n",
     )
 
-    assert (
-        V.process_file_for_orphan_money((str(path), str(tmp_path), MONEY_CONSUMERS))
-        == []
-    )
+    assert variable_scan(path, "orphan", tmp_path, consumer_map=MONEY_CONSUMERS) == []
 
 
 def test_branch_gated_rewrites_do_not_clobber_the_setter(tmp_path):
@@ -483,10 +403,7 @@ def test_branch_gated_rewrites_do_not_clobber_the_setter(tmp_path):
         "}\n",
     )
 
-    assert (
-        V.process_file_for_orphan_money((str(path), str(tmp_path), MONEY_CONSUMERS))
-        == []
-    )
+    assert variable_scan(path, "orphan", tmp_path, consumer_map=MONEY_CONSUMERS) == []
 
 
 # --- event targets ---------------------------------------------------------
@@ -702,7 +619,7 @@ def test_treasury_scan_reports_the_first_and_last_line(tmp_path, newline):
     ]
     path = _write(tmp_path / "events" / "ev.txt", newline.join(lines))
 
-    issues = V.process_file_for_treasury_scope((str(path), str(tmp_path)))
+    issues = variable_scan(path, "treasury", tmp_path)
 
     assert [
         (line, "random_owned_state" in message) for message, _rel, line in issues
@@ -766,32 +683,32 @@ _SKIP_RULE_CASES = {
     "flag syntax": (
         "common/scripted_effects/b.txt",
         "set_country_flag = { flag = TST_b }\n",
-        lambda f, m: V.process_file_for_flag_syntax((f, m))[1],
+        lambda f, m: variable_scan(f, "flag_syntax", m)[1],
     ),
     "math precision": (
         "common/scripted_effects/c.txt",
         "add = 0.1234567\n",
-        lambda f, m: V.process_file_for_math_precision((f, m)),
+        lambda f, m: variable_scan(f, "math", m),
     ),
     "clamp harvest": (
         "common/scripted_effects/d.txt",
         "clamp_variable = { var = TST_v min = 0 max = 10 }\n",
         lambda f, m: V.collect_clamp_ranges((f, m))[0],
     ),
-    "clamp conflicts": (
+    "clamp checks": (
         "events/e.txt",
         "check_variable = { TST_v > 50 }\n",
-        lambda f, m: V.process_file_for_clamp_conflicts((f, m, {"TST_v": (0.0, 9.0)})),
+        lambda f, m: variable_scan(f, "clamp_checks", m),
     ),
     "variable tooltips": (
         "events/g.txt",
         "set_variable = { TST_v = 1 tooltip = TST_tt }\n",
-        lambda f, m: V.process_file_for_variable_tooltips((f, m)),
+        lambda f, m: variable_scan(f, "var_tooltips", m),
     ),
     "orphan money": (
         "events/h.txt",
         "option = {\n\tset_temp_variable = { treasury_change = 5 }\n}\n",
-        lambda f, m: V.process_file_for_orphan_money((f, m, MONEY_CONSUMERS)),
+        lambda f, m: variable_scan(f, "orphan", m, consumer_map=MONEY_CONSUMERS),
     ),
     "event targets": (
         "events/i.txt",
@@ -811,33 +728,26 @@ _SKIP_RULE_CASES = {
     "available checks": (
         "common/decisions/j.txt",
         "c = {\n\td = {\n\t\tavailable = { check_variable = { TST_v > 5 } }\n\t}\n}\n",
-        lambda f, m: V._scan_available_file((f, m, frozenset()))[0],
+        lambda f, m: variable_scan(f, "available", m),
     ),
     "scripted trigger calls": (
         "common/decisions/k.txt",
         "c = {\n\td = {\n\t\tavailable = { TST_border = yes }\n\t}\n}\n",
-        lambda f, m: V.process_file_for_untooltipped_available_scripted_trigger(
-            (f, m, frozenset({"TST_border"}), frozenset())
+        lambda f, m: variable_scan(
+            f, "scripted", m, flagged_names=frozenset({"TST_border"})
         ),
     ),
     "missing variable tooltips": (
         "events/l.txt",
         "option = { add_to_variable = { TST_pp = 1 } }\n",
-        lambda f, m: V.process_file_for_missing_variable_tooltips(
-            (f, m, {"TST_pp": ("political_power_factor",)})
+        lambda f, m: variable_scan(
+            f, "missing", m, backing={"TST_pp": ("political_power_factor",)}
         ),
     ),
     "treasury scope": (
         "events/n.txt",
         "option = { random_owned_state = { modify_treasury_effect = yes } }\n",
-        lambda f, m: V.process_file_for_treasury_scope((f, m)),
-    ),
-    "shared scan": (
-        "common/scripted_effects/s.txt",
-        "add = 0.1234567\n",
-        lambda f, m: V._scan_shared_file(
-            (f, m, V._F_MATH, frozenset(), frozenset(), {}, {}, {}, frozenset())
-        )[0],
+        lambda f, m: variable_scan(f, "treasury", m),
     ),
 }
 

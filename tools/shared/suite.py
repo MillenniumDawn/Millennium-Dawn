@@ -156,6 +156,49 @@ def call_site_scan(path, section: str, mod_path, tracked=frozenset()):
     return validate_events._scan_shared_call_site_file(args)[index]
 
 
+# section: (mask flag, index in the shared result)
+_VARIABLE_SECTIONS = {
+    "math": ("_F_MATH", 0),
+    "orphan": ("_F_ORPHAN", 1),
+    "treasury": ("_F_TREASURY", 2),
+    "clamp_checks": ("_F_CLAMP", 6),
+    "available": ("_F_AVAILABLE", 7),
+    "available_flags": ("_F_AVAILABLE", 8),
+    "scripted": ("_F_SCRIPTED", 9),
+    "var_tooltips": ("_F_VAR_TOOLTIP", 10),
+    "missing": ("_F_MISSING", 11),
+    "flag_syntax": ("_F_FLAG_SYNTAX", 12),
+}
+
+
+def variable_scan(
+    path,
+    section: str,
+    mod_path,
+    *,
+    ai_categories=frozenset(),
+    flagged_names=frozenset(),
+    consumer_map=None,
+    backing=None,
+):
+    """One section of the variables validator's shared scan of a single file."""
+    import validate_variables
+
+    flag, index = _VARIABLE_SECTIONS[section]
+    args = (
+        str(path),
+        str(mod_path),
+        getattr(validate_variables, flag),
+        ai_categories,
+        flagged_names,
+        consumer_map or {},
+        backing or {},
+        {},
+        frozenset(),
+    )
+    return validate_variables._scan_shared_file(args)[index]
+
+
 def collecting_validator(cls):
     """Wrap a Validator so `_report` appends to `.collected` instead of printing."""
 
