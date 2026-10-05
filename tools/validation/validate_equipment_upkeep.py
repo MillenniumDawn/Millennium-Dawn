@@ -21,7 +21,7 @@ from equipment_module_slots import (
     blank_comments,
     parse_duplicate_archetypes,
 )
-from shared_utils import FileOpener, find_matching_brace, validation_config
+from shared_utils import FileOpener, find_matching_brace, line_of, validation_config
 from validator_common import BaseValidator, Severity, run_validator_main
 
 EQUIPMENT_GLOB = "common/units/equipment/**/*.txt"
@@ -61,10 +61,6 @@ def _read(path: str) -> Optional[str]:
         return blank_comments(FileOpener.open_text_file(path))
     except (OSError, UnicodeDecodeError):
         return None
-
-
-def _line_of(text: str, offset: int) -> int:
-    return text.count("\n", 0, offset) + 1
 
 
 def _parse_equipment(text: str) -> Tuple[Set[str], Dict[str, str]]:
@@ -108,7 +104,7 @@ def _land_equipment_refs(text: str) -> Dict[str, Tuple[str, int]]:
             body = _depth0_text(text, ulo, uhi)
             if _LAND_MARKER not in body:
                 continue
-            line = _line_of(text, header)
+            line = line_of(text, header)
             tokens: Set[str] = set()
             for key, klo, khi, _ in _iter_blocks(text, ulo, uhi):
                 if key in _NEED_KEYS:
@@ -138,12 +134,12 @@ def _upkeep_terms(text: str) -> Tuple[Set[str], Set[str], int]:
         if not _VAR_RE.search(body):
             continue
         if not line:
-            line = _line_of(text, m.start())
+            line = line_of(text, m.start())
         deployed.update(_DEPLOYED_RE.findall(body))
         stockpiled.update(_STOCKPILE_RE.findall(body))
     if not line:
         init = _INIT_RE.search(text)
-        line = _line_of(text, init.start()) if init else 0
+        line = line_of(text, init.start()) if init else 0
     return deployed, stockpiled, line
 
 

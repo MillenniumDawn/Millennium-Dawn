@@ -43,7 +43,7 @@ Output is color-coded. Pass `--no-color` for plain text (e.g. in log files).
 | **validate_factions.py**              | Faction template/goal/rule/icon references exist; no duplicate IDs; valid rule types                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | **validate_file_paths.py**            | Tracked paths that differ from a vanilla one only in case (Windows overrides it, Linux loads both — multiplayer checksum mismatch); case collisions inside the mod; names Windows cannot check out; source art shipped under a content root — `.psd`/`.xcf` the engine cannot load and `.png`/`.jpg`/`.jpeg` that load uncompressed and unmipmapped, convert with `tools/assets/md_art_convert.py` (WARNING; `.bmp` is exempt because `map/` requires it). Reads the git index, so it covers `map/` and `sound/` too                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | **validate_focus_tree.py**            | Duplicate focus IDs; orphan focuses; missing prerequisite targets; missing loc keys; dependency cycles; focus titles carrying a `§` color code, and focus descriptions coloured outside `§Y`/`§G`/`§R`. Opt-in: `--missing-icons` (focuses whose `icon` sprite is undefined). Bonus `name =` parameters moved to `validate_bonus_names.py`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| **validate_gfx_references.py**        | Sprite names in `.gui` and scripted-GUI files are defined in `interface/*.gfx`; English `£name` loc refs that match a sprite only case-insensitively (ERROR — no icon on Linux); one name defined twice, and names differing only in case (WARNING). Opt-in: `--report-unused` (sprites defined but never referenced). Sprites the engine builds from mod data are resolved into the reference set — focus search-filter icons, `GFX_EMI_<module>`, ace portraits, and anything a `[...]` scripted-loc/GUI template can produce — while equipment/tech icons and vanilla-name overrides are exempted outright. `MD_GFX_HIDE_UNUSED=1` drops just the orphan list from that run                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| **validate_gfx_references.py**        | Sprite names in `.gui` and scripted-GUI files are defined in `interface/*.gfx`; English `£name` loc refs that match a sprite only case-insensitively (ERROR — no icon on Linux); one name defined twice, and names differing only in case (WARNING). Raw texture paths in variant icon values and designer icon pools are ERROR. Opt-in: `--report-unused` (sprites defined but never referenced). Sprites the engine builds from mod data are resolved into the reference set — focus search-filter icons, `GFX_EMI_<module>`, ace portraits, and anything a `[...]` scripted-loc/GUI template can produce — while equipment/tech icons and vanilla-name overrides are exempted outright. `MD_GFX_HIDE_UNUSED=1` drops just the orphan list from that run                                                                                                                                                                                                                                                                                                                                         |
 | **validate_history.py**               | History files: technology dependencies, equipment variant modules, DLC-gated techs, OOB references, capital definitions                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
 | **validate_ideas.py**                 | Idea `allowed`/`visible` blocks reference defined ideas; no duplicate idea IDs; `GFX_idea_categories` has enough frames for the politics-view categories. Unused-ideas check is enabled by default (pass `--no-unused-ideas` to disable). The missing-icon audit runs by default as WARNING and flags three cases: the picture sprite is undefined, it differs only in case from one that is defined, or it resolves to placeholder art. Opt-in: `--missing-loc` (ideas without name/desc loc keys), `--suggest-consolidation` (advisory loc consolidation hints)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | **validate_localisation.py**          | Duplicate keys; unpaired brackets; color code mismatches; orphaned `_tt` tooltip keys; opinion modifiers without localisation (WARNING)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
@@ -224,7 +224,7 @@ All validators extend `BaseValidator` from `validator_common.py`. To add a new v
 5. Call `run_validator_main(YourValidator, "Description")` at the bottom
 6. `run_all_validators.py` auto-discovers it on the next run unless it is intentionally manual-only
 
-`validator_common.py` also provides `strip_comments()`, `FileOpener`, `DataCleaner`, `HOI4_BUILTIN_BLOCKS`, and `scan_meta_constructed_names()` for use in validators.
+`validator_common.py` also provides `strip_comments()`, `FileOpener`, `drop_partial_matches()`, `HOI4_BUILTIN_BLOCKS`, and `scan_meta_constructed_names()` for use in validators.
 
 Module-level constants and pool-worker functions (those passed to `_pool_map`) must be defined at the **top level** — not inside the validator class — so `multiprocessing.Pool` can pickle them. Classmethods on a validator subclass are not directly picklable; use standalone functions for pool dispatch.
 
@@ -323,6 +323,51 @@ registry. Deleted focus paths are retained; a deletion rechecks all trees.
 Staging no focus files runs no geometry scan. Per-file cached records are reused,
 but assembly and geometry are recomputed so changed imports cannot leave stale
 results. The separate scenario report remains useful for dynamic investigations.
+
+`focus-allow-branch-leak` (WARNING) covers the gap gated focuses leave. A focus
+whose own `allow_branch` is true shows even when an ancestor's `allow_branch`
+hid its branch, so it floats on top of the visible path (#5042). The check
+hides each gated focus, follows prerequisites (a focus hides once one of its
+`prerequisite` groups is fully hidden), and stops at the first descendant with
+its own `allow_branch`. That descendant must repeat every `key = value` leaf of
+the ancestor's `allow_branch`, in any structure. `NOT` is not distinguished from
+a plain condition. It stays a WARNING until the existing backlog is cleared.
+
+### Measured backlog for #5126
+
+At `f99f2055f069e41c6f51623c82d2fcc6a7f7338b`, 114 files contain 106 trees and
+32,684 assembled focus instances (a shared focus counts once in each host tree).
+The check resolves 32,655 instances, skips 9,814 resolved dynamic instances and
+checks 22,841 static instances. Gated instances number 8,373 and offset-dependent
+instances 8,996; these overlap and must not be added. There are no missing shared
+imports. The two unresolved root diagnostics account for 29 unresolved instances.
+
+The static backlog is **8 candidate pairs across 5 trees**:
+
+| Tree                            | Candidate pairs                                                                                                        |
+| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| San Marino                      | `SMA_healthy_people` / `SMA_vatican_union`                                                                             |
+| Czech Republic                  | `CZE_2000st_apc` / `CZE_2000st_ifv`; `CZE_2000st_utility_vehichles` / `CZE_2000st_tank_modernization`                  |
+| Generic                         | `GENERIC_eastern_emergence` / `GENERIC_non_aligned`; `GENERIC_the_rising_powers` / `GENERIC_the_conservative_approach` |
+| Ukrainian provisional republics | `DRP_dnieper_logistics` / `UKR_prp_emergency_economy`; `DRP_moscow_alignment` / `UKR_prp_utilities_repair`             |
+| USA                             | `USA_net_zero_green_house` / `USA_new_path_ways_for_greens`                                                            |
+
+Removing dynamic exclusions yields 543 raw pairs, not 543 established bugs. The
+eight static candidates have not been repositioned or exempted without in-game
+review. The Brazil pre-#5122 fixture reports its one-column pair; the corrected
+two-column spacing passes. Fractional coordinates account for four candidates
+missed by the earlier integer-only exploratory scan.
+
+Run `MD_LOG_LEVEL=INFO python tools/validation/validate_focus_tree.py --path .
+--workers 1 --no-color` on one line to print counts with findings. Existing
+unrelated validator errors can still make the complete validator exit nonzero.
+
+Three cold-cache and three warm-cache measurements on the same 114 files with
+Python 3.12.14 and one worker compared the existing parse/relative-position scans
+with those same scans plus geometry. Median times were 0.911s versus 2.658s cold,
+and 0.226s versus 0.471s warm. These measure this scan component, not the full
+validator or CI; they are not a speedup claim. Resolution avoids recursive depth
+limits, and sorted row buckets enumerate only pairs within the spacing window.
 
 ## Credits
 
