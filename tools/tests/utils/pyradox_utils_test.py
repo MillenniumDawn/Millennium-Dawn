@@ -1,3 +1,8 @@
+import pytest
+
+# pyradox ships in the optional analysis group; only the Linux CI leg installs it.
+pytest.importorskip("pyradox")
+
 from tools.types.equipment import Equipment, LandEquipmentStats
 from tools.types.mio import MIO, Trait
 from tools.utils.pyradox_utils import (

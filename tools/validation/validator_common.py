@@ -9,6 +9,7 @@ import re
 import sys
 import time
 from dataclasses import dataclass
+from itertools import chain
 from multiprocessing import cpu_count
 from multiprocessing.pool import Pool
 from pathlib import Path
@@ -19,17 +20,20 @@ import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from shared_utils import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     Colors,
-    DataCleaner,
     FileOpener,
     atomic_write_text,
     clean_filepath,
     compute_line_offsets,
     cpu_budget,
     create_validation_parser,
+    drop_partial_matches,
     extract_block_from_text,
     find_line_number,
+    find_unquoted_block_end,
+    find_unquoted_brace_close,
     get_staged_files,
     line_for_offset,
+    line_of,
     log_message,
     normalize_path_separators,
     print_timing_summary,
@@ -41,6 +45,8 @@ from shared_utils import (
 
 # Generic type for the cross-pass result cache accessor (see BaseValidator.cached).
 T = TypeVar("T")
+
+_ANSI_RE = re.compile(r"\033\[[0-9;]+m")
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
@@ -359,20 +365,6 @@ KNOWN_VANILLA_LOC_KEYS = frozenset(
 _BLOCK_RE = re.compile(r"([A-Za-z_0-9@][A-Za-z0-9_.@]*(?::[A-Za-z0-9_]+)?)\s*=\s*\{")
 
 
-def _match_brace(text: str, open_pos: int) -> int:
-    """Return the index of the `}` closing the `{` at ``open_pos``, or -1."""
-    depth = 0
-    for i in range(open_pos, len(text)):
-        char = text[i]
-        if char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
-                return i
-    return -1
-
-
 def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, int]]:
     """Direct child blocks of a body as (name, name_start, body_start, body_end)."""
     blocks = []
@@ -381,7 +373,7 @@ def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, 
         match = _BLOCK_RE.search(text, i, end)
         if not match:
             break
-        close = _match_brace(text, match.end() - 1)
+        close = find_unquoted_brace_close(text, match.end() - 1)
         if close < 0 or close > end:
             break
         blocks.append((match.group(1), match.start(), match.end(), close))
@@ -731,9 +723,8 @@ class BaseValidator:
         elif level == "warning" and _LOG_LEVEL == "ERROR":
             return
 
-        display_msg = (
-            message if self.use_colors else re.sub(r"\033\[[0-9;]+m", "", message)
-        )
+        plain = _ANSI_RE.sub("", message)
+        display_msg = message if self.use_colors else plain
         if level == "always":
             # Bypass the logging threshold entirely; the root logger defaults to
             # WARNING, so logging.info would drop these. Same stream as logging.
@@ -744,8 +735,7 @@ class BaseValidator:
             logging.warning(display_msg)
         elif level == "error":
             logging.error(display_msg)
-        file_msg = re.sub(r"\033\[[0-9;]+m", "", message)
-        self.output_lines.append(file_msg)
+        self.output_lines.append(plain)
 
     def _log_section(self, title: str):
         """Emit the section header and start timing this section.
@@ -762,7 +752,7 @@ class BaseValidator:
         # progress is only useful when profiling, so show a one-line marker then.
         if self._show_timing:
             self.log(
-                f"{Colors.CYAN if self.use_colors else ''}── {title}{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.CYAN}── {title}{Colors.ENDC}",
                 "always",
             )
 
@@ -803,9 +793,7 @@ class BaseValidator:
                 items = sorted(by_cat[cat], key=lambda i: (i.file or "", i.line))
                 n = len(items)
                 head = f"{cat}  ({n} {noun}{'s' if n != 1 else ''})"
-                c0 = sev_color if self.use_colors else ""
-                c1 = Colors.ENDC if self.use_colors else ""
-                self.log(f"\n{c0}{head}{c1}", "always")
+                self.log(f"\n{sev_color}{head}{Colors.ENDC}", "always")
                 shown = items[: self.MAX_RENDERED_PER_CATEGORY]
                 for issue in shown:
                     # "  file:line - message" matches report_lib's text-fallback
@@ -921,9 +909,7 @@ class BaseValidator:
         are progress noise at the default verbosity.
         """
         if not results:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}{ok_msg}{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}{ok_msg}{Colors.ENDC}")
             return
         group_label = category or _label_from_failmsg(fail_msg)
         for r in results:
@@ -1047,6 +1033,14 @@ class BaseValidator:
         if pool is None:
             return [func(a) for a in args_list]
         return pool.map(func, args_list, chunksize=chunksize)
+
+    def _pool_flat_map(
+        self, func: Callable, args_list: List, chunksize: int = 50
+    ) -> List:
+        """_pool_map for workers that each return a collection: every item, flat."""
+        return list(
+            chain.from_iterable(self._pool_map(func, args_list, chunksize=chunksize))
+        )
 
     def _pool_map_init(
         self,
@@ -1209,7 +1203,7 @@ class BaseValidator:
     def run_all_validations(self):
         self.log(f"\n{'#' * 80}", "always")
         self.log(
-            f"{Colors.BOLD if self.use_colors else ''}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC if self.use_colors else ''}",
+            f"{Colors.BOLD}MILLENNIUM DAWN {self.TITLE}{Colors.ENDC}",
             "always",
         )
         self.log(f"{'#' * 80}", "always")
@@ -1217,7 +1211,7 @@ class BaseValidator:
         self.log(f"Worker processes: {self.workers}", "always")
         if self.staged_only:
             self.log(
-                f"{Colors.CYAN if self.use_colors else ''}Mode: Git staged files only{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.CYAN}Mode: Git staged files only{Colors.ENDC}",
                 "always",
             )
         if self.output_file:
@@ -1237,7 +1231,7 @@ class BaseValidator:
         self.log(f"\n{'#' * 80}", "always")
         if self.errors_found == 0 and self.warnings_found == 0:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.GREEN}✓ VALIDATION COMPLETE - NO ISSUES FOUND{Colors.ENDC}",
                 "always",
             )
         else:
@@ -1252,7 +1246,7 @@ class BaseValidator:
             if n_files:
                 error_msg += f" in {n_files} file{'s' if n_files != 1 else ''}"
             self.log(
-                f"{Colors.RED if self.use_colors else ''}{error_msg}{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.RED}{error_msg}{Colors.ENDC}",
                 "always",
             )
         self.log(f"{'#' * 80}\n", "always")

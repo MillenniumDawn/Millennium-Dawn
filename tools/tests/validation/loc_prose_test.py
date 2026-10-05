@@ -4,13 +4,13 @@ Flags em dashes (U+2014), backtick-as-apostrophe, and an odd count of \\" quotes
 inside loc VALUES only -- keys and comments are never scanned.
 """
 
-from validate_localisation import process_yml_for_prose
+from shared.suite import yml_scan
 
 
 def _hits(tmp_path, body):
     path = tmp_path / "a_l_english.yml"
     path.write_text(body, encoding="utf-8-sig")
-    return process_yml_for_prose((str(path),))
+    return yml_scan(path, "prose")
 
 
 def test_flags_em_dash_in_value(tmp_path):

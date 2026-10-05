@@ -1665,7 +1665,7 @@ class Validator(BaseValidator):
         fixed_total = self._apply_decision_file_fixes(fixes, patch)
 
         self.log(
-            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.GREEN}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC}"
         )
         if fixed_total:
             _invalidate_decision_cache()
@@ -1720,9 +1720,7 @@ class Validator(BaseValidator):
         }
 
         if not cats_to_validate:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No empty decision categories{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No empty decision categories{Colors.ENDC}")
             return
 
         bop_path = str(Path(self.mod_path) / "common" / "bop")
@@ -1739,7 +1737,7 @@ class Validator(BaseValidator):
 
         if not found_files:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}No BOP files found, skipping BOP check{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}No BOP files found, skipping BOP check{Colors.ENDC}",
                 "warning",
             )
 
@@ -2443,7 +2441,7 @@ class Validator(BaseValidator):
         )
 
         self.log(
-            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.GREEN}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC}"
         )
         if fixed_total:
             _invalidate_decision_cache()
@@ -2732,7 +2730,7 @@ class Validator(BaseValidator):
     def validate_missing_log(self):
         """Flag decision effect blocks that carry no log line.
 
-        AGENTS.md / decision-reference.md require the log in every block the
+        decision-reference.md requires the log in every block the
         engine runs as a decision's effects (complete_effect, remove_effect,
         timeout_effect, cancel_effect):
         `log = "[GetDateText]: [Root.GetName]: Decision <ID>"`. An effect block

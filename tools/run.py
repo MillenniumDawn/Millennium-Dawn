@@ -41,7 +41,6 @@ HIDDEN = {
     "loc",
     "logging_tool",
     "run",
-    "validate_staged",
     "standardize_staged",
     "common_utils",
     "validator_common",
