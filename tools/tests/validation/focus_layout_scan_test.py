@@ -100,6 +100,22 @@ def test_dynamic_markers_and_prerequisites_survive_cached_scan(tmp_path):
     assert value.layout_counts["overlap_pairs"] == 0
 
 
+def test_nested_allow_branch_terms_feed_the_branch_leak_check(tmp_path):
+    gate = "if = { limit = { has_game_rule = { option = HIDE } } NOT = { has_completed_focus = rival } }"
+    path = write_focus(
+        tmp_path,
+        "focus_tree = { id = leak "
+        f"focus = {{ id = gate x = 0 y = 0 allow_branch = {{ {gate} }} }} "
+        "focus = { id = middle x = 0 y = 1 prerequisite = { focus = gate } } "
+        "focus = { id = child x = 0 y = 2 allow_branch = { has_game_rule = { option = no } } "
+        "prerequisite = { focus = middle } } }",
+    )
+    focuses = V._FocusFile(path, str(tmp_path)).layout()["trees"][0]["focuses"]
+    assert focuses[0]["branch_terms"] == ["has_completed_focus=rival", "option=HIDE"]
+    assert focuses[1]["branch_terms"] == []
+    assert validator(tmp_path).layout_counts["branch_leaks"] == 1
+
+
 @pytest.mark.parametrize(
     "coordinates", ["y = 0", "x = invalid y = 0", "x = @column y = 0", "x = {} y = 0"]
 )

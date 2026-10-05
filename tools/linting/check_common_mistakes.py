@@ -83,7 +83,6 @@ Detects mechanically-checkable rule violations from CLAUDE.md:
     scripted call missing "= yes" that the parser rejects
 """
 
-import json
 import os
 import re
 import sys
@@ -200,7 +199,6 @@ _RE_CATEGORY = re.compile(r"^(\w+)\s*=\s*\{")
 _RE_AVAILABLE_ALWAYS_NO = re.compile(r"\bavailable\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_VISIBLE_ALWAYS_NO = re.compile(r"\bvisible\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_BYPASS_OPEN = re.compile(r"\bbypass\s*=\s*\{")
-_RE_BYPASS_TRIVIAL = re.compile(r"\bbypass\s*=\s*\{\s*always\s*=\s*(?:yes|no)\s*\}")
 _RE_DECISION_MARKER = re.compile(
     r"\bcomplete_effect\s*=\s*\{|\bfire_only_once\s*=|\bactivation\s*=\s*\{|\bdays_mission_timeout\s*="
 )
@@ -491,6 +489,7 @@ from shared_utils import (
     clean_filepath,
     collect_files_by_mode,
     create_linting_parser,
+    find_unquoted_brace_close,
     get_non_selectable_idea_categories,
     get_root_dir,
     print_timing_summary,
@@ -2505,12 +2504,8 @@ def _find_brace_close(text, open_pos):
     awareness. Returns `len(text)` if the braces never balance. Shared by
     the whole-file brace scans below.
     """
-    depth = 0
-    for brace in _RE_BRACE.finditer(text, open_pos):
-        depth += 1 if brace.group() == "{" else -1
-        if not depth:
-            return brace.start()
-    return len(text)
+    close = find_unquoted_brace_close(text, open_pos)
+    return len(text) if close == -1 else close
 
 
 def _check_invalid_is_at_war(lines):
@@ -4264,45 +4259,8 @@ def check_file(filepath):
     return [(filepath, ln, msg) for ln, msg in issues]
 
 
-_JSON_CATEGORY = "common-mistakes"
-
-
-def _add_output_arg(parser):
-    parser.add_argument(
-        "--output",
-        "-o",
-        help="Write the findings to this log file and a matching .json sidecar",
-    )
-
-
-def _write_report(output_path, lines, issues):
-    """Mirror BaseValidator: a text log plus a `<stem>.json` issue sidecar.
-
-    newline="" keeps Windows from turning the log into CRLF.
-    """
-    with open(output_path, "w", encoding="utf-8", newline="") as handle:
-        handle.write("\n".join(lines) + "\n")
-
-    payload = [
-        {
-            "severity": "error",
-            "category": _JSON_CATEGORY,
-            "message": message,
-            "file": clean_filepath(filepath).replace(os.sep, "/"),
-            "line": line_num,
-            "validator": _JSON_CATEGORY,
-        }
-        for filepath, line_num, message in issues
-    ]
-    sidecar = os.path.splitext(output_path)[0] + ".json"
-    with open(sidecar, "w", encoding="utf-8", newline="") as handle:
-        json.dump(payload, handle, indent=2)
-
-
 def main():
-    parser = create_linting_parser(
-        "Check for common HOI4 scripting mistakes", extra_args_fn=_add_output_arg
-    )
+    parser = create_linting_parser("Check for common HOI4 scripting mistakes")
     args = parser.parse_args()
 
     timings = []
@@ -4314,16 +4272,6 @@ def main():
 
     if not files_list:
         print("No files to check")
-        if args.output:
-            _write_report(
-                args.output,
-                [
-                    "COMMON MISTAKES CHECK",
-                    "",
-                    "✓ VALIDATION COMPLETE - 0 ERROR(S) - 0 WARNING(S)",
-                ],
-                [],
-            )
         return 0
 
     # The available=always-no and is_X_nation checks need completion refs and
@@ -4370,21 +4318,6 @@ def main():
         print(f"{clean_filepath(filepath)}:{line_num}: {message}")
     # Summary after processing all issues
     print(f"------\nChecked {len(files_list)} files")
-
-    if args.output:
-        # "  file:line - message" plus the VALIDATION COMPLETE tokens match what
-        # tools/report_lib/loader.py parses when a JSON sidecar is unavailable.
-        report_lines = ["COMMON MISTAKES CHECK", ""]
-        report_lines += [
-            f"  {clean_filepath(filepath).replace(os.sep, '/')}:{line_num} - {message}"
-            for filepath, line_num, message in sorted_issues
-        ]
-        marker = "✗" if sorted_issues else "✓"
-        report_lines += [
-            "",
-            f"{marker} VALIDATION COMPLETE - {len(sorted_issues)} ERROR(S) - 0 WARNING(S)",
-        ]
-        _write_report(args.output, report_lines, sorted_issues)
 
     if all_issues:
         print(f"Found {len(all_issues)} issue(s)")

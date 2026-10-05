@@ -21,6 +21,7 @@ import sys
 import pytest
 import validate_scripted_params as vsp
 from shared.suite import initialize_git_repository, run_git
+from shared.suite import write_text as _write
 from shared_utils import collapse_or_compact
 from validate_scripted_params import _validate_call_sites_in_file
 
@@ -59,12 +60,6 @@ _TEST_VALID_TAGS = frozenset(
         "NTR",  # alias
     }
 )
-
-
-def _write(path, content):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as file:
-        file.write(content)
 
 
 def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
