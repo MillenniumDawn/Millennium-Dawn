@@ -298,6 +298,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `mio-production-bonus-naval` (ERROR): everything the trait reaches is naval.
   `mio-production-bonus-partial-naval` (WARNING): mixed scope, a coverage note.
   `policies/` is out of scope because `same_as_mio` is not statically resolvable.
+- `mio-design-team-type-uncovered` (WARNING): a `create_equipment_variant` names
+  `design_team = mio:<org>` whose `equipment_type` does not cover the variant's
+  archetype after `mio_cat_*` expansion, so the engine ignores the designer. A type
+  the equipment index cannot resolve (a vanilla designer airframe) is skipped. A
+  staged org edit does not rescan unstaged references; the full CI run does.
 - A staged change in `policies/`, `common/country_leader/`, `common/units/equipment/`,
   `common/equipment_groups/`, or English loc rescans every org.
 
@@ -335,6 +340,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `missing-template-ensure` (WARNING): a `create_unit` naming a template that
   `delete_unit_template_and_units` removes anywhere needs the template created earlier
   or a `has_template` guard. A scripted effect that creates or guards it also counts.
+- `airborne-template-not-parachutable` (WARNING): a `division_template` whose name
+  matches para, airborne, VDV, or desant lists a sub-unit without
+  `can_be_parachuted = yes`, which stops the whole division from paradropping.
+  Deliberate air-assault templates are listed in `air_assault_templates` in the
+  config as `<file>:<template name>`. Staged mode checks only staged template files, so a `common/units/`
+  flag change surfaces on the full CI run.
 - New source directories: `config_drift_test.py` derives the routes from the
   `_*_SOURCE_PATTERNS` lists and fails until every route is updated.
 
