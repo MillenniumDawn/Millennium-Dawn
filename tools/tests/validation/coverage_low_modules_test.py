@@ -40,7 +40,7 @@ def _categories(validator):
 
 def test_agency_helpers_cover_calls_and_unreadable_inputs(tmp_path):
     assert agency._read(tmp_path / "missing.txt") == ""
-    assert agency._line_of("a\nb\n", 2) == 2
+    assert agency.line_of("a\nb\n", 2) == 2
     assert agency.Validator._short_token("MD_auto_agency_12_upgrade_x") == "upgrade_x"
     assert (
         agency.Validator._short_token("MD_auto_agency_12_upgrade_x_name") == "upgrade_x"

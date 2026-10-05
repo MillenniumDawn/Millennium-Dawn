@@ -9,7 +9,12 @@ from collections import defaultdict
 from typing import DefaultDict, Dict, List, Optional, Set, Tuple, TypedDict
 
 import disk_cache
-from validator_common import BaseValidator, run_validator_main, strip_comments
+from validator_common import (
+    BaseValidator,
+    find_unquoted_block_end,
+    run_validator_main,
+    strip_comments,
+)
 
 # --- Module-level compiled patterns ---
 # Hoisted from per-line/per-file loops in the tech-graph and history-file
@@ -903,16 +908,7 @@ def _expand_dlc_configs(
 def _match_brace_end(text: str, pos: int) -> int:
     """Given pos pointing just past an opening `{`, return the index just past
     its matching `}`. Returns len(text) if the braces never balance."""
-    depth = 1
-    j = pos
-    while j < len(text) and depth > 0:
-        ch = text[j]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-        j += 1
-    return j
+    return find_unquoted_block_end(text, pos)[0]
 
 
 def _find_dlc_if_blocks(content: str) -> List[Tuple[int, int, str]]:

@@ -23,6 +23,7 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    find_unquoted_brace_close,
     has_flat_is_ai,
     is_ai_only_block,
     iter_direct_child_blocks,
@@ -30,6 +31,7 @@ from shared_utils import (
     read_text_under,
     strip_comments,
     validation_config,
+    word_start_re,
 )
 
 # Focus block/reward walking is owned by the focus-tree validator — reuse it
@@ -48,25 +50,14 @@ from validator_common import (
     should_skip_file,
 )
 
-
-def _word_start_re(literal: str, rest: str) -> re.Pattern[str]:
-    """Compile `\\b<literal><rest>` with the literal first.
-
-    A leading `\\b` makes the engine try the pattern at every offset. Led by
-    the literal it skips between occurrences, and the lookbehind checks the
-    same word boundary.
-    """
-    return re.compile(literal + r"(?<=\b" + literal + ")" + rest)
-
-
 # Compiled at module load (once per worker process) instead of once per file scanned.
-_FLAG_BLOCK_RE = _word_start_re(
+_FLAG_BLOCK_RE = word_start_re(
     "set_",
     r"(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{[^}]*\}",
 )
 _FLAG_DAYS_RE = re.compile(r"\bdays\s*=\s*[^\s}]+")
 _FLAG_VALUE_RE = re.compile(r"\bvalue\s*=\s*[^\s}]+")
-_FLAG_LONG_FORM_RE = _word_start_re(
+_FLAG_LONG_FORM_RE = word_start_re(
     "set_",
     r"(country|global|state|character|mio|project|unit_leader)_flag\s*=\s*\{\s*flag\s*=\s*([^\s{}]+)\s*\}",
 )
@@ -613,7 +604,7 @@ _SET_PERSISTENT_VAR_RE = re.compile(
 )
 
 
-_UNTOOLTIPPED_TRIGGER_RE = _word_start_re("check_variable", r"\s*=\s*\{")
+_UNTOOLTIPPED_TRIGGER_RE = word_start_re("check_variable", r"\s*=\s*\{")
 _TOOLTIP_WRAPPER_TOKENS = frozenset(
     {"custom_trigger_tooltip", "hidden_trigger", "custom_override_tooltip"}
 )
@@ -654,11 +645,11 @@ _PLAYER_FACING_GLOBS = [
 # Shorthand and long form, both flag types: `has_country_flag = X` /
 # `has_global_flag = { flag = X value > 0 }`. Group 1 is the flag kind
 # ("country"|"global"), group 2 the flag name.
-_AVAILABLE_FLAG_RE = _word_start_re(
+_AVAILABLE_FLAG_RE = word_start_re(
     "has_",
     r"(country|global)_flag\s*=\s*(?:\{\s*flag\s*=\s*)?([A-Za-z_][A-Za-z0-9_.@]*)",
 )
-_TRIGGER_TOOLTIP_OPEN_RE = _word_start_re(
+_TRIGGER_TOOLTIP_OPEN_RE = word_start_re(
     "custom_", r"(?:trigger|override)_tooltip\s*=\s*\{"
 )
 _TRIGGER_TOOLTIP_KEY_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_.]*")
@@ -679,7 +670,7 @@ _TOOLTIP_KEY_RE = re.compile(r"\btooltip\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)")
 # `{ var = my_var value = 5 }`.
 _VAR_TARGET_RE = re.compile(r"\{\s*(?:var\s*=\s*)?([A-Za-z_][A-Za-z0-9_.:^]*)")
 
-_RE_HIDDEN_EFFECT = _word_start_re("hidden_effect", r"\s*=\s*\{")
+_RE_HIDDEN_EFFECT = word_start_re("hidden_effect", r"\s*=\s*\{")
 # Block kinds the engine renders as a player-facing effect tooltip. cancel_effect
 # is absent on purpose: it fires on cancellation, not on a player action.
 _TOOLTIP_EFFECT_BLOCKS = (
@@ -698,16 +689,16 @@ _RE_TOOLTIP_EFFECT_BLOCK = re.compile(
 # A flag whose only writer is one focus completion_reward and whose only readers
 # are has_country_flag duplicates state the engine already tracks, so
 # has_completed_focus replaces it. See .claude/docs/performance-patterns.md.
-_SET_CFLAG_SHORT_RE = _word_start_re("set_country_flag", r"\s*=\s*([^\s{}=]+)")
-_SET_CFLAG_LONG_RE = _word_start_re("set_country_flag", r"\s*=\s*\{([^{}]*)\}")
-_HAS_CFLAG_SHORT_RE = _word_start_re("has_country_flag", r"\s*=\s*([^\s{}=]+)")
-_HAS_CFLAG_LONG_RE = _word_start_re("has_country_flag", r"\s*=\s*\{([^{}]*)\}")
-_CLR_CFLAG_RE = _word_start_re("clr_country_flag", r"\s*=\s*([^\s{}=]+)")
-_MODIFY_CFLAG_RE = _word_start_re("modify_country_flag", r"\s*=\s*\{([^{}]*)\}")
+_SET_CFLAG_SHORT_RE = word_start_re("set_country_flag", r"\s*=\s*([^\s{}=]+)")
+_SET_CFLAG_LONG_RE = word_start_re("set_country_flag", r"\s*=\s*\{([^{}]*)\}")
+_HAS_CFLAG_SHORT_RE = word_start_re("has_country_flag", r"\s*=\s*([^\s{}=]+)")
+_HAS_CFLAG_LONG_RE = word_start_re("has_country_flag", r"\s*=\s*\{([^{}]*)\}")
+_CLR_CFLAG_RE = word_start_re("clr_country_flag", r"\s*=\s*([^\s{}=]+)")
+_MODIFY_CFLAG_RE = word_start_re("modify_country_flag", r"\s*=\s*\{([^{}]*)\}")
 _CFLAG_INNER_FLAG_RE = re.compile(r"\bflag\s*=\s*([^\s{}=]+)")
-_BYPASS_BLOCK_RE = _word_start_re("bypass", r"\s*=\s*\{")
+_BYPASS_BLOCK_RE = word_start_re("bypass", r"\s*=\s*\{")
 _JOINT_REWARD_RE = re.compile(r"\bcompletion_reward_joint_(?:originator|member)\b")
-_LOAD_FOCUS_TREE_RE = _word_start_re("load_focus_tree", r"\s*=\s*(?:\{([^{}]*)\}|\S+)")
+_LOAD_FOCUS_TREE_RE = word_start_re("load_focus_tree", r"\s*=\s*(?:\{([^{}]*)\}|\S+)")
 _KEEP_COMPLETED_RE = re.compile(r"\bkeep_completed\s*=\s*yes\b")
 # Blocks that make an enclosed effect conditional. A flag set under one of these
 # is not implied by focus completion, so has_completed_focus is not equivalent.
@@ -726,20 +717,10 @@ _DM_NON_MODIFIER_KEYS = frozenset(
 _DM_NON_VARIABLE_VALUES = frozenset({"yes", "no", "x"})
 
 
-_BRACE_RE = re.compile(r"[{}]")
-
-
 def _matching_brace(text: str, open_idx: int) -> int:
     """Index of the `}` closing the `{` at ``open_idx``, or ``len(text)`` if unbalanced."""
-    depth = 0
-    for m in _BRACE_RE.finditer(text, open_idx):
-        if m.group() == "{":
-            depth += 1
-        else:
-            depth -= 1
-            if depth == 0:
-                return m.start()
-    return len(text)
+    close = find_unquoted_brace_close(text, open_idx)
+    return len(text) if close == -1 else close
 
 
 def _brace_spans(text: str, pattern) -> List[Tuple[int, int]]:

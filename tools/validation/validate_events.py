@@ -20,6 +20,7 @@ from image_size import read_image_size
 from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
+    find_unquoted_brace_close,
     get_staged_files,
     strip_comments,
     strip_inline_comment,
@@ -371,19 +372,6 @@ _MISSING_EVENT_CALL_EQUALS_RE = re.compile(
 )
 
 
-def _matching_brace(text: str, open_pos: int) -> int:
-    depth = 0
-    pos = open_pos
-    while True:
-        close = text.find("}", pos)
-        if close == -1:
-            return -1
-        depth += text.count("{", pos, close) - 1
-        if depth == 0:
-            return close
-        pos = close + 1
-
-
 _ID_OR_BRACE_RE = re.compile(r"[{}]|\bid\s*=\s*([A-Za-z_][\w.]*)")
 
 
@@ -416,7 +404,7 @@ def _iter_typed_event_bodies(cleaned: str, *, require_id: bool = True):
     """
     for m in _keyword_matches(_EVENT_BLOCK_OPEN_RE, cleaned):
         ob = cleaned.index("{", m.end() - 1)
-        end = _matching_brace(cleaned, ob)
+        end = find_unquoted_brace_close(cleaned, ob)
         if end == -1:
             continue
         body = cleaned[ob + 1 : end]
@@ -609,7 +597,7 @@ def _event_trigger_body(body: str) -> Optional[str]:
         if depth != 0:
             continue
         ob = body.index("{", m.end() - 1)
-        end = _matching_brace(body, ob)
+        end = find_unquoted_brace_close(body, ob)
         return None if end == -1 else body[ob + 1 : end]
     return None
 
@@ -1243,7 +1231,7 @@ def _effect_costs(
         if m is None:
             return costs
         pos = m.end()
-        end = _matching_brace(text, pos - 1) if m["branch"] else -1
+        end = find_unquoted_brace_close(text, pos - 1) if m["branch"] else -1
         if end != -1:
             if m["branch"] == "if":
                 before_if = dict(known)
@@ -1300,7 +1288,7 @@ def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
         pos = 0
         while True:
             m = _SCRIPTED_EFFECT_DEF_RE.search(code, pos)
-            end = _matching_brace(code, m.end() - 1) if m else -1
+            end = find_unquoted_brace_close(code, m.end() - 1) if m else -1
             if m is None or end == -1:
                 break
             bodies[m.group(1)] = _split_option(code[m.end() : end])[0]
@@ -1370,7 +1358,7 @@ def find_cost_blind_options(
     for _eid, body, start in _iter_event_bodies(code):
         base = code.index("{", start) + 1
         options = [
-            (match.end(), _matching_brace(body, match.end() - 1))
+            (match.end(), find_unquoted_brace_close(body, match.end() - 1))
             for match in _OPTION_OPEN_RE.finditer(body)
         ]
         if len(options) < 2:

@@ -25,7 +25,7 @@ from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-from shared_utils import strip_inline_comment, validation_config
+from shared_utils import blank_quoted_strings, strip_inline_comment, validation_config
 from validator_common import BaseValidator, Severity, run_validator_main
 
 _SCAN_PATTERNS = [
@@ -82,20 +82,6 @@ def _is_escaped(text: str, index: int) -> bool:
         backslashes += 1
         index -= 1
     return backslashes % 2 == 1
-
-
-def _code_outside_strings(code: str) -> str:
-    output = []
-    in_string = False
-    for index, char in enumerate(code):
-        if char == '"' and not _is_escaped(code, index):
-            in_string = not in_string
-            output.append('"')
-        elif in_string:
-            output.append(" ")
-        else:
-            output.append(char)
-    return "".join(output)
 
 
 def _quote_count(code: str) -> int:
@@ -217,7 +203,7 @@ def line_spacing_warnings(line: str) -> List[str]:
     """Return spacing and quote warnings for one line."""
     warnings: List[str] = []
     code, _comment = split_code_and_comment(line)
-    code_only = _code_outside_strings(code)
+    code_only = blank_quoted_strings(code)
     spacing_line = re.sub(r"\{\s*\}", "", code_only)
 
     if "{" in code_only:
@@ -267,7 +253,7 @@ def _check_spacing_and_quotes(text: str, path: str):
 
         warnings.extend((message, line_num) for message in line_spacing_warnings(line))
 
-        code_only = _code_outside_strings(code)
+        code_only = blank_quoted_strings(code)
         brace_depth += code_only.count("{")
         brace_depth -= code_only.count("}")
 

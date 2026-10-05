@@ -684,7 +684,7 @@ def test_source_line_matches_a_count_from_the_start(text):
     + ["éset_x = g", "set_xset_x = h", ""],
 )
 def test_literal_first_pattern_keeps_the_leading_word_boundary(text):
-    fast = V._word_start_re("set_x", r"\s*=\s*(\w+)")
+    fast = V.word_start_re("set_x", r"\s*=\s*(\w+)")
     plain = re.compile(r"\bset_x\s*=\s*(\w+)")
 
     assert [(m.span(), m.groups()) for m in fast.finditer(text)] == [

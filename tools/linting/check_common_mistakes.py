@@ -490,6 +490,7 @@ from shared_utils import (
     clean_filepath,
     collect_files_by_mode,
     create_linting_parser,
+    find_unquoted_brace_close,
     get_non_selectable_idea_categories,
     get_root_dir,
     print_timing_summary,
@@ -2504,12 +2505,8 @@ def _find_brace_close(text, open_pos):
     awareness. Returns `len(text)` if the braces never balance. Shared by
     the whole-file brace scans below.
     """
-    depth = 0
-    for brace in _RE_BRACE.finditer(text, open_pos):
-        depth += 1 if brace.group() == "{" else -1
-        if not depth:
-            return brace.start()
-    return len(text)
+    close = find_unquoted_brace_close(text, open_pos)
+    return len(text) if close == -1 else close
 
 
 def _check_invalid_is_at_war(lines):

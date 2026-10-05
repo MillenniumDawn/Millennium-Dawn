@@ -336,15 +336,33 @@ def find_unquoted_block_end(text: str, start: int) -> Tuple[int, bool]:
     hide a brace inside a ``"..."`` span.
     """
     depth = 1
-    i = start
-    n = len(text)
-    while i < n and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return i, depth == 0
+    pos = start
+    # Depth only falls at a `}`, so hop between them and count the `{` skipped.
+    while True:
+        close = text.find("}", pos)
+        if close == -1:
+            return len(text), False
+        depth += text.count("{", pos, close) - 1
+        if not depth:
+            return close + 1, True
+        pos = close + 1
+
+
+def find_unquoted_brace_close(text: str, open_idx: int) -> int:
+    """Index of the ``}`` closing the ``{`` at *open_idx*, or -1 if unbalanced.
+
+    Like :func:`find_unquoted_block_end`, braces inside quotes still count.
+    """
+    depth = 0
+    pos = open_idx
+    while True:
+        close = text.find("}", pos)
+        if close == -1:
+            return -1
+        depth += text.count("{", pos, close) - 1
+        if not depth:
+            return close
+        pos = close + 1
 
 
 def compact_block(block_lines: List[str]) -> List[str]:
@@ -1290,6 +1308,36 @@ def iter_statements(body: str) -> Iterator[Tuple[str, Optional[str], Optional[st
 
 def line_of(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
+
+
+def word_start_re(literal: str, rest: str) -> "re.Pattern[str]":
+    """Compile `\\b<literal><rest>` with the literal first.
+
+    A leading `\\b` makes the engine try the pattern at every offset. Led by
+    the literal it skips between occurrences, and the lookbehind checks the
+    same word boundary.
+    """
+    return re.compile(literal + r"(?<=\b" + literal + ")" + rest)
+
+
+def label_before_brace(body: str, brace_idx: int) -> Optional[str]:
+    """Return the `key` of a `key = {` opener whose `{` is at *brace_idx*.
+
+    Returns None for an anonymous block (no `=` before the brace), e.g. a
+    color/array literal.
+    """
+    j = brace_idx - 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    if j < 0 or body[j] != "=":
+        return None
+    j -= 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    end = j + 1
+    while j >= 0 and (body[j].isalnum() or body[j] in "_:.@"):
+        j -= 1
+    return body[j + 1 : end] or None
 
 
 def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:

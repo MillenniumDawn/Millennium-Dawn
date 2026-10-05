@@ -33,6 +33,7 @@ from equipment_module_slots import (
 )
 from shared_utils import (
     get_staged_files,
+    label_before_brace,
     normalize_path_separators,
     read_text_under,
     validation_config,
@@ -978,21 +979,6 @@ class _CreateUnitChecks:
         )
 
 
-def _label_before_brace(text: str, brace_idx: int) -> Optional[str]:
-    j = brace_idx - 1
-    while j >= 0 and text[j] in " \t\r\n":
-        j -= 1
-    if j < 0 or text[j] != "=":
-        return None
-    j -= 1
-    while j >= 0 and text[j] in " \t\r\n":
-        j -= 1
-    end = j + 1
-    while j >= 0 and (text[j].isalnum() or text[j] in "_:.@"):
-        j -= 1
-    return text[j + 1 : end] or None
-
-
 def _matching_braces(text: str) -> Dict[int, int]:
     stack = []
     pairs = {}
@@ -1027,7 +1013,7 @@ def _build_block_nodes(text: str) -> List[Dict]:
         line += text.count("\n", counted_to, op)
         counted_to = op
         node: Dict[str, Any] = {
-            "label": _label_before_brace(text, op),
+            "label": label_before_brace(text, op),
             "start": op,
             "end": pairs[op],
             "line": line,
@@ -1785,7 +1771,7 @@ def _effect_template_closure(
             if start < top_end:
                 continue
             top_end = pairs[start]
-            label = _label_before_brace(content, start)
+            label = label_before_brace(content, start)
             if not label:
                 continue
             body = content[start:top_end]
