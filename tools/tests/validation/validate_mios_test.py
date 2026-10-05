@@ -288,8 +288,8 @@ def test_full_run_on_fixture_dir(tmp_path):
     assert "org-id-format" not in by_cat
     assert by_cat["org-allowed-tag"].severity == "error"
     assert by_cat["on-complete-empty"].severity == "error"
-    assert by_cat["trait-x-bounds"].severity == "warning"
-    assert by_cat["initial-trait-name"].severity == "warning"
+    assert by_cat["trait-x-bounds"].severity == "error"
+    assert by_cat["initial-trait-name"].severity == "error"
     assert by_cat["trait-loc-missing"].severity == "error"
 
 
@@ -1055,6 +1055,128 @@ def test_full_run_covers_orgs_policies_and_references(tmp_path, write_path):
     }
 
 
+_COVERAGE_EQUIPMENT = """
+equipments = {
+\tsmall_plane_airframe = { is_archetype = yes }
+\tsmall_plane_airframe_1 = { archetype = small_plane_airframe }
+\tmedium_plane_airframe = {
+\t\tis_archetype = yes
+\t\ttype = { test_fighter }
+\t}
+\tmedium_plane_airframe_1 = { archetype = medium_plane_airframe }
+}
+duplicate_archetypes = {
+\tsmall_plane_cas_airframe = { archetype = small_plane_airframe }
+}
+"""
+
+_COVERAGE_GROUPS = """
+mio_cat_test_medium = {
+\tequipment_type = {
+\t\tmedium_plane_airframe
+\t}
+}
+"""
+
+_COVERAGE_FILE = "history/countries/TST - Test.txt"
+
+
+def _coverage_issues(tmp_path, write_path, org_types, variant):
+    """Issues for one variant written against a TST_org listing *org_types*."""
+    write_path(
+        tmp_path,
+        f"{V.ORG_DIR}/MD_TST_organizations.txt",
+        f"TST_org = {{\n\tequipment_type = {{ {org_types} }}\n}}\n",
+    )
+    write_path(tmp_path, "common/units/equipment/MD_test.txt", _COVERAGE_EQUIPMENT)
+    write_path(tmp_path, "common/equipment_groups/mio_test.txt", _COVERAGE_GROUPS)
+    v = _validator(tmp_path)
+    v._org_bodies = v._load_org_bodies()
+    text = "create_equipment_variant = {\n" f"{variant}" "}\n"
+    v._check_design_team_coverage(
+        text, _COVERAGE_FILE, V.build_equipment_stat_index(str(tmp_path))
+    )
+    return v._issues
+
+
+def _team(variant_type, team="\tdesign_team = mio:TST_org\n"):
+    return f"\ttype = {variant_type}\n{team}"
+
+
+def test_design_team_type_outside_equipment_type_is_flagged(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "small_plane_airframe", _team("medium_plane_airframe_1")
+    )
+    assert [(i.category, i.severity, i.line) for i in issues] == [
+        ("mio-design-team-type-uncovered", "warning", 3)
+    ]
+    assert "medium_plane_airframe" in issues[0].message
+
+
+def test_design_team_type_listed_directly_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "medium_plane_airframe", _team("medium_plane_airframe")
+    )
+    assert not issues
+
+
+def test_design_team_type_covered_through_mio_cat_group_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "mio_cat_test_medium", _team("medium_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_numbered_type_listed_directly_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path,
+        write_path,
+        "medium_plane_airframe_1",
+        _team("medium_plane_airframe_1"),
+    )
+    assert not issues
+
+
+def test_design_team_type_covered_through_category_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "test_fighter", _team("medium_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_numbered_type_matches_its_archetype(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "small_plane_airframe", _team("small_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_clone_is_its_own_archetype(tmp_path, write_path):
+    org_types = "small_plane_airframe"
+    issues = _coverage_issues(
+        tmp_path, write_path, org_types, _team("small_plane_cas_airframe_1")
+    )
+    assert [i.category for i in issues] == ["mio-design-team-type-uncovered"]
+    assert "small_plane_cas_airframe" in issues[0].message
+
+
+def test_variant_without_design_team_is_not_flagged(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path,
+        write_path,
+        "small_plane_airframe",
+        _team("medium_plane_airframe_1", ""),
+    )
+    assert not issues
+
+
+def test_design_team_on_undefined_vanilla_type_is_skipped(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "small_plane_airframe", _team("fighter_equipment_1")
+    )
+    assert not issues
+
+
 def test_unreadable_and_undecodable_files_do_not_stop_the_run(tmp_path, write_path):
     _run_repo(tmp_path, write_path)
     (tmp_path / V.ORG_DIR / "broken.txt").mkdir()
@@ -1326,7 +1448,9 @@ def test_child_on_or_above_parent_row_is_flagged(tmp_path):
 
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
-    assert [i.category for i in v._issues] == ["trait-geometry-parent-row"]
+    assert [(i.category, i.severity) for i in v._issues] == [
+        ("trait-geometry-parent-row", "error")
+    ]
     assert "`child`" in v._issues[0].message and "`root`" in v._issues[0].message
 
     v = _geometry_validator(tmp_path, _index(body))
@@ -1379,7 +1503,9 @@ def test_mutually_exclusive_traits_on_different_rows_are_flagged(tmp_path):
 
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
-    assert [i.category for i in v._issues] == ["trait-geometry-mutex-row"]
+    assert [(i.category, i.severity) for i in v._issues] == [
+        ("trait-geometry-mutex-row", "error")
+    ]
 
 
 def test_mutually_exclusive_traits_sharing_a_row_are_clean(tmp_path):
@@ -1403,7 +1529,9 @@ def test_all_parents_with_mutually_exclusive_parents_is_flagged(tmp_path):
 
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
-    assert [i.category for i in v._issues] == ["trait-geometry-mutex-parents"]
+    assert [(i.category, i.severity) for i in v._issues] == [
+        ("trait-geometry-mutex-parents", "error")
+    ]
     assert "any_parent" in v._issues[0].message
 
 
@@ -1786,7 +1914,7 @@ def test_icon_lines_match_counting_from_the_top():
         offset = 0
         for raw_line in text.splitlines():
             code, _comment = V.split_code_and_comment(raw_line)
-            for match in V.ICON_ASSIGNMENT_RE.finditer(V._mask_strings(code)):
+            for match in V.ICON_ASSIGNMENT_RE.finditer(V.blank_quoted_strings(code)):
                 expected.append(text.count("\n", 0, offset + match.start()) + 1)
             offset += len(raw_line) + 1
         assert [line for _name, line in V._iter_icon_values(text)] == expected, text

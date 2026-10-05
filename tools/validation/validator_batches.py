@@ -34,7 +34,9 @@ _CORE_GROUPS = (
 
 BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     "core": (
-        ValidatorSpec("common-mistakes", "validate_common_mistakes.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "common-mistakes", "validate_common_mistakes.py", (*_CORE_GROUPS, "music")
+        ),
         ValidatorSpec(
             "variables",
             "validate_variables.py",
@@ -59,7 +61,10 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     ),
     "targeted-a": (
         ValidatorSpec(
-            "decisions", "validate_decisions.py", ("decisions", "localisation")
+            "decisions",
+            "validate_decisions.py",
+            ("decisions", "localisation"),
+            args=("--unannounced-categories",),
         ),
         ValidatorSpec("oob-units", "validate_oob_units.py", ("oob",)),
         ValidatorSpec("equipment-upkeep", "validate_equipment_upkeep.py", ("oob",)),
@@ -67,7 +72,6 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "equipment-variants",
             "validate_equipment_variants.py",
             ("common", "events", "history"),
-            strict=False,
         ),
         ValidatorSpec("ai-roles", "validate_ai_roles.py", ("ai-strategy",)),
         ValidatorSpec("ai-navy", "validate_ai_navy.py", ("ai-navy",)),
@@ -98,7 +102,14 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "gfx-references",
             "validate_gfx_references.py",
-            ("interface", "common", "events", "history", "localisation"),
+            (
+                "interface",
+                "common",
+                "events",
+                "history",
+                "localisation",
+                "graphic-db",
+            ),
         ),
         ValidatorSpec("bonus-names", "validate_bonus_names.py", ("common", "events")),
         ValidatorSpec(
@@ -112,10 +123,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             strict=False,
         ),
         ValidatorSpec(
-            "building-guards",
-            "validate_building_guards.py",
-            ("common", "events"),
-            strict=False,
+            "building-guards", "validate_building_guards.py", ("common", "events")
         ),
         ValidatorSpec("dlc-guards", "validate_dlc_guards.py", ("common", "events")),
         ValidatorSpec(
@@ -171,7 +179,6 @@ _IMPACT_EXCLUDED_SCRIPTS = {
     # Reads gfx/models and gfx/entities, which the CI workspace does not ship.
     "validate_mesh_textures.py",
     "validate_tools.py",
-    "validate_staged.py",
     # Manual-only: the standardization report is deliberately unwired from
     # pre-commit and CI; editing the script must not re-select it.
     "validate_standardization.py",

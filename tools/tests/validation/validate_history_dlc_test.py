@@ -9,6 +9,7 @@ designer's equipment. Regression for the KAZ SP_arty_0 fix.
 """
 
 import validate_history as V
+from shared.suite import write_under_str
 
 
 def test_extract_dlc_conditions_forbid_and_require():
@@ -94,11 +95,7 @@ def test_propagate_dlc_reqs_require_side():
 
 
 def _write_country(tmp_path, name, body):
-    cdir = tmp_path / "history" / "countries"
-    cdir.mkdir(parents=True, exist_ok=True)
-    fp = cdir / name
-    fp.write_text(body)
-    return str(fp)
+    return write_under_str(tmp_path, f"history/countries/{name}", body)
 
 
 def test_forbid_tech_in_dlc_branch_flagged(tmp_path, monkeypatch):

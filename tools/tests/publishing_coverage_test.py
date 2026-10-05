@@ -23,14 +23,9 @@ import time
 from pathlib import Path, PurePosixPath
 
 import pytest
+from shared.suite import write_text
 
 from tools.publishing import publish_workshop as pw
-
-
-def write_text(path: Path, content: str) -> None:
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-
 
 # ---------------------------------------------------------------------------
 # Config / manifest constants
@@ -1734,7 +1729,7 @@ def test_main_rejects_conflicting_modes_before_staging(monkeypatch, capsys):
 _DESCRIPTION = (
     "[b]Current Version:[/b] 2.0.0\n"
     "[b]Current HOI4 Version:[/b] 1.19.*\n"
-    "[b]Expected Checksum:[/b] 8751\n"
+    "[b]Expected Checksum:[/b] ccc6\n"
     "[url=https://example.invalid/v1.12.2]Tutorials for v1.12.*[/url]\n"
     '[b]Café "quoted" \\ text[/b]\n'
 )

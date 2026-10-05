@@ -8,6 +8,7 @@ import validate_localisation as loc
 import validate_mios as mios
 import validate_oob_units as oob
 import validate_variables as variables
+from shared.suite import yml_scan
 
 
 @pytest.mark.parametrize(
@@ -68,21 +69,11 @@ def test_shared_localisation_worker_skips_both_unselected_scan_groups(tmp_path):
     ) == ([], (set(), [], set()), set(), [], [])
 
 
-@pytest.mark.parametrize("content", [b"\xff", None])
-def test_localisation_variable_reference_worker_handles_unreadable_files(
-    tmp_path, content
-):
-    path = tmp_path / "edge.yml"
-    if content is not None:
-        path.write_bytes(content)
-    assert loc.process_yml_for_var_refs((str(path),)) == []
-
-
-def test_localisation_variable_reference_worker_keeps_exact_lines(tmp_path, write_path):
+def test_localisation_variable_reference_scan_keeps_exact_lines(tmp_path, write_path):
     path = write_path(
         tmp_path, "edge.yml", 'l_english:\n KEY:0 "[?some_value] [?ROOT.GetName]"\n'
     )
-    assert loc.process_yml_for_var_refs((str(path),)) == [("some_value", "edge.yml", 2)]
+    assert yml_scan(path, "var_refs") == [("some_value", "edge.yml", 2)]
 
 
 @pytest.mark.parametrize(

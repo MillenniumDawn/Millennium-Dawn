@@ -9,12 +9,9 @@ import subprocess
 import sys
 from pathlib import Path
 
+from shared.suite import write_text as _write
+
 _CLI = Path(__file__).resolve().parents[2] / "linting" / "fix_log_ids.py"
-
-
-def _write(path: Path, content: str) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8", newline="")
 
 
 def _shared_tree(tmp_path: Path) -> Path:
