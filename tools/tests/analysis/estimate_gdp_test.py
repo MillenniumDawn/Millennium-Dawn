@@ -286,9 +286,10 @@ class TestModifierStackAndGdp:
         assert result["buildings"]["offices"] == 3
         assert result["gdp_from_buildings"] > 0
         # Resource GDP: steel 4 * 1.0 (no per-resource factor) + oil 6 * 1.0 + aluminium 2 * 1.0 = 12
-        # Multiplied by RESOURCE_GDP_COEFF = 0.5 → 6.0
         assert result["total_resources"] == pytest.approx(12.0)
-        assert result["gdp_from_resources"] == pytest.approx(6.0)
+        assert result["gdp_from_resources"] == pytest.approx(
+            12.0 * mod.RESOURCE_GDP_COEFF
+        )
         assert result["num_states"] == 2
 
     def test_finalize_gdp_applies_productivity_mult_and_healthcare(
@@ -318,11 +319,10 @@ class TestModifierStackAndGdp:
     ):
         mod = import_estimate_gdp
         result = mod.calculate_gdp(_parsed_states(mod, populated_mini_repo))
-        # health_06 → 2.20 multiplier. With seeded gdpc=12.5 and population_total
-        # in hundred-thousands (2_300_000 / 100_000 = 23): healthcare_raw
-        # = 23 * 0.01 * 12.5 * 2.20 = 6.325.
+        # With seeded gdpc=12.5 and population_total in hundred-thousands
+        # (2_300_000 / 100_000 = 23): healthcare_raw = 23 * 0.01 * 12.5 * mult.
         mod.finalize_gdp(result, health_idea="health_06", seeded_gdpc=12.5)
-        expected_raw = 23 * 0.01 * 12.5 * 2.20
+        expected_raw = 23 * 0.01 * 12.5 * mod.HEALTH_GDP_MULT["health_06"]
         expected_total = (result["gdp_pre_healthcare"] + expected_raw) * result[
             "productivity_mult"
         ]
@@ -522,3 +522,58 @@ class TestCliMain:
         # The ranked table should have a header line plus one data row.
         data_lines = [l for l in out.splitlines() if l.startswith("   1")]
         assert len(data_lines) == 1
+
+
+class TestGameConstants:
+    """GDP factors come from the @gdp_* constants in 00_money_system.txt."""
+
+    def test_load_gdp_constants_reads_top_level_gdp_lines(
+        self, import_estimate_gdp, tmp_path
+    ):
+        mod = import_estimate_gdp
+        path = tmp_path / "money.txt"
+        write_text(
+            path,
+            "@gdp_civ_base_factor = 17.5\n"
+            "@gdp_health_01_factor = 0.10\n"
+            "@other_constant = 3\n"
+            "\t@gdp_indented = 9\n",
+        )
+        assert mod.load_gdp_constants(str(path)) == {
+            "civ_base_factor": 17.5,
+            "health_01_factor": 0.10,
+        }
+
+    def test_missing_constant_exits_with_its_name(self, import_estimate_gdp):
+        mod = import_estimate_gdp
+        constants = mod.load_gdp_constants(mod.MONEY_SYSTEM_FILE)
+        del constants["rail_terminal_factor"]
+        with pytest.raises(SystemExit, match="@gdp_rail_terminal_factor"):
+            mod.build_gdp_tables(constants)
+
+    def test_every_gdp_constant_is_used_by_the_game(self, import_estimate_gdp):
+        mod = import_estimate_gdp
+        with open(mod.MONEY_SYSTEM_FILE, encoding="utf-8") as handle:
+            content = handle.read()
+        for name in mod.load_gdp_constants(mod.MONEY_SYSTEM_FILE):
+            assert content.count(f"@gdp_{name}") >= 2, name
+
+    def test_tables_cover_flat_buildings_and_health_levels(self, import_estimate_gdp):
+        mod = import_estimate_gdp
+        assert mod.BUILDING_GDP_FORMULA["rail_terminal"][1:] == (0, None)
+        assert sorted(mod.HEALTH_GDP_MULT) == [f"health_0{i}" for i in range(1, 7)]
+        assert all(v > 0 for v in mod.PLANT_RESOURCE_OUTPUT.values())
+
+    def test_plants_add_their_output_to_resources(self, import_estimate_gdp):
+        mod = import_estimate_gdp
+        state = {
+            "manpower": 1_000_000,
+            "productivity": 1000,
+            "buildings": {"microchip_plant": 2, "composite_plant": 1},
+            "resources": {},
+        }
+        result = mod.calculate_gdp([state])
+        assert result["total_resources"] == pytest.approx(
+            2 * mod.PLANT_RESOURCE_OUTPUT["microchip_plant"]
+            + mod.PLANT_RESOURCE_OUTPUT["composite_plant"]
+        )
