@@ -987,6 +987,33 @@ _SEMANTIC_FIXTURES = {
         "\ttest_effect = yes\n}\n",
         [(_MISSING, 5)],
     ),
+    "add_to_temp": (
+        "option = {\n\tadd_to_temp_variable = { amount = 1 }\n\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "subtract_from_temp": (
+        "option = {\n\tsubtract_from_temp_variable = { amount = 1 }\n"
+        "\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "long_form_set_temp": (
+        "option = {\n\tset_temp_variable = { var = amount value = 1 }\n"
+        "\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "multiline_random_set_temp": (
+        "option = {\n\tset_temp_variable_to_random = {\n\t\tvar = amount\n"
+        "\t\tmax = 8\n\t}\n\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "variable_named_var": (
+        "option = {\n\tset_temp_variable = { var = 1 }\n\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
+    "multiply_temp_sets_nothing": (
+        "option = {\n\tmultiply_temp_variable = { amount = 2 }\n\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
     "multiline_string": (
         'option = {\n\tlog = "first\n\ttest_effect = yes"\n\ttest_effect = yes\n}\n',
         [(_MISSING, 4)],
@@ -1393,6 +1420,37 @@ def test_staged_tag_or_alias_change_rechecks_unchanged_callers(
 
     assert _cli_findings(tmp_path, monkeypatch, "--staged") == [
         ("invalid-influence-tag", "events/e.txt", 3)
+    ]
+
+
+def test_staged_trigger_change_rechecks_unchanged_callers(tmp_path, monkeypatch):
+    """A trigger that stops reading a parameter leaves its callers' setters dead."""
+    trigger = "common/scripted_triggers/t.txt"
+    caller = (
+        "option = {\n"
+        "\tif = {\n"
+        "\t\tlimit = {\n"
+        "\t\t\tset_temp_variable = { amount = 5 }\n"
+        "\t\t\ttest_trigger = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    _committed_tree(
+        tmp_path,
+        monkeypatch,
+        {
+            _EFFECT_FILE: _REQUIRES_AMOUNT,
+            trigger: "test_trigger = {\n\tcheck_variable = { amount > 1 }\n}\n",
+            "events/e.txt": caller,
+        },
+    )
+    assert _cli_findings(tmp_path, monkeypatch) == []
+
+    _stage(tmp_path, trigger, "test_trigger = {\n\talways = yes\n}\n")
+
+    assert _cli_findings(tmp_path, monkeypatch, "--staged") == [
+        ("orphan-param-setter", "events/e.txt", 4)
     ]
 
 

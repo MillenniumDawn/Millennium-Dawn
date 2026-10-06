@@ -53,7 +53,9 @@ def test_pending_alawite_event_keeps_queue_guard_until_event_fires():
         (block for block in not_blocks if re.search(r"\bOR\s*=\s*\{", block)), None
     )
     assert war_guard is not None
-    war_body = _block(war_guard, re.search(r"\bOR\s*=\s*\{", war_guard).start())
+    war_match = re.search(r"\bOR\s*=\s*\{", war_guard)
+    assert war_match is not None
+    war_body = _block(war_guard, war_match.start())
     assert set(re.findall(r"has_war_with\s*=\s*(\w+)", war_body)) == {
         "ROJ",
         "DRU",

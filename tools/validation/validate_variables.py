@@ -28,7 +28,6 @@ from shared_utils import (
     is_ai_only_block,
     iter_direct_child_blocks,
     iter_statements,
-    read_text_under,
     strip_comments,
     validation_config,
     word_start_re,
@@ -1355,229 +1354,7 @@ def _scan_treasury_text(src: _Source) -> List[Tuple[str, str, int]]:
     return issues
 
 
-# Input variables and the scripted effect that consumes each. A
-# set_temp_variable of one of these with no consumer call afterwards in the
-# same effect block is a dead setter — the money never moves (Sweden_foci.57),
-# or the party popularity never changes (SyriaFocus.88).
-_MONEY_EFFECT_PAIRS = {
-    "treasury_change": "modify_treasury_effect",
-    "debt_change": "modify_debt_effect",
-    "int_investment_change": "modify_international_investment_effect",
-    "party_popularity_increase": "change_relative_party_popularity",
-}
-_NEVER_CONSUMED_OUTCOME = {
-    "party_popularity_increase": "the party popularity never changes"
-}
-_MONEY_SETTER_RE = re.compile(
-    r"set_temp_variable\s*=\s*\{\s*(" + "|".join(_MONEY_EFFECT_PAIRS) + r")\s*="
-)
-# Blocks that delimit one effect execution. hidden_effect is NOT a boundary —
-# it runs in the same execution as its parent, only hidden from the tooltip.
-# effect_tooltip is deliberately its own container: a setter previewed there
-# must also be consumed there or the tooltip renders nothing, and a consumer
-# that only appears inside a tooltip never runs.
-_EFFECT_CONTAINER_RE = re.compile(
-    r"\b(?:completion_reward|select_effect|bypass_effect|option|immediate|"
-    r"complete_effect|remove_effect|timeout_effect|cancel_effect|"
-    r"on_add|on_remove|effect_tooltip|effect)\s*=\s*\{"
-)
 _SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
-# Value-producing writers only — add_to/multiply etc. read the existing value.
-_WRITE_BEFORE_RE = re.compile(
-    r"(?:set_temp_variable|set_variable)\s*=\s*\{\s*$"
-    r"|set_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*$"
-)
-_MONEY_WRITE_RES = {
-    var: re.compile(
-        r"\b(?:set_temp_variable|set_variable)\s*=\s*\{\s*" + var + r"\s*="
-        r"|\bset_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*" + var + r"\b"
-    )
-    for var in _MONEY_EFFECT_PAIRS
-}
-
-
-def build_money_consumer_map(
-    effect_files: List[str], under: str
-) -> Dict[str, frozenset]:
-    """Map each money input variable to the scripted effects that consume it.
-
-    An effect consumes a variable when the variable's first appearance in its
-    body is a read (add_to_variable r-value, multiply, check, ...) rather than
-    a set_temp_variable/set_variable write — a wrapper that writes first
-    overwrites the caller's value and cannot consume it. Closed transitively
-    so wrappers of wrappers (GRE_pay_or_defer -> modify_debt_effect) count.
-    """
-    bodies: Dict[str, str] = {}
-    for fp in effect_files:
-        try:
-            text = strip_comments(read_text_under(fp, under))
-        except (OSError, ValueError):
-            continue
-        for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
-            body, _ = extract_block_from_text(text, m.start())
-            if body:
-                bodies[m.group(1)] = body
-
-    def first_positions(body: str, var: str):
-        first_read = first_write = None
-        for om in re.finditer(r"\b" + var + r"\b", body):
-            if _WRITE_BEFORE_RE.search(body, 0, om.start()):
-                if first_write is None:
-                    first_write = om.start()
-            elif first_read is None:
-                first_read = om.start()
-            if first_read is not None and first_write is not None:
-                break
-        return first_read, first_write
-
-    consumers = {var: {base} for var, base in _MONEY_EFFECT_PAIRS.items()}
-    for var in _MONEY_EFFECT_PAIRS:
-        for name, body in bodies.items():
-            first_read, first_write = first_positions(body, var)
-            if first_read is not None and (
-                first_write is None or first_read < first_write
-            ):
-                consumers[var].add(name)
-
-    changed = True
-    while changed:
-        changed = False
-        for var, known in consumers.items():
-            call_re = re.compile(
-                r"\b(?:"
-                + "|".join(re.escape(n) for n in sorted(known))
-                + r")\s*=\s*yes\b"
-            )
-            for name, body in bodies.items():
-                if name in known:
-                    continue
-                call = call_re.search(body)
-                if not call:
-                    continue
-                _, first_write = first_positions(body, var)
-                if first_write is None or call.start() < first_write:
-                    known.add(name)
-                    changed = True
-    return {var: frozenset(names) for var, names in consumers.items()}
-
-
-def _has_sequential_rewrite(
-    cleaned: str, start: int, end: int, var: str, write_re: re.Pattern
-) -> bool:
-    """Whether the setter's variable is re-set in [start, end) as a clobber.
-
-    Depth heuristic: only a re-write at the setter's own brace depth counts —
-    branch-gated writes (if/else arms) sit in nested blocks and never clobber.
-    A same-depth re-write that reads the variable in its value expression
-    (``value = X multiply = -1``, events/raids.txt) folds the old value
-    forward and is not a clobber either.
-    """
-    rewrites = [w.start() for w in write_re.finditer(cleaned, start, end)]
-    if not rewrites:
-        return False
-    var_re = re.compile(r"\b" + var + r"\b")
-    ri = 0
-    depth = 1  # start sits inside the setter's own braces
-    in_str = False
-    for i in range(start, end):
-        if ri < len(rewrites) and rewrites[ri] == i:
-            if depth == 0 and not in_str:
-                # First same-depth re-write decides: the sole var occurrence
-                # in its block is the l-value; a second one is a self-read.
-                body, _ = extract_block_from_text(cleaned, i)
-                return len(var_re.findall(body)) <= 1
-            ri += 1
-            if ri == len(rewrites):
-                return False
-        c = cleaned[i]
-        if c == '"' and cleaned[i - 1] != "\\":
-            in_str = not in_str
-        elif not in_str:
-            if c == "{":
-                depth += 1
-            elif c == "}":
-                depth -= 1
-                if depth < 0:
-                    return False
-    return False
-
-
-def _scan_orphan_money_text(
-    cleaned: str, rel: str, consumer_map: Dict[str, frozenset]
-) -> List[Tuple[str, str, int]]:
-    """Flag money-variable setters that are dead in their block: never consumed,
-    or overwritten at the same depth before the consumer runs.
-
-    Setters outside any known effect container (loose scripted-effect bodies
-    that produce the value for their caller) are skipped.
-    """
-    setters = list(_MONEY_SETTER_RE.finditer(cleaned))
-    if not setters:
-        return []
-
-    spans = []
-    for m in _EFFECT_CONTAINER_RE.finditer(cleaned):
-        brace = m.end() - 1
-        body, end = extract_block_from_text(cleaned, brace)
-        if body:
-            is_tooltip = cleaned.startswith("effect_tooltip", m.start())
-            spans.append((brace + 1, end, is_tooltip))
-    tooltip_spans = [(s, e) for s, e, is_tt in spans if is_tt]
-
-    consumer_res = {
-        var: re.compile(
-            r"\b(?:" + "|".join(re.escape(n) for n in sorted(names)) + r")\s*=\s*yes\b"
-        )
-        for var, names in consumer_map.items()
-    }
-    issues: List[Tuple[str, str, int]] = []
-    for m in setters:
-        var = m.group(1)
-        holder_start = -1
-        holder_end = -1
-        holder_is_tooltip = False
-        for start, end, is_tt in spans:
-            if start <= m.start() < end and start > holder_start:
-                holder_start = start
-                holder_end = end
-                holder_is_tooltip = is_tt
-        if holder_start < 0:
-            continue
-        if holder_is_tooltip:
-            hits = list(consumer_res[var].finditer(cleaned, m.end(), holder_end))
-        else:
-            hits = [
-                cm
-                for cm in consumer_res[var].finditer(cleaned, m.end(), holder_end)
-                if not any(ts <= cm.start() < te for ts, te in tooltip_spans)
-            ]
-        if hits and not _has_sequential_rewrite(
-            cleaned, m.end(), hits[0].start(), var, _MONEY_WRITE_RES[var]
-        ):
-            continue
-        line = cleaned[: m.start()].count("\n") + 1
-        if hits:
-            issues.append(
-                (
-                    f"set_temp_variable {var} is overwritten before"
-                    f" {_MONEY_EFFECT_PAIRS[var]} (or wrapper) runs — a later"
-                    f" write to {var} clobbers this value, so this setter is dead",
-                    rel,
-                    line,
-                )
-            )
-        else:
-            issues.append(
-                (
-                    f"set_temp_variable {var} is never consumed — no"
-                    f" {_MONEY_EFFECT_PAIRS[var]} (or wrapper) follows in the"
-                    f" same effect block, so"
-                    f" {_NEVER_CONSUMED_OUTCOME.get(var, 'the money never moves')}",
-                    rel,
-                    line,
-                )
-            )
-    return issues
 
 
 def _scan_targets_in_text(
@@ -1704,7 +1481,6 @@ def process_file_for_flags_and_targets(
 # The parent builds the mask from set membership so each file runs exactly the
 # scans its own section file list would have run — no more, no fewer.
 _F_MATH = 1
-_F_ORPHAN = 2
 _F_TREASURY = 4
 _F_CLAMP = 8
 _F_AVAILABLE = 16
@@ -1715,7 +1491,6 @@ _F_FLAG_SYNTAX = 256
 _F_TOKEN = 512
 
 _EMPTY_SHARED_RESULT: Tuple = (
-    [],
     [],
     [],
     [],
@@ -1741,7 +1516,7 @@ def _scan_shared_file(args) -> Tuple:
     indexes, across the section scans instead of paying one read plus strip
     plus blank pass per section. Each scan is gated by ``mask`` so the file set
     per section is unchanged. Flag syntax keeps its naive strip.
-    Returns (math, orphan, treasury, clamp_found, clamp_temp, clamp_persist,
+    Returns (math, treasury, clamp_found, clamp_temp, clamp_persist,
     clamp_checks, avail_unt, avail_flags, scripted, var_tooltips, missing,
     (flag_days, flag_long), avail_negated_tooltips, tokens).
     """
@@ -1751,7 +1526,6 @@ def _scan_shared_file(args) -> Tuple:
         mask,
         ai_categories,
         flagged_names,
-        consumer_map,
         backing,
         requirements,
         registered_tokens,
@@ -1774,8 +1548,7 @@ def _scan_shared_file(args) -> Tuple:
         | _F_MISSING
     )
     need_stripped = mask & (
-        _F_ORPHAN
-        | _F_MATH
+        _F_MATH
         | _F_TREASURY
         | _F_CLAMP
         | _F_AVAILABLE
@@ -1793,7 +1566,6 @@ def _scan_shared_file(args) -> Tuple:
     naive = re.sub(r"#[^\n]*", "", text) if need_naive else ""
 
     math_issues: List[str] = []
-    orphan_issues: List = []
     treasury_issues: List = []
     clamp_found: List = []
     clamp_temp: List = []
@@ -1813,8 +1585,6 @@ def _scan_shared_file(args) -> Tuple:
         token_issues = _scan_dynamic_tokens_text(stripped, rel, registered_tokens)
     if mask & _F_MATH:
         math_issues = _scan_math_precision_text(blanked, rel)
-    if mask & _F_ORPHAN:
-        orphan_issues = _scan_orphan_money_text(stripped, rel, consumer_map)
     src = _Source(blanked, rel)
     if mask & _F_TREASURY:
         if any(k in blanked for k in _TREASURY_EFFECT_KEYWORDS):
@@ -1839,7 +1609,6 @@ def _scan_shared_file(args) -> Tuple:
 
     return (
         math_issues,
-        orphan_issues,
         treasury_issues,
         clamp_found,
         clamp_temp,
@@ -2122,26 +1891,6 @@ class Validator(BaseValidator):
             category="unregistered-dynamic-token",
         )
 
-    def validate_orphan_money_setters(self):
-        """Flag input-variable setters whose value is never consumed (WARNING).
-
-        set_temp_variable of treasury_change/debt_change/int_investment_change
-        or party_popularity_increase must be followed, within the same effect
-        block, by the matching effect call or a wrapper that consumes it —
-        otherwise the setter is dead and the transfer or popularity change
-        silently never happens. A setter re-written at the same brace depth
-        before the consumer runs is equally dead (clobbered).
-        """
-        self._log_section("Checking for orphan input-variable setters...")
-        issues = self._get_shared_scan()["orphan"]
-        self._report(
-            issues,
-            "✓ No orphan input-variable setters found",
-            "Dead input-variable setters (never consumed, or overwritten before the consumer runs — the effect never applies):",
-            severity=Severity.WARNING,
-            category="orphan-money-setter",
-        )
-
     def validate_treasury_state_scope(self):
         """Flag treasury/debt/investment effect calls in state scope (WARNING).
 
@@ -2198,7 +1947,7 @@ class Validator(BaseValidator):
         """Run every variable section in one pool pass over the union file set.
 
         Reads each candidate file once and shares the stripped/blanked text
-        across math, orphan-money, treasury, clamp, available, scripted-trigger,
+        across math, treasury, clamp, available, scripted-trigger,
         tooltip, missing-tooltip, and flag-syntax scans. Each file runs exactly
         the scans its own section file list selects (via ``mask``). Clamp ranges
         are harvested in the same pass and resolved parent-side; in staged mode
@@ -2210,13 +1959,6 @@ class Validator(BaseValidator):
         self._log_section("Sharing per-file reads across variable sections...")
 
         math_patterns = ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
-        orphan_patterns = [
-            "common/national_focus/*.txt",
-            "common/decisions/**/*.txt",
-            "common/ideas/**/*.txt",
-            "common/on_actions/**/*.txt",
-            "events/**/*.txt",
-        ]
         treasury_patterns = [
             "common/national_focus/*.txt",
             "common/decisions/**/*.txt",
@@ -2228,7 +1970,6 @@ class Validator(BaseValidator):
         clamp_patterns = ["common/**/*.txt", "events/**/*.txt"]
 
         math_files = self._collect_files(math_patterns)
-        orphan_files = self._collect_files(orphan_patterns)
         treasury_files = self._collect_files(treasury_patterns)
         clamp_files = self._collect_files(clamp_patterns)
         available_files = self._collect_files(_PLAYER_FACING_GLOBS)
@@ -2239,7 +1980,6 @@ class Validator(BaseValidator):
         union = list(
             dict.fromkeys(
                 math_files
-                + orphan_files
                 + treasury_files
                 + clamp_files
                 + available_files
@@ -2248,7 +1988,6 @@ class Validator(BaseValidator):
         )
         empty: Dict[str, List] = {
             "math": [],
-            "orphan": [],
             "treasury": [],
             "clamp": [],
             "avail_unt": [],
@@ -2274,12 +2013,6 @@ class Validator(BaseValidator):
             ai_categories = self._get_ai_only_categories()
             flagged_names = self._collect_scripted_trigger_flag_names()
             requirements = self._collect_scripted_trigger_requirements()
-        consumer_map: Dict[str, frozenset] = {}
-        if orphan_files:
-            effect_files = self._collect_files(
-                ["common/scripted_effects/**/*.txt"], ignore_staged=True
-            )
-            consumer_map = build_money_consumer_map(effect_files, self.mod_path)
         backing = self._collect_dynamic_modifier_vars() if clamp_files else {}
         registered_tokens: frozenset = frozenset()
         if os.path.isfile(os.path.join(self.mod_path, DYNAMIC_TOKEN_FILE)):
@@ -2305,7 +2038,6 @@ class Validator(BaseValidator):
                 repo_persist.update(persist_written)
 
         math_set = set(math_files)
-        orphan_set = set(orphan_files)
         treasury_set = set(treasury_files)
         clamp_set = set(clamp_files)
         available_set = set(available_files)
@@ -2317,8 +2049,6 @@ class Validator(BaseValidator):
                 mask |= _F_TOKEN
             if f in math_set:
                 mask |= _F_MATH | _F_TOKEN | _F_FLAG_SYNTAX
-            if f in orphan_set:
-                mask |= _F_ORPHAN
             if f in treasury_set:
                 mask |= _F_TREASURY
             if f in clamp_set:
@@ -2332,7 +2062,6 @@ class Validator(BaseValidator):
                     mask,
                     ai_categories,
                     flagged_names,
-                    consumer_map,
                     backing,
                     requirements,
                     registered_tokens,
@@ -2347,7 +2076,6 @@ class Validator(BaseValidator):
         for filename, res in zip(union, results):
             (
                 math_i,
-                orphan_i,
                 treasury_i,
                 found,
                 temp_w,
@@ -2364,7 +2092,6 @@ class Validator(BaseValidator):
             ) = res
             empty["tokens"].extend(token_i)
             empty["math"].extend(math_i)
-            empty["orphan"].extend(orphan_i)
             empty["treasury"].extend(treasury_i)
             empty["avail_unt"].extend(unt)
             empty["avail_flags"].extend(flags)
@@ -2849,7 +2576,6 @@ class Validator(BaseValidator):
     def run_validations(self):
         self.validate_math_precision()
         self.validate_unregistered_dynamic_tokens()
-        self.validate_orphan_money_setters()
         self.validate_treasury_state_scope()
         self.validate_clamp_range_conflicts()
         self.validate_untooltipped_available_checks()
