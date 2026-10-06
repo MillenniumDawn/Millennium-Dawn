@@ -43,7 +43,12 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             _CORE_GROUPS,
             args=("--redundant-focus-flags",),
         ),
-        ValidatorSpec("math-expressions", "validate_math_expressions.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "math-expressions",
+            "validate_math_expressions.py",
+            _CORE_GROUPS,
+            args=("--clamp-bounds",),
+        ),
         ValidatorSpec(
             "scripted-localisation", "validate_scripted_localisation.py", _CORE_GROUPS
         ),
