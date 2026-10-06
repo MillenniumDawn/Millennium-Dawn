@@ -62,6 +62,12 @@ def test_decisions_spec_carries_the_unannounced_category_scan():
     assert spec.strict is True
 
 
+def test_math_expressions_spec_carries_the_clamp_bounds_check():
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "math-expressions")
+    assert spec.args == ("--clamp-bounds",)
+    assert spec.strict is True
+
+
 def test_selected_specs_filters_by_changed_groups():
     selected = {
         spec.name

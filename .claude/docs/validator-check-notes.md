@@ -261,6 +261,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - `math-sibling-operator`, `math-from-read` (ERROR). The traps are in
   `hoi4-data-structures.md`. Plain `set_temp_variable = { x = FROM.y }` copies are valid.
+- `clamp-min-above-max` (ERROR, opt-in `--clamp-bounds`, passed in CI): a `clamp`,
+  `clamp_variable`, or `clamp_temp_variable` whose literal `min` is above its literal
+  `max`. A bound that is a variable, an `@constant`, or an expression block is not
+  judged, so a swapped pair with one of those still passes.
 
 ## validate_mesh_textures.py
 
