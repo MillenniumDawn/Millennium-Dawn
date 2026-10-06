@@ -47,10 +47,33 @@ keeping the different vehicles at tiers 6 and 7. The maintainer reported that th
 in-game check passed. This supports the same-tag rule, not culture, generic, or
 cosmetic-prefix lookup. Cosmetic prefixes need their own in-game check.
 
-Keep the culture and generic tier clones added by #1159 for #1106. Since HOI4 1.18,
+Keep numbered culture and generic sprite entities for #1106. Since HOI4 1.18,
 tierless fallbacks match every tier at high priority and can override country-tiered
-models. Give each tierless sprite entity in a culture set `_1` to `_7` clones. Equal
-resolved appearance alone does not make these fallback tiers redundant.
+models. A culture's sprite set needs `_1` to `_7` entries, either distinct entities or
+clones. Equal resolved appearance alone does not make these fallback tiers redundant.
+
+## Motorized sprite consolidation
+
+The #5374 conversion builds on #5418 and moves regular motorized models to
+`<prefix>_MD_motorized_*` across country, cosmetic, and shared cultural sets. Matching
+militia, airborne, and marine entities use that sprite set instead. Keep sub-unit
+entities whose mesh, animations, scale, or attachments differ. An omitted scale is 1.
+Keep the shared base before surviving clones that reference it.
+
+The conversion removes 1,243 definitions across 56 files and 65 prefixes (2,126 to
+883 motorized entities). France drops from 45 to 33 and `jihadist_gfx` from 44 to 9.
+Distinct English and Korean regular-infantry bases remain as sub-unit overrides.
+All 91 existing numbered cultural motorized sprite entries remain; 67 former default
+copies now hold the regular infantry's distinct tiered art. Their former appearance
+remains in the shared base. Do not recreate identical country tiers removed by #5418.
+
+Sprite/sub-unit lookup remains unverified in game. The shared sprite also serves heavy
+motorized infantry, reconnaissance, and headquarters, whose tier selection may change.
+Check all motorized sub-units at each tier in the designer and on the map, including
+desert and snow, and check `error.log` for new missing entity lines. Static comparisons
+cannot prove sprite fallback, terrain selection, cosmetic priority, or priority against
+culture-level sub-unit entities. Do not treat this conversion as a confirmed lookup rule
+until those checks pass.
 
 ## Files in `gfx/entities/`
 
