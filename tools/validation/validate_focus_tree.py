@@ -5,6 +5,7 @@ import os
 import re
 import sys
 from collections import defaultdict
+from decimal import Decimal
 from functools import cached_property
 from typing import (
     Any,
@@ -21,8 +22,16 @@ from typing import (
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from focus_geometry import analyze_layout
 from shared_utils import extract_block_from_text as _extract_block
-from shared_utils import read_text_under, validation_config
+from shared_utils import (
+    get_staged_files,
+    iter_statements,
+    label_before_brace,
+    read_text_under,
+    validation_config,
+    word_start_re,
+)
 from sprite_index import build_sprite_index
 from validator_common import (
     BaseValidator,
@@ -33,20 +42,10 @@ from validator_common import (
     strip_comments,
 )
 
-
-def _keyword_re(keyword: str, rest: str) -> re.Pattern[str]:
-    """Compile `\\b<keyword><rest>` led by the keyword itself.
-
-    A leading `\\b` makes the engine try every offset; led by the literal it
-    skips between occurrences, and the lookbehind checks the same boundary.
-    """
-    return re.compile(keyword + r"(?<=\b" + keyword + ")" + rest)
-
-
 # Opening of a focus_tree or top-level focus definition block
 # (shared_focus and joint_focus are both standalone definitions that can be
 # referenced as prerequisites — they live outside any focus_tree wrapper)
-_FOCUS_TREE_START = _keyword_re("focus_tree", r"\s*=\s*\{")
+_FOCUS_TREE_START = word_start_re("focus_tree", r"\s*=\s*\{")
 # Same as `\b(?:shared_focus|joint_focus)`, led by its first letters.
 _SHARED_FOCUS_DEF_START = re.compile(
     r"(?:shared|joint)_focus(?:(?<=\bshared_focus)|(?<=\bjoint_focus))\s*=\s*\{"
@@ -77,7 +76,7 @@ def _fmt_codes(codes: List[str]) -> str:
 
 
 # focus ID extraction
-_FOCUS_ID_RE = _keyword_re("focus", r"\s*=\s*\{")
+_FOCUS_ID_RE = word_start_re("focus", r"\s*=\s*\{")
 _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 
 # focus icon: `icon = X` or `icon = "GFX X"`. The value resolves verbatim to a
@@ -87,34 +86,34 @@ _ID_LINE_RE = re.compile(r"\bid\s*=\s*(\S+)")
 # the engine matches the sprite name verbatim (a quoted value with a space is a
 # real, distinct sprite name, not two tokens).
 _FOCUS_BLOCK_START = re.compile(r"\b(?:focus|shared_focus|joint_focus)\s*=\s*\{")
-_ICON_LINE_RE = _keyword_re("icon", r'\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
-_RELATIVE_POSITION_RE = _keyword_re("relative_position_id", r"\s*=\s*(\S+)")
+_ICON_LINE_RE = word_start_re("icon", r'\s*=\s*(?:"([^"]*)"|([^\s{}]+))')
+_RELATIVE_POSITION_RE = word_start_re("relative_position_id", r"\s*=\s*(\S+)")
 
 # prerequisite blocks: prerequisite = { focus = A  focus = B }
-_PREREQ_BLOCK_RE = _keyword_re("prerequisite", r"\s*=\s*\{([^}]*)\}")
+_PREREQ_BLOCK_RE = word_start_re("prerequisite", r"\s*=\s*\{([^}]*)\}")
 _PREREQ_FOCUS_RE = re.compile(r"\bfocus\s*=\s*(\S+)")
 
 # shared_focus reference inside a focus_tree block (not a definition)
-_SHARED_REF_RE = _keyword_re("shared_focus", r"\s*=\s*(\w+)")
+_SHARED_REF_RE = word_start_re("shared_focus", r"\s*=\s*(\w+)")
 
 # completion_reward, incl. the joint-focus reward variants
-_REWARD_BLOCK_RE = _keyword_re(
+_REWARD_BLOCK_RE = word_start_re(
     "completion_reward", r"(?:_joint_originator|_joint_member)?\s*=\s*\{"
 )
 
-# PP malus in completion_reward (focus time is the cost — AGENTS.md).
+# PP malus in completion_reward (focus time is the cost).
 # Occurrences inside an effect_tooltip = { } subtree preview a PP change
 # applied elsewhere (e.g. a select_effect) rather than executing it, so
 # they are not flagged.
-_EFFECT_TOOLTIP_START = _keyword_re("effect_tooltip", r"\s*=\s*\{")
-_PP_MALUS_RE = _keyword_re("add_political_power", r"\s*=\s*(-\d+(?:\.\d+)?)\b")
+_EFFECT_TOOLTIP_START = word_start_re("effect_tooltip", r"\s*=\s*\{")
+_PP_MALUS_RE = word_start_re("add_political_power", r"\s*=\s*(-\d+(?:\.\d+)?)\b")
 
 _PP_MALUS_EXEMPT_FOCUS_IDS = frozenset(
     validation_config("validate_focus_tree", "pp_malus_exempt_focus_ids")
 )
 
-# ai_will_do staffing/bankruptcy guards (issue #2233 + the AGENTS.md
-# convention). Building type -> the scripted trigger
+# ai_will_do staffing/bankruptcy guards (issue #2233 +
+# search-filters.md). Building type -> the scripted trigger
 # (common/scripted_triggers/00_economic_triggers.txt) that an ai_will_do
 # factor = 0 modifier must check before the AI takes a focus building it.
 _STAFFABLE_TRIGGERS = {
@@ -150,8 +149,8 @@ _MIL_ECON_RESEARCH_FILTERS = frozenset(
     }
 )
 
-_AI_WILL_DO_START = _keyword_re("ai_will_do", r"\s*=\s*\{")
-_MODIFIER_START = _keyword_re("modifier", r"\s*=\s*\{")
+_AI_WILL_DO_START = word_start_re("ai_will_do", r"\s*=\s*\{")
+_MODIFIER_START = word_start_re("modifier", r"\s*=\s*\{")
 _FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
 _CAN_STAFF_NO_RE = re.compile(r"\b(can_staff_an_\w+)\s*=\s*no\b")
 _CAN_STAFF_NOT_YES_RE = re.compile(
@@ -160,7 +159,7 @@ _CAN_STAFF_NOT_YES_RE = re.compile(
 _BANKRUPTCY_GUARD_RE = re.compile(
     r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
 )
-_ADD_BUILDING_START = _keyword_re("add_building_construction", r"\s*=\s*\{")
+_ADD_BUILDING_START = word_start_re("add_building_construction", r"\s*=\s*\{")
 _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # Money spend (MD budget system): treasury_change is set (a literal, a `{ }`
 # computed value, or a bare-identifier reference to another variable — the
@@ -202,15 +201,15 @@ _NUMERIC_LITERAL_RE = re.compile(r"^-?\d+(?:\.\d+)?$")
 # the treasury). Group 1 is the suffix, empty for the plain form; a non-empty
 # suffix applies an amount that can't be computed statically, so it forces the
 # segment unknown. The `_tt` loc key is never called with `= yes`.
-_MODIFY_TREASURY_RE = _keyword_re("modify_treasury_effect", r"(\w*)\s*=\s*yes\b")
-_MODIFY_DEBT_RE = _keyword_re("modify_debt_effect", r"\s*=\s*yes\b")
-_SEARCH_FILTERS_RE = _keyword_re("search_filters", r"\s*=\s*\{([^{}]*)\}")
+_MODIFY_TREASURY_RE = word_start_re("modify_treasury_effect", r"(\w*)\s*=\s*yes\b")
+_MODIFY_DEBT_RE = word_start_re("modify_debt_effect", r"\s*=\s*yes\b")
+_SEARCH_FILTERS_RE = word_start_re("search_filters", r"\s*=\s*\{([^{}]*)\}")
 _BRACE_RE = re.compile(r"[{}]")
 _BRACE_OR_QUOTE_RE = re.compile(r'["{}]')
 _REWARD_KEY_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 
-# Cross-country event tooltip check (AGENTS.md "Cross-country event tooltips"):
+# Cross-country event tooltip check (event-reference.md "Cross-country events"):
 # a completion_reward that fires a country_event into another nation's scope
 # should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT so the player sees the
 # acceptance outcome. Foreignness is decided by the fire's nearest enclosing
@@ -221,7 +220,7 @@ _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.M)
 # TT_IF_THIS_ACCEPTS and TT_IF_EACH_ACCEPTS are the same preview worded for one
 # named target and for a fan-out; the former renders [THIS.GetNameWithFlag], so
 # it sits inside the target's scope block rather than beside its effect_tooltip.
-_COUNTRY_EVENT_RE = _keyword_re("country_event", r"\b")
+_COUNTRY_EVENT_RE = word_start_re("country_event", r"\b")
 _TT_IF_THEY_ACCEPT_RE = re.compile(
     r"\b(?:TT_IF_THEY_ACCEPT|TT_IF_THIS_ACCEPTS"
     r"|TT_IF_EACH_ACCEPTS|TT_EFFECTS_FROM_EVENT)\b"
@@ -234,8 +233,8 @@ _FIRE_TARGET_RE = re.compile(r"country_event\s*=\s*(?:\{[^{}]*?\bid\s*=\s*)?([\w
 # inside an option is a fire, and would otherwise index x as optionless.
 _EVENT_BLOCK_RE = re.compile(r"^(country_event|news_event)\s*=\s*\{", re.M)
 _EVENT_ID_RE = re.compile(r"\bid\s*=\s*([\w.]+)")
-_EVENT_OPTION_RE = _keyword_re("option", r"\s*=\s*\{")
-_EVENT_HIDDEN_RE = _keyword_re("hidden", r"\s*=\s*yes\b")
+_EVENT_OPTION_RE = word_start_re("option", r"\s*=\s*\{")
+_EVENT_HIDDEN_RE = word_start_re("hidden", r"\s*=\s*yes\b")
 _OPTION_TRIGGER_RE = re.compile(r"\btrigger\s*=\s*\{")
 _NEGATION_RE = re.compile(r"\bNOT\s*=\s*\{")
 # Option bookkeeping that is not an outcome: the label, the log line, the AI
@@ -245,7 +244,7 @@ _OPTION_LOG_RE = re.compile(r"\blog\s*=\s*\"[^\"]*\"")
 _OPTION_INERT_BLOCK_RE = re.compile(r"\b(?:ai_chance|trigger)\s*=\s*\{")
 # `tag = XXX` / `original_tag = XXX`, in a focus_tree's `country = { }` block
 # (the owner) and in an event option's `trigger = { }` (the recipient).
-_FT_COUNTRY_BLOCK_RE = _keyword_re("country", r"\s*=\s*\{")
+_FT_COUNTRY_BLOCK_RE = word_start_re("country", r"\s*=\s*\{")
 _TAG_ASSIGN_RE = re.compile(r"\b(?:original_)?tag\s*=\s*([A-Z]{3})\b")
 _LITERAL_TAG_RE = re.compile(r"^[A-Z]{3}$")
 # Iterators that step over other countries (every_country, random_other_country,
@@ -289,26 +288,6 @@ def _top_level_search_filters(body: str) -> Set[str]:
     return set()
 
 
-def _label_before_brace(body: str, brace_idx: int) -> Optional[str]:
-    """Return the `key` of a `key = {` opener whose `{` is at *brace_idx*.
-
-    Returns None for an anonymous block (no `=` before the brace), e.g. a
-    color/array literal.
-    """
-    j = brace_idx - 1
-    while j >= 0 and body[j] in " \t\r\n":
-        j -= 1
-    if j < 0 or body[j] != "=":
-        return None
-    j -= 1
-    while j >= 0 and body[j] in " \t\r\n":
-        j -= 1
-    end = j + 1
-    while j >= 0 and (body[j].isalnum() or body[j] in "_:.@"):
-        j -= 1
-    return body[j + 1 : end] or None
-
-
 def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
     """Return (label, open_brace_index) of the innermost block enclosing *pos*.
 
@@ -322,7 +301,7 @@ def _enclosing_block_label(body: str, pos: int) -> Tuple[Optional[str], int]:
             depth += 1
         elif c == "{":
             if depth == 0:
-                return _label_before_brace(body, i), i
+                return label_before_brace(body, i), i
             depth -= 1
         i -= 1
     return None, -1
@@ -942,6 +921,9 @@ class _FocusFile:
     def relative_positions(self) -> List[Tuple[str, Optional[str], str, int]]:
         return self._cached("focus_tree.relative_positions", _scan_relative_positions)
 
+    def layout(self) -> Dict:
+        return self._cached("focus_tree.layout.v1", _scan_focus_layout)
+
     def missing_search_filters(self) -> List[Tuple[str, str, int]]:
         return self._cached(
             "focus_tree.search_filters.v1", _scan_missing_search_filters
@@ -1231,8 +1213,8 @@ _FOCUS_DEFAULT_WRITE_RE = re.compile(
 _AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
 _ALWAYS_NO_BODY_RE = re.compile(r"\s*always\s*=\s*no\s*")
 _RE_BYPASS_BLOCK = re.compile(r"\bbypass\s*=\s*\{")
-_RE_EMPTY_MUTEX = _keyword_re("mutually_exclusive", r"\s*=\s*\{\s*\}")
-_RE_EMPTY_AVAILABLE = _keyword_re("available", r"\s*=\s*\{\s*\}")
+_RE_EMPTY_MUTEX = word_start_re("mutually_exclusive", r"\s*=\s*\{\s*\}")
+_RE_EMPTY_AVAILABLE = word_start_re("available", r"\s*=\s*\{\s*\}")
 
 
 def _scan_focus_structural(source: _FocusFile) -> List[Tuple[str, str, str, int]]:
@@ -1280,6 +1262,103 @@ def _scan_relative_positions(
         else:
             out.append((block.focus_id, None, source.filepath, block.line))
     return out
+
+
+def _branch_terms(body: str) -> Set[str]:
+    terms = set()
+    for key, scalar, nested in iter_statements(body):
+        if nested is not None:
+            terms |= _branch_terms(nested)
+        elif scalar:
+            terms.add(f"{key}={scalar}")
+    return terms
+
+
+def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
+    record: Dict[str, Any] = {
+        "id": None,
+        "file": filepath,
+        "line": block.line,
+        "x": None,
+        "y": None,
+        "relative": None,
+        "allow_branch": False,
+        "branch_terms": [],
+        "offset": False,
+        "prerequisites": [],
+    }
+    for key, scalar, body in iter_statements(block.body):
+        if key == "id":
+            record["id"] = scalar
+        elif key in ("x", "y"):
+            record[key] = (
+                Decimal(scalar)
+                if scalar and re.fullmatch(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)", scalar)
+                else None
+            )
+        elif key == "relative_position_id":
+            record["relative"] = scalar
+        elif key in ("allow_branch", "offset"):
+            record[key] = True
+            if key == "allow_branch" and body:
+                record["branch_terms"] = sorted(_branch_terms(body))
+        elif key == "prerequisite" and body is not None:
+            record["prerequisites"].append(
+                [
+                    value
+                    for name, value, _ in iter_statements(body)
+                    if name == "focus" and value
+                ]
+            )
+    return record
+
+
+def _scan_focus_layout(source: _FocusFile) -> Dict:
+    filepath = os.path.relpath(source.filepath, source.mod_path).replace(os.sep, "/")
+    result: Dict[str, Any] = {"filepath": filepath, "trees": [], "shared": []}
+    ranges = []
+    end = 0
+    for match in _FOCUS_TREE_START.finditer(source.text):
+        opening = source.text.find("{", match.start())
+        if match.start() < end or opening not in source.pairs:
+            continue
+        body, end = _block_at(source.text, match.start(), source.pairs)
+        if end == -1:
+            continue
+        line = source.text.count("\n", 0, match.start()) + 1
+        tree: Dict[str, Any] = {
+            "id": f"tree at line {line}",
+            "line": line,
+            "focuses": [],
+            "shared_refs": [],
+        }
+        for key, scalar, nested in iter_statements(body):
+            if key == "id" and scalar:
+                tree["id"] = scalar
+            elif key == "shared_focus":
+                refs = [scalar] if scalar else re.findall(r"[\w.-]+", nested or "")
+                tree["shared_refs"].extend(refs)
+        result["trees"].append(tree)
+        ranges.append((match.start(), end, tree))
+
+    tree_index = 0
+    for block in source.blocks:
+        if source.text.find("{", block.start) not in source.pairs:
+            continue
+        record = _layout_record(block, filepath)
+        if not record["id"]:
+            continue
+        while tree_index < len(ranges) and block.start >= ranges[tree_index][1]:
+            tree_index += 1
+        if (
+            tree_index < len(ranges)
+            and ranges[tree_index][0] < block.start < ranges[tree_index][1]
+        ):
+            if block.end <= ranges[tree_index][1]:
+                ranges[tree_index][2]["focuses"].append(record)
+        elif source.text.startswith(("shared_focus", "joint_focus"), block.start):
+            result["shared"].append(record)
+    return result
 
 
 def _parse_focus_text(source: _FocusFile) -> Dict:
@@ -1391,6 +1470,7 @@ def _scan_focus_file(
     indexes = {
         "parse": source.parse(),
         "relative_positions": source.relative_positions(),
+        "layout": source.layout(),
     }
     if not reportable:
         return indexes
@@ -1421,9 +1501,19 @@ class Validator(BaseValidator):
         self._scans: Optional[List[Dict[str, Any]]] = None
         self._registry: Optional[_FocusRegistry] = None
         self._staged_paths: Optional[Set[str]] = None
+        self.layout_counts: Dict[str, int] = {}
         self._scripted_effect_data: Optional[
             Tuple[Dict[str, FrozenSet[str]], FrozenSet[str]]
         ] = None
+        if self.staged_only:
+            self.staged_files = (
+                get_staged_files(
+                    self.mod_path,
+                    extensions=self.STAGED_EXTENSIONS,
+                    include_missing=True,
+                )
+                or []
+            )
 
     # -----------------------------------------------------------------------
     # Data collection
@@ -1466,7 +1556,7 @@ class Validator(BaseValidator):
             return self._scans
         files = self._collect_files(["common/national_focus/*.txt"], ignore_staged=True)
         reportable = [self._is_reportable(f) for f in files]
-        if not any(reportable):
+        if not any(reportable) and not (self.staged_only and self._get_staged_paths()):
             self._scans = []
             return self._scans
         staffable, money = self._scripted_effect_data_for_guards()
@@ -2078,7 +2168,7 @@ class Validator(BaseValidator):
         """Flag focuses that fire an event to another nation without a
         TT_IF_THEY_ACCEPT tooltip.
 
-        AGENTS.md "Cross-country event tooltips": when a completion_reward fires
+        event-reference.md "Cross-country events": when a completion_reward fires
         a country_event into a foreign scope, the player should see the outcome
         via custom_effect_tooltip = TT_IF_THEY_ACCEPT. Reported per file as a
         WARNING — the presence of the tooltip anywhere in the reward clears it,
@@ -2117,7 +2207,7 @@ class Validator(BaseValidator):
         """Flag a literal PP loss (add_political_power = -N) inside a focus's
         completion_reward.
 
-        Focus time is the cost (AGENTS.md) — a PP malus on completion is a
+        Focus time is the cost — a PP malus on completion is a
         balance choice needing per-site judgment, so this reports at WARNING
         only. Scope is the literal-negative-number pattern: variable forms
         and timed lose-PP ideas are not detected. effect_tooltip previews of
@@ -2415,10 +2505,55 @@ class Validator(BaseValidator):
             category="relative-position-missing-target",
         )
 
+    def validate_focus_overlap(self):
+        self._log_section("Checking static focus coordinates...")
+        reportable = None
+        if self.staged_only:
+            reportable = {
+                path.replace(os.sep, "/") for path in self._get_staged_paths()
+            }
+            if any(
+                not os.path.isfile(os.path.join(self.mod_path, path))
+                for path in reportable
+            ):
+                reportable = None
+        layout = analyze_layout(
+            [scan["layout"] for scan in self._focus_scans()], reportable
+        )
+        self.layout_counts = layout["counts"]
+        self.log(
+            "Focus layout counts: "
+            + ", ".join(
+                f"{key}={value}" for key, value in sorted(self.layout_counts.items())
+            )
+        )
+        self._report(
+            layout["findings"],
+            "No static focus overlaps",
+            "Focuses less than two columns apart on the same row:",
+            Severity.WARNING,
+            category="focus-coordinate-overlap",
+        )
+        self._report(
+            layout["unresolved"],
+            "All focus coordinates resolved",
+            "Focus coordinates could not be resolved safely:",
+            Severity.WARNING,
+            category="focus-coordinate-unresolved",
+        )
+        self._report(
+            layout["branch_leaks"],
+            "No focus allow_branch shows a hidden branch",
+            "Focuses whose own allow_branch shows them under a hidden ancestor:",
+            Severity.WARNING,
+            category="focus-allow-branch-leak",
+        )
+
     def run_validations(self):
         self.validate_duplicate_focus_ids()
         self.validate_missing_prerequisite_targets()
         self.validate_relative_position_targets()
+        self.validate_focus_overlap()
         self.validate_orphan_focuses()
         self.validate_dependency_cycles()
         self.validate_missing_loc_keys()

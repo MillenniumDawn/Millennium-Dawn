@@ -404,7 +404,7 @@ quarterly_inflation_calculation = {
 		neutral_cb_rate = {
 			value = policy_inflation_reference
 			add = natural_real_interest_rate
-			clamp = { min = 1 max = 20 }
+			clamp = { min = 1 max = 30 }
 		}
 	}
 	set_temp_variable = {
@@ -423,27 +423,17 @@ quarterly_inflation_calculation = {
 		}
 	}
 	set_temp_variable = {
-		real_policy_gap = {
-			value = cb_policy_rate
-			divide = 100
-			subtract = inflation_rate_var
-		}
-	}
-	set_temp_variable = {
-		monetary_policy_credibility = {
-			value = real_policy_gap
-			add = 0.01
-			divide = 0.05
-			clamp = { min = 0 max = 1 }
-		}
-	}
-	set_temp_variable = {
 		expectations_vulnerability = {
-			value = 1
-			subtract = { value = monetary_policy_credibility multiply = 0.6 }
-			add = { value = quarterly_currency_depreciation multiply = 2.5 clamp = { min = 0 max = 0.25 } }
-			add = { value = excess_deficit_ratio multiply = 5 clamp = { min = 0 max = 0.5 } }
-			clamp = { min = 0.25 max = 1.5 }
+			value = 0.9
+			# Each policy rate point cuts a fixed share at any inflation level; an excess deficit halves it at most.
+			subtract = {
+				value = 1
+				subtract = { value = excess_deficit_ratio multiply = 5 clamp = { min = 0 max = 0.5 } }
+				multiply = cb_policy_rate
+				multiply = 0.025
+			}
+			# Below 1 so inflation decays once its drivers stop; at 1 or above it feeds itself.
+			clamp = { min = 0.25 max = 0.9 }
 		}
 	}
 	set_temp_variable = {
@@ -522,6 +512,17 @@ quarterly_inflation_calculation = {
 			add = inflation_expectations_pressure
 		}
 	}
+	# Only a positive quarter is scaled, so inflation_gain_multiplier_modifier leaves deflation alone.
+	if = { limit = { check_variable = { inflation_rate_adjuster > 0 } }
+		multiply_temp_variable = {
+			var = inflation_rate_adjuster
+			value = {
+				value = 1
+				add = modifier@inflation_gain_multiplier_modifier
+				max = 0
+			}
+		}
+	}
 	set_variable = { print_money_inflation_pressure = 0 }
 	set_variable = { inflation_currency_strength_start = currency_strength }
 
@@ -586,12 +587,29 @@ quarterly_inflation_calculation = {
 			neutral_cb_rate = {
 				value = policy_inflation_reference
 				add = natural_real_interest_rate
-				clamp = { min = 1 max = 20 }
+				clamp = { min = 1 max = 30 }
 			}
 		}
 		set_temp_variable = { neutral_cb_rate_lower = { value = neutral_cb_rate subtract = 0.5 } }
 		set_temp_variable = { neutral_cb_rate_upper = { value = neutral_cb_rate add = 0.5 } }
+		# Move faster when far from neutral, or the rate takes years to follow inflation up or down.
+		set_temp_variable = { neutral_cb_rate_far_below = { value = neutral_cb_rate subtract = 5 } }
+		set_temp_variable = { neutral_cb_rate_far_above = { value = neutral_cb_rate add = 5 } }
+		# The AI stops hiking at 20, or the rate's debt interest outweighs the inflation cut. Players can go to 30.
 		if = {
+			limit = {
+				check_variable = { cb_policy_rate < neutral_cb_rate_far_below }
+				check_variable = { cb_policy_rate < 18 }
+			}
+			add_to_variable = { cb_policy_rate = 3 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+		else_if = {
+			limit = { check_variable = { cb_policy_rate > neutral_cb_rate_far_above } }
+			subtract_from_variable = { cb_policy_rate = 3 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+		}
+		else_if = {
 			limit = {
 				check_variable = { cb_policy_rate < neutral_cb_rate_lower }
 				check_variable = { cb_policy_rate < 20 }

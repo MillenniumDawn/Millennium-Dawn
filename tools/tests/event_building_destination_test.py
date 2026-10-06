@@ -149,9 +149,12 @@ def test_double_farm_conversion_requires_two_convertible_farms():
     assert "agriculture_district > 1" in single_state
     assert "industrial_complex < 49" in single_state
     multiple_states = _block(alternatives, "collection_size")
-    assert "input = game:scope" in multiple_states
+    collection = _block(multiple_states, "input")
+    assert ("input", "game:scope", None) in list(iter_statements(collection))
     assert "value > 2" in multiple_states
-    operators = _block(multiple_states, "operators")
+    assert "agriculture_district_total" not in alternatives
+    assert "operators" not in [key for key, _, _ in iter_statements(multiple_states)]
+    operators = _block(collection, "operators")
     assert "owned_states" in operators
     eligible = _block(operators, "limit")
     assert "is_controlled_by = OWNER" in eligible
