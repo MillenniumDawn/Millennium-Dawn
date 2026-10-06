@@ -263,7 +263,7 @@ Check it first when the AI never federates.
 
 ## Known traps and accepted behavior
 
-- An IBR or ANZ integrate timer that finishes after `EFS_update_flag` has fired adds
+- An IBR integrate timer that finishes after `EFS_update_flag` has fired adds
   `reshaping_national_identity` on top of sentinel 1000. The AI keeps it, because the
   ratchet blocks the `update_flag` that would remove it.
 - Player-side clobber: `SCA`, `IBR`, `HBL`, `NORDEM`, `AUSHUN`, and `AVG` `update_flag`
