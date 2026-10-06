@@ -92,7 +92,6 @@ def test_shared_variable_worker_handles_skipped_missing_and_unselected_files(
         frozenset(),
         {},
         {},
-        {},
         frozenset(),
     )
     assert variables._scan_shared_file(args) == variables._EMPTY_SHARED_RESULT

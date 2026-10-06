@@ -125,6 +125,10 @@ def test_ideas_run_passes_the_same_flags_as_the_ci_batch():
     assert spec.args == ("--missing-name-loc",)
 
 
+def test_math_expressions_run_passes_the_clamp_bounds_check():
+    assert runner._VALIDATOR_EXTRA_FLAGS["math-expressions"] == ["--clamp-bounds"]
+
+
 def test_oob_units_run_does_not_enable_missing_equipment_factor():
     assert "oob-units" not in runner._VALIDATOR_EXTRA_FLAGS
 

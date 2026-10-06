@@ -36,6 +36,9 @@ strict (`tag = X`) ownership lifts scopes; `original_tag = X` gates admit
 breakaways, so they only lose their always-true `original_tag` re-checks.
 `joint_focus` blocks are never scanned (rewards fan out to every member).
 
+An `OR` that lists the same clause twice is flagged as well. The repeat is
+dead weight, or a copy-paste where one copy was meant to differ.
+
 Output is WARNING-only.
 """
 
@@ -151,6 +154,15 @@ def _keyword_block_re(*keywords: str) -> re.Pattern[str]:
     boundary."""
     alternatives = "|".join(rf"{keyword}(?<!\w{keyword})" for keyword in keywords)
     return re.compile(rf"({alternatives})\s*=\s*\{{")
+
+
+def _iter_block_bodies(src: _Script, block_re: re.Pattern[str]):
+    """Yield (match, body) for each block *block_re* opens that closes."""
+    text = src.text
+    for m in block_re.finditer(text):
+        end = src.block_end(m.end() - 1, len(text))
+        if end != -1:
+            yield m, text[m.end() : end - 1]
 
 
 # Magic scopes that resolve to a single deterministic target. Dotted chains of
@@ -453,11 +465,7 @@ def _find_government_match(src: _Script):
     if "has_government" not in text:
         return []
     results = []
-    for m in _OR_BLOCK_RE.finditer(text):
-        end = src.block_end(m.end() - 1, len(text))
-        if end == -1:
-            continue
-        body = text[m.end() : end - 1]
+    for m, body in _iter_block_bodies(src, _OR_BLOCK_RE):
         clauses = []
         spans = []
         pos = 0
@@ -512,12 +520,12 @@ _CHILD_KEY_RE = re.compile(r"[\w.:^@\[\]-]+\s*(?:>=|<=|=|>|<)\s*")
 _VALUE_RE = re.compile(r"\S+")
 
 
-def _count_children(body: str) -> int:
-    """Count direct depth-1 constructs in a block body: a `key = { ... }`
-    block (however large) and a bare `key = value` scalar each count as one
-    child. Stops counting on anything unparseable, so malformed input
-    undercounts rather than false-flagging."""
-    count = 0
+def _iter_children(body: str):
+    """Yield the (start, end) span of each direct depth-1 construct in a block
+    body: a `key = { ... }` block (however large) or a bare `key = value`
+    scalar. Stops on anything unparseable, so malformed input yields fewer
+    children rather than false-flagging; a child whose value does not parse is
+    still yielded, running to the end of the body."""
     pos = 0
     n = len(body)
     while pos < n:
@@ -528,24 +536,26 @@ def _count_children(body: str) -> int:
         m = _CHILD_KEY_RE.match(body, pos)
         if not m:
             break
-        count += 1
+        start = pos
         pos = m.end()
         if pos < n and body[pos] == "{":
             _, end = extract_block_from_text(body, pos)
-            if end == -1:
-                break
-            pos = end
         elif pos < n and body[pos] == '"':
             close = body.find('"', pos + 1)
-            if close == -1:
-                break
-            pos = close + 1
+            end = -1 if close == -1 else close + 1
         else:
             vm = _VALUE_RE.match(body, pos)
-            if not vm:
-                break
-            pos = vm.end()
-    return count
+            end = vm.end() if vm else -1
+        if end == -1:
+            yield start, n
+            break
+        yield start, end
+        pos = end
+
+
+def _count_children(body: str) -> int:
+    """Count direct depth-1 constructs in a block body."""
+    return sum(1 for _ in _iter_children(body))
 
 
 def _find_bare_not(src: _Script):
@@ -554,15 +564,27 @@ def _find_bare_not(src: _Script):
     is unambiguous and not flagged. finditer walks the whole file, so a NOT
     nested inside another block (OR, if, a second NOT) is found independently
     of its container."""
-    text = src.text
     results = []
-    for m in _NOT_RE.finditer(text):
-        end = src.block_end(m.end() - 1, len(text))
-        if end == -1:
-            continue
-        count = _count_children(text[m.end() : end - 1])
+    for m, body in _iter_block_bodies(src, _NOT_RE):
+        count = _count_children(body)
         if count >= 2:
             results.append((src.line(m.start()), count))
+    return results
+
+
+def _find_duplicate_or_clauses(src: _Script):
+    """Return (line, clause) for each direct child of an `OR` block that
+    repeats an earlier sibling. A repeated clause never changes the result, so
+    it is dead weight or a copy-paste where one copy was meant to differ
+    (SyriaFocus.80 listed communism twice and left neutrality out)."""
+    results = []
+    for m, body in _iter_block_bodies(src, _OR_BLOCK_RE):
+        seen = set()
+        for start, child_end in _iter_children(body):
+            clause = " ".join(body[start:child_end].split())
+            if clause in seen:
+                results.append((src.line(m.end() + start), clause))
+            seen.add(clause)
     return results
 
 
@@ -1036,10 +1058,11 @@ def _scan_file(src: _Script):
 
 
 def _scan_bare_not(src: _Script):
-    """Return [(message, line)] for the bare multi-child NOT check. Separate
-    from _scan_file: NOT lives in trigger contexts across all of common/ (the
-    founding bug was in an ai_strategy allowed block), so this check scans
-    wider than the effect-bearing files the other detectors target."""
+    """Return [(message, line)] for the bare multi-child NOT and duplicate OR
+    clause checks. Separate from _scan_file: NOT and OR live in trigger
+    contexts across all of common/ (the founding bug was in an ai_strategy
+    allowed block), so these checks scan wider than the effect-bearing files
+    the other detectors target."""
     findings = []
     for line, count in _find_bare_not(src):
         findings.append(
@@ -1047,6 +1070,15 @@ def _scan_bare_not(src: _Script):
                 f"NOT with {count} children is ambiguous (semantics disputed "
                 "NAND vs NOR); write `NOT = { OR = { ... } }` or one NOT "
                 "per trigger",
+                line,
+            )
+        )
+    for line, clause in _find_duplicate_or_clauses(src):
+        shown = clause if len(clause) <= 80 else clause[:77] + "..."
+        findings.append(
+            (
+                f"OR repeats the clause `{shown}`; remove the duplicate, or fix "
+                "it if one copy was meant to differ",
                 line,
             )
         )
