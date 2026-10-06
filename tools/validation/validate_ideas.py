@@ -1021,41 +1021,68 @@ class Validator(BaseValidator):
         )
 
     def validate_missing_localisation(
-        self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
+        self,
+        defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]],
+        ideas_by_file: Dict[str, List[str]],
     ):
+        """Flag ideas whose name key has no English loc, so tooltips show the raw id.
+
+        Hidden categories never display. Character idea_tokens render from the
+        character's own name and are not in `ideas_by_file`. Missing `_desc`
+        keys are reported only under --missing-loc.
+        """
         self._log_section("Checking for ideas with missing localisation keys...")
+        if not ideas_by_file:
+            self.log("  No idea files in scope, skipping the loc index")
+            return
 
         from validate_localisation import get_all_loc_keys
 
-        loc_dict, _ = get_all_loc_keys(self.mod_path, lowercase=False)
-        loc_keys: frozenset = frozenset(loc_dict.keys())
-        self.log(
-            f"  Checking {len(defined_ideas)} ideas against {len(loc_keys)} loc keys..."
+        loc_keys, _ = get_all_loc_keys(self.mod_path, lowercase=False)
+        hidden_cats = frozenset(
+            c["name"] for c in get_all_idea_categories(self.mod_path) if c["hidden"]
         )
 
-        grouped: Dict[str, List[str]] = defaultdict(list)
-
-        for idea_name in sorted(defined_ideas):
-            _cat, name_override, _pic = defined_ideas[idea_name]
-            primary_key = name_override if name_override else idea_name
-            desc_key = primary_key + "_desc"
-
-            missing: List[str] = []
-            if primary_key not in loc_keys:
-                missing.append(primary_key)
-            if desc_key not in loc_keys:
-                missing.append(desc_key)
-
+        findings: List[Issue] = []
+        for filepath in sorted(ideas_by_file):
+            missing: List[Tuple[str, str, str]] = []
+            for idea_name in ideas_by_file[filepath]:
+                cat, name_override, _pic = defined_ideas[idea_name]
+                if cat in hidden_cats:
+                    continue
+                keys = [name_override or idea_name]
+                if self.missing_loc:
+                    keys.append(f"{keys[0]}_desc")
+                missing.extend(
+                    (idea_name, cat, key) for key in keys if key not in loc_keys
+                )
             if not missing:
                 continue
 
-            file_key = _cat
-            grouped[file_key].append(f"{idea_name}: {', '.join(missing)}")
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            def_lines: Dict[str, int] = {}
+            for lineno, line in enumerate(text.split("\n"), 1):
+                m = _IDEA_DEF_LINE.match(line)
+                if m:
+                    def_lines.setdefault(m.group(1), lineno)
+            rel = os.path.relpath(filepath, self.mod_path)
+            for idea_name, cat, key in missing:
+                findings.append(
+                    Issue(
+                        severity=Severity.WARNING,
+                        category="missing-idea-localisation",
+                        message=f"'{idea_name}' ({cat}) is missing loc key '{key}'",
+                        file=rel,
+                        line=def_lines.get(idea_name, 0),
+                    )
+                )
 
-        self._report_grouped(
-            grouped,
+        self._report(
+            findings,
             "✓ All idea localisation keys are defined",
-            "Ideas missing localisation (grouped by category):",
+            "Ideas missing localisation:",
             severity=Severity.WARNING,
             category="missing-idea-localisation",
         )
@@ -1406,29 +1433,24 @@ class Validator(BaseValidator):
             else:
                 self.log("  No staged idea files — skipping quality checks")
             self.validate_undefined_idea_refs(defined_ideas)
-            ideas_for_consolidation = staged_ideas_by_file
+            ideas_in_scope = staged_ideas_by_file
         else:
             self.validate_undefined_idea_refs(defined_ideas)
             self.validate_idea_quality(issues_by_file)
-            ideas_for_consolidation = ideas_by_file
+            ideas_in_scope = ideas_by_file
 
         self.validate_category_icon_frames()
         self.validate_equipment_bonus_stack()
 
         if self.suggest_consolidation:
-            if ideas_for_consolidation:
-                self.validate_loc_consolidation(defined_ideas, ideas_for_consolidation)
+            if ideas_in_scope:
+                self.validate_loc_consolidation(defined_ideas, ideas_in_scope)
         else:
             self._log_section(
                 "Skipping loc-consolidation suggestions (pass --suggest-consolidation to enable)"
             )
 
-        if self.missing_loc:
-            self.validate_missing_localisation(defined_ideas)
-        else:
-            self._log_section(
-                "Skipping missing localisation check (pass --missing-loc to enable)"
-            )
+        self.validate_missing_localisation(defined_ideas, ideas_in_scope)
 
         self.validate_missing_icons(defined_ideas)
 
@@ -1445,7 +1467,7 @@ def _add_extra_args(parser):
         "--missing-loc",
         action="store_true",
         dest="missing_loc",
-        help="Enable the missing localisation check (noisy until backlog is cleared)",
+        help="Also report ideas missing a _desc loc key (noisy until backlog is cleared)",
     )
     parser.add_argument(
         "--unused-ideas",
