@@ -365,11 +365,22 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   config as `<file>:<template name>`. Staged mode checks only staged template files, so a `common/units/`
   flag change surfaces on the full CI run.
 - `template-slot` (ERROR): a `division_template` skips a row or column, puts two units
-  on one slot, or places a unit off the designer grid. The designer hides the unit and
-  locks the template for editing. `regimental_support` may skip columns, but each of its
-  columns needs the same `regiments` column. Grid sizes are in `_TEMPLATE_GRIDS`; update
-  them when the `MAX_DIVISION_*` or `MAX_REGIMENTAL_SUPPORT_*` defines change. Not
-  checked: `REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS`, and Army HQ template sizes.
+  on one slot, places a unit off the designer grid, or has a unit with no readable
+  `x`/`y`. The designer hides the unit and locks the template for editing.
+  `regimental_support` may skip columns, but each of its columns needs the same
+  `regiments` column, and each row needs the battalions
+  `REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS` sets for it.
+- `template-locked-row` (WARNING): a `regiments` unit sits on a row past
+  `MIN_DIVISION_BRIGADE_HEIGHT`. Those rows stay locked until the country has
+  `additional_brigade_column_size`. One finding per template. A tag's starting
+  subdoctrines (`set_sub_doctrine` at the top level of its `history/countries` file)
+  open rows for its `history/units/TAG_*` files and for templates scoped to it.
+  Mastery rewards and ideas are not counted. Tracked in #5451.
+- Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
+  to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
+  sizes, `divisional = no` or `regimental = no` units in the wrong block, and
+  `allowed_battalion_groups`. Staged mode checks only staged template files, so a
+  define or doctrine change surfaces on the full CI run.
 - New source directories: `config_drift_test.py` derives the routes from the
   `_*_SOURCE_PATTERNS` lists and fails until every route is updated.
 
