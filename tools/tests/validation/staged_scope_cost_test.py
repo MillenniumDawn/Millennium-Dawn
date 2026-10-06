@@ -238,7 +238,7 @@ def test_variables_staged_localisation_builds_no_script_index(
         'l_english:\n a:0 "[token:TST_registered]"\n b:0 "[token:TST_stray]"\n',
     )
     validator = _staged(V.Validator(str(tmp_path), use_colors=False, workers=1), yml)
-    _forbid(monkeypatch, V, "collect_clamp_ranges", "build_money_consumer_map")
+    _forbid(monkeypatch, V, "collect_clamp_ranges")
     _forbid(
         monkeypatch,
         validator,
@@ -313,14 +313,6 @@ def test_variables_staged_decision_still_reads_every_repo_index(tmp_path, write_
             " to the player; add tooltip = political_power_factor_tt",
             rel,
             14,
-        ),
-        (
-            "orphan-money-setter",
-            "set_temp_variable treasury_change is never consumed — no"
-            " modify_treasury_effect (or wrapper) follows in the same effect"
-            " block, so the money never moves",
-            rel,
-            19,
         ),
         (
             "unlocalised-available-flag",

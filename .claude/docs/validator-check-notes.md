@@ -390,11 +390,35 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_scripted_params.py
 
+- Contracts come from the `# Parameters:` block above a scripted effect, plus the
+  `HARDCODED_CONTRACTS` table in the validator. Declare a parameter in the block to
+  have it checked. An effect with neither is never checked itself.
+- `orphan_param_setter_test.py` pins the four money and party popularity blocks. A
+  blank line inside a block, or a renamed header, silently drops the contract.
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
-- A staged change under `common/scripted_effects/`, `common/country_tags/`, or
-  `common/country_tag_aliases/` rescans every caller.
+- `missing-required-param` (ERROR): a call with a required parameter not set first.
+  `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
+  `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
+- `orphan-param-setter` (ERROR): a `set_temp_variable`, `add_to_temp_variable`, or
+  `subtract_from_temp_variable` of a declared parameter, required or optional, that
+  nothing uses afterwards in the same effect block, or that is overwritten at the same
+  depth before its first use. The `var = NAME` long form counts.
+  - A use is a call to any scripted effect or trigger that reads the parameter before
+    writing it, contracted or not, or a direct read. `multiply_temp_variable` and the
+    other statements that only change it are not uses. A write nested in a branch of
+    the callee is ignored, since it may not run.
+  - `move_party_popularity` writes `party_popularity_increase` itself, so it does not
+    consume a caller's value.
+  - Not reported: a reset to `0`, a setter in a scripted effect's own body, and a
+    setter outside the blocks in `EFFECT_BLOCK_KEYWORDS`, `effect_tooltip`, and
+    scripted GUI `*_click`.
+  - A setter inside `effect_tooltip` must be used inside it. A runtime setter that only
+    feeds a later `effect_tooltip` preview is accepted.
+  - Known gap: a use in a sibling `if` or `else` arm counts.
+- A staged change under `common/scripted_effects/`, `common/scripted_triggers/`,
+  `common/country_tags/`, or `common/country_tag_aliases/` rescans every caller.
 - See the [layout policy](../../tools/validation/README.md#scripted-effect-call-layout).
 
 ## validate_style.py and check_common_mistakes.py
@@ -445,12 +469,6 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   English entry. `dynamic-modifier-tooltip-missing` (ERROR): an add or subtract on a
   variable backing a dynamic modifier with no `tooltip`, in blocks the engine renders.
   `hidden_effect` suppresses both.
-- `orphan-money-setter` (WARNING): a `set_temp_variable` of a money-system input with
-  no consumer call after it, or one overwritten at the same depth before the call,
-  never moves the money. Also tracks `party_popularity_increase`, consumed by
-  `change_relative_party_popularity`. Consumers include wrapper effects, and the
-  category name is unchanged to keep baselines comparable. Scans focuses, decisions,
-  ideas (`on_add`, `on_remove`), on_actions, and events.
 
 ## Other tools
 
