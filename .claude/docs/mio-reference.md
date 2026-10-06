@@ -1,9 +1,5 @@
 # MIO Reference
 
-Military-Industrial Organization conventions, structure, examples, and valid modifier keys.
-
-## Example MIO
-
 ```
 CHI_norinco_manufacturer = {
  allowed = { original_tag = CHI }
@@ -33,131 +29,83 @@ CHI_norinco_manufacturer = {
 }
 ```
 
-## Key Points
+## Rules
 
-- Name MIOs `TAG_organization_name`
-- Always include `allowed = { original_tag = TAG }` to restrict to the correct country
-- `task_capacity` scales with the org's breadth and nation size, not a formula. Most MIOs omit it — 5 is the MD default (`DEFAULT_INITIAL_TASK_CAPACITY`). When set: 2-3 for small/niche orgs, ~10 for major-nation manufacturers (USA/SOV/FRA/ENG), 18-25 for sprawling multi-category giants (CHI Norinco covers 8 equipment types at 18)
-- Equipment types must reference valid `equipment_type` categories
-- Trait x positions must not exceed 9. Negative x is valid; y is not capped.
-  Use `relative_position_id` for branch internals.
-- An **organic network is the default**: branches interleave and cross-link, paths split and reconverge, and cross-branch parents are encouraged (a parent from another branch is fine as long as it sits at a lower `y` than the child). Produce a clean raster/column layout only when explicitly requested.
-- A child sits below its parent; vertical spacing may vary for an organic layout, but a child is never on or above its parent's row (`validate_mios.py` reports violations as `trait-geometry-parent-row`)
-- Mutually exclusive traits sit on the same row (same `y` value), placed side by side (`trait-geometry-mutex-row` when they don't)
-- A parent's connecting line must reach its child without crossing sibling traits on the same row. If it would cross, reposition the child or nudge with `relative_position_id`.
-- Children that should inherit from either of two mutually exclusive parents must use `any_parent` (not `parent`) — otherwise picking the "wrong" parent locks the child out (`trait-geometry-mutex-parents`); both geometry checks resolve `relative_position_id` chains and tokens defined in `include`d orgs, and stay silent when a position or token cannot be resolved statically
-- Spread `organization_modifier` / `production_bonus` traits across tree depth (near roots, mid-tree, and leaves) rather than clustering them in the bottom rows. Full organic-layout playbook lives in the `mio-builder` skill.
-- Name the initial trait `{org_token}_trait` (e.g. `CHI_norinco_trait`)
-- `on_complete` always needs `on_complete = { expenditure_for_mio_upgrade = yes }`, unless you add custom effects (idea switch, give a factory, etc.)
-- Localisation goes in the country-specific loc file (`localisation/english/MD_focus_TAG`)
+- Name MIOs `TAG_organization_name` and the initial trait `{org_token}_trait`.
+- Always include `allowed = { original_tag = TAG }`.
+- `task_capacity` defaults to 5 and most MIOs omit it. Set 2 or 3 for niche orgs, about
+  10 for major-nation manufacturers, and 18 to 25 for multi-category giants.
+- `on_complete = { expenditure_for_mio_upgrade = yes }` on every trait, unless it has
+  custom effects.
+- Localisation goes in the country's `MD_focus_TAG` loc file.
 
-## Modifier Keys
+Trait layout:
 
-Valid modifier keys per block type. Use to verify which keys are legal for a given equipment category.
+- An organic network is the default: branches interleave, split, and reconverge, and
+  cross-branch parents are fine. Produce a clean column layout only when asked.
+- Trait x must not exceed 9. Negative x is valid. y is not capped. Use
+  `relative_position_id` inside a branch.
+- A child is never on or above its parent's row.
+- Mutually exclusive traits sit side by side on the same row.
+- A parent's line must reach its child without crossing a sibling on the same row.
+- A child of two mutually exclusive parents uses `any_parent`, not `parent`, or the
+  wrong pick locks it out.
+- Spread `organization_modifier` and `production_bonus` traits across tree depth.
 
-### Organisation modifiers
+## Modifier keys
 
-Used inside `organization_modifier = { ... }` blocks.
+### `organization_modifier`
 
-- `military_industrial_organization_design_team_assign_cost` — Cost to assign an MIO in the Tank/Aircraft/Ship designer. Example: `= -0.2`
-- `military_industrial_organization_design_team_change_cost` — Cost to pull the latest changes from an already-assigned MIO for a given Tank/Aircraft/Ship design. Example: `= -0.1`
-- `military_industrial_organization_funds_gain` — Rate at which funds are obtained (funds level the MIO and unlock traits) — another levelling lever. Example: `= 0.2`
-- `military_industrial_organization_industrial_manufacturer_assign_cost` — Cost to assign a MIO to an industrial (non-designer) production line. Example: `= -0.2`
-- `military_industrial_organization_research_bonus` — Flat increase to the MIO's research bonus percentage: 20% plus "0.1" here gives 30%. Example: `= 0.1`
-- `military_industrial_organization_size_up_requirement` — Modifies funds needed per level, speeding trait unlocks; for MIOs with above-average trait counts. Example: `= -0.1`
-- `military_industrial_organization_task_capacity` — Flat increase to the number of tasks an MIO can be assigned in parallel. Example: `= 5`
+- `military_industrial_organization_design_team_assign_cost`: cost to assign the MIO in
+  a designer.
+- `military_industrial_organization_design_team_change_cost`: cost to pull the latest
+  changes into an assigned design.
+- `military_industrial_organization_funds_gain`: rate funds are gained.
+- `military_industrial_organization_industrial_manufacturer_assign_cost`: cost to assign
+  the MIO to a production line.
+- `military_industrial_organization_research_bonus`: flat addition to the research
+  bonus. 0.1 turns 20% into 30%.
+- `military_industrial_organization_size_up_requirement`: funds needed per level.
+- `military_industrial_organization_task_capacity`: flat extra parallel tasks.
 
-### Production modifiers
+### `production_bonus`
 
-Used inside `production_bonus = { ... }` blocks. Equipment types the key applies to in parentheses.
+- All equipment: `production_capacity_factor`, `production_cost_factor`,
+  `production_resource_need_factor`, `production_resource_penalty_factor`.
+- Not ships: `production_conversion_speed_factor`, `production_efficiency_cap_factor`,
+  `production_efficiency_gain_factor`. Dockyards have no production efficiency, so these
+  do nothing on a naval roster.
 
-Ships are built in dockyards, which have no production-efficiency mechanic, so the three `(non-naval)` keys below are wholly inert on a naval roster. `validate_mios.py` enforces it: `mio-production-bonus-naval` (ERROR, gates) when every equipment the trait reaches is a ship, `mio-production-bonus-partial-naval` (WARNING) when only part of it is. Use `production_capacity_factor`, `production_cost_factor`, `production_resource_need_factor` or `production_resource_penalty_factor` on a naval MIO instead.
+### `equipment_bonus`
 
-- `production_capacity_factor` (All) — Increases production output (items produced per day). Example: `= 0.1`
-- `production_conversion_speed_factor` (non-naval) — Speed at which equipment conversions are performed. Example: `= 0.5`
-- `production_cost_factor` (All) — Reduces production cost. Example: `= 0.05`
-- `production_efficiency_cap_factor` (non-naval) — Increase max production efficiency. Ships have no production efficiency cap. Example: `= 0.2`
-- `production_efficiency_gain_factor` (non-naval) — Increase the rate efficiency increases. Ships have no production efficiency cap. Example: `= 0.24`
-- `production_resource_need_factor` (All) — Change raw resources needed (Iron, Tungsten, Chromium, etc.). Example: `= -0.1`
-- `production_resource_penalty_factor` (All) — Modify the penalty from not having enough resources. Example: `= -0.1`
+A bonus is a percentage of the equipment's declared base stat. A key the target never
+declares, or declares as 0, does nothing. The lists say which keys the engine accepts,
+not which ones bite. Check the archetype in `common/units/equipment/` first.
 
-### Equipment modifiers
+- `AA_Equipment` declares only `reliability`, `build_cost_ic`, `supply_consumption`,
+  `lend_lease_cost`, and `air_attack`.
+- `infantry_weapons_type` declares `ap_attack = 0` and `armor_value = 0`.
+- `max_organisation` bites only on `cnc_equipment_type`, `convoy`, and ship hulls.
+- When a stat bites on part of the roster, narrow the trait with
+  `limit_to_equipment_type` or pick a stat every member declares. The limit also
+  restricts the trait's `production_bonus`.
 
-Used inside `equipment_bonus = { ... }` blocks.
+Keys:
 
-**A bonus is a percentage of the equipment's declared base stat, so a key the target equipment never declares — or declares as `0` — does nothing.** Parser-legal is not the same as effective: the tables below say which keys the engine accepts for a category, not which ones bite on a given archetype. `AA_Equipment` (MANPADS) declares only `reliability`, `build_cost_ic`, `supply_consumption`, `lend_lease_cost` and `air_attack`, so every other key is inert on it; `infantry_weapons_type` declares `ap_attack = 0` and `armor_value = 0`, which is no better than omitting them. Check the archetype in `common/units/equipment/` before picking a stat. `validate_mios.py` reports the dead ones as `mio-bonus-no-base-stat` / `mio-bonus-partial-base-stat`, both ERROR-severity and gating. When a stat only bites on part of the org's roster, narrow the trait with `limit_to_equipment_type` or swap the stat for one every member declares — but note the limit is trait-level, so it restricts the trait's `production_bonus` as well. `initial_trait` is exempt from the partial check, since an org has only one and cannot split it.
-
-#### All equipment
-
-| Key                | Effective on                                                            |
-| ------------------ | ----------------------------------------------------------------------- |
-| `build_cost_ic`    | everything                                                              |
-| `reliability`      | everything                                                              |
-| `max_organisation` | **only `cnc_equipment_type`, `convoy` and ship hulls** (see note below) |
-
-`max_organisation`: no land or air archetype declares it — it is inert on infantry, armour, artillery, MANPADS, ATGM, aircraft and missiles alike.
-
-#### Air and Missiles
-
-| Key                       |
-| ------------------------- |
-| `air_agility`             |
-| `air_attack`              |
-| `strategic_attack`        |
-| `air_defence`             |
-| `air_ground_attack`       |
-| `air_range`               |
-| `air_superiority`         |
-| `naval_strike_attack`     |
-| `naval_strike_targetting` |
-| `night_penalty`           |
-| `thrust`                  |
-
-#### Naval
-
-| Key                                          |
-| -------------------------------------------- |
-| `anti_air_attack`                            |
-| `armor_value`                                |
-| `carrier_size`                               |
-| `hg_armor_piercing`                          |
-| `hg_attack`                                  |
-| `lg_armor_piercing`                          |
-| `lg_attack`                                  |
-| `max_strength`                               |
-| `naval_heavy_gun_hit_chance_factor`          |
-| `naval_light_gun_hit_chance_factor`          |
-| `naval_range`                                |
-| `naval_speed`                                |
-| `naval_supremacy_factor`                     |
-| `naval_torpedo_damage_reduction_factor`      |
-| `naval_torpedo_enemy_critical_chance_factor` |
-| `naval_torpedo_hit_chance_factor`            |
-| `sub_attack`                                 |
-| `sub_visibility`                             |
-| `surface_visibility`                         |
-| `torpedo_attack`                             |
-
-#### Land (Material / Armor / Helicopter)
-
-| Key            | Notes                     |
-| -------------- | ------------------------- |
-| `ap_attack`    | Material/Armor/Helicopter |
-| `armor_value`  | Armor/Helicopter only     |
-| `breakthrough` | Material/Armor/Helicopter |
-| `defense`      | Material/Armor/Helicopter |
-| `hard_attack`  | Material/Armor/Helicopter |
-| `soft_attack`  | Material/Armor/Helicopter |
-| `hardness`     | Armor                     |
-
-#### Mixed / multi-category
-
-| Key                 | Equipment types               |
-| ------------------- | ----------------------------- |
-| `maximum_speed`     | Material/Armor/Helicopter/Air |
-| `mines_planting`    | Air/Naval                     |
-| `mines_sweeping`    | Air/Naval                     |
-| `sub_detection`     | CV Air/Naval                  |
-| `surface_detection` | CV Air/Naval                  |
-| `weight`            | Air/Armor                     |
-| `fuel_consumption`  | non-material                  |
+- All: `build_cost_ic`, `reliability`.
+- Air and missiles: `air_agility`, `air_attack`, `strategic_attack`, `air_defence`,
+  `air_ground_attack`, `air_range`, `air_superiority`, `naval_strike_attack`,
+  `naval_strike_targetting`, `night_penalty`, `thrust`.
+- Naval: `anti_air_attack`, `armor_value`, `carrier_size`, `hg_armor_piercing`,
+  `hg_attack`, `lg_armor_piercing`, `lg_attack`, `max_strength`,
+  `naval_heavy_gun_hit_chance_factor`, `naval_light_gun_hit_chance_factor`,
+  `naval_range`, `naval_speed`, `naval_supremacy_factor`,
+  `naval_torpedo_damage_reduction_factor`,
+  `naval_torpedo_enemy_critical_chance_factor`, `naval_torpedo_hit_chance_factor`,
+  `sub_attack`, `sub_visibility`, `surface_visibility`, `torpedo_attack`.
+- Land material, armor, and helicopters: `ap_attack`, `breakthrough`, `defense`,
+  `hard_attack`, `soft_attack`. Armor and helicopters also take `armor_value`. Armor
+  takes `hardness`.
+- Mixed: `maximum_speed` (land and air), `mines_planting` and `mines_sweeping` (air and
+  naval), `sub_detection` and `surface_detection` (carrier air and naval), `weight` (air
+  and armor), `fuel_consumption` (everything but material).

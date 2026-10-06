@@ -44,3 +44,5 @@ Check for these when reviewing localisation files:
 | `religous`                                             | `religious`                             |
 | `suzerainity`                                          | `suzerainty`                            |
 | `seperation` / `seperate` / `seperated`                | `separation` / `separate` / `separated` |
+| `actionns`                                             | `actions`                               |
+| `annexd`                                               | `annexed`                               |

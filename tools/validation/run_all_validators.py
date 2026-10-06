@@ -28,7 +28,6 @@ TOOLS_DIR = os.path.dirname(SCRIPTS_DIR)
 _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
     (
         "validate_tools.py",
-        "validate_staged.py",
         "run_all_validators.py",
         "validate_unused_textures.py",
     )
@@ -40,6 +39,7 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
 # off — its ~7.8k backlog would drown the report; run it on demand instead.
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
     "bonus-names": ["--name-not-owner-id"],
+    "decisions": ["--unannounced-categories"],
     "focus-tree": ["--missing-icons"],
     "variables": ["--redundant-focus-flags"],
 }
@@ -112,10 +112,7 @@ def launch_validator(
     # Capture stderr per validator so a crash leaves a traceback to read;
     # previously DEVNULL made crashes undiagnosable from the suite output.
     stderr_path = os.path.join(output_dir, f"{name}.stderr.log")
-    try:
-        stderr_fh = open(stderr_path, "w", encoding="utf-8", newline="")
-    except OSError:
-        raise
+    stderr_fh = open(stderr_path, "w", encoding="utf-8", newline="")
     try:
         proc = subprocess.Popen(
             cmd,
@@ -268,10 +265,7 @@ def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
     baseline wants from it. Copy errors raise: a silent partial persist would
     save a truncated baseline under a valid-looking meta.
     """
-    try:
-        os.makedirs(persist_dir, exist_ok=True)
-    except OSError:
-        raise
+    os.makedirs(persist_dir, exist_ok=True)
     marker_path = os.path.join(persist_dir, PERSISTENCE_MARKER)
     try:
         os.unlink(marker_path)
@@ -284,18 +278,12 @@ def _persist_sidecars(output_dir: str, persist_dir: str) -> None:
             pass
     copied = 0
     for json_path in glob.glob(os.path.join(output_dir, "*.json")):
-        try:
-            shutil.copyfile(
-                json_path, os.path.join(persist_dir, os.path.basename(json_path))
-            )
-        except OSError:
-            raise
+        shutil.copyfile(
+            json_path, os.path.join(persist_dir, os.path.basename(json_path))
+        )
         copied += 1
-    try:
-        with open(marker_path, "w", encoding="utf-8", newline="") as marker:
-            marker.write("complete\n")
-    except OSError:
-        raise
+    with open(marker_path, "w", encoding="utf-8", newline="") as marker:
+        marker.write("complete\n")
     print(
         f"Persisted {copied} validator result sidecar(s) to {persist_dir}",
         file=sys.stderr,
@@ -514,21 +502,15 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
                     if extension.lower() == ".txt"
                     else f"{args.output}.json"
                 )
-            try:
-                with open(json_path, "w", encoding="utf-8", newline="") as f:
-                    f.write(json_output)
-            except OSError:
-                raise
+            with open(json_path, "w", encoding="utf-8", newline="") as f:
+                f.write(json_output)
         else:
             print(json_output)
 
     if args.format in ("text", "both"):
         if args.output:
-            try:
-                with open(args.output, "w", encoding="utf-8", newline="") as f:
-                    f.write(report)
-            except OSError:
-                raise
+            with open(args.output, "w", encoding="utf-8", newline="") as f:
+                f.write(report)
             print(
                 f"\n{Colors.YELLOW}Detailed report saved to: {args.output}{Colors.ENDC}",
                 file=human_stream,

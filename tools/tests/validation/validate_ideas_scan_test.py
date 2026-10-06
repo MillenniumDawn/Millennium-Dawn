@@ -6,29 +6,21 @@ directly with the text and files the validator would hand them.
 
 import os
 
+from shared.suite import write_under as _write
 from validate_ideas import (
     _META_PREFIX_SENTINEL,
     _check_file_for_refs,
     _extract_idea_refs_from_blocks,
     _extract_swap_idea_refs,
     _idea_categories_frame_count,
-    _load_dynamic_token_names,
     _on_add_is_log_only,
     _parse_ideas_from_file,
     _parse_ideas_from_text,
     _scan_idea_refs_for_unused,
 )
-from validator_common import casefold_index
+from validator_common import casefold_index, load_dynamic_token_names
 
 NO_CATEGORIES: frozenset = frozenset()
-
-
-def _write(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-    return path
 
 
 def test_swap_block_refs_are_collected():
@@ -158,13 +150,13 @@ def test_dynamic_token_names_are_loaded(tmp_path):
         "TOKEN_one\nTOKEN_two\n\nnot a token line\n",
     )
 
-    assert _load_dynamic_token_names(str(tmp_path)) == {"TOKEN_one", "TOKEN_two"}
+    assert load_dynamic_token_names(str(tmp_path)) == {"TOKEN_one", "TOKEN_two"}
 
 
 def test_dynamic_token_names_from_an_empty_registry(tmp_path):
     _write(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", "")
 
-    assert _load_dynamic_token_names(str(tmp_path)) == set()
+    assert load_dynamic_token_names(str(tmp_path)) == set()
 
 
 def test_unused_scan_captures_literal_and_meta_references(tmp_path):
