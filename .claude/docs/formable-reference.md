@@ -236,9 +236,13 @@ country's own `EU_member` idea, together. It stops a federation member trading i
 cosmetic for a formable one. Never check either half alone. The flag alone fires
 worldwide, and the idea alone strands an EU member before any federation exists.
 
-- BLT: `update_flag` is hidden for a federation member. `integrate_start` has no EU block.
-- CANZUK and MAGHREB: `update_flag` is hidden for a federation member or the cosmetic
-  already held. Only CANZUK AI-blocks `integrate_start` to match.
+- BLT: `update_flag` is hidden for a federation member. `integrate_start` has no EU block
+  and needs none: `EFS_update_flag` fires for every member and its sentinel call removes
+  the idea.
+- CANZUK: `update_flag` is hidden for a federation member or the cosmetic already held,
+  and `integrate_start` is AI-blocked to match.
+- MAGHREB: `update_flag` is hidden only once the cosmetic is held. No EU guard, because
+  none of the nine tags that can form it is EU-potential.
 - MAGHREB and UAR exclude each other: `MAGHREB_integrate_start` is hidden for a UAR, and
   `form_UAR_category` is hidden on `is_MAGHREB`.
 - ANZ, NORDEM, AVG: no EU guard. They carry the CANZUK exemption.
@@ -259,8 +263,9 @@ Check it first when the AI never federates.
 
 ## Known traps and accepted behavior
 
-- A Baltic AI still integrating when EU112 passes keeps `reshaping_national_identity`.
-  `BLT_update_flag` is hidden for a federation member, and only `update_flag` removes it.
+- An IBR integrate timer that finishes after `EFS_update_flag` has fired adds
+  `reshaping_national_identity` on top of sentinel 1000. The AI keeps it, because the
+  ratchet blocks the `update_flag` that would remove it.
 - Player-side clobber: `SCA`, `IBR`, `HBL`, `NORDEM`, `AUSHUN`, and `AVG` `update_flag`
   have no EU guard, so a player can click one after EFS branding and lose it for good.
   A guard there must be `EU_is_federation_member`, never `EU_member` alone.

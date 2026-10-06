@@ -829,6 +829,25 @@ class TestLocalisation:
         assert report.count_sentences("Only this.") == 1
 
 
+class TestRandomPathExemption:
+    def rule_issues(self, tag):
+        rule = report.Rule(
+            name=tag + "_ai_behavior",
+            header_key="",
+            options=[
+                report.RuleOption("HISTORICAL", "", "", False),
+                report.RuleOption("NO_PATH", "", "", True),
+            ],
+        )
+        return report._rule_findings(rule, {}, {}, {}, [], tag)["issues"]
+
+    def test_a_listed_tag_needs_no_random_path(self):
+        assert "missing RANDOM_PATH option" not in self.rule_issues("NKR")
+
+    def test_any_other_tag_still_needs_random_path(self):
+        assert "missing RANDOM_PATH option" in self.rule_issues("DEN")
+
+
 HISTORY_FILE = """
 capital = 1
 add_ideas = {

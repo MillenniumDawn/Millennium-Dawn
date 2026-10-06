@@ -111,7 +111,6 @@ def test_dynamic_flag_matcher_only_expands_scope_substitutions():
 
 _SHARED_SECTION_EMPTY = {
     "math": [],
-    "orphan": [],
     "treasury": [],
     "clamp_checks": [],
     "available": [],
@@ -279,98 +278,6 @@ def test_treasury_scan_survives_a_stray_close_brace(tmp_path):
         "}\nmodify_treasury_effect = yes\n",
     )
     assert variable_scan(path, "treasury", tmp_path) == []
-
-
-# --- money consumer map ----------------------------------------------------
-
-
-def test_consumer_map_reads_first_use_not_every_use(tmp_path):
-    path = _write(
-        tmp_path / "common" / "scripted_effects" / "money.txt",
-        "double_write_effect = {\n"
-        "\tset_temp_variable = { treasury_change = 5 }\n"
-        "\tset_temp_variable = { treasury_change = 6 }\n"
-        "}\n"
-        "double_read_effect = {\n"
-        "\tadd_to_variable = { TST_total = treasury_change }\n"
-        "\tadd_to_variable = { TST_other = treasury_change }\n"
-        "}\n"
-        "read_then_write_effect = {\n"
-        "\tadd_to_variable = { TST_total = treasury_change }\n"
-        "\tset_temp_variable = { treasury_change = 0 }\n"
-        "}\n"
-        "unterminated_effect = {\n"
-        "\tadd_to_variable = { TST_total = treasury_change }\n",
-    )
-
-    consumers = V.build_money_consumer_map([str(path)], str(tmp_path))[
-        "treasury_change"
-    ]
-
-    assert "double_read_effect" in consumers
-    assert "read_then_write_effect" in consumers
-    assert "double_write_effect" not in consumers
-    assert "unterminated_effect" not in consumers
-
-
-def test_consumer_map_refuses_a_file_outside_the_mod(tmp_path):
-    outside = str(tmp_path.parent / "outside_effects.txt")
-
-    consumers = V.build_money_consumer_map([outside], str(tmp_path))
-
-    assert consumers["treasury_change"] == frozenset({"modify_treasury_effect"})
-
-
-# --- orphan money setters --------------------------------------------------
-
-
-MONEY_CONSUMERS = {
-    "treasury_change": frozenset({"modify_treasury_effect"}),
-    "debt_change": frozenset({"modify_debt_effect"}),
-    "int_investment_change": frozenset({"modify_international_investment_effect"}),
-}
-
-
-def test_orphan_money_scan_skips_files_without_a_setter(tmp_path):
-    path = _write(
-        tmp_path / "events" / "ev.txt",
-        "country_event = {\n\tid = tst.1\n\toption = {\n\t\tname = tst.1.a\n\t}\n}\n",
-    )
-    consumers = {"treasury_change": frozenset()}
-    assert variable_scan(path, "orphan", tmp_path, consumer_map=consumers) == []
-
-
-def test_setter_outside_any_effect_container_is_not_flagged(tmp_path):
-    """An unbalanced container is dropped, so its setter has no holder block."""
-    path = _write(
-        tmp_path / "events" / "ev.txt",
-        "completion_reward = {\n"
-        "\tset_temp_variable = { treasury_change = 5 }\n"
-        "\tmodify_treasury_effect = yes\n"
-        "}\n"
-        "option = {\n"
-        "\tset_temp_variable = { debt_change = 5 }\n",
-    )
-
-    assert variable_scan(path, "orphan", tmp_path, consumer_map=MONEY_CONSUMERS) == []
-
-
-def test_branch_gated_rewrites_do_not_clobber_the_setter(tmp_path):
-    """Re-writes nested in if arms sit below the setter's depth, so they are
-    not clobbers — and a quoted log string between them must not desync the
-    depth walk."""
-    path = _write(
-        tmp_path / "events" / "ev.txt",
-        "completion_reward = {\n"
-        "\tset_temp_variable = { treasury_change = 5 }\n"
-        '\tlog = "money note"\n'
-        "\tif = { limit = { always = yes } set_temp_variable = { treasury_change = 8 } }\n"
-        "\tif = { limit = { always = yes } set_temp_variable = { treasury_change = 9 } }\n"
-        "\tmodify_treasury_effect = yes\n"
-        "}\n",
-    )
-
-    assert variable_scan(path, "orphan", tmp_path, consumer_map=MONEY_CONSUMERS) == []
 
 
 # --- event targets ---------------------------------------------------------
@@ -654,11 +561,6 @@ _SKIP_RULE_CASES = {
         "events/g.txt",
         "set_variable = { TST_v = 1 tooltip = TST_tt }\n",
         lambda f, m: variable_scan(f, "var_tooltips", m),
-    ),
-    "orphan money": (
-        "events/h.txt",
-        "option = {\n\tset_temp_variable = { treasury_change = 5 }\n}\n",
-        lambda f, m: variable_scan(f, "orphan", m, consumer_map=MONEY_CONSUMERS),
     ),
     "event targets": (
         "events/i.txt",
