@@ -1564,11 +1564,16 @@ def test_dashboard_funded_share_is_hidden_outside_full_mode(mode):
     assert variables["ai_race_capability_funded_usable"] == 0
 
 
-def test_dashboard_breakdown_has_all_score_inputs_and_is_reachable():
+def test_dashboard_breakdown_tooltip_is_reachable():
+    if not RACE_GUI_PATH.exists():
+        pytest.skip("interface/ not in this checkout")
     gui = RACE_GUI_PATH.read_text(encoding="utf-8")
+    assert 'pdx_tooltip = "[ai_race_capability_breakdown]"' in gui
+
+
+def test_dashboard_breakdown_has_all_score_inputs():
     loc = RACE_LOC_PATH.read_text(encoding="utf-8-sig")
     scripted = SCRIPTED_LOC_PATH.read_text(encoding="utf-8")
-    assert 'pdx_tooltip = "[ai_race_capability_breakdown]"' in gui
     for value in (
         "ai_race_capability_external",
         "ai_race_capability_stock",
