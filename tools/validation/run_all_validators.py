@@ -41,6 +41,7 @@ _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
     "bonus-names": ["--name-not-owner-id"],
     "decisions": ["--unannounced-categories"],
     "focus-tree": ["--missing-icons"],
+    "math-expressions": ["--clamp-bounds"],
     "variables": ["--redundant-focus-flags"],
 }
 
