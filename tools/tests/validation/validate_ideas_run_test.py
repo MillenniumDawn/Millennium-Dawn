@@ -540,17 +540,38 @@ def test_default_run_reports_only_the_always_on_checks(tmp_path, no_vanilla_gfx)
 
     assert _findings(validator) == [
         (
-            "missing-idea-localisation",
-            "'DEAD_spirit' (country) is missing loc key 'DEAD_spirit'",
-            "common/ideas/test.txt",
-            9,
-        ),
-        (
             "unused-idea",
             "'DEAD_spirit' (country) is defined but never referenced",
             "common/ideas/test.txt",
             0,
-        ),
+        )
+    ]
+
+
+def test_missing_name_loc_flag_reports_only_the_name_key(tmp_path, no_vanilla_gfx):
+    _write_run_mod(tmp_path)
+    validator = _validator(tmp_path, missing_name_loc=True)
+
+    validator.run_validations()
+
+    assert [issue.message for issue in validator._issues] == [
+        "'DEAD_spirit' (country) is missing loc key 'DEAD_spirit'"
+    ]
+
+
+def test_staged_missing_name_loc_checks_only_the_staged_idea_file(
+    tmp_path, no_vanilla_gfx
+):
+    _write_run_mod(tmp_path)
+    _write(tmp_path, "common/ideas/quality.txt", QUALITY_IDEAS)
+    validator = _validator(tmp_path, missing_name_loc=True)
+    validator.staged_only = True
+    validator.staged_files = ["common/ideas/test.txt"]
+
+    validator.run_validations()
+
+    assert [issue.message for issue in validator._issues] == [
+        "'DEAD_spirit' (country) is missing loc key 'DEAD_spirit'"
     ]
 
 
@@ -600,10 +621,8 @@ def test_staged_run_reports_quality_for_the_staged_idea_file(tmp_path, no_vanill
 
     validator.run_validations()
 
-    assert sorted(issue.category for issue in validator._issues) == (
-        ["idea-quality"] * 5 + ["missing-idea-localisation"] * 5
-    )
-    assert validator.warnings_found == 10
+    assert {issue.category for issue in validator._issues} == {"idea-quality"}
+    assert validator.warnings_found == 5
 
 
 def test_extra_cli_arguments_default_to_the_documented_values():
@@ -612,15 +631,18 @@ def test_extra_cli_arguments_default_to_the_documented_values():
 
     defaults = parser.parse_args([])
     assert (
+        defaults.missing_name_loc,
         defaults.missing_loc,
         defaults.unused_ideas,
         defaults.suggest_consolidation,
     ) == (
         False,
+        False,
         True,
         False,
     )
     assert parser.parse_args(["--no-unused-ideas"]).unused_ideas is False
+    assert parser.parse_args(["--missing-name-loc"]).missing_name_loc is True
     assert parser.parse_args(["--missing-loc"]).missing_loc is True
     assert parser.parse_args(["--suggest-consolidation"]).suggest_consolidation is True
 

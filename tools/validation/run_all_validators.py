@@ -36,11 +36,12 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
 # Opt-in flags that only one validator understands, applied by its discovered
 # `name` (validate_ideas.py -> "ideas"). The suite is non-strict by default, so
 # these surface as warnings without gating. --missing-loc is intentionally left
-# off. Its ~4.5k `_desc` backlog would drown the report; run it on demand instead.
+# off. Its `_desc` backlog would drown the report; run it on demand instead.
 _VALIDATOR_EXTRA_FLAGS: Dict[str, List[str]] = {
     "bonus-names": ["--name-not-owner-id"],
     "decisions": ["--unannounced-categories"],
     "focus-tree": ["--missing-icons"],
+    "ideas": ["--missing-name-loc"],
     "variables": ["--redundant-focus-flags"],
 }
 

@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import pytest
 import run_all_validators as runner
+from validator_batches import ALL_SPECS
 
 
 class _Process:
@@ -116,6 +117,12 @@ def test_variables_run_passes_the_redundant_focus_flag_scan():
 
 def test_decisions_run_passes_the_unannounced_category_scan():
     assert runner._VALIDATOR_EXTRA_FLAGS["decisions"] == ["--unannounced-categories"]
+
+
+def test_ideas_run_passes_the_same_flags_as_the_ci_batch():
+    spec = next(spec for spec in ALL_SPECS if spec.name == "ideas")
+    assert runner._VALIDATOR_EXTRA_FLAGS["ideas"] == list(spec.args)
+    assert spec.args == ("--missing-name-loc",)
 
 
 def test_oob_units_run_does_not_enable_missing_equipment_factor():

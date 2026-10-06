@@ -700,6 +700,7 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def __init__(self, *args, **kwargs):
+        self.missing_name_loc = kwargs.pop("missing_name_loc", False)
         self.missing_loc = kwargs.pop("missing_loc", False)
         self.unused_ideas = kwargs.pop("unused_ideas", True)
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
@@ -1028,8 +1029,8 @@ class Validator(BaseValidator):
         """Flag ideas whose name key has no English loc, so tooltips show the raw id.
 
         Hidden categories never display. Character idea_tokens render from the
-        character's own name and are not in `ideas_by_file`. Missing `_desc`
-        keys are reported only under --missing-loc.
+        character's own name and are not in `ideas_by_file`. --missing-loc
+        adds the missing `_desc` keys.
         """
         self._log_section("Checking for ideas with missing localisation keys...")
         if not ideas_by_file:
@@ -1450,7 +1451,12 @@ class Validator(BaseValidator):
                 "Skipping loc-consolidation suggestions (pass --suggest-consolidation to enable)"
             )
 
-        self.validate_missing_localisation(defined_ideas, ideas_in_scope)
+        if self.missing_name_loc or self.missing_loc:
+            self.validate_missing_localisation(defined_ideas, ideas_in_scope)
+        else:
+            self._log_section(
+                "Skipping missing localisation check (pass --missing-name-loc to enable)"
+            )
 
         self.validate_missing_icons(defined_ideas)
 
@@ -1464,10 +1470,16 @@ class Validator(BaseValidator):
 
 def _add_extra_args(parser):
     parser.add_argument(
+        "--missing-name-loc",
+        action="store_true",
+        dest="missing_name_loc",
+        help="Report ideas whose name loc key is missing (CI passes this)",
+    )
+    parser.add_argument(
         "--missing-loc",
         action="store_true",
         dest="missing_loc",
-        help="Also report ideas missing a _desc loc key (noisy until backlog is cleared)",
+        help="Report ideas missing a name or _desc loc key (noisy until backlog is cleared)",
     )
     parser.add_argument(
         "--unused-ideas",
