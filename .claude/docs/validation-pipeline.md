@@ -51,7 +51,7 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 
 ## Validation config
 
-`validation_config.json` at the repo root holds every suppression list the validators read: false positives, exemptions, and known-good names. To add or drop an entry, edit the JSON, not the validator.
+`validation_config.json` at the repo root holds every suppression list the validators and `tools/analysis/ai_path_report.py` read: false positives, exemptions, and known-good names. To add or drop an entry, edit the JSON, not the validator.
 
 - Shape: `version`, then one object per validator script (`validate_ideas`, `check_common_mistakes`, ...), each holding named lists. A list maps each entry to the reason it is exempt. Leave the reason empty only when nobody knows it.
 - Matching depends on the list. Most match whole names, `*_prefixes` and `equipment_bonus_instant_exempt` match name starts, the `validate_variables`, `validate_set_variables`, and `validate_scripted_localisation` lists match substrings (so a short entry can swallow real names), and `false_positive_patterns` holds regexes.
