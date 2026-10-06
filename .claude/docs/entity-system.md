@@ -29,10 +29,28 @@ the same `graphical_culture` and define one `<graphical_culture>_*` set
 (`northamerican_gfx_infantryandvehicle.asset` serves every US breakaway). A new culture
 needs a line in `common/graphicalculturetype.txt`. Tags moved to it lose the old culture's
 fallbacks, so clone the old culture's entities for any unit type the shared set does not
-define (`donbas_gfx` does this for tanks, planes, and ships). Give each tierless sprite
-entity in a culture set `_1` to `_7` clones, or it matches every tier. The division
-designer's model selector is engine-native and enumerates every unit entity, so entity
-count drives how slow it is to open.
+define (`donbas_gfx` does this for tanks, planes, and ships). The division designer's
+model selector is engine-native and enumerates every unit entity, so entity count
+drives how slow it is to open.
+
+## Tierless and tiered motorized entities
+
+A tag's tierless entity can supply missing tiers without overriding that tag's distinct
+tiered art. Remove a tier entity only when its resolved mesh, animations, scale, and
+attachments match the tierless entity with the same prefix, sub-unit, and terrain.
+Keep terrain variants that have no matching tierless terrain entity. Repoint surviving
+clones to the equivalent tierless source before deleting their tier source.
+
+The France pilot in [#5417](https://github.com/MillenniumDawn/Millennium-Dawn/pull/5417),
+commit `70d372bb`, removed 23 repeated entries (68 to 45 motorized entities) while
+keeping the different vehicles at tiers 6 and 7. The maintainer reported that the
+in-game check passed. This supports the same-tag rule, not culture, generic, or
+cosmetic-prefix lookup. Cosmetic prefixes need their own in-game check.
+
+Keep the culture and generic tier clones added by #1159 for #1106. Since HOI4 1.18,
+tierless fallbacks match every tier at high priority and can override country-tiered
+models. Give each tierless sprite entity in a culture set `_1` to `_7` clones. Equal
+resolved appearance alone does not make these fallback tiers redundant.
 
 ## Files in `gfx/entities/`
 
