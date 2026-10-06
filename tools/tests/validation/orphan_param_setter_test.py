@@ -369,6 +369,43 @@ def test_second_party_setup_overwrites_the_first(tmp_path):
     assert _findings(tmp_path, body) == [(4, "overwritten"), (5, "overwritten")]
 
 
+def test_party_popularity_setter_with_a_call_after_each_is_clean(tmp_path):
+    body = _option(
+        "set_temp_variable = { party_popularity_increase = 0.30 }",
+        "change_relative_party_popularity = yes",
+        "set_temp_variable = { party_popularity_increase = 0.10 }",
+        "change_relative_party_popularity = yes",
+    )
+    assert _findings(tmp_path, body) == []
+
+
+def test_party_popularity_setter_with_no_call_names_the_effect(tmp_path):
+    (issue,) = _issues(tmp_path, _option(PARTY_SET))
+    assert issue.severity == vsp.Severity.ERROR
+    assert issue.line == 4
+    assert "party_popularity_increase" in issue.message
+    assert "no change_relative_party_popularity call" in issue.message
+
+
+def test_setter_clobbered_in_an_idea_on_add_is_flagged(tmp_path):
+    body = (
+        "ideas = {\n"
+        "\tcountry = {\n"
+        "\t\ttest_idea = {\n"
+        "\t\t\ton_add = {\n"
+        "\t\t\t\thidden_effect = {\n"
+        f"\t\t\t\t\t{PARTY_SET}\n"
+        f"\t\t\t\t\t{PARTY_SET}\n"
+        "\t\t\t\t\tchange_relative_party_popularity = yes\n"
+        "\t\t\t\t}\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _findings(tmp_path, body, "common/ideas/test.txt") == [(6, "overwritten")]
+
+
 def test_move_party_popularity_does_not_consume_the_setter(tmp_path):
     # it writes party_popularity_increase itself, so the caller's value is lost
     body = _option(PARTY_SET, "move_party_popularity = yes")
