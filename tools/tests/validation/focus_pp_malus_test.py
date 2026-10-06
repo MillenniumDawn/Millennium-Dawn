@@ -9,20 +9,12 @@ bypass) are not.
 import re
 
 from shared.paths import REPO_ROOT as _MOD_ROOT
+from shared.suite import write_focus_file as _write_focus_file
 from validate_focus_tree import (
     _PP_MALUS_EXEMPT_FOCUS_IDS,
     Validator,
     _FocusFile,
 )
-
-
-def _write_focus_file(tmp_path, content):
-    nf_dir = tmp_path / "common" / "national_focus"
-    nf_dir.mkdir(parents=True, exist_ok=True)
-    fpath = nf_dir / "test.txt"
-    fpath.write_text(content, encoding="utf-8")
-    return fpath
-
 
 FOCUS_TEMPLATE = """focus_tree = {{
 	id = test_tree

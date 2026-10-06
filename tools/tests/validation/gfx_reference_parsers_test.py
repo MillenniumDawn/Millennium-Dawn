@@ -207,6 +207,8 @@ def test_unreadable_country_tag_file_is_skipped(tmp_path):
         vg._parse_loc_refs,
         vg._parse_sprite_templates,
         vg._parse_sloc_file,
+        vg._parse_raw_variant_icons,
+        vg._parse_raw_graphic_db_icons,
     ],
 )
 def test_every_parser_tolerates_an_unreadable_file(tmp_path, parser):
@@ -217,6 +219,11 @@ def test_every_parser_tolerates_an_unreadable_file(tmp_path, parser):
 def test_unbalanced_sprite_block_falls_back_to_the_opening_line():
     raw = 'spriteType = { name = "GFX_unbalanced" texturefile = "gfx/a.dds"\n'
     assert vg.sprite_defs_from_gfx_text(raw) == [("GFX_unbalanced", "gfx/a.dds", 1)]
+
+
+def test_unquoted_texturefile_is_parsed():
+    raw = 'spriteType = { name = "GFX_a" texturefile = gfx/a.dds }\n'
+    assert vg.sprite_defs_from_gfx_text(raw) == [("GFX_a", "gfx/a.dds", 1)]
 
 
 def test_nameless_sprite_block_defines_nothing():

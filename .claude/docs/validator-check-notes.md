@@ -104,6 +104,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `icon = X` passes if `X`, `GFX_decision_X`, or `GFX_X` exists. A category `icon = X`
   takes `GFX_decision_category_` instead. A category `picture` is the full sprite name.
   Needs a live install to avoid vanilla noise. The flag also drives the focus-tree check.
+- `unannounced-decision-category` (WARNING, opt-in `--unannounced-categories`, passed in
+  CI): a category whose `visible` waits on a flag, focus, idea, or variable, with no
+  `unlock_decision_category_tooltip` naming it and no `unlock_decision_tooltip` naming
+  one of its decisions. History mentions do not exempt a category.
+  `unannounced_category_exempt` in the config records each exception and its reason:
+  startup gates, shared state with no single owning-country unlock effect, and balance
+  of power categories that have no name key to render.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -125,7 +132,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_equipment_variants.py
 
-- `equipment-variant-unavailable` (WARNING): an effect sequence creates a named variant
+- `equipment-variant-unavailable` (ERROR): an effect sequence creates a named variant
   without an assured enabling technology, then uses it in `add_equipment_production`,
   `create_ship`, or `add_equipment_to_stockpile`. Technologies resolve through
   `enable_equipments`, not by matching ids.
@@ -144,10 +151,17 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   reachable from a scheduled ancestor, fires from focuses or decisions, `random_events`
   pools, and chance-rolled `random` polls. A `date <` bound alone is an expiry guard.
 - `event-fire-type-mismatch`, `malformed-event-fire` (ERROR).
-- `event-option-log-without-effect` (WARNING): an option holding only `name`, `log`,
+- `event-option-log-without-effect` (ERROR): an option holding only `name`, `log`,
   `trigger`, and `ai_chance`. `hidden_effect`, scope blocks, and tooltips count as
   effects. `tools/linting/fix_event_option_logs.py` shares the detection and deletes the
   lines.
+- `event-option-log-id` (ERROR): an option log that cites another option's id, in the
+  `Event <id>` form, the canonical `<id> executed` form, or a bare event id ending in
+  a numeric id segment and optional letter-led suffix. Namespaces may end in digits;
+  version-like `v1.2` and dotted scopes such as `ROOT.capital` are ignored.
+  The option name is read at its own depth, so a `name =` inside an effect does not count.
+  `tools/linting/fix_log_ids.py` shares the detection and rewrites the token. Exempt
+  option names live in `validation_config.json` `option_log_id_exempt`.
 - `event-ai-chance-ignores-cost` (WARNING, off by default, `--check-ai-chance-costs`,
   tracked in #5106): in an event with two or more options, an option that charges its
   own country and whose `ai_chance` has no `modifier`. Costs: lowering `treasury` or
@@ -163,7 +177,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   art up to 1.45, news art from 2.0. The band between is not reported. For a sprite
   shared by both windows, split it into a `news_`-prefixed and an unprefixed pair
   instead of editing call sites.
-- `hidden-event-picture` (WARNING), `news-event-picture-omitted` (ERROR),
+- `hidden-event-picture`, `news-event-picture-omitted`,
   `placeholder-event-picture` (ERROR). Only pictures at depth 0 of the event body count,
   so leader portraits inside `immediate` do not.
 
@@ -187,6 +201,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   resolves focus positions in file order. Targets in another file are not checked.
 - Focus geometry (WARNING): see the
   [coordinate policy](../../tools/validation/README.md#focus-coordinate-warnings).
+- `focus-allow-branch-leak` (WARNING): a focus with its own `allow_branch` under an
+  ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
 
 ## validate_gfx_references.py
 
@@ -204,7 +220,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   case-insensitively, so the icon is missing on Linux. `unused-sprite-case` (WARNING): a
   sprite whose only reference is miscased.
 - `duplicate-sprite`, `case-variant-sprite` (WARNING): the message says whether the blocks
-  share a texture.
+  share a texture. Unquoted `texturefile` values are read the same as quoted ones.
+- `raw-icon-path` (ERROR): `icon =` inside `create_equipment_variant`, or an entry in a
+  `graphic_db` `icons = { }` block, that is a texture path instead of a `GFX_` sprite.
+  Quoted and unquoted, slash or backslash. Comments and focus-tree `icon =` are ignored.
+  `_documentation.info` is not scanned. Raw plane paths crash the macOS air battle window.
 - `undefined-font` (ERROR): a `.gui` font naming no `bitmapfont` renders in the default
   face. Vanilla names come from an install or `vanilla_fonts.txt`.
 - Sprite names in generator-managed `.gfx` files come from the texture filename. Rename
@@ -215,6 +235,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Missing-icon audit (WARNING, always on): the sprite is undefined, exists only under a
   different case, or resolves to placeholder art (`_PLACEHOLDER_TEXTURES`). A mod
   placeholder that shadows a vanilla sprite name still reports.
+- `missing-idea-localisation` (WARNING, behind `--missing-name-loc`): an idea whose name
+  key has no English loc shows its raw id in every tooltip that grants it. The key is the
+  `name = X` override when set. Hidden categories and character `idea_token` entries are
+  exempt. The CI core batch and the nightly run pass the flag. The commit hook does not,
+  so there is no local signal. `--missing-loc` adds missing `_desc` keys and runs nowhere
+  by default. Backlog and the move to ERROR: #5415.
 - `loc-key-collision` (WARNING): an idea's `name = X` override resolves its name to `X`
   and its description to `X_desc`. When `X` is also a focus or decision id and resolves
   in English loc, one string silently overrides the other. Intentional sharing is allowed.
@@ -228,10 +254,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_localisation.py and validate_scripted_localisation.py
 
-- `loc-em-dash`, `loc-backtick-apostrophe`, `loc-unbalanced-quote` (WARNING) scan only the
-  quoted values in `localisation/english/`. Inch marks and quotes spanning paragraphs
-  are expected false positives of the quote check.
-- `loc-typo-watchlist` (WARNING): `typo-watchlist.md` entries in prose, excluding keys and
+- `loc-em-dash`, `loc-backtick-apostrophe` (WARNING), and `loc-unbalanced-quote` (ERROR)
+  scan only the quoted values in `localisation/english/`. Inch marks and quotes spanning
+  paragraphs are expected false positives of the quote check.
+- `loc-typo-watchlist` (ERROR): `typo-watchlist.md` entries in prose, excluding keys and
   runtime references. `it's` and `civilisation` are excluded as context-dependent.
 - Prose warnings (repeated word, tripled letter, exact placeholder, dangling
   description): see `localisation-rules.md`.
@@ -242,8 +268,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_math_expressions.py
 
-- `math-sibling-operator`, `math-from-read` (WARNING). The traps are in
+- `math-sibling-operator`, `math-from-read` (ERROR). The traps are in
   `hoi4-data-structures.md`. Plain `set_temp_variable = { x = FROM.y }` copies are valid.
+- `clamp-min-above-max` (ERROR, opt-in `--clamp-bounds`, passed in CI): a `clamp`,
+  `clamp_variable`, or `clamp_temp_variable` whose literal `min` is above its literal
+  `max`. A bound that is a variable, an `@constant`, or an expression block is not
+  judged, so a swapped pair with one of those still passes.
 
 ## validate_mesh_textures.py
 
@@ -262,10 +292,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_mios.py
 
-- Gates: org-id format, `allowed = { original_tag = TAG }`, non-empty `on_complete`.
-  WARNING: initial-trait naming and trait-grid x above 9. Negative x is the standard
+- Gates: org-id format, `allowed = { original_tag = TAG }`, non-empty `on_complete`,
+  initial-trait naming, and trait-grid x above 9. Negative x is the standard
   first column. `generic_` orgs and `generic_` initial traits are exempt.
-- Trait geometry (WARNING): `trait-geometry-parent-row` (child on or above its parent's
+- Trait geometry (ERROR): `trait-geometry-parent-row` (child on or above its parent's
   row), `trait-geometry-mutex-row` (mutually exclusive traits on different rows),
   `trait-geometry-mutex-parents` (a `parent` or `all_parents` list naming two mutually
   exclusive traits locks the child out, `any_parent` is the fix). Unresolvable anchors
@@ -292,6 +322,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `mio-production-bonus-naval` (ERROR): everything the trait reaches is naval.
   `mio-production-bonus-partial-naval` (WARNING): mixed scope, a coverage note.
   `policies/` is out of scope because `same_as_mio` is not statically resolvable.
+- `mio-design-team-type-uncovered` (WARNING): a `create_equipment_variant` names
+  `design_team = mio:<org>` whose `equipment_type` does not cover the variant's
+  archetype after `mio_cat_*` expansion, so the engine ignores the designer. A type
+  the equipment index cannot resolve (a vanilla designer airframe) is skipped. A
+  staged org edit does not rescan unstaged references; the full CI run does.
 - A staged change in `policies/`, `common/country_leader/`, `common/units/equipment/`,
   `common/equipment_groups/`, or English loc rescans every org.
 
@@ -315,7 +350,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 ## validate_oob_units.py and validate_ai_equipment.py
 
 - Every `create_equipment_variant` is slot-checked through `equipment_module_slots.py`
-  (ERROR): required slots, hull `module_count_limit`, `forbid_equipment_type`.
+  (ERROR): unknown hulls, slots, and modules, slot categories, required slots, hull
+  `module_count_limit`, `forbid_equipment_type`.
   `validate_ai_equipment.py` applies the same rules to `target_variant` designs.
 - `parent_version` is not resolved. A clean run on a `parent_version > 0` design is not
   proof the runtime design is legal.
@@ -328,6 +364,29 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `missing-template-ensure` (WARNING): a `create_unit` naming a template that
   `delete_unit_template_and_units` removes anywhere needs the template created earlier
   or a `has_template` guard. A scripted effect that creates or guards it also counts.
+- `airborne-template-not-parachutable` (WARNING): a `division_template` whose name
+  matches para, airborne, VDV, or desant lists a sub-unit without
+  `can_be_parachuted = yes`, which stops the whole division from paradropping.
+  Deliberate air-assault templates are listed in `air_assault_templates` in the
+  config as `<file>:<template name>`. Staged mode checks only staged template files, so a `common/units/`
+  flag change surfaces on the full CI run.
+- `template-slot` (ERROR): a `division_template` skips a row or column, puts two units
+  on one slot, places a unit off the designer grid, or has a unit with no readable
+  `x`/`y`. The designer hides the unit and locks the template for editing.
+  `regimental_support` may skip columns, but each of its columns needs the same
+  `regiments` column, and each row needs the battalions
+  `REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS` sets for it.
+- `template-locked-row` (WARNING): a `regiments` unit sits on a row past
+  `MIN_DIVISION_BRIGADE_HEIGHT`. Those rows stay locked until the country has
+  `additional_brigade_column_size`. One finding per template. A tag's starting
+  subdoctrines (`set_sub_doctrine` at the top level of its `history/countries` file)
+  open rows for its `history/units/TAG_*` files and for templates scoped to it.
+  Mastery rewards and ideas are not counted. Tracked in #5451.
+- Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
+  to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
+  sizes, `divisional = no` or `regimental = no` units in the wrong block, and
+  `allowed_battalion_groups`. Staged mode checks only staged template files, so a
+  define or doctrine change surfaces on the full CI run.
 - New source directories: `config_drift_test.py` derives the routes from the
   `_*_SOURCE_PATTERNS` lists and fails until every route is updated.
 
@@ -346,18 +405,50 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `shadowed-scientist-trait-icon` (vanilla ships the art, re-declare the `spriteType`),
   `missing-scientist-trait-icon`, `stale-scientist-trait-icon-todo`. All WARNING.
 
+## validate_simplifications.py
+
+- `simplification` (WARNING): an `OR` listing the same clause twice — direct children
+  compared after whitespace is collapsed. A repeat is dead weight or a copy-paste
+  where one copy was meant to differ. Scans `common/` and `events/`.
+
 ## validate_scripted_params.py
 
+- Contracts come from the `# Parameters:` block above a scripted effect, plus the
+  `HARDCODED_CONTRACTS` table in the validator. Declare a parameter in the block to
+  have it checked. An effect with neither is never checked itself.
+- `orphan_param_setter_test.py` pins the four money and party popularity blocks. A
+  blank line inside a block, or a renamed header, silently drops the contract.
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
-- A staged change under `common/scripted_effects/`, `common/country_tags/`, or
-  `common/country_tag_aliases/` rescans every caller.
+- `missing-required-param` (ERROR): a call with a required parameter not set first.
+  `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
+  `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
+- `orphan-param-setter` (ERROR): a `set_temp_variable`, `add_to_temp_variable`, or
+  `subtract_from_temp_variable` of a declared parameter, required or optional, that
+  nothing uses afterwards in the same effect block, or that is overwritten at the same
+  depth before its first use. The `var = NAME` long form counts.
+  - A use is a call to any scripted effect or trigger that reads the parameter before
+    writing it, contracted or not, or a direct read. `multiply_temp_variable` and the
+    other statements that only change it are not uses. A write nested in a branch of
+    the callee is ignored, since it may not run.
+  - `move_party_popularity` writes `party_popularity_increase` itself, so it does not
+    consume a caller's value.
+  - Not reported: a reset to `0`, a setter in a scripted effect's own body, and a
+    setter outside the blocks in `EFFECT_BLOCK_KEYWORDS`, `effect_tooltip`, and
+    scripted GUI `*_click`.
+  - A setter inside `effect_tooltip` must be used inside it. A runtime setter that only
+    feeds a later `effect_tooltip` preview is accepted.
+  - Known gap: a use in a sibling `if` or `else` arm counts.
+- A staged change under `common/scripted_effects/`, `common/scripted_triggers/`,
+  `common/country_tags/`, or `common/country_tag_aliases/` rescans every caller.
 - See the [layout policy](../../tools/validation/README.md#scripted-effect-call-layout).
 
 ## validate_style.py and check_common_mistakes.py
 
-- Both are diff-scoped in the core job. `check_common_mistakes.py` reports ERROR only.
+- The style check is diff-scoped in the core job. Common mistakes run full-repo in the
+  core batch through `validate_common_mistakes.py` and report ERROR only. It scans
+  `common`, `events`, `history`, and `music`.
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
@@ -397,8 +488,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     wrappers at any depth, `check_variable`'s inline `tooltip`, `visible` blocks, names
     containing `@`, AI-only decisions, and `if` branches whose `limit` holds an
     unconditional `is_ai = yes`.
-- `variable-tooltip-missing-loc` (WARNING): `tooltip = KEY` in a variable effect with no
-  English entry. `dynamic-modifier-tooltip-missing` (WARNING): an add or subtract on a
+- `variable-tooltip-missing-loc` (ERROR): `tooltip = KEY` in a variable effect with no
+  English entry. `dynamic-modifier-tooltip-missing` (ERROR): an add or subtract on a
   variable backing a dynamic modifier with no `tooltip`, in blocks the engine renders.
   `hidden_effect` suppresses both.
 

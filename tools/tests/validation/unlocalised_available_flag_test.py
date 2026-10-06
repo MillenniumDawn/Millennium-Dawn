@@ -11,13 +11,14 @@ outright, so no requirement line renders either way.
 """
 
 import validate_variables as V
+from shared.suite import variable_scan
 
 
 def _findings(tmp_path, text, ai_categories=frozenset(), rel="src.txt"):
     f = tmp_path / rel
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(text, encoding="utf-8")
-    return V.process_file_for_available_flags((str(f), str(tmp_path), ai_categories))
+    return variable_scan(f, "available_flags", tmp_path, ai_categories=ai_categories)
 
 
 def test_shorthand_flag_in_available_flagged(tmp_path):

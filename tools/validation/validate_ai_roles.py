@@ -155,11 +155,7 @@ class Validator(BaseValidator):
 
         args_list = [(f, self.valid_roles) for f in strategy_files]
 
-        all_results = self._pool_map(validate_strategy_file, args_list, chunksize=20)
-
-        results = []
-        for file_results in all_results:
-            results.extend(file_results)
+        results = self._pool_flat_map(validate_strategy_file, args_list, chunksize=20)
 
         self._report(
             results,

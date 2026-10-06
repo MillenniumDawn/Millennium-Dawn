@@ -58,9 +58,9 @@ def test_name_override_collision_check_is_removed():
 def test_name_override_sharing_focus_keys_is_clean(tmp_path):
     _setup_shared_key(tmp_path)
     validator = _validator(tmp_path)
-    defined, _issues, _by_file = validator._parse_all_ideas()
+    defined, _issues, by_file = validator._parse_all_ideas()
     assert defined["COL_idea"] == ("country", "shared_key", "shared")
-    validator.validate_missing_localisation(defined)
+    validator.validate_missing_localisation(defined, by_file)
     assert [
         issue for issue in validator._issues if issue.category == "loc-key-collision"
     ] == []
@@ -70,8 +70,8 @@ def test_name_override_sharing_focus_keys_is_clean(tmp_path):
 def test_missing_localisation_resolves_through_name_override(tmp_path):
     _setup_shared_key(tmp_path)
     validator = _validator(tmp_path)
-    defined, _issues, _by_file = validator._parse_all_ideas()
-    validator.validate_missing_localisation(defined)
+    defined, _issues, by_file = validator._parse_all_ideas()
+    validator.validate_missing_localisation(defined, by_file)
     assert [
         issue
         for issue in validator._issues
@@ -83,8 +83,8 @@ def test_missing_localisation_flags_missing_override_keys(tmp_path):
     _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
     _write(tmp_path, "common/ideas/test.txt", IDEAS)
     validator = _validator(tmp_path)
-    defined, _issues, _by_file = validator._parse_all_ideas()
-    validator.validate_missing_localisation(defined)
+    defined, _issues, by_file = validator._parse_all_ideas()
+    validator.validate_missing_localisation(defined, by_file)
     findings = [
         issue
         for issue in validator._issues

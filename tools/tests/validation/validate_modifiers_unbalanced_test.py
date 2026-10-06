@@ -5,14 +5,8 @@ growth over 25%, game-start policy rate over 30, game-start inflation over 50%.
 """
 
 import validate_modifiers as vm
+from shared.suite import write_under as _write
 from validate_modifiers import Validator, _scan_numeric_modifier_entries
-
-
-def _write(tmp_path, rel, content):
-    path = tmp_path / rel
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(content, encoding="utf-8")
-    return path
 
 
 def _validator(tmp_path, enabled=True):

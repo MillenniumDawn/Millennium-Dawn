@@ -155,11 +155,7 @@ class Validator(BaseValidator):
             files = self._collect_files([f"common/{subdir}/**/*.txt"])
 
         args_list = [(f, self.mod_path) for f in files]
-        all_results = self._pool_map(extract_definitions, args_list, chunksize=10)
-
-        definitions = []
-        for result in all_results:
-            definitions.extend(result)
+        definitions = self._pool_flat_map(extract_definitions, args_list, chunksize=10)
 
         return definitions
 
@@ -204,11 +200,7 @@ class Validator(BaseValidator):
 
         # First pass: find all names used outside definition dirs
         args_list = [(f, all_names, self.mod_path) for f in other_files]
-        results = self._pool_map(scan_file_for_usages, args_list)
-
-        used_names: set = set()
-        for found in results:
-            used_names.update(found)
+        used_names = set(self._pool_flat_map(scan_file_for_usages, args_list))
 
         # Second pass: check cross-calls within definition files
         remaining = all_names - used_names
@@ -258,12 +250,6 @@ class Validator(BaseValidator):
                     unused_triggers.append(entry)
 
         return unused_effects, unused_triggers
-
-    def validate_unused_effects(self):
-        self._log_section("Checking for unused scripted effects...")
-
-    def validate_unused_triggers(self):
-        self._log_section("Checking for unused scripted triggers...")
 
     def run_validations(self):
         if self.staged_only:

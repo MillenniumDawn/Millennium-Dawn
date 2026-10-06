@@ -121,7 +121,7 @@ from check_common_mistakes import (
 
 # Each module-level case runs on import, in file order (later fixtures change
 # module state), and is reported under its own pytest id by test_case below.
-_CASES = []
+_CASES: list = []
 
 
 def assert_finds(check_fn, lines, expected_count, label):
@@ -2470,6 +2470,174 @@ assert_finds(
     "nested country_event scheduling call not treated as a definition",
 )
 
+# Canonical executed form matching own name -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.1\n",
+        "\toption = {\n",
+        "\t\tname = tst.1.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.a executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "executed-form log matching own name not flagged",
+)
+
+# Canonical executed form copy-pasted from a sibling option -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.1\n",
+        "\toption = {\n",
+        "\t\tname = tst.1.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.a executed"\n',
+        "\t}\n",
+        "\toption = {\n",
+        "\t\tname = tst.1.b\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.a executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "executed-form log copy-pasted from a sibling option flagged",
+)
+
+# "option executed" phrasing citing another option -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = brotherhood.6\n",
+        "\toption = {\n",
+        "\t\tname = brotherhood.6.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: brotherhood.6.b option executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "option-executed phrasing citing another option flagged",
+)
+
+# Shared loc key from another event, log cites this event's dotted id -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "news_event = {\n",
+        "\tid = isisNews.1302\n",
+        "\toption = {\n",
+        "\t\tname = isisNews.1301.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: isisNews.1302.a executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "shared loc name with this event's log id not flagged",
+)
+
+# A name = inside a child block is not the option's name -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.7\n",
+        "\toption = {\n",
+        "\t\tadd_tech_bonus = {\n",
+        "\t\t\tname = tst.7.title\n",
+        "\t\t}\n",
+        "\t\tname = tst.7.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.7.a executed"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "name = nested in a child block not taken as the option name",
+)
+
+# Bare id with no "executed" word, copy-pasted from another event -> flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.8\n",
+        "\toption = {\n",
+        "\t\tname = tst.8.c\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.c"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "bare-id log copy-pasted from another event flagged",
+)
+
+# A sentence ending in a period is prose, not a bare id -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.9\n",
+        "\toption = {\n",
+        "\t\tname = tst.9.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: The purge ended."\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "log ending in a sentence period not flagged",
+)
+
+# A numeric dotted value is not an event id -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.10\n",
+        "\toption = {\n",
+        "\t\tname = tst.10.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: 2025.5"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "numeric dotted log ending not treated as an event id",
+)
+
+# Dotted scope and version tokens are not event ids -> no flag
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.11\n",
+        "\toption = {\n",
+        "\t\tname = tst.11.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: ROOT.capital"\n',
+        '\t\tlog = "[GetDateText]: [This.GetName]: v1.2"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    0,
+    "non-event dotted log endings not treated as event ids",
+)
+
+# Event namespaces can end in digits; require the middle segment to be numeric.
+assert_finds(
+    _check_event_log_id,
+    [
+        "country_event = {\n",
+        "\tid = tst.12\n",
+        "\toption = {\n",
+        "\t\tname = tst.12.a\n",
+        '\t\tlog = "[GetDateText]: [This.GetName]: CZE_Army_2000.01"\n',
+        "\t}\n",
+        "}\n",
+    ],
+    1,
+    "numeric namespace suffix does not hide a mismatched event id",
+)
+
 
 # 15d. hidden_trigger inside custom_trigger_tooltip (Check E1)
 
@@ -4640,6 +4808,12 @@ _EXPECTED = {
             "log says Option b but this option's own name is tst.1.a -- fix the option letter",
         )
     ],
+    "country_event executed-form log names another option": [
+        (
+            5,
+            "log references Event tst.1.a, but this option's own name is tst.1.b -- likely copy-paste; fix the log id",
+        )
+    ],
     "leader tier advances by two": [
         (
             4,
@@ -5043,6 +5217,19 @@ _EXACT_CASES = [
             "\toption = {\n",
             "\t\tname = tst.1.a\n",
             '\t\tlog = "Event tst.1 Option b"\n',
+            "\t}\n",
+            "}\n",
+        ],
+    ),
+    _exact(
+        "country_event executed-form log names another option",
+        _check_event_log_id,
+        [
+            "country_event = {\n",
+            "\tid = tst.1\n",
+            "\toption = {\n",
+            "\t\tname = tst.1.b\n",
+            '\t\tlog = "[GetDateText]: [This.GetName]: tst.1.a executed"\n',
             "\t}\n",
             "}\n",
         ],

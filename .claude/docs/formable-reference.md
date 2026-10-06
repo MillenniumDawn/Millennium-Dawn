@@ -150,11 +150,11 @@ validator recomputes both.
 
 ### CANZUK exemption
 
-`CANZUK_update_flag` is hidden for an EU member or once any European federation exists,
-so a CANZUK commitment can strand.
+`CANZUK_update_flag` is hidden for a member of a European federation, so a CANZUK
+commitment can strand.
 
 - `CANZUK_integrate_start` has a second AI modifier: `factor = 0` when
-  `has_global_flag = european_federation` or `has_idea = EU_member`.
+  `EU_is_federation_member = yes`.
 - Every ANZ, NORDEM, and AVG decision (CANZUK's fallback formables) extends its gate so a
   stranded CANZUK commitment does not block them:
 
@@ -162,10 +162,7 @@ so a CANZUK commitment can strand.
 			NOT = {
 				AND = {
 					check_variable = { formable_committed_id = 15 }
-					OR = {
-						has_global_flag = european_federation
-						has_idea = EU_member
-					}
+					EU_is_federation_member = yes
 				}
 			}
 ```
@@ -234,12 +231,14 @@ Call pattern. The setter must be immediately followed by the call:
 
 ## Cross-guards
 
-`european_federation` is a global flag, so guards on it fire worldwide.
+The EU guard is `EU_is_federation_member`: the global `european_federation` flag and the
+country's own `EU_member` idea, together. It stops a federation member trading its EFS
+cosmetic for a formable one. Never check either half alone. The flag alone fires
+worldwide, and the idea alone strands an EU member before any federation exists.
 
-- BLT: `update_flag` is hidden for `european_federation` or `EU_member`.
-  `integrate_start` has no EU block (the Baltic trap below).
-- CANZUK and MAGHREB: `update_flag` is hidden for `european_federation`, `EU_member`, or
-  the cosmetic already held. Only CANZUK AI-blocks `integrate_start` to match.
+- BLT: `update_flag` is hidden for a federation member. `integrate_start` has no EU block.
+- CANZUK and MAGHREB: `update_flag` is hidden for a federation member or the cosmetic
+  already held. Only CANZUK AI-blocks `integrate_start` to match.
 - MAGHREB and UAR exclude each other: `MAGHREB_integrate_start` is hidden for a UAR, and
   `form_UAR_category` is hidden on `is_MAGHREB`.
 - ANZ, NORDEM, AVG: no EU guard. They carry the CANZUK exemption.
@@ -260,13 +259,11 @@ Check it first when the AI never federates.
 
 ## Known traps and accepted behavior
 
-- Baltic trap: `BLT_integrate_start` has no EU gate while `BLT_update_flag` is hidden for
-  `EU_member`. An AI that starts BLT as an EU member keeps the -15% stability idea.
-- `european_federation` hides `MAGHREB_update_flag` and `CANZUK_update_flag` worldwide,
-  which can strand an AI mid-formable.
+- A Baltic AI still integrating when EU112 passes keeps `reshaping_national_identity`.
+  `BLT_update_flag` is hidden for a federation member, and only `update_flag` removes it.
 - Player-side clobber: `SCA`, `IBR`, `HBL`, `NORDEM`, `AUSHUN`, and `AVG` `update_flag`
   have no EU guard, so a player can click one after EFS branding and lose it for good.
-  Do not fix this by copying BLT's `EU_member` guard. That recreates the Baltic trap.
+  A guard there must be `EU_is_federation_member`, never `EU_member` alone.
 - EFS variants exist only for IBR, SCA, and BLT. Other completed formables get a plain
   `EFS_<TAG>`.
 - A member mid-formable when EU112 passes gets sentinel 102 and is AI-blocked from the

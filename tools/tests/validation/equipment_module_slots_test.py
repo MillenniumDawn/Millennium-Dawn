@@ -9,6 +9,7 @@ synthetic hull/module fixtures.
 
 import random
 
+import pytest
 from equipment_module_slots import (
     _depth0_text,
     _iter_named_blocks,
@@ -20,6 +21,7 @@ from equipment_module_slots import (
     created_variant_spans,
     parse_variant_names,
 )
+from shared.suite import write_under as _write
 from validate_ai_equipment import Validator
 
 # Archetype with three slots; hull_1 inherits, hull_2 overrides and adds a slot.
@@ -557,13 +559,6 @@ def test_target_variant_missing_required_slot_flagged():
     assert _kinds(content) == ["missing_required_module"]
 
 
-def _write(tmp_path, rel, body):
-    p = tmp_path / rel
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(body, encoding="utf-8")
-    return p
-
-
 def _variant_issues(tmp_path, hulls, rel, content, validator_cls, prefix):
     _write(tmp_path, "common/units/equipment/MD_test_ships.txt", hulls)
     _write(tmp_path, "common/units/equipment/modules/MD_test_modules.txt", MODULES)
@@ -593,7 +588,7 @@ def test_oob_validator_integration_reports_errors(tmp_path):
     assert "module_test_plain_fc" in issues[0].message
 
 
-def test_validator_integration_reports_warnings(tmp_path):
+def test_ai_validator_integration_reports_errors(tmp_path):
     issues = _variant_issues(
         tmp_path,
         HULLS,
@@ -607,7 +602,7 @@ def test_validator_integration_reports_warnings(tmp_path):
         "NAVAL VARIANT",
     )
     assert len(issues) == 1
-    assert issues[0].severity == "warning"
+    assert issues[0].severity == "error"
     assert issues[0].file == "common/ai_equipment/TST_naval.txt"
     assert "module_test_plain_fc" in issues[0].message
 
@@ -633,8 +628,7 @@ def test_oob_validator_reports_missing_required_slot(tmp_path):
 
 
 def test_ai_validator_missing_required_slot_is_error(tmp_path):
-    # A template that leaves a required slot empty can never be matched, so the
-    # AI validator escalates it above its usual slot-rule warning.
+    # A template that leaves a required slot empty can never be matched.
     issues = _variant_issues(
         tmp_path,
         REQUIRED_HULLS,
@@ -669,6 +663,33 @@ def test_ai_validator_count_limit_is_error(tmp_path):
     assert len(issues) == 1
     assert issues[0].severity == "error"
     assert "module_light_guns_category" in issues[0].message
+
+
+@pytest.mark.parametrize(
+    "modules_body, category",
+    [
+        (
+            "\t\t\t\tgun_slot = module_test_helipad\n",
+            "EQUIPMENT VARIANT: module category not allowed in slot",
+        ),
+        (
+            "\t\t\t\tgun_slot = module_test_exact_gun\n",
+            "EQUIPMENT VARIANT: module forbidden on hull type",
+        ),
+    ],
+)
+def test_ai_validator_non_ship_slot_findings_are_errors(
+    tmp_path, modules_body, category
+):
+    issues = _variant_issues(
+        tmp_path,
+        LIMIT_HULLS,
+        "common/ai_equipment/TST_land.txt",
+        _variant("lim_tank_hull_1", modules_body),
+        Validator,
+        "EQUIPMENT VARIANT",
+    )
+    assert [(i.severity, i.category) for i in issues] == [("error", category)]
 
 
 def test_two_guns_exceed_category_count_limit():

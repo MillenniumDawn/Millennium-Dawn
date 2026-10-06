@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate Military-Industrial Organization definitions in Millennium Dawn.
 
-Rules from .claude/docs/mio-reference.md + AGENTS.md:
+Rules from .claude/docs/mio-reference.md:
   * org ids are TAG_organization_name (3-uppercase tag prefix); the shared
     GENERIC_/generic_ orgs are exempt
   * orgs pin their tag with allowed = { original_tag = TAG }
@@ -20,6 +20,9 @@ Rules from .claude/docs/mio-reference.md + AGENTS.md:
     roster — ships are built in dockyards, which have no production efficiency
   * percentage-type organization_modifier keys stay inside -1..1 — a whole
     number there is a dropped decimal point that silently breaks the org
+  * a `create_equipment_variant` naming `design_team = mio:<org>` uses a type
+    the org's equipment_type covers (after `mio_cat_*` expansion and archetype
+    resolution), or the engine ignores the designer
   * every `mio:<org>` reference names a real org, and the org is reachable from
     the country whose script references it — an org pinned to another tag is
     simply absent in that scope, so the engine logs `was not found in country
@@ -51,9 +54,14 @@ from typing import (
     Union,
 )
 
-from equipment_module_slots import blank_comments
+from equipment_module_slots import _iter_named_blocks, _scalar, blank_comments
 from equipment_stats import EquipmentStatIndex, build_equipment_stat_index
-from shared_utils import get_staged_files, validation_config
+from shared_utils import (
+    blank_quoted_strings,
+    find_unquoted_block_end,
+    get_staged_files,
+    validation_config,
+)
 from sprite_index import build_sprite_index
 from validate_style import _is_escaped, split_code_and_comment
 from validator_common import BaseValidator, run_validator_main
@@ -129,20 +137,6 @@ NAME_RE = re.compile(_keyword("name") + r"\s*=\s*([A-Za-z0-9_]+)")
 TOKEN_RE = re.compile(_keyword("token") + r"\s*=\s*([A-Za-z0-9_]+)")
 
 
-def _mask_strings(code: str) -> str:
-    masked = []
-    in_string = False
-    for index, char in enumerate(code):
-        if char == '"' and not _is_escaped(code, index):
-            in_string = not in_string
-            masked.append('"')
-        elif in_string:
-            masked.append(" ")
-        else:
-            masked.append(char)
-    return "".join(masked)
-
-
 def _iter_icon_values(text: str):
     offset = 0
     line = 1
@@ -151,7 +145,7 @@ def _iter_icon_values(text: str):
         # Only a line holding the literal can match; skip the per-character mask.
         if "icon" in raw_line:
             code, _comment = split_code_and_comment(raw_line)
-            masked = _mask_strings(code)
+            masked = blank_quoted_strings(code)
             for match in ICON_ASSIGNMENT_RE.finditer(masked):
                 value = code[match.end() :].lstrip()
                 if value.startswith('"'):
@@ -174,6 +168,7 @@ def _iter_icon_values(text: str):
 # `industrial_manufacturer = mio:X`, the unlock tooltip, and the `mio:X = { }`
 # scope block.
 MIO_REFERENCE_RE = re.compile(_keyword("mio:") + r"([A-Za-z0-9_]+)")
+DESIGN_TEAM_RE = re.compile(_keyword("design_team") + r"\s*=\s*mio:([A-Za-z0-9_]+)")
 COUNTRY_TAG_DEF_RE = re.compile(r"^\s*([A-Z][A-Z0-9]{2})\s*=", re.MULTILINE)
 FOCUS_BLOCK_RE = re.compile(
     r"^[^\S\n]*(?:shared_focus|joint_focus|focus)\s*=\s*\{", re.MULTILINE
@@ -259,17 +254,7 @@ def _block_end(text: str, open_brace_end: int) -> int:
     Braces are counted bare, quoted or not; an unclosed block runs to the end
     of *text*.
     """
-    depth = 1
-    pos = open_brace_end
-    # Depth only falls at a `}`, so hop between them and count the `{` skipped.
-    while True:
-        close = text.find("}", pos)
-        if close == -1:
-            return len(text)
-        depth += text.count("{", pos, close) - 1
-        if not depth:
-            return close + 1
-        pos = close + 1
+    return find_unquoted_block_end(text, open_brace_end)[0]
 
 
 def _open_braces(text: str, positions: Sequence[int]) -> List[Tuple[int, ...]]:
@@ -700,7 +685,9 @@ class Validator(BaseValidator):
                 continue
             reference_hits += 1
             rel = Path(filepath).relative_to(self.mod_path).as_posix()
-            self._check_mio_references(blank_comments(text), rel)
+            clean = blank_comments(text)
+            self._check_mio_references(clean, rel)
+            self._check_design_team_coverage(clean, rel, equipment)
 
         self.log(
             f"  Scanned {len(files) + len(bonus_files)} files | "
@@ -751,7 +738,7 @@ class Validator(BaseValidator):
             return
         prefix = org_id.split("_", 1)[0]
         if not name.startswith(prefix + "_") or not name.endswith("_trait"):
-            self.add_warning(
+            self.add_error(
                 "initial-trait-name",
                 f"initial_trait name '{name}' must be {prefix}_<name>_trait "
                 f"(e.g. {prefix}_norinco_trait)",
@@ -807,7 +794,7 @@ class Validator(BaseValidator):
             except ValueError:
                 continue
             if x > 9:
-                self.add_warning(
+                self.add_error(
                     "trait-x-bounds",
                     f"trait position x = {x} must stay inside 0..9",
                     rel,
@@ -886,7 +873,7 @@ class Validator(BaseValidator):
                     if parent_pos is None:
                         continue
                     if child_pos[1] <= parent_pos[1]:
-                        self.add_warning(
+                        self.add_error(
                             "trait-geometry-parent-row",
                             f"trait `{token}` sits on or above its parent "
                             f"`{parent}` (rows {child_pos[1]} vs "
@@ -907,7 +894,7 @@ class Validator(BaseValidator):
                     continue
                 if child_pos[1] != other_pos[1]:
                     self._reported_mutex_rows.add(row_pair)
-                    self.add_warning(
+                    self.add_error(
                         "trait-geometry-mutex-row",
                         f"mutually exclusive traits `{token}` and `{other}` "
                         f"sit on different rows ({child_pos[1]} vs "
@@ -931,7 +918,7 @@ class Validator(BaseValidator):
                     if pair in seen_pairs:
                         continue
                     seen_pairs.add(pair)
-                    self.add_warning(
+                    self.add_error(
                         "trait-geometry-mutex-parents",
                         f"trait `{token}` requires both `{parent}` and "
                         f"`{other}`, but they are mutually exclusive — the "
@@ -1335,6 +1322,43 @@ class Validator(BaseValidator):
                     rel,
                     line,
                 )
+
+    def _check_design_team_coverage(
+        self, text: str, rel: str, equipment: EquipmentStatIndex
+    ):
+        """Flag a `create_equipment_variant` whose `design_team = mio:<org>` org
+        does not list the variant's archetype, which the engine ignores.
+
+        A type the index cannot resolve to an archetype (a vanilla designer
+        airframe, or a typo) and an org with no equipment_type are skipped, so
+        only a provable mismatch is reported.
+        """
+        for lo, hi in _iter_named_blocks(
+            text, 0, len(text), "create_equipment_variant"
+        ):
+            team = DESIGN_TEAM_RE.search(text, lo, hi)
+            variant_type = _scalar(text, lo, hi, "type")
+            body = self._org_bodies.get(team.group(1)) if team else None
+            archetype = equipment.archetype_of(variant_type) if variant_type else None
+            if body is None or archetype is None:
+                continue
+            tokens = self._org_equipment_types(team.group(1), body)
+            covered = {m for token in tokens for m in equipment.expand(token)}
+            if not tokens or covered & {
+                variant_type,
+                archetype,
+                *equipment.types.get(archetype, ()),
+                *equipment.types.get(variant_type, ()),
+            }:
+                continue
+            self.add_warning(
+                "mio-design-team-type-uncovered",
+                f"design_team = mio:{team.group(1)} cannot design {variant_type}: "
+                f"its equipment_type does not cover {archetype}, so the engine "
+                f"ignores the designer",
+                rel,
+                text.count("\n", 0, team.start()) + 1,
+            )
 
     def _check_on_complete(self, body: str, rel: str, body_offset: int):
         for m in ON_COMPLETE_RE.finditer(body):
