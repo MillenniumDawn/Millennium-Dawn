@@ -5,6 +5,7 @@ import sys
 
 import pytest
 import validate_factions
+from shared.suite import write_text as _write_text
 from validate_factions import (
     Validator,
     extract_default_rules_block,
@@ -49,11 +50,6 @@ upgrade_group = {
 
     assert extract_group_rule_ids(content) == {"rule_group": ["rule_one", "rule_two"]}
     assert extract_upgrade_group_ids(content) == {"upgrade_group": ["upgrade_one"]}
-
-
-def _write_text(path, content):
-    with path.open("w", encoding="utf-8", newline="") as file:
-        file.write(content)
 
 
 def _write_faction_fixture(tmp_path, manifest="manifest_one"):

@@ -55,6 +55,8 @@ GROUP_PATTERNS = {
     "scripted-loc": ["common/scripted_localisation/**"],
     "scripted-guis": ["common/scripted_guis/**"],
     "interface": ["interface/**"],
+    "graphic-db": ["gfx/interface/equipmentdesigner/graphic_db/**"],
+    "music": ["music/**/*.txt"],
     "national-focus": ["common/national_focus/**"],
     "on-actions": ["common/on_actions/**"],
     "mios": [
@@ -82,6 +84,7 @@ GROUP_PATTERNS = {
         "localisation/**",
         "interface/**",
         "gfx/interface/decisions/**",
+        "gfx/interface/equipmentdesigner/graphic_db/**",
         "music/**",
         "map/adjacency_rules.txt",
         "*.mod",

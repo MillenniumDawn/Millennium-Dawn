@@ -6,13 +6,13 @@ nearest enclosing scope switch is a state, so random_list weights and intervenin
 owner/tag/ROOT openers must not produce false positives.
 """
 
-import validate_variables as V
+from shared.suite import variable_scan
 
 
 def _hits(tmp_path, body):
     path = tmp_path / "focus.txt"
     path.write_text(body)
-    return V.process_file_for_treasury_scope((str(path), str(tmp_path)))
+    return variable_scan(path, "treasury", tmp_path)
 
 
 def test_state_id_block_is_flagged(tmp_path):

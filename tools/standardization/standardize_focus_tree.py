@@ -11,12 +11,12 @@ import sys
 import time
 from typing import Any
 
-from _common import format_elapsed
 from common_utils import (
     PROP_NAME_RE,
     collapse_blank_runs,
     compact_icon,
     compact_search_filters,
+    format_elapsed,
     join_groups,
     read_lines_for_standardization,
     render_standardized,
@@ -369,17 +369,6 @@ def extract_focus_properties(focus_lines):
         props["comments"]["__trailing__"] = list(pending)
 
     return props
-
-
-def clean_block_lines(block_lines):
-    """Remove trailing blank lines from a block and return cleaned lines"""
-    if not block_lines:
-        return block_lines
-
-    while block_lines and block_lines[-1].strip() == "":
-        block_lines.pop()
-
-    return block_lines
 
 
 def _fix_log_id(line: str, focus_id: str) -> str:

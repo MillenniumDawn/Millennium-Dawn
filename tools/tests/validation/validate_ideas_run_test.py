@@ -10,6 +10,7 @@ import sys
 
 import pytest
 import validate_ideas
+from shared.suite import issue_rows as _findings
 from shared.suite import write_under as _write
 from validate_ideas import IdeaIssue, Validator, _add_extra_args
 
@@ -88,13 +89,6 @@ RUN_GFX = (
 def _validator(root, **kwargs):
     kwargs.setdefault("unused_ideas", False)
     return Validator(str(root), use_colors=False, workers=1, **kwargs)
-
-
-def _findings(validator):
-    return sorted(
-        (issue.category, issue.message, issue.file, issue.line)
-        for issue in validator._issues
-    )
 
 
 def _write_run_mod(tmp_path):

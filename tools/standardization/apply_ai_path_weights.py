@@ -30,9 +30,8 @@ import sys
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Sequence, Tuple
 
-_TOOLS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
-sys.path.insert(0, _TOOLS)
-sys.path.insert(0, os.path.join(_TOOLS, "analysis"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "analysis"))
 
 from ai_path_report import resolve_focus_file  # noqa: E402
 from common_utils import code_of_line, find_block_span  # noqa: E402

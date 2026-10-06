@@ -12,6 +12,8 @@ Quality checklist for new content. Full guides:
 - A country tree must meet or exceed the generic tree's focus count. Count the generic
   tree before merging a new country.
 - Starting factories match real GDP PPP and must not be changed.
+- GDP per building and resource comes only from the `@gdp_*` constants in
+  `common/scripted_effects/00_money_system.txt`.
 
 ## Political
 

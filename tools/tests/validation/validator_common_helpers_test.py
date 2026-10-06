@@ -58,7 +58,7 @@ def test_child_blocks_on_empty_span():
 
 
 def test_match_brace_returns_minus_one_when_unclosed():
-    assert VC._match_brace("{ a = 1", 0) == -1
+    assert VC.find_unquoted_brace_close("{ a = 1", 0) == -1
 
 
 # ---- leader trait parsing -------------------------------------------------

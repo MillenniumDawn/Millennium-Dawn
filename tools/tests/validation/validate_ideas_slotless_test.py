@@ -9,6 +9,7 @@ alternatives and are never flagged.
 
 import pytest
 import shared_utils
+from shared.suite import write_text as _write
 from validate_ideas import (
     IdeaIssue,
     Validator,
@@ -100,12 +101,6 @@ def test_always_yes_available_in_slotless_still_flagged():
 def test_both_gates_flagged_in_country():
     body = _idea("allowed = { original_tag = ISR }", "available = { always = yes }")
     assert _issue_types(_wrap(body)) == _every_slotless_issue()
-
-
-def _write(path, text):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
 
 
 def _custom_slotless_idea(gate):

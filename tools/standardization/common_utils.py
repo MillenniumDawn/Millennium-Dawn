@@ -14,7 +14,6 @@ from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from _common import format_elapsed
 from shared_utils import (
     add_standard_file_arguments,
     atomic_write_text,
@@ -23,7 +22,6 @@ from shared_utils import (
     extract_block,
     log_message,
     normalize_spacing,
-    run_tool_main,
     strip_inline_comment,
 )
 
@@ -226,6 +224,14 @@ def read_lines_for_standardization(
     return lines
 
 
+def format_elapsed(seconds: float) -> str:
+    """Render an elapsed duration: `X.XX seconds` under a minute, else `Xm Y.YYs`."""
+    if seconds < 60:
+        return f"{seconds:.2f} seconds"
+    minutes = int(seconds // 60)
+    return f"{minutes}m {seconds % 60:.2f}s"
+
+
 def render_standardized(output_lines: List[str]) -> str:
     """Render a standardizer's output lines as the file text it would write."""
     return "".join(normalize_spacing(line) + "\n" for line in output_lines)
@@ -385,11 +391,12 @@ def create_standardizer_parser(description: str) -> argparse.ArgumentParser:
 
 def run_standardizer(standardizer_class, description: str, argv=None):
     """Run a standardizer with standard command line interface."""
-    parser = create_standardizer_parser(description)
-    run_tool_main(
-        standardizer_class,
-        description=description,
-        method_name="standardize_file",
-        argv=argv,
-        parser=parser,
-    )
+    args = create_standardizer_parser(description).parse_args(argv)
+    output_file = resolve_output_file_and_backup(args)
+    log_message("INFO", f"Starting processing of {args.input_file}", args.verbose)
+    standardizer = standardizer_class(verbose=args.verbose)
+    if standardizer.standardize_file(args.input_file, output_file):
+        log_message("SUCCESS", f"Processing completed: {output_file}")
+    else:
+        log_message("ERROR", "Processing failed")
+        sys.exit(1)

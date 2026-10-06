@@ -60,12 +60,6 @@ def _scan_brackets_text(text: str, basename: str) -> List[str]:
     return results
 
 
-def process_yml_for_brackets(args: Tuple[str]) -> List[str]:
-    filename = args[0]
-    text = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    return _scan_brackets_text(text, os.path.basename(filename))
-
-
 _SUBST_KEY_RE = re.compile(r"\$([A-Za-z_][A-Za-z0-9_]*)\$")
 _LINE_KEY_RE = re.compile(r"^[ \t]*([\w.\-]+)\s*:")
 # Literal first so sre can scan for it; the look-behind stands in for a leading \b.
@@ -186,15 +180,6 @@ def _scan_syntax_text(
     return out
 
 
-def process_yml_for_syntax(args: Tuple[str, List[str], frozenset]) -> List[Issue | str]:
-    filename, valid_colors, subst_keys = args
-    text_file = FileOpener.open_text_file(
-        filename, lowercase=False, strip_comments_flag=True
-    )
-    pairs = _scan_syntax_text(text_file, os.path.basename(filename), valid_colors)
-    return [finding for finding, key in pairs if key not in subst_keys]
-
-
 def _scan_mandatory_text(text: str, basename: str) -> List[str]:
     results: List[str] = []
     lines = text.split("\n")
@@ -203,12 +188,6 @@ def _scan_mandatory_text(text: str, basename: str) -> List[str]:
     if not any("l_english:" in line for line in lines):
         results.append(f"{basename} - l_english: line is absent")
     return results
-
-
-def process_yml_for_mandatory(args: Tuple[str]) -> List[str]:
-    filename = args[0]
-    text_file = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    return _scan_mandatory_text(text_file, os.path.basename(filename))
 
 
 # .claude/docs/typo-watchlist.md's catalogued misspellings, lowered. `it's`
@@ -310,12 +289,6 @@ def _scan_typos_text(text: str, basename: str) -> List[str]:
                 f"{basename} - line {line_idx + 2} - '{token}' -> '{correction}'"
             )
     return results
-
-
-def process_yml_for_typos(args: Tuple[str]) -> List[str]:
-    filename = args[0]
-    text = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    return _scan_typos_text(text, os.path.basename(filename))
 
 
 _PROSE_COLOR_RE = re.compile(r"§(?:\[[^\]]*\]|\$[^$\s]+\$|[A-Za-z0-9!])")
@@ -427,12 +400,6 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
             )
 
     return results
-
-
-def process_yml_for_prose(args: Tuple[str]) -> List[Issue]:
-    filename = args[0]
-    text = FileOpener.open_text_file(filename, strip_comments_flag=True)
-    return _scan_prose_text(text, os.path.basename(filename))
 
 
 def _scan_subst_keys_text(text: str) -> Set[str]:
@@ -935,27 +902,15 @@ def process_txt_for_script_var_reads(args: Tuple[str]) -> List[Tuple[str, str, i
     return _scan_script_var_reads_text(text, os.path.basename(filename))
 
 
-def process_yml_for_var_refs(args: Tuple[str]) -> List[Tuple[str, str, int]]:
-    """Pool worker: (variable, file, line) for every `[?...]` in one loc file."""
-    filename = args[0]
-    try:
-        with open(filename, "r", encoding="utf-8-sig", newline="") as handle:
-            raw = handle.read()
-    except (OSError, UnicodeDecodeError):
-        return []
-    return _scan_var_refs_text(raw, os.path.basename(filename))
-
-
 def _scan_shared_yml_file(args) -> Tuple:
     """Pool worker: run every yml check on one file after a single read.
 
     Reads the file once and shares the comment-stripped text across the
     brackets, syntax, mandatory, typo, and prose scans instead of one read
-    plus strip pass per check. Each scan calls the same ``_scan_*_text``
-    helper its standalone worker uses, so findings are unchanged. Variable
-    references scan the raw lines and substitution keys are harvested from
-    the same stripped text; the syntax color exemption resolves parent-side
-    once the repo-wide substitution set is known.
+    plus strip pass per check. Variable references scan the raw lines and
+    substitution keys are harvested from the same stripped text; the syntax
+    color exemption resolves parent-side once the repo-wide substitution set
+    is known.
     Returns (brackets, syntax_pairs, mandatory, typos, prose, var_refs, subst).
     """
     filename, valid_colors = args
@@ -1179,25 +1134,6 @@ class Validator(BaseValidator):
             ["localisation/english/**/*.yml"],
             extra_skip=functools.partial(_should_skip, mod_path=self.mod_path),
         )
-
-    def _collect_substitution_keys(self, yml_files: List[str]) -> frozenset:
-        """Return loc keys referenced via $KEY$ string interpolation.
-
-        These keys intentionally split § color codes across multiple values
-        (e.g. `gip` ends with §Y and `gis` supplies §!) so the per-key
-        §-balance check produces false positives. Caller skips that check
-        for any key in this set.
-        """
-        keys: set = set()
-        for filepath in yml_files:
-            try:
-                text = FileOpener.open_text_file(
-                    filepath, lowercase=False, strip_comments_flag=True
-                )
-            except Exception:
-                continue
-            keys.update(_SUBST_KEY_RE.findall(text))
-        return frozenset(keys)
 
     def _get_shared_yml_scan(self) -> dict:
         """Run every yml check in one pool pass over the yml file set.

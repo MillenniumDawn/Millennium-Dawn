@@ -18,9 +18,9 @@ import disk_cache
 from shared_utils import validation_config
 from validator_common import (
     BaseValidator,
-    DataCleaner,
     FileOpener,
     Severity,
+    drop_partial_matches,
     find_line_number,
     run_validator_main,
     should_skip_file,
@@ -384,12 +384,7 @@ class Validator(BaseValidator):
             if var not in unique_vars:
                 unique_vars[var] = paths[var]
 
-        cleaned_vars = (
-            DataCleaner.clear_false_positives_partial_match(
-                list(unique_vars.keys()), tuple(false_positives)
-            )
-            or []
-        )
+        cleaned_vars = drop_partial_matches(unique_vars, false_positives)
 
         self.log(f"Found {len(cleaned_vars)} unique variables set via set_variable")
         self.log(f"Checking reference counts with {self.workers} workers...")

@@ -544,14 +544,14 @@ class Validator(BaseValidator):
         orphaned = self.manifest_ids - referenced_manifests
         if orphaned:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Warning: {len(orphaned)} manifest(s) not referenced by any template:{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Warning: {len(orphaned)} manifest(s) not referenced by any template:{Colors.ENDC}",
                 "warning",
             )
             for m in sorted(orphaned):
                 self.log(f"  {m}", "warning")
         else:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}All manifests are referenced by at least one template{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.GREEN}All manifests are referenced by at least one template{Colors.ENDC}"
             )
 
     def run_validations(self):

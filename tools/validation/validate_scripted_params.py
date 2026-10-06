@@ -4,16 +4,22 @@
 Auto-discovers parameter contracts from "# Parameters:" comment blocks in
 common/scripted_effects/*.txt and validates each call site sets required vars
 before calling. Warns on scope-boundary violations (temp var set inside a
-scope-changing block, but the effect call is outside).
+scope-changing block, but the effect call is outside). The reverse is checked
+too: a declared parameter that is set and then never used is a dead setter.
 """
 
+import functools
 import glob
 import os
 import re
-from typing import Dict, List, Set, Tuple
+from typing import Dict, Iterable, List, Set, Tuple
 
 import disk_cache
-from shared_utils import blank_quoted_strings, get_staged_files
+from shared_utils import (
+    blank_quoted_strings,
+    extract_block_from_text,
+    get_staged_files,
+)
 from validate_unused_scripted import extract_definitions
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
@@ -38,6 +44,7 @@ _CALLER_PATTERNS = [
 # A staged change here can break a caller that did not change.
 _DEPENDENCY_DIRS = (
     "common/scripted_effects",
+    "common/scripted_triggers",
     "common/country_tags",
     "common/country_tag_aliases",
 )
@@ -122,6 +129,8 @@ SCOPE_CHANGING_KEYWORDS: Set[str] = {
 # the next one runs.
 EFFECT_BLOCK_KEYWORDS: Set[str] = {
     "completion_reward",
+    "completion_reward_joint_originator",
+    "completion_reward_joint_member",
     "select_effect",
     "immediate",
     "option",
@@ -129,13 +138,25 @@ EFFECT_BLOCK_KEYWORDS: Set[str] = {
     "remove_effect",
     "timeout_effect",
     "cancel_effect",
+    "bypass_effect",
     "effect",
     "on_add",
     "on_remove",
+    "on_activate",
+    "on_deactivate",
+    "on_complete",
+    "outcome_extra_execute",
 }
 
+# Every statement that gives a temp variable a value. add_to/subtract_from count:
+# they start from zero on an unset variable. `var = NAME` is the long form.
+_TEMP_WRITERS = (
+    r"(?:set_temp_variable(?:_to_random)?|add_to_temp_variable"
+    r"|subtract_from_temp_variable)"
+)
+_TEMP_TARGET = r"(?:var\s*=\s*)?([a-zA-Z_][a-zA-Z0-9_]*)"
 _SET_TEMP_RE = re.compile(
-    r"\bset_temp_variable\s*=\s*\{\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*([^}]+?)\s*\}",
+    r"\b" + _TEMP_WRITERS + r"\s*=\s*\{\s*" + _TEMP_TARGET + r"\s*=?\s*([^}]*?)\s*\}",
 )
 _CALL_RE = re.compile(r"\b([A-Za-z][A-Za-z0-9_]*)\s*=\s*yes\b")
 _SINGLE_CALL_LINE_RE = re.compile(
@@ -367,16 +388,15 @@ def _parse_effect_contracts_from_file(
 
 
 def _normalize_multiline_set_temp(text: str) -> str:
-    """Collapse multi-line set_temp_variable blocks without changing line numbers."""
+    """Collapse multi-line temp-variable writes without changing line numbers."""
     normalized = []
     cursor = 0
-    pattern = re.compile(r"\bset_temp_variable\s*=\s*\{")
+    pattern = re.compile(r"\b" + _TEMP_WRITERS + r"\s*=\s*\{")
+    target = re.compile(r"\s*" + _TEMP_TARGET)
 
     while match := pattern.search(text, cursor):
         block_start = match.end() - 1
-        name_match = re.match(
-            r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=", text[block_start + 1 :]
-        )
+        name_match = target.match(text, block_start + 1)
         if not name_match:
             normalized.append(text[cursor : match.end()])
             cursor = match.end()
@@ -666,6 +686,265 @@ def _validate_call_sites_in_file(
     return results
 
 
+# Blocks that delimit one effect execution. hidden_effect is NOT a boundary:
+# it runs in the same execution as its parent, only hidden from the tooltip.
+# effect_tooltip is deliberately its own container: a setter previewed there
+# must also be used there or the tooltip renders nothing.
+_EFFECT_CONTAINER_RE = re.compile(
+    r"\b(?:"
+    + "|".join(sorted(EFFECT_BLOCK_KEYWORDS))
+    + r"|effect_tooltip|\w+_click)\s*=\s*\{"
+)
+_SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z0-9_]+)\s*=\s*\{", re.MULTILINE)
+# A variable statement up to the operand it changes. That operand is not a read.
+_TARGET_BEFORE_RE = re.compile(
+    r"\b(?:set|add_to|subtract_from|multiply|divide|modulo|round|clamp)"
+    r"_(?:temp_)?variable(?:_to_random)?\s*=\s*\{\s*(?:var\s*=\s*)?$"
+)
+# Longest statement opener, with its whitespace, that can precede an operand.
+_OPENER_WINDOW = 160
+
+
+@functools.lru_cache(maxsize=None)
+def _param_res(var: str) -> Tuple[re.Pattern, re.Pattern]:
+    """(any occurrence, value-producing write) patterns for one parameter.
+
+    add_to/multiply etc. read the existing value, so they are not writes. The
+    write's last group is the parameter it sets.
+    """
+    name = re.escape(var)
+    return (
+        re.compile(r"\b" + name + r"\b"),
+        re.compile(
+            r"\b(?:set_temp_variable|set_variable)\s*=\s*\{\s*(?:var\s*=\s*)?"
+            r"(" + name + r")\s*(?:=|value\s*=)"
+            r"|\bset_temp_variable_to_random\s*=\s*\{\s*var\s*=\s*(" + name + r")\b"
+        ),
+    )
+
+
+@functools.lru_cache(maxsize=None)
+def _setter_re(params: Tuple[str, ...]) -> re.Pattern:
+    """A statement that hands one of the parameters a value, short or long form."""
+    return re.compile(
+        r"\b(?:set|add_to|subtract_from)_temp_variable\s*=\s*\{\s*(?:var\s*=\s*)?("
+        + "|".join(re.escape(p) for p in params)
+        + r")\s*(?:=|value\s*=)"
+    )
+
+
+@functools.lru_cache(maxsize=None)
+def _consumer_call_re(effects: frozenset) -> re.Pattern:
+    return re.compile(
+        r"\b(?:" + "|".join(re.escape(n) for n in sorted(effects)) + r")\s*=\s*yes\b"
+    )
+
+
+def _scripted_bodies(filepath: str) -> Dict[str, str]:
+    """Each scripted effect or trigger in a file, mapped to its comment-free body.
+
+    A read or decode error propagates so the caller can report the file.
+    """
+    with open(filepath, "r", encoding="utf-8-sig") as fh:
+        text = strip_comments(fh.read())
+    bodies: Dict[str, str] = {}
+    for m in _SCRIPTED_EFFECT_DEF_RE.finditer(text):
+        body, _ = extract_block_from_text(text, m.start())
+        if body:
+            bodies[m.group(1)] = body
+    return bodies
+
+
+def _reads_itself(text: str, write_start: int, var_re: re.Pattern) -> bool:
+    """Whether the write opening at write_start reads the variable it sets.
+
+    The sole occurrence in the write's block is the l-value. A second one
+    (``value = X multiply = -1``, events/raids.txt) folds the old value forward.
+    """
+    body, _ = extract_block_from_text(text, write_start)
+    return len(var_re.findall(body)) > 1
+
+
+def build_param_consumer_map(
+    bodies: Dict[str, str], declared: Dict[str, Iterable[str]]
+) -> Dict[str, frozenset]:
+    """Map each declared parameter to the scripted effects that consume it.
+
+    An effect consumes a parameter when the parameter's first appearance in
+    its body is a read (add_to_variable r-value, multiply, check, ...) rather
+    than a set_temp_variable/set_variable write. A wrapper that writes first
+    overwrites the caller's value and cannot consume it. A write nested in a
+    branch may not run, so it does not count, the same as on the caller side.
+    Closed transitively so wrappers of wrappers (GRE_pay_or_defer ->
+    modify_debt_effect) count. An effect needs no contract of its own to count.
+    """
+    callers: Dict[str, List[Tuple[str, int]]] = {}
+    for name, body in bodies.items():
+        for m in _CALL_RE.finditer(body):
+            callers.setdefault(m.group(1), []).append((name, m.start()))
+
+    consumers: Dict[str, frozenset] = {}
+    for var, effects in declared.items():
+        var_re, write_re = _param_res(var)
+        first_write: Dict[str, int] = {}
+        known = set(effects)
+        for name, body in bodies.items():
+            if var not in body:
+                continue
+            # target position -> start of the statement that writes it
+            writes = {w.start(w.lastindex): w.start() for w in write_re.finditer(body)}
+            read = write = None
+            for om in var_re.finditer(body):
+                opener = writes.get(om.start())
+                if opener is None or _reads_itself(body, opener, var_re):
+                    if read is None:
+                        read = om.start()
+                elif write is None and body.count("{", 0, opener) == body.count(
+                    "}", 0, opener
+                ):
+                    write = om.start()
+                if read is not None and write is not None:
+                    break
+            if write is not None:
+                first_write[name] = write
+            if read is not None and (write is None or read < write):
+                known.add(name)
+        queue = list(known)
+        while queue:
+            for caller, pos in callers.get(queue.pop(), ()):
+                write = first_write.get(caller)
+                if caller not in known and (write is None or pos < write):
+                    known.add(caller)
+                    queue.append(caller)
+        consumers[var] = frozenset(known)
+    return consumers
+
+
+def _has_sequential_rewrite(
+    cleaned: str, start: int, end: int, var_re: re.Pattern, write_re: re.Pattern
+) -> bool:
+    """Whether the setter's variable is re-set in [start, end) as a clobber.
+
+    Depth heuristic: only a re-write at the setter's own brace depth counts.
+    Branch-gated writes (if/else arms) sit in nested blocks and never clobber.
+    A same-depth re-write that reads the variable in its value expression
+    folds the old value forward and is not a clobber either.
+    """
+    rewrites = [w.start() for w in write_re.finditer(cleaned, start, end)]
+    if not rewrites:
+        return False
+    ri = 0
+    depth = 1  # start sits inside the setter's own braces
+    for i in range(start, end):
+        if ri < len(rewrites) and rewrites[ri] == i:
+            if depth == 0:
+                # The first same-depth re-write decides.
+                return not _reads_itself(cleaned, i, var_re)
+            ri += 1
+            if ri == len(rewrites):
+                return False
+        c = cleaned[i]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth < 0:
+                return False
+    return False
+
+
+def _scan_orphan_setters_text(
+    cleaned: str, consumers: Dict[str, frozenset]
+) -> List[Tuple[str, bool, int]]:
+    """Find declared-parameter setters that are dead in their block: never
+    used, or overwritten at the same depth before the first use.
+
+    A use is a call to an effect that consumes the parameter, or a direct read
+    of it. A use inside a nested effect_tooltip counts, since a preview reads
+    the value too. Setters outside any known effect container (loose
+    scripted-effect bodies that produce the value for their caller) are skipped.
+    Returns (parameter, overwritten, line) triples.
+    """
+    setters = list(_setter_re(tuple(sorted(consumers))).finditer(cleaned))
+    if not setters:
+        return []
+
+    spans = []
+    for m in _EFFECT_CONTAINER_RE.finditer(cleaned):
+        brace = m.end() - 1
+        body, end = extract_block_from_text(cleaned, brace)
+        if body:
+            spans.append((brace + 1, end))
+
+    found: List[Tuple[str, bool, int]] = []
+    for m in setters:
+        var = m.group(1)
+        holder_start = -1
+        holder_end = -1
+        for start, end in spans:
+            if start <= m.start() < end and start > holder_start:
+                holder_start = start
+                holder_end = end
+        if holder_start < 0:
+            continue
+        var_re, write_re = _param_res(var)
+        _, setter_end = extract_block_from_text(cleaned, m.start())
+        # Assigning zero resets a parameter after use. It passes nothing on.
+        if cleaned[m.end() : setter_end - 1].strip() == "0":
+            continue
+        uses = [
+            cm.start()
+            for cm in _consumer_call_re(consumers[var]).finditer(
+                cleaned, m.end(), holder_end
+            )
+        ]
+        # The setter's own value expression may read the variable it sets.
+        uses += [
+            om.start()
+            for om in var_re.finditer(cleaned, setter_end, holder_end)
+            if not _TARGET_BEFORE_RE.search(
+                cleaned, max(0, om.start() - _OPENER_WINDOW), om.start()
+            )
+        ]
+        overwritten = bool(uses) and _has_sequential_rewrite(
+            cleaned, m.end(), min(uses), var_re, write_re
+        )
+        if not uses or overwritten:
+            found.append((var, overwritten, cleaned.count("\n", 0, m.start()) + 1))
+    return found
+
+
+def _scan_orphan_setters_in_file(
+    args: Tuple[str, str, Dict[str, frozenset], Dict[str, str]],
+) -> List[str]:
+    """Report the dead declared-parameter setters in one file."""
+    filepath, mod_path, consumers, owners = args
+    try:
+        with open(filepath, "r", encoding="utf-8-sig") as fh:
+            raw = fh.read()
+    except _READ_ERRORS:
+        # The call-site pass reads the same file and reports it.
+        return []
+    if "_temp_variable" not in raw or not any(var in raw for var in consumers):
+        return []
+
+    rel = os.path.relpath(filepath, mod_path)
+    results = []
+    text = blank_quoted_strings(strip_comments(raw))
+    for var, overwritten, line in _scan_orphan_setters_text(text, consumers):
+        if overwritten:
+            results.append(
+                f"{rel}:{line} - '{var}' is set and then overwritten before"
+                f" anything uses it, so this setter is dead"
+            )
+        else:
+            results.append(
+                f"{rel}:{line} - '{var}' is set but never used: no {owners[var]}"
+                f" call, wrapper, or read follows in the same effect block"
+            )
+    return results
+
+
 class Validator(BaseValidator):
     TITLE = "SCRIPTED EFFECT PARAMETER VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -675,6 +954,9 @@ class Validator(BaseValidator):
         self.audit_shared_lines = audit_shared_lines
         self._audit_names: Set[str] = set()
         self._contracts: Dict[str, Dict[str, List[str]]] = {}
+        # Every declared parameter, required or optional -> effects declaring it.
+        self._declared: Dict[str, Set[str]] = {}
+        self._consumers: Dict[str, frozenset] = {}
         self._valid_tags: "frozenset[str]" = frozenset()
         self._unreadable: List[str] = []
         if self.staged_only:
@@ -694,11 +976,17 @@ class Validator(BaseValidator):
         self._unreadable.extend(unreadable)
         self.log(f"  Valid country tags + aliases:     {len(self._valid_tags)}")
 
+    def _declare(self, eff_name: str, contract: Dict[str, List[str]]):
+        for param in contract["required"] + contract["optional"]:
+            self._declared.setdefault(param, set()).add(eff_name)
+
     def _build_contracts(self):
         """Build the parameter contract registry from hardcoded + auto-discovered data."""
         self._log_section("Building scripted effect parameter contracts")
 
         self._contracts.update(HARDCODED_CONTRACTS)
+        for eff_name, contract in HARDCODED_CONTRACTS.items():
+            self._declare(eff_name, contract)
 
         # Auto-discover from scripted effect files (always full scan — definitions
         # are the truth set and must be complete even in staged mode)
@@ -706,9 +994,11 @@ class Validator(BaseValidator):
             os.path.join(self.mod_path, "common", "scripted_effects", "*.txt")
         )
         discovered = 0
+        bodies: Dict[str, str] = {}
         for filepath in sorted(effect_files):
             try:
                 parsed = _parse_effect_contracts_from_file(filepath)
+                bodies.update(_scripted_bodies(filepath))
             except _READ_ERRORS as exc:
                 self._unreadable.append(_unreadable(filepath, self.mod_path, exc))
                 continue
@@ -720,9 +1010,20 @@ class Validator(BaseValidator):
                     )
                 )
             for eff_name, contract in parsed.items():
+                self._declare(eff_name, contract)
                 if eff_name not in self._contracts and contract["required"]:
                     self._contracts[eff_name] = contract
                     discovered += 1
+        # A scripted trigger reads a parameter the same way an effect does.
+        trigger_files = glob.glob(
+            os.path.join(self.mod_path, "common", "scripted_triggers", "*.txt")
+        )
+        for filepath in sorted(trigger_files):
+            try:
+                bodies.update(_scripted_bodies(filepath))
+            except _READ_ERRORS as exc:
+                self._unreadable.append(_unreadable(filepath, self.mod_path, exc))
+        self._consumers = build_param_consumer_map(bodies, self._declared)
 
         self.log(f"  Hardcoded contracts:              {len(HARDCODED_CONTRACTS)}")
         self.log(f"  Auto-discovered contracts:        {discovered}")
@@ -736,7 +1037,7 @@ class Validator(BaseValidator):
         """Validate all caller files against the contract registry."""
         self._log_section("Checking scripted effect parameter usage")
 
-        if not self._contracts:
+        if not self._declared:
             self.log("  No contracts found — nothing to validate")
             return
 
@@ -831,6 +1132,24 @@ class Validator(BaseValidator):
                 severity=Severity.WARNING,
                 category="audit-call-shares-line",
             )
+
+        owners = {}
+        for var, effects in self._declared.items():
+            first = min(effects)
+            more = len(effects) - 1
+            owners[var] = f"{first} (or {more} more)" if more else first
+        orphan_results = self._pool_map(
+            _scan_orphan_setters_in_file,
+            [(f, self.mod_path, self._consumers, owners) for f in files],
+            chunksize=20,
+        )
+        self._report(
+            [message for file_results in orphan_results for message in file_results],
+            "Every declared parameter that is set is also used",
+            "Declared parameters set and never used, or overwritten before use:",
+            severity=Severity.ERROR,
+            category="orphan-param-setter",
+        )
 
     def run_validations(self):
         self._build_contracts()

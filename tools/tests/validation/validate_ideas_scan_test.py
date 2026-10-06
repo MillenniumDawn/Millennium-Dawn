@@ -6,6 +6,7 @@ directly with the text and files the validator would hand them.
 
 import os
 
+from shared.suite import write_under as _write
 from validate_ideas import (
     _META_PREFIX_SENTINEL,
     _check_file_for_refs,
@@ -20,14 +21,6 @@ from validate_ideas import (
 from validator_common import casefold_index, load_dynamic_token_names
 
 NO_CATEGORIES: frozenset = frozenset()
-
-
-def _write(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-    return path
 
 
 def test_swap_block_refs_are_collected():

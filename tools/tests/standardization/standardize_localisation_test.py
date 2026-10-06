@@ -10,6 +10,7 @@ import sys
 
 import pytest
 import standardize_localisation
+from shared.suite import write_text as _write
 from standardize_localisation import (
     SECTION_ORDER,
     LocalisationStandardizer,
@@ -20,11 +21,6 @@ from standardize_localisation import (
     _format_output,
     _parse_loc_file,
 )
-
-
-def _write(path, text):
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
 
 
 def _empty_index():

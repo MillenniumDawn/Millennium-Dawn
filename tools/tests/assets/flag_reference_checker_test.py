@@ -11,6 +11,7 @@ from pathlib import Path
 
 import pytest
 from shared.suite import load_tool_module
+from shared.suite import write_under as _write
 
 frc = load_tool_module("assets/flag-reference-checker.py")
 
@@ -68,12 +69,6 @@ def test_should_skip_directory_match_is_case_insensitive_for_gfx_localisation():
 
 
 # --- scan_directory -------------------------------------------------------
-
-
-def _write(root, name, content):
-    target = root / name
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8")
 
 
 def test_scan_directory_counts_tokens_per_file_using_one_pass(tmp_path, capsys):

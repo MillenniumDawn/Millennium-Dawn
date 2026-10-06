@@ -8,10 +8,8 @@ broadcast still repeats. Non-major news_event fires inside every_country are
 the per-country notification pattern and are not flagged.
 """
 
-from validate_events import (
-    _parse_event_metadata,
-    scan_major_event_in_loop,
-)
+from shared.suite import call_site_scan
+from validate_events import _parse_event_metadata
 
 
 def _major_block(eid, extra="major = yes\n"):
@@ -29,7 +27,7 @@ def _scan(tmp_path, body, ids=("foo.1",)):
     call = tmp_path / "common" / "f.txt"
     call.parent.mkdir(parents=True, exist_ok=True)
     call.write_text(body, encoding="utf-8")
-    return scan_major_event_in_loop((str(call), frozenset(ids), str(tmp_path)))
+    return call_site_scan(call, "major", tmp_path, frozenset(ids))
 
 
 def test_major_news_inside_every_country_flagged(tmp_path):
@@ -144,8 +142,8 @@ def test_literal_brace_in_quoted_log_does_not_desync(tmp_path):
 
 
 def test_worker_returns_empty_for_an_unreadable_file(tmp_path):
-    args = (str(tmp_path / "common" / "gone.txt"), frozenset({"foo.1"}), str(tmp_path))
-    assert scan_major_event_in_loop(args) == []
+    gone = tmp_path / "common" / "gone.txt"
+    assert call_site_scan(gone, "major", tmp_path, frozenset({"foo.1"})) == []
 
 
 def test_worker_short_circuits_files_with_no_event_calls(tmp_path):
@@ -155,9 +153,7 @@ def test_worker_short_circuits_files_with_no_event_calls(tmp_path):
         "fx = {\n\tevery_country = { add_political_power = 5 }\n}\n",
         encoding="utf-8",
     )
-    assert (
-        scan_major_event_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path))) == []
-    )
+    assert call_site_scan(call, "major", tmp_path, frozenset({"foo.1"})) == []
 
 
 def test_parse_metadata_major_yes():

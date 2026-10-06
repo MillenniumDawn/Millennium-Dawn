@@ -873,6 +873,30 @@ update_security_council_peeps = {
 		add_to_temp_variable = { set_index = 1 }
 	}
 
+	# A vote holder rotated off the council hands its finishing mission to a seated member.
+	for_each_scope_loop = {
+		array = md_departing_sc_members
+		if = {
+			limit = {
+				has_country_flag = has_sc_mission
+				NOT = { is_in_array = { global.security_council_members = THIS } }
+			}
+			clr_country_flag = has_sc_mission
+			set_temp_variable = { md_vote_mission_reassigned = 0 }
+			random_scope_in_array = {
+				array = global.security_council_members
+				limit = { exists = yes }
+				set_country_flag = has_sc_mission
+				activate_mission = UN_SC_voting_mission
+				PREV = { set_temp_variable = { md_vote_mission_reassigned = 1 } }
+			}
+			if = {
+				limit = { check_variable = { md_vote_mission_reassigned = 0 } }
+				un_abort_sc_vote = yes
+			}
+		}
+	}
+
 	clear_array = md_departing_sc_members
 	clear_array = global.confirmed_new_council_members
 

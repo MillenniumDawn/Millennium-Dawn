@@ -9,7 +9,12 @@ from collections import defaultdict
 from typing import DefaultDict, Dict, List, Optional, Set, Tuple, TypedDict
 
 import disk_cache
-from validator_common import BaseValidator, run_validator_main, strip_comments
+from validator_common import (
+    BaseValidator,
+    find_unquoted_block_end,
+    run_validator_main,
+    strip_comments,
+)
 
 # --- Module-level compiled patterns ---
 # Hoisted from per-line/per-file loops in the tech-graph and history-file
@@ -22,12 +27,6 @@ _LEADS_TO_TECH_RE = re.compile(r"leads_to_tech\s*=\s*(\S+)")
 _MODULE_NAME_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*$")
 _ENABLE_MODULES_RE = re.compile(r"^enable_equipment_modules\s*=\s*\{")
 _ALLOW_BRANCH_RE = re.compile(r"^allow_branch\s*=\s*\{")
-# Reused with .match() on already-left-stripped lines, so the leading ^
-# behaves identically whether or not it's spelled out in the source pattern.
-_SET_TECHNOLOGY_BLOCK_RE = re.compile(r"^set_technology\s*=\s*\{")
-_IF_BLOCK_LINE_RE = re.compile(r"^if\s*=\s*\{")
-_SET_TECH_1_RE = re.compile(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*1\s*$")
-_ELSE_BLOCK_RE = re.compile(r"else\s*=\s*\{")
 
 
 class _HistoryFrame(TypedDict):
@@ -40,8 +39,6 @@ _NOT_HAS_DLC_BLOCK_RE = re.compile(
     r'NOT\s*=\s*\{[^{}]*?has_dlc\s*=\s*"([^"]+)"[^{}]*?\}'
 )
 _STRIP_NOT_BLOCK_RE = re.compile(r"NOT\s*=\s*\{[^{}]*?\}")
-_NOT_HAS_DLC_PREFIX_RE = re.compile(r'NOT\s*=\s*\{[^}]*has_dlc\s*=\s*"([^"]+)"')
-_LIMIT_BLOCK_RE = re.compile(r"limit\s*=\s*\{(.*?)\}", re.DOTALL)
 _LIMIT_BLOCK_WORDBOUND_RE = re.compile(r"\blimit\s*=\s*\{(.*?)\}", re.DOTALL)
 _IF_BLOCK_START_RE = re.compile(r"\bif\s*=\s*\{")
 _CREATE_VARIANT_RE = re.compile(r"\bcreate_equipment_variant\s*=\s*\{")
@@ -63,10 +60,6 @@ _RULING_PARTY_VAR_RE = re.compile(
     r"set_variable\s*=\s*\{\s*ruling_party\s*=\s*(-?\d+)\s*\}",
     re.MULTILINE,
 )
-# `complete_special_project = sp:sp_X` lines grant a country the special project
-# at game start. Used to detect techs whose `allow` block requires an SP the
-# country has not completed.
-_COMPLETE_SP_RE = re.compile(r"^\s*complete_special_project\s*=\s*sp:([a-zA-Z0-9_]+)")
 # `is_special_project_completed = sp:sp_X` inside a tech's `allow` block.
 _SP_REQUIRED_RE = re.compile(r"is_special_project_completed\s*=\s*sp:([a-zA-Z0-9_]+)")
 # A project's `project_output` unlock tooltip and the tech it advertises.
@@ -915,16 +908,7 @@ def _expand_dlc_configs(
 def _match_brace_end(text: str, pos: int) -> int:
     """Given pos pointing just past an opening `{`, return the index just past
     its matching `}`. Returns len(text) if the braces never balance."""
-    depth = 1
-    j = pos
-    while j < len(text) and depth > 0:
-        ch = text[j]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-        j += 1
-    return j
+    return find_unquoted_block_end(text, pos)[0]
 
 
 def _find_dlc_if_blocks(content: str) -> List[Tuple[int, int, str]]:

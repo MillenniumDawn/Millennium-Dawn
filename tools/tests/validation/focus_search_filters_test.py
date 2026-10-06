@@ -1,11 +1,7 @@
 """Tests for missing search_filters reporting in validate_focus_tree."""
 
-from shared.suite import write_text
+from shared.suite import write_focus_file as _write_focus_file
 from validate_focus_tree import Validator, _FocusFile
-
-
-def _write_focus_file(tmp_path, content):
-    return write_text(tmp_path / "common" / "national_focus" / "test.txt", content)
 
 
 def _run_validator(tmp_path, content):

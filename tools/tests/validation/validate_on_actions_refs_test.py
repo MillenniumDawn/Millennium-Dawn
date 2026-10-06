@@ -13,7 +13,6 @@ from shared.suite import write_under as _write
 from validate_on_actions import (
     Validator,
     _event_calls_effect,
-    _extract_random_events_ids,
     _parse_on_actions_file,
     _parse_on_actions_text,
     _scan_date_polls_file,
@@ -125,7 +124,13 @@ def test_random_events_pool_ids_are_extracted():
 }
 """
 
-    assert _extract_random_events_ids(text) == {"econvent.1", "econvent.2"}
+    assert _parse_on_actions_text(text, "f.txt") == (
+        [
+            ("econvent.1", "on_startup", 4, "f.txt"),
+            ("econvent.2", "on_startup", 5, "f.txt"),
+        ],
+        [],
+    )
 
 
 def test_repeated_random_events_entry_is_a_duplicate():

@@ -12,7 +12,8 @@ from pathlib import Path
 
 import pytest
 from fix_loc_yaml import check_line
-from validate_localisation import _scan_prose_text, process_yml_for_syntax
+from shared.suite import yml_syntax
+from validate_localisation import _scan_prose_text
 from validate_scripted_localisation import (
     _documented_getters,
     _getter_spelling_message,
@@ -176,7 +177,7 @@ def test_5091_malformed_opening_quote_is_reported():
 def _syntax_findings(tmp_path, line):
     path = tmp_path / f"syntax{len(list(tmp_path.iterdir()))}_l_english.yml"
     path.write_text(f"l_english:\n {line}\n", encoding="utf-8-sig")
-    return process_yml_for_syntax((str(path), ["Y", "R", "G"], frozenset()))
+    return yml_syntax(path, ["Y", "R", "G"])
 
 
 def test_5094_bare_section_sign_is_reported(tmp_path):

@@ -70,6 +70,43 @@ def _hidden_ids(index):
     return hidden
 
 
+def _branch_leaks(index):
+    """Yield (child, gate) where the child's own allow_branch reshows it.
+
+    The engine shows a focus whose own allow_branch is true even when an
+    ancestor's allow_branch hid its branch, so the child must repeat the
+    ancestor's conditions.
+    """
+    children = defaultdict(set)
+    for name, definitions in index.items():
+        for focus in definitions:
+            for group in focus["prerequisites"]:
+                for parent in group:
+                    children[parent].add(name)
+    for gate in sorted(index):
+        root = index[gate][0]
+        if not root["allow_branch"]:
+            continue
+        hidden = {gate}
+        gated = set()
+        pending = deque([gate])
+        while pending:
+            for name in sorted(children[pending.popleft()] - hidden - gated):
+                focus = index[name][0]
+                if not any(
+                    group and all(parent in hidden for parent in group)
+                    for group in focus["prerequisites"]
+                ):
+                    continue
+                if not focus["allow_branch"]:
+                    hidden.add(name)
+                    pending.append(name)
+                    continue
+                gated.add(name)
+                if not set(root["branch_terms"]) <= set(focus["branch_terms"]):
+                    yield focus, root
+
+
 def _positions(index):
     """Memoize both coordinates and failed chains without Python recursion."""
     positions = {}
@@ -176,11 +213,13 @@ def analyze_layout(files: list[dict], reportable: set[str] | None = None) -> dic
             "static_eligible",
             "overlap_pairs",
             "trees_with_overlaps",
+            "branch_leaks",
         ),
         0,
     )
     findings = []
     unresolved = []
+    branch_leaks = []
     shared, dependents, requirements = _shared_index(files)
     for file in sorted(files, key=lambda item: item["filepath"]):
         for tree in sorted(file["trees"], key=lambda item: (item["id"], item["line"])):
@@ -242,8 +281,21 @@ def analyze_layout(files: list[dict], reportable: set[str] | None = None) -> dic
                         left["line"],
                     )
                 )
+            for focus, gate in _branch_leaks(index):
+                counts["branch_leaks"] += 1
+                branch_leaks.append(
+                    (
+                        f"{label}: '{focus['id']}' has its own allow_branch, so it "
+                        f"shows when '{gate['id']}' ({gate['file']}:{gate['line']}) "
+                        "hides its branch; add the allow_branch conditions of "
+                        f"'{gate['id']}'",
+                        focus["file"],
+                        focus["line"],
+                    )
+                )
     return {
         "findings": sorted(findings),
         "unresolved": sorted(unresolved),
+        "branch_leaks": sorted(branch_leaks),
         "counts": counts,
     }

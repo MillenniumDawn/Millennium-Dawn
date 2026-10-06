@@ -6,6 +6,7 @@ all survive. It is also idempotent, and must preserve quoted strings and
 comments verbatim.
 """
 
+from shared.suite import write_text as _write
 from standardize_history import (
     HistoryStandardizer,
     _detect_mod_root,
@@ -13,12 +14,6 @@ from standardize_history import (
     _load_modifier_variables,
     _variable_name,
 )
-
-
-def _write(path, text):
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
-
 
 # Modeled on real history/countries structure: a dated block with duplicate
 # flags, duplicate special projects, a quoted string, and comments.

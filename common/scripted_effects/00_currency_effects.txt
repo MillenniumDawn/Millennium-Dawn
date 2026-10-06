@@ -281,19 +281,17 @@ calculate_currency_strength = {
 		set_temp_variable = { haven_weight = @currency_haven_usd_jpy }
 	}
 
+	# The floor rises with the rate, so a higher rate still helps when inflation is far above it.
+	set_temp_variable = {
+		real_rate_floor = { value = cb_policy_rate multiply = 0.0025 subtract = 0.10 }
+	}
 	set_temp_variable = {
 		currency_delta = {
 			value = cb_policy_rate
 			divide = 100
 			subtract = inflation_rate_var
 			subtract = @currency_real_rate_neutral
-			# The floor rises with the rate, so a higher rate still helps when inflation is far above it.
-			clamp = {
-				min = 0.05
-				max = {
-					value = cb_policy_rate multiply = 0.0025 subtract = 0.10
-				}
-			}
+			clamp = { min = real_rate_floor max = 0.05 }
 			multiply = @currency_real_rate_sensitivity
 			add = debt_risk_pressure
 			add = {

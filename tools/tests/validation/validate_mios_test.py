@@ -1914,7 +1914,7 @@ def test_icon_lines_match_counting_from_the_top():
         offset = 0
         for raw_line in text.splitlines():
             code, _comment = V.split_code_and_comment(raw_line)
-            for match in V.ICON_ASSIGNMENT_RE.finditer(V._mask_strings(code)):
+            for match in V.ICON_ASSIGNMENT_RE.finditer(V.blank_quoted_strings(code)):
                 expected.append(text.count("\n", 0, offset + match.start()) + 1)
             offset += len(raw_line) + 1
         assert [line for _name, line in V._iter_icon_values(text)] == expected, text

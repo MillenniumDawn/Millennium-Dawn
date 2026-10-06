@@ -1,5 +1,6 @@
 """Tests for the math-expression trap scanner (validate_math_expressions)."""
 
+import pytest
 from shared.suite import write_under as _write
 from validate_math_expressions import Validator, scan_text
 
@@ -240,6 +241,45 @@ def test_clamp_and_modulo_effects_are_out_of_scope():
     assert scan_text(script) == []
 
 
+def test_expression_clamp_with_min_above_max_is_flagged():
+    script = (
+        "set_temp_variable = {\n"
+        "\tX = {\n"
+        "\t\tvalue = Y\n"
+        "\t\tclamp = { min = 0.05 max = -0.10 }\n"
+        "\t}\n"
+        "}\n"
+    )
+
+    assert scan_text(script) == [
+        (
+            4,
+            "clamp-min-above-max",
+            "`clamp` has min 0.05 above max -0.10, so the bounds are swapped or "
+            "mistyped",
+        )
+    ]
+
+
+@pytest.mark.parametrize("effect", ["clamp_variable", "clamp_temp_variable"])
+def test_clamp_effect_with_min_above_max_is_flagged(effect):
+    findings = scan_text(f"\n{effect} = {{ var = X min = 5 max = 0 }}\n")
+
+    assert [(f[0], f[1]) for f in findings] == [(2, "clamp-min-above-max")]
+
+
+def test_clamps_without_two_inverted_literals_are_clean():
+    script = (
+        "clamp_variable = { var = X min = 5 max = 5 }\n"
+        "clamp_variable = { var = X min = floor max = 0 }\n"
+        "clamp_variable = { var = X min = 5 }\n"
+        "clamp_temp_variable = { var = X min = 5 max = @cap }\n"
+        "set_variable = { X = { value = Y clamp = { min = 5 max = { value = Z } } } }\n"
+    )
+
+    assert scan_text(script) == []
+
+
 def _sibling(ops):
     return (
         f"math statements ({ops}) sit beside var/value instead of inside the "
@@ -298,6 +338,26 @@ def test_validator_reports_math_from_read_as_error(tmp_path):
 
     assert [(i.severity, i.category) for i in v._issues] == [
         ("error", "math-from-read")
+    ]
+
+
+def test_clamp_bounds_are_reported_only_with_the_flag(tmp_path):
+    _write(
+        tmp_path,
+        "common/scripted_effects/clamp.txt",
+        "clamp_variable = { var = X min = 5 max = 0 }\n",
+    )
+
+    off = _validator(tmp_path)
+    off.run_validations()
+    on = Validator(
+        str(tmp_path), use_colors=False, workers=1, no_cache=True, clamp_bounds=True
+    )
+    on.run_validations()
+
+    assert off._issues == []
+    assert [(i.severity, i.category, i.file, i.line) for i in on._issues] == [
+        ("error", "clamp-min-above-max", "common/scripted_effects/clamp.txt", 1)
     ]
 
 

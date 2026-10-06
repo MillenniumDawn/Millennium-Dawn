@@ -15,7 +15,7 @@ import glob
 import os
 import re
 import sys
-from typing import Dict, FrozenSet, List, Optional, Set, Tuple
+from typing import Callable, Dict, FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -25,6 +25,7 @@ from shared_utils import (
     extract_block_from_text,
     find_hoi4_install,
     line_for_offset,
+    strip_comments,
     strip_inline_comment,
 )
 from validator_common import (
@@ -138,8 +139,26 @@ _GFX_NAME = re.compile(
     r'\bname\s*=\s*(?:"(GFX_[A-Za-z0-9_.@-]+)"|(GFX_[A-Za-z0-9_.@-]+))'
 )
 
-# textureFile / texturefile inside a sprite block — the art a definition points at.
-_GFX_TEXTUREFILE = re.compile(r'\btexture[fF]ile\s*=\s*"([^"]+)"', re.IGNORECASE)
+# textureFile / texturefile inside a sprite block — quoted or bare.
+_GFX_TEXTUREFILE = re.compile(
+    r'\btexture[fF]ile\s*=\s*(?:"([^"]*)"|([^\s#{}]+))',
+    re.IGNORECASE,
+)
+_CREATE_EQUIPMENT_VARIANT = re.compile(r"\bcreate_equipment_variant\s*=\s*\{")
+_VARIANT_ICON = re.compile(r'\bicon\s*=\s*(?:"([^"]*)"|([^\s#{}]+))')
+_ICONS_BLOCK = re.compile(r"\bicons\s*=\s*\{")
+_BLOCK_TOKEN = re.compile(r'"([^"]+)"|([^\s#{}]+)')
+_RAW_ICON_PATH = re.compile(r"[\\/]|\.(?:dds|tga|png)\Z", re.IGNORECASE)
+
+
+def _quoted_or_bare(match: re.Match) -> str:
+    quoted = match.group(1)
+    return quoted if quoted is not None else (match.group(2) or "")
+
+
+def _is_raw_icon_path(value: str) -> bool:
+    return _RAW_ICON_PATH.search(value) is not None
+
 
 # Property names are case-insensitive; quotes are optional. GFX_ stays exact.
 _GUI_REF = re.compile(
@@ -727,11 +746,39 @@ def sprite_defs_from_gfx_text(raw: str) -> List[Tuple[str, str, int]]:
             defs.append(
                 (
                     nm.group(1) or nm.group(2),
-                    tx.group(1) if tx else "",
+                    _quoted_or_bare(tx) if tx else "",
                     line_for_offset(offsets, m.start()),
                 )
             )
     return defs
+
+
+def _raw_paths_in_blocks(
+    text: str, opener: re.Pattern, token_re: re.Pattern
+) -> List[Tuple[str, int]]:
+    # Quote-aware: a `#` inside a variant name is not a comment.
+    stripped = strip_comments(text)
+    offsets = compute_line_offsets(stripped)
+    hits: List[Tuple[str, int]] = []
+    for m in opener.finditer(stripped):
+        body, end = extract_block_from_text(stripped, m.end() - 1)
+        if end == -1:
+            continue
+        for tm in token_re.finditer(body):
+            value = _quoted_or_bare(tm)
+            if _is_raw_icon_path(value):
+                hits.append((value, line_for_offset(offsets, m.end() + tm.start())))
+    return hits
+
+
+def raw_variant_icon_paths(text: str) -> List[Tuple[str, int]]:
+    """Return (value, line) for raw `icon =` paths in create_equipment_variant."""
+    return _raw_paths_in_blocks(text, _CREATE_EQUIPMENT_VARIANT, _VARIANT_ICON)
+
+
+def raw_graphic_db_icon_paths(text: str) -> List[Tuple[str, int]]:
+    """Return (value, line) for raw texture paths in `icons = { }` blocks."""
+    return _raw_paths_in_blocks(text, _ICONS_BLOCK, _BLOCK_TOKEN)
 
 
 def font_names_from_gfx_text(raw: str) -> Set[str]:
@@ -838,6 +885,43 @@ def _parse_gfx_fonts(args: Tuple[str, str]) -> List[str]:
         filepath,
         raw,
         lambda: sorted(font_names_from_gfx_text(raw)),
+    )
+
+
+def _parse_raw_icon_hits(
+    args: Tuple[str, str],
+    cache_key: str,
+    needle: str,
+    extract: Callable[[str], List[Tuple[str, int]]],
+) -> List[Tuple[str, str, int]]:
+    filepath, mod_path = args
+    raw = _read_raw(filepath)
+    # Most script files never name the block; skip their hash and cache row.
+    if raw is None or needle not in raw:
+        return []
+    return disk_cache.per_file_cached_by_content(
+        mod_path,
+        cache_key,
+        filepath,
+        raw,
+        lambda: [(value, filepath, line) for value, line in extract(raw)],
+    )
+
+
+def _parse_raw_variant_icons(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
+    return _parse_raw_icon_hits(
+        args,
+        "gfx_ref.raw_variant_icon",
+        "create_equipment_variant",
+        raw_variant_icon_paths,
+    )
+
+
+def _parse_raw_graphic_db_icons(
+    args: Tuple[str, str],
+) -> List[Tuple[str, str, int]]:
+    return _parse_raw_icon_hits(
+        args, "gfx_ref.raw_pool_icon", "icons", raw_graphic_db_icon_paths
     )
 
 
@@ -1001,11 +1085,11 @@ class Validator(BaseValidator):
         self._log_section("Building GFX sprite definition set")
         # Always scan the full repo — definitions must come from anywhere.
         gfx_files = self._collect_files(["interface/**/*.gfx"], ignore_staged=True)
-        results = self._pool_map(
-            _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
+        self._mod_defs.extend(
+            self._pool_flat_map(
+                _parse_gfx_file, [(f, self.mod_path) for f in gfx_files]
+            )
         )
-        for batch in results:
-            self._mod_defs.extend(batch)
         mod_defined: Set[str] = {name for name, _f, _tx, _l in self._mod_defs}
         self.log(
             f"  Found {len(mod_defined)} GFX sprite names across {len(gfx_files)} .gfx files (mod)"
@@ -1054,11 +1138,9 @@ class Validator(BaseValidator):
         # only downgradable when their vanilla parent/override is in view, so the
         # ref universe must not be staged-limited (would escalate WARNING->ERROR).
         gui_files = self._collect_files(["interface/**/*.gui"], ignore_staged=True)
-        all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(
+        all_refs = self._pool_flat_map(
             _parse_gui_file, [(f, self.mod_path) for f in gui_files]
-        ):
-            all_refs.extend(batch)
+        )
         self.log(
             f"  Scanned {len(gui_files)} .gui files; found {len(all_refs)} GFX references"
         )
@@ -1085,11 +1167,9 @@ class Validator(BaseValidator):
                 os.path.join(self.mod_path, "gfx", "**", "*.txt"), recursive=True
             )
         )
-        refs: Set[str] = set()
-        for batch in self._pool_map(
-            _parse_script_refs, [(f, self.mod_path) for f in files]
-        ):
-            refs.update(batch)
+        refs = set(
+            self._pool_flat_map(_parse_script_refs, [(f, self.mod_path) for f in files])
+        )
         self.log(
             f"  Scanned {len(files)} script files; found {len(refs)} distinct GFX references"
         )
@@ -1103,11 +1183,9 @@ class Validator(BaseValidator):
         """
         self._log_section("Collecting GFX £sprite references from localisation/*.yml")
         files = self._collect_files(["localisation/**/*.yml"], ignore_staged=True)
-        all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(
+        all_refs = self._pool_flat_map(
             _parse_loc_refs, [(f, self.mod_path) for f in files]
-        ):
-            all_refs.extend(batch)
+        )
         self.log(
             f"  Scanned {len(files)} localisation files;"
             f" found {len({r[0] for r in all_refs})} distinct GFX references"
@@ -1155,11 +1233,11 @@ class Validator(BaseValidator):
             ["common/scripted_localisation/*.txt", "common/scripted_guis/*.txt"],
             ignore_staged=True,
         )
-        templates: Set[str] = set()
-        for batch in self._pool_map(
-            _parse_sprite_templates, [(f, self.mod_path) for f in template_files]
-        ):
-            templates.update(batch)
+        templates = set(
+            self._pool_flat_map(
+                _parse_sprite_templates, [(f, self.mod_path) for f in template_files]
+            )
+        )
         patterns = [p for p in map(_template_pattern, sorted(templates)) if p]
         skipped = len(templates) - len(patterns)
         if skipped:
@@ -1181,11 +1259,9 @@ class Validator(BaseValidator):
         """Return undefined image= references from common/scripted_guis/*.txt."""
         self._log_section("Collecting GFX image= references from scripted_guis/*.txt")
         sgui_files = self._collect_files(["common/scripted_guis/*.txt"])
-        all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(
+        all_refs = self._pool_flat_map(
             _parse_sgui_file, [(f, self.mod_path) for f in sgui_files]
-        ):
-            all_refs.extend(batch)
+        )
         self.log(
             f"  Scanned {len(sgui_files)} scripted_gui files; found {len(all_refs)} GFX image= references"
         )
@@ -1197,11 +1273,9 @@ class Validator(BaseValidator):
             "Collecting GFX localization_key= references from scripted_localisation/*.txt"
         )
         sloc_files = self._collect_files(["common/scripted_localisation/*.txt"])
-        all_refs: List[Tuple[str, str, int]] = []
-        for batch in self._pool_map(
+        all_refs = self._pool_flat_map(
             _parse_sloc_file, [(f, self.mod_path) for f in sloc_files]
-        ):
-            all_refs.extend(batch)
+        )
         self.log(
             f"  Scanned {len(sloc_files)} scripted_localisation files; found {len(all_refs)} GFX references"
         )
@@ -1410,18 +1484,19 @@ class Validator(BaseValidator):
         """
         self._log_section("Checking font references in interface/*.gui files")
         gfx_files = self._collect_files(["interface/**/*.gfx"], ignore_staged=True)
-        defined: Set[str] = set()
-        for batch in self._pool_map(
-            _parse_gfx_fonts, [(f, self.mod_path) for f in gfx_files]
-        ):
-            defined.update(batch)
+        defined = set(
+            self._pool_flat_map(
+                _parse_gfx_fonts, [(f, self.mod_path) for f in gfx_files]
+            )
+        )
 
         vanilla_gfx = _vanilla_gfx_files()
         if vanilla_gfx:
-            for batch in self._pool_map(
-                _parse_gfx_fonts, [(f, self.mod_path) for f in vanilla_gfx]
-            ):
-                defined.update(batch)
+            defined.update(
+                self._pool_flat_map(
+                    _parse_gfx_fonts, [(f, self.mod_path) for f in vanilla_gfx]
+                )
+            )
         else:
             manifest = _load_vanilla_font_manifest()
             if not manifest:
@@ -1618,7 +1693,7 @@ class Validator(BaseValidator):
 
         if not orphans:
             self.log(
-                f"{Colors.GREEN if self.use_colors else ''}  All defined GFX sprites are referenced.{Colors.ENDC if self.use_colors else ''}"
+                f"{Colors.GREEN}  All defined GFX sprites are referenced.{Colors.ENDC}"
             )
             return
 
@@ -1634,6 +1709,61 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
             category="unused-sprite",
         )
+
+    def _graphic_db_files(self) -> List[str]:
+        files = glob.glob(
+            os.path.join(
+                self.mod_path,
+                "gfx",
+                "interface",
+                "equipmentdesigner",
+                "graphic_db",
+                "*.txt",
+            )
+        )
+        if not self.staged_only:
+            return files
+        # join() leaves an absolute staged path as it is.
+        staged = {
+            os.path.abspath(os.path.join(self.mod_path, f))
+            for f in self.staged_files or []
+        }
+        return [f for f in files if os.path.abspath(f) in staged]
+
+    def _check_raw_icon_paths(self) -> None:
+        self._log_section("Checking for raw texture paths in unit icons")
+        variant_files = self._collect_files(
+            ["events/**/*.txt", "common/**/*.txt", "history/**/*.txt"]
+        )
+        for parser, files, site, where in (
+            (
+                _parse_raw_variant_icons,
+                variant_files,
+                "create_equipment_variant icon =",
+                "create_equipment_variant icon values",
+            ),
+            (
+                _parse_raw_graphic_db_icons,
+                self._graphic_db_files(),
+                "graphic_db icons entry",
+                "graphic_db icons blocks",
+            ),
+        ):
+            hits = self._pool_flat_map(parser, [(f, self.mod_path) for f in files])
+            self._report(
+                [
+                    (
+                        f"{site} '{value}' is a raw texture path; use a GFX_ sprite",
+                        os.path.relpath(filepath, self.mod_path),
+                        line,
+                    )
+                    for value, filepath, line in hits
+                ],
+                ok_msg=f"No raw texture paths in {where}",
+                fail_msg=f"Raw texture paths in {where}:",
+                severity=Severity.ERROR,
+                category="raw-icon-path",
+            )
 
     def run_validations(self) -> None:
         defined, mod_defined = self._build_gfx_definitions()
@@ -1683,6 +1813,7 @@ class Validator(BaseValidator):
         # (mod + vanilla) is the index — £refs legitimately name vanilla sprites.
         loc_refs = self._collect_loc_refs()
         self._check_loc_ref_case(loc_refs, defined, casefold_index(defined))
+        self._check_raw_icon_paths()
 
         if not self.report_unused:
             self._log_section(

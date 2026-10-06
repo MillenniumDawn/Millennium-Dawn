@@ -30,8 +30,8 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Callable, Dict, List, Optional, Sequence, Set, Tuple
 
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "validation"))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "validation"))
 
 try:
     from PIL import Image
@@ -39,7 +39,7 @@ except ImportError:
     sys.exit("Pillow is required: pip install --group runtime")
 
 from image_size import read_image_size
-from shared_utils import find_hoi4_install
+from shared_utils import find_hoi4_install, find_unquoted_block_end
 from sprite_index import build_sprite_index, build_sprite_texture_index
 from validate_decisions import (
     _DEC_ICON_BLOCK_RE,
@@ -369,7 +369,7 @@ def _rewrite_text(text: str, mapping: Dict[Tuple[str, str], str]) -> str:
     for match in _DEC_ICON_BLOCK_RE.finditer(text):
         if match.start() < pos:
             continue
-        end = _block_end(text, match)
+        end = find_unquoted_block_end(text, match.end())[0]
         out.append(text[pos : match.start()])
         out.append(
             _DEC_ICON_KEY_RE.sub(
@@ -379,18 +379,6 @@ def _rewrite_text(text: str, mapping: Dict[Tuple[str, str], str]) -> str:
         pos = end
     out.append(text[pos:])
     return "".join(out)
-
-
-def _block_end(text: str, match: "re.Match[str]") -> int:
-    depth = 0
-    for i in range(match.end() - 1, len(text)):
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-            if depth == 0:
-                return i + 1
-    return len(text)
 
 
 def _append_sprites(root: Path, entries: List[Tuple[str, str]]) -> None:

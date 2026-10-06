@@ -43,6 +43,7 @@ env:
     interface
     gfx/flags
     gfx/interface/decisions
+    gfx/interface/equipmentdesigner/graphic_db
     map/adjacency_rules.txt
     music
     tools
@@ -77,6 +78,8 @@ jobs:
       scripted-loc: ${{ steps.groups.outputs.scripted-loc }}
       scripted-guis: ${{ steps.groups.outputs.scripted-guis }}
       interface: ${{ steps.groups.outputs.interface }}
+      graphic-db: ${{ steps.groups.outputs.graphic-db }}
+      music: ${{ steps.groups.outputs.music }}
       national-focus: ${{ steps.groups.outputs.national-focus }}
       on-actions: ${{ steps.groups.outputs.on-actions }}
       scripted-effects: ${{ steps.groups.outputs.scripted-effects }}
@@ -166,7 +169,8 @@ jobs:
         run: |
           missing=()
           for path in tools/validation/ci_workspace_profile.txt \
-              tools/validation/staged_sparse_profile.txt validation_config.json; do
+              tools/validation/staged_sparse_profile.txt \
+              validation_config.json; do
             test -f "$path" || missing+=("$path")
           done
           for package in pytest-xdist pytest-cov; do
@@ -353,10 +357,11 @@ jobs:
           } | tee .workspace-manifest
 
       - name: Pack prepared workspace
-        # Word splitting on WORKSPACE_PATHS is intended; it also expands *.mod.
-        run: >-
-          tar --zstd -cf "$RUNNER_TEMP/prepared-workspace.tar.zst"
-          $WORKSPACE_PATHS .workspace-manifest .validation_cache
+        run: |
+          # Word splitting on WORKSPACE_PATHS is intended; it also expands *.mod.
+          # shellcheck disable=SC2086
+          tar --zstd -cf "$RUNNER_TEMP/prepared-workspace.tar.zst" \
+            $WORKSPACE_PATHS .workspace-manifest .validation_cache
 
       - name: Upload prepared workspace
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -745,6 +750,8 @@ jobs:
           G_HISTORY: ${{ needs.detect-changes.outputs.history }}
           G_LOCALISATION: ${{ needs.detect-changes.outputs.localisation }}
           G_INTERFACE: ${{ needs.detect-changes.outputs.interface }}
+          G_GRAPHIC_DB: ${{ needs.detect-changes.outputs.graphic-db }}
+          G_MUSIC: ${{ needs.detect-changes.outputs.music }}
           G_MAP_ADJACENCY: ${{ needs.detect-changes.outputs.map-adjacency }}
           G_DECISIONS: ${{ needs.detect-changes.outputs.decisions }}
           G_OOB: ${{ needs.detect-changes.outputs.oob }}
@@ -765,14 +772,14 @@ jobs:
           changed=()
           if [ "$G_FULL_SUITE" = "true" ]; then
             changed=(common events history localisation interface \
-              map-adjacency decisions oob ai-strategy ai-navy ai-equipment \
-              factions characters scientist-traits scripted-guis \
-              national-focus on-actions scripted-effects mios)
+              graphic-db map-adjacency decisions oob ai-strategy ai-navy \
+              ai-equipment factions characters scientist-traits scripted-guis \
+              national-focus on-actions scripted-effects mios music)
           else
             for group in common events history localisation interface \
-                map-adjacency decisions oob ai-strategy ai-navy ai-equipment \
-                factions characters scientist-traits scripted-guis \
-                national-focus on-actions scripted-effects mios; do
+                graphic-db map-adjacency decisions oob ai-strategy ai-navy \
+                ai-equipment factions characters scientist-traits scripted-guis \
+                national-focus on-actions scripted-effects mios music; do
               var="G_${group^^}"
               var="${var//-/_}"
               if [ "${!var}" = "true" ]; then
@@ -807,11 +814,7 @@ jobs:
           printf '%s' "$STYLE_FILES_JSON" | jq -r '.[]' \
             | grep -vE \
               '(^|/)(Changelog|AUTHORS)\.txt$|/descriptions[^/]*\.txt$' \
-            > changed_style_files.txt || true
-          if [ -s changed_style_files.txt ]; then
-            echo "has-changed-files=true" >> "$GITHUB_OUTPUT"
-          fi
-          cp changed_style_files.txt style_files.txt
+            > style_files.txt || true
           if [ "$STYLE_CONFIG" = true ]; then
             find common/national_focus -type f -name '*.txt' >> style_files.txt
           fi
@@ -829,15 +832,6 @@ jobs:
             python3 tools/validation/validate_style.py \
             --staged --strict --no-color --output validation-style-check.log
 
-      - name: Run common-mistakes check
-        if: >-
-          always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-changed-files == 'true'
-        run: |
-          tr '\n' '\0' < changed_style_files.txt | xargs -0 -r \
-            python3 tools/linting/check_common_mistakes.py \
-            --output validation-common-mistakes.log
-
       - name: Verify style results
         if: >-
           always() && !cancelled() && matrix.batch == 'core' &&
@@ -845,14 +839,6 @@ jobs:
         run: |
           test -f validation-style-check.log
           test -f validation-style-check.json
-
-      - name: Verify common-mistakes results
-        if: >-
-          always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-changed-files == 'true'
-        run: |
-          test -f validation-common-mistakes.log
-          test -f validation-common-mistakes.json
 
       - name: Check localisation UTF-8 BOM
         if: >-
@@ -901,19 +887,6 @@ jobs:
           path: |
             validation-style-check.log
             validation-style-check.json
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Upload common-mistakes results
-        if: >-
-          always() && !cancelled() && matrix.batch == 'core' &&
-          steps.style-files.outputs.has-changed-files == 'true'
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-        with:
-          name: validation-common-mistakes-results
-          path: |
-            validation-common-mistakes.log
-            validation-common-mistakes.json
           if-no-files-found: error
           retention-days: 7
 

@@ -18,7 +18,11 @@ from shared_utils import (
     find_hoi4_install,
     strip_inline_comment,
 )
-from validate_gfx_references import _GFX_SPRITE_TYPES
+from validate_gfx_references import (
+    _GFX_SPRITE_TYPES,
+    _GFX_TEXTUREFILE,
+    _quoted_or_bare,
+)
 from validator_common import (
     BaseValidator,
     Colors,
@@ -38,9 +42,21 @@ _DOUBLE_SLASH = re.compile(r"/{2,}")
 # Loc text icons: £stem and £GFX_stem both resolve to spriteType GFX_stem.
 _TEXT_ICON_REF = re.compile(r"£([A-Za-z0-9_.]+)")
 _SPRITE_NAME_IN_BLOCK = re.compile(r'\bname\s*=\s*"([^"]+)"')
-_SPRITE_TEXTUREFILE_IN_BLOCK = re.compile(
-    r'\btexturefile\s*=\s*"([^"]+)"', re.IGNORECASE
+# Every key a .gfx names a texture with, quoted or bare. Unanchored on purpose:
+# `animationtexturefile` counts as a reference too.
+_GFX_TEXTURE_REF = re.compile(
+    r"(?:texturefile|texture_(?:diffuse|normal|specular))\s*=\s*"
+    r'(?:"([^"]*)"|([^\s#{}]+))',
+    re.IGNORECASE,
 )
+
+
+def _normalize_texture_path(texture_path: str) -> str:
+    texture_path = texture_path.replace("\\", "/").lstrip("/")
+    while "//" in texture_path:
+        texture_path = texture_path.replace("//", "/")
+    return texture_path
+
 
 TEXTURE_EXTENSIONS = [".dds", ".tga", ".png"]
 
@@ -111,35 +127,16 @@ def process_gfx_file(filename: str) -> Tuple[Set[str], Set[str]]:
             filename, lowercase=False, strip_comments_flag=True
         )
 
-        # Pattern 1: texturefile = "path/to/file.ext" (interface .gfx files)
-        # Pattern 2: texture_diffuse/normal/specular = "file.ext" (entity .gfx files)
-        patterns = [
-            r'texturefile\s*=\s*"([^"]+)"',
-            r'texture_diffuse\s*=\s*"([^"]+)"',
-            r'texture_normal\s*=\s*"([^"]+)"',
-            r'texture_specular\s*=\s*"([^"]+)"',
-        ]
-
-        for pattern in patterns:
-            matches = re.finditer(pattern, content, re.IGNORECASE)
-            for match in matches:
-                texture_path = match.group(1)
-                texture_path = texture_path.replace("\\", "/").lstrip("/")
-                while "//" in texture_path:
-                    texture_path = texture_path.replace("//", "/")
-
-                raw_references.add(texture_path)
-
-                # Check if this is a full path match
-                if texture_path in texture_files:
-                    referenced_textures.add(texture_path)
-                else:
-                    # Try to match by filename only (common for entity .gfx files)
-                    ref_filename = os.path.basename(texture_path)
-                    if ref_filename in filename_lookup:
-                        # Add all matching paths (there might be duplicates with same filename)
-                        for tex_path in filename_lookup[ref_filename]:
-                            referenced_textures.add(tex_path)
+        for match in _GFX_TEXTURE_REF.finditer(content):
+            texture_path = _normalize_texture_path(_quoted_or_bare(match))
+            raw_references.add(texture_path)
+            if texture_path in texture_files:
+                referenced_textures.add(texture_path)
+            else:
+                # Entity .gfx files name textures by basename alone.
+                referenced_textures.update(
+                    filename_lookup.get(os.path.basename(texture_path), ())
+                )
 
     except Exception:
         # Silently skip files that can't be read
@@ -164,13 +161,10 @@ def _sprite_name_to_texture(gfx_files: List[str]) -> Dict[str, str]:
             if end == -1:
                 continue
             nm = _SPRITE_NAME_IN_BLOCK.search(block)
-            tf = _SPRITE_TEXTUREFILE_IN_BLOCK.search(block)
+            tf = _GFX_TEXTUREFILE.search(block)
             if not (nm and tf):
                 continue
-            texture_path = tf.group(1).replace("\\", "/").lstrip("/")
-            while "//" in texture_path:
-                texture_path = texture_path.replace("//", "/")
-            mapping[nm.group(1)] = texture_path
+            mapping[nm.group(1)] = _normalize_texture_path(_quoted_or_bare(tf))
     return mapping
 
 
@@ -242,7 +236,7 @@ class Validator(BaseValidator):
                 return
             else:
                 self.log(
-                    f"{Colors.YELLOW if self.use_colors else ''}Warning: Provided HoI4 path does not exist: {self.hoi4_path}{Colors.ENDC if self.use_colors else ''}",
+                    f"{Colors.YELLOW}Warning: Provided HoI4 path does not exist: {self.hoi4_path}{Colors.ENDC}",
                     "warning",
                 )
                 self.hoi4_path = None
@@ -255,7 +249,7 @@ class Validator(BaseValidator):
             return
 
         self.log(
-            f"{Colors.YELLOW if self.use_colors else ''}Warning: Could not find HoI4 installation. Vanilla .gfx files will not be checked.{Colors.ENDC if self.use_colors else ''}",
+            f"{Colors.YELLOW}Warning: Could not find HoI4 installation. Vanilla .gfx files will not be checked.{Colors.ENDC}",
             "warning",
         )
         self.log("  Use --hoi4-path to specify the installation directory.")
@@ -581,17 +575,17 @@ class Validator(BaseValidator):
 
         if self.unused_count > 0:
             self.log(
-                f"\n  {Colors.YELLOW if self.use_colors else ''}Note: Unused textures may be legacy files that can be removed to reduce mod size.{Colors.ENDC if self.use_colors else ''}"
+                f"\n  {Colors.YELLOW}Note: Unused textures may be legacy files that can be removed to reduce mod size.{Colors.ENDC}"
             )
 
         if self.missing_count > 0:
             if self.hoi4_path:
                 self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}Note: Missing textures are not found in mod, vanilla textures, or vanilla .gfx files.{Colors.ENDC if self.use_colors else ''}"
+                    f"  {Colors.YELLOW}Note: Missing textures are not found in mod, vanilla textures, or vanilla .gfx files.{Colors.ENDC}"
                 )
             else:
                 self.log(
-                    f"  {Colors.YELLOW if self.use_colors else ''}Note: Missing textures check is incomplete. Use --hoi4-path to check vanilla .gfx files.{Colors.ENDC if self.use_colors else ''}"
+                    f"  {Colors.YELLOW}Note: Missing textures check is incomplete. Use --hoi4-path to check vanilla .gfx files.{Colors.ENDC}"
                 )
         self.log(f"{'=' * 80}")
 

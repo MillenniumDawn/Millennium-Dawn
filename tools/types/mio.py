@@ -1,5 +1,3 @@
-import os
-import sys
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from pathlib import Path
@@ -7,11 +5,7 @@ from typing import Any, Optional, cast
 
 import pyradox
 
-_UTILS_DIR = os.path.join(os.path.dirname(__file__), "..", "utils")
-_UTILS_DIR = os.path.abspath(_UTILS_DIR)
-if _UTILS_DIR not in sys.path:
-    sys.path.insert(0, _UTILS_DIR)
-
+# Importing equipment puts tools/utils on sys.path for pyradox_utils.
 from equipment import (
     AirEquipmentStats,
     Equipment,
@@ -556,9 +550,9 @@ class MIO:
         """Parse already-loaded raw organization trees into typed MIO objects."""
         resolved_equipment_index = Equipment.get_equipment_index(equipment_index)
 
-        cache: dict[
-            str, dict[str, object]
-        ] = {}  # MIO token -> resolved include-expanded payload.
+        cache: dict[str, dict[str, object]] = (
+            {}
+        )  # MIO token -> resolved include-expanded payload.
         parsed: dict[str, MIO] = {}  # MIO token -> typed MIO object.
         for org_id in raw_orgs:
             raw_data = as_mapping(raw_orgs[org_id])
@@ -601,9 +595,9 @@ class MIO:
         if not root.is_dir():
             raise NotADirectoryError(path)
 
-        raw_orgs: dict[
-            str, pyradox.Tree
-        ] = {}  # MIO token -> raw pyradox tree from files.
+        raw_orgs: dict[str, pyradox.Tree] = (
+            {}
+        )  # MIO token -> raw pyradox tree from files.
         for file_path in sorted(root.rglob("*.txt")):
             if not file_path.is_file():
                 continue
@@ -636,7 +630,9 @@ class MIO:
             result[token] = mio
         return result
 
-    def sum_bonuses_for(self, equipment_type: Equipment, weights: Optional[EquipmentStats] = None) -> "BonusReport":
+    def sum_bonuses_for(
+        self, equipment_type: Equipment, weights: Optional[EquipmentStats] = None
+    ) -> "BonusReport":
         """Calculate the total and per-stat average bonuses this MIO provides to a type.
 
         The aggregate bonus is the sum across all matching traits. The averaged report is

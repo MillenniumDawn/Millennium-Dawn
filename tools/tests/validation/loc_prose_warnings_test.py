@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 import validate_localisation as VL
-from shared.suite import write_under_str
+from shared.suite import write_under_str, yml_scan
 from validator_common import Severity
 
 
@@ -127,7 +127,7 @@ def test_worker_preserves_comments_bom_crlf_and_inline_hashes(tmp_path):
         ' the_the_seeeker: "Clean." # "the the seeeker"\r\n'
         ' sample:0 "# the the seeeker"\r\n',
     )
-    issues = VL.process_yml_for_prose((path,))
+    issues = yml_scan(path, "prose")
     assert [(i.category, i.line) for i in issues] == [
         ("loc-repeated-word", 5),
         ("loc-tripled-letter", 5),

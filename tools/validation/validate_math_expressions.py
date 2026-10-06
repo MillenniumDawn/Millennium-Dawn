@@ -15,6 +15,9 @@ of the file. Two documented failure classes, nothing broader:
   (#2464). Plain `set_temp_variable = { x = FROM.y }` copies are valid and
   not reported.
 
+`--clamp-bounds` (opt-in, #5321) also reports a `clamp`, `clamp_variable`, or
+`clamp_temp_variable` whose literal `min` is above its literal `max`.
+
 Statement names follow resources/documentation/script_math_functions.md.
 """
 
@@ -86,6 +89,13 @@ EXPR_STATEMENTS = SIBLING_OPERATORS | frozenset({"value", "limit", "named_collec
 # A FROM-bound variable read: `FROM.debt_bailout`, `FROM.FROM.x`. A bare FROM
 # (scope block, scope comparison) is not a variable read.
 FROM_READ_RE = re.compile(r"(?<![A-Za-z0-9_.])FROM(?:\.[A-Za-z0-9_]+)+")
+
+# The expression statement and the two effects, all of which take min/max.
+CLAMP_RE = re.compile(
+    r"(?<![A-Za-z0-9_])(clamp|clamp_variable|clamp_temp_variable)\s*=\s*\{"
+)
+CLAMP_BOUNDS_CATEGORY = "clamp-min-above-max"
+_NUMBER_RE = re.compile(r"-?\d+(?:\.\d+)?")
 
 Finding = Tuple[int, str, str]
 
@@ -176,20 +186,44 @@ def _scan_effect_block(block: str, base_line: int, findings: List[Finding]) -> N
         _check_expression(value, base_line + block.count("\n", 0, offset), findings)
 
 
+def _iter_blocks(text: str, pattern: re.Pattern[str]) -> Iterator[Tuple[int, str, str]]:
+    """Yield (line, name, body) for each block *pattern* opens."""
+    # Matches come in file order, so count only the newlines since the last one.
+    line = 1
+    line_pos = 0
+    for m in pattern.finditer(text):
+        line += text.count("\n", line_pos, m.start())
+        line_pos = m.start()
+        block, end = extract_block_from_text(text, m.end() - 1)
+        if end != -1:
+            yield line, m.group(1), block
+
+
+def _scan_clamp_bounds(text: str, findings: List[Finding]) -> None:
+    for line, name, block in _iter_blocks(text, CLAMP_RE):
+        bounds = {
+            key: value
+            for key, value, is_block, _offset in _iter_statements(block)
+            if key in ("min", "max") and not is_block and _NUMBER_RE.fullmatch(value)
+        }
+        if len(bounds) == 2 and float(bounds["min"]) > float(bounds["max"]):
+            findings.append(
+                (
+                    line,
+                    CLAMP_BOUNDS_CATEGORY,
+                    f"`{name}` has min {bounds['min']} above max {bounds['max']}, "
+                    f"so the bounds are swapped or mistyped",
+                )
+            )
+
+
 def scan_text(raw: str) -> List[Finding]:
     """Scan script text; returns (line, category, message)."""
     text = blank_quoted_strings(blank_comments(raw))
     findings: List[Finding] = []
-    # Matches come in file order, so count only the newlines since the last one.
-    line = 1
-    line_pos = 0
-    for m in VAR_EFFECT_RE.finditer(text):
-        line += text.count("\n", line_pos, m.start())
-        line_pos = m.start()
-        block, end = extract_block_from_text(text, m.end() - 1)
-        if end == -1:
-            continue
+    for line, _name, block in _iter_blocks(text, VAR_EFFECT_RE):
         _scan_effect_block(block, line, findings)
+    _scan_clamp_bounds(text, findings)
     return findings
 
 
@@ -212,6 +246,10 @@ class Validator(BaseValidator):
     TITLE = "MATH EXPRESSION VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
+    def __init__(self, mod_path: str, **kwargs):
+        self.clamp_bounds = kwargs.pop("clamp_bounds", False)
+        super().__init__(mod_path, **kwargs)
+
     def run_validations(self):
         files = self._collect_files(SCAN_PATTERNS)
         files = [
@@ -228,13 +266,28 @@ class Validator(BaseValidator):
         ):
             rel = os.path.relpath(path, self.mod_path)
             for line, category, message in file_findings:
+                if category == CLAMP_BOUNDS_CATEGORY and not self.clamp_bounds:
+                    continue
                 self.add_error(category, message, rel, line)
-            total += len(file_findings)
+                total += 1
         if not total:
             self.log("No math-expression traps found")
         else:
             self.log(f"  {total} math-expression trap(s) found", "error")
 
 
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--clamp-bounds",
+        action="store_true",
+        dest="clamp_bounds",
+        help="Flag a clamp, clamp_variable, or clamp_temp_variable whose literal min is above its literal max",
+    )
+
+
 if __name__ == "__main__":
-    run_validator_main(Validator, "Validate math-expression traps in variable effects")
+    run_validator_main(
+        Validator,
+        "Validate math-expression traps in variable effects",
+        extra_args_fn=_add_extra_args,
+    )
