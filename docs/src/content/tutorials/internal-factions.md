@@ -30,6 +30,7 @@ You can only have **one active faction at a time**. Switching removes the old fa
 - [Religious Factions](#religious-factions)
   - [The Priesthood](#the-priesthood)
   - [The Ulema](#the-ulema)
+  - [Muslim Brotherhood](#muslim-brotherhood)
   - [The Clergy](#the-clergy)
   - [Wahabi Ulema](#wahabi-ulema)
 - [Nation-Specific Factions](#nation-specific-factions)
@@ -523,6 +524,26 @@ Laws, national spirits and focuses can shift a faction's limits. They show on th
 
 ---
 
+### Muslim Brotherhood
+
+**Available for**: Nations with Sunni Islam as their state religion
+
+**Static Bonus**:
+
+- Neutrality drift: +0.02
+
+**Dynamic Bonuses** (scale with opinion):
+
+- Stability factor (max +15%)
+- Political power factor (max +20%)
+- Neutrality drift (max +0.05)
+
+**Decisions**: Same as The Priesthood
+
+**Notes**: Egypt starts with this faction and cannot change its internal factions while the Regime Balance system runs.
+
+---
+
 ### The Clergy
 
 **Available for**: Nations with Orthodox Christian, Christian, or Eastern Church variants as their state religion
@@ -730,28 +751,29 @@ Laws, national spirits and focuses can shift a faction's limits. They show on th
 
 ## Quick Reference Table
 
-| Faction                        | Category         | Key Bonus                            | Availability Restriction               |
-| ------------------------------ | ---------------- | ------------------------------------ | -------------------------------------- |
-| Small & Medium Business Owners | Economic         | +15% civ construction, +20% civ tax  | Not KOR, NKO                           |
-| International Bankers          | Economic         | -1 interest rate, +20% trade op.     | Not USA                                |
-| Fossil Fuel Industry           | Economic         | +25% fuel gain                       | ,                                      |
-| Industrial Conglomerates       | Economic         | +15% infra construction              | Not oligarch/post-Soviet states        |
-| Oligarchs                      | Economic         | +20% local resources                 | Oligarch/post-Soviet states only       |
-| Maritime Industry              | Militaristic     | +20% dockyard speed and capacity     | Requires coastal state                 |
-| Defense Industry               | Militaristic     | +15% mil factory productivity        | ,                                      |
-| The Military                   | Militaristic     | +10% army morale, -25% pers. cost    | Requires military idea                 |
-| Intelligence Community         | Militaristic     | +15% intel factors, +20% crypto      | Not Pakistan                           |
-| Labour Unions                  | Special Interest | +25% political power                 | Not Nationalist or Fascist governments |
-| Landowners                     | Special Interest | +15% local resources                 | ,                                      |
-| Farmers                        | Special Interest | +20% population growth               | ,                                      |
-| Communist Cadres               | Special Interest | +25% mobilization speed              | Communist governments only             |
-| The Priesthood                 | Religious        | +30% political power, +25% pop.      | Buddhism, Hinduism, Shinto, Cheondoism |
-| The Ulema                      | Religious        | +30% political power, +25% pop.      | Sunni, Ibadi, Sufi, Shia Islam         |
-| The Clergy                     | Religious        | +30% political power, +25% pop.      | Orthodox, Christian, Eastern Church    |
-| Wahabi Ulema                   | Religious        | +30% political power, +fascism drift | SAU, QAT, UAE, extremist nations       |
-| The Donju                      | Nation-Specific  | +15% civ construction                | NKO only                               |
-| Saudi Royal Family             | Nation-Specific  | +20% political power                 | SAU, QAT, BHR, OMA, KUW                |
-| Iranian Quds Force             | Nation-Specific  | +0.10% communist drift               | Iranian proxies only                   |
-| Foreign Jihadis                | Nation-Specific  | +20% special forces cap              | Fascist government only                |
-| Wall Street                    | Nation-Specific  | -1 interest rate, -25% econ cycle    | USA only                               |
-| Chaebols                       | Nation-Specific  | +15% civ/infra construction          | KOR only                               |
+| Faction                        | Category         | Key Bonus                               | Availability Restriction               |
+| ------------------------------ | ---------------- | --------------------------------------- | -------------------------------------- |
+| Small & Medium Business Owners | Economic         | +15% civ construction, +20% civ tax     | Not KOR, NKO                           |
+| International Bankers          | Economic         | -1 interest rate, +20% trade op.        | Not USA                                |
+| Fossil Fuel Industry           | Economic         | +25% fuel gain                          | ,                                      |
+| Industrial Conglomerates       | Economic         | +15% infra construction                 | Not oligarch/post-Soviet states        |
+| Oligarchs                      | Economic         | +20% local resources                    | Oligarch/post-Soviet states only       |
+| Maritime Industry              | Militaristic     | +20% dockyard speed and capacity        | Requires coastal state                 |
+| Defense Industry               | Militaristic     | +15% mil factory productivity           | ,                                      |
+| The Military                   | Militaristic     | +10% army morale, -25% pers. cost       | Requires military idea                 |
+| Intelligence Community         | Militaristic     | +15% intel factors, +20% crypto         | Not Pakistan                           |
+| Labour Unions                  | Special Interest | +25% political power                    | Not Nationalist or Fascist governments |
+| Landowners                     | Special Interest | +15% local resources                    | ,                                      |
+| Farmers                        | Special Interest | +20% population growth                  | ,                                      |
+| Communist Cadres               | Special Interest | +25% mobilization speed                 | Communist governments only             |
+| The Priesthood                 | Religious        | +30% political power, +25% pop.         | Buddhism, Hinduism, Shinto, Cheondoism |
+| The Ulema                      | Religious        | +30% political power, +25% pop.         | Sunni, Ibadi, Sufi, Shia Islam         |
+| Muslim Brotherhood             | Religious        | +20% political power, +neutrality drift | Sunni Islam                            |
+| The Clergy                     | Religious        | +30% political power, +25% pop.         | Orthodox, Christian, Eastern Church    |
+| Wahabi Ulema                   | Religious        | +30% political power, +fascism drift    | SAU, QAT, UAE, extremist nations       |
+| The Donju                      | Nation-Specific  | +15% civ construction                   | NKO only                               |
+| Saudi Royal Family             | Nation-Specific  | +20% political power                    | SAU, QAT, BHR, OMA, KUW                |
+| Iranian Quds Force             | Nation-Specific  | +0.10% communist drift                  | Iranian proxies only                   |
+| Foreign Jihadis                | Nation-Specific  | +20% special forces cap                 | Fascist government only                |
+| Wall Street                    | Nation-Specific  | -1 interest rate, -25% econ cycle       | USA only                               |
+| Chaebols                       | Nation-Specific  | +15% civ/infra construction             | KOR only                               |

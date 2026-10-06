@@ -1,119 +1,219 @@
-EGY_update_military_standing = {
-	set_variable = { EGY_military_standing_value = 0 }
-
-	#Military spending
-	set_variable = { EGY_military_standing_spending = 0 }
+# Parameters:
+# - temp_influence: signed influence change
+EGY_change_military_influence = {
+	add_to_variable = { EGY_military_influence = temp_influence }
+	clamp_variable = { var = EGY_military_influence min = 0 max = 50 }
+	custom_effect_tooltip = EGY_change_military_influence_tt
 	if = {
-		limit = { has_idea = defence_04 }
-		add_to_variable = { EGY_military_standing_spending = 20 }
+		limit = { check_variable = { EGY_military_influence > 39 } }
+		if = { limit = { check_variable = { EGY_security_influence > 39 } } set_variable = { EGY_security_influence = 39 } }
+		if = { limit = { check_variable = { EGY_brotherhood_influence > 39 } } set_variable = { EGY_brotherhood_influence = 39 } }
 	}
-	else_if = {
-		limit = { has_idea = defence_05 }
-		add_to_variable = { EGY_military_standing_spending = 40 }
-	}
-	else_if = {
-		limit = { has_idea = defence_06 }
-		add_to_variable = { EGY_military_standing_spending = 60 }
-	}
-	else_if = {
-		limit = { has_idea = defence_07 }
-		add_to_variable = { EGY_military_standing_spending = 80 }
-	}
-	else_if = {
-		limit = { has_idea = defence_08 }
-		add_to_variable = { EGY_military_standing_spending = 100 }
-	}
-	add_to_variable = { EGY_military_standing_value = EGY_military_standing_spending }
-
-	#Military internal faction opinion counts as positive
-	set_variable = { EGY_military_standing_opinion = ROOT.the_military_opinion }
-	add_to_variable = { EGY_military_standing_value = EGY_military_standing_opinion }
-
-	#Corruption above level 5 is -20 points per level
-	set_variable = { EGY_military_standing_corruption = 0 }
+	EGY_recalculate_regime_balance = yes
 	if = {
-		limit = { has_idea = corruption_level_06 }
-		add_to_variable = { EGY_military_standing_corruption = 20 }
+		limit = { is_ai = no }
+		EGY_update_regime_balance_dirty = yes
 	}
-	else_if = {
-		limit = { has_idea = corruption_level_07 }
-		add_to_variable = { EGY_military_standing_corruption = 40 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_08 }
-		add_to_variable = { EGY_military_standing_corruption = 60 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_09 }
-		add_to_variable = { EGY_military_standing_corruption = 80 }
-	}
-	else_if = {
-		limit = { has_idea = corruption_level_10 }
-		add_to_variable = { EGY_military_standing_corruption = 100 }
-	}
-	add_to_variable = { EGY_military_standing_value = EGY_military_standing_corruption }
+}
 
-	#Bad economic cycle is -25 points per level below stable growth
-	set_variable = { EGY_military_standing_economy = 0 }
+# Parameters:
+# - temp_influence: signed influence change
+EGY_change_security_influence = {
+	add_to_variable = { EGY_security_influence = temp_influence }
+	clamp_variable = { var = EGY_security_influence min = 0 max = 50 }
+	custom_effect_tooltip = EGY_change_security_influence_tt
 	if = {
-		limit = { has_idea = stagnation }
-		add_to_variable = { EGY_military_standing_economy = -25 }
+		limit = { check_variable = { EGY_security_influence > 39 } }
+		if = { limit = { check_variable = { EGY_military_influence > 39 } } set_variable = { EGY_military_influence = 39 } }
+		if = { limit = { check_variable = { EGY_brotherhood_influence > 39 } } set_variable = { EGY_brotherhood_influence = 39 } }
+	}
+	EGY_recalculate_regime_balance = yes
+	if = {
+		limit = { is_ai = no }
+		EGY_update_regime_balance_dirty = yes
+	}
+}
+
+# Parameters:
+# - temp_influence: signed influence change
+EGY_change_brotherhood_influence = {
+	add_to_variable = { EGY_brotherhood_influence = temp_influence }
+	clamp_variable = { var = EGY_brotherhood_influence min = 0 max = 50 }
+	custom_effect_tooltip = EGY_change_brotherhood_influence_tt
+	if = {
+		limit = { check_variable = { EGY_brotherhood_influence > 39 } }
+		if = { limit = { check_variable = { EGY_military_influence > 39 } } set_variable = { EGY_military_influence = 39 } }
+		if = { limit = { check_variable = { EGY_security_influence > 39 } } set_variable = { EGY_security_influence = 39 } }
+	}
+	EGY_recalculate_regime_balance = yes
+	if = {
+		limit = { is_ai = no }
+		EGY_update_regime_balance_dirty = yes
+	}
+}
+
+# Parameters:
+# - temp_authority: signed authority change
+EGY_change_mubarak_authority = {
+	add_to_variable = { EGY_mubarak_authority = temp_authority }
+	clamp_variable = { var = EGY_mubarak_authority min = 0 max = 20 }
+	custom_effect_tooltip = EGY_change_mubarak_authority_tt
+	EGY_recalculate_regime_balance = yes
+	if = {
+		limit = { is_ai = no }
+		EGY_update_regime_balance_dirty = yes
+	}
+}
+
+EGY_recalculate_regime_balance = {
+	set_temp_variable = { reg_influence_total = { value = EGY_military_influence add = EGY_security_influence add = EGY_brotherhood_influence } }
+	set_temp_variable = { reg_weighted = 0 }
+	if = {
+		limit = { check_variable = { reg_influence_total > 0 } }
+		set_temp_variable = {
+			reg_weighted = {
+				value = the_military_opinion
+				subtract = 50
+				multiply = EGY_military_influence
+				add = { value = intelligence_community_opinion subtract = 50 multiply = EGY_security_influence }
+				add = { value = the_muslim_brotherhood_opinion subtract = 50 multiply = EGY_brotherhood_influence }
+				divide = reg_influence_total
+			}
+		}
+	}
+	set_variable = { EGY_mubarak_strength = { value = reg_weighted add = 50 add = EGY_mubarak_authority clamp = { min = 0 max = 100 } round = yes } }
+	set_variable = { EGY_regime_pp_var = { value = EGY_mubarak_strength subtract = 50 multiply = 0.004 } }
+	set_variable = { EGY_regime_stability_var = { value = EGY_mubarak_strength subtract = 50 multiply = 0.003 } }
+	set_variable = { EGY_military_influence_frame = { value = EGY_military_influence multiply = 2 } }
+	set_variable = { EGY_security_influence_frame = { value = EGY_security_influence multiply = 2 } }
+	set_variable = { EGY_brotherhood_influence_frame = { value = EGY_brotherhood_influence multiply = 2 } }
+
+	set_temp_variable = { reg_pressure = 0 }
+	if = {
+		limit = {
+			OR = {
+				has_idea = defence_07
+				has_idea = defence_08
+				has_idea = defence_09
+			}
+		}
+		set_temp_variable = { reg_pressure = 1 }
+	}
+	else_if = {
+		limit = {
+			OR = {
+				has_idea = defence_05
+				has_idea = defence_06
+			}
+		}
+		set_temp_variable = { reg_pressure = 0.5 }
+	}
+	if = {
+		limit = { has_idea = depression }
+		add_to_temp_variable = { reg_pressure = -1 }
 	}
 	else_if = {
 		limit = { has_idea = recession }
-		add_to_variable = { EGY_military_standing_economy = -50 }
+		add_to_temp_variable = { reg_pressure = -0.5 }
 	}
-	else_if = {
-		limit = { has_idea = depression }
-		add_to_variable = { EGY_military_standing_economy = -75 }
+	if = {
+		limit = { check_variable = { interest_rate > 8 } }
+		add_to_temp_variable = { reg_pressure = -0.5 }
 	}
-	add_to_variable = { EGY_military_standing_value = EGY_military_standing_economy }
-
-	#Interest rate multiplied by -5
-	set_variable = { EGY_military_standing_interest_rate = ROOT.interest_rate }
-	round_variable = EGY_military_standing_interest_rate
-	multiply_variable = { EGY_military_standing_interest_rate = -5 }
-	add_to_variable = { EGY_military_standing_value = EGY_military_standing_interest_rate }
-
-	#Different parties have different base opinions
-	set_variable = { EGY_military_standing_party = 0 }
-	if = { # Muslim Brotherhood, Coptic, & Shi'ites
+	if = {
 		limit = {
-			OR = {
-				check_variable = { ruling_party = 12 }
-				check_variable = { ruling_party = 9 }
-				check_variable = { ruling_party = 8 }
+			NOT = {
+				OR = {
+					western_autocrats_are_in_power = yes
+					emerging_autocracy_are_in_power = yes
+					neutrality_neutral_autocracy_are_in_power = yes
+					nationalist_fascist_are_in_power = yes
+					nationalist_military_junta_are_in_power = yes
+				}
 			}
 		}
-		set_variable = { EGY_military_standing_party = -100 }
+		add_to_temp_variable = { reg_pressure = -1 }
 	}
-	else_if = {
-		limit = { # Salafists
-			OR = {
-				check_variable = { ruling_party = 10 }
-				check_variable = { ruling_party = 11 }
+	set_variable = { EGY_military_pressure_var = reg_pressure }
+
+	if = {
+		limit = { has_idea = the_military }
+		set_temp_variable = { reg_mil_tier = 7 }
+		if = { limit = { check_variable = { the_military_opinion > 9.99 } } set_temp_variable = { reg_mil_tier = 6 } }
+		if = { limit = { check_variable = { the_military_opinion > 19.99 } } set_temp_variable = { reg_mil_tier = 5 } }
+		if = { limit = { check_variable = { the_military_opinion > 29.99 } } set_temp_variable = { reg_mil_tier = 4 } }
+		if = { limit = { check_variable = { the_military_opinion > 39.99 } } set_temp_variable = { reg_mil_tier = 3 } }
+		if = { limit = { check_variable = { the_military_opinion > 49.99 } } set_temp_variable = { reg_mil_tier = 2 } }
+		if = { limit = { check_variable = { the_military_opinion > 69.99 } } set_temp_variable = { reg_mil_tier = 1 } }
+		if = {
+			limit = { NOT = { check_variable = { EGY_current_mil_tier = reg_mil_tier } } }
+			set_variable = { EGY_current_mil_tier = reg_mil_tier }
+			remove_ideas = {
+				EGY_military_happy
+				EGY_military_anger1
+				EGY_military_anger2
+				EGY_military_anger3
+				EGY_military_anger4
+				EGY_military_anger5
 			}
+			if = { limit = { check_variable = { reg_mil_tier = 1 } } add_ideas = EGY_military_happy }
+			else_if = { limit = { check_variable = { reg_mil_tier = 3 } } add_ideas = EGY_military_anger1 }
+			else_if = { limit = { check_variable = { reg_mil_tier = 4 } } add_ideas = EGY_military_anger2 }
+			else_if = { limit = { check_variable = { reg_mil_tier = 5 } } add_ideas = EGY_military_anger3 }
+			else_if = { limit = { check_variable = { reg_mil_tier = 6 } } add_ideas = EGY_military_anger4 }
+			else_if = { limit = { check_variable = { reg_mil_tier = 7 } } add_ideas = EGY_military_anger5 }
 		}
-		set_variable = { EGY_military_standing_party = -50 }
 	}
-	else_if = {
-		limit = {
-			OR = {
-				western_autocrats_are_in_power = yes
-				check_variable = { ruling_party = 1 }
-				check_variable = { ruling_party = 2 }
-				check_variable = { ruling_party = 3 }
-				check_variable = { ruling_party = 7 }
-				check_variable = { ruling_party = 21 }
+
+	if = {
+		limit = { has_idea = intelligence_community }
+		set_temp_variable = { reg_sec_tier = 2 }
+		if = { limit = { check_variable = { intelligence_community_opinion < 29.99 } } set_temp_variable = { reg_sec_tier = 3 } }
+		if = { limit = { check_variable = { intelligence_community_opinion > 69.99 } } set_temp_variable = { reg_sec_tier = 1 } }
+		if = {
+			limit = { NOT = { check_variable = { EGY_current_sec_tier = reg_sec_tier } } }
+			set_variable = { EGY_current_sec_tier = reg_sec_tier }
+			remove_ideas = {
+				EGY_security_state_loyal
+				EGY_security_state_unchecked
 			}
+			if = { limit = { check_variable = { reg_sec_tier = 1 } } add_ideas = EGY_security_state_loyal }
+			else_if = { limit = { check_variable = { reg_sec_tier = 3 } } add_ideas = EGY_security_state_unchecked }
 		}
-		set_variable = { EGY_military_standing_party = 50 }
 	}
-	else_if = {
-		limit = { check_variable = { ruling_party = 22 } }
-		set_variable = { EGY_military_standing_party = 100 }
+
+	if = {
+		limit = { has_idea = the_muslim_brotherhood }
+		set_temp_variable = { reg_mb_tier = 2 }
+		if = { limit = { check_variable = { the_muslim_brotherhood_opinion < 29.99 } } set_temp_variable = { reg_mb_tier = 3 } }
+		if = { limit = { check_variable = { the_muslim_brotherhood_opinion > 69.99 } } set_temp_variable = { reg_mb_tier = 1 } }
+		if = {
+			limit = { NOT = { check_variable = { EGY_current_mb_tier = reg_mb_tier } } }
+			set_variable = { EGY_current_mb_tier = reg_mb_tier }
+			remove_ideas = {
+				EGY_brotherhood_quietist
+				EGY_brotherhood_agitating
+			}
+			if = { limit = { check_variable = { reg_mb_tier = 1 } } add_ideas = EGY_brotherhood_quietist }
+			else_if = { limit = { check_variable = { reg_mb_tier = 3 } } add_ideas = EGY_brotherhood_agitating }
+		}
 	}
-	add_to_variable = { EGY_military_standing_value = EGY_military_standing_party }
+
+}
+
+EGY_update_regime_balance_dirty = {
+	if = {
+		limit = { check_variable = { global.EGY_regime_balance_dirty < 10000 } }
+		add_to_variable = { global.EGY_regime_balance_dirty = 1 }
+	}
+	else = {
+		set_variable = { global.EGY_regime_balance_dirty = 1 }
+	}
+}
+
+EGY_regime_interference_cooldown = {
+	set_country_flag = { flag = EGY_regime_interfered days = 90 }
+	EGY_update_regime_balance_dirty = yes
 }
 
 coptic_events = {
