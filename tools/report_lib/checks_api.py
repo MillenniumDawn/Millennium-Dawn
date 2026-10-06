@@ -9,8 +9,9 @@ total; additional batches are attached via PATCH after the initial write. We
 default to 100 annotations per Check Run (configurable via
 MAX_ANNOTATIONS_PER_CHECK), which keeps the slowest GitHub Files-Changed
 render time reasonable while giving reviewers double the inline coverage.
-Issues are sorted errors-first, then by file/line, so the most important
-entries always survive any cap.
+Issues are sorted errors-first, then the PR's own findings (in the diff or new
+against the baseline), then by file/line, so a standing backlog cannot push
+them past the cap.
 
 The workflow jobs already create Check Runs on the head SHA under their own
 names, so an existing run with the job name is PATCHed in place; a POST is
@@ -242,6 +243,7 @@ def _pick_annotations(run: ValidatorRun) -> List[Dict]:
     eligible.sort(
         key=lambda i: (
             0 if i.severity == Severity.ERROR else 1,
+            0 if i.in_diff or i.baseline_status == "new" else 1,
             i.file,
             i.line,
         )

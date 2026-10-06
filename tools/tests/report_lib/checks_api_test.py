@@ -204,6 +204,46 @@ def test_pick_annotations_truncates_with_overflow_notice():
     assert anns[-1]["annotation_level"] == "notice"
 
 
+def test_pick_annotations_keeps_the_prs_own_warnings_under_a_backlog():
+    backlog = [
+        Issue(
+            severity=Severity.WARNING,
+            category="c",
+            message=f"backlog {i}",
+            file=f"common/ideas/file_{i:03d}.txt",
+            line=1,
+            validator="ideas",
+        )
+        for i in range(MAX_ANNOTATIONS_PER_CHECK + 10)
+    ]
+    in_diff = Issue(
+        severity=Severity.WARNING,
+        category="c",
+        message="in the diff",
+        file="events/changed.txt",
+        line=3,
+        validator="events",
+        in_diff=True,
+    )
+    new = Issue(
+        severity=Severity.WARNING,
+        category="c",
+        message="new against the baseline",
+        file="history/untouched.txt",
+        line=7,
+        validator="history",
+        baseline_status="new",
+    )
+
+    anns = _pick_annotations(_run_with_issues(backlog + [in_diff, new]))
+
+    assert [ann["path"] for ann in anns[:2]] == [
+        "events/changed.txt",
+        "history/untouched.txt",
+    ]
+    assert len(anns) == MAX_ANNOTATIONS_PER_CHECK
+
+
 def test_build_check_payload_includes_head_sha_and_name():
     run = _run_with_issues(
         [

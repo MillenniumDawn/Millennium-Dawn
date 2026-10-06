@@ -843,7 +843,7 @@ def test_ci_redundant_modifier_gate_is_strict():
 
 
 def test_ci_idea_icon_check_is_enabled():
-    assert _spec_for("validate_ideas.py").args in ((), None)
+    assert _spec_for("validate_ideas.py").args == ("--missing-name-loc",)
     validator = IdeaValidator("/nonexistent", use_colors=False, workers=1)
     called = []
     validator._parse_all_ideas = lambda: ({}, {}, {})

@@ -59,7 +59,9 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec("history-files", "validate_history.py", _CORE_GROUPS),
         ValidatorSpec("unused-scripted", "validate_unused_scripted.py", _CORE_GROUPS),
         ValidatorSpec("agency-upgrades", "validate_agency_upgrades.py", _CORE_GROUPS),
-        ValidatorSpec("ideas", "validate_ideas.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "ideas", "validate_ideas.py", _CORE_GROUPS, args=("--missing-name-loc",)
+        ),
         ValidatorSpec("set-variables", "validate_set_variables.py", _CORE_GROUPS),
         # Cross-references the committed vanilla_defines.txt manifest.
         ValidatorSpec("defines", "validate_defines.py", _CORE_GROUPS),
