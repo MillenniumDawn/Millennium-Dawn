@@ -255,3 +255,43 @@ def test_planning_power_uses_only_the_owner_balance_and_represented_demand(
     assert "ai_race_stage" not in country["vars"]
     assert not any(key.startswith("ai_race_demand_") for key in country["vars"])
     assert race.events == race.charges == []
+
+
+def _reactor_desire():
+    action = _parse_race_script(
+        _named_block(
+            DIPLOMACY.read_text(encoding="utf-8"), "purchase_reactor_grade_material"
+        )
+    )["purchase_reactor_grade_material"]
+    return [value for key, _, value in _body(action, "ai_desire") if key == "modifier"]
+
+
+def test_the_affordability_veto_comes_after_every_added_weight():
+    modifiers = _reactor_desire()
+    veto = next(
+        index
+        for index, modifier in enumerate(modifiers)
+        if _contains(modifier, "bankruptcy_incoming_collapse")
+    )
+    assert ("factor", "=", "0") in modifiers[veto]
+    assert all(key != "add" for modifier in modifiers[veto:] for key, _, _ in modifier)
+
+
+@pytest.mark.parametrize(
+    "treasury,bankrupt,expected",
+    [(3, False, True), (4, False, False), (50, True, True), (50, False, False)],
+)
+def test_the_affordability_veto_stops_a_buyer_who_cannot_pay(
+    treasury, bankrupt, expected
+):
+    race, country = _recovering()
+    country["vars"]["treasury"] = treasury
+    if bankrupt:
+        country["missions"].add("bankruptcy_incoming_collapse")
+    veto = next(
+        modifier
+        for modifier in _reactor_desire()
+        if _contains(modifier, "bankruptcy_incoming_collapse")
+    )
+    condition = [entry for entry in veto if entry[0] not in {"add", "factor"}]
+    assert race.condition(condition, 1) is expected
