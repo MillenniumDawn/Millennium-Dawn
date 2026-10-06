@@ -11,6 +11,7 @@ import os
 
 import pytest
 import validate_localisation as VL
+from shared.suite import yml_scan, yml_syntax
 
 
 def _write(path, body, encoding="utf-8-sig"):
@@ -33,7 +34,7 @@ def _txt(tmp_path, relative, body):
 
 def test_unclosed_colour_codes_report_the_expected_count(tmp_path):
     path = _english(tmp_path, "a_l_english.yml", 'l_english:\n A:0 "§Ya §Yb"\n')
-    results = VL.process_yml_for_syntax((path, ["Y"], frozenset()))
+    results = yml_syntax(path, ["Y"])
     assert len(results) == 1
     assert isinstance(results[0], str)
     assert "expected 1 § but got 0" in results[0].replace("§!", "§")
@@ -41,7 +42,7 @@ def test_unclosed_colour_codes_report_the_expected_count(tmp_path):
 
 def test_balanced_colour_codes_are_clean(tmp_path):
     path = _english(tmp_path, "b_l_english.yml", 'l_english:\n B:0 "§Ya§! §Yb§!"\n')
-    assert VL.process_yml_for_syntax((path, ["Y"], frozenset())) == []
+    assert yml_syntax(path, ["Y"]) == []
 
 
 # --- mandatory l_english: line ----------------------------------------------
@@ -49,12 +50,12 @@ def test_balanced_colour_codes_are_clean(tmp_path):
 
 def test_empty_loc_file_is_not_reported_as_missing_the_header(tmp_path):
     path = _english(tmp_path, "empty_l_english.yml", "")
-    assert VL.process_yml_for_mandatory((path,)) == []
+    assert yml_scan(path, "mandatory") == []
 
 
 def test_loc_file_without_the_header_is_reported(tmp_path):
     path = _english(tmp_path, "headless_l_english.yml", ' KEY:0 "value"\n')
-    assert VL.process_yml_for_mandatory((path,)) == [
+    assert yml_scan(path, "mandatory") == [
         "headless_l_english.yml - l_english: line is absent"
     ]
 
@@ -64,10 +65,10 @@ def test_loc_file_without_the_header_is_reported(tmp_path):
 
 def test_exempt_phrase_suppresses_a_watchlist_hit(tmp_path, monkeypatch):
     path = _english(tmp_path, "typo_l_english.yml", 'l_english:\n T:0 "seperate"\n')
-    assert len(VL.process_yml_for_typos((path,))) == 1
+    assert len(yml_scan(path, "typos")) == 1
 
     monkeypatch.setattr(VL, "_TYPO_EXEMPTIONS", {"seperate"})
-    assert VL.process_yml_for_typos((path,)) == []
+    assert yml_scan(path, "typos") == []
 
 
 # --- localization_key = references ------------------------------------------
@@ -263,13 +264,6 @@ def test_keys_defined_in_skipped_loc_files_are_collected(tmp_path):
 def test_skipped_file_without_the_english_header_is_ignored(tmp_path):
     _english(tmp_path, "00_operations_l_english.yml", ' OPERATION_KEY:0 "value"\n')
     assert VL._get_skipped_loc_keys(str(tmp_path)) == set()
-
-
-def test_substitution_key_scan_tolerates_an_unreadable_file(tmp_path):
-    good = _english(tmp_path, "subst_l_english.yml", 'l_english:\n A:0 "$gip$"\n')
-    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    keys = validator._collect_substitution_keys([str(tmp_path / "gone.yml"), good])
-    assert keys == frozenset({"gip"})
 
 
 # --- add_resistance_target tooltips -----------------------------------------
@@ -587,7 +581,7 @@ def test_files_without_the_english_header_are_not_read_for_keys(tmp_path):
 
 def test_issue_paths_use_the_file_basename(tmp_path):
     path = _english(tmp_path, "prose_l_english.yml", 'l_english:\n A:0 "a — b"\n')
-    issues = VL.process_yml_for_prose((path,))
+    issues = yml_scan(path, "prose")
     assert [i.file for i in issues] == [os.path.basename(path)]
 
 

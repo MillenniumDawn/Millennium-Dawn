@@ -5,6 +5,7 @@ from pathlib import PurePosixPath
 
 import pytest
 from shared.paths import TOOLS_DIR as TOOLS
+from shared.suite import prevent_commit_signing_during_tests
 
 SPEC = importlib.util.spec_from_file_location(
     "publish_workshop", TOOLS / "publishing" / "publish_workshop.py"
@@ -15,7 +16,8 @@ SPEC.loader.exec_module(P)
 
 
 def _git(repo, *args):
-    subprocess.run(["git", "-C", str(repo), *args], check=True, capture_output=True)
+    git_args = prevent_commit_signing_during_tests(*args)
+    subprocess.run(["git", "-C", str(repo), *git_args], check=True, capture_output=True)
 
 
 def _repo(tmp_path):

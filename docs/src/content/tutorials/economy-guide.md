@@ -381,12 +381,13 @@ Currency strength is recalculated monthly. Falls are a share of its current leve
 | Financial collapse | Your currency is weaker for three years after a financial collapse.                                                                                             |
 | Reserve issuers    | Each country using your currency as its reserve strengthens it slightly.                                                                                        |
 | Safe havens        | While world tension stays above 50%, the US dollar and Japanese yen strengthen slightly, and the Swiss franc a little more.                                     |
+| National spirits   | A spirit with a **Currency Strength Target** value moves the level your currency is pulled toward by that amount. The pull closes 1% of the gap a month.        |
 
 At a policy rate of 0%, the real interest rate can pull your currency down by at most 1% a month. Each point of the rate takes 2.5% off that limit, so a rate of 20% halves it. A higher rate therefore helps even when inflation is far above it.
 
 Your base strength starts at your country's historical value and slowly follows your currency. It rises at half the speed it falls, so trust is lost faster than it is earned. Years of good management raise the level your currency settles at, and years of bad management lower it.
 
-Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. Its effects include:
+Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. A national spirit with a **Minimum Currency Strength** value raises that floor to the value shown, and values from several spirits add up. Its effects include:
 
 - **Weak currency** (below 1.0): Resource exports and international investment returns are worth more in local terms, but foreign-denominated debt costs more and inflation pressure increases
 - **Strong currency** (above 1.0): Foreign-denominated debt is cheaper and inflation is suppressed, but export income and investment returns decrease in local terms
@@ -404,7 +405,7 @@ The **Currency Backing** law determines how your currency is anchored:
 | Bi-Metal Standard | +2%       | +1%           | Moderate volatility                      |
 | Fiat Currency     | -2%       | --            | +0.03 daily PP; highest flexibility      |
 
-Hard-money standards (gold, silver) dampen currency volatility and pull currency strength toward par (1.0) over time. However, they restrict monetary policy flexibility -- you cannot use the Expand Money Supply decision while on the gold standard.
+Hard-money standards dampen currency volatility and lift a currency at or below par (1.0) every month: gold and silver by 0.003, and a bi-metal standard by 0.002. The monthly fall is a share of the current level, so that lift stops the monthly slide at about 0.60 on gold, 0.38 on silver, and 0.20 on a bi-metal standard. However, they restrict monetary policy flexibility -- you cannot use the Expand Money Supply decision while on the gold standard.
 
 ### Monetary Policy Decisions
 
@@ -456,6 +457,8 @@ Each quarter, the game calculates an inflation adjustment from the factors above
 
 5. **Budget balance**: A deficit adds inflationary pressure proportional to the shortfall. A surplus has the opposite effect.
 6. **Money printing multiplier**: If the Expand Money Supply decision is active, the entire adjustment is amplified.
+
+A national spirit with an **Inflation Gain** value scales a positive quarterly result by that percentage. At -20%, a quarterly result of 5% becomes 4%. It does not change a quarter of deflation.
 
 The quarterly result is stored and averaged with the previous three quarters. The rate is clamped to prevent wild swings: no more than +/-10 percentage points change per quarter, and a hard cap of +/-200% total.
 
@@ -525,7 +528,7 @@ Inflation responds to multiple levers. Here are the main strategies:
 
 **Strengthen the currency.** Use Austerity Measures, reduce debt, or improve stability to push currency strength above 1.0. This eliminates the currency inflation channel.
 
-**Adopt a hard-money standard.** Gold and silver backing dampen currency volatility and pull it toward 1.0 over time, which indirectly reduces currency-driven inflation. However, hard-money standards restrict your ability to use the Expand Money Supply decision.
+**Adopt a hard-money standard.** Gold, silver, and bi-metal backing dampen currency volatility and pull it toward 1.0 over time, which indirectly reduces currency-driven inflation. However, hard-money standards restrict your ability to use the Expand Money Supply decision.
 
 **Avoid the Expand Money Supply decision during high inflation.** This decision amplifies the inflation adjustment and weakens the currency -- useful during deflation but dangerous during inflation.
 

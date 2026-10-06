@@ -104,6 +104,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `icon = X` passes if `X`, `GFX_decision_X`, or `GFX_X` exists. A category `icon = X`
   takes `GFX_decision_category_` instead. A category `picture` is the full sprite name.
   Needs a live install to avoid vanilla noise. The flag also drives the focus-tree check.
+- `unannounced-decision-category` (WARNING, opt-in `--unannounced-categories`, passed in
+  CI): a category whose `visible` waits on a flag, focus, idea, or variable, with no
+  `unlock_decision_category_tooltip` naming it and no `unlock_decision_tooltip` naming
+  one of its decisions. A gate named in a `history/countries/` file is open from day one
+  and skipped. `unannounced_category_exempt` in the config lists what that scan cannot
+  see: gates set by scripted effects history runs, and balance of power categories that
+  have no name key to render.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -148,6 +155,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `trigger`, and `ai_chance`. `hidden_effect`, scope blocks, and tooltips count as
   effects. `tools/linting/fix_event_option_logs.py` shares the detection and deletes the
   lines.
+- `event-option-log-id` (ERROR): an option log that cites another option's id, in the
+  `Event <id>` form or the canonical `<id> executed` form.
+  `tools/linting/fix_log_ids.py` shares the detection and rewrites the token. Exempt
+  option names live in `validation_config.json` `option_log_id_exempt`.
 - `event-ai-chance-ignores-cost` (WARNING, off by default, `--check-ai-chance-costs`,
   tracked in #5106): in an event with two or more options, an option that charges its
   own country and whose `ai_chance` has no `modifier`. Costs: lowering `treasury` or
@@ -187,6 +198,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   resolves focus positions in file order. Targets in another file are not checked.
 - Focus geometry (WARNING): see the
   [coordinate policy](../../tools/validation/README.md#focus-coordinate-warnings).
+- `focus-allow-branch-leak` (WARNING): a focus with its own `allow_branch` under an
+  ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
 
 ## validate_gfx_references.py
 
@@ -204,7 +217,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   case-insensitively, so the icon is missing on Linux. `unused-sprite-case` (WARNING): a
   sprite whose only reference is miscased.
 - `duplicate-sprite`, `case-variant-sprite` (WARNING): the message says whether the blocks
-  share a texture.
+  share a texture. Unquoted `texturefile` values are read the same as quoted ones.
+- `raw-icon-path` (ERROR): `icon =` inside `create_equipment_variant`, or an entry in a
+  `graphic_db` `icons = { }` block, that is a texture path instead of a `GFX_` sprite.
+  Quoted and unquoted, slash or backslash. Comments and focus-tree `icon =` are ignored.
+  `_documentation.info` is not scanned. Raw plane paths crash the macOS air battle window.
 - `undefined-font` (ERROR): a `.gui` font naming no `bitmapfont` renders in the default
   face. Vanilla names come from an install or `vanilla_fonts.txt`.
 - Sprite names in generator-managed `.gfx` files come from the texture filename. Rename
@@ -292,6 +309,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `mio-production-bonus-naval` (ERROR): everything the trait reaches is naval.
   `mio-production-bonus-partial-naval` (WARNING): mixed scope, a coverage note.
   `policies/` is out of scope because `same_as_mio` is not statically resolvable.
+- `mio-design-team-type-uncovered` (WARNING): a `create_equipment_variant` names
+  `design_team = mio:<org>` whose `equipment_type` does not cover the variant's
+  archetype after `mio_cat_*` expansion, so the engine ignores the designer. A type
+  the equipment index cannot resolve (a vanilla designer airframe) is skipped. A
+  staged org edit does not rescan unstaged references; the full CI run does.
 - A staged change in `policies/`, `common/country_leader/`, `common/units/equipment/`,
   `common/equipment_groups/`, or English loc rescans every org.
 
@@ -329,6 +351,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `missing-template-ensure` (WARNING): a `create_unit` naming a template that
   `delete_unit_template_and_units` removes anywhere needs the template created earlier
   or a `has_template` guard. A scripted effect that creates or guards it also counts.
+- `airborne-template-not-parachutable` (WARNING): a `division_template` whose name
+  matches para, airborne, VDV, or desant lists a sub-unit without
+  `can_be_parachuted = yes`, which stops the whole division from paradropping.
+  Deliberate air-assault templates are listed in `air_assault_templates` in the
+  config as `<file>:<template name>`. Staged mode checks only staged template files, so a `common/units/`
+  flag change surfaces on the full CI run.
 - New source directories: `config_drift_test.py` derives the routes from the
   `_*_SOURCE_PATTERNS` lists and fails until every route is updated.
 
@@ -358,7 +386,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_style.py and check_common_mistakes.py
 
-- Both are diff-scoped in the core job. `check_common_mistakes.py` reports ERROR only.
+- The style check is diff-scoped in the core job. Common mistakes run full-repo in the
+  core batch through `validate_common_mistakes.py` and report ERROR only. It scans
+  `common`, `events`, `history`, and `music`.
 - `shared_focus_prefixes` in the config exempts `EH_` focus ids.
 - An effect block whose only content is a `log` line is dead: delete the block. The
   standardizers and `tools/logging_tool.py` never inject a log into an empty block.
@@ -398,8 +428,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     wrappers at any depth, `check_variable`'s inline `tooltip`, `visible` blocks, names
     containing `@`, AI-only decisions, and `if` branches whose `limit` holds an
     unconditional `is_ai = yes`.
-- `variable-tooltip-missing-loc` (WARNING): `tooltip = KEY` in a variable effect with no
-  English entry. `dynamic-modifier-tooltip-missing` (WARNING): an add or subtract on a
+- `variable-tooltip-missing-loc` (ERROR): `tooltip = KEY` in a variable effect with no
+  English entry. `dynamic-modifier-tooltip-missing` (ERROR): an add or subtract on a
   variable backing a dynamic modifier with no `tooltip`, in blocks the engine renders.
   `hidden_effect` suppresses both.
 
