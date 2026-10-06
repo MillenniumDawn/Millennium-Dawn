@@ -107,10 +107,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `unannounced-decision-category` (WARNING, opt-in `--unannounced-categories`, passed in
   CI): a category whose `visible` waits on a flag, focus, idea, or variable, with no
   `unlock_decision_category_tooltip` naming it and no `unlock_decision_tooltip` naming
-  one of its decisions. A gate named in a `history/countries/` file is open from day one
-  and skipped. `unannounced_category_exempt` in the config lists what that scan cannot
-  see: gates set by scripted effects history runs, and balance of power categories that
-  have no name key to render.
+  one of its decisions. History mentions do not exempt a category.
+  `unannounced_category_exempt` in the config records each exception and its reason:
+  startup gates, shared state with no single owning-country unlock effect, and balance
+  of power categories that have no name key to render.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
