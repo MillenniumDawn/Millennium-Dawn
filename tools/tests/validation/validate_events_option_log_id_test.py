@@ -50,6 +50,32 @@ def test_matching_executed_form_is_not_flagged(tmp_path):
     assert v._issues == []
 
 
+def test_numeric_dotted_log_ending_is_not_treated_as_an_event_id(tmp_path):
+    body = (
+        "\t\tname = foo.1.a\n"
+        '\t\tlog = "[GetDateText]: [This.GetName]: 2025.5"\n'
+        '\t\tlog = "[GetDateText]: [This.GetName]: ROOT.capital"\n'
+        '\t\tlog = "[GetDateText]: [This.GetName]: v1.2"\n'
+        "\t\tadd_political_power = 10\n"
+    )
+    _write(tmp_path, "events/Ev.txt", _event(body))
+    v = _validator(tmp_path)
+    v.validate_option_log_id()
+    assert v._issues == []
+
+
+def test_bare_event_id_with_numeric_namespace_suffix_is_flagged(tmp_path):
+    body = (
+        "\t\tname = foo.1.a\n"
+        '\t\tlog = "[GetDateText]: [This.GetName]: CZE_Army_2000.01"\n'
+        "\t\tadd_political_power = 10\n"
+    )
+    _write(tmp_path, "events/Ev.txt", _event(body))
+    v = _validator(tmp_path)
+    v.validate_option_log_id()
+    assert [i.message for i in v._issues] == ["foo.1.a log cites CZE_Army_2000.01"]
+
+
 def test_event_word_form_citing_another_option_is_flagged(tmp_path):
     body = (
         "\t\tname = foo.1.a\n"

@@ -66,12 +66,17 @@ def _setup(tmp_path):
     )
 
 
-def _lines(tmp_path, reward, consumer_map):
-    nf_dir = tmp_path / "common" / "national_focus"
-    nf_dir.mkdir(parents=True, exist_ok=True)
-    fpath = nf_dir / "test.txt"
-    fpath.write_text(FOCUS_TEMPLATE.format(reward=reward), encoding="utf-8")
+def _scan(tmp_path, subdir, text, consumer_map):
+    target = tmp_path / "common" / subdir
+    target.mkdir(parents=True, exist_ok=True)
+    fpath = target / "test.txt"
+    fpath.write_text(text, encoding="utf-8")
     return variable_scan(fpath, "orphan", tmp_path, consumer_map=consumer_map)
+
+
+def _lines(tmp_path, reward, consumer_map):
+    text = FOCUS_TEMPLATE.format(reward=reward)
+    return _scan(tmp_path, "national_focus", text, consumer_map)
 
 
 def test_consumed_setter_is_clean(tmp_path):
@@ -136,6 +141,63 @@ def test_clobbered_setter_is_flagged(tmp_path):
     issues = _lines(tmp_path, reward, cmap)
     assert len(issues) == 1
     assert "overwritten" in issues[0][0]
+
+
+def test_party_popularity_setter_clobbered_before_the_call_is_flagged(tmp_path):
+    # SyriaFocus.88 shape: two parties set up back to back, one call
+    cmap = _setup(tmp_path)
+    reward = (
+        "set_temp_variable = { party_index = 20 }\n"
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.30 }\n"
+        "\t\t\tset_temp_variable = { party_index = 5 }\n"
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.10 }\n"
+        "\t\t\tchange_relative_party_popularity = yes"
+    )
+    issues = _lines(tmp_path, reward, cmap)
+    assert [line for _msg, _rel, line in issues] == [10]
+    assert "party_popularity_increase is overwritten" in issues[0][0]
+
+
+def test_party_popularity_setter_with_a_call_after_each_is_clean(tmp_path):
+    cmap = _setup(tmp_path)
+    reward = (
+        "set_temp_variable = { party_popularity_increase = 0.30 }\n"
+        "\t\t\tchange_relative_party_popularity = yes\n"
+        "\t\t\tset_temp_variable = { party_popularity_increase = 0.10 }\n"
+        "\t\t\tchange_relative_party_popularity = yes"
+    )
+    assert _lines(tmp_path, reward, cmap) == []
+
+
+def test_party_popularity_setter_with_no_call_names_the_outcome(tmp_path):
+    cmap = _setup(tmp_path)
+    reward = "set_temp_variable = { party_popularity_increase = 0.05 }"
+    issues = _lines(tmp_path, reward, cmap)
+    assert len(issues) == 1
+    assert issues[0][0].endswith("so the party popularity never changes")
+
+
+def test_setter_clobbered_in_an_idea_on_add_is_flagged(tmp_path):
+    # Polish.txt shape: the setup sits in on_add = { hidden_effect = { ... } }
+    cmap = _setup(tmp_path)
+    idea = (
+        "ideas = {\n"
+        "\tcountry = {\n"
+        "\t\ttest_idea = {\n"
+        "\t\t\ton_add = {\n"
+        "\t\t\t\thidden_effect = {\n"
+        "\t\t\t\t\tset_temp_variable = { party_popularity_increase = 0.25 }\n"
+        "\t\t\t\t\tset_temp_variable = { party_popularity_increase = 0.25 }\n"
+        "\t\t\t\t\tchange_relative_party_popularity = yes\n"
+        "\t\t\t\t}\n"
+        "\t\t\t}\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    issues = _scan(tmp_path, "ideas", idea, cmap)
+    assert [line for _msg, _rel, line in issues] == [6]
+    assert "party_popularity_increase is overwritten" in issues[0][0]
 
 
 def test_clobber_seen_across_intervening_block(tmp_path):
