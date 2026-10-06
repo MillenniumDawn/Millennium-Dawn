@@ -107,9 +107,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `unannounced-decision-category` (WARNING, opt-in `--unannounced-categories`, passed in
   CI): a category whose `visible` waits on a flag, focus, idea, or variable, with no
   `unlock_decision_category_tooltip` naming it and no `unlock_decision_tooltip` naming
-  one of its decisions. `unannounced_category_exempt` in the config lists categories
-  whose gate is granted only at game start, and balance of power categories that have
-  no name key to render.
+  one of its decisions. History mentions do not exempt a category.
+  `unannounced_category_exempt` in the config records each exception and its reason:
+  startup gates, shared state with no single owning-country unlock effect, and balance
+  of power categories that have no name key to render.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -155,7 +156,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   effects. `tools/linting/fix_event_option_logs.py` shares the detection and deletes the
   lines.
 - `event-option-log-id` (ERROR): an option log that cites another option's id, in the
-  `Event <id>` form or the canonical `<id> executed` form.
+  `Event <id>` form, the canonical `<id> executed` form, or a bare event id ending in
+  a numeric id segment and optional letter-led suffix. Namespaces may end in digits;
+  version-like `v1.2` and dotted scopes such as `ROOT.capital` are ignored.
+  The option name is read at its own depth, so a `name =` inside an effect does not count.
   `tools/linting/fix_log_ids.py` shares the detection and rewrites the token. Exempt
   option names live in `validation_config.json` `option_log_id_exempt`.
 - `event-ai-chance-ignores-cost` (WARNING, off by default, `--check-ai-chance-costs`,
@@ -231,6 +235,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Missing-icon audit (WARNING, always on): the sprite is undefined, exists only under a
   different case, or resolves to placeholder art (`_PLACEHOLDER_TEXTURES`). A mod
   placeholder that shadows a vanilla sprite name still reports.
+- `missing-idea-localisation` (WARNING, behind `--missing-name-loc`): an idea whose name
+  key has no English loc shows its raw id in every tooltip that grants it. The key is the
+  `name = X` override when set. Hidden categories and character `idea_token` entries are
+  exempt. The CI core batch and the nightly run pass the flag. The commit hook does not,
+  so there is no local signal. `--missing-loc` adds missing `_desc` keys and runs nowhere
+  by default. Backlog and the move to ERROR: #5415.
 - `loc-key-collision` (WARNING): an idea's `name = X` override resolves its name to `X`
   and its description to `X_desc`. When `X` is also a focus or decision id and resolves
   in English loc, one string silently overrides the other. Intentional sharing is allowed.
@@ -260,6 +270,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - `math-sibling-operator`, `math-from-read` (ERROR). The traps are in
   `hoi4-data-structures.md`. Plain `set_temp_variable = { x = FROM.y }` copies are valid.
+- `clamp-min-above-max` (ERROR, opt-in `--clamp-bounds`, passed in CI): a `clamp`,
+  `clamp_variable`, or `clamp_temp_variable` whose literal `min` is above its literal
+  `max`. A bound that is a variable, an `@constant`, or an expression block is not
+  judged, so a swapped pair with one of those still passes.
 
 ## validate_mesh_textures.py
 
@@ -356,6 +370,23 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   Deliberate air-assault templates are listed in `air_assault_templates` in the
   config as `<file>:<template name>`. Staged mode checks only staged template files, so a `common/units/`
   flag change surfaces on the full CI run.
+- `template-slot` (ERROR): a `division_template` skips a row or column, puts two units
+  on one slot, places a unit off the designer grid, or has a unit with no readable
+  `x`/`y`. The designer hides the unit and locks the template for editing.
+  `regimental_support` may skip columns, but each of its columns needs the same
+  `regiments` column, and each row needs the battalions
+  `REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS` sets for it.
+- `template-locked-row` (WARNING): a `regiments` unit sits on a row past
+  `MIN_DIVISION_BRIGADE_HEIGHT`. Those rows stay locked until the country has
+  `additional_brigade_column_size`. One finding per template. A tag's starting
+  subdoctrines (`set_sub_doctrine` at the top level of its `history/countries` file)
+  open rows for its `history/units/TAG_*` files and for templates scoped to it.
+  Mastery rewards and ideas are not counted. Tracked in #5451.
+- Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
+  to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
+  sizes, `divisional = no` or `regimental = no` units in the wrong block, and
+  `allowed_battalion_groups`. Staged mode checks only staged template files, so a
+  define or doctrine change surfaces on the full CI run.
 - New source directories: `config_drift_test.py` derives the routes from the
   `_*_SOURCE_PATTERNS` lists and fails until every route is updated.
 
@@ -374,13 +405,43 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `shadowed-scientist-trait-icon` (vanilla ships the art, re-declare the `spriteType`),
   `missing-scientist-trait-icon`, `stale-scientist-trait-icon-todo`. All WARNING.
 
+## validate_simplifications.py
+
+- `simplification` (WARNING): an `OR` listing the same clause twice — direct children
+  compared after whitespace is collapsed. A repeat is dead weight or a copy-paste
+  where one copy was meant to differ. Scans `common/` and `events/`.
+
 ## validate_scripted_params.py
 
+- Contracts come from the `# Parameters:` block above a scripted effect, plus the
+  `HARDCODED_CONTRACTS` table in the validator. Declare a parameter in the block to
+  have it checked. An effect with neither is never checked itself.
+- `orphan_param_setter_test.py` pins the four money and party popularity blocks. A
+  blank line inside a block, or a renamed header, silently drops the contract.
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
-- A staged change under `common/scripted_effects/`, `common/country_tags/`, or
-  `common/country_tag_aliases/` rescans every caller.
+- `missing-required-param` (ERROR): a call with a required parameter not set first.
+  `set_temp_variable`, its `var = NAME` long form, `set_temp_variable_to_random`,
+  `add_to_temp_variable`, and `subtract_from_temp_variable` all count as setting it.
+- `orphan-param-setter` (ERROR): a `set_temp_variable`, `add_to_temp_variable`, or
+  `subtract_from_temp_variable` of a declared parameter, required or optional, that
+  nothing uses afterwards in the same effect block, or that is overwritten at the same
+  depth before its first use. The `var = NAME` long form counts.
+  - A use is a call to any scripted effect or trigger that reads the parameter before
+    writing it, contracted or not, or a direct read. `multiply_temp_variable` and the
+    other statements that only change it are not uses. A write nested in a branch of
+    the callee is ignored, since it may not run.
+  - `move_party_popularity` writes `party_popularity_increase` itself, so it does not
+    consume a caller's value.
+  - Not reported: a reset to `0`, a setter in a scripted effect's own body, and a
+    setter outside the blocks in `EFFECT_BLOCK_KEYWORDS`, `effect_tooltip`, and
+    scripted GUI `*_click`.
+  - A setter inside `effect_tooltip` must be used inside it. A runtime setter that only
+    feeds a later `effect_tooltip` preview is accepted.
+  - Known gap: a use in a sibling `if` or `else` arm counts.
+- A staged change under `common/scripted_effects/`, `common/scripted_triggers/`,
+  `common/country_tags/`, or `common/country_tag_aliases/` rescans every caller.
 - See the [layout policy](../../tools/validation/README.md#scripted-effect-call-layout).
 
 ## validate_style.py and check_common_mistakes.py
