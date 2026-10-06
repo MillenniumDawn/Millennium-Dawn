@@ -364,6 +364,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   Deliberate air-assault templates are listed in `air_assault_templates` in the
   config as `<file>:<template name>`. Staged mode checks only staged template files, so a `common/units/`
   flag change surfaces on the full CI run.
+- `template-slot` (ERROR): a `division_template` skips a row or column, puts two units
+  on one slot, or places a unit off the designer grid. The designer hides the unit and
+  locks the template for editing. `regimental_support` may skip columns, but each of its
+  columns needs the same `regiments` column. Grid sizes are in `_TEMPLATE_GRIDS`; update
+  them when the `MAX_DIVISION_*` or `MAX_REGIMENTAL_SUPPORT_*` defines change. Not
+  checked: `REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS`, and Army HQ template sizes.
 - New source directories: `config_drift_test.py` derives the routes from the
   `_*_SOURCE_PATTERNS` lists and fails until every route is updated.
 

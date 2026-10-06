@@ -103,6 +103,14 @@ _AIR_ASSAULT_TEMPLATES = frozenset(
     validation_config("validate_oob_units", "air_assault_templates")
 )
 _TEMPLATE_UNIT_BLOCKS = frozenset({"regiments", "regimental_support", "support"})
+# Designer grid as (columns, rows). MD_defines.lua sets the brigade width and
+# the regimental support grid; the rest are the vanilla defaults.
+_TEMPLATE_GRIDS = {
+    "regiments": (5, 5),
+    "regimental_support": (5, 3),
+    "support": (1, 5),
+}
+_SLOT_COORD_RE = re.compile(r"\b([xy])\s*=\s*(\d+)")
 _VERSION_NAME_RE = re.compile(r'\bversion_name\s*=\s*"([^"]*)"')
 _OOB_CREATOR_RE = re.compile(r'\bcreator\s*=\s*"?([A-Za-z_]\w*)"?')
 _OOB_OWNER_RE = re.compile(r'\bowner\s*=\s*"?([A-Za-z_]\w*)"?')
@@ -110,6 +118,7 @@ _PRODUCER_RE = re.compile(r'\b(?:creator|producer)\s*=\s*"?([A-Za-z_]\w*)"?')
 _LOAD_OOB_RE = re.compile(r'\bload_oob\s*=\s*(?:"([^"]+)"|([A-Za-z_]\w*))')
 _DIVISION_TEMPLATE_DEF_PATTERN = r"division_template\s*=\s*\{"
 _DIVISION_TEMPLATE_DEF_RE = re.compile(_DIVISION_TEMPLATE_DEF_PATTERN.encode())
+_DIVISION_TEMPLATE_DEF_TEXT_RE = re.compile(_DIVISION_TEMPLATE_DEF_PATTERN)
 
 # create_unit and runtime load_oob appear in these sources.
 _CREATE_UNIT_SOURCE_PATTERNS = _VARIANT_SOURCE_PATTERNS + [
@@ -1232,6 +1241,106 @@ def _check_paradrop_file(
             line=unit_line,
         )
         for template_line, name, unit, unit_line in findings
+    ]
+
+
+def _first_gap(used: Dict[int, Any]) -> Optional[int]:
+    """Lowest index missing below the highest one in use."""
+    return next((i for i in range(max(used)) if i not in used), None)
+
+
+def check_template_slots(raw: str) -> List[Tuple[int, str]]:
+    """``(line, message)`` per division_template slot the designer cannot show.
+
+    A skipped row or column hides the unit past it and locks the template for
+    editing. A slot used twice shows only one of its units.
+    """
+    text = strip_comments(raw)
+    nodes = _build_block_nodes(text)
+    findings = []
+    for node in nodes:
+        if node["label"] != "division_template":
+            continue
+        name = _top_level_value(text, node["start"] + 1, node["end"], "name")
+        # block -> column -> row -> line of the unit holding that slot
+        grids: Dict[str, Dict[int, Dict[int, int]]] = {}
+        problems = []
+        for block_idx in node["children"]:
+            block = nodes[block_idx]["label"]
+            if block not in _TEMPLATE_GRIDS:
+                continue
+            width, height = _TEMPLATE_GRIDS[block]
+            for unit_idx in nodes[block_idx]["children"]:
+                unit = nodes[unit_idx]
+                pos = dict(_SLOT_COORD_RE.findall(text[unit["start"] : unit["end"]]))
+                if len(pos) != 2:
+                    continue
+                x, y = int(pos["x"]), int(pos["y"])
+                slot = f"{block} slot x = {x} y = {y}"
+                rows = grids.setdefault(block, {}).setdefault(x, {})
+                if y in rows:
+                    problems.append(
+                        (unit["line"], f"{slot} is already used on line {rows[y]}")
+                    )
+                    continue
+                rows[y] = unit["line"]
+                if x >= width or y >= height:
+                    problems.append(
+                        (unit["line"], f"{slot} is outside the {width}x{height} grid")
+                    )
+        for block, columns in grids.items():
+            for x, rows in sorted(columns.items()):
+                gap = _first_gap(rows)
+                if gap is not None:
+                    past = rows[min(y for y in rows if y > gap)]
+                    problems.append(
+                        (past, f"{block} column x = {x} skips row y = {gap}")
+                    )
+            if block == "regimental_support":
+                # Each column of companies attaches to the same regiments column.
+                problems.extend(
+                    (
+                        min(rows.values()),
+                        f"{block} column x = {x} has no regiments column x = {x}",
+                    )
+                    for x, rows in sorted(columns.items())
+                    if x not in grids.get("regiments", {})
+                )
+                continue
+            gap = _first_gap(columns)
+            if gap is not None:
+                past = min(columns[min(x for x in columns if x > gap)].values())
+                problems.append((past, f"{block} skips column x = {gap}"))
+        findings.extend(
+            (line, f"template '{name}' (line {node['line']}): {message}")
+            for line, message in sorted(problems)
+        )
+    return findings
+
+
+def _check_template_slots_file(args: Tuple[str, str]) -> List[Issue]:
+    filepath, mod_path = args
+    raw = _read_text(filepath, mod_path)
+    # Most candidates only name a template inside a create_unit string.
+    if not _DIVISION_TEMPLATE_DEF_TEXT_RE.search(raw):
+        return []
+    findings = disk_cache.per_file_cached_by_content(
+        mod_path,
+        "oob_units.template_slots",
+        filepath,
+        raw,
+        lambda: check_template_slots(raw),
+    )
+    rel = normalize_path_separators(os.path.relpath(filepath, mod_path))
+    return [
+        Issue(
+            severity=Severity.ERROR,
+            category="template-slot",
+            message=message,
+            file=rel,
+            line=line,
+        )
+        for line, message in findings
     ]
 
 
@@ -2539,6 +2648,25 @@ class Validator(BaseValidator):
             category="airborne-template-not-parachutable",
         )
 
+    def validate_template_slots(self):
+        """Flag division_template slots that are skipped, reused, or off the grid."""
+        self._log_section("Checking division template slot layout...")
+
+        files = self._collect_files(_TEMPLATE_SOURCE_PATTERNS)
+        self.log(f"  Found {len(files)} files to check")
+        results = self._pool_flat_map(
+            _check_template_slots_file,
+            [(f, self.mod_path) for f in files],
+            chunksize=20,
+        )
+
+        self._report(
+            results,
+            "✓ All division template slots are contiguous and unique",
+            "Division templates with skipped, reused, or off-grid slots:",
+            category="template-slot",
+        )
+
     def run_validations(self):
         self._build_canonical_units()
         self.validate_unit_references()
@@ -2550,6 +2678,7 @@ class Validator(BaseValidator):
         self.validate_load_oob_references()
         self.validate_created_units()
         self.validate_airborne_templates()
+        self.validate_template_slots()
 
 
 def _add_extra_args(parser):
