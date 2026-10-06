@@ -9,8 +9,7 @@ errors in error.log — and one bad expression desyncs the parser for the rest
 of the file. Two documented failure classes, nothing broader:
 
 * math statements written as siblings of the effect's `var =`/`value =`
-  instead of inside the expression block (hoi4-data-structures.md, "Do not
-  write the math expression as siblings of `var = X`");
+  instead of inside the expression block (see hoi4-data-structures.md);
 * `FROM.<var>` reads inside an expression, which parse but return 0
   (#2464). Plain `set_temp_variable = { x = FROM.y }` copies are valid and
   not reported.
