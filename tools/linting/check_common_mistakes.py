@@ -250,6 +250,13 @@ _RE_LOG_EVENT_EXECUTED_TOKEN = re.compile(
     r'log\s*=\s*"[^"]*\]:\s*([\w.]+)\s+(?:option\s+)?executed',
     re.IGNORECASE,
 )
+# A bare event id at the end of the string needs a numeric id segment. Event
+# namespaces can end in digits (e.g. `md4` and `CZE_Army_2000`), but a token in
+# the version-like `v1.2` form is not an event id.
+_RE_LOG_EVENT_BARE_TOKEN = re.compile(
+    r'log\s*=\s*"[^"]*\]:\s*((?![vV]\d+\.\d+(?:\.[A-Za-z]\w*)?\")'
+    r'[A-Za-z_]\w*\.\d+(?:\.[A-Za-z]\w*)?)"'
+)
 _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
 _RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
 _RE_FOCUS_BLOCK_OPEN = re.compile(r"^\s*focus\s*=\s*\{")
@@ -3257,11 +3264,15 @@ def _iter_event_log_mismatches(lines):
             src, inner, lambda j: _RE_OPTION_BLOCK_OPEN.search(src.code[j])
         ):
             own_name = None
-            for code in src.code[opt_start:opt_end]:
-                nm = _RE_OPTION_NAME_IN_BLOCK.match(code)
-                if nm:
-                    own_name = nm.group(1)
-                    break
+            depth = 0
+            for row in range(opt_start, opt_end):
+                # Deeper than 1 is an effect's own name (add_tech_bonus).
+                if depth == 1:
+                    nm = _RE_OPTION_NAME_IN_BLOCK.match(src.code[row])
+                    if nm:
+                        own_name = nm.group(1)
+                        break
+                depth += src.delta[row]
             own_suffix = None
             if own_name and own_name.startswith(event_id + "."):
                 own_suffix = own_name[len(event_id) + 1 :]
@@ -3271,7 +3282,9 @@ def _iter_event_log_mismatches(lines):
                 m = _RE_LOG_EVENT_TOKEN.search(obl_code)
                 if m is None:
                     used_event_word = False
-                    m = _RE_LOG_EVENT_EXECUTED_TOKEN.search(obl_code)
+                    m = _RE_LOG_EVENT_EXECUTED_TOKEN.search(
+                        obl_code
+                    ) or _RE_LOG_EVENT_BARE_TOKEN.search(obl_code)
                 if m is None:
                     continue
                 token = m.group(1)
