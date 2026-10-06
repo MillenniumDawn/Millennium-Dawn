@@ -44,6 +44,8 @@ GROUP_PATTERNS = {
         "common/resistance_compliance_modifiers/**",
         "common/scripted_guis/**",
         "common/ideas/**",
+        "common/defines/**",
+        "common/doctrines/**",
     ],
     "decisions": [
         "common/**/*.txt",

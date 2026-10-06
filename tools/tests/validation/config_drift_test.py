@@ -16,6 +16,7 @@ from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
     _CREATE_UNIT_SOURCE_PATTERNS,
     _DELETE_TEMPLATE_SOURCE_PATTERNS,
+    _TEMPLATE_LIMIT_SOURCE_PATTERNS,
     _TEMPLATE_SOURCE_PATTERNS,
     _VARIANT_SOURCE_PATTERNS,
 )
@@ -925,6 +926,7 @@ def test_group_patterns_preserve_cross_reference_routes():
     for pattern in (
         _CREATE_UNIT_SOURCE_PATTERNS
         + _DELETE_TEMPLATE_SOURCE_PATTERNS
+        + _TEMPLATE_LIMIT_SOURCE_PATTERNS
         + _TEMPLATE_SOURCE_PATTERNS
         + _VARIANT_SOURCE_PATTERNS
     ):
