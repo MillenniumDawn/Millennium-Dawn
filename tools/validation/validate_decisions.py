@@ -30,9 +30,9 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
-    first_flat_match,
     flat_block_text,
     has_flat_is_ai,
+    iter_flat_matches,
     iter_flat_offsets,
     read_text_strict,
     strip_comments,
@@ -441,8 +441,9 @@ _UNLOCK_DECISION_RE = re.compile(
 # State that flips on during play, so the category it gates appears mid-game.
 _MIDGAME_GATE_RE = re.compile(
     r"\b(?:has_country_flag|has_global_flag|has_completed_focus|has_idea)"
-    r"\s*=\s*[A-Za-z0-9_]+|\bcheck_variable\b"
+    r"\s*=\s*(?P<token>[A-Za-z0-9_]+)|\bcheck_variable\b"
 )
+_WORD_RE = re.compile(r"\w+")
 _UNANNOUNCED_CATEGORY_EXEMPT = frozenset(
     validation_config("validate_decisions", "unannounced_category_exempt")
 )
@@ -452,6 +453,15 @@ _SET_FLAG_RE = re.compile(
     r"set_(?:country|global)_flag\s*=\s*(?:([A-Za-z0-9_]+)"
     r"|\{[^{}]*?flag\s*=\s*([A-Za-z0-9_]+))"
 )
+
+
+def _history_country_names(mod_path: str) -> Set[str]:
+    """Every word in the country history files, which run before day one."""
+    names: Set[str] = set()
+    pattern = os.path.join(mod_path, "history", "countries", "*.txt")
+    for filename in glob.iglob(pattern):
+        names.update(_WORD_RE.findall(strip_comments(read_text_strict(filename))))
+    return names
 
 
 def _unlock_decision_names(text: str) -> Set[str]:
@@ -2623,14 +2633,16 @@ class Validator(BaseValidator):
 
         A category with no `visible` block is always on the decisions tab, and
         one gated only on the tag or the date is on from the start, so neither
-        has anything to announce. A category gated on state that flips during
-        play — a flag, a completed focus, an idea, a variable — appears part-way
-        through, and needs `unlock_decision_category_tooltip` (or
-        `unlock_decision_tooltip` on one of its decisions) in whatever turns it
-        on. Without it a whole tab of decisions shows up with no indication of
-        where it came from. AI-only categories are exempt: nobody is watching.
-        So are the `unannounced_category_exempt` config entries, which have
-        nothing a tooltip could announce.
+        has anything to announce. Nor does one whose flag, focus or idea gates
+        are all named in a country history file, which grants them before day
+        one. A category gated on state that flips during play — a flag, a
+        completed focus, an idea, a variable — appears part-way through, and
+        needs `unlock_decision_category_tooltip` (or `unlock_decision_tooltip` on
+        one of its decisions) in whatever turns it on. Without it a whole tab of
+        decisions shows up with no indication of where it came from. AI-only
+        categories are exempt: nobody is watching. So are the
+        `unannounced_category_exempt` config entries, which have nothing a
+        tooltip could announce.
         """
         self._log_section("Checking decision categories announce themselves...")
         self._report(
@@ -2647,6 +2659,7 @@ class Validator(BaseValidator):
         _, _, _, unlock_refs = self._get_activation_removal_scan()
         announced = _announced_names(unlock_refs)
         by_category = parse_categories_with_decisions(self.mod_path, lowercase=False)
+        history_names = _history_country_names(self.mod_path)
 
         results = []
         for name, body in sorted(parse_decision_categories(self.mod_path).items()):
@@ -2657,8 +2670,11 @@ class Validator(BaseValidator):
             # parse_decision_categories hands back `NAME = { ... }`, so unwrap
             # the header before looking for the category's own child blocks.
             inner = flat_block_text(direct_child_block(body, name))
-            gate = first_flat_match(
+            gates = iter_flat_matches(
                 direct_child_block(inner, "visible"), _MIDGAME_GATE_RE
+            )
+            gate = next(
+                (g for g in gates if g.group("token") not in history_names), None
             )
             if not gate:
                 continue

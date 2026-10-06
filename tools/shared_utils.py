@@ -1368,10 +1368,10 @@ _AI_GATE_FIELDS = ("visible", "available", "allowed")
 _TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
 
 
-def first_flat_match(
+def iter_flat_matches(
     block: str, pattern: "re.Pattern[str]"
-) -> Optional["re.Match[str]"]:
-    """First match of *pattern* sitting unconditionally at depth 0 of a block.
+) -> Iterator["re.Match[str]"]:
+    """Matches of *pattern* sitting unconditionally at depth 0 of a block.
 
     Nested inside NOT/OR/AND/if/limit or a scoped `TAG = { }` a token is
     conditional and means something different: `NOT = { has_country_flag = X }`
@@ -1380,14 +1380,20 @@ def first_flat_match(
     preceding-whitespace guard against matching mid-token.
     """
     if not block:
-        return None
+        return
     for inner, index in iter_flat_offsets(block):
         if index and not inner[index - 1].isspace():
             continue
         match = pattern.match(inner, index)
         if match:
-            return match
-    return None
+            yield match
+
+
+def first_flat_match(
+    block: str, pattern: "re.Pattern[str]"
+) -> Optional["re.Match[str]"]:
+    """First match of *pattern* sitting unconditionally at depth 0 of a block."""
+    return next(iter_flat_matches(block, pattern), None)
 
 
 def has_flat_is_ai(block: str) -> bool:

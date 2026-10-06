@@ -191,6 +191,47 @@ def test_ai_only_category_is_not_flagged(tmp_path):
     assert _findings(_write_mod(tmp_path, gate)) == []
 
 
+@pytest.mark.parametrize(
+    ("gate", "history"),
+    (
+        (_FLAG_GATE, "set_country_flag = md_test_flag"),
+        (
+            "\tvisible = {\n\t\thas_idea = md_test_idea\n\t}\n",
+            "add_ideas = {\n\tmd_other_idea\n\tmd_test_idea\n}",
+        ),
+    ),
+)
+def test_gate_granted_in_country_history_is_not_flagged(tmp_path, gate, history):
+    # The history file runs before day one, so the category is already open.
+    write_text(tmp_path / "history/countries/MDT - Test.txt", history + "\n")
+    assert _findings(_write_mod(tmp_path, gate)) == []
+
+
+@pytest.mark.parametrize(
+    ("path", "history"),
+    (
+        ("history/countries/MDT - Test.txt", "# set_country_flag = md_test_flag"),
+        ("history/states/1-Test.txt", "set_country_flag = md_test_flag"),
+    ),
+)
+def test_gate_outside_country_history_effects_is_flagged(tmp_path, path, history):
+    write_text(tmp_path / path, history + "\n")
+    assert len(_findings(_write_mod(tmp_path, _FLAG_GATE))) == 1
+
+
+def test_finding_names_the_gate_history_does_not_grant(tmp_path):
+    write_text(
+        tmp_path / "history/countries/MDT - Test.txt", "set_country_flag = md_start\n"
+    )
+    gate = (
+        "\tvisible = {\n\t\thas_country_flag = md_start\n"
+        "\t\thas_country_flag = md_test_flag\n\t}\n"
+    )
+    out = _findings(_write_mod(tmp_path, gate))
+    assert len(out) == 1
+    assert "becomes visible on has_country_flag = md_test_flag but" in out[0]
+
+
 def test_config_exempt_category_is_not_flagged(tmp_path):
     # Uses a real config key so a broken load (values instead of ids) fails.
     assert V._UNANNOUNCED_CATEGORY_EXEMPT
