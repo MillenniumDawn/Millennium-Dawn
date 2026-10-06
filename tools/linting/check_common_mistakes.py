@@ -2,7 +2,7 @@
 """
 Check for common scripting mistakes in HOI4 mod files.
 
-Detects mechanically-checkable rule violations from CLAUDE.md:
+Detects mechanically-checkable rule violations:
   - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
   - allowed = { always = no } in country/hidden_ideas idea categories (redundant default; checked once at load, bypassed by add_ideas)
   - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
@@ -436,7 +436,7 @@ _MUTUALLY_EXCLUSIVE_TRIGGERS = {
 # Idea slots where only one idea from the group can be active at a time. Two
 # `has_idea = X` checks for ideas in the same group inside a single AND block
 # are always false; inside a NOT block they are always true. The classic bug
-# from CLAUDE.md is `NOT = { has_idea = intervention_isolation
+# is `NOT = { has_idea = intervention_isolation
 # has_idea = intervention_local_security }` — silently true forever because no
 # country has both intervention doctrines at once.
 # Keep in sync with the mutually-exclusive idea slots defined in common/ideas/.
@@ -2064,8 +2064,8 @@ def _check_every_country_member_array(lines):
 
     The known member ideas (see _MEMBER_IDEA_TO_ARRAY) all have corresponding
     global arrays. for_each_scope_loop over the array iterates ~30 members
-    instead of 200+ tags. See simplification-patterns.md § "Convert
-    every_country Over Bloc Membership".
+    instead of 200+ tags. See simplification-patterns.md § "Bloc membership
+    loops".
     """
     issues = []
     src = _source(lines)
