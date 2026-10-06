@@ -32,6 +32,11 @@ from shared_utils import (  # noqa: E402
     line_of,
     read_script,
     strip_comments,
+    validation_config,
+)
+
+_RANDOM_PATH_EXEMPT_TAGS = frozenset(
+    validation_config("ai_path_report", "random_path_exempt_tags")
 )
 
 SECTIONS = (
@@ -749,6 +754,8 @@ def _rule_findings(
     if "DEFAULT" in options:
         issues.append("DEFAULT option still present")
     for required in ("HISTORICAL", "RANDOM_PATH", "NO_PATH"):
+        if required == "RANDOM_PATH" and tag in _RANDOM_PATH_EXEMPT_TAGS:
+            continue
         if required not in options:
             issues.append("missing " + required + " option")
     if rule.header_key and rule.header_key not in loc:
