@@ -402,18 +402,23 @@ def test_weekly_savings_uses_the_new_owner_power_multiplier():
     assert country["vars"]["ai_race_ai_savings_target"] == 0
 
 
-@pytest.mark.parametrize(
-    "treasury,paid", [(153, 0), (154, 0), (158.999, 0), (159, 5), (180, 26)]
-)
-def test_real_debt_repayment_preserves_race_floor_and_reduces_only_excess(
-    treasury, paid
-):
+def _indebted_planner(treasury):
     race, country = _planner()
     variables = country["vars"]
     variables.update(treasury=treasury, debt=400, debt_ratio=0.4)
     _capacity(race, country, 1)
     _choose_target(race)
     race.run("ai_race_ai_calculate_savings", 1)
+    return race, variables
+
+
+@pytest.mark.parametrize(
+    "treasury,paid", [(153, 0), (154, 0), (158.999, 0), (159, 5), (180, 26)]
+)
+def test_real_debt_repayment_preserves_race_floor_and_reduces_only_excess(
+    treasury, paid
+):
+    race, variables = _indebted_planner(treasury)
     race.run("ai_repay_debt", 1)
     assert variables["treasury"] == pytest.approx(treasury - paid)
     assert variables["debt"] == pytest.approx(400 - paid)
@@ -426,12 +431,7 @@ def test_real_debt_repayment_preserves_race_floor_and_reduces_only_excess(
 def test_full_debt_payoff_preserves_the_live_race_savings_floor(
     treasury, remaining_treasury, remaining_debt
 ):
-    race, country = _planner()
-    variables = country["vars"]
-    variables.update(treasury=treasury, debt=400, debt_ratio=0.4)
-    _capacity(race, country, 1)
-    _choose_target(race)
-    race.run("ai_race_ai_calculate_savings", 1)
+    race, variables = _indebted_planner(treasury)
     assert variables["ai_race_ai_savings_target"] == 154
     race.run("ai_repay_debt", 1)
     assert variables["treasury"] == pytest.approx(remaining_treasury)
