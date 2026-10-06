@@ -156,7 +156,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   effects. `tools/linting/fix_event_option_logs.py` shares the detection and deletes the
   lines.
 - `event-option-log-id` (ERROR): an option log that cites another option's id, in the
-  `Event <id>` form or the canonical `<id> executed` form.
+  `Event <id>` form, the canonical `<id> executed` form, or a bare event id ending in
+  a numeric id segment and optional letter-led suffix. Namespaces may end in digits;
+  version-like `v1.2` and dotted scopes such as `ROOT.capital` are ignored.
+  The option name is read at its own depth, so a `name =` inside an effect does not count.
   `tools/linting/fix_log_ids.py` shares the detection and rewrites the token. Exempt
   option names live in `validation_config.json` `option_log_id_exempt`.
 - `event-ai-chance-ignores-cost` (WARNING, off by default, `--check-ai-chance-costs`,
@@ -379,6 +382,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `shadowed-scientist-trait-icon` (vanilla ships the art, re-declare the `spriteType`),
   `missing-scientist-trait-icon`, `stale-scientist-trait-icon-todo`. All WARNING.
 
+## validate_simplifications.py
+
+- `simplification` (WARNING): an `OR` listing the same clause twice — direct children
+  compared after whitespace is collapsed. A repeat is dead weight or a copy-paste
+  where one copy was meant to differ. Scans `common/` and `events/`.
+
 ## validate_scripted_params.py
 
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
@@ -436,6 +445,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   English entry. `dynamic-modifier-tooltip-missing` (ERROR): an add or subtract on a
   variable backing a dynamic modifier with no `tooltip`, in blocks the engine renders.
   `hidden_effect` suppresses both.
+- `orphan-money-setter` (WARNING): a `set_temp_variable` of a money-system input with
+  no consumer call after it, or one overwritten at the same depth before the call,
+  never moves the money. Also tracks `party_popularity_increase`, consumed by
+  `change_relative_party_popularity`. Consumers include wrapper effects, and the
+  category name is unchanged to keep baselines comparable. Scans focuses, decisions,
+  ideas (`on_add`, `on_remove`), on_actions, and events.
 
 ## Other tools
 
