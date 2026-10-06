@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 import validate_localisation as VL
-from shared.suite import write_under_str
+from shared.suite import write_under_str, yml_scan
 from validator_common import Severity
 
 
@@ -127,7 +127,7 @@ def test_worker_preserves_comments_bom_crlf_and_inline_hashes(tmp_path):
         ' the_the_seeeker: "Clean." # "the the seeeker"\r\n'
         ' sample:0 "# the the seeeker"\r\n',
     )
-    issues = VL.process_yml_for_prose((path,))
+    issues = yml_scan(path, "prose")
     assert [(i.category, i.line) for i in issues] == [
         ("loc-repeated-word", 5),
         ("loc-tripled-letter", 5),
@@ -141,7 +141,7 @@ def test_shared_scan_reads_each_english_file_once_and_reports_every_category(
         tmp_path,
         "localisation/english/a_l_english.yml",
         'l_english:\n a: "the the seeeker — we`ll \\"wait"\n'
-        ' b: "WIP"\n c_desc: "which will require them"\n',
+        ' b: "WIP"\n c_desc: "which will require them"\n d: "seperate"\n',
     )
     write_under_str(tmp_path, "localisation/french/a.yml", 'l_french:\n a: "WIP"\n')
     calls = []
@@ -164,9 +164,27 @@ def test_shared_scan_reads_each_english_file_once_and_reports_every_category(
         "loc-em-dash",
         "loc-backtick-apostrophe",
         "loc-unbalanced-quote",
+        "loc-typo-watchlist",
     }
-    assert validator.errors_found == 0
-    assert validator.warnings_found == 7
+    assert {i.category for i in validator._issues if i.severity == Severity.ERROR} == {
+        "loc-unbalanced-quote",
+        "loc-typo-watchlist",
+    }
+    assert validator.errors_found == 2
+    assert validator.warnings_found == 6
+
+
+def test_typo_watchlist_match_is_an_error(tmp_path):
+    write_under_str(
+        tmp_path,
+        "localisation/english/a_l_english.yml",
+        'l_english:\n a: "seperate"\n',
+    )
+    validator = VL.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.validate_typo_watchlist()
+    assert [(i.severity, i.category) for i in validator._issues] == [
+        (Severity.ERROR, "loc-typo-watchlist")
+    ]
 
 
 def test_staged_selection_does_not_expand_to_other_english_files(tmp_path, monkeypatch):

@@ -13,7 +13,6 @@ from shared.suite import read_text as _read
 from shared.suite import write_text as _write
 from shared_utils import strip_inline_comment
 from standardize_focus_tree import (
-    clean_block_lines,
     effect_block_with_log,
     extract_focus_properties,
     format_continuous_focus_position_block,
@@ -806,16 +805,6 @@ def test_focus_without_an_id_still_formats():
         "",
         "\t\tai_will_do = { base = 1 }",
         "\t}",
-    ]
-
-
-def test_clean_block_lines_drops_only_trailing_blanks():
-    assert clean_block_lines([]) == []
-    assert clean_block_lines(["a = {", "", "\tb = 1", "}", "", "  "]) == [
-        "a = {",
-        "",
-        "\tb = 1",
-        "}",
     ]
 
 
