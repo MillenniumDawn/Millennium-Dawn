@@ -107,9 +107,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `unannounced-decision-category` (WARNING, opt-in `--unannounced-categories`, passed in
   CI): a category whose `visible` waits on a flag, focus, idea, or variable, with no
   `unlock_decision_category_tooltip` naming it and no `unlock_decision_tooltip` naming
-  one of its decisions. `unannounced_category_exempt` in the config lists categories
-  whose gate is granted only at game start, and balance of power categories that have
-  no name key to render.
+  one of its decisions. A gate named in a `history/countries/` file is open from day one
+  and skipped. `unannounced_category_exempt` in the config lists what that scan cannot
+  see: gates set by scripted effects history runs, and balance of power categories that
+  have no name key to render.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -260,6 +261,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - `math-sibling-operator`, `math-from-read` (ERROR). The traps are in
   `hoi4-data-structures.md`. Plain `set_temp_variable = { x = FROM.y }` copies are valid.
+- `clamp-min-above-max` (ERROR, opt-in `--clamp-bounds`, passed in CI): a `clamp`,
+  `clamp_variable`, or `clamp_temp_variable` whose literal `min` is above its literal
+  `max`. A bound that is a variable, an `@constant`, or an expression block is not
+  judged, so a swapped pair with one of those still passes.
 
 ## validate_mesh_textures.py
 
