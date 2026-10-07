@@ -1227,16 +1227,21 @@ debt_default_decisions = {
 			check_variable = { gdp_total < 100 }
 		}
 
-		available = { interest_rate_lower_than_5 = yes }
+		available = {
+			interest_rate_lower_than_5 = yes
+			check_variable = { treasury > 0 }
+		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision debt_default_pay_10_from_treasury"
-			custom_effect_tooltip = debt_default_pay_10_from_treasury_tt
-			# Up to 10, never more than is owed or than the treasury holds
-			set_temp_variable = { treasury_change = 10 }
+			# Borrowing at most half of GDP keeps the new interest below the 15% default threshold
+			set_temp_variable = { treasury_change = gdp_total }
+			multiply_temp_variable = { treasury_change = 0.5 }
+			add_to_temp_variable = { treasury_change = treasury }
+			clamp_temp_variable = { var = treasury_change max = 10 }
 			clamp_temp_variable = { var = treasury_change max = debt_default_left }
-			clamp_temp_variable = { var = treasury_change max = treasury }
 			clamp_temp_variable = { var = treasury_change min = 0 }
+			custom_effect_tooltip = debt_default_pay_10_from_treasury_tt
 			subtract_from_variable = { debt_default_left = treasury_change }
 			multiply_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
