@@ -2725,47 +2725,16 @@ focus_tree = {
 
 
 	focus = {
-		id = EGY_american_military_aid
-		icon = mubarakg
-
-		x = 7
-		y = 1
-		relative_position_id = EGY_the_indispensable_broker
-
-		cost = 7
-
-		prerequisite = { focus = EGY_the_indispensable_broker }
-		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_FOREIGN_POLICY }
-
-		available = { EGY_mubarak_in_power = yes }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_american_military_aid"
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_military_opinion = yes
-			army_experience = 20
-			hidden_effect = {
-				EGY_recalculate_regime_balance = yes
-			}
-			newline = yes
-			set_temp_variable = { treasury_change = 4 }
-			modify_treasury_effect = yes
-		}
-
-		ai_will_do = { base = 3 }
-	}
-
-	focus = {
 		id = EGY_operation_bright_star
 		icon = mubarakg
 
-		x = -1
-		y = 1
-		relative_position_id = EGY_american_military_aid
+		x = 6
+		y = 2
+		relative_position_id = EGY_the_indispensable_broker
 
 		cost = 5
 
-		prerequisite = { focus = EGY_american_military_aid }
+		prerequisite = { focus = EGY_the_indispensable_broker }
 		search_filters = { FOCUS_FILTER_ARMY_XP FOCUS_FILTER_FOREIGN_POLICY }
 
 		available = { EGY_mubarak_in_power = yes }
@@ -2780,6 +2749,7 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = 3 }
 			change_the_military_opinion = yes
 			hidden_effect = { EGY_recalculate_regime_balance = yes }
+			unlock_decision_tooltip = EGY_operation_bright_star_exercise
 		}
 
 		ai_will_do = { base = 5 }
@@ -2789,14 +2759,14 @@ focus_tree = {
 		id = EGY_abrams_at_factory_200
 		icon = mubarakg
 
-		x = 1
-		y = 1
-		relative_position_id = EGY_american_military_aid
+		x = 8
+		y = 2
+		relative_position_id = EGY_the_indispensable_broker
 
 		cost = 7
 
-		prerequisite = { focus = EGY_american_military_aid }
-		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_ARMY }
+		prerequisite = { focus = EGY_the_indispensable_broker }
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_INDUSTRY }
 
 		available = { EGY_mubarak_in_power = yes }
 
@@ -2805,15 +2775,61 @@ focus_tree = {
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 			hidden_effect = { EGY_recalculate_regime_balance = yes }
-			add_tech_bonus = {
-				name = EGY_abrams_at_factory_200
-				bonus = 0.5
-				uses = 2
-				category = CAT_tanks
+			if = {
+				limit = { has_dlc = "No Step Back" }
+				create_equipment_variant = {
+					name = "M1A1 EG"
+					type = medium_tank_chassis_1
+					allow_without_tech = yes
+					parent_version = 0
+					modules = {
+						main_armament_slot = tank_medium_cannon_2
+						ammunition_load_slot = anti_armor_main_ammo_2
+						turret_type_slot = tank_base_tank_turret
+						suspension_type_slot = tank_torsion_bar_suspension_medium
+						armor_type_slot = nera_armor_gen1
+						engine_type_slot = tank_gas_turbine_engine_gen3
+						reload_type_slot = manual_loading
+						special_type_slot_1 = empty
+						special_type_slot_2 = smoke_launchers_2
+						special_type_slot_3 = wet_ammo_storage
+						special_type_slot_4 = tank_battlestation_2_thermal
+					}
+					upgrades = {
+						tank_nsb_armor_upgrade = 3
+					}
+					icon = "GFX_USA_LAND_M1A1_Desert"
+					model = "USA_MD_medium_armor_entity"
+					design_team = mio:EGY_abu_zaabal_specialized_industries_manufacturer
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "M1A1 EG"
+					type = MBT_3
+					allow_without_tech = yes
+					parent_version = 0
+					upgrades = {
+						tank_armor_upgrade = 3
+						tank_engine_upgrade = 3
+						tank_reliability_upgrade = 3
+					}
+					icon = "GFX_USA_LAND_M1A1_Desert"
+				}
+			}
+			if = {
+				limit = { owns_state = 214 }
+				214 = { two_state_arms_factory = yes }
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	focus = {
@@ -2832,19 +2848,28 @@ focus_tree = {
 
 		available = {
 			EGY_mubarak_in_power = yes
+			country_exists = USA
+			NOT = { has_war_with = USA }
 		}
+
+		bypass = { NOT = { country_exists = USA } }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_f16_block_52_order"
-			air_experience = 25
 			add_tech_bonus = {
 				name = EGY_the_f16_block_52_order
 				bonus = 0.5
 				uses = 1
 				category = CAT_aircraft
 			}
-			set_temp_variable = { treasury_change = -0.5 }
-			modify_treasury_effect = yes
+			USA = { country_event = { id = egypt_mubarak.15 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { EGY_receive_f16_block_52 = yes }
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = {
+				add_opinion_modifier = { target = USA modifier = military_aid_denied }
+				add_political_power = -25
+			}
 		}
 
 		ai_will_do = {
@@ -2870,7 +2895,13 @@ focus_tree = {
 		mutually_exclusive = { focus = EGY_the_f16_block_52_order }
 		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_FOREIGN_POLICY }
 
-		available = { EGY_mubarak_in_power = yes }
+		available = {
+			EGY_mubarak_in_power = yes
+			OR = {
+				country_exists = SOV
+				country_exists = CHI
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_look_east_for_arms"
@@ -2891,6 +2922,36 @@ focus_tree = {
 				bonus = 0.5
 				uses = 1
 				category = CAT_aircraft
+			}
+			if = {
+				limit = { has_idea = USA_usaid }
+				remove_ideas = USA_usaid
+			}
+			if = {
+				limit = { has_idea = EGY_us_helps }
+				remove_ideas = EGY_us_helps
+			}
+			if = {
+				limit = { has_idea = Major_Non_NATO_Ally }
+				remove_ideas = Major_Non_NATO_Ally
+			}
+			if = {
+				limit = { country_exists = SOV }
+				SOV = { country_event = { id = egypt_mubarak.20 days = 2 } }
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				unlock_decision_tooltip = EGY_buy_russian_fighters
+				unlock_decision_tooltip = EGY_invite_russian_advisors
+				custom_effect_tooltip = TT_IF_THEY_REJECT
+				effect_tooltip = { add_political_power = -25 }
+			}
+			if = {
+				limit = { country_exists = CHI }
+				CHI = { country_event = { id = egypt_mubarak.23 days = 2 } }
+				custom_effect_tooltip = TT_IF_THEY_ACCEPT
+				unlock_decision_tooltip = EGY_license_chinese_trainers
+				unlock_decision_tooltip = EGY_buy_chinese_fighters
+				custom_effect_tooltip = TT_IF_THEY_REJECT
+				effect_tooltip = { add_political_power = -25 }
 			}
 		}
 
@@ -2917,8 +2978,10 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
 			add_to_variable = { EGY_mubarak_drift_defence_factor = 0.10 tooltip = drift_defence_factor_tt }
 			add_to_variable = { EGY_mubarak_foreign_influence_defense_modifier = 0.05 tooltip = foreign_influence_defense_modifier_tt }
+			newline = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_intelligence_community_opinion = yes
+			newline = yes
 			set_temp_variable = { temp_opinion = -3 }
 			change_the_military_opinion = yes
 			set_temp_variable = { temp_influence = -5 }
@@ -2946,10 +3009,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_pilot_of_october"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
-			add_to_variable = { EGY_mubarak_air_doctrine_cost_factor = -0.10 tooltip = air_doctrine_cost_factor_tt }
-			add_to_variable = { EGY_mubarak_experience_gain_air = 0.05 tooltip = experience_gain_air_tt }
-			add_to_variable = { EGY_mubarak_if_the_military_monthly_opinion = 0.25 tooltip = if_the_military_monthly_opinion_tt }
+			add_country_leader_trait = EGY_pilot_of_october
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 			set_temp_variable = { temp_authority = 3 }
