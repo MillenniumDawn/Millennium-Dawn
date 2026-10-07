@@ -159,3 +159,239 @@ EGY_coptic_decision = {
 		}
 	}
 }
+
+EGY_military_cooperation = {
+	EGY_operation_bright_star_exercise = {
+		icon = recogn_usa_button
+		cost = 50
+		days_remove = 60
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = EGY_operation_bright_star
+			NOT = { has_completed_focus = EGY_look_east_for_arms }
+		}
+
+		available = {
+			country_exists = USA
+			NOT = { has_war_with = USA }
+			has_opinion = {
+				target = USA
+				value > 0
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_operation_bright_star_exercise"
+			if = {
+				limit = { EGY_shares_land_grand_doctrine_with_usa = yes }
+				add_daily_mastery = {
+					amount = 0.5
+					days = 60
+					name = EGY_operation_bright_star_exercise
+					folder = land
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_operation_bright_star_exercise"
+			army_experience = 15
+			air_experience = 5
+			USA = { add_opinion_modifier = { target = ROOT modifier = military_cooperation } }
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	EGY_buy_russian_fighters = {
+		icon = recogn_russia_button
+		fire_only_once = yes
+		days_remove = 90
+		custom_cost_trigger = { check_variable = { treasury > 2 } }
+		custom_cost_text = cost_2_0
+
+		visible = { has_country_flag = EGY_russian_arms_partner }
+
+		available = {
+			country_exists = SOV
+			NOT = { has_war_with = SOV }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_buy_russian_fighters"
+			SOV = {
+				set_temp_variable = { treasury_change = 2 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_buy_russian_fighters"
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = small_plane_strike_airframe_2
+					variant_name = "MiG-29M Fulcrum"
+					amount = 12
+					producer = SOV
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = MR_Fighter2
+					amount = 12
+					producer = SOV
+				}
+			}
+			air_experience = 10
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+
+	EGY_invite_russian_advisors = {
+		icon = recogn_russia_button
+		days_remove = 30
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = { has_country_flag = EGY_russian_arms_partner }
+
+		available = {
+			country_exists = SOV
+			NOT = { has_war_with = SOV }
+			NOT = { has_idea = russian_military_advisors }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_invite_russian_advisors"
+			add_timed_idea = {
+				idea = russian_military_advisors
+				days = 365
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	EGY_license_chinese_trainers = {
+		icon = recogn_china_button
+		fire_only_once = yes
+
+		visible = { has_country_flag = EGY_chinese_arms_partner }
+
+		available = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_license_chinese_trainers"
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				CHI = {
+					create_production_license = {
+						target = EGY
+						equipment = {
+							type = small_plane_strike_airframe_2
+							version_name = "Hongdu JL-8"
+						}
+						cost_factor = 0
+					}
+				}
+			}
+			else = {
+				CHI = {
+					create_production_license = {
+						target = EGY
+						equipment = { type = L_Strike_fighter1 }
+						cost_factor = 0
+					}
+				}
+			}
+			mio:EGY_aoi_aircraft_aircraft_manufacturer = { add_mio_funds = 250 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	EGY_buy_chinese_fighters = {
+		icon = decision_jet_aircraft
+		fire_only_once = yes
+		days_remove = 60
+		custom_cost_trigger = { check_variable = { treasury > 1 } }
+		custom_cost_text = cost_1_0
+
+		visible = { has_country_flag = EGY_chinese_arms_partner }
+
+		available = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_buy_chinese_fighters"
+			CHI = {
+				set_temp_variable = { treasury_change = 1 }
+				modify_treasury_effect = yes
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_buy_chinese_fighters"
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				add_equipment_to_stockpile = {
+					type = medium_plane_fighter_airframe_2
+					variant_name = "J-11 Yinglong"
+					amount = 12
+					producer = CHI
+				}
+			}
+			else = {
+				add_equipment_to_stockpile = {
+					type = AS_Fighter2
+					amount = 12
+					producer = CHI
+				}
+			}
+			air_experience = 10
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+}
