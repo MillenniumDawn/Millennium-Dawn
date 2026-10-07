@@ -12,21 +12,26 @@ focus_tree = {
 	shared_focus = AFRICAN_UNION_shared_focus
 	shared_focus = GCC_the_gcc
 
-	continuous_focus_position = { x = 6560 y = 750 }
+	continuous_focus_position = { x = 3600 y = 1000 }
+
+	# Trunk
 
 	focus = {
 		id = EGY_the_fourth_term
 		icon = generic_government
 
-		x = 7
+		x = 17
 		y = 0
 
 		cost = 5
 
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
 
+		available = { EGY_mubarak_in_power = yes }
+
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_fourth_term"
+			# TODO(decrees): unlock the Presidential Decrees decisions in EGY_regime_balance
 			set_temp_variable = { temp_authority = 5 }
 			EGY_change_mubarak_authority = yes
 			add_political_power = 50
@@ -36,17 +41,677 @@ focus_tree = {
 	}
 
 	focus = {
-		id = EGY_the_2000_elections
-		icon = Election
+		id = EGY_stability_above_all
+		icon = mubarakg
 
-		x = -2
+		x = 0
+		y = 1
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_fourth_term }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_stability_above_all"
+			add_stability = 0.05
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_new_thinking_and_priorities
+		icon = mubarakg
+
+		x = -12
 		y = 1
 		relative_position_id = EGY_the_fourth_term
 
 		cost = 7
 
 		prerequisite = { focus = EGY_the_fourth_term }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_ECONOMY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_new_thinking_and_priorities"
+			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
+			add_political_power = 50
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_indispensable_broker
+		icon = mubarakg
+
+		x = 13
+		y = 1
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_fourth_term }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_DIPLOMACY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_indispensable_broker"
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_indispensable_broker_opinion } }
+			}
+			add_political_power = 25
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_mubarak_doctrine
+		icon = mubarakg
+
+		x = 0
+		y = 12
+		relative_position_id = EGY_the_fourth_term
+
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2008.1.1
+			custom_trigger_tooltip = {
+				tooltip = EGY_three_capstones_tt
+				count_triggers = {
+					amount = 3
+					has_completed_focus = EGY_the_seven_percent_economy
+					has_completed_focus = EGY_the_dominant_party
+					has_completed_focus = EGY_the_controlled_opening
+					has_completed_focus = EGY_the_security_pact
+					has_completed_focus = EGY_the_social_contract
+					has_completed_focus = EGY_egypt_pivot_of_the_region
+					has_completed_focus = EGY_the_pilot_of_october
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_mubarak_doctrine"
+			set_temp_variable = { temp_authority = 5 }
+			EGY_change_mubarak_authority = yes
+			hidden_effect = { add_dynamic_modifier = { modifier = EGY_mubarak_doctrine } }
+			custom_effect_tooltip = { localization_key = adds_dynamic_modifier_tt MODIFIER = EGY_mubarak_doctrine }
+			if = {
+				limit = { has_completed_focus = EGY_the_seven_percent_economy }
+				add_to_variable = { EGY_doctrine_return_on_investment_modifier = 0.03 tooltip = return_on_investment_modifier_tt }
+			}
+			if = {
+				limit = { has_completed_focus = EGY_the_dominant_party }
+				add_to_variable = { EGY_doctrine_political_power_factor = 0.05 tooltip = political_power_factor_tt }
+			}
+			if = {
+				limit = { has_completed_focus = EGY_the_controlled_opening }
+				add_to_variable = { EGY_doctrine_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+			}
+			if = {
+				limit = { has_completed_focus = EGY_the_security_pact }
+				add_to_variable = { EGY_doctrine_stability_factor = 0.03 tooltip = stability_factor_tt }
+			}
+			if = {
+				limit = { has_completed_focus = EGY_the_social_contract }
+				add_to_variable = { EGY_doctrine_social_cost_multiplier_modifier = -0.05 tooltip = social_cost_multiplier_modifier_tt }
+			}
+			if = {
+				limit = { has_completed_focus = EGY_egypt_pivot_of_the_region }
+				add_to_variable = { EGY_doctrine_foreign_influence_modifier = 0.05 tooltip = foreign_influence_modifier_tt }
+			}
+			if = {
+				limit = { has_completed_focus = EGY_the_pilot_of_october }
+				add_to_variable = { EGY_doctrine_army_morale_factor = 0.05 tooltip = army_morale_factor_tt }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	# Branch A: New Thinking
+
+	focus = {
+		id = EGY_the_policies_secretariat
+		icon = generic_government
+
+		x = -16
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_new_thinking_and_priorities }
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+			date > 2002.9.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_policies_secretariat"
+			# TODO(characters): unlock Gamal Mubarak as an advisor
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_authority = 5 }
+			EGY_change_mubarak_authority = yes
+			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_float_the_pound
+		icon = better_money
+
+		x = -14
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_new_thinking_and_priorities }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+			date > 2003.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_float_the_pound"
+			# TODO(bread): bread pressure +15
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+			hidden_effect = {
+				EGY_recalculate_regime_balance = yes
+			}
+			newline = yes
+			set_temp_variable = { int_investment_change = 4 }
+			modify_international_investment_effect = yes
+			add_timed_idea = { idea = EGY_post_float_inflation_idea days = 730 }
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_smart_village_and_the_ict_strategy
+		icon = mubarakg
+
+		x = -17
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_policies_secretariat }
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_INDUSTRY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_smart_village_and_the_ict_strategy"
+			add_ideas = EGY_smart_village_idea
+			set_temp_variable = { temp_opinion = -3 }
+			change_intelligence_community_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_the_nazif_cabinet
+		icon = economic_banks
+
+		x = -15
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_the_policies_secretariat }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+			date > 2004.7.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_nazif_cabinet"
+			# TODO(characters): Ahmed Nazif replaces Atef Ebeid; unlock Rachid Mohamed Rachid, Youssef Boutros Ghali and Mahmoud Mohieldin as advisors
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_authority = 3 }
+			EGY_change_mubarak_authority = yes
+			add_power_balance_value = { id = EGY_succession_bop value = 0.15 }
+			add_ideas = EGY_reformist_cabinet_idea
+			newline = yes
+			set_temp_variable = { int_investment_change = 5 }
+			modify_international_investment_effect = yes
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_reviving_the_nuclear_programme
+		icon = mubarakg
+
+		x = -13
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_policies_secretariat }
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_POWER_INFRASTRUCTURE }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+			date > 2006.9.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_reviving_the_nuclear_programme"
+			set_temp_variable = { temp_authority = 3 }
+			EGY_change_mubarak_authority = yes
+			add_power_balance_value = { id = EGY_succession_bop value = 0.05 }
+			add_tech_bonus = {
+				name = EGY_reviving_the_nuclear_programme
+				bonus = 0.5
+				uses = 2
+				category = CAT_nuclear_reactors
+			}
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_income_tax_law
+		icon = mubarakg
+
+		x = -17
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_nazif_cabinet }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+			date > 2005.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_income_tax_law"
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			# TODO(resolver): roll the tax compliance idea through EGY_resolve_state_project
+			add_ideas = EGY_tax_compliance_idea
+			add_power_balance_value = { id = EGY_succession_bop value = 0.05 }
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = EGY_customs_tariff_overhaul
+		icon = mubarakg
+
+		x = -15
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_nazif_cabinet }
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_ECONOMY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_customs_tariff_overhaul"
+			add_ideas = EGY_customs_reform_idea
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_customs_overhaul_opinion } }
+			}
+			custom_effect_tooltip = EGY_eu_members_opinion_tt
+			hidden_effect = {
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = EGY_customs_overhaul_opinion }
+				}
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_banking_reform_programme
+		icon = mubarakg
+
+		x = -13
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_nazif_cabinet }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_CORRUPTION }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_banking_reform_programme"
+			# TODO(characters): unlock Farouk El-Okdah as an advisor
+			# TODO(resolver): bank consolidation rolls through EGY_resolve_state_project; only the Full outcome lowers corruption
+			decrease_corruption = yes
+			set_temp_variable = { treasury_change = 1.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_the_qiz_agreement
+		icon = trade_with_europe
+
+		x = -16
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_customs_tariff_overhaul }
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+			date > 2004.12.1
+			has_completed_focus = EGY_the_camp_david_dividend
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_qiz_agreement"
+			set_temp_variable = { int_investment_change = 4 }
+			modify_international_investment_effect = yes
+			if = {
+				limit = { owns_state = 214 }
+				214 = { one_state_industrial_complex = yes }
+			}
+			if = {
+				limit = { owns_state = 216 }
+				216 = { one_state_industrial_complex = yes }
+			}
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_brotherhood_influence = yes
+			if = {
+				limit = { country_exists = USA }
+				USA = {
+					add_opinion_modifier = { target = ROOT modifier = global_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
+				}
+			}
+			if = {
+				limit = { country_exists = ISR }
+				ISR = {
+					add_opinion_modifier = { target = ROOT modifier = global_trade }
+					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = EGY_the_privatization_drive
+		icon = mubarakg
+
+		x = -13
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_banking_reform_programme }
+		search_filters = { FOCUS_FILTER_FOREIGN_INVESTMENTS FOCUS_FILTER_ECONOMY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_privatization_drive"
+			# TODO(resolver): sales roll through EGY_resolve_state_project; the Troubled outcome raises corruption by one tier
+			set_temp_variable = { treasury_change = 2 }
+			modify_treasury_effect = yes
+			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_us_free_trade_agreement
+		icon = mubarakg
+
+		x = -17
+		y = 6
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_qiz_agreement }
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+			country_exists = USA
+			OR = {
+				has_completed_focus = EGY_a_genuine_contest
+				USA = { has_opinion = { target = ROOT value > 49 } }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_us_free_trade_agreement"
+			add_ideas = EGY_us_fta_idea
+			USA = { add_opinion_modifier = { target = ROOT modifier = EGY_us_fta_opinion } }
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_brotherhood_influence = yes
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_partner_the_tycoons
+		icon = mubarakg
+
+		x = -14
+		y = 6
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_privatization_drive }
+		mutually_exclusive = { focus = EGY_empower_the_competition_authority }
+		search_filters = { FOCUS_FILTER_INDUSTRY FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_partner_the_tycoons"
+			# TODO(characters): unlock Ahmed Ezz as an advisor
+			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
+			add_ideas = EGY_tycoon_partnership_idea
+			increase_corruption_chance = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_empower_the_competition_authority
+		icon = mubarakg
+
+		x = -12
+		y = 6
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_privatization_drive }
+		mutually_exclusive = { focus = EGY_partner_the_tycoons }
+		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_ECONOMY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_empower_the_competition_authority"
+			decrease_corruption = yes
+			add_power_balance_value = { id = EGY_succession_bop value = -0.05 }
+			add_ideas = EGY_competition_authority_idea
+			country_event = { id = egypt_mubarak.14 days = 30 }
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_the_seven_percent_economy
+		icon = mubarakg
+
+		x = -15
+		y = 7
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_income_tax_law }
+		prerequisite = { focus = EGY_banking_reform_programme }
+		prerequisite = { focus = EGY_partner_the_tycoons focus = EGY_empower_the_competition_authority }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_gamal_in_power = yes
+			}
+			date > 2007.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_seven_percent_economy"
+			# TODO(bread): bread pressure +5
+			add_timed_idea = { idea = EGY_nazif_boom_idea days = 1095 }
+			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	# Branch C: Political Engineering
+
+	focus = {
+		id = EGY_the_2000_elections
+		icon = Election
+
+		x = -9
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_new_thinking_and_priorities }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = { EGY_mubarak_in_power = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_2000_elections"
@@ -60,36 +725,11 @@ focus_tree = {
 	}
 
 	focus = {
-		id = EGY_tantawis_ministry_of_defence
-		icon = military_academy
-
-		x = 2
-		y = 1
-		relative_position_id = EGY_the_fourth_term
-
-		cost = 5
-
-		prerequisite = { focus = EGY_the_fourth_term }
-		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_tantawis_ministry_of_defence"
-			set_temp_variable = { temp_opinion = 10 }
-			change_the_military_opinion = yes
-			hidden_effect = {
-				EGY_recalculate_regime_balance = yes
-			}
-		}
-
-		ai_will_do = { base = 5 }
-	}
-
-	focus = {
 		id = EGY_military_tribunals_for_the_brotherhood
 		icon = focus_generic_court
 
-		x = -4
-		y = 2
+		x = -10
+		y = 3
 		relative_position_id = EGY_the_fourth_term
 
 		cost = 7
@@ -97,6 +737,8 @@ focus_tree = {
 		prerequisite = { focus = EGY_the_2000_elections }
 		mutually_exclusive = { focus = EGY_tolerate_brotherhood_independents }
 		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+
+		available = { EGY_mubarak_in_power = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_military_tribunals_for_the_brotherhood"
@@ -117,8 +759,8 @@ focus_tree = {
 		id = EGY_tolerate_brotherhood_independents
 		icon = islam
 
-		x = -2
-		y = 2
+		x = -8
+		y = 3
 		relative_position_id = EGY_the_fourth_term
 
 		cost = 7
@@ -126,6 +768,8 @@ focus_tree = {
 		prerequisite = { focus = EGY_the_2000_elections }
 		mutually_exclusive = { focus = EGY_military_tribunals_for_the_brotherhood }
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = { EGY_mubarak_in_power = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_tolerate_brotherhood_independents"
@@ -141,15 +785,628 @@ focus_tree = {
 	}
 
 	focus = {
+		id = EGY_renewing_the_ndp
+		icon = mubarakg
+
+		x = -9
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_military_tribunals_for_the_brotherhood focus = EGY_tolerate_brotherhood_independents }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_renewing_the_ndp"
+			set_temp_variable = { temp_authority = 3 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_national_council_for_human_rights
+		icon = mubarakg
+
+		x = -11
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_renewing_the_ndp }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2003.6.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_national_council_for_human_rights"
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_human_rights_council_opinion } }
+			}
+			custom_effect_tooltip = EGY_eu_members_opinion_tt
+			hidden_effect = {
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = EGY_human_rights_council_opinion }
+				}
+			}
+			set_temp_variable = { temp_opinion = -2 }
+			change_intelligence_community_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_amending_article_76
+		icon = mubarakg
+
+		x = -8
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_renewing_the_ndp }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2005.2.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_amending_article_76"
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+			country_event = { id = egypt_mubarak.1 days = 7 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_managed_pluralism
+		icon = mubarakg
+
+		x = -9
+		y = 6
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_amending_article_76 }
+		mutually_exclusive = { focus = EGY_a_genuine_contest }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_managed_pluralism"
+			set_temp_variable = { temp_authority = 5 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { temp_influence = -5 }
+			EGY_change_brotherhood_influence = yes
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_managed_pluralism_opinion } }
+			}
+			country_event = { id = egypt_mubarak.2 days = 14 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_a_genuine_contest
+		icon = mubarakg
+
+		x = -7
+		y = 6
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_amending_article_76 }
+		mutually_exclusive = { focus = EGY_managed_pluralism }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_a_genuine_contest"
+			add_popularity = { ideology = democratic popularity = 0.05 }
+			set_temp_variable = { temp_authority = -5 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_brotherhood_influence = yes
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_genuine_contest_opinion } }
+			}
+			add_power_balance_value = { id = EGY_succession_bop value = 0.05 }
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_the_2005_electoral_programme
+		icon = mubarakg
+
+		x = -8
+		y = 7
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_managed_pluralism focus = EGY_a_genuine_contest }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2005.8.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_2005_electoral_programme"
+			# TODO(pledges): start the five 2005 pledge missions (jobs, factories, homes, feddans, end the emergency) with deadline 2011.9.1
+			add_stability = 0.03
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_brotherhood_question
+		icon = mubarakg
+
+		x = -8
+		y = 8
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_2005_electoral_programme }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_POLITICAL }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2005.12.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_brotherhood_question"
+			if = {
+				limit = { check_variable = { EGY_brotherhood_influence > 19 } }
+				country_event = { id = egypt_mubarak.3 days = 3 }
+			}
+			else = {
+				set_temp_variable = { temp_authority = 3 }
+				EGY_change_mubarak_authority = yes
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_shater_trial
+		icon = mubarakg
+
+		x = -11
+		y = 9
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_brotherhood_question }
+		mutually_exclusive = { focus = EGY_license_the_wasat_party }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_shater_trial"
+			set_temp_variable = { temp_opinion = -10 }
+			change_the_muslim_brotherhood_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			set_temp_variable = { temp_influence = -15 }
+			EGY_change_brotherhood_influence = yes
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_shater_trial_opinion } }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_license_the_wasat_party
+		icon = mubarakg
+
+		x = -10
+		y = 9
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_brotherhood_question }
+		mutually_exclusive = { focus = EGY_the_shater_trial }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_SOCIAL_CONSERVATISM }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_license_the_wasat_party"
+			set_temp_variable = { temp_opinion = -5 }
+			change_intelligence_community_opinion = yes
+			set_temp_variable = { temp_influence = -5 }
+			EGY_change_brotherhood_influence = yes
+			add_ideas = EGY_wasat_party_idea
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_extend_the_emergency_law
+		icon = mubarakg
+
+		x = -8
+		y = 9
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 3
+
+		prerequisite = { focus = EGY_the_brotherhood_question }
+		mutually_exclusive = { focus = EGY_replace_the_emergency_law }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_extend_the_emergency_law"
+			# TODO(decrees): unlock the Renew the Emergency Law decree (every 2 years or the Emergency Law lapses)
+			# TODO(pledges): the "end the emergency" pledge fails
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_extend_emergency_opinion } }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_replace_the_emergency_law
+		icon = mubarakg
+
+		x = -7
+		y = 9
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_brotherhood_question }
+		mutually_exclusive = { focus = EGY_extend_the_emergency_law }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			OR = {
+				has_completed_focus = EGY_a_genuine_contest
+				custom_trigger_tooltip = {
+					tooltip = EGY_mubarak_strength_above_59_tt
+					check_variable = { EGY_mubarak_strength > 59 }
+				}
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_replace_the_emergency_law"
+			# TODO(pledges): the "end the emergency" pledge is met
+			if = {
+				limit = { has_idea = EGY_emergency_law_idea }
+				swap_ideas = { remove_idea = EGY_emergency_law_idea add_idea = EGY_counter_terror_law_idea }
+			}
+			else = {
+				add_ideas = EGY_counter_terror_law_idea
+			}
+			set_temp_variable = { temp_opinion = -10 }
+			change_intelligence_community_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+			add_timed_idea = { idea = EGY_emergency_transition_idea days = 365 }
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_replace_emergency_opinion } }
+			}
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_the_2007_constitutional_amendments
+		icon = mubarakg
+
+		x = -10
+		y = 10
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_managed_pluralism }
+		prerequisite = { focus = EGY_the_brotherhood_question }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2007.3.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_2007_constitutional_amendments"
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			set_temp_variable = { temp_authority = 5 }
+			EGY_change_mubarak_authority = yes
+			add_popularity = { ideology = democratic popularity = -0.03 }
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_constitutional_amendments_opinion } }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_reforming_the_judicial_authority_law
+		icon = mubarakg
+
+		x = -8
+		y = 10
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_a_genuine_contest }
+		prerequisite = { focus = EGY_the_brotherhood_question }
+		search_filters = { FOCUS_FILTER_CORRUPTION FOCUS_FILTER_POLITICAL }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_reforming_the_judicial_authority_law"
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+			# TODO(resolver): roll through EGY_resolve_state_project; only the Full outcome lowers corruption
+			decrease_corruption = yes
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_the_dominant_party
+		icon = mubarakg
+
+		x = -10
+		y = 11
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_2007_constitutional_amendments }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2010.10.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_dominant_party"
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.15 }
+			change_relative_party_popularity = yes
+			set_temp_variable = { temp_influence = -10 }
+			EGY_change_brotherhood_influence = yes
+			set_temp_variable = { temp_authority = 3 }
+			EGY_change_mubarak_authority = yes
+			add_power_balance_value = { id = EGY_succession_bop value = 0.05 }
+			add_timed_idea = { idea = EGY_rigged_parliament_idea days = 365 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_controlled_opening
+		icon = mubarakg
+
+		x = -8
+		y = 11
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_reforming_the_judicial_authority_law }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2010.10.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_controlled_opening"
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_brotherhood_influence = yes
+			add_popularity = { ideology = democratic popularity = 0.10 }
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+			add_stability = 0.03
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	# Branch B: Security State
+
+	focus = {
+		id = EGY_tantawis_ministry_of_defence
+		icon = military_academy
+
+		x = -6
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_stability_above_all }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_tantawis_ministry_of_defence"
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
+			hidden_effect = {
+				EGY_recalculate_regime_balance = yes
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_suleimans_general_intelligence
+		icon = intelligence_exchange
+
+		x = -4
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_stability_above_all }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_suleimans_general_intelligence"
+			# TODO(characters): unlock Omar Suleiman as the intelligence advisor
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_security_influence = yes
+			add_power_balance_value = { id = EGY_succession_bop value = -0.10 }
+			if = {
+				limit = { country_exists = PAL }
+				PAL = {
+					set_temp_variable = { percent_change = 3 }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = ISR }
+				ISR = {
+					set_temp_variable = { percent_change = 2 }
+					change_influence_percentage = yes
+				}
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_empower_state_security
+		icon = Generic_Policeman
+
+		x = -2
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_stability_above_all }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_empower_state_security"
+			# TODO(characters): unlock Habib el-Adly as an advisor
+			set_temp_variable = { temp_opinion = 10 }
+			change_intelligence_community_opinion = yes
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_security_influence = yes
+			set_temp_variable = { temp_influence = -5 }
+			EGY_change_brotherhood_influence = yes
+			if = {
+				limit = { has_idea = police_04 }
+				swap_ideas = { remove_idea = police_04 add_idea = police_05 }
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
 		id = EGY_the_military_economy
 		icon = industry_military
 
-		x = 2
-		y = 2
+		x = -6
+		y = 3
 		relative_position_id = EGY_the_fourth_term
 
 		prerequisite = { focus = EGY_tantawis_ministry_of_defence }
 		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_ADD_BUILDING }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_military_economy"
@@ -168,17 +1425,1403 @@ focus_tree = {
 	}
 
 	focus = {
-		id = EGY_american_military_aid
-		icon = military_deal
+		id = EGY_the_gamaa_islamiya_revisions
+		icon = mubarakg
 
-		x = 4
-		y = 2
+		x = -5
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_suleimans_general_intelligence }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_RADICALIZATION }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_gamaa_islamiya_revisions"
+			add_stability = 0.02
+			custom_effect_tooltip = EGY_lower_sinai_bombing_risk_tt
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_renew_the_emergency_law
+		icon = dangerous_laws
+
+		x = -3
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_empower_state_security }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_renew_the_emergency_law"
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_muslim_brotherhood_opinion = yes
+			add_stability = 0.03
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_security_influence = yes
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_expand_the_central_security_forces
+		icon = mubarakg
+
+		x = -2
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_empower_state_security }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_MANPOWER }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_expand_the_central_security_forces"
+			# TODO(bread): bread pressure thresholds sit 10 higher while EGY_central_security_forces_idea is active
+			add_stability = 0.05
+			add_ideas = EGY_central_security_forces_idea
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_watching_the_online_opposition
+		icon = mubarakg
+
+		x = -1
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_empower_state_security }
+		search_filters = { FOCUS_FILTER_PROPAGANDA FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+			date > 2008.4.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_watching_the_online_opposition"
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			if = {
+				limit = { has_completed_focus = EGY_smart_village_and_the_ict_strategy }
+				set_temp_variable = { temp_opinion = 3 }
+				change_intelligence_community_opinion = yes
+			}
+			set_temp_variable = { temp_influence = 3 }
+			EGY_change_security_influence = yes
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_balancing_the_pillars
+		icon = mubarakg
+
+		x = -5
+		y = 4
 		relative_position_id = EGY_the_fourth_term
 
 		cost = 7
 
 		prerequisite = { focus = EGY_tantawis_ministry_of_defence }
+		prerequisite = { focus = EGY_suleimans_general_intelligence }
+		prerequisite = { focus = EGY_empower_state_security }
+		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_balancing_the_pillars"
+			add_ideas = EGY_divided_pillars_idea
+			add_power_balance_value = { id = EGY_succession_bop value = -0.05 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_iraq_war_protests
+		icon = anti_establishment
+
+		x = -3
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_renew_the_emergency_law }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_AFFAIRS }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_iraq_war_protests"
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_muslim_brotherhood_opinion = yes
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_security_influence = yes
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_tantawis_barracks_bargain
+		icon = mubarakg
+
+		x = -6
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_balancing_the_pillars }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_tantawis_barracks_bargain"
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_military_influence = yes
+			add_ideas = EGY_barracks_bargain_idea
+			custom_effect_tooltip = EGY_barracks_bargain_budget_tt
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_name_suleiman_vice_president
+		icon = mubarakg
+
+		x = -4
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_suleimans_general_intelligence }
+		prerequisite = { focus = EGY_balancing_the_pillars }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2005.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_name_suleiman_vice_president"
+			add_power_balance_value = { id = EGY_succession_bop value = -0.25 }
+			set_temp_variable = { temp_opinion = 10 }
+			change_intelligence_community_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_security_influence = yes
+			set_temp_variable = { temp_authority = -5 }
+			EGY_change_mubarak_authority = yes
+		}
+
+		ai_will_do = { base = 1 }
+	}
+
+	focus = {
+		id = EGY_after_taba
+		icon = terrorism
+
+		x = -3
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_iraq_war_protests focus = EGY_suleimans_general_intelligence }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INSURGENCY }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_after_taba"
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_security_influence = yes
+			add_ideas = EGY_south_sinai_security_idea
+			custom_effect_tooltip = EGY_lower_sinai_bombing_risk_tt
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_the_security_pact
+		icon = mubarakg
+
+		x = -3
+		y = 6
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_expand_the_central_security_forces }
+		prerequisite = { focus = EGY_balancing_the_pillars }
+		prerequisite = { focus = EGY_after_taba }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			OR = {
+				EGY_mubarak_in_power = yes
+				EGY_suleiman_in_power = yes
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_security_pact"
+			add_ideas = EGY_security_pact_idea
+			add_power_balance_value = { id = EGY_succession_bop value = -0.10 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	# Branch D: Social Contract
+
+	focus = {
+		id = EGY_bread_on_every_table
+		icon = mubarakg
+
+		x = 1
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_stability_above_all }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_ECONOMY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_bread_on_every_table"
+			# TODO(bread): activate the bread mechanic if it is not active yet; bread pressure -10
+			add_stability = 0.02
+			add_political_power = 25
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_wheat_import_security
+		icon = mubarakg
+
+		x = 0
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_bread_on_every_table }
+		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_STABILITY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_wheat_import_security"
+			# TODO(bread): strategic stockpile halves the bread pressure from world food price shocks
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_wheat_import_opinion } }
+			}
+			if = {
+				limit = { country_exists = SOV }
+				SOV = { add_opinion_modifier = { target = ROOT modifier = EGY_wheat_import_opinion } }
+			}
+			add_stability = 0.01
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_smart_ration_cards
+		icon = mubarakg
+
+		x = 1
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_bread_on_every_table }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2006.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_smart_ration_cards"
+			# TODO(bread): subsidy level to Smart Cards; bread pressure +5 on the switch
+			# TODO(resolver): savings roll through EGY_resolve_state_project (-30% subsidy cost on Full, -10% on Troubled)
+			add_ideas = EGY_smart_ration_cards_idea
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_army_bakes_bread
+		icon = mubarakg
+
+		x = 2
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_bread_on_every_table }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			# TODO(bread): also available when bread pressure is 60 or more
+			date > 2008.3.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_army_bakes_bread"
+			# TODO(bread): bread pressure -20
+			# TODO(decrees): unlock the Order the Army to Bake decree
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_influence = 3 }
+			EGY_change_military_influence = yes
+			add_stability = 0.03
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_national_housing_programme
+		icon = mubarakg
+
+		x = 3
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_bread_on_every_table }
+		search_filters = { FOCUS_FILTER_EXPENDITURE FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2005.9.1
+			has_completed_focus = EGY_the_2005_electoral_programme
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_national_housing_programme"
+			# TODO(pledges): start the National Housing Programme decision chain that the 500,000 homes pledge checks
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			add_stability = 0.03
+			set_temp_variable = { temp_influence = -3 }
+			EGY_change_brotherhood_influence = yes
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = EGY_the_may_day_bonus
+		icon = mubarakg
+
+		x = 2
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_army_bakes_bread }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2008.5.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_may_day_bonus"
+			# TODO(bread): bread pressure -10
+			add_stability = 0.05
+			add_timed_idea = { idea = EGY_may_day_bonus_idea days = 730 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = EGY_patron_of_toshka
+		icon = mubarakg
+
+		x = 5
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_stability_above_all }
+		search_filters = { FOCUS_FILTER_ADD_BUILDING FOCUS_FILTER_EXPENDITURE }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_patron_of_toshka"
+			# TODO(resolver): roll through EGY_resolve_state_project; the Troubled outcome fires egypt_mubarak.4 Toshka Falls Short
+			set_temp_variable = { temp_authority = 3 }
+			EGY_change_mubarak_authority = yes
+			if = {
+				limit = { owns_state = 218 }
+				218 = { one_state_agriculture_district = yes }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = EGY_national_project_for_sinai_development
+		icon = mubarakg
+
+		x = 4
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_patron_of_toshka }
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_national_project_for_sinai_development"
+			set_temp_variable = { temp_opinion = 3 }
+			change_the_military_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+			if = {
+				limit = { owns_state = 213 }
+				213 = { one_state_infrastructure = yes }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = EGY_the_grand_egyptian_museum
+		icon = mubarakg
+
+		x = 5
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_patron_of_toshka }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2002.2.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_grand_egyptian_museum"
+			add_political_power = 25
+			add_stability = 0.01
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_cairo_metro_line_three
+		icon = mubarakg
+
+		x = 6
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_patron_of_toshka }
+		search_filters = { FOCUS_FILTER_INFRASTRUCTURE FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2007.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_cairo_metro_line_three"
+			add_stability = 0.01
+			if = {
+				limit = { owns_state = 215 }
+				215 = { one_state_infrastructure = yes }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = EGY_the_bibliotheca_alexandrina
+		icon = mubarakg
+
+		x = 7
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_stability_above_all }
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2002.10.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_bibliotheca_alexandrina"
+			add_ideas = EGY_bibliotheca_alexandrina_idea
+			custom_effect_tooltip = EGY_eu_members_opinion_tt
+			hidden_effect = {
+				for_each_scope_loop = {
+					array = global.EU_member
+					add_opinion_modifier = { target = ROOT modifier = EGY_bibliotheca_opinion }
+				}
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_the_first_ladys_councils
+		icon = mubarakg
+
+		x = 7
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_bibliotheca_alexandrina }
+		search_filters = { FOCUS_FILTER_RESEARCH FOCUS_FILTER_SOCIAL_CONSERVATISM }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_first_ladys_councils"
+			add_ideas = EGY_first_ladys_councils_idea
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_first_ladys_councils_opinion } }
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_co_opt_al_azhar
+		icon = islam
+
+		x = 8
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_stability_above_all }
+		search_filters = { FOCUS_FILTER_SOCIAL_CONSERVATISM FOCUS_FILTER_STABILITY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_co_opt_al_azhar"
+			add_stability = 0.03
+			set_temp_variable = { temp_influence = -5 }
+			EGY_change_brotherhood_influence = yes
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_national_unity_and_coptic_christmas
+		icon = mubarakg
+
+		x = 8
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_co_opt_al_azhar }
+		search_filters = { FOCUS_FILTER_SOCIAL_CONSERVATISM FOCUS_FILTER_SECTARIANISM }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2002.12.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_national_unity_and_coptic_christmas"
+			add_stability = 0.02
+			set_temp_variable = { coptic_opinion_change = 10 }
+			modify_coptic_opinion_effect = yes
+			set_temp_variable = { temp_influence = 2 }
+			EGY_change_brotherhood_influence = yes
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_the_social_contract
+		icon = mubarakg
+
+		x = 3
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_the_army_bakes_bread focus = EGY_smart_ration_cards }
+		prerequisite = { focus = EGY_the_national_housing_programme }
+		prerequisite = { focus = EGY_co_opt_al_azhar }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_ECONOMY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_social_contract"
+			# TODO(bread): bread pressure thresholds +10; subsidy cost +10% while the subsidy level is still Universal
+			add_ideas = EGY_social_contract_idea
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	# Branch E: Foreign Policy
+
+	focus = {
+		id = EGY_the_camp_david_dividend
+		icon = mubarakg
+
+		x = 10
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_indispensable_broker }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_ECONOMY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_camp_david_dividend"
+			add_ideas = EGY_us_helps
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_camp_david_opinion } }
+			}
+			if = {
+				limit = { country_exists = ISR }
+				ISR = { add_opinion_modifier = { target = ROOT modifier = EGY_camp_david_israel_opinion } }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_gas_diplomacy
+		icon = mubarakg
+
+		x = 9
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_camp_david_dividend }
+		search_filters = { FOCUS_FILTER_RESOURCE FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2003.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_gas_diplomacy"
+			add_ideas = EGY_gas_exports_idea
+			if = {
+				limit = { country_exists = JOR }
+				JOR = { add_opinion_modifier = { target = ROOT modifier = EGY_gas_diplomacy_opinion } }
+			}
+			if = {
+				limit = { country_exists = ISR }
+				ISR = { add_opinion_modifier = { target = ROOT modifier = EGY_gas_diplomacy_opinion } }
+			}
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_brotherhood_influence = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_sharm_el_sheikh_summits
+		icon = mubarakg
+
+		x = 10
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_camp_david_dividend }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2005.2.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_sharm_el_sheikh_summits"
+			# TODO(decrees): unlock the Host a Sharm Summit decree
+			add_political_power = 50
+			if = {
+				limit = { country_exists = ISR }
+				ISR = {
+					set_temp_variable = { percent_change = 2 }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = PAL }
+				PAL = {
+					set_temp_variable = { percent_change = 2 }
+					change_influence_percentage = yes
+				}
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_co_president_of_the_mediterranean
+		icon = mubarakg
+
+		x = 11
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_camp_david_dividend }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_TRADE }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2008.7.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_co_president_of_the_mediterranean"
+			add_ideas = EGY_mediterranean_partnership_idea
+			if = {
+				limit = { country_exists = FRA }
+				FRA = { add_opinion_modifier = { target = ROOT modifier = EGY_mediterranean_opinion } }
+			}
+			custom_effect_tooltip = EGY_eu_members_opinion_tt
+			hidden_effect = {
+				for_each_scope_loop = {
+					array = global.EU_member
+					if = {
+						limit = { NOT = { original_tag = FRA } }
+						add_opinion_modifier = { target = ROOT modifier = EGY_mediterranean_eu_opinion }
+					}
+				}
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_the_gaza_file
+		icon = mubarakg
+
+		x = 10
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_sharm_el_sheikh_summits }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2005.9.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_gaza_file"
+			if = {
+				limit = { country_exists = PAL }
+				PAL = {
+					set_temp_variable = { percent_change = 2 }
+					change_influence_percentage = yes
+				}
+			}
+			set_temp_variable = { temp_opinion = 3 }
+			change_the_military_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_seal_the_rafah_crossing
+		icon = mubarakg
+
+		x = 9
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_gaza_file }
+		mutually_exclusive = { focus = EGY_rafah_on_egyptian_terms }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_MIGRANT_CRISIS }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_seal_the_rafah_crossing"
+			if = {
+				limit = { country_exists = ISR }
+				ISR = { add_opinion_modifier = { target = ROOT modifier = EGY_seal_rafah_opinion } }
+			}
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_seal_rafah_us_opinion } }
+			}
+			set_temp_variable = { temp_influence = 10 }
+			EGY_change_brotherhood_influence = yes
+			custom_effect_tooltip = EGY_lower_rafah_breach_risk_tt
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_brokering_palestinian_reconciliation
+		icon = mubarakg
+
+		x = 10
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_gaza_file }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_DIPLOMACY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2007.6.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_brokering_palestinian_reconciliation"
+			if = {
+				limit = { country_exists = PAL }
+				PAL = {
+					set_temp_variable = { percent_change = 3 }
+					if = {
+						limit = { ROOT = { has_completed_focus = EGY_rafah_on_egyptian_terms } }
+						set_temp_variable = { percent_change = 6 }
+					}
+					change_influence_percentage = yes
+				}
+			}
+			add_political_power = 25
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_rafah_on_egyptian_terms
+		icon = mubarakg
+
+		x = 11
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_gaza_file }
+		mutually_exclusive = { focus = EGY_seal_the_rafah_crossing }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_MIGRANT_CRISIS }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_rafah_on_egyptian_terms"
+			if = {
+				limit = { country_exists = PAL }
+				PAL = { add_opinion_modifier = { target = ROOT modifier = EGY_open_rafah_opinion } }
+			}
+			if = {
+				limit = { country_exists = ISR }
+				ISR = { add_opinion_modifier = { target = ROOT modifier = EGY_open_rafah_israel_opinion } }
+			}
+			set_temp_variable = { temp_influence = -5 }
+			EGY_change_brotherhood_influence = yes
+			add_stability = -0.02
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_warning_against_the_iraq_war
+		icon = mubarakg
+
+		x = 12
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_indispensable_broker }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2002.9.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_warning_against_the_iraq_war"
+			custom_effect_tooltip = EGY_arab_league_opinion_tt
+			hidden_effect = {
+				for_each_scope_loop = {
+					array = global.arab_league_members
+					if = {
+						limit = { NOT = { tag = ROOT } }
+						add_opinion_modifier = { target = ROOT modifier = EGY_warn_iraq_opinion }
+					}
+				}
+			}
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_warn_iraq_us_opinion } }
+			}
+			add_stability = 0.02
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_cairos_arab_league
+		icon = mubarakg
+
+		x = 12
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_warning_against_the_iraq_war }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_POLITICAL }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_cairos_arab_league"
+			add_political_power = 25
+			custom_effect_tooltip = EGY_arab_league_influence_tt
+			hidden_effect = {
+				for_each_scope_loop = {
+					array = global.arab_league_members
+					if = {
+						limit = { NOT = { tag = ROOT } }
+						set_temp_variable = { percent_change = 1 }
+						change_influence_percentage = yes
+					}
+				}
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_gulf_partnership
+		icon = mubarakg
+
+		x = 12
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_cairos_arab_league }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_gulf_partnership"
+			if = {
+				limit = { country_exists = SAU }
+				SAU = { add_opinion_modifier = { target = ROOT modifier = EGY_gulf_partnership_opinion } }
+			}
+			if = {
+				limit = { country_exists = UAE }
+				UAE = { add_opinion_modifier = { target = ROOT modifier = EGY_gulf_partnership_opinion } }
+			}
+			if = {
+				limit = { country_exists = KUW }
+				KUW = { add_opinion_modifier = { target = ROOT modifier = EGY_gulf_partnership_opinion } }
+			}
+			if = {
+				limit = { country_exists = PER }
+				PER = { add_opinion_modifier = { target = ROOT modifier = EGY_gulf_partnership_iran_opinion } }
+			}
+			set_temp_variable = { treasury_change = 1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_sudan_file
+		icon = mubarakg
+
+		x = 14
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_indispensable_broker }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_sudan_file"
+			if = {
+				limit = { country_exists = SUD }
+				SUD = {
+					set_temp_variable = { percent_change = 3 }
+					change_influence_percentage = yes
+				}
+			}
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_the_nile_waters_question
+		icon = mubarakg
+
+		x = 14
+		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_sudan_file }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_RESOURCE }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2010.5.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_nile_waters_question"
+			add_political_power = 25
+			set_temp_variable = { temp_opinion = 3 }
+			change_the_military_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_hold_the_1959_line
+		icon = mubarakg
+
+		x = 13
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_nile_waters_question }
+		mutually_exclusive = { focus = EGY_a_nile_basin_compromise }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_STABILITY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_hold_the_1959_line"
+			if = {
+				limit = { country_exists = ETH }
+				ETH = { add_opinion_modifier = { target = ROOT modifier = EGY_hold_1959_opinion } }
+			}
+			custom_effect_tooltip = EGY_upstream_states_opinion_tt
+			hidden_effect = {
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = KEN
+							original_tag = UGA
+							original_tag = TNZ
+							original_tag = RWA
+							original_tag = BUR
+							original_tag = DRC
+							original_tag = SSU
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = EGY_hold_1959_upstream_opinion }
+				}
+			}
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+			add_stability = 0.02
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_a_nile_basin_compromise
+		icon = mubarakg
+
+		x = 14
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_nile_waters_question }
+		mutually_exclusive = { focus = EGY_hold_the_1959_line }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_DIPLOMACY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_a_nile_basin_compromise"
+			if = {
+				limit = { country_exists = ETH }
+				ETH = { add_opinion_modifier = { target = ROOT modifier = EGY_nile_compromise_opinion } }
+			}
+			custom_effect_tooltip = EGY_upstream_and_au_opinion_tt
+			hidden_effect = {
+				every_country = {
+					limit = {
+						OR = {
+							original_tag = KEN
+							original_tag = UGA
+							original_tag = TNZ
+							original_tag = RWA
+							original_tag = BUR
+							original_tag = DRC
+							original_tag = SSU
+						}
+					}
+					add_opinion_modifier = { target = ROOT modifier = EGY_nile_compromise_upstream_opinion }
+				}
+				for_each_scope_loop = {
+					array = global.AU_member
+					if = {
+						limit = { NOT = { tag = ROOT } }
+						add_opinion_modifier = { target = ROOT modifier = EGY_nile_compromise_au_opinion }
+					}
+				}
+				for_each_scope_loop = {
+					array = global.OAU_member
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							NOT = { has_idea = AU_member }
+						}
+						add_opinion_modifier = { target = ROOT modifier = EGY_nile_compromise_au_opinion }
+					}
+				}
+			}
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { temp_opinion = -5 }
+			change_the_military_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_egypt_pivot_of_the_region
+		icon = mubarakg
+
+		x = 12
+		y = 6
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_brokering_palestinian_reconciliation }
+		prerequisite = { focus = EGY_the_gulf_partnership }
+		prerequisite = { focus = EGY_hold_the_1959_line focus = EGY_a_nile_basin_compromise }
+		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_egypt_pivot_of_the_region"
+			add_ideas = EGY_pivot_of_the_region_idea
+			add_political_power = 50
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	# Branch F: Mubarak's Military
+
+	focus = {
+		id = EGY_american_military_aid
+		icon = military_deal
+
+		x = 16
+		y = 2
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_indispensable_broker }
 		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = { EGY_mubarak_in_power = yes }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_american_military_aid"
@@ -197,275 +2840,640 @@ focus_tree = {
 	}
 
 	focus = {
-		id = EGY_empower_state_security
-		icon = Generic_Policeman
+		id = EGY_operation_bright_star
+		icon = mubarakg
 
-		x = -4
+		x = 16
 		y = 3
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_american_military_aid }
+		search_filters = { FOCUS_FILTER_ARMY_XP FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_operation_bright_star"
+			army_experience = 15
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_bright_star_opinion } }
+			}
+			set_temp_variable = { temp_opinion = 3 }
+			change_the_military_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_abrams_at_factory_200
+		icon = mubarakg
+
+		x = 15
+		y = 4
 		relative_position_id = EGY_the_fourth_term
 
 		cost = 7
 
-		prerequisite = { focus = EGY_military_tribunals_for_the_brotherhood focus = EGY_tolerate_brotherhood_independents }
-		search_filters = { FOCUS_FILTER_INTERNAL_FACTION FOCUS_FILTER_STABILITY }
+		prerequisite = { focus = EGY_operation_bright_star }
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_ARMY }
+
+		available = { EGY_mubarak_in_power = yes }
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_empower_state_security"
-			set_temp_variable = { temp_opinion = 10 }
-			change_intelligence_community_opinion = yes
-			set_temp_variable = { temp_influence = 5 }
-			EGY_change_security_influence = yes
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_abrams_at_factory_200"
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+			add_tech_bonus = {
+				name = EGY_abrams_at_factory_200
+				bonus = 0.5
+				uses = 2
+				category = CAT_tanks
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_f16_block_52_order
+		icon = mubarakg
+
+		x = 16
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_operation_bright_star }
+		mutually_exclusive = { focus = EGY_look_east_for_arms }
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_EXPENDITURE }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2010.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_f16_block_52_order"
+			air_experience = 25
+			add_tech_bonus = {
+				name = EGY_the_f16_block_52_order
+				bonus = 0.5
+				uses = 1
+				category = CAT_aircraft
+			}
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	focus = {
+		id = EGY_look_east_for_arms
+		icon = mubarakg
+
+		x = 17
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_operation_bright_star }
+		mutually_exclusive = { focus = EGY_the_f16_block_52_order }
+		search_filters = { FOCUS_FILTER_EQUIPMENT FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_look_east_for_arms"
 			if = {
-				limit = { has_idea = police_04 }
-				swap_ideas = { remove_idea = police_04 add_idea = police_05 }
+				limit = { country_exists = SOV }
+				SOV = { add_opinion_modifier = { target = ROOT modifier = EGY_look_east_opinion } }
+			}
+			if = {
+				limit = { country_exists = CHI }
+				CHI = { add_opinion_modifier = { target = ROOT modifier = EGY_look_east_opinion } }
+			}
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_look_east_us_opinion } }
+			}
+			add_tech_bonus = {
+				name = EGY_look_east_for_arms
+				bonus = 0.5
+				uses = 1
+				category = CAT_aircraft
+			}
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_strengthen_the_republican_guard
+		icon = mubarakg
+
+		x = 18
+		y = 4
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_operation_bright_star }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_strengthen_the_republican_guard"
+			add_ideas = EGY_republican_guard_idea
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			set_temp_variable = { temp_opinion = -3 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_influence = -5 }
+			EGY_change_military_influence = yes
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	focus = {
+		id = EGY_the_pilot_of_october
+		icon = mubarakg
+
+		x = 16
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_abrams_at_factory_200 }
+		prerequisite = { focus = EGY_the_f16_block_52_order focus = EGY_look_east_for_arms }
+		search_filters = { FOCUS_FILTER_AIRCRAFT FOCUS_FILTER_MILITARY_LAWS }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_pilot_of_october"
+			add_ideas = EGY_pilot_of_october_idea
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_authority = 3 }
+			EGY_change_mubarak_authority = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_blue_helmets_for_darfur
+		icon = mubarakg
+
+		x = 18
+		y = 5
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_operation_bright_star }
+		prerequisite = { focus = EGY_the_sudan_file }
+		search_filters = { FOCUS_FILTER_ARMY_XP FOCUS_FILTER_FOREIGN_POLICY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2008.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_blue_helmets_for_darfur"
+			army_experience = 10
+			if = {
+				limit = { country_exists = SUD }
+				SUD = { add_opinion_modifier = { target = ROOT modifier = EGY_blue_helmets_opinion } }
+			}
+			custom_effect_tooltip = EGY_au_members_opinion_tt
+			hidden_effect = {
+				for_each_scope_loop = {
+					array = global.AU_member
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							NOT = { original_tag = SUD }
+						}
+						add_opinion_modifier = { target = ROOT modifier = EGY_blue_helmets_opinion }
+					}
+				}
+				for_each_scope_loop = {
+					array = global.OAU_member
+					if = {
+						limit = {
+							NOT = { tag = ROOT }
+							NOT = { original_tag = SUD }
+							NOT = { has_idea = AU_member }
+						}
+						add_opinion_modifier = { target = ROOT modifier = EGY_blue_helmets_opinion }
+					}
+				}
 			}
 		}
 
 		ai_will_do = { base = 3 }
 	}
 
-	focus = {
-		id = EGY_co_opt_al_azhar
-		icon = islam
-
-		x = -2
-		y = 3
-		relative_position_id = EGY_the_fourth_term
-
-		cost = 5
-
-		prerequisite = { focus = EGY_military_tribunals_for_the_brotherhood focus = EGY_tolerate_brotherhood_independents }
-		search_filters = { FOCUS_FILTER_SOCIAL_CONSERVATISM FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_co_opt_al_azhar"
-			add_stability = 0.03
-			set_temp_variable = { temp_influence = -5 }
-			EGY_change_brotherhood_influence = yes
-		}
-
-		ai_will_do = { base = 3 }
-	}
+	# Branch G: Succession
 
 	focus = {
-		id = EGY_the_policies_secretariat
-		icon = generic_government
+		id = EGY_the_question_of_2011
+		icon = mubarakg
 
 		x = 0
-		y = 3
+		y = 13
 		relative_position_id = EGY_the_fourth_term
 
 		cost = 7
 
-		prerequisite = { focus = EGY_the_2000_elections focus = EGY_tantawis_ministry_of_defence }
+		prerequisite = { focus = EGY_the_mubarak_doctrine }
 		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
 
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2009.1.1
+		}
+
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_policies_secretariat"
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_question_of_2011"
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+			custom_effect_tooltip = EGY_question_of_2011_tt
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_gamals_moment
+		icon = mubarakg
+
+		x = -3
+		y = 14
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_question_of_2011 }
+		mutually_exclusive = { focus = EGY_the_generals_succession focus = EGY_the_sixth_term }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			power_balance_value = { id = EGY_succession_bop value > 0.29 }
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_gamals_moment"
+			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
 			set_temp_variable = { temp_opinion = -10 }
 			change_the_military_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_the_ndp_nominates_gamal
+		icon = mubarakg
+
+		x = -3
+		y = 15
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_gamals_moment }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2010.6.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_ndp_nominates_gamal"
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.05 }
+			change_relative_party_popularity = yes
+			country_event = { id = egypt_mubarak.13 days = 7 }
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_president_gamal_mubarak
+		icon = gamal_gamble
+
+		x = -3
+		y = 16
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_the_ndp_nominates_gamal }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2011.6.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_president_gamal_mubarak"
+			# TODO(characters): promote the Gamal Mubarak character instead of creating a leader
+			custom_effect_tooltip = EGY_gamal_becomes_president_tt
+			hidden_effect = {
+				kill_country_leader = yes
+				create_country_leader = {
+					name = "Gamal Mubarak"
+					picture = "gfx/leaders/generic_politicians/middleeast_001.dds"
+					ideology = Western_Autocracy
+					traits = {
+						western_Western_Autocracy
+					}
+				}
+			}
+			set_temp_variable = { temp_authority = -5 }
+			EGY_change_mubarak_authority = yes
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_gamal_second_wave_of_reform
+		icon = mubarakg
+
+		x = -3
+		y = 17
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_president_gamal_mubarak }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_FOREIGN_INVESTMENTS }
+
+		available = { EGY_gamal_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_gamal_second_wave_of_reform"
+			# TODO(bread): bread pressure +10
+			set_temp_variable = { treasury_change = 3 }
+			modify_treasury_effect = yes
+			set_temp_variable = { int_investment_change = 5 }
+			modify_international_investment_effect = yes
+			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_gamal_the_new_guard_state
+		icon = mubarakg
+
+		x = -3
+		y = 18
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_gamal_second_wave_of_reform }
+		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_POLITICAL }
+
+		available = {
+			EGY_gamal_in_power = yes
+			date > 2015.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_gamal_the_new_guard_state"
+			add_ideas = EGY_new_guard_state_idea
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_generals_succession
+		icon = mubarakg
+
+		x = 0
+		y = 14
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_question_of_2011 }
+		mutually_exclusive = { focus = EGY_gamals_moment focus = EGY_the_sixth_term }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			OR = {
+				power_balance_value = { id = EGY_succession_bop value < -0.29 }
+				has_completed_focus = EGY_name_suleiman_vice_president
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_generals_succession"
+			add_power_balance_value = { id = EGY_succession_bop value = -0.10 }
+			set_temp_variable = { temp_opinion = 5 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_opinion = 5 }
+			change_intelligence_community_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_the_field_marshals_endorsement
+		icon = mubarakg
+
+		x = 0
+		y = 15
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_generals_succession }
+		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_field_marshals_endorsement"
+			set_temp_variable = { temp_opinion = 10 }
+			change_the_military_opinion = yes
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_military_influence = yes
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_president_omar_suleiman
+		icon = mubarakg
+
+		x = 0
+		y = 16
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_the_field_marshals_endorsement }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2011.6.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_president_omar_suleiman"
+			# TODO(characters): promote the Omar Suleiman character instead of creating a leader
+			custom_effect_tooltip = EGY_suleiman_becomes_president_tt
+			hidden_effect = {
+				kill_country_leader = yes
+				create_country_leader = {
+					name = "Omar Suleiman"
+					picture = "gfx/leaders/generic_politicians/middleeast_002.dds"
+					ideology = Western_Autocracy
+					traits = {
+						western_Western_Autocracy
+					}
+				}
+			}
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_security_influence = yes
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	focus = {
+		id = EGY_suleiman_the_security_republic
+		icon = mubarakg
+
+		x = 0
+		y = 17
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_president_omar_suleiman }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
+
+		available = { EGY_suleiman_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_suleiman_the_security_republic"
+			set_temp_variable = { temp_opinion = 10 }
+			change_intelligence_community_opinion = yes
+			hidden_effect = { EGY_recalculate_regime_balance = yes }
+			add_stability = 0.05
+			add_popularity = { ideology = democratic popularity = -0.05 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_suleiman_order_and_continuity
+		icon = mubarakg
+
+		x = 0
+		y = 18
+		relative_position_id = EGY_the_fourth_term
+
+		prerequisite = { focus = EGY_suleiman_the_security_republic }
+		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_MILITARY_LAWS }
+
+		available = {
+			EGY_suleiman_in_power = yes
+			date > 2015.1.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_suleiman_order_and_continuity"
+			add_ideas = EGY_order_and_continuity_idea
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_the_sixth_term
+		icon = mubarakg
+
+		x = 3
+		y = 14
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 5
+
+		prerequisite = { focus = EGY_the_question_of_2011 }
+		mutually_exclusive = { focus = EGY_gamals_moment focus = EGY_the_generals_succession }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = { EGY_mubarak_in_power = yes }
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_sixth_term"
+			set_temp_variable = { temp_authority = 3 }
+			EGY_change_mubarak_authority = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	focus = {
+		id = EGY_father_of_the_nation
+		icon = mubarakg
+
+		x = 3
+		y = 15
+		relative_position_id = EGY_the_fourth_term
+
+		cost = 7
+
+		prerequisite = { focus = EGY_the_sixth_term }
+		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+		available = {
+			EGY_mubarak_in_power = yes
+			date > 2011.9.1
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_father_of_the_nation"
+			# TODO(design): hold Mubarak's strength at 40 or more, and weaken the stability bonus each year past age 83
+			add_ideas = EGY_father_of_the_nation_idea
 			set_temp_variable = { temp_authority = 5 }
 			EGY_change_mubarak_authority = yes
 		}
 
-		ai_will_do = { base = 2 }
-	}
-
-	focus = {
-		id = EGY_suleimans_general_intelligence
-		icon = intelligence_exchange
-
-		x = -6
-		y = 4
-		relative_position_id = EGY_the_fourth_term
-
-		cost = 7
-
-		prerequisite = { focus = EGY_empower_state_security }
-		search_filters = { FOCUS_FILTER_INFLUENCE FOCUS_FILTER_FOREIGN_POLICY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_suleimans_general_intelligence"
-			set_temp_variable = { temp_opinion = 5 }
-			change_intelligence_community_opinion = yes
-			set_temp_variable = { temp_influence = 5 }
-			EGY_change_security_influence = yes
-			if = {
-				limit = { country_exists = PAL }
-				set_temp_variable = { percent_change = 3 }
-				set_temp_variable = { influence_target = PAL }
-				change_influence_percentage = yes
-			}
-			if = {
-				limit = { country_exists = ISR }
-				set_temp_variable = { percent_change = 2 }
-				set_temp_variable = { influence_target = ISR }
-				change_influence_percentage = yes
-			}
-		}
-
-		ai_will_do = { base = 3 }
-	}
-
-	focus = {
-		id = EGY_renew_the_emergency_law
-		icon = dangerous_laws
-
-		x = -4
-		y = 4
-		relative_position_id = EGY_the_fourth_term
-
-		cost = 5
-
-		prerequisite = { focus = EGY_empower_state_security }
-		search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_renew_the_emergency_law"
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_muslim_brotherhood_opinion = yes
-			add_stability = 0.03
-			set_temp_variable = { temp_influence = 5 }
-			EGY_change_security_influence = yes
-		}
-
-		ai_will_do = { base = 3 }
-	}
-
-	focus = {
-		id = EGY_float_the_pound
-		icon = better_money
-
-		x = 0
-		y = 4
-		relative_position_id = EGY_the_fourth_term
-
-		prerequisite = { focus = EGY_the_policies_secretariat }
-		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_FOREIGN_INVESTMENTS }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_float_the_pound"
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_military_opinion = yes
-			hidden_effect = {
-				EGY_recalculate_regime_balance = yes
-			}
-			newline = yes
-			set_temp_variable = { int_investment_change = 4 }
-			modify_international_investment_effect = yes
-		}
-
-		ai_will_do = { base = 2 }
-	}
-
-	focus = {
-		id = EGY_the_iraq_war_protests
-		icon = anti_establishment
-
-		x = -2
-		y = 5
-		relative_position_id = EGY_the_fourth_term
-
-		cost = 5
-
-		prerequisite = { focus = EGY_renew_the_emergency_law }
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_AFFAIRS }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_iraq_war_protests"
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_muslim_brotherhood_opinion = yes
-			set_temp_variable = { temp_influence = 5 }
-			EGY_change_security_influence = yes
-		}
-
-		ai_will_do = { base = 2 }
-	}
-
-	focus = {
-		id = EGY_the_nazif_cabinet
-		icon = economic_banks
-
-		x = 0
-		y = 5
-		relative_position_id = EGY_the_fourth_term
-
-		prerequisite = { focus = EGY_float_the_pound }
-		search_filters = { FOCUS_FILTER_ECONOMY FOCUS_FILTER_FOREIGN_INVESTMENTS }
-
-		available = { date > 2004.7.1 }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_nazif_cabinet"
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_military_opinion = yes
-			set_temp_variable = { temp_authority = 3 }
-			EGY_change_mubarak_authority = yes
-			newline = yes
-			set_temp_variable = { int_investment_change = 5 }
-			modify_international_investment_effect = yes
-		}
-
-		ai_will_do = { base = 2 }
-	}
-
-	focus = {
-		id = EGY_after_taba
-		icon = terrorism
-
-		x = -2
-		y = 6
-		relative_position_id = EGY_the_fourth_term
-
-		cost = 5
-
-		prerequisite = { focus = EGY_the_iraq_war_protests focus = EGY_suleimans_general_intelligence }
-		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INSURGENCY }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_after_taba"
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_military_opinion = yes
-			set_temp_variable = { temp_influence = 5 }
-			EGY_change_security_influence = yes
-		}
-
-		ai_will_do = { base = 2 }
-	}
-
-	focus = {
-		id = EGY_the_qiz_agreement
-		icon = trade_with_europe
-
-		x = 0
-		y = 6
-		relative_position_id = EGY_the_fourth_term
-
-		cost = 7
-
-		prerequisite = { focus = EGY_the_nazif_cabinet }
-		search_filters = { FOCUS_FILTER_TRADE FOCUS_FILTER_FOREIGN_INVESTMENTS }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_qiz_agreement"
-			set_temp_variable = { int_investment_change = 4 }
-			modify_international_investment_effect = yes
-			if = {
-				limit = { country_exists = USA }
-				USA = {
-					add_opinion_modifier = { target = ROOT modifier = global_trade }
-					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
-				}
-			}
-			if = {
-				limit = { country_exists = ISR }
-				ISR = {
-					add_opinion_modifier = { target = ROOT modifier = global_trade }
-					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
-				}
-			}
-		}
-
-		ai_will_do = { base = 2 }
+		ai_will_do = { base = 5 }
 	}
 }
