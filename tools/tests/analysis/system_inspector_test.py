@@ -168,6 +168,17 @@ def test_cli_prints_json_and_rejects_a_pattern_with_no_files(tmp_path, capsys):
     assert "No files" in capsys.readouterr().err
 
 
+def test_cli_rejects_an_invalid_pattern_before_reading_the_tree(capsys, monkeypatch):
+    def unexpected_scan(_root):
+        pytest.fail("read_tree must not run for an invalid path pattern")
+
+    monkeypatch.setattr(system_inspector, "read_tree", unexpected_scan)
+    assert system_inspector.main(["--path-pattern", "["]) == 2
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.startswith("Invalid --path-pattern '[':")
+
+
 def test_text_report_honours_sections(tmp_path, capsys):
     for relative, text in FILES.items():
         write_under_str(tmp_path, relative, text)
@@ -267,6 +278,17 @@ def test_prose_cannot_create_hooks_dependencies_or_hide_unused_symbols(
     assert "outside_helper" not in [
         entry["name"] for entry in report["dependencies"]["scripted_effect"]
     ]
+
+
+def test_quoted_display_name_cannot_hide_an_unused_effect(mod_root):
+    write_under_str(
+        mod_root,
+        "common/characters/outside.txt",
+        'characters = { outside_character = { name = "ZZZ_orphan" } }\n',
+    )
+    report = inspect_mod(mod_root)
+    assert "common/characters/outside.txt" not in report["hooks"]
+    assert "ZZZ_orphan" in report["unused"]["scripted_effects_and_triggers"]
 
 
 def test_quoted_identifiers_and_scripted_loc_remain_references(mod_root):

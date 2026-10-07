@@ -109,6 +109,27 @@ LOG_RE = re.compile(r'\blog\s*=\s*"(?:\\.|[^"\\])*"')
 LOC_SUBSTITUTION_RE = re.compile(
     r"\[(?:[A-Za-z_][A-Za-z0-9_:^]*\.)*([A-Za-z_][A-Za-z0-9_]*)\]"
 )
+QUOTED_FIELD_RE = re.compile(r"([A-Za-z0-9_.@:\-^]+)\s*=\s*$")
+# Fields whose quoted values still name definitions, references, or localisation keys.
+QUOTED_REFERENCE_FIELDS = {
+    "add_ideas",
+    "buttonText",
+    "complete_national_focus",
+    "custom_effect_tooltip",
+    "custom_modifier_tooltip",
+    "desc",
+    "has_completed_focus",
+    "has_idea",
+    "id",
+    "localisation_key",
+    "localization_key",
+    "pdx_tooltip",
+    "pdx_tooltip_delayed",
+    "remove_ideas",
+    "text",
+    "title",
+    "tooltip",
+}
 FIELD_RE = re.compile(
     r"(?P<key>[A-Za-z0-9_.@:\-^]+)\s*=\s*"
     r'(?P<value>"(?:\\.|[^"\\])*"|[^\s{}=]+|\{)'
@@ -179,12 +200,22 @@ def strip_comments(text: str) -> str:
     )
 
 
-def reference_code(text: str) -> str:
+def reference_code(text: str, rel: str = "") -> str:
     code = LOG_RE.sub('log = ""', strip_comments(text))
 
     def keep_identifier(match: re.Match) -> str:
         value = match.group(0)[1:-1]
-        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", value):
+        assignment = QUOTED_FIELD_RE.search(code, 0, match.start())
+        field = assignment.group(1) if assignment else ""
+        name_is_reference = field == "name" and (
+            rel.startswith(
+                ("common/scripted_localisation/", "events/", "common/game_rules/")
+            )
+            or rel.endswith(".gfx")
+        )
+        if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", value) and (
+            field in QUOTED_REFERENCE_FIELDS or field.isdecimal() or name_is_reference
+        ):
             return match.group(0)
         return '"' + " ".join(LOC_SUBSTITUTION_RE.findall(value)) + '"'
 
@@ -208,7 +239,7 @@ def read_tree(root: Path) -> Tree:
                 text = data.decode("utf-8-sig", errors="replace")
                 tree.warnings.append(f"{rel}: not valid UTF-8, read with replacement")
             tree.raw[rel] = text
-            tree.code[rel] = text if rel.endswith(".yml") else reference_code(text)
+            tree.code[rel] = text if rel.endswith(".yml") else reference_code(text, rel)
     return tree
 
 
@@ -352,8 +383,12 @@ def scripted_calls(rel: str, code: str) -> set[str]:
     }
 
 
-def inspect(tree: Tree, path_pattern: str, prefixes: tuple[str, ...]) -> dict:
-    pattern = re.compile(path_pattern)
+def inspect(
+    tree: Tree, path_pattern: str | re.Pattern[str], prefixes: tuple[str, ...]
+) -> dict:
+    pattern = (
+        re.compile(path_pattern) if isinstance(path_pattern, str) else path_pattern
+    )
     system = sorted(rel for rel in tree.code if pattern.search(rel))
     inside = set(system)
 
@@ -569,7 +604,7 @@ def inspect(tree: Tree, path_pattern: str, prefixes: tuple[str, ...]) -> dict:
     }
 
     return {
-        "path_pattern": path_pattern,
+        "path_pattern": pattern.pattern,
         "prefixes": list(prefixes),
         "warnings": tree.warnings,
         "files": dict(files),
@@ -676,7 +711,12 @@ def main(argv: list[str] | None = None) -> int:
     else:
         print("Give a preset (see --list) or --path-pattern.", file=sys.stderr)
         return 2
-    report = inspect(read_tree(args.root), path_pattern, prefixes)
+    try:
+        pattern = re.compile(path_pattern)
+    except re.error as error:
+        print(f"Invalid --path-pattern {path_pattern!r}: {error}", file=sys.stderr)
+        return 2
+    report = inspect(read_tree(args.root), pattern, prefixes)
     if not any(report["files"].values()):
         print(f"No files under {args.root} match /{path_pattern}/.", file=sys.stderr)
         return 1
