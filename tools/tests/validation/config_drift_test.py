@@ -16,11 +16,11 @@ from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
     _CREATE_UNIT_SOURCE_PATTERNS,
     _DELETE_TEMPLATE_SOURCE_PATTERNS,
+    _TEMPLATE_LIMIT_SOURCE_PATTERNS,
     _TEMPLATE_SOURCE_PATTERNS,
     _VARIANT_SOURCE_PATTERNS,
 )
 from validate_scripted_params import _CALLER_PATTERNS
-from validate_staged import VALIDATORS as STAGED_VALIDATORS
 from validator_batches import ALL_SPECS, BATCHES, ValidatorSpec
 
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
@@ -457,7 +457,6 @@ def test_mod_core_runs_extra_checks_after_batch():
     batch_index = names.index("Run validator batch")
     for name in (
         "Run style check",
-        "Run common-mistakes check",
         "Check localisation UTF-8 BOM",
         "Check localisation YAML syntax",
         "Check .mod file encoding",
@@ -751,9 +750,7 @@ def test_validation_config_reaches_every_validator_run():
     assert "needs.detect-changes.outputs.style_config" in collect["env"]["STYLE_CONFIG"]
     assert "find common/national_focus -type f -name '*.txt'" in collect["run"]
     style = next(s for s in steps if s.get("name") == "Run style check")
-    mistakes = next(s for s in steps if s.get("name") == "Run common-mistakes check")
     assert "has-files" in style["if"]
-    assert "has-changed-files" in mistakes["if"]
 
 
 def test_baseline_saves_only_after_clean_diff():
@@ -847,7 +844,7 @@ def test_ci_redundant_modifier_gate_is_strict():
 
 
 def test_ci_idea_icon_check_is_enabled():
-    assert _spec_for("validate_ideas.py").args in ((), None)
+    assert _spec_for("validate_ideas.py").args == ("--missing-name-loc",)
     validator = IdeaValidator("/nonexistent", use_colors=False, workers=1)
     called = []
     validator._parse_all_ideas = lambda: ({}, {}, {})
@@ -871,10 +868,53 @@ def test_mio_validator_runs_for_localisation_changes():
 
 
 def test_gfx_and_scripted_localisation_routes_are_preserved():
-    assert {"interface", "common", "events", "history", "localisation"} <= set(
-        _spec_for("validate_gfx_references.py").groups
-    )
+    assert {
+        "interface",
+        "common",
+        "events",
+        "history",
+        "localisation",
+        "graphic-db",
+    } <= set(_spec_for("validate_gfx_references.py").groups)
     assert "interface" in _spec_for("validate_scripted_localisation.py").groups
+
+
+_BATCH_GROUPS = sorted({group for spec in ALL_SPECS for group in spec.groups})
+
+
+def test_every_batch_group_change_starts_the_mod_tests_job():
+    # prepare-workspace and mod-tests only run on `content`.
+    outside = [
+        pattern
+        for group in _BATCH_GROUPS
+        for pattern in GROUP_PATTERNS[group]
+        if not classify([pattern.replace("**", "probe").replace("*", "probe")])[
+            "content"
+        ]
+    ]
+    assert not outside
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux", reason="the step needs bash 4, which only Linux ships"
+)
+@pytest.mark.parametrize("full_suite", ("true", "false"))
+def test_every_batch_group_reaches_the_validator_batch(tmp_path, full_suite):
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    outputs = workflow["jobs"]["detect-changes"]["outputs"]
+    step = workflow_step("mod-tests", "Compute changed validator groups")
+    env = {"GITHUB_OUTPUT": str(tmp_path / "output"), "G_FULL_SUITE": full_suite}
+    for group in _BATCH_GROUPS:
+        variable = "G_" + group.upper().replace("-", "_")
+        assert outputs[group] == f"${{{{ steps.groups.outputs.{group} }}}}"
+        assert f"outputs.{group} }}}}" in step["env"][variable]
+        env[variable] = "true"
+
+    result = run_bash_step(step["run"], tmp_path, env)
+
+    assert result.returncode == 0, result.stderr
+    emitted = (tmp_path / "output").read_text(encoding="utf-8")
+    assert set(_BATCH_GROUPS) <= set(emitted.removeprefix("groups=").split())
 
 
 def test_group_patterns_preserve_cross_reference_routes():
@@ -886,6 +926,7 @@ def test_group_patterns_preserve_cross_reference_routes():
     for pattern in (
         _CREATE_UNIT_SOURCE_PATTERNS
         + _DELETE_TEMPLATE_SOURCE_PATTERNS
+        + _TEMPLATE_LIMIT_SOURCE_PATTERNS
         + _TEMPLATE_SOURCE_PATTERNS
         + _VARIANT_SOURCE_PATTERNS
     ):
@@ -905,10 +946,6 @@ def test_scripted_param_patterns_scan_every_script_root():
     }
     assert not sorted(set(SCRIPT_ROOTS) - whole_tree)
     caller_dirs = {pattern.split("*", 1)[0] for pattern in _CALLER_PATTERNS}
-    staged = next(
-        spec for spec in STAGED_VALIDATORS if spec["name"] == "scripted params"
-    )
-    assert caller_dirs <= set(staged["prefixes"])
     for directory in caller_dirs:
         sample = directory + "_scripted_param_probe.txt"
         assert classify([sample])["style"] is True

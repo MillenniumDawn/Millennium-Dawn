@@ -15,6 +15,7 @@ either way.
 """
 
 import validate_variables as V
+from shared.suite import variable_scan
 
 _FLAGGED = frozenset({"pak_raj_border_available"})
 
@@ -25,8 +26,8 @@ def _findings(
     f = tmp_path / rel
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(text, encoding="utf-8")
-    return V.process_file_for_untooltipped_available_scripted_trigger(
-        (str(f), str(tmp_path), flagged, ai_categories)
+    return variable_scan(
+        f, "scripted", tmp_path, ai_categories=ai_categories, flagged_names=flagged
     )
 
 

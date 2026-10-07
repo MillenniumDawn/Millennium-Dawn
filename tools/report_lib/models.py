@@ -88,15 +88,6 @@ class ValidatorRun:
         ""  # owning CI job; empty until known (Checks API falls back to the name)
     )
 
-    def status_symbol(self) -> str:
-        return {
-            "passed": "✓ Pass",
-            "warnings": "⚠ Warn",
-            "failed": "✗ Fail",
-            "no_output": "⚠ No output",
-            "unknown": "⚠ Unknown",
-        }.get(self.status, "⚠ Unknown")
-
 
 @dataclass
 class ReportContext:

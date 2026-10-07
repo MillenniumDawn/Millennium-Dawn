@@ -31,6 +31,7 @@ def test_workspace_profile_materializes_only_validator_inputs(tmp_path):
         "interface/core.gfx",
         "gfx/flags/probe.tga",
         "gfx/interface/decisions/probe.dds",
+        "gfx/interface/equipmentdesigner/graphic_db/probe.txt",
         "map/adjacency_rules.txt",
         "music/playlists/probe.txt",
         "resources/documentation/probe.md",

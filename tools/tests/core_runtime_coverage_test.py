@@ -54,14 +54,6 @@ def test_logging_honors_debug_and_no_color(monkeypatch, capsys):
 
 
 def test_parser_factories_and_linting_extensions():
-    standard = U.create_standard_parser("standard")
-    parsed = standard.parse_args(
-        ["input.txt", "--output", "out.txt", "--backup", "-v", "--no-color"]
-    )
-    assert parsed.input_file == "input.txt"
-    assert parsed.output == "out.txt"
-    assert parsed.backup and parsed.verbose and parsed.no_color
-
     file_parser = argparse.ArgumentParser()
     U.add_standard_file_arguments(file_parser, input_help="Custom input")
     assert "Custom input" in file_parser.format_help()
@@ -410,19 +402,8 @@ def test_file_opener_cleaners_and_line_helpers(tmp_path, monkeypatch, capsys):
     assert U.strip_comments('log = "a \\" # keep" # x') == 'log = "a \\" # keep" '
     assert U.blank_quoted_strings('x = "a { b }"\nyes', {4}) == 'x = "a { b }"\nyes'
 
-    assert U.DataCleaner.clear_false_positives({"a": 1, "b": 2}, ("b", "gone")) == {
-        "a": 1
-    }
-    assert U.DataCleaner.clear_false_positives(["a", "b"], ("b",)) == ["a"]
-    assert U.DataCleaner.clear_false_positives(["a"], ()) == ["a"]
-    assert U.DataCleaner.clear_false_positives("a", ()) is None
-    assert U.DataCleaner.clear_false_positives_partial_match(
-        {"abc": 1, "x": 2}, ("b",)
-    ) == {"x": 2}
-    assert U.DataCleaner.clear_false_positives_partial_match(["abc", "x"], ("b",)) == [
-        "x"
-    ]
-    assert U.DataCleaner.clear_false_positives_partial_match("a", ()) is None
+    assert U.drop_partial_matches({"abc": 1, "x": 2}, ("b",)) == ["x"]
+    assert U.drop_partial_matches(["abc", "x"], ()) == ["abc", "x"]
 
     assert U.compute_line_offsets("a\nb\n") == [1, 3]
     assert U.line_for_offset([1, 3], 1) == 1
@@ -537,52 +518,6 @@ def test_staged_file_parsing_subprocess_and_rename(tmp_path, monkeypatch):
         ),
     )
     assert U.get_staged_files(str(tmp_path)) is None
-
-
-def test_run_tool_main_success_backup_and_failures(tmp_path, monkeypatch, capsys):
-    source = tmp_path / "input.txt"
-    destination = tmp_path / "output.txt"
-    _write(source, "input")
-    seen = {}
-
-    class Tool:
-        def __init__(self, verbose=False, use_colors=True):
-            seen["ctor"] = (verbose, use_colors)
-
-        def process_file(self, input_file, output_file):
-            _write(output_file, Path(input_file).read_text(encoding="utf-8").upper())
-            return True
-
-    monkeypatch.setattr(
-        U,
-        "create_backup",
-        lambda filename: seen.setdefault("backup", filename) or "backup",
-    )
-    U.run_tool_main(
-        Tool,
-        argv=[str(source), "-o", str(destination), "--backup", "-v", "--no-color"],
-    )
-    assert destination.read_text(encoding="utf-8") == "INPUT"
-    assert seen["ctor"] == (True, False)
-    assert seen["backup"] == str(source)
-    assert "Processing completed" in capsys.readouterr().err
-
-    class Broken:
-        def process_file(self, *_args):
-            return False
-
-    with pytest.raises(SystemExit) as exc:
-        U.run_tool_main(Broken, argv=[str(source)])
-    assert exc.value.code == 1
-
-    with pytest.raises(SystemExit) as exc:
-        U.run_tool_main(Broken, argv=[str(tmp_path / "missing.txt")])
-    assert exc.value.code == 1
-
-    monkeypatch.setattr(U, "create_backup", lambda _filename: "")
-    with pytest.raises(SystemExit) as exc:
-        U.run_tool_main(Broken, argv=[str(source), "--backup"])
-    assert exc.value.code == 1
 
 
 def test_run_validator_main_cli_paths_and_strict(tmp_path, monkeypatch):

@@ -1,5 +1,5 @@
 """Tests for the cross-country event tooltip check in validate_focus_tree
-(AGENTS.md "Cross-country event tooltips").
+(event-reference.md "Cross-country events").
 
 A completion_reward that fires a country_event into another nation's scope
 should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT. Fires to self (bare,
@@ -8,6 +8,7 @@ event the target cannot answer.
 """
 
 import validate_focus_tree as vft
+from shared.suite import write_focus_file as _write_focus_file
 from validate_focus_tree import (
     _country_event_target_is_foreign,
     _FocusFile,
@@ -15,14 +16,6 @@ from validate_focus_tree import (
 )
 
 OWNER = frozenset({"BUL"})
-
-
-def _write_focus_file(tmp_path, content):
-    nf_dir = tmp_path / "common" / "national_focus"
-    nf_dir.mkdir(parents=True, exist_ok=True)
-    fpath = nf_dir / "test.txt"
-    fpath.write_text(content, encoding="utf-8")
-    return fpath
 
 
 TREE_TEMPLATE = """focus_tree = {{

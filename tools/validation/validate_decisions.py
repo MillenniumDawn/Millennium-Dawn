@@ -1665,7 +1665,7 @@ class Validator(BaseValidator):
         fixed_total = self._apply_decision_file_fixes(fixes, patch)
 
         self.log(
-            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.GREEN}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC}"
         )
         if fixed_total:
             _invalidate_decision_cache()
@@ -1720,9 +1720,7 @@ class Validator(BaseValidator):
         }
 
         if not cats_to_validate:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No empty decision categories{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No empty decision categories{Colors.ENDC}")
             return
 
         bop_path = str(Path(self.mod_path) / "common" / "bop")
@@ -1739,7 +1737,7 @@ class Validator(BaseValidator):
 
         if not found_files:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}No BOP files found, skipping BOP check{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}No BOP files found, skipping BOP check{Colors.ENDC}",
                 "warning",
             )
 
@@ -2443,7 +2441,7 @@ class Validator(BaseValidator):
         )
 
         self.log(
-            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.GREEN}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC}"
         )
         if fixed_total:
             _invalidate_decision_cache()
@@ -2623,16 +2621,12 @@ class Validator(BaseValidator):
     def validate_unannounced_categories(self):
         """Flag categories that switch on mid-game without telling the player.
 
-        A category with no `visible` block is always on the decisions tab, and
-        one gated only on the tag or the date is on from the start, so neither
-        has anything to announce. A category gated on state that flips during
-        play — a flag, a completed focus, an idea, a variable — appears part-way
-        through, and needs `unlock_decision_category_tooltip` (or
-        `unlock_decision_tooltip` on one of its decisions) in whatever turns it
-        on. Without it a whole tab of decisions shows up with no indication of
-        where it came from. AI-only categories are exempt: nobody is watching.
-        So are the `unannounced_category_exempt` config entries, which have
-        nothing a tooltip could announce.
+        A category with no `visible` block or only tag/date gates has nothing
+        to announce. A flag, focus, idea or variable gate needs
+        `unlock_decision_category_tooltip` (or `unlock_decision_tooltip` on one
+        of its decisions) in whatever opens it. AI-only categories are exempt.
+        Other exceptions, including startup gates and shared state with no
+        single unlock effect, need a reason in `unannounced_category_exempt`.
         """
         self._log_section("Checking decision categories announce themselves...")
         self._report(
@@ -2732,7 +2726,7 @@ class Validator(BaseValidator):
     def validate_missing_log(self):
         """Flag decision effect blocks that carry no log line.
 
-        AGENTS.md / decision-reference.md require the log in every block the
+        decision-reference.md requires the log in every block the
         engine runs as a decision's effects (complete_effect, remove_effect,
         timeout_effect, cancel_effect):
         `log = "[GetDateText]: [Root.GetName]: Decision <ID>"`. An effect block
