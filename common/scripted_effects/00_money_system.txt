@@ -4149,50 +4149,127 @@ calculate_int_investments_rate = {
 # Effect: calculate_resource_sale_rate
 # Purpose: Computes weekly revenue from resource exports at market prices
 calculate_resource_sale_rate = {
-	#Additive export multipliers (base + per-resource modifiers), computed before the export revenue so each fold reads the finished multiplier
-	set_temp_variable = { resource_export_multiplier = { value = 1 add = modifier@resource_export_multiplier_modifier } }
-
-	set_temp_variable = { oil_export_multiplier = { value = resource_export_multiplier add = modifier@oil_export_multiplier_modifier } }
-	set_temp_variable = { steel_export_multiplier = { value = resource_export_multiplier add = modifier@steel_export_multiplier_modifier } }
-	set_temp_variable = { aluminium_export_multiplier = { value = resource_export_multiplier add = modifier@aluminium_export_multiplier_modifier } }
-	set_temp_variable = { tungsten_export_multiplier = { value = resource_export_multiplier add = modifier@tungsten_export_multiplier_modifier } }
-	set_temp_variable = { chromium_export_multiplier = { value = resource_export_multiplier add = modifier@chromium_export_multiplier_modifier } }
-	set_temp_variable = { rubber_export_multiplier = { value = resource_export_multiplier add = modifier@rubber_export_multiplier_modifier } }
-	set_temp_variable = { microchip_export_multiplier = { value = resource_export_multiplier add = modifier@microchip_export_multiplier_modifier } }
-	set_temp_variable = { composite_export_multiplier = { value = resource_export_multiplier add = modifier@composite_export_multiplier_modifier } }
-
 	#Revenue = exported amount * market price * export multiplier * yearly-to-weekly constant
-	set_variable = { oil_exports = { value = resource_exported@oil multiply = global.oil_price multiply = oil_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { steel_exports = { value = resource_exported@steel multiply = global.steel_price multiply = steel_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { aluminium_exports = { value = resource_exported@aluminium multiply = global.aluminium_price multiply = aluminium_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { tungsten_exports = { value = resource_exported@tungsten multiply = global.tungsten_price multiply = tungsten_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { chromium_exports = { value = resource_exported@chromium multiply = global.chromium_price multiply = chromium_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { rubber_exports = { value = resource_exported@rubber multiply = global.rubber_price multiply = rubber_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { microchip_exports = { value = resource_exported@microchips multiply = global.microchip_price multiply = microchip_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { composite_exports = { value = resource_exported@composites multiply = global.composite_price multiply = composite_export_multiplier multiply = @resource_sale_rate_constant } }
-
-	# Clamp Export Values at 0 so Luigi's massive negatives don't break my shit
-	clamp_variable = { var = oil_exports min = 0 }
-	clamp_variable = { var = steel_exports min = 0 }
-	clamp_variable = { var = aluminium_exports min = 0 }
-	clamp_variable = { var = tungsten_exports min = 0 }
-	clamp_variable = { var = chromium_exports min = 0 }
-	clamp_variable = { var = rubber_exports min = 0 }
-	clamp_variable = { var = microchip_exports min = 0 }
-	clamp_variable = { var = composite_exports min = 0 }
+	#The closing max = 0 is a floor at 0 so Luigi's massive negatives don't break my shit
+	set_variable = {
+		oil_exports = {
+			value = resource_exported@oil
+			multiply = global.oil_price
+			multiply = {
+				value = 1
+				add = modifier@oil_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		steel_exports = {
+			value = resource_exported@steel
+			multiply = global.steel_price
+			multiply = {
+				value = 1
+				add = modifier@steel_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		aluminium_exports = {
+			value = resource_exported@aluminium
+			multiply = global.aluminium_price
+			multiply = {
+				value = 1
+				add = modifier@aluminium_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		tungsten_exports = {
+			value = resource_exported@tungsten
+			multiply = global.tungsten_price
+			multiply = {
+				value = 1
+				add = modifier@tungsten_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		chromium_exports = {
+			value = resource_exported@chromium
+			multiply = global.chromium_price
+			multiply = {
+				value = 1
+				add = modifier@chromium_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		rubber_exports = {
+			value = resource_exported@rubber
+			multiply = global.rubber_price
+			multiply = {
+				value = 1
+				add = modifier@rubber_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		microchip_exports = {
+			value = resource_exported@microchips
+			multiply = global.microchip_price
+			multiply = {
+				value = 1
+				add = modifier@microchip_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		composite_exports = {
+			value = resource_exported@composites
+			multiply = global.composite_price
+			multiply = {
+				value = 1
+				add = modifier@composite_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
 
 	#Add total cost
-	set_variable = { resource_sale_rate = {
-		value = oil_exports
-		add = steel_exports
-		add = aluminium_exports
-		add = tungsten_exports
-		add = chromium_exports
-		add = rubber_exports
-		add = microchip_exports
-		add = composite_exports
-		clamp = { min = 0 max = @math_expressions_max }
-	} }
+	set_variable = {
+		resource_sale_rate = {
+			value = oil_exports
+			add = steel_exports
+			add = aluminium_exports
+			add = tungsten_exports
+			add = chromium_exports
+			add = rubber_exports
+			add = microchip_exports
+			add = composite_exports
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
 }
 
 # Effect: update_display
