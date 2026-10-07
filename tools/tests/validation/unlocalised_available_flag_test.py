@@ -1,7 +1,7 @@
 """Regressions for the unlocalised-available-flag check in validate_variables.
 
 HOI4 renders the requirement line for a `has_country_flag` / `has_global_flag`
-check inside a player-facing `available` block from a localisation key named
+check inside a player-facing `available`, `cancel_trigger` or `bypass` block from a localisation key named
 after the flag itself. With no such key the player reads the raw flag token
 instead of a human-readable requirement.
 
@@ -11,13 +11,14 @@ outright, so no requirement line renders either way.
 """
 
 import validate_variables as V
+from shared.suite import variable_scan
 
 
 def _findings(tmp_path, text, ai_categories=frozenset(), rel="src.txt"):
     f = tmp_path / rel
     f.parent.mkdir(parents=True, exist_ok=True)
     f.write_text(text, encoding="utf-8")
-    return V.process_file_for_available_flags((str(f), str(tmp_path), ai_categories))
+    return variable_scan(f, "available_flags", tmp_path, ai_categories=ai_categories)
 
 
 def test_shorthand_flag_in_available_flagged(tmp_path):
@@ -209,8 +210,50 @@ def test_only_unlocalised_flags_reported(tmp_path):
     issue = v._issues[0]
     assert "ENG_unknown_flag" in issue.message
     assert "ENG_known_flag" not in issue.message
-    assert issue.severity == V.Severity.WARNING
+    assert issue.severity == V.Severity.ERROR
     assert issue.category == "unlocalised-available-flag"
+
+
+def test_cancel_trigger_flag_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "ENG_welsh_referendum = {\n"
+        "\tcancel_trigger = {\n"
+        "\t\tOR = {\n"
+        "\t\t\tcountry_exists = WAS\n"
+        "\t\t\thas_country_flag = ENG_devolution_purged\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert len(out) == 1
+    assert out[0][0] == "ENG_devolution_purged"
+    assert out[0][4] == "cancel_trigger"
+
+
+def test_bypass_flag_flagged(tmp_path):
+    out = _findings(
+        tmp_path,
+        "focus = {\n"
+        "\tid = NRY_focus\n"
+        "\tbypass = { has_country_flag = NRY_UK_DECLINED }\n"
+        "}\n",
+    )
+    assert len(out) == 1
+    assert out[0][0] == "NRY_UK_DECLINED"
+    assert out[0][4] == "bypass"
+
+
+def test_hidden_trigger_in_cancel_trigger_ok(tmp_path):
+    out = _findings(
+        tmp_path,
+        "my_mission = {\n"
+        "\tcancel_trigger = {\n"
+        "\t\thidden_trigger = { has_country_flag = a }\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert out == []
 
 
 # --- AI-only exemption -------------------------------------------------------

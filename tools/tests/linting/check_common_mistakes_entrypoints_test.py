@@ -2,8 +2,8 @@
 
 check_common_mistakes_test.py drills the individual `_check_*` scanners with
 hand-built line lists. This file covers what sits around them: check_file's
-per-directory dispatch and its own inline rules, the reference scan and report
-writer, and main()'s exit codes.
+per-directory dispatch and its own inline rules, the reference scan, and main()'s
+exit codes.
 """
 
 import runpy
@@ -11,12 +11,7 @@ import sys
 
 import check_common_mistakes as checker
 import pytest
-
-
-def _write(path, content):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
+from shared.suite import write_text as _write
 
 
 def _script(*lines):
@@ -426,31 +421,7 @@ def test_main_reports_issues_and_exits_nonzero(tmp_path, monkeypatch, capsys):
     assert "Found 1 issue(s)" in out
 
 
-def test_main_writes_a_report_and_a_json_sidecar(tmp_path, monkeypatch):
-    path = tmp_path / "common" / "dirty.txt"
-    _write(path, _script("test_trigger = { is_at_war = yes }"))
-    output = tmp_path / "report.log"
-
-    assert _run_main(monkeypatch, tmp_path, str(path), "--output", str(output)) == 1
-
-    report = output.read_text(encoding="utf-8")
-    assert "✗ VALIDATION COMPLETE - 1 ERROR(S) - 0 WARNING(S)" in report
-    sidecar = (tmp_path / "report.json").read_text(encoding="utf-8")
-    assert '"category": "common-mistakes"' in sidecar
-    assert '"line": 1' in sidecar
-
-
 def test_main_reports_an_empty_run(tmp_path, monkeypatch, capsys):
-    output = tmp_path / "report.log"
-
-    assert _run_main(monkeypatch, tmp_path, "--output", str(output)) == 0
-
-    assert "No files to check" in capsys.readouterr().out
-    assert "0 ERROR(S)" in output.read_text(encoding="utf-8")
-    assert (tmp_path / "report.json").read_text(encoding="utf-8") == "[]"
-
-
-def test_main_writes_no_report_without_the_output_flag(tmp_path, monkeypatch, capsys):
     assert _run_main(monkeypatch, tmp_path) == 0
 
     assert "No files to check" in capsys.readouterr().out

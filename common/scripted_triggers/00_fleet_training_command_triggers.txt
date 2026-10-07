@@ -1,0 +1,156 @@
+@MD_ftc_exercise_cost = 450
+@MD_ftc_upgrade_cost_1 = 550
+@MD_ftc_upgrade_cost_2 = 650
+@MD_ftc_upgrade_cost_3 = 800
+@MD_ftc_staff_course_cost = 350
+@MD_ftc_flag_officer_cost = 450
+@MD_ftc_flag_officer_skill_cap = 9
+@MD_ftc_rnd_liaison_cost = 600
+@MD_ftc_fleet_min_ships = 8
+@MD_ftc_min_convoys = 100
+@MD_ftc_command_power_cost = 75
+
+MD_ftc_can_start_exercise_capital = {
+	has_navy_experience > @MD_ftc_exercise_cost
+	command_power > @MD_ftc_command_power_cost
+	NOT = { has_idea = MD_ftc_exercise_capital }
+	NOT = { has_navy_size = { size < @MD_ftc_fleet_min_ships } }
+	OR = {
+		has_navy_size = { unit = carrier size > 0 }
+		has_navy_size = { unit = helicopter_operator size > 0 }
+		has_navy_size = { unit = battleship size > 0 }
+		has_navy_size = { unit = battle_cruiser size > 0 }
+		has_navy_size = { unit = cruiser size > 0 }
+		has_navy_size = { unit = destroyer size > 0 }
+		has_navy_size = { unit = stealth_destroyer size > 0 }
+		has_navy_size = { unit = heavy_frigate size > 0 }
+	}
+}
+
+MD_ftc_can_start_exercise_escort = {
+	has_navy_experience > @MD_ftc_exercise_cost
+	command_power > @MD_ftc_command_power_cost
+	NOT = { has_idea = MD_ftc_exercise_escort }
+	NOT = { has_navy_size = { size < @MD_ftc_fleet_min_ships } }
+	OR = {
+		has_navy_size = { unit = frigate size > 0 }
+		has_navy_size = { unit = corvette size > 0 }
+		has_navy_size = { unit = patrol_boat size > 0 }
+		has_navy_size = { unit = screen_destroyer size > 0 }
+		has_navy_size = { unit = stealth_frigate size > 0 }
+		has_navy_size = { unit = stealth_corvette size > 0 }
+	}
+}
+
+MD_ftc_can_start_exercise_submarine = {
+	has_navy_experience > @MD_ftc_exercise_cost
+	command_power > @MD_ftc_command_power_cost
+	NOT = { has_idea = MD_ftc_exercise_submarine }
+	NOT = { has_navy_size = { size < @MD_ftc_fleet_min_ships } }
+	OR = {
+		has_navy_size = { unit = attack_submarine size > 0 }
+		has_navy_size = { unit = missile_submarine size > 0 }
+	}
+}
+
+MD_ftc_can_start_exercise_operations = {
+	has_navy_experience > @MD_ftc_exercise_cost
+	command_power > @MD_ftc_command_power_cost
+	NOT = { has_idea = MD_ftc_exercise_operations }
+	NOT = { has_navy_size = { size < @MD_ftc_fleet_min_ships } }
+	has_navy_size = { unit = repair_ship size > 0 }
+	has_navy_size = { unit = support_ship size > 0 }
+	NOT = { has_equipment = { convoy < @MD_ftc_min_convoys } }
+}
+
+MD_ftc_can_upgrade_academy = {
+	OR = {
+		AND = {
+			check_variable = { MD_ftc_academy_level < 1 }
+			has_navy_experience > @MD_ftc_upgrade_cost_1
+		}
+		AND = {
+			check_variable = { MD_ftc_academy_level = 1 }
+			has_navy_experience > @MD_ftc_upgrade_cost_2
+		}
+		AND = {
+			check_variable = { MD_ftc_academy_level = 2 }
+			has_navy_experience > @MD_ftc_upgrade_cost_3
+		}
+	}
+}
+
+MD_ftc_can_upgrade_fleet = {
+	OR = {
+		AND = {
+			check_variable = { MD_ftc_fleet_level < 1 }
+			has_navy_experience > @MD_ftc_upgrade_cost_1
+		}
+		AND = {
+			check_variable = { MD_ftc_fleet_level = 1 }
+			has_navy_experience > @MD_ftc_upgrade_cost_2
+		}
+		AND = {
+			check_variable = { MD_ftc_fleet_level = 2 }
+			has_navy_experience > @MD_ftc_upgrade_cost_3
+		}
+	}
+}
+
+MD_ftc_can_upgrade_command = {
+	OR = {
+		AND = {
+			check_variable = { MD_ftc_command_level < 1 }
+			has_navy_experience > @MD_ftc_upgrade_cost_1
+		}
+		AND = {
+			check_variable = { MD_ftc_command_level = 1 }
+			has_navy_experience > @MD_ftc_upgrade_cost_2
+		}
+		AND = {
+			check_variable = { MD_ftc_command_level = 2 }
+			has_navy_experience > @MD_ftc_upgrade_cost_3
+		}
+	}
+}
+
+MD_ftc_can_run_staff_course = {
+	has_navy_experience > @MD_ftc_staff_course_cost
+	command_power > @MD_ftc_command_power_cost
+	NOT = { has_idea = MD_ftc_staff_course_cooldown }
+	any_navy_leader = { always = yes }
+}
+
+MD_ftc_can_run_flag_officer_course = {
+	has_navy_experience > @MD_ftc_flag_officer_cost
+	command_power > @MD_ftc_command_power_cost
+	NOT = { has_idea = MD_ftc_flag_officer_course_cooldown }
+	any_navy_leader = { skill < @MD_ftc_flag_officer_skill_cap }
+}
+
+MD_ftc_can_run_rnd_liaison = {
+	has_navy_experience > @MD_ftc_rnd_liaison_cost
+	command_power > @MD_ftc_command_power_cost
+	NOT = { has_idea = MD_ftc_rnd_liaison_cooldown }
+}
+
+MD_ftc_doctrine_changed = {
+	OR = {
+		AND = {
+			has_country_flag = MD_ftc_doctrine_blue_water
+			NOT = { has_doctrine = blue_water }
+		}
+		AND = {
+			has_country_flag = MD_ftc_doctrine_green_water
+			NOT = { has_doctrine = green_water }
+		}
+		AND = {
+			has_country_flag = MD_ftc_doctrine_jeune_ecole
+			NOT = { has_doctrine = jeune_ecole }
+		}
+		AND = {
+			has_country_flag = MD_ftc_doctrine_guerre_de_course
+			NOT = { has_doctrine = guerre_de_course }
+		}
+	}
+}

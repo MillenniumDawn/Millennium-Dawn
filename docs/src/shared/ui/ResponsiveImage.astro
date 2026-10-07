@@ -47,12 +47,18 @@ const resolvedSrc = resolveImageSource(src);
 const pictureClassName = [wrapperClass?.trim()].filter(Boolean).join(" ");
 const imageClassName = className?.trim() ? className.trim() : "rounded";
 const isMetadataSource = typeof resolvedSrc !== "string";
-const resolvedWidth = width ?? (isMetadataSource ? resolvedSrc.width : undefined);
-const resolvedHeight = height ?? (isMetadataSource ? resolvedSrc.height : undefined);
+const sourceWidth = width ?? (isMetadataSource ? resolvedSrc.width : undefined);
+const sourceHeight = height ?? (isMetadataSource ? resolvedSrc.height : undefined);
 
-if (!resolvedWidth || !resolvedHeight) {
+if (!sourceWidth || !sourceHeight) {
   throw new Error("ResponsiveImage requires width and height.");
 }
+
+/* The content column is 1200px wide; the lightbox serves the original. */
+const MAX_RENDER_WIDTH = 1920;
+const renderScale = Math.min(1, MAX_RENDER_WIDTH / sourceWidth);
+const resolvedWidth = Math.round(sourceWidth * renderScale);
+const resolvedHeight = Math.round(sourceHeight * renderScale);
 
 const resolvedAlt = decorative ? "" : alt;
 const pictureAttrs = decorative ? { role: "presentation" as const, "aria-hidden": "true" as const } : {};

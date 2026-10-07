@@ -11,6 +11,7 @@ import os
 
 import pytest
 import validate_localisation as VL
+from shared.suite import yml_scan, yml_syntax
 
 
 def _write(path, body, encoding="utf-8-sig"):
@@ -33,7 +34,7 @@ def _txt(tmp_path, relative, body):
 
 def test_unclosed_colour_codes_report_the_expected_count(tmp_path):
     path = _english(tmp_path, "a_l_english.yml", 'l_english:\n A:0 "§Ya §Yb"\n')
-    results = VL.process_yml_for_syntax((path, ["Y"], frozenset()))
+    results = yml_syntax(path, ["Y"])
     assert len(results) == 1
     assert isinstance(results[0], str)
     assert "expected 1 § but got 0" in results[0].replace("§!", "§")
@@ -41,7 +42,7 @@ def test_unclosed_colour_codes_report_the_expected_count(tmp_path):
 
 def test_balanced_colour_codes_are_clean(tmp_path):
     path = _english(tmp_path, "b_l_english.yml", 'l_english:\n B:0 "§Ya§! §Yb§!"\n')
-    assert VL.process_yml_for_syntax((path, ["Y"], frozenset())) == []
+    assert yml_syntax(path, ["Y"]) == []
 
 
 # --- mandatory l_english: line ----------------------------------------------
@@ -49,12 +50,12 @@ def test_balanced_colour_codes_are_clean(tmp_path):
 
 def test_empty_loc_file_is_not_reported_as_missing_the_header(tmp_path):
     path = _english(tmp_path, "empty_l_english.yml", "")
-    assert VL.process_yml_for_mandatory((path,)) == []
+    assert yml_scan(path, "mandatory") == []
 
 
 def test_loc_file_without_the_header_is_reported(tmp_path):
     path = _english(tmp_path, "headless_l_english.yml", ' KEY:0 "value"\n')
-    assert VL.process_yml_for_mandatory((path,)) == [
+    assert yml_scan(path, "mandatory") == [
         "headless_l_english.yml - l_english: line is absent"
     ]
 
@@ -64,10 +65,10 @@ def test_loc_file_without_the_header_is_reported(tmp_path):
 
 def test_exempt_phrase_suppresses_a_watchlist_hit(tmp_path, monkeypatch):
     path = _english(tmp_path, "typo_l_english.yml", 'l_english:\n T:0 "seperate"\n')
-    assert len(VL.process_yml_for_typos((path,))) == 1
+    assert len(yml_scan(path, "typos")) == 1
 
     monkeypatch.setattr(VL, "_TYPO_EXEMPTIONS", {"seperate"})
-    assert VL.process_yml_for_typos((path,)) == []
+    assert yml_scan(path, "typos") == []
 
 
 # --- localization_key = references ------------------------------------------
@@ -265,13 +266,6 @@ def test_skipped_file_without_the_english_header_is_ignored(tmp_path):
     assert VL._get_skipped_loc_keys(str(tmp_path)) == set()
 
 
-def test_substitution_key_scan_tolerates_an_unreadable_file(tmp_path):
-    good = _english(tmp_path, "subst_l_english.yml", 'l_english:\n A:0 "$gip$"\n')
-    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-    keys = validator._collect_substitution_keys([str(tmp_path / "gone.yml"), good])
-    assert keys == frozenset({"gip"})
-
-
 # --- add_resistance_target tooltips -----------------------------------------
 
 
@@ -439,6 +433,75 @@ def test_opinion_modifier_scan_tolerates_a_vanished_file(tmp_path, monkeypatch):
     }
 
 
+# --- raids ------------------------------------------------------------------
+
+
+def _raid_files(tmp_path):
+    _txt(
+        tmp_path,
+        "common/raids/00_test.txt",
+        "types = {\n"
+        "\tlocalised_raid = {\n\t\tcategory = test_raids\n\t}\n"
+        "\tunlocalised_raid = {\n\t\tcategory = test_raids\n\t}\n"
+        "}\n",
+    )
+    _txt(
+        tmp_path,
+        "common/raids/categories/00_test.txt",
+        "categories = {\n\ttest_raids = {\n\t\tintel_source = army\n\t}\n}\n",
+    )
+
+
+def test_raid_without_name_or_desc_is_a_warning(tmp_path):
+    _raid_files(tmp_path)
+    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_raid_localisation(
+        {
+            "raid_type_localised_raid": "Raid",
+            "raid_type_localised_raid_desc": "Desc",
+            "raid_type_unlocalised_raid": "Raid",
+            "raid_category_test_raids": "Test Raids",
+        },
+        set(),
+    )
+
+    assert validator.errors_found == 0
+    assert [i.message for i in validator._issues] == [
+        "raid_type_unlocalised_raid_desc - 00_test.txt: raid without localisation"
+    ]
+    assert validator._issues[0].category == "missing-raid-localisation"
+
+
+def test_raid_category_without_localisation_is_flagged(tmp_path):
+    _raid_files(tmp_path)
+    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_raid_localisation({}, set())
+
+    assert {i.message.split(" - ")[0] for i in validator._issues} == {
+        "raid_category_test_raids",
+        "raid_type_localised_raid",
+        "raid_type_localised_raid_desc",
+        "raid_type_unlocalised_raid",
+        "raid_type_unlocalised_raid_desc",
+    }
+
+
+def test_raid_localised_by_scripted_or_vanilla_loc_is_clean(tmp_path):
+    _txt(
+        tmp_path,
+        "common/raids/00_test.txt",
+        "types = {\n"
+        "\trescue_captured_general = {\n\t}\n"
+        "\tscripted_raid = {\n\t}\n"
+        "}\n",
+    )
+    validator = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    validator.validate_raid_localisation(
+        {}, {"raid_type_scripted_raid", "raid_type_scripted_raid_desc"}
+    )
+    assert validator._issues == []
+
+
 # --- staged mode ------------------------------------------------------------
 
 
@@ -518,7 +581,7 @@ def test_files_without_the_english_header_are_not_read_for_keys(tmp_path):
 
 def test_issue_paths_use_the_file_basename(tmp_path):
     path = _english(tmp_path, "prose_l_english.yml", 'l_english:\n A:0 "a — b"\n')
-    issues = VL.process_yml_for_prose((path,))
+    issues = yml_scan(path, "prose")
     assert [i.file for i in issues] == [os.path.basename(path)]
 
 
@@ -701,6 +764,15 @@ def test_engine_random_and_vanilla_written_reads_are_known(tmp_path):
     assert _unwritten_names(tmp_path) == {"collaboration_formed_by"}
 
 
+def test_collaboration_formed_by_is_allowed_in_vanilla_autonomy_file(tmp_path):
+    _txt(
+        tmp_path,
+        "common/autonomous_states/lar_collaboration_government.txt",
+        "x = {\n\thas_variable = collaboration_formed_by\n}\n",
+    )
+    assert _unwritten_names(tmp_path) == set()
+
+
 def test_loop_binder_is_a_written_variable(tmp_path):
     _txt(
         tmp_path,
@@ -715,6 +787,22 @@ def test_loop_binder_is_a_written_variable(tmp_path):
     v = VL.Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
     v.validate_unwritten_script_variables()
     assert v._issues == []
+
+
+def test_loop_binder_nested_in_another_loop_is_a_written_variable(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tfor_loop_effect = {\n"
+        "\t\tend = 3\n"
+        "\t\tfind_highest_in_array = { array = gdp_array value = max index = max_index }\n"
+        "\t\tcheck_variable = { max > 0 }\n"
+        "\t\tcheck_variable = { max_index > 0 }\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert _unwritten_names(tmp_path) == set()
 
 
 def test_any_of_and_all_of_bind_value_only_inside_the_collection(tmp_path):

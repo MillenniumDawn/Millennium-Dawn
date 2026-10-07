@@ -3,6 +3,10 @@ title: Art Standards
 description: Document detailing Millennium Dawn's GFX/Art Standards
 ---
 
+## 3D Models
+
+Follow the [3D Model Performance Guidelines](/dev-resources/3d-model-performance-guidelines/) for mesh and texture budgets, triangle targets, CM consultation, and permissions for public redistribution through GitHub.
+
 ## File Management
 
 All graphics need to be placed in the right location to ensure they aren’t lost and implemented into the game. Here are the resources you need and the places you need to be looking when you finish your icons.
