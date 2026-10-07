@@ -1093,7 +1093,7 @@ country_event = {
 						Militia_Bat = { x = 1 y = 2 }
 						Militia_Bat = { x = 2 y = 1 }
 						Arty_Bat = { x = 2 y = 0 }
-						Arty_Bat = { x = 2 y = 1 }
+						Arty_Bat = { x = 2 y = 3 }
 						Arty_Bat = { x = 2 y = 2 }
 					}
 					support = {
@@ -5802,7 +5802,7 @@ country_event = {
 				}
 				support = {
 					L_Engi_Comp = { x = 0 y = 0 }
-					L_Recce_Comp = { x = 0 y = 0 }
+					L_Recce_Comp = { x = 0 y = 1 }
 				}
 				priority = 2
 			}
@@ -6097,8 +6097,7 @@ country_event = {
 						country_exists = UKR
 						NOT = { has_war_with = UKR }
 						all_core_state = {
-							is_owned_by = HUN
-							is_controlled_by = HUN
+							is_owned_and_controlled_by = HUN
 						}
 					}
 				}
@@ -6134,8 +6133,7 @@ country_event = {
 				country_exists = UKR
 				NOT = { has_war_with = UKR }
 				all_core_state = {
-					is_owned_by = HUN
-					is_controlled_by = HUN
+					is_owned_and_controlled_by = HUN
 				}
 			}
 			UKR = {
@@ -21242,27 +21240,26 @@ news_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	trigger = {
-		original_tag = UKR
-		check_variable = { var = cb_policy_rate value = 17 compare = greater_than_or_equals } # rate stays >= 7 after the cut
-	}
+	trigger = { original_tag = UKR }
 
 	option = {
 		name = ukr_economy_rate.5.a
 		log = "[GetDateText]: [This.GetName]: ukr_economy_rate.5.a executed"
 
-		subtract_from_variable = { cb_policy_rate = 10 }
-		clamp_variable = { var = cb_policy_rate min = 0 }
-		set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
-		custom_effect_tooltip = { localization_key = modifies_cb_policy_rate_tt RATE = 10 }
+		# The game starts at the 30% cap, so the historical 45% to 29% easing is one point here
+		if = { limit = { check_variable = { cb_policy_rate > 29 } }
+			subtract_from_variable = { cb_policy_rate = 1 }
+			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
+			custom_effect_tooltip = { localization_key = modifies_cb_policy_rate_tt RATE = 1 }
+		}
 
-		set_temp_variable = { int_investment_change = 0.50 }
+		set_temp_variable = { int_investment_change = 0.80 }
 		modify_international_investment_effect = yes
 		custom_effect_tooltip = {
 			localization_key = modifies_dynamic_modifier_tt
 			MODIFIER = UKR_economic_reforms_modifier
 		}
-		add_to_variable = { UKR_econ_mod_productivity_growth_modifier = 0.040 tooltip = productivity_growth_modifier_tt }
+		add_to_variable = { UKR_econ_mod_productivity_growth_modifier = 0.070 tooltip = productivity_growth_modifier_tt }
 	}
 
 	option = {
