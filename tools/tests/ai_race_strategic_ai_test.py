@@ -15,6 +15,8 @@ AI_STRATEGIES = ROOT / "common/ai_strategy/MD_ai_race_ai.txt"
 CAPACITY_EFFECTS = ROOT / "common/scripted_effects/01_ai_race_capacity_effects.txt"
 ECONOMIC_EFFECTS = ROOT / "common/scripted_effects/00_economic_system_utilities.txt"
 ECONOMIC_TRIGGERS = ROOT / "common/scripted_triggers/00_economic_triggers.txt"
+INVESTMENT_EFFECTS = ROOT / "common/scripted_effects/99_investment_scripted_effects.txt"
+INVESTMENT_EVENTS = ROOT / "events/investments_events.txt"
 
 
 class StrategicRaceScript(RaceScript):
@@ -29,6 +31,9 @@ class StrategicRaceScript(RaceScript):
         self.effects["ai_repay_debt"] = _parse_race_script(
             ECONOMIC_EFFECTS.read_text(encoding="utf-8")
         )["ai_repay_debt"]
+        self.effects["calculate_investment_spendable_treasury"] = _parse_race_script(
+            INVESTMENT_EFFECTS.read_text(encoding="utf-8")
+        )["calculate_investment_spendable_treasury"]
         self.triggers.update(
             _parse_race_script(AI_TRIGGERS.read_text(encoding="utf-8"))
         )
@@ -152,6 +157,58 @@ class StrategicRaceScript(RaceScript):
             self.execute(self.effects[name], identifier)
         else:
             super().run(name, identifier)
+
+
+class InvestmentOfferScript(StrategicRaceScript):
+    def __init__(self):
+        super().__init__()
+        investment_effects = _parse_race_script(
+            INVESTMENT_EFFECTS.read_text(encoding="utf-8")
+        )
+        self.effects["accept_pending_investment_offer"] = investment_effects[
+            "accept_pending_investment_offer"
+        ]
+        self.effects["start_project_two"] = None
+        self.effects["change_influence_percentage"] = None
+        self.event_root = None
+        self.event_from = None
+        self.started_projects = []
+        self.influence_changes = []
+
+    def value(self, name, identifier):
+        if name == "PREV.id":
+            return self.scope_stack[-1]
+        return super().value(name, identifier)
+
+    def execute(self, statements, identifier):
+        for statement in statements:
+            key, _comparison, operand = statement
+            if key in {"FROM", "ROOT"}:
+                target = self.event_from if key == "FROM" else self.event_root
+                self.scope_stack.append(identifier)
+                try:
+                    self.execute(operand, target)
+                finally:
+                    self.scope_stack.pop()
+            elif key in {"newline", "custom_effect_tooltip"}:
+                continue
+            else:
+                super().execute([statement], identifier)
+
+    def run(self, name, identifier):
+        if name == "start_project_two":
+            cost = self.countries[identifier]["vars"]["project_monetary_cost_effect"]
+            self.countries[identifier]["vars"]["treasury"] += cost
+            self.started_projects.append((identifier, -cost))
+        elif name == "change_influence_percentage":
+            self.influence_changes.append((identifier, self.scope_stack[-1]))
+        else:
+            super().run(name, identifier)
+
+    def accept_offer(self, investor, recipient):
+        self.event_root = recipient
+        self.event_from = investor
+        self.run("accept_pending_investment_offer", recipient)
 
 
 def _planner(*, stage=0, year=2013, month=1):
@@ -463,6 +520,104 @@ def test_live_expansion_brake_releases_cached_savings_before_next_planner_tick(r
     )
     assert variables["treasury"] == pytest.approx(expected_reserve)
     assert variables["debt"] == pytest.approx(400 - (200 - expected_reserve))
+
+
+@pytest.mark.parametrize(
+    "target_stage,savings,expected",
+    [(1, 154, 46), (0, 154, 200), (1, 250, -50)],
+)
+def test_outgoing_investment_spendable_treasury_preserves_the_live_race_reserve(
+    target_stage, savings, expected
+):
+    race, country = _planner()
+    country["vars"].update(
+        treasury=200,
+        ai_race_ai_target_stage=target_stage,
+        ai_race_ai_savings_target=savings,
+    )
+    race.run("calculate_investment_spendable_treasury", 1)
+    assert race.temps["investment_spendable_treasury"] == expected
+
+
+def test_investment_offer_and_acceptance_use_the_calculated_and_saved_project_costs():
+    events = INVESTMENT_EVENTS.read_text(encoding="utf-8")
+    ai_offer = events[events.index("# AI Investment Initialization") :]
+    assert ai_offer.index("project_monetary_cost_calculation = yes") < ai_offer.index(
+        "calculate_investment_spendable_treasury = yes"
+    )
+    assert (
+        "check_variable = { var = investment_spendable_treasury "
+        "value = project_monetary_cost^-1 compare = greater_than_or_equals }"
+        in ai_offer
+    )
+
+    acceptance = _named_block(
+        INVESTMENT_EFFECTS.read_text(encoding="utf-8"),
+        "accept_pending_investment_offer",
+    )
+    assert (
+        "set_temp_variable = { investment_offer_cost = PREV.pending_offer_total_cost }"
+        in acceptance
+    )
+    assert (
+        "check_variable = { var = investment_spendable_treasury "
+        "value = investment_offer_cost compare = greater_than_or_equals }" in acceptance
+    )
+    assert acceptance.index("investment_offer_cost") < acceptance.index(
+        "set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }"
+    )
+    assert acceptance.index(
+        "set_variable = { project_monetary_cost^-1 = PREV.pending_offer_total_cost }"
+    ) < acceptance.index("start_project_two = yes")
+    assert "investment_offer_accepted" not in acceptance
+    assert acceptance.index("start_project_two = yes") < acceptance.index("ROOT = {")
+
+
+@pytest.mark.parametrize(
+    "treasury,expected_started,expected_influence,expected_investor_treasury,expected_recipient_treasury",
+    [
+        (164, [(1, 10)], [(2, 1)], 154, 99999),
+        (163.999, [], [], 163.999, 100000),
+    ],
+)
+def test_pending_offer_acceptance_executes_success_effects_only_above_the_reserve_floor(
+    treasury,
+    expected_started,
+    expected_influence,
+    expected_investor_treasury,
+    expected_recipient_treasury,
+):
+    race = InvestmentOfferScript()
+    investor = race.country(1)
+    recipient = race.country(2)
+    investor["vars"].update(
+        treasury=treasury,
+        ai_race_ai_target_stage=1,
+        ai_race_ai_savings_target=154,
+    )
+    investor["flags"].update(
+        investments_ai_pending=None,
+        **{"this_investment_offer_pending@PREV": None},
+    )
+    recipient["vars"].update(
+        pending_offer_total_cost=10,
+        pending_offer_duration=90,
+        pending_offer_amount=1,
+        pending_offer_type=1,
+        pending_offer_state=101,
+    )
+    race.globals["investment_percent_change_value"] = 1
+
+    race.accept_offer(1, 2)
+
+    assert race.started_projects == expected_started
+    assert race.influence_changes == expected_influence
+    assert investor["vars"]["treasury"] == pytest.approx(expected_investor_treasury)
+    assert recipient["vars"]["treasury"] == pytest.approx(expected_recipient_treasury)
+    assert race.charges == ([(2, -1)] if expected_started else [])
+    assert "investments_ai_pending" not in investor["flags"]
+    assert "this_investment_offer_pending@PREV" not in investor["flags"]
+    assert not any(name.startswith("pending_offer_") for name in recipient["vars"])
 
 
 def _construction_plan(race):
@@ -1051,16 +1206,19 @@ def test_refinery_strategy_uses_prepare_or_recovery_weight_and_aborts_for_humans
 
 
 @pytest.mark.parametrize("plan", ["missing", "dormant"])
-def test_every_strategy_is_gated_on_an_active_plan(plan):
+def test_every_strategy_is_installed_only_in_full_mode_and_gated_on_an_active_plan(
+    plan,
+):
     strategies = _parse_race_script(AI_STRATEGIES.read_text(encoding="utf-8"))
-    enables = {
-        name: dict((key, value) for key, _, value in statements)["enable"]
-        for name, statements in strategies.items()
-    }
-    for name, enable in enables.items():
+    enables = {}
+    for name, statements in strategies.items():
+        data = dict((key, value) for key, _, value in statements)
+        assert data["allowed"] == [("ai_race_full_mode", "=", "yes")], name
+        enable = data["enable"]
         key, _, operand = enable[0]
         assert key == "check_variable", name
         assert tuple(operand[0]) == ("ai_race_ai_target_stage", ">", "0"), name
+        enables[name] = enable
     race, country = _planner(year=2019)
     _capacity(race, country, 1, [1, 0.5, 1, 1, 1, 1])
     race.run("ai_race_ai_update_plan", 1)
@@ -1070,6 +1228,30 @@ def test_every_strategy_is_gated_on_an_active_plan(plan):
     else:
         country["vars"]["ai_race_ai_target_stage"] = 0
     assert not any(race.condition(enable, 1) for enable in enables.values())
+
+
+@pytest.mark.parametrize(
+    "trigger,technology,ratio",
+    [
+        ("ai_race_ai_microchip_project_needed", "microchip_production_1", "microchips"),
+        ("ai_race_ai_composite_project_needed", "composite_production_1", "composites"),
+    ],
+)
+@pytest.mark.parametrize("plan", ["missing", "dormant"])
+def test_material_special_project_weights_require_an_active_plan(
+    trigger, technology, ratio, plan
+):
+    race, country = _planner()
+    country["techs"].discard(technology)
+    country["techs"].add("microprocessors")
+    country["vars"]["ai_race_ai_target_stage"] = 1
+    country["vars"][f"ai_race_ai_{ratio}_ratio"] = 0.5
+    assert race.condition(race.triggers[trigger], 1)
+    if plan == "missing":
+        del country["vars"]["ai_race_ai_target_stage"]
+    else:
+        country["vars"]["ai_race_ai_target_stage"] = 0
+    assert not race.condition(race.triggers[trigger], 1)
 
 
 @pytest.mark.parametrize("stage,weight", [(0, "25"), (1, "50")])
