@@ -2529,7 +2529,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_the_sudan_file
-		icon = mubarakg
+		icon = align_to_sudan
 
 		x = 3
 		y = 1
@@ -2546,10 +2546,9 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_sudan_file"
 			if = {
 				limit = { country_exists = SUD }
-				SUD = {
-					set_temp_variable = { percent_change = 3 }
-					change_influence_percentage = yes
-				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = SUD.id }
+				change_influence_percentage = yes
 			}
 		}
 
@@ -2557,8 +2556,8 @@ focus_tree = {
 	}
 
 	focus = {
-		id = EGY_the_nile_waters_question
-		icon = mubarakg
+		id = EGY_the_unity_of_the_nile_valley
+		icon = small_arms
 
 		x = -1
 		y = 1
@@ -2567,134 +2566,96 @@ focus_tree = {
 		cost = 5
 
 		prerequisite = { focus = EGY_the_sudan_file }
-		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_RESOURCE }
+		mutually_exclusive = { focus = EGY_the_egyptian_libyan_initiative }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
 		available = {
 			EGY_mubarak_in_power = yes
+			country_exists = SSU
+			SUD = { has_war_with = SSU }
+		}
+
+		bypass = {
+			OR = {
+				has_global_flag = second_sudanese_civil_war_over
+				NOT = { country_exists = SSU }
+				NOT = { country_exists = SUD }
+			}
 		}
 
 		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_nile_waters_question"
-			add_political_power = 25
-			set_temp_variable = { temp_opinion = 3 }
-			change_the_military_opinion = yes
-			hidden_effect = { EGY_recalculate_regime_balance = yes }
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_unity_of_the_nile_valley"
+			send_equipment = { type = infantry_weapons_type amount = 2000 target = SUD }
+			set_temp_variable = { percent_change = 5 }
+			set_temp_variable = { influence_target = SUD.id }
+			change_influence_percentage = yes
+			SUD = { add_opinion_modifier = { target = ROOT modifier = EGY_nile_valley_unity_opinion } }
+			SSU = { add_opinion_modifier = { target = ROOT modifier = EGY_armed_khartoum_opinion } }
 		}
 
 		ai_will_do = { base = 5 }
 	}
 
 	focus = {
-		id = EGY_hold_the_1959_line
-		icon = mubarakg
-
-		x = -1
-		y = 1
-		relative_position_id = EGY_the_nile_waters_question
-
-		cost = 5
-
-		prerequisite = { focus = EGY_the_nile_waters_question }
-		mutually_exclusive = { focus = EGY_a_nile_basin_compromise }
-		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_STABILITY }
-
-		available = { EGY_mubarak_in_power = yes }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_hold_the_1959_line"
-			if = {
-				limit = { country_exists = ETH }
-				ETH = { add_opinion_modifier = { target = ROOT modifier = EGY_hold_1959_opinion } }
-			}
-			custom_effect_tooltip = EGY_upstream_states_opinion_tt
-			hidden_effect = {
-				every_country = {
-					limit = {
-						OR = {
-							original_tag = KEN
-							original_tag = UGA
-							original_tag = TNZ
-							original_tag = RWA
-							original_tag = BUR
-							original_tag = DRC
-							original_tag = SSU
-						}
-					}
-					add_opinion_modifier = { target = ROOT modifier = EGY_hold_1959_upstream_opinion }
-				}
-			}
-			set_temp_variable = { temp_opinion = 5 }
-			change_the_military_opinion = yes
-			hidden_effect = { EGY_recalculate_regime_balance = yes }
-		}
-
-		ai_will_do = { base = 5 }
-	}
-
-	focus = {
-		id = EGY_a_nile_basin_compromise
-		icon = mubarakg
+		id = EGY_the_egyptian_libyan_initiative
+		icon = ARM_peace_policy
 
 		x = 1
 		y = 1
-		relative_position_id = EGY_the_nile_waters_question
+		relative_position_id = EGY_the_sudan_file
 
-		cost = 7
+		cost = 5
 
-		prerequisite = { focus = EGY_the_nile_waters_question }
-		mutually_exclusive = { focus = EGY_hold_the_1959_line }
-		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_DIPLOMACY }
+		prerequisite = { focus = EGY_the_sudan_file }
+		mutually_exclusive = { focus = EGY_the_unity_of_the_nile_valley }
+		search_filters = { FOCUS_FILTER_FOREIGN_POLICY FOCUS_FILTER_INFLUENCE }
 
-		available = { EGY_mubarak_in_power = yes }
-
-		completion_reward = {
-			log = "[GetDateText]: [Root.GetName]: Focus EGY_a_nile_basin_compromise"
-			if = {
-				limit = { country_exists = ETH }
-				ETH = { add_opinion_modifier = { target = ROOT modifier = EGY_nile_compromise_opinion } }
-			}
-			custom_effect_tooltip = EGY_upstream_and_au_opinion_tt
-			hidden_effect = {
-				every_country = {
-					limit = {
-						OR = {
-							original_tag = KEN
-							original_tag = UGA
-							original_tag = TNZ
-							original_tag = RWA
-							original_tag = BUR
-							original_tag = DRC
-							original_tag = SSU
-						}
-					}
-					add_opinion_modifier = { target = ROOT modifier = EGY_nile_compromise_upstream_opinion }
-				}
-				for_each_scope_loop = {
-					array = global.AU_member
-					if = {
-						limit = { NOT = { tag = ROOT } }
-						add_opinion_modifier = { target = ROOT modifier = EGY_nile_compromise_au_opinion }
-					}
-				}
-				for_each_scope_loop = {
-					array = global.OAU_member
-					if = {
-						limit = {
-							NOT = { tag = ROOT }
-							NOT = { has_idea = AU_member }
-						}
-						add_opinion_modifier = { target = ROOT modifier = EGY_nile_compromise_au_opinion }
-					}
-				}
-			}
-			set_temp_variable = { temp_authority = -3 }
-			EGY_change_mubarak_authority = yes
-			set_temp_variable = { temp_opinion = -5 }
-			change_the_military_opinion = yes
-			hidden_effect = { EGY_recalculate_regime_balance = yes }
+		available = {
+			EGY_mubarak_in_power = yes
+			country_exists = SSU
+			SUD = { has_war_with = SSU }
 		}
 
-		ai_will_do = { base = 2 }
+		bypass = {
+			OR = {
+				has_global_flag = second_sudanese_civil_war_over
+				NOT = { country_exists = SSU }
+				NOT = { country_exists = SUD }
+			}
+		}
+
+		completion_reward = {
+			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_egyptian_libyan_initiative"
+			custom_effect_tooltip = EGY_sudan_peace_brought_forward_tt
+			hidden_effect = {
+				SUD = {
+					if = {
+						limit = { has_active_mission = SUD_second_sudanese_civil_war_mission }
+						add_days_mission_timeout = { mission = SUD_second_sudanese_civil_war_mission days = -180 }
+					}
+				}
+				SSU = {
+					if = {
+						limit = { has_active_mission = SSU_second_sudanese_civil_war_mission }
+						add_days_mission_timeout = { mission = SSU_second_sudanese_civil_war_mission days = -180 }
+					}
+				}
+			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { influence_target = SUD.id }
+			change_influence_percentage = yes
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { influence_target = SSU.id }
+			change_influence_percentage = yes
+			SUD = { add_opinion_modifier = { target = ROOT modifier = EGY_egyptian_libyan_initiative_opinion } }
+			SSU = { add_opinion_modifier = { target = ROOT modifier = EGY_egyptian_libyan_initiative_opinion } }
+			if = {
+				limit = { country_exists = LBA }
+				LBA = { add_opinion_modifier = { target = ROOT modifier = EGY_egyptian_libyan_initiative_opinion } }
+			}
+		}
+
+		ai_will_do = { base = 5 }
 	}
 
 	focus = {
@@ -3021,28 +2982,42 @@ focus_tree = {
 
 	focus = {
 		id = EGY_blue_helmets_for_darfur
-		icon = mubarakg
+		icon = un_peace_keeping
 
-		x = 1
-		y = 1
+		x = 0
+		y = 2
 		relative_position_id = EGY_the_sudan_file
 
 		cost = 5
 
-		prerequisite = { focus = EGY_the_sudan_file }
+		prerequisite = { focus = EGY_the_unity_of_the_nile_valley focus = EGY_the_egyptian_libyan_initiative }
 		search_filters = { FOCUS_FILTER_ARMY_XP FOCUS_FILTER_FOREIGN_POLICY }
 
 		available = {
 			EGY_mubarak_in_power = yes
+			country_exists = DAR
+			SUD = { has_war_with = DAR }
 		}
+
+		bypass = { has_global_flag = war_in_darfur_over }
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_blue_helmets_for_darfur"
-			army_experience = 10
-			if = {
-				limit = { country_exists = SUD }
-				SUD = { add_opinion_modifier = { target = ROOT modifier = EGY_blue_helmets_opinion } }
+			add_manpower = -2500
+			add_timed_idea = { idea = EGY_darfur_contingent_idea days = 730 }
+			custom_effect_tooltip = EGY_darfur_talks_brought_forward_tt
+			hidden_effect = {
+				SUD = {
+					if = {
+						limit = { has_active_mission = SUD_war_in_darfur_mission }
+						add_days_mission_timeout = { mission = SUD_war_in_darfur_mission days = -90 }
+					}
+				}
 			}
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { influence_target = SUD.id }
+			change_influence_percentage = yes
+			SUD = { add_opinion_modifier = { target = ROOT modifier = EGY_blue_helmets_opinion } }
 			custom_effect_tooltip = EGY_au_members_opinion_tt
 			hidden_effect = {
 				for_each_scope_loop = {
