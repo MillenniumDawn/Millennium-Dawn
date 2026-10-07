@@ -121,6 +121,8 @@ _RE_IS_AT_WAR = re.compile(r"\bis_at_war\s*=\s*(?:yes|no)\b")
 _RE_HAS_OPINION_MODIFIER_BLOCK = re.compile(r"\bhas_opinion_modifier\s*=\s*\{")
 _RE_WHILE_LOOP_OPEN = re.compile(r"\bwhile_loop_effect\s*=\s*\{")
 _RE_MAX_ITERATIONS = re.compile(r"\bmax_iterations\s*=")
+_RE_DAILY_MASTERY_OPEN = re.compile(r"\badd_daily_mastery\s*=\s*\{")
+_RE_MASTERY_INDEX = re.compile(r"\bindex\s*=")
 # var:x^i needs the full variable name; a one-letter base is the shorthand the
 # engine silently resolves to nothing.
 _RE_VAR_INDEX_SHORTHAND = re.compile(r"\bvar:([A-Za-z])\^")
@@ -2576,6 +2578,32 @@ def _check_while_loop_max_iterations(lines):
     return issues
 
 
+def _check_daily_mastery_index(lines):
+    """Flag index inside add_daily_mastery -- the engine rejects it.
+
+    The vanilla effects documentation lists an index filter, but the game logs
+    Invalid effect 'index' for every such call.
+    """
+    issues = []
+    src = _source(lines)
+    if "add_daily_mastery" not in src.raw:
+        return issues
+    text = src.text
+    for match in _RE_DAILY_MASTERY_OPEN.finditer(text):
+        i = _find_brace_close(text, match.end() - 1)
+        body = text[match.end() : i]
+        for found in _RE_MASTERY_INDEX.finditer(body):
+            issues.append(
+                (
+                    text.count("\n", 0, match.end() + found.start()) + 1,
+                    "index is not a valid add_daily_mastery key -- the engine "
+                    "rejects it (Invalid effect 'index'); filter with track, "
+                    "sub_doctrine, grand_doctrine or folder",
+                )
+            )
+    return issues
+
+
 def _check_var_index_shorthand(lines):
     """Flag var:x^i shorthand -- an array read needs the full variable name."""
     src = _source(lines)
@@ -4321,6 +4349,7 @@ def check_file(filepath):
     issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
+    issues.extend(_check_daily_mastery_index(lines))
     issues.extend(_check_var_index_shorthand(lines))
     issues.extend(_check_else_with_limit(lines))
     issues.extend(_check_log_nested_quote(lines))
