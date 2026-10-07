@@ -151,9 +151,7 @@ class ToolsValidator(BaseValidator):
 
     def run_validations(self):
         self.log(f"\n{'=' * 80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking Python scripts...{Colors.ENDC if self.use_colors else ''}"
-        )
+        self.log(f"{Colors.CYAN}Checking Python scripts...{Colors.ENDC}")
         self.log(f"{'=' * 80}")
 
         scripts = self._find_scripts()
@@ -204,9 +202,7 @@ class ToolsValidator(BaseValidator):
             self.log(f"  Warning: no main guard or main() — {name}", "warning")
 
         self.log(f"\n{'=' * 80}")
-        self.log(
-            f"{Colors.CYAN if self.use_colors else ''}Checking dependencies...{Colors.ENDC if self.use_colors else ''}"
-        )
+        self.log(f"{Colors.CYAN}Checking dependencies...{Colors.ENDC}")
         self.log(f"{'=' * 80}")
 
         missing_deps = self._check_dependencies()

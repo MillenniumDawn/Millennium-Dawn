@@ -381,10 +381,13 @@ Currency strength is recalculated monthly. Falls are a share of its current leve
 | Financial collapse | Your currency is weaker for three years after a financial collapse.                                                                                             |
 | Reserve issuers    | Each country using your currency as its reserve strengthens it slightly.                                                                                        |
 | Safe havens        | While world tension stays above 50%, the US dollar and Japanese yen strengthen slightly, and the Swiss franc a little more.                                     |
+| National spirits   | A spirit with a **Currency Strength Target** value moves the level your currency is pulled toward by that amount. The pull closes 1% of the gap a month.        |
+
+At a policy rate of 0%, the real interest rate can pull your currency down by at most 1% a month. Each point of the rate takes 2.5% off that limit, so a rate of 20% halves it. A higher rate therefore helps even when inflation is far above it.
 
 Your base strength starts at your country's historical value and slowly follows your currency. It rises at half the speed it falls, so trust is lost faster than it is earned. Years of good management raise the level your currency settles at, and years of bad management lower it.
 
-Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. Its effects include:
+Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. A national spirit with a **Minimum Currency Strength** value raises that floor to the value shown, and values from several spirits add up. Its effects include:
 
 - **Weak currency** (below 1.0): Resource exports and international investment returns are worth more in local terms, but foreign-denominated debt costs more and inflation pressure increases
 - **Strong currency** (above 1.0): Foreign-denominated debt is cheaper and inflation is suppressed, but export income and investment returns decrease in local terms
@@ -402,7 +405,7 @@ The **Currency Backing** law determines how your currency is anchored:
 | Bi-Metal Standard | +2%       | +1%           | Moderate volatility                      |
 | Fiat Currency     | -2%       | --            | +0.03 daily PP; highest flexibility      |
 
-Hard-money standards (gold, silver) dampen currency volatility and pull currency strength toward par (1.0) over time. However, they restrict monetary policy flexibility -- you cannot use the Expand Money Supply decision while on the gold standard.
+Hard-money standards dampen currency volatility and lift a currency at or below par (1.0) every month: gold and silver by 0.003, and a bi-metal standard by 0.002. The monthly fall is a share of the current level, so that lift stops the monthly slide at about 0.60 on gold, 0.38 on silver, and 0.20 on a bi-metal standard. However, they restrict monetary policy flexibility -- you cannot use the Expand Money Supply decision while on the gold standard.
 
 ### Monetary Policy Decisions
 
@@ -455,6 +458,8 @@ Each quarter, the game calculates an inflation adjustment from the factors above
 5. **Budget balance**: A deficit adds inflationary pressure proportional to the shortfall. A surplus has the opposite effect.
 6. **Money printing multiplier**: If the Expand Money Supply decision is active, the entire adjustment is amplified.
 
+A national spirit with an **Inflation Gain** value scales a positive quarterly result by that percentage. At -20%, a quarterly result of 5% becomes 4%. It does not change a quarter of deflation.
+
 The quarterly result is stored and averaged with the previous three quarters. The rate is clamped to prevent wild swings: no more than +/-10 percentage points change per quarter, and a hard cap of +/-200% total.
 
 ### Central Bank Policy Rate
@@ -472,9 +477,9 @@ Ukraine's National Bank rate-cut events can also lower the rate. Accepted cuts c
 The rate works on inflation in two ways:
 
 - **Against the neutral rate.** The neutral rate uses inflation or a low-inflation baseline, whichever is higher, plus 0.5 to 2.5 points. It is limited to 1-30%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%. The effect stops at 3% either way.
-- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A large budget deficit raises the share again.
+- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A budget deficit above the sustainable 2-8% of GDP shrinks each point's cut. At 10% of GDP over that level the cut is halved, and it goes no lower, so a deficit never cancels the rate.
 
-AI-controlled countries move their rate toward neutral once a quarter, provided no rate-change cooldown is active. They raise the rate three points when it is more than 5 points below neutral. Otherwise they move one point up or down when more than half a point from neutral. Each AI change starts a 60-day cooldown.
+AI-controlled countries move their rate toward neutral once a quarter, provided no rate-change cooldown is active. They move the rate three points when it is more than 5 points from neutral. Otherwise they move one point up or down when more than half a point from neutral. The AI never raises its rate above 20%, so only a player can take it to 30%. Each AI change starts a 60-day cooldown.
 
 Manual changes update debt costs immediately. Inflation responds at the next quarterly calculation and is averaged over four quarters, so do not expect a rate increase to remove inflation at once.
 
@@ -482,13 +487,13 @@ The gap between your rate and inflation also moves your currency. See [Currency 
 
 ### Currency and Inflation
 
-Currency strength has a separate, additive effect on inflation costs. When your currency is weak (below 1.0), the gap between 1.0 and your currency strength feeds into a **currency inflation component**:
+Currency strength has a separate, additive effect on inflation costs. The gap between 1.0 and your currency strength feeds into a **currency inflation component**:
 
 ```
-Currency Inflation = (1.0 / Currency Strength - 1.0) × 0.05
+Currency Inflation = (1.0 / Currency Strength - 1.0) × 0.025
 ```
 
-This is added to the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds roughly 5% additional inflation pressure. A currency at 1.0 or above adds nothing.
+This is added to the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds 2.5% additional inflation pressure. A currency at 1.0 adds nothing. Above 1.0 the component goes negative, so a strong currency eases inflation costs. At 2.0 it subtracts 1.25%.
 
 This means inflation has two independent sources: the quarterly macroeconomic calculation and the currency channel. You can have low base inflation but still suffer high effective inflation if your currency has collapsed.
 
@@ -515,7 +520,7 @@ Inflation applies a dynamic modifier that scales with the inflation rate. The ef
 
 Inflation responds to multiple levers. Here are the main strategies:
 
-**Raise the central bank policy rate.** The most direct tool. Every point cuts how much inflation carries into the next quarter, even when inflation is far above the rate. The tradeoff is that high rates also raise debt interest and slow economic growth.
+**Raise the central bank policy rate.** The most direct tool. Every point cuts how much inflation carries into the next quarter, even when inflation is far above the rate. A large budget deficit can halve that cut, so fix the budget alongside it. The tradeoff is that high rates also raise debt interest and slow economic growth.
 
 **Raise taxes.** Higher tax rates dampen inflation by pulling money out of the economy. However, high corporate taxes reduce productivity growth, so this is a short-term fix with long-term costs.
 
@@ -523,7 +528,7 @@ Inflation responds to multiple levers. Here are the main strategies:
 
 **Strengthen the currency.** Use Austerity Measures, reduce debt, or improve stability to push currency strength above 1.0. This eliminates the currency inflation channel.
 
-**Adopt a hard-money standard.** Gold and silver backing dampen currency volatility and pull it toward 1.0 over time, which indirectly reduces currency-driven inflation. However, hard-money standards restrict your ability to use the Expand Money Supply decision.
+**Adopt a hard-money standard.** Gold, silver, and bi-metal backing dampen currency volatility and pull it toward 1.0 over time, which indirectly reduces currency-driven inflation. However, hard-money standards restrict your ability to use the Expand Money Supply decision.
 
 **Avoid the Expand Money Supply decision during high inflation.** This decision amplifies the inflation adjustment and weakens the currency -- useful during deflation but dangerous during inflation.
 

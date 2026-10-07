@@ -1,9 +1,5 @@
 # Idea Reference
 
-Idea conventions, category-specific gates, and examples.
-
-## Example Idea
-
 ```
 BRA_idea_higher_minimum_wage_1 = {
  name = BRA_idea_higher_minimum_wage
@@ -20,17 +16,23 @@ BRA_idea_higher_minimum_wage_1 = {
 }
 ```
 
-## Key Points
-
-- Always include `picture = sprite_name` — without it the idea shows a blank icon in-game. Find an existing sprite by searching the codebase: `grep "picture = " common/ideas/*.txt | sed 's/.*picture = //' | sort -u`
-- Include `allowed_civil_war = { always = yes }` for civil war tags
-- Use `original_tag` not `tag` in `allowed` blocks
-- Drop the `allowed` block entirely in a category with no slot (`country`, `hidden_ideas`). Nothing picks from those, so `add_idea` is the only way in and it never consults `allowed` — the gate is dead either way. A category that has a slot draws from a pool `allowed` filters, so keep it there. Flagged by `validate_ideas.py` (`allowed-in-slotless-category`); `tools/standardization/strip_idea_allowed_gates.py` removes them in bulk
-- Drop the `available` block entirely in a category with no slot (`country`, `hidden_ideas`). Same reason: nothing picks from those, so `available` is never consulted. Use `cancel` if the idea should remove itself. Flagged by `validate_ideas.py` (`available-in-slotless-category`); the same stripper removes them in bulk
-- Keep `allowed = { always = no }` on slotted ideas that must not appear in the picker (religion, other laws). `add_idea` still applies them. Do not use it in slotless categories (`country`, `hidden_ideas`); that gate is dead and the validator flags it
-- Remove `cancel = { always = no }` (checked hourly, never true)
-- A slotted idea whose `available` can turn false mid-game needs a mirrored `cancel` with the negated condition. `available` gates picking only — the engine never strips an already-slotted idea when it goes false — and the spirit categories are `removal_cost = -1`, so the player cannot un-pick it either. `cancel` is checked hourly and frees the slot. Precedent: the doctrine-gated office core spirits in `common/ideas/zzz_{army,navy,air}_spirits.txt`
-- Drop an `on_add` / `on_remove` whose only statement is a log; `check_common_mistakes.py` rejects it (#4456) and the ideas standardizer removes it
-- Tiered ideas use suffix numbering: `TAG_idea_name_1`, `TAG_idea_name_2`, with shared `name = TAG_idea_name` for display
-- `name = X` redirects **both** name and description loc lookups — game reads `X` for the displayed name and `X_desc` for the tooltip body. The idea's own ID is no longer used for loc once `name =` is set.
-- Pick a `name = X` value that no focus, decision, or other idea uses. A focus with `id = X` and an idea with `name = X` share the same `X` / `X_desc` loc keys — duplicate definitions in `.yml` resolve to the last one written, silently overwriting the other game object's text. If a tier needs unique flavor while sharing a display name with sibling tiers, give it a distinct `name =` and its own `name_desc` entry rather than reusing the shared key.
+- Always include `picture = sprite_name`. Without it the idea shows a blank icon.
+- Include `allowed_civil_war = { always = yes }` so civil war tags keep the idea.
+- Use `original_tag`, not `tag`, in `allowed`.
+- In a category with no slot (`country`, `hidden_ideas`), drop `allowed` and `available`
+  entirely. Nothing picks from those categories, and `add_idea` never consults either
+  block. Use `cancel` if the idea should remove itself.
+  `tools/standardization/strip_idea_allowed_gates.py` removes them in bulk.
+- In a slotted category, keep `allowed = { always = no }` on ideas that must not appear
+  in the picker (religion, other laws). `add_idea` still applies them.
+- A slotted idea whose `available` can turn false mid-game needs a `cancel` with the
+  negated condition. `available` gates picking only, and the spirit categories have
+  `removal_cost = -1`, so nothing else frees the slot. Precedent: the doctrine-gated
+  office spirits in `common/ideas/zzz_{army,navy,air}_spirits.txt`.
+- Remove `cancel = { always = no }`. It is checked hourly and is never true.
+- Drop an `on_add` or `on_remove` whose only statement is a log.
+- Tiered ideas use suffix numbering (`TAG_idea_name_1`, `TAG_idea_name_2`) with a shared
+  `name = TAG_idea_name`.
+- `name = X` makes the game read `X` for the name and `X_desc` for the description. Pick
+  an `X` that no focus, decision, or other idea uses, or one string overrides the other.
+  A tier that needs its own text takes a distinct `name`.
