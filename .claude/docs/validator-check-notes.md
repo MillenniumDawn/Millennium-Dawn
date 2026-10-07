@@ -107,10 +107,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `unannounced-decision-category` (WARNING, opt-in `--unannounced-categories`, passed in
   CI): a category whose `visible` waits on a flag, focus, idea, or variable, with no
   `unlock_decision_category_tooltip` naming it and no `unlock_decision_tooltip` naming
-  one of its decisions. A gate named in a `history/countries/` file is open from day one
-  and skipped. `unannounced_category_exempt` in the config lists what that scan cannot
-  see: gates set by scripted effects history runs, and balance of power categories that
-  have no name key to render.
+  one of its decisions. History mentions do not exempt a category.
+  `unannounced_category_exempt` in the config records each exception and its reason:
+  startup gates, shared state with no single owning-country unlock effect, and balance
+  of power categories that have no name key to render.
 - `decision-icon-slot-mismatch` (ERROR): the decision UI draws icons at native texture
   size, so art for one slot renders wrong in another. Bands by longest edge: decision icon
   up to 36, category icon 48 to 79, picture 80 and up. Sizes in the gaps are not reported.
@@ -235,6 +235,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Missing-icon audit (WARNING, always on): the sprite is undefined, exists only under a
   different case, or resolves to placeholder art (`_PLACEHOLDER_TEXTURES`). A mod
   placeholder that shadows a vanilla sprite name still reports.
+- `missing-idea-localisation` (WARNING, behind `--missing-name-loc`): an idea whose name
+  key has no English loc shows its raw id in every tooltip that grants it. The key is the
+  `name = X` override when set. Hidden categories and character `idea_token` entries are
+  exempt. The CI core batch and the nightly run pass the flag. The commit hook does not,
+  so there is no local signal. `--missing-loc` adds missing `_desc` keys and runs nowhere
+  by default. Backlog and the move to ERROR: #5415.
 - `loc-key-collision` (WARNING): an idea's `name = X` override resolves its name to `X`
   and its description to `X_desc`. When `X` is also a focus or decision id and resolves
   in English loc, one string silently overrides the other. Intentional sharing is allowed.
@@ -364,6 +370,23 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   Deliberate air-assault templates are listed in `air_assault_templates` in the
   config as `<file>:<template name>`. Staged mode checks only staged template files, so a `common/units/`
   flag change surfaces on the full CI run.
+- `template-slot` (ERROR): a `division_template` skips a row or column, puts two units
+  on one slot, places a unit off the designer grid, or has a unit with no readable
+  `x`/`y`. The designer hides the unit and locks the template for editing.
+  `regimental_support` may skip columns, but each of its columns needs the same
+  `regiments` column, and each row needs the battalions
+  `REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS` sets for it.
+- `template-locked-row` (WARNING): a `regiments` unit sits on a row past
+  `MIN_DIVISION_BRIGADE_HEIGHT`. Those rows stay locked until the country has
+  `additional_brigade_column_size`. One finding per template. A tag's starting
+  subdoctrines (`set_sub_doctrine` at the top level of its `history/countries` file)
+  open rows for its `history/units/TAG_*` files and for templates scoped to it.
+  Mastery rewards and ideas are not counted. Tracked in #5451.
+- Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
+  to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
+  sizes, `divisional = no` or `regimental = no` units in the wrong block, and
+  `allowed_battalion_groups`. Staged mode checks only staged template files, so a
+  define or doctrine change surfaces on the full CI run.
 - New source directories: `config_drift_test.py` derives the routes from the
   `_*_SOURCE_PATTERNS` lists and fails until every route is updated.
 

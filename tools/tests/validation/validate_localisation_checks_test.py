@@ -789,6 +789,22 @@ def test_loop_binder_is_a_written_variable(tmp_path):
     assert v._issues == []
 
 
+def test_loop_binder_nested_in_another_loop_is_a_written_variable(tmp_path):
+    _txt(
+        tmp_path,
+        "common/e.txt",
+        "x = {\n"
+        "\tfor_loop_effect = {\n"
+        "\t\tend = 3\n"
+        "\t\tfind_highest_in_array = { array = gdp_array value = max index = max_index }\n"
+        "\t\tcheck_variable = { max > 0 }\n"
+        "\t\tcheck_variable = { max_index > 0 }\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert _unwritten_names(tmp_path) == set()
+
+
 def test_any_of_and_all_of_bind_value_only_inside_the_collection(tmp_path):
     _txt(
         tmp_path,
