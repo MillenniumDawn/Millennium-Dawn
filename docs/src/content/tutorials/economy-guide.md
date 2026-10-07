@@ -487,13 +487,13 @@ The gap between your rate and inflation also moves your currency. See [Currency 
 
 ### Currency and Inflation
 
-Currency strength has a separate, additive effect on inflation costs. When your currency is weak (below 1.0), the gap between 1.0 and your currency strength feeds into a **currency inflation component**:
+Currency strength has a separate, additive effect on inflation costs. The gap between 1.0 and your currency strength feeds into a **currency inflation component**:
 
 ```
-Currency Inflation = (1.0 / Currency Strength - 1.0) × 0.05
+Currency Inflation = (1.0 / Currency Strength - 1.0) × 0.025
 ```
 
-This is added to the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds roughly 5% additional inflation pressure. A currency at 1.0 or above adds nothing.
+This is added to the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds 2.5% additional inflation pressure. A currency at 1.0 adds nothing. Above 1.0 the component goes negative, so a strong currency eases inflation costs. At 2.0 it subtracts 1.25%.
 
 This means inflation has two independent sources: the quarterly macroeconomic calculation and the currency channel. You can have low base inflation but still suffer high effective inflation if your currency has collapsed.
 
