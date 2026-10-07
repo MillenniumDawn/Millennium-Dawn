@@ -333,42 +333,6 @@ its own `allow_branch`. That descendant must repeat every `key = value` leaf of
 the ancestor's `allow_branch`, in any structure. `NOT` is not distinguished from
 a plain condition. It stays a WARNING until the existing backlog is cleared.
 
-### Measured backlog for #5126
-
-At `f99f2055f069e41c6f51623c82d2fcc6a7f7338b`, 114 files contain 106 trees and
-32,684 assembled focus instances (a shared focus counts once in each host tree).
-The check resolves 32,655 instances, skips 9,814 resolved dynamic instances and
-checks 22,841 static instances. Gated instances number 8,373 and offset-dependent
-instances 8,996; these overlap and must not be added. There are no missing shared
-imports. The two unresolved root diagnostics account for 29 unresolved instances.
-
-The static backlog is **8 candidate pairs across 5 trees**:
-
-| Tree                            | Candidate pairs                                                                                                        |
-| ------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| San Marino                      | `SMA_healthy_people` / `SMA_vatican_union`                                                                             |
-| Czech Republic                  | `CZE_2000st_apc` / `CZE_2000st_ifv`; `CZE_2000st_utility_vehichles` / `CZE_2000st_tank_modernization`                  |
-| Generic                         | `GENERIC_eastern_emergence` / `GENERIC_non_aligned`; `GENERIC_the_rising_powers` / `GENERIC_the_conservative_approach` |
-| Ukrainian provisional republics | `DRP_dnieper_logistics` / `UKR_prp_emergency_economy`; `DRP_moscow_alignment` / `UKR_prp_utilities_repair`             |
-| USA                             | `USA_net_zero_green_house` / `USA_new_path_ways_for_greens`                                                            |
-
-Removing dynamic exclusions yields 543 raw pairs, not 543 established bugs. The
-eight static candidates have not been repositioned or exempted without in-game
-review. The Brazil pre-#5122 fixture reports its one-column pair; the corrected
-two-column spacing passes. Fractional coordinates account for four candidates
-missed by the earlier integer-only exploratory scan.
-
-Run `MD_LOG_LEVEL=INFO python tools/validation/validate_focus_tree.py --path .
---workers 1 --no-color` on one line to print counts with findings. Existing
-unrelated validator errors can still make the complete validator exit nonzero.
-
-Three cold-cache and three warm-cache measurements on the same 114 files with
-Python 3.12.14 and one worker compared the existing parse/relative-position scans
-with those same scans plus geometry. Median times were 0.911s versus 2.658s cold,
-and 0.226s versus 0.471s warm. These measure this scan component, not the full
-validator or CI; they are not a speedup claim. Resolution avoids recursive depth
-limits, and sorted row buckets enumerate only pairs within the spacing window.
-
 ## Credits
 
 Based on Kaiserreich Autotests by [Pelmen323](https://github.com/Pelmen323), adapted for Millennium Dawn.
