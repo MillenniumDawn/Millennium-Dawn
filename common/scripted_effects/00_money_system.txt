@@ -4149,16 +4149,17 @@ calculate_int_investments_rate = {
 # Effect: calculate_resource_sale_rate
 # Purpose: Computes weekly revenue from resource exports at market prices
 calculate_resource_sale_rate = {
-	#Base export multiplier, each resource adds its own modifier to it
-	set_temp_variable = { resource_export_multiplier = { value = 1 add = modifier@resource_export_multiplier_modifier } }
-
 	#Revenue = exported amount * market price * export multiplier * yearly-to-weekly constant
 	#The closing max = 0 is a floor at 0 so Luigi's massive negatives don't break my shit
 	set_variable = {
 		oil_exports = {
 			value = resource_exported@oil
 			multiply = global.oil_price
-			multiply = { value = resource_export_multiplier add = modifier@oil_export_multiplier_modifier }
+			multiply = {
+				value = 1
+				add = modifier@oil_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
 			multiply = @resource_sale_rate_constant
 			max = 0
 		}
@@ -4167,7 +4168,11 @@ calculate_resource_sale_rate = {
 		steel_exports = {
 			value = resource_exported@steel
 			multiply = global.steel_price
-			multiply = { value = resource_export_multiplier add = modifier@steel_export_multiplier_modifier }
+			multiply = {
+				value = 1
+				add = modifier@steel_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
 			multiply = @resource_sale_rate_constant
 			max = 0
 		}
@@ -4176,7 +4181,11 @@ calculate_resource_sale_rate = {
 		aluminium_exports = {
 			value = resource_exported@aluminium
 			multiply = global.aluminium_price
-			multiply = { value = resource_export_multiplier add = modifier@aluminium_export_multiplier_modifier }
+			multiply = {
+				value = 1
+				add = modifier@aluminium_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
 			multiply = @resource_sale_rate_constant
 			max = 0
 		}
@@ -4185,7 +4194,11 @@ calculate_resource_sale_rate = {
 		tungsten_exports = {
 			value = resource_exported@tungsten
 			multiply = global.tungsten_price
-			multiply = { value = resource_export_multiplier add = modifier@tungsten_export_multiplier_modifier }
+			multiply = {
+				value = 1
+				add = modifier@tungsten_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
 			multiply = @resource_sale_rate_constant
 			max = 0
 		}
@@ -4194,7 +4207,11 @@ calculate_resource_sale_rate = {
 		chromium_exports = {
 			value = resource_exported@chromium
 			multiply = global.chromium_price
-			multiply = { value = resource_export_multiplier add = modifier@chromium_export_multiplier_modifier }
+			multiply = {
+				value = 1
+				add = modifier@chromium_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
 			multiply = @resource_sale_rate_constant
 			max = 0
 		}
@@ -4203,7 +4220,11 @@ calculate_resource_sale_rate = {
 		rubber_exports = {
 			value = resource_exported@rubber
 			multiply = global.rubber_price
-			multiply = { value = resource_export_multiplier add = modifier@rubber_export_multiplier_modifier }
+			multiply = {
+				value = 1
+				add = modifier@rubber_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
 			multiply = @resource_sale_rate_constant
 			max = 0
 		}
@@ -4212,7 +4233,11 @@ calculate_resource_sale_rate = {
 		microchip_exports = {
 			value = resource_exported@microchips
 			multiply = global.microchip_price
-			multiply = { value = resource_export_multiplier add = modifier@microchip_export_multiplier_modifier }
+			multiply = {
+				value = 1
+				add = modifier@microchip_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
 			multiply = @resource_sale_rate_constant
 			max = 0
 		}
@@ -4221,24 +4246,30 @@ calculate_resource_sale_rate = {
 		composite_exports = {
 			value = resource_exported@composites
 			multiply = global.composite_price
-			multiply = { value = resource_export_multiplier add = modifier@composite_export_multiplier_modifier }
+			multiply = {
+				value = 1
+				add = modifier@composite_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
 			multiply = @resource_sale_rate_constant
 			max = 0
 		}
 	}
 
 	#Add total cost
-	set_variable = { resource_sale_rate = {
-		value = oil_exports
-		add = steel_exports
-		add = aluminium_exports
-		add = tungsten_exports
-		add = chromium_exports
-		add = rubber_exports
-		add = microchip_exports
-		add = composite_exports
-		clamp = { min = 0 max = @math_expressions_max }
-	} }
+	set_variable = {
+		resource_sale_rate = {
+			value = oil_exports
+			add = steel_exports
+			add = aluminium_exports
+			add = tungsten_exports
+			add = chromium_exports
+			add = rubber_exports
+			add = microchip_exports
+			add = composite_exports
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
 }
 
 # Effect: update_display
