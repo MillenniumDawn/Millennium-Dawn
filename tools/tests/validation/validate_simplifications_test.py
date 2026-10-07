@@ -16,6 +16,7 @@ from validate_simplifications import (
     _count_children,
     _find_bare_not,
     _find_count_collapsible,
+    _find_duplicate_or_clauses,
     _find_empty_trigger_blocks,
     _find_government_match,
     _find_mergeable,
@@ -781,6 +782,57 @@ def test_unterminated_child_block_stops_the_count():
 
 def test_missing_child_value_stops_the_count():
     assert _count_children(" tag =") == 1
+
+
+# --- duplicate OR clauses ----------------------------------------------------
+
+
+def _dup(text):
+    return _find_duplicate_or_clauses(_script(text))
+
+
+def test_repeated_block_clause_in_an_or_is_flagged_at_the_second_copy():
+    # SyriaFocus.80 shape: communism listed twice, neutrality missing
+    text = (
+        "OR = {\n"
+        "\tAND = { has_government = democratic FROM = { has_government = democratic } }\n"
+        "\tAND = { has_government = communism FROM = { has_government = communism } }\n"
+        "\tAND = {\n"
+        "\t\thas_government = communism\n"
+        "\t\tFROM = { has_government = communism }\n"
+        "\t}\n"
+        "}\n"
+    )
+    assert _dup(text) == [
+        (
+            4,
+            "AND = { has_government = communism FROM = { has_government = communism } }",
+        )
+    ]
+
+
+def test_repeated_scalar_clause_in_an_or_is_flagged():
+    assert _dup("OR = { tag = ITA tag = GER tag = ITA }\n") == [(1, "tag = ITA")]
+
+
+def test_distinct_or_clauses_are_not_flagged():
+    assert _dup("OR = { tag = ITA original_tag = ITA NOT = { tag = ITA } }\n") == []
+
+
+def test_repeat_outside_an_or_is_not_flagged():
+    assert _dup("AND = { tag = ITA tag = ITA }\nadd_stability = 0.1\n") == []
+
+
+def test_nested_or_is_checked_on_its_own_children():
+    text = "OR = {\n\thas_war = yes\n\tAND = { OR = { tag = ITA tag = ITA } }\n}\n"
+    assert _dup(text) == [(3, "tag = ITA")]
+
+
+def test_composite_reports_a_duplicate_or_clause_outside_the_effect_dirs():
+    text = "ai_strategy = {\n\tenable = { OR = { tag = ITA tag = ITA } }\n}\n"
+    findings = _scan_composite(text, "common/ai_strategy/test.txt")
+    assert [line for _message, line in findings] == [2]
+    assert "OR repeats the clause `tag = ITA`" in findings[0][0]
 
 
 # --- direct child iteration ------------------------------------------------

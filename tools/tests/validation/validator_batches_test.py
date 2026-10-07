@@ -62,6 +62,12 @@ def test_decisions_spec_carries_the_unannounced_category_scan():
     assert spec.strict is True
 
 
+def test_math_expressions_spec_carries_the_clamp_bounds_check():
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "math-expressions")
+    assert spec.args == ("--clamp-bounds",)
+    assert spec.strict is True
+
+
 def test_selected_specs_filters_by_changed_groups():
     selected = {
         spec.name
@@ -111,7 +117,8 @@ def test_shared_module_change_selects_its_transitive_consumers():
 
 @pytest.mark.usefixtures("reuse_repository_import_graph")
 def test_linting_wrapper_change_selects_the_validator_it_wraps():
-    # Both validate_common_mistakes and validate_decisions import this scanner.
+    # validate_common_mistakes, validate_decisions, validate_equipment_variants,
+    # and validate_events import this scanner.
     batch, adhoc = vb.select_for_changed_files(
         ["tools/linting/check_common_mistakes.py"]
     )
@@ -119,6 +126,7 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
         "common-mistakes",
         "decisions",
         "equipment-variants",
+        "events",
     }
     assert adhoc == []
 

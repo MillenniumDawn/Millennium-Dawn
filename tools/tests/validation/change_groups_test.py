@@ -4,6 +4,7 @@ import io
 
 import change_groups
 import pytest
+import run_validator_batch
 from validate_file_paths import CONTENT_ROOTS
 
 
@@ -162,6 +163,26 @@ def test_decision_art_change_runs_decision_validation(path):
     assert groups["decisions"] is True
     assert groups["content"] is True
     assert groups["full_suite"] is False
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
+        "events/example.txt",
+        "common/national_focus/example.txt",
+        "common/ideas/example.txt",
+        "history/countries/example.txt",
+    ),
+)
+def test_unlock_tooltip_source_change_runs_decision_validation(path):
+    # These files hold the unlock tooltips the decisions validator scans for.
+    groups = change_groups.classify([path])
+
+    assert groups["decisions"] is True
+    changed = {name for name in change_groups.GROUP_PATTERNS if groups[name]}
+    assert "decisions" in {
+        spec.name for spec in run_validator_batch.selected_specs("targeted-a", changed)
+    }
 
 
 def test_file_path_roots_match_validator_content_roots():

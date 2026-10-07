@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate Military-Industrial Organization definitions in Millennium Dawn.
 
-Rules from .claude/docs/mio-reference.md + AGENTS.md:
+Rules from .claude/docs/mio-reference.md:
   * org ids are TAG_organization_name (3-uppercase tag prefix); the shared
     GENERIC_/generic_ orgs are exempt
   * orgs pin their tag with allowed = { original_tag = TAG }
