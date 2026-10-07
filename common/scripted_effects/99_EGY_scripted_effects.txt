@@ -48,53 +48,87 @@ EGY_change_mubarak_authority = {
 # Parameters:
 # - temp_project: 1 Income Tax Law, 2 Banking Reform, 3 Privatization Drive, 4 Judicial Authority Law, 5 Smart Ration Cards, 6 Patron of Toshka, 7 Desert Land decree
 EGY_resolve_state_project = {
+	if = {
+		limit = { OR = { has_idea = corruption_level_01 has_idea = corruption_level_02 } }
+		set_temp_variable = { project_full = 100 }
+		set_temp_variable = { project_partial = 0 }
+		set_temp_variable = { project_troubled = 0 }
+	}
+	else_if = {
+		limit = { OR = { has_idea = corruption_level_03 has_idea = corruption_level_04 } }
+		set_temp_variable = { project_full = 70 }
+		set_temp_variable = { project_partial = 25 }
+		set_temp_variable = { project_troubled = 5 }
+	}
+	else_if = {
+		limit = { OR = { has_idea = corruption_level_05 has_idea = corruption_level_06 } }
+		set_temp_variable = { project_full = 45 }
+		set_temp_variable = { project_partial = 40 }
+		set_temp_variable = { project_troubled = 15 }
+	}
+	else = {
+		set_temp_variable = { project_full = 25 }
+		set_temp_variable = { project_partial = 45 }
+		set_temp_variable = { project_troubled = 30 }
+	}
+	if = {
+		limit = { OR = { has_idea = bureau_04 has_idea = bureau_05 } }
+		add_to_temp_variable = { project_full = -10 }
+		add_to_temp_variable = { project_partial = 10 }
+	}
+	if = {
+		limit = {
+			check_variable = { EGY_mubarak_strength > 70 }
+			check_variable = { project_troubled > 9 }
+		}
+		add_to_temp_variable = { project_troubled = -10 }
+		add_to_temp_variable = { project_partial = 10 }
+	}
+	if = {
+		limit = {
+			check_variable = { treasury_rate < 0 }
+			check_variable = { project_full > 9 }
+		}
+		add_to_temp_variable = { project_full = -10 }
+		add_to_temp_variable = { project_troubled = 10 }
+	}
 	custom_effect_tooltip = EGY_state_project_tt
+	newline = yes
+	custom_effect_tooltip = EGY_state_project_full_tt
 	effect_tooltip = { EGY_state_project_full = yes }
+	newline = yes
+	custom_effect_tooltip = EGY_state_project_partial_tt
+	if = {
+		limit = { OR = { check_variable = { temp_project = 4 } check_variable = { temp_project = 6 } } }
+		custom_effect_tooltip = EGY_state_project_no_effect_tt
+	}
+	else = {
+		custom_effect_tooltip = EGY_state_project_now_tt
+		effect_tooltip = { EGY_state_project_partial = yes }
+	}
+	custom_effect_tooltip = EGY_state_project_second_half_tt
+	effect_tooltip = { EGY_state_project_second_half = yes }
+	newline = yes
+	custom_effect_tooltip = EGY_state_project_troubled_tt
+	if = {
+		limit = { OR = { check_variable = { temp_project = 4 } check_variable = { temp_project = 6 } } }
+		custom_effect_tooltip = EGY_state_project_no_effect_tt
+	}
+	else = {
+		custom_effect_tooltip = EGY_state_project_now_tt
+		effect_tooltip = { EGY_state_project_troubled = yes }
+	}
+	if = {
+		limit = { OR = { check_variable = { temp_project = 1 } check_variable = { temp_project = 4 } check_variable = { temp_project = 5 } } }
+		custom_effect_tooltip = EGY_state_project_rescue_tt
+		effect_tooltip = { EGY_state_project_rescue = yes }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 6 } }
+		custom_effect_tooltip = EGY_state_project_toshka_tt
+	}
+	newline = yes
 	hidden_effect = {
-		if = {
-			limit = { OR = { has_idea = corruption_level_01 has_idea = corruption_level_02 } }
-			set_temp_variable = { project_full = 100 }
-			set_temp_variable = { project_partial = 0 }
-			set_temp_variable = { project_troubled = 0 }
-		}
-		else_if = {
-			limit = { OR = { has_idea = corruption_level_03 has_idea = corruption_level_04 } }
-			set_temp_variable = { project_full = 70 }
-			set_temp_variable = { project_partial = 25 }
-			set_temp_variable = { project_troubled = 5 }
-		}
-		else_if = {
-			limit = { OR = { has_idea = corruption_level_05 has_idea = corruption_level_06 } }
-			set_temp_variable = { project_full = 45 }
-			set_temp_variable = { project_partial = 40 }
-			set_temp_variable = { project_troubled = 15 }
-		}
-		else = {
-			set_temp_variable = { project_full = 25 }
-			set_temp_variable = { project_partial = 45 }
-			set_temp_variable = { project_troubled = 30 }
-		}
-		if = {
-			limit = { OR = { has_idea = bureau_04 has_idea = bureau_05 } }
-			add_to_temp_variable = { project_full = -10 }
-			add_to_temp_variable = { project_partial = 10 }
-		}
-		if = {
-			limit = {
-				check_variable = { EGY_mubarak_strength > 70 }
-				check_variable = { project_troubled > 9 }
-			}
-			add_to_temp_variable = { project_troubled = -10 }
-			add_to_temp_variable = { project_partial = 10 }
-		}
-		if = {
-			limit = {
-				check_variable = { treasury_rate < 0 }
-				check_variable = { project_full > 9 }
-			}
-			add_to_temp_variable = { project_full = -10 }
-			add_to_temp_variable = { project_troubled = 10 }
-		}
 		add_to_temp_variable = { project_partial = project_full }
 		set_temp_variable_to_random = { var = project_roll min = 0 max = 100 }
 		if = {
@@ -104,8 +138,27 @@ EGY_resolve_state_project = {
 		else_if = {
 			limit = { check_variable = { project_roll < project_partial } }
 			EGY_state_project_partial = yes
+			add_to_array = { EGY_partial_projects = temp_project }
+			country_event = { id = egypt_mubarak.72 days = 180 }
+			set_variable = { EGY_shown_project = temp_project }
+			set_variable = { EGY_shown_outcome = 2 }
+			country_event = egypt_mubarak.5
 		}
-		else = { EGY_state_project_troubled = yes }
+		else = {
+			EGY_state_project_troubled = yes
+			if = {
+				limit = { OR = { check_variable = { temp_project = 1 } check_variable = { temp_project = 4 } check_variable = { temp_project = 5 } } }
+				add_to_array = { EGY_troubled_projects = temp_project }
+				country_event = { id = egypt_mubarak.6 days = 365 random_days = 730 }
+			}
+			else_if = {
+				limit = { check_variable = { temp_project = 6 } }
+				country_event = { id = egypt_mubarak.4 days = 365 random_days = 730 }
+			}
+			set_variable = { EGY_shown_project = temp_project }
+			set_variable = { EGY_shown_outcome = 3 }
+			country_event = egypt_mubarak.5
+		}
 	}
 }
 
@@ -175,11 +228,6 @@ EGY_state_project_partial = {
 		set_temp_variable = { treasury_change = 0.25 }
 		modify_treasury_effect = yes
 	}
-	add_to_array = { EGY_partial_projects = temp_project }
-	country_event = { id = egypt_mubarak.72 days = 180 }
-	set_variable = { EGY_shown_project = temp_project }
-	set_variable = { EGY_shown_outcome = 2 }
-	country_event = egypt_mubarak.5
 }
 
 EGY_state_project_second_half = {
@@ -250,18 +298,6 @@ EGY_state_project_troubled = {
 		set_temp_variable = { treasury_change = 0.2 }
 		modify_treasury_effect = yes
 	}
-	if = {
-		limit = { OR = { check_variable = { temp_project = 1 } check_variable = { temp_project = 4 } check_variable = { temp_project = 5 } } }
-		add_to_array = { EGY_troubled_projects = temp_project }
-		country_event = { id = egypt_mubarak.6 days = 365 random_days = 730 }
-	}
-	else_if = {
-		limit = { check_variable = { temp_project = 6 } }
-		country_event = { id = egypt_mubarak.4 days = 365 random_days = 730 }
-	}
-	set_variable = { EGY_shown_project = temp_project }
-	set_variable = { EGY_shown_outcome = 3 }
-	country_event = egypt_mubarak.5
 }
 
 EGY_state_project_rescue = {
