@@ -45,6 +45,243 @@ EGY_change_mubarak_authority = {
 	custom_effect_tooltip = EGY_change_mubarak_authority_tt
 }
 
+# Parameters:
+# - temp_project: 1 Income Tax Law, 2 Banking Reform, 3 Privatization Drive, 4 Judicial Authority Law, 5 Smart Ration Cards, 6 Patron of Toshka, 7 Desert Land decree
+EGY_resolve_state_project = {
+	custom_effect_tooltip = EGY_state_project_tt
+	effect_tooltip = { EGY_state_project_full = yes }
+	hidden_effect = {
+		if = {
+			limit = { OR = { has_idea = corruption_level_01 has_idea = corruption_level_02 } }
+			set_temp_variable = { project_full = 100 }
+			set_temp_variable = { project_partial = 0 }
+			set_temp_variable = { project_troubled = 0 }
+		}
+		else_if = {
+			limit = { OR = { has_idea = corruption_level_03 has_idea = corruption_level_04 } }
+			set_temp_variable = { project_full = 70 }
+			set_temp_variable = { project_partial = 25 }
+			set_temp_variable = { project_troubled = 5 }
+		}
+		else_if = {
+			limit = { OR = { has_idea = corruption_level_05 has_idea = corruption_level_06 } }
+			set_temp_variable = { project_full = 45 }
+			set_temp_variable = { project_partial = 40 }
+			set_temp_variable = { project_troubled = 15 }
+		}
+		else = {
+			set_temp_variable = { project_full = 25 }
+			set_temp_variable = { project_partial = 45 }
+			set_temp_variable = { project_troubled = 30 }
+		}
+		if = {
+			limit = { OR = { has_idea = bureau_04 has_idea = bureau_05 } }
+			add_to_temp_variable = { project_full = -10 }
+			add_to_temp_variable = { project_partial = 10 }
+		}
+		if = {
+			limit = {
+				check_variable = { EGY_mubarak_strength > 70 }
+				check_variable = { project_troubled > 9 }
+			}
+			add_to_temp_variable = { project_troubled = -10 }
+			add_to_temp_variable = { project_partial = 10 }
+		}
+		if = {
+			limit = {
+				check_variable = { treasury_rate < 0 }
+				check_variable = { project_full > 9 }
+			}
+			add_to_temp_variable = { project_full = -10 }
+			add_to_temp_variable = { project_troubled = 10 }
+		}
+		add_to_temp_variable = { project_partial = project_full }
+		set_temp_variable_to_random = { var = project_roll min = 0 max = 100 }
+		if = {
+			limit = { check_variable = { project_roll < project_full } }
+			EGY_state_project_full = yes
+		}
+		else_if = {
+			limit = { check_variable = { project_roll < project_partial } }
+			EGY_state_project_partial = yes
+		}
+		else = { EGY_state_project_troubled = yes }
+	}
+}
+
+EGY_state_project_full = {
+	if = {
+		limit = { check_variable = { temp_project = 1 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.05 tooltip = population_tax_income_multiplier_modifier_tt }
+		add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 2 } }
+		decrease_corruption = yes
+		newline = yes
+		set_temp_variable = { treasury_change = 1.5 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 3 } }
+		set_temp_variable = { treasury_change = 2 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 4 } }
+		decrease_corruption = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 5 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.10 tooltip = social_cost_multiplier_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 6 } }
+		if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 7 } }
+		set_temp_variable = { treasury_change = 0.5 }
+		modify_treasury_effect = yes
+	}
+}
+
+EGY_state_project_partial = {
+	if = {
+		limit = { check_variable = { temp_project = 1 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.025 tooltip = population_tax_income_multiplier_modifier_tt }
+		add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.025 tooltip = corporate_tax_income_multiplier_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 2 } }
+		set_temp_variable = { treasury_change = 0.75 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 3 } }
+		set_temp_variable = { treasury_change = 1 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 5 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.05 tooltip = social_cost_multiplier_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 7 } }
+		set_temp_variable = { treasury_change = 0.25 }
+		modify_treasury_effect = yes
+	}
+	add_to_array = { EGY_partial_projects = temp_project }
+	country_event = { id = egypt_mubarak.72 days = 180 }
+	set_variable = { EGY_shown_project = temp_project }
+	set_variable = { EGY_shown_outcome = 2 }
+	country_event = egypt_mubarak.5
+}
+
+EGY_state_project_second_half = {
+	if = {
+		limit = { check_variable = { temp_project = 1 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.025 tooltip = population_tax_income_multiplier_modifier_tt }
+		add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.025 tooltip = corporate_tax_income_multiplier_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 2 } }
+		set_temp_variable = { treasury_change = 0.75 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 3 } }
+		set_temp_variable = { treasury_change = 1 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 4 } }
+		decrease_corruption = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 5 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.05 tooltip = social_cost_multiplier_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 6 } }
+		if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 7 } }
+		set_temp_variable = { treasury_change = 0.25 }
+		modify_treasury_effect = yes
+	}
+}
+
+EGY_state_project_troubled = {
+	if = {
+		limit = { check_variable = { temp_project = 1 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.015 tooltip = population_tax_income_multiplier_modifier_tt }
+		add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.015 tooltip = corporate_tax_income_multiplier_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 2 } }
+		set_temp_variable = { treasury_change = 0.5 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 3 } }
+		increase_corruption = yes
+		newline = yes
+		set_temp_variable = { treasury_change = 0.7 }
+		modify_treasury_effect = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 5 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.03 tooltip = social_cost_multiplier_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 7 } }
+		increase_corruption = yes
+		newline = yes
+		set_temp_variable = { treasury_change = 0.2 }
+		modify_treasury_effect = yes
+	}
+	if = {
+		limit = { OR = { check_variable = { temp_project = 1 } check_variable = { temp_project = 4 } check_variable = { temp_project = 5 } } }
+		add_to_array = { EGY_troubled_projects = temp_project }
+		country_event = { id = egypt_mubarak.6 days = 365 random_days = 730 }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 6 } }
+		country_event = { id = egypt_mubarak.4 days = 365 random_days = 730 }
+	}
+	set_variable = { EGY_shown_project = temp_project }
+	set_variable = { EGY_shown_outcome = 3 }
+	country_event = egypt_mubarak.5
+}
+
+EGY_state_project_rescue = {
+	if = {
+		limit = { check_variable = { temp_project = 1 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.035 tooltip = population_tax_income_multiplier_modifier_tt }
+		add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.035 tooltip = corporate_tax_income_multiplier_modifier_tt }
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 4 } }
+		decrease_corruption = yes
+	}
+	else_if = {
+		limit = { check_variable = { temp_project = 5 } }
+		custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+		add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.07 tooltip = social_cost_multiplier_modifier_tt }
+	}
+}
+
 EGY_recalculate_regime_balance = {
 	set_temp_variable = { reg_influence_total = { value = EGY_military_influence add = EGY_security_influence add = EGY_brotherhood_influence } }
 	set_temp_variable = { reg_weighted = 0 }
