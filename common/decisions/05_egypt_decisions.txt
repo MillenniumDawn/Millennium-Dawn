@@ -395,3 +395,644 @@ EGY_military_cooperation = {
 		}
 	}
 }
+
+EGY_nile_valley = {
+	EGY_revive_the_jonglei_canal = {
+		icon = sudan_export
+		fire_only_once = yes
+		days_remove = 365
+		custom_cost_trigger = { check_variable = { treasury > 3 } }
+		custom_cost_text = cost_3_0
+
+		visible = { has_country_flag = EGY_four_freedoms_agreement }
+
+		available = {
+			country_exists = SUD
+			NOT = { has_war_with = SUD }
+			SUD = { NOT = { has_war_with = SSU } }
+			924 = { is_controlled_by = SUD }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_revive_the_jonglei_canal"
+			newline = yes
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_revive_the_jonglei_canal"
+			217 = {
+				if = {
+					limit = { is_owned_by = ROOT }
+					one_state_agriculture_district = yes
+				}
+			}
+			218 = {
+				if = {
+					limit = { is_owned_by = ROOT }
+					one_state_agriculture_district = yes
+				}
+			}
+			SUD = { add_opinion_modifier = { target = ROOT modifier = EGY_jonglei_canal_opinion } }
+			924 = {
+				if = {
+					limit = { is_controlled_by = SUD }
+					one_state_infrastructure = yes
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+}
+
+EGY_regime_balance = {
+	EGY_decree_cabinet_reshuffle = {
+		icon = generic_political_discourse
+		custom_cost_trigger = { check_variable = { EGY_mubarak_authority > 4 } }
+		custom_cost_text = EGY_decree_authority_cost_5
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = { has_completed_focus = EGY_the_fourth_term }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_cabinet_reshuffle"
+			set_temp_variable = { temp_authority = -5 }
+			EGY_change_mubarak_authority = yes
+			country_event = egypt_mubarak.59
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	EGY_decree_price_controls = {
+		icon = money_dec
+		cost = 50
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = { has_completed_focus = EGY_the_fourth_term }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_price_controls"
+			# TODO(bread): bread pressure -10
+			newline = yes
+			set_temp_variable = { treasury_change = -0.3 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	EGY_decree_emergency_courts = {
+		icon = generic_police_action
+		custom_cost_trigger = { check_variable = { EGY_mubarak_authority > 2 } }
+		custom_cost_text = EGY_decree_authority_cost_3
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = EGY_the_fourth_term
+			has_idea = EGY_emergency_law_idea
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_emergency_courts"
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+			set_temp_variable = { temp_influence = -5 }
+			EGY_change_brotherhood_influence = yes
+			set_temp_variable = { temp_opinion = 3 }
+			change_intelligence_community_opinion = yes
+			if = {
+				limit = { country_exists = USA }
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_emergency_courts_opinion } }
+			}
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	EGY_decree_presidential_pardon = {
+		icon = generic_civil_support
+		cost = 25
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = { has_completed_focus = EGY_the_fourth_term }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_presidential_pardon"
+			add_stability = 0.02
+			country_event = egypt_mubarak.60
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	EGY_decree_desert_land = {
+		icon = generic_construction
+		cost = 25
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = EGY_the_fourth_term
+			has_completed_focus = EGY_the_nazif_cabinet
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_desert_land"
+			add_power_balance_value = { id = EGY_succession_bop value = 0.05 }
+			# TODO(resolver): roll corruption through EGY_resolve_state_project
+			newline = yes
+			set_temp_variable = { treasury_change = 0.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	EGY_decree_army_bakes = {
+		icon = generic_army_support
+		days_re_enable = 180
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = EGY_the_fourth_term
+			has_completed_focus = EGY_the_army_bakes_bread
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_army_bakes"
+			# TODO(bread): bread pressure -15
+			set_temp_variable = { temp_opinion = -3 }
+			change_the_military_opinion = yes
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	EGY_decree_raise_wages = {
+		icon = eng_trade_unions_support
+		custom_cost_trigger = { check_variable = { treasury > 0.99 } }
+		custom_cost_text = cost_1_0
+		days_re_enable = 365
+		fire_only_once = no
+
+		visible = { has_completed_focus = EGY_the_fourth_term }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_raise_wages"
+			add_stability = 0.03
+			# TODO(bread): bread pressure -5
+			newline = yes
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+
+	EGY_decree_sharm_summit = {
+		icon = negotiate_icon
+		cost = 50
+		fire_only_once = no
+
+		target_root_trigger = {
+			has_completed_focus = EGY_the_fourth_term
+			has_completed_focus = EGY_the_sharm_el_sheikh_summits
+			NOT = { has_country_flag = EGY_sharm_summit_held }
+		}
+
+		targets = { ISR PAL JOR SAU SUD LBA SYR LEB }
+
+		available = { NOT = { has_war_with = FROM } }
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_sharm_summit"
+			set_country_flag = { flag = EGY_sharm_summit_held days = 180 }
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { tag_index = EGY }
+			set_temp_variable = { influence_target = FROM.id }
+			change_influence_percentage = yes
+			FROM = { add_opinion_modifier = { target = ROOT modifier = EGY_sharm_summit_opinion } }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	EGY_decree_renew_emergency_law = {
+		icon = decree8
+		custom_cost_trigger = { check_variable = { EGY_mubarak_authority > 2 } }
+		custom_cost_text = EGY_decree_authority_cost_3
+		days_remove = 730
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = EGY_extend_the_emergency_law
+			has_idea = EGY_emergency_law_idea
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_renew_emergency_law"
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+		}
+
+		ai_will_do = { base = 50 }
+	}
+
+	EGY_emergency_law_lapse = {
+		icon = decree8
+		available = { always = no }
+		activation = {
+			has_completed_focus = EGY_extend_the_emergency_law
+			has_idea = EGY_emergency_law_idea
+			NOT = { has_decision = EGY_decree_renew_emergency_law }
+		}
+		days_mission_timeout = 180
+		is_good = no
+
+		cancel_trigger = {
+			OR = {
+				has_decision = EGY_decree_renew_emergency_law
+				NOT = { has_idea = EGY_emergency_law_idea }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_emergency_law_lapse"
+			remove_ideas = EGY_emergency_law_idea
+		}
+	}
+}
+
+EGY_gas_exports = {
+	EGY_build_arab_gas_pipeline = {
+		icon = oil
+		fire_only_once = yes
+		days_remove = 180
+		custom_cost_trigger = { check_variable = { treasury > 2 } }
+		custom_cost_text = cost_2_0
+
+		available = {
+			country_exists = JOR
+			NOT = { has_war_with = JOR }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_build_arab_gas_pipeline"
+			newline = yes
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_build_arab_gas_pipeline"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_oil_export_multiplier_modifier = 0.10 tooltip = oil_export_multiplier_modifier_tt }
+			if = {
+				limit = { country_exists = JOR }
+				JOR = { add_opinion_modifier = { target = ROOT modifier = EGY_gas_diplomacy_opinion } }
+			}
+			set_country_flag = EGY_arab_gas_pipeline_built
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+
+	EGY_extend_arab_gas_pipeline_north = {
+		icon = oil
+		fire_only_once = yes
+		days_remove = 270
+		custom_cost_trigger = { check_variable = { treasury > 3 } }
+		custom_cost_text = cost_3_0
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = EGY_arab_gas_pipeline_built_tt
+				has_country_flag = EGY_arab_gas_pipeline_built
+			}
+			country_exists = SYR
+			country_exists = LEB
+			NOT = { has_war_with = SYR }
+			NOT = { has_war_with = LEB }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_extend_arab_gas_pipeline_north"
+			newline = yes
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_extend_arab_gas_pipeline_north"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_oil_export_multiplier_modifier = 0.10 tooltip = oil_export_multiplier_modifier_tt }
+			if = {
+				limit = { country_exists = SYR }
+				SYR = { add_opinion_modifier = { target = ROOT modifier = EGY_gas_diplomacy_opinion } }
+			}
+			if = {
+				limit = { country_exists = LEB }
+				LEB = { add_opinion_modifier = { target = ROOT modifier = EGY_gas_diplomacy_opinion } }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+
+	EGY_east_mediterranean_gas_deal = {
+		icon = oil
+		fire_only_once = yes
+		days_remove = 120
+		custom_cost_trigger = { check_variable = { treasury > 1 } }
+		custom_cost_text = cost_1_0
+
+		available = {
+			country_exists = ISR
+			NOT = { has_war_with = ISR }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_east_mediterranean_gas_deal"
+			newline = yes
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_east_mediterranean_gas_deal"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_oil_export_multiplier_modifier = 0.10 tooltip = oil_export_multiplier_modifier_tt }
+			if = {
+				limit = { country_exists = ISR }
+				ISR = { add_opinion_modifier = { target = ROOT modifier = EGY_gas_diplomacy_opinion } }
+			}
+			set_temp_variable = { temp_influence = 5 }
+			EGY_change_brotherhood_influence = yes
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				factor = 0.5
+				ai_has_high_deficit = yes
+			}
+		}
+	}
+}
+
+EGY_palestinian_question = {
+	EGY_propose_two_state_settlement = {
+		icon = negotiate_icon
+		cost = 50
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = EGY_a_two_state_settlement
+			has_country_flag = EGY_palestinian_proposal_rejected
+		}
+
+		available = {
+			NOT = { has_global_flag = MEPP_peace_deal_signed }
+			custom_trigger_tooltip = {
+				tooltip = EGY_gaza_proposal_cooldown_tt
+				NOT = { has_country_flag = EGY_gaza_proposal_cooldown }
+			}
+			country_exists = ISR
+			country_exists = PAL
+			209 = {
+				OR = {
+					is_owned_by = HAM
+					is_owned_by = PAL
+				}
+			}
+			ISR = { influence_higher_20 = yes }
+			PAL = { influence_higher_25 = yes }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_propose_two_state_settlement"
+			set_country_flag = { flag = EGY_gaza_proposal_cooldown days = 180 value = 1 }
+			clr_country_flag = EGY_palestinian_proposal_rejected
+			clr_country_flag = right_of_return_yes
+			clr_country_flag = settlements_no
+			clr_country_flag = settlements_ish
+			clr_country_flag = jerusalem_PAL
+			clr_country_flag = jerusalem_ISR
+			clr_country_flag = jerusalem_UN
+			clr_country_flag = palestine_state_yes
+			clr_country_flag = palestine_state_no
+			add_to_variable = { isreali_support = 1 }
+			add_to_variable = { palestinian_support = 1 }
+			news_event = { id = peace_plan.1 days = 1 }
+			country_event = { id = peace_plan.2 days = 1 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	EGY_propose_gaza_to_israel = {
+		icon = israel
+		cost = 50
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = EGY_gaza_to_israel
+			has_country_flag = EGY_palestinian_proposal_rejected
+		}
+
+		available = {
+			NOT = { has_global_flag = MEPP_peace_deal_signed }
+			custom_trigger_tooltip = {
+				tooltip = EGY_gaza_proposal_cooldown_tt
+				NOT = { has_country_flag = EGY_gaza_proposal_cooldown }
+			}
+			country_exists = ISR
+			country_exists = PAL
+			209 = {
+				OR = {
+					is_owned_by = HAM
+					is_owned_by = PAL
+				}
+			}
+			country_exists = HAM
+			ISR = { influence_higher_20 = yes }
+			PAL = { influence_higher_25 = yes }
+			HAM = { influence_higher_20 = yes }
+			custom_trigger_tooltip = {
+				tooltip = EGY_israel_present_in_palestine_tt
+				PAL = {
+					OR = {
+						is_subject_of = ISR
+						any_of = {
+							array = influence_array
+							value = v
+							index = i
+
+							var:v = { tag = ISR }
+							check_variable = { influence_array_val^i > 9.999 }
+						}
+					}
+				}
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_propose_gaza_to_israel"
+			set_country_flag = { flag = EGY_gaza_proposal_cooldown days = 180 value = 1 }
+			clr_country_flag = EGY_palestinian_proposal_rejected
+			ISR = { country_event = { id = egypt_mubarak.61 days = 1 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { ISR = { annex_country = { target = HAM transfer_troops = yes } } }
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = { add_opinion_modifier = { target = ISR modifier = EGY_gaza_proposal_rejected_opinion } }
+		}
+
+		ai_will_do = { base = 2 }
+	}
+
+	EGY_propose_egyptian_gaza = {
+		icon = palestine
+		cost = 50
+		fire_only_once = no
+
+		visible = {
+			has_completed_focus = EGY_egyptian_rule_over_gaza
+			has_country_flag = EGY_palestinian_proposal_rejected
+		}
+
+		available = {
+			NOT = { has_global_flag = MEPP_peace_deal_signed }
+			custom_trigger_tooltip = {
+				tooltip = EGY_gaza_proposal_cooldown_tt
+				NOT = { has_country_flag = EGY_gaza_proposal_cooldown }
+			}
+			country_exists = ISR
+			country_exists = PAL
+			209 = {
+				OR = {
+					is_owned_by = HAM
+					is_owned_by = PAL
+				}
+			}
+			country_exists = HAM
+			ISR = { influence_higher_25 = yes }
+			PAL = { influence_higher_30 = yes }
+			HAM = { influence_higher_30 = yes }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_propose_egyptian_gaza"
+			set_country_flag = { flag = EGY_gaza_proposal_cooldown days = 180 value = 1 }
+			clr_country_flag = EGY_palestinian_proposal_rejected
+			ISR = { country_event = { id = egypt_mubarak.64 days = 1 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { 209 = { transfer_state_to = ROOT } }
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = { add_opinion_modifier = { target = ISR modifier = EGY_gaza_proposal_rejected_opinion } }
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	EGY_lean_on_israel_through_washington = {
+		icon = israel
+		cost = 50
+		fire_only_once = no
+		days_re_enable = 180
+
+		visible = { has_country_flag = EGY_palestinian_proposal_rejected }
+
+		available = {
+			country_exists = ISR
+			country_exists = USA
+			USA = { has_opinion = { target = ROOT value > 24 } }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_lean_on_israel_through_washington"
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { influence_target = ISR.id }
+			change_influence_percentage = yes
+			add_to_variable = { isreali_support = 1 }
+			ISR = { set_country_flag = { flag = EGY_israel_under_pressure days = 180 value = 1 } }
+			custom_effect_tooltip = EGY_israel_under_pressure_tt
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	EGY_rally_the_arab_league_behind_ramallah = {
+		icon = palestine
+		cost = 50
+		fire_only_once = no
+		days_re_enable = 180
+
+		visible = { has_country_flag = EGY_palestinian_proposal_rejected }
+
+		available = {
+			country_exists = PAL
+			has_completed_focus = EGY_a_two_state_settlement
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_rally_the_arab_league_behind_ramallah"
+			set_temp_variable = { percent_change = 3 }
+			set_temp_variable = { influence_target = PAL.id }
+			change_influence_percentage = yes
+			add_to_variable = { palestinian_support = 1 }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+}
