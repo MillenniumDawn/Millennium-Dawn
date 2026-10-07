@@ -1227,28 +1227,24 @@ debt_default_decisions = {
 			check_variable = { gdp_total < 100 }
 		}
 
-		available = {
-			interest_rate_lower_than_5 = yes
-			# Blocks a second borrow before the weekly refinance updates interest
-			treasury_higher_than_0_5 = yes
-		}
+		available = { interest_rate_lower_than_5 = yes }
+
+		# One payment per weekly refinance, so the interest gate always sees the last borrow
+		days_re_enable = 7
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision debt_default_pay_10_from_treasury"
-			# The refinance turns half of GDP into about 0.64x GDP of debt: under 5% interest stays under the 15% default gate
+			# The refinance turns half of GDP into about 0.64x GDP of debt: one payment from under 5% stays under the 15% default gate
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = 0.5 }
 			add_to_temp_variable = { treasury_change = treasury }
 			clamp_temp_variable = { var = treasury_change max = 10 }
 			clamp_temp_variable = { var = treasury_change max = debt_default_left }
+			clamp_temp_variable = { var = treasury_change min = 0 }
 			custom_effect_tooltip = debt_default_pay_10_from_treasury_tt
 			subtract_from_variable = { debt_default_left = treasury_change }
 			multiply_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
-			clamp_variable = {
-				var = debt_default_left
-				min = 0
-			}
 		}
 
 		ai_will_do = { base = 1000 }
@@ -1260,10 +1256,12 @@ debt_default_decisions = {
 
 		visible = {
 			has_active_mission = debt_default_main_mission
-			check_variable = { gdp_total > 100 }
+			NOT = { check_variable = { gdp_total < 100 } }
 		}
 
 		available = { interest_rate_lower_than_5 = yes }
+
+		days_re_enable = 7
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision debt_default_pay_50_from_treasury"
@@ -1273,10 +1271,6 @@ debt_default_decisions = {
 			subtract_from_variable = { debt_default_left = treasury_change }
 			multiply_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
-			clamp_variable = {
-				var = debt_default_left
-				min = 0
-			}
 		}
 
 		ai_will_do = { base = 1000 }
