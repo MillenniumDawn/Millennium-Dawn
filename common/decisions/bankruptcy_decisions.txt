@@ -1229,18 +1229,18 @@ debt_default_decisions = {
 
 		available = {
 			interest_rate_lower_than_5 = yes
-			check_variable = { treasury > 0 }
+			# Blocks a second borrow before the weekly refinance updates interest
+			treasury_higher_than_0_5 = yes
 		}
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision debt_default_pay_10_from_treasury"
-			# Borrowing at most half of GDP keeps the new interest below the 15% default threshold
+			# The refinance turns half of GDP into about 0.64x GDP of debt: under 5% interest stays under the 15% default gate
 			set_temp_variable = { treasury_change = gdp_total }
 			multiply_temp_variable = { treasury_change = 0.5 }
 			add_to_temp_variable = { treasury_change = treasury }
 			clamp_temp_variable = { var = treasury_change max = 10 }
 			clamp_temp_variable = { var = treasury_change max = debt_default_left }
-			clamp_temp_variable = { var = treasury_change min = 0 }
 			custom_effect_tooltip = debt_default_pay_10_from_treasury_tt
 			subtract_from_variable = { debt_default_left = treasury_change }
 			multiply_temp_variable = { treasury_change = -1 }
@@ -1267,10 +1267,12 @@ debt_default_decisions = {
 
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision debt_default_pay_50_from_treasury"
+			set_temp_variable = { treasury_change = 50 }
+			clamp_temp_variable = { var = treasury_change max = debt_default_left }
 			custom_effect_tooltip = debt_default_pay_50_from_treasury_tt
-			set_temp_variable = { treasury_change = -50 }
+			subtract_from_variable = { debt_default_left = treasury_change }
+			multiply_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
-			subtract_from_variable = { debt_default_left = 50 }
 			clamp_variable = {
 				var = debt_default_left
 				min = 0
