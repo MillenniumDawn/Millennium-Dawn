@@ -720,7 +720,8 @@ def process_txt_for_var_writes(args: Tuple[str]) -> Set[str]:
                     and _BIND_NAME_RE.fullmatch(scalar)
                 ):
                     written.add(scalar)
-            search_from = end
+            # Resume inside the block so a binder nested in another loop is found too.
+            search_from = match.end()
     if "dynamic_lists" in text:
         search_from = 0
         while True:
