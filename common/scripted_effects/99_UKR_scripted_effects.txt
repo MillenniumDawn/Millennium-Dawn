@@ -5124,3 +5124,105 @@ UKR_strategic_industry_milestone_2026 = {
 		UKR_strategic_industry_apply_wartime_drone_arsenal = yes
 	}
 }
+
+# T-55 and T-62 modernizations already developed, in temp variable t55_prior_models
+UKR_t55_count_developed_models = {
+	set_temp_variable = { t55_prior_models = 0 }
+	if = { limit = { has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55_5tdf_flag } add_to_temp_variable = { t55_prior_models = 1 } }
+	if = { limit = { has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55_64_flag } add_to_temp_variable = { t55_prior_models = 1 } }
+	if = { limit = { has_country_flag = ukraine_modernize_sov_equipment_t55_developed_t55agm_flag } add_to_temp_variable = { t55_prior_models = 1 } }
+	if = { limit = { has_country_flag = ukraine_modernize_sov_equipment_t55_developed_bmp55_flag } add_to_temp_variable = { t55_prior_models = 1 } }
+	if = { limit = { has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62_5tdf_flag } add_to_temp_variable = { t55_prior_models = 1 } }
+	if = { limit = { has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62ag_flag } add_to_temp_variable = { t55_prior_models = 1 } }
+	if = { limit = { has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62agm_flag } add_to_temp_variable = { t55_prior_models = 1 } }
+}
+
+# Storage list in the UKR_reactivate_sov_category GUI (UKR_reactivate_sov_storage_gui).
+# Row ids: 1-5 are section headers, 11 and up are vehicles, the tens digit is their section.
+# Sections and vehicles with nothing in storage are hidden. Only the section in UKR_storage_open_section
+# shows its vehicles (0 = all closed). UKR_storage_refresh rebuilds the rows.
+UKR_storage_rebuild_rows = {
+	clear_array = UKR_storage_rows
+	if = {
+		limit = { check_variable = { UKR_storage_total_1 > 0 } }
+		add_to_array = { UKR_storage_rows = 1 }
+		if = {
+			limit = { check_variable = { UKR_storage_open_section = 1 } }
+			if = { limit = { check_variable = { ukraine_has_t55_stockpile > 0 } } add_to_array = { UKR_storage_rows = 11 } }
+			if = { limit = { check_variable = { ukraine_has_t62_stockpile > 0 } } add_to_array = { UKR_storage_rows = 12 } }
+			if = { limit = { check_variable = { ukraine_has_pt76_stockpile > 0 } } add_to_array = { UKR_storage_rows = 13 } }
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_storage_total_2 > 0 } }
+		add_to_array = { UKR_storage_rows = 2 }
+		if = {
+			limit = { check_variable = { UKR_storage_open_section = 2 } }
+			if = { limit = { check_variable = { ukraine_has_btr50_stockpile > 0 } } add_to_array = { UKR_storage_rows = 21 } }
+			if = { limit = { check_variable = { ukraine_has_gtmu_stockpile > 0 } } add_to_array = { UKR_storage_rows = 22 } }
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_storage_total_3 > 0 } }
+		add_to_array = { UKR_storage_rows = 3 }
+		if = {
+			limit = { check_variable = { UKR_storage_open_section = 3 } }
+			if = { limit = { check_variable = { ukraine_has_2k11_stockpile > 0 } } add_to_array = { UKR_storage_rows = 31 } }
+			if = { limit = { check_variable = { ukraine_has_9k31_stockpile > 0 } } add_to_array = { UKR_storage_rows = 32 } }
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_storage_total_4 > 0 } }
+		add_to_array = { UKR_storage_rows = 4 }
+		if = {
+			limit = { check_variable = { UKR_storage_open_section = 4 } }
+			if = { limit = { check_variable = { ukraine_has_9k11_stockpile > 0 } } add_to_array = { UKR_storage_rows = 41 } }
+		}
+	}
+	if = {
+		limit = { check_variable = { UKR_storage_total_5 > 0 } }
+		add_to_array = { UKR_storage_rows = 5 }
+		if = {
+			limit = { check_variable = { UKR_storage_open_section = 5 } }
+			if = { limit = { check_variable = { ukraine_has_brdm1_stockpile > 0 } } add_to_array = { UKR_storage_rows = 51 } }
+		}
+	}
+}
+
+# Header click in the storage list: open the section in temp variable storage_section, or close it when it is already open
+UKR_storage_toggle_section = {
+	if = {
+		limit = { check_variable = { UKR_storage_open_section = storage_section } }
+		set_variable = { UKR_storage_open_section = 0 }
+	}
+	else = {
+		set_variable = { UKR_storage_open_section = storage_section }
+	}
+	UKR_storage_refresh = yes
+}
+
+# Call after every change of a ukraine_has_*_stockpile variable: section totals, rows and a GUI refresh
+UKR_storage_refresh = {
+	if = {
+		limit = { NOT = { has_country_flag = UKR_storage_initialized_flag } }
+		set_country_flag = UKR_storage_initialized_flag
+		set_variable = { UKR_storage_open_section = 1 }
+	}
+	set_variable = { UKR_storage_total_1 = ukraine_has_t55_stockpile }
+	add_to_variable = { UKR_storage_total_1 = ukraine_has_t62_stockpile }
+	add_to_variable = { UKR_storage_total_1 = ukraine_has_pt76_stockpile }
+	set_variable = { UKR_storage_total_2 = ukraine_has_btr50_stockpile }
+	add_to_variable = { UKR_storage_total_2 = ukraine_has_gtmu_stockpile }
+	set_variable = { UKR_storage_total_3 = ukraine_has_2k11_stockpile }
+	add_to_variable = { UKR_storage_total_3 = ukraine_has_9k31_stockpile }
+	set_variable = { UKR_storage_total_4 = ukraine_has_9k11_stockpile }
+	set_variable = { UKR_storage_total_5 = ukraine_has_brdm1_stockpile }
+	UKR_storage_rebuild_rows = yes
+	if = {
+		limit = { check_variable = { UKR_storage_dirty_var < 10000 } }
+		add_to_variable = { UKR_storage_dirty_var = 1 }
+	}
+	else = {
+		set_variable = { UKR_storage_dirty_var = 1 }
+	}
+}
