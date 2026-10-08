@@ -291,6 +291,47 @@ def test_missing_name_key_is_reported_at_the_idea_definition(tmp_path):
     ]
 
 
+def test_inline_localisation_uses_definition_ids_and_name_overrides(
+    tmp_path, no_vanilla_gfx
+):
+    _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
+    _write(
+        tmp_path,
+        "common/ideas/inline.txt",
+        "ideas = { country = {\n"
+        "\tDIRECT_idea = { picture = shared }\n"
+        "\tRENAMED_idea = { name = shared_name picture = shared }\n"
+        "\tMISSING_idea = { picture = shared }\n"
+        "} }\n",
+    )
+    _write(
+        tmp_path,
+        "localisation/english/MD_inline_l_english.yml",
+        'l_english:\n DIRECT_idea: "Direct Name"\n'
+        ' DIRECT_idea_desc: "Direct description."\n'
+        ' shared_name: "Shared Name"\n shared_name_desc: "Shared description."\n',
+    )
+    _write(tmp_path, "interface/ideas.gfx", RUN_GFX)
+    validator = _validator(tmp_path, missing_loc=True)
+
+    validator.run_validations()
+
+    assert _findings(validator) == [
+        (
+            "missing-idea-localisation",
+            "'MISSING_idea' (country) is missing loc key 'MISSING_idea'",
+            "common/ideas/inline.txt",
+            4,
+        ),
+        (
+            "missing-idea-localisation",
+            "'MISSING_idea' (country) is missing loc key 'MISSING_idea_desc'",
+            "common/ideas/inline.txt",
+            4,
+        ),
+    ]
+
+
 def test_missing_loc_flag_adds_the_desc_keys(tmp_path):
     assert _missing_loc_findings(tmp_path, missing_loc=True) == [
         (
