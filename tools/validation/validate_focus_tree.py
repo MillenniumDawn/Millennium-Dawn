@@ -22,7 +22,7 @@ from typing import (
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from focus_geometry import analyze_layout
+from focus_geometry import HIDE_RULE_PREFIX, HIDE_RULE_TERMS, analyze_layout
 from shared_utils import extract_block_from_text as _extract_block
 from shared_utils import (
     get_staged_files,
@@ -1264,13 +1264,18 @@ def _scan_relative_positions(
     return out
 
 
-def _branch_terms(body: str) -> Set[str]:
+def _branch_terms(body: str, prefix: str = "") -> Set[str]:
     terms = set()
     for key, scalar, nested in iter_statements(body):
         if nested is not None:
-            terms |= _branch_terms(nested)
+            limit = next((b for k, _, b in iter_statements(nested) if k == "limit"), "")
+            if key == "if" and HIDE_RULE_TERMS <= _branch_terms(limit or ""):
+                inner = _branch_terms(nested, HIDE_RULE_PREFIX)
+                terms |= inner - {HIDE_RULE_PREFIX + t for t in HIDE_RULE_TERMS}
+            else:
+                terms |= _branch_terms(nested, prefix)
         elif scalar:
-            terms.add(f"{key}={scalar}")
+            terms.add(f"{prefix}{key}={scalar}")
     return terms
 
 
