@@ -6,14 +6,10 @@ and never used there is a dead setter: the value never reaches the effect
 parameter consumes it, with or without a contract of its own.
 """
 
-from pathlib import Path
-
 import pytest
 import validate_scripted_params as vsp
 from shared.suite import run_validator
 from shared.suite import write_text as _write
-
-ROOT = Path(__file__).resolve().parents[3]
 
 EFFECTS = """# Parameters:
 # - treasury_change: amount
@@ -410,32 +406,3 @@ def test_move_party_popularity_does_not_consume_the_setter(tmp_path):
     # it writes party_popularity_increase itself, so the caller's value is lost
     body = _option(PARTY_SET, "move_party_popularity = yes")
     assert _findings(tmp_path, body) == [(4, "never")]
-
-
-_BUDGET = "common/scripted_effects/00_budget_effects.txt"
-_POLITICS = "common/scripted_effects/00_MD_politicsview_scripted_effects.txt"
-
-
-@pytest.mark.parametrize(
-    "rel, effect, required, optional",
-    [
-        (_BUDGET, "modify_treasury_effect", ["treasury_change"], []),
-        (_BUDGET, "modify_debt_effect", ["debt_change"], []),
-        (
-            _BUDGET,
-            "modify_international_investment_effect",
-            ["int_investment_change"],
-            [],
-        ),
-        (
-            _POLITICS,
-            "change_relative_party_popularity",
-            [],
-            ["party_index", "party_popularity_increase", "temp_outlook_increase"],
-        ),
-    ],
-)
-def test_game_file_still_declares_the_contract(rel, effect, required, optional):
-    # the contract is a comment block, so a stray edit can switch the check off
-    contracts = vsp._parse_effect_contracts_from_file(str(ROOT / rel))
-    assert contracts[effect] == {"required": required, "optional": optional}

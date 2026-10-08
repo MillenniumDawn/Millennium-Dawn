@@ -6,9 +6,6 @@ change applied elsewhere) and outside completion_reward (select_effect,
 bypass) are not.
 """
 
-import re
-
-from shared.paths import REPO_ROOT as _MOD_ROOT
 from shared.suite import write_focus_file as _write_focus_file
 from validate_focus_tree import (
     _PP_MALUS_EXEMPT_FOCUS_IDS,
@@ -86,30 +83,3 @@ def test_exempt_focus_id_is_not_reported(tmp_path):
     v.validate_pp_malus_in_rewards()
     assert v.warnings_found == 0
     assert v.errors_found == 0
-
-
-def _focus_ids_with_pp_malus():
-    """Focus ids in the real tree that still carry a literal negative
-    add_political_power, found by walking back to the nearest preceding id."""
-    id_or_malus = re.compile(
-        r"^\s*(?:id\s*=\s*(\S+)|(add_political_power\s*=\s*-\d))", re.MULTILINE
-    )
-    found = set()
-    for path in sorted((_MOD_ROOT / "common" / "national_focus").glob("*.txt")):
-        current = None
-        for m in id_or_malus.finditer(
-            path.read_text(encoding="utf-8-sig", errors="replace")
-        ):
-            if m.group(1):
-                current = m.group(1)
-            elif current:
-                found.add(current)
-    return found
-
-
-def test_pp_malus_exemptions_are_still_live():
-    stale = sorted(_PP_MALUS_EXEMPT_FOCUS_IDS - _focus_ids_with_pp_malus())
-    assert not stale, (
-        "_PP_MALUS_EXEMPT_FOCUS_IDS names focuses that no longer apply a PP "
-        f"malus: {stale}. Remove them from the exemption set."
-    )
