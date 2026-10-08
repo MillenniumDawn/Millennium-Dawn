@@ -71,7 +71,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_new_thinking_and_priorities
-		icon = mubarakg
+		icon = examine_foreign_laws
 
 		x = -19
 		y = 1
@@ -87,7 +87,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_new_thinking_and_priorities"
 			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
-			add_political_power = 50
 		}
 
 		ai_will_do = { base = 5 }
@@ -122,7 +121,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_the_policies_secretariat
-		icon = mubarakg
+		icon = Focus_AUS_lawmaking_leniency
 
 		x = 2
 		y = 1
@@ -142,11 +141,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_policies_secretariat"
-			# TODO(characters): unlock Gamal Mubarak as an advisor
 			set_temp_variable = { temp_opinion = -10 }
 			change_the_military_opinion = yes
+			newline = yes
 			set_temp_variable = { temp_authority = 5 }
 			EGY_change_mubarak_authority = yes
+			newline = yes
 			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
 		}
 
@@ -155,7 +155,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_float_the_pound
-		icon = mubarakg
+		icon = focus_IRQ_decouple_from_the_pound
 
 		x = -2
 		y = 1
@@ -176,7 +176,8 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_float_the_pound"
 			set_temp_variable = { temp_bread = 15 }
-			EGY_change_bread_pressure = yes
+			EGY_world_food_price_shock = yes
+			newline = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_the_military_opinion = yes
 			newline = yes
@@ -210,9 +211,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_smart_village_and_the_ict_strategy"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
-			add_to_variable = { EGY_political_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
-			add_to_variable = { EGY_political_offices_productivity = 0.03 tooltip = offices_productivity_tt }
+			activate_mission = EGY_smart_village_mission
+			newline = yes
 			set_temp_variable = { temp_opinion = -3 }
 			change_intelligence_community_opinion = yes
 		}
@@ -222,7 +222,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_the_nazif_cabinet
-		icon = mubarakg
+		icon = british_cabinet
 
 		x = 0
 		y = 1
@@ -243,12 +243,15 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_nazif_cabinet"
 			unlock_decision_tooltip = EGY_decree_desert_land
-			# TODO(characters): Ahmed Nazif replaces Atef Ebeid; unlock Rachid Mohamed Rachid, Youssef Boutros Ghali and Mahmoud Mohieldin as advisors
+			newline = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_the_military_opinion = yes
+			newline = yes
 			set_temp_variable = { temp_authority = 3 }
 			EGY_change_mubarak_authority = yes
+			newline = yes
 			add_power_balance_value = { id = EGY_succession_bop value = 0.15 }
+			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
 			add_to_variable = { EGY_political_bureaucracy_cost_multiplier_modifier = -0.10 tooltip = bureaucracy_cost_multiplier_modifier_tt }
 			add_to_variable = { EGY_political_political_power_factor = 0.05 tooltip = political_power_factor_tt }
@@ -284,13 +287,49 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_reviving_the_nuclear_programme"
 			set_temp_variable = { temp_authority = 3 }
 			EGY_change_mubarak_authority = yes
+			newline = yes
 			add_power_balance_value = { id = EGY_succession_bop value = 0.05 }
+			newline = yes
 			add_tech_bonus = {
 				name = EGY_reviving_the_nuclear_programme
 				bonus = 0.5
 				uses = 2
 				category = CAT_nuclear_reactors
 			}
+			newline = yes
+			if = {
+				limit = {
+					owns_state = 215
+					NOT = { any_owned_state = { nuclear_facility > 0 } }
+				}
+				215 = {
+					add_building_construction = {
+						type = nuclear_facility
+						level = 1
+						instant_build = yes
+						province = 7011
+					}
+				}
+				add_breakthrough_points = {
+					specialization = specialization_nuclear
+					value = 1
+				}
+			}
+			else = {
+				add_breakthrough_points = {
+					specialization = specialization_nuclear
+					value = 3
+				}
+			}
+			if = {
+				limit = { owns_state = 216 }
+				newline = yes
+				set_temp_variable = { skip_payment = 1 }
+				216 = { one_state_nuclear_reactor = yes }
+			}
+			newline = yes
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
 		}
 
 		ai_will_do = { base = 2 }
@@ -318,10 +357,16 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_income_tax_law"
+			set_temp_variable = { corp_change = -4 }
+			modify_corporate_tax_rate_effect = yes
+			set_temp_variable = { pop_change = -3 }
+			modify_population_tax_rate_effect = yes
+			newline = yes
 			activate_mission = EGY_income_tax_law_mission
+			newline = yes
 			add_power_balance_value = { id = EGY_succession_bop value = 0.05 }
 			newline = yes
-			set_temp_variable = { treasury_change = -1 }
+			set_temp_variable = { treasury_change = 1 }
 			modify_treasury_effect = yes
 		}
 
@@ -336,7 +381,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_customs_tariff_overhaul
-		icon = mubarakg
+		icon = trade
 
 		x = 1
 		y = 2
@@ -359,9 +404,11 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
 			add_to_variable = { EGY_political_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
 			add_to_variable = { EGY_political_trade_opinion_factor = 0.10 tooltip = trade_opinion_factor_tt }
+			newline = yes
 			if = {
 				limit = { country_exists = USA }
 				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_customs_overhaul_opinion } }
+				newline = yes
 			}
 			custom_effect_tooltip = EGY_eu_members_opinion_tt
 			hidden_effect = {
@@ -377,7 +424,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_banking_reform_programme
-		icon = mubarakg
+		icon = focus_PER_national_bank
 
 		x = 0
 		y = 1
@@ -397,8 +444,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_banking_reform_programme"
-			# TODO(characters): unlock Farouk El-Okdah as an advisor
 			activate_mission = EGY_banking_reform_mission
+			newline = yes
+			two_office_construction = yes
 		}
 
 		ai_will_do = { base = 3 }
@@ -423,36 +471,38 @@ focus_tree = {
 				EGY_gamal_in_power = yes
 			}
 			has_completed_focus = EGY_the_camp_david_dividend
+			country_exists = USA
+			country_exists = ISR
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_qiz_agreement"
-			set_temp_variable = { int_investment_change = 4 }
-			modify_international_investment_effect = yes
-			if = {
-				limit = { owns_state = 214 }
-				214 = { one_state_industrial_complex = yes }
-			}
-			if = {
-				limit = { owns_state = 216 }
-				216 = { one_state_industrial_complex = yes }
-			}
-			set_temp_variable = { temp_influence = 5 }
-			EGY_change_brotherhood_influence = yes
-			if = {
-				limit = { country_exists = USA }
+			USA = { country_event = { id = egypt_mubarak.88 days = 1 } }
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				set_temp_variable = { int_investment_change = 4 }
+				modify_international_investment_effect = yes
+				if = {
+					limit = { owns_state = 214 }
+					214 = { one_state_industrial_complex = yes }
+				}
+				if = {
+					limit = { owns_state = 216 }
+					216 = { one_state_industrial_complex = yes }
+				}
 				USA = {
 					add_opinion_modifier = { target = ROOT modifier = global_trade }
 					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
 				}
-			}
-			if = {
-				limit = { country_exists = ISR }
 				ISR = {
 					add_opinion_modifier = { target = ROOT modifier = global_trade }
 					reverse_add_opinion_modifier = { target = ROOT modifier = global_trade }
 				}
 			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = { unlock_decision_tooltip = EGY_resend_qiz_proposal }
 		}
 
 		ai_will_do = {
@@ -466,7 +516,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_the_privatization_drive
-		icon = mubarakg
+		icon = economic_privatisation
 
 		x = 0
 		y = 2
@@ -487,7 +537,9 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_privatization_drive"
 			activate_mission = EGY_privatization_drive_mission
+			newline = yes
 			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
+			newline = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_the_military_opinion = yes
 		}
@@ -522,12 +574,20 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_us_free_trade_agreement"
-			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
-			add_to_variable = { EGY_political_trade_opinion_factor = 0.15 tooltip = trade_opinion_factor_tt }
-			add_to_variable = { EGY_political_industrial_capacity_factory = 0.03 tooltip = industrial_capacity_factory_tt }
-			USA = { add_opinion_modifier = { target = ROOT modifier = EGY_us_fta_opinion } }
-			set_temp_variable = { temp_influence = 5 }
-			EGY_change_brotherhood_influence = yes
+			USA = { country_event = { id = egypt_mubarak.90 days = 1 } }
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_us_fta_opinion } }
+				custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+				add_to_variable = { EGY_political_trade_opinion_factor = 0.05 tooltip = trade_opinion_factor_tt }
+				newline = yes
+				set_temp_variable = { temp_influence = 5 }
+				EGY_change_brotherhood_influence = yes
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_REJECT
+			effect_tooltip = { unlock_decision_tooltip = EGY_resend_us_fta_proposal }
 		}
 
 		ai_will_do = { base = 2 }
@@ -535,7 +595,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_partner_the_tycoons
-		icon = mubarakg
+		icon = rally_the_industrialists
 
 		x = -1
 		y = 3
@@ -556,11 +616,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_partner_the_tycoons"
-			# TODO(characters): unlock Ahmed Ezz as an advisor
 			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
+			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
 			add_to_variable = { EGY_political_industrial_capacity_factory = 0.05 tooltip = industrial_capacity_factory_tt }
 			add_to_variable = { EGY_political_production_speed_industrial_complex_factor = 0.10 tooltip = production_speed_industrial_complex_factor_tt }
+			newline = yes
 			increase_corruption_chance = yes
 		}
 
@@ -569,7 +630,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_empower_the_competition_authority
-		icon = mubarakg
+		icon = industry_democratic
 
 		x = 1
 		y = 3
@@ -590,12 +651,14 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_empower_the_competition_authority"
-			decrease_corruption = yes
 			add_power_balance_value = { id = EGY_succession_bop value = -0.05 }
+			newline = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
 			add_to_variable = { EGY_political_return_on_investment_modifier = 0.02 tooltip = return_on_investment_modifier_tt }
 			add_to_variable = { EGY_political_consumer_goods_factor = -0.02 tooltip = consumer_goods_factor_tt }
-			country_event = { id = egypt_mubarak.14 days = 30 }
+			newline = yes
+			decrease_corruption = yes
+			hidden_effect = { country_event = { id = egypt_mubarak.14 days = 30 } }
 		}
 
 		ai_will_do = { base = 2 }
@@ -620,13 +683,23 @@ focus_tree = {
 				EGY_mubarak_in_power = yes
 				EGY_gamal_in_power = yes
 			}
+			custom_trigger_tooltip = {
+				tooltip = EGY_seven_percent_growth_tt
+				OR = {
+					has_idea = fast_growth
+					has_idea = economic_boom
+					check_variable = { last_quarter_gdp_growth_rate > 0.017 }
+				}
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_seven_percent_economy"
 			set_temp_variable = { temp_bread = 5 }
 			EGY_change_bread_pressure = yes
+			newline = yes
 			add_timed_idea = { idea = EGY_nazif_boom_idea days = 1095 }
+			newline = yes
 			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
 		}
 
@@ -1310,7 +1383,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_tantawis_ministry_of_defence
-		icon = mubarakg
+		icon = army_logistics
 
 		x = -8
 		y = 1
@@ -1700,7 +1773,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_after_taba
-		icon = mubarakg
+		icon = Generic_Colonial_Army
 
 		x = 0
 		y = 1
