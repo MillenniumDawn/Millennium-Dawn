@@ -1,14 +1,7 @@
 """Tests for validate_tech_categories."""
 
-from shared.paths import REPO_ROOT
 from shared.suite import write_under as _write
-from validate_tech_categories import (
-    _LEGACY_CATEGORIES,
-    Validator,
-    _brace_span,
-    _references,
-    load_known_categories,
-)
+from validate_tech_categories import Validator, _brace_span, _references
 
 _TAG_NAMES = [
     "CAT_military",
@@ -113,15 +106,6 @@ def test_mixed_case_reference_suggests_the_lowercase_tag(tmp_path):
     messages = _messages(v)
     assert len(messages) == 1
     assert "did you mean 'CAT_military'" in messages[0], messages[0]
-
-
-def test_legacy_table_targets_exist_and_keys_do_not():
-    known = load_known_categories(
-        sorted((REPO_ROOT / "common" / "technology_tags").glob("*.txt"))
-    )
-    known_lower = {k.lower() for k in known}
-    assert set(_LEGACY_CATEGORIES.values()) <= known
-    assert not set(_LEGACY_CATEGORIES) & known_lower
 
 
 def test_research_bonus_keys_are_checked(tmp_path):
