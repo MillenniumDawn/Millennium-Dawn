@@ -1014,16 +1014,19 @@ class Validator(BaseValidator):
 
         findings: List[Issue] = []
         for filepath in sorted(ideas_by_file):
-            missing: List[Tuple[str, str, str]] = []
+            missing: List[Tuple[str, str, str, str]] = []
             for idea_name in ideas_by_file[filepath]:
                 cat, name_override, _pic = defined_ideas[idea_name]
                 if cat in hidden_cats:
                     continue
-                keys = [name_override or idea_name]
+                name_key = name_override or idea_name
+                keys = [(name_key, Severity.ERROR)]
                 if self.missing_loc:
-                    keys.append(f"{keys[0]}_desc")
+                    keys.append((f"{name_key}_desc", Severity.WARNING))
                 missing.extend(
-                    (idea_name, cat, key) for key in keys if key not in loc_keys
+                    (idea_name, cat, key, severity)
+                    for key, severity in keys
+                    if key not in loc_keys
                 )
             if not missing:
                 continue
@@ -1035,10 +1038,10 @@ class Validator(BaseValidator):
             for m in _IDEA_BLOCK_START.finditer(blank_quoted_strings(text)):
                 def_lines.setdefault(m.group(1), text.count("\n", 0, m.start()) + 1)
             rel = os.path.relpath(filepath, self.mod_path)
-            for idea_name, cat, key in missing:
+            for idea_name, cat, key, severity in missing:
                 findings.append(
                     Issue(
-                        severity=Severity.WARNING,
+                        severity=severity,
                         category="missing-idea-localisation",
                         message=f"'{idea_name}' ({cat}) is missing loc key '{key}'",
                         file=rel,
@@ -1050,7 +1053,6 @@ class Validator(BaseValidator):
             findings,
             "✓ All idea localisation keys are defined",
             "Ideas missing localisation:",
-            severity=Severity.WARNING,
             category="missing-idea-localisation",
         )
 

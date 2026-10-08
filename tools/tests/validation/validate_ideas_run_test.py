@@ -13,6 +13,8 @@ import validate_ideas
 from shared.suite import issue_rows as _findings
 from shared.suite import write_under as _write
 from validate_ideas import IdeaIssue, Validator, _add_extra_args
+from validator_batches import BATCHES
+from validator_common import Severity
 
 IDEA_TAGS = """idea_categories = {
 \thidden_ideas = { hidden = yes }
@@ -330,6 +332,11 @@ def test_inline_localisation_uses_definition_ids_and_name_overrides(
             4,
         ),
     ]
+    assert [issue.severity for issue in validator._issues] == [
+        Severity.ERROR,
+        Severity.WARNING,
+    ]
+    assert (validator.errors_found, validator.warnings_found) == (1, 1)
 
 
 def test_missing_loc_flag_adds_the_desc_keys(tmp_path):
@@ -598,6 +605,8 @@ def test_missing_name_loc_flag_reports_only_the_name_key(tmp_path, no_vanilla_gf
     assert [issue.message for issue in validator._issues] == [
         "'DEAD_spirit' (country) is missing loc key 'DEAD_spirit'"
     ]
+    assert validator._issues[0].severity == Severity.ERROR
+    assert (validator.errors_found, validator.warnings_found) == (1, 0)
 
 
 def test_staged_missing_name_loc_checks_only_the_staged_idea_file(
@@ -716,6 +725,69 @@ def test_script_entry_point_exits_nonzero_under_strict(tmp_path, monkeypatch):
         runpy.run_path(validate_ideas.__file__, run_name="__main__")
 
     assert exit_info.value.code == 1
+
+
+@pytest.mark.parametrize(
+    ("name_override", "descriptions_only", "expected_code"),
+    [
+        (None, False, 1),
+        ("shared_missing", False, 1),
+        ("shared_missing_desc", False, 1),
+        (None, True, 0),
+    ],
+)
+def test_strict_core_gate_fails_only_for_missing_idea_names(
+    tmp_path,
+    monkeypatch,
+    no_vanilla_gfx,
+    capsys,
+    name_override,
+    descriptions_only,
+    expected_code,
+):
+    _write_run_mod(tmp_path)
+    spec = next(spec for spec in BATCHES["core"] if spec.name == "ideas")
+    assert spec.strict is True
+    flags = list(spec.args)
+    if name_override:
+        _write(
+            tmp_path,
+            "common/ideas/test.txt",
+            RUN_IDEAS.replace(
+                "DEAD_spirit = {", f"DEAD_spirit = {{ name = {name_override}"
+            ),
+        )
+    if descriptions_only:
+        _write(
+            tmp_path,
+            "localisation/english/MD_test_l_english.yml",
+            RUN_LOC + ' DEAD_spirit: "Dead Spirit"\n',
+        )
+        flags = ["--missing-loc"]
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            validate_ideas.__file__,
+            "--path",
+            str(tmp_path),
+            "--strict",
+            "--workers",
+            "1",
+            "--no-color",
+            "--no-unused-ideas",
+            *flags,
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(validate_ideas.__file__, run_name="__main__")
+
+    assert exit_info.value.code == expected_code
+    missing_key = (
+        "DEAD_spirit_desc" if descriptions_only else name_override or "DEAD_spirit"
+    )
+    assert f"missing loc key '{missing_key}'" in capsys.readouterr().err
 
 
 def test_type_and_child_equipment_bonus_is_flagged(tmp_path):
