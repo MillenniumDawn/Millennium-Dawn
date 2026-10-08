@@ -208,6 +208,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   [coordinate policy](../../tools/validation/README.md#focus-coordinate-warnings).
 - `focus-allow-branch-leak` (WARNING): a focus with its own `allow_branch` under an
   ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
+  A condition the ancestor checks only under the `obsolete_focus_branches_visibility`
+  HIDE rule is also met when the child checks it without that rule.
 
 ## validate_gfx_references.py
 
