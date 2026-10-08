@@ -13,7 +13,7 @@ from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text
+from shared_utils import extract_block_from_text, strip_comments
 from validator_common import (
     BaseValidator,
     Severity,
@@ -200,6 +200,7 @@ def _normalise_path(p: str) -> str:
 def _parse_gui_text(text: str, rel: str) -> Dict:
     """Parse one .gui file's text. Returns the GUI-element data this file
     contributes, keyed by collection name. Mutates nothing."""
+    text = strip_comments(text)
     elements: Dict[str, Tuple[str, str, int]] = {}
     element_files: Dict[str, str] = {}
     containers: List[str] = []
@@ -271,6 +272,7 @@ def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict[st
 def _parse_scripted_gui_text(text: str, rel: str) -> Tuple[List[Dict], Set[str]]:
     """Parse one scripted_gui .txt file's text. Returns
     (list_of_block_dicts, set_of_trigger_names). Mutates nothing."""
+    text = strip_comments(text)
     blocks: List[Dict] = []
     trigger_names: Set[str] = set()
 
@@ -294,7 +296,7 @@ def _parse_scripted_gui_text(text: str, rel: str) -> Tuple[List[Dict], Set[str]]
             body, inner_end = extract_block_from_text(outer_body, inner_start - 1)
             if inner_end == -1:
                 break
-            line_no = text.count("\n", 0, outer_start + m.start()) + 1
+            line_no = text.count("\n", 0, outer_start + m.start(1)) + 1
             block = _parse_one_sgui_block(name, body, rel, line_no)
             for elem, kind in block["handlers"]:
                 trigger_names.add(f"{elem}_{kind}")
@@ -327,7 +329,10 @@ class Validator(BaseValidator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Cache the staged-files set for fast filtering
-        self._staged_set: Set[str] = set(self.staged_files or [])
+        self._staged_set: Set[str] = {
+            _normalise_path(os.path.relpath(path, self.mod_path))
+            for path in self.staged_files or []
+        }
         # Populated by parsing passes
         self._gui_elements: Dict[str, Tuple[str, str, int]] = {}
         # name -> (type, file, line)
@@ -414,9 +419,19 @@ class Validator(BaseValidator):
         sgui_dir = os.path.join(self.mod_path, "common", "scripted_guis")
         if not os.path.isdir(sgui_dir):
             return
+        try:
+            names = os.listdir(sgui_dir)
+        except OSError as exc:
+            super().add_issue(
+                Severity.ERROR,
+                "SCRIPTED_GUI_READ_ERROR",
+                f"Could not list scripted GUI files: {exc}",
+                file=os.path.relpath(sgui_dir, self.mod_path),
+            )
+            return
         files = [
             os.path.join(sgui_dir, f)
-            for f in os.listdir(sgui_dir)
+            for f in names
             if f.endswith(".txt") and not should_skip_file(f)
         ]
         for filepath in sorted(files):
@@ -574,21 +589,20 @@ class Validator(BaseValidator):
         for block in self._sgui_blocks:
             if block["window_name"]:
                 wn = block["window_name"]
-                if wn in self._gui_containers:
-                    continue
-                # Skip vanilla containers we don't define locally
-                if wn.lower() in _VANILLA_PARENT_WINDOWS:
-                    continue
-                self.add_issue(
-                    Severity.WARNING,
-                    "MISSING_WINDOW",
-                    f"Scripted GUI '{block['name']}' references "
-                    f'window_name = "{block["window_name"]}" but no '
-                    f"containerWindowType with that name exists in MD .gui "
-                    f"files (may be a vanilla container)",
-                    file=block["file"],
-                    line=block["line"],
-                )
+                if (
+                    wn not in self._gui_containers
+                    and wn.lower() not in _VANILLA_PARENT_WINDOWS
+                ):
+                    self.add_issue(
+                        Severity.ERROR,
+                        "MISSING_WINDOW",
+                        f"Scripted GUI '{block['name']}' references "
+                        f'window_name = "{wn}" but no '
+                        f"containerWindowType with that name exists in MD .gui "
+                        f"files; the game cannot create this window",
+                        file=block["file"],
+                        line=block["line"],
+                    )
             if block["parent_window_name"]:
                 pwn = block["parent_window_name"]
                 if pwn in self._gui_containers:
