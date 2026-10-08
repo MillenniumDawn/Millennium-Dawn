@@ -22,6 +22,7 @@ from validate_oob_units import (
     _effect_template_closure,
     _parse_division_string,
     build_division_template_index,
+    division_template_entries,
 )
 from validator_common import Severity
 
@@ -117,14 +118,18 @@ def _focus_with_template_owner(owner, template):
     )
 
 
-def _focus_index(owner, name="Militia"):
+def _template_index(*sources):
     return build_division_template_index(
-        [
-            (
-                "common/national_focus/Odessa.txt",
-                _focus_with_template_owner(owner, _division_template(name)),
-            )
-        ]
+        [division_template_entries(rel, raw) for rel, raw in sources]
+    )
+
+
+def _focus_index(owner, name="Militia"):
+    return _template_index(
+        (
+            "common/national_focus/Odessa.txt",
+            _focus_with_template_owner(owner, _division_template(name)),
+        )
     )
 
 
@@ -894,27 +899,25 @@ def test_ukraine_spawn_warns_for_foreign_static_templates(tmp_path):
         + _esc_quote("Natsionalna Hvardiya")
         + " start_experience_factor = 0.1"
     )
-    owners, wildcard = build_division_template_index(
-        [
-            (
-                "common/national_focus/Odessa.txt",
-                _focus_with_template_owner(
-                    "OPR", _division_template("Natsionalna Hvardiya")
-                ),
+    owners, wildcard = _template_index(
+        (
+            "common/national_focus/Odessa.txt",
+            _focus_with_template_owner(
+                "OPR", _division_template("Natsionalna Hvardiya")
             ),
-            (
-                "common/national_focus/Malorossiya.txt",
-                _focus_with_template_owner(
-                    "MLR", _division_template("Natsionalna Hvardiya")
-                ),
+        ),
+        (
+            "common/national_focus/Malorossiya.txt",
+            _focus_with_template_owner(
+                "MLR", _division_template("Natsionalna Hvardiya")
             ),
-            (
-                "common/national_focus/05_south_ossetia.txt",
-                _focus_with_template_owner(
-                    "SOO", _division_template("Natsionalna Hvardiya")
-                ),
+        ),
+        (
+            "common/national_focus/05_south_ossetia.txt",
+            _focus_with_template_owner(
+                "SOO", _division_template("Natsionalna Hvardiya")
             ),
-        ]
+        ),
     )
     issues = _run(
         _focus_with_effect(_create_unit(div, owner="UKR")),
@@ -945,8 +948,8 @@ def test_same_owner_static_definition_is_clean(tmp_path):
 
 
 def test_oob_template_is_wildcard(tmp_path):
-    owners, wildcard = build_division_template_index(
-        [("history/units/MLR_2000.txt", _division_template("Militia"))]
+    owners, wildcard = _template_index(
+        ("history/units/MLR_2000.txt", _division_template("Militia"))
     )
     issues = _run_indexed(
         _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="UKR")),
@@ -959,13 +962,11 @@ def test_oob_template_is_wildcard(tmp_path):
 
 
 def test_unknown_definition_scope_is_wildcard(tmp_path):
-    owners, wildcard = build_division_template_index(
-        [
-            (
-                "common/scripted_effects/templates.txt",
-                "event_target:recipient = { " + _division_template("Militia") + " }",
-            )
-        ]
+    owners, wildcard = _template_index(
+        (
+            "common/scripted_effects/templates.txt",
+            "event_target:recipient = { " + _division_template("Militia") + " }",
+        )
     )
     issues = _run_indexed(
         _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="UKR")),
@@ -981,9 +982,7 @@ def test_nested_literal_scope_overrides_focus_root(tmp_path):
     source = _focus_with_template_owner(
         "OPR", _block("UKR", _division_template("Militia"))
     )
-    owners, wildcard = build_division_template_index(
-        [("common/national_focus/shared.txt", source)]
-    )
+    owners, wildcard = _template_index(("common/national_focus/shared.txt", source))
     assert owners == {"Militia": frozenset({"UKR"})}
     issues = _run_indexed(
         _focus_with_effect(_create_unit(_div_for("Militia", "Militia"), owner="UKR")),

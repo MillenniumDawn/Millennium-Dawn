@@ -1,0 +1,109 @@
+name: Changelog Conflict Fixer
+
+# Merges main into open PRs whose only conflict is Changelog.txt.
+
+on:
+  push:
+    branches: [main]
+    paths: [Changelog.txt]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+  actions: write
+
+concurrency:
+  group: changelog-conflict-fixer
+  cancel-in-progress: true
+
+jobs:
+  fix-changelog-conflicts:
+    runs-on: ubuntu-latest
+    env:
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout history
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          filter: blob:none
+          sparse-checkout: |
+            .github
+            /tools/merge_changelog.py
+            /tools/linting/check_changelog.py
+          sparse-checkout-cone-mode: false
+
+      - name: Merge main into changelog-only conflicts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GIT_AUTHOR_NAME: github-actions[bot]
+          GIT_AUTHOR_EMAIL: >-
+            41898283+github-actions[bot]@users.noreply.github.com
+          GIT_COMMITTER_NAME: github-actions[bot]
+          GIT_COMMITTER_EMAIL: >-
+            41898283+github-actions[bot]@users.noreply.github.com
+        run: |
+          # Merge edited entries instead of duplicating them with merge=union.
+          echo "Changelog.txt merge=changelog" > .git/info/attributes
+          git config merge.changelog.driver \
+            "python3 $GITHUB_WORKSPACE/tools/merge_changelog.py %O %A %B"
+          base_sha=$(git rev-parse origin/main)
+          pulls_url="repos/$GH_REPO/pulls?state=open&base=main&per_page=100"
+          # Fork branches cannot be pushed with the workflow token.
+          prs=$(gh api --paginate "$pulls_url" --jq '.[]
+            | select(.head.repo.full_name == .base.repo.full_name)
+            | [.number, .head.ref] | @tsv')
+          fixed=0
+          skipped=0
+          failed=0
+          while IFS=$'\t' read -r num head; do
+            [ -z "$num" ] && continue
+            # GitHub computes mergeability lazily and reports null until done.
+            mergeable=null
+            for _ in 1 2 3 4 5; do
+              mergeable=$(gh api "repos/$GH_REPO/pulls/$num" --jq '.mergeable')
+              [ "$mergeable" != "null" ] && break
+              sleep 5
+            done
+            if [ "$mergeable" != "false" ]; then
+              continue
+            fi
+            git fetch --no-tags --quiet origin "refs/heads/$head"
+            head_sha=$(git rev-parse FETCH_HEAD)
+            if ! tree=$(git merge-tree --write-tree \
+                origin/main "$head_sha"); then
+              echo "PR #$num has unresolved conflicts, skipping"
+              skipped=$((skipped + 1))
+              continue
+            fi
+            commit=$(git commit-tree "$tree" -p "$head_sha" -p "$base_sha" \
+              -m "Merge main into $head (auto-resolved Changelog.txt)")
+            if ! git push --quiet origin "$commit:refs/heads/$head"; then
+              echo "::warning::PR #$num could not be pushed"
+              failed=$((failed + 1))
+              continue
+            fi
+            # Workflow-token pushes do not trigger pull_request runs.
+            if ! gh workflow run test-suite.yml --ref main \
+                -f pr_number="$num" -f head_sha="$commit" \
+                -f base_sha="$base_sha"; then
+              echo "::warning::PR #$num validation could not be dispatched"
+              failed=$((failed + 1))
+              continue
+            fi
+            # Check the top-version ordering after the merge driver sorted it.
+            if ! gh workflow run changelog-lint.yml --ref "$head"; then
+              echo "::warning::PR #$num changelog lint could not be dispatched"
+              failed=$((failed + 1))
+              continue
+            fi
+            echo "PR #$num: merged main and resolved Changelog.txt"
+            fixed=$((fixed + 1))
+          done <<< "$prs"
+          echo "Fixed $fixed PR(s), skipped $skipped with other conflicts," \
+            "$failed failure(s)"
+          if [ "$failed" -gt 0 ]; then
+            exit 1
+          fi

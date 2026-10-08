@@ -7,6 +7,7 @@ including when the offending key is not the first one in the _variable block.
 """
 
 import validate_variables as V
+from shared.suite import variable_scan
 
 
 def _matches(text):
@@ -51,12 +52,12 @@ def test_single_literal_reports_once(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    issues = V.process_file_for_math_precision((str(f), str(tmp_path)))
+    issues = variable_scan(f, "math", tmp_path)
     assert len(issues) == 1
 
 
 def test_two_distinct_literals_report_twice(tmp_path):
     f = tmp_path / "y.txt"
     f.write_text("set_variable = { var = 0.123456 add = 0.999999 }\n", encoding="utf-8")
-    issues = V.process_file_for_math_precision((str(f), str(tmp_path)))
+    issues = variable_scan(f, "math", tmp_path)
     assert len(issues) == 2

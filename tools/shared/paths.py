@@ -22,6 +22,8 @@ PYTEST_PYTHONPATH = (
     "tools/docs_checks",
     "tools/analysis",
     "tools/assets",
+    "tools/types",
+    "tools/utils",
 )
 
 PYLINT_PATHS = (

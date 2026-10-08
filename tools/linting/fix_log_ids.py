@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""Rewrite mismatched log IDs in focus/decision log strings (Check C sweep).
+"""Rewrite mismatched log IDs in focus/decision/event log strings (Check C sweep).
 
 Shares detection with check_common_mistakes.py's _find_focus_log_mismatches /
-_find_decision_log_mismatches (Check C) -- same core, so a clean run of the
-checker implies a clean run here and vice versa. Only the mismatched ID token
-inside the quoted log string is rewritten; complete/timeout/remove/cancel
-phrasing around it is left untouched. Scope: common/national_focus/ and
-common/decisions/ (fix_common_mistakes.py's event-log check has no fixer --
-its ~13 legacy sites were hand-verified and hand-fixed instead).
+_find_decision_log_mismatches / _find_event_log_mismatches (Check C) -- same
+core, so a clean run of the checker implies a clean run here and vice versa.
+Only the mismatched ID token inside the quoted log string is rewritten;
+complete/timeout/remove/cancel phrasing around it is left untouched. Scope:
+common/national_focus/, common/decisions/, and events/.
 """
 
 import os
@@ -16,6 +15,7 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from check_common_mistakes import (
     _find_decision_log_mismatches,
+    _find_event_log_mismatches,
     _find_focus_log_mismatches,
 )
 from shared_utils import (
@@ -35,6 +35,8 @@ def _finder_for(filepath):
         return _find_focus_log_mismatches
     if "common/decisions" in normalized:
         return _find_decision_log_mismatches
+    if "events/" in normalized:
+        return _find_event_log_mismatches
     return None
 
 
@@ -87,7 +89,7 @@ def fix_file_dry_run(filepath):
 
 def main():
     parser = create_linting_parser(
-        "Rewrite mismatched log IDs in focus/decision log strings (Check C sweep)",
+        "Rewrite mismatched log IDs in focus/decision/event log strings (Check C sweep)",
         extra_args_fn=add_dry_run_argument,
     )
     args = parser.parse_args()
@@ -99,7 +101,7 @@ def main():
         apply_fn=fix_file,
         dry_run_fn=fix_file_dry_run,
         unit="log id(s)",
-        no_files_message="No focus/decision files to process",
+        no_files_message="No focus/decision/event files to process",
     )
 
 

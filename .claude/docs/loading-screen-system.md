@@ -5,7 +5,7 @@ Contributor steps: `docs/src/content/resources/add-loading-screens.md`. This pag
 ## Contract
 
 - Rotation: every `gfx/loadingscreens/*.dds` except `*_small.dds` (`replace_path` hides vanilla's folder).
-- Picker: entries in `common/frontend/backgrounds/base_backgrounds.txt`; `load_7 = { }` reads `gfx/loadingscreens/load_7.dds` and previews sprite `GFX_load_7_small` (engine builds `"GFX_" + name + "_small"`). On a miss it falls back to vanilla's `GFX_frontend_bg_basic_small` with nothing in `error.log` - `replace_path` does not block vanilla texture lookups. That was the v2.0 picker bug.
+- Picker: entries in `common/frontend/backgrounds/base_backgrounds.txt`; `load_7 = { }` reads `gfx/loadingscreens/load_7.dds` and previews sprite `GFX_load_7_small` (engine builds `"GFX_" + name + "_small"`). On a miss it falls back to vanilla's `GFX_frontend_bg_basic_small` with nothing in `error.log`, since `replace_path` does not block vanilla texture lookups.
 - `GFX_frontend_bg` (`interface/frontendmainviewbg.gfx` -> `gfx/main_menu/main_menu.dds`) is listed as an extra picker tile, previewed by `GFX_main_menu_small`.
 - Selection persists by texture path in `settings.txt`; renaming a file resets it.
 

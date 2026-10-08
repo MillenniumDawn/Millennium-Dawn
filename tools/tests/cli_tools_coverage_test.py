@@ -8,14 +8,13 @@ Fixtures live in conftest.py (shared path/skip markers).
 
 from __future__ import annotations
 
-import os
 import subprocess
 import sys
 from pathlib import Path
 
 import assign_mio_icons
 import pytest
-from shared.suite import run_git, symlinks_available
+from shared.suite import symlinks_available, write_text
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 TOOLS = REPO_ROOT / "tools"
@@ -24,11 +23,6 @@ requires_symlinks = pytest.mark.skipif(
     not symlinks_available(),
     reason="creating a symlink needs Developer Mode or admin on Windows",
 )
-
-
-def write_text(path: Path, content: str) -> None:
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
 
 
 # ---------------------------------------------------------------------------
@@ -83,80 +77,6 @@ class TestRunPy:
         # or the tool's own error, but NOT the run.py unknown-tool path.
         assert "Unknown tool" not in result.stdout
         assert result.returncode in (0, 2)  # 0=--help, 2=argparse error inside tool
-
-
-# ---------------------------------------------------------------------------
-# archive_stale_branches.py
-# ---------------------------------------------------------------------------
-
-
-class TestArchiveStaleBranches:
-    """Tests for tools/archive_stale_branches.py — path safety and archive logic."""
-
-    def test_diff_paths_rejects_absolute_path(self, monkeypatch):
-        """diff_paths raises ValueError when git emits an absolute path."""
-        sys.path.insert(0, str(TOOLS))
-        import archive_stale_branches as arch
-
-        # Inject git output containing an absolute path.
-        monkeypatch.setattr(arch, "run", lambda *a, **kw: b"/etc/passwd\0")
-        with pytest.raises(ValueError, match="Unsafe path"):
-            arch.diff_paths("origin/some-branch", REPO_ROOT)
-
-    def test_diff_paths_rejects_dotdot_in_path(self, monkeypatch):
-        """diff_paths raises ValueError when git emits a path with '..'."""
-        sys.path.insert(0, str(TOOLS))
-        import archive_stale_branches as arch
-
-        # Inject git output containing a path with traversal.
-        monkeypatch.setattr(arch, "run", lambda *a, **kw: b"../secrets/token.txt\0")
-        with pytest.raises(ValueError, match="Unsafe path"):
-            arch.diff_paths("origin/some-branch", REPO_ROOT)
-
-    def test_branch_exists_false_for_nonexistent(self):
-        """branch_exists returns False for a ref that does not exist."""
-        sys.path.insert(0, str(TOOLS))
-        import archive_stale_branches as arch
-
-        assert arch.branch_exists("origin/nonexistent-ref-xyz123", REPO_ROOT) is False
-
-    @requires_symlinks
-    def test_remove_stale_files_rejects_symlink_dir(self, tmp_path):
-        """remove_stale_files raises ValueError when target is a symlink."""
-        sys.path.insert(0, str(TOOLS))
-        import archive_stale_branches as arch
-
-        real_dir = tmp_path / "real"
-        real_dir.mkdir()
-        link = tmp_path / "link"
-        link.symlink_to(real_dir)
-
-        with pytest.raises(ValueError, match="symlink"):
-            arch.remove_stale_files(link, set())
-
-    def test_remove_stale_files_preserves_desired_files(self, tmp_path):
-        """remove_stale_files keeps desired files and removes everything else."""
-        sys.path.insert(0, str(TOOLS))
-        import archive_stale_branches as arch
-
-        # Create some files
-        kept = tmp_path / "kept.txt"
-        write_text(kept, "keep me")
-        removed = tmp_path / "removed.txt"
-        write_text(removed, "remove me")
-
-        arch.remove_stale_files(tmp_path, {"kept.txt"})
-
-        assert kept.exists()
-        assert not removed.exists()
-
-    def test_archive_ref_rejects_bad_ref(self, tmp_path):
-        """archive_ref raises RuntimeError for a non-existent ref."""
-        sys.path.insert(0, str(TOOLS))
-        import archive_stale_branches as arch
-
-        with pytest.raises(RuntimeError, match="failed"):
-            arch.archive_ref("nonexistent-ref-xyz123", tmp_path, REPO_ROOT)
 
 
 # ---------------------------------------------------------------------------
@@ -450,52 +370,3 @@ class TestStandardizeStaged:
         )
         # Should exit 0 — nothing to do, nothing modified, no errors
         assert result.returncode == 0
-
-
-# ---------------------------------------------------------------------------
-# validate_staged.py
-# ---------------------------------------------------------------------------
-
-
-class TestValidateStaged:
-    """Tests for tools/validate_staged.py — pre-commit validation runner."""
-
-    def test_main_no_staged_files_or_skip_env(self, tmp_path, monkeypatch):
-        """With no staged files or MD_SKIP_VALIDATE=1, no validators run and exit 0."""
-        for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "MD_SKIP_VALIDATE"):
-            monkeypatch.delenv(name, raising=False)
-        run_git(tmp_path, "init")
-        result = subprocess.run(
-            [sys.executable, str(TOOLS / "validate_staged.py")],
-            capture_output=True,
-            text=True,
-            cwd=tmp_path,
-        )
-        assert result.returncode == 0
-        assert "Running " not in result.stdout
-
-        (tmp_path / "events").mkdir()
-        write_text(tmp_path / "events" / "example.txt", "add_namespace = example\n")
-        run_git(tmp_path, "add", "events/example.txt")
-        assert (
-            run_git(tmp_path, "diff", "--cached", "--name-only").stdout.strip()
-            == "events/example.txt"
-        )
-        result = subprocess.run(
-            [sys.executable, str(TOOLS / "validate_staged.py")],
-            capture_output=True,
-            text=True,
-            cwd=tmp_path,
-            env={**os.environ, "MD_SKIP_VALIDATE": "1"},
-        )
-        assert result.returncode == 0
-        assert "Running " not in result.stdout
-
-    def test_staged_file_routes_to_validator(self):
-        """A staged .yml file causes the localisation validator to be invoked."""
-        sys.path.insert(0, str(TOOLS))
-        from validate_staged import VALIDATORS
-
-        loc_validator = next(v for v in VALIDATORS if v["name"] == "localisation")
-        assert "validate_localisation.py" in loc_validator["cmd"][1]
-        assert loc_validator["suffix"] == ".yml"

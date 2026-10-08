@@ -57,12 +57,13 @@ import sys
 from collections import defaultdict
 
 # tools/ (parent of analysis/) on path for shared_utils, mirroring sibling tools.
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 from shared_utils import (  # noqa: E402
     Colors,
     atomic_write_text,
     extract_block_from_text,
+    line_of,
     read_text_strict,
     read_text_under,
     strip_comments,
@@ -205,10 +206,6 @@ def _depth0_assignments(body):
     return result
 
 
-def _line_of(text, index):
-    return text.count("\n", 0, index) + 1
-
-
 def _iter_hook_blocks():
     """Yield (path, clean, m, cadence, tag, body) for every recurring on_action hook block."""
     for path, text in _iter_txt("common/on_actions"):
@@ -257,7 +254,7 @@ def index_events():
                 {
                     "type": name,
                     "file": _rel(path),
-                    "line": _line_of(clean, start),
+                    "line": line_of(clean, start),
                     "body": body,
                 },
             )
@@ -416,7 +413,7 @@ def collect_hooks(effects, events, effect_cache):
                 "cadence": cadence,
                 "scope": tag if tag else "GLOBAL",
                 "file": _rel(path),
-                "line": _line_of(clean, m.start()),
+                "line": line_of(clean, m.start()),
                 "direct_effect_calls": sorted(direct_calls),
                 "reached_effects": sorted(reached),
                 "call_edges": edges,
@@ -470,7 +467,7 @@ def collect_timed_decisions():
                     field = next(iter(timers))
                     days = None
                     bucket = "variable"
-                line = _line_of(clean, cat_body_start + doff)
+                line = line_of(clean, cat_body_start + doff)
                 recurring = fields.get("fire_only_once", "yes") == "no"
                 timed.append(
                     {
@@ -545,7 +542,7 @@ def index_effect_locations():
     for path, text in _iter_txt("common/scripted_effects"):
         clean = strip_comments(text)
         for name, _body, start in _top_level_blocks(clean, _pre_stripped=True):
-            loc.setdefault(name, _rel(path) + ":" + str(_line_of(clean, start)))
+            loc.setdefault(name, _rel(path) + ":" + str(line_of(clean, start)))
     return loc
 
 
@@ -638,7 +635,7 @@ def build_call_tree(effects, events, loc, max_depth=22, max_nodes=9000):
             "name": "on_" + cadence + (("_" + tag) if tag else ""),
             "scope": tag or "GLOBAL",
             "kind": "hook",
-            "file": _rel(path) + ":" + str(_line_of(clean, m.start())),
+            "file": _rel(path) + ":" + str(line_of(clean, m.start())),
             "ops": self_ops,
             "children": children,
             "total": self_ops + sum(c["total"] for c in children),
@@ -1460,7 +1457,7 @@ def _spot_named_blocks(source, base=0, diagnostics=None, file="?", full_source=N
                 diagnostics.append(
                     {
                         "file": file,
-                        "line": _line_of(full_source, base + match.start()),
+                        "line": line_of(full_source, base + match.start()),
                         "message": "malformed unclosed block",
                     }
                 )
@@ -1514,7 +1511,7 @@ def _spot_scan_context_body(
         "divide_temp_variable",
     ):
         for match in re.finditer(r"\b" + re.escape(op) + r"\s*=", clean):
-            line = _line_of(full_source, body_abs + match.start())
+            line = line_of(full_source, body_abs + match.start())
             if op in SPOT_LOOP_OPS:
                 if context.get("reachability") == "recurring":
                     severity = (
@@ -1655,7 +1652,7 @@ def _spot_scan_context_body(
                     ),
                     "medium",
                     file,
-                    _line_of(full_source, loop_abs + second_start),
+                    line_of(full_source, loop_abs + second_start),
                     dict(loop_context),
                     f"identical {name} scope read repeats inside one loop",
                     "Hoist the invariant lookup before the loop.",
@@ -1672,7 +1669,7 @@ def _spot_scan_context_body(
             diagnostics.append(
                 {
                     "file": file,
-                    "line": _line_of(full_source, body_abs + match.start()),
+                    "line": line_of(full_source, body_abs + match.start()),
                     "message": "suppressed O(1) can_staff trigger",
                     "suppressed": True,
                 }
@@ -1849,7 +1846,7 @@ def scan_spot_checks(paths=None, scope=None):
                             "critical",
                             "high",
                             rel,
-                            _line_of(source, body_abs + dirty.start()),
+                            line_of(source, body_abs + dirty.start()),
                             context,
                             "dirty is bound to " + dirty.group(1),
                             "Use a mutation counter that changes only when backing data changes.",
@@ -1877,7 +1874,7 @@ def scan_spot_checks(paths=None, scope=None):
                                 "high",
                                 "medium",
                                 rel,
-                                _line_of(source, gui_start),
+                                line_of(source, gui_start),
                                 context,
                                 "stateful decision-category GUI has no dirty binding",
                                 "Bind dirty to a mutation counter for the GUI backing data.",

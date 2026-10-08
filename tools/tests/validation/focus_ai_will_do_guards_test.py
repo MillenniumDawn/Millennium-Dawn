@@ -1,5 +1,5 @@
 """Tests for the ai_will_do staffing/bankruptcy guard checks in
-validate_focus_tree (issue #2233 + the AGENTS.md bankruptcy convention).
+validate_focus_tree (issue #2233 + search-filters.md bankruptcy guard).
 
 A focus whose completion_reward builds a staffable building needs a
 factor = 0 ai_will_do modifier checking the matching can_staff_an_* trigger.
@@ -9,15 +9,8 @@ a guard on a focus with no money cost is flagged as unneeded.
 """
 
 import validate_focus_tree
-from validate_focus_tree import Validator, _extract_ai_guard_data
-
-
-def _write_focus_file(tmp_path, content):
-    nf_dir = tmp_path / "common" / "national_focus"
-    nf_dir.mkdir(parents=True, exist_ok=True)
-    fpath = nf_dir / "test.txt"
-    fpath.write_text(content, encoding="utf-8")
-    return fpath
+from shared.suite import write_focus_file as _write_focus_file
+from validate_focus_tree import Validator, _FocusFile
 
 
 def _write_effects_file(tmp_path, extra=""):
@@ -82,7 +75,7 @@ STAFFABLE_MAP = {"one_random_industrial_complex": frozenset({"industrial_complex
 
 
 def _guard_data(fpath, tmp_path, staffable=STAFFABLE_MAP, money=frozenset()):
-    return _extract_ai_guard_data((str(fpath), str(tmp_path), staffable, money))
+    return _FocusFile(str(fpath), str(tmp_path)).ai_guards(staffable, money)
 
 
 def _write_worker_focus(tmp_path, reward, modifiers=""):
