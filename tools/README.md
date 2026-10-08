@@ -77,6 +77,10 @@ platform-native writes. `.gitattributes` and `.editorconfig` keep the repository
 Tests belong under `tools/tests/` and end in `_test.py`; `test_*.py` is not collected.
 The suite runs in parallel workers, so a test writes only under `tmp_path`, never
 into the real repository tree. Another worker may be scanning that tree.
+A test that reads live game files goes in `tools/tests/content/`. CI runs that
+directory once, in the `Content tests` job, on tools or game content changes. The
+tools test jobs skip it and check out only the few game files named in
+`test-suite.yml`, so every other test builds its input under `tmp_path`.
 Add regression coverage with changed validator, fixer, or report behavior. Run
 `python -m pytest` before merging any `tools/` change, and fix failures in the same
 change. Never delete, skip, or weaken a test to reach green. A correct behavior change

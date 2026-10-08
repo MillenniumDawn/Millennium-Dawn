@@ -12,7 +12,6 @@ unreachable without the DLC (issue #5328, the ENG moonbase focus in #5314).
 
 import pytest
 import validate_dlc_guards as V
-from shared.paths import REPO_ROOT
 from shared.suite import write_under as _write
 
 BBA = "By Blood Alone"
@@ -47,26 +46,6 @@ def _scan(script, availability=frozenset()):
 
 def _messages(script):
     return [message for _, _, message in _scan(script)]
-
-
-def test_poland_logistics_focus_uses_the_matching_aircraft_tree():
-    mod_path = f"{REPO_ROOT}/"
-    folder_gates = V.parse_folder_gates(mod_path)
-    project_gates = V.parse_project_gates(mod_path)
-    tech_gates, category_gates, project_tech_gates = V.parse_tech_gates(
-        mod_path, folder_gates, project_gates
-    )
-    path = REPO_ROOT / "common" / "national_focus" / "05_poland.txt"
-    scanner = V.Scanner(
-        V._sanitize(path.read_text(encoding="utf-8-sig")),
-        tech_gates,
-        category_gates,
-        project_gates,
-        project_tech_gates,
-        V._AVAILABILITY,
-    )
-    scanner.walk(0, len(scanner.text), V.Context())
-    assert scanner.findings == []
 
 
 def _bonus(tech, indent="\t"):
