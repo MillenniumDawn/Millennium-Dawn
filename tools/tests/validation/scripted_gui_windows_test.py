@@ -12,23 +12,29 @@ GUI_FILE = "interface/windows.gui"
 
 @pytest.fixture
 def window_repo(tmp_path, write_path):
-    def build(window, gui="", parent=None):
+    def build(window, gui="", parent=None, before_window="", staged_only=False):
         parent_line = f"\t\tparent_window_name = {parent}\n" if parent else ""
-        write_path(tmp_path, GUI_FILE, gui)
+        if gui is not None:
+            write_path(tmp_path, GUI_FILE, gui)
         write_path(
             tmp_path,
             SCRIPTED_GUI_FILE,
             "scripted_gui = {\n"
             "\tinvestments = {\n"
             "\t\tcontext_type = selected_state_context\n"
-            f"\t\twindow_name = {window}\n"
+            + before_window
+            + f"\t\twindow_name = {window}\n"
             + parent_line
             + "\t\tparent_window_token = selected_state_view\n"
             "\t}\n"
             "}\n",
         )
         return V.Validator(
-            mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True
+            mod_path=str(tmp_path),
+            use_colors=False,
+            workers=1,
+            no_cache=True,
+            staged_only=staged_only,
         )
 
     return build
@@ -160,15 +166,12 @@ def test_named_parent_and_its_instance_resolve(window_repo, parent):
     [("live_window", []), ("investments_treasury_container", ["MISSING_WINDOW"])],
 )
 def test_staged_script_checks_unstaged_gui_definitions(
-    tmp_path, window_repo, monkeypatch, window, expected
+    window_repo, monkeypatch, window, expected
 ):
-    window_repo(window, "containerWindowType = { name = live_window }\n")
     monkeypatch.setenv("MD_STAGED_FILES", SCRIPTED_GUI_FILE)
-    validator = V.Validator(
-        mod_path=str(tmp_path),
-        use_colors=False,
-        workers=1,
-        no_cache=True,
+    validator = window_repo(
+        window,
+        "containerWindowType = { name = live_window }\n",
         staged_only=True,
     )
 
@@ -177,8 +180,12 @@ def test_staged_script_checks_unstaged_gui_definitions(
     assert [issue.category for issue in validator._issues] == expected
 
 
-def test_unreadable_scripted_gui_directory_is_a_hard_error(window_repo, monkeypatch):
-    validator = window_repo("live_window")
+@pytest.mark.parametrize("staged_only", [False, True])
+def test_unreadable_scripted_gui_directory_is_a_hard_error(
+    window_repo, monkeypatch, staged_only
+):
+    monkeypatch.setenv("MD_STAGED_FILES", GUI_FILE)
+    validator = window_repo("live_window", staged_only=staged_only)
 
     def fail_listdir(path):
         raise PermissionError(f"Cannot read {path}")
@@ -196,6 +203,189 @@ def test_unreadable_scripted_gui_directory_is_a_hard_error(window_repo, monkeypa
     assert issue.file.replace("\\", "/") == "common/scripted_guis"
     assert "Cannot read" in issue.message
     assert validator.errors_found == 1
+
+
+@pytest.mark.parametrize(
+    "before_window",
+    [
+        '\t\tlog = "window_name = debug_label"\n',
+        '\t\tlog = "escaped \\"quote\\" window_name = debug_label { } #"\n',
+        "\t\teffects = {\n"
+        "\t\t\tdebug_button_click = {\n"
+        "\t\t\t\tset_variable = { window_name = debug_label }\n"
+        "\t\t\t}\n"
+        "\t\t}\n",
+    ],
+)
+@pytest.mark.parametrize("quoted", [False, True])
+def test_window_uses_its_direct_assignment(window_repo, before_window, quoted):
+    window = '"live_window"' if quoted else "live_window"
+    validator = window_repo(
+        window,
+        "containerWindowType = {\n"
+        "\tname = live_window\n"
+        "\tbuttonType = { name = debug_button }\n"
+        "}\n",
+        before_window=before_window,
+    )
+
+    validator.run_validations()
+
+    assert validator._sgui_blocks[0]["window_name"] == "live_window"
+    assert validator._issues == []
+
+
+def test_quoted_resolved_name_does_not_hide_a_missing_window(window_repo):
+    validator = window_repo(
+        "missing_window",
+        "containerWindowType = { name = live_window }\n",
+        before_window='\t\tlog = "window_name = live_window"\n',
+    )
+
+    validator.run_validations()
+
+    assert [issue.category for issue in validator._issues] == ["MISSING_WINDOW"]
+    assert 'window_name = "missing_window"' in validator._issues[0].message
+
+
+def test_quoted_gui_definition_is_not_indexed(window_repo):
+    validator = window_repo(
+        "fake_window",
+        "guiTypes = {\n"
+        "\tinstantTextBoxType = {\n"
+        "\t\tname = caption\n"
+        '\t\ttext = "containerWindowType = { name = fake_window }"\n'
+        "\t}\n"
+        "}\n",
+    )
+
+    validator.run_validations()
+
+    assert [issue.category for issue in validator._issues] == ["MISSING_WINDOW"]
+    assert set(validator._gui_elements) == {"caption"}
+
+
+@pytest.mark.parametrize("named_outer", [False, True])
+def test_nested_container_cannot_satisfy_window_name(window_repo, named_outer):
+    outer_name = "name = outer\n" if named_outer else ""
+    validator = window_repo(
+        "nested_window",
+        "guiTypes = {\n"
+        "\tcontainerWindowType = {\n"
+        + outer_name
+        + "\t\tcontainerWindowType = { name = nested_window }\n"
+        "\t}\n"
+        "}\n",
+    )
+
+    validator.run_validations()
+
+    assert [issue.category for issue in validator._issues] == ["MISSING_WINDOW"]
+    assert validator._issues[0].severity == "error"
+
+
+def test_nested_container_still_resolves_as_a_parent(window_repo):
+    validator = window_repo(
+        "live_window",
+        "containerWindowType = { name = live_window }\n"
+        "containerWindowType = {\n"
+        "\tname = outer\n"
+        "\tcontainerWindowType = { name = nested_parent }\n"
+        "}\n",
+        parent="nested_parent",
+    )
+
+    validator.run_validations()
+
+    assert validator._issues == []
+
+
+def test_container_name_is_not_taken_from_its_children(window_repo):
+    validator = window_repo(
+        "live_window",
+        "containerWindowType = {\n"
+        "\tbuttonType = { name = debug_button }\n"
+        "\tname = live_window\n"
+        "}\n",
+    )
+
+    validator.run_validations()
+
+    assert validator._issues == []
+    assert validator._gui_elements["debug_button"][0] == "buttonType"
+
+
+@pytest.mark.parametrize(
+    "gui, expected",
+    [
+        ("containerWindowType = { name = live_window }\n", []),
+        ("containerWindowType = { name = renamed_window }\n", ["MISSING_WINDOW"]),
+        ("", ["MISSING_WINDOW"]),
+        (None, ["MISSING_WINDOW"]),
+    ],
+    ids=["unchanged", "renamed", "removed", "deleted-file"],
+)
+def test_staged_gui_checks_unchanged_scripted_references(
+    window_repo, monkeypatch, gui, expected
+):
+    monkeypatch.setenv("MD_STAGED_FILES", GUI_FILE)
+    validator = window_repo("live_window", gui, staged_only=True)
+
+    validator.run_validations()
+
+    assert [issue.category for issue in validator._issues] == expected
+    assert validator.errors_found == len(expected)
+
+
+@pytest.mark.parametrize(
+    "before_window, parent, expected",
+    [
+        ("", "missing_parent", "MISSING_PARENT_WINDOW"),
+        (
+            "\t\tdynamic_lists = { rows = {\n"
+            "\t\t\tarray = items entry_container = missing_entry\n"
+            "\t\t} }\n",
+            None,
+            "MISSING_ENTRY_CONTAINER",
+        ),
+        (
+            "\t\ttriggers = {\n\t\t\tmissing_button_visible = { }\n\t\t}\n",
+            None,
+            "DEAD_HANDLER",
+        ),
+    ],
+)
+def test_staged_gui_checks_other_unchanged_element_references(
+    window_repo, monkeypatch, before_window, parent, expected
+):
+    monkeypatch.setenv("MD_STAGED_FILES", GUI_FILE)
+    validator = window_repo(
+        "live_window",
+        "containerWindowType = { name = live_window }\n",
+        before_window=before_window,
+        parent=parent,
+        staged_only=True,
+    )
+
+    validator.run_validations()
+
+    assert [issue.category for issue in validator._issues] == [expected]
+
+
+def test_scripted_gui_block_lines_skip_blank_lines():
+    blocks, _ = V._parse_scripted_gui_text(
+        "scripted_gui = {\n"
+        "\tfirst = { window_name = first_window }\n"
+        "\n\n"
+        "\tsecond = { window_name = second_window }\n"
+        "}\n",
+        SCRIPTED_GUI_FILE,
+    )
+
+    assert [(block["name"], block["line"]) for block in blocks] == [
+        ("first", 2),
+        ("second", 5),
+    ]
 
 
 def test_missing_window_fails_strict_cli(tmp_path, window_repo, monkeypatch):
