@@ -549,6 +549,10 @@ EGY_bread_monthly_tick = {
 		limit = { has_idea = EGY_baladi_bakeries_idea }
 		add_to_temp_variable = { temp_bread = -0.25 }
 	}
+	if = {
+		limit = { check_variable = { var = EGY_informal_share value = 60 compare = greater_than_or_equals } }
+		add_to_temp_variable = { temp_bread = 0.1 }
+	}
 	set_temp_variable = { temp_deal_relief = EGY_wheat_supply_deals }
 	multiply_temp_variable = { temp_deal_relief = -0.1 }
 	add_to_temp_variable = { temp_bread = temp_deal_relief }
@@ -582,6 +586,96 @@ EGY_bread_monthly_tick = {
 			chance = 20
 			set_country_flag = { flag = EGY_mahalla_cooldown days = 365 value = 1 }
 			country_event = { id = egypt_mubarak.74 days = 1 }
+		}
+	}
+}
+
+# Parameters:
+# - temp_housing_k: signed change to formal housing in Cairo, in thousands of residents
+EGY_change_formal_housing = {
+	add_to_variable = { EGY_cairo_formal_housing_k = temp_housing_k }
+	clamp_variable = { var = EGY_cairo_formal_housing_k min = 0 }
+	custom_effect_tooltip = EGY_change_formal_housing_tt
+	hidden_effect = { EGY_update_informal_cairo = yes }
+}
+
+EGY_update_informal_cairo = {
+	if = {
+		limit = { owns_state = 215 }
+		215 = { set_variable = { PREV.EGY_cairo_population_k = state_population_k } }
+		clamp_variable = { var = EGY_cairo_population_k min = 1 }
+		set_variable = {
+			EGY_informal_share = {
+				value = EGY_cairo_population_k
+				subtract = EGY_cairo_formal_housing_k
+				divide = EGY_cairo_population_k
+				multiply = 100
+				clamp = { min = 0 max = 100 }
+			}
+		}
+	}
+	else = {
+		set_variable = { EGY_informal_share = 0 }
+	}
+	set_temp_variable = {
+		informal_excess = {
+			value = EGY_informal_share
+			subtract = 40
+			clamp = { min = 0 max = 60 }
+		}
+	}
+	set_variable = { EGY_cairo_country_productivity_growth_modifier = { value = informal_excess multiply = -0.01 } }
+	if = {
+		limit = { has_completed_focus = EGY_cairo_metro_line_three }
+		multiply_variable = { EGY_cairo_country_productivity_growth_modifier = 0.5 }
+	}
+	set_variable = { EGY_cairo_production_speed_buildings_factor = { value = informal_excess multiply = -0.002 } }
+	set_variable = { EGY_cairo_stability_factor = { value = informal_excess multiply = -0.0025 } }
+}
+
+EGY_informal_cairo_monthly_tick = {
+	if = {
+		limit = { has_country_flag = EGY_isdf_established }
+		multiply_variable = { EGY_cairo_formal_housing_k = 0.999 }
+	}
+	else = {
+		multiply_variable = { EGY_cairo_formal_housing_k = 0.998 }
+	}
+	EGY_update_informal_cairo = yes
+	if = {
+		limit = { check_variable = { var = EGY_informal_share value = 75 compare = greater_than_or_equals } }
+		set_temp_variable = { temp_influence = 1 }
+		EGY_change_brotherhood_influence = yes
+	}
+	if = {
+		limit = {
+			date > 2008.9.1
+			NOT = { has_country_flag = EGY_duweiqa_fired }
+			check_variable = { var = EGY_informal_share value = 40 compare = greater_than_or_equals }
+		}
+		set_country_flag = EGY_duweiqa_fired
+		country_event = { id = egypt_mubarak.85 days = 5 }
+	}
+	if = {
+		limit = {
+			check_variable = { var = EGY_informal_share value = 60 compare = greater_than_or_equals }
+			NOT = { has_country_flag = EGY_block_collapse_cooldown }
+		}
+		random = {
+			chance = 10
+			set_country_flag = { flag = EGY_block_collapse_cooldown days = 365 value = 1 }
+			country_event = { id = egypt_mubarak.86 days = 1 }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { var = EGY_informal_share value = 75 compare = greater_than_or_equals }
+			NOT = { has_country_flag = EGY_cairo_unrest_cooldown }
+		}
+		random = {
+			chance = 15
+			set_country_flag = { flag = EGY_cairo_unrest_cooldown days = 365 value = 1 }
+			country_event = { id = egypt_mubarak.87 days = 1 }
 		}
 	}
 }
