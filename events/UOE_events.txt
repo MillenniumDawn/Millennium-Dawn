@@ -86,29 +86,17 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event UOEEvent.2.a"
 		UOE = {
 			set_country_flag = states_exited_due_eco
+			clear_array = uoe_rel_track
+			set_variable = { uoe_rel_count = 0 }
 			every_controlled_state = {
-				limit = { check_variable = { productivity_state_var < UOE.overall_productivity } }
+				limit = {
+					check_variable = { productivity_state_var < UOE.overall_productivity }
+					check_variable = { UOE_former_owner > 0 }
+				}
 				add_to_temp_variable = { state_lost_stab_mod = 0.01 }
-				if = { limit = { is_in_array = { core_countries = UOE } }
-					remove_core_of = UOE
-				}
-				set_temp_variable = { release_nation = core_countries^0 }
-				if = {
-					limit = {
-						is_core_of = GER
-					}
-					log = "its a german state"
-					transfer_state_to = GER
-				}else = {
-					if = {
-						limit = {
-							is_core_of = SPR
-						}
-						transfer_state_to = SPR
-					}else = {
-						transfer_state_to = var:release_nation
-					}
-				}
+				remove_core_of = UOE
+				set_temp_variable = { release_nation = UOE_former_owner }
+				transfer_state_to = var:release_nation
 				var:release_nation = {
 					if = {
 						limit = {
@@ -120,27 +108,29 @@ country_event = {
 							}
 						}
 						add_to_array = { UOE.uoe_rel_track = THIS }
+						UOE = { add_to_variable = { uoe_rel_count = 1 } }
 					}
 					if = {
-						limit = {
-							has_idea = NATO_member
-						}
+						limit = { has_idea = NATO_member }
 						remove_ideas = NATO_member
 					}
 				}
 			}
 			add_to_variable = { military_revolt = state_lost_stab_mod }
 			remove_mission = high_prod_state_revolt
-		}
-		set_temp_variable = { fac_nation = UOE.uoe_rel_track^0 }
-		remove_from_array = { UOE.uoe_rel_track = fac_nation }
-		var:fac_nation = {
-			create_faction = alliance_european_states
-		}
-		for_each_loop = {
-			array = UOE.uoe_rel_track
-			value = state_to_join
-			var:fac_nation = { add_to_faction = state_to_join }
+			if = {
+				limit = { check_variable = { uoe_rel_count > 0 } }
+				set_temp_variable = { fac_nation = uoe_rel_track^0 }
+				remove_from_array = { uoe_rel_track = fac_nation }
+				var:fac_nation = { create_faction = alliance_european_states }
+				for_each_loop = {
+					array = uoe_rel_track
+					value = state_to_join
+					var:fac_nation = { add_to_faction = state_to_join }
+				}
+			}
+			clear_array = uoe_rel_track
+			clear_variable = uoe_rel_count
 		}
 
 		ai_chance = {
@@ -186,53 +176,51 @@ country_event = {
 		log = "[GetDateText]: [Root.GetName]: event UOEEvent.3.a"
 		UOE = {
 			set_country_flag = states_exited_due_eco
+			clear_array = uoe_rel_track
+			set_variable = { uoe_rel_count = 0 }
 			every_controlled_state = {
-				limit = { check_variable = { productivity_state_var > UOE.overall_productivity } }
+				limit = {
+					check_variable = { productivity_state_var > UOE.overall_productivity }
+					check_variable = { UOE_former_owner > 0 }
+				}
 				add_to_temp_variable = { state_lost_stab_mod = 0.01 }
-				if = { limit = { is_in_array = { core_countries = UOE } }
-					remove_core_of = UOE
-				}
-				set_temp_variable = { release_nation = core_countries^0 }
-				if = {
-					limit = {
-						is_core_of = GER
-					}
-					transfer_state_to = GER
-				}else = {
-					transfer_state_to = var:release_nation
-				}
+				remove_core_of = UOE
+				set_temp_variable = { release_nation = UOE_former_owner }
+				transfer_state_to = var:release_nation
 				var:release_nation = {
 					if = {
 						limit = {
 							NOT = {
 								is_in_array = {
-									array = global.uoe_rel_track
+									array = UOE.uoe_rel_track
 									value = THIS
 								}
 							}
 						}
-						add_to_array = { global.uoe_rel_track = THIS }
+						add_to_array = { UOE.uoe_rel_track = THIS }
+						UOE = { add_to_variable = { uoe_rel_count = 1 } }
 					}
 					if = {
-						limit = {
-							has_idea = NATO_member
-						}
+						limit = { has_idea = NATO_member }
 						remove_ideas = NATO_member
 					}
 				}
 			}
 			add_to_variable = { military_revolt = state_lost_stab_mod }
 			remove_mission = low_prod_state_revolt
-		}
-		set_temp_variable = { fac_nation = global.uoe_rel_track^0 }
-		remove_from_array = { global.uoe_rel_track = fac_nation }
-		var:fac_nation = {
-			create_faction = alliance_european_states
-		}
-		for_each_loop = {
-			array = global.uoe_rel_track
-			value = state_to_join
-			var:fac_nation = { add_to_faction = state_to_join }
+			if = {
+				limit = { check_variable = { uoe_rel_count > 0 } }
+				set_temp_variable = { fac_nation = uoe_rel_track^0 }
+				remove_from_array = { uoe_rel_track = fac_nation }
+				var:fac_nation = { create_faction = alliance_european_states }
+				for_each_loop = {
+					array = uoe_rel_track
+					value = state_to_join
+					var:fac_nation = { add_to_faction = state_to_join }
+				}
+			}
+			clear_array = uoe_rel_track
+			clear_variable = uoe_rel_count
 		}
 
 		ai_chance = {

@@ -486,6 +486,12 @@ focus_EU111_QMV_result = {
 				set_nationality = UOE
 				add_unit_leader_trait = military_reorganization
 			}
+			if = {
+				limit = { NOT = { tag = UOE } }
+				every_owned_state = {
+					set_variable = { UOE_former_owner = PREV.id }
+				}
+			}
 			every_owned_state = {
 				limit = {
 					OR = {
@@ -781,38 +787,13 @@ focus_EU111_QMV_result = {
 			log = "current breakdown is [?democ_track], [?fac_track], [?com_track], [?neut_track], [?nat_track]"
 
 			#Adds all missile system stuff here
-			if = { limit = { NOT = { tag = UOE } }
-				# for_each_loop = {
-				# 	array = missile_inventory_array
-				# 	value = v
-				# 	index = i
-				# 	add_to_variable = { UOE.missile_inventory_array^i = missile_inventory_array^i }
-				# }
-				for_each_loop = {
-					array = GNSS_satellite_array
-					value = v
-					index = i
-					add_to_variable = { UOE.GNSS_satellite_array^i = GNSS_satellite_array^i }
-				}
-				for_each_loop = {
-					array = COM_satellite_array
-					value = v
-					index = i
-					add_to_variable = { UOE.COM_satellite_array^i = COM_satellite_array^i }
-				}
-				for_each_loop = {
-					array = SPY_satellite_array
-					value = v
-					index = i
-					add_to_variable = { UOE.SPY_satellite_array^i = SPY_satellite_array^i }
-				}
-				# for_each_loop = {
-				# 	array = nuclear_warhead_inventory_array
-				# 	value = v
-				# 	index = i
-				# 	add_to_variable = { UOE.nuclear_warhead_inventory_array^i = nuclear_warhead_inventory_array^i }
-				# }
+			if = {
+				limit = { NOT = { tag = UOE } }
+				set_temp_variable = { uoe_nukes_to_transfer = num_of_nukes }
 				UOE = {
+					set_variable = { tag_to_grab = PREV.id }
+					update_missile_satellite_inventory = yes
+					add_nuclear_bombs = uoe_nukes_to_transfer
 					add_to_variable = { treasury = PREV.treasury }
 					add_to_variable = { debt = PREV.debt }
 					add_to_variable = { int_investments = PREV.int_investments }
