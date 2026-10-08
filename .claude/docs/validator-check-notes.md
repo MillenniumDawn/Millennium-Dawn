@@ -416,7 +416,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Contracts come from the `# Parameters:` block above a scripted effect, plus the
   `HARDCODED_CONTRACTS` table in the validator. Declare a parameter in the block to
   have it checked. An effect with neither is never checked itself.
-- `orphan_param_setter_test.py` pins the four money and party popularity blocks. A
+- `content/tool_data_drift_test.py` pins the four money and party popularity blocks. A
   blank line inside a block, or a renamed header, silently drops the contract.
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds

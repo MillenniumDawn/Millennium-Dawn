@@ -77,10 +77,24 @@ platform-native writes. `.gitattributes` and `.editorconfig` keep the repository
 Tests belong under `tools/tests/` and end in `_test.py`; `test_*.py` is not collected.
 The suite runs in parallel workers, so a test writes only under `tmp_path`, never
 into the real repository tree. Another worker may be scanning that tree.
+A test that reads live game files goes in `tools/tests/content/`. CI runs that
+directory once, in the `Content tests` job, on tools or game content changes. The
+tools test jobs skip it and check out only the game paths listed in the
+`tools-tests` checkout in `test-suite.yml`, which three live readers need:
+`estimate_gdp` loads `common/buildings/00_buildings.txt` and
+`common/scripted_effects/00_money_system.txt` at import, the common-mistakes lint
+cases resolve names from `common/decisions`, `common/modifiers`,
+`common/opinion_modifiers`, `common/script_enums.txt` and `common/units/equipment`,
+and `balance/set_energy_tech_scurves_test.py` dry-runs against
+`common/technologies/industry.txt`. Every other test builds its input under
+`tmp_path` or skips when the live tree is absent, so a new live reader belongs in
+`tools/tests/content/` or needs its path added to that checkout.
 Add regression coverage with changed validator, fixer, or report behavior. Run
 `python -m pytest` before merging any `tools/` change, and fix failures in the same
 change. Never delete, skip, or weaken a test to reach green. A correct behavior change
 updates its regression expectations; a broken implementation gets fixed instead.
+Removing a test as cleanup is its own change. The test must be dead or repeat another
+test's input, and the coverage total must not drop.
 
 ## Quick Start
 

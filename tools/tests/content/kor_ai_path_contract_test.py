@@ -10,7 +10,7 @@ from shared_utils import (
     strip_comments,
 )
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 FOCUS_SCRIPT = strip_comments(
     read_text(ROOT / "common/national_focus/05_south_korea.txt")
 )

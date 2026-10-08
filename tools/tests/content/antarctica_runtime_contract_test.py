@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from shared_utils import extract_block_from_text, iter_statements, strip_comments
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 EFFECTS = strip_comments(
     (ROOT / "common/scripted_effects/00_antarctica_effects.txt").read_text(
         encoding="utf-8"

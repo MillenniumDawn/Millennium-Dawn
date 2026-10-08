@@ -2,7 +2,7 @@ from pathlib import Path
 
 from shared.suite import read_text
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def _read_common(path):

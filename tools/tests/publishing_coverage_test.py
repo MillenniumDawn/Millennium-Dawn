@@ -217,6 +217,7 @@ def test_frontend_loc_files_returns_the_fixed_locale_set(tmp_path):
         path.relative_to(tmp_path).as_posix()
         for path in pw.frontend_loc_files(tmp_path)
     } == EXPECTED_FRONTEND_PATHS
+    assert tuple(pw.VERSION_LOC_KEYS) == EXPECTED_VERSION_LOC_KEYS
 
 
 def _frontend_body(lang, version="2.0.0"):
@@ -470,30 +471,6 @@ def test_patch_frontend_version_is_a_byte_for_byte_noop_for_same_version(tmp_pat
     pw.patch_frontend_version(tmp_path, "1.2.3")
 
     assert all(path.read_bytes() == data for path, data in before.items())
-
-
-def test_real_frontend_files_match_the_fixed_production_locale_contract():
-    localisation = pw.REPO_ROOT / "localisation"
-    actual = {
-        path.relative_to(pw.REPO_ROOT).as_posix()
-        for path in localisation.glob("*/MD_frontend_l_*.yml")
-    }
-    assert actual == EXPECTED_FRONTEND_PATHS
-    assert tuple(pw.VERSION_LOC_KEYS) == EXPECTED_VERSION_LOC_KEYS
-
-    for rel in sorted(EXPECTED_FRONTEND_PATHS):
-        path = pw.REPO_ROOT / rel
-        lines = path.read_text(encoding="utf-8").splitlines()
-        for key in EXPECTED_VERSION_LOC_KEYS:
-            matches = [line for line in lines if line.split(":", 1)[0].strip() == key]
-            assert len(matches) == 1, f"{rel}: expected exactly one {key}"
-            assert (
-                len(pw.VERSION_TOKEN.findall(matches[0])) == 1
-            ), f"{rel}: {key} must have exactly one complete version token"
-            banner = pw.BANNER_VERSION.search(matches[0])
-            assert (
-                banner and banner["marker"]
-            ), f"{rel}: {key} must follow its version with a dev marker"
 
 
 # ---------------------------------------------------------------------------

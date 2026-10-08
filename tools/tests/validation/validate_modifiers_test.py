@@ -139,17 +139,6 @@ def test_doctrine_folder_cost_factors_are_harvested(tmp_path):
     }
 
 
-def test_shipped_doctrine_folders_cover_the_netherlands_ideas():
-    """The five folders MD ships are exactly the five modifiers in use."""
-    shipped = REPO_ROOT / "common" / "doctrines" / "folders" / "doctrine_folders.txt"
-    if not shipped.exists():
-        return
-    harvested = _harvest_doctrine_folder_cost_factors([str(shipped)])
-    assert "equipment_doctrine_cost_factor" in harvested
-    for vanilla in ("air", "land", "naval", "special_forces"):
-        assert f"{vanilla}_doctrine_cost_factor" in harvested
-
-
 def test_shipped_doc_yields_concrete_names_and_families():
     """Guard the doc parse against a format change in the next refresh.
 

@@ -91,15 +91,6 @@ def _worker_data(tmp_path, reward, modifiers="", *, money=frozenset()):
     )
 
 
-def _run_focus_guard_check(tmp_path, reward, modifiers="", *, effects=""):
-    _write_effects_file(tmp_path, extra=effects)
-    _write_focus_file(
-        tmp_path,
-        FOCUS_TEMPLATE.format(cost=2, extra="", reward=reward, modifiers=modifiers),
-    )
-    return _run_check(tmp_path)
-
-
 def _spend(amount):
     """A reward that sets treasury_change and applies it via the budget effect."""
     return (
