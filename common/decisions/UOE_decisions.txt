@@ -43,7 +43,8 @@ UOE_culture_balance_cat = {
 				value = -0.15
 			}
 			add_stability = -0.05
-			#TODO: this will increase the liklihood of nations to revolt and leave the USoE
+			set_temp_variable = { mil_change = 0.10 }
+			UOE_mil_revolt_change = yes
 		}
 	}
 	UOE_ban_eastern_media_production = {
@@ -60,7 +61,8 @@ UOE_culture_balance_cat = {
 				value = 0.15
 			}
 			add_stability = -0.05
-			#TODO: this will increase the liklihood of nations to revolt and leave the USoE
+			set_temp_variable = { mil_change = 0.10 }
+			UOE_mil_revolt_change = yes
 		}
 	}
 	UOE_allow_western_demonstrations = {
@@ -202,7 +204,7 @@ UOE_culture_balance_cat = {
 				value = -0.1
 			}
 			add_to_variable = { UOE_bop_cult_dif = -0.05 }
-			set_temp_variable = { percent_change = 0.05 }
+			set_temp_variable = { percent_change = 5 }
 			set_temp_variable = { tag_index = USA }
 			set_temp_variable = { influence_target = UOE }
 			change_influence_percentage = yes
@@ -225,6 +227,7 @@ UOE_culture_balance_cat = {
 				value = 0.1
 			}
 			add_to_variable = { UOE_bop_cult_dif = 0.05 }
+			set_temp_variable = { percent_change = 5 }
 			set_temp_variable = { tag_index = SOV }
 			set_temp_variable = { influence_target = UOE }
 			change_influence_percentage = yes
@@ -533,7 +536,9 @@ UOE_economic_instability_category = {
 			set_country_flag = resolved_eco_crisis
 			clr_country_flag = unstable_economy
 			remove_mission = low_prod_state_revolt
+			remove_mission = low_prod_states_leaving
 			remove_mission = high_prod_state_revolt
+			remove_mission = high_prod_states_leaving
 			remove_dynamic_modifier = { modifier = UOE_economic_turmoil_modifier }
 		}
 	}
@@ -573,11 +578,16 @@ UOE_economic_instability_category = {
 		selectable_mission = no
 		days_mission_timeout = 180
 		complete_effect = {
-			activate_mission = low_prod_state_revolt
+			if = {
+				limit = { NOT = { has_country_flag = resolved_eco_crisis } }
+				activate_mission = low_prod_state_revolt
+			}
 		}
 		timeout_effect = {
-			#low prod states LEAVE the USoE
-			country_event = UOEEvent.2
+			if = {
+				limit = { NOT = { has_country_flag = resolved_eco_crisis } }
+				country_event = UOEEvent.2
+			}
 		}
 	}
 	high_prod_state_revolt = {
@@ -616,71 +626,363 @@ UOE_economic_instability_category = {
 		selectable_mission = no
 		days_mission_timeout = 2
 		complete_effect = {
-			activate_mission = high_prod_state_revolt
+			if = {
+				limit = { NOT = { has_country_flag = resolved_eco_crisis } }
+				activate_mission = high_prod_state_revolt
+			}
 		}
 		timeout_effect = {
-			country_event = UOEEvent.3
+			if = {
+				limit = { NOT = { has_country_flag = resolved_eco_crisis } }
+				country_event = UOEEvent.3
+			}
 		}
 	}
 }
 
 UOE_resource_agency_category = {
+	UOE_union_efficiency_standards = {
+		cost = 75
+		fire_only_once = yes
+		days_remove = 180
+		visible = { has_dynamic_modifier = { modifier = UOE_the_energy_crisis_modifier } }
+		available = { has_dynamic_modifier = { modifier = UOE_the_energy_crisis_modifier } }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_union_efficiency_standards"
+			set_temp_variable = { temp_change = -0.05 }
+			UOE_energy_use_change = yes
+		}
+		ai_will_do = { base = 1 }
+	}
 
+	UOE_integrated_european_grid = {
+		cost = 100
+		fire_only_once = yes
+		days_remove = 180
+		visible = { has_dynamic_modifier = { modifier = UOE_the_energy_crisis_modifier } }
+		available = { has_dynamic_modifier = { modifier = UOE_the_energy_crisis_modifier } }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_integrated_european_grid"
+			set_temp_variable = { temp_change = 0.05 }
+			UOE_energy_gain_change = yes
+			random_owned_controlled_state = {
+				limit = { renewable_energy_infra < 2 }
+				add_building_construction = {
+					type = renewable_energy_infra
+					level = 1
+					instant_build = yes
+				}
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	UOE_household_electrification_program = {
+		cost = 75
+		fire_only_once = yes
+		days_remove = 180
+		visible = { has_dynamic_modifier = { modifier = UOE_the_energy_crisis_modifier } }
+		available = { has_dynamic_modifier = { modifier = UOE_the_energy_crisis_modifier } }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_household_electrification_program"
+			set_temp_variable = { temp_change = -0.05 }
+			UOE_pop_energy_change = yes
+			set_temp_variable = { temp_change = -0.05 }
+			UOE_pop_fuel_change = yes
+		}
+		ai_will_do = { base = 1 }
+	}
 }
 
 UOE_transportation_agency_category = {
 	UOE_highway_through_europe_mission = {
-
 		available = {
-			check_variable = { current_highway_level > target_highway_level }
+			check_variable = {
+				var = current_highway_level
+				value = target_highway_level
+				compare = greater_than_or_equals
+			}
 		}
-
 		activation = { always = no }
-
 		is_good = yes
-
 		selectable_mission = no
 		days_mission_timeout = 730
-
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_highway_through_europe_mission"
+			set_temp_variable = { temp_productivity_change = 0.02 }
 			every_controlled_state = {
-				add_extra_state_shared_building_slots = 3
+				limit = { is_core_of = UOE }
+				state_flat_productivity_change_effect = yes
 			}
 			add_ideas = UOE_superhighway
+			UOE_end_highway_project = yes
 		}
 		timeout_effect = {
 			add_stability = -0.1
-			add_ideas = UOE_failed_superhighway
+			add_timed_idea = { idea = UOE_failed_superhighway days = 730 }
+			UOE_end_highway_project = yes
 		}
 	}
 }
 
 UOE_construction_agency_category = {
+	UOE_regional_development_commission = {
+		cost = 35
+		days_re_enable = 180
+		available = {
+			check_variable = { treasury > 1 }
+			any_owned_state = {
+				is_controlled_by = ROOT
+				is_core_of = UOE
+				building@infrastructure < 5
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_regional_development_commission"
+			subtract_from_variable = { treasury = 1 }
+			random_owned_controlled_state = {
+				limit = {
+					is_core_of = UOE
+					building@infrastructure < 5
+				}
+				add_building_construction = { type = infrastructure level = 1 instant_build = yes }
+				set_temp_variable = { temp_productivity_change = 0.01 }
+				state_flat_productivity_change_effect = yes
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
 
+	UOE_european_industrial_park = {
+		cost = 50
+		days_re_enable = 365
+		available = { check_variable = { treasury > 2 } }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_european_industrial_park"
+			subtract_from_variable = { treasury = 2 }
+			random_owned_controlled_state = {
+				limit = { is_core_of = UOE }
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	UOE_commercial_redevelopment_zone = {
+		cost = 40
+		days_re_enable = 270
+		available = { check_variable = { treasury > 2 } }
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_commercial_redevelopment_zone"
+			subtract_from_variable = { treasury = 2 }
+			random_owned_controlled_state = {
+				limit = { is_core_of = UOE }
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = office_park level = 1 instant_build = yes }
+				set_temp_variable = { temp_productivity_change = 0.01 }
+				state_flat_productivity_change_effect = yes
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
 }
 
 UOE_military_industry_category = {
+	UOE_procurement_standardization = {
+		cost = 75
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_procurement_standardization"
+			set_temp_variable = { temp_change = -0.05 }
+			UOE_equipment_cost_change = yes
+		}
+		ai_will_do = { base = 1 }
+	}
 
+	UOE_european_arms_export_bureau = {
+		cost = 75
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_european_arms_export_bureau"
+			set_temp_variable = { temp_change = 0.10 }
+			UOE_market_income_change = yes
+			set_temp_variable = { temp_change = -0.05 }
+			UOE_market_purchase_change = yes
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	UOE_production_coordination_board = {
+		cost = 100
+		fire_only_once = yes
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_production_coordination_board"
+			set_temp_variable = { temp_change = 0.05 }
+			UOE_mil_ind_complex_change = yes
+			set_temp_variable = { mio_upgrade = 2 }
+			upgrade_uoe_mios = yes
+		}
+		ai_will_do = { base = 1 }
+	}
 }
 
 EU_USoE_category = {
 	EU_USoE_create_eurosphere_decision = {
 		cost = 200
+		fire_only_once = yes
 		available = {
 			tag = UOE
 			has_country_flag = new_government_established
 		}
-
 		visible = {
 			tag = UOE
 			has_country_flag = new_government_established
 		}
-		days_remove = 7
+		days_remove = 14
 		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EU_USoE_create_eurosphere_decision"
+			every_neighbor_country = {
+				limit = {
+					is_subject = no
+					NOT = { influence_higher_50 = yes }
+					capital_scope = {
+						OR = {
+							is_on_continent = europe
+							is_on_continent = middle_east
+							is_on_continent = africa
+						}
+					}
+				}
+				set_temp_variable = { percent_change = 5 }
+				set_temp_variable = { tag_index = UOE }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
 		}
-		ai_will_do = {
-			factor = 1
+		ai_will_do = { base = 1 }
+	}
+
+	UOE_extend_european_protection = {
+		cost = 50
+		target_root_trigger = { has_completed_focus = UOE_Protect_the_Rest }
+		target_array = global.PR_regional_or_greater_powers
+		target_trigger = {
+			FROM = {
+				NOT = { tag = ROOT }
+				is_subject = no
+				NOT = { is_in_faction_with = ROOT }
+				NOT = { is_guaranteed_by = ROOT }
+			}
 		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_extend_european_protection"
+			diplomatic_relation = { country = FROM relation = guarantee active = yes }
+			FROM = {
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = UOE }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	UOE_peaceful_coexistence_initiative = {
+		cost = 40
+		target_root_trigger = {
+			OR = {
+				has_completed_focus = UOE_Peaceful_Coexistance
+				has_completed_focus = UOE_A_Peaceful_Existance
+			}
+		}
+		target_array = global.PR_regional_or_greater_powers
+		target_trigger = {
+			FROM = {
+				NOT = { tag = ROOT }
+				is_subject = no
+				NOT = { has_non_aggression_pact_with = ROOT }
+				NOT = { has_war_with = ROOT }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_peaceful_coexistence_initiative"
+			diplomatic_relation = { country = FROM relation = non_aggression_pact active = yes }
+			FROM = {
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { tag_index = UOE }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+			}
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	UOE_invite_to_global_rights_pact = {
+		cost = 50
+		target_root_trigger = { has_completed_focus = UOE_Establish_the_Global_Rights_Pact }
+		target_array = global.PR_regional_or_greater_powers
+		target_trigger = {
+			FROM = {
+				NOT = { tag = ROOT }
+				is_subject = no
+				NOT = { has_idea = UOE_global_rights_pact_member }
+				NOT = { has_country_flag = UOE_rights_pact_refused }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_invite_to_global_rights_pact"
+			FROM = { country_event = { id = UOEEvent.22 } }
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	UOE_convene_economic_council = {
+		cost = 50
+		days_re_enable = 180
+		visible = { has_completed_focus = UOE_Establish_the_Council }
+		available = {
+			NOT = { has_idea = UOE_council_economic_agenda }
+			NOT = { has_idea = UOE_council_social_agenda }
+			NOT = { has_idea = UOE_council_security_agenda }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_convene_economic_council"
+			add_timed_idea = { idea = UOE_council_economic_agenda days = 180 }
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	UOE_convene_social_council = {
+		cost = 50
+		days_re_enable = 180
+		visible = { has_completed_focus = UOE_Establish_the_Council }
+		available = {
+			NOT = { has_idea = UOE_council_economic_agenda }
+			NOT = { has_idea = UOE_council_social_agenda }
+			NOT = { has_idea = UOE_council_security_agenda }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_convene_social_council"
+			add_timed_idea = { idea = UOE_council_social_agenda days = 180 }
+		}
+		ai_will_do = { base = 1 }
+	}
+
+	UOE_convene_security_council = {
+		cost = 50
+		days_re_enable = 180
+		visible = { has_completed_focus = UOE_Establish_the_Council }
+		available = {
+			NOT = { has_idea = UOE_council_economic_agenda }
+			NOT = { has_idea = UOE_council_social_agenda }
+			NOT = { has_idea = UOE_council_security_agenda }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UOE_convene_security_council"
+			add_timed_idea = { idea = UOE_council_security_agenda days = 180 }
+		}
+		ai_will_do = { base = 1 }
 	}
 }
 
@@ -964,15 +1266,16 @@ EU_environmental_imperialism_category = {
 		cost = 100
 		target_trigger = {
 			FROM = {
+				NOT = { tag = ROOT }
 				NOT = { has_country_flag = EU_USoE_environmental_imperialism_target }
 				NOT = { has_idea = USoE_environmental_sanctions }
 				OR = {
 					has_idea = regional_power
 					has_idea = large_power
 					has_idea = great_power
-					has_idea = superpower
+					has_idea = super_power
 				}
-				synthetic_refinery < num_owned_states
+				renewable_energy_infra < num_owned_states
 				OR = {
 					AND = {
 						ROOT = {
@@ -1041,17 +1344,12 @@ EU_environmental_imperialism_category = {
 				}
 			}
 		}
-		available = {
-			#has_country_flag = environmental_imperialism
-		}
-
 		visible = {
 			has_country_flag = environmental_imperialism
 			has_country_flag = USoE
 			FROM = {
 				NOT = { has_country_flag = EU_USoE_environmental_imperialism_target }
-			}
-			FROM = {
+				NOT = { has_country_flag = UOE_environmental_demands_met }
 				NOT = { has_idea = USoE_environmental_sanctions }
 			}
 			FROM = {
@@ -1070,9 +1368,8 @@ EU_environmental_imperialism_category = {
 				show_ideas_tooltip = USoE_environmental_sanctions
 			}
 		}
-		ai_will_do = {
-			factor = 1
-		}
+		target_array = global.PR_regional_or_greater_powers
+		ai_will_do = { base = 1 }
 	}
 
 	EU_USoE_environmental_imperialism_mission = {
@@ -1080,9 +1377,7 @@ EU_environmental_imperialism_category = {
 			always = yes
 		}
 		available = {
-			set_temp_variable = { a = num_owned_states }
-			subtract_from_temp_variable = { a = 1 }
-			synthetic_refinery > a
+			NOT = { renewable_energy_infra < num_owned_states }
 		}
 		activation = {
 			always = no
@@ -1099,31 +1394,22 @@ EU_environmental_imperialism_category = {
 			set_temp_variable = { party_popularity_increase = 0.05 }
 			set_temp_variable = { temp_outlook_increase = 0.05 }
 			change_relative_party_popularity = yes
-			every_country = {
-				limit = {
-					has_country_flag = USoE
-				}
-				country_event = {
-					id = USoEevent.5
-				}
+			set_country_flag = UOE_environmental_demands_met
+			if = {
+				limit = { country_exists = UOE }
+				UOE = { country_event = USoEevent.5 }
 			}
 			clr_country_flag = EU_USoE_environmental_imperialism_target
 		}
 		timeout_effect = {
 			add_ideas = USoE_environmental_sanctions
 			clr_country_flag = EU_USoE_environmental_imperialism_target
-			every_country = {
-				limit = {
-					has_country_flag = USoE
-				}
-				country_event = {
-					id = USoEevent.6
-				}
+			if = {
+				limit = { country_exists = UOE }
+				UOE = { country_event = USoEevent.6 }
 			}
 		}
-		ai_will_do = {
-			factor = 1
-		}
+		ai_will_do = { base = 1 }
 	}
 
 	# Green Energy Reconstruction
@@ -1136,7 +1422,7 @@ EU_environmental_imperialism_category = {
 		visible = {
 			has_country_flag = EU_USoE_environmental_imperialism_target
 			any_owned_state = {
-				synthetic_refinery < 2
+				renewable_energy_infra < 2
 				industrial_complex > 0
 			}
 		}
@@ -1144,7 +1430,7 @@ EU_environmental_imperialism_category = {
 			set_temp_variable = { temp1 = 0 }
 			every_owned_state = {
 				limit = {
-					synthetic_refinery < 2
+					renewable_energy_infra < 2
 					industrial_complex > 0
 				}
 				remove_building = {
@@ -1152,7 +1438,7 @@ EU_environmental_imperialism_category = {
 					level = 1
 				}
 				add_building_construction = {
-					type = synthetic_refinery
+					type = renewable_energy_infra
 					level = 1
 					instant_build = yes
 				}
