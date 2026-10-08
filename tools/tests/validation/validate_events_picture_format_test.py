@@ -197,8 +197,8 @@ def test_hidden_event_picture_is_reported(tmp_path):
     v.validate_hidden_event_pictures()
 
     assert [i.message for i in v._issues] == ["hid.1 - Ev.txt"]
-    assert v.warnings_found == 1
-    assert v.errors_found == 0
+    assert v.errors_found == 1
+    assert v.warnings_found == 0
     assert v._issues[0].category == "hidden-event-picture"
 
 

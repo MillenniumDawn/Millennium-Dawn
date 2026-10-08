@@ -1,6 +1,7 @@
 """Tests for `report_lib.baseline`."""
 
 import json
+from collections import Counter
 
 from report_lib import (
     Severity,
@@ -115,6 +116,73 @@ def test_classify_escalated_severity_counts_as_new(tmp_path):
     stats = classify([make_issue(file="a.txt", line=1, message="escalated")], baseline)
     assert stats.new_errors == 1
     assert stats.existing_errors == 0
+
+
+def test_classify_line_shift_reads_existing(tmp_path):
+    # An unrelated edit six lines up moves the anchor line and the read-site
+    # lines inside the message; the finding still exists on main.
+    def message(focus_line, event_line):
+        return (
+            "flag_x - set only by focus AST_x; replace 2 read(s) with "
+            "`has_completed_focus = AST_x`: "
+            f"common/national_focus/05_Australia.txt:{focus_line}, "
+            f"events/05_australia_events.txt:{event_line}"
+        )
+
+    focus_file = "common/national_focus/05_Australia.txt"
+    baseline = _baseline(
+        tmp_path,
+        [
+            _issue_dict(
+                "warning",
+                file=focus_file,
+                line=3112,
+                message=message(1889, 8071),
+                category="redundant-focus-flag",
+            )
+        ],
+    )
+
+    shifted = make_issue(
+        severity=Severity.WARNING,
+        file=focus_file,
+        line=3106,
+        message=message(1883, 8032),
+        category="redundant-focus-flag",
+    )
+    stats = classify([shifted], baseline)
+
+    assert shifted.baseline_status == "existing"
+    assert stats.new_warnings == 0
+    assert stats.existing_warnings == 1
+
+
+def test_classify_masks_line_word_references(tmp_path):
+    baseline = _baseline(
+        tmp_path,
+        [_issue_dict("error", line=10, message="X redefined (first at line 4)")],
+    )
+
+    moved = make_issue(file="a.txt", line=8, message="X redefined (first at line 2)")
+    classify([moved], baseline)
+    assert moved.baseline_status == "existing"
+
+
+def test_classify_extra_instance_of_existing_finding_is_new(tmp_path):
+    baseline = _baseline(
+        tmp_path,
+        [_issue_dict("error", file="a.txt", line=5, message="dup")],
+    )
+
+    issues = [
+        make_issue(file="a.txt", line=5, message="dup"),
+        make_issue(file="a.txt", line=40, message="dup"),
+    ]
+    stats = classify(issues, baseline)
+
+    assert [i.baseline_status for i in issues] == ["existing", "new"]
+    assert stats.existing_errors == 1
+    assert stats.new_errors == 1
 
 
 def test_classify_leaves_unkeyable_issues_untagged(tmp_path):
@@ -258,7 +326,7 @@ def test_write_baseline_over_empty_sidecar_dir_prunes_all(tmp_path):
     assert (output / META_FILENAME).is_file()
     baseline = load_baseline(str(output), "h")
     assert baseline is not None
-    assert baseline.keys == set()
+    assert baseline.keys == Counter()
 
 
 def test_build_report_annotates_new_vs_existing(tmp_path):

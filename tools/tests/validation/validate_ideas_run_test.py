@@ -10,6 +10,7 @@ import sys
 
 import pytest
 import validate_ideas
+from shared.suite import issue_rows as _findings
 from shared.suite import write_under as _write
 from validate_ideas import IdeaIssue, Validator, _add_extra_args
 
@@ -90,13 +91,6 @@ def _validator(root, **kwargs):
     return Validator(str(root), use_colors=False, workers=1, **kwargs)
 
 
-def _findings(validator):
-    return sorted(
-        (issue.category, issue.message, issue.file, issue.line)
-        for issue in validator._issues
-    )
-
-
 def _write_run_mod(tmp_path):
     _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
     _write(tmp_path, "common/ideas/test.txt", RUN_IDEAS)
@@ -166,6 +160,36 @@ def test_quality_report_ignores_an_issue_type_it_has_no_message_for(tmp_path):
     assert [issue.line for issue in validator._issues] == [4]
 
 
+def test_non_instant_bonus_is_skipped_for_configured_idea_prefixes(
+    tmp_path, monkeypatch
+):
+    _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
+    monkeypatch.setattr(validate_ideas, "_INSTANT_EXEMPT_PREFIXES", ("sp_",))
+    validator = _validator(tmp_path)
+
+    validator.validate_idea_quality(
+        {
+            str(tmp_path / "common" / "ideas" / "quality.txt"): [
+                IdeaIssue(
+                    "sp_idea", "country", 4, "equipment-bonus-not-instant", "convoy"
+                ),
+                IdeaIssue(
+                    "TAG_idea", "country", 9, "equipment-bonus-not-instant", "convoy"
+                ),
+            ]
+        }
+    )
+
+    assert [(issue.line, issue.message) for issue in validator._issues] == [
+        (
+            9,
+            "'TAG_idea' equipment_bonus convoy has no instant = yes (the bonus"
+            " only reaches newly created variants; add instant = yes, or exempt"
+            " the idea in validation_config.json)",
+        )
+    ]
+
+
 def test_character_idea_tokens_join_the_defined_set(tmp_path):
     _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
     _write(
@@ -213,30 +237,95 @@ def test_repeated_undefined_reference_is_reported_once(tmp_path):
     ]
 
 
-def test_missing_localisation_is_grouped_by_category(tmp_path):
+MISSING_LOC_IDEAS = """ideas = {
+\thidden_ideas = {
+\t\tTAG_hidden = {
+\t\t}
+\t}
+\tcountry = {
+\t\tTAG_present = {
+\t\t}
+\t\tTAG_renamed = {
+\t\t\tname = TAG_present
+\t\t}
+\t\tTAG_no_desc = {
+\t\t}
+\t\tTAG_absent = {
+\t\t}
+\t}
+}
+"""
+
+
+def _missing_loc_findings(tmp_path, **kwargs):
+    _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
+    _write(tmp_path, "common/ideas/test.txt", MISSING_LOC_IDEAS)
+    _write(
+        tmp_path,
+        "common/characters/TAG.txt",
+        "characters = {\n\tTAG_person = {\n\t\tadvisor = {\n"
+        "\t\t\tidea_token = TAG_person_token\n\t\t}\n\t}\n}\n",
+    )
     _write(
         tmp_path,
         "localisation/english/MD_test_l_english.yml",
-        ' l_english:\n TAG_present:0 "Present"\n TAG_present_desc:0 "Desc"\n',
+        ' l_english:\n TAG_present:0 "Present"\n TAG_present_desc:0 "Desc"\n'
+        ' TAG_no_desc:0 "No Desc"\n',
+    )
+    validator = _validator(tmp_path, **kwargs)
+    defined, _issues, ideas_by_file = validator._parse_all_ideas()
+
+    validator.validate_missing_localisation(defined, ideas_by_file)
+
+    return _findings(validator)
+
+
+def test_missing_name_key_is_reported_at_the_idea_definition(tmp_path):
+    assert _missing_loc_findings(tmp_path) == [
+        (
+            "missing-idea-localisation",
+            "'TAG_absent' (country) is missing loc key 'TAG_absent'",
+            "common/ideas/test.txt",
+            14,
+        )
+    ]
+
+
+def test_missing_loc_flag_adds_the_desc_keys(tmp_path):
+    assert _missing_loc_findings(tmp_path, missing_loc=True) == [
+        (
+            "missing-idea-localisation",
+            "'TAG_absent' (country) is missing loc key 'TAG_absent'",
+            "common/ideas/test.txt",
+            14,
+        ),
+        (
+            "missing-idea-localisation",
+            "'TAG_absent' (country) is missing loc key 'TAG_absent_desc'",
+            "common/ideas/test.txt",
+            14,
+        ),
+        (
+            "missing-idea-localisation",
+            "'TAG_no_desc' (country) is missing loc key 'TAG_no_desc_desc'",
+            "common/ideas/test.txt",
+            12,
+        ),
+    ]
+
+
+def test_missing_localisation_reads_no_loc_without_idea_files_in_scope(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(
+        "validate_localisation.get_all_loc_keys",
+        lambda *_args, **_kwargs: pytest.fail("loc index was loaded"),
     )
     validator = _validator(tmp_path)
 
-    validator.validate_missing_localisation(
-        {
-            "TAG_present": ("country", None, None),
-            "TAG_renamed": ("country", "TAG_present", None),
-            "TAG_absent": ("hidden_ideas", None, None),
-        }
-    )
+    validator.validate_missing_localisation({"TAG_absent": ("country", None, None)}, {})
 
-    assert _findings(validator) == [
-        (
-            "missing-idea-localisation",
-            "hidden_ideas: TAG_absent: TAG_absent, TAG_absent_desc",
-            "",
-            0,
-        )
-    ]
+    assert validator._issues == []
 
 
 def test_loc_consolidation_only_suggests_true_duplicates(tmp_path):
@@ -459,6 +548,33 @@ def test_default_run_reports_only_the_always_on_checks(tmp_path, no_vanilla_gfx)
     ]
 
 
+def test_missing_name_loc_flag_reports_only_the_name_key(tmp_path, no_vanilla_gfx):
+    _write_run_mod(tmp_path)
+    validator = _validator(tmp_path, missing_name_loc=True)
+
+    validator.run_validations()
+
+    assert [issue.message for issue in validator._issues] == [
+        "'DEAD_spirit' (country) is missing loc key 'DEAD_spirit'"
+    ]
+
+
+def test_staged_missing_name_loc_checks_only_the_staged_idea_file(
+    tmp_path, no_vanilla_gfx
+):
+    _write_run_mod(tmp_path)
+    _write(tmp_path, "common/ideas/quality.txt", QUALITY_IDEAS)
+    validator = _validator(tmp_path, missing_name_loc=True)
+    validator.staged_only = True
+    validator.staged_files = ["common/ideas/test.txt"]
+
+    validator.run_validations()
+
+    assert [issue.message for issue in validator._issues] == [
+        "'DEAD_spirit' (country) is missing loc key 'DEAD_spirit'"
+    ]
+
+
 def test_optional_flags_enable_the_advisory_checks(tmp_path, no_vanilla_gfx):
     _write_run_mod(tmp_path)
     validator = Validator(
@@ -477,7 +593,7 @@ def test_optional_flags_enable_the_advisory_checks(tmp_path, no_vanilla_gfx):
         "missing-idea-localisation",
     }
     assert any(
-        "DEAD_spirit: DEAD_spirit, DEAD_spirit_desc" in issue.message
+        "is missing loc key 'DEAD_spirit_desc'" in issue.message
         for issue in validator._issues
     )
 
@@ -515,15 +631,18 @@ def test_extra_cli_arguments_default_to_the_documented_values():
 
     defaults = parser.parse_args([])
     assert (
+        defaults.missing_name_loc,
         defaults.missing_loc,
         defaults.unused_ideas,
         defaults.suggest_consolidation,
     ) == (
         False,
+        False,
         True,
         False,
     )
     assert parser.parse_args(["--no-unused-ideas"]).unused_ideas is False
+    assert parser.parse_args(["--missing-name-loc"]).missing_name_loc is True
     assert parser.parse_args(["--missing-loc"]).missing_loc is True
     assert parser.parse_args(["--suggest-consolidation"]).suggest_consolidation is True
 

@@ -12,6 +12,27 @@ is_reserve_currency_issuer = {
 	}
 }
 
+uses_own_reserve_currency = {
+	OR = {
+		AND = { has_country_flag = is_usd_issuer has_idea = us_dollar }
+		AND = { has_country_flag = is_eur_issuer has_idea = euro }
+		AND = {
+			has_country_flag = is_cny_issuer
+			OR = {
+				has_idea = chinese_yuan
+				has_idea = chinese_yuan_2
+				has_idea = chinese_yuan_3
+			}
+		}
+		AND = { has_country_flag = is_rub_issuer has_idea = russia_rouble }
+		AND = { has_country_flag = is_jpy_issuer has_idea = japanese_yen }
+		AND = { has_country_flag = is_gbp_issuer has_idea = british_pound }
+		AND = { has_country_flag = is_chf_issuer has_idea = swiss_frank }
+		AND = { has_country_flag = is_nlg_issuer has_idea = gulden }
+		AND = { has_country_flag = is_brl_issuer has_idea = brazilian_real }
+	}
+}
+
 JAP_influences_this_10 = {
 	any_of = {
 		array = influence_array
@@ -152,6 +173,8 @@ ai_has_acceptable_deficit = {
 			check_variable = { treasury_rate > -3.00 }
 		}
 	}
+	# The amounts above are sized for large economies; small ones also stay within 10% of income.
+	check_variable = { budget_balance_ratio > -0.10 }
 }
 ai_has_acceptable_surplus = {
 	OR = {
@@ -296,7 +319,10 @@ ai_has_moderate_economic_problems = {
 	else = {
 		check_variable = { interest_rate > 8.999 }
 	}
-	check_variable = { treasury_rate < -5.00 }
+	OR = {
+		check_variable = { treasury_rate < -5.00 }
+		check_variable = { budget_balance_ratio < -0.15 }
+	}
 }
 ai_has_major_economic_problems = {
 	if = {
@@ -311,7 +337,10 @@ ai_has_major_economic_problems = {
 	else = {
 		check_variable = { interest_rate > 11.999 }
 	}
-	check_variable = { treasury_rate < -9.00 }
+	OR = {
+		check_variable = { treasury_rate < -9.00 }
+		check_variable = { budget_balance_ratio < -0.30 }
+	}
 }
 
 # Balance
@@ -319,7 +348,10 @@ ai_has_deficit = {
 	check_variable = { treasury_rate < -0.05 }
 }
 ai_has_high_deficit = {
-	check_variable = { treasury_rate < -3.00 }
+	OR = {
+		check_variable = { treasury_rate < -3.00 }
+		check_variable = { budget_balance_ratio < -0.10 }
+	}
 }
 
 ai_has_surplus = {
@@ -340,8 +372,8 @@ ai_has_same_organization = {
 		}
 		# ASEAN
 		AND = {
-			FROM = { has_idea = NATO_member }
-			has_idea = NATO_member
+			FROM = { has_idea = ASEAN_Member }
+			has_idea = ASEAN_Member
 		}
 		# EU Member
 		AND = {

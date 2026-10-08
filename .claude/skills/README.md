@@ -29,4 +29,4 @@ Project slash commands for Claude Code. Each directory holds a `SKILL.md` whose 
 | `/validate`            | Run the validation tools and summarize errors (explicit-only)        |
 | `/warnings`            | Full untruncated issue list from one validator (explicit-only)       |
 
-Conventions: every skill has frontmatter with a trigger-quality `description`; `disable-model-invocation: true` marks skills that only run when the user invokes them (`/validate`, `/close-issue`, `/update-claude`). Reference material belongs in `.claude/docs/`, not in skill bodies — skills cite docs.
+Conventions: every skill has frontmatter with a trigger-quality `description`; `disable-model-invocation: true` marks skills that only run when the user invokes them. Reference material belongs in `.claude/docs/`, not in skill bodies — skills cite docs.

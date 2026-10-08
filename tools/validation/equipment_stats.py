@@ -83,6 +83,7 @@ NAVAL_TYPE_CATEGORIES = frozenset(
 # line's `reliability = 0.9` and silently drop that stat.
 _ASSIGN_RE = re.compile(r"([A-Za-z_]\w*)[^\S\n]*=[^\S\n]*([^\s{}]+)")
 _TOKEN_RE = re.compile(r"[A-Za-z_]\w*")
+_NUMBERED_RE = re.compile(r"_\d+$")
 
 
 def _is_nonzero(value: str) -> bool:
@@ -149,6 +150,9 @@ class EquipmentStatIndex:
     stats: Dict[str, FrozenSet[str]]
     groups: Dict[str, List[str]]
     types: Dict[str, FrozenSet[str]]
+    # Variant or generated clone -> the archetype a MIO ``equipment_type`` names.
+    archetypes: Dict[str, str]
+    roots: FrozenSet[str]
 
     def resolve(self, token: str) -> Optional[FrozenSet[str]]:
         """Stats *token* declares a base for, or None when nothing defines it."""
@@ -158,6 +162,20 @@ class EquipmentStatIndex:
         """Member tokens of a ``mio_cat_*`` group, or ``[token]`` when it is not
         a group."""
         return list(self.groups.get(token, (token,)))
+
+    def archetype_of(self, token: str) -> Optional[str]:
+        """The archetype a MIO ``equipment_type`` names for *token*, or None.
+
+        A numbered engine clone such as ``large_plane_air_transport_airframe_1``
+        appears in no file, so ``_N`` is dropped only when the rest is a known
+        archetype. Vanilla designer airframes the mod never defines stay None.
+        """
+        if token in self.archetypes:
+            return self.archetypes[token]
+        if token in self.roots:
+            return token
+        base = _NUMBERED_RE.sub("", token)
+        return base if base != token and base in self.roots else None
 
     def is_naval(self, token: str) -> bool:
         """True when *token* is a ship.
@@ -352,6 +370,14 @@ def build_index(
             entry.types | types.get(entry.archetype or "", set())
         )
 
+    archetypes: Dict[str, str] = {}
+    roots: Set[str] = set(duplicates)
+    for name, entry in entries.items():
+        if entry.archetype:
+            archetypes[name] = entry.archetype
+            roots.add(entry.archetype)
+        else:
+            roots.add(name)
     # A category resolves to the union of every equipment declaring it.
     for name, tokens in types.items():
         for category in tokens:
@@ -361,6 +387,8 @@ def build_index(
         stats={k: frozenset(v) for k, v in stats.items()},
         groups=_parse_groups(group_texts),
         types={k: frozenset(v) for k, v in types.items()},
+        archetypes=archetypes,
+        roots=frozenset(roots),
     )
 
 

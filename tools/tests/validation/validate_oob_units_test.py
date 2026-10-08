@@ -5,8 +5,22 @@ Linux; a wrong-case division_types token or a dead vanilla ship_types token
 means the namelist silently never applies.
 """
 
+import pytest
 import validate_oob_units
 from validate_oob_units import Validator, _parse_canonical_units_file
+
+_DEAD_SHIP_TOKENS = (
+    "submarine",
+    "light_cruiser",
+    "heavy_cruiser",
+    "ship_hull_carrier",
+    "ship_hull_cruiser",
+    "ship_hull_heavy",
+    "ship_hull_light",
+    "ship_hull_submarine",
+    "battleship_hull_0",
+    "LHA",
+)
 
 _LAND_UNITS = """sub_units = {
 \tArm_Inf_Bat = {
@@ -119,22 +133,42 @@ def test_canonical_division_types_token_clean(tmp_path):
     assert validator._issues == []
 
 
-def test_dead_vanilla_ship_types_token_flagged(tmp_path):
-    """Legacy vanilla tokens (submarine, light_cruiser, ...) were removed by
-    MD — a ship_types entry using one is silently dead and must warn."""
+@pytest.mark.parametrize("token", _DEAD_SHIP_TOKENS)
+def test_dead_ship_types_token_flagged(tmp_path, token):
     validator = _run_namelist_check(
         tmp_path,
         "names_ships",
         "USA_ship_names.txt",
-        "USA_SUBS = {\n"
-        "\tname = NAME_THEME_SUBS\n"
+        "USA_SHIPS = {\n"
+        "\tname = NAME_THEME_SHIPS\n"
         "\tfor_countries = { USA }\n"
         "\ttype = ship\n"
-        "\tship_types = { submarine }\n"
+        "\tship_types = {\n"
+        "\t\tcorvette\n"
+        f"\t\t{token}\n"
+        "\t}\n"
         "}\n",
     )
     assert validator.warnings_found == 1
-    assert "unknown ship_types token 'submarine'" in validator._issues[0].message
+    assert f"unknown ship_types token '{token}'" in validator._issues[0].message
+
+
+@pytest.mark.parametrize("token", _DEAD_SHIP_TOKENS)
+def test_dead_ship_design_block_key_flagged(tmp_path, token):
+    validator = _run_namelist_check(
+        tmp_path,
+        "names",
+        "00_USA_names.txt",
+        "USA = {\n"
+        f"\t{token} = {{\n"
+        '\t\tprefix = ""\n'
+        '\t\tgeneric = { "Ship" }\n'
+        "\t\tunique = { }\n"
+        "\t}\n"
+        "}\n",
+    )
+    assert validator.warnings_found == 1
+    assert f"unknown namelist block key '{token}'" in validator._issues[0].message
 
 
 def test_canonical_ship_types_token_clean(tmp_path):
@@ -144,10 +178,13 @@ def test_canonical_ship_types_token_clean(tmp_path):
         "USA_ship_names.txt",
         "USA_CORVETTES = {\n"
         "\tname = NAME_THEME_CORVETTES\n"
-        "\tship_types = { corvette }\n"
+        "\tship_types = { corvette } # submarine\n"
+        '\tfallback_name = "LHA-%d"\n'
+        '\tunique = { "LHA" "submarine" "light_cruiser" "heavy_cruiser" }\n'
         "}\n",
     )
     assert validator.warnings_found == 0
+    assert validator._issues == []
 
 
 def test_namelist_block_key_accepts_equipment_type(tmp_path):

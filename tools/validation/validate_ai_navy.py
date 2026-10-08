@@ -8,6 +8,7 @@ import difflib
 import glob
 import os
 import re
+from collections import Counter
 from typing import Dict, List, Set, Tuple
 
 from validator_common import BaseValidator, run_validator_main, strip_comments
@@ -383,6 +384,22 @@ class Validator(BaseValidator):
             mission_results,
             "✓ All mission types in taskforce templates are valid",
             "Invalid mission types in taskforce templates:",
+        )
+
+        # The game allows one mission per template, asserts on more, and only uses the first.
+        per_line = Counter(
+            (filename, line_num) for _m, filename, line_num in mission_refs
+        )
+        multi_results = [
+            f"{filename}:{line_num}: taskforce template lists {count} missions; "
+            f"the game allows one and only uses the first"
+            for (filename, line_num), count in sorted(per_line.items())
+            if count > 1
+        ]
+        self._report(
+            multi_results,
+            "✓ Every taskforce template has a single mission",
+            "Taskforce templates with more than one mission:",
         )
 
     def _validate_fleet_references(self):

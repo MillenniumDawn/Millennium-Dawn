@@ -26,6 +26,16 @@ class TestStatements:
         keys = [key for key, _, _ in iter_statements("a = { b = { c = 1 } } d = 2")]
         assert keys == ["a", "d"]
 
+    def test_escaped_quote_keeps_statement_text_inside_the_string(self):
+        body = 'desc = "text \\" x = 99" x = 2'
+        assert list(iter_statements(body)) == [
+            ("desc", 'text \\" x = 99', None),
+            ("x", "2", None),
+        ]
+
+    def test_unclosed_quoted_scalar_stops_the_walk(self):
+        assert list(iter_statements('desc = "text \\" x = 99')) == []
+
     def test_operators_are_reported_separately(self):
         body = "has_stability > 0.66 threat < 0.4 date >= 2005.1.1"
         assert list(iter_statement_ops(body)) == [

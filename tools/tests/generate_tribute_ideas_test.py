@@ -1,5 +1,6 @@
 import importlib.util
 import sys
+from pathlib import Path
 
 import pytest
 
@@ -52,5 +53,7 @@ def test_tools_dir_is_put_on_sys_path(monkeypatch):
     monkeypatch.setattr(
         sys, "path", [entry for entry in sys.path if not entry.endswith("tools")]
     )
-    module = _module()
-    assert module.TOOLS_DIR in sys.path
+    from shared.paths import TOOLS_DIR
+
+    _module()
+    assert TOOLS_DIR in {Path(entry).resolve() for entry in sys.path}

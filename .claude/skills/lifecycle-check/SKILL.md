@@ -3,36 +3,19 @@ name: lifecycle-check
 description: 'Audit a country branch against the focus tree lifecycle checklist (focus tree, ideas, decisions, OOB, characters, loc, namelists, AI, game rules, graphics, changelog), reporting done/missing/partial per item. Use when asked if a country''s content is complete or review-ready, e.g. "/lifecycle-check UKR".'
 ---
 
-Audit a country's content branch against the focus tree lifecycle checklist and report which phases are done or missing.
+**Syntax:** `/lifecycle-check [TAG]`. Without a TAG, infer it from the most frequent
+country prefix in `git diff origin/main...HEAD --name-only`.
 
-**Syntax:** `/lifecycle-check [TAG]`
+Read `docs/src/content/resources/focus-tree-lifecycle-checklist.md` first.
 
-- With `TAG`: check all required files for that specific country tag.
-- Without argument: infer the TAG from the current branch name or changed files.
+## Checks
 
-The authoritative checklist is `docs/src/content/resources/focus-tree-lifecycle-checklist.md`. Read it before starting.
+Mark each item Done, Missing, or Partial (the file exists but looks like a stub).
 
-## Execution
+Drafting cannot be checked from files. Remind the user that draft approval comes before
+coding.
 
-### 1. Determine the TAG
-
-If TAG is provided, use it directly (uppercase). Otherwise run:
-
-```
-git diff origin/main...HEAD --name-only
-```
-
-and infer the TAG from the most frequently changed country-specific prefix.
-
-### 2. Check each lifecycle item
-
-For each item mark **Done**, **Missing**, or **Partial** (file exists but seems incomplete, e.g. an empty stub).
-
-#### Drafting Phase
-
-Cannot be checked from files. Mark "not verifiable from code" and remind the user that draft approval must happen before coding.
-
-#### Coding Phase
+### Coding
 
 | Item                    | How to check                                                           |
 | ----------------------- | ---------------------------------------------------------------------- |
@@ -52,57 +35,28 @@ Cannot be checked from files. Mark "not verifiable from code" and remind the use
 | Game rules              | `common/game_rules/` contains a rule referencing TAG                   |
 | Scripted localisation   | `common/scripted_localisation/` file with TAG entries (if used)        |
 
-#### Graphics Phase
+### Graphics
 
-| Item             | How to check                                                              |
-| ---------------- | ------------------------------------------------------------------------- |
-| Focus icons      | Every focus has `icon =`; flag default/placeholder like `goal_unknown`    |
-| Idea icons       | Grep the ideas file for `picture =`                                       |
-| Leader portraits | `gfx/leaders/TAG/` directory exists and contains at least one `.dds` file |
+| Item             | How to check                                                    |
+| ---------------- | --------------------------------------------------------------- |
+| Focus icons      | Every focus has `icon =`; flag placeholders like `goal_unknown` |
+| Idea icons       | Grep the ideas file for `picture =`                             |
+| Leader portraits | `gfx/leaders/TAG/` exists and contains at least one `.dds` file |
 
-#### Polish Phase
+### Polish and completion
 
-| Item                     | How to check                                                     |
-| ------------------------ | ---------------------------------------------------------------- |
-| Localisation spell-check | Cannot be checked automatically — note as "manual review needed" |
-| error.log clear          | Cannot be checked from files — note as "requires in-game test"   |
-| Playtest done            | Cannot be checked — note as "requires manual confirmation"       |
-| Code Resource compliance | Note that `/content-review` and `/audit` should be run           |
+| Item            | How to check                                                |
+| --------------- | ----------------------------------------------------------- |
+| Spell-check     | Manual review needed                                        |
+| error.log clear | Requires an in-game test                                    |
+| Playtest        | Requires manual confirmation                                |
+| Code compliance | Recommend `/content-review` and `/audit`                    |
+| Changelog entry | Grep `Changelog.txt` for the TAG or country name            |
+| Authors updated | Confirm manually against `docs/src/content/misc/authors.md` |
 
-#### Completion Phase
+## Output
 
-| Item            | How to check                                                     |
-| --------------- | ---------------------------------------------------------------- |
-| Changelog entry | Grep `Changelog.txt` for the TAG or country name                 |
-| Authors updated | Grep `docs/src/content/misc/authors.md` for the developer's name |
-
-- Authors updated cannot be verified automatically — note as "confirm manually".
-
-### 3. Output
-
-Print a checklist table:
-
-```
-Lifecycle Check — TAG (Country Name)
-=====================================
-
-CODING PHASE
-  [✓] Focus tree file            common/national_focus/05_TAG.txt
-  [✗] National decisions         No file found matching common/decisions/TAG*.txt
-  [~] Focus localisation         File exists but may be incomplete (N keys found)
-  ...
-
-GRAPHICS PHASE
-  [✓] Focus icons                All N focuses have non-placeholder icons
-  [✗] Leader portraits           gfx/leaders/TAG/ not found
-  ...
-
-COMPLETION PHASE
-  [✓] Changelog entry            Found "TAG" in Changelog.txt
-  [?] Authors updated            Cannot verify — confirm manually
-  ...
-
-Summary: N done, N missing, N partial, N manual-only
-```
-
-Flag any **Missing** items required before a lead review can be requested (focus tree, OOB, localisation, changelog).
+One line per item, grouped by phase, with `[✓]`, `[✗]`, `[~]`, or `[?]`, the item name,
+and the path or reason. End with a count of done, missing, partial, and manual-only.
+Flag any missing item required before lead review: focus tree, OOB, localisation,
+changelog.

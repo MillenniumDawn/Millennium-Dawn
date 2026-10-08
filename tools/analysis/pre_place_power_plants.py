@@ -59,9 +59,6 @@ REPO_ROOT = os.path.abspath(os.path.join(THIS_DIR, "..", ".."))
 # ─── Energy formula constants (mirror !_energy_effects.txt) ────────────────────
 ENERGY_USE_BALANCE_MULT = 1.25
 POP_ENERGY_BALANCE = 28
-FOSSIL_GW_PER_PLANT = (
-    2  # base modifier@fossil_energy_gain from common/buildings/00_buildings.txt:344
-)
 NUCLEAR_GW_PER_REACTOR = (
     4  # nuclear_energy_gain in common/buildings/00_buildings.txt:169
 )

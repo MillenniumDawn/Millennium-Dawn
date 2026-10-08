@@ -66,13 +66,21 @@ global_support_naval_production = {
 		}
 		ai_for_units_is_not_disabled = yes
 	}
-	enable = { always = yes }
+	enable = {
+		# INFO: Smaller navies do not need to build these
+		check_variable = { num_ships > 50 }
+		check_expr = {
+			value = num_ships_with_type@support_ship
+			divide = num_ships
+			clamp = { min = 0 max = 1 }
+			less_than = { value = 0.03 }
+		}
+		check_variable = { num_ships_with_type@support_ship < 10 }
+	}
 	abort_when_not_enabled = yes
 
 	ai_strategy = { type = role_ratio id = naval_support_ship value = 2 }
 	ai_strategy = { type = role_ratio id = naval_repair_ship value = 2 }
-	ai_strategy = { type = equipment_production_min_factories_archetype id = support_ship_hull value = 1 }
-	ai_strategy = { type = equipment_production_min_factories_archetype id = repair_ship_hull value = 1 }
 }
 
 global_produce_floating_harbors = {
@@ -105,6 +113,30 @@ peace_time_naval_missions = {
 	ai_strategy = { type = naval_mission_threshold id = "MISSION_CONVOY_RAIDING" value = 18000 }
 }
 
+# No capital ship, no landing; a built destroyer becomes a screen, so cruiser.
+MD_first_capital_ship_priority = {
+	allowed = {
+		ai_for_units_is_not_disabled = yes
+		any_owned_state = { is_coastal = yes }
+	}
+	enable = {
+		num_of_naval_factories > 0
+		has_tech = cruiser_hull_1
+		has_no_capital_ships = yes
+	}
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = role_ratio id = naval_cruiser value = 60 }
+}
+
+# Weights the regions invasion paths cross; inert without an invasion front.
+MD_naval_invasion_crossing_escort = {
+	allowed = { ai_for_units_is_not_disabled = yes }
+	enable = { has_war = yes }
+	abort_when_not_enabled = yes
+
+	ai_strategy = { type = naval_invasion_dominance_weight value = 40 }
+}
 
 halt_sub_missions = {
 	allowed = { ai_for_units_is_not_disabled = yes }
