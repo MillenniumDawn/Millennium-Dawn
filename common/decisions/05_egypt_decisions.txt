@@ -1612,6 +1612,47 @@ EGY_state_projects = {
 		}
 	}
 
+	EGY_smart_village_mission = {
+		icon = generic_research
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_smart_village_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = { owns_state = 215 }
+						215 = { two_state_office_construction = yes }
+					}
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_research_speed_factor = 0.03 tooltip = research_speed_factor_tt }
+					add_to_variable = { EGY_political_offices_productivity = 0.03 tooltip = offices_productivity_tt }
+				}
+				project_partial = {
+					if = {
+						limit = { owns_state = 215 }
+						215 = { one_state_office_construction = yes }
+					}
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_research_speed_factor = 0.015 tooltip = research_speed_factor_tt }
+					add_to_variable = { EGY_political_offices_productivity = 0.015 tooltip = offices_productivity_tt }
+					activate_mission = EGY_smart_village_second_phase
+				}
+				project_troubled = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_research_speed_factor = 0.01 tooltip = research_speed_factor_tt }
+					activate_mission = EGY_smart_village_overruns
+				}
+			}
+		}
+	}
+
 	EGY_income_tax_law_second_phase = {
 		icon = money_dec
 		activation = { always = no }
@@ -1687,6 +1728,26 @@ EGY_state_projects = {
 		}
 	}
 
+	EGY_smart_village_second_phase = {
+		icon = generic_research
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_smart_village_second_phase"
+			if = {
+				limit = { owns_state = 215 }
+				215 = { one_state_office_construction = yes }
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_research_speed_factor = 0.015 tooltip = research_speed_factor_tt }
+			add_to_variable = { EGY_political_offices_productivity = 0.015 tooltip = offices_productivity_tt }
+		}
+	}
+
 	EGY_desert_land_second_phase = {
 		icon = generic_construction
 		activation = { always = no }
@@ -1742,6 +1803,21 @@ EGY_state_projects = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EGY_smart_ration_cards_overruns"
+			set_temp_variable = { temp_authority = -2 }
+			EGY_change_mubarak_authority = yes
+		}
+	}
+
+	EGY_smart_village_overruns = {
+		icon = generic_research
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		is_good = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_smart_village_overruns"
 			set_temp_variable = { temp_authority = -2 }
 			EGY_change_mubarak_authority = yes
 		}
@@ -1826,6 +1902,78 @@ EGY_state_projects = {
 			modifier = { factor = 0 has_idea = recession }
 			modifier = { factor = 0 has_idea = depression }
 		}
+	}
+
+	EGY_cover_smart_village_overruns = {
+		icon = generic_research
+		fire_only_once = yes
+
+		visible = { has_active_mission = EGY_smart_village_overruns }
+
+		custom_cost_trigger = { check_variable = { treasury > 0.99 } }
+		custom_cost_text = cost_1_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_cover_smart_village_overruns"
+			remove_mission = EGY_smart_village_overruns
+			if = {
+				limit = { owns_state = 215 }
+				215 = { one_state_office_construction = yes }
+			}
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
+			add_to_variable = { EGY_political_offices_productivity = 0.03 tooltip = offices_productivity_tt }
+			newline = yes
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_idea = recession }
+			modifier = { factor = 0 has_idea = depression }
+		}
+	}
+
+	EGY_resend_qiz_proposal = {
+		icon = generic_factory
+
+		visible = {
+			has_country_flag = EGY_qiz_rejected
+			country_exists = USA
+			country_exists = ISR
+		}
+
+		fire_only_once = no
+		cost = 25
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_resend_qiz_proposal"
+			USA = { country_event = { id = egypt_mubarak.88 days = 1 } }
+		}
+
+		ai_will_do = { base = 5 }
+	}
+
+	EGY_resend_us_fta_proposal = {
+		icon = generic_political_discourse
+
+		visible = {
+			has_country_flag = EGY_us_fta_rejected
+			country_exists = USA
+		}
+
+		fire_only_once = no
+		cost = 25
+		days_re_enable = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_resend_us_fta_proposal"
+			USA = { country_event = { id = egypt_mubarak.90 days = 1 } }
+		}
+
+		ai_will_do = { base = 5 }
 	}
 }
 
