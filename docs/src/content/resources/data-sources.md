@@ -45,7 +45,7 @@ not December-to-December inflation.
 ## Starting policy rate
 
 `cb_policy_rate` is the central bank policy rate in whole percentage points. The GUI steps it by
-1 and clamps it to -10-30. The quarterly AI uses one-point or three-point steps toward its policy
+1 and clamps it to -10 to 30. The quarterly AI uses one-point or three-point steps toward its policy
 rate target, can cut to -10, and keeps its 20% hike ceiling. The January 2000 start uses the official
 policy rate in force on **2000.1.1** where that instrument is documented. Half-percentage values
 round half up (5.50 becomes 6). Rates above 30 are stored as 30. Ukraine starts at that cap.
