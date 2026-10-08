@@ -548,6 +548,7 @@ EGY_regime_balance = {
 		cost = 25
 		days_re_enable = 365
 		fire_only_once = no
+		fixed_random_seed = no
 
 		visible = {
 			has_completed_focus = EGY_the_fourth_term
@@ -557,8 +558,24 @@ EGY_regime_balance = {
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_desert_land"
 			add_power_balance_value = { id = EGY_succession_bop value = 0.05 }
-			set_temp_variable = { temp_project = 7 }
-			EGY_resolve_state_project = yes
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					set_temp_variable = { treasury_change = 0.5 }
+					modify_treasury_effect = yes
+				}
+				project_partial = {
+					set_temp_variable = { treasury_change = 0.25 }
+					modify_treasury_effect = yes
+					activate_mission = EGY_desert_land_second_phase
+				}
+				project_troubled = {
+					increase_corruption = yes
+					newline = yes
+					set_temp_variable = { treasury_change = 0.2 }
+					modify_treasury_effect = yes
+				}
+			}
 		}
 
 		ai_will_do = { base = 5 }
@@ -1298,6 +1315,468 @@ EGY_bread_subsidies = {
 				factor = 0
 				check_variable = { EGY_bread_pressure > 49 }
 			}
+		}
+	}
+}
+
+EGY_state_projects = {
+	EGY_income_tax_law_mission = {
+		icon = money_dec
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_income_tax_law_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.05 tooltip = population_tax_income_multiplier_modifier_tt }
+					add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.05 tooltip = corporate_tax_income_multiplier_modifier_tt }
+				}
+				project_partial = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.025 tooltip = population_tax_income_multiplier_modifier_tt }
+					add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.025 tooltip = corporate_tax_income_multiplier_modifier_tt }
+					activate_mission = EGY_income_tax_law_second_phase
+				}
+				project_troubled = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.015 tooltip = population_tax_income_multiplier_modifier_tt }
+					add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.015 tooltip = corporate_tax_income_multiplier_modifier_tt }
+					activate_mission = EGY_income_tax_law_overruns
+				}
+			}
+		}
+	}
+
+	EGY_banking_reform_mission = {
+		icon = generic_political_discourse
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_banking_reform_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					decrease_corruption = yes
+					newline = yes
+					set_temp_variable = { treasury_change = 1.5 }
+					modify_treasury_effect = yes
+				}
+				project_partial = {
+					set_temp_variable = { treasury_change = 0.75 }
+					modify_treasury_effect = yes
+					activate_mission = EGY_banking_reform_second_phase
+				}
+				project_troubled = {
+					set_temp_variable = { treasury_change = 0.5 }
+					modify_treasury_effect = yes
+				}
+			}
+		}
+	}
+
+	EGY_privatization_drive_mission = {
+		icon = generic_factory
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_privatization_drive_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					set_temp_variable = { treasury_change = 2 }
+					modify_treasury_effect = yes
+				}
+				project_partial = {
+					set_temp_variable = { treasury_change = 1 }
+					modify_treasury_effect = yes
+					activate_mission = EGY_privatization_drive_second_phase
+				}
+				project_troubled = {
+					increase_corruption = yes
+					newline = yes
+					set_temp_variable = { treasury_change = 0.7 }
+					modify_treasury_effect = yes
+				}
+			}
+		}
+	}
+
+	EGY_judicial_authority_law_mission = {
+		icon = decree8
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_judicial_authority_law_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					decrease_corruption = yes
+					newline = yes
+					set_temp_variable = { temp_authority = -2 }
+					EGY_change_mubarak_authority = yes
+				}
+				project_partial = {
+					activate_mission = EGY_judicial_authority_law_second_phase
+				}
+				project_troubled = {
+					set_temp_variable = { temp_authority = 3 }
+					EGY_change_mubarak_authority = yes
+					newline = yes
+					set_temp_variable = { temp_influence = 5 }
+					EGY_change_brotherhood_influence = yes
+					activate_mission = EGY_judicial_authority_law_overruns
+				}
+			}
+		}
+	}
+
+	EGY_smart_ration_cards_mission = {
+		icon = eng_trade_unions_support
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_smart_ration_cards_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.10 tooltip = social_cost_multiplier_modifier_tt }
+				}
+				project_partial = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.05 tooltip = social_cost_multiplier_modifier_tt }
+					activate_mission = EGY_smart_ration_cards_second_phase
+				}
+				project_troubled = {
+					custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+					add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.03 tooltip = social_cost_multiplier_modifier_tt }
+					activate_mission = EGY_smart_ration_cards_overruns
+				}
+			}
+		}
+	}
+
+	EGY_toshka_mission = {
+		icon = hol_drain_water_lines
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
+				}
+				project_partial = {
+					activate_mission = EGY_toshka_second_phase
+				}
+				project_troubled = {
+					activate_mission = EGY_toshka_overruns
+				}
+			}
+		}
+	}
+
+	EGY_income_tax_law_second_phase = {
+		icon = money_dec
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_income_tax_law_second_phase"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.025 tooltip = population_tax_income_multiplier_modifier_tt }
+			add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.025 tooltip = corporate_tax_income_multiplier_modifier_tt }
+		}
+	}
+
+	EGY_banking_reform_second_phase = {
+		icon = generic_political_discourse
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_banking_reform_second_phase"
+			set_temp_variable = { treasury_change = 0.75 }
+			modify_treasury_effect = yes
+		}
+	}
+
+	EGY_privatization_drive_second_phase = {
+		icon = generic_factory
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_privatization_drive_second_phase"
+			set_temp_variable = { treasury_change = 1 }
+			modify_treasury_effect = yes
+		}
+	}
+
+	EGY_judicial_authority_law_second_phase = {
+		icon = decree8
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_judicial_authority_law_second_phase"
+			decrease_corruption = yes
+		}
+	}
+
+	EGY_smart_ration_cards_second_phase = {
+		icon = eng_trade_unions_support
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_smart_ration_cards_second_phase"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.05 tooltip = social_cost_multiplier_modifier_tt }
+		}
+	}
+
+	EGY_toshka_second_phase = {
+		icon = hol_drain_water_lines
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_second_phase"
+			if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
+		}
+	}
+
+	EGY_desert_land_second_phase = {
+		icon = generic_construction
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_desert_land_second_phase"
+			set_temp_variable = { treasury_change = 0.25 }
+			modify_treasury_effect = yes
+		}
+	}
+
+	EGY_income_tax_law_overruns = {
+		icon = money_dec
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		is_good = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_income_tax_law_overruns"
+			set_temp_variable = { temp_authority = -2 }
+			EGY_change_mubarak_authority = yes
+		}
+	}
+
+	EGY_judicial_authority_law_overruns = {
+		icon = decree8
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		is_good = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_judicial_authority_law_overruns"
+			set_temp_variable = { temp_authority = -2 }
+			EGY_change_mubarak_authority = yes
+		}
+	}
+
+	EGY_smart_ration_cards_overruns = {
+		icon = eng_trade_unions_support
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		is_good = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_smart_ration_cards_overruns"
+			set_temp_variable = { temp_authority = -2 }
+			EGY_change_mubarak_authority = yes
+		}
+	}
+
+	EGY_toshka_overruns = {
+		icon = hol_drain_water_lines
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		is_good = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_overruns"
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+			add_stability = -0.02
+		}
+	}
+
+	EGY_cover_income_tax_law_overruns = {
+		icon = money_dec
+		fire_only_once = yes
+
+		visible = { has_active_mission = EGY_income_tax_law_overruns }
+
+		custom_cost_trigger = { check_variable = { treasury > 0.99 } }
+		custom_cost_text = cost_1_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_cover_income_tax_law_overruns"
+			remove_mission = EGY_income_tax_law_overruns
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_population_tax_income_multiplier_modifier = 0.035 tooltip = population_tax_income_multiplier_modifier_tt }
+			add_to_variable = { EGY_political_corporate_tax_income_multiplier_modifier = 0.035 tooltip = corporate_tax_income_multiplier_modifier_tt }
+			newline = yes
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_idea = recession }
+			modifier = { factor = 0 has_idea = depression }
+		}
+	}
+
+	EGY_cover_judicial_authority_law_overruns = {
+		icon = decree8
+		fire_only_once = yes
+
+		visible = { has_active_mission = EGY_judicial_authority_law_overruns }
+
+		custom_cost_trigger = { check_variable = { treasury > 0.99 } }
+		custom_cost_text = cost_1_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_cover_judicial_authority_law_overruns"
+			remove_mission = EGY_judicial_authority_law_overruns
+			decrease_corruption = yes
+			newline = yes
+			set_temp_variable = { temp_authority = -2 }
+			EGY_change_mubarak_authority = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_idea = recession }
+			modifier = { factor = 0 has_idea = depression }
+		}
+	}
+
+	EGY_cover_smart_ration_cards_overruns = {
+		icon = eng_trade_unions_support
+		fire_only_once = yes
+
+		visible = { has_active_mission = EGY_smart_ration_cards_overruns }
+
+		custom_cost_trigger = { check_variable = { treasury > 0.99 } }
+		custom_cost_text = cost_1_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_cover_smart_ration_cards_overruns"
+			remove_mission = EGY_smart_ration_cards_overruns
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_social_cost_multiplier_modifier = -0.07 tooltip = social_cost_multiplier_modifier_tt }
+			newline = yes
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_idea = recession }
+			modifier = { factor = 0 has_idea = depression }
+		}
+	}
+
+	EGY_cover_toshka_overruns = {
+		icon = hol_drain_water_lines
+		fire_only_once = yes
+
+		visible = { has_active_mission = EGY_toshka_overruns }
+
+		custom_cost_trigger = { check_variable = { treasury > 1.49 } }
+		custom_cost_text = cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_cover_toshka_overruns"
+			remove_mission = EGY_toshka_overruns
+			if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
+			newline = yes
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_idea = recession }
+			modifier = { factor = 0 has_idea = depression }
 		}
 	}
 }
