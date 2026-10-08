@@ -235,12 +235,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - Missing-icon audit (WARNING, always on): the sprite is undefined, exists only under a
   different case, or resolves to placeholder art (`_PLACEHOLDER_TEXTURES`). A mod
   placeholder that shadows a vanilla sprite name still reports.
-- `missing-idea-localisation` (WARNING, behind `--missing-name-loc`): an idea whose name
+- `missing-idea-localisation` (ERROR, behind `--missing-name-loc`): an idea whose name
   key has no English loc shows its raw id in every tooltip that grants it. The key is the
-  `name = X` override when set. Hidden categories and character `idea_token` entries are
-  exempt. The CI core batch and the nightly run pass the flag. The commit hook does not,
-  so there is no local signal. `--missing-loc` adds missing `_desc` keys and runs nowhere
-  by default. Backlog and the move to ERROR: #5415.
+  `name = X` override when set, otherwise the idea id. Hidden categories and character
+  `idea_token` entries are exempt. The CI core batch and the nightly run pass the flag.
+  The commit hook does not, so there is no local signal. `--missing-loc` adds missing
+  `_desc` keys as WARNING findings and runs nowhere by default.
 - `loc-key-collision` (WARNING): an idea's `name = X` override resolves its name to `X`
   and its description to `X_desc`. When `X` is also a focus or decision id and resolves
   in English loc, one string silently overrides the other. Intentional sharing is allowed.
