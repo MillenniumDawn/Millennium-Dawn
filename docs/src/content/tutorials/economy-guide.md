@@ -1201,7 +1201,9 @@ When the economy is in severe distress (interest above 15%), countries can reque
 3. **Second-most influential country** (less diplomatic damage)
 4. **Most influential country** (last resort, most influence cost)
 
-If interest exceeds 25% and the country is not at war, the AI will default on its debt, triggering severe consequences.
+The AI considers these last-resort options once both taxes reach their automation caps, the country has a major economic crisis, or interest is at least 15% and debt service exceeds 30% of income. That debt-service gate applies even with a budget surplus.
+
+At interest of at least 25%, an AI that passes one of those gates may default on its debt while at peace. War blocks the default, triggering severe consequences only when the peacetime decision proceeds.
 
 ---
 
