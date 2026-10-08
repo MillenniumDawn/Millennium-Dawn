@@ -6,6 +6,7 @@ A production line naming an archetype instead of a concrete equipment hits the
 same lookup with a design that can never exist.
 """
 
+from equipment_module_slots import created_variant_spans
 from validate_oob_units import (
     build_variant_name_index,
     check_attributed_archetypes,
@@ -62,7 +63,9 @@ def _ship(hull, name, **fields):
 
 
 def _index(*sources):
-    return build_variant_name_index(list(sources))
+    return build_variant_name_index(
+        [(rel, created_variant_spans(content)) for rel, content in sources]
+    )
 
 
 def _kinds(findings):

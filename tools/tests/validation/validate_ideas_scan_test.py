@@ -6,29 +6,22 @@ directly with the text and files the validator would hand them.
 
 import os
 
+import pytest
+from shared.suite import write_under as _write
 from validate_ideas import (
     _META_PREFIX_SENTINEL,
     _check_file_for_refs,
     _extract_idea_refs_from_blocks,
     _extract_swap_idea_refs,
     _idea_categories_frame_count,
-    _load_dynamic_token_names,
     _on_add_is_log_only,
     _parse_ideas_from_file,
     _parse_ideas_from_text,
     _scan_idea_refs_for_unused,
 )
-from validator_common import casefold_index
+from validator_common import casefold_index, load_dynamic_token_names
 
 NO_CATEGORIES: frozenset = frozenset()
-
-
-def _write(root, relative, content):
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-    return path
 
 
 def test_swap_block_refs_are_collected():
@@ -108,6 +101,57 @@ def test_schema_key_at_idea_level_is_not_an_idea():
     assert issues == []
 
 
+@pytest.mark.parametrize("compact", (False, True))
+def test_inline_ideas_keep_their_own_fields_and_quality_issues(compact):
+    lines = [
+        "ideas = {",
+        "\tcountry = {",
+        "\t\tFIRST_idea = { name = shared_key picture = first }",
+        "\t\tEMPTY_idea = {}",
+        "\t\tSECOND_idea = { picture = second cancel = { always = no } }",
+        "\t}",
+        "}",
+    ]
+    text = " ".join(lines) if compact else "\n".join(lines)
+
+    defined, issues = _parse_ideas_from_text(text, NO_CATEGORIES)
+
+    assert defined == {
+        "FIRST_idea": ("country", "shared_key", "first"),
+        "EMPTY_idea": ("country", None, None),
+        "SECOND_idea": ("country", None, "second"),
+    }
+    assert [(i.idea_name, i.issue_type, i.line) for i in issues] == [
+        ("SECOND_idea", "cancel-always-no", 1 if compact else 5),
+    ]
+
+
+def test_idea_fields_ignore_nested_effects_and_braces_in_log_strings():
+    text = """ideas = {
+\tcountry = {
+\t\tFIRST_idea = {
+\t\t\ton_add = {
+\t\t\t\tlog = "brace } and picture = fake"
+\t\t\t\tcreate_equipment_variant = {
+\t\t\t\t\tname = "Equipment Name"
+\t\t\t\t}
+\t\t\t}
+\t\t\tpicture = "first"
+\t\t}
+\t\tSECOND_idea = { picture = second }
+\t}
+}
+"""
+
+    defined, issues = _parse_ideas_from_text(text, NO_CATEGORIES)
+
+    assert defined == {
+        "FIRST_idea": ("country", None, "first"),
+        "SECOND_idea": ("country", None, "second"),
+    }
+    assert issues == []
+
+
 def test_cancel_always_no_and_log_only_on_add_are_recorded():
     text = """ideas = {
 \tcountry = {
@@ -133,6 +177,24 @@ def test_cancel_always_no_and_log_only_on_add_are_recorded():
     ]
 
 
+def test_equipment_bonus_without_instant_is_recorded_per_equipment():
+    text = (
+        "ideas = {\n\tcountry = {\n\t\tBONUS_idea = {\n\t\t\tequipment_bonus = {\n"
+        "\t\t\t\tinfantry_weapons_type = { soft_attack = 0.05 instant = yes }\n"
+        "\t\t\t\tartillery_equipment = {\n\t\t\t\t\tsoft_attack = 0.05\n\t\t\t\t}\n"
+        "\t\t\t\tinstant_tank = { build_cost_ic = -0.1 instant = no }\n"
+        "\t\t\t}\n\t\t}\n\t}\n}\n"
+    )
+
+    issues = _parse_ideas_from_text(text, NO_CATEGORIES)[1]
+
+    assert [(i.idea_name, i.line, i.detail) for i in issues] == [
+        ("BONUS_idea", 6, "artillery_equipment"),
+        ("BONUS_idea", 9, "instant_tank"),
+    ]
+    assert {i.issue_type for i in issues} == {"equipment-bonus-not-instant"}
+
+
 def test_dynamic_token_names_are_loaded(tmp_path):
     _write(
         tmp_path,
@@ -140,13 +202,13 @@ def test_dynamic_token_names_are_loaded(tmp_path):
         "TOKEN_one\nTOKEN_two\n\nnot a token line\n",
     )
 
-    assert _load_dynamic_token_names(str(tmp_path)) == {"TOKEN_one", "TOKEN_two"}
+    assert load_dynamic_token_names(str(tmp_path)) == {"TOKEN_one", "TOKEN_two"}
 
 
 def test_dynamic_token_names_from_an_empty_registry(tmp_path):
     _write(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", "")
 
-    assert _load_dynamic_token_names(str(tmp_path)) == set()
+    assert load_dynamic_token_names(str(tmp_path)) == set()
 
 
 def test_unused_scan_captures_literal_and_meta_references(tmp_path):

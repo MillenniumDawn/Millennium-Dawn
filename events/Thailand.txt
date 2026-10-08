@@ -6207,3 +6207,71 @@ country_event = {
 		ai_chance = { base = 5 }
 	}
 }
+
+country_event = {
+	id = thailand.437
+	hidden = yes
+	is_triggered_only = yes
+
+	trigger = {
+		original_tag = SIA
+		is_ai = yes
+		has_civil_war = no
+		SIA_ai_historical_path = yes
+		SIA_ai_not_historical_path = no
+		NOT = { has_country_flag = generic_election_killswitch }
+	}
+
+	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event thailand.437"
+		if = {
+			limit = { date > 2023.8.21 }
+			set_temp_variable = { rul_party_temp = 18 }
+		}
+		else_if = {
+			limit = { date > 2014.5.21 }
+			set_temp_variable = { rul_party_temp = 22 }
+			set_temp_variable = { disable_elections = 1 }
+		}
+		else_if = {
+			limit = { date > 2011.8.4 }
+			set_temp_variable = { rul_party_temp = 18 }
+		}
+
+		if = {
+			limit = {
+				check_variable = { rul_party_temp > 0 }
+				NOT = { check_variable = { ruling_party = rul_party_temp } }
+			}
+			change_ruling_party_effect = yes
+			if = {
+				limit = { check_variable = { disable_elections = 0 } }
+				set_elections_48_months = yes
+			}
+		}
+		else_if = {
+			limit = { check_variable = { rul_party_temp > 0 } }
+			set_leader = yes
+		}
+
+		if = {
+			limit = { check_variable = { rul_party_temp = 22 } }
+			if = {
+				limit = { NOT = { has_idea = SIA_junta_government } }
+				add_ideas = SIA_junta_government
+				SIA_junta_party_shift = yes
+			}
+			if = {
+				limit = { has_idea = SIA_peoples_constitution }
+				remove_ideas = SIA_peoples_constitution
+			}
+		}
+		else_if = {
+			limit = {
+				check_variable = { rul_party_temp = 18 }
+				has_idea = SIA_junta_government
+			}
+			remove_ideas = SIA_junta_government
+		}
+	}
+}

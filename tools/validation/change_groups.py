@@ -44,6 +44,8 @@ GROUP_PATTERNS = {
         "common/resistance_compliance_modifiers/**",
         "common/scripted_guis/**",
         "common/ideas/**",
+        "common/defines/**",
+        "common/doctrines/**",
     ],
     "decisions": [
         "common/**/*.txt",
@@ -55,6 +57,8 @@ GROUP_PATTERNS = {
     "scripted-loc": ["common/scripted_localisation/**"],
     "scripted-guis": ["common/scripted_guis/**"],
     "interface": ["interface/**"],
+    "graphic-db": ["gfx/interface/equipmentdesigner/graphic_db/**"],
+    "music": ["music/**/*.txt"],
     "national-focus": ["common/national_focus/**"],
     "on-actions": ["common/on_actions/**"],
     "mios": [
@@ -82,6 +86,7 @@ GROUP_PATTERNS = {
         "localisation/**",
         "interface/**",
         "gfx/interface/decisions/**",
+        "gfx/interface/equipmentdesigner/graphic_db/**",
         "music/**",
         "map/adjacency_rules.txt",
         "*.mod",
@@ -95,6 +100,7 @@ _FULL_SUITE_EXACT = {
     "bun.lock",
     ".jscpd.json",
     ".claude/docs/typo-watchlist.md",
+    "validation_config.json",
 }
 _FULL_SUITE_PREFIXES = (
     "tools/validation/",
@@ -194,6 +200,7 @@ def classify(paths: Iterable[str], dispatch: bool = False) -> Dict[str, object]:
     )
     result["style_files"] = style_files
     result["style"] = bool(style_files)
+    result["style_config"] = "validation_config.json" in normalized
     return result
 
 

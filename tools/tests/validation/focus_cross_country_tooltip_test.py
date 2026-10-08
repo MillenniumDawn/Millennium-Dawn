@@ -1,5 +1,5 @@
 """Tests for the cross-country event tooltip check in validate_focus_tree
-(AGENTS.md "Cross-country event tooltips").
+(event-reference.md "Cross-country events").
 
 A completion_reward that fires a country_event into another nation's scope
 should carry custom_effect_tooltip = TT_IF_THEY_ACCEPT. Fires to self (bare,
@@ -8,21 +8,14 @@ event the target cannot answer.
 """
 
 import validate_focus_tree as vft
+from shared.suite import write_focus_file as _write_focus_file
 from validate_focus_tree import (
     _country_event_target_is_foreign,
-    _extract_cross_country_fires,
+    _FocusFile,
     _is_tag_routed,
 )
 
 OWNER = frozenset({"BUL"})
-
-
-def _write_focus_file(tmp_path, content):
-    nf_dir = tmp_path / "common" / "national_focus"
-    nf_dir.mkdir(parents=True, exist_ok=True)
-    fpath = nf_dir / "test.txt"
-    fpath.write_text(content, encoding="utf-8")
-    return fpath
 
 
 TREE_TEMPLATE = """focus_tree = {{
@@ -51,8 +44,8 @@ def _ids(tmp_path, reward, notifications=frozenset()):
     fpath = _write_focus_file(tmp_path, TREE_TEMPLATE.format(reward=reward))
     return {
         d["id"]
-        for d in _extract_cross_country_fires(
-            (str(fpath), str(tmp_path), notifications)
+        for d in _FocusFile(str(fpath), str(tmp_path)).cross_country_fires(
+            notifications
         )
     }
 
@@ -176,7 +169,7 @@ def test_worker_reads_owner_from_original_tag(tmp_path):
         reward="BUL = { country_event = x.1 }"
     )
     fpath = _write_focus_file(tmp_path, tree)
-    assert _extract_cross_country_fires((str(fpath), str(tmp_path), frozenset())) == []
+    assert _FocusFile(str(fpath), str(tmp_path)).cross_country_fires(frozenset()) == []
 
 
 def test_worker_ignores_bare_self_fire(tmp_path):

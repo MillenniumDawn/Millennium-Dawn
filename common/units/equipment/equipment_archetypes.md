@@ -36,7 +36,7 @@ destroyer Destroyer
 stealth_destroyer Stealth Destroyers
 cruiser Cruiser
 battle_cruiser Battlecruisers
-battleship_hull_0 Battleships
+battleship Battleships
 helicopter_operator Helicopter Operators
 carrier Aircraft Carrier
 attack_submarine Attack Submarines

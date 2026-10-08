@@ -3,12 +3,13 @@
 A tech with `allow_branch = { NOT = { has_dlc = "X" } }` (a non-DLC fallback
 such as SP_arty_0) must not be granted in a history DLC branch where X is
 active; a tech with `allow_branch = { has_dlc = "X" }` (a DLC-only tech such as
-nsb_artillery_0) must not be granted where X is inactive. Granting it anyway
+nsb_artillery_1) must not be granted where X is inactive. Granting it anyway
 force-enables equipment whose tech branch is disabled, duplicating the active
 designer's equipment. Regression for the KAZ SP_arty_0 fix.
 """
 
 import validate_history as V
+from shared.suite import write_under_str
 
 
 def test_extract_dlc_conditions_forbid_and_require():
@@ -53,12 +54,12 @@ def test_parse_tech_dependencies_collects_dlc_gating(tmp_path):
         '\t\tallow_branch = { NOT = { has_dlc = "No Step Back" } }\n'
         "\t\tenable_equipments = { SP_arty_0 }\n"
         "\t}\n"
-        "\tnsb_artillery_0 = {\n"
+        "\tnsb_artillery_1 = {\n"
         '\t\tallow_branch = { has_dlc = "No Step Back" }\n'
         "\t}\n",
     )
     assert reqs["SP_arty_0"] == [("forbid", "No Step Back")]
-    assert reqs["nsb_artillery_0"] == [("require", "No Step Back")]
+    assert reqs["nsb_artillery_1"] == [("require", "No Step Back")]
 
 
 def test_propagate_dlc_reqs_extends_gate_to_upgrade_chain():
@@ -66,14 +67,14 @@ def test_propagate_dlc_reqs_extends_gate_to_upgrade_chain():
     prerequisites = {
         "SP_arty_1": {"SP_arty_0"},
         "SP_arty_2": {"SP_arty_1"},
-        "Arty_upgrade_1": {"SP_arty_0"},
+        "arty_upgrade_1": {"SP_arty_0"},
     }
     direct = {"SP_arty_0": [("forbid", "No Step Back")]}
     prop = V.propagate_dlc_reqs(prerequisites, direct)
     assert prop["SP_arty_0"] == [("forbid", "No Step Back")]
     assert prop["SP_arty_1"] == [("forbid", "No Step Back")]
     assert prop["SP_arty_2"] == [("forbid", "No Step Back")]  # transitive
-    assert prop["Arty_upgrade_1"] == [("forbid", "No Step Back")]
+    assert prop["arty_upgrade_1"] == [("forbid", "No Step Back")]
 
 
 def test_propagate_dlc_reqs_requires_all_prereqs_gated():
@@ -94,11 +95,7 @@ def test_propagate_dlc_reqs_require_side():
 
 
 def _write_country(tmp_path, name, body):
-    cdir = tmp_path / "history" / "countries"
-    cdir.mkdir(parents=True, exist_ok=True)
-    fp = cdir / name
-    fp.write_text(body)
-    return str(fp)
+    return write_under_str(tmp_path, f"history/countries/{name}", body)
 
 
 def test_forbid_tech_in_dlc_branch_flagged(tmp_path, monkeypatch):
@@ -110,7 +107,7 @@ def test_forbid_tech_in_dlc_branch_flagged(tmp_path, monkeypatch):
         "if = {\n"
         '\tlimit = { has_dlc = "No Step Back" }\n'
         "\tset_technology = {\n"
-        "\t\tnsb_artillery_0 = 1\n"
+        "\t\tnsb_artillery_1 = 1\n"
         "\t\tSP_arty_0 = 1\n"
         "\t}\n"
         "\telse = {\n"
@@ -154,7 +151,7 @@ def test_correct_branch_placement_is_clean(tmp_path, monkeypatch):
     monkeypatch.setenv("MD_NO_CACHE", "1")
     reqs = {
         "SP_arty_0": [("forbid", "No Step Back")],
-        "nsb_artillery_0": [("require", "No Step Back")],
+        "nsb_artillery_1": [("require", "No Step Back")],
     }
     fp = _write_country(
         tmp_path,
@@ -162,7 +159,7 @@ def test_correct_branch_placement_is_clean(tmp_path, monkeypatch):
         "if = {\n"
         '\tlimit = { has_dlc = "No Step Back" }\n'
         "\tset_technology = {\n"
-        "\t\tnsb_artillery_0 = 1\n"
+        "\t\tnsb_artillery_1 = 1\n"
         "\t}\n"
         "\telse = {\n"
         "\t\tset_technology = {\n"

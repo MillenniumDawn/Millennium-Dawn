@@ -1,13 +1,8 @@
 """Tests for runtime load_oob reference validation."""
 
 from shared.suite import initialize_git_repository, run_git
+from shared.suite import write_text as _write
 from validate_oob_units import Validator, find_load_oob_references
-
-
-def _write(path, content):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as output_file:
-        output_file.write(content)
 
 
 def _validator(tmp_path, staged_only=False):

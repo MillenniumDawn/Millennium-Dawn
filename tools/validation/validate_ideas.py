@@ -13,9 +13,16 @@ from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from equipment_module_slots import blank_comments
+from equipment_module_slots import _iter_blocks, blank_comments
 from equipment_stats import build_equipment_stat_index, iter_type_archetype_stacks
-from shared_utils import normalize_path_separators
+from shared_utils import (
+    blank_quoted_strings,
+    find_matching_brace,
+    iter_direct_child_blocks,
+    iter_statements,
+    normalize_path_separators,
+    validation_config,
+)
 from validator_common import (
     HOI4_BUILTIN_BLOCKS,
     BaseValidator,
@@ -24,6 +31,7 @@ from validator_common import (
     Severity,
     case_mismatch,
     casefold_index,
+    load_dynamic_token_names,
     run_validator_main,
     should_skip_file,
 )
@@ -46,10 +54,7 @@ _IDEA_REF_BLOCK_START = re.compile(
     r"\b(?:add_ideas|remove_ideas)\s*=\s*\{", re.IGNORECASE
 )
 
-# Matches an idea definition line at brace depth 2 inside `ideas = { CATEGORY = { IDEA = { `
-# We track depth manually; this just recognises `WORD = {` at the right level.
-# Hyphens are included so that identifiers like `NKO_Marxism-Leninism` are recognised.
-_IDEA_DEF_LINE = re.compile(r"^[\t ]*([A-Za-z][A-Za-z0-9_-]*)\s*=\s*\{")
+_IDEA_BLOCK_START = re.compile(r"\b([A-Za-z][A-Za-z0-9_-]*)\s*=\s*\{")
 
 # Idea-schema inner keys that appear at depth 2 but are not idea definitions.
 # The control-flow / effect blocks (if, limit, modifier, scope iterators, etc.)
@@ -97,14 +102,11 @@ from shared_utils import (
     get_slotless_idea_categories as _get_slotless_idea_categories,
 )
 
-# Vanilla idea prefixes that we skip for undefined-reference checks
-# (game-engine built-ins, vanilla ideas, etc.)
-_VANILLA_IDEA_PREFIXES: Tuple[str, ...] = (
-    "generic_",
-    "neutrality_idea",
-    "democratic_idea",
-    "fascism_idea",
-    "communism_idea",
+_VANILLA_IDEA_PREFIXES: Tuple[str, ...] = tuple(
+    validation_config("validate_ideas", "vanilla_idea_prefixes")
+)
+_INSTANT_EXEMPT_PREFIXES: Tuple[str, ...] = tuple(
+    validation_config("validate_ideas", "equipment_bonus_instant_exempt")
 )
 
 
@@ -117,8 +119,6 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
     return refs
 
 
-_NAME_OVERRIDE_LINE = re.compile(r"^\s+name\s*=\s*([A-Za-z0-9_.]+)", re.MULTILINE)
-_PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([^\s#]+)", re.MULTILINE)
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
 _AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
@@ -127,9 +127,10 @@ _AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
 # tags (`ISR_CW_0`) are caught, not just the 3-letter base tag.
 _TAG_IN_ALLOWED = re.compile(r"\btag\s*=\s*([A-Z][A-Z0-9_]{2,11})\b")
 _ORIGINAL_TAG_IN_ALLOWED = re.compile(r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{2})\b")
-_PICTURE_LINE = re.compile(r"^\s+picture\s*=", re.MULTILINE)
 _ON_ADD_BLOCK_START = re.compile(r"\bon_add\s*=\s*\{")
 _LOG_LINE = re.compile(r'^\s*log\s*=\s*"[^"]*"\s*$')
+_EQUIPMENT_BONUS_START = re.compile(r"\bequipment_bonus\s*=\s*\{")
+_INSTANT_YES = re.compile(r"\binstant\s*=\s*yes\b")
 _IDEA_CATEGORIES_SPRITE = re.compile(r'name\s*=\s*"GFX_idea_categories"')
 _NO_OF_FRAMES = re.compile(r"\bno[Oo]f[Ff]rames\s*=\s*(\d+)")
 
@@ -302,6 +303,19 @@ def _on_add_is_log_only(idea_text: str) -> bool:
     return found_any
 
 
+def _non_instant_bonuses(idea_text: str) -> List[Tuple[int, str]]:
+    """Return (offset, equipment) for each equipment_bonus entry lacking instant = yes."""
+    found: List[Tuple[int, str]] = []
+    for m in _EQUIPMENT_BONUS_START.finditer(idea_text):
+        close = find_matching_brace(idea_text, m.end() - 1)
+        if close == -1:
+            continue
+        for name, lo, hi, header in _iter_blocks(idea_text, m.end(), close):
+            if not _INSTANT_YES.search(idea_text, lo, hi):
+                found.append((header, name))
+    return found
+
+
 @dataclass
 class IdeaIssue:
     idea_name: str
@@ -352,61 +366,38 @@ def _parse_ideas_from_text(
     defined: Dict[str, Tuple[str, Optional[str], Optional[str]]] = {}
     issues: List[IdeaIssue] = []
 
-    lines = text.split("\n")
-    depth = 0
-    category_name: Optional[str] = None
-    current_idea: Optional[str] = None
-    current_idea_line: int = 0
-    idea_open_depth: int = 0
-    category_open_depth: int = 0
-    idea_lines: List[str] = []
-
-    for lineno, line in enumerate(lines, 1):
-        opens = line.count("{")
-        closes = line.count("}")
-
-        m = _IDEA_DEF_LINE.match(line)
-        token = m.group(1) if m else None
-
-        prev_depth = depth
-        depth += opens - closes
-
-        if prev_depth == 0 and opens > 0 and token == "ideas":
+    text = blank_comments(text)
+    scan_text = blank_quoted_strings(text)
+    for root, root_open, root_close in iter_direct_child_blocks(
+        scan_text, _IDEA_BLOCK_START
+    ):
+        if root.group(1) != "ideas":
             continue
-
-        if prev_depth == 1 and opens > 0 and token is not None:
-            category_name = token
-            category_open_depth = depth - opens + 1
-            current_idea = None
-            idea_lines = []
-            continue
-
-        if (
-            category_name is not None
-            and prev_depth == 2
-            and opens > 0
-            and token is not None
+        root_body = scan_text[root_open + 1 : root_close]
+        for category, cat_open, cat_close in iter_direct_child_blocks(
+            root_body, _IDEA_BLOCK_START
         ):
-            if token not in _HOI4_IDEA_INNER_KEYS:
-                current_idea = token
-                current_idea_line = lineno
-                idea_open_depth = depth - opens + 1
-                idea_lines = [line]
-                defined[token] = (category_name, None, None)
-                continue
+            cat = category.group(1)
+            cat_offset = root_open + 1 + cat_open + 1
+            cat_body = root_body[cat_open + 1 : cat_close]
+            for idea, idea_open, idea_close in iter_direct_child_blocks(
+                cat_body, _IDEA_BLOCK_START
+            ):
+                current_idea = idea.group(1)
+                if current_idea in _HOI4_IDEA_INNER_KEYS:
+                    continue
+                current_idea_line = text.count("\n", 0, cat_offset + idea.start()) + 1
+                body_offset = cat_offset + idea_open + 1
+                idea_text = text[body_offset : cat_offset + idea_close]
+                fields = {
+                    key: value
+                    for key, value, _block in iter_statements(idea_text)
+                    if key in ("name", "picture") and value is not None
+                }
+                defined[current_idea] = (cat, fields.get("name"), fields.get("picture"))
+                quality_text = cat_body[idea_open + 1 : idea_close]
 
-        if current_idea is not None:
-            idea_lines.append(line)
-            if depth < idea_open_depth:
-                idea_text = "\n".join(idea_lines)
-                nm = _NAME_OVERRIDE_LINE.search(idea_text)
-                name_override = nm.group(1) if nm else None
-                pm = _PICTURE_VALUE_LINE.search(idea_text)
-                picture = pm.group(1) if pm else None
-                cat, _, _ = defined[current_idea]
-                defined[current_idea] = (cat, name_override, picture)
-
-                if _CANCEL_ALWAYS_NO.search(idea_text):
+                if _CANCEL_ALWAYS_NO.search(quality_text):
                     issues.append(
                         IdeaIssue(
                             current_idea,
@@ -416,9 +407,9 @@ def _parse_ideas_from_text(
                         )
                     )
 
-                allowed_start = _ALLOWED_BLOCK_START.search(idea_text)
+                allowed_start = _ALLOWED_BLOCK_START.search(quality_text)
                 if allowed_start:
-                    if category_name in slotless_categories:
+                    if cat in slotless_categories:
                         issues.append(
                             IdeaIssue(
                                 current_idea,
@@ -428,7 +419,7 @@ def _parse_ideas_from_text(
                             )
                         )
                     allowed_block, _ = extract_block_from_text(
-                        idea_text, allowed_start.end() - 1
+                        quality_text, allowed_start.end() - 1
                     )
                     tag_m = _TAG_IN_ALLOWED.search(allowed_block)
                     if tag_m:
@@ -454,9 +445,8 @@ def _parse_ideas_from_text(
                             )
                         )
 
-                if (
-                    category_name in slotless_categories
-                    and _AVAILABLE_BLOCK_START.search(idea_text)
+                if cat in slotless_categories and _AVAILABLE_BLOCK_START.search(
+                    quality_text
                 ):
                     issues.append(
                         IdeaIssue(
@@ -477,11 +467,16 @@ def _parse_ideas_from_text(
                         )
                     )
 
-                current_idea = None
-                idea_lines = []
-
-        if category_name is not None and depth < category_open_depth:
-            category_name = None
+                for offset, equipment in _non_instant_bonuses(quality_text):
+                    issues.append(
+                        IdeaIssue(
+                            current_idea,
+                            cat,
+                            text.count("\n", 0, body_offset + offset) + 1,
+                            "equipment-bonus-not-instant",
+                            detail=equipment,
+                        )
+                    )
 
     return defined, issues
 
@@ -585,25 +580,6 @@ _IDEA_REF_META = re.compile(
     re.IGNORECASE,
 )
 
-# Dynamic-token ideas are applied at runtime via `add_ideas = var:<token>`, where
-# the literal name lives only in this registry and never next to an add_ideas
-# keyword. Treat any name registered here as referenced.
-_DYNAMIC_TOKEN_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
-_DYNAMIC_TOKEN_LINE = re.compile(r"^[A-Za-z0-9_.\-]+$")
-
-
-def _load_dynamic_token_names(mod_path: str) -> Set[str]:
-    """Return every token name registered in MD_tokens.txt (one bareword/line)."""
-    path = os.path.join(mod_path, _DYNAMIC_TOKEN_FILE)
-    text = FileOpener.open_text_file(path, lowercase=False, strip_comments_flag=True)
-    if not text:
-        return set()
-    return {
-        line.strip()
-        for line in text.splitlines()
-        if _DYNAMIC_TOKEN_LINE.match(line.strip())
-    }
-
 
 def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
     """Pool worker: every idea name a file references, for the unused check.
@@ -613,7 +589,7 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
     forms. Content-cached.
     """
     filepath, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -638,12 +614,13 @@ def _scan_idea_refs_for_unused(args: Tuple[str, str]) -> List[str]:
 def _check_file_for_refs(args: Tuple[str, frozenset, dict, str]) -> List[str]:
     """Pool worker: return undefined idea references found in one file.
 
+    Exclusions use mod_path so worktree ancestors do not hide content.
     *defined_ci* maps lower-cased idea name -> canonical name; a ref that misses
     case-sensitively but hits here is a case mismatch that works on Windows and
     silently fails on Linux, so it gets a distinct, louder message.
     """
     filepath, defined_ideas_frozen, defined_ci, mod_path = args
-    if should_skip_file(filepath):
+    if should_skip_file(filepath, mod_path=mod_path):
         return []
     text = FileOpener.open_text_file(
         filepath, lowercase=False, strip_comments_flag=True
@@ -691,6 +668,7 @@ class Validator(BaseValidator):
     STAGED_EXTENSIONS = [".txt"]
 
     def __init__(self, *args, **kwargs):
+        self.missing_name_loc = kwargs.pop("missing_name_loc", False)
         self.missing_loc = kwargs.pop("missing_loc", False)
         self.unused_ideas = kwargs.pop("unused_ideas", True)
         self.suggest_consolidation = kwargs.pop("suggest_consolidation", False)
@@ -918,6 +896,16 @@ class Validator(BaseValidator):
                         f"'{issue.idea_name}' has on_add = {{ log = ... }} with no real effects"
                         " (drop the on_add block — tracing-only logs are dead weight)",
                     )
+                elif issue.issue_type == "equipment-bonus-not-instant":
+                    if issue.idea_name.startswith(_INSTANT_EXEMPT_PREFIXES):
+                        continue
+                    _add(
+                        filepath,
+                        issue.line,
+                        f"'{issue.idea_name}' equipment_bonus {issue.detail} has no"
+                        " instant = yes (the bonus only reaches newly created variants;"
+                        " add instant = yes, or exempt the idea in validation_config.json)",
+                    )
 
         self._report(
             findings,
@@ -1002,42 +990,69 @@ class Validator(BaseValidator):
         )
 
     def validate_missing_localisation(
-        self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
+        self,
+        defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]],
+        ideas_by_file: Dict[str, List[str]],
     ):
+        """Flag ideas whose name key has no English loc, so tooltips show the raw id.
+
+        Hidden categories never display. Character idea_tokens render from the
+        character's own name and are not in `ideas_by_file`. --missing-loc
+        adds the missing `_desc` keys.
+        """
         self._log_section("Checking for ideas with missing localisation keys...")
+        if not ideas_by_file:
+            self.log("  No idea files in scope, skipping the loc index")
+            return
 
         from validate_localisation import get_all_loc_keys
 
-        loc_dict, _ = get_all_loc_keys(self.mod_path, lowercase=False)
-        loc_keys: frozenset = frozenset(loc_dict.keys())
-        self.log(
-            f"  Checking {len(defined_ideas)} ideas against {len(loc_keys)} loc keys..."
+        loc_keys, _ = get_all_loc_keys(self.mod_path, lowercase=False)
+        hidden_cats = frozenset(
+            c["name"] for c in get_all_idea_categories(self.mod_path) if c["hidden"]
         )
 
-        grouped: Dict[str, List[str]] = defaultdict(list)
-
-        for idea_name in sorted(defined_ideas):
-            _cat, name_override, _pic = defined_ideas[idea_name]
-            primary_key = name_override if name_override else idea_name
-            desc_key = primary_key + "_desc"
-
-            missing: List[str] = []
-            if primary_key not in loc_keys:
-                missing.append(primary_key)
-            if desc_key not in loc_keys:
-                missing.append(desc_key)
-
+        findings: List[Issue] = []
+        for filepath in sorted(ideas_by_file):
+            missing: List[Tuple[str, str, str, str]] = []
+            for idea_name in ideas_by_file[filepath]:
+                cat, name_override, _pic = defined_ideas[idea_name]
+                if cat in hidden_cats:
+                    continue
+                name_key = name_override or idea_name
+                keys = [(name_key, Severity.ERROR)]
+                if self.missing_loc:
+                    keys.append((f"{name_key}_desc", Severity.WARNING))
+                missing.extend(
+                    (idea_name, cat, key, severity)
+                    for key, severity in keys
+                    if key not in loc_keys
+                )
             if not missing:
                 continue
 
-            file_key = _cat
-            grouped[file_key].append(f"{idea_name}: {', '.join(missing)}")
+            text = FileOpener.open_text_file(
+                filepath, lowercase=False, strip_comments_flag=True
+            )
+            def_lines: Dict[str, int] = {}
+            for m in _IDEA_BLOCK_START.finditer(blank_quoted_strings(text)):
+                def_lines.setdefault(m.group(1), text.count("\n", 0, m.start()) + 1)
+            rel = os.path.relpath(filepath, self.mod_path)
+            for idea_name, cat, key, severity in missing:
+                findings.append(
+                    Issue(
+                        severity=severity,
+                        category="missing-idea-localisation",
+                        message=f"'{idea_name}' ({cat}) is missing loc key '{key}'",
+                        file=rel,
+                        line=def_lines.get(idea_name, 0),
+                    )
+                )
 
-        self._report_grouped(
-            grouped,
+        self._report(
+            findings,
             "✓ All idea localisation keys are defined",
-            "Ideas missing localisation (grouped by category):",
-            severity=Severity.WARNING,
+            "Ideas missing localisation:",
             category="missing-idea-localisation",
         )
 
@@ -1286,7 +1301,9 @@ class Validator(BaseValidator):
         referenced: Set[str] = set()
         for sub in ref_lists:
             referenced.update(sub)
-        referenced.update(_load_dynamic_token_names(self.mod_path))
+        # Dynamic-token ideas are applied via `add_ideas = var:<token>`, so the
+        # literal name lives only in the registry. Treat those as referenced.
+        referenced.update(load_dynamic_token_names(self.mod_path))
 
         # Prefixes from meta-effect references (`idea = tribute_idea_[ROOTTAG]`).
         # Any candidate whose name starts with one is built at runtime, not dead.
@@ -1385,28 +1402,28 @@ class Validator(BaseValidator):
             else:
                 self.log("  No staged idea files — skipping quality checks")
             self.validate_undefined_idea_refs(defined_ideas)
-            ideas_for_consolidation = staged_ideas_by_file
+            ideas_in_scope = staged_ideas_by_file
         else:
             self.validate_undefined_idea_refs(defined_ideas)
             self.validate_idea_quality(issues_by_file)
-            ideas_for_consolidation = ideas_by_file
+            ideas_in_scope = ideas_by_file
 
         self.validate_category_icon_frames()
         self.validate_equipment_bonus_stack()
 
         if self.suggest_consolidation:
-            if ideas_for_consolidation:
-                self.validate_loc_consolidation(defined_ideas, ideas_for_consolidation)
+            if ideas_in_scope:
+                self.validate_loc_consolidation(defined_ideas, ideas_in_scope)
         else:
             self._log_section(
                 "Skipping loc-consolidation suggestions (pass --suggest-consolidation to enable)"
             )
 
-        if self.missing_loc:
-            self.validate_missing_localisation(defined_ideas)
+        if self.missing_name_loc or self.missing_loc:
+            self.validate_missing_localisation(defined_ideas, ideas_in_scope)
         else:
             self._log_section(
-                "Skipping missing localisation check (pass --missing-loc to enable)"
+                "Skipping missing localisation check (pass --missing-name-loc to enable)"
             )
 
         self.validate_missing_icons(defined_ideas)
@@ -1421,10 +1438,16 @@ class Validator(BaseValidator):
 
 def _add_extra_args(parser):
     parser.add_argument(
+        "--missing-name-loc",
+        action="store_true",
+        dest="missing_name_loc",
+        help="Report ideas whose name loc key is missing (CI passes this)",
+    )
+    parser.add_argument(
         "--missing-loc",
         action="store_true",
         dest="missing_loc",
-        help="Enable the missing localisation check (noisy until backlog is cleared)",
+        help="Report ideas missing a name or _desc loc key (noisy until backlog is cleared)",
     )
     parser.add_argument(
         "--unused-ideas",
