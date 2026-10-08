@@ -626,6 +626,7 @@ class BaseValidator:
 
     TITLE = "VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
+    STAGED_INCLUDE_MISSING = False
 
     def __init__(
         self,
@@ -666,7 +667,12 @@ class BaseValidator:
 
         if staged_only:
             self.staged_files = (
-                get_staged_files(mod_path, extensions=self.STAGED_EXTENSIONS) or []
+                get_staged_files(
+                    mod_path,
+                    extensions=self.STAGED_EXTENSIONS,
+                    include_missing=self.STAGED_INCLUDE_MISSING,
+                )
+                or []
             )
             if not self.staged_files:
                 logging.warning("No staged files found")
