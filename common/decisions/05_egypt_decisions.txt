@@ -1,7 +1,7 @@
 EGY_coptic_decision = {
 	EGY_appease_coptic_people = {
 		icon = GFX_decision_copts_speaker_button
-		cost = 65
+		cost = EGY_appease_coptic_cost
 		days_remove = 65
 		fire_only_once = no
 		available = {
@@ -30,7 +30,7 @@ EGY_coptic_decision = {
 	}
 	EGY_promote_coptic_politicians = {
 		icon = GFX_decision_copts_propa_button
-		cost = 45
+		cost = EGY_promote_coptic_cost
 		days_remove = 73
 		fire_only_once = no
 		available = {
@@ -579,27 +579,6 @@ EGY_regime_balance = {
 		}
 
 		ai_will_do = { base = 5 }
-	}
-
-	EGY_decree_army_bakes = {
-		icon = generic_army_support
-		days_re_enable = 180
-		fire_only_once = no
-
-		visible = {
-			has_completed_focus = EGY_the_fourth_term
-			has_completed_focus = EGY_the_army_bakes_bread
-		}
-
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_army_bakes"
-			set_temp_variable = { temp_bread = -15 }
-			EGY_change_bread_pressure = yes
-			set_temp_variable = { temp_opinion = -3 }
-			change_the_military_opinion = yes
-		}
-
-		ai_will_do = { base = 3 }
 	}
 
 	EGY_decree_raise_wages = {
@@ -1317,6 +1296,74 @@ EGY_bread_subsidies = {
 			}
 		}
 	}
+
+	EGY_decree_army_bakes = {
+		icon = generic_army_support
+		days_remove = 180
+		fire_only_once = yes
+
+		visible = {
+			has_completed_focus = EGY_the_fourth_term
+			has_completed_focus = EGY_the_army_bakes_bread
+		}
+
+		modifier = {
+			army_org_factor = -0.05
+			training_time_factor = 0.10
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_army_bakes"
+			set_temp_variable = { temp_opinion = -3 }
+			change_the_military_opinion = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_decree_army_bakes"
+			set_temp_variable = { temp_bread = -10 }
+			EGY_change_bread_pressure = yes
+		}
+
+		ai_will_do = { base = 3 }
+	}
+
+	EGY_request_wheat_supply_deal = {
+		icon = money_dec
+		cost = 50
+		days_re_enable = 180
+		fire_only_once = no
+
+		target_root_trigger = {
+			has_completed_focus = EGY_wheat_import_security
+			custom_trigger_tooltip = {
+				tooltip = EGY_wheat_deals_below_three_tt
+				check_variable = { EGY_wheat_supply_deals < 3 }
+			}
+		}
+
+		targets = { USA SOV FRA UKR AST KAZ CAN ARG }
+
+		target_trigger = {
+			country_exists = FROM
+			FROM = {
+				NOT = { has_country_flag = EGY_wheat_deal_partner }
+				NOT = { has_war_with = ROOT }
+			}
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_request_wheat_supply_deal"
+			FROM = { country_event = { id = egypt_mubarak.82 days = 2 } }
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = {
+				add = 4
+				check_variable = { EGY_bread_pressure > 40 }
+			}
+		}
+	}
 }
 
 EGY_state_projects = {
@@ -1483,32 +1530,6 @@ EGY_state_projects = {
 		}
 	}
 
-	EGY_toshka_mission = {
-		icon = hol_drain_water_lines
-		activation = { always = no }
-		available = { always = no }
-		days_mission_timeout = 90
-		fire_only_once = yes
-		fixed_random_seed = no
-		is_good = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_mission"
-			EGY_set_state_project_odds = yes
-			random_list = {
-				project_full = {
-					if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
-				}
-				project_partial = {
-					activate_mission = EGY_toshka_second_phase
-				}
-				project_troubled = {
-					activate_mission = EGY_toshka_overruns
-				}
-			}
-		}
-	}
-
 	EGY_income_tax_law_second_phase = {
 		icon = money_dec
 		activation = { always = no }
@@ -1584,20 +1605,6 @@ EGY_state_projects = {
 		}
 	}
 
-	EGY_toshka_second_phase = {
-		icon = hol_drain_water_lines
-		activation = { always = no }
-		available = { always = no }
-		days_mission_timeout = 180
-		fire_only_once = yes
-		is_good = yes
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_second_phase"
-			if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
-		}
-	}
-
 	EGY_desert_land_second_phase = {
 		icon = generic_construction
 		activation = { always = no }
@@ -1655,22 +1662,6 @@ EGY_state_projects = {
 			log = "[GetDateText]: [Root.GetName]: Decision EGY_smart_ration_cards_overruns"
 			set_temp_variable = { temp_authority = -2 }
 			EGY_change_mubarak_authority = yes
-		}
-	}
-
-	EGY_toshka_overruns = {
-		icon = hol_drain_water_lines
-		activation = { always = no }
-		available = { always = no }
-		days_mission_timeout = 365
-		fire_only_once = yes
-		is_good = no
-
-		timeout_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_overruns"
-			set_temp_variable = { temp_authority = -3 }
-			EGY_change_mubarak_authority = yes
-			add_stability = -0.02
 		}
 	}
 
@@ -1754,6 +1745,73 @@ EGY_state_projects = {
 			modifier = { factor = 0 has_idea = depression }
 		}
 	}
+}
+
+EGY_great_projects = {
+	EGY_toshka_mission = {
+		icon = hol_drain_water_lines
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
+					set_country_flag = EGY_toshka_built
+					set_temp_variable = { temp_wheat = 5 }
+					EGY_change_domestic_wheat_share = yes
+					EGY_bump_great_projects_gui = yes
+				}
+				project_partial = {
+					activate_mission = EGY_toshka_second_phase
+				}
+				project_troubled = {
+					activate_mission = EGY_toshka_overruns
+				}
+			}
+		}
+	}
+
+	EGY_toshka_second_phase = {
+		icon = hol_drain_water_lines
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_second_phase"
+			if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
+			set_country_flag = EGY_toshka_built
+			set_temp_variable = { temp_wheat = 5 }
+			EGY_change_domestic_wheat_share = yes
+			EGY_bump_great_projects_gui = yes
+		}
+	}
+
+	EGY_toshka_overruns = {
+		icon = hol_drain_water_lines
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		is_good = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_toshka_overruns"
+			set_temp_variable = { temp_authority = -3 }
+			EGY_change_mubarak_authority = yes
+			add_stability = -0.02
+			EGY_bump_great_projects_gui = yes
+		}
+	}
 
 	EGY_cover_toshka_overruns = {
 		icon = hol_drain_water_lines
@@ -1768,9 +1826,253 @@ EGY_state_projects = {
 			log = "[GetDateText]: [Root.GetName]: Decision EGY_cover_toshka_overruns"
 			remove_mission = EGY_toshka_overruns
 			if = { limit = { owns_state = 218 } 218 = { one_state_agriculture_district = yes } }
+			set_country_flag = EGY_toshka_built
+			set_temp_variable = { temp_wheat = 5 }
+			EGY_change_domestic_wheat_share = yes
+			EGY_bump_great_projects_gui = yes
 			newline = yes
 			set_temp_variable = { treasury_change = -1.5 }
 			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_idea = recession }
+			modifier = { factor = 0 has_idea = depression }
+		}
+	}
+
+	EGY_sinai_development_mission = {
+		icon = generic_construction
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_sinai_development_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					if = {
+						limit = { owns_state = 213 }
+						213 = {
+							one_state_infrastructure = yes
+							one_state_agriculture_district = yes
+						}
+					}
+					set_country_flag = EGY_sinai_built
+					set_temp_variable = { temp_wheat = 5 }
+					EGY_change_domestic_wheat_share = yes
+					set_temp_variable = { temp_risk = -1 }
+					EGY_change_sinai_bombing_risk = yes
+					EGY_bump_great_projects_gui = yes
+				}
+				project_partial = {
+					activate_mission = EGY_sinai_development_second_phase
+				}
+				project_troubled = {
+					activate_mission = EGY_sinai_development_overruns
+				}
+			}
+		}
+	}
+
+	EGY_sinai_development_second_phase = {
+		icon = generic_construction
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_sinai_development_second_phase"
+			if = {
+				limit = { owns_state = 213 }
+				213 = {
+					one_state_infrastructure = yes
+					one_state_agriculture_district = yes
+				}
+			}
+			set_country_flag = EGY_sinai_built
+			set_temp_variable = { temp_wheat = 5 }
+			EGY_change_domestic_wheat_share = yes
+			set_temp_variable = { temp_risk = -1 }
+			EGY_change_sinai_bombing_risk = yes
+			EGY_bump_great_projects_gui = yes
+		}
+	}
+
+	EGY_sinai_development_overruns = {
+		icon = generic_construction
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		is_good = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_sinai_development_overruns"
+			set_temp_variable = { temp_authority = -2 }
+			EGY_change_mubarak_authority = yes
+			add_stability = -0.02
+			EGY_bump_great_projects_gui = yes
+		}
+	}
+
+	EGY_cover_sinai_development_overruns = {
+		icon = generic_construction
+		fire_only_once = yes
+
+		visible = { has_active_mission = EGY_sinai_development_overruns }
+
+		custom_cost_trigger = { check_variable = { treasury > 1.49 } }
+		custom_cost_text = cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_cover_sinai_development_overruns"
+			remove_mission = EGY_sinai_development_overruns
+			if = {
+				limit = { owns_state = 213 }
+				213 = {
+					one_state_infrastructure = yes
+					one_state_agriculture_district = yes
+				}
+			}
+			set_country_flag = EGY_sinai_built
+			set_temp_variable = { temp_wheat = 5 }
+			EGY_change_domestic_wheat_share = yes
+			set_temp_variable = { temp_risk = -1 }
+			EGY_change_sinai_bombing_risk = yes
+			EGY_bump_great_projects_gui = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_idea = recession }
+			modifier = { factor = 0 has_idea = depression }
+		}
+	}
+
+	EGY_grand_egyptian_museum_mission = {
+		icon = tourism_button
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 90
+		fire_only_once = yes
+		fixed_random_seed = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_grand_egyptian_museum_mission"
+			EGY_set_state_project_odds = yes
+			random_list = {
+				project_full = {
+					set_country_flag = EGY_gem_built
+					add_stability = 0.02
+					custom_effect_tooltip = EGY_gem_tourism_tt
+					EGY_bump_great_projects_gui = yes
+				}
+				project_partial = {
+					activate_mission = EGY_grand_egyptian_museum_second_phase
+				}
+				project_troubled = {
+					activate_mission = EGY_grand_egyptian_museum_overruns
+				}
+			}
+		}
+	}
+
+	EGY_grand_egyptian_museum_second_phase = {
+		icon = tourism_button
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 180
+		fire_only_once = yes
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_grand_egyptian_museum_second_phase"
+			set_country_flag = EGY_gem_built
+			add_stability = 0.02
+			custom_effect_tooltip = EGY_gem_tourism_tt
+			EGY_bump_great_projects_gui = yes
+		}
+	}
+
+	EGY_grand_egyptian_museum_overruns = {
+		icon = tourism_button
+		activation = { always = no }
+		available = { always = no }
+		days_mission_timeout = 365
+		fire_only_once = yes
+		is_good = no
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_grand_egyptian_museum_overruns"
+			set_temp_variable = { temp_authority = -2 }
+			EGY_change_mubarak_authority = yes
+			add_stability = -0.01
+			EGY_bump_great_projects_gui = yes
+		}
+	}
+
+	EGY_cover_grand_egyptian_museum_overruns = {
+		icon = tourism_button
+		fire_only_once = yes
+
+		visible = { has_active_mission = EGY_grand_egyptian_museum_overruns }
+
+		custom_cost_trigger = { check_variable = { treasury > 0.99 } }
+		custom_cost_text = cost_1_0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_cover_grand_egyptian_museum_overruns"
+			remove_mission = EGY_grand_egyptian_museum_overruns
+			set_country_flag = EGY_gem_built
+			add_stability = 0.02
+			custom_effect_tooltip = EGY_gem_tourism_tt
+			EGY_bump_great_projects_gui = yes
+			newline = yes
+			set_temp_variable = { treasury_change = -1.0 }
+			modify_treasury_effect = yes
+		}
+
+		ai_will_do = {
+			base = 6
+			modifier = { factor = 0 has_idea = recession }
+			modifier = { factor = 0 has_idea = depression }
+		}
+	}
+
+	EGY_great_library_programme = {
+		icon = generic_research
+		days_remove = 365
+		fire_only_once = yes
+
+		visible = { has_completed_focus = EGY_the_bibliotheca_alexandrina }
+
+		custom_cost_trigger = { check_variable = { treasury > 1.49 } }
+		custom_cost_text = cost_1_5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_great_library_programme"
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision EGY_great_library_programme"
+			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
+			add_to_variable = { EGY_political_research_speed_factor = 0.02 tooltip = research_speed_factor_tt }
+			set_country_flag = EGY_great_library_built
+			EGY_bump_great_projects_gui = yes
 		}
 
 		ai_will_do = {

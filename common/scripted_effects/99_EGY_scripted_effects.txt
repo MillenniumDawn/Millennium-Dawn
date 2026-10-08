@@ -432,13 +432,49 @@ EGY_change_bread_pressure = {
 }
 
 # Parameters:
-# - temp_bread: signed bread pressure change before the wheat stockpile is applied
+# - temp_bread: signed bread pressure change before import dependence and supply deals are applied
 EGY_world_food_price_shock = {
-	if = {
-		limit = { has_completed_focus = EGY_wheat_import_security }
-		multiply_temp_variable = { temp_bread = 0.5 }
-	}
+	set_temp_variable = { temp_import_dependence = { value = 100 subtract = EGY_domestic_wheat_share divide = 55 } }
+	multiply_temp_variable = { temp_bread = temp_import_dependence }
+	set_temp_variable = { temp_deal_factor = { value = EGY_wheat_supply_deals multiply = -0.15 add = 1 } }
+	multiply_temp_variable = { temp_bread = temp_deal_factor }
 	EGY_change_bread_pressure = yes
+}
+
+# Parameters:
+# - temp_risk: signed change to the monthly Sinai bombing chance in percent
+EGY_change_sinai_bombing_risk = {
+	add_to_variable = { EGY_sinai_bombing_risk = temp_risk }
+	clamp_variable = { var = EGY_sinai_bombing_risk min = 1 max = 10 }
+	custom_effect_tooltip = EGY_sinai_bombing_risk_tt
+}
+
+# Parameters:
+# - temp_wheat: signed change to the domestic share of wheat supply in percent
+EGY_change_domestic_wheat_share = {
+	add_to_variable = { EGY_domestic_wheat_share = temp_wheat }
+	clamp_variable = { var = EGY_domestic_wheat_share min = 0 max = 100 }
+	custom_effect_tooltip = EGY_change_domestic_wheat_share_tt
+}
+
+EGY_cheapen_coptic_decisions = {
+	set_variable = { EGY_appease_coptic_cost = 45 }
+	set_variable = { EGY_promote_coptic_cost = 25 }
+	custom_effect_tooltip = EGY_coptic_decisions_cheaper_tt
+}
+
+EGY_bump_great_projects_gui = {
+	if = {
+		limit = {
+			is_ai = no
+			check_variable = { global.EGY_great_projects_dirty_update_var < 10000 }
+		}
+		add_to_variable = { global.EGY_great_projects_dirty_update_var = 1 }
+	}
+	else_if = {
+		limit = { is_ai = no }
+		set_variable = { global.EGY_great_projects_dirty_update_var = 1 }
+	}
 }
 
 EGY_update_bread_tier = {
@@ -509,6 +545,14 @@ EGY_bread_monthly_tick = {
 		limit = { check_variable = { EGY_bread_subsidy_level = 3 } }
 		add_to_temp_variable = { temp_bread = -0.25 }
 	}
+	if = {
+		limit = { has_idea = EGY_baladi_bakeries_idea }
+		add_to_temp_variable = { temp_bread = -0.25 }
+	}
+	set_temp_variable = { temp_deal_relief = EGY_wheat_supply_deals }
+	multiply_temp_variable = { temp_deal_relief = -0.1 }
+	add_to_temp_variable = { temp_bread = temp_deal_relief }
+	clamp_temp_variable = { var = temp_bread min = 0 }
 	add_to_variable = { EGY_bread_pressure = temp_bread }
 	clamp_variable = { var = EGY_bread_pressure min = 0 max = 100 }
 	EGY_update_bread_tier = yes
