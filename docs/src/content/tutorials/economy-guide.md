@@ -430,7 +430,7 @@ Six factors feed into the quarterly inflation calculation:
 | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **GDP/C Growth**             | Higher GDP per capita growth directly increases inflation pressure. A rapidly growing economy generates demand that pushes prices up.                   |
 | **Tax Rate**                 | Higher average tax rates reduce inflation pressure. Taxes act as a fiscal brake on the economy -- they pull money out of circulation.                   |
-| **Central Bank Policy Rate** | Each point cuts how much of your inflation carries into the next quarter, at any inflation level. A rate under the neutral rate also adds to inflation. |
+| **Central Bank Policy Rate** | Positive rate points reduce inflation carryover; rates at or below 0% leave it at 90%. A rate below neutral also adds more inflation.                   |
 | **Economic Cycle**           | Boom and fast growth stages add inflationary pressure. Depression and recession stages reduce it. Stable growth is neutral.                             |
 | **Budget Balance**           | A budget deficit increases inflation (simulating money printing to cover the gap). A budget surplus decreases it.                                       |
 | **Currency Strength**        | A weak currency (below 1.0) feeds additional inflation pressure through higher import costs. A strong currency suppresses it.                           |
@@ -464,22 +464,22 @@ The quarterly result is stored and averaged with the previous three quarters. Th
 
 ### Central Bank Policy Rate
 
-The **Central Bank Policy Rate** represents your country's monetary policy stance. The manual controls range from **0% to 30%**. Most countries start at 3%; Ukraine starts at 30% in January 2000.
+The **Central Bank Policy Rate** represents your country's monetary policy stance. The manual controls range from **-10% to 30%**. Most countries start at 3%; Ukraine starts at 30% in January 2000.
 
 To change it:
 
 1. Open the Economic Preview and find **Policy Rate**.
 2. Keep more than 25 political power available. Each click spends 25 political power and raises or lowers the rate by **1 percentage point**.
-3. Wait **30 days** before another manual change. Increase is unavailable at 30%, and decrease is unavailable at 0%.
+3. Wait **30 days** before another manual change. Increase is unavailable at 30%, and decrease is unavailable at -10%.
 
 Ukraine's National Bank rate-cut events can also lower the rate. Accepted cuts cannot take it below 0% and block another rate change for **60 days**. A later event can therefore lower a rate you raised manually; player-controlled countries do not receive the generic AI adjustment.
 
 The rate works on inflation in two ways:
 
-- **Against the neutral rate.** The neutral rate uses inflation or a low-inflation baseline, whichever is higher, plus 0.5 to 2.5 points. It is limited to 1-30%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%. The effect stops at 3% either way.
-- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A budget deficit above the sustainable 2-8% of GDP shrinks each point's cut. At 10% of GDP over that level the cut is halved, and it goes no lower, so a deficit never cancels the rate.
+- **Against the neutral rate.** The neutral rate uses inflation or a low-inflation baseline, whichever is higher, plus 0.5 to 2.5 points. It is limited to 1-30%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%, so negative rates provide additional inflation stimulus during deflation. The effect stops at 3% either way.
+- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each positive point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. Negative rates do not raise this share above 90%; their additional stimulus comes from the gap below neutral. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A budget deficit above the sustainable 2-8% of GDP shrinks each point's cut. At 10% of GDP over that level the cut is halved, and it goes no lower, so a deficit never cancels the rate.
 
-AI-controlled countries move their rate toward neutral once a quarter, provided no rate-change cooldown is active. They move the rate three points when it is more than 5 points from neutral. Otherwise they move one point up or down when more than half a point from neutral. The AI never raises its rate above 20%, so only a player can take it to 30%. Each AI change starts a 60-day cooldown.
+AI-controlled countries move their rate toward a target once a quarter, provided no rate-change cooldown is active. During deflation, that target uses the actual negative inflation rate plus the natural real rate and can fall to -10%. Otherwise it matches the neutral rate. The AI moves three points when it is more than 5 points from the target, and one point when it is more than half a point away. It never cuts below -10% or raises above 20%, so only a player can take it to 30%. Each AI change starts a 60-day cooldown.
 
 Manual changes update debt costs immediately. Inflation responds at the next quarterly calculation and is averaged over four quarters, so do not expect a rate increase to remove inflation at once.
 
