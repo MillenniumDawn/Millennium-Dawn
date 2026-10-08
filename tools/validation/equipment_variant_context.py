@@ -137,11 +137,11 @@ def branches(nodes, dlcs):
         while True:
             limit = _first_child(node, "limit")
             truth = dlc_truth(limit.children, dlcs) if limit else None
-            if reachable and truth is not False:
+            if reachable and (truth is None or truth):
                 outcomes.append(
                     [child for child in node.children if child.key != "limit"]
                 )
-            reachable = reachable and truth is not True
+            reachable = reachable and (truth is None or not truth)
             if index == len(nodes) or nodes[index].key not in {"else_if", "else"}:
                 if reachable:
                     outcomes.append([])
@@ -155,7 +155,7 @@ def branches(nodes, dlcs):
         yield outcomes
 
 
-def starting_techs(nodes, dlcs, start, known=None):
+def starting_techs(nodes, dlcs, start, known=None, effects=None, active=frozenset()):
     known = set(known or ())
     dated = [node for node in nodes if _DATE.fullmatch(node.key)]
     ordered = [node for node in nodes if not _DATE.fullmatch(node.key)]
@@ -164,8 +164,20 @@ def starting_techs(nodes, dlcs, start, known=None):
     )
     for node in branches(ordered, dlcs):
         if isinstance(node, list):
-            outcomes = [starting_techs(arm, dlcs, start, known) for arm in node]
+            outcomes = [
+                starting_techs(arm, dlcs, start, known, effects, active) for arm in node
+            ]
             known = set.intersection(*outcomes)
+        elif effects and node.key in effects:
+            if node.key not in active:
+                known = starting_techs(
+                    effects[node.key][1],
+                    dlcs,
+                    start,
+                    known,
+                    effects,
+                    active | {node.key},
+                )
         elif node.key == "set_technology":
             for tech in node.children:
                 if tech.value == "1":
@@ -173,11 +185,13 @@ def starting_techs(nodes, dlcs, start, known=None):
                 elif tech.value == "0":
                     known.discard(tech.key)
         elif node.key == "hidden_effect":
-            known = starting_techs(node.children, dlcs, start, known)
+            known = starting_techs(node.children, dlcs, start, known, effects, active)
         elif _DATE.fullmatch(node.key) and start:
             date = tuple(int(part) for part in node.key.split("."))[:3]
             if date <= start:
-                known = starting_techs(node.children, dlcs, start, known)
+                known = starting_techs(
+                    node.children, dlcs, start, known, effects, active
+                )
     return known
 
 
@@ -185,6 +199,7 @@ def starting_techs(nodes, dlcs, start, known=None):
 class VariantContext:
     documents: dict = field(default_factory=dict)
     histories: dict = field(default_factory=dict)
+    effects: dict = field(default_factory=dict)
     categories: dict = field(default_factory=dict)
     event_countries: dict = field(default_factory=dict)
     unknown_events: set = field(default_factory=set)
@@ -196,7 +211,7 @@ class VariantContext:
         key = (country, tuple(sorted(dlcs.items())))
         if key not in self._history_cache:
             self._history_cache[key] = starting_techs(
-                self.histories.get(country, []), dlcs, self.start
+                self.histories.get(country, []), dlcs, self.start, effects=self.effects
             )
         return self._history_cache[key]
 
@@ -218,6 +233,8 @@ class VariantContext:
                     event = value(node, "id")
                     if event:
                         definitions[event] = node
+                elif path.startswith("common/scripted_effects/") and node.value is None:
+                    self.effects[node.key] = (path, node.children)
                 elif path.startswith("common/decisions/categories/"):
                     allowed = _first_child(node, "allowed")
                     self.categories[node.key] = (
@@ -234,6 +251,33 @@ class VariantContext:
                             dates.append(
                                 tuple(int(part) for part in date.split("."))[:3]
                             )
+        effect_callers = {name: set() for name in self.effects}
+        relevant = set()
+        for name, (_, body) in self.effects.items():
+            pending = list(body)
+            while pending:
+                node = pending.pop()
+                if node.key in effect_callers:
+                    effect_callers[node.key].add(name)
+                if node.key in {
+                    "create_equipment_variant",
+                    "set_technology",
+                    "add_equipment_production",
+                    "create_ship",
+                    "add_equipment_to_stockpile",
+                }:
+                    relevant.add(name)
+                pending.extend(node.children)
+        pending = list(relevant)
+        while pending:
+            for caller in effect_callers[pending.pop()] - relevant:
+                relevant.add(caller)
+                pending.append(caller)
+        self.effects = {
+            name: definition
+            for name, definition in self.effects.items()
+            if name in relevant
+        }
         self.start = min(dates) if dates else ()
         for nodes in self.documents.values():
             for node in nodes:
@@ -258,9 +302,13 @@ class VariantContext:
         callers = {event: [] for event in definitions}
         for event in self.unknown_events & callers.keys():
             callers[event].append(frozenset({None}))
-        definition_ids = {id(node) for node in definitions.values()}
+        definition_ids = {id(node): event for event, node in definitions.items()}
 
-        def visit(nodes, current=frozenset({None}), root=frozenset({None})):
+        def visit(
+            nodes,
+            current: frozenset[str | None] | str = frozenset({None}),
+            root: frozenset[str | None] | str = frozenset({None}),
+        ):
             for node in nodes:
                 if node.key in {
                     "trigger",
@@ -284,7 +332,9 @@ class VariantContext:
                     trigger = _first_child(node, "trigger")
                     tags = countries(trigger.children) if trigger else None
                     selected = (
-                        frozenset(tags) if tags is not None else value(node, "id")
+                        frozenset(tags)
+                        if tags is not None
+                        else definition_ids[id(node)]
                     )
                     visit(node.children, selected, selected)
                     continue

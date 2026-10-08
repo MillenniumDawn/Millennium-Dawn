@@ -10,6 +10,7 @@ history/states/*.txt via `parse_state_building_owners`.
 """
 
 import validate_history as V
+from shared.suite import write_under_str
 
 
 def _write_ideas(tmp_path, body):
@@ -25,15 +26,11 @@ def _write_state(tmp_path, name, body):
 
 
 def _write_projects(tmp_path, body):
-    projects_dir = tmp_path / "common" / "special_projects" / "projects"
-    projects_dir.mkdir(parents=True, exist_ok=True)
-    (projects_dir / "test.txt").write_text(body)
+    write_under_str(tmp_path, "common/special_projects/projects/test.txt", body)
 
 
 def _write_country(tmp_path, name, body):
-    cdir = tmp_path / "history" / "countries"
-    cdir.mkdir(parents=True, exist_ok=True)
-    (cdir / name).write_text(body)
+    write_under_str(tmp_path, f"history/countries/{name}", body)
 
 
 _NUCLEAR_STATUS_IDEAS = (

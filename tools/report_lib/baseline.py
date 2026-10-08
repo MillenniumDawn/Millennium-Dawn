@@ -3,41 +3,48 @@
 The nightly `check-baseline` job in validator-cache.yml persists the
 per-validator JSON sidecars of a full main run as the shared baseline. PR
 report jobs restore that entry (keyed on the validator source hash) and use
-the key set here to tag every finding NEW (not on the latest main run) or
+the key counts here to tag every finding NEW (not on the latest main run) or
 EXISTING (also present there).
 
-Fingerprint: (severity, category, file, line, message) — the report_lib
-dedupe key plus severity, computed after the same cross-validator dedupe
-runs on both sides. Severity is part of the key so an existing warning that
-escalates to an error reads as a new error (the alarm direction). Known
+Fingerprint: (severity, category, file, message) with line references in
+the message (`file.txt:123`, `line 123`) masked, counted after the same
+cross-validator dedupe runs on both sides. Leaving lines out keeps an
+existing finding EXISTING when an unrelated edit shifts it; counting keeps a
+real second instance NEW. Severity is part of the key so an existing warning
+that escalates to an error reads as a new error (the alarm direction). Known
 limitations:
-  - an unrelated edit that shifts lines makes existing findings look NEW;
+  - when one file has the same finding twice, fixing one and adding another
+    in that file reads as two EXISTING findings;
   - a PR that runs only a subset of validators can tag an existing finding
     NEW when main's cross-validator dedupe escalated its severity but the
     PR's subset didn't (see classify).
 """
 
 import json
+import re
 import shutil
+from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from .dedupe import dedupe
 from .models import Issue, Severity
 
 META_FILENAME = "baseline-meta.json"
 
-# (severity, category, file, line, message)
-BaselineKey = Tuple[str, str, str, int, str]
+# (severity, category, file, message with line references masked)
+BaselineKey = Tuple[str, str, str, str]
+
+_LINE_REF = re.compile(r"(\.\w+:|\bline )\d+")
 
 
 @dataclass
 class Baseline:
-    """A loaded baseline: its meta plus the deduped key set."""
+    """A loaded baseline: its meta plus the deduped key counts."""
 
     meta: Dict[str, str]
-    keys: Set[BaselineKey]
+    keys: Counter[BaselineKey]
 
 
 @dataclass
@@ -61,7 +68,13 @@ def issue_key(issue: Issue) -> Optional[BaselineKey]:
     """
     if not issue.category or not issue.file or issue.line <= 0 or not issue.message:
         return None
-    return (issue.severity, issue.category, issue.file, issue.line, issue.message)
+    message = _LINE_REF.sub(r"\1#", issue.message)
+    return (issue.severity, issue.category, issue.file, message)
+
+
+def count_keys(issues: Iterable[Issue]) -> Counter[BaselineKey]:
+    """How many keyable issues share each key; unkeyable issues are skipped."""
+    return Counter(key for key in map(issue_key, issues) if key is not None)
 
 
 def load_issues(sidecar_dir: str) -> List[Issue]:
@@ -112,13 +125,7 @@ def load_baseline(
     if expected_toolshash and meta.get("toolshash") != expected_toolshash:
         return None
 
-    deduped = load_issues(baseline_dir)
-    keys: Set[BaselineKey] = set()
-    for issue in deduped:
-        key = issue_key(issue)
-        if key is not None:
-            keys.add(key)
-    return Baseline(meta=meta, keys=keys)
+    return Baseline(meta=meta, keys=count_keys(load_issues(baseline_dir)))
 
 
 def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
@@ -128,6 +135,9 @@ def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
     unclassified. Rendering only adds a NEW tag when the field is set, so a
     missing baseline needs no special case at render time.
 
+    Each baseline entry matches one issue: with N on main, the first N
+    issues sharing that key read EXISTING and any more read NEW.
+
     Severity is part of the key on purpose: an existing warning escalated to
     an error must read as a new error (the alarm direction). The accepted
     asymmetry is de-escalation — a PR that runs only the validator reporting
@@ -135,12 +145,14 @@ def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
     as an error tags it NEW even though it exists on main.
     """
     stats = BaselineStats()
+    unmatched = baseline.keys.copy()
     for issue in issues:
         key = issue_key(issue)
         if key is None:
             stats.unclassified += 1
             continue
-        if key in baseline.keys:
+        if unmatched[key] > 0:
+            unmatched[key] -= 1
             issue.baseline_status = "existing"
             if issue.severity == Severity.ERROR:
                 stats.existing_errors += 1

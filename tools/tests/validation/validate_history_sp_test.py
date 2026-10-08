@@ -11,6 +11,7 @@ configuration (then the subsystem is off and the requirement is moot).
 """
 
 import validate_history as V
+from shared.suite import write_under_str
 
 
 def _write_tech(tmp_path, name, body):
@@ -22,17 +23,11 @@ def _write_tech(tmp_path, name, body):
 
 def _write_sp(tmp_path, body):
     """Write special-project definitions to a stub projects file."""
-    sp_dir = tmp_path / "common" / "special_projects" / "projects"
-    sp_dir.mkdir(parents=True, exist_ok=True)
-    (sp_dir / "test.txt").write_text(body)
+    write_under_str(tmp_path, "common/special_projects/projects/test.txt", body)
 
 
 def _write_country(tmp_path, name, body):
-    cdir = tmp_path / "history" / "countries"
-    cdir.mkdir(parents=True, exist_ok=True)
-    fp = cdir / name
-    fp.write_text(body)
-    return str(fp)
+    return write_under_str(tmp_path, f"history/countries/{name}", body)
 
 
 def test_parse_tech_sp_requirements_collects_single_sp(tmp_path):
@@ -425,7 +420,7 @@ def test_parse_sp_output_claims(tmp_path):
         "\t\tcountry_effects = {\n"
         "\t\t\tcustom_effect_tooltip = {\n"
         "\t\t\t\tlocalization_key = SP_UNLOCK_TECH\n"
-        "\t\t\t\tTECH = programmable_harvesters\n"
+        "\t\t\t\tTECH = agriculture_6\n"
         "\t\t\t}\n"
         "\t\t}\n"
         "\t}\n"
@@ -433,21 +428,21 @@ def test_parse_sp_output_claims(tmp_path):
         "sp_no_tooltip = {\n\tallowed = { always = yes }\n}\n",
     )
     claims = V.parse_sp_output_claims(str(tmp_path))
-    assert claims == {"sp_agriculture_drone": ["programmable_harvesters"]}
+    assert claims == {"sp_agriculture_drone": ["agriculture_6"]}
 
 
 def test_sp_output_consistency_flags_wrong_tech():
-    # The project gates programmable_harvesters but its tooltip advertises a
+    # The project gates agriculture_6 but its tooltip advertises a
     # different tech that another project gates.
     sp_gated = {
-        "sp_agriculture_drone": {"programmable_harvesters"},
-        "sp_other": {"improved_harvesting_automation"},
+        "sp_agriculture_drone": {"agriculture_6"},
+        "sp_other": {"agriculture_7"},
     }
-    claims = {"sp_agriculture_drone": ["improved_harvesting_automation"]}
+    claims = {"sp_agriculture_drone": ["agriculture_7"]}
     errors = V.validate_sp_output_consistency(sp_gated, claims)
     assert len(errors) == 1
     assert "sp_agriculture_drone" in errors[0]
-    assert "improved_harvesting_automation" in errors[0]
+    assert "agriculture_7" in errors[0]
     assert "sp:sp_other" in errors[0]
 
 
@@ -462,8 +457,8 @@ def test_sp_output_consistency_flags_gateless_project():
 
 
 def test_sp_output_consistency_clean_when_matches():
-    sp_gated = {"sp_agriculture_drone": {"programmable_harvesters"}}
-    claims = {"sp_agriculture_drone": ["programmable_harvesters"]}
+    sp_gated = {"sp_agriculture_drone": {"agriculture_6"}}
+    claims = {"sp_agriculture_drone": ["agriculture_6"]}
     assert V.validate_sp_output_consistency(sp_gated, claims) == []
 
 

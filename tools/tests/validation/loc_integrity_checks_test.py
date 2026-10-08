@@ -1,24 +1,21 @@
 """Tests for three loc-integrity checks:
 
-1. validate_localisation.process_yml_for_syntax — formatter-mangled loc lines
+1. validate_localisation's syntax scan — formatter-mangled loc lines
    (a Prettier/pre-commit --all-files run once split `KEY:0 "value"` across
    two lines and rewrote double quotes to single quotes).
 2. validate_oob_units.Validator.validate_air_wing_names_template_loc —
    air_wing_names_template = KEY must resolve to a defined English loc key.
-3. validate_modifiers.Validator.validate_dynamic_modifier_name_loc — a dynamic
-   modifier with a _TT/_desc loc entry must also have the bare-name key (the
-   in-game header renders it).
+3. validate_modifiers.Validator.validate_dynamic_modifier_name_loc — every
+   dynamic modifier must have a bare-name key (in-game tooltips render it).
 """
 
-from validate_localisation import Issue, process_yml_for_syntax
+import pytest
+from shared.suite import write_yml as _write_yml
+from shared.suite import yml_syntax
+from validate_localisation import Issue
 from validate_modifiers import Validator as ModifiersValidator
 from validate_oob_units import Validator as OOBValidator
-
-
-def _write_yml(tmp_path, name, value_line):
-    p = tmp_path / name
-    p.write_text(f"l_english:\n {value_line}\n", encoding="utf-8-sig")
-    return str(p)
+from validator_common import Severity
 
 
 def _issues_only(results):
@@ -32,7 +29,7 @@ def _issues_only(results):
 
 def test_syntax_check_flags_key_with_no_value(tmp_path):
     path = _write_yml(tmp_path, "a_l_english.yml", "SOME_KEY:0")
-    results = _issues_only(process_yml_for_syntax((path, ["Y", "R", "G"], frozenset())))
+    results = _issues_only(yml_syntax(path, ["Y", "R", "G"]))
     assert len(results) == 1
     assert results[0].category == "mangled-loc-line"
     assert "no value" in results[0].message
@@ -40,7 +37,7 @@ def test_syntax_check_flags_key_with_no_value(tmp_path):
 
 def test_syntax_check_flags_single_quoted_value(tmp_path):
     path = _write_yml(tmp_path, "b_l_english.yml", "SOME_KEY:0 'Some Value'")
-    results = _issues_only(process_yml_for_syntax((path, ["Y", "R", "G"], frozenset())))
+    results = _issues_only(yml_syntax(path, ["Y", "R", "G"]))
     assert len(results) == 1
     assert results[0].category == "mangled-loc-line"
     assert "single quotes" in results[0].message
@@ -48,7 +45,7 @@ def test_syntax_check_flags_single_quoted_value(tmp_path):
 
 def test_syntax_check_clean_double_quoted_value(tmp_path):
     path = _write_yml(tmp_path, "c_l_english.yml", 'SOME_KEY:0 "Some Value"')
-    results = _issues_only(process_yml_for_syntax((path, ["Y", "R", "G"], frozenset())))
+    results = _issues_only(yml_syntax(path, ["Y", "R", "G"]))
     assert results == []
 
 
@@ -108,15 +105,23 @@ def _write_dynamic_modifier(tmp_path, body):
     (dm_dir / "00_test_dynamic_modifiers.txt").write_text(body, encoding="utf-8")
 
 
-def test_dynamic_modifier_missing_bare_key_flagged(tmp_path):
-    _write_dynamic_modifier(
-        tmp_path,
-        "test_dynamic_modifier = {\n"
-        "\tenable = { always = yes }\n"
-        "\tstability_factor = 0.1\n"
-        "}\n",
-    )
-    _write_loc_file(tmp_path, ["test_dynamic_modifier_TT"])
+@pytest.mark.parametrize(
+    ("body", "loc_keys"),
+    [
+        (
+            "test_dynamic_modifier = {\n"
+            "\tenable = { always = yes }\n"
+            "\tstability_factor = 0.1\n"
+            "}\n",
+            ["test_dynamic_modifier_TT"],
+        ),
+        ("test_dynamic_modifier = {\n\tstability_factor = 0.1\n}\n", []),
+    ],
+    ids=["only_tt_key", "no_loc"],
+)
+def test_dynamic_modifier_missing_bare_key_flagged(tmp_path, body, loc_keys):
+    _write_dynamic_modifier(tmp_path, body)
+    _write_loc_file(tmp_path, loc_keys)
 
     validator = ModifiersValidator(mod_path=str(tmp_path), use_colors=False)
     validator.validate_dynamic_modifier_name_loc()
@@ -124,6 +129,7 @@ def test_dynamic_modifier_missing_bare_key_flagged(tmp_path):
     assert len(validator._issues) == 1
     issue = validator._issues[0]
     assert issue.category == "dynamic-modifier-name-loc"
+    assert issue.severity == Severity.ERROR
     assert "test_dynamic_modifier" in issue.message
 
 

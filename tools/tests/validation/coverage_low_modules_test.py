@@ -12,16 +12,10 @@ import validate_localisation as localisation
 import validate_mod_descriptors as descriptors
 import validate_scripted_gui as scripted_gui
 import validate_unused_scripted as unused
+from shared.suite import write_under as _write
+from shared.suite import yml_scan, yml_syntax
 from shared_utils import run_validator_main
 from sprite_index import SpriteSizeIndex
-
-
-def _write(root: Path, relative: str, content: str) -> Path:
-    path = root / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
-    return path
 
 
 def _validator(cls, root: Path, staged_only: bool = False, **kwargs):
@@ -40,7 +34,7 @@ def _categories(validator):
 
 def test_agency_helpers_cover_calls_and_unreadable_inputs(tmp_path):
     assert agency._read(tmp_path / "missing.txt") == ""
-    assert agency._line_of("a\nb\n", 2) == 2
+    assert agency.line_of("a\nb\n", 2) == 2
     assert agency.Validator._short_token("MD_auto_agency_12_upgrade_x") == "upgrade_x"
     assert (
         agency.Validator._short_token("MD_auto_agency_12_upgrade_x_name") == "upgrade_x"
@@ -432,27 +426,27 @@ novalue:0
 bracket:0 "[broken"
 typo:0 "seperate [ROOT.GetName] $VALUE$"
 prose:0 "bad — `"
+unbalanced:0 "said \\"go."
 clean:0 "§Yok§!"
 """,
     )
-    assert localisation.process_yml_for_brackets((str(loc),))
-    syntax = localisation.process_yml_for_syntax(
-        (str(loc), ["R", "Y", "!"], frozenset({"sub_key"}))
-    )
+    assert yml_scan(loc, "brackets")
+    syntax = yml_syntax(loc, ["R", "Y", "!"], frozenset({"sub_key"}))
     assert {
         item.category for item in syntax if isinstance(item, localisation.Issue)
     } == {"mangled-loc-line"}
     assert any("odd number" in str(item) for item in syntax)
     assert any("unsupported color" in str(item) for item in syntax)
-    assert localisation.process_yml_for_mandatory((str(loc),)) == []
+    assert yml_scan(loc, "mandatory") == []
     bad_mandatory = _write(tmp_path, "localisation/english/no_header.yml", 'x:0 "x"\n')
-    assert localisation.process_yml_for_mandatory((str(bad_mandatory),))
-    typo_results = localisation.process_yml_for_typos((str(loc),))
+    assert yml_scan(bad_mandatory, "mandatory")
+    typo_results = yml_scan(loc, "typos")
     assert any("seperate" in item for item in typo_results)
-    prose_results = localisation.process_yml_for_prose((str(loc),))
+    prose_results = yml_scan(loc, "prose")
     assert {item.category for item in prose_results} == {
         "loc-em-dash",
         "loc-backtick-apostrophe",
+        "loc-unbalanced-quote",
     }
     _write(
         tmp_path,
@@ -527,6 +521,7 @@ novalue:0
 bracket:0 "[broken"
 typo:0 "seperate"
 prose:0 "bad — `"
+unbalanced:0 "said \\"go."
 sub_a:0 "§Y"
 orphan_tt:0 "never used"
 used_tt:0 "used"
@@ -585,6 +580,7 @@ tooltip = dynamic_[TAG]_tt
     assert "loc-typo-watchlist" in categories
     assert "loc-em-dash" in categories
     assert "loc-backtick-apostrophe" in categories
+    assert "loc-unbalanced-quote" in categories
     assert any("missing_key" in issue.message for issue in validator._issues)
     assert any("orphan_tt" in issue.message for issue in validator._issues)
     assert any("resistance_bad" in issue.message for issue in validator._issues)
@@ -643,6 +639,7 @@ def test_scripted_gui_parsers_cover_templates_and_malformed_blocks(tmp_path):
         "elements": {},
         "element_files": {},
         "containers": [],
+        "windows": [],
     }
     parsed = scripted_gui._parse_gui_text(
         'containerWindowType = { name = "window" }\n'
@@ -652,6 +649,7 @@ def test_scripted_gui_parsers_cover_templates_and_malformed_blocks(tmp_path):
     )
     assert set(parsed["elements"]) == {"window", "button"}
     assert parsed["containers"] == ["window"]
+    assert parsed["windows"] == ["window"]
     blocks, triggers = scripted_gui._parse_scripted_gui_text(
         "scripted_gui = {\n\tname = {\n"
         "\t\tcontext_type = player_context\n"

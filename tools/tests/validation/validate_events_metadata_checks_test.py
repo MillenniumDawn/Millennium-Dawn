@@ -1,5 +1,7 @@
 """Event checks that walk metadata instead of a second body-list parse."""
 
+import pytest
+import validate_events as V
 from shared.suite import write_under_str as _write
 from validate_events import Validator
 
@@ -596,3 +598,97 @@ def test_nested_fire_id_is_not_adopted_by_a_malformed_parent(tmp_path):
     assert not any(
         "foo.1" in str(issue) for issue in v._issues
     ), "the nested fire was counted as a second definition of foo.1"
+
+
+TWO_NAMESPACES = (
+    "add_namespace = alpha\n"
+    "add_namespace = beta\n"
+    "country_event = {\n"
+    "\tid = alpha.1\n"
+    "\tis_triggered_only = yes\n"
+    "\tpicture = GFX_alpha\n"
+    "}\n"
+    "news_event = {\n"
+    "\tid = beta.1\n"
+    "\tis_triggered_only = yes\n"
+    "\tpicture = GFX_beta\n"
+    "}"
+)
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_two_namespaces_and_exact_lines_survive_crlf(tmp_path, newline):
+    """Event files are read without newline translation, so CRLF reaches the
+    parser; the last line has no trailing newline."""
+    _write(tmp_path, "events/Ev.txt", TWO_NAMESPACES.replace("\n", newline))
+    meta, namespaces = _validator(tmp_path)._get_event_metadata()
+    assert namespaces == {"alpha", "beta"}
+    assert [(m["id"], m["type"], m["line"], m["picture_refs"]) for m in meta] == [
+        ("alpha.1", "country_event", 3, [("GFX_alpha", 6)]),
+        ("beta.1", "news_event", 8, [("GFX_beta", 11)]),
+    ]
+
+
+def _lookup_event(eid, flag):
+    return (
+        f"country_event = {{\n\tid = {eid}\n\tis_triggered_only = yes\n\t{flag}\n}}\n"
+    )
+
+
+@pytest.mark.parametrize("staged", [False, True])
+def test_lookup_id_sets_come_from_the_single_metadata_parse(
+    tmp_path, monkeypatch, staged
+):
+    """The scoped checks and the full-repo fire_only_once / major lookups share
+    one parse per event file, in staged mode too."""
+    monkeypatch.setenv("MD_NO_CACHE", "1")
+    staged_path = _write(
+        tmp_path,
+        "events/A.txt",
+        _lookup_event("once.1", "fire_only_once = yes")
+        + _lookup_event("big.1", "major = yes"),
+    )
+    _write(tmp_path, "events/B.txt", _lookup_event("other.1", "fire_only_once = yes"))
+    parsed = []
+    original = V._parse_event_metadata
+
+    def counting(text, basename):
+        parsed.append(basename)
+        return original(text, basename)
+
+    monkeypatch.setattr(V, "_parse_event_metadata", counting)
+    v = _validator(tmp_path)
+    if staged:
+        v.staged_only = True
+        v.staged_files = [staged_path]
+
+    meta, _ = v._get_event_metadata()
+    scoped = [("once.1", "A.txt", 1), ("big.1", "A.txt", 6)]
+    if not staged:
+        scoped.append(("other.1", "B.txt", 1))
+    assert sorted((m["id"], m["file"], m["line"]) for m in meta) == sorted(scoped)
+    assert v._get_fire_only_once_ids() == {"once.1", "other.1"}
+    assert v._get_major_event_ids() == {"big.1"}
+    assert sorted(parsed) == ["A.txt", "B.txt"]
+
+
+def test_conditional_picture_scope_ends_with_its_block(tmp_path):
+    _write(
+        tmp_path,
+        "events/Ev.txt",
+        "news_event = {\n"
+        "\tid = cond.1\n"
+        "\tis_triggered_only = yes\n"
+        "\tpicture = {\n"
+        "\t\ttrigger = { has_country_flag = show }\n"
+        "\t\tpicture = GFX_conditional\n"
+        "\t}\n"
+        "\toption = {\n"
+        "\t\tname = cond.1.a\n"
+        "\t\tpicture = GFX_option_scope\n"
+        "\t}\n"
+        "\tpicture = GFX_own\n"
+        "}\n",
+    )
+    meta, _ = _validator(tmp_path)._get_event_metadata()
+    assert meta[0]["picture_refs"] == [("GFX_conditional", 6), ("GFX_own", 12)]

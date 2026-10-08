@@ -15,13 +15,8 @@ sre_clear = {
 	set_variable = { POL.industrial_materials_current = 0 }
 }
 
-# needs to be called when first enabling the mechanic
+# sets the constants the calculations below depend on
 sre_initialize = {
-	add_ideas = {
-		POL_sre_medium_effort
-		POL_sre_medium_success
-	}
-
 	# how much factories produce per month
 	set_variable = { POL.production_base = 10 }
 
@@ -41,6 +36,48 @@ sre_initialize = {
 	set_variable = { POL.const_factories_effort_min = 0.075 }
 	set_variable = { POL.const_factories_effort_med = 0.15 }
 	set_variable = { POL.const_factories_effort_max = 0.225 }
+}
+
+# starts the mechanic, and restarts it with fresh quotas when communists return to power
+sre_start = {
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_idea = POL_sre_low_effort
+					has_idea = POL_sre_medium_effort
+					has_idea = POL_sre_max_effort
+				}
+			}
+		}
+		add_ideas = POL_sre_medium_effort
+	}
+	if = {
+		limit = {
+			NOT = {
+				OR = {
+					has_idea = POL_sre_lowest_success
+					has_idea = POL_sre_low_success
+					has_idea = POL_sre_medium_success
+					has_idea = POL_sre_high_success
+					has_idea = POL_sre_highest_success
+				}
+			}
+		}
+		add_ideas = POL_sre_medium_success
+	}
+	if = {
+		limit = { is_ai = no }
+		sre_clear = yes
+		sre_initialize = yes
+		sre_calculate_tools = yes
+		sre_calculate_machinery = yes
+		sre_calculate_materials = yes
+		sre_calculate_number_of_factories_and_clear = yes
+		activate_mission = POL_sre_main_countdown_mission
+		activate_mission = POL_sre_monthly_mission
+		POL_gui_dirty_update = yes
+	}
 }
 
 # Calculates how much Machine Tools country needs per year
@@ -167,7 +204,7 @@ sre_decrease_success = {
 	else_if = {
 		# lets keep if, just in case something breaks,
 		# we do not wont to punish player for that
-		limit = { has_idea = POL_sre_low_success }
+		limit = { has_idea = POL_sre_lowest_success }
 
 		add_stability = -0.05
 		add_political_power = -100

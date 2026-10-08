@@ -10,13 +10,7 @@ unreadable-file fallbacks every parser carries.
 from collections import defaultdict
 
 import validate_history as V
-
-
-def _write(tmp_path, relative, body):
-    path = tmp_path / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding="utf-8")
-    return str(path)
+from shared.suite import write_under_str as _write
 
 
 def _write_undecodable(tmp_path, relative):

@@ -44,6 +44,10 @@ instructions belong in `docs/src/content/pages/` or `tutorials/`; contributor gu
 belongs in `docs/src/content/resources/`. Do not move internal review procedures into
 player guides.
 
+Docs hold rules, shapes, and traps. Open backlogs, finding counts, and change history
+go in GitHub issues and commit messages, not in a doc. Do not copy inventories the
+script files already hold, and do not cite line numbers.
+
 Write the answer or action first where useful. Keep prose terse and tables readable
 in plaintext: pad columns using the repo's Prettier settings and keep each whole
 padded row within 100 characters. Shorten cells or use a list instead of a wide table.
@@ -51,13 +55,13 @@ For website frontmatter, headings, and links, read `docs/CONTRIBUTING.md`.
 
 ### Naming Scheme
 
-Most filenames end in one of four suffixes: `-reference` (structure or valid-key lookup), `-rules` (must-follow conventions), `-patterns` (recipe/refactor catalogs), or `-system` (subsystem architecture). A handful of docs use a plain descriptive name instead when none of those fit (`agent-conventions.md`, `debug-commands.md`, `typo-watchlist.md`, `validation-pipeline.md`).
+Most filenames end in one of four suffixes: `-reference` (structure or valid-key lookup), `-rules` (must-follow conventions), `-patterns` (recipe/refactor catalogs), or `-system` (subsystem architecture). A few docs use a plain descriptive name when none of those fit.
 
 All files below live in `.claude/docs/`.
 
 | File                             | Contents                                                     |
 | -------------------------------- | ------------------------------------------------------------ |
-| `agent-conventions.md`           | Rules for `.claude/agents/` definitions: anti-rules, reading |
+| `agent-conventions.md`           | Agent roles: task reading, boundaries, BLUF handoffs         |
 | `ai-equipment-reference.md`      | AI equipment variants: role templates, coverage errors       |
 | `ai-strategy-reference.md`       | Unit production: 5 layers, on_action entries, plan files     |
 | `bug-patterns.md`                | Known bug patterns: scan signatures, diff-review questions   |
@@ -77,14 +81,14 @@ All files below live in `.claude/docs/`.
 | `idea-reference.md`              | Idea structure: pictures, tiered naming, `name =` gotchas    |
 | `known-false-positives.md`       | Intentional bug-lookalikes; review agents must skip them     |
 | `loading-screen-system.md`       | Loading rotation vs menu picker, `GFX_<x>_small`, generator  |
+| `loc-smoke-checklist.md`         | In-game checks for dynamic loc that tests cannot prove       |
 | `localisation-rules.md`          | English `.yml` rules: BOM, file naming, key formatting       |
-| `md-custom-modifiers.md`         | Non-vanilla modifier keys, grouped by category               |
+| `md-custom-modifiers.md`         | Where custom modifier keys live; faction opinion keys        |
 | `meta-effect-patterns.md`        | `meta_effect`/`meta_trigger` dispatch; `[!]` tooltips        |
 | `mio-reference.md`               | MIO structure, per-block modifier keys, trait-grid rules     |
 | `music-system.md`                | Stations, playlists, chance weights, radio GUI wiring        |
 | `namelist-reference.md`          | Division/ship name-list files and mandatory groups           |
-| `oob-equipment-reference.md`     | OOB equipment types (NSB), stockpiles, variant errors        |
-| `oob-variants-reference.md`      | Full OOB + variant reference (`history/units/`)              |
+| `oob-variants-reference.md`      | OOB files, variants, type systems, slot and tech rules       |
 | `party-loc-reference.md`         | Politics-view party keys, subideology slots, loc hooks       |
 | `performance-patterns.md`        | Hoisting, dirty counters, clamp-before-divide, early-outs    |
 | `refactor-checklist.md`          | Rename/migration sweeps: namespaces, GUI/GFX refs, tags      |
@@ -96,25 +100,5 @@ All files below live in `.claude/docs/`.
 | `sound-system.md`                | Sound defs, combat sounds, voicelines, compressors           |
 | `typo-watchlist.md`              | Recurring localisation typos to check in review              |
 | `un-system-reference.md`         | UN votes/elections: invariants, new-resolution recipe        |
-| `validation-pipeline.md`         | Pre-commit vs Test Suite CI divergence; deprecation watch    |
-
-Detail moved out of the table:
-
-- `agent-conventions.md`: task-specific reading, role boundaries, and BLUF handoffs.
-- `ai-equipment-reference.md` role-template structure keys: `category`/`roles`/`priority`.
-- `entity-system.md` landmark buildings: state-file placement, `map/buildings.txt` spawn points, `provinces.bmp` validation, heightmap-calibrated y, rendering gotchas; plus a division-designer performance note.
-- `formable-reference.md` paths: 23 decision formables, EU111 USoE, EU112 EFS, UAR, Yugoslavia, United States of Africa, Event Horizon, focus-tree unions; plus known traps and maintenance rules.
-- `music-system.md` stations: Main, Regional, UKR-RUS war, Synthwave.
-- `scripted-gui-patterns.md`: the dirty-variable standard is `update_<system>_dirty_variable`; checkbox swap = filter-checkbox image swap; ✓/✗ tooltips are per-entry.
-- `scripting-edge-cases.md`: trigger semantics, relief signs, equipment transfers, guards,
-  and effect scope interpolation. `FROM` in events fired from on_actions or
-  `random_scope_in_array` defaults to the firing scope.
-- `sound-system.md` also covers adding voicelines and audio-file requirements.
-
-## AI Agent Definitions
-
-Agents live in `.claude/agents/` (10 definitions); the session agent list carries their descriptions.
-
-## Repository Access
-
-Use `gh` CLI commands for GitHub operations: `gh issue list`, `gh pr list`, `gh pr view`.
+| `validation-pipeline.md`         | Pre-commit vs CI rules, config, vanilla data refresh         |
+| `validator-check-notes.md`       | Per-validator checks, exemptions, gaps; search by name       |

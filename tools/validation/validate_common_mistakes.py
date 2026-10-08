@@ -20,7 +20,12 @@ class Validator(BaseValidator):
 
     def run_validations(self):
         files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"]
+            [
+                "common/**/*.txt",
+                "events/**/*.txt",
+                "history/**/*.txt",
+                "music/**/*.txt",
+            ]
         )
         files = [
             path

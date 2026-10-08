@@ -30,16 +30,11 @@ EU_update_vars = {
 	hidden_effect = {
 		# EU population vars update
 		# Sets Global EU Population and Country Population
+		# population_total, not max_manpower_k: the engine value wraps negative above ~922M people (#4879)
 		set_variable = { var = global.var_EUpopTotal value = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
-			add_to_variable = {
-				var = global.var_EUpopTotal
-				value = {
-					value = max_manpower_k
-					multiply = 0.01
-				}
-			}
+			add_to_variable = { global.var_EUpopTotal = THIS.population_total }
 		}
 
 		set_variable = {
@@ -55,9 +50,7 @@ EU_update_vars = {
 			# Population share of the Union (0-1), summing to 1 across all members
 			set_variable = {
 				EU_pop_ratio = {
-					value = 0
-					add = THIS.max_manpower_k
-					multiply = 0.01
+					value = THIS.population_total
 					if = { limit = { value = global.var_EUpopTotal greater_than = 0 }
 						divide = global.var_EUpopTotal
 					}
@@ -1051,7 +1044,8 @@ election_POTEF_in_member_state = {
 		set_variable = {
 			POTEF_pop_vote^i = {
 				value = party_pop_array^i
-				multiply = max_manpower_k
+				multiply = population_total
+				multiply = 100 # thousands, as the POTEF vote tooltip shows
 			}
 		}
 		add_to_variable = { global.POTEF_pop_vote^i = THIS.POTEF_pop_vote^i }
@@ -1222,6 +1216,7 @@ update_EU_average_eco_lvl = {
 		else_if = { limit = { has_idea = stagnation } set_temp_variable = { eco_score = 3 } }
 		else_if = { limit = { has_idea = recession } set_temp_variable = { eco_score = 2 } }
 		else_if = { limit = { has_idea = depression } set_temp_variable = { eco_score = 1 } }
+		set_variable = { EU_average_eco_lvl = eco_score }
 		add_to_variable = { global.EU_average_eco_lvl = eco_score }
 	}
 	if = {
@@ -1893,6 +1888,20 @@ joining_the_euro = {
 		limit = { has_idea = gulden }
 		swap_ideas = {
 			remove_idea = gulden
+			add_idea = euro
+		}
+	}
+	if = {
+		limit = { has_idea = brazilian_real }
+		swap_ideas = {
+			remove_idea = brazilian_real
+			add_idea = euro
+		}
+	}
+	if = {
+		limit = { has_idea = bitcoin }
+		swap_ideas = {
+			remove_idea = bitcoin
 			add_idea = euro
 		}
 	}

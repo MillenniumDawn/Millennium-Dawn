@@ -6,6 +6,7 @@ OOB files, division_names_group resolution, air-wing template loc keys, and the
 OOB/production equipment reference checks.
 """
 
+from shared.suite import write_under as _write
 from validate_oob_units import Validator
 
 _UNITS = """sub_units = {
@@ -37,13 +38,6 @@ _VARIANT = """create_equipment_variant = {
 \ttype = frigate_hull_2
 }
 """
-
-
-def _write(tmp_path, relative, body):
-    path = tmp_path / relative
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(body, encoding="utf-8")
-    return path
 
 
 def _validator(tmp_path):
