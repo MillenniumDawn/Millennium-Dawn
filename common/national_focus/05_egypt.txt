@@ -44,7 +44,7 @@ focus_tree = {
 
 	focus = {
 		id = EGY_stability_above_all
-		icon = mubarakg
+		icon = SOV_presidential_republic
 
 		x = 0
 		y = 1
@@ -61,6 +61,7 @@ focus_tree = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_stability_above_all"
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_mubarak_modifier }
 			add_to_variable = { EGY_mubarak_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
+			newline = yes
 			set_temp_variable = { temp_opinion = 5 }
 			change_intelligence_community_opinion = yes
 		}
@@ -174,7 +175,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_float_the_pound"
-			# TODO(bread): bread pressure +15
+			set_temp_variable = { temp_bread = 15 }
+			EGY_change_bread_pressure = yes
 			set_temp_variable = { temp_opinion = -5 }
 			change_the_military_opinion = yes
 			newline = yes
@@ -625,7 +627,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_seven_percent_economy"
-			# TODO(bread): bread pressure +5
+			set_temp_variable = { temp_bread = 5 }
+			EGY_change_bread_pressure = yes
 			add_timed_idea = { idea = EGY_nazif_boom_idea days = 1095 }
 			add_power_balance_value = { id = EGY_succession_bop value = 0.10 }
 		}
@@ -1542,10 +1545,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_expand_the_central_security_forces"
-			# TODO(bread): bread pressure thresholds sit 10 higher while has_completed_focus = EGY_expand_the_central_security_forces
+			custom_effect_tooltip = EGY_bread_thresholds_raised_tt
+			add_to_variable = { EGY_bread_threshold_offset = 10 }
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
 			add_to_variable = { EGY_political_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
 			add_to_variable = { EGY_political_personnel_cost_multiplier_modifier = 0.03 tooltip = personnel_cost_multiplier_modifier_tt }
+			hidden_effect = { EGY_update_bread_tier = yes }
 		}
 
 		ai_will_do = { base = 3 }
@@ -1805,7 +1810,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_bread_on_every_table"
-			# TODO(bread): activate the bread mechanic if it is not active yet; bread pressure -10
+			set_temp_variable = { temp_bread = -10 }
+			EGY_change_bread_pressure = yes
 			set_temp_variable = { temp_influence = -3 }
 			EGY_change_brotherhood_influence = yes
 			add_political_power = 25
@@ -1831,7 +1837,7 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_wheat_import_security"
-			# TODO(bread): strategic stockpile halves the bread pressure from world food price shocks
+			custom_effect_tooltip = EGY_wheat_stockpile_tt
 			if = {
 				limit = { country_exists = USA }
 				USA = { add_opinion_modifier = { target = ROOT modifier = EGY_wheat_import_opinion } }
@@ -1864,7 +1870,10 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_smart_ration_cards"
-			# TODO(bread): subsidy level to Smart Cards; bread pressure +5 on the switch
+			set_temp_variable = { temp_subsidy_level = 3 }
+			EGY_set_bread_subsidy_level = yes
+			set_temp_variable = { temp_bread = 5 }
+			EGY_change_bread_pressure = yes
 			set_temp_variable = { temp_project = 5 }
 			EGY_resolve_state_project = yes
 		}
@@ -1886,13 +1895,16 @@ focus_tree = {
 		search_filters = { FOCUS_FILTER_STABILITY FOCUS_FILTER_INTERNAL_FACTION }
 
 		available = {
-			EGY_mubarak_in_power = yes
-			# TODO(bread): also available when bread pressure is 60 or more
+			OR = {
+				EGY_mubarak_in_power = yes
+				check_variable = { EGY_bread_pressure > 59 }
+			}
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_army_bakes_bread"
-			# TODO(bread): bread pressure -20
+			set_temp_variable = { temp_bread = -20 }
+			EGY_change_bread_pressure = yes
 			unlock_decision_tooltip = EGY_decree_army_bakes
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
@@ -1959,7 +1971,8 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_may_day_bonus"
-			# TODO(bread): bread pressure -10
+			set_temp_variable = { temp_bread = -10 }
+			EGY_change_bread_pressure = yes
 			add_timed_idea = { idea = EGY_may_day_bonus_idea days = 730 }
 		}
 
@@ -2231,10 +2244,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_the_social_contract"
-			# TODO(bread): bread pressure thresholds +10; subsidy cost +10% while the subsidy level is still Universal
+			custom_effect_tooltip = EGY_bread_thresholds_raised_tt
+			add_to_variable = { EGY_bread_threshold_offset = 10 }
+			custom_effect_tooltip = EGY_social_contract_subsidy_tt
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = EGY_political_modifier }
 			add_to_variable = { EGY_political_drift_defence_factor = 0.05 tooltip = drift_defence_factor_tt }
 			add_to_variable = { EGY_political_social_cost_multiplier_modifier = 0.05 tooltip = social_cost_multiplier_modifier_tt }
+			hidden_effect = { EGY_update_bread_tier = yes }
 		}
 
 		ai_will_do = { base = 5 }
@@ -3565,7 +3581,13 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus EGY_gamal_second_wave_of_reform"
-			# TODO(bread): bread pressure +10
+			set_temp_variable = { temp_bread = 10 }
+			EGY_change_bread_pressure = yes
+			if = {
+				limit = { check_variable = { EGY_bread_subsidy_level = 1 } }
+				set_temp_variable = { temp_subsidy_level = 2 }
+				EGY_set_bread_subsidy_level = yes
+			}
 			set_temp_variable = { treasury_change = 3 }
 			modify_treasury_effect = yes
 			set_temp_variable = { int_investment_change = 5 }
