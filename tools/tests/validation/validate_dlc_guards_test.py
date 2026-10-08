@@ -472,14 +472,6 @@ def test_project_jxx_regression():
 # --- has_tech in availability ----------------------------------------------
 
 FOCUS = DECISION = V._AVAILABILITY
-FOCUS_AND_DECISION_BLOCKS = [
-    (FOCUS, "available"),
-    (FOCUS, "allowed"),
-    (FOCUS, "visible"),
-    (DECISION, "available"),
-    (DECISION, "allowed"),
-    (DECISION, "visible"),
-]
 
 
 def _object(body, block="available", extra=""):
@@ -535,9 +527,9 @@ _GUARDED_SCRIPTS = {
 }
 
 
-@pytest.mark.parametrize(("availability", "block"), FOCUS_AND_DECISION_BLOCKS)
-def test_unguarded_project_tech_in_availability_is_flagged(availability, block):
-    findings = _scan(_object(_has_tech(), block), availability)
+@pytest.mark.parametrize("block", ["available", "allowed", "visible"])
+def test_unguarded_project_tech_in_availability_is_flagged(block):
+    findings = _scan(_object(_has_tech(), block), FOCUS)
 
     assert [(category, line) for category, line, _ in findings] == [("dlc_has_tech", 3)]
     assert f'requires "{BBA}"' in findings[0][2]
