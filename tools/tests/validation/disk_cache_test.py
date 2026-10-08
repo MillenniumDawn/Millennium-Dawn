@@ -1,12 +1,15 @@
 """Tests for `disk_cache.per_file_cached`, `aggregate_cached`, and the
 `MD_NO_CACHE` bypass."""
 
+import ast
 import os
 import shutil
+from pathlib import Path
 
 import disk_cache
 import pytest
 import sprite_index
+from shared.paths import VALIDATION_DIR
 
 
 @pytest.fixture(autouse=True)
@@ -23,12 +26,8 @@ def _counted_compute(calls, namespace):
     return run
 
 
-def _patch_helper_change(monkeypatch, namespace, helper_name):
-    helper = next(
-        path
-        for path in disk_cache._fingerprint_paths(namespace)
-        if path.name == helper_name
-    )
+def _patch_helper_change(monkeypatch, helper_name):
+    helper = Path(disk_cache.__file__).parent / helper_name
     original_read_bytes = type(helper).read_bytes
 
     def changed_read_bytes(path):
@@ -93,23 +92,12 @@ def test_code_fingerprints_are_scoped_to_owner_and_shared_code():
     assert not any(path.name == "validate_focus_tree.py" for path in sprites)
 
 
-def test_sprite_index_cached_and_uncached_results_match(tmp_path, monkeypatch):
-    gfx = tmp_path / "sample.gfx"
-    gfx.write_text('spriteType = { name = "GFX_sample" }', encoding="utf-8")
-
-    cached = sprite_index._names_in_file(str(gfx), str(tmp_path))
-    monkeypatch.setenv("MD_NO_CACHE", "1")
-    uncached = sprite_index._names_in_file(str(gfx), str(tmp_path))
-
-    assert cached == uncached == ["GFX_sample"]
-
-
-def test_sprite_index_helper_change_invalidates_actual_cache(tmp_path, monkeypatch):
+def _warm_sprite_parse(tmp_path, monkeypatch):
+    """Cache one .gfx parse, then count the parses that follow."""
     gfx = tmp_path / "sample.gfx"
     gfx.write_text('spriteType = { name = "GFX_sample" }', encoding="utf-8")
     disk_cache._FINGERPRINT_CACHE.clear()
     sprite_index._names_in_file(str(gfx), str(tmp_path))
-
     original_parse = sprite_index._parse_names
     calls = []
 
@@ -117,47 +105,104 @@ def test_sprite_index_helper_change_invalidates_actual_cache(tmp_path, monkeypat
         calls.append(raw)
         return original_parse(raw)
 
-    _patch_helper_change(
-        monkeypatch, "sprite_index.names", "validate_gfx_references.py"
-    )
     monkeypatch.setattr(sprite_index, "_parse_names", counted_parse)
+    return gfx, calls
+
+
+def test_sprite_index_cached_and_uncached_results_match(tmp_path, monkeypatch):
+    gfx, calls = _warm_sprite_parse(tmp_path, monkeypatch)
+
+    cached = sprite_index._names_in_file(str(gfx), str(tmp_path))
+    assert calls == []
+    monkeypatch.setenv("MD_NO_CACHE", "1")
+    uncached = sprite_index._names_in_file(str(gfx), str(tmp_path))
+
+    assert len(calls) == 1
+    assert cached == uncached == ["GFX_sample"]
+
+
+def test_sprite_index_helper_change_invalidates_actual_cache(tmp_path, monkeypatch):
+    gfx, calls = _warm_sprite_parse(tmp_path, monkeypatch)
+    _patch_helper_change(monkeypatch, "validate_gfx_references.py")
     disk_cache._FINGERPRINT_CACHE.clear()
 
     assert sprite_index._names_in_file(str(gfx), str(tmp_path)) == ["GFX_sample"]
     assert len(calls) == 1
 
 
+_CACHE_CALLS = {"per_file_cached", "per_file_cached_by_content", "parse_files_cached"}
+
+
+def _called_name(call):
+    return getattr(call.func, "attr", getattr(call.func, "id", ""))
+
+
+def _string_head(node):
+    if isinstance(node, ast.Constant) and isinstance(node.value, str):
+        return node.value
+    if isinstance(node, ast.JoinedStr) and node.values:
+        return _string_head(node.values[0])
+    return None
+
+
+def _production_namespace_prefixes():
+    """Every namespace prefix tools/validation hands to disk_cache.
+
+    A local resolves through its assignments; a parameter resolves through the
+    calls of the function that takes it, as guard_scan.scan_file's does."""
+    functions = [
+        node
+        for path in sorted(VALIDATION_DIR.glob("*.py"))
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8")))
+        if isinstance(node, ast.FunctionDef)
+    ]
+    calls = [
+        (function, node)
+        for function in functions
+        for node in ast.walk(function)
+        if isinstance(node, ast.Call)
+    ]
+
+    def resolve(expr, function, depth=0):
+        head = _string_head(expr)
+        if head is not None:
+            return {head}
+        if not isinstance(expr, ast.Name) or depth > 3:
+            return set()
+        values = set()
+        for node in ast.walk(function):
+            if isinstance(node, ast.Assign) and any(
+                getattr(target, "id", None) == expr.id for target in node.targets
+            ):
+                values |= resolve(node.value, function, depth + 1)
+        params = [arg.arg for arg in function.args.args]
+        if expr.id in params:
+            index = params.index(expr.id) - (params[:1] == ["self"])
+            for caller, call in calls:
+                if _called_name(call) == function.name and len(call.args) > index:
+                    values |= resolve(call.args[index], caller, depth + 1)
+        return values
+
+    prefixes = set()
+    for function, call in calls:
+        name = _called_name(call)
+        if name in _CACHE_CALLS and len(call.args) > 1:
+            expr = call.args[1]
+        elif name == "aggregate_cached":
+            expr = next((k.value for k in call.keywords if k.arg == "namespace"), None)
+        else:
+            continue
+        if expr is not None:
+            prefixes |= {value.split(".", 1)[0] for value in resolve(expr, function)}
+    return prefixes - {""}
+
+
 def test_namespace_mapping_covers_all_real_cache_prefixes():
-    expected = {
-        "agency",
-        "building_guards_scan_v3",
-        "cosmetic",
-        "decisions",
-        "dlc_guards",
-        "dynamic_modifier_guards_scan_v1",
-        "events",
-        "focus_tree",
-        "gfx_ref",
-        "history_techs",
-        "ideas",
-        "loc",
-        "math_expr",
-        "modifiers",
-        "oob_units",
-        "on_actions",
-        "party_loc",
-        "scripted_gui",
-        "sgui",
-        "scripted_params",
-        "set_variables",
-        "simplifications",
-        "sprite_index",
-        "style",
-        "unused_scripted",
-        "unused_textures",
-        "variables",
-    }
-    assert expected <= set(disk_cache._VALIDATOR_NAMESPACES)
+    prefixes = _production_namespace_prefixes()
+
+    # Wrapped namespaces resolve too, so the scan sees the whole set.
+    assert {"dynamic_modifier_guards_scan_v1", "events", "style"} <= prefixes
+    assert not sorted(prefixes - set(disk_cache._VALIDATOR_NAMESPACES))
 
 
 def test_fingerprints_are_memoized_until_source_changes(tmp_path, monkeypatch):
@@ -236,33 +281,41 @@ def test_owner_source_change_invalidates_only_that_namespace(tmp_path, monkeypat
     assert calls == {"owned": 2, "other": 1}
 
 
+@pytest.mark.parametrize(
+    ("namespace", "helper"),
+    [
+        ("building_guards_scan_v5", "guard_scan.py"),
+        ("influence_calls_scan_v2", "guard_scan.py"),
+        ("dlc_guards_scan", "validate_history.py"),
+        # The cached parses call helpers these validators import from elsewhere.
+        ("ideas.defs.v5", "equipment_module_slots.py"),
+        ("variables.redundant_focus_flag", "validate_focus_tree.py"),
+    ],
+)
 def test_configured_helper_change_invalidates_affected_namespace_only(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, namespace, helper
 ):
     source = tmp_path / "data.txt"
     source.write_text("hello", encoding="utf-8")
     disk_cache._FINGERPRINT_CACHE.clear()
-    calls = {"building": 0, "events": 0}
+    calls = {"owner": 0, "events": 0}
 
     def run_both():
-        for namespace, key in (
-            ("building_guards_scan_v3.result", "building"),
-            ("events.result", "events"),
-        ):
+        for each_namespace, key in ((namespace, "owner"), ("events.result", "events")):
             disk_cache.per_file_cached_by_content(
                 str(tmp_path),
-                namespace,
+                each_namespace,
                 str(source),
                 "body",
                 _counted_compute(calls, key),
             )
 
     run_both()
-    _patch_helper_change(monkeypatch, "building_guards_scan_v3.result", "guard_scan.py")
+    _patch_helper_change(monkeypatch, helper)
     disk_cache._FINGERPRINT_CACHE.clear()
     run_both()
 
-    assert calls == {"building": 2, "events": 1}
+    assert calls == {"owner": 2, "events": 1}
 
 
 def test_per_file_cached_hits_on_unchanged_file(tmp_path):
@@ -620,9 +673,7 @@ def test_helper_change_still_invalidates_after_a_copy(tmp_path, monkeypatch):
         compute,
     )
     _copy_cache(first, second)
-    _patch_helper_change(
-        monkeypatch, "sprite_index.names", "validate_gfx_references.py"
-    )
+    _patch_helper_change(monkeypatch, "validate_gfx_references.py")
     disk_cache._FINGERPRINT_CACHE.clear()
     disk_cache.per_file_cached_by_content(
         str(second),

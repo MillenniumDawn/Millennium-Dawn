@@ -7,9 +7,11 @@ adapted for Millennium Dawn with multiprocessing.
 
 import bisect
 import glob
+import math
 import os
 import re
 import sys
+from functools import partial
 from pathlib import Path
 from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
 
@@ -35,6 +37,7 @@ from shared_utils import (
     read_text_strict,
     strip_comments,
     strip_inline_comment,
+    validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validator_common import (
@@ -59,8 +62,10 @@ _DECISION_REFERENCE_SOURCE_PATTERNS = (
 _LITERAL_ID_TOKEN = r"[\w-]+"
 
 
-def _should_skip(filename: str) -> bool:
-    return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
+    return should_skip_file(
+        filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS, mod_path=mod_path
+    )
 
 
 _TARGETED_BLOCK_RE = re.compile(
@@ -204,22 +209,8 @@ def _resolved_sprite(kind: str, value: str, sprites: SpriteSizeIndex) -> Optiona
     return None
 
 
-# Bespoke cartel map icons drawn at 52x40 on purpose; accepted as-is.
 _SLOT_EXEMPT_SPRITES = frozenset(
-    {
-        "GFX_decision_sinaloa_high",
-        "GFX_decision_sinaloa_medium",
-        "GFX_decision_sinaloa_low",
-        "GFX_decision_sinaloa_none",
-        "GFX_decision_tamaulpas_high",
-        "GFX_decision_tamaulpas_medium",
-        "GFX_decision_tamaulpas_low",
-        "GFX_decision_tamaulpas_none",
-        "GFX_decision_tierra_caliente_high",
-        "GFX_decision_tierra_caliente_medium",
-        "GFX_decision_tierra_caliente_low",
-        "GFX_decision_tierra_caliente_none",
-    }
+    validation_config("validate_decisions", "slot_exempt_sprites")
 )
 
 _MOD_ART_HINT = "resize with tools/assets/resize_decision_icons.py"
@@ -252,6 +243,55 @@ def _icon_type_message(
         f"{owner}: {_ICON_KIND_FIELD[kind]} = {value} -> {sprite} is "
         f"{size[0]}x{size[1]}, which is {_SLOT_LABEL[actual]} art; a "
         f"{_SLOT_LABEL[kind]} is {_SLOT_TYPICAL_SIZE[kind]} ({hint})"
+    )
+
+
+# A category description that opens with a text icon (`£name` draws GFX_name)
+# shows the art at native size, centred on its text line. `full_text` starts 6px
+# down in hoi_16mbs, whose lines are 16px (interface/countrydecisionview.gui:158),
+# so each leading `\n` lowers the art 16px. The 480x73 banners overhang the box by
+# about 7px behind their one newline and read fine, so 8px is allowed; a 480x225
+# picture behind the same padding covers the category header (#4315).
+_DESC_LEADING_ICON_RE = re.compile(
+    r'^[ \t]*([\w.\-]+)_desc:\d*[ \t]*"((?:\\n|[ \t])*)£(\w+)', re.MULTILINE
+)
+_DESC_LINE_HEIGHT = 16
+_DESC_HEADROOM = 6 + _DESC_LINE_HEIGHT // 2 + 8
+
+
+def _desc_image_min_newlines(height: int) -> int:
+    """Leading newlines a description needs above art of this pixel height."""
+    return max(0, math.ceil((height / 2 - _DESC_HEADROOM) / _DESC_LINE_HEIGHT))
+
+
+def _leading_desc_icons(text: str) -> List[Tuple[str, int, str, int]]:
+    """Return (owner, leading newlines, icon, line) for each `<owner>_desc`
+    value in a localisation file that opens with a text icon."""
+    return [
+        (
+            m.group(1),
+            m.group(2).count("\\n"),
+            m.group(3),
+            text.count("\n", 0, m.start()) + 1,
+        )
+        for m in _DESC_LEADING_ICON_RE.finditer(text)
+    ]
+
+
+def _desc_image_message(
+    owner: str, newlines: int, icon: str, sprites: SpriteSizeIndex
+) -> Optional[str]:
+    """Return a finding when the art opening a category description sits too
+    high. An icon that resolves to no measurable sprite is not reported."""
+    size = sprites.size(f"GFX_{icon}")
+    if size is None:
+        return None
+    needed = _desc_image_min_newlines(size[1])
+    if newlines >= needed:
+        return None
+    return (
+        f"{owner}_desc: £{icon} is {size[0]}x{size[1]} behind {newlines} leading "
+        f"\\n, so it overlaps the category header; it needs {needed}"
     )
 
 
@@ -403,6 +443,9 @@ _MIDGAME_GATE_RE = re.compile(
     r"\b(?:has_country_flag|has_global_flag|has_completed_focus|has_idea)"
     r"\s*=\s*[A-Za-z0-9_]+|\bcheck_variable\b"
 )
+_UNANNOUNCED_CATEGORY_EXEMPT = frozenset(
+    validation_config("validate_decisions", "unannounced_category_exempt")
+)
 _FLAG_GATE_RE = re.compile(r"has_(?:country|global)_flag\s*=\s*([A-Za-z0-9_]+)")
 # Both the bare form and the timed `set_country_flag = { flag = X days = N }`.
 _SET_FLAG_RE = re.compile(
@@ -483,7 +526,9 @@ def _flat_flag_gates(block: str) -> Set[str]:
     return flags
 
 
-def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, list]:
+def _scan_activations_and_removals(
+    filename: str, *, mod_path: Optional[str] = None
+) -> Tuple[set, set, set, list]:
     """Single-read worker: (activated, missions, removed, unlock refs).
 
     Combines the activation, external-removal and unlock-tooltip scans so the
@@ -491,7 +536,7 @@ def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, list]:
     element holds (kind, name, line) for every reference that tells the player a
     decision or category it has unlocked; the caller adds the file path.
     """
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return set(), set(), set(), []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
@@ -518,7 +563,7 @@ def _load_scripted_localisation_keys(mod_path: str) -> set:
     keys = set()
     pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
     for filename in glob.iglob(pattern):
-        if _should_skip(filename):
+        if _should_skip(filename, mod_path=mod_path):
             continue
         text_file = FileOpener.open_text_file(
             filename, lowercase=False, strip_comments_flag=True
@@ -901,9 +946,8 @@ def _is_effectively_ai_only(
     return dec.ai_only or dec_id in ai_only_by_category
 
 
-# AI-only decisions whose name keys stay on purpose.
 _AI_ONLY_LOC_KEEP = frozenset(
-    {"monetary_policy_austerity", "monetary_policy_expand_money_supply"}
+    validation_config("validate_decisions", "ai_only_loc_keep")
 )
 
 
@@ -1560,7 +1604,11 @@ class Validator(BaseValidator):
             file_refs,
         ) in zip(
             all_files,
-            self._pool_map(_scan_activations_and_removals, all_files, chunksize=30),
+            self._pool_map(
+                partial(_scan_activations_and_removals, mod_path=self.mod_path),
+                all_files,
+                chunksize=30,
+            ),
         ):
             activated_decisions |= decision_set
             activated_missions |= mission_set
@@ -1617,7 +1665,7 @@ class Validator(BaseValidator):
         fixed_total = self._apply_decision_file_fixes(fixes, patch)
 
         self.log(
-            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.GREEN}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC}"
         )
         if fixed_total:
             _invalidate_decision_cache()
@@ -1672,9 +1720,7 @@ class Validator(BaseValidator):
         }
 
         if not cats_to_validate:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No empty decision categories{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No empty decision categories{Colors.ENDC}")
             return
 
         bop_path = str(Path(self.mod_path) / "common" / "bop")
@@ -1691,7 +1737,7 @@ class Validator(BaseValidator):
 
         if not found_files:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}No BOP files found, skipping BOP check{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}No BOP files found, skipping BOP check{Colors.ENDC}",
                 "warning",
             )
 
@@ -2395,7 +2441,7 @@ class Validator(BaseValidator):
         )
 
         self.log(
-            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.GREEN}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC}"
         )
         if fixed_total:
             _invalidate_decision_cache()
@@ -2415,7 +2461,7 @@ class Validator(BaseValidator):
         results = []
         dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
         for filename in sorted(glob.iglob(dec_filepath + "/**/*.txt", recursive=True)):
-            if _should_skip(filename):
+            if _should_skip(filename, mod_path=self.mod_path):
                 continue
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
@@ -2575,14 +2621,12 @@ class Validator(BaseValidator):
     def validate_unannounced_categories(self):
         """Flag categories that switch on mid-game without telling the player.
 
-        A category with no `visible` block is always on the decisions tab, and
-        one gated only on the tag or the date is on from the start, so neither
-        has anything to announce. A category gated on state that flips during
-        play — a flag, a completed focus, an idea, a variable — appears part-way
-        through, and needs `unlock_decision_category_tooltip` (or
-        `unlock_decision_tooltip` on one of its decisions) in whatever turns it
-        on. Without it a whole tab of decisions shows up with no indication of
-        where it came from. AI-only categories are exempt: nobody is watching.
+        A category with no `visible` block or only tag/date gates has nothing
+        to announce. A flag, focus, idea or variable gate needs
+        `unlock_decision_category_tooltip` (or `unlock_decision_tooltip` on one
+        of its decisions) in whatever opens it. AI-only categories are exempt.
+        Other exceptions, including startup gates and shared state with no
+        single unlock effect, need a reason in `unannounced_category_exempt`.
         """
         self._log_section("Checking decision categories announce themselves...")
         self._report(
@@ -2603,6 +2647,8 @@ class Validator(BaseValidator):
         results = []
         for name, body in sorted(parse_decision_categories(self.mod_path).items()):
             if name in ai_only or name in announced:
+                continue
+            if name in _UNANNOUNCED_CATEGORY_EXEMPT:
                 continue
             # parse_decision_categories hands back `NAME = { ... }`, so unwrap
             # the header before looking for the category's own child blocks.
@@ -2680,7 +2726,7 @@ class Validator(BaseValidator):
     def validate_missing_log(self):
         """Flag decision effect blocks that carry no log line.
 
-        AGENTS.md / decision-reference.md require the log in every block the
+        decision-reference.md requires the log in every block the
         engine runs as a decision's effects (complete_effect, remove_effect,
         timeout_effect, cancel_effect):
         `log = "[GetDateText]: [Root.GetName]: Decision <ID>"`. An effect block
@@ -3140,7 +3186,7 @@ class Validator(BaseValidator):
         for parts in _COMMIT_SCAN_DIRS:
             pattern = os.path.join(self.mod_path, *parts, "**", "*.txt")
             for filename in glob.iglob(pattern, recursive=True):
-                if _should_skip(filename):
+                if _should_skip(filename, mod_path=self.mod_path):
                     continue
                 if os.path.basename(filename) == _FORMABLE_DECISIONS_BASENAME:
                     continue
@@ -3266,8 +3312,38 @@ class Validator(BaseValidator):
             results,
             "✓ All decision icons use art sized for their slot",
             "Decision icons using art from the wrong slot:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="decision-icon-slot-mismatch",
+        )
+
+    def validate_category_desc_images(self):
+        """Flag category descriptions whose opening art overlaps the header."""
+        self._log_section("Checking category description images clear the header...")
+
+        categories = parse_decision_categories(self.mod_path, lowercase=False)
+        sprites = build_sprite_size_index(self.mod_path, self._pool_map)
+        files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
+
+        results = []
+        for filepath in files:
+            text = read_text_strict(filepath)
+            for owner, newlines, icon, line in _leading_desc_icons(text):
+                if owner not in categories:
+                    continue
+                msg = _desc_image_message(owner, newlines, icon, sprites)
+                if msg:
+                    results.append(
+                        (msg, os.path.relpath(filepath, self.mod_path), line)
+                    )
+
+        self._report(
+            results,
+            "✓ All category description images clear the header",
+            "Category description images overlapping the header:",
+            Severity.WARNING,
+            category="category-desc-image-overlap",
         )
 
     def run_validations(self):
@@ -3316,6 +3392,7 @@ class Validator(BaseValidator):
         self.validate_orphaned_target_modifiers()
         self.validate_formable_commitment_sync()
         self.validate_icon_types()
+        self.validate_category_desc_images()
 
         if self.missing_icons:
             self.validate_missing_icons()

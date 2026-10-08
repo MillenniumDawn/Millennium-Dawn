@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import run_all_validators
-from shared_utils import Colors, split_cpu_budget
+from shared_utils import Colors, cpu_budget, running_in_ci, split_cpu_budget
 from validator_batches import BATCHES, ValidatorSpec, select_for_changed_files
 
 RESULT_PREFIX = "validation-"
@@ -113,6 +113,10 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
     mod_path = os.path.abspath(args.path)
     os.makedirs(args.output_dir, exist_ok=True)
     max_parallel, inner_workers = split_cpu_budget(len(specs))
+    if running_in_ci():
+        # A runner owns its cores. Capping the product at the core count left
+        # most of them idle behind one long single-worker validator.
+        inner_workers = cpu_budget()
     child_flags = ["--no-color", "--workers", str(inner_workers)]
 
     print(
