@@ -91,7 +91,9 @@ python3 tools/run.py --list                              # see all available too
 python3 tools/run.py estimate_gdp USA --all              # run a tool by name
 python3 tools/run.py find_idea common/ideas/Greek.txt    # partial names work too
 python3 tools/run.py publish_workshop release --version 1.12.3  # pass args through
-python3 tools/run.py gfx_entry_generator                  # works on any platform
+python3 tools/run.py gfx_entry_generator                   # works on any platform
+python3 tools/balance/mio_report.py REPORT_ALL             # export an Excel MIO balance report
+python3 tools/balance/mio_report.py <equipment_archetype>  # rank MIOs for a specific archetype
 ```
 
 ### Fix changelog ordering
@@ -102,9 +104,14 @@ python3 tools/merge_changelog.py --fix
 
 This sorts only the current version's entries within each category. Untagged
 entries come first, followed by the first country tag. Equal tags keep their
-order. Older versions, entry text, and duplicate entries are left alone. Resolve
+order. Blank lines between entries are dropped and repeated blank lines become
+one. Older versions, entry text, and duplicate entries are left alone. Resolve
 conflict markers first. The Git merge driver also applies this ordering after a
 successful merge.
+
+The merge driver keeps a PR's new entry in the category the PR put it under. If
+main started a new version, the entry moves to the same category there. A PR
+whose category main no longer has is skipped for a human to resolve.
 
 ### Validation timing baselines
 
@@ -167,6 +174,7 @@ and targeted-b 115s. It is not a comparable baseline for this worktree.
 tools/
 ├── analysis/          Analysis, reference finders, metrics
 ├── assets/            DDS conversion, GFX generation, texture tools
+├── balance/           Balance reporting and spreadsheet analysis
 ├── generators/        Content generators (tribute ideas, focus names)
 ├── linting/           Style checkers, formatters, encoding validators
 ├── publishing/        Steam Workshop publishing
@@ -174,6 +182,7 @@ tools/
 ├── shared/            Test harness helpers and repo-anchored paths
 ├── standardization/   Auto-standardizers for focuses, events, decisions, ideas
 ├── tests/             All Python tests for tools/ (root scripts plus domain subdirs)
+├── types/             Type definitions
 ├── validation/        Content validators (events, decisions, variables, etc.)
 ├── shared_utils.py    Shared utilities (Colors, FileOpener, path helpers, arg parsers)
 ├── loc.py             Localisation utilities
@@ -257,7 +266,6 @@ if __name__ == "__main__":
 | `add_standard_file_arguments(parser, input_help=...)` | Add shared `input_file`, `--output`, `--backup`, and `--verbose` arguments                    |
 | `create_validation_parser(desc)`                      | Argparse factory for validators (`--path`, `--strict`, `--staged`, `--no-cache`, `--workers`) |
 | `create_linting_parser(desc)`                         | Argparse factory for linting scripts (`--mode`, `--files`, `--workers`)                       |
-| `create_standard_parser(desc)`                        | Argparse factory for file-processing tools, including `--no-color`                            |
 | `run_validator_main(cls, desc)`                       | Entry point for validators, parses args, creates instance, runs, exits                        |
 
 ## Scripts by Category
@@ -266,14 +274,14 @@ if __name__ == "__main__":
 
 Style checkers, formatters, and encoding validators. These are used in pre-commit hooks and CI.
 
-| Script                                | Description                                                                                                                                                                                                                                                                                                                                                                               |
-| ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **check_common_mistakes.py**          | Detects common scripting mistakes: bad value ranges, `allowed`/`cancel` no-ops, `ai_will_do factor` vs `base`, division instead of multiplication, stat comparisons with the wrong trigger name (`stability >` vs `has_stability >`), malformed leader rotations in `*_political_leaders.txt`. `--output FILE` also writes the `FILE`-stem `.json` sidecar the CI validation report reads |
-| **fix_styling.py**                    | Comprehensive auto-fixer for style issues (tabs, spacing, braces, whitespace)                                                                                                                                                                                                                                                                                                             |
-| **fix_line_endings.py**               | Converts CRLF to LF line endings                                                                                                                                                                                                                                                                                                                                                          |
-| **fix_loc_yaml.py**                   | Fixes localisation YAML issues (quotes, tabs, colons, version keys)                                                                                                                                                                                                                                                                                                                       |
-| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files                                                                                                                                                                                                                                                                                                                             |
-| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                                                                                                                                                                                                                                                                                                                                    |
+| Script                                | Description                                                                                                                                                                                                                                                                                   |
+| ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **check_common_mistakes.py**          | Detects common scripting mistakes: bad value ranges, `allowed`/`cancel` no-ops, `ai_will_do factor` vs `base`, division instead of multiplication, stat comparisons with the wrong trigger name (`stability >` vs `has_stability >`), malformed leader rotations in `*_political_leaders.txt` |
+| **fix_styling.py**                    | Comprehensive auto-fixer for style issues (tabs, spacing, braces, whitespace)                                                                                                                                                                                                                 |
+| **fix_line_endings.py**               | Converts CRLF to LF line endings                                                                                                                                                                                                                                                              |
+| **fix_loc_yaml.py**                   | Fixes localisation YAML issues (quotes, tabs, colons, version keys)                                                                                                                                                                                                                           |
+| **validate_localization_encoding.py** | Validates and fixes UTF-8 BOM encoding for localisation files                                                                                                                                                                                                                                 |
+| **validate_mod_encoding.py**          | Checks UTF-8 encoding for `.mod` files                                                                                                                                                                                                                                                        |
 
 ### Validation (`validation/`)
 
@@ -310,7 +318,7 @@ Metrics, reference analysis, and review tools.
 | ----------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **ai_path_report.py**               | Reports one country's AI path rule, flag wiring, focus ownership, killswitch orphans, and the burdens/mechanics the AI must be able to resolve (issue #3162)    |
 | **calculate_days.py**               | Calculates days from January 1st for the HOI4 date system                                                                                                       |
-| **estimate_gdp.py**                 | Estimates starting GDP for country tags using MD's building formulas                                                                                            |
+| **estimate_gdp.py**                 | Estimates starting GDP for country tags, reading every GDP factor from the `@gdp_*` constants in `00_money_system.txt`                                          |
 | **event_load.py**                   | Reports how many events the yearly pulse schedules for one country and when, flagging years where several land in the same window                               |
 | **validation_timing_report.py**     | Summarizes saved GitHub Actions validation job and step timings, grouped by compatible revision and environment                                                 |
 | **find_idea_references.py**         | Finds which ideas from a file are referenced elsewhere in the codebase                                                                                          |
@@ -356,10 +364,11 @@ Tests live in `tests/report_lib/` and run on every PR via the `test-suite.yml` w
 
 ### Tests (`tests/`)
 
-| Script                             | Description                                                      |
-| ---------------------------------- | ---------------------------------------------------------------- |
-| **staged_validators_test.py**      | Tests staged validators using synthetic temporary files          |
-| **staged_validators_real_test.py** | Tests staged validators against real mod files with known issues |
+| Script                             | Description                                                       |
+| ---------------------------------- | ----------------------------------------------------------------- |
+| **staged_validators_test.py**      | Tests staged validators using synthetic temporary files           |
+| **staged_validators_real_test.py** | Tests staged validators against real mod files with known issues  |
+| **staged_harness_test.py**         | Checks that both harnesses fail on a crash, timeout, or no result |
 
 Tests for individual validators live in `tests/validation/`:
 
@@ -372,21 +381,21 @@ Tests for individual validators live in `tests/validation/`:
 
 Hook entry points, CI tools, shared libraries, and other scripts that stay at the `tools/` root.
 
-| Script                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                                                                                                                                                                    |
-| **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| **merge_changelog.py**            | CI: git merge driver the changelog conflict fixer uses to merge `Changelog.txt` entries without duplicating edited lines                                                                                                                                                                                                                                                                                                                                                                               |
-| **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse helpers (`add_standard_file_arguments`, `create_validation_parser`, `create_linting_parser`, `create_standard_parser`), entry points (`run_validator_main`, `run_tool_main`), `find_hoi4_install()` (`$HOI4_PATH`, then Steam's `libraryfolders.vdf`, the VS Code HOI4 extension `installPath` settings, then fixed paths), `extract_block_from_text()`. |
-| **loc.py**                        | Localisation utilities                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| **logging_tool.py**               | Logging utility                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
-| **cleanup_or.py**                 | Library for `linting/check_common_mistakes.py`: finds redundant `AND`/single-condition `OR` blocks                                                                                                                                                                                                                                                                                                                                                                                                     |
-| **assign_mio_icons.py**           | Manual tool: assigns MIO trait icons deterministically from the trait's winning modifier                                                                                                                                                                                                                                                                                                                                                                                                               |
-| **summarize_game_log.py**         | Manual tool: parses scripted `log =` lines out of game.log into a "what happened" report after a test run                                                                                                                                                                                                                                                                                                                                                                                              |
-| **sync_dynamic_tokens.py**        | Manual tool: regenerates `common/synchronized_dynamic_tokens` from error.log                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| Script                            | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **precommit_validate.py**         | Pre-commit hook (`md-validate-content`): runs the commit-stage validators in parallel, sharing one staged-file list                                                                                                                                                                                                                                                                                                                                          |
+| **standardize_staged.py**         | Pre-commit hook: routes staged files to the correct standardizer                                                                                                                                                                                                                                                                                                                                                                                             |
+| **generate_validation_report.py** | CI: renders the PR validation comment + posts GitHub Check Runs                                                                                                                                                                                                                                                                                                                                                                                              |
+| **merge_changelog.py**            | CI: git merge driver the changelog conflict fixer uses to merge `Changelog.txt` entries without duplicating edited lines                                                                                                                                                                                                                                                                                                                                     |
+| **validate_tools.py**             | CI: validates Python scripts in the tools directory                                                                                                                                                                                                                                                                                                                                                                                                          |
+| **gfx_entry_generator.py**        | GFX sprite entry generator (cross-platform, merges into existing `.gfx` files)                                                                                                                                                                                                                                                                                                                                                                               |
+| **shared_utils.py**               | Shared utilities: `Colors` class, `FileOpener` (LRU cache), `clean_filepath()`, `should_skip_file()`, `DEFAULT_EXTRA_SKIP_PATTERNS`, argparse helpers (`add_standard_file_arguments`, `create_validation_parser`, `create_linting_parser`), the `run_validator_main` entry point, `find_hoi4_install()` (`$HOI4_PATH`, then Steam's `libraryfolders.vdf`, the VS Code HOI4 extension `installPath` settings, then fixed paths), `extract_block_from_text()`. |
+| **loc.py**                        | Localisation utilities                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| **logging_tool.py**               | Logging utility                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| **cleanup_or.py**                 | Library for `linting/check_common_mistakes.py`: finds redundant `AND`/single-condition `OR` blocks                                                                                                                                                                                                                                                                                                                                                           |
+| **assign_mio_icons.py**           | Manual tool: assigns MIO trait icons deterministically from the trait's winning modifier                                                                                                                                                                                                                                                                                                                                                                     |
+| **summarize_game_log.py**         | Manual tool: parses scripted `log =` lines out of game.log into a "what happened" report after a test run                                                                                                                                                                                                                                                                                                                                                    |
+| **sync_dynamic_tokens.py**        | Manual tool: regenerates `common/synchronized_dynamic_tokens` from error.log                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ---
 
@@ -475,6 +484,32 @@ Default output shows upload progress, warnings, errors, and the saved log path.
 `--verbose` also prints detailed timing, VDF contents, the command, and SteamCMD
 output. Full diagnostics and timing remain in the log in either mode.
 
+#### Cleanup and Interrupted Runs
+
+Each run stages into its own `md_publish_*` directory under the system temp
+directory and removes it when the run ends: on success, on failure, on Ctrl+C,
+and on `kill` or a closed terminal. The `git archive` and SteamCMD children are
+stopped first. On Linux and macOS the upload runs in its own process group, so
+SteamCMD's child processes stop with it. The interactive login stays attached to
+your terminal, so Ctrl+C reaches it directly. On Windows only the SteamCMD
+process itself is stopped, and that path is not verified.
+
+Cleanup cannot run when the publisher is force-killed (`kill -9`, Task Manager)
+or the machine crashes.
+
+If staging cannot be removed, the tool prints a warning with the leftover path
+and still reports the original error. To recover by hand, check that no
+`steamcmd` process is still running, then delete that one directory. Do not
+delete other `md_publish_*` directories by name or age. Another run may own
+them.
+
+Upload logs are saved as `md_publish_*.log` in the same temp directory, outside
+staging. Retries append to the same log. Logs are never removed automatically,
+so delete them yourself once you no longer need them.
+
+Separate runs never share staging. That does not make two uploads to the same
+Workshop item safe to run at once.
+
 #### English Workshop Description
 
 Public Workshop descriptions stay unchanged unless `--sync-description` is supplied:
@@ -527,7 +562,3 @@ Use `--exclude PATTERN` to add extra exclusions, or `--no-default-excludes` to s
 | release | `2777392649` |
 | beta    | `3374271790` |
 | test    | `2777133449` |
-
-## Old Folder
-
-The `old/` directory contains unused or outdated tools kept for historical reference. They are not expected to be used in current development.

@@ -4,13 +4,13 @@ Flags em dashes (U+2014), backtick-as-apostrophe, and an odd count of \\" quotes
 inside loc VALUES only -- keys and comments are never scanned.
 """
 
-from validate_localisation import process_yml_for_prose
+from shared.suite import yml_scan
 
 
 def _hits(tmp_path, body):
     path = tmp_path / "a_l_english.yml"
     path.write_text(body, encoding="utf-8-sig")
-    return process_yml_for_prose((str(path),))
+    return yml_scan(path, "prose")
 
 
 def test_flags_em_dash_in_value(tmp_path):
@@ -59,7 +59,9 @@ def test_both_violations_in_one_file(tmp_path):
 
 def test_flags_odd_count_of_escaped_quotes(tmp_path):
     results = _hits(tmp_path, 'l_english:\n key:0 "He said: \\"go now."\n')
-    assert [(r.category, r.line) for r in results] == [("loc-unbalanced-quote", 2)]
+    assert [(r.category, r.severity, r.line) for r in results] == [
+        ("loc-unbalanced-quote", "error", 2)
+    ]
 
 
 def test_balanced_escaped_quotes_not_flagged(tmp_path):
