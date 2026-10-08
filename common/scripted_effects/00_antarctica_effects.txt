@@ -3318,6 +3318,23 @@ antarctica_apply_small_treaty_laboratory_bonuses = {
 # Usage
 # antarctica_apply_station_maintenance_costs = yes
 antarctica_apply_station_maintenance_costs = {
+	# Zero every owner first so a country with several stations pays for all of them
+	for_each_loop = {
+		array = global.antarctica_station_ids
+		value = process_station_id
+
+		if = {
+			limit = {
+				check_variable = { process_station_id > 0 }
+				check_variable = { global.antarctica_station_controller^process_station_id > 0 }
+			}
+			set_variable = { temp_controller_id = global.antarctica_station_controller^process_station_id }
+			var:temp_controller_id = {
+				set_variable = { antarctica_station_total_upkeep_multiplier = 0 }
+			}
+		}
+	}
+
 	for_each_loop = {
 		array = global.antarctica_station_ids
 		value = process_station_id
@@ -3337,7 +3354,6 @@ antarctica_apply_station_maintenance_costs = {
 
 				# Scope directly to the owner country ID and add upkeep there.
 				var:temp_controller_id = {
-					set_variable = { antarctica_station_total_upkeep_multiplier = 0 }
 					add_to_variable = { antarctica_station_total_upkeep_multiplier = global.antarctica_temp_upkeep_cost }
 				}
 			}
