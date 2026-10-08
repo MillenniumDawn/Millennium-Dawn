@@ -661,3 +661,123 @@ EGY_end_libyan_plan_sides = {
 		remove_relation_rule_override = { target = SSU can_send_volunteers = no }
 	}
 }
+
+# Parameters:
+# - temp_bread: signed bread pressure change
+EGY_change_bread_pressure = {
+	add_to_variable = { EGY_bread_pressure = temp_bread }
+	clamp_variable = { var = EGY_bread_pressure min = 0 max = 100 }
+	custom_effect_tooltip = EGY_change_bread_pressure_tt
+	hidden_effect = { EGY_update_bread_tier = yes }
+}
+
+# Parameters:
+# - temp_bread: signed bread pressure change before the wheat stockpile is applied
+EGY_world_food_price_shock = {
+	if = {
+		limit = { has_completed_focus = EGY_wheat_import_security }
+		multiply_temp_variable = { temp_bread = 0.5 }
+	}
+	EGY_change_bread_pressure = yes
+}
+
+EGY_update_bread_tier = {
+	set_temp_variable = { bread_line_1 = 50 }
+	set_temp_variable = { bread_line_2 = 70 }
+	set_temp_variable = { bread_line_3 = 90 }
+	add_to_temp_variable = { bread_line_1 = EGY_bread_threshold_offset }
+	add_to_temp_variable = { bread_line_2 = EGY_bread_threshold_offset }
+	add_to_temp_variable = { bread_line_3 = EGY_bread_threshold_offset }
+	set_temp_variable = { bread_new_tier = 0 }
+	if = {
+		limit = { check_variable = { var = EGY_bread_pressure value = bread_line_1 compare = greater_than_or_equals } }
+		set_temp_variable = { bread_new_tier = 1 }
+	}
+	if = {
+		limit = { check_variable = { var = EGY_bread_pressure value = bread_line_2 compare = greater_than_or_equals } }
+		set_temp_variable = { bread_new_tier = 2 }
+	}
+	if = {
+		limit = { check_variable = { var = EGY_bread_pressure value = bread_line_3 compare = greater_than_or_equals } }
+		set_temp_variable = { bread_new_tier = 3 }
+	}
+	if = {
+		limit = { NOT = { check_variable = { EGY_bread_tier = bread_new_tier } } }
+		set_variable = { EGY_bread_tier = bread_new_tier }
+		remove_ideas = { EGY_bread_queues_idea EGY_bread_strikes_idea EGY_bread_riots_idea }
+		if = {
+			limit = { check_variable = { EGY_bread_tier = 1 } }
+			add_ideas = EGY_bread_queues_idea
+		}
+		else_if = {
+			limit = { check_variable = { EGY_bread_tier = 2 } }
+			add_ideas = EGY_bread_strikes_idea
+		}
+		else_if = {
+			limit = { check_variable = { EGY_bread_tier = 3 } }
+			add_ideas = EGY_bread_riots_idea
+		}
+	}
+}
+
+# Parameters:
+# - temp_subsidy_level: 1 Universal, 2 Targeted, 3 Smart Cards
+EGY_set_bread_subsidy_level = {
+	set_variable = { EGY_bread_subsidy_level = temp_subsidy_level }
+	remove_ideas = { EGY_bread_subsidy_universal_idea EGY_bread_subsidy_targeted_idea EGY_bread_subsidy_smart_cards_idea }
+	if = {
+		limit = { check_variable = { EGY_bread_subsidy_level = 1 } }
+		add_ideas = EGY_bread_subsidy_universal_idea
+	}
+	else_if = {
+		limit = { check_variable = { EGY_bread_subsidy_level = 2 } }
+		add_ideas = EGY_bread_subsidy_targeted_idea
+	}
+	else_if = {
+		limit = { check_variable = { EGY_bread_subsidy_level = 3 } }
+		add_ideas = EGY_bread_subsidy_smart_cards_idea
+	}
+}
+
+EGY_bread_monthly_tick = {
+	set_temp_variable = { temp_bread = 0.5 }
+	if = {
+		limit = { has_completed_focus = EGY_the_army_bakes_bread }
+		add_to_temp_variable = { temp_bread = -0.25 }
+	}
+	if = {
+		limit = { check_variable = { EGY_bread_subsidy_level = 3 } }
+		add_to_temp_variable = { temp_bread = -0.25 }
+	}
+	add_to_variable = { EGY_bread_pressure = temp_bread }
+	clamp_variable = { var = EGY_bread_pressure min = 0 max = 100 }
+	EGY_update_bread_tier = yes
+	if = {
+		limit = { check_variable = { EGY_bread_tier > 1 } }
+		set_temp_variable = { temp_influence = 1 }
+		EGY_change_brotherhood_influence = yes
+	}
+	if = {
+		limit = {
+			check_variable = { EGY_bread_tier > 0 }
+			NOT = { has_country_flag = EGY_bread_queues_cooldown }
+		}
+		random = {
+			chance = 15
+			set_country_flag = { flag = EGY_bread_queues_cooldown days = 180 value = 1 }
+			country_event = { id = egypt_mubarak.73 days = 1 }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { EGY_bread_tier > 1 }
+			date > 2008.3.1
+			NOT = { has_country_flag = EGY_mahalla_cooldown }
+		}
+		random = {
+			chance = 20
+			set_country_flag = { flag = EGY_mahalla_cooldown days = 365 value = 1 }
+			country_event = { id = egypt_mubarak.74 days = 1 }
+		}
+	}
+}
