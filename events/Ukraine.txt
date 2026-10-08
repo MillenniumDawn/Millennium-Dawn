@@ -48,6 +48,7 @@ add_namespace = ukr_modernize_sov_equipment_t55_reactivation_program
 add_namespace = ukraine_develop_btr3
 add_namespace = ukraine_develop_btr4
 add_namespace = ukraine_develop_2s22
+add_namespace = ukraine_modernize_planes_restore_an_71
 ##############MAIDAN##############
 #Start Protest
 country_event = {
@@ -5257,7 +5258,7 @@ country_event = {
 			limit = { check_variable = { UKR_aid_report_strike > 0 } }
 			if = {
 				limit = { has_dlc = "By Blood Alone" }
-				effect_tooltip = { add_equipment_to_stockpile = { variant_name = "F-16C Fighting Falcon" type = small_plane_strike_airframe_2 amount = UKR_aid_report_strike } }
+				effect_tooltip = { add_equipment_to_stockpile = { variant_name = "F-16C Blk 40/42" type = small_plane_strike_airframe_2 amount = UKR_aid_report_strike } }
 			}
 			else = {
 				effect_tooltip = { add_equipment_to_stockpile = { type = small_plane_strike_airframe amount = UKR_aid_report_strike } }
@@ -21318,5 +21319,547 @@ country_event = {
 		else = {
 			set_leader = yes
 		}
+	}
+}
+
+country_event = {
+	id = ukraine_modernize_planes_restore_an_71.1
+	title = ukraine_modernize_planes_restore_an_71.1.name
+	desc = ukraine_modernize_planes_restore_an_71.1.desc
+	picture = GFX_ukraine_modernize_planes_restore_an_71_radar
+
+	is_triggered_only = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_modernize_planes_restore_an_71.1.a
+		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.1.a executed"
+
+		ai_chance = {
+			base = 50
+			modifier = { factor = 0.5 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 2 has_country_flag = UKR_strategic_industry_eastern_export_dependence }
+			modifier = { factor = 0.5 has_country_flag = UKR_strategic_industry_western_diversification }
+		}
+
+		trigger = {
+			country_exists = SOV
+			NOT = { has_war_with = SOV }
+		}
+
+		set_temp_variable = { treasury_change = -0.2 }
+		modify_treasury_effect = yes
+
+		set_temp_variable = { percent_change = 0.04 }
+		set_temp_variable = { tag_index = SOV.id }
+		set_temp_variable = { influence_target = ROOT.id }
+		change_influence_percentage = yes
+
+		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_kvant_tt
+
+		country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 180 }
+	}
+
+	option = {
+		name = ukraine_modernize_planes_restore_an_71.1.b
+		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.1.b executed"
+
+		ai_chance = {
+			base = 50
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 2 has_country_flag = UKR_strategic_industry_western_diversification }
+			modifier = { factor = 0.5 has_country_flag = UKR_strategic_industry_eastern_export_dependence }
+		}
+
+		trigger = {
+			country_exists = ISR
+			NOT = { has_war_with = ISR }
+		}
+
+		set_temp_variable = { treasury_change = -0.5 }
+		modify_treasury_effect = yes
+
+		set_temp_variable = { percent_change = -0.02 }
+		set_temp_variable = { tag_index = SOV.id }
+		set_temp_variable = { influence_target = ROOT.id }
+		change_influence_percentage = yes
+
+		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_phalcon_tt
+
+		set_country_flag = UKR_an_71_phalcon_radar_flag
+
+		country_event = { id = ukraine_modernize_planes_restore_an_71.2 days = 270 }
+	}
+}
+
+country_event = {
+	id = ukraine_modernize_planes_restore_an_71.2
+	title = ukraine_modernize_planes_restore_an_71.2.name
+	desc = {
+		text = ukraine_modernize_planes_restore_an_71.2.desc_kvant
+		trigger = { NOT = { has_country_flag = UKR_an_71_phalcon_radar_flag } }
+	}
+	desc = {
+		text = ukraine_modernize_planes_restore_an_71.2.desc_phalcon
+		trigger = { has_country_flag = UKR_an_71_phalcon_radar_flag }
+	}
+	picture = GFX_ukraine_modernize_planes_restore_an_71
+
+	is_triggered_only = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_modernize_planes_restore_an_71.2.a
+		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.2.a executed"
+
+		ai_chance = {
+			base = 50
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		trigger = { controls_state = 696 } #Kharkiv
+
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			if = {
+				limit = { NOT = { has_tech = awacs_1 } }
+				set_technology = { awacs_1 = 1 popup = no }
+			}
+			if = {
+				limit = { has_country_flag = UKR_an_71_phalcon_radar_flag }
+				create_equipment_variant = {
+					name = "An-71U"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 0
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_2
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_2
+						avionics_type_slot = avionics_manned_1
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_2
+						special_slot_type_3 = empty
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+				add_equipment_to_stockpile = { type = large_plane_awacs_airframe_2 variant_name = "An-71U" amount = 1 producer = UKR }
+			}
+			else = {
+				create_equipment_variant = {
+					name = "An-71"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 0
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_1
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_2
+						avionics_type_slot = avionics_manned_1
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_2
+						special_slot_type_3 = empty
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+				add_equipment_to_stockpile = { type = large_plane_awacs_airframe_2 variant_name = "An-71" amount = 1 producer = UKR }
+			}
+		}
+		else = {
+			if = {
+				limit = { NOT = { has_tech = awacs_plane1 } }
+				set_technology = { awacs_plane1 = 1 popup = no }
+			}
+			add_equipment_to_stockpile = { type = awacs_equipment_1 amount = 1 producer = UKR }
+		}
+
+		set_temp_variable = { treasury_change = -0.1 }
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_200_tt
+
+		country_event = { id = ukraine_modernize_planes_restore_an_71.3 days = 150 }
+	}
+
+	option = {
+		name = ukraine_modernize_planes_restore_an_71.2.b
+		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.2.b executed"
+
+		ai_chance = {
+			base = 30
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		trigger = {
+			controls_state = 696 #Kharkiv
+			controls_state = 694 #Zaporizhzhia
+		}
+
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			if = {
+				limit = { NOT = { has_tech = awacs_1 } }
+				set_technology = { awacs_1 = 1 popup = no }
+			}
+			if = {
+				limit = { has_country_flag = UKR_an_71_phalcon_radar_flag }
+				create_equipment_variant = {
+					name = "An-71U"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 0
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_2
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_2
+						avionics_type_slot = avionics_manned_1
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_2
+						special_slot_type_3 = empty
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+				add_equipment_to_stockpile = { type = large_plane_awacs_airframe_2 variant_name = "An-71U" amount = 1 producer = UKR }
+			}
+			else = {
+				create_equipment_variant = {
+					name = "An-71"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 0
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_1
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_2
+						avionics_type_slot = avionics_manned_1
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_2
+						special_slot_type_3 = empty
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+				add_equipment_to_stockpile = { type = large_plane_awacs_airframe_2 variant_name = "An-71" amount = 1 producer = UKR }
+			}
+		}
+		else = {
+			if = {
+				limit = { NOT = { has_tech = awacs_plane1 } }
+				set_technology = { awacs_plane1 = 1 popup = no }
+			}
+			add_equipment_to_stockpile = { type = awacs_equipment_1 amount = 1 producer = UKR }
+		}
+
+		set_temp_variable = { treasury_change = -0.2 }
+		modify_treasury_effect = yes
+
+		custom_effect_tooltip = ukraine_modernize_planes_restore_an_71_300_tt
+
+		country_event = { id = ukraine_modernize_planes_restore_an_71.4 days = 240 }
+	}
+
+	option = {
+		name = ukraine_modernize_planes_restore_an_71.2.c
+		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.2.c executed"
+
+		ai_chance = { base = 20 }
+
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			if = {
+				limit = { NOT = { has_tech = awacs_1 } }
+				set_technology = { awacs_1 = 1 popup = no }
+			}
+			if = {
+				limit = { has_country_flag = UKR_an_71_phalcon_radar_flag }
+				create_equipment_variant = {
+					name = "An-71U"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 0
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_2
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_2
+						avionics_type_slot = avionics_manned_1
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_2
+						special_slot_type_3 = empty
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+				add_equipment_to_stockpile = { type = large_plane_awacs_airframe_2 variant_name = "An-71U" amount = 1 producer = UKR }
+			}
+			else = {
+				create_equipment_variant = {
+					name = "An-71"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 0
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_1
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_2
+						avionics_type_slot = avionics_manned_1
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_2
+						special_slot_type_3 = empty
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+				add_equipment_to_stockpile = { type = large_plane_awacs_airframe_2 variant_name = "An-71" amount = 1 producer = UKR }
+			}
+		}
+		else = {
+			if = {
+				limit = { NOT = { has_tech = awacs_plane1 } }
+				set_technology = { awacs_plane1 = 1 popup = no }
+			}
+			add_equipment_to_stockpile = { type = awacs_equipment_1 amount = 1 producer = UKR }
+		}
+
+		air_experience = 10
+	}
+}
+
+country_event = {
+	id = ukraine_modernize_planes_restore_an_71.3
+	title = ukraine_modernize_planes_restore_an_71.3.name
+	desc = ukraine_modernize_planes_restore_an_71.3.desc
+	picture = GFX_ukraine_modernize_planes_restore_an_71tk
+
+	is_triggered_only = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_modernize_planes_restore_an_71.3.a
+		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.3.a executed"
+
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			if = {
+				limit = { has_country_flag = UKR_an_71_phalcon_radar_flag }
+				create_equipment_variant = {
+					name = "An-71UTK-200"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 1
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_2
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_2
+						avionics_type_slot = avionics_manned_2
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_3
+						special_slot_type_3 = spec_refuel_1
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "An-71TK-200"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 1
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_1
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_2
+						avionics_type_slot = avionics_manned_2
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_3
+						special_slot_type_3 = spec_refuel_1
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+			}
+		}
+
+		air_experience = 5
+	}
+}
+
+country_event = {
+	id = ukraine_modernize_planes_restore_an_71.4
+	title = ukraine_modernize_planes_restore_an_71.4.name
+	desc = ukraine_modernize_planes_restore_an_71.4.desc
+	picture = GFX_ukraine_modernize_planes_restore_an_71tk
+
+	is_triggered_only = yes
+
+	trigger = { original_tag = UKR }
+
+	option = {
+		name = ukraine_modernize_planes_restore_an_71.4.a
+		log = "[GetDateText]: [This.GetName]: ukraine_modernize_planes_restore_an_71.4.a executed"
+
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			if = {
+				limit = { has_country_flag = UKR_an_71_phalcon_radar_flag }
+				create_equipment_variant = {
+					name = "An-71UTK-300"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 1
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_2
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_3
+						avionics_type_slot = avionics_manned_3
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_2
+						special_slot_type_3 = empty
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+			}
+			else = {
+				create_equipment_variant = {
+					name = "An-71TK-300"
+					type = large_plane_awacs_airframe_2
+					parent_version = 0 #Current Version: 1
+					allow_without_tech = yes
+
+					modules = {
+						fixed_main_weapon_slot = weap_buff_awacs_1
+						fixed_gun_slot = empty
+						fixed_auxiliary_weapon_slot_1 = empty
+						fixed_auxiliary_weapon_slot_2 = empty
+						fixed_auxiliary_weapon_slot_3 = empty
+						engine_type_slot = engine_jet_double_3
+						avionics_type_slot = avionics_manned_3
+						wingform_type_slot = wing_straight
+						special_slot_type_1 = spec_countermeasures_1
+						special_slot_type_2 = spec_redundant_2
+						special_slot_type_3 = empty
+						special_slot_type_4 = empty
+					}
+
+					upgrades = { plane_bba_engine_upgrade = 2 }
+
+					design_team = mio:UKR_antonov_aircraft_manufacturer
+
+					icon = "GFX_SOV_AIR_An_71"
+					model = "SOV_awacs_equipment_entity"
+				}
+			}
+		}
+
+		air_experience = 5
 	}
 }

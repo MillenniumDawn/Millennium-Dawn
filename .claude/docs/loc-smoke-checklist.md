@@ -4,7 +4,7 @@ Python tests and CI prove that tokens, scopes, and formats in English strings ma
 what we expect. Only the game proves they render. Run this list by hand after a change
 to dynamic localisation, and report the result apart from the Python and CI results.
 
-The automated side lives in `tools/tests/validation/localisation_contract_test.py` and
+The automated side lives in `tools/tests/content/localisation_contract_test.py` and
 `tools/tests/validation/localisation_regression_fixtures_test.py`.
 
 ## What to record
