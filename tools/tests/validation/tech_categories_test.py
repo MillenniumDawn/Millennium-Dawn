@@ -1,6 +1,7 @@
 """Tests for validate_tech_categories."""
 
 from shared.paths import REPO_ROOT
+from shared.suite import write_under as _write
 from validate_tech_categories import (
     _LEGACY_CATEGORIES,
     Validator,
@@ -41,12 +42,6 @@ _TECHS = (
 _LOC = "l_english:\n" + "".join(
     f' {name}: "{name}"\n {name}_research: "${name}$ Research"\n' for name in _TAG_NAMES
 )
-
-
-def _write(tmp_path, rel_path, content):
-    target = tmp_path / rel_path
-    target.parent.mkdir(parents=True, exist_ok=True)
-    target.write_text(content, encoding="utf-8")
 
 
 def _run(tmp_path, rel_path, content, tags=_TAGS, techs=_TECHS, loc=_LOC):
@@ -251,6 +246,18 @@ def test_ai_focus_research_weights_are_checked(tmp_path):
     messages = _messages(v)
     assert len(messages) == 1
     assert "CAT_sam" in messages[0]
+
+
+def test_tech_ai_research_weights_keys_are_checked(tmp_path):
+    v = _run(
+        tmp_path,
+        "common/technologies/01_test.txt",
+        "technologies = {\n\tx = {\n\t\tcategories = { CAT_missile }\n"
+        "\t\tai_research_weights = { CAT_missile = 3 CAT_reactors = 2 }\n\t}\n}\n",
+    )
+    messages = _messages(v)
+    assert len(messages) == 1
+    assert "CAT_reactors" in messages[0]
 
 
 def test_tag_without_loc_keys_is_reported(tmp_path):

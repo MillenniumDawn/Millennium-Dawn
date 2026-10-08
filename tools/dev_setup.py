@@ -32,6 +32,7 @@ import re
 import subprocess
 import sys
 import sysconfig
+import tomllib
 from pathlib import Path
 
 # Force line-buffered stdout so prints appear in the correct order
@@ -46,7 +47,7 @@ DOCS_DIR = REPO_ROOT / "docs"
 PYPROJECT = REPO_ROOT / "pyproject.toml"
 
 # Packages whose import name differs from their distribution name.
-_IMPORT_NAMES = {"pillow": "PIL", "pyyaml": "yaml"}
+_IMPORT_NAMES = {"pillow": "PIL", "pyyaml": "yaml", "pytest-xdist": "xdist"}
 
 MIN_PYTHON = (3, 12)
 MIN_NODE = 24
@@ -200,10 +201,15 @@ def _group_packages(group: str) -> list[str]:
     """Return the package specs in a pyproject [dependency-groups] entry."""
     if not PYPROJECT.exists():
         return []
-    match = re.search(
-        rf"(?ms)^{re.escape(group)}\s*=\s*\[(.*?)\]", PYPROJECT.read_text()
-    )
-    return re.findall(r'"([^"]+)"', match.group(1)) if match else []
+    with PYPROJECT.open("rb") as handle:
+        groups = tomllib.load(handle).get("dependency-groups", {})
+    specs: list[str] = []
+    for entry in groups.get(group, []):
+        if isinstance(entry, str):
+            specs.append(entry)
+        else:
+            specs.extend(_group_packages(entry["include-group"]))
+    return specs
 
 
 def _version_tuple(value: str) -> tuple[int, ...]:

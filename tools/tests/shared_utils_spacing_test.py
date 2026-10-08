@@ -1,7 +1,8 @@
 """Unit tests for shared_utils.normalize_spacing.
 
-Guards the MD style rule (AGENTS.md) that ``{``, ``}`` and ``=`` carry single
-spaces, while string interiors, comments and indentation stay byte-exact.
+Guards the MD style rule (tools/standardization/README.md) that ``{``, ``}``
+and ``=`` carry single spaces, while string interiors, comments and indentation
+stay byte-exact.
 """
 
 from shared_utils import normalize_spacing

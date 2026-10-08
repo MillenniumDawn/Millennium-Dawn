@@ -434,31 +434,6 @@ ENG_update_wales_pressure = {
 	update_eng_devolution_dirty_variable = yes
 }
 
-# An integrated region leaves the mechanic on a fixed baseline: no agitation, no nationalists, wholly dependent
-ENG_apply_integrated_baseline = {
-	if = {
-		limit = { check_variable = { ENG_referendum_target = 1 } }
-		set_variable = { ENG_scottish_agitation = 0 }
-		set_variable = { ENG_scottish_nationalists = 0 }
-		set_variable = { ENG_scottish_dependency = 100 }
-		ENG_update_scottish_pressure = yes
-	}
-	else_if = {
-		limit = { check_variable = { ENG_referendum_target = 2 } }
-		set_variable = { ENG_north_irish_agitation = 0 }
-		set_variable = { ENG_north_irish_nationalists = 0 }
-		set_variable = { ENG_north_irish_dependency = 100 }
-		ENG_update_north_irish_pressure = yes
-	}
-	else_if = {
-		limit = { check_variable = { ENG_referendum_target = 3 } }
-		set_variable = { ENG_wales_agitation = 0 }
-		set_variable = { ENG_wales_nationalists = 0 }
-		set_variable = { ENG_wales_dependency = 100 }
-		ENG_update_wales_pressure = yes
-	}
-}
-
 ENG_settle_northern_ireland_question = {
 	if = {
 		limit = { has_idea = ENG_good_friday_agreement }
@@ -634,45 +609,60 @@ ENG_release_referendum_region = {
 	}
 }
 
-ENG_integrate_referendum_region = {
-	if = {
-		limit = { check_variable = { ENG_referendum_target = 1 } }
-		set_country_flag = ENG_scottish_integrated
-		clr_country_flag = ENG_scottish_rejected
-		clr_country_flag = ENG_auto_subsidy_SCO
-		every_owned_state = {
-			limit = { is_core_of = SCO }
-			if = {
-				limit = { has_dynamic_modifier = { modifier = ENG_resistance_against_westminster } }
-				remove_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
-			}
-			remove_core_of = SCO
+ENG_integrate_scotland = {
+	set_country_flag = ENG_scottish_integrated
+	clr_country_flag = ENG_scottish_rejected
+	clr_country_flag = ENG_auto_subsidy_SCO
+	custom_effect_tooltip = ENG_integrate_scotland_tt
+	every_owned_state = {
+		limit = { is_core_of = SCO }
+		if = {
+			limit = { has_dynamic_modifier = { modifier = ENG_resistance_against_westminster } }
+			remove_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
 		}
-		ENG_apply_integrated_baseline = yes
+		remove_core_of = SCO
 	}
-	else_if = {
-		limit = { check_variable = { ENG_referendum_target = 2 } }
-		set_country_flag = ENG_north_irish_integrated
-		clr_country_flag = ENG_irish_rejected
-		clr_country_flag = ENG_auto_subsidy_NIR
-		17 = { remove_core_of = NIR }
-		ENG_settle_northern_ireland_question = yes
-		ENG_apply_integrated_baseline = yes
+	hidden_effect = {
+		set_variable = { ENG_scottish_agitation = 0 }
+		set_variable = { ENG_scottish_nationalists = 0 }
+		set_variable = { ENG_scottish_dependency = 100 }
+		ENG_update_scottish_pressure = yes
 	}
-	else_if = {
-		limit = { check_variable = { ENG_referendum_target = 3 } }
-		set_country_flag = ENG_welsh_integrated
-		clr_country_flag = ENG_welsh_rejected
-		clr_country_flag = ENG_auto_subsidy_WAS
-		every_owned_state = {
-			limit = { is_core_of = WAS }
-			if = {
-				limit = { has_dynamic_modifier = { modifier = ENG_resistance_against_westminster } }
-				remove_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
-			}
-			remove_core_of = WAS
+}
+
+ENG_integrate_northern_ireland = {
+	set_country_flag = ENG_north_irish_integrated
+	clr_country_flag = ENG_irish_rejected
+	clr_country_flag = ENG_auto_subsidy_NIR
+	custom_effect_tooltip = ENG_integrate_northern_ireland_tt
+	17 = { remove_core_of = NIR }
+	ENG_settle_northern_ireland_question = yes
+	hidden_effect = {
+		set_variable = { ENG_north_irish_agitation = 0 }
+		set_variable = { ENG_north_irish_nationalists = 0 }
+		set_variable = { ENG_north_irish_dependency = 100 }
+		ENG_update_north_irish_pressure = yes
+	}
+}
+
+ENG_integrate_wales = {
+	set_country_flag = ENG_welsh_integrated
+	clr_country_flag = ENG_welsh_rejected
+	clr_country_flag = ENG_auto_subsidy_WAS
+	custom_effect_tooltip = ENG_integrate_wales_tt
+	every_owned_state = {
+		limit = { is_core_of = WAS }
+		if = {
+			limit = { has_dynamic_modifier = { modifier = ENG_resistance_against_westminster } }
+			remove_dynamic_modifier = { modifier = ENG_resistance_against_westminster }
 		}
-		ENG_apply_integrated_baseline = yes
+		remove_core_of = WAS
+	}
+	hidden_effect = {
+		set_variable = { ENG_wales_agitation = 0 }
+		set_variable = { ENG_wales_nationalists = 0 }
+		set_variable = { ENG_wales_dependency = 100 }
+		ENG_update_wales_pressure = yes
 	}
 }
 
