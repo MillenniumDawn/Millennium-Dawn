@@ -1205,48 +1205,70 @@ on_actions = {
 				}
 			}
 
-			# Bosnian civil war: the winner absorbs the loser, so no peace conference decides it
+			# Bosnian civil war: the weekly BOS, RSK, and HZG hooks fire the recovery events from these pending flags
 			if = {
 				limit = {
 					BOS = { has_country_flag = civil_war_bosnia }
 					ROOT = { OR = { tag = BOS tag = RSK tag = HZG } }
-					FROM = { OR = { tag = BOS tag = RSK tag = HZG } }
 				}
 				ROOT = {
+					clr_country_flag = BOS_rsk_civil_war_recovery_pending
+					clr_country_flag = BOS_hzg_civil_war_recovery_pending
 					clr_country_flag = RSK_civil_war_recovery_pending
 					clr_country_flag = HZG_civil_war_recovery_pending
-					# No peace conference follows to lift it
-					if = {
-						limit = { has_idea = capitulated_nation_no_call_ally }
-						remove_ideas = capitulated_nation_no_call_ally
-					}
 				}
-				FROM = {
-					if = {
-						limit = { tag = BOS }
-						if = {
-							limit = { ROOT = { tag = HZG } }
-							set_country_flag = BOS_hzg_civil_war_recovery_pending
-							country_event = { id = BOS_political.20 days = 2 }
-						}
-						else = { country_event = { id = BOS_events.4 days = 2 } }
+				# The breakaway that knocks Bosnia out, or absorbs the one that did, has won
+				if = {
+					limit = {
+						FROM = { OR = { tag = RSK tag = HZG } }
+						NOT = { BOS = { has_war_with = ROOT } }
 					}
-					# A breakaway gets its recovery event only once Bosnia itself is beaten
-					else_if = {
-						limit = {
-							OR = {
-								ROOT = { tag = BOS }
-								NOT = { country_exists = BOS }
-							}
-						}
+					FROM = {
 						if = {
 							limit = { tag = RSK }
 							set_country_flag = RSK_civil_war_recovery_pending
 						}
 						else = { set_country_flag = HZG_civil_war_recovery_pending }
-						country_event = { id = BOS_political.20 days = 2 }
 					}
-					annex_country = { target = ROOT transfer_troops = no }
+				}
+				# A beaten breakaway is absorbed at once; a beaten Bosnia keeps its peace conference
+				if = {
+					limit = {
+						ROOT = { NOT = { tag = BOS } }
+						OR = {
+							BOS = { has_war_with = ROOT }
+							FROM = { OR = { tag = RSK tag = HZG } }
+						}
+					}
+					ROOT = {
+						clr_country_flag = civil_war_bosnia
+						clr_country_flag = civil_war_bos_two
+						remove_ideas = {
+							BOS_aggressive_nation
+							BOS_croat_balkan_aspiration
+							BOS_srpska_balkan_aspiration
+						}
+						if = {
+							limit = { has_idea = capitulated_nation_no_call_ally }
+							remove_ideas = capitulated_nation_no_call_ally
+						}
+					}
+					if = {
+						limit = { is_in_array = { global.un_sc_pressure_end_war = ROOT } }
+						remove_from_array = { global.un_sc_pressure_end_war = ROOT }
+					}
+					if = {
+						limit = { BOS = { has_war_with = ROOT } }
+						BOS = {
+							if = {
+								limit = { has_country_flag = BOS_defeat_all_serbs }
+								set_country_flag = BOS_rsk_civil_war_recovery_pending
+							}
+							else = { set_country_flag = BOS_hzg_civil_war_recovery_pending }
+							annex_country = { target = ROOT transfer_troops = no }
+						}
+					}
+					else = { FROM = { annex_country = { target = ROOT transfer_troops = no } } }
 				}
 			}
 
