@@ -16,6 +16,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   fix the validator. Never delete or weaken a test to pass. Removing a dead or
   duplicate test is a separate cleanup change that keeps the coverage total.
 - The suite runs under `pytest -n auto`, so a test writes only under `tmp_path`.
+- Worker pools in tests start with `spawn` on every OS. A pool worker sees what it
+  imports and what it is passed, not state a test patched in the parent.
 - Tests that read live game files live in `tools/tests/content/`. The `Content tests`
   job runs them once, on tools or game content changes. The tools test jobs skip
   that directory and check out only the few game files named in the workflow.

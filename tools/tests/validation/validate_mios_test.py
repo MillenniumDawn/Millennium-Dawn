@@ -7,7 +7,7 @@ import validate_mios as V
 
 
 def _validator(tmp_path):
-    return V.Validator(str(tmp_path))
+    return V.Validator(str(tmp_path), workers=1)
 
 
 def test_commented_org_blocks_are_not_parsed():
@@ -251,7 +251,7 @@ def test_staged_english_localisation_scans_all_mios(tmp_path, monkeypatch):
     )
     monkeypatch.setenv("MD_STAGED_FILES", "localisation/english/MD_mio_l_english.yml")
 
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
     v.run_validations()
 
     assert [issue.category for issue in v._issues] == ["trait-loc-missing"]
@@ -1207,7 +1207,7 @@ def test_a_staged_equipment_edit_rescans_every_org(tmp_path, write_path, monkeyp
     monkeypatch.setenv(
         "MD_STAGED_FILES", "common/units/equipment/MD_test_equipment.txt"
     )
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1246,7 +1246,7 @@ def test_a_staged_scripted_trigger_rescans_orgs_and_references(
     monkeypatch.setenv(
         "MD_STAGED_FILES", "common/scripted_triggers/99_USA_scripted_triggers.txt"
     )
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1260,7 +1260,7 @@ def test_staged_run_with_no_mio_input_skips(tmp_path, write_path, monkeypatch):
     _run_repo(tmp_path, write_path)
     write_path(tmp_path, "interface/unrelated.txt", "guiTypes = { }\n")
     monkeypatch.setenv("MD_STAGED_FILES", "interface/unrelated.txt")
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1275,7 +1275,7 @@ def test_staged_interface_edit_rescans_all_mios(tmp_path, write_path, monkeypatc
     sprite.write_text("spriteType = { name = GFX_test }\n", encoding="utf-8")
     monkeypatch.setenv("MD_STAGED_FILES", "interface/mio.gfx")
 
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     assert v._org_files()
 
