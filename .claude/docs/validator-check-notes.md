@@ -320,7 +320,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     `equipment_type`, else that of the org named by `include`.
   - `NON_STAT_BONUS_KEYS` excludes the per-archetype production keys.
     `zero_base_exempt_stats` in the config is empty on purpose: confirm in game before
-    adding a stat.
+    adding a stat. The naval `*_factor` keys stay out of it. Vanilla declares their base
+    on hulls and modules, and MD declares none, so they are dead here.
   - The stat index (`equipment_stats.py`) counts a stat only with a non-zero value, and
     scopes modules to the slots a hull accepts.
 - Naval production bonus: ships are built in dockyards, which have no production
