@@ -426,14 +426,14 @@ Inflation is one of the most important economic variables in Millennium Dawn. It
 
 Six factors feed into the quarterly inflation calculation:
 
-| Factor                       | Effect on Inflation                                                                                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **GDP/C Growth**             | Higher GDP per capita growth directly increases inflation pressure. A rapidly growing economy generates demand that pushes prices up.                   |
-| **Tax Rate**                 | Higher average tax rates reduce inflation pressure. Taxes act as a fiscal brake on the economy -- they pull money out of circulation.                   |
-| **Central Bank Policy Rate** | Positive rate points reduce inflation carryover; rates at or below 0% leave it at 90%. A rate below neutral also adds more inflation.                   |
-| **Economic Cycle**           | Boom and fast growth stages add inflationary pressure. Depression and recession stages reduce it. Stable growth is neutral.                             |
-| **Budget Balance**           | A budget deficit increases inflation (simulating money printing to cover the gap). A budget surplus decreases it.                                       |
-| **Currency Strength**        | A weak currency (below 1.0) feeds additional inflation pressure through higher import costs. A strong currency suppresses it.                           |
+| Factor                       | Effect on Inflation                                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **GDP/C Growth**             | Higher GDP per capita growth directly increases inflation pressure. A rapidly growing economy generates demand that pushes prices up. |
+| **Tax Rate**                 | Higher average tax rates reduce inflation pressure. Taxes act as a fiscal brake on the economy -- they pull money out of circulation. |
+| **Central Bank Policy Rate** | Positive rate points reduce inflation carryover; rates at or below 0% leave it at 90%. A rate below neutral also adds more inflation. |
+| **Economic Cycle**           | Boom and fast growth stages add inflationary pressure. Depression and recession stages reduce it. Stable growth is neutral.           |
+| **Budget Balance**           | A budget deficit increases inflation (simulating money printing to cover the gap). A budget surplus decreases it.                     |
+| **Currency Strength**        | A weak currency (below 1.0) feeds additional inflation pressure through higher import costs. A strong currency suppresses it.         |
 
 ### The Inflation Formula
 
@@ -1201,7 +1201,9 @@ When the economy is in severe distress (interest above 15%), countries can reque
 3. **Second-most influential country** (less diplomatic damage)
 4. **Most influential country** (last resort, most influence cost)
 
-If interest exceeds 25% and the country is not at war, the AI will default on its debt, triggering severe consequences.
+The AI treats these as last resorts. It considers them only once both taxes are at their automation caps (40% population, 50% corporate) and it still runs a deficit, its economy is in a major crisis, a financial collapse is incoming, or interest is at least 15% and debt service exceeds 30% of income. The debt-service condition applies even with a budget surplus. Cheap loans also open on a deficit over 10% of income, and the AI counts the paused debt payments as spending so it keeps raising taxes during the loan.
+
+An AI that passes one of those conditions may default on its debt once interest reaches 25%, but never while at war. A default has severe consequences.
 
 ---
 
