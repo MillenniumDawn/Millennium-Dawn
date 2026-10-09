@@ -347,7 +347,7 @@ _MANPADS_ORG = (
 def test_bonus_on_stat_the_equipment_lacks_is_flagged(tmp_path):
     v = _run_org_check(tmp_path, _MANPADS_ORG)
     assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
-    assert v._issues[0].severity == "warning"
+    assert v._issues[0].severity == "error"
     assert "max_organisation" in v._issues[0].message
     assert v._issues[0].line == 7
 
@@ -355,6 +355,11 @@ def test_bonus_on_stat_the_equipment_lacks_is_flagged(tmp_path):
 def test_bonus_on_declared_stat_passes(tmp_path):
     body = _MANPADS_ORG.replace("max_organisation = 0.10", "air_attack = 0.10")
     assert not _run_org_check(tmp_path, body)._issues
+
+
+def test_zero_base_exempt_stat_is_not_flagged(tmp_path, monkeypatch):
+    monkeypatch.setattr(V, "ZERO_BASE_EXEMPT_STATS", frozenset({"max_organisation"}))
+    assert _run_org_check(tmp_path, _MANPADS_ORG)._issues == []
 
 
 def test_limit_to_equipment_type_narrows_the_scope(tmp_path):
