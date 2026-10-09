@@ -357,6 +357,11 @@ def test_bonus_on_declared_stat_passes(tmp_path):
     assert not _run_org_check(tmp_path, body)._issues
 
 
+def test_zero_base_exempt_stat_is_not_flagged(tmp_path, monkeypatch):
+    monkeypatch.setattr(V, "ZERO_BASE_EXEMPT_STATS", frozenset({"max_organisation"}))
+    assert _run_org_check(tmp_path, _MANPADS_ORG)._issues == []
+
+
 def test_limit_to_equipment_type_narrows_the_scope(tmp_path):
     # The org covers both, but the trait limits itself to the half that has no
     # max_organisation, so the bonus is fully dead rather than partial.

@@ -292,6 +292,83 @@ def test_agency_completion_cache_flags_orphans_and_missing_blocks(tmp_path):
     assert missing._issues == []
 
 
+def test_agency_completion_cache_flags_a_missing_seed_block(tmp_path):
+    triggers = _slot_trigger(0) + _slot_trigger(1) + _can_upgrade_block([0, 1])
+    validator = _agency_completion_cache_fixture(
+        tmp_path, triggers, "MD_auto_agency_other_effect = {\n}\n"
+    )
+    messages = [issue.message for issue in validator._issues]
+    assert any(
+        "MD_auto_agency_seed_completed_cache block not found" in m for m in messages
+    )
+
+
+def _agency_can_select_fixture(tmp_path, triggers: str):
+    _write(
+        tmp_path,
+        agency.ON_ACTIONS_FILE,
+        "global.agency_upgrades^0 = token:MD_auto_agency_0_upgrade_a\n"
+        "global.agency_upgrades^1 = token:MD_auto_agency_1_upgrade_b\n",
+    )
+    _write(tmp_path, agency.SCRIPTED_TRIGGERS_FILE, triggers)
+    validator = _validator(agency.Validator, tmp_path)
+    validator._collect_registry()
+    validator._validate_can_select_dispatch()
+    return validator
+
+
+def _can_select_trigger(idx: int) -> str:
+    return f"MD_auto_agency_can_select_upgrade_{idx}_trigger = {{\n\talways = yes\n}}\n"
+
+
+def _v_can_select_block(indices) -> str:
+    branches = "".join(
+        f"\t\tMD_auto_agency_can_select_upgrade_{i}_trigger = yes\n" for i in indices
+    )
+    return f"MD_auto_agency_v_can_select = {{\n\tOR = {{\n{branches}\t}}\n}}\n"
+
+
+def test_agency_can_select_accepts_a_fully_wired_pair(tmp_path):
+    triggers = (
+        _can_select_trigger(0) + _can_select_trigger(1) + _v_can_select_block([0, 1])
+    )
+    assert _agency_can_select_fixture(tmp_path, triggers)._issues == []
+
+
+def test_agency_can_select_flags_missing_and_orphan_wiring(tmp_path):
+    # Index 1 has no definition and no dispatch branch; 9 is defined and 7 is
+    # dispatched, but neither is registered.
+    triggers = (
+        _can_select_trigger(0) + _can_select_trigger(9) + _v_can_select_block([0, 7])
+    )
+    validator = _agency_can_select_fixture(tmp_path, triggers)
+    messages = [issue.message for issue in validator._issues]
+    assert _categories(validator) == {"agency-upgrades-can-select"}
+    assert len(messages) == 4
+    assert any(
+        "has no MD_auto_agency_can_select_upgrade_1_trigger definition" in m
+        for m in messages
+    )
+    assert any(
+        "has no MD_auto_agency_can_select_upgrade_1_trigger = yes branch" in m
+        for m in messages
+    )
+    assert any(
+        "MD_auto_agency_can_select_upgrade_9_trigger is defined but index ^9 is not registered"
+        in m
+        for m in messages
+    )
+    assert any("dispatches index ^7 but it is not registered" in m for m in messages)
+
+
+def test_agency_can_select_reports_a_missing_dispatch_block_once(tmp_path):
+    triggers = _can_select_trigger(0) + _can_select_trigger(1)
+    validator = _agency_can_select_fixture(tmp_path, triggers)
+    messages = [issue.message for issue in validator._issues]
+    assert len(messages) == 1
+    assert "MD_auto_agency_v_can_select block not found" in messages[0]
+
+
 def test_cosmetic_workers_cover_comments_dynamic_and_missing_files(tmp_path):
     path = _write(
         tmp_path,
