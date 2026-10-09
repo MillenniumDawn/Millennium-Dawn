@@ -186,6 +186,14 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `placeholder-event-picture` (ERROR). Only pictures at depth 0 of the event body count,
   so leader portraits inside `immediate` do not.
 
+## validate_factions.py
+
+- `faction-goal-cache-scope` (ERROR): a goal file reads a `*_cache` variable with
+  `check_variable` or `has_variable` under `scope:faction`. The cache effects write on
+  the faction leader, so the read finds nothing and the goal never shows or completes.
+  Only the nearest scope-changing block counts, so `faction_leader` inside
+  `scope:faction` is fine. A name with a scope prefix (`ROOT.x_cache`) is skipped.
+
 ## validate_file_paths.py
 
 - Windows resolves paths case-insensitively and Linux does not. A mod path that differs
