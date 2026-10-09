@@ -264,6 +264,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `loc-em-dash`, `loc-backtick-apostrophe` (WARNING), and `loc-unbalanced-quote` (ERROR)
   scan only the quoted values in `localisation/english/`. Inch marks and quotes spanning
   paragraphs are expected false positives of the quote check.
+- `loc-spaced-en-dash` (WARNING): a spaced en dash ( – ) used in place of an em dash. A
+  dash between two numbers is a range and is skipped. Official names go in
+  `spaced_en_dash_exemptions` (by loc key) or `spaced_en_dash_exempt_files` (by file) in
+  `validation_config.json`.
 - `loc-typo-watchlist` (ERROR): `typo-watchlist.md` entries in prose, excluding keys and
   runtime references. `it's` and `civilisation` are excluded as context-dependent.
 - Prose warnings (repeated word, tripled letter, exact placeholder, dangling
@@ -320,7 +324,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
     `equipment_type`, else that of the org named by `include`.
   - `NON_STAT_BONUS_KEYS` excludes the per-archetype production keys.
     `zero_base_exempt_stats` in the config is empty on purpose: confirm in game before
-    adding a stat.
+    adding a stat. The naval `*_factor` keys stay out of it. Vanilla declares their base
+    on hulls and modules, and MD declares none, so they are dead here.
   - The stat index (`equipment_stats.py`) counts a stat only with a non-zero value, and
     scopes modules to the slots a hull accepts.
 - Naval production bonus: ships are built in dockyards, which have no production
