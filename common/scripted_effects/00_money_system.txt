@@ -4309,16 +4309,18 @@ update_display = {
 
 	set_variable = { treasury_rate = { value = display_income subtract = display_expense } }
 
-	# Lets AI deficit checks scale with the size of the economy.
+	# Lets AI deficit checks scale with the size of the economy. Counts paused debt service so a cheap loan does not read as a surplus.
 	if = { limit = { check_variable = { display_income > 0 } }
-		set_variable = { budget_balance_ratio = { value = treasury_rate divide = display_income } }
+		set_variable = { budget_balance_ratio = { value = display_income subtract = potential_expense divide = display_income } }
 	}
-	else_if = { limit = { check_variable = { treasury_rate < 0 } }
+	else_if = { limit = { check_variable = { potential_expense > display_income } }
 		set_variable = { budget_balance_ratio = -1 }
 	}
 	else = {
 		set_variable = { budget_balance_ratio = 0 }
 	}
+	# Share of income paid as interest, read by ai_fiscal_last_resort_open
+	set_variable = { debt_service_share = { value = debt_rate divide = { value = potential_income clamp = { min = 0.001 max = 100000000 } } } }
 
 	if = { limit = { is_in_array = { global.arabic_countries = THIS.id } }
 		calculate_monthly_arab_spring_change = yes
@@ -6040,6 +6042,7 @@ calculate_tax_adjustments = {
 				check_variable = { treasury_rate > 2 }
 				check_variable = { budget_balance_ratio > 0.10 }
 			}
+			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { debt_ratio < 0.30 }
 			check_variable = { interest_rate < 5 }
 			check_variable = { pop_tax_change = 0 }
@@ -6060,7 +6063,7 @@ calculate_tax_adjustments = {
 		limit = {
 			has_stability < 0.30
 			check_variable = { population_tax_rate > 20 }
-			check_variable = { treasury_rate > 0 }
+			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { pop_tax_change = 0 }
 		}
 		set_temp_variable = { pop_tax_change = -1 }
