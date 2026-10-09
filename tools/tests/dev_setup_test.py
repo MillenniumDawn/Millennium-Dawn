@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import dev_setup
 import pytest
+from shared.suite import write_text as write
 
 Version = namedtuple("Version", "major minor micro releaselevel serial")
 
@@ -46,12 +47,6 @@ def stub_run(monkeypatch, handler=lambda cmd: completed()):
 
     monkeypatch.setattr(dev_setup, "run", fake_run)
     return calls
-
-
-def write(path, text):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
 
 
 def venv_python(root):

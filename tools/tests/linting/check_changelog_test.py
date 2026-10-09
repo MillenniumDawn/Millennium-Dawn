@@ -117,6 +117,50 @@ Content:
     assert check_lines(lines) == []
 
 
+def test_blank_line_between_entries_fails():
+    lines = _lines("""
+v2.0.1
+
+Content:
+ - Added a global feature
+
+ - [CHI] Added a Chinese focus
+""")
+    assert check_lines(lines) == ["line 5: remove the blank line between entries"]
+
+
+def test_repeated_blank_line_fails():
+    lines = _lines("""
+v2.0.1
+
+Content:
+ - Added a global feature
+
+
+Bugfix:
+ - Fixed a global bug
+""")
+    assert check_lines(lines) == ["line 6: remove the repeated blank line"]
+
+
+def test_blank_lines_in_older_versions_are_ignored():
+    lines = _lines("""
+v2.0.1
+
+Content:
+ - Added a global feature
+
+v2.0.1
+
+Content:
+ - Added a global feature
+
+
+ - [CHI] Added a Chinese focus
+""")
+    assert check_lines(lines) == []
+
+
 def test_main_reports_errors(tmp_path, monkeypatch, capsys):
     path = tmp_path / "Changelog.txt"
     path.write_text("v2.0.1\n\nContent:\n - [FRA] A\n - [ENG] B\n", encoding="utf-8")
@@ -135,26 +179,38 @@ def test_main_ignores_older_versions_with_bom(tmp_path, monkeypatch):
     assert check_changelog.main() == 0
 
 
-def test_sort_preserves_entries_spacing_and_older_versions():
+def test_sort_preserves_entries_line_endings_and_older_versions():
+    older = "v2.0.1\r\nContent:\r\n - [USA] Old\r\n\r\n\r\n - Global old\r\n"
     original = (
         "\ufeffv2.0.1\r\n\r\nContent:\r\n"
         " - [USA] U\r\n\r\n - Global\r\n"
         " - [chi/NKO] C1\r\n - [CHI] C2\r\n"
-        "Bugfix:\r\n - [FRA] F\r\n - [ENG] E\r\n"
-        "v2.0.1\r\nContent:\r\n - [USA] Old\r\n - Global old\r\n"
+        "Bugfix:\r\n - [FRA] F\r\n - [ENG] E\r\n" + older
     )
     expected = (
         "\ufeffv2.0.1\r\n\r\nContent:\r\n"
-        " - Global\r\n\r\n - [chi/NKO] C1\r\n"
+        " - Global\r\n - [chi/NKO] C1\r\n"
         " - [CHI] C2\r\n - [USA] U\r\n"
-        "Bugfix:\r\n - [ENG] E\r\n - [FRA] F\r\n"
-        "v2.0.1\r\nContent:\r\n - [USA] Old\r\n - Global old\r\n"
+        "Bugfix:\r\n - [ENG] E\r\n - [FRA] F\r\n" + older
     )
     ordered = order_lines(original.splitlines(keepends=True))
     assert "".join(ordered) == expected
     assert check_lines(ordered) == []
     assert order_lines(ordered) == ordered
     assert order_lines([]) == []
+
+
+def test_sort_tidies_blank_lines_and_keeps_category_spacing():
+    original = (
+        "v2.0.1\n\nContent:\n - [USA] U\n\n\n - Global\n\n\n"
+        "Bugfix:\n - B\n\nFooter text\n\n\nMore text\n"
+    )
+    ordered = order_lines(original.splitlines(keepends=True))
+    assert "".join(ordered) == (
+        "v2.0.1\n\nContent:\n - Global\n - [USA] U\n\n"
+        "Bugfix:\n - B\n\nFooter text\n\nMore text\n"
+    )
+    assert check_lines(ordered) == []
 
 
 def test_sort_preserves_an_absent_final_newline():
