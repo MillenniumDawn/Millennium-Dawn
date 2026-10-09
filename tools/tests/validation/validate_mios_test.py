@@ -347,7 +347,7 @@ _MANPADS_ORG = (
 def test_bonus_on_stat_the_equipment_lacks_is_flagged(tmp_path):
     v = _run_org_check(tmp_path, _MANPADS_ORG)
     assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
-    assert v._issues[0].severity == "warning"
+    assert v._issues[0].severity == "error"
     assert "max_organisation" in v._issues[0].message
     assert v._issues[0].line == 7
 
