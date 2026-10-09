@@ -1229,16 +1229,17 @@ debt_default_decisions = {
 
 		available = { interest_rate_lower_than_5 = yes }
 
+		# One payment per weekly refinance, so the interest gate always sees the last borrow
+		days_re_enable = 7
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision debt_default_pay_10_from_treasury"
+			# The refinance turns half of GDP into about 0.64x GDP of debt: one payment from under 5% stays under the 15% default gate
+			set_temp_variable = { treasury_change = { value = gdp_total multiply = 0.5 add = treasury min = 10 min = debt_default_left max = 0 } }
 			custom_effect_tooltip = debt_default_pay_10_from_treasury_tt
-			set_temp_variable = { treasury_change = -10 }
+			subtract_from_variable = { debt_default_left = treasury_change }
+			multiply_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
-			subtract_from_variable = { debt_default_left = 10 }
-			clamp_variable = {
-				var = debt_default_left
-				min = 0
-			}
 		}
 
 		ai_will_do = { base = 1000 }
@@ -1250,21 +1251,20 @@ debt_default_decisions = {
 
 		visible = {
 			has_active_mission = debt_default_main_mission
-			check_variable = { gdp_total > 100 }
+			NOT = { check_variable = { gdp_total < 100 } }
 		}
 
 		available = { interest_rate_lower_than_5 = yes }
 
+		days_re_enable = 7
+
 		complete_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision debt_default_pay_50_from_treasury"
+			set_temp_variable = { treasury_change = { value = debt_default_left min = 50 } }
 			custom_effect_tooltip = debt_default_pay_50_from_treasury_tt
-			set_temp_variable = { treasury_change = -50 }
+			subtract_from_variable = { debt_default_left = treasury_change }
+			multiply_temp_variable = { treasury_change = -1 }
 			modify_treasury_effect = yes
-			subtract_from_variable = { debt_default_left = 50 }
-			clamp_variable = {
-				var = debt_default_left
-				min = 0
-			}
 		}
 
 		ai_will_do = { base = 1000 }

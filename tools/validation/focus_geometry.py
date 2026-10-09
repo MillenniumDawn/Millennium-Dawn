@@ -3,6 +3,10 @@
 from collections import defaultdict, deque
 from itertools import combinations, product
 
+# Terms under the obsolete-branch rule only apply when that rule is set to HIDE.
+HIDE_RULE_TERMS = {"rule=obsolete_focus_branches_visibility", "option=HIDE"}
+HIDE_RULE_PREFIX = "hide_rule:"
+
 
 def _key(focus):
     return focus["id"], focus["file"], focus["line"]
@@ -75,7 +79,8 @@ def _branch_leaks(index):
 
     The engine shows a focus whose own allow_branch is true even when an
     ancestor's allow_branch hid its branch, so the child must repeat the
-    ancestor's conditions.
+    ancestor's conditions. An ancestor term under the obsolete-branch rule is
+    also met by the same term outside that rule, which hides more often.
     """
     children = defaultdict(set)
     for name, definitions in index.items():
@@ -103,7 +108,11 @@ def _branch_leaks(index):
                     pending.append(name)
                     continue
                 gated.add(name)
-                if not set(root["branch_terms"]) <= set(focus["branch_terms"]):
+                terms = set(focus["branch_terms"])
+                if not all(
+                    term in terms or term.removeprefix(HIDE_RULE_PREFIX) in terms
+                    for term in root["branch_terms"]
+                ):
                     yield focus, root
 
 

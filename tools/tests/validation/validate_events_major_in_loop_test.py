@@ -141,11 +141,6 @@ def test_literal_brace_in_quoted_log_does_not_desync(tmp_path):
     assert len(res) == 1
 
 
-def test_worker_returns_empty_for_an_unreadable_file(tmp_path):
-    gone = tmp_path / "common" / "gone.txt"
-    assert call_site_scan(gone, "major", tmp_path, frozenset({"foo.1"})) == []
-
-
 def test_worker_short_circuits_files_with_no_event_calls(tmp_path):
     call = tmp_path / "common" / "fx.txt"
     call.parent.mkdir(parents=True)

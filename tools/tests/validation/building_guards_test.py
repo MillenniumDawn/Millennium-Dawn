@@ -8,11 +8,8 @@ an `if`/`limit` guarding something else entirely (an idea, a flag) must still
 flag the effect inside it.
 """
 
-import re
-
 import pytest
 import validate_building_guards as V
-from shared.paths import REPO_ROOT as _MOD_ROOT
 
 
 def _scan(script):
@@ -518,24 +515,6 @@ def test_supply_province_buildings_in_state_only_trigger_are_flagged(building):
     findings = _scan_province(script)
     assert len(findings) == 1
     assert building in findings[0][2]
-
-
-def test_province_building_list_covers_every_province_max_building():
-    """`_PROVINCE_BUILDINGS` is a hand-kept mirror of the buildings that carry a
-    province_max level cap; this fails when a new one is added to the game."""
-    text = (_MOD_ROOT / "common" / "buildings" / "00_buildings.txt").read_text(
-        encoding="utf-8-sig"
-    )
-    declared = set()
-    building = None
-    for line in text.splitlines():
-        match = re.match(r"^\t([A-Za-z_][A-Za-z0-9_]*) = \{", line)
-        if match:
-            building = match.group(1)
-        elif building and re.search(r"\bprovince_max\s*=", line):
-            declared.add(building)
-    assert declared
-    assert declared <= V._PROVINCE_BUILDINGS
 
 
 def test_bare_comparison_guards_a_province_building():

@@ -6,6 +6,7 @@ directly with the text and files the validator would hand them.
 
 import os
 
+import pytest
 from shared.suite import write_under as _write
 from validate_ideas import (
     _META_PREFIX_SENTINEL,
@@ -97,6 +98,57 @@ def test_schema_key_at_idea_level_is_not_an_idea():
     defined, issues = _parse_ideas_from_text(text, NO_CATEGORIES)
 
     assert defined == {"REAL_idea": ("country", None, "x")}
+    assert issues == []
+
+
+@pytest.mark.parametrize("compact", (False, True))
+def test_inline_ideas_keep_their_own_fields_and_quality_issues(compact):
+    lines = [
+        "ideas = {",
+        "\tcountry = {",
+        "\t\tFIRST_idea = { name = shared_key picture = first }",
+        "\t\tEMPTY_idea = {}",
+        "\t\tSECOND_idea = { picture = second cancel = { always = no } }",
+        "\t}",
+        "}",
+    ]
+    text = " ".join(lines) if compact else "\n".join(lines)
+
+    defined, issues = _parse_ideas_from_text(text, NO_CATEGORIES)
+
+    assert defined == {
+        "FIRST_idea": ("country", "shared_key", "first"),
+        "EMPTY_idea": ("country", None, None),
+        "SECOND_idea": ("country", None, "second"),
+    }
+    assert [(i.idea_name, i.issue_type, i.line) for i in issues] == [
+        ("SECOND_idea", "cancel-always-no", 1 if compact else 5),
+    ]
+
+
+def test_idea_fields_ignore_nested_effects_and_braces_in_log_strings():
+    text = """ideas = {
+\tcountry = {
+\t\tFIRST_idea = {
+\t\t\ton_add = {
+\t\t\t\tlog = "brace } and picture = fake"
+\t\t\t\tcreate_equipment_variant = {
+\t\t\t\t\tname = "Equipment Name"
+\t\t\t\t}
+\t\t\t}
+\t\t\tpicture = "first"
+\t\t}
+\t\tSECOND_idea = { picture = second }
+\t}
+}
+"""
+
+    defined, issues = _parse_ideas_from_text(text, NO_CATEGORIES)
+
+    assert defined == {
+        "FIRST_idea": ("country", None, "first"),
+        "SECOND_idea": ("country", None, "second"),
+    }
     assert issues == []
 
 

@@ -639,6 +639,7 @@ def test_scripted_gui_parsers_cover_templates_and_malformed_blocks(tmp_path):
         "elements": {},
         "element_files": {},
         "containers": [],
+        "windows": [],
     }
     parsed = scripted_gui._parse_gui_text(
         'containerWindowType = { name = "window" }\n'
@@ -648,6 +649,7 @@ def test_scripted_gui_parsers_cover_templates_and_malformed_blocks(tmp_path):
     )
     assert set(parsed["elements"]) == {"window", "button"}
     assert parsed["containers"] == ["window"]
+    assert parsed["windows"] == ["window"]
     blocks, triggers = scripted_gui._parse_scripted_gui_text(
         "scripted_gui = {\n\tname = {\n"
         "\t\tcontext_type = player_context\n"
