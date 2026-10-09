@@ -101,6 +101,14 @@
 # tweak this to modify the operative cost of all equipment
 @equipment_operative_cost_multiplier = 5
 
+# Default income every country gets
+@base_income_rate = 0.25
+
+# Weekly canal and strait income at 2000 world GDP, scaled by global.world_trade_factor
+@suez_toll_income = 0.0346 # 1.8B yearly
+@panama_toll_income = 0.0096 # 0.5B yearly
+@malacca_hub_income = 0.0135 # 0.7B yearly
+
 setup_spending_law_tables = {
 	clear_array = global.bureau_law_idea
 	resize_array = { array = global.bureau_law_idea size = 1 }
@@ -788,7 +796,8 @@ calculate_tax_gain = {
 # Effect: calculate_additional_income_rate
 # Purpose: Aggregates special income sources (seigniorage, ideas, canal revenue, foreign aid)
 calculate_additional_income_rate = {
-	set_variable = { additional_income_rate = 0 }
+	set_variable = { additional_income_base = @base_income_rate }
+	set_variable = { additional_income_rate = additional_income_base }
 
 	if = { limit = { has_idea = bitcoin }
 		add_to_variable = { additional_income_rate = global.bitcoin_reserve_income }
@@ -935,30 +944,26 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = HEZ_iranian_support_money }
 		}
 		if = {
-			 limit = { always = yes } # This is to stop Hezbollah's economy collapsing early.
+			limit = { always = yes } # This is to stop Hezbollah's economy collapsing early.
 			set_variable = { HEZ_unknown_funds_income = 0.400 }
 			add_to_variable = { additional_income_rate = HEZ_unknown_funds_income }
 		}
 	}
 	if = { limit = { has_idea = full_control_of_suez }
-		set_variable = { additional_income_suez = 0.1 }
+		set_variable = { additional_income_suez = { value = global.world_trade_factor multiply = @suez_toll_income } }
 		add_to_variable = { additional_income_rate = additional_income_suez }
 	}
 	if = { limit = { has_idea = partial_control_of_suez }
-		set_variable = { additional_income_suez_partial = 0.05 }
+		set_variable = { additional_income_suez_partial = { value = global.world_trade_factor multiply = @suez_toll_income multiply = 0.5 } }
 		add_to_variable = { additional_income_rate = additional_income_suez_partial }
 	}
 	if = { limit = { has_idea = full_control_of_panama }
-		set_variable = { additional_income_panama = 0.05 }
+		set_variable = { additional_income_panama = { value = global.world_trade_factor multiply = @panama_toll_income } }
 		add_to_variable = { additional_income_rate = additional_income_panama }
 	}
 	if = { limit = { has_idea = gateway_to_asia }
-		set_variable = { gateway_to_asia_income = 0.1 }
+		set_variable = { gateway_to_asia_income = { value = global.world_trade_factor multiply = @malacca_hub_income } }
 		add_to_variable = { additional_income_rate = gateway_to_asia_income }
-	}
-	if = { limit = { has_idea = MICROSTATE_fix }
-		set_variable = { additional_income_microstate_fix_var = 0.35 }
-		add_to_variable = { additional_income_rate = additional_income_microstate_fix_var }
 	}
 	if = { limit = { has_idea = saudi_aid }
 		set_variable = { additional_income_saudi_aid = { value = population_total multiply = 0.00002 } }	#Millions of people
