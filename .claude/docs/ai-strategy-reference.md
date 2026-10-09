@@ -108,6 +108,10 @@ ai_strategy = { type = conquer id = GER value = 200 }
   `MD_dont_build_transport_helicopter_strong` adds to it once a spare reserve exists.
   Keep the sum at -100 or above.
 - `default_surplus_management` decides what spare factories build once needs are met.
+- APCs and IFVs share one spare-stock line for three blocks: `MD_low_*_stockpile` boosts
+  below it, `MD_high_*_stockpile` slows above it, and `focus_on_*` trains more of the
+  units that use them. Tanks have no high block. `medium_tank_chassis` is a base type,
+  and its subtypes inherit a factor set on it.
 - APCs use the `amphibious` equipment category and IFVs use `flame`, not `mechanized`.
 - Emergency strategies (`MD_wartime_low_*`, `MD_desperately_need_guns`,
   `default_AI_needs_to_live`) halt training and reprioritize when a stockpile runs out.
