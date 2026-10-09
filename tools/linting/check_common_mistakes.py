@@ -2,7 +2,7 @@
 """
 Check for common scripting mistakes in HOI4 mod files.
 
-Detects mechanically-checkable rule violations from CLAUDE.md:
+Detects mechanically-checkable rule violations:
   - threat/has_war_support/has_stability comparisons >= 1 (all are 0.0-1.0 ranges)
   - allowed = { always = no } in country/hidden_ideas idea categories (redundant default; checked once at load, bypassed by add_ideas)
   - allowed = { tag = TAG } in country/hidden_ideas (breaks civil war split-offs; use original_tag)
@@ -121,6 +121,8 @@ _RE_IS_AT_WAR = re.compile(r"\bis_at_war\s*=\s*(?:yes|no)\b")
 _RE_HAS_OPINION_MODIFIER_BLOCK = re.compile(r"\bhas_opinion_modifier\s*=\s*\{")
 _RE_WHILE_LOOP_OPEN = re.compile(r"\bwhile_loop_effect\s*=\s*\{")
 _RE_MAX_ITERATIONS = re.compile(r"\bmax_iterations\s*=")
+_RE_DAILY_MASTERY_OPEN = re.compile(r"\badd_daily_mastery\s*=\s*\{")
+_RE_MASTERY_INDEX = re.compile(r"\bindex\s*=")
 # var:x^i needs the full variable name; a one-letter base is the shorthand the
 # engine silently resolves to nothing.
 _RE_VAR_INDEX_SHORTHAND = re.compile(r"\bvar:([A-Za-z])\^")
@@ -249,6 +251,13 @@ _RE_LOG_EVENT_OPTION_SUFFIX = re.compile(r"\s+Option\s+([a-zA-Z])\b", re.IGNOREC
 _RE_LOG_EVENT_EXECUTED_TOKEN = re.compile(
     r'log\s*=\s*"[^"]*\]:\s*([\w.]+)\s+(?:option\s+)?executed',
     re.IGNORECASE,
+)
+# A bare event id at the end of the string needs a numeric id segment. Event
+# namespaces can end in digits (e.g. `md4` and `CZE_Army_2000`), but a token in
+# the version-like `v1.2` form is not an event id.
+_RE_LOG_EVENT_BARE_TOKEN = re.compile(
+    r'log\s*=\s*"[^"]*\]:\s*((?![vV]\d+\.\d+(?:\.[A-Za-z]\w*)?\")'
+    r'[A-Za-z_]\w*\.\d+(?:\.[A-Za-z]\w*)?)"'
 )
 _RE_CUSTOM_TRIGGER_TOOLTIP_OPEN = re.compile(r"\bcustom_trigger_tooltip\s*=\s*\{")
 _RE_HIDDEN_TRIGGER_OPEN = re.compile(r"\bhidden_trigger\s*=\s*\{")
@@ -429,7 +438,7 @@ _MUTUALLY_EXCLUSIVE_TRIGGERS = {
 # Idea slots where only one idea from the group can be active at a time. Two
 # `has_idea = X` checks for ideas in the same group inside a single AND block
 # are always false; inside a NOT block they are always true. The classic bug
-# from CLAUDE.md is `NOT = { has_idea = intervention_isolation
+# is `NOT = { has_idea = intervention_isolation
 # has_idea = intervention_local_security }` — silently true forever because no
 # country has both intervention doctrines at once.
 # Keep in sync with the mutually-exclusive idea slots defined in common/ideas/.
@@ -2057,8 +2066,8 @@ def _check_every_country_member_array(lines):
 
     The known member ideas (see _MEMBER_IDEA_TO_ARRAY) all have corresponding
     global arrays. for_each_scope_loop over the array iterates ~30 members
-    instead of 200+ tags. See simplification-patterns.md § "Convert
-    every_country Over Bloc Membership".
+    instead of 200+ tags. See simplification-patterns.md § "Bloc membership
+    loops".
     """
     issues = []
     src = _source(lines)
@@ -2564,6 +2573,32 @@ def _check_while_loop_max_iterations(lines):
                     text.count("\n", 0, match.end() + found.start()) + 1,
                     "max_iterations is not a valid while_loop_effect key -- the "
                     "engine ignores it; bound the loop with its break variable",
+                )
+            )
+    return issues
+
+
+def _check_daily_mastery_index(lines):
+    """Flag index inside add_daily_mastery -- the engine rejects it.
+
+    The vanilla effects documentation lists an index filter, but the game logs
+    Invalid effect 'index' for every such call.
+    """
+    issues = []
+    src = _source(lines)
+    if "add_daily_mastery" not in src.raw:
+        return issues
+    text = src.text
+    for match in _RE_DAILY_MASTERY_OPEN.finditer(text):
+        i = _find_brace_close(text, match.end() - 1)
+        body = text[match.end() : i]
+        for found in _RE_MASTERY_INDEX.finditer(body):
+            issues.append(
+                (
+                    text.count("\n", 0, match.end() + found.start()) + 1,
+                    "index is not a valid add_daily_mastery key -- the engine "
+                    "rejects it (Invalid effect 'index'); filter with track, "
+                    "sub_doctrine, grand_doctrine or folder",
                 )
             )
     return issues
@@ -3257,11 +3292,15 @@ def _iter_event_log_mismatches(lines):
             src, inner, lambda j: _RE_OPTION_BLOCK_OPEN.search(src.code[j])
         ):
             own_name = None
-            for code in src.code[opt_start:opt_end]:
-                nm = _RE_OPTION_NAME_IN_BLOCK.match(code)
-                if nm:
-                    own_name = nm.group(1)
-                    break
+            depth = 0
+            for row in range(opt_start, opt_end):
+                # Deeper than 1 is an effect's own name (add_tech_bonus).
+                if depth == 1:
+                    nm = _RE_OPTION_NAME_IN_BLOCK.match(src.code[row])
+                    if nm:
+                        own_name = nm.group(1)
+                        break
+                depth += src.delta[row]
             own_suffix = None
             if own_name and own_name.startswith(event_id + "."):
                 own_suffix = own_name[len(event_id) + 1 :]
@@ -3271,7 +3310,9 @@ def _iter_event_log_mismatches(lines):
                 m = _RE_LOG_EVENT_TOKEN.search(obl_code)
                 if m is None:
                     used_event_word = False
-                    m = _RE_LOG_EVENT_EXECUTED_TOKEN.search(obl_code)
+                    m = _RE_LOG_EVENT_EXECUTED_TOKEN.search(
+                        obl_code
+                    ) or _RE_LOG_EVENT_BARE_TOKEN.search(obl_code)
                 if m is None:
                     continue
                 token = m.group(1)
@@ -4308,6 +4349,7 @@ def check_file(filepath):
     issues.extend(_check_invalid_is_at_war(lines))
     issues.extend(_check_has_opinion_modifier_block(lines))
     issues.extend(_check_while_loop_max_iterations(lines))
+    issues.extend(_check_daily_mastery_index(lines))
     issues.extend(_check_var_index_shorthand(lines))
     issues.extend(_check_else_with_limit(lines))
     issues.extend(_check_log_nested_quote(lines))

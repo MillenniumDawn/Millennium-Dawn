@@ -10,7 +10,6 @@ import argparse
 
 import pytest
 import validate_decisions as V
-from shared.paths import REPO_ROOT
 from shared.suite import write_text
 
 # Where an announcement can live: one file under each scanned root, with `%s`
@@ -191,6 +190,52 @@ def test_ai_only_category_is_not_flagged(tmp_path):
     assert _findings(_write_mod(tmp_path, gate)) == []
 
 
+@pytest.mark.parametrize("country", ("MDT - Test.txt", "OTH - Other.txt"))
+@pytest.mark.parametrize(
+    ("gate", "history"),
+    (
+        (_FLAG_GATE, "set_country_flag = md_test_flag"),
+        (
+            "\tvisible = {\n\t\thas_idea = md_test_idea\n\t}\n",
+            "add_ideas = {\n\tmd_other_idea\n\tmd_test_idea\n}",
+        ),
+        (
+            "\tvisible = {\n\t\thas_completed_focus = md_test_focus\n\t}\n",
+            "complete_national_focus = md_test_focus",
+        ),
+        (_FLAG_GATE, 'log = "md_test_flag"'),
+    ),
+)
+def test_history_gate_requires_explicit_exemption(tmp_path, country, gate, history):
+    write_text(tmp_path / "history/countries" / country, history + "\n")
+    assert len(_findings(_write_mod(tmp_path, gate))) == 1
+
+
+@pytest.mark.parametrize(
+    ("path", "history"),
+    (
+        ("history/countries/MDT - Test.txt", "# set_country_flag = md_test_flag"),
+        ("history/states/1-Test.txt", "set_country_flag = md_test_flag"),
+    ),
+)
+def test_gate_outside_country_history_effects_is_flagged(tmp_path, path, history):
+    write_text(tmp_path / path, history + "\n")
+    assert len(_findings(_write_mod(tmp_path, _FLAG_GATE))) == 1
+
+
+def test_history_does_not_skip_the_first_gate(tmp_path):
+    write_text(
+        tmp_path / "history/countries/MDT - Test.txt", "set_country_flag = md_start\n"
+    )
+    gate = (
+        "\tvisible = {\n\t\thas_country_flag = md_start\n"
+        "\t\thas_country_flag = md_test_flag\n\t}\n"
+    )
+    out = _findings(_write_mod(tmp_path, gate))
+    assert len(out) == 1
+    assert "becomes visible on has_country_flag = md_start but" in out[0]
+
+
 def test_config_exempt_category_is_not_flagged(tmp_path):
     # Uses a real config key so a broken load (values instead of ids) fails.
     assert V._UNANNOUNCED_CATEGORY_EXEMPT
@@ -198,13 +243,11 @@ def test_config_exempt_category_is_not_flagged(tmp_path):
     assert _findings(_write_mod(tmp_path, _FLAG_GATE, category=exempt)) == []
 
 
-def test_unannounced_category_exemptions_are_still_live():
-    names = set(V.parse_decision_categories(str(REPO_ROOT)))
-    stale = sorted(V._UNANNOUNCED_CATEGORY_EXEMPT - names)
-    assert not stale, (
-        "unannounced_category_exempt names categories that no longer exist: "
-        f"{stale}. Remove them from validation_config.json."
+def test_unannounced_category_exemptions_have_reasons():
+    exemptions = V.validation_config(
+        "validate_decisions", "unannounced_category_exempt"
     )
+    assert all(reason.strip() for reason in exemptions.values())
 
 
 @pytest.mark.parametrize(
