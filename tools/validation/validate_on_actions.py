@@ -23,9 +23,6 @@ from validator_common import (
     run_validator_main,
 )
 
-# Declared namespaces: add_namespace = foo
-_ADD_NAMESPACE_RE = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
-
 # Top-level event block openers (country_event, news_event, state_event, …).
 # Allow optional leading whitespace — some files indent the top-level blocks
 # with a tab (e.g. agricultural_events.txt).
@@ -126,16 +123,6 @@ def _scan_event_file(args: Tuple[str, str]) -> Tuple[Set[str], Set[str]]:
         text,
         lambda: _scan_event_text(text),
     )
-
-
-def _extract_random_events_ids(text: str) -> Set[str]:
-    """Return all event IDs found inside random_events = { ... } blocks."""
-    ids: Set[str] = set()
-    for m in _RANDOM_EVENTS_BLOCK_RE.finditer(text):
-        body, _ = extract_block_from_text(text, m.end() - 1)
-        for entry in _RANDOM_EVENT_ENTRY_RE.finditer(body):
-            ids.add(entry.group(1))
-    return ids
 
 
 # Opening of any control-flow or scope-change block that gates its body —
@@ -496,13 +483,11 @@ class Validator(BaseValidator):
         self._log_section("Checking pulse on-actions for deterministic date polling...")
 
         on_actions_files = self._collect_files(["common/on_actions/**/*.txt"])
-        polls: List[Tuple[str, str, int, str]] = []
-        for result in self._pool_map(
+        polls: List[Tuple[str, str, int, str]] = self._pool_flat_map(
             _scan_date_polls_file,
             [(f, self.mod_path) for f in on_actions_files],
             chunksize=10,
-        ):
-            polls.extend(result)
+        )
 
         results = []
         for eid, block_name, line, filepath in sorted(polls, key=lambda x: x[2]):

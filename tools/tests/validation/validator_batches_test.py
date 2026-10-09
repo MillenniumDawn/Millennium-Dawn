@@ -45,12 +45,26 @@ def test_batches_cover_every_ci_validator_exactly_once():
 
 def test_core_batch_selects_from_the_core_groups():
     for spec in vb.BATCHES["core"]:
-        assert set(spec.groups) == set(vb._CORE_GROUPS)
+        # Only common-mistakes also scans the music tree.
+        extra = {"music"} if spec.name == "common-mistakes" else set()
+        assert set(spec.groups) == set(vb._CORE_GROUPS) | extra
 
 
 def test_variables_spec_carries_the_redundant_focus_flag_scan():
     spec = next(spec for spec in vb.ALL_SPECS if spec.name == "variables")
     assert spec.args == ("--redundant-focus-flags",)
+    assert spec.strict is True
+
+
+def test_decisions_spec_carries_the_unannounced_category_scan():
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "decisions")
+    assert spec.args == ("--unannounced-categories",)
+    assert spec.strict is True
+
+
+def test_math_expressions_spec_carries_the_clamp_bounds_check():
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "math-expressions")
+    assert spec.args == ("--clamp-bounds",)
     assert spec.strict is True
 
 
@@ -64,6 +78,16 @@ def test_selected_specs_filters_by_changed_groups():
     assert selected == {"decisions", "mios"}
     # An unknown or empty group list selects the whole batch (dispatch flow).
     assert len(rvb.selected_specs("targeted-a", None)) == len(vb.BATCHES["targeted-a"])
+
+
+def test_graphic_db_group_selects_gfx_references():
+    selected = {spec.name for spec in rvb.selected_specs("targeted-b", {"graphic-db"})}
+    assert selected == {"gfx-references"}
+
+
+def test_music_group_selects_only_common_mistakes():
+    selected = {spec.name for spec in rvb.selected_specs("core", {"music"})}
+    assert selected == {"common-mistakes"}
 
 
 def test_selected_specs_rejects_unknown_batch():
@@ -93,7 +117,8 @@ def test_shared_module_change_selects_its_transitive_consumers():
 
 @pytest.mark.usefixtures("reuse_repository_import_graph")
 def test_linting_wrapper_change_selects_the_validator_it_wraps():
-    # Both validate_common_mistakes and validate_decisions import this scanner.
+    # validate_common_mistakes, validate_decisions, validate_equipment_variants,
+    # and validate_events import this scanner.
     batch, adhoc = vb.select_for_changed_files(
         ["tools/linting/check_common_mistakes.py"]
     )
@@ -101,6 +126,7 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
         "common-mistakes",
         "decisions",
         "equipment-variants",
+        "events",
     }
     assert adhoc == []
 
@@ -117,6 +143,39 @@ def test_shared_infrastructure_selects_every_validator():
         "mod-descriptors",
         "localization-encoding",
     } <= {spec.name for spec in batch}
+    assert adhoc == []
+
+
+@pytest.mark.usefixtures("reuse_repository_import_graph")
+def test_validator_common_change_selects_the_impact_checks_it_feeds():
+    batch, adhoc = vb.select_for_changed_files(["tools/validation/validator_common.py"])
+    impact = {spec.name for spec in vb.IMPACT_ONLY_SPECS}
+    assert {spec.name for spec in batch} & impact == {
+        "file-paths",
+        "style",
+        "mod-descriptors",
+    }
+    assert adhoc == []
+
+
+@pytest.mark.usefixtures("reuse_repository_import_graph")
+def test_leaf_validation_tooling_selects_every_check(repository_import_graph):
+    # Nothing imports the batch runner, so no importer bounds what it can break.
+    assert not vb._transitive_importers(
+        repository_import_graph, "validation/run_validator_batch"
+    )
+    batch, adhoc = vb.select_for_changed_files(
+        ["tools/validation/run_validator_batch.py"]
+    )
+    assert {spec.name for spec in batch} == {
+        spec.name for spec in vb.ALL_SPECS + vb.IMPACT_ONLY_SPECS
+    }
+    assert adhoc == []
+
+
+def test_report_library_change_selects_every_batch_validator():
+    batch, adhoc = vb.select_for_changed_files(["tools/report_lib/loader.py"])
+    assert [spec.name for spec in batch] == [spec.name for spec in vb.ALL_SPECS]
     assert adhoc == []
 
 
@@ -166,7 +225,7 @@ def test_renamed_validator_runs_only_under_its_new_name(tmp_path, monkeypatch):
             "tools/validation/validate_renamed_thing.py",
         ]
     )
-    assert all(spec.name != "events" for spec in batch)
+    assert batch == []
     assert [spec.name for spec in adhoc] == ["renamed-thing"]
 
 
@@ -250,11 +309,12 @@ def test_import_graph_parses_comma_and_relative_imports(tmp_path):
     # AST graph must catch both, or validators silently drop off selection.
     (tmp_path / "validation").mkdir()
     (tmp_path / "shared_utils.py").write_text("", encoding="utf-8")
+    # The known module comes second so a first-alias-only reading misses it.
     (tmp_path / "validation/validate_comma.py").write_text(
-        "import shared_utils, other_module\n", encoding="utf-8"
+        "import other_module, shared_utils\n", encoding="utf-8"
     )
     (tmp_path / "validation/validate_relative.py").write_text(
-        "from . import validate_comma\nfrom .shared_utils import thing\n",
+        "from . import other_module, validate_comma\nfrom .shared_utils import thing\n",
         encoding="utf-8",
     )
     nodes = {
@@ -278,6 +338,8 @@ def test_module_importers_follow_the_transitive_chain(repository_import_graph):
     graph = {node: edges.copy() for node, edges in repository_import_graph.items()}
     importers = vb._transitive_importers(graph, "validation/equipment_stats")
     assert {"validation/validate_ideas", "validation/validate_mios"} <= importers
+    chain = {"leaf": set(), "middle": {"leaf"}, "top": {"middle"}, "other": set()}
+    assert vb._transitive_importers(chain, "leaf") == {"middle", "top"}
 
 
 def test_unparsable_module_stays_conservative(tmp_path):
@@ -287,7 +349,9 @@ def test_unparsable_module_stays_conservative(tmp_path):
     (tmp_path / "validation/validate_broken.py").write_text(
         "def broken(:\n", encoding="utf-8"
     )
-    nodes = {"validation/validate_broken": str(tmp_path / "validation/broken.py")}
+    nodes = {
+        "validation/validate_broken": str(tmp_path / "validation/validate_broken.py")
+    }
 
     graph = vb._build_import_graph(nodes)
 

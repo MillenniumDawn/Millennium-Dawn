@@ -1,5 +1,6 @@
 """Tests for the math-expression trap scanner (validate_math_expressions)."""
 
+import pytest
 from shared.suite import write_under as _write
 from validate_math_expressions import Validator, scan_text
 
@@ -91,7 +92,7 @@ def test_malformed_siblings_beside_scoped_assignment_are_flagged():
     assert [f[1] for f in findings] == ["math-sibling-operator"]
 
 
-def test_unsafe_comparator_and_from_read_in_nested_operands_are_flagged():
+def test_from_read_in_nested_operands_is_flagged():
     script = (
         "set_variable = {\n"
         "\tglobal.productivity = {\n"
@@ -103,10 +104,7 @@ def test_unsafe_comparator_and_from_read_in_nested_operands_are_flagged():
         "}\n"
     )
 
-    assert [f[1] for f in scan_text(script)] == [
-        "math-from-read",
-        "math-unsafe-comparator",
-    ]
+    assert [f[1] for f in scan_text(script)] == ["math-from-read"]
 
 
 def test_unknown_expression_blocks_do_not_leak_descendants():
@@ -124,29 +122,33 @@ def test_unknown_expression_blocks_do_not_leak_descendants():
     assert scan_text(script) == []
 
 
-def test_unsafe_comparator_inside_expression_is_flagged():
+def test_comparators_inside_expression_are_clean():
     script = (
         "set_temp_variable = {\n"
         "\tchance = {\n"
         "\t\tvalue = v\n"
         "\t\tif = { limit = { value = reach equals = 1 } add = 15 }\n"
+        "\t\tif = { limit = { value = reach not_equals = 2 } add = 5 }\n"
+        "\t\tadd = { value = y less_than_or_equals = 3 }\n"
+        "\t\tadd = { value = y greater_than_or_equals = 3 }\n"
         "\t}\n"
         "}\n"
     )
 
-    findings = scan_text(script)
-
-    assert [f[1] for f in findings] == ["math-unsafe-comparator"]
-    assert findings[0][0] == 4
+    assert scan_text(script) == []
 
 
-def test_unsafe_comparator_in_nested_operand_is_flagged():
-    script = (
-        "set_variable = { X = { value = 1 add = { value = y "
-        "less_than_or_equals = 3 } } }\n"
-    )
+def test_from_read_inside_comparator_operand_is_flagged():
+    script = "set_variable = { X = { value = 1 equals = { value = FROM.y } } }\n"
 
-    assert [f[1] for f in scan_text(script)] == ["math-unsafe-comparator"]
+    assert [f[1] for f in scan_text(script)] == ["math-from-read"]
+
+
+def test_comparator_beside_value_is_flagged_as_sibling():
+    findings = scan_text("set_variable = { X = 0 equals = Y }\n")
+
+    assert [f[1] for f in findings] == ["math-sibling-operator"]
+    assert "equals" in findings[0][2]
 
 
 def test_effect_level_check_variable_comparators_are_clean():
@@ -239,6 +241,75 @@ def test_clamp_and_modulo_effects_are_out_of_scope():
     assert scan_text(script) == []
 
 
+def test_expression_clamp_with_min_above_max_is_flagged():
+    script = (
+        "set_temp_variable = {\n"
+        "\tX = {\n"
+        "\t\tvalue = Y\n"
+        "\t\tclamp = { min = 0.05 max = -0.10 }\n"
+        "\t}\n"
+        "}\n"
+    )
+
+    assert scan_text(script) == [
+        (
+            4,
+            "clamp-min-above-max",
+            "`clamp` has min 0.05 above max -0.10, so the bounds are swapped or "
+            "mistyped",
+        )
+    ]
+
+
+@pytest.mark.parametrize("effect", ["clamp_variable", "clamp_temp_variable"])
+def test_clamp_effect_with_min_above_max_is_flagged(effect):
+    findings = scan_text(f"\n{effect} = {{ var = X min = 5 max = 0 }}\n")
+
+    assert [(f[0], f[1]) for f in findings] == [(2, "clamp-min-above-max")]
+
+
+def test_clamps_without_two_inverted_literals_are_clean():
+    script = (
+        "clamp_variable = { var = X min = 5 max = 5 }\n"
+        "clamp_variable = { var = X min = floor max = 0 }\n"
+        "clamp_variable = { var = X min = 5 }\n"
+        "clamp_temp_variable = { var = X min = 5 max = @cap }\n"
+        "set_variable = { X = { value = Y clamp = { min = 5 max = { value = Z } } } }\n"
+    )
+
+    assert scan_text(script) == []
+
+
+def _sibling(ops):
+    return (
+        f"math statements ({ops}) sit beside var/value instead of inside the "
+        "expression — this parses as 0.0 silently; wrap them in value = { ... } "
+        "(short form) or <var> = { ... } (long form)"
+    )
+
+
+def test_findings_keep_their_lines_across_quotes_comments_and_crlf():
+    script = "\r\n".join(
+        [
+            "set_variable = { X = 0 add = Y }",
+            'log = "# { set_variable = { var = q add = 1 }"',
+            "# set_variable = { var = c add = 2 }",
+            "add_to_variable = {",
+            "\tvar = A",
+            "\tmin = 0",
+            "}",
+            "set_variable = { unclosed = {",
+            "multiply_variable = { var = Z value = 1 divide = 2 }",
+        ]
+    )
+
+    assert scan_text(script) == [
+        (1, "math-sibling-operator", _sibling("add")),
+        (4, "math-sibling-operator", _sibling("min")),
+        (9, "math-sibling-operator", _sibling("divide")),
+    ]
+
+
 def _validator(tmp_path):
     return Validator(str(tmp_path), use_colors=False, workers=1, no_cache=True)
 
@@ -252,7 +323,70 @@ def test_validator_reports_file_and_line(tmp_path):
     assert [(i.category, i.file, i.line) for i in v._issues] == [
         ("math-sibling-operator", "common/scripted_effects/traps.txt", 1)
     ]
-    assert all(i.severity == "warning" for i in v._issues)
+    assert all(i.severity == "error" for i in v._issues)
+
+
+def test_validator_reports_math_from_read_as_error(tmp_path):
+    _write(
+        tmp_path,
+        "common/scripted_effects/from_read.txt",
+        "set_temp_variable = {\n\tchange = {\n\t\tvalue = FROM.debt_bailout\n\t}\n}\n",
+    )
+
+    v = _validator(tmp_path)
+    v.run_validations()
+
+    assert [(i.severity, i.category) for i in v._issues] == [
+        ("error", "math-from-read")
+    ]
+
+
+def test_clamp_bounds_are_reported_only_with_the_flag(tmp_path):
+    _write(
+        tmp_path,
+        "common/scripted_effects/clamp.txt",
+        "clamp_variable = { var = X min = 5 max = 0 }\n",
+    )
+
+    off = _validator(tmp_path)
+    off.run_validations()
+    on = Validator(
+        str(tmp_path), use_colors=False, workers=1, no_cache=True, clamp_bounds=True
+    )
+    on.run_validations()
+
+    assert off._issues == []
+    assert [(i.severity, i.category, i.file, i.line) for i in on._issues] == [
+        ("error", "clamp-min-above-max", "common/scripted_effects/clamp.txt", 1)
+    ]
+
+
+def test_pooled_run_matches_the_in_process_run(tmp_path, monkeypatch, pool_sizes):
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    for index in range(12):
+        _write(
+            tmp_path,
+            f"common/scripted_effects/f{index:02}.txt",
+            "\n" * index + "set_variable = { X = 0 add = Y }\n",
+        )
+
+    def run(workers):
+        v = Validator(str(tmp_path), use_colors=False, workers=workers, no_cache=True)
+        v.run_all_validations()
+        return [(i.category, i.message, i.file, i.line) for i in v._issues]
+
+    pooled = run(2)
+    assert pool_sizes == [2]
+    assert pooled == run(1)
+    assert sorted(pooled) == [
+        (
+            "math-sibling-operator",
+            _sibling("add"),
+            f"common/scripted_effects/f{index:02}.txt",
+            index + 1,
+        )
+        for index in range(12)
+    ]
 
 
 def test_clean_repo_is_a_clean_pass(tmp_path):

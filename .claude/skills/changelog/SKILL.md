@@ -11,7 +11,7 @@ Requested arguments: $ARGUMENTS
 
 Steps:
 
-1. Read `Changelog.txt` to identify the top-most version heading (first line, e.g., `v2.0.0`) and existing categories.
+1. Read `Changelog.txt` to identify the top-most version heading (first line, e.g., `v2.0.1`) and existing categories.
 
 2. Get the branch diff and commit history:
 

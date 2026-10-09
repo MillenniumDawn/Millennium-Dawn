@@ -16,7 +16,6 @@ from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
-    DataCleaner,
     FileOpener,
     Severity,
     run_validator_main,
@@ -43,6 +42,9 @@ def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
 
 # --- Multiprocessing helpers ---
 
+_SET_COSMETIC = "set_cosmetic_tag = "
+_NON_SPACE_RE = re.compile(r"\S*")
+
 
 def process_file_for_set_cosmetic_tag(
     args: Tuple[str, bool, List[str]],
@@ -51,13 +53,24 @@ def process_file_for_set_cosmetic_tag(
     text_file = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
     )
-    counts = {}
-    if "set_cosmetic_tag =" in text_file:
-        for tag in tags_to_find:
-            count = text_file.count(f"set_cosmetic_tag = {tag}")
-            if count > 0:
-                counts[tag] = count
-    return counts
+    counts: Dict[str, int] = {}
+    if "set_cosmetic_tag =" not in text_file:
+        return counts
+    # Same as text_file.count(_SET_COSMETIC + tag) per tag, but one walk over
+    # the sites: tags hold no whitespace, so each is a prefix of a site's value.
+    wanted = set(tags_to_find)
+    next_free: Dict[str, int] = {}
+    site = text_file.find(_SET_COSMETIC)
+    while site != -1:
+        start = site + len(_SET_COSMETIC)
+        value = _NON_SPACE_RE.match(text_file, start).group()
+        for stop in range(1, len(value) + 1):
+            tag = value[:stop]
+            if tag in wanted and site >= next_free.get(tag, 0):
+                counts[tag] = counts.get(tag, 0) + 1
+                next_free[tag] = start + stop
+        site = text_file.find(_SET_COSMETIC, site + 1)
+    return {tag: counts[tag] for tag in tags_to_find if tag in counts}
 
 
 def _scan_both_cosmetic_tags(
@@ -130,6 +143,9 @@ def process_file_for_cosmetic_tag_in_loc(
         return {}
     cleaned = re.sub(r"#[^\n]*", "", text)
     counts: Dict[str, int] = {}
+    # One scan for any tag at all; most loc files hold none.
+    if not re.search("|".join(map(re.escape, sorted(tags_to_find))), cleaned):
+        return counts
     suffixes = [":"] + [s + ":" for s in MD_IDEOLOGY_SUFFIXES]
     for tag in tags_to_find:
         if tag not in cleaned:
@@ -144,13 +160,27 @@ class Validator(BaseValidator):
     TITLE = "COSMETIC TAG VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".yml"]
 
+    def _txt_files(self, *, ignore_staged: bool = False) -> List[str]:
+        """Script files the checks scan, walked once; outside staged mode the
+        full-repo list is the same list."""
+        if ignore_staged and self.staged_only:
+            return self._collect_files(
+                ["**/*.txt"],
+                extra_skip=partial(_should_skip, mod_path=self.mod_path),
+                ignore_staged=True,
+            )
+        return self.cached(
+            "txt_files",
+            lambda: self._collect_files(
+                ["**/*.txt"], extra_skip=partial(_should_skip, mod_path=self.mod_path)
+            ),
+        )
+
     def _scan_for_both_tags(self):
         # Cached so validate_missing + validate_unused share one repo walk
         # instead of each running its own pool scan.
         def _build():
-            files = self._collect_files(
-                ["**/*.txt"], extra_skip=partial(_should_skip, mod_path=self.mod_path)
-            )
+            files = self._txt_files()
             args_list = [(f, False, self.mod_path) for f in files]
             scan_results = self._pool_map(
                 process_file_for_both_cosmetic_tags, args_list
@@ -183,20 +213,14 @@ class Validator(BaseValidator):
 
         self.log(f"  Found {len(cosmetic_tags)} unique has_cosmetic_tag references")
         if len(cosmetic_tags) == 0:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No cosmetic tag references found{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No cosmetic tag references found{Colors.ENDC}")
             return
 
         # Cross-reference resolution: a tag set in any file in the repo counts,
         # not just in the staged subset. Without ignore_staged here, a staged
         # change adding `has_cosmetic_tag = X` would false-positive whenever
         # the `set_cosmetic_tag = X` definition lives in an unmodified file.
-        all_files = self._collect_files(
-            ["**/*.txt"],
-            extra_skip=partial(_should_skip, mod_path=self.mod_path),
-            ignore_staged=True,
-        )
+        all_files = self._txt_files(ignore_staged=True)
         remaining_tags = list(cosmetic_tags.keys())
         args_list = [(f, False, remaining_tags) for f in all_files]
         results = self._pool_map(process_file_for_set_cosmetic_tag, args_list)
@@ -205,7 +229,8 @@ class Validator(BaseValidator):
             for tag, count in counts.items():
                 cosmetic_tags[tag] += count
 
-        DataCleaner.clear_false_positives(cosmetic_tags, tuple(false_positives))
+        for tag in false_positives:
+            cosmetic_tags.pop(tag, None)
         missing = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
         if missing:
@@ -227,9 +252,7 @@ class Validator(BaseValidator):
 
         self.log(f"  Found {len(cosmetic_tags)} unique set_cosmetic_tag definitions")
         if len(cosmetic_tags) == 0:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No cosmetic tag definitions found{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No cosmetic tag definitions found{Colors.ENDC}")
             return
 
         cosmetic_file = Path(self.mod_path) / "common" / "countries" / "cosmetic.txt"
@@ -297,7 +320,8 @@ class Validator(BaseValidator):
                     for tag, count in counts.items():
                         cosmetic_tags[tag] += count
 
-        DataCleaner.clear_false_positives(cosmetic_tags, tuple(false_positives))
+        for tag in false_positives:
+            cosmetic_tags.pop(tag, None)
         unused = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
         if unused:
@@ -318,7 +342,7 @@ class Validator(BaseValidator):
         cosmetic_file = Path(self.mod_path) / "common" / "countries" / "cosmetic.txt"
         if not cosmetic_file.exists():
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}cosmetic.txt not found, skipping{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}cosmetic.txt not found, skipping{Colors.ENDC}",
                 "warning",
             )
             return
@@ -333,16 +357,13 @@ class Validator(BaseValidator):
 
         self.log(f"  Found {len(cosmetic_tags)} cosmetic tag color definitions")
         if len(cosmetic_tags) == 0:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No cosmetic tag colors found{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No cosmetic tag colors found{Colors.ENDC}")
             return
 
-        DataCleaner.clear_false_positives(cosmetic_tags, tuple(false_positives))
+        for tag in false_positives:
+            cosmetic_tags.pop(tag, None)
 
-        files = self._collect_files(
-            ["**/*.txt"], extra_skip=partial(_should_skip, mod_path=self.mod_path)
-        )
+        files = self._txt_files()
         remaining_tags = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
         if remaining_tags:
             args_list = [(f, False, remaining_tags) for f in files]

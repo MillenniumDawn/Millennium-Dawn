@@ -10,8 +10,11 @@ import sys
 
 import pytest
 import validate_ideas
+from shared.suite import issue_rows as _findings
 from shared.suite import write_under as _write
 from validate_ideas import IdeaIssue, Validator, _add_extra_args
+from validator_batches import BATCHES
+from validator_common import Severity
 
 IDEA_TAGS = """idea_categories = {
 \thidden_ideas = { hidden = yes }
@@ -88,13 +91,6 @@ RUN_GFX = (
 def _validator(root, **kwargs):
     kwargs.setdefault("unused_ideas", False)
     return Validator(str(root), use_colors=False, workers=1, **kwargs)
-
-
-def _findings(validator):
-    return sorted(
-        (issue.category, issue.message, issue.file, issue.line)
-        for issue in validator._issues
-    )
 
 
 def _write_run_mod(tmp_path):
@@ -243,30 +239,141 @@ def test_repeated_undefined_reference_is_reported_once(tmp_path):
     ]
 
 
-def test_missing_localisation_is_grouped_by_category(tmp_path):
+MISSING_LOC_IDEAS = """ideas = {
+\thidden_ideas = {
+\t\tTAG_hidden = {
+\t\t}
+\t}
+\tcountry = {
+\t\tTAG_present = {
+\t\t}
+\t\tTAG_renamed = {
+\t\t\tname = TAG_present
+\t\t}
+\t\tTAG_no_desc = {
+\t\t}
+\t\tTAG_absent = {
+\t\t}
+\t}
+}
+"""
+
+
+def _missing_loc_findings(tmp_path, **kwargs):
+    _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
+    _write(tmp_path, "common/ideas/test.txt", MISSING_LOC_IDEAS)
+    _write(
+        tmp_path,
+        "common/characters/TAG.txt",
+        "characters = {\n\tTAG_person = {\n\t\tadvisor = {\n"
+        "\t\t\tidea_token = TAG_person_token\n\t\t}\n\t}\n}\n",
+    )
     _write(
         tmp_path,
         "localisation/english/MD_test_l_english.yml",
-        ' l_english:\n TAG_present:0 "Present"\n TAG_present_desc:0 "Desc"\n',
+        ' l_english:\n TAG_present:0 "Present"\n TAG_present_desc:0 "Desc"\n'
+        ' TAG_no_desc:0 "No Desc"\n',
     )
-    validator = _validator(tmp_path)
+    validator = _validator(tmp_path, **kwargs)
+    defined, _issues, ideas_by_file = validator._parse_all_ideas()
 
-    validator.validate_missing_localisation(
-        {
-            "TAG_present": ("country", None, None),
-            "TAG_renamed": ("country", "TAG_present", None),
-            "TAG_absent": ("hidden_ideas", None, None),
-        }
+    validator.validate_missing_localisation(defined, ideas_by_file)
+
+    return _findings(validator)
+
+
+def test_missing_name_key_is_reported_at_the_idea_definition(tmp_path):
+    assert _missing_loc_findings(tmp_path) == [
+        (
+            "missing-idea-localisation",
+            "'TAG_absent' (country) is missing loc key 'TAG_absent'",
+            "common/ideas/test.txt",
+            14,
+        )
+    ]
+
+
+def test_inline_localisation_uses_definition_ids_and_name_overrides(
+    tmp_path, no_vanilla_gfx
+):
+    _write(tmp_path, "common/idea_tags/00_idea.txt", IDEA_TAGS)
+    _write(
+        tmp_path,
+        "common/ideas/inline.txt",
+        "ideas = { country = {\n"
+        "\tDIRECT_idea = { picture = shared }\n"
+        "\tRENAMED_idea = { name = shared_name picture = shared }\n"
+        "\tMISSING_idea = { picture = shared }\n"
+        "} }\n",
     )
+    _write(
+        tmp_path,
+        "localisation/english/MD_inline_l_english.yml",
+        'l_english:\n DIRECT_idea: "Direct Name"\n'
+        ' DIRECT_idea_desc: "Direct description."\n'
+        ' shared_name: "Shared Name"\n shared_name_desc: "Shared description."\n',
+    )
+    _write(tmp_path, "interface/ideas.gfx", RUN_GFX)
+    validator = _validator(tmp_path, missing_loc=True)
+
+    validator.run_validations()
 
     assert _findings(validator) == [
         (
             "missing-idea-localisation",
-            "hidden_ideas: TAG_absent: TAG_absent, TAG_absent_desc",
-            "",
-            0,
-        )
+            "'MISSING_idea' (country) is missing loc key 'MISSING_idea'",
+            "common/ideas/inline.txt",
+            4,
+        ),
+        (
+            "missing-idea-localisation",
+            "'MISSING_idea' (country) is missing loc key 'MISSING_idea_desc'",
+            "common/ideas/inline.txt",
+            4,
+        ),
     ]
+    assert [issue.severity for issue in validator._issues] == [
+        Severity.ERROR,
+        Severity.WARNING,
+    ]
+    assert (validator.errors_found, validator.warnings_found) == (1, 1)
+
+
+def test_missing_loc_flag_adds_the_desc_keys(tmp_path):
+    assert _missing_loc_findings(tmp_path, missing_loc=True) == [
+        (
+            "missing-idea-localisation",
+            "'TAG_absent' (country) is missing loc key 'TAG_absent'",
+            "common/ideas/test.txt",
+            14,
+        ),
+        (
+            "missing-idea-localisation",
+            "'TAG_absent' (country) is missing loc key 'TAG_absent_desc'",
+            "common/ideas/test.txt",
+            14,
+        ),
+        (
+            "missing-idea-localisation",
+            "'TAG_no_desc' (country) is missing loc key 'TAG_no_desc_desc'",
+            "common/ideas/test.txt",
+            12,
+        ),
+    ]
+
+
+def test_missing_localisation_reads_no_loc_without_idea_files_in_scope(
+    tmp_path, monkeypatch
+):
+    monkeypatch.setattr(
+        "validate_localisation.get_all_loc_keys",
+        lambda *_args, **_kwargs: pytest.fail("loc index was loaded"),
+    )
+    validator = _validator(tmp_path)
+
+    validator.validate_missing_localisation({"TAG_absent": ("country", None, None)}, {})
+
+    assert validator._issues == []
 
 
 def test_loc_consolidation_only_suggests_true_duplicates(tmp_path):
@@ -489,6 +596,35 @@ def test_default_run_reports_only_the_always_on_checks(tmp_path, no_vanilla_gfx)
     ]
 
 
+def test_missing_name_loc_flag_reports_only_the_name_key(tmp_path, no_vanilla_gfx):
+    _write_run_mod(tmp_path)
+    validator = _validator(tmp_path, missing_name_loc=True)
+
+    validator.run_validations()
+
+    assert [issue.message for issue in validator._issues] == [
+        "'DEAD_spirit' (country) is missing loc key 'DEAD_spirit'"
+    ]
+    assert validator._issues[0].severity == Severity.ERROR
+    assert (validator.errors_found, validator.warnings_found) == (1, 0)
+
+
+def test_staged_missing_name_loc_checks_only_the_staged_idea_file(
+    tmp_path, no_vanilla_gfx
+):
+    _write_run_mod(tmp_path)
+    _write(tmp_path, "common/ideas/quality.txt", QUALITY_IDEAS)
+    validator = _validator(tmp_path, missing_name_loc=True)
+    validator.staged_only = True
+    validator.staged_files = ["common/ideas/test.txt"]
+
+    validator.run_validations()
+
+    assert [issue.message for issue in validator._issues] == [
+        "'DEAD_spirit' (country) is missing loc key 'DEAD_spirit'"
+    ]
+
+
 def test_optional_flags_enable_the_advisory_checks(tmp_path, no_vanilla_gfx):
     _write_run_mod(tmp_path)
     validator = Validator(
@@ -507,7 +643,7 @@ def test_optional_flags_enable_the_advisory_checks(tmp_path, no_vanilla_gfx):
         "missing-idea-localisation",
     }
     assert any(
-        "DEAD_spirit: DEAD_spirit, DEAD_spirit_desc" in issue.message
+        "is missing loc key 'DEAD_spirit_desc'" in issue.message
         for issue in validator._issues
     )
 
@@ -545,15 +681,18 @@ def test_extra_cli_arguments_default_to_the_documented_values():
 
     defaults = parser.parse_args([])
     assert (
+        defaults.missing_name_loc,
         defaults.missing_loc,
         defaults.unused_ideas,
         defaults.suggest_consolidation,
     ) == (
         False,
+        False,
         True,
         False,
     )
     assert parser.parse_args(["--no-unused-ideas"]).unused_ideas is False
+    assert parser.parse_args(["--missing-name-loc"]).missing_name_loc is True
     assert parser.parse_args(["--missing-loc"]).missing_loc is True
     assert parser.parse_args(["--suggest-consolidation"]).suggest_consolidation is True
 
@@ -586,6 +725,69 @@ def test_script_entry_point_exits_nonzero_under_strict(tmp_path, monkeypatch):
         runpy.run_path(validate_ideas.__file__, run_name="__main__")
 
     assert exit_info.value.code == 1
+
+
+@pytest.mark.parametrize(
+    ("name_override", "descriptions_only", "expected_code"),
+    [
+        (None, False, 1),
+        ("shared_missing", False, 1),
+        ("shared_missing_desc", False, 1),
+        (None, True, 0),
+    ],
+)
+def test_strict_core_gate_fails_only_for_missing_idea_names(
+    tmp_path,
+    monkeypatch,
+    no_vanilla_gfx,
+    capsys,
+    name_override,
+    descriptions_only,
+    expected_code,
+):
+    _write_run_mod(tmp_path)
+    spec = next(spec for spec in BATCHES["core"] if spec.name == "ideas")
+    assert spec.strict is True
+    flags = list(spec.args)
+    if name_override:
+        _write(
+            tmp_path,
+            "common/ideas/test.txt",
+            RUN_IDEAS.replace(
+                "DEAD_spirit = {", f"DEAD_spirit = {{ name = {name_override}"
+            ),
+        )
+    if descriptions_only:
+        _write(
+            tmp_path,
+            "localisation/english/MD_test_l_english.yml",
+            RUN_LOC + ' DEAD_spirit: "Dead Spirit"\n',
+        )
+        flags = ["--missing-loc"]
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            validate_ideas.__file__,
+            "--path",
+            str(tmp_path),
+            "--strict",
+            "--workers",
+            "1",
+            "--no-color",
+            "--no-unused-ideas",
+            *flags,
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(validate_ideas.__file__, run_name="__main__")
+
+    assert exit_info.value.code == expected_code
+    missing_key = (
+        "DEAD_spirit_desc" if descriptions_only else name_override or "DEAD_spirit"
+    )
+    assert f"missing loc key '{missing_key}'" in capsys.readouterr().err
 
 
 def test_type_and_child_equipment_bonus_is_flagged(tmp_path):

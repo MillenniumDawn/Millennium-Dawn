@@ -1531,26 +1531,57 @@ country_event = {
 	desc = NKO_spa.21.d
 	picture = GFX_computer
 	is_triggered_only = yes
-	fire_only_once = yes
 
 	trigger = { NKO_spa_mechanic_enabled = yes }
+
+	immediate = {
+		hidden_effect = {
+			random_list = {
+				15 = { set_variable = { NKO_spa_eq_reward = 1 } }
+				15 = { set_variable = { NKO_spa_eq_reward = 2 } }
+				15 = { set_variable = { NKO_spa_eq_reward = 3 } }
+				15 = { set_variable = { NKO_spa_eq_reward = 4 } }
+				15 = { set_variable = { NKO_spa_eq_reward = 5 } }
+				15 = { set_variable = { NKO_spa_eq_reward = 6 } }
+				10 = { set_variable = { NKO_spa_eq_reward = 7 } }
+			}
+		}
+	}
 
 	option = {
 		name = NKO_spa.21.a
 		log = "[GetDateText]: [Root.GetName]: NKO_spa.21.a executed"
 		army_experience = 25
-		hidden_effect = {
-			set_temp_variable = { NKO_spa_eq_amount = 75 }
-			random_list = {
-				15 = { NKO_spa_give_latest_tank = yes }
-				15 = { NKO_spa_give_latest_apc = yes }
-				15 = { NKO_spa_give_latest_ifv = yes }
-				15 = { NKO_spa_give_latest_recon = yes }
-				15 = { NKO_spa_give_latest_sp_aa = yes }
-				15 = { NKO_spa_give_latest_sp_arty = yes }
-				10 = { NKO_spa_give_latest_sp_rocket_arty = yes }
-			}
+		set_temp_variable = { NKO_spa_eq_amount = 35 }
+		if = {
+			limit = { hidden_trigger = { check_variable = { NKO_spa_eq_reward = 1 } } }
+			NKO_spa_give_latest_tank = yes
 		}
+		else_if = {
+			limit = { hidden_trigger = { check_variable = { NKO_spa_eq_reward = 2 } } }
+			NKO_spa_give_latest_apc = yes
+		}
+		else_if = {
+			limit = { hidden_trigger = { check_variable = { NKO_spa_eq_reward = 3 } } }
+			NKO_spa_give_latest_ifv = yes
+		}
+		else_if = {
+			limit = { hidden_trigger = { check_variable = { NKO_spa_eq_reward = 4 } } }
+			NKO_spa_give_latest_recon = yes
+		}
+		else_if = {
+			limit = { hidden_trigger = { check_variable = { NKO_spa_eq_reward = 5 } } }
+			NKO_spa_give_latest_sp_aa = yes
+		}
+		else_if = {
+			limit = { hidden_trigger = { check_variable = { NKO_spa_eq_reward = 6 } } }
+			NKO_spa_give_latest_sp_arty = yes
+		}
+		else_if = {
+			limit = { hidden_trigger = { check_variable = { NKO_spa_eq_reward = 7 } } }
+			NKO_spa_give_latest_sp_rocket_arty = yes
+		}
+		hidden_effect = { clear_variable = NKO_spa_eq_reward }
 	}
 }
 
@@ -1579,7 +1610,6 @@ country_event = {
 	desc = NKO_spa.23.d
 	picture = GFX_mining
 	is_triggered_only = yes
-	fire_only_once = yes
 
 	trigger = { NKO_spa_mechanic_enabled = yes }
 
@@ -3702,5 +3732,45 @@ country_event = {
 		set_temp_variable = { treasury_change = 0.5 }
 		modify_treasury_effect = yes
 		ai_chance = { base = 50 }
+	}
+}
+
+country_event = {
+	id = NKO_spa.56
+	title = NKO_spa.56.t
+	desc = NKO_spa.56.d
+	picture = GFX_computer
+	is_triggered_only = yes
+	fire_only_once = yes
+
+	trigger = {
+		NKO_spa_mechanic_enabled = yes
+		602 = {
+			is_owned_and_controlled_by = ROOT
+			radar_station < 4
+		}
+	}
+
+	option = {
+		name = NKO_spa.56.a
+		trigger = { check_variable = { var = treasury value = 7 compare = greater_than_or_equals } }
+		log = "[GetDateText]: [Root.GetName]: NKO_spa.56.a executed"
+		set_temp_variable = { treasury_change = -7 }
+		modify_treasury_effect = yes
+		602 = {
+			set_building_level = {
+				type = radar_station
+				level = 4
+			}
+		}
+		ai_chance = { base = 70 }
+	}
+
+	option = {
+		name = NKO_spa.56.b
+		ai_chance = {
+			base = 30
+			modifier = { factor = 4 check_variable = { treasury < 7 } }
+		}
 	}
 }

@@ -9,7 +9,16 @@ the call site. `random_country` / `random_state` are single-pick and are not
 iterators, so a call nested only in them is not flagged.
 """
 
-from validate_events import _parse_event_metadata, scan_fire_only_once_in_loop
+import os
+
+import pytest
+from shared.suite import call_site_scan, write_under_str
+from validate_events import (
+    _FOF_IN_LOOP_MSG,
+    _MAJOR_IN_LOOP_MSG,
+    Validator,
+    _parse_event_metadata,
+)
 
 
 def _event_block(eid, body_extra="fire_only_once = yes\n"):
@@ -33,7 +42,7 @@ def test_fires_inside_every_country_flagged(tmp_path):
         "x = {\n\tevery_country = {\n\t\tcountry_event = foo.1\n\t}\n}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert len(res) == 1
     assert "foo.1" in res[0]
     assert "iterator" in res[0]
@@ -51,7 +60,7 @@ def test_fires_inside_for_each_scope_loop_flagged(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert len(res) == 1
     assert "foo.1" in res[0]
 
@@ -67,7 +76,7 @@ def test_id_not_first_arg_still_extracted(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert len(res) == 1
     assert "foo.1" in res[0]
 
@@ -82,7 +91,7 @@ def test_operative_leader_event_short_form_flagged(tmp_path):
         "x = {\n\tevery_country = {\n\t\toperative_leader_event = foo.1\n\t}\n}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert len(res) == 1
     assert "foo.1" in res[0]
 
@@ -98,7 +107,7 @@ def test_operative_leader_event_long_form_flagged(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert len(res) == 1
     assert "foo.1" in res[0]
 
@@ -118,7 +127,7 @@ def test_literal_brace_in_quoted_log_does_not_desync(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert len(res) == 1
     assert "foo.1" in res[0]
 
@@ -130,7 +139,7 @@ def test_random_country_single_pick_not_flagged(tmp_path):
         "x = {\n\trandom_country = {\n\t\tcountry_event = foo.1\n\t}\n}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert res == []
 
 
@@ -149,7 +158,7 @@ def test_random_nested_in_every_country_flagged(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert len(res) == 1
 
 
@@ -168,7 +177,7 @@ def test_pinned_root_scope_in_every_country_not_flagged(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert res == []
 
 
@@ -187,7 +196,7 @@ def test_pinned_tag_scope_in_every_country_not_flagged(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert res == []
 
 
@@ -206,7 +215,7 @@ def test_iterator_wrapping_pinned_scope_still_flagged(tmp_path):
         "}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset({"foo.1"}), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path, frozenset({"foo.1"}))
     assert len(res) == 1
 
 
@@ -217,7 +226,7 @@ def test_non_fire_only_once_event_not_flagged(tmp_path):
         "x = {\n\tevery_country = {\n\t\tcountry_event = foo.1\n\t}\n}\n",
         encoding="utf-8",
     )
-    res = scan_fire_only_once_in_loop((str(call), frozenset(), str(tmp_path)))
+    res = call_site_scan(call, "fof", tmp_path)
     assert res == []
 
 
@@ -298,3 +307,65 @@ def test_parse_metadata_strips_commented_hidden_and_triggered_only():
     meta, _ = _parse_event_metadata(text, "Ev.txt")
     assert meta[0]["is_triggered_only"] is False
     assert meta[0]["is_hidden"] is False
+
+
+# One walk serves the fire_only_once and major checks. Lines 6-8 hold a brace,
+# a call in a comment and a call in a string; none may move or add a finding.
+NESTED_LOOPS = (
+    "fx = {\n"
+    "\tevery_country = {\n"
+    "\t\tevery_owned_state = {\n"
+    "\t\t\tfor_each_scope_loop = {\n"
+    "\t\t\t\tarray = global.list\n"
+    '\t\t\t\tlog = "brace } inside a string"\n'
+    "\t\t\t\t# country_event = fof.1\n"
+    '\t\t\t\tlog = "country_event = fof.1"\n'
+    "\t\t\t\tnews_event = { id = maj.1 days = 1 }\n"
+    "\t\t\t\tcountry_event = fof.1\n"
+    "\t\t\t}\n"
+    "\t\t}\n"
+    "\t\tROOT = {\n"
+    "\t\t\tcountry_event = fof.1\n"
+    "\t\t\tnews_event = maj.1\n"
+    "\t\t}\n"
+    "\t}\n"
+    "}\n"
+    "country_event = fof.1"
+)
+
+
+def _tracked_tree(tmp_path, caller_text, caller="common/scripted_effects/f.txt"):
+    write_under_str(
+        tmp_path,
+        "events/Ev.txt",
+        _event_block("fof.1") + _event_block("maj.1", "major = yes\n"),
+    )
+    path = write_under_str(tmp_path, caller, caller_text)
+    v = Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
+    return path, v._get_shared_call_site_scan()
+
+
+@pytest.mark.parametrize("newline", ["\n", "\r\n"])
+def test_three_deep_iterators_report_both_checks_from_one_walk(tmp_path, newline):
+    path, shared = _tracked_tree(tmp_path, NESTED_LOOPS.replace("\n", newline))
+    rel = os.path.join("common", "scripted_effects", "f.txt")
+    fof = [f"{rel}:10 - {_FOF_IN_LOOP_MSG.format(eid='fof.1')}"]
+    major = [
+        f"{rel}:9 - {_MAJOR_IN_LOOP_MSG.format(eid='maj.1')}",
+        f"{rel}:15 - {_MAJOR_IN_LOOP_MSG.format(eid='maj.1')}",
+    ]
+    assert shared["fof"] == fof
+    assert shared["major"] == major
+    assert call_site_scan(path, "fof", tmp_path, frozenset({"fof.1"})) == fof
+    assert call_site_scan(path, "major", tmp_path, frozenset({"maj.1"})) == major
+
+
+def test_for_each_only_caller_reaches_the_in_loop_walk(tmp_path):
+    _path, shared = _tracked_tree(
+        tmp_path,
+        "gx = {\n\tfor_each_scope_loop = {\n\t\tarray = global.list\n"
+        "\t\tstate_event = maj.1\n\t}\n}\n",
+    )
+    rel = os.path.join("common", "scripted_effects", "f.txt")
+    assert shared["major"] == [f"{rel}:4 - {_MAJOR_IN_LOOP_MSG.format(eid='maj.1')}"]
+    assert shared["fof"] == []

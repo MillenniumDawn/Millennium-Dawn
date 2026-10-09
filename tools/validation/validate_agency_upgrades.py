@@ -13,7 +13,13 @@ from pathlib import Path
 from typing import Dict, List, Set
 
 import disk_cache
-from validator_common import BaseValidator, Colors, run_validator_main, strip_comments
+from validator_common import (
+    BaseValidator,
+    Colors,
+    line_of,
+    run_validator_main,
+    strip_comments,
+)
 
 ON_ACTIONS_FILE = "common/on_actions/MD_auto_agency_on_actions.txt"
 UPGRADES_DIR = "common/intelligence_agency_upgrades"
@@ -101,11 +107,6 @@ def _read(path: Path) -> str:
         return ""
 
 
-def _line_of(text: str, offset: int) -> int:
-    """1-based line number for a character offset in text."""
-    return text.count("\n", 0, offset) + 1
-
-
 def _scan_agency_calls(stripped: str, filepath: str):
     create_icons = []
     for m in CREATE_AGENCY_RE.finditer(stripped):
@@ -116,13 +117,13 @@ def _scan_agency_calls(stripped: str, filepath: str):
         gfx = icon_match.group(1)
         # Line number of the icon match within the original file
         abs_offset = m.start() + body.find(icon_match.group(0))
-        line = _line_of(stripped, abs_offset)
+        line = line_of(stripped, abs_offset)
         create_icons.append((filepath, line, gfx))
 
     upgrade_calls = []
     for m in UPGRADE_CALL_RE.finditer(stripped):
         upgrade = m.group(1)
-        line = _line_of(stripped, m.start())
+        line = line_of(stripped, m.start())
         upgrade_calls.append((filepath, line, upgrade))
 
     return create_icons, upgrade_calls
@@ -464,7 +465,7 @@ class Validator(BaseValidator):
         text = strip_comments(_read(Path(self.mod_path) / SCRIPTED_GUI_FILE))
         if not text:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Missing {SCRIPTED_GUI_FILE} — skipping{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Missing {SCRIPTED_GUI_FILE} — skipping{Colors.ENDC}",
                 "warning",
             )
             return
@@ -491,7 +492,7 @@ class Validator(BaseValidator):
         text = strip_comments(_read(Path(self.mod_path) / SCRIPTED_TRIGGERS_FILE))
         if not text:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Missing {SCRIPTED_TRIGGERS_FILE} — skipping{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Missing {SCRIPTED_TRIGGERS_FILE} — skipping{Colors.ENDC}",
                 "warning",
             )
             return
@@ -552,7 +553,7 @@ class Validator(BaseValidator):
         if not triggers or not effects:
             missing = SCRIPTED_TRIGGERS_FILE if not triggers else SCRIPTED_EFFECTS_FILE
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}Missing {missing} — skipping{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}Missing {missing} — skipping{Colors.ENDC}",
                 "warning",
             )
             return
