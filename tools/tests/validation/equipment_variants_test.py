@@ -37,7 +37,7 @@ def reward(equipment="hull", extra="", consumer="add_equipment_production", crea
 def test_every_equipment_and_consumer(equipment, consumer):
     findings = check_variant_availability(reward(equipment, consumer=consumer), UNLOCKS)
     assert len(findings) == 1
-    assert findings[0][1] == 2
+    assert findings[0][2] == 2
     assert equipment in findings[0][0]
     assert consumer in findings[0][0]
 
@@ -180,7 +180,7 @@ def test_comments_strings_and_line_numbers():
         "# " + reward().replace("\n", "\n# "), UNLOCKS
     )
     text = '# heading\nlog = "create_equipment_variant = { name = fake }"\n' + reward()
-    assert check_variant_availability(text, UNLOCKS)[0][1] == 4
+    assert check_variant_availability(text, UNLOCKS)[0][2] == 4
 
 
 def test_conditional_creation_remains_pending_after_branch():
@@ -218,7 +218,11 @@ def test_equipment_unlock_mapping():
 )
 def test_validator_scans_all_effect_sources(tmp_path, write_path, path):
     write_technology(tmp_path, write_path)
-    write_path(tmp_path, path, reward())
+    if path.startswith("common/scripted_effects/"):
+        write_path(tmp_path, path, "build_design = { " + reward() + " }")
+        write_path(tmp_path, "events/caller.txt", "build_design = yes")
+    else:
+        write_path(tmp_path, path, reward())
     validator = Validator(mod_path=str(tmp_path), workers=1, use_colors=False)
     validator.run_validations()
     assert len(validator._issues) == 1
@@ -689,3 +693,255 @@ def test_negated_country_comparison_cannot_supply_history(guard):
     assert check_variant_availability(
         event_body(reward(), trigger=guard), UNLOCKS, context
     )
+
+
+def validate_documents(tmp_path, write_path, documents, staged=None):
+    write_technology(tmp_path, write_path)
+    for path, text in documents.items():
+        write_path(tmp_path, path, text)
+    validator = Validator(
+        mod_path=str(tmp_path),
+        staged_only=staged is not None,
+        workers=1,
+        use_colors=False,
+    )
+    if staged is not None:
+        validator.staged_files = [str(tmp_path / staged)]
+    validator.run_validations()
+    return validator
+
+
+@pytest.mark.parametrize(
+    "consumer",
+    ["add_equipment_production", "create_ship", "add_equipment_to_stockpile"],
+)
+def test_scripted_creation_reaches_caller_only_consumers(
+    tmp_path, write_path, consumer
+):
+    creation, use = reward(consumer=consumer).splitlines()
+    validator = validate_documents(
+        tmp_path,
+        write_path,
+        {
+            "common/scripted_effects/create.txt": "build_design = {\n"
+            + creation
+            + "\n}",
+            "events/use.txt": "build_design = yes\n" + use,
+        },
+    )
+    assert len(validator._issues) == 1
+    issue = validator._issues[0]
+    assert issue.file == "events/use.txt"
+    assert issue.line == 2
+    assert "common/scripted_effects/create.txt:2" in issue.message
+
+
+@pytest.mark.parametrize(
+    "grant,expected",
+    [
+        ("set_technology = { naval_tech = 1 }", 0),
+        ("set_technology = { armor_tech = 1 }", 1),
+        ("if = { limit = { has_war = yes } set_technology = { naval_tech = 1 } }", 1),
+        ("GER = { set_technology = { naval_tech = 1 } }", 1),
+        ("effect_tooltip = { set_technology = { naval_tech = 1 } }", 1),
+    ],
+)
+def test_scripted_grant_clears_pending_caller_variant(grant, expected):
+    creation, use = reward().splitlines()
+    context = context_for(
+        {"common/scripted_effects/grant.txt": "grant_tech = { " + grant + " }"}
+    )
+    body = creation + "\ngrant_tech = yes\n" + use
+    assert len(check_variant_availability(body, UNLOCKS, context)) == expected
+
+
+@pytest.mark.parametrize(
+    "prefix",
+    [
+        "set_technology = { naval_tech = 1 } build_design = yes",
+        "if = { limit = { has_tech = naval_tech } build_design = yes }",
+        "focus = { available = { has_tech = naval_tech } completion_reward = { build_design = yes } }",
+        "country_event = { trigger = { has_tech = naval_tech } option = { build_design = yes } }",
+        'focus = { available = { if = { limit = { has_dlc = "Designer" } has_tech = naval_tech } } completion_reward = { build_design = yes } }',
+    ],
+)
+def test_scripted_body_inherits_caller_technology_and_guards(prefix):
+    context = context_for(
+        {"common/scripted_effects/create.txt": "build_design = { " + reward() + " }"}
+    )
+    assert not check_variant_availability(prefix, UNLOCKS, context)
+
+
+@pytest.mark.parametrize(
+    "history,expected",
+    [
+        ("set_technology = { naval_tech = 1 }\nbuild_design = yes", 0),
+        ("build_design = yes\nset_technology = { naval_tech = 1 }", 1),
+        (
+            "set_technology = { naval_tech = 1 }\nset_technology = { naval_tech = 0 }\nbuild_design = yes",
+            1,
+        ),
+        (
+            'if = { limit = { has_dlc = "Designer" } set_technology = { naval_tech = 1 } build_design = yes }',
+            0,
+        ),
+    ],
+)
+def test_history_scripted_body_uses_call_site_technology(
+    tmp_path, write_path, history, expected
+):
+    validator = validate_documents(
+        tmp_path,
+        write_path,
+        {
+            "common/scripted_effects/create.txt": "build_design = {\n"
+            + reward(creator="creator = ROOT")
+            + "\n}",
+            "history/countries/GER - Test.txt": "2000.1.1 = {\n" + history + "\n}",
+        },
+    )
+    assert len(validator._issues) == expected
+    if expected:
+        assert validator._issues[0].file == "common/scripted_effects/create.txt"
+        assert validator._issues[0].line == 3
+
+
+@pytest.mark.parametrize("grant", ["grant_tech = yes", "grant_tech = { unused = yes }"])
+def test_scripted_starting_grants_supply_proven_event_recipients(grant):
+    context = context_for(
+        {
+            "common/scripted_effects/grant.txt": "grant_tech = { set_technology = { naval_tech = 1 } }",
+            "history/countries/GER - Test.txt": "2000.1.1 = { " + grant + " }",
+        }
+    )
+    assert not check_variant_availability(
+        event_body(reward(), trigger="tag = GER"), UNLOCKS, context
+    )
+
+
+def test_nested_scripted_effects_share_pending_variants_and_sources(
+    tmp_path, write_path
+):
+    creation, use = reward().splitlines()
+    validator = validate_documents(
+        tmp_path,
+        write_path,
+        {
+            "common/scripted_effects/wrapper.txt": "wrapper = { build_design = yes consume_design = yes }",
+            "common/scripted_effects/create.txt": "build_design = {\n"
+            + creation
+            + "\n}",
+            "common/scripted_effects/use.txt": "consume_design = {\n" + use + "\n}",
+            "events/caller.txt": "wrapper = yes\nwrapper = yes",
+        },
+    )
+    assert len(validator._issues) == 1
+    issue = validator._issues[0]
+    assert issue.file == "common/scripted_effects/use.txt"
+    assert issue.line == 2
+    assert "common/scripted_effects/create.txt:2" in issue.message
+
+
+@pytest.mark.parametrize("caller", ["first", "second"])
+def test_recursive_scripted_calls_terminate_and_keep_later_operations(caller):
+    context = context_for(
+        {
+            "common/scripted_effects/cycle.txt": "first = { second = yes } second = { first = yes "
+            + reward()
+            + " }",
+        }
+    )
+    assert len(check_variant_availability(caller + " = yes", UNLOCKS, context)) == 1
+
+
+def test_scripted_grants_can_run_again_after_a_previous_call():
+    context = context_for(
+        {
+            "common/scripted_effects/grant.txt": "grant_tech = { set_technology = { naval_tech = 1 } }",
+        }
+    )
+    body = (
+        "grant_tech = yes\nset_technology = { naval_tech = 0 }\n"
+        "grant_tech = yes\n" + reward()
+    )
+    assert not check_variant_availability(body, UNLOCKS, context)
+
+
+@pytest.mark.parametrize("scope", ["GER", "random_other_country", "FROM"])
+def test_scripted_foreign_calls_do_not_unlock_the_caller(scope):
+    context = context_for(
+        {
+            "common/scripted_effects/grant.txt": "grant_tech = { set_technology = { naval_tech = 1 } }"
+        }
+    )
+    assert check_variant_availability(
+        f"{scope} = {{ grant_tech = yes }}" + reward(), UNLOCKS, context
+    )
+
+
+def test_uncalled_scripted_definitions_are_not_executed(tmp_path, write_path):
+    validator = validate_documents(
+        tmp_path,
+        write_path,
+        {
+            "common/scripted_effects/unused.txt": "unused = { " + reward() + " }",
+            "events/caller.txt": "add_stability = 0.1",
+        },
+    )
+    assert not validator._issues
+
+
+def test_scripted_bodies_are_checked_in_each_callers_context(tmp_path, write_path):
+    documents = {
+        "common/scripted_effects/create.txt": "build_design = { " + reward() + " }",
+        "events/unlocked.txt": "set_technology = { naval_tech = 1 } build_design = yes",
+        "events/locked.txt": "build_design = yes",
+    }
+    validator = validate_documents(tmp_path, write_path, documents)
+    assert len(validator._issues) == 1
+    assert validator._issues[0].file == "common/scripted_effects/create.txt"
+    write_path(
+        tmp_path,
+        "events/locked.txt",
+        "set_technology = { naval_tech = 1 } build_design = yes",
+    )
+    FileOpener.clear_cache()
+    validator = Validator(mod_path=str(tmp_path), workers=1, use_colors=False)
+    validator.run_validations()
+    assert not validator._issues
+
+
+@pytest.mark.parametrize(
+    "staged",
+    [
+        "common/scripted_effects/grant.txt",
+        "common/scripted_effects/wrapper.txt",
+        "common/on_actions/caller.txt",
+    ],
+)
+def test_staged_scripted_changes_rescan_caller_only_files(tmp_path, write_path, staged):
+    creation, use = reward().splitlines()
+    validator = validate_documents(
+        tmp_path,
+        write_path,
+        {
+            "common/scripted_effects/grant.txt": "grant_tech = { set_technology = { naval_tech = 0 } }",
+            "common/scripted_effects/wrapper.txt": "wrapper = { grant_tech = yes }",
+            "common/scripted_effects/create.txt": "build_design = { " + creation + " }",
+            "common/on_actions/caller.txt": "build_design = yes wrapper = yes " + use,
+        },
+        staged=staged,
+    )
+    assert len(validator._issues) == 1
+    assert validator._issues[0].file == "common/on_actions/caller.txt"
+
+
+def test_only_equipment_relevant_scripted_chains_are_expanded():
+    context = context_for(
+        {
+            "common/scripted_effects/test.txt": "unrelated = { add_stability = 0.1 } wrapper = { build_design = yes } build_design = { "
+            + reward()
+            + " }",
+        }
+    )
+    assert set(context.effects) == {"wrapper", "build_design"}
