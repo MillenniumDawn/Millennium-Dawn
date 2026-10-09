@@ -1205,6 +1205,46 @@ on_actions = {
 				}
 			}
 
+			# Bosnian civil war: the winner absorbs the loser, so no peace conference decides it
+			if = {
+				limit = {
+					BOS = { has_country_flag = civil_war_bosnia }
+					ROOT = { OR = { tag = BOS tag = RSK tag = HZG } }
+					FROM = { OR = { tag = BOS tag = RSK tag = HZG } }
+				}
+				ROOT = {
+					clr_country_flag = RSK_civil_war_recovery_pending
+					clr_country_flag = HZG_civil_war_recovery_pending
+				}
+				FROM = {
+					if = {
+						limit = { tag = BOS }
+						if = {
+							limit = { ROOT = { tag = HZG } }
+							set_country_flag = BOS_hzg_civil_war_recovery_pending
+							country_event = { id = BOS_political.20 days = 2 }
+						}
+						else = { country_event = { id = BOS_events.4 days = 2 } }
+					}
+					# A breakaway has only won once Bosnia itself is beaten
+					else_if = {
+						limit = {
+							OR = {
+								ROOT = { tag = BOS }
+								NOT = { country_exists = BOS }
+							}
+						}
+						if = {
+							limit = { tag = RSK }
+							set_country_flag = RSK_civil_war_recovery_pending
+						}
+						else = { set_country_flag = HZG_civil_war_recovery_pending }
+						country_event = { id = BOS_political.20 days = 2 }
+					}
+					annex_country = { target = ROOT transfer_troops = no }
+				}
+			}
+
 			#Special capitulation for ISIS
 			if = { limit = { original_tag = ISI }
 				# Give Iraqi states first Kurdistan if they've capture them, otherwise return to Iraq
@@ -1417,64 +1457,6 @@ on_actions = {
 					set_variable = { tag_to_grab = FROM.id }
 					update_missile_satellite_inventory = yes
 				}
-			}
-			# Bosnia civil war end
-			if = {
-				limit = {
-					ROOT = { original_tag = BOS }
-					FROM = { original_tag = RSK }
-				}
-				ROOT = { country_event = { id = BOS_events.4 days = 2 } }
-			}
-			if = {
-				limit = {
-					ROOT = { original_tag = BOS }
-					FROM = { original_tag = HZG }
-				}
-				ROOT = {
-					set_country_flag = BOS_hzg_civil_war_recovery_pending
-					country_event = { id = BOS_political.20 days = 2 }
-				}
-			}
-			if = {
-				limit = {
-					ROOT = { original_tag = RSK }
-					FROM = { original_tag = BOS }
-				}
-				ROOT = {
-					set_country_flag = RSK_civil_war_recovery_pending
-					country_event = { id = BOS_political.20 days = 2 }
-				}
-			}
-			if = {
-				limit = {
-					ROOT = { original_tag = HZG }
-					FROM = { original_tag = BOS }
-				}
-				ROOT = {
-					set_country_flag = HZG_civil_war_recovery_pending
-					country_event = { id = BOS_political.20 days = 2 }
-				}
-			}
-			if = {
-				limit = {
-					ROOT = {
-						original_tag = RSK
-						has_country_flag = RSK_civil_war_recovery_pending
-					}
-					FROM = { original_tag = HZG }
-				}
-				ROOT = { country_event = { id = BOS_political.20 days = 2 } }
-			}
-			if = {
-				limit = {
-					ROOT = {
-						original_tag = HZG
-						has_country_flag = HZG_civil_war_recovery_pending
-					}
-					FROM = { original_tag = RSK }
-				}
-				ROOT = { country_event = { id = BOS_political.20 days = 2 } }
 			}
 		}
 	}
