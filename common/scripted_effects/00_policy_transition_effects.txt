@@ -5,9 +5,9 @@
 @policy_transition_cost_decay = 0.01
 @policy_transition_cut_per_level = 0.05
 @policy_transition_penalty_cap = -0.20
-@policy_transition_penalty_recovery = 0.0025
+@policy_transition_penalty_recovery = 0.002
 @policy_transition_population_tax_per_point = 0.01
-@policy_transition_corporate_tax_per_point = 0.005
+@policy_transition_corporate_tax_per_point = 0.006
 @policy_transition_mandate_factor = 0.5
 
 policy_transition_ensure_modifier = {
@@ -162,7 +162,10 @@ military_transition_check = {
 		}
 		set_temp_variable = { policy_transition_delta = { value = spending_new_level subtract = military_law } }
 		if = {
-			limit = { check_variable = { policy_transition_delta > 0 } }
+			limit = {
+				check_variable = { policy_transition_delta > 0 }
+				has_war = no
+			}
 			policy_transition_raise_amount = yes
 			policy_transition_ensure_modifier = yes
 			add_to_variable = { var = policy_transition_military_cost value = policy_transition_amount tooltip = military_spending_cost_multiplier_modifier_tt }
@@ -178,40 +181,56 @@ military_transition_check = {
 	}
 }
 
-# Call right after a tax rate change, with temp previous_tax_rate set before it
+# Call after a tax change with temp previous_tax_rate; only points above the peak since the last reset count
 population_tax_transition_check = {
 	if = {
 		limit = { check_variable = { population_tax_rate > previous_tax_rate } }
-		set_temp_variable = {
-			policy_transition_amount = {
-				value = previous_tax_rate
-				subtract = population_tax_rate
-				multiply = @policy_transition_population_tax_per_point
-			}
+		if = {
+			limit = { NOT = { has_variable = policy_transition_population_tax_peak } }
+			set_variable = { policy_transition_population_tax_peak = previous_tax_rate }
 		}
 		if = {
-			limit = { has_idea = policy_reform_mandate }
-			multiply_temp_variable = { policy_transition_amount = @policy_transition_mandate_factor }
+			limit = { check_variable = { population_tax_rate > policy_transition_population_tax_peak } }
+			set_temp_variable = {
+				policy_transition_amount = {
+					value = policy_transition_population_tax_peak
+					subtract = population_tax_rate
+					multiply = @policy_transition_population_tax_per_point
+				}
+			}
+			set_variable = { policy_transition_population_tax_peak = population_tax_rate }
+			if = {
+				limit = { has_idea = policy_reform_mandate }
+				multiply_temp_variable = { policy_transition_amount = @policy_transition_mandate_factor }
+			}
+			policy_transition_add_stability_penalty = yes
 		}
-		policy_transition_add_stability_penalty = yes
 	}
 }
 
 corporate_tax_transition_check = {
 	if = {
 		limit = { check_variable = { corporate_tax_rate > previous_tax_rate } }
-		set_temp_variable = {
-			policy_transition_amount = {
-				value = previous_tax_rate
-				subtract = corporate_tax_rate
-				multiply = @policy_transition_corporate_tax_per_point
-			}
+		if = {
+			limit = { NOT = { has_variable = policy_transition_corporate_tax_peak } }
+			set_variable = { policy_transition_corporate_tax_peak = previous_tax_rate }
 		}
 		if = {
-			limit = { has_idea = policy_reform_mandate }
-			multiply_temp_variable = { policy_transition_amount = @policy_transition_mandate_factor }
+			limit = { check_variable = { corporate_tax_rate > policy_transition_corporate_tax_peak } }
+			set_temp_variable = {
+				policy_transition_amount = {
+					value = policy_transition_corporate_tax_peak
+					subtract = corporate_tax_rate
+					multiply = @policy_transition_corporate_tax_per_point
+				}
+			}
+			set_variable = { policy_transition_corporate_tax_peak = corporate_tax_rate }
+			if = {
+				limit = { has_idea = policy_reform_mandate }
+				multiply_temp_variable = { policy_transition_amount = @policy_transition_mandate_factor }
+			}
+			policy_transition_add_stability_penalty = yes
 		}
-		policy_transition_add_stability_penalty = yes
 	}
 }
 
@@ -278,6 +297,8 @@ clear_policy_transition = {
 	clear_variable = policy_transition_military_cost
 	clear_variable = policy_transition_stability
 	clear_variable = policy_transition_war_support
+	clear_variable = policy_transition_population_tax_peak
+	clear_variable = policy_transition_corporate_tax_peak
 }
 
 # For reformist focuses: halves new transition costs and penalties for a year
