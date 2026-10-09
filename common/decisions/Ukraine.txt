@@ -8329,25 +8329,86 @@ UKR_modernize_sov_category = {
 		}
 	}
 
-	ukraine_modernize_sov_equipment_brdm_2_start_modernization = {
+	ukraine_modernize_sov_equipment_brdm_2_modernization_offers = {
 		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
-
 		fire_only_once = yes
-		ai_will_do = { base = 10 }
+		ai_will_do = { base = 5 }
+
+		visible = {
+			date < 2001.01.01
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_offers"
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_offers_flag
+
+			country_event = ukraine_modernize_sov_equipment_brdm_2_modernization.1
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_offers_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+		ai_will_do = { base = 1 }
+
+		activation = {
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_offers_flag }
+			date > 2001.01.01
+			date < 2001.07.01
+		}
+
+		days_mission_timeout = 180
+		selectable_mission = yes
+		is_good = yes
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_offers_mission"
+
+			country_event = ukraine_modernize_sov_equipment_brdm_2_modernization.1
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout ukraine_modernize_sov_equipment_brdm_2_modernization_offers_mission"
+
+			country_event = ukraine_modernize_sov_equipment_brdm_2_modernization.1
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_early = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_flag
+			date > 2000.07.01
+			date < 2001.07.01
+		}
 
 		available = {
-			OR = {
-				controls_state = 1086 #Mykolayiv
-				controls_state = 696 #Kharkiv
-				controls_state = 698 #Kyiv
-				controls_state = 699 #Vinnytsia
-				controls_state = 1089 #Poltava
-			}
-			has_political_power > 5
-			has_army_experience > 2
-			NOT = {
-				has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_cancel_flag
-			}
+			controls_state = 1086 #Mykolayiv
 		}
 
 		custom_cost_trigger = {
@@ -8355,18 +8416,651 @@ UKR_modernize_sov_category = {
 			has_political_power > 5
 			has_army_experience > 2
 		}
+
 		custom_cost_text = cost_0_01_pp_5_army_2
 		ai_hint_pp_cost = 5
 
-		modifier = {
-			research_speed_factor = 0.02
-			industrial_capacity_factory = -0.004
+		highlight_states = {
+			highlight_states_trigger = { state = 1086 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
 		}
 
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_early"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.01 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_early_flag
+
+			custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_wait_tt DAYS = 30 }
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.2 days = 30 random_days = 10 } }
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_early_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		activation = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_flag
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_early_flag }
+			date > 2001.07.01
+			date < 2001.08.01
+		}
+
+		available = {
+			controls_state = 1086 #Mykolayiv
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.01 }
+			has_political_power > 5
+			has_army_experience > 2
+		}
+
+		custom_cost_text = cost_0_01_pp_5_army_2
+		ai_hint_pp_cost = 5
+
+		days_mission_timeout = 183
+		days_remove = 1 # leaves the list 1 day after it ends, not the default 13
+		selectable_mission = yes
+		is_good = yes
+
+		highlight_states = {
+			highlight_states_trigger = { state = 1086 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_early_mission"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.01 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_early_flag
+
+			custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_wait_tt DAYS = 30 }
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.2 days = 30 random_days = 10 } }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_early_mission"
+
+			custom_effect_tooltip = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_early_expired_tt
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_developed = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_flag
+			date > 2004.01.01
+			date < 2005.07.01
+		}
+
+		available = {
+			controls_state = 1086 #Mykolayiv
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.02 }
+			has_political_power > 5
+			has_army_experience > 2
+		}
+
+		custom_cost_text = cost_0_02_pp_5_army_2
+		ai_hint_pp_cost = 5
+
+		highlight_states = {
+			highlight_states_trigger = { state = 1086 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_developed"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_developed_flag
+
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2ld_flag
+						has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2m_flag
+					}
+				}
+				custom_effect_tooltip = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_experience_tt
+				custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_wait_tt DAYS = 60 }
+				hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.3 days = 60 random_days = 15 } }
+			}
+			else = {
+				custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_wait_tt DAYS = 120 }
+				hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.3 days = 120 random_days = 30 } }
+			}
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_developed_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		activation = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_flag
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_developed_flag }
+			date > 2005.07.01
+			date < 2005.08.01
+		}
+
+		available = {
+			controls_state = 1086 #Mykolayiv
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.02 }
+			has_political_power > 5
+			has_army_experience > 2
+		}
+
+		custom_cost_text = cost_0_02_pp_5_army_2
+		ai_hint_pp_cost = 5
+
+		days_mission_timeout = 183
+		days_remove = 1 # leaves the list 1 day after it ends, not the default 13
+		selectable_mission = yes
+		is_good = yes
+
+		highlight_states = {
+			highlight_states_trigger = { state = 1086 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_developed_mission"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_developed_flag
+
+			if = {
+				limit = {
+					OR = {
+						has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2ld_flag
+						has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2m_flag
+					}
+				}
+				custom_effect_tooltip = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_experience_tt
+				custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_wait_tt DAYS = 60 }
+				hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.3 days = 60 random_days = 15 } }
+			}
+			else = {
+				custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_wait_tt DAYS = 120 }
+				hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.3 days = 120 random_days = 30 } }
+			}
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_developed_mission"
+
+			custom_effect_tooltip = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_developed_expired_tt
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_other_manufacturers = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_flag
+			date > 2010.01.01
+			date < 2013.01.01
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+
+			custom_trigger_tooltip = {
+				tooltip = ukraine_modernize_sov_equipment_brdm_2_modernization_stockpile_40_tt
+				has_equipment = { medium_tank_destroyer_chassis_0 > 39 }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.01 }
+			has_political_power > 5
+		}
+
+		custom_cost_text = cost_0_01_pp_5
+		ai_hint_pp_cost = 5
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_other_manufacturers"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.01 }
+				modify_treasury_effect = yes
+			}
+
+			country_event = ukraine_modernize_sov_equipment_brdm_2_modernization.4
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_late = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_flag
+			date > 2015.01.01
+			date < 2018.07.01
+		}
+
+		available = {
+			controls_state = 1086 #Mykolayiv
+
+			custom_trigger_tooltip = {
+				tooltip = ukraine_modernize_sov_equipment_brdm_2_modernization_stockpile_100_tt
+				has_equipment = { medium_tank_destroyer_chassis_0 > 100 }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.02 }
+			has_political_power > 5
+			has_army_experience > 2
+		}
+
+		custom_cost_text = cost_0_02_pp_5_army_2
+		ai_hint_pp_cost = 5
+
+		highlight_states = {
+			highlight_states_trigger = { state = 1086 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_late"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_late_flag
+
+			custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_wait_tt DAYS = 30 }
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.5 days = 30 random_days = 10 } }
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_late_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		activation = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_flag
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_late_flag }
+			date > 2018.07.01
+			date < 2018.08.01
+		}
+
+		available = {
+			controls_state = 1086 #Mykolayiv
+
+			custom_trigger_tooltip = {
+				tooltip = ukraine_modernize_sov_equipment_brdm_2_modernization_stockpile_100_tt
+				has_equipment = { medium_tank_destroyer_chassis_0 > 100 }
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.02 }
+			has_political_power > 5
+			has_army_experience > 2
+		}
+
+		custom_cost_text = cost_0_02_pp_5_army_2
+		ai_hint_pp_cost = 5
+
+		days_mission_timeout = 183
+		days_remove = 1 # leaves the list 1 day after it ends, not the default 13
+		selectable_mission = yes
+		is_good = yes
+
+		highlight_states = {
+			highlight_states_trigger = { state = 1086 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_late_mission"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_late_flag
+
+			custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_wait_tt DAYS = 30 }
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.5 days = 30 random_days = 10 } }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_late_mission"
+
+			custom_effect_tooltip = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_late_expired_tt
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_brdm_2t = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_flag
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_started_flag }
+			date > 2010.01.01
+			date < 2011.07.01
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.02 }
+			has_political_power > 5
+			has_army_experience > 2
+		}
+
+		custom_cost_text = cost_0_02_pp_5_army_2
+		ai_hint_pp_cost = 5
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_brdm_2t"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_started_flag
+
+			custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_wait_tt DAYS = 600 }
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.9 days = 600 random_days = 120 } }
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_brdm_2t_mission = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		activation = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_flag
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_started_flag }
+			date > 2011.07.01
+			date < 2011.08.01
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.02 }
+			has_political_power > 5
+			has_army_experience > 2
+		}
+
+		custom_cost_text = cost_0_02_pp_5_army_2
+		ai_hint_pp_cost = 5
+
+		days_mission_timeout = 183
+		days_remove = 1 # leaves the list 1 day after it ends, not the default 13
+		selectable_mission = yes
+		is_good = yes
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_brdm_2t_mission"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_started_flag
+
+			custom_effect_tooltip = { localization_key = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_wait_tt DAYS = 600 }
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.9 days = 600 random_days = 120 } }
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_brdm_2t_mission"
+
+			custom_effect_tooltip = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_expired_tt
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_yanhol = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			OR = {
+				has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2t_2013_flag
+				has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2t_2015_flag
+			}
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_yanhol_flag }
+			date > 2017.01.01
+			date < 2020.01.01
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.03 }
+			has_political_power > 5
+			has_army_experience > 3
+		}
+
+		custom_cost_text = cost_0_03_pp_5_army_3
+		ai_hint_pp_cost = 5
+
+		modifier = {
+			research_speed_factor = 0.01
+			industrial_capacity_factory = -0.003
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
 		days_remove = 120
 
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_start_modernization"
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_yanhol"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.03 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_yanhol"
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_yanhol_flag
+
+			country_event = ukraine_modernize_sov_equipment_brdm_2_modernization.16
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_mayak_brdm_2dp = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_other_flag
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2dp_flag }
+			date > 2007.01.01
+			date < 2011.01.01
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.01 }
+			has_political_power > 5
+		}
+
+		custom_cost_text = cost_0_01_pp_5
+		ai_hint_pp_cost = 5
+
+		modifier = {
+			research_speed_factor = 0.01
+			industrial_capacity_factory = -0.002
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_mayak_brdm_2dp"
 
 			hidden_effect = {
 				add_political_power = -5
@@ -8376,16 +9070,142 @@ UKR_modernize_sov_category = {
 		}
 
 		remove_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision remove ukraine_modernize_sov_equipment_brdm_2_start_modernization"
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukraine_modernize_sov_equipment_brdm_2_modernization_mayak_brdm_2dp"
 
-			custom_effect_tooltip = {
-				localization_key = modifies_dynamic_modifier_tt
-				MODIFIER = UKR_modernize_sov_equipment_effect
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2dp_flag
+
+			country_event = ukraine_modernize_sov_equipment_brdm_2_modernization.17
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_vepr_brdm_2_vepr = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			OR = {
+				has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_other_flag
+				has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_vepr_flag
 			}
-			add_to_variable = { UKR_modernize_sov_equipment_effect_equipment_conversion_speed = 0.05 tooltip = equipment_conversion_speed_tt }
-			add_to_variable = { UKR_modernize_sov_equipment_effect_military_industrial_organization_funds_gain = 0.02 tooltip = military_industrial_organization_funds_gain_tt }
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2_vepr_flag }
+			date > 2009.01.01
+			date < 2013.01.01
+		}
 
-			country_event = ukraine_modernize_sov_equipment_brdm_2_modernization.1
+		available = {
+			controls_state = 1089 #Poltava
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.02 }
+			has_political_power > 5
+		}
+
+		custom_cost_text = cost_0_02_pp_5
+		ai_hint_pp_cost = 5
+
+		modifier = {
+			research_speed_factor = 0.01
+			industrial_capacity_factory = -0.002
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 1089 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_vepr_brdm_2_vepr"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukraine_modernize_sov_equipment_brdm_2_modernization_vepr_brdm_2_vepr"
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2_vepr_flag
+
+			country_event = ukraine_modernize_sov_equipment_brdm_2_modernization.19
+		}
+	}
+
+	ukraine_modernize_sov_equipment_brdm_2_modernization_vinnytsia_brdm_2i = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		visible = {
+			OR = {
+				has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_other_flag
+				has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_vinnytsia_flag
+			}
+			NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2i_flag }
+			date > 2014.07.01
+			date < 2017.01.01
+		}
+
+		available = {
+			controls_state = 699 #Vinnytsia
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.02 }
+			has_political_power > 5
+			has_army_experience > 2
+		}
+
+		custom_cost_text = cost_0_02_pp_5_army_2
+		ai_hint_pp_cost = 5
+
+		modifier = {
+			research_speed_factor = 0.01
+			industrial_capacity_factory = -0.003
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 699 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukraine_modernize_sov_equipment_brdm_2_modernization_vinnytsia_brdm_2i"
+
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukraine_modernize_sov_equipment_brdm_2_modernization_vinnytsia_brdm_2i"
+
+			set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_brdm_2i_flag
+
+			country_event = ukraine_modernize_sov_equipment_brdm_2_modernization.18
 		}
 	}
 
@@ -8698,6 +9518,7 @@ UKR_modernize_sov_category = {
 			}
 		}
 	}
+
 	UKR_develop_bmp64 = {
 		icon = GFX_decision_icon_UKR_modernize_sov_t64
 		fire_only_once = yes
@@ -11324,6 +12145,43 @@ UKR_modernize_planes_category = {
 }
 
 UKR_develop_domestic_category = {
+	ukr_light_transport_tender = {
+		fire_only_once = yes
+		icon = GFX_decision_ukrpom_button
+
+		visible = {
+			date < 2004.01.01
+		}
+
+		available = {
+			date < 2004.01.01
+			has_political_power > 5
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.02 }
+			has_political_power > 5
+		}
+
+		custom_cost_text = cost_0_02_pp_5
+		ai_hint_pp_cost = 5
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_light_transport_tender"
+			hidden_effect = {
+				add_political_power = -5
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+
+			country_event = ukr_light_transport_tender.1
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
 	UKR_develop_kevlar_e = {
 		icon = GFX_decision_icon_UKR_modernize_sov_mt_lb
 		fire_only_once = yes
@@ -12005,6 +12863,7 @@ UKR_develop_domestic_category = {
 			date < 2012.01.01
 			controls_state = 698 #Kyiv
 			has_army_experience > 4
+			has_tech = Heavy_Anti_tank_3
 			has_country_flag = UKR_develop_btr3e_flag
 		}
 
@@ -12580,7 +13439,7 @@ UKR_develop_domestic_category = {
 			if = {
 				limit = { NOT = { has_tech = diesel_engine_tech_6 } }
 				set_technology = { diesel_engine_tech_6 = 1 }
-			} 
+			}
 			if = {
 				limit = { NOT = { has_tech = large_gun_tech } }
 				set_technology = { large_gun_tech = 1 }
@@ -12652,7 +13511,7 @@ UKR_develop_domestic_category = {
 
 			has_tech = Heavy_Anti_tank_3
 			has_tech = electric_engine_tech_2
-			has_tech = large_gun_tech_2 
+			has_tech = large_gun_tech_2
 			has_tech = tank_components_tech_4
 
 			has_country_flag = UKR_develop_t64bm2_bulat_flag
@@ -13076,7 +13935,10 @@ UKR_develop_domestic_category = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_develop_stuhna_p_atgm"
 			army_experience = 2
+			if = {
+				limit = { NOT = { has_tech = Anti_tank_3 } }
 			set_technology = { Anti_tank_3 = 1 }
+			}
 			698 = { #Kyiv
 				add_state_modifier = { modifier = { state_productivity_growth_modifier = 0.02 } }
 			}
