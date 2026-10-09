@@ -4295,11 +4295,11 @@ update_display = {
 
 	set_variable = { treasury_rate = { value = display_income subtract = display_expense } }
 
-	# Lets AI deficit checks scale with the size of the economy.
+	# Lets AI deficit checks scale with the size of the economy. Counts paused debt service so a cheap loan does not read as a surplus.
 	if = { limit = { check_variable = { display_income > 0 } }
-		set_variable = { budget_balance_ratio = { value = treasury_rate divide = display_income } }
+		set_variable = { budget_balance_ratio = { value = display_income subtract = potential_expense divide = display_income } }
 	}
-	else_if = { limit = { check_variable = { treasury_rate < 0 } }
+	else_if = { limit = { check_variable = { potential_expense > display_income } }
 		set_variable = { budget_balance_ratio = -1 }
 	}
 	else = {
