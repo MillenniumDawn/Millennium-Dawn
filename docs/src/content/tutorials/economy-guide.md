@@ -1201,7 +1201,7 @@ When the economy is in severe distress (interest above 15%), countries can reque
 3. **Second-most influential country** (less diplomatic damage)
 4. **Most influential country** (last resort, most influence cost)
 
-The AI treats these as last resorts. It considers them only once both taxes are at their automation caps (40% population, 50% corporate), its economy is in a major crisis, or interest is at least 15% and debt service exceeds 30% of income. The debt-service condition applies even with a budget surplus.
+The AI treats these as last resorts. It considers them only once both taxes are at their automation caps (40% population, 50% corporate) and it still runs a deficit, its economy is in a major crisis, a financial collapse is incoming, or interest is at least 15% and debt service exceeds 30% of income. The debt-service condition applies even with a budget surplus.
 
 An AI that passes one of those conditions may default on its debt once interest reaches 25%, but never while at war. A default has severe consequences.
 
