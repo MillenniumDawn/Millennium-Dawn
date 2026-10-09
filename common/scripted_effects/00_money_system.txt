@@ -3001,36 +3001,36 @@ update_military_rate = {
 	set_variable = { defence_breakdown_personnel_gdp_modifier = { value = gdp_defence_modifier_personnel multiply = 7.752 subtract = 1 } }	#7.752 = minimum modifier; -1 to work with percentages
 
 	# 0.0000003 to 0.0000015 of GDP a day by capability tier, in whole units so no literal risks rounding to zero.
-	set_variable = {
-		defence_breakdown_cyber = {
+	set_temp_variable = {
+		cyber_upkeep_tier_unit = {
 			value = gdp_total
 			divide = 1000
-			multiply = {
-				value = 0
-				if = {
-					limit = { value = cyber_capability greater_than = 11 }
-					add = 5
-				}
-				if = {
-					limit = { value = cyber_capability greater_than = 7 }
-					add = 4
-				}
-				if = {
-					limit = { value = cyber_capability greater_than = 3 }
-					add = 3
-				}
-				if = {
-					limit = { value = cyber_capability greater_than = 0 }
-					add = 3
-				}
-			}
-			multiply = {
-				value = 1
-				add = modifier@cyber_cost_multiplier_modifier
-			}
+			multiply = { value = 1 add = modifier@cyber_cost_multiplier_modifier }
 			multiply = 7
 			divide = 10000
 		}
+	}
+	set_variable = { cyber_projected_upkeep_tier_1 = { value = cyber_upkeep_tier_unit multiply = 3 } }
+	set_variable = { cyber_projected_upkeep_tier_2 = { value = cyber_upkeep_tier_unit multiply = 6 } }
+	set_variable = { cyber_projected_upkeep_tier_3 = { value = cyber_upkeep_tier_unit multiply = 10 } }
+	set_variable = { cyber_projected_upkeep_tier_4 = { value = cyber_upkeep_tier_unit multiply = 15 } }
+
+	set_variable = { defence_breakdown_cyber = 0 }
+	if = {
+		limit = { check_variable = { cyber_capability > 11 } }
+		set_variable = { defence_breakdown_cyber = cyber_projected_upkeep_tier_4 }
+	}
+	else_if = {
+		limit = { check_variable = { cyber_capability > 7 } }
+		set_variable = { defence_breakdown_cyber = cyber_projected_upkeep_tier_3 }
+	}
+	else_if = {
+		limit = { check_variable = { cyber_capability > 3 } }
+		set_variable = { defence_breakdown_cyber = cyber_projected_upkeep_tier_2 }
+	}
+	else_if = {
+		limit = { check_variable = { cyber_capability > 0 } }
+		set_variable = { defence_breakdown_cyber = cyber_projected_upkeep_tier_1 }
 	}
 
 	#Add military industry and personnel costs together for the total
