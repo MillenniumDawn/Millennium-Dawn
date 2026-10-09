@@ -46,6 +46,7 @@ MAX_TEMPLATE_GOALS_PER_CATEGORY = 2
 SCOPE_KEEPING_BLOCKS = frozenset(
     {
         "check_variable",
+        "count_triggers",
         "custom_trigger_tooltip",
         "custom_override_tooltip",
         "hidden_trigger",

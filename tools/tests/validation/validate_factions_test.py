@@ -456,6 +456,29 @@ def _goal(completed: str) -> str:
             "\t\t}",
             [(5, "goal_tanks_cache")],
         ),
+        (
+            "\t\tscope:faction = { count_triggers = { amount = 1"
+            " check_variable = { goal_tanks_cache > 1 } } }",
+            [(3, "goal_tanks_cache")],
+        ),
+        (
+            "\t\tscope:faction = { count_triggers = { amount = 1"
+            " has_variable = goal_tanks_cache } }",
+            [(3, "goal_tanks_cache")],
+        ),
+        (
+            "\t\tscope:faction = {\n"
+            "\t\t\tcount_triggers = {\n"
+            "\t\t\t\tamount = 1\n"
+            "\t\t\t\tcheck_variable = {\n"
+            "\t\t\t\t\tvar = goal_tanks_cache\n"
+            "\t\t\t\t\tvalue = 10\n"
+            "\t\t\t\t\tcompare = greater_than_or_equals\n"
+            "\t\t\t\t}\n"
+            "\t\t\t}\n"
+            "\t\t}",
+            [(7, "goal_tanks_cache")],
+        ),
     ],
 )
 def test_cache_read_in_faction_scope_is_found(completed, expected):
@@ -470,6 +493,8 @@ def test_cache_read_in_faction_scope_is_found(completed, expected):
         "\t\tscope:faction = {\n"
         "\t\t\tfaction_leader = { check_variable = { goal_tanks_cache = 1 } }\n"
         "\t\t}",
+        "\t\tscope:faction = { count_triggers = { amount = 1"
+        " faction_leader = { check_variable = { goal_tanks_cache > 1 } } } }",
         "\t\tscope:faction = { check_variable = { goal_tanks_cached = 1 } }",
         "\t\tscope:faction = { check_variable = { ROOT.goal_tanks_cache = 1 } }",
         "\t\tscope:faction = { set_temp_variable = { goal_tanks_cache = 1 } }",
