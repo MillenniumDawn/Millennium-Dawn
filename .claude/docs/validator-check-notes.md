@@ -264,6 +264,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `loc-em-dash`, `loc-backtick-apostrophe` (WARNING), and `loc-unbalanced-quote` (ERROR)
   scan only the quoted values in `localisation/english/`. Inch marks and quotes spanning
   paragraphs are expected false positives of the quote check.
+- `loc-spaced-en-dash` (WARNING): a spaced en dash ( – ) used in place of an em dash. A
+  dash between two numbers is a range and is skipped. Official names go in
+  `spaced_en_dash_exemptions` (by loc key) or `spaced_en_dash_exempt_files` (by file) in
+  `validation_config.json`.
 - `loc-typo-watchlist` (ERROR): `typo-watchlist.md` entries in prose, excluding keys and
   runtime references. `it's` and `civilisation` are excluded as context-dependent.
 - Prose warnings (repeated word, tripled letter, exact placeholder, dangling
