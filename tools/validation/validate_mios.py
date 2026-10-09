@@ -1090,7 +1090,7 @@ class Validator(BaseValidator):
                 continue
             line = line_of(m.start())
             if len(dead) == len(scope):
-                self.add_warning(
+                self.add_error(
                     "mio-bonus-no-base-stat",
                     f"equipment_bonus '{stat}' is inert: {', '.join(dead)} "
                     f"{'declares' if len(dead) == 1 else 'declare'} no base "
