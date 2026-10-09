@@ -102,6 +102,12 @@ ai_strategy = { type = conquer id = GER value = 200 }
 
 - Army and equipment strategies come in tiers by military factory count. Keep tier
   `enable` ranges exclusive so role weights do not stack.
+- Every tag uses the generic army tiers. A national composition block adds deltas to
+  them. It does not set absolute ratios.
+- Transport helicopters carry a negative factor in every tier, and
+  `MD_dont_build_transport_helicopter_strong` adds to it once a spare reserve exists.
+  Keep the sum at -100 or above.
+- `default_surplus_management` decides what spare factories build once needs are met.
 - APCs use the `amphibious` equipment category and IFVs use `flame`, not `mechanized`.
 - Emergency strategies (`MD_wartime_low_*`, `MD_desperately_need_guns`,
   `default_AI_needs_to_live`) halt training and reprioritize when a stockpile runs out.
