@@ -229,7 +229,7 @@ class Validator(BaseValidator):
 
         return self.cached("country_tags", _build)
 
-    def validate_missing_cosmetic_tags(self, false_positives: list):
+    def validate_missing_cosmetic_tags(self):
         self._log_section(
             "Checking missing cosmetic tags (has_cosmetic_tag but never set)..."
         )
@@ -261,8 +261,6 @@ class Validator(BaseValidator):
             for tag, count in counts.items():
                 cosmetic_tags[tag] += count
 
-        for tag in false_positives:
-            cosmetic_tags.pop(tag, None)
         missing = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
         if missing:
@@ -366,7 +364,7 @@ class Validator(BaseValidator):
                 category="unused-cosmetic-tag",
             )
 
-    def validate_unused_cosmetic_tag_colors(self, false_positives: list):
+    def validate_unused_cosmetic_tag_colors(self):
         self._log_section(
             "Checking unused cosmetic tag colors (defined in cosmetic.txt but never set)..."
         )
@@ -391,9 +389,6 @@ class Validator(BaseValidator):
         if len(cosmetic_tags) == 0:
             self.log(f"{Colors.GREEN}✓ No cosmetic tag colors found{Colors.ENDC}")
             return
-
-        for tag in false_positives:
-            cosmetic_tags.pop(tag, None)
 
         files = self._txt_files()
         remaining_tags = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
@@ -431,22 +426,15 @@ class Validator(BaseValidator):
             )
             return
 
-        pattern, meta_effect, known_bugs, incomplete = (
-            list(validation_config("validate_cosmetic_tags", key))
-            for key in (
-                "pattern_false_positives",
-                "meta_effect_tags",
-                "known_bugs",
-                "incomplete_tags",
-            )
-        )
         # validate_missing uses _collect_files() which respects staged mode
-        self.validate_missing_cosmetic_tags(pattern + meta_effect)
+        self.validate_missing_cosmetic_tags()
 
         # Cross-reference checks scan all .tga/.yml files — skip in staged mode
         if not self.staged_only:
-            self.validate_unused_cosmetic_tags(pattern + known_bugs + incomplete)
-            self.validate_unused_cosmetic_tag_colors(pattern + meta_effect)
+            self.validate_unused_cosmetic_tags(
+                list(validation_config("validate_cosmetic_tags", "incomplete_tags"))
+            )
+            self.validate_unused_cosmetic_tag_colors()
 
 
 if __name__ == "__main__":

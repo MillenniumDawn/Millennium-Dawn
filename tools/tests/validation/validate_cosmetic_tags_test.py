@@ -134,10 +134,10 @@ def test_a_cosmetic_file_with_no_colour_definitions_is_a_clean_pass(
     assert _categories(_run(tmp_path)) == []
 
 
-def test_colour_definitions_on_the_false_positive_list_are_not_reported(
-    tmp_path, write_path
-):
-    write_path(tmp_path, "common/countries/cosmetic.txt", "ENG_England = {\n}\n")
+def test_set_tags_on_the_incomplete_list_are_not_reported(tmp_path, write_path):
+    write_path(
+        tmp_path, "common/national_focus/tags.txt", "set_cosmetic_tag = BSH_limonka\n"
+    )
 
     assert _categories(_run(tmp_path)) == []
 
