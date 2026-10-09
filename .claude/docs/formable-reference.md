@@ -213,8 +213,11 @@ Call pattern. The setter must be immediately followed by the call:
   `european_federation`, which is never cleared. The sentinel lives in `EFS_update_flag`
   because that decision fires for founders and every later joiner. `EFS_flag_change` is
   one-shot. The chain checks `is_IBR`, `is_SCA`, and `is_BLT` first and sets `EFS_IBR`,
-  `EFS_SCA`, or `EFS_BLT`, then has one branch per tag with EFS art. Wales (`WAS`) maps
-  to `EFS_WAL`. A member with no branch keeps its look and still gets the sentinel.
+  `EFS_SCA`, or `EFS_BLT`, then `ENG_England` for `EFS_ENG_england`. Every other member
+  gets `EFS_<original_tag>` from a `meta_effect`, so EFS art and colors are named after
+  the tag. A member with no EFS art gets an `EFS_<TAG>` tag that has no flag art or color.
+  It replaces any other cosmetic the member held. Not checked in game. Every member
+  still gets the sentinel.
   `leaving_EU` never drops the EFS cosmetic or the sentinel.
 - 103 United Arab Republic: both announces in `UnitedArabRepublic.txt`, plus
   `EGY_pan_arab_effort` and `LBA_strive_for_uar`. The `EGY_negot_*`,
