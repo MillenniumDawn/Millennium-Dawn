@@ -3010,11 +3010,13 @@ update_military_rate = {
 	#Add up armed forces
 	set_temp_variable = { personnel_cost = { value = land_count add = navy_count add = airforce_count } }
 
+	set_temp_variable = { military_spending_cost_multiplier = { value = 1 add = modifier@military_spending_cost_multiplier_modifier max = 0 } }
+
 	#Values for breakdown tooltips
-	set_variable = { defence_breakdown_industry = { value = array_defence_spend^def_index multiply = 7 } }
-	set_variable = { defence_breakdown_land = { value = land_count multiply = 7 add = equipment_operative_cost } }
-	set_variable = { defence_breakdown_navy = { value = navy_count multiply = 7 } }
-	set_variable = { defence_breakdown_airforce = { value = airforce_count multiply = 7 } }
+	set_variable = { defence_breakdown_industry = { value = array_defence_spend^def_index multiply = 7 multiply = military_spending_cost_multiplier } }
+	set_variable = { defence_breakdown_land = { value = land_count multiply = 7 add = equipment_operative_cost multiply = military_spending_cost_multiplier } }
+	set_variable = { defence_breakdown_navy = { value = navy_count multiply = 7 multiply = military_spending_cost_multiplier } }
+	set_variable = { defence_breakdown_airforce = { value = airforce_count multiply = 7 multiply = military_spending_cost_multiplier } }
 
 	set_variable = { defence_breakdown_industry_gdp_modifier = { value = 8.1 divide = gdp_defence_modifier_industry subtract = 1 } }	#8.1 = maximum modifier; -1 to work with percentages
 	set_variable = { defence_breakdown_personnel_gdp_modifier = { value = gdp_defence_modifier_personnel multiply = 7.752 subtract = 1 } }	#7.752 = minimum modifier; -1 to work with percentages
@@ -3064,6 +3066,7 @@ update_military_rate = {
 				add = personnel_cost
 				multiply = 7
 				add = equipment_operative_cost
+				multiply = military_spending_cost_multiplier
 				clamp = { min = 0 max = @math_expressions_max }
 			}
 		}
@@ -6084,10 +6087,16 @@ calculate_ai_taxes_desire = {
 	}
 
 	if = { limit = { NOT = { check_variable = { pop_tax_change = 0 } } }
+		set_temp_variable = { previous_tax_rate = population_tax_rate }
 		add_to_variable = { population_tax_rate = pop_tax_change }
+		clamp_variable = { var = population_tax_rate min = 0 max = 50 }
+		population_tax_transition_check = yes
 	}
 	if = { limit = { NOT = { check_variable = { corp_tax_change = 0 } } }
+		set_temp_variable = { previous_tax_rate = corporate_tax_rate }
 		add_to_variable = { corporate_tax_rate = corp_tax_change }
+		clamp_variable = { var = corporate_tax_rate min = 0 max = 50 }
+		corporate_tax_transition_check = yes
 	}
 
 	clamp_variable = { var = population_tax_rate min = 0 max = 50 }
