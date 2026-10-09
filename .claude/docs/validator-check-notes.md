@@ -140,8 +140,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `allow_without_tech = yes`. Country history through the earliest bookmark supplies
   starting technologies only for proven recipients. Tooltip effects and foreign scopes
   cannot supply an unlock.
-- It does not follow scripted-effect calls, cross-file variant creation, focus
-  prerequisites, or dynamic names, so findings need review.
+- Scripted-effect calls share the caller's country, guards, technologies, and pending
+  variants, including nested calls across files. Definitions are checked through their
+  callers, not as separate executions. Recursive calls stop at an active effect.
+  Changes to effect definitions rescan callers, and findings identify the creation and
+  consumption files.
+- It does not follow unrelated event or focus chains, substitute scripted-effect
+  parameters, or resolve dynamic names, so findings need review.
 
 ## validate_events.py
 
@@ -203,6 +208,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   [coordinate policy](../../tools/validation/README.md#focus-coordinate-warnings).
 - `focus-allow-branch-leak` (WARNING): a focus with its own `allow_branch` under an
   ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
+  A condition the ancestor checks only under the `obsolete_focus_branches_visibility`
+  HIDE rule is also met when the child checks it without that rule.
 
 ## validate_gfx_references.py
 
