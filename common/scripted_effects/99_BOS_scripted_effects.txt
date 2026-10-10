@@ -409,8 +409,8 @@ BOS_begin_srpska_civil_war_effect = {
 	}
 }
 
-# Run on a breakaway about to be annexed in on_capitulation: no peace conference follows to clear these
-BOS_strip_beaten_breakaway_effect = {
+# Run on a breakaway about to be annexed: no peace conference follows to clear these
+BOS_strip_breakaway_effect = {
 	clr_country_flag = civil_war_bosnia
 	remove_ideas = {
 		BOS_aggressive_nation
@@ -448,43 +448,34 @@ BOS_breakaway_weekly_recovery_effect = {
 	}
 }
 
-# Run in BOS scope from BOS_political.20. ROOT is the breakaway that won and hands its Bosnian states back.
-BOS_take_winner_states_effect = {
+# Run in BOS scope from BOS_political.20. ROOT is the breakaway that won: the reunited country keeps the BOS tag and absorbs it, army included.
+BOS_absorb_winning_breakaway_effect = {
+	# A Bosnia annexed in its peace conference needs a state back before the player or the annexation can land on it
 	if = {
 		limit = { exists = no }
 		set_temp_variable = { BOS_was_annexed_temp = 1 }
+		ROOT = {
+			random_owned_state = {
+				limit = { is_core_of = BOS }
+				BOS = { transfer_state = PREV }
+			}
+		}
 	}
-	if = {
-		limit = { 128 = { is_owned_by = ROOT } }
-		transfer_state = 128
-	}
-	# the player moves before the winner gives up its last state and ceases to exist
 	change_tag_from = ROOT
-	if = {
-		limit = { 129 = { is_owned_by = ROOT } }
-		transfer_state = 129
-	}
-	if = {
-		limit = { 1052 = { is_owned_by = ROOT } }
-		transfer_state = 1052
-	}
-	if = {
-		limit = { 1051 = { is_owned_by = ROOT } }
-		transfer_state = 1051
-	}
-	if = {
-		limit = { 1054 = { is_owned_by = ROOT } }
-		transfer_state = 1054
-	}
-	if = {
-		limit = { 1053 = { is_owned_by = ROOT } }
-		transfer_state = 1053
-	}
-	# A Bosnia annexed in its peace conference comes back as a new country
 	if = {
 		limit = { check_variable = { BOS_was_annexed_temp = 1 } }
 		BOS_setup_new_country_effect = yes
+		# on_annex dropped Bosnia from the array, and nothing re-adds a member that still holds the idea
+		if = {
+			limit = {
+				has_idea = NATO_member
+				NOT = { is_in_array = { global.nato_members = THIS } }
+			}
+			add_to_array = { global.nato_members = THIS }
+		}
 	}
+	ROOT = { BOS_strip_breakaway_effect = yes }
+	annex_country = { target = ROOT transfer_troops = yes }
 }
 
 BOS_finish_civil_war_recovery_effect = {
