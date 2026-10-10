@@ -337,7 +337,6 @@ BOS_remove_sfor_volunteer_support_effect = {
 
 BOS_begin_internal_war_effect = {
 	set_country_flag = civil_war_bosnia
-	set_country_flag = civil_war_bos_two
 	set_country_flag = civil_war_focus
 	add_ideas = BOS_aggressive_nation
 }
@@ -353,7 +352,6 @@ BOS_begin_srpska_civil_war_effect = {
 	}
 	RSK = {
 		set_country_flag = civil_war_bosnia
-		set_country_flag = civil_war_bos_two
 		add_ideas = BOS_srpska_balkan_aspiration
 		add_ideas = BOS_aggressive_nation
 		declare_war_on = {
@@ -404,7 +402,6 @@ BOS_begin_srpska_civil_war_effect = {
 # Run on a breakaway about to be annexed in on_capitulation: no peace conference follows to clear these
 BOS_strip_beaten_breakaway_effect = {
 	clr_country_flag = civil_war_bosnia
-	clr_country_flag = civil_war_bos_two
 	remove_ideas = {
 		BOS_aggressive_nation
 		BOS_croat_balkan_aspiration
@@ -420,11 +417,61 @@ BOS_strip_beaten_breakaway_effect = {
 	}
 }
 
+# Weekly on RSK and HZG: a breakaway that won gets its settlement once it is at peace, and loses the claim if it became a subject
+BOS_breakaway_weekly_recovery_effect = {
+	if = {
+		limit = { BOS_breakaway_claim_trigger = yes }
+		if = {
+			limit = { is_subject = yes }
+			clr_country_flag = RSK_civil_war_recovery_pending
+			clr_country_flag = HZG_civil_war_recovery_pending
+			clr_country_flag = civil_war_bosnia
+		}
+		else_if = {
+			limit = {
+				has_country_flag = civil_war_bosnia
+				has_civil_war = no
+				has_war = no
+			}
+			country_event = BOS_political.20
+		}
+	}
+}
+
+# Run in BOS scope from BOS_political.20. ROOT is the breakaway that won and hands its Bosnian states back.
+BOS_take_winner_states_effect = {
+	if = {
+		limit = { 128 = { is_owned_by = ROOT } }
+		transfer_state = 128
+	}
+	# the player moves before the winner gives up its last state and ceases to exist
+	change_tag_from = ROOT
+	if = {
+		limit = { 129 = { is_owned_by = ROOT } }
+		transfer_state = 129
+	}
+	if = {
+		limit = { 1052 = { is_owned_by = ROOT } }
+		transfer_state = 1052
+	}
+	if = {
+		limit = { 1051 = { is_owned_by = ROOT } }
+		transfer_state = 1051
+	}
+	if = {
+		limit = { 1054 = { is_owned_by = ROOT } }
+		transfer_state = 1054
+	}
+	if = {
+		limit = { 1053 = { is_owned_by = ROOT } }
+		transfer_state = 1053
+	}
+}
+
 BOS_finish_civil_war_recovery_effect = {
 	set_country_flag = BOS_civil_war_over
 	clr_country_flag = civil_war_focus
 	clr_country_flag = civil_war_bosnia
-	clr_country_flag = civil_war_bos_two
 	remove_ideas = BOS_bosniak_balkan_aspiration
 	remove_ideas = BOS_bosniak_balkan_aspiration2
 	remove_ideas = BOS_croat_balkan_aspiration
