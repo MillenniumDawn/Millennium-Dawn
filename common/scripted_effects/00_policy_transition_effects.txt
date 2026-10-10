@@ -62,6 +62,23 @@ policy_transition_raise_amount = {
 	policy_transition_apply_mandate = yes
 }
 
+# Limits temp policy_transition_amount to the room left under the cap, given temp policy_transition_current
+policy_transition_limit_raise = {
+	set_temp_variable = { policy_transition_room = { value = @policy_transition_cost_cap subtract = policy_transition_current } }
+	if = {
+		limit = { check_variable = { policy_transition_amount > policy_transition_room } }
+		set_temp_variable = { policy_transition_amount = policy_transition_room }
+	}
+}
+
+policy_transition_limit_war_support = {
+	set_temp_variable = { policy_transition_room = { value = @policy_transition_cut_cap subtract = policy_transition_war_support } }
+	if = {
+		limit = { check_variable = { policy_transition_amount < policy_transition_room } }
+		set_temp_variable = { policy_transition_amount = policy_transition_room }
+	}
+}
+
 policy_transition_cut_amount = {
 	set_temp_variable = { policy_transition_amount = { value = policy_transition_delta multiply = @policy_transition_cut_per_level } }
 	policy_transition_apply_mandate = yes
@@ -108,9 +125,13 @@ bureau_transition_check = {
 		if = {
 			limit = { check_variable = { policy_transition_delta > 0 } }
 			policy_transition_raise_amount = yes
-			policy_transition_ensure_modifier = yes
-			add_to_variable = { var = policy_transition_bureau_cost value = policy_transition_amount tooltip = bureaucracy_cost_multiplier_modifier_tt }
-			clamp_variable = { var = policy_transition_bureau_cost min = 0 max = @policy_transition_cost_cap }
+			set_temp_variable = { policy_transition_current = policy_transition_bureau_cost }
+			policy_transition_limit_raise = yes
+			if = {
+				limit = { check_variable = { policy_transition_amount > 0 } }
+				policy_transition_ensure_modifier = yes
+				add_to_variable = { var = policy_transition_bureau_cost value = policy_transition_amount tooltip = bureaucracy_cost_multiplier_modifier_tt }
+			}
 		}
 		else_if = {
 			limit = { check_variable = { policy_transition_delta < 0 } }
@@ -132,9 +153,13 @@ police_transition_check = {
 		if = {
 			limit = { check_variable = { policy_transition_delta > 0 } }
 			policy_transition_raise_amount = yes
-			policy_transition_ensure_modifier = yes
-			add_to_variable = { var = policy_transition_police_cost value = policy_transition_amount tooltip = police_cost_multiplier_modifier_tt }
-			clamp_variable = { var = policy_transition_police_cost min = 0 max = @policy_transition_cost_cap }
+			set_temp_variable = { policy_transition_current = policy_transition_police_cost }
+			policy_transition_limit_raise = yes
+			if = {
+				limit = { check_variable = { policy_transition_amount > 0 } }
+				policy_transition_ensure_modifier = yes
+				add_to_variable = { var = policy_transition_police_cost value = policy_transition_amount tooltip = police_cost_multiplier_modifier_tt }
+			}
 		}
 		else_if = {
 			limit = { check_variable = { policy_transition_delta < 0 } }
@@ -156,9 +181,13 @@ education_transition_check = {
 		if = {
 			limit = { check_variable = { policy_transition_delta > 0 } }
 			policy_transition_raise_amount = yes
-			policy_transition_ensure_modifier = yes
-			add_to_variable = { var = policy_transition_education_cost value = policy_transition_amount tooltip = education_cost_multiplier_modifier_tt }
-			clamp_variable = { var = policy_transition_education_cost min = 0 max = @policy_transition_cost_cap }
+			set_temp_variable = { policy_transition_current = policy_transition_education_cost }
+			policy_transition_limit_raise = yes
+			if = {
+				limit = { check_variable = { policy_transition_amount > 0 } }
+				policy_transition_ensure_modifier = yes
+				add_to_variable = { var = policy_transition_education_cost value = policy_transition_amount tooltip = education_cost_multiplier_modifier_tt }
+			}
 		}
 		else_if = {
 			limit = { check_variable = { policy_transition_delta < 0 } }
@@ -180,9 +209,13 @@ health_transition_check = {
 		if = {
 			limit = { check_variable = { policy_transition_delta > 0 } }
 			policy_transition_raise_amount = yes
-			policy_transition_ensure_modifier = yes
-			add_to_variable = { var = policy_transition_health_cost value = policy_transition_amount tooltip = health_cost_multiplier_modifier_tt }
-			clamp_variable = { var = policy_transition_health_cost min = 0 max = @policy_transition_cost_cap }
+			set_temp_variable = { policy_transition_current = policy_transition_health_cost }
+			policy_transition_limit_raise = yes
+			if = {
+				limit = { check_variable = { policy_transition_amount > 0 } }
+				policy_transition_ensure_modifier = yes
+				add_to_variable = { var = policy_transition_health_cost value = policy_transition_amount tooltip = health_cost_multiplier_modifier_tt }
+			}
 		}
 		else_if = {
 			limit = { check_variable = { policy_transition_delta < 0 } }
@@ -204,9 +237,13 @@ social_transition_check = {
 		if = {
 			limit = { check_variable = { policy_transition_delta > 0 } }
 			policy_transition_raise_amount = yes
-			policy_transition_ensure_modifier = yes
-			add_to_variable = { var = policy_transition_social_cost value = policy_transition_amount tooltip = social_cost_multiplier_modifier_tt }
-			clamp_variable = { var = policy_transition_social_cost min = 0 max = @policy_transition_cost_cap }
+			set_temp_variable = { policy_transition_current = policy_transition_social_cost }
+			policy_transition_limit_raise = yes
+			if = {
+				limit = { check_variable = { policy_transition_amount > 0 } }
+				policy_transition_ensure_modifier = yes
+				add_to_variable = { var = policy_transition_social_cost value = policy_transition_amount tooltip = social_cost_multiplier_modifier_tt }
+			}
 		}
 		else_if = {
 			limit = { check_variable = { policy_transition_delta < 0 } }
@@ -231,21 +268,28 @@ military_transition_check = {
 				has_war = no
 			}
 			policy_transition_raise_amount = yes
-			policy_transition_ensure_modifier = yes
-			add_to_variable = { var = policy_transition_military_cost value = policy_transition_amount tooltip = military_spending_cost_multiplier_modifier_tt }
-			clamp_variable = { var = policy_transition_military_cost min = 0 max = @policy_transition_cost_cap }
+			set_temp_variable = { policy_transition_current = policy_transition_military_cost }
+			policy_transition_limit_raise = yes
+			if = {
+				limit = { check_variable = { policy_transition_amount > 0 } }
+				policy_transition_ensure_modifier = yes
+				add_to_variable = { var = policy_transition_military_cost value = policy_transition_amount tooltip = military_spending_cost_multiplier_modifier_tt }
+			}
 		}
 		else_if = {
 			limit = { check_variable = { policy_transition_delta < 0 } }
 			policy_transition_cut_amount = yes
-			policy_transition_ensure_modifier = yes
-			add_to_variable = { var = policy_transition_war_support value = policy_transition_amount tooltip = war_support_factor_tt }
-			clamp_variable = { var = policy_transition_war_support min = @policy_transition_cut_cap max = 0 }
+			policy_transition_limit_war_support = yes
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				policy_transition_ensure_modifier = yes
+				add_to_variable = { var = policy_transition_war_support value = policy_transition_amount tooltip = war_support_factor_tt }
+			}
 		}
 	}
 }
 
-# Call after a tax change with temp previous_tax_rate; charges points above the peak, which holds while the penalty is capped
+# Call after a tax change with temp previous_tax_rate; charges points above the peak, which also follows scripted raises
 population_tax_transition_check = {
 	if = {
 		limit = { check_variable = { population_tax_rate > previous_tax_rate } }
@@ -258,12 +302,8 @@ population_tax_transition_check = {
 			}
 			set_variable = { policy_transition_population_tax_peak = previous_tax_rate }
 		}
-		set_temp_variable = { policy_transition_tax_cap_temp = @policy_transition_tax_cap }
 		if = {
-			limit = {
-				check_variable = { population_tax_rate > policy_transition_population_tax_peak }
-				check_variable = { policy_transition_tax_stability > policy_transition_tax_cap_temp }
-			}
+			limit = { check_variable = { population_tax_rate > policy_transition_population_tax_peak } }
 			set_temp_variable = {
 				policy_transition_amount = {
 					value = policy_transition_population_tax_peak
@@ -290,12 +330,8 @@ corporate_tax_transition_check = {
 			}
 			set_variable = { policy_transition_corporate_tax_peak = previous_tax_rate }
 		}
-		set_temp_variable = { policy_transition_tax_cap_temp = @policy_transition_tax_cap }
 		if = {
-			limit = {
-				check_variable = { corporate_tax_rate > policy_transition_corporate_tax_peak }
-				check_variable = { policy_transition_tax_stability > policy_transition_tax_cap_temp }
-			}
+			limit = { check_variable = { corporate_tax_rate > policy_transition_corporate_tax_peak } }
 			set_temp_variable = {
 				policy_transition_amount = {
 					value = policy_transition_corporate_tax_peak
