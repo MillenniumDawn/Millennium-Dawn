@@ -124,7 +124,16 @@ def issue_rows(validator):
     )
 
 
-_YML_SECTIONS = ("brackets", "syntax", "mandatory", "typos", "prose", "var_refs")
+_YML_SECTIONS = (
+    "brackets",
+    "syntax",
+    "mandatory",
+    "typos",
+    "prose",
+    "var_refs",
+    "subst",
+    "yaml",
+)
 
 
 def yml_scan(path, section: str, valid_colors=()):
@@ -132,7 +141,7 @@ def yml_scan(path, section: str, valid_colors=()):
     import validate_localisation
 
     results = validate_localisation._scan_shared_yml_file(
-        (str(path), list(valid_colors))
+        (str(path), list(valid_colors), False)
     )
     return results[_YML_SECTIONS.index(section)]
 
@@ -190,7 +199,7 @@ def variable_scan(
     import validate_variables
 
     flag, index = _VARIABLE_SECTIONS[section]
-    args = (
+    args: tuple = (
         str(path),
         str(mod_path),
         getattr(validate_variables, flag),

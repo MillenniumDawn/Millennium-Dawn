@@ -34,8 +34,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## Encoding and loc format
 
-- `fix_loc_yaml.py` fixes on commit and checks in CI, so a bare `"` inside a value fails
-  CI for contributors without hooks. `validate_localization_encoding.py`,
+- `fix_loc_yaml.py` fixes on commit. `validate_localisation.py` reuses its checks and
+  reports YAML errors in the localisation results, including for contributors without
+  hooks. `validate_localization_encoding.py`,
   `validate_mod_encoding.py`, and `validate_txt_encoding.py` run in CI for the same reason.
 - `validate_txt_encoding.py` scans shipped `.txt` roots only. Script `.txt` must not
   carry a BOM.
@@ -269,6 +270,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_localisation.py and validate_scripted_localisation.py
 
+- `loc-yaml-*` (ERROR): tabs, curly quotes, version-number keys, missing colon spacing,
+  excess indentation, missing closing quotes, and unescaped inner quotes. These check
+  raw English lines, including comments and files exempt from other content checks.
 - `loc-em-dash`, `loc-backtick-apostrophe` (WARNING), and `loc-unbalanced-quote` (ERROR)
   scan only the quoted values in `localisation/english/`. Inch marks and quotes spanning
   paragraphs are expected false positives of the quote check.
