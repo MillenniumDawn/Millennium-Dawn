@@ -67,11 +67,11 @@ The Air Force functions similarly to vanilla HOI4, but air wing sizes are drasti
 
 There are three airframes. As with armored vehicles, the modules you install decide the role, and modules in the primary weapons slot largely determine what type of aircraft the airframe becomes.
 
-| Airframe | Roles                                                                    |
-| -------- | ------------------------------------------------------------------------ |
-| Light    | Light Fighter, Light Multi-Role Fighter, Light CAS Fighter, Naval Bomber |
-| Medium   | Multi-Role Fighter, Air Superiority Fighter, CAS Aircraft                |
-| Heavy    | Strategic Bomber, Gunship, AWACS, Heavy Lift Aircraft                    |
+| Airframe | Roles                                                                          |
+| -------- | ------------------------------------------------------------------------------ |
+| Light    | Light Fighter, Light Multi-Role Fighter, Light CAS Fighter, Light Naval Bomber |
+| Medium   | Multi-Role Fighter, Air Superiority Fighter, CAS Aircraft                      |
+| Heavy    | Strategic Bomber, Gunship, AWACS, Heavy Lift Aircraft                          |
 
 The medium and heavy airframes also build maritime patrol aircraft, and the medium airframe builds a Medium Lift transport. Light and medium airframes can be built as drones. Carriers use their own light and medium airframes.
 
