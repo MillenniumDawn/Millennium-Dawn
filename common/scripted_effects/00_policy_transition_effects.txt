@@ -13,9 +13,9 @@
 @policy_transition_mandate_factor = 0.5
 @policy_transition_tax_bonus_per_point = 0.005
 @policy_transition_tax_bonus_cap = 0.10
-@policy_transition_productivity_per_point = 0.1
-@policy_transition_productivity_cap = 1
-@policy_transition_productivity_decay = 0.1
+@policy_transition_productivity_per_point = 0.01
+@policy_transition_productivity_cap = 0.1
+@policy_transition_productivity_decay = 0.01
 @policy_transition_investment_per_point = -0.02
 @policy_transition_investment_cap = -0.20
 @policy_transition_investment_recovery = 0.02
@@ -435,6 +435,14 @@ population_tax_transition_check = {
 	}
 	policy_transition_tax_points = yes
 	if = {
+		limit = {
+			check_variable = { population_tax_rate > previous_tax_rate }
+			check_variable = { policy_transition_tax_bonus > 0 }
+		}
+		set_temp_variable = { policy_transition_amount = { value = population_tax_rate subtract = previous_tax_rate multiply = @policy_transition_tax_bonus_per_point multiply = -1 } }
+		policy_transition_add_tax_bonus = yes
+	}
+	if = {
 		limit = { check_variable = { policy_transition_tax_raised > 0 } }
 		set_variable = { policy_transition_population_tax_peak = population_tax_rate }
 		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_raised multiply = @policy_transition_population_tax_per_point multiply = -1 } }
@@ -463,6 +471,30 @@ corporate_tax_transition_check = {
 		set_temp_variable = { policy_transition_tax_low_temp = policy_transition_corporate_tax_low }
 	}
 	policy_transition_tax_points = yes
+	if = {
+		limit = {
+			check_variable = { corporate_tax_rate > previous_tax_rate }
+			OR = {
+				check_variable = { policy_transition_productivity > 0 }
+				check_variable = { policy_transition_investment_cost < 0 }
+			}
+		}
+		set_temp_variable = { policy_transition_tax_restored = { value = corporate_tax_rate subtract = previous_tax_rate } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_restored multiply = @policy_transition_productivity_per_point } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_productivity min = policy_transition_amount multiply = -1 } }
+		if = {
+			limit = { check_variable = { policy_transition_amount < 0 } }
+			add_to_variable = { var = policy_transition_productivity value = policy_transition_amount tooltip = productivity_growth_modifier_tt }
+		}
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_restored multiply = @policy_transition_investment_per_point multiply = -1 } }
+		set_temp_variable = { policy_transition_room = { value = policy_transition_investment_cost multiply = -1 } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_amount min = policy_transition_room } }
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_investment_cost value = policy_transition_amount tooltip = receiving_investment_cost_modifier_tt }
+		}
+		policy_transition_refresh = yes
+	}
 	if = {
 		limit = { check_variable = { policy_transition_tax_raised > 0 } }
 		set_variable = { policy_transition_corporate_tax_peak = corporate_tax_rate }
