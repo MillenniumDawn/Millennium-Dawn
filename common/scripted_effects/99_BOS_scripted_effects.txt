@@ -341,9 +341,12 @@ BOS_begin_internal_war_effect = {
 	add_ideas = BOS_aggressive_nation
 }
 
-# A country released or revived mid-game skipped on_startup: no AI templates, no inflation or currency setup. PREV is its maker.
+# A breakaway released mid-game skipped on_startup: no AI templates, no inflation or currency setup. PREV is its maker.
 BOS_setup_new_country_effect = {
-	ingame_startup_nations_effect = yes
+	if = {
+		limit = { NOT = { has_variable = last_quarter_gdp_total } }
+		ingame_startup_nations_effect = yes
+	}
 	if = {
 		limit = { is_ai = yes }
 		give_AI_templates = yes
@@ -457,24 +460,32 @@ BOS_absorb_winning_breakaway_effect = {
 		ROOT = {
 			random_owned_state = {
 				limit = { is_core_of = BOS }
+				prioritize = { 128 }
 				BOS = { transfer_state = PREV }
+			}
+		}
+	}
+	else_if = {
+		limit = { is_subject_of = ROOT }
+		ROOT = {
+			set_autonomy = {
+				target = BOS
+				autonomy_state = autonomy_free
 			}
 		}
 	}
 	change_tag_from = ROOT
 	if = {
 		limit = { check_variable = { BOS_was_annexed_temp = 1 } }
-		BOS_setup_new_country_effect = yes
-		# on_annex dropped Bosnia from the array, and nothing re-adds a member that still holds the idea
+		ingame_startup_nations_effect = yes
 		if = {
-			limit = {
-				has_idea = NATO_member
-				NOT = { is_in_array = { global.nato_members = THIS } }
-			}
-			add_to_array = { global.nato_members = THIS }
+			limit = { is_ai = yes }
+			give_AI_templates = yes
 		}
 	}
 	ROOT = { BOS_strip_breakaway_effect = yes }
+	# The weekly check still finishes the recovery if the option stops once its owner is annexed
+	clr_country_flag = BOS_civil_war_settling
 	annex_country = { target = ROOT transfer_troops = yes }
 }
 
@@ -519,11 +530,15 @@ BOS_finish_civil_war_recovery_effect = {
 		idea = BOS_civil_war_recovery
 		days = BOS_recovery_days
 	}
+	clear_variable = BOS_recovery_days
 	set_temp_variable = { treasury_change = -25.00 }
 	modify_treasury_effect = yes
 	128 = {
 		if = {
-			limit = { infrastructure > 0 }
+			limit = {
+				infrastructure > 0
+				is_owned_by = BOS
+			}
 			damage_building = {
 				type = infrastructure
 				damage = 1
