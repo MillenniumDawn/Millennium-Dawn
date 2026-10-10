@@ -8,7 +8,7 @@ import os
 import re
 from functools import partial
 from pathlib import Path
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
 import disk_cache
 from shared_utils import validation_config
@@ -44,10 +44,15 @@ def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
 
 _SET_COSMETIC = "set_cosmetic_tag = "
 _NON_SPACE_RE = re.compile(r"\S*")
+# `EFS_[TAG]` inside a meta_effect: one placeholder, filled with a country tag.
+_TEMPLATE_RE = re.compile(r"([^\[\]]*)\[[^\[\]]+\]([^\[\]]*)")
+_COUNTRY_TAG_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
 
 
 def process_file_for_set_cosmetic_tag(
     args: Tuple[str, bool, List[str]],
+    *,
+    country_tags: FrozenSet[str] = frozenset(),
 ) -> Dict[str, int]:
     filename, lowercase, tags_to_find = args
     text_file = FileOpener.open_text_file(
@@ -64,6 +69,13 @@ def process_file_for_set_cosmetic_tag(
     while site != -1:
         start = site + len(_SET_COSMETIC)
         value = _NON_SPACE_RE.match(text_file, start).group()
+        template = _TEMPLATE_RE.fullmatch(value)
+        if template:
+            prefix, suffix = template.groups()
+            for tag in wanted:
+                middle = tag[len(prefix) : len(tag) - len(suffix)]
+                if middle in country_tags and tag == prefix + middle + suffix:
+                    counts[tag] = counts.get(tag, 0) + 1
         for stop in range(1, len(value) + 1):
             tag = value[:stop]
             if tag in wanted and site >= next_free.get(tag, 0):
@@ -202,7 +214,22 @@ class Validator(BaseValidator):
 
         return self.cached("cosmetic_both_tags", _build)
 
-    def validate_missing_cosmetic_tags(self, false_positives: list):
+    def _country_tags(self) -> FrozenSet[str]:
+        """Tags declared in common/country_tags/, the values a placeholder can take."""
+
+        def _build():
+            tags: Set[str] = set()
+            pattern = str(Path(self.mod_path) / "common" / "country_tags" / "*.txt")
+            for filename in glob.iglob(pattern):
+                text_file = FileOpener.open_text_file(
+                    filename, lowercase=False, strip_comments_flag=True
+                )
+                tags.update(_COUNTRY_TAG_RE.findall(text_file))
+            return frozenset(tags)
+
+        return self.cached("country_tags", _build)
+
+    def validate_missing_cosmetic_tags(self):
         self._log_section(
             "Checking missing cosmetic tags (has_cosmetic_tag but never set)..."
         )
@@ -223,14 +250,17 @@ class Validator(BaseValidator):
         all_files = self._txt_files(ignore_staged=True)
         remaining_tags = list(cosmetic_tags.keys())
         args_list = [(f, False, remaining_tags) for f in all_files]
-        results = self._pool_map(process_file_for_set_cosmetic_tag, args_list)
+        results = self._pool_map(
+            partial(
+                process_file_for_set_cosmetic_tag, country_tags=self._country_tags()
+            ),
+            args_list,
+        )
 
         for counts in results:
             for tag, count in counts.items():
                 cosmetic_tags[tag] += count
 
-        for tag in false_positives:
-            cosmetic_tags.pop(tag, None)
         missing = [tag for tag in cosmetic_tags if cosmetic_tags[tag] == 0]
 
         if missing:
@@ -334,7 +364,7 @@ class Validator(BaseValidator):
                 category="unused-cosmetic-tag",
             )
 
-    def validate_unused_cosmetic_tag_colors(self, false_positives: list):
+    def validate_unused_cosmetic_tag_colors(self):
         self._log_section(
             "Checking unused cosmetic tag colors (defined in cosmetic.txt but never set)..."
         )
@@ -360,15 +390,17 @@ class Validator(BaseValidator):
             self.log(f"{Colors.GREEN}✓ No cosmetic tag colors found{Colors.ENDC}")
             return
 
-        for tag in false_positives:
-            cosmetic_tags.pop(tag, None)
-
         files = self._txt_files()
         remaining_tags = [t for t in cosmetic_tags if cosmetic_tags[t] == 0]
         if remaining_tags:
             args_list = [(f, False, remaining_tags) for f in files]
             results = self._pool_map(
-                process_file_for_set_cosmetic_tag, args_list, chunksize=30
+                partial(
+                    process_file_for_set_cosmetic_tag,
+                    country_tags=self._country_tags(),
+                ),
+                args_list,
+                chunksize=30,
             )
             for counts in results:
                 for tag, count in counts.items():
@@ -394,22 +426,15 @@ class Validator(BaseValidator):
             )
             return
 
-        pattern, meta_effect, known_bugs, incomplete = (
-            list(validation_config("validate_cosmetic_tags", key))
-            for key in (
-                "pattern_false_positives",
-                "meta_effect_tags",
-                "known_bugs",
-                "incomplete_tags",
-            )
-        )
         # validate_missing uses _collect_files() which respects staged mode
-        self.validate_missing_cosmetic_tags(pattern + meta_effect)
+        self.validate_missing_cosmetic_tags()
 
         # Cross-reference checks scan all .tga/.yml files — skip in staged mode
         if not self.staged_only:
-            self.validate_unused_cosmetic_tags(pattern + known_bugs + incomplete)
-            self.validate_unused_cosmetic_tag_colors(pattern + meta_effect)
+            self.validate_unused_cosmetic_tags(
+                list(validation_config("validate_cosmetic_tags", "incomplete_tags"))
+            )
+            self.validate_unused_cosmetic_tag_colors()
 
 
 if __name__ == "__main__":
