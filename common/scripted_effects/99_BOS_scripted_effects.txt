@@ -341,6 +341,16 @@ BOS_begin_internal_war_effect = {
 	add_ideas = BOS_aggressive_nation
 }
 
+# Run on a country the civil war just released or revived, from inside the scope of the country that did it.
+# It skipped on_startup, so it has no AI division templates and no inflation or currency setup until this runs.
+BOS_setup_new_country_effect = {
+	ingame_startup_nations_effect = yes
+	if = {
+		limit = { is_ai = yes }
+		give_AI_templates = yes
+	}
+}
+
 BOS_begin_srpska_civil_war_effect = {
 	BOS_begin_internal_war_effect = yes
 	set_country_flag = BOS_defeat_all_serbs
@@ -351,6 +361,7 @@ BOS_begin_srpska_civil_war_effect = {
 		name = bos_war_civil_war
 	}
 	RSK = {
+		BOS_setup_new_country_effect = yes
 		set_country_flag = civil_war_bosnia
 		add_ideas = BOS_srpska_balkan_aspiration
 		add_ideas = BOS_aggressive_nation
@@ -441,6 +452,10 @@ BOS_breakaway_weekly_recovery_effect = {
 # Run in BOS scope from BOS_political.20. ROOT is the breakaway that won and hands its Bosnian states back.
 BOS_take_winner_states_effect = {
 	if = {
+		limit = { exists = no }
+		set_temp_variable = { BOS_was_annexed_temp = 1 }
+	}
+	if = {
 		limit = { 128 = { is_owned_by = ROOT } }
 		transfer_state = 128
 	}
@@ -465,6 +480,11 @@ BOS_take_winner_states_effect = {
 	if = {
 		limit = { 1053 = { is_owned_by = ROOT } }
 		transfer_state = 1053
+	}
+	# A Bosnia annexed in its peace conference comes back as a new country
+	if = {
+		limit = { check_variable = { BOS_was_annexed_temp = 1 } }
+		BOS_setup_new_country_effect = yes
 	}
 }
 
