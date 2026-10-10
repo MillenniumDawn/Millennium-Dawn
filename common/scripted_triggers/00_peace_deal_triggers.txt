@@ -818,6 +818,31 @@ CPC_off_nationalist = {
 	FROM = { has_government = nationalist }
 }
 
+BOS_civil_war_side = {
+	OR = {
+		original_tag = BOS
+		original_tag = HZG
+		original_tag = RSK
+	}
+}
+# A side, or a country whose peace deal also covers one
+BOS_civil_war_peace_party = {
+	OR = {
+		BOS_civil_war_side = yes
+		AND = {
+			is_faction_leader = yes
+			OR = {
+				is_in_faction_with = BOS
+				is_in_faction_with = HZG
+				is_in_faction_with = RSK
+			}
+		}
+		BOS = { is_subject_of = PREV }
+		HZG = { is_subject_of = PREV }
+		RSK = { is_subject_of = PREV }
+	}
+}
+
 # Custom Civil War Trigger
 CPD_is_a_custom_civil_war = {
 	# Somalia
@@ -937,23 +962,17 @@ CPD_is_a_custom_civil_war = {
 			original_tag = TAL
 		}
 	}
-	# Bosnia
+	# Bosnia: a deal signed by a side's faction leader or overlord white-peaces that side too
 	else_if = {
-		limit = {
-			BOS = { has_country_flag = civil_war_bosnia }
-			ROOT = {
-				OR = {
-					original_tag = BOS
-					original_tag = HZG
-					original_tag = RSK
-				}
-			}
-		}
+		limit = { BOS = { has_country_flag = civil_war_bosnia } }
 		NOT = {
-			OR = {
-				original_tag = BOS
-				original_tag = HZG
-				original_tag = RSK
+			AND = {
+				BOS_civil_war_peace_party = yes
+				ROOT = { BOS_civil_war_peace_party = yes }
+				OR = {
+					BOS_civil_war_side = yes
+					ROOT = { BOS_civil_war_side = yes }
+				}
 			}
 		}
 	}
