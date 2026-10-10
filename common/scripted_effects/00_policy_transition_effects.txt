@@ -1,4 +1,5 @@
 # Own-choice budget law and tax changes add decaying costs; scripted changes set spending_law_scripted_change
+# Parliament bills the country tables itself (Rada, Knesset) set spending_law_bill_passed or spending_law_bill_forced and still count
 
 @policy_transition_cost_per_level = 0.10
 @policy_transition_cost_cap = 0.30
@@ -36,9 +37,15 @@ policy_transition_refresh = {
 	hidden_effect = { force_update_dynamic_modifier = yes }
 }
 
+# A bill passed by parliament (Rada, Knesset) counts as a mandate; one pushed through by a bribe does not
 policy_transition_apply_mandate = {
 	if = {
-		limit = { has_idea = policy_reform_mandate }
+		limit = {
+			OR = {
+				has_idea = policy_reform_mandate
+				has_country_flag = spending_law_bill_passed
+			}
+		}
 		multiply_temp_variable = { policy_transition_amount = @policy_transition_mandate_factor }
 	}
 }
@@ -131,7 +138,11 @@ policy_transition_add_tax_penalty = {
 bureau_transition_check = {
 	if = {
 		limit = {
-			NOT = { has_country_flag = spending_law_scripted_change }
+			OR = {
+				NOT = { has_country_flag = spending_law_scripted_change }
+				has_country_flag = spending_law_bill_passed
+				has_country_flag = spending_law_bill_forced
+			}
 			has_variable = bureau_law
 		}
 		set_temp_variable = { policy_transition_old = bureau_law }
@@ -160,7 +171,11 @@ bureau_transition_check = {
 police_transition_check = {
 	if = {
 		limit = {
-			NOT = { has_country_flag = spending_law_scripted_change }
+			OR = {
+				NOT = { has_country_flag = spending_law_scripted_change }
+				has_country_flag = spending_law_bill_passed
+				has_country_flag = spending_law_bill_forced
+			}
 			has_variable = police_law
 		}
 		set_temp_variable = { policy_transition_old = police_law }
@@ -189,7 +204,11 @@ police_transition_check = {
 education_transition_check = {
 	if = {
 		limit = {
-			NOT = { has_country_flag = spending_law_scripted_change }
+			OR = {
+				NOT = { has_country_flag = spending_law_scripted_change }
+				has_country_flag = spending_law_bill_passed
+				has_country_flag = spending_law_bill_forced
+			}
 			has_variable = education_law
 		}
 		set_temp_variable = { policy_transition_old = education_law }
@@ -218,7 +237,11 @@ education_transition_check = {
 health_transition_check = {
 	if = {
 		limit = {
-			NOT = { has_country_flag = spending_law_scripted_change }
+			OR = {
+				NOT = { has_country_flag = spending_law_scripted_change }
+				has_country_flag = spending_law_bill_passed
+				has_country_flag = spending_law_bill_forced
+			}
 			has_variable = health_law
 		}
 		set_temp_variable = { policy_transition_old = health_law }
@@ -247,7 +270,11 @@ health_transition_check = {
 social_transition_check = {
 	if = {
 		limit = {
-			NOT = { has_country_flag = spending_law_scripted_change }
+			OR = {
+				NOT = { has_country_flag = spending_law_scripted_change }
+				has_country_flag = spending_law_bill_passed
+				has_country_flag = spending_law_bill_forced
+			}
 			has_variable = social_law
 		}
 		set_temp_variable = { policy_transition_old = social_law }
@@ -276,7 +303,11 @@ social_transition_check = {
 military_transition_check = {
 	if = {
 		limit = {
-			NOT = { has_country_flag = spending_law_scripted_change }
+			OR = {
+				NOT = { has_country_flag = spending_law_scripted_change }
+				has_country_flag = spending_law_bill_passed
+				has_country_flag = spending_law_bill_forced
+			}
 			has_variable = military_law
 		}
 		set_temp_variable = { policy_transition_old = military_law }
