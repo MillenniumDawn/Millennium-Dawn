@@ -818,28 +818,23 @@ CPC_off_nationalist = {
 	FROM = { has_government = nationalist }
 }
 
-BOS_civil_war_side = {
+# Scope is a side of the Bosnian civil war; PREV's peace deal also white-peaces it
+BOS_civil_war_side_covered_by_prev = {
+	BOS_civil_war_side_trigger = yes
 	OR = {
-		original_tag = BOS
-		original_tag = HZG
-		original_tag = RSK
+		is_subject_of = PREV
+		AND = {
+			is_in_faction_with = PREV
+			PREV = { is_faction_leader = yes }
+		}
 	}
 }
-# A side, or a country whose peace deal also covers one
 BOS_civil_war_peace_party = {
 	OR = {
-		BOS_civil_war_side = yes
-		AND = {
-			is_faction_leader = yes
-			OR = {
-				is_in_faction_with = BOS
-				is_in_faction_with = HZG
-				is_in_faction_with = RSK
-			}
-		}
-		BOS = { is_subject_of = PREV }
-		HZG = { is_subject_of = PREV }
-		RSK = { is_subject_of = PREV }
+		BOS_civil_war_side_trigger = yes
+		BOS = { BOS_civil_war_side_covered_by_prev = yes }
+		HZG = { BOS_civil_war_side_covered_by_prev = yes }
+		RSK = { BOS_civil_war_side_covered_by_prev = yes }
 	}
 }
 
@@ -970,8 +965,8 @@ CPD_is_a_custom_civil_war = {
 				BOS_civil_war_peace_party = yes
 				ROOT = { BOS_civil_war_peace_party = yes }
 				OR = {
-					BOS_civil_war_side = yes
-					ROOT = { BOS_civil_war_side = yes }
+					BOS_civil_war_side_trigger = yes
+					ROOT = { BOS_civil_war_side_trigger = yes }
 				}
 			}
 		}

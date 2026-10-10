@@ -1242,12 +1242,6 @@ on_actions = {
 				clr_country_flag = RSK_civil_war_recovery_pending
 				clr_country_flag = civil_war_bosnia
 				clr_country_flag = civil_war_bos_two
-				BOS = {
-					clr_country_flag = civil_war_focus
-					clr_country_flag = civil_war_bosnia
-					clr_country_flag = civil_war_bos_two
-					clr_country_flag = BOS_defeat_all_serbs
-				}
 			}
 			else_if = {
 				limit = {
@@ -1272,12 +1266,6 @@ on_actions = {
 				clr_country_flag = HZG_civil_war_recovery_pending
 				clr_country_flag = civil_war_bosnia
 				clr_country_flag = civil_war_bos_two
-				BOS = {
-					clr_country_flag = civil_war_focus
-					clr_country_flag = civil_war_bosnia
-					clr_country_flag = civil_war_bos_two
-					clr_country_flag = defeat_all_croats
-				}
 			}
 			else_if = {
 				limit = {
@@ -1546,20 +1534,46 @@ on_actions = {
 					country_event = { id = BOS_events.63 days = 3 }
 				}
 			}
+			# Civil war aftermath: a breakaway's live claim comes first, and an open settlement event blocks the rest
 			if = {
 				limit = {
 					has_country_flag = civil_war_bosnia
-					is_subject = no
 					has_civil_war = no
 					has_war = no
+					NOT = { has_country_flag = BOS_civil_war_settling }
+					NOT = {
+						RSK = {
+							exists = yes
+							has_country_flag = civil_war_bosnia
+							has_country_flag = RSK_civil_war_recovery_pending
+						}
+					}
+					NOT = {
+						HZG = {
+							exists = yes
+							has_country_flag = civil_war_bosnia
+							has_country_flag = HZG_civil_war_recovery_pending
+						}
+					}
 				}
 				if = {
-					limit = { has_country_flag = BOS_rsk_civil_war_recovery_pending }
+					limit = {
+						is_subject = no
+						has_country_flag = BOS_rsk_civil_war_recovery_pending
+					}
 					country_event = BOS_events.4
 				}
 				else_if = {
-					limit = { has_country_flag = BOS_hzg_civil_war_recovery_pending }
+					limit = {
+						is_subject = no
+						has_country_flag = BOS_hzg_civil_war_recovery_pending
+					}
 					country_event = BOS_political.20
+				}
+				# Nobody is left to claim the war: Bosnia was beaten by an outsider, the winner is a subject, or the fighting stopped without a capitulation
+				else_if = {
+					limit = { NOT = { RSK = { has_war_with = HZG } } }
+					BOS_finish_civil_war_recovery_effect = yes
 				}
 			}
 		}

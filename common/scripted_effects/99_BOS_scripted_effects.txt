@@ -401,6 +401,25 @@ BOS_begin_srpska_civil_war_effect = {
 	}
 }
 
+# Run on a breakaway about to be annexed in on_capitulation: no peace conference follows to clear these
+BOS_strip_beaten_breakaway_effect = {
+	clr_country_flag = civil_war_bosnia
+	clr_country_flag = civil_war_bos_two
+	remove_ideas = {
+		BOS_aggressive_nation
+		BOS_croat_balkan_aspiration
+		BOS_srpska_balkan_aspiration
+	}
+	if = {
+		limit = { has_idea = capitulated_nation_no_call_ally }
+		remove_ideas = capitulated_nation_no_call_ally
+	}
+	if = {
+		limit = { is_in_array = { global.un_sc_pressure_end_war = THIS } }
+		remove_from_array = { global.un_sc_pressure_end_war = THIS }
+	}
+}
+
 BOS_finish_civil_war_recovery_effect = {
 	set_country_flag = BOS_civil_war_over
 	clr_country_flag = civil_war_focus
@@ -414,8 +433,17 @@ BOS_finish_civil_war_recovery_effect = {
 	clr_country_flag = defeat_all_croats
 	clr_country_flag = BOS_hzg_civil_war_recovery_pending
 	clr_country_flag = BOS_rsk_civil_war_recovery_pending
+	clr_country_flag = BOS_civil_war_settling
 	RSK = { clr_country_flag = RSK_civil_war_recovery_pending }
 	HZG = { clr_country_flag = HZG_civil_war_recovery_pending }
+	# A Bosnia that capitulated and then won through its allies never reaches the peace conference that lifts this
+	if = {
+		limit = {
+			has_idea = capitulated_nation_no_call_ally
+			has_war = no
+		}
+		remove_ideas = capitulated_nation_no_call_ally
+	}
 	# Recovery length is set by the caller via BOS_recovery_days; callers that leave it unset get the default 5 years.
 	if = {
 		limit = { NOT = { check_variable = { BOS_recovery_days > 0 } } }
