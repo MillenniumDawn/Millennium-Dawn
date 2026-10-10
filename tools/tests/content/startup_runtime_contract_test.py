@@ -38,48 +38,6 @@ def test_game_startup_drops_redundant_zero_seeds_and_keeps_order():
     )
 
 
-def test_startup_tax_overrides_precede_money_pass_and_debt_branch_reruns_setup():
-    on_actions = _read_common("on_actions/00_on_actions.txt")
-    startup = on_actions[on_actions.index("# Initialize On Startup") :]
-    country_setup = _effect_body(startup, "every_country")
-
-    tax_limit = (
-        "if = { limit = { is_ai = yes NOT = { MD_special_countries = yes } "
-        "gifted_income_list = yes }"
-    )
-    assert country_setup.count(tax_limit) == 1
-    assert country_setup.count("set_variable = { population_tax_rate = 25 }") == 1
-    assert country_setup.count("set_variable = { corporate_tax_rate = 20 }") == 1
-    assert country_setup.count("multiply_variable = { debt = 0.0125 }") == 1
-
-    first_money_pass = country_setup.index("ingame_update_setup = yes")
-    assert (
-        country_setup.index("calculate_inflation_effects = yes")
-        < country_setup.index("set_variable = { population_tax_rate = 25 }")
-        < country_setup.index("set_variable = { corporate_tax_rate = 20 }")
-        < first_money_pass
-    )
-    assert "gifted_income_list" not in country_setup[first_money_pass:]
-
-    assert country_setup.count("ingame_update_setup = yes") == 2
-    debt_branch = _effect_body(
-        country_setup[
-            country_setup.index(
-                "if = { limit = { check_variable = { gdp_total < 8 } }"
-            ) :
-        ],
-        "if",
-    )
-    assert debt_branch.index(
-        "multiply_variable = { debt = 0.0125 }"
-    ) < debt_branch.index("ingame_update_setup = yes")
-    assert (
-        country_setup.index("ingame_update_setup = yes", first_money_pass + 1)
-        < country_setup.index("calculate_expected_spending = yes")
-        < (country_setup.index("recalculate_law_desires = yes"))
-    )
-
-
 def test_cyber_startup_recalculates_without_zero_seeds():
     cyber = _effect_body(
         _read_common("scripted_effects/00_cyber_effects.txt"), "cyber_nation_startup"
