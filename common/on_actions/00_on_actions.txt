@@ -1796,7 +1796,11 @@ on_actions = {
 				currency_startup = yes #must precede ingame_update_setup so currency_strength is nonzero before income conversion
 				resize_array = { array = year_quarter_inflation_tracker value = inflation_rate_var size = 4 }
 				calculate_inflation_effects = yes
-				ingame_update_setup = yes 	#money system — single pass; fossil/composite plants pre-placed in history/states, reactor stockpile + nuclear-fuel flag pre-placed in history/countries
+				if = { limit = { is_ai = yes NOT = { MD_special_countries = yes } gifted_income_list = yes }
+					set_variable = { population_tax_rate = 25 }
+					set_variable = { corporate_tax_rate = 20 }
+				}
+				ingame_update_setup = yes 	#money system
 				set_variable = { gdpc_converging_var = gdp_per_capita }	#snap for clean weekly-convergence baseline
 				productivity_growth_effect = yes
 				force_update_dynamic_modifier = yes
@@ -1805,13 +1809,6 @@ on_actions = {
 				economic_cycle_drift_popularity = yes #drift from neighbor
 				if = { limit = { check_variable = { gdp_total < 8 } }
 					multiply_variable = { debt = 0.0125 }
-				}
-				if = { limit = { is_ai = yes NOT = { MD_special_countries = yes } gifted_income_list = yes }
-					set_variable = { population_tax_rate = 25 }
-					set_variable = { corporate_tax_rate = 20 }
-				}
-				# Rerun the money pass after the debt cut and microstate taxes and income, before spending desires read it
-				if = { limit = { OR = { check_variable = { gdp_total < 8 } gifted_income_list = yes } }
 					ingame_update_setup = yes
 				}
 				calculate_expected_spending = yes
