@@ -181,9 +181,11 @@ class InvestmentOfferScript(StrategicRaceScript):
         return super().value(name, identifier)
 
     def execute(self, statements, identifier):
-        for statement in statements:
+        for statement in self._active_statements(statements, identifier):
             key, _comparison, operand = statement
-            if key in {"FROM", "ROOT"}:
+            if key in {"if", "else_if", "else"}:
+                self.execute(operand, identifier)
+            elif key in {"FROM", "ROOT"}:
                 target = self.event_from if key == "FROM" else self.event_root
                 self.scope_stack.append(identifier)
                 try:
@@ -524,7 +526,7 @@ def test_live_expansion_brake_releases_cached_savings_before_next_planner_tick(r
 
 @pytest.mark.parametrize(
     "target_stage,savings,expected",
-    [(1, 154, 46), (0, 154, 200), (1, 250, -50)],
+    [(1, 154, 46), (0, 0, 200), (1, 250, -50)],
 )
 def test_outgoing_investment_spendable_treasury_preserves_the_live_race_reserve(
     target_stage, savings, expected
@@ -542,8 +544,14 @@ def test_outgoing_investment_spendable_treasury_preserves_the_live_race_reserve(
 def test_investment_offer_and_acceptance_use_the_calculated_and_saved_project_costs():
     events = INVESTMENT_EVENTS.read_text(encoding="utf-8")
     ai_offer = events[events.index("# AI Investment Initialization") :]
-    assert ai_offer.index("project_monetary_cost_calculation = yes") < ai_offer.index(
+    assert ai_offer.index("project_monetary_cost_calculation = yes") < ai_offer.rindex(
         "calculate_investment_spendable_treasury = yes"
+    )
+    scoring = ai_offer.index("AI_country_selection_calculation = yes")
+    assert ai_offer.index("calculate_investment_spendable_treasury = yes") < scoring
+    assert (
+        ai_offer.index("check_variable = { investment_spendable_treasury > 5 }")
+        < scoring
     )
     assert (
         "check_variable = { var = investment_spendable_treasury "
@@ -574,13 +582,18 @@ def test_investment_offer_and_acceptance_use_the_calculated_and_saved_project_co
 
 
 @pytest.mark.parametrize(
-    "treasury,expected_started,expected_influence,expected_investor_treasury,expected_recipient_treasury",
+    "ai,savings,treasury,expected_started,expected_influence,expected_investor_treasury,expected_recipient_treasury",
     [
-        (164, [(1, 10)], [(2, 1)], 154, 99999),
-        (163.999, [], [], 163.999, 100000),
+        (True, 154, 164, [(1, 10)], [(2, 1)], 154, 99999),
+        (True, 154, 163.999, [], [], 163.999, 100000),
+        (False, 0, 10, [(1, 10)], [(2, 1)], 0, 99999),
+        (False, 0, 9.999, [], [], 9.999, 100000),
+        (False, 154, 10, [(1, 10)], [(2, 1)], 0, 99999),
     ],
 )
 def test_pending_offer_acceptance_executes_success_effects_only_above_the_reserve_floor(
+    ai,
+    savings,
     treasury,
     expected_started,
     expected_influence,
@@ -588,12 +601,12 @@ def test_pending_offer_acceptance_executes_success_effects_only_above_the_reserv
     expected_recipient_treasury,
 ):
     race = InvestmentOfferScript()
-    investor = race.country(1)
+    investor = race.country(1, ai=ai)
     recipient = race.country(2)
     investor["vars"].update(
         treasury=treasury,
         ai_race_ai_target_stage=1,
-        ai_race_ai_savings_target=154,
+        ai_race_ai_savings_target=savings,
     )
     investor["flags"].update(
         investments_ai_pending=None,
@@ -615,9 +628,71 @@ def test_pending_offer_acceptance_executes_success_effects_only_above_the_reserv
     assert investor["vars"]["treasury"] == pytest.approx(expected_investor_treasury)
     assert recipient["vars"]["treasury"] == pytest.approx(expected_recipient_treasury)
     assert race.charges == ([(2, -1)] if expected_started else [])
+    assert race.events == ([] if expected_started else [(1, "investments_event.13")])
     assert "investments_ai_pending" not in investor["flags"]
     assert "this_investment_offer_pending@PREV" not in investor["flags"]
     assert not any(name.startswith("pending_offer_") for name in recipient["vars"])
+
+
+@pytest.mark.parametrize(
+    "reason", ["war", "deficit", "bankruptcy", "human", "disabled", "outcomes_only"]
+)
+def test_investments_release_stale_reserves_under_the_live_expansion_brake(reason):
+    race, country = _planner()
+    country["vars"].update(
+        treasury=200, ai_race_ai_target_stage=1, ai_race_ai_savings_target=154
+    )
+    if reason == "war":
+        country["war"] = True
+    elif reason == "deficit":
+        country["vars"]["treasury_rate"] = -3.001
+    elif reason == "bankruptcy":
+        country["missions"].add("bankruptcy_incoming_collapse")
+    elif reason == "human":
+        country["ai"] = False
+    else:
+        race.mode = reason
+    race.run("calculate_investment_spendable_treasury", 1)
+    assert race.temps["investment_spendable_treasury"] == 200
+
+
+@pytest.mark.parametrize("spendable,blacklisted", [(9.999, False), (10, True)])
+def test_investor_funding_failure_does_not_blacklist_the_target(spendable, blacklisted):
+    source = INVESTMENT_EVENTS.read_text(encoding="utf-8")
+    start = source.index(
+        "else_if = {\n\t\t\t\t\tlimit = { check_variable = { "
+        "var = investment_spendable_treasury"
+    )
+    branches = _named_block(source[start:], "else_if")
+    funding_failure = _named_block(source[start:], "else")
+    race, _country = _planner()
+    target = race.country(2)
+    race.temps.update(investment_spendable_treasury=spendable, AI_best_country=2)
+    race.countries[1]["vars"]["project_monetary_cost^-1"] = 10
+    race.execute(
+        _parse_race_script(
+            "probe = { if = { limit = { always = no } } "
+            f"{branches} {funding_failure} }}"
+        )["probe"],
+        1,
+    )
+    assert ("recently_failed_to_invest" in target["flags"]) is blacklisted
+
+
+@pytest.mark.parametrize("spendable", [-1, 0, 5])
+def test_unfunded_investor_skips_target_scoring_on_repeated_pulses(spendable):
+    source = INVESTMENT_EVENTS.read_text(encoding="utf-8")
+    ai_offer = source[source.index("# AI Investment Initialization") :]
+    guard = ai_offer[ai_offer.index("calculate_investment_spendable_treasury = yes") :]
+    scoring = _parse_race_script(f"probe = {{{_named_block(guard, 'if')}}}")["probe"]
+    race, investor = _planner()
+    target = race.country(2)
+    investor["vars"]["investment_targets"] = [2]
+    race.temps["investment_spendable_treasury"] = spendable
+    for _pulse in range(10):
+        race.execute(scoring, 1)
+    assert "AI_country_score" not in race.temps
+    assert "recently_failed_to_invest" not in target["flags"]
 
 
 def _construction_plan(race):

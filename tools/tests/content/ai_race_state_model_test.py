@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 EFFECTS_PATH = ROOT / "common" / "scripted_effects" / "00_ai_race_effects.txt"
 PROGRESSION_PATH = (
     ROOT / "common" / "scripted_effects" / "03_ai_race_progression_effects.txt"

@@ -620,7 +620,7 @@ def test_purchase_resample_detects_lost_imports_instead_of_reusing_weekly_headro
 
 @pytest.fixture(scope="module")
 def scripts():
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     paths = {
         "finance": "common/scripted_effects/02_ai_race_finance_effects.txt",
         "capacity": "common/scripted_effects/01_ai_race_capacity_effects.txt",
@@ -713,7 +713,7 @@ def test_script_quote_snapshots_gdp_and_divides_principal_into_520_payments(scri
         operating, "calculate_energy_use = yes", "ai_race_refresh_capacity_sample = yes"
     )
     assert operating.count("ai_race_refresh_capacity_sample = yes") == 2
-    root = Path(__file__).resolve().parents[2]
+    root = Path(__file__).resolve().parents[3]
     callers = [
         scripts["progression"],
         scripts["actions"],

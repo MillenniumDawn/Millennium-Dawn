@@ -243,10 +243,13 @@ active race target; cash above that reserve remains available for repayment. Man
 expenses, scheduled installments, ordinary borrowing, and separate weekly-surplus debt repayment
 retain their existing behavior. Live expansion guards release protection during war or crisis.
 
-The investment owner is unchanged in this core port. A race purchase waits while upstream's
-seven-day `investments_ai_pending` flag marks an outgoing offer in flight, but outgoing offers
-do not yet check the race reserve. The reserve check and a frozen, generation-bound offer
-record arrive with the investment-owner port.
+A race purchase waits while upstream's seven-day `investments_ai_pending` flag marks an
+outgoing offer in flight. Outgoing investments subtract the reserve only while the live
+`ai_race_ai_expansion_permitted` guard passes. The AI checks spendable treasury before
+scoring targets and checks the calculated cost before sending an offer. Acceptance rechecks
+the saved offer cost against spendable treasury. An investor-side funding failure never
+blacklists the target; an accepted offer that can no longer be funded notifies the investor
+that it lapsed. A frozen, generation-bound offer record remains part of the investment-owner port.
 
 ## Decisions and notifications
 
@@ -254,8 +257,8 @@ One Decisions dashboard shows national progress, current physical requirements, 
 next investment, and financing. The public leaderboard lives in its own International Systems
 tab, The AI Race (`01_international_ai_race_gui.txt`, `MD_international_ai_race.gui`): every
 ranked participant's stage and capability, the first Frontier AI finisher, and a status line for
-Off, before 2016, no participants, and Outcomes Only. It refreshes on `ai_race_gui_dirty`, and
-opening it calls `ai_race_refresh_gui` only while the race is enabled, so Off creates no state.
+Off, before 2016, no participants, and Outcomes Only. It refreshes on `global.ai_race_view_dirty`, and
+opening it calls `ai_race_bump_view` only while the race is enabled, so Off creates no state.
 Foreign financial ledgers are never rendered. Country-scope dynamic rows avoid per-country
 localisation or interface definitions.
 
