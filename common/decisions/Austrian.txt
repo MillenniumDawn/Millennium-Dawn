@@ -1,57 +1,67 @@
 AUS_toll_system_category = {
-	AUS_toll_system = {
+	AUS_increase_toll_rate = {
 		fire_only_once = no
+		visible = { NOT = { has_active_mission = AUS_increase_toll_rate_mission } }
 
-		custom_cost_trigger = {
+		available = {
 			check_variable = { toll_cost < 10 }
+			NOT = { has_active_mission = AUS_increase_toll_rate_mission }
+			NOT = { has_active_mission = AUS_decrease_toll_rate_mission }
 		}
 
 		complete_effect = {
-			hidden_effect = {
-				set_variable = { attractiveness = 5}
-                set_variable = { toll_cost = 5 }
-                set_variable = { toll_factors = 1 }
-				calc_toll_cost = yes
-			}
+			log = "[GetDateText]: [Root.GetName]: Decision AUS_increase_toll_rate"
+			activate_mission = AUS_increase_toll_rate_mission
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	AUS_decrease_toll_rate = {
+		fire_only_once = no
+		visible = { NOT = { has_active_mission = AUS_decrease_toll_rate_mission } }
+
+		available = {
+			check_variable = { toll_cost > 0 }
+			NOT = { has_active_mission = AUS_increase_toll_rate_mission }
+			NOT = { has_active_mission = AUS_decrease_toll_rate_mission }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AUS_decrease_toll_rate"
+			activate_mission = AUS_decrease_toll_rate_mission
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	AUS_increase_toll_rate_mission = {
+		available = { always = no }
+		activation = { always = no }
+		days_mission_timeout = 30
+		fire_only_once = no
+		is_good = yes
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AUS_increase_toll_rate_mission"
+			add_to_variable = { toll_cost = 1 }
+			clamp_variable = { var = toll_cost min = 0 max = 10 }
+			calc_toll_cost = yes
 		}
 	}
 
-	AUS_test_increase_infra = {
+	AUS_decrease_toll_rate_mission = {
+		available = { always = no }
+		activation = { always = no }
+		days_mission_timeout = 30
 		fire_only_once = no
+		is_good = yes
 
-		custom_cost_trigger = {
-			check_variable = { toll_cost < 10 }
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AUS_decrease_toll_rate_mission"
+			subtract_from_variable = { toll_cost = 1 }
+			clamp_variable = { var = toll_cost min = 1 max = 10 }
+			calc_toll_cost = yes
 		}
-
-		complete_effect = {
-				add_to_variable = { attractiveness = 1}
-				calc_toll_cost = yes
-		}	
-	}
-
-	AUS_test_increase_toll_cost = {
-		fire_only_once = no
-
-		custom_cost_trigger = {
-			check_variable = { toll_cost < 10 }
-		}
-
-		complete_effect = {
-				add_to_variable = { toll_cost = 1}
-				calc_toll_cost = yes
-		}	
-	}
-
-	AUS_test_increase_toll_factors = {
-		fire_only_once = no
-
-		custom_cost_trigger = {
-			check_variable = { toll_cost < 10 }
-		}
-
-		complete_effect = {
-				set_variable = { toll_factors = 1.5}
-				calc_toll_cost = yes
-		}	
 	}
 }
