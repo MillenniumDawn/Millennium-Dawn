@@ -120,6 +120,7 @@ def test_untooltipped_write_flagged(tmp_path):
     )
     assert len(issues) == 1
     assert issues[0].category == "dynamic-modifier-tooltip-missing"
+    assert issues[0].severity == V.Severity.ERROR
     assert "add tooltip = political_power_factor_tt" in issues[0].message
 
 
@@ -316,6 +317,7 @@ def test_unlocalised_tooltip_key_flagged(tmp_path):
     )
     assert len(issues) == 1
     assert issues[0].category == "variable-tooltip-missing-loc"
+    assert issues[0].severity == V.Severity.ERROR
     assert "tooltip = no_such_key_tt" in issues[0].message
 
 

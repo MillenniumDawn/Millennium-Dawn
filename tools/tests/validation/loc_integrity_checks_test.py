@@ -1,6 +1,6 @@
 """Tests for three loc-integrity checks:
 
-1. validate_localisation.process_yml_for_syntax — formatter-mangled loc lines
+1. validate_localisation's syntax scan — formatter-mangled loc lines
    (a Prettier/pre-commit --all-files run once split `KEY:0 "value"` across
    two lines and rewrote double quotes to single quotes).
 2. validate_oob_units.Validator.validate_air_wing_names_template_loc —
@@ -10,16 +10,12 @@
 """
 
 import pytest
-from validate_localisation import Issue, process_yml_for_syntax
+from shared.suite import write_yml as _write_yml
+from shared.suite import yml_syntax
+from validate_localisation import Issue
 from validate_modifiers import Validator as ModifiersValidator
 from validate_oob_units import Validator as OOBValidator
 from validator_common import Severity
-
-
-def _write_yml(tmp_path, name, value_line):
-    p = tmp_path / name
-    p.write_text(f"l_english:\n {value_line}\n", encoding="utf-8-sig")
-    return str(p)
 
 
 def _issues_only(results):
@@ -33,7 +29,7 @@ def _issues_only(results):
 
 def test_syntax_check_flags_key_with_no_value(tmp_path):
     path = _write_yml(tmp_path, "a_l_english.yml", "SOME_KEY:0")
-    results = _issues_only(process_yml_for_syntax((path, ["Y", "R", "G"], frozenset())))
+    results = _issues_only(yml_syntax(path, ["Y", "R", "G"]))
     assert len(results) == 1
     assert results[0].category == "mangled-loc-line"
     assert "no value" in results[0].message
@@ -41,7 +37,7 @@ def test_syntax_check_flags_key_with_no_value(tmp_path):
 
 def test_syntax_check_flags_single_quoted_value(tmp_path):
     path = _write_yml(tmp_path, "b_l_english.yml", "SOME_KEY:0 'Some Value'")
-    results = _issues_only(process_yml_for_syntax((path, ["Y", "R", "G"], frozenset())))
+    results = _issues_only(yml_syntax(path, ["Y", "R", "G"]))
     assert len(results) == 1
     assert results[0].category == "mangled-loc-line"
     assert "single quotes" in results[0].message
@@ -49,7 +45,7 @@ def test_syntax_check_flags_single_quoted_value(tmp_path):
 
 def test_syntax_check_clean_double_quoted_value(tmp_path):
     path = _write_yml(tmp_path, "c_l_english.yml", 'SOME_KEY:0 "Some Value"')
-    results = _issues_only(process_yml_for_syntax((path, ["Y", "R", "G"], frozenset())))
+    results = _issues_only(yml_syntax(path, ["Y", "R", "G"]))
     assert results == []
 
 

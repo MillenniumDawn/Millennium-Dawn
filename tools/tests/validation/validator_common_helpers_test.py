@@ -58,7 +58,7 @@ def test_child_blocks_on_empty_span():
 
 
 def test_match_brace_returns_minus_one_when_unclosed():
-    assert VC._match_brace("{ a = 1", 0) == -1
+    assert VC.find_unquoted_brace_close("{ a = 1", 0) == -1
 
 
 # ---- leader trait parsing -------------------------------------------------
@@ -299,6 +299,43 @@ def test_pool_map_falls_back_to_sequential_without_a_pool(tmp_path, monkeypatch)
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, workers=2)
     monkeypatch.setattr(v, "_get_pool", lambda: None)
     assert v._pool_map(str, list(range(12))) == [str(i) for i in range(12)]
+
+
+def test_pool_map_init_closes_the_shared_pool_before_starting_its_own(
+    tmp_path, monkeypatch
+):
+    events = []
+
+    class _SharedPool:
+        def terminate(self):
+            events.append("terminate")
+
+        def join(self):
+            events.append("join")
+
+    class _DedicatedPool:
+        def __init__(self, **_kwargs):
+            events.append("start")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_exc):
+            return False
+
+        def map(self, func, items, chunksize=None):
+            return [func(item) for item in items]
+
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    monkeypatch.setattr(VC, "Pool", _DedicatedPool)
+    v = _Dummy(mod_path=str(tmp_path), use_colors=False, workers=2)
+    v._pool = _SharedPool()
+
+    result = v._pool_map_init(str, list(range(12)), lambda: None, ())
+
+    assert events == ["terminate", "join", "start"]
+    assert v._pool is None
+    assert result == [str(i) for i in range(12)]
 
 
 # ---- localisation keys ----------------------------------------------------

@@ -2,13 +2,7 @@
 
 import validate_events as V
 from shared.suite import collecting_validator
-
-
-def _write(tmp_path, name, body):
-    p = tmp_path / name
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(body, encoding="utf-8")
-    return str(p)
+from shared.suite import write_under_str as _write
 
 
 def _gated(tmp_path, body, name="events/Ev.txt"):
