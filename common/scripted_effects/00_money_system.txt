@@ -101,6 +101,14 @@
 # tweak this to modify the operative cost of all equipment
 @equipment_operative_cost_multiplier = 5
 
+# Default income every country gets
+@base_income_rate = 0.25
+
+# Weekly canal and strait income at 2000 world GDP, scaled by global.world_trade_factor
+@suez_toll_income = 0.0346 # 1.8B yearly
+@panama_toll_income = 0.0096 # 0.5B yearly
+@malacca_hub_income = 0.0135 # 0.7B yearly
+
 setup_spending_law_tables = {
 	clear_array = global.bureau_law_idea
 	resize_array = { array = global.bureau_law_idea size = 1 }
@@ -255,11 +263,8 @@ ingame_update_setup = {
 	#Expenses
 	expense_modifier_calculations = yes
 	update_military_rate = yes
-	update_bureaucracy_rate = yes
-	update_police_rate = yes
+	update_population_spending_rates = yes
 	update_education_rate = yes
-	update_health_rate = yes
-	update_social_rate = yes
 	update_infra_rate = yes
 	calculate_interest_rate = yes
 	calculate_additional_expense_rate = yes
@@ -791,7 +796,8 @@ calculate_tax_gain = {
 # Effect: calculate_additional_income_rate
 # Purpose: Aggregates special income sources (seigniorage, ideas, canal revenue, foreign aid)
 calculate_additional_income_rate = {
-	set_variable = { additional_income_rate = 0 }
+	set_variable = { additional_income_base = @base_income_rate }
+	set_variable = { additional_income_rate = additional_income_base }
 
 	if = { limit = { has_idea = bitcoin }
 		add_to_variable = { additional_income_rate = global.bitcoin_reserve_income }
@@ -938,30 +944,26 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = HEZ_iranian_support_money }
 		}
 		if = {
-			 limit = { always = yes } # This is to stop Hezbollah's economy collapsing early.
+			limit = { always = yes } # This is to stop Hezbollah's economy collapsing early.
 			set_variable = { HEZ_unknown_funds_income = 0.400 }
 			add_to_variable = { additional_income_rate = HEZ_unknown_funds_income }
 		}
 	}
 	if = { limit = { has_idea = full_control_of_suez }
-		set_variable = { additional_income_suez = 0.1 }
+		set_variable = { additional_income_suez = { value = global.world_trade_factor multiply = @suez_toll_income } }
 		add_to_variable = { additional_income_rate = additional_income_suez }
 	}
 	if = { limit = { has_idea = partial_control_of_suez }
-		set_variable = { additional_income_suez_partial = 0.05 }
+		set_variable = { additional_income_suez_partial = { value = global.world_trade_factor multiply = @suez_toll_income multiply = 0.5 } }
 		add_to_variable = { additional_income_rate = additional_income_suez_partial }
 	}
 	if = { limit = { has_idea = full_control_of_panama }
-		set_variable = { additional_income_panama = 0.05 }
+		set_variable = { additional_income_panama = { value = global.world_trade_factor multiply = @panama_toll_income } }
 		add_to_variable = { additional_income_rate = additional_income_panama }
 	}
 	if = { limit = { has_idea = gateway_to_asia }
-		set_variable = { gateway_to_asia_income = 0.1 }
+		set_variable = { gateway_to_asia_income = { value = global.world_trade_factor multiply = @malacca_hub_income } }
 		add_to_variable = { additional_income_rate = gateway_to_asia_income }
-	}
-	if = { limit = { has_idea = MICROSTATE_fix }
-		set_variable = { additional_income_microstate_fix_var = 0.35 }
-		add_to_variable = { additional_income_rate = additional_income_microstate_fix_var }
 	}
 	if = { limit = { has_idea = saudi_aid }
 		set_variable = { additional_income_saudi_aid = { value = population_total multiply = 0.00002 } }	#Millions of people
@@ -1368,6 +1370,20 @@ calculate_additional_income_rate = {
 			limit = { has_idea = CRM_naval }
 			set_variable = { additional_income_CRM_naval = 0.045 }
 			add_to_variable = { additional_income_rate = additional_income_CRM_naval }
+		}
+	}
+	#Cuba
+	else_if = {
+		limit = { original_tag = CUB }
+		if = {
+			limit = { has_idea = CUB_tourism }
+			set_variable = { CUB_tourism_income = 0.100 }
+			add_to_variable = { additional_income_rate = CUB_tourism_income }
+		}
+		if = {
+			limit = { has_idea = CUB_tourism_hub_idea }
+			set_variable = { CUB_tourism_hub_income = 0.500 }
+			add_to_variable = { additional_income_rate = CUB_tourism_hub_income }
 		}
 	}
 	# Denmark
@@ -3056,65 +3072,78 @@ update_military_rate = {
 	set_variable = { defence_gain = { value = array_defence_spend^def_index add = defence_breakdown_cyber clamp = { min = 0 max = @math_expressions_max } } }
 }
 
-# Effect: update_bureaucracy_rate
-# Purpose: Computes daily bureaucracy/civil-service spending based on population and selected law level
-update_bureaucracy_rate = {
-	# Recreate the Array
+# Effect: update_population_spending_rates
+# Purpose: Computes bureaucracy, security, healthcare, and welfare spending in one pass
+update_population_spending_rates = {
+	set_temp_variable = {
+		bureaucracy_spending_base = {
+			value = population_total
+			multiply = { value = 1 add = modifier@bureaucracy_cost_multiplier_modifier }
+			multiply = common_money_modifier
+			multiply = @bureau_base_cost_per_capita
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+	set_temp_variable = {
+		security_spending_base = {
+			value = population_total
+			multiply = {
+				value = 1
+				add = modifier@police_cost_multiplier_modifier
+				add = ct_police_cost_var
+			}
+			multiply = common_money_modifier
+			multiply = @police_base_cost_per_capita
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+	set_temp_variable = {
+		health_spending_base = {
+			value = population_total
+			multiply = { value = 1 add = modifier@health_cost_multiplier_modifier }
+			multiply = common_money_modifier
+			multiply = @health_base_cost_per_capita
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+	set_temp_variable = {
+		welfare_spending_base = {
+			value = population_total
+			multiply = { value = 1 add = modifier@social_cost_multiplier_modifier }
+			multiply = common_money_modifier
+			multiply = @social_base_cost_per_capita
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+
 	resize_array = { array = array_bureaucracy_spend size = 5 value = 0 }
-
-	#Calculate the base cost of each bureaucracy level, scaled by the per-level multiplier ladder
-	for_each_loop = {
-		array = array_bureaucracy_spend
-		index = i
-		value = v
-		set_variable = {
-			array_bureaucracy_spend^i = {
-				value = population_total
-				multiply = { value = 1 add = modifier@bureaucracy_cost_multiplier_modifier }
-				multiply = common_money_modifier
-				multiply = @bureau_base_cost_per_capita
-				clamp = { min = 0 max = @math_expressions_max }
-				multiply = global.spending_ladder_standard^i
-			}
-		}
-	}
-
-	#Set which spending level the country is at
-	set_temp_variable = { bureau_index = { value = bureau_law subtract = 1 clamp = { min = 0 max = 4 } } }
-	set_variable = { var = bureaucracy_gain value = { value = array_bureaucracy_spend^bureau_index clamp = { min = 0 max = @math_expressions_max } } }
-}
-
-# Effect: update_police_rate
-# Purpose: Computes daily police/public-security spending based on population and selected law level
-update_police_rate = {
-	# Recreate the Array
 	resize_array = { array = array_security_spend size = 5 value = 0 }
+	resize_array = { array = array_health_spend size = 6 value = 0 }
+	resize_array = { array = array_social_spend size = 6 value = 0 }
 
-	#Calculate the base cost of each police level, scaled by the per-level multiplier ladder
 	for_each_loop = {
-		array = array_security_spend
+		array = array_social_spend
 		index = i
 		value = v
-		set_variable = {
-			array_security_spend^i = {
-				value = population_total
-				multiply = {
-					value = 1
-					add = modifier@police_cost_multiplier_modifier
-					add = ct_police_cost_var
-				}
-				multiply = common_money_modifier
-				multiply = @police_base_cost_per_capita
-				clamp = { min = 0 max = @math_expressions_max }
-				multiply = global.spending_ladder_standard^i
-			}
+
+		set_variable = { array_health_spend^i = { value = health_spending_base multiply = global.spending_ladder_health^i } }
+		set_variable = { array_social_spend^i = { value = welfare_spending_base multiply = global.spending_ladder_social^i } }
+		if = {
+			limit = { check_variable = { i < 5 } }
+			set_variable = { array_bureaucracy_spend^i = { value = bureaucracy_spending_base multiply = global.spending_ladder_standard^i } }
+			set_variable = { array_security_spend^i = { value = security_spending_base multiply = global.spending_ladder_standard^i } }
 		}
 	}
 
-	#Set which spending level the country is at
+	set_temp_variable = { bureau_index = { value = bureau_law subtract = 1 clamp = { min = 0 max = 4 } } }
 	set_temp_variable = { security_index = { value = police_law subtract = 1 clamp = { min = 0 max = 4 } } }
+	set_temp_variable = { health_index = { value = health_law subtract = 1 clamp = { min = 0 max = 5 } } }
+	set_temp_variable = { social_index = { value = social_law subtract = 1 clamp = { min = 0 max = 5 } } }
 
+	set_variable = { bureaucracy_gain = { value = array_bureaucracy_spend^bureau_index clamp = { min = 0 max = @math_expressions_max } } }
 	set_variable = { security_gain = { value = array_security_spend^security_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { health_gain = { value = array_health_spend^health_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { welfare_gain = { value = array_social_spend^social_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_education_rate
@@ -3219,64 +3248,6 @@ update_education_rate = {
 
 	set_variable = { education_gain = { value = array_education_spend^education_index clamp = { min = 0 max = @math_expressions_max } } }
 	clamp_variable = { var = total_facilities_spending_display_var min = 0 }
-}
-
-# Effect: update_health_rate
-# Purpose: Computes daily healthcare spending based on population and selected law level
-update_health_rate = {
-	# Recreate the Array
-	resize_array = { array = array_health_spend size = 6 value = 0 }
-
-	#Calculate the base cost of each health level, scaled by the per-level multiplier ladder
-	for_each_loop = {
-		array = array_health_spend
-		index = i
-		value = v
-		set_variable = {
-			array_health_spend^i = {
-				value = population_total	#Unit 100 000
-				multiply = { value = 1 add = modifier@health_cost_multiplier_modifier }
-				multiply = common_money_modifier
-				multiply = @health_base_cost_per_capita
-				clamp = { min = 0 max = @math_expressions_max }
-				multiply = global.spending_ladder_health^i
-			}
-		}
-	}
-
-	#Set which spending level the country is at
-	set_temp_variable = { health_index = { value = health_law subtract = 1 clamp = { min = 0 max = 5 } } }
-
-	set_variable = { health_gain = { value = array_health_spend^health_index clamp = { min = 0 max = @math_expressions_max } } }
-}
-
-# Effect: update_social_rate
-# Purpose: Computes daily welfare/social-benefit spending based on population and selected law level
-update_social_rate = {
-	# Recreate the Array
-	resize_array = { array = array_social_spend size = 6 value = 0 }
-
-	#Calculate the base cost of each social level, scaled by the per-level multiplier ladder
-	for_each_loop = {
-		array = array_social_spend
-		index = i
-		value = v
-		set_variable = {
-			array_social_spend^i = {
-				value = population_total	#Unit 100 000
-				multiply = { value = 1 add = modifier@social_cost_multiplier_modifier }
-				multiply = common_money_modifier
-				multiply = @social_base_cost_per_capita
-				clamp = { min = 0 max = @math_expressions_max }
-				multiply = global.spending_ladder_social^i
-			}
-		}
-	}
-
-	#Set which spending level the country is at
-	set_temp_variable = { social_index = { value = social_law subtract = 1 clamp = { min = 0 max = 5 } } }
-
-	set_variable = { welfare_gain = { value = array_social_spend^social_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_infra_rate
@@ -4343,16 +4314,18 @@ update_display = {
 
 	set_variable = { treasury_rate = { value = display_income subtract = display_expense } }
 
-	# Lets AI deficit checks scale with the size of the economy.
+	# Lets AI deficit checks scale with the size of the economy. Counts paused debt service so a cheap loan does not read as a surplus.
 	if = { limit = { check_variable = { display_income > 0 } }
-		set_variable = { budget_balance_ratio = { value = treasury_rate divide = display_income } }
+		set_variable = { budget_balance_ratio = { value = display_income subtract = potential_expense divide = display_income } }
 	}
-	else_if = { limit = { check_variable = { treasury_rate < 0 } }
+	else_if = { limit = { check_variable = { potential_expense > display_income } }
 		set_variable = { budget_balance_ratio = -1 }
 	}
 	else = {
 		set_variable = { budget_balance_ratio = 0 }
 	}
+	# Share of income paid as interest, read by ai_fiscal_last_resort_open
+	set_variable = { debt_service_share = { value = debt_rate divide = { value = potential_income clamp = { min = 0.001 max = 100000000 } } } }
 
 	if = { limit = { is_in_array = { global.arabic_countries = THIS.id } }
 		calculate_monthly_arab_spring_change = yes
@@ -6074,6 +6047,7 @@ calculate_tax_adjustments = {
 				check_variable = { treasury_rate > 2 }
 				check_variable = { budget_balance_ratio > 0.10 }
 			}
+			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { debt_ratio < 0.30 }
 			check_variable = { interest_rate < 5 }
 			check_variable = { pop_tax_change = 0 }
@@ -6094,7 +6068,7 @@ calculate_tax_adjustments = {
 		limit = {
 			has_stability < 0.30
 			check_variable = { population_tax_rate > 20 }
-			check_variable = { treasury_rate > 0 }
+			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { pop_tax_change = 0 }
 		}
 		set_temp_variable = { pop_tax_change = -1 }

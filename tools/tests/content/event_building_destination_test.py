@@ -3,7 +3,7 @@ from pathlib import Path
 import pytest
 from shared_utils import iter_statements, strip_comments
 
-ROOT = Path(__file__).resolve().parents[2]
+ROOT = Path(__file__).resolve().parents[3]
 
 
 def _block(source, key, identity=None):
