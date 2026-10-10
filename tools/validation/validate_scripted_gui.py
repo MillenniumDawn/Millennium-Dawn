@@ -13,7 +13,12 @@ from typing import Any, Dict, FrozenSet, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text
+from shared_utils import (
+    blank_quoted_strings,
+    extract_block_from_text,
+    iter_statements,
+    strip_comments,
+)
 from validator_common import (
     BaseValidator,
     Severity,
@@ -33,9 +38,6 @@ _GUI_TYPE_OPENER = re.compile(
     re.IGNORECASE,
 )
 
-# Inside a GUI element, match `name = "..."` or `name = ...`
-_GUI_NAME = re.compile(r"\bname\s*=\s*\"?([A-Za-z0-9_]+)\"?")
-
 # scripted_gui block opener:   <name> = {
 # Match identifier directly followed by = { in the scripted_guis context.
 _SGUI_BLOCK_OPENER = re.compile(r"^\s*([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
@@ -51,21 +53,8 @@ _SGUI_HANDLER = re.compile(
     re.MULTILINE,
 )
 
-# context_type = ...
-_SGUI_CONTEXT = re.compile(r"\bcontext_type\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
-
-# window_name = "..." (or unquoted)
-_SGUI_WINDOW = re.compile(r"\bwindow_name\s*=\s*\"?([A-Za-z0-9_]+)\"?")
-
-# parent_window_name = "..." / parent_window_token = X
-_SGUI_PARENT_NAME = re.compile(r"\bparent_window_name\s*=\s*\"?([A-Za-z0-9_]+)\"?")
-_SGUI_PARENT_TOKEN = re.compile(r"\bparent_window_token\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
-
 # dynamic_lists block — entry_container reference
 _SGUI_ENTRY_CONTAINER = re.compile(r"\bentry_container\s*=\s*\"?([A-Za-z0-9_]+)\"?")
-
-# dirty = ... — the variable the GUI refreshes on (may be scope-qualified, e.g. global.X)
-_SGUI_DIRTY = re.compile(r"\bdirty\s*=\s*([A-Za-z_][A-Za-z0-9_.]*)")
 
 # Variable write operations across the mod — capture the assignment target (LHS),
 # optionally scope-qualified. Used to tell whether a dirty var is ever written and
@@ -89,9 +78,6 @@ _GLOBAL_REF = re.compile(r"\bglobal\.([A-Za-z_][A-Za-z0-9_]*)")
 # A `dirty = global.X` declaration — stripped before counting global refs so a
 # global var that appears ONLY as a dirty line still reads as undefined.
 _SGUI_DIRTY_GLOBAL = re.compile(r"\bdirty\s*=\s*global\.[A-Za-z_][A-Za-z0-9_]*")
-
-# ai_test_scopes — value (can appear multiple times in one scripted_gui block)
-_SGUI_AI_TEST_SCOPES = re.compile(r"\bai_test_scopes\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 
 # [!trigger_name] loc formatter — captures the trigger name
 _LOC_BANG_REF = re.compile(r"\[!([A-Za-z_][A-Za-z0-9_]*)\]")
@@ -200,30 +186,41 @@ def _normalise_path(p: str) -> str:
 def _parse_gui_text(text: str, rel: str) -> Dict:
     """Parse one .gui file's text. Returns the GUI-element data this file
     contributes, keyed by collection name. Mutates nothing."""
+    text = strip_comments(text)
     elements: Dict[str, Tuple[str, str, int]] = {}
     element_files: Dict[str, str] = {}
     containers: List[str] = []
+    windows: List[str] = []
+    enclosing_ends: List[int] = []
 
-    for m in _GUI_TYPE_OPENER.finditer(text):
+    for m in _GUI_TYPE_OPENER.finditer(blank_quoted_strings(text)):
+        while enclosing_ends and m.start() >= enclosing_ends[-1]:
+            enclosing_ends.pop()
         type_name = m.group(1)
-        block_start = m.end()
-        block, end = extract_block_from_text(text, block_start - 1)
+        block, end = extract_block_from_text(text, m.end() - 1)
         if end == -1:
             continue
-        line_no = text.count("\n", 0, m.start()) + 1
-        name_m = _GUI_NAME.search(block)
-        if not name_m:
+        independent = not enclosing_ends
+        enclosing_ends.append(end)
+        name = next(
+            (scalar for key, scalar, _ in iter_statements(block) if key == "name"),
+            None,
+        )
+        if not name:
             continue
-        name = name_m.group(1)
+        line_no = text.count("\n", 0, m.start()) + 1
         elements[name] = (type_name, rel, line_no)
         element_files[name] = rel
         if type_name.lower() == "containerwindowtype":
             containers.append(name)
+            if independent:
+                windows.append(name)
 
     return {
         "elements": elements,
         "element_files": element_files,
         "containers": containers,
+        "windows": windows,
     }
 
 
@@ -242,26 +239,23 @@ def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict[st
         "handlers": set(),
         "entry_containers": [],
     }
-    m = _SGUI_CONTEXT.search(body)
-    if m:
-        block["context_type"] = m.group(1)
-    m = _SGUI_WINDOW.search(body)
-    if m:
-        block["window_name"] = m.group(1)
-    m = _SGUI_PARENT_NAME.search(body)
-    if m:
-        block["parent_window_name"] = m.group(1)
-    m = _SGUI_PARENT_TOKEN.search(body)
-    if m:
-        block["parent_window_token"] = m.group(1)
-    m = _SGUI_DIRTY.search(body)
-    if m:
-        block["dirty"] = m.group(1)
-    for sm in _SGUI_AI_TEST_SCOPES.finditer(body):
-        block["ai_test_scopes"].append(sm.group(1))
+    for key, scalar, _ in iter_statements(body):
+        if scalar is None:
+            continue
+        if key in {
+            "context_type",
+            "window_name",
+            "parent_window_name",
+            "parent_window_token",
+            "dirty",
+        }:
+            if block[key] is None:
+                block[key] = scalar
+        elif key == "ai_test_scopes":
+            block[key].append(scalar)
     for ec in _SGUI_ENTRY_CONTAINER.finditer(body):
         block["entry_containers"].append(ec.group(1))
-    for hm in _SGUI_HANDLER.finditer(body):
+    for hm in _SGUI_HANDLER.finditer(blank_quoted_strings(body)):
         elem = hm.group(1)
         kind = hm.group(2)
         block["handlers"].add((elem, kind))
@@ -271,22 +265,25 @@ def _parse_one_sgui_block(name: str, body: str, file: str, line: int) -> Dict[st
 def _parse_scripted_gui_text(text: str, rel: str) -> Tuple[List[Dict], Set[str]]:
     """Parse one scripted_gui .txt file's text. Returns
     (list_of_block_dicts, set_of_trigger_names). Mutates nothing."""
+    text = strip_comments(text)
+    scan = blank_quoted_strings(text)
     blocks: List[Dict] = []
     trigger_names: Set[str] = set()
 
     outer_opener = re.compile(r"\bscripted_gui\s*=\s*\{")
     cursor = 0
-    while outer := outer_opener.search(text, cursor):
+    while outer := outer_opener.search(scan, cursor):
         outer_start = outer.end()
         outer_body, outer_end = extract_block_from_text(text, outer_start - 1)
         if outer_end == -1:
             cursor = outer_start
             continue
 
+        outer_scan = scan[outer_start : outer_end - 1]
         i = 0
         n = len(outer_body)
         while i < n:
-            m = _SGUI_BLOCK_OPENER.search(outer_body, i)
+            m = _SGUI_BLOCK_OPENER.search(outer_scan, i)
             if not m:
                 break
             name = m.group(1)
@@ -294,7 +291,7 @@ def _parse_scripted_gui_text(text: str, rel: str) -> Tuple[List[Dict], Set[str]]
             body, inner_end = extract_block_from_text(outer_body, inner_start - 1)
             if inner_end == -1:
                 break
-            line_no = text.count("\n", 0, outer_start + m.start()) + 1
+            line_no = text.count("\n", 0, outer_start + m.start(1)) + 1
             block = _parse_one_sgui_block(name, body, rel, line_no)
             for elem, kind in block["handlers"]:
                 trigger_names.add(f"{elem}_{kind}")
@@ -323,15 +320,24 @@ def _parse_var_writes_text(text: str) -> Tuple[Set[str], Set[str]]:
 class Validator(BaseValidator):
     TITLE = "SCRIPTED GUI VALIDATION"
     STAGED_EXTENSIONS = [".txt", ".gui", ".yml"]
+    STAGED_INCLUDE_MISSING = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # Cache the staged-files set for fast filtering
-        self._staged_set: Set[str] = set(self.staged_files or [])
+        self._staged_set: Set[str] = {
+            _normalise_path(os.path.relpath(path, self.mod_path))
+            for path in self.staged_files or []
+        }
+        self._staged_gui_changed = any(
+            path.startswith("interface/") and path.endswith(".gui")
+            for path in self._staged_set
+        )
         # Populated by parsing passes
         self._gui_elements: Dict[str, Tuple[str, str, int]] = {}
         # name -> (type, file, line)
         self._gui_containers: Set[str] = set()
+        self._gui_windows: Set[str] = set()
         self._gui_element_files: Dict[str, str] = {}
         # element_name -> .gui file path
 
@@ -350,10 +356,14 @@ class Validator(BaseValidator):
     def add_issue(
         self, severity: str, category: str, message: str, file: str = "", line: int = 0
     ) -> None:
-        """Override: in staged_only mode, suppress issues whose file isn't in
-        the staged set so pre-commit only reports on what the commit changes."""
-        if self.staged_only:
-            if not self._staged_set or _normalise_path(file) not in self._staged_set:
+        """Report staged sources and scripted references affected by GUI changes."""
+        if self.staged_only and _normalise_path(file) not in self._staged_set:
+            if not self._staged_gui_changed or category not in {
+                "MISSING_WINDOW",
+                "MISSING_PARENT_WINDOW",
+                "MISSING_ENTRY_CONTAINER",
+                "DEAD_HANDLER",
+            }:
                 return
         super().add_issue(severity, category, message, file, line)
 
@@ -408,15 +418,26 @@ class Validator(BaseValidator):
         self._gui_elements.update(data["elements"])
         self._gui_element_files.update(data["element_files"])
         self._gui_containers.update(data["containers"])
+        self._gui_windows.update(data["windows"])
 
     def _parse_scripted_gui_files(self) -> None:
         self._log_section("Parsing common/scripted_guis/*.txt files")
         sgui_dir = os.path.join(self.mod_path, "common", "scripted_guis")
         if not os.path.isdir(sgui_dir):
             return
+        try:
+            names = os.listdir(sgui_dir)
+        except OSError as exc:
+            super().add_issue(
+                Severity.ERROR,
+                "SCRIPTED_GUI_READ_ERROR",
+                f"Could not list scripted GUI files: {exc}",
+                file=os.path.relpath(sgui_dir, self.mod_path),
+            )
+            return
         files = [
             os.path.join(sgui_dir, f)
-            for f in os.listdir(sgui_dir)
+            for f in names
             if f.endswith(".txt") and not should_skip_file(f)
         ]
         for filepath in sorted(files):
@@ -574,21 +595,20 @@ class Validator(BaseValidator):
         for block in self._sgui_blocks:
             if block["window_name"]:
                 wn = block["window_name"]
-                if wn in self._gui_containers:
-                    continue
-                # Skip vanilla containers we don't define locally
-                if wn.lower() in _VANILLA_PARENT_WINDOWS:
-                    continue
-                self.add_issue(
-                    Severity.WARNING,
-                    "MISSING_WINDOW",
-                    f"Scripted GUI '{block['name']}' references "
-                    f'window_name = "{block["window_name"]}" but no '
-                    f"containerWindowType with that name exists in MD .gui "
-                    f"files (may be a vanilla container)",
-                    file=block["file"],
-                    line=block["line"],
-                )
+                if (
+                    wn not in self._gui_windows
+                    and wn.lower() not in _VANILLA_PARENT_WINDOWS
+                ):
+                    self.add_issue(
+                        Severity.ERROR,
+                        "MISSING_WINDOW",
+                        f"Scripted GUI '{block['name']}' references "
+                        f'window_name = "{wn}" but no '
+                        f"independent containerWindowType with that name exists in MD .gui "
+                        f"files; the game cannot create this window",
+                        file=block["file"],
+                        line=block["line"],
+                    )
             if block["parent_window_name"]:
                 pwn = block["parent_window_name"]
                 if pwn in self._gui_containers:

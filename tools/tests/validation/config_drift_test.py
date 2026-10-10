@@ -16,11 +16,11 @@ from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
     _CREATE_UNIT_SOURCE_PATTERNS,
     _DELETE_TEMPLATE_SOURCE_PATTERNS,
+    _TEMPLATE_LIMIT_SOURCE_PATTERNS,
     _TEMPLATE_SOURCE_PATTERNS,
     _VARIANT_SOURCE_PATTERNS,
 )
 from validate_scripted_params import _CALLER_PATTERNS
-from validate_staged import VALIDATORS as STAGED_VALIDATORS
 from validator_batches import ALL_SPECS, BATCHES, ValidatorSpec
 
 PRECOMMIT = REPO_ROOT / ".pre-commit-config.yaml"
@@ -146,6 +146,7 @@ def test_test_suite_replaces_old_workflows():
         "validate-paths",
         "prepare-workspace",
         "tools-tests",
+        "content-tests",
         "tools-quality",
         "mod-tests",
         "docs-quality",
@@ -299,6 +300,28 @@ def test_tools_checkout_exposes_consumed_configuration():
     assert not {"localisation", "resources"} & sparse
     assert checkout["with"]["fetch-depth"] == 1
     assert checkout["with"]["filter"] == "blob:none"
+
+
+def test_content_tests_run_once_with_the_game_tree():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    game_trees = {"common", "events", "history", "localisation/english"}
+    tools = workflow["jobs"]["tools-tests"]
+    assert not game_trees & set(tools["steps"][0]["with"]["sparse-checkout"].split())
+    suite_runs = [
+        step["run"]
+        for step in tools["steps"]
+        if "pytest tools/tests " in step.get("run", "")
+    ]
+    assert len(suite_runs) == 2
+    assert all("--ignore=tools/tests/content" in run for run in suite_runs)
+
+    content = workflow["jobs"]["content-tests"]
+    for group in ("full_suite", "content", "tools"):
+        assert f"outputs.{group} == 'true'" in content["if"]
+    assert game_trees <= set(content["steps"][0]["with"]["sparse-checkout"].split())
+    assert any(
+        "pytest tools/tests/content" in step.get("run", "") for step in content["steps"]
+    )
 
 
 def test_file_paths_run_in_a_lightweight_index_job():
@@ -457,7 +480,6 @@ def test_mod_core_runs_extra_checks_after_batch():
     batch_index = names.index("Run validator batch")
     for name in (
         "Run style check",
-        "Run common-mistakes check",
         "Check localisation UTF-8 BOM",
         "Check localisation YAML syntax",
         "Check .mod file encoding",
@@ -520,6 +542,7 @@ def test_gate_steps_cannot_be_switched_off():
 CONTRACT_FILES = (
     "tools/validation/ci_workspace_profile.txt",
     "tools/validation/staged_sparse_profile.txt",
+    "tools/tests/content/tool_data_drift_test.py",
     "validation_config.json",
     "pyproject.toml",
 )
@@ -532,7 +555,7 @@ def _contract_guard():
 @pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
 @pytest.mark.parametrize(
     "dropped",
-    [None, *CONTRACT_FILES[:3], "pytest-xdist", "pytest-cov"],
+    [None, *CONTRACT_FILES[:4], "pytest-xdist", "pytest-cov"],
 )
 def test_detect_changes_stops_a_head_without_the_ci_contract(tmp_path, dropped):
     for relative in CONTRACT_FILES:
@@ -563,7 +586,8 @@ def test_contract_guard_covers_what_the_workflow_reads_from_the_head():
     sparse = {path.lstrip("/") for path in checkout["with"]["sparse-checkout"].split()}
     profiles = set(re.findall(r"tools/validation/\w+_profile\.txt", text))
     assert profiles
-    for path in sorted(profiles) + ["validation_config.json", "pyproject.toml"]:
+    assert set(profiles) < set(CONTRACT_FILES)
+    for path in CONTRACT_FILES:
         assert path in sparse, path
         assert path in guard, path
     assert "-n auto" in text and "pytest-xdist" in guard
@@ -751,9 +775,7 @@ def test_validation_config_reaches_every_validator_run():
     assert "needs.detect-changes.outputs.style_config" in collect["env"]["STYLE_CONFIG"]
     assert "find common/national_focus -type f -name '*.txt'" in collect["run"]
     style = next(s for s in steps if s.get("name") == "Run style check")
-    mistakes = next(s for s in steps if s.get("name") == "Run common-mistakes check")
     assert "has-files" in style["if"]
-    assert "has-changed-files" in mistakes["if"]
 
 
 def test_baseline_saves_only_after_clean_diff():
@@ -826,11 +848,7 @@ def test_manual_texture_audit_always_runs():
 
 def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
-    assert sorted(spec.name for spec in ALL_SPECS if not spec.strict) == [
-        "building-guards",
-        "equipment-variants",
-        "simplifications",
-    ]
+    assert [spec.name for spec in ALL_SPECS if not spec.strict] == ["simplifications"]
 
 
 def test_ci_oob_units_does_not_enable_missing_equipment_factor():
@@ -851,7 +869,7 @@ def test_ci_redundant_modifier_gate_is_strict():
 
 
 def test_ci_idea_icon_check_is_enabled():
-    assert _spec_for("validate_ideas.py").args in ((), None)
+    assert _spec_for("validate_ideas.py").args == ("--missing-name-loc",)
     validator = IdeaValidator("/nonexistent", use_colors=False, workers=1)
     called = []
     validator._parse_all_ideas = lambda: ({}, {}, {})
@@ -875,10 +893,53 @@ def test_mio_validator_runs_for_localisation_changes():
 
 
 def test_gfx_and_scripted_localisation_routes_are_preserved():
-    assert {"interface", "common", "events", "history", "localisation"} <= set(
-        _spec_for("validate_gfx_references.py").groups
-    )
+    assert {
+        "interface",
+        "common",
+        "events",
+        "history",
+        "localisation",
+        "graphic-db",
+    } <= set(_spec_for("validate_gfx_references.py").groups)
     assert "interface" in _spec_for("validate_scripted_localisation.py").groups
+
+
+_BATCH_GROUPS = sorted({group for spec in ALL_SPECS for group in spec.groups})
+
+
+def test_every_batch_group_change_starts_the_mod_tests_job():
+    # prepare-workspace and mod-tests only run on `content`.
+    outside = [
+        pattern
+        for group in _BATCH_GROUPS
+        for pattern in GROUP_PATTERNS[group]
+        if not classify([pattern.replace("**", "probe").replace("*", "probe")])[
+            "content"
+        ]
+    ]
+    assert not outside
+
+
+@pytest.mark.skipif(
+    sys.platform != "linux", reason="the step needs bash 4, which only Linux ships"
+)
+@pytest.mark.parametrize("full_suite", ("true", "false"))
+def test_every_batch_group_reaches_the_validator_batch(tmp_path, full_suite):
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    outputs = workflow["jobs"]["detect-changes"]["outputs"]
+    step = workflow_step("mod-tests", "Compute changed validator groups")
+    env = {"GITHUB_OUTPUT": str(tmp_path / "output"), "G_FULL_SUITE": full_suite}
+    for group in _BATCH_GROUPS:
+        variable = "G_" + group.upper().replace("-", "_")
+        assert outputs[group] == f"${{{{ steps.groups.outputs.{group} }}}}"
+        assert f"outputs.{group} }}}}" in step["env"][variable]
+        env[variable] = "true"
+
+    result = run_bash_step(step["run"], tmp_path, env)
+
+    assert result.returncode == 0, result.stderr
+    emitted = (tmp_path / "output").read_text(encoding="utf-8")
+    assert set(_BATCH_GROUPS) <= set(emitted.removeprefix("groups=").split())
 
 
 def test_group_patterns_preserve_cross_reference_routes():
@@ -890,6 +951,7 @@ def test_group_patterns_preserve_cross_reference_routes():
     for pattern in (
         _CREATE_UNIT_SOURCE_PATTERNS
         + _DELETE_TEMPLATE_SOURCE_PATTERNS
+        + _TEMPLATE_LIMIT_SOURCE_PATTERNS
         + _TEMPLATE_SOURCE_PATTERNS
         + _VARIANT_SOURCE_PATTERNS
     ):
@@ -909,10 +971,6 @@ def test_scripted_param_patterns_scan_every_script_root():
     }
     assert not sorted(set(SCRIPT_ROOTS) - whole_tree)
     caller_dirs = {pattern.split("*", 1)[0] for pattern in _CALLER_PATTERNS}
-    staged = next(
-        spec for spec in STAGED_VALIDATORS if spec["name"] == "scripted params"
-    )
-    assert caller_dirs <= set(staged["prefixes"])
     for directory in caller_dirs:
         sample = directory + "_scripted_param_probe.txt"
         assert classify([sample])["style"] is True

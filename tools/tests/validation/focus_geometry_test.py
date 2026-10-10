@@ -16,6 +16,7 @@ def focus(name, x=0, y=0, **kwargs):
         "y": y,
         "relative": None,
         "allow_branch": False,
+        "branch_terms": [],
         "offset": False,
         "prerequisites": [],
         **kwargs,
@@ -121,6 +122,88 @@ def test_dynamic_union_and_alternate_prerequisite_paths():
     assert result["counts"]["dynamic_skipped"] == 4
     assert result["counts"]["static_eligible"] == 1
     assert not result["findings"]
+
+
+GATE_TERMS = ["has_completed_focus=rival", "option=HIDE"]
+
+
+def leak_ids(nodes):
+    result = analyze_layout([source(nodes)])
+    assert result["counts"]["branch_leaks"] == len(result["branch_leaks"])
+    return [message.split("'")[3] for message, _, _ in result["branch_leaks"]]
+
+
+@pytest.mark.parametrize(
+    "terms,expected",
+    [(["option=no"], ["leak"]), (GATE_TERMS + ["option=no"], [])],
+)
+def test_child_allow_branch_must_repeat_hidden_ancestor_terms(terms, expected):
+    nodes = [
+        focus("gate", allow_branch=True, branch_terms=GATE_TERMS),
+        focus("middle", prerequisites=[["gate"]]),
+        focus("other", prerequisites=[["gate"]]),
+        focus(
+            "leak",
+            allow_branch=True,
+            branch_terms=terms,
+            prerequisites=[["middle", "other"]],
+        ),
+    ]
+    assert leak_ids(nodes) == expected
+
+
+@pytest.mark.parametrize(
+    "groups,expected",
+    [([["middle", "visible"]], []), ([["middle"], ["visible"]], ["leak"])],
+)
+def test_branch_leak_needs_a_fully_hidden_prerequisite_group(groups, expected):
+    nodes = [
+        focus("gate", allow_branch=True, branch_terms=GATE_TERMS),
+        focus("middle", prerequisites=[["gate"]]),
+        focus("visible"),
+        focus("leak", allow_branch=True, prerequisites=groups),
+    ]
+    assert leak_ids(nodes) == expected
+
+
+RIVAL = "has_completed_focus=rival"
+HIDDEN_RIVAL = "hide_rule:" + RIVAL
+
+
+@pytest.mark.parametrize(
+    "gate_terms,child_terms,expected",
+    [
+        ([HIDDEN_RIVAL], [HIDDEN_RIVAL], []),
+        ([HIDDEN_RIVAL], [RIVAL], []),
+        ([HIDDEN_RIVAL], ["hide_rule:has_completed_focus=other"], ["leak"]),
+        ([RIVAL], [HIDDEN_RIVAL], ["leak"]),
+        ([RIVAL], [RIVAL, "hide_rule:has_completed_focus=other"], []),
+    ],
+)
+def test_terms_outside_the_hide_rule_satisfy_terms_inside_it(
+    gate_terms, child_terms, expected
+):
+    nodes = [
+        focus("gate", allow_branch=True, branch_terms=gate_terms),
+        focus(
+            "leak",
+            allow_branch=True,
+            branch_terms=child_terms,
+            prerequisites=[["gate"]],
+        ),
+    ]
+    assert leak_ids(nodes) == expected
+
+
+def test_branch_leak_stops_at_the_first_gated_descendant():
+    nodes = [
+        focus("gate", allow_branch=True, branch_terms=GATE_TERMS),
+        focus(
+            "pair", allow_branch=True, branch_terms=GATE_TERMS, prerequisites=[["gate"]]
+        ),
+        focus("leak", allow_branch=True, prerequisites=[["pair"]]),
+    ]
+    assert leak_ids(nodes) == ["leak"]
 
 
 def test_prerequisite_cycle_terminates_and_available_does_not_hide():

@@ -13,8 +13,14 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   Linux, macOS, and Windows. Run it locally before merging any `tools/` change.
 - A validator change and its regression tests are one change. Update a `*_test.py` to
   the new correct behavior in the same commit. If the test holds the correct invariant,
-  fix the validator. Never delete or weaken a test to pass.
+  fix the validator. Never delete or weaken a test to pass. Removing a dead or
+  duplicate test is a separate cleanup change that keeps the coverage total.
 - The suite runs under `pytest -n auto`, so a test writes only under `tmp_path`.
+- Worker pools in tests start with `spawn` on every OS. A pool worker sees what it
+  imports and what it is passed, not state a test patched in the parent.
+- Tests that read live game files live in `tools/tests/content/`. The `Content tests`
+  job runs them once, on tools or game content changes. The tools test jobs skip
+  that directory and check out only the few game files named in the workflow.
 - `.jscpd.json` fails the quality job on one pasted block. Factor shared test setup into
   a helper.
 - The repository ruleset requires the `Test suite gate` check.
@@ -41,15 +47,17 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - The Test Suite runs on every PR to `main`, drafts included. Changes under
   `tools/validation/`, `tools/linting/`, `tools/shared_utils.py`, the workflow files,
   `resources/documentation/`, or `validation_config.json` force the full suite.
-- Style and common-mistakes checks are diff-scoped in CI. The nightly `main` baseline is
-  full-repo, so the PR report flags only new findings, and references orphaned by a
-  deleted definition surface on the nightly run.
+- The style check is diff-scoped in CI. The nightly `main` baseline is full-repo, so
+  the PR report flags only new findings, and references orphaned by a deleted
+  definition surface on the nightly run. Common mistakes run full-repo in the core batch
+  over `common`, `events`, `history`, and `music`. A `music/*.txt` change selects only
+  that validator, through the `music` group.
 - Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
   cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
 
 ## Validation config
 
-`validation_config.json` at the repo root holds every suppression list the validators read: false positives, exemptions, and known-good names. To add or drop an entry, edit the JSON, not the validator.
+`validation_config.json` at the repo root holds every suppression list the validators and `tools/analysis/ai_path_report.py` read: false positives, exemptions, and known-good names. To add or drop an entry, edit the JSON, not the validator.
 
 - Shape: `version`, then one object per validator script (`validate_ideas`, `check_common_mistakes`, ...), each holding named lists. A list maps each entry to the reason it is exempt. Leave the reason empty only when nobody knows it.
 - Matching depends on the list. Most match whole names, `*_prefixes` and `equipment_bonus_instant_exempt` match name starts, the `validate_variables`, `validate_set_variables`, and `validate_scripted_localisation` lists match substrings (so a short entry can swallow real names), and `false_positive_patterns` holds regexes.
