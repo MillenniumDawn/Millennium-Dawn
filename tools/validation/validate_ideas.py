@@ -16,7 +16,10 @@ import disk_cache
 from equipment_module_slots import _iter_blocks, blank_comments
 from equipment_stats import build_equipment_stat_index, iter_type_archetype_stacks
 from shared_utils import (
+    blank_quoted_strings,
     find_matching_brace,
+    iter_direct_child_blocks,
+    iter_statements,
     normalize_path_separators,
     validation_config,
 )
@@ -51,10 +54,7 @@ _IDEA_REF_BLOCK_START = re.compile(
     r"\b(?:add_ideas|remove_ideas)\s*=\s*\{", re.IGNORECASE
 )
 
-# Matches an idea definition line at brace depth 2 inside `ideas = { CATEGORY = { IDEA = { `
-# We track depth manually; this just recognises `WORD = {` at the right level.
-# Hyphens are included so that identifiers like `NKO_Marxism-Leninism` are recognised.
-_IDEA_DEF_LINE = re.compile(r"^[\t ]*([A-Za-z][A-Za-z0-9_-]*)\s*=\s*\{")
+_IDEA_BLOCK_START = re.compile(r"\b([A-Za-z][A-Za-z0-9_-]*)\s*=\s*\{")
 
 # Idea-schema inner keys that appear at depth 2 but are not idea definitions.
 # The control-flow / effect blocks (if, limit, modifier, scope iterators, etc.)
@@ -119,8 +119,6 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
     return refs
 
 
-_NAME_OVERRIDE_LINE = re.compile(r"^\s+name\s*=\s*([A-Za-z0-9_.]+)", re.MULTILINE)
-_PICTURE_VALUE_LINE = re.compile(r"^\s+picture\s*=\s*([^\s#]+)", re.MULTILINE)
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
 _AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
@@ -368,61 +366,38 @@ def _parse_ideas_from_text(
     defined: Dict[str, Tuple[str, Optional[str], Optional[str]]] = {}
     issues: List[IdeaIssue] = []
 
-    lines = text.split("\n")
-    depth = 0
-    category_name: Optional[str] = None
-    current_idea: Optional[str] = None
-    current_idea_line: int = 0
-    idea_open_depth: int = 0
-    category_open_depth: int = 0
-    idea_lines: List[str] = []
-
-    for lineno, line in enumerate(lines, 1):
-        opens = line.count("{")
-        closes = line.count("}")
-
-        m = _IDEA_DEF_LINE.match(line)
-        token = m.group(1) if m else None
-
-        prev_depth = depth
-        depth += opens - closes
-
-        if prev_depth == 0 and opens > 0 and token == "ideas":
+    text = blank_comments(text)
+    scan_text = blank_quoted_strings(text)
+    for root, root_open, root_close in iter_direct_child_blocks(
+        scan_text, _IDEA_BLOCK_START
+    ):
+        if root.group(1) != "ideas":
             continue
-
-        if prev_depth == 1 and opens > 0 and token is not None:
-            category_name = token
-            category_open_depth = depth - opens + 1
-            current_idea = None
-            idea_lines = []
-            continue
-
-        if (
-            category_name is not None
-            and prev_depth == 2
-            and opens > 0
-            and token is not None
+        root_body = scan_text[root_open + 1 : root_close]
+        for category, cat_open, cat_close in iter_direct_child_blocks(
+            root_body, _IDEA_BLOCK_START
         ):
-            if token not in _HOI4_IDEA_INNER_KEYS:
-                current_idea = token
-                current_idea_line = lineno
-                idea_open_depth = depth - opens + 1
-                idea_lines = [line]
-                defined[token] = (category_name, None, None)
-                continue
+            cat = category.group(1)
+            cat_offset = root_open + 1 + cat_open + 1
+            cat_body = root_body[cat_open + 1 : cat_close]
+            for idea, idea_open, idea_close in iter_direct_child_blocks(
+                cat_body, _IDEA_BLOCK_START
+            ):
+                current_idea = idea.group(1)
+                if current_idea in _HOI4_IDEA_INNER_KEYS:
+                    continue
+                current_idea_line = text.count("\n", 0, cat_offset + idea.start()) + 1
+                body_offset = cat_offset + idea_open + 1
+                idea_text = text[body_offset : cat_offset + idea_close]
+                fields = {
+                    key: value
+                    for key, value, _block in iter_statements(idea_text)
+                    if key in ("name", "picture") and value is not None
+                }
+                defined[current_idea] = (cat, fields.get("name"), fields.get("picture"))
+                quality_text = cat_body[idea_open + 1 : idea_close]
 
-        if current_idea is not None:
-            idea_lines.append(line)
-            if depth < idea_open_depth:
-                idea_text = "\n".join(idea_lines)
-                nm = _NAME_OVERRIDE_LINE.search(idea_text)
-                name_override = nm.group(1) if nm else None
-                pm = _PICTURE_VALUE_LINE.search(idea_text)
-                picture = pm.group(1) if pm else None
-                cat, _, _ = defined[current_idea]
-                defined[current_idea] = (cat, name_override, picture)
-
-                if _CANCEL_ALWAYS_NO.search(idea_text):
+                if _CANCEL_ALWAYS_NO.search(quality_text):
                     issues.append(
                         IdeaIssue(
                             current_idea,
@@ -432,9 +407,9 @@ def _parse_ideas_from_text(
                         )
                     )
 
-                allowed_start = _ALLOWED_BLOCK_START.search(idea_text)
+                allowed_start = _ALLOWED_BLOCK_START.search(quality_text)
                 if allowed_start:
-                    if category_name in slotless_categories:
+                    if cat in slotless_categories:
                         issues.append(
                             IdeaIssue(
                                 current_idea,
@@ -444,7 +419,7 @@ def _parse_ideas_from_text(
                             )
                         )
                     allowed_block, _ = extract_block_from_text(
-                        idea_text, allowed_start.end() - 1
+                        quality_text, allowed_start.end() - 1
                     )
                     tag_m = _TAG_IN_ALLOWED.search(allowed_block)
                     if tag_m:
@@ -470,9 +445,8 @@ def _parse_ideas_from_text(
                             )
                         )
 
-                if (
-                    category_name in slotless_categories
-                    and _AVAILABLE_BLOCK_START.search(idea_text)
+                if cat in slotless_categories and _AVAILABLE_BLOCK_START.search(
+                    quality_text
                 ):
                     issues.append(
                         IdeaIssue(
@@ -493,22 +467,16 @@ def _parse_ideas_from_text(
                         )
                     )
 
-                for offset, equipment in _non_instant_bonuses(idea_text):
+                for offset, equipment in _non_instant_bonuses(quality_text):
                     issues.append(
                         IdeaIssue(
                             current_idea,
                             cat,
-                            current_idea_line + idea_text.count("\n", 0, offset),
+                            text.count("\n", 0, body_offset + offset) + 1,
                             "equipment-bonus-not-instant",
                             detail=equipment,
                         )
                     )
-
-                current_idea = None
-                idea_lines = []
-
-        if category_name is not None and depth < category_open_depth:
-            category_name = None
 
     return defined, issues
 
@@ -1046,16 +1014,19 @@ class Validator(BaseValidator):
 
         findings: List[Issue] = []
         for filepath in sorted(ideas_by_file):
-            missing: List[Tuple[str, str, str]] = []
+            missing: List[Tuple[str, str, str, str]] = []
             for idea_name in ideas_by_file[filepath]:
                 cat, name_override, _pic = defined_ideas[idea_name]
                 if cat in hidden_cats:
                     continue
-                keys = [name_override or idea_name]
+                name_key = name_override or idea_name
+                keys = [(name_key, Severity.ERROR)]
                 if self.missing_loc:
-                    keys.append(f"{keys[0]}_desc")
+                    keys.append((f"{name_key}_desc", Severity.WARNING))
                 missing.extend(
-                    (idea_name, cat, key) for key in keys if key not in loc_keys
+                    (idea_name, cat, key, severity)
+                    for key, severity in keys
+                    if key not in loc_keys
                 )
             if not missing:
                 continue
@@ -1064,15 +1035,13 @@ class Validator(BaseValidator):
                 filepath, lowercase=False, strip_comments_flag=True
             )
             def_lines: Dict[str, int] = {}
-            for lineno, line in enumerate(text.split("\n"), 1):
-                m = _IDEA_DEF_LINE.match(line)
-                if m:
-                    def_lines.setdefault(m.group(1), lineno)
+            for m in _IDEA_BLOCK_START.finditer(blank_quoted_strings(text)):
+                def_lines.setdefault(m.group(1), text.count("\n", 0, m.start()) + 1)
             rel = os.path.relpath(filepath, self.mod_path)
-            for idea_name, cat, key in missing:
+            for idea_name, cat, key, severity in missing:
                 findings.append(
                     Issue(
-                        severity=Severity.WARNING,
+                        severity=severity,
                         category="missing-idea-localisation",
                         message=f"'{idea_name}' ({cat}) is missing loc key '{key}'",
                         file=rel,
@@ -1084,7 +1053,6 @@ class Validator(BaseValidator):
             findings,
             "✓ All idea localisation keys are defined",
             "Ideas missing localisation:",
-            severity=Severity.WARNING,
             category="missing-idea-localisation",
         )
 

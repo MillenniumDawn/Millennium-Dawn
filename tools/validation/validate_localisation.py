@@ -310,6 +310,14 @@ _STRETCHED_WORD_EXEMPTIONS = frozenset(
 _DANGLING_DESCRIPTION_EXEMPTIONS = frozenset(
     validation_config("validate_localisation", "dangling_description_exemptions")
 )
+_SPACED_EN_DASH_EXEMPT_FILES = frozenset(
+    validation_config("validate_localisation", "spaced_en_dash_exempt_files")
+)
+_SPACED_EN_DASH_EXEMPTIONS = frozenset(
+    validation_config("validate_localisation", "spaced_en_dash_exemptions")
+)
+# A spaced en dash between two numbers is a range ("1959 – 2015"), not an em dash stand-in.
+_SPACED_EN_DASH_RE = re.compile(r"(?<!\d) \u2013 |(?<=\d) \u2013 (?!\d)")
 
 
 def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
@@ -368,6 +376,20 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
                     line=line_idx + 2,
                 )
             )
+        if (
+            basename not in _SPACED_EN_DASH_EXEMPT_FILES
+            and key not in _SPACED_EN_DASH_EXEMPTIONS
+        ):
+            for _ in _SPACED_EN_DASH_RE.finditer(value):
+                results.append(
+                    Issue(
+                        severity=Severity.WARNING,
+                        category="loc-spaced-en-dash",
+                        message="Spaced en dash used as an em dash in loc value: replace with a period, comma, or colon (see .claude/docs/localisation-rules.md)",
+                        file=basename,
+                        line=line_idx + 2,
+                    )
+                )
         for _ in range(value.count("`")):
             results.append(
                 Issue(
@@ -1246,6 +1268,7 @@ class Validator(BaseValidator):
         self._log_section("Checking localisation prose conventions...")
         categories = {
             "loc-em-dash": "Em dashes",
+            "loc-spaced-en-dash": "Spaced en dashes",
             "loc-backtick-apostrophe": "Backtick apostrophes",
             "loc-unbalanced-quote": "Unbalanced escaped quotes",
             "loc-repeated-word": "Repeated words",

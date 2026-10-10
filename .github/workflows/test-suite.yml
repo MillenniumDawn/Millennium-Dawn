@@ -161,6 +161,7 @@ jobs:
             tools/validation/change_groups.py
             tools/validation/ci_workspace_profile.txt
             tools/validation/staged_sparse_profile.txt
+            tools/tests/content/tool_data_drift_test.py
             /pyproject.toml
             /validation_config.json
           sparse-checkout-cone-mode: false
@@ -170,6 +171,7 @@ jobs:
           missing=()
           for path in tools/validation/ci_workspace_profile.txt \
               tools/validation/staged_sparse_profile.txt \
+              tools/tests/content/tool_data_drift_test.py \
               validation_config.json; do
             test -f "$path" || missing+=("$path")
           done
@@ -408,11 +410,14 @@ jobs:
             .pre-commit-config.yaml
             .claude/docs/typo-watchlist.md
             .github/actions/setup-md-python/action.yml
-            common
-            events
-            history
-            localisation/english
-            localisation/*/MD_frontend_l_*.yml
+            common/buildings/00_buildings.txt
+            common/decisions
+            common/modifiers
+            common/opinion_modifiers
+            common/script_enums.txt
+            common/scripted_effects/00_money_system.txt
+            common/technologies/industry.txt
+            common/units/equipment
             resources/documentation
             package.json
             bun.lock
@@ -450,8 +455,8 @@ jobs:
           steps.dependencies.outcome == 'success'
         # coverage report below owns the threshold, so pytest-cov only collects.
         run: >-
-          python -m pytest tools/tests -o addopts=
-          -o 'python_files=*_test.py' -q --durations=20 -n auto
+          python -m pytest tools/tests --ignore=tools/tests/content
+          -o addopts= -o 'python_files=*_test.py' -q --durations=20 -n auto
           --cov --cov-branch --cov-report= --cov-fail-under=0
 
       - name: Report coverage
@@ -467,8 +472,8 @@ jobs:
           always() && !cancelled() && matrix.coverage == false &&
           steps.dependencies.outcome == 'success'
         run: >-
-          python -m pytest tools/tests -o addopts=
-          -o 'python_files=*_test.py' -q --durations=20 -n auto
+          python -m pytest tools/tests --ignore=tools/tests/content
+          -o addopts= -o 'python_files=*_test.py' -q --durations=20 -n auto
 
       - name: Write tools suite sidecar
         id: suite-sidecar
@@ -510,6 +515,82 @@ jobs:
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: tools-tests-${{ matrix.os }}-results
+          path: suite-run.json
+          if-no-files-found: error
+          retention-days: 7
+
+  # The tests that read live game files. They need the game tree, so they run
+  # once here instead of on every tools-tests leg.
+  content-tests:
+    name: Content tests
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.full_suite == 'true' ||
+      needs.detect-changes.outputs.content == 'true' ||
+      needs.detect-changes.outputs.tools == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout content test tree
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          fetch-depth: 1
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            pyproject.toml
+            validation_config.json
+            .github/actions/setup-md-python/action.yml
+            common
+            events
+            history
+            localisation/english
+            localisation/*/MD_frontend_l_*.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Set up Python and dependencies
+        id: dependencies
+        uses: ./.github/actions/setup-md-python
+        with:
+          group: test
+
+      - name: Run content tests
+        id: content
+        if: always() && !cancelled() && steps.dependencies.outcome == 'success'
+        run: >-
+          python -m pytest tools/tests/content -o addopts=
+          -o 'python_files=*_test.py' -q
+
+      - name: Write content tests sidecar
+        if: always() && !cancelled()
+        run: |
+          status=passed
+          failed=0
+          for outcome in \
+            "${{ steps.dependencies.outcome }}" \
+            "${{ steps.content.outcome }}"; do
+            if [ "$outcome" = "failure" ]; then
+              failed=$((failed + 1))
+            fi
+          done
+          if [ "$failed" -gt 0 ]; then
+            status=failed
+          fi
+          {
+            printf '{"suite":"tools","job":"Content tests",'
+            printf '"name":"content-tests","title":"Content tests",'
+            printf '"status":"%s","errors":%d,"warnings":0,' \
+              "$status" "$failed"
+            printf '"issues":[]}\n'
+          } > suite-run.json
+
+      - name: Upload content test results
+        if: always() && !cancelled()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: content-tests-results
           path: suite-run.json
           if-no-files-found: error
           retention-days: 7
@@ -917,6 +998,7 @@ jobs:
       - validate-paths
       - prepare-workspace
       - tools-tests
+      - content-tests
       - tools-quality
       - mod-tests
       - docs-quality
@@ -1038,6 +1120,7 @@ jobs:
       - validate-paths
       - prepare-workspace
       - tools-tests
+      - content-tests
       - tools-quality
       - mod-tests
       - docs-quality
@@ -1054,6 +1137,8 @@ jobs:
           needs.prepare-workspace.result != 'skipped') ||
           (needs.tools-tests.result != 'success' &&
           needs.tools-tests.result != 'skipped') ||
+          (needs.content-tests.result != 'success' &&
+          needs.content-tests.result != 'skipped') ||
           (needs.tools-quality.result != 'success' &&
           needs.tools-quality.result != 'skipped') ||
           (needs.mod-tests.result != 'success' &&

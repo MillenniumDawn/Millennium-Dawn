@@ -10,7 +10,6 @@ import argparse
 
 import pytest
 import validate_decisions as V
-from shared.paths import REPO_ROOT
 from shared.suite import write_text
 
 # Where an announcement can live: one file under each scanned root, with `%s`
@@ -249,15 +248,6 @@ def test_unannounced_category_exemptions_have_reasons():
         "validate_decisions", "unannounced_category_exempt"
     )
     assert all(reason.strip() for reason in exemptions.values())
-
-
-def test_unannounced_category_exemptions_are_still_live():
-    names = set(V.parse_decision_categories(str(REPO_ROOT)))
-    stale = sorted(V._UNANNOUNCED_CATEGORY_EXEMPT - names)
-    assert not stale, (
-        "unannounced_category_exempt names categories that no longer exist: "
-        f"{stale}. Remove them from validation_config.json."
-    )
 
 
 @pytest.mark.parametrize(
