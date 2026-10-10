@@ -942,9 +942,9 @@ def _scan_yaml_text(text: str, filename: str) -> List[Issue]:
 
 def _scan_shared_yml_file(args) -> Tuple:
     """Run every yml check after one read; YAML checks never use content exemptions."""
-    filename, valid_colors, skip_content = args
+    filename, valid_colors, skip_content, relative_path = args
     raw = read_text_strict(filename)
-    yaml_issues = _scan_yaml_text(raw, filename)
+    yaml_issues = _scan_yaml_text(raw, relative_path)
     if skip_content:
         return ([], [], [], [], [], [], set(), yaml_issues)
     text = strip_comments(raw)
@@ -1175,7 +1175,12 @@ class Validator(BaseValidator):
         yml_files = self._get_yml_files()
         valid_colors = get_all_colors(self.mod_path)
         args_list = [
-            (f, valid_colors, _should_skip(f, mod_path=self.mod_path))
+            (
+                f,
+                valid_colors,
+                _should_skip(f, mod_path=self.mod_path),
+                Path(f).relative_to(self.mod_path).as_posix(),
+            )
             for f in yml_files
         ]
 

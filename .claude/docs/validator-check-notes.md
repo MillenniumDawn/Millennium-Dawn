@@ -273,6 +273,7 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `loc-yaml-*` (ERROR): tabs, curly quotes, version-number keys, missing colon spacing,
   excess indentation, missing closing quotes, and unescaped inner quotes. These check
   raw English lines, including comments and files exempt from other content checks.
+  Findings use repository-relative paths for PR file matching, links, and annotations.
 - `loc-em-dash`, `loc-backtick-apostrophe` (WARNING), and `loc-unbalanced-quote` (ERROR)
   scan only the quoted values in `localisation/english/`. Inch marks and quotes spanning
   paragraphs are expected false positives of the quote check.

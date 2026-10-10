@@ -141,7 +141,7 @@ def yml_scan(path, section: str, valid_colors=()):
     import validate_localisation
 
     results = validate_localisation._scan_shared_yml_file(
-        (str(path), list(valid_colors), False)
+        (str(path), list(valid_colors), False, str(path))
     )
     return results[_YML_SECTIONS.index(section)]
 
