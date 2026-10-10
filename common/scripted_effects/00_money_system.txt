@@ -101,6 +101,14 @@
 # tweak this to modify the operative cost of all equipment
 @equipment_operative_cost_multiplier = 5
 
+# Default income every country gets
+@base_income_rate = 0.25
+
+# Weekly canal and strait income at 2000 world GDP, scaled by global.world_trade_factor
+@suez_toll_income = 0.0346 # 1.8B yearly
+@panama_toll_income = 0.0096 # 0.5B yearly
+@malacca_hub_income = 0.0135 # 0.7B yearly
+
 setup_spending_law_tables = {
 	clear_array = global.bureau_law_idea
 	resize_array = { array = global.bureau_law_idea size = 1 }
@@ -788,7 +796,8 @@ calculate_tax_gain = {
 # Effect: calculate_additional_income_rate
 # Purpose: Aggregates special income sources (seigniorage, ideas, canal revenue, foreign aid)
 calculate_additional_income_rate = {
-	set_variable = { additional_income_rate = 0 }
+	set_variable = { additional_income_base = @base_income_rate }
+	set_variable = { additional_income_rate = additional_income_base }
 
 	if = { limit = { has_idea = bitcoin }
 		add_to_variable = { additional_income_rate = global.bitcoin_reserve_income }
@@ -935,30 +944,26 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = HEZ_iranian_support_money }
 		}
 		if = {
-			 limit = { always = yes } # This is to stop Hezbollah's economy collapsing early.
+			limit = { always = yes } # This is to stop Hezbollah's economy collapsing early.
 			set_variable = { HEZ_unknown_funds_income = 0.400 }
 			add_to_variable = { additional_income_rate = HEZ_unknown_funds_income }
 		}
 	}
 	if = { limit = { has_idea = full_control_of_suez }
-		set_variable = { additional_income_suez = 0.1 }
+		set_variable = { additional_income_suez = { value = global.world_trade_factor multiply = @suez_toll_income } }
 		add_to_variable = { additional_income_rate = additional_income_suez }
 	}
 	if = { limit = { has_idea = partial_control_of_suez }
-		set_variable = { additional_income_suez_partial = 0.05 }
+		set_variable = { additional_income_suez_partial = { value = global.world_trade_factor multiply = @suez_toll_income multiply = 0.5 } }
 		add_to_variable = { additional_income_rate = additional_income_suez_partial }
 	}
 	if = { limit = { has_idea = full_control_of_panama }
-		set_variable = { additional_income_panama = 0.05 }
+		set_variable = { additional_income_panama = { value = global.world_trade_factor multiply = @panama_toll_income } }
 		add_to_variable = { additional_income_rate = additional_income_panama }
 	}
 	if = { limit = { has_idea = gateway_to_asia }
-		set_variable = { gateway_to_asia_income = 0.1 }
+		set_variable = { gateway_to_asia_income = { value = global.world_trade_factor multiply = @malacca_hub_income } }
 		add_to_variable = { additional_income_rate = gateway_to_asia_income }
-	}
-	if = { limit = { has_idea = MICROSTATE_fix }
-		set_variable = { additional_income_microstate_fix_var = 0.35 }
-		add_to_variable = { additional_income_rate = additional_income_microstate_fix_var }
 	}
 	if = { limit = { has_idea = saudi_aid }
 		set_variable = { additional_income_saudi_aid = { value = population_total multiply = 0.00002 } }	#Millions of people
@@ -1365,6 +1370,20 @@ calculate_additional_income_rate = {
 			limit = { has_idea = CRM_naval }
 			set_variable = { additional_income_CRM_naval = 0.045 }
 			add_to_variable = { additional_income_rate = additional_income_CRM_naval }
+		}
+	}
+	#Cuba
+	else_if = {
+		limit = { original_tag = CUB }
+		if = {
+			limit = { has_idea = CUB_tourism }
+			set_variable = { CUB_tourism_income = 0.100 }
+			add_to_variable = { additional_income_rate = CUB_tourism_income }
+		}
+		if = {
+			limit = { has_idea = CUB_tourism_hub_idea }
+			set_variable = { CUB_tourism_hub_income = 0.500 }
+			add_to_variable = { additional_income_rate = CUB_tourism_hub_income }
 		}
 	}
 	# Denmark
@@ -4295,16 +4314,18 @@ update_display = {
 
 	set_variable = { treasury_rate = { value = display_income subtract = display_expense } }
 
-	# Lets AI deficit checks scale with the size of the economy.
+	# Lets AI deficit checks scale with the size of the economy. Counts paused debt service so a cheap loan does not read as a surplus.
 	if = { limit = { check_variable = { display_income > 0 } }
-		set_variable = { budget_balance_ratio = { value = treasury_rate divide = display_income } }
+		set_variable = { budget_balance_ratio = { value = display_income subtract = potential_expense divide = display_income } }
 	}
-	else_if = { limit = { check_variable = { treasury_rate < 0 } }
+	else_if = { limit = { check_variable = { potential_expense > display_income } }
 		set_variable = { budget_balance_ratio = -1 }
 	}
 	else = {
 		set_variable = { budget_balance_ratio = 0 }
 	}
+	# Share of income paid as interest, read by ai_fiscal_last_resort_open
+	set_variable = { debt_service_share = { value = debt_rate divide = { value = potential_income clamp = { min = 0.001 max = 100000000 } } } }
 
 	if = { limit = { is_in_array = { global.arabic_countries = THIS.id } }
 		calculate_monthly_arab_spring_change = yes
@@ -6026,6 +6047,7 @@ calculate_tax_adjustments = {
 				check_variable = { treasury_rate > 2 }
 				check_variable = { budget_balance_ratio > 0.10 }
 			}
+			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { debt_ratio < 0.30 }
 			check_variable = { interest_rate < 5 }
 			check_variable = { pop_tax_change = 0 }
@@ -6046,7 +6068,7 @@ calculate_tax_adjustments = {
 		limit = {
 			has_stability < 0.30
 			check_variable = { population_tax_rate > 20 }
-			check_variable = { treasury_rate > 0 }
+			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { pop_tax_change = 0 }
 		}
 		set_temp_variable = { pop_tax_change = -1 }
