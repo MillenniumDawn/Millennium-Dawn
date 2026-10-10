@@ -2577,6 +2577,8 @@ update_military_rate = {
 		}
 	}
 
+	set_temp_variable = { military_spending_cost_multiplier = { value = 1 add = modifier@military_spending_cost_multiplier_modifier max = 0 } }
+
 	#Base cost per spending level = (naval + mil factories) * inflation * level ladder / gdp/c modifier * 1.1
 	for_each_loop = {
 		array = array_defence_spend
@@ -2590,6 +2592,7 @@ update_military_rate = {
 				multiply = global.spending_ladder_defence^i
 				divide = gdp_defence_modifier_industry
 				multiply = 1.1 #tweak this to modify industrial cost spending in relations to everything else
+				multiply = military_spending_cost_multiplier
 			}
 		}
 	}
@@ -3010,13 +3013,11 @@ update_military_rate = {
 	#Add up armed forces
 	set_temp_variable = { personnel_cost = { value = land_count add = navy_count add = airforce_count } }
 
-	set_temp_variable = { military_spending_cost_multiplier = { value = 1 add = modifier@military_spending_cost_multiplier_modifier max = 0 } }
-
 	#Values for breakdown tooltips
-	set_variable = { defence_breakdown_industry = { value = array_defence_spend^def_index multiply = 7 multiply = military_spending_cost_multiplier } }
-	set_variable = { defence_breakdown_land = { value = land_count multiply = 7 add = equipment_operative_cost multiply = military_spending_cost_multiplier } }
-	set_variable = { defence_breakdown_navy = { value = navy_count multiply = 7 multiply = military_spending_cost_multiplier } }
-	set_variable = { defence_breakdown_airforce = { value = airforce_count multiply = 7 multiply = military_spending_cost_multiplier } }
+	set_variable = { defence_breakdown_industry = { value = array_defence_spend^def_index multiply = 7 } }
+	set_variable = { defence_breakdown_land = { value = land_count multiply = 7 add = equipment_operative_cost } }
+	set_variable = { defence_breakdown_navy = { value = navy_count multiply = 7 } }
+	set_variable = { defence_breakdown_airforce = { value = airforce_count multiply = 7 } }
 
 	set_variable = { defence_breakdown_industry_gdp_modifier = { value = 8.1 divide = gdp_defence_modifier_industry subtract = 1 } }	#8.1 = maximum modifier; -1 to work with percentages
 	set_variable = { defence_breakdown_personnel_gdp_modifier = { value = gdp_defence_modifier_personnel multiply = 7.752 subtract = 1 } }	#7.752 = minimum modifier; -1 to work with percentages
@@ -3066,7 +3067,6 @@ update_military_rate = {
 				add = personnel_cost
 				multiply = 7
 				add = equipment_operative_cost
-				multiply = military_spending_cost_multiplier
 				clamp = { min = 0 max = @math_expressions_max }
 			}
 		}
@@ -6038,6 +6038,17 @@ calculate_tax_adjustments = {
 			}
 			set_temp_variable = { corp_tax_change = 1 }
 		}
+	}
+
+	# Hold personal tax hikes while recent ones still weigh on stability, unless the deficit is severe
+	if = {
+		limit = {
+			check_variable = { pop_tax_change = 1 }
+			check_variable = { policy_transition_tax_stability < -0.1 }
+			check_variable = { treasury_rate > -5 }
+			check_variable = { budget_balance_ratio > -0.15 }
+		}
+		set_temp_variable = { pop_tax_change = 0 }
 	}
 
 	# --- TAX DECREASES (surplus response) ---
