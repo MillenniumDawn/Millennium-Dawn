@@ -17,7 +17,7 @@ The agency window has an **Automated Upgrades** control with three modes:
 
 Add upgrades to the **Queue**, then raise or lower their priority. Shift-click moves an upgrade to the top or bottom. **Clear Queue** empties it.
 
-You cannot upgrade the agency by hand while an automated upgrade is in progress. Cancelling that upgrade does not stop the next one. Turn automation off or clear the queue to do that.
+You cannot upgrade the agency by hand while an automated upgrade is in progress. Cancelling that upgrade does not stop the next one. Choose **Upgrades Off** to stop further automated upgrades. Clearing the queue stops further upgrades only in **Queue Only** mode; **Upgrades On** can still pick a valid upgrade.
 
 ## Related Documentation
 

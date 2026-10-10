@@ -14,7 +14,7 @@ Some options turn off achievements. For the rules that help performance, see the
 - **God Of War Mod**: Disabled (default), Enabled. Enabled gives the AI advanced division templates and some cheats.
 - **AI Starting Political Power**: No Starting Political Power (default), 250, 500, or 1000 Political Power. Every AI country starts with that amount.
 - **Debt Wars for AI**: Enable (default), Disable. When enabled, the AI is more likely to declare war on a country that defaults on debt owed to it.
-- **AI Uses Increase Autonomy Focus**: Enable (default), Disable. When enabled, an AI overlord uses the Increase Autonomy continuous focus against your autonomy.
+- **AI Uses Increase Autonomy Focus**: Enable (default), Disable. When enabled, AI subjects can use the Increase Autonomy continuous focus to increase their own autonomy.
 - **Enable AI Using Attaché**: Yes (default), No. Lets the AI send attachés through diplomatic actions.
 
 ## Peace Conferences
