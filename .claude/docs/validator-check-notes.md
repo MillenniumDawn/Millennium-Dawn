@@ -222,9 +222,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_ai_path_rules.py
 
-- `common/national_focus/eritrea_puppet.txt` is exempt from the day-one AI path rule
-  check because it is the tree used after Ethiopia releases Eritrea as a federation
-  puppet, not an AI path for starting Eritrea.
+- `common/national_focus/eritrea_puppet.txt` contains Ethiopia's Eritrean federation-
+  puppet content. Its owner factor is 0 plus 1 for ERI, below `generic_focus`'s day-one
+  factor of 2, so it does not need an ERI day-one AI path rule.
 
 ## validate_gfx_references.py
 
