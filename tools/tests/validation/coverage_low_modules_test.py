@@ -667,7 +667,7 @@ def test_localisation_clean_and_staged_scope(tmp_path, monkeypatch):
     loc = _write(
         tmp_path,
         "localisation/english/staged_l_english.yml",
-        'l_english:\nvalid:0 "plain"\n',
+        'l_english:\n valid: "plain"\n',
     )
     clean = _validator(localisation.Validator, tmp_path)
     assert clean.run_all_validations() == 0
