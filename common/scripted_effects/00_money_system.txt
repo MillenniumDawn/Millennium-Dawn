@@ -6016,6 +6016,31 @@ calculate_tax_adjustments = {
 		set_temp_variable = { corp_tax_change = 1 }
 	}
 
+	# Hold hikes that would add to recent tax transition penalties, unless the deficit is severe; a debt crisis below still raises
+	if = {
+		limit = {
+			check_variable = { policy_transition_tax_stability < -0.1 }
+			check_variable = { treasury_rate > -5 }
+			check_variable = { budget_balance_ratio > -0.15 }
+		}
+		if = {
+			limit = {
+				check_variable = { pop_tax_change = 1 }
+				NOT = { check_variable = { population_tax_rate < expected_population_tax_rate } }
+				NOT = { check_variable = { policy_transition_population_tax_peak > population_tax_rate } }
+			}
+			set_temp_variable = { pop_tax_change = 0 }
+		}
+		if = {
+			limit = {
+				check_variable = { corp_tax_change = 1 }
+				NOT = { check_variable = { corporate_tax_rate < expected_corporate_tax_rate } }
+				NOT = { check_variable = { policy_transition_corporate_tax_peak > corporate_tax_rate } }
+			}
+			set_temp_variable = { corp_tax_change = 0 }
+		}
+	}
+
 	# Debt crisis escalation: force tax increases when debt service is unsustainable or debt is excessive
 	if = {
 		limit = {
@@ -6040,26 +6065,6 @@ calculate_tax_adjustments = {
 			}
 			set_temp_variable = { corp_tax_change = 1 }
 		}
-	}
-
-	# Hold tax hikes while recent ones still weigh on stability, unless the deficit is severe
-	if = {
-		limit = {
-			check_variable = { pop_tax_change = 1 }
-			check_variable = { policy_transition_tax_stability < -0.1 }
-			check_variable = { treasury_rate > -5 }
-			check_variable = { budget_balance_ratio > -0.15 }
-		}
-		set_temp_variable = { pop_tax_change = 0 }
-	}
-	if = {
-		limit = {
-			check_variable = { corp_tax_change = 1 }
-			check_variable = { policy_transition_tax_stability < -0.1 }
-			check_variable = { treasury_rate > -5 }
-			check_variable = { budget_balance_ratio > -0.15 }
-		}
-		set_temp_variable = { corp_tax_change = 0 }
 	}
 
 	# --- TAX DECREASES (surplus response) ---
