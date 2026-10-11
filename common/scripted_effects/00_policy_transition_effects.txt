@@ -221,37 +221,38 @@ policy_transition_refund_vetoed_change = {
 	clear_variable = policy_transition_last_amount
 }
 
+# Given temp policy_transition_old, _expected and _current: applies a cut and leaves a raise in temp policy_transition_amount for the caller
+policy_transition_civilian_change = {
+	policy_transition_charged_levels = yes
+	if = {
+		limit = { check_variable = { policy_transition_delta > 0 } }
+		policy_transition_raise_amount = yes
+		policy_transition_limit_raise = yes
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			policy_transition_ensure_modifier = yes
+		}
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_delta < 0 } }
+		policy_transition_cut_amount = yes
+		policy_transition_add_cut_penalty = yes
+	}
+}
+
 # Called from law on_add with temp spending_new_level, before <cat>_law is updated
 bureau_transition_check = {
 	set_temp_variable = { policy_transition_amount = 0 }
 	if = {
-		limit = {
-			OR = {
-				NOT = { has_country_flag = spending_law_scripted_change }
-				has_country_flag = spending_law_bill_passed
-				has_country_flag = spending_law_bill_forced
-			}
-			has_variable = bureau_law
-		}
+		limit = { policy_transition_own_choice = yes has_variable = bureau_law }
 		set_temp_variable = { policy_transition_old = bureau_law }
 		set_temp_variable = { policy_transition_expected = expected_adm_spending }
-		policy_transition_charged_levels = yes
+		set_temp_variable = { policy_transition_current = policy_transition_bureau_cost }
+		policy_transition_civilian_change = yes
 		if = {
-			limit = { check_variable = { policy_transition_delta > 0 } }
-			policy_transition_raise_amount = yes
-			set_temp_variable = { policy_transition_current = policy_transition_bureau_cost }
-			policy_transition_limit_raise = yes
-			if = {
-				limit = { check_variable = { policy_transition_amount > 0 } }
-				policy_transition_ensure_modifier = yes
-				add_to_variable = { var = policy_transition_bureau_cost value = policy_transition_amount tooltip = bureaucracy_cost_multiplier_modifier_tt }
-				policy_transition_refresh = yes
-			}
-		}
-		else_if = {
-			limit = { check_variable = { policy_transition_delta < 0 } }
-			policy_transition_cut_amount = yes
-			policy_transition_add_cut_penalty = yes
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_bureau_cost value = policy_transition_amount tooltip = bureaucracy_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
 		}
 	}
 	set_temp_variable = { policy_transition_category = 1 }
@@ -261,33 +262,15 @@ bureau_transition_check = {
 police_transition_check = {
 	set_temp_variable = { policy_transition_amount = 0 }
 	if = {
-		limit = {
-			OR = {
-				NOT = { has_country_flag = spending_law_scripted_change }
-				has_country_flag = spending_law_bill_passed
-				has_country_flag = spending_law_bill_forced
-			}
-			has_variable = police_law
-		}
+		limit = { policy_transition_own_choice = yes has_variable = police_law }
 		set_temp_variable = { policy_transition_old = police_law }
 		set_temp_variable = { policy_transition_expected = expected_police_spending }
-		policy_transition_charged_levels = yes
+		set_temp_variable = { policy_transition_current = policy_transition_police_cost }
+		policy_transition_civilian_change = yes
 		if = {
-			limit = { check_variable = { policy_transition_delta > 0 } }
-			policy_transition_raise_amount = yes
-			set_temp_variable = { policy_transition_current = policy_transition_police_cost }
-			policy_transition_limit_raise = yes
-			if = {
-				limit = { check_variable = { policy_transition_amount > 0 } }
-				policy_transition_ensure_modifier = yes
-				add_to_variable = { var = policy_transition_police_cost value = policy_transition_amount tooltip = police_cost_multiplier_modifier_tt }
-				policy_transition_refresh = yes
-			}
-		}
-		else_if = {
-			limit = { check_variable = { policy_transition_delta < 0 } }
-			policy_transition_cut_amount = yes
-			policy_transition_add_cut_penalty = yes
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_police_cost value = policy_transition_amount tooltip = police_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
 		}
 	}
 	set_temp_variable = { policy_transition_category = 2 }
@@ -297,33 +280,15 @@ police_transition_check = {
 education_transition_check = {
 	set_temp_variable = { policy_transition_amount = 0 }
 	if = {
-		limit = {
-			OR = {
-				NOT = { has_country_flag = spending_law_scripted_change }
-				has_country_flag = spending_law_bill_passed
-				has_country_flag = spending_law_bill_forced
-			}
-			has_variable = education_law
-		}
+		limit = { policy_transition_own_choice = yes has_variable = education_law }
 		set_temp_variable = { policy_transition_old = education_law }
 		set_temp_variable = { policy_transition_expected = expected_edu_spending }
-		policy_transition_charged_levels = yes
+		set_temp_variable = { policy_transition_current = policy_transition_education_cost }
+		policy_transition_civilian_change = yes
 		if = {
-			limit = { check_variable = { policy_transition_delta > 0 } }
-			policy_transition_raise_amount = yes
-			set_temp_variable = { policy_transition_current = policy_transition_education_cost }
-			policy_transition_limit_raise = yes
-			if = {
-				limit = { check_variable = { policy_transition_amount > 0 } }
-				policy_transition_ensure_modifier = yes
-				add_to_variable = { var = policy_transition_education_cost value = policy_transition_amount tooltip = education_cost_multiplier_modifier_tt }
-				policy_transition_refresh = yes
-			}
-		}
-		else_if = {
-			limit = { check_variable = { policy_transition_delta < 0 } }
-			policy_transition_cut_amount = yes
-			policy_transition_add_cut_penalty = yes
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_education_cost value = policy_transition_amount tooltip = education_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
 		}
 	}
 	set_temp_variable = { policy_transition_category = 3 }
@@ -333,33 +298,15 @@ education_transition_check = {
 health_transition_check = {
 	set_temp_variable = { policy_transition_amount = 0 }
 	if = {
-		limit = {
-			OR = {
-				NOT = { has_country_flag = spending_law_scripted_change }
-				has_country_flag = spending_law_bill_passed
-				has_country_flag = spending_law_bill_forced
-			}
-			has_variable = health_law
-		}
+		limit = { policy_transition_own_choice = yes has_variable = health_law }
 		set_temp_variable = { policy_transition_old = health_law }
 		set_temp_variable = { policy_transition_expected = expected_health_spending }
-		policy_transition_charged_levels = yes
+		set_temp_variable = { policy_transition_current = policy_transition_health_cost }
+		policy_transition_civilian_change = yes
 		if = {
-			limit = { check_variable = { policy_transition_delta > 0 } }
-			policy_transition_raise_amount = yes
-			set_temp_variable = { policy_transition_current = policy_transition_health_cost }
-			policy_transition_limit_raise = yes
-			if = {
-				limit = { check_variable = { policy_transition_amount > 0 } }
-				policy_transition_ensure_modifier = yes
-				add_to_variable = { var = policy_transition_health_cost value = policy_transition_amount tooltip = health_cost_multiplier_modifier_tt }
-				policy_transition_refresh = yes
-			}
-		}
-		else_if = {
-			limit = { check_variable = { policy_transition_delta < 0 } }
-			policy_transition_cut_amount = yes
-			policy_transition_add_cut_penalty = yes
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_health_cost value = policy_transition_amount tooltip = health_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
 		}
 	}
 	set_temp_variable = { policy_transition_category = 4 }
@@ -369,33 +316,15 @@ health_transition_check = {
 social_transition_check = {
 	set_temp_variable = { policy_transition_amount = 0 }
 	if = {
-		limit = {
-			OR = {
-				NOT = { has_country_flag = spending_law_scripted_change }
-				has_country_flag = spending_law_bill_passed
-				has_country_flag = spending_law_bill_forced
-			}
-			has_variable = social_law
-		}
+		limit = { policy_transition_own_choice = yes has_variable = social_law }
 		set_temp_variable = { policy_transition_old = social_law }
 		set_temp_variable = { policy_transition_expected = expected_welfare_spending }
-		policy_transition_charged_levels = yes
+		set_temp_variable = { policy_transition_current = policy_transition_social_cost }
+		policy_transition_civilian_change = yes
 		if = {
-			limit = { check_variable = { policy_transition_delta > 0 } }
-			policy_transition_raise_amount = yes
-			set_temp_variable = { policy_transition_current = policy_transition_social_cost }
-			policy_transition_limit_raise = yes
-			if = {
-				limit = { check_variable = { policy_transition_amount > 0 } }
-				policy_transition_ensure_modifier = yes
-				add_to_variable = { var = policy_transition_social_cost value = policy_transition_amount tooltip = social_cost_multiplier_modifier_tt }
-				policy_transition_refresh = yes
-			}
-		}
-		else_if = {
-			limit = { check_variable = { policy_transition_delta < 0 } }
-			policy_transition_cut_amount = yes
-			policy_transition_add_cut_penalty = yes
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { var = policy_transition_social_cost value = policy_transition_amount tooltip = social_cost_multiplier_modifier_tt }
+			policy_transition_refresh = yes
 		}
 	}
 	set_temp_variable = { policy_transition_category = 5 }
@@ -404,14 +333,7 @@ social_transition_check = {
 
 military_transition_check = {
 	if = {
-		limit = {
-			OR = {
-				NOT = { has_country_flag = spending_law_scripted_change }
-				has_country_flag = spending_law_bill_passed
-				has_country_flag = spending_law_bill_forced
-			}
-			has_variable = military_law
-		}
+		limit = { policy_transition_own_choice = yes has_variable = military_law }
 		set_temp_variable = { policy_transition_old = military_law }
 		set_temp_variable = { policy_transition_expected = expected_military_law }
 		policy_transition_charged_levels = yes
