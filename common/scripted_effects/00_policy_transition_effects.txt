@@ -219,6 +219,7 @@ policy_transition_refund_vetoed_change = {
 	}
 	clear_variable = policy_transition_last_category
 	clear_variable = policy_transition_last_amount
+	policy_transition_clear_if_empty = yes
 }
 
 # Given temp policy_transition_old, _expected and _current: applies a cut and leaves a raise in temp policy_transition_amount for the caller
@@ -521,6 +522,7 @@ population_tax_transition_check = {
 		set_temp_variable = { policy_transition_amount = { value = policy_transition_tax_lowered multiply = @policy_transition_tax_bonus_per_point } }
 		policy_transition_add_tax_bonus = yes
 	}
+	policy_transition_clear_if_empty = yes
 	if = {
 		limit = { is_ai = no }
 		policy_transition_refresh = yes
@@ -600,6 +602,7 @@ corporate_tax_transition_check = {
 			add_to_variable = { var = policy_transition_investment_cost value = policy_transition_amount tooltip = receiving_investment_cost_modifier_tt }
 		}
 	}
+	policy_transition_clear_if_empty = yes
 	# The AI's budget picks the change up at the daily refresh
 	if = {
 		limit = { is_ai = no }
@@ -661,23 +664,7 @@ policy_transition_monthly_decay = {
 				limit = { check_variable = { policy_transition_war_support < 0 } }
 				set_variable = { policy_transition_war_support = { value = policy_transition_war_support add = @policy_transition_penalty_recovery min = 0 } }
 			}
-			if = {
-				limit = {
-					NOT = { check_variable = { policy_transition_bureau_cost > 0 } }
-					NOT = { check_variable = { policy_transition_police_cost > 0 } }
-					NOT = { check_variable = { policy_transition_education_cost > 0 } }
-					NOT = { check_variable = { policy_transition_health_cost > 0 } }
-					NOT = { check_variable = { policy_transition_social_cost > 0 } }
-					NOT = { check_variable = { policy_transition_military_cost > 0 } }
-					check_variable = { policy_transition_cut_stability = 0 }
-					check_variable = { policy_transition_tax_stability = 0 }
-					check_variable = { policy_transition_tax_bonus = 0 }
-					NOT = { check_variable = { policy_transition_war_support < 0 } }
-					check_variable = { policy_transition_productivity = 0 }
-					check_variable = { policy_transition_investment_cost = 0 }
-				}
-				policy_transition_clear_costs = yes
-			}
+			policy_transition_clear_if_empty = yes
 		}
 		if = {
 			limit = { has_variable = policy_transition_population_tax_peak }
@@ -711,6 +698,28 @@ policy_transition_monthly_decay = {
 				clear_variable = policy_transition_corporate_tax_low
 			}
 		}
+	}
+}
+
+# Drops the modifier as soon as every value is back at zero instead of showing an empty spirit until the monthly check
+policy_transition_clear_if_empty = {
+	if = {
+		limit = {
+			has_dynamic_modifier = { modifier = policy_transition_costs }
+			NOT = { check_variable = { policy_transition_bureau_cost > 0 } }
+			NOT = { check_variable = { policy_transition_police_cost > 0 } }
+			NOT = { check_variable = { policy_transition_education_cost > 0 } }
+			NOT = { check_variable = { policy_transition_health_cost > 0 } }
+			NOT = { check_variable = { policy_transition_social_cost > 0 } }
+			NOT = { check_variable = { policy_transition_military_cost > 0 } }
+			check_variable = { policy_transition_cut_stability = 0 }
+			check_variable = { policy_transition_tax_stability = 0 }
+			check_variable = { policy_transition_tax_bonus = 0 }
+			NOT = { check_variable = { policy_transition_war_support < 0 } }
+			check_variable = { policy_transition_productivity = 0 }
+			check_variable = { policy_transition_investment_cost = 0 }
+		}
+		hidden_effect = { policy_transition_clear_costs = yes }
 	}
 }
 
