@@ -868,6 +868,7 @@
 	NDefines.NAI.DESIRE_USE_XP_TO_UPGRADE_NAVAL_EQUIPMENT = 1.5		-- 1.0 vanilla; AI prioritizes naval design upgrades more
 	NDefines.NAI.WANTED_CARRIER_PLANES_PER_CARRIER_CAPACITY_IN_PRODUCTION_FACTOR = 1.5 -- 1.0 vanilla; AI pre-builds planes for carriers under construction
 	NDefines.NAI.MAX_FUEL_CONSUMPTION_RATIO_FOR_NAVY_TRAINING = 0.5	-- 0.2 vanilla; allow more fuel for naval training
+	NDefines.NAI.AI_SURFACE_COMBAT_FUEL_RATIO = 1.0					-- 0.70 vanilla; a navy with one task force never fit its own coast defence or invasion support budget
 	NDefines.NAI.MAX_FULLY_TRAINED_SHIP_RATIO_FOR_TRAINING = 0.85	-- 0.7 vanilla; train even with mostly-trained fleet
 	NDefines.NAI.REGION_THREAT_LEVEL_TO_AVOID_REGION = 5000			-- 250 vanilla; fleets don't hide from minor threats
 	NDefines.NAI.REGION_THREAT_LEVEL_TO_BLOCK_REGION = 10000		-- 2500 vanilla; extreme threat needed to block regions
