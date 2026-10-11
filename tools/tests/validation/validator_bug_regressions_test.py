@@ -141,35 +141,6 @@ def test_get_all_colors_returns_colors_when_file_present(tmp_path):
 
 
 # ---------------------------------------------------------------------------
-# Bug: fragile line.index(":") + 2 pattern in loc key extraction
-# File: validate_localisation.py
-# Fix: Use explicit colon_idx variable with proper slice bounds
-# ---------------------------------------------------------------------------
-
-
-def test_colon_idx_extraction_handles_value_with_colon():
-    """A loc value that contains a colon (e.g. "Value: with colon") must not
-    break key extraction — the colon before the value is the separator."""
-    line = 'my_key: "A value with : a colon inside"'
-    colon_idx = line.index(":")
-    key = line[:colon_idx].strip()
-    value = line[colon_idx + 2 :].strip()  # +2 skips ": "
-    assert key == "my_key"
-    assert value == '"A value with : a colon inside"'
-
-
-def test_colon_idx_extraction_preserves_quoted_colon_in_value():
-    """A value that starts with a quoted string containing a colon must not
-    misidentify the opening quote as the separator."""
-    line = 'desc: "§YSome description: with a colon§!"'
-    colon_idx = line.index(":")
-    key = line[:colon_idx].strip()
-    value = line[colon_idx + 2 :].strip()
-    assert key == "desc"
-    assert value == '"§YSome description: with a colon§!"'
-
-
-# ---------------------------------------------------------------------------
 # Bug: gate_signature coordinate mismatch in on_actions duplicate detection
 # File: validate_on_actions.py
 # Fix: line_offset threaded through _scan_on_action_block so line numbers

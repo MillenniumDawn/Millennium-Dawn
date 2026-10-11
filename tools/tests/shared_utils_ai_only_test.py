@@ -7,6 +7,7 @@ Nested inside OR/AND/if/limit or a scoped `TAG = { }` the token is conditional
 and must not exempt anything.
 """
 
+import pytest
 from shared_utils import (
     ai_only_decision_categories,
     direct_child_block,
@@ -16,12 +17,33 @@ from shared_utils import (
 )
 
 
-def test_flat_is_ai_detected():
-    assert has_flat_is_ai("{\n\t\t\tis_ai = yes\n\t\t}")
-
-
-def test_is_ai_nested_in_or_not_detected():
-    assert not has_flat_is_ai("{\n\t\t\tOR = {\n\t\t\t\tis_ai = yes\n\t\t\t}\n\t\t}")
+@pytest.mark.parametrize(
+    ("block", "expected"),
+    [
+        ("{\n\t\t\tis_ai = yes\n\t\t}", True),
+        ("{ is_ai = yes }", True),
+        ("{\n\t\t\tOR = {\n\t\t\t\tis_ai = yes\n\t\t\t}\n\t\t}", False),
+        ("{\n\t\t\tGRE = {\n\t\t\t\tis_ai = yes\n\t\t\t}\n\t\t}", False),
+        ("{\n\t\t\tif = {\n\t\t\t\tlimit = { is_ai = yes }\n\t\t\t}\n\t\t}", False),
+        ("{\n\t\t\tis_ai = no\n\t\t}", False),
+        ("{\n\t\t\t# is_ai = yes\n\t\t}", False),
+        ("{\n\t\t\tfoo_is_ai = yes\n\t\t}", False),
+        ("", False),
+    ],
+    ids=[
+        "flat",
+        "single_line",
+        "nested_in_or",
+        "scoped_to_tag",
+        "in_if_limit",
+        "is_ai_no",
+        "commented",
+        "mid_token",
+        "empty",
+    ],
+)
+def test_has_flat_is_ai(block, expected):
+    assert bool(has_flat_is_ai(block)) is expected
 
 
 def test_direct_child_block_returns_block_with_braces():

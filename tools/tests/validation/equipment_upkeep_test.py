@@ -33,25 +33,27 @@ _MBT_BATTALION = """\tarmor_Bat = {
 
 
 def _money(*entries: str) -> str:
-    body = "".join(entries)
     return (
         "update_military_rate = {\n"
-        "\tset_variable = { equipment_operative_cost = 0 }\n" + body + "}\n"
+        "\tset_variable = {\n"
+        "\t\tequipment_operative_cost = {\n"
+        "\t\t\tvalue = 0\n" + "".join(entries) + "\t\t\tmultiply = 0.019\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
     )
 
 
 def _entry(archetype: str, deployed: bool = True, stockpile: bool = True) -> str:
-    lines = [
-        "\tadd_to_variable = {\n\t\tvar = equipment_operative_cost\n\t\tvalue = {\n"
-    ]
+    lines = ["\t\t\tadd = {\n"]
     if deployed:
-        lines.append(f"\t\t\tvalue = num_equipment_in_armies@{archetype}\n")
-    lines.append("\t\t\tmultiply = 0.7\n")
+        lines.append(f"\t\t\t\tvalue = num_equipment_in_armies@{archetype}\n")
+    lines.append("\t\t\t\tmultiply = 0.7\n")
     if stockpile:
         lines.append(
-            f"\t\t\tadd = {{ value = num_equipment@{archetype} multiply = 0.14 }}\n"
+            f"\t\t\t\tadd = {{ value = num_equipment@{archetype} multiply = 0.14 }}\n"
         )
-    lines.append("\t\t}\n\t}\n")
+    lines.append("\t\t\t}\n")
     return "".join(lines)
 
 
@@ -191,10 +193,6 @@ def test_exempt_archetype_that_gained_a_cost_is_reported_as_stale(tmp_path):
 
 
 def test_commented_out_entry_does_not_count_as_coverage(tmp_path):
-    money = _money().replace(
-        "\tset_variable = { equipment_operative_cost = 0 }\n",
-        "\tset_variable = { equipment_operative_cost = 0 }\n"
-        "#" + _entry("medium_tank_chassis").replace("\n", "\n#") + "\n",
-    )
-    v = _run(tmp_path, _MBT_BATTALION, money)
+    commented = "#" + _entry("medium_tank_chassis").replace("\n", "\n#") + "\n"
+    v = _run(tmp_path, _MBT_BATTALION, _money(commented))
     assert [i.category for i in v._issues] == ["upkeep-accumulator-missing"]

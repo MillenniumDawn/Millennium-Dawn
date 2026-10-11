@@ -116,6 +116,21 @@ def test_nested_allow_branch_terms_feed_the_branch_leak_check(tmp_path):
     assert validator(tmp_path).layout_counts["branch_leaks"] == 1
 
 
+def test_hide_rule_terms_are_tagged_and_the_rule_check_dropped(tmp_path):
+    rule = "has_game_rule = { rule = obsolete_focus_branches_visibility option = HIDE }"
+    path = write_focus(
+        tmp_path,
+        "focus_tree = { id = rule focus = { id = gate x = 0 y = 0 allow_branch = { "
+        "date < 2006.7.1 "
+        f"if = {{ limit = {{ {rule} }} NOT = {{ has_completed_focus = rival }} }} }} }} }}",
+    )
+    focus = V._FocusFile(path, str(tmp_path)).layout()["trees"][0]["focuses"][0]
+    assert focus["branch_terms"] == [
+        "date=2006.7.1",
+        "hide_rule:has_completed_focus=rival",
+    ]
+
+
 @pytest.mark.parametrize(
     "coordinates", ["y = 0", "x = invalid y = 0", "x = @column y = 0", "x = {} y = 0"]
 )

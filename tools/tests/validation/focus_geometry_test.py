@@ -166,6 +166,35 @@ def test_branch_leak_needs_a_fully_hidden_prerequisite_group(groups, expected):
     assert leak_ids(nodes) == expected
 
 
+RIVAL = "has_completed_focus=rival"
+HIDDEN_RIVAL = "hide_rule:" + RIVAL
+
+
+@pytest.mark.parametrize(
+    "gate_terms,child_terms,expected",
+    [
+        ([HIDDEN_RIVAL], [HIDDEN_RIVAL], []),
+        ([HIDDEN_RIVAL], [RIVAL], []),
+        ([HIDDEN_RIVAL], ["hide_rule:has_completed_focus=other"], ["leak"]),
+        ([RIVAL], [HIDDEN_RIVAL], ["leak"]),
+        ([RIVAL], [RIVAL, "hide_rule:has_completed_focus=other"], []),
+    ],
+)
+def test_terms_outside_the_hide_rule_satisfy_terms_inside_it(
+    gate_terms, child_terms, expected
+):
+    nodes = [
+        focus("gate", allow_branch=True, branch_terms=gate_terms),
+        focus(
+            "leak",
+            allow_branch=True,
+            branch_terms=child_terms,
+            prerequisites=[["gate"]],
+        ),
+    ]
+    assert leak_ids(nodes) == expected
+
+
 def test_branch_leak_stops_at_the_first_gated_descendant():
     nodes = [
         focus("gate", allow_branch=True, branch_terms=GATE_TERMS),

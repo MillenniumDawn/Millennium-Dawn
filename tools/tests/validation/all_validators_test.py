@@ -45,7 +45,7 @@ def test_validator_exposes_contract(modname):
 @pytest.mark.parametrize("modname", VALIDATORS)
 def test_validator_runs_on_empty_tree(tmp_path, modname):
     _mod, classes = _validator_class(modname)
-    validator = classes[0](mod_path=str(tmp_path), use_colors=False)
+    validator = classes[0](mod_path=str(tmp_path), use_colors=False, workers=1)
     # Must not raise on an empty mod tree — validators have to tolerate missing
     # directories/files gracefully.
     validator.run_all_validations()

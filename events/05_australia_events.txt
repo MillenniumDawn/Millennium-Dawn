@@ -262,31 +262,11 @@ country_event = {
 	}
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: pacific_solution.5.a executed"
+		log = "[GetDateText]: [This.GetName]: pacific_solution.5.a executed"
 		name = pacific_solution.5.a # "Excellent news."
 		set_temp_variable = { treasury_change = -4 }
 		modify_treasury_effect = yes
-		if = {
-			limit = { has_idea = boat_arrivals_ast }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast
-				add_idea = boat_arrivals_ast_2
-			}
-		}
-		else_if = {
-			limit = { has_idea = boat_arrivals_ast_2 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_2
-				add_idea = boat_arrivals_ast_3
-			}
-		}
-		else_if = {
-			limit = { has_idea = boat_arrivals_ast_4 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_4
-				add_idea = boat_arrivals_ast
-			}
-		}
+		AST_decrease_boat_arrivals = yes
 		if = {
 			limit = { has_focus_tree = ruddgov_focus }
 			add_power_balance_value = {
@@ -441,43 +421,114 @@ country_event = {
 
 	# Option 1: Accept the Agreement
 	option = {
-			log = "[GetDateText]: [This.GetName]: marks_trade.1.a executed"
+		log = "[GetDateText]: [This.GetName]: marks_trade.1.a executed"
 		name = marks_trade.1.a
-		ai_chance = { base = 90 }
-		add_opinion_modifier = {
-			target = AST
-			modifier = ast_trade_deal
-		}
-		add_opinion_modifier = {
-			target = AST
-			modifier = ast_trade_agreement
-		}
+		add_ideas = mutual_assistance_and_trade_agreement
+		set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { tag_index = AST.id }
+				set_temp_variable = { influence_target = THIS.id }
+				change_influence_percentage = yes
+		newline = yes
 		AST = {
 			add_opinion_modifier = {
 				target = ROOT
 				modifier = ast_trade_deal
 			}
-			add_opinion_modifier = {
-				target = ROOT
-				modifier = ast_trade_agreement
+			country_event = {
+				id = marks_trade.2
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 80
+				has_opinion = {
+					target = AST
+					value > 0
+				}
 			}
 		}
 	}
 
 	# Option 2: Decline
 	option = {
-			log = "[GetDateText]: [This.GetName]: marks_trade.1.b executed"
+		log = "[GetDateText]: [This.GetName]: marks_trade.1.b executed"
 		name = marks_trade.1.b
-		ai_chance = {
-			base = 10
-		}
 		# Optional: Add a small negative modifier if you want a diplomatic sting
 		AST = {
 			add_opinion_modifier = {
 				target = ROOT
 				modifier = refused_trade_deal
 			}
+			country_event = {
+				id = marks_trade.3
+				days = 1
+			}
 		}
+		ai_chance = {
+			base = 10
+			modifier = {
+				add = 80
+				has_opinion = {
+					target = AST
+					value < 0
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = marks_trade.2
+	title = marks_trade.2.t
+	desc = marks_trade.2.d
+	picture = GFX_treaty
+
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			FROM = {
+				add_opinion_modifier = {
+					target = AST
+					modifier = ast_trade_deal
+				}
+			}
+		}
+
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: marks_trade.2.a executed"
+		name = marks_trade.2.a
+		effect_tooltip = {
+			FROM = {
+				add_ideas = mutual_assistance_and_trade_agreement
+				newline = yes
+				add_opinion_modifier = {
+					target = AST
+					modifier = ast_trade_deal
+				}
+			}
+		}
+
+	}
+
+}
+
+country_event = {
+	id = marks_trade.3
+	title = marks_trade.3.t
+	desc = marks_trade.3.d
+	picture = GFX_treaty_rejected
+
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: marks_trade.3.a executed"
+		name = marks_trade.3.a
+		add_political_power = -30
 	}
 }
 
@@ -686,6 +737,17 @@ country_event = {
 		name = ast_jap_trade.1.a
 		ai_chance = { base = 30 }
 		AST = { country_event = { id = ast_jap_trade.2 days = 1 } }
+		add_timed_idea = {
+			idea = JAP_AST_trade_deal_1
+			days = 1095
+		}
+		newline = yes
+		effect_tooltip = {
+			add_opinion_modifier = { target = AST modifier = ast_trade_deal }
+			AST = {
+				add_opinion_modifier = { target = ROOT modifier = ast_trade_deal }
+			}
+		}
 	}
 
 	# Option 2: Demand Mineral Rights (The Counter-Offer)
@@ -696,6 +758,17 @@ country_event = {
 			base = 60
 		}
 		AST = { country_event = { id = ast_jap_trade.3 days = 1 } } # Notification: Negotiation
+		custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_timed_idea = {
+					idea = JAP_AST_trade_deal_2
+					days = 1095
+				}
+				newline = yes
+				AST = {
+					add_opinion_modifier = { target = ROOT modifier = ast_trade_deal }
+				}
+			}
 	}
 
 	# Option 3: Decline
@@ -703,8 +776,9 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: ast_jap_trade.1.c executed"
 		name = ast_jap_trade.1.c
 		ai_chance = {
-			base = 10 # Base 10 if relations are good
+			base = 10
 		}
+		add_political_power = 20
 		AST = { country_event = { id = ast_jap_trade.4 days = 1 } } # Notification: Failure
 	}
 }
@@ -718,13 +792,13 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: ast_jap_trade.2.a executed"
+		log = "[GetDateText]: [This.GetName]: ast_jap_trade.2.a executed"
 		name = ast_jap_trade.2.a
-		add_opinion_modifier = { target = JAP modifier = ast_trade_deal }
+		add_ideas = japanese_export_deal_ast
+		newline = yes
 		JAP = {
 			add_opinion_modifier = { target = ROOT modifier = ast_trade_deal }
 		}
-		add_ideas = japanese_export_deal_ast
 	}
 }
 
@@ -738,14 +812,15 @@ country_event = {
 
 	# Accept their terms
 	option = {
-			log = "[GetDateText]: [This.GetName]: ast_jap_trade.3.a executed"
+		log = "[GetDateText]: [This.GetName]: ast_jap_trade.3.a executed"
 		name = ast_jap_trade.3.a
-		add_opinion_modifier = { target = JAP modifier = ast_trade_deal }
+		add_ideas = japanese_export_deal_ast_1
+		newline = yes
 		JAP = {
 			add_opinion_modifier = { target = ROOT modifier = ast_trade_deal }
+			country_event = ast_jap_trade.6
 		}
-		add_ideas = japanese_export_deal_ast_1
-		ai_chance = { base = 1 }
+		ai_chance = { base = 80 }
 	}
 
 	# Hold stance / Demand original deal
@@ -754,7 +829,7 @@ country_event = {
 		name = ast_jap_trade.3.b
 		JAP = { country_event = { id = ast_jap_trade.5 days = 1 } } # Send back to Japan
 		ai_chance = {
-				base = 0
+				base = 20
 			}
 	}
 }
@@ -770,11 +845,11 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: ast_jap_trade.4.a executed"
 		name = ast_jap_trade.4.a
-		add_political_power = -5
+		add_political_power = -50
 	}
 }
 
-# Japan decides on the original deal
+# Australians stand firm - Jap event
 country_event = {
 	id = ast_jap_trade.5
 	title = ast_jap_trade.5.t
@@ -787,6 +862,11 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: ast_jap_trade.5.a executed"
 		name = ast_jap_trade.5.a
 		ai_chance = { base = 70 }
+		add_timed_idea = {
+					idea = JAP_AST_trade_deal_1
+					days = 1095
+				}
+		newline = yes
 		AST = { country_event = { id = ast_jap_trade.2 days = 2 } } # Triggers the Success event for you
 	}
 
@@ -795,7 +875,36 @@ country_event = {
 			log = "[GetDateText]: [This.GetName]: ast_jap_trade.5.b executed"
 		name = ast_jap_trade.5.b
 		ai_chance = { base = 30 }
-		AST = { country_event = { id = ast_jap_trade.4 days = 2 } } # Triggers the Failure event for you
+		AST = {
+			country_event = { id = ast_jap_trade.4 days = 2 }
+			add_opinion_modifier = {
+				target = JAP
+				modifier = refused_trade_deal
+			}
+		} # Triggers the Failure event for you
+	}
+}
+
+#Australia accepts new deal - Jap event
+country_event = {
+	id = ast_jap_trade.6
+	title = ast_jap_trade.6.t
+	desc = ast_jap_trade.6.d
+	picture = GFX_aus_flag
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: ast_jap_trade.6.a executed"
+		name = ast_jap_trade.6.a
+		add_political_power = 50
+		add_timed_idea = {
+			idea = JAP_AST_trade_deal_2
+			days = 1095
+		}
+		newline = yes
+		AST = {
+			add_opinion_modifier = { target = JAP modifier = ast_trade_deal }
+		}
 	}
 }
 
@@ -982,12 +1091,9 @@ country_event = {
 	}
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: reconciliation_journey.1.a executed"
+		log = "[GetDateText]: [This.GetName]: reconciliation_journey.1.a executed"
 		name = reconciliation_journey.1.a
-		swap_ideas = {
-			remove_idea = reconciliation_discontent
-			add_idea = rekindled_hope_ast
-		}
+		AST_increase_indigenous_laws = yes
 	}
 }
 
@@ -2070,22 +2176,9 @@ country_event = {
 	is_triggered_only = yes
 
 	option = {
-			log = "[GetDateText]: [This.GetName]: detention_centres_full.1.a executed"
+		log = "[GetDateText]: [This.GetName]: detention_centres_full.1.a executed"
 		name = detention_centres_full.1.a
-		if = {
-			limit = { has_idea = boat_arrivals_ast_3 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_3
-				add_idea = boat_arrivals_ast_2
-			}
-		}
-		else_if = {
-			limit = { has_idea = boat_arrivals_ast_2 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_2
-				add_idea = boat_arrivals_ast
-			}
-		}
+		AST_increase_boat_arrivals = yes
 		add_timed_idea = {
 			idea = detention_centre_emergency_funding_ast
 			days = 230
@@ -2164,11 +2257,18 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: abbott_gov_event.2.a executed"
 		name = abbott_gov_event.2.a
 		if = {
-				limit = { has_idea = reform_despair_ast }
-				swap_ideas = {
-					remove_idea = reform_despair_ast
-					add_idea = reconciliation_discontent
+			limit = {
+				NOT = {
+					OR = {
+						has_idea = reconciliation_discontent
+						has_idea = rekindled_hope_ast
+						has_idea = a_new_era_ast
+						has_idea = radical_protections_ast
+					}
+
 				}
+			}
+			AST_increase_indigenous_laws = yes
 			}
 		else = { add_stability = 0.05 }
 	}
@@ -2949,27 +3049,7 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: operation_sovereign_abbott.1.a executed"
 		name = operation_sovereign_abbott.1.a
-		if = {
-			limit = { has_idea = boat_arrivals_ast }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast
-				add_idea = boat_arrivals_ast_2
-			}
-		}
-		else_if = {
-			limit = { has_idea = boat_arrivals_ast_2 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_2
-				add_idea = boat_arrivals_ast_3
-			}
-			else_if = {
-				limit = { has_idea = boat_arrivals_ast_4 }
-				swap_ideas = {
-					remove_idea = boat_arrivals_ast_4
-					add_idea = boat_arrivals_ast
-				}
-			}
-		}
+		AST_decrease_boat_arrivals = yes
 		newline = yes
 		set_temp_variable = { party_popularity_increase = 0.02 }
 		change_relative_party_popularity = yes
@@ -4241,28 +4321,8 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: costello_in_the_mines.3.a executed"
 		name = costello_in_the_mines.3.a
-		if = {
-			limit = { has_idea = boat_arrivals_ast }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast
-				add_idea = boat_arrivals_ast_2
-			}
-		}
-		else_if = {
-			limit = { has_idea = boat_arrivals_ast_2 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_2
-				add_idea = boat_arrivals_ast_3
-			}
-		}
-		else_if = {
-			limit = { has_idea = boat_arrivals_ast_4 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_4
-				add_idea = boat_arrivals_ast
-			}
-		}
-		else = { add_stability = 0.02 }
+		AST_decrease_boat_arrivals = yes
+		newline = yes
 		add_timed_idea = {
 			idea = mining_interruption_ast
 			days = 160
@@ -4446,35 +4506,7 @@ country_event = {
 		}
 		if = {
 			limit = { has_completed_focus = AST_with_heritage_to_remember }
-			if = {
-				limit = { has_idea = reform_despair_ast }
-				swap_ideas = {
-					remove_idea = reform_despair_ast
-					add_idea = reconciliation_discontent
-				}
-			}
-			else_if = {
-				limit = { has_idea = reconciliation_discontent }
-				swap_ideas = {
-					remove_idea = reconciliation_discontent
-					add_idea = rekindled_hope_ast
-				}
-			}
-			else_if = {
-				limit = { has_idea = rekindled_hope_ast }
-				swap_ideas = {
-					remove_idea = rekindled_hope_ast
-					add_idea = a_new_era_ast
-				}
-			}
-			else_if = {
-				limit = { has_idea = a_new_era_ast }
-				swap_ideas = {
-					remove_idea = a_new_era_ast
-					add_idea = radical_protections_ast
-				}
-			}
-			else = { add_stability = 0.04 }
+			AST_increase_indigenous_laws = yes
 			set_country_flag = itstheconst_bypass
 			newline = yes
 		}
@@ -4777,6 +4809,16 @@ country_event = {
 			else = { add_political_power = 50 }
 		}
 		else = {
+			random_list = {
+				50 = {
+					set_temp_variable = { party_popularity_increase = -0.02 }
+					change_relative_party_popularity = yes
+				}
+				50 = {
+					set_temp_variable = { party_popularity_increase = 0.02 }
+					change_relative_party_popularity = yes
+				}
+			}
 			country_event = ast_elections.3
 		}
 	}
@@ -4935,7 +4977,7 @@ country_event = {
 	hidden = yes
 
 	immediate = {
-		if = {
+		if = { #Peter Costello wins 2007
 			limit = {
 				western_conservatism_are_in_power = yes
 				date > 2004.01.01
@@ -4960,8 +5002,10 @@ country_event = {
 				tree = costellogov_focus
 				keep_completed = yes
 			}
+			set_temp_variable = { add_col_one = 14 }
+			add_coalition_members_effect = yes
 		}
-		else_if = {
+		else_if = { #Kevin Rudd wins 2007
 			limit = {
 				western_social_democrats_are_in_power = yes
 				date > 2007.01.01
@@ -4970,9 +5014,9 @@ country_event = {
 					has_country_flag = labor_previously_in
 				}
 			}
-			news_event = election_outcomes_ast.1 #rudd wins
+			news_event = election_outcomes_ast.1
 		}
-		else_if = {
+		else_if = { #Rudd wins reelection
 			limit = {
 				western_social_democrats_are_in_power = yes
 				has_focus_tree = ruddgov_focus
@@ -4984,9 +5028,9 @@ country_event = {
 					ruling_party = democratic
 					elections_allowed = yes
 				}
-			news_event = election_outcomes_ast.4 #rudd consecutive
+			news_event = election_outcomes_ast.4
 		}
-		else_if = {
+		else_if = { #Julia Gillard wins 2013-16
 			limit = {
 				western_social_democrats_are_in_power = yes
 				date > 2011.01.01
@@ -4997,9 +5041,9 @@ country_event = {
 					ruling_party = democratic
 					elections_allowed = yes
 				}
-			news_event = election_outcomes_ast.8 #gillard wins nonconsecutive
+			news_event = election_outcomes_ast.8
 		}
-		else_if = {
+		else_if = { #Julia Gillard wins reelection
 			limit = {
 				western_social_democrats_are_in_power = yes
 				has_focus_tree = gillardgov_focus
@@ -5009,16 +5053,16 @@ country_event = {
 			}
 			news_event = election_outcomes_ast.6 #consecutive gillard wins
 		}
-		else_if = {
+		else_if = { #Liberals win reelection 2007
 			limit = {
 				western_conservatism_are_in_power = yes
 				date > 2007.01.01
 				date < 2008.01.01
 				has_country_flag = liberals_previously_in
 			}
-			news_event = election_outcomes_ast.2 #consecutive lib win 2007
+			news_event = election_outcomes_ast.2
 		}
-		else_if = {
+		else_if = { #Tony Abbott wins 2010-13
 			limit = {
 				western_conservatism_are_in_power = yes
 				date > 2010.01.01
@@ -5027,9 +5071,9 @@ country_event = {
 					has_country_flag = liberals_previously_in
 				}
 			}
-			news_event = dissolution_election_rudd.4 #abbott wins
+			news_event = dissolution_election_rudd.4
 		}
-		else_if = {
+		else_if = { #Malcolm Turnbull wins 2016-
 			limit = {
 				western_conservatism_are_in_power = yes
 				date > 2016.01.01
@@ -5037,24 +5081,23 @@ country_event = {
 					has_country_flag = liberals_previously_in
 				}
 			}
-			news_event = election_outcomes_ast.9 #turnbull win
+			news_event = election_outcomes_ast.9
 		}
-		#generic reelections
-		else_if = {
+		else_if = { #Generic Liberal reelection
 			limit = {
 				western_conservatism_are_in_power = yes
 				has_country_flag = liberals_previously_in
 			}
 			news_event = election_outcomes_ast.7
 		}
-		else_if = {
+		else_if = { #Generic Labor reelection
 			limit = {
 				western_social_democrats_are_in_power = yes
 				has_country_flag = labor_previously_in
 			}
 			news_event = election_outcomes_ast.3
 		}
-		else = {
+		else = { #Catchall event
 			set_temp_variable = { rul_party_temp = FROM.ruling_party }
 			change_ruling_party_effect = yes
 			load_focus_tree = {
@@ -5063,7 +5106,7 @@ country_event = {
 			}
 		}
 		hidden_effect = {
-			country_event = { id = ast_elections.6 days = 1 } #election day after effects
+			country_event = { id = ast_elections.6 days = 1 } #election cleanup effects
 		}
 	}
 }
@@ -5125,7 +5168,7 @@ news_event = {
 	}
 }
 
-#coalition wins 2007
+#coalition wins reelection 2007
 news_event = {
 	id = election_outcomes_ast.2
 	title = election_outcomes_ast.2.t
@@ -5133,7 +5176,7 @@ news_event = {
 	picture = GFX_liberal_rally
 	is_triggered_only = yes
 
-	option = { name = election_outcomes_ast.2.a }
+	option = { name = election_outcomes_ast.2.a add_political_power = 50 }
 }
 
 #generic labor reelection
@@ -5144,7 +5187,7 @@ news_event = {
 	picture = GFX_generic_labor_crowd
 	is_triggered_only = yes
 
-	option = { name = election_outcomes_ast.3.a }
+	option = { name = election_outcomes_ast.3.a add_political_power = 50 }
 }
 
 #rudd reelected
@@ -5158,6 +5201,7 @@ news_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.3.a executed"
 		name = election_outcomes_ast.3.a
+		add_political_power = 50
 		set_country_flag = rudd_consecutive_win
 	}
 }
@@ -5189,6 +5233,7 @@ news_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.6.a executed"
 		name = election_outcomes_ast.6.a
+		add_political_power = 50
 		set_country_flag = gillard_consecutive_win
 	}
 }
@@ -5201,7 +5246,7 @@ news_event = {
 	picture = GFX_liberal_rally
 	is_triggered_only = yes
 
-	option = { name = election_outcomes_ast.7.a }
+	option = { name = election_outcomes_ast.7.a add_political_power = 50 }
 }
 
 #gillard wins 2013 nonconsecutive
@@ -5268,6 +5313,8 @@ news_event = {
 				tree = turnbullgov_focus
 				keep_completed = yes
 			}
+			set_temp_variable = { add_col_one = 14 }
+			add_coalition_members_effect = yes
 		}
 	}
 
@@ -6475,6 +6522,11 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: uranium_trade_deal_ast.1.a executed"
 		name = uranium_trade_deal_ast.1.a
+		add_timed_idea = {
+			idea = vie_ast_tariff_deal
+			days = 720
+		}
+		newline = yes
 		AST = {
 			add_opinion_modifier = {
 				target = VIE
@@ -6509,6 +6561,11 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: vietnam_trade_gillard_ast.2.a executed"
 		name = vietnam_trade_gillard_ast.2.a
+		add_timed_idea = {
+			idea = influx_of_vietnamese_goods_ast
+			days = 720
+		}
+		newline = yes
 		VIE = {
 			add_opinion_modifier = {
 				target = AST
@@ -6528,6 +6585,8 @@ country_event = {
 
 	option = {
 		name = vietnam_trade_gillard_ast.3.a
+		log = "[GetDateText]: [This.GetName]: vietnam_trade_gillard_ast.3.a executed"
+		add_political_power = -50
 		ai_chance = { base = 0 }
 	}
 }
@@ -6775,7 +6834,7 @@ country_event = {
 	id = something_to_give_ast.1
 	title = something_to_give_ast.1.t
 	desc = something_to_give_ast.1.d
-	picture = GFX_political_deal
+	picture = GFX_computer
 	is_triggered_only = yes
 
 	option = { name = something_to_give_ast.1.a }
@@ -6822,7 +6881,7 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: bill_of_rights_ast.1.a executed"
 		name = bill_of_rights_ast.1.a
-		add_ideas = bill_of_rights_ast
+		AST_increase_indigenous_laws = yes
 	}
 }
 
@@ -7085,20 +7144,7 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: papua_talks_rudd.2.a executed"
 		name = papua_talks_rudd.2.a
-		if = {
-			limit = { has_idea = boat_arrivals_ast }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast
-				add_idea = boat_arrivals_ast_2
-			}
-		}
-		else_if = {
-			limit = { has_idea = boat_arrivals_ast_2 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_2
-				add_idea = boat_arrivals_ast_3
-			}
-		}
+		AST_decrease_boat_arrivals = yes
 		hidden_effect = {
 			set_temp_variable = { treasury_change = -3.5 }
 			modify_treasury_effect = yes
@@ -7430,20 +7476,11 @@ country_event = {
 		set_temp_variable = { temp_opinion = -70 }
 		change_fossil_fuel_industry_opinion = yes
 		newline = yes
-		add_ideas = mining_smear_campaign_idea_ast
-		hidden_effect = {
-			country_event = { id = mining_smear_campaign_ast.2 days = 280 }
+		add_timed_idea = {
+			idea = mining_smear_campaign_idea_ast
+			days = 160
 		}
 	}
-}
-
-country_event = {
-	id = mining_smear_campaign_ast.2
-	is_triggered_only = yes
-	hidden = yes
-	fire_only_once = yes
-
-	immediate = { remove_ideas = mining_smear_campaign_idea_ast }
 }
 
 add_namespace = corruption_outcome_aus
@@ -7526,9 +7563,17 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: rudd_the_next_leader.1.a executed"
 		name = rudd_the_next_leader.1.a
 		custom_effect_tooltip = rudd_the_next_leader_tt
+		ai_chance = {
+			base = 1
+		}
 	}
 
-	option = { name = rudd_the_next_leader.1.b }
+	option = {
+		name = rudd_the_next_leader.1.b
+		ai_chance = {
+			base = 1
+		}
+	}
 }
 
 
@@ -7590,6 +7635,34 @@ country_event = {
 
 add_namespace = solomon_islands_intervention
 
+#major sol no intervention
+news_event = {
+	id = solomon_islands_intervention.0
+	title = solomon_islands_intervention.0.t
+	desc = solomon_islands_intervention.0.d
+	picture = GFX_solomon_islands_news
+	is_triggered_only = yes
+
+	major = yes
+
+	show_major = {
+		OR = {
+			has_country_flag = asean_nation_flag
+			has_country_flag = oceania_nation_flag
+			is_East_Asia = yes
+			tag = USA
+		}
+		NOT = {
+			tag = SOL
+		}
+	}
+
+	option = {
+		name = solomon_islands_intervention.0.a
+	}
+}
+
+#major sol intervention event
 news_event = {
 	id = solomon_islands_intervention.1
 	title = solomon_islands_intervention.1.t
@@ -7597,32 +7670,26 @@ news_event = {
 	picture = GFX_solomon_islands_news
 	is_triggered_only = yes
 
-	trigger = {
-		tag = AST
-		NOT = { has_country_flag = sol_islands_event_done }
-		is_ai = no
-	}
+	major = yes
 
-	immediate = {
-		hidden_effect = {
-			SOL = {
-				add_threat = 4
-				add_stability = -15
-				add_war_support = -2
-				add_ideas = collapsing_state_sol
-				decrease_two_level_economic_growth = yes
-			}
+	show_major = {
+		OR = {
+			has_country_flag = asean_nation_flag
+			has_country_flag = oceania_nation_flag
+			is_East_Asia = yes
+			tag = USA
 		}
-		set_country_flag = sol_islands_event_done
+		NOT = {
+			tag = SOL
+		}
 	}
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: solomon_islands_intervention.1.a executed"
 		name = solomon_islands_intervention.1.a
-		country_event = { id = solomon_islands_intervention.2 days = 1 }
 	}
 }
 
+#solomon islands calls for aid
 country_event = {
 	id = solomon_islands_intervention.2
 	title = solomon_islands_intervention.2.t
@@ -7635,14 +7702,46 @@ country_event = {
 		name = solomon_islands_intervention.2.a
 		custom_effect_tooltip = sol_intervention_tt
 		set_country_flag = sol_intervention
+		news_event = {
+			id = solomon_islands_intervention.1
+			days = 2
+		}
+		hidden_effect = {
+			SOL = {
+				country_event = {
+					id = Solomon_Islands.6 days = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
 	}
 
 	option = {
 		log = "[GetDateText]: [This.GetName]: solomon_islands_intervention.2.b executed"
 		name = solomon_islands_intervention.2.b
-		add_stability = -0.10
+		add_political_power = -80
+		news_event = {
+			id = solomon_islands_intervention.0
+			days = 2
+		}
 		hidden_effect = {
-			news_event = { id = solomon_islands_intervention.6 days = 268 }
+			SOL = {
+				country_event = {
+					id = Solomon_Islands.7 days = 1
+				}
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				has_opinion = {
+					target = SOL
+					value < 0
+				}
+				factor = 5
+			}
 		}
 	}
 }
@@ -7655,13 +7754,15 @@ country_event = {
 	picture = GFX_solomon_islands_success
 	is_triggered_only = yes
 
-	immediate = { hidden_effect = { puppet = SOL } }
-
 	option = {
 		log = "[GetDateText]: [This.GetName]: solomon_islands_intervention.3.a executed"
 		name = solomon_islands_intervention.3.a
 		add_stability = 0.05
-		SOL = { remove_ideas = collapsing_state_sol_1 }
+		effect_tooltip = {
+			SOL = { remove_ideas = SOL_collapsing_state_1 }
+			newline = yes
+			puppet = SOL
+		}
 	}
 }
 
@@ -7673,30 +7774,12 @@ country_event = {
 	picture = GFX_SLO_rebels
 	is_triggered_only = yes
 
-	immediate = {
-		hidden_effect = {
-			news_event = { id = solomon_islands_intervention.6 days = 223 }
-		}
-	}
-
 	option = {
 		log = "[GetDateText]: [This.GetName]: solomon_islands_intervention.4.a executed"
 		name = solomon_islands_intervention.4.a
-		add_stability = -0.15
+		add_stability = -0.1
 		SOL = {
-			if = {
-				limit = { has_idea = collapsing_state_sol }
-				swap_ideas = {
-					remove_idea = collapsing_state_sol
-					add_idea = collapsed_state_sol
-				}
-			}
-			else = {
-				swap_ideas = {
-					remove_idea = collapsing_state_sol_1
-					add_idea = collapsed_state_sol
-				}
-			}
+			country_event = Solomon_Islands.8
 		}
 	}
 }
@@ -7711,35 +7794,46 @@ country_event = {
 	option = { name = solomon_islands_intervention.5.a }
 }
 
-#eagles take over
-news_event = {
+#sol gets loan event
+country_event = {
 	id = solomon_islands_intervention.6
 	title = solomon_islands_intervention.6.t
 	desc = solomon_islands_intervention.6.d
-	picture = GFX_SLO_civil_war
+	picture = GFX_aus_currency
 	is_triggered_only = yes
-	major = yes
 
-	immediate = {
-		hidden_effect = {
-			SOL = {
-				add_popularity = {
-					ideology = nationalist
-					popularity = 0.23
-				}
-				set_temp_variable = { rul_party_temp = 22 }
-				change_ruling_party_effect = yes
-				set_politics = {
-					ruling_party = nationalist
-					elections_allowed = no
-				}
-				remove_ideas = collapsed_state_sol
-				remove_ideas = collapsing_state_sol
-			}
+	option = {
+		name = solomon_islands_intervention.6.a
+		log = "[GetDateText]: [This.GetName]: solomon_islands_intervention.6.a executed"
+		add_stability = 0.03
+		add_timed_idea = {
+			idea = reconstruction_loans_sol
+			days = 360
+		}
+		set_temp_variable = { percent_change = 6 }
+			set_temp_variable = { tag_index = AST.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+	}
+}
+
+#sol intervention success
+country_event = {
+	id = solomon_islands_intervention.7
+	title = solomon_islands_intervention.7.t
+	desc = solomon_islands_intervention.7.d
+	picture = GFX_SLO_peacekeepers
+	is_triggered_only = yes
+
+	option = {
+		name = solomon_islands_intervention.7.a
+		log = "[GetDateText]: [This.GetName]: solomon_islands_intervention.7.a executed"
+		remove_ideas = SOL_collapsing_state_1
+		newline = yes
+		AST = {
+			puppet = SOL
 		}
 	}
-
-	option = { name = solomon_islands_intervention.6.a }
 }
 
 add_namespace = walk_for_reconciliation
@@ -8088,7 +8182,7 @@ news_event = {
 
 	trigger = {
 		tag = AST
-		NOT = { has_country_flag = aus_is_a_republic }
+		NOT = { has_completed_focus = AST_a_new_constitution }
 		NOT = { has_idea = subdued_governor_general_ast }
 		is_ai = no
 	}
@@ -8238,27 +8332,8 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: migration_event_ast.1.a executed"
 		name = migration_event_ast.1.a
-		if = {
-			limit = { has_idea = boat_arrivals_ast_3 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_3
-				add_idea = boat_arrivals_ast_2
-			}
-		}
-		else_if = {
-			limit = { has_idea = boat_arrivals_ast_2 }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast_2
-				add_idea = boat_arrivals_ast
-			}
-		}
-		else_if = {
-			limit = { has_idea = boat_arrivals_ast }
-			swap_ideas = {
-				remove_idea = boat_arrivals_ast
-				add_idea = boat_arrivals_ast_4
-			}
-		}
+		AST_increase_boat_arrivals = yes
+		newline = yes
 		add_popularity = {
 				ideology = nationalist
 				popularity = 0.03
@@ -8372,7 +8447,7 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: malaysia_solution_ast.1.a executed"
 		name = malaysia_solution_ast.1.a
 		add_political_power = 90
-		MAL = {
+		MAY = {
 			add_opinion_modifier = {
 					target = AST
 					modifier = small_increase

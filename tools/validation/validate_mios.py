@@ -214,9 +214,10 @@ NON_NAVAL_PRODUCTION_KEYS = frozenset(
 # Stats the engine gives a non-zero default, so a percentage bonus bites even
 # though no MD equipment file declares a base. Empty until one is confirmed in
 # game — an entry here silences a real finding, so it needs evidence, not a
-# hunch. The open candidates are the naval *_factor keys
-# (naval_light_gun_hit_chance_factor, naval_heavy_gun_hit_chance_factor,
-# naval_torpedo_damage_reduction_factor, naval_weather_penalty_factor).
+# hunch. The naval *_factor keys (naval_light_gun_hit_chance_factor,
+# naval_heavy_gun_hit_chance_factor, naval_torpedo_damage_reduction_factor,
+# naval_weather_penalty_factor) are not candidates: vanilla declares a base for
+# each on its hulls or modules, and MD declares none.
 ZERO_BASE_EXEMPT_STATS: FrozenSet[str] = frozenset(
     validation_config("validate_mios", "zero_base_exempt_stats")
 )
@@ -1089,7 +1090,7 @@ class Validator(BaseValidator):
                 continue
             line = line_of(m.start())
             if len(dead) == len(scope):
-                self.add_warning(
+                self.add_error(
                     "mio-bonus-no-base-stat",
                     f"equipment_bonus '{stat}' is inert: {', '.join(dead)} "
                     f"{'declares' if len(dead) == 1 else 'declare'} no base "

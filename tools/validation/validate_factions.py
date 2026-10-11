@@ -7,7 +7,7 @@ import os
 import re
 import sys
 from collections import Counter
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -41,6 +41,30 @@ IS_MANIFEST_RE = re.compile(r"\bis_manifest\s*=\s*yes\b")
 CATEGORY_RE = re.compile(r"^\s*category\s*=\s*(\w+)")
 GOAL_CATEGORIES = ("short_term", "medium_term", "long_term")
 MAX_TEMPLATE_GOALS_PER_CATEGORY = 2
+
+# Trigger blocks that keep the enclosing scope. Any other opener ends the scope walk.
+SCOPE_KEEPING_BLOCKS = frozenset(
+    {
+        "check_variable",
+        "count_triggers",
+        "custom_trigger_tooltip",
+        "custom_override_tooltip",
+        "hidden_trigger",
+        "if",
+        "else_if",
+        "else",
+        "limit",
+        "AND",
+        "OR",
+        "NOT",
+    }
+)
+# A scope-prefixed name (`ROOT.x_cache`) names its own holder, so it never matches.
+GOAL_TOKEN_RE = re.compile(
+    r"(?P<opener>[^\s{}=]+)\s*=\s*\{"
+    r"|(?P<brace>[{}])"
+    r"|(?P<has>\bhas_variable\s*=\s*)?(?<![\w.:])(?P<cache>\w+_cache)\b"
+)
 
 
 def read_file(filepath: str) -> str:
@@ -91,6 +115,34 @@ def extract_goal_categories(content: str) -> Dict[str, str]:
                     break
             depth += code.count("{") - code.count("}")
     return categories
+
+
+def find_faction_scope_cache_reads(content: str) -> List[Tuple[int, str]]:
+    """Return (line, variable) for each `*_cache` read in faction scope.
+
+    The goal caches are written on the faction leader, so a read whose nearest
+    scope-changing block is `scope:faction` finds nothing.
+    """
+    text = blank_quoted_strings(content)
+    hits = []
+    stack: List[str] = []
+    for match in GOAL_TOKEN_RE.finditer(text):
+        if match["opener"]:
+            stack.append(match["opener"])
+        elif match["brace"] == "{":
+            stack.append("")
+        elif match["brace"]:
+            if stack:
+                stack.pop()
+        elif match["has"] or (stack and stack[-1] == "check_variable"):
+            for token in reversed(stack):
+                if token in SCOPE_KEEPING_BLOCKS:
+                    continue
+                if token == "scope:faction":
+                    line = text.count("\n", 0, match.start("cache")) + 1
+                    hits.append((line, match["cache"]))
+                break
+    return hits
 
 
 def extract_default_rules_block(content: str, template_id: str) -> List[str]:
@@ -481,6 +533,32 @@ class Validator(BaseValidator):
             "Duplicate goal IDs:",
         )
 
+    def _validate_goal_cache_scope(self):
+        """Check that no goal reads a faction-leader cache from the faction scope."""
+        self._log_section("Checking faction goal cache read scope...")
+
+        results = []
+        goals_dir = self._faction_path("goals")
+        for filepath in sorted(glob.glob(os.path.join(goals_dir, "*.txt"))):
+            rel = os.path.relpath(filepath, self.mod_path)
+            for line, variable in find_faction_scope_cache_reads(read_file(filepath)):
+                results.append(
+                    (
+                        f"'{variable}' is read under scope:faction, but the goal"
+                        " caches are written on the faction leader. Read it under"
+                        " faction_leader",
+                        rel,
+                        line,
+                    )
+                )
+
+        self._report(
+            results,
+            "No goal reads a cache variable from the faction scope",
+            "Goal cache variables read under scope:faction:",
+            category="faction-goal-cache-scope",
+        )
+
     def _validate_duplicate_rules(self):
         """Check for duplicate rule IDs across files."""
         self._log_section("Checking for duplicate rule IDs...")
@@ -565,6 +643,7 @@ class Validator(BaseValidator):
         self._validate_rule_types()
         self._validate_duplicate_templates()
         self._validate_duplicate_goals()
+        self._validate_goal_cache_scope()
         self._validate_duplicate_rules()
         self._validate_upgrade_groups()
         self._check_orphaned_manifests()

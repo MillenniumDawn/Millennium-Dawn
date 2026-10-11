@@ -52,46 +52,6 @@ def _results_for(
     return validator.collected
 
 
-# --- has_flat_is_ai ---------------------------------------------------------
-
-
-def test_flat_is_ai_detected():
-    assert V.has_flat_is_ai("{\n\t\t\tis_ai = yes\n\t\t}")
-
-
-def test_single_line_is_ai_detected():
-    assert V.has_flat_is_ai("{ is_ai = yes }")
-
-
-def test_is_ai_nested_in_or_not_detected():
-    assert not V.has_flat_is_ai("{\n\t\t\tOR = {\n\t\t\t\tis_ai = yes\n\t\t\t}\n\t\t}")
-
-
-def test_is_ai_scoped_to_tag_not_detected():
-    assert not V.has_flat_is_ai("{\n\t\t\tGRE = {\n\t\t\t\tis_ai = yes\n\t\t\t}\n\t\t}")
-
-
-def test_is_ai_in_if_limit_not_detected():
-    block = "{\n\t\t\tif = {\n\t\t\t\tlimit = { is_ai = yes }\n\t\t\t}\n\t\t}"
-    assert not V.has_flat_is_ai(block)
-
-
-def test_is_ai_no_not_detected():
-    assert not V.has_flat_is_ai("{\n\t\t\tis_ai = no\n\t\t}")
-
-
-def test_commented_is_ai_not_detected():
-    assert not V.has_flat_is_ai("{\n\t\t\t# is_ai = yes\n\t\t}")
-
-
-def test_is_ai_mid_token_not_detected():
-    assert not V.has_flat_is_ai("{\n\t\t\tfoo_is_ai = yes\n\t\t}")
-
-
-def test_empty_block_not_detected():
-    assert not V.has_flat_is_ai("")
-
-
 # --- DecisionFactory.ai_only -------------------------------------------------
 
 

@@ -576,42 +576,48 @@ quarterly_inflation_calculation = {
 			is_ai = yes
 			NOT = { has_country_flag = temp_cb_rate_changed }
 		}
-		set_temp_variable = {
-			policy_inflation_reference = {
-				value = inflation_rate_var
-				max = inflation_expectations_anchor
-				multiply = 100
+		if = {
+			limit = { check_variable = { inflation_rate_var < 0 } }
+			set_temp_variable = { policy_inflation_reference = { value = inflation_rate_var multiply = 100 } }
+		}
+		else = {
+			set_temp_variable = {
+				policy_inflation_reference = {
+					value = inflation_rate_var
+					max = inflation_expectations_anchor
+					multiply = 100
+				}
 			}
 		}
 		set_temp_variable = {
-			neutral_cb_rate = {
+			ai_target_cb_rate = {
 				value = policy_inflation_reference
 				add = natural_real_interest_rate
-				clamp = { min = 1 max = 30 }
+				clamp = { min = -10 max = 30 }
 			}
 		}
-		set_temp_variable = { neutral_cb_rate_lower = { value = neutral_cb_rate subtract = 0.5 } }
-		set_temp_variable = { neutral_cb_rate_upper = { value = neutral_cb_rate add = 0.5 } }
-		# Move faster when far from neutral, or the rate takes years to follow inflation up or down.
-		set_temp_variable = { neutral_cb_rate_far_below = { value = neutral_cb_rate subtract = 5 } }
-		set_temp_variable = { neutral_cb_rate_far_above = { value = neutral_cb_rate add = 5 } }
+		set_temp_variable = { ai_target_cb_rate_lower = { value = ai_target_cb_rate subtract = 0.5 } }
+		set_temp_variable = { ai_target_cb_rate_upper = { value = ai_target_cb_rate add = 0.5 } }
+		# Move faster when far from target, or the rate takes years to follow inflation up or down.
+		set_temp_variable = { ai_target_cb_rate_far_below = { value = ai_target_cb_rate subtract = 5 } }
+		set_temp_variable = { ai_target_cb_rate_far_above = { value = ai_target_cb_rate add = 5 } }
 		# The AI stops hiking at 20, or the rate's debt interest outweighs the inflation cut. Players can go to 30.
 		if = {
 			limit = {
-				check_variable = { cb_policy_rate < neutral_cb_rate_far_below }
+				check_variable = { cb_policy_rate < ai_target_cb_rate_far_below }
 				check_variable = { cb_policy_rate < 18 }
 			}
 			add_to_variable = { cb_policy_rate = 3 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
 		}
 		else_if = {
-			limit = { check_variable = { cb_policy_rate > neutral_cb_rate_far_above } }
+			limit = { check_variable = { cb_policy_rate > ai_target_cb_rate_far_above } }
 			subtract_from_variable = { cb_policy_rate = 3 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
 		}
 		else_if = {
 			limit = {
-				check_variable = { cb_policy_rate < neutral_cb_rate_lower }
+				check_variable = { cb_policy_rate < ai_target_cb_rate_lower }
 				check_variable = { cb_policy_rate < 20 }
 			}
 			add_to_variable = { cb_policy_rate = 1 }
@@ -619,8 +625,8 @@ quarterly_inflation_calculation = {
 		}
 		else_if = {
 			limit = {
-				check_variable = { cb_policy_rate > neutral_cb_rate_upper }
-				check_variable = { cb_policy_rate > 1 }
+				check_variable = { cb_policy_rate > ai_target_cb_rate_upper }
+				check_variable = { cb_policy_rate > -10 }
 			}
 			subtract_from_variable = { cb_policy_rate = 1 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }

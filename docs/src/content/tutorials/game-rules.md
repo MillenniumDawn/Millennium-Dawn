@@ -3,169 +3,150 @@ title: Game Rules
 description: Player-oriented guide to Game Rules for Millennium Dawn
 ---
 
-This guide covers all game rules available in Millennium Dawn for customizing your gameplay experience.
+Set game rules with the **Custom Game Rules** button on the Select a Country screen. They cannot be changed once the campaign starts. This guide lists every Millennium Dawn rule by the name and group shown in game, with its options and default.
+
+Some options turn off achievements. For the rules that help performance, see the [Performance Guide](/player-tutorials/performance-guide/).
 
 ---
 
-## Game Rule Groups
+## AI Options
 
-## AI Options (`MD_AI_RULES`)
+- **God Of War Mod**: Disabled (default), Enabled. Enabled gives the AI advanced division templates and some cheats.
+- **AI Starting Political Power**: No Starting Political Power (default), 250, 500, or 1000 Political Power. Every AI country starts with that amount.
+- **Debt Wars for AI**: Enable (default), Disable. When enabled, the AI is more likely to declare war on a country that defaults on debt owed to it.
+- **AI Uses Increase Autonomy Focus**: Enable (default), Disable. When enabled, AI subjects can use the Increase Autonomy continuous focus to increase their own autonomy.
+- **Enable AI Using Attaché**: Yes (default), No. Lets the AI send attachés through diplomatic actions.
 
-Controls AI behavior and difficulty settings.
+## Peace Conferences
 
-| Rule                                       | Options          | Default | Description                                |
-| ------------------------------------------ | ---------------- | ------- | ------------------------------------------ |
-| `rule_god_of_war`                          | yes/no           | no      | Enables "God of War" AI mode               |
-| `rule_ai_starting_political_power`         | no/one/two/three | no      | AI starting political power (250/500/1000) |
-| `rule_enable_ai_debt_war`                  | yes/no           | no      | Allow AI to take on debt for war           |
-| `rule_disable_AI_using_freedom_cont_focus` | yes/no           | yes     | Enable AI use of autonomy focus            |
-| `rule_enable_AI_using_attaches`            | yes/no           | yes     | Enable AI use of military attaches         |
+- **Enable Border Gore Clean-up**: No (default), Yes. After a peace deal, copies of the same country are merged into the one with the strongest overlord. This can take up to 14 days.
+- **Enable Chaotic Peace Deals**: No (default), Yes. No limits AI claims in peace conferences to majors and faction leaders. Players are not affected.
+- **Enable Player Led Peace Conferences**: No (default), Yes. Yes lets only players make claims.
+- **Allow Conditional Peace Deals**: Yes (default), No. See [Conditional Peace Deals](/player-tutorials/conditional-peace-deals/).
+- **Allow AI Conditional Peace Offers**: No (default), Yes. Yes lets the AI propose conditional peace when it judges a war lost or stalemated.
 
-## Peace Conferences (`MD_PEACE_DEALS`)
+## Peace Score Distribution
 
-Controls peace conference and annexation behavior.
+These three rules come from the base game.
 
-| Rule                  | Options | Default | Description                            |
-| --------------------- | ------- | ------- | -------------------------------------- |
-| `rule_md_annex`       | yes/no  | no      | Allow direct annexation in peace deals |
-| `allow_chaotic_PC`    | yes/no  | no      | Enable chaotic peace conferences       |
-| `allow_player_led_PC` | yes/no  | no      | Allow player-led peace conferences     |
-| `allowed_CPD`         | yes/no  | yes     | Allow conditional peace deals          |
+- **Puppets to Overlord**: Yes (default), No.
+- **Faction Members to Faction Leader**: No (default), Yes.
+- **Redistribute low scores**: No (default), Yes.
 
-## Focus Tree Options (`MD_FOCUS_TREE_RULES`)
+## Focus Tree Options
 
-Country-specific focus tree options and alternate paths.
+- **Enable Salafist Branch**: No (default), Yes. No opens the Salafist branch of the generic tree to countries that follow Islam. Yes opens it to every country.
+- **Taliban Insurgency** (Afghanistan): Historical (default), Contained, Relentless. Contained halves how fast the Taliban rebuild. Relentless raises it by half.
+- **Northern Alliance Uprising** (Afghanistan): Yes (default), No. Yes lets the Northern Alliance rise again a few months after a Taliban victory.
 
-| Rule                   | Options | Default | Description                     |
-| ---------------------- | ------- | ------- | ------------------------------- |
-| `rule_salafist_branch` | yes/no  | no      | Enable/disable Salafist content |
+## Flags & Formable Nations
 
-## Flags & Formable Nations (`MD_FORMABLE_RULES`)
+- **Disable Formable Nations**: No (default), Yes. See [Formable Nations](/player-tutorials/formable-nations/).
+- **Allow Edgy Flags**: No (default), Yes. Yes allows the more controversial flag options.
 
-Controls special nation formation options.
+## Organization Options
 
-| Rule                            | Options | Default | Description                  |
-| ------------------------------- | ------- | ------- | ---------------------------- |
-| `rule_disable_formable_nations` | yes/no  | no      | Disable all formable nations |
-| `allow_edgy_flags`              | yes/no  | no      | Allow alternate flag designs |
+- **Disable The EU**: No (default), Yes. Yes removes every country from the European Union.
+- **European Union Voting Cooldown**: 1 Day, 60 Days, 90 Days, 120 Days (default), 180 Days, 210 Days. The 1 Day option is for testing.
+- **EU Behavior**: Default (default), Expansion Focus. Expansion Focus makes the EU prioritize enlargement laws.
+- **Enable AI EU End Game Paths**: Yes (default), No. Lets the AI pursue the European Federation or the United States of Europe.
+- **Disable NATO**: No (default), Yes.
+- **Disable CSTO**: No (default), Yes.
 
-## Organization Options (`MD_ORGANISATION_RULES`)
+Disabling an organization removes content. See [Larger Cuts That Remove Content](/player-tutorials/performance-guide/#larger-cuts-that-remove-content) and the [EU Tutorial](/player-tutorials/eu-tutorial/).
 
-Controls major international organizations.
+## Influence System Options
 
-| Rule                | Options | Default | Description            |
-| ------------------- | ------- | ------- | ---------------------- |
-| `rule_disable_eu`   | yes/no  | no      | Disable European Union |
-| `rule_disable_nato` | yes/no  | no      | Disable NATO           |
-| `rule_disable_csto` | yes/no  | no      | Disable CSTO           |
+- **Spread Influence Amount Gain**: 0.5%, 1%, 1.5% (default), 2%, 3%, 4%. Influence gained from each spread action.
+- **Spread Influence Cooldown**: No Cooldown, 14 Days, 30 Days (default), 60 Days.
+- **Investment Influence Gain**: 0.5%, 1%, 1.5% (default), 2%. Influence gained when a country accepts your investment.
+- **Investment Influence Gain Cooldown**: No Cooldown, 14 Day Cooldown (default), 30 Day Cooldown. You can still invest during the cooldown, but you gain no influence.
+- **Enable Monthly Domestic Independence Growth Tick**: Yes (default), No.
+- **Monthly Domestic Independence Growth Tick Amount**: 0.05% (default), 0.10%, 0.15%.
+- **Disable AI Influence Puppeting**: No (default), Yes. Yes stops the AI from making puppets through the influence system.
+- **Disable Coup Contest Events**: No (default), Yes. Yes stops major foreign influencers from being asked how to respond when a coup succeeds in a country they are invested in.
+- **Disable Aggressive Influence Features for Western Outlook**: No (default), Yes. Yes disables the influence coup and influence puppet actions for Western countries.
 
-**EU Voting Rules**
+See the [Influence Guide](/player-tutorials/influence-guide/).
 
-- `rule_european_union_voting_limits`: Cooldown between votes (60-210 days)
+## Optimization & Performance
 
-## Influence System Options (`MD_INFLUENCE_RULES`)
+- **Allow Multiplayer Optimizations**: No (default), Yes. Yes lets players merge countries in a region to improve performance.
+- **Enable AI Division Limiter**: Yes (default), No, Potato Edition. Potato Edition limits AI divisions further.
+- **Disable GDP Graph**: No (default), Yes.
+- **Remove Nations**: No (default), Tiny Nations (Microstates), Smaller Nations, Extended Removal. Each step removes more small countries at game start.
+- **Disable generals randomly getting killed in battles**: No (default), Yes.
+- **Free Factories for Players**: Off (default), 1, 2, 3, or 5 Civilian and Military. Every human player gets that many offsite factories of each kind at game start.
+- **MP Enhancements**: No (default), Yes. Yes speeds the game up for multiplayer and lets every country create a faction without the Power Ranking requirement.
+- **Enable Resource Storage System**: Yes (default), No. No removes raw material storage and the daily work it needs.
 
-Controls influence system mechanics.
+## Miscellaneous Rules
 
-| Rule                                             | Options               | Default | Description                        |
-| ------------------------------------------------ | --------------------- | ------- | ---------------------------------- |
-| `rule_spread_influence_amount_gain`              | 0.5%/1%/1.5%/2%/3%/4% | 1.5%    | Spread influence gain rate         |
-| `rule_spread_influence_cooldown_limits`          | 0/14/30/60 days       | 30 days | Influence action cooldown          |
-| `rule_invest_influence_amount_gain`              | 0.5%/1%/1.5%/2%       | 1.5%    | Invest influence gain rate         |
-| `rule_influence_cooldown_limits`                 | 0/14/30 days          | 14 days | Invest influence cooldown          |
-| `rule_monthly_domestic_independence_tick`        | yes/no                | yes     | Monthly domestic independence gain |
-| `rule_monthly_domestic_independence_gain_amount` | 0.5/1.0/1.5           | 0.5     | Domestic independence amount       |
-| `rule_disable_ai_influence_puppeting`            | yes/no                | no      | Disable AI influence puppeting     |
-| `rule_disable_western_outlook_features`          | yes/no                | no      | Disable Western Outlook features   |
+- **Rail-Roaded World War**: No (default), Yes. Yes limits the sandbox and pushes the world toward a world war by a set year.
+- **Enable MD Ledger**: Yes (default), No.
+- **Enable MD Colored Puppets**: Yes (default), No. Yes recolors a puppet to match its overlord.
+- **Historical Events Trigger**: No (default), Yes. Yes makes certain events fire within the month of their historical date.
+- **Corporate History**: Full (default), Outcomes Only, Off. Outcomes Only applies the historical route without showing its event choices or one-time rewards.
+- **Enable Aircraft Carrier Only Raids**: No (default), Yes.
+- **Enforce Doctrine Reach on Raids**: Yes (default), No. Yes makes your intervention doctrine limit which countries you can raid in peacetime. War always bypasses it.
+- **Player Energy Difficulty**: Very Easy, Easy, Normal (default), Hard, Very Hard. Each step changes energy gain and energy use by 25%.
+- **AI Energy Difficulty**: Very Easy, Easy, Normal (default), Hard, Very Hard. The same steps, applied to the AI.
+- **Enable Energy Load Sharing**: Yes (default), No. Lets countries buy and sell energy with neighbors when one runs a deficit.
+- **Income from Energy Load Sharing**: $0.10 per GW (default), $0.25, $0.50, $0.75.
+- **Enable MD Help GUI**: No (default), Yes.
+- **Starting National Debt**: Historical National Debt (default), Remove Player Debt, Remove AI Debt, Remove Everyone's Debt.
+- **Internal Faction Opinion Monthly Tick Amount**: 0.00, 0.10, 0.25, 0.50 (default), 0.75 Opinion Monthly.
+- **Internal Faction Cost Reduction**: No (default), Yes. Yes lowers the cost of switching internal factions.
+- **Enable Investment Bankruptcy Lock**: Yes (default), No. Yes blocks sending investments while the Bankruptcy Incoming mission is active.
+- **Return on Investment Cap**: 10%, 15%, 20% (default), 25%. Caps the yearly return from international investments.
+- **Disable Muslim Brotherhood Civil War**: No (default), Yes.
+- **Futuristic Special Project**: Allowed (default), Disabled.
+- **Nuclear Weapons Research**: Allowed (default), Players Only, Disabled. Disabled hides nuclear weapon technologies and projects for everyone. Weapons granted at game start are kept.
+- **Fictional & Meme Content**: No (default), Yes. Yes enables joke and non-historical content.
 
-## Optimization & Performance (`MD_OPTIMISATION_RULES`)
+See the [Economy Guide](/player-tutorials/economy-guide/), the [Investments Guide](/player-tutorials/investments-guide/), and [Internal Factions](/player-tutorials/internal-factions/).
 
-Performance-related settings.
+## Cheat Options
 
-| Rule                                   | Options               | Default | Description                        |
-| -------------------------------------- | --------------------- | ------- | ---------------------------------- |
-| `allow_mp_optimizations`               | yes/no                | no      | Enable multiplayer optimizations   |
-| `allow_division_limiter`               | yes/no/potato_edition | yes     | Division count limiter             |
-| `remove_mp_states`                     | yes/no                | no      | Remove small nations               |
-| `rule_disable_generals_getting_killed` | yes/no                | no      | Prevent general deaths             |
-| `rule_free_factories_amount`           | off/1/2/3/5           | off     | Free factories to players at start |
-| `rule_allow_MP_enhancements`           | yes/no                | no      | MP enhancements                    |
+- **Allow Cheat Decisions**: No (default), Yes. See [Unique Cheats](/player-tutorials/unique-cheats/).
+- **(Multiplayer) Allow Toggling Cheat Decisions Globally**: No (default), Yes. Yes lets any country toggle the cheat decisions for everyone. It also needs Allow Cheat Decisions.
+- **Disable Public War Weariness**: No (default), Yes.
+- **Instant War Goal Justification (Players Only)**: No (default), Yes. Yes gives every human player the Case for War spirit, which removes the justification time.
 
-## Nuclear Rules (`MD_NUCLEAR_RULES`)
+## Randomize Game Rules
 
-Nuclear weapons settings.
+- **Randomize Outlooks**: No (default), Yes.
+- **Randomize Religions**: No (default), Yes.
+- **Randomize Internal Factions**: No (default), Yes.
 
-| Rule                        | Options | Default | Description                        |
-| --------------------------- | ------- | ------- | ---------------------------------- |
-| `allow_nuclear_first_use`   | yes/no  | no      | Allow first use of nuclear weapons |
-| `allow_nuclear_retaliation` | yes/no  | yes     | Allow nuclear retaliation          |
+## Custom Scenarios
 
-## Miscellaneous Rules (`MD_RULES`)
+- **Enable Zombie Game Mode**: No (default), Yes.
+- **Zombie Game Mode Difficulty**: Normal (default), Hard, Extreme, Insane.
+- **Zombie Spawn Location**: India (default), Central Africa, East Asia, Multiple Locations.
+- **Zombie Spawn Delay**: No Delay (default), 1 Year, 2 Years, 3 Years.
+- **Anti-Zombie Coalition Faction**: Enabled (default), Disabled.
+- **Anti-Zombie Coalition Joining Faction**: Default Faction Behavior (default), No Majors, All Majors join the Coalition.
+- **Event Horizon Scenario**: Deactivated (default), Blitz - 2001, Casual - 2012, Delayed - 2020. Once the megacountries form, your focus tree is replaced with the scenario tree.
 
-Miscellaneous gameplay options.
+## AI Behavior
 
-| Rule                     | Options | Default | Description               |
-| ------------------------ | ------- | ------- | ------------------------- |
-| `allow_enable_world_war` | yes/no  | no      | Allow world war mechanics |
-| `allow_enable_ledger`    | yes/no  | yes     | Enable ledger feature     |
-| `allow_colored_puppets`  | yes/no  | no      | Colored puppet borders    |
-| `historic_events`        | yes/no  | no      | Enable historical events  |
-| `allow_enable_help_gui`  | yes/no  | no      | Enable help GUI           |
+Each country with scripted paths has its own rule in the **AI Behavior** group. The rule lists that country's historical and alternate paths. Most also offer two shared options:
 
-**Energy Difficulty Rules**
+- **Random Path**: the AI draws one of the country's paths at random when the game begins. You are not told which.
+- **No Path**: the AI follows no scripted path and picks its focuses freely.
 
-- `rule_player_energy_difficulty`: Player energy difficulty (very_easy to very_hard)
-- `rule_AI_energy_difficulty`: AI energy difficulty
-- `rule_enable_energy_load_sharing`: Energy load sharing between states
+Countries with an AI Behavior rule: Abkhazia, Afghanistan, Algeria, Armenia, Artsakh, Australia, Azerbaijan, Bahrain, Belarus, Bolivia, Bosnia and Herzegovina, Botswana, Brazil, Bulgaria, Canada, Cascadia, Chechnya, China, Comoros, Cuba, Czech Republic, Denmark, Egypt, Estonia, Ethiopia, Fiji, Finland, France, Free States of America, Georgia, Germany, Greece, Greenland, Hezbollah, Hong Kong, India, Indonesia, Iran, Iraq, Israel, Italy, Japan, Kosovo, Lakota, Libya, Liechtenstein, Montenegro, Myanmar, Netherlands, New England, Nigeria, North Korea, Norway, Poland, Romania, Russia, San Marino, Saudi Arabia, Singapore, South Korea, South Ossetia, Southern Republic of America, Spain, Sweden, Switzerland, Syria, Tajikistan, Thailand, Transnistria, Türkiye, Ukraine, United Kingdom, United States, Venezuela, and Yugoslavia.
 
-**Economic Rules**
-
-- `rule_starting_debt_rule`: Who gets starting debt (normal/player_only/ai_only/everyone)
-- `rule_internal_faction_tick_amount`: Internal faction tick rate
-- `rule_internal_faction_cost_reduction`: Faction cost reduction
-
-## Cheat Options (`MD_CHEAT_RULES`)
-
-Debug and cheat-related options.
-
-| Rule                             | Options | Default | Description                    |
-| -------------------------------- | ------- | ------- | ------------------------------ |
-| `allow_cheat_decisions`          | yes/no  | no      | Enable cheat decisions         |
-| `allow_toggling_cheat_decisions` | yes/no  | no      | Allow toggling cheats mid-game |
-| `rule_disable_anti_bully`        | yes/no  | no      | Disable anti-bully protection  |
-
-## Randomize Game Rules (`MD_RANDOM_RULES`)
-
-Chaos mode options for randomized gameplay.
-
-| Rule                               | Options | Default | Description                 |
-| ---------------------------------- | ------- | ------- | --------------------------- |
-| `rule_randomize_ideologies`        | yes/no  | no      | Randomize all ideologies    |
-| `rule_randomize_religion`          | yes/no  | no      | Randomize religions         |
-| `rule_randomize_internal_factions` | yes/no  | no      | Randomize internal factions |
+Belarus, Georgia, and Transnistria have extra rules for specific storylines.
 
 ---
 
-## Vanilla Rules
+## Base Game Rules
 
-Millennium Dawn inherits many vanilla HOI4 game rules:
+Millennium Dawn keeps these base game rules. They work as they do in Hearts of Iron IV.
 
-## Foreign Policy
-
-- `allow_wargoals`: Wargoal availability
-- `allow_access`: Military access rules
-- `allow_release_nations`: Nation release rules
-- `allow_licensing`: Equipment licensing
-- `allow_lend_lease`: Lend-lease rules
-- `allow_volunteers`: Volunteer rules
-- `allow_guarantees`: Guarantee independence
-
-## Covert Actions
-
-- `allow_coups`: Coup availability
-- `allow_party_boosting`: Party boosting
-
-## Gameplay
-
-- `allow_paratroopers`: Paratrooper availability
-- `maximum_fort_level`: Fort level cap
+- **Foreign Policy**: Wargoals, Military Access and Docking Rights, Release Nations, Production Licenses, Lend Lease, Volunteers, Allow Recalling of Intervention Forces, Allow Enforce Peace, Guarantee Independence, Revoke Guarantees, Leave Faction, Kick From Faction, Take Over Faction Leadership.
+- **UI**: Show obsolete branches in Focus Tree.
+- **Covert Actions**: Coups, Boosting Party Popularity.
+- **Gameplay Rules**: Paradrops, Scorched Earth, Maximum Fort Level.

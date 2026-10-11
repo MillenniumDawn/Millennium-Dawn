@@ -3,13 +3,10 @@
 from __future__ import annotations
 
 import json
-import re
 
 import ai_path_report as report
 import pytest
-from shared.paths import REPO_ROOT
 from shared.suite import write_under
-from shared_utils import PARTY_SLOT_NAMES
 
 
 def parse(body: str, tag: str = "DEN"):
@@ -793,25 +790,6 @@ class TestWalker:
         assert report.resolve_branch(chain, (2024, 7, 5)) is chain[0]
         assert report.resolve_branch(chain, (2021, 1, 1)) is chain[1]
         assert report.resolve_branch(chain, (2005, 5, 5)) is chain[2]
-
-
-class TestPartyIndices:
-    def test_indices_match_the_runtime_party_localisation(self):
-        source = (
-            REPO_ROOT
-            / "common/scripted_localisation/01_politics_scripted_localisation.txt"
-        )
-        text = source.read_text(encoding="utf-8")
-        pairs = re.findall(
-            r"party_index\s*=\s*(\d+).*?localization_key\s*=\s*"
-            r'"\[([A-Za-z0-9_-]+)_L\]"',
-            text,
-            re.S,
-        )
-        runtime_names = {int(slot): name for slot, name in pairs}
-
-        assert len(pairs) == 24
-        assert runtime_names == PARTY_SLOT_NAMES
 
 
 class TestLocalisation:
