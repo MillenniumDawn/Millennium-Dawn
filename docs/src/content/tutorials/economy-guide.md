@@ -354,7 +354,7 @@ Millennium Dawn models a currency system where each country has a **currency str
 
 ### Reserve Currency
 
-Choose your reserve currency through the **Reserve Currency** law in the Politics window. This choice affects investment returns, trade bonuses, and whether debt interest payments receive an exchange-rate adjustment. The available options include:
+Choose your reserve currency through the **Reserve Currency** law in the Politics window. This choice affects investment returns, trade bonuses, foreign influence defence, and whether debt interest payments receive an exchange-rate adjustment. The available options include:
 
 | Currency             | Typical Adopters                           |
 | -------------------- | ------------------------------------------ |
@@ -368,6 +368,8 @@ Choose your reserve currency through the **Reserve Currency** law in the Politic
 | Domestic Reserve     | Isolated or autarkic states                |
 
 With a reserve currency, weekly debt interest is multiplied by **1 / currency strength**, capped at **2×**. A strength of 0.5 doubles the payment; a strength of 2.0 halves it. This changes the payment, not the displayed annual interest rate.
+
+Holding **US Dollars** leaves a nation 3% more open to American influence, and holding **Chinese Yuan** does the same for Chinese influence. **Domestic Reserve** instead grants 3% foreign influence defence.
 
 Choosing **Domestic Reserve** keeps that multiplier at **1×** and grants a small political power bonus, but removes the reserve currency ROI and trade bonuses that come from being part of a major currency network. Switching to a reserve currency restores the exchange-rate adjustment; switching back to Domestic Reserve removes it.
 
