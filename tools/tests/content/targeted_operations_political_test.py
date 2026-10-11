@@ -1,5 +1,7 @@
 import json
 import re
+import subprocess
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -544,7 +546,45 @@ def test_maduro_retirement_has_an_idempotent_venezuelan_successor():
     )
     assert 'name = "Delcy Rodríguez"' in helper
     assert "ideology = anarchist_communism" in helper
-    portrait = ROOT / "gfx/leaders/generic_politicians/latin_female_001.dds"
-    if not portrait.exists() and not (ROOT / "gfx").exists():
-        pytest.skip("game content not checked out (sparse checkout)")
-    assert portrait.is_file()
+    portrait = "gfx/leaders/generic_politicians/latin_female_001.dds"
+    assert f'picture = "{portrait}"' in helper
+    image = subprocess.run(
+        ["git", "-C", str(ROOT), "show", f":{portrait}"],
+        check=True,
+        capture_output=True,
+        timeout=30,
+    ).stdout
+    assert image.startswith(b"DDS ")
+
+
+@pytest.mark.parametrize(
+    ("image", "error"),
+    [
+        (b"DDS fixture", None),
+        (None, subprocess.CalledProcessError),
+        (b"not a DDS", AssertionError),
+    ],
+)
+def test_successor_portrait_checks_the_index_in_sparse_checkouts(
+    tmp_path, monkeypatch, image, error
+):
+    source = "common/scripted_effects/VEN_political_leaders.txt"
+    destination = tmp_path / source
+    destination.parent.mkdir(parents=True)
+    with destination.open("w", encoding="utf-8", newline="") as stream:
+        stream.write((ROOT / source).read_text(encoding="utf-8"))
+    subprocess.run(["git", "init", "-q", str(tmp_path)], check=True, timeout=30)
+    portrait = tmp_path / "gfx/leaders/generic_politicians/latin_female_001.dds"
+    if image is not None:
+        portrait.parent.mkdir(parents=True)
+        portrait.write_bytes(image)
+        subprocess.run(
+            ["git", "-C", str(tmp_path), "add", str(portrait)], check=True, timeout=30
+        )
+        portrait.unlink()
+    monkeypatch.setattr(sys.modules[__name__], "ROOT", tmp_path)
+    if error is None:
+        test_maduro_retirement_has_an_idempotent_venezuelan_successor()
+    else:
+        with pytest.raises(error):
+            test_maduro_retirement_has_an_idempotent_venezuelan_successor()

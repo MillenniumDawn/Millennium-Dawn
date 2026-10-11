@@ -5,7 +5,7 @@ description: "Complete list of formable nations in Millennium Dawn, including re
 
 Millennium Dawn has a formable nations system that allows players to unite countries into larger political entities. Formable nations are created through the in-game decision system, where you integrate member states one by one.
 
-Formable nations can be toggled on or off via the **Game Rules** menu at game start. A rule also controls whether multiple players can form the same nation simultaneously.
+Formable nations can be turned off at game start with the **Disable Formable Nations** game rule.
 
 ## How Formation Works
 
@@ -95,6 +95,5 @@ The forming nation must hold at least regional power status. Other Arab nations 
 ## Notes
 
 - Formable nations use **cosmetic tags**, meaning your country keeps its original tag for gameplay purposes but displays the new name and flag.
-- The formable nations game rule must be enabled (it is by default).
-- A separate game rule controls whether multiple countries can form the same nation in one game.
+- The **Disable Formable Nations** game rule must be left on No, its default.
 - Some formable nations (like Iberia) have additional restrictions tied to specific focus tree paths.
