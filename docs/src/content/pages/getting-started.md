@@ -66,6 +66,7 @@ The mod introduces several new mechanics:
 ### Performance
 
 - The mod is resource-intensive due to its complexity
+- Set the recommended Game Rules in the [Performance Guide](/player-tutorials/performance-guide/) before you start a campaign. They cannot be changed afterwards
 - Consider reducing graphics settings if experiencing lag
 - Close other applications while playing
 
