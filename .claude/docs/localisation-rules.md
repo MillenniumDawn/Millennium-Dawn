@@ -137,8 +137,10 @@ rewrites:
 - `loc-tripled-letter`: three identical letters in a lowercase word.
 - `loc-placeholder`: a value that is only `TODO`, `TBD`, `TDA`, `WIP`, or `PLACEHOLDER`.
 - `loc-dangling-description`: a description that ends without punctuation on a word
-  like `the`, `of`, or `with`. Read it before adding a period. A period on cut-off text
-  is not a fix.
+  like `the`, `of`, or `with`. Event descriptions are identified by their `desc =`
+  references, including `text =` in conditional `desc` blocks, not by a `.d` suffix.
+  Other descriptions use `_desc`. Read the text before adding a period. A period on
+  cut-off text is not a fix.
 
 Reviewed exceptions live in `validation_config.json` under `validate_localisation`.
 Every entry needs a reason. Do not exempt a whole file or a placeholder to clear a

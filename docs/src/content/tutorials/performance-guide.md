@@ -16,7 +16,7 @@ This guide does not recommend:
 - Disabling the United Nations system
 - Removing core gameplay systems
 
-These systems are central to Millennium Dawn's geopolitical gameplay. The recommendations below improve performance while keeping them enabled.
+These systems are central to Millennium Dawn's geopolitical gameplay. The recommended rules below improve performance while keeping them enabled. Options that do remove content are listed apart, under [Larger Cuts That Remove Content](#larger-cuts-that-remove-content).
 
 **NOTE**
 If your computer has weak single-core performance and struggles with vanilla Hearts of Iron IV, it will struggle significantly more with Millennium Dawn. The development team cannot fix this; it must be handled by the Paradox Interactive development team.
@@ -52,3 +52,26 @@ The Resource Storage System is relatively minor in the grand scheme of Millenniu
 ### Enable MD Ledger: No
 
 The Ledger, much like the GDP Graph, is purely for display and provides long-form data and information about the world at large. Disabling the MD Ledger does not reduce the gameplay experience; it only limits the easily accessible information provided to the player. Turning it off reduces the performance drain on monthly ticks, yielding around a 2-4% overall improvement.
+
+## Larger Cuts That Remove Content
+
+Use these only when the recommended rules are not enough. Each one switches off a whole system, so you trade content for speed. The team has not benchmarked them, so this guide gives no percentages and cannot promise a gain. Try one at a time and compare.
+
+### Organization Options
+
+These three rules sit under **Organization Options**. They apply once, when the game starts, and cannot be undone in that save.
+
+- **Disable The EU: Yes** removes every country from the European Union. Members lose the European Union Member and Euro spirits and switch to the Domestic Reserve currency law. EU voting, membership applications, and the EU end-game paths are switched off.
+- **Disable NATO: Yes** dissolves the NATO faction. Members lose the NATO Member spirit, NATO technology sharing, and their opinion bonus with each other. The Major Non-NATO Ally spirit is removed and the NATO decisions are hidden.
+- **Disable CSTO: Yes** dissolves the CSTO faction. Members lose the CSTO Member spirit and CSTO technology sharing, and the CSTO decisions are hidden.
+
+Focuses and decisions that depend on one of these organizations are skipped or unavailable. This matters most for European countries, the United States, and Russia, whose content leans on them. Pick a country that does not rely on the organization you disable.
+
+### Expansions
+
+Expansions are switched off in the Hearts of Iron IV launcher, not in Game Rules. Two of them add systems that run for the whole game:
+
+- **La Résistance** adds intelligence agencies, operatives, and operations. Without it you lose espionage, including the Millennium Dawn operations built on it.
+- **No Compromise, No Surrender** adds naval headquarters and naval supply hubs, which Millennium Dawn places in dozens of states at the start. Without it you also lose the cruise missile strike on naval headquarters and the Forbidden City and Tokyo Imperial Palace landmarks.
+
+Millennium Dawn runs without either expansion. Change your expansions before starting a new game, not in the middle of a campaign.

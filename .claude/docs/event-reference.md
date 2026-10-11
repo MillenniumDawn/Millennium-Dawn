@@ -59,6 +59,11 @@ desc = {
 }
 ```
 
+The reference determines the string's role, not its suffix. `desc = KEY`, or
+`text = KEY` inside a `desc` block, selects the description. `name = KEY` inside an
+`option` selects an option label. A `.d` key can name option D when the description
+uses another key, such as `.desc`.
+
 ## Cost-aware AI weights
 
 An option that charges the country (treasury, debt, a tax rate change, political power,
