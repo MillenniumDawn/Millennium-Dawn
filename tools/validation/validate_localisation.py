@@ -12,7 +12,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Dict, Iterator, List, Optional, Set, Tuple, Union
+from typing import AbstractSet, Dict, Iterator, List, Optional, Set, Tuple, Union
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -321,7 +321,34 @@ _SPACED_EN_DASH_EXEMPTIONS = frozenset(
 _SPACED_EN_DASH_RE = re.compile(r"(?<!\d) \u2013 |(?<=\d) \u2013 (?!\d)")
 
 
-def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
+def _event_description_keys(text: str) -> Set[str]:
+    keys: Set[str] = set()
+    for event_type, _, event_body in iter_statements(strip_comments(text)):
+        if event_body is None or event_type not in (
+            "country_event",
+            "news_event",
+            "state_event",
+            "unit_leader_event",
+            "operative_leader_event",
+        ):
+            continue
+        for field, value, description in iter_statements(event_body):
+            if field != "desc":
+                continue
+            if value:
+                keys.add(value)
+            elif description is not None:
+                keys.update(
+                    value
+                    for field, value, _ in iter_statements(description)
+                    if field == "text" and value
+                )
+    return keys
+
+
+def _prose_findings(
+    key: str, value: str, event_description_keys: AbstractSet[str]
+) -> Iterator[Tuple[str, str]]:
     if value in _PLACEHOLDER_VALUES:
         yield "loc-placeholder", f"{key}: placeholder value '{value}' needs finished text"
     # Runtime text is opaque, not empty; deleting it invents adjacency and endings.
@@ -352,8 +379,9 @@ def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
         previous = match
         previous_folded = folded
     if (
-        key.endswith(("_desc", ".d"))
+        (key.endswith("_desc") or key in event_description_keys)
         and previous is not None
+        and (previous.start() == 0 or prose[previous.start() - 1] not in "-–")
         and previous.group().lower() in _DANGLING_WORDS
         and not prose[previous.end() :].strip()
         and f"{key}:{previous.group().lower()}" not in _DANGLING_DESCRIPTION_EXEMPTIONS
@@ -364,7 +392,9 @@ def _prose_findings(key: str, value: str) -> Iterator[Tuple[str, str]]:
         )
 
 
-def _scan_prose_text(text: str, basename: str) -> List[Issue]:
+def _scan_prose_text(
+    text: str, basename: str, event_description_keys: AbstractSet[str] = frozenset()
+) -> List[Issue]:
     results: List[Issue] = []
     for line_idx, key, value in _iter_loc_values(text):
         for _ in range(value.count("\u2014")):
@@ -411,7 +441,7 @@ def _scan_prose_text(text: str, basename: str) -> List[Issue]:
                     line=line_idx + 2,
                 )
             )
-        for category, message in _prose_findings(key, value):
+        for category, message in _prose_findings(key, value, event_description_keys):
             results.append(
                 Issue(
                     severity=Severity.WARNING,
@@ -940,7 +970,9 @@ def _scan_yaml_text(text: str, filename: str) -> List[Issue]:
     ]
 
 
-def _scan_shared_yml_file(args) -> Tuple:
+def _scan_shared_yml_file(
+    args, *, event_description_keys: AbstractSet[str] = frozenset()
+) -> Tuple:
     """Run every yml check after one read; YAML checks never use content exemptions."""
     filename, valid_colors, skip_content, relative_path = args
     raw = read_text_strict(filename)
@@ -954,7 +986,7 @@ def _scan_shared_yml_file(args) -> Tuple:
         _scan_syntax_text(text, basename, valid_colors),
         _scan_mandatory_text(text, basename),
         _scan_typos_text(text, basename),
-        _scan_prose_text(text, basename),
+        _scan_prose_text(text, basename, event_description_keys),
         _scan_var_refs_text(raw, basename),
         _scan_subst_keys_text(text),
         yaml_issues,
@@ -1173,6 +1205,18 @@ class Validator(BaseValidator):
         self._log_section("Sharing per-file reads across localisation checks...")
 
         yml_files = self._get_yml_files()
+        event_description_keys: Set[str] = set()
+        if yml_files:
+            for filename in self._collect_files(
+                ["events/**/*.txt"], ignore_staged=True
+            ):
+                event_description_keys.update(
+                    _event_description_keys(read_text_strict(filename))
+                )
+        scan = functools.partial(
+            _scan_shared_yml_file,
+            event_description_keys=frozenset(event_description_keys),
+        )
         valid_colors = get_all_colors(self.mod_path)
         args_list = [
             (
@@ -1202,7 +1246,7 @@ class Validator(BaseValidator):
             var_refs,
             subst,
             yaml_issues,
-        ) in self._pool_map(_scan_shared_yml_file, args_list, chunksize=10):
+        ) in self._pool_map(scan, args_list, chunksize=10):
             brackets_all.extend(brackets)
             syntax_tagged.extend(pairs)
             mandatory_all.extend(mandatory)
