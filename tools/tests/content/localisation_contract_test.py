@@ -119,6 +119,13 @@ def test_text_only_edit_keeps_the_contract():
     assert contract_changes(before, after) == set()
 
 
+def test_loading_drill_master_quotation_is_escaped():
+    value = _loc("replace/replaced_from_vanilla_traits_l_english.yml")[
+        "loading_drill_master_desc"
+    ]
+    assert value == r"§L\"Shoot them again, they're not dead yet!\"§!"
+
+
 @pytest.mark.parametrize(
     "before, after, expected",
     [
@@ -293,7 +300,9 @@ def test_ace_event_roles_match_the_on_action_scopes(on_action):
     event = _event_block(ACE_EVENTS, event_id)
     roles = {"fallen": fallen, "winner": winner}
     for field in ("title", "desc"):
-        key = re.search(rf"\b{field}\s*=\s*(\S+)", event).group(1)
+        match = re.search(rf"\b{field}\s*=\s*(\S+)", event)
+        assert match, (event_id, field)
+        key = match.group(1)
         assert role_violations(ACES[key], ACE_ANCHORS[key], roles) == [], key
 
 
