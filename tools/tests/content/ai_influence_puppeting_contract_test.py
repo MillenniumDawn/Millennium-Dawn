@@ -4,7 +4,7 @@ import re
 
 import pytest
 from shared.paths import REPO_ROOT
-from shared_utils import iter_statements, read_script
+from shared_utils import iter_statement_ops, iter_statements, read_script
 
 TRIGGERS = read_script(
     str(REPO_ROOT / "common/scripted_triggers/00_influence_scripted_triggers.txt")
@@ -20,8 +20,12 @@ def _block(script, name):
 
 def _shape(script):
     return [
-        (key, _shape(body) if body is not None else value)
-        for key, value, body in iter_statements(script)
+        (
+            (key, _shape(body) if body is not None else value)
+            if operator == "="
+            else (key, operator, value)
+        )
+        for key, operator, value, body in iter_statement_ops(script)
     ]
 
 
@@ -60,7 +64,22 @@ def test_ai_and_player_puppeting_share_the_eighty_percent_boundary(
         (
             "99_AI_influence_scripted_effects.txt",
             "AI_influence_country_selection_calculation",
-            [("add_to_temp_variable", [("AI_country_score", "100")])],
+            [
+                ("add_to_temp_variable", [("AI_country_score", "50")]),
+                (
+                    "if",
+                    [
+                        (
+                            "limit",
+                            [
+                                ("PREV", [("has_navy_size", [("size", "<", "1")])]),
+                                ("NOT", [("is_on_same_continent_as", "PREV")]),
+                            ],
+                        ),
+                        ("add_to_temp_variable", [("AI_country_score", "-20")]),
+                    ],
+                ),
+            ],
         ),
         (
             "00_influence_scripted_effects.txt",
