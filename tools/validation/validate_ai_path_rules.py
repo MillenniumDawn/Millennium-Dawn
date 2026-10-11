@@ -9,9 +9,13 @@ least a `HISTORICAL` option and a `default = { }` block to steer it. Shared tree
 
 import glob
 import re
+import sys
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+
+from shared_utils import validation_config
 from validator_common import (
     BaseValidator,
     extract_block_from_text,
@@ -30,6 +34,9 @@ STATE_OWNER_RE = re.compile(r"^\s*owner\s*=\s*([A-Z0-9]{3})\b", re.MULTILINE)
 RULE_RE = re.compile(r"^([A-Z0-9]{3})_ai_behavior\s*=\s*\{", re.MULTILINE)
 OPTION_NAME_RE = re.compile(r"\boption\s*=\s*\{\s*name\s*=\s*(\w+)")
 DEFAULT_BLOCK_RE = re.compile(r"\bdefault\s*=\s*\{")
+EXEMPT_TREE_FILES = set(
+    validation_config("validate_ai_path_rules", "exempt_tree_files")
+)
 
 
 def _tree_owner(text: str) -> Tuple[Optional[str], int]:
@@ -88,11 +95,13 @@ class Validator(BaseValidator):
         trees = 0
         findings = 0
         for path in focus_files:
+            rel = Path(path).relative_to(mod).as_posix()
+            if rel in EXEMPT_TREE_FILES:
+                continue
             tag, line = _tree_owner(self._read(path))
             if tag is None or tag not in owners:
                 continue
             trees += 1
-            rel = Path(path).relative_to(mod).as_posix()
             if tag not in rules:
                 findings += 1
                 self.add_warning(
