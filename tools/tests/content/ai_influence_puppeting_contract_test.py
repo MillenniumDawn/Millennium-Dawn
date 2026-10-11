@@ -14,6 +14,9 @@ from shared_utils import (
 TRIGGERS = read_script(
     str(REPO_ROOT / "common/scripted_triggers/00_influence_scripted_triggers.txt")
 )
+SCORING = read_script(
+    str(REPO_ROOT / "common/scripted_effects/99_AI_influence_scripted_effects.txt")
+)
 
 
 def _block(script, name):
@@ -32,6 +35,37 @@ def _shape(script):
         )
         for key, operator, value, body in iter_statement_ops(script)
     ]
+
+
+def _rule(script, condition):
+    matches = [
+        body
+        for key, _, body in iter_statements(script)
+        if key == "if" and _shape(_block(body, "limit")) == condition
+    ]
+    assert len(matches) == 1, condition
+    return matches[0]
+
+
+@pytest.fixture(scope="module")
+def influence_scoring():
+    return _block(SCORING, "AI_influence_country_selection_calculation")
+
+
+@pytest.fixture(scope="module")
+def saturation_rule(influence_scoring):
+    loop = _block(influence_scoring, "for_loop_effect")
+    assert ("value", "v") in _shape(loop)
+    entry = _block(loop, "if")
+    owner = _block(_block(entry, "limit"), "check_variable")
+    assert re.fullmatch(r"\s*influence_array\^v\s*=\s*PREV\.id\s*", owner)
+    matches = [
+        body
+        for key, _, body in iter_statements(entry)
+        if key == "if" and ("coup_is_available", "no") in _shape(_block(body, "limit"))
+    ]
+    assert len(matches) == 1
+    return matches[0]
 
 
 @pytest.fixture(scope="module")
@@ -90,6 +124,7 @@ def test_ai_and_player_puppeting_share_the_eighty_percent_boundary(
                             [
                                 ("PREV", [("has_navy_size", [("size", "<", "1")])]),
                                 ("NOT", [("is_on_same_continent_as", "PREV")]),
+                                ("NOT", [("is_neighbor_of", "PREV")]),
                             ],
                         ),
                         ("add_to_temp_variable", [("AI_country_score", "-20")]),
@@ -109,13 +144,7 @@ def test_target_bonus_and_execution_use_the_same_puppeting_gate(
 ):
     script = read_script(str(REPO_ROOT / "common/scripted_effects" / filename))
     gate = [("make_puppet_action_available", "yes")]
-    matches = [
-        body
-        for key, _, body in iter_statements(_block(script, effect))
-        if key == "if" and _shape(_block(body, "limit")) == gate
-    ]
-    assert len(matches) == 1
-    assert _shape(matches[0]) == [("limit", gate), *outcome]
+    assert _shape(_rule(_block(script, effect), gate)) == [("limit", gate), *outcome]
 
 
 def test_disable_ai_puppeting_rule_gates_every_target(puppet_trigger):
@@ -205,3 +234,149 @@ def test_monthly_influence_keeps_ai_pp_and_bankruptcy_guards(influence_pulse):
     assert ("is_ai", "yes") in guard
     assert ("has_political_power", ">", "200") in guard
     assert ("NOT", [("has_active_mission", "bankruptcy_incoming_collapse")]) in guard
+
+
+@pytest.mark.parametrize("no_navy", [False, True])
+@pytest.mark.parametrize("same_continent", [False, True])
+@pytest.mark.parametrize("neighbor", [False, True])
+def test_overseas_penalty_exempts_border_neighbors(
+    influence_scoring, no_navy, same_continent, neighbor
+):
+    bonus = _rule(influence_scoring, [("make_puppet_action_available", "yes")])
+    penalty = _block(bonus, "if")
+    assert _shape(_block(penalty, "limit")) == [
+        ("PREV", [("has_navy_size", [("size", "<", "1")])]),
+        ("NOT", [("is_on_same_continent_as", "PREV")]),
+        ("NOT", [("is_neighbor_of", "PREV")]),
+    ]
+    score = int(dict(_shape(_block(bonus, "add_to_temp_variable")))["AI_country_score"])
+    if no_navy and not same_continent and not neighbor:
+        score += int(
+            dict(_shape(_block(penalty, "add_to_temp_variable")))["AI_country_score"]
+        )
+    assert score == (30 if no_navy and not same_continent and not neighbor else 50)
+
+
+@pytest.mark.parametrize("subject", [False, True])
+def test_existing_subjects_have_a_soft_target_scope_penalty(influence_scoring, subject):
+    condition = [("is_subject", "yes")]
+    rule = _rule(influence_scoring, condition)
+    assert _shape(rule) == [
+        ("limit", condition),
+        ("add_to_temp_variable", [("AI_country_score", "-20")]),
+    ]
+    score = int(dict(_shape(_block(rule, "add_to_temp_variable")))["AI_country_score"])
+    assert (score if subject else 0) == (-20 if subject else 0)
+    selection = _block(SCORING, "AI_select_influence_target")
+    target = _block(_block(selection, "for_each_scope_loop"), "if")
+    assert _shape(_block(target, "limit")) == [("THIS", [("exists", "yes")])]
+
+
+@pytest.mark.parametrize("production", [0, 9.999, 10, 1000])
+def test_resource_bonus_is_capped_and_uses_target_production(
+    influence_scoring, production
+):
+    condition = [("check_variable", [("total_resource_amount", ">", "9.999")])]
+    rule = _rule(influence_scoring, condition)
+    assert _shape(rule) == [
+        ("limit", condition),
+        ("add_to_temp_variable", [("AI_country_score", "20")]),
+    ]
+    comparison = _shape(_block(_block(rule, "limit"), "check_variable"))[0]
+    score = int(dict(_shape(_block(rule, "add_to_temp_variable")))["AI_country_score"])
+    assert (score if production > float(comparison[2]) else 0) == (
+        20 if production >= 10 else 0
+    )
+
+
+def test_resource_total_covers_domestic_production_of_all_defined_resources():
+    money = read_script(str(REPO_ROOT / "common/scripted_effects/00_money_system.txt"))
+    update = _block(money, "update_state_variables")
+    totals = [
+        body
+        for key, _, body in iter_statements(update)
+        if key == "set_variable"
+        and body is not None
+        and any(name == "total_resource_amount" for name, _, _ in iter_statements(body))
+    ]
+    assert len(totals) == 1
+    fields = _shape(_block(totals[0], "total_resource_amount"))
+    assert fields[0][0] == "value"
+    assert all(key == "add" for key, _ in fields[1:])
+    resources = read_script(str(REPO_ROOT / "common/resources/00_resources.txt"))
+    names = {key for key, _, _ in iter_statements(_block(resources, "resources"))}
+    assert {value for _, value in fields} == {
+        f"resource_produced@{name}" for name in names
+    }
+    assert len(fields) == len(names)
+    assert ("update_state_variables", "yes") in _shape(
+        _block(money, "ingame_update_setup")
+    )
+
+
+@pytest.mark.parametrize("same_continent", [False, True])
+@pytest.mark.parametrize("independent", [False, True])
+@pytest.mark.parametrize("same_outlook", [False, True])
+def test_regional_integration_bonus_requires_independence_and_matching_outlook(
+    influence_scoring, same_continent, independent, same_outlook
+):
+    condition = [("country_exists", "PREV"), ("is_on_same_continent_as", "PREV")]
+    rule = _rule(influence_scoring, condition)
+    integration = _block(rule, "if")
+    assert _shape(_block(integration, "limit")) == [
+        ("is_subject", "no"),
+        ("has_government", "PREV"),
+    ]
+    score = 0
+    if same_continent:
+        score += int(
+            dict(_shape(_block(rule, "add_to_temp_variable")))["AI_country_score"]
+        )
+        if independent and same_outlook:
+            score += int(
+                dict(_shape(_block(integration, "add_to_temp_variable")))[
+                    "AI_country_score"
+                ]
+            )
+    assert score == (
+        25 + (10 if independent and same_outlook else 0) if same_continent else 0
+    )
+
+
+@pytest.mark.parametrize("influence", [94.998, 94.999, 95, 100])
+@pytest.mark.parametrize("coup", [False, True])
+@pytest.mark.parametrize("manipulation", [False, True])
+@pytest.mark.parametrize("puppeting", [False, True])
+def test_saturation_penalty_requires_own_dominance_and_no_available_political_action(
+    saturation_rule, influence, coup, manipulation, puppeting
+):
+    limit = _block(saturation_rule, "limit")
+    comparison = _block(limit, "check_variable")
+    match = re.fullmatch(r"\s*influence_array_val\^v\s*>\s*([0-9.]+)\s*", comparison)
+    assert match is not None
+    gates = [
+        (key, value)
+        for key, value, _ in iter_statements(limit)
+        if key != "check_variable"
+    ]
+    assert gates == [
+        ("coup_is_available", "no"),
+        ("manipulate_politics_action_available", "no"),
+        ("make_puppet_action_available", "no"),
+    ]
+    available = {
+        "coup_is_available": coup,
+        "manipulate_politics_action_available": manipulation,
+        "make_puppet_action_available": puppeting,
+    }
+    penalized = influence > float(match[1]) and all(
+        available[key] == (value == "yes") for key, value in gates
+    )
+    score = int(
+        dict(_shape(_block(saturation_rule, "add_to_temp_variable")))[
+            "AI_country_score"
+        ]
+    )
+    assert (score if penalized else 0) == (
+        -50 if influence >= 95 and not any(available.values()) else 0
+    )
