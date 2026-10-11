@@ -350,7 +350,10 @@ def _prose_findings(
     key: str, value: str, event_description_keys: AbstractSet[str]
 ) -> Iterator[Tuple[str, str]]:
     if value in _PLACEHOLDER_VALUES:
-        yield "loc-placeholder", f"{key}: placeholder value '{value}' needs finished text"
+        yield (
+            "loc-placeholder",
+            f"{key}: placeholder value '{value}' needs finished text",
+        )
     # Runtime text is opaque, not empty; deleting it invents adjacency and endings.
     prose = _PROSE_COLOR_RE.sub("", value.replace("§§", "\0"))
     prose = _PROSE_REFERENCE_RE.sub("\0", prose).replace(r"\n", "\n")
@@ -366,7 +369,10 @@ def _prose_findings(
             and prose[previous.end() : match.start()].strip(" \t") == ""
             and f"{key}:{folded}" not in _REPEATED_WORD_EXEMPTIONS
         ):
-            yield "loc-repeated-word", f"{key}: repeated word '{word}' (review in context)"
+            yield (
+                "loc-repeated-word",
+                f"{key}: repeated word '{word}' (review in context)",
+            )
         if (
             has_tripled_letter
             and word.isascii()
@@ -375,7 +381,10 @@ def _prose_findings(
             and not _ROMAN_WORD_RE.fullmatch(word)
             and word not in _STRETCHED_WORD_EXEMPTIONS
         ):
-            yield "loc-tripled-letter", f"{key}: tripled letter in '{word}' (review in context)"
+            yield (
+                "loc-tripled-letter",
+                f"{key}: tripled letter in '{word}' (review in context)",
+            )
         previous = match
         previous_folded = folded
     if (
