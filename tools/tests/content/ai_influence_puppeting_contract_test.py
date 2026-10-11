@@ -4,7 +4,12 @@ import re
 
 import pytest
 from shared.paths import REPO_ROOT
-from shared_utils import iter_statement_ops, iter_statements, read_script
+from shared_utils import (
+    extract_block_from_text,
+    iter_statement_ops,
+    iter_statements,
+    read_script,
+)
 
 TRIGGERS = read_script(
     str(REPO_ROOT / "common/scripted_triggers/00_influence_scripted_triggers.txt")
@@ -32,6 +37,17 @@ def _shape(script):
 @pytest.fixture(scope="module")
 def puppet_trigger():
     return _block(TRIGGERS, "make_puppet_action_available")
+
+
+@pytest.fixture(scope="module")
+def influence_pulse():
+    script = read_script(str(REPO_ROOT / "common/on_actions/MD_on_actions.txt"))
+    anchor = "un_check_if_valid_for_sanctions = yes"
+    assert script.count(anchor) == 1
+    start = script.index("if = {", script.index(anchor))
+    pulse, end = extract_block_from_text(script, start)
+    assert end > start
+    return pulse
 
 
 @pytest.mark.parametrize(
@@ -158,3 +174,34 @@ def test_puppeting_requires_matching_outlooks_and_an_independent_peaceful_target
     ]
     assert checks[0] is not None
     assert re.fullmatch(r"\s*influence_array\^0\s*=\s*PREV\s*", checks[0])
+
+
+@pytest.mark.parametrize(
+    "at_war,in_crisis,expected_chance",
+    [(False, False, 100), (True, False, 50), (False, True, 50), (True, True, 50)],
+)
+def test_monthly_influence_throttle_does_not_stack(
+    influence_pulse, at_war, in_crisis, expected_chance
+):
+    throttle = _block(influence_pulse, "if")
+    conditions = _block(_block(throttle, "limit"), "OR")
+    assert _shape(conditions) == [
+        ("has_war", "yes"),
+        ("ai_has_major_economic_problems", "yes"),
+    ]
+    random = _block(throttle, "random")
+    assert _shape(random) == [("chance", "50"), ("country_event", "influence.500")]
+    assert _shape(_block(influence_pulse, "else")) == [
+        ("country_event", "influence.500")
+    ]
+    country = {"has_war": at_war, "ai_has_major_economic_problems": in_crisis}
+    throttled = any(country[key] for key, _, _ in iter_statements(conditions))
+    chance = int(dict(_shape(random))["chance"]) if throttled else 100
+    assert chance == expected_chance
+
+
+def test_monthly_influence_keeps_ai_pp_and_bankruptcy_guards(influence_pulse):
+    guard = _shape(_block(influence_pulse, "limit"))
+    assert ("is_ai", "yes") in guard
+    assert ("has_political_power", ">", "200") in guard
+    assert ("NOT", [("has_active_mission", "bankruptcy_incoming_collapse")]) in guard
