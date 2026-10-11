@@ -481,7 +481,6 @@ def test_mod_core_runs_extra_checks_after_batch():
     for name in (
         "Run style check",
         "Check localisation UTF-8 BOM",
-        "Check localisation YAML syntax",
         "Check .mod file encoding",
         "Check mod descriptor replace_path sync",
     ):
@@ -490,8 +489,10 @@ def test_mod_core_runs_extra_checks_after_batch():
         assert names.index(name) > batch_index
     style = next(step for step in steps if step.get("name") == "Run style check")
     assert "MD_STAGED_FILES" in style["run"]
-    loc_yaml = steps[names.index("Check localisation YAML syntax")]
-    assert loc_yaml["run"] == "python3 tools/linting/fix_loc_yaml.py"
+    assert "Check localisation YAML syntax" not in names
+    localisation = next(spec for spec in BATCHES["core"] if spec.name == "localisation")
+    assert localisation.script == "validate_localisation.py"
+    assert localisation.strict
 
 
 def test_report_job_posts_comment_and_checks():
