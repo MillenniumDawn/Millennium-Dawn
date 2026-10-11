@@ -220,6 +220,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   A condition the ancestor checks only under the `obsolete_focus_branches_visibility`
   HIDE rule is also met when the child checks it without that rule.
 
+## validate_ai_path_rules.py
+
+- `common/national_focus/eritrea_puppet.txt` is exempt from the day-one AI path rule
+  check because it is the tree used after Ethiopia releases Eritrea as a federation
+  puppet, not an AI path for starting Eritrea.
+
 ## validate_gfx_references.py
 
 - The unused-sprite check is opt-in behind `--report-unused`. `MD_GFX_HIDE_UNUSED=1`
