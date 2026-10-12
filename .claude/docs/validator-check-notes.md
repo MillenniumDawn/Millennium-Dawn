@@ -413,10 +413,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `REGIMENTAL_SUPPORT_REQUIRED_BATTALIONS` sets for it.
 - `template-locked-row` (WARNING): a `regiments` unit sits on a row past
   `MIN_DIVISION_BRIGADE_HEIGHT`. Those rows stay locked until the country has
-  `additional_brigade_column_size`. One finding per template. A tag's starting
-  subdoctrines (`set_sub_doctrine` at the top level of its `history/countries` file)
-  open rows for its `history/units/TAG_*` files and for templates scoped to it.
-  Mastery rewards and ideas are not counted. Tracked in #5451.
+  `additional_brigade_column_size`. One finding per template. A tag's active starting
+  subdoctrines and mastery rewards in `history/countries` open rows for its
+  `history/units/TAG_*` files and for templates scoped to it. Dated history counts
+  through the default bookmark date only and applies root history before dated
+  blocks in date order. Mastery rewards use their explicit threshold or
+  `NDefines.NDoctrines.DEFAULT_REWARD_MASTERY`, accumulated across earlier rewards.
+  Dynamic selectors, conditional history commands, or mastery amounts do not unlock
+  inferred rewards. This is a static estimate; runtime triggers, effects, and idea
+  bonuses are not modeled.
+  Tracked in #5451.
 - Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
   to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
   sizes, `divisional = no` or `regimental = no` units in the wrong block, and
