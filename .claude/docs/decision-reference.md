@@ -159,13 +159,8 @@ mission and halve it on a high deficit:
 
 - Modifiers run in order on a running total. Put every `factor = 0` modifier after the
   adds, or a later `add` brings the zeroed weight back.
-- A treasury `custom_cost_trigger` already stops a country that cannot pay. Add the
-  weight when the spending is optional. Leave it off when skipping the decision costs
-  the AI more than the charge.
+- Leave the weight off when skipping the decision costs the AI more than the charge.
 - Political power needs no weight. `cost` and `ai_hint_pp_cost` tell the AI the price.
-- `validate_decisions.py` reports a missing weight as `decision-ai-will-do-ignores-cost`
-  and `validate_ai_weight_order.py` reports an `add` after a `factor = 0`. Both are
-  WARNING. The Spanish decisions in `common/decisions/Spain.txt` are the reference.
 
 ## Formables
 

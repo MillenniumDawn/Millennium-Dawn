@@ -51,15 +51,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_ai_weight_order.py
 
-- `ai-weight-zero-then-add` (WARNING, backlog in #5738): an `ai_chance` or `ai_will_do`
-  where a positive `add` modifier follows a `factor = 0` modifier. Modifiers run in order
-  on a running total, so the add brings the zeroed weight back. Move every `factor = 0`
-  modifier below the adds. The line reported is the first such add.
-- Reads only the block's direct `modifier` children and their own `factor` and `add`
-  keys. A root-level `factor`, a zero or negative `add`, and an `add` set from a variable
-  are ignored.
-- Known gap: triggers are not compared, so two modifiers that can never both hold are
-  still reported.
+- `ai-weight-zero-then-add` (WARNING): triggers are not compared, so two modifiers that
+  can never both hold are still reported.
 
 ## validate_building_guards.py
 
@@ -134,17 +127,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `category-desc-image-overlap` (WARNING): a category `<id>_desc` that opens with a
   `£icon` draws the art at native size and can cover the header. Minimum leading `\n`:
   `ceil((height / 2 - 22) / 16)`. Not confirmed pixel for pixel in game.
-- `decision-ai-will-do-ignores-cost` (WARNING, backlog in #5738): a decision whose
-  `complete_effect` or `remove_effect` charges its own country's treasury, raises debt,
-  lowers international investment, or moves a tax rate, while `ai_will_do` has no
-  non-neutral modifier on the bankruptcy mission, `ai_has_high_deficit`, or a money
-  variable. Cost and guard detection are shared with `event-ai-chance-ignores-cost`, so
-  the same known gaps apply. Political power is left to `cost` and `ai_hint_pp_cost`.
-  - Skipped: `is_ai = no` or `always = no` on the decision or its category, `base = 0`
-    with no `add`, non-selectable missions, and a selectable mission's `remove_effect`.
-  - A finding behind a treasury `custom_cost_trigger` carries a "verify" note. The
-    engine already stops a country that cannot pay from taking it.
-  - Fix pattern: `decision-reference.md`, "Cost-aware AI weights".
+- `decision-ai-will-do-ignores-cost` (WARNING): the decision twin of
+  `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
+  `custom_cost_trigger` carries a "verify" note, because the engine already stops a
+  country that cannot pay.
 
 ## validate_dynamic_modifier_guards.py
 
