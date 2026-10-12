@@ -5910,7 +5910,7 @@ calculate_gdp_modifiers = {
 		#-0.04 * GDP/C + 1.25 - GDP/C c [31.25, 62.5]
 		#-0.02 * GDP/C        - GDP/C c [62.5, 100]
 		# Break-even at GDP/c = 31.25, min clamp (-2.00) at GDP/c = 100
-		# Fitted to in-game GDP/c, which runs several times above real-world figures
+		# Fitted to in-game GDP/c, not real-world dollars
 		set_variable = {
 			monthly_population_gdp_modifier = {
 				value = gdp_per_capita
@@ -6190,7 +6190,7 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# A worker shortage draws migrants in
+	# Worker shortage
 	set_variable = {
 		immigration_employment_factor_display = {
 			value = 1
@@ -6243,7 +6243,7 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# Unemployment and war push our own people out
+	# Emigration pressure
 	set_variable = {
 		emigration_pressure = {
 			value = 0
@@ -6257,7 +6257,7 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# Immigration we would take in with fully open borders
+	# Immigration at fully open borders
 	set_variable = {
 		max_net_immigration_rate = {
 			value = 1
@@ -6296,7 +6296,7 @@ calculate_migration_mechanic_values = {
 	if = { limit = { check_variable = { global.countries^num < 2 } }
 		set_variable = { max_net_immigration_rate = 0 }
 	}
-	# The border law decides how much of that potential we take in
+	# Share the border law lets in
 	set_variable = {
 		immigration_capacity = {
 			value = max_net_immigration_rate
@@ -6305,7 +6305,7 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# Both flows are scaled so that world immigration equals world emigration
+	# Net rate, balanced against world flows
 	set_variable = {
 		net_immigration_rate = {
 			value = immigration_capacity
@@ -6319,7 +6319,7 @@ calculate_migration_mechanic_values = {
 }
 
 # Effect: update_world_migration_balance
-# Purpose: Scales world immigration and emigration to the smaller of the two, so migration moves people instead of creating or removing them; global, monthly
+# Purpose: Scales world immigration and emigration to the smaller of the two; global, monthly
 update_world_migration_balance = {
 	set_variable = { global.world_immigration_capacity = 0 }
 	set_variable = { global.world_emigration_pressure = 0 }
@@ -6356,9 +6356,9 @@ update_world_migration_balance = {
 }
 
 # Effect: update_population_growth_floor
-# Purpose: Tops up monthly_population so no country grows slower than 0.01% a month; weekly only, since it reads back its own applied value
+# Purpose: Keeps population growth at or above 0.01% a month; weekly only, it reads back its own value
 update_population_growth_floor = {
-	# 0.01% a month is 20% of base growth (POPULATION_YEARLY_GROWTH_BASE / 12), so the total modifier is held at -0.8 or above
+	# -0.8 total leaves 20% of base growth, 0.01% a month
 	set_variable = {
 		monthly_population_floor_modifier = {
 			value = -0.8
