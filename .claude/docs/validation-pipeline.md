@@ -52,6 +52,23 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   definition surface on the nightly run. Common mistakes run full-repo in the core batch
   over `common`, `events`, `history`, and `music`. A `music/*.txt` change selects only
   that validator, through the `music` group.
+- `validate_graphical_cultures.py` runs in the targeted-b batch for `common` changes,
+  in warning mode while the standing backlog is triaged. It compares top-level country
+  `graphical_culture` assignments with bare identifier values, matching current country
+  file syntax, against entries in MD's
+  `common/graphicalculturetype.txt`. The CI workspace profile includes `/common/`,
+  which supplies both inputs. No local HOI4 install or vanilla culture registry was
+  available to verify base-game-only fallback behavior, so the check does not add a
+  guessed vanilla allowlist. Resolve this source/policy question before making the
+  check strict.
+- Remaining phases of [#5383](https://github.com/MillenniumDawn/Millennium-Dawn/issues/5383):
+  confirm the vanilla culture source/policy; validate entity
+  clone parents and `attach` targets (including vanilla entities); check that cultural
+  sprite sets cover `_1` through `_7`, including the known tierless-only
+  `northamerican_gfx` entries; validate cross-file clone load order; report cosmetic-tag
+  users of tag-prefixed entity sets; and include `gfx/entities/` in the CI workspace.
+  Those checks depend on entity parsing and/or game lookup behavior and are not covered
+  by the country registration milestone.
 - Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
   cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
 

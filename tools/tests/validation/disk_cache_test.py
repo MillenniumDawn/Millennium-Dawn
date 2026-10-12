@@ -203,6 +203,12 @@ def test_namespace_mapping_covers_all_real_cache_prefixes():
     # Wrapped namespaces resolve too, so the scan sees the whole set.
     assert {"dynamic_modifier_guards_scan_v1", "events", "style"} <= prefixes
     assert not sorted(prefixes - set(disk_cache._VALIDATOR_NAMESPACES))
+    assert disk_cache._VALIDATOR_NAMESPACES["country_graphical_cultures"] == (
+        "validate_graphical_cultures.py"
+    )
+    assert disk_cache._VALIDATOR_NAMESPACES["graphical_culture_registry"] == (
+        "validate_graphical_cultures.py"
+    )
 
 
 def test_fingerprints_are_memoized_until_source_changes(tmp_path, monkeypatch):
