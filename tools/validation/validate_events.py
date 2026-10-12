@@ -24,6 +24,7 @@ from shared_utils import (
     extract_block_from_text,
     find_unquoted_brace_close,
     get_staged_files,
+    iter_statements,
     strip_comments,
     strip_inline_comment,
     validation_config,
@@ -327,7 +328,7 @@ def _extract_cost_blind_options(
     basename = os.path.basename(filename)
     return [
         (
-            f"{name} - flat ai_chance ignores the {costs} cost"
+            f"{name} - ai_chance ignores the {costs} cost"
             + (_ALL_GATED_NOTE if all_gated else ""),
             basename,
             line,
@@ -997,7 +998,6 @@ _OWN_SCOPE_BLOCKS = frozenset(
         "else",
         "else_if",
         "hidden_effect",
-        "effect_tooltip",
         "random",
         "random_list",
         "meta_effect",
@@ -1014,6 +1014,28 @@ _VARIABLE_EFFECTS = frozenset(
 _BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
 _OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
 _AI_CHANCE_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
+_AI_WEIGHT_LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
+_BANKRUPTCY_GUARD_RE = re.compile(
+    r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
+)
+_FINANCIAL_GUARD_RE = re.compile(
+    _BANKRUPTCY_GUARD_RE.pattern + r"|\bai_has_high_deficit\s*=\s*(?:yes|no)\b"
+    r"|\bcheck_variable\s*=\s*\{\s*(?:var\s*=\s*)?(?:ROOT\.|THIS\.)?"
+    r"(?:treasury|debt|int_investments|treasury_rate|budget_balance_ratio|"
+    r"corporate_tax_rate|population_tax_rate)\b"
+)
+_COST_GUARDS = {
+    "treasury": _FINANCIAL_GUARD_RE,
+    "debt": _FINANCIAL_GUARD_RE,
+    "international investment": _FINANCIAL_GUARD_RE,
+    "tax rate": _FINANCIAL_GUARD_RE,
+    "political power": _BANKRUPTCY_GUARD_RE,
+    "stability": re.compile(r"\bhas_stability\s*[<>=]"),
+    "war support": re.compile(r"\bhas_war_support\s*[<>=]"),
+}
+_TRIGGER_SCOPE_BLOCKS = frozenset(
+    {"AND", "OR", "NOT", "hidden_trigger", "custom_trigger_tooltip"}
+)
 
 # Signs a value can have, as bits. Zero has neither, so a zero change costs nothing.
 _NEG, _POS = 1, 2
@@ -1215,8 +1237,13 @@ def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
         costly |= callers
 
 
-def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
-    """(own-scope effects, option-level blocks left out of them as key -> (offset, body))."""
+def _split_option(
+    body: str, country: Optional[str] = None, *, triggers: bool = False
+) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
+    """(own-scope text, excluded option-level blocks as key -> (offset, body))."""
+    scope_blocks = _OWN_SCOPE_BLOCKS
+    if triggers:
+        scope_blocks |= _TRIGGER_SCOPE_BLOCKS
     own: List[str] = []
     blocks: Dict[Optional[str], Tuple[int, str]] = {}
     depth = 0
@@ -1229,9 +1256,13 @@ def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]
             key = m.group(1)
             if skip is not None or kept_whole:
                 continue
-            if key in _VARIABLE_EFFECTS:
+            if key in _VARIABLE_EFFECTS or (triggers and key == "check_variable"):
                 kept_whole = depth
-            elif key not in _OWN_SCOPE_BLOCKS and not (key or "").isdigit():
+            elif (
+                key not in scope_blocks
+                and (country is None or key != country)
+                and not (key or "").isdigit()
+            ):
                 own.append(body[cursor : m.start()])
                 skip = (depth, m.end(), key)
             continue
@@ -1248,13 +1279,41 @@ def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]
     return " ".join(own), blocks
 
 
+def _cost_sensitive_kinds(ai_chance: str, country: Optional[str]) -> Set[str]:
+    covered: Set[str] = set()
+    pos = 0
+    while True:
+        match = _AI_CHANCE_MODIFIER_RE.search(ai_chance, pos)
+        if match is None:
+            return covered
+        end = find_unquoted_brace_close(ai_chance, match.end() - 1)
+        if end == -1:
+            return covered
+        own, _blocks = _split_option(
+            ai_chance[match.end() : end], country, triggers=True
+        )
+        pos = end + 1
+        if not any(
+            float(value) != (1 if key == "factor" else 0)
+            for key, value, block in iter_statements(own)
+            if key in {"factor", "add"}
+            and block is None
+            and value is not None
+            and _AI_WEIGHT_LITERAL_RE.fullmatch(value)
+        ):
+            continue
+        covered.update(
+            kind for kind, guard in _COST_GUARDS.items() if guard.search(own)
+        )
+
+
 def find_cost_blind_options(
     text: str, effects: Dict[str, str], stored: Dict[str, int]
 ) -> List[Tuple[str, int, str, bool]]:
     """(option name, 1-based line, costs, all gated) for AI weights that ignore a cost.
 
-    Reports an option of a multi-option event when it charges its own country and
-    its `ai_chance` has no `modifier`, so the AI pays as readily broke as flush.
+    Reports each cost not covered by a relevant, non-neutral AI modifier in the
+    choosing country's scope. Opinion and path modifiers do not cover costs.
     A missing `ai_chance` is the flat default weight. The line is the `ai_chance`
     when there is one, since that is where the fix goes. `all gated` marks an event
     where every option has a `trigger`: those may be variants the AI never chooses
@@ -1272,15 +1331,19 @@ def find_cost_blind_options(
         ]
         if len(options) < 2:
             continue
+        recipient = re.fullmatch(
+            r"\s*tag\s*=\s*([A-Z0-9]{3})\s*", _event_trigger_body(body) or ""
+        )
+        country = recipient.group(1) if recipient else None
         splits = [
-            _split_option(body[opt_start:opt_end]) for opt_start, opt_end in options
+            _split_option(body[opt_start:opt_end], country)
+            for opt_start, opt_end in options
         ]
         all_gated = all("trigger" in blocks for _own, blocks in splits)
         for (opt_start, opt_end), (own, blocks) in zip(options, splits):
             ai_offset, ai_chance = blocks.get("ai_chance", (0, ""))
-            if _AI_CHANCE_MODIFIER_RE.search(ai_chance):
-                continue
             costs = _effect_costs(own, effects, {}, stored)
+            costs -= _cost_sensitive_kinds(ai_chance, country)
             if not costs:
                 continue
             name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
@@ -2697,11 +2760,7 @@ class Validator(BaseValidator):
         )
 
     def validate_ai_chance_ignores_cost(self):
-        """Flag options whose flat `ai_chance` ignores what the option costs.
-
-        Off unless `--check-ai-chance-costs` is passed: the backlog is mod-wide
-        (#5096), so the check stays out of CI until it is worked down.
-        """
+        """Warn on cost-insensitive AI weights when enabled by CLI or the CI batch."""
         if not self.check_ai_chance_costs:
             self._log_section(
                 "Skipping AI weight cost check (pass --check-ai-chance-costs to enable)"
@@ -2740,8 +2799,8 @@ class Validator(BaseValidator):
         self._report(
             sorted(results, key=lambda r: (r[1], r[2])),
             "✓ No event AI weights ignoring option costs",
-            "Event options with a cost and a flat ai_chance (add a modifier for"
-            " affordability or for the situation the cost solves):",
+            "Event options whose ai_chance ignores a cost (add a relevant modifier"
+            " in the choosing country's scope):",
             Severity.WARNING,
             category="event-ai-chance-ignores-cost",
         )
@@ -2778,7 +2837,7 @@ def _add_extra_args(parser):
         "--check-ai-chance-costs",
         action="store_true",
         dest="check_ai_chance_costs",
-        help="Report event options whose flat ai_chance ignores the option's cost",
+        help="Report event options whose ai_chance ignores the option's cost",
     )
 
 

@@ -24,7 +24,7 @@ def reuse_repository_import_graph(monkeypatch, repository_import_graph):
 
 
 def test_every_batch_spec_script_exists():
-    assert len(vb.ALL_SPECS) == 43
+    assert len(vb.ALL_SPECS) == 44
     assert not {spec.name for spec in vb.ALL_SPECS} & {
         spec.name for spec in vb.IMPACT_ONLY_SPECS
     }
@@ -68,6 +68,12 @@ def test_math_expressions_spec_carries_the_clamp_bounds_check():
     assert spec.strict is True
 
 
+def test_events_spec_carries_the_cost_sensitivity_check():
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "events")
+    assert spec.args == ("--check-ai-chance-costs",)
+    assert spec.strict is True
+
+
 def test_selected_specs_filters_by_changed_groups():
     selected = {
         spec.name
@@ -83,6 +89,13 @@ def test_selected_specs_filters_by_changed_groups():
 def test_graphic_db_group_selects_gfx_references():
     selected = {spec.name for spec in rvb.selected_specs("targeted-b", {"graphic-db"})}
     assert selected == {"gfx-references"}
+
+
+def test_common_group_selects_graphical_culture_registration():
+    selected = {spec.name for spec in rvb.selected_specs("targeted-b", {"common"})}
+    assert "graphical-cultures" in selected
+    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "graphical-cultures")
+    assert spec.strict is False
 
 
 def test_music_group_selects_only_common_mistakes():

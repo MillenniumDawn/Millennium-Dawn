@@ -337,9 +337,20 @@ BOS_remove_sfor_volunteer_support_effect = {
 
 BOS_begin_internal_war_effect = {
 	set_country_flag = civil_war_bosnia
-	set_country_flag = civil_war_bos_two
 	set_country_flag = civil_war_focus
 	add_ideas = BOS_aggressive_nation
+}
+
+# A breakaway released mid-game skipped on_startup: no AI templates, no inflation or currency setup. PREV is its maker.
+BOS_setup_new_country_effect = {
+	if = {
+		limit = { NOT = { has_variable = last_quarter_gdp_total } }
+		ingame_startup_nations_effect = yes
+	}
+	if = {
+		limit = { is_ai = yes }
+		give_AI_templates = yes
+	}
 }
 
 BOS_begin_srpska_civil_war_effect = {
@@ -352,8 +363,8 @@ BOS_begin_srpska_civil_war_effect = {
 		name = bos_war_civil_war
 	}
 	RSK = {
+		BOS_setup_new_country_effect = yes
 		set_country_flag = civil_war_bosnia
-		set_country_flag = civil_war_bos_two
 		add_ideas = BOS_srpska_balkan_aspiration
 		add_ideas = BOS_aggressive_nation
 		declare_war_on = {
@@ -401,11 +412,87 @@ BOS_begin_srpska_civil_war_effect = {
 	}
 }
 
+# Run on a breakaway about to be annexed: no peace conference follows to clear these
+BOS_strip_breakaway_effect = {
+	clr_country_flag = civil_war_bosnia
+	remove_ideas = {
+		BOS_aggressive_nation
+		BOS_croat_balkan_aspiration
+		BOS_srpska_balkan_aspiration
+	}
+	if = {
+		limit = { has_idea = capitulated_nation_no_call_ally }
+		remove_ideas = capitulated_nation_no_call_ally
+	}
+	if = {
+		limit = { is_in_array = { global.un_sc_pressure_end_war = THIS } }
+		remove_from_array = { global.un_sc_pressure_end_war = THIS }
+	}
+}
+
+# Weekly on RSK and HZG: a breakaway that won gets its settlement once it is at peace, and loses the claim if it became a subject
+BOS_breakaway_weekly_recovery_effect = {
+	if = {
+		limit = { BOS_breakaway_claim_trigger = yes }
+		if = {
+			limit = { is_subject = yes }
+			clr_country_flag = RSK_civil_war_recovery_pending
+			clr_country_flag = HZG_civil_war_recovery_pending
+			clr_country_flag = civil_war_bosnia
+		}
+		else_if = {
+			limit = {
+				has_country_flag = civil_war_bosnia
+				has_civil_war = no
+				has_war = no
+			}
+			country_event = BOS_political.20
+		}
+	}
+}
+
+# Run in BOS scope from BOS_political.20. ROOT is the breakaway that won: the reunited country keeps the BOS tag and absorbs it, army included.
+BOS_absorb_winning_breakaway_effect = {
+	# A Bosnia annexed in its peace conference needs a state back before the player or the annexation can land on it
+	if = {
+		limit = { exists = no }
+		set_temp_variable = { BOS_was_annexed_temp = 1 }
+		ROOT = {
+			random_owned_state = {
+				limit = { is_core_of = BOS }
+				prioritize = { 128 }
+				BOS = { transfer_state = PREV }
+			}
+		}
+	}
+	else_if = {
+		limit = { is_subject_of = ROOT }
+		ROOT = {
+			set_autonomy = {
+				target = BOS
+				autonomy_state = autonomy_free
+			}
+		}
+	}
+	change_tag_from = ROOT
+	if = {
+		limit = { check_variable = { BOS_was_annexed_temp = 1 } }
+		ingame_startup_nations_effect = yes
+		if = {
+			limit = { is_ai = yes }
+			give_AI_templates = yes
+		}
+	}
+	ROOT = { BOS_strip_breakaway_effect = yes }
+	# The weekly check still finishes the recovery if the option stops once its owner is annexed
+	clr_country_flag = BOS_civil_war_settling
+	annex_country = { target = ROOT transfer_troops = yes }
+}
+
 BOS_finish_civil_war_recovery_effect = {
 	set_country_flag = BOS_civil_war_over
 	clr_country_flag = civil_war_focus
 	clr_country_flag = civil_war_bosnia
-	clr_country_flag = civil_war_bos_two
 	remove_ideas = BOS_bosniak_balkan_aspiration
 	remove_ideas = BOS_bosniak_balkan_aspiration2
 	remove_ideas = BOS_croat_balkan_aspiration
@@ -413,6 +500,27 @@ BOS_finish_civil_war_recovery_effect = {
 	clr_country_flag = BOS_defeat_all_serbs
 	clr_country_flag = defeat_all_croats
 	clr_country_flag = BOS_hzg_civil_war_recovery_pending
+	clr_country_flag = BOS_rsk_civil_war_recovery_pending
+	clr_country_flag = BOS_civil_war_settling
+	RSK = { clr_country_flag = RSK_civil_war_recovery_pending }
+	HZG = { clr_country_flag = HZG_civil_war_recovery_pending }
+	USA = { BOS_remove_sfor_volunteer_support_effect = yes }
+	ENG = { BOS_remove_sfor_volunteer_support_effect = yes }
+	ITA = { BOS_remove_sfor_volunteer_support_effect = yes }
+	GER = { BOS_remove_sfor_volunteer_support_effect = yes }
+	BUL = { BOS_remove_sfor_volunteer_support_effect = yes }
+	IRE = { BOS_remove_sfor_volunteer_support_effect = yes }
+	SPR = { BOS_remove_sfor_volunteer_support_effect = yes }
+	ROM = { BOS_remove_sfor_volunteer_support_effect = yes }
+	SWE = { BOS_remove_sfor_volunteer_support_effect = yes }
+	# A Bosnia that capitulated and then won through its allies never reaches the peace conference that lifts this
+	if = {
+		limit = {
+			has_idea = capitulated_nation_no_call_ally
+			has_war = no
+		}
+		remove_ideas = capitulated_nation_no_call_ally
+	}
 	# Recovery length is set by the caller via BOS_recovery_days; callers that leave it unset get the default 5 years.
 	if = {
 		limit = { NOT = { check_variable = { BOS_recovery_days > 0 } } }
@@ -422,11 +530,15 @@ BOS_finish_civil_war_recovery_effect = {
 		idea = BOS_civil_war_recovery
 		days = BOS_recovery_days
 	}
+	clear_variable = BOS_recovery_days
 	set_temp_variable = { treasury_change = -25.00 }
 	modify_treasury_effect = yes
 	128 = {
 		if = {
-			limit = { infrastructure > 0 }
+			limit = {
+				infrastructure > 0
+				is_owned_by = BOS
+			}
 			damage_building = {
 				type = infrastructure
 				damage = 1

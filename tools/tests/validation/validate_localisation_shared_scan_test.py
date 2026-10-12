@@ -240,7 +240,7 @@ def _pooled_tree(tmp_path):
     write_under_str(
         tmp_path,
         "localisation/english/t_l_english.yml",
-        'l_english:\n orphan_tt:0 "x"\n used_tt:0 "y"\n',
+        'l_english:\n orphan_tt: "x"\n used_tt: "y"\n',
     )
     for index in range(12):
         write_under_str(
