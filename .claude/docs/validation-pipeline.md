@@ -16,6 +16,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   fix the validator. Never delete or weaken a test to pass. Removing a dead or
   duplicate test is a separate cleanup change that keeps the coverage total.
 - The suite runs under `pytest -n auto`, so a test writes only under `tmp_path`.
+- Worker pools in tests start with `spawn` on every OS. A pool worker sees what it
+  imports and what it is passed, not state a test patched in the parent.
 - Tests that read live game files live in `tools/tests/content/`. The `Content tests`
   job runs them once, on tools or game content changes. The tools test jobs skip
   that directory and check out only the few game files named in the workflow.
@@ -38,6 +40,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `--strict` gates on ERROR only. A check with a standing backlog ships as WARNING until
   the backlog is cleared. A new strict check needs a baseline audit first, see the
   review checklist in `tools/README.md`.
+- The events batch enables `--check-ai-chance-costs` as WARNING while the existing
+  backlog is reviewed. It checks relevant AI modifiers, not just their presence, and
+  ignores display-only `effect_tooltip` costs. Commit hooks leave this cross-reference
+  scan disabled; functional Indonesia contracts run in the `Content tests` job.
 - Strictness can differ by stage. `validate_ai_equipment.py` runs without `--strict`
   locally and with it in CI.
 - `validate_unused_textures.py` is a `stages: [manual]` hook. `validate_standardization.py`
@@ -50,6 +56,23 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   definition surface on the nightly run. Common mistakes run full-repo in the core batch
   over `common`, `events`, `history`, and `music`. A `music/*.txt` change selects only
   that validator, through the `music` group.
+- `validate_graphical_cultures.py` runs in the targeted-b batch for `common` changes,
+  in warning mode while the standing backlog is triaged. It compares top-level country
+  `graphical_culture` assignments with bare identifier values, matching current country
+  file syntax, against entries in MD's
+  `common/graphicalculturetype.txt`. The CI workspace profile includes `/common/`,
+  which supplies both inputs. No local HOI4 install or vanilla culture registry was
+  available to verify base-game-only fallback behavior, so the check does not add a
+  guessed vanilla allowlist. Resolve this source/policy question before making the
+  check strict.
+- Remaining phases of [#5383](https://github.com/MillenniumDawn/Millennium-Dawn/issues/5383):
+  confirm the vanilla culture source/policy; validate entity
+  clone parents and `attach` targets (including vanilla entities); check that cultural
+  sprite sets cover `_1` through `_7`, including the known tierless-only
+  `northamerican_gfx` entries; validate cross-file clone load order; report cosmetic-tag
+  users of tag-prefixed entity sets; and include `gfx/entities/` in the CI workspace.
+  Those checks depend on entity parsing and/or game lookup behavior and are not covered
+  by the country registration milestone.
 - Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
   cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
 

@@ -91,6 +91,26 @@ AI_influence_country_selection_calculation = {
 		add_to_temp_variable = { AI_country_score = 30 }
 	}
 
+	if = { limit = { make_puppet_action_available = yes }
+		add_to_temp_variable = { AI_country_score = 50 }
+		if = {
+			limit = {
+				PREV = { has_navy_size = { size < 1 } }
+				NOT = { is_on_same_continent_as = PREV }
+				NOT = { is_neighbor_of = PREV }
+			}
+			add_to_temp_variable = { AI_country_score = -20 }
+		}
+	}
+
+	if = { limit = { is_subject = yes }
+		add_to_temp_variable = { AI_country_score = -20 }
+	}
+
+	if = { limit = { check_variable = { total_resource_amount > 9.999 } }
+		add_to_temp_variable = { AI_country_score = 20 }
+	}
+
 	# Check
 	if = { limit = { has_idea = non_state_actor }
 		add_to_temp_variable = { AI_country_score = -80 }
@@ -171,6 +191,16 @@ AI_influence_country_selection_calculation = {
 				limit = { check_variable = { influence_array_val^v > 75.99 } }
 				add_to_temp_variable = { AI_country_score = 5 }
 			}
+
+			if = {
+				limit = {
+					check_variable = { influence_array_val^v > 94.999 }
+					coup_is_available = no
+					manipulate_politics_action_available = no
+					make_puppet_action_available = no
+				}
+				add_to_temp_variable = { AI_country_score = -50 }
+			}
 		}
 	}
 
@@ -195,6 +225,13 @@ AI_influence_country_selection_calculation = {
 			is_on_same_continent_as = PREV
 		}
 		add_to_temp_variable = { AI_country_score = 25 }
+		if = {
+			limit = {
+				is_subject = no
+				has_government = PREV
+			}
+			add_to_temp_variable = { AI_country_score = 10 }
+		}
 	}
 
 	set_temp_variable_to_random = {
