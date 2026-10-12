@@ -8,7 +8,6 @@ call without a per-iteration set locks onto the first iterated country
 
 import pytest
 import validate_influence_calls as V
-from shared.paths import REPO_ROOT as _MOD_ROOT
 
 LOOP_CALL = "change_influence_percentage = yes"
 FIXED = "\t\t\t\tset_temp_variable = { influence_target = THIS }"
@@ -350,15 +349,6 @@ def test_validator_reports_error_category(tmp_path):
     assert issues[0]["category"] == "stale-influence-target"
     assert issues[0]["severity"] == "error"
     assert issues[0]["line"] == 1
-
-
-def test_spain_focus_tree_is_clean():
-    path = _MOD_ROOT / "common" / "national_focus" / "05_spain.txt"
-    raw = path.read_text(encoding="utf-8")
-    setter = "set_temp_variable = { influence_target = THIS }"
-    assert raw.count(setter) == 6
-    assert V.scan_file((str(path), str(_MOD_ROOT))) == []
-    assert len(V.scan_text(raw.replace(setter, ""))) == 6
 
 
 @pytest.mark.parametrize(

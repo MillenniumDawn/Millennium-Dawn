@@ -626,6 +626,7 @@ class BaseValidator:
 
     TITLE = "VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
+    STAGED_INCLUDE_MISSING = False
 
     def __init__(
         self,
@@ -666,7 +667,12 @@ class BaseValidator:
 
         if staged_only:
             self.staged_files = (
-                get_staged_files(mod_path, extensions=self.STAGED_EXTENSIONS) or []
+                get_staged_files(
+                    mod_path,
+                    extensions=self.STAGED_EXTENSIONS,
+                    include_missing=self.STAGED_INCLUDE_MISSING,
+                )
+                or []
             )
             if not self.staged_files:
                 logging.warning("No staged files found")
@@ -1014,14 +1020,20 @@ class BaseValidator:
         """Lazily create the shared worker pool on first parallel use.
 
         Tiny staged commits never reach a parallel code path, so the Pool is
-        never spawned and they don't pay the fork+teardown cost. Created once,
-        memoized, and torn down by run_all_validations().
+        never spawned and they don't pay the fork+teardown cost. Memoized, and
+        torn down by _close_pool().
         """
         if self.workers <= 1:
             return None
         if self._pool is None:
             self._pool = Pool(processes=self.workers)
         return self._pool
+
+    def _close_pool(self) -> None:
+        if self._pool is not None:
+            self._pool.terminate()
+            self._pool.join()
+            self._pool = None
 
     def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
         # Falls back to sequential when workers == 1 or the batch is small, so
@@ -1058,6 +1070,8 @@ class BaseValidator:
         if self.workers == 1 or len(items) < 10:
             initializer(*initargs)
             return [func(it) for it in items]
+        # A live shared pool runs helper threads, and forking beside them can deadlock.
+        self._close_pool()
         with Pool(
             processes=self.workers, initializer=initializer, initargs=initargs
         ) as pool:
@@ -1221,10 +1235,7 @@ class BaseValidator:
             self.run_validations()
         finally:
             self._finish_sections()
-            if self._pool is not None:
-                self._pool.terminate()
-                self._pool.join()
-                self._pool = None
+            self._close_pool()
 
         self._render_issues()
 

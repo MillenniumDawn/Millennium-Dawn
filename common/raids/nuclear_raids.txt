@@ -1,9 +1,12 @@
 types = {
 	#Hits a province
 	tactical_nuclear_strike = {
-		allowed = { has_dlc = "Gotterdammerung" }
+		allowed = {
+			has_dlc = "Gotterdammerung"
+			nuclear_grant_allowed = yes
+		}
 		days_to_prepare = 1
-		days_re_enable = 10
+		days_re_enable = 60
 
 		category = nuclear_raids
 
@@ -22,8 +25,6 @@ types = {
 				NOT = { is_subject_of = ROOT }
 				NOT = { has_non_aggression_pact_with = ROOT }
 			}
-			set_temp_variable = { temp_check = 1 }
-			check_if_nuclear_weapons_in_stockpile = yes
 			is_able_to_launch_a_nuclear_strike = yes
 			is_able_to_use_nuclear_strikes_tac = yes
 		}
@@ -39,19 +40,19 @@ types = {
 
 		unit_requirements = {
 			equipment = {
-				type = { tactical_bomber strategic_bomber }
-				modules = { spec_nuclear_consent }
+				type = { nuclear_missile_equipment }
 				amount = { min = 1 }
 			}
 		}
 		unit_requirements = {
 			equipment = {
-				type = { nuclear_ballistic_missile_equipment }
+				type = { tactical_bomber strategic_bomber }
+				modules = { spec_nuclear_consent }
 				amount = { min = 1 }
 			}
 		}
 		starting_point = {
-			types = { carrier air_base rocket_site submarine }
+			types = { air_base rocket_site }
 		}
 
 		arrow = {
@@ -147,6 +148,7 @@ types = {
 					}
 				}
 				victim_effects = {
+					record_tactical_nuclear_strike = yes
 					var:target_state = {
 						custom_effect_tooltip = raid_nuclear_strike_tt
 						add_dynamic_modifier = {
@@ -180,6 +182,7 @@ types = {
 					}
 				}
 				victim_effects = {
+					record_tactical_nuclear_strike = yes
 					var:target_state = {
 						custom_effect_tooltip = raid_nuclear_strike_tt
 					}
@@ -193,30 +196,52 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
-				add = 10
-				surrender_progress > 0.5
+				add = 2
+				longest_war_length > 2
+				surrender_progress > 0.25
 			}
 			modifier = {
-				factor = 5
-				surrender_progress > 0.75
+				add = 50
+				NOT = { surrender_progress < 0.55 }
 			}
 			modifier = {
-				factor = 10
-				surrender_progress > 0.9
+				factor = 0.01
+				surrender_progress > 0.7
+			}
+			modifier = {
+				factor = 0
+				NOT = { surrender_progress < 0.8 }
+			}
+			modifier = {
+				add = 1000
+				has_country_flag = has_been_nuked
+			}
+			modifier = {
+				add = 10000
+				FROM = { has_country_flag = nuclear_tactical_strike_against@ROOT }
+			}
+			modifier = {
+				factor = 0
+				FROM = { has_country_flag = nuclear_repeated_strikes_against@ROOT }
+			}
+			modifier = {
+				factor = 0
+				longest_war_length < 3
+				NOT = { has_country_flag = has_been_nuked }
+				surrender_progress < 0.55
 			}
 			modifier = {
 				factor = 0
 				threat < 0.10
+				NOT = { has_country_flag = has_been_nuked }
 			}
-			# Alliance gate — nukes are a deterrent; don't strike a stronger bloc
-			# unless we are already desperate (surrender_progress >= 0.5 overrides caution).
 			modifier = {
 				factor = 0
 				raid_alliance_unfavorable = yes
 				surrender_progress < 0.5
+				NOT = { has_country_flag = has_been_nuked }
 			}
 			modifier = {
-				# Don't target anyone who is not a potential enemy
 				factor = 0
 				NOT = {
 					is_in_array = {
@@ -229,10 +254,14 @@ types = {
 	}
 	#Nuke a whole state for the price of one
 	state_nuclear_strike = {
-		allowed = { has_dlc = "Gotterdammerung" }
+		allowed = {
+			has_dlc = "Gotterdammerung"
+			nuclear_grant_allowed = yes
+		}
 		category = nuclear_raids
 
 		days_to_prepare = 1
+		days_re_enable = 180
 
 		command_power = 5 # command power allocation cost
 
@@ -251,8 +280,6 @@ types = {
 				NOT = { has_non_aggression_pact_with = ROOT }
 				has_war_with = ROOT
 			}
-			set_temp_variable = { temp_check = 1 }
-			check_if_nuclear_weapons_in_stockpile = yes
 			is_able_to_use_nuclear_strikes = yes
 			is_able_to_launch_a_nuclear_strike = yes
 		}
@@ -272,12 +299,13 @@ types = {
 		}
 		unit_requirements = {
 			equipment = {
-				type = { nuclear_ballistic_missile_equipment }
+				type = { tactical_bomber strategic_bomber }
+				modules = { spec_nuclear_consent }
 				amount = { min = 1 }
 			}
 		}
 		starting_point = {
-			types = { rocket_site submarine }
+			types = { air_base rocket_site }
 		}
 		arrow = {
 			type = ballistic
@@ -302,6 +330,7 @@ types = {
 		success_levels = {
 			failure = {
 				actor_effects = {
+					record_state_nuclear_strike = yes
 					var:actor_country = {
 						launch_nuke = {
 							province = var:ROOT.target_province #optional use either province or state
@@ -363,6 +392,7 @@ types = {
 			}
 			limited_success = {
 				actor_effects = {
+					record_state_nuclear_strike = yes
 					var:actor_country = {
 						launch_nuke = {
 							province = var:ROOT.target_province #optional use either province or state
@@ -419,6 +449,7 @@ types = {
 			}
 			success = {
 				actor_effects = {
+					record_state_nuclear_strike = yes
 					var:actor_country = {
 						launch_nuke = {
 							province = var:ROOT.target_province #optional use either province or state
@@ -475,6 +506,7 @@ types = {
 			}
 			critical_success = {
 				actor_effects = {
+					record_state_nuclear_strike = yes
 					var:actor_country = {
 						launch_nuke = {
 							province = var:ROOT.target_province #optional use either province or state
@@ -534,30 +566,52 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
-				add = 10
-				surrender_progress > 0.5
+				add = 2
+				longest_war_length > 5
+				surrender_progress > 0.4
 			}
 			modifier = {
-				factor = 5
-				surrender_progress > 0.75
+				add = 50
+				NOT = { surrender_progress < 0.55 }
 			}
 			modifier = {
-				factor = 10
-				surrender_progress > 0.9
+				factor = 0.01
+				surrender_progress > 0.7
+			}
+			modifier = {
+				factor = 0
+				NOT = { surrender_progress < 0.8 }
+			}
+			modifier = {
+				add = 2500
+				has_country_flag = has_been_nuked
+			}
+			modifier = {
+				add = 250000
+				FROM = { has_country_flag = nuclear_state_strike_against@ROOT }
+			}
+			modifier = {
+				factor = 0
+				FROM = { has_country_flag = nuclear_repeated_strikes_against@ROOT }
+			}
+			modifier = {
+				factor = 0
+				longest_war_length < 6
+				NOT = { has_country_flag = has_been_nuked }
+				surrender_progress < 0.55
 			}
 			modifier = {
 				factor = 0
 				threat < 0.10
+				NOT = { has_country_flag = has_been_nuked }
 			}
-			# Alliance gate — nukes are a deterrent; don't strike a stronger bloc
-			# unless we are already desperate (surrender_progress >= 0.5 overrides caution).
 			modifier = {
 				factor = 0
 				raid_alliance_unfavorable = yes
 				surrender_progress < 0.5
+				NOT = { has_country_flag = has_been_nuked }
 			}
 			modifier = {
-				# Don't target anyone who is not a potential enemy
 				factor = 0
 				NOT = {
 					is_in_array = {
@@ -571,10 +625,14 @@ types = {
 	}
 	#The whole enchilada. It's the end of the world as we know it!
 	strategic_nuclear_strike = {
-		allowed = { has_dlc = "Gotterdammerung" }
+		allowed = {
+			has_dlc = "Gotterdammerung"
+			nuclear_grant_allowed = yes
+		}
 		category = nuclear_raids
 
 		days_to_prepare = 1
+		days_re_enable = 365
 		#Nuclear powers WILL get aggressive if they are about to be conquered
 		#Realistic behavior, so people should be careful about how they push wars
 		#This should also include some more launch checks, but for now, this will work
@@ -595,11 +653,13 @@ types = {
 				NOT = { has_non_aggression_pact_with = ROOT }
 				has_war_with = ROOT
 			}
-			set_temp_variable = { temp_check = 10 }
-			check_if_nuclear_weapons_in_stockpile = yes
 			is_able_to_use_nuclear_strikes = yes
-			if = { limit = { has_idea = nuclear_power_def }
-				surrender_progress > 0.5
+			if = {
+				limit = { has_idea = nuclear_power_def }
+				OR = {
+					surrender_progress > 0.5
+					has_country_flag = has_been_nuked
+				}
 			}
 		}
 		launchable = {
@@ -613,18 +673,19 @@ types = {
 		unit_requirements = {
 			equipment = {
 				type = { nuclear_missile_equipment }
-				amount = { min = 10 }
+				amount = { min = 1 }
 			}
 		}
 		unit_requirements = {
 			equipment = {
-				type = { nuclear_ballistic_missile_equipment }
-				amount = { min = 10 }
+				type = { tactical_bomber }
+				modules = { spec_nuclear_consent }
+				amount = { min = 1 }
 			}
 		}
 
 		starting_point = {
-			types = { rocket_site submarine }
+			types = { air_base rocket_site }
 		}
 		arrow = {
 			type = ballistic
@@ -649,6 +710,7 @@ types = {
 		success_levels = {
 			failure = {
 				victim_effects = {
+					record_strategic_nuclear_strike = yes
 					var:victim_country = {
 						set_country_flag = has_been_nuked
 						set_country_flag = {
@@ -709,6 +771,7 @@ types = {
 			}
 			limited_success = {
 				victim_effects = {
+					record_strategic_nuclear_strike = yes
 					var:victim_country = {
 						set_country_flag = has_been_nuked
 						set_country_flag = {
@@ -769,6 +832,7 @@ types = {
 			}
 			success = {
 				victim_effects = {
+					record_strategic_nuclear_strike = yes
 					var:victim_country = {
 						set_country_flag = has_been_nuked
 						set_country_flag = {
@@ -829,6 +893,7 @@ types = {
 			}
 			critical_success = {
 				victim_effects = {
+					record_strategic_nuclear_strike = yes
 					var:victim_country = {
 						set_country_flag = has_been_nuked
 						set_country_flag = {
@@ -890,26 +955,50 @@ types = {
 		ai_will_do = {
 			base = 0
 			modifier = {
-				add = 10
-				surrender_progress > 0.75
+				add = 5000
+				surrender_progress > 0.7
 			}
 			modifier = {
-				factor = 5
-				surrender_progress > 0.9
+				add = 10000
+				NOT = { surrender_progress < 0.8 }
+			}
+			modifier = {
+				add = 500
+				surrender_progress > 0.7
+				FROM = {
+					has_country_flag = nuclear_warning_from@ROOT
+					NOT = { has_country_flag = nuclear_warning_grace_from@ROOT }
+				}
+			}
+			modifier = {
+				add = 10000
+				has_country_flag = has_been_nuked
+			}
+			modifier = {
+				add = 10000
+				FROM = { has_country_flag = nuclear_strategic_strike_against@ROOT }
+			}
+			modifier = {
+				add = 10000
+				FROM = { has_country_flag = nuclear_repeated_strikes_against@ROOT }
 			}
 			modifier = {
 				factor = 0
-				threat < 0.10
+				NOT = { has_country_flag = has_been_nuked }
+				FROM = {
+					OR = {
+						NOT = { has_country_flag = nuclear_warning_from@ROOT }
+						has_country_flag = nuclear_warning_grace_from@ROOT
+					}
+				}
 			}
-			# Alliance gate — nukes are a deterrent; don't strike a stronger bloc
-			# unless we are already desperate (surrender_progress >= 0.5 overrides caution).
 			modifier = {
 				factor = 0
 				raid_alliance_unfavorable = yes
 				surrender_progress < 0.5
+				NOT = { has_country_flag = has_been_nuked }
 			}
 			modifier = {
-				# Don't target anyone who is not a potential enemy
 				factor = 0
 				NOT = {
 					is_in_array = {

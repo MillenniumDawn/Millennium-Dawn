@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Find locally created equipment variants consumed before their unlock is assured.
+"""Find equipment variants consumed before their unlock is assured.
 
-This is a local effect-flow check, not a whole-program proof. External scripted
-effects and focus prerequisites can establish availability too,
+Scripted effects share their caller's flow. This is not a whole-program proof:
+separate event chains and focus prerequisites can establish availability too,
 so findings need review. All equipment types use the same engine contract.
 """
 
@@ -32,6 +32,7 @@ from shared_utils import FileOpener
 from validator_common import BaseValidator, Severity, run_validator_main
 
 _LITERAL = re.compile(r"[A-Za-z_][\w.-]*\Z")
+_ASSIGNMENT = re.compile(r"\b([A-Za-z_]\w*)\s*=")
 _CONSUMERS = {
     "add_equipment_production": "version_name",
     "create_ship": "equipment_variant",
@@ -123,9 +124,9 @@ class _Flow:
 def _join(states):
     pending = {}
     for state in states:
-        for key, (techs, line) in state.pending.items():
-            if not techs & state.techs:
-                pending[key] = (techs, line)
+        for key, deferred in state.pending.items():
+            if not deferred[0] & state.techs:
+                pending[key] = deferred
     return _Flow(
         set.intersection(*(state.techs for state in states)),
         pending,
@@ -138,19 +139,35 @@ def _join(states):
     )
 
 
-def check_variant_availability(text, unlocks, context=None, history_country=None):
-    """Return (message, use-line) warnings for deferred variants used locally."""
+def check_variant_availability(
+    text, unlocks, context=None, history_country=None, source_path=""
+):
+    """Return (message, use-file, use-line) findings for deferred variants."""
     findings = set()
     context = context or VariantContext()
+    sources = [source_path]
+    active_effects = set()
 
-    def walk(nodes, state, country="ROOT", root_country="ROOT"):
+    def walk(
+        nodes, state, country: str | None = "ROOT", root_country: str | None = "ROOT"
+    ):
         index = 0
         while index < len(nodes):
             node = nodes[index]
             index += 1
             if node.key in _METADATA:
                 continue
-            if node.key == "if":
+            if node.key in context.effects:
+                if node.key not in active_effects:
+                    path, body = context.effects[node.key]
+                    active_effects.add(node.key)
+                    sources.append(path)
+                    try:
+                        state = walk(body, state, country, root_country)
+                    finally:
+                        sources.pop()
+                        active_effects.remove(node.key)
+            elif node.key == "if":
                 outcomes = []
                 remaining = state.copy()
                 branch = node
@@ -206,7 +223,7 @@ def check_variant_availability(text, unlocks, context=None, history_country=None
                 ):
                     state.pending.pop(key, None)
                 elif techs:
-                    state.pending[key] = (techs, node.line)
+                    state.pending[key] = (techs, sources[-1], node.line)
             elif node.key in _CONSUMERS:
                 source = (
                     _first_child(node, "equipment")
@@ -232,12 +249,18 @@ def check_variant_availability(text, unlocks, context=None, history_country=None
                 key = (_value(source, "type"), _value(source, _CONSUMERS[node.key]))
                 deferred = state.pending.get(key)
                 if deferred and not deferred[0] & state.techs:
+                    creation = (
+                        f"{deferred[1]}:{deferred[2]}"
+                        if deferred[1]
+                        else f"line {deferred[2]}"
+                    )
                     findings.add(
                         (
-                            f'{node.key} uses "{key[1]}" ({key[0]}) created at line '
-                            f"{deferred[1]} without assured technology "
+                            f'{node.key} uses "{key[1]}" ({key[0]}) created at '
+                            f"{creation} without assured technology "
                             f'({", ".join(sorted(deferred[0]))}). Grant or require the '
                             "technology, or use allow_without_tech = yes before consuming the variant.",
+                            sources[-1],
                             node.line,
                         )
                     )
@@ -346,8 +369,9 @@ def check_variant_availability(text, unlocks, context=None, history_country=None
         _nodes(text) if isinstance(text, str) else text,
         _Flow(),
         history_country or "ROOT",
+        history_country or "ROOT",
     )
-    return sorted(findings, key=lambda finding: (finding[1], finding[0]))
+    return sorted(findings, key=lambda finding: (finding[1], finding[2], finding[0]))
 
 
 class Validator(BaseValidator):
@@ -365,6 +389,17 @@ class Validator(BaseValidator):
             ).items():
                 unlocks.setdefault(equipment, set()).update(techs)
         context = VariantContext()
+        for path in self._collect_files(
+            ["common/scripted_effects/**/*.txt"], ignore_staged=True
+        ):
+            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            context.documents[relative] = _nodes(FileOpener.open_text_file(path))
+        effect_names = {
+            node.key
+            for nodes in context.documents.values()
+            for node in nodes
+            if node.value is None
+        }
         paths = self._collect_files(
             ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
             ignore_staged=True,
@@ -372,6 +407,9 @@ class Validator(BaseValidator):
         for path in paths:
             relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
             text = FileOpener.open_text_file(path)
+            if relative in context.documents:
+                context.unknown_events.update(event_pool_targets(text))
+                continue
             if (
                 any(
                     token in text
@@ -382,6 +420,7 @@ class Validator(BaseValidator):
                         "set_technology",
                     )
                 )
+                or any(match[1] in effect_names for match in _ASSIGNMENT.finditer(text))
                 or re.search(r"\b[A-Za-z_]\w*\.\d+\b", text)
                 or relative.startswith(
                     (
@@ -395,50 +434,64 @@ class Validator(BaseValidator):
                 context.documents[relative] = _nodes(text)
                 context.unknown_events.update(event_pool_targets(text))
         context.index()
-        context_changed = self.staged_only and any(
-            path.replace("\\", "/").endswith(".txt")
-            and (
-                any(
-                    part in path.replace("\\", "/")
-                    for part in (
-                        "common/technologies/",
-                        "common/technology_tags/",
-                        "common/bookmarks/",
-                        "history/countries/",
-                        "common/decisions/categories/",
-                        "common/national_focus/",
-                        "events/",
+        context_changed = (
+            self.staged_only
+            and self.staged_files is not None
+            and any(
+                path.replace("\\", "/").endswith(".txt")
+                and (
+                    any(
+                        part in path.replace("\\", "/")
+                        for part in (
+                            "common/technologies/",
+                            "common/technology_tags/",
+                            "common/bookmarks/",
+                            "common/scripted_effects/",
+                            "history/countries/",
+                            "common/decisions/categories/",
+                            "common/national_focus/",
+                            "events/",
+                        )
+                    )
+                    or any(
+                        token in FileOpener.open_text_file(path)
+                        for token in (
+                            "country_event",
+                            "news_event",
+                            "random_events",
+                            "events =",
+                        )
                     )
                 )
-                or any(
-                    token in FileOpener.open_text_file(path)
-                    for token in (
-                        "country_event",
-                        "news_event",
-                        "random_events",
-                        "events =",
-                    )
-                )
+                for path in self.staged_files
             )
-            for path in self.staged_files
         )
-        results = []
+        results = set()
         for path in self._collect_files(
             ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
             ignore_staged=context_changed,
         ):
-            text = FileOpener.open_text_file(path)
-            if "create_equipment_variant" not in text:
-                continue
             relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            if relative.startswith("common/scripted_effects/"):
+                continue
+            text = FileOpener.open_text_file(path)
+            if "create_equipment_variant" not in text and not any(
+                match[1] in context.effects for match in _ASSIGNMENT.finditer(text)
+            ):
+                continue
             match = re.match(r"history/countries/([A-Z]{3})(?:\s|\.)", relative)
             history_country = match[1] if match else None
-            for message, line in check_variant_availability(
-                context.documents[relative], unlocks, context, history_country
-            ):
-                results.append((message, relative, line))
+            results.update(
+                check_variant_availability(
+                    context.documents[relative],
+                    unlocks,
+                    context,
+                    history_country,
+                    relative,
+                )
+            )
         self._report(
-            results,
+            sorted(results, key=lambda finding: (finding[1], finding[2], finding[0])),
             "No locally deferred equipment variants consumed",
             "Equipment variants consumed without an assured unlock:",
             severity=Severity.ERROR,
