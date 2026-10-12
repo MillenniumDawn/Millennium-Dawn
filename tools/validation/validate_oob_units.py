@@ -131,9 +131,10 @@ _NMILITARY_DEFINE_RE = re.compile(
 )
 _INT_RE = re.compile(r"\d+")
 _COLUMN_SIZE_MODIFIER = "additional_brigade_column_size"
-_SET_SUB_DOCTRINE_RE = re.compile(
-    r"^set_sub_doctrine\s*=\s*(?:\{[^}]*?\bsub_doctrine\s*=\s*)?(\w+)", re.M
+_DOCTRINE_HISTORY_COMMAND_RE = re.compile(
+    r"\b(set_sub_doctrine|set_grand_doctrine|add_mastery)\s*=\s*"
 )
+_NUMBER_RE = re.compile(r"^[+-]?(?:\d+(?:\.\d*)?|\.\d+)$")
 _SLOT_COORD_RE = re.compile(r"\b([xy])\s*=\s*(\d+)")
 _TEMPLATE_SLOT = "template-slot"
 _TEMPLATE_LOCKED_ROW = "template-locked-row"
@@ -1298,33 +1299,326 @@ def _limit_sources(mod_path: str, pattern: str) -> List[str]:
 
 
 def _starting_column_bonus(mod_path: str) -> Dict[str, int]:
-    """Regiments rows each tag's starting subdoctrines add.
-
-    Mastery rewards and ideas that add rows are not counted.
-    """
-    sizes: Dict[str, int] = {}
-    for path in _limit_sources(mod_path, _DOCTRINES_PATTERN):
+    """Regiments rows available from each tag's starting active doctrines."""
+    reward_mastery = 100.0
+    for path in _limit_sources(mod_path, _DEFINES_PATTERN):
         text = strip_comments(_read_text(path, mod_path))
-        if _COLUMN_SIZE_MODIFIER not in text:
-            continue
+        value = re.search(
+            r"\bNDefines\.NDoctrines\.DEFAULT_REWARD_MASTERY\s*=\s*([\d.]+)",
+            text,
+        )
+        if value:
+            reward_mastery = float(value.group(1))
+
+    doctrines: Dict[str, Dict[str, Any]] = {}
+    grand_doctrine_folders: Dict[str, Set[str]] = {}
+    for path in _limit_sources(mod_path, "common/doctrines/grand_doctrines/**/*.txt"):
+        text = strip_comments(_read_text(path, mod_path))
         for node in _build_block_nodes(text):
             if node["parent"] != -1:
                 continue
-            size = _top_level_value(
-                text, node["start"] + 1, node["end"], _COLUMN_SIZE_MODIFIER
+            folder = _top_level_value(text, node["start"] + 1, node["end"], "folder")
+            if folder:
+                grand_doctrine_folders.setdefault(node["label"], set()).add(folder)
+    for path in _limit_sources(mod_path, _DOCTRINES_PATTERN):
+        text = strip_comments(_read_text(path, mod_path))
+        nodes = _build_block_nodes(text)
+        for node in nodes:
+            if node["parent"] != -1:
+                continue
+            track = _top_level_value(text, node["start"] + 1, node["end"], "track")
+            folder = os.path.basename(os.path.dirname(path))
+            direct = _number_value(
+                _top_level_value(
+                    text, node["start"] + 1, node["end"], _COLUMN_SIZE_MODIFIER
+                )
             )
-            if size:
-                sizes[node["label"]] = int(size)
+            row_rewards = []
+            mastery_cost = 0.0
+            reward_cost_known = True
+            for child_idx in node["children"]:
+                child = nodes[child_idx]
+                if child["label"] != "rewards":
+                    continue
+                for reward_idx in child["children"]:
+                    reward = nodes[reward_idx]
+                    threshold_raw = _top_level_value(
+                        text, reward["start"] + 1, reward["end"], "mastery"
+                    )
+                    threshold = (
+                        reward_mastery
+                        if threshold_raw is None
+                        else _number_value(threshold_raw)
+                    )
+                    if threshold is None:
+                        reward_cost_known = False
+                    elif reward_cost_known:
+                        mastery_cost += threshold
+                    size = _top_level_value(
+                        text, reward["start"] + 1, reward["end"], _COLUMN_SIZE_MODIFIER
+                    )
+                    if size is None:
+                        continue
+                    row_rewards.append(
+                        (
+                            mastery_cost if reward_cost_known else None,
+                            _number_value(size),
+                        )
+                    )
+            doctrines[node["label"]] = {
+                "track": track,
+                "folder": folder,
+                "direct": direct,
+                "rewards": row_rewards,
+            }
+
+    bookmark_date = _default_bookmark_date(mod_path)
     bonus: Dict[str, int] = {}
     for path in _limit_sources(mod_path, _COUNTRY_HISTORY_PATTERN):
-        text = _read_text(path, mod_path)
-        if "set_sub_doctrine" not in text:
-            continue
-        doctrines = _SET_SUB_DOCTRINE_RE.findall(strip_comments(text))
-        rows = sum(sizes.get(doctrine, 0) for doctrine in doctrines)
+        text = strip_comments(_read_text(path, mod_path))
+        nodes = _build_block_nodes(text)
+        date_nodes = [
+            node
+            for node in nodes
+            if node["parent"] == -1 and _parse_history_date(node["label"]) is not None
+        ]
+        events = []
+        uncertain_history = False
+        for match in _DOCTRINE_HISTORY_COMMAND_RE.finditer(text):
+            event_date = (0, 0, 0, 0)
+            date_order = 0
+            at_root_level = _at_top_level(text, 0, match.start())
+            if at_root_level:
+                date_order = 0
+            else:
+                scope_date = None
+                scope_node = None
+                for date_node in date_nodes:
+                    if date_node["start"] < match.start() < date_node["end"]:
+                        scope_node = date_node
+                        scope_date = _parse_history_date(date_node["label"])
+                        break
+                if scope_date is not None:
+                    if scope_date > bookmark_date:
+                        continue
+                    event_date = scope_date
+                    date_order = 1
+                    if not _at_top_level(text, scope_node["start"] + 1, match.start()):
+                        uncertain_history = True
+                        continue
+                else:
+                    # A nested command outside a dated history block may be
+                    # conditional or scoped; do not treat it as unconditional.
+                    uncertain_history = True
+                    continue
+            command = match.group(1)
+            value_start = match.end()
+            if command in {"set_sub_doctrine", "set_grand_doctrine"}:
+                if value_start < len(text) and text[value_start] == "{":
+                    block = next(
+                        (node for node in nodes if node["start"] == value_start), None
+                    )
+                    fields = _block_fields(text, block) if block else {}
+                    value = fields.get(
+                        "sub_doctrine"
+                        if command == "set_sub_doctrine"
+                        else "grand_doctrine"
+                    )
+                else:
+                    value_match = re.match(r"\s*([^\s{}]+)", text[value_start:])
+                    value = (
+                        value_match.group(1)
+                        if value_match and _is_static_name(value_match.group(1))
+                        else None
+                    )
+                    fields = {}
+                events.append(
+                    (date_order, event_date, match.start(), command, value, fields)
+                )
+            else:
+                block = next(
+                    (node for node in nodes if node["start"] == value_start), None
+                )
+                if not block:
+                    continue
+                fields = _block_fields(text, block)
+                events.append(
+                    (date_order, event_date, match.start(), command, None, fields)
+                )
+
+        active: Dict[str, str] = {}
+        grand_doctrines: Dict[str, str] = {}
+        mastery: Dict[str, float] = {}
+        uncertain_mastery: Set[str] = set()
+        uncertain_folders: Set[str] = set()
+        uncertain_grand_folders: Set[str] = set()
+        uncertain_all = uncertain_history
+        for _, _, _, command, doctrine, fields in sorted(events):
+            if command == "set_sub_doctrine":
+                info = doctrines.get(doctrine)
+                folder = fields.get("folder")
+                if not doctrine or not info or not info["track"]:
+                    if folder and _is_static_name(folder):
+                        uncertain_folders.add(folder)
+                    else:
+                        uncertain_all = True
+                    continue
+                if folder and folder != info["folder"]:
+                    uncertain_folders.add(folder)
+                    continue
+                if fields.get("track") is not None:
+                    # `track` here is an index among a folder's tracks. The
+                    # static source does not resolve duplicate track instances.
+                    uncertain_folders.add(folder or info["folder"])
+                    continue
+                active[f"{info['folder']}:{info['track']}"] = doctrine
+            elif command == "set_grand_doctrine":
+                folder = fields.get("folder")
+                folders = (
+                    {folder}
+                    if folder and _is_static_name(folder)
+                    else grand_doctrine_folders.get(doctrine, set())
+                )
+                if doctrine and folders:
+                    for target_folder in folders:
+                        if (
+                            any(
+                                doctrines[item]["folder"] == target_folder
+                                for item in active.values()
+                            )
+                            and grand_doctrines.get(target_folder) != doctrine
+                        ):
+                            uncertain_folders.add(target_folder)
+                        grand_doctrines[target_folder] = doctrine
+                elif doctrine and _is_static_name(doctrine):
+                    uncertain_grand_folders.add("*")
+                    uncertain_folders.update(
+                        doctrines[item]["folder"] for item in active.values()
+                    )
+                elif folder and _is_static_name(folder):
+                    uncertain_grand_folders.add(folder)
+                    uncertain_folders.add(folder)
+                else:
+                    uncertain_grand_folders.add("*")
+                    uncertain_folders.update(
+                        doctrines[item]["folder"] for item in active.values()
+                    )
+            else:
+                amount = _number_value(fields.get("amount"))
+                candidates = list(active.values())
+                filters = {
+                    key: fields.get(key)
+                    for key in ("folder", "grand_doctrine", "sub_doctrine", "track")
+                    if fields.get(key) is not None
+                }
+                static_filters = {
+                    key: value
+                    for key, value in filters.items()
+                    if _is_static_name(value)
+                }
+                unknown_filter = len(static_filters) != len(filters)
+                if "index" in fields:
+                    unknown_filter = True
+                candidates = [
+                    candidate
+                    for candidate in candidates
+                    if (
+                        "sub_doctrine" not in static_filters
+                        or candidate == static_filters["sub_doctrine"]
+                    )
+                    and (
+                        "folder" not in static_filters
+                        or doctrines[candidate]["folder"] == static_filters["folder"]
+                    )
+                    and (
+                        "track" not in static_filters
+                        or doctrines[candidate]["track"] == static_filters["track"]
+                    )
+                    and (
+                        "grand_doctrine" not in static_filters
+                        or (
+                            doctrines[candidate]["folder"]
+                            not in uncertain_grand_folders
+                            and "*" not in uncertain_grand_folders
+                            and grand_doctrines.get(doctrines[candidate]["folder"])
+                            == static_filters["grand_doctrine"]
+                        )
+                    )
+                ]
+                if unknown_filter:
+                    uncertain_mastery.update(candidates)
+                    continue
+                if amount is None:
+                    uncertain_mastery.update(candidates)
+                else:
+                    for candidate in candidates:
+                        mastery[candidate] = mastery.get(candidate, 0.0) + amount
+
+        rows = 0
+        if not uncertain_all:
+            for doctrine in active.values():
+                info = doctrines[doctrine]
+                if info["folder"] in uncertain_folders or "*" in uncertain_folders:
+                    continue
+                direct = info["direct"]
+                if direct is not None:
+                    rows += int(direct)
+                for threshold, size in info["rewards"]:
+                    if (
+                        threshold is not None
+                        and size is not None
+                        and doctrine not in uncertain_mastery
+                        and mastery.get(doctrine, 0.0) >= threshold
+                    ):
+                        rows += int(size)
         if rows:
             bonus[os.path.basename(path)[:3]] = rows
     return bonus
+
+
+def _block_fields(text: str, node: Optional[Dict]) -> Dict[str, Optional[str]]:
+    if not node:
+        return {}
+    fields = {}
+    for key in ("amount", "sub_doctrine", "grand_doctrine", "folder", "track", "index"):
+        value = _top_level_value(text, node["start"] + 1, node["end"], key)
+        if value is not None:
+            fields[key] = value
+    return fields
+
+
+def _is_static_name(value: str) -> bool:
+    return bool(re.fullmatch(r"[A-Za-z_]\w*", value))
+
+
+def _number_value(value: Optional[str]) -> Optional[float]:
+    if value is None or not _NUMBER_RE.fullmatch(value):
+        return None
+    return float(value)
+
+
+def _parse_history_date(value: str) -> Optional[Tuple[int, ...]]:
+    if not re.fullmatch(r"\d+(?:\.\d+){2,3}", value):
+        return None
+    parts = [int(part) for part in value.split(".")]
+    return tuple((parts + [0] * (4 - len(parts)))[:4])
+
+
+def _default_bookmark_date(mod_path: str) -> Tuple[int, ...]:
+    for path in _limit_sources(mod_path, "common/bookmarks/*.txt"):
+        text = strip_comments(_read_text(path, mod_path))
+        nodes = _build_block_nodes(text)
+        for node in nodes:
+            if (
+                node["label"] == "bookmark"
+                and _top_level_value(text, node["start"] + 1, node["end"], "default")
+                == "yes"
+            ):
+                raw = _top_level_value(text, node["start"] + 1, node["end"], "date")
+                date = _parse_history_date(raw or "")
+                if date:
+                    return date
+    return (2000, 1, 1, 12)
 
 
 def read_template_limits(mod_path: str) -> TemplateLimits:

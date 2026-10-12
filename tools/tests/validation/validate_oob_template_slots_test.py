@@ -27,6 +27,7 @@ _DEFINES = (
 )
 _DOCTRINES = (
     "centralized_command = {\n"
+    "\ttrack = structure_doctrine\n"
     "\tadditional_brigade_column_size = 1\n"
     "\trewards = {\n"
     "\t\tdivision_structure = {\n"
@@ -231,6 +232,337 @@ def test_limits_come_from_the_defines_and_starting_doctrines(tmp_path):
     )
 
     assert read_template_limits(str(tmp_path)) == _LIMITS
+
+
+def test_starting_mastery_below_reward_threshold_does_not_open_reward_row(tmp_path):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(
+        tmp_path,
+        "common/defines/doctrine.lua",
+        "NDefines.NDoctrines.DEFAULT_REWARD_MASTERY = 100.0\n",
+    )
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(
+        tmp_path,
+        "common/doctrines/grand_doctrines/land.txt",
+        "combined_arms = { folder = land }\n",
+    )
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_grand_doctrine = combined_arms\n"
+        "set_sub_doctrine = centralized_command\n"
+        "add_mastery = { amount = 25 sub_doctrine = centralized_command }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 1}
+
+
+@pytest.mark.parametrize("amount", [100, 125])
+def test_starting_mastery_at_or_above_reward_threshold_opens_reward_row(
+    tmp_path, amount
+):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(
+        tmp_path,
+        "common/defines/doctrine.lua",
+        "NDefines.NDoctrines.DEFAULT_REWARD_MASTERY = 100.0\n",
+    )
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\n"
+        f"add_mastery = {{ amount = {amount} sub_doctrine = centralized_command }}\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 2}
+
+
+def test_mastery_reward_threshold_override_is_respected(tmp_path):
+    doctrine = _DOCTRINES.replace(
+        "division_structure = {\n\t\t\tadditional_brigade_column_size = 1",
+        "division_structure = {\n\t\t\tmastery = 50\n\t\t\tadditional_brigade_column_size = 1",
+    )
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrine)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\n"
+        "add_mastery = { amount = 50 sub_doctrine = centralized_command }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 2}
+
+
+def test_inactive_subdoctrine_mastery_does_not_open_replaced_track_reward(tmp_path):
+    doctrines = _DOCTRINES + "other_command = {\n\ttrack = structure_doctrine\n}\n"
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrines)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\n"
+        "set_sub_doctrine = other_command\n"
+        "add_mastery = { amount = 100 sub_doctrine = centralized_command }\n"
+        "set_sub_doctrine = centralized_command\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 1}
+
+
+def test_add_mastery_filter_does_not_credit_inactive_subdoctrine(tmp_path):
+    doctrines = (
+        _DOCTRINES + "other_command = {\n\ttrack = another_structure_doctrine\n}\n"
+    )
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrines)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\n"
+        "set_sub_doctrine = other_command\n"
+        "add_mastery = { amount = 100 sub_doctrine = other_command }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 1}
+
+
+def test_add_mastery_filters_match_active_doctrine_state(tmp_path):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(
+        tmp_path,
+        "common/doctrines/grand_doctrines/land.txt",
+        "combined_arms = { folder = land }\n",
+    )
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_grand_doctrine = combined_arms\n"
+        "set_sub_doctrine = centralized_command\n"
+        "add_mastery = { amount = 100 folder = land grand_doctrine = combined_arms "
+        "sub_doctrine = centralized_command track = structure_doctrine }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 2}
+
+
+def test_changing_grand_doctrine_after_subdoctrine_invalidates_its_row_bonus(
+    tmp_path,
+):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(
+        tmp_path,
+        "common/doctrines/grand_doctrines/land.txt",
+        "combined_arms = { folder = land }\nother_arms = { folder = land }\n",
+    )
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_grand_doctrine = combined_arms\n"
+        "set_sub_doctrine = centralized_command\n"
+        "set_grand_doctrine = other_arms\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {}
+
+
+def test_nested_conditional_doctrine_command_makes_starting_state_uncertain(
+    tmp_path,
+):
+    doctrines = _DOCTRINES + "other_command = {\n\ttrack = structure_doctrine\n}\n"
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrines)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\n"
+        "if = { limit = { always = yes } set_sub_doctrine = other_command }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {}
+
+
+@pytest.mark.parametrize(
+    "history, grand_doctrines",
+    [
+        (
+            "set_sub_doctrine = centralized_command.variable\n",
+            "",
+        ),
+        (
+            "set_grand_doctrine = combined_arms\n"
+            "set_sub_doctrine = centralized_command\n"
+            "set_grand_doctrine = combined_arms.variable\n",
+            "combined_arms = { folder = land }\n",
+        ),
+    ],
+)
+def test_assignment_suffix_expression_is_not_parsed_as_static_identifier(
+    history, grand_doctrines, tmp_path
+):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    if grand_doctrines:
+        _write(
+            tmp_path,
+            "common/doctrines/grand_doctrines/land.txt",
+            grand_doctrines,
+        )
+    _write(tmp_path, "history/countries/UKR - Ukraine.txt", history)
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {}
+
+
+def test_dynamic_mastery_amount_prevents_later_numeric_mastery_from_unlocking(tmp_path):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\n"
+        "add_mastery = { amount = ROOT.starting_mastery sub_doctrine = centralized_command }\n"
+        "add_mastery = { amount = 100 sub_doctrine = centralized_command }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 1}
+
+
+def test_dynamic_mastery_filter_is_conservative_for_known_active_candidates(tmp_path):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\n"
+        "add_mastery = { amount = 100 sub_doctrine = ROOT.starting_doctrine }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 1}
+
+
+def test_unresolved_track_index_prevents_mastery_reward_inference(tmp_path):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\n"
+        "add_mastery = { amount = 100 sub_doctrine = centralized_command index = 0 }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 1}
+
+
+def test_unresolved_subdoctrine_track_selector_is_conservative_in_its_folder(tmp_path):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = { sub_doctrine = centralized_command folder = land track = 0 }\n"
+        "add_mastery = { amount = 100 sub_doctrine = centralized_command }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {}
+
+
+def test_doctrine_without_row_modifier_does_not_hide_another_active_doctrines_bonus(
+    tmp_path,
+):
+    doctrines = (
+        _DOCTRINES + "other_command = {\n\ttrack = another_structure_doctrine\n}\n"
+    )
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrines)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\nset_sub_doctrine = other_command\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 1}
+
+
+@pytest.mark.parametrize("amount, expected_rows", [(100, 1), (200, 2)])
+def test_second_mastery_reward_uses_cumulative_cost(amount, expected_rows, tmp_path):
+    doctrine = _DOCTRINES.replace(
+        "\t\t\tadditional_brigade_column_size = 1\n",
+        "\t\t\tplanning_speed = 0.05\n",
+        1,
+    ).replace(
+        "\t\t}\n\t}\n}\nmobile_infantry",
+        "\t\t}\n"
+        "\t\tdivision_structure_two = {\n"
+        "\t\t\tadditional_brigade_column_size = 1\n"
+        "\t\t}\n"
+        "\t}\n}\nmobile_infantry",
+    )
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrine)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "set_sub_doctrine = centralized_command\n"
+        f"add_mastery = {{ amount = {amount} sub_doctrine = centralized_command }}\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": expected_rows}
+
+
+def test_root_doctrine_assignment_precedes_later_in_file_dated_assignment(tmp_path):
+    doctrines = _DOCTRINES + "other_command = {\n\ttrack = structure_doctrine\n}\n"
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrines)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "2000.1.1 = {\n\tset_sub_doctrine = other_command\n}\n"
+        "set_sub_doctrine = centralized_command\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {}
+
+
+def test_dated_doctrine_assignments_replay_in_date_order_not_source_order(tmp_path):
+    doctrines = _DOCTRINES + "other_command = {\n\ttrack = structure_doctrine\n}\n"
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrines)
+    _write(
+        tmp_path,
+        "common/bookmarks/default.txt",
+        "bookmark = {\n\tdefault = yes\n\tdate = 2002.1.1.12\n}\n",
+    )
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "2001.1.1 = {\n\tset_sub_doctrine = other_command\n}\n"
+        "2000.1.1 = {\n\tset_sub_doctrine = centralized_command\n}\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {}
+
+
+def test_dated_doctrine_and_mastery_after_default_bookmark_do_not_count(tmp_path):
+    _write(tmp_path, "common/defines/MD_defines.lua", _DEFINES)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(
+        tmp_path,
+        "common/bookmarks/default.txt",
+        "bookmark = {\n\tdefault = yes\n\tdate = 2000.1.1.12\n}\n",
+    )
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        "2000.1.1 = {\n\tset_sub_doctrine = centralized_command\n}\n"
+        "2001.1.1 = {\n"
+        "\tadd_mastery = { amount = 100 sub_doctrine = centralized_command }\n}\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 1}
 
 
 def test_limits_fall_back_to_vanilla_without_defines(tmp_path):
