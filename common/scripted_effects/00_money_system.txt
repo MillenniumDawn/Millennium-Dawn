@@ -5906,31 +5906,30 @@ calculate_gdp_modifiers = {
 		}
 
 		#Population growth rate
-		#-0.125 * GDP/C + 3.5 - GDP/C c [0, 28]
-		#-0.025 * GDP/C + 0.7 - GDP/C c [28, 60]
-		#-0.005 * GDP/C - 0.5 - GDP/C c [60, 100]
-		# Break-even at GDP/c = 28, min clamp (-1.00) at GDP/c = 100
+		#-0.08 * GDP/C + 2.50 - GDP/C c [0, 31.25]
+		#-0.04 * GDP/C + 1.25 - GDP/C c [31.25, 62.5]
+		#-0.02 * GDP/C        - GDP/C c [62.5, 100]
+		# Break-even at GDP/c = 31.25, min clamp (-2.00) at GDP/c = 100
 		# Fitted to in-game GDP/c, which runs several times above real-world figures
 		set_variable = {
 			monthly_population_gdp_modifier = {
 				value = gdp_per_capita
 				if = {
-					limit = { value = gdp_per_capita less_than = 28 }
-					multiply = -0.125
-					add = 3.5
+					limit = { value = gdp_per_capita less_than = 31.25 }
+					multiply = -0.08
+					add = 2.5
 				}
 				else = {
 					if = {
-						limit = { value = gdp_per_capita less_than = 60 }
-						multiply = -0.025
-						add = 0.7
+						limit = { value = gdp_per_capita less_than = 62.5 }
+						multiply = -0.04
+						add = 1.25
 					}
 					else = {
-						multiply = -0.005
-						add = -0.5
+						multiply = -0.02
 					}
 				}
-				clamp = { min = -1 max = 20000 }
+				clamp = { min = -2 max = 20000 }
 			}
 		}
 
@@ -6191,19 +6190,12 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# Calculate Unemployment/Worker fulfillment
+	# A worker shortage draws migrants in
 	set_variable = {
 		immigration_employment_factor_display = {
-			value = 0
-			if = {
-				limit = { value = average_worker_fulfillment less_than = 1 }
-				add = 1
-				subtract = average_worker_fulfillment
-			}
-			else = {
-				add = total_unemployed_percentage_display
-				multiply = -2
-			}
+			value = 1
+			subtract = average_worker_fulfillment
+			clamp = { min = 0 max = 1 }
 		}
 	}
 
@@ -6251,16 +6243,30 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# Calculate Net Immigration Rate
+	# Unemployment and war push our own people out
+	set_variable = {
+		emigration_pressure = {
+			value = 0
+			if = {
+				limit = { value = average_worker_fulfillment greater_than_or_equals = 1 }
+				add = total_unemployed_percentage_display
+				multiply = 2
+			}
+			subtract = personal_war_refugees_display
+			clamp = { min = 0 max = 2.0 }
+		}
+	}
+
+	# Immigration we would take in with fully open borders
 	set_variable = {
 		max_net_immigration_rate = {
-			value = immigration_productivity_calculations_display
+			value = 1
+			add = immigration_productivity_calculations_display
 			add = immigration_employment_factor_display
 			add = immigration_government_factor_display
 			add = modifier@maximum_migration_rate_value
 			add = neighbour_war_refugees_display
-			add = personal_war_refugees_display
-			clamp = { min = -2.0 max = 2.0 }
+			clamp = { min = 0 max = 3.0 }
 		}
 	}
 
@@ -6290,16 +6296,61 @@ calculate_migration_mechanic_values = {
 	if = { limit = { check_variable = { global.countries^num < 2 } }
 		set_variable = { max_net_immigration_rate = 0 }
 	}
+	# The border law decides how much of that potential we take in
 	set_variable = {
-		net_immigration_rate = {
+		immigration_capacity = {
 			value = max_net_immigration_rate
 			multiply = migration_rate_value
-			if = { limit = { value = global.countries^num greater_than = 0 }
-				clamp = { min = -2.0 max = max_net_immigration_rate }
+			clamp = { min = 0 max = max_net_immigration_rate }
+		}
+	}
+
+	# Both flows are scaled so that world immigration equals world emigration
+	set_variable = {
+		net_immigration_rate = {
+			value = immigration_capacity
+			multiply = global.world_immigration_fill
+			subtract = {
+				value = emigration_pressure
+				multiply = global.world_emigration_share
 			}
-			else = {
-				clamp = { min = 0 max = 0 }
+		}
+	}
+}
+
+# Effect: update_world_migration_balance
+# Purpose: Scales world immigration and emigration to the smaller of the two, so migration moves people instead of creating or removing them; global, monthly
+update_world_migration_balance = {
+	set_variable = { global.world_immigration_capacity = 0 }
+	set_variable = { global.world_emigration_pressure = 0 }
+	every_country = {
+		add_to_variable = {
+			var = global.world_immigration_capacity
+			value = {
+				value = immigration_capacity
+				multiply = population_total_m
 			}
+		}
+		add_to_variable = {
+			var = global.world_emigration_pressure
+			value = {
+				value = emigration_pressure
+				multiply = population_total_m
+			}
+		}
+	}
+	set_variable = {
+		global.world_immigration_fill = {
+			value = global.world_emigration_pressure
+			divide = { value = global.world_immigration_capacity clamp = { min = 0.001 max = @math_expressions_max } }
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = {
+		global.world_emigration_share = {
+			value = global.world_immigration_capacity
+			divide = { value = global.world_emigration_pressure clamp = { min = 0.001 max = @math_expressions_max } }
+			clamp = { min = 0 max = 1 }
 		}
 	}
 }
