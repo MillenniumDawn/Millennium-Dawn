@@ -42,6 +42,7 @@ from shared_utils import (
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
 from validate_events import load_cost_lookups, uncovered_costs
 from validator_common import (
+    BASE_ZERO_RE,
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
@@ -590,7 +591,6 @@ _CATEGORY_BLOCK_RE = re.compile(
     rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
 )
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
-_BASE_ZERO_RE = re.compile(r"\bbase\s*=\s*0(?:\.0+)?(?![\d.])")
 _AI_ADD_RE = re.compile(r"\badd\s*=")
 # The money kinds validate_events.uncovered_costs can report.
 _MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
@@ -1215,6 +1215,11 @@ def _top_level_neg_pp(block: str):
         if match:
             return _int_literal(match.group(1))
     return None
+
+
+def _ai_never_takes(ai_factor: str) -> bool:
+    """`base = 0` with no `add`: the weight cannot leave zero."""
+    return bool(BASE_ZERO_RE.search(ai_factor)) and not _AI_ADD_RE.search(ai_factor)
 
 
 def extract_value_multi_line(obj: str, s: str) -> str:
@@ -2987,7 +2992,7 @@ class Validator(BaseValidator):
         for d in factories:
             if d.ai_hint_pp_cost:
                 continue
-            if d.ai_factor and "base = 0" in d.ai_factor and "add" not in d.ai_factor:
+            if _ai_never_takes(d.ai_factor):
                 continue
 
             if d.custom_cost_trigger and "political_power" in d.custom_cost_trigger:
@@ -3020,16 +3025,11 @@ class Validator(BaseValidator):
     def validate_ai_will_do_ignores_cost(self):
         """Flag decisions that charge money while ai_will_do never looks at money.
 
-        The decision twin of the event check (issue #5738). A charge is what
-        `complete_effect` or `remove_effect` takes from the country itself:
-        treasury, debt, international investment, or a tax rate change, directly
-        or through a scripted effect. It is covered by an `ai_will_do` modifier
-        on the bankruptcy mission, `ai_has_high_deficit`, or a money variable.
-
-        Skipped: decisions the AI cannot see or never takes (`base = 0` with no
-        `add`), plain missions, and a selectable mission's `remove_effect`, which
-        is a timeout outcome. A treasury `custom_cost_trigger` stops a broke
-        country from paying, so those findings carry a note and need a look.
+        The decision twin of the event check (issue #5738), with the same cost
+        and guard detection. Skipped: decisions the AI cannot see or never
+        takes, plain missions, and a selectable mission's `remove_effect`, which
+        is a timeout outcome. A treasury `custom_cost_trigger` already stops a
+        broke country, so those findings carry a note.
         """
         self._log_section("Checking decisions for AI weights that ignore money...")
 
@@ -3039,9 +3039,9 @@ class Validator(BaseValidator):
         for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
             if d.mission_subtype and not d.selectable_mission:
                 continue
-            ai_weights = d.ai_factor[1:-1]
-            if _BASE_ZERO_RE.search(ai_weights) and not _AI_ADD_RE.search(ai_weights):
+            if _ai_never_takes(d.ai_factor):
                 continue
+            ai_weights = d.ai_factor[1:-1]
 
             costs: Set[str] = set()
             blocks = [d.complete_effect]

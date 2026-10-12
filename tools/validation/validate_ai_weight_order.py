@@ -1,21 +1,9 @@
 """Flag AI weight blocks where an `add` follows a `factor = 0` modifier.
 
 `ai_chance` and `ai_will_do` apply their `modifier` blocks in order on a running
-total. A `factor = 0` zeroes the total, and a positive `add` in a later modifier
-brings it back, so the killswitch switches nothing off (issue #5738):
-
-    ai_chance = {
-        base = 10
-        modifier = { factor = 0 has_war = yes }
-        modifier = { add = 5 has_stability > 0.5 }   # at war: 0 + 5
-    }
-
-The fix is to move every `factor = 0` modifier below the adds.
-
-Only the block's direct `modifier` children are read, and only their own
-`factor` and `add` keys. A root-level `factor`, a negative or zero `add`, and an
-`add` set from a variable are ignored. Triggers are not compared, so two
-modifiers that can never both hold are still reported.
+total, so a positive `add` after a `factor = 0` brings the zeroed weight back
+(issue #5738). Triggers are not compared: two modifiers that can never both hold
+are still reported.
 """
 
 import os
@@ -31,6 +19,7 @@ from shared_utils import (
     line_for_offset,
 )
 from validator_common import (
+    FACTOR_ZERO_RE,
     BaseValidator,
     Severity,
     _child_blocks,
@@ -38,7 +27,6 @@ from validator_common import (
 )
 
 _AI_WEIGHT_RE = re.compile(r"\b(ai_chance|ai_will_do)\s*=\s*\{")
-_FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
 _ADD_RE = re.compile(r"\badd\s*=\s*(\d+(?:\.\d+)?)")
 _CATEGORY = "ai-weight-zero-then-add"
 
@@ -63,7 +51,7 @@ def _add_after_zero(text: str, start: int, end: int) -> Optional[int]:
         own = _own_text(text, body_start, body_end)
         if zeroed and any(float(value) > 0 for value in _ADD_RE.findall(own)):
             return name_start
-        if _FACTOR_ZERO_RE.search(own):
+        if FACTOR_ZERO_RE.search(own):
             zeroed = True
     return None
 
