@@ -82,9 +82,11 @@ ai_strategy = { type = avoid_starting_wars value = -200 }
 ai_strategy = { type = conquer id = GER value = 200 }
 ```
 
-- MD uses both signs on purpose: small positive values as a general brake, and negative
-  values for the suppression technique. Do not flag a value as a sign bug without
-  reading the surrounding `conquer` strategies.
+- Never write a positive targetless value. The engine adds it to `conquer` and reads the
+  sum as front war priority, so a positive value makes the country and every country
+  bordering its faction treat those fronts as top priority; it is not a brake. Use a
+  negative value for the suppression technique, and `declare_war id = TAG value = -4000`
+  to block one target. A targeted `avoid_starting_wars id = TAG` is never read.
 - `declare_war` needs `id = TAG`. `target =` is not accepted and `dont_declare_war` is
   not a token.
 - `enable = { has_war_with = TARGET }` makes `declare_war` a no-op. Gate on
