@@ -1,4 +1,4 @@
-"""Event options whose flat ai_chance ignores what the option costs (issue #5096)."""
+"""Event options whose ai_chance ignores what the option costs (issue #5096)."""
 
 import argparse
 import subprocess
@@ -21,7 +21,8 @@ _FLAT = "\t\tai_chance = { base = 5 }\n"
 _AWARE = (
     "\t\tai_chance = {\n"
     "\t\t\tbase = 10\n"
-    "\t\t\tmodifier = { factor = 0.25 has_political_power < 25 }\n"
+    "\t\t\tmodifier = { factor = 0.25 has_active_mission = "
+    "bankruptcy_incoming_collapse }\n"
     "\t\t}\n"
 )
 _PP_COST = "\t\tadd_political_power = -50\n"
@@ -168,7 +169,7 @@ def test_cli_path_under_worktrees_reports_known_cost_defect(tmp_path):
         check=True,
     )
 
-    assert "foo.1.a - flat ai_chance ignores the political power cost" in result.stderr
+    assert "foo.1.a - ai_chance ignores the political power cost" in result.stderr
 
 
 def test_flat_weight_on_a_costed_option_is_flagged(tmp_path):
@@ -176,7 +177,7 @@ def test_flat_weight_on_a_costed_option_is_flagged(tmp_path):
     v = _validator(tmp_path, check_ai_chance_costs=True)
     v.validate_ai_chance_ignores_cost()
     assert [(i.message, i.file, i.line) for i in v._issues] == [
-        ("foo.1.a - flat ai_chance ignores the political power cost", "Ev.txt", 8)
+        ("foo.1.a - ai_chance ignores the political power cost", "Ev.txt", 8)
     ]
     assert v._issues[0].category == "event-ai-chance-ignores-cost"
     assert v.warnings_found == 1
@@ -193,7 +194,7 @@ def test_validator_reads_the_mods_scripted_effects(tmp_path):
     v = _validator(tmp_path, check_ai_chance_costs=True)
     v.validate_ai_chance_ignores_cost()
     assert [i.message for i in v._issues] == [
-        "foo.1.a - flat ai_chance ignores the treasury cost"
+        "foo.1.a - ai_chance ignores the treasury cost"
     ]
 
 
@@ -250,7 +251,7 @@ def test_event_with_every_option_gated_is_marked_for_review(tmp_path):
     v = _validator(tmp_path, check_ai_chance_costs=True)
     v.validate_ai_chance_ignores_cost()
     assert [i.message for i in v._issues] == [
-        "foo.1.a - flat ai_chance ignores the political power cost"
+        "foo.1.a - ai_chance ignores the political power cost"
         " (every option has a trigger; check the AI sees more than one)"
     ]
 
@@ -535,7 +536,7 @@ def test_validator_reads_stored_signs_from_the_whole_mod(tmp_path):
     v = _validator(tmp_path, check_ai_chance_costs=True)
     v.validate_ai_chance_ignores_cost()
     assert [i.message for i in v._issues] == [
-        "foo.1.a - flat ai_chance ignores the treasury cost"
+        "foo.1.a - ai_chance ignores the treasury cost"
     ]
 
 
@@ -560,3 +561,140 @@ def test_reference_pattern_is_clean_and_its_flat_sibling_is_flagged():
     decline = "\t\tadd_stability = -0.02\n\t\tai_chance = { base = 1 }\n"
     text = _event(_option("foo.1.a", pay), _option("foo.1.b", decline))
     assert _found(text) == [("foo.1.b", 17, "stability", False)]
+
+
+def _weighted(condition, weight="factor = 0.25"):
+    return f"\t\tai_chance = {{ base = 5 modifier = {{ {weight} {condition} }} }}\n"
+
+
+@pytest.mark.parametrize(
+    "condition,weight",
+    [
+        ("has_opinion = { target = IND value > 50 }", "add = 20"),
+        ("is_historical_focus_on = yes", "factor = 10"),
+        ("has_war_with = IND", "factor = 0"),
+        ("has_stability < 0.3", "factor = 0.25"),
+        ("", "factor = 0.25"),
+        ("has_active_mission = bankruptcy_incoming_collapse", "factor = 1"),
+        ("has_active_mission = bankruptcy_incoming_collapse", "add = 0"),
+        ("has_active_mission = bankruptcy_incoming_collapse", "factor = score"),
+        ("FROM = { has_active_mission = bankruptcy_incoming_collapse }", "factor = 0"),
+        ("IND = { has_active_mission = bankruptcy_incoming_collapse }", "factor = 0"),
+        (
+            "has_active_mission = bankruptcy_incoming_collapse "
+            "check_variable = { factor = 0.25 }",
+            "factor = 1",
+        ),
+    ],
+)
+def test_unrelated_neutral_or_foreign_modifiers_do_not_cover_costs(condition, weight):
+    found = _found(_two_options(_PP_COST + _weighted(condition, weight)))
+    assert [(name, costs) for name, _line, costs, _gated in found] == [
+        ("foo.1.a", "political power")
+    ]
+
+
+@pytest.mark.parametrize(
+    "condition",
+    [
+        "has_active_mission = bankruptcy_incoming_collapse",
+        "ai_has_high_deficit = yes",
+        "check_variable = { treasury < 15 }",
+        "check_variable = { var = ROOT.treasury value = 15 compare = less_than }",
+        "ROOT = { ai_has_high_deficit = yes }",
+        "THIS = { ai_has_high_deficit = yes }",
+        "OR = { ai_has_high_deficit = yes has_war = yes }",
+        "NOT = { ai_has_high_deficit = yes }",
+    ],
+)
+def test_financial_modifiers_cover_treasury_costs(condition):
+    body = "\t\tsmall_expenditure = yes\n" + _weighted(condition)
+    assert _found(_two_options(body)) == []
+
+
+@pytest.mark.parametrize(
+    "cost,condition",
+    [
+        ("add_to_variable = { debt = 5 }", "ai_has_high_deficit = yes"),
+        (
+            "subtract_from_variable = { int_investments = 5 }",
+            "ai_has_high_deficit = yes",
+        ),
+        (
+            "subtract_from_variable = { population_tax_rate = 5 }",
+            "check_variable = { population_tax_rate > 40 }",
+        ),
+        ("add_stability = -0.02", "has_stability < 0.3"),
+        ("add_war_support = -0.02", "has_war_support < 0.3"),
+    ],
+)
+def test_each_cost_kind_accepts_its_relevant_modifier(cost, condition):
+    assert _found(_two_options(f"\t\t{cost}\n" + _weighted(condition))) == []
+
+
+def test_mixed_costs_report_only_the_uncovered_kind():
+    body = "\t\tsmall_expenditure = yes\n\t\tadd_stability = -0.02\n" + _AWARE
+    found = _found(_two_options(body))
+    assert [(name, costs) for name, _line, costs, _gated in found] == [
+        ("foo.1.a", "stability")
+    ]
+    covered = body.replace(
+        "base = 10", "base = 10 modifier = { factor = 0.25 has_stability < 0.3 }"
+    )
+    assert _found(_two_options(covered)) == []
+
+
+@pytest.mark.parametrize("scope", ["ROOT", "THIS", "AST"])
+def test_choosing_country_cost_scopes_are_checked(scope):
+    text = _two_options(f"\t\t{scope} = {{ add_political_power = -50 }}\n" + _FLAT)
+    text = text.replace("id = foo.1", "id = foo.1\n\ttrigger = { tag = AST }")
+    assert [found[0] for found in _found(text)] == ["foo.1.a"]
+    assert _found(text.replace(_FLAT, _AWARE)) == []
+
+
+def test_literal_receiver_scope_can_cover_its_own_cost():
+    body = "\t\tAST = { small_expenditure = yes }\n" + _weighted(
+        "AST = { ai_has_high_deficit = yes }"
+    )
+    text = _two_options(body).replace(
+        "id = foo.1", "id = foo.1\n\ttrigger = { tag = AST }"
+    )
+    assert _found(text) == []
+
+
+@pytest.mark.parametrize(
+    "trigger",
+    ["NOT = { tag = AST }", "OR = { tag = AST tag = IND }", "original_tag = AST"],
+)
+def test_nonexclusive_tag_checks_do_not_make_foreign_costs_local(trigger):
+    body = "\t\tAST = { add_political_power = -50 }\n" + _FLAT
+    text = _two_options(body).replace(
+        "id = foo.1", f"id = foo.1\n\ttrigger = {{ {trigger} }}"
+    )
+    assert _found(text) == []
+
+
+@pytest.mark.parametrize(
+    "preview",
+    ["add_political_power = -50", "small_expenditure = yes", "add_stability = -0.1"],
+)
+def test_effect_tooltip_is_not_an_executed_cost(preview):
+    assert _found(_two_options(f"\t\teffect_tooltip = {{ {preview} }}\n" + _FLAT)) == []
+
+
+def test_preview_only_scripted_effect_is_not_costly():
+    effects = costly_scripted_effects(
+        ["preview = { effect_tooltip = { add_political_power = -50 } }\n"]
+    )
+    assert effects == {}
+
+
+@pytest.mark.parametrize("actual,preview,expected", [(5, -5, []), (-5, 5, ["foo.1.a"])])
+def test_preview_temp_writes_do_not_change_the_executed_cost(actual, preview, expected):
+    body = (
+        f"\t\tset_temp_variable = {{ treasury_change = {actual} }}\n"
+        f"\t\teffect_tooltip = {{ set_temp_variable = {{ treasury_change = {preview} }} "
+        "modify_treasury_effect = yes }\n"
+        "\t\tmodify_treasury_effect = yes\n" + _FLAT
+    )
+    assert [found[0] for found in _found(_two_options(body))] == expected

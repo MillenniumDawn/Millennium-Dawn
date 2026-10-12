@@ -40,6 +40,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `--strict` gates on ERROR only. A check with a standing backlog ships as WARNING until
   the backlog is cleared. A new strict check needs a baseline audit first, see the
   review checklist in `tools/README.md`.
+- The events batch enables `--check-ai-chance-costs` as WARNING while the existing
+  backlog is reviewed. It checks relevant AI modifiers, not just their presence, and
+  ignores display-only `effect_tooltip` costs. Commit hooks leave this cross-reference
+  scan disabled; functional Indonesia contracts run in the `Content tests` job.
 - Strictness can differ by stage. `validate_ai_equipment.py` runs without `--strict`
   locally and with it in CI.
 - `validate_unused_textures.py` is a `stages: [manual]` hook. `validate_standardization.py`
