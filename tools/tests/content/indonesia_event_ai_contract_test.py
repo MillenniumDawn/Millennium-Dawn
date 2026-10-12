@@ -190,3 +190,71 @@ def test_reparations_preview_matches_the_actual_charge_without_paying_twice(
         key for key, _, _ in iter_statements(acceptance)
     ]
     assert "treasury_change = 51.45" in _child(payer, "IND")
+
+
+@pytest.mark.parametrize(
+    "focus_id,option_name,donor",
+    [
+        ("IND_maluku_contact_dutch", "indonesia.5.a", "HOL"),
+        ("IND_call_saudis", "indonesia.6.a", "SAU"),
+    ],
+)
+def test_aid_influence_preview_and_payment_use_the_actual_donor(
+    indonesia_options, focus_id, option_name, donor
+):
+    source = strip_comments(
+        read_text(REPO_ROOT / "common/national_focus/05_indonesia.txt")
+    )
+    focus = next(
+        body
+        for key, _, body in iter_statements(_child(source, "focus_tree"))
+        if key == "focus"
+        and body is not None
+        and ("id", focus_id, None) in list(iter_statements(body))
+    )
+    preview = _child(_child(focus, "completion_reward"), "effect_tooltip")
+    donor_preview = _child(preview, donor)
+    actual = indonesia_options[option_name]
+    for parameter, value in [
+        ("tag_index", donor),
+        ("influence_target", "IND"),
+        ("percent_change", "2"),
+    ]:
+        for body in [donor_preview, actual]:
+            setters = [
+                block
+                for key, _, block in iter_statements(body)
+                if key == "set_temp_variable" and block is not None
+            ]
+            assert any(
+                (parameter, value, None) in list(iter_statements(block))
+                for block in setters
+            )
+    for body in [donor_preview, actual]:
+        assert ("change_influence_percentage", "yes", None) in list(
+            iter_statements(body)
+        )
+        assert "treasury_change = -26.45" in body
+
+
+@pytest.mark.parametrize(
+    "request_id,notice,target", [("7", "70", "MAY"), ("8", "80", "AST")]
+)
+def test_diplomatic_rejection_applies_wargoal_and_threat_only_once(
+    indonesia_events, indonesia_options, request_id, notice, target
+):
+    rejection = _child(indonesia_options[f"indonesia.{request_id}.a"], "IND")
+    assert rejection.count("add_threat_from_wargoal_effect = yes") == 1
+    assert rejection.count("create_wargoal =") == 1
+    assert ("target", target, None) in list(
+        iter_statements(_child(rejection, "create_wargoal"))
+    )
+    assert ("id", f"indonesia.{notice}", None) in list(
+        iter_statements(_child(rejection, "country_event"))
+    )
+    assert list(iter_statements(indonesia_options[f"indonesia.{notice}.a"])) == [
+        ("name", f"indonesia.{notice}.a", None)
+    ]
+    assert ("minor_flavor", "yes", None) in list(
+        iter_statements(indonesia_events[f"indonesia.{notice}"])
+    )
