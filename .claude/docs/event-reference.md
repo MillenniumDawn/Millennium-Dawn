@@ -111,7 +111,8 @@ problem the cost solves:
 - Political power: `has_active_mission = bankruptcy_incoming_collapse`, the same check as treasury. Political power can go negative, so do not check the balance and do not hide the option behind a `trigger`. An option that already has the bankruptcy modifier for a treasury cost does not need a second one.
 - Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
 - Country paths: weigh choices by the `TAG_ai_behavior` path triggers first. Use the sitting government only under No Path, or where the check mirrors a focus `available` gate.
-- Give every event at least one option that stays above zero when the country is broke. Decisions that charge the treasury need the same checks in `ai_will_do`.
+- Give every event at least one option that stays above zero when the country is broke. Decisions that charge the treasury need the same checks in `ai_will_do`; see "Cost-aware AI weights" in `decision-reference.md`.
+- Modifiers run in order on a running total. Put every `factor = 0` modifier after the adds, or a later `add` brings the zeroed weight back. `validate_ai_weight_order.py` reports that order as WARNING.
 - A cost audit changes AI weights only. Ask before adding an option `trigger` to enforce a cost (`has_political_power`, `has_equipment`) or converting hand-typed costs to presets such as `small_expenditure`.
 
 The German BfV events in `events/Germany.txt` are the reference.

@@ -40,6 +40,7 @@ from shared_utils import (
     validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
+from validate_events import load_cost_lookups, uncovered_costs
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -589,6 +590,11 @@ _CATEGORY_BLOCK_RE = re.compile(
     rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
 )
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
+_BASE_ZERO_RE = re.compile(r"\bbase\s*=\s*0(?:\.0+)?(?![\d.])")
+_AI_ADD_RE = re.compile(r"\badd\s*=")
+# The money kinds validate_events.uncovered_costs can report.
+_MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
+_TREASURY_GATE_NOTE = " (behind a treasury custom_cost_trigger; verify)"
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
 # FROM-usage detection (hoisted from validate_targets_no_trigger /
@@ -1748,40 +1754,36 @@ class Validator(BaseValidator):
             "Unused decision categories (empty, not in BOP):",
         )
 
-    def validate_ai_factors(self):
-        self._log_section("Checking decision AI factors...")
-
-        factories = parse_all_decision_factories(self.mod_path)
+    def _ai_reachable(self, factories: List[DecisionFactory]) -> List[DecisionFactory]:
+        """Decisions with no `is_ai = no` or `always = no` on them or their category."""
         categories = parse_decision_categories(self.mod_path)
-        cats_with_decs = parse_categories_with_decisions(self.mod_path)
-
-        # Reverse index: decision token -> parent category. The previous
-        # version did an O(N) scan per decision over `cats_with_decs`, which
-        # added ~1.5s on this mod.
+        # Reverse index: decision token -> parent category. A scan per decision
+        # over the category map added ~1.5s on this mod.
         decision_to_category: Dict[str, str] = {}
-        for cat, dec_tokens in cats_with_decs.items():
+        for cat, dec_tokens in parse_categories_with_decisions(self.mod_path).items():
             for tok in dec_tokens:
                 decision_to_category.setdefault(tok, cat)
+
+        return [
+            d
+            for d in factories
+            if not any(
+                "is_ai = no" in gate or "always = no" in gate
+                for gate in (
+                    d.available,
+                    d.visible,
+                    categories.get(decision_to_category.get(d.token, ""), ""),
+                )
+            )
+        ]
+
+    def validate_ai_factors(self):
+        self._log_section("Checking decision AI factors...")
 
         results = []
         fixes_needed = []
 
-        for d in factories:
-            if d.available and any(
-                ["is_ai = no" in d.available, "always = no" in d.available]
-            ):
-                continue
-            if d.visible and any(
-                ["is_ai = no" in d.visible, "always = no" in d.visible]
-            ):
-                continue
-
-            dec_category = decision_to_category.get(d.token)
-            if dec_category and dec_category in categories:
-                cat_code = categories[dec_category]
-                if "is_ai = no" in cat_code or "always = no" in cat_code:
-                    continue
-
+        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
             if d.mission_subtype:
                 if d.selectable_mission and not d.ai_factor:
                     results.append(
@@ -1804,7 +1806,8 @@ class Validator(BaseValidator):
             # evaluates in order on a running total, and clustering
             # factor=0 before the adds makes them a no-op (0*0=0 with base=0).
             # The whole point of placing factor=0 after adds is to override
-            # the adds conditionally. Do not re-add that check.
+            # the adds conditionally. Do not re-add that check. The opposite
+            # order, an add after factor=0, is validate_ai_weight_order.py.
 
         self._report(results, "✓ No AI factor issues", "Decision AI factor issues:")
 
@@ -3014,6 +3017,57 @@ class Validator(BaseValidator):
             severity=Severity.WARNING,
         )
 
+    def validate_ai_will_do_ignores_cost(self):
+        """Flag decisions that charge money while ai_will_do never looks at money.
+
+        The decision twin of the event check (issue #5738). A charge is what
+        `complete_effect` or `remove_effect` takes from the country itself:
+        treasury, debt, international investment, or a tax rate change, directly
+        or through a scripted effect. It is covered by an `ai_will_do` modifier
+        on the bankruptcy mission, `ai_has_high_deficit`, or a money variable.
+
+        Skipped: decisions the AI cannot see or never takes (`base = 0` with no
+        `add`), plain missions, and a selectable mission's `remove_effect`, which
+        is a timeout outcome. A treasury `custom_cost_trigger` stops a broke
+        country from paying, so those findings carry a note and need a look.
+        """
+        self._log_section("Checking decisions for AI weights that ignore money...")
+
+        effects, stored = load_cost_lookups(self)
+        results = []
+
+        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
+            if d.mission_subtype and not d.selectable_mission:
+                continue
+            ai_weights = d.ai_factor[1:-1]
+            if _BASE_ZERO_RE.search(ai_weights) and not _AI_ADD_RE.search(ai_weights):
+                continue
+
+            costs: Set[str] = set()
+            blocks = [d.complete_effect]
+            if not d.mission_subtype:
+                blocks.append(d.remove_effect)
+            for block in blocks:
+                costs |= uncovered_costs(block[1:-1], ai_weights, effects, stored)
+            costs &= _MONEY_COSTS
+            if not costs:
+                continue
+
+            note = _TREASURY_GATE_NOTE if "treasury" in d.custom_cost_trigger else ""
+            results.append(
+                f"{d.token:<55}{d.source_basename} - ai_will_do ignores the "
+                f"{', '.join(sorted(costs))} cost{note}"
+            )
+
+        self._report(
+            results,
+            "✓ No decision AI weights ignoring money costs",
+            "Decisions whose ai_will_do ignores a money cost (add a bankruptcy or"
+            " deficit modifier):",
+            severity=Severity.WARNING,
+            category="decision-ai-will-do-ignores-cost",
+        )
+
     def validate_state_target_with_targets(self):
         """Flag state-targeted decisions with explicit targets but incompatible state_target value.
 
@@ -3386,6 +3440,7 @@ class Validator(BaseValidator):
         self.validate_missing_war_hint()
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
+        self.validate_ai_will_do_ignores_cost()
         self.validate_state_target_with_targets()
         self.validate_mission_only_attributes()
         self.validate_orphaned_remove_effect()
