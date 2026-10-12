@@ -136,12 +136,12 @@ alone. `SNDR` is the sender:
   ai_chance = {
    base = 15
    modifier = {
-    factor = 0
-    sender_influence_higher_30 = yes
-   }
-   modifier = {
     add = 10
     has_opinion = { target = SNDR value < -15 }
+   }
+   modifier = {
+    factor = 0
+    sender_influence_higher_30 = yes
    }
   }
  }
