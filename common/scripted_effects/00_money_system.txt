@@ -5906,14 +5906,31 @@ calculate_gdp_modifiers = {
 		}
 
 		#Population growth rate
-		# (60 - GDP/c) * 0.02
-		# Break-even at GDP/c = 60, clamped to 0 above
+		#-0.125 * GDP/C + 3.5 - GDP/C c [0, 28]
+		#-0.025 * GDP/C + 0.7 - GDP/C c [28, 60]
+		#-0.005 * GDP/C - 0.5 - GDP/C c [60, 100]
+		# Break-even at GDP/c = 28, min clamp (-1.00) at GDP/c = 100
+		# Fitted to in-game GDP/c, which runs several times above real-world figures
 		set_variable = {
 			monthly_population_gdp_modifier = {
-				value = 60
-				subtract = gdp_per_capita
-				multiply = 0.02
-				clamp = { min = 0 max = 20000 }
+				value = gdp_per_capita
+				if = {
+					limit = { value = gdp_per_capita less_than = 28 }
+					multiply = -0.125
+					add = 3.5
+				}
+				else = {
+					if = {
+						limit = { value = gdp_per_capita less_than = 60 }
+						multiply = -0.025
+						add = 0.7
+					}
+					else = {
+						multiply = -0.005
+						add = -0.5
+					}
+				}
+				clamp = { min = -1 max = 20000 }
 			}
 		}
 
@@ -6284,6 +6301,27 @@ calculate_migration_mechanic_values = {
 				clamp = { min = 0 max = 0 }
 			}
 		}
+	}
+}
+
+# Effect: update_population_growth_floor
+# Purpose: Tops up monthly_population so no country grows slower than 0.01% a month; weekly only, since it reads back its own applied value
+update_population_growth_floor = {
+	# 0.01% a month is 20% of base growth (POPULATION_YEARLY_GROWTH_BASE / 12), so the total modifier is held at -0.8 or above
+	set_variable = {
+		monthly_population_floor_modifier = {
+			value = -0.8
+			subtract = modifier@monthly_population
+			add = monthly_population_floor_modifier
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { monthly_population_floor_modifier > 0 }
+			NOT = { has_dynamic_modifier = { modifier = population_growth_floor } }
+		}
+		add_dynamic_modifier = { modifier = population_growth_floor }
 	}
 }
 
