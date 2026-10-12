@@ -1,0 +1,110 @@
+TOP_host_case_available = {
+	always = yes
+}
+
+TOP_can_designate = {
+	TOP_country_eligible = yes
+	TOP_has_selected_target = yes
+	check_variable = { global.TOP_status^TOP_selected = 1 }
+	check_variable = { TOP_package_state^TOP_selected = 0 }
+	set_temp_variable = { TOP_role_target = TOP_selected }
+	TOP_authored_role_eligible = yes
+	has_political_power > 24
+}
+
+# Reads TOP_arg_target and TOP_arg_host.
+TOP_case_can_review = {
+	check_variable = { TOP_case_phase^TOP_arg_target = 1 }
+	check_variable = { TOP_case_host^TOP_arg_target = TOP_arg_host }
+	set_temp_variable = { TOP_role_target = TOP_arg_target }
+	TOP_authored_role_eligible = yes
+	set_temp_variable = { TOP_case_visit_target = TOP_arg_target }
+	TOP_case_visit_review_valid = yes
+	TOP_case_visit_approval_fits = yes
+}
+
+# Reads TOP_arg_target, TOP_arg_method and TOP_arg_state.
+TOP_native_binding_unused = {
+	set_temp_variable = { TOP_binding_state = TOP_arg_state }
+	NOT = { check_variable = { TOP_binding_state = 0 } }
+	check_variable = { TOP_binding_state < 10000 }
+	set_temp_variable = { TOP_binding_key = { value = TOP_arg_target multiply = 20000 } }
+	set_temp_variable = { TOP_binding_key = { value = TOP_binding_key add = { value = TOP_arg_state multiply = 2 } } }
+	set_temp_variable = { TOP_binding_key = { value = TOP_binding_key add = TOP_arg_method } }
+	NOT = { is_in_array = { TOP_retired_native_bindings = TOP_binding_key } }
+}
+
+# Reads TOP_arg_target, TOP_arg_method and TOP_arg_state.
+TOP_case_binding_valid = {
+	TOP_country_eligible = yes
+	set_temp_variable = { TOP_binding_target = TOP_arg_target }
+	check_variable = { TOP_binding_target > 0 }
+	check_variable = { TOP_binding_target < global.TOP_registry_capacity }
+	check_variable = { TOP_case_phase^TOP_arg_target = 3 }
+	check_variable = { TOP_case_method^TOP_arg_target = TOP_arg_method }
+	check_variable = { TOP_case_state^TOP_arg_target = TOP_arg_state }
+	check_variable = { TOP_operation_subject_kind = 1 }
+	check_variable = { TOP_operation_subject_id = TOP_arg_target }
+	check_variable = { TOP_operation_sequence = TOP_case_sequence^TOP_arg_target }
+	check_variable = { global.TOP_status^TOP_arg_target = 1 }
+	set_temp_variable = { TOP_expected_host = TOP_case_host^TOP_arg_target }
+	var:TOP_case_state^TOP_arg_target = { is_controlled_by = var:PREV.TOP_expected_host }
+	set_temp_variable = { TOP_role_target = TOP_arg_target }
+	TOP_authored_role_eligible = yes
+	set_temp_variable = { TOP_target = TOP_arg_target }
+	TOP_person_operational_eligible = yes
+	set_temp_variable = { TOP_case_visit_target = TOP_arg_target }
+	TOP_case_visit_execution_valid = yes
+}
+
+TOP_operation_slot_available = {
+	check_variable = { TOP_operation_subject_kind = 0 }
+}
+
+# Reads TOP_arg_target.
+TOP_can_begin_person_operation = {
+	TOP_country_eligible = yes
+	TOP_operation_slot_available = yes
+	check_variable = { TOP_case_phase^TOP_arg_target = 2 }
+	check_variable = { TOP_case_until^TOP_arg_target > global.TOP_clock }
+	check_variable = { global.TOP_status^TOP_arg_target = 1 }
+	set_temp_variable = { TOP_target = TOP_arg_target }
+	TOP_person_operational_eligible = yes
+	set_temp_variable = { TOP_access_method = TOP_case_method^TOP_arg_target }
+	set_temp_variable = { TOP_access_state = TOP_case_state^TOP_arg_target }
+	set_temp_variable = { TOP_access_host = TOP_case_host^TOP_arg_target }
+	TOP_person_access_available = yes
+	var:TOP_case_state^TOP_arg_target = { is_controlled_by = var:PREV.TOP_access_host }
+	if = {
+		limit = { check_variable = { TOP_case_method^TOP_arg_target = 5 } }
+		check_variable = { TOP_case_host_posture^TOP_arg_target = 4 }
+	}
+}
+
+TOP_can_confirm_assessment = {
+	TOP_has_selected_target = yes
+	check_variable = { TOP_case_phase^TOP_selected = 5 }
+}
+
+TOP_can_revoke_case = {
+	TOP_has_selected_target = yes
+	check_variable = { TOP_case_phase^TOP_selected > 0 }
+	check_variable = { TOP_case_phase^TOP_selected < 4 }
+}
+
+# Used by scripted localisation, which cannot set a temp variable in a trigger
+# block of its own.
+TOP_selected_role_and_host_locked = {
+	always = no
+}
+# Reads TOP_target, TOP_case_result_context and TOP_case_result_sequence.
+TOP_case_result_binding_valid = {
+	check_variable = { TOP_case_result_context = 1 }
+	check_variable = { TOP_target > 0 }
+	check_variable = { TOP_target < global.TOP_registry_capacity }
+	check_variable = { TOP_authorized_target = TOP_target }
+	check_variable = { TOP_case_phase^TOP_target > 0 }
+	check_variable = { TOP_case_sequence^TOP_target = TOP_case_result_sequence }
+	check_variable = { TOP_case_method^TOP_target = TOP_authorized_method }
+	check_variable = { TOP_case_state^TOP_target = TOP_authorized_state }
+}

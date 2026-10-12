@@ -1,0 +1,56 @@
+# $TRACK$ was spliced into the variable name, which a temp variable cannot
+# express, so the two tracks that exist are written out.
+TOP_protection_policy_active = {
+	TOP_enabled = yes
+	exists = yes
+	check_variable = { TOP_protection_level > 0 }
+	check_variable = { TOP_protection_level < 4 }
+	check_variable = { TOP_protection_until > global.TOP_clock }
+}
+
+TOP_counterintelligence_policy_active = {
+	TOP_enabled = yes
+	exists = yes
+	check_variable = { TOP_counterintelligence_level > 0 }
+	check_variable = { TOP_counterintelligence_level < 4 }
+	check_variable = { TOP_counterintelligence_until > global.TOP_clock }
+}
+
+TOP_security_country_eligible = {
+	TOP_enabled = yes
+	exists = yes
+	num_of_controlled_states > 0
+	OR = {
+		TOP_country_eligible = yes
+		TOP_has_protected_official = yes
+	}
+}
+
+# Reads TOP_security_requested_level.
+TOP_security_can_purchase = {
+	TOP_security_country_eligible = yes
+	OR = {
+		AND = {
+			check_variable = { TOP_security_requested_level = 1 }
+			has_political_power > 24.999
+			check_variable = { var = treasury value = 0.25 compare = greater_than_or_equals }
+		}
+		AND = {
+			check_variable = { TOP_security_requested_level = 2 }
+			has_political_power > 39.999
+			check_variable = { var = treasury value = 0.75 compare = greater_than_or_equals }
+		}
+		AND = {
+			check_variable = { TOP_security_requested_level = 3 }
+			has_political_power > 59.999
+			check_variable = { var = treasury value = 1.5 compare = greater_than_or_equals }
+		}
+	}
+}
+
+TOP_security_window_visible = {
+	TOP_enabled = yes
+	has_country_flag = open_MD_countrymissilesview
+	check_variable = { var_open_MD_CT_gui = 2 }
+	check_variable = { TOP_open = 1 }
+}
