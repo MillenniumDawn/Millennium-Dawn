@@ -222,6 +222,10 @@ def analyze_layout(files: list[dict], reportable: set[str] | None = None) -> dic
             "static_eligible",
             "overlap_pairs",
             "trees_with_overlaps",
+            "prerequisite_order_pairs",
+            "trees_with_prerequisite_order",
+            "mutually_exclusive_row_pairs",
+            "trees_with_mutually_exclusive_rows",
             "branch_leaks",
         ),
         0,
@@ -229,6 +233,8 @@ def analyze_layout(files: list[dict], reportable: set[str] | None = None) -> dic
     findings = []
     unresolved = []
     branch_leaks = []
+    prerequisite_order = []
+    mutually_exclusive_rows = []
     shared, dependents, requirements = _shared_index(files)
     for file in sorted(files, key=lambda item: item["filepath"]):
         for tree in sorted(file["trees"], key=lambda item: (item["id"], item["line"])):
@@ -275,6 +281,69 @@ def analyze_layout(files: list[dict], reportable: set[str] | None = None) -> dic
                 else:
                     eligible.append((focus, position))
             counts["static_eligible"] += len(eligible)
+            eligible_by_id = {
+                focus["id"]: (focus, position) for focus, position in eligible
+            }
+            prerequisite_pairs = {}
+            for child, child_position in eligible:
+                for group in child["prerequisites"]:
+                    for parent_id in group:
+                        parent = eligible_by_id.get(parent_id)
+                        if parent is None:
+                            continue
+                        parent_focus, parent_position = parent
+                        if parent_position[1] < child_position[1]:
+                            continue
+                        pair = (parent_focus["id"], child["id"])
+                        prerequisite_pairs[pair] = (
+                            parent_focus,
+                            parent_position,
+                            child,
+                            child_position,
+                        )
+            counts["prerequisite_order_pairs"] += len(prerequisite_pairs)
+            counts["trees_with_prerequisite_order"] += bool(prerequisite_pairs)
+            for parent, parent_xy, child, child_xy in prerequisite_pairs.values():
+                prerequisite_order.append(
+                    (
+                        f"{label}: prerequisite '{parent['id']}' at {_point(parent_xy)} "
+                        f"({parent['file']}:{parent['line']}) is at or below child "
+                        f"'{child['id']}' at {_point(child_xy)} "
+                        f"({child['file']}:{child['line']})",
+                        child["file"],
+                        child["line"],
+                    )
+                )
+
+            mutex_pairs = {}
+            for focus, position in eligible:
+                for other_id in focus.get("mutually_exclusive", ()):
+                    other = eligible_by_id.get(other_id)
+                    if other is None or position[1] == other[1][1]:
+                        continue
+                    other_focus, other_position = other
+                    if focus["id"] == other_focus["id"]:
+                        continue
+                    ordered = sorted((focus, other_focus), key=_key)
+                    left = ordered[0]
+                    right = ordered[1]
+                    left_position = positions[left["id"]]
+                    right_position = positions[right["id"]]
+                    pair = tuple(sorted((left["id"], right["id"])))
+                    mutex_pairs[pair] = (left, left_position, right, right_position)
+            counts["mutually_exclusive_row_pairs"] += len(mutex_pairs)
+            counts["trees_with_mutually_exclusive_rows"] += bool(mutex_pairs)
+            for left, left_xy, right, right_xy in mutex_pairs.values():
+                mutually_exclusive_rows.append(
+                    (
+                        f"{label}: mutually exclusive focuses '{left['id']}' at "
+                        f"{_point(left_xy)} ({left['file']}:{left['line']}) and "
+                        f"'{right['id']}' at {_point(right_xy)} "
+                        f"({right['file']}:{right['line']}) are on different rows",
+                        left["file"],
+                        left["line"],
+                    )
+                )
             pairs = list(_overlaps(eligible))
             counts["overlap_pairs"] += len(pairs)
             counts["trees_with_overlaps"] += bool(pairs)
@@ -306,5 +375,7 @@ def analyze_layout(files: list[dict], reportable: set[str] | None = None) -> dic
         "findings": sorted(findings),
         "unresolved": sorted(unresolved),
         "branch_leaks": sorted(branch_leaks),
+        "prerequisite_order": sorted(prerequisite_order),
+        "mutually_exclusive_rows": sorted(mutually_exclusive_rows),
         "counts": counts,
     }
