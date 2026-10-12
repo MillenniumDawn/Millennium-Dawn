@@ -279,9 +279,15 @@ also reorder properties and inject logging.
 
 `validate_focus_tree.py` reports `focus-coordinate-overlap` when two static focuses
 in the same assembled tree share a row and are less than two columns apart.
-Both exact stacks and neighboring positions are checked, including every pair
-between stacked groups. Findings include the tree, both IDs, resolved coordinates
-and source locations. These are WARNINGs, including under `--strict`.
+It reports `focus-prerequisite-row-order` when a resolved static prerequisite is
+on the child's row or below it, checking every member of every prerequisite OR
+group. It reports `focus-mutually-exclusive-row` when a resolved static pair
+declared mutually exclusive is on different rows. Reciprocal mutex declarations
+and duplicate declarations of the same directed prerequisite are reported once.
+Both exact stacks and neighboring positions are checked for overlap, including
+every pair between stacked groups.
+Findings include the tree, IDs, resolved coordinates and source locations. These
+are WARNINGs, including under `--strict`.
 
 The existing per-file read/cache pass supplies geometry. Each tree imports its
 explicit `shared_focus` references plus shared/joint descendants whose shared
@@ -311,10 +317,14 @@ Czech focuses omit `x`, leaving their 29 combined tree instances unresolved.
 Dynamic layout is not simulated. Any focus with an `offset`, and every relative
 descendant of it, is skipped. A focus with `allow_branch`, and every prerequisite
 descendant that could depend on that gate, is skipped conservatively, including
-alternative prerequisite paths. This can omit real problems but avoids claiming
-that hypothetical static positions are drawn together. `available` and
-`mutually_exclusive` alone do not exempt icons. No content-specific exemptions
-were added; the remaining candidates stay visible for review.
+alternative prerequisite paths. Both sides of a mutex pair must be statically
+eligible, so a pair is skipped if either side is gated or offset. For example,
+Venezuela's `VEN_conservative_authoritarism` has `allow_branch = { always = no }`
+and declares mutex alternatives; those relationships are omitted because their
+visibility depends on branch gating. This can omit real problems but avoids
+claiming that hypothetical positions are drawn together. `available` by itself
+does not exempt focuses. No content-specific exemptions were added; the remaining
+candidates stay visible for review.
 
 In staged mode, changed country trees and all shared-consuming trees are checked
 after any focus-file change. Rechecking shared consumers is intentional: removing

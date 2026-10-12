@@ -922,7 +922,7 @@ class _FocusFile:
         return self._cached("focus_tree.relative_positions", _scan_relative_positions)
 
     def layout(self) -> Dict:
-        return self._cached("focus_tree.layout.v1", _scan_focus_layout)
+        return self._cached("focus_tree.layout.v2", _scan_focus_layout)
 
     def missing_search_filters(self) -> List[Tuple[str, str, int]]:
         return self._cached(
@@ -1291,6 +1291,7 @@ def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
         "branch_terms": [],
         "offset": False,
         "prerequisites": [],
+        "mutually_exclusive": [],
     }
     for key, scalar, body in iter_statements(block.body):
         if key == "id":
@@ -1314,6 +1315,12 @@ def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
                     for name, value, _ in iter_statements(body)
                     if name == "focus" and value
                 ]
+            )
+        elif key == "mutually_exclusive" and body is not None:
+            record["mutually_exclusive"].extend(
+                value
+                for name, value, _ in iter_statements(body)
+                if name == "focus" and value
             )
     return record
 
@@ -2538,6 +2545,20 @@ class Validator(BaseValidator):
             "Focuses less than two columns apart on the same row:",
             Severity.WARNING,
             category="focus-coordinate-overlap",
+        )
+        self._report(
+            layout["prerequisite_order"],
+            "Resolved prerequisites appear above their children",
+            "Resolved prerequisites at or below their child:",
+            Severity.WARNING,
+            category="focus-prerequisite-row-order",
+        )
+        self._report(
+            layout["mutually_exclusive_rows"],
+            "Mutually exclusive focuses share a row",
+            "Mutually exclusive focuses on different rows:",
+            Severity.WARNING,
+            category="focus-mutually-exclusive-row",
         )
         self._report(
             layout["unresolved"],
