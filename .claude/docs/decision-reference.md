@@ -162,6 +162,8 @@ mission and halve it on a high deficit:
 - Leave the weight off when skipping the decision costs the AI more than the charge.
 - Political power needs no weight. `cost` and `ai_hint_pp_cost` tell the AI the price.
 
+The Spanish decisions in `common/decisions/Spain.txt` are the reference.
+
 ## Formables
 
 Every decision in `formable_nation_decisions.txt` carries the AI commitment gate, and a

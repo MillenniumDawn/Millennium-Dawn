@@ -65,6 +65,7 @@ def test_validator_reports_the_same_cold_warm_and_uncached(
         + "\t}\n}\n",
     )
     write_path(tmp_path, "common/decisions/Clean.txt", _block(ADD, ZERO))
+    write_path(tmp_path, "common/decisions/Weightless.txt", "ai_chance = { base = 1 }")
     scans = []
     scan_text = V.scan_text
 
