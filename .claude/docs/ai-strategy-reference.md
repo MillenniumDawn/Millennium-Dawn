@@ -116,8 +116,9 @@ ai_strategy = { type = conquer id = GER value = 200 }
   and its subtypes inherit a factor set on it.
 - APCs use the `amphibious` equipment category and IFVs use `flame`, not `mechanized`.
 - Shortage strategies (`MD_wartime_low_*`, `MD_desperately_need_guns`) only raise
-  production. Do not put `role_ratio` or `build_army` on a stockpile gate: the gate flips
-  as stock moves, and each flip deletes or re-queues training lines.
+  production. A `role_ratio` or `build_army` on a shortage gate flips as stock moves, and
+  each flip deletes or re-queues training lines.
+- `default_AI_needs_to_live` adds light infantry once surrender progress passes 0.49.
 - A country gets a custom chip or composite production strategy only when it is a
   significant producer. Others use the generic logic.
 
