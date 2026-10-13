@@ -141,8 +141,9 @@ Beside its tables, a validator's test file has:
 Setup that two files need goes in `tools/shared/suite.py`. `build_validator` and
 `run_validator` construct a validator on `tmp_path`. `write_tree` writes a dict of
 files. `assert_findings` matches findings one to one: a string is a whole finding, a
-tuple is fragments of one. `decisions_results_for`, `call_site_scan`, `yml_scan` and
-`variable_scan` run one check or one section of a shared scan.
+tuple is fragments of one. `event_block` and `decision_factory` build one event or one
+decision file from its fields. `decisions_results_for`, `call_site_scan`, `yml_scan`
+and `variable_scan` run one check or one section of a shared scan.
 
 Removing a test as cleanup is its own change. The test must be dead or fail the row
 rules above, and the missed-line and partial-branch totals from `coverage json` must

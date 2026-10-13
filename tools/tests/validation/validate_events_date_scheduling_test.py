@@ -7,7 +7,7 @@ carries a date bound of its own.
 
 import pytest
 import validate_events as V
-from shared.suite import assert_findings, collecting_validator
+from shared.suite import assert_findings, collecting_validator, event_block
 from shared.suite import write_under_str as _write
 
 _YEARLY = V._YEARLY_EFFECTS_REL
@@ -28,11 +28,8 @@ def _assert_reported(validator, finding, severity):
 
 
 def _event(event_id, *fields):
-    lines = "".join(f"\t{field}\n" for field in fields)
-    return (
-        f"country_event = {{\n\tid = {event_id}\n\tis_triggered_only = yes\n{lines}"
-        f"\toption = {{ name = {event_id}.a }}\n}}\n"
-    )
+    option = f"option = {{ name = {event_id}.a }}"
+    return event_block(event_id, "is_triggered_only = yes", *fields, option)
 
 
 def _on_action(*effect_lines):
@@ -53,6 +50,11 @@ _DATE_SCAN_CASES = {
         _event("foo.2", "trigger = {\n\t\tdate < 2005.1.1\n\t}"),
         set(),
         {"foo.2"},
+    ),
+    "commented bound": (
+        _event("foo.4", "trigger = {\n\t\t#date > 2005.1.1\n\t}"),
+        set(),
+        set(),
     ),
     "date outside the trigger": (
         _event(
@@ -114,6 +116,10 @@ _POLL_CASES = {
     ),
     "no chance": (["random = {", "\tcountry_event = foo.1", "}"], set()),
     # None of these is `random = {`.
+    "commented out": (
+        ["# random = {", "# \tchance = 17", "# \tcountry_event = foo.1", "# }"],
+        set(),
+    ),
     "lookalike scope keywords": (
         [
             "random_country = { chance = 5 country_event = foo.1 }",
@@ -227,6 +233,7 @@ def test_date_gated_event_needs_a_schedule(
 _DATE_BOUND_CASES = {
     "scheduled only": ([("foo.1", _YEARLY)], ("foo.1", _YEARLY)),
     "also fired from a focus": ([("foo.1", _YEARLY), ("foo.1", _FOCUS_FILE)], None),
+    "also fired from an event": ([("foo.1", _YEARLY), ("foo.1", _EVENT_FILE)], None),
     "no yearly effects file": ([("foo.1", _EVENT_FILE)], _SKIPPED),
 }
 

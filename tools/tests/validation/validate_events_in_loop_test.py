@@ -11,7 +11,13 @@ import os
 
 import pytest
 import validate_events as V
-from shared.suite import build_validator, call_site_scan, write_tree, write_under_str
+from shared.suite import (
+    build_validator,
+    call_site_scan,
+    event_block,
+    write_tree,
+    write_under_str,
+)
 
 _CALLER = "common/f.txt"
 _TRACKED = frozenset({"foo.1"})
@@ -35,11 +41,7 @@ def _nest(*scopes):
 
 
 def _event(event_id, *fields):
-    lines = "".join(f"\t{field}\n" for field in fields)
-    return (
-        f"country_event = {{\n\tid = {event_id}\n{lines}"
-        f"\toption = {{ name = {event_id}.a }}\n}}\n"
-    )
+    return event_block(event_id, *fields, f"option = {{ name = {event_id}.a }}")
 
 
 def _findings(section, *lines, event_id="foo.1", caller=_CALLER):

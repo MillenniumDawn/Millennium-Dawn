@@ -261,6 +261,16 @@ def decision_factory(body, basename="X.txt"):
     return V.DecisionFactory(body, source_basename=basename)
 
 
+def event_block(event_id, *fields, kind="country_event"):
+    """One event definition: the id on line 2, then one line per field.
+
+    `event_id=None` leaves the id out. A multi-line field carries its own tabs
+    after the first line.
+    """
+    lines = (f"id = {event_id}",) * (event_id is not None) + fields
+    return f"{kind} = {{\n" + "".join(f"\t{line}\n" for line in lines) + "}\n"
+
+
 def decisions_results_for(factories, monkeypatch, check="validate_missing_log"):
     """Run a `validate_decisions.Validator` check on `factories`; return its results.
 
