@@ -117,18 +117,21 @@ def run_validator(validator_cls, tmp_path, **kwargs):
     return validator
 
 
+def _finding_matches(row, entry):
+    if isinstance(entry, str):
+        return row == entry
+    return all(part in row for part in entry)
+
+
 def assert_findings(results, expected):
     """One result per expected entry: a string matches a whole result, a tuple
-    matches a result holding every fragment in it."""
-    assert len(results) == len(expected), results
+    matches a result holding every fragment in it. A result matches once."""
+    unmatched = list(results)
     for entry in expected:
-        if isinstance(entry, str):
-            assert entry in results, (entry, results)
-        else:
-            assert any(all(part in row for part in entry) for row in results), (
-                entry,
-                results,
-            )
+        match = next((row for row in unmatched if _finding_matches(row, entry)), None)
+        assert match is not None, (entry, results)
+        unmatched.remove(match)
+    assert not unmatched, unmatched
 
 
 def issue_categories(validator):
