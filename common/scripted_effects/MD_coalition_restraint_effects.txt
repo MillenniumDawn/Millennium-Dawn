@@ -7,7 +7,7 @@
 #
 # Scope: the target. Temp variables:
 #   coalition_attacker: the country that holds (or is getting) the wargoal.
-#   coalition_new_wargoal = 1: the wargoal is being created right now.
+#   coalition_new_wargoal = 1: the wargoal is being created or justified right now.
 coalition_restraint_update_effect = {
 	set_temp_variable = { coalition_restraint_on = 0 }
 	if = {
@@ -22,6 +22,8 @@ coalition_restraint_update_effect = {
 		every_country = {
 			limit = {
 				NOT = { tag = PREV }
+				NOT = { tag = var:coalition_attacker }
+				NOT = { is_in_faction_with = var:coalition_attacker }
 				OR = {
 					is_in_faction_with = PREV
 					PREV = { is_guaranteed_by = PREV }
@@ -64,5 +66,22 @@ coalition_restraint_update_effect = {
 			add_ai_strategy = { type = declare_war id = PREV value = -1000 }
 			set_country_flag = coalition_restraint_strong@PREV
 		}
+	}
+}
+
+# Monthly upkeep, scope: an AI country. Script wargoals also get the update at creation
+# (add_threat_from_wargoal_effect), engine justifications on on_justifying_wargoal_pulse.
+coalition_restraint_monthly_effect = {
+	set_temp_variable = { coalition_attacker = THIS }
+	every_country = {
+		limit = {
+			ROOT = {
+				OR = {
+					has_wargoal_against = PREV
+					has_country_flag = coalition_restraint_strong@PREV
+				}
+			}
+		}
+		coalition_restraint_update_effect = yes
 	}
 }
