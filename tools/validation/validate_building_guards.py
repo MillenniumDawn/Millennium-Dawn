@@ -63,12 +63,16 @@ from guard_scan import SKIP_BLOCKS as _SKIP_BLOCKS  # noqa: E402
 from guard_scan import Context, report_findings  # noqa: E402
 from guard_scan import sanitize as _sanitize  # noqa: E402
 from shared_utils import compute_line_offsets, line_for_offset
-from validator_common import BaseValidator, _child_blocks, run_validator_main
+from validator_common import (
+    FACTOR_ZERO_RE,
+    BaseValidator,
+    _child_blocks,
+    run_validator_main,
+)
 
 _TYPE_RE = re.compile(r"\btype\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
 _COMPARISON_RE = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*(>=|<=|==|!=|>|<)\s*(-?\d+)")
 _BUILDING_FIELD_RE = re.compile(r"\b(?:building|type)\s*=\s*([A-Za-z_][A-Za-z0-9_]*)")
-_FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?\b")
 # A comparison inside any of these cannot stand on its own: the branch that
 # held may be another one, or the whole thing may be negated.
 _UNPROVEN_IN = frozenset({"not", "or", "nand", "nor", "count_triggers"})
@@ -269,7 +273,7 @@ class Scanner:
         for name, _, body_start, body_end in blocks:
             if name == "modifier":
                 body = self.text[body_start:body_end]
-                if _FACTOR_ZERO_RE.search(body):
+                if FACTOR_ZERO_RE.search(body):
                     gate_buildings |= _extract_absent_buildings(body)
         ctx = ctx.apply(gate_buildings)
 

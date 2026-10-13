@@ -21,6 +21,21 @@ def test_localisation_only_change():
 @pytest.mark.parametrize(
     "path",
     (
+        "common/countries/Guangxi.txt",
+        "common/graphicalculturetype.txt",
+    ),
+)
+def test_graphical_culture_inputs_select_common_validators(path):
+    groups = change_groups.classify([path])
+
+    assert groups["common"] is True
+    assert groups["content"] is True
+    assert groups["full_suite"] is False
+
+
+@pytest.mark.parametrize(
+    "path",
+    (
         "tools/validation/change_groups.py",
         "tools/linting/check_common_mistakes.py",
     ),
