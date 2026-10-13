@@ -7,7 +7,6 @@ import os
 import struct
 import subprocess
 import sys
-import tempfile
 import urllib.error
 from http.client import HTTPMessage
 from pathlib import Path
@@ -17,22 +16,6 @@ import yaml
 from report_lib.models import Issue, Severity
 
 from shared.paths import REPO_ROOT
-
-
-def symlinks_available() -> bool:
-    """Whether this process may create a symlink.
-
-    Windows refuses without Developer Mode or admin rights (WinError 1314), so
-    symlink-rejection tests skip there instead of failing the whole suite.
-    """
-    with tempfile.TemporaryDirectory() as folder:
-        target = Path(folder) / "target"
-        target.mkdir()
-        try:
-            (Path(folder) / "link").symlink_to(target)
-        except (OSError, NotImplementedError):
-            return False
-    return True
 
 
 def imagemagick_available() -> bool:
@@ -102,6 +85,17 @@ def run_bash_step(script: str, cwd, env=None) -> subprocess.CompletedProcess:
         capture_output=True,
         text=True,
         timeout=60,
+    )
+
+
+def run_tool_script(script, *args, timeout=60) -> subprocess.CompletedProcess:
+    """Run tools/<script> as its own process, the way run.py and the hooks do."""
+    return subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / script), *map(str, args)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
     )
 
 

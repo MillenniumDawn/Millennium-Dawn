@@ -144,7 +144,12 @@ Setup that two files need goes in `tools/shared/suite.py`. `build_validator` and
 files. `assert_findings` matches findings one to one: a string is a whole finding, a
 tuple is fragments of one. `event_block` and `decision_factory` build one event or one
 decision file from its fields. `decisions_results_for`, `call_site_scan`, `yml_scan`
-and `variable_scan` run one check or one section of a shared scan.
+and `variable_scan` run one check or one section of a shared scan. `run_tool_script`
+runs a tool as its own process.
+
+A tool with a `main()` is tested in process, with `sys.argv` patched. One test per
+tool runs the script itself through `run_tool_script`, because an import that only
+works under pytest's path passes every in-process test.
 
 Removing a test as cleanup is its own change. The test must be dead or fail the row
 rules above, and the missed-line and partial-branch totals from `coverage json` must
