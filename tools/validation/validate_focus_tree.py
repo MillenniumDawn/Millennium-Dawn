@@ -34,6 +34,7 @@ from shared_utils import (
 )
 from sprite_index import build_sprite_index
 from validator_common import (
+    FACTOR_ZERO_RE,
     BaseValidator,
     Severity,
     case_mismatch,
@@ -151,7 +152,6 @@ _MIL_ECON_RESEARCH_FILTERS = frozenset(
 
 _AI_WILL_DO_START = word_start_re("ai_will_do", r"\s*=\s*\{")
 _MODIFIER_START = word_start_re("modifier", r"\s*=\s*\{")
-_FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
 _CAN_STAFF_NO_RE = re.compile(r"\b(can_staff_an_\w+)\s*=\s*no\b")
 _CAN_STAFF_NOT_YES_RE = re.compile(
     r"\bNOT\s*=\s*\{\s*(can_staff_an_\w+)\s*=\s*yes\s*\}"
@@ -1076,7 +1076,7 @@ def _scan_ai_guards(
                         continue
                     factor_zero = any(
                         _enclosing_block_label(mbody, fm.start())[0] is None
-                        for fm in _FACTOR_ZERO_RE.finditer(mbody)
+                        for fm in FACTOR_ZERO_RE.finditer(mbody)
                     )
                     if factor_zero:
                         for gm in _CAN_STAFF_NO_RE.finditer(mbody):
