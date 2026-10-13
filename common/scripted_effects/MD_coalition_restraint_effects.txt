@@ -1,4 +1,4 @@
-# Scope: target. coalition_attacker = AI with the wargoal; coalition_new_wargoal = 1 while it is created or justified.
+# Scope: target. coalition_attacker = AI with the wargoal; coalition_new_wargoal = 1 while it is created.
 # add_ai_strategy entries add up, so the flag pairs each -1000 with one later +1000.
 coalition_restraint_update_effect = {
 	set_temp_variable = { coalition_restraint_on = 0 }
@@ -6,7 +6,12 @@ coalition_restraint_update_effect = {
 		limit = {
 			OR = {
 				check_variable = { coalition_new_wargoal = 1 }
-				var:coalition_attacker = { has_wargoal_against = PREV }
+				var:coalition_attacker = {
+					OR = {
+						has_wargoal_against = PREV
+						is_justifying_wargoal_against = PREV
+					}
+				}
 			}
 			NOT = { has_war_with = var:coalition_attacker }
 		}
