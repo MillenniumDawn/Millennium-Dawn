@@ -4,12 +4,12 @@
 # taskforces, mission types against valid HOI4 naval missions, and optimal
 # composition sizes against NAI define limits. Suggests the closest match for
 # likely typos.
+import collections
 import difflib
 import glob
 import os
 import re
 import sys
-from collections import Counter
 from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -388,7 +388,7 @@ class Validator(BaseValidator):
         )
 
         # The game allows one mission per template, asserts on more, and only uses the first.
-        per_line = Counter(
+        per_line = collections.Counter(
             (filename, line_num) for _m, filename, line_num in mission_refs
         )
         multi_results = [

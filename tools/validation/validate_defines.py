@@ -174,7 +174,7 @@ class Validator(BaseValidator):
     TITLE = "DEFINES VALIDATION"
     STAGED_EXTENSIONS = [".lua"]
 
-    def __init__(self, *args, vanilla_path: str = None, **kwargs):
+    def __init__(self, *args, vanilla_path: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.vanilla_path = vanilla_path
 
