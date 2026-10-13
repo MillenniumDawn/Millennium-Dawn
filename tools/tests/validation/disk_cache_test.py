@@ -287,15 +287,28 @@ def test_owner_source_change_invalidates_only_that_namespace(tmp_path, monkeypat
     assert calls == {"owned": 2, "other": 1}
 
 
+def test_guard_scan_users_declare_the_helper():
+    users = {
+        namespace
+        for namespace, owner in disk_cache._VALIDATOR_NAMESPACES.items()
+        if "guard_scan" in (VALIDATION_DIR / owner).read_text(encoding="utf-8")
+    }
+
+    assert users
+    assert not sorted(
+        namespace
+        for namespace in users
+        if "guard_scan.py" not in disk_cache._HELPER_DEPENDENCIES.get(namespace, ())
+    )
+
+
 @pytest.mark.parametrize(
     ("namespace", "helper"),
     [
-        ("building_guards_scan_v5", "guard_scan.py"),
-        ("influence_calls_scan_v2", "guard_scan.py"),
-        ("dlc_guards_scan", "validate_history.py"),
-        # The cached parses call helpers these validators import from elsewhere.
-        ("ideas.defs.v5", "equipment_module_slots.py"),
-        ("variables.redundant_focus_flag", "validate_focus_tree.py"),
+        # Dotted, as callers pass it: the prefix alone picks the helpers.
+        (f"{prefix}.result", helper)
+        for prefix, helpers in sorted(disk_cache._HELPER_DEPENDENCIES.items())
+        for helper in helpers
     ],
 )
 def test_configured_helper_change_invalidates_affected_namespace_only(
