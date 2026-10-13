@@ -120,22 +120,99 @@ def test_fire_only_once_worker_survives_a_stray_closing_brace(tmp_path):
 # ---------------------------------------------------------------------------
 
 
-def test_unclosed_event_block_is_not_a_definition(tmp_path):
-    path = _write(
-        tmp_path,
+DEFINITION = """country_event = {
+\tid = foo.1
+\tis_triggered_only = yes
+\toption = { name = foo.1.a }
+}
+"""
+
+# The scan brace-matches event blocks, because several event files indent their
+# definitions one tab deeper than the norm.
+# case: (file, text, (id, type) per definition)
+_DEFINITION_CASES = {
+    "definition": ("events/Ev.txt", DEFINITION, [("foo.1", "country_event")]),
+    "news event": (
+        "events/Ev.txt",
+        DEFINITION.replace("country_event", "news_event"),
+        [("foo.1", "news_event")],
+    ),
+    "one tab deeper": (
+        "events/Ev.txt",
+        "".join("\t" + line for line in DEFINITION.splitlines(keepends=True)),
+        [("foo.1", "country_event")],
+    ),
+    "fire block": (
+        "common/f.txt",
+        "x = {\n\tcountry_event = { id = foo.1 days = 3 }\n}\n",
+        [],
+    ),
+    "unclosed block": (
         "events/Ev.txt",
         "country_event = {\n\tid = foo.1\n\ttitle = foo.1.t\n",
-    )
-    assert V.scan_event_definition_types((path, frozenset())) == []
+        [],
+    ),
+}
 
 
-def test_fire_block_without_an_id_is_ignored(tmp_path):
-    path = _write(
-        tmp_path,
-        "common/f.txt",
+@pytest.mark.parametrize(
+    ("relative", "text", "definitions"),
+    _DEFINITION_CASES.values(),
+    ids=_DEFINITION_CASES,
+)
+def test_event_definitions_are_read_with_their_type(
+    tmp_path, relative, text, definitions
+):
+    path = _write(tmp_path, relative, text)
+
+    assert V.scan_event_definition_types((path, frozenset())) == definitions
+
+
+# case: (caller, (id, keyword, line) per fire)
+_TYPED_FIRE_CASES = {
+    "short, block and reordered forms": (
+        "x = {\n"
+        "\tcountry_event = short.1\n"
+        "\tcountry_event = { id = block.1 days = 3 }\n"
+        "\tnews_event = { days = 2 id = reordered.1 }\n"
+        "}\n",
+        [
+            ("short.1", "country_event", 2),
+            ("block.1", "country_event", 3),
+            ("reordered.1", "news_event", 4),
+        ],
+    ),
+    "block without an id": (
         "x = {\n\tcountry_event = { days = 3 }\n\tcountry_event = { id = real.1 }\n}\n",
+        [("real.1", "country_event", 3)],
+    ),
+    # `UN.[ID]` has no literal form to resolve.
+    "interpolated id": ("x = {\n\tcountry_event = UN.[ID]\n}\n", []),
+    "commented fire": ("x = {\n\t#country_event = dead.1\n}\n", []),
+}
+
+
+@pytest.mark.parametrize(
+    ("caller", "fires"), _TYPED_FIRE_CASES.values(), ids=_TYPED_FIRE_CASES
+)
+def test_event_fires_are_read_with_their_keyword_and_line(tmp_path, caller, fires):
+    path = _write(tmp_path, "common/f.txt", caller)
+
+    found = sorted(call_site_scan(path, "typed", tmp_path), key=lambda fire: fire[3])
+
+    assert found == [(eid, keyword, path, line) for eid, keyword, line in fires]
+
+
+def test_metadata_retains_an_event_without_an_id():
+    metadata, namespaces = V._parse_event_metadata(
+        "country_event = {\n\tis_triggered_only = yes\n\toption = { name = missing.id.a }\n}\n",
+        "broken.txt",
     )
-    assert {f[0] for f in call_site_scan(path, "typed", tmp_path)} == {"real.1"}
+
+    assert namespaces == set()
+    assert [(event["id"], event["file"]) for event in metadata] == [
+        (None, "broken.txt")
+    ]
 
 
 def test_option_trigger_is_not_the_events_own_gate(tmp_path):
@@ -253,10 +330,7 @@ def test_matching_fire_type_is_not_flagged(tmp_path):
 def _validator_for_staged_event_change(tmp_path, definition, caller):
     event = _write(tmp_path, "events/Ev.txt", definition)
     _write(tmp_path, "common/f.txt", caller)
-    validator = _validator(tmp_path)
-    validator.staged_only = True
-    validator.staged_files = [event]
-    return validator
+    return _staged(tmp_path, event)
 
 
 def test_staged_event_type_change_rescans_unchanged_callers(tmp_path):
@@ -314,6 +388,79 @@ def test_undefined_fire_reported_once_per_id(tmp_path):
         f"ghost.1 - fired from {relative}:3, no event defines it"
     ]
     assert v._issues[0].category == "undefined-event-fire"
+
+
+def _staged(tmp_path, staged_file):
+    validator = _validator(tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [staged_file]
+    return validator
+
+
+def test_type_mismatch_report_keeps_file_and_line(tmp_path):
+    _write(tmp_path, "common/f.txt", "country_event = foo.1\n")
+    validator = _validator(tmp_path)
+    validator._definition_types_cache = {"foo.1": "news_event"}
+
+    validator.validate_event_fire_types()
+
+    assert [(i.file, i.line) for i in validator._issues] == [("common/f.txt", 1)]
+
+
+def test_malformed_call_scan_uses_staged_scope(tmp_path):
+    staged = _write(tmp_path, "common/staged.txt", "country_event = foo.1\n")
+    _write(tmp_path, "common/unstaged.txt", "event_country = foo.2\n")
+
+    assert _staged(tmp_path, staged)._get_scoped_fire_scan_args() == [
+        (staged, frozenset())
+    ]
+
+
+def test_malformed_calls_keep_an_id_that_is_not_the_first_argument(tmp_path):
+    caller = _write(
+        tmp_path,
+        "common/f.txt",
+        "event_news = { days = 3 id = foo.3 }\ncountry_event { days = 3 id = foo.4 }\n",
+    )
+
+    assert call_site_scan(caller, "invalid", tmp_path) == [
+        ("reversed", "event_news", "foo.3", caller, 1),
+        ("missing-equals", "country_event", "foo.4", caller, 2),
+    ]
+
+
+def test_undefined_fire_in_staged_mode_reports_only_staged_callers(tmp_path):
+    _write(tmp_path, "events/Ev.txt", DEFINITION)
+    staged = _write(tmp_path, "common/staged.txt", "country_event = ghost.1\n")
+    _write(tmp_path, "common/unstaged.txt", "country_event = also_ghost.1\n")
+    validator = _staged(tmp_path, staged)
+
+    validator.validate_undefined_event_fires()
+
+    relative = os.path.join("common", "staged.txt")
+    assert [issue.message for issue in validator._issues] == [
+        f"ghost.1 - fired from {relative}:1, no event defines it"
+    ]
+
+
+def test_call_site_checks_skip_when_the_staged_file_has_no_fires(tmp_path, monkeypatch):
+    staged = _write(tmp_path, "common/ideas/x.txt", "idea = { allowed = yes }\n")
+    validator = _staged(tmp_path, staged)
+    for index in (
+        "_get_event_definition_types",
+        "_get_fire_only_once_ids",
+        "_get_major_event_ids",
+    ):
+        monkeypatch.setattr(
+            validator, index, lambda: pytest.fail("built a call-site index")
+        )
+
+    validator.validate_event_fire_types()
+    validator.validate_undefined_event_fires()
+    validator.validate_fire_only_once_in_loop()
+    validator.validate_major_event_in_loop()
+
+    assert validator._issues == []
 
 
 def test_event_fire_views_share_typed_scan(tmp_path, monkeypatch):
