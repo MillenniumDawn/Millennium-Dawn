@@ -3,7 +3,7 @@ title: Balance Decisions
 description: Why key balance values are what they are, with the history of each change
 ---
 
-Balance values that differ from vanilla, why they changed, and who approved them. Add an entry when you change one.
+Balance values that differ from vanilla, why they changed, and when. Add an entry when you change one.
 
 ## Railway construction cost
 
@@ -30,4 +30,4 @@ Balance values that differ from vanilla, why they changed, and who approved them
 
 **Side effects:** railways upgrade faster for everyone, and rail repairs after bombing cost less.
 
-**Approved by:** Bird, 2026-10.
+**Decision:** team decision, 2026-10-12.
