@@ -146,6 +146,9 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "influence-calls", "validate_influence_calls.py", ("common", "events")
         ),
+        ValidatorSpec(
+            "ai-weight-order", "validate_ai_weight_order.py", ("common", "events")
+        ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
         ValidatorSpec("country-names", "validate_country_names.py", ("common",)),
         ValidatorSpec(
