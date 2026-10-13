@@ -68,7 +68,9 @@ def process_file_for_set_cosmetic_tag(
     site = text_file.find(_SET_COSMETIC)
     while site != -1:
         start = site + len(_SET_COSMETIC)
-        value = _NON_SPACE_RE.match(text_file, start).group()
+        value_match = _NON_SPACE_RE.match(text_file, start)
+        assert value_match is not None
+        value = value_match.group()
         template = _TEMPLATE_RE.fullmatch(value)
         if template:
             prefix, suffix = template.groups()

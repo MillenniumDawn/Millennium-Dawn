@@ -1343,6 +1343,19 @@ def uncovered_costs(
     )
 
 
+def _receiver_tag(trigger: str) -> Optional[str]:
+    """A literal tag required on every trigger path, not just mentioned in one."""
+    tags = set()
+    for key, value, block in iter_statements(trigger):
+        if key == "tag" and value and re.fullmatch(r"[A-Z0-9]{3}", value):
+            tags.add(value)
+        elif key in {"AND", "hidden_trigger", "ROOT", "THIS"} and block is not None:
+            tag = _receiver_tag(block)
+            if tag:
+                tags.add(tag)
+    return next(iter(tags)) if len(tags) == 1 else None
+
+
 def find_cost_blind_options(
     text: str, effects: Dict[str, str], stored: Dict[str, int]
 ) -> List[Tuple[str, int, str, bool]]:
@@ -1367,10 +1380,7 @@ def find_cost_blind_options(
         ]
         if len(options) < 2:
             continue
-        recipient = re.fullmatch(
-            r"\s*tag\s*=\s*([A-Z0-9]{3})\s*", _event_trigger_body(body) or ""
-        )
-        country = recipient.group(1) if recipient else None
+        country = _receiver_tag(_event_trigger_body(body) or "")
         splits = [
             _split_option(body[opt_start:opt_end], country)
             for opt_start, opt_end in options

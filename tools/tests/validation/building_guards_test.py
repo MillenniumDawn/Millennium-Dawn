@@ -561,9 +561,10 @@ def test_scan_file_skips_files_without_building_effects(tmp_path):
     assert V.scan_file((str(filepath), str(tmp_path) + "/")) == []
 
 
-def test_scan_file_skips_unreadable_files(tmp_path):
+def test_scan_file_rejects_unreadable_files(tmp_path):
     (tmp_path / "damage_building.txt").mkdir()
-    assert V.scan_file((str(tmp_path / "damage_building.txt"), str(tmp_path))) == []
+    with pytest.raises(ValueError, match="Cannot scan"):
+        V.scan_file((str(tmp_path / "damage_building.txt"), str(tmp_path)))
 
 
 # --- effects with no type field --------------------------------------------
