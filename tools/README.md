@@ -93,12 +93,53 @@ Add regression coverage with changed validator, fixer, or report behavior. Run
 `python -m pytest` before merging any `tools/` change, and fix failures in the same
 change. Never delete, skip, or weaken a test to reach green. A correct behavior change
 updates its regression expectations; a broken implementation gets fixed instead.
-Keep one test file per tool module, or one per group of related checks when a
-module's tests outgrow a file. Put the cases for a check in one parametrized table
-and add a row for a new case. Setup that two files need goes in
-`tools/shared/suite.py`.
-Removing a test as cleanup is its own change. The test must be dead, or another test
-must already check the same behavior, and the coverage total must not drop.
+
+### Test Structure
+
+One test file per tool module, or one per group of related checks when a module's
+tests outgrow a file. `tests/validation/validate_decisions_test.py` is the model.
+
+A check's cases are rows of one parametrized table: a dict of case name to case, used
+for both the values and the ids. A comment above the table names the columns. A new
+case is a new row, not a new function.
+
+```python
+# check: {case: (decisions, what each finding must match)}
+_CHECK_CASES = {
+    "validate_missing_log": {
+        "logged": ([_flat(_effect(_LOG))], []),
+        "unquoted log": ([_flat(_effect(_UNQUOTED))], [_NO_LOG % "complete_effect"]),
+    },
+}
+```
+
+A table holds these rows and no others:
+
+- One row the check flags and one row it passes.
+- One row for each code path through the check that no other row runs.
+- One row for each token the check names in a regex or tuple, such as each effect
+  block or each event keyword. Coverage cannot see these, so they stay even when
+  they run the same path as another row.
+
+A row that only repeats another row's path with different incidental input does not
+belong. A named regression is a row like any other.
+
+Beside its tables, a validator's test file has:
+
+- One test proving `run_validations` calls every `validate_*` check.
+- One run against a real tree, with no mocked source, for each check that reads its
+  data from the mod.
+- One severity assertion for each category that gates CI.
+
+Setup that two files need goes in `tools/shared/suite.py`. `build_validator` and
+`run_validator` construct a validator on `tmp_path`. `write_tree` writes a dict of
+files. `assert_findings` matches findings one to one: a string is a whole finding, a
+tuple is fragments of one. `decisions_results_for`, `call_site_scan`, `yml_scan` and
+`variable_scan` run one check or one section of a shared scan.
+
+Removing a test as cleanup is its own change. The test must be dead or fail the row
+rules above, and the missed-line and partial-branch totals from `coverage json` must
+not rise. Run the suite with `--cov-context=test` to see which rows share a path.
 
 ## Quick Start
 

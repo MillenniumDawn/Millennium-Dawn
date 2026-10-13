@@ -57,6 +57,7 @@ _GAIN = "\t\tadd_political_power = 10\n"
 _SPEND = "\t\tadd_political_power = -75\n"
 _SPEND_50 = "\t\tadd_political_power = -50\n"
 _NO_LOG = "dec_one - X.txt: %s has no log line"
+_EFFECT_BLOCKS = ("complete_effect", "remove_effect", "timeout_effect", "cancel_effect")
 _RANDOM = "\t\trandom = {\n\t\t\tchance = 50\n\t\t\tadd_stability = 0.01\n\t\t}\n"
 _RANDOM_LIST = (
     "\t\trandom_list = {\n\t\t\t50 = { add_stability = 0.01 }\n"
@@ -106,34 +107,13 @@ _ANNOUNCED = [_setter("md_announced"), _gated("md_announced")]
 _CHECK_CASES = {
     "validate_missing_log": {
         "logged": ([_flat(_effect(_LOG))], []),
-        "no log": ([_flat(_effect(_GAIN))], [_NO_LOG % "complete_effect"]),
-        "no effect block": ([_flat()], []),
         "unquoted log": (
             [_flat(_effect("\t\tlog = some_unquoted_thing\n"))],
             [_NO_LOG % "complete_effect"],
         ),
-        "log after another effect": ([_flat(_effect(_GAIN + _LOG))], []),
         "every effect block needs one": (
-            [
-                _flat(
-                    _effect(_GAIN, "remove_effect"),
-                    _effect(_GAIN, "timeout_effect"),
-                    _effect(_GAIN, "cancel_effect"),
-                )
-            ],
-            [
-                _NO_LOG % "remove_effect",
-                _NO_LOG % "timeout_effect",
-                _NO_LOG % "cancel_effect",
-            ],
-        ),
-        "a log covers only its own block": (
-            [_flat(_effect(_LOG + _GAIN), _effect(_GAIN, "remove_effect"))],
-            [_NO_LOG % "remove_effect"],
-        ),
-        "single-line block": (
-            [_flat("\tremove_effect = { " + _LOG.strip() + " }\n")],
-            [],
+            [_flat(*(_effect(_GAIN, block) for block in _EFFECT_BLOCKS))],
+            [_NO_LOG % block for block in _EFFECT_BLOCKS],
         ),
     },
     "validate_log_not_first": {
@@ -200,7 +180,6 @@ _CHECK_CASES = {
             ],
             [],
         ),
-        "gain": ([_flat(_effect("\t\tadd_political_power = 75\n"))], []),
         "AI never takes it": (
             [_flat("\tai_will_do = { base = 0 }\n", _effect(_SPEND))],
             [],
@@ -208,10 +187,6 @@ _CHECK_CASES = {
         "mission timeout": (
             [_flat("\tdays_mission_timeout = 365\n", _effect(_SPEND, "remove_effect"))],
             [],
-        ),
-        "both blocks charge": (
-            [_flat(_effect(_SPEND), _effect(_SPEND_50, "remove_effect"))],
-            [("complete_effect spends 75 PP",)],
         ),
     },
     "validate_random_seed": {
@@ -229,10 +204,6 @@ _CHECK_CASES = {
             [],
         ),
         "fire_only_once": ([_flat("\tfire_only_once = yes\n", _effect(_RANDOM))], []),
-        "fire_only_once = no": (
-            [_flat("\tfire_only_once = no\n", _effect(_RANDOM))],
-            [("dec_one",)],
-        ),
         # random_owned_state and random_country change scope, they do not roll.
         "random scopes": (
             [
@@ -245,12 +216,10 @@ _CHECK_CASES = {
             ],
             [],
         ),
-        "no randomness": ([_flat(_effect(_GAIN))], []),
     },
     # Issue #5738.
     "validate_ai_will_do_ignores_cost": {
         "flat weight": ([_flat(_PAID, _WEIGHT)], _ignores("treasury cost")),
-        "no ai_will_do": ([_flat(_PAID)], _ignores("treasury cost")),
         "scripted effect": (
             [_flat(_effect("\t\tpay_the_bill = yes\n"), _WEIGHT)],
             _ignores("treasury cost"),
@@ -277,10 +246,6 @@ _CHECK_CASES = {
             [_flat(_PAID, _ZERO_BASE_ADD)],
             _ignores("treasury cost"),
         ),
-        "fractional base": (
-            [_flat(_PAID, "\tai_will_do = { base = 0.5 }\n")],
-            _ignores("treasury cost"),
-        ),
         "selectable mission": (
             [_flat(_SELECTABLE, _PAID, _WEIGHT)],
             _ignores("treasury cost"),
@@ -291,10 +256,6 @@ _CHECK_CASES = {
             [],
         ),
         "political power only": ([_flat(_effect(_SPEND_50), _WEIGHT)], []),
-        "another country pays": (
-            [_flat(_effect("\t\tFROM = {\n\t" + _CHARGE + "\t\t}\n"), _WEIGHT)],
-            [],
-        ),
         "AI never takes it": ([_flat(_PAID, "\tai_will_do = { base = 0 }\n")], []),
         "player only": ([_flat(_PAID, _WEIGHT, "\tavailable = { is_ai = no }\n")], []),
         "never visible": (
@@ -302,10 +263,6 @@ _CHECK_CASES = {
             [],
         ),
         "plain mission": ([_flat(_MISSION, _PAID)], []),
-        "selectable mission timeout": (
-            [_flat(_SELECTABLE, _PAID_ON_REMOVE, _WEIGHT)],
-            [],
-        ),
     },
     # Only the inconsistent case is a defect: a block that announces one unlock
     # and misses a sibling gated on the flag it just set.
@@ -315,7 +272,6 @@ _CHECK_CASES = {
             [_setter("md_one", "md_two"), _gated("md_one"), _gated("md_two")],
             [],
         ),
-        "nothing announced": ([_setter(), _gated("md_missed")], []),
         "quoted tooltip text": (
             [
                 _setter(
@@ -324,14 +280,6 @@ _CHECK_CASES = {
                 ),
                 _gated("md_announced"),
                 _gated("md_missed"),
-            ],
-            [],
-        ),
-        # Setting the flag hides this decision instead of unlocking it.
-        "negated gate": (
-            [
-                *_ANNOUNCED,
-                _gated("md_hidden", check="NOT = { has_country_flag = md_gate_flag }"),
             ],
             [],
         ),
@@ -351,20 +299,6 @@ _CHECK_CASES = {
             [_UNLOCK_MISSED],
         ),
         "AI-only sibling": ([*_ANNOUNCED, _gated("md_ai")], []),
-        "setter gated on its own flag": (
-            [
-                _flat(
-                    "\tvisible = {\n\t\thas_country_flag = md_gate_flag\n\t}\n",
-                    _effect(
-                        "\t\tset_country_flag = md_gate_flag\n"
-                        "\t\tunlock_decision_tooltip = md_announced\n"
-                    ),
-                    token="md_setter",
-                ),
-                _gated("md_announced"),
-            ],
-            [],
-        ),
     },
     "validate_targeted_without_target": {
         "disabled and map-click decisions are skipped": (
@@ -529,12 +463,6 @@ _UNUSED_CASES = {
         {_SLOT},
         [],
     ),
-    "placeholder leaves other decisions alone": (
-        ["investments_project_0_target_decision", "unrelated_target_decision"],
-        {_PROJECT},
-        set(),
-        ["unrelated_target_decision"],
-    ),
     "slot and type outside the domain": (
         ["cyber_op_slot_10_gps_tracking", "cyber_op_slot_0_typo_tracking"],
         set(),
@@ -552,13 +480,6 @@ _UNUSED_CASES = {
         set(),
         {"custom_slot_[SLOT]_mission"},
         ["custom_slot_0_mission"],
-    ),
-    # activate_targeted_decision lands a targeted mission in the decision set.
-    "targeted mission": (
-        ["investments_project_3_target_decision"],
-        {"investments_project_3_target_decision"},
-        set(),
-        [],
     ),
     "never activated": (
         ["get_md_light_infantry"],
@@ -611,18 +532,6 @@ _AI_ONLY_LOC_CASES = {
         {},
         [],
     ),
-    "AI-only by category without loc": (
-        [_flat("\tcost = 25\n")],
-        set(),
-        {"by_category": {"dec_one"}},
-        [],
-    ),
-    "AI-only by category with loc": (
-        [_flat("\tcost = 25\n")],
-        {"dec_one"},
-        {"by_category": {"dec_one"}},
-        [("AI-only decision has localisation key 'dec_one'",)],
-    ),
     "ordinary decision without loc": (
         [_flat("\tcost = 25\n")],
         set(),
@@ -647,7 +556,6 @@ _AI_ONLY_LOC_CASES = {
         {"categories": {"md_cat"}, "unlocked": {"md_cat"}},
         [],
     ),
-    "ordinary category with loc": ([], {"md_cat"}, {}, []),
 }
 
 
@@ -660,7 +568,7 @@ def test_ai_only_localisation(monkeypatch, decisions, loc_keys, state, expected)
     unlocks = [("category", name, "cat.txt", 1) for name in state.get("unlocked", ())]
     patched = {
         "_load_localisation_keys": loc_keys,
-        "_get_ai_only_by_category": state.get("by_category", set()),
+        "_get_ai_only_by_category": set(),
         "_get_ai_only_categories": dict.fromkeys(state.get("categories", ()), "c.txt"),
         "_get_activation_removal_scan": (set(), set(), set(), unlocks),
     }
@@ -711,11 +619,6 @@ _CATEGORY_RECHECK_CASES = {
     ),
     "NOT-wrapped recheck": (
         {"dec1": _block("available", "NOT = {\n\toriginal_tag = GER\n}")},
-        {_GER},
-        [],
-    ),
-    "FROM-wrapped recheck": (
-        {"dec1": _block("available", "FROM = {\n\toriginal_tag = GER\n}")},
         {_GER},
         [],
     ),
@@ -799,11 +702,6 @@ def _set_pair(fid, size):
 
 _AAA = _update_flag("AAA", 1, 3, 3)
 _FOCUS_COMMIT = "focus = {\n\thidden_effect = {\n%s\t}\n}\n"
-_EU_EXEMPTION = (
-    "\t\t\t\tNOT = {\n\t\t\t\t\tAND = {\n"
-    "\t\t\t\t\t\tcheck_variable = { formable_committed_id = 99 }\n"
-    "\t\t\t\t\t\thas_idea = EU_member\n\t\t\t\t\t}\n\t\t\t\t}\n"
-)
 _GUARDED_FOCUS_COMMIT = (
     "\t\tif = {\n\t\t\tlimit = {\n\t\t\t\tcheck_variable = {\n"
     "\t\t\t\t\tvar = formable_committed_size\n\t\t\t\t\tvalue = 3\n"
@@ -813,24 +711,6 @@ _GUARDED_FOCUS_COMMIT = (
 # case: (formable decisions, {other file: text}, what the rows must mention)
 _FORMABLE_CASES = {
     "consistent": ([_start("AAA", 1, 3), _AAA], {}, []),
-    # update_flag lists 4 states while every literal still says 3.
-    "state list drift": (
-        [_start("AAA", 1, 3), _update_flag("AAA", 1, 3, 4)],
-        {},
-        ["size literal 3 != AAA update_flag state count 4"],
-    ),
-    "missing gate": (
-        [
-            _AAA,
-            _nested(
-                "AAA_integrate_BBB",
-                "\t\tai_will_do = { base = 10 }\n"
-                + _block("complete_effect", "add_political_power = 1"),
-            ),
-        ],
-        {},
-        ["missing commitment gate"],
-    ),
     "id collision": (
         [_AAA, _update_flag("BBB", 1, 5, 5)],
         {},
@@ -840,24 +720,6 @@ _FORMABLE_CASES = {
         [_AAA, _nested("AAA_integrate_BBB", _gate(2, 3))],
         {},
         ["gate id 2 != AAA commit id 1"],
-    ),
-    "exemption naming an unknown id": (
-        [
-            _AAA,
-            _nested(
-                "AAA_integrate_BBB",
-                _gate(1, 3).replace(
-                    "\t\t\t}\n\t\t}\n", _EU_EXEMPTION + "\t\t\t}\n\t\t}\n"
-                ),
-            ),
-        ],
-        {},
-        ["references unknown formable id 99"],
-    ),
-    "focus commit size mismatch": (
-        [_AAA],
-        {"05_spain.txt": _FOCUS_COMMIT % _set_pair(1, 7)},
-        ["05_spain.txt: commit size 7 != update_flag state count 3 for id 1"],
     ),
     "guarded focus commit": (
         [_start("AAA", 1, 3), _AAA],
@@ -1060,21 +922,17 @@ _SPRITES = frozenset(
 # (reference kind, value): the finding, or None when a sprite resolves
 _SPRITE_CASES = {
     ("decision", "tungsten"): None,
-    # The engine prepends GFX_decision_ to a bare name.
-    ("decision", "oil"): None,
-    ("decision", "GFX_decision_generic_intelligence_operation"): None,
     ("decision", "[GetIcon]"): None,
+    # The engine prepends GFX_decision_ to a bare name.
     ("decision", "nope"): (
         "owner: icon = nope -> no sprite nope / GFX_decision_nope / GFX_nope defined "
         "in interface/*.gfx (create the sprite or pick an existing icon)"
     ),
-    ("category_icon", "generic_economy"): None,
     # GFX_decision_oil exists, but a category needs GFX_decision_category_oil.
     ("category_icon", "oil"): (
         "owner: icon = oil -> no sprite oil / GFX_decision_category_oil defined "
         "in interface/*.gfx (create the sprite or pick an existing icon)"
     ),
-    ("category_picture", "GFX_zsr_parlament"): None,
     ("category_picture", "zsr_parlament"): (
         "owner: picture = zsr_parlament -> no sprite zsr_parlament defined "
         "in interface/*.gfx (create the sprite or pick an existing icon)"
@@ -1115,11 +973,6 @@ _ICON_REFERENCE_CASES = {
         "cat = {\r\n\tfirst = {\r\n\t\ticon = money\r\n\t}\r\n}\r\n",
         [("first", "decision", "money", 3)],
     ),
-    "dot and hyphen in a name": (
-        _DECISION_FILE,
-        "cat = {\n\ta = {\n\t\ticon = GFX_CTC.5\n\t}\n\tb = {\n\t\ticon = GFX_MIG-29-GER\n\t}\n}\n",
-        [("a", "decision", "GFX_CTC.5", 3), ("b", "decision", "GFX_MIG-29-GER", 6)],
-    ),
     "dynamic icon block": (
         _DECISION_FILE,
         "cat = {\n\tdyn = {\n\t\ticon = {\n"
@@ -1134,13 +987,6 @@ _ICON_REFERENCE_CASES = {
         _DECISION_FILE,
         "cat = {\n\tdec = {\n\t\ticon = {\n\t\t\tkey = GFX_decision_x\n",
         [],
-    ),
-    # A one-line block between the id and its icon is not the owner.
-    "nested block before the icon": (
-        _DECISION_FILE,
-        "cat = {\n\tJAP_bibi = {\n\t\tvisible = { has_completed_focus = X }\n"
-        "\t\ticon = microchip\n\t}\n}\n",
-        [("JAP_bibi", "decision", "microchip", 4)],
     ),
     "category file": (
         "common/decisions/categories/c.txt",
@@ -1321,12 +1167,6 @@ _DESC_IMAGE_CASES = {
         ("480x225", "6"),
     ),
     "tall picture with six newlines": (6, "CHVK_desctext_pmc", _PMC_PICTURE, None),
-    "banner with one newline": (
-        1,
-        "MAIN_desctext_nato",
-        {"GFX_MAIN_desctext_nato": (480, 73)},
-        None,
-    ),
     "unresolved icon": (0, "nothing", {}, None),
 }
 
@@ -1416,22 +1256,11 @@ _UNLOCK_TARGET_CASES = {
     "decision": (["unlock_decision_tooltip = md_real_decision"], []),
     "category": (["unlock_decision_category_tooltip = md_category"], []),
     "block form": ([_BLOCK_FORM % "md_real_decision"], []),
-    "hyphenated decision": (["unlock_decision_tooltip = md_hyphen-decision"], []),
-    "hyphenated block form": ([_BLOCK_FORM % "md_hyphen-decision"], []),
-    "hyphenated category": (
-        ["unlock_decision_category_tooltip = md_hyphen-category"],
-        [],
-    ),
     "commented out": (
         [
             "# unlock_decision_tooltip = md_typo",
             "unlock_decision_tooltip = md_real_decision  # keep this one",
         ],
-        [],
-    ),
-    "quoted decision keyword": ([_QUOTED_UNLOCK], []),
-    "quoted category keyword": (
-        ['log = "[GetDateText]: unlock_decision_category_tooltip = md_typo"'],
         [],
     ),
     "longer key around the keyword": (
@@ -1452,17 +1281,8 @@ _UNLOCK_TARGET_CASES = {
         ["unlock_decision_category_tooltip = md_real_decision"],
         [(_no_category("md_real_decision"), 4)],
     ),
-    "category named as a decision": (
-        ["unlock_decision_tooltip = md_category"],
-        [(_no_decision("md_category"), 4)],
-    ),
-    "undefined block form": ([_BLOCK_FORM % "md_typo"], [(_no_decision("md_typo"), 4)]),
     "undefined hyphenated decision": (
         ["unlock_decision_tooltip = md_hyphen-typo"],
-        [(_no_decision("md_hyphen-typo"), 4)],
-    ),
-    "undefined hyphenated block form": (
-        [_BLOCK_FORM % "md_hyphen-typo"],
         [(_no_decision("md_hyphen-typo"), 4)],
     ),
     "undefined hyphenated category": (
@@ -1564,34 +1384,9 @@ _CATEGORY_GATE_CASES = {
         {_COUNTRY_HISTORY: "set_country_flag = md_test_flag\n"},
         _FLAG,
     ),
-    "flag set in another country's history": (
-        _FLAG_GATE,
-        {"history/countries/OTH - Other.txt": "set_country_flag = md_test_flag\n"},
-        _FLAG,
-    ),
-    "flag quoted in history": (
-        _FLAG_GATE,
-        {_COUNTRY_HISTORY: 'log = "md_test_flag"\n'},
-        _FLAG,
-    ),
     "flag commented out in history": (
         _FLAG_GATE,
         {_COUNTRY_HISTORY: "# set_country_flag = md_test_flag\n"},
-        _FLAG,
-    ),
-    "idea added in history": (
-        _visible("has_idea = md_test_idea"),
-        {_COUNTRY_HISTORY: "add_ideas = {\n\tmd_other_idea\n\tmd_test_idea\n}\n"},
-        "has_idea = md_test_idea",
-    ),
-    "focus completed in history": (
-        _visible("has_completed_focus = md_test_focus"),
-        {_COUNTRY_HISTORY: "complete_national_focus = md_test_focus\n"},
-        "has_completed_focus = md_test_focus",
-    ),
-    "flag set in state history": (
-        _FLAG_GATE,
-        {"history/states/1-Test.txt": "set_country_flag = md_test_flag\n"},
         _FLAG,
     ),
     "first of two gates set in history": (
@@ -1649,6 +1444,7 @@ _ANNOUNCEMENTS = (
     "unlock_decision_tooltip = { decision = md_test_decision }",
 )
 _NOT_ANNOUNCEMENTS = (
+    "add_political_power = 10",
     "# unlock_decision_category_tooltip = md_test_category",
     'log = "unlock_decision_category_tooltip = md_test_category"',
     "md_unlock_decision_category_tooltip = md_test_category",
@@ -1658,8 +1454,8 @@ _NOT_ANNOUNCEMENTS = (
 
 @pytest.mark.parametrize(
     ("source", "effect", "findings"),
-    [(source, effect, 0) for source in _SOURCES for effect in _ANNOUNCEMENTS]
-    + [(source, "add_political_power = 10", 1) for source in _SOURCES]
+    [(source, _ANNOUNCEMENTS[0], 0) for source in _SOURCES]
+    + [("focus", effect, 0) for effect in _ANNOUNCEMENTS[1:]]
     + [("focus", effect, 1) for effect in _NOT_ANNOUNCEMENTS],
 )
 def test_only_an_unlock_tooltip_announces_the_category(

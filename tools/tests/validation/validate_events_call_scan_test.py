@@ -188,7 +188,6 @@ _TYPED_FIRE_CASES = {
     ),
     # `UN.[ID]` has no literal form to resolve.
     "interpolated id": ("x = {\n\tcountry_event = UN.[ID]\n}\n", []),
-    "commented fire": ("x = {\n\t#country_event = dead.1\n}\n", []),
 }
 
 

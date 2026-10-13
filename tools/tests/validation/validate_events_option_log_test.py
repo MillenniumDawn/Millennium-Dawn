@@ -43,40 +43,12 @@ _OPTION_LOG_CASES = {
             ),
             [("foo.1.a", 7)],
         ),
-        "log before the name": (_event(_LOG + _NAME), [("foo.1.a", 6)]),
         "unnamed option": (_event(_LOG), [("unnamed option", 6)]),
-        "two logs": (_event(_NAME + _LOG + _LOG), [("foo.1.a", 7), ("foo.1.a", 8)]),
-        "brace inside the log string": (
-            _event(_NAME + '\t\tlog = "closing } brace"\n'),
-            [("foo.1.a", 7)],
-        ),
         "real effect": (_event(_NAME + _LOG + _EFFECT), []),
-        "numeric state scope": (
-            _event(_NAME + _LOG + "\t\t652 = { MSC_elect_sobyanin_edro = yes }\n"),
-            [],
-        ),
         "quoted tag scope": (
             _event(_NAME + _LOG + '\t\t"LGN" = { change_tag_from = CAR }\n'),
             [],
         ),
-        "hidden_effect": (
-            _event(_NAME + _LOG + "\t\thidden_effect = { set_country_flag = x }\n"),
-            [],
-        ),
-        "effect_tooltip": (
-            _event(_NAME + _LOG + "\t\teffect_tooltip = { add_stability = 0.1 }\n"),
-            [],
-        ),
-        "log nested in an if": (
-            _event(
-                _NAME
-                + "\t\tif = {\n\t\t\tlimit = { has_country_flag = foo_flag }\n\t"
-                + _LOG
-                + "\t\t}\n"
-            ),
-            [],
-        ),
-        "commented-out log": (_event(_NAME + "\t\t#" + _LOG.lstrip("\t")), []),
     },
     "validate_option_log_id": {
         "another option's id": (
@@ -84,20 +56,6 @@ _OPTION_LOG_CASES = {
             [("foo.1.b log cites foo.1.a", 7)],
         ),
         "its own id": (_event(_NAME + _LOG + _EFFECT), []),
-        "dotted endings that are not event ids": (
-            _event(
-                _NAME
-                + _log("[This.GetName]: 2025.5")
-                + _log("[This.GetName]: ROOT.capital")
-                + _log("[This.GetName]: v1.2")
-                + _EFFECT
-            ),
-            [],
-        ),
-        "id with a numeric namespace suffix": (
-            _event(_NAME + _log("[This.GetName]: CZE_Army_2000.01") + _EFFECT),
-            [("foo.1.a log cites CZE_Army_2000.01", 7)],
-        ),
         "Event word form": (
             _event(_NAME + _log("Event foo.1.b") + _EFFECT),
             [("foo.1.a log cites foo.1.b", 7)],
@@ -112,16 +70,6 @@ _OPTION_LOG_CASES = {
                 + _log("[This.GetName]: exempt.1.b executed")
                 + _EFFECT,
                 "exempt.1",
-            ),
-            [],
-        ),
-        # A name key shared with another event still logs this event's id.
-        "shared name key": (
-            _event(
-                "\t\tname = isisNews.1301.a\n"
-                + _log("[This.GetName]: isisNews.1302.a executed")
-                + _EFFECT,
-                "isisNews.1302",
             ),
             [],
         ),

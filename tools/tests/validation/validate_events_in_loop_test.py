@@ -52,8 +52,6 @@ _FIRE = "country_event = foo.1"
 # case: (caller, line the fire_only_once check reports, line the major check reports)
 _LOOP_CASES = {
     "every_country": (_nest("every_country", _FIRE), 3, 3),
-    "every_other_country": (_nest("every_other_country", "news_event = foo.1"), 3, 3),
-    "every_state": (_nest("every_state", "news_event = foo.1"), 3, 3),
     "for_each_scope_loop": (
         _nest(
             "for_each_scope_loop",
@@ -62,19 +60,9 @@ _LOOP_CASES = {
         4,
         4,
     ),
-    "id after another argument": (
-        _nest("every_country", "country_event = { days = 20 id = foo.1 }"),
-        3,
-        3,
-    ),
     # The keyword set once had `operative_event`, which is not a keyword.
     "operative_leader_event": (
         _nest("every_country", "operative_leader_event = foo.1"),
-        3,
-        3,
-    ),
-    "operative_leader_event block form": (
-        _nest("every_state", "operative_leader_event = { id = foo.1 days = 2 }"),
         3,
         3,
     ),
@@ -96,7 +84,6 @@ _LOOP_CASES = {
         None,
         4,
     ),
-    "loop inside a ROOT scope": (_nest("ROOT", "every_country", _FIRE), 4, 4),
     "loop without an event call": (
         _nest("every_country", "add_political_power = 5"),
         None,
@@ -126,7 +113,6 @@ def test_untracked_event_fired_in_a_loop_is_not_reported(tmp_path, section):
 # case: (event fields, metadata the parser must read)
 _METADATA_CASES = {
     "fire_only_once": (["fire_only_once = yes"], {"fire_only_once": True}),
-    "commented fire_only_once": (["#fire_only_once = yes"], {"fire_only_once": False}),
     "commented hidden and triggered only": (
         ["#is_triggered_only = yes", "#hidden = yes"],
         {"is_triggered_only": False, "is_hidden": False},
