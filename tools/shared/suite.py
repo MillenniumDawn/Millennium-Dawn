@@ -105,12 +105,30 @@ def run_bash_step(script: str, cwd, env=None) -> subprocess.CompletedProcess:
     )
 
 
-def run_validator(validator_cls, tmp_path, **kwargs):
-    validator = validator_cls(
-        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True, **kwargs
+def build_validator(validator_cls, root, **kwargs):
+    return validator_cls(
+        mod_path=str(root), use_colors=False, workers=1, no_cache=True, **kwargs
     )
+
+
+def run_validator(validator_cls, tmp_path, **kwargs):
+    validator = build_validator(validator_cls, tmp_path, **kwargs)
     validator.run_validations()
     return validator
+
+
+def assert_findings(results, expected):
+    """One result per expected entry: a string matches a whole result, a tuple
+    matches a result holding every fragment in it."""
+    assert len(results) == len(expected), results
+    for entry in expected:
+        if isinstance(entry, str):
+            assert entry in results, (entry, results)
+        else:
+            assert any(all(part in row for part in entry) for row in results), (
+                entry,
+                results,
+            )
 
 
 def issue_categories(validator):
@@ -234,10 +252,10 @@ def fake_decisions_validator(*args, **kwargs):
     return collecting_validator(V.Validator)(*args, **kwargs)
 
 
-def decision_factory(body):
+def decision_factory(body, basename="X.txt"):
     import validate_decisions as V
 
-    return V.DecisionFactory(body, source_basename="X.txt")
+    return V.DecisionFactory(body, source_basename=basename)
 
 
 def decisions_results_for(factories, monkeypatch, check="validate_missing_log"):
@@ -314,6 +332,14 @@ def dds_header(
     )
 
 
+def dds_stub(width: int, height: int) -> bytes:
+    """A DDS header that carries a size and nothing else."""
+    header = bytearray(128)
+    header[0:4] = b"DDS "
+    struct.pack_into("<II", header, 12, height, width)
+    return bytes(header)
+
+
 def load_tool_module(
     relative_path: str, *, module_name: str | None = None, register: bool = False
 ) -> ModuleType:
@@ -342,6 +368,13 @@ def write_under(root: Path, relative_path: str, content: str) -> Path:
 
 def write_under_str(root: Path, relative_path: str, content: str) -> str:
     return str(write_under(root, relative_path, content))
+
+
+def write_tree(root: Path, files: dict) -> Path:
+    """Write `{relative path: content}` under root."""
+    for relative_path, content in files.items():
+        write_under(root, relative_path, content)
+    return root
 
 
 def write_focus_file(root: Path, content: str) -> Path:

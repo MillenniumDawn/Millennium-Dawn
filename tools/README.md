@@ -93,8 +93,11 @@ Add regression coverage with changed validator, fixer, or report behavior. Run
 `python -m pytest` before merging any `tools/` change, and fix failures in the same
 change. Never delete, skip, or weaken a test to reach green. A correct behavior change
 updates its regression expectations; a broken implementation gets fixed instead.
-Removing a test as cleanup is its own change. The test must be dead or repeat another
-test's input, and the coverage total must not drop.
+Keep one test file per tool module. Put the cases for a check in one parametrized
+table and add a row for a new case. Setup that two files need goes in
+`tools/shared/suite.py`.
+Removing a test as cleanup is its own change. The test must be dead, or another test
+must already check the same behavior, and the coverage total must not drop.
 
 ## Quick Start
 
