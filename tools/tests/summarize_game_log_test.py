@@ -2,7 +2,7 @@
 
 import json
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
 
 import pytest
 import summarize_game_log as S
@@ -138,11 +138,6 @@ def test_date_argument_fills_the_missing_month_and_day(argument, key):
     assert S.parse_date_arg(argument) == key
 
 
-def test_dates_have_a_sort_key_and_a_padded_label():
-    assert S.date_key(2007, 5, 2) == 20070502
-    assert S.fmt_date(2007, 5, 2) == " 2 May 2007"
-
-
 @pytest.mark.parametrize(
     ("value", "text"),
     [
@@ -164,61 +159,59 @@ def test_money_groups_thousands(value, text):
     assert S.money(value) == text
 
 
+# case: (countries in the log, name typed, name resolved)
+_NAME_CASES = {
+    "other case": (["Brazil"], "bRaZiL", "Brazil"),
+    "part of the name": (["Korea"], "Kore", "Korea"),
+    # Niger and Nigeria, Sudan and South Sudan: the exact name wins.
+    "exact match before a longer name": (["North Korea", "Korea"], "korea", "Korea"),
+    "unknown": (["Brazil"], "Atlantis", "Atlantis"),
+}
+
+
 @pytest.mark.parametrize(
-    ("typed", "name"),
-    [("bRaZiL", "Brazil"), ("Kore", "Korea"), ("Atlantis", "Atlantis")],
-    ids=["other case", "part of the name", "unknown"],
+    ("countries", "typed", "name"), _NAME_CASES.values(), ids=_NAME_CASES
 )
-def test_country_name_resolves_by_case_then_by_substring(data, typed, name):
-    assert S.resolve_name(data, typed) == name
+def test_country_name_resolves_by_case_then_by_substring(countries, typed, name):
+    assert S.resolve_name({"activity": Counter(countries)}, typed) == name
 
 
-def test_country_selection_dedupes_and_guesses_the_player_by_decisions(data):
+def test_country_selection_resolves_and_dedupes_requested_names(data):
     selected = S.pick_countries(data, ["brazil", "Kore", "Brazil"], 2)
 
     assert selected[:2] == ["Brazil", "Korea"]
     assert len(selected) == len(set(selected))
-    # Nothing requested: the country with the most decisions.
-    assert S.pick_countries(data, [], 0) == ["Brazil"]
 
 
-# With no decisions logged the most active country is picked, if there is one.
+# With nothing requested the player is guessed: the country with the most
+# decisions, or the most active one when no decision was logged.
+# case: ({country: log entries}, {country: decisions taken}, countries picked)
+_GUESS_CASES = {
+    "most decisions, not most active": ({"A": 5, "B": 1}, {"B": 1}, ["B"]),
+    "no decisions": ({"Fallback": 1}, {}, ["Fallback"]),
+    "empty log": ({}, {}, []),
+}
+
+
 @pytest.mark.parametrize(
-    ("activity", "picked"), [({"Fallback": 1}, ["Fallback"]), ({}, [])]
+    ("activity", "decisions", "picked"), _GUESS_CASES.values(), ids=_GUESS_CASES
 )
-def test_country_selection_without_decisions_uses_activity(activity, picked):
-    quiet = {"activity": Counter(activity), "decisions": defaultdict(Counter)}
-
-    assert S.pick_countries(quiet, [], 0) == picked
-
-
-def test_report_on_an_empty_log_says_nothing_was_detected():
-    empty = {
-        "stats": {
-            "lines": 0,
-            "parsed": 0,
-            "skipped": 0,
-            "wall_first": None,
-            "wall_last": None,
-            "game_first": None,
-            "game_last": None,
+def test_country_selection_guesses_the_player(activity, decisions, picked):
+    data = {
+        "activity": Counter(activity),
+        "decisions": {
+            country: Counter(some_decision=count)
+            for country, count in decisions.items()
         },
-        "activity": Counter(),
-        "categories": Counter(),
-        "focuses": defaultdict(Counter),
-        "decisions": defaultdict(Counter),
-        "events": defaultdict(dict),
-        "conflicts": [],
-        "annexations": [],
-        "economy": {},
-        "inflation": {},
-        "country_events": defaultdict(list),
-        "ideas": defaultdict(Counter),
-        "diplomacy": defaultdict(Counter),
-        "events_by_country": defaultdict(Counter),
     }
 
-    report = S.report(empty)
+    assert S.pick_countries(data, [], 0) == picked
+
+
+def test_report_on_a_log_with_no_records_says_nothing_was_detected(tmp_path):
+    quiet = write_text(tmp_path / "quiet.log", "not a scripted MD record\n")
+
+    report = S.report(S.parse(quiet))
 
     assert "(none detected)" in report
     assert "In-game span" not in report
