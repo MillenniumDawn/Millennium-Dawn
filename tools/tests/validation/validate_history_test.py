@@ -914,6 +914,7 @@ _CAPITAL_CASES = {
     "column zero": ("capital = 700\n", []),
     "indented": ("\tcapital = 700\n", []),
     "missing": ('oob = "TST_1990"\n', _NO_CAPITAL),
+    "inside a quoted string": ('log = "capital = 700"\n', _NO_CAPITAL),
 }
 
 
@@ -943,9 +944,9 @@ _RULING_PARTY_CASES = {
     "assigned after": (_dated(_START, _party(2)), []),
     "nothing assigned": (_dated(_START), ["2000.1.1: "]),
     "assigned before": (_dated(_party(2), _START), ["2000.1.1: "]),
-    # The vanilla ideology token is not the 0-23 index.
-    "set_politics token": (
-        _dated(_START, "set_politics = { ruling_party = democratic }"),
+    # Only set_variable sets the 0-23 index. set_politics takes an ideology.
+    "set_politics block": (
+        _dated(_START, "set_politics = { ruling_party = 3 }"),
         ["2000.1.1: "],
     ),
     "commented assignment": (_dated(_START, "# " + _party(2)), ["2000.1.1: "]),

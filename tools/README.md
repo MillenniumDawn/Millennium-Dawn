@@ -147,9 +147,10 @@ decision file from its fields. `decisions_results_for`, `call_site_scan`, `yml_s
 and `variable_scan` run one check or one section of a shared scan. `run_tool_script`
 runs a tool as its own process.
 
-A tool with a `main()` is tested in process, with `sys.argv` patched. One test per
-tool runs the script itself through `run_tool_script`, because an import that only
-works under pytest's path passes every in-process test.
+A tool with a `main()` is tested in process, with `sys.argv` patched. At most one
+test per tool runs the script itself, through `run_tool_script`. Keep one where it
+exists: only a script run catches an import that works only under pytest's path. Do
+not add more, and do not repeat an in-process case as a subprocess.
 
 Removing a test as cleanup is its own change. The test must be dead or fail the row
 rules above, and the missed-line and partial-branch totals from `coverage json` must
