@@ -117,6 +117,19 @@ def run_validator(validator_cls, tmp_path, **kwargs):
     return validator
 
 
+def checks_called_by_run(validator, monkeypatch):
+    """Stub every `validate_*` method and run the validator.
+
+    Returns (checks the run called, checks the class defines), both sorted.
+    """
+    checks = sorted(name for name in dir(validator) if name.startswith("validate_"))
+    called = []
+    for name in checks:
+        monkeypatch.setattr(validator, name, lambda name=name: called.append(name))
+    validator.run_validations()
+    return sorted(called), checks
+
+
 def _finding_matches(row, entry):
     if isinstance(entry, str):
         return row == entry

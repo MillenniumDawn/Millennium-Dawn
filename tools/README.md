@@ -132,7 +132,8 @@ belong. A named regression is a row like any other.
 
 Beside its tables, a validator's test file has:
 
-- One test proving `run_validations` calls every `validate_*` check.
+- One test proving `run_validations` calls every `validate_*` check, through
+  `checks_called_by_run`.
 - One run against a real tree, with no mocked source, for each check that reads its
   data from the mod.
 - A severity assertion wherever the severity is a decision: an ERROR that gates CI, or

@@ -14,6 +14,7 @@ import validate_decisions as V
 from shared.suite import (
     assert_findings,
     build_validator,
+    checks_called_by_run,
     dds_stub,
     decision_factory,
     decisions_results_for,
@@ -1752,15 +1753,11 @@ def test_fix_rewrites_missing_ai_factors_and_duplicate_available(tmp_path):
     ids=("default", "opt-in checks"),
 )
 def test_run_validations_calls_every_check(tmp_path, monkeypatch, flags):
-    checks = {name for name in dir(V.Validator) if name.startswith("validate_")}
-    validator = _mod(tmp_path, {}, **flags)
-    called = []
-    for name in checks:
-        monkeypatch.setattr(validator, name, lambda name=name: called.append(name))
+    called, checks = checks_called_by_run(_mod(tmp_path, {}, **flags), monkeypatch)
 
-    validator.run_validations()
-
-    assert sorted(called) == sorted(checks if flags else checks - _OPT_IN_CHECKS)
+    if not flags:
+        checks = [name for name in checks if name not in _OPT_IN_CHECKS]
+    assert called == checks
 
 
 def test_cli_exposes_the_opt_in_checks():

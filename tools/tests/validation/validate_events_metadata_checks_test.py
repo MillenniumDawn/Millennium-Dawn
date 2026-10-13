@@ -254,25 +254,33 @@ def test_unreferenced_skips_the_full_tree_scan_in_staged_mode(tmp_path, monkeypa
     assert v._issues == []
 
 
-def test_id_based_checks_skip_a_block_with_no_id(tmp_path):
-    # Only a check that can name the block "unknown" may report on it.
+def test_a_block_with_no_id_is_skipped_or_reported_as_unknown(tmp_path):
+    # A check that keys on the id skips the block. The others name it "unknown".
     v = _validator(
         tmp_path,
         "add_namespace = foo\n",
         event_block(
             None, _TRIGGERED, _HIDDEN, _MTTH, "title = foo.1.t", _option("foo.1")
         ),
+        # A second block with no id would read as a duplicate of the first.
+        event_block(None, _TRIGGERED, _option("foo.1")),
         _plain("foo.1"),
+        files={
+            "localisation/english/md_l_english.yml": 'l_english:\n foo.1.t:0 "Title"\n'
+        },
     )
 
     v.validate_mtth_triggered_only()
     v.validate_duplicate_event_ids()
     v.validate_namespace_mismatch()
-    v.validate_hidden_event_localisation()
     assert v._issues == []
 
     v.validate_hidden_event_options()
-    assert _messages(v) == ["unknown - Ev.txt: 1 option block"]
+    v.validate_hidden_event_localisation()
+    assert _messages(v) == [
+        "unknown - Ev.txt: 1 option block",
+        "unknown - Ev.txt: foo.1.t",
+    ]
 
 
 def test_event_metadata_is_parsed_once_per_run(tmp_path):

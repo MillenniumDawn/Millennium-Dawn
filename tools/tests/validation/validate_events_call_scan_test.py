@@ -13,7 +13,7 @@ from multiprocessing import get_context
 import pytest
 import validate_events as V
 import validator_common
-from shared.suite import call_site_scan
+from shared.suite import call_site_scan, checks_called_by_run
 from shared.suite import write_under_str as _write
 
 
@@ -626,16 +626,11 @@ def test_picture_check_skips_when_the_sprite_index_failed_to_load(
 
 
 def test_run_validations_calls_every_check(tmp_path, monkeypatch):
-    checks = {name for name in dir(V.Validator) if name.startswith("validate_")}
-    v = _validator(tmp_path)
-    called = []
-    for name in checks:
-        monkeypatch.setattr(v, name, lambda name=name: called.append(name))
-
-    v.run_validations()
+    called, checks = checks_called_by_run(_validator(tmp_path), monkeypatch)
 
     # The omission report is a standalone audit, not part of the run.
-    assert sorted(called) == sorted(checks - {"validate_event_picture_omissions"})
+    checks.remove("validate_event_picture_omissions")
+    assert called == checks
 
 
 MOD_EVENTS = """add_namespace = foo
