@@ -1,0 +1,68 @@
+# Coalition restraint. Compares divisions:
+# attacker + its faction vs target + its faction + its guarantors.
+# Below 0.5: declare_war -1000 (any negative fails the engine's declare-war readiness check).
+# ai_strategy plans need a fixed id, so this uses add_ai_strategy.
+# Those entries persist and add up, so a flag per target records the veto,
+# and lifting it adds the opposite value.
+#
+# Scope: the target. Temp variables:
+#   coalition_attacker: the country that holds (or is getting) the wargoal.
+#   coalition_new_wargoal = 1: the wargoal is being created right now.
+coalition_restraint_update_effect = {
+	set_temp_variable = { coalition_restraint_on = 0 }
+	if = {
+		limit = {
+			OR = {
+				check_variable = { coalition_new_wargoal = 1 }
+				var:coalition_attacker = { has_wargoal_against = PREV }
+			}
+			NOT = { has_war_with = var:coalition_attacker }
+		}
+		set_temp_variable = { coalition_them = num_divisions }
+		every_country = {
+			limit = {
+				NOT = { tag = PREV }
+				OR = {
+					is_in_faction_with = PREV
+					PREV = { is_guaranteed_by = PREV }
+				}
+			}
+			add_to_temp_variable = { coalition_them = num_divisions }
+		}
+		var:coalition_attacker = {
+			set_temp_variable = { coalition_us = num_divisions }
+			every_country = {
+				limit = {
+					NOT = { tag = PREV }
+					is_in_faction_with = PREV
+				}
+				add_to_temp_variable = { coalition_us = num_divisions }
+			}
+		}
+		set_temp_variable = { coalition_us_x2 = { value = coalition_us multiply = 2 } }
+		if = {
+			limit = { check_variable = { coalition_us_x2 < coalition_them } }
+			set_temp_variable = { coalition_restraint_on = 1 }
+		}
+	}
+	if = {
+		limit = {
+			check_variable = { coalition_restraint_on = 0 }
+			var:coalition_attacker = { has_country_flag = coalition_restraint_strong@PREV }
+		}
+		var:coalition_attacker = {
+			add_ai_strategy = { type = declare_war id = PREV value = 1000 }
+			clr_country_flag = coalition_restraint_strong@PREV
+		}
+	}
+	else_if = {
+		limit = {
+			check_variable = { coalition_restraint_on = 1 }
+			var:coalition_attacker = { NOT = { has_country_flag = coalition_restraint_strong@PREV } }
+		}
+		var:coalition_attacker = {
+			add_ai_strategy = { type = declare_war id = PREV value = -1000 }
+			set_country_flag = coalition_restraint_strong@PREV
+		}
+	}
+}
