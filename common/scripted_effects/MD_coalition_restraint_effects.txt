@@ -1,13 +1,5 @@
-# Coalition restraint. Compares divisions:
-# attacker + its faction vs target + its faction + its guarantors.
-# Below 0.5: declare_war -1000 (any negative fails the engine's declare-war readiness check).
-# ai_strategy plans need a fixed id, so this uses add_ai_strategy.
-# Those entries persist and add up, so a flag per target records the veto,
-# and lifting it adds the opposite value.
-#
-# Scope: the target. Temp variables:
-#   coalition_attacker: the country that holds (or is getting) the wargoal.
-#   coalition_new_wargoal = 1: the wargoal is being created or justified right now.
+# Scope: target. coalition_attacker = AI with the wargoal; coalition_new_wargoal = 1 while it is created or justified.
+# add_ai_strategy entries add up, so the flag pairs each -1000 with one later +1000.
 coalition_restraint_update_effect = {
 	set_temp_variable = { coalition_restraint_on = 0 }
 	if = {
@@ -69,8 +61,6 @@ coalition_restraint_update_effect = {
 	}
 }
 
-# Monthly upkeep, scope: an AI country. Script wargoals also get the update at creation
-# (add_threat_from_wargoal_effect), engine justifications on on_justifying_wargoal_pulse.
 coalition_restraint_monthly_effect = {
 	set_temp_variable = { coalition_attacker = THIS }
 	every_country = {
