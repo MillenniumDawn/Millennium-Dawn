@@ -1327,8 +1327,8 @@ UKR_ensure_kazachya_brigada_template = {
 				Arm_Inf_Bat = { x = 0 y = 0 }
 				Arm_Inf_Bat = { x = 0 y = 1 }
 				Arm_Inf_Bat = { x = 0 y = 2 }
-				SP_Arty_Bat = { x = 0 y = 3 }
 				armor_Bat = { x = 1 y = 0 }
+				SP_Arty_Bat = { x = 2 y = 0 }
 			}
 			support = {
 				H_Engi_Comp = { x = 0 y = 0 }
@@ -1339,21 +1339,26 @@ UKR_ensure_kazachya_brigada_template = {
 }
 UKR_regional_republic_templates = {
 	division_template = {
-		name = "Batalyon Dobrovolchev"
+		name = "Batalyon Dobrovoltsev"
 		regiments = {
 			L_Inf_Bat = { x = 0 y = 0 }
 			L_Inf_Bat = { x = 0 y = 1 }
 			L_Inf_Bat = { x = 0 y = 2 }
-			L_Inf_Bat = { x = 0 y = 3 }
 		}
 		priority = 0
 	}
 	division_template = {
-		name = "Brigada Dobrovolchev"
+		name = "Brigada Dobrovoltsev"
 		regiments = {
 			L_Inf_Bat = { x = 0 y = 0 }
 			L_Inf_Bat = { x = 0 y = 1 }
 			L_Inf_Bat = { x = 0 y = 2 }
+			L_Inf_Bat = { x = 1 y = 0 }
+			L_Inf_Bat = { x = 1 y = 1 }
+			L_Inf_Bat = { x = 1 y = 2 }
+			L_Inf_Bat = { x = 2 y = 0 }
+			L_Inf_Bat = { x = 2 y = 1 }
+			L_Inf_Bat = { x = 2 y = 2 }
 		}
 		support = {
 			Arty_Battery = { x = 0 y = 0 }
@@ -1450,8 +1455,8 @@ OPR_maidan_create_army = {
 			Arm_Marine_Bat = { x = 0 y = 2 }
 			Mech_Marine_Bat = { x = 0 y = 0 }
 			Mech_Marine_Bat = { x = 0 y = 1 }
-			Mot_Marine_Bat = { x = 0 y = 3 }
-			Mot_Marine_Bat = { x = 0 y = 4 }
+			Mot_Marine_Bat = { x = 1 y = 0 }
+			Mot_Marine_Bat = { x = 1 y = 1 }
 		}
 		support = {
 			H_Engi_Comp = { x = 0 y = 0 }
@@ -1790,21 +1795,26 @@ UKR_spawn_OPR_war = {
 }
 UKR_republic_army_templates = {
 	division_template = {
-		name = "Batalyon Dobrovolchev"
+		name = "Batalyon Dobrovoltsev"
 		regiments = {
 			L_Inf_Bat = { x = 0 y = 0 }
 			L_Inf_Bat = { x = 0 y = 1 }
 			L_Inf_Bat = { x = 0 y = 2 }
-			L_Inf_Bat = { x = 0 y = 3 }
 		}
 		priority = 0
 	}
 	division_template = {
-		name = "Brigada Dobrovolchev"
+		name = "Brigada Dobrovoltsev"
 		regiments = {
 			L_Inf_Bat = { x = 0 y = 0 }
 			L_Inf_Bat = { x = 0 y = 1 }
 			L_Inf_Bat = { x = 0 y = 2 }
+			L_Inf_Bat = { x = 1 y = 0 }
+			L_Inf_Bat = { x = 1 y = 1 }
+			L_Inf_Bat = { x = 1 y = 2 }
+			L_Inf_Bat = { x = 2 y = 0 }
+			L_Inf_Bat = { x = 2 y = 1 }
+			L_Inf_Bat = { x = 2 y = 2 }
 		}
 		support = {
 			Arty_Battery = { x = 0 y = 0 }
@@ -5122,5 +5132,132 @@ UKR_strategic_industry_milestone_2026 = {
 	else_if = {
 		limit = { has_game_rule = { rule = rule_corporate_history option = outcomes_only } }
 		UKR_strategic_industry_apply_wartime_drone_arsenal = yes
+	}
+}
+
+UKR_start_workforce_setup = {
+	set_variable = { UKR_start_workforce_agriculture = 1 }
+	set_variable = { UKR_start_workforce_civ_facs = 0.25 }
+	set_variable = { UKR_start_workforce_mil_facs = -0.1 }
+	set_variable = { UKR_start_workforce_resources = 0.75 }
+	set_variable = { UKR_start_workforce_offices = -0.1 }
+	add_dynamic_modifier = { modifier = UKR_start_workforce_modifier }
+}
+
+# A target is the start count plus one building per step that brings the requirement back to 0
+UKR_start_workforce_record_counts = {
+	# mil_facs_worker_requirement_modifier also sets the workers per dockyard, so both count as one workplace
+	set_variable = { UKR_start_workforce_mil_facs_count = { value = military_factory_total add = naval_factory_total } }
+	set_variable = { UKR_start_workforce_agriculture_target = { value = UKR_start_workforce_agriculture divide = 0.1 add = agriculture_district_total } }
+	set_variable = { UKR_start_workforce_civ_facs_target = { value = UKR_start_workforce_civ_facs divide = 0.025 add = industrial_complex_total } }
+	set_variable = { UKR_start_workforce_mil_facs_target = { value = UKR_start_workforce_mil_facs divide = -0.02 add = UKR_start_workforce_mil_facs_count } }
+	set_variable = { UKR_start_workforce_offices_target = { value = UKR_start_workforce_offices divide = -0.02 add = office_park_total } }
+}
+
+UKR_start_workforce_update = {
+	if = {
+		limit = { has_dynamic_modifier = { modifier = UKR_start_workforce_modifier } }
+		if = {
+			limit = { NOT = { has_variable = UKR_start_workforce_civ_facs_target } }
+			UKR_start_workforce_record_counts = yes
+		}
+		set_variable = { UKR_start_workforce_mil_facs_count = { value = military_factory_total add = naval_factory_total } }
+		set_temp_variable = { agriculture_was = UKR_start_workforce_agriculture }
+		set_temp_variable = { civ_facs_was = UKR_start_workforce_civ_facs }
+		set_temp_variable = { mil_facs_was = UKR_start_workforce_mil_facs }
+		set_temp_variable = { resources_was = UKR_start_workforce_resources }
+		set_temp_variable = { offices_was = UKR_start_workforce_offices }
+		set_temp_variable = { population_gain = 0 }
+
+		# Each workplace sits one step from 0 per building it is short of its target, and lost buildings never move it back
+		set_temp_variable = { workforce_new = { value = UKR_start_workforce_agriculture_target subtract = agriculture_district_total multiply = 0.1 } }
+		clamp_temp_variable = { var = workforce_new min = 0 }
+		if = {
+			limit = { check_variable = { workforce_new < UKR_start_workforce_agriculture } }
+			set_variable = { UKR_start_workforce_agriculture = workforce_new }
+			if = {
+				limit = { NOT = { check_variable = { workforce_new > 0 } } }
+				add_to_temp_variable = { population_gain = 0.1 }
+			}
+		}
+		set_temp_variable = { workforce_new = { value = UKR_start_workforce_civ_facs_target subtract = industrial_complex_total multiply = 0.025 } }
+		clamp_temp_variable = { var = workforce_new min = 0 }
+		if = {
+			limit = { check_variable = { workforce_new < UKR_start_workforce_civ_facs } }
+			set_variable = { UKR_start_workforce_civ_facs = workforce_new }
+			if = {
+				limit = { NOT = { check_variable = { workforce_new > 0 } } }
+				add_to_temp_variable = { population_gain = 0.1 }
+			}
+		}
+		set_temp_variable = { workforce_new = { value = UKR_start_workforce_mil_facs_count subtract = UKR_start_workforce_mil_facs_target multiply = 0.02 } }
+		clamp_temp_variable = { var = workforce_new max = 0 }
+		if = {
+			limit = { check_variable = { workforce_new > UKR_start_workforce_mil_facs } }
+			set_variable = { UKR_start_workforce_mil_facs = workforce_new }
+			if = {
+				limit = { NOT = { check_variable = { workforce_new < 0 } } }
+				add_to_temp_variable = { population_gain = 0.05 }
+			}
+		}
+		set_temp_variable = { workforce_new = { value = office_park_total subtract = UKR_start_workforce_offices_target multiply = 0.02 } }
+		clamp_temp_variable = { var = workforce_new max = 0 }
+		if = {
+			limit = { check_variable = { workforce_new > UKR_start_workforce_offices } }
+			set_variable = { UKR_start_workforce_offices = workforce_new }
+			if = {
+				limit = { NOT = { check_variable = { workforce_new < 0 } } }
+				add_to_temp_variable = { population_gain = 0.05 }
+			}
+		}
+
+		# Every workplace back to normal staffing raises population growth in Ukrainian Economic Development for good
+		if = {
+			limit = { check_variable = { population_gain > 0 } }
+			add_to_variable = { UKR_econ_mod_MONTHLY_POPULATION = population_gain tooltip = MONTHLY_POPULATION_tt }
+		}
+
+		# Every step the other four workplaces take cuts resource extraction by 2.5%: their 30 steps clear its 75%
+		set_temp_variable = {
+			workforce_steps = {
+				value = agriculture_was
+				subtract = UKR_start_workforce_agriculture
+				divide = 0.1
+				add = { value = civ_facs_was subtract = UKR_start_workforce_civ_facs divide = 0.025 }
+				add = { value = UKR_start_workforce_mil_facs subtract = mil_facs_was divide = 0.02 }
+				add = { value = UKR_start_workforce_offices subtract = offices_was divide = 0.02 }
+			}
+		}
+		subtract_from_variable = { UKR_start_workforce_resources = { value = workforce_steps multiply = 0.025 } }
+		clamp_variable = { var = UKR_start_workforce_resources min = 0 }
+
+		if = {
+			limit = {
+				NOT = {
+					OR = {
+						check_variable = { UKR_start_workforce_agriculture > 0 }
+						check_variable = { UKR_start_workforce_civ_facs > 0 }
+						check_variable = { UKR_start_workforce_mil_facs < 0 }
+						check_variable = { UKR_start_workforce_resources > 0 }
+						check_variable = { UKR_start_workforce_offices < 0 }
+					}
+				}
+			}
+			remove_dynamic_modifier = { modifier = UKR_start_workforce_modifier }
+		}
+
+		if = {
+			limit = {
+				is_ai = no
+				check_variable = { workforce_steps > 0 }
+			}
+			set_variable = { UKR_start_workforce_agriculture_change = { value = UKR_start_workforce_agriculture subtract = agriculture_was } }
+			set_variable = { UKR_start_workforce_civ_facs_change = { value = UKR_start_workforce_civ_facs subtract = civ_facs_was } }
+			set_variable = { UKR_start_workforce_mil_facs_change = { value = UKR_start_workforce_mil_facs subtract = mil_facs_was } }
+			set_variable = { UKR_start_workforce_resources_change = { value = UKR_start_workforce_resources subtract = resources_was } }
+			set_variable = { UKR_start_workforce_offices_change = { value = UKR_start_workforce_offices subtract = offices_was } }
+			set_variable = { UKR_start_workforce_population_change = population_gain }
+			country_event = ukr_start_workforce.1
+		}
 	}
 }

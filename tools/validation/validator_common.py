@@ -381,6 +381,11 @@ def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, 
     return blocks
 
 
+# Literal zero AI weights. The lookahead keeps `0.5` from reading as zero.
+FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
+BASE_ZERO_RE = re.compile(r"\bbase\s*=\s*0(?:\.0+)?(?![\d.])")
+
+
 def casefold_index(names) -> dict:
     """Return a dict mapping each name lowercased to its canonical form.
 
