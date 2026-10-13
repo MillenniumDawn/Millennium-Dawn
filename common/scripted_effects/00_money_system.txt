@@ -6316,40 +6316,48 @@ calculate_migration_mechanic_values = {
 			}
 		}
 	}
+	# Government Policy Impact carries net migration plus the growth floor top-up
+	set_variable = { gov_pop_monthly_population = { value = net_immigration_rate add = monthly_population_floor_modifier } }
 }
 
 # Effect: update_world_migration_balance
 # Purpose: Scales world immigration and emigration to the smaller of the two; global, monthly
 update_world_migration_balance = {
-	set_variable = { global.world_immigration_capacity = 0 }
-	set_variable = { global.world_emigration_pressure = 0 }
-	every_country = {
-		add_to_variable = {
-			var = global.world_immigration_capacity
-			value = {
-				value = immigration_capacity
-				multiply = population_total_m
+	set_temp_variable = {
+		world_immigration_capacity = {
+			value = 0
+			every_collection = {
+				named_collection = all_countries_collection
+				add = {
+					value = immigration_capacity
+					multiply = population_total_m
+				}
 			}
 		}
-		add_to_variable = {
-			var = global.world_emigration_pressure
-			value = {
-				value = emigration_pressure
-				multiply = population_total_m
+	}
+	set_temp_variable = {
+		world_emigration_pressure = {
+			value = 0
+			every_collection = {
+				named_collection = all_countries_collection
+				add = {
+					value = emigration_pressure
+					multiply = population_total_m
+				}
 			}
 		}
 	}
 	set_variable = {
 		global.world_immigration_fill = {
-			value = global.world_emigration_pressure
-			divide = { value = global.world_immigration_capacity clamp = { min = 0.001 max = @math_expressions_max } }
+			value = world_emigration_pressure
+			divide = { value = world_immigration_capacity clamp = { min = 0.001 max = @math_expressions_max } }
 			clamp = { min = 0 max = 1 }
 		}
 	}
 	set_variable = {
 		global.world_emigration_share = {
-			value = global.world_immigration_capacity
-			divide = { value = global.world_emigration_pressure clamp = { min = 0.001 max = @math_expressions_max } }
+			value = world_immigration_capacity
+			divide = { value = world_emigration_pressure clamp = { min = 0.001 max = @math_expressions_max } }
 			clamp = { min = 0 max = 1 }
 		}
 	}
@@ -6367,13 +6375,7 @@ update_population_growth_floor = {
 			clamp = { min = 0 max = @math_expressions_max }
 		}
 	}
-	if = {
-		limit = {
-			check_variable = { monthly_population_floor_modifier > 0 }
-			NOT = { has_dynamic_modifier = { modifier = population_growth_floor } }
-		}
-		add_dynamic_modifier = { modifier = population_growth_floor }
-	}
+	set_variable = { gov_pop_monthly_population = { value = net_immigration_rate add = monthly_population_floor_modifier } }
 }
 
 # Effect: calculate_cost_pp_economic_cycles
