@@ -49,6 +49,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `TAG_ai_behavior` rule with a `HISTORICAL` option and a `default` block.
 - Out of scope: shared trees, and tags that only spawn later.
 
+## validate_ai_weight_order.py
+
+- `ai-weight-zero-then-add` (WARNING): triggers are not compared, so two modifiers that
+  can never both hold are still reported.
+
 ## validate_building_guards.py
 
 - `damage_building` or `remove_building` against a building the state lacks spams
@@ -122,6 +127,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `category-desc-image-overlap` (WARNING): a category `<id>_desc` that opens with a
   `£icon` draws the art at native size and can cover the header. Minimum leading `\n`:
   `ceil((height / 2 - 22) / 16)`. Not confirmed pixel for pixel in game.
+- `decision-ai-will-do-ignores-cost` (WARNING): the decision twin of
+  `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
+  `custom_cost_trigger` carries a "verify" note, because the engine already stops a
+  country that cannot pay.
 
 ## validate_dynamic_modifier_guards.py
 
