@@ -175,60 +175,102 @@ def _stub_conversion(monkeypatch, size, match):
     return written
 
 
-# A resized copy is not compared with its source.
-# case: (source size, --resize, pixels match, problems, line printed)
+_NO_MATCH = "does not match its source"
+
+# A copy is resized only when its size differs, and a resized copy is not
+# compared with its source.
+# case: (source size, --resize, verify, pixels match, problems, line printed,
+#        the copy written as (file, resized) or None)
 _FIXED_SIZE_CASES = {
-    "allowed size": ((2, 2), False, True, 0, "OK"),
-    "wrong size": ((3, 3), False, True, 1, "SKIP"),
-    "wrong size, resized": ((3, 3), True, False, 0, "OK"),
-    "copy does not match": ((2, 2), False, False, 1, "does not match its source"),
+    "allowed size": ((2, 2), False, True, True, 0, "OK", ("x.dds", False)),
+    "wrong size": ((3, 3), False, True, True, 1, "SKIP", None),
+    "wrong size, resized": ((3, 3), True, True, False, 0, "OK", ("x.dds", True)),
+    "copy does not match": ((2, 2), False, True, False, 1, _NO_MATCH, ("x.dds", False)),
+    "unverified copy": ((2, 2), False, False, False, 0, "OK", ("x.dds", False)),
 }
 
 
 @pytest.mark.parametrize(
-    ("size", "resize", "match", "problems", "line"),
+    ("size", "resize", "verify", "match", "problems", "line", "copy"),
     _FIXED_SIZE_CASES.values(),
     ids=_FIXED_SIZE_CASES,
 )
 def test_fixed_size_conversion_checks_the_size_and_the_copy(
-    monkeypatch, tmp_path, capsys, size, resize, match, problems, line
+    monkeypatch, tmp_path, capsys, size, resize, verify, match, problems, line, copy
 ):
-    _stub_conversion(monkeypatch, size, match)
+    written = _stub_conversion(monkeypatch, size, match)
 
     found = M.convert_fixed_size(
-        [tmp_path / "x.png"], tmp_path / "out", [(2, 2)], resize=resize, verify=True
+        [tmp_path / "x.png"], tmp_path / "out", [(2, 2)], resize=resize, verify=verify
     )
 
     assert found == problems
     assert line in capsys.readouterr().out
+    assert [(dest.name, resized) for dest, resized in written] == (
+        [copy] if copy else []
+    )
 
 
-# case: (source size, pixels match, problems, line printed)
+# case: (source size, verify, pixels match, problems, line printed)
 _FLAG_CASES = {
-    "base size": ((82, 52), True, 0, "OK"),
-    "other size": ((10, 10), False, 0, "resizing to 82x52"),
-    "base copy does not match": ((82, 52), False, 1, "does not match its source"),
+    "base size": ((82, 52), True, True, 0, "OK"),
+    "other size": ((10, 10), True, False, 0, "resizing to 82x52"),
+    "base copy does not match": ((82, 52), True, False, 1, _NO_MATCH),
+    "unverified base copy": ((82, 52), False, False, 0, "OK"),
 }
 
 
 @pytest.mark.parametrize(
-    ("size", "match", "problems", "line"), _FLAG_CASES.values(), ids=_FLAG_CASES
+    ("size", "verify", "match", "problems", "line"),
+    _FLAG_CASES.values(),
+    ids=_FLAG_CASES,
 )
 def test_flag_conversion_writes_three_sizes_and_checks_the_unscaled_one(
-    monkeypatch, tmp_path, capsys, size, match, problems, line
+    monkeypatch, tmp_path, capsys, size, verify, match, problems, line
 ):
     written = _stub_conversion(monkeypatch, size, match)
     flags = tmp_path / "flags"
 
-    found = M.convert_flag(tmp_path / "flag.png", "TST", flags, verify=True)
+    found = M.convert_flag(tmp_path / "flag.png", "TST", flags, verify=verify)
 
     assert found == problems
     assert line in capsys.readouterr().out
-    assert [dest for dest, _resize in written] == [
-        flags / "TST.tga",
-        flags / "medium" / "TST.tga",
-        flags / "small" / "TST.tga",
+    # Only a source already at the base size is copied unscaled.
+    assert written == [
+        (flags / "TST.tga", size != (82, 52)),
+        (flags / "medium" / "TST.tga", True),
+        (flags / "small" / "TST.tga", True),
     ]
+
+
+_RESIZE = ["-filter", "Lanczos", "-resize", "4x2!"]
+_DDS = ["-alpha", "set", "-define", "dds:compression=none", "-define", "dds:mipmaps=0"]
+_TGA = ["-flip", "-alpha", "set", "-orient", "bottom-left", "-compress", "None"]
+
+# The DDS is uncompressed with alpha. The TGA is flipped to a bottom-left origin.
+# case: (writer, resize, options between the source and the destination)
+_WRITER_CASES = {
+    "dds": ("write_dds", False, _DDS),
+    "dds, resized": ("write_dds", True, _RESIZE + _DDS),
+    "tga": ("write_tga", False, _TGA),
+    "tga, resized": ("write_tga", True, _RESIZE + _TGA),
+}
+
+
+@pytest.mark.parametrize(
+    ("writer", "resize", "options"), _WRITER_CASES.values(), ids=_WRITER_CASES
+)
+def test_writer_builds_its_imagemagick_command(
+    monkeypatch, tmp_path, writer, resize, options
+):
+    _on_path(monkeypatch, {"magick": "/usr/bin/magick"})
+    calls = _record_runs(monkeypatch)
+    dest = tmp_path / "out" / "copy"
+
+    getattr(M, writer)(Path("src.png"), dest, (4, 2), resize)
+
+    assert calls == [["/usr/bin/magick", "src.png", *options, str(dest)]]
+    assert dest.parent.is_dir()
 
 
 # ---- conversions on the real ImageMagick -------------------------------------

@@ -99,6 +99,14 @@ updates its regression expectations; a broken implementation gets fixed instead.
 One test file per tool module, or one per group of related checks when a module's
 tests outgrow a file. `tests/validation/validate_decisions_test.py` is the model.
 
+A test lives in the file of the module it tests. Do not add a `*_coverage_test.py`
+that gathers tests for several modules; the ones that remain are being split. Import
+the module under test normally, never as a second copy through
+`spec_from_file_location`: a patch on one copy does not reach the other.
+
+A test checks one behavior. A test that asserts many unrelated things in a row is
+split into tests or table rows, so a failure names what broke.
+
 A check's cases are rows of one parametrized table: a dict of case name to case, used
 for both the values and the ids. A comment above the table names the columns. A new
 case is a new row, not a new function.
@@ -151,6 +159,11 @@ A tool with a `main()` is tested in process, with `sys.argv` patched. At most on
 test per tool runs the script itself, through `run_tool_script`. Keep one where it
 exists: only a script run catches an import that works only under pytest's path. Do
 not add more, and do not repeat an in-process case as a subprocess.
+
+A rule that depends on an external binary, such as ImageMagick, is tested on a stub
+of that binary, so it runs on every machine. At most a couple of tests drive the real
+binary, and they skip where it is missing. `tests/md_art_convert_test.py` is the
+model.
 
 Removing a test as cleanup is its own change. The test must be dead or fail the row
 rules above, and the missed-line and partial-branch totals from `coverage json` must
