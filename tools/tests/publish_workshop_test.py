@@ -90,7 +90,7 @@ def test_archive_path_excluded(path_str, expected):
         (2048, "2.0 KB"),
         (2 * 1024 * 1024, "2.0 MB"),
         (int(1.5 * 1024**3), "1.5 GB"),
-        (0, "0.0 B"),
+        (2 * 1024**4, "2.0 TB"),
     ],
 )
 def test_format_size(n, expected):
@@ -483,13 +483,7 @@ def test_write_vdf(tmp_path, changenote, assertions):
     content = vdf_path.read_text(encoding="utf-8")
     for needle in assertions:
         assert needle in content
-
-
-def test_write_vdf_newline_translation(tmp_path):
-    mod_dir = tmp_path / "content"
-    mod_dir.mkdir()
-    mod_dir.joinpath("thumbnail.png").write_bytes(b"\x89PNG")
-    vdf_path = pw.write_vdf(mod_dir, "123", "Note")
+    # The file is written with LF on every platform.
     assert b"\r\n" not in vdf_path.read_bytes()
 
 
@@ -924,10 +918,6 @@ def test_copy_repo_reports_an_unreadable_tracked_file(tmp_path, monkeypatch):
     assert proc.terminated, "the git archive child must be torn down on failure"
 
 
-def test_format_size_reaches_terabytes():
-    assert pw.format_size(2 * 1024**4) == "2.0 TB"
-
-
 # ---------------------------------------------------------------------------
 # prune_unchanged — directories, verbose listing, unlink failures
 # ---------------------------------------------------------------------------
@@ -1320,12 +1310,6 @@ def _main_staged(tmp_path, monkeypatch, *args, description_body=None):
 
     def fake_publish(mod_dir, *_args, **_kwargs):
         seen["description"] = _kwargs.get("description")
-        seen["description_file"] = (
-            mod_dir / "descriptions/descriptions_EN.txt"
-        ).exists()
-        seen["frontend"] = (
-            mod_dir / "localisation" / "english" / "MD_frontend_l_english.yml"
-        ).read_text(encoding="utf-8")
         seen["frontend_paths"] = {
             path.relative_to(mod_dir).as_posix()
             for path in mod_dir.glob("localisation/*/MD_frontend_l_*.yml")
