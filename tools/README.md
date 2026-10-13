@@ -104,6 +104,15 @@ that gathers tests for several modules; the ones that remain are being split. Im
 the module under test normally, never as a second copy through
 `spec_from_file_location`: a patch on one copy does not reach the other.
 
+The exception is a contract several modules share. It is one table over those
+modules, not a copy in each file. `tests/docs_checks/checker_cli_test.py` is the
+model: every docs checker's `main()` hands its arguments to `run()`, prints the
+report and exits 0 or 1.
+
+A module that carries its own table of cases, such as `SELF_TEST_CASES` in the
+docs checkers, is tested by running that table once. The test file adds only the
+cases it leaves out.
+
 A test checks one behavior. A test that asserts many unrelated things in a row is
 split into tests or table rows, so a failure names what broke.
 
