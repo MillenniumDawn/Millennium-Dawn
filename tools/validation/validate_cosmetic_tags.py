@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Dict, FrozenSet, List, Optional, Set, Tuple
 
 import disk_cache
+from shared_utils import COUNTRY_TAG_ASSIGNMENT_LINE_RE as _COUNTRY_TAG_RE
 from shared_utils import validation_config
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
@@ -46,7 +47,6 @@ _SET_COSMETIC = "set_cosmetic_tag = "
 _NON_SPACE_RE = re.compile(r"\S*")
 # `EFS_[TAG]` inside a meta_effect: one placeholder, filled with a country tag.
 _TEMPLATE_RE = re.compile(r"([^\[\]]*)\[[^\[\]]+\]([^\[\]]*)")
-_COUNTRY_TAG_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
 
 
 def process_file_for_set_cosmetic_tag(
