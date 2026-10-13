@@ -18,7 +18,7 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - Tests follow [Test Structure](../../tools/README.md#test-structure): one file per
   module or group of checks, one parametrized table per check, a new case is a new
   row. A row stays only if it is the flagged or passing baseline, runs a path no other
-  row runs, or pins a token the check names in a regex or tuple.
+  row runs, or is the only row that fails when one rule of the check is broken.
 - The suite runs under `pytest -n auto`, so a test writes only under `tmp_path`.
 - Worker pools in tests start with `spawn` on every OS. A pool worker sees what it
   imports and what it is passed, not state a test patched in the parent.

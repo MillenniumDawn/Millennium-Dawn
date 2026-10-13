@@ -115,6 +115,10 @@ _CHECK_CASES = {
             [_flat(*(_effect(_GAIN, block) for block in _EFFECT_BLOCKS))],
             [_NO_LOG % block for block in _EFFECT_BLOCKS],
         ),
+        "a log covers only its own block": (
+            [_flat(_effect(_LOG + _GAIN), _effect(_GAIN, "remove_effect"))],
+            [_NO_LOG % "remove_effect"],
+        ),
     },
     "validate_log_not_first": {
         "log first": ([_flat(_effect(_LOG + _GAIN, "remove_effect"))], []),
@@ -188,6 +192,10 @@ _CHECK_CASES = {
             [_flat("\tdays_mission_timeout = 365\n", _effect(_SPEND, "remove_effect"))],
             [],
         ),
+        "both blocks charge": (
+            [_flat(_effect(_SPEND), _effect(_SPEND_50, "remove_effect"))],
+            [("complete_effect spends 75 PP",)],
+        ),
     },
     "validate_random_seed": {
         "random_list": ([_flat(_effect(_RANDOM_LIST))], [("dec_one",)]),
@@ -204,6 +212,10 @@ _CHECK_CASES = {
             [],
         ),
         "fire_only_once": ([_flat("\tfire_only_once = yes\n", _effect(_RANDOM))], []),
+        "fire_only_once = no": (
+            [_flat("\tfire_only_once = no\n", _effect(_RANDOM))],
+            [("dec_one",)],
+        ),
         # random_owned_state and random_country change scope, they do not roll.
         "random scopes": (
             [
@@ -244,6 +256,11 @@ _CHECK_CASES = {
         ),
         "zero base with an add": (
             [_flat(_PAID, _ZERO_BASE_ADD)],
+            _ignores("treasury cost"),
+        ),
+        # `base = 0` must not match `base = 0.5`.
+        "fractional base": (
+            [_flat(_PAID, "\tai_will_do = { base = 0.5 }\n")],
             _ignores("treasury cost"),
         ),
         "selectable mission": (
@@ -299,6 +316,20 @@ _CHECK_CASES = {
             [_UNLOCK_MISSED],
         ),
         "AI-only sibling": ([*_ANNOUNCED, _gated("md_ai")], []),
+        "setter gated on its own flag": (
+            [
+                _flat(
+                    "\tvisible = {\n\t\thas_country_flag = md_gate_flag\n\t}\n",
+                    _effect(
+                        "\t\tset_country_flag = md_gate_flag\n"
+                        "\t\tunlock_decision_tooltip = md_announced\n"
+                    ),
+                    token="md_setter",
+                ),
+                _gated("md_announced"),
+            ],
+            [],
+        ),
     },
     "validate_targeted_without_target": {
         "disabled and map-click decisions are skipped": (
@@ -928,6 +959,7 @@ _SPRITE_CASES = {
         "owner: icon = nope -> no sprite nope / GFX_decision_nope / GFX_nope defined "
         "in interface/*.gfx (create the sprite or pick an existing icon)"
     ),
+    ("category_icon", "generic_economy"): None,
     # GFX_decision_oil exists, but a category needs GFX_decision_category_oil.
     ("category_icon", "oil"): (
         "owner: icon = oil -> no sprite oil / GFX_decision_category_oil defined "
@@ -972,6 +1004,11 @@ _ICON_REFERENCE_CASES = {
         _DECISION_FILE,
         "cat = {\r\n\tfirst = {\r\n\t\ticon = money\r\n\t}\r\n}\r\n",
         [("first", "decision", "money", 3)],
+    ),
+    "dot and hyphen in a name": (
+        _DECISION_FILE,
+        "cat = {\n\ta = {\n\t\ticon = GFX_CTC.5\n\t}\n\tb = {\n\t\ticon = GFX_MIG-29-GER\n\t}\n}\n",
+        [("a", "decision", "GFX_CTC.5", 3), ("b", "decision", "GFX_MIG-29-GER", 6)],
     ),
     "dynamic icon block": (
         _DECISION_FILE,
@@ -1281,6 +1318,7 @@ _UNLOCK_TARGET_CASES = {
         ["unlock_decision_category_tooltip = md_real_decision"],
         [(_no_category("md_real_decision"), 4)],
     ),
+    "undefined block form": ([_BLOCK_FORM % "md_typo"], [(_no_decision("md_typo"), 4)]),
     "undefined hyphenated decision": (
         ["unlock_decision_tooltip = md_hyphen-typo"],
         [(_no_decision("md_hyphen-typo"), 4)],

@@ -113,6 +113,15 @@ _POLL_CASES = {
         {"foo.1"},
     ),
     "no chance": (["random = {", "\tcountry_event = foo.1", "}"], set()),
+    # None of these is `random = {`.
+    "lookalike scope keywords": (
+        [
+            "random_country = { chance = 5 country_event = foo.1 }",
+            "random_list = { 50 = foo.2 }",
+            "random_events = { 50 = foo.3 }",
+        ],
+        set(),
+    ),
 }
 
 

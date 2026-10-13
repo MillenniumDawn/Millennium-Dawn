@@ -117,11 +117,17 @@ A table holds these rows and no others:
 
 - One row the check flags and one row it passes.
 - One row for each code path through the check that no other row runs.
-- One row for each token the check names in a regex or tuple, such as each effect
-  block or each event keyword. Coverage cannot see these, so they stay even when
-  they run the same path as another row.
+- One row for each rule the check applies that coverage cannot see. To find them,
+  name the one-line change to the validator that the row would catch. If no other row
+  fails under that change, the row stays. This covers each alternative or literal in a
+  regex or tuple, comment, quoted-string and CRLF handling, nesting depth, and
+  report-once, per-block and scope-order rules.
 
-A row that only repeats another row's path with different incidental input does not
+The row that pins a rule must be one whose expected result changes when the rule
+breaks. A row that expects no finding does not pin a pattern that could just stop
+matching.
+
+A row that only repeats another row's rule with different incidental input does not
 belong. A named regression is a row like any other.
 
 Beside its tables, a validator's test file has:
@@ -129,7 +135,8 @@ Beside its tables, a validator's test file has:
 - One test proving `run_validations` calls every `validate_*` check.
 - One run against a real tree, with no mocked source, for each check that reads its
   data from the mod.
-- One severity assertion for each category that gates CI.
+- A severity assertion wherever the severity is a decision: an ERROR that gates CI, or
+  a WARNING held back until a backlog clears.
 
 Setup that two files need goes in `tools/shared/suite.py`. `build_validator` and
 `run_validator` construct a validator on `tmp_path`. `write_tree` writes a dict of
@@ -140,6 +147,8 @@ tuple is fragments of one. `decisions_results_for`, `call_site_scan`, `yml_scan`
 Removing a test as cleanup is its own change. The test must be dead or fail the row
 rules above, and the missed-line and partial-branch totals from `coverage json` must
 not rise. Run the suite with `--cov-context=test` to see which rows share a path.
+Shared paths only pick candidates: equal coverage does not show that two rows check
+the same rule.
 
 ## Quick Start
 

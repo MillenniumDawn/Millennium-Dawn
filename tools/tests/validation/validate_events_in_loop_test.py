@@ -60,6 +60,11 @@ _LOOP_CASES = {
         4,
         4,
     ),
+    "id after another argument": (
+        _nest("every_country", "country_event = { days = 20 id = foo.1 }"),
+        3,
+        3,
+    ),
     # The keyword set once had `operative_event`, which is not a keyword.
     "operative_leader_event": (
         _nest("every_country", "operative_leader_event = foo.1"),
@@ -84,6 +89,8 @@ _LOOP_CASES = {
         None,
         4,
     ),
+    # A pinned scope outside the loop does not fix the recipient.
+    "loop inside a ROOT scope": (_nest("ROOT", "every_country", _FIRE), 4, 4),
     "loop without an event call": (
         _nest("every_country", "add_political_power = 5"),
         None,
