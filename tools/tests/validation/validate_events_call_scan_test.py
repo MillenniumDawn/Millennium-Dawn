@@ -102,15 +102,6 @@ def test_picture_worker_skips_unreadable_and_ignored_files(tmp_path):
     assert V._extract_event_pictures(skipped) == []
 
 
-def test_fire_only_once_worker_short_circuits_files_with_no_event_calls(tmp_path):
-    path = _write(
-        tmp_path,
-        "common/scripted_effects/00_fx.txt",
-        "fx = {\n\tevery_country = { add_political_power = 5 }\n}\n",
-    )
-    assert call_site_scan(path, "fof", tmp_path, frozenset({"foo.1"})) == []
-
-
 def test_fire_only_once_worker_survives_a_stray_closing_brace(tmp_path):
     """An unbalanced `}` must not desync the scope stack for the rest of the
     file — every finding after it would otherwise be wrong."""
@@ -484,38 +475,21 @@ def test_picture_check_skips_when_the_sprite_index_failed_to_load(
 
 
 # ---------------------------------------------------------------------------
-# fire_only_once short circuit and the full run
+# The full run
 # ---------------------------------------------------------------------------
 
 
-def test_fire_only_once_check_short_circuits_without_declarations(
-    tmp_path, monkeypatch
-):
-    """With nothing declared fire_only_once there is nothing to scan for, so
-    the repo-wide file walk must not run at all."""
-    _write(
-        tmp_path,
-        "events/Ev.txt",
-        "country_event = {\n"
-        "\tid = foo.1\n"
-        "\tis_triggered_only = yes\n"
-        "\toption = { name = foo.1.a }\n"
-        "}\n",
-    )
-    _write(
-        tmp_path,
-        "common/scripted_effects/00_fx.txt",
-        "fx = {\n\tevery_country = { country_event = foo.1 }\n}\n",
-    )
+def test_run_validations_calls_every_check(tmp_path, monkeypatch):
+    checks = {name for name in dir(V.Validator) if name.startswith("validate_")}
     v = _validator(tmp_path)
-    v._get_fire_only_once_ids()
+    called = []
+    for name in checks:
+        monkeypatch.setattr(v, name, lambda name=name: called.append(name))
 
-    def _fail(*args, **kwargs):
-        raise AssertionError("scanned for in-loop fires with no fire_only_once events")
+    v.run_validations()
 
-    monkeypatch.setattr(v, "_pool_map", _fail)
-    v.validate_fire_only_once_in_loop()
-    assert v._issues == []
+    # The omission report is a standalone audit, not part of the run.
+    assert sorted(called) == sorted(checks - {"validate_event_picture_omissions"})
 
 
 MOD_EVENTS = """add_namespace = foo

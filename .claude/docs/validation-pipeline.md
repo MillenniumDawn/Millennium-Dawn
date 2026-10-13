@@ -16,8 +16,9 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   fix the validator. Never delete or weaken a test to pass. Removing a test is a
   separate cleanup change: the test is dead or another test already checks the same
   behavior, and the coverage total holds.
-- One test file per module, one parametrized table per check. A new case is a new row.
-  Setup that two files need goes in `tools/shared/suite.py`.
+- One test file per module, or per group of related checks in a large module. One
+  parametrized table per check. A new case is a new row. Setup that two files need
+  goes in `tools/shared/suite.py`.
 - The suite runs under `pytest -n auto`, so a test writes only under `tmp_path`.
 - Worker pools in tests start with `spawn` on every OS. A pool worker sees what it
   imports and what it is passed, not state a test patched in the parent.
