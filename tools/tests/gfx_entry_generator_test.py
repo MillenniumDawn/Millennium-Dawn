@@ -29,7 +29,7 @@ def _images(root, directory, *names):
 
 def _crlf_only(path):
     raw = path.read_bytes()
-    return b"\r\n" in raw and b"\n" not in raw.replace(b"\r\n", b"")
+    return 0 < raw.count(b"\r\n") == raw.count(b"\n") == raw.count(b"\r")
 
 
 # ---- scanning and parsing ----------------------------------------------------
@@ -503,9 +503,14 @@ def test_scripted_gui_scan_keeps_the_manual_region_and_crlf(tmp_path, capsys):
     write_text(out, manual.replace("\n", "\r\n"))
     generator.generate_scripted_gui(tmp_path)
 
-    assert "GFX_manual" in read_text(out)
-    assert _crlf_only(out)
     assert "already up to date" in capsys.readouterr().out
+
+    _images(tmp_path, countries, "ALG/b.png")
+    generator.generate_scripted_gui(tmp_path)
+
+    rewritten = read_text(out)
+    assert "GFX_manual" in rewritten and 'name = "GFX_b"' in rewritten
+    assert _crlf_only(out)
 
 
 # ---- focus titlebars ---------------------------------------------------------
