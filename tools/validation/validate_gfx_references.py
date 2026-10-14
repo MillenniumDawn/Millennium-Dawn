@@ -20,6 +20,7 @@ from typing import Callable, Dict, FrozenSet, List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from shared_utils import COUNTRY_TAG_ASSIGNMENT_LINE_RE as _COUNTRY_TAG_RE
 from shared_utils import (
     compute_line_offsets,
     extract_block_from_text,
@@ -412,7 +413,6 @@ _SEARCH_FILTERS_RE = re.compile(r"\bsearch_filters\s*=\s*\{([^}]*)\}")
 # (GFX_ace_m_2). The pool name is the only variable part, so resolving one means
 # checking it against the tags and cultures the mod actually declares.
 _ACE_PORTRAIT_RE = re.compile(r"^GFX_(?:(?P<pool>.+)_)?ace_[mf]_\d+$")
-_COUNTRY_TAG_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
 _GRAPHICAL_CULTURE_RE = re.compile(
     r"^\s*graphical_culture(?:_2d)?\s*=\s*([A-Za-z0-9_]+)", re.MULTILINE
 )

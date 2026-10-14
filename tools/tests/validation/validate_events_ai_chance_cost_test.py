@@ -644,10 +644,22 @@ def test_mixed_costs_report_only_the_uncovered_kind():
     assert _found(_two_options(covered)) == []
 
 
-@pytest.mark.parametrize("scope", ["ROOT", "THIS", "AST"])
-def test_choosing_country_cost_scopes_are_checked(scope):
+@pytest.mark.parametrize(
+    "scope, trigger",
+    [
+        ("ROOT", "tag = AST"),
+        ("THIS", "tag = AST"),
+        ("AST", "tag = AST"),
+        ("AST", "tag = AST has_war = no"),
+        ("AST", "AND = { tag = AST has_war = no }"),
+        ("AST", "ROOT = { tag = AST }"),
+        ("AST", "THIS = { tag = AST }"),
+        ("AST", "tag = AST AND = { has_war = no }"),
+    ],
+)
+def test_choosing_country_cost_scopes_are_checked(scope, trigger):
     text = _two_options(f"\t\t{scope} = {{ add_political_power = -50 }}\n" + _FLAT)
-    text = text.replace("id = foo.1", "id = foo.1\n\ttrigger = { tag = AST }")
+    text = text.replace("id = foo.1", f"id = foo.1\n\ttrigger = {{ {trigger} }}")
     assert [found[0] for found in _found(text)] == ["foo.1.a"]
     assert _found(text.replace(_FLAT, _AWARE)) == []
 
@@ -664,7 +676,13 @@ def test_literal_receiver_scope_can_cover_its_own_cost():
 
 @pytest.mark.parametrize(
     "trigger",
-    ["NOT = { tag = AST }", "OR = { tag = AST tag = IND }", "original_tag = AST"],
+    [
+        "NOT = { tag = AST }",
+        "OR = { tag = AST tag = IND }",
+        "original_tag = AST",
+        "FROM = { tag = AST }",
+        "tag = AST tag = IND",
+    ],
 )
 def test_nonexclusive_tag_checks_do_not_make_foreign_costs_local(trigger):
     body = "\t\tAST = { add_political_power = -50 }\n" + _FLAT

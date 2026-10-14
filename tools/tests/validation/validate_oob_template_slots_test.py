@@ -27,6 +27,7 @@ _DEFINES = (
 )
 _DOCTRINES = (
     "centralized_command = {\n"
+    "\tavailable = {\n\t\tOR = { has_war = no }\n\t}\n"
     "\tadditional_brigade_column_size = 1\n"
     "\trewards = {\n"
     "\t\tdivision_structure = {\n"
@@ -231,6 +232,118 @@ def test_limits_come_from_the_defines_and_starting_doctrines(tmp_path):
     )
 
     assert read_template_limits(str(tmp_path)) == _LIMITS
+
+
+_SET_CENTRALIZED = "set_sub_doctrine = centralized_command\n"
+
+
+@pytest.mark.parametrize(
+    "history, expected",
+    [
+        (
+            _SET_CENTRALIZED
+            + "add_mastery = { amount = 100 sub_doctrine = centralized_command }\n",
+            {"UKR": 2},
+        ),
+        (
+            _SET_CENTRALIZED
+            + "add_mastery = { amount = 60 sub_doctrine = centralized_command }\n"
+            "add_mastery = { amount = 40 sub_doctrine = centralized_command }\n",
+            {"UKR": 2},
+        ),
+        (
+            _SET_CENTRALIZED
+            + "add_mastery = { amount = 100 sub_doctrine = mobile_infantry }\n",
+            {"UKR": 1},
+        ),
+        (
+            "set_sub_doctrine = mobile_infantry\n"
+            "add_mastery = { amount = 100 sub_doctrine = centralized_command }\n",
+            {},
+        ),
+        (
+            _SET_CENTRALIZED
+            + "add_mastery = { amount = ROOT.x sub_doctrine = centralized_command }\n",
+            {"UKR": 1},
+        ),
+        (
+            _SET_CENTRALIZED
+            + "add_mastery = { amount = 100 sub_doctrine = centralized_command "
+            "index = 0 }\n",
+            {"UKR": 1},
+        ),
+        (
+            _SET_CENTRALIZED + "2000.1.1 = {\n"
+            "\tadd_mastery = { amount = 100 sub_doctrine = centralized_command }\n}\n",
+            {"UKR": 1},
+        ),
+    ],
+    ids=[
+        "reaches-default-threshold",
+        "amounts-add-up",
+        "other-doctrine",
+        "doctrine-not-set",
+        "dynamic-amount",
+        "unmodeled-filter",
+        "dated-block",
+    ],
+)
+def test_starting_mastery_opens_reward_rows(tmp_path, history, expected):
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", _DOCTRINES)
+    _write(tmp_path, "history/countries/UKR - Ukraine.txt", history)
+
+    assert read_template_limits(str(tmp_path)).column_bonus == expected
+
+
+@pytest.mark.parametrize(
+    "defines, reward_override",
+    [
+        ("NDefines.NDoctrines.DEFAULT_REWARD_MASTERY = 50.0\n", ""),
+        ("", "\t\t\tmastery = 50\n"),
+    ],
+    ids=["define", "reward-override"],
+)
+def test_reward_threshold_comes_from_the_define_or_the_reward(
+    tmp_path, defines, reward_override
+):
+    doctrine = _DOCTRINES.replace(
+        "division_structure = {\n", "division_structure = {\n" + reward_override
+    )
+    _write(tmp_path, "common/defines/MD_defines.lua", defines)
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrine)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        _SET_CENTRALIZED
+        + "add_mastery = { amount = 50 sub_doctrine = centralized_command }\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": 2}
+
+
+@pytest.mark.parametrize("amount, expected_rows", [(100, 1), (200, 2)])
+def test_second_mastery_reward_uses_cumulative_cost(amount, expected_rows, tmp_path):
+    doctrine = _DOCTRINES.replace(
+        "\t\t\tadditional_brigade_column_size = 1\n",
+        "\t\t\tplanning_speed = 0.05\n",
+        1,
+    ).replace(
+        "\t\t}\n\t}\n}\nmobile_infantry",
+        "\t\t}\n"
+        "\t\tdivision_structure_two = {\n"
+        "\t\t\tadditional_brigade_column_size = 1\n"
+        "\t\t}\n"
+        "\t}\n}\nmobile_infantry",
+    )
+    _write(tmp_path, "common/doctrines/subdoctrines/land/combat.txt", doctrine)
+    _write(
+        tmp_path,
+        "history/countries/UKR - Ukraine.txt",
+        _SET_CENTRALIZED
+        + f"add_mastery = {{ amount = {amount} sub_doctrine = centralized_command }}\n",
+    )
+
+    assert read_template_limits(str(tmp_path)).column_bonus == {"UKR": expected_rows}
 
 
 def test_limits_fall_back_to_vanilla_without_defines(tmp_path):
