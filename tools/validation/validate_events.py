@@ -318,6 +318,30 @@ def _scan_stored_variable_signs(
     return stored_variable_signs([text])
 
 
+def load_cost_lookups(
+    validator: BaseValidator,
+) -> Tuple[Dict[str, str], Dict[str, int]]:
+    """(costly_scripted_effects, stored_variable_signs) read from the whole mod."""
+    effect_texts = (
+        _read_cleaned_text(path, mod_path=validator.mod_path)
+        for path in validator._collect_files(
+            ["common/scripted_effects/**/*.txt"], ignore_staged=True
+        )
+    )
+    effects = costly_scripted_effects(text for text in effect_texts if text)
+    stored: Dict[str, int] = {}
+    script_files = validator._collect_files(
+        ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+        ignore_staged=True,
+    )
+    for found in validator._pool_map(
+        partial(_scan_stored_variable_signs, mod_path=validator.mod_path), script_files
+    ):
+        for name, signs in found.items():
+            stored[name] = stored.get(name, 0) | signs
+    return effects, stored
+
+
 def _extract_cost_blind_options(
     filename: str, *, mod_path: Optional[str] = None
 ) -> List[Tuple[str, str, int]]:
@@ -1305,6 +1329,20 @@ def _cost_sensitive_kinds(ai_chance: str, country: Optional[str]) -> Set[str]:
         covered.update(
             kind for kind, guard in _COST_GUARDS.items() if guard.search(own)
         )
+
+
+def uncovered_costs(
+    effect_text: str, ai_weights: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> Set[str]:
+    """Costs an effect block charges its own country that an AI weight block ignores.
+
+    Both arguments are block bodies with comments already stripped. `effects`
+    and `stored` come from load_cost_lookups.
+    """
+    own = _split_option(blank_quoted_strings(effect_text))[0]
+    return _effect_costs(own, effects, {}, stored) - _cost_sensitive_kinds(
+        ai_weights, None
+    )
 
 
 def find_cost_blind_options(
@@ -2771,23 +2809,7 @@ class Validator(BaseValidator):
         if not files:
             self.log("  No event files in scope — skipping")
             return
-        effect_texts = (
-            _read_cleaned_text(path, mod_path=self.mod_path)
-            for path in self._collect_files(
-                ["common/scripted_effects/**/*.txt"], ignore_staged=True
-            )
-        )
-        effects = costly_scripted_effects(text for text in effect_texts if text)
-        stored: Dict[str, int] = {}
-        script_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
-            ignore_staged=True,
-        )
-        for found in self._pool_map(
-            partial(_scan_stored_variable_signs, mod_path=self.mod_path), script_files
-        ):
-            for name, signs in found.items():
-                stored[name] = stored.get(name, 0) | signs
+        effects, stored = load_cost_lookups(self)
         results: List[Tuple[str, str, int]] = []
         for sub in self._pool_map_init(
             partial(_extract_cost_blind_options, mod_path=self.mod_path),
