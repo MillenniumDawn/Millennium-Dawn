@@ -32,11 +32,34 @@ on_actions = {
 					set_country_flag = UKR_open_medical_laws
 					set_country_flag = UKR_open_pension_laws
 				}
+				# Building totals come from the money system's on_startup; if they are not counted yet, the first monthly check records them
+				if = {
+					limit = { check_variable = { industrial_complex_total > 0 } }
+					UKR_start_workforce_record_counts = yes
+				}
 			}
 		}
 	}
 	on_monthly_UKR = {
 		effect = {
+			UKR_start_workforce_update = yes
+			# BRDM-2: Arey rebuilds it on its own during a war with Russia when Mykolayiv does not lead the program
+			if = {
+				limit = {
+					date > 2015.01.01
+					date < 2019.01.01
+					has_war_with = SOV
+					OR = {
+						has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_flag
+						has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_other_flag
+					}
+					NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_flag }
+					NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_arey_initiative_flag }
+				}
+				set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_arey_initiative_flag
+				country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.14 days = 15 random_days = 180 }
+			}
+
 			UKR_rework_monthly_cleanup = yes
 			if = {
 				limit = {
@@ -59,6 +82,24 @@ on_actions = {
 						chance = 1
 						country_event = { id = ukr_zelenskiy.2 days = 1 }
 					}
+				}
+			}
+			# Kharkiv industry ideas cancel when state 696 is lost; restore them once it is owned again
+			if = {
+				limit = { owns_state = 696 }
+				if = {
+					limit = { has_completed_focus = UKR_concers }
+					if = { limit = { NOT = { has_idea = UKR_concern } } add_ideas = UKR_concern }
+				}
+				else = {
+					if = { limit = { has_completed_focus = UKR_bronetank NOT = { has_idea = HPR_bronetank } } add_ideas = HPR_bronetank }
+					if = { limit = { has_completed_focus = UKR_avia_zavod NOT = { has_idea = HPR_avia_zavod } } add_ideas = HPR_avia_zavod }
+					if = { limit = { has_completed_focus = UKR_priborostroy NOT = { has_idea = HPR_priborostroy } } add_ideas = HPR_priborostroy }
+					if = { limit = { has_completed_focus = UKR_agregat NOT = { has_idea = HPR_agregat } } add_ideas = HPR_agregat }
+					if = { limit = { has_completed_focus = UKR_tractor NOT = { has_idea = HPR_tractor } } add_ideas = HPR_tractor }
+					if = { limit = { has_completed_focus = UKR_morozova NOT = { has_idea = HPR_morozova } } add_ideas = HPR_morozova }
+					if = { limit = { has_completed_focus = UKR_specmachine NOT = { has_idea = HPR_specmachine } } add_ideas = HPR_specmachine }
+					if = { limit = { has_completed_focus = UKR_malichev NOT = { has_idea = HPR_malichev } } add_ideas = HPR_malichev }
 				}
 			}
 			#SUBJECTS AUTORITY

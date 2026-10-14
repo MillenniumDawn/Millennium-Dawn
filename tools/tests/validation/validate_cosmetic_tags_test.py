@@ -64,6 +64,31 @@ def test_a_meta_effect_placeholder_is_not_a_cosmetic_tag(tmp_path, write_path):
     assert _categories(_run(tmp_path)) == []
 
 
+def test_a_meta_effect_template_sets_one_tag_per_country(tmp_path, write_path):
+    """`EFS_[TAG]` sets `EFS_GER`; a name no country tag builds is still unset."""
+    write_path(
+        tmp_path,
+        "common/country_tags/00_countries.txt",
+        'GER = "countries/Germany.txt"\n',
+    )
+    write_path(
+        tmp_path,
+        "common/countries/cosmetic.txt",
+        "EFS_GER = {\n}\nEFS_NOR = {\n}\n",
+    )
+    write_path(
+        tmp_path,
+        "common/decisions/flags.txt",
+        "has_cosmetic_tag = GER_REB\nhas_cosmetic_tag = NOR_REB\n"
+        "set_cosmetic_tag = EFS_[TAG]\nset_cosmetic_tag = [ROOTTAG]_REB\n",
+    )
+
+    assert _rows(_run(tmp_path)) == [
+        ("missing-cosmetic-tag", "NOR_REB", "flags.txt", 0),
+        ("unused-cosmetic-color", "EFS_NOR", "", 0),
+    ]
+
+
 def test_a_flag_named_exactly_after_the_tag_counts_as_used(tmp_path, write_path):
     write_path(
         tmp_path, "common/national_focus/tags.txt", "set_cosmetic_tag = TAG_EXACT\n"
@@ -109,10 +134,10 @@ def test_a_cosmetic_file_with_no_colour_definitions_is_a_clean_pass(
     assert _categories(_run(tmp_path)) == []
 
 
-def test_colour_definitions_on_the_false_positive_list_are_not_reported(
-    tmp_path, write_path
-):
-    write_path(tmp_path, "common/countries/cosmetic.txt", "PER_REB = {\n}\n")
+def test_set_tags_on_the_incomplete_list_are_not_reported(tmp_path, write_path):
+    write_path(
+        tmp_path, "common/national_focus/tags.txt", "set_cosmetic_tag = BSH_limonka\n"
+    )
 
     assert _categories(_run(tmp_path)) == []
 

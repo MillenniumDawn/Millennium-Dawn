@@ -49,6 +49,7 @@ Unit tests for the checks added to check_common_mistakes.py (in file order):
   46. has_opinion_modifier only accepts a modifier ID, not a block
   47. stat comparisons with the wrong trigger name (stability -> has_stability)
   48. exact findings per check, and the shared per-file source's edge cases
+  49. index inside add_daily_mastery (engine rejects it)
 """
 
 import os
@@ -72,6 +73,7 @@ from check_common_mistakes import (
     _check_consecutive_scope_blocks,
     _check_country_exists_scope_contradiction,
     _check_create_faction_deprecated,
+    _check_daily_mastery_index,
     _check_decision_allowed_dynamic,
     _check_decision_available_always_no,
     _check_decision_log_id,
@@ -4712,6 +4714,7 @@ _FOCUS_LOG = "log references Focus TST_b, but the enclosing focus is TST_a -- li
 _FOCUS_WAR = "Focus TST_war has create_wargoal but no will_lead_to_war_with -- add will_lead_to_war_with = TAG so the AI prepares for war"
 _NO_PROVINCE = "add_building_construction type = naval_base has no province -- it is a provincial building, so the engine rejects the effect and nothing is built; add province = <id> or province = { all_provinces = yes ... }"
 _MAX_ITERATIONS = "max_iterations is not a valid while_loop_effect key -- the engine ignores it; bound the loop with its break variable"
+_DAILY_MASTERY_INDEX = "index is not a valid add_daily_mastery key -- the engine rejects it (Invalid effect 'index'); filter with track, sub_doctrine, grand_doctrine or folder"
 _DUPLICATE_ADD = "duplicate consecutive add_to_variable line (same as line {}) -- likely copy-paste error; use the combined value in a single line"
 _IS_X_NATION = "is_X_nation in runtime context -- use has_country_flag = {} for O(1) lookup (allowed = {{ }} is OK for game-start checks)"
 
@@ -4959,6 +4962,8 @@ _EXPECTED = {
     ],
     "while_loop_effect max_iterations": [(2, _MAX_ITERATIONS)],
     "while_loop_effect split across lines": [(2, _MAX_ITERATIONS)],
+    "add_daily_mastery index": [(1, _DAILY_MASTERY_INDEX)],
+    "add_daily_mastery index split across lines": [(3, _DAILY_MASTERY_INDEX)],
     "var:x^i shorthand": [
         (
             1,
@@ -5458,6 +5463,24 @@ _EXACT_CASES = [
         ["while_loop_effect\n", "= { max_iterations = 5 }\n"],
     ),
     _exact(
+        "add_daily_mastery index",
+        _check_daily_mastery_index,
+        [
+            "\tadd_daily_mastery = { track = leadership index = 4 days = 90 amount = 1 }\n"
+        ],
+    ),
+    _exact(
+        "add_daily_mastery index split across lines",
+        _check_daily_mastery_index,
+        [
+            "\tadd_daily_mastery\n",
+            "\t= {\n",
+            "\t\tindex = 1\n",
+            "\t\tdays = 90\n",
+            "\t}\n",
+        ],
+    ),
+    _exact(
         "var:x^i shorthand",
         _check_var_index_shorthand,
         ["\tset_variable = { x = var:a^i }\n"],
@@ -5815,6 +5838,38 @@ def test_event_chain_uses_the_first_definition_of_a_repeated_id(tmp_path, monkey
             " prepares for war",
         )
     ]
+
+
+# 49. index inside add_daily_mastery. The vanilla docs list it, but the engine
+# logs Invalid effect 'index' for every call.
+
+print("\n── add_daily_mastery index ──")
+
+assert_finds(
+    _check_daily_mastery_index,
+    [
+        "\tadd_daily_mastery = { name = X track = operational_theory index = 1 days = 90 amount = 1 }\n",
+        "\tadd_daily_mastery = {\n",
+        "\t\tname = X\n",
+        "\t\tindex = 4\n",
+        "\t\tdays = 90\n",
+        "\t}\n",
+    ],
+    2,
+    "single-line and multi-line add_daily_mastery index flagged",
+)
+assert_finds(
+    _check_daily_mastery_index,
+    [
+        "\tadd_daily_mastery = { name = X track = training days = 90 amount = 1 }\n",
+        "\tadd_daily_mastery = { name = X folder = land days = 90 amount = 1 } # index = 1\n",
+        '\tlog = "add_daily_mastery = { index = 1 }"\n',
+        "\tadd_to_array = { array = a value = 1 index = 0 }\n",
+        "\tadd_mastery = { amount = 25 track = infantry }\n",
+    ],
+    0,
+    "add_daily_mastery without index, comments, quoted strings, and other blocks not flagged",
+)
 
 
 # Summary

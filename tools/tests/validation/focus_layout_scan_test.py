@@ -100,6 +100,35 @@ def test_dynamic_markers_and_prerequisites_survive_cached_scan(tmp_path):
     assert value.layout_counts["overlap_pairs"] == 0
 
 
+def test_prerequisite_order_and_mutex_rows_are_reported_as_warnings(tmp_path):
+    write_focus(
+        tmp_path,
+        "focus_tree = { id = rows "
+        "focus = { id = parent x = 0 y = 1 } "
+        "focus = { id = child x = 4 y = 0 prerequisite = { focus = parent } "
+        "mutually_exclusive = { focus = other } } "
+        "focus = { id = other x = 8 y = 2 mutually_exclusive = { focus = child } } }",
+    )
+    data = V._FocusFile(
+        os.path.join(str(tmp_path), FOCUS_DIR, "tree.txt"), str(tmp_path)
+    ).layout()
+    child = next(
+        focus for focus in data["trees"][0]["focuses"] if focus["id"] == "child"
+    )
+    assert child["prerequisites"] == [["parent"]]
+    assert child["mutually_exclusive"] == ["other"]
+
+    value = validator(tmp_path)
+    categories = {issue.category for issue in value._issues}
+    assert categories == {
+        "focus-prerequisite-row-order",
+        "focus-mutually-exclusive-row",
+    }
+    assert all(issue.severity == V.Severity.WARNING for issue in value._issues)
+    assert value.layout_counts["prerequisite_order_pairs"] == 1
+    assert value.layout_counts["mutually_exclusive_row_pairs"] == 1
+
+
 def test_nested_allow_branch_terms_feed_the_branch_leak_check(tmp_path):
     gate = "if = { limit = { has_game_rule = { option = HIDE } } NOT = { has_completed_focus = rival } }"
     path = write_focus(
@@ -114,6 +143,21 @@ def test_nested_allow_branch_terms_feed_the_branch_leak_check(tmp_path):
     assert focuses[0]["branch_terms"] == ["has_completed_focus=rival", "option=HIDE"]
     assert focuses[1]["branch_terms"] == []
     assert validator(tmp_path).layout_counts["branch_leaks"] == 1
+
+
+def test_hide_rule_terms_are_tagged_and_the_rule_check_dropped(tmp_path):
+    rule = "has_game_rule = { rule = obsolete_focus_branches_visibility option = HIDE }"
+    path = write_focus(
+        tmp_path,
+        "focus_tree = { id = rule focus = { id = gate x = 0 y = 0 allow_branch = { "
+        "date < 2006.7.1 "
+        f"if = {{ limit = {{ {rule} }} NOT = {{ has_completed_focus = rival }} }} }} }} }}",
+    )
+    focus = V._FocusFile(path, str(tmp_path)).layout()["trees"][0]["focuses"][0]
+    assert focus["branch_terms"] == [
+        "date=2006.7.1",
+        "hide_rule:has_completed_focus=rival",
+    ]
 
 
 @pytest.mark.parametrize(

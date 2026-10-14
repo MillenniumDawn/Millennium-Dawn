@@ -22,7 +22,7 @@ from typing import (
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from focus_geometry import analyze_layout
+from focus_geometry import HIDE_RULE_PREFIX, HIDE_RULE_TERMS, analyze_layout
 from shared_utils import extract_block_from_text as _extract_block
 from shared_utils import (
     get_staged_files,
@@ -34,6 +34,7 @@ from shared_utils import (
 )
 from sprite_index import build_sprite_index
 from validator_common import (
+    FACTOR_ZERO_RE,
     BaseValidator,
     Severity,
     case_mismatch,
@@ -151,7 +152,6 @@ _MIL_ECON_RESEARCH_FILTERS = frozenset(
 
 _AI_WILL_DO_START = word_start_re("ai_will_do", r"\s*=\s*\{")
 _MODIFIER_START = word_start_re("modifier", r"\s*=\s*\{")
-_FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
 _CAN_STAFF_NO_RE = re.compile(r"\b(can_staff_an_\w+)\s*=\s*no\b")
 _CAN_STAFF_NOT_YES_RE = re.compile(
     r"\bNOT\s*=\s*\{\s*(can_staff_an_\w+)\s*=\s*yes\s*\}"
@@ -922,7 +922,7 @@ class _FocusFile:
         return self._cached("focus_tree.relative_positions", _scan_relative_positions)
 
     def layout(self) -> Dict:
-        return self._cached("focus_tree.layout.v1", _scan_focus_layout)
+        return self._cached("focus_tree.layout.v2", _scan_focus_layout)
 
     def missing_search_filters(self) -> List[Tuple[str, str, int]]:
         return self._cached(
@@ -1076,7 +1076,7 @@ def _scan_ai_guards(
                         continue
                     factor_zero = any(
                         _enclosing_block_label(mbody, fm.start())[0] is None
-                        for fm in _FACTOR_ZERO_RE.finditer(mbody)
+                        for fm in FACTOR_ZERO_RE.finditer(mbody)
                     )
                     if factor_zero:
                         for gm in _CAN_STAFF_NO_RE.finditer(mbody):
@@ -1264,13 +1264,18 @@ def _scan_relative_positions(
     return out
 
 
-def _branch_terms(body: str) -> Set[str]:
+def _branch_terms(body: str, prefix: str = "") -> Set[str]:
     terms = set()
     for key, scalar, nested in iter_statements(body):
         if nested is not None:
-            terms |= _branch_terms(nested)
+            limit = next((b for k, _, b in iter_statements(nested) if k == "limit"), "")
+            if key == "if" and HIDE_RULE_TERMS <= _branch_terms(limit or ""):
+                inner = _branch_terms(nested, HIDE_RULE_PREFIX)
+                terms |= inner - {HIDE_RULE_PREFIX + t for t in HIDE_RULE_TERMS}
+            else:
+                terms |= _branch_terms(nested, prefix)
         elif scalar:
-            terms.add(f"{key}={scalar}")
+            terms.add(f"{prefix}{key}={scalar}")
     return terms
 
 
@@ -1286,6 +1291,7 @@ def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
         "branch_terms": [],
         "offset": False,
         "prerequisites": [],
+        "mutually_exclusive": [],
     }
     for key, scalar, body in iter_statements(block.body):
         if key == "id":
@@ -1309,6 +1315,12 @@ def _layout_record(block: _FocusBlock, filepath: str) -> Dict:
                     for name, value, _ in iter_statements(body)
                     if name == "focus" and value
                 ]
+            )
+        elif key == "mutually_exclusive" and body is not None:
+            record["mutually_exclusive"].extend(
+                value
+                for name, value, _ in iter_statements(body)
+                if name == "focus" and value
             )
     return record
 
@@ -2533,6 +2545,20 @@ class Validator(BaseValidator):
             "Focuses less than two columns apart on the same row:",
             Severity.WARNING,
             category="focus-coordinate-overlap",
+        )
+        self._report(
+            layout["prerequisite_order"],
+            "Resolved prerequisites appear above their children",
+            "Resolved prerequisites at or below their child:",
+            Severity.WARNING,
+            category="focus-prerequisite-row-order",
+        )
+        self._report(
+            layout["mutually_exclusive_rows"],
+            "Mutually exclusive focuses share a row",
+            "Mutually exclusive focuses on different rows:",
+            Severity.WARNING,
+            category="focus-mutually-exclusive-row",
         )
         self._report(
             layout["unresolved"],

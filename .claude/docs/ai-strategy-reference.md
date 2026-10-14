@@ -82,9 +82,11 @@ ai_strategy = { type = avoid_starting_wars value = -200 }
 ai_strategy = { type = conquer id = GER value = 200 }
 ```
 
-- MD uses both signs on purpose: small positive values as a general brake, and negative
-  values for the suppression technique. Do not flag a value as a sign bug without
-  reading the surrounding `conquer` strategies.
+- Never write a positive targetless value. The engine adds it to `conquer` and reads the
+  sum as front war priority, so a positive value makes the country and every country
+  bordering its faction treat those fronts as top priority; it is not a brake. Use a
+  negative value for the suppression technique, and `declare_war id = TAG value = -4000`
+  to block one target. A targeted `avoid_starting_wars id = TAG` is never read.
 - `declare_war` needs `id = TAG`. `target =` is not accepted and `dont_declare_war` is
   not a token.
 - `enable = { has_war_with = TARGET }` makes `declare_war` a no-op. Gate on
@@ -102,9 +104,21 @@ ai_strategy = { type = conquer id = GER value = 200 }
 
 - Army and equipment strategies come in tiers by military factory count. Keep tier
   `enable` ranges exclusive so role weights do not stack.
+- Every tag uses the generic army tiers. A national composition block adds deltas to
+  them. It does not set absolute ratios.
+- Transport helicopters carry a negative factor in every tier, and
+  `MD_dont_build_transport_helicopter_strong` adds to it once a spare reserve exists.
+  Keep the sum at -100 or above.
+- `default_surplus_management` decides what spare factories build once needs are met.
+- APCs and IFVs share one spare-stock line for three blocks: `MD_low_*_stockpile` boosts
+  below it, `MD_high_*_stockpile` slows above it, and `focus_on_*` trains more of the
+  units that use them. Tanks have no high block. `medium_tank_chassis` is a base type,
+  and its subtypes inherit a factor set on it.
 - APCs use the `amphibious` equipment category and IFVs use `flame`, not `mechanized`.
-- Emergency strategies (`MD_wartime_low_*`, `MD_desperately_need_guns`,
-  `default_AI_needs_to_live`) halt training and reprioritize when a stockpile runs out.
+- Shortage strategies (`MD_wartime_low_*`, `MD_desperately_need_guns`) only raise
+  production. A `role_ratio` or `build_army` on a shortage gate flips as stock moves, and
+  each flip deletes or re-queues training lines.
+- `default_AI_needs_to_live` adds light infantry once surrender progress passes 0.49.
 - A country gets a custom chip or composite production strategy only when it is a
   significant producer. Others use the generic logic.
 

@@ -30,9 +30,9 @@ from shared_utils import (
     blank_quoted_strings,
     direct_child_block,
     extract_block_from_text,
+    first_flat_match,
     flat_block_text,
     has_flat_is_ai,
-    iter_flat_matches,
     iter_flat_offsets,
     read_text_strict,
     strip_comments,
@@ -40,7 +40,9 @@ from shared_utils import (
     validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
+from validate_events import load_cost_lookups, uncovered_costs
 from validator_common import (
+    BASE_ZERO_RE,
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
@@ -441,9 +443,8 @@ _UNLOCK_DECISION_RE = re.compile(
 # State that flips on during play, so the category it gates appears mid-game.
 _MIDGAME_GATE_RE = re.compile(
     r"\b(?:has_country_flag|has_global_flag|has_completed_focus|has_idea)"
-    r"\s*=\s*(?P<token>[A-Za-z0-9_]+)|\bcheck_variable\b"
+    r"\s*=\s*[A-Za-z0-9_]+|\bcheck_variable\b"
 )
-_WORD_RE = re.compile(r"\w+")
 _UNANNOUNCED_CATEGORY_EXEMPT = frozenset(
     validation_config("validate_decisions", "unannounced_category_exempt")
 )
@@ -453,15 +454,6 @@ _SET_FLAG_RE = re.compile(
     r"set_(?:country|global)_flag\s*=\s*(?:([A-Za-z0-9_]+)"
     r"|\{[^{}]*?flag\s*=\s*([A-Za-z0-9_]+))"
 )
-
-
-def _history_country_names(mod_path: str) -> Set[str]:
-    """Every word in the country history files, which run before day one."""
-    names: Set[str] = set()
-    pattern = os.path.join(mod_path, "history", "countries", "*.txt")
-    for filename in glob.iglob(pattern):
-        names.update(_WORD_RE.findall(strip_comments(read_text_strict(filename))))
-    return names
 
 
 def _unlock_decision_names(text: str) -> Set[str]:
@@ -599,6 +591,10 @@ _CATEGORY_BLOCK_RE = re.compile(
     rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
 )
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
+_AI_ADD_RE = re.compile(r"\badd\s*=")
+# The money kinds validate_events.uncovered_costs can report.
+_MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
+_TREASURY_GATE_NOTE = " (behind a treasury custom_cost_trigger; verify)"
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
 # FROM-usage detection (hoisted from validate_targets_no_trigger /
@@ -979,7 +975,7 @@ def _find_formable_commitment_rows(
     Every decision in the formables file carries an ``ai_will_do`` gate
     comparing ``formable_committed_size`` against that formable's full state
     count, and the commit sites (integrate_start / update_flag complete_effect,
-    the IBR/ANZ remove_effects, Spain's focus tree) store the same id/size
+    the IBR/ANZ integrate complete_effects, Spain's focus tree) store the same id/size
     pair. The counts exist only as inlined literals, so editing an
     update_flag's state list silently corrupts the ratchet ordering — this
     recomputes each count from the update_flag ``available`` block and diffs
@@ -1219,6 +1215,11 @@ def _top_level_neg_pp(block: str):
         if match:
             return _int_literal(match.group(1))
     return None
+
+
+def _ai_never_takes(ai_factor: str) -> bool:
+    """`base = 0` with no `add`: the weight cannot leave zero."""
+    return bool(BASE_ZERO_RE.search(ai_factor)) and not _AI_ADD_RE.search(ai_factor)
 
 
 def extract_value_multi_line(obj: str, s: str) -> str:
@@ -1758,40 +1759,36 @@ class Validator(BaseValidator):
             "Unused decision categories (empty, not in BOP):",
         )
 
-    def validate_ai_factors(self):
-        self._log_section("Checking decision AI factors...")
-
-        factories = parse_all_decision_factories(self.mod_path)
+    def _ai_reachable(self, factories: List[DecisionFactory]) -> List[DecisionFactory]:
+        """Decisions with no `is_ai = no` or `always = no` on them or their category."""
         categories = parse_decision_categories(self.mod_path)
-        cats_with_decs = parse_categories_with_decisions(self.mod_path)
-
-        # Reverse index: decision token -> parent category. The previous
-        # version did an O(N) scan per decision over `cats_with_decs`, which
-        # added ~1.5s on this mod.
+        # Reverse index: decision token -> parent category. A scan per decision
+        # over the category map added ~1.5s on this mod.
         decision_to_category: Dict[str, str] = {}
-        for cat, dec_tokens in cats_with_decs.items():
+        for cat, dec_tokens in parse_categories_with_decisions(self.mod_path).items():
             for tok in dec_tokens:
                 decision_to_category.setdefault(tok, cat)
+
+        return [
+            d
+            for d in factories
+            if not any(
+                "is_ai = no" in gate or "always = no" in gate
+                for gate in (
+                    d.available,
+                    d.visible,
+                    categories.get(decision_to_category.get(d.token, ""), ""),
+                )
+            )
+        ]
+
+    def validate_ai_factors(self):
+        self._log_section("Checking decision AI factors...")
 
         results = []
         fixes_needed = []
 
-        for d in factories:
-            if d.available and any(
-                ["is_ai = no" in d.available, "always = no" in d.available]
-            ):
-                continue
-            if d.visible and any(
-                ["is_ai = no" in d.visible, "always = no" in d.visible]
-            ):
-                continue
-
-            dec_category = decision_to_category.get(d.token)
-            if dec_category and dec_category in categories:
-                cat_code = categories[dec_category]
-                if "is_ai = no" in cat_code or "always = no" in cat_code:
-                    continue
-
+        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
             if d.mission_subtype:
                 if d.selectable_mission and not d.ai_factor:
                     results.append(
@@ -1814,7 +1811,8 @@ class Validator(BaseValidator):
             # evaluates in order on a running total, and clustering
             # factor=0 before the adds makes them a no-op (0*0=0 with base=0).
             # The whole point of placing factor=0 after adds is to override
-            # the adds conditionally. Do not re-add that check.
+            # the adds conditionally. Do not re-add that check. The opposite
+            # order, an add after factor=0, is validate_ai_weight_order.py.
 
         self._report(results, "✓ No AI factor issues", "Decision AI factor issues:")
 
@@ -2631,18 +2629,12 @@ class Validator(BaseValidator):
     def validate_unannounced_categories(self):
         """Flag categories that switch on mid-game without telling the player.
 
-        A category with no `visible` block is always on the decisions tab, and
-        one gated only on the tag or the date is on from the start, so neither
-        has anything to announce. Nor does one whose flag, focus or idea gates
-        are all named in a country history file, which grants them before day
-        one. A category gated on state that flips during play — a flag, a
-        completed focus, an idea, a variable — appears part-way through, and
-        needs `unlock_decision_category_tooltip` (or `unlock_decision_tooltip` on
-        one of its decisions) in whatever turns it on. Without it a whole tab of
-        decisions shows up with no indication of where it came from. AI-only
-        categories are exempt: nobody is watching. So are the
-        `unannounced_category_exempt` config entries, which have nothing a
-        tooltip could announce.
+        A category with no `visible` block or only tag/date gates has nothing
+        to announce. A flag, focus, idea or variable gate needs
+        `unlock_decision_category_tooltip` (or `unlock_decision_tooltip` on one
+        of its decisions) in whatever opens it. AI-only categories are exempt.
+        Other exceptions, including startup gates and shared state with no
+        single unlock effect, need a reason in `unannounced_category_exempt`.
         """
         self._log_section("Checking decision categories announce themselves...")
         self._report(
@@ -2659,7 +2651,6 @@ class Validator(BaseValidator):
         _, _, _, unlock_refs = self._get_activation_removal_scan()
         announced = _announced_names(unlock_refs)
         by_category = parse_categories_with_decisions(self.mod_path, lowercase=False)
-        history_names = _history_country_names(self.mod_path)
 
         results = []
         for name, body in sorted(parse_decision_categories(self.mod_path).items()):
@@ -2670,11 +2661,8 @@ class Validator(BaseValidator):
             # parse_decision_categories hands back `NAME = { ... }`, so unwrap
             # the header before looking for the category's own child blocks.
             inner = flat_block_text(direct_child_block(body, name))
-            gates = iter_flat_matches(
+            gate = first_flat_match(
                 direct_child_block(inner, "visible"), _MIDGAME_GATE_RE
-            )
-            gate = next(
-                (g for g in gates if g.group("token") not in history_names), None
             )
             if not gate:
                 continue
@@ -3004,7 +2992,7 @@ class Validator(BaseValidator):
         for d in factories:
             if d.ai_hint_pp_cost:
                 continue
-            if d.ai_factor and "base = 0" in d.ai_factor and "add" not in d.ai_factor:
+            if _ai_never_takes(d.ai_factor):
                 continue
 
             if d.custom_cost_trigger and "political_power" in d.custom_cost_trigger:
@@ -3032,6 +3020,52 @@ class Validator(BaseValidator):
             "✓ No PP-spending decisions missing ai_hint_pp_cost",
             "Decisions spending political power with no ai_hint_pp_cost (AI won't reserve PP):",
             severity=Severity.WARNING,
+        )
+
+    def validate_ai_will_do_ignores_cost(self):
+        """Flag decisions that charge money while ai_will_do never looks at money.
+
+        The decision twin of the event check (issue #5738), with the same cost
+        and guard detection. Skipped: decisions the AI cannot see or never
+        takes, plain missions, and a selectable mission's `remove_effect`, which
+        is a timeout outcome. A treasury `custom_cost_trigger` already stops a
+        broke country, so those findings carry a note.
+        """
+        self._log_section("Checking decisions for AI weights that ignore money...")
+
+        effects, stored = load_cost_lookups(self)
+        results = []
+
+        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
+            if d.mission_subtype and not d.selectable_mission:
+                continue
+            if _ai_never_takes(d.ai_factor):
+                continue
+            ai_weights = d.ai_factor[1:-1]
+
+            costs: Set[str] = set()
+            blocks = [d.complete_effect]
+            if not d.mission_subtype:
+                blocks.append(d.remove_effect)
+            for block in blocks:
+                costs |= uncovered_costs(block[1:-1], ai_weights, effects, stored)
+            costs &= _MONEY_COSTS
+            if not costs:
+                continue
+
+            note = _TREASURY_GATE_NOTE if "treasury" in d.custom_cost_trigger else ""
+            results.append(
+                f"{d.token:<55}{d.source_basename} - ai_will_do ignores the "
+                f"{', '.join(sorted(costs))} cost{note}"
+            )
+
+        self._report(
+            results,
+            "✓ No decision AI weights ignoring money costs",
+            "Decisions whose ai_will_do ignores a money cost (add a bankruptcy or"
+            " deficit modifier):",
+            severity=Severity.WARNING,
+            category="decision-ai-will-do-ignores-cost",
         )
 
     def validate_state_target_with_targets(self):
@@ -3406,6 +3440,7 @@ class Validator(BaseValidator):
         self.validate_missing_war_hint()
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
+        self.validate_ai_will_do_ignores_cost()
         self.validate_state_target_with_targets()
         self.validate_mission_only_attributes()
         self.validate_orphaned_remove_effect()

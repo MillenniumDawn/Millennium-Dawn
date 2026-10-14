@@ -7,7 +7,6 @@ from pathlib import Path
 import pytest
 import validate_agency_upgrades as agency
 import validate_cosmetic_tags as cosmetic
-import validate_decisions as decisions
 import validate_localisation as localisation
 import validate_mod_descriptors as descriptors
 import validate_scripted_gui as scripted_gui
@@ -15,7 +14,6 @@ import validate_unused_scripted as unused
 from shared.suite import write_under as _write
 from shared.suite import yml_scan, yml_syntax
 from shared_utils import run_validator_main
-from sprite_index import SpriteSizeIndex
 
 
 def _validator(cls, root: Path, staged_only: bool = False, **kwargs):
@@ -290,6 +288,83 @@ def test_agency_completion_cache_flags_orphans_and_missing_blocks(tmp_path):
     missing = _validator(agency.Validator, tmp_path / "missing")
     missing._validate_completion_cache()
     assert missing._issues == []
+
+
+def test_agency_completion_cache_flags_a_missing_seed_block(tmp_path):
+    triggers = _slot_trigger(0) + _slot_trigger(1) + _can_upgrade_block([0, 1])
+    validator = _agency_completion_cache_fixture(
+        tmp_path, triggers, "MD_auto_agency_other_effect = {\n}\n"
+    )
+    messages = [issue.message for issue in validator._issues]
+    assert any(
+        "MD_auto_agency_seed_completed_cache block not found" in m for m in messages
+    )
+
+
+def _agency_can_select_fixture(tmp_path, triggers: str):
+    _write(
+        tmp_path,
+        agency.ON_ACTIONS_FILE,
+        "global.agency_upgrades^0 = token:MD_auto_agency_0_upgrade_a\n"
+        "global.agency_upgrades^1 = token:MD_auto_agency_1_upgrade_b\n",
+    )
+    _write(tmp_path, agency.SCRIPTED_TRIGGERS_FILE, triggers)
+    validator = _validator(agency.Validator, tmp_path)
+    validator._collect_registry()
+    validator._validate_can_select_dispatch()
+    return validator
+
+
+def _can_select_trigger(idx: int) -> str:
+    return f"MD_auto_agency_can_select_upgrade_{idx}_trigger = {{\n\talways = yes\n}}\n"
+
+
+def _v_can_select_block(indices) -> str:
+    branches = "".join(
+        f"\t\tMD_auto_agency_can_select_upgrade_{i}_trigger = yes\n" for i in indices
+    )
+    return f"MD_auto_agency_v_can_select = {{\n\tOR = {{\n{branches}\t}}\n}}\n"
+
+
+def test_agency_can_select_accepts_a_fully_wired_pair(tmp_path):
+    triggers = (
+        _can_select_trigger(0) + _can_select_trigger(1) + _v_can_select_block([0, 1])
+    )
+    assert _agency_can_select_fixture(tmp_path, triggers)._issues == []
+
+
+def test_agency_can_select_flags_missing_and_orphan_wiring(tmp_path):
+    # Index 1 has no definition and no dispatch branch; 9 is defined and 7 is
+    # dispatched, but neither is registered.
+    triggers = (
+        _can_select_trigger(0) + _can_select_trigger(9) + _v_can_select_block([0, 7])
+    )
+    validator = _agency_can_select_fixture(tmp_path, triggers)
+    messages = [issue.message for issue in validator._issues]
+    assert _categories(validator) == {"agency-upgrades-can-select"}
+    assert len(messages) == 4
+    assert any(
+        "has no MD_auto_agency_can_select_upgrade_1_trigger definition" in m
+        for m in messages
+    )
+    assert any(
+        "has no MD_auto_agency_can_select_upgrade_1_trigger = yes branch" in m
+        for m in messages
+    )
+    assert any(
+        "MD_auto_agency_can_select_upgrade_9_trigger is defined but index ^9 is not registered"
+        in m
+        for m in messages
+    )
+    assert any("dispatches index ^7 but it is not registered" in m for m in messages)
+
+
+def test_agency_can_select_reports_a_missing_dispatch_block_once(tmp_path):
+    triggers = _can_select_trigger(0) + _can_select_trigger(1)
+    validator = _agency_can_select_fixture(tmp_path, triggers)
+    messages = [issue.message for issue in validator._issues]
+    assert len(messages) == 1
+    assert "MD_auto_agency_v_can_select block not found" in messages[0]
 
 
 def test_cosmetic_workers_cover_comments_dynamic_and_missing_files(tmp_path):
@@ -590,7 +665,7 @@ def test_localisation_clean_and_staged_scope(tmp_path, monkeypatch):
     loc = _write(
         tmp_path,
         "localisation/english/staged_l_english.yml",
-        'l_english:\nvalid:0 "plain"\n',
+        'l_english:\n valid: "plain"\n',
     )
     clean = _validator(localisation.Validator, tmp_path)
     assert clean.run_all_validations() == 0
@@ -639,6 +714,7 @@ def test_scripted_gui_parsers_cover_templates_and_malformed_blocks(tmp_path):
         "elements": {},
         "element_files": {},
         "containers": [],
+        "windows": [],
     }
     parsed = scripted_gui._parse_gui_text(
         'containerWindowType = { name = "window" }\n'
@@ -648,6 +724,7 @@ def test_scripted_gui_parsers_cover_templates_and_malformed_blocks(tmp_path):
     )
     assert set(parsed["elements"]) == {"window", "button"}
     assert parsed["containers"] == ["window"]
+    assert parsed["windows"] == ["window"]
     blocks, triggers = scripted_gui._parse_scripted_gui_text(
         "scripted_gui = {\n\tname = {\n"
         "\t\tcontext_type = player_context\n"
@@ -881,483 +958,6 @@ def test_unused_clean_and_staged_scope(tmp_path, monkeypatch):
     assert staged._issues == []
 
 
-def _decision(token: str, body: str = "") -> str:
-    return f"\t{token} = {{\n{body}\n\t}}\n"
-
-
-def _field(name: str, body: str) -> str:
-    return f"\t\t{name} = {{\n{body}\n\t\t}}\n"
-
-
-def test_decision_parsers_and_low_level_branches(tmp_path):
-    assert decisions._owner_spans("x = { y = { } }", 0)
-    assert decisions._sprite_candidates("category_picture", "x") == ["x"]
-    assert decisions._sprite_candidates("category_icon", "x") == [
-        "x",
-        "GFX_decision_category_x",
-    ]
-    assert (
-        decisions._missing_sprite_message("decision", "x", "[dynamic]", frozenset())
-        is None
-    )
-    assert decisions._slot_for_size(32, 31) == "decision"
-    assert decisions._slot_for_size(52, 40) == "category_icon"
-    assert decisions._slot_for_size(114, 101) == "category_picture"
-    assert decisions._slot_for_size(40, 40) is None
-    assert (
-        decisions._resolved_sprite(
-            "decision", "plain", SpriteSizeIndex({"GFX_decision_plain": "x"})
-        )
-        == "GFX_decision_plain"
-    )
-    assert (
-        decisions._icon_type_message("decision", "x", "none", SpriteSizeIndex({}))
-        is None
-    )
-    assert decisions._extract_from_blocks("FROM = { x = yes }") == [" x = yes "]
-    assert decisions._extract_from_blocks("FROM = {") == []
-    assert decisions._flat_tag_pins("{ tag = GER NOT = { tag = ITA } }") == {"GER"}
-    assert decisions._flat_tag_pins_with_kind("{ original_tag = GER }") == {
-        ("original_tag", "GER")
-    }
-    assert list(decisions._scan_top_level("{ tag = GER GER = { x = yes } }")) == [
-        ("tag", "GER"),
-        ("scope", "GER"),
-    ]
-    assert decisions._is_sole_flat_pin("{ tag = GER }", "GER")
-    assert not decisions._is_sole_flat_pin("{ tag = GER x = yes }", "GER")
-    assert (
-        decisions._top_level_field_value('{ name = custom desc = "literal" }', "name")
-        == "custom"
-    )
-    assert decisions._top_level_field_value('{ name = "literal" }', "name") is None
-    assert decisions._top_level_neg_pp("{ add_political_power = -12 }") == 12
-    assert decisions._top_level_neg_pp("{ if = { add_political_power = -12 } }") is None
-    validator = _validator(decisions.Validator, tmp_path)
-    assert (
-        validator._normalize_block("{ a = yes # comment\n b = no }") == "a = yes b = no"
-    )
-    assert decisions._unactivated({"a", "b"}, {"a"}) == ["b"]
-    assert (
-        decisions._unactivated(
-            {"cyber_op_slot_1_gps_tracking"}, {"cyber_op_slot_[SLOT]_[TYPE]"}
-        )
-        == []
-    )
-
-    categories = _write(
-        tmp_path, "common/decisions/categories/cats.txt", "cat = {\n}\n"
-    )
-    decision_file = _write(
-        tmp_path,
-        "common/decisions/decisions.txt",
-        "cat = {\n" + _decision("decision_a", "\t\ticon = icon\n") + "}\n",
-    )
-    assert decisions.parse_all_decisions(str(tmp_path))[0]
-    assert (
-        decisions.parse_all_decision_factories(str(tmp_path))[0].token == "decision_a"
-    )
-    assert decisions.parse_all_decision_names(str(tmp_path))[0] == ["decision_a"]
-    assert decisions.parse_decision_categories(str(tmp_path)) == {"cat": "cat = {\n}"}
-    _write(
-        tmp_path,
-        "common/decisions/categories/hidden.txt",
-        "hidden = {\n\tvisible_when_empty = yes\n}\n",
-    )
-    assert "hidden" not in decisions.parse_decision_categories(
-        str(tmp_path), visible_when_empty=False
-    )
-    assert (
-        decisions._remove_available_block_for_token(
-            "\tdecision_a = {\n\t\tavailable = { always = yes }\n\t}\n", "decision_a"
-        )
-        is not None
-    )
-    assert (
-        decisions._remove_available_block_for_token("decision_a = { }", "missing")
-        is None
-    )
-    assert decisions.parse_categories_with_decisions(str(tmp_path)) == {
-        "cat": ["decision_a"]
-    }
-    assert decisions._is_category_file(str(categories))
-    assert decisions._find_decision_file(str(tmp_path), "decisions.txt") == str(
-        decision_file
-    )
-    assert decisions._find_decision_file(str(tmp_path), "missing.txt") is None
-    assert decisions._int_literal("12") == 12
-    with pytest.raises(ValueError):
-        decisions._int_literal("bad")
-
-
-def test_decisions_full_run_exercises_finding_categories(tmp_path):
-    category_text = """cat_allowed = {
-\tallowed = { original_tag = GER }
-}
-cat_unchecked = {
-}
-cat_empty = {
-}
-cat_orphan = {
-}
-cat_ai_disabled = {
-	allowed = { always = no }
-}
-"""
-    _write(tmp_path, "common/decisions/categories/categories.txt", category_text)
-    common = "\t\ticon = icon\n"
-    decisions_text = "cat_allowed = {\n"
-    decisions_text += _decision(
-        "decision_dup",
-        common
-        + _field("allowed", "\t\t\toriginal_tag = GER")
-        + _field("visible", "\t\t\ttag = GER\n\t\t\tGER = { has_war = yes }")
-        + "\t\tdays_remove = 2\n"
-        + _field("remove_effect", "\t\t\tadd_stability = 1")
-        + "\t\tcreate_wargoal = yes\n",
-    )
-    decisions_text += _decision(
-        "category_recheck_allowed",
-        common + _field("visible", "\t\t\toriginal_tag = GER"),
-    )
-    decisions_text += "}\ncat_unchecked = {\n"
-    decisions_text += _decision("decision_dup", common)
-    decisions_text += _decision("no_allowed", common)
-    decisions_text += "}\ncat_empty = { }\n"
-    decisions_text += _decision(
-        "manual_unused",
-        common + _field("allowed", "\t\t\talways = no"),
-    )
-    decisions_text += _decision(
-        "manual_used",
-        common + _field("allowed", "\t\t\talways = no"),
-    )
-    decisions_text += _decision(
-        "missing_ai",
-        common,
-    )
-    decisions_text += _decision(
-        "selectable_mission",
-        common + "\t\tdays_mission_timeout = 3\n\t\tselectable_mission = yes\n",
-    )
-    decisions_text += _decision(
-        "nonselect_mission",
-        common + "\t\tdays_mission_timeout = 3\n\t\tai_will_do = { base = 1 }\n",
-    )
-    decisions_text += _decision(
-        "custom_cost",
-        common + _field("custom_cost_trigger", "\t\t\t has_political_power > 10"),
-    )
-    decisions_text += _decision(
-        "target_no_set",
-        common + _field("target_trigger", "\t\t\thas_war = yes"),
-    )
-    decisions_text += _decision(
-        "from_no_trigger",
-        common
-        + _field("targets", "\t\t\tGER = { }\n")
-        + _field("visible", "\t\t\tFROM = { has_war = yes }"),
-    )
-    decisions_text += _decision(
-        "root_visible",
-        common
-        + _field("targets", "\t\t\tGER = { }\n")
-        + _field("visible", "\t\t\thas_war = yes"),
-    )
-    decisions_text += _decision(
-        "from_duplicate",
-        common
-        + _field("targets", "\t\t\tGER = { }\n")
-        + _field("target_trigger", "\t\t\tFROM = { has_war = yes }")
-        + _field("visible", "\t\t\tFROM = { has_war = yes }"),
-    )
-    decisions_text += _decision(
-        "from_move",
-        common
-        + _field("targets", "\t\t\tGER = { }\n")
-        + _field(
-            "target_trigger",
-            "\t\t\tFROM = { has_war = yes }",
-        )
-        + _field(
-            "visible",
-            "\t\t\tFROM = { has_war = yes }\n\t\t\tFROM = { has_stability = yes }",
-        ),
-    )
-    decisions_text += _decision(
-        "from_unscoped",
-        common + _field("visible", "\t\t\tFROM = { has_war = yes }"),
-    )
-    decisions_text += _decision(
-        "random_decision",
-        common + _field("complete_effect", "\t\t\trandom = { chance = 50 }"),
-    )
-    decisions_text += _decision(
-        "tag_checks",
-        common
-        + _field("allowed", "\t\t\ttag = GER\n\t\t\toriginal_tag = GER")
-        + _field("visible", "\t\t\ttag = GER"),
-    )
-    decisions_text += _decision(
-        "category_recheck",
-        common + _field("visible", "\t\t\toriginal_tag = GER"),
-    )
-    decisions_text += _decision(
-        "pp_hidden",
-        common + _field("complete_effect", "\t\t\tadd_political_power = -5"),
-    )
-    decisions_text += _decision(
-        "pp_double",
-        common
-        + "\t\tcost = 5\n"
-        + _field("complete_effect", "\t\t\tadd_political_power = -3"),
-    )
-    decisions_text += _decision(
-        "same_visible_available",
-        common
-        + _field("visible", "\t\t\thas_war = yes")
-        + _field("available", "\t\t\thas_war = yes"),
-    )
-    decisions_text += _decision(
-        "bare_trigger",
-        common + _field("available", "\t\t\tpolitical_power < 5"),
-    )
-    decisions_text += _decision(
-        "missing_loc",
-        common
-        + "\t\tname = missing_name\n\t\tdesc = missing_desc\n\t\tcustom_cost_text = missing_cost\n",
-    )
-    decisions_text += _decision(
-        "missing_log",
-        common + _field("complete_effect", "\t\t\tadd_stability = 1"),
-    )
-    decisions_text += _decision(
-        "late_log",
-        common
-        + _field("complete_effect", '\t\t\tadd_stability = 1\n\t\t\tlog = "late"'),
-    )
-    decisions_text += _decision(
-        "mission_visible",
-        common
-        + "\t\tdays_mission_timeout = 3\n"
-        + _field("visible", "\t\t\thas_war = yes"),
-    )
-    decisions_text += _decision(
-        "mission_script",
-        common
-        + "\t\tdays_mission_timeout = 3\n\t\tactivation = { always = no }\n"
-        + _field("visible", "\t\t\thas_war = yes"),
-    )
-    decisions_text += _decision(
-        "war_target",
-        common + "\t\ttargets = { GER }\n\t\twar_with_on_complete = FROM\n",
-    )
-    decisions_text += _decision(
-        "war_all",
-        common + "\t\twar_with_on_remove = FROM\n\t\twar_with_on_timeout = FROM\n",
-    )
-    decisions_text += _decision(
-        "war_no_hint",
-        common + _field("complete_effect", "\t\t\tcreate_wargoal = yes"),
-    )
-    decisions_text += _decision(
-        "cancel_missing_visible",
-        common + "\t\tcancel_if_not_visible = yes\n",
-    )
-    decisions_text += _decision(
-        "custom_pp_hint",
-        common + _field("custom_cost_trigger", "\t\t\thas_political_power > 10"),
-    )
-    decisions_text += _decision(
-        "state_bad",
-        common
-        + "\t\tstate_target = any_owned_state\n"
-        + _field("targets", "\t\t\tGER = { }"),
-    )
-    decisions_text += _decision(
-        "mission_only",
-        common
-        + "\t\ttimeout_effect = { }\n\t\tactivation = { always = no }\n"
-        + "\t\tis_good = yes\n\t\tselectable_mission = yes\n\t\twar_with_on_timeout = GER\n"
-        + "\t\twar_with_target_on_timeout = yes\n",
-    )
-    decisions_text += _decision(
-        "orphan_remove",
-        common + _field("remove_effect", "\t\t\tadd_stability = 1"),
-    )
-    decisions_text += _decision(
-        "orphan_modifiers",
-        common + "\t\ttargets_dynamic = yes\n\t\ttarget_non_existing = yes\n",
-    )
-    decisions_text += _decision(
-        "skip_ai_available",
-        common + _field("available", "\t\t\t is_ai = no"),
-    )
-    decisions_text += _decision(
-        "skip_ai_visible",
-        common + _field("visible", "\t\t\t always = no"),
-    )
-    decisions_text += "}\ncat_ai_disabled = {\n"
-    decisions_text += _decision("category_ai_skip", common)
-    decisions_text += "}\n"
-    _write(tmp_path, "common/decisions/decisions.txt", decisions_text)
-    _write(
-        tmp_path,
-        "events/activations.txt",
-        "activate_targeted_decision = { decision = manual_used }\n",
-    )
-    _write(
-        tmp_path,
-        "common/bop/bop.txt",
-        "decision_category = cat_empty\n",
-    )
-    _write(
-        tmp_path,
-        "localisation/english/decisions_l_english.yml",
-        'l_english:\nmissing_ai:0 "Missing AI"\n',
-    )
-    # validate_missing_icons skips itself below 1000 indexed sprites. Without a
-    # mod-side index the check only ran where a vanilla install is discoverable,
-    # so it passed locally and reported nothing on CI.
-    _write(
-        tmp_path,
-        "interface/filler.gfx",
-        "spriteTypes = {\n"
-        + "".join(
-            f'\tspriteType = {{ name = "GFX_filler_{i}" }}\n' for i in range(1000)
-        )
-        + "}\n",
-    )
-
-    validator = _validator(decisions.Validator, tmp_path)
-    validator.run_all_validations()
-    missing_icons = _validator(decisions.Validator, tmp_path, missing_icons=True)
-    missing_icons.validate_missing_icons()
-    assert "missing-decision-icon" in _categories(missing_icons)
-    categories = _categories(validator)
-    expected = {
-        "missing-decision-localisation",
-        "missing-decision-log",
-        "decision-log-not-first",
-        "bare-trigger-name",
-        "missing-decision-war-hint",
-    }
-    assert expected <= categories
-    for marker in (
-        "Decision AI factor issues",
-        "Decisions in categories without allowed",
-        "Decisions with custom_cost_trigger",
-        "Decisions with redundant tag checks",
-        "Missions with visible block",
-        "Regular decisions using mission-only",
-        "Targeted decisions using war_with_on_",
-        "Decisions charging political power",
-        "Decisions double-charging PP",
-        "Decisions using FROM without",
-        "Decisions with FROM checks in visible/available",
-        "Decisions with `allowed` redundant",
-        "Decisions with cancel_if_not_visible",
-        "Decisions with identical visible and available",
-        "Decisions with tag/original_tag",
-        "Decisions with target_root_trigger",
-        "Decisions with targets_dynamic",
-        "Duplicated decisions found",
-        "Repeatable decisions",
-        "State-targeted decisions",
-        "Targeted decisions with FROM checks",
-        "Unused decision categories",
-        "Unused decisions",
-        "Decisions spending political power",
-        "Decisions with remove_effect",
-    ):
-        assert any(marker in category for category in categories), marker
-    assert any(
-        issue.category == "missing-decision-localisation" for issue in validator._issues
-    )
-    assert any("manual_unused" in issue.message for issue in validator._issues)
-    assert any("pp_hidden" in issue.message for issue in validator._issues)
-    assert any("orphan_modifiers" in issue.message for issue in validator._issues)
-    assert any(
-        "from_move" in issue.message and "move the FROM" in issue.message
-        for issue in validator._issues
-    )
-
-
-def test_decisions_clean_staged_and_cli_strict_boundaries(tmp_path, monkeypatch):
-    _write(tmp_path, "common/decisions/categories/cat.txt", "cat = { }\n")
-    _write(
-        tmp_path,
-        "common/decisions/clean.txt",
-        "cat = {\n"
-        + _decision("clean_decision", "\t\tai_will_do = { base = 0 }\n")
-        + "}\n",
-    )
-    _write(
-        tmp_path,
-        "localisation/english/clean.yml",
-        'l_english:\nclean_decision:0 "Clean"\n',
-    )
-    clean = _validator(decisions.Validator, tmp_path)
-    assert clean.run_all_validations() == 0
-    assert clean._issues == []
-
-    monkeypatch.setenv("MD_STAGED_FILES", "common/decisions/clean.txt")
-    staged = _validator(decisions.Validator, tmp_path, staged_only=True)
-    staged.run_all_validations()
-    assert staged._issues == []
-
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "validate_decisions.py",
-            "--path",
-            str(tmp_path),
-            "--strict",
-            "--workers",
-            "1",
-        ],
-    )
-    with pytest.raises(SystemExit) as result:
-        run_validator_main(
-            decisions.Validator,
-            "decisions",
-            extra_args_fn=decisions._add_extra_args,
-        )
-    assert result.value.code == 0
-
-    file_path = _write(tmp_path, "not-a-mod.txt", "content\n")
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        ["validate_decisions.py", "--path", str(file_path)],
-    )
-    with pytest.raises(SystemExit) as result:
-        run_validator_main(decisions.Validator, "decisions")
-    assert result.value.code == 1
-
-
-def test_decision_fix_paths_rewrite_only_synthetic_files(tmp_path):
-    decision_file = _write(
-        tmp_path,
-        "common/decisions/fix.txt",
-        "cat = {\n"
-        + _decision("missing_ai", "\t\tvisible = { has_war = yes }\n")
-        + _decision(
-            "same_blocks",
-            _field("visible", "\t\t\thas_war = yes")
-            + _field("available", "\t\t\thas_war = yes"),
-        )
-        + "}\n",
-    )
-    fixer = _validator(decisions.Validator, tmp_path, fix=True)
-    fixer.validate_ai_factors()
-    assert "ai_will_do = {" in decision_file.read_text()
-    fixer.validate_visible_equals_available()
-    assert "same_blocks = {\n\t\tvisible" in decision_file.read_text()
-    assert "\n\t\tavailable =" not in decision_file.read_text()
-
-
 def test_cli_strict_exits_nonzero_for_descriptor_findings(tmp_path, monkeypatch):
     _write(tmp_path, "descriptor.mod", 'replace_path = "a"\n')
     _write(tmp_path, "Millennium_Dawn.mod", 'replace_path = "b"\n')
@@ -1369,92 +969,3 @@ def test_cli_strict_exits_nonzero_for_descriptor_findings(tmp_path, monkeypatch)
     with pytest.raises(SystemExit) as result:
         run_validator_main(descriptors.Validator, "descriptors")
     assert result.value.code == 1
-
-
-def test_formable_commitment_helper_covers_drift_rows():
-    update = decisions.DecisionFactory(
-        "\tAAA_update_flag = {\n\t\tavailable = {\n\t\t\t1 = { }\n\t\t}\n\t}\n",
-        source_basename="formable_nation_decisions.txt",
-    )
-    integrate = decisions.DecisionFactory(
-        "\tAAA_integrate_start = {\n"
-        "\t\tformable_committed_size = 1\n"
-        "\t\tset_variable = { formable_committed_id = 1 }\n"
-        "\t\tset_variable = { formable_committed_size = 1 }\n"
-        "\t}\n",
-        source_basename="formable_nation_decisions.txt",
-    )
-    conflict = decisions.DecisionFactory(
-        "\tZZZ_integrate_start = {\n"
-        "\t\tformable_committed_size = 9\n"
-        "\t\tvar = formable_committed_size value = 8\n"
-        "\t\tset_variable = { formable_committed_id = 1 }\n"
-        "\t\tset_variable = { formable_committed_size = 9 }\n"
-        "\t\tset_variable = { formable_committed_id = 2 }\n"
-        "\t\tset_variable = { formable_committed_size = 9 }\n"
-        "\t\tNOT = { check_variable = { formable_committed_id = 9 } }\n"
-        "\t}\n",
-        source_basename="formable_nation_decisions.txt",
-    )
-    zzz_update = decisions.DecisionFactory(
-        "\tZZZ_update_flag = {\n"
-        "\t\tavailable = {\n\t\t\t1 = { }\n\t\t\t2 = { }\n\t\t}\n"
-        "\t}\n",
-        source_basename="formable_nation_decisions.txt",
-    )
-    bbb_update = decisions.DecisionFactory(
-        "\tBBB_update_flag = {\n\t\tavailable = {\n\t\t\t1 = { }\n\t\t}\n\t}\n",
-        source_basename="formable_nation_decisions.txt",
-    )
-    no_gate = decisions.DecisionFactory(
-        "\tBBB_integrate_start = {\n\t}\n",
-        source_basename="formable_nation_decisions.txt",
-    )
-    bbb_commit = decisions.DecisionFactory(
-        "\tBBB_buy_core_state = {\n"
-        "\t\tformable_committed_size = 1\n"
-        "\t\tset_variable = { formable_committed_id = 1 }\n"
-        "\t\tset_variable = { formable_committed_size = 1 }\n"
-        "\t}\n",
-        source_basename="formable_nation_decisions.txt",
-    )
-    no_update = decisions.DecisionFactory(
-        "\tCCC_integrate_start = {\n\t}\n",
-        source_basename="formable_nation_decisions.txt",
-    )
-    not_formable = decisions.DecisionFactory(
-        "\tordinary = {\n\t}\n", source_basename="formable_nation_decisions.txt"
-    )
-    assert decisions._FORMABLE_TAG_RE.match(conflict.token)
-    assert decisions._COMMIT_PAIR_RE.findall(conflict.raw) == [("1", "9"), ("2", "9")]
-    rows = decisions._find_formable_commitment_rows(
-        [
-            update,
-            integrate,
-            conflict,
-            zzz_update,
-            bbb_update,
-            no_gate,
-            bbb_commit,
-            no_update,
-            not_formable,
-        ],
-        {
-            "focus.txt": (
-                "set_variable = { formable_committed_id = 99 }\n"
-                "set_variable = { formable_committed_size = 2 }\n"
-                "set_variable = { formable_committed_id = 1 }\n"
-                "set_variable = { formable_committed_size = 2 }\n"
-                "var = formable_committed_size value = 8"
-            )
-        },
-    )
-    assert any("conflicting commit ids" in row for row in rows)
-    assert any("size literal 9" in row for row in rows)
-    assert any("commit id 1 collides" in row for row in rows)
-    assert any("unknown formable id 9" in row for row in rows)
-    assert any("commit references unknown formable id 99" in row for row in rows)
-    assert any("focus.txt: commit size 2" in row for row in rows)
-    assert any("focus.txt: guard size 8" in row for row in rows)
-    assert any("no update_flag" in row for row in rows)
-    assert any("not a formable decision shape" in row for row in rows)

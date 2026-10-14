@@ -54,12 +54,19 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ),
         ValidatorSpec("cosmetic-tags", "validate_cosmetic_tags.py", _CORE_GROUPS),
         ValidatorSpec("localisation", "validate_localisation.py", _CORE_GROUPS),
-        ValidatorSpec("events", "validate_events.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "events",
+            "validate_events.py",
+            _CORE_GROUPS,
+            args=("--check-ai-chance-costs",),
+        ),
         ValidatorSpec("achievements", "validate_achievements.py", _CORE_GROUPS),
         ValidatorSpec("history-files", "validate_history.py", _CORE_GROUPS),
         ValidatorSpec("unused-scripted", "validate_unused_scripted.py", _CORE_GROUPS),
         ValidatorSpec("agency-upgrades", "validate_agency_upgrades.py", _CORE_GROUPS),
-        ValidatorSpec("ideas", "validate_ideas.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "ideas", "validate_ideas.py", _CORE_GROUPS, args=("--missing-name-loc",)
+        ),
         ValidatorSpec("set-variables", "validate_set_variables.py", _CORE_GROUPS),
         # Cross-references the committed vanilla_defines.txt manifest.
         ValidatorSpec("defines", "validate_defines.py", _CORE_GROUPS),
@@ -139,8 +146,17 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "influence-calls", "validate_influence_calls.py", ("common", "events")
         ),
+        ValidatorSpec(
+            "ai-weight-order", "validate_ai_weight_order.py", ("common", "events")
+        ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
         ValidatorSpec("country-names", "validate_country_names.py", ("common",)),
+        ValidatorSpec(
+            "graphical-cultures",
+            "validate_graphical_cultures.py",
+            ("common",),
+            strict=False,
+        ),
         ValidatorSpec(
             "ai-path-rules",
             "validate_ai_path_rules.py",

@@ -16,6 +16,7 @@ from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
     _CREATE_UNIT_SOURCE_PATTERNS,
     _DELETE_TEMPLATE_SOURCE_PATTERNS,
+    _TEMPLATE_LIMIT_SOURCE_PATTERNS,
     _TEMPLATE_SOURCE_PATTERNS,
     _VARIANT_SOURCE_PATTERNS,
 )
@@ -145,6 +146,7 @@ def test_test_suite_replaces_old_workflows():
         "validate-paths",
         "prepare-workspace",
         "tools-tests",
+        "content-tests",
         "tools-quality",
         "mod-tests",
         "docs-quality",
@@ -298,6 +300,40 @@ def test_tools_checkout_exposes_consumed_configuration():
     assert not {"localisation", "resources"} & sparse
     assert checkout["with"]["fetch-depth"] == 1
     assert checkout["with"]["filter"] == "blob:none"
+
+
+def test_content_tests_run_once_with_the_game_tree():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    game_trees = {"common", "events", "history", "localisation/english"}
+    tools = workflow["jobs"]["tools-tests"]
+    assert not game_trees & set(tools["steps"][0]["with"]["sparse-checkout"].split())
+    suite_runs = [
+        step["run"]
+        for step in tools["steps"]
+        if "pytest tools/tests " in step.get("run", "")
+    ]
+    assert len(suite_runs) == 2
+    assert all("--ignore=tools/tests/content" in run for run in suite_runs)
+
+    content = workflow["jobs"]["content-tests"]
+    for group in ("full_suite", "content", "tools"):
+        assert f"outputs.{group} == 'true'" in content["if"]
+    assert game_trees <= set(content["steps"][0]["with"]["sparse-checkout"].split())
+    assert any(
+        "pytest tools/tests/content" in step.get("run", "") for step in content["steps"]
+    )
+
+
+def test_graphical_culture_validator_inputs_are_in_content_workspace():
+    profile = (
+        (VALIDATION_DIR / "ci_workspace_profile.txt")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
+    assert "/common/" in profile or {
+        "/common/countries/",
+        "/common/graphicalculturetype.txt",
+    } <= set(profile)
 
 
 def test_file_paths_run_in_a_lightweight_index_job():
@@ -457,7 +493,6 @@ def test_mod_core_runs_extra_checks_after_batch():
     for name in (
         "Run style check",
         "Check localisation UTF-8 BOM",
-        "Check localisation YAML syntax",
         "Check .mod file encoding",
         "Check mod descriptor replace_path sync",
     ):
@@ -466,8 +501,10 @@ def test_mod_core_runs_extra_checks_after_batch():
         assert names.index(name) > batch_index
     style = next(step for step in steps if step.get("name") == "Run style check")
     assert "MD_STAGED_FILES" in style["run"]
-    loc_yaml = steps[names.index("Check localisation YAML syntax")]
-    assert loc_yaml["run"] == "python3 tools/linting/fix_loc_yaml.py"
+    assert "Check localisation YAML syntax" not in names
+    localisation = next(spec for spec in BATCHES["core"] if spec.name == "localisation")
+    assert localisation.script == "validate_localisation.py"
+    assert localisation.strict
 
 
 def test_report_job_posts_comment_and_checks():
@@ -518,6 +555,7 @@ def test_gate_steps_cannot_be_switched_off():
 CONTRACT_FILES = (
     "tools/validation/ci_workspace_profile.txt",
     "tools/validation/staged_sparse_profile.txt",
+    "tools/tests/content/tool_data_drift_test.py",
     "validation_config.json",
     "pyproject.toml",
 )
@@ -530,7 +568,7 @@ def _contract_guard():
 @pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
 @pytest.mark.parametrize(
     "dropped",
-    [None, *CONTRACT_FILES[:3], "pytest-xdist", "pytest-cov"],
+    [None, *CONTRACT_FILES[:4], "pytest-xdist", "pytest-cov"],
 )
 def test_detect_changes_stops_a_head_without_the_ci_contract(tmp_path, dropped):
     for relative in CONTRACT_FILES:
@@ -561,7 +599,8 @@ def test_contract_guard_covers_what_the_workflow_reads_from_the_head():
     sparse = {path.lstrip("/") for path in checkout["with"]["sparse-checkout"].split()}
     profiles = set(re.findall(r"tools/validation/\w+_profile\.txt", text))
     assert profiles
-    for path in sorted(profiles) + ["validation_config.json", "pyproject.toml"]:
+    assert set(profiles) < set(CONTRACT_FILES)
+    for path in CONTRACT_FILES:
         assert path in sparse, path
         assert path in guard, path
     assert "-n auto" in text and "pytest-xdist" in guard
@@ -822,7 +861,10 @@ def test_manual_texture_audit_always_runs():
 
 def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
-    assert [spec.name for spec in ALL_SPECS if not spec.strict] == ["simplifications"]
+    assert [spec.name for spec in ALL_SPECS if not spec.strict] == [
+        "simplifications",
+        "graphical-cultures",
+    ]
 
 
 def test_ci_oob_units_does_not_enable_missing_equipment_factor():
@@ -843,7 +885,7 @@ def test_ci_redundant_modifier_gate_is_strict():
 
 
 def test_ci_idea_icon_check_is_enabled():
-    assert _spec_for("validate_ideas.py").args in ((), None)
+    assert _spec_for("validate_ideas.py").args == ("--missing-name-loc",)
     validator = IdeaValidator("/nonexistent", use_colors=False, workers=1)
     called = []
     validator._parse_all_ideas = lambda: ({}, {}, {})
@@ -925,6 +967,7 @@ def test_group_patterns_preserve_cross_reference_routes():
     for pattern in (
         _CREATE_UNIT_SOURCE_PATTERNS
         + _DELETE_TEMPLATE_SOURCE_PATTERNS
+        + _TEMPLATE_LIMIT_SOURCE_PATTERNS
         + _TEMPLATE_SOURCE_PATTERNS
         + _VARIANT_SOURCE_PATTERNS
     ):
