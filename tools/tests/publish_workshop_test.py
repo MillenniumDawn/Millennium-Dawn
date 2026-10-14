@@ -49,6 +49,7 @@ def test_config_values_valid():
         assert pw.MOD_IDS[key].isdigit(), f"{key} mod ID not numeric"
     for key in pw.MOD_NAMES:
         assert len(pw.MOD_NAMES[key]) > 0, f"{key} name empty"
+    assert pw.DEFAULT_EXCLUDES == pw.ROOT_ONLY_EXCLUDES | pw.ANYWHERE_EXCLUDES
 
 
 # ---------------------------------------------------------------------------
@@ -1484,7 +1485,9 @@ def test_invalid_description_stops_before_upload(tmp_path, monkeypatch, body, er
 
 
 # The description is read before a diff publish prunes its file.
-@pytest.mark.parametrize(("mode", "sync"), [("full", False), ("diff", True)])
+@pytest.mark.parametrize(
+    ("mode", "sync"), [("full", False), ("full", True), ("diff", True)]
+)
 def test_main_description_sync_is_opt_in_and_survives_diff_pruning(
     tmp_path, monkeypatch, sync, mode
 ):
