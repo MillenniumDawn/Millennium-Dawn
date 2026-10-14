@@ -13,8 +13,12 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   Linux, macOS, and Windows. Run it locally before merging any `tools/` change.
 - A validator change and its regression tests are one change. Update a `*_test.py` to
   the new correct behavior in the same commit. If the test holds the correct invariant,
-  fix the validator. Never delete or weaken a test to pass. Removing a dead or
-  duplicate test is a separate cleanup change that keeps the coverage total.
+  fix the validator. Never delete or weaken a test to pass. Removing a test is a
+  separate cleanup change that keeps the missed-line and partial-branch totals.
+- Tests follow [Test Structure](../../tools/README.md#test-structure): one file per
+  module or group of checks, one parametrized table per check, a new case is a new
+  row. A row stays only if it is the flagged or passing baseline, runs a path no other
+  row runs, or is the only row that fails when one rule of the check is broken.
 - The suite runs under `pytest -n auto`, so a test writes only under `tmp_path`.
 - Worker pools in tests start with `spawn` on every OS. A pool worker sees what it
   imports and what it is passed, not state a test patched in the parent.
