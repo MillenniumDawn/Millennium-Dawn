@@ -1,164 +1,149 @@
-"""Event options carrying a log while running no effects (issue #3677)."""
+"""Event option log checks.
 
-from shared.suite import write_under_str as _write
-from validate_events import Validator, find_option_logs_without_effects
+An option that only logs runs no effects (issue #3677). A log that cites another
+option's id points the reader at the wrong option (issue #5266).
+"""
 
+import pytest
+import validate_events as V
+from shared.suite import build_validator, write_tree
+from shared_utils import validation_config
 
-def _validator(tmp_path):
-    return Validator(mod_path=str(tmp_path), use_colors=False, workers=1)
-
-
-def _event(option_body: str) -> str:
-    return (
-        "country_event = {\n"
-        "\tid = foo.1\n"
-        "\ttitle = foo.1.t\n"
-        "\tis_triggered_only = yes\n"
-        "\toption = {\n" + option_body + "\t}\n"
-        "}\n"
-    )
-
-
+_NAME = "\t\tname = foo.1.a\n"
 _LOG = '\t\tlog = "[GetDateText]: [This.GetName]: foo.1.a executed"\n'
+_EFFECT = "\t\tadd_political_power = 10\n"
+_CATEGORIES = {
+    "validate_option_log_without_effect": "event-option-log-without-effect",
+    "validate_option_log_id": "event-option-log-id",
+}
 
 
-def test_name_and_log_only_is_flagged(tmp_path):
-    _write(tmp_path, "events/Ev.txt", _event("\t\tname = foo.1.a\n" + _LOG))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert [(i.message, i.file, i.line) for i in v._issues] == [
-        ("foo.1.a", "Ev.txt", 7)
+def _event(option_body, event_id="foo.1"):
+    """One event whose option body starts on line 6."""
+    return (
+        f"country_event = {{\n\tid = {event_id}\n\ttitle = {event_id}.t\n"
+        "\tis_triggered_only = yes\n\toption = {\n" + option_body + "\t}\n}\n"
+    )
+
+
+def _log(text):
+    return f'\t\tlog = "[GetDateText]: {text}"\n'
+
+
+# check: {case: (event, (message, line) per finding)}
+_OPTION_LOG_CASES = {
+    "validate_option_log_without_effect": {
+        "name and log only": (_event(_NAME + _LOG), [("foo.1.a", 7)]),
+        "trigger and ai_chance are not effects": (
+            _event(
+                _NAME
+                + _LOG
+                + "\t\ttrigger = { has_country_flag = foo_flag }\n"
+                + "\t\tai_chance = {\n\t\t\tbase = 1\n\t\t}\n"
+            ),
+            [("foo.1.a", 7)],
+        ),
+        "unnamed option": (_event(_LOG), [("unnamed option", 6)]),
+        "brace inside the log string": (
+            _event(_NAME + '\t\tlog = "closing } brace"\n'),
+            [("foo.1.a", 7)],
+        ),
+        "real effect": (_event(_NAME + _LOG + _EFFECT), []),
+        "numeric state scope": (
+            _event(_NAME + _LOG + "\t\t652 = { MSC_elect_sobyanin_edro = yes }\n"),
+            [],
+        ),
+        "quoted tag scope": (
+            _event(_NAME + _LOG + '\t\t"LGN" = { change_tag_from = CAR }\n'),
+            [],
+        ),
+        # Only a log at the option's own depth counts.
+        "log nested in an if": (
+            _event(
+                _NAME
+                + "\t\tif = {\n\t\t\tlimit = { has_country_flag = foo_flag }\n\t"
+                + _LOG
+                + "\t\t}\n"
+            ),
+            [],
+        ),
+        "commented-out log": (_event(_NAME + "\t\t#" + _LOG.lstrip("\t")), []),
+    },
+    "validate_option_log_id": {
+        "another option's id": (
+            _event("\t\tname = foo.1.b\n" + _LOG + _EFFECT),
+            [("foo.1.b log cites foo.1.a", 7)],
+        ),
+        "its own id": (_event(_NAME + _LOG + _EFFECT), []),
+        "dotted endings that are not event ids": (
+            _event(
+                _NAME
+                + _log("[This.GetName]: 2025.5")
+                + _log("[This.GetName]: ROOT.capital")
+                + _log("[This.GetName]: v1.2")
+                + _EFFECT
+            ),
+            [],
+        ),
+        "id with a numeric namespace suffix": (
+            _event(_NAME + _log("[This.GetName]: CZE_Army_2000.01") + _EFFECT),
+            [("foo.1.a log cites CZE_Army_2000.01", 7)],
+        ),
+        "Event word form": (
+            _event(_NAME + _log("Event foo.1.b") + _EFFECT),
+            [("foo.1.a log cites foo.1.b", 7)],
+        ),
+        "wrong option letter": (
+            _event(_NAME + _log("Event foo.1 Option b") + _EFFECT),
+            [("foo.1.a log says Option b", 7)],
+        ),
+        "config exemption": (
+            _event(
+                "\t\tname = exempt.1.a\n"
+                + _log("[This.GetName]: exempt.1.b executed")
+                + _EFFECT,
+                "exempt.1",
+            ),
+            [],
+        ),
+    },
+}
+
+
+@pytest.mark.parametrize(
+    ("check", "event", "expected"),
+    [
+        pytest.param(check, *case, id=f"{check}: {name}")
+        for check, cases in _OPTION_LOG_CASES.items()
+        for name, case in cases.items()
+    ],
+)
+def test_option_log_check(tmp_path, monkeypatch, check, event, expected):
+    monkeypatch.setattr(V, "_OPTION_LOG_ID_EXEMPT", frozenset({"exempt.1.a"}))
+    write_tree(tmp_path, {"events/Ev.txt": event})
+    validator = build_validator(V.Validator, tmp_path)
+
+    getattr(validator, check)()
+
+    assert sorted(
+        (i.message, i.line, i.file, i.category, i.severity) for i in validator._issues
+    ) == [
+        (message, line, "Ev.txt", _CATEGORIES[check], V.Severity.ERROR)
+        for message, line in expected
     ]
-    assert v._issues[0].category == "event-option-log-without-effect"
-    assert v.errors_found == 1
-    assert v.warnings_found == 0
 
 
-def test_trigger_and_ai_chance_are_not_effects(tmp_path):
-    body = (
-        "\t\tname = foo.1.a\n"
-        + _LOG
-        + "\t\ttrigger = { has_country_flag = foo_flag }\n"
-        "\t\tai_chance = {\n\t\t\tbase = 1\n\t\t}\n"
-    )
-    _write(tmp_path, "events/Ev.txt", _event(body))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert len(v._issues) == 1
+def test_log_id_worker_skips_unreadable_and_ignored_files(tmp_path):
+    mismatch = _event("\t\tname = foo.1.b\n" + _LOG + _EFFECT)
+    write_tree(tmp_path, {"tools/edge.txt": mismatch})
+
+    for relative in ("tools/edge.txt", "events/missing.txt"):
+        path = str(tmp_path / relative)
+        assert V._extract_event_log_id_mismatches(path, mod_path=str(tmp_path)) == []
 
 
-def test_log_before_name_still_resolves_the_option_name(tmp_path):
-    _write(tmp_path, "events/Ev.txt", _event(_LOG + "\t\tname = foo.1.a\n"))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert [(i.message, i.line) for i in v._issues] == [("foo.1.a", 6)]
+def test_option_log_id_exemptions_map_an_option_to_a_reason():
+    entries = validation_config("validate_events", "option_log_id_exempt")
 
-
-def test_real_effect_is_not_flagged(tmp_path):
-    body = "\t\tname = foo.1.a\n" + _LOG + "\t\tset_country_flag = foo_flag\n"
-    _write(tmp_path, "events/Ev.txt", _event(body))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert v._issues == []
-
-
-def test_numeric_state_scope_counts_as_an_effect(tmp_path):
-    body = (
-        "\t\tname = foo.1.a\n" + _LOG + "\t\t652 = { MSC_elect_sobyanin_edro = yes }\n"
-    )
-    _write(tmp_path, "events/Ev.txt", _event(body))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert v._issues == []
-
-
-def test_quoted_tag_scope_counts_as_an_effect(tmp_path):
-    body = "\t\tname = foo.1.a\n" + _LOG + '\t\t"LGN" = { change_tag_from = CAR }\n'
-    _write(tmp_path, "events/Ev.txt", _event(body))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert v._issues == []
-
-
-def test_hidden_effect_counts_as_an_effect(tmp_path):
-    body = (
-        "\t\tname = foo.1.a\n"
-        + _LOG
-        + "\t\thidden_effect = { set_country_flag = foo_flag }\n"
-    )
-    _write(tmp_path, "events/Ev.txt", _event(body))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert v._issues == []
-
-
-def test_effect_tooltip_counts_as_an_effect(tmp_path):
-    body = (
-        "\t\tname = foo.1.a\n"
-        + _LOG
-        + "\t\teffect_tooltip = { add_political_power = 10 }\n"
-    )
-    _write(tmp_path, "events/Ev.txt", _event(body))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert v._issues == []
-
-
-def test_log_nested_in_an_if_is_not_an_option_level_log(tmp_path):
-    body = (
-        "\t\tname = foo.1.a\n"
-        "\t\tif = {\n"
-        "\t\t\tlimit = { has_country_flag = foo_flag }\n" + "\t" + _LOG + "\t\t}\n"
-    )
-    _write(tmp_path, "events/Ev.txt", _event(body))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert v._issues == []
-
-
-def test_commented_out_log_is_ignored(tmp_path):
-    body = "\t\tname = foo.1.a\n\t\t#" + _LOG.lstrip("\t")
-    _write(tmp_path, "events/Ev.txt", _event(body))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert v._issues == []
-
-
-def test_two_logs_in_one_option_report_both_lines(tmp_path):
-    _write(tmp_path, "events/Ev.txt", _event("\t\tname = foo.1.a\n" + _LOG + _LOG))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert sorted(i.line for i in v._issues) == [7, 8]
-
-
-def test_braces_inside_a_log_string_do_not_break_the_scan(tmp_path):
-    body = '\t\tname = foo.1.a\n\t\tlog = "closing } brace"\n'
-    _write(tmp_path, "events/Ev.txt", _event(body))
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert [i.line for i in v._issues] == [7]
-
-
-def test_empty_tree_reports_nothing(tmp_path):
-    v = _validator(tmp_path)
-    v.validate_option_log_without_effect()
-    assert v._issues == []
-
-
-def test_detector_returns_name_and_line_pairs():
-    text = (
-        "option = {\n"
-        "\tname = foo.1.a\n"
-        '\tlog = "foo.1.a executed"\n'
-        "}\n"
-        "option = {\n"
-        '\tlog = "foo.1.b executed"\n'
-        "\tadd_political_power = 10\n"
-        "}\n"
-    )
-    assert find_option_logs_without_effects(text) == [("foo.1.a", 3)]
-
-
-def test_detector_labels_an_unnamed_option():
-    text = 'option = {\n\tlog = "orphan"\n}\n'
-    assert find_option_logs_without_effects(text) == [("unnamed option", 2)]
+    assert isinstance(entries, dict)
+    assert all(isinstance(k, str) and isinstance(v, str) for k, v in entries.items())
