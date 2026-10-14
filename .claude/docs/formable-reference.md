@@ -308,8 +308,8 @@ New special formable:
    `effect_tooltip`, add the setter and the call. One id per identity.
 3. If the identity can dissolve, `clear_variable` both ratchet variables at each
    dissolution site. The latch stays.
-4. Add a test in `tools/tests/validation/validate_decisions_formable_commitment_test.py`
-   if the site shape is new.
+4. Add a row to the formable tables in
+   `tools/tests/validation/validate_decisions_test.py` if the site shape is new.
 
 Then run `python tools/validation/validate_decisions.py` and `python -m pytest`. The
 validator scans `common/decisions`, `common/national_focus`, `common/scripted_effects`,
