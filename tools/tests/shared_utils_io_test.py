@@ -1,9 +1,13 @@
 import os
 import stat
+import subprocess
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import shared_utils as U
 from shared.suite import initialize_git_repository, run_git
+from shared.suite import write_text as _write
 
 
 def test_normalized_traversal_exclusions_handle_both_separators():
@@ -269,3 +273,277 @@ def test_staged_files_includes_deleted_git_paths_when_requested(tmp_path, monkey
     assert str(deleted) in staged
     assert str(renamed_to) in staged
     assert str(moved_from) in staged
+
+
+@pytest.mark.parametrize(
+    "extension, expected", [(".txt", ["a.txt"]), (".yml", None)], ids=["match", "none"]
+)
+def test_staged_files_filter_by_extension(tmp_path, monkeypatch, extension, expected):
+    _write(tmp_path / "common" / "a.txt", "a")
+    monkeypatch.setenv("MD_STAGED_FILES", "common/a.txt")
+    staged = U.get_staged_files(str(tmp_path), extensions=[extension])
+    assert staged == (
+        None
+        if expected is None
+        else [str(tmp_path / "common" / name) for name in expected]
+    )
+
+
+def test_staged_rename_lists_both_sides(tmp_path, monkeypatch):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    output = SimpleNamespace(
+        stdout="R100\tcommon/old.txt\tcommon/new.txt\n", returncode=0
+    )
+    monkeypatch.setattr(U.subprocess, "run", lambda *args, **kwargs: output)
+    assert U.get_staged_files(str(tmp_path), include_missing=True) == [
+        str(tmp_path / "common" / "old.txt"),
+        str(tmp_path / "common" / "new.txt"),
+    ]
+
+
+def _raise(error):
+    def run(*_args, **_kwargs):
+        raise error
+
+    return run
+
+
+@pytest.mark.parametrize(
+    "run",
+    [
+        _raise(subprocess.TimeoutExpired("git", 1)),
+        lambda *args, **kwargs: SimpleNamespace(stdout=""),
+    ],
+    ids=["git timed out", "nothing staged"],
+)
+def test_staged_files_without_git_output_is_none(tmp_path, monkeypatch, run):
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    monkeypatch.setattr(U.subprocess, "run", run)
+    assert U.get_staged_files(str(tmp_path)) is None
+
+
+# ---- git diff and tree discovery -----------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "include_interface, expected",
+    [(False, ["common/a.txt"]), (True, ["common/a.txt", "interface/b.txt"])],
+    ids=["content only", "with interface"],
+)
+def test_staged_diff_files_come_from_the_env(
+    tmp_path, monkeypatch, include_interface, expected
+):
+    monkeypatch.chdir(tmp_path)
+    _write(tmp_path / "common" / "a.txt", "a")
+    _write(tmp_path / "interface" / "b.txt", "b")
+    monkeypatch.setattr(U, "_staged_files_cache", None)
+    monkeypatch.setenv("MD_STAGED_FILES", "common/a.txt\ninterface/b.txt\nmissing.txt")
+    assert (
+        U.get_git_diff_files(staged_only=True, include_interface=include_interface)
+        == expected
+    )
+
+
+def test_branch_diff_asks_git_for_the_merge_base_range(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    _write(tmp_path / "common" / "a.txt", "a")
+    _write(tmp_path / "interface" / "b.txt", "b")
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    calls = []
+    result = SimpleNamespace(stdout="common/a.txt\ninterface/b.txt\n", returncode=0)
+    monkeypatch.setattr(
+        U.subprocess, "run", lambda command, **kwargs: calls.append(command) or result
+    )
+    assert U.get_git_diff_files(base_branch="release") == ["common/a.txt"]
+    assert calls[0][-1] == "release...HEAD"
+
+
+def test_branch_diff_without_git_is_empty(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    monkeypatch.setattr(U.subprocess, "run", _raise(OSError()))
+    assert U.get_git_diff_files() == []
+
+
+@pytest.mark.parametrize(
+    "include_interface, expected",
+    [(False, ["common/a.txt"]), (True, ["common/a.txt", "interface/b.txt"])],
+    ids=["content only", "with interface"],
+)
+def test_all_txt_files(tmp_path, include_interface, expected):
+    _write(tmp_path / "common" / "a.txt", "a")
+    _write(tmp_path / "interface" / "b.txt", "b")
+    assert U.get_all_txt_files(str(tmp_path), include_interface=include_interface) == [
+        str(tmp_path / relative) for relative in expected
+    ]
+
+
+def test_excluded_path_matches_a_directory_component(tmp_path):
+    excluded = tmp_path / "common" / "nested" / "tools" / "ignored.txt"
+    assert U.is_excluded_path(str(excluded), {"tools"}, str(tmp_path))
+    assert not U.is_excluded_path(
+        str(tmp_path / "common" / "nested" / "a.TXT"), {"tools"}, str(tmp_path)
+    )
+
+
+def test_txt_targets_of_a_directory_a_file_and_a_missing_path(tmp_path):
+    content = tmp_path / "common" / "nested"
+    _write(content / "a.TXT", "a")
+    _write(content / "b.yml", "b")
+    _write(content / "tools" / "ignored.txt", "ignored")
+    a_txt = str(content / "a.TXT")
+    assert list(U.iter_txt_targets(str(content), {"tools"})) == [("a.TXT", a_txt)]
+    assert list(U.iter_txt_targets(a_txt, set())) == [(a_txt, a_txt)]
+    assert list(U.iter_txt_targets(str(content / "missing.txt"), set())) == []
+
+
+# ---- writes, reads and backups -------------------------------------------------
+
+
+def test_atomic_writes_of_text_with_a_bom_and_of_bytes(tmp_path):
+    target = tmp_path / "nested" / "file.txt"
+    U.atomic_write_text(str(target), "café\n", encoding="utf-8-sig", bom=True)
+    binary = tmp_path / "nested" / "binary.dat"
+    U.atomic_write_bytes(str(binary), b"\x00\xff")
+    assert binary.read_bytes() == b"\x00\xff"
+    assert target.read_bytes() == b"\xef\xbb\xbfcaf\xc3\xa9\n"
+    assert U.read_text_strict(str(target)) == "café\n"
+    assert U.read_text_strict(str(target), reject_symlink=False).startswith("café")
+
+
+def test_backup_copies_the_file_and_a_missing_file_has_none(tmp_path):
+    target = _write(tmp_path / "file.txt", "content\n")
+    backup = U.create_backup(str(target))
+    assert Path(backup).read_bytes() == target.read_bytes()
+    assert U.create_backup(str(tmp_path / "missing")) == ""
+
+
+@pytest.mark.parametrize(
+    "path, expected",
+    [("prefix/common/file.txt", "common/file.txt"), ("unrelated.txt", "unrelated.txt")],
+)
+def test_clean_filepath(path, expected):
+    assert U.clean_filepath(path) == expected
+
+
+def test_file_opener_lowercases_strips_comments_and_caches(tmp_path):
+    path = _write(tmp_path / "data.txt", 'KEY = "Value # kept" # remove\n')
+    U.FileOpener.clear_cache()
+    raw = U.FileOpener.open_text_file(
+        str(path), lowercase=True, strip_comments_flag=True
+    )
+    assert raw == 'key = "value # kept" \n'
+    assert (
+        U.FileOpener.open_text_file(str(path), lowercase=True, strip_comments_flag=True)
+        == raw
+    )
+    U.FileOpener.invalidate(str(path))
+
+
+@pytest.mark.parametrize("needle, line", [("KEY", 1), ("missing", 0)])
+def test_find_line_number(tmp_path, needle, line):
+    path = _write(tmp_path / "data.txt", 'KEY = "Value # kept" # remove\n')
+    assert U.find_line_number(str(path), needle) == line
+
+
+# ---- HOI4 install and idea categories ------------------------------------------
+
+
+def test_install_comes_from_the_env_then_the_known_paths(tmp_path, monkeypatch):
+    install = tmp_path / "hoi4"
+    install.mkdir()
+    monkeypatch.setenv("HOI4_PATH", str(install))
+    assert U.find_hoi4_install() == str(install)
+    assert U.find_hoi4_install(str(install)) == str(install)
+
+    monkeypatch.delenv("HOI4_PATH")
+    monkeypatch.setattr(U, "HOI4_INSTALL_PATHS", [str(tmp_path / "missing-install")])
+    monkeypatch.setattr(U, "HOI4_DISCOVERY_SOURCES", [])
+    assert U.find_hoi4_install() is None
+
+    monkeypatch.setattr(U, "HOI4_DISCOVERY_SOURCES", [lambda: [str(install)]])
+    assert U.find_hoi4_install() == str(install)
+
+
+def test_steam_library_installs_reads_every_library_folder(tmp_path, monkeypatch):
+    steam = tmp_path / "Steam"
+    other = tmp_path / "Games"
+    game = other / "steamapps" / "common" / "Hearts of Iron IV"
+    game.mkdir(parents=True)
+    escaped_steam = str(steam).replace("\\", "\\\\")
+    escaped_other = str(other).replace("\\", "\\\\")
+    _write(
+        steam / "steamapps" / "libraryfolders.vdf",
+        '"libraryfolders"\n{\n'
+        f'\t"0"\n\t{{\n\t\t"path"\t\t"{escaped_steam}"\n\t}}\n'
+        f'\t"1"\n\t{{\n\t\t"path"\t\t"{escaped_other}"\n\t}}\n}}\n',
+    )
+    monkeypatch.setattr(U, "_steam_roots", lambda: [str(steam)])
+    assert U._steam_library_installs() == [
+        os.path.join(str(steam), U._HOI4_GAME_SUBDIR),
+        os.path.join(str(other), U._HOI4_GAME_SUBDIR),
+    ]
+    monkeypatch.setattr(U, "HOI4_INSTALL_PATHS", [])
+    monkeypatch.delenv("HOI4_PATH", raising=False)
+    assert U.find_hoi4_install() == str(game)
+
+    monkeypatch.setattr(U, "_steam_roots", lambda: [str(tmp_path / "nowhere")])
+    assert U._steam_library_installs() == []
+
+
+def test_editor_settings_installs_parses_jsonc(tmp_path, monkeypatch):
+    settings = _write(
+        tmp_path / "settings.json",
+        "{\n"
+        "    // user settings\n"
+        '    "cwtools.cache.hoi4": "H:\\\\Games\\\\Hearts of Iron IV",\n'
+        '    "mdHoi4Utilities.installPath": "h:\\\\Games\\\\Hearts of Iron IV\\\\",\n'
+        '    "mdHoi4Utilities.modFile": "D:\\\\mod\\\\descriptor.mod",\n'
+        "}\n",
+    )
+    monkeypatch.setattr(U, "_editor_settings_files", lambda: [str(settings)])
+    assert U._editor_settings_installs() == [
+        "H:\\Games\\Hearts of Iron IV",
+        "h:\\Games\\Hearts of Iron IV",
+    ]
+
+    _write(settings, '{ "editor.tabSize": 4 }\n')
+    assert U._editor_settings_installs() == []
+    monkeypatch.setattr(U, "_editor_settings_files", lambda: [str(tmp_path / "gone")])
+    assert U._editor_settings_installs() == []
+
+
+def test_idea_categories_read_every_tags_file(tmp_path):
+    tags = tmp_path / "common" / "idea_tags"
+    _write(
+        tags / "00_tags.txt",
+        "idea_categories = {\n"
+        " selectable = { slot = national_spirit type = national_spirit }\n"
+        " hidden = { hidden = yes slot = dynamic_modifier_slots }\n"
+        " plain = { type = army_spirit }\n"
+        "}\n",
+    )
+    _write(tags / "not_tags.txt", "not categories = { x = { yes = no } }\n")
+    _write(tags / "broken.txt", "idea_categories = { broken = { slot = x\n")
+    categories = U.get_all_idea_categories(str(tmp_path))
+    assert [category["name"] for category in categories] == [
+        "selectable",
+        "hidden",
+        "plain",
+        "broken",
+    ]
+    assert categories[0]["has_slot"] and categories[0]["type"] == "national_spirit"
+    assert categories[1]["hidden"] and categories[1]["has_char_slot"] is False
+    assert U.get_non_selectable_idea_categories(str(tmp_path)) == frozenset(
+        {"plain", "hidden"}
+    )
+    assert U.get_slotless_idea_categories(str(tmp_path)) == frozenset({"plain"})
+
+
+def test_without_idea_tags_the_vanilla_defaults_apply(tmp_path):
+    empty = tmp_path / "empty"
+    assert U.get_all_idea_categories(str(empty)) == []
+    assert U.get_non_selectable_idea_categories(str(empty)) == frozenset(
+        {"country", "hidden_ideas"}
+    )
+    assert U.get_slotless_idea_categories(str(empty)) == frozenset()

@@ -371,6 +371,20 @@ def test_crlf_survives_the_rewrite(tmp_path):
     assert b"allowed" not in payload
 
 
+def test_rewrite_with_backup_keeps_a_copy(tmp_path):
+    idea_path = tmp_path / "ideas.txt"
+    with open(idea_path, "w", encoding="utf-8", newline="") as out:
+        out.write(_IDEA_SAMPLE)
+
+    assert process_file(str(idea_path), SLOTLESS, dry_run=False, backup=True) == (
+        1,
+        0,
+        False,
+    )
+    assert "allowed" not in idea_path.read_text(encoding="utf-8")
+    assert list(tmp_path.glob("ideas.txt.backup.*"))
+
+
 def test_unreadable_file_is_reported_not_raised(tmp_path):
     missing = str(tmp_path / "missing.txt")
     assert process_file(missing, SLOTLESS, False, False) == (0, 0, True)

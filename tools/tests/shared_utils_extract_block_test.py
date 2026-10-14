@@ -3,7 +3,15 @@
 import random
 
 import pytest
-from shared_utils import blank_quoted_strings, extract_block, find_matching_brace
+from shared_utils import (
+    blank_quoted_strings,
+    extract_block,
+    extract_block_from_text,
+    find_matching_brace,
+    find_unquoted_block_end,
+    strip_comments,
+    strip_inline_comment,
+)
 
 
 def _split(text):
@@ -239,3 +247,55 @@ def test_text_scanners_match_their_reference_loops_on_random_input():
         ), repr(text)
         open_idx = rng.randint(-len(text) - 1, len(text) + 1)
         assert _same_brace_outcome(text, open_idx), (text, open_idx)
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [('x = { log = "}" value = { yes } }', 32), ("x = {", -1)],
+    ids=["quoted brace and nested block", "unclosed"],
+)
+def test_find_matching_brace_from_the_opener(text, expected):
+    assert find_matching_brace(text, 4) == expected
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [("name = { value = 1 } tail", (" value = 1 ", 20)), ("name = no block", ("", -1))],
+    ids=["block", "no block"],
+)
+def test_extract_block_from_text(text, expected):
+    assert extract_block_from_text(text, 0) == expected
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [("inner } tail", (7, True)), ("inner", (5, False))],
+    ids=["closed", "unclosed"],
+)
+def test_find_unquoted_block_end(text, expected):
+    assert find_unquoted_block_end(text, 0) == expected
+
+
+@pytest.mark.parametrize(
+    "line, expected",
+    [("foo # comment", "foo "), ('foo = "# not a comment"', 'foo = "# not a comment"')],
+    ids=["comment", "hash in quotes"],
+)
+def test_strip_inline_comment(line, expected):
+    assert strip_inline_comment(line) == expected
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    [
+        ('a # x\n# whole\nlog = "# keep"', 'a \n\nlog = "# keep"'),
+        ('log = "a \\" # keep" # x', 'log = "a \\" # keep" '),
+    ],
+    ids=["comment lines", "escaped quote"],
+)
+def test_strip_comments_keeps_quoted_hashes(text, expected):
+    assert strip_comments(text) == expected
+
+
+def test_blank_quoted_strings_keeps_the_listed_quotes():
+    assert blank_quoted_strings('x = "a { b }"\nyes', {4}) == 'x = "a { b }"\nyes'
