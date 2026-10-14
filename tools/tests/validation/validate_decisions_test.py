@@ -1021,6 +1021,13 @@ _ICON_REFERENCE_CASES = {
             ("dyn", "decision", "GFX_decision_low", 7),
         ],
     ),
+    "icon nested in an effect": (
+        _DECISION_FILE,
+        "cat = {\n\tdec = {\n\t\ticon = money\n\t\tcomplete_effect = {\n"
+        "\t\t\tcreate_intelligence_agency = {\n\t\t\t\ticon = GFX_agency_logo\n"
+        "\t\t\t}\n\t\t}\n\t}\n}\n",
+        [("dec", "decision", "money", 3)],
+    ),
     "unbalanced dynamic icon block": (
         _DECISION_FILE,
         "cat = {\n\tdec = {\n\t\ticon = {\n\t\t\tkey = GFX_decision_x\n",

@@ -320,9 +320,17 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
         # Owner spans and newline offsets are collected once and bisected per
         # reference; rescanning from the top for every icon is quadratic on the
         # bigger decision files.
-        owners = _owner_spans(text, 0 if is_category else 1)
+        owner_depth = 0 if is_category else 1
+        owners = _owner_spans(text, owner_depth)
         owner_starts = [s for s, _, _ in owners]
         newlines = [i for i, ch in enumerate(text) if ch == "\n"]
+        brace_offsets: List[int] = []
+        brace_depths: List[int] = []
+        depth = 0
+        for m in re.finditer(r"[{}]", text):
+            depth += 1 if m.group() == "{" else -1
+            brace_offsets.append(m.start())
+            brace_depths.append(depth)
 
         refs: List[Tuple[int, str, str]] = []
         for m in _DEC_ICON_SIMPLE_RE.finditer(text):
@@ -339,6 +347,11 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
 
         out: List[Tuple[str, str, str, int]] = []
         for offset, kind, value in sorted(refs):
+            # An icon nested in an effect, such as create_intelligence_agency,
+            # is not the owner's own icon.
+            brace = bisect.bisect_right(brace_offsets, offset) - 1
+            if (brace_depths[brace] if brace >= 0 else 0) != owner_depth + 1:
+                continue
             idx = bisect.bisect_right(owner_starts, offset) - 1
             owner = "<unknown>"
             if idx >= 0 and offset < owners[idx][1]:
