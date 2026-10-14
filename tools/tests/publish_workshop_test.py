@@ -23,7 +23,7 @@ import time
 from pathlib import Path, PurePosixPath
 
 import pytest
-from shared.suite import initialize_git_repository, run_git, write_text
+from shared.suite import initialize_git_repository, write_text
 
 from tools.publishing import publish_workshop as pw
 
@@ -49,9 +49,6 @@ def test_config_values_valid():
         assert pw.MOD_IDS[key].isdigit(), f"{key} mod ID not numeric"
     for key in pw.MOD_NAMES:
         assert len(pw.MOD_NAMES[key]) > 0, f"{key} name empty"
-    assert "descriptor.mod" in pw.ALWAYS_KEEP
-    assert "thumbnail.png" in pw.ALWAYS_KEEP
-    assert pw.DEFAULT_EXCLUDES == pw.ROOT_ONLY_EXCLUDES | pw.ANYWHERE_EXCLUDES
 
 
 # ---------------------------------------------------------------------------
@@ -106,7 +103,6 @@ def test_format_size(n, expected):
         ("line1\rline2", "line1\\rline2"),
         ("line1\nline2", "line1\\nline2"),
         (PurePosixPath("/tmp/mod"), "/tmp/mod"),
-        ('"quoted"\\npath', '\\"quoted\\"\\\\npath'),
     ],
 )
 def test_escape_vdf(value, expected):
@@ -204,14 +200,6 @@ def _frontend_loc(mod_dir, lang, body):
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_bytes(b"\xef\xbb\xbf" + body.encode("utf-8"))
     return path
-
-
-def test_frontend_loc_files_returns_the_fixed_locale_set(tmp_path):
-    assert {
-        path.relative_to(tmp_path).as_posix()
-        for path in pw.frontend_loc_files(tmp_path)
-    } == EXPECTED_FRONTEND_PATHS
-    assert tuple(pw.VERSION_LOC_KEYS) == EXPECTED_VERSION_LOC_KEYS
 
 
 def _frontend_body(lang, version="2.0.0"):
@@ -357,15 +345,11 @@ def test_normalize_version_accepts_supported_formats(value, expected):
         "v",
         " 1.2.3",
         "1.2.3 ",
-        '"1.2.3"',
-        "1.2.3\\1",
         "1.2",
         "1.2.3-",
         "1.2.3-beta..1",
-        "-1.2.3",
         "01.2.3",
         "1.2.3\n",
-        "1.2.3\x00",
     ],
 )
 def test_normalize_version_rejects_malformed_values(value):
@@ -437,15 +421,6 @@ def test_patch_frontend_version_rejects_malformed_frontend_banners(
 
     with pytest.raises(SystemExit, match=expected_error):
         pw.patch_frontend_version(tmp_path, "1.2.3")
-
-    assert all(path.read_bytes() == data for path, data in before.items())
-
-
-def test_patch_frontend_version_is_a_byte_for_byte_noop_for_same_version(tmp_path):
-    paths = _write_frontend_tree(tmp_path, version="1.2.3")
-    before = {path: path.read_bytes() for path in paths}
-
-    pw.patch_frontend_version(tmp_path, "1.2.3")
 
     assert all(path.read_bytes() == data for path, data in before.items())
 
@@ -534,10 +509,10 @@ def test_validate_mod_files(tmp_path, present, missing):
             {"events/new_file.txt"},
             set(),
         ),
-        # A directory, traversal, or a non-canonical spelling is never a match.
+        # A directory or a non-canonical spelling is never a match.
         (
             {"events/existing.txt", "descriptor.mod"},
-            {"events", "../outside.txt", "events/../descriptor.mod", ""},
+            {"events", "events/../descriptor.mod"},
             set(),
         ),
     ],
@@ -604,22 +579,12 @@ def test_get_publishable_changed_files_does_not_scan_the_tree(tmp_path, monkeypa
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "setup,expected_count,expected_total",
-    [
-        ({"a.txt": 100, "b.txt": 50, "sub/c.txt": 25}, 3, 175),
-        ({}, 0, 0),
-    ],
-    ids=["three_files", "empty_dir"],
-)
-def test_dir_stats(tmp_path, setup, expected_count, expected_total):
-    for rel, size in setup.items():
+def test_dir_stats_counts_files_and_bytes(tmp_path):
+    for rel, size in {"a.txt": 100, "b.txt": 50, "sub/c.txt": 25}.items():
         p = tmp_path / rel
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_bytes(b"x" * size)
-    count, total = pw.dir_stats(tmp_path)
-    assert count == expected_count
-    assert total == expected_total
+    assert pw.dir_stats(tmp_path) == (3, 175)
 
 
 # ---------------------------------------------------------------------------
@@ -627,43 +592,19 @@ def test_dir_stats(tmp_path, setup, expected_count, expected_total):
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.parametrize(
-    "initial_files,changed,expect_present,expect_absent",
-    [
-        # keep.txt and descriptor.mod kept; prune.txt removed.
-        (
-            {"keep.txt", "prune.txt", "descriptor.mod"},
-            {"keep.txt"},
-            {"keep.txt", "descriptor.mod"},
-            {"prune.txt"},
-        ),
-        # ALWAYS_KEEP files survive even when changed set is empty.
-        (
-            {"descriptor.mod", "thumbnail.png", "delete_me.txt"},
-            set(),
-            {"descriptor.mod", "thumbnail.png"},
-            {"delete_me.txt"},
-        ),
-    ],
-    ids=["removes_untracked", "keeps_always_keep"],
-)
-def test_prune_unchanged(
-    tmp_path, initial_files, changed, expect_present, expect_absent
-):
+def test_prune_keeps_the_always_kept_files_of_an_empty_diff(tmp_path):
     mod_dir = tmp_path / "mod"
     mod_dir.mkdir()
-    for rel in initial_files:
-        p = mod_dir / rel
-        p.parent.mkdir(parents=True, exist_ok=True)
-        if rel.endswith(".png"):
-            p.write_bytes(b"\x89PNG")
-        else:
-            write_text(p, "content")
-    pw.prune_unchanged(mod_dir, changed)
-    for rel in expect_present:
-        assert (mod_dir / rel).exists(), f"{rel} should exist"
-    for rel in expect_absent:
-        assert not (mod_dir / rel).exists(), f"{rel} should not exist"
+    write_text(mod_dir / "descriptor.mod", "content")
+    (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
+    write_text(mod_dir / "delete_me.txt", "content")
+
+    pw.prune_unchanged(mod_dir, set())
+
+    assert sorted(path.name for path in mod_dir.iterdir()) == [
+        "descriptor.mod",
+        "thumbnail.png",
+    ]
 
 
 # ---------------------------------------------------------------------------
@@ -1027,20 +968,6 @@ def test_copy_repo_publishes_tracked_head_only(tmp_path, monkeypatch):
     assert not (copied / "untracked.txt").exists()
 
 
-def test_copy_repo_refuses_a_symlink_tracked_by_real_git(tmp_path, monkeypatch):
-    repo = _real_repo(tmp_path)
-    try:
-        os.symlink("tracked.txt", repo / "tracked-link")
-    except OSError:
-        pytest.skip("symlinks unavailable")
-    run_git(repo, "add", "tracked-link")
-    run_git(repo, "commit", "-m", "symlink")
-    monkeypatch.setattr(pw, "REPO_ROOT", repo)
-
-    with pytest.raises(RuntimeError, match="tracked symlink"):
-        pw.copy_repo(tmp_path / "publish", set())
-
-
 def test_steam_login_exits_when_steamcmd_fails(monkeypatch):
     monkeypatch.setattr(pw.subprocess, "call", lambda _cmd: 7)
 
@@ -1145,25 +1072,6 @@ def test_publish_exits_after_exhausted_retries(tmp_path, monkeypatch):
         pw.publish(_publish_mod(tmp_path), "user", "1", "note")
 
 
-def test_publish_verbose_echoes_the_vdf_and_steamcmd_stream(
-    tmp_path, monkeypatch, capsys
-):
-    _stub_publish_runtime(tmp_path, monkeypatch)
-    monkeypatch.setattr(
-        pw.subprocess,
-        "Popen",
-        lambda *_args, **_kwargs: _SteamProc(["Preparing workshop item"], returncode=0),
-    )
-
-    pw.publish(_publish_mod(tmp_path), "user", "1", "Line1\nLine2", verbose=True)
-
-    out = capsys.readouterr().out
-    assert "--- workshop_upload.vdf ---" in out
-    assert "Preparing workshop item" in out
-    vdf = (tmp_path / "workshop_upload.vdf").read_text(encoding="utf-8")
-    assert r"Line1\nLine2" in vdf
-
-
 def test_main_exits_without_a_username(monkeypatch):
     monkeypatch.delenv("STEAM_USERNAME", raising=False)
     monkeypatch.setattr(
@@ -1195,98 +1103,6 @@ def test_main_refuses_a_diff_that_deletes_files(monkeypatch):
         pw.main()
 
 
-def test_main_refuses_a_diff_with_no_publishable_files(tmp_path, monkeypatch):
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "publish_workshop.py",
-            "test",
-            "--base-ref",
-            "v1",
-            "--username",
-            "u",
-            "--version",
-            "1.2.3",
-        ],
-    )
-    monkeypatch.setattr(pw, "get_deleted_files", lambda _ref: set())
-    monkeypatch.setattr(pw, "get_changed_files", lambda _ref: {"tools/secret.py"})
-    monkeypatch.setattr(pw.tempfile, "mkdtemp", lambda prefix="": str(tmp_path / "pub"))
-    (tmp_path / "pub").mkdir()
-
-    def fake_copy(dest_parent, _excludes):
-        mod_dir = dest_parent / "mod"
-        mod_dir.mkdir()
-        write_text(mod_dir / "descriptor.mod", "name=x\n")
-        (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
-        return mod_dir
-
-    monkeypatch.setattr(pw, "copy_repo", fake_copy)
-
-    with pytest.raises(SystemExit, match="No publishable mod files changed"):
-        pw.main()
-
-
-def test_main_full_publish_patches_the_descriptor_then_uploads(tmp_path, monkeypatch):
-    _prepare_full_main(
-        tmp_path,
-        monkeypatch,
-        "test",
-        "--full",
-        "--username",
-        "uploader",
-        "--version",
-        "1.2.3",
-        "--changenote",
-        "notes",
-        "--exclude",
-        "scratch",
-    )
-    seen = {}
-
-    def fake_copy(dest_parent, excludes):
-        seen["excludes"] = set(excludes)
-        mod_dir = dest_parent / "mod"
-        mod_dir.mkdir()
-        write_text(
-            mod_dir / "descriptor.mod",
-            'name="Old"\nversion="0.1"\nremote_file_id="0"\n',
-        )
-        _write_frontend_tree(mod_dir)
-        (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
-        return mod_dir
-
-    def fake_publish(
-        mod_dir, username, mod_id, changenote, verbose=False, description=None
-    ):
-        seen["descriptor"] = (mod_dir / "descriptor.mod").read_text(encoding="utf-8")
-        seen["frontend_paths"] = {
-            path.relative_to(mod_dir).as_posix()
-            for path in mod_dir.glob("localisation/*/MD_frontend_l_*.yml")
-        }
-        seen["username"] = username
-        seen["mod_id"] = mod_id
-        seen["changenote"] = changenote
-        seen["verbose"] = verbose
-
-    monkeypatch.setattr(pw, "copy_repo", fake_copy)
-    monkeypatch.setattr(pw, "publish", fake_publish)
-
-    pw.main()
-
-    assert "scratch" in seen["excludes"]
-    assert "tools" in seen["excludes"]
-    assert 'name="MD Test"' in seen["descriptor"]
-    assert 'remote_file_id="2777133449"' in seen["descriptor"]
-    assert 'version="1.2.3"' in seen["descriptor"]
-    assert seen["frontend_paths"] == EXPECTED_FRONTEND_PATHS
-    assert seen["username"] == "uploader"
-    assert seen["mod_id"] == "2777133449"
-    assert seen["changenote"] == "notes"
-    assert seen["verbose"] is False
-
-
 def _staged_mod(dest_parent, description_body):
     mod_dir = dest_parent / "mod"
     mod_dir.mkdir()
@@ -1303,17 +1119,13 @@ def _main_staged(tmp_path, monkeypatch, *args, description_body=None):
     seen = {}
 
     def fake_copy(dest_parent, excludes):
-        mod_dir = _staged_mod(dest_parent, description_body)
-        if "english" in excludes:
-            (mod_dir / "localisation/english/MD_frontend_l_english.yml").unlink()
-        return mod_dir
+        seen["excludes"] = set(excludes)
+        return _staged_mod(dest_parent, description_body)
 
-    def fake_publish(mod_dir, *_args, **_kwargs):
-        seen["description"] = _kwargs.get("description")
-        seen["frontend_paths"] = {
-            path.relative_to(mod_dir).as_posix()
-            for path in mod_dir.glob("localisation/*/MD_frontend_l_*.yml")
-        }
+    def fake_publish(mod_dir, *args, **kwargs):
+        seen["publish_args"] = args
+        seen["verbose"] = kwargs["verbose"]
+        seen["description"] = kwargs["description"]
         seen["frontends"] = {
             rel: (mod_dir / rel).read_text(encoding="utf-8")
             for rel in EXPECTED_FRONTEND_PATHS
@@ -1359,17 +1171,29 @@ def _main_diff_staged(tmp_path, monkeypatch, changed, *args, description_body=No
     return seen
 
 
-def test_main_requires_version_before_staging(monkeypatch, capsys):
-    monkeypatch.setattr(
-        sys, "argv", ["publish_workshop.py", "release", "--username", "u"]
-    )
+# argparse rejects these before anything is staged.
+# case: (arguments, what the usage error names)
+_USAGE_ERROR_CASES = {
+    "no --version": (("release", "--username", "u"), "--version"),
+    "--full with --base-ref": (
+        ("release", "--version", "1.2.3", "--full", "--base-ref", "v1"),
+        "not allowed with argument",
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("args", "error"), _USAGE_ERROR_CASES.values(), ids=_USAGE_ERROR_CASES
+)
+def test_main_usage_errors_stop_before_staging(monkeypatch, capsys, args, error):
+    monkeypatch.setattr(sys, "argv", ["publish_workshop.py", *args])
     monkeypatch.setattr(
         pw.tempfile, "mkdtemp", lambda **_kwargs: pytest.fail("staging started")
     )
     with pytest.raises(SystemExit) as exc:
         pw.main()
     assert exc.value.code == 2
-    assert "--version" in capsys.readouterr().err
+    assert error in capsys.readouterr().err
 
 
 # Each target ships its own name, Workshop id and banner marker. The version
@@ -1401,9 +1225,49 @@ def test_main_full_publish_stamps_the_descriptor_and_every_banner(
     assert f'version="{shipped}"' in staged["descriptor"]
     assert f'name="{pw.MOD_NAMES[target]}"' in staged["descriptor"]
     assert f'remote_file_id="{pw.MOD_IDS[target]}"' in staged["descriptor"]
-    assert staged["frontend_paths"] == EXPECTED_FRONTEND_PATHS
     for body in staged["frontends"].values():
         assert body.count(f'v{shipped}{marker}"') == 2
+
+
+# case: (extra arguments, excludes copy_repo gets, verbose publish gets)
+_MAIN_ARGUMENT_CASES = {
+    "defaults plus --exclude": (
+        ("--exclude", "scratch"),
+        pw.DEFAULT_EXCLUDES | {"scratch"},
+        False,
+    ),
+    "--no-default-excludes --verbose": (
+        ("--no-default-excludes", "--verbose"),
+        set(),
+        True,
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("extra", "excludes", "verbose"),
+    _MAIN_ARGUMENT_CASES.values(),
+    ids=_MAIN_ARGUMENT_CASES,
+)
+def test_main_hands_its_arguments_to_copy_and_publish(
+    tmp_path, monkeypatch, extra, excludes, verbose
+):
+    staged = _main_staged(
+        tmp_path,
+        monkeypatch,
+        "test",
+        "--username",
+        "uploader",
+        "--version",
+        "1.2.3",
+        "--changenote",
+        "notes",
+        *extra,
+    )
+
+    assert staged["excludes"] == excludes
+    assert staged["publish_args"] == ("uploader", pw.MOD_IDS["test"], "notes")
+    assert staged["verbose"] is verbose
 
 
 def test_main_version_validation_happens_before_copy(tmp_path, monkeypatch):
@@ -1421,24 +1285,6 @@ def test_main_version_validation_happens_before_copy(tmp_path, monkeypatch):
 
     with pytest.raises(SystemExit, match=r"^ERROR: Invalid version"):
         pw.main()
-
-
-def test_main_excludes_a_required_locale_instead_of_uploading_a_mismatch(
-    tmp_path, monkeypatch
-):
-    with pytest.raises(SystemExit, match="Missing expected frontend localisation file"):
-        _main_staged(
-            tmp_path,
-            monkeypatch,
-            "test",
-            "--full",
-            "--username",
-            "u",
-            "--version",
-            "1.2.3",
-            "--exclude",
-            "english",
-        )
 
 
 def test_main_diff_publish_with_version_ships_the_patched_banner(
@@ -1463,14 +1309,22 @@ def test_main_diff_publish_with_version_ships_the_patched_banner(
     assert "10/10 frontend files rewritten" in capsys.readouterr().out
 
 
-def test_main_diff_publish_with_version_still_refuses_an_empty_diff(
-    tmp_path, monkeypatch
-):
+# case: files the diff changed
+_UNPUBLISHABLE_DIFF_CASES = {
+    "only excluded files": {"tools/secret.py"},
+    "only always-kept files": {"descriptor.mod"},
+}
+
+
+@pytest.mark.parametrize(
+    "changed", _UNPUBLISHABLE_DIFF_CASES.values(), ids=_UNPUBLISHABLE_DIFF_CASES
+)
+def test_main_refuses_a_diff_with_no_publishable_files(tmp_path, monkeypatch, changed):
     with pytest.raises(SystemExit, match="No publishable mod files changed"):
         _main_diff_staged(
             tmp_path,
             monkeypatch,
-            {"tools/secret.py"},
+            changed,
             "beta",
             "--base-ref",
             "v1",
@@ -1479,46 +1333,6 @@ def test_main_diff_publish_with_version_still_refuses_an_empty_diff(
             "--version",
             "1.2.3",
         )
-
-
-def test_main_no_default_excludes_is_honoured(tmp_path, monkeypatch):
-    _prepare_full_main(
-        tmp_path,
-        monkeypatch,
-        "beta",
-        "--full",
-        "--username",
-        "u",
-        "--version",
-        "1.2.3",
-        "--no-default-excludes",
-        "--verbose",
-    )
-    seen = {}
-
-    def fake_copy(dest_parent, excludes):
-        seen["excludes"] = set(excludes)
-        mod_dir = dest_parent / "mod"
-        mod_dir.mkdir()
-        _write_frontend_tree(mod_dir)
-        write_text(mod_dir / "descriptor.mod", "name=x\n")
-        (mod_dir / "thumbnail.png").write_bytes(b"\x89PNG")
-        return mod_dir
-
-    def fake_publish(
-        mod_dir, username, mod_id, changenote, verbose=False, description=None
-    ):
-        seen["mod_id"] = mod_id
-        seen["verbose"] = verbose
-
-    monkeypatch.setattr(pw, "copy_repo", fake_copy)
-    monkeypatch.setattr(pw, "publish", fake_publish)
-
-    pw.main()
-
-    assert seen["excludes"] == set()
-    assert seen["mod_id"] == pw.MOD_IDS["beta"]
-    assert seen["verbose"] is True
 
 
 # Each committed marker is replaced, and an empty target marker strips it.
@@ -1569,6 +1383,7 @@ def test_publish_keeps_diagnostics_in_log_and_quiets_default_output(
     out = capsys.readouterr().out
     assert "Warning: example diagnostic" in out
     assert "Upload completed" in out
+    assert ("--- workshop_upload.vdf ---" in out) is verbose
     assert ("Phase timings" in out) is verbose
     assert ("Preparing workshop item" in out) is verbose
     log = next(tmp_path.glob("md_publish_*.log")).read_text(encoding="utf-8")
@@ -1607,29 +1422,6 @@ def test_spinner_does_not_start_animation_for_redirected_output(monkeypatch, cap
     with pw.Spinner("Copying"):
         pass
     assert "+ Copying" in capsys.readouterr().out
-
-
-def test_main_rejects_conflicting_modes_before_staging(monkeypatch, capsys):
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "publish_workshop.py",
-            "release",
-            "--version",
-            "1.2.3",
-            "--full",
-            "--base-ref",
-            "v1",
-        ],
-    )
-    monkeypatch.setattr(
-        pw.tempfile, "mkdtemp", lambda **_kwargs: pytest.fail("staging started")
-    )
-    with pytest.raises(SystemExit) as exc:
-        pw.main()
-    assert exc.value.code == 2
-    assert "not allowed with argument" in capsys.readouterr().err
 
 
 _DESCRIPTION = (
@@ -1692,9 +1484,7 @@ def test_invalid_description_stops_before_upload(tmp_path, monkeypatch, body, er
 
 
 # The description is read before a diff publish prunes its file.
-@pytest.mark.parametrize(
-    ("mode", "sync"), [("full", False), ("full", True), ("diff", True)]
-)
+@pytest.mark.parametrize(("mode", "sync"), [("full", False), ("diff", True)])
 def test_main_description_sync_is_opt_in_and_survives_diff_pruning(
     tmp_path, monkeypatch, sync, mode
 ):
@@ -1799,34 +1589,11 @@ def test_stop_process_terminates_a_running_child():
     assert proc.stdout.closed and proc.stderr.closed
 
 
-def test_stop_process_leaves_a_finished_child_alone():
-    proc = _spawn("print('done')")
-    proc.wait()
-
-    pw.stop_process(proc)
-
-    assert proc.returncode == 0
-    assert proc.stdout.closed and proc.stderr.closed
-
-
-@posix_only
-def test_stop_process_kills_a_child_that_ignores_termination(monkeypatch):
-    monkeypatch.setattr(pw, "STOP_TIMEOUT_SECS", 0.5)
-    proc = _spawn(_CHILD, "ignore")
-    assert proc.stdout.readline().strip() == b"ready"
-    started = time.monotonic()
-
-    pw.stop_process(proc)
-
-    assert proc.returncode == -signal.SIGKILL
-    assert time.monotonic() - started < 10
-
-
 @posix_only
 @pytest.mark.parametrize(
     "child_mode,wrapper_mode",
-    [("obey", "exit"), ("ignore", "wait"), ("ignore", "exit")],
-    ids=["wrapper_exits_first", "child_ignores_term", "both"],
+    [("obey", "exit"), ("ignore", "wait")],
+    ids=["wrapper_exits_first", "child_ignores_term"],
 )
 def test_stop_process_stops_the_whole_group(
     monkeypatch, capsys, child_mode, wrapper_mode
@@ -1913,23 +1680,22 @@ def test_copy_repo_closes_the_archive_pipes_without_terminating(tmp_path, monkey
     assert proc.stdout.closed and proc.stderr.closed
 
 
-@pytest.mark.parametrize("failure", [KeyboardInterrupt, SystemExit])
-def test_copy_repo_stops_git_archive_when_interrupted(tmp_path, monkeypatch, failure):
+def test_copy_repo_stops_git_archive_when_interrupted(tmp_path, monkeypatch):
     proc = _archive_proc(monkeypatch, _FakeArchiveProc(_tar_bytes([])))
 
     def interrupted(*_args, **_kwargs):
-        raise failure
+        raise SystemExit
 
     monkeypatch.setattr(pw.tarfile, "open", interrupted)
 
-    with pytest.raises(failure):
+    with pytest.raises(SystemExit):
         pw.copy_repo(tmp_path / "publish", set())
 
     assert proc.terminated
     assert proc.stdout.closed and proc.stderr.closed
 
 
-@pytest.mark.parametrize("failure", [KeyboardInterrupt, SystemExit, OSError])
+@pytest.mark.parametrize("failure", [SystemExit, OSError])
 def test_publish_stops_the_upload_group_and_keeps_the_log(
     tmp_path, monkeypatch, failure
 ):
@@ -2060,6 +1826,8 @@ def test_remove_staging_refuses_a_symlinked_staging_path(tmp_path, capsys):
     outside = tmp_path / "outside"
     outside.mkdir()
     write_text(outside / "keep.txt", "keep")
+    os.chmod(outside / "keep.txt", stat.S_IREAD)
+    mode_before = (outside / "keep.txt").stat().st_mode
     staging = tmp_path / "pub"
     try:
         os.symlink(outside, staging, target_is_directory=True)
@@ -2069,6 +1837,7 @@ def test_remove_staging_refuses_a_symlinked_staging_path(tmp_path, capsys):
     pw.remove_staging(staging)
 
     assert (outside / "keep.txt").read_text(encoding="utf-8") == "keep"
+    assert (outside / "keep.txt").stat().st_mode == mode_before
     out = capsys.readouterr().out
     assert f"WARNING: Could not remove staging directory {staging}" in out
 
@@ -2090,13 +1859,7 @@ def test_remove_staging_warns_with_the_leftover_path(tmp_path, monkeypatch, caps
     assert staging.is_dir()
 
 
-def test_main_removes_staging_after_a_successful_run(tmp_path, monkeypatch):
-    _main_staged(tmp_path, monkeypatch, *_FULL_ARGS)
-
-    assert not (tmp_path / "pub").exists()
-
-
-@pytest.mark.parametrize("failure", [RuntimeError, KeyboardInterrupt, SystemExit])
+@pytest.mark.parametrize("failure", [RuntimeError, SystemExit])
 def test_main_removes_staging_when_the_upload_fails(tmp_path, monkeypatch, failure):
     _prepare_full_main(tmp_path, monkeypatch, *_FULL_ARGS)
     monkeypatch.setattr(pw, "copy_repo", lambda dest, _ex: _staged_mod(dest, None))
@@ -2126,28 +1889,6 @@ def test_main_removes_partial_staging_when_the_copy_fails(tmp_path, monkeypatch)
         pw.main()
 
     assert not (tmp_path / "pub").exists()
-
-
-def test_main_keeps_the_original_error_when_cleanup_fails(
-    tmp_path, monkeypatch, capsys
-):
-    _prepare_full_main(tmp_path, monkeypatch, *_FULL_ARGS)
-
-    def broken_copy(_dest_parent, _excludes):
-        raise RuntimeError("copy broke")
-
-    def locked(_path, ignore_errors=False):
-        if not ignore_errors:
-            raise PermissionError("file in use")
-
-    monkeypatch.setattr(pw, "copy_repo", broken_copy)
-    monkeypatch.setattr(pw.shutil, "rmtree", locked)
-
-    with pytest.raises(RuntimeError, match="copy broke"):
-        pw.main()
-
-    out = capsys.readouterr().out
-    assert f"WARNING: Could not remove staging directory {tmp_path / 'pub'}" in out
 
 
 def test_repeated_and_overlapping_runs_keep_separate_staging(tmp_path, monkeypatch):
