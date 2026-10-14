@@ -34,8 +34,9 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## Encoding and loc format
 
-- `fix_loc_yaml.py` fixes on commit and checks in CI, so a bare `"` inside a value fails
-  CI for contributors without hooks. `validate_localization_encoding.py`,
+- `fix_loc_yaml.py` fixes on commit. `validate_localisation.py` reuses its checks and
+  reports YAML errors in the localisation results, including for contributors without
+  hooks. `validate_localization_encoding.py`,
   `validate_mod_encoding.py`, and `validate_txt_encoding.py` run in CI for the same reason.
 - `validate_txt_encoding.py` scans shipped `.txt` roots only. Script `.txt` must not
   carry a BOM.
@@ -47,6 +48,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `country` block names exactly one tag that owns a state at start needs a
   `TAG_ai_behavior` rule with a `HISTORICAL` option and a `default` block.
 - Out of scope: shared trees, and tags that only spawn later.
+
+## validate_ai_weight_order.py
+
+- `ai-weight-zero-then-add` (WARNING): triggers are not compared, so two modifiers that
+  can never both hold are still reported.
 
 ## validate_building_guards.py
 
@@ -121,6 +127,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `category-desc-image-overlap` (WARNING): a category `<id>_desc` that opens with a
   `£icon` draws the art at native size and can cover the header. Minimum leading `\n`:
   `ceil((height / 2 - 22) / 16)`. Not confirmed pixel for pixel in game.
+- `decision-ai-will-do-ignores-cost` (WARNING): the decision twin of
+  `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
+  `custom_cost_trigger` carries a "verify" note, because the engine already stops a
+  country that cannot pay.
 
 ## validate_dynamic_modifier_guards.py
 
@@ -167,15 +177,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   The option name is read at its own depth, so a `name =` inside an effect does not count.
   `tools/linting/fix_log_ids.py` shares the detection and rewrites the token. Exempt
   option names live in `validation_config.json` `option_log_id_exempt`.
-- `event-ai-chance-ignores-cost` (WARNING, off by default, `--check-ai-chance-costs`,
-  tracked in #5106): in an event with two or more options, an option that charges its
-  own country and whose `ai_chance` has no `modifier`. Costs: lowering `treasury` or
-  `int_investments`, raising `debt`, moving a tax rate, or negative political power,
-  stability, or war support, directly or through a scripted effect. Costs inside foreign
-  scopes are skipped. The "decline" option counts when declining is what costs.
-  - Known gaps: a stored variable whose negative value comes from math or an array reads
-    as positive, a `[TOKEN]` in a `meta_effect` body is not substituted, and
-    single-option events are never reported.
+- `event-ai-chance-ignores-cost` (WARNING, enabled in CI with `--check-ai-chance-costs`,
+  tracked in #5106): reports uncovered costs in multi-option events. Costs: lowering
+  `treasury` or `int_investments`, raising `debt`, moving a tax rate, or negative
+  political power, stability, or war support, directly or through a scripted effect.
+  A non-neutral modifier must check the choosing country's finances, stability, or
+  war support for the corresponding cost. Political power uses the bankruptcy mission.
+  Opinion, path, unconditional, neutral, and foreign-country modifiers do not cover a cost.
+  `effect_tooltip` costs and temp writes are display-only and ignored. A literal country
+  scope counts as the receiver only when the event's sole trigger is `tag = TAG`.
+  The "decline" option counts when declining is what costs.
+  - Known gaps: stored negative values built from math or arrays, unsubstituted
+    `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs, more complex
+    recipient gates, and single-option events. These need manual review.
   - Fix pattern: `event-reference.md`, "Cost-aware AI weights".
 - Event pictures: both event windows draw `event_picture` at native size.
   `event-picture-format-mismatch` (ERROR) classifies by aspect ratio, not name: country
@@ -218,6 +232,12 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   ancestor whose `allow_branch` can hide the branch, without repeating its conditions.
   A condition the ancestor checks only under the `obsolete_focus_branches_visibility`
   HIDE rule is also met when the child checks it without that rule.
+
+## validate_ai_path_rules.py
+
+- `common/national_focus/eritrea_puppet.txt` contains Ethiopia's Eritrean federation-
+  puppet content. Its owner factor is 0 plus 1 for ERI, below `generic_focus`'s day-one
+  factor of 2, so it does not need an ERI day-one AI path rule.
 
 ## validate_gfx_references.py
 
@@ -269,6 +289,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 ## validate_localisation.py and validate_scripted_localisation.py
 
+- `loc-yaml-*` (ERROR): tabs, curly quotes, version-number keys, missing colon spacing,
+  excess indentation, missing closing quotes, and unescaped inner quotes. These check
+  raw English lines, including comments and files exempt from other content checks.
+  Findings use repository-relative paths for PR file matching, links, and annotations.
 - `loc-em-dash`, `loc-backtick-apostrophe` (WARNING), and `loc-unbalanced-quote` (ERROR)
   scan only the quoted values in `localisation/english/`. Inch marks and quotes spanning
   paragraphs are expected false positives of the quote check.

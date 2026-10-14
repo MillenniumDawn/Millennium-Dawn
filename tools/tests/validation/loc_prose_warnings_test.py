@@ -86,12 +86,21 @@ def test_stretched_exemption_matches_only_whole_words():
     ]
 
 
-@pytest.mark.parametrize("key", ["focus_desc", "event.1.d"])
-def test_description_suffixes_are_checked(key):
-    assert _scan("We must invest in the", key)[0].category == "loc-dangling-description"
+def test_non_event_description_suffix_is_checked():
+    assert _scan("We must invest in the")[0].category == "loc-dangling-description"
 
 
-@pytest.mark.parametrize("key", ["focus", "event.1.t", "event.1.a", "focus_desc_extra"])
+@pytest.mark.parametrize("key", ["event.1.d", "event.1.desc", "custom_text"])
+def test_event_description_keys_are_checked(key):
+    issues = VL._scan_prose_text(
+        f'l_english:\n {key}: "We must invest in the"\n', "sample.yml", {key}
+    )
+    assert [issue.category for issue in issues] == ["loc-dangling-description"]
+
+
+@pytest.mark.parametrize(
+    "key", ["focus", "event.1.t", "event.1.a", "event.1.d", "focus_desc_extra"]
+)
 def test_other_suffixes_are_not_descriptions(key):
     assert _scan("We must invest in the", key) == []
 
@@ -200,6 +209,104 @@ def test_staged_selection_does_not_expand_to_other_english_files(tmp_path, monke
     assert [(i.file, i.category) for i in validator._issues] == [
         ("selected.yml", "loc-placeholder")
     ]
+
+
+@pytest.mark.parametrize(
+    "event_type",
+    [
+        "country_event",
+        "news_event",
+        "state_event",
+        "unit_leader_event",
+        "operative_leader_event",
+    ],
+)
+@pytest.mark.parametrize(
+    "description",
+    [
+        "desc = actual_text",
+        'desc = "actual_text"',
+        "desc = { text = actual_text trigger = { always = yes } }",
+    ],
+)
+@pytest.mark.parametrize("staged_only", [False, True])
+def test_event_descriptions_follow_references_not_suffixes(
+    tmp_path, monkeypatch, event_type, description, staged_only
+):
+    write_under_str(
+        tmp_path,
+        "events/nested/fixture.txt",
+        "add_namespace = sample\n"
+        "country_event = sample.2\n"
+        "# desc = commented.d\n"
+        "other_block = { desc = unrelated.d }\n"
+        f"{event_type} = {{\n"
+        " id = sample.1\n"
+        f" {description}\n"
+        " desc = { text = alternate_text trigger = { always = no } }\n"
+        ' immediate = { log = "{ desc = quoted.d }" }\n'
+        " option = { name = ukr_light_transport_tender.1.d }\n"
+        " option = { name = sample.1.d }\n"
+        "}\n",
+    )
+    relative = "localisation/english/fixture.yml"
+    write_under_str(
+        tmp_path,
+        relative,
+        'l_english:\n actual_text: "We must invest in the"\n'
+        ' alternate_text: "We must invest in the"\n'
+        ' ukr_light_transport_tender.1.d: "Select the §YDozor-A§!"\n'
+        ' sample.1.d: "Choose one of them"\n'
+        ' commented.d: "We must invest in the"\n'
+        ' unrelated.d: "We must invest in the"\n'
+        ' quoted.d: "We must invest in the"\n',
+    )
+    monkeypatch.setenv("MD_STAGED_FILES", relative)
+    validator = VL.Validator(
+        str(tmp_path), staged_only=staged_only, use_colors=False, workers=1
+    )
+    validator.validate_prose_conventions()
+    assert [(issue.category, issue.line) for issue in validator._issues] == [
+        ("loc-dangling-description", 2),
+        ("loc-dangling-description", 3),
+    ]
+
+
+def test_event_description_d_key_survives_worker_pool(
+    tmp_path, monkeypatch, pool_sizes
+):
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    write_under_str(
+        tmp_path,
+        "events/fixture.txt",
+        "country_event = { id = sample.1 desc = sample.1.d "
+        "option = { name = sample.1.a } }\n",
+    )
+    for index in range(12):
+        write_under_str(
+            tmp_path,
+            f"localisation/english/f{index:02}.yml",
+            'l_english:\n sample.1.d: "We must invest in the"\n',
+        )
+
+    def run(workers):
+        validator = VL.Validator(str(tmp_path), use_colors=False, workers=workers)
+        try:
+            validator.validate_prose_conventions()
+            return [(i.category, i.file, i.line) for i in validator._issues]
+        finally:
+            validator._close_pool()
+
+    pooled = run(2)
+    assert pool_sizes and set(pool_sizes) == {2}
+    assert pooled == run(1)
+    assert len(pooled) == 12
+    assert all(row[0] == "loc-dangling-description" for row in pooled)
+
+
+@pytest.mark.parametrize("value", ["Select the §YDozor-A§!", "Model-A", "Model–A"])
+def test_vehicle_suffix_is_not_a_dangling_article(value):
+    assert _scan(value) == []
 
 
 FIXTURES = json.loads(
