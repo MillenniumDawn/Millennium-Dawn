@@ -424,8 +424,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `MIN_DIVISION_BRIGADE_HEIGHT`. Those rows stay locked until the country has
   `additional_brigade_column_size`. One finding per template. A tag's starting
   subdoctrines (`set_sub_doctrine` at the top level of its `history/countries` file)
-  open rows for its `history/units/TAG_*` files and for templates scoped to it.
-  Mastery rewards and ideas are not counted. Tracked in #5451.
+  open rows for its `history/units/TAG_*` files and for templates scoped to it. So do
+  their mastery rewards, once top-level `add_mastery` blocks with a literal `amount`
+  and only a `sub_doctrine` filter reach the reward. Reward thresholds add up in
+  order. Dated history and ideas are not counted. Tracked in #5451.
 - Both read the grid from `NDefines.NMilitary` in `common/defines/*.lua`, falling back
   to the vanilla values in `_VANILLA_TEMPLATE_DEFINES`. Not checked: Army HQ template
   sizes, `divisional = no` or `regimental = no` units in the wrong block, and
