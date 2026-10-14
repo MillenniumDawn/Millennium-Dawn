@@ -540,6 +540,24 @@ def test_idea_categories_read_every_tags_file(tmp_path):
     assert U.get_slotless_idea_categories(str(tmp_path)) == frozenset({"plain"})
 
 
+def test_idea_category_slots_character_slots_and_types(tmp_path):
+    _write(
+        tmp_path / "common" / "idea_tags" / "00_idea.txt",
+        "idea_categories = {\n"
+        " national_status = { slot = religion slot = corruption }\n"
+        " military_staff = { character_slot = chief_of_staff }\n"
+        " army_spirit = { type = army_spirit slot = army_chief }\n"
+        "}\n",
+    )
+    categories = {c["name"]: c for c in U.get_all_idea_categories(str(tmp_path))}
+    assert (
+        categories["national_status"]["has_slot"],
+        categories["national_status"]["type"],
+    ) == (True, None)
+    assert categories["military_staff"]["has_char_slot"] is True
+    assert categories["army_spirit"]["type"] == "army_spirit"
+
+
 def test_without_idea_tags_the_vanilla_defaults_apply(tmp_path):
     empty = tmp_path / "empty"
     assert U.get_all_idea_categories(str(empty)) == []

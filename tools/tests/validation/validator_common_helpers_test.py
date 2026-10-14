@@ -353,6 +353,19 @@ def test_localisation_loader_skips_unreadable_yml(dummy, write_path, tmp_path):
     assert "recruit_in_europe" in keys
 
 
+@pytest.mark.parametrize(
+    "registry, expected",
+    [
+        ("TOKEN_one\nTOKEN_two\n\nnot a token line\n", {"TOKEN_one", "TOKEN_two"}),
+        ("", set()),
+    ],
+    ids=["tokens", "empty registry"],
+)
+def test_dynamic_token_names(write_path, tmp_path, registry, expected):
+    write_path(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", registry)
+    assert VC.load_dynamic_token_names(str(tmp_path)) == expected
+
+
 def _loc_tree(write_path, tmp_path):
     write_path(
         tmp_path,
