@@ -23,6 +23,7 @@ from typing import Dict, Iterator, List, Optional, Sequence, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import IDENTIFIER_BLOCK_LINE_RE as _TOP_BLOCK
 from shared_utils import (  # noqa: E402
     PARTY_SLOT_NAMES,
     blank_quoted_strings,
@@ -78,7 +79,6 @@ _LOC_KEY = re.compile(r'^\s*([A-Za-z_][A-Za-z0-9_]*):\s*\d*\s*"(.*)"\s*$')
 _YEAR = re.compile(r"\b(19|20)\d{2}\b")
 _HIGHLIGHT = re.compile(r"§.*?§!")
 _LOC_SCOPE = re.compile(r"\[[^\]]*\]")
-_TOP_BLOCK = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.M)
 _STATE_BLOCK = re.compile(r"^[ \t]*\d+\s*=\s*\{", re.M)
 _IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 _REMOVE_IDEA = re.compile(r"remove_ideas?\s*=\s*(\{[^{}]*\}|[A-Za-z_][A-Za-z0-9_]*)")
@@ -231,10 +231,9 @@ def expr_tokens(expr: Expr) -> Iterator[str]:
 def load_path_triggers(root: str, tag: str) -> Dict[str, Expr]:
     """Index every `TAG_ai_*` scripted trigger definition in the mod."""
     triggers: Dict[str, Expr] = {}
-    opener = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.M)
     for path in iter_txt_files(os.path.join(root, "common", "scripted_triggers")):
         text = read_script(path)
-        for match in opener.finditer(text):
+        for match in _TOP_BLOCK.finditer(text):
             if not is_path_trigger(match.group(1), tag):
                 continue
             close = find_matching_brace(text, match.end() - 1)
@@ -554,8 +553,7 @@ def parse_plans(root: str, tag: str) -> List[Tuple[str, Dict[str, float], bool]]
         return []
     text = read_script(path)
     plans = []
-    opener = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.M)
-    for match in opener.finditer(text):
+    for match in _TOP_BLOCK.finditer(text):
         close = find_matching_brace(text, match.end() - 1)
         if close == -1:
             continue
@@ -804,12 +802,14 @@ def _rule_findings(
                 issues.append(option.desc_key + " contains a hard date")
 
     wired = {option: values for option, values in wiring.items() if values}
-    for option in options:
-        if option in ("RANDOM_PATH", "NO_PATH"):
+    for option_name in options:
+        if option_name in ("RANDOM_PATH", "NO_PATH"):
             continue
-        if option not in wired:
+        if option_name not in wired:
             issues.append(
-                "option " + option + " sets no global flag in 999_game_rules_on_actions"
+                "option "
+                + option_name
+                + " sets no global flag in 999_game_rules_on_actions"
             )
     if wiring.get("NO_PATH"):
         issues.append("NO_PATH sets a flag; it must set none")
