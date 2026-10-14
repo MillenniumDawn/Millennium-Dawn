@@ -13523,7 +13523,7 @@ UKR_develop_domestic_category = {
 		ai_hint_pp_cost = 10
 
 		available = {
-			has_country_flag = UKR_equipment_develop_domestic_kombat_konus_atgm_flag
+			has_country_flag = UKR_equipment_develop_domestic_bulava_atgm_flag
 			date > 2015.01.01
 			date < 2026.01.01
 
@@ -13591,7 +13591,7 @@ UKR_develop_domestic_category = {
 					armor_type_slot = nera_armor_gen3
 					engine_type_slot = tank_diesel_engine_gen6
 					reload_type_slot = revolver_magazine
-					special_type_slot_1 = smoothbore_atgm_gen2
+					special_type_slot_1 = smoothbore_atgm_gen3
 					special_type_slot_2 = spaced_armor_gen2
 					special_type_slot_3 = hardkill_system_gen1
 					special_type_slot_4 = tank_battlestation_4
@@ -14815,6 +14815,10 @@ UKR_develop_domestic_atgm_category = {
 			modifier = { factor = 0.5 ai_has_high_deficit = yes }
 		}
 
+		visible = {
+			date < 2000.07.01
+		}
+
 		available = {
 			controls_state = 698 #Kyiv
 		}
@@ -14855,8 +14859,67 @@ UKR_develop_domestic_atgm_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_equipment_develop_domestic_kombat_konus_atgm"
 
 			if = {
-				limit = { NOT = { has_tech = Heavy_Anti_tank_2 } }
-				set_technology = { Heavy_Anti_tank_2 = 1 }
+				limit = { NOT = { has_tech = Heavy_Anti_tank_3 } }
+				add_tech_bonus = {
+					name = UKR_equipment_develop_domestic_kombat_konus_atgm
+					bonus = 0.15
+					uses = 1
+					technology = Heavy_Anti_tank_3
+				}
+			}
+
+			set_country_flag = UKR_equipment_develop_domestic_kombat_konus_atgm_flag
+		}
+	}
+
+	UKR_equipment_develop_domestic_kombat_konus_atgm_mission = {
+		icon = GFX_decision_icon_UKR_equipment_develop_domestic_stuhna_p_atgm
+
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
+
+		activation = {
+			NOT = { has_country_flag = UKR_equipment_develop_domestic_kombat_konus_atgm_flag }
+			NOT = { has_decision = UKR_equipment_develop_domestic_kombat_konus_atgm }
+			date > 2000.07.01
+			date < 2000.08.01
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > UKR_atgm_dev_cost_kombat_konus }
+		}
+
+		custom_cost_text = UKR_atgm_dev_cost_kombat_konus_text
+
+		days_mission_timeout = 92
+		days_remove = 1 # leaves the list 1 day after it ends, not the default 13
+		selectable_mission = yes
+		is_good = yes
+
+		highlight_states = {
+			highlight_states_trigger = {
+				state = 698 #Kyiv
+			}
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision UKR_equipment_develop_domestic_kombat_konus_atgm_mission"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = UKR_atgm_dev_cost_kombat_konus }
+				multiply_temp_variable = { treasury_change = -1 }
+				modify_treasury_effect = yes
 			}
 
 			if = {
@@ -14870,6 +14933,12 @@ UKR_develop_domestic_atgm_category = {
 			}
 
 			set_country_flag = UKR_equipment_develop_domestic_kombat_konus_atgm_flag
+		}
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision timeout UKR_equipment_develop_domestic_kombat_konus_atgm_mission"
+
+			custom_effect_tooltip = UKR_equipment_develop_domestic_kombat_konus_atgm_mission_expired_tt
 		}
 	}
 
@@ -14926,11 +14995,6 @@ UKR_develop_domestic_atgm_category = {
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_equipment_develop_domestic_bm3_shturm"
-
-			if = {
-				limit = { NOT = { has_tech = Heavy_Anti_tank_2 } }
-				set_technology = { Heavy_Anti_tank_2 = 1 }
-			}
 
 			set_country_flag = UKR_equipment_develop_domestic_bm3_shturm_flag
 		}
@@ -15000,14 +15064,51 @@ UKR_develop_domestic_atgm_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove UKR_equipment_develop_domestic_stuhna_p_vehicle"
 
 			if = {
-				limit = {
-					OR = {
-						has_tech = util_vehicle_6
-						has_tech = IMV_6
-					}
-				}
+				limit = { has_tech = util_vehicle_5 }
 				create_equipment_variant = {
-					name = "RK-2S Stuhna-P SP"
+					name = "Dozor-B with Stuhna-P"
+					type = Heavy_Anti_tank_3
+					allow_without_tech = yes
+
+					upgrades = {
+						H_AT_fire_control = 3
+						H_AT_warhead = 4
+						H_AT_Reliability = 2
+					}
+
+					parent_version = 0
+
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+
+					icon = "GFX_UKR_Heavy_Anti_tank_3_medium"
+				}
+			}
+
+			if = {
+				limit = { has_tech = IMV_5 }
+				create_equipment_variant = {
+					name = "Kozak with Stuhna-P"
+					type = Heavy_Anti_tank_3
+					allow_without_tech = yes
+
+					upgrades = {
+						H_AT_fire_control = 3
+						H_AT_warhead = 4
+						H_AT_Reliability = 2
+					}
+
+					parent_version = 0
+
+					design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+
+					icon = "GFX_UKR_Heavy_Anti_tank_3_medium"
+				}
+			}
+
+			if = {
+				limit = { has_tech = util_vehicle_6 }
+				create_equipment_variant = {
+					name = "Novator with Stuhna-P"
 					type = Heavy_Anti_tank_3
 					allow_without_tech = yes
 
@@ -15024,16 +15125,18 @@ UKR_develop_domestic_atgm_category = {
 					icon = "GFX_UKR_Heavy_Anti_tank_3_medium"
 				}
 			}
-			else = {
+
+			if = {
+				limit = { has_tech = IMV_6 }
 				create_equipment_variant = {
-					name = "RK-2S Stuhna-P SP"
+					name = "Kozak-2 with Stuhna-P"
 					type = Heavy_Anti_tank_3
 					allow_without_tech = yes
 
 					upgrades = {
 						H_AT_fire_control = 3
 						H_AT_warhead = 4
-						H_AT_Reliability = 2
+						H_AT_Reliability = 4
 					}
 
 					parent_version = 0
@@ -15062,6 +15165,10 @@ UKR_develop_domestic_atgm_category = {
 			AZE = {
 				NOT = { has_war_with = ROOT }
 				has_opinion = { target = ROOT value > 29 }
+				custom_trigger_tooltip = {
+					tooltip = UKR_equipment_export_skif_buyer_money_0_2_tt
+					check_variable = { treasury > 0.2 }
+				}
 			}
 		}
 
@@ -15109,6 +15216,10 @@ UKR_develop_domestic_atgm_category = {
 			SAU = {
 				NOT = { has_war_with = ROOT }
 				has_opinion = { target = ROOT value > 29 }
+				custom_trigger_tooltip = {
+					tooltip = UKR_equipment_export_skif_buyer_money_0_4_tt
+					check_variable = { treasury > 0.4 }
+				}
 			}
 		}
 
@@ -15156,6 +15267,10 @@ UKR_develop_domestic_atgm_category = {
 			GEO = {
 				NOT = { has_war_with = ROOT }
 				has_opinion = { target = ROOT value > 29 }
+				custom_trigger_tooltip = {
+					tooltip = UKR_equipment_export_skif_buyer_money_0_1_tt
+					check_variable = { treasury > 0.1 }
+				}
 			}
 		}
 
