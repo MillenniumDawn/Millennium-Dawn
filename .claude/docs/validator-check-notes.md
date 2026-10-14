@@ -49,6 +49,11 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   `TAG_ai_behavior` rule with a `HISTORICAL` option and a `default` block.
 - Out of scope: shared trees, and tags that only spawn later.
 
+## validate_ai_weight_order.py
+
+- `ai-weight-zero-then-add` (WARNING): triggers are not compared, so two modifiers that
+  can never both hold are still reported.
+
 ## validate_building_guards.py
 
 - `damage_building` or `remove_building` against a building the state lacks spams
@@ -122,6 +127,10 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `category-desc-image-overlap` (WARNING): a category `<id>_desc` that opens with a
   `£icon` draws the art at native size and can cover the header. Minimum leading `\n`:
   `ceil((height / 2 - 22) / 16)`. Not confirmed pixel for pixel in game.
+- `decision-ai-will-do-ignores-cost` (WARNING): the decision twin of
+  `event-ai-chance-ignores-cost`, with the same known gaps. A finding behind a treasury
+  `custom_cost_trigger` carries a "verify" note, because the engine already stops a
+  country that cannot pay.
 
 ## validate_dynamic_modifier_guards.py
 
@@ -168,15 +177,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   The option name is read at its own depth, so a `name =` inside an effect does not count.
   `tools/linting/fix_log_ids.py` shares the detection and rewrites the token. Exempt
   option names live in `validation_config.json` `option_log_id_exempt`.
-- `event-ai-chance-ignores-cost` (WARNING, off by default, `--check-ai-chance-costs`,
-  tracked in #5106): in an event with two or more options, an option that charges its
-  own country and whose `ai_chance` has no `modifier`. Costs: lowering `treasury` or
-  `int_investments`, raising `debt`, moving a tax rate, or negative political power,
-  stability, or war support, directly or through a scripted effect. Costs inside foreign
-  scopes are skipped. The "decline" option counts when declining is what costs.
-  - Known gaps: a stored variable whose negative value comes from math or an array reads
-    as positive, a `[TOKEN]` in a `meta_effect` body is not substituted, and
-    single-option events are never reported.
+- `event-ai-chance-ignores-cost` (WARNING, enabled in CI with `--check-ai-chance-costs`,
+  tracked in #5106): reports uncovered costs in multi-option events. Costs: lowering
+  `treasury` or `int_investments`, raising `debt`, moving a tax rate, or negative
+  political power, stability, or war support, directly or through a scripted effect.
+  A non-neutral modifier must check the choosing country's finances, stability, or
+  war support for the corresponding cost. Political power uses the bankruptcy mission.
+  Opinion, path, unconditional, neutral, and foreign-country modifiers do not cover a cost.
+  `effect_tooltip` costs and temp writes are display-only and ignored. A literal country
+  scope counts as the receiver only when the event's sole trigger is `tag = TAG`.
+  The "decline" option counts when declining is what costs.
+  - Known gaps: stored negative values built from math or arrays, unsubstituted
+    `[TOKEN]` values, custom cost-guard triggers, delayed event-chain costs, more complex
+    recipient gates, and single-option events. These need manual review.
   - Fix pattern: `event-reference.md`, "Cost-aware AI weights".
 - Event pictures: both event windows draw `event_picture` at native size.
   `event-picture-format-mismatch` (ERROR) classifies by aspect ratio, not name: country

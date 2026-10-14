@@ -324,6 +324,18 @@ def test_content_tests_run_once_with_the_game_tree():
     )
 
 
+def test_graphical_culture_validator_inputs_are_in_content_workspace():
+    profile = (
+        (VALIDATION_DIR / "ci_workspace_profile.txt")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
+    assert "/common/" in profile or {
+        "/common/countries/",
+        "/common/graphicalculturetype.txt",
+    } <= set(profile)
+
+
 def test_file_paths_run_in_a_lightweight_index_job():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     detect = workflow["jobs"]["detect-changes"]
@@ -849,7 +861,10 @@ def test_manual_texture_audit_always_runs():
 
 def test_ci_strict_gate_lives_in_batch_specs():
     assert ValidatorSpec("x", "validate_x.py", ("common",)).strict is True
-    assert [spec.name for spec in ALL_SPECS if not spec.strict] == ["simplifications"]
+    assert [spec.name for spec in ALL_SPECS if not spec.strict] == [
+        "simplifications",
+        "graphical-cultures",
+    ]
 
 
 def test_ci_oob_units_does_not_enable_missing_equipment_factor():
