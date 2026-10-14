@@ -80,6 +80,28 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
   cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
 
+## CI artifacts and reports
+
+- `test-suite.yml` checks out the live PR head and holds no write credentials until the
+  `report` job. A head predating the tooling contract stops with one error asking
+  to merge main.
+- `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
+  `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
+  across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
+  and only `gfx/flags` and `gfx/interface/decisions` from the art trees.
+- `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
+  integration, and `validate_tools.py`. Coverage runs on Linux only.
+- `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips
+  diff-scoped style sections. `nightly-pr-validation.yml` re-dispatches PRs with no
+  successful run on their current head and base. `validator-cache.yml` rebuilds main's
+  baseline.
+- `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
+  `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
+  `python3 tools/merge_changelog.py --fix` repairs it.
+- The report posts one PR comment: new findings against main's baseline first, then
+  findings in touched files. A clean run removes the older comment. Section titles
+  derive from artifact directory names, so keep those slugs stable.
+
 ## Validation config
 
 `validation_config.json` at the repo root holds every suppression list the validators and `tools/analysis/ai_path_report.py` read: false positives, exemptions, and known-good names. To add or drop an entry, edit the JSON, not the validator.
