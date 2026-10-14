@@ -1,6 +1,7 @@
 """Tests for validate_oob_units.py.
 
-The create_unit ensure, guard and owner rules live in validate_create_unit_test.py.
+The create_unit ensure, guard and owner rules live in
+validate_oob_units_create_unit_test.py.
 """
 
 import pytest
