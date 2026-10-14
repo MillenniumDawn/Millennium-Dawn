@@ -151,8 +151,8 @@
 
 	-- NMarket Related Defines
 	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
-	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.85 -- 2.0
-	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 40 -- 30
+	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.3 -- 2.0
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 30 -- 30
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
@@ -803,6 +803,7 @@
 	NDefines.NAI.MIN_DELIVERED_TRADE_FRACTION = 0.6 -- 0.8
 	NDefines.NAI.MAX_VOLUNTEER_ARMY_FRACTION = 0.5			-- 0.25
 	NDefines.NAI.DEPLOY_MIN_EQUIPMENT_WAR_FACTOR = 0.90		-- vanilla
+	NDefines.NAI.PRODUCTION_EQUIPMENT_SURPLUS_FACTOR = 0.85	-- 0.8; spare stock the AI aims for, as a share of fielded equipment
 	NDefines.NAI.CALL_ALLY_BASE_DESIRE = 25					-- 20
 	NDefines.NAI.CALL_ALLY_DEMOCRATIC_DESIRE = 25			-- 50
 	NDefines.NAI.CALL_ALLY_FASCIST_DESIRE = 25				-- -10

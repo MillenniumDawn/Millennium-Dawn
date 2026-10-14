@@ -100,6 +100,35 @@ def test_dynamic_markers_and_prerequisites_survive_cached_scan(tmp_path):
     assert value.layout_counts["overlap_pairs"] == 0
 
 
+def test_prerequisite_order_and_mutex_rows_are_reported_as_warnings(tmp_path):
+    write_focus(
+        tmp_path,
+        "focus_tree = { id = rows "
+        "focus = { id = parent x = 0 y = 1 } "
+        "focus = { id = child x = 4 y = 0 prerequisite = { focus = parent } "
+        "mutually_exclusive = { focus = other } } "
+        "focus = { id = other x = 8 y = 2 mutually_exclusive = { focus = child } } }",
+    )
+    data = V._FocusFile(
+        os.path.join(str(tmp_path), FOCUS_DIR, "tree.txt"), str(tmp_path)
+    ).layout()
+    child = next(
+        focus for focus in data["trees"][0]["focuses"] if focus["id"] == "child"
+    )
+    assert child["prerequisites"] == [["parent"]]
+    assert child["mutually_exclusive"] == ["other"]
+
+    value = validator(tmp_path)
+    categories = {issue.category for issue in value._issues}
+    assert categories == {
+        "focus-prerequisite-row-order",
+        "focus-mutually-exclusive-row",
+    }
+    assert all(issue.severity == V.Severity.WARNING for issue in value._issues)
+    assert value.layout_counts["prerequisite_order_pairs"] == 1
+    assert value.layout_counts["mutually_exclusive_row_pairs"] == 1
+
+
 def test_nested_allow_branch_terms_feed_the_branch_leak_check(tmp_path):
     gate = "if = { limit = { has_game_rule = { option = HIDE } } NOT = { has_completed_focus = rival } }"
     path = write_focus(
