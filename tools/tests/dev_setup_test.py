@@ -8,6 +8,7 @@ from types import SimpleNamespace
 
 import dev_setup
 import pytest
+from shared.suite import run_tool_script
 from shared.suite import write_text as write
 
 Version = namedtuple("Version", "major minor micro releaselevel serial")
@@ -714,6 +715,14 @@ def run_main(monkeypatch, *argv):
     with pytest.raises(SystemExit) as exc:
         dev_setup.main()
     return exc.value.code
+
+
+def test_the_script_checks_the_real_environment():
+    result = run_tool_script("dev_setup.py", "--check")
+
+    assert "Python:" in result.stdout
+    assert "pre-commit" in result.stdout
+    assert result.returncode in (0, 1), f"crashed: {result.stderr[:200]}"
 
 
 def test_check_mode_reports_a_ready_environment(setup_env, monkeypatch, capsys):
