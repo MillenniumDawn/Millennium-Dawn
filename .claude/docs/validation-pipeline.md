@@ -13,8 +13,12 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   Linux, macOS, and Windows. Run it locally before merging any `tools/` change.
 - A validator change and its regression tests are one change. Update a `*_test.py` to
   the new correct behavior in the same commit. If the test holds the correct invariant,
-  fix the validator. Never delete or weaken a test to pass. Removing a dead or
-  duplicate test is a separate cleanup change that keeps the coverage total.
+  fix the validator. Never delete or weaken a test to pass. Removing a test is a
+  separate cleanup change that keeps the missed-line and partial-branch totals.
+- Tests follow [Test Structure](../../tools/README.md#test-structure): one file per
+  module or group of checks, one parametrized table per check, a new case is a new
+  row. A row stays only if it is the flagged or passing baseline, runs a path no other
+  row runs, or is the only row that fails when one rule of the check is broken.
 - The suite runs under `pytest -n auto`, so a test writes only under `tmp_path`.
 - Worker pools in tests start with `spawn` on every OS. A pool worker sees what it
   imports and what it is passed, not state a test patched in the parent.
@@ -75,6 +79,28 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   by the country registration milestone.
 - Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
   cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
+
+## CI artifacts and reports
+
+- `test-suite.yml` checks out the live PR head and holds no write credentials until the
+  `report` job. A head predating the tooling contract stops with one error asking
+  to merge main.
+- `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
+  `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
+  across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
+  and only `gfx/flags` and `gfx/interface/decisions` from the art trees.
+- `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
+  integration, and `validate_tools.py`. Coverage runs on Linux only.
+- `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips
+  diff-scoped style sections. `nightly-pr-validation.yml` re-dispatches PRs with no
+  successful run on their current head and base. `validator-cache.yml` rebuilds main's
+  baseline.
+- `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
+  `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
+  `python3 tools/merge_changelog.py --fix` repairs it.
+- The report posts one PR comment: new findings against main's baseline first, then
+  findings in touched files. A clean run removes the older comment. Section titles
+  derive from artifact directory names, so keep those slugs stable.
 
 ## Validation config
 
