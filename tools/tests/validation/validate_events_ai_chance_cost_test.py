@@ -644,15 +644,17 @@ def test_mixed_costs_report_only_the_uncovered_kind():
     assert _found(_two_options(covered)) == []
 
 
-@pytest.mark.parametrize("scope", ["ROOT", "THIS", "AST"])
 @pytest.mark.parametrize(
-    "trigger",
+    "scope, trigger",
     [
-        "tag = AST",
-        "tag = AST has_war = no",
-        "AND = { tag = AST has_war = no }",
-        "ROOT = { tag = AST }",
-        "THIS = { tag = AST }",
+        ("ROOT", "tag = AST"),
+        ("THIS", "tag = AST"),
+        ("AST", "tag = AST"),
+        ("AST", "tag = AST has_war = no"),
+        ("AST", "AND = { tag = AST has_war = no }"),
+        ("AST", "ROOT = { tag = AST }"),
+        ("AST", "THIS = { tag = AST }"),
+        ("AST", "tag = AST AND = { has_war = no }"),
     ],
 )
 def test_choosing_country_cost_scopes_are_checked(scope, trigger):

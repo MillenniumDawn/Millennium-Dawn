@@ -20,7 +20,6 @@ import disk_cache
 from check_common_mistakes import _iter_event_log_mismatches
 from image_size import read_image_size
 from shared_utils import MODIFIER_OPEN_RE as _AI_CHANCE_MODIFIER_RE
-from shared_utils import OPTION_OPEN_RE as _OPTION_BLOCK_PATTERN
 from shared_utils import OPTION_OPEN_RE as _OPTION_OPEN_RE
 from shared_utils import TRIGGER_OPEN_RE as _TRIGGER_OPEN_RE
 from shared_utils import (
@@ -1497,7 +1496,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "fire_only_once": "fire_only_once = yes" in body_nc,
                 "is_major": bool(_RE_MAJOR_YES.search(body_nc)),
                 "has_mtth": "mean_time_to_happen" in body_nc,
-                "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
+                "option_count": len(_OPTION_OPEN_RE.findall(body)),
                 "title_desc_refs": [
                     v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
                 ],

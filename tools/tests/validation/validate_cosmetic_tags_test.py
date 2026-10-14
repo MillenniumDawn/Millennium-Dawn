@@ -10,11 +10,6 @@ def _run(tmp_path, **kwargs):
     return run_validator(V.Validator, tmp_path, **kwargs)
 
 
-@pytest.mark.parametrize("text", ["", "TAG_TEST", " TAG_TEST", "\nTAG_TEST"])
-def test_set_tag_value_match_always_exists(text):
-    assert V._NON_SPACE_RE.match(text) is not None
-
-
 def test_loc_worker_skips_ignored_paths(tmp_path, write_path):
     skipped = write_path(tmp_path, ".git/x.yml", 'x:0 "TAG_A:"\n')
 

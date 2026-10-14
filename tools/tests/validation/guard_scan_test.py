@@ -1,5 +1,7 @@
 """Shared file-input contracts for the guard validators."""
 
+import disk_cache
+import guard_scan
 import pytest
 import validate_ai_weight_order
 import validate_building_guards
@@ -60,20 +62,27 @@ def test_scan_file_reads_and_relativizes_path(tmp_path, monkeypatch, scanner_cas
     assert scanner.scan_file(args) == [expected]
 
 
-def test_scan_file_skips_files_without_the_effect(tmp_path, scanner_case):
-    scanner = scanner_case[0]
+def test_scan_file_skips_files_without_the_effect(tmp_path, monkeypatch, scanner_case):
+    def scanned(*_args):
+        raise AssertionError("a file without the effect reached the scan")
+
+    monkeypatch.setattr(disk_cache, "per_file_cached_by_content", scanned)
     path = tmp_path / "quiet.txt"
     path.write_text("focus = { id = TST_focus }\n", encoding="utf-8")
-    assert scanner.scan_file((str(path), str(tmp_path) + "/")) == []
+    assert scanner_case[0].scan_file((str(path), str(tmp_path) + "/")) == []
 
 
 @pytest.mark.parametrize("bad_input", ["missing", "directory", "invalid-utf8"])
-def test_scan_file_reports_unreadable_input(tmp_path, scanner_case, bad_input):
-    scanner = scanner_case[0]
+def test_read_file_reports_unreadable_input(tmp_path, bad_input):
     path = tmp_path / "broken.txt"
     if bad_input == "directory":
         path.mkdir()
     elif bad_input == "invalid-utf8":
         path.write_bytes(b"\xff")
     with pytest.raises(ValueError, match="Cannot scan"):
-        scanner.scan_file((str(path), str(tmp_path)))
+        guard_scan.read_file(str(path))
+
+
+def test_scan_file_reports_unreadable_input(tmp_path, scanner_case):
+    with pytest.raises(ValueError, match="Cannot scan"):
+        scanner_case[0].scan_file((str(tmp_path / "missing.txt"), str(tmp_path)))

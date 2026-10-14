@@ -46,7 +46,7 @@ def parse_org_equipment_types(content: str) -> List[Tuple[str, int]]:
     An org that only carries `include = <org>` lists nothing itself; the
     included org is checked on its own.
     """
-    found = []
+    found: List[Tuple[str, int]] = []
     for m in TOP_LEVEL_DEF_RE.finditer(content):
         body, _ = extract_block_from_text(content, m.end() - 1)
         block = EQUIPMENT_TYPE_RE.search(body)

@@ -10,7 +10,7 @@ import hashlib
 import os
 import re
 import sys
-from functools import partial
+from functools import lru_cache, partial
 from typing import FrozenSet, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
@@ -114,7 +114,7 @@ def _required_booleans(
 
 
 def scan_text(
-    raw: str, boolean_triggers: FrozenSet[str] = frozenset()
+    raw: str, boolean_triggers: FrozenSet[str] = _BOOLEAN_TRIGGERS
 ) -> List[Tuple[int, str]]:
     """Return (line, message) for every AI weight block that adds after a zero."""
     text = guard_scan.sanitize(raw)
@@ -124,9 +124,7 @@ def scan_text(
         close = find_unquoted_brace_close(text, match.end() - 1)
         if close == -1:
             continue
-        add_at = _add_after_zero(
-            text, match.end(), close, _BOOLEAN_TRIGGERS | boolean_triggers
-        )
+        add_at = _add_after_zero(text, match.end(), close, boolean_triggers)
         if add_at is not None:
             findings.append(
                 (
@@ -139,17 +137,21 @@ def scan_text(
     return findings
 
 
+@lru_cache(maxsize=None)
+def _cache_namespace(boolean_triggers: FrozenSet[str]) -> str:
+    """Findings depend on which triggers are boolean, so the set keys the cache."""
+    digest = hashlib.sha256("\n".join(sorted(boolean_triggers)).encode()).hexdigest()
+    return "ai_weight_order_scan_v1." + digest
+
+
 def scan_file(
-    args: Tuple[str, str], boolean_triggers: FrozenSet[str] = frozenset()
+    args: Tuple[str, str], boolean_triggers: FrozenSet[str] = _BOOLEAN_TRIGGERS
 ) -> List[Tuple[str, int, str]]:
     """Return (relative path, line, message) for one content file."""
-    trigger_hash = hashlib.sha256(
-        "\n".join(sorted(boolean_triggers)).encode()
-    ).hexdigest()
     return guard_scan.scan_file(
         args,
         "factor",
-        "ai_weight_order_scan_v1." + trigger_hash,
+        _cache_namespace(boolean_triggers),
         partial(scan_text, boolean_triggers=boolean_triggers),
     )
 
@@ -166,7 +168,7 @@ class Validator(BaseValidator):
         definitions = self._pool_map(
             extract_definitions, [(path, self.mod_path) for path in trigger_files]
         )
-        boolean_triggers = frozenset(
+        boolean_triggers = _BOOLEAN_TRIGGERS | frozenset(
             name for rows in definitions for name, _, _ in rows
         )
         rows = guard_scan.collect_findings(
