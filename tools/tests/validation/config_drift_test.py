@@ -1,5 +1,7 @@
 """Drift guards for validator declarations and the validation workflows."""
 
+import json
+import os
 import re
 import sys
 
@@ -664,6 +666,49 @@ def test_nightly_dispatches_test_suite_and_matches_its_runs():
     assert "head=$head_sha" in script
     assert "base=$base_sha" in script
     assert "grep -Fqx" in script
+    assert "select(.head.repo.full_name == .base.repo.full_name)" in script
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.parametrize(
+    ("head_repository", "event", "allowed"),
+    [
+        pytest.param("o/r", {"INPUT_PR_NUMBER": "5"}, True, id="same-repo dispatch"),
+        pytest.param("fork/r", {"INPUT_PR_NUMBER": "5"}, False, id="fork dispatch"),
+        pytest.param(
+            "fork/r",
+            {"EVENT_PR_NUMBER": "5", "EVENT_HEAD_REPOSITORY": "fork/r"},
+            True,
+            id="fork pull_request run",
+        ),
+    ],
+)
+def test_dispatch_validates_only_same_repository_prs(
+    tmp_path, head_repository, event, allowed
+):
+    pr = json.dumps({"head": {"sha": "head", "repo": {"full_name": head_repository}}})
+    gh = write_under_str(tmp_path, "bin/gh", f"#!/bin/sh\nprintf '%s' '{pr}'\n")
+    os.chmod(gh, 0o755)
+    env = {
+        "PATH": f"{tmp_path / 'bin'}{os.pathsep}{os.environ['PATH']}",
+        "GITHUB_OUTPUT": str(tmp_path / "output.txt"),
+        "GITHUB_REPOSITORY": "o/r",
+        "GITHUB_SHA": "main",
+        "EVENT_PR_NUMBER": "",
+        "EVENT_HEAD_REPOSITORY": "",
+        "EVENT_HEAD_SHA": "",
+        "EVENT_BASE_SHA": "base",
+        "INPUT_PR_NUMBER": "",
+        "INPUT_HEAD_SHA": "",
+        "INPUT_BASE_SHA": "",
+        **event,
+    }
+    step = workflow_step("detect-changes", "Resolve validation ref")
+
+    result = run_bash_step(step["run"], tmp_path, env)
+
+    assert (result.returncode == 0) is allowed, result.stdout
+    assert ("same-repository PRs only" in result.stdout) is not allowed
 
 
 def test_housekeeping_has_one_job_and_three_actions():
