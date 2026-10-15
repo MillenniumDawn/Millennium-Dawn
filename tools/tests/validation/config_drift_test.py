@@ -573,7 +573,16 @@ CONTRACT_FILES = (
     "tools/tests/content/tool_data_drift_test.py",
     "validation_config.json",
     "pyproject.toml",
+    "tools/generate_validation_report.py",
+    "tools/baseline_check.py",
 )
+# What the guard greps for, and where.
+CONTRACT_STRINGS = {
+    "pytest-xdist": "pyproject.toml",
+    "pytest-cov": "pyproject.toml",
+    "--tooling-changed": "tools/generate_validation_report.py",
+    "--observation": "tools/baseline_check.py",
+}
 
 
 def _contract_guard():
@@ -583,17 +592,17 @@ def _contract_guard():
 @pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
 @pytest.mark.parametrize(
     "dropped",
-    [None, *CONTRACT_FILES[:4], "pytest-xdist", "pytest-cov"],
+    [None, *CONTRACT_FILES[:4], *CONTRACT_STRINGS],
 )
 def test_detect_changes_stops_a_head_without_the_ci_contract(tmp_path, dropped):
     for relative in CONTRACT_FILES:
         if relative != dropped:
             body = (REPO_ROOT / relative).read_text(encoding="utf-8")
-            if relative == "pyproject.toml" and dropped:
+            if CONTRACT_STRINGS.get(dropped) == relative:
                 body = "".join(
                     line
                     for line in body.splitlines(keepends=True)
-                    if f'"{dropped}' not in line
+                    if dropped not in line
                 )
             write_under_str(tmp_path, relative, body)
 
