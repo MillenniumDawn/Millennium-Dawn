@@ -4535,289 +4535,89 @@ SOV_fbk_organization_category = {
 }
 
 sov_reunification_category = {
-	start_talks_with_karelia = {
-		fire_only_once = yes
-		cost = 300
-		visible = {
-			country_exists = KAE
+	SOV_start_reunification_talks = {
+		cost = 150
+		target_root_trigger = { is_subject = no }
+		targets = { KAE DON CSB ESB }
+		target_trigger = {
+			FROM = { is_subject = no }
 		}
 		available = {
-			is_subject = no
 			has_war = no
-			NOT = {
-				OR = {
-					has_country_flag = reunification_talks_in_progress
-					has_idea = reunification_strains_idea
-				}
-			}
-			KAE = {
-				is_subject = no
+			NOT = { has_country_flag = reunification_talks_in_progress }
+			NOT = { has_idea = reunification_strains_idea }
+			FROM = {
 				has_war = no
+				NOT = { has_country_flag = SOV_reunification_cooldown }
 			}
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision start_talks_with_karelia"
-			set_variable = { reunification_target = KAE }
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_start_reunification_talks"
 			set_country_flag = reunification_talks_in_progress
-			activate_mission = SOV_reunification_mission
+			set_variable = { reunification_target = FROM }
+			set_variable = { reunification_progress = 0 }
+			country_event = sov_dissolution.13
 		}
 
 		ai_will_do = { base = 50 }
 	}
 
-	start_talks_with_don = {
-		fire_only_once = yes
-		cost = 300
-		visible = {
-			country_exists = DON
-		}
-		available = {
-			is_subject = no
-			has_war = no
-			NOT = {
-				OR = {
-					has_country_flag = reunification_talks_in_progress
-					has_idea = reunification_strains_idea
-				}
-			}
-			DON = {
-				is_subject = no
-				has_war = no
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision start_talks_with_don"
-			set_variable = { reunification_target = DON }
-			set_country_flag = reunification_talks_in_progress
-			activate_mission = SOV_reunification_mission
-		}
-
-		ai_will_do = { base = 50 }
-	}
-
-	start_talks_with_csb = {
-		fire_only_once = yes
-		cost = 300
-		visible = {
-			country_exists = CSB
-		}
-		available = {
-			is_subject = no
-			has_war = no
-			NOT = {
-				OR = {
-					has_country_flag = reunification_talks_in_progress
-					has_idea = reunification_strains_idea
-				}
-			}
-			CSB = {
-				is_subject = no
-				has_war = no
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision start_talks_with_csb"
-			set_variable = { reunification_target = CSB }
-			set_country_flag = reunification_talks_in_progress
-			activate_mission = SOV_reunification_mission
-		}
-
-		ai_will_do = { base = 50 }
-	}
-
-	start_talks_with_esb = {
-		fire_only_once = yes
-		cost = 300
-		visible = {
-			country_exists = ESB
-		}
-		available = {
-			is_subject = no
-			has_war = no
-			NOT = {
-				OR = {
-					has_country_flag = reunification_talks_in_progress
-					has_idea = reunification_strains_idea
-				}
-			}
-			ESB = {
-				is_subject = no
-				has_war = no
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision start_talks_with_esb"
-			set_variable = { reunification_target = ESB }
-			set_country_flag = reunification_talks_in_progress
-			activate_mission = SOV_reunification_mission
-		}
-
-		ai_will_do = { base = 50 }
-	}
-
-	free_kae = {
-		fire_only_once = yes
+	SOV_negotiate_shard_release = {
 		cost = 50
-		days_re_enable = 100
-		visible = {
-			country_exists = KAE
-			KAE = {
+		target_root_trigger = { is_subject = no }
+		targets = { KAE DON CSB ESB }
+		target_trigger = {
+			FROM = {
 				is_subject = yes
-				NOT = { is_subject_of = SOV }
+				NOT = { is_subject_of = ROOT }
 			}
 		}
 		available = {
-			is_subject = no
 			has_war = no
-			NOT = {
-				OR = {
-					has_country_flag = reunification_talks_in_progress
-					has_idea = reunification_strains_idea
-				}
-			}
-			if = {
-				limit = { KAE = { is_subject = yes } }
-
-				KAE = {
-					has_war = no
-					OVERLORD = {
-						has_opinion = { target = SOV value > 99 }
-					}
-				}
+			NOT = { has_country_flag = reunification_talks_in_progress }
+			FROM = {
+				has_war = no
+				NOT = { has_country_flag = SOV_reunification_cooldown }
+				OVERLORD = { has_opinion = { target = ROOT value > 19 } }
 			}
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision free_kae"
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_negotiate_shard_release"
 			set_country_flag = reunification_talks_in_progress
-			set_variable = { reunification_puppet_target = KAE }
-			KAE = {
-				OVERLORD = {
-					country_event = { id = sov_dissolution.3 days = 1 }
-				}
+			set_variable = { reunification_puppet_target = FROM }
+			FROM = {
+				OVERLORD = { country_event = { id = sov_dissolution.3 days = 1 } }
 			}
 		}
 
 		ai_will_do = { base = 50 }
 	}
 
-	free_don = {
-		fire_only_once = yes
-		cost = 50
-		days_re_enable = 100
-		visible = {
-			country_exists = DON
-			DON = {
-				is_subject = yes
-				NOT = { is_subject_of = SOV }
-			}
+	SOV_prepare_reconquest = {
+		cost = 300
+		target_root_trigger = { is_subject = no }
+		targets = { KAE DON CSB ESB }
+		target_trigger = {
+			FROM = { is_subject = no }
 		}
 		available = {
-			is_subject = no
 			has_war = no
-			NOT = {
-				OR = {
-					has_country_flag = reunification_talks_in_progress
-					has_idea = reunification_strains_idea
-				}
-			}
-			DON = {
-				has_war = no
-			}
+			NOT = { has_country_flag = reunification_talks_in_progress }
 		}
 		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision free_don"
+			log = "[GetDateText]: [Root.GetName]: Decision SOV_prepare_reconquest"
 			set_country_flag = reunification_talks_in_progress
-			set_variable = { reunification_puppet_target = DON }
-			DON = {
-				OVERLORD = {
-					country_event = { id = sov_dissolution.3 days = 1 }
-				}
-			}
+			set_variable = { reunification_target = FROM }
+			activate_mission = SOV_reconquest_mission
+			custom_effect_tooltip = SOV_prepare_reconquest_tt
 		}
 
-		ai_will_do = { base = 50 }
-	}
-
-	free_csb = {
-		fire_only_once = yes
-		cost = 50
-		days_re_enable = 100
-		visible = {
-			country_exists = CSB
-			CSB = {
-				is_subject = yes
-				NOT = { is_subject_of = SOV }
-			}
-		}
-		available = {
-			is_subject = no
-			has_war = no
-			NOT = {
-				OR = {
-					has_country_flag = reunification_talks_in_progress
-					has_idea = reunification_strains_idea
-				}
-			}
-			CSB = {
-				has_war = no
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision free_csb"
-			set_country_flag = reunification_talks_in_progress
-			set_variable = { reunification_puppet_target = CSB }
-			CSB = {
-				OVERLORD = {
-					country_event = { id = sov_dissolution.3 days = 1 }
-				}
-			}
-		}
-
-		ai_will_do = { base = 50 }
-	}
-
-	free_esb = {
-		fire_only_once = yes
-		cost = 50
-		days_re_enable = 100
-		visible = {
-			country_exists = ESB
-			ESB = {
-				is_subject = yes
-				NOT = { is_subject_of = SOV }
-			}
-		}
-		available = {
-			is_subject = no
-			has_war = no
-			NOT = {
-				OR = {
-					has_country_flag = reunification_talks_in_progress
-					has_idea = reunification_strains_idea
-				}
-			}
-			ESB = {
-				has_war = no
-			}
-		}
-		complete_effect = {
-			log = "[GetDateText]: [Root.GetName]: Decision free_esb"
-			set_country_flag = reunification_talks_in_progress
-			set_variable = { reunification_puppet_target = ESB }
-			ESB = {
-				OVERLORD = {
-					country_event = { id = sov_dissolution.3 days = 1 }
-				}
-			}
-		}
-
-		ai_will_do = { base = 50 }
+		ai_will_do = { base = 5 }
 	}
 
 	SOV_reunification_mission = {
 		allowed = { always = no }
 		available = { always = no }
-		fire_only_once = no
 		is_good = yes
 		selectable_mission = no
 		days_mission_timeout = 29 # becomes 30 with refire
@@ -4825,42 +4625,94 @@ sov_reunification_category = {
 
 		timeout_effect = {
 			log = "[GetDateText]: [Root.GetName]: Mission SOV_reunification_mission"
+			custom_effect_tooltip = SOV_reunification_mission_tt
+			hidden_effect = {
+				if = {
+					limit = {
+						var:reunification_target = {
+							OR = {
+								exists = no
+								is_subject = yes
+							}
+						}
+					}
+					SOV_clear_reunification_effort = yes
+					country_event = sov_dissolution.15
+				}
+				else_if = {
+					limit = {
+						OR = {
+							has_war = yes
+							is_subject = yes
+							var:reunification_target = { has_war = yes }
+						}
+					}
+					activate_mission = SOV_reunification_mission
+				}
+				else_if = {
+					limit = { check_variable = { reunification_progress > 99 } }
+					SOV_complete_reunification_talks = yes
+				}
+				else = {
+					add_to_variable = { reunification_progress = 10 }
+					if = {
+						limit = {
+							var:reunification_target = { has_opinion = { target = ROOT value > 49 } }
+						}
+						add_to_variable = { reunification_progress = 5 }
+					}
+					if = {
+						limit = { has_stability < 0.4 }
+						subtract_from_variable = { reunification_progress = 5 }
+					}
+					random_list = {
+						70 = { }
+						10 = { country_event = { id = sov_dissolution.10 days = 1 } }
+						7 = { country_event = { id = sov_dissolution.11 days = 1 } }
+						5 = {
+							modifier = {
+								factor = 0
+								NOT = { any_owned_state = { industrial_complex > 0 } }
+							}
+							country_event = { id = sov_dissolution.12 days = 1 }
+						}
+						8 = {
+							SOV_roll_reunification_demand = yes
+							if = {
+								limit = { check_variable = { reunification_offered_demand > 0 } }
+								country_event = { id = sov_dissolution.14 days = 1 }
+							}
+						}
+					}
+					activate_mission = SOV_reunification_mission
+				}
+			}
+		}
+	}
 
+	SOV_reconquest_mission = {
+		allowed = { always = no }
+		available = { always = no }
+		is_good = no
+		selectable_mission = no
+		days_mission_timeout = 60
+
+		timeout_effect = {
+			log = "[GetDateText]: [Root.GetName]: Mission SOV_reconquest_mission"
 			if = {
 				limit = {
-					check_variable = { reunification_progress > 99 }
-				}
-
-				country_event = { id = sov_dissolution.2 days = 1 }
-				var:THIS.reunification_target = {
-					ROOT = {
-						annex_country = {
-							target = PREV
-							transfer_troops = yes
+					var:reunification_target = {
+						OR = {
+							exists = no
+							is_subject = yes
 						}
 					}
 				}
-
-				add_timed_idea = {
-					idea = reunification_strains_idea
-					days = 365
-				}
-
-				clear_variable = reunification_target
-				clear_variable = reunification_progress
-				clr_country_flag = reunification_talks_in_progress
+				SOV_clear_reunification_effort = yes
+				country_event = sov_dissolution.15
 			}
 			else = {
-				random_list = {
-					30 = { country_event = { id = sov_dissolution.10 days = 1 } }
-					20 = { country_event = { id = sov_dissolution.11 days = 1 } }
-					10 = { country_event = { id = sov_dissolution.12 days = 1 } }
-				}
-
-				hidden_effect = {
-					add_to_variable = { reunification_progress = 5 }
-					activate_mission = SOV_reunification_mission
-				}
+				country_event = sov_dissolution.16
 			}
 		}
 	}
