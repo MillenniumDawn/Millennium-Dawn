@@ -329,7 +329,7 @@ def test_pool_map_init_closes_the_shared_pool_before_starting_its_own(
     monkeypatch.setenv("MD_MAX_WORKERS", "2")
     monkeypatch.setattr(VC, "Pool", _DedicatedPool)
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, workers=2)
-    v._pool = _SharedPool()
+    monkeypatch.setattr(v, "_pool", _SharedPool())
 
     result = v._pool_map_init(str, list(range(12)), lambda: None, ())
 
