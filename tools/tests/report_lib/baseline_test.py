@@ -100,10 +100,33 @@ def test_load_baseline_loads_and_dedupes_sidecars(tmp_path):
     assert baseline.meta["toolshash"] == "h"
 
 
-def test_issue_key_requires_location():
-    assert issue_key(make_issue()) is not None
-    assert issue_key(make_issue(file="", line=0)) is None
-    assert issue_key(make_issue(line=-3)) is None
+@pytest.mark.parametrize(
+    ("overrides", "keyed"),
+    [
+        pytest.param({}, True, id="located"),
+        pytest.param({"file": "", "line": 0}, True, id="no file"),
+        pytest.param({"category": ""}, False, id="no category"),
+        pytest.param({"message": ""}, False, id="no message"),
+    ],
+)
+def test_issue_key_needs_a_category_and_message(overrides, keyed):
+    assert (issue_key(make_issue(**overrides)) is not None) is keyed
+
+
+def test_classify_matches_a_finding_with_no_file(tmp_path):
+    # Decision AI-cost findings name the decision and file in the message.
+    message = "ABK_rebuild_the_power_grid Abkhazia.txt - ai_will_do ignores the cost"
+    baseline = _baseline(
+        tmp_path, [_issue_dict("warning", file="", line=0, message=message)]
+    )
+    issues = [
+        make_issue(severity=Severity.WARNING, file="", line=0, message=message),
+        make_issue(severity=Severity.WARNING, file="", line=0, message="added"),
+    ]
+
+    classify(issues, baseline)
+
+    assert [i.baseline_status for i in issues] == ["existing", "new"]
 
 
 def test_classify_tags_new_and_existing(tmp_path):
@@ -256,7 +279,7 @@ def test_classify_extra_instance_of_existing_finding_is_new(tmp_path):
 def test_classify_leaves_unkeyable_issues_untagged(tmp_path):
     baseline = _baseline(tmp_path)
 
-    unkeyable = make_issue(file="", line=0, message="no location")
+    unkeyable = make_issue(category="", message="no category")
     stats = classify([unkeyable], baseline)
 
     assert unkeyable.baseline_status is None
@@ -321,7 +344,7 @@ def test_classify_counts_mixed_unclassified_and_new(tmp_path):
     stats = classify(
         [
             make_issue(file="a.txt", line=1, message="keyed"),
-            make_issue(file="", line=0, message="no location"),
+            make_issue(category="", message="no category"),
         ],
         _baseline(tmp_path),
     )
