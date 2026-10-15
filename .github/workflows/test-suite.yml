@@ -192,8 +192,8 @@ jobs:
             grep -Fq "\"$package" pyproject.toml || missing+=("$package")
           done
           # The report and the base scan run the head's scripts with these flags.
-          grep -Fq -- --tooling-changed tools/generate_validation_report.py ||
-            missing+=("--tooling-changed")
+          grep -Fq -- --renames tools/generate_validation_report.py ||
+            missing+=("--renames")
           grep -Fq -- --observation tools/baseline_check.py ||
             missing+=("--observation")
           if [ "${#missing[@]}" -gt 0 ]; then
@@ -228,6 +228,9 @@ jobs:
             | python3 tools/validation/collect_changed_files.py \
             > changed-files.txt
           wc -l changed-files.txt
+          git diff --name-status -z --diff-filter=R "$merge_base" "$HEAD_SHA" \
+            | python3 tools/validation/collect_changed_files.py \
+            > renames.txt
 
       # The comparison scans both commits with this PR's validators, so it
       # cannot show what changed validator code does to main's findings.
@@ -263,6 +266,7 @@ jobs:
           name: changed-files
           path: |
             changed-files.txt
+            renames.txt
             party-loc-scope.diff
           if-no-files-found: warn
           retention-days: 7
@@ -1271,6 +1275,9 @@ jobs:
           fi
           if [ -f changed-files/changed-files.txt ]; then
             args+=(--changed-files changed-files/changed-files.txt)
+          fi
+          if [ -f changed-files/renames.txt ]; then
+            args+=(--renames changed-files/renames.txt)
           fi
           if [ -n "$PR_NUMBER" ]; then
             # A run for an older head must not replace the newer head's
