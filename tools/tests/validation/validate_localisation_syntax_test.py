@@ -126,8 +126,11 @@ def test_mandatory_header(tmp_path, body, expected):
 # ---- YAML lint ----------------------------------------------------------------
 
 
-def test_yaml_findings_reuse_the_fixer_finding_with_its_location():
-    line = ' KEY: "“curly”"'
+# The content checks strip comments; the YAML checks see them raw.
+@pytest.mark.parametrize(
+    "line", [' KEY: "“curly”"', " # a ‘curly’ comment"], ids=["value", "comment"]
+)
+def test_yaml_findings_reuse_the_fixer_finding_with_its_location(line):
     issues = VL._scan_yaml_text(f"l_english:\n{line}\n", "fixture.yml")
     assert [(i.severity, i.category, i.message, i.file, i.line) for i in issues] == [
         (
