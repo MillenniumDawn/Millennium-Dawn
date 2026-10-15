@@ -167,6 +167,25 @@ def test_classify_severity_changes(tmp_path, on_main, on_pr, status):
     assert issue.baseline_status == status
 
 
+@pytest.mark.parametrize("warning_first", [True, False])
+def test_classify_exact_error_match_wins_over_a_lowered_warning(
+    tmp_path, warning_first
+):
+    baseline = _baseline(
+        tmp_path, [_issue_dict("error", file="a.txt", line=1, message="same")]
+    )
+    error = make_issue(file="a.txt", line=1, message="same")
+    warning = make_issue(
+        severity=Severity.WARNING, file="a.txt", line=2, message="same"
+    )
+    issues = [warning, error] if warning_first else [error, warning]
+
+    stats = classify(issues, baseline)
+
+    assert (error.baseline_status, warning.baseline_status) == ("existing", "new")
+    assert (stats.new_errors, stats.new_warnings) == (0, 1)
+
+
 def test_classify_line_shift_reads_existing(tmp_path):
     # An unrelated edit six lines up moves the anchor line and the read-site
     # lines inside the message; the finding still exists on main.
