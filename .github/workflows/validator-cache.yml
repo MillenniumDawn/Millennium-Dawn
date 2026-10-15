@@ -134,11 +134,19 @@ jobs:
             --workflow-run-url "$workflow_url" \
             --github-repository "$REPOSITORY"
 
+      # baseline_check records this commit's results only for a complete run.
+      - name: Check for a recorded baseline
+        id: recorded
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f .validation_baseline/baseline-meta.json ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
+
       # PR reports compare against this commit's results even when the alarm
-      # fails; baseline_check writes them only for a complete run.
+      # fails.
       - name: Save validation baseline
-        if: >-
-          !cancelled() && hashFiles('.validation_baseline/baseline-meta.json') != ''
+        if: ${{ !cancelled() && steps.recorded.outputs.found == 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_baseline
@@ -159,8 +167,7 @@ jobs:
 
       # Make a failed save visible instead of leaving PRs without a baseline.
       - name: Verify this run's baseline entries exist
-        if: >-
-          !cancelled() && hashFiles('.validation_baseline/baseline-meta.json') != ''
+        if: ${{ !cancelled() && steps.recorded.outputs.found == 'true' }}
         env:
           GH_TOKEN: ${{ github.token }}
           ACCEPTED: ${{ steps.diff.outcome == 'success' }}

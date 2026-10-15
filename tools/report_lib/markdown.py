@@ -346,6 +346,12 @@ def _render_availability_notice(ctx: ReportContext) -> str:
             f"Baseline comparison unavailable (no complete baseline{commit} for "
             "this validator code). Findings are not annotated NEW vs EXISTING."
         )
+    if ctx.tooling_changed and ctx.baseline_status == "available":
+        bits.append(
+            "This PR changes validator code. Both commits were scanned with the "
+            "PR's validators, so findings that code adds to unchanged content read "
+            "EXISTING, not NEW."
+        )
     if ctx.changed_files_status == "unavailable":
         bits.append(
             "Changed-file list was not available. Findings are not tagged IN YOUR PR."

@@ -108,6 +108,9 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   20-minute budget. The report reads its artifact and marks the source. The scan saves
   no cache entry, because a dispatched run on main would let PR tooling write a
   main-scoped baseline. With neither, the comparison is unavailable.
+- When a PR changes validator code or reference data, both scans use its validators,
+  so findings that code adds to unchanged content read EXISTING. `detect-changes`
+  flags this and the report says so.
 - The validator hash covers `tools/validation` sources and data, `shared_utils.py`,
   `validation_config.json`, `resources/documentation/`, and the typo watchlist. All
   four `hashFiles` sites must match, and each checkout must hold those files.
