@@ -353,6 +353,52 @@ def test_localisation_loader_skips_unreadable_yml(dummy, write_path, tmp_path):
     assert "recruit_in_europe" in keys
 
 
+def _loc_tree(write_path, tmp_path):
+    write_path(
+        tmp_path,
+        "localisation/english/test_l_english.yml",
+        'l_english:\n TEST_key_one:0 "One"\n TEST_key_two:0 "Two"\n',
+    )
+
+
+# A staged .txt reads its loc keys from unstaged files. Restricting the lookup
+# to staged files once flooded --staged runs with false positives.
+def test_staged_run_loads_loc_keys_from_the_whole_repo(dummy, write_path, tmp_path):
+    _loc_tree(write_path, tmp_path)
+    dummy.staged_only = True
+    dummy.staged_files = ["events/some_event.txt"]
+
+    assert {"TEST_key_one", "TEST_key_two"} <= dummy._load_localisation_keys()
+
+
+def test_loc_keys_are_memoized(dummy, write_path, tmp_path):
+    _loc_tree(write_path, tmp_path)
+    assert dummy._load_localisation_keys() is dummy._load_localisation_keys()
+
+
+def test_loc_keys_hit_the_disk_cache_across_instances(
+    write_path, tmp_path, monkeypatch
+):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    _loc_tree(write_path, tmp_path)
+    first = _Dummy(
+        mod_path=str(tmp_path), use_colors=False, workers=1
+    )._load_localisation_keys()
+    opens = []
+    original_open = open
+
+    def wrapped(path, *args, **kwargs):
+        opens.append(str(path))
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr("builtins.open", wrapped)
+    second = _Dummy(
+        mod_path=str(tmp_path), use_colors=False, workers=1
+    )._load_localisation_keys()
+    assert not any(path.endswith(".yml") for path in opens)
+    assert second == first
+
+
 # ---- run wiring -----------------------------------------------------------
 
 
