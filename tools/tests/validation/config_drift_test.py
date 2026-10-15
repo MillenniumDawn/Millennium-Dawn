@@ -1144,8 +1144,8 @@ def test_ci_idea_icon_check_is_enabled():
     validator = IdeaValidator("/nonexistent", use_colors=False, workers=1)
     called = []
     validator._parse_all_ideas = lambda: ({}, {}, {})
-    validator.validate_missing_icons = lambda defined_ideas: called.append(
-        defined_ideas
+    validator.validate_missing_icons = lambda defined_ideas, ideas_by_file: (
+        called.append(defined_ideas)
     )
     for name in (
         "validate_undefined_idea_refs",
