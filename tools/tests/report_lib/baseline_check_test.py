@@ -139,6 +139,48 @@ def test_incomplete_candidate_fails_without_a_baseline(
     assert not (tmp_path / "observation").exists()
 
 
+def test_record_only_run_writes_just_the_observation(tmp_path, monkeypatch):
+    # The PR suite's base scan records the base commit; it runs no alarm.
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [_issue_dict("error")])
+    observation = tmp_path / "observation"
+
+    code = baseline_check.main(
+        [
+            "--current",
+            str(current),
+            "--observation",
+            str(observation),
+            "--toolshash",
+            "h",
+            "--commit-sha",
+            "base",
+        ]
+    )
+
+    assert code == 0
+    assert load_baseline(str(observation), "h", "base") is not None
+    assert sorted(path.name for path in tmp_path.iterdir()) == [
+        "current",
+        "observation",
+    ]
+
+
+def test_previous_without_output_is_rejected(tmp_path):
+    with pytest.raises(SystemExit):
+        baseline_check.main(
+            [
+                "--previous",
+                str(tmp_path / "prev"),
+                "--current",
+                str(tmp_path),
+                "--observation",
+                str(tmp_path / "observation"),
+            ]
+        )
+
+
 def test_establishing_baseline_when_previous_missing(tmp_path, monkeypatch, capsys):
     current = tmp_path / "current"
     _write_sidecar(current, "events", [_issue_dict("error")])

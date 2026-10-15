@@ -986,6 +986,118 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  # Recomputes the base commit's baseline when main's run has not saved one.
+  # Advisory: without it the comparison is unavailable, which never blocks.
+  baseline-scan:
+    name: Base commit scan
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.full_suite == 'true' ||
+      needs.detect-changes.outputs.content == 'true'
+    runs-on: ubuntu-latest
+    # The resource budget for one cold full scan.
+    timeout-minutes: 20
+    env:
+      BASE_SHA: ${{ needs.detect-changes.outputs.base-sha }}
+    steps:
+      - name: Checkout PR validator tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          fetch-depth: 1
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            validation_config.json
+            resources/documentation
+            .claude/docs/typo-watchlist.md
+            .github/actions/setup-md-python/action.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Compute validator code hash
+        id: toolshash
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**/*.py',
+          'tools/validation/**/*.txt', 'tools/shared_utils.py',
+          'validation_config.json', 'resources/documentation/**',
+          '.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Look up the base commit's baseline
+        id: lookup
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          lookup-only: true
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}
+          restore-keys: |
+            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}-
+
+      - name: Checkout base commit content
+        if: steps.lookup.outputs.cache-matched-key == ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.BASE_SHA }}
+          path: base
+          fetch-depth: 1
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout: /validation_config.json
+          sparse-checkout-cone-mode: false
+
+      # Both scans run the PR's tooling, so only the content differs.
+      - name: Give the base content the PR's tooling
+        if: steps.lookup.outputs.cache-matched-key == ''
+        run: |
+          git -C base sparse-checkout set --no-cone --stdin \
+            < tools/validation/ci_workspace_profile.txt
+          rm -rf base/tools base/resources/documentation
+          mkdir -p base/resources base/.claude/docs
+          cp -R tools base/tools
+          cp -R resources/documentation base/resources/documentation
+          cp validation_config.json base/validation_config.json
+          cp .claude/docs/typo-watchlist.md base/.claude/docs/typo-watchlist.md
+
+      - name: Set up Python
+        if: steps.lookup.outputs.cache-matched-key == ''
+        uses: ./.github/actions/setup-md-python
+        with:
+          install: "false"
+
+      # Cold and isolated: no shared validator cache feeds the comparison.
+      - name: Scan the base commit
+        if: steps.lookup.outputs.cache-matched-key == ''
+        working-directory: base
+        run: >-
+          python3 tools/validation/run_all_validators.py --no-color --no-cache
+          --persist-results "$RUNNER_TEMP/base-candidate"
+
+      - name: Record the base commit's baseline
+        if: steps.lookup.outputs.cache-matched-key == ''
+        env:
+          TOOLSHASH: ${{ steps.toolshash.outputs.hash }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          test -f "$RUNNER_TEMP/base-candidate/.persist-complete"
+          python3 tools/baseline_check.py \
+            --current "$RUNNER_TEMP/base-candidate" \
+            --observation "$RUNNER_TEMP/base-baseline" \
+            --toolshash "$TOOLSHASH" \
+            --commit-sha "$BASE_SHA" \
+            --github-repository "$REPOSITORY"
+
+      - name: Upload base commit baseline
+        if: steps.lookup.outputs.cache-matched-key == ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: base-commit-baseline
+          path: ${{ runner.temp }}/base-baseline
+          if-no-files-found: error
+          retention-days: 1
+
   docs-quality:
     name: Docs quality
     needs: [detect-changes]
@@ -1007,6 +1119,7 @@ jobs:
       - content-tests
       - tools-quality
       - mod-tests
+      - baseline-scan
       - docs-quality
     if: ${{ always() && !cancelled() }}
     permissions:
@@ -1055,6 +1168,7 @@ jobs:
       # Only the base commit's own baseline; any other main commit's findings
       # would read as this PR's.
       - name: Restore validation baseline
+        id: restore-baseline
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_baseline
@@ -1063,6 +1177,15 @@ jobs:
             steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}
           restore-keys: |
             md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}-
+
+      # Main has not saved one yet: use the base scan from this run, if any.
+      - name: Download base commit baseline
+        if: steps.restore-baseline.outputs.cache-matched-key == ''
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: base-commit-baseline
+          path: .validation_baseline
 
       - name: Set up Python
         id: setup-python
