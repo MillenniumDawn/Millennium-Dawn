@@ -455,7 +455,6 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: marks_trade.1.b executed"
 		name = marks_trade.1.b
-		# Optional: Add a small negative modifier if you want a diplomatic sting
 		AST = {
 			add_opinion_modifier = {
 				target = ROOT
@@ -7747,6 +7746,775 @@ country_event = {
 	}
 }
 
+add_namespace = AST_ind_detention_facility
+
+country_event = {
+	id = AST_ind_detention_facility.1
+	title = AST_ind_detention_facility.1.t
+	desc = AST_ind_detention_facility.1.d
+	picture = GFX_european_migrant_crisis
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_ind_detention_facility.1.a executed"
+		name = AST_ind_detention_facility.1.a
+		set_temp_variable = { temp_productivity_change = 40 }
+		635 = {
+			state_flat_productivity_change_effect = yes
+		}
+		set_temp_variable = { treasury_change = 6.00 }
+		modify_treasury_effect = yes
+		newline = yes
+		diplomatic_relation = {
+			country = AST
+			relation = non_aggression_pact
+			active = yes
+		}
+		AST = {
+			add_opinion_modifier = {
+				target = IND
+				modifier = accepted_pacific_solution
+			}
+			country_event = {
+				id = AST_ind_detention_facility.2
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_ind_detention_facility.1.b executed"
+		name = AST_ind_detention_facility.1.b
+		AST = {
+			add_opinion_modifier = {
+				target = IND
+				modifier = denied_pacific_solution
+			}
+			country_event = {
+				id = AST_ind_detention_facility.3
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				has_opinion = {
+					target = AST
+					value < -30
+				}
+				add = 2
+			}
+		}
+	}
+}
+
+country_event = {
+	id = AST_ind_detention_facility.2
+	title = AST_ind_detention_facility.2.t
+	desc = AST_ind_detention_facility.2.d
+	picture = GFX_european_migrant_crisis
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_ind_detention_facility.2.a executed"
+		name = AST_ind_detention_facility.2.a
+		AST_decrease_boat_arrivals = yes
+		newline = yes
+		set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = AST.id }
+			set_temp_variable = { influence_target = IND.id }
+			change_influence_percentage = yes
+		set_temp_variable = { treasury_change = -6.00 }
+		modify_treasury_effect = yes
+	}
+}
+
+country_event = {
+	id = AST_ind_detention_facility.3
+	title = AST_ind_detention_facility.3.t
+	desc = AST_ind_detention_facility.3.d
+	picture = GFX_european_migrant_crisis
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_ind_detention_facility.3.a executed"
+		name = AST_ind_detention_facility.3.a
+		add_political_power = -50
+	}
+}
+
+add_namespace = AST_investment_opportunity_event
+
+country_event = {
+	id = AST_investment_opportunity_event.1
+	title = AST_investment_opportunity_event.1.t
+	desc = AST_investment_opportunity_event.1.d
+	picture = GFX_aus_flag
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_investment_opportunity_event.1.a executed"
+		name = AST_investment_opportunity_event.1.a
+		effect_tooltip = {
+			AST = {
+				random_owned_state = {
+					limit = {
+						is_core_of = AST
+						is_on_continent = australia
+					}
+					random_list = {
+						20 = {
+							add_extra_state_shared_building_slots = 1
+							add_building_construction = {
+								type = industrial_complex
+								level = 1
+								instant_build = yes
+							}
+						}
+						20 = {
+							add_extra_state_shared_building_slots = 1
+							add_building_construction = {
+								type = offices
+								level = 1
+								instant_build = yes
+							}
+						}
+						20 = {
+							add_extra_state_shared_building_slots = 1
+							add_building_construction = {
+								type = agriculture_district
+								level = 1
+								instant_build = yes
+							}
+						}
+						20 = {
+							add_extra_state_shared_building_slots = 1
+							add_building_construction = {
+								type = arms_factory
+								level = 1
+								instant_build = yes
+							}
+						}
+						20 = {
+							add_building_construction = {
+								type = renewable_energy_infra
+								level = 1
+								instant_build = yes
+							}
+						}
+					}
+				}
+			}
+		}
+		set_temp_variable = { treasury_change = -15.00 }
+		modify_treasury_effect = yes
+		newline = yes
+		AST = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = investments_construction_opinion
+			}
+			set_temp_variable = { percent_change = 4 }
+			set_temp_variable = { tag_index = ROOT.id }
+			set_temp_variable = { influence_target = AST.id }
+			change_influence_percentage = yes
+			country_event = AST_investment_opportunity_event.2
+		}
+		hidden_effect = {
+			random_list = {
+					20 = {
+						modifier = {
+							AST = {
+								has_idea = stable_growth
+							}
+							factor = 3
+						}
+						modifier = {
+							AST = {
+								has_idea = fast_growth
+							}
+							factor = 7
+						}
+						modifier = {
+							AST = {
+								has_idea = economic_boom
+							}
+							factor = 16
+						}
+						country_event = {
+							id = AST_investment_opportunity_event.4
+							days = 780
+						}
+					}
+					80 = { }	
+				}
+		}
+		ai_chance = {
+			base = 2
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = AST
+					value > 10
+				}
+			}
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_investment_opportunity_event.1.b executed"
+		name = AST_investment_opportunity_event.1.b
+		AST = {
+			add_opinion_modifier = {
+				target = ROOT
+				modifier = refused_our_request
+			}
+			country_event = AST_investment_opportunity_event.3
+		}
+		ai_chance = {
+			base = 1
+			modifier = {
+				add = 10
+				has_opinion = {
+					target = AST
+					value < 0
+				}
+			}
+		}
+	}
+}
+
+country_event = {
+	id = AST_investment_opportunity_event.2
+	title = AST_investment_opportunity_event.2.t
+	desc = AST_investment_opportunity_event.2.d
+	picture = GFX_united_states_dollar
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			AST = {
+                random_owned_state = {
+                    limit = {
+                        is_core_of = AST
+                        is_on_continent = australia
+                    }
+                    save_event_target_as = AST_invest_state
+                }
+            }
+			random_list = {
+                20 = { set_country_flag = AST_invest_roll_industrial }
+                20 = { set_country_flag = AST_invest_roll_offices }
+                20 = { set_country_flag = AST_invest_roll_agriculture }
+                20 = { set_country_flag = AST_invest_roll_arms }
+                20 = { set_country_flag = AST_invest_roll_renewable }
+            }
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_investment_opportunity_event.2.a executed"
+		name = AST_investment_opportunity_event.2.a
+		if = {
+			limit = { has_country_flag = AST_invest_roll_industrial }
+			event_target:AST_invest_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = industrial_complex level = 1 instant_build = yes }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = AST_invest_roll_offices }
+			event_target:AST_invest_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = offices level = 1 instant_build = yes }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = AST_invest_roll_agriculture }
+			event_target:AST_invest_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = agriculture_district level = 1 instant_build = yes }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = AST_invest_roll_arms }
+			event_target:AST_invest_state = {
+				add_extra_state_shared_building_slots = 1
+				add_building_construction = { type = arms_factory level = 1 instant_build = yes }
+			}
+		}
+		else_if = {
+			limit = { has_country_flag = AST_invest_roll_renewable }
+			event_target:AST_invest_state = {
+				add_building_construction = { type = renewable_energy_infra level = 1 instant_build = yes }
+			}
+		}
+		clr_country_flag = AST_invest_roll_industrial
+		clr_country_flag = AST_invest_roll_offices
+		clr_country_flag = AST_invest_roll_agriculture
+		clr_country_flag = AST_invest_roll_arms
+		clr_country_flag = AST_invest_roll_renewable
+			effect_tooltip = {
+				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { tag_index = FROM.id }
+				set_temp_variable = { influence_target = AST.id }
+				change_influence_percentage = yes
+			}
+	}
+}
+
+country_event = {
+	id = AST_investment_opportunity_event.3
+	title = AST_investment_opportunity_event.3.t
+	desc = AST_investment_opportunity_event.3.d
+	picture = GFX_united_states_dollar
+	is_triggered_only = yes
+
+	option = {
+		name = AST_investment_opportunity_event.3.a
+	}
+}
+
+#investment return positive
+country_event = {
+	id = AST_investment_opportunity_event.4
+	title = AST_investment_opportunity_event.4.t
+	desc = AST_investment_opportunity_event.4.d
+	picture = GFX_united_states_dollar
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_investment_opportunity_event.4.a executed"
+		name = AST_investment_opportunity_event.4.a
+		set_temp_variable = { int_investment_change = 22 }
+		modify_international_investment_effect = yes
+	}
+}
+
+add_namespace = AST_breadbasket_event
+
+country_event = {
+	id = AST_breadbasket_event.1
+	title = AST_breadbasket_event.1.t
+	desc = AST_breadbasket_event.1.d
+	picture = GFX_aus_flag
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_breadbasket_event.1.a executed"
+		name = AST_breadbasket_event.1.a
+		add_timed_idea = {
+			idea = aukfta_2
+			days = 840
+		}
+		add_tech_bonus = {
+				name = AST_crop_data_collecting
+				bonus = 0.25
+				uses = 1
+				category = CAT_agriculture
+			}
+		newline = yes
+		AST = {
+			add_opinion_modifier = {
+				target = ENG
+				modifier = ast_trade_deal
+			}
+			country_event = { id = AST_breadbasket_event.2 days = 1 }
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_breadbasket_event.1.b executed"
+		name = AST_breadbasket_event.1.b
+		AST = {
+			add_opinion_modifier = {
+				target = ENG
+				modifier = refused_trade_deal
+			}
+			country_event = { id = AST_breadbasket_event.3 days = 1 }
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				has_opinion = {
+					target = AST
+					value < 0
+				}
+				add = 2
+			}
+		}
+	}
+}
+
+country_event = {
+	id = AST_breadbasket_event.2
+	title = AST_breadbasket_event.2.t
+	desc = AST_breadbasket_event.2.d
+	picture = GFX_grain_silo_investments
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_breadbasket_event.2.a executed"
+		name = AST_breadbasket_event.2.a
+		add_timed_idea = {
+			idea = aukfta_1
+			days = 840
+		}
+		add_tech_bonus = {
+				name = AST_crop_data_collecting
+				bonus = 0.25
+				uses = 1
+				category = CAT_agriculture
+			}
+		newline = yes
+		ENG = {
+			add_opinion_modifier = {
+				target = AST
+				modifier = ast_trade_deal
+			}
+		}
+	}
+}
+
+country_event = {
+	id = AST_breadbasket_event.3
+	title = AST_breadbasket_event.3.t
+	desc = AST_breadbasket_event.3.d
+	picture = GFX_grain_silo_investments
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_breadbasket_event.3.a executed"
+		name = AST_breadbasket_event.3.a
+		add_political_power = -30
+	}
+}
+
+add_namespace = AST_experts_decisions
+
+country_event = {
+	id = AST_experts_decisions.1
+	title = AST_experts_decisions.1.t
+	desc = AST_experts_decisions.1.d
+	picture = GFX_oil_refinery
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_experts_decisions.1.a executed"
+		name = AST_experts_decisions.1.a
+		add_timed_idea = {
+			idea = ast_technical_experts
+			days = 860
+		}
+		set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = AST.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+		ai_chance = {
+			base = 1
+		}
+		hidden_effect = {
+			add_opinion_modifier = {
+                    target = AST
+                    modifier = sent_experts_ast
+                }
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: AST_experts_decisions.1.a executed"
+		name = AST_experts_decisions.1.b
+		AST = {
+			country_event = {
+				id = AST_experts_decisions.2
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				has_opinion = {
+					target = AST
+					value < 0
+				}
+				add = 2
+			}
+		}
+	}
+}
+
+#experts refusal event
+country_event = {
+	id = AST_experts_decisions.2
+	title = AST_experts_decisions.2.t
+	desc = AST_experts_decisions.2.d
+	picture = GFX_treaty_rejected
+	is_triggered_only = yes
+
+	option = {
+		name = AST_experts_decisions.2.a
+	}
+}
+
+add_namespace = AST_oil_ind_lease
+
+# oil offer to ind
+country_event = {
+    id = AST_oil_ind_lease.1
+    title = AST_oil_ind_lease.1.t
+    desc = AST_oil_ind_lease.1.d
+    picture = GFX_aus_flag
+    is_triggered_only = yes
+
+    option = {
+        name = AST_oil_ind_lease.1.a   # accept
+		log = "[GetDateText]: [This.GetName]: AST_oil_ind_lease.1.a executed"
+        give_resource_rights = {
+            receiver = AST
+            state = 629
+			resources = { oil }
+        }
+		newline = yes
+		set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = AST.id }
+			set_temp_variable = { influence_target = THIS.id }
+			change_influence_percentage = yes
+        AST = {
+			add_opinion_modifier = {
+				target = IND
+				modifier = approved_resource_lease
+			}
+			country_event = { id = AST_oil_ind_lease.2 days = 1 }
+        }
+		ai_chance = {
+            base = 1
+            modifier = {
+                add = 9
+                has_opinion = {
+                    target = AST
+                    value > 9
+                }
+            }
+        }
+    }
+
+    option = {
+        name = AST_oil_ind_lease.1.b   # refuse
+		log = "[GetDateText]: [This.GetName]: AST_oil_ind_lease.1.b executed"
+		add_political_power = 30
+		newline = yes
+        AST = {
+            country_event = { id = AST_oil_ind_lease.3 days = 1 }
+        }
+		ai_chance = {
+            base = 1
+            modifier = {
+                add = 9
+                has_opinion = {
+                    target = AST
+                    value < 0
+                }
+            }
+        }
+    }
+}
+
+#accepted deal
+country_event = {
+    id = AST_oil_ind_lease.2
+    title = AST_oil_ind_lease.2.t
+    desc = AST_oil_ind_lease.2.d
+    picture = GFX_oil_refinery
+    is_triggered_only = yes
+
+    option = {
+        name = AST_oil_ind_lease.2.a
+		log = "[GetDateText]: [This.GetName]: AST_oil_ind_lease.2.a executed"
+		effect_tooltip = {
+			IND = {
+				give_resource_rights = {
+					receiver = AST
+					state = 629
+					resources = { oil }
+				}
+			}
+		}
+		hidden_effect = {
+			country_event = { id = AST_oil_ind_lease.5 days = 364 }
+			IND = { country_event = { id = AST_oil_ind_lease.4 days = 364 } }
+		}
+    }
+}
+
+#refusal
+country_event = {
+    id = AST_oil_ind_lease.3
+    title = AST_oil_ind_lease.3.t
+    desc = AST_oil_ind_lease.3.d
+    picture = GFX_oil_refinery
+    is_triggered_only = yes
+
+    option = {
+        name = AST_oil_ind_lease.3.a
+		add_political_power = -20
+    }
+}
+
+#ind end contract event
+country_event = {
+    id = AST_oil_ind_lease.4
+    title = AST_oil_ind_lease.4.t
+    desc = AST_oil_ind_lease.4.d
+    picture = GFX_oil_refinery
+    is_triggered_only = yes
+
+    option = {
+		log = "[GetDateText]: [This.GetName]: AST_oil_ind_lease.4.a executed"
+        name = AST_oil_ind_lease.4.a
+		add_resource = {
+				type = oil
+				amount = 8
+				state = 629
+			}
+		set_temp_variable = { treasury_change = 4.00 }
+		modify_treasury_effect = yes
+		newline = yes
+		AST = {
+			remove_resource_rights = 629
+		}
+			
+    }
+}
+
+#ast end contract
+country_event = {
+    id = AST_oil_ind_lease.5
+    title = AST_oil_ind_lease.4.t
+    desc = AST_oil_ind_lease.5.d
+    picture = GFX_oil_refinery
+    is_triggered_only = yes
+
+    option = {
+		log = "[GetDateText]: [This.GetName]: AST_oil_ind_lease.5.a executed"
+        name = AST_oil_ind_lease.5.a
+		add_tech_bonus = {
+			name = AST_commit_to_renewables
+			bonus = 0.35
+			uses = 1
+			category = CAT_excavation
+		}
+		set_temp_variable = { temp_opinion = 10 }
+		change_fossil_fuel_industry_opinion = yes
+		newline = yes
+		effect_tooltip = {
+			add_resource = {
+				type = oil
+				amount = 8
+				state = 629
+			}
+			remove_resource_rights = 629
+		}
+    }
+}
+
+add_namespace = kinetic_connection_event
+
+country_event = {
+	id = kinetic_connection_event.1
+	title = kinetic_connection_event.1.t
+	desc = kinetic_connection_event.1.d
+	picture = GFX_CTC.2
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: kinetic_connection_event.1.a executed"
+		name = kinetic_connection_event.1.a
+		add_ideas = fraus_idea
+		AST = {
+			add_opinion_modifier = {
+				target = FRA
+				modifier = joint_counter_terrorism
+			}
+			country_event = {
+				id = kinetic_connection_event.2
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 1
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: kinetic_connection_event.1.b executed"
+		name = kinetic_connection_event.1.b
+		AST = {
+			country_event = {
+				id = kinetic_connection_event.3
+				days = 1
+			}
+		}
+		ai_chance = {
+			base = 0
+			modifier = {
+				has_opinion = {
+					target = AST
+					value < 0
+				}
+				add = 5
+			}
+		}
+	}
+}
+
+country_event = {
+	id = kinetic_connection_event.2
+	title = kinetic_connection_event.2.t
+	desc = kinetic_connection_event.2.d
+	picture = GFX_CTC.2
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: kinetic_connection_event.2.a executed"
+		name = kinetic_connection_event.2.a
+		add_ideas = fraus_idea
+		FRA = {
+			add_opinion_modifier = {
+				target = AST
+				modifier = joint_counter_terrorism
+			}
+		}
+	}
+}
+
+country_event = {
+	id = kinetic_connection_event.3
+	title = kinetic_connection_event.3.t
+	desc = kinetic_connection_event.3.d
+	picture = GFX_CTC.2
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: kinetic_connection_event.3.a executed"
+		name = kinetic_connection_event.3.a
+		add_political_power = -30
+		add_popularity = {
+				ideology = democratic
+				popularity = -0.02
+			}
+	}
+}
+
 
 ################
 #News Events
@@ -7859,7 +8627,7 @@ country_event = {
 					target = SOL
 					value < 0
 				}
-				factor = 5
+				add = 5
 			}
 		}
 	}

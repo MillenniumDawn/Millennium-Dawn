@@ -40,6 +40,8 @@ focus_tree = {
 				idea = investing_in_the_nation_ast
 				days = 720
 			}
+			set_temp_variable = { treasury_change = -12.00 }
+			modify_treasury_effect = yes
 		}
 	}
 
@@ -134,19 +136,21 @@ focus_tree = {
 			set_temp_variable = { treasury_change = -15.00 }
 			modify_treasury_effect = yes
 			hidden_effect = {
-				random = {
-					chance = 80
-					modifier = {
+				random_list = {
+					80 = {
+						modifier = {
 						OR = {
 							has_completed_focus = AST_commit_to_renewables
 							has_idea = comprehensive_regulations
 						}
 						add = -65
+						country_event = {
+							id = AST_solar_panels_at_home.1
+							days = 110
+						}
+						}
 					}
-					country_event = {
-						id = AST_solar_panels_at_home.1
-						days = 110
-					}
+					20 = { }
 				}
 			}
 		}
@@ -578,7 +582,17 @@ focus_tree = {
 		x = -1
 		y = 1
 		completion_reward = {
-			#
+			add_timed_idea = {
+				idea = christmas_island_renovations_ast
+				days = 120
+			}
+			set_temp_variable = { party_popularity_increase = -0.02 }
+			change_relative_party_popularity = yes
+			newline = yes
+			set_temp_variable = { temp_productivity_change = 30 }
+			748 = {
+				state_flat_productivity_change_effect = yes
+			}
 		}
 	}
 
@@ -596,11 +610,18 @@ focus_tree = {
 		x = 1
 		y = 1
 		completion_reward = {
-			#
+			add_political_power = -50
+			add_stability = -0.02
+			set_temp_variable = { party_popularity_increase = 0.02 }
+			change_relative_party_popularity = yes
+			newline = yes
+			set_temp_variable = { temp_productivity_change = -20 }
+			748 = {
+				state_flat_productivity_change_effect = yes
+			}
 		}
 	}
 
-	# Dashed line in the plan: reachable from EITHER branch (separate prerequisite blocks = OR)
 	focus = {
 		id = AST_the_coastal_guard
 		icon = focus_SIA_river_patrols
@@ -613,7 +634,25 @@ focus_tree = {
 		x = 1
 		y = 1
 		completion_reward = {
-			#
+			if = {
+				limit = { has_idea = border_protection_bill_ast }
+				swap_ideas = {
+					remove_idea = border_protection_bill_ast
+					add_idea = border_patrol_bill
+				}
+			}
+			else_if = {
+				limit = { has_idea = border_protection_bill_ast_2 }
+				swap_ideas = {
+					remove_idea = border_protection_bill_ast_2
+					add_idea = border_patrol_bill
+				}
+			}
+			else = {
+				add_ideas = border_patrol_bill
+			}
+			newline = yes
+			AST_decrease_boat_arrivals = yes
 		}
 	}
 
@@ -628,7 +667,19 @@ focus_tree = {
 		x = 0
 		y = 2
 		completion_reward = {
-			#
+			IND = { country_event = AST_ind_detention_facility.1 }
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				AST_decrease_boat_arrivals = yes
+				newline = yes
+				set_temp_variable = { percent_change = 3 }
+					set_temp_variable = { tag_index = AST.id }
+					set_temp_variable = { influence_target = IND.id }
+					change_influence_percentage = yes
+				set_temp_variable = { treasury_change = -6.00 }
+				modify_treasury_effect = yes
+			}
 		}
 	}
 
@@ -643,7 +694,7 @@ focus_tree = {
 		x = 0
 		y = 2
 		completion_reward = {
-			#
+			
 		}
 	}
 
@@ -658,7 +709,16 @@ focus_tree = {
 		x = 0
 		y = 1
 		completion_reward = {
-			#
+			if = {
+				limit = { has_idea = asio }
+				swap_ideas = {
+					remove_idea = asio
+					add_idea = asio_1
+				}
+			}
+			else = {
+				add_ideas = asio
+			}
 		}
 	}
 
@@ -673,13 +733,13 @@ focus_tree = {
 		x = 0
 		y = 1
 		completion_reward = {
-			#
+			add_ideas = skilled_asylum_seeker_agreement_ast
 		}
 	}
 
-	########################################
+	##############
 	# FAR AND WIDE
-	########################################
+	##############
 
 	focus = {
 		id = AST_befriend_the_west
@@ -692,7 +752,7 @@ focus_tree = {
 		x = -1
 		y = 1
 		completion_reward = {
-			#
+			custom_effect_tooltip = AST_befriend_the_west_tt
 		}
 	}
 
@@ -704,10 +764,28 @@ focus_tree = {
 		prerequisite = {
 			focus = AST_advance_the_nation
 		}
+		bypass = {
+			NOT = {
+				controls_state = 1219
+			}
+		}
 		x = 1
 		y = 1
 		completion_reward = {
-			#
+			1219 = {
+				add_building_construction = {
+				type = naval_base
+				level = 3
+				instant_build = yes
+				province = { all_provinces = yes }
+
+			}
+			add_building_construction = {
+				type = air_base
+				level = 2
+				instant_build = yes
+			}
+			}
 		}
 	}
 
@@ -722,11 +800,23 @@ focus_tree = {
 		x = -1
 		y = 1
 		completion_reward = {
-			#
+			ENG = { country_event = AST_breadbasket_event.1 }
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_timed_idea = {
+					idea = aukfta_1
+					days = 840
+				}
+				add_tech_bonus = {
+						name = AST_crop_data_collecting
+						bonus = 0.25
+						uses = 1
+						category = CAT_agriculture
+					}
+			}
 		}
 	}
-
-	# Shared child of both Befriend the West and Protect the East (AND - see notes)
 	focus = {
 		id = AST_solid_rock
 		icon = fighter_plane
@@ -739,7 +829,15 @@ focus_tree = {
 		x = 1
 		y = 1
 		completion_reward = {
-			#
+			add_tech_bonus = {
+				name = AST_solid_rock
+				bonus = 0.6
+				uses = 1
+				ahead_reduction = 5
+				category = CAT_light_aircraft
+			}
+			newline = yes
+			add_ideas = intercepter_radar_modifications_ast
 		}
 	}
 
@@ -754,7 +852,7 @@ focus_tree = {
 		x = 1
 		y = 1
 		completion_reward = {
-			#
+			custom_effect_tooltip = AST_experts_abroad_tt
 		}
 	}
 
@@ -763,6 +861,14 @@ focus_tree = {
 		icon = Generic_Transport_Aircraft
 		cost = 5
 		relative_position_id = AST_breadbasket_negotiations
+		available = {
+			ENG = {
+				has_opinion = {
+					target = AST
+					value > 49
+				}
+			}
+		}
 		prerequisite = {
 			focus = AST_breadbasket_negotiations
 		}
@@ -772,7 +878,18 @@ focus_tree = {
 		x = 1
 		y = 1
 		completion_reward = {
-			#
+			add_tech_bonus = {
+				name = AST_bomber_agreement
+				bonus = 0.6
+				uses = 1
+				category = CAT_heavy_aircraft
+			}
+			add_tech_bonus = {
+				name = AST_bomber_agreement
+				bonus = 0.6
+				uses = 1
+				category = CAT_air_countermeasures
+			}
 		}
 	}
 
@@ -788,7 +905,20 @@ focus_tree = {
 		x = 0
 		y = 2
 		completion_reward = {
-			#
+			FRA = {
+				country_event = kinetic_connection_event.1
+			}
+			newline = yes
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_ideas = fraus_idea
+				FRA = {
+					add_opinion_modifier = {
+						target = AST
+						modifier = joint_counter_terrorism
+					}
+				}
+			}
 		}
 	}
 
@@ -818,7 +948,7 @@ focus_tree = {
 		x = -1
 		y = 1
 		completion_reward = {
-			#
+			IND = { country_event = AST_oil_ind_lease.1 }
 		}
 	}
 
@@ -898,7 +1028,7 @@ focus_tree = {
 		completion_reward = {  }
 	}
 
-	# Bottom-left brace in the plan: fans out from The Kinetic Connection (see notes)
+	#fans out from The Kinetic Connection
 	focus = {
 		id = AST_assess_the_threat
 		icon = army_cyberwar
@@ -910,7 +1040,13 @@ focus_tree = {
 		x = -1
 		y = 1
 		completion_reward = {
-			#
+			set_temp_variable = { defense_var = 0.5 }
+			add_to_variable = { ct_home_defense_var = defense_var }
+			set_temp_variable = { intel_gain_var = 2 }
+			add_to_variable = { ct_global_base_detect_var = intel_gain_var }
+			custom_effect_tooltip = is_ct_dom_suv_tt
+			newline = yes
+			gain_random_agency_upgrade = yes
 		}
 	}
 
@@ -926,7 +1062,7 @@ focus_tree = {
 		x = 1
 		y = 1
 		completion_reward = {
-			#
+			add_ideas = ocma_ast
 		}
 	}
 
@@ -943,7 +1079,9 @@ focus_tree = {
 		}
 		x = 1
 		y = 1
-		completion_reward = {  }
+		completion_reward = { 
+			add_ideas = humint_operations_ast
+		}
 	}
 
 	focus = {
@@ -960,7 +1098,24 @@ focus_tree = {
 		x = 1
 		y = 1
 		completion_reward = {
-			#
+			add_timed_idea = {
+				idea = influx_of_european_visitors_ast
+				days = 680
+			}
+			add_popularity = {
+				ideology = democratic
+				popularity = 0.02
+			}
+			newline = yes
+			every_other_country = {
+				limit = {
+					has_idea = EU_member
+				}
+				add_opinion_modifier = {
+					target = AST
+					modifier = implemented_the_euro_pass
+				}
+			}
 		}
 	}
 
