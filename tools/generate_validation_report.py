@@ -36,8 +36,10 @@ from report_lib import (  # noqa: E402
     load_all,
     load_baseline,
     load_changed_files,
+    load_renames,
     post_checks,
     post_comment,
+    rename_keys,
     render,
     tag_changed_files,
     truncate_if_needed,
@@ -159,6 +161,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--renames",
+        default=None,
+        help=(
+            "Files the PR renamed, each old path on one line and its new path "
+            "on the next. Main's findings in an old path count as the new one's."
+        ),
+    )
+    parser.add_argument(
         "--github-token",
         default=os.environ.get("GITHUB_TOKEN"),
     )
@@ -197,6 +207,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         ctx.baseline_scanned_here = bool(
             baseline is not None and run_id and baseline.meta.get("run_id") == run_id
         )
+    if baseline is not None and args.renames and os.path.isfile(args.renames):
+        baseline.keys = rename_keys(baseline.keys, load_renames(args.renames))
 
     changed_files = None
     if args.changed_files:

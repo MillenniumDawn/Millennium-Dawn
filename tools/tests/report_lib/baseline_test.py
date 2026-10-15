@@ -13,7 +13,7 @@ from report_lib import (
     tag_changed_files,
     write_baseline,
 )
-from report_lib.baseline import META_FILENAME, issue_key
+from report_lib.baseline import META_FILENAME, issue_key, load_renames, rename_keys
 from shared.suite import issue_dict, make_issue, write_text
 from shared.suite import write_slug_json as _write_sidecar
 
@@ -127,6 +127,32 @@ def test_classify_matches_a_finding_with_no_file(tmp_path):
     classify(issues, baseline)
 
     assert [i.baseline_status for i in issues] == ["existing", "new"]
+
+
+@pytest.mark.parametrize(
+    ("file", "message", "moved"),
+    [
+        pytest.param(
+            "events/old.txt", "m", ("events/new.txt", "m"), id="finding in the file"
+        ),
+        pytest.param(
+            "a.txt",
+            "read at events/old.txt:#",
+            ("a.txt", "read at events/new.txt:#"),
+            id="path in the message",
+        ),
+        pytest.param("old.txt", "m", ("old.txt", "m"), id="basename only"),
+        pytest.param("events/x.txt", "m", ("events/x.txt", "m"), id="unrelated"),
+    ],
+)
+def test_rename_keys_moves_findings_to_the_new_path(tmp_path, file, message, moved):
+    renames = tmp_path / "renames.txt"
+    renames.write_text("events/old.txt\nevents/new.txt\n", encoding="utf-8")
+    keys = Counter({("error", "c", file, message): 2})
+
+    assert rename_keys(keys, load_renames(str(renames))) == Counter(
+        {("error", "c", *moved): 2}
+    )
 
 
 def test_classify_tags_new_and_existing(tmp_path):

@@ -145,6 +145,28 @@ def load_baseline(
     return Baseline(meta=meta, keys=count_keys(issues))
 
 
+def load_renames(path: str) -> Dict[str, str]:
+    """Old path -> new path, from a list of each old path followed by its new one."""
+    lines = Path(path).read_text(encoding="utf-8").splitlines()
+    return dict(zip(lines[::2], lines[1::2]))
+
+
+def rename_keys(
+    keys: Counter[BaselineKey], renames: Dict[str, str]
+) -> Counter[BaselineKey]:
+    """Move main's findings in each file the PR renamed to its new path.
+
+    The file field and any mention of the old path in the message move. A
+    basename-only file field stays, since it cannot say which file it was.
+    """
+    moved: Counter[BaselineKey] = Counter()
+    for (severity, category, file, message), count in keys.items():
+        for old, new in renames.items():
+            message = message.replace(old, new)
+        moved[(severity, category, renames.get(file, file), message)] += count
+    return moved
+
+
 def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
     """Tag each issue's `baseline_status` ("new"/"existing") in place.
 
