@@ -31,6 +31,66 @@ _CASES = {
         [(4, "ai_chance"), (15, "ai_chance")],
     ),
     "zero last": (_block(ADD, ZERO), []),
+    "opposite booleans": (_block(ZERO, "modifier = { add = 5 has_war = no }"), []),
+    "negated boolean": (
+        _block(ZERO, "modifier = { add = 5 NOT = { has_war = yes } }"),
+        [],
+    ),
+    "AND guard": (
+        _block(ZERO, "modifier = { add = 5 AND = { has_war = no has_dlc = yes } }"),
+        [],
+    ),
+    "OR with an overlapping path": (
+        _block(ZERO, "modifier = { add = 5 OR = { has_war = no has_dlc = yes } }"),
+        [(4, "ai_chance")],
+    ),
+    "OR with only opposite paths": (
+        _block(
+            ZERO,
+            "modifier = { add = 5 OR = { has_war = no AND = { has_war = no has_dlc = yes } } }",
+        ),
+        [],
+    ),
+    "NOT conjunction is not one opposite fact": (
+        _block(ZERO, "modifier = { add = 5 NOT = { has_war = yes has_dlc = yes } }"),
+        [(4, "ai_chance")],
+    ),
+    "foreign boolean is not opposite": (
+        _block(ZERO, "modifier = { add = 5 FROM = { has_war = no } }"),
+        [(4, "ai_chance")],
+    ),
+    "same foreign scope": (
+        _block(
+            "modifier = { factor = 0 FROM = { has_war = yes } }\n",
+            "modifier = { add = 5 FROM = { has_war = no } }",
+        ),
+        [],
+    ),
+    "ROOT boolean": (
+        _block(ZERO, "modifier = { add = 5 ROOT = { has_war = no } }"),
+        [],
+    ),
+    "THIS boolean": (
+        _block(ZERO, "modifier = { add = 5 THIS = { has_war = no } }"),
+        [],
+    ),
+    "empty OR": (
+        _block(ZERO, "modifier = { add = 5 OR = { } }"),
+        [(4, "ai_chance")],
+    ),
+    "multiple zero guards still overlap": (
+        _block(
+            ZERO, "modifier = { factor = 0 }\n", "modifier = { add = 5 has_war = no }"
+        ),
+        [(5, "ai_chance")],
+    ),
+    "yes and no can both be flag names": (
+        _block(
+            "modifier = { factor = 0 has_country_flag = yes }\n",
+            "modifier = { add = 5 has_country_flag = no }",
+        ),
+        [(4, "ai_chance")],
+    ),
     "negative add": (_block(ZERO, _modifier("add = -5")), []),
     "zero add": (_block(ZERO, _modifier("add = 0")), []),
     "variable add": (_block(ZERO, _modifier("add = bonus_weight")), []),
@@ -69,9 +129,9 @@ def test_validator_reports_the_same_cold_warm_and_uncached(
     scans = []
     scan_text = V.scan_text
 
-    def counted(raw):
+    def counted(raw, **kwargs):
         scans.append(raw)
-        return scan_text(raw)
+        return scan_text(raw, **kwargs)
 
     monkeypatch.setattr(V, "scan_text", counted)
     monkeypatch.delenv("MD_NO_CACHE", raising=False)
@@ -87,3 +147,34 @@ def test_validator_reports_the_same_cold_warm_and_uncached(
         ("ai-weight-zero-then-add", "events/Ev.txt", 8)
     ]
     assert (uncached.warnings_found, uncached.errors_found) == (1, 0)
+
+
+_SCRIPTED_GUARDS = (
+    "ai_will_do = {\n"
+    " modifier = { factor = 0 test_path = yes }\n"
+    " modifier = { add = 5 test_path = no }\n"
+    "}\n"
+)
+
+
+def test_only_defined_scripted_triggers_are_boolean():
+    assert len(V.scan_text(_SCRIPTED_GUARDS)) == 1
+    assert V.scan_text(_SCRIPTED_GUARDS, frozenset({"test_path"})) == []
+
+
+def test_changed_trigger_definitions_invalidate_cached_weights(
+    tmp_path, write_path, issues_by_line, monkeypatch
+):
+    monkeypatch.delenv("MD_NO_CACHE", raising=False)
+    write_path(tmp_path, "common/decisions/Test.txt", _SCRIPTED_GUARDS)
+    trigger_path = "common/scripted_triggers/Test.txt"
+    write_path(tmp_path, trigger_path, "other_path = { always = yes }")
+
+    assert len(issue_rows(issues_by_line(V.Validator, tmp_path)[1])) == 1
+    write_path(tmp_path, trigger_path, "test_path = { always = yes }")
+    assert issue_rows(issues_by_line(V.Validator, tmp_path)[1]) == []
+    assert issue_rows(issues_by_line(V.Validator, tmp_path)[1]) == []
+    assert issue_rows(run_validator(V.Validator, tmp_path)) == []
+
+    write_path(tmp_path, trigger_path, "other_path = { always = yes }")
+    assert len(issue_rows(issues_by_line(V.Validator, tmp_path)[1])) == 1

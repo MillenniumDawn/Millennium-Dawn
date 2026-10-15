@@ -125,13 +125,13 @@ To view a country's economic information, click the graph icon in the bottom rig
 | Effect                         | How It Scales                                                                      |
 | ------------------------------ | ---------------------------------------------------------------------------------- |
 | Construction Speed             | Penalty increases with wealth, rich nations build slower                           |
-| Population Growth              | Bonus for poor nations, penalty for wealthy nations (break-even around $60k GDP/C) |
+| Population Growth              | Bonus for poor nations, penalty for wealthy nations (break-even around $31k GDP/C) |
 | Research Speed                 | Bonus increases with wealth (kicks in above ~$51k GDP/C)                           |
 | Stability                      | Small bonus that increases with wealth (kicks in above ~$100k GDP/C)               |
 | Workforce Costs                | Wealthy nations require more workers per building                                  |
 | Fossil Fuel Plant Construction | Cheaper for poor nations, expensive for rich ones                                  |
 
-This means poor nations grow their population faster and build cheaply, but have lower research speed. Rich nations research faster and are more stable, but face higher costs for construction and workforce.
+This means poor nations grow their population faster and build cheaply, but have lower research speed. Rich nations research faster and are more stable, but face higher costs for construction and workforce. Population growth never falls below 0.01% a month, however large the penalties.
 
 ---
 
@@ -641,7 +641,7 @@ There are six stages, each with distinct modifiers:
 | Fast Growth   | +45%               | +2%       | +2.0                | +0.15          |
 | Economic Boom | +55%               | +4%       | +3.5                | +0.25          |
 
-**Upgrading the Economic Cycle** costs both political power and treasury funds. The political power cost increases with each upgrade, and a treasury payment is deducted when the new stage is adopted. Depression is the worst state, reducing productivity growth severely and preventing immigration.
+**Upgrading the Economic Cycle** costs both political power and treasury funds. The political power cost increases with each upgrade, and a treasury payment is deducted when the new stage is adopted. Depression is the worst state, reducing productivity growth severely and cutting immigration.
 
 **Changing the Economic Cycle:**
 
@@ -1120,9 +1120,25 @@ Two mutually exclusive keystone buildings provide state-wide bonuses. Only one c
 
 ## Immigration
 
-Immigration is one way to grow your population. Migration happens automatically, but you can adjust the acceptance level by changing the stage of **Migration Laws** (found at the far right of Policies in the Politics window).
+Your **Migration Law** decides how many migrants you take in. Open borders bring the most people, and closed borders bring none. The laws are at the far right of Policies in the Politics window.
 
-Immigration control costs money. Stricter restrictions cost more to enforce. The immigration rate is calculated from factors including national productivity, unemployment rate, and war status, and is further modified by national spirits and other sources. The Economic Cycle also affects migration: higher growth stages attract more immigrants, while depression and recession drive emigration.
+Each country has a **Maximum Migration Rate**. This is the immigration it would get with fully open borders. It starts at 100% and rises with productivity above the world average, worker shortages, and higher Economic Cycle stages. National spirits, your ruling party, and wars in neighboring countries also change it.
+
+Your law takes a share of that rate:
+
+| Migration Law               | Share of Maximum Migration Rate |
+| --------------------------- | ------------------------------- |
+| Open Borders                | 100%                            |
+| Lightly Regulated Migration | 75%                             |
+| Regulated Migration         | 20%                             |
+| Heavily Regulated Migration | 5%                              |
+| Closed Borders              | 0%                              |
+
+**Emigration** works the other way. Unemployment and being at war push your own people out, whatever your law is.
+
+Your **Net Migration Rate** is immigration minus emigration. The Economy window shows it next to the Maximum Migration Rate, and its tooltip breaks it into the two parts.
+
+Immigration control costs money. Stricter laws cost more to enforce.
 
 ---
 

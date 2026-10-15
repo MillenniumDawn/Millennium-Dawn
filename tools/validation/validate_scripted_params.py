@@ -12,10 +12,11 @@ import functools
 import glob
 import os
 import re
-from typing import Dict, Iterable, List, Set, Tuple
+from typing import Dict, Iterable, List, Mapping, Set, Tuple
 
 import disk_cache
 from shared_utils import (
+    COUNTRY_TAG_ASSIGNMENT_RE,
     blank_quoted_strings,
     extract_block_from_text,
     get_staged_files,
@@ -238,12 +239,11 @@ def _load_valid_country_tags(mod_path: str) -> Tuple["frozenset[str]", List[str]
     """
     valid: Set[str] = set()
     unreadable: List[str] = []
-    tag_re = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"')
     for fp in glob.glob(os.path.join(mod_path, "common", "country_tags", "*.txt")):
         try:
             with open(fp, "r", encoding="utf-8-sig") as fh:
                 for line in fh:
-                    m = tag_re.match(line)
+                    m = COUNTRY_TAG_ASSIGNMENT_RE.match(line)
                     if m:
                         valid.add(m.group(1))
         except _READ_ERRORS as exc:
@@ -766,7 +766,7 @@ def _reads_itself(text: str, write_start: int, var_re: re.Pattern) -> bool:
 
 
 def build_param_consumer_map(
-    bodies: Dict[str, str], declared: Dict[str, Iterable[str]]
+    bodies: Dict[str, str], declared: Mapping[str, Iterable[str]]
 ) -> Dict[str, frozenset]:
     """Map each declared parameter to the scripted effects that consume it.
 
@@ -792,7 +792,10 @@ def build_param_consumer_map(
             if var not in body:
                 continue
             # target position -> start of the statement that writes it
-            writes = {w.start(w.lastindex): w.start() for w in write_re.finditer(body)}
+            writes = {
+                w.start(1 if w.group(1) is not None else 2): w.start()
+                for w in write_re.finditer(body)
+            }
             read = write = None
             for om in var_re.finditer(body):
                 opener = writes.get(om.start())

@@ -116,11 +116,9 @@ problem the cost solves:
 - A cost audit changes AI weights only. Ask before adding an option `trigger` to enforce a cost (`has_political_power`, `has_equipment`) or converting hand-typed costs to presets such as `small_expenditure`.
 
 The German BfV events in `events/Germany.txt` are the reference.
-`validate_events.py --check-ai-chance-costs` runs in CI as WARNING and lists costs
-without a relevant, non-neutral modifier in the choosing country's scope. Opinion
-and path modifiers alone do not cover costs. `effect_tooltip` previews are not charges;
-when payment occurs in a follow-up event, show it in the original choice's preview
-and weigh it there. Delayed event-chain costs still need manual review.
+Opinion and path modifiers alone do not cover costs. `effect_tooltip` previews are
+not charges. When payment occurs in a follow-up event, show it in the original
+choice's preview and weigh it there. Review delayed event-chain costs manually.
 
 ## Cross-country events
 

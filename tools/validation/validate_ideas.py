@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache
 from equipment_module_slots import _iter_blocks, blank_comments
 from equipment_stats import build_equipment_stat_index, iter_type_archetype_stacks
+from shared_utils import AVAILABLE_OPEN_RE as _AVAILABLE_BLOCK_START
 from shared_utils import (
     blank_quoted_strings,
     find_matching_brace,
@@ -121,7 +122,6 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
 
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
-_AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
 # `\btag` does not match inside `original_tag` (the preceding `_` is a word char),
 # so these two are disjoint. The capture spans 3+ chars so runtime civil-war
 # tags (`ISR_CW_0`) are caught, not just the 3-letter base tag.
