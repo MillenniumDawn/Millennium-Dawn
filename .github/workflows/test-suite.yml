@@ -173,6 +173,8 @@ jobs:
             tools/validation/ci_workspace_profile.txt
             tools/validation/staged_sparse_profile.txt
             tools/tests/content/tool_data_drift_test.py
+            /tools/generate_validation_report.py
+            /tools/baseline_check.py
             /pyproject.toml
             /validation_config.json
           sparse-checkout-cone-mode: false
@@ -189,6 +191,11 @@ jobs:
           for package in pytest-xdist pytest-cov; do
             grep -Fq "\"$package" pyproject.toml || missing+=("$package")
           done
+          # The report and the base scan run the head's scripts with these flags.
+          grep -Fq -- --tooling-changed tools/generate_validation_report.py ||
+            missing+=("--tooling-changed")
+          grep -Fq -- --observation tools/baseline_check.py ||
+            missing+=("--observation")
           if [ "${#missing[@]}" -gt 0 ]; then
             echo "::error::This branch predates the CI tooling contract" \
               "(missing ${missing[*]}). Merge main into it."

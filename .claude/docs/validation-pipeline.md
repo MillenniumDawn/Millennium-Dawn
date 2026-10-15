@@ -87,7 +87,9 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   `pull_request` run, re-runs included, validates its event's head and base. A
   dispatch looks the PR up, which is the explicit refresh to its live head. The report
   leaves the PR comment alone when the head has since moved. A head predating the
-  tooling contract stops with one error asking to merge main.
+  tooling contract stops with one error asking to merge main. The report and the base
+  scan run the head's scripts with the workflow's flags, so a new flag joins the
+  contract.
 - `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
   `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
   across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
