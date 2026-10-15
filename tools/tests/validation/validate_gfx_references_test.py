@@ -411,6 +411,7 @@ def test_declaration_engine_refs_reuse_the_aggregate_cache(tmp_path, monkeypatch
 # spelled with the wrong case still reports as miscased.
 
 _FOCUS_FILE = "common/national_focus/test.txt"
+_TOKENS_FILE = "common/synchronized_dynamic_tokens/MD_tokens.txt"
 _CZE_ENGINE = "equipment_modules = {\n\tCZE_engine_1 = {\n\t\tyear = 2000\n\t}\n}\n"
 _UNIT_SUFFIXES = (
     "medium",
@@ -509,6 +510,21 @@ _ENGINE_REF_CASES = {
         {"GFX_missile_CHI_ID_101_icon", "GFX_missile_submarine_offensive_medium"},
         {"GFX_missile_CHI_ID_101_icon"},
         {"GFX_missile_submarine_offensive_medium"},
+    ),
+    "token template": (
+        {
+            "common/scripted_guis/topbar.txt": 'image = "GFX_[?topbar.GetTokenKey]"\n',
+            _TOKENS_FILE: "topbar_oil_total\n",
+        },
+        {"GFX_topbar_oil_total", "GFX_topbar_oil"},
+        {"GFX_topbar_oil_total"},
+        {"GFX_topbar_oil"},
+    ),
+    "tokens without a token template": (
+        {_TOKENS_FILE: "topbar_oil_total\n"},
+        {"GFX_topbar_oil_total"},
+        set(),
+        {"GFX_topbar_oil_total"},
     ),
 }
 
@@ -647,27 +663,27 @@ def test_font_names_from_gfx_text(raw, names):
     assert vg.font_names_from_gfx_text(raw) == names
 
 
-# case: (.gui text, collected sprite names)
+# case: (.gui text, collected (sprite name, line))
 _GUI_REF_CASES = {
     "lowercase quadtexturesprite and spritetype": (
         'quadtexturesprite = "GFX_Bundeswehr_bar"\n'
         'spritetype = "GFX_PER_propaganda_progress_frame"\n',
-        ["GFX_Bundeswehr_bar", "GFX_PER_propaganda_progress_frame"],
+        [("GFX_Bundeswehr_bar", 1), ("GFX_PER_propaganda_progress_frame", 2)],
     ),
     "PascalCase SpriteType": (
         'SpriteType = "GFX_resources_bg"\n',
-        ["GFX_resources_bg"],
+        [("GFX_resources_bg", 1)],
     ),
     "unquoted names": (
         "spriteType = GFX_button_94x31\n"
         "quadTextureSprite = GFX_faction_theater_background\n",
-        ["GFX_button_94x31", "GFX_faction_theater_background"],
+        [("GFX_button_94x31", 1), ("GFX_faction_theater_background", 2)],
     ),
     "camelCase quoted names": (
         'spriteType = "GFX_closebutton"\n'
         'quadTextureSprite = "GFX_button_123x34"\n'
         'background = "GFX_tiled_plain_bg"\n',
-        ["GFX_closebutton", "GFX_button_123x34", "GFX_tiled_plain_bg"],
+        [("GFX_closebutton", 1), ("GFX_button_123x34", 2), ("GFX_tiled_plain_bg", 3)],
     ),
     "lowercase gfx_ prefix": ('quadTextureSprite = "gfx_transparency_white"\n', []),
     "dynamic quoted name": ('spriteType = "GFX_missile_[THIS.GetTag]_icon"\n', []),
@@ -675,15 +691,23 @@ _GUI_REF_CASES = {
     "runtime-built name": (
         'guiTypes = {\n\tspriteType = "GFX_static"\n'
         '\tbackground = "GFX_stray]token"\n}\n',
-        ["GFX_static"],
+        [("GFX_static", 2)],
+    ),
+    # Lines count in the comment-stripped text, which keeps every newline.
+    "comments above the ref": (
+        "# View for the topbar widget.\n# Adapted from Black Ice.\n"
+        'spriteType = "GFX_NV_btn_add"\n',
+        [("GFX_NV_btn_add", 3)],
     ),
 }
 
 
-@pytest.mark.parametrize("text, names", _GUI_REF_CASES.values(), ids=_GUI_REF_CASES)
-def test_parse_gui_file(tmp_path, text, names):
+@pytest.mark.parametrize("text, refs", _GUI_REF_CASES.values(), ids=_GUI_REF_CASES)
+def test_parse_gui_file(tmp_path, text, refs):
     path = _write(tmp_path / "interface" / "view.gui", text)
-    assert [name for name, _f, _l in vg._parse_gui_file((path, str(tmp_path)))] == names
+    assert [
+        (name, line) for name, _f, line in vg._parse_gui_file((path, str(tmp_path)))
+    ] == refs
 
 
 def test_scripted_gui_and_scripted_loc_refs_carry_their_line(tmp_path):
@@ -694,11 +718,16 @@ def test_scripted_gui_and_scripted_loc_refs_carry_their_line(tmp_path):
     )
     sloc = _write(
         tmp_path / "common" / "scripted_localisation" / "text.txt",
-        'defined_text = {\n\tlocalization_key = "GFX_sloc_icon"\n}\n',
+        'defined_text = {\n\tlocalization_key = "GFX_sloc_icon"\n'
+        "#\tlocalization_key = GFX_commented_out\n"
+        "\tlocalization_key = GFX_bare_icon # trailing note\n}\n",
     )
 
     assert vg._parse_sgui_file((sgui, str(tmp_path))) == [("GFX_panel_icon", sgui, 2)]
-    assert vg._parse_sloc_file((sloc, str(tmp_path))) == [("GFX_sloc_icon", sloc, 2)]
+    assert vg._parse_sloc_file((sloc, str(tmp_path))) == [
+        ("GFX_sloc_icon", sloc, 2),
+        ("GFX_bare_icon", sloc, 4),
+    ]
 
 
 @pytest.mark.parametrize(
@@ -714,8 +743,18 @@ def test_scripted_gui_and_scripted_loc_refs_carry_their_line(tmp_path):
             "picture = generic_bank\nicon = GFX_decision_icon\n",
             ["GFX_decision_icon"],
         ),
+        (
+            "common/decisions/test.txt",
+            "icon = arabic\nicon = {\n\tkey = sinaloa_high\n}\n",
+            [
+                "GFX_decision_arabic",
+                "GFX_decision_category_arabic",
+                "GFX_decision_category_sinaloa_high",
+                "GFX_decision_sinaloa_high",
+            ],
+        ),
     ],
-    ids=["idea picture", "picture outside ideas"],
+    ids=["idea picture", "picture outside ideas", "bare decision icon"],
 )
 def test_parse_script_refs(tmp_path, rel, text, refs):
     path = _write(tmp_path / rel, text)
@@ -730,8 +769,12 @@ def test_parse_script_refs(tmp_path, rel, text, refs):
             [("GFX_command_power", 2)],
         ),
         ('l_english:\n A:0 "£GFX_money_icon"\n', [("GFX_money_icon", 2)]),
+        (
+            'l_english:\n A:0 "£trigger_no£Not £mission_icons|1£Intel"\n',
+            [("GFX_trigger_no", 2), ("GFX_mission_icons", 2)],
+        ),
     ],
-    ids=["punctuation and repeats", "prefix already present"],
+    ids=["punctuation and repeats", "prefix already present", "closing pound sign"],
 )
 def test_parse_loc_refs(tmp_path, text, refs):
     path = _write(tmp_path / "localisation" / "english" / "a_l_english.yml", text)
@@ -951,16 +994,19 @@ def test_scripted_gui_and_scripted_loc_refs_reach_the_report(tmp_path):
 
 
 @pytest.mark.parametrize(
-    "gui, messages",
+    "gui, findings",
     [
-        ('instantTextBoxType = {\n\tfont = "hoi_16"\n}\n', ['font = "hoi_16"']),
+        (
+            '# Status bar text.\ninstantTextBoxType = {\n\tfont = "hoi_16"\n}\n',
+            [('font = "hoi_16"', 3)],
+        ),
         ('instantTextBoxType = {\n\tfont = "hoi_16mbs"\n}\n', []),
         ('instantTextBoxType = {\n\tfont = "vic_18"\n}\n', []),
         ('#\tfont = "hoi_16"\n', []),
     ],
     ids=["undefined font", "mod font", "vanilla manifest font", "commented reference"],
 )
-def test_undefined_fonts(tmp_path, monkeypatch, gui, messages):
+def test_undefined_fonts(tmp_path, monkeypatch, gui, findings):
     monkeypatch.setattr(
         vg, "_load_vanilla_font_manifest", lambda: frozenset({"vic_18"})
     )
@@ -970,8 +1016,7 @@ def test_undefined_fonts(tmp_path, monkeypatch, gui, messages):
     validator.run_validations()
 
     issues = _categories(validator, "undefined-font")
-    assert len(issues) == len(messages)
-    assert all(m in i.message for i, m in zip(issues, messages))
+    assert [(i.message.split(" is ")[0], i.line) for i in issues] == findings
 
 
 def test_live_vanilla_fonts_satisfy_a_gui_reference(tmp_path, monkeypatch):
@@ -1005,25 +1050,50 @@ def test_font_check_is_skipped_without_an_install_or_manifest(tmp_path):
     assert validator._issues == []
 
 
-# --- £ref case --------------------------------------------------------------
+def test_staged_font_check_reports_only_staged_gui_files(tmp_path, monkeypatch):
+    monkeypatch.setattr(vg, "_load_vanilla_font_manifest", lambda: frozenset({"x"}))
+    _write(tmp_path / "interface" / "core.gfx", _CORE_FONTS)
+    gui = 'instantTextBoxType = {\n\tfont = "absent_18"\n}\n'
+    staged = _write(tmp_path / "interface" / "staged.gui", gui)
+    _write(tmp_path / "interface" / "other.gui", gui)
+    validator = _validator(tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [staged]
 
-# case: (sprite definition, loc language, loc ref, sprite-ref-case findings)
-_LOC_REF_CASE_CASES = {
-    "miscased ref": ("GFX_VTB_autocracy", "english", "£VTB_Autocracy", 1),
-    "matching ref": ("GFX_VTB_Autocracy", "english", "£VTB_Autocracy", 0),
-    # A ref naming nothing at all is a separate question this check stays out of.
-    "ref with no case match": ("GFX_real", "english", "£totally_absent", 0),
+    validator._check_undefined_fonts()
+
+    assert [os.path.basename(i.file) for i in validator._issues] == ["staged.gui"]
+
+
+# --- £refs ------------------------------------------------------------------
+
+# case: (sprite definition, loc language, loc ref, finding categories)
+_LOC_REF_CASES = {
+    "miscased ref": (
+        "GFX_VTB_autocracy",
+        "english",
+        "£VTB_Autocracy",
+        ["sprite-ref-case"],
+    ),
+    "matching ref": ("GFX_VTB_Autocracy", "english", "£VTB_Autocracy", []),
+    "ref with no case match": (
+        "GFX_real",
+        "english",
+        "£totally_absent",
+        ["undefined-loc-sprite"],
+    ),
     # Non-English loc is out of scope, and `£Réseau` truncates at the accent.
-    "non-English ref": ("GFX_VTB_autocracy", "french", "£VTB_Autocracy", 0),
+    "non-English ref": ("GFX_VTB_autocracy", "french", "£VTB_Autocracy", []),
+    "pound sign": ("GFX_real", "english", "£5 billion", []),
 }
 
 
 @pytest.mark.parametrize(
-    "sprite, language, ref, count",
-    _LOC_REF_CASE_CASES.values(),
-    ids=_LOC_REF_CASE_CASES,
+    "sprite, language, ref, categories",
+    _LOC_REF_CASES.values(),
+    ids=_LOC_REF_CASES,
 )
-def test_loc_ref_case_runs_by_default(tmp_path, sprite, language, ref, count):
+def test_loc_refs_run_by_default(tmp_path, sprite, language, ref, categories):
     _write_gfx(tmp_path, "test.gfx", _sprite(sprite, "gfx/vtb.dds"))
     _write(
         tmp_path / "localisation" / language / f"a_l_{language}.yml", f' a: "{ref}"\n'
@@ -1031,10 +1101,15 @@ def test_loc_ref_case_runs_by_default(tmp_path, sprite, language, ref, count):
     validator = _validator(tmp_path)
     validator.run_validations()
 
-    issues = _categories(validator, "sprite-ref-case")
+    issues = [
+        i
+        for i in validator._issues
+        if i.category in {"sprite-ref-case", "undefined-loc-sprite"}
+    ]
     assert [
-        (sprite in i.message, i.file.endswith("a_l_english.yml")) for i in issues
-    ] == [(True, True)] * count
+        (i.category, ref in i.message, i.file.endswith("a_l_english.yml"), i.severity)
+        for i in issues
+    ] == [(category, True, True, Severity.ERROR) for category in categories]
 
 
 def test_loc_ref_case_check_is_scoped_to_staged_files(tmp_path):
@@ -1045,12 +1120,12 @@ def test_loc_ref_case_check_is_scoped_to_staged_files(tmp_path):
     validator = _validator(tmp_path)
     validator.staged_only = True
     validator.staged_files = [staged]
-    validator._check_loc_ref_case(
+    validator._check_loc_refs(
         [("GFX_UKR_energy", other, 3)], defined, vg.casefold_index(defined)
     )
     assert validator._issues == []
 
-    validator._check_loc_ref_case(
+    validator._check_loc_refs(
         [("GFX_UKR_energy", staged, 3)], defined, vg.casefold_index(defined)
     )
     assert len(validator._issues) == 1
@@ -1101,8 +1176,41 @@ def test_duplicate_definitions(tmp_path, sprites, fragments):
         if i.category in {"duplicate-sprite", "case-variant-sprite"}
     ]
     assert len(issues) == len({category for category, _ in fragments})
+    assert all(i.severity == Severity.ERROR for i in issues)
     for category, fragment in fragments:
         assert any(i.category == category and fragment in i.message for i in issues)
+
+
+# case: (.gfx files as {basename: sprite names}, check, category, reported names)
+_STAGED_REPORT_CASES = {
+    "duplicate name": (
+        {"a.gfx": ["GFX_dup"], "b.gfx": ["GFX_dup", "GFX_old"], "c.gfx": ["GFX_old"]},
+        "duplicate-sprite",
+        ["GFX_dup"],
+    ),
+    "case variant": (
+        {"a.gfx": ["GFX_Case"], "b.gfx": ["GFX_case", "GFX_Old"], "c.gfx": ["GFX_old"]},
+        "case-variant-sprite",
+        ["GFX_Case"],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "gfx, category, reported", _STAGED_REPORT_CASES.values(), ids=_STAGED_REPORT_CASES
+)
+def test_staged_duplicates_need_a_staged_definition(tmp_path, gfx, category, reported):
+    for basename, names in gfx.items():
+        _write_gfx(tmp_path, basename, *(_sprite(n, "gfx/x.dds") for n in names))
+    validator = _validator(tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [_iface(tmp_path, "a.gfx")]
+    validator._build_gfx_definitions()
+    validator._check_duplicate_definitions()
+
+    issues = _categories(validator, category)
+    assert [n for n in reported if any(n in i.message for i in issues)] == reported
+    assert len(issues) == len(reported)
 
 
 # --- unused sprites ---------------------------------------------------------
@@ -1133,6 +1241,25 @@ _UNUSED_CASES = {
         set(),
         {"GFX_MODIFIER_ATTRITION"},
         [("unused-sprite", "GFX_MD_only")],
+    ),
+    "vanilla-shaped mod-only name with vanilla names loaded": (
+        {"GFX_topbar_md_only"},
+        set(),
+        {"GFX_MODIFIER_ATTRITION"},
+        [("unused-sprite", "GFX_topbar_md_only")],
+    ),
+    "vanilla-shaped name without vanilla names": (
+        {"GFX_topbar_md_only"},
+        set(),
+        set(),
+        [],
+    ),
+    # The flag pattern covers engine-built names, which are never defined.
+    "defined flag-shaped sprite": (
+        {"GFX_british_flag"},
+        set(),
+        set(),
+        [("unused-sprite", "GFX_british_flag")],
     ),
     # Focus icons are not GFX_-prefixed; the equipment exemption must not
     # swallow them.
@@ -1188,6 +1315,7 @@ def test_unused_sprites(tmp_path, defined, refs, vanilla, expected):
     _write(tmp_path / _TECH_FILE, TECHNOLOGY_FIXTURE)
     validator = _validator(tmp_path)
     validator._vanilla_defined = vanilla
+    validator._vanilla_defs_loaded = bool(vanilla)
 
     validator._check_unused_sprites(defined=defined, all_refs=refs)
 
@@ -1198,11 +1326,17 @@ def test_unused_sprites(tmp_path, defined, refs, vanilla, expected):
         )
 
 
-def test_unused_message_names_the_sprite(tmp_path):
+def test_unused_finding_names_the_sprite_and_its_definition(tmp_path):
+    _write_gfx(tmp_path, "test.gfx", _sprite("GFX_orphan", "gfx/a.dds"))
     validator = _validator(tmp_path)
-    validator._check_unused_sprites(defined={"focus_icon_orphan"}, all_refs=set())
-    assert [i.message for i in validator._issues] == [
-        "Unused GFX sprite 'focus_icon_orphan' (defined but never referenced)"
+    validator._build_gfx_definitions()
+    validator._check_unused_sprites(defined={"GFX_orphan"}, all_refs=set())
+    assert [(i.message, i.file, i.line) for i in validator._issues] == [
+        (
+            "Unused GFX sprite 'GFX_orphan' (defined but never referenced)",
+            "interface/test.gfx",
+            2,
+        )
     ]
 
 
