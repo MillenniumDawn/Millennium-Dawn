@@ -699,6 +699,27 @@ def test_tooling_change_notice_explains_existing_findings(baseline_status, shown
     assert ("This PR changes validator code." in body) is shown
 
 
+@pytest.mark.parametrize(
+    ("effect", "line"),
+    [
+        pytest.param(None, "is unavailable: main has no scan", id="no main scan"),
+        pytest.param({}, "that code changes no findings.", id="no change"),
+        pytest.param(
+            {"a": (1, 0), "b": (2, 3)},
+            "adds/drops: `b` +2/-3, `a` +1/-0.",
+            id="largest change first",
+        ),
+    ],
+)
+def test_tooling_change_notice_reports_the_effect_on_main(effect, line):
+    ctx = _ctx()
+    ctx.baseline_status = "available"
+    ctx.tooling_changed = True
+    ctx.tool_effect = effect
+    runs = [ValidatorRun(name="events", title="Events", status="passed")]
+    assert line in render(runs, [], ctx)
+
+
 def test_unavailable_baseline_is_explicit():
     ctx = _ctx()
     ctx.baseline_status = "unavailable"

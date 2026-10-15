@@ -167,6 +167,18 @@ def rename_keys(
     return moved
 
 
+def tool_effect(
+    pr_tools: Counter[BaselineKey], main_tools: Counter[BaselineKey]
+) -> Dict[str, Tuple[int, int]]:
+    """Per category, the findings the PR's validators add to and drop from
+    main's own scan of the same commit. A reworded finding counts as both."""
+    effect: Dict[str, List[int]] = {}
+    for side, diff in ((0, pr_tools - main_tools), (1, main_tools - pr_tools)):
+        for (_severity, category, _file, _message), count in diff.items():
+            effect.setdefault(category, [0, 0])[side] += count
+    return {category: (added, dropped) for category, (added, dropped) in effect.items()}
+
+
 def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
     """Tag each issue's `baseline_status` ("new"/"existing") in place.
 

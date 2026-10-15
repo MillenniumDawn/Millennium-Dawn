@@ -13,7 +13,13 @@ from report_lib import (
     tag_changed_files,
     write_baseline,
 )
-from report_lib.baseline import META_FILENAME, issue_key, load_renames, rename_keys
+from report_lib.baseline import (
+    META_FILENAME,
+    issue_key,
+    load_renames,
+    rename_keys,
+    tool_effect,
+)
 from shared.suite import issue_dict, make_issue, write_text
 from shared.suite import write_slug_json as _write_sidecar
 
@@ -153,6 +159,25 @@ def test_rename_keys_moves_findings_to_the_new_path(tmp_path, file, message, mov
     assert rename_keys(keys, load_renames(str(renames))) == Counter(
         {("error", "c", *moved): 2}
     )
+
+
+def test_tool_effect_counts_what_the_pr_validators_change():
+    main = Counter(
+        {
+            ("warning", "a", "f", "kept"): 1,
+            ("warning", "a", "f", "old wording"): 1,
+            ("warning", "b", "f", "dropped"): 2,
+        }
+    )
+    pr = Counter(
+        {
+            ("warning", "a", "f", "kept"): 1,
+            ("warning", "a", "f", "new wording"): 1,
+            ("warning", "c", "f", "added"): 1,
+        }
+    )
+
+    assert tool_effect(pr, main) == {"a": (1, 1), "b": (0, 2), "c": (1, 0)}
 
 
 def test_classify_tags_new_and_existing(tmp_path):

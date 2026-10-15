@@ -580,7 +580,7 @@ CONTRACT_FILES = (
 CONTRACT_STRINGS = {
     "pytest-xdist": "pyproject.toml",
     "pytest-cov": "pyproject.toml",
-    "--renames": "tools/generate_validation_report.py",
+    "--main-tools-baseline": "tools/generate_validation_report.py",
     "--observation": "tools/baseline_check.py",
 }
 
@@ -895,6 +895,46 @@ def test_every_main_commit_gets_a_baseline_and_only_the_alarm_is_gated():
     assert "md-accepted-v1-" in saves[".validation_accepted"]["with"]["key"]
 
 
+_TOOL_EFFECT_STEPS = (
+    "Compute the base's own validator hash",
+    "Restore main's own baseline of the base",
+    "Upload main's own baseline of the base",
+)
+
+
+def test_tool_effect_reads_main_own_baseline_of_the_base():
+    # The base's own hash must be validator-cache's formula over the base
+    # checkout, taken before the overlay replaces its tooling.
+    steps = [
+        step["name"]
+        for step in yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))["jobs"][
+            "baseline-scan"
+        ]["steps"]
+    ]
+    assert steps.index(_TOOL_EFFECT_STEPS[0]) < steps.index(
+        "Give the base content the PR's tooling"
+    )
+    main_hash = re.search(
+        r"hashFiles\(([^)]*)\)", VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
+    )
+    base_hash = re.search(
+        r"hashFiles\(([^)]*)\)",
+        workflow_step("baseline-scan", _TOOL_EFFECT_STEPS[0])["run"],
+    )
+    patterns = re.findall(r"'([^']+)'", main_hash.group(1))
+    assert re.findall(r"'([^']+)'", base_hash.group(1)) == [
+        f"base/{pattern}" for pattern in patterns
+    ]
+    restore = workflow_step("baseline-scan", _TOOL_EFFECT_STEPS[1])
+    assert restore["with"]["path"] == ".validation_baseline"
+    assert "steps.basehash.outputs.hash" in restore["with"]["key"]
+    upload = workflow_step("baseline-scan", _TOOL_EFFECT_STEPS[2])
+    download = workflow_step("report", "Download main's own baseline of the base")
+    assert download["with"]["name"] == upload["with"]["name"]
+    report = workflow_step("report", "Generate and post validation report")
+    assert f"--main-tools-baseline {download['with']['path']}" in report["run"]
+
+
 def test_base_scan_recomputes_only_a_missing_base_baseline():
     # Same tooling on both commits, a cold cache, a time budget, and an
     # artifact the report reads only when main has not saved the baseline.
@@ -908,7 +948,8 @@ def test_base_scan_recomputes_only_a_missing_base_baseline():
     checkout = workflow_step("baseline-scan", "Checkout base commit content")
     assert checkout["with"]["ref"] == "${{ env.BASELINE_SHA }}"
     for step in job["steps"][3:]:
-        assert step["if"] == "steps.lookup.outputs.cache-matched-key == ''", step
+        if step["name"] not in _TOOL_EFFECT_STEPS:
+            assert step["if"] == "steps.lookup.outputs.cache-matched-key == ''", step
     overlay = workflow_step("baseline-scan", "Give the base content the PR's tooling")
     for path in ("tools", "resources/documentation", "validation_config.json"):
         assert f"cp -R {path}" in overlay["run"] or f"cp {path}" in overlay["run"]
