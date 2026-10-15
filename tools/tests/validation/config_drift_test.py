@@ -638,10 +638,14 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     )
     assert "--baseline-dir .validation_baseline" in script
     assert '--baseline-toolshash "$TOOLSHASH"' in script
-    # Only the base commit's baseline: the cache prefix and the meta check.
-    assert "needs.detect-changes.outputs.base-sha" in report["env"]["BASE_SHA"]
-    assert restore["with"]["restore-keys"].strip().endswith("-${{ env.BASE_SHA }}-")
-    assert '--baseline-commit "$BASE_SHA"' in script
+    # Only the merge base's baseline: the cache prefix and the meta check.
+    outputs = workflow["jobs"]["detect-changes"]["outputs"]
+    assert outputs["baseline-sha"] == "${{ steps.changed.outputs.merge-base }}"
+    derive = workflow_step("detect-changes", "Derive changed files")
+    assert 'echo "merge-base=$merge_base" >> "$GITHUB_OUTPUT"' in derive["run"]
+    assert "needs.detect-changes.outputs.baseline-sha" in report["env"]["BASELINE_SHA"]
+    assert restore["with"]["restore-keys"].strip().endswith("-${{ env.BASELINE_SHA }}-")
+    assert '--baseline-commit "$BASELINE_SHA"' in script
     assert "--changed-files changed-files/changed-files.txt" in script
     assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
     assert (
@@ -883,10 +887,12 @@ def test_base_scan_recomputes_only_a_missing_base_baseline():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     job = workflow["jobs"]["baseline-scan"]
     assert job["timeout-minutes"] <= 20
-    assert "base-sha" in job["env"]["BASE_SHA"]
+    assert "baseline-sha" in job["env"]["BASELINE_SHA"]
     lookup = workflow_step("baseline-scan", "Look up the base commit's baseline")
     assert lookup["with"]["lookup-only"] is True
-    assert lookup["with"]["restore-keys"].strip().endswith("-${{ env.BASE_SHA }}-")
+    assert lookup["with"]["restore-keys"].strip().endswith("-${{ env.BASELINE_SHA }}-")
+    checkout = workflow_step("baseline-scan", "Checkout base commit content")
+    assert checkout["with"]["ref"] == "${{ env.BASELINE_SHA }}"
     for step in job["steps"][3:]:
         assert step["if"] == "steps.lookup.outputs.cache-matched-key == ''", step
     overlay = workflow_step("baseline-scan", "Give the base content the PR's tooling")
@@ -896,7 +902,7 @@ def test_base_scan_recomputes_only_a_missing_base_baseline():
     assert scan["working-directory"] == "base"
     assert "run_all_validators.py --no-color --no-cache" in scan["run"]
     record = workflow_step("baseline-scan", "Record the base commit's baseline")
-    assert '--commit-sha "$BASE_SHA"' in record["run"]
+    assert '--commit-sha "$BASELINE_SHA"' in record["run"]
     assert "--previous" not in record["run"]
     upload = workflow_step("baseline-scan", "Upload base commit baseline")
     assert not upload["with"]["name"].endswith("results")
@@ -926,7 +932,7 @@ def test_detect_changes_flags_validator_tooling_changes(tmp_path, path, changed)
     output = tmp_path / "output.txt"
     step = workflow_step("detect-changes", "Check validator tooling against the base")
     env = {
-        "BASE_SHA": base,
+        "MERGE_BASE": base,
         "HEAD_SHA": run_git(tmp_path, "rev-parse", "HEAD").stdout.strip(),
         "GITHUB_OUTPUT": str(output),
     }
@@ -938,6 +944,7 @@ def test_detect_changes_flags_validator_tooling_changes(tmp_path, path, changed)
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     outputs = workflow["jobs"]["detect-changes"]["outputs"]
     assert outputs["tooling-changed"] == "${{ steps.tooling.outputs.changed }}"
+    assert step["env"]["MERGE_BASE"] == "${{ steps.changed.outputs.merge-base }}"
     report = workflow_step("report", "Generate and post validation report")
     assert "args+=(--tooling-changed)" in report["run"]
 

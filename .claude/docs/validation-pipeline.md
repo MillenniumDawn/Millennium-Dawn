@@ -104,12 +104,14 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   The alarm compares the run with the last accepted one (`md-accepted-v1-*`) and goes
   red on new errors until they are fixed. Main's run also widens diff-scoped checks to
   their whole domain through `baseline_args` (party-loc audits every tag).
-- The report restores only its base commit's baseline and checks the commit in the
-  meta. When main has not saved one, the advisory `baseline-scan` job scans the base
-  commit in the same run: the PR's tooling over the base content, no shared cache, a
-  20-minute budget. The report reads its artifact and marks the source. The scan saves
-  no cache entry, because a dispatched run on main would let PR tooling write a
-  main-scoped baseline. With neither, the comparison is unavailable.
+- The report restores only the baseline of the PR's merge base, the main commit its
+  content started from, and checks the commit in the meta. Against main's tip, fixes
+  main made after the branch point would read as the PR's findings. When main has not
+  saved one, the advisory `baseline-scan` job scans the merge base in the same run:
+  the PR's tooling over the base content, no shared cache, a 20-minute budget. The
+  report reads its artifact and marks the source. The scan saves no cache entry,
+  because a dispatched run on main would let PR tooling write a main-scoped baseline.
+  With neither, the comparison is unavailable.
 - When a PR changes validator code or reference data, both scans use its validators,
   so findings that code adds to unchanged content read EXISTING. `detect-changes`
   flags this and the report says so.
