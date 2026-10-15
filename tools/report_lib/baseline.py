@@ -15,13 +15,10 @@ the message (`file.txt:123`, `line 123`) masked, counted after the same
 cross-validator dedupe runs on both sides. Leaving lines out keeps an
 existing finding EXISTING when an unrelated edit shifts it; counting keeps a
 real second instance NEW. Severity is part of the key so an existing warning
-that escalates to an error reads as a new error (the alarm direction). Known
-limitations:
-  - when one file has the same finding twice, fixing one and adding another
-    in that file reads as two EXISTING findings;
-  - a PR that runs only a subset of validators can tag an existing finding
-    NEW when main's cross-validator dedupe escalated its severity but the
-    PR's subset didn't (see classify).
+that escalates to an error reads as a new error (the alarm direction); a
+warning still matches main's error for the same finding (see classify).
+Known limitation: when one file has the same finding twice, fixing one and
+adding another in that file reads as two EXISTING findings.
 """
 
 import json
@@ -159,10 +156,10 @@ def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
     issues sharing that key read EXISTING and any more read NEW.
 
     Severity is part of the key on purpose: an existing warning escalated to
-    an error must read as a new error (the alarm direction). The accepted
-    asymmetry is de-escalation — a PR that runs only the validator reporting
-    a warning while main's cross-validator dedupe recorded the same finding
-    as an error tags it NEW even though it exists on main.
+    an error must read as a new error (the alarm direction). A warning that
+    main recorded as an error reads EXISTING: main's cross-validator dedupe
+    raises a finding that another validator reports as an error, and a PR
+    running fewer validators sees only the warning.
     """
     stats = BaselineStats()
     unmatched = baseline.keys.copy()
@@ -171,6 +168,10 @@ def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
         if key is None:
             stats.unclassified += 1
             continue
+        if unmatched[key] == 0 and issue.severity == Severity.WARNING:
+            raised = (Severity.ERROR, key[1], key[2], key[3])
+            if unmatched[raised] > 0:
+                key = raised
         if unmatched[key] > 0:
             unmatched[key] -= 1
             issue.baseline_status = "existing"

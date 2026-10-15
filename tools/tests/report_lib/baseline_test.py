@@ -147,17 +147,24 @@ def test_classify_tags_new_and_existing(tmp_path):
     assert stats.new_issues == issues[1:3]
 
 
-def test_classify_escalated_severity_counts_as_new(tmp_path):
-    # Severity is part of the key: a warning on main that a PR escalates to
-    # an error must alarm as a new error, not read as existing.
+@pytest.mark.parametrize(
+    ("on_main", "on_pr", "status"),
+    [
+        # A warning a PR escalates to an error alarms as a new error.
+        pytest.param("warning", Severity.ERROR, "new", id="escalated"),
+        # Main's dedupe raised it to an error; a PR subset sees the warning.
+        pytest.param("error", Severity.WARNING, "existing", id="lowered"),
+    ],
+)
+def test_classify_severity_changes(tmp_path, on_main, on_pr, status):
     baseline = _baseline(
-        tmp_path,
-        [_issue_dict("warning", file="a.txt", line=1, message="escalated")],
+        tmp_path, [_issue_dict(on_main, file="a.txt", line=1, message="same")]
     )
+    issue = make_issue(severity=on_pr, file="a.txt", line=1, message="same")
 
-    stats = classify([make_issue(file="a.txt", line=1, message="escalated")], baseline)
-    assert stats.new_errors == 1
-    assert stats.existing_errors == 0
+    classify([issue], baseline)
+
+    assert issue.baseline_status == status
 
 
 def test_classify_line_shift_reads_existing(tmp_path):
