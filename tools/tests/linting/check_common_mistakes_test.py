@@ -332,6 +332,14 @@ _COUNT_CASES: dict[
             ],
         ),
         (
+            "clamp_temp_variable guard suppresses flag",
+            0,
+            [
+                "\tclamp_temp_variable = { var = tmp_div min = 0.1 }\n",
+                "\tdivide_variable = { result = tmp_div }\n",
+            ],
+        ),
+        (
             "clamp with min=0 still flagged",
             1,
             [
@@ -970,6 +978,16 @@ _COUNT_CASES: dict[
                 "check_expr = {\n",
                 "\tvalue = my_var\n",
                 "\tgreater_than > 6\n",
+                "}\n",
+            ],
+        ),
+        (
+            "check_expr less_than > 0.40 flagged",
+            1,
+            [
+                "check_expr = {\n",
+                "\tvalue = my_var\n",
+                "\tless_than > 0.40\n",
                 "}\n",
             ],
         ),
