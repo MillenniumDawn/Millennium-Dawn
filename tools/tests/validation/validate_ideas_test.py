@@ -383,6 +383,7 @@ def test_block_refs_skip_assignments_comments_and_nested_blocks():
         modifier = { factor = 2 }
         third_block_idea fourth_block_idea
     }
+    add_ideas = { fifth_block_idea }
     """
     refs = set(_scan_idea_refs(text))
 
@@ -391,6 +392,7 @@ def test_block_refs_skip_assignments_comments_and_nested_blocks():
         "second_block_idea",
         "third_block_idea",
         "fourth_block_idea",
+        "fifth_block_idea",
         "nested_idea",
     }
     assert refs.isdisjoint(
