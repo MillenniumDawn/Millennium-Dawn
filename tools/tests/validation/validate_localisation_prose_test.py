@@ -196,6 +196,7 @@ def test_spaced_en_dash_exemptions(monkeypatch, key, basename):
         ("which'll require them", "loc-dangling-description"),
         ("the §Ythe§! regime", "loc-repeated-word"),
         ("see§[GetColor]eker§!", "loc-tripled-letter"),
+        ("which'll require §Ythem§!", "loc-dangling-description"),
     ],
 )
 def test_warning_has_category_key_and_original_location(value, category):
@@ -228,6 +229,7 @@ def test_exact_placeholder_in_any_value(value):
         "the [the the seeeker] the end.",
         "the $the_the_seeeker$ the end.",
         "the £the_the_seeeker the end.",
+        "the §§ the end.",
         "seeeker_key",
         "123seeeker",
         "",

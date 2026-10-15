@@ -1,8 +1,4 @@
-"""Tests for validate_variables.py.
-
-The clamp, math precision, dynamic token, available tooltip and negated trigger
-checks keep their own test files.
-"""
+"""Tests for validate_variables.py."""
 
 import argparse
 import os
@@ -353,6 +349,49 @@ def test_flag_syntax_issues_are_reported(tmp_path):
     assert any("use shorthand" in m for m in messages)
 
 
+_CANAL_EFFECT = (
+    "canal_block_effect = {\n"
+    "\tif = {\n"
+    "\t\tlimit = { has_war_with = TUR }\n"
+    "\t\tset_global_flag = TEST_CANAL_BLOCKED\n"
+    "\t}\n"
+    "\telse = { clr_global_flag = TEST_CANAL_BLOCKED }\n"
+    "}\n"
+)
+_CANAL_RULE = (
+    "adjacency_rule = {\n"
+    '\tname = "TEST_STRAIT"\n'
+    "\tis_disabled = {\n"
+    "\t\thas_global_flag = TEST_CANAL_BLOCKED\n"
+    "\t\ttooltip = test_blocked_tt\n"
+    "\t}\n"
+    "}\n"
+)
+
+
+@pytest.mark.parametrize(
+    "with_map, expected",
+    [
+        (True, []),
+        (False, [("TEST_CANAL_BLOCKED", "common/scripted_effects/00_test.txt", 4)]),
+    ],
+    ids=["read in map/adjacency_rules.txt", "never read"],
+)
+def test_flag_read_only_in_adjacency_rules_counts_as_used(tmp_path, with_map, expected):
+    _write(tmp_path, "common/scripted_effects/00_test.txt", _CANAL_EFFECT)
+    if with_map:
+        _write(tmp_path, "map/adjacency_rules.txt", _CANAL_RULE)
+    validator = _validator(tmp_path)
+
+    validator.run_validations()
+
+    assert [
+        (issue.message, issue.file, issue.line)
+        for issue in validator._issues
+        if issue.category == "variables"
+    ] == expected
+
+
 # --- event targets ----------------------------------------------------------
 
 _EVENTS = "events/ev.txt"
@@ -622,17 +661,86 @@ def test_treasury_effect_in_state_scope_is_reported(tmp_path):
 # --- clamp ranges -----------------------------------------------------------
 
 
-def test_clamp_without_a_max_is_not_a_range(tmp_path):
-    path = _write(
+def _clamp_harvest(tmp_path, text):
+    path = _write(tmp_path, "common/scripted_effects/clamp.txt", text)
+    return V.collect_clamp_ranges((str(path), str(tmp_path)))
+
+
+@pytest.mark.parametrize(
+    "text, found",
+    [
+        pytest.param(
+            "clamp_variable = { var = TST_partial min = 0 }\n"
+            "clamp_variable = { var = TST_full min = 0 max = 100 }\n",
+            [("TST_full", 0.0, 100.0)],
+            id="a clamp without a max is not a range",
+        ),
+        pytest.param(
+            "clamp_variable = { var = global.some_var min = 0 max = 50 }\n",
+            [("some_var", 0.0, 50.0)],
+            id="the global prefix is dropped",
+        ),
+    ],
+)
+def test_collected_clamp_ranges(tmp_path, text, found):
+    assert _clamp_harvest(tmp_path, text)[0] == found
+
+
+def test_clamp_harvest_separates_temp_and_persistent_writes(tmp_path):
+    _found, temp, persistent = _clamp_harvest(
         tmp_path,
-        "common/scripted_effects/clamp.txt",
-        "clamp_variable = { var = TST_partial min = 0 }\n"
-        "clamp_variable = { var = TST_full min = 0 max = 100 }\n",
+        "set_temp_variable = { pp_gain = political_power_daily }\n"
+        "set_variable = { var = expected_military_sp value = 2 }\n"
+        "set_global_variable = { GLOBAL_war_count = 0 }\n",
     )
 
-    found, _temp, _persistent = V.collect_clamp_ranges((str(path), str(tmp_path)))
+    assert temp == ["pp_gain"]
+    assert set(persistent) == {"expected_military_sp", "GLOBAL_war_count"}
 
-    assert found == [("TST_full", 0.0, 100.0)]
+
+@pytest.mark.parametrize(
+    "text, ranges, fragment",
+    [
+        pytest.param(
+            "check_variable = { my_var < 0.6 }",
+            {"my_var": (0.8, 50.0)},
+            "never change outcome",
+            id="value below the minimum",
+        ),
+        pytest.param(
+            "check_variable = { taliban_strength > 0.19 }",
+            {"taliban_strength": (0.0, 100.0)},
+            "0-1 scale value",
+            id="0-1 scale value on a wide clamp",
+        ),
+        pytest.param(
+            "check_variable = { var = my_var value = 200 compare = greater_than }",
+            {"my_var": (0.0, 100.0)},
+            "never change outcome",
+            id="long form",
+        ),
+        pytest.param(
+            "check_variable = { taliban_attack_strength > 0.19 }",
+            {"taliban_attack_strength": (0.0, 1.0)},
+            None,
+            id="fraction on a 0..1 clamp",
+        ),
+        pytest.param(
+            "check_variable = { unknown_var > 9999 }", {}, None, id="unclamped variable"
+        ),
+    ],
+)
+def test_clamp_conflicts(tmp_path, text, ranges, fragment):
+    path = _write(tmp_path, "use.txt", text)
+
+    out = V._resolve_clamp_checks(
+        variable_scan(path, "clamp_checks", tmp_path), "use.txt", ranges
+    )
+
+    if fragment is None:
+        assert out == []
+    else:
+        assert len(out) == 1 and fragment in out[0]
 
 
 @pytest.mark.parametrize(
@@ -677,163 +785,241 @@ def test_clamp_ranges_from_several_files_widen_before_comparison(
         assert all(fragment in message for fragment in fragments)
 
 
-# --- available blocks -------------------------------------------------------
-
-
-def test_check_variable_outside_available_is_not_flagged(tmp_path):
-    """A stray `}` must not pop the block stack and mislabel the enclosing block."""
-    path = _write(
-        tmp_path,
-        "common/national_focus/focus.txt",
-        "}\n"
-        "my_focus = {\n"
-        "\tcompletion_reward = {\n"
-        "\t\tcheck_variable = { TST_var > 5 }\n"
-        "\t}\n"
-        "}\n",
-    )
-
-    assert variable_scan(path, "available", tmp_path) == []
-
-
-def test_untooltipped_check_variable_in_available_is_reported(tmp_path):
-    _write(
-        tmp_path,
-        "common/decisions/dec.txt",
-        "TST_category = {\n"
-        "\tTST_decision = {\n"
-        "\t\tavailable = {\n"
-        "\t\t\tcheck_variable = { TST_var > 5 }\n"
-        "\t\t}\n"
-        "\t}\n"
-        "}\n",
-    )
-    validator = _validator(tmp_path)
-
-    validator.validate_untooltipped_available_checks()
-
-    assert [(i.category, i.severity, i.file, i.line) for i in validator._issues] == [
-        (
-            "untooltipped-available-check",
-            V.Severity.ERROR,
-            "common/decisions/dec.txt",
-            4,
-        )
-    ]
-
-
-def test_repeated_unlocalised_flag_in_one_file_is_reported_once(tmp_path):
-    _write(
-        tmp_path,
-        "common/decisions/dec.txt",
-        "TST_category = {\n"
-        "\tTST_first = {\n"
-        "\t\tavailable = { has_country_flag = TST_no_loc }\n"
-        "\t}\n"
-        "\tTST_second = {\n"
-        "\t\tavailable = { has_country_flag = TST_no_loc }\n"
-        "\t}\n"
-        "}\n",
-    )
-    validator = _validator(tmp_path)
-
-    validator.validate_unlocalised_available_flags()
-
-    assert [i.line for i in validator._issues] == [3]
-
-
-_BORDER_TRIGGER = "TST_border_available = {\n\thas_global_flag = TST_border_open\n}\n"
-
-
-def test_scripted_trigger_index_survives_an_unreadable_definition_file(tmp_path):
-    (tmp_path / "common" / "scripted_triggers" / "broken.txt").mkdir(parents=True)
-    _write(tmp_path, "common/scripted_triggers/border.txt", _BORDER_TRIGGER)
-    validator = _validator(tmp_path)
-
-    assert validator._collect_scripted_trigger_flag_names() == frozenset(
-        {"TST_border_available"}
-    )
-
-
-def test_scripted_trigger_body_with_a_stray_close_brace():
-    assert V._scripted_trigger_body_has_unwrapped_global_flag("} has_global_flag = x")
+# --- math precision ---------------------------------------------------------
 
 
 @pytest.mark.parametrize(
-    "decisions, lines",
+    "text, count",
     [
-        (None, []),
-        (
-            "TST_category = {\n"
-            "\tTST_decision = {\n"
-            "\t\tavailable = {\n"
-            "\t\t\tTST_border_available = yes\n"
-            "\t\t}\n"
+        pytest.param(
+            "effect = {\n"
+            "\tset_variable = {\n"
+            "\t\tvar = my_var\n"
+            "\t\tvalue = 0.123456\n"
             "\t}\n"
             "}\n",
-            [4],
+            1,
+            id="a literal both patterns match reports once",
+        ),
+        pytest.param(
+            "set_variable = { my_var = 0.12345 }\n", 0, id="five decimals are fine"
         ),
     ],
-    ids=["no player-facing file", "bare call in available"],
 )
-def test_untooltipped_available_scripted_trigger(tmp_path, decisions, lines):
-    _write(tmp_path, "common/scripted_triggers/border.txt", _BORDER_TRIGGER)
-    if decisions is not None:
-        _write(tmp_path, "common/decisions/dec.txt", decisions)
-    validator = _validator(tmp_path)
+def test_math_precision(tmp_path, text, count):
+    path = _write(tmp_path, "x.txt", text)
+    assert len(variable_scan(path, "math", tmp_path)) == count
 
-    validator.validate_untooltipped_available_scripted_trigger()
 
-    assert [(i.category, i.file, i.line) for i in validator._issues] == [
-        (
-            "untooltipped-available-scripted-trigger",
-            "common/decisions/dec.txt",
-            line,
+# --- dynamic tokens ---------------------------------------------------------
+
+_REGISTRY = "common/synchronized_dynamic_tokens/MD_tokens.txt"
+
+
+def _tokens(text, registered=()):
+    return [
+        (message.split(" ", 1)[0], line)
+        for message, _rel, line in V._scan_dynamic_tokens_text(
+            text, "common/scripted_effects/x.txt", frozenset(registered)
         )
-        for line in lines
     ]
 
 
-def test_scripted_trigger_call_scan_survives_a_stray_close_brace(tmp_path):
-    path = _write(
-        tmp_path,
-        "common/decisions/dec.txt",
-        "}\n"
-        "my_category = {\n"
-        "\tmy_decision = {\n"
-        "\t\tavailable = {\n"
-        "\t\t\ttst_border_available = yes\n"
-        "\t\t}\n"
-        "\t}\n"
-        "}\n",
-    )
+@pytest.mark.parametrize(
+    ("text", "registered", "found"),
+    [
+        pytest.param(
+            "set_variable = { x = token:Gen_7_Light }\n",
+            {"gen_7_light"},
+            [("token:Gen_7_Light", 1)],
+            id="registration is case-sensitive",
+        ),
+        pytest.param(
+            "set_variable = { x = token:a_b }\nset_variable = { y = token:a_b }\n",
+            (),
+            [("token:a_b", 1)],
+            id="a repeated literal reports once per file",
+        ),
+        *(
+            pytest.param(
+                f"check_variable = {{ {ref} > 0 }}\n",
+                (),
+                [(ref.split(".")[-1], 1)],
+                id=ref,
+            )
+            for ref in (
+                "THIS.building_level@TST_custom_factor",
+                "num_battalions_with_type@TST_custom_factor",
+                "party_popularity_100@TST_custom_factor",
+                "resource_produced@TST_custom_factor",
+            )
+        ),
+        pytest.param(
+            'desc = "Uses num_equipment@TST_a."\n',
+            (),
+            [("num_equipment@TST_a", 1)],
+            id="trailing punctuation is not part of the token",
+        ),
+        *(
+            pytest.param(text, (), [], id=text.strip())
+            for text in (
+                "set_variable = { x = token:topbar_[THIS.GetTag] }\n",
+                "set_variable = { x = token:gen_$LEVEL$_light }\n",
+                # Engine-known tokens need no registration.
+                "check_variable = { resource@steel > 0 }\n",
+                "check_variable = { party_popularity@democratic > 0.5 }\n",
+                "check_variable = { modifier@political_power_gain > 0 }\n",
+                # `@` after an ordinary variable is a scope, not a token target.
+                "set_variable = { my_resource@TST_custom_factor = 1 }\n",
+                # The target is read from a variable.
+                "set_temp_variable = { size = party_popularity@var:ideology }\n",
+            )
+        ),
+    ],
+)
+def test_dynamic_tokens_in_script(text, registered, found):
+    assert _tokens(text, registered) == found
 
-    issues = variable_scan(
-        path, "scripted", tmp_path, flagged_names=frozenset({"tst_border_available"})
-    )
 
-    assert [issue[2] for issue in issues] == [5]
-
-
-def test_repeat_lookups_reuse_the_memoized_index(tmp_path):
-    """Each index is harvested repo-wide; recomputing it per check is wasted work."""
-    _write(tmp_path, "common/scripted_triggers/border.txt", _BORDER_TRIGGER)
+def test_validator_reports_unregistered_tokens_as_errors(tmp_path):
+    _write(tmp_path, _REGISTRY, "gen_3_light\n")
     _write(
         tmp_path,
-        "common/dynamic_modifiers/dyn.txt",
-        "TST_modifier = {\n\tpolitical_power_factor = TST_pp\n}\n",
+        "common/scripted_effects/tokens.txt",
+        "TST_demo = {\n"
+        "\tadd_to_temp_array = { techs = token:gen_3_light }\n"
+        "\tadd_to_temp_array = { techs = token:gen_7_light }\n"
+        "\t# add_to_temp_array = { techs = token:commented_out }\n"
+        '\tlog = "[GetDateText]: [?modifier@TST_logged_factor]"\n'
+        "}\n",
     )
     validator = _validator(tmp_path)
 
-    assert validator._get_ai_only_categories() is validator._get_ai_only_categories()
-    assert (
-        validator._collect_scripted_trigger_flag_names()
-        is validator._collect_scripted_trigger_flag_names()
+    validator.validate_unregistered_dynamic_tokens()
+
+    assert [
+        (issue.category, issue.severity, issue.file, issue.line)
+        for issue in validator._issues
+    ] == [
+        (
+            "unregistered-dynamic-token",
+            V.Severity.ERROR,
+            "common/scripted_effects/tokens.txt",
+            line,
+        )
+        for line in (3, 5)
+    ]
+    assert validator._issues[0].message.startswith("token:gen_7_light ")
+    assert validator._issues[1].message.startswith("modifier@TST_logged_factor ")
+
+
+@pytest.mark.parametrize(
+    ("path", "content", "line"),
+    [
+        (
+            "history/countries/TST - Test.txt",
+            "set_variable = { x = modifier@TST_custom_factor }\n",
+            1,
+        ),
+        (
+            "events/tst.txt",
+            "TST_demo = {\n\tset_variable = { x = token:TST_custom_factor }\n}\n",
+            2,
+        ),
+        (
+            "interface/tst.gui",
+            "guiTypes = {\n"
+            "\t# instantTextBoxType\n"
+            '\ttext = "[?modifier@TST_custom_factor|%0=+]"\n'
+            "}\n",
+            3,
+        ),
+    ],
+    ids=["history", "events", "interface"],
+)
+def test_every_scanned_root_reports(tmp_path, path, content, line):
+    _write(tmp_path, _REGISTRY, "gen_3_light\n")
+    _write(tmp_path, path, content)
+    validator = _validator(tmp_path)
+
+    validator.validate_unregistered_dynamic_tokens()
+
+    assert [(issue.file, issue.line) for issue in validator._issues] == [(path, line)]
+
+
+def test_only_english_localisation_is_scanned(tmp_path):
+    _write(tmp_path, _REGISTRY, "TST_mission\n")
+    _write(
+        tmp_path,
+        "localisation/english/tst_l_english.yml",
+        "l_english:\n"
+        ' # TST_c: "[?modifier@TST_commented_out]"\n'
+        ' TST_a: "[?days_mission_timeout@TST_mission] days"\n'
+        ' TST_b: "[?modifier@TST_custom_factor|%1]"\n',
     )
-    assert (
-        validator._collect_dynamic_modifier_vars()
-        is validator._collect_dynamic_modifier_vars()
+    _write(
+        tmp_path,
+        "localisation/french/tst_l_french.yml",
+        'l_french:\n TST_a: "[?modifier@TST_other_factor]"\n',
     )
+    validator = _validator(tmp_path)
+
+    validator.validate_unregistered_dynamic_tokens()
+
+    assert [
+        (issue.message.split(" ", 1)[0], issue.file, issue.line)
+        for issue in validator._issues
+    ] == [("modifier@TST_custom_factor", "localisation/english/tst_l_english.yml", 4)]
+
+
+def test_missing_registry_reports_every_literal(tmp_path):
+    _write(
+        tmp_path,
+        "events/tokens.txt",
+        "TST_demo = {\n\tset_variable = { x = token:gen_3_light }\n}\n",
+    )
+    validator = _validator(tmp_path)
+
+    validator.validate_unregistered_dynamic_tokens()
+
+    assert [(issue.file, issue.line) for issue in validator._issues] == [
+        ("events/tokens.txt", 2)
+    ]
+
+
+@pytest.mark.parametrize(
+    ("registry", "exit_code"),
+    [("gen_3_light\n", 1), ("gen_3_light\nTST_custom_factor\n", 0)],
+    ids=["unregistered token", "every token registered"],
+)
+def test_unregistered_token_fails_a_strict_run(
+    tmp_path, monkeypatch, registry, exit_code
+):
+    """CI runs the validator with --strict, so one finding must fail the job."""
+    _write(tmp_path, _REGISTRY, registry)
+    _write(
+        tmp_path,
+        "common/scripted_effects/tokens.txt",
+        "TST_demo = {\n\tset_variable = { x = modifier@TST_custom_factor }\n}\n",
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            V.__file__,
+            "--path",
+            str(tmp_path),
+            "--workers",
+            "1",
+            "--no-color",
+            "--strict",
+        ],
+    )
+
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(V.__file__, run_name="__main__")
+
+    assert exit_info.value.code == exit_code
 
 
 # --- variable tooltips and dynamic modifiers --------------------------------
