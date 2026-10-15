@@ -7,6 +7,8 @@ and the rules a count cannot show. check_file, main() and the common/ readers
 are in check_common_mistakes_entrypoints_test.py.
 """
 
+from collections.abc import Callable
+
 import check_common_mistakes as common_mistakes
 import pytest
 from check_common_mistakes import (
@@ -179,7 +181,10 @@ def _war_brake(ratio, strategy="avoid_starting_wars value = -200"):
     ]
 
 
-_COUNT_CASES = {
+_COUNT_CASES: dict[
+    Callable[..., list[tuple[int, str]]],
+    list[tuple[str, int, list[str], *tuple[object, ...]]],
+] = {
     _check_consecutive_scope_blocks: [
         (
             "blocks inside OR not flagged",
