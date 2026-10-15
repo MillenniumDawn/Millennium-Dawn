@@ -338,6 +338,21 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
     return " · ".join(bits)
 
 
+def _tool_effect_line(effect: Optional[Dict[str, Tuple[int, int]]]) -> str:
+    if effect is None:
+        return (
+            "What that code does to main's findings is unavailable: main has no "
+            "scan of this commit with its own validators."
+        )
+    if not effect:
+        return "On main's content, that code changes no findings."
+    ranked = sorted(effect.items(), key=lambda item: (-sum(item[1]), item[0]))
+    parts = [
+        f"`{category}` +{added}/-{dropped}" for category, (added, dropped) in ranked
+    ]
+    return "On main's content, that code adds/drops: " + ", ".join(parts) + "."
+
+
 def _render_availability_notice(ctx: ReportContext) -> str:
     bits: List[str] = []
     if ctx.baseline_status == "unavailable":
@@ -352,6 +367,7 @@ def _render_availability_notice(ctx: ReportContext) -> str:
             "PR's validators, so findings that code adds to unchanged content read "
             "EXISTING, not NEW."
         )
+        bits.append(_tool_effect_line(ctx.tool_effect))
     if ctx.changed_files_status == "unavailable":
         bits.append(
             "Changed-file list was not available. Findings are not tagged IN YOUR PR."

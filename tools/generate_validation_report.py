@@ -42,6 +42,7 @@ from report_lib import (  # noqa: E402
     rename_keys,
     render,
     tag_changed_files,
+    tool_effect,
     truncate_if_needed,
 )
 
@@ -161,6 +162,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--main-tools-baseline",
+        default=None,
+        help=(
+            "Main's own baseline of the --baseline-commit, from main's "
+            "validators. With --tooling-changed, the report lists per category "
+            "what the PR's validators add to and drop from it."
+        ),
+    )
+    parser.add_argument(
         "--renames",
         default=None,
         help=(
@@ -207,6 +217,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         ctx.baseline_scanned_here = bool(
             baseline is not None and run_id and baseline.meta.get("run_id") == run_id
         )
+    if args.tooling_changed and baseline is not None and args.main_tools_baseline:
+        main_tools = load_baseline(args.main_tools_baseline, None, args.baseline_commit)
+        if main_tools is not None:
+            ctx.tool_effect = tool_effect(baseline.keys, main_tools.keys)
     if baseline is not None and args.renames and os.path.isfile(args.renames):
         baseline.keys = rename_keys(baseline.keys, load_renames(args.renames))
 
