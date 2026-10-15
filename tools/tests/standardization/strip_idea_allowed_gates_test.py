@@ -8,6 +8,7 @@ can pick.
 
 import sys
 
+import pytest
 import strip_idea_allowed_gates
 from shared.suite import read_text as _read
 from shared.suite import write_text as _write
@@ -407,18 +408,21 @@ def _mod_root(tmp_path):
     return root
 
 
-def test_main_sweeps_the_ideas_directory_by_default(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("extra", "kept"), [((), False), (("--dry-run",), True)], ids=["write", "dry run"]
+)
+def test_main_sweeps_the_ideas_directory_by_default(tmp_path, monkeypatch, extra, kept):
     root = _mod_root(tmp_path)
     ideas = root / "common" / "ideas"
     ideas.mkdir()
     idea_file = ideas / "ideas.txt"
     _write(idea_file, _IDEA_SAMPLE)
     monkeypatch.setattr(
-        sys, "argv", ["strip_idea_allowed_gates.py", "--root", str(root)]
+        sys, "argv", ["strip_idea_allowed_gates.py", "--root", str(root), *extra]
     )
 
     assert strip_idea_allowed_gates.main() == 0
-    assert "allowed" not in _read(idea_file)
+    assert ("allowed" in _read(idea_file)) is kept
     assert "picture = gold" in _read(idea_file)
 
 
