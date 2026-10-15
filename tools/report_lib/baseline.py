@@ -159,21 +159,29 @@ def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
     an error must read as a new error (the alarm direction). A warning that
     main recorded as an error reads EXISTING: main's cross-validator dedupe
     raises a finding that another validator reports as an error, and a PR
-    running fewer validators sees only the warning.
+    running fewer validators sees only the warning. Exact matches are taken
+    first, so such a warning only gets an error no exact match claimed.
     """
     stats = BaselineStats()
     unmatched = baseline.keys.copy()
-    for issue in issues:
-        key = issue_key(issue)
+    keys = [issue_key(issue) for issue in issues]
+    exact: List[bool] = []
+    for key in keys:
+        if key is not None and unmatched[key] > 0:
+            unmatched[key] -= 1
+            exact.append(True)
+        else:
+            exact.append(False)
+    for issue, key, matched in zip(issues, keys, exact):
         if key is None:
             stats.unclassified += 1
             continue
-        if unmatched[key] == 0 and issue.severity == Severity.WARNING:
+        if not matched and issue.severity == Severity.WARNING:
             raised = (Severity.ERROR, key[1], key[2], key[3])
-            if unmatched[raised] > 0:
-                key = raised
-        if unmatched[key] > 0:
-            unmatched[key] -= 1
+            matched = unmatched[raised] > 0
+            if matched:
+                unmatched[raised] -= 1
+        if matched:
             issue.baseline_status = "existing"
             if issue.severity == Severity.ERROR:
                 stats.existing_errors += 1
