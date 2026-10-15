@@ -94,6 +94,7 @@ _HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
 
 from shared_utils import (  # noqa: E402
     extract_block_from_text,
+    find_line_number,
     get_all_idea_categories,
 )
 from shared_utils import (
@@ -1117,7 +1118,9 @@ class Validator(BaseValidator):
         return SpriteSet.build(defined - placeholders, placeholders)
 
     def validate_missing_icons(
-        self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
+        self,
+        defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]],
+        ideas_by_file: Dict[str, List[str]],
     ):
         """Flag ideas whose icon sprite is not defined in any interface/*.gfx.
 
@@ -1152,7 +1155,10 @@ class Validator(BaseValidator):
             c["name"] for c in get_all_idea_categories(self.mod_path) if c["hidden"]
         )
 
-        grouped: Dict[str, List[str]] = defaultdict(list)
+        sources = {
+            name: path for path, names in ideas_by_file.items() for name in names
+        }
+        results: List[Tuple[str, str, int]] = []
         checked = 0
 
         for idea_name in sorted(defined_ideas):
@@ -1164,11 +1170,24 @@ class Validator(BaseValidator):
                 idea_name, cat, name_override, picture, sprites, hidden_cats
             )
             if msg:
-                grouped[cat].append(msg)
+                path = sources.get(idea_name, "")
+                results.append(
+                    (
+                        f"{cat}: {msg}",
+                        os.path.relpath(path, self.mod_path) if path else "",
+                        (
+                            find_line_number(
+                                path, f"\t{idea_name} = {{", lowercase=False
+                            )
+                            if path
+                            else 0
+                        ),
+                    )
+                )
 
         self.log(f"  Checked {checked} idea icons (explicit picture + auto-registered)")
-        self._report_grouped(
-            grouped,
+        self._report(
+            results,
             "✓ All idea picture sprites resolve to real art",
             "Ideas with missing icons (undefined, case-mismatched or placeholder art):",
             severity=Severity.WARNING,
@@ -1426,7 +1445,7 @@ class Validator(BaseValidator):
                 "Skipping missing localisation check (pass --missing-name-loc to enable)"
             )
 
-        self.validate_missing_icons(defined_ideas)
+        self.validate_missing_icons(defined_ideas, ideas_by_file)
 
         if self.unused_ideas:
             self.validate_unused_ideas(defined_ideas, ideas_by_file)

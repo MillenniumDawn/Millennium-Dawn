@@ -716,6 +716,11 @@ def test_missing_icons_skip_hidden_and_character_categories(tmp_path, no_vanilla
     _write(
         tmp_path, "interface/ideas.gfx", 'spriteType = { name = "GFX_idea_known" }\n'
     )
+    ideas = _write(
+        tmp_path,
+        "common/ideas/x.txt",
+        "ideas = {\n\tcountry = {\n\t\tNO_icon = {\n\t\t}\n\t}\n}\n",
+    )
     validator = _validator(tmp_path)
 
     validator.validate_missing_icons(
@@ -724,14 +729,19 @@ def test_missing_icons_skip_hidden_and_character_categories(tmp_path, no_vanilla
             "NO_icon": ("country", None, None),
             "HIDDEN_idea": ("hidden_ideas", None, None),
             "CHAR_token": ("character", None, None),
-        }
+        },
+        {str(ideas): ["NO_icon"]},
     )
 
-    assert [(i.severity, i.category, i.message) for i in validator._issues] == [
+    assert [
+        (i.severity, i.category, i.message, i.file, i.line) for i in validator._issues
+    ] == [
         (
             Severity.WARNING,
             "missing-idea-icon",
             "country: NO_icon: auto-icon GFX_idea_NO_icon (undefined)",
+            "common/ideas/x.txt",
+            3,
         )
     ]
 
@@ -743,7 +753,7 @@ def test_empty_idea_scope_skips_the_sprite_index(tmp_path, monkeypatch):
         "_build_idea_sprite_set",
         lambda: pytest.fail("sprite index loaded"),
     )
-    validator.validate_missing_icons({})
+    validator.validate_missing_icons({}, {})
     assert validator.errors_found == 0
 
 
