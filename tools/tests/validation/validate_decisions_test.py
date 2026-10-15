@@ -1028,6 +1028,18 @@ _ICON_REFERENCE_CASES = {
         "\t\t\t}\n\t\t}\n\t}\n}\n",
         [("dec", "decision", "money", 3)],
     ),
+    "quoted opening brace in an earlier decision": (
+        _DECISION_FILE,
+        'cat = {\n\ta = {\n\t\tcomplete_effect = { log = "a {" }\n\t}\n'
+        "\tb = {\n\t\ticon = money\n\t}\n}\n",
+        [("b", "decision", "money", 6)],
+    ),
+    "quoted closing brace in an earlier decision": (
+        _DECISION_FILE,
+        'cat = {\n\ta = {\n\t\tcomplete_effect = { log = "a }" }\n\t}\n'
+        "\tb = {\n\t\ticon = money\n\t}\n}\n",
+        [("b", "decision", "money", 6)],
+    ),
     "unbalanced dynamic icon block": (
         _DECISION_FILE,
         "cat = {\n\tdec = {\n\t\ticon = {\n\t\t\tkey = GFX_decision_x\n",

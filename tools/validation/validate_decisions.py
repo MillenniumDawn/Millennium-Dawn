@@ -321,13 +321,14 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
         # reference; rescanning from the top for every icon is quadratic on the
         # bigger decision files.
         owner_depth = 0 if is_category else 1
-        owners = _owner_spans(text, owner_depth)
+        code = blank_quoted_strings(text)
+        owners = _owner_spans(code, owner_depth)
         owner_starts = [s for s, _, _ in owners]
         newlines = [i for i, ch in enumerate(text) if ch == "\n"]
         brace_offsets: List[int] = []
         brace_depths: List[int] = []
         depth = 0
-        for m in re.finditer(r"[{}]", text):
+        for m in re.finditer(r"[{}]", code):
             depth += 1 if m.group() == "{" else -1
             brace_offsets.append(m.start())
             brace_depths.append(depth)
