@@ -151,6 +151,7 @@ def test_test_suite_replaces_old_workflows():
         "content-tests",
         "tools-quality",
         "mod-tests",
+        "baseline-scan",
         "docs-quality",
         "report",
         "gate",
@@ -528,12 +529,17 @@ def test_report_job_posts_comment_and_checks():
     assert "checkout-ref" in checkout["with"]["ref"]
 
 
+# Feeds the NEW/EXISTING comparison only; #5787 rolls it out advisory first.
+ADVISORY_JOBS = {"baseline-scan"}
+
+
 def test_suite_gate_requires_every_validation_job():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     gate = workflow["jobs"]["gate"]
     assert gate["name"] == "Test suite gate"
     assert gate["if"] == "${{ always() }}"
-    assert set(gate["needs"]) == set(workflow["jobs"]) - {"gate"}
+    assert set(gate["needs"]) == set(workflow["jobs"]) - {"gate"} - ADVISORY_JOBS
+    assert ADVISORY_JOBS <= set(workflow["jobs"]["report"]["needs"])
     failure_step = gate["steps"][0]
     for job in gate["needs"]:
         assert f"needs.{job}.result" in failure_step["if"]
@@ -862,9 +868,38 @@ def test_every_main_commit_gets_a_baseline_and_only_the_alarm_is_gated():
     assert "md-accepted-v1-" in saves[".validation_accepted"]["with"]["key"]
 
 
+def test_base_scan_recomputes_only_a_missing_base_baseline():
+    # Same tooling on both commits, a cold cache, a time budget, and an
+    # artifact the report reads only when main has not saved the baseline.
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["baseline-scan"]
+    assert job["timeout-minutes"] <= 20
+    assert "base-sha" in job["env"]["BASE_SHA"]
+    lookup = workflow_step("baseline-scan", "Look up the base commit's baseline")
+    assert lookup["with"]["lookup-only"] is True
+    assert lookup["with"]["restore-keys"].strip().endswith("-${{ env.BASE_SHA }}-")
+    for step in job["steps"][3:]:
+        assert step["if"] == "steps.lookup.outputs.cache-matched-key == ''", step
+    overlay = workflow_step("baseline-scan", "Give the base content the PR's tooling")
+    for path in ("tools", "resources/documentation", "validation_config.json"):
+        assert f"cp -R {path}" in overlay["run"] or f"cp {path}" in overlay["run"]
+    scan = workflow_step("baseline-scan", "Scan the base commit")
+    assert scan["working-directory"] == "base"
+    assert "run_all_validators.py --no-color --no-cache" in scan["run"]
+    record = workflow_step("baseline-scan", "Record the base commit's baseline")
+    assert '--commit-sha "$BASE_SHA"' in record["run"]
+    assert "--previous" not in record["run"]
+    upload = workflow_step("baseline-scan", "Upload base commit baseline")
+    assert not upload["with"]["name"].endswith("results")
+    download = workflow_step("report", "Download base commit baseline")
+    assert download["with"]["name"] == upload["with"]["name"]
+    assert download["with"]["path"] == ".validation_baseline"
+    assert "restore-baseline.outputs.cache-matched-key == ''" in download["if"]
+
+
 def test_every_fingerprint_site_hashes_the_same_inputs():
     # A cache or baseline saved under one fingerprint is read under another,
-    # so all four sites hash the validator code, config, and reference data.
+    # so every site hashes the validator code, config, and reference data.
     fingerprints = set()
     for workflow in (CI_WORKFLOW, VALIDATOR_CACHE_WORKFLOW):
         source = workflow.read_text(encoding="utf-8")
@@ -880,6 +915,7 @@ def test_every_fingerprint_site_hashes_the_same_inputs():
     for job, name in (
         ("report", "Checkout report tooling"),
         ("tools-quality", "Checkout tools quality tree"),
+        ("baseline-scan", "Checkout PR validator tooling"),
     ):
         step = workflow_step(job, name)
         assert set(references) <= set(step["with"]["sparse-checkout"].split()), job

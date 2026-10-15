@@ -6,7 +6,8 @@ has left the per-validator JSON sidecars of a full main run on disk. A
 complete run is always written to --observation: PR reports compare against
 that commit's results whether or not they pass the alarm. The alarm compares
 the run with the last accepted baseline (--previous) and promotes it to
---output only on a clean diff. Exit codes:
+--output only on a clean diff. The PR suite's base scan passes neither and
+only records the observation. Exit codes:
 
   0 — no new errors on main (accepted baseline promoted to tonight's
       results), or no complete accepted baseline to compare against (a fresh
@@ -129,8 +130,10 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument(
         "--previous",
-        required=True,
-        help="Directory holding the last accepted baseline (restored cache entry)",
+        help=(
+            "Directory holding the last accepted baseline (restored cache entry). "
+            "Without --previous and --output, only the observation is recorded."
+        ),
     )
     parser.add_argument(
         "--current",
@@ -139,7 +142,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     parser.add_argument(
         "--output",
-        required=True,
         help="Directory to write the new accepted baseline into on a clean diff",
     )
     parser.add_argument(
@@ -159,6 +161,8 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         default=os.environ.get("GITHUB_REPOSITORY", ""),
     )
     args = parser.parse_args(argv)
+    if (args.previous is None) != (args.output is None):
+        parser.error("--previous and --output go together")
 
     # Every validator writes a sidecar, even when clean, so a directory with
     # none is a run that produced nothing, not an all-clean main.
@@ -177,6 +181,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
 
     meta = _build_meta(args)
     write_baseline(args.current, args.observation, meta)
+    if args.previous is None:
+        print(f"Recorded a baseline of {len(current)} issue(s).")
+        return 0
     previous = load_baseline(args.previous, args.toolshash or None)
 
     if previous is None:

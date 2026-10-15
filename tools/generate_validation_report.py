@@ -183,6 +183,11 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.baseline_dir:
         ctx.baseline_status = "available" if baseline is not None else "unavailable"
         ctx.baseline_commit = args.baseline_commit
+        run_id = os.environ.get("GITHUB_RUN_ID")
+        # The base scan job records this run's id; main's own runs record theirs.
+        ctx.baseline_scanned_here = bool(
+            baseline is not None and run_id and baseline.meta.get("run_id") == run_id
+        )
 
     changed_files = None
     if args.changed_files:

@@ -326,6 +326,8 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
         source = (
             f"main `{ctx.baseline_commit[:7]}`" if ctx.baseline_commit else "available"
         )
+        if ctx.baseline_scanned_here:
+            source += " (scanned in this run)"
         bits.append(f"**Baseline comparison:** {source}")
     elif ctx.baseline_status == "unavailable":
         bits.append("**Baseline comparison:** unavailable")
