@@ -161,17 +161,15 @@ def _is_raw_icon_path(value: str) -> bool:
     return _RAW_ICON_PATH.search(value) is not None
 
 
-# Property names are case-insensitive; quotes are optional. GFX_ stays exact.
+# A sprite value, quoted or bare. GFX_ stays exact.
+_SPRITE_VALUE = r'(?:"(GFX_[^"\[]+)"|(GFX_[A-Za-z0-9_.@-]+))'
+
+# Property names are case-insensitive.
 _GUI_REF = re.compile(
-    r"\b(?i:spriteType|quadTextureSprite|background)\s*=\s*"
-    r'(?:"(GFX_[^"\[]+)"|(GFX_[A-Za-z0-9_.@-]+))'
+    r"\b(?i:spriteType|quadTextureSprite|background)\s*=\s*" + _SPRITE_VALUE
 )
-
-# Scripted GUI properties: image = "GFX_xxx"
-_SGUI_IMAGE_REF = re.compile(r'\bimage\s*=\s*"(GFX_[^"\[]+)"')
-
-# Scripted localisation: localization_key = "GFX_xxx"
-_SLOC_KEY_REF = re.compile(r'\blocalization_key\s*=\s*"(GFX_[^"\[]+)"')
+_SGUI_IMAGE_REF = re.compile(r"\bimage\s*=\s*" + _SPRITE_VALUE)
+_SLOC_KEY_REF = re.compile(r"\blocalization_key\s*=\s*" + _SPRITE_VALUE)
 
 # The same two attributes, but keeping the `[` those exclude — a bracket is what
 # marks a name the engine builds at runtime (GFX_missile_[THIS.GetTag]_ID_[?v]_icon).
@@ -196,10 +194,17 @@ _FONT_REF = re.compile(r'\bfont\s*=\s*"([^"\[]+)"')
 # optional `|frame` suffix may follow). Party, idea and money icons are often
 # referenced this way and nowhere else, so skipping .yml mis-reports them as
 # unused. `£GFX_name` also occurs, hence both spellings are recorded. Names can
-# carry `.` frame suffixes and `-`, same as _GFX_TOKEN_REF.
-_LOC_SPRITE_REF = re.compile(r"£([A-Za-z0-9_.\-]+)")
+# carry `.` frame suffixes and `-`, same as _GFX_TOKEN_REF. A `£` right after the
+# name (`£trigger_no£Not`) closes the icon; consuming it keeps `Not` from reading
+# as another sprite.
+_LOC_SPRITE_REF = re.compile(r"£([A-Za-z0-9_.\-]+)(?:\|[^£\s]*)?£?")
 # Idea `picture = X` resolves to the sprite `GFX_idea_X` (X is not GFX_-prefixed).
 _IDEA_PICTURE_REF = re.compile(r"^\s*picture\s*=\s*([A-Za-z0-9_.\-]+)", re.MULTILINE)
+# A bare decision `icon = X`, or `key = X` in a conditional icon block, resolves to
+# GFX_decision_X, or GFX_decision_category_X on a category.
+_DECISION_ICON_REF = re.compile(
+    r"^\s*(?:icon|key)\s*=\s*(?!GFX_)([A-Za-z0-9_.\-]+)", re.MULTILINE
+)
 
 # Auto-generated flag sprites — never defined in .gfx, built by the engine.
 # Matches GFX_flag_TAG, GFX_TAG_flag, GFX_shield_TAG etc.
@@ -423,6 +428,9 @@ _GRAPHICAL_CULTURE_RE = re.compile(
 # identify them: `GFX_[?topbar.GetTokenKey]` would otherwise match every sprite.
 _TEMPLATE_PLACEHOLDER_RE = re.compile(r"\[[^\]]*\]")
 _TEMPLATE_MIN_LITERAL = 4
+# `GFX_[?topbar.GetTokenKey]` has no literal text. MD fills those variables from
+# common/synchronized_dynamic_tokens, so it draws GFX_<token> for each declared token.
+_TOKEN_TEMPLATE_RE = re.compile(r"^GFX_\[\?[^\]]*\.GetTokenKey\]$")
 
 
 def _entry_names_from_text(raw: str, block_re: "re.Pattern[str]") -> List[str]:
@@ -556,6 +564,16 @@ def _load_search_filter_names(mod_path: str) -> FrozenSet[str]:
         os.path.join(mod_path, "common", "national_focus"),
         _search_filter_names_from_text,
         "gfx_ref.search_filters",
+    )
+
+
+def _load_dynamic_token_names(mod_path: str) -> FrozenSet[str]:
+    """Return every token declared in common/synchronized_dynamic_tokens."""
+    return _load_names_from_dir(
+        mod_path,
+        os.path.join(mod_path, "common", "synchronized_dynamic_tokens"),
+        lambda raw: sorted(set(_HASH_COMMENT.sub("", raw).split())),
+        "gfx_ref.dynamic_tokens",
     )
 
 
@@ -836,20 +854,12 @@ def _parse_gui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
     if raw is None:
         return []
 
-    def _compute():
-        text = _strip_comments(raw)
-        offsets = compute_line_offsets(raw)
-        results = []
-        for m in _GUI_REF.finditer(text):
-            sprite = m.group(1) or m.group(2)
-            if _is_dynamic(sprite):
-                continue
-            line = line_for_offset(offsets, m.start())
-            results.append((sprite, filepath, line))
-        return results
-
     return disk_cache.per_file_cached_by_content(
-        mod_path, "gfx_ref.gui", filepath, raw, _compute
+        mod_path,
+        "gfx_ref.gui",
+        filepath,
+        raw,
+        lambda: _sprite_refs(_strip_comments(raw), filepath, _GUI_REF),
     )
 
 
@@ -862,7 +872,7 @@ def _parse_gui_fonts(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
 
     def _compute():
         text = _strip_comments(raw)
-        offsets = compute_line_offsets(raw)
+        offsets = compute_line_offsets(text)
         return [
             (m.group(1), filepath, line_for_offset(offsets, m.start()))
             for m in _FONT_REF.finditer(text)
@@ -925,20 +935,18 @@ def _parse_raw_graphic_db_icons(
     )
 
 
-def _refs_from_raw_text(
-    raw: str, filepath: str, pattern: "re.Pattern[str]"
+def _sprite_refs(
+    text: str, filepath: str, pattern: "re.Pattern[str]"
 ) -> List[Tuple[str, str, int]]:
-    """Return (sprite_name, filepath, line) for each `pattern` match's group(1).
+    """Return (sprite_name, filepath, line) for each `pattern` match in `text`.
 
-    Scans `raw` directly rather than comment-stripped text: scripted_gui .txt
-    and scripted_localisation .txt both use # for Clausewitz-script comments,
-    but a scripted loc key can itself start with #, so stripping would corrupt
-    a legitimate reference. Dynamic names are skipped.
+    `text` is comment-stripped with its newlines kept, so lines match the file.
+    Dynamic names are skipped.
     """
-    offsets = compute_line_offsets(raw)
+    offsets = compute_line_offsets(text)
     results = []
-    for m in pattern.finditer(raw):
-        sprite = m.group(1)
+    for m in pattern.finditer(text):
+        sprite = m.group(1) or m.group(2)
         if _is_dynamic(sprite):
             continue
         line = line_for_offset(offsets, m.start())
@@ -958,7 +966,7 @@ def _parse_sgui_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
         "gfx_ref.sgui",
         filepath,
         raw,
-        lambda: _refs_from_raw_text(raw, filepath, _SGUI_IMAGE_REF),
+        lambda: _sprite_refs(strip_comments(raw), filepath, _SGUI_IMAGE_REF),
     )
 
 
@@ -966,10 +974,10 @@ def _parse_script_refs(args: Tuple[str, str]) -> List[str]:
     """Return every GFX sprite a game-script .txt file references.
 
     Picks up literal `GFX_xxx` tokens (event pictures, focus/decision icons,
-    MIO and agency logos, portraits, etc.) plus idea `picture = X` entries,
-    which resolve to `GFX_idea_X`. Comment lines are stripped first so a
-    commented-out reference does not mask a genuinely unused sprite. Content-
-    cached, so a warm run only re-scans changed files.
+    MIO and agency logos, portraits, etc.) plus idea `picture = X` and bare
+    decision `icon = X` entries, which the engine prefixes. Comment lines are
+    stripped first so a commented-out reference does not mask a genuinely unused
+    sprite. Content-cached, so a warm run only re-scans changed files.
     """
     filepath, mod_path = args
     raw = _read_raw(filepath)
@@ -982,6 +990,10 @@ def _parse_script_refs(args: Tuple[str, str]) -> List[str]:
         if os.sep + "ideas" + os.sep in filepath:
             for m in _IDEA_PICTURE_REF.finditer(text):
                 refs.add("GFX_idea_" + m.group(1))
+        if os.sep + "decisions" + os.sep in filepath:
+            for m in _DECISION_ICON_REF.finditer(text):
+                refs.add("GFX_decision_" + m.group(1))
+                refs.add("GFX_decision_category_" + m.group(1))
         return sorted(refs)
 
     return disk_cache.per_file_cached_by_content(
@@ -1020,11 +1032,7 @@ def _parse_loc_refs(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
 
 
 def _parse_sprite_templates(args: Tuple[str, str]) -> List[str]:
-    """Return every runtime-built `GFX_...[...]...` sprite name in a scripted file.
-
-    Comments are left in place for the same reason `_parse_sloc_file` leaves them:
-    a scripted loc key may legitimately start with `#`.
-    """
+    """Return every runtime-built `GFX_...[...]...` sprite name in a scripted file."""
     filepath, mod_path = args
     raw = _read_raw(filepath)
     if raw is None:
@@ -1035,7 +1043,7 @@ def _parse_sprite_templates(args: Tuple[str, str]) -> List[str]:
         "gfx_ref.templates",
         filepath,
         raw,
-        lambda: sorted(set(_SPRITE_TEMPLATE_REF.findall(raw))),
+        lambda: sorted(set(_SPRITE_TEMPLATE_REF.findall(strip_comments(raw)))),
     )
 
 
@@ -1051,7 +1059,7 @@ def _parse_sloc_file(args: Tuple[str, str]) -> List[Tuple[str, str, int]]:
         "gfx_ref.sloc",
         filepath,
         raw,
-        lambda: _refs_from_raw_text(raw, filepath, _SLOC_KEY_REF),
+        lambda: _sprite_refs(strip_comments(raw), filepath, _SLOC_KEY_REF),
     )
 
 
@@ -1070,6 +1078,12 @@ class Validator(BaseValidator):
         # Every mod definition site (name, file, texturefile, line) for the
         # duplicate-name check.
         self._mod_defs: List[Tuple[str, str, str, int]] = []
+
+    def _staged_rel(self) -> Optional[Set[str]]:
+        """Return staged paths relative to the mod root, or None outside --staged."""
+        if not self.staged_only:
+            return None
+        return {os.path.relpath(f, self.mod_path) for f in self.staged_files or []}
 
     def _build_gfx_definitions(self) -> Tuple[Set[str], Set[str]]:
         """Scan all interface/*.gfx files and return (all_defined, mod_defined).
@@ -1210,6 +1224,8 @@ class Validator(BaseValidator):
             GFX_<TAG|culture>_ace_<m|f>_N ace portraits, keyed by tag or 2d culture
             GFX_missile_<TAG>_ID_<N>_icon and anything else a `[...]` scripted-loc
                                           or scripted-GUI template can build
+            GFX_<token>                   synchronized dynamic tokens, drawn by a
+                                          `GFX_[?x.GetTokenKey]` template
         """
         self._log_section("Resolving engine-built GFX references from mod data")
         declared, notices = _declaration_engine_refs(self.mod_path)
@@ -1238,8 +1254,14 @@ class Validator(BaseValidator):
                 _parse_sprite_templates, [(f, self.mod_path) for f in template_files]
             )
         )
-        patterns = [p for p in map(_template_pattern, sorted(templates)) if p]
-        skipped = len(templates) - len(patterns)
+        token_templates = {t for t in templates if _TOKEN_TEMPLATE_RE.match(t)}
+        if token_templates:
+            tokens = _load_dynamic_token_names(self.mod_path)
+            refs.update(defined & {"GFX_" + token for token in tokens})
+        patterns = [
+            p for p in map(_template_pattern, sorted(templates - token_templates)) if p
+        ]
+        skipped = len(templates) - len(token_templates) - len(patterns)
         if skipped:
             self.log(
                 f"  {skipped} sprite template(s) too generic to resolve"
@@ -1310,13 +1332,8 @@ class Validator(BaseValidator):
         seen: Set[Tuple[str, str, int]] = set()
         ci = mod_defined_ci or {}
         # .gui refs are gathered full-repo (ignore_staged) to build the override
-        # index below, so under --staged the reported entries must be re-scoped to
-        # the staged files or the whole repo's ~50 .gui errors would surface.
-        staged_rel: Set[str] = set()
-        if self.staged_only:
-            staged_rel = {
-                os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])
-            }
+        # index below, so under --staged the reported entries are re-scoped.
+        staged_rel = self._staged_rel()
         # Vanilla .gui files ship dead sprite refs of their own; an MD-authored
         # nation variant (`<vanilla_stem>_<tag>.gui`) inheriting the same ref is
         # vanilla's bug, not the mod's — downgrade to WARNING. Keyed per vanilla
@@ -1344,7 +1361,7 @@ class Validator(BaseValidator):
             if not self._vanilla_defs_loaded and _is_likely_vanilla(sprite):
                 continue
             rel = os.path.relpath(filepath, self.mod_path)
-            if self.staged_only and rel not in staged_rel:
+            if staged_rel is not None and rel not in staged_rel:
                 continue
             key = (sprite, rel, line)
             if key in seen:
@@ -1401,21 +1418,25 @@ class Validator(BaseValidator):
         sprites to the engine but the same file to a Windows author, which is how a
         `£ref` ends up pointing at whichever variant happens to be miscased.
 
-        WARNING, not ERROR: the mod carries a ~477-entry backlog of exact repeats,
-        and `--strict` gates on errors, so erroring here would fail every CI run
-        until that backlog is cleared.
+        Under --staged, a name reports when one of its definitions is staged.
         """
         self._log_section("Checking for duplicate GFX sprite definitions")
+        staged_rel = self._staged_rel()
         by_name: dict = {}
         for name, filepath, texture, line in self._mod_defs:
             by_name.setdefault(name, []).append(
                 (os.path.relpath(filepath, self.mod_path), texture, line)
             )
 
+        def _in_scope(names) -> bool:
+            return staged_rel is None or any(
+                f in staged_rel for n in names for f, _tx, _ln in by_name[n]
+            )
+
         exact = []
         for name in sorted(by_name):
             sites = by_name[name]
-            if len(sites) < 2:
+            if len(sites) < 2 or not _in_scope([name]):
                 continue
             elsewhere = ", ".join(f"{f}:{ln}" for f, _tx, ln in sites[1:])
             same_art = len({tx for _f, tx, _ln in sites}) == 1
@@ -1436,7 +1457,7 @@ class Validator(BaseValidator):
             exact,
             ok_msg="No GFX sprite name is defined twice.",
             fail_msg=f"Duplicate GFX sprite definitions ({len(exact)} total):",
-            severity=Severity.WARNING,
+            severity=Severity.ERROR,
             category="duplicate-sprite",
         )
 
@@ -1446,7 +1467,7 @@ class Validator(BaseValidator):
         variants = []
         for lower in sorted(by_lower):
             names = sorted(by_lower[lower])
-            if len(names) < 2:
+            if len(names) < 2 or not _in_scope(names):
                 continue
             first = by_name[names[0]][0]
             # Same art under two spellings is one sprite split in half by a Windows
@@ -1465,14 +1486,13 @@ class Validator(BaseValidator):
                     first[2],
                 )
             )
-        if variants:
-            self._report(
-                variants,
-                ok_msg="No case-variant GFX sprite definitions.",
-                fail_msg="Case-variant GFX sprite definitions:",
-                severity=Severity.WARNING,
-                category="case-variant-sprite",
-            )
+        self._report(
+            variants,
+            ok_msg="No case-variant GFX sprite definitions.",
+            fail_msg="Case-variant GFX sprite definitions:",
+            severity=Severity.ERROR,
+            category="case-variant-sprite",
+        )
 
     def _check_undefined_fonts(self) -> None:
         """Report .gui `font = "x"` naming a bitmapfont nothing declares.
@@ -1507,7 +1527,7 @@ class Validator(BaseValidator):
                 return
             defined.update(manifest)
 
-        gui_files = self._collect_files(["interface/**/*.gui"], ignore_staged=True)
+        gui_files = self._collect_files(["interface/**/*.gui"])
         issues = []
         for batch in self._pool_map(
             _parse_gui_fonts, [(f, self.mod_path) for f in gui_files]
@@ -1531,31 +1551,29 @@ class Validator(BaseValidator):
             category="undefined-font",
         )
 
-    def _check_loc_ref_case(
+    def _check_loc_refs(
         self,
         refs: List[Tuple[str, str, int]],
         defined: Set[str],
         defined_ci: dict,
     ) -> None:
-        """Report `£sprite` localisation refs that only match a sprite case-insensitively.
+        """Report English `£sprite` refs that match no sprite, or match one only by case.
 
         Nothing else validates localisation sprite refs — script `GFX_` tokens are
         covered by the focus/event/decision/idea validators' sprite index, and .gui
-        refs by `_check_undefined_refs`. A miscased `£ref` renders no icon on Linux.
+        refs by `_check_undefined_refs`. A miscased `£ref` renders no icon on Linux;
+        a missing one renders none anywhere.
 
         English only: non-English loc is out of scope until the translation project
         (AGENTS.md), and a stray `£` before an accented word truncates at the accent
         (`£Réseau` -> `£R`), which then collides with short vanilla sprite names.
+        A `£` before a digit is the pound sign.
 
-        One entry per distinct misspelling, not per occurrence — the same `£token` is
+        One entry per distinct name, not per occurrence — the same `£token` is
         copied verbatim into every file that carries the key.
         """
-        self._log_section("Checking GFX £sprite reference case in localisation")
-        staged_rel = (
-            {os.path.relpath(f, self.mod_path) for f in (self.staged_files or [])}
-            if self.staged_only
-            else None
-        )
+        self._log_section("Checking GFX £sprite references in localisation")
+        staged_rel = self._staged_rel()
         sites: dict = {}
         for sprite, filepath, line in refs:
             if sprite in defined or sprite in sites:
@@ -1563,28 +1581,39 @@ class Validator(BaseValidator):
             rel = os.path.relpath(filepath, self.mod_path)
             if os.sep + "english" + os.sep not in rel:
                 continue
-            canonical = case_mismatch(sprite, defined_ci)
-            if not canonical:
+            if sprite[len("GFX_") :][:1].isdigit():
                 continue
             if staged_rel is not None and rel not in staged_rel:
                 continue
-            sites[sprite] = (canonical, rel, line)
+            sites[sprite] = (case_mismatch(sprite, defined_ci), rel, line)
 
-        issues = [
-            (
-                f"Sprite reference '£{sprite[len('GFX_') :]}' matches no sprite —"
-                f" defined as '{canonical}' (works on Windows, fails on Linux)",
-                rel,
-                line,
-            )
-            for sprite, (canonical, rel, line) in sorted(sites.items())
-        ]
+        miscased, missing = [], []
+        for sprite, (canonical, rel, line) in sorted(sites.items()):
+            ref = f"Sprite reference '£{sprite[len('GFX_') :]}' matches no sprite"
+            if canonical:
+                miscased.append(
+                    (
+                        f"{ref} — defined as '{canonical}'"
+                        " (works on Windows, fails on Linux)",
+                        rel,
+                        line,
+                    )
+                )
+            else:
+                missing.append((f"{ref} in the mod or vanilla", rel, line))
         self._report(
-            issues,
+            miscased,
             ok_msg="All localisation £sprite references match a defined sprite's case.",
             fail_msg="Case-mismatched £sprite references in localisation:",
             severity=Severity.ERROR,
             category="sprite-ref-case",
+        )
+        self._report(
+            missing,
+            ok_msg="All localisation £sprite references are defined.",
+            fail_msg="Undefined £sprite references in localisation:",
+            severity=Severity.ERROR,
+            category="undefined-loc-sprite",
         )
 
     def _check_unused_sprites(
@@ -1642,15 +1671,18 @@ class Validator(BaseValidator):
             tagged = _EQUIPMENT_ICON_TAG_RE.match(stem)
             return tagged is not None and tagged.group(1) in implicit
 
+        # The prefix heuristic stands in for vanilla names only when none loaded.
         unused = sorted(
             s
             for s in defined
             if s not in all_refs
             and s not in self._vanilla_defined
-            and not _is_flag_sprite(s)
-            and not _is_likely_vanilla(s)
+            and (self._vanilla_defs_loaded or not _is_likely_vanilla(s))
             and not _is_engine_resolved_icon(s)
         )
+        site: Dict[str, Tuple[str, int]] = {}
+        for name, filepath, _tx, line in self._mod_defs:
+            site.setdefault(name, (os.path.relpath(filepath, self.mod_path), line))
 
         refs_ci = casefold_index(all_refs)
         orphans: List[str] = []
@@ -1670,8 +1702,7 @@ class Validator(BaseValidator):
                     (
                         f"Unused GFX sprite '{s}': referenced only as"
                         f" '{ref}' (works on Windows, fails on Linux)",
-                        "",
-                        0,
+                        *site.get(s, ("", 0)),
                     )
                     for s, ref in miscased
                 ],
@@ -1698,7 +1729,10 @@ class Validator(BaseValidator):
             return
 
         issues = [
-            (f"Unused GFX sprite '{s}' (defined but never referenced)", "", 0)
+            (
+                f"Unused GFX sprite '{s}' (defined but never referenced)",
+                *site.get(s, ("", 0)),
+            )
             for s in orphans
         ]
 
@@ -1808,11 +1842,11 @@ class Validator(BaseValidator):
             mod_defined_ci=mod_defined_ci,
         )
 
-        # Localisation £refs are checked for case whether or not --report-unused is
-        # passed: a miscased ref is a broken icon, not backlog. The full defined set
+        # Localisation £refs are checked whether or not --report-unused is passed: a
+        # missing or miscased ref is a broken icon, not backlog. The full defined set
         # (mod + vanilla) is the index — £refs legitimately name vanilla sprites.
         loc_refs = self._collect_loc_refs()
-        self._check_loc_ref_case(loc_refs, defined, casefold_index(defined))
+        self._check_loc_refs(loc_refs, defined, casefold_index(defined))
         self._check_raw_icon_paths()
 
         if not self.report_unused:
