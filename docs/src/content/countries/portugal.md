@@ -58,13 +58,14 @@ leave as rounding errors.
 
 ## The Tree
 
-Five columns, each with its own button at the top of the tree: Ideology (the Ideological
-Question), Economy (the Programme of Government over Regional Development), Armed Forces (the
-Portuguese Sea and the Armed Forces over the Air Force), Lusophone World (the Lusophone Community
-over the Campaigns) and The Powers (the Balance of Powers over the Dream of Iberia). The European Union's shared
-trees sit below the first two columns.
+Seven columns, each with its own button at the top of the tree: Ideology (the Ideological
+Question), Economy (the Programme of Government over Regional Development), The Navy (the
+Portuguese Sea), The Army (the Armed Forces), The Air Force, Lusophone World (the Lusophone
+Community over the Campaigns) and The Powers (the Balance of Powers over the Dream of Iberia).
+The European Union's shared trees sit below the first two columns.
 
-Focus bonuses collect in three national spirits: The Portuguese Economy, The Third Republic and
+No focus waits for money in the treasury: whatever a focus costs beyond what Portugal holds is
+borrowed. Focus bonuses collect in three national spirits: The Portuguese Economy, The Third Republic and
 The Armed Forces. Separate spirits are kept only for the shadow war (The Lusophone Network, The
 Weight of Distance, Overseas Doctrine and Under Investigation) and the Anglo-Portuguese Alliance.
 
@@ -90,6 +91,23 @@ Weight of Distance, Overseas Doctrine and Under Investigation) and the Anglo-Por
   - **International Solidarity**: alignment focuses that open Beijing, Washington, the
     sovereigntist bloc, BRICS or the Lusophone world depending on who is in office, then Europe
     with Us or Proudly Alone.
+- **The regime directions** close the four branches: the Crown follows the Greatest
+  Portuguese, the Executive State the new parties of the right, the Revolution April, Always,
+  and the Open Republic the Tenth of June. Each needs its own parties in government and
+  ideological development above 60, and only one can be taken per game. Each has three core
+  focuses, a choice of specialisations that only add modifiers, and an endgame.
+  - **The Crown** (PPM, CDS-PP, NOS): a monarchy referendum that passes if the monarchists hold
+    more than 20% or stability is above 60%, the Kingdom of Portugal, a crowned republic, an
+    integral monarchy or the Sebastianist dream, and the Lusophone Crown, which makes Portugal
+    the Fifth Portuguese Empire.
+  - **The Executive State** (PDR, PNR, the Army): the constitution suspended and elections
+    ended, which Brussels answers with an Article 7 procedure. The Guardian Council, the Fourth
+    Republic or the Chief Executive's shareholder state, and a permanent executive at the end.
+  - **The Revolution** (CDU, POUS, PCTP, BE): the Alentejo's land reform, Lajes closed and NATO
+    left, popular power, the parish republic or carnation socialism, and a Carnation Bloc of
+    Lusophone comrades.
+  - **The Open Republic** (PSD, PS, Nós, Cidadãos!, MPT): a federalist Lisbon, the European
+    Vanguard or the Atlantic Hub, and a second Treaty of Lisbon.
 - **Armed Forces**, **Portuguese Sea** and **Air Force**: professionalization,
   procurement, and a doctrine school in each service. Almost nothing is mutually exclusive;
   the time and the money make the choice. Each service can buy a research facility for
@@ -105,6 +123,26 @@ Weight of Distance, Overseas Doctrine and Under Investigation) and the Anglo-Por
   civilian ones in regional development compete for Madeira, the Azores and any state Portugal
   gains. None of them is needed; they are for a player with money to spare. A program finished
   before the older technologies in its line are researched spends its uses on those instead.
+
+  Each service also has a late game, built to bring the player back to it between wars:
+  - **Fielding focuses** open once the matching technology is researched: stealth frigates,
+    ocean-going submarines, hypersonic missiles and an unmanned squadron for the Navy; the
+    soldier of the future, the networked division, long-range fires, a robotic brigade and
+    layered air defence for the Army; loyal wingmen, stand-off weapons, a sixth-generation
+    fighter and Space Command for the Air Force. Each costs money and gives research for the
+    next generation of that equipment, three years ahead of time. After 2040 the Navy and the
+    Army can rewrite their doctrine around them.
+  - **Force-size focuses** need forces actually in service: the Atlantic Fleet more than 19
+    ships, the Expeditionary Corps more than 75,000 men in formed units, An Air Force of
+    Hundreds more than 249 aircraft, and the Carrier Air Wing a carrier at sea.
+  - **Overseas focuses** need a subject or territory in a region and train for it. A subject in
+    sub-Saharan Africa opens training missions (better in the heat, and experience for those
+    subjects), the Gulf of Guinea patrol and air bases in Africa. South America opens the jungle
+    warfare school, the South Atlantic station and an air bridge. Asia opens the Far East
+    station and air wing. Moroccan territory opens the Army of Africa, Spanish territory the
+    Peninsular Army, and Gibraltar or the western Mediterranean islands the Mediterranean
+    Squadron. The capstones, Thalassocracy, An Army on Four Continents and Global Reach,
+    need most of a service's regions.
 - **Programme of Government**: the policy tree: financial, industrial and social policy, each
   a set of two-sided forks. Taking a side commits the country to it, and reversing it needs
   the other bloc to win a majority first. The reversal undoes the focuses as well as the
@@ -114,8 +152,9 @@ Weight of Distance, Overseas Doctrine and Under Investigation) and the Anglo-Por
   The wealth tax raises productivity growth and the flat tax lowers it. Retail CBDC
   (40 billion) gives every citizen an account at the central bank: inside the euro it is the
   digital euro, with the escudo back it is Portugal's own. The Sovereign Wealth Fund puts
-  100 billion into international investments. It trades 6% of tax revenue and 10% of
-  political power gain for 3% more return on investment.
+  100 billion into international investments. It trades 6% of tax revenue, 10% of political
+  power gain and a little productivity growth for 3% more return on investment and a lower
+  interest rate.
 - **Regional Development**: seventy-two projects in seven regional columns (Norte, Centro,
   Lisboa, Alentejo, Algarve, Madeira and the Azores), each building in its own region. The
   early ones are the programmes of the 2000s: Leixões, the Douro, Autoeuropa, Sines, Alqueva and
@@ -208,7 +247,8 @@ operatives. The operation itself needs 30% influence, 70% intelligence network s
 infiltrated government and army, a recent false-flag raid there, and 5,000 small arms of any
 model. It starts the civil war with Portuguese politics in the rebel government. The False Flag
 itself does only one thing: it costs the target 5% stability and leaves its regime looking for
-someone to blame, which is the pretext the rising needs for 180 days.
+someone to blame, which is the pretext the rising needs for 180 days. Neither operation appears in a
+country's operation list until Portugal has an intelligence network there.
 
 **The campaigns** are the list of places to use the instruments, eight chains. Each one opens
 with a diplomatic focus that gives influence and opinion, runs through one cooperation focus
@@ -262,7 +302,8 @@ stake in the pre-salt fields, Embraer at Évora (which Brazil can refuse) and ch
 EU-Mercosur, or the Contest for Luanda, rejecting the spelling agreement and the Oi veto, then the
 Treaty of Rio. From there a monarchist government can take a puppet war goal on Brazil and a
 nationalist, fascist or military government can claim Bahia and Pernambuco; democratic and communist
-governments cannot declare war on a government of their own ideology.
+governments cannot declare war on a government of their own ideology. Once Portugal holds Bahia
+and Pernambuco, the Sunrise Invasion takes a puppet war goal on the rest of Brazil.
 The Macanese passports bring two years of arrivals from Macau: more migration, faster research
 and faster productivity growth. A focus that deals with one country improves that country's
 trade relations with Portugal; Gibraltar with Madrid, for example, gives +20 with Spain.
@@ -346,6 +387,92 @@ power). A region that reaches 100 declares independence if it has a nation to br
 the government either lets it go or goes to war to keep it. A region with no such nation falls
 into unrest instead: the union takes the Regional Unrest spirit until its sectarianism drops
 below 100.
+
+After the proclamation, the union chooses what it becomes. Monarchists make it **The United
+Crowns**, a dual monarchy. A democratic government makes it **A Federation of Nations**:
+Galicia, Catalonia, the Basque Country, Andalusia and the Canaries become autonomous states.
+A Communist, socialist or green government dissolves it into **The Confederation of Peoples**,
+with the same five nations independent and in a confederation. Northern Portugal stays with the
+union either way.
+
+## The Overseas Empire
+
+Three Balance of Powers branches continue into the late game of an expansionist run. For a
+walk through one, see the [Portugal expansion guide](/player-tutorials/portugal-expansion-guide/).
+
+**The Southern Crown** follows the Braganza Restoration or the Sunrise Invasion. It opens once
+the monarchy is restored and Portugal either has Brazil as a subject or owns Rio de Janeiro and
+São Paulo. It annexes a Brazilian subject, cores every
+Brazilian state Portugal owns and renames the country the United Kingdom of Portugal, Brazil
+and the Algarves. The court can move to Rio. The Platine Question claims Uruguay and leads to
+war goals on Uruguay, Paraguay, Bolivia's Pando-Beni and then Argentina. Cayenne starts a border
+war from Amapá into French Guiana. A border war is not a declared war, so NATO's mutual defence
+does not trigger. The South American Crown cores the conquests. The Isthmus offers Panama a
+security treaty that makes it an associated state. If Panama refuses, Portugal can take a war
+goal instead. The United States' opinion of Portugal drops either way.
+
+**The Estado da Índia** follows Full Sovereignty over Macau. It opens while Portugal still owns
+Macau and is not democratic. It has war goals for
+Goa, Damão and Diu, Malacca and then Singapore, Solor and Flores (with Timor held) and then the
+Moluccas, and Hong Kong, which China defends. The Macau Window opens decisions that sell visas
+to officials, passports to engineers and a tax haven to Chinese money, or broadcast to China.
+Each one weakens China and adds a grievance. At every third grievance China retaliates with
+six months of trade pressure, unless Portugal hands people back and clears the grievances.
+With three grievances, A Second Opium War claims Guangdong, Fujian, Zhejiang and Shanghai, and
+the Unequal Treaties raise compliance in the ports Portugal takes.
+
+**The Crown of Aragon** follows any of the Gates of Iberia focuses, so the union is already
+proclaimed. The Sardinian Question asks
+Italy to free Sardinia. Italy almost always refuses, which gives Portugal a claim. The Sardinian
+Protectorate then offers a free Sardinia protection as an associated state, or takes a war goal
+on Italy for the island. Northern Catalonia is a border war from Catalonia into the Roussillon.
+The Two Sicilies claims Naples, Sicily and Calabria, and the Knights' Isle after it puppets
+Malta. NATO only defends a member from an attacker outside the alliance, so a declared war on
+Italy brings in the rest of NATO only once Portugal has left it. The focuses warn when that
+applies. Mare Nostrum cores the conquests.
+
+**The League of Crowns.** Once the monarchy is restored, Portugal can fund royalist movements in
+the United Kingdom, France, Italy, Germany, Austria, Greece, Romania, Bulgaria, Serbia, Hungary
+and Czechia. Funding raises the Monarchists' popularity by 2% every four months. A country led by
+a player is asked first and can refuse. When an AI country's Monarchists pass 20% and its
+stability is below 50%, Portugal can back a restoration. It succeeds 35% of the time: the
+Monarchists take power and suspend elections. In France this also opens France's own
+restoration of the kingdom. Otherwise the Monarchists lose popularity and the country holds
+Portugal responsible. Portugal can found the League of Crowns, a defensive alliance whose leader
+alone declares its wars. Portugal has to be in no alliance to found it, so it leaves NATO first.
+It can invite any monarchist-led country in no other alliance, so a NATO member has to leave NATO
+first too. Most AI countries that stop being democratic leave NATO on their own.
+
+## Peace Treaties
+
+When Spain, Italy, France, the United Kingdom, Morocco, Brazil, Argentina, India, China or
+Indonesia capitulates to Portugal, its subject, or a faction Portugal leads, Portugal gets a
+treaty event the next day, after any peace conference. Each option draws the final border. The
+states it names change hands, and anything else of the loser's that Portugal took at the
+conference goes back to it. A loser the conference annexed is released again first.
+
+| Loser     | Treaty              | Choices                                            |
+| --------- | ------------------- | -------------------------------------------------- |
+| Spain     | Peace of Badajoz    | Aljubarrota claims, one crown, free nations, annex |
+| Italy     | Peace of Naples     | Aragonese south, free Sardinia, crown in Rome      |
+| France    | Peace of Perpignan  | Roussillon, Corsica, Guiana; French crown; Guiana  |
+| UK        | Peace of Windsor    | Gibraltar and South Atlantic, end the Union, crown |
+| Morocco   | Treaty of Tangier   | Tangier, protectorate, free Sahara                 |
+| Brazil    | Treaty of Rio       | North-east, Braganza crown, divide the Brazils     |
+| Argentina | Peace of the Plate  | Protectorate, or Mesopotamia and free Patagonia    |
+| India     | Return to Goa       | Goa, Damão and Diu, or also Kerala and Mumbai      |
+| China     | Pearl River Treaty  | Ports, or also free Tibet and East Turkestan       |
+| Indonesia | Spice Islands Peace | Spice route islands, West Timor to Timor           |
+
+The crown options (one crown for Spain, a crown in Rome, a French or British crown, the Braganza
+crown) need the restored monarchy. They make the loser a puppet, and outside Spain they put its
+Monarchists in power with elections suspended.
+
+**Negotiated peace.** A war does not have to end in capitulation. Each week, if Portugal fully
+controls every state an enemy owns that Portugal claims, or holds its capital while it is more
+than 30% of the way to surrender, Portugal can offer terms: those states for peace, or
+protection as a puppet. The enemy, or the player leading it, accepts or fights on. Either side
+turning the offer down stops it for 180 days. Tangier keeps its own white peace.
 
 ## National Spirits
 

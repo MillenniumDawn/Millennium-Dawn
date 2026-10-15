@@ -1,11 +1,11 @@
 shared_focus = {
 	id = IBR_dream_of_iberia
 	icon = iberian_summit
-	x = 127
-	y = 10
+	x = 160
+	y = 12
 	offset = {
-		x = -64
-		y = 6
+		x = -97
+		y = 4
 		trigger = { original_tag = SPR }
 	}
 	cost = 5
@@ -45,6 +45,7 @@ shared_focus = {
 				add_core_of = ROOT
 			}
 		}
+		newline = yes
 		# A European Federation member keeps its EFS branding; EFS_update_flag never runs twice
 		if = {
 			limit = {
@@ -56,13 +57,18 @@ shared_focus = {
 		else = {
 			set_cosmetic_tag = IBR
 		}
+		newline = yes
 		custom_effect_tooltip = IBR_dream_of_iberia_tt
+		newline = yes
 		unlock_decision_category_tooltip = IBR_dream_category
+		newline = yes
 		custom_effect_tooltip = {
 			localization_key = adds_dynamic_modifier_tt
 			MODIFIER = IBR_divided_peninsula
 		}
+		newline = yes
 		set_variable = { IBR_union_growth = 0.25 tooltip = IBR_sectarian_growth_change_tt }
+		newline = yes
 		custom_effect_tooltip = IBR_division_stability_tt
 		hidden_effect = {
 			set_country_flag = is_IBR
@@ -102,10 +108,12 @@ shared_focus = {
 		log = "[GetDateText]: [Root.GetName]: Focus IBR_common_curriculum"
 		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_all_change_tt }
 		custom_effect_tooltip = IBR_common_curriculum_tt
+		newline = yes
 		custom_effect_tooltip = {
 			localization_key = modifies_dynamic_modifier_tt
 			MODIFIER = IBR_divided_peninsula
 		}
+		newline = yes
 		add_to_variable = { IBR_union_growth = -0.2 tooltip = IBR_sectarian_growth_change_tt }
 		hidden_effect = {
 			IBR_change_sectarianism_all = yes
@@ -129,6 +137,7 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus IBR_iberian_broadcasting"
 		add_stability = 0.02
+		newline = yes
 		set_temp_variable = { IBR_sect_change = -5 tooltip = IBR_sectarianism_all_change_tt }
 		hidden_effect = { IBR_change_sectarianism_all = yes }
 		# The nation that was absorbed gets a second cut
@@ -332,6 +341,7 @@ shared_focus = {
 			localization_key = modifies_dynamic_modifier_tt
 			MODIFIER = IBR_divided_peninsula
 		}
+		newline = yes
 		add_to_variable = { IBR_union_growth = -0.5 tooltip = IBR_sectarian_growth_change_tt }
 		hidden_effect = {
 			91 = { IBR_change_sectarianism = yes }
@@ -388,11 +398,13 @@ shared_focus = {
 	completion_reward = {
 		log = "[GetDateText]: [Root.GetName]: Focus IBR_proclaim_the_iberian_union"
 		custom_effect_tooltip = IBR_project_ends_tt
+		newline = yes
 		IBR_end_project = yes
 		if = {
 			limit = { original_tag = POR }
 			hidden_effect = { POR_open_hispanosphere = yes }
 		}
+		newline = yes
 		add_timed_idea = {
 			idea = IBR_national_unity
 			days = 730
@@ -401,4 +413,103 @@ shared_focus = {
 	}
 
 	ai_will_do = { base = 100 }
+}
+
+shared_focus = {
+	id = IBR_united_crowns
+	icon = Generic_Crown_Box
+	x = -2
+	y = 1
+	relative_position_id = IBR_proclaim_the_iberian_union
+	cost = 10
+	prerequisite = { focus = IBR_proclaim_the_iberian_union }
+	mutually_exclusive = { focus = IBR_federation_of_nations }
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_STABILITY }
+
+	available = {
+		NOT = { has_completed_focus = IBR_confederation_of_peoples }
+		custom_trigger_tooltip = {
+			tooltip = IBR_monarchists_govern_tt
+			check_variable = { ruling_party = 23 }
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_united_crowns"
+		add_stability = 0.05
+		add_war_support = 0.05
+		add_political_power = 150
+		newline = yes
+		custom_effect_tooltip = IBR_united_crowns_tt
+	}
+
+	ai_will_do = { base = 10 }
+}
+
+shared_focus = {
+	id = IBR_federation_of_nations
+	icon = BRA_federalism
+	x = 0
+	y = 1
+	relative_position_id = IBR_proclaim_the_iberian_union
+	cost = 10
+	prerequisite = { focus = IBR_proclaim_the_iberian_union }
+	mutually_exclusive = { focus = IBR_united_crowns focus = IBR_confederation_of_peoples }
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_TFV_AUTONOMY }
+
+	available = {
+		has_government = democratic
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_federation_of_nations"
+		custom_effect_tooltip = IBR_federation_tt
+		hidden_effect = {
+			set_temp_variable = { IBR_release_mode = 1 }
+			IBR_release_nations = yes
+		}
+		newline = yes
+		add_stability = 0.10
+		add_political_power = 100
+	}
+
+	ai_will_do = { base = 5 }
+}
+
+shared_focus = {
+	id = IBR_confederation_of_peoples
+	icon = GEO_Socialist_Federalists
+	x = 2
+	y = 1
+	relative_position_id = IBR_proclaim_the_iberian_union
+	cost = 10
+	prerequisite = { focus = IBR_proclaim_the_iberian_union }
+	mutually_exclusive = { focus = IBR_federation_of_nations }
+	search_filters = { FOCUS_FILTER_POLITICAL FOCUS_FILTER_TFV_AUTONOMY }
+
+	available = {
+		NOT = { has_completed_focus = IBR_united_crowns }
+		custom_trigger_tooltip = {
+			tooltip = IBR_left_governs_tt
+			OR = {
+				has_government = communism
+				check_variable = { ruling_party = 17 }
+				check_variable = { ruling_party = 18 }
+				check_variable = { ruling_party = 19 }
+			}
+		}
+	}
+
+	completion_reward = {
+		log = "[GetDateText]: [Root.GetName]: Focus IBR_confederation_of_peoples"
+		custom_effect_tooltip = IBR_confederation_tt
+		hidden_effect = {
+			set_temp_variable = { IBR_release_mode = 2 }
+			IBR_release_nations = yes
+		}
+		newline = yes
+		add_stability = 0.10
+	}
+
+	ai_will_do = { base = 1 }
 }

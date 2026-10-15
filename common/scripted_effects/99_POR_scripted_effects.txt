@@ -2478,6 +2478,36 @@ POR_state_industrial_complex = {
 	}
 }
 
+POR_state_microchip_plant = {
+	add_extra_state_shared_building_slots = 1
+	add_building_construction = {
+		type = microchip_plant
+		level = 1
+		instant_build = yes
+	}
+	CONTROLLER = {
+		if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+			set_temp_variable = { treasury_change = -10.5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
+POR_state_composite_plant = {
+	add_extra_state_shared_building_slots = 1
+	add_building_construction = {
+		type = composite_plant
+		level = 1
+		instant_build = yes
+	}
+	CONTROLLER = {
+		if = { limit = { NOT = { check_variable = { skip_payment = 1 } } }
+			set_temp_variable = { treasury_change = -8.5 }
+			modify_treasury_effect = yes
+		}
+	}
+}
+
 POR_state_two_industrial_complexes = {
 	add_extra_state_shared_building_slots = 2
 	add_building_construction = {
@@ -3316,5 +3346,107 @@ POR_sell_falcons = {
 		}
 		add_opinion_modifier = { target = ROOT modifier = military_deals }
 		clear_variable = POR_falcon_request
+	}
+}
+
+POR_restore_monarchy = {
+	if = {
+		limit = { NOT = { check_variable = { ruling_party = 23 } } }
+		set_temp_variable = { rul_party_temp = 23 }
+		set_temp_variable = { change_leader_temp = 0 }
+		change_ruling_party_effect = yes
+	}
+	set_cosmetic_tag = POR_kingdom
+	set_country_flag = POR_monarchy_restored
+	hidden_effect = {
+		if = {
+			limit = { date < 2010.1.1 }
+			set_country_flag = POR_restored_before_2010
+		}
+	}
+	set_temp_variable = { party_index = 23 }
+	set_temp_variable = { temp_outlook_increase = 0 }
+	set_temp_variable = { party_popularity_increase = 0.10 }
+	change_relative_party_popularity = yes
+	add_stability = 0.05
+}
+
+POR_provoke_china = {
+	add_to_variable = { POR_china_provocations = 1 }
+	custom_effect_tooltip = POR_china_provocation_tt
+	CHI = { add_opinion_modifier = { target = ROOT modifier = POR_macau_window_grievance } }
+	set_temp_variable = { POR_china_cycle = POR_china_provocations }
+	modulo_temp_variable = { POR_china_cycle = 3 }
+	if = {
+		limit = { check_variable = { POR_china_cycle = 0 } }
+		custom_effect_tooltip = POR_china_retaliates_tt
+		hidden_effect = { country_event = { id = portugal.129 days = 7 } }
+	}
+}
+
+# Subject's scope: becomes Portugal's (ROOT's) puppet, coloured if the game rule allows.
+POR_puppet_under_root = {
+	if = {
+		limit = { has_global_flag = GAME_RULE_allow_colored_puppets }
+		ROOT = {
+			set_autonomy = {
+				target = PREV
+				autonomy_state = autonomy_puppet_state_colored
+				end_wars = yes
+			}
+		}
+	}
+	else = {
+		ROOT = {
+			set_autonomy = {
+				target = PREV
+				autonomy_state = autonomy_puppet_state
+				end_wars = yes
+			}
+		}
+	}
+}
+
+# Target's scope: the Monarchists take power and suspend elections.
+POR_crown_takes_power = {
+	set_temp_variable = { rul_party_temp = 23 }
+	set_temp_variable = { change_leader_temp = 0 }
+	set_temp_variable = { disable_elections = 1 }
+	change_ruling_party_effect = yes
+	if = {
+		limit = { original_tag = FRA }
+		set_country_flag = FRA_monarchists_won_coup
+	}
+}
+
+# Weekly: an enemy whose claimed states or capital we hold is offered peace through portugal.151.
+POR_peace_watch = {
+	if = {
+		limit = {
+			has_war = yes
+			NOT = { has_country_flag = POR_peace_talks }
+		}
+		random_enemy_country = {
+			limit = {
+				is_subject = no
+				has_capitulated = no
+				NOT = { has_country_flag = POR_peace_declined }
+				NOT = {
+					AND = {
+						tag = MOR
+						ROOT = { has_country_flag = POR_tangier_goal }
+					}
+				}
+				OR = {
+					POR_peace_claims_held = yes
+					POR_peace_capital_held = yes
+				}
+			}
+			ROOT = {
+				set_variable = { POR_peace_target = PREV.id }
+				set_country_flag = { flag = POR_peace_talks value = 1 days = 30 }
+				country_event = { id = portugal.151 days = 1 }
+			}
+		}
 	}
 }
