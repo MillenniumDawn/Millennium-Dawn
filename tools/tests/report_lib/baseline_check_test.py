@@ -468,7 +468,7 @@ def test_unkeyable_findings_count_as_new(tmp_path):
 
     current = [
         baseline_check.Issue.from_dict(
-            {"severity": "error", "category": "c", "message": "no location"}
+            {"severity": "error", "category": "", "message": "no category"}
         )
     ]
     new_errors, new_warnings = baseline_check._split_new_findings(current, baseline)

@@ -57,8 +57,8 @@ def _split_new_findings(
     """Split current issues into (new errors, new warnings).
 
     Findings classify tags existing are skipped. Findings without a
-    file/line can never match a key and count as new — the alarm direction
-    for the nightly check.
+    category or message can never match a key and count as new, the alarm
+    direction for the nightly check.
     """
     classify(current, previous)
     new_errors: List[Issue] = []
