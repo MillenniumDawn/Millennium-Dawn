@@ -3,6 +3,7 @@
 import json
 from collections import Counter
 
+import pytest
 from report_lib import (
     Severity,
     classify,
@@ -23,14 +24,16 @@ def _issue_dict(severity, file="a.txt", line=1, message="m", category="missing_k
     )
 
 
-def _write_meta(path, toolshash="h"):
-    write_text(path / META_FILENAME, json.dumps({"toolshash": toolshash}))
+def _write_meta(path, toolshash="h", sidecars=("events.json",)):
+    write_text(
+        path / META_FILENAME,
+        json.dumps({"toolshash": toolshash, "sidecars": list(sidecars)}),
+    )
 
 
-def _baseline(path, issues=None, toolshash="h"):
+def _baseline(path, issues=(), toolshash="h"):
     _write_meta(path, toolshash)
-    if issues is not None:
-        _write_sidecar(path, "events", issues)
+    _write_sidecar(path, "events", list(issues))
     baseline = load_baseline(str(path), toolshash)
     assert baseline is not None
     return baseline
@@ -46,8 +49,36 @@ def test_load_baseline_returns_none_on_toolshash_mismatch(tmp_path):
     assert load_baseline(str(tmp_path), "new-hash") is None
 
 
+@pytest.mark.parametrize(
+    ("sidecars", "files"),
+    [
+        pytest.param(None, {}, id="metadata only"),
+        pytest.param([], {}, id="empty sidecar list"),
+        pytest.param(["events.json"], {}, id="listed sidecar missing"),
+        pytest.param(
+            ["events.json"],
+            {"events.json": "[]", "extra.json": "[]"},
+            id="unlisted sidecar",
+        ),
+        pytest.param(["events.json"], {"events.json": "not json"}, id="unparseable"),
+        pytest.param(["events.json"], {"events.json": '{"a": 1}'}, id="not a list"),
+        pytest.param(["events.json"], {"events.json": "[null]"}, id="non-dict entry"),
+    ],
+)
+def test_load_baseline_rejects_an_incomplete_baseline(tmp_path, sidecars, files):
+    # A partial baseline would read every lost finding as NEW on the PR.
+    meta = {"toolshash": "h"}
+    if sidecars is not None:
+        meta["sidecars"] = sidecars
+    write_text(tmp_path / META_FILENAME, json.dumps(meta))
+    for name, content in files.items():
+        write_text(tmp_path / name, content)
+
+    assert load_baseline(str(tmp_path), "h") is None
+
+
 def test_load_baseline_loads_and_dedupes_sidecars(tmp_path):
-    _write_meta(tmp_path)
+    _write_meta(tmp_path, sidecars=("events.json", "localisation.json"))
     dup = _issue_dict("error")
     _write_sidecar(tmp_path, "events", [dup])
     _write_sidecar(tmp_path, "localisation", [dup])
@@ -195,40 +226,10 @@ def test_classify_leaves_unkeyable_issues_untagged(tmp_path):
     assert stats.unclassified == 1
 
 
-def test_load_issues_ignores_non_list_json(tmp_path):
-    (tmp_path / "notes.json").write_text('{"not": "a list"}', encoding="utf-8")
-    assert load_issues(str(tmp_path)) == []
-
-
-def test_load_issues_skips_unparseable_sidecars(tmp_path):
-    (tmp_path / "broken.json").write_text("not json", encoding="utf-8")
-    (tmp_path / "events.json").write_text(
-        json.dumps([_issue_dict("error")]), encoding="utf-8"
-    )
-    issues = load_issues(str(tmp_path))
-    # The broken sidecar is skipped, not fatal: one validator with a
-    # truncated upload must not crash the PR report or the nightly diff.
-    assert len(issues) == 1
-
-
-def test_load_issues_skips_non_dict_entries(tmp_path):
-    (tmp_path / "events.json").write_text(
-        json.dumps(
-            [
-                _issue_dict("error"),
-                None,
-                "garbage",
-                42,
-                _issue_dict("warning", file="b.txt", line=2, message="second"),
-            ]
-        ),
-        encoding="utf-8",
-    )
-    issues = load_issues(str(tmp_path))
-    # Non-dict entries are dropped, not fatal: a malformed sidecar element
-    # must not kill the whole report job via AttributeError.
-    assert [i.file for i in issues] == ["a.txt", "b.txt"]
-    assert [i.severity for i in issues] == ["error", "warning"]
+def test_load_issues_names_the_malformed_sidecar(tmp_path):
+    (tmp_path / "events.json").write_text("not json", encoding="utf-8")
+    with pytest.raises(ValueError, match="events.json"):
+        load_issues(str(tmp_path))
 
 
 def test_from_dict_coerces_non_numeric_line_to_zero(tmp_path):
@@ -258,8 +259,8 @@ def test_load_baseline_returns_none_on_unreadable_meta(tmp_path):
 
 
 def test_classify_with_empty_baseline_marks_everything_new(tmp_path):
-    # An all-clean main run stores only meta (no sidecars): any PR finding
-    # is new by definition.
+    # An all-clean main run stores empty sidecars: any PR finding is new by
+    # definition.
     stats = classify(
         [
             make_issue(file="a.txt", line=1, message="first"),
@@ -309,21 +310,18 @@ def test_write_baseline_copies_sidecars_writes_meta_and_prunes(tmp_path):
     assert not (output / "removed-validator.json").exists()
     meta = json.loads((output / META_FILENAME).read_text(encoding="utf-8"))
     assert meta["toolshash"] == "h"
+    assert meta["sidecars"] == ["events.json"]
 
 
-def test_write_baseline_over_empty_sidecar_dir_prunes_all(tmp_path):
+def test_a_clean_run_round_trips_as_an_empty_baseline(tmp_path):
+    # A clean validator writes an empty sidecar. That complete empty result
+    # loads as the empty findings set, unlike a run with no output.
     current = tmp_path / "current"
-    current.mkdir()
+    _write_sidecar(current, "events", [])
     output = tmp_path / "baseline"
-    output.mkdir()
-    _write_sidecar(output, "events", [_issue_dict("error")])
 
-    # All-clean run: no sidecars at all, so the baseline collapses to the
-    # meta file only — the empty findings set.
     write_baseline(str(current), str(output), {"toolshash": "h"})
 
-    assert not (output / "events.json").exists()
-    assert (output / META_FILENAME).is_file()
     baseline = load_baseline(str(output), "h")
     assert baseline is not None
     assert baseline.keys == Counter()

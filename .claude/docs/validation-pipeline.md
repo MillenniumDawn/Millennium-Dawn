@@ -34,7 +34,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - Most content validators are CI-only. The `mod-tests` batch jobs in
   `.github/workflows/test-suite.yml` are the gate. `tools/validation/validator_batches.py`
   is the single list of what runs, which change groups select each validator, and which
-  run without `--strict`.
+  run without `--strict`. Its `args` are also the flags of the main baseline run, so a
+  PR and main enable the same checks.
 - `git commit` runs only the fast subset: the `md-validate-content` dispatcher
   (`tools/precommit_validate.py`), `validate_defines.py`, and `validate_mesh_textures.py`
   on staged `gfx/models/` or `gfx/entities/` paths. The mesh check never runs in CI.
@@ -102,6 +103,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - The report posts one PR comment: new findings against main's baseline first, then
   findings in touched files. A clean run removes the older comment. Section titles
   derive from artifact directory names, so keep those slugs stable.
+- Every validator writes a sidecar, even when clean, and the baseline meta lists them.
+  A missing, extra, or malformed sidecar makes the baseline unavailable, so the report
+  drops the NEW tags instead of reading lost findings as new. `baseline_check.py`
+  refuses a run with no sidecars or a malformed one.
 
 ## Validation config
 

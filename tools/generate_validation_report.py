@@ -54,7 +54,7 @@ def build_report(
 
     # NEW vs EXISTING classification against the main-side baseline, when
     # one was restored. None keeps rendering exactly as before the baseline
-    # existed (cold cache, validator generation change).
+    # existed (cold cache, validator generation change, incomplete baseline).
     baseline_stats = classify(deduped, baseline) if baseline is not None else None
     if changed_files:
         tag_changed_files(deduped, changed_files)
@@ -122,8 +122,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         help=(
             "Directory holding the main-side validation baseline (restored "
             "cache entry, .validation_baseline). Findings are tagged NEW vs "
-            "EXISTING when it loads; a missing/stale baseline only drops the "
-            "annotation."
+            "EXISTING when it loads; a missing, stale, or incomplete baseline "
+            "only drops the annotation."
         ),
     )
     parser.add_argument(
@@ -164,9 +164,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         validation_scope=args.validation_scope,
     )
 
-    # None on a cold cache or stale toolshash: classification (and the
-    # NEW/EXISTING rendering) is skipped instead of comparing against output
-    # from a different validator generation.
+    # None on a cold cache, stale toolshash, or incomplete baseline:
+    # classification (and the NEW/EXISTING rendering) is skipped instead of
+    # comparing against stale or partial output.
     baseline = (
         load_baseline(args.baseline_dir, args.baseline_toolshash)
         if args.baseline_dir

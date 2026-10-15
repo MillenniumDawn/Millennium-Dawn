@@ -19,7 +19,8 @@ from shared.suite import make_results_tree
 def _write_baseline(base, toolshash, issues):
     base.mkdir(parents=True, exist_ok=True)
     (base / META_FILENAME).write_text(
-        json.dumps({"toolshash": toolshash}), encoding="utf-8"
+        json.dumps({"toolshash": toolshash, "sidecars": ["events.json"]}),
+        encoding="utf-8",
     )
     (base / "events.json").write_text(json.dumps(issues), encoding="utf-8")
 

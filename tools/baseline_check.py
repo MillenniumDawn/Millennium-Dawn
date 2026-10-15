@@ -6,11 +6,14 @@ Run by validator-cache.yml's check-baseline job after
 sidecars of a full main run on disk. Exit codes:
 
   0 — no new errors on main (baseline promoted to tonight's results), or no
-      previous baseline to compare against (a fresh one is established).
+      complete previous baseline to compare against (a fresh one is
+      established).
   1 — new errors on main: the workflow goes red and the previous baseline is
       kept, so the alarm repeats every night until the regression is fixed.
       A validator-code change moves the toolshash, which re-establishes the
-      baseline instead of comparing against stale output.
+      baseline instead of comparing against stale output. Also returned when
+      tonight's results are empty or malformed, so they never become the
+      baseline.
 
 New warnings are reported but never fail the job: warnings are advisory
 everywhere else in the pipeline, so the nightly alarm tracks errors only.
@@ -37,6 +40,7 @@ from report_lib import (  # noqa: E402
     count_keys,
     load_baseline,
     load_issues,
+    sidecar_names,
     write_baseline,
 )
 
@@ -149,14 +153,20 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     )
     args = parser.parse_args(argv)
 
-    # An empty sidecar dir is a legitimate all-clean run: validators only
-    # write a JSON sidecar when they have findings. A missing directory is
-    # a wiring error (the persist step never ran), so that alone fails fast.
+    # Every validator writes a sidecar, even when clean, so a directory with
+    # none is a run that produced nothing, not an all-clean main.
     current_dir = Path(args.current)
     if not current_dir.is_dir():
         print("--current directory does not exist", file=sys.stderr)
         return 1
-    current = load_issues(args.current)
+    if not sidecar_names(args.current):
+        print("--current holds no validator results", file=sys.stderr)
+        return 1
+    try:
+        current = load_issues(args.current)
+    except ValueError as exc:
+        print(exc, file=sys.stderr)
+        return 1
 
     previous = load_baseline(args.previous, args.toolshash or None)
     meta = _build_meta(args)
@@ -164,16 +174,17 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     if previous is None:
         write_baseline(args.current, args.output, meta)
         print(
-            "No previous baseline for this validator generation; established "
-            f"a new baseline from {len(current)} issue(s)."
+            "No usable previous baseline for this validator generation; "
+            f"established a new baseline from {len(current)} issue(s)."
         )
         _write_step_summary(
             _header_lines(args)
             + [
                 f"**Established a new baseline** from {len(current)} issue(s).",
                 "",
-                "No previous baseline existed for the current validator code "
-                "(first run or a validator change moved the toolshash).",
+                "No complete previous baseline existed for the current validator "
+                "code (first run, a validator change moved the toolshash, or the "
+                "stored baseline was incomplete).",
             ]
         )
         return 0
