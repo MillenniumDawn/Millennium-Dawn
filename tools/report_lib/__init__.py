@@ -25,6 +25,7 @@ from .baseline import (
     load_baseline,
     load_changed_files,
     load_issues,
+    sidecar_names,
     tag_changed_files,
     write_baseline,
 )
@@ -63,6 +64,7 @@ __all__ = [
     "load_baseline",
     "load_changed_files",
     "load_issues",
+    "sidecar_names",
     "write_baseline",
     "issue_key",
     "count_keys",

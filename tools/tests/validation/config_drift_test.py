@@ -12,7 +12,14 @@ from change_groups import GROUP_PATTERNS, classify
 from coverage import Coverage
 from precommit_validate import _REGISTRY
 from shared.paths import REPO_ROOT, VALIDATION_DIR
-from shared.suite import run_bash_step, workflow_step, write_under_str
+from shared.suite import (
+    initialize_git_repository,
+    run_bash_step,
+    run_git,
+    substitute_expressions,
+    workflow_step,
+    write_under_str,
+)
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
@@ -151,6 +158,7 @@ def test_test_suite_replaces_old_workflows():
         "content-tests",
         "tools-quality",
         "mod-tests",
+        "baseline-scan",
         "docs-quality",
         "report",
         "gate",
@@ -528,12 +536,17 @@ def test_report_job_posts_comment_and_checks():
     assert "checkout-ref" in checkout["with"]["ref"]
 
 
+# Feeds the NEW/EXISTING comparison only; #5787 rolls it out advisory first.
+ADVISORY_JOBS = {"baseline-scan"}
+
+
 def test_suite_gate_requires_every_validation_job():
     workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
     gate = workflow["jobs"]["gate"]
     assert gate["name"] == "Test suite gate"
     assert gate["if"] == "${{ always() }}"
-    assert set(gate["needs"]) == set(workflow["jobs"]) - {"gate"}
+    assert set(gate["needs"]) == set(workflow["jobs"]) - {"gate"} - ADVISORY_JOBS
+    assert ADVISORY_JOBS <= set(workflow["jobs"]["report"]["needs"])
     failure_step = gate["steps"][0]
     for job in gate["needs"]:
         assert f"needs.{job}.result" in failure_step["if"]
@@ -560,7 +573,16 @@ CONTRACT_FILES = (
     "tools/tests/content/tool_data_drift_test.py",
     "validation_config.json",
     "pyproject.toml",
+    "tools/generate_validation_report.py",
+    "tools/baseline_check.py",
 )
+# What the guard greps for, and where.
+CONTRACT_STRINGS = {
+    "pytest-xdist": "pyproject.toml",
+    "pytest-cov": "pyproject.toml",
+    "--tooling-changed": "tools/generate_validation_report.py",
+    "--observation": "tools/baseline_check.py",
+}
 
 
 def _contract_guard():
@@ -570,17 +592,17 @@ def _contract_guard():
 @pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
 @pytest.mark.parametrize(
     "dropped",
-    [None, *CONTRACT_FILES[:4], "pytest-xdist", "pytest-cov"],
+    [None, *CONTRACT_FILES[:4], *CONTRACT_STRINGS],
 )
 def test_detect_changes_stops_a_head_without_the_ci_contract(tmp_path, dropped):
     for relative in CONTRACT_FILES:
         if relative != dropped:
             body = (REPO_ROOT / relative).read_text(encoding="utf-8")
-            if relative == "pyproject.toml" and dropped:
+            if CONTRACT_STRINGS.get(dropped) == relative:
                 body = "".join(
                     line
                     for line in body.splitlines(keepends=True)
-                    if f'"{dropped}' not in line
+                    if dropped not in line
                 )
             write_under_str(tmp_path, relative, body)
 
@@ -625,6 +647,14 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     )
     assert "--baseline-dir .validation_baseline" in script
     assert '--baseline-toolshash "$TOOLSHASH"' in script
+    # Only the merge base's baseline: the cache prefix and the meta check.
+    outputs = workflow["jobs"]["detect-changes"]["outputs"]
+    assert outputs["baseline-sha"] == "${{ steps.changed.outputs.merge-base }}"
+    derive = workflow_step("detect-changes", "Derive changed files")
+    assert 'echo "merge-base=$merge_base" >> "$GITHUB_OUTPUT"' in derive["run"]
+    assert "needs.detect-changes.outputs.baseline-sha" in report["env"]["BASELINE_SHA"]
+    assert restore["with"]["restore-keys"].strip().endswith("-${{ env.BASELINE_SHA }}-")
+    assert '--baseline-commit "$BASELINE_SHA"' in script
     assert "--changed-files changed-files/changed-files.txt" in script
     assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
     assert (
@@ -836,15 +866,195 @@ def test_validation_config_reaches_every_validator_run():
     assert "has-files" in style["if"]
 
 
-def test_baseline_saves_only_after_clean_diff():
+def test_every_main_commit_gets_a_baseline_and_only_the_alarm_is_gated():
+    # PR reports accept only their base commit's baseline, so every push to
+    # main builds one, and a red alarm must not withhold it.
+    assert "paths" not in _workflow_trigger(VALIDATOR_CACHE_WORKFLOW)["push"]
     config = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
     job = config["jobs"]["build-cache"]
     diff = next(step for step in job["steps"] if step.get("id") == "diff")
     assert "tools/baseline_check.py" in diff["run"]
-    save = next(
-        step for step in job["steps"] if step.get("name") == "Save validation baseline"
-    )
-    assert save["if"] == "steps.diff.outcome == 'success'"
+    assert "--previous .validation_accepted" in diff["run"]
+    assert "--output .validation_accepted" in diff["run"]
+    assert "--observation .validation_baseline" in diff["run"]
+    saves = {
+        step["with"]["path"]: step
+        for step in job["steps"]
+        if "actions/cache/save@" in step.get("uses", "")
+    }
+    observation = saves[".validation_baseline"]["if"]
+    assert "steps.diff" not in observation
+    assert "steps.recorded.outputs.found == 'true'" in observation
+    assert "md-baseline-v1-" in saves[".validation_baseline"]["with"]["key"]
+    assert saves[".validation_accepted"]["if"] == "steps.diff.outcome == 'success'"
+    assert "md-accepted-v1-" in saves[".validation_accepted"]["with"]["key"]
+
+
+def test_base_scan_recomputes_only_a_missing_base_baseline():
+    # Same tooling on both commits, a cold cache, a time budget, and an
+    # artifact the report reads only when main has not saved the baseline.
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    job = workflow["jobs"]["baseline-scan"]
+    assert job["timeout-minutes"] <= 20
+    assert "baseline-sha" in job["env"]["BASELINE_SHA"]
+    lookup = workflow_step("baseline-scan", "Look up the base commit's baseline")
+    assert lookup["with"]["lookup-only"] is True
+    assert lookup["with"]["restore-keys"].strip().endswith("-${{ env.BASELINE_SHA }}-")
+    checkout = workflow_step("baseline-scan", "Checkout base commit content")
+    assert checkout["with"]["ref"] == "${{ env.BASELINE_SHA }}"
+    for step in job["steps"][3:]:
+        assert step["if"] == "steps.lookup.outputs.cache-matched-key == ''", step
+    overlay = workflow_step("baseline-scan", "Give the base content the PR's tooling")
+    for path in ("tools", "resources/documentation", "validation_config.json"):
+        assert f"cp -R {path}" in overlay["run"] or f"cp {path}" in overlay["run"]
+    scan = workflow_step("baseline-scan", "Scan the base commit")
+    assert scan["working-directory"] == "base"
+    assert "run_all_validators.py --no-color --no-cache" in scan["run"]
+    record = workflow_step("baseline-scan", "Record the base commit's baseline")
+    assert '--commit-sha "$BASELINE_SHA"' in record["run"]
+    assert "--previous" not in record["run"]
+    upload = workflow_step("baseline-scan", "Upload base commit baseline")
+    assert not upload["with"]["name"].endswith("results")
+    download = workflow_step("report", "Download base commit baseline")
+    assert download["with"]["name"] == upload["with"]["name"]
+    assert download["with"]["path"] == ".validation_baseline"
+    assert "restore-baseline.outputs.cache-matched-key == ''" in download["if"]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.parametrize(
+    ("path", "changed"),
+    [
+        pytest.param("tools/validation/sub/validate_x.py", "true", id="validator"),
+        pytest.param("resources/documentation/mods.md", "true", id="reference"),
+        pytest.param("tools/validation/README.md", "false", id="validator docs"),
+        pytest.param("common/x.txt", "false", id="content"),
+    ],
+)
+def test_detect_changes_flags_validator_tooling_changes(tmp_path, path, changed):
+    write_under_str(tmp_path, "seed.txt", "seed\n")
+    initialize_git_repository(tmp_path, ".")
+    base = run_git(tmp_path, "rev-parse", "HEAD").stdout.strip()
+    write_under_str(tmp_path, path, "x\n")
+    run_git(tmp_path, "add", "-A")
+    run_git(tmp_path, "commit", "-m", "head")
+    output = tmp_path / "output.txt"
+    step = workflow_step("detect-changes", "Check validator tooling against the base")
+    env = {
+        "MERGE_BASE": base,
+        "HEAD_SHA": run_git(tmp_path, "rev-parse", "HEAD").stdout.strip(),
+        "GITHUB_OUTPUT": str(output),
+    }
+
+    result = run_bash_step(step["run"], tmp_path, env)
+
+    assert result.returncode == 0, result.stderr
+    assert output.read_text(encoding="utf-8") == f"changed={changed}\n"
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    outputs = workflow["jobs"]["detect-changes"]["outputs"]
+    assert outputs["tooling-changed"] == "${{ steps.tooling.outputs.changed }}"
+    assert step["env"]["MERGE_BASE"] == "${{ steps.changed.outputs.merge-base }}"
+    report = workflow_step("report", "Generate and post validation report")
+    assert "args+=(--tooling-changed)" in report["run"]
+
+
+def _stub_commands(tmp_path, **scripts):
+    """A PATH whose named commands run the given sh bodies."""
+    bin_dir = tmp_path / "bin"
+    for name, body in scripts.items():
+        path = write_under_str(bin_dir, name, f"#!/bin/sh\n{body}\n")
+        os.chmod(path, 0o755)
+    return f"{bin_dir}{os.pathsep}{os.environ['PATH']}"
+
+
+_LIVE_PR = '{"head":{"sha":"live","repo":{"full_name":"o/r"}},"base":{"ref":"main"}}'
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.parametrize(
+    ("event", "expected"),
+    [
+        pytest.param(
+            {"EVENT_PR_NUMBER": "5", "EVENT_HEAD_SHA": "event"}, "event", id="re-run"
+        ),
+        pytest.param({"INPUT_PR_NUMBER": "5"}, "live", id="dispatch refresh"),
+    ],
+)
+def test_pull_request_runs_keep_their_event_head(tmp_path, event, expected):
+    output = tmp_path / "output.txt"
+    env = {
+        "PATH": _stub_commands(tmp_path, gh=f"printf '%s' '{_LIVE_PR}'"),
+        "GITHUB_OUTPUT": str(output),
+        "GITHUB_REPOSITORY": "o/r",
+        "GITHUB_SHA": "merge",
+        "EVENT_PR_NUMBER": "",
+        "EVENT_HEAD_REPOSITORY": "o/r",
+        "EVENT_HEAD_SHA": "",
+        "EVENT_BASE_SHA": "base",
+        "INPUT_PR_NUMBER": "",
+        "INPUT_HEAD_SHA": "",
+        "INPUT_BASE_SHA": "",
+        **event,
+    }
+    step = workflow_step("detect-changes", "Resolve validation ref")
+
+    result = run_bash_step(step["run"], tmp_path, env)
+
+    assert result.returncode == 0, result.stderr
+    assert f"head-sha={expected}\n" in output.read_text(encoding="utf-8")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.parametrize(
+    ("gh", "posts"),
+    [
+        pytest.param("echo head", True, id="head unchanged"),
+        pytest.param("echo newer", False, id="head moved"),
+        pytest.param("exit 1", True, id="head unreadable"),
+    ],
+)
+def test_report_never_replaces_a_newer_heads_comment(tmp_path, gh, posts):
+    calls = tmp_path / "calls.txt"
+    path = _stub_commands(tmp_path, gh=gh, python3=f'echo "$@" > "{calls}"')
+    step = workflow_step("report", "Generate and post validation report")
+    script = substitute_expressions(step["run"], {"github.repository": "o/r"})
+    env = {
+        "PATH": path,
+        "PR_NUMBER": "5",
+        "HEAD_SHA": "head",
+        "GITHUB_REPOSITORY": "o/r",
+    }
+
+    result = run_bash_step(script, tmp_path, env)
+
+    assert result.returncode == 0, result.stderr
+    assert ("--post-comment" in calls.read_text(encoding="utf-8")) is posts
+
+
+def test_every_fingerprint_site_hashes_the_same_inputs():
+    # A cache or baseline saved under one fingerprint is read under another,
+    # so every site hashes the validator code, config, and reference data.
+    fingerprints = set()
+    for workflow in (CI_WORKFLOW, VALIDATOR_CACHE_WORKFLOW):
+        source = workflow.read_text(encoding="utf-8")
+        hashes = re.findall(
+            r"hashFiles\('tools/validation/\*\*/\*\.py',[^)]*\)", source
+        )
+        assert hashes
+        fingerprints.update(" ".join(found.split()) for found in hashes)
+    assert len(fingerprints) == 1
+    (fingerprint,) = fingerprints
+    references = ("resources/documentation", ".claude/docs/typo-watchlist.md")
+    assert all(path in fingerprint for path in references)
+    for job, name in (
+        ("report", "Checkout report tooling"),
+        ("tools-quality", "Checkout tools quality tree"),
+        ("baseline-scan", "Checkout PR validator tooling"),
+    ):
+        step = workflow_step(job, name)
+        assert set(references) <= set(step["with"]["sparse-checkout"].split()), job
+    profile = (VALIDATION_DIR / "ci_workspace_profile.txt").read_text(encoding="utf-8")
+    assert {"/resources/documentation/", "/.claude/"} <= set(profile.split())
 
 
 def test_tools_quality_checks_are_wired_in_precommit_and_ci():

@@ -423,6 +423,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   is ERROR.
 - The default run scopes format checks to the tags the branch touched. `--all` sweeps
   everything, `--tag TAG` audits one nation. Missing slots are never reported.
+- Full `run_all_validators.py` runs, including main's baseline, pass `--all`, so a PR's
+  scoped findings in a touched tag match main's results instead of reading NEW.
 
 ## validate_scientist_traits.py
 
