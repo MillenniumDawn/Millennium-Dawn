@@ -1146,6 +1146,19 @@ _COUNT_CASES = {
     ],
     _check_event_log_id: [
         (
+            "option-executed phrasing citing another option flagged",
+            1,
+            [
+                "country_event = {\n",
+                "\tid = brotherhood.6\n",
+                "\toption = {\n",
+                "\t\tname = brotherhood.6.a\n",
+                '\t\tlog = "[GetDateText]: [This.GetName]: brotherhood.6.b option executed"\n',
+                "\t}\n",
+                "}\n",
+            ],
+        ),
+        (
             "bare id + matching Option letter not flagged",
             0,
             [
