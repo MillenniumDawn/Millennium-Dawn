@@ -119,7 +119,9 @@ def checks_called_by_run(validator, monkeypatch):
     checks = sorted(name for name in dir(validator) if name.startswith("validate_"))
     called = []
     for name in checks:
-        monkeypatch.setattr(validator, name, lambda name=name: called.append(name))
+        monkeypatch.setattr(
+            validator, name, lambda *_args, name=name: called.append(name)
+        )
     validator.run_validations()
     return sorted(called), checks
 
