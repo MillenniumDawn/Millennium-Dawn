@@ -46,6 +46,7 @@ from typing import (
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from shared_utils import COUNTRY_TAG_ASSIGNMENT_LINE_RE as _COUNTRY_TAG_DEF_RE
 from shared_utils import (
     PARTY_SLOT_NAMES,
     find_unquoted_block_end,
@@ -84,7 +85,6 @@ _TRIGGER_RE = re.compile(r"trigger\s*=\s*\{")
 _BLOCK_NAME_RE = re.compile(r"name\s*=\s*(\w+)")
 _LONE_ORIGINAL_TAG_RE = re.compile(r"^original_tag\s*=\s*(\w+)$")
 _ORIGINAL_TAG_RE = re.compile(r"original_tag\s*=\s*(\w+)")
-_COUNTRY_TAG_DEF_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
 _ALIAS_DEF_RE = re.compile(r"^\s*([A-Z0-9_]{3})\s*=\s*\{", re.MULTILINE)
 _HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 _DIFF_HEADER_RE = re.compile(r"^diff --git a/(.*) b/(.*)$")
