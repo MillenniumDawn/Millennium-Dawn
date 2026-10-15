@@ -118,7 +118,9 @@ jobs:
           head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
           head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
           base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"
-          if [ -n "$pr_number" ]; then
+          # A pull_request run, re-runs included, keeps its event's pins. Only
+          # a dispatch looks the PR up, which is the explicit refresh.
+          if [ -n "$INPUT_PR_NUMBER" ]; then
             pr_url="repos/$GITHUB_REPOSITORY/pulls/$pr_number"
             pr_json=$(gh api "$pr_url")
             head_repository=$(printf '%s' "$pr_json" \
@@ -1258,7 +1260,15 @@ jobs:
             args+=(--changed-files changed-files/changed-files.txt)
           fi
           if [ -n "$PR_NUMBER" ]; then
-            args+=(--post-comment)
+            # A run for an older head must not replace the newer head's
+            # comment. An unreadable head keeps the old behavior.
+            pr_url="repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER"
+            live_head=$(gh api "$pr_url" --jq '.head.sha' || true)
+            if [ -z "$live_head" ] || [ "$live_head" = "$HEAD_SHA" ]; then
+              args+=(--post-comment)
+            else
+              echo "::notice::PR head moved to $live_head; comment left as is"
+            fi
           fi
           python3 tools/generate_validation_report.py "${args[@]}"
 

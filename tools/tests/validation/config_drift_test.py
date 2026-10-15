@@ -12,7 +12,14 @@ from change_groups import GROUP_PATTERNS, classify
 from coverage import Coverage
 from precommit_validate import _REGISTRY
 from shared.paths import REPO_ROOT, VALIDATION_DIR
-from shared.suite import run_bash_step, workflow_step, write_under_str
+from shared.suite import (
+    initialize_git_repository,
+    run_bash_step,
+    run_git,
+    substitute_expressions,
+    workflow_step,
+    write_under_str,
+)
 from validate_decisions import _DECISION_REFERENCE_SOURCE_PATTERNS
 from validate_ideas import Validator as IdeaValidator
 from validate_oob_units import (
@@ -910,25 +917,17 @@ def test_base_scan_recomputes_only_a_missing_base_baseline():
     ],
 )
 def test_detect_changes_flags_validator_tooling_changes(tmp_path, path, changed):
-    def git(*args):
-        result = run_bash_step(
-            "git -c user.name=t -c user.email=t@example.com " + " ".join(args),
-            tmp_path,
-        )
-        assert result.returncode == 0, result.stderr
-        return result.stdout.strip()
-
-    git("init", "-q")
-    git("commit", "-q", "--allow-empty", "-m", "base")
-    base = git("rev-parse", "HEAD")
+    write_under_str(tmp_path, "seed.txt", "seed\n")
+    initialize_git_repository(tmp_path, ".")
+    base = run_git(tmp_path, "rev-parse", "HEAD").stdout.strip()
     write_under_str(tmp_path, path, "x\n")
-    git("add", "-A")
-    git("commit", "-q", "-m", "head")
+    run_git(tmp_path, "add", "-A")
+    run_git(tmp_path, "commit", "-m", "head")
     output = tmp_path / "output.txt"
     step = workflow_step("detect-changes", "Check validator tooling against the base")
     env = {
         "BASE_SHA": base,
-        "HEAD_SHA": git("rev-parse", "HEAD"),
+        "HEAD_SHA": run_git(tmp_path, "rev-parse", "HEAD").stdout.strip(),
         "GITHUB_OUTPUT": str(output),
     }
 
@@ -941,6 +940,79 @@ def test_detect_changes_flags_validator_tooling_changes(tmp_path, path, changed)
     assert outputs["tooling-changed"] == "${{ steps.tooling.outputs.changed }}"
     report = workflow_step("report", "Generate and post validation report")
     assert "args+=(--tooling-changed)" in report["run"]
+
+
+def _stub_commands(tmp_path, **scripts):
+    """A PATH whose named commands run the given sh bodies."""
+    bin_dir = tmp_path / "bin"
+    for name, body in scripts.items():
+        path = write_under_str(bin_dir, name, f"#!/bin/sh\n{body}\n")
+        os.chmod(path, 0o755)
+    return f"{bin_dir}{os.pathsep}{os.environ['PATH']}"
+
+
+_LIVE_PR = '{"head":{"sha":"live","repo":{"full_name":"o/r"}},"base":{"ref":"main"}}'
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.parametrize(
+    ("event", "expected"),
+    [
+        pytest.param(
+            {"EVENT_PR_NUMBER": "5", "EVENT_HEAD_SHA": "event"}, "event", id="re-run"
+        ),
+        pytest.param({"INPUT_PR_NUMBER": "5"}, "live", id="dispatch refresh"),
+    ],
+)
+def test_pull_request_runs_keep_their_event_head(tmp_path, event, expected):
+    output = tmp_path / "output.txt"
+    env = {
+        "PATH": _stub_commands(tmp_path, gh=f"printf '%s' '{_LIVE_PR}'"),
+        "GITHUB_OUTPUT": str(output),
+        "GITHUB_REPOSITORY": "o/r",
+        "GITHUB_SHA": "merge",
+        "EVENT_PR_NUMBER": "",
+        "EVENT_HEAD_REPOSITORY": "o/r",
+        "EVENT_HEAD_SHA": "",
+        "EVENT_BASE_SHA": "base",
+        "INPUT_PR_NUMBER": "",
+        "INPUT_HEAD_SHA": "",
+        "INPUT_BASE_SHA": "",
+        **event,
+    }
+    step = workflow_step("detect-changes", "Resolve validation ref")
+
+    result = run_bash_step(step["run"], tmp_path, env)
+
+    assert result.returncode == 0, result.stderr
+    assert f"head-sha={expected}\n" in output.read_text(encoding="utf-8")
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.parametrize(
+    ("gh", "posts"),
+    [
+        pytest.param("echo head", True, id="head unchanged"),
+        pytest.param("echo newer", False, id="head moved"),
+        pytest.param("exit 1", True, id="head unreadable"),
+    ],
+)
+def test_report_never_replaces_a_newer_heads_comment(tmp_path, gh, posts):
+    calls = tmp_path / "calls.txt"
+    path = _stub_commands(tmp_path, gh=gh, python3=f'echo "$@" > "{calls}"')
+    step = workflow_step("report", "Generate and post validation report")
+    script = substitute_expressions(step["run"], {"github.repository": "o/r"})
+    env = {
+        "PATH": path,
+        "PR_NUMBER": "5",
+        "HEAD_SHA": "head",
+        "GITHUB_REPOSITORY": "o/r",
+    }
+
+    result = run_bash_step(script, tmp_path, env)
+
+    assert result.returncode == 0, result.stderr
+    assert ("--post-comment" in calls.read_text(encoding="utf-8")) is posts
 
 
 def test_every_fingerprint_site_hashes_the_same_inputs():
