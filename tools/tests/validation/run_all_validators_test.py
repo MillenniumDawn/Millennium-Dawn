@@ -259,10 +259,13 @@ def test_manual_texture_audit_is_not_auto_discovered():
     assert "validate_unused_textures.py" not in scripts
 
 
+@pytest.mark.parametrize("staged", [False, True], ids=["full run", "staged run"])
 def test_suite_passes_each_discovered_validator_its_ci_batch_args(
-    tmp_path, monkeypatch
+    tmp_path, monkeypatch, staged
 ):
-    # This run is the main baseline: a check enabled only on PRs reads NEW.
+    # A full run is the main baseline: a check enabled only on PRs reads NEW,
+    # and a diff-scoped check must cover its whole domain. A staged run must
+    # not widen.
     monkeypatch.setattr(runner, "split_cpu_budget", lambda tasks: (tasks, 1))
     flags = {}
 
@@ -273,11 +276,19 @@ def test_suite_passes_each_discovered_validator_its_ci_batch_args(
 
     monkeypatch.setattr(runner, "launch_validator", launch)
     validators = runner.discover_validators()
+    extra = ["--staged"] if staged else []
 
-    runner._run_suite(_args("text"), [], str(tmp_path), validators, str(tmp_path))
+    runner._run_suite(_args("text"), extra, str(tmp_path), validators, str(tmp_path))
 
     assert {spec.script: flags.get(spec.script) for spec in ALL_SPECS} == {
-        spec.script: [*spec.args, "--workers", "1"] for spec in ALL_SPECS
+        spec.script: [
+            *spec.args,
+            *(() if staged else spec.baseline_args),
+            *extra,
+            "--workers",
+            "1",
+        ]
+        for spec in ALL_SPECS
     }
 
 

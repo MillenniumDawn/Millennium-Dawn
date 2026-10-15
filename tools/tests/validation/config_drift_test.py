@@ -625,6 +625,10 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     )
     assert "--baseline-dir .validation_baseline" in script
     assert '--baseline-toolshash "$TOOLSHASH"' in script
+    # Only the base commit's baseline: the cache prefix and the meta check.
+    assert "needs.detect-changes.outputs.base-sha" in report["env"]["BASE_SHA"]
+    assert restore["with"]["restore-keys"].strip().endswith("-${{ env.BASE_SHA }}-")
+    assert '--baseline-commit "$BASE_SHA"' in script
     assert "--changed-files changed-files/changed-files.txt" in script
     assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
     assert (
@@ -836,15 +840,51 @@ def test_validation_config_reaches_every_validator_run():
     assert "has-files" in style["if"]
 
 
-def test_baseline_saves_only_after_clean_diff():
+def test_every_main_commit_gets_a_baseline_and_only_the_alarm_is_gated():
+    # PR reports accept only their base commit's baseline, so every push to
+    # main builds one, and a red alarm must not withhold it.
+    assert "paths" not in _workflow_trigger(VALIDATOR_CACHE_WORKFLOW)["push"]
     config = yaml.safe_load(VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8"))
     job = config["jobs"]["build-cache"]
     diff = next(step for step in job["steps"] if step.get("id") == "diff")
     assert "tools/baseline_check.py" in diff["run"]
-    save = next(
-        step for step in job["steps"] if step.get("name") == "Save validation baseline"
-    )
-    assert save["if"] == "steps.diff.outcome == 'success'"
+    assert "--previous .validation_accepted" in diff["run"]
+    assert "--output .validation_accepted" in diff["run"]
+    assert "--observation .validation_baseline" in diff["run"]
+    saves = {
+        step["with"]["path"]: step
+        for step in job["steps"]
+        if "actions/cache/save@" in step.get("uses", "")
+    }
+    assert "steps.diff" not in saves[".validation_baseline"]["if"]
+    assert "md-baseline-v1-" in saves[".validation_baseline"]["with"]["key"]
+    assert saves[".validation_accepted"]["if"] == "steps.diff.outcome == 'success'"
+    assert "md-accepted-v1-" in saves[".validation_accepted"]["with"]["key"]
+
+
+def test_every_fingerprint_site_hashes_the_same_inputs():
+    # A cache or baseline saved under one fingerprint is read under another,
+    # so all four sites hash the validator code, config, and reference data.
+    fingerprints = set()
+    for workflow in (CI_WORKFLOW, VALIDATOR_CACHE_WORKFLOW):
+        source = workflow.read_text(encoding="utf-8")
+        hashes = re.findall(
+            r"hashFiles\('tools/validation/\*\*/\*\.py',[^)]*\)", source
+        )
+        assert hashes
+        fingerprints.update(" ".join(found.split()) for found in hashes)
+    assert len(fingerprints) == 1
+    (fingerprint,) = fingerprints
+    references = ("resources/documentation", ".claude/docs/typo-watchlist.md")
+    assert all(path in fingerprint for path in references)
+    for job, name in (
+        ("report", "Checkout report tooling"),
+        ("tools-quality", "Checkout tools quality tree"),
+    ):
+        step = workflow_step(job, name)
+        assert set(references) <= set(step["with"]["sparse-checkout"].split()), job
+    profile = (VALIDATION_DIR / "ci_workspace_profile.txt").read_text(encoding="utf-8")
+    assert {"/resources/documentation/", "/.claude/"} <= set(profile.split())
 
 
 def test_tools_quality_checks_are_wired_in_precommit_and_ci():

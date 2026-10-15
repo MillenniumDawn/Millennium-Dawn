@@ -97,6 +97,16 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   fork PRs; their `pull_request` runs validate them. `nightly-pr-validation.yml`
   re-dispatches same-repository PRs with no successful run on their current head and
   base. `validator-cache.yml` rebuilds main's baseline.
+- `validator-cache.yml` runs on every push to main. It saves each complete run as that
+  commit's baseline (`md-baseline-v1-<os>-<hash>-<sha>-*`), even when the alarm fails.
+  The alarm compares the run with the last accepted one (`md-accepted-v1-*`) and goes
+  red on new errors until they are fixed. Main's run also widens diff-scoped checks to
+  their whole domain through `baseline_args` (party-loc audits every tag).
+- The report restores only its base commit's baseline and checks the commit in the
+  meta. Until main's run for that commit finishes, the comparison is unavailable.
+- The validator hash covers `tools/validation` sources and data, `shared_utils.py`,
+  `validation_config.json`, `resources/documentation/`, and the typo watchlist. All
+  four `hashFiles` sites must match, and each checkout must hold those files.
 - `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
   `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
   `python3 tools/merge_changelog.py --fix` repairs it.
@@ -106,7 +116,7 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - Every validator writes a sidecar, even when clean, and the baseline meta lists them.
   A missing, extra, or malformed sidecar makes the baseline unavailable, so the report
   drops the NEW tags instead of reading lost findings as new. `baseline_check.py`
-  refuses a run with no sidecars or a malformed one.
+  refuses a run with no sidecars or a malformed one, and saves neither baseline.
 
 ## Validation config
 

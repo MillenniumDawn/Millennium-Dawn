@@ -337,7 +337,8 @@ jobs:
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**/*.py',
           'tools/validation/**/*.txt', 'tools/shared_utils.py',
-          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
+          'validation_config.json', 'resources/documentation/**',
+          '.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore shared validator disk cache
         id: valcache
@@ -623,6 +624,8 @@ jobs:
             tools
             pyproject.toml
             validation_config.json
+            resources/documentation
+            .claude/docs/typo-watchlist.md
             package.json
             bun.lock
             .jscpd.json
@@ -687,7 +690,8 @@ jobs:
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**/*.py',
           'tools/validation/**/*.txt', 'tools/shared_utils.py',
-          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
+          'validation_config.json', 'resources/documentation/**',
+          '.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
 
       - name: Create staged integration worktree
         id: staged-worktree
@@ -1014,6 +1018,7 @@ jobs:
       HEAD_SHA: >-
         ${{ needs.detect-changes.outputs.head-sha ||
         github.event.pull_request.head.sha || github.sha }}
+      BASE_SHA: ${{ needs.detect-changes.outputs.base-sha || github.sha }}
       VALIDATION_SCOPE: >-
         ${{ (github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.full_suite == 'true') &&
@@ -1035,6 +1040,8 @@ jobs:
             tools/validation
             tools/shared_utils.py
             validation_config.json
+            resources/documentation
+            .claude/docs/typo-watchlist.md
           sparse-checkout-cone-mode: false
 
       - name: Compute validator code hash
@@ -1042,18 +1049,20 @@ jobs:
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**/*.py',
           'tools/validation/**/*.txt', 'tools/shared_utils.py',
-          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
+          'validation_config.json', 'resources/documentation/**',
+          '.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
 
+      # Only the base commit's own baseline; any other main commit's findings
+      # would read as this PR's.
       - name: Restore validation baseline
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_baseline
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
-            steps.toolshash.outputs.hash }}-${{
-            needs.detect-changes.outputs.base-sha || github.sha }}
+            steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}
           restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
+            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}-
 
       - name: Set up Python
         id: setup-python
@@ -1098,6 +1107,7 @@ jobs:
           args+=(
             --baseline-dir .validation_baseline
             --baseline-toolshash "$TOOLSHASH"
+            --baseline-commit "$BASE_SHA"
           )
           if [ -f changed-files/changed-files.txt ]; then
             args+=(--changed-files changed-files/changed-files.txt)

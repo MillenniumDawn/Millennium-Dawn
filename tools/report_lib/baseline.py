@@ -1,10 +1,10 @@
 """Validation baseline: store main-side findings, classify PR findings.
 
-The nightly `check-baseline` job in validator-cache.yml persists the
-per-validator JSON sidecars of a full main run as the shared baseline. PR
-report jobs restore that entry (keyed on the validator source hash) and use
-the key counts here to tag every finding NEW (not on the latest main run) or
-EXISTING (also present there).
+validator-cache.yml persists the per-validator JSON sidecars of a full run
+of each main commit as that commit's baseline. PR report jobs restore the
+entry for their base commit (keyed on the validator source hash and the
+commit) and use the key counts here to tag every finding NEW (not on that
+main commit) or EXISTING (also present there).
 
 Every validator writes a sidecar, even when clean, so the meta lists the
 sidecars a baseline holds. A missing, extra, or malformed sidecar makes the
@@ -111,7 +111,9 @@ def load_issues(sidecar_dir: str) -> List[Issue]:
 
 
 def load_baseline(
-    baseline_dir: str, expected_toolshash: Optional[str] = None
+    baseline_dir: str,
+    expected_toolshash: Optional[str] = None,
+    expected_commit: Optional[str] = None,
 ) -> Optional[Baseline]:
     """Load the stored baseline, or None when missing, stale, or incomplete.
 
@@ -119,8 +121,8 @@ def load_baseline(
     validator generation; comparing against it would report every finding
     whose output shape moved as NEW, so the caller falls back to rendering
     without baseline annotation (or, nightly-side, establishing a fresh one).
-    An incomplete baseline does the same, since a lost sidecar would also
-    read as NEW findings.
+    A baseline of another main commit, or an incomplete one, does the same,
+    since its differences would also read as NEW findings.
     """
     base = Path(baseline_dir)
     meta_path = base / META_FILENAME
@@ -133,6 +135,8 @@ def load_baseline(
     if not isinstance(meta, dict):
         return None
     if expected_toolshash and meta.get("toolshash") != expected_toolshash:
+        return None
+    if expected_commit and meta.get("commit_sha") != expected_commit:
         return None
     sidecars = meta.get("sidecars")
     if not sidecars or sidecars != sidecar_names(baseline_dir):

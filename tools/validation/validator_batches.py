@@ -1,7 +1,7 @@
 """Shared validator selection for CI batches and impact scans.
 
 `ValidatorSpec.args` are also the flags of the main baseline run, so a PR
-and main enable the same checks.
+and main enable the same checks. `baseline_args` apply to the main run only.
 """
 
 import ast
@@ -25,6 +25,9 @@ class ValidatorSpec:
     strict: bool = True
     args: Tuple[str, ...] = ()
     runner: str = "standard"
+    # Main baseline only: widens a diff-scoped check to its whole domain, so a
+    # PR's scoped findings have full main results to match against.
+    baseline_args: Tuple[str, ...] = ()
 
 
 _CORE_GROUPS = (
@@ -179,6 +182,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "party-loc",
             "validate_party_loc.py",
             ("localisation", "common"),
+            baseline_args=("--all",),
         ),
     ),
 }

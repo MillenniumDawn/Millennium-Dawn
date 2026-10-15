@@ -27,7 +27,9 @@ def _issue_dict(severity, file="a.txt", line=1, message="m", category="missing_k
 def _write_meta(path, toolshash="h", sidecars=("events.json",)):
     write_text(
         path / META_FILENAME,
-        json.dumps({"toolshash": toolshash, "sidecars": list(sidecars)}),
+        json.dumps(
+            {"toolshash": toolshash, "commit_sha": "base", "sidecars": list(sidecars)}
+        ),
     )
 
 
@@ -47,6 +49,15 @@ def test_load_baseline_returns_none_without_meta(tmp_path):
 def test_load_baseline_returns_none_on_toolshash_mismatch(tmp_path):
     _write_meta(tmp_path, "old-hash")
     assert load_baseline(str(tmp_path), "new-hash") is None
+
+
+@pytest.mark.parametrize(("expected", "loads"), [("base", True), ("other", False)])
+def test_load_baseline_accepts_only_the_pinned_commit(tmp_path, expected, loads):
+    # Another main commit's findings would read as the PR's own.
+    _write_meta(tmp_path)
+    _write_sidecar(tmp_path, "events", [])
+    baseline = load_baseline(str(tmp_path), "h", expected)
+    assert (baseline is not None) is loads
 
 
 @pytest.mark.parametrize(

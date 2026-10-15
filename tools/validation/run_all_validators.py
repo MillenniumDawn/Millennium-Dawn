@@ -34,9 +34,16 @@ _AUTO_RUN_EXCLUDED_SCRIPTS = frozenset(
     )
 )
 
-# The CI batch flags, keyed by script: this run is the main baseline PRs compare
-# against, so it must enable the same checks.
-_SPEC_ARGS: Dict[str, Tuple[str, ...]] = {spec.script: spec.args for spec in ALL_SPECS}
+# The CI batch specs, keyed by script: a full run is the main baseline PRs
+# compare against, so it must enable the same checks over their whole domain.
+_SPECS_BY_SCRIPT = {spec.script: spec for spec in ALL_SPECS}
+
+
+def _spec_flags(script: str, staged: bool) -> List[str]:
+    spec = _SPECS_BY_SCRIPT.get(script)
+    if spec is None:
+        return []
+    return [*spec.args, *(() if staged else spec.baseline_args)]
 
 
 def discover_validators() -> List[Tuple[str, str, str]]:
@@ -428,7 +435,7 @@ def _run_suite(args, extra_flags, output_dir, VALIDATORS, mod_path) -> int:
             name, script, _label = pending.pop(0)
             processes[name] = launch_validator(
                 script,
-                [*_SPEC_ARGS.get(script, ()), *child_flags],
+                [*_spec_flags(script, "--staged" in extra_flags), *child_flags],
                 output_dir,
                 name,
                 mod_path,

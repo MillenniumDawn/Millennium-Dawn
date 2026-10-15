@@ -51,6 +51,8 @@ def _summary_with_run_url(tmp_path, monkeypatch, run_url, commit=None):
         str(current),
         "--output",
         str(tmp_path / "baseline"),
+        "--observation",
+        str(tmp_path / "observation"),
         "--toolshash",
         "h",
         "--workflow-run-url",
@@ -81,6 +83,8 @@ def _run(
         str(current),
         "--output",
         str(tmp_path / "baseline"),
+        "--observation",
+        str(tmp_path / "observation"),
         "--toolshash",
         toolshash,
         "--commit-sha",
@@ -132,6 +136,7 @@ def test_incomplete_candidate_fails_without_a_baseline(
     assert code == 1
     assert message in capsys.readouterr().err
     assert not (tmp_path / "baseline").exists()
+    assert not (tmp_path / "observation").exists()
 
 
 def test_establishing_baseline_when_previous_missing(tmp_path, monkeypatch, capsys):
@@ -186,8 +191,13 @@ def test_new_errors_fail_and_keep_old_baseline(tmp_path, monkeypatch, capsys):
     assert code == 1
     assert "1 new error(s)" in capsys.readouterr().err
     assert "- **New warnings:** 1" in summary_path.read_text(encoding="utf-8")
-    # Red night: the old baseline stays; nothing is written to --output.
+    # Red night: the accepted baseline stays; nothing is written to --output.
     assert not (tmp_path / "baseline" / META_FILENAME).exists()
+    # PR reports still get this commit's complete results.
+    observation = load_baseline(str(tmp_path / "observation"), "h")
+    assert observation is not None
+    assert observation.meta["commit_sha"].startswith("abc1234")
+    assert sum(observation.keys.values()) == 4
 
 
 def test_clean_diff_promotes_baseline(tmp_path, monkeypatch, capsys):
