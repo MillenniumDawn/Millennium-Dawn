@@ -96,6 +96,7 @@ jobs:
       full_suite: ${{ steps.groups.outputs.full_suite }}
       head-sha: ${{ steps.resolve-ref.outputs.head-sha }}
       base-sha: ${{ steps.resolve-ref.outputs.base-sha }}
+      baseline-sha: ${{ steps.changed.outputs.merge-base }}
       tooling-changed: ${{ steps.tooling.outputs.changed }}
       checkout-repository: ${{ steps.resolve-ref.outputs.repository }}
       checkout-ref: ${{ steps.resolve-ref.outputs.ref }}
@@ -201,12 +202,16 @@ jobs:
           git fetch --no-tags \
             "https://github.com/${{ github.repository }}.git" "$BASE_SHA"
 
+      # The merge base is also the baseline commit: the PR's content started
+      # there, so main's later fixes are not the PR's findings.
       - name: Derive changed files
+        id: changed
         env:
           BASE_SHA: ${{ steps.resolve-ref.outputs.base-sha }}
           HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
         run: |
           merge_base=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
+          echo "merge-base=$merge_base" >> "$GITHUB_OUTPUT"
           hook_path=common/scripted_localisation/00_MD_politicsview_
           hook_path+=scripted_localisation.txt
           git diff --unified=0 "$merge_base" "$HEAD_SHA" -- \
@@ -222,10 +227,10 @@ jobs:
       - name: Check validator tooling against the base
         id: tooling
         env:
-          BASE_SHA: ${{ steps.resolve-ref.outputs.base-sha }}
+          MERGE_BASE: ${{ steps.changed.outputs.merge-base }}
           HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
         run: |
-          if git diff --quiet --no-renames "$BASE_SHA" "$HEAD_SHA" -- \
+          if git diff --quiet --no-renames "$MERGE_BASE" "$HEAD_SHA" -- \
               ':(glob)tools/validation/**/*.py' ':(glob)tools/validation/**/*.txt' \
               tools/shared_utils.py validation_config.json \
               resources/documentation .claude/docs/typo-watchlist.md; then
@@ -1018,7 +1023,7 @@ jobs:
     # The resource budget for one cold full scan.
     timeout-minutes: 20
     env:
-      BASE_SHA: ${{ needs.detect-changes.outputs.base-sha }}
+      BASELINE_SHA: ${{ needs.detect-changes.outputs.baseline-sha }}
     steps:
       - name: Checkout PR validator tooling
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -1052,15 +1057,15 @@ jobs:
           lookup-only: true
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
-            steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}
           restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}-
+            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
 
       - name: Checkout base commit content
         if: steps.lookup.outputs.cache-matched-key == ''
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ env.BASE_SHA }}
+          ref: ${{ env.BASELINE_SHA }}
           path: base
           fetch-depth: 1
           filter: blob:none
@@ -1106,7 +1111,7 @@ jobs:
             --current "$RUNNER_TEMP/base-candidate" \
             --observation "$RUNNER_TEMP/base-baseline" \
             --toolshash "$TOOLSHASH" \
-            --commit-sha "$BASE_SHA" \
+            --commit-sha "$BASELINE_SHA" \
             --github-repository "$REPOSITORY"
 
       - name: Upload base commit baseline
@@ -1151,7 +1156,8 @@ jobs:
       HEAD_SHA: >-
         ${{ needs.detect-changes.outputs.head-sha ||
         github.event.pull_request.head.sha || github.sha }}
-      BASE_SHA: ${{ needs.detect-changes.outputs.base-sha || github.sha }}
+      BASELINE_SHA: >-
+        ${{ needs.detect-changes.outputs.baseline-sha || github.sha }}
       TOOLING_CHANGED: ${{ needs.detect-changes.outputs.tooling-changed }}
       VALIDATION_SCOPE: >-
         ${{ (github.event_name == 'workflow_dispatch' ||
@@ -1195,9 +1201,9 @@ jobs:
           path: .validation_baseline
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
-            steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}
           restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASE_SHA }}-
+            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
 
       # Main has not saved one yet: use the base scan from this run, if any.
       - name: Download base commit baseline
@@ -1251,7 +1257,7 @@ jobs:
           args+=(
             --baseline-dir .validation_baseline
             --baseline-toolshash "$TOOLSHASH"
-            --baseline-commit "$BASE_SHA"
+            --baseline-commit "$BASELINE_SHA"
           )
           if [ "$TOOLING_CHANGED" = true ]; then
             args+=(--tooling-changed)
