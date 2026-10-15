@@ -122,3 +122,71 @@ def test_cli_without_arguments_prints_usage_and_fails(capsys):
 
     assert exc.value.code == 1
     assert "usage: cleanup_or.py" in capsys.readouterr().err
+
+
+_NESTED = """root = {
+\tOR = {
+\t\tNOT = {
+\t\t\thas_country_flag = FLAG_one
+\t\t}
+\t}
+\tavailable = { OR = { has_government = democratic } }
+\tAND = {
+\t\thas_war = no
+\t\thas_stability > 0.5
+\t}
+\tOR = { has_war = no has_stability > 0.5 }
+\tNOT = { AND = { has_war = no has_stability > 0.5 } }
+}
+"""
+
+_SINGLE_OR = (
+    "redundant OR = { } wrapper around single condition"
+    " -- run tools/cleanup_or.py to fix"
+)
+
+
+def test_single_condition_or_and_redundant_and_are_found_in_nested_context():
+    lines = _NESTED.splitlines(keepends=True)
+    assert C.find_single_condition_or_blocks(lines) == [
+        (2, _SINGLE_OR),
+        (7, _SINGLE_OR),
+    ]
+    assert [line for line, _message in C.find_redundant_and_blocks(lines)] == [8]
+
+
+def test_process_file_simplifies_once_and_keeps_the_rest(tmp_path):
+    source = tmp_path / "conditions.txt"
+    source.write_text(_NESTED, encoding="utf-8")
+
+    assert C.process_file(str(source)) is True
+    once = source.read_text(encoding="utf-8")
+    assert C.process_file(str(source)) is False
+    assert source.read_text(encoding="utf-8") == once
+    assert "available = { has_government = democratic }" in once
+    assert "\thas_war = no\n\thas_stability > 0.5" in once
+    assert "NOT = { AND = { has_war = no has_stability > 0.5 } }" in once
+    assert "OR = { has_war = no has_stability > 0.5 }" in once
+
+
+def test_simplify_keeps_inline_comments_and_a_malformed_tail():
+    lines = [
+        "trigger = { OR = { has_country_flag = x } } # braces }\n",
+        "trigger = { OR = { has_country_flag = x has_war = no } }\n",
+        "OR = {\n",
+        "\thas_war = no\n",
+        "\thas_stability > 0.5\n",
+        "",  # no closer: the malformed tail must not be rewritten
+    ]
+    simplified = C.simplify_or_block(lines)
+    assert "trigger = { has_country_flag = x } # braces }\n" in simplified
+    assert "trigger = { OR = { has_country_flag = x has_war = no } }\n" in simplified
+    assert simplified[-4:] == lines[-4:]
+    assert C.simplify_and_block(simplified) == simplified
+
+
+def test_undecodable_file_is_reported_not_rewritten(tmp_path, capsys):
+    invalid = tmp_path / "invalid.txt"
+    invalid.write_bytes(b"OR = { has_war = no }\n\xff")
+    assert C.process_file(str(invalid)) is False
+    assert "undecodable UTF-8" in capsys.readouterr().err
