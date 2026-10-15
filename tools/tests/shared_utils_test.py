@@ -422,6 +422,8 @@ def test_branch_diff_asks_git_for_the_merge_base_range(tmp_path, monkeypatch):
     _write(tmp_path / "common" / "a.txt", "a")
     _write(tmp_path / "interface" / "b.txt", "b")
     monkeypatch.delenv("MD_STAGED_FILES", raising=False)
+    # A branch diff never reads the staged-file cache.
+    monkeypatch.setattr(U, "_staged_files_cache", ["common/stale.txt"])
     calls = []
     result = SimpleNamespace(stdout="common/a.txt\ninterface/b.txt\n", returncode=0)
     monkeypatch.setattr(
