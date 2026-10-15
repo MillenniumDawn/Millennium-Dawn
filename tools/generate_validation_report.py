@@ -143,6 +143,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--tooling-changed",
+        action="store_true",
+        help=(
+            "The PR's validator code differs from the base's. The report says "
+            "the comparison cannot show what that code does to main's findings."
+        ),
+    )
+    parser.add_argument(
         "--changed-files",
         default=None,
         help=(
@@ -170,6 +178,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         date_utc=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         repo=args.github_repository,
         validation_scope=args.validation_scope,
+        tooling_changed=args.tooling_changed,
     )
 
     # None on a cold cache, stale toolshash, other commit, or incomplete

@@ -862,7 +862,9 @@ def test_every_main_commit_gets_a_baseline_and_only_the_alarm_is_gated():
         for step in job["steps"]
         if "actions/cache/save@" in step.get("uses", "")
     }
-    assert "steps.diff" not in saves[".validation_baseline"]["if"]
+    observation = saves[".validation_baseline"]["if"]
+    assert "steps.diff" not in observation
+    assert "steps.recorded.outputs.found == 'true'" in observation
     assert "md-baseline-v1-" in saves[".validation_baseline"]["with"]["key"]
     assert saves[".validation_accepted"]["if"] == "steps.diff.outcome == 'success'"
     assert "md-accepted-v1-" in saves[".validation_accepted"]["with"]["key"]
@@ -895,6 +897,50 @@ def test_base_scan_recomputes_only_a_missing_base_baseline():
     assert download["with"]["name"] == upload["with"]["name"]
     assert download["with"]["path"] == ".validation_baseline"
     assert "restore-baseline.outputs.cache-matched-key == ''" in download["if"]
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="the step runs in bash on Linux")
+@pytest.mark.parametrize(
+    ("path", "changed"),
+    [
+        pytest.param("tools/validation/sub/validate_x.py", "true", id="validator"),
+        pytest.param("resources/documentation/mods.md", "true", id="reference"),
+        pytest.param("tools/validation/README.md", "false", id="validator docs"),
+        pytest.param("common/x.txt", "false", id="content"),
+    ],
+)
+def test_detect_changes_flags_validator_tooling_changes(tmp_path, path, changed):
+    def git(*args):
+        result = run_bash_step(
+            "git -c user.name=t -c user.email=t@example.com " + " ".join(args),
+            tmp_path,
+        )
+        assert result.returncode == 0, result.stderr
+        return result.stdout.strip()
+
+    git("init", "-q")
+    git("commit", "-q", "--allow-empty", "-m", "base")
+    base = git("rev-parse", "HEAD")
+    write_under_str(tmp_path, path, "x\n")
+    git("add", "-A")
+    git("commit", "-q", "-m", "head")
+    output = tmp_path / "output.txt"
+    step = workflow_step("detect-changes", "Check validator tooling against the base")
+    env = {
+        "BASE_SHA": base,
+        "HEAD_SHA": git("rev-parse", "HEAD"),
+        "GITHUB_OUTPUT": str(output),
+    }
+
+    result = run_bash_step(step["run"], tmp_path, env)
+
+    assert result.returncode == 0, result.stderr
+    assert output.read_text(encoding="utf-8") == f"changed={changed}\n"
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    outputs = workflow["jobs"]["detect-changes"]["outputs"]
+    assert outputs["tooling-changed"] == "${{ steps.tooling.outputs.changed }}"
+    report = workflow_step("report", "Generate and post validation report")
+    assert "args+=(--tooling-changed)" in report["run"]
 
 
 def test_every_fingerprint_site_hashes_the_same_inputs():

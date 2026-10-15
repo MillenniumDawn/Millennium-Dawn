@@ -107,6 +107,8 @@ class ReportContext:
     baseline_commit: Optional[str] = None
     # True when this run scanned the base commit instead of main's own run.
     baseline_scanned_here: bool = False
+    # True when the PR's validator code differs from the base commit's.
+    tooling_changed: bool = False
     # "available" or "unavailable" when --changed-files was passed.
     changed_files_status: Optional[str] = None
     # Impact reports use a separate comment marker and title.

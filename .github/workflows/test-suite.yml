@@ -96,6 +96,7 @@ jobs:
       full_suite: ${{ steps.groups.outputs.full_suite }}
       head-sha: ${{ steps.resolve-ref.outputs.head-sha }}
       base-sha: ${{ steps.resolve-ref.outputs.base-sha }}
+      tooling-changed: ${{ steps.tooling.outputs.changed }}
       checkout-repository: ${{ steps.resolve-ref.outputs.repository }}
       checkout-ref: ${{ steps.resolve-ref.outputs.ref }}
     steps:
@@ -213,6 +214,23 @@ jobs:
             | python3 tools/validation/collect_changed_files.py \
             > changed-files.txt
           wc -l changed-files.txt
+
+      # The comparison scans both commits with this PR's validators, so it
+      # cannot show what changed validator code does to main's findings.
+      - name: Check validator tooling against the base
+        id: tooling
+        env:
+          BASE_SHA: ${{ steps.resolve-ref.outputs.base-sha }}
+          HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
+        run: |
+          if git diff --quiet --no-renames "$BASE_SHA" "$HEAD_SHA" -- \
+              ':(glob)tools/validation/**/*.py' ':(glob)tools/validation/**/*.txt' \
+              tools/shared_utils.py validation_config.json \
+              resources/documentation .claude/docs/typo-watchlist.md; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Compute changed groups
         id: groups
@@ -1132,6 +1150,7 @@ jobs:
         ${{ needs.detect-changes.outputs.head-sha ||
         github.event.pull_request.head.sha || github.sha }}
       BASE_SHA: ${{ needs.detect-changes.outputs.base-sha || github.sha }}
+      TOOLING_CHANGED: ${{ needs.detect-changes.outputs.tooling-changed }}
       VALIDATION_SCOPE: >-
         ${{ (github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.full_suite == 'true') &&
@@ -1232,6 +1251,9 @@ jobs:
             --baseline-toolshash "$TOOLSHASH"
             --baseline-commit "$BASE_SHA"
           )
+          if [ "$TOOLING_CHANGED" = true ]; then
+            args+=(--tooling-changed)
+          fi
           if [ -f changed-files/changed-files.txt ]; then
             args+=(--changed-files changed-files/changed-files.txt)
           fi
