@@ -1,12 +1,31 @@
-"""Unit tests for the shared script walkers in shared_utils."""
+"""Unit tests for the shared script walkers and line helpers in shared_utils."""
 
+import pytest
 from shared_utils import (
+    compute_line_offsets,
+    drop_partial_matches,
     iter_focus_blocks,
     iter_statement_ops,
     iter_statements,
+    line_for_offset,
     line_of,
     read_script,
 )
+
+
+def test_line_offsets_map_back_to_lines():
+    offsets = compute_line_offsets("a\nb\n")
+    assert offsets == [1, 3]
+    assert line_for_offset(offsets, 1) == 1
+
+
+@pytest.mark.parametrize(
+    "names, fragments, expected",
+    [({"abc": 1, "x": 2}, ("b",), ["x"]), (["abc", "x"], (), ["abc", "x"])],
+    ids=["drops a match", "no fragments"],
+)
+def test_drop_partial_matches(names, fragments, expected):
+    assert drop_partial_matches(names, fragments) == expected
 
 
 def _focus(body):
