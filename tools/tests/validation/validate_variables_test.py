@@ -802,6 +802,11 @@ def test_clamp_ranges_from_several_files_widen_before_comparison(
             id="a literal both patterns match reports once",
         ),
         pytest.param(
+            "set_variable = { var = 0.123456 add = 0.999999 }\n",
+            2,
+            id="two distinct literals report twice",
+        ),
+        pytest.param(
             "set_variable = { my_var = 0.12345 }\n", 0, id="five decimals are fine"
         ),
     ],

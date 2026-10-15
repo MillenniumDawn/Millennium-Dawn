@@ -431,6 +431,12 @@ def test_bare_available_findings_name_the_problem(tmp_path):
             id="long_form_without_tooltip",
         ),
         pytest.param(
+            "\t\tcheck_variable = { tooltip = my_tt var = a value = 5 compare = less_than }\n"
+            "\t\tcheck_variable = { b > 2 }\n",
+            [4],
+            id="inline_tooltip_does_not_mask_the_next_check",
+        ),
+        pytest.param(
             "\t\tNOT = { OR = { check_variable = { a > 1 } check_variable = { b > 2 } } }\n",
             [3, 3],
             id="nested_in_boolean",

@@ -226,6 +226,7 @@ _BELOW = "CREATE UNIT: equipment/manpower factor below 0.01"
         ("start_equipment_factor = +0", _ZERO),
         ("start_equipment_factor = 1.0 start_manpower_factor = 0.", _ZERO),
         ("start_equipment_factor = 1.0 start_manpower_factor = .0", _ZERO),
+        ("start_equipment_factor = 0.005", _BELOW),
         ("start_equipment_factor = -0.5", _BELOW),
         ("start_equipment_factor = 1.0 start_manpower_factor = -0.5", _BELOW),
         ("start_equipment_factor = 0.01", None),
