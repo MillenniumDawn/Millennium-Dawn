@@ -6,6 +6,10 @@ report jobs restore that entry (keyed on the validator source hash) and use
 the key counts here to tag every finding NEW (not on the latest main run) or
 EXISTING (also present there).
 
+Every validator writes a sidecar, even when clean, so the meta lists the
+sidecars a baseline holds. A missing, extra, or malformed sidecar makes the
+whole baseline unavailable rather than quietly smaller.
+
 Fingerprint: (severity, category, file, message) with line references in
 the message (`file.txt:123`, `line 123`) masked, counted after the same
 cross-validator dedupe runs on both sides. Leaving lines out keeps an
@@ -26,7 +30,7 @@ import shutil
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
 
 from .dedupe import dedupe
 from .models import Issue, Severity
@@ -43,7 +47,7 @@ _LINE_REF = re.compile(r"(\.\w+:|\bline )\d+")
 class Baseline:
     """A loaded baseline: its meta plus the deduped key counts."""
 
-    meta: Dict[str, str]
+    meta: Dict[str, Any]
     keys: Counter[BaselineKey]
 
 
@@ -77,40 +81,46 @@ def count_keys(issues: Iterable[Issue]) -> Counter[BaselineKey]:
     return Counter(key for key in map(issue_key, issues) if key is not None)
 
 
+def sidecar_names(sidecar_dir: str) -> List[str]:
+    """File names of the validator sidecars in a dir, meta excluded."""
+    return sorted(
+        path.name
+        for path in Path(sidecar_dir).glob("*.json")
+        if path.name != META_FILENAME
+    )
+
+
 def load_issues(sidecar_dir: str) -> List[Issue]:
     """Load and cross-validator dedupe every `<slug>.json` sidecar in a dir.
 
     The dir layout is the one `run_all_validators.py --persist-results`
-    produces: one flat JSON list of issue dicts per validator. A validator
-    that passed clean writes no sidecar at all, which is exactly the empty
-    findings set the baseline wants.
+    produces: one flat JSON list of issue dicts per validator. Raises
+    ValueError on a sidecar that is unreadable or not a list of dicts.
     """
     issues: List[Issue] = []
-    base = Path(sidecar_dir)
-    for path in sorted(base.glob("*.json")):
-        if path.name == META_FILENAME:
-            continue
+    for name in sidecar_names(sidecar_dir):
+        path = Path(sidecar_dir) / name
         try:
             data = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            continue
-        if not isinstance(data, list):
-            continue
-        issues.extend(
-            Issue.from_dict(d, validator=path.stem) for d in data if isinstance(d, dict)
-        )
+        except (OSError, ValueError) as exc:
+            raise ValueError(f"Malformed validator sidecar: {path}") from exc
+        if not isinstance(data, list) or not all(isinstance(d, dict) for d in data):
+            raise ValueError(f"Malformed validator sidecar: {path}")
+        issues.extend(Issue.from_dict(d, validator=path.stem) for d in data)
     return dedupe(issues)
 
 
 def load_baseline(
     baseline_dir: str, expected_toolshash: Optional[str] = None
 ) -> Optional[Baseline]:
-    """Load the stored baseline, or None when missing or stale.
+    """Load the stored baseline, or None when missing, stale, or incomplete.
 
     A toolshash mismatch means the baseline was produced by a different
     validator generation; comparing against it would report every finding
     whose output shape moved as NEW, so the caller falls back to rendering
     without baseline annotation (or, nightly-side, establishing a fresh one).
+    An incomplete baseline does the same, since a lost sidecar would also
+    read as NEW findings.
     """
     base = Path(baseline_dir)
     meta_path = base / META_FILENAME
@@ -124,8 +134,14 @@ def load_baseline(
         return None
     if expected_toolshash and meta.get("toolshash") != expected_toolshash:
         return None
-
-    return Baseline(meta=meta, keys=count_keys(load_issues(baseline_dir)))
+    sidecars = meta.get("sidecars")
+    if not sidecars or sidecars != sidecar_names(baseline_dir):
+        return None
+    try:
+        issues = load_issues(baseline_dir)
+    except ValueError:
+        return None
+    return Baseline(meta=meta, keys=count_keys(issues))
 
 
 def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
@@ -168,26 +184,27 @@ def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
     return stats
 
 
-def write_baseline(sidecar_dir: str, baseline_dir: str, meta: Dict[str, str]) -> None:
+def write_baseline(sidecar_dir: str, baseline_dir: str, meta: Dict[str, Any]) -> None:
     """Persist a baseline: one JSON per validator sidecar plus a meta file.
 
     Stale validator files (removed from the suite since the previous save)
     are dropped so the baseline can never keep reporting issues for a
     validator that no longer runs. All-json deletion is bounded to
-    `baseline_dir` and skips the meta file.
+    `baseline_dir` and skips the meta file. The meta records the sidecar
+    names so load_baseline can tell a complete baseline from a partial one.
     """
     source = Path(sidecar_dir)
     target = Path(baseline_dir)
     target.mkdir(parents=True, exist_ok=True)
 
-    sidecars = sorted(p for p in source.glob("*.json") if p.is_file())
-    keep = {p.name for p in sidecars} | {META_FILENAME}
+    sidecars = sidecar_names(sidecar_dir)
+    keep = set(sidecars) | {META_FILENAME}
     for stale in sorted(p for p in target.glob("*.json") if p.name not in keep):
         stale.unlink()
-    for path in sidecars:
-        shutil.copyfile(path, target / path.name)
+    for name in sidecars:
+        shutil.copyfile(source / name, target / name)
     with open(target / META_FILENAME, "w", encoding="utf-8", newline="") as fh:
-        fh.write(json.dumps(meta, indent=2, sort_keys=True))
+        fh.write(json.dumps({**meta, "sidecars": sidecars}, indent=2, sort_keys=True))
 
 
 def load_changed_files(path: str) -> Set[str]:

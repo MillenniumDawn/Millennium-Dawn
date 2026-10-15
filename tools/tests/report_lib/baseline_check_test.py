@@ -18,16 +18,19 @@ from shared.suite import write_text
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
 
-def _write_meta(base, toolshash="h"):
-    base.mkdir(parents=True, exist_ok=True)
-    write_text(base / META_FILENAME, json.dumps({"toolshash": toolshash}))
+def _previous(tmp_path, sidecars=None, toolshash="h"):
+    """A stored baseline: meta plus one sidecar per slug (default: clean events)."""
+    previous = tmp_path / "prev"
+    sidecars = {"events": []} if sidecars is None else sidecars
+    for slug, issues in sidecars.items():
+        _write_sidecar(previous, slug, issues)
+    meta = {"toolshash": toolshash, "sidecars": sorted(f"{s}.json" for s in sidecars)}
+    write_text(previous / META_FILENAME, json.dumps(meta))
+    return previous
 
 
 def _previous_with_one_old_error(tmp_path):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
-    _write_sidecar(previous, "events", [_issue_dict("error", message="old")])
-    return previous
+    return _previous(tmp_path, {"events": [_issue_dict("error", message="old")]})
 
 
 def _identical_previous_and_current(tmp_path):
@@ -101,29 +104,34 @@ def test_standalone_help_bootstraps_shared_report_imports():
     assert "Diff a main-side validation run" in result.stdout
 
 
-def test_empty_candidate_establishes_clean_baseline(tmp_path, monkeypatch, capsys):
+@pytest.mark.parametrize(
+    ("files", "message"),
+    [
+        pytest.param(None, "--current directory does not exist", id="missing"),
+        pytest.param({}, "--current holds no validator results", id="empty"),
+        pytest.param(
+            {"events.json": "not json"}, "Malformed validator sidecar", id="malformed"
+        ),
+    ],
+)
+def test_incomplete_candidate_fails_without_a_baseline(
+    tmp_path, monkeypatch, capsys, files, message
+):
+    # Every validator writes a sidecar, so none or a broken one is a failed
+    # run, never an all-clean main.
     current = tmp_path / "current"
-    current.mkdir()
+    if files is not None:
+        current.mkdir()
+        for name, content in files.items():
+            write_text(current / name, content)
 
     code = _run(
         tmp_path, tmp_path / "no-such-baseline", current, monkeypatch=monkeypatch
     )
 
-    assert code == 0
-    assert (tmp_path / "baseline" / META_FILENAME).is_file()
-    assert "0 issue(s)" in capsys.readouterr().out
-
-
-def test_missing_candidate_directory_fails(tmp_path, monkeypatch, capsys):
-    code = _run(
-        tmp_path,
-        tmp_path / "no-such-baseline",
-        tmp_path / "missing",
-        monkeypatch=monkeypatch,
-    )
-
     assert code == 1
-    assert "--current directory does not exist" in capsys.readouterr().err
+    assert message in capsys.readouterr().err
+    assert not (tmp_path / "baseline").exists()
 
 
 def test_establishing_baseline_when_previous_missing(tmp_path, monkeypatch, capsys):
@@ -147,11 +155,12 @@ def test_establishing_baseline_when_previous_missing(tmp_path, monkeypatch, caps
 
 
 def test_new_errors_fail_and_keep_old_baseline(tmp_path, monkeypatch, capsys):
-    previous = _previous_with_one_old_error(tmp_path)
-    _write_sidecar(
-        previous,
-        "events-warnings",
-        [_issue_dict("warning", message="known warning")],
+    previous = _previous(
+        tmp_path,
+        {
+            "events": [_issue_dict("error", message="old")],
+            "events-warnings": [_issue_dict("warning", message="known warning")],
+        },
     )
     current = tmp_path / "current"
     _write_sidecar(
@@ -192,30 +201,28 @@ def test_clean_diff_promotes_baseline(tmp_path, monkeypatch, capsys):
 
 
 def test_all_clean_night_promotes_empty_baseline(tmp_path, monkeypatch, capsys):
-    # A fully clean suite writes no sidecars at all. That is the empty
-    # findings set, not a crash: the previous baseline (with findings)
-    # collapses to meta-only and the fixed counts are reported.
-    previous = tmp_path / "prev"
-    _write_meta(previous)
-    _write_sidecar(previous, "events", [_issue_dict("error", message="old")])
+    # A fully clean suite writes one empty sidecar per validator. That is the
+    # empty findings set: the previous baseline's findings are reported fixed.
+    previous = _previous_with_one_old_error(tmp_path)
     current = tmp_path / "current"
-    current.mkdir()
+    _write_sidecar(current, "events", [])
 
     code = _run(tmp_path, previous, current, monkeypatch=monkeypatch)
 
     assert code == 0
     assert (tmp_path / "baseline" / META_FILENAME).is_file()
-    assert not (tmp_path / "baseline" / "events.json").exists()
     assert "1 error(s), 0 warning(s) fixed" in capsys.readouterr().out
 
 
 def test_fixed_errors_still_promote(tmp_path, monkeypatch, capsys):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
-    _write_sidecar(
-        previous,
-        "events",
-        [_issue_dict("error", message="old"), _issue_dict("error", message="fixed")],
+    previous = _previous(
+        tmp_path,
+        {
+            "events": [
+                _issue_dict("error", message="old"),
+                _issue_dict("error", message="fixed"),
+            ]
+        },
     )
     current = tmp_path / "current"
     _write_sidecar(current, "events", [_issue_dict("error", message="old")])
@@ -228,8 +235,7 @@ def test_fixed_errors_still_promote(tmp_path, monkeypatch, capsys):
 
 
 def test_red_night_step_summary_reports_new_errors(tmp_path, monkeypatch):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
+    previous = _previous(tmp_path)
     current = tmp_path / "current"
     _write_sidecar(
         current,
@@ -298,8 +304,7 @@ def test_step_summary_includes_the_workflow_run_url(tmp_path, monkeypatch):
 def test_step_summary_caps_new_issue_lists(
     tmp_path, monkeypatch, severity, filename, message, exit_code, marker
 ):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
+    previous = _previous(tmp_path)
     current = tmp_path / "current"
     issues = [
         _issue_dict(severity, file=filename, line=n, message=f"{message} {n}")
@@ -335,8 +340,7 @@ def test_issue_line_renders_fallback_locations():
 
 
 def test_new_warnings_do_not_fail(tmp_path, monkeypatch, capsys):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
+    previous = _previous(tmp_path)
     current = tmp_path / "current"
     _write_sidecar(current, "events", [_issue_dict("warning", message="new warn")])
 
@@ -348,8 +352,7 @@ def test_new_warnings_do_not_fail(tmp_path, monkeypatch, capsys):
 
 
 def test_toolshash_mismatch_reestablishes(tmp_path, monkeypatch, capsys):
-    previous = tmp_path / "prev"
-    _write_meta(previous, toolshash="old-generation")
+    previous = _previous(tmp_path, toolshash="old-generation")
     current = tmp_path / "current"
     _write_sidecar(current, "events", [_issue_dict("error", message="old")])
 
@@ -368,9 +371,7 @@ def test_missing_current_dir_fails(tmp_path, monkeypatch, capsys):
 
 
 def test_split_new_findings(tmp_path):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
-    _write_sidecar(previous, "events", [_issue_dict("error", message="old")])
+    previous = _previous_with_one_old_error(tmp_path)
     baseline = load_baseline(str(previous), "h")
     assert baseline is not None
 
@@ -385,15 +386,14 @@ def test_split_new_findings(tmp_path):
 
 
 def test_split_new_findings_counts_duplicate_instances(tmp_path):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
-    _write_sidecar(
-        previous,
-        "events",
-        [
-            _issue_dict("error", line=5, message="dup"),
-            _issue_dict("error", line=9, message="dup"),
-        ],
+    previous = _previous(
+        tmp_path,
+        {
+            "events": [
+                _issue_dict("error", line=5, message="dup"),
+                _issue_dict("error", line=9, message="dup"),
+            ]
+        },
     )
     baseline = load_baseline(str(previous), "h")
     assert baseline is not None
@@ -411,9 +411,7 @@ def test_split_new_findings_counts_duplicate_instances(tmp_path):
 
 
 def test_unkeyable_findings_count_as_new(tmp_path):
-    previous = tmp_path / "prev"
-    _write_meta(previous)
-    baseline = load_baseline(str(previous), "h")
+    baseline = load_baseline(str(_previous(tmp_path)), "h")
     assert baseline is not None
 
     current = [
