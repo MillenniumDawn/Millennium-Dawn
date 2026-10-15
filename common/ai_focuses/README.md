@@ -116,6 +116,20 @@ both on these scales so neither swamps the other.
 - `is_populous_developing_country` (over 100 million people, GDP per capita under 20) cuts AI and electrification techs to x0.25 for five years after their start
   year. Surplus labor makes worker savings and extra population energy use a
   poor trade early.
+- Peacetime profiles favor computing and internet access separately from the broader
+  information-technology category. Encryption and decryption keep a smaller weight.
+  Robotics also has a peacetime weight; its first two factory-output steps get x2
+  below 1% unemployment once population data is initialized.
+- The first three artificial-intelligence techs get x3 while `ai_is_threatened` is
+  false. Their research-speed gains help safe countries compound early progress;
+  war, hostile countries, or high world tension remove that bonus.
+- An energy deficit doubles energy-efficiency weights and cuts electrification to
+  x0.25, since electrification increases population electricity use. Neither change
+  bypasses date gates. Construction catch-up and stacked excavation weights stay
+  at or below 20.
+- Agriculture keeps its farm-count and agricultural-GDP bonuses. Its labor-shortage
+  bonus uses unemployment below 1% with existing farms and initialized population,
+  not the country's military manpower pool.
 - `ai_research_weights = { CAT_x = N }` on an entry tech (first reactor, first
   microchip plant, rail terminals, helicopter operations) pulls the AI toward the
   rest of that line. The keys are tech categories, not resources.

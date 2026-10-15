@@ -47,6 +47,9 @@ from shared_utils import (
 T = TypeVar("T")
 
 _ANSI_RE = re.compile(r"\033\[[0-9;]+m")
+BANKRUPTCY_GUARD_RE = re.compile(
+    r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
+)
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
@@ -379,6 +382,11 @@ def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, 
         blocks.append((match.group(1), match.start(), match.end(), close))
         i = close + 1
     return blocks
+
+
+# Literal zero AI weights. The lookahead keeps `0.5` from reading as zero.
+FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
+BASE_ZERO_RE = re.compile(r"\bbase\s*=\s*0(?:\.0+)?(?![\d.])")
 
 
 def casefold_index(names) -> dict:
@@ -1020,14 +1028,20 @@ class BaseValidator:
         """Lazily create the shared worker pool on first parallel use.
 
         Tiny staged commits never reach a parallel code path, so the Pool is
-        never spawned and they don't pay the fork+teardown cost. Created once,
-        memoized, and torn down by run_all_validations().
+        never spawned and they don't pay the fork+teardown cost. Memoized, and
+        torn down by _close_pool().
         """
         if self.workers <= 1:
             return None
         if self._pool is None:
             self._pool = Pool(processes=self.workers)
         return self._pool
+
+    def _close_pool(self) -> None:
+        if self._pool is not None:
+            self._pool.terminate()
+            self._pool.join()
+            self._pool = None
 
     def _pool_map(self, func: Callable, args_list: List, chunksize: int = 50) -> List:
         # Falls back to sequential when workers == 1 or the batch is small, so
@@ -1064,6 +1078,8 @@ class BaseValidator:
         if self.workers == 1 or len(items) < 10:
             initializer(*initargs)
             return [func(it) for it in items]
+        # A live shared pool runs helper threads, and forking beside them can deadlock.
+        self._close_pool()
         with Pool(
             processes=self.workers, initializer=initializer, initargs=initargs
         ) as pool:
@@ -1227,10 +1243,7 @@ class BaseValidator:
             self.run_validations()
         finally:
             self._finish_sections()
-            if self._pool is not None:
-                self._pool.terminate()
-                self._pool.join()
-                self._pool = None
+            self._close_pool()
 
         self._render_issues()
 
