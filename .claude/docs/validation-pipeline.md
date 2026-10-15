@@ -92,9 +92,10 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
   integration, and `validate_tools.py`. Coverage runs on Linux only.
 - `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips
-  diff-scoped style sections. `nightly-pr-validation.yml` re-dispatches PRs with no
-  successful run on their current head and base. `validator-cache.yml` rebuilds main's
-  baseline.
+  diff-scoped style sections. It runs with main's token and cache scope, so it refuses
+  fork PRs; their `pull_request` runs validate them. `nightly-pr-validation.yml`
+  re-dispatches same-repository PRs with no successful run on their current head and
+  base. `validator-cache.yml` rebuilds main's baseline.
 - `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
   `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
   `python3 tools/merge_changelog.py --fix` repairs it.

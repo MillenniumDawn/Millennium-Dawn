@@ -140,6 +140,13 @@ jobs:
             echo "::error::Unable to resolve the PR head repository and SHA"
             exit 1
           fi
+          # A dispatch runs with main's token and cache scope.
+          if [ -n "$INPUT_PR_NUMBER" ] &&
+              [ "$head_repository" != "$GITHUB_REPOSITORY" ]; then
+            echo "::error::Dispatch validates same-repository PRs only." \
+              "Fork PRs validate in their pull_request runs."
+            exit 1
+          fi
           {
             echo "repository=$head_repository"
             echo "ref=$head_sha"
