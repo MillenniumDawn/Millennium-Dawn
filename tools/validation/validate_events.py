@@ -19,6 +19,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "linting"))
 import disk_cache
 from check_common_mistakes import _iter_event_log_mismatches
 from image_size import read_image_size
+from shared_utils import MODIFIER_OPEN_RE as _AI_CHANCE_MODIFIER_RE
+from shared_utils import OPTION_OPEN_RE as _OPTION_OPEN_RE
+from shared_utils import TRIGGER_OPEN_RE as _TRIGGER_OPEN_RE
 from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
@@ -30,6 +33,7 @@ from shared_utils import (
     validation_config,
 )
 from sprite_index import build_sprite_index, build_sprite_texture_index
+from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -549,7 +553,6 @@ def _scan_dynamic_namespaces_text(cleaned: str) -> Set[str]:
 _DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
 # Any bound is redundant on an event the yearly effects already schedule.
 _DATE_BOUND_RE = re.compile(r"\bdate\s*[<>]=?\s*\d{4}\.\d{1,2}\.\d{1,2}")
-_TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
 
 
 def _event_trigger_body(body: str) -> Optional[str]:
@@ -918,7 +921,6 @@ def _scan_shared_call_site_file(args) -> Tuple:
 _ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
 _RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
 _RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
-_OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 
 # Statements an option can carry that change no game state. `trigger` gates the
 # option's visibility and `ai_chance` weights the AI's pick; neither runs an effect.
@@ -938,7 +940,6 @@ _OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
 _OPTION_STATEMENT_RE = re.compile(r'([A-Za-z_]\w*|\d+|"[^"]*")\s*=')
 _OPTION_TOKEN_RE = re.compile(r"[{}]|" + _OPTION_STATEMENT_RE.pattern)
 _BRACE_RE = re.compile(r"[{}]")
-_OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
 
 # Event-level (depth-1) title/desc fields — option-level name fields are
 # nested deeper and are not matched.
@@ -1037,11 +1038,7 @@ _VARIABLE_EFFECTS = frozenset(
 )
 _BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
 _OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
-_AI_CHANCE_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
 _AI_WEIGHT_LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
-_BANKRUPTCY_GUARD_RE = re.compile(
-    r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
-)
 _FINANCIAL_GUARD_RE = re.compile(
     _BANKRUPTCY_GUARD_RE.pattern + r"|\bai_has_high_deficit\s*=\s*(?:yes|no)\b"
     r"|\bcheck_variable\s*=\s*\{\s*(?:var\s*=\s*)?(?:ROOT\.|THIS\.)?"
@@ -1345,6 +1342,19 @@ def uncovered_costs(
     )
 
 
+def _receiver_tag(trigger: str) -> Optional[str]:
+    """A literal tag required on every trigger path, not just mentioned in one."""
+    tags = set()
+    for key, value, block in iter_statements(trigger):
+        if key == "tag" and value and re.fullmatch(r"[A-Z0-9]{3}", value):
+            tags.add(value)
+        elif key in {"AND", "hidden_trigger", "ROOT", "THIS"} and block is not None:
+            tag = _receiver_tag(block)
+            if tag:
+                tags.add(tag)
+    return next(iter(tags)) if len(tags) == 1 else None
+
+
 def find_cost_blind_options(
     text: str, effects: Dict[str, str], stored: Dict[str, int]
 ) -> List[Tuple[str, int, str, bool]]:
@@ -1369,10 +1379,7 @@ def find_cost_blind_options(
         ]
         if len(options) < 2:
             continue
-        recipient = re.fullmatch(
-            r"\s*tag\s*=\s*([A-Z0-9]{3})\s*", _event_trigger_body(body) or ""
-        )
-        country = recipient.group(1) if recipient else None
+        country = _receiver_tag(_event_trigger_body(body) or "")
         splits = [
             _split_option(body[opt_start:opt_end], country)
             for opt_start, opt_end in options
@@ -1489,7 +1496,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "fire_only_once": "fire_only_once = yes" in body_nc,
                 "is_major": bool(_RE_MAJOR_YES.search(body_nc)),
                 "has_mtth": "mean_time_to_happen" in body_nc,
-                "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
+                "option_count": len(_OPTION_OPEN_RE.findall(body)),
                 "title_desc_refs": [
                     v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
                 ],

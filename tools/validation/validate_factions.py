@@ -11,6 +11,7 @@ from typing import Dict, List, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import WORD_BLOCK_LINE_RE as BLOCK_DEF_RE
 from shared_utils import blank_quoted_strings, extract_block_from_text
 from validator_common import (
     BaseValidator,
@@ -30,9 +31,6 @@ VALID_RULE_TYPES = {
     "member_rules",
     "contribution_rule",
 }
-
-# Top-level block: word = { at the start of a line (possibly indented by tabs)
-BLOCK_DEF_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
 
 MANIFEST_RE = re.compile(r"\bmanifest\s*=\s*(\w+)")
 ICON_RE = re.compile(r"\bicon\s*=\s*(\w+)")
