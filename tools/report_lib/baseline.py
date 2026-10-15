@@ -18,7 +18,8 @@ real second instance NEW. Severity is part of the key so an existing warning
 that escalates to an error reads as a new error (the alarm direction); a
 warning still matches main's error for the same finding (see classify).
 Known limitation: when one file has the same finding twice, fixing one and
-adding another in that file reads as two EXISTING findings.
+adding another in that file reads as two EXISTING findings. A finding with no
+file has the same limit across the repo.
 """
 
 import json
@@ -61,13 +62,12 @@ class BaselineStats:
 
 
 def issue_key(issue: Issue) -> Optional[BaselineKey]:
-    """The comparison key for one issue.
+    """The comparison key for one issue, or None without a category or message.
 
-    None when the issue cannot be keyed: text-fallback issues carry no
-    file/line, so they can never be proven to match a baseline entry. Line
-    must be positive to agree with Issue.has_location.
+    A finding with no file keys on its message, which names what it is about
+    (decision and file, idea and sprite), so it is counted repo-wide.
     """
-    if not issue.category or not issue.file or issue.line <= 0 or not issue.message:
+    if not issue.category or not issue.message:
         return None
     message = _LINE_REF.sub(r"\1#", issue.message)
     return (issue.severity, issue.category, issue.file, message)
@@ -148,8 +148,8 @@ def load_baseline(
 def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
     """Tag each issue's `baseline_status` ("new"/"existing") in place.
 
-    Unkeyable issues (no file/line) are left untagged and counted as
-    unclassified. Rendering only adds a NEW tag when the field is set, so a
+    Unkeyable issues (no category or message) are left untagged and counted
+    as unclassified. Rendering only adds a NEW tag when the field is set, so a
     missing baseline needs no special case at render time.
 
     Each baseline entry matches one issue: with N on main, the first N
