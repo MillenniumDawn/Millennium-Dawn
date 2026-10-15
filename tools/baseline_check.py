@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
-"""Nightly baseline check: diff fresh main-side results against the baseline.
+"""Main baseline check: record a main run and diff it against the accepted one.
 
-Run by validator-cache.yml's check-baseline job after
-`run_all_validators.py --persist-results` has left the per-validator JSON
-sidecars of a full main run on disk. Exit codes:
+Run by validator-cache.yml after `run_all_validators.py --persist-results`
+has left the per-validator JSON sidecars of a full main run on disk. A
+complete run is always written to --observation: PR reports compare against
+that commit's results whether or not they pass the alarm. The alarm compares
+the run with the last accepted baseline (--previous) and promotes it to
+--output only on a clean diff. Exit codes:
 
-  0 — no new errors on main (baseline promoted to tonight's results), or no
-      complete previous baseline to compare against (a fresh one is
-      established).
-  1 — new errors on main: the workflow goes red and the previous baseline is
+  0 — no new errors on main (accepted baseline promoted to tonight's
+      results), or no complete accepted baseline to compare against (a fresh
+      one is established).
+  1 — new errors on main: the workflow goes red and the accepted baseline is
       kept, so the alarm repeats every night until the regression is fixed.
       A validator-code change moves the toolshash, which re-establishes the
       baseline instead of comparing against stale output. Also returned when
-      tonight's results are empty or malformed, so they never become the
-      baseline.
+      tonight's results are empty or malformed, so they are written nowhere.
 
 New warnings are reported but never fail the job: warnings are advisory
 everywhere else in the pipeline, so the nightly alarm tracks errors only.
@@ -128,7 +130,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--previous",
         required=True,
-        help="Directory holding the previous baseline (restored cache entry)",
+        help="Directory holding the last accepted baseline (restored cache entry)",
     )
     parser.add_argument(
         "--current",
@@ -138,7 +140,12 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument(
         "--output",
         required=True,
-        help="Directory to write the new baseline into on a clean diff",
+        help="Directory to write the new accepted baseline into on a clean diff",
+    )
+    parser.add_argument(
+        "--observation",
+        required=True,
+        help="Directory to write this commit's complete results into, for PR reports",
     )
     parser.add_argument(
         "--toolshash",
@@ -168,8 +175,9 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         print(exc, file=sys.stderr)
         return 1
 
-    previous = load_baseline(args.previous, args.toolshash or None)
     meta = _build_meta(args)
+    write_baseline(args.current, args.observation, meta)
+    previous = load_baseline(args.previous, args.toolshash or None)
 
     if previous is None:
         write_baseline(args.current, args.output, meta)

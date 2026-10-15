@@ -15,13 +15,13 @@ from shared.paths import TOOLS_DIR
 from shared.suite import issue_dict as _issue_dict
 from shared.suite import make_results_tree
 
+BASE_SHA = "0123456789abcdef"  # pragma: allowlist secret
+
 
 def _write_baseline(base, toolshash, issues):
     base.mkdir(parents=True, exist_ok=True)
-    (base / META_FILENAME).write_text(
-        json.dumps({"toolshash": toolshash, "sidecars": ["events.json"]}),
-        encoding="utf-8",
-    )
+    meta = {"toolshash": toolshash, "commit_sha": BASE_SHA, "sidecars": ["events.json"]}
+    (base / META_FILENAME).write_text(json.dumps(meta), encoding="utf-8")
     (base / "events.json").write_text(json.dumps(issues), encoding="utf-8")
 
 
@@ -45,7 +45,7 @@ def _old_and_new_tree(tmp_path, toolshash="h"):
     )
 
 
-def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None):
+def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None, baseline_commit=None):
     argv = [
         "--results-dir",
         str(tmp_path / "validation-results"),
@@ -62,6 +62,8 @@ def _argv(tmp_path, baseline_dir=None, baseline_toolshash=None):
         argv += ["--baseline-dir", str(baseline_dir)]
     if baseline_toolshash is not None:
         argv += ["--baseline-toolshash", baseline_toolshash]
+    if baseline_commit is not None:
+        argv += ["--baseline-commit", baseline_commit]
     return argv
 
 
@@ -96,23 +98,39 @@ def test_main_annotates_new_vs_existing_from_baseline(tmp_path, monkeypatch, cap
     _old_and_new_tree(tmp_path)
 
     code = generate_validation_report.main(
-        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
+        _argv(
+            tmp_path,
+            baseline_dir=tmp_path / "baseline",
+            baseline_toolshash="h",
+            baseline_commit=BASE_SHA,
+        )
     )
 
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
     assert "1 new error against the main baseline" in report
-    assert "**Baseline comparison:** available" in report
+    assert "**Baseline comparison:** main `0123456`" in report
     err = capsys.readouterr().err
     assert "vs main baseline: 1 new error(s), 0 new warning(s)" in err
 
 
-def test_main_ignores_stale_baseline(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("toolshash", "commit"),
+    [
+        pytest.param("new-generation", BASE_SHA, id="other validator code"),
+        pytest.param(
+            "h",
+            "fedcba9876543210",  # pragma: allowlist secret
+            id="other main commit",
+        ),
+    ],
+)
+def test_main_ignores_stale_baseline(tmp_path, monkeypatch, toolshash, commit):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     _findings_tree(tmp_path)
     _write_baseline(
         tmp_path / "baseline",
-        "old-generation",
+        "h",
         [_issue_dict("error", file="old.txt", message="old finding")],
     )
 
@@ -120,16 +138,18 @@ def test_main_ignores_stale_baseline(tmp_path, monkeypatch):
         _argv(
             tmp_path,
             baseline_dir=tmp_path / "baseline",
-            baseline_toolshash="new-generation",
+            baseline_toolshash=toolshash,
+            baseline_commit=commit,
         )
     )
 
     assert code == 0
     report = (tmp_path / "report.md").read_text(encoding="utf-8")
-    # A baseline from a different validator generation must be ignored, not
-    # compared: no NEW/EXISTING annotation anywhere.
+    # A baseline from different validator code or another main commit must be
+    # ignored, not compared: no NEW/EXISTING annotation anywhere.
     assert "main baseline" not in report
     assert "**Baseline comparison:** unavailable" in report
+    assert f"no complete baseline of main `{commit[:7]}`" in report
 
 
 def test_main_renders_without_baseline_when_dir_missing(tmp_path, monkeypatch):

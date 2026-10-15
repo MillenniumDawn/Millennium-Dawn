@@ -323,7 +323,10 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
     if scope_label:
         bits.append(f"**Scope:** {scope_label}")
     if ctx.baseline_status == "available":
-        bits.append("**Baseline comparison:** available")
+        source = (
+            f"main `{ctx.baseline_commit[:7]}`" if ctx.baseline_commit else "available"
+        )
+        bits.append(f"**Baseline comparison:** {source}")
     elif ctx.baseline_status == "unavailable":
         bits.append("**Baseline comparison:** unavailable")
     if ctx.changed_files_status == "available":
@@ -336,9 +339,10 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
 def _render_availability_notice(ctx: ReportContext) -> str:
     bits: List[str] = []
     if ctx.baseline_status == "unavailable":
+        commit = f" of main `{ctx.baseline_commit[:7]}`" if ctx.baseline_commit else ""
         bits.append(
-            "Baseline comparison unavailable (no complete baseline for this "
-            "validator code). Findings are not annotated NEW vs EXISTING."
+            f"Baseline comparison unavailable (no complete baseline{commit} for "
+            "this validator code). Findings are not annotated NEW vs EXISTING."
         )
     if ctx.changed_files_status == "unavailable":
         bits.append(

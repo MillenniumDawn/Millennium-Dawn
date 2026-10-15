@@ -51,17 +51,21 @@ def test_core_batch_selects_from_the_core_groups():
 
 
 def test_specs_carry_their_opt_in_checks():
-    # PR batches and the main baseline both read these args.
+    # PR batches and the main baseline both read args; baseline_args widen a
+    # diff-scoped check on main only.
     assert {
-        spec.name: (spec.args, spec.strict) for spec in vb.ALL_SPECS if spec.args
+        spec.name: (spec.args, spec.baseline_args, spec.strict)
+        for spec in vb.ALL_SPECS
+        if spec.args or spec.baseline_args
     } == {
-        "bonus-names": (("--name-not-owner-id",), True),
-        "decisions": (("--unannounced-categories",), True),
-        "events": (("--check-ai-chance-costs",), True),
-        "focus-tree": (("--missing-icons",), True),
-        "ideas": (("--missing-name-loc",), True),
-        "math-expressions": (("--clamp-bounds",), True),
-        "variables": (("--redundant-focus-flags",), True),
+        "bonus-names": (("--name-not-owner-id",), (), True),
+        "decisions": (("--unannounced-categories",), (), True),
+        "events": (("--check-ai-chance-costs",), (), True),
+        "focus-tree": (("--missing-icons",), (), True),
+        "ideas": (("--missing-name-loc",), (), True),
+        "math-expressions": (("--clamp-bounds",), (), True),
+        "party-loc": ((), ("--all",), True),
+        "variables": (("--redundant-focus-flags",), (), True),
     }
 
 

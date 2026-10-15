@@ -135,6 +135,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--baseline-commit",
+        default=None,
+        help=(
+            "Main commit the baseline must record (the PR's base); a baseline "
+            "of any other commit is ignored."
+        ),
+    )
+    parser.add_argument(
         "--changed-files",
         default=None,
         help=(
@@ -164,16 +172,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         validation_scope=args.validation_scope,
     )
 
-    # None on a cold cache, stale toolshash, or incomplete baseline:
-    # classification (and the NEW/EXISTING rendering) is skipped instead of
-    # comparing against stale or partial output.
+    # None on a cold cache, stale toolshash, other commit, or incomplete
+    # baseline: classification (and the NEW/EXISTING rendering) is skipped
+    # instead of comparing against stale or partial output.
     baseline = (
-        load_baseline(args.baseline_dir, args.baseline_toolshash)
+        load_baseline(args.baseline_dir, args.baseline_toolshash, args.baseline_commit)
         if args.baseline_dir
         else None
     )
     if args.baseline_dir:
         ctx.baseline_status = "available" if baseline is not None else "unavailable"
+        ctx.baseline_commit = args.baseline_commit
 
     changed_files = None
     if args.changed_files:
