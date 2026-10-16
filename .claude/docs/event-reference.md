@@ -59,6 +59,11 @@ desc = {
 }
 ```
 
+The reference determines the string's role, not its suffix. `desc = KEY`, or
+`text = KEY` inside a `desc` block, selects the description. `name = KEY` inside an
+`option` selects an option label. A `.d` key can name option D when the description
+uses another key, such as `.desc`.
+
 ## Cost-aware AI weights
 
 An option that charges the country (treasury, debt, a tax rate change, political power,
@@ -106,11 +111,14 @@ problem the cost solves:
 - Political power: `has_active_mission = bankruptcy_incoming_collapse`, the same check as treasury. Political power can go negative, so do not check the balance and do not hide the option behind a `trigger`. An option that already has the bankruptcy modifier for a treasury cost does not need a second one.
 - Stability and war support: `has_stability < N` and `has_war_support < N`. The "decline" option needs one too when declining is what costs stability.
 - Country paths: weigh choices by the `TAG_ai_behavior` path triggers first. Use the sitting government only under No Path, or where the check mirrors a focus `available` gate.
-- Give every event at least one option that stays above zero when the country is broke. Decisions that charge the treasury need the same checks in `ai_will_do`.
+- Give every event at least one option that stays above zero when the country is broke. Decisions that charge the treasury need the same checks in `ai_will_do`; see "Cost-aware AI weights" in `decision-reference.md`.
+- Modifiers run in order on a running total. Put every `factor = 0` modifier after the adds, or a later `add` brings the zeroed weight back.
 - A cost audit changes AI weights only. Ask before adding an option `trigger` to enforce a cost (`has_political_power`, `has_equipment`) or converting hand-typed costs to presets such as `small_expenditure`.
 
 The German BfV events in `events/Germany.txt` are the reference.
-`validate_events.py --check-ai-chance-costs` lists options that still need this.
+Opinion and path modifiers alone do not cover costs. `effect_tooltip` previews are
+not charges. When payment occurs in a follow-up event, show it in the original
+choice's preview and weigh it there. Review delayed event-chain costs manually.
 
 ## Cross-country events
 
@@ -126,12 +134,12 @@ alone. `SNDR` is the sender:
   ai_chance = {
    base = 15
    modifier = {
-    factor = 0
-    sender_influence_higher_30 = yes
-   }
-   modifier = {
     add = 10
     has_opinion = { target = SNDR value < -15 }
+   }
+   modifier = {
+    factor = 0
+    sender_influence_higher_30 = yes
    }
   }
  }

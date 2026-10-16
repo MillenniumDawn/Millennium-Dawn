@@ -4,6 +4,7 @@
 import ast
 import os
 import shutil
+import time
 from pathlib import Path
 
 import disk_cache
@@ -203,6 +204,12 @@ def test_namespace_mapping_covers_all_real_cache_prefixes():
     # Wrapped namespaces resolve too, so the scan sees the whole set.
     assert {"dynamic_modifier_guards_scan_v1", "events", "style"} <= prefixes
     assert not sorted(prefixes - set(disk_cache._VALIDATOR_NAMESPACES))
+    assert disk_cache._VALIDATOR_NAMESPACES["country_graphical_cultures"] == (
+        "validate_graphical_cultures.py"
+    )
+    assert disk_cache._VALIDATOR_NAMESPACES["graphical_culture_registry"] == (
+        "validate_graphical_cultures.py"
+    )
 
 
 def test_fingerprints_are_memoized_until_source_changes(tmp_path, monkeypatch):
@@ -281,15 +288,28 @@ def test_owner_source_change_invalidates_only_that_namespace(tmp_path, monkeypat
     assert calls == {"owned": 2, "other": 1}
 
 
+def test_guard_scan_users_declare_the_helper():
+    users = {
+        namespace
+        for namespace, owner in disk_cache._VALIDATOR_NAMESPACES.items()
+        if "guard_scan" in (VALIDATION_DIR / owner).read_text(encoding="utf-8")
+    }
+
+    assert users
+    assert not sorted(
+        namespace
+        for namespace in users
+        if "guard_scan.py" not in disk_cache._HELPER_DEPENDENCIES.get(namespace, ())
+    )
+
+
 @pytest.mark.parametrize(
     ("namespace", "helper"),
     [
-        ("building_guards_scan_v5", "guard_scan.py"),
-        ("influence_calls_scan_v2", "guard_scan.py"),
-        ("dlc_guards_scan", "validate_history.py"),
-        # The cached parses call helpers these validators import from elsewhere.
-        ("ideas.defs.v5", "equipment_module_slots.py"),
-        ("variables.redundant_focus_flag", "validate_focus_tree.py"),
+        # Dotted, as callers pass it: the prefix alone picks the helpers.
+        (f"{prefix}.result", helper)
+        for prefix, helpers in sorted(disk_cache._HELPER_DEPENDENCIES.items())
+        for helper in helpers
     ],
 )
 def test_configured_helper_change_invalidates_affected_namespace_only(
@@ -478,8 +498,78 @@ def test_fingerprint_of_a_missing_source_is_stable(tmp_path, monkeypatch):
     assert first == second
 
 
-def test_results_are_still_computed_when_the_db_cannot_open(tmp_path, monkeypatch):
-    monkeypatch.setattr(disk_cache, "_connect", lambda mod_path: None)
+def test_aggregate_cached_hits_until_a_tracked_file_changes_or_appears(
+    tmp_path, write_path
+):
+    one = write_path(tmp_path, "one.txt", "one")
+    late = tmp_path / "late.txt"
+    calls = []
+
+    def run():
+        return disk_cache.aggregate_cached(
+            str(tmp_path),
+            "key",
+            [str(one), str(late)],
+            lambda: calls.append(1) or len(calls),
+        )
+
+    assert (run(), run()) == (1, 1)
+    write_path(tmp_path, "one.txt", "changed")
+    assert run() == 2
+    write_path(tmp_path, "late.txt", "here")
+    assert run() == 3
+
+
+def test_per_file_cached_computes_every_time_for_a_missing_file(tmp_path):
+    calls = []
+    gone = str(tmp_path / "gone.txt")
+
+    for _ in range(2):
+        disk_cache.per_file_cached(str(tmp_path), "ns", gone, lambda: calls.append(1))
+
+    assert len(calls) == 2
+
+
+def test_a_corrupt_cached_value_is_recomputed(tmp_path, write_path):
+    source = str(write_path(tmp_path, "source.txt", "one"))
+    calls = []
+
+    def run():
+        return disk_cache.per_file_cached(
+            str(tmp_path), "ns", source, lambda: calls.append(1) or len(calls)
+        )
+
+    run()
+    conn = disk_cache._connect(str(tmp_path))
+    assert conn is not None
+    conn.execute("UPDATE entries SET value = ?", (b"corrupt",))
+
+    assert run() == 2
+
+
+def test_a_value_that_cannot_be_pickled_is_returned_and_not_stored(tmp_path):
+    class Unpicklable:
+        def __reduce__(self):
+            raise disk_cache.pickle.PicklingError("no pickle")
+
+    calls = []
+
+    def compute():
+        calls.append(1)
+        return Unpicklable()
+
+    for _ in range(2):
+        result = disk_cache.per_file_cached_by_content(
+            str(tmp_path), "ns", "f.txt", "body", compute
+        )
+        assert isinstance(result, Unpicklable)
+
+    assert len(calls) == 2
+
+
+def test_results_are_still_computed_when_the_db_cannot_open(tmp_path):
+    # A directory where the database file belongs makes the connect fail.
+    disk_cache._db_path(str(tmp_path)).mkdir(parents=True)
     calls = []
 
     def compute():
@@ -534,6 +624,7 @@ def test_prune_old_versions_removes_only_stale_version_dirs(tmp_path, write_path
     root = tmp_path / disk_cache._CACHE_DIR_NAME
     (root / "v4" / "old").mkdir(parents=True)
     (root / f"v{disk_cache.CACHE_VERSION}").mkdir(parents=True)
+    (root / "not-a-version").mkdir()
     write_path(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/notes.txt", "keep me")
     write_path(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/v3", "a file, not a dir")
 
@@ -541,6 +632,7 @@ def test_prune_old_versions_removes_only_stale_version_dirs(tmp_path, write_path
 
     assert removed == ["v4"]
     assert not (root / "v4").exists()
+    assert (root / "not-a-version").is_dir()
     assert (root / "v3").is_file()
     assert (root / f"v{disk_cache.CACHE_VERSION}").is_dir()
 
@@ -574,6 +666,12 @@ def test_clear_closes_open_connections_even_when_close_fails(tmp_path, monkeypat
     assert not (tmp_path / disk_cache._CACHE_DIR_NAME).exists()
 
 
+def test_clear_without_a_cache_does_nothing(tmp_path):
+    disk_cache.clear(str(tmp_path))
+
+    assert list(tmp_path.iterdir()) == []
+
+
 def test_clear_survives_a_failing_tree_removal(tmp_path, monkeypatch):
     (tmp_path / disk_cache._CACHE_DIR_NAME).mkdir()
     monkeypatch.setattr(
@@ -595,11 +693,36 @@ def test_stamp_created_survives_an_unwritable_cache_root(tmp_path, write_path):
     assert disk_cache.cache_age_days(str(tmp_path)) is None
 
 
-def test_clear_if_stale_keeps_a_fresh_cache(tmp_path):
-    disk_cache.stamp_created(str(tmp_path))
+@pytest.mark.parametrize(
+    ("marker", "max_age_days", "cleared", "clock_running"),
+    [
+        pytest.param("0", 1, True, True, id="older than the limit"),
+        pytest.param("0", 0, False, False, id="a zero limit turns the check off"),
+        pytest.param(str(time.time()), 7, False, True, id="younger than the limit"),
+        pytest.param(
+            "not-a-time", 1, False, False, id="an unreadable marker is not restamped"
+        ),
+        pytest.param(None, 1, False, True, id="no marker yet"),
+    ],
+)
+def test_clear_if_stale(
+    tmp_path, write_path, marker, max_age_days, cleared, clock_running
+):
+    """`marker` is the creation time on disk. `clock_running` is whether the
+    cache has a creation time under a day old afterward."""
+    cached = write_path(tmp_path, f"{disk_cache._CACHE_DIR_NAME}/v1/old", "old")
+    if marker is not None:
+        write_path(
+            tmp_path,
+            f"{disk_cache._CACHE_DIR_NAME}/{disk_cache._CREATED_MARKER}",
+            marker,
+        )
 
-    assert disk_cache.clear_if_stale(str(tmp_path), 7.0) is False
-    assert disk_cache._marker_path(str(tmp_path)).exists()
+    assert disk_cache.clear_if_stale(str(tmp_path), max_age_days) is cleared
+
+    assert cached.exists() is not cleared
+    age = disk_cache.cache_age_days(str(tmp_path))
+    assert (age is not None and age < 1) is clock_running
 
 
 def test_source_key_is_relative_under_the_checkout(tmp_path):

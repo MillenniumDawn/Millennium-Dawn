@@ -1,4 +1,8 @@
-"""Shared validator selection for CI batches and impact scans."""
+"""Shared validator selection for CI batches and impact scans.
+
+`ValidatorSpec.args` are also the flags of the main baseline run, so a PR
+and main enable the same checks. `baseline_args` apply to the main run only.
+"""
 
 import ast
 import os
@@ -21,6 +25,9 @@ class ValidatorSpec:
     strict: bool = True
     args: Tuple[str, ...] = ()
     runner: str = "standard"
+    # Main baseline only: widens a diff-scoped check to its whole domain, so a
+    # PR's scoped findings have full main results to match against.
+    baseline_args: Tuple[str, ...] = ()
 
 
 _CORE_GROUPS = (
@@ -54,11 +61,17 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ),
         ValidatorSpec("cosmetic-tags", "validate_cosmetic_tags.py", _CORE_GROUPS),
         ValidatorSpec("localisation", "validate_localisation.py", _CORE_GROUPS),
-        ValidatorSpec("events", "validate_events.py", _CORE_GROUPS),
+        ValidatorSpec(
+            "events",
+            "validate_events.py",
+            _CORE_GROUPS,
+            args=("--check-ai-chance-costs",),
+        ),
         ValidatorSpec("achievements", "validate_achievements.py", _CORE_GROUPS),
-        ValidatorSpec("history-files", "validate_history.py", _CORE_GROUPS),
+        ValidatorSpec("history", "validate_history.py", _CORE_GROUPS),
         ValidatorSpec("unused-scripted", "validate_unused_scripted.py", _CORE_GROUPS),
         ValidatorSpec("agency-upgrades", "validate_agency_upgrades.py", _CORE_GROUPS),
+        # --missing-loc stays off: its `_desc` backlog would drown the report.
         ValidatorSpec(
             "ideas", "validate_ideas.py", _CORE_GROUPS, args=("--missing-name-loc",)
         ),
@@ -98,7 +111,10 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
     ),
     "targeted-b": (
         ValidatorSpec(
-            "focus-tree", "validate_focus_tree.py", ("national-focus", "localisation")
+            "focus-tree",
+            "validate_focus_tree.py",
+            ("national-focus", "localisation"),
+            args=("--missing-icons",),
         ),
         ValidatorSpec("on-actions", "validate_on_actions.py", ("on-actions", "events")),
         ValidatorSpec(
@@ -118,7 +134,12 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
                 "graphic-db",
             ),
         ),
-        ValidatorSpec("bonus-names", "validate_bonus_names.py", ("common", "events")),
+        ValidatorSpec(
+            "bonus-names",
+            "validate_bonus_names.py",
+            ("common", "events"),
+            args=("--name-not-owner-id",),
+        ),
         ValidatorSpec(
             "tech-categories", "validate_tech_categories.py", ("common", "events")
         ),
@@ -141,8 +162,17 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
         ValidatorSpec(
             "influence-calls", "validate_influence_calls.py", ("common", "events")
         ),
+        ValidatorSpec(
+            "ai-weight-order", "validate_ai_weight_order.py", ("common", "events")
+        ),
         ValidatorSpec("technologies", "validate_technologies.py", ("common",)),
         ValidatorSpec("country-names", "validate_country_names.py", ("common",)),
+        ValidatorSpec(
+            "graphical-cultures",
+            "validate_graphical_cultures.py",
+            ("common",),
+            strict=False,
+        ),
         ValidatorSpec(
             "ai-path-rules",
             "validate_ai_path_rules.py",
@@ -152,6 +182,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             "party-loc",
             "validate_party_loc.py",
             ("localisation", "common"),
+            baseline_args=("--all",),
         ),
     ),
 }
