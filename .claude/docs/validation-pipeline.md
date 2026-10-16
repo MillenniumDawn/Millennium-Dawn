@@ -114,6 +114,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   report reads its artifact and marks the source. The scan saves no cache entry,
   because a dispatched run on main would let PR tooling write a main-scoped baseline.
   With neither, the comparison is unavailable.
+- Main's findings in a file the PR renamed count as the new path's, in the file
+  field and in messages. A finding that names only a basename does not move.
 - When a PR changes validator code or reference data, both scans use its validators,
   so findings that code adds to unchanged content read EXISTING. `detect-changes`
   flags this and the report says so.

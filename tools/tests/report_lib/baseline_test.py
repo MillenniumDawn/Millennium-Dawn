@@ -13,7 +13,7 @@ from report_lib import (
     tag_changed_files,
     write_baseline,
 )
-from report_lib.baseline import META_FILENAME, issue_key
+from report_lib.baseline import META_FILENAME, issue_key, load_renames, rename_keys
 from shared.suite import issue_dict, make_issue, write_text
 from shared.suite import write_slug_json as _write_sidecar
 
@@ -100,10 +100,59 @@ def test_load_baseline_loads_and_dedupes_sidecars(tmp_path):
     assert baseline.meta["toolshash"] == "h"
 
 
-def test_issue_key_requires_location():
-    assert issue_key(make_issue()) is not None
-    assert issue_key(make_issue(file="", line=0)) is None
-    assert issue_key(make_issue(line=-3)) is None
+@pytest.mark.parametrize(
+    ("overrides", "keyed"),
+    [
+        pytest.param({}, True, id="located"),
+        pytest.param({"file": "", "line": 0}, True, id="no file"),
+        pytest.param({"category": ""}, False, id="no category"),
+        pytest.param({"message": ""}, False, id="no message"),
+    ],
+)
+def test_issue_key_needs_a_category_and_message(overrides, keyed):
+    assert (issue_key(make_issue(**overrides)) is not None) is keyed
+
+
+def test_classify_matches_a_finding_with_no_file(tmp_path):
+    # Decision AI-cost findings name the decision and file in the message.
+    message = "ABK_rebuild_the_power_grid Abkhazia.txt - ai_will_do ignores the cost"
+    baseline = _baseline(
+        tmp_path, [_issue_dict("warning", file="", line=0, message=message)]
+    )
+    issues = [
+        make_issue(severity=Severity.WARNING, file="", line=0, message=message),
+        make_issue(severity=Severity.WARNING, file="", line=0, message="added"),
+    ]
+
+    classify(issues, baseline)
+
+    assert [i.baseline_status for i in issues] == ["existing", "new"]
+
+
+@pytest.mark.parametrize(
+    ("file", "message", "moved"),
+    [
+        pytest.param(
+            "events/old.txt", "m", ("events/new.txt", "m"), id="finding in the file"
+        ),
+        pytest.param(
+            "a.txt",
+            "read at events/old.txt:#",
+            ("a.txt", "read at events/new.txt:#"),
+            id="path in the message",
+        ),
+        pytest.param("old.txt", "m", ("old.txt", "m"), id="basename only"),
+        pytest.param("events/x.txt", "m", ("events/x.txt", "m"), id="unrelated"),
+    ],
+)
+def test_rename_keys_moves_findings_to_the_new_path(tmp_path, file, message, moved):
+    renames = tmp_path / "renames.txt"
+    renames.write_text("events/old.txt\nevents/new.txt\n", encoding="utf-8")
+    keys = Counter({("error", "c", file, message): 2})
+
+    assert rename_keys(keys, load_renames(str(renames))) == Counter(
+        {("error", "c", *moved): 2}
+    )
 
 
 def test_classify_tags_new_and_existing(tmp_path):
@@ -256,7 +305,7 @@ def test_classify_extra_instance_of_existing_finding_is_new(tmp_path):
 def test_classify_leaves_unkeyable_issues_untagged(tmp_path):
     baseline = _baseline(tmp_path)
 
-    unkeyable = make_issue(file="", line=0, message="no location")
+    unkeyable = make_issue(category="", message="no category")
     stats = classify([unkeyable], baseline)
 
     assert unkeyable.baseline_status is None
@@ -321,7 +370,7 @@ def test_classify_counts_mixed_unclassified_and_new(tmp_path):
     stats = classify(
         [
             make_issue(file="a.txt", line=1, message="keyed"),
-            make_issue(file="", line=0, message="no location"),
+            make_issue(category="", message="no category"),
         ],
         _baseline(tmp_path),
     )

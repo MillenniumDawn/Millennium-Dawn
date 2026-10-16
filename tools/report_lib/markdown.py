@@ -618,7 +618,7 @@ def _render_baseline_section(
         if stats.unclassified:
             lines.append(
                 f"_{stats.unclassified} finding(s) could not be compared "
-                "(no file/line)._"
+                "(no category or message)._"
             )
         return "\n".join(lines)
 
@@ -641,7 +641,8 @@ def _render_baseline_section(
     lines.extend(warning_lines)
     if stats.unclassified:
         lines.append(
-            f"_{stats.unclassified} finding(s) could not be compared (no file/line)._"
+            f"_{stats.unclassified} finding(s) could not be compared "
+            "(no category or message)._"
         )
     return "\n".join(lines)
 

@@ -522,7 +522,7 @@ def test_step_summary_lists_new_findings():
     assert error_details.startswith("<details open>")
     assert warning_details.startswith("<details>")
     assert "**NEW**" in body
-    assert "1 finding(s) could not be compared (no file/line)." in body
+    assert "1 finding(s) could not be compared (no category or message)." in body
 
 
 def test_step_summary_collapses_warnings_by_default():
@@ -631,7 +631,7 @@ def test_baseline_section_notes_unclassified_findings():
         baseline_stats=_stats(new_errors=0, unclassified=2),
     )
     assert "✅ No new findings against the main baseline." in body
-    assert "2 finding(s) could not be compared (no file/line)." in body
+    assert "2 finding(s) could not be compared (no category or message)." in body
 
 
 def test_concise_comment_lists_new_findings():

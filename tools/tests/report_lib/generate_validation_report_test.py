@@ -130,6 +130,35 @@ def test_main_annotates_new_vs_existing_from_baseline(
     assert "vs main baseline: 1 new error(s), 0 new warning(s)" in err
 
 
+def test_main_moves_main_findings_to_renamed_files(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    make_results_tree(
+        tmp_path,
+        {
+            "events": {
+                "log": "VALIDATION COMPLETE",
+                "issues": [_issue_dict("error", file="moved.txt", message="finding")],
+            }
+        },
+    )
+    _write_baseline(
+        tmp_path / "baseline",
+        "h",
+        [_issue_dict("error", file="old.txt", message="finding")],
+    )
+    renames = tmp_path / "renames.txt"
+    renames.write_text("old.txt\nmoved.txt\n", encoding="utf-8")
+
+    code = generate_validation_report.main(
+        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
+        + ["--renames", str(renames)]
+    )
+
+    assert code == 0
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "No new errors against the main baseline" in report
+
+
 @pytest.mark.parametrize(
     ("toolshash", "commit"),
     [
