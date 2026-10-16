@@ -33,9 +33,7 @@ from validator_common import (
 # Every tree the engine runs script from, not a per-directory caller list: that
 # list drifted past operations, scripted_diplomatic_actions, ideas, MIOs,
 # factions and bop, all of which already call contracted effects, and any new
-# common/ subdirectory would be missed the same way. _validate_call_sites_in_file
-# drops a file that names no contract before parsing it, so the extra breadth
-# costs a read per file.
+# common/ subdirectory would be missed the same way.
 _CALLER_PATTERNS = [
     "common/**/*.txt",
     "events/**/*.txt",
@@ -166,6 +164,9 @@ _SINGLE_CALL_LINE_RE = re.compile(
 )
 # Numeric scopes (741 = {) must open a block, or their close pops the wrong one.
 _KW_OPEN_RE = re.compile(r"\b([A-Za-z0-9_]+)\s*=\s*\{")
+
+_SCRIPT_BLOCK_RE = re.compile(r"([A-Za-z0-9_:.@^$+-]+)\s*=\s*\{|[{}]")
+_DOLLAR_PARAM_RE = re.compile(r"\$[A-Za-z_][A-Za-z0-9_]*\$")
 
 _READ_ERRORS = (OSError, UnicodeDecodeError)
 
@@ -484,9 +485,53 @@ def _tokenize(text: str) -> List[Tuple[str, int, str, str]]:
     return tokens
 
 
+def _unsupported_effect_syntax(
+    text: str, rel: str, effect_names: "frozenset[str]"
+) -> List[Tuple[str, str, int]]:
+    """Report unsupported effect arguments without flagging definitions."""
+    definitions = rel.replace("\\", "/").startswith("common/scripted_effects/")
+    results = []
+    if definitions:
+        for line, content in enumerate(text.splitlines(), 1):
+            if match := _DOLLAR_PARAM_RE.search(content):
+                results.append(
+                    (
+                        "unsupported-effect-placeholder",
+                        f"{rel}:{line} - scripted effects do not substitute "
+                        f"'{match.group()}'; use scopes, temp variables, or meta_effect",
+                        line,
+                    )
+                )
+
+    depth = 0
+    for match in _SCRIPT_BLOCK_RE.finditer(text):
+        name = match.group(1)
+        if name in effect_names and not (definitions and depth == 0):
+            line = text.count("\n", 0, match.start()) + 1
+            results.append(
+                (
+                    "unsupported-effect-arguments",
+                    f"{rel}:{line} - '{name}' is a scripted effect, not a "
+                    "parameter block; call it with '= yes' and pass values "
+                    "through scopes or set_temp_variable",
+                    line,
+                )
+            )
+        if match.group().endswith("{"):
+            depth += 1
+        else:
+            depth = max(0, depth - 1)
+    return results
+
+
 def _validate_call_sites_in_file(
     args: Tuple[
-        str, Dict[str, Dict[str, List[str]]], str, "frozenset[str]", "frozenset[str]"
+        str,
+        Dict[str, Dict[str, List[str]]],
+        str,
+        "frozenset[str]",
+        "frozenset[str]",
+        "frozenset[str]",
     ],
 ) -> List[Tuple[str, str, int]]:
     """Validate one file for missing required params and orphaned sets.
@@ -496,7 +541,7 @@ def _validate_call_sites_in_file(
 
     Returns a list of (category, message, line_number) tuples.
     """
-    filepath, contracts, mod_path, valid_tags, audit_names = args
+    filepath, contracts, mod_path, valid_tags, audit_names, effect_names = args
 
     try:
         with open(filepath, "r", encoding="utf-8-sig") as fh:
@@ -508,14 +553,15 @@ def _validate_call_sites_in_file(
     text = blank_quoted_strings(strip_comments(raw))
     rel = os.path.relpath(filepath, mod_path)
 
+    results = _unsupported_effect_syntax(text, rel, effect_names)
+
     # Quick pre-check: does this file reference any contracted effect?
     contracted_names = set(contracts.keys())
     if not audit_names and not any(name in text for name in contracted_names):
-        return []
+        return results
 
     lines = text.splitlines()
     shared_lines: Set[int] = set()
-    results: List[Tuple[str, str, int]] = []
     # Cache the tokenisation (the expensive, contract-independent step); the
     # contract validation below runs per call against the cached tokens.
     tokens = disk_cache.per_file_cached_by_content(
@@ -955,7 +1001,7 @@ class Validator(BaseValidator):
     def __init__(self, *args, audit_shared_lines: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
         self.audit_shared_lines = audit_shared_lines
-        self._audit_names: Set[str] = set()
+        self._effect_names: Set[str] = set()
         self._contracts: Dict[str, Dict[str, List[str]]] = {}
         # Every declared parameter, required or optional -> effects declaring it.
         self._declared: Dict[str, Set[str]] = {}
@@ -1005,13 +1051,10 @@ class Validator(BaseValidator):
             except _READ_ERRORS as exc:
                 self._unreadable.append(_unreadable(filepath, self.mod_path, exc))
                 continue
-            if self.audit_shared_lines:
-                self._audit_names.update(
-                    name
-                    for name, _file, _line in extract_definitions(
-                        (filepath, self.mod_path)
-                    )
-                )
+            self._effect_names.update(
+                name
+                for name, _file, _line in extract_definitions((filepath, self.mod_path))
+            )
             for eff_name, contract in parsed.items():
                 self._declare(eff_name, contract)
                 if eff_name not in self._contracts and contract["required"]:
@@ -1055,9 +1098,17 @@ class Validator(BaseValidator):
         )
         self.log(f"  Scanning {len(files)} files for effect calls")
 
-        audit_names = frozenset(self._audit_names)
+        effect_names = frozenset(self._effect_names)
+        audit_names = effect_names if self.audit_shared_lines else frozenset()
         args_list = [
-            (f, self._contracts, self.mod_path, self._valid_tags, audit_names)
+            (
+                f,
+                self._contracts,
+                self.mod_path,
+                self._valid_tags,
+                audit_names,
+                effect_names,
+            )
             for f in files
         ]
         all_results = self._pool_map(
@@ -1070,6 +1121,8 @@ class Validator(BaseValidator):
         invalid_tag_results = []
         shared_line_results = []
         audit_shared_line_results = []
+        unsupported_argument_results = []
+        unsupported_placeholder_results = []
 
         for file_results in all_results:
             for category, message, _line in file_results:
@@ -1085,8 +1138,27 @@ class Validator(BaseValidator):
                     shared_line_results.append(message)
                 elif category == "audit-call-shares-line":
                     audit_shared_line_results.append(message)
+                elif category == "unsupported-effect-arguments":
+                    unsupported_argument_results.append(message)
+                elif category == "unsupported-effect-placeholder":
+                    unsupported_placeholder_results.append(message)
                 elif category == "unreadable-input":
                     self._unreadable.append(message)
+
+        self._report(
+            unsupported_argument_results,
+            "No scripted effects use unsupported argument blocks",
+            "Scripted effects called with unsupported argument blocks:",
+            severity=Severity.WARNING,
+            category="unsupported-effect-arguments",
+        )
+        self._report(
+            unsupported_placeholder_results,
+            "No scripted effects use unsupported dollar placeholders",
+            "Unsupported dollar placeholders in scripted effect definitions:",
+            severity=Severity.WARNING,
+            category="unsupported-effect-placeholder",
+        )
 
         self._report(
             missing_param_results,
