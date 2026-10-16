@@ -10,6 +10,9 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
+	# both callers release RSK first; without it the war flags would be set with no war
+	trigger = { country_exists = RSK }
+
 	option = {
 		name = BOS_events.1.a
 		log = "[GetDateText]: [This.GetName]: BOS_events.1.a executed"
@@ -23,15 +26,9 @@ country_event = {
 			else = {
 				delete_units = { division_template = "Oklopna Brigada (SER)" disband = yes }
 			}
-			129 = {
-				set_demilitarized_zone = no
-			}
-			1053 = {
-				set_demilitarized_zone = no
-			}
-			1054 = {
-				set_demilitarized_zone = no
-			}
+			129 = { set_demilitarized_zone = no }
+			1053 = { set_demilitarized_zone = no }
+			1054 = { set_demilitarized_zone = no }
 		}
 		if = {
 			limit = {
@@ -50,9 +47,7 @@ country_event = {
 			ROM = { BOS_add_sfor_volunteer_support_effect = yes }
 			SWE = { BOS_add_sfor_volunteer_support_effect = yes }
 		}
-		ai_chance = {
-			base = 70
-		}
+		ai_chance = { base = 70 }
 	}
 
 	option = {
@@ -61,6 +56,17 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_events.1.b executed"
 		custom_effect_tooltip = bos_civil_war_srpska_info_tool_tip
 		hidden_effect = {
+			if = {
+				limit = { NOT = { has_template = "Milicija Divizija" } }
+				division_template = {
+					name = "Milicija Divizija"
+					division_names_group = BOS_MIL
+					is_locked = yes
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+					}
+				}
+			}
 			remove_ideas = BOS_SFOR
 			BOS_begin_srpska_civil_war_effect = yes
 			transfer_units_fraction = {
@@ -194,21 +200,19 @@ country_event = {
 					}
 				}
 			}
-			hidden_effect = {
-				mark_focus_tree_layout_dirty = yes
-			}
+			hidden_effect = { mark_focus_tree_layout_dirty = yes }
 			RSK = {
-				hidden_effect = {
-					mark_focus_tree_layout_dirty = yes
-				}
+				hidden_effect = { mark_focus_tree_layout_dirty = yes }
 				change_tag_from = ROOT
 			}
+			# a Bosnia the player just left never got AI templates at startup
+			if = {
+				limit = { is_ai = yes }
+				give_AI_templates = yes
+			}
 		}
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 
 # Croats Declare Independence
@@ -225,6 +229,17 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_events.2.a executed"
 		custom_effect_tooltip = bos_croat_war_info_tool_tip
 		hidden_effect = {
+			if = {
+				limit = { NOT = { has_template = "Milicija Divizija" } }
+				division_template = {
+					name = "Milicija Divizija"
+					division_names_group = BOS_MIL
+					is_locked = yes
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+					}
+				}
+			}
 			set_country_flag = defeat_all_croats
 			BOS_begin_internal_war_effect = yes
 			add_named_threat = {
@@ -233,8 +248,8 @@ country_event = {
 			}
 			release = HZG
 			HZG = {
+				BOS_setup_new_country_effect = yes
 				set_country_flag = civil_war_bosnia
-				set_country_flag = civil_war_bos_two
 				declare_war_on = {
 					target = BOS
 					type = civil_war
@@ -294,7 +309,6 @@ country_event = {
 						}
 					}
 				}
-
 			}
 			if = {
 				limit = { check_variable = { BOS_cw_croat_manpower > 74 } }
@@ -353,12 +367,8 @@ country_event = {
 			}
 			add_state_core = 1052
 		}
-		CRO = {
-			add_ideas = BOS_sfor_vol_troops
-		}
-		ai_chance = {
-			factor = 100
-		}
+		CRO = { add_ideas = BOS_sfor_vol_troops }
+		ai_chance = { base = 100 }
 	}
 
 	option = {
@@ -366,6 +376,17 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_events.2.b executed"
 		custom_effect_tooltip = bos_croat_war_info_tool_tip
 		hidden_effect = {
+			if = {
+				limit = { NOT = { has_template = "Milicija Divizija" } }
+				division_template = {
+					name = "Milicija Divizija"
+					division_names_group = BOS_MIL
+					is_locked = yes
+					regiments = {
+						Militia_Bat = { x = 0 y = 0 }
+					}
+				}
+			}
 			set_country_flag = defeat_all_croats
 			BOS_begin_internal_war_effect = yes
 			add_named_threat = {
@@ -374,8 +395,8 @@ country_event = {
 			}
 			release = HZG
 			HZG = {
+				BOS_setup_new_country_effect = yes
 				set_country_flag = civil_war_bosnia
-				set_country_flag = civil_war_bos_two
 				add_ideas = BOS_croat_balkan_aspiration
 				add_ideas = BOS_aggressive_nation
 				declare_war_on = {
@@ -429,24 +450,20 @@ country_event = {
 				navy_ratio = 0.0
 				air_ratio = 0.2
 			}
-			hidden_effect = {
-				mark_focus_tree_layout_dirty = yes
-			}
+			hidden_effect = { mark_focus_tree_layout_dirty = yes }
 			HZG = {
-				hidden_effect = {
-					mark_focus_tree_layout_dirty = yes
-				}
+				hidden_effect = { mark_focus_tree_layout_dirty = yes }
 				change_tag_from = ROOT
 			}
+			# a Bosnia the player just left never got AI templates at startup
+			if = {
+				limit = { is_ai = yes }
+				give_AI_templates = yes
+			}
 		}
-		CRO = {
-			add_ideas = BOS_sfor_vol_troops
-		}
-		ai_chance = {
-			base = 0
-		}
+		CRO = { add_ideas = BOS_sfor_vol_troops }
+		ai_chance = { base = 0 }
 	}
-
 }
 country_event = {
 	id = BOS_events.4
@@ -459,38 +476,15 @@ country_event = {
 		is_subject = no
 		has_civil_war = no
 		has_country_flag = civil_war_bosnia
-		has_country_flag = civil_war_bos_two
+		has_country_flag = BOS_rsk_civil_war_recovery_pending
 		has_war = no
 	}
 
 	immediate = {
+		clr_country_flag = BOS_rsk_civil_war_recovery_pending
+		set_country_flag = BOS_civil_war_settling
 		hidden_effect = {
-			if = {
-				limit = {
-					OR = {
-						has_idea = BOS_EUFOR
-						has_idea = BOS_SFOR
-					}
-				}
-				USA = { BOS_remove_sfor_volunteer_support_effect = yes }
-				ENG = { BOS_remove_sfor_volunteer_support_effect = yes }
-				ITA = { BOS_remove_sfor_volunteer_support_effect = yes }
-				GER = { BOS_remove_sfor_volunteer_support_effect = yes }
-				BUL = { BOS_remove_sfor_volunteer_support_effect = yes }
-				IRE = { BOS_remove_sfor_volunteer_support_effect = yes }
-				SPR = { BOS_remove_sfor_volunteer_support_effect = yes }
-				ROM = { BOS_remove_sfor_volunteer_support_effect = yes }
-				SWE = { BOS_remove_sfor_volunteer_support_effect = yes }
-			}
 			news_event = news.86
-			BOS = {
-				transfer_state = 129
-				transfer_state = 1052
-				transfer_state = 1051
-				transfer_state = 1054
-				transfer_state = 128
-				transfer_state = 1053
-			}
 			add_ideas = recession
 		}
 	}
@@ -501,9 +495,7 @@ country_event = {
 		BOS_srpska_reconciliation_full_effect = yes
 		set_variable = { BOS_recovery_days = 1826 }
 		BOS_finish_civil_war_recovery_effect = yes
-		ai_chance = {
-			base = 50
-		}
+		ai_chance = { base = 50 }
 	}
 
 	option = {
@@ -513,9 +505,7 @@ country_event = {
 		add_ideas = BOS_dayton_two
 		set_variable = { BOS_recovery_days = 1095 }
 		BOS_finish_civil_war_recovery_effect = yes
-		ai_chance = {
-			base = 25
-		}
+		ai_chance = { base = 25 }
 	}
 
 	option = {
@@ -526,11 +516,8 @@ country_event = {
 		add_stability = 0.03
 		set_variable = { BOS_recovery_days = 1461 }
 		BOS_finish_civil_war_recovery_effect = yes
-		ai_chance = {
-			base = 25
-		}
+		ai_chance = { base = 25 }
 	}
-
 }
 
 # Bosnia requests arms (TUR/ALB)
@@ -607,7 +594,6 @@ country_event = {
 			modifier = { factor = 0.25 sender_influence_higher_30 = yes }
 		}
 	}
-
 }
 country_event = {
 	id = BOS_events.11
@@ -618,11 +604,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.11.a
-		ai_chance = {
-			factor = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 country_event = {
 	id = BOS_events.12
@@ -642,9 +625,7 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.15 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
 		change_relative_party_popularity = yes
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
 
 	option = {
@@ -652,11 +633,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_events.12.b executed"
 		add_political_power = -100
 		set_country_flag = BOS_strike_defused
-		ai_chance = {
-			base = 0
-		}
+		ai_chance = { base = 0 }
 	}
-
 }
 
 country_event = {
@@ -671,11 +649,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_events.13.a executed"
 		add_political_power = -100
 		set_country_flag = BOS_strike_defused
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 
 country_event = {
@@ -696,9 +671,7 @@ country_event = {
 		set_temp_variable = { party_popularity_increase = 0.15 }
 		set_temp_variable = { temp_outlook_increase = 0.05 }
 		change_relative_party_popularity = yes
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
 
 	option = {
@@ -706,11 +679,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_events.14.b executed"
 		add_political_power = -100
 		set_country_flag = BOS_strike_defused
-		ai_chance = {
-			base = 0
-		}
+		ai_chance = { base = 0 }
 	}
-
 }
 country_event = {
 	id = BOS_events.34
@@ -759,7 +729,6 @@ country_event = {
 			modifier = { factor = 0.25 sender_influence_higher_30 = yes }
 		}
 	}
-
 }
 country_event = {
 	id = BOS_events.35
@@ -770,11 +739,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.35.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_events.36
@@ -785,11 +751,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.36.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_events.45
@@ -800,11 +763,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.45.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_events.46
@@ -815,11 +775,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.46.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_events.47
@@ -830,11 +787,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.47.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_events.48
@@ -853,11 +807,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_events.48.a executed"
 		set_temp_variable = { rul_party_temp = 4 }
 		change_ruling_party_effect = yes
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_events.55
@@ -884,20 +835,15 @@ country_event = {
 		name = BOS_events.55.a
 		log = "[GetDateText]: [This.GetName]: BOS_events.55.a executed"
 		BOS_bosniak_attitude_increase_effect = yes
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
 
 	option = {
 		name = BOS_events.55.b
 		log = "[GetDateText]: [This.GetName]: BOS_events.55.b executed"
 		add_stability = 0.02
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_events.15
@@ -951,7 +897,6 @@ country_event = {
 			modifier = { factor = 2 has_opinion = { target = FROM value < 0 } }
 		}
 	}
-
 }
 country_event = {
 	id = BOS_events.16
@@ -967,11 +912,8 @@ country_event = {
 		BOS_bosniak_attitude_decrease_effect = yes
 		BOS_bosniak_stability_decrease_effect = yes
 		modify_timed_idea = { idea = BOS_pro_srpska days = 70 }
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 country_event = {
 	id = BOS_events.17
@@ -982,11 +924,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.17.a
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 country_event = {
 	id = BOS_events.18
@@ -995,9 +934,7 @@ country_event = {
 	picture = GFX_generic_factory
 	is_triggered_only = yes
 
-	trigger = {
-		FROM = { original_tag = BOS }
-	}
+	trigger = { FROM = { original_tag = BOS } }
 
 	option = {
 		name = BOS_events.18.a
@@ -1022,9 +959,7 @@ country_event = {
 		set_temp_variable = { influence_target = FROM.id }
 		change_influence_percentage = yes
 		add_opinion_modifier = { target = FROM modifier = declaration_of_friendship }
-		ai_chance = {
-			base = 70
-		}
+		ai_chance = { base = 70 }
 	}
 
 	option = {
@@ -1034,11 +969,8 @@ country_event = {
 		hidden_effect = {
 			FROM = { country_event = { id = BOS_events.20 days = 1 } }
 		}
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_events.19
@@ -1049,11 +981,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.19.a
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 country_event = {
 	id = BOS_events.20
@@ -1064,11 +993,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.20.a
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 country_event = {
 	id = BOS_events.21
@@ -1095,9 +1021,7 @@ country_event = {
 		hidden_effect = {
 			FROM = { country_event = { id = BOS_events.22 days = 1 } }
 		}
-		ai_chance = {
-			base = 80
-		}
+		ai_chance = { base = 80 }
 	}
 
 	option = {
@@ -1107,11 +1031,8 @@ country_event = {
 		hidden_effect = {
 			FROM = { country_event = { id = BOS_events.23 days = 1 } }
 		}
-		ai_chance = {
-			base = 20
-		}
+		ai_chance = { base = 20 }
 	}
-
 }
 country_event = {
 	id = BOS_events.22
@@ -1122,11 +1043,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.22.a
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 country_event = {
 	id = BOS_events.23
@@ -1137,11 +1055,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.23.a
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 country_event = {
 	id = BOS_events.24
@@ -1168,9 +1083,7 @@ country_event = {
 		hidden_effect = {
 			FROM = { country_event = { id = BOS_events.25 days = 1 } }
 		}
-		ai_chance = {
-			base = 80
-		}
+		ai_chance = { base = 80 }
 	}
 
 	option = {
@@ -1180,11 +1093,8 @@ country_event = {
 		hidden_effect = {
 			FROM = { country_event = { id = BOS_events.26 days = 1 } }
 		}
-		ai_chance = {
-			base = 20
-		}
+		ai_chance = { base = 20 }
 	}
-
 }
 country_event = {
 	id = BOS_events.25
@@ -1195,11 +1105,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.25.a
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 country_event = {
 	id = BOS_events.26
@@ -1210,11 +1117,8 @@ country_event = {
 
 	option = {
 		name = BOS_events.26.a
-		ai_chance = {
-			base = 100
-		}
+		ai_chance = { base = 100 }
 	}
-
 }
 
 #first focus about
@@ -1227,11 +1131,8 @@ country_event = {
 
 	option = {
 		name = BOS_political.1.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 
 #free the the states
@@ -1250,11 +1151,8 @@ country_event = {
 		BOS = { set_cosmetic_tag = bos_fed }
 		RSK = { set_cosmetic_tag = rsk_fed }
 		HZG = { set_cosmetic_tag = hzg_fed }
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 #united again
 country_event = {
@@ -1275,14 +1173,9 @@ country_event = {
 			target = RSK
 			transfer_troops = yes
 		}
-		BOS = {
-			set_cosmetic_tag = bos_fed2
-		}
-		ai_chance = {
-			base = 30
-		}
+		BOS = { set_cosmetic_tag = bos_fed2 }
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_political.4
@@ -1311,7 +1204,7 @@ country_event = {
 			base = 50
 			modifier = {
 				factor = 100
-				has_global_flag = PRO_BOSNIAN_LEADERSHIP_COMMIE
+				has_global_flag = BOS_WORKERS_STATE_FOCUS_PATH
 			}
 			modifier = {
 				factor = 2
@@ -1320,15 +1213,15 @@ country_event = {
 			modifier = {
 				factor = 100
 				OR = {
-					has_global_flag = PRO_BOSNIAN_LEADERSHIP_PEACEFUL
-					has_global_flag = PRO_BOSNIAN_LEADERSHIP_MUSLIM_NATION
+					has_global_flag = BOS_HISTORICAL_FOCUS_PATH
+					has_global_flag = BOS_ISLAMIST_REVIVAL_FOCUS_PATH
 				}
 			}
 			modifier = {
 				factor = 0
 				OR = {
-					has_global_flag = PRO_LEADERSHIP_TO_SRPSKA
-					has_global_flag = PRO_LEADERSHIP_TO_SRPSKA_SRPSKA_FIRST
+					has_global_flag = BOS_SRPSKA_PARTNERSHIP_FOCUS_PATH
+					has_global_flag = BOS_SRPSKA_UNION_FOCUS_PATH
 				}
 			}
 			modifier = {
@@ -1358,15 +1251,15 @@ country_event = {
 			base = 50
 			modifier = {
 				factor = 0
-				has_global_flag = PRO_BOSNIAN_LEADERSHIP_COMMIE
+				has_global_flag = BOS_WORKERS_STATE_FOCUS_PATH
 			}
 			modifier = {
 				factor = 0
 				is_historical_focus_on = yes
 				NOT = {
 					OR = {
-						has_global_flag = PRO_LEADERSHIP_TO_SRPSKA
-						has_global_flag = PRO_LEADERSHIP_TO_SRPSKA_SRPSKA_FIRST
+						has_global_flag = BOS_SRPSKA_PARTNERSHIP_FOCUS_PATH
+						has_global_flag = BOS_SRPSKA_UNION_FOCUS_PATH
 					}
 				}
 			}
@@ -1377,15 +1270,15 @@ country_event = {
 			modifier = {
 				factor = 100
 				OR = {
-					has_global_flag = PRO_LEADERSHIP_TO_SRPSKA
-					has_global_flag = PRO_LEADERSHIP_TO_SRPSKA_SRPSKA_FIRST
+					has_global_flag = BOS_SRPSKA_PARTNERSHIP_FOCUS_PATH
+					has_global_flag = BOS_SRPSKA_UNION_FOCUS_PATH
 				}
 			}
 			modifier = {
 				factor = 0
 				OR = {
-					has_global_flag = PRO_BOSNIAN_LEADERSHIP_PEACEFUL
-					has_global_flag = PRO_BOSNIAN_LEADERSHIP_MUSLIM_NATION
+					has_global_flag = BOS_HISTORICAL_FOCUS_PATH
+					has_global_flag = BOS_ISLAMIST_REVIVAL_FOCUS_PATH
 				}
 			}
 			modifier = {
@@ -1394,7 +1287,6 @@ country_event = {
 			}
 		}
 	}
-
 }
 # 2008 crash
 country_event = {
@@ -1414,11 +1306,8 @@ country_event = {
 			days = 1825
 		}
 		add_ideas = recession
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 # Power to Milorad_Dodik
 country_event = {
@@ -1437,11 +1326,8 @@ country_event = {
 		name = BOS_political.6.a
 		log = "[GetDateText]: [This.GetName]: BOS_political.6.a executed"
 		add_ideas = BOS_milorad_dodik_idea
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 
 # Bosnian town split by pupils schooled in hate
@@ -1461,11 +1347,8 @@ country_event = {
 		BOS_all_faction_stability_decrease_effect = yes
 		BOS_croat_attitude_decrease_effect = yes
 		BOS_srpska_attitude_decrease_effect = yes
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 
 #Fears over Bosnia troop cut plan
@@ -1484,11 +1367,8 @@ country_event = {
 
 	option = {
 		name = BOS_political.9.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 
 # 2003 report on press attacks in 2002
@@ -1506,11 +1386,8 @@ country_event = {
 
 	option = {
 		name = BOS_political.10.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 ##2003 23 Years for Bosnian War Criminal Nikolic
 country_event = {
@@ -1531,11 +1408,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_political.11.a executed"
 		BOS_srpska_attitude_decrease_effect = yes
 		BOS_srpska_stability_decrease_effect = yes
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 
 #2004 sep reports on people returning to Bosnia
@@ -1553,11 +1427,8 @@ country_event = {
 
 	option = {
 		name = BOS_political.13.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 #Severe cold hits refugees and returnees in Bosnia and Herzegovina
 country_event = {
@@ -1579,11 +1450,8 @@ country_event = {
 		BOS_all_faction_stability_decrease_effect = yes
 		BOS_croat_attitude_decrease_effect = yes
 		BOS_srpska_attitude_decrease_effect = yes
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 40 }
 	}
-
 }
 #Blast damages former Muslim leader grave
 country_event = {
@@ -1603,11 +1471,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_political.15.a executed"
 		BOS_bosniak_attitude_decrease_effect = yes
 		BOS_bosniak_stability_decrease_effect = yes
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 40 }
 	}
-
 }
 
 # 2014 Southeast Europe floods
@@ -1622,11 +1487,8 @@ country_event = {
 
 	option = {
 		name = BOS_political.17.a
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 country_event = {
 	id = BOS_political.20
@@ -1666,6 +1528,7 @@ country_event = {
 			clr_country_flag = HZG_civil_war_recovery_pending
 		}
 		else = { clr_country_flag = BOS_hzg_civil_war_recovery_pending }
+		BOS = { set_country_flag = BOS_civil_war_settling }
 	}
 
 	option = {
@@ -1675,31 +1538,7 @@ country_event = {
 		news_event = news.86
 		BOS = {
 			hidden_effect = {
-				if = {
-					limit = { 128 = { is_owned_by = ROOT } }
-					transfer_state = 128
-				}
-				change_tag_from = ROOT
-				if = {
-					limit = { 129 = { is_owned_by = ROOT } }
-					transfer_state = 129
-				}
-				if = {
-					limit = { 1052 = { is_owned_by = ROOT } }
-					transfer_state = 1052
-				}
-				if = {
-					limit = { 1051 = { is_owned_by = ROOT } }
-					transfer_state = 1051
-				}
-				if = {
-					limit = { 1054 = { is_owned_by = ROOT } }
-					transfer_state = 1054
-				}
-				if = {
-					limit = { 1053 = { is_owned_by = ROOT } }
-					transfer_state = 1053
-				}
+				BOS_absorb_winning_breakaway_effect = yes
 				set_country_flag = BOS_loser
 				unlock_national_focus = BOS_house_of_representatives
 				unlock_national_focus = BOS_elections_political
@@ -1715,6 +1554,7 @@ country_event = {
 			}
 			BOS_finish_civil_war_recovery_effect = yes
 			add_ideas = BOS_srpska_supremacy_idea
+			unlock_decision_category_tooltip = BOS_srpska_supremacy_measures
 			set_temp_variable = { party_index = 18 }
 			set_temp_variable = { party_popularity_increase = 0.06 }
 			set_temp_variable = { temp_outlook_increase = 0.08 }
@@ -1724,43 +1564,20 @@ country_event = {
 			set_temp_variable = { add_col_one = 14 }
 			add_coalition_members_effect = yes
 		}
-		ai_chance = {
-			base = 60
-		}
+		ai_chance = { base = 60 }
 	}
 
 	option = {
 		name = BOS_political.20.b
-		trigger = { original_tag = HZG }
+		trigger = {
+			original_tag = HZG
+			NOT = { has_cosmetic_tag = BOS_gov_old_name }
+		}
 		log = "[GetDateText]: [This.GetName]: BOS_political.20.b executed"
 		news_event = news.86
 		BOS = {
 			hidden_effect = {
-				if = {
-					limit = { 128 = { is_owned_by = ROOT } }
-					transfer_state = 128
-				}
-				change_tag_from = ROOT
-				if = {
-					limit = { 129 = { is_owned_by = ROOT } }
-					transfer_state = 129
-				}
-				if = {
-					limit = { 1052 = { is_owned_by = ROOT } }
-					transfer_state = 1052
-				}
-				if = {
-					limit = { 1051 = { is_owned_by = ROOT } }
-					transfer_state = 1051
-				}
-				if = {
-					limit = { 1054 = { is_owned_by = ROOT } }
-					transfer_state = 1054
-				}
-				if = {
-					limit = { 1053 = { is_owned_by = ROOT } }
-					transfer_state = 1053
-				}
+				BOS_absorb_winning_breakaway_effect = yes
 				set_country_flag = BOS_loser
 				unlock_national_focus = BOS_house_of_representatives
 				unlock_national_focus = BOS_elections_political
@@ -1778,9 +1595,38 @@ country_event = {
 			set_temp_variable = { rul_party_temp = 20 }
 			change_ruling_party_effect = yes
 		}
-		ai_chance = {
-			base = 60
+		ai_chance = { base = 60 }
+	}
+
+	# Islamic takeover route: HZG is the old parliamentary government, not the Croat secession
+	option = {
+		name = BOS_political.20.e
+		trigger = {
+			original_tag = HZG
+			has_cosmetic_tag = BOS_gov_old_name
 		}
+		log = "[GetDateText]: [This.GetName]: BOS_political.20.e executed"
+		news_event = news.86
+		BOS = {
+			hidden_effect = {
+				BOS_absorb_winning_breakaway_effect = yes
+				unlock_national_focus = BOS_house_of_representatives
+				unlock_national_focus = BOS_elections_political
+				unlock_national_focus = BOS_the_federation
+				remove_ideas = BOS_rotating_presidency
+				remove_ideas = BOS_rotating_presidency2
+				remove_ideas = BOS_rotating_presidency3
+				drop_cosmetic_tag = yes
+			}
+			BOS_finish_civil_war_recovery_effect = yes
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.06 }
+			set_temp_variable = { temp_outlook_increase = 0.08 }
+			change_relative_party_popularity = yes
+			set_temp_variable = { rul_party_temp = 0 }
+			change_ruling_party_effect = yes
+		}
+		ai_chance = { base = 60 }
 	}
 
 	option = {
@@ -1817,11 +1663,8 @@ country_event = {
 			}
 			BOS_finish_civil_war_recovery_effect = yes
 		}
-		ai_chance = {
-			base = 60
-		}
+		ai_chance = { base = 60 }
 	}
-
 }
 
 # Defence with euro
@@ -1878,7 +1721,6 @@ country_event = {
 			modifier = { factor = 0.25 sender_influence_higher_30 = yes }
 		}
 	}
-
 }
 
 ###union with serbia
@@ -1926,7 +1768,6 @@ country_event = {
 			modifier = { factor = 0.25 sender_influence_higher_30 = yes }
 		}
 	}
-
 }
 
 # EU candidate status granted
@@ -1943,11 +1784,8 @@ country_event = {
 		name = BOS_political.24.a
 		log = "[GetDateText]: [This.GetName]: BOS_political.24.a executed"
 		add_stability = 0.02
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 
 # Republika Srpska obstructs accession negotiations
@@ -1967,8 +1805,8 @@ country_event = {
 		ai_chance = {
 			base = 60
 			modifier = {
-				factor = 0
-				has_political_power < 50
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -1977,11 +1815,8 @@ country_event = {
 		name = BOS_political.25.b
 		log = "[GetDateText]: [This.GetName]: BOS_political.25.b executed"
 		BOS_srpska_attitude_decrease_effect = yes
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 40 }
 	}
-
 }
 
 # Corruption scandal
@@ -2013,8 +1848,8 @@ country_event = {
 		ai_chance = {
 			base = 60
 			modifier = {
-				factor = 0
-				has_political_power < 50
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2024,11 +1859,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_political.26.b executed"
 		add_stability = -0.05
 		BOS_corruption_scandal_weakest_hit_effect = yes
-		ai_chance = {
-			base = 40
-		}
+		ai_chance = { base = 40 }
 	}
-
 }
 
 # Republika Srpska autonomy crisis erupts
@@ -2049,11 +1881,8 @@ country_event = {
 			days = 180
 		}
 		custom_effect_tooltip = BOS_dayton_pressure_decisions_available_tt
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 
 # Autonomy crisis expires unresolved
@@ -2071,11 +1900,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_political.28.a executed"
 		BOS_srpska_attitude_decrease_effect = yes
 		add_stability = -0.05
-		ai_chance = {
-			base = 30
-		}
+		ai_chance = { base = 30 }
 	}
-
 }
 
 # Diaspora investment drive concludes
@@ -2095,7 +1921,6 @@ country_event = {
 		add_stability = 0.02
 		ai_chance = { base = 30 }
 	}
-
 }
 
 # Karadzic arrest, reaction in Sarajevo
@@ -2122,7 +1947,6 @@ country_event = {
 		BOS_srpska_attitude_decrease_effect = yes
 		ai_chance = { base = 30 }
 	}
-
 }
 
 # Mladic arrest, reaction in Sarajevo
@@ -2149,7 +1973,6 @@ country_event = {
 		BOS_srpska_attitude_decrease_effect = yes
 		ai_chance = { base = 30 }
 	}
-
 }
 
 # The Sejdic-Finci ruling
@@ -2180,7 +2003,6 @@ country_event = {
 		set_country_flag = BOS_sejdic_finci_ruling
 		ai_chance = { base = 30 }
 	}
-
 }
 
 # SFOR hands over to EUFOR
@@ -2188,7 +2010,7 @@ country_event = {
 	id = BOS_political.33
 	title = BOS_political.33.t
 	desc = BOS_political.33.d
-	picture = GFX_nato_summit_2
+	picture = GFX_event_BOS_european_flag
 	is_triggered_only = yes
 
 	trigger = {
@@ -2204,9 +2026,12 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_political.33.a executed"
 		remove_ideas = BOS_SFOR
 		add_ideas = BOS_EUFOR
+		if = {
+			limit = { has_completed_focus = BOS_bosnian_revanchism }
+			unlock_decision_category_tooltip = BOS_peacekeeper_oversight
+		}
 		ai_chance = { base = 30 }
 	}
-
 }
 
 # The 2013 census
@@ -2229,7 +2054,6 @@ country_event = {
 		BOS_srpska_attitude_decrease_effect = yes
 		ai_chance = { base = 30 }
 	}
-
 }
 
 # Tuzla protests and plenums
@@ -2261,8 +2085,8 @@ country_event = {
 		ai_chance = {
 			base = 60
 			modifier = {
-				factor = 0
-				has_political_power < 50
+				factor = 0.25
+				has_active_mission = bankruptcy_incoming_collapse
 			}
 		}
 	}
@@ -2274,7 +2098,6 @@ country_event = {
 		BOS_bosniak_stability_decrease_effect = yes
 		ai_chance = { base = 40 }
 	}
-
 }
 
 # EU membership application
@@ -2303,7 +2126,6 @@ country_event = {
 		europeanism_change = yes
 		ai_chance = { base = 30 }
 	}
-
 }
 
 # High Representative bans genocide denial
@@ -2323,9 +2145,7 @@ country_event = {
 		has_idea = BOS_milorad_dodik_idea
 	}
 
-	immediate = {
-		hidden_effect = { set_country_flag = BOS_genocide_denial_banned }
-	}
+	immediate = { hidden_effect = { set_country_flag = BOS_genocide_denial_banned } }
 
 	option = {
 		name = BOS_political.37.a
@@ -2342,7 +2162,6 @@ country_event = {
 		BOS_bosniak_attitude_decrease_effect = yes
 		ai_chance = { base = 40 }
 	}
-
 }
 
 # Republika Srpska withdrawal laws
@@ -2384,14 +2203,13 @@ country_event = {
 		BOS_srpska_attitude_decrease_effect = yes
 		ai_chance = { base = 40 }
 	}
-
 }
 
 # AI fallback: candidate status is historically due
 country_event = {
 	id = BOS_political.39
-	hidden = yes
 	is_triggered_only = yes
+	hidden = yes
 
 	trigger = {
 		original_tag = BOS
@@ -2409,7 +2227,6 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: BOS_political.39 executed"
 		set_country_flag = BOS_eu_candidacy_overdue
 	}
-
 }
 
 # --- Added content: political depth, economic and foreign-influence events ---
@@ -2505,9 +2322,7 @@ country_event = {
 		NOT = { has_country_flag = BOS_saa_signed }
 	}
 
-	immediate = {
-		hidden_effect = { set_country_flag = BOS_saa_signed }
-	}
+	immediate = { hidden_effect = { set_country_flag = BOS_saa_signed } }
 
 	option = {
 		name = BOS_political.42.a
@@ -2666,9 +2481,7 @@ country_event = {
 		NOT = { has_country_flag = civil_war_bosnia }
 	}
 
-	immediate = {
-		set_country_flag = BOS_mostar_without_government
-	}
+	immediate = { set_country_flag = BOS_mostar_without_government }
 
 	option = {
 		name = BOS_political.47.a
@@ -2748,9 +2561,7 @@ country_event = {
 		NOT = { has_country_flag = civil_war_bosnia }
 	}
 
-	immediate = {
-		add_ideas = BOS_croat_grievance
-	}
+	immediate = { add_ideas = BOS_croat_grievance }
 
 	option = {
 		name = BOS_political.49.a
@@ -2845,7 +2656,7 @@ country_event = {
 	id = BOS_political.52
 	title = BOS_political.52.t
 	desc = BOS_political.52.d
-	picture = GFX_muj_bosnia_news_event
+	picture = GFX_event_BOS_schmidt
 	is_triggered_only = yes
 
 	trigger = {
@@ -2872,7 +2683,7 @@ country_event = {
 	id = BOS_political.53
 	title = BOS_political.53.t
 	desc = BOS_political.53.d
-	picture = GFX_bosnia_news_car
+	picture = GFX_event_BOS_schmidt
 	is_triggered_only = yes
 
 	trigger = {
@@ -2997,8 +2808,8 @@ country_event = {
 # AI fallback: EU accession negotiations are historically due (21 March 2024)
 country_event = {
 	id = BOS_political.56
-	hidden = yes
 	is_triggered_only = yes
+	hidden = yes
 
 	trigger = {
 		original_tag = BOS
@@ -3033,9 +2844,7 @@ country_event = {
 		has_country_leader = { name = "Milorad Dodik" ruling_only = yes }
 	}
 
-	immediate = {
-		set_country_flag = BOS_dodik_banned
-	}
+	immediate = { set_country_flag = BOS_dodik_banned }
 
 	option = {
 		name = BOS_political.57.a
@@ -3104,7 +2913,7 @@ country_event = {
 	option = {
 		name = BOS_political.58.a
 		log = "[GetDateText]: [This.GetName]: BOS_political.58.a executed"
-		1052 = { remove_building = { type = industrial_complex level = 1 } }
+		1052 = { if = { limit = { industrial_complex > 0 } remove_building = { type = industrial_complex level = 1 } } }
 		add_ideas = BOS_mostar_industrial_decline
 		add_stability = -0.02
 		set_temp_variable = { temp_trust_change = -5 }
@@ -3124,7 +2933,7 @@ country_event = {
 				BOS_croat_trust_add_effect = yes
 			}
 			65 = {
-				1052 = { remove_building = { type = industrial_complex level = 1 } }
+				1052 = { if = { limit = { industrial_complex > 0 } remove_building = { type = industrial_complex level = 1 } } }
 				add_ideas = BOS_mostar_industrial_decline
 				add_stability = -0.03
 				set_temp_variable = { temp_trust_change = -5 }
@@ -3158,7 +2967,7 @@ country_event = {
 	option = {
 		name = BOS_political.59.a
 		log = "[GetDateText]: [This.GetName]: BOS_political.59.a executed"
-		128 = { remove_building = { type = industrial_complex level = 1 } }
+		128 = { if = { limit = { industrial_complex > 0 } remove_building = { type = industrial_complex level = 1 } } }
 		add_ideas = BOS_zenica_industrial_decline
 		add_stability = -0.02
 		set_temp_variable = { temp_trust_change = -4 }
@@ -3178,7 +2987,7 @@ country_event = {
 				BOS_bosniak_trust_add_effect = yes
 			}
 			55 = {
-				128 = { remove_building = { type = industrial_complex level = 1 } }
+				128 = { if = { limit = { industrial_complex > 0 } remove_building = { type = industrial_complex level = 1 } } }
 				add_ideas = BOS_zenica_industrial_decline
 				add_stability = -0.03
 				set_temp_variable = { temp_trust_change = -4 }
@@ -3216,7 +3025,6 @@ country_event = {
 		set_temp_variable = { treasury_change = -2 }
 		modify_treasury_effect = yes
 		set_temp_variable = { modify_europeanism = 0.02 }
-		set_temp_variable = { modify_europeanism_target = THIS.id }
 		europeanism_change = yes
 		if = {
 			limit = { country_exists = CHI }
@@ -3263,9 +3071,7 @@ country_event = {
 		NOT = { has_country_flag = civil_war_bosnia }
 	}
 
-	immediate = {
-		set_country_flag = BOS_visa_liberalized
-	}
+	immediate = { set_country_flag = BOS_visa_liberalized }
 
 	option = {
 		name = BOS_political.61.a
@@ -3299,9 +3105,7 @@ country_event = {
 		NOT = { has_country_flag = civil_war_bosnia }
 	}
 
-	immediate = {
-		add_ideas = BOS_government_formation_paralysis
-	}
+	immediate = { add_ideas = BOS_government_formation_paralysis }
 
 	option = {
 		name = BOS_political.62.a
@@ -3403,9 +3207,7 @@ country_event = {
 		has_country_flag = BOS_mostar_without_government
 	}
 
-	immediate = {
-		clr_country_flag = BOS_mostar_without_government
-	}
+	immediate = { clr_country_flag = BOS_mostar_without_government }
 
 	option = {
 		name = BOS_political.65.a
@@ -3441,9 +3243,7 @@ country_event = {
 		has_country_flag = BOS_dodik_banned
 	}
 
-	immediate = {
-		add_ideas = BOS_civil_society_crackdown
-	}
+	immediate = { add_ideas = BOS_civil_society_crackdown }
 
 	option = {
 		name = BOS_political.66.a
@@ -3581,9 +3381,7 @@ country_event = {
 		NOT = { has_country_flag = civil_war_bosnia }
 	}
 
-	immediate = {
-		set_country_flag = BOS_ljubic_ruling
-	}
+	immediate = { set_country_flag = BOS_ljubic_ruling }
 
 	option = {
 		name = BOS_political.69.a
@@ -3765,7 +3563,7 @@ country_event = {
 	id = BOS_political.74
 	title = BOS_political.74.t
 	desc = BOS_political.74.d
-	picture = GFX_bosnian_protest
+	picture = GFX_event_BOS_baby_death
 	is_triggered_only = yes
 
 	trigger = {
@@ -3923,9 +3721,7 @@ country_event = {
 		NOT = { has_country_flag = civil_war_bosnia }
 	}
 
-	immediate = {
-		add_ideas = BOS_stanari_plant_online
-	}
+	immediate = { add_ideas = BOS_stanari_plant_online }
 
 	option = {
 		name = BOS_political.76.a
@@ -3988,9 +3784,12 @@ country_event = {
 
 	immediate = {
 		1052 = {
-			damage_building = {
-				type = infrastructure
-				damage = 0.3
+			if = {
+				limit = { infrastructure > 0 }
+				damage_building = {
+					type = infrastructure
+					damage = 0.3
+				}
 			}
 		}
 		add_stability = -0.02
@@ -4195,11 +3994,12 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	# stand down if another path already started the war or released RSK
+	# stand down if another path already started the war or released RSK, or Bosnia holds no Srpska state to release
 	trigger = {
 		original_tag = BOS
 		NOT = { has_country_flag = civil_war_bosnia }
 		NOT = { country_exists = RSK }
+		any_owned_state = { is_core_of = RSK }
 	}
 
 	option = {
@@ -4355,7 +4155,6 @@ country_event = {
 			}
 		}
 	}
-
 }
 
 # The Croat secession crisis expired unresolved and open war erupts
@@ -4367,11 +4166,12 @@ country_event = {
 	is_triggered_only = yes
 	fire_only_once = yes
 
-	# stand down if another path already started the war or released HZG
+	# stand down if another path already started the war or released HZG, or Bosnia holds no Herzegovina state to release
 	trigger = {
 		original_tag = BOS
 		NOT = { has_country_flag = civil_war_bosnia }
 		NOT = { country_exists = HZG }
+		any_owned_state = { is_core_of = HZG }
 	}
 
 	option = {
@@ -4388,7 +4188,6 @@ country_event = {
 		}
 		1052 = { set_demilitarized_zone = no }
 	}
-
 }
 
 # Republika Srpska moves to secede unless Sarajevo defuses the crisis
@@ -4407,7 +4206,6 @@ country_event = {
 		custom_effect_tooltip = BOS_dayton_pressure_decisions_available_tt
 		ai_chance = { base = 1 }
 	}
-
 }
 
 # Herceg-Bosna threatens to break away unless Croat grievances are met
@@ -4426,7 +4224,6 @@ country_event = {
 		custom_effect_tooltip = BOS_croat_deescalation_hint_tt
 		ai_chance = { base = 1 }
 	}
-
 }
 
 # A partner community feels shut out as the presidency rotation stalls
@@ -4457,7 +4254,40 @@ country_event = {
 		}
 		ai_chance = { base = 1 }
 	}
+}
 
+# An EU member decides whether to invest in Bosnian infrastructure
+country_event = {
+	id = BOS_political.85
+	title = BOS_political.85.t
+	desc = BOS_political.85.d
+	picture = GFX_european_union_flag
+	is_triggered_only = yes
+
+	trigger = {
+		has_idea = EU_member
+		FROM = {
+			original_tag = BOS
+			any_owned_state = { infrastructure < 5 }
+		}
+	}
+
+	option = {
+		name = BOS_political.85.a
+		log = "[GetDateText]: [This.GetName]: BOS_political.85.a executed"
+		FROM = { invest_in_EU_single_market_infra = yes }
+		ai_chance = {
+			base = 60
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0.5 has_opinion = { target = FROM value < 0 } }
+		}
+	}
+
+	option = {
+		name = BOS_political.85.b
+		ai_chance = { base = 40 }
+	}
 }
 
 # Srpska-led government presses to approve a Chinese-financed Republika Srpska project
@@ -4575,7 +4405,6 @@ country_event = {
 
 	option = {
 		name = BOS_events.64.a
-		log = "[GetDateText]: [This.GetName]: BOS_events.64.a executed"
 		ai_chance = { base = 1 }
 	}
 }
@@ -4592,7 +4421,6 @@ country_event = {
 
 	option = {
 		name = BOS_events.65.a
-		log = "[GetDateText]: [This.GetName]: BOS_events.65.a executed"
 		ai_chance = { base = 1 }
 	}
 }

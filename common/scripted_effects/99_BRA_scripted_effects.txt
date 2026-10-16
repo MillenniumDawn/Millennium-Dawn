@@ -203,19 +203,29 @@ BRA_calculate_amazon_system = {
 
 	# Calculate Wild Percentage
 	set_variable = { var = BRA_wild_acreage_ratio value = BRA_acres_wild }
-	divide_variable = { var = BRA_wild_acreage_ratio value = BRA_acres_current }
-
-	# Calculate Conserved Percentage (Used for Display only)
 	set_variable = { var = BRA_conserved_acreage_ratio value = BRA_acres_conserved }
-	divide_variable = { var = BRA_conserved_acreage_ratio value = BRA_acres_current }
+	if = {
+		limit = { check_variable = { BRA_acres_current > 0 } }
+		divide_variable = { var = BRA_wild_acreage_ratio value = BRA_acres_current }
+		divide_variable = { var = BRA_conserved_acreage_ratio value = BRA_acres_current }
+	}
+	else = {
+		set_variable = { var = BRA_wild_acreage_ratio value = 0 }
+		set_variable = { var = BRA_conserved_acreage_ratio value = 0 }
+	}
 
 	# Calculate Target Ratio
 	set_variable = { var = BRA_current_target_ratio value = BRA_acres_current }
-	divide_variable = { var = BRA_current_target_ratio value = BRA_acres_target }
-
-	# Calculate Penalties
 	set_temp_variable = { var = temp_penalties value = BRA_acres_current }
-	divide_temp_variable = { var = temp_penalties value = BRA_acres_target }
+	if = {
+		limit = { check_variable = { BRA_acres_target > 0 } }
+		divide_variable = { var = BRA_current_target_ratio value = BRA_acres_target }
+		divide_temp_variable = { var = temp_penalties value = BRA_acres_target }
+	}
+	else = {
+		set_variable = { var = BRA_current_target_ratio value = 0 }
+		set_temp_variable = { var = temp_penalties value = 0 }
+	}
 
 	# Wild Acreage Causes the Most Penalties
 	set_temp_variable = { temp_ratio_penalties = BRA_wild_acreage_ratio }

@@ -1,8 +1,9 @@
 # Bug Patterns
 
-Deduplicated catalog of known MD/HOI4 bug patterns. Two sections: **Scan patterns** are greppable signatures for codebase sweeps (`/fix-issue` idle scans); **Adversarial questions** are what-could-go-wrong checks for reviewing a diff (`/adversarial-review`, `/audit`). Reviewers apply both sections.
+Scan patterns are greppable signatures for codebase sweeps. Adversarial questions are what-could-go-wrong checks for a diff. Reviewers apply both.
 
-Plus every pattern in `.claude/rules/general-rules.md` § Scripting Patterns — always loaded, not repeated here.
+Also read [Scripting Edge Cases](scripting-edge-cases.md) and
+[Data Structures](hoi4-data-structures.md) for scope, state, and trigger semantics.
 
 ## Scan patterns
 
@@ -24,6 +25,8 @@ Plus every pattern in `.claude/rules/general-rules.md` § Scripting Patterns —
 - Stacked multipliers producing near-zero denominators (clamp before division)
 - `add_building_construction` for `naval_base` missing `province`
 - Scripted trigger defined twice in the same file (second definition silently overwrites the first)
+- Merge-conflict markers left in a file
+- Defines with names or namespaces absent from vanilla's `00_defines.lua`; verify before reuse
 - New subideology parties missing registration in `common/scripted_localisation/00_MD_politicsview_scripted_localisation.txt`
 
 ## Adversarial questions
@@ -61,6 +64,7 @@ Ask these systematically against every changed block. If the answer is "no, it's
 
 - Permanent effects applied directly to another nation (not via event): target player has no agency. Includes `add_timed_idea` to a tag, force-joining factions, etc.
 - `will_lead_to_war_with = TAG` without an actual wargoal granted in the same `completion_reward`: the tooltip lies.
+- Focus that sends an event (or chained events) declaring war at the owner's scope needs `will_lead_to_war_with` too, even with no direct wargoal in `completion_reward` (checked by `check_common_mistakes.py`; wargoal grants count as demands).
 
 **GUI & Script-Glue Edge Cases**
 

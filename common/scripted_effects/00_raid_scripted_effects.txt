@@ -23,30 +23,41 @@ calculate_aa_defense_value = {
 	if = { limit = { check_variable = { aa_defense = 0 } } add_to_temp_variable = { aa_defense = 1 } }
 }
 
-# Composes aa_defense and applies it as the plane-loss multiplier.
+# Composes aa_defense and applies it, capped at 4, as the plane-loss multiplier.
 # Used in actor_effects after setting raid_planes_lost.
 calculate_raid_aa_defense = {
 	calculate_aa_defense_value = yes
-	multiply_temp_variable = { raid_planes_lost = aa_defense }
+	set_temp_variable = { raid_planes_lost = { value = aa_defense  min = 4  multiply = raid_planes_lost } }
 }
 
-# Clamps, rounds, applies raid_damage_units, and shows the plane-loss tooltip.
-# Call after all war/non-war loss multipliers have been applied.
+# Applies losses as a share of the assigned wing, capped at half.
+# Raid scope cannot read the wing size, so the standard 50-plane wing is the baseline.
 finalize_raid_plane_losses = {
 	clamp_temp_variable = {
 		var = raid_planes_lost
 		min = 0
 	}
 	round_temp_variable = raid_planes_lost
+	set_temp_variable = { raid_plane_loss_ratio = { value = raid_planes_lost  divide = 50  clamp = { min = 0 max = 0.5 } } }
 	hidden_effect = {
 		raid_damage_units = {
-			plane_loss = raid_planes_lost
-			ratio = no
+			plane_loss = raid_plane_loss_ratio
+			ratio = yes
 		}
 	}
 	custom_effect_tooltip = {
-		localization_key = plane_raid_losses_tt
-		LOSSES = [?raid_planes_lost]
+		localization_key = plane_raid_losses_ratio_tt
+		LOSSES = [?raid_plane_loss_ratio]
+	}
+}
+
+apply_discounted_raid_pp_cost = {
+	var:actor_country = {
+		if = {
+			limit = { NOT = { has_war_with = var:ROOT.victim_country } }
+			set_temp_variable = { adjusted_raid_pp_loss = { value = PREV.raid_pp_loss  multiply = { value = 1  add = modifier@raid_cost_factor } } }
+			add_political_power = adjusted_raid_pp_loss
+		}
 	}
 }
 
@@ -118,14 +129,7 @@ apply_raid_failure_losses = {
 		multiply_temp_variable = { raid_planes_lost = random_chance_on_dead_planes }
 	}
 	finalize_raid_plane_losses = yes
-	var:actor_country = {
-		if = {
-			limit = {
-				NOT = { has_war_with = var:ROOT.victim_country }
-			}
-			add_political_power = PREV.raid_pp_loss
-		}
-	}
+	apply_discounted_raid_pp_cost = yes
 }
 
 apply_raid_limited_success_losses = {
@@ -150,14 +154,7 @@ apply_raid_limited_success_losses = {
 		multiply_temp_variable = { raid_planes_lost = random_chance_on_dead_planes }
 	}
 	finalize_raid_plane_losses = yes
-	var:actor_country = {
-		if = {
-			limit = {
-				NOT = { has_war_with = var:ROOT.victim_country }
-			}
-			add_political_power = PREV.raid_pp_loss
-		}
-	}
+	apply_discounted_raid_pp_cost = yes
 }
 
 apply_raid_success_losses = {
@@ -183,14 +180,7 @@ apply_raid_success_losses = {
 		multiply_temp_variable = { raid_planes_lost = random_chance_on_dead_planes }
 	}
 	finalize_raid_plane_losses = yes
-	var:actor_country = {
-		if = {
-			limit = {
-				NOT = { has_war_with = var:ROOT.victim_country }
-			}
-			add_political_power = PREV.raid_pp_loss
-		}
-	}
+	apply_discounted_raid_pp_cost = yes
 }
 
 apply_raid_critical_success_losses = {
@@ -214,39 +204,42 @@ apply_raid_critical_success_losses = {
 		multiply_temp_variable = { raid_planes_lost = random_chance_on_dead_planes }
 	}
 	finalize_raid_plane_losses = yes
-	var:actor_country = {
-		if = {
-			limit = {
-				NOT = { has_war_with = var:ROOT.victim_country }
-			}
-			add_political_power = PREV.raid_pp_loss
-		}
-	}
+	apply_discounted_raid_pp_cost = yes
 }
 
 send_events_to_others = {
 	hidden_effect = {
-		every_country = {
-			limit = {
-				NOT = { original_tag = var:ROOT.target_country }
-				NOT = { original_tag = var:ROOT.hostile_country }
-			}
-			if = { limit = { is_in_faction_with = var:ROOT.target_country }
-				country_event = MD_raid.12
-			}
-			else_if = { limit = { is_neighbor_of = var:ROOT.target_country }
-				country_event = {
-					id = MD_raid.10
-					days = 1
+		for_each_loop = {
+			array = FROM.faction_members
+			value = raid_notification_recipient
+			var:raid_notification_recipient = {
+				if = {
+					limit = {
+						NOT = { tag = ROOT }
+						NOT = { original_tag = FROM }
+						NOT = { has_country_flag = disable_raid_notification }
+					}
+					country_event = MD_raid.12
 				}
 			}
-			else_if = {
-				limit = {
-					NOT = { has_country_flag = temp_flag_raids }
-				}
-				country_event = {
-					id = MD_raid.11
-					days = 1
+		}
+
+		for_each_loop = {
+			array = FROM.neighbors
+			value = raid_notification_recipient
+			var:raid_notification_recipient = {
+				if = {
+					limit = {
+						NOT = { tag = ROOT }
+						NOT = { original_tag = FROM }
+						NOT = { is_in_faction_with = FROM }
+						NOT = { has_country_flag = temp_flag_raids }
+						NOT = { has_country_flag = disable_raid_notification }
+					}
+					country_event = {
+						id = MD_raid.10
+						days = 1
+					}
 				}
 			}
 		}
@@ -333,6 +326,93 @@ apply_drone_swarm_damage = {
 		add_dynamic_modifier = {
 			modifier = sucide_drone_swarms
 			days = 10
+		}
+	}
+}
+
+# Specific Raid Strike Success
+production_strike_success_damage = {
+	if = { limit = { arms_factory > 0 }
+		meta_effect = {
+			text = {
+				damage_building = {
+					type = arms_factory
+					damage = [DAM]
+				}
+			}
+			DAM = "[?building_damage_by_missile]"
+		}
+	}
+	if = { limit = { dockyard > 0 }
+		meta_effect = {
+			text = {
+				damage_building = {
+					type = dockyard
+					damage = [DAM]
+				}
+			}
+			DAM = "[?building_damage_by_missile]"
+		}
+	}
+	if = { limit = { industrial_complex > 0 }
+		meta_effect = {
+			text = {
+				damage_building = {
+					type = industrial_complex
+					damage = [DAM]
+				}
+			}
+			DAM = "[?building_damage_by_missile]"
+		}
+	}
+	if = { limit = { offices > 0 }
+		meta_effect = {
+			text = {
+				damage_building = {
+					type = offices
+					damage = [DAM]
+				}
+			}
+			DAM = "[?building_damage_by_missile]"
+		}
+	}
+	if = { limit = { agriculture_district > 0 }
+		meta_effect = {
+			text = {
+				damage_building = {
+					type = agriculture_district
+					damage = [DAM]
+				}
+			}
+			DAM = "[?building_damage_by_missile]"
+		}
+	}
+}
+
+ai_nuclear_warning_monthly = {
+	if = {
+		limit = {
+			has_war = yes
+			longest_war_length > 2
+			surrender_progress > 0.5
+			has_idea = full_first_use
+			NOT = { has_country_flag = has_been_nuked }
+		}
+		every_enemy_country = {
+			limit = {
+				NOT = { has_country_flag = nuclear_warning_from@ROOT }
+			}
+			set_country_flag = {
+				flag = nuclear_warning_from@ROOT
+				days = 180
+				value = 1
+			}
+			set_country_flag = {
+				flag = nuclear_warning_grace_from@ROOT
+				days = 7
+				value = 1
+			}
+			country_event = MD_raid.18
 		}
 	}
 }

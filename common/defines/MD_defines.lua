@@ -52,9 +52,13 @@
 	NDefines.NDiplomacy.REVOKE_GUARANTEE_COST = 30
 	NDefines.NDiplomacy.OPINION_PER_VOLUNTEER = 15
 	NDefines.NDiplomacy.MAX_OPINION_FROM_VOLUNTEERS = 50
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 3
-	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 20
 	NDefines.NDiplomacy.MASTER_BUILD_AUTONOMY_FACTOR = -0.5  -- was -0.7
+
+	--License AI: Modifiers for license
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE = 5 -- 2 is the default value
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_PUPPET_BASE = 5 -- 15 is the default value
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_TECH_DIFFERENCE_BASE = 30
+	NDefines.NDiplomacy.LICENSE_ACCEPTANCE_OPINION_FACTOR = 0.35 -- 0.4 is the default value
 
 	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_BASE = 0  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
 	NDefines.NDiplomacy.LL_TO_OVERLORD_AUTONOMY_DAILY_FACTOR = 0.05  -- If puppet lend leases equipment to overlord of at least same tech level as they have, they gain autonomy
@@ -88,6 +92,7 @@
 	NDefines.NDiplomacy.FACTION_LEADERSHIP_CHANGE_FACTORY_WEIGHT = 2			-- Importance of factory count when determining how close a faction member is to being able to assume leadership.
 
 	-- Peace related defines
+	NDefines.NDiplomacy.PEACE_SCORE_DISTRIBUTION = { 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2, 0.2 }
 	NDefines.NDiplomacy.BASE_PEACE_PUPPET_FACTOR = 100							-- (100 in vanilla) Base factor for puppet in %.
 	NDefines.NDiplomacy.BASE_PEACE_LIBERATE_FACTOR = 100						-- (100 in vanilla) Base factor for liberate in %.
 	NDefines.NDiplomacy.BASE_PEACE_TAKE_UNCONTROLLED_STATE_FACTOR = 10.0		-- (10.0 in vanilla) Base factor for taking state you do not control
@@ -146,8 +151,8 @@
 
 	-- NMarket Related Defines
 	NDefines.NProduction.CIC_BANK_SPEED_BOOST_FACTOR = 0 -- 0.25
-	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.85 -- 2.0
-	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 40 -- 30
+	NDefines.NMarket.IC_TO_CIC_FACTOR = 0.3 -- 2.0
+	NDefines.NMarket.PURCHASE_CONTRACT_DELIVERY_TOTAL_DAYS = 30 -- 30
 	NDefines.NMarket.MAX_CIV_FACTORIES_PER_CONTRACT = 1 -- 15
 	NDefines.NMarket.LOW_PRICE_LEVEL_FACTOR = 0.90 -- 0.75
 	NDefines.NMarket.HIGH_PRICE_LEVEL_FACTOR = 1.10 -- 1.25
@@ -276,7 +281,7 @@
 	NDefines.NBuildings.RADAR_RANGE_MAX = 220
 	NDefines.NBuildings.RADAR_INTEL_EFFECT = 60 -- 40
 	NDefines.NBuildings.BASE_FACTORY_REPAIR = 0.25
-	NDefines.NBuildings.MAX_SHARED_SLOTS = 56
+	NDefines.NBuildings.MAX_SHARED_SLOTS = 80
 	NDefines.NBuildings.INFRASTRUCTURE_RESOURCE_BONUS = 0.05	--upped from 0.02, vanilla 0.2
 	NDefines.NBuildings.ANTI_AIR_SUPERIORITY_MULT = 3.5 -- was 4.0 --Fucked with this to see
 	-- NOTE: The below piercing values are granularized to make piercing less punishing for nations with no real tank access
@@ -308,8 +313,8 @@
 	NDefines.NMilitary.ARMOR_VS_AVERAGE = 0.4 -- 0.4 Reset this back up to try and improve tanks a little bit, keeping below to make pen better
 	NDefines.NMilitary.PEN_VS_AVERAGE = 0.425 -- 0.4 Increase pen avaiable to units, so that infantry has a better chance against armor
 
-	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 18 -- Vanilla 24
-	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 15 --24
+	NDefines.NMilitary.CORPS_COMMANDER_DIVISIONS_CAP = 24 -- Vanilla 24
+	NDefines.NMilitary.FIELD_MARSHAL_DIVISIONS_CAP = 20 --24
 	NDefines.NMilitary.FIELD_MARSHAL_ARMIES_CAP = 4 -- Vanilla 5
 	NDefines.NMilitary.BASE_DIVISION_SUPPORT_SLOT_COST = 5 -- 10
 	NDefines.NMilitary.COMBAT_MINIMUM_TIME = 6 -- 4
@@ -347,7 +352,7 @@
 	NDefines.NMilitary.UNIT_DIGIN_CAP = 10 -- 5
 	NDefines.NMilitary.EXPERIENCE_COMBAT_FACTOR = 0.05 -- 0.25
 	NDefines.NMilitary.EXPERIENCE_LOSS_FACTOR = 0.45 -- 1.00
-	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.7 -- 0.7
+	NDefines.NMilitary.EQUIPMENT_COMBAT_LOSS_FACTOR = 0.665 -- 0.7
 	NDefines.NMilitary.SUPPLY_GRACE = 96 -- 72
 	NDefines.NMilitary.MAX_OUT_OF_SUPPLY_DAYS = 45 -- 30
 	NDefines.NMilitary.OUT_OF_SUPPLY_SPEED = -0.6	-- -0.8
@@ -453,7 +458,7 @@
 	NDefines.NAir.AIR_WING_MAX_STATS_SPEED = 4000 -- 800
 	NDefines.NAir.AIR_WING_MAX_STATS_BOMBING = 999 -- 100
 	NDefines.NAir.AIR_WING_AVERAGE_SIZE = 30 -- 100 vanilla; was 50. Reduced to reflect MD wing sizes (land=50, cv=10, strat=25). Used for air volunteer calculations.
-	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 20 -- 2
+	NDefines.NAir.AIR_WING_BOMB_DAMAGE_FACTOR = 10 -- 2
 	NDefines.NAir.AI_ALLOWED_PLANES_KEPT_IN_RESERVE = 0.05 -- 0.10 vanilla; was 0.15 — too many carrier planes held back from deployment
 	NDefines.NAir.BIGGEST_AGILITY_FACTOR_DIFF = 6 -- 2.5
 	NDefines.NAir.COMBAT_BETTER_AGILITY_DAMAGE_REDUCTION = 0.70 -- 0.3
@@ -544,6 +549,8 @@
 		0,0, -- NUCLEAR
 		0,0, -- SAM
 	}
+	-- Vanilla 0.60 demands 1.5x the floor in empty seas the AI never patrols.
+	NDefines.NNavy.DOMINANCE_CONTROLLED_THRESHOLD_RATIO = 0.20
 	NDefines.NNavy.NAVAL_INVASION_PLAN_CAP = 4
 	NDefines.NNavy.COMBAT_MAX_GROUPS = 1 -- 1
 	NDefines.NNavy.BEST_CAPITALS_TO_CARRIER_RATIO = 2 -- 1
@@ -729,7 +736,7 @@
 	NDefines.NNavy.CONVOY_LOSS_HISTORY_TIMEOUT_MONTHS = 3 -- 6; halve convoy loss history retention
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_MANPOWER_FACTOR = 0.01                        -- war score gained for every manpower killed when sinking a ship
 	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_SHIP_PRODUCTION_COST_FACTOR = 0.01   --0.04                       -- war score gained for every IC of the sunk ship
-	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 1.25  --10                       -- war score gained for every sunk convoy
+	NDefines.NNavy.WAR_SCORE_GAIN_FOR_SUNK_CONVOY = 0.75  --10                       -- war score gained for every sunk convoy
 
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_RANGE_FACTOR = 0.42 -- bonus factor applied to task force's range when underway replenishment is activated (e.g. 0.2 means +20%) -- 0.42 base game
 	NDefines.NNavy.UNDERWAY_REPLENISHMENT_CONVOY_COST_PER_FUEL = 0.42 -- Cost in convoys for underway replenishment multiplied by max daily fuel consumption (rounded up) -- 0.42 base game
@@ -796,6 +803,7 @@
 	NDefines.NAI.MIN_DELIVERED_TRADE_FRACTION = 0.6 -- 0.8
 	NDefines.NAI.MAX_VOLUNTEER_ARMY_FRACTION = 0.5			-- 0.25
 	NDefines.NAI.DEPLOY_MIN_EQUIPMENT_WAR_FACTOR = 0.90		-- vanilla
+	NDefines.NAI.PRODUCTION_EQUIPMENT_SURPLUS_FACTOR = 0.85	-- 0.8; spare stock the AI aims for, as a share of fielded equipment
 	NDefines.NAI.CALL_ALLY_BASE_DESIRE = 25					-- 20
 	NDefines.NAI.CALL_ALLY_DEMOCRATIC_DESIRE = 25			-- 50
 	NDefines.NAI.CALL_ALLY_FASCIST_DESIRE = 25				-- -10
@@ -970,7 +978,7 @@
 	NDefines.NAI.LAND_DEFENSE_MIN_FACTORIES_FOR_AIR_IMPORTANCE = 2 -- 5; even small nations value air defense
 	NDefines.NAI.MAX_AIR_REGIONS_TO_CARE_ABOUT = 7
 	NDefines.NAir.ACE_WING_SIZE = 24 -- 100; smaller wing size for ace bonus scaling (MD uses smaller wings)
-	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 20 -- 10; AI can restart more focuses after interruption
+	NDefines.NFocus.MAX_SAVED_FOCUS_PROGRESS = 30 -- 10; a month of focus progress banks while the slot sits empty
 	NDefines.NAI.AI_FRACTION_OF_FIGHTERS_RESERVED_FOR_INTERCEPTION = 0.10
 	NDefines.NAI.WANTED_LAND_PLANES_PER_DIVISION = 30
 	NDefines.NAI.BUILDING_TARGETS_BUILDING_PRIORITIES = {				-- buildings in order of priority when considering building targets strategies. First has the greatest priority, omitted has the lowest. NOTE: not all buildings are supported by building targets strategies.
@@ -1006,12 +1014,13 @@
 	NDefines.NRaids.MAX_TARGETS_TO_UPDATE_PER_FRAME = 25 -- 100
 
 	-- AI Research Stuff
+	-- See common/ai_focuses/README.md for more diligent information about the research weights
 	NDefines.NAI.RESEARCH_WEIGHT_TRUNCATION_THRESHOLD = 0.5 -- Reduced this from 0.75
 	NDefines.NAI.RESEARCH_DAYS_BETWEEN_WEIGHT_UPDATE = 20 -- 7
 	NDefines.NAI.MAX_AHEAD_RESEARCH_PENALTY = 4 -- 2 --Buffing to double so it penalizes more
 	NDefines.NAI.RESEARCH_BASE_DAYS = 350 -- 60
 	NDefines.NAI.RESEARCH_YEARS_BEHIND_FACTOR = 0.30 -- Try to stay on the cutting edge where possible
-	NDefines.NAI.RESEARCH_NEEDS_FACTOR = 0.05
+	NDefines.NAI.RESEARCH_NEEDS_FACTOR = 0.125 -- 0.05 before the ai_focuses weights were divided by 2.5
 	NDefines.NAI.RESEARCH_LENGTH_FACTOR = 2.5
 
 	-- AI Peace Conference
@@ -1100,6 +1109,9 @@
 	-- NIntel Defines
 	NDefines.NIntel.RADAR_INTEL_STACKING_FACTOR = 0.6							-- (Normaly 0.5) Used when multiple radars cover the same province
 	NDefines.NIntel.RECON_PLANE_INTEL_BASE = 0.024								-- (normaly 0.02) intel base amount for a strategic area per plane
+	NDefines.NIntel.INTEL_TO_SHOW_GRAND_DOCTRINE = { 0.3, 0.3, 0.3 } -- minimum value to show grand doctrine { army, navy, air }
+	NDefines.NIntel.INTEL_TO_SHOW_SUBDOCTRINES = { 0.5, 0.5, 0.5 } -- minimum value to show subdoctrines { army, navy, air }
+	NDefines.NIntel.INTEL_TO_SHOW_MASTERY = { 0.7, 0.7, 0.7 } -- minimum value to show mastery levels { army, navy, air }
 
 	-- NChracter defines
 	NDefines.NCharacter.OFFICER_CORP_ADVISOR_ENTRIES_IN_MENU = { "high_command", "theorist", "army_chief", "air_chief", "navy_chief", }
@@ -1150,7 +1162,7 @@
 		100, -- MINES SWEEPING
 		0, -- TRAIN
 		100, -- RESERVE_FLEET
-		200, -- NAVAL INVASION SUPPORT
+		100, -- NAVAL INVASION SUPPORT
 	}
 
 	NDefines.NIndustrialOrganisation.ASSIGN_DESIGN_TEAM_PP_COST_PER_DAY = 0.05					-- 0.1
@@ -1159,10 +1171,10 @@
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_FACTOR = 75 			-- 100
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_SIZE_UP_LEVEL_POW = 1.8			-- 1.8
 	NDefines.NIndustrialOrganisation.UNLOCKED_TRAITS_PER_SIZE_UP = 1			-- 1
-	NDefines.NIndustrialOrganisation.FUNDS_FOR_RESEARCH_COMPLETION_PER_RESEARCH_COST = 500			-- 500
+	NDefines.NIndustrialOrganisation.FUNDS_FOR_RESEARCH_COMPLETION_PER_RESEARCH_COST = 575			-- 500
 	NDefines.NIndustrialOrganisation.FUNDS_FOR_CREATING_EQUIPMENT_VARIANT = 0		-- 0
 	NDefines.NIndustrialOrganisation.FUNDS_FROM_MANUFACTURER_PER_IC_PER_DAY = 0.1		-- 0.1
-	NDefines.NIndustrialOrganisation.MAX_FUNDS_FROM_MANUFACTURER_PER_DAY = 100		-- 100
+	NDefines.NIndustrialOrganisation.MAX_FUNDS_FROM_MANUFACTURER_PER_DAY = 115		-- 100
 	NDefines.NIndustrialOrganisation.DESIGN_TEAM_RESEARCH_BONUS = 0.05				-- 0.05
 	NDefines.NIndustrialOrganisation.ENABLE_TASK_CAPACITY = true					-- false
 	NDefines.NIndustrialOrganisation.DEFAULT_INITIAL_TASK_CAPACITY = 5				-- 0
@@ -1196,8 +1208,35 @@
 	NDefines.NFactions.FACTION_INFLUENCE_INDUSTRIAL_CAPACITY_FACTOR = 0.65 --how much the country's industry affects its influence
 	NDefines.NFactions.FACTION_INFLUENCE_LEADER_BONUS = 250			-- How much influence we are giving a faction member for being the leader, vanilla 200
 	NDefines.NFactions.MAX_NUM_SHORT_TERM_GOALS = 2						-- Maximum number of short term goals a faction can have at any one time, vanilla 1
-	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 1						-- Maximum number of medium term goals a faction can have at any one time
-	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 1						-- Maximum number of long term goals a faction can have at any one time
+	NDefines.NFactions.MAX_NUM_MEDIUM_TERM_GOALS = 2						-- Maximum number of medium term goals a faction can have at any one time
+	NDefines.NFactions.MAX_NUM_LONG_TERM_GOALS = 2						-- Maximum number of long term goals a faction can have at any one time
 	NDefines.NFactions.FACTION_INITIATIVE_CHANGE_RULE_COST = 3 -- vanilla 1
+	NDefines.NFactions.FACTION_DOCTRINE_SHARING_UNLOCK_COST = 1               -- Cost of unlocking doctrine sharing for one folder
+	NDefines.NFactions.DOCTRINE_SHARING_BASE_MASTERY_GAIN_MONTHLY = 10        -- When doctrine sharing is enabled, this is the base amount of mastery gained monthly
+	NDefines.NFactions.DOCTRINE_SHARING_MONTHLY_MASTERY_GAIN_PER_COMMANDER = 2 -- When doctrine sharing is enabled, each theater commander increases the montly mastery gain by this much
 	NDefines.NFactions.FACTION_TAKE_OVER_RELUCTANCE_VERSUS_HUMAN_INFLUENCE = 2.5
 	NDefines.NFactions.FACTION_ASSIGN_SCIENTIST_COST = 75
+
+	NDefines.NDoctrines.DEFAULT_REWARD_MASTERY = 100.0                         -- How much mastery is required for unlocking a doctrine reward, if no override is set
+	NDefines.NDoctrines.BASE_MASTERY_GAIN_TARGET_MANPOWER = 100000.0           -- Beyond this amount of manpower contributing to mastery, mastery gain will start having diminishing returns (see doctrines documentation)
+	NDefines.NDoctrines.TRAINING_MASTERY_GAIN_FACTOR = 0.1                     -- How much training contributes to doctrine mastery relative to combat/missions
+	NDefines.NDoctrines.MAX_MONTHLY_MASTERY_GAIN = 40.0                        -- Monthly mastery gain will not exceed this value
+	NDefines.NDoctrines.MIN_MASTERY_GAIN_PER_DAY = 0.0                         -- If we have any mastery gain, it will be boosted to be at least this much per day (lower cap)
+	NDefines.NDoctrines.MASTERY_BAR_ANIMATION_SPEED_PER_DAILY_MASTERY = 4.0    -- Multiplier of how fast the mastery bar animates based on daily mastery gain
+	NDefines.NDoctrines.MASTERY_BAR_MAX_ANIMATION_SPEED = 40.0                 -- Max speed of the mastery bar animation
+	NDefines.NDoctrines.MASTERY_BANK_CONVERSION_RATE = 0.25                    -- The rate at which mastery gained when a track is finished or empty is "banked"
+	NDefines.NDoctrines.MASTERY_BANK_MAX = 200.0                               -- The maximum amount of mastery that can be banked
+	NDefines.NDoctrines.MILITARY_ATTACHE_MASTERY_TRANSFER_FACTOR = 0.1         -- For each mastery track, military attaches will add this fraction of their visiting country's mastery gain (from units only) in that track
+	NDefines.NDoctrines.THEATER_COMMANDER_UNITS_MASTERY_GAIN_FACTOR_PER_SKILL = 0.01  -- Unit in a theater commander's theater will contribute this fraction of their mastery gain to the theater commander's country, for each skill point they have in attack + defense
+	NDefines.NDoctrines.NAVAL_MISSION_MASTERY_GAIN_FACTORS = {  -- Mastery gain from naval missions is reduced, just like training
+	0.0, -- HOLD
+	0.2, -- PATROL
+	0.05, -- STRIKE FORCE
+	0.3, -- CONVOY RAIDING
+	0.2, -- CONVOY ESCORT
+	0.2, -- MINES PLANTING
+	0.2, -- MINES SWEEPING
+	0.0, -- TRAIN # NOT USED - handled by TRAINING_MASTERY_GAIN_FACTOR
+	0.0, -- RESERVE_FLEET
+	0.0, -- NAVAL_INVASION_SUPPORT
+	}

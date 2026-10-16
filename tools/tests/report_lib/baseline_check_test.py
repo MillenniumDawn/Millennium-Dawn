@@ -1,0 +1,510 @@
+"""Tests for the nightly `baseline_check` CLI."""
+
+import builtins
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+import baseline_check
+import pytest
+from report_lib import load_baseline
+from report_lib.baseline import META_FILENAME
+from shared.suite import issue_dict as _issue_dict
+from shared.suite import write_slug_json as _write_sidecar
+from shared.suite import write_text
+
+REPO_ROOT = Path(__file__).resolve().parents[3]
+
+
+def _previous(tmp_path, sidecars=None, toolshash="h"):
+    """A stored baseline: meta plus one sidecar per slug (default: clean events)."""
+    previous = tmp_path / "prev"
+    sidecars = {"events": []} if sidecars is None else sidecars
+    for slug, issues in sidecars.items():
+        _write_sidecar(previous, slug, issues)
+    meta = {"toolshash": toolshash, "sidecars": sorted(f"{s}.json" for s in sidecars)}
+    write_text(previous / META_FILENAME, json.dumps(meta))
+    return previous
+
+
+def _previous_with_one_old_error(tmp_path):
+    return _previous(tmp_path, {"events": [_issue_dict("error", message="old")]})
+
+
+def _identical_previous_and_current(tmp_path):
+    previous = _previous_with_one_old_error(tmp_path)
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [_issue_dict("error", message="old")])
+    return previous, current
+
+
+def _summary_with_run_url(tmp_path, monkeypatch, run_url, commit=None):
+    previous, current = _identical_previous_and_current(tmp_path)
+    summary_path = tmp_path / "summary.md"
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_path))
+    argv = [
+        "--previous",
+        str(previous),
+        "--current",
+        str(current),
+        "--output",
+        str(tmp_path / "baseline"),
+        "--observation",
+        str(tmp_path / "observation"),
+        "--toolshash",
+        "h",
+        "--workflow-run-url",
+        run_url,
+    ]
+    if commit:
+        argv.extend(["--commit-sha", commit])
+    assert baseline_check.main(argv) == 0
+    return summary_path.read_text(encoding="utf-8")
+
+
+def _run(
+    tmp_path, previous, current, toolshash="h", monkeypatch=None, summary_path=None
+):
+    if monkeypatch is not None:
+        if summary_path is None:
+            # No summary requested: exercise the real no-op path rather
+            # than mocking the writer away.
+            monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+        else:
+            # Keep the real writer: the step summary is the nightly alarm's
+            # only human-readable output, so tests assert its content.
+            monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(summary_path))
+    argv = [
+        "--previous",
+        str(previous),
+        "--current",
+        str(current),
+        "--output",
+        str(tmp_path / "baseline"),
+        "--observation",
+        str(tmp_path / "observation"),
+        "--toolshash",
+        toolshash,
+        "--commit-sha",
+        "abc1234deadbeef",  # pragma: allowlist secret
+    ]
+    return baseline_check.main(argv)
+
+
+def test_standalone_help_bootstraps_shared_report_imports():
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    result = subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / "baseline_check.py"), "--help"],
+        capture_output=True,
+        text=True,
+        cwd=REPO_ROOT,
+        env=env,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Diff a main-side validation run" in result.stdout
+
+
+@pytest.mark.parametrize(
+    ("files", "message"),
+    [
+        pytest.param(None, "--current directory does not exist", id="missing"),
+        pytest.param({}, "--current holds no validator results", id="empty"),
+        pytest.param(
+            {"events.json": "not json"}, "Malformed validator sidecar", id="malformed"
+        ),
+    ],
+)
+def test_incomplete_candidate_fails_without_a_baseline(
+    tmp_path, monkeypatch, capsys, files, message
+):
+    # Every validator writes a sidecar, so none or a broken one is a failed
+    # run, never an all-clean main.
+    current = tmp_path / "current"
+    if files is not None:
+        current.mkdir()
+        for name, content in files.items():
+            write_text(current / name, content)
+
+    code = _run(
+        tmp_path, tmp_path / "no-such-baseline", current, monkeypatch=monkeypatch
+    )
+
+    assert code == 1
+    assert message in capsys.readouterr().err
+    assert not (tmp_path / "baseline").exists()
+    assert not (tmp_path / "observation").exists()
+
+
+def test_record_only_run_writes_just_the_observation(tmp_path, monkeypatch):
+    # The PR suite's base scan records the base commit; it runs no alarm.
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [_issue_dict("error")])
+    observation = tmp_path / "observation"
+
+    code = baseline_check.main(
+        [
+            "--current",
+            str(current),
+            "--observation",
+            str(observation),
+            "--toolshash",
+            "h",
+            "--commit-sha",
+            "base",
+        ]
+    )
+
+    assert code == 0
+    assert load_baseline(str(observation), "h", "base") is not None
+    assert sorted(path.name for path in tmp_path.iterdir()) == [
+        "current",
+        "observation",
+    ]
+
+
+def test_previous_without_output_is_rejected(tmp_path):
+    with pytest.raises(SystemExit):
+        baseline_check.main(
+            [
+                "--previous",
+                str(tmp_path / "prev"),
+                "--current",
+                str(tmp_path),
+                "--observation",
+                str(tmp_path / "observation"),
+            ]
+        )
+
+
+def test_establishing_baseline_when_previous_missing(tmp_path, monkeypatch, capsys):
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [_issue_dict("error")])
+
+    code = _run(
+        tmp_path, tmp_path / "no-such-baseline", current, monkeypatch=monkeypatch
+    )
+
+    assert code == 0
+    assert "established" in capsys.readouterr().out
+    assert (tmp_path / "baseline" / META_FILENAME).is_file()
+    assert (tmp_path / "baseline" / "events.json").is_file()
+    # The real _build_meta ran: the persisted meta carries the hash the
+    # PR-side load_baseline will later verify against.
+    meta = json.loads(
+        (tmp_path / "baseline" / META_FILENAME).read_text(encoding="utf-8")
+    )
+    assert meta["toolshash"] == "h"
+
+
+def test_new_errors_fail_and_keep_old_baseline(tmp_path, monkeypatch, capsys):
+    previous = _previous(
+        tmp_path,
+        {
+            "events": [_issue_dict("error", message="old")],
+            "events-warnings": [_issue_dict("warning", message="known warning")],
+        },
+    )
+    current = tmp_path / "current"
+    _write_sidecar(
+        current,
+        "events",
+        [
+            _issue_dict("error", message="old"),
+            _issue_dict("warning", message="known warning"),
+            _issue_dict("error", message="brand new", file="b.txt", line=2),
+            _issue_dict("warning", message="new warning", file="c.txt", line=3),
+        ],
+    )
+    summary_path = tmp_path / "summary.md"
+
+    code = _run(
+        tmp_path,
+        previous,
+        current,
+        monkeypatch=monkeypatch,
+        summary_path=summary_path,
+    )
+
+    assert code == 1
+    assert "1 new error(s)" in capsys.readouterr().err
+    assert "- **New warnings:** 1" in summary_path.read_text(encoding="utf-8")
+    # Red night: the accepted baseline stays; nothing is written to --output.
+    assert not (tmp_path / "baseline" / META_FILENAME).exists()
+    # PR reports still get this commit's complete results.
+    observation = load_baseline(str(tmp_path / "observation"), "h")
+    assert observation is not None
+    assert observation.meta["commit_sha"].startswith("abc1234")
+    assert len(observation.issues()) == 4
+
+
+def test_clean_diff_promotes_baseline(tmp_path, monkeypatch, capsys):
+    previous, current = _identical_previous_and_current(tmp_path)
+
+    code = _run(tmp_path, previous, current, monkeypatch=monkeypatch)
+
+    assert code == 0
+    assert (tmp_path / "baseline" / META_FILENAME).is_file()
+    assert "baseline updated" in capsys.readouterr().out
+
+
+def test_all_clean_night_promotes_empty_baseline(tmp_path, monkeypatch, capsys):
+    # A fully clean suite writes one empty sidecar per validator. That is the
+    # empty findings set: the previous baseline's findings are reported fixed.
+    previous = _previous_with_one_old_error(tmp_path)
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [])
+
+    code = _run(tmp_path, previous, current, monkeypatch=monkeypatch)
+
+    assert code == 0
+    assert (tmp_path / "baseline" / META_FILENAME).is_file()
+    assert "1 error(s), 0 warning(s) fixed" in capsys.readouterr().out
+
+
+def test_fixed_errors_still_promote(tmp_path, monkeypatch, capsys):
+    previous = _previous(
+        tmp_path,
+        {
+            "events": [
+                _issue_dict("error", message="old"),
+                _issue_dict("error", message="fixed"),
+            ]
+        },
+    )
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [_issue_dict("error", message="old")])
+
+    code = _run(tmp_path, previous, current, monkeypatch=monkeypatch)
+
+    assert code == 0
+    assert "1 error(s), 0 warning(s) fixed" in capsys.readouterr().out
+    assert (tmp_path / "baseline" / META_FILENAME).is_file()
+
+
+def test_red_night_step_summary_reports_new_errors(tmp_path, monkeypatch):
+    previous = _previous(tmp_path)
+    current = tmp_path / "current"
+    _write_sidecar(
+        current,
+        "events",
+        [_issue_dict("error", file="b.txt", line=2, message="brand new")],
+    )
+    summary_path = tmp_path / "summary.md"
+
+    code = _run(
+        tmp_path,
+        previous,
+        current,
+        monkeypatch=monkeypatch,
+        summary_path=summary_path,
+    )
+
+    assert code == 1
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "New errors on main — baseline not updated." in summary
+    assert "`b.txt:2` — brand new" in summary
+
+
+def test_clean_night_step_summary_confirms_update(tmp_path, monkeypatch):
+    previous, current = _identical_previous_and_current(tmp_path)
+    summary_path = tmp_path / "summary.md"
+
+    code = _run(
+        tmp_path,
+        previous,
+        current,
+        monkeypatch=monkeypatch,
+        summary_path=summary_path,
+    )
+
+    assert code == 0
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "✅ No new errors — baseline updated to tonight's results." in summary
+
+
+def test_header_omits_commit_when_only_the_run_url_is_set(tmp_path, monkeypatch):
+    summary = _summary_with_run_url(tmp_path, monkeypatch, "https://example.test/run/2")
+    assert "**Commit:**" not in summary
+    assert "**Run:** [https://example.test/run/2]" in summary
+
+
+def test_step_summary_includes_the_workflow_run_url(tmp_path, monkeypatch):
+    summary = _summary_with_run_url(
+        tmp_path,
+        monkeypatch,
+        "https://example.test/run/1",
+        commit="a" * 40,
+    )
+    assert "**Commit:** `aaaaaaa`" in summary
+    assert (
+        "**Run:** [https://example.test/run/1](https://example.test/run/1)" in summary
+    )
+
+
+@pytest.mark.parametrize(
+    ("severity", "filename", "message", "exit_code", "marker"),
+    [
+        ("error", "e.txt", "error", 1, "- ❌ `e.txt:"),
+        ("warning", "w.txt", "warning", 0, "- ⚠️ `w.txt:"),
+    ],
+)
+def test_step_summary_caps_new_issue_lists(
+    tmp_path, monkeypatch, severity, filename, message, exit_code, marker
+):
+    previous = _previous(tmp_path)
+    current = tmp_path / "current"
+    issues = [
+        _issue_dict(severity, file=filename, line=n, message=f"{message} {n}")
+        for n in range(1, baseline_check.MAX_LISTED + 2)
+    ]
+    _write_sidecar(current, "events", issues)
+    summary_path = tmp_path / "summary.md"
+
+    code = _run(
+        tmp_path,
+        previous,
+        current,
+        monkeypatch=monkeypatch,
+        summary_path=summary_path,
+    )
+
+    assert code == exit_code
+    summary = summary_path.read_text(encoding="utf-8")
+    assert "_…and 1 more._" in summary
+    assert summary.count(marker) == baseline_check.MAX_LISTED
+
+
+def test_issue_line_renders_fallback_locations():
+    no_line = baseline_check.Issue.from_dict(
+        {"severity": "error", "category": "c", "message": "m", "file": "f.txt"}
+    )
+    assert baseline_check._issue_line(no_line) == "- ❌ `f.txt` — m"
+
+    no_file = baseline_check.Issue.from_dict(
+        {"severity": "warning", "category": "c", "message": "m"}
+    )
+    assert baseline_check._issue_line(no_file) == "- ⚠️ _(no location)_ — m"
+
+
+def test_new_warnings_do_not_fail(tmp_path, monkeypatch, capsys):
+    previous = _previous(tmp_path)
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [_issue_dict("warning", message="new warn")])
+
+    code = _run(tmp_path, previous, current, monkeypatch=monkeypatch)
+
+    assert code == 0
+    assert "1 new warning(s)" in capsys.readouterr().out
+    assert (tmp_path / "baseline" / META_FILENAME).is_file()
+
+
+def test_toolshash_mismatch_reestablishes(tmp_path, monkeypatch, capsys):
+    previous = _previous(tmp_path, toolshash="old-generation")
+    current = tmp_path / "current"
+    _write_sidecar(current, "events", [_issue_dict("error", message="old")])
+
+    code = _run(
+        tmp_path, previous, current, toolshash="new-gen", monkeypatch=monkeypatch
+    )
+
+    assert code == 0
+    assert "established" in capsys.readouterr().out
+
+
+def test_missing_current_dir_fails(tmp_path, monkeypatch, capsys):
+    code = _run(tmp_path, tmp_path / "prev", tmp_path / "no-such-dir")
+    assert code == 1
+    assert "does not exist" in capsys.readouterr().err
+
+
+def test_split_new_findings(tmp_path):
+    previous = _previous(
+        tmp_path,
+        {
+            "events": [
+                _issue_dict("error", message="old"),
+                _issue_dict("warning", message="raised"),
+                _issue_dict("error", message="lowered"),
+            ]
+        },
+    )
+    baseline = load_baseline(str(previous), "h")
+    assert baseline is not None
+
+    current = [
+        baseline_check.Issue.from_dict(_issue_dict(severity, message=message))
+        for severity, message in (
+            ("error", "old"),
+            ("error", "new"),
+            ("warning", "new warning"),
+            ("error", "raised"),
+            ("warning", "lowered"),
+        )
+    ]
+    new_errors, new_warnings = baseline_check._split_new_findings(current, baseline)
+    # A warning raised to an error alarms; an error lowered to a warning does not.
+    assert [i.message for i in new_errors] == ["new", "raised"]
+    assert [i.message for i in new_warnings] == ["new warning"]
+
+
+def test_split_new_findings_counts_duplicate_instances(tmp_path):
+    previous = _previous(
+        tmp_path,
+        {
+            "events": [
+                _issue_dict("error", line=5, message="dup"),
+                _issue_dict("error", line=9, message="dup"),
+            ]
+        },
+    )
+    baseline = load_baseline(str(previous), "h")
+    assert baseline is not None
+
+    # Both known copies shifted a line; only the third copy is new.
+    current = [
+        baseline_check.Issue.from_dict(_issue_dict("error", line=ln, message="dup"))
+        for ln in (6, 10, 40)
+    ]
+    new_errors, new_warnings = baseline_check._split_new_findings(current, baseline)
+    assert [i.line for i in new_errors] == [40]
+    assert new_warnings == []
+
+    assert baseline_check._fixed_counts(current[:1], baseline) == (1, 0)
+
+
+def test_unkeyable_findings_count_as_new(tmp_path):
+    baseline = load_baseline(str(_previous(tmp_path)), "h")
+    assert baseline is not None
+
+    current = [
+        baseline_check.Issue.from_dict(
+            {"severity": "error", "category": "", "message": "no category"}
+        )
+    ]
+    new_errors, new_warnings = baseline_check._split_new_findings(current, baseline)
+    assert len(new_errors) == 1
+    assert new_warnings == []
+
+    # The fixed-counts side also skips unkeyable findings instead of
+    # treating them as keyed matches.
+    fixed_errors, fixed_warnings = baseline_check._fixed_counts(current, baseline)
+    assert fixed_errors == 0
+    assert fixed_warnings == 0
+
+
+def test_step_summary_write_failure_is_non_fatal(tmp_path, monkeypatch, capsys):
+    monkeypatch.setenv("GITHUB_STEP_SUMMARY", str(tmp_path / "summary.md"))
+
+    def broken_open(_path, _mode, **_kwargs):
+        raise OSError("read-only filesystem")
+
+    monkeypatch.setattr(builtins, "open", broken_open)
+
+    baseline_check._write_step_summary(["line"])
+
+    assert "could not write step summary" in capsys.readouterr().err

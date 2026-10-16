@@ -5,22 +5,27 @@ Millennium Dawn Idea Standardizer
 Standardizes HOI4 idea files according to Millennium Dawn coding standards
 """
 
-import os
 import re
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
-from _common import format_elapsed
-from common_utils import PROP_NAME_RE, BaseStandardizer, run_standardizer
+from common_utils import (
+    PROP_NAME_RE,
+    BaseStandardizer,
+    read_lines_for_standardization,
+    run_standardizer,
+    write_standardized_output,
+)
 from shared_utils import (
     blank_quoted_strings,
+    collapse_nested_blocks,
     collapse_or_compact,
     extract_block,
     log_message,
     strip_inline_comment,
 )
 
-_SINGLE_LINE_PROPS = {"name", "picture"}
+_SINGLE_LINE_PROPS = {"name", "picture", "ledger"}
 
 _BLOCK_PROPS = {
     "allowed",
@@ -35,14 +40,18 @@ _BLOCK_PROPS = {
     "on_remove",
 }
 
-# Blocks that get filtered out when they contain `always = no`
-_ALWAYS_NO_FILTERED = {"allowed", "allowed_civil_war", "cancel"}
+# Blocks that get filtered out when they contain `always = no`.
+# `allowed` is not in this set: on a slotted idea it hides the entry from the
+# picker while add_idea still applies it. Slotless allowed blocks are stripped
+# by strip_idea_allowed_gates.py instead.
+_ALWAYS_NO_FILTERED = {"allowed_civil_war", "cancel"}
 
 # Block pattern for wrapper blocks / idea blocks
 _BLOCK_START_RE = re.compile(r"\s*[\w_]+\s*=\s*{")
 
 
 _ALLOWED_TAG_RE = re.compile(r"\btag\s*=\s*(\w+)")
+_LOG_STATEMENT_RE = re.compile(r'\blog\s*=\s*"[^"]*"')
 
 
 def _rewrite_allowed_tag(line: str) -> str:
@@ -132,6 +141,7 @@ class IdeaStandardizer(BaseStandardizer):
             "allowed": [],
             "allowed_civil_war": [],
             "picture": "",
+            "ledger": "",
             "cancel": [],
             "modifier": [],
             "targeted_modifier": [],
@@ -141,6 +151,10 @@ class IdeaStandardizer(BaseStandardizer):
             "on_add": [],
             "on_remove": [],
             "other": [],
+            # (property, index) -> comments written above it. Properties are
+            # re-emitted in a fixed order below, so a comment has to travel with
+            # the one it describes instead of being left where it was written.
+            "comments": {},
         }
 
         # Extract ID from the opening line (e.g., "BRA_idea_higher_minimum_wage_1 = {").
@@ -157,6 +171,15 @@ class IdeaStandardizer(BaseStandardizer):
         if brace != -1 and first_code[brace + 1 :].strip():
             block_lines = _explode_braces(block_lines)
 
+        pending: List[str] = []
+
+        def flush_pending():
+            """Park comments in `other`, in source order, when the property they
+            precede isn't one of the re-ordered ones (or was dropped)."""
+            nonlocal pending
+            props["other"].extend(("comment", comment) for comment in pending)
+            pending = []
+
         i = 1  # Skip opening brace line
         while i < len(block_lines) - 1:  # Skip closing brace
             line = block_lines[i].strip()
@@ -165,11 +188,15 @@ class IdeaStandardizer(BaseStandardizer):
 
             if prop_name in _SINGLE_LINE_PROPS:
                 props[prop_name] = line
+                props["comments"][(prop_name, 0)] = pending
+                pending = []
             elif prop_name in _BLOCK_PROPS:
                 block, next_i = extract_block(block_lines, i)
                 if prop_name in _ALWAYS_NO_FILTERED and self.is_always_no_block(
                     block, prop_name
                 ):
+                    # The block goes away as dead code; its comments stay.
+                    flush_pending()
                     i = next_i
                     continue
                 if prop_name == "allowed":
@@ -178,11 +205,14 @@ class IdeaStandardizer(BaseStandardizer):
                     # is preserved verbatim.
                     block = [_rewrite_allowed_tag(bl) for bl in block]
                 props[prop_name].append(block)
+                props["comments"][(prop_name, len(props[prop_name]) - 1)] = pending
+                pending = []
                 i = next_i
                 continue
             elif line.startswith("#"):
-                props["other"].append(("comment", block_lines[i].rstrip()))
+                pending.append(block_lines[i].rstrip())
             elif line:
+                flush_pending()
                 # Blank quoted strings before counting so a `{` inside a quoted
                 # value isn't misread as a block opener (which would send the
                 # quote-aware extract_block negative and drop lines to the closer).
@@ -197,6 +227,7 @@ class IdeaStandardizer(BaseStandardizer):
 
             i += 1
 
+        flush_pending()
         return props
 
     def is_empty_log_block(self, block_lines: List[str]) -> bool:
@@ -224,13 +255,12 @@ class IdeaStandardizer(BaseStandardizer):
             return False
 
         for line in block_lines:
-            stripped = line.strip()
+            stripped = _LOG_STATEMENT_RE.sub("", line).strip()
             if (
                 stripped in ("{", "}", "")
                 or not stripped
                 or stripped.startswith("#")
                 or stripped.endswith("{")  # block opener, e.g. `on_remove = {`
-                or stripped.startswith("log =")
             ):
                 continue
             return True
@@ -238,16 +268,10 @@ class IdeaStandardizer(BaseStandardizer):
         return False
 
     def is_always_no_block(self, block_lines: List[str], property_name: str) -> bool:
-        """Check if a block contains only `always = no` — a redundant default.
+        """True when the block is a redundant `always = no` default we drop.
 
-        Removed as code cleanup, NOT a performance optimization.
-        `allowed` is checked once at game start/load (default = always allowed)
-        and is bypassed by add_ideas — so `allowed = { always = no }` is dead code.
-        Tradeoff: `has_available_idea_with_trait` builds a list of every idea that
-        passes `allowed`, then evaluates their `available` triggers at runtime.
-        Keeping `allowed = { always = no }` keeps ideas out of that list (fewer
-        runtime checks). Removing it lets more ideas into the pool (more runtime
-        checks). MD does not use that trigger, so the tradeoff is moot here.
+        `allowed = { always = no }` is not redundant on slotted ideas: it hides
+        the entry from the picker while add_idea still applies it.
         """
         if property_name not in _ALWAYS_NO_FILTERED:
             return False
@@ -292,7 +316,7 @@ class IdeaStandardizer(BaseStandardizer):
     ) -> List[str]:
         """Single-line collapse a single-leaf block, else reindent at prop_indent."""
         collapsed = collapse_or_compact(block_lines[:], prop_indent)
-        multi = self.compact_block(block_lines[:], prop_indent)
+        multi = self.compact_block(collapse_nested_blocks(block_lines), prop_indent)
         if len(collapsed) == 1 and len(multi) != 1:
             return collapsed
         return multi
@@ -310,19 +334,15 @@ class IdeaStandardizer(BaseStandardizer):
         # A single-line block (`on_add = { set_variable = { x = 1 } }`) has its
         # opener and closer on the same line, so an injected log would land
         # outside the block and re-inject on the next run (non-idempotent).
-        # Explode it only when a log will actually be injected (meaningful
-        # effects, no existing log) — leaving log-only single-line blocks handled
-        # exactly as before so this fix doesn't silently strip them.
+        # Judge the exploded form (a packed `on_add = { log = "..." }` reads as
+        # content otherwise) and explode only when a log will be injected.
         if len(block) == 1:
             exploded = _explode_braces(block)
-            # An empty single-line block (`on_add = { }`) reads as meaningful when
-            # left packed, so the legacy path would inject a log outside its
-            # braces. Detect emptiness on the exploded form and drop it.
             if self.is_empty_log_block(exploded):
                 return []
-            if self.has_meaningful_effects(exploded) and not any(
-                "log =" in line for line in exploded
-            ):
+            if not self.has_meaningful_effects(exploded):
+                return []
+            if not any("log =" in line for line in exploded):
                 block = exploded
         if self.is_empty_log_block(block):
             return []
@@ -342,7 +362,7 @@ class IdeaStandardizer(BaseStandardizer):
                     modified.append(log_line)
             block = modified
 
-        return self.compact_block(block[:], prop_indent)
+        return self.compact_block(collapse_nested_blocks(block[:]), prop_indent)
 
     def format_block(self, props: Dict[str, Any], base_indent: str = "\t") -> List[str]:
         """Format idea according to Millennium Dawn standard"""
@@ -359,36 +379,57 @@ class IdeaStandardizer(BaseStandardizer):
         # Property indent is one level deeper
         prop_indent = base_indent + "\t"
 
+        def emit_comments(key: str, index: int = 0) -> None:
+            for comment in props.get("comments", {}).get((key, index), []):
+                lines.append(prop_indent + comment.strip())
+
         # 1. Name (optional, first property if present)
         if props["name"]:
+            emit_comments("name")
             lines.append(prop_indent + props["name"])
 
         # 2. Picture
         if props["picture"]:
+            emit_comments("picture")
             lines.append(prop_indent + props["picture"])
 
-        # 3-10. Simple blocks emitted in order
+        # 3. allowed-family blocks (gates evaluated once at game start)
         for key in (
             "allowed",
             "allowed_civil_war",
             "cancel",
+        ):
+            for index, block in enumerate(props[key]):
+                emit_comments(key, index)
+                lines.extend(self._reindent_or_collapse(block, prop_indent))
+
+        # 4. ledger (single-line categorisation, sits above the effect blocks)
+        if props["ledger"]:
+            emit_comments("ledger")
+            lines.append(prop_indent + props["ledger"])
+
+        # 5-10. Effect blocks emitted in order
+        for key in (
             "modifier",
             "targeted_modifier",
             "research_bonus",
             "rule",
             "equipment_bonus",
         ):
-            for block in props[key]:
+            for index, block in enumerate(props[key]):
+                emit_comments(key, index)
                 lines.extend(self._reindent_or_collapse(block, prop_indent))
 
         # 11. on_add (log only when making changes)
-        for block in props["on_add"]:
+        for index, block in enumerate(props["on_add"]):
+            emit_comments("on_add", index)
             lines.extend(
                 self._emit_lifecycle_block(block, prop_indent, props["id"], "added")
             )
 
         # 12. on_remove (log only when making changes)
-        for block in props["on_remove"]:
+        for index, block in enumerate(props["on_remove"]):
+            emit_comments("on_remove", index)
             lines.extend(
                 self._emit_lifecycle_block(block, prop_indent, props["id"], "removed")
             )
@@ -426,43 +467,28 @@ class IdeaStandardizer(BaseStandardizer):
 
         return cleaned_lines
 
+    def standardize_lines(self, lines: List[str]) -> Optional[List[str]]:
+        """Ideas nest, so the recursive walker replaces the base block loop."""
+        return self._process_lines(lines, depth=0)
+
     def standardize_file(self, input_file: str, output_file: str) -> bool:
         """Standardize ideas file by handling nested structure properly"""
         self.start_time = time.time()
-        log_message("INFO", f"Starting standardization of {input_file}", self.verbose)
-
-        if not os.path.exists(input_file):
-            log_message("ERROR", f"Input file not found: {input_file}")
+        lines = read_lines_for_standardization(input_file, verbose=self.verbose)
+        if lines is None:
             return False
 
-        try:
-            with open(input_file, "r", encoding="utf-8") as f:
-                lines = f.readlines()
-            log_message(
-                "INFO", f"Read {len(lines)} lines from {input_file}", self.verbose
-            )
-        except Exception as e:
-            log_message("ERROR", f"Failed to read {input_file}: {e}")
-            return False
+        output_lines = self.standardize_lines(lines)
+        if output_lines is None:
+            return True
 
-        output_lines = self._process_lines(lines, depth=0)
-
-        try:
-            with open(output_file, "w", encoding="utf-8") as f:
-                for line in output_lines:
-                    f.write(line + "\n")
-
-            time_str = format_elapsed(time.time() - self.start_time)
-
-            log_message("SUCCESS", f"Standardization completed in {time_str}")
-            log_message("SUCCESS", f"Processed {self.processed_count} ideas")
-            log_message("SUCCESS", f"Output written to: {output_file}")
-
-        except Exception as e:
-            log_message("ERROR", f"Failed to write {output_file}: {e}")
-            return False
-
-        return True
+        return write_standardized_output(
+            output_file,
+            output_lines,
+            start_time=self.start_time,
+            processed_count=self.processed_count,
+            unit_label="ideas",
+        )
 
     def _process_lines(
         self, lines: List[str], depth: int, mode: str = "root"

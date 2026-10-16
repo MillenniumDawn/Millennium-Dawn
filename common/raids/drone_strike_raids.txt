@@ -298,7 +298,8 @@ types = {
 				}
 				has_war_with = FROM
 				has_wargoal_against = FROM
-				has_political_power > 300
+				set_temp_variable = { cost = 300 }
+				raid_can_launch = yes
 				is_justifying_wargoal_against = FROM
 			}
 		}
@@ -316,9 +317,8 @@ types = {
 
 		unit_requirements = {
 			equipment = {
-				type = { suicide }
-				modules = { avionics_drone_1 avionics_drone_2 avionics_drone_3 avionics_drone_4 avionics_drone_5 avionics_drone_6 avionics_drone_quadcopter }
-				amount = { min = 50 }
+				type = { small_plane_suicide_airframe cv_small_plane_suicide_airframe }
+				amount = { min = 20 }
 			}
 		}
 
@@ -567,10 +567,8 @@ types = {
 
 		# Raid Type is visible
 		visible = {
-			OR = {
-				has_political_power > 300
-				has_war_with = FROM
-			}
+			set_temp_variable = { cost = 300 }
+			raid_can_launch = yes
 		}
 		# Specific Target is visible
 		show_target = {
@@ -588,13 +586,8 @@ types = {
 					has_non_aggression_pact_with = ROOT
 				}
 			}
-			OR = {
-				hidden_trigger = {
-					has_country_flag = promised_retaliation_against@FROM
-				}
-				has_political_power > 300
-				has_war_with = FROM
-			}
+			set_temp_variable = { cost = 300 }
+			raid_can_launch = yes
 		}
 
 		target_type = {
@@ -605,9 +598,8 @@ types = {
 
 		unit_requirements = {
 			equipment = {
-				type = { suicide }
-				modules = { avionics_drone_1 avionics_drone_2 avionics_drone_3 avionics_drone_4 avionics_drone_5 avionics_drone_6 avionics_drone_quadcopter }
-				amount = { min = 1 }
+				type = { small_plane_suicide_airframe cv_small_plane_suicide_airframe }
+				amount = { min = 20 }
 			}
 		}
 
@@ -960,24 +952,16 @@ types = {
 
 		available = {
 			FROM = {
-				NOT = {
-					is_subject_of = ROOT
-				}
-				NOT = {
-					has_non_aggression_pact_with = ROOT
-				}
+				NOT = { is_subject_of = ROOT }
+				NOT = { has_non_aggression_pact_with = ROOT }
 			}
-			OR = {
-				hidden_trigger = {
-					has_country_flag = promised_retaliation_against@FROM
-				}
-				has_political_power > 300
-				has_war_with = FROM
-			}
+			set_temp_variable = { cost = 150 }
+			raid_can_launch = yes
 		}
 
 		launchable = {
-			has_political_power > 150
+			set_temp_variable = { cost = 150 }
+			raid_can_launch = yes
 		}
 
 		target_type = {
@@ -988,8 +972,7 @@ types = {
 
 		unit_requirements = {
 			equipment = {
-				type = { suicide }
-				modules = { avionics_drone_1 avionics_drone_2 avionics_drone_3 avionics_drone_4 avionics_drone_5 avionics_drone_6 avionics_drone_quadcopter  }
+				type = { small_plane_suicide_airframe cv_small_plane_suicide_airframe }
 				amount = { min = 1 }
 			}
 		}
@@ -1068,19 +1051,21 @@ types = {
 				}
 				actor_effects = {
 					var:target_state = {
-						set_temp_variable = { targeted_org = target_raid_org_store }
-						clear_variable = target_raid_org_store
+						ct_resolve_raid_org = yes
 					}
-					var:actor_country = {
-						randomize_temp_variable = {
-							var = threat_loss
-							distribution = poisson
-							min = 2
-							lambda = 8
+					if = {
+						limit = { check_variable = { targeted_org > -1 } }
+						var:actor_country = {
+							randomize_temp_variable = {
+								var = threat_loss
+								distribution = poisson
+								min = 2
+								lambda = 8
+							}
+							add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
+							multiply_temp_variable = { threat_loss = -1 }
+							add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 						}
-						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
-						multiply_temp_variable = { threat_loss = -1 }
-						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 					}
 				}
 			}
@@ -1091,26 +1076,28 @@ types = {
 				}
 				actor_effects = {
 					var:target_state = {
-						set_temp_variable = { targeted_org = target_raid_org_store }
-						clear_variable = target_raid_org_store
+						ct_resolve_raid_org = yes
 					}
-					var:actor_country = {
-						randomize_temp_variable = {
-							var = intel_gain
-							distribution = poisson
-							min = 1
-							lambda = 5
+					if = {
+						limit = { check_variable = { targeted_org > -1 } }
+						var:actor_country = {
+							randomize_temp_variable = {
+								var = intel_gain
+								distribution = poisson
+								min = 1
+								lambda = 5
+							}
+							add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
+							randomize_temp_variable = {
+								var = threat_loss
+								distribution = poisson
+								min = -5
+								lambda = -1
+							}
+							add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
+							multiply_temp_variable = { threat_loss = -1 }
+							add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 						}
-						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
-						randomize_temp_variable = {
-							var = threat_loss
-							distribution = poisson
-							min = -5
-							lambda = -1
-						}
-						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
-						multiply_temp_variable = { threat_loss = -1 }
-						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 					}
 				}
 
@@ -1122,26 +1109,28 @@ types = {
 				}
 				actor_effects = {
 					var:target_state = {
-						set_temp_variable = { targeted_org = target_raid_org_store }
-						clear_variable = target_raid_org_store
+						ct_resolve_raid_org = yes
 					}
-					var:actor_country = {
-						randomize_temp_variable = {
-							var = intel_gain
-							distribution = poisson
-							min = 1
-							lambda = 10
+					if = {
+						limit = { check_variable = { targeted_org > -1 } }
+						var:actor_country = {
+							randomize_temp_variable = {
+								var = intel_gain
+								distribution = poisson
+								min = 1
+								lambda = 10
+							}
+							add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
+							randomize_temp_variable = {
+								var = threat_loss
+								distribution = poisson
+								min = -10
+								lambda = -1
+							}
+							add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
+							multiply_temp_variable = { threat_loss = -1 }
+							add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 						}
-						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
-						randomize_temp_variable = {
-							var = threat_loss
-							distribution = poisson
-							min = -10
-							lambda = -1
-						}
-						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
-						multiply_temp_variable = { threat_loss = -1 }
-						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 					}
 				}
 			}
@@ -1152,26 +1141,28 @@ types = {
 				}
 				actor_effects = {
 					var:target_state = {
-						set_temp_variable = { targeted_org = target_raid_org_store }
-						clear_variable = target_raid_org_store
+						ct_resolve_raid_org = yes
 					}
-					var:actor_country = {
-						randomize_temp_variable = {
-							var = intel_gain
-							distribution = poisson
-							min = 1
-							lambda = 15
+					if = {
+						limit = { check_variable = { targeted_org > -1 } }
+						var:actor_country = {
+							randomize_temp_variable = {
+								var = intel_gain
+								distribution = poisson
+								min = 1
+								lambda = 15
+							}
+							add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
+							randomize_temp_variable = {
+								var = threat_loss
+								distribution = poisson
+								min = -15
+								lambda = -1
+							}
+							add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
+							multiply_temp_variable = { threat_loss = -1 }
+							add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 						}
-						add_to_variable = { international_terror_org_temp_specific_intel^targeted_org = intel_gain }
-						randomize_temp_variable = {
-							var = threat_loss
-							distribution = poisson
-							min = -15
-							lambda = -1
-						}
-						add_to_variable = { global.active_terror_org_threat_lvl^targeted_org = threat_loss }
-						multiply_temp_variable = { threat_loss = -1 }
-						add_to_variable = { global.active_terror_org_vis_lvl^targeted_org = threat_loss }
 					}
 				}
 			}
@@ -1227,12 +1218,7 @@ types = {
 					raid_show_target_intervention_check = yes
 				}
 			}
-			var:target_state = {
-				OR = {
-					air_base > 0
-					radar_station > 0
-				}
-			}
+			FROM = { MD_special_countries = no }
 		}
 
 		# Can prepare
@@ -1659,26 +1645,19 @@ types = {
 				NOT = {
 					has_country_flag = power_grid_damaged
 				}
+				MD_special_countries = no
 			}
 			raid_show_target_opinion_neutral = yes
-			var:target_state = {
-				OR = {
-					fossil_powerplant > 0
-					renewable_energy_infra > 0
-				}
-			}
 		}
 
 		# Can prepare
 		available = {
-			drone_raid_available_grey_zone = yes
+			raid_available_grey_zone = yes
 		}
 
 		launchable = {
-			OR = {
-				has_political_power > 99
-				has_war_with = FROM
-			}
+			set_temp_variable = { cost = 99 }
+			raid_can_launch = yes
 		}
 
 		target_type = {
@@ -2122,9 +2101,7 @@ types = {
 				has_wargoal_against = FROM
 				is_justifying_wargoal_against = FROM
 			}
-			var:target_state = {
-				rocket_site > 0
-			}
+			FROM = { MD_special_countries = no }
 		}
 
 		# Can prepare

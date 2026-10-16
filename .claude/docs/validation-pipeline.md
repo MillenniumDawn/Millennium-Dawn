@@ -1,26 +1,185 @@
-# Validation Pipeline — Pre-commit vs CI
+# Validation Pipeline
 
-Pre-commit and CI do not run the same hook set. Things that pass locally can still fail CI, and vice versa. Read this before wiring, judging, or debugging any validator.
+Pre-commit and CI run different hook sets. A change can pass locally and fail CI, or
+the reverse. Read this before wiring, judging, or debugging a validator.
 
-## The split
+What one validator checks, its exemptions, and its known gaps are in
+[Validator Check Notes](validator-check-notes.md). Search that file for the script or
+category name. Do not read it whole. Track a backlog in a GitHub issue, not in a doc.
 
-- Most content validators run **CI-only**: the `validate-core` / `validate-targeted` matrices in `.github/workflows/coding-pipeline.yml` are the gate. Their old `stages: [manual]` pre-commit hooks were removed (almost nobody ran them). On `git commit` only the fast subset runs — the `md-validate-content` dispatcher (`tools/precommit_validate.py`, which fans the commit-stage validators out in parallel), plus `check_common_mistakes.py` and `validate_defines.py`. To run a CI-only validator locally: `python3 tools/validation/validate_<topic>.py --staged --no-color` (drop `--staged` for a full-repo scan).
-- `validate_ai_equipment.py` runs without `--strict` locally (coverage gaps would block all commits) but **with** `--strict` on CI. Equipment-coverage gaps that are tolerated locally will fail PR validation.
-- `fix_loc_yaml.py`, `validate_localization_encoding.py`, `validate_mod_encoding.py` (all `tools/linting/`) are **pre-commit-only** — never run on CI. Web-UI edits or contributors with hooks disabled can land BOM or encoding regressions. (The old `check_braces.py` hook was absorbed into `tools/validation/validate_style.py`.)
-- `validate_defines.py` runs on pre-commit against the live install and on CI against the committed `tools/validation/vanilla_defines.txt` manifest. Regenerate the manifest with `gen_vanilla_defines_manifest.py` after a HOI4 version bump (same for `vanilla_sprites.txt` via `gen_vanilla_sprites_manifest.py`).
-- `validate_ideas.py` is wired into both pre-commit (`--staged --strict`) and CI (`--strict`) — the undefined-idea backlog was cleared, so both sides gate identically.
-- `validate_unused_textures.py` is wired into pre-commit as `stages: [manual]` only. CI cannot run it, so invoke the manual hook when a texture audit is needed.
-- `validate_set_variables.py` runs **CI-only**, `--strict` (its unused-variable backlog was cleared). No pre-commit hook; run it directly (`python3 tools/validation/validate_set_variables.py`) for a local check.
-- `validate_scripted_localisation.py` runs **CI-only**, `--strict` (its missing/unused scripted-loc backlog was cleared). No pre-commit hook; run it directly for a local check.
-- `validate_file_paths.py` runs **CI-only**, `--strict`, in its own `validate-paths` job rather than either matrix. It reads path names from the git index (`git ls-files`), so it needs a checkout with `.git`; the workspace bundle the matrix jobs restore has neither `.git` nor `map/`. The job checks out with `filter: blob:none` and a sparse `tools` cone — the index already names every shipped path, so no content is fetched. `descriptor.mod` is read for `replace_path` directives, and a missing descriptor is a hard setup error: reading it as "nothing is replaced" would turn every inert case clash into a blocking one. Cross-references the committed `vanilla_paths.txt` manifest (CI has no HOI4 install); regenerate it after a game update via `gen_vanilla_paths_manifest.py`. Its within-mod case-collision check overlaps the pre-commit `check-case-conflict` hook on purpose — that hook only sees staged files on machines with hooks enabled, so web-UI edits and hook-less contributors bypass it exactly like the BOM fixers below.
+## Hard gate
 
-## Check notes
+- `python -m pytest` must stay green. CI runs it on every PR touching `tools/`, on
+  Linux, macOS, and Windows. Run it locally before merging any `tools/` change.
+- A validator change and its regression tests are one change. Update a `*_test.py` to
+  the new correct behavior in the same commit. If the test holds the correct invariant,
+  fix the validator. Never delete or weaken a test to pass. Removing a test is a
+  separate cleanup change that keeps the missed-line and partial-branch totals.
+- Tests follow [Test Structure](../../tools/README.md#test-structure): one file per
+  module or group of checks, one parametrized table per check, a new case is a new
+  row. A row stays only if it is the flagged or passing baseline, runs a path no other
+  row runs, or is the only row that fails when one rule of the check is broken.
+- The suite runs under `pytest -n auto`, so a test writes only under `tmp_path`.
+- Worker pools in tests start with `spawn` on every OS. A pool worker sees what it
+  imports and what it is passed, not state a test patched in the parent.
+- Tests that read live game files live in `tools/tests/content/`. The `Content tests`
+  job runs them once, on tools or game content changes. The tools test jobs skip
+  that directory and check out only the few game files named in the workflow.
+- `.jscpd.json` fails the quality job on one pasted block. Factor shared test setup into
+  a helper.
+- The repository ruleset requires the `Test suite gate` check.
 
-- `validate_file_paths.py` exists because Windows resolves paths case-insensitively and Linux does not. A mod file whose path differs from a vanilla one only in case replaces it on Windows but loads beside it on Linux, so the two platforms hash different file sets and cannot play multiplayer together — the Kaiserreich #28202 failure, whose culprits were `common/ai_focuses/usa.txt` against vanilla's `USA.txt` and friends. The checksummed set is not all of the mod: the game's own `checksum_manifest.txt` limits it to `common/**/{*.txt,*.lua}`, `events/**/*.txt`, `history/**/*.txt` and `map/**/{*.txt,*.map,*.bmp,*.csv}`, which is why `gfx/` and `interface/` case fixes never move a checksum. Collisions inside a `replace_path`'d directory are WARNINGs, not errors — the vanilla directory is not loaded at all there, so nothing diverges while that `replace_path` stands. `replace_path` is not recursive, so the check matches a parent directory exactly, never as a prefix.
+## Where a check runs
 
-- `validate_variables.py` carries a **clamp-range conflict** check (WARNING, `clamp-range-conflict`). It harvests every literal `clamp_variable = { var = X min = A max = B }` and flags any `check_variable` on `X` that compares against a value outside `A..B` (dead logic — always true or always false), plus the inverse scale slip: a sub-1 value compared against a variable clamped to a wide integer range. That second half is the `taliban_strength > 0.19` shape, the same failure class as the `threat > 40` trap in `general-rules.md`. It is deliberately anchored on the clamp rather than on observed value spread — a plain "this variable is compared on two scales" heuristic fires on `treasury`, `inflation_rate_var` and every percentage display variable, which legitimately use both. Variables only ever written by `set_temp_variable` are excluded: a clamp on a scratch parameter (`pp_gain`) constrains that one invocation, not the variable, so its range is no invariant for checks elsewhere.
+- Most content validators are CI-only. The `mod-tests` batch jobs in
+  `.github/workflows/test-suite.yml` are the gate. `tools/validation/validator_batches.py`
+  is the single list of what runs, which change groups select each validator, and which
+  run without `--strict`. Its `args` are also the flags of the main baseline run, so a
+  PR and main enable the same checks.
+- `git commit` runs only the fast subset: the `md-validate-content` dispatcher
+  (`tools/precommit_validate.py`), `validate_defines.py`, and `validate_mesh_textures.py`
+  on staged `gfx/models/` or `gfx/entities/` paths. The mesh check never runs in CI.
+- Run a CI-only validator locally with
+  `python3 tools/validation/validate_<topic>.py --staged --no-color`. Drop `--staged`
+  for a full-repo scan.
+- `--strict` gates on ERROR only. A check with a standing backlog ships as WARNING until
+  the backlog is cleared. A new strict check needs a baseline audit first, see the
+  review checklist in `tools/README.md`.
+- The events batch enables `--check-ai-chance-costs` as WARNING while the existing
+  backlog is reviewed. It checks relevant AI modifiers, not just their presence, and
+  ignores display-only `effect_tooltip` costs. Commit hooks leave this cross-reference
+  scan disabled; functional Indonesia contracts run in the `Content tests` job.
+- Strictness can differ by stage. `validate_ai_equipment.py` runs without `--strict`
+  locally and with it in CI.
+- `validate_unused_textures.py` is a `stages: [manual]` hook. `validate_standardization.py`
+  is unwired and run by hand. The `md-standardize` auto-fixer hook stays disabled.
+- The Test Suite runs on every PR to `main`, drafts included. Changes under
+  `tools/validation/`, `tools/linting/`, `tools/shared_utils.py`, the workflow files,
+  `resources/documentation/`, or `validation_config.json` force the full suite.
+- The style check is diff-scoped in CI. The nightly `main` baseline is full-repo, so
+  the PR report flags only new findings, and references orphaned by a deleted
+  definition surface on the nightly run. Common mistakes run full-repo in the core batch
+  over `common`, `events`, `history`, and `music`. A `music/*.txt` change selects only
+  that validator, through the `music` group.
+- `validate_graphical_cultures.py` runs in the targeted-b batch for `common` changes,
+  in warning mode while the standing backlog is triaged. It compares top-level country
+  `graphical_culture` assignments with bare identifier values, matching current country
+  file syntax, against entries in MD's
+  `common/graphicalculturetype.txt`. The CI workspace profile includes `/common/`,
+  which supplies both inputs. No local HOI4 install or vanilla culture registry was
+  available to verify base-game-only fallback behavior, so the check does not add a
+  guessed vanilla allowlist. Resolve this source/policy question before making the
+  check strict.
+- Remaining phases of [#5383](https://github.com/MillenniumDawn/Millennium-Dawn/issues/5383):
+  confirm the vanilla culture source/policy; validate entity
+  clone parents and `attach` targets (including vanilla entities); check that cultural
+  sprite sets cover `_1` through `_7`, including the known tierless-only
+  `northamerican_gfx` entries; validate cross-file clone load order; report cosmetic-tag
+  users of tag-prefixed entity sets; and include `gfx/entities/` in the CI workspace.
+  Those checks depend on entity parsing and/or game lookup behavior and are not covered
+  by the country registration milestone.
+- Everything that fans out shares `cpu_budget()` in `tools/shared_utils.py`: 75% of the
+  cores locally, all of them on CI. `MD_MAX_WORKERS=N` overrides it.
 
-- `validate_oob_units.py` also slot-checks every `create_equipment_variant` ship design (shared resolver: `tools/validation/naval_module_slots.py`). That widened its run gate well past OOB files: it is now routed on `history/countries/`, `common/national_focus/`, `events/`, `common/decisions/`, `common/special_projects/` and all of `common/scripted_effects/`, in both the pre-commit registry (`tools/precommit_validate.py`) and the CI `oob` path filter. Those two lists and the golden test in `tools/tests/precommit_validate_test.py` must move together. Findings are **errors** — the backlog was cleared first, so any hit is a regression. Non-ship variants are skipped by design; tank and plane slots are not validated anywhere yet, and their frequently-empty `allowed_module_categories` blocks mean the naval resolver cannot be pointed at them as-is.
+## CI artifacts and reports
+
+- `test-suite.yml` holds no write credentials until the `report` job. A
+  `pull_request` run, re-runs included, validates its event's head and base. A
+  dispatch looks the PR up, which is the explicit refresh to its live head. The report
+  leaves the PR comment alone when the head has since moved. A head predating the
+  tooling contract stops with one error asking to merge main. The report and the base
+  scan run the head's scripts with the workflow's flags, so a new flag joins the
+  contract.
+- `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
+  `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
+  across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
+  and only `gfx/flags` and `gfx/interface/decisions` from the art trees.
+- `tools-quality` runs Ruff, Black, pylint, mypy, jscpd, the staged-validator
+  integration, and `validate_tools.py`. Coverage runs on Linux only.
+- `workflow_dispatch` takes `pr_number`, `head_sha`, and `base_sha`, and skips
+  diff-scoped style sections. It runs with main's token and cache scope, so it refuses
+  fork PRs; their `pull_request` runs validate them. `nightly-pr-validation.yml`
+  re-dispatches same-repository PRs with no successful run on their current head and
+  base. `validator-cache.yml` rebuilds main's baseline.
+- `validator-cache.yml` runs on every push to main. It saves each complete run as that
+  commit's baseline (`md-baseline-v1-<os>-<hash>-<sha>-*`), even when the alarm fails.
+  The alarm compares the run with the last accepted one (`md-accepted-v1-*`) and goes
+  red on new errors until they are fixed. Main's run also widens diff-scoped checks to
+  their whole domain through `baseline_args` (party-loc audits every tag).
+- The report restores only the baseline of the PR's merge base, the main commit its
+  content started from, and checks the commit in the meta. Against main's tip, fixes
+  main made after the branch point would read as the PR's findings. When main has not
+  saved one, the advisory `baseline-scan` job scans the merge base in the same run:
+  the PR's tooling over the base content, no shared cache, a 20-minute budget. The
+  report reads its artifact and marks the source. The scan saves no cache entry,
+  because a dispatched run on main would let PR tooling write a main-scoped baseline.
+  With neither, the comparison is unavailable.
+- Main's findings in a file the PR renamed count as the new path's, in the file
+  field and in messages. A finding that names only a basename does not move.
+- Each main finding matches one PR finding with the same category, file, and message.
+  `detect-changes` ships the merge-base diff's hunk headers, so a match also needs the
+  same place: main's line shifted past the PR's edits, or the same changed hunk.
+  Fixing one copy and adding another elsewhere reads NEW, and so does a block moved
+  within a file. Findings with no line or only a basename match by count.
+- Main's findings come only from the validators the PR ran, so a severity difference
+  is a real transition: RAISED (warning to error) or LOWERED (error to warning).
+  This needs batch spec names to equal the script-derived sidecar names.
+- When a PR changes validator code or reference data, both scans use its validators,
+  so findings that code adds to unchanged content read EXISTING. `detect-changes`
+  flags this and the report says so. The base scan also restores main's own baseline
+  of the merge base, keyed by the base's own validator hash, and the report lists per
+  category what the PR's validators add to and drop from it.
+- The validator hash covers `tools/validation` sources and data, `shared_utils.py`,
+  `validation_config.json`, `resources/documentation/`, and the typo watchlist. All
+  four `hashFiles` sites must match, and each checkout must hold those files.
+- `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
+  `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
+  `python3 tools/merge_changelog.py --fix` repairs it.
+- The report posts one PR comment: new findings against main's baseline first, then
+  findings in touched files. A clean run removes the older comment. Section titles
+  derive from artifact directory names, so keep those slugs stable.
+- Every validator writes a sidecar, even when clean, and the baseline meta lists them.
+  A missing, extra, or malformed sidecar makes the baseline unavailable, so the report
+  drops the NEW tags instead of reading lost findings as new. `baseline_check.py`
+  refuses a run with no sidecars or a malformed one, and saves neither baseline.
+
+## Validation config
+
+`validation_config.json` at the repo root holds every suppression list the validators and `tools/analysis/ai_path_report.py` read: false positives, exemptions, and known-good names. To add or drop an entry, edit the JSON, not the validator.
+
+- Shape: `version`, then one object per validator script (`validate_ideas`, `check_common_mistakes`, ...), each holding named lists. A list maps each entry to the reason it is exempt. Leave the reason empty only when nobody knows it.
+- Matching depends on the list. Most match whole names, `*_prefixes` and `equipment_bonus_instant_exempt` match name starts, the `validate_variables`, `validate_set_variables`, and `validate_scripted_localisation` lists match substrings (so a short entry can swallow real names), and `false_positive_patterns` holds regexes.
+- `shared_utils.validation_config(validator, key)` returns one list. A missing file, section, or key raises, and so does a `version` other than 1.
+- Rule sets that describe the engine (block keywords, vanilla loc keys, placeholder textures, naming-convention prefixes) stay in code. Only lists that silence findings on specific content belong in the config.
+- A config edit behaves like a validator edit. The file is in every disk-cache fingerprint and the CI validator hash, `change_groups.py` runs the full suite for it, and every CI checkout plus `staged_sparse_profile.txt` includes it. CI also scans existing focus files when the config changes; style checks on other files remain diff-scoped. `config_drift_test.py` pins that wiring. The workshop publisher excludes it.
+
+## Refreshing vanilla-derived data
+
+CI has no HOI4 install, so six checked-in files stand in for the game. `tools/validation/refresh_vanilla_data.py` rebuilds all of them from a local install (`$HOI4_PATH`, else auto-detected from Steam's `libraryfolders.vdf` or the VS Code HOI4 extension `installPath` settings):
+
+Files live under `tools/validation/` except the `docs` target.
+
+| Target    | File                           | Read by                      |
+| --------- | ------------------------------ | ---------------------------- |
+| `defines` | `vanilla_defines.txt`          | `validate_defines.py`        |
+| `docs`    | `resources/documentation/*.md` | `validate_modifiers.py`      |
+| `fonts`   | `vanilla_fonts.txt`            | `validate_gfx_references.py` |
+| `gui`     | `vanilla_gui_files.txt`        | `validate_gfx_references.py` |
+| `paths`   | `vanilla_paths.txt`            | `validate_file_paths.py`     |
+| `sprites` | `vanilla_sprites.txt`          | `validate_gfx_references.py` |
+
+- `docs` files are verbatim copies of the game's own `documentation/`.
+- `fonts` feeds the undefined-font check; `gui` the MD-authored vs vanilla override split (ERROR/WARNING).
+- `sprites` is also read by `validate_ideas.py` (names) and `validate_decisions.py` (sizes). Lines are `GFX_name WxH`; the size is the texture's header dimensions and is absent when the sprite has no `texturefile` or the file is unreadable. Names come first so every reader that only wants names keeps working. The refresh reads ~30k texture headers and takes about a minute. Sprites from DLCs the refreshing machine does not own would drop out of the manifest; the ten music-pack sprites (`GFX_sabaton_album_art`, `GFX_*_comintern`, …) were kept by hand for that reason, so check the name diff before committing a refresh.
+
+```bash
+python3 tools/validation/refresh_vanilla_data.py
+python3 tools/validation/refresh_vanilla_data.py --only docs sprites
+```
+
+Run it after every HOI4 version bump and commit the diff. Stale data does not fail CI. It produces false positives instead, which is worse: a modifier Paradox added after the last refresh reads as a typo, and a sprite added in the same patch reads as an undefined reference.
+
+The `docs` target is a straight file copy with no reformatting, so `diff -r resources/documentation "$HOI4_PATH/documentation"` is the staleness check.
 
 ## Tooling deprecation watch
 

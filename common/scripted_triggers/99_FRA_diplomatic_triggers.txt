@@ -1,0 +1,213 @@
+# Author(s): 4RH1T3CT0R
+# Purpose: Diplomatic restriction triggers for French extremist factions and RPF
+
+# Check if France is on an extremist political path
+FRA_on_extremist_path = {
+	OR = {
+		has_country_flag = FRA_national_rally_path
+		has_country_flag = FRA_communist_path
+		has_country_flag = FRA_lfi_path
+		has_country_flag = FRA_pcf_path
+	}
+}
+
+# Check if France is on an anti-American path (includes RPF Gaullist path)
+FRA_on_anti_american_path = {
+	OR = {
+		has_country_flag = FRA_rpf_path
+		has_country_flag = FRA_national_rally_path
+		has_country_flag = FRA_communist_path
+		has_country_flag = FRA_lfi_path
+		has_country_flag = FRA_pcf_path
+		has_completed_focus = FRA_anti_usa
+	}
+}
+
+# Check if France is on a far-right path (National Rally)
+FRA_on_far_right_path = {
+	OR = {
+		has_country_flag = FRA_national_rally_path
+		has_completed_focus = FRA_FN_death
+	}
+}
+
+# Check if France is on a far-left path (PCF or LFI)
+FRA_on_far_left_path = {
+	OR = {
+		has_country_flag = FRA_communist_path
+		has_country_flag = FRA_lfi_path
+		has_country_flag = FRA_pcf_path
+		has_completed_focus = FRA_leave_nato_PCF
+	}
+}
+
+# Check if France is on Gaullist RPF path
+FRA_on_gaullist_path = {
+	OR = {
+		has_country_flag = FRA_rpf_path
+		has_completed_focus = FRA_back_gaulism
+	}
+}
+
+#################################################
+# Terrorist Attack Triggers
+# Based on historical French security vulnerabilities
+#################################################
+
+# Check if France has strong intelligence agency (counter-terrorism capability)
+FRA_has_strong_intelligence = {
+	custom_trigger_tooltip = {
+		tooltip = FRA_has_strong_intelligence_tt
+		has_intelligence_agency = yes
+		OR = {
+			has_done_agency_upgrade = upgrade_passive_defense
+			has_done_agency_upgrade = upgrade_interrogation_techniques
+			num_of_operatives > 3
+		}
+	}
+}
+
+# Check if France has weak intelligence agency
+FRA_has_weak_intelligence = {
+	custom_trigger_tooltip = {
+		tooltip = FRA_has_weak_intelligence_tt
+		OR = {
+			has_intelligence_agency = no
+			AND = {
+				NOT = { has_done_agency_upgrade = upgrade_passive_defense }
+				NOT = { has_done_agency_upgrade = upgrade_interrogation_techniques }
+				num_of_operatives < 2
+			}
+		}
+	}
+}
+
+# Check if France has high social/police spending (social_04, social_05, social_06)
+FRA_has_high_police_budget = {
+	custom_trigger_tooltip = {
+		tooltip = FRA_has_high_police_budget_tt
+		OR = {
+			has_idea = social_04
+			has_idea = social_05
+			has_idea = social_06
+		}
+	}
+}
+
+# Check if France has low social/police spending (social_01, social_02)
+FRA_has_low_police_budget = {
+	custom_trigger_tooltip = {
+		tooltip = FRA_has_low_police_budget_tt
+		OR = {
+			has_idea = social_01
+			has_idea = social_02
+		}
+	}
+}
+
+# Check if France is vulnerable to terrorist attacks (base conditions)
+FRA_vulnerable_to_terrorism = {
+	NOT = { has_country_flag = FRA_terror_networks_dismantled }
+	custom_trigger_tooltip = {
+		tooltip = FRA_vulnerable_to_terrorism_tt
+		OR = {
+			# Very low stability (crisis level)
+			has_stability < 0.25
+			# Combination of low stability and war
+			AND = {
+				has_stability < 0.35
+				has_war = yes
+			}
+			# Combination of low stability and extremist path
+			AND = {
+				has_stability < 0.40
+				FRA_on_extremist_path = yes
+			}
+			# Low social spending makes country vulnerable
+			AND = {
+				has_stability < 0.40
+				FRA_has_low_police_budget = yes
+			}
+			# Weak intelligence makes country vulnerable
+			AND = {
+				has_stability < 0.35
+				FRA_has_weak_intelligence = yes
+			}
+		}
+	}
+}
+
+# Check if France has heightened security (blocks terrorist events)
+FRA_has_heightened_security = {
+	custom_trigger_tooltip = {
+		tooltip = FRA_has_heightened_security_tt
+		OR = {
+			has_country_flag = FRA_vigipirate_active
+			has_country_flag = FRA_etat_urgence_active
+			has_idea = FRA_heightened_security
+			has_idea = FRA_state_of_emergency_terrorism
+		}
+	}
+}
+
+# Check if France can be targeted for minor attacks (metro, car bombs)
+FRA_can_have_minor_attack = {
+	FRA_vulnerable_to_terrorism = yes
+	NOT = { FRA_has_heightened_security = yes }
+	NOT = { has_country_flag = FRA_recent_terror_attack }
+	NOT = { has_country_flag = FRA_terror_chain_complete }
+}
+
+# Check if France can be targeted for medium attacks (police stations, markets)
+FRA_can_have_medium_attack = {
+	FRA_vulnerable_to_terrorism = yes
+	NOT = { FRA_has_heightened_security = yes }
+	NOT = { has_country_flag = FRA_recent_terror_attack }
+	has_country_flag = FRA_terror_level_1
+	# Stability check - relaxed during active terror wave
+	OR = {
+		has_stability < 0.30  # Normal threshold
+		AND = {
+			has_country_flag = FRA_terror_wave_active
+			has_stability < 0.40  # Relaxed threshold during wave
+		}
+	}
+}
+
+# Check if France can be targeted for major attacks (Louvre, military bases)
+FRA_can_have_major_attack = {
+	FRA_vulnerable_to_terrorism = yes
+	NOT = { FRA_has_heightened_security = yes }
+	NOT = { has_country_flag = FRA_recent_terror_attack }
+	has_country_flag = FRA_terror_level_2
+	# Stability check - relaxed during active terror wave
+	OR = {
+		has_stability < 0.25  # Normal threshold
+		AND = {
+			has_country_flag = FRA_terror_wave_active
+			has_stability < 0.35  # Relaxed threshold during wave
+		}
+	}
+}
+
+# Check if France can be targeted for catastrophic attacks (Eiffel Tower, nuclear)
+FRA_can_have_catastrophic_attack = {
+	FRA_vulnerable_to_terrorism = yes
+	NOT = { FRA_has_heightened_security = yes }
+	NOT = { has_country_flag = FRA_recent_terror_attack }
+	has_country_flag = FRA_terror_level_3
+	# Stability check - relaxed during active terror wave
+	OR = {
+		has_stability < 0.20  # Normal threshold
+		AND = {
+			has_country_flag = FRA_terror_wave_active
+			has_stability < 0.30  # Relaxed threshold during wave
+		}
+	}
+	# Must be in a really bad situation
+	OR = {
+		has_war = yes
+		FRA_on_extremist_path = yes
+		has_civil_war = yes
+	}
+}

@@ -43,14 +43,19 @@ import subprocess
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor
-from multiprocessing import cpu_count
 
 _TOOLS_DIR = os.path.dirname(os.path.abspath(__file__))
 if _TOOLS_DIR not in sys.path:
     sys.path.insert(0, _TOOLS_DIR)
 
+from shared_utils import (  # noqa: E402 — needs the path tweak above
+    normalize_path_separators,
+    split_cpu_budget,
+)
+
 TXT = ".txt"
 YML = ".yml"
+GFX = ".gfx"
 
 
 class _Spec:
@@ -85,6 +90,11 @@ class _Spec:
 # tools/tests/precommit_validate_test.py guards against drift.
 _REGISTRY = [
     _Spec(
+        "validate_common_mistakes",
+        [("", TXT)],
+        exclude=r"Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$",
+    ),
+    _Spec(
         "validate_style",
         [("", TXT)],
         exclude=r"Changelog\.txt$|AUTHORS\.txt$|descriptions.*\.txt$",
@@ -92,17 +102,22 @@ _REGISTRY = [
     _Spec(
         "validate_oob_units",
         [
-            ("history/units/", TXT),
+            ("history/", TXT),
             ("common/units/", TXT),
             ("common/ai_templates/", TXT),
             ("common/scripted_effects/", TXT),
-            # create_equipment_variant ship designs are slot-checked against
-            # their hull, so every directory that can hold one is routed here.
-            ("history/countries/", TXT),
+            # Ship variants and create_unit effects share this validator, so
+            # every runtime source for either effect is routed here.
             ("common/national_focus/", TXT),
             ("events/", TXT),
             ("common/decisions/", TXT),
             ("common/special_projects/", TXT),
+            ("common/on_actions/", TXT),
+            ("common/operations/", TXT),
+            ("common/resistance_compliance_modifiers/", TXT),
+            ("common/scripted_guis/", TXT),
+            # Idea removal effects delete templates that create_unit uses.
+            ("common/ideas/", TXT),
         ],
     ),
     _Spec(
@@ -110,6 +125,24 @@ _REGISTRY = [
         [("common/ai_strategy/", TXT), ("common/ai_templates/", TXT)],
     ),
     _Spec("validate_ai_navy", [("common/ai_navy/", TXT), ("common/units/", TXT)]),
+    _Spec(
+        "validate_characters",
+        [
+            ("common/characters/", TXT),
+            ("common/unit_leader/", TXT),
+            # The other leader trait pool. A trait moved between the two
+            # changes whether it is legal on a unit leader, and a trait moved
+            # between pool files reclassifies every advisor slot using it.
+            ("common/country_leader/", TXT),
+            # Sources of create_corps_commander and add_advisor_role.
+            ("common/national_focus/", TXT),
+            ("common/decisions/", TXT),
+            ("common/scripted_effects/", TXT),
+            ("common/on_actions/", TXT),
+            ("events/", TXT),
+            ("history/countries/", TXT),
+        ],
+    ),
     _Spec("validate_ai_equipment", [("common/ai_equipment/", TXT)], strict=False),
     _Spec(
         "validate_agency_upgrades",
@@ -124,6 +157,7 @@ _REGISTRY = [
         "validate_ideas",
         [
             ("common/ideas/", TXT),
+            ("common/idea_tags/", TXT),
             ("common/national_focus/", TXT),
             ("common/decisions/", TXT),
             ("common/on_actions/", TXT),
@@ -134,22 +168,49 @@ _REGISTRY = [
             ("localisation/english/", YML),
         ],
     ),
-    _Spec("validate_events", [("events/", TXT)]),
+    _Spec(
+        "validate_events",
+        [("common/", TXT), ("events/", TXT), ("history/", TXT)],
+    ),
+    _Spec(
+        "validate_mios",
+        [
+            ("common/military_industrial_organization/organizations/", TXT),
+            ("common/military_industrial_organization/policies/", TXT),
+            ("common/country_leader/", TXT),
+            ("common/doctrines/", TXT),
+            # Equipment and its groups are the other half of the dead-bonus
+            # check: dropping a base stat there kills bonuses elsewhere.
+            ("common/units/equipment/", TXT),
+            ("common/equipment_groups/", TXT),
+            ("interface/", GFX),
+            ("localisation/english/", YML),
+        ],
+    ),
 ]
 
 
 def _discover_staged(mod_path, argv_files):
-    """Staged paths relative to *mod_path*. Prefer the filenames pre-commit
-    already matched (argv); fall back to git for manual invocation."""
-    if argv_files:
-        out = []
-        for f in argv_files:
-            out.append(os.path.relpath(os.path.abspath(f), mod_path))
-        return out
+    """Return staged paths relative to *mod_path*, including rename origins."""
     from shared_utils import get_staged_files
 
-    staged = get_staged_files(mod_path, extensions=[TXT, YML]) or []
-    return [os.path.relpath(f, mod_path) for f in staged]
+    staged = (
+        get_staged_files(
+            mod_path, extensions=[TXT, YML, GFX], include_missing=bool(argv_files)
+        )
+        or []
+    )
+    discovered = [
+        normalize_path_separators(os.path.relpath(f, mod_path)) for f in staged
+    ]
+    if not argv_files:
+        return discovered
+
+    passed = [
+        normalize_path_separators(os.path.relpath(os.path.abspath(f), mod_path))
+        for f in argv_files
+    ]
+    return list(dict.fromkeys(passed + discovered))
 
 
 def _run(spec, mod_path, env, no_color, inner_workers):
@@ -177,8 +238,12 @@ def _run(spec, mod_path, env, no_color, inner_workers):
             timeout=300,
         )
     except subprocess.TimeoutExpired as exc:
-        out = exc.stdout or ""
-        err = exc.stderr or ""
+        out = exc.stdout
+        err = exc.stderr
+        if out is None:
+            out = ""
+        if err is None:
+            err = ""
         if isinstance(out, bytes):
             out = out.decode("utf-8", "replace")
         if isinstance(err, bytes):
@@ -207,9 +272,9 @@ def main():
 
     mod_path = os.path.abspath(args.path)
     rel_paths = [p.replace("\\", "/") for p in _discover_staged(mod_path, args.files)]
-    rel_paths = [p for p in rel_paths if p.endswith((TXT, YML))]
+    rel_paths = [p for p in rel_paths if p.endswith((TXT, YML, GFX))]
     if not rel_paths:
-        print("No staged .txt/.yml content files — nothing to validate.")
+        print("No staged .txt/.yml/.gfx content files — nothing to validate.")
         return 0
 
     selected = [spec for spec in _REGISTRY if spec.matches(rel_paths)]
@@ -222,13 +287,10 @@ def main():
     env = dict(os.environ)
     env["MD_STAGED_FILES"] = "\n".join(rel_paths)
 
-    cores = max(1, cpu_count())
-    max_parallel = min(len(selected), cores)
-    # Split cores between the outer fan-out and each validator's own worker pool.
-    # Floor of 2 so the heavy full-repo scanners (cosmetic_tags, focus_tree)
-    # keep some internal parallelism even on low-core machines, where dividing
-    # cores evenly would otherwise starve them back to single-threaded.
-    inner_workers = max(2, cores // max_parallel)
+    # The old split floored inner workers at 2, so the outer fan-out times the
+    # inner pools could reach twice the core count and stall the machine mid
+    # commit. split_cpu_budget keeps the product inside the shared budget.
+    max_parallel, inner_workers = split_cpu_budget(len(selected))
     print(
         f"MD content validation: {len(rel_paths)} staged file(s), "
         f"{len(selected)} validator(s), up to {max_parallel} in parallel "

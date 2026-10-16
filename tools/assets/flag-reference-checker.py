@@ -3,7 +3,7 @@
 import os
 import re
 import sys
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 
 def find_flags(content):
@@ -40,7 +40,7 @@ def should_skip(root, filename):
 
 def scan_directory(search_dir):
     """Scan directory once, collecting all flags and their locations."""
-    file_contents = {}  # filepath -> content
+    file_tokens = {}  # filepath -> token counts
     all_flags = set()
     files_processed = 0
 
@@ -64,7 +64,8 @@ def scan_directory(search_dir):
             try:
                 with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
-                    file_contents[filepath] = content
+                    tokens = Counter(re.findall(r"[A-Za-z0-9_]+", content))
+                    file_tokens[filepath] = tokens
 
                     flags = find_flags(content)
                     all_flags.update(flags)
@@ -78,25 +79,25 @@ def scan_directory(search_dir):
 
     print(f" Done! ({files_processed} files)\n")
 
-    # Count references by scanning each file once, not each flag once (faster)
+    # Counters retain exact token counts without rescanning each file once per
+    # identifier or matching short names inside unrelated identifiers.
     print("Analyzing flag references...")
     flag_references = defaultdict(lambda: defaultdict(int))
 
     flags_processed = 0
-    for filepath, content in file_contents.items():
-        for flag in all_flags:
-            if flag in content:
-                flag_references[flag][filepath] = content.count(flag)
+    for filepath, tokens in file_tokens.items():
+        for flag in all_flags.intersection(tokens):
+            flag_references[flag][filepath] = tokens[flag]
 
         flags_processed += 1
         if flags_processed % 50 == 0:
             print(
-                f"\r  Processed {flags_processed}/{len(file_contents)} files...",
+                f"\r  Processed {flags_processed}/{len(file_tokens)} files...",
                 end="",
                 flush=True,
             )
 
-    print(f"\r  Processed {flags_processed}/{len(file_contents)} files... Done!\n")
+    print(f"\r  Processed {flags_processed}/{len(file_tokens)} files... Done!\n")
 
     return all_flags, flag_references
 

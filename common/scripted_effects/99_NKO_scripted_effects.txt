@@ -148,278 +148,61 @@ NKO_sanctions_set_max = {
 		add_ideas = NKO_international_sanctions_idea
 	}
 }
-###########CIVIL WAR IN SOUTH KOREA -  EFFECT###########
-NKO_civil_war_south = {
-	hidden_effect = {
-		create_dynamic_country = {
-			original_tag = KOR
-			copy_tag = KOR
-			transfer_state = 604
-			set_popularities = {
-				democratic = 0
-				neutrality = 0
-				fascism = 0
-				communism = 99
-				nationalist = 1
-			}
-			inherit_technology = KOR
-			set_temp_variable = { rul_party_temp = 4 }
-			set_temp_variable = { disable_elections = 1 }
-			change_ruling_party_effect = yes
-			set_temp_variable = {
-				current_cons_popularity = party_pop_array^4
-			}
-			multiply_temp_variable = {
-				current_cons_popularity = 0.5
-			}
-			add_to_variable = {
-				party_pop_array^4 = current_cons_popularity
-			}
-			recalculate_party = yes
-			retire_country_leader = yes
-			KOR = {
-				transfer_units_fraction = {
-					target = PREV
-					size = 0.2
-					stockpile_ratio = 0.2
-					army_ratio = 0.2
-					navy_ratio = 0.2
-					air_ratio = 0.2
-				}
-			}
-			declare_war_on = {
-				target = KOR
-				type = civil_war
-			}
-			add_civil_war_target = KOR
-			country_event = korea.39
-		}
-	}
-}
-
 
 # -----------------------------------------------------------------------------
-# Initialise — adds the umbrella idea + 8 standing debuffs and seeds the
-# picks counter. Idempotent (each idea add is gated). Called from on_startup.
+# Refresh the player-only SPA banner after mandate state changes.
 # -----------------------------------------------------------------------------
-NKO_spa_initialise = {
-	hidden_effect = {
+NKO_spa_update_gui_dirty = {
+	if = {
+		limit = { is_ai = no }
 		if = {
-			limit = { NOT = { has_idea = NKO_spa_umbrella } }
-			add_ideas = NKO_spa_umbrella
-		}
-
-		if = {
-			limit = {
-				NOT = { has_idea = NKO_spa_debuff_industry }
-				NOT = { has_idea = NKO_spa_bonus_industry }
-			}
-			add_ideas = NKO_spa_debuff_industry
-		}
-		if = {
-			limit = {
-				NOT = { has_idea = NKO_spa_debuff_production }
-				NOT = { has_idea = NKO_spa_bonus_production }
-			}
-			add_ideas = NKO_spa_debuff_production
-		}
-		if = {
-			limit = {
-				NOT = { has_idea = NKO_spa_debuff_military }
-				NOT = { has_idea = NKO_spa_bonus_military }
-			}
-			add_ideas = NKO_spa_debuff_military
-		}
-		if = {
-			limit = {
-				NOT = { has_idea = NKO_spa_debuff_economy }
-				NOT = { has_idea = NKO_spa_bonus_economy }
-			}
-			add_ideas = NKO_spa_debuff_economy
-		}
-		if = {
-			limit = {
-				NOT = { has_idea = NKO_spa_debuff_research }
-			}
-			add_ideas = NKO_spa_debuff_research
-		}
-		if = {
-			limit = {
-				NOT = { has_idea = NKO_spa_debuff_agriculture }
-				NOT = { has_idea = NKO_spa_bonus_agriculture }
-			}
-			add_ideas = NKO_spa_debuff_agriculture
-		}
-		if = {
-			limit = {
-				NOT = { has_idea = NKO_spa_debuff_foreign }
-				NOT = { has_idea = NKO_spa_bonus_foreign }
-			}
-			add_ideas = NKO_spa_debuff_foreign
-		}
-		if = {
-			limit = {
-				NOT = { has_idea = NKO_spa_debuff_construction }
-				NOT = { has_idea = NKO_spa_bonus_construction }
-			}
-			add_ideas = NKO_spa_debuff_construction
-		}
-
-
-		set_variable = { NKO_spa_picks_made = 0 }
-	}
-}
-
-NKO_spa_open_session = {
-	hidden_effect = {
-		NKO_spa_resync_active_mandates = yes
-	}
-}
-
-NKO_spa_resync_active_mandates = {
-	hidden_effect = {
-		set_variable = { NKO_spa_picks_made = 0 }
-		if = { limit = { has_idea = NKO_spa_bonus_industry } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_production } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_military } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_economy } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { OR = { has_idea = NKO_spa_bonus_research has_idea = NKO_spa_bonus_research_half has_idea = NKO_spa_bonus_research_quarter } } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_agriculture } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_foreign } add_to_variable = { NKO_spa_picks_made = 1 } }
-		if = { limit = { has_idea = NKO_spa_bonus_construction } add_to_variable = { NKO_spa_picks_made = 1 } }
-	}
-}
-
-NKO_spa_release_slot = {
-	hidden_effect = {
-		if = {
-			limit = { check_variable = { NKO_spa_picks_made > 0 } }
-			subtract_from_variable = { NKO_spa_picks_made = 1 }
-		}
-	}
-}
-
-NKO_spa_pass_industry = {
-	hidden_effect = {
-		if = { limit = { has_idea = NKO_spa_debuff_industry } remove_ideas = NKO_spa_debuff_industry }
-		add_timed_idea = { idea = NKO_spa_bonus_industry days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
-		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Industrial Acceleration"
-	}
-}
-
-NKO_spa_pass_production = {
-	hidden_effect = {
-		if = { limit = { has_idea = NKO_spa_debuff_production } remove_ideas = NKO_spa_debuff_production }
-		add_timed_idea = { idea = NKO_spa_bonus_production days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
-		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Equipment Production Mandate"
-	}
-}
-
-NKO_spa_pass_military = {
-	hidden_effect = {
-		if = { limit = { has_idea = NKO_spa_debuff_military } remove_ideas = NKO_spa_debuff_military }
-		add_timed_idea = { idea = NKO_spa_bonus_military days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
-		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Songun Resolution"
-	}
-}
-
-NKO_spa_pass_economy = {
-	hidden_effect = {
-		if = { limit = { has_idea = NKO_spa_debuff_economy } remove_ideas = NKO_spa_debuff_economy }
-		add_timed_idea = { idea = NKO_spa_bonus_economy days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
-		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Juche Self-Reliance"
-	}
-}
-
-NKO_spa_pass_research = {
-	hidden_effect = {
-		if = { limit = { has_idea = NKO_spa_debuff_research } remove_ideas = NKO_spa_debuff_research }
-		if = {
-			limit = { NKO_spa_has_2005_tech_tier = yes }
-			add_timed_idea = { idea = NKO_spa_bonus_research_quarter days = 365 }
-		}
-		else_if = {
-			limit = { NKO_spa_has_1995_tech_tier = yes }
-			add_timed_idea = { idea = NKO_spa_bonus_research_half days = 365 }
+			limit = { check_variable = { global.NKO_spa_gui_dirty < 10000 } }
+			add_to_variable = { global.NKO_spa_gui_dirty = 1 }
 		}
 		else = {
-			add_timed_idea = { idea = NKO_spa_bonus_research days = 365 }
+			set_variable = { global.NKO_spa_gui_dirty = 1 }
 		}
-		add_to_variable = { NKO_spa_active_mandates = 1 }
-		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Research Drive"
 	}
 }
-
-NKO_spa_pass_agriculture = {
-	hidden_effect = {
-		if = { limit = { has_idea = NKO_spa_debuff_agriculture } remove_ideas = NKO_spa_debuff_agriculture }
-		add_timed_idea = { idea = NKO_spa_bonus_agriculture days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
-		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Agricultural Drive"
-	}
-}
-
-NKO_spa_pass_foreign = {
-	hidden_effect = {
-		if = { limit = { has_idea = NKO_spa_debuff_foreign } remove_ideas = NKO_spa_debuff_foreign }
-		add_timed_idea = { idea = NKO_spa_bonus_foreign days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
-		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Foreign Policy Directive"
-	}
-}
-
-NKO_spa_pass_construction = {
-	hidden_effect = {
-		if = { limit = { has_idea = NKO_spa_debuff_construction } remove_ideas = NKO_spa_debuff_construction }
-		add_timed_idea = { idea = NKO_spa_bonus_construction days = 365 }
-		add_to_variable = { NKO_spa_active_mandates = 1 }
-		log = "[GetDateText]: [Root.GetName]: SPA mandate passed: Construction Battalion"
-	}
-}
-
 
 NKO_spa_lift_debuff_industry = {
-	set_country_flag = NKO_spa_debuff_industry_lifted
-	if = { limit = { has_idea = NKO_spa_debuff_industry } remove_ideas = NKO_spa_debuff_industry }
+	remove_ideas = NKO_spa_debuff_industry
+	NKO_spa_update_gui_dirty = yes
 }
 
 NKO_spa_lift_debuff_production = {
-	set_country_flag = NKO_spa_debuff_production_lifted
-	if = { limit = { has_idea = NKO_spa_debuff_production } remove_ideas = NKO_spa_debuff_production }
+	remove_ideas = NKO_spa_debuff_production
+	NKO_spa_update_gui_dirty = yes
 }
 
 NKO_spa_lift_debuff_military = {
-	set_country_flag = NKO_spa_debuff_military_lifted
-	if = { limit = { has_idea = NKO_spa_debuff_military } remove_ideas = NKO_spa_debuff_military }
+	remove_ideas = NKO_spa_debuff_military
+	NKO_spa_update_gui_dirty = yes
 }
 
 NKO_spa_lift_debuff_economy = {
-	set_country_flag = NKO_spa_debuff_economy_lifted
-	if = { limit = { has_idea = NKO_spa_debuff_economy } remove_ideas = NKO_spa_debuff_economy }
+	remove_ideas = NKO_spa_debuff_economy
+	NKO_spa_update_gui_dirty = yes
 }
 
 NKO_spa_lift_debuff_research = {
-	set_country_flag = NKO_spa_debuff_research_lifted
-	if = { limit = { has_idea = NKO_spa_debuff_research } remove_ideas = NKO_spa_debuff_research }
+	remove_ideas = NKO_spa_debuff_research
+	NKO_spa_update_gui_dirty = yes
 }
 
 NKO_spa_lift_debuff_agriculture = {
-	set_country_flag = NKO_spa_debuff_agriculture_lifted
-	if = { limit = { has_idea = NKO_spa_debuff_agriculture } remove_ideas = NKO_spa_debuff_agriculture }
+	remove_ideas = NKO_spa_debuff_agriculture
+	NKO_spa_update_gui_dirty = yes
 }
 
 NKO_spa_lift_debuff_foreign = {
-	set_country_flag = NKO_spa_debuff_foreign_lifted
-	if = { limit = { has_idea = NKO_spa_debuff_foreign } remove_ideas = NKO_spa_debuff_foreign }
+	remove_ideas = NKO_spa_debuff_foreign
+	NKO_spa_update_gui_dirty = yes
 }
 
 NKO_spa_lift_debuff_construction = {
-	set_country_flag = NKO_spa_debuff_construction_lifted
-	if = { limit = { has_idea = NKO_spa_debuff_construction } remove_ideas = NKO_spa_debuff_construction }
+	remove_ideas = NKO_spa_debuff_construction
+	NKO_spa_update_gui_dirty = yes
 }
 
 
@@ -437,118 +220,56 @@ NKO_spa_give_latest_inf_weapons = {
 }
 
 NKO_spa_give_latest_tank = {
-	if = { limit = { has_tech = MBT_8 } add_equipment_to_stockpile = { type = MBT_8 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = MBT_7 } add_equipment_to_stockpile = { type = MBT_7 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = MBT_5 } add_equipment_to_stockpile = { type = MBT_5 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = MBT_4 } add_equipment_to_stockpile = { type = MBT_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = MBT_3 } add_equipment_to_stockpile = { type = MBT_3 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = MBT_2 } add_equipment_to_stockpile = { type = MBT_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_6 } add_equipment_to_stockpile = { type = medium_tank_chassis_6 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_5 } add_equipment_to_stockpile = { type = medium_tank_chassis_5 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = medium_tank_chassis_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = medium_tank_chassis_3 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = medium_tank_chassis_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_1 } add_equipment_to_stockpile = { type = medium_tank_chassis_1 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech } add_equipment_to_stockpile = { type = medium_tank_chassis_0 amount = NKO_spa_eq_amount producer = NKO } }
-	else = { add_equipment_to_stockpile = { type = MBT_1 amount = NKO_spa_eq_amount producer = NKO } }
+	add_equipment_to_stockpile = { type = medium_tank_chassis amount = NKO_spa_eq_amount producer = NKO }
 }
 
 NKO_spa_give_latest_apc = {
-	if = { limit = { has_tech = APC_8 } add_equipment_to_stockpile = { type = APC_8 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = APC_7 } add_equipment_to_stockpile = { type = APC_7 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = APC_6 } add_equipment_to_stockpile = { type = APC_6 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = APC_5 } add_equipment_to_stockpile = { type = APC_5 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = APC_4 } add_equipment_to_stockpile = { type = APC_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = APC_3 } add_equipment_to_stockpile = { type = APC_3 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = APC_2 } add_equipment_to_stockpile = { type = APC_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = APC_8 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = APC_6 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = APC_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_1 } add_equipment_to_stockpile = { type = APC_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else = { add_equipment_to_stockpile = { type = APC_1 amount = NKO_spa_eq_amount producer = NKO } }
+	add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis amount = NKO_spa_eq_amount producer = NKO }
 }
 
 NKO_spa_give_latest_ifv = {
-	if = { limit = { has_tech = IFV_8 } add_equipment_to_stockpile = { type = IFV_8 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = IFV_7 } add_equipment_to_stockpile = { type = IFV_7 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = IFV_6 } add_equipment_to_stockpile = { type = IFV_6 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = IFV_5 } add_equipment_to_stockpile = { type = IFV_5 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = IFV_4 } add_equipment_to_stockpile = { type = IFV_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = IFV_3 } add_equipment_to_stockpile = { type = IFV_3 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = IFV_2 } add_equipment_to_stockpile = { type = IFV_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = IFV_8 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = IFV_6 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = IFV_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_1 } add_equipment_to_stockpile = { type = IFV_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else = { add_equipment_to_stockpile = { type = IFV_1 amount = NKO_spa_eq_amount producer = NKO } }
+	add_equipment_to_stockpile = { type = medium_tank_flame_chassis amount = NKO_spa_eq_amount producer = NKO }
 }
 
 NKO_spa_give_latest_recon = {
-	if = { limit = { has_tech = Rec_tank_5 } add_equipment_to_stockpile = { type = Rec_tank_5 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = Rec_tank_4 } add_equipment_to_stockpile = { type = Rec_tank_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = Rec_tank_3 } add_equipment_to_stockpile = { type = Rec_tank_3 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = Rec_tank_2 } add_equipment_to_stockpile = { type = Rec_tank_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = Rec_tank_1 } add_equipment_to_stockpile = { type = Rec_tank_1 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = Rec_tank_5 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = Rec_tank_3 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = Rec_tank_1 amount = NKO_spa_eq_amount producer = NKO } }
-	else = { add_equipment_to_stockpile = { type = Rec_tank_0 amount = NKO_spa_eq_amount producer = NKO } }
+	add_equipment_to_stockpile = { type = medium_tank_destroyer_chassis amount = NKO_spa_eq_amount producer = NKO }
 }
 
 NKO_spa_give_latest_sp_aa = {
-	if = { limit = { has_tech = SP_Anti_Air_4 } add_equipment_to_stockpile = { type = SP_Anti_Air_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = SP_Anti_Air_3 } add_equipment_to_stockpile = { type = SP_Anti_Air_3 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = SP_Anti_Air_2 } add_equipment_to_stockpile = { type = SP_Anti_Air_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = SP_Anti_Air_1 } add_equipment_to_stockpile = { type = SP_Anti_Air_1 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = SP_Anti_Air_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = SP_Anti_Air_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = SP_Anti_Air_1 amount = NKO_spa_eq_amount producer = NKO } }
-	else = { add_equipment_to_stockpile = { type = SP_Anti_Air_0 amount = NKO_spa_eq_amount producer = NKO } }
+	add_equipment_to_stockpile = { type = medium_tank_aa_chassis amount = NKO_spa_eq_amount producer = NKO }
 }
 
 NKO_spa_give_latest_sp_arty = {
-	if = { limit = { has_tech = SP_arty_4 } add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = SP_arty_3 } add_equipment_to_stockpile = { type = SP_arty_3 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = SP_arty_2 } add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = SP_arty_1 } add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = SP_arty_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = SP_arty_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = SP_arty_1 amount = NKO_spa_eq_amount producer = NKO } }
-	else = { add_equipment_to_stockpile = { type = SP_arty_0 amount = NKO_spa_eq_amount producer = NKO } }
+	add_equipment_to_stockpile = { type = medium_tank_artillery_chassis amount = NKO_spa_eq_amount producer = NKO }
 }
 
 NKO_spa_give_latest_sp_rocket_arty = {
-	if = { limit = { has_tech = SP_R_arty_4 } add_equipment_to_stockpile = { type = SP_R_arty_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = SP_R_arty_3 } add_equipment_to_stockpile = { type = SP_R_arty_3 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = SP_R_arty_2 } add_equipment_to_stockpile = { type = SP_R_arty_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = SP_R_arty_1 } add_equipment_to_stockpile = { type = SP_R_arty_1 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_4 } add_equipment_to_stockpile = { type = SP_R_arty_4 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_3 } add_equipment_to_stockpile = { type = SP_R_arty_2 amount = NKO_spa_eq_amount producer = NKO } }
-	else_if = { limit = { has_tech = mbt_tech_2 } add_equipment_to_stockpile = { type = SP_R_arty_1 amount = NKO_spa_eq_amount producer = NKO } }
-	else = { add_equipment_to_stockpile = { type = SP_R_arty_0 amount = NKO_spa_eq_amount producer = NKO } }
+	add_equipment_to_stockpile = { type = medium_tank_rocket_chassis amount = NKO_spa_eq_amount producer = NKO }
 }
 
 NKO_spa_suppress_for_collapse = {
 	hidden_effect = {
-		if = { limit = { has_idea = NKO_spa_umbrella } remove_ideas = NKO_spa_umbrella }
-		if = { limit = { has_idea = NKO_spa_debuff_industry } remove_ideas = NKO_spa_debuff_industry }
-		if = { limit = { has_idea = NKO_spa_debuff_production } remove_ideas = NKO_spa_debuff_production }
-		if = { limit = { has_idea = NKO_spa_debuff_military } remove_ideas = NKO_spa_debuff_military }
-		if = { limit = { has_idea = NKO_spa_debuff_economy } remove_ideas = NKO_spa_debuff_economy }
-		if = { limit = { has_idea = NKO_spa_debuff_research } remove_ideas = NKO_spa_debuff_research }
-		if = { limit = { has_idea = NKO_spa_debuff_agriculture } remove_ideas = NKO_spa_debuff_agriculture }
-		if = { limit = { has_idea = NKO_spa_debuff_foreign } remove_ideas = NKO_spa_debuff_foreign }
-		if = { limit = { has_idea = NKO_spa_debuff_construction } remove_ideas = NKO_spa_debuff_construction }
-		if = { limit = { has_idea = NKO_spa_bonus_industry } remove_ideas = NKO_spa_bonus_industry }
-		if = { limit = { has_idea = NKO_spa_bonus_production } remove_ideas = NKO_spa_bonus_production }
-		if = { limit = { has_idea = NKO_spa_bonus_military } remove_ideas = NKO_spa_bonus_military }
-		if = { limit = { has_idea = NKO_spa_bonus_economy } remove_ideas = NKO_spa_bonus_economy }
-		if = { limit = { has_idea = NKO_spa_bonus_research } remove_ideas = NKO_spa_bonus_research }
-		if = { limit = { has_idea = NKO_spa_bonus_research_half } remove_ideas = NKO_spa_bonus_research_half }
-		if = { limit = { has_idea = NKO_spa_bonus_research_quarter } remove_ideas = NKO_spa_bonus_research_quarter }
-		if = { limit = { has_idea = NKO_spa_bonus_agriculture } remove_ideas = NKO_spa_bonus_agriculture }
-		if = { limit = { has_idea = NKO_spa_bonus_foreign } remove_ideas = NKO_spa_bonus_foreign }
-		if = { limit = { has_idea = NKO_spa_bonus_construction } remove_ideas = NKO_spa_bonus_construction }
+		if = { limit = { has_decision = NKO_spa_resolution_industry } remove_decision = NKO_spa_resolution_industry }
+		if = { limit = { has_decision = NKO_spa_resolution_production } remove_decision = NKO_spa_resolution_production }
+		if = { limit = { has_decision = NKO_spa_resolution_military } remove_decision = NKO_spa_resolution_military }
+		if = { limit = { has_decision = NKO_spa_resolution_economy } remove_decision = NKO_spa_resolution_economy }
+		if = { limit = { has_decision = NKO_spa_resolution_research } remove_decision = NKO_spa_resolution_research }
+		if = { limit = { has_decision = NKO_spa_resolution_agriculture } remove_decision = NKO_spa_resolution_agriculture }
+		if = { limit = { has_decision = NKO_spa_resolution_foreign } remove_decision = NKO_spa_resolution_foreign }
+		if = { limit = { has_decision = NKO_spa_resolution_construction } remove_decision = NKO_spa_resolution_construction }
+		remove_ideas = {
+			NKO_spa_umbrella
+			NKO_spa_debuff_industry
+			NKO_spa_debuff_production
+			NKO_spa_debuff_military
+			NKO_spa_debuff_economy
+			NKO_spa_debuff_research
+			NKO_spa_debuff_agriculture
+			NKO_spa_debuff_foreign
+			NKO_spa_debuff_construction
+		}
+		set_variable = { NKO_spa_picks_made = 0 }
+		NKO_spa_update_gui_dirty = yes
 	}
 }
 
@@ -614,27 +335,33 @@ NKO_naval_grant_latest_destroyer = {
 NKO_naval_buildup_grant_mastery_naval = {
 	if = {
 		limit = { check_variable = { NKO_naval_buildup_mastery_naval < 200 } }
-		add_mastery = { amount = 25 folder = naval }
-		add_to_variable = { NKO_naval_buildup_mastery_naval = 25 }
-		clamp_variable = { var = NKO_naval_buildup_mastery_naval min = 0 max = 200 }
+		custom_effect_tooltip = NKO_naval_buildup_mastery_naval_tt
+		hidden_effect = {
+			add_mastery = { amount = 25 folder = naval }
+			add_to_variable = { NKO_naval_buildup_mastery_naval = 25 }
+		}
 	}
 }
 
 NKO_naval_buildup_grant_mastery_land = {
 	if = {
-		limit = { check_variable = { NKO_naval_buildup_mastery_land < 150 } }
-		add_mastery = { amount = 25 folder = land }
-		add_to_variable = { NKO_naval_buildup_mastery_land = 25 }
-		clamp_variable = { var = NKO_naval_buildup_mastery_land min = 0 max = 150 }
+		limit = { check_variable = { NKO_naval_buildup_mastery_land < 100 } }
+		custom_effect_tooltip = NKO_naval_buildup_mastery_land_tt
+		hidden_effect = {
+			add_mastery = { amount = 25 folder = land }
+			add_to_variable = { NKO_naval_buildup_mastery_land = 25 }
+		}
 	}
 }
 
 NKO_naval_buildup_grant_mastery_sf = {
 	if = {
-		limit = { check_variable = { NKO_naval_buildup_mastery_sf < 200 } }
-		add_mastery = { amount = 25 folder = special_forces }
-		add_to_variable = { NKO_naval_buildup_mastery_sf = 25 }
-		clamp_variable = { var = NKO_naval_buildup_mastery_sf min = 0 max = 200 }
+		limit = { check_variable = { NKO_naval_buildup_mastery_sf < 100 } }
+		custom_effect_tooltip = NKO_naval_buildup_mastery_sf_tt
+		hidden_effect = {
+			add_mastery = { amount = 25 folder = special_forces }
+			add_to_variable = { NKO_naval_buildup_mastery_sf = 25 }
+		}
 	}
 }
 
@@ -796,12 +523,12 @@ NKO_export_transfer_util = {
 NKO_export_transfer_heavy_util = {
 	set_temp_variable = { NKO_export_eq_amount_neg = NKO_export_eq_amount }
 	multiply_temp_variable = { NKO_export_eq_amount_neg = -1 }
-	if = { limit = { has_tech = util_vehicle_9 } add_equipment_to_stockpile = { type = heavy_util_vehicle_9 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_9 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_8 } add_equipment_to_stockpile = { type = heavy_util_vehicle_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_8 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_7 } add_equipment_to_stockpile = { type = heavy_util_vehicle_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_7 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_6 } add_equipment_to_stockpile = { type = heavy_util_vehicle_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_6 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_5 } add_equipment_to_stockpile = { type = heavy_util_vehicle_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_5 amount = NKO_export_eq_amount producer = NKO } } }
-	else_if = { limit = { has_tech = util_vehicle_4 } add_equipment_to_stockpile = { type = heavy_util_vehicle_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_4 amount = NKO_export_eq_amount producer = NKO } } }
+	if = { limit = { has_tech = IMV_9 } add_equipment_to_stockpile = { type = heavy_util_vehicle_9 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_9 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_9 } add_equipment_to_stockpile = { type = heavy_util_vehicle_8 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_8 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_7 } add_equipment_to_stockpile = { type = heavy_util_vehicle_7 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_7 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_6 } add_equipment_to_stockpile = { type = heavy_util_vehicle_6 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_6 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_5 } add_equipment_to_stockpile = { type = heavy_util_vehicle_5 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_5 amount = NKO_export_eq_amount producer = NKO } } }
+	else_if = { limit = { has_tech = IMV_4 } add_equipment_to_stockpile = { type = heavy_util_vehicle_4 amount = NKO_export_eq_amount_neg producer = NKO } event_target:NKO_arms_client = { add_equipment_to_stockpile = { type = heavy_util_vehicle_4 amount = NKO_export_eq_amount producer = NKO } } }
 }
 
 # Latest command & control equipment (floor 1995 / cnc_equipment_3).
@@ -881,7 +608,7 @@ NKO_export_do_munitions = {
 		limit = { event_target:NKO_arms_client = { check_variable = { NKO_arms_request_type = 2 } } }
 		# Motorized Infantry Division — 3x Mot_Inf_Bat need (rifles 200, util 20, C&C 20).
 		if = { limit = { has_tech = infantry_weapons_4 } set_temp_variable = { NKO_export_eq_amount = 600 } NKO_export_transfer_inf_weapons = yes }
-		if = { limit = { has_tech = util_vehicle_4 }     set_temp_variable = { NKO_export_eq_amount = 60 }  NKO_export_transfer_util = yes  NKO_export_transfer_heavy_util = yes }
+		if = { limit = { has_tech = IMV_4 }     set_temp_variable = { NKO_export_eq_amount = 60 }  NKO_export_transfer_util = yes  NKO_export_transfer_heavy_util = yes }
 		if = { limit = { has_tech = cnc_equipment_3 }    set_temp_variable = { NKO_export_eq_amount = 60 }  NKO_export_transfer_cnc = yes }
 		set_temp_variable = { NKO_arms_export_output_tier = 2 }
 	}
@@ -915,7 +642,7 @@ NKO_export_do_munitions = {
 		}
 		# Utility and heavy utility vehicles — minimum 1995.
 		if = {
-			limit = { has_tech = util_vehicle_4 }
+			limit = { has_tech = IMV_4 }
 			set_temp_variable = { NKO_export_eq_amount = 80 }
 			NKO_export_transfer_util = yes
 			NKO_export_transfer_heavy_util = yes
@@ -1082,4 +809,12 @@ NKO_expeditionary_mastery_tick = {
 		limit = { check_variable = { NKO_expeditionary_any_active = 1 } }
 		add_mastery = { amount = 0.14 folder = land }
 	}
+}
+
+# Keep temporary exceptions and their consumer in one history effect invocation.
+NKO_initialize_party_bans = {
+	add_to_temp_array = { ban_except_array = 4 }
+	add_to_temp_array = { ban_except_array = 5 }
+	add_to_temp_array = { ban_except_array = 7 }
+	ban_all_parties_except_array = yes
 }

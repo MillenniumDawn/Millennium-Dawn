@@ -9,6 +9,7 @@ cnc_equipment_type C&C Equipment
 artillery_equipment Artillery
 space_artillery_equipment_type Orbital Fire Control Relay
 util_vehicle_type Utility Vehicle
+heavy_util_vehicle_type Heavy Utility Vehicle
 heavy_tank_chassis Attack Helicopter
 medium_tank_chassis Main Battle Tank
 super_heavy_tank_chassis Walker Tank
@@ -35,7 +36,7 @@ destroyer Destroyer
 stealth_destroyer Stealth Destroyers
 cruiser Cruiser
 battle_cruiser Battlecruisers
-battleship_hull_0 Battleships
+battleship Battleships
 helicopter_operator Helicopter Operators
 carrier Aircraft Carrier
 attack_submarine Attack Submarines
@@ -44,6 +45,7 @@ patrol_boat Patrol Boat
 support_ship_hull Support Ship
 repair_ship_hull Repair Ship
 convoy Convoy
+floating_harbor_equipment Modular Causeway System
 train_equipment Civilian Trains
 zombie Zombie Virus
 zombie_runner Runner Strain

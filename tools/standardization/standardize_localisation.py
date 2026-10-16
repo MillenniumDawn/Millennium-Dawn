@@ -15,7 +15,12 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-from shared_utils import create_backup, log_message
+from shared_utils import (
+    add_standard_file_arguments,
+    atomic_write_text,
+    create_backup,
+    log_message,
+)
 
 # Output order
 SECTION_ORDER = [
@@ -389,13 +394,13 @@ class LocalisationStandardizer:
         )
 
         try:
-            output_file.write_text(output, encoding="utf-8-sig")
+            atomic_write_text(str(output_file), output, bom=True)
         except OSError as exc:
             log_message("ERROR", f"Cannot write {output_file}: {exc}")
             return False
 
         # Summary
-        cats = {}
+        cats: Dict[str, int] = {}
         for entry in entries:
             if entry.key:
                 cat = _find_category(entry.key, self.index, self.references)
@@ -414,12 +419,7 @@ def main():
     parser = argparse.ArgumentParser(
         description="Standardise a Millennium Dawn localisation file by content category"
     )
-    parser.add_argument("input_file", help="Input .yml localisation file")
-    parser.add_argument("-o", "--output", help="Output file (default: overwrite input)")
-    parser.add_argument(
-        "-b", "--backup", action="store_true", help="Create backup first"
-    )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
+    add_standard_file_arguments(parser, input_help="Input .yml localisation file")
     parser.add_argument(
         "--mod-root", help="Path to mod root (auto-detected if omitted)"
     )

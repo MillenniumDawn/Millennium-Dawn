@@ -3,9 +3,13 @@
 
 import argparse
 import codecs
+import os
 import re
 import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import atomic_write_bytes
 
 # Curly quote pairs to normalize
 SMART_QUOTES = {
@@ -206,11 +210,10 @@ def process_file(file_path: Path, fix_mode: bool) -> tuple:
     fixed_content = "\n".join(fixed_lines)
 
     write_bytes = (codecs.BOM_UTF8 if has_bom else b"") + fixed_content.encode("utf-8")
-    with open(file_path, "wb") as f:
-        f.write(write_bytes)
+    atomic_write_bytes(str(file_path), write_bytes)
 
     # Summarize by issue type
-    counts = {}
+    counts: dict[str, int] = {}
     for _, issue_type, _ in all_problems:
         counts[issue_type] = counts.get(issue_type, 0) + 1
     summary = ", ".join(f"{v} {k}" for k, v in sorted(counts.items()))

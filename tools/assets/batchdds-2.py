@@ -96,21 +96,63 @@ def _color_block_palette(raw, off):
         ]
 
 
+def _block_grid(width, height):
+    """Return the (bx_count, by_count) 4x4 block grid covering width x height."""
+    pw = (width + 3) & ~3
+    ph = (height + 3) & ~3
+    return pw // 4, ph // 4
+
+
+def _dxt5_alpha_palette(a0, a1):
+    """Return the 8-entry DXT5 alpha palette for endpoints a0, a1."""
+    if a0 > a1:
+        return [
+            a0,
+            a1,
+            (6 * a0 + 1 * a1) // 7,
+            (5 * a0 + 2 * a1) // 7,
+            (4 * a0 + 3 * a1) // 7,
+            (3 * a0 + 4 * a1) // 7,
+            (2 * a0 + 5 * a1) // 7,
+            (1 * a0 + 6 * a1) // 7,
+        ]
+    return [
+        a0,
+        a1,
+        (4 * a0 + 1 * a1) // 5,
+        (3 * a0 + 2 * a1) // 5,
+        (2 * a0 + 3 * a1) // 5,
+        (1 * a0 + 4 * a1) // 5,
+        0,
+        255,
+    ]
+
+
 # ── Decompressors → flat list of (b, g, r, a) ────────────────────────────────
+
+
+def _decompress_setup(width, height):
+    """Return (bx_count, by_count, canvas) shared by the DXT block decompressors."""
+    bx_count, by_count = _block_grid(width, height)
+    pixels = [(0, 0, 0, 255)] * (width * height)
+    return bx_count, by_count, pixels
+
+
+def _color_index_block(raw, color_off):
+    """Return (pal, idx_dw) decoded from an 8-byte DXT color sub-block at color_off."""
+    pal = _color_block_palette(raw, color_off)
+    idx_dw = struct.unpack_from("<I", raw, color_off + 4)[0]
+    return pal, idx_dw
 
 
 def decompress_dxt1(raw, width, height):
     """Decompress DXT1 to flat (b,g,r,a) list. Transparent blocks get a=0."""
-    pw = (width + 3) & ~3
-    ph = (height + 3) & ~3
-    bx_count = pw // 4
-    pixels = [(0, 0, 0, 255)] * (width * height)
-    for by in range(ph // 4):
+    bx_count, by_count, pixels = _decompress_setup(width, height)
+    for by in range(by_count):
         for bx in range(bx_count):
             off = (by * bx_count + bx) * 8
             c0_565, c1_565 = struct.unpack_from("<HH", raw, off)
-            pal = _color_block_palette(raw, off)
-            idx_dw = struct.unpack_from("<I", raw, off + 4)[0]
+            pal, idx_dw = _color_index_block(raw, off)
             has_transparency = c0_565 <= c1_565
             for py in range(4):
                 for px in range(4):
@@ -125,83 +167,49 @@ def decompress_dxt1(raw, width, height):
     return pixels
 
 
-def decompress_dxt3(raw, width, height):
-    """Decompress DXT3 to flat (b,g,r,a) list."""
-    pw = (width + 3) & ~3
-    ph = (height + 3) & ~3
-    bx_count = pw // 4
-    pixels = [(0, 0, 0, 255)] * (width * height)
-    for by in range(ph // 4):
+def _dxt3_alpha_values(raw, off):
+    """Return DXT3's 16 4-bit alpha values, expanded to bytes."""
+    values = []
+    for pi in range(16):
+        alpha_byte = raw[off + pi // 2]
+        values.append(((alpha_byte >> ((pi % 2) * 4)) & 0xF) * 255 // 15)
+    return values
+
+
+def _dxt5_alpha_values(raw, off):
+    """Return DXT5's 16 alpha values from its compressed alpha block."""
+    a0, a1 = raw[off], raw[off + 1]
+    index_bits = sum(raw[off + 2 + index] << (index * 8) for index in range(6))
+    palette = _dxt5_alpha_palette(a0, a1)
+    return [palette[(index_bits >> (pixel * 3)) & 0x7] for pixel in range(16)]
+
+
+def _decompress_dxt_with_alpha(raw, width, height, alpha_values):
+    """Decompress a DXT color block paired with a DXT3 or DXT5 alpha block."""
+    bx_count, by_count, pixels = _decompress_setup(width, height)
+    for by in range(by_count):
         for bx in range(bx_count):
             off = (by * bx_count + bx) * 16
-            color_off = off + 8
-            pal = _color_block_palette(raw, color_off)
-            idx_dw = struct.unpack_from("<I", raw, color_off + 4)[0]
+            palette, index_dword = _color_index_block(raw, off + 8)
+            alphas = alpha_values(raw, off)
             for py in range(4):
                 for px in range(4):
                     dy, dx = by * 4 + py, bx * 4 + px
                     if dy < height and dx < width:
-                        pi = py * 4 + px
-                        # 4-bit alpha packed two-per-byte
-                        ab = raw[off + pi // 2]
-                        nibble = (ab >> ((pi % 2) * 4)) & 0xF
-                        a = nibble * 255 // 15
-                        r, g, b = pal[(idx_dw >> (pi * 2)) & 0x3]
-                        pixels[dy * width + dx] = (b, g, r, a)
+                        pixel = py * 4 + px
+                        r, g, b = palette[(index_dword >> (pixel * 2)) & 0x3]
+                        pixels[dy * width + dx] = (b, g, r, alphas[pixel])
     return pixels
+
+
+def decompress_dxt3(raw, width, height):
+    """Decompress DXT3 to flat (b,g,r,a) list."""
+    return _decompress_dxt_with_alpha(raw, width, height, _dxt3_alpha_values)
 
 
 def decompress_dxt5(raw, width, height):
     """Decompress DXT5 to flat (b,g,r,a) list."""
-    pw = (width + 3) & ~3
-    ph = (height + 3) & ~3
-    bx_count = pw // 4
-    pixels = [(0, 0, 0, 255)] * (width * height)
-    for by in range(ph // 4):
-        for bx in range(bx_count):
-            off = (by * bx_count + bx) * 16
-            color_off = off + 8
-
-            # Alpha block
-            a0, a1 = raw[off], raw[off + 1]
-            idx_bits = 0
-            for k in range(6):
-                idx_bits |= raw[off + 2 + k] << (k * 8)
-            if a0 > a1:
-                apal = [
-                    a0,
-                    a1,
-                    (6 * a0 + 1 * a1) // 7,
-                    (5 * a0 + 2 * a1) // 7,
-                    (4 * a0 + 3 * a1) // 7,
-                    (3 * a0 + 4 * a1) // 7,
-                    (2 * a0 + 5 * a1) // 7,
-                    (1 * a0 + 6 * a1) // 7,
-                ]
-            else:
-                apal = [
-                    a0,
-                    a1,
-                    (4 * a0 + 1 * a1) // 5,
-                    (3 * a0 + 2 * a1) // 5,
-                    (2 * a0 + 3 * a1) // 5,
-                    (1 * a0 + 4 * a1) // 5,
-                    0,
-                    255,
-                ]
-
-            pal = _color_block_palette(raw, color_off)
-            idx_dw = struct.unpack_from("<I", raw, color_off + 4)[0]
-
-            for py in range(4):
-                for px in range(4):
-                    dy, dx = by * 4 + py, bx * 4 + px
-                    if dy < height and dx < width:
-                        pi = py * 4 + px
-                        a = apal[(idx_bits >> (pi * 3)) & 0x7]
-                        r, g, b = pal[(idx_dw >> (pi * 2)) & 0x3]
-                        pixels[dy * width + dx] = (b, g, r, a)
-    return pixels
+    return _decompress_dxt_with_alpha(raw, width, height, _dxt5_alpha_values)
 
 
 def decode_bgra(raw, width, height):
@@ -274,28 +282,7 @@ def _compress_dxt5_alpha_block(alphas):
     if a0 == a1 and a0 > 0:
         a1 -= 1
 
-    if a0 > a1:
-        apal = [
-            a0,
-            a1,
-            (6 * a0 + 1 * a1) // 7,
-            (5 * a0 + 2 * a1) // 7,
-            (4 * a0 + 3 * a1) // 7,
-            (3 * a0 + 4 * a1) // 7,
-            (2 * a0 + 5 * a1) // 7,
-            (1 * a0 + 6 * a1) // 7,
-        ]
-    else:
-        apal = [
-            a0,
-            a1,
-            (4 * a0 + 1 * a1) // 5,
-            (3 * a0 + 2 * a1) // 5,
-            (2 * a0 + 3 * a1) // 5,
-            (1 * a0 + 4 * a1) // 5,
-            0,
-            255,
-        ]
+    apal = _dxt5_alpha_palette(a0, a1)
 
     idx_bits = 0
     for i, a in enumerate(alphas):
@@ -306,38 +293,33 @@ def _compress_dxt5_alpha_block(alphas):
     return bytes([a0, a1]) + idx_bytes
 
 
+def _gather_block(pixels, width, height, by, bx):
+    """Return the 16 source pixels for block (by, bx), clamping at the image edge."""
+    return [
+        pixels[min(by * 4 + py, height - 1) * width + min(bx * 4 + px, width - 1)]
+        for py in range(4)
+        for px in range(4)
+    ]
+
+
 def compress_to_dxt1(pixels, width, height):
     """Compress flat (b,g,r,a) list to DXT1 data (alpha discarded)."""
-    pw = (width + 3) & ~3
-    ph = (height + 3) & ~3
+    bx_count, by_count = _block_grid(width, height)
     out = bytearray()
-    for by in range(ph // 4):
-        for bx in range(pw // 4):
-            block = [
-                pixels[
-                    min(by * 4 + py, height - 1) * width + min(bx * 4 + px, width - 1)
-                ]
-                for py in range(4)
-                for px in range(4)
-            ]
+    for by in range(by_count):
+        for bx in range(bx_count):
+            block = _gather_block(pixels, width, height, by, bx)
             out += _compress_color_block(block)
     return out
 
 
 def compress_to_dxt5(pixels, width, height):
     """Compress flat (b,g,r,a) list to DXT5 data (alpha preserved)."""
-    pw = (width + 3) & ~3
-    ph = (height + 3) & ~3
+    bx_count, by_count = _block_grid(width, height)
     out = bytearray()
-    for by in range(ph // 4):
-        for bx in range(pw // 4):
-            block = [
-                pixels[
-                    min(by * 4 + py, height - 1) * width + min(bx * 4 + px, width - 1)
-                ]
-                for py in range(4)
-                for px in range(4)
-            ]
+    for by in range(by_count):
+        for bx in range(bx_count):
+            block = _gather_block(pixels, width, height, by, bx)
             out += _compress_dxt5_alpha_block([p[3] for p in block])
             out += _compress_color_block(block)
     return out

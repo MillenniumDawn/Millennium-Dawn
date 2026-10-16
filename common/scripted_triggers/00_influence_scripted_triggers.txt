@@ -2,10 +2,7 @@
 is_influencer = {
 	custom_trigger_tooltip = {
 		tooltip = is_influencer_tt
-		any_of_scopes = {
-			array = influence_array
-			tag = ROOT
-		}
+		is_in_array = { influence_array = ROOT }
 	}
 }
 
@@ -389,6 +386,25 @@ influence_higher_90 = {
 	}
 }
 
+influence_less_5 = {
+	custom_trigger_tooltip = {
+		tooltip = influence_less_5_tt
+		OR = {
+			NOT = {
+				is_in_array = { array = ROOT.influence_array value = THIS }
+			}
+			any_of = {
+				array = ROOT.influence_array
+				value = v
+				index = i
+
+				var:v = { tag = THIS }
+				check_variable = { ROOT.influence_array_val^i < 5 }
+			}
+		}
+	}
+}
+
 influence_less_10 = {
 	custom_trigger_tooltip = {
 		tooltip = influence_less_10_tt
@@ -569,13 +585,29 @@ manipulate_politics_action_available = {
 
 make_puppet_action_available = {
 	check_variable = { influence_array^0 = PREV }
-	check_variable = { influence_array_val^0 > 80.999 } #84.999
+	check_variable = { influence_array_val^0 > 79.999 }
 	has_government = PREV
-	NOT = { is_subject_of = PREV }
-	NOT = { has_war = yes }
+	is_subject = no
+	has_war = no
 	has_game_rule = {
 		rule = rule_disable_ai_influence_puppeting
 		option = no
+	}
+	if = {
+		limit = {
+			has_game_rule = {
+				rule = rule_disable_western_outlook_features
+				option = yes
+			}
+		}
+		PREV = { NOT = { has_government = democratic } }
+	}
+	if = {
+		limit = {
+			original_tag = NKO
+			PREV = { original_tag = CHI }
+		}
+		always = no
 	}
 }
 

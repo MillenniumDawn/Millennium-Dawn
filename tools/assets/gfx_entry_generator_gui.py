@@ -1,8 +1,14 @@
 #!/usr/bin/env python3
 import sys
 from pathlib import Path
-from tkinter import *
-from tkinter import messagebox
+from tkinter import (
+    NW,
+    Canvas,
+    IntVar,
+    PhotoImage,
+    Tk,
+    messagebox,
+)
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 import gfx_entry_generator as geg
@@ -60,7 +66,10 @@ selection = IntVar()
 
 
 def main(event=None):
-    sel = int(selection.get())
+    try:
+        sel = int(selection.get())
+    except (TypeError, ValueError):
+        return
     if sel == 1:
         # gfxbool=0: bypass the CLI's interactive prompt, matching this GUI's
         # long-standing default of never prefixing goal icons with "GFX_".
@@ -101,7 +110,7 @@ can = Canvas(gui, width=527, height=315, bd=0, highlightthickness=0)
 can.pack(fill="both", expand=True)
 can.create_image(0, 0, image=bg_img, anchor=NW)
 quit_button = can.create_image(510, 15, image=exit_img)
-can.tag_bind(quit_button, "<Button-1>", exit)
+can.tag_bind(quit_button, "<Button-1>", lambda _event: gui.destroy())
 
 generate_button = can.create_image(255, 280, image=generate_img)
 can.tag_bind(generate_button, "<Button-1>", main)

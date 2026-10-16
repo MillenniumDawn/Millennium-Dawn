@@ -6,13 +6,7 @@ a directly-passed file. These regressions cover both entry points: a resources/
 file path and the resources/ directory itself must be left untouched.
 """
 
-import os
-import sys
-
-REPO_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-sys.path.insert(0, os.path.join(REPO_ROOT, "tools"))
-
-import cleanup_or  # noqa: E402
+import cleanup_or
 
 # A collapsible OR block cleanup_or would otherwise rewrite to a bare condition.
 _REWRITABLE = "foo = {\n\tavailable = {\n\t\tOR = {\n\t\t\thas_country_flag = bar\n\t\t}\n\t}\n}\n"
@@ -44,6 +38,20 @@ def test_resources_directory_not_walked(tmp_path):
     f.write_text(_REWRITABLE, encoding="utf-8")
     cleanup_or.main([str(res)])
     assert f.read_text(encoding="utf-8") == _REWRITABLE
+
+
+def test_directory_walk_prunes_a_nested_resources_folder(tmp_path, capsys):
+    normal = tmp_path / "normal.txt"
+    excluded = tmp_path / "resources" / "reference.txt"
+    excluded.parent.mkdir()
+    normal.write_text(_REWRITABLE, encoding="utf-8")
+    excluded.write_text(_REWRITABLE, encoding="utf-8")
+
+    cleanup_or.main([str(tmp_path)])
+
+    assert normal.read_text(encoding="utf-8") == _SIMPLIFIED
+    assert excluded.read_text(encoding="utf-8") == _REWRITABLE
+    assert "Simplified OR blocks" in capsys.readouterr().out
 
 
 def test_ancestor_resources_outside_repo_not_excluded(tmp_path):

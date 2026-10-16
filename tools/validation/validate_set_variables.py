@@ -12,14 +12,15 @@ import os
 import re
 from functools import partial
 from multiprocessing import Pool
-from typing import Dict, List, Tuple
+from typing import Dict, FrozenSet, Iterator, List, Tuple
 
 import disk_cache
+from shared_utils import validation_config
 from validator_common import (
     BaseValidator,
-    DataCleaner,
     FileOpener,
     Severity,
+    drop_partial_matches,
     find_line_number,
     run_validator_main,
     should_skip_file,
@@ -30,14 +31,28 @@ from validator_common import (
 # gives margin while staying tight enough never to reach a prior statement.
 SET_LOOKBACK_WINDOW = 40
 
-_SET_SHORT_RE = re.compile(r"set_variable = ([^ \t\n\}]+)")
+# Variable-writing effects whose left-hand target is a tracked variable. The
+# unused-variable check must cover every effect that defines a variable, not
+# just set_variable: a var written only via add_to_variable/subtract_from_variable
+# (and never bound to a dynamic modifier or read) would otherwise be invisible
+# to the reference scan.
+_WRITE_EFFECTS = (
+    "set_variable",
+    "add_to_variable",
+    "subtract_from_variable",
+    "multiply_variable",
+    "divide_variable",
+)
+_WRITE_ALT = "|".join(_WRITE_EFFECTS)
+
+_SET_SHORT_RE = re.compile(rf"(?:{_WRITE_ALT}) = ([^ \t\n}}]+)")
 # `\w` (Unicode) keeps tag-prefixed targets whole (GER_event_counter_1_wot,
 # ITA_ageing_population_var) AND non-ASCII names like additional_income_GER_Ökosteuer.
 # An ASCII-only class split on the Ö and captured only the `kosteuer` tail, which
 # never matched its own reads and so was wrongly reported as unused. `@.^[]` stay
 # for indexed/array and scoped targets.
 _SET_LONG_RE = re.compile(
-    r"set_variable = \{[^}]*?([\w@\.\^\[\]]+)\s*=",
+    rf"(?:{_WRITE_ALT}) = \{{[^}}]*?([\w@\.\^\[\]]+)\s*=",
     flags=re.MULTILINE | re.DOTALL,
 )
 _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
@@ -50,7 +65,9 @@ _SET_LONG_RESERVED = frozenset(("value", "days", "months", "years", "hours"))
 # correctly counted as a read. The `(?:scope\.)*` tail lets the scope-stripped
 # target (see _strip_scope_prefix) still be recognised inside a scoped write
 # like `set_variable = { THIS.europeanism = ... }`.
-_SET_TARGET_PREFIX_RE = re.compile(r"set_variable\s*=\s*\{?\s*(?:[a-z_][a-z0-9_]*\.)*$")
+_SET_TARGET_PREFIX_RE = re.compile(
+    rf"(?:{_WRITE_ALT})\s*=\s*\{{?\s*(?:[a-z_][a-z0-9_]*\.)*$"
+)
 
 
 def _resolve_mod_root(path: str) -> str:
@@ -92,7 +109,7 @@ def _strip_scope_prefix(name: str) -> str:
 
 def _scan_set_variables(text: str) -> List[str]:
     variables: List[str] = []
-    if "set_variable =" in text:
+    if any(f"{e} =" in text for e in _WRITE_EFFECTS):
         variables.extend(_SET_SHORT_RE.findall(text))
         variables.extend(
             m for m in _SET_LONG_RE.findall(text) if m not in _SET_LONG_RESERVED
@@ -104,7 +121,7 @@ def _scan_set_variables(text: str) -> List[str]:
 def process_file_for_set_variables(
     filename: str, lowercase: bool, mod_path: str
 ) -> Tuple[List[str], Dict[str, str]]:
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=mod_path):
         return [], {}
     text = FileOpener.open_text_file(
         filename, lowercase=lowercase, strip_comments_flag=True
@@ -171,6 +188,24 @@ def _dynamic_ref_pattern(ref: str):
     return "^" + r"\w+".join(re.escape(part) for part in literals) + "$"
 
 
+def _dynamic_refs(text: str) -> Iterator[str]:
+    """Yield what `_DYNAMIC_REF_RE.finditer(text)` would, trying only offsets
+    that lead into a `[`. finditer backtracked through every word first."""
+    end = 0
+    bracket = text.find("[")
+    while bracket != -1:
+        start = bracket
+        while start > end and (text[start - 1].isalnum() or text[start - 1] in "_.:"):
+            start -= 1
+        m = _DYNAMIC_REF_RE.match(text, start)
+        if m is None:
+            bracket = text.find("[", bracket + 1)
+            continue
+        yield m.group()
+        end = m.end()
+        bracket = text.find("[", end)
+
+
 # Pass-2 per-worker state, populated once by _pass2_init via the Pool
 # initializer instead of being re-pickled in every task's args (the old args
 # tuple shipped the full ~3,900-element tracked set to each of ~8,800 files).
@@ -178,14 +213,19 @@ _W_MOD_PATH: str = ""
 _W_BARE: Dict[str, str] = {}
 _W_DOTTED: Dict[str, str] = {}
 _W_NAMESPACE: str = ""
+# Every word a count can start from: a bare name, or the X of a tracked global.X.
+_W_WORDS: FrozenSet[str] = frozenset()
 
 
 def _pass2_init(mod_path, bare_map, dotted_map, namespace):
-    global _W_MOD_PATH, _W_BARE, _W_DOTTED, _W_NAMESPACE
+    global _W_MOD_PATH, _W_BARE, _W_DOTTED, _W_NAMESPACE, _W_WORDS
     _W_MOD_PATH = mod_path
     _W_BARE = bare_map
     _W_DOTTED = dotted_map
     _W_NAMESPACE = namespace
+    _W_WORDS = frozenset(bare_map).union(
+        name[len("global.") :] for name in dotted_map if name.startswith("global.")
+    )
 
 
 def _is_definition(text: str, start: int) -> bool:
@@ -199,20 +239,31 @@ def _is_definition(text: str, start: int) -> bool:
 def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
     bare = _W_BARE
     dotted = _W_DOTTED
+    words = _W_WORDS
     counts: Dict[str, int] = {}
     dynamic_patterns: set = set()
-    if "[" in text:
-        for dm in _DYNAMIC_REF_RE.finditer(text):
-            pattern = _dynamic_ref_pattern(dm.group())
-            if pattern is not None:
-                dynamic_patterns.add(pattern)
+    for ref in _dynamic_refs(text):
+        pattern = _dynamic_ref_pattern(ref)
+        if pattern is not None:
+            dynamic_patterns.add(pattern)
     for m in _RUN_RE.finditer(text):
         run = m.group()
-        base = m.start()
         if "." not in run:
-            orig = bare.get(run)
-            if orig is not None and not _is_definition(text, base):
-                counts[orig] = counts.get(orig, 0) + 1
+            if run not in words:
+                continue
+            base = m.start()
+            if not _is_definition(text, base):
+                orig = bare.get(run)
+                if orig is not None:
+                    counts[orig] = counts.get(orig, 0) + 1
+                # The engine resolves an unqualified name to the global scope
+                # when no local one exists, so a bare read (a [?X|0] loc
+                # interpolation, a check_variable, an RHS) also satisfies a
+                # tracked global.X variable that is only ever written with its
+                # namespace prefix.
+                gorig = dotted.get("global." + run)
+                if gorig is not None:
+                    counts[gorig] = counts.get(gorig, 0) + 1
             continue
         # Dotted run: walk segments left-to-right, mirroring the old
         # alternation's non-overlapping match. A tracked global.X (the only
@@ -222,6 +273,9 @@ def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
         # tail segment is not also counted as a bare X. Any other segment
         # (THIS.foo, root.bar) is matched as a bare name, exactly as the old
         # `\bX\b` did for the inner token of a scope chain.
+        if words.isdisjoint(run.split(".")):
+            continue
+        base = m.start()
         segs = list(_WORD_RE.finditer(run))
         j = 0
         n = len(segs)
@@ -246,7 +300,7 @@ def _count_refs_in_text(text: str) -> Tuple[Dict[str, int], set]:
 def count_all_variables_in_file(filename: str) -> Tuple[Dict[str, int], set]:
     # Per-worker globals (set by _pass2_init) hold the tracked maps and cache
     # namespace, so each task carries only the filename string.
-    if should_skip_file(filename):
+    if should_skip_file(filename, mod_path=_W_MOD_PATH):
         return {}, set()
     text = FileOpener.open_text_file(filename, lowercase=True, strip_comments_flag=True)
     if not text:
@@ -330,9 +384,7 @@ class Validator(BaseValidator):
             if var not in unique_vars:
                 unique_vars[var] = paths[var]
 
-        cleaned_vars = DataCleaner.clear_false_positives_partial_match(
-            list(unique_vars.keys()), tuple(false_positives)
-        )
+        cleaned_vars = drop_partial_matches(unique_vars, false_positives)
 
         self.log(f"Found {len(cleaned_vars)} unique variables set via set_variable")
         self.log(f"Checking reference counts with {self.workers} workers...")
@@ -385,7 +437,7 @@ class Validator(BaseValidator):
         tracked_hash = hashlib.sha1(
             "|".join(sorted(cleaned_vars)).encode("utf-8")
         ).hexdigest()[:16]
-        namespace = f"set_variables.counts.lc=2.{tracked_hash}"
+        namespace = f"set_variables.counts.lc=3.{tracked_hash}"
 
         var_ref_counts = {var: 0 for var in cleaned_vars}
         dynamic_patterns: set = set()
@@ -434,20 +486,9 @@ class Validator(BaseValidator):
         if self.min_references:
             self.log(f"Minimum references required: {self.min_references}")
 
-        FALSE_POSITIVES = [
-            "value",
-            "days",
-            "months",
-            "years",
-            "hours",
-            "@",
-            "[",
-            "{",
-            "var:",
-            "temp_",
-            "^",
-        ]
-        self.validate_set_variables(FALSE_POSITIVES)
+        self.validate_set_variables(
+            list(validation_config("validate_set_variables", "false_positives"))
+        )
 
 
 def add_extra_args(parser):
