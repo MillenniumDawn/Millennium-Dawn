@@ -34,13 +34,16 @@ from shared_utils import (
     flat_block_text,
     has_flat_is_ai,
     iter_flat_offsets,
+    line_of,
     read_text_strict,
     strip_comments,
     strip_inline_comment,
     validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
+from validate_events import load_cost_lookups, uncovered_costs
 from validator_common import (
+    BASE_ZERO_RE,
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
@@ -318,9 +321,18 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
         # Owner spans and newline offsets are collected once and bisected per
         # reference; rescanning from the top for every icon is quadratic on the
         # bigger decision files.
-        owners = _owner_spans(text, 0 if is_category else 1)
+        owner_depth = 0 if is_category else 1
+        code = blank_quoted_strings(text)
+        owners = _owner_spans(code, owner_depth)
         owner_starts = [s for s, _, _ in owners]
         newlines = [i for i, ch in enumerate(text) if ch == "\n"]
+        brace_offsets: List[int] = []
+        brace_depths: List[int] = []
+        depth = 0
+        for m in re.finditer(r"[{}]", code):
+            depth += 1 if m.group() == "{" else -1
+            brace_offsets.append(m.start())
+            brace_depths.append(depth)
 
         refs: List[Tuple[int, str, str]] = []
         for m in _DEC_ICON_SIMPLE_RE.finditer(text):
@@ -337,6 +349,11 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
 
         out: List[Tuple[str, str, str, int]] = []
         for offset, kind, value in sorted(refs):
+            # An icon nested in an effect, such as create_intelligence_agency,
+            # is not the owner's own icon.
+            brace = bisect.bisect_right(brace_offsets, offset) - 1
+            if (brace_depths[brace] if brace >= 0 else 0) != owner_depth + 1:
+                continue
             idx = bisect.bisect_right(owner_starts, offset) - 1
             owner = "<unknown>"
             if idx >= 0 and offset < owners[idx][1]:
@@ -589,6 +606,10 @@ _CATEGORY_BLOCK_RE = re.compile(
     rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
 )
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
+_AI_ADD_RE = re.compile(r"\badd\s*=")
+# The money kinds validate_events.uncovered_costs can report.
+_MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
+_TREASURY_GATE_NOTE = " (behind a treasury custom_cost_trigger; verify)"
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
 # FROM-usage detection (hoisted from validate_targets_no_trigger /
@@ -1211,6 +1232,11 @@ def _top_level_neg_pp(block: str):
     return None
 
 
+def _ai_never_takes(ai_factor: str) -> bool:
+    """`base = 0` with no `add`: the weight cannot leave zero."""
+    return bool(BASE_ZERO_RE.search(ai_factor)) and not _AI_ADD_RE.search(ai_factor)
+
+
 def extract_value_multi_line(obj: str, s: str) -> str:
     pattern = r"(\t+)" + s + r" = (\{([^\n]*|.*?^\1)\})"
     if f"\t{s} =" not in obj:
@@ -1220,8 +1246,10 @@ def extract_value_multi_line(obj: str, s: str) -> str:
 
 
 class DecisionFactory:
-    def __init__(self, dec: str, source_basename: str = "") -> None:
-        self.source_basename = source_basename
+    def __init__(self, dec: str, source_path: str = "", line: int = 0) -> None:
+        self.source_path = source_path
+        self.source_basename = os.path.basename(source_path)
+        self.line = line
         self.raw = dec
         self.token = re.findall(r"^\t*(\S+)\s*=\s*\{", dec, flags=re.MULTILINE)[0]
         self.allowed = extract_value_multi_line(dec, "allowed")
@@ -1326,8 +1354,8 @@ def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
 
 def parse_all_decisions(
     mod_path: str, lowercase: bool = False
-) -> Tuple[List[str], Dict[str, str]]:
-    """Parse all decisions with caching."""
+) -> Tuple[List[str], Dict[str, Tuple[str, int]]]:
+    """Parse all decisions with caching: each block and its (path, line)."""
 
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions")
@@ -1349,7 +1377,10 @@ def parse_all_decisions(
             for m in _DECISIONS_BLOCK_RE.finditer(blanked):
                 match = text_file[m.start() : m.end()]
                 decisions.append(match)
-                paths[match] = os.path.basename(filename)
+                paths[match] = (
+                    os.path.relpath(filename, mod_path),
+                    line_of(text_file, m.start()),
+                )
 
         return decisions, paths
 
@@ -1365,13 +1396,13 @@ def parse_all_decision_factories(
     them once and reusing across all validators eliminates the dominant cost of
     a full decisions validation run (was ~7s of ~10s on this mod).
 
-    The source filename is stored on the factory as ``source_basename`` so
-    reporting code can avoid re-keying a parallel paths dict.
+    The source path and line are stored on the factory so reporting code can
+    avoid re-keying a parallel paths dict.
     """
 
     def _build():
         decisions, dec_paths = parse_all_decisions(mod_path, lowercase)
-        return [DecisionFactory(dec=d, source_basename=dec_paths[d]) for d in decisions]
+        return [DecisionFactory(d, *dec_paths[d]) for d in decisions]
 
     return _get_cached("decision_factories", mod_path, lowercase, _build)
 
@@ -1388,7 +1419,7 @@ def parse_all_decision_names(
         for d in decisions:
             name = _DECISION_TOKEN_LINE_RE.findall(d)[0]
             names.append(name)
-            name_paths[name] = dec_paths[d]
+            name_paths[name] = os.path.basename(dec_paths[d][0])
         return names, name_paths
 
     return _get_cached("decision_names", mod_path, lowercase, _parse)
@@ -1748,40 +1779,36 @@ class Validator(BaseValidator):
             "Unused decision categories (empty, not in BOP):",
         )
 
-    def validate_ai_factors(self):
-        self._log_section("Checking decision AI factors...")
-
-        factories = parse_all_decision_factories(self.mod_path)
+    def _ai_reachable(self, factories: List[DecisionFactory]) -> List[DecisionFactory]:
+        """Decisions with no `is_ai = no` or `always = no` on them or their category."""
         categories = parse_decision_categories(self.mod_path)
-        cats_with_decs = parse_categories_with_decisions(self.mod_path)
-
-        # Reverse index: decision token -> parent category. The previous
-        # version did an O(N) scan per decision over `cats_with_decs`, which
-        # added ~1.5s on this mod.
+        # Reverse index: decision token -> parent category. A scan per decision
+        # over the category map added ~1.5s on this mod.
         decision_to_category: Dict[str, str] = {}
-        for cat, dec_tokens in cats_with_decs.items():
+        for cat, dec_tokens in parse_categories_with_decisions(self.mod_path).items():
             for tok in dec_tokens:
                 decision_to_category.setdefault(tok, cat)
+
+        return [
+            d
+            for d in factories
+            if not any(
+                "is_ai = no" in gate or "always = no" in gate
+                for gate in (
+                    d.available,
+                    d.visible,
+                    categories.get(decision_to_category.get(d.token, ""), ""),
+                )
+            )
+        ]
+
+    def validate_ai_factors(self):
+        self._log_section("Checking decision AI factors...")
 
         results = []
         fixes_needed = []
 
-        for d in factories:
-            if d.available and any(
-                ["is_ai = no" in d.available, "always = no" in d.available]
-            ):
-                continue
-            if d.visible and any(
-                ["is_ai = no" in d.visible, "always = no" in d.visible]
-            ):
-                continue
-
-            dec_category = decision_to_category.get(d.token)
-            if dec_category and dec_category in categories:
-                cat_code = categories[dec_category]
-                if "is_ai = no" in cat_code or "always = no" in cat_code:
-                    continue
-
+        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
             if d.mission_subtype:
                 if d.selectable_mission and not d.ai_factor:
                     results.append(
@@ -1804,7 +1831,8 @@ class Validator(BaseValidator):
             # evaluates in order on a running total, and clustering
             # factor=0 before the adds makes them a no-op (0*0=0 with base=0).
             # The whole point of placing factor=0 after adds is to override
-            # the adds conditionally. Do not re-add that check.
+            # the adds conditionally. Do not re-add that check. The opposite
+            # order, an add after factor=0, is validate_ai_weight_order.py.
 
         self._report(results, "✓ No AI factor issues", "Decision AI factor issues:")
 
@@ -2984,7 +3012,7 @@ class Validator(BaseValidator):
         for d in factories:
             if d.ai_hint_pp_cost:
                 continue
-            if d.ai_factor and "base = 0" in d.ai_factor and "add" not in d.ai_factor:
+            if _ai_never_takes(d.ai_factor):
                 continue
 
             if d.custom_cost_trigger and "political_power" in d.custom_cost_trigger:
@@ -3012,6 +3040,56 @@ class Validator(BaseValidator):
             "✓ No PP-spending decisions missing ai_hint_pp_cost",
             "Decisions spending political power with no ai_hint_pp_cost (AI won't reserve PP):",
             severity=Severity.WARNING,
+        )
+
+    def validate_ai_will_do_ignores_cost(self):
+        """Flag decisions that charge money while ai_will_do never looks at money.
+
+        The decision twin of the event check (issue #5738), with the same cost
+        and guard detection. Skipped: decisions the AI cannot see or never
+        takes, plain missions, and a selectable mission's `remove_effect`, which
+        is a timeout outcome. A treasury `custom_cost_trigger` already stops a
+        broke country, so those findings carry a note.
+        """
+        self._log_section("Checking decisions for AI weights that ignore money...")
+
+        effects, stored = load_cost_lookups(self)
+        results = []
+
+        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
+            if d.mission_subtype and not d.selectable_mission:
+                continue
+            if _ai_never_takes(d.ai_factor):
+                continue
+            ai_weights = d.ai_factor[1:-1]
+
+            costs: Set[str] = set()
+            blocks = [d.complete_effect]
+            if not d.mission_subtype:
+                blocks.append(d.remove_effect)
+            for block in blocks:
+                costs |= uncovered_costs(block[1:-1], ai_weights, effects, stored)
+            costs &= _MONEY_COSTS
+            if not costs:
+                continue
+
+            note = _TREASURY_GATE_NOTE if "treasury" in d.custom_cost_trigger else ""
+            results.append(
+                (
+                    f"{d.token} - ai_will_do ignores the "
+                    f"{', '.join(sorted(costs))} cost{note}",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No decision AI weights ignoring money costs",
+            "Decisions whose ai_will_do ignores a money cost (add a bankruptcy or"
+            " deficit modifier):",
+            severity=Severity.WARNING,
+            category="decision-ai-will-do-ignores-cost",
         )
 
     def validate_state_target_with_targets(self):
@@ -3386,6 +3464,7 @@ class Validator(BaseValidator):
         self.validate_missing_war_hint()
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
+        self.validate_ai_will_do_ignores_cost()
         self.validate_state_target_with_targets()
         self.validate_mission_only_attributes()
         self.validate_orphaned_remove_effect()
