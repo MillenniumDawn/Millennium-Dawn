@@ -96,6 +96,8 @@ jobs:
       full_suite: ${{ steps.groups.outputs.full_suite }}
       head-sha: ${{ steps.resolve-ref.outputs.head-sha }}
       base-sha: ${{ steps.resolve-ref.outputs.base-sha }}
+      baseline-sha: ${{ steps.changed.outputs.merge-base }}
+      tooling-changed: ${{ steps.tooling.outputs.changed }}
       checkout-repository: ${{ steps.resolve-ref.outputs.repository }}
       checkout-ref: ${{ steps.resolve-ref.outputs.ref }}
     steps:
@@ -117,7 +119,9 @@ jobs:
           head_repository="${EVENT_HEAD_REPOSITORY:-$GITHUB_REPOSITORY}"
           head_sha="${EVENT_HEAD_SHA:-$GITHUB_SHA}"
           base_sha="${INPUT_BASE_SHA:-$EVENT_BASE_SHA}"
-          if [ -n "$pr_number" ]; then
+          # A pull_request run, re-runs included, keeps its event's pins. Only
+          # a dispatch looks the PR up, which is the explicit refresh.
+          if [ -n "$INPUT_PR_NUMBER" ]; then
             pr_url="repos/$GITHUB_REPOSITORY/pulls/$pr_number"
             pr_json=$(gh api "$pr_url")
             head_repository=$(printf '%s' "$pr_json" \
@@ -138,6 +142,13 @@ jobs:
           fi
           if [ -z "$head_repository" ] || [ -z "$head_sha" ]; then
             echo "::error::Unable to resolve the PR head repository and SHA"
+            exit 1
+          fi
+          # A dispatch runs with main's token and cache scope.
+          if [ -n "$INPUT_PR_NUMBER" ] &&
+              [ "$head_repository" != "$GITHUB_REPOSITORY" ]; then
+            echo "::error::Dispatch validates same-repository PRs only." \
+              "Fork PRs validate in their pull_request runs."
             exit 1
           fi
           {
@@ -162,8 +173,11 @@ jobs:
             tools/validation/ci_workspace_profile.txt
             tools/validation/staged_sparse_profile.txt
             tools/tests/content/tool_data_drift_test.py
+            /tools/generate_validation_report.py
+            /tools/baseline_check.py
             /pyproject.toml
             /validation_config.json
+            /.gitattributes
           sparse-checkout-cone-mode: false
 
       - name: Check CI tooling contract
@@ -178,6 +192,18 @@ jobs:
           for package in pytest-xdist pytest-cov; do
             grep -Fq "\"$package" pyproject.toml || missing+=("$package")
           done
+          # The report and base scan run the head's scripts with these flags.
+          grep -Fq -- --main-tools-baseline \
+            tools/generate_validation_report.py ||
+            missing+=("--main-tools-baseline")
+          grep -Fq -- --renames tools/generate_validation_report.py ||
+            missing+=("--renames")
+          grep -Fq -- --hunks tools/generate_validation_report.py ||
+            missing+=("--hunks")
+          grep -Fq -- --tooling-changed tools/generate_validation_report.py ||
+            missing+=("--tooling-changed")
+          grep -Fq -- --observation tools/baseline_check.py ||
+            missing+=("--observation")
           if [ "${#missing[@]}" -gt 0 ]; then
             echo "::error::This branch predates the CI tooling contract" \
               "(missing ${missing[*]}). Merge main into it."
@@ -191,12 +217,18 @@ jobs:
           git fetch --no-tags \
             "https://github.com/${{ github.repository }}.git" "$BASE_SHA"
 
+      # The merge base is also the baseline commit: the PR's content started
+      # there, so main's later fixes are not the PR's findings.
       - name: Derive changed files
+        id: changed
+        # A failed git diff must fail the step, not leave a short list.
+        shell: bash
         env:
           BASE_SHA: ${{ steps.resolve-ref.outputs.base-sha }}
           HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
         run: |
           merge_base=$(git merge-base "$BASE_SHA" "$HEAD_SHA")
+          echo "merge-base=$merge_base" >> "$GITHUB_OUTPUT"
           hook_path=common/scripted_localisation/00_MD_politicsview_
           hook_path+=scripted_localisation.txt
           git diff --unified=0 "$merge_base" "$HEAD_SHA" -- \
@@ -206,6 +238,31 @@ jobs:
             | python3 tools/validation/collect_changed_files.py \
             > changed-files.txt
           wc -l changed-files.txt
+          git diff --name-status -z --diff-filter=R "$merge_base" "$HEAD_SHA" \
+            | python3 tools/validation/collect_changed_files.py \
+            > renames.txt
+          # Hunk headers place main's findings in the PR's files.
+          git -c core.quotePath=false diff --unified=0 --no-color \
+              --no-ext-diff "$merge_base" "$HEAD_SHA" \
+            | awk '/^(diff --git |\+\+\+ |@@ )/' > hunks.txt
+
+      # The comparison scans both commits with this PR's validators, so it
+      # cannot show what changed validator code does to main's findings.
+      - name: Check validator tooling against the base
+        id: tooling
+        env:
+          MERGE_BASE: ${{ steps.changed.outputs.merge-base }}
+          HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
+        run: |
+          if git diff --quiet --no-renames "$MERGE_BASE" "$HEAD_SHA" -- \
+              ':(glob)tools/validation/**/*.py' \
+              ':(glob)tools/validation/**/*.txt' \
+              tools/shared_utils.py validation_config.json \
+              resources/documentation .claude/docs/typo-watchlist.md; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Compute changed groups
         id: groups
@@ -224,6 +281,8 @@ jobs:
           name: changed-files
           path: |
             changed-files.txt
+            renames.txt
+            hunks.txt
             party-loc-scope.diff
           if-no-files-found: warn
           retention-days: 7
@@ -330,7 +389,8 @@ jobs:
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**/*.py',
           'tools/validation/**/*.txt', 'tools/shared_utils.py',
-          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
+          'validation_config.json', 'resources/documentation/**',
+          '.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
 
       - name: Restore shared validator disk cache
         id: valcache
@@ -616,6 +676,8 @@ jobs:
             tools
             pyproject.toml
             validation_config.json
+            resources/documentation
+            .claude/docs/typo-watchlist.md
             package.json
             bun.lock
             .jscpd.json
@@ -680,7 +742,8 @@ jobs:
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**/*.py',
           'tools/validation/**/*.txt', 'tools/shared_utils.py',
-          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
+          'validation_config.json', 'resources/documentation/**',
+          '.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
 
       - name: Create staged integration worktree
         id: staged-worktree
@@ -975,6 +1038,158 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
+  # Recomputes the base commit's baseline when main's run has not saved one.
+  # Advisory: without it the comparison is unavailable, which never blocks.
+  baseline-scan:
+    name: Base commit scan
+    needs: [detect-changes]
+    if: >-
+      needs.detect-changes.outputs.full_suite == 'true' ||
+      needs.detect-changes.outputs.content == 'true'
+    runs-on: ubuntu-latest
+    # The resource budget for one cold full scan.
+    timeout-minutes: 20
+    env:
+      BASELINE_SHA: ${{ needs.detect-changes.outputs.baseline-sha }}
+    steps:
+      - name: Checkout PR validator tooling
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ${{ needs.detect-changes.outputs.checkout-repository }}
+          ref: ${{ needs.detect-changes.outputs.checkout-ref }}
+          fetch-depth: 1
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout: |
+            tools
+            validation_config.json
+            resources/documentation
+            .claude/docs/typo-watchlist.md
+            .github/actions/setup-md-python/action.yml
+          sparse-checkout-cone-mode: false
+
+      - name: Compute validator code hash
+        id: toolshash
+        run: >-
+          echo "hash=${{ hashFiles('tools/validation/**/*.py',
+          'tools/validation/**/*.txt', 'tools/shared_utils.py',
+          'validation_config.json', 'resources/documentation/**',
+          '.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Look up the base commit's baseline
+        id: lookup
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          lookup-only: true
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}
+          restore-keys: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
+
+      - name: Checkout base commit content
+        if: steps.lookup.outputs.cache-matched-key == ''
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.BASELINE_SHA }}
+          path: base
+          fetch-depth: 1
+          filter: blob:none
+          persist-credentials: false
+          sparse-checkout: /validation_config.json
+          sparse-checkout-cone-mode: false
+
+      - name: Check out the base's own workspace
+        if: steps.lookup.outputs.cache-matched-key == ''
+        run: >-
+          git -C base sparse-checkout set --no-cone --stdin
+          < tools/validation/ci_workspace_profile.txt
+
+      # Before the overlay, so it matches validator-cache's hash of this commit.
+      - name: Compute the base's own validator hash
+        id: basehash
+        if: >-
+          steps.lookup.outputs.cache-matched-key == '' &&
+          needs.detect-changes.outputs.tooling-changed == 'true'
+        run: >-
+          echo "hash=${{ hashFiles('base/tools/validation/**/*.py',
+          'base/tools/validation/**/*.txt', 'base/tools/shared_utils.py',
+          'base/validation_config.json', 'base/resources/documentation/**',
+          'base/.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore main's own baseline of the base
+        id: main-baseline
+        if: steps.basehash.outputs.hash != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.basehash.outputs.hash }}-${{ env.BASELINE_SHA }}
+          restore-keys: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.basehash.outputs.hash }}-${{ env.BASELINE_SHA }}-
+
+      # Both scans run the PR's tooling, so only the content differs.
+      - name: Give the base content the PR's tooling
+        if: steps.lookup.outputs.cache-matched-key == ''
+        run: |
+          rm -rf base/tools base/resources/documentation
+          mkdir -p base/resources base/.claude/docs
+          cp -R tools base/tools
+          cp -R resources/documentation base/resources/documentation
+          cp validation_config.json base/validation_config.json
+          cp .claude/docs/typo-watchlist.md base/.claude/docs/typo-watchlist.md
+
+      - name: Set up Python
+        if: steps.lookup.outputs.cache-matched-key == ''
+        uses: ./.github/actions/setup-md-python
+        with:
+          install: "false"
+
+      # Cold and isolated: no shared validator cache feeds the comparison.
+      - name: Scan the base commit
+        if: steps.lookup.outputs.cache-matched-key == ''
+        working-directory: base
+        run: >-
+          python3 tools/validation/run_all_validators.py --no-color --no-cache
+          --persist-results "$RUNNER_TEMP/base-candidate"
+
+      - name: Record the base commit's baseline
+        if: steps.lookup.outputs.cache-matched-key == ''
+        env:
+          TOOLSHASH: ${{ steps.toolshash.outputs.hash }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          test -f "$RUNNER_TEMP/base-candidate/.persist-complete"
+          python3 tools/baseline_check.py \
+            --current "$RUNNER_TEMP/base-candidate" \
+            --observation "$RUNNER_TEMP/base-baseline" \
+            --toolshash "$TOOLSHASH" \
+            --commit-sha "$BASELINE_SHA" \
+            --github-repository "$REPOSITORY"
+
+      - name: Upload base commit baseline
+        if: steps.lookup.outputs.cache-matched-key == ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: base-commit-baseline
+          path: ${{ runner.temp }}/base-baseline
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload main's own baseline of the base
+        if: steps.main-baseline.outputs.cache-matched-key != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: main-tools-baseline
+          path: .validation_baseline
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 1
+
   docs-quality:
     name: Docs quality
     needs: [detect-changes]
@@ -996,6 +1211,7 @@ jobs:
       - content-tests
       - tools-quality
       - mod-tests
+      - baseline-scan
       - docs-quality
     if: ${{ always() && !cancelled() }}
     permissions:
@@ -1007,6 +1223,9 @@ jobs:
       HEAD_SHA: >-
         ${{ needs.detect-changes.outputs.head-sha ||
         github.event.pull_request.head.sha || github.sha }}
+      BASELINE_SHA: >-
+        ${{ needs.detect-changes.outputs.baseline-sha || github.sha }}
+      TOOLING_CHANGED: ${{ needs.detect-changes.outputs.tooling-changed }}
       VALIDATION_SCOPE: >-
         ${{ (github.event_name == 'workflow_dispatch' ||
         needs.detect-changes.outputs.full_suite == 'true') &&
@@ -1028,6 +1247,8 @@ jobs:
             tools/validation
             tools/shared_utils.py
             validation_config.json
+            resources/documentation
+            .claude/docs/typo-watchlist.md
           sparse-checkout-cone-mode: false
 
       - name: Compute validator code hash
@@ -1035,18 +1256,40 @@ jobs:
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**/*.py',
           'tools/validation/**/*.txt', 'tools/shared_utils.py',
-          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
+          'validation_config.json', 'resources/documentation/**',
+          '.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
 
+      # Only the base commit's own baseline; any other main commit's findings
+      # would read as this PR's.
       - name: Restore validation baseline
+        id: restore-baseline
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_baseline
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
-            steps.toolshash.outputs.hash }}-${{
-            needs.detect-changes.outputs.base-sha || github.sha }}
-          restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}
+          restore-keys: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
+
+      # Main has not saved one yet: use the base scan from this run, if any.
+      - name: Download base commit baseline
+        if: steps.restore-baseline.outputs.cache-matched-key == ''
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: base-commit-baseline
+          path: .validation_baseline
+
+      # Shows what a validator change does to main's own findings.
+      - name: Download main's own baseline of the base
+        if: env.TOOLING_CHANGED == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: main-tools-baseline
+          path: main-tools-baseline
 
       - name: Set up Python
         id: setup-python
@@ -1091,12 +1334,33 @@ jobs:
           args+=(
             --baseline-dir .validation_baseline
             --baseline-toolshash "$TOOLSHASH"
+            --baseline-commit "$BASELINE_SHA"
           )
+          if [ "$TOOLING_CHANGED" = true ]; then
+            args+=(--tooling-changed)
+          fi
           if [ -f changed-files/changed-files.txt ]; then
             args+=(--changed-files changed-files/changed-files.txt)
           fi
+          if [ -f changed-files/renames.txt ]; then
+            args+=(--renames changed-files/renames.txt)
+          fi
+          if [ -f changed-files/hunks.txt ]; then
+            args+=(--hunks changed-files/hunks.txt)
+          fi
+          if [ -d main-tools-baseline ]; then
+            args+=(--main-tools-baseline main-tools-baseline)
+          fi
           if [ -n "$PR_NUMBER" ]; then
-            args+=(--post-comment)
+            # A run for an older head must not replace the newer head's
+            # comment. An unreadable head keeps the old behavior.
+            pr_url="repos/$GITHUB_REPOSITORY/pulls/$PR_NUMBER"
+            live_head=$(gh api "$pr_url" --jq '.head.sha' || true)
+            if [ -z "$live_head" ] || [ "$live_head" = "$HEAD_SHA" ]; then
+              args+=(--post-comment)
+            else
+              echo "::notice::PR head moved to $live_head; comment left as is"
+            fi
           fi
           python3 tools/generate_validation_report.py "${args[@]}"
 

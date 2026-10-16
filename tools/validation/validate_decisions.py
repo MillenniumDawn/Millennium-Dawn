@@ -34,6 +34,7 @@ from shared_utils import (
     flat_block_text,
     has_flat_is_ai,
     iter_flat_offsets,
+    line_of,
     read_text_strict,
     strip_comments,
     strip_inline_comment,
@@ -320,9 +321,18 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
         # Owner spans and newline offsets are collected once and bisected per
         # reference; rescanning from the top for every icon is quadratic on the
         # bigger decision files.
-        owners = _owner_spans(text, 0 if is_category else 1)
+        owner_depth = 0 if is_category else 1
+        code = blank_quoted_strings(text)
+        owners = _owner_spans(code, owner_depth)
         owner_starts = [s for s, _, _ in owners]
         newlines = [i for i, ch in enumerate(text) if ch == "\n"]
+        brace_offsets: List[int] = []
+        brace_depths: List[int] = []
+        depth = 0
+        for m in re.finditer(r"[{}]", code):
+            depth += 1 if m.group() == "{" else -1
+            brace_offsets.append(m.start())
+            brace_depths.append(depth)
 
         refs: List[Tuple[int, str, str]] = []
         for m in _DEC_ICON_SIMPLE_RE.finditer(text):
@@ -339,6 +349,11 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
 
         out: List[Tuple[str, str, str, int]] = []
         for offset, kind, value in sorted(refs):
+            # An icon nested in an effect, such as create_intelligence_agency,
+            # is not the owner's own icon.
+            brace = bisect.bisect_right(brace_offsets, offset) - 1
+            if (brace_depths[brace] if brace >= 0 else 0) != owner_depth + 1:
+                continue
             idx = bisect.bisect_right(owner_starts, offset) - 1
             owner = "<unknown>"
             if idx >= 0 and offset < owners[idx][1]:
@@ -1231,8 +1246,10 @@ def extract_value_multi_line(obj: str, s: str) -> str:
 
 
 class DecisionFactory:
-    def __init__(self, dec: str, source_basename: str = "") -> None:
-        self.source_basename = source_basename
+    def __init__(self, dec: str, source_path: str = "", line: int = 0) -> None:
+        self.source_path = source_path
+        self.source_basename = os.path.basename(source_path)
+        self.line = line
         self.raw = dec
         self.token = re.findall(r"^\t*(\S+)\s*=\s*\{", dec, flags=re.MULTILINE)[0]
         self.allowed = extract_value_multi_line(dec, "allowed")
@@ -1337,8 +1354,8 @@ def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
 
 def parse_all_decisions(
     mod_path: str, lowercase: bool = False
-) -> Tuple[List[str], Dict[str, str]]:
-    """Parse all decisions with caching."""
+) -> Tuple[List[str], Dict[str, Tuple[str, int]]]:
+    """Parse all decisions with caching: each block and its (path, line)."""
 
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions")
@@ -1360,7 +1377,10 @@ def parse_all_decisions(
             for m in _DECISIONS_BLOCK_RE.finditer(blanked):
                 match = text_file[m.start() : m.end()]
                 decisions.append(match)
-                paths[match] = os.path.basename(filename)
+                paths[match] = (
+                    os.path.relpath(filename, mod_path),
+                    line_of(text_file, m.start()),
+                )
 
         return decisions, paths
 
@@ -1376,13 +1396,13 @@ def parse_all_decision_factories(
     them once and reusing across all validators eliminates the dominant cost of
     a full decisions validation run (was ~7s of ~10s on this mod).
 
-    The source filename is stored on the factory as ``source_basename`` so
-    reporting code can avoid re-keying a parallel paths dict.
+    The source path and line are stored on the factory so reporting code can
+    avoid re-keying a parallel paths dict.
     """
 
     def _build():
         decisions, dec_paths = parse_all_decisions(mod_path, lowercase)
-        return [DecisionFactory(dec=d, source_basename=dec_paths[d]) for d in decisions]
+        return [DecisionFactory(d, *dec_paths[d]) for d in decisions]
 
     return _get_cached("decision_factories", mod_path, lowercase, _build)
 
@@ -1399,7 +1419,7 @@ def parse_all_decision_names(
         for d in decisions:
             name = _DECISION_TOKEN_LINE_RE.findall(d)[0]
             names.append(name)
-            name_paths[name] = dec_paths[d]
+            name_paths[name] = os.path.basename(dec_paths[d][0])
         return names, name_paths
 
     return _get_cached("decision_names", mod_path, lowercase, _parse)
@@ -3055,8 +3075,12 @@ class Validator(BaseValidator):
 
             note = _TREASURY_GATE_NOTE if "treasury" in d.custom_cost_trigger else ""
             results.append(
-                f"{d.token:<55}{d.source_basename} - ai_will_do ignores the "
-                f"{', '.join(sorted(costs))} cost{note}"
+                (
+                    f"{d.token} - ai_will_do ignores the "
+                    f"{', '.join(sorted(costs))} cost{note}",
+                    d.source_path,
+                    d.line,
+                )
             )
 
         self._report(

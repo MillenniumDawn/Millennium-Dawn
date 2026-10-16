@@ -13417,7 +13417,11 @@ focus_tree = {
 				set_technology = { internet_4 = 1 }
 			}
 			else_if = {
-				limit = { NOT = { has_tech = lte } }
+				limit = {
+					NOT = { has_tech = lte }
+					NOT = { has_tech = wimax }
+					NOT = { is_researching_technology = wimax }
+				}
 				set_technology = { lte = 1 }
 			}
 			else_if = {
@@ -20687,7 +20691,7 @@ focus_tree = {
 		y = 1
 		relative_position_id = ENG_the_sun_which_never_set
 
-		cost = 10
+		cost = 5
 
 		prerequisite = { focus = ENG_the_sun_which_never_set }
 
@@ -20699,26 +20703,50 @@ focus_tree = {
 				has_idea = intervention_global_interventionism
 			}
 			has_stability > 0.70
-			country_exists = SIE
+			OR = {
+				country_exists = SIE
+				country_exists = AFR
+			}
 			NOT = { has_war_with = SIE }
+			NOT = { has_war_with = AFR }
 		}
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus ENG_operation_barras"
-			unlock_decision_tooltip = ENG_seize_sierra_leone_resources
 			add_to_variable = { ENG_fp_count = 1 }
-			set_temp_variable = { percent_change = 3 }
-			set_temp_variable = { influence_target = SIE }
-			change_influence_percentage = yes
-			newline = yes
-			add_relation_modifier = {
-				target = SIE
-				modifier = generic_increased_military_support
+			if = {
+				limit = { country_exists = SIE }
+				unlock_decision_tooltip = ENG_seize_sierra_leone_resources
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = SIE }
+				change_influence_percentage = yes
+				newline = yes
+				add_relation_modifier = {
+					target = SIE
+					modifier = generic_increased_military_support
+				}
+				if = {
+					limit = { SIE = { has_war_with = AFR } }
+					newline = yes
+					SIE = {
+						add_equipment_to_stockpile = { type = infantry_weapons_type amount = 1000 producer = ENG }
+					}
+				}
+				newline = yes
+				custom_effect_tooltip = ENG_seize_sierra_leone_TT
+				newline = yes
+				SIE = { country_event = britain_md.13 }
 			}
-			newline = yes
-			custom_effect_tooltip = ENG_seize_sierra_leone_TT
-			newline = yes
-			SIE = { country_event = britain_md.13 }
+			else = {
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = AFR }
+				change_influence_percentage = yes
+				newline = yes
+				add_relation_modifier = {
+					target = AFR
+					modifier = generic_increased_military_support
+				}
+			}
 		}
 
 		ai_will_do = {

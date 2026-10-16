@@ -349,16 +349,16 @@ def load_cost_lookups(
 def _extract_cost_blind_options(
     filename: str, *, mod_path: Optional[str] = None
 ) -> List[Tuple[str, str, int]]:
-    """Pool worker: (message, basename, line) for options whose AI weight ignores a cost."""
+    """Pool worker: (message, path, line) for options whose AI weight ignores a cost."""
     text = _read_cleaned_text(filename, mod_path=mod_path)
     if text is None:
         return []
-    basename = os.path.basename(filename)
+    path = os.path.relpath(filename, mod_path)
     return [
         (
             f"{name} - ai_chance ignores the {costs} cost"
             + (_ALL_GATED_NOTE if all_gated else ""),
-            basename,
+            path,
             line,
         )
         for name, line, costs, all_gated in find_cost_blind_options(
@@ -1527,8 +1527,8 @@ class Validator(BaseValidator):
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id (or None for malformed blocks), type, file,
-        is_hidden, picture_refs, is_triggered_only, fire_only_once,
+        Each metadata dict has: id (or None for malformed blocks), type, file
+        (basename), path (mod-relative), line, is_hidden, picture_refs, is_triggered_only, fire_only_once,
         is_major, has_mtth, option_count, title_desc_refs.
         """
         if self._meta_cache is None:
@@ -1563,6 +1563,9 @@ class Validator(BaseValidator):
                     if text
                     else ([], set())
                 )
+                rel = self._rel_posix(filepath)
+                for ev in parsed[0]:
+                    ev["path"] = rel
                 self._parsed_event_files[filepath] = parsed
             meta.extend(parsed[0])
             namespaces |= parsed[1]
@@ -1960,7 +1963,9 @@ class Validator(BaseValidator):
             eid = ev["id"] or "unknown"
             for key in _LOC_REF_PATTERN.findall(ev["body"]):
                 if "." in key and key not in loc_keys:
-                    results.append(f"{eid} - {ev['file']}: missing loc key '{key}'")
+                    results.append(
+                        (f"{eid}: missing loc key '{key}'", ev["path"], ev["line"])
+                    )
 
         self._report(
             results,
@@ -1976,8 +1981,8 @@ class Validator(BaseValidator):
         )
 
         meta, _ = self._get_event_metadata()
-        triggered_only_ids: Dict[str, str] = {
-            ev["id"]: ev["file"]
+        triggered_only_ids: Dict[str, dict] = {
+            ev["id"]: ev
             for ev in meta
             if ev["id"] is not None
             and ev["is_triggered_only"]
@@ -2022,7 +2027,8 @@ class Validator(BaseValidator):
             ns = eid[:last_dot] if last_dot >= 0 else eid
             if ns in dynamic_namespaces:
                 continue
-            results.append(f"{eid} - {triggered_only_ids[eid]}")
+            ev = triggered_only_ids[eid]
+            results.append((f"{eid}: no references found", ev["path"], ev["line"]))
 
         self._report(
             results,

@@ -477,11 +477,11 @@ def test_events_staged_event_file_still_scans_unstaged_callers(tmp_path, write_p
         + [
             (
                 "missing-event-localisation",
-                f"{eid} - tst.txt: missing loc key '{eid}.a'",
-                "",
-                0,
+                f"{eid}: missing loc key '{eid}.a'",
+                "events/tst.txt",
+                line,
             )
-            for eid in ("tst.1", "tst.2")
+            for eid, line in (("tst.1", 2), ("tst.2", 8))
         ]
         + [
             (

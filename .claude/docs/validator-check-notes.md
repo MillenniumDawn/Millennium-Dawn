@@ -226,14 +226,18 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   sprite still reports once its backing declaration is deleted: `GFX_<FOCUS_FILTER_X>`,
   `GFX_EMI_<module>`, `GFX_SMI_<module>`,
   `GFX_unit_<subunit|category>_icon_{small,medium}[_white|_black]`,
-  `GFX_<TAG|graphical_culture>_ace_<m|f>_<n>`, and anything a `[...]` template in
-  scripted loc or a scripted-GUI `image` can build. A template with under four literal
-  characters after `GFX_` is rejected.
+  `GFX_<TAG|graphical_culture>_ace_<m|f>_<n>`, bare decision icons as
+  `GFX_decision_<icon>` and `GFX_decision_category_<icon>`, and anything a `[...]`
+  template in scripted loc or a scripted-GUI `image` can build. A template with under four
+  literal characters after `GFX_` is rejected, except `GFX_[?x.GetTokenKey]`, which
+  resolves `GFX_<token>` for every synchronized dynamic token. Known gap: a sprite that
+  shares a token's name never reports, whichever variable holds the token.
 - True exemptions: equipment, tech, and designer icons, and any name vanilla also defines.
 - `sprite-ref-case` (ERROR): an English `£name` that matches a sprite only
-  case-insensitively, so the icon is missing on Linux. `unused-sprite-case` (WARNING): a
-  sprite whose only reference is miscased.
-- `duplicate-sprite`, `case-variant-sprite` (WARNING): the message says whether the blocks
+  case-insensitively, so the icon is missing on Linux. `undefined-loc-sprite` (ERROR): an
+  English `£name` that matches no sprite at all. A `£` before a digit is the pound sign.
+  `unused-sprite-case` (WARNING): a sprite whose only reference is miscased.
+- `duplicate-sprite`, `case-variant-sprite` (ERROR): the message says whether the blocks
   share a texture. Unquoted `texturefile` values are read the same as quoted ones.
 - `raw-icon-path` (ERROR): `icon =` inside `create_equipment_variant`, or an entry in a
   `graphic_db` `icons = { }` block, that is a texture path instead of a `GFX_` sprite.
@@ -419,6 +423,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   is ERROR.
 - The default run scopes format checks to the tags the branch touched. `--all` sweeps
   everything, `--tag TAG` audits one nation. Missing slots are never reported.
+- Full `run_all_validators.py` runs, including main's baseline, pass `--all`, so a PR's
+  scoped findings in a touched tag match main's results instead of reading NEW.
 
 ## validate_scientist_traits.py
 
