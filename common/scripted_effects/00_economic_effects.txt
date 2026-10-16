@@ -164,105 +164,67 @@ reapply_agreement_opinion_modifiers = {
 }
 
 quarterly_inflation_calculation = {
-	#Get and set the basic civilian economic growth for this quarter, and grab our old inflation rate
-	set_temp_variable = { last_inflation_rate = inflation_rate_var }
-
-	set_temp_variable = {
-		gdpc_productivity_catchup = {
-			value = global.average_world_productivity
-			divide = { value = overall_productivity clamp = { min = 0.001 max = @math_expressions_max } }
-			add = -1
-			clamp = { min = 0 max = 1 }
-			multiply = 0.02
-		}
-	}
-	set_temp_variable = {
-		gdpc_labor_slack = {
-			value = total_unemployed_percentage_display
-			subtract = unemployment_threshold_display_var
-			clamp = { min = 0 max = 0.2 }
-			multiply = 0.1
-		}
-	}
-	set_temp_variable = {
-		gdpc_worker_shortage = {
-			value = 1
-			subtract = average_worker_fulfillment
-			clamp = { min = 0 max = 0.2 }
-			multiply = 0.1
-		}
-	}
+	#Get and set the basic civilian economic growth for this quarter
 	set_temp_variable = {
 		healthy_gdpc_growth = {
 			value = 0.01
-			add = gdpc_productivity_catchup
-			add = gdpc_labor_slack
-			subtract = gdpc_worker_shortage
+			add = {
+				value = global.average_world_productivity
+				divide = { value = overall_productivity clamp = { min = 0.001 max = @math_expressions_max } }
+				add = -1
+				clamp = { min = 0 max = 1 }
+				multiply = 0.02
+			}
+			add = {
+				value = total_unemployed_percentage_display
+				subtract = unemployment_threshold_display_var
+				clamp = { min = 0 max = 0.2 }
+				multiply = 0.1
+			}
+			subtract = {
+				value = 1
+				subtract = average_worker_fulfillment
+				clamp = { min = 0 max = 0.2 }
+				multiply = 0.1
+			}
 			clamp = { min = 0.005 max = 0.05 }
-		}
-	}
-	set_temp_variable = { normal_gdpc_growth = 0 }
-	set_temp_variable = { excess_gdpc_growth = 0 }
-	if = {
-		limit = { check_variable = { last_quarter_gdpc_growth_rate < 0 } }
-		set_temp_variable = {
-			gdpc_contraction_magnitude = {
-				value = last_quarter_gdpc_growth_rate
-				multiply = -1
-			}
-		}
-		set_temp_variable = {
-			normal_gdpc_growth = {
-				value = last_quarter_gdpc_growth_rate
-				divide = {
-					value = gdpc_contraction_magnitude
-					divide = 0.05
-					add = 1
-				}
-			}
-		}
-	}
-	else = {
-		set_temp_variable = {
-			normal_gdpc_growth = {
-				value = last_quarter_gdpc_growth_rate
-				min = healthy_gdpc_growth
-			}
-		}
-		set_temp_variable = {
-			raw_excess_gdpc_growth = {
-				value = last_quarter_gdpc_growth_rate
-				subtract = healthy_gdpc_growth
-				max = 0
-			}
-		}
-		set_temp_variable = {
-			excess_gdpc_growth = {
-				value = raw_excess_gdpc_growth
-				divide = {
-					value = raw_excess_gdpc_growth
-					divide = 0.05
-					add = 1
-				}
-			}
 		}
 	}
 	set_temp_variable = {
 		gdpc_inflation_adjuster = {
-			value = normal_gdpc_growth
-			multiply = 0.25
-			add = excess_gdpc_growth
+			value = last_quarter_gdpc_growth_rate
+			if = {
+				limit = {
+					value = last_quarter_gdpc_growth_rate
+					less_than = 0
+				}
+				divide = {
+					value = last_quarter_gdpc_growth_rate
+					multiply = -1
+					divide = 0.05
+					add = 1
+				}
+				multiply = 0.25
+			}
+			else = {
+				min = healthy_gdpc_growth
+				multiply = 0.25
+				add = {
+					value = last_quarter_gdpc_growth_rate
+					subtract = healthy_gdpc_growth
+					max = 0
+					divide = {
+						value = last_quarter_gdpc_growth_rate
+						subtract = healthy_gdpc_growth
+						max = 0
+						divide = 0.05
+						add = 1
+					}
+				}
+			}
 		}
 	}
 
-	set_temp_variable = {
-		quarterly_currency_depreciation = {
-			value = inflation_currency_strength_start
-			subtract = currency_strength
-			divide = { value = inflation_currency_strength_start clamp = { min = 0.15 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
-		}
-	}
 	set_temp_variable = {
 		total_resource_imports = {
 			value = resource_imported@oil
@@ -276,109 +238,36 @@ quarterly_inflation_calculation = {
 		}
 	}
 	set_temp_variable = {
-		inflation_import_dependency = {
-			value = total_resource_imports
-			divide = {
-				value = total_resource_imports
-				add = total_resource_amount
-				clamp = { min = 0.001 max = @math_expressions_max }
-			}
-			clamp = { min = 0 max = 1 }
-		}
-	}
-	set_temp_variable = {
-		currency_weak_anchor_vulnerability = {
-			value = 1
-			subtract = currency_strength_base
-			clamp = { min = 0 max = 0.5 }
-			multiply = 0.25
-		}
-	}
-	set_temp_variable = {
-		currency_inflation_pass_through = {
-			value = 0.25
-			add = { value = inflation_import_dependency multiply = 0.5 }
-			add = currency_weak_anchor_vulnerability
-			clamp = { min = 0.15 max = 0.85 }
-		}
-	}
-	set_temp_variable = {
-		currency_depreciation_pressure = {
-			value = quarterly_currency_depreciation
-			clamp = { min = 0 max = 0.5 }
-			multiply = currency_inflation_pass_through
-			multiply = 0.5
-		}
-	}
-
-	set_temp_variable = {
-		annual_deficit_ratio = {
+		excess_deficit_ratio = {
 			value = treasury_rate
 			multiply = -52
 			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
 			clamp = { min = 0 max = 0.5 }
-		}
-	}
-	set_temp_variable = {
-		fiscal_currency_allowance = {
-			value = currency_strength_base
-			subtract = 1
-			clamp = { min = -0.5 max = 0.5 }
-			multiply = 0.015
-		}
-	}
-	set_temp_variable = {
-		fiscal_debt_penalty = {
-			value = debt_ratio
-			clamp = { min = 0 max = 2 }
-			multiply = 0.01
-		}
-	}
-	set_temp_variable = {
-		fiscal_borrowing_risk = {
-			value = interest_rate
-			subtract = cb_rate_premium
-			subtract = 5
-			divide = 100
-			clamp = { min = 0 max = 0.1 }
-		}
-	}
-	set_temp_variable = {
-		sustainable_deficit_ratio = {
-			value = 0.05
-			add = fiscal_currency_allowance
-			subtract = fiscal_debt_penalty
-			subtract = fiscal_borrowing_risk
-			clamp = { min = 0.02 max = 0.08 }
-		}
-	}
-	set_temp_variable = {
-		excess_deficit_ratio = {
-			value = annual_deficit_ratio
-			subtract = sustainable_deficit_ratio
+			subtract = {
+				value = 0.05
+				add = {
+					value = currency_strength_base
+					subtract = 1
+					clamp = { min = -0.5 max = 0.5 }
+					multiply = 0.015
+				}
+				subtract = {
+					value = debt_ratio
+					clamp = { min = 0 max = 2 }
+					multiply = 0.01
+				}
+				subtract = {
+					value = interest_rate
+					subtract = cb_rate_premium
+					subtract = 5
+					divide = 100
+					clamp = { min = 0 max = 0.1 }
+				}
+				clamp = { min = 0.02 max = 0.08 }
+			}
 			max = 0
 		}
 	}
-	set_temp_variable = {
-		fiscal_inflation_vulnerability = {
-			value = 0.25
-			add = { value = debt_ratio clamp = { min = 0 max = 2 } multiply = 0.25 }
-			add = {
-				value = 1
-				subtract = currency_strength
-				clamp = { min = 0 max = 1 }
-				multiply = 0.25
-			}
-			clamp = { min = 0.25 max = 1.25 }
-		}
-	}
-	set_temp_variable = {
-		severe_deficit_inflation_pressure = {
-			value = excess_deficit_ratio
-			multiply = fiscal_inflation_vulnerability
-		}
-	}
-
 	set_temp_variable = {
 		inflation_expectations_anchor = {
 			value = healthy_gdpc_growth
@@ -393,72 +282,7 @@ quarterly_inflation_calculation = {
 			clamp = { min = 0.5 max = 2.5 }
 		}
 	}
-	set_temp_variable = {
-		policy_inflation_reference = {
-			value = inflation_rate_var
-			max = inflation_expectations_anchor
-			multiply = 100
-		}
-	}
-	set_temp_variable = {
-		neutral_cb_rate = {
-			value = policy_inflation_reference
-			add = natural_real_interest_rate
-			clamp = { min = 1 max = 30 }
-		}
-	}
-	set_temp_variable = {
-		policy_inflation_pressure = {
-			value = neutral_cb_rate
-			subtract = cb_policy_rate
-			multiply = 0.002
-			clamp = { min = -0.03 max = 0.03 }
-		}
-	}
-	set_temp_variable = {
-		inflation_above_expectations_anchor = {
-			value = inflation_rate_var
-			subtract = inflation_expectations_anchor
-			max = 0
-		}
-	}
-	set_temp_variable = {
-		expectations_vulnerability = {
-			value = 0.9
-			# Each policy rate point cuts a fixed share at any inflation level; an excess deficit halves it at most.
-			subtract = {
-				value = 1
-				subtract = { value = excess_deficit_ratio multiply = 5 clamp = { min = 0 max = 0.5 } }
-				multiply = cb_policy_rate
-				multiply = 0.025
-			}
-			# Below 1 so inflation decays once its drivers stop; at 1 or above it feeds itself.
-			clamp = { min = 0.25 max = 0.9 }
-		}
-	}
-	set_temp_variable = {
-		expectations_intensity = {
-			value = inflation_above_expectations_anchor
-			divide = { value = inflation_expectations_anchor clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 1 }
-		}
-	}
-	set_temp_variable = {
-		inflation_expectations_pressure = {
-			value = inflation_above_expectations_anchor
-			multiply = expectations_intensity
-			multiply = expectations_vulnerability
-		}
-	}
 
-	set_temp_variable = {
-		annual_expenditure_ratio = {
-			value = display_expense
-			multiply = 52
-			divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
-			clamp = { min = 0 max = 0.75 }
-		}
-	}
 	if = {
 		limit = { has_idea = depression }
 		set_temp_variable = { cycle_inflation_adjustment = -0.035 }
@@ -493,10 +317,24 @@ quarterly_inflation_calculation = {
 			}
 			multiply = { value = tax_rate multiply = -0.01 }
 			add = gdpc_inflation_adjuster
-			add = policy_inflation_pressure
+			add = {
+				value = inflation_rate_var
+				max = inflation_expectations_anchor
+				multiply = 100
+				add = natural_real_interest_rate
+				clamp = { min = 1 max = 30 }
+				subtract = cb_policy_rate
+				multiply = 0.002
+				clamp = { min = -0.03 max = 0.03 }
+			}
 			add = {
 				value = cycle_inflation_adjustment
-				multiply = annual_expenditure_ratio
+				multiply = {
+					value = display_expense
+					multiply = 52
+					divide = { value = gdp_total clamp = { min = 0.001 max = @math_expressions_max } }
+					clamp = { min = 0 max = 0.75 }
+				}
 			}
 			add = {
 				value = treasury_rate
@@ -507,9 +345,71 @@ quarterly_inflation_calculation = {
 				multiply = gdpc_inflation_adjuster
 			}
 			add = print_money_inflation_pressure
-			add = currency_depreciation_pressure
-			add = severe_deficit_inflation_pressure
-			add = inflation_expectations_pressure
+			add = {
+				value = inflation_currency_strength_start
+				subtract = currency_strength
+				divide = { value = inflation_currency_strength_start clamp = { min = 0.15 max = @math_expressions_max } }
+				clamp = { min = 0 max = 0.5 }
+				multiply = {
+					value = 0.25
+					add = {
+						value = total_resource_imports
+						divide = {
+							value = total_resource_imports
+							add = total_resource_amount
+							clamp = { min = 0.001 max = @math_expressions_max }
+						}
+						clamp = { min = 0 max = 1 }
+						multiply = 0.5
+					}
+					add = {
+						value = 1
+						subtract = currency_strength_base
+						clamp = { min = 0 max = 0.5 }
+						multiply = 0.25
+					}
+					clamp = { min = 0.15 max = 0.85 }
+				}
+				multiply = 0.5
+			}
+			add = {
+				value = excess_deficit_ratio
+				multiply = {
+					value = 0.25
+					add = { value = debt_ratio clamp = { min = 0 max = 2 } multiply = 0.25 }
+					add = {
+						value = 1
+						subtract = currency_strength
+						clamp = { min = 0 max = 1 }
+						multiply = 0.25
+					}
+					clamp = { min = 0.25 max = 1.25 }
+				}
+			}
+			add = {
+				value = inflation_rate_var
+				subtract = inflation_expectations_anchor
+				max = 0
+				# (inflation - anchor) / anchor, written as inflation / anchor - 1.
+				multiply = {
+					value = inflation_rate_var
+					divide = { value = inflation_expectations_anchor clamp = { min = 0.001 max = @math_expressions_max } }
+					subtract = 1
+					clamp = { min = 0 max = 1 }
+				}
+				multiply = {
+					value = 0.9
+					# Each policy rate point cuts a fixed share at any inflation level; an excess deficit halves it at most.
+					subtract = {
+						value = 1
+						subtract = { value = excess_deficit_ratio multiply = 5 clamp = { min = 0 max = 0.5 } }
+						multiply = cb_policy_rate
+						multiply = 0.025
+					}
+					# Below 1 so inflation decays once its drivers stop; at 1 or above it feeds itself.
+					clamp = { min = 0.25 max = 0.9 }
+				}
+			}
 		}
 	}
 	# Only a positive quarter is scaled, so inflation_gain_multiplier_modifier leaves deflation alone.
@@ -528,9 +428,7 @@ quarterly_inflation_calculation = {
 
 	#Calculation of the quarterly rate finished, now move to calculate the yearly average off those numbers
 	#Check to make sure the array has only 4 items, and add up the value
-	set_temp_variable = { total_elements = year_quarter_inflation_tracker^num }
-
-	if = { limit = { check_variable = { total_elements > 3 } }
+	if = { limit = { check_variable = { year_quarter_inflation_tracker^num > 3 } }
 		remove_from_array = {
 			array = year_quarter_inflation_tracker
 			index = 0
@@ -540,8 +438,6 @@ quarterly_inflation_calculation = {
 	#Add this to the array, so we can average yearly inflation. this should stop rapid swings up and down, slowing movement
 	add_to_array = { year_quarter_inflation_tracker = inflation_rate_adjuster }
 	set_temp_variable = { new_inflation_rate = 0 }
-	#Reset the tracker here; this will prevent divide by 0, and give the most current number before division
-	set_temp_variable = { total_elements = year_quarter_inflation_tracker^num }
 
 	for_each_loop = {
 		array = year_quarter_inflation_tracker
@@ -553,16 +449,15 @@ quarterly_inflation_calculation = {
 	#Maximum inflation movement per quarter of 10%. This means that the max you can move in a year is 40% in either direction
 	#This is a balance mechanic, both for gameplay, and for when you eat a whole country and your finances go crazy. On quick quarterly spike, and then back down
 	#Hard cap inflation at -200% to 200%
-	set_temp_variable = {
-		new_inflation_rate = {
+	set_variable = {
+		inflation_rate_var = {
 			value = new_inflation_rate
-			divide = total_elements
-			max = { value = last_inflation_rate subtract = 0.1 }
-			min = { value = last_inflation_rate add = 0.1 }
+			divide = year_quarter_inflation_tracker^num
+			max = { value = inflation_rate_var subtract = 0.1 }
+			min = { value = inflation_rate_var add = 0.1 }
 			clamp = { min = -2 max = 2 }
 		}
 	}
-	set_variable = { inflation_rate_var = new_inflation_rate }
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: DEBUG: Inflation Update: Current Inflation Rate: [?THIS.inflation_rate_var|%]"
 		log = "[GetDateText]: [THIS.GetName]: DEBUG: Inflation Update: Last Four Quarters: [?THIS.year_quarter_inflation_tracker^0|%] - [?THIS.year_quarter_inflation_tracker^1|%] - [?THIS.year_quarter_inflation_tracker^2|%] - [?THIS.year_quarter_inflation_tracker^3|%]"
@@ -576,48 +471,43 @@ quarterly_inflation_calculation = {
 			is_ai = yes
 			NOT = { has_country_flag = temp_cb_rate_changed }
 		}
-		if = {
-			limit = { check_variable = { inflation_rate_var < 0 } }
-			set_temp_variable = { policy_inflation_reference = { value = inflation_rate_var multiply = 100 } }
-		}
-		else = {
-			set_temp_variable = {
-				policy_inflation_reference = {
+		# Policy rate minus the AI's target rate.
+		set_temp_variable = {
+			ai_cb_rate_gap = {
+				value = cb_policy_rate
+				subtract = {
 					value = inflation_rate_var
-					max = inflation_expectations_anchor
+					if = {
+						limit = {
+							value = inflation_rate_var
+							greater_than_or_equals = 0
+						}
+						max = inflation_expectations_anchor
+					}
 					multiply = 100
+					add = natural_real_interest_rate
+					clamp = { min = -10 max = 30 }
 				}
 			}
 		}
-		set_temp_variable = {
-			ai_target_cb_rate = {
-				value = policy_inflation_reference
-				add = natural_real_interest_rate
-				clamp = { min = -10 max = 30 }
-			}
-		}
-		set_temp_variable = { ai_target_cb_rate_lower = { value = ai_target_cb_rate subtract = 0.5 } }
-		set_temp_variable = { ai_target_cb_rate_upper = { value = ai_target_cb_rate add = 0.5 } }
 		# Move faster when far from target, or the rate takes years to follow inflation up or down.
-		set_temp_variable = { ai_target_cb_rate_far_below = { value = ai_target_cb_rate subtract = 5 } }
-		set_temp_variable = { ai_target_cb_rate_far_above = { value = ai_target_cb_rate add = 5 } }
 		# The AI stops hiking at 20, or the rate's debt interest outweighs the inflation cut. Players can go to 30.
 		if = {
 			limit = {
-				check_variable = { cb_policy_rate < ai_target_cb_rate_far_below }
+				check_variable = { ai_cb_rate_gap < -5 }
 				check_variable = { cb_policy_rate < 18 }
 			}
 			add_to_variable = { cb_policy_rate = 3 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
 		}
 		else_if = {
-			limit = { check_variable = { cb_policy_rate > ai_target_cb_rate_far_above } }
+			limit = { check_variable = { ai_cb_rate_gap > 5 } }
 			subtract_from_variable = { cb_policy_rate = 3 }
 			set_country_flag = { flag = temp_cb_rate_changed value = 1 days = 60 }
 		}
 		else_if = {
 			limit = {
-				check_variable = { cb_policy_rate < ai_target_cb_rate_lower }
+				check_variable = { ai_cb_rate_gap < -0.5 }
 				check_variable = { cb_policy_rate < 20 }
 			}
 			add_to_variable = { cb_policy_rate = 1 }
@@ -625,7 +515,7 @@ quarterly_inflation_calculation = {
 		}
 		else_if = {
 			limit = {
-				check_variable = { cb_policy_rate > ai_target_cb_rate_upper }
+				check_variable = { ai_cb_rate_gap > 0.5 }
 				check_variable = { cb_policy_rate > -10 }
 			}
 			subtract_from_variable = { cb_policy_rate = 1 }
