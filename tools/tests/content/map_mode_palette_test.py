@@ -49,8 +49,8 @@ CATEGORICAL_RULES = {
 # Ramps are ordered worst to best: brightness rises and neighbors stay this far apart.
 RAMP_NEIGHBOR_MINIMUM = 10
 
-# mode: kind. "party" shares its 24 colors with the politics view party ring and is not
-# checked; the vanilla Ideology map mode serves colorblind players by outlook.
+# mode: kind. "party" has 25 colors, too many to reach the colorblind options' bar, so it
+# keeps one palette that clears the Standard bar.
 MAP_MODES = {
     "EU_map_mode": "categorical",
     "GCC_map_mode": "categorical",
@@ -236,8 +236,8 @@ def test_every_palette_colors_every_category(map_modes, mode):
 _CATEGORICAL_CASES = [
     (mode, palette, vision)
     for mode, kind in MAP_MODES.items()
-    if kind == "categorical"
     for palette, rules in CATEGORICAL_RULES.items()
+    if kind == "categorical" or (kind == "party" and palette == STANDARD)
     for vision in rules
 ]
 
