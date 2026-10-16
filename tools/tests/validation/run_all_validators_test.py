@@ -38,9 +38,9 @@ def _run_stub(tmp_path, args):
 
 def _launcher_with(issues, returncode=0, stderr_log=""):
     def launch(_script, _flags, output_dir, name, _mod_path):
-        # Mirror BaseValidator.save_output: a validator with no findings
-        # writes no JSON sidecar at all.
-        if issues:
+        # Mirror BaseValidator.save_output: every validator writes a JSON
+        # sidecar, even when clean. None stands for a run that wrote nothing.
+        if issues is not None:
             try:
                 with open(f"{output_dir}/{name}.json", "w", encoding="utf-8") as stream:
                     json.dump(issues, stream)
@@ -156,7 +156,7 @@ def test_discovery_names_validators_from_their_scripts_in_name_order(
     ]
 
 
-def test_launch_validator_passes_each_flag_once_and_logs_stderr(tmp_path, monkeypatch):
+def test_launch_validator_passes_flags_and_logs_stderr(tmp_path, monkeypatch):
     captured = {}
 
     def popen(command, **kwargs):
@@ -165,7 +165,6 @@ def test_launch_validator_passes_each_flag_once_and_logs_stderr(tmp_path, monkey
 
     monkeypatch.setattr(runner.subprocess, "Popen", popen)
 
-    # focus-tree already gets --missing-icons from _VALIDATOR_EXTRA_FLAGS.
     process, stderr = runner.launch_validator(
         "validate_focus_tree.py",
         ["--missing-icons", "--staged"],
@@ -255,31 +254,53 @@ def test_suite_bounds_concurrency_and_passes_a_worker_budget(tmp_path, monkeypat
     assert all(f[-2:] == ["--workers", "3"] for f in flags)
 
 
+def test_batch_names_match_main_sidecar_names():
+    # The report compares a PR batch's results with main's sidecar of the
+    # same name, so a renamed batch would lose main's findings.
+    discovered = {script: name for name, script, _label in runner.discover_validators()}
+    assert [
+        spec.name
+        for spec in ALL_SPECS
+        if discovered.get(spec.script, spec.name) != spec.name
+    ] == []
+
+
 def test_manual_texture_audit_is_not_auto_discovered():
     scripts = {script for _name, script, _label in runner.discover_validators()}
     assert "validate_unused_textures.py" not in scripts
 
 
-def test_variables_run_passes_the_redundant_focus_flag_scan():
-    assert runner._VALIDATOR_EXTRA_FLAGS["variables"] == ["--redundant-focus-flags"]
+@pytest.mark.parametrize("staged", [False, True], ids=["full run", "staged run"])
+def test_suite_passes_each_discovered_validator_its_ci_batch_args(
+    tmp_path, monkeypatch, staged
+):
+    # A full run is the main baseline: a check enabled only on PRs reads NEW,
+    # and a diff-scoped check must cover its whole domain. A staged run must
+    # not widen.
+    monkeypatch.setattr(runner, "split_cpu_budget", lambda tasks: (tasks, 1))
+    flags = {}
 
+    def launch(script, child_flags, output_dir, name, _mod_path):
+        flags[script] = child_flags
+        write_text(Path(output_dir) / f"{name}.json", "[]")
+        return _Process(), io.StringIO()
 
-def test_decisions_run_passes_the_unannounced_category_scan():
-    assert runner._VALIDATOR_EXTRA_FLAGS["decisions"] == ["--unannounced-categories"]
+    monkeypatch.setattr(runner, "launch_validator", launch)
+    validators = runner.discover_validators()
+    extra = ["--staged"] if staged else []
 
+    runner._run_suite(_args("text"), extra, str(tmp_path), validators, str(tmp_path))
 
-def test_ideas_run_passes_the_same_flags_as_the_ci_batch():
-    spec = next(spec for spec in ALL_SPECS if spec.name == "ideas")
-    assert runner._VALIDATOR_EXTRA_FLAGS["ideas"] == list(spec.args)
-    assert spec.args == ("--missing-name-loc",)
-
-
-def test_math_expressions_run_passes_the_clamp_bounds_check():
-    assert runner._VALIDATOR_EXTRA_FLAGS["math-expressions"] == ["--clamp-bounds"]
-
-
-def test_oob_units_run_does_not_enable_missing_equipment_factor():
-    assert "oob-units" not in runner._VALIDATOR_EXTRA_FLAGS
+    assert {spec.script: flags.get(spec.script) for spec in ALL_SPECS} == {
+        spec.script: [
+            *spec.args,
+            *(() if staged else spec.baseline_args),
+            *extra,
+            "--workers",
+            "1",
+        ]
+        for spec in ALL_SPECS
+    }
 
 
 def test_summary_totals_use_deduplicated_issues(tmp_path, monkeypatch):
@@ -419,7 +440,7 @@ def test_persist_results_writes_completion_marker_when_clean(tmp_path, monkeypat
     code = _run_stub(tmp_path, _args("both", persist_results=str(persist_dir)))
 
     assert code == 0
-    assert list(persist_dir.glob("*.json")) == []
+    assert list(persist_dir.glob("*.json")) == [persist_dir / "stub.json"]
     assert (persist_dir / runner.PERSISTENCE_MARKER).read_text(encoding="utf-8") == (
         "complete\n"
     )
@@ -453,21 +474,36 @@ def test_persist_results_copy_failure_propagates(tmp_path, monkeypatch):
     assert not marker.exists()
 
 
-def test_crashed_validator_fails_run_without_strict(tmp_path, monkeypatch, capsys):
-    # A validator that exits non-zero with no findings crashed. That is
-    # infrastructure failure and must fail the run even when --strict is off.
+@pytest.mark.parametrize(
+    ("returncode", "expected"),
+    [
+        pytest.param(2, ["(crashed, exit code 2)", "    last line"], id="crash"),
+        pytest.param(0, ["(wrote no result file)"], id="no result file"),
+    ],
+)
+def test_validator_without_a_result_fails_run_without_strict(
+    tmp_path, monkeypatch, capsys, returncode, expected
+):
+    # No sidecar is infrastructure failure, not a clean result: it fails the
+    # run even when --strict is off and never earns the completion marker.
     monkeypatch.setattr(
         runner,
         "launch_validator",
-        _launcher_with([], returncode=2, stderr_log="Traceback\nlast line\n"),
+        _launcher_with(
+            None, returncode=returncode, stderr_log="Traceback\nlast line\n"
+        ),
     )
+    persist_dir = tmp_path / "persisted"
 
-    code = _run_stub(tmp_path, _args("both", strict=False))
+    code = _run_stub(
+        tmp_path, _args("both", strict=False, persist_results=str(persist_dir))
+    )
 
     stdout = capsys.readouterr().out
     assert code == 1
-    assert "(crashed, exit code 2)" in stdout
-    assert "    last line" in stdout
+    for line in expected:
+        assert line in stdout
+    assert not (persist_dir / runner.PERSISTENCE_MARKER).exists()
 
 
 def test_clean_run_passes_without_strict(tmp_path, monkeypatch):
