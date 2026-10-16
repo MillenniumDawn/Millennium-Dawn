@@ -3,23 +3,21 @@
 validator-cache.yml persists the per-validator JSON sidecars of a full run
 of each main commit as that commit's baseline. PR report jobs restore the
 entry for their base commit (keyed on the validator source hash and the
-commit) and use the key counts here to tag every finding NEW (not on that
-main commit) or EXISTING (also present there).
+commit) and tag every finding NEW (not on that main commit), EXISTING (also
+there), RAISED (a warning there, an error now), or LOWERED (the reverse).
 
 Every validator writes a sidecar, even when clean, so the meta lists the
 sidecars a baseline holds. A missing, extra, or malformed sidecar makes the
 whole baseline unavailable rather than quietly smaller.
 
-Fingerprint: (severity, category, file, message) with line references in
-the message (`file.txt:123`, `line 123`) masked, counted after the same
-cross-validator dedupe runs on both sides. Leaving lines out keeps an
-existing finding EXISTING when an unrelated edit shifts it; counting keeps a
-real second instance NEW. Severity is part of the key so an existing warning
-that escalates to an error reads as a new error (the alarm direction); a
-warning still matches main's error for the same finding (see classify).
-Known limitation: when one file has the same finding twice, fixing one and
-adding another in that file reads as two EXISTING findings. A finding with no
-file has the same limit across the repo.
+Each main finding matches at most one PR finding with the same category,
+file, and message, line references in the message (`file.txt:123`,
+`line 123`) masked. With the PR's diff hunks, the match also needs the same
+place: main's line shifted past the PR's edits, or the same changed hunk.
+So fixing one copy of a finding and adding another elsewhere reads NEW, and
+an unrelated edit above a finding keeps it EXISTING. Findings with no line
+match by count. Main's findings come only from the validators the PR ran,
+deduped the same way, so a severity difference is a real transition.
 """
 
 import json
@@ -37,16 +35,23 @@ META_FILENAME = "baseline-meta.json"
 
 # (severity, category, file, message with line references masked)
 BaselineKey = Tuple[str, str, str, str]
+# (old start, old count, new start, new count) of one changed range
+Hunk = Tuple[int, int, int, int]
 
 _LINE_REF = re.compile(r"(\.\w+:|\bline )\d+")
+_HUNK = re.compile(r"@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))? @@")
 
 
 @dataclass
 class Baseline:
-    """A loaded baseline: its meta plus the deduped key counts."""
+    """A loaded baseline: its meta plus each validator's raw findings."""
 
     meta: Dict[str, Any]
-    keys: Counter[BaselineKey]
+    sidecars: Dict[str, List[Dict[str, Any]]]
+
+    def issues(self, validators: Optional[Set[str]] = None) -> List[Issue]:
+        """Main's deduped findings, from only `validators` when given."""
+        return _dedupe_sidecars(self.sidecars, validators)
 
 
 @dataclass
@@ -59,6 +64,8 @@ class BaselineStats:
     existing_warnings: int = 0
     unclassified: int = 0
     new_issues: List[Issue] = field(default_factory=list)
+    raised: List[Issue] = field(default_factory=list)
+    lowered: List[Issue] = field(default_factory=list)
 
 
 def issue_key(issue: Issue) -> Optional[BaselineKey]:
@@ -87,14 +94,14 @@ def sidecar_names(sidecar_dir: str) -> List[str]:
     )
 
 
-def load_issues(sidecar_dir: str) -> List[Issue]:
-    """Load and cross-validator dedupe every `<slug>.json` sidecar in a dir.
+def _read_sidecars(sidecar_dir: str) -> Dict[str, List[Dict[str, Any]]]:
+    """Validator name -> its issue dicts, for every `<slug>.json` in a dir.
 
     The dir layout is the one `run_all_validators.py --persist-results`
     produces: one flat JSON list of issue dicts per validator. Raises
     ValueError on a sidecar that is unreadable or not a list of dicts.
     """
-    issues: List[Issue] = []
+    sidecars: Dict[str, List[Dict[str, Any]]] = {}
     for name in sidecar_names(sidecar_dir):
         path = Path(sidecar_dir) / name
         try:
@@ -103,8 +110,26 @@ def load_issues(sidecar_dir: str) -> List[Issue]:
             raise ValueError(f"Malformed validator sidecar: {path}") from exc
         if not isinstance(data, list) or not all(isinstance(d, dict) for d in data):
             raise ValueError(f"Malformed validator sidecar: {path}")
-        issues.extend(Issue.from_dict(d, validator=path.stem) for d in data)
-    return dedupe(issues)
+        sidecars[path.stem] = data
+    return sidecars
+
+
+def _dedupe_sidecars(
+    sidecars: Dict[str, List[Dict[str, Any]]], validators: Optional[Set[str]] = None
+) -> List[Issue]:
+    return dedupe(
+        [
+            Issue.from_dict(d, validator=name)
+            for name, data in sidecars.items()
+            if validators is None or name in validators
+            for d in data
+        ]
+    )
+
+
+def load_issues(sidecar_dir: str) -> List[Issue]:
+    """Load and cross-validator dedupe every sidecar in a dir."""
+    return _dedupe_sidecars(_read_sidecars(sidecar_dir))
 
 
 def load_baseline(
@@ -139,10 +164,10 @@ def load_baseline(
     if not sidecars or sidecars != sidecar_names(baseline_dir):
         return None
     try:
-        issues = load_issues(baseline_dir)
+        sidecars = _read_sidecars(baseline_dir)
     except ValueError:
         return None
-    return Baseline(meta=meta, keys=count_keys(issues))
+    return Baseline(meta=meta, sidecars=sidecars)
 
 
 def load_renames(path: str) -> Dict[str, str]:
@@ -151,20 +176,73 @@ def load_renames(path: str) -> Dict[str, str]:
     return dict(zip(lines[::2], lines[1::2]))
 
 
-def rename_keys(
-    keys: Counter[BaselineKey], renames: Dict[str, str]
-) -> Counter[BaselineKey]:
+def rename_issues(issues: List[Issue], renames: Dict[str, str]) -> None:
     """Move main's findings in each file the PR renamed to its new path.
 
     The file field and any mention of the old path in the message move. A
     basename-only file field stays, since it cannot say which file it was.
     """
-    moved: Counter[BaselineKey] = Counter()
-    for (severity, category, file, message), count in keys.items():
+    for issue in issues:
         for old, new in renames.items():
-            message = message.replace(old, new)
-        moved[(severity, category, renames.get(file, file), message)] += count
-    return moved
+            issue.message = issue.message.replace(old, new)
+        issue.file = renames.get(issue.file, issue.file)
+
+
+def load_hunks(path: str) -> Dict[str, List[Hunk]]:
+    """New path -> its changed ranges, from `git diff --unified=0` headers.
+
+    The file holds only the `diff --git`, `+++`, and `@@` lines. An added line
+    can also start with `+++`, so only the one before a file's first hunk
+    names it. A deleted file (`+++ /dev/null`) has nothing to map to.
+    """
+    hunks: Dict[str, List[Hunk]] = {}
+    current: Optional[List[Hunk]] = None
+    in_hunks = False
+    text = Path(path).read_text(encoding="utf-8", errors="replace")
+    for line in text.splitlines():
+        if line.startswith("diff --git "):
+            current, in_hunks = None, False
+        elif line.startswith("+++ b/") and not in_hunks:
+            # git ends a path that has a space with a tab.
+            current = hunks.setdefault(line[len("+++ b/") :].rstrip("\t"), [])
+        elif match := _HUNK.match(line):
+            in_hunks = True
+            if current is not None:
+                old_start, old_count, new_start, new_count = match.groups()
+                current.append(
+                    (
+                        int(old_start),
+                        int(old_count or 1),
+                        int(new_start),
+                        int(new_count or 1),
+                    )
+                )
+    return hunks
+
+
+def _position(
+    issue: Issue, hunks: Dict[str, List[Hunk]], on_main: bool
+) -> Optional[Tuple[str, int]]:
+    """Where a finding sits in the PR's version of its file.
+
+    ("hunk", i) on a line the PR changed, ("line", n) on an unchanged line,
+    with main's lines shifted past the PR's edits. None without a file path
+    and line; a basename cannot be placed.
+    """
+    if "/" not in issue.file or issue.line <= 0:
+        return None
+    shift = 0
+    for index, (old_start, old_count, new_start, new_count) in enumerate(
+        hunks.get(issue.file, ())
+    ):
+        start, count = (old_start, old_count) if on_main else (new_start, new_count)
+        if count and start <= issue.line < start + count:
+            return ("hunk", index)
+        # A range with no lines sits after its start line.
+        if issue.line < start or (not count and issue.line == start):
+            break
+        shift += new_count - old_count
+    return ("line", issue.line + shift if on_main else issue.line)
 
 
 def tool_effect(
@@ -179,52 +257,64 @@ def tool_effect(
     return {category: (added, dropped) for category, (added, dropped) in effect.items()}
 
 
-def classify(issues: List[Issue], baseline: Baseline) -> BaselineStats:
-    """Tag each issue's `baseline_status` ("new"/"existing") in place.
+def classify(
+    issues: List[Issue],
+    baseline_issues: List[Issue],
+    hunks: Optional[Dict[str, List[Hunk]]] = None,
+) -> BaselineStats:
+    """Tag each issue's `baseline_status` in place against main's findings.
 
     Unkeyable issues (no category or message) are left untagged and counted
     as unclassified. Rendering only adds a NEW tag when the field is set, so a
     missing baseline needs no special case at render time.
 
-    Each baseline entry matches one issue: with N on main, the first N
-    issues sharing that key read EXISTING and any more read NEW.
-
-    Severity is part of the key on purpose: an existing warning escalated to
-    an error must read as a new error (the alarm direction). A warning that
-    main recorded as an error reads EXISTING: main's cross-validator dedupe
-    raises a finding that another validator reports as an error, and a PR
-    running fewer validators sees only the warning. Exact matches are taken
-    first, so such a warning only gets an error no exact match claimed.
+    Each main finding matches one issue: with N on main, the first N issues
+    sharing a match read EXISTING and any more read NEW. Without `hunks`
+    nothing is placed and matches ignore lines. Same-severity matches are
+    taken first; a match across severities is RAISED (warning to error) or
+    LOWERED (error to warning).
     """
+
+    def match_key(issue: Issue, on_main: bool):
+        key = issue_key(issue)
+        if key is None:
+            return None
+        place = _position(issue, hunks, on_main) if hunks is not None else None
+        return (*key[1:], place)
+
     stats = BaselineStats()
-    unmatched = baseline.keys.copy()
-    keys = [issue_key(issue) for issue in issues]
+    unmatched: Counter = Counter(
+        (issue.severity, key)
+        for issue in baseline_issues
+        if (key := match_key(issue, True)) is not None
+    )
+    keys = [match_key(issue, False) for issue in issues]
     exact: List[bool] = []
-    for key in keys:
-        if key is not None and unmatched[key] > 0:
-            unmatched[key] -= 1
-            exact.append(True)
-        else:
-            exact.append(False)
-    for issue, key, matched in zip(issues, keys, exact):
+    for issue, key in zip(issues, keys):
+        hit = key is not None and unmatched[(issue.severity, key)] > 0
+        if hit:
+            unmatched[(issue.severity, key)] -= 1
+        exact.append(hit)
+    for issue, key, hit in zip(issues, keys, exact):
         if key is None:
             stats.unclassified += 1
             continue
-        if not matched and issue.severity == Severity.WARNING:
-            raised = (Severity.ERROR, key[1], key[2], key[3])
-            matched = unmatched[raised] > 0
-            if matched:
-                unmatched[raised] -= 1
-        if matched:
+        error = issue.severity == Severity.ERROR
+        other = (Severity.WARNING if error else Severity.ERROR, key)
+        if hit:
             issue.baseline_status = "existing"
-            if issue.severity == Severity.ERROR:
+            if error:
                 stats.existing_errors += 1
             else:
                 stats.existing_warnings += 1
+        elif unmatched[other] > 0:
+            unmatched[other] -= 1
+            issue.baseline_status = "raised" if error else "lowered"
+            (stats.raised if error else stats.lowered).append(issue)
         else:
             issue.baseline_status = "new"
             stats.new_issues.append(issue)
-            if issue.severity == Severity.ERROR:
+            if error:
                 stats.new_errors += 1
             else:
                 stats.new_warnings += 1
