@@ -254,6 +254,17 @@ def test_suite_bounds_concurrency_and_passes_a_worker_budget(tmp_path, monkeypat
     assert all(f[-2:] == ["--workers", "3"] for f in flags)
 
 
+def test_batch_names_match_main_sidecar_names():
+    # The report compares a PR batch's results with main's sidecar of the
+    # same name, so a renamed batch would lose main's findings.
+    discovered = {script: name for name, script, _label in runner.discover_validators()}
+    assert [
+        spec.name
+        for spec in ALL_SPECS
+        if discovered.get(spec.script, spec.name) != spec.name
+    ] == []
+
+
 def test_manual_texture_audit_is_not_auto_discovered():
     scripts = {script for _name, script, _label in runner.discover_validators()}
     assert "validate_unused_textures.py" not in scripts

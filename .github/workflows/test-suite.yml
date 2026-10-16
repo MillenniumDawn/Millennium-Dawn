@@ -177,6 +177,7 @@ jobs:
             /tools/baseline_check.py
             /pyproject.toml
             /validation_config.json
+            /.gitattributes
           sparse-checkout-cone-mode: false
 
       - name: Check CI tooling contract
@@ -197,6 +198,8 @@ jobs:
             missing+=("--main-tools-baseline")
           grep -Fq -- --renames tools/generate_validation_report.py ||
             missing+=("--renames")
+          grep -Fq -- --hunks tools/generate_validation_report.py ||
+            missing+=("--hunks")
           grep -Fq -- --tooling-changed tools/generate_validation_report.py ||
             missing+=("--tooling-changed")
           grep -Fq -- --observation tools/baseline_check.py ||
@@ -218,6 +221,8 @@ jobs:
       # there, so main's later fixes are not the PR's findings.
       - name: Derive changed files
         id: changed
+        # A failed git diff must fail the step, not leave a short list.
+        shell: bash
         env:
           BASE_SHA: ${{ steps.resolve-ref.outputs.base-sha }}
           HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
@@ -236,6 +241,10 @@ jobs:
           git diff --name-status -z --diff-filter=R "$merge_base" "$HEAD_SHA" \
             | python3 tools/validation/collect_changed_files.py \
             > renames.txt
+          # Hunk headers place main's findings in the PR's files.
+          git -c core.quotePath=false diff --unified=0 --no-color \
+              --no-ext-diff "$merge_base" "$HEAD_SHA" \
+            | awk '/^(diff --git |\+\+\+ |@@ )/' > hunks.txt
 
       # The comparison scans both commits with this PR's validators, so it
       # cannot show what changed validator code does to main's findings.
@@ -273,6 +282,7 @@ jobs:
           path: |
             changed-files.txt
             renames.txt
+            hunks.txt
             party-loc-scope.diff
           if-no-files-found: warn
           retention-days: 7
@@ -1334,6 +1344,9 @@ jobs:
           fi
           if [ -f changed-files/renames.txt ]; then
             args+=(--renames changed-files/renames.txt)
+          fi
+          if [ -f changed-files/hunks.txt ]; then
+            args+=(--hunks changed-files/hunks.txt)
           fi
           if [ -d main-tools-baseline ]; then
             args+=(--main-tools-baseline main-tools-baseline)

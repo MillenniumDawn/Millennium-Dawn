@@ -43,6 +43,8 @@ _IN_PR_HEADING = "Findings in your PR"
 _CATEGORY_HEADING = "Findings by category"
 # Statuses that mean a run produced no usable result, so it cannot count as passed.
 _INCOMPLETE_STATUSES = {"unknown", "no_output"}
+# Baseline statuses the New Findings section lists.
+_LISTED_STATUSES = {"new", "raised", "lowered"}
 
 
 def render(
@@ -205,10 +207,10 @@ def _severity_icon(errors: int, warnings: int) -> str:
 def _error_verdict_with_baseline(
     total_errors: int, total_warnings: int, stats: "BaselineStats"
 ) -> str:
-    line = (
-        f"{_plural(stats.new_errors, 'new error')} against the main baseline "
-        f"must be fixed before merge."
-    )
+    blocking = [_plural(stats.new_errors, "new error")] if stats.new_errors else []
+    if stats.raised:
+        blocking.append(f"{_plural(len(stats.raised), 'warning')} raised to error")
+    line = f"{' and '.join(blocking)} against the main baseline must be fixed before merge."
     extras = [f"{_plural(total_errors, 'error')} total"]
     if stats.new_warnings:
         extras.append(_plural(stats.new_warnings, "new warning"))
@@ -262,7 +264,7 @@ def _render_verdict(
     )
 
     if baseline_stats is not None:
-        if baseline_stats.new_errors:
+        if baseline_stats.new_errors or baseline_stats.raised:
             line = _error_verdict_with_baseline(
                 total_errors, total_warnings, baseline_stats
             )
@@ -583,15 +585,15 @@ def _render_in_pr_section(
 
     Always rendered, so a standing backlog surfaces in the files a PR touches
     instead of staying invisible behind the new-vs-baseline comparison. With
-    ``exclude_new`` the new findings are dropped here, since the New Findings
-    section above already lists them.
+    ``exclude_new`` the new and changed-severity findings are dropped here,
+    since the New Findings section above already lists them.
     """
     in_pr = [
         i
         for i in issues
         if i.in_diff
         and i.severity in (Severity.ERROR, Severity.WARNING)
-        and not (exclude_new and i.baseline_status == "new")
+        and not (exclude_new and i.baseline_status in _LISTED_STATUSES)
     ]
     if not in_pr:
         return ""
@@ -629,32 +631,36 @@ def _render_baseline_section(
     """New-findings section for the PR comment and the step summary."""
     lines: List[str] = [f"## {_NEW_FINDINGS_HEADING}", ""]
 
-    if not stats.new_issues:
+    if not (stats.new_issues or stats.raised or stats.lowered):
         lines.append("✅ No new findings against the main baseline.")
-        if stats.unclassified:
-            lines.append(
-                f"_{stats.unclassified} finding(s) could not be compared "
-                "(no category or message)._"
-            )
-        return "\n".join(lines)
 
     new_errors = [i for i in stats.new_issues if i.severity == Severity.ERROR]
     new_warnings = [i for i in stats.new_issues if i.severity != Severity.ERROR]
+    groups = (
+        ("❌ New errors", "error", new_errors, True, None),
+        (
+            "⬆️ Warnings on main, errors now",
+            "",
+            stats.raised,
+            True,
+            "more raised finding",
+        ),
+        ("⚠️ New warnings", "warning", new_warnings, False, None),
+        (
+            "⬇️ Errors on main, warnings now",
+            "",
+            stats.lowered,
+            False,
+            "more lowered finding",
+        ),
+    )
     remaining = max_visible
-    error_lines, error_overflow = _render_new_severity_group(
-        "❌ New errors", "error", new_errors, ctx, remaining, open_by_default=True
-    )
-    remaining = max(0, remaining - (len(new_errors) - error_overflow))
-    warning_lines, _warning_overflow = _render_new_severity_group(
-        "⚠️ New warnings",
-        "warning",
-        new_warnings,
-        ctx,
-        remaining,
-        open_by_default=False,
-    )
-    lines.extend(error_lines)
-    lines.extend(warning_lines)
+    for heading, word, group, open_by_default, overflow_word in groups:
+        group_lines, overflow = _render_new_severity_group(
+            heading, word, group, ctx, remaining, open_by_default, overflow_word
+        )
+        remaining = max(0, remaining - (len(group) - overflow))
+        lines.extend(group_lines)
     if stats.unclassified:
         lines.append(
             f"_{stats.unclassified} finding(s) could not be compared "
@@ -808,8 +814,8 @@ def _file_ref(issue: Issue, ctx: ReportContext) -> str:
 def _render_bullet(issue: Issue, ctx: ReportContext) -> str:
     marker = "❌" if issue.severity == Severity.ERROR else "⚠️"
     tags = []
-    if issue.baseline_status == "new":
-        tags.append("**NEW**")
+    if issue.baseline_status in _LISTED_STATUSES:
+        tags.append(f"**{issue.baseline_status.upper()}**")
     if issue.in_diff:
         tags.append("**IN YOUR PR**")
     tag_str = f" {' '.join(tags)}" if tags else ""

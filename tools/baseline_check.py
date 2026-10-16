@@ -56,15 +56,16 @@ def _split_new_findings(
 ) -> Tuple[List[Issue], List[Issue]]:
     """Split current issues into (new errors, new warnings).
 
-    Findings classify tags existing are skipped. Findings without a
-    category or message can never match a key and count as new, the alarm
-    direction for the nightly check.
+    Existing findings and errors lowered to warnings are skipped; a warning
+    raised to an error counts as a new error. Findings without a category or
+    message can never match a key and count as new, the alarm direction for
+    the nightly check.
     """
-    classify(current, previous)
+    classify(current, previous.issues())
     new_errors: List[Issue] = []
     new_warnings: List[Issue] = []
     for issue in current:
-        if issue.baseline_status == "existing":
+        if issue.baseline_status in ("existing", "lowered"):
             continue
         if issue.severity == Severity.ERROR:
             new_errors.append(issue)
@@ -75,7 +76,7 @@ def _split_new_findings(
 
 def _fixed_counts(current: Sequence[Issue], previous: Baseline) -> Tuple[int, int]:
     """(errors, warnings) present in the previous baseline but gone tonight."""
-    fixed = previous.keys - count_keys(current)
+    fixed = count_keys(previous.issues()) - count_keys(current)
     fixed_errors = sum(n for key, n in fixed.items() if key[0] == Severity.ERROR)
     return fixed_errors, fixed.total() - fixed_errors
 

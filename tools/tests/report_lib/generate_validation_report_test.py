@@ -180,6 +180,38 @@ def test_main_moves_main_findings_to_renamed_files(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize(
+    ("hunks", "verdict"),
+    [
+        pytest.param("", "No new errors", id="no edit"),
+        pytest.param("@@ -1,0 +2,2 @@\n", "1 new error", id="main's copy moved down"),
+    ],
+)
+def test_main_places_main_findings_through_the_hunks(
+    tmp_path, monkeypatch, hunks, verdict
+):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    finding = _issue_dict("error", file="events/a.txt", line=10, message="finding")
+    make_results_tree(
+        tmp_path, {"events": {"log": "VALIDATION COMPLETE", "issues": [finding]}}
+    )
+    _write_baseline(tmp_path / "baseline", "h", [finding])
+    hunks_file = tmp_path / "hunks.txt"
+    hunks_file.write_text(
+        "diff --git a/events/a.txt b/events/a.txt\n+++ b/events/a.txt\n" + hunks,
+        encoding="utf-8",
+    )
+
+    code = generate_validation_report.main(
+        _argv(tmp_path, baseline_dir=tmp_path / "baseline", baseline_toolshash="h")
+        + ["--hunks", str(hunks_file)]
+    )
+
+    assert code == 0
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert f"{verdict} against the main baseline" in report
+
+
+@pytest.mark.parametrize(
     ("toolshash", "commit"),
     [
         pytest.param("new-generation", BASE_SHA, id="other validator code"),

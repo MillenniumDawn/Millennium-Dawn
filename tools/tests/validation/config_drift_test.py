@@ -589,6 +589,7 @@ CONTRACT_STRINGS = {
     "pytest-cov": "pyproject.toml",
     "--main-tools-baseline": "tools/generate_validation_report.py",
     "--renames": "tools/generate_validation_report.py",
+    "--hunks": "tools/generate_validation_report.py",
     "--tooling-changed": "tools/generate_validation_report.py",
     "--observation": "tools/baseline_check.py",
 }
@@ -665,11 +666,15 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     assert restore["with"]["restore-keys"].strip().endswith("-${{ env.BASELINE_SHA }}-")
     assert '--baseline-commit "$BASELINE_SHA"' in script
     assert "--changed-files changed-files/changed-files.txt" in script
-    # Renames ride in the changed-files artifact, from the same merge-base diff.
+    # Renames and hunks ride in the changed-files artifact, from the same
+    # merge-base diff; a failed diff fails the step.
     assert "--renames changed-files/renames.txt" in script
+    assert "--hunks changed-files/hunks.txt" in script
     assert '--diff-filter=R "$merge_base" "$HEAD_SHA"' in derive["run"]
+    assert "> hunks.txt" in derive["run"]
+    assert derive["shell"] == "bash"
     upload = workflow_step("detect-changes", "Upload changed files")
-    assert "renames.txt" in upload["with"]["path"].split()
+    assert {"renames.txt", "hunks.txt"} <= set(upload["with"]["path"].split())
     assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
     assert (
         "github.event_name == 'workflow_dispatch'" in report["env"]["VALIDATION_SCOPE"]

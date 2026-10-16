@@ -23,8 +23,8 @@ class Issue:
     line: int = 0
     validator: str = ""
     detected_by: List[str] = field(default_factory=list)
-    # Set by baseline.classify(): "new" / "existing" when a baseline was
-    # available and the issue could be keyed; None otherwise.
+    # Set by baseline.classify(): "new", "existing", "raised", or "lowered"
+    # when a baseline was available and the issue could be keyed; else None.
     baseline_status: Optional[str] = None
     # Set by baseline.tag_changed_files(): True when Issue.file is in the PR diff.
     in_diff: bool = False

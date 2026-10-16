@@ -525,6 +525,21 @@ def test_step_summary_lists_new_findings():
     assert "1 finding(s) could not be compared (no category or message)." in body
 
 
+def test_severity_changes_get_their_own_groups_and_a_red_verdict():
+    run = ValidatorRun(name="events", title="Events", status="failed", errors=1)
+    raised = make_issue(baseline_status="raised")
+    lowered = make_issue(severity=Severity.WARNING, line=9, baseline_status="lowered")
+    stats = _stats(new_errors=0, new_warnings=0, raised=[raised], lowered=[lowered])
+
+    body = render([run], [raised, lowered], _ctx(), baseline_stats=stats)
+
+    assert "> ❌ 1 warning raised to error against the main baseline" in body
+    assert "<summary>⬆️ Warnings on main, errors now (1)</summary>" in body
+    assert "<summary>⬇️ Errors on main, warnings now (1)</summary>" in body
+    assert "**RAISED**" in body and "**LOWERED**" in body
+    assert "No new findings against the main baseline" not in body
+
+
 def test_step_summary_collapses_warnings_by_default():
     runs = [
         ValidatorRun(
