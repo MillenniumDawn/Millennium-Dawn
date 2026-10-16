@@ -6,6 +6,7 @@ all survive. It is also idempotent, and must preserve quoted strings and
 comments verbatim.
 """
 
+import pytest
 import standardize_history as history
 from shared.suite import read_text as _read
 from shared.suite import write_text as _write
@@ -57,9 +58,36 @@ def test_repeated_statements_all_retained(tmp_path):
     assert out.count("add_equipment_to_stockpile") == 2
 
 
-def test_idempotent(tmp_path):
+_INFLUENCE_SETUP = """\
+	# Influence system
+	init_influence = yes
+	set_variable = { domestic_influence_amount = 200 }
+	add_to_array = { influence_array = CHI.id }
+	add_to_array = { influence_array_val = 99 }
+	add_to_array = {
+		influence_array = USA.id
+	}
+	add_to_array = { influence_array_val = 40 }
+	sort_influence = yes
+"""
+_INFLUENCE_HISTORY = (
+    "capital = 652\n\n2000.1.1 = {\n"
+    "\tset_country_flag = TST_alpha\n" + _INFLUENCE_SETUP + "}\n"
+)
+_IDEMPOTENT_CASES = {"repeated statements": _HISTORY, "influence": _INFLUENCE_HISTORY}
+
+
+def test_influence_setup_order_preserved(tmp_path):
     src = tmp_path / "hist.txt"
-    src.write_text(_HISTORY, encoding="utf-8")
+    _write(src, _INFLUENCE_HISTORY)
+    out = _standardize(src)
+    assert _INFLUENCE_SETUP in out
+
+
+@pytest.mark.parametrize("history", _IDEMPOTENT_CASES.values(), ids=_IDEMPOTENT_CASES)
+def test_idempotent(tmp_path, history):
+    src = tmp_path / "hist.txt"
+    _write(src, history)
     run1 = _standardize(src)
     run2 = _standardize(src)
     assert run1 == run2
