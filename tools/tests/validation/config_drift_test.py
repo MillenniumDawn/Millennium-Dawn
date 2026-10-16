@@ -588,6 +588,7 @@ CONTRACT_STRINGS = {
     "pytest-xdist": "pyproject.toml",
     "pytest-cov": "pyproject.toml",
     "--main-tools-baseline": "tools/generate_validation_report.py",
+    "--renames": "tools/generate_validation_report.py",
     "--tooling-changed": "tools/generate_validation_report.py",
     "--observation": "tools/baseline_check.py",
 }
