@@ -118,7 +118,9 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   field and in messages. A finding that names only a basename does not move.
 - When a PR changes validator code or reference data, both scans use its validators,
   so findings that code adds to unchanged content read EXISTING. `detect-changes`
-  flags this and the report says so.
+  flags this and the report says so. The base scan also restores main's own baseline
+  of the merge base, keyed by the base's own validator hash, and the report lists per
+  category what the PR's validators add to and drop from it.
 - The validator hash covers `tools/validation` sources and data, `shared_utils.py`,
   `validation_config.json`, `resources/documentation/`, and the typo watchlist. All
   four `hashFiles` sites must match, and each checkout must hold those files.
