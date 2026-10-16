@@ -29,6 +29,7 @@ from .baseline import (
     rename_keys,
     sidecar_names,
     tag_changed_files,
+    tool_effect,
     write_baseline,
 )
 from .checks_api import post_checks
@@ -74,6 +75,7 @@ __all__ = [
     "count_keys",
     "classify",
     "tag_changed_files",
+    "tool_effect",
     "dedupe",
     "render",
     "truncate_if_needed",

@@ -192,6 +192,9 @@ jobs:
             grep -Fq "\"$package" pyproject.toml || missing+=("$package")
           done
           # The report and base scan run the head's scripts with these flags.
+          grep -Fq -- --main-tools-baseline \
+            tools/generate_validation_report.py ||
+            missing+=("--main-tools-baseline")
           grep -Fq -- --renames tools/generate_validation_report.py ||
             missing+=("--renames")
           grep -Fq -- --tooling-changed tools/generate_validation_report.py ||
@@ -1088,12 +1091,41 @@ jobs:
           sparse-checkout: /validation_config.json
           sparse-checkout-cone-mode: false
 
+      - name: Check out the base's own workspace
+        if: steps.lookup.outputs.cache-matched-key == ''
+        run: >-
+          git -C base sparse-checkout set --no-cone --stdin
+          < tools/validation/ci_workspace_profile.txt
+
+      # Before the overlay, so it matches validator-cache's hash of this commit.
+      - name: Compute the base's own validator hash
+        id: basehash
+        if: >-
+          steps.lookup.outputs.cache-matched-key == '' &&
+          needs.detect-changes.outputs.tooling-changed == 'true'
+        run: >-
+          echo "hash=${{ hashFiles('base/tools/validation/**/*.py',
+          'base/tools/validation/**/*.txt', 'base/tools/shared_utils.py',
+          'base/validation_config.json', 'base/resources/documentation/**',
+          'base/.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
+
+      - name: Restore main's own baseline of the base
+        id: main-baseline
+        if: steps.basehash.outputs.hash != ''
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_baseline
+          key: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.basehash.outputs.hash }}-${{ env.BASELINE_SHA }}
+          restore-keys: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.basehash.outputs.hash }}-${{ env.BASELINE_SHA }}-
+
       # Both scans run the PR's tooling, so only the content differs.
       - name: Give the base content the PR's tooling
         if: steps.lookup.outputs.cache-matched-key == ''
         run: |
-          git -C base sparse-checkout set --no-cone --stdin \
-            < tools/validation/ci_workspace_profile.txt
           rm -rf base/tools base/resources/documentation
           mkdir -p base/resources base/.claude/docs
           cp -R tools base/tools
@@ -1135,6 +1167,16 @@ jobs:
         with:
           name: base-commit-baseline
           path: ${{ runner.temp }}/base-baseline
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload main's own baseline of the base
+        if: steps.main-baseline.outputs.cache-matched-key != ''
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: main-tools-baseline
+          path: .validation_baseline
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 1
 
@@ -1230,6 +1272,15 @@ jobs:
           name: base-commit-baseline
           path: .validation_baseline
 
+      # Shows what a validator change does to main's own findings.
+      - name: Download main's own baseline of the base
+        if: env.TOOLING_CHANGED == 'true'
+        continue-on-error: true
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: main-tools-baseline
+          path: main-tools-baseline
+
       - name: Set up Python
         id: setup-python
         uses: ./.github/actions/setup-md-python
@@ -1283,6 +1334,9 @@ jobs:
           fi
           if [ -f changed-files/renames.txt ]; then
             args+=(--renames changed-files/renames.txt)
+          fi
+          if [ -d main-tools-baseline ]; then
+            args+=(--main-tools-baseline main-tools-baseline)
           fi
           if [ -n "$PR_NUMBER" ]; then
             # A run for an older head must not replace the newer head's

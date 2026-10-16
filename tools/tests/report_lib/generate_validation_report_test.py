@@ -130,6 +130,26 @@ def test_main_annotates_new_vs_existing_from_baseline(
     assert "vs main baseline: 1 new error(s), 0 new warning(s)" in err
 
 
+def test_main_reports_what_changed_validators_do_to_main(tmp_path, monkeypatch):
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
+    _old_and_new_tree(tmp_path)
+    _write_baseline(tmp_path / "main-tools", "main-hash", [])
+
+    code = generate_validation_report.main(
+        _argv(
+            tmp_path,
+            baseline_dir=tmp_path / "baseline",
+            baseline_toolshash="h",
+            baseline_commit=BASE_SHA,
+        )
+        + ["--tooling-changed", "--main-tools-baseline", str(tmp_path / "main-tools")]
+    )
+
+    assert code == 0
+    report = (tmp_path / "report.md").read_text(encoding="utf-8")
+    assert "that code adds/drops: `c` +1/-0." in report
+
+
 def test_main_moves_main_findings_to_renamed_files(tmp_path, monkeypatch):
     monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     make_results_tree(
