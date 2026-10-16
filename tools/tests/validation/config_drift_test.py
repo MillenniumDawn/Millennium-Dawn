@@ -536,6 +536,13 @@ def test_report_job_posts_comment_and_checks():
     assert "checkout-ref" in checkout["with"]["ref"]
 
 
+def test_suite_step_ids_are_unique():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    for name, job in workflow["jobs"].items():
+        ids = [step["id"] for step in job.get("steps", []) if "id" in step]
+        assert len(ids) == len(set(ids)), name
+
+
 # Feeds the NEW/EXISTING comparison only; #5787 rolls it out advisory first.
 ADVISORY_JOBS = {"baseline-scan"}
 
@@ -580,6 +587,7 @@ CONTRACT_FILES = (
 CONTRACT_STRINGS = {
     "pytest-xdist": "pyproject.toml",
     "pytest-cov": "pyproject.toml",
+    "--renames": "tools/generate_validation_report.py",
     "--tooling-changed": "tools/generate_validation_report.py",
     "--observation": "tools/baseline_check.py",
 }
@@ -656,6 +664,11 @@ def test_report_restores_baseline_for_full_and_dispatch_runs():
     assert restore["with"]["restore-keys"].strip().endswith("-${{ env.BASELINE_SHA }}-")
     assert '--baseline-commit "$BASELINE_SHA"' in script
     assert "--changed-files changed-files/changed-files.txt" in script
+    # Renames ride in the changed-files artifact, from the same merge-base diff.
+    assert "--renames changed-files/renames.txt" in script
+    assert '--diff-filter=R "$merge_base" "$HEAD_SHA"' in derive["run"]
+    upload = workflow_step("detect-changes", "Upload changed files")
+    assert "renames.txt" in upload["with"]["path"].split()
     assert "if [ -f .validation_baseline/baseline-meta.json ]" not in script
     assert (
         "github.event_name == 'workflow_dispatch'" in report["env"]["VALIDATION_SCOPE"]
@@ -827,7 +840,12 @@ def test_validator_cache_restores_are_source_hash_scoped():
     assert expected in workflow
     assert expected in VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
     baseline = "md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
-    assert baseline in CI_WORKFLOW.read_text(encoding="utf-8")
+    for job, name in (
+        ("baseline-scan", "Look up the base commit's baseline"),
+        ("report", "Restore validation baseline"),
+    ):
+        restore = workflow_step(job, name)
+        assert restore["with"]["restore-keys"].startswith(baseline)
 
 
 def test_validation_config_reaches_every_validator_run():
@@ -1144,8 +1162,8 @@ def test_ci_idea_icon_check_is_enabled():
     validator = IdeaValidator("/nonexistent", use_colors=False, workers=1)
     called = []
     validator._parse_all_ideas = lambda: ({}, {}, {})
-    validator.validate_missing_icons = lambda defined_ideas: called.append(
-        defined_ideas
+    validator.validate_missing_icons = lambda defined_ideas, ideas_by_file: (
+        called.append(defined_ideas)
     )
     for name in (
         "validate_undefined_idea_refs",

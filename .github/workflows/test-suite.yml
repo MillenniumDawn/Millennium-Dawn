@@ -191,7 +191,9 @@ jobs:
           for package in pytest-xdist pytest-cov; do
             grep -Fq "\"$package" pyproject.toml || missing+=("$package")
           done
-          # The report and the base scan run the head's scripts with these flags.
+          # The report and base scan run the head's scripts with these flags.
+          grep -Fq -- --renames tools/generate_validation_report.py ||
+            missing+=("--renames")
           grep -Fq -- --tooling-changed tools/generate_validation_report.py ||
             missing+=("--tooling-changed")
           grep -Fq -- --observation tools/baseline_check.py ||
@@ -228,6 +230,9 @@ jobs:
             | python3 tools/validation/collect_changed_files.py \
             > changed-files.txt
           wc -l changed-files.txt
+          git diff --name-status -z --diff-filter=R "$merge_base" "$HEAD_SHA" \
+            | python3 tools/validation/collect_changed_files.py \
+            > renames.txt
 
       # The comparison scans both commits with this PR's validators, so it
       # cannot show what changed validator code does to main's findings.
@@ -238,7 +243,8 @@ jobs:
           HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
         run: |
           if git diff --quiet --no-renames "$MERGE_BASE" "$HEAD_SHA" -- \
-              ':(glob)tools/validation/**/*.py' ':(glob)tools/validation/**/*.txt' \
+              ':(glob)tools/validation/**/*.py' \
+              ':(glob)tools/validation/**/*.txt' \
               tools/shared_utils.py validation_config.json \
               resources/documentation .claude/docs/typo-watchlist.md; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -263,6 +269,7 @@ jobs:
           name: changed-files
           path: |
             changed-files.txt
+            renames.txt
             party-loc-scope.diff
           if-no-files-found: warn
           retention-days: 7
@@ -1065,8 +1072,9 @@ jobs:
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}
-          restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
+          restore-keys: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
 
       - name: Checkout base commit content
         if: steps.lookup.outputs.cache-matched-key == ''
@@ -1209,8 +1217,9 @@ jobs:
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}
-          restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
+          restore-keys: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
 
       # Main has not saved one yet: use the base scan from this run, if any.
       - name: Download base commit baseline
@@ -1271,6 +1280,9 @@ jobs:
           fi
           if [ -f changed-files/changed-files.txt ]; then
             args+=(--changed-files changed-files/changed-files.txt)
+          fi
+          if [ -f changed-files/renames.txt ]; then
+            args+=(--renames changed-files/renames.txt)
           fi
           if [ -n "$PR_NUMBER" ]; then
             # A run for an older head must not replace the newer head's
