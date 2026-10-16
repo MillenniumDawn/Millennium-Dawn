@@ -34,7 +34,8 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 - Most content validators are CI-only. The `mod-tests` batch jobs in
   `.github/workflows/test-suite.yml` are the gate. `tools/validation/validator_batches.py`
   is the single list of what runs, which change groups select each validator, and which
-  run without `--strict`.
+  run without `--strict`. Its `args` are also the flags of the main baseline run, so a
+  PR and main enable the same checks.
 - `git commit` runs only the fast subset: the `md-validate-content` dispatcher
   (`tools/precommit_validate.py`), `validate_defines.py`, and `validate_mesh_textures.py`
   on staged `gfx/models/` or `gfx/entities/` paths. The mesh check never runs in CI.
@@ -82,9 +83,13 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
 
 ## CI artifacts and reports
 
-- `test-suite.yml` checks out the live PR head and holds no write credentials until the
-  `report` job. A head predating the tooling contract stops with one error asking
-  to merge main.
+- `test-suite.yml` holds no write credentials until the `report` job. A
+  `pull_request` run, re-runs included, validates its event's head and base. A
+  dispatch looks the PR up, which is the explicit refresh to its live head. The report
+  leaves the PR comment alone when the head has since moved. A head predating the
+  tooling contract stops with one error asking to merge main. The report and the base
+  scan run the head's scripts with the workflow's flags, so a new flag joins the
+  contract.
 - `detect-changes` uses `collect_changed_files.py` and `change_groups.py`.
   `validate-paths` reads the git index. `prepare-workspace` shares one sparse artifact
   across the core, targeted-a, and targeted-b batches. It has no `.git`, no `map/`,
@@ -96,12 +101,39 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   fork PRs; their `pull_request` runs validate them. `nightly-pr-validation.yml`
   re-dispatches same-repository PRs with no successful run on their current head and
   base. `validator-cache.yml` rebuilds main's baseline.
+- `validator-cache.yml` runs on every push to main. It saves each complete run as that
+  commit's baseline (`md-baseline-v1-<os>-<hash>-<sha>-*`), even when the alarm fails.
+  The alarm compares the run with the last accepted one (`md-accepted-v1-*`) and goes
+  red on new errors until they are fixed. Main's run also widens diff-scoped checks to
+  their whole domain through `baseline_args` (party-loc audits every tag).
+- The report restores only the baseline of the PR's merge base, the main commit its
+  content started from, and checks the commit in the meta. Against main's tip, fixes
+  main made after the branch point would read as the PR's findings. When main has not
+  saved one, the advisory `baseline-scan` job scans the merge base in the same run:
+  the PR's tooling over the base content, no shared cache, a 20-minute budget. The
+  report reads its artifact and marks the source. The scan saves no cache entry,
+  because a dispatched run on main would let PR tooling write a main-scoped baseline.
+  With neither, the comparison is unavailable.
+- Main's findings in a file the PR renamed count as the new path's, in the file
+  field and in messages. A finding that names only a basename does not move.
+- When a PR changes validator code or reference data, both scans use its validators,
+  so findings that code adds to unchanged content read EXISTING. `detect-changes`
+  flags this and the report says so. The base scan also restores main's own baseline
+  of the merge base, keyed by the base's own validator hash, and the report lists per
+  category what the PR's validators add to and drop from it.
+- The validator hash covers `tools/validation` sources and data, `shared_utils.py`,
+  `validation_config.json`, `resources/documentation/`, and the typo watchlist. All
+  four `hashFiles` sites must match, and each checkout must hold those files.
 - `changelog-conflict-fixer.yml` merges main into same-repo PRs whose only conflict is
   `Changelog.txt`, then dispatches the suite. `changelog-lint.yml` checks entry order;
   `python3 tools/merge_changelog.py --fix` repairs it.
 - The report posts one PR comment: new findings against main's baseline first, then
   findings in touched files. A clean run removes the older comment. Section titles
   derive from artifact directory names, so keep those slugs stable.
+- Every validator writes a sidecar, even when clean, and the baseline meta lists them.
+  A missing, extra, or malformed sidecar makes the baseline unavailable, so the report
+  drops the NEW tags instead of reading lost findings as new. `baseline_check.py`
+  refuses a run with no sidecars or a malformed one, and saves neither baseline.
 
 ## Validation config
 

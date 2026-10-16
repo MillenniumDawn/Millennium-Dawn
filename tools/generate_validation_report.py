@@ -36,10 +36,13 @@ from report_lib import (  # noqa: E402
     load_all,
     load_baseline,
     load_changed_files,
+    load_renames,
     post_checks,
     post_comment,
+    rename_keys,
     render,
     tag_changed_files,
+    tool_effect,
     truncate_if_needed,
 )
 
@@ -54,7 +57,7 @@ def build_report(
 
     # NEW vs EXISTING classification against the main-side baseline, when
     # one was restored. None keeps rendering exactly as before the baseline
-    # existed (cold cache, validator generation change).
+    # existed (cold cache, validator generation change, incomplete baseline).
     baseline_stats = classify(deduped, baseline) if baseline is not None else None
     if changed_files:
         tag_changed_files(deduped, changed_files)
@@ -122,8 +125,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         help=(
             "Directory holding the main-side validation baseline (restored "
             "cache entry, .validation_baseline). Findings are tagged NEW vs "
-            "EXISTING when it loads; a missing/stale baseline only drops the "
-            "annotation."
+            "EXISTING when it loads; a missing, stale, or incomplete baseline "
+            "only drops the annotation."
         ),
     )
     parser.add_argument(
@@ -135,11 +138,44 @@ def main(argv: Optional[List[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--baseline-commit",
+        default=None,
+        help=(
+            "Main commit the baseline must record (the PR's base); a baseline "
+            "of any other commit is ignored."
+        ),
+    )
+    parser.add_argument(
+        "--tooling-changed",
+        action="store_true",
+        help=(
+            "The PR's validator code differs from the base's. The report says "
+            "the comparison cannot show what that code does to main's findings."
+        ),
+    )
+    parser.add_argument(
         "--changed-files",
         default=None,
         help=(
             "Newline-separated PR changed-file list. Findings whose file is "
             "in the list are tagged IN YOUR PR."
+        ),
+    )
+    parser.add_argument(
+        "--main-tools-baseline",
+        default=None,
+        help=(
+            "Main's own baseline of the --baseline-commit, from main's "
+            "validators. With --tooling-changed, the report lists per category "
+            "what the PR's validators add to and drop from it."
+        ),
+    )
+    parser.add_argument(
+        "--renames",
+        default=None,
+        help=(
+            "Files the PR renamed, each old path on one line and its new path "
+            "on the next. Main's findings in an old path count as the new one's."
         ),
     )
     parser.add_argument(
@@ -162,18 +198,31 @@ def main(argv: Optional[List[str]] = None) -> int:
         date_utc=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         repo=args.github_repository,
         validation_scope=args.validation_scope,
+        tooling_changed=args.tooling_changed,
     )
 
-    # None on a cold cache or stale toolshash: classification (and the
-    # NEW/EXISTING rendering) is skipped instead of comparing against output
-    # from a different validator generation.
+    # None on a cold cache, stale toolshash, other commit, or incomplete
+    # baseline: classification (and the NEW/EXISTING rendering) is skipped
+    # instead of comparing against stale or partial output.
     baseline = (
-        load_baseline(args.baseline_dir, args.baseline_toolshash)
+        load_baseline(args.baseline_dir, args.baseline_toolshash, args.baseline_commit)
         if args.baseline_dir
         else None
     )
     if args.baseline_dir:
         ctx.baseline_status = "available" if baseline is not None else "unavailable"
+        ctx.baseline_commit = args.baseline_commit
+        run_id = os.environ.get("GITHUB_RUN_ID")
+        # The base scan job records this run's id; main's own runs record theirs.
+        ctx.baseline_scanned_here = bool(
+            baseline is not None and run_id and baseline.meta.get("run_id") == run_id
+        )
+    if args.tooling_changed and baseline is not None and args.main_tools_baseline:
+        main_tools = load_baseline(args.main_tools_baseline, None, args.baseline_commit)
+        if main_tools is not None:
+            ctx.tool_effect = tool_effect(baseline.keys, main_tools.keys)
+    if baseline is not None and args.renames and os.path.isfile(args.renames):
+        baseline.keys = rename_keys(baseline.keys, load_renames(args.renames))
 
     changed_files = None
     if args.changed_files:

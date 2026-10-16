@@ -6,7 +6,7 @@ that only need to render reports.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 class Severity:
@@ -103,6 +103,15 @@ class ReportContext:
     validation_scope: str = "full"
     # "available" or "unavailable" when the workflow requested a baseline.
     baseline_status: Optional[str] = None
+    # The main commit the baseline had to come from, when pinned.
+    baseline_commit: Optional[str] = None
+    # True when this run scanned the base commit instead of main's own run.
+    baseline_scanned_here: bool = False
+    # True when the PR's validator code differs from the base commit's.
+    tooling_changed: bool = False
+    # Category -> (added, dropped) by the PR's validators on main's own scan of
+    # the baseline commit; None when main has no such scan.
+    tool_effect: Optional[Dict[str, Tuple[int, int]]] = None
     # "available" or "unavailable" when --changed-files was passed.
     changed_files_status: Optional[str] = None
     # Impact reports use a separate comment marker and title.
