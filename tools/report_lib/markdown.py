@@ -110,16 +110,14 @@ def render(
         parts.append(categories)
         parts.append("")
 
-    new_errors = (
-        _new_error_counts(baseline_stats) if baseline_stats is not None else None
-    )
+    new_counts = _new_counts(baseline_stats) if baseline_stats is not None else None
 
-    summary = _render_summary_table(runs, new_errors)
+    summary = _render_summary_table(runs, new_counts)
     if summary:
         parts.append(summary)
         parts.append("")
 
-    tools_section = _render_tools_section(runs, new_errors)
+    tools_section = _render_tools_section(runs, new_counts)
     if tools_section:
         parts.append(tools_section)
         parts.append("")
@@ -184,10 +182,11 @@ def _count_label(errors: int, warnings: int) -> str:
     return ", ".join(parts) or "0 issues"
 
 
-def _new_error_counts(stats: "BaselineStats") -> Dict[str, int]:
+def _new_counts(stats: "BaselineStats") -> Dict[str, int]:
+    """New findings per validator, errors and warnings, as the verdict counts them."""
     counts: Dict[str, int] = defaultdict(int)
     for issue in stats.new_issues:
-        if issue.severity == Severity.ERROR and issue.validator:
+        if issue.validator:
             counts[issue.validator] += 1
     return counts
 
@@ -324,7 +323,12 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
     if scope_label:
         bits.append(f"**Scope:** {scope_label}")
     if ctx.baseline_status == "available":
-        bits.append("**Baseline comparison:** available")
+        source = (
+            f"main `{ctx.baseline_commit[:7]}`" if ctx.baseline_commit else "available"
+        )
+        if ctx.baseline_scanned_here:
+            source += " (scanned in this run)"
+        bits.append(f"**Baseline comparison:** {source}")
     elif ctx.baseline_status == "unavailable":
         bits.append("**Baseline comparison:** unavailable")
     if ctx.changed_files_status == "available":
@@ -337,9 +341,16 @@ def _render_metadata_strip(ctx: ReportContext) -> str:
 def _render_availability_notice(ctx: ReportContext) -> str:
     bits: List[str] = []
     if ctx.baseline_status == "unavailable":
+        commit = f" of main `{ctx.baseline_commit[:7]}`" if ctx.baseline_commit else ""
         bits.append(
-            "Baseline comparison unavailable (cold cache or validator generation "
-            "mismatch). Findings are not annotated NEW vs EXISTING."
+            f"Baseline comparison unavailable (no complete baseline{commit} for "
+            "this validator code). Findings are not annotated NEW vs EXISTING."
+        )
+    if ctx.tooling_changed and ctx.baseline_status == "available":
+        bits.append(
+            "This PR changes validator code. Both commits were scanned with the "
+            "PR's validators, so findings that code adds to unchanged content read "
+            "EXISTING, not NEW."
         )
     if ctx.changed_files_status == "unavailable":
         bits.append(
@@ -356,11 +367,11 @@ def _render_availability_notice(ctx: ReportContext) -> str:
 
 
 def _run_sort_key(
-    r: ValidatorRun, new_errors: Optional[Dict[str, int]] = None
+    r: ValidatorRun, new_counts: Optional[Dict[str, int]] = None
 ) -> Tuple[int, int, str]:
-    """New errors first when classified, then errors, warnings, clean."""
-    n = (new_errors or {}).get(r.name, 0)
-    if new_errors is not None:
+    """New findings first when classified, then errors, warnings, clean."""
+    n = (new_counts or {}).get(r.name, 0)
+    if new_counts is not None:
         rank = 0 if n else (1 if r.errors else (2 if r.warnings else 3))
         return (rank, -n, r.title.lower())
     rank = 0 if r.errors else (1 if r.warnings else 2)
@@ -385,7 +396,7 @@ def _table_row(
 
 
 def _render_tools_section(
-    runs: List[ValidatorRun], new_errors: Optional[Dict[str, int]] = None
+    runs: List[ValidatorRun], new_counts: Optional[Dict[str, int]] = None
 ) -> str:
     """Findings only; omitted when no tools suite ran, one line when all passed."""
     tools_runs = [r for r in runs if r.suite == "tools"]
@@ -398,7 +409,7 @@ def _render_tools_section(
     if not total_errors and not total_warnings and not incomplete:
         return "## Tools tests\n\n✅ All tools based tests have succeeded!"
 
-    sorted_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_errors))
+    sorted_runs = sorted(tools_runs, key=lambda r: _run_sort_key(r, new_counts))
     table_runs = [
         r
         for r in sorted_runs
@@ -411,10 +422,10 @@ def _render_tools_section(
             f"\n\n✅ {_plural(passed, 'other tool suite')} completed successfully."
         )
 
-    if new_errors is not None:
+    if new_counts is not None:
         header = "| Tool suite | New | Errors | Warnings |\n|-----------|----:|-------:|---------:|"
         rows = [
-            _table_row(r.title, r.errors, r.warnings, new_errors.get(r.name, 0))
+            _table_row(r.title, r.errors, r.warnings, new_counts.get(r.name, 0))
             for r in table_runs
         ]
     else:
@@ -424,7 +435,7 @@ def _render_tools_section(
 
 
 def _render_summary_table(
-    runs: List[ValidatorRun], new_errors: Optional[Dict[str, int]] = None
+    runs: List[ValidatorRun], new_counts: Optional[Dict[str, int]] = None
 ) -> str:
     mod_runs = [r for r in runs if r.suite != "tools"]
     if not mod_runs:
@@ -435,7 +446,7 @@ def _render_summary_table(
     if total_errors == 0 and total_warnings == 0:
         return ""
 
-    sorted_runs = sorted(runs, key=lambda r: _run_sort_key(r, new_errors))
+    sorted_runs = sorted(runs, key=lambda r: _run_sort_key(r, new_counts))
     table_runs = [r for r in sorted_runs if r.errors or r.warnings]
     passed = sum(1 for r in runs if not r.errors and not r.warnings)
     passed_note = ""
@@ -444,13 +455,13 @@ def _render_summary_table(
             f"\n\n✅ {_plural(passed, 'other validator')} completed successfully."
         )
 
-    if new_errors is not None:
+    if new_counts is not None:
         header = "| Validator | New | Errors | Warnings |\n|-----------|----:|-------:|---------:|"
         rows = [
-            _table_row(r.title, r.errors, r.warnings, new_errors.get(r.name, 0))
+            _table_row(r.title, r.errors, r.warnings, new_counts.get(r.name, 0))
             for r in table_runs
         ]
-        total_new = sum(new_errors.get(r.name, 0) for r in runs)
+        total_new = sum(new_counts.get(r.name, 0) for r in runs)
         rows.append(
             _table_row("Total", total_errors, total_warnings, total_new, bold=True)
         )
