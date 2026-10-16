@@ -44,6 +44,8 @@ matrices at full severity and compared with CIEDE2000 (ΔE).
 - Legend color names must hold for every palette, so variants stay near the Standard
   hues. Text color codes only approximate the map; the words and the status line carry
   the meaning.
+- Legend text must stay readable on the dark tooltip. `§Z` and `§b` vanish there, so
+  ramps start at navy, which `§n` matches.
 - Palette-aware legends end by pointing to the Automation Settings choice.
 
 ## Unverified engine behavior

@@ -16,6 +16,9 @@ ROOT = Path(__file__).resolve().parents[3]
 MAP_MODE_DIR = ROOT / "common/map_modes"
 REFRESH_EFFECT_FILE = ROOT / "common/scripted_effects/00_map_mode_palette_effects.txt"
 REFRESH_EFFECT = "refresh_palette_map_modes"
+LEGEND_FILE = ROOT / "localisation/english/MD_map_modes_l_english.yml"
+# Text colors from interface/core.gfx that vanish on the dark tooltip background
+UNREADABLE_TEXT_CODES = {"Z", "b"}
 
 STANDARD, RED_GREEN, BLUE_YELLOW = 0, 1, 2
 PALETTES = (STANDARD, RED_GREEN, BLUE_YELLOW)
@@ -272,6 +275,13 @@ def test_ramp_neighbors_stay_apart(map_modes, mode, vision):
     for first, second in zip(colors, colors[1:]):
         distance = _distance(first, second, vision)
         assert distance >= RAMP_NEIGHBOR_MINIMUM, f"{first} vs {second}: {distance:.1f}"
+
+
+def test_map_mode_legends_use_readable_text_colors():
+    with LEGEND_FILE.open(encoding="utf-8-sig") as handle:
+        legends = [line for line in handle if "_map_mode_tooltip" in line]
+    codes = {code for line in legends for code in re.findall(r"§(\w)", line)}
+    assert legends and not codes & UNREADABLE_TEXT_CODES
 
 
 def test_palette_setting_refreshes_every_palette_aware_mode(map_modes):
