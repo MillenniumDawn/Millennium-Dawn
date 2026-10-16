@@ -349,16 +349,16 @@ def load_cost_lookups(
 def _extract_cost_blind_options(
     filename: str, *, mod_path: Optional[str] = None
 ) -> List[Tuple[str, str, int]]:
-    """Pool worker: (message, basename, line) for options whose AI weight ignores a cost."""
+    """Pool worker: (message, path, line) for options whose AI weight ignores a cost."""
     text = _read_cleaned_text(filename, mod_path=mod_path)
     if text is None:
         return []
-    basename = os.path.basename(filename)
+    path = os.path.relpath(filename, mod_path)
     return [
         (
             f"{name} - ai_chance ignores the {costs} cost"
             + (_ALL_GATED_NOTE if all_gated else ""),
-            basename,
+            path,
             line,
         )
         for name, line, costs, all_gated in find_cost_blind_options(

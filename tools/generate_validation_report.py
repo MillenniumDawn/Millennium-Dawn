@@ -32,14 +32,16 @@ from report_lib import (  # noqa: E402
     ReportContext,
     classify,
     clear_comment,
+    count_keys,
     dedupe,
     load_all,
     load_baseline,
     load_changed_files,
+    load_hunks,
     load_renames,
     post_checks,
     post_comment,
-    rename_keys,
+    rename_issues,
     render,
     tag_changed_files,
     tool_effect,
@@ -48,7 +50,12 @@ from report_lib import (  # noqa: E402
 
 
 def build_report(
-    results_dir: str, ctx: ReportContext, baseline=None, changed_files=None
+    results_dir: str,
+    ctx: ReportContext,
+    baseline=None,
+    changed_files=None,
+    renames=None,
+    hunks=None,
 ):
     """Return (body, step_summary_body, runs, deduped_issues, truncated, stats)."""
     runs = load_all(results_dir)
@@ -58,7 +65,11 @@ def build_report(
     # NEW vs EXISTING classification against the main-side baseline, when
     # one was restored. None keeps rendering exactly as before the baseline
     # existed (cold cache, validator generation change, incomplete baseline).
-    baseline_stats = classify(deduped, baseline) if baseline is not None else None
+    baseline_stats = None
+    if baseline is not None:
+        main_issues = baseline.issues({run.name for run in runs})
+        rename_issues(main_issues, renames or {})
+        baseline_stats = classify(deduped, main_issues, hunks)
     if changed_files:
         tag_changed_files(deduped, changed_files)
 
@@ -179,6 +190,15 @@ def main(argv: Optional[List[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--hunks",
+        default=None,
+        help=(
+            "The `diff --git`, `+++`, and `@@` lines of the PR's "
+            "`git diff --unified=0` from the baseline commit. Main's findings "
+            "then match only at the same place in the PR's files."
+        ),
+    )
+    parser.add_argument(
         "--github-token",
         default=os.environ.get("GITHUB_TOKEN"),
     )
@@ -220,9 +240,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     if args.tooling_changed and baseline is not None and args.main_tools_baseline:
         main_tools = load_baseline(args.main_tools_baseline, None, args.baseline_commit)
         if main_tools is not None:
-            ctx.tool_effect = tool_effect(baseline.keys, main_tools.keys)
-    if baseline is not None and args.renames and os.path.isfile(args.renames):
-        baseline.keys = rename_keys(baseline.keys, load_renames(args.renames))
+            ctx.tool_effect = tool_effect(
+                count_keys(baseline.issues()), count_keys(main_tools.issues())
+            )
+    renames = (
+        load_renames(args.renames)
+        if args.renames and os.path.isfile(args.renames)
+        else None
+    )
+    hunks = (
+        load_hunks(args.hunks) if args.hunks and os.path.isfile(args.hunks) else None
+    )
 
     changed_files = None
     if args.changed_files:
@@ -233,7 +261,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             ctx.changed_files_status = "unavailable"
 
     body, step_body, runs, deduped, truncated, baseline_stats = build_report(
-        args.results_dir, ctx, baseline, changed_files
+        args.results_dir, ctx, baseline, changed_files, renames, hunks
     )
 
     try:
@@ -274,6 +302,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             f"vs main baseline: {baseline_stats.new_errors} new error(s), "
             f"{baseline_stats.new_warnings} new warning(s), "
             f"{baseline_stats.existing_errors + baseline_stats.existing_warnings} existing, "
+            f"{len(baseline_stats.raised)} raised, {len(baseline_stats.lowered)} lowered, "
             f"{baseline_stats.unclassified} unclassified",
             file=sys.stderr,
         )
