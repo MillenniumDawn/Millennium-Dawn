@@ -490,6 +490,24 @@ def _unsupported_effect_syntax(
 ) -> List[Tuple[str, str, int]]:
     """Report unsupported effect arguments without flagging definitions."""
     definitions = rel.replace("\\", "/").startswith("common/scripted_effects/")
+    # Definition blocks share namespaces with effects: idea names collide
+    # with budget-cycle effects, dynamic-modifier names collide with their
+    # applier effects. Those opens are definitions, not effect calls.
+    ideas_file = rel.replace("\\", "/").startswith("common/ideas/")
+    dynmod_file = rel.replace("\\", "/").startswith("common/dynamic_modifiers/")
+    # Scopes and engine blocks are never effect calls, matched
+    # case-insensitively: HOI4 scopes are case-insensitive, so both
+    # `from` and `FROM` are the scope, not the script-language effect.
+    lowered_effects = {name.lower() for name in effect_names}
+    skip_names = SCOPE_CHANGING_KEYWORDS | {
+        block.lower() for block in HOI4_BUILTIN_BLOCKS
+    }
+    # Magic scopes written uppercase by convention. A lowercase block whose
+    # name is both one of these and a scripted effect is ambiguous: readers
+    # (and the old case-sensitive check) see the effect, the engine runs the
+    # scope. Only these collide today (`from`); lowercase `root`/`prev`/`this`
+    # without an effect of the same name stay silent.
+    uppercase_scopes = {"root", "prev", "from", "this", "fromfrom", "prevprev"}
     results = []
     if definitions:
         for line, content in enumerate(text.splitlines(), 1):
@@ -506,17 +524,43 @@ def _unsupported_effect_syntax(
     depth = 0
     for match in _SCRIPT_BLOCK_RE.finditer(text):
         name = match.group(1)
-        if name in effect_names and not (definitions and depth == 0):
-            line = text.count("\n", 0, match.start()) + 1
-            results.append(
-                (
-                    "unsupported-effect-arguments",
-                    f"{rel}:{line} - '{name}' is a scripted effect, not a "
-                    "parameter block; call it with '= yes' and pass values "
-                    "through scopes or set_temp_variable",
-                    line,
-                )
+        if name is not None:
+            lowered = name.lower()
+            is_definition_open = (
+                (definitions and depth == 0)
+                or (dynmod_file and depth == 0)
+                or (ideas_file and depth in (1, 2))
             )
+            if (
+                lowered in lowered_effects
+                and lowered not in skip_names
+                and not is_definition_open
+            ):
+                line = text.count("\n", 0, match.start()) + 1
+                results.append(
+                    (
+                        "unsupported-effect-arguments",
+                        f"{rel}:{line} - '{name}' is a scripted effect, not a "
+                        "parameter block; call it with '= yes' and pass values "
+                        "through scopes or set_temp_variable",
+                        line,
+                    )
+                )
+            if (
+                lowered in lowered_effects
+                and lowered in uppercase_scopes
+                and name != name.upper()
+                and not is_definition_open
+            ):
+                line = text.count("\n", 0, match.start()) + 1
+                results.append(
+                    (
+                        "lowercase-scope-shadowed-by-effect",
+                        f"{rel}:{line} - '{name}' matches the {name.upper()} scope "
+                        f"and a scripted effect; write the scope as '{name.upper()}'",
+                        line,
+                    )
+                )
         if match.group().endswith("{"):
             depth += 1
         else:
@@ -1123,6 +1167,7 @@ class Validator(BaseValidator):
         audit_shared_line_results = []
         unsupported_argument_results = []
         unsupported_placeholder_results = []
+        lowercase_scope_results = []
 
         for file_results in all_results:
             for category, message, _line in file_results:
@@ -1142,6 +1187,8 @@ class Validator(BaseValidator):
                     unsupported_argument_results.append(message)
                 elif category == "unsupported-effect-placeholder":
                     unsupported_placeholder_results.append(message)
+                elif category == "lowercase-scope-shadowed-by-effect":
+                    lowercase_scope_results.append(message)
                 elif category == "unreadable-input":
                     self._unreadable.append(message)
 
@@ -1158,6 +1205,13 @@ class Validator(BaseValidator):
             "Unsupported dollar placeholders in scripted effect definitions:",
             severity=Severity.WARNING,
             category="unsupported-effect-placeholder",
+        )
+        self._report(
+            lowercase_scope_results,
+            "No scopes shadowed by scripted effects are written lowercase",
+            "Scopes sharing a name with a scripted effect, written lowercase (use uppercase):",
+            severity=Severity.WARNING,
+            category="lowercase-scope-shadowed-by-effect",
         )
 
         self._report(
