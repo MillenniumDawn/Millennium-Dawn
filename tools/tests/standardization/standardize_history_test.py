@@ -6,6 +6,9 @@ all survive. It is also idempotent, and must preserve quoted strings and
 comments verbatim.
 """
 
+import pytest
+import standardize_history as history
+from shared.suite import read_text as _read
 from shared.suite import write_text as _write
 from standardize_history import (
     HistoryStandardizer,
@@ -55,9 +58,36 @@ def test_repeated_statements_all_retained(tmp_path):
     assert out.count("add_equipment_to_stockpile") == 2
 
 
-def test_idempotent(tmp_path):
+_INFLUENCE_SETUP = """\
+	# Influence system
+	init_influence = yes
+	set_variable = { domestic_influence_amount = 200 }
+	add_to_array = { influence_array = CHI.id }
+	add_to_array = { influence_array_val = 99 }
+	add_to_array = {
+		influence_array = USA.id
+	}
+	add_to_array = { influence_array_val = 40 }
+	sort_influence = yes
+"""
+_INFLUENCE_HISTORY = (
+    "capital = 652\n\n2000.1.1 = {\n"
+    "\tset_country_flag = TST_alpha\n" + _INFLUENCE_SETUP + "}\n"
+)
+_IDEMPOTENT_CASES = {"repeated statements": _HISTORY, "influence": _INFLUENCE_HISTORY}
+
+
+def test_influence_setup_order_preserved(tmp_path):
     src = tmp_path / "hist.txt"
-    src.write_text(_HISTORY, encoding="utf-8")
+    _write(src, _INFLUENCE_HISTORY)
+    out = _standardize(src)
+    assert _INFLUENCE_SETUP in out
+
+
+@pytest.mark.parametrize("history", _IDEMPOTENT_CASES.values(), ids=_IDEMPOTENT_CASES)
+def test_idempotent(tmp_path, history):
+    src = tmp_path / "hist.txt"
+    _write(src, history)
     run1 = _standardize(src)
     run2 = _standardize(src)
     assert run1 == run2
@@ -170,3 +200,128 @@ def test_statement_routing_and_comment_retention():
         "\t# trailing note with nothing after it",
         "}",
     ]
+
+
+_COUNTRY = """capital = 652
+2000.1.1 = {
+\t# Set Ideas
+\tadd_ideas = {
+\t\tlaw_income
+\t\tmd_example
+\t\tfaction_support
+\t\tTST_country
+\t\tmd_example
+\t}
+\tadd_dynamic_modifier = { modifier = TST_modifier }
+\tset_variable = { var = TST_modifier_value value = 1 }
+\tset_variable = { var = global_unclaimed value = 2 }
+\tset_variable = { var = TST_country_value value = 3 }
+\tadd_to_array = { array = global_array value = TST_country }
+\tcomplete_special_project = sp:sp_space_program
+\tset_technology = { infantry_weapons = 1 }
+\tif = { limit = { has_dlc = yes } set_technology = { armor = 1 } }
+\tcreate_equipment_variant = { type = infantry_equipment_0 }
+\tcreate_equipment_variant = { type = airframe }
+\tcreate_equipment_variant = { type = destroyer_hull }
+\tset_oob = TST_army
+\tset_air_oob = TST_air
+\tset_naval_oob = TST_navy
+\tstart_politics_input = { }
+\tstartup_politics = { }
+\tcreate_country_leader = { name = TST_leader }
+\tset_popularities = { democratic = 0.5 }
+\tset_politics = { ruling_party = democratic }
+\tadd_opinion_modifier = { target = USA modifier = good }
+\treverse_add_opinion_modifier = { target = USA modifier = bad }
+\tset_power_balance = { id = TST_balance }
+\t652 = { buildings = { infrastructure = 1 } }
+\tset_country_flag = TST_started
+\tclr_country_flag = TST_old
+\tother_statement = yes
+}
+"""
+
+
+def _mod(tmp_path):
+    """A mod root with law and faction ideas, a dynamic modifier and one country."""
+    root = tmp_path / "mod"
+    _write(
+        root / "common/ideas/AA_law_test.txt",
+        "ideas = {\n\tlaw_category = {\n\t\tlaw = yes\n"
+        "\t\tlaw_income = {\n\t\t\tname = law_income\n\t\t}\n\t}\n}\n",
+    )
+    _write(
+        root / "common/ideas/factions.txt",
+        "ideas = {\n\tinternal_factions = {\n"
+        "\t\tfaction_support = {\n\t\t\tname = faction_support\n\t\t}\n\t}\n"
+        "\tmd_category = {\n\t\tmd_example = {\n\t\t\tname = md_example\n\t\t}\n\t}\n}\n",
+    )
+    _write(
+        root / "common/dynamic_modifiers/modifiers.txt",
+        "TST_modifier = {\n\ticon = x\n\tvalue = TST_modifier_value\n"
+        "\tnested = {\n\t\tfield = TST_nested_value\n\t}\n}\n",
+    )
+    return root, _write(root / "history/countries/TST.txt", _COUNTRY)
+
+
+def test_mod_root_is_found_from_a_country_file(tmp_path):
+    root, country = _mod(tmp_path)
+    assert _detect_mod_root(str(country)) == str(root)
+    assert history._iter_file_lines(str(root / "missing.txt")) is None
+
+
+def test_loaders_classify_ideas_and_collect_modifier_variables(tmp_path):
+    history._IDEA_CACHE.clear()
+    history._MODIFIER_CACHE.clear()
+    root, _country = _mod(tmp_path)
+    law, factions = _load_idea_classification(str(root))
+    assert "law_income" in law
+    assert "faction_support" in factions
+    assert _load_modifier_variables(str(root))["TST_modifier"] >= {
+        "TST_modifier_value",
+        "TST_nested_value",
+    }
+
+
+def test_a_country_file_is_grouped_by_statement_kind_and_idempotent(tmp_path):
+    history._IDEA_CACHE.clear()
+    history._MODIFIER_CACHE.clear()
+    root, country = _mod(tmp_path)
+    standardizer = HistoryStandardizer(mod_root=str(root))
+    block = history.extract_block(_read(country).splitlines(keepends=True), 1)[0]
+    assert standardizer.extract_properties(block)["ideas"]
+    standardizer._ensure_classification(str(country))
+    props = standardizer.extract_properties(block)
+    assert standardizer._classify_idea("law_income") == "law"
+    assert any("# Laws" in line for line in standardizer.format_block(props))
+
+    assert standardizer.standardize_file(str(country), str(country))
+    output = _read(country)
+    for heading in (
+        "# Laws",
+        "# Internal Factions",
+        "# Country Content",
+        "# Dynamic Modifiers",
+        "# Air Force Equipment",
+        "# Naval Equipment",
+    ):
+        assert heading in output, heading
+    assert output.count("set_country_flag = TST_started") == 1
+    assert output.count("clr_country_flag = TST_old") == 1
+    assert "other_statement = yes" in output
+    assert standardizer.standardize_file(str(country), str(country))
+    assert _read(country) == output
+
+
+def test_without_a_mod_root_classification_is_empty(tmp_path):
+    source = _write(
+        tmp_path / "history.txt", "2000.1.1 = {\n\tset_country_flag = TST_flag\n}\n"
+    )
+    standardizer = HistoryStandardizer()
+    assert standardizer.standardize_file(str(source), str(source))
+    assert (standardizer._law, standardizer._faction, standardizer._modvars) == (
+        set(),
+        set(),
+        {},
+    )
+    assert _detect_mod_root(str(tmp_path)) is None

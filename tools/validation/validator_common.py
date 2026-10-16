@@ -47,6 +47,9 @@ from shared_utils import (
 T = TypeVar("T")
 
 _ANSI_RE = re.compile(r"\033\[[0-9;]+m")
+BANKRUPTCY_GUARD_RE = re.compile(
+    r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
+)
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty

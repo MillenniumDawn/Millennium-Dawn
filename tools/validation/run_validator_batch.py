@@ -147,7 +147,6 @@ def run_batch(specs: List[ValidatorSpec], args) -> int:
                 f"{RESULT_PREFIX}{spec.name}",
                 mod_path,
                 output_filename=f"{RESULT_PREFIX}{spec.name}.log",
-                apply_extra_flags=False,
             )
 
     for _ in range(max_parallel):

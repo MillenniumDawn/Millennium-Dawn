@@ -15,6 +15,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache
 from equipment_module_slots import _iter_blocks, blank_comments
 from equipment_stats import build_equipment_stat_index, iter_type_archetype_stacks
+from shared_utils import AVAILABLE_OPEN_RE as _AVAILABLE_BLOCK_START
 from shared_utils import (
     blank_quoted_strings,
     find_matching_brace,
@@ -93,6 +94,7 @@ _HOI4_IDEA_INNER_KEYS: frozenset = HOI4_BUILTIN_BLOCKS | frozenset(
 
 from shared_utils import (  # noqa: E402
     extract_block_from_text,
+    find_line_number,
     get_all_idea_categories,
 )
 from shared_utils import (
@@ -121,7 +123,6 @@ def _extract_swap_idea_refs(text: str) -> List[str]:
 
 _CANCEL_ALWAYS_NO = re.compile(r"\bcancel\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _ALLOWED_BLOCK_START = re.compile(r"\ballowed\s*=\s*\{")
-_AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
 # `\btag` does not match inside `original_tag` (the preceding `_` is a word char),
 # so these two are disjoint. The capture spans 3+ chars so runtime civil-war
 # tags (`ISR_CW_0`) are caught, not just the 3-letter base tag.
@@ -1117,7 +1118,9 @@ class Validator(BaseValidator):
         return SpriteSet.build(defined - placeholders, placeholders)
 
     def validate_missing_icons(
-        self, defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]]
+        self,
+        defined_ideas: Dict[str, Tuple[str, Optional[str], Optional[str]]],
+        ideas_by_file: Dict[str, List[str]],
     ):
         """Flag ideas whose icon sprite is not defined in any interface/*.gfx.
 
@@ -1152,7 +1155,10 @@ class Validator(BaseValidator):
             c["name"] for c in get_all_idea_categories(self.mod_path) if c["hidden"]
         )
 
-        grouped: Dict[str, List[str]] = defaultdict(list)
+        sources = {
+            name: path for path, names in ideas_by_file.items() for name in names
+        }
+        results: List[Tuple[str, str, int]] = []
         checked = 0
 
         for idea_name in sorted(defined_ideas):
@@ -1164,11 +1170,24 @@ class Validator(BaseValidator):
                 idea_name, cat, name_override, picture, sprites, hidden_cats
             )
             if msg:
-                grouped[cat].append(msg)
+                path = sources.get(idea_name, "")
+                results.append(
+                    (
+                        f"{cat}: {msg}",
+                        os.path.relpath(path, self.mod_path) if path else "",
+                        (
+                            find_line_number(
+                                path, f"\t{idea_name} = {{", lowercase=False
+                            )
+                            if path
+                            else 0
+                        ),
+                    )
+                )
 
         self.log(f"  Checked {checked} idea icons (explicit picture + auto-registered)")
-        self._report_grouped(
-            grouped,
+        self._report(
+            results,
             "✓ All idea picture sprites resolve to real art",
             "Ideas with missing icons (undefined, case-mismatched or placeholder art):",
             severity=Severity.WARNING,
@@ -1426,7 +1445,7 @@ class Validator(BaseValidator):
                 "Skipping missing localisation check (pass --missing-name-loc to enable)"
             )
 
-        self.validate_missing_icons(defined_ideas)
+        self.validate_missing_icons(defined_ideas, ideas_by_file)
 
         if self.unused_ideas:
             self.validate_unused_ideas(defined_ideas, ideas_by_file)
