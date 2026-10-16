@@ -68,7 +68,7 @@ BATCHES: Dict[str, Tuple[ValidatorSpec, ...]] = {
             args=("--check-ai-chance-costs",),
         ),
         ValidatorSpec("achievements", "validate_achievements.py", _CORE_GROUPS),
-        ValidatorSpec("history-files", "validate_history.py", _CORE_GROUPS),
+        ValidatorSpec("history", "validate_history.py", _CORE_GROUPS),
         ValidatorSpec("unused-scripted", "validate_unused_scripted.py", _CORE_GROUPS),
         ValidatorSpec("agency-upgrades", "validate_agency_upgrades.py", _CORE_GROUPS),
         # --missing-loc stays off: its `_desc` backlog would drown the report.

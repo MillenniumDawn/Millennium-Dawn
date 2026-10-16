@@ -252,7 +252,7 @@ def test_validate_ai_chance_ignores_cost(tmp_path, files, expected):
     v.validate_ai_chance_ignores_cost()
 
     assert [(i.category, i.message, i.file, i.line) for i in v._issues] == [
-        ("event-ai-chance-ignores-cost", message, "Ev.txt", line)
+        ("event-ai-chance-ignores-cost", message, "events/Ev.txt", line)
         for message, line in expected
     ]
     assert (v.warnings_found, v.errors_found) == (len(expected), 0)
