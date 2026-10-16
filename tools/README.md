@@ -100,9 +100,9 @@ One test file per tool module, or one per group of related checks when a module'
 tests outgrow a file. `tests/validation/validate_decisions_test.py` is the model.
 
 A test lives in the file of the module it tests. Do not add a `*_coverage_test.py`
-that gathers tests for several modules; the ones that remain are being split. Import
-the module under test normally, never as a second copy through
-`spec_from_file_location`: a patch on one copy does not reach the other.
+that gathers tests for several modules. Import the module under test normally,
+never as a second copy through `spec_from_file_location`: a patch on one copy does
+not reach the other.
 
 The exception is a contract several modules share. It is one table over those
 modules, not a copy in each file. `tests/docs_checks/checker_cli_test.py` is the
