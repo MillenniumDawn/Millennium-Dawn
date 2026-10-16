@@ -49,8 +49,8 @@ CATEGORICAL_RULES = {
 # Ramps are ordered worst to best: brightness rises and neighbors stay this far apart.
 RAMP_NEIGHBOR_MINIMUM = 10
 
-# mode: kind. "party" mirrors the 24 pie chart sprites of the politics view, so it is
-# not checked; the vanilla Ideology map mode serves colorblind players by outlook.
+# mode: kind. "party" shares its 24 colors with the politics view party ring and is not
+# checked; the vanilla Ideology map mode serves colorblind players by outlook.
 MAP_MODES = {
     "EU_map_mode": "categorical",
     "GCC_map_mode": "categorical",

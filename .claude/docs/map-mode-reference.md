@@ -16,9 +16,10 @@ matrices at full severity and compared with CIEDE2000 (ΔE).
 - **Ramps.** One palette. Bands run from worst to best in code order, brightness rises
   every step, and neighbors stay ΔE 10 apart under all four visions. Darker is worse.
   Use one band per legend line, with thresholds that match the legend text.
-- **Party colors.** The Ruling Party mode is exempt. Its 24 colors mirror the per-party
-  pie chart sprites of the politics view, so a recolor means redrawing those sprites.
-  Its legend points colorblind players to the vanilla Ideology map mode.
+- **Party colors.** The Ruling Party mode is exempt. Its 24 colors match the party ring
+  of the politics view, set by the `color` lines of the `GFX_*_chart` progress bars in
+  `interface/MD_countrypoliticsview.gfx`, so a recolor changes both files. Its legend
+  points colorblind players to the vanilla Ideology map mode.
 - Never lower a bar to pass. Merge or cut categories instead, as the EU mode does by
   grouping nine offices into five tiers.
 
