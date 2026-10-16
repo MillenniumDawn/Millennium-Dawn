@@ -517,7 +517,7 @@ POR_Arsenal_do_Alfeite_naval_manufacturer = {			#Whitehall coastal vessel focus 
 	name = POR_Arsenal_do_Alfeite_naval_manufacturer
 	icon = GFX_idea_POR_Arsenal_do_Alfeite
 	include = GENERIC_whitehall_strategic_solutions
-	
+
 	available = {
 		always = yes
 	}
@@ -537,14 +537,1478 @@ POR_eid_materiel_manufacturer = {			#C&C and electronics
 	include = generic_cnc_equipment_type_organization
 }
 
-POR_ogma_aircraft_manufacturer = {			#Needs custom tree around all kinds of aircraft but focused on reliability and material cost reduction instead of performance
+POR_ogma_aircraft_manufacturer = {			#New custom rework
 	allowed = { original_tag = POR }
 	name = POR_ogma_aircraft_manufacturer
 	icon = GFX_idea_POR_ogma
-	include = generic_fixed_wing_equipment_organization
+
+	task_capacity = 5
+
+	equipment_type = {
+		mio_cat_helicopters
+		mio_cat_eq_only_all_light_aircraft
+		mio_cat_eq_only_all_medium_aircraft
+		mio_cat_eq_only_large_aircraft
+	}
+
+	research_categories = {
+		CAT_aircraft
+		CAT_helicopters
+	}
+
+	tree_header_text = {
+		text = POR_ogma_header_1
+		x = 1
+	}
+
+	tree_header_text = {
+		text = POR_ogma_header_2
+		x = 4
+	}
+
+	tree_header_text = {
+		text = POR_ogma_header_3
+		x = 8
+	}
+
+	initial_trait = {
+		name = POR_ogma_manufacturer_trait
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_uav
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+			mio_cat_eq_only_large_aircraft
+		}
+
+		production_bonus = { production_capacity_factor = 0.05 }
+
+		organization_modifier = { military_industrial_organization_research_bonus = 0.05 }
+	}
+
+	trait = {
+		token = POR_ogma_jit
+		name = POR_ogma_jit
+		icon = GFX_generic_mio_trait_icon_air_agility
+
+		position = { x = 1 y = 0 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		production_bonus = { production_efficiency_gain_factor = 0.10 }
+
+		organization_modifier = { military_industrial_organization_research_bonus = 0.03 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_inhouse_avionics
+		name = POR_ogma_inhouse_avionics
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		all_parents = { POR_ogma_jit }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 0 y = 1 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			air_attack = 0.03
+			air_defence = 0.03
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_rivets
+		name = POR_ogma_rivets
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		all_parents = { POR_ogma_inhouse_avionics }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = -1 y = 2 }
+
+		mutually_exclusive = { POR_ogma_fasteners }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			air_defence = 0.04
+			build_cost_ic = -0.03
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_fasteners
+		name = POR_ogma_fasteners
+		icon = GFX_generic_mio_trait_icon_air_agility
+
+		all_parents = { POR_ogma_inhouse_avionics }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 1 y = 2 }
+
+		mutually_exclusive = { POR_ogma_rivets }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			air_agility = 0.1
+			build_cost_ic = 0.03
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_fire_control
+		name = POR_ogma_fire_control
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		any_parent = {
+			POR_ogma_rivets
+			POR_ogma_fasteners
+		}
+
+		relative_position_id = POR_ogma_jit
+		position = { x = -1 y = 3 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			air_attack = 0.03
+			air_ground_attack = 0.03
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_recycled_weapon_mounts
+		name = POR_ogma_recycled_weapon_mounts
+		icon = GFX_generic_mio_trait_icon_air_ground_attack
+
+		any_parent = {
+			POR_ogma_rivets
+			POR_ogma_fasteners
+		}
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 1 y = 3 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		production_bonus = { production_resource_need_factor = -0.1 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_conformal_fuel_tanks
+		name = POR_ogma_conformal_fuel_tanks
+		icon = GFX_generic_mio_trait_icon_air_range
+
+		any_parent = {
+			POR_ogma_rivets
+			POR_ogma_fasteners
+		}
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 2 y = 3 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			air_range = 0.06
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_cfd
+		name = POR_ogma_cfd
+		icon = GFX_generic_mio_trait_icon_air_superiority
+
+		all_parents = { POR_ogma_fire_control }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = -1 y = 4 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			maximum_speed = 0.03
+			fuel_consumption = -0.03
+			build_cost_ic = -0.01
+		}
+
+		organization_modifier = { military_industrial_organization_design_team_assign_cost = -0.15 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_predictive_maintenance
+		name = POR_ogma_predictive_maintenance
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		all_parents = { POR_ogma_recycled_weapon_mounts }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 1 y = 4 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			reliability = 0.03
+			air_defence = 0.03
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_lean_burn_combustors
+		name = POR_ogma_lean_burn_combustors
+		icon = GFX_generic_mio_trait_icon_air_range
+
+		all_parents = { POR_ogma_conformal_fuel_tanks }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 2 y = 4 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			air_range = 0.03
+			fuel_consumption = -0.03
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_foreign_procurement
+		name = POR_ogma_foreign_procurement
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		all_parents = { POR_ogma_cfd }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = -1 y = 5 }
+
+		mutually_exclusive = { POR_ogma_domestic_procurement }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			air_attack = 0.1
+			build_cost_ic = 0.03
+		}
+
+		organization_modifier = { military_industrial_organization_research_bonus = 0.04 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_mifcc
+		name = POR_ogma_mifcc
+		icon = GFX_generic_mio_trait_icon_maximum_speed
+
+		all_parents = { POR_ogma_predictive_maintenance }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 2 y = 5 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			maximum_speed = 0.03
+			reliability = 0.03
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_domestic_procurement
+		name = POR_ogma_domestic_procurement
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		all_parents = { POR_ogma_lean_burn_combustors }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 1 y = 5 }
+
+		mutually_exclusive = { POR_ogma_foreign_procurement }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = { build_cost_ic = -0.07 }
+
+		organization_modifier = { military_industrial_organization_funds_gain = 0.05 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_reinforced_airframe
+		name = POR_ogma_reinforced_airframe
+		icon = GFX_generic_mio_trait_icon_air_defence
+
+		any_parent = {
+			POR_ogma_foreign_procurement
+			POR_ogma_domestic_procurement
+		}
+
+		relative_position_id = POR_ogma_jit
+		position = { x = -1 y = 6 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		equipment_bonus = {
+			air_defence = 0.06
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_expanded_research_and_development
+		name = POR_ogma_expanded_research_and_development
+		icon = GFX_generic_mio_trait_icon_design
+
+		all_parents = { POR_ogma_mifcc }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 2 y = 6 }
+
+		organization_modifier = {
+			military_industrial_organization_industrial_manufacturer_assign_cost = -0.20
+			military_industrial_organization_research_bonus = 0.06
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_alternative_composites
+		name = POR_ogma_alternative_composites
+		icon = GFX_generic_mio_trait_icon_efficiency_gain
+
+		all_parents = { POR_ogma_domestic_procurement }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 1 y = 6 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		production_bonus = { production_resource_need_factor = -0.1 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_logistics_optimization
+		name = POR_ogma_logistics_optimization
+		icon = GFX_generic_mio_trait_icon_air_attack
+
+		all_parents = { POR_ogma_expanded_research_and_development }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = 2 y = 7 }
+
+		limit_to_equipment_type = {
+			mio_cat_eq_only_all_light_aircraft
+			mio_cat_eq_only_all_medium_aircraft
+		}
+
+		production_bonus = { production_efficiency_gain_factor = 0.10 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_multidisciplinary_collaboration
+		name = POR_ogma_multidisciplinary_collaboration
+		icon = GFX_generic_mio_trait_icon_design
+
+		all_parents = { POR_ogma_reinforced_airframe }
+
+		relative_position_id = POR_ogma_jit
+		position = { x = -1 y = 7 }
+
+		organization_modifier = { military_industrial_organization_task_capacity = 1 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_redesigned_internals
+		name = POR_ogma_redesigned_internals
+		icon = GFX_generic_mio_trait_icon_large_aircraft_range
+
+		position = { x = 4 y = 0 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			air_range = 0.04
+			build_cost_ic = -0.03
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_strategic_dematerialization
+		name = POR_ogma_strategic_dematerialization
+		icon = GFX_generic_mio_trait_icon_large_aircraft_reliability
+
+		all_parents = { POR_ogma_redesigned_internals }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 0 y = 1 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		production_bonus = { production_resource_need_factor = -0.1 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_civilian_conversion_programme
+		name = POR_ogma_civilian_conversion_programme
+		icon = GFX_generic_mio_trait_icon_large_aircraft_buildcost
+
+		all_parents = { POR_ogma_strategic_dematerialization }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 0 y = 2 }
+
+		mutually_exclusive = { POR_ogma_military_contract_programme }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			build_cost_ic = -0.07
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_military_contract_programme
+		name = POR_ogma_military_contract_programme
+		icon = GFX_generic_mio_trait_icon_large_aircraft_anti_air
+
+		all_parents = { POR_ogma_strategic_dematerialization }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 1 y = 2 }
+
+		mutually_exclusive = { POR_ogma_civilian_conversion_programme }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			air_ground_attack = 0.05
+			air_bombing = 0.05
+			build_cost_ic = 0.03
+		}
+
+		organization_modifier = { military_industrial_organization_funds_gain = 0.05 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_airframe_revitalisation
+		name = POR_ogma_airframe_revitalisation
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		all_parents = { POR_ogma_civilian_conversion_programme }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 0 y = 3 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		production_bonus = { production_efficiency_gain_factor = 0.10 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_localized_reinforcements
+		name = POR_ogma_localized_reinforcements
+		icon = GFX_generic_mio_trait_icon_large_aircraft_defense
+
+		all_parents = { POR_ogma_military_contract_programme }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 1 y = 3 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			air_defence = 0.07
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_weapons_bay_geometry
+		name = POR_ogma_weapons_bay_geometry
+		icon = GFX_generic_mio_trait_icon_large_aircraft_anti_air
+
+		all_parents = { POR_ogma_military_contract_programme }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 2 y = 3 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			air_ground_attack = 0.05
+			air_agility = 0.02
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_improvised_weapons_integration
+		name = POR_ogma_improvised_weapons_integration
+		icon = GFX_generic_mio_trait_icon_large_aircraft_air_ground_attack
+
+		all_parents = { POR_ogma_airframe_revitalisation }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 0 y = 4 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			air_ground_attack = 0.05
+			air_defence = -0.05
+			build_cost_ic = -0.07
+		}
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_air_force_procurement
+		name = POR_ogma_air_force_procurement
+		icon = GFX_generic_mio_trait_icon_design
+
+		all_parents = { POR_ogma_localized_reinforcements }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 1 y = 4 }
+
+		organization_modifier = { military_industrial_organization_task_capacity = 1 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_airframe_optimisation
+		name = POR_ogma_airframe_optimisation
+		icon = GFX_generic_mio_trait_icon_large_aircraft_agility
+
+		all_parents = { POR_ogma_weapons_bay_geometry }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 2 y = 4 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			maximum_speed = 0.02
+			air_agility = 0.05
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_dual_use_adaptation
+		name = POR_ogma_dual_use_adaptation
+		icon = GFX_generic_mio_trait_icon_large_aircraft_defense
+
+		all_parents = { POR_ogma_improvised_weapons_integration }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 0 y = 5 }
+
+		mutually_exclusive = { POR_ogma_maritime_patrol_requisition }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		production_bonus = { production_resource_need_factor = -0.1 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_ruggedisation
+		name = POR_ogma_ruggedisation
+		icon = GFX_generic_mio_trait_icon_large_aircraft_reliability
+
+		all_parents = { POR_ogma_air_force_procurement }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 2 y = 5 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			reliability = 0.03
+			air_defence = 0.04
+		}
+
+		organization_modifier = { military_industrial_organization_funds_gain = 0.05 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_maritime_patrol_requisition
+		name = POR_ogma_maritime_patrol_requisition
+		icon = GFX_generic_mio_trait_icon_large_aircraft
+
+		all_parents = { POR_ogma_airframe_optimisation }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 1 y = 5 }
+
+		mutually_exclusive = { POR_ogma_dual_use_adaptation }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			sub_detection = 0.12
+			naval_strike_attack = 0.12
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_compact_engine_core
+		name = POR_ogma_compact_engine_core
+		icon = GFX_generic_mio_trait_icon_large_aircraft_reliability
+
+		any_parent = {
+			POR_ogma_dual_use_adaptation
+			POR_ogma_maritime_patrol_requisition
+		}
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 0 y = 6 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			fuel_consumption = -0.04
+			build_cost_ic = -0.03
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_extended_long_range
+		name = POR_ogma_extended_long_range
+		icon = GFX_generic_mio_trait_icon_large_aircraft_range
+
+		all_parents = { POR_ogma_ruggedisation }
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 2 y = 6 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		equipment_bonus = {
+			air_range = 0.02
+			air_bombing = 0.05
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_assembly_line_integration
+		name = POR_ogma_assembly_line_integration
+		icon = GFX_generic_mio_trait_icon_large_aircraft_buildcost
+
+		any_parent = {
+			POR_ogma_maritime_patrol_requisition
+			POR_ogma_dual_use_adaptation
+		}
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 1 y = 6 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		production_bonus = { production_cost_factor = -0.07 }
+
+		organization_modifier = { military_industrial_organization_research_bonus = 0.03 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_composite_substitution
+		name = POR_ogma_composite_substitution
+		icon = GFX_generic_mio_trait_icon_large_aircraft_strategic_attack
+
+		any_parent = {
+			POR_ogma_extended_long_range
+			POR_ogma_compact_engine_core
+			POR_ogma_assembly_line_integration
+		}
+
+		relative_position_id = POR_ogma_redesigned_internals
+		position = { x = 1 y = 7 }
+
+		limit_to_equipment_type = { mio_cat_eq_only_large_aircraft }
+
+		production_bonus = { production_resource_need_factor = -0.1 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_lean_manufacturing
+		name = POR_ogma_lean_manufacturing
+		icon = GFX_generic_mio_trait_icon_maximum_speed
+
+		position = { x = 8 y = 0 }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		production_bonus = { production_efficiency_gain_factor = 0.10 }
+
+		organization_modifier = { military_industrial_organization_funds_gain = 0.04 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_tank_hunters
+		name = POR_ogma_tank_hunters
+		icon = GFX_generic_mio_trait_icon_attackheli_hard_attack
+
+		all_parents = { POR_ogma_lean_manufacturing }
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = 0 y = 2 }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		equipment_bonus = {
+			ap_attack = 0.06
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_source_reduction
+		name = POR_ogma_source_reduction
+		icon = GFX_generic_mio_trait_icon_attackheli
+
+		all_parents = { POR_ogma_tank_hunters }
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = 0 y = 3 }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		production_bonus = { production_resource_need_factor = -0.1 }
+
+		organization_modifier = { military_industrial_organization_size_up_requirement = -0.10 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_eurocopter_cooperation
+		name = POR_ogma_eurocopter_cooperation
+		icon = GFX_generic_mio_trait_icon_attackheli_hard_attack
+
+		all_parents = { POR_ogma_lean_manufacturing }
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = -1 y = 1 }
+
+		mutually_exclusive = { POR_ogma_independent_design }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		equipment_bonus = {
+			hard_attack = 0.05
+			soft_attack = 0.05
+			build_cost_ic = 0.03
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_independent_design
+		name = POR_ogma_independent_design
+		icon = GFX_generic_mio_trait_icon_attackheli_buildcost
+
+		all_parents = { POR_ogma_lean_manufacturing }
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = 1 y = 1 }
+
+		mutually_exclusive = { POR_ogma_eurocopter_cooperation }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		equipment_bonus = {
+			reliability = 0.04
+			build_cost_ic = -0.03
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_reinforced_pylons
+		name = POR_ogma_reinforced_pylons
+		icon = GFX_generic_mio_trait_icon_attackheli_soft_attack
+
+		any_parent = {
+			POR_ogma_eurocopter_cooperation
+			POR_ogma_independent_design
+		}
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = -1 y = 2 }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		equipment_bonus = {
+			soft_attack = 0.03
+			hard_attack = 0.03
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_sustainable_aviation_fuels
+		name = POR_ogma_sustainable_aviation_fuels
+		icon = GFX_generic_mio_trait_icon_attackheli_speed
+
+		any_parent = {
+			POR_ogma_eurocopter_cooperation
+			POR_ogma_independent_design
+		}
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = 1 y = 2 }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		equipment_bonus = {
+			fuel_consumption = -0.06
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_assembly_consolidation
+		name = POR_ogma_assembly_consolidation
+		icon = GFX_generic_mio_trait_icon_attackheli_buildcost
+
+		all_parents = { POR_ogma_reinforced_pylons }
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = -1 y = 3 }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		production_bonus = { production_efficiency_gain_factor = 0.10 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_national_stockpile
+		name = POR_ogma_national_stockpile
+		icon = GFX_generic_mio_trait_icon_attackheli_soft_attack
+
+		all_parents = {
+			POR_ogma_sustainable_aviation_fuels
+			POR_ogma_source_reduction
+		}
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = 1 y = 4 }
+
+		mutually_exclusive = { POR_ogma_mbda_akeron_contracts }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		equipment_bonus = {
+			soft_attack = 0.04
+			build_cost_ic = -0.03
+		}
+
+		organization_modifier = { military_industrial_organization_funds_gain = 0.04 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_rotor_efficiency_development
+		name = POR_ogma_rotor_efficiency_development
+		icon = GFX_generic_mio_trait_icon_reliability
+
+		all_parents = { POR_ogma_source_reduction }
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = 0 y = 5 }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		equipment_bonus = {
+			reliability = 0.03
+			fuel_consumption = -0.03
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_mbda_akeron_contracts
+		name = POR_ogma_mbda_akeron_contracts
+		icon = GFX_generic_mio_trait_icon_attackheli
+
+		all_parents = {
+			POR_ogma_assembly_consolidation
+			POR_ogma_source_reduction
+		}
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = -1 y = 4 }
+
+		mutually_exclusive = { POR_ogma_national_stockpile }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		equipment_bonus = {
+			ap_attack = 0.1
+			build_cost_ic = 0.03
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_engineering_group_review
+		name = POR_ogma_engineering_group_review
+		icon = GFX_generic_mio_trait_icon_build_cost_ic
+
+		all_parents = {
+			POR_ogma_rotor_efficiency_development
+		}
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = 0 y = 6 }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		equipment_bonus = {
+			defense = 0.03
+			reliability = 0.03
+			build_cost_ic = -0.01
+		}
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
+
+	trait = {
+		token = POR_ogma_sustainable_helicopter_production
+		name = POR_ogma_sustainable_helicopter_production
+		icon = GFX_generic_mio_trait_icon_defense
+
+		all_parents = { POR_ogma_engineering_group_review }
+
+		relative_position_id = POR_ogma_lean_manufacturing
+		position = { x = 0 y = 7 }
+
+		limit_to_equipment_type = { mio_cat_helicopters }
+
+		production_bonus = { production_resource_need_factor = -0.1 }
+
+		organization_modifier = { military_industrial_organization_research_bonus = 0.05 }
+
+		on_complete = { expenditure_for_mio_upgrade = yes }
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				check_variable = { FROM.interest_rate > 8 }
+			}
+		}
+	}
 }
 
-POR_umm_tank_manufacturer = {			#Needs custom utility vehicle and apc tree			
+
+POR_umm_tank_manufacturer = {			#Needs custom utility vehicle and apc tree
 	allowed = { original_tag = POR }
 	name = POR_umm_tank_manufacturer
 	icon = GFX_idea_POR_umm
