@@ -279,6 +279,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `idea-quality` (WARNING): an idea `equipment_bonus` without `instant = yes` applies only
   to variants created afterwards. Exempt name prefixes go in
   `equipment_bonus_instant_exempt`.
+- `idea-quality` (WARNING): `weekly_war_support` and `weekly_stability` in a top-level
+  `modifier` on a `country` idea need a permanent grant to tick as intended. The check
+  reads static `add_idea(s)` and `add_timed_idea` call sites across `common/`, `events/`,
+  and `history/`; display-only `effect_tooltip` references are ignored. Timed-only ideas
+  are skipped, while mixed grants are reported. A definition with no statically resolved
+  grant is advisory because dynamic references and grants from outside those trees
+  cannot establish permanence.
 - `bonus-type-archetype-stack` (ERROR, also in `validate_mios.py`): a nested
   `equipment_bonus` naming a type category (`carrier`) and a child archetype of that type
   with the same modifier stacks twice. Helicopter operators are `type = carrier`.
