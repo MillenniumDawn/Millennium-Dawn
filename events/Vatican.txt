@@ -101,7 +101,10 @@ country_event = {
 			target = FROM
 		}
 		hidden_effect = { FROM = { add_ideas = HLS_idea_holy_war } }
-		ai_chance = { base = 10 }
+		ai_chance = {
+			base = 10
+			modifier = { factor = 5 HLS_ai_historical_path = yes }
+		}
 	}
 
 	option = {
@@ -121,7 +124,7 @@ country_event = {
 		}
 		ai_chance = {
 			base = 10
-			modifier = { factor = 3 HLS_ai_crusader_path = yes }
+			modifier = { factor = 5 HLS_ai_crusader_path = yes }
 		}
 	}
 }
@@ -151,7 +154,11 @@ country_event = {
 		name = vatican.6.o2
 		log = "[GetDateText]: [This.GetName]: vatican.6.o2 executed"
 		hidden_effect = { FROM = { country_event = { id = vatican.17 days = 1 } } }
-		ai_chance = { base = 20 }
+		ai_chance = {
+			base = 20
+			modifier = { add = 10 has_opinion = { target = FROM value < 0 } }
+			modifier = { factor = 0.5 sender_influence_higher_30 = yes }
+		}
 	}
 }
 
@@ -167,7 +174,10 @@ country_event = {
 		name = vatican.7.o1
 		log = "[GetDateText]: [This.GetName]: vatican.7.o1 executed"
 		hidden_effect = { FROM = { add_ideas = HLS_idea_holy_war } }
-		ai_chance = { base = 30 }
+		ai_chance = {
+			base = 30
+			modifier = { factor = 5 HLS_ai_historical_path = yes }
+		}
 	}
 
 	option = {
@@ -184,6 +194,7 @@ country_event = {
 		}
 		ai_chance = {
 			base = 45
+			modifier = { factor = 5 HLS_ai_crusader_path = yes }
 			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
 		}
 	}
@@ -293,6 +304,7 @@ country_event = {
 		ai_chance = {
 			base = 10
 			modifier = { add = 5 has_opinion = { target = HLS value > 25 } }
+			modifier = { factor = 0 NOT = { has_manpower > 750 } }
 		}
 	}
 
@@ -352,6 +364,7 @@ country_event = {
 		ai_chance = {
 			base = 10
 			modifier = { add = 10 has_opinion = { target = FROM value > 25 } }
+			modifier = { factor = 0 NOT = { has_manpower > 100 } }
 		}
 	}
 
@@ -444,6 +457,256 @@ country_event = {
 		create_wargoal = {
 			type = puppet_wargoal_focus
 			target = FROM
+		}
+	}
+}
+
+# A jubilee year draws pilgrims to Rome
+country_event = {
+	id = vatican.18
+	title = vatican.18.t
+	desc = vatican.18.d
+	picture = GFX_pope_visits_romania
+	is_triggered_only = yes
+
+	option = {
+		name = vatican.18.o1
+		log = "[GetDateText]: [This.GetName]: vatican.18.o1 executed"
+		set_temp_variable = { treasury_change = 2 }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
+		add_stability = -0.01
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_historical_path = yes }
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+
+	option = {
+		name = vatican.18.o2
+		log = "[GetDateText]: [This.GetName]: vatican.18.o2 executed"
+		set_temp_variable = { treasury_change = 1 }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_clergy_opinion = yes
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_crusader_path = yes }
+		}
+	}
+}
+
+# World Youth Day: choose the host region
+country_event = {
+	id = vatican.19
+	title = vatican.19.t
+	desc = vatican.19.d
+	picture = GFX_christ_rally2
+	is_triggered_only = yes
+
+	option = {
+		name = vatican.19.o1
+		log = "[GetDateText]: [This.GetName]: vatican.19.o1 executed"
+		set_temp_variable = { temp_opinion = 3 }
+		change_the_clergy_opinion = yes
+		custom_effect_tooltip = vatican_wyd_europe_tt
+		hidden_effect = {
+			every_other_country = {
+				limit = {
+					has_idea = christian
+					is_in_europe = yes
+				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_crusader_path = yes }
+		}
+	}
+
+	option = {
+		name = vatican.19.o2
+		log = "[GetDateText]: [This.GetName]: vatican.19.o2 executed"
+		set_temp_variable = { temp_opinion = 3 }
+		change_the_clergy_opinion = yes
+		custom_effect_tooltip = vatican_wyd_americas_tt
+		hidden_effect = {
+			every_other_country = {
+				limit = {
+					has_idea = christian
+					is_in_the_americas = yes
+				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+		}
+		ai_chance = { base = 1 }
+	}
+
+	option = {
+		name = vatican.19.o3
+		log = "[GetDateText]: [This.GetName]: vatican.19.o3 executed"
+		set_temp_variable = { temp_opinion = 3 }
+		change_the_clergy_opinion = yes
+		custom_effect_tooltip = vatican_wyd_global_south_tt
+		hidden_effect = {
+			every_other_country = {
+				limit = {
+					has_idea = christian
+					OR = {
+						is_in_africa = yes
+						is_in_asia = yes
+					}
+				}
+				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_historical_path = yes }
+		}
+	}
+}
+
+# Interfaith prayer meeting at Assisi
+country_event = {
+	id = vatican.20
+	title = vatican.20.t
+	desc = vatican.20.d
+	picture = GFX_religious_meeting
+	is_triggered_only = yes
+
+	option = {
+		name = vatican.20.o1
+		log = "[GetDateText]: [This.GetName]: vatican.20.o1 executed"
+		add_stability = 0.02
+		set_temp_variable = { temp_opinion = -5 }
+		change_the_clergy_opinion = yes
+		custom_effect_tooltip = vatican_assisi_muslim_tt
+		hidden_effect = {
+			every_other_country = {
+				limit = { Is_Muslim_Country = yes }
+				add_opinion_modifier = {
+					target = ROOT
+					modifier = peace_talks
+				}
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_historical_path = yes }
+			modifier = { factor = 3 HLS_ai_caliphate_path = yes }
+		}
+	}
+
+	option = {
+		name = vatican.20.o2
+		log = "[GetDateText]: [This.GetName]: vatican.20.o2 executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_clergy_opinion = yes
+		custom_effect_tooltip = vatican_assisi_orthodox_tt
+		hidden_effect = {
+			every_other_country = {
+				limit = { has_idea = orthodox_christian }
+				set_temp_variable = { percent_change = 2 }
+				set_temp_variable = { influence_target = THIS }
+				change_influence_percentage = yes
+			}
+		}
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_crusader_path = yes }
+		}
+	}
+}
+
+# A synod of bishops debates reform and tradition
+country_event = {
+	id = vatican.21
+	title = vatican.21.t
+	desc = vatican.21.d
+	picture = GFX_ETH_cathedral
+	is_triggered_only = yes
+
+	option = {
+		name = vatican.21.o1
+		log = "[GetDateText]: [This.GetName]: vatican.21.o1 executed"
+		add_stability = 0.03
+		set_temp_variable = { temp_opinion = -10 }
+		change_the_clergy_opinion = yes
+		set_temp_variable = { temp_opinion = 5 }
+		change_labour_unions_opinion = yes
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_historical_path = yes }
+		}
+	}
+
+	option = {
+		name = vatican.21.o2
+		log = "[GetDateText]: [This.GetName]: vatican.21.o2 executed"
+		set_temp_variable = { temp_opinion = 10 }
+		change_the_clergy_opinion = yes
+		add_political_power = -25
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_crusader_path = yes }
+			modifier = { factor = 0.25 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	option = {
+		name = vatican.21.o3
+		log = "[GetDateText]: [This.GetName]: vatican.21.o3 executed"
+		set_temp_variable = { temp_opinion = 3 }
+		change_the_clergy_opinion = yes
+		add_political_power = 25
+		ai_chance = { base = 1 }
+	}
+}
+
+# Leaked documents expose the Curia's finances
+country_event = {
+	id = vatican.22
+	title = vatican.22.t
+	desc = vatican.22.d
+	picture = GFX_report_event_Corruption_1
+	is_triggered_only = yes
+
+	option = {
+		name = vatican.22.o1
+		log = "[GetDateText]: [This.GetName]: vatican.22.o1 executed"
+		set_temp_variable = { treasury_change = 1 }
+		modify_treasury_effect = yes
+		set_temp_variable = { temp_opinion = -10 }
+		change_the_clergy_opinion = yes
+		add_stability = -0.02
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_historical_path = yes }
+			modifier = { factor = 0.5 has_stability < 0.3 }
+		}
+	}
+
+	option = {
+		name = vatican.22.o2
+		log = "[GetDateText]: [This.GetName]: vatican.22.o2 executed"
+		set_temp_variable = { temp_opinion = 5 }
+		change_the_clergy_opinion = yes
+		add_stability = -0.05
+		add_political_power = 50
+		ai_chance = {
+			base = 1
+			modifier = { factor = 5 HLS_ai_crusader_path = yes }
+			modifier = { factor = 0 has_stability < 0.3 }
 		}
 	}
 }
