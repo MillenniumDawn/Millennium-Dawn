@@ -191,9 +191,12 @@ jobs:
           for package in pytest-xdist pytest-cov; do
             grep -Fq "\"$package" pyproject.toml || missing+=("$package")
           done
-          # The report and the base scan run the head's scripts with these flags.
-          grep -Fq -- --main-tools-baseline tools/generate_validation_report.py ||
+          # The report and base scan run the head's scripts with these flags.
+          grep -Fq -- --main-tools-baseline \
+            tools/generate_validation_report.py ||
             missing+=("--main-tools-baseline")
+          grep -Fq -- --tooling-changed tools/generate_validation_report.py ||
+            missing+=("--tooling-changed")
           grep -Fq -- --observation tools/baseline_check.py ||
             missing+=("--observation")
           if [ "${#missing[@]}" -gt 0 ]; then
@@ -241,7 +244,8 @@ jobs:
           HEAD_SHA: ${{ steps.resolve-ref.outputs.head-sha }}
         run: |
           if git diff --quiet --no-renames "$MERGE_BASE" "$HEAD_SHA" -- \
-              ':(glob)tools/validation/**/*.py' ':(glob)tools/validation/**/*.txt' \
+              ':(glob)tools/validation/**/*.py' \
+              ':(glob)tools/validation/**/*.txt' \
               tools/shared_utils.py validation_config.json \
               resources/documentation .claude/docs/typo-watchlist.md; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
@@ -1069,8 +1073,9 @@ jobs:
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}
-          restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
+          restore-keys: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
 
       - name: Checkout base commit content
         if: steps.lookup.outputs.cache-matched-key == ''
@@ -1111,8 +1116,9 @@ jobs:
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
             steps.basehash.outputs.hash }}-${{ env.BASELINE_SHA }}
-          restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.basehash.outputs.hash }}-${{ env.BASELINE_SHA }}-
+          restore-keys: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.basehash.outputs.hash }}-${{ env.BASELINE_SHA }}-
 
       # Both scans run the PR's tooling, so only the content differs.
       - name: Give the base content the PR's tooling
@@ -1251,8 +1257,9 @@ jobs:
           key: >-
             md-baseline-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}
-          restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
+          restore-keys: >-
+            md-baseline-v1-${{ runner.os }}-${{
+            steps.toolshash.outputs.hash }}-${{ env.BASELINE_SHA }}-
 
       # Main has not saved one yet: use the base scan from this run, if any.
       - name: Download base commit baseline

@@ -84,6 +84,21 @@ def test_inline_or_with_one_condition_is_reported():
     assert [line for line, _message in C.find_single_condition_or_blocks(lines)] == [1]
 
 
+def test_and_directly_under_not_is_kept():
+    lines = [
+        "\ttrigger = {\n",
+        "\t\tNOT = {\n",
+        "\t\t\tAND = {\n",
+        "\t\t\t\toriginal_tag = AUS\n",
+        "\t\t\t\thas_war = yes\n",
+        "\t\t\t}\n",
+        "\t\t}\n",
+        "\t}\n",
+    ]
+    assert C.find_redundant_and_blocks(lines) == []
+    assert C.simplify_and_block(lines) == lines
+
+
 def test_main_reports_nothing_when_no_file_changes(tmp_path, capsys):
     (tmp_path / "clean.txt").write_text("foo = {\n\tbar = yes\n}\n", encoding="utf-8")
 
