@@ -116,6 +116,14 @@ category name. Do not read it whole. Track a backlog in a GitHub issue, not in a
   With neither, the comparison is unavailable.
 - Main's findings in a file the PR renamed count as the new path's, in the file
   field and in messages. A finding that names only a basename does not move.
+- Each main finding matches one PR finding with the same category, file, and message.
+  `detect-changes` ships the merge-base diff's hunk headers, so a match also needs the
+  same place: main's line shifted past the PR's edits, or the same changed hunk.
+  Fixing one copy and adding another elsewhere reads NEW, and so does a block moved
+  within a file. Findings with no line or only a basename match by count.
+- Main's findings come only from the validators the PR ran, so a severity difference
+  is a real transition: RAISED (warning to error) or LOWERED (error to warning).
+  This needs batch spec names to equal the script-derived sidecar names.
 - When a PR changes validator code or reference data, both scans use its validators,
   so findings that code adds to unchanged content read EXISTING. `detect-changes`
   flags this and the report says so. The base scan also restores main's own baseline

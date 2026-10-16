@@ -239,7 +239,7 @@ def test_new_errors_fail_and_keep_old_baseline(tmp_path, monkeypatch, capsys):
     observation = load_baseline(str(tmp_path / "observation"), "h")
     assert observation is not None
     assert observation.meta["commit_sha"].startswith("abc1234")
-    assert sum(observation.keys.values()) == 4
+    assert len(observation.issues()) == 4
 
 
 def test_clean_diff_promotes_baseline(tmp_path, monkeypatch, capsys):
@@ -423,17 +423,32 @@ def test_missing_current_dir_fails(tmp_path, monkeypatch, capsys):
 
 
 def test_split_new_findings(tmp_path):
-    previous = _previous_with_one_old_error(tmp_path)
+    previous = _previous(
+        tmp_path,
+        {
+            "events": [
+                _issue_dict("error", message="old"),
+                _issue_dict("warning", message="raised"),
+                _issue_dict("error", message="lowered"),
+            ]
+        },
+    )
     baseline = load_baseline(str(previous), "h")
     assert baseline is not None
 
     current = [
-        baseline_check.Issue.from_dict(_issue_dict("error", message="old")),
-        baseline_check.Issue.from_dict(_issue_dict("error", message="new")),
-        baseline_check.Issue.from_dict(_issue_dict("warning", message="new warning")),
+        baseline_check.Issue.from_dict(_issue_dict(severity, message=message))
+        for severity, message in (
+            ("error", "old"),
+            ("error", "new"),
+            ("warning", "new warning"),
+            ("error", "raised"),
+            ("warning", "lowered"),
+        )
     ]
     new_errors, new_warnings = baseline_check._split_new_findings(current, baseline)
-    assert [i.message for i in new_errors] == ["new"]
+    # A warning raised to an error alarms; an error lowered to a warning does not.
+    assert [i.message for i in new_errors] == ["new", "raised"]
     assert [i.message for i in new_warnings] == ["new warning"]
 
 

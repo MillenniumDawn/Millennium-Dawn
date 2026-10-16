@@ -16,8 +16,9 @@ from report_lib import (
 from report_lib.baseline import (
     META_FILENAME,
     issue_key,
+    load_hunks,
     load_renames,
-    rename_keys,
+    rename_issues,
     tool_effect,
 )
 from shared.suite import issue_dict, make_issue, write_text
@@ -44,7 +45,7 @@ def _baseline(path, issues=(), toolshash="h"):
     _write_sidecar(path, "events", list(issues))
     baseline = load_baseline(str(path), toolshash)
     assert baseline is not None
-    return baseline
+    return baseline.issues()
 
 
 def test_load_baseline_returns_none_without_meta(tmp_path):
@@ -94,15 +95,23 @@ def test_load_baseline_rejects_an_incomplete_baseline(tmp_path, sidecars, files)
     assert load_baseline(str(tmp_path), "h") is None
 
 
-def test_load_baseline_loads_and_dedupes_sidecars(tmp_path):
+@pytest.mark.parametrize(
+    ("validators", "severities"),
+    [
+        pytest.param(None, ["error"], id="all validators"),
+        pytest.param({"events"}, ["warning"], id="only what the PR ran"),
+        pytest.param({"style"}, [], id="none of them"),
+    ],
+)
+def test_load_baseline_dedupes_the_chosen_validators(tmp_path, validators, severities):
+    # Main's dedupe raises a finding to the worst severity any validator gave
+    # it, so a PR running only `events` must compare against `events` alone.
     _write_meta(tmp_path, sidecars=("events.json", "localisation.json"))
-    dup = _issue_dict("error")
-    _write_sidecar(tmp_path, "events", [dup])
-    _write_sidecar(tmp_path, "localisation", [dup])
+    _write_sidecar(tmp_path, "events", [_issue_dict("warning")])
+    _write_sidecar(tmp_path, "localisation", [_issue_dict("error")])
     baseline = load_baseline(str(tmp_path), "h")
     assert baseline is not None
-    # Cross-validator duplicates collapse before keys are built.
-    assert len(baseline.keys) == 1
+    assert [i.severity for i in baseline.issues(validators)] == severities
     assert baseline.meta["toolshash"] == "h"
 
 
@@ -151,14 +160,14 @@ def test_classify_matches_a_finding_with_no_file(tmp_path):
         pytest.param("events/x.txt", "m", ("events/x.txt", "m"), id="unrelated"),
     ],
 )
-def test_rename_keys_moves_findings_to_the_new_path(tmp_path, file, message, moved):
+def test_rename_issues_moves_findings_to_the_new_path(tmp_path, file, message, moved):
     renames = tmp_path / "renames.txt"
     renames.write_text("events/old.txt\nevents/new.txt\n", encoding="utf-8")
-    keys = Counter({("error", "c", file, message): 2})
+    issue = make_issue(file=file, message=message)
 
-    assert rename_keys(keys, load_renames(str(renames))) == Counter(
-        {("error", "c", *moved): 2}
-    )
+    rename_issues([issue], load_renames(str(renames)))
+
+    assert (issue.file, issue.message) == moved
 
 
 def test_tool_effect_counts_what_the_pr_validators_change():
@@ -224,21 +233,21 @@ def test_classify_tags_new_and_existing(tmp_path):
 @pytest.mark.parametrize(
     ("on_main", "on_pr", "status"),
     [
-        # A warning a PR escalates to an error alarms as a new error.
-        pytest.param("warning", Severity.ERROR, "new", id="escalated"),
-        # Main's dedupe raised it to an error; a PR subset sees the warning.
-        pytest.param("error", Severity.WARNING, "existing", id="lowered"),
+        pytest.param("warning", Severity.ERROR, "raised", id="raised"),
+        pytest.param("error", Severity.WARNING, "lowered", id="lowered"),
     ],
 )
-def test_classify_severity_changes(tmp_path, on_main, on_pr, status):
+def test_classify_reports_severity_changes(tmp_path, on_main, on_pr, status):
     baseline = _baseline(
         tmp_path, [_issue_dict(on_main, file="a.txt", line=1, message="same")]
     )
     issue = make_issue(severity=on_pr, file="a.txt", line=1, message="same")
 
-    classify([issue], baseline)
+    stats = classify([issue], baseline)
 
     assert issue.baseline_status == status
+    assert getattr(stats, status) == [issue]
+    assert (stats.new_errors, stats.new_warnings) == (0, 0)
 
 
 @pytest.mark.parametrize("warning_first", [True, False])
@@ -325,6 +334,63 @@ def test_classify_extra_instance_of_existing_finding_is_new(tmp_path):
     assert [i.baseline_status for i in issues] == ["existing", "new"]
     assert stats.existing_errors == 1
     assert stats.new_errors == 1
+
+
+# The PR replaced line 10 of events/a.txt with lines 10-12, so lines below
+# moved down by two.
+_HUNKS = {"events/a.txt": [(10, 1, 10, 3)]}
+
+
+@pytest.mark.parametrize(
+    ("file", "main_lines", "pr_lines", "statuses"),
+    [
+        pytest.param("events/a.txt", [5], [5], ["existing"], id="above the edit"),
+        pytest.param("events/a.txt", [20], [22], ["existing"], id="shifted below"),
+        pytest.param("events/a.txt", [20], [20], ["new"], id="not where main's moved"),
+        pytest.param("events/a.txt", [10], [11], ["existing"], id="same changed hunk"),
+        pytest.param(
+            "events/a.txt",
+            [5, 30],
+            [5, 11],
+            ["existing", "new"],
+            id="fixed one copy, added another",
+        ),
+        pytest.param("events/a.txt", [0], [0], ["existing"], id="no line"),
+        pytest.param("a.txt", [20], [22], ["existing"], id="basename by count"),
+    ],
+)
+def test_classify_places_findings_through_the_diff(
+    tmp_path, file, main_lines, pr_lines, statuses
+):
+    baseline = _baseline(
+        tmp_path,
+        [
+            _issue_dict("error", file=file, line=line, message="dup")
+            for line in main_lines
+        ],
+    )
+    issues = [make_issue(file=file, line=line, message="dup") for line in pr_lines]
+
+    classify(issues, baseline, _HUNKS)
+
+    assert [i.baseline_status for i in issues] == statuses
+
+
+def test_load_hunks_reads_only_header_lines(tmp_path):
+    hunks = tmp_path / "hunks.txt"
+    hunks.write_text(
+        "diff --git a/events/a b.txt b/events/a b.txt\n"
+        "+++ b/events/a b.txt\t\n"
+        "@@ -3 +3,2 @@ ctx\n"
+        "+++ an added line, not a header\n"
+        "@@ -9,0 +11 @@\n"
+        "diff --git a/events/gone.txt b/events/gone.txt\n"
+        "+++ /dev/null\n"
+        "@@ -1,4 +0,0 @@\n",
+        encoding="utf-8",
+    )
+
+    assert load_hunks(str(hunks)) == {"events/a b.txt": [(3, 1, 3, 2), (9, 0, 11, 1)]}
 
 
 def test_classify_leaves_unkeyable_issues_untagged(tmp_path):
@@ -435,7 +501,7 @@ def test_a_clean_run_round_trips_as_an_empty_baseline(tmp_path):
 
     baseline = load_baseline(str(output), "h")
     assert baseline is not None
-    assert baseline.keys == Counter()
+    assert baseline.issues() == []
 
 
 def test_build_report_annotates_new_vs_existing(tmp_path):
@@ -459,10 +525,11 @@ def test_build_report_annotates_new_vs_existing(tmp_path):
         encoding="utf-8",
     )
 
-    baseline = _baseline(
+    _baseline(
         tmp_path / "baseline",
         [_issue_dict("error", file="old.txt", message="old finding")],
     )
+    baseline = load_baseline(str(tmp_path / "baseline"), "h")
 
     ctx = ReportContext(
         pr_number="42",
