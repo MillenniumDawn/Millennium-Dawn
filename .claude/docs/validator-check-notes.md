@@ -128,7 +128,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - It follows effect order, direct technology guards, conditional grants, and
   `allow_without_tech = yes`. Country history through the earliest bookmark supplies
   starting technologies only for proven recipients. Tooltip effects and foreign scopes
-  cannot supply an unlock.
+  cannot supply an unlock. Starting-history DLC branches support both nested and
+  sibling `else`/`else_if` forms.
 - Scripted-effect calls share the caller's country, guards, technologies, and pending
   variants, including nested calls across files. Definitions are checked through their
   callers, not as separate executions. Recursive calls stop at an active effect.
@@ -136,6 +137,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   consumption files.
 - It does not follow unrelated event or focus chains, substitute scripted-effect
   parameters, or resolve dynamic names, so findings need review.
+
+## validate_history.py
+
+- `history-influence-order` (WARNING): country history writes to `influence_array`
+  or `influence_array_val` need preceding `init_influence` and following
+  `sort_influence` (or its `recalculate_influence` wrapper). A later initialization
+  clears earlier writes; a sort before a later write is premature.
+- Checks track explicit country scopes, ROOT/THIS, hidden effects, and conditional
+  paths. Dated setups remain independent. Comments, tooltip blocks, unrelated
+  arrays, and countries without foreign influence writes do not require setup.
+  Arbitrary scripted effects and dynamic country scopes are not expanded.
+- Warning-only while the audited content backlog in #5825 remains. The existing
+  history CI batch selects this check for country-history changes.
 
 ## validate_events.py
 
