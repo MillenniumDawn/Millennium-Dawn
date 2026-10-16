@@ -191,6 +191,7 @@ def _parse_gui_text(text: str, rel: str) -> Dict:
     element_files: Dict[str, str] = {}
     containers: List[str] = []
     windows: List[str] = []
+    unsupported_button_origos: List[int] = []
     enclosing_ends: List[int] = []
 
     for m in _GUI_TYPE_OPENER.finditer(blank_quoted_strings(text)):
@@ -202,13 +203,29 @@ def _parse_gui_text(text: str, rel: str) -> Dict:
             continue
         independent = not enclosing_ends
         enclosing_ends.append(end)
+        line_no = text.count("\n", 0, m.start()) + 1
+        if type_name.lower() == "buttontype":
+            # Only a button's own properties matter here. Nested widgets can
+            # have their own properties, while containers legally use origo.
+            button_body = strip_comments(block)
+            code = blank_quoted_strings(button_body)
+            depth = 0
+            tokens = re.finditer(r"(?i)(?<![A-Za-z0-9_])origo\s*=|[{}]", code)
+            for token in tokens:
+                if token.group() == "{":
+                    depth += 1
+                elif token.group() == "}":
+                    depth -= 1
+                elif depth == 0:
+                    unsupported_button_origos.append(
+                        line_no + button_body.count("\n", 0, token.start())
+                    )
         name = next(
             (scalar for key, scalar, _ in iter_statements(block) if key == "name"),
             None,
         )
         if not name:
             continue
-        line_no = text.count("\n", 0, m.start()) + 1
         elements[name] = (type_name, rel, line_no)
         element_files[name] = rel
         if type_name.lower() == "containerwindowtype":
@@ -221,6 +238,7 @@ def _parse_gui_text(text: str, rel: str) -> Dict:
         "element_files": element_files,
         "containers": containers,
         "windows": windows,
+        "unsupported_button_origos": unsupported_button_origos,
     }
 
 
@@ -419,6 +437,14 @@ class Validator(BaseValidator):
         self._gui_element_files.update(data["element_files"])
         self._gui_containers.update(data["containers"])
         self._gui_windows.update(data["windows"])
+        for line in data["unsupported_button_origos"]:
+            self.add_issue(
+                Severity.ERROR,
+                "BUTTON_ORIGO_UNSUPPORTED",
+                "buttonType uses unsupported origo property; use a supported widget property",
+                file=rel,
+                line=line,
+            )
 
     def _parse_scripted_gui_files(self) -> None:
         self._log_section("Parsing common/scripted_guis/*.txt files")
