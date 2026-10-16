@@ -1,5 +1,6 @@
 """Tests for `report_lib.markdown`."""
 
+import pytest
 from report_lib import (
     ReportContext,
     Severity,
@@ -655,29 +656,47 @@ def test_concise_comment_lists_new_findings():
     assert "step summary" in body
 
 
-def test_summary_table_adds_new_column_with_baseline():
+def test_every_section_counts_new_warnings_like_the_verdict():
     runs = [
         ValidatorRun(
             name="events", title="Events", status="failed", errors=3, warnings=1
         ),
         ValidatorRun(name="ideas", title="Ideas", status="failed", errors=1),
     ]
-    new_issue, stats = _new_error()
-    body = render(runs, [new_issue], _ctx(), baseline_stats=stats)
+    new_error = make_issue(baseline_status="new")
+    new_warning = make_issue(severity=Severity.WARNING, line=80, baseline_status="new")
+    stats = _stats(new_issues=[new_error, new_warning], new_errors=1, new_warnings=1)
+    body = render(runs, [new_error, new_warning], _ctx(), baseline_stats=stats)
+    assert "1 new error against the main baseline" in body
+    assert "1 new warning" in body
+    assert "| ❌ Missing Key | 2 | 1 | 1 |" in body
     assert "| Validator | New | Errors | Warnings |" in body
-    assert "| ❌ Events | 1 | 3 | 1 |" in body
+    assert "| ❌ Events | 2 | 3 | 1 |" in body
     assert "| ❌ Ideas | 0 | 1 | 0 |" in body
-    assert "| **Total** | **1** | **4** | **1** |" in body
+    assert "| **Total** | **2** | **4** | **1** |" in body
 
 
-def test_summary_table_sorts_new_error_validators_first():
+def test_summary_table_sorts_validators_with_new_findings_first():
     runs = [
         ValidatorRun(name="ideas", title="Ideas", status="failed", errors=9),
-        ValidatorRun(name="events", title="Events", status="failed", errors=1),
+        ValidatorRun(name="events", title="Events", status="warnings", warnings=1),
     ]
-    new_issue, stats = _new_error()
-    body = render(runs, [new_issue], _ctx(), baseline_stats=stats)
-    assert body.index("| ❌ Events | 1 |") < body.index("| ❌ Ideas | 0 |")
+    new_warning = make_issue(severity=Severity.WARNING, baseline_status="new")
+    stats = _stats(new_issues=[new_warning], new_errors=0, new_warnings=1)
+    body = render(runs, [new_warning], _ctx(), baseline_stats=stats)
+    assert body.index("| ⚠️ Events | 1 |") < body.index("| ❌ Ideas | 0 |")
+
+
+@pytest.mark.parametrize(
+    ("baseline_status", "shown"), [("available", True), ("unavailable", False)]
+)
+def test_tooling_change_notice_explains_existing_findings(baseline_status, shown):
+    ctx = _ctx()
+    ctx.baseline_status = baseline_status
+    ctx.tooling_changed = True
+    runs = [ValidatorRun(name="events", title="Events", status="passed")]
+    body = render(runs, [], ctx)
+    assert ("This PR changes validator code." in body) is shown
 
 
 def test_unavailable_baseline_is_explicit():

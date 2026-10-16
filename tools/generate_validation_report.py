@@ -54,7 +54,7 @@ def build_report(
 
     # NEW vs EXISTING classification against the main-side baseline, when
     # one was restored. None keeps rendering exactly as before the baseline
-    # existed (cold cache, validator generation change).
+    # existed (cold cache, validator generation change, incomplete baseline).
     baseline_stats = classify(deduped, baseline) if baseline is not None else None
     if changed_files:
         tag_changed_files(deduped, changed_files)
@@ -122,8 +122,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         help=(
             "Directory holding the main-side validation baseline (restored "
             "cache entry, .validation_baseline). Findings are tagged NEW vs "
-            "EXISTING when it loads; a missing/stale baseline only drops the "
-            "annotation."
+            "EXISTING when it loads; a missing, stale, or incomplete baseline "
+            "only drops the annotation."
         ),
     )
     parser.add_argument(
@@ -132,6 +132,22 @@ def main(argv: Optional[List[str]] = None) -> int:
         help=(
             "Validator source hash the baseline must have been built with; "
             "a mismatch ignores the baseline instead of comparing stale output."
+        ),
+    )
+    parser.add_argument(
+        "--baseline-commit",
+        default=None,
+        help=(
+            "Main commit the baseline must record (the PR's base); a baseline "
+            "of any other commit is ignored."
+        ),
+    )
+    parser.add_argument(
+        "--tooling-changed",
+        action="store_true",
+        help=(
+            "The PR's validator code differs from the base's. The report says "
+            "the comparison cannot show what that code does to main's findings."
         ),
     )
     parser.add_argument(
@@ -162,18 +178,25 @@ def main(argv: Optional[List[str]] = None) -> int:
         date_utc=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         repo=args.github_repository,
         validation_scope=args.validation_scope,
+        tooling_changed=args.tooling_changed,
     )
 
-    # None on a cold cache or stale toolshash: classification (and the
-    # NEW/EXISTING rendering) is skipped instead of comparing against output
-    # from a different validator generation.
+    # None on a cold cache, stale toolshash, other commit, or incomplete
+    # baseline: classification (and the NEW/EXISTING rendering) is skipped
+    # instead of comparing against stale or partial output.
     baseline = (
-        load_baseline(args.baseline_dir, args.baseline_toolshash)
+        load_baseline(args.baseline_dir, args.baseline_toolshash, args.baseline_commit)
         if args.baseline_dir
         else None
     )
     if args.baseline_dir:
         ctx.baseline_status = "available" if baseline is not None else "unavailable"
+        ctx.baseline_commit = args.baseline_commit
+        run_id = os.environ.get("GITHUB_RUN_ID")
+        # The base scan job records this run's id; main's own runs record theirs.
+        ctx.baseline_scanned_here = bool(
+            baseline is not None and run_id and baseline.meta.get("run_id") == run_id
+        )
 
     changed_files = None
     if args.changed_files:
