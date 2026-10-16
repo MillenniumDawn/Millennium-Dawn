@@ -536,6 +536,13 @@ def test_report_job_posts_comment_and_checks():
     assert "checkout-ref" in checkout["with"]["ref"]
 
 
+def test_suite_step_ids_are_unique():
+    workflow = yaml.safe_load(CI_WORKFLOW.read_text(encoding="utf-8"))
+    for name, job in workflow["jobs"].items():
+        ids = [step["id"] for step in job.get("steps", []) if "id" in step]
+        assert len(ids) == len(set(ids)), name
+
+
 # Feeds the NEW/EXISTING comparison only; #5787 rolls it out advisory first.
 ADVISORY_JOBS = {"baseline-scan"}
 
@@ -581,6 +588,7 @@ CONTRACT_STRINGS = {
     "pytest-xdist": "pyproject.toml",
     "pytest-cov": "pyproject.toml",
     "--renames": "tools/generate_validation_report.py",
+    "--tooling-changed": "tools/generate_validation_report.py",
     "--observation": "tools/baseline_check.py",
 }
 
@@ -832,7 +840,12 @@ def test_validator_cache_restores_are_source_hash_scoped():
     assert expected in workflow
     assert expected in VALIDATOR_CACHE_WORKFLOW.read_text(encoding="utf-8")
     baseline = "md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-"
-    assert baseline in CI_WORKFLOW.read_text(encoding="utf-8")
+    for job, name in (
+        ("baseline-scan", "Look up the base commit's baseline"),
+        ("report", "Restore validation baseline"),
+    ):
+        restore = workflow_step(job, name)
+        assert restore["with"]["restore-keys"].startswith(baseline)
 
 
 def test_validation_config_reaches_every_validator_run():
