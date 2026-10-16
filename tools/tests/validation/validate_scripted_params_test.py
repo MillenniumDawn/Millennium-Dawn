@@ -773,8 +773,7 @@ def test_discovered_contract_with_only_optional_params_is_not_registered(tmp_pat
 def test_tag_set_accepts_both_country_tags_and_aliases(tmp_path):
     _write(
         tmp_path / "common" / "country_tags" / "00_countries.txt",
-        "# Country tags\n"
-        '\nUSA = "countries/USA.txt"\nGER = "countries/Germany.txt"\n',
+        '# Country tags\n\nUSA = "countries/USA.txt"\nGER = "countries/Germany.txt"\n',
     )
     _write(
         tmp_path / "common" / "country_tag_aliases" / "00_aliases.txt",
@@ -1221,13 +1220,11 @@ def test_splitting_statements_preserves_influence_values_and_errors(
         ("hidden_effect = { plain_effect = yes }", False),
         ("plain_effect = yes add_stability = 0.1", False),
         (
-            "set_temp_variable = { amount = 1 }\n"
-            "test_effect = yes add_stability = 0.1",
+            "set_temp_variable = { amount = 1 }\ntest_effect = yes add_stability = 0.1",
             True,
         ),
         (
-            "set_temp_variable = { amount = 1 }\n"
-            "hidden_effect = { test_effect = yes }",
+            "set_temp_variable = { amount = 1 }\nhidden_effect = { test_effect = yes }",
             False,
         ),
         ("test_effect = yes", True),
