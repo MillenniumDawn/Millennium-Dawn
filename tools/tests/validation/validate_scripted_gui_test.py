@@ -478,16 +478,7 @@ def test_button_origo_fails_strict_cli(tmp_path, write_path, monkeypatch):
     monkeypatch.setattr(
         sys,
         "argv",
-        [
-            "validate_scripted_gui.py",
-            "--path",
-            str(tmp_path),
-            "--strict",
-            "--no-color",
-            "--no-cache",
-            "--workers",
-            "1",
-        ],
+        ["validate_scripted_gui.py", "--path", str(tmp_path), "--strict"],
     )
 
     with pytest.raises(SystemExit) as result:
