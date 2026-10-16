@@ -10,7 +10,6 @@ import standardize_focus_tree as focus_tree
 import standardize_history as history
 import standardize_localisation as localisation
 import standardize_mio as mio
-import standardize_staged
 import strip_idea_allowed_gates as idea_gates
 from common_utils import (
     BaseStandardizer,
@@ -761,35 +760,3 @@ def test_mio_fallbacks_and_strip_gate_cli(tmp_path, monkeypatch):
     assert (removed, skipped, failed) == (1, 0, False)
     assert "allowed" not in _read(idea)
     assert list(idea.parent.glob("ideas.txt.backup.*"))
-
-
-def test_standardize_staged_in_process_routes_and_reports(tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    focus_file = tmp_path / "common" / "national_focus" / "TST.txt"
-    focus_file.parent.mkdir(parents=True)
-    _write(focus_file, "focus_tree = {\n\tfocus = {\n\t\tid = TST_focus\n\t}\n}\n")
-    other = tmp_path / "README.txt"
-    _write(other, "plain\n")
-    monkeypatch.setattr(
-        sys,
-        "argv",
-        [
-            "standardize_staged.py",
-            "common/national_focus/TST.txt",
-            "README.txt",
-            "missing.txt",
-        ],
-    )
-    assert standardize_staged.main() == 1
-    assert "focus = {" in _read(focus_file)
-
-
-def test_standardize_staged_error_is_nonzero(monkeypatch):
-    monkeypatch.setattr(sys, "argv", ["standardize_staged.py", "events/TST.txt"])
-
-    def fail_standardize(*_args):
-        raise RuntimeError("boom")
-
-    monkeypatch.setattr(standardize_staged, "standardize_file", fail_standardize)
-    monkeypatch.setattr(standardize_staged.os.path, "exists", lambda _path: True)
-    assert standardize_staged.main() == 1

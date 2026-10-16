@@ -10,6 +10,7 @@ import os
 
 import pytest
 import sprite_index
+from validate_gfx_references import _load_vanilla_sprite_manifest
 
 
 @pytest.fixture(autouse=True)
@@ -82,6 +83,12 @@ def test_vanilla_names_join_the_index_when_included(tmp_path, monkeypatch):
         "GFX_van",
         "GFX_mod",
     }
+
+
+def test_name_index_does_not_fold_in_the_vanilla_manifest(tmp_path):
+    # The icon checks the manifest fed are opt-in and kept out of CI.
+    assert _load_vanilla_sprite_manifest()
+    assert not sprite_index.build_sprite_index(str(tmp_path), include_vanilla=True)
 
 
 def test_mod_texture_overrides_a_vanilla_sprite_of_the_same_name(tmp_path, monkeypatch):

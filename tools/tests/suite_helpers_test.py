@@ -2,8 +2,10 @@
 
 import json
 
+import pytest
 from shared.paths import TOOLS_DIR
 from shared.suite import (
+    assert_findings,
     collecting_validator,
     initialize_git_repository,
     issue_dict,
@@ -28,6 +30,33 @@ def test_collecting_validator_appends_results_and_severity():
     wrapped._report(["a", "b"], "ok", "fail", severity="error", category="x")
     assert wrapped.collected == ["a", "b"]
     assert wrapped.last_severity == "error"
+
+
+@pytest.mark.parametrize(
+    ("results", "expected", "passes"),
+    (
+        (["a - b"], ["a - b"], True),
+        (["a - b"], [("a", "b")], True),
+        (["a - b"], ["a"], False),
+        (["a - b"], [], False),
+        ([], [("a",)], False),
+        (["a - b"], [("a",), ("b",)], False),
+    ),
+    ids=(
+        "whole finding",
+        "fragments",
+        "string is not a fragment",
+        "extra finding",
+        "missing finding",
+        "one finding for two entries",
+    ),
+)
+def test_assert_findings_matches_each_finding_once(results, expected, passes):
+    if passes:
+        assert_findings(results, expected)
+    else:
+        with pytest.raises(AssertionError):
+            assert_findings(results, expected)
 
 
 def test_issue_dict_defaults():

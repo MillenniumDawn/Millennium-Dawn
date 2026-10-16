@@ -1,81 +1,195 @@
-"""Unit tests for merge_gfx_entries de-duplication in gfx_entry_generator."""
+"""GFX entry generator: image scanning, the merge into an existing .gfx file,
+each generator's naming rule, the focus titlebar and scripted GUI files, and
+the menu."""
 
-from gfx_entry_generator import (
-    _build_scripted_gui_text,
-    _extract_manual_body,
-    generate_decisions,
-    generate_decisions_desc,
-    generate_goals,
-    generate_modifier_icons,
-    generate_scripted_gui,
-    merge_gfx_entries,
-)
+import gfx_entry_generator as generator
+import pytest
+from shared.paths import REPO_ROOT
+from shared.suite import read_text, write_text
 
 
-def _render(name, tex):
-    return f'\tspriteType = {{\n\t\tname = "{name}"\n\t\ttexturefile = "{tex}"\n\t}}\n'
+def _render(name, texture):
+    return (
+        f'\tspriteType = {{\n\t\tname = "{name}"\n\t\ttexturefile = "{texture}"\n\t}}\n'
+    )
 
 
-def _file(tmp_path, *blocks):
-    p = tmp_path / "t.gfx"
-    p.write_text("spriteTypes = {\n" + "".join(blocks) + "}\n", encoding="utf-8")
-    return p
+def _gfx_file(tmp_path, *blocks):
+    return write_text(tmp_path / "t.gfx", "spriteTypes = {\n" + "".join(blocks) + "}\n")
+
+
+def _images(root, directory, *names):
+    """Touch image files under `directory`, and make the interface folder."""
+    for name in names:
+        path = root / directory / name
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(b"fixture")
+    (root / "interface").mkdir(exist_ok=True)
+
+
+def _crlf_only(path):
+    raw = path.read_bytes()
+    return 0 < raw.count(b"\r\n") == raw.count(b"\n") == raw.count(b"\r")
+
+
+# ---- scanning and parsing ----------------------------------------------------
+
+
+def test_scan_images_finds_image_files_recursively_in_name_order(tmp_path):
+    _images(tmp_path, "scan/nested", "B.DDS", "a.png", "c.TgA", "ignored.jpg")
+    write_text(tmp_path / "scan" / "not-an-image.txt", "fixture")
+
+    files = generator.scan_images(tmp_path / "scan")
+
+    assert [path.name for path in files] == ["a.png", "B.DDS", "c.TgA"]
+    assert generator.rel_texture_path(files[0], tmp_path) == "scan/nested/a.png"
+
+
+def test_check_duplicate_reports_the_second_use_of_a_name():
+    seen = set()
+
+    assert not generator.check_duplicate("GFX_a", seen, "a.png")
+    assert generator.check_duplicate("GFX_a", seen, "other.png")
+
+
+def test_named_blocks_are_parsed_with_whatever_fields_they_have():
+    parsed = generator._parse_named_blocks(
+        _render("GFX_good", "gfx/good.dds")
+        + '\tspriteType = {\n\t\tname = "GFX_no_texture"\n\t}\n'
+        + '\tspriteType = {\n\t\ttexturefile = "gfx/no_name.dds"\n\t}\n'
+        # An unclosed block ends the parse.
+        + "\tspriteType = {\n"
+    )
+
+    assert [(name, texture) for name, texture, _start, _end in parsed] == [
+        ("GFX_good", "gfx/good.dds"),
+        ("GFX_no_texture", None),
+        (None, "gfx/no_name.dds"),
+    ]
+    assert generator._match_brace("{ nested { value } }", 0) == 19
+    with pytest.raises(ValueError, match="Unmatched"):
+        generator._match_brace("{", 0)
+
+
+def test_text_helpers_leave_text_alone_without_a_complete_block_or_marker():
+    begin = generator.SG_MANUAL_BEGIN
+
+    assert generator._remove_block_by_name('name = "GFX_a"', "GFX_a")[1] is False
+    assert (
+        generator._remove_block_by_name('spriteType = { name = "GFX_a"', "GFX_a")[1]
+        is False
+    )
+    assert generator._strip_region("before\nafter", "BEGIN", "END") == "before\nafter"
+    assert generator._strip_region("before\nBEGIN\nbody", "BEGIN", "END") == "before\n"
+    assert generator._extract_manual_body("no markers") == ""
+    assert generator._extract_manual_body(f"{begin}\nbody") == ""
+    assert (
+        generator._remove_tag_headers("### keep ###\n### remove ###", ["remove"])
+        == "### keep ###"
+    )
+    assert generator._collapse_blanks("a\n\n\n\nb") == "a\n\nb"
+
+
+def test_missing_file_reads_as_empty_and_a_failed_write_is_reported(tmp_path, capsys):
+    assert generator._read_lf(tmp_path / "missing.gfx") == ""
+
+    generator._write_with_newline(tmp_path, "text", "\n")
+
+    assert "Failed to write" in capsys.readouterr().out
+
+
+def test_long_name_lists_are_capped():
+    assert generator._format_names(["b", "a"], cap=3) == "a, b"
+    assert generator._format_names(["0", "1", "2", "3"], cap=2).endswith("+2 more")
+
+
+# ---- merging into an existing .gfx file --------------------------------------
+
+
+def test_merge_adds_changes_and_keeps_orphans_protected_names_and_crlf(tmp_path):
+    protected = frozenset({"GFX_protected"})
+    path = write_text(
+        tmp_path / "entries.gfx",
+        (
+            "spriteTypes = {\n"
+            + _render("GFX_change", "old.dds")
+            + _render("GFX_orphan", "orphan.dds")
+            + _render("GFX_protected", "external.dds")
+            + "}\n"
+        ).replace("\n", "\r\n"),
+    )
+    entries = {
+        "GFX_change": "new.dds",
+        "GFX_new": "new-entry.dds",
+        "GFX_protected": "local.dds",
+    }
+
+    result = generator.merge_gfx_entries(path, entries, _render, protected=protected)
+
+    assert result[:5] == (["GFX_new"], ["GFX_change"], ["GFX_orphan"], [], True)
+    text = read_text(path)
+    assert "new.dds" in text and "old.dds" not in text
+    # A protected name keeps the texture it already points at.
+    assert "external.dds" in text and "local.dds" not in text
+    assert "GFX_orphan" in text
+    assert _crlf_only(path)
+    # Nothing is written when the file is already up to date.
+    assert (
+        generator.merge_gfx_entries(path, entries, _render, protected=protected)[4]
+        is False
+    )
+
+
+def test_merge_report_names_a_texture_mismatch_or_says_up_to_date(capsys):
+    generator._print_merge_report(
+        "entries.gfx",
+        ["new"],
+        ["changed"],
+        ["orphan"],
+        ["duplicate"],
+        True,
+        [("duplicate", "kept", "dropped")],
+    )
+    report = capsys.readouterr().out
+    assert "TEXTURE MISMATCH" in report and "already up to date" not in report
+
+    generator._print_merge_report("entries.gfx", [], [], [], [], False)
+    assert "already up to date" in capsys.readouterr().out
 
 
 def test_dedup_same_texture(tmp_path):
-    p = _file(
-        tmp_path,
-        _render("GFX_a", "gfx/a.dds"),
-        _render("GFX_a", "gfx/a.dds"),
-        _render("GFX_b", "gfx/b.dds"),
-    )
-    new, changed, orphaned, deduped, written, conflicts = merge_gfx_entries(
-        p, {"GFX_a": "gfx/a.dds", "GFX_b": "gfx/b.dds"}, _render
-    )
-    out = p.read_text(encoding="utf-8")
-    assert deduped == ["GFX_a"]
-    assert conflicts == []
-    assert out.count('name = "GFX_a"') == 1
-    assert out.count('name = "GFX_b"') == 1
-    assert written is True
-
-
-def test_generated_goals_shine_headers_do_not_trail(tmp_path):
-    goals = tmp_path / "gfx" / "interface" / "goals"
-    goals.mkdir(parents=True)
-    (goals / "a.dds").write_bytes(b"x")
-    (tmp_path / "interface").mkdir()
-
-    generate_goals(tmp_path, gfxbool=0)
-
-    shine = (tmp_path / "interface" / "goals_shine.gfx").read_text(encoding="utf-8")
-    assert "spriteType = { \n" not in shine
-
-
-def test_dedup_is_idempotent(tmp_path):
-    p = _file(
+    path = _gfx_file(
         tmp_path,
         _render("GFX_a", "gfx/a.dds"),
         _render("GFX_a", "gfx/a.dds"),
         _render("GFX_b", "gfx/b.dds"),
     )
     entries = {"GFX_a": "gfx/a.dds", "GFX_b": "gfx/b.dds"}
-    merge_gfx_entries(p, entries, _render)
-    second = merge_gfx_entries(p, entries, _render)
-    assert second[3] == []  # nothing left to de-duplicate
-    assert second[4] is False  # no write on the second pass
+
+    _new, _changed, _orphaned, deduped, written, conflicts = (
+        generator.merge_gfx_entries(path, entries, _render)
+    )
+
+    out = read_text(path)
+    assert deduped == ["GFX_a"]
+    assert conflicts == []
+    assert out.count('name = "GFX_a"') == 1
+    assert out.count('name = "GFX_b"') == 1
+    assert written is True
+    # The second pass finds nothing to remove and writes nothing.
+    assert generator.merge_gfx_entries(path, entries, _render)[3:5] == ([], False)
 
 
 def test_dedup_divergent_texture_is_reported(tmp_path):
-    p = _file(
-        tmp_path,
-        _render("GFX_a", "gfx/a.dds"),
-        _render("GFX_a", "gfx/a2.dds"),
+    path = _gfx_file(
+        tmp_path, _render("GFX_a", "gfx/a.dds"), _render("GFX_a", "gfx/a2.dds")
     )
-    _, _, _, deduped, _, conflicts = merge_gfx_entries(
-        p, {"GFX_a": "gfx/a.dds"}, _render
+
+    _, _, _, deduped, _, conflicts = generator.merge_gfx_entries(
+        path, {"GFX_a": "gfx/a.dds"}, _render
     )
-    out = p.read_text(encoding="utf-8")
+
+    out = read_text(path)
     assert deduped == ["GFX_a"]
     assert conflicts == [("GFX_a", "gfx/a.dds", "gfx/a2.dds")]
     assert out.count('name = "GFX_a"') == 1
@@ -83,38 +197,257 @@ def test_dedup_divergent_texture_is_reported(tmp_path):
 
 
 def test_dedup_removes_trailing_inline_comment(tmp_path):
-    dup_with_comment = (
-        "\tspriteType = {\n"
-        '\t\tname = "GFX_a"\n'
-        '\t\ttexturefile = "gfx/a.dds"\n'
-        "\t} # duplicate, remove me\n"
+    duplicate = _render("GFX_a", "gfx/a.dds").replace(
+        "\t}\n", "\t} # duplicate, remove me\n"
     )
-    p = _file(
+    path = _gfx_file(
         tmp_path,
         _render("GFX_a", "gfx/a.dds"),
-        dup_with_comment,
+        duplicate,
         _render("GFX_b", "gfx/b.dds"),
     )
-    merge_gfx_entries(p, {"GFX_a": "gfx/a.dds", "GFX_b": "gfx/b.dds"}, _render)
-    out = p.read_text(encoding="utf-8")
+
+    generator.merge_gfx_entries(
+        path, {"GFX_a": "gfx/a.dds", "GFX_b": "gfx/b.dds"}, _render
+    )
+
+    out = read_text(path)
     assert "remove me" not in out
     assert out.count('name = "GFX_a"') == 1
 
 
 def test_dedup_of_last_block_keeps_closing_brace(tmp_path):
-    p = _file(
+    path = _gfx_file(
         tmp_path,
         _render("GFX_b", "gfx/b.dds"),
         _render("GFX_a", "gfx/a.dds"),
         _render("GFX_a", "gfx/a.dds"),
     )
-    merge_gfx_entries(p, {"GFX_a": "gfx/a.dds", "GFX_b": "gfx/b.dds"}, _render)
-    out = p.read_text(encoding="utf-8")
+
+    generator.merge_gfx_entries(
+        path, {"GFX_a": "gfx/a.dds", "GFX_b": "gfx/b.dds"}, _render
+    )
+
+    out = read_text(path)
     assert out.count('name = "GFX_a"') == 1
     assert out.rstrip().endswith("}")
 
 
-# --- generate_scripted_gui ---------------------------------------------------
+# ---- naming rule of each generator -------------------------------------------
+
+# A prefix the file name already carries is not added twice, and two files
+# that map to one name give one entry.
+# case: (generator, image folder, output file, {image file: sprite name})
+_NAMING_CASES = {
+    "event pictures": (
+        "generate_event_pictures",
+        "gfx/event_pictures",
+        "MD_eventpictures.gfx",
+        {
+            "plain.dds": "GFX_plain",
+            "nested/GFX_existing.png": "GFX_existing",
+            "nested/GFX_existing.tga": "GFX_existing",
+        },
+    ),
+    "ideas": (
+        "generate_ideas",
+        "gfx/interface/ideas",
+        "MD_ideas.gfx",
+        {
+            "idea_reform.dds": "GFX_idea_reform",
+            "reform.png": "GFX_idea_reform",
+            "traits_strip.dds": "GFX_idea_traits_strip",
+        },
+    ),
+    "party icons": (
+        "generate_party_icons",
+        "gfx/texticons/parties_icons",
+        "MD_parties_icons.gfx",
+        {"social_democrat.dds": "GFX_social_democrat"},
+    ),
+    "intelligence agencies": (
+        "generate_intelligence_icons",
+        "gfx/interface/operatives/agencies",
+        "MD_intelligence_icons.gfx",
+        {
+            "agency_logo_PER.dds": "GFX_intelligence_agency_logo_PER",
+            "GER.png": "GFX_intelligence_agency_logo_GER",
+        },
+    ),
+    "decisions": (
+        "generate_decisions",
+        "gfx/interface/decisions",
+        "MD_decisions.gfx",
+        {
+            "regular/trade.tga": "GFX_decision_trade",
+            "regular/decision_category_reform.png": "GFX_decision_category_reform",
+        },
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("function", "folder", "output", "names"),
+    _NAMING_CASES.values(),
+    ids=_NAMING_CASES,
+)
+def test_generator_names_each_sprite_once(tmp_path, function, folder, output, names):
+    _images(tmp_path, folder, *names)
+
+    getattr(generator, function)(tmp_path)
+
+    text = read_text(tmp_path / "interface" / output)
+    for name in set(names.values()):
+        assert text.count(f'name = "{name}"') == 1
+
+
+def _decisions_tree(root):
+    _images(
+        root,
+        "gfx/interface/decisions",
+        # Text icons sit under decision_text/. The last one does not.
+        "russia/decision_text/SOV_desctext_wagner.dds",
+        "netherlands/decision_text/hol_voc_category_picture.dds",
+        "politics/propaganda.dds",
+    )
+
+
+def test_decisions_desc_uses_bare_gfx_and_only_scans_decision_text(tmp_path):
+    _decisions_tree(tmp_path)
+
+    generator.generate_decisions_desc(tmp_path)
+
+    out = read_text(tmp_path / "interface" / "MD_decisions_desc.gfx")
+    # Bare GFX_<stem>, never a decision_ prefix: the loc key is £<stem>.
+    assert 'name = "GFX_SOV_desctext_wagner"' in out
+    assert 'name = "GFX_hol_voc_category_picture"' in out
+    assert "GFX_decision_hol_voc_category_picture" not in out
+    assert "propaganda" not in out
+    assert "legacy_lazy_load = no" in out
+
+
+def test_decisions_skips_decision_text(tmp_path):
+    _decisions_tree(tmp_path)
+
+    generator.generate_decisions(tmp_path)
+
+    out = read_text(tmp_path / "interface" / "MD_decisions.gfx")
+    assert 'name = "GFX_decision_propaganda"' in out
+    assert "desctext_wagner" not in out
+    assert "hol_voc_category_picture" not in out
+
+
+# ---- goals -------------------------------------------------------------------
+
+
+def test_goals_scan_recursively_and_write_one_shine_per_name(tmp_path):
+    _images(
+        tmp_path,
+        "gfx/interface/goals",
+        "alpha.dds",
+        "nested/alpha.png",
+        "nested/gamma.png",
+        "beta.tga",
+    )
+
+    generator.generate_goals(tmp_path, gfxbool=1)
+
+    output = read_text(tmp_path / "interface" / "goals.gfx")
+    shine = read_text(tmp_path / "interface" / "goals_shine.gfx")
+    assert output.count('name = "GFX_alpha"') == 1
+    assert "gfx/interface/goals/nested/gamma.png" in output
+    assert 'name = "GFX_gamma_shine"' in shine
+    assert 'name = "GFX_beta_shine"' in shine
+    assert 'effectfile = "gfx/FX/buttonstate.lua"' in shine
+    assert "spriteType = { \n" not in shine
+
+
+def test_goals_prompt_repeats_until_the_prefix_choice_is_valid(
+    tmp_path, monkeypatch, capsys
+):
+    _images(tmp_path, "gfx/interface/goals", "goal.dds")
+    answers = iter(["", "not a number", "4", "0"])
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(answers))
+
+    generator.generate_goals(tmp_path)
+
+    # The answer 0 means no GFX_ prefix.
+    assert 'name = "goal"' in read_text(tmp_path / "interface" / "goals.gfx")
+    assert "Input cannot be empty" in capsys.readouterr().out
+
+
+# ---- modifier icons ----------------------------------------------------------
+
+_MODIFIER_ICONS = "gfx/texticons/modifier_icons"
+_MODIFIER_GFX = "interface/modifiericons_texticons.gfx"
+
+
+def _modifier_icons_tree(root):
+    _images(
+        root,
+        _MODIFIER_ICONS,
+        "air_spirit_texticon.dds",
+        "Aircraft_Company_cost_factor.dds",
+    )
+
+
+def test_modifier_icons_emits_gfx_full_stem(tmp_path):
+    _modifier_icons_tree(tmp_path)
+
+    generator.generate_modifier_icons(tmp_path)
+
+    out = read_text(tmp_path / _MODIFIER_GFX)
+    assert 'name = "GFX_air_spirit_texticon"' in out
+    assert f'texturefile = "{_MODIFIER_ICONS}/air_spirit_texticon.dds"' in out
+    assert 'name = "GFX_Aircraft_Company_cost_factor"' in out
+    assert f'texturefile = "{_MODIFIER_ICONS}/Aircraft_Company_cost_factor.dds"' in out
+    assert "legacy_lazy_load = no" in out
+    # A second run changes nothing.
+    generator.generate_modifier_icons(tmp_path)
+    assert read_text(tmp_path / _MODIFIER_GFX) == out
+
+
+def test_modifier_icons_preserves_existing_gfx_name(tmp_path):
+    # A block already in the file keeps its name even when the name the stem
+    # would give differs. Renaming it would orphan the .gui references.
+    _modifier_icons_tree(tmp_path)
+    write_text(
+        tmp_path / _MODIFIER_GFX,
+        "spriteTypes = {\n"
+        + _render(
+            "GFX_Aircraft_Company_cost_factor_texticon",
+            f"{_MODIFIER_ICONS}/Aircraft_Company_cost_factor.dds",
+        )
+        + "}\n",
+    )
+
+    generator.generate_modifier_icons(tmp_path)
+
+    out = read_text(tmp_path / _MODIFIER_GFX)
+    assert 'name = "GFX_Aircraft_Company_cost_factor_texticon"' in out
+    assert 'name = "GFX_Aircraft_Company_cost_factor"' not in out
+
+
+def test_modifier_icons_protected_set_keeps_role_icon_texturefile(tmp_path):
+    # GFX_anti_air_texticon is a vanilla role icon. It keeps its texture, and
+    # the local file with the same stem is not added under the same name.
+    role_icon = "gfx/interface/equipmentdesigner/tanks/role_icons/role_icon_3.dds"
+    _images(tmp_path, _MODIFIER_ICONS, "anti_air_texticon.dds")
+    write_text(
+        tmp_path / _MODIFIER_GFX,
+        "spriteTypes = {\n\tSpriteType = {\n"
+        '\t\tname = "GFX_anti_air_texticon"\n'
+        f'\t\ttexturefile = "{role_icon}"\n\t}}\n}}\n',
+    )
+
+    generator.generate_modifier_icons(tmp_path)
+
+    out = read_text(tmp_path / _MODIFIER_GFX)
+    assert f'texturefile = "{role_icon}"' in out
+    assert out.count('name = "GFX_anti_air_texticon"') == 1
+
+
+# ---- scripted GUI ------------------------------------------------------------
 
 
 def test_scripted_gui_text_groups_by_tag():
@@ -122,10 +455,11 @@ def test_scripted_gui_text_groups_by_tag():
         "PER": [("GFX_ahmadinejad_portrait", "gfx/x/PER/ahmadinejad_portrait.dds")],
         "ALG": [("GFX_algiers_green", "gfx/x/ALG/algiers_green.dds")],
     }
-    text = _build_scripted_gui_text(per_tag, "")
+
+    text = generator._build_scripted_gui_text(per_tag, "")
+
     assert text.startswith("spriteTypes = {")
     assert text.rstrip().endswith("}")
-    # sorted tags: ALG before PER
     assert text.index("# ALG") < text.index("# PER")
     assert 'name = "GFX_ahmadinejad_portrait"' in text
     assert "BEGIN GENERATED" in text and "END GENERATED" in text
@@ -133,190 +467,193 @@ def test_scripted_gui_text_groups_by_tag():
 
 def test_scripted_gui_manual_region_round_trips():
     manual = '\tprogressbartype = {\n\t\tname = "GFX_bar"\n\t}'
-    text = _build_scripted_gui_text({"PER": [("GFX_a", "p/a.dds")]}, manual)
+
+    text = generator._build_scripted_gui_text({"PER": [("GFX_a", "p/a.dds")]}, manual)
+
     assert 'name = "GFX_bar"' in text
-    assert _extract_manual_body(text).strip() == manual.strip()
+    assert generator._extract_manual_body(text).strip() == manual.strip()
 
 
-def test_generate_scripted_gui_scans_and_preserves_manual(tmp_path):
-    root = tmp_path
-    per = root / "gfx" / "interface" / "scripted_gui" / "countries" / "PER"
-    per.mkdir(parents=True)
-    (per / "ahmadinejad_portrait.dds").write_bytes(b"x")
-    (root / "interface").mkdir()
-    generate_scripted_gui(root)
-    out = (root / "interface" / "MD_scripted_gui.gfx").read_text(encoding="utf-8")
-    assert 'name = "GFX_ahmadinejad_portrait"' in out
-    assert "# PER" in out
+def test_scripted_gui_scan_keeps_the_manual_region_and_crlf(tmp_path, capsys):
+    countries = "gfx/interface/scripted_gui/countries"
+    # PER and ALG both have a `z`. A folder starting with `_` is not scanned.
+    _images(
+        tmp_path,
+        countries,
+        "PER/z.dds",
+        "PER/_manual/skip.png",
+        "ALG/z.png",
+        "ALG/a.tga",
+    )
+    (tmp_path / countries / "EMPTY").mkdir()
+    out = tmp_path / "interface" / "MD_scripted_gui.gfx"
 
-    # inject a manual special, regenerate, confirm it survives
-    injected = out.replace(
+    generator.generate_scripted_gui(tmp_path)
+
+    initial = read_text(out)
+    assert initial.count('name = "GFX_z"') == 1
+    assert 'name = "GFX_a"' in initial
+    assert "# ALG" in initial
+    assert "skip" not in initial
+
+    manual = initial.replace(
         "\t# === END MANUAL ===",
-        '\tprogressbartype = {\n\t\tname = "GFX_keepme"\n\t}\n\t# === END MANUAL ===',
+        '\tprogressbartype = {\n\t\tname = "GFX_manual"\n\t}\n\t# === END MANUAL ===',
     )
-    (root / "interface" / "MD_scripted_gui.gfx").write_text(injected, encoding="utf-8")
-    generate_scripted_gui(root)
-    out2 = (root / "interface" / "MD_scripted_gui.gfx").read_text(encoding="utf-8")
-    assert 'name = "GFX_keepme"' in out2
-    assert 'name = "GFX_ahmadinejad_portrait"' in out2
+    write_text(out, manual.replace("\n", "\r\n"))
+    generator.generate_scripted_gui(tmp_path)
+
+    assert "already up to date" in capsys.readouterr().out
+
+    _images(tmp_path, countries, "ALG/b.png")
+    generator.generate_scripted_gui(tmp_path)
+
+    rewritten = read_text(out)
+    assert "GFX_manual" in rewritten and 'name = "GFX_b"' in rewritten
+    assert _crlf_only(out)
 
 
-# --- decisions vs decisions_desc split -------------------------------------
+# ---- focus titlebars ---------------------------------------------------------
+
+_TITLEBARS = "gfx/interface/focusview/titlebar"
 
 
-def _decisions_tree(root):
-    dec = root / "gfx" / "interface" / "decisions"
-    (dec / "russia" / "decision_text").mkdir(parents=True)
-    (dec / "netherlands" / "decision_text").mkdir(parents=True)
-    (dec / "politics").mkdir(parents=True)
-    (root / "interface").mkdir()
-    # text icons under decision_text/
-    (dec / "russia" / "decision_text" / "SOV_desctext_wagner.dds").write_bytes(b"x")
-    (
-        dec / "netherlands" / "decision_text" / "hol_voc_category_picture.dds"
-    ).write_bytes(b"x")
-    # a regular decision picture NOT under decision_text/
-    (dec / "politics" / "propaganda.dds").write_bytes(b"x")
-    return dec
+def _titlebar(state, suffix):
+    return f"focus_{state}_joint_{suffix}_bg.dds"
 
 
-def test_decisions_desc_uses_bare_gfx_and_only_scans_decision_text(tmp_path):
-    _decisions_tree(tmp_path)
-    generate_decisions_desc(tmp_path)
-    out = (tmp_path / "interface" / "MD_decisions_desc.gfx").read_text(encoding="utf-8")
-    # bare GFX_<stem>, never a decision_ prefix (£<stem> loc convention)
-    assert 'name = "GFX_SOV_desctext_wagner"' in out
-    assert 'name = "GFX_hol_voc_category_picture"' in out
-    assert "GFX_decision_hol_voc_category_picture" not in out
-    # non-decision_text art is not pulled into the desc file
-    assert "propaganda" not in out
-
-
-def test_decisions_skips_decision_text(tmp_path):
-    _decisions_tree(tmp_path)
-    generate_decisions(tmp_path)
-    out = (tmp_path / "interface" / "MD_decisions.gfx").read_text(encoding="utf-8")
-    # the regular picture is emitted with the decision_ prefix
-    assert 'name = "GFX_decision_propaganda"' in out
-    # decision_text/ art is excluded from MD_decisions.gfx entirely
-    assert "desctext_wagner" not in out
-    assert "hol_voc_category_picture" not in out
-
-
-def test_generate_scripted_gui_skips_underscore_dirs(tmp_path):
-    root = tmp_path
-    per = root / "gfx" / "interface" / "scripted_gui" / "countries" / "PER"
-    (per / "_manual").mkdir(parents=True)
-    (per / "bushehr_red.dds").write_bytes(b"x")
-    (per / "_manual" / "propaganda_green.dds").write_bytes(b"x")
-    (root / "interface").mkdir()
-    generate_scripted_gui(root)
-    out = (root / "interface" / "MD_scripted_gui.gfx").read_text(encoding="utf-8")
-    assert 'name = "GFX_bushehr_red"' in out
-    assert "propaganda_green" not in out  # _manual/ skipped
-
-
-# --- generate_modifier_icons -----------------------------------------------
-
-
-def _modifier_icons_tree(root):
-    (root / "gfx" / "texticons" / "modifier_icons").mkdir(parents=True)
-    (root / "interface").mkdir()
-    (
-        root / "gfx" / "texticons" / "modifier_icons" / "air_spirit_texticon.dds"
-    ).write_bytes(b"x")
-    (
-        root
-        / "gfx"
-        / "texticons"
-        / "modifier_icons"
-        / "Aircraft_Company_cost_factor.dds"
-    ).write_bytes(b"x")
-    return root
-
-
-def test_modifier_icons_emits_gfx_full_stem(tmp_path):
-    _modifier_icons_tree(tmp_path)
-    generate_modifier_icons(tmp_path)
-    out = (tmp_path / "interface" / "modifiericons_texticons.gfx").read_text(
-        encoding="utf-8"
+def _focus_fixture(root):
+    """Titlebar art for a full set (alpha) and two partial ones, and CRLF files
+    that already hold hand-made entries and an old generated region."""
+    _images(
+        root,
+        _TITLEBARS,
+        _titlebar("unavailable", "alpha"),
+        _titlebar("can_start", "alpha"),
+        _titlebar("completed", "alpha"),
+        _titlebar("can_start", "beta"),
+        _titlebar("unavailable", "gamma"),
     )
-    # Files whose stem already ends in _texticon: GFX_<full_stem>
-    assert 'name = "GFX_air_spirit_texticon"' in out
-    assert 'texturefile = "gfx/texticons/modifier_icons/air_spirit_texticon.dds"' in out
-    # Files without _texticon suffix: GFX_<stem> (workshop convention)
-    assert 'name = "GFX_Aircraft_Company_cost_factor"' in out
-    assert (
-        'texturefile = "gfx/texticons/modifier_icons/Aircraft_Company_cost_factor.dds"'
-        in out
-    )
-    # Every block has legacy_lazy_load = no
-    assert "legacy_lazy_load = no" in out
-
-
-def test_modifier_icons_preserves_existing_gfx_name(tmp_path):
-    """A GFX block already wired in the .gfx keeps its existing name even if the
-    stem-derived default would differ (e.g. hand-rolled MD cost-factor entries
-    with a `_texticon` suffix). This avoids orphaning and breaking .gui refs."""
-    _modifier_icons_tree(tmp_path)
-    out_path = tmp_path / "interface" / "modifiericons_texticons.gfx"
-    out_path.write_text(
+    epsilon = f"{_TITLEBARS}/{_titlebar('can_start', 'epsilon')}"
+    gfx = (
         "spriteTypes = {\n"
-        "\tspriteType = {\n"
-        '\t\tname = "GFX_Aircraft_Company_cost_factor_texticon"\n'
-        '\t\ttexturefile = "gfx/texticons/modifier_icons/Aircraft_Company_cost_factor.dds"\n'
-        "\t\tlegacy_lazy_load = no\n"
-        "\t}\n"
-        "}\n",
-        encoding="utf-8",
+        "\t# comment before generated content\n"
+        + _render(
+            "GFX_focus_unavailable_joint_alpha",
+            f"{_TITLEBARS}/{_titlebar('unavailable', 'alpha')}",
+        )
+        + _render("GFX_focus_can_start_joint_epsilon", epsilon)
+        + _render("GFX_focus_current_joint_epsilon", epsilon)
+        + _render("GFX_focus_can_start_joint_delta", "gfx/hand/custom.dds")
+        + "\t### alpha ###\n"
+        + f"{generator.GFX_BEGIN}\nold generated\n{generator.GFX_END}\n"
+        + "}\n"
     )
-    generate_modifier_icons(tmp_path)
-    out = out_path.read_text(encoding="utf-8")
-    # The existing GFX_Aircraft_Company_cost_factor_texticon block is preserved verbatim
-    assert 'name = "GFX_Aircraft_Company_cost_factor_texticon"' in out
-    # No duplicate GFX_Aircraft_Company_cost_factor block was added
-    assert 'name = "GFX_Aircraft_Company_cost_factor"' not in out
+    styles = (
+        "style = {\n"
+        "\tname = JOINT_alpha_focus_style\n"
+        "\tavailable = GFX_focus_can_start_joint_alpha\n"
+        "}\n"
+        f"{generator.STYLE_BEGIN}\nold styles\n{generator.STYLE_END}\n"
+    )
+    gfx_path = write_text(
+        root / "interface" / "nationalfocusview.gfx", gfx.replace("\n", "\r\n")
+    )
+    styles_path = write_text(
+        root / "common" / "national_focus" / "00_titlebar_styles.txt",
+        styles.replace("\n", "\r\n"),
+    )
+    return gfx_path, styles_path
 
 
-def test_modifier_icons_protected_set_keeps_role_icon_texturefile(tmp_path):
-    """A protected GFX name (e.g. GFX_anti_air_texticon role icon) keeps its
-    existing non-modifier_icons texturefile. The local .dds with the same stem
-    is left unreferenced rather than added under a duplicate GFX name; the
-    role icon block survives intact so vanilla references keep resolving."""
-    (tmp_path / "gfx" / "texticons" / "modifier_icons").mkdir(parents=True)
-    (tmp_path / "interface").mkdir()
-    (
-        tmp_path / "gfx" / "texticons" / "modifier_icons" / "anti_air_texticon.dds"
-    ).write_bytes(b"x")
-    out_path = tmp_path / "interface" / "modifiericons_texticons.gfx"
-    out_path.write_text(
-        "spriteTypes = {\n"
-        "\tSpriteType = {\n"
-        '\t\tname = "GFX_anti_air_texticon"\n'
-        '\t\ttexturefile = "gfx/interface/equipmentdesigner/tanks/role_icons/role_icon_3.dds"\n'
-        "\t}\n"
-        "}\n",
-        encoding="utf-8",
-    )
-    generate_modifier_icons(tmp_path)
-    out = out_path.read_text(encoding="utf-8")
-    # The role-icon texturefile survives untouched
-    assert (
-        'texturefile = "gfx/interface/equipmentdesigner/tanks/role_icons/role_icon_3.dds"'
-        in out
-    )
-    # Only the role-icon block exists (no duplicate local entry was added)
-    assert out.count('name = "GFX_anti_air_texticon"') == 1
+def test_focus_titlebars_fill_in_partial_sets_and_add_their_styles(tmp_path, capsys):
+    gfx, styles = _focus_fixture(tmp_path)
+
+    generator.generate_focus_titlebars(tmp_path)
+
+    output = read_text(gfx)
+    style_output = read_text(styles)
+    assert 'name = "GFX_focus_unavailable_joint_alpha"' in output
+    assert 'name = "GFX_focus_current_joint_alpha"' in output
+    assert "GFX_focus_unavailable_joint_beta" not in output
+    assert 'name = "GFX_focus_current_joint_beta"' in output
+    assert "GFX_focus_can_start_joint_delta" in output
+    assert "GFX_focus_unavailable_joint_gamma" not in output
+    assert "JOINT_beta_focus_style" in style_output
+    assert "JOINT_epsilon_focus_style" in style_output
+    assert output.count(generator.GFX_BEGIN) == 1
+    assert "Incomplete sets" in capsys.readouterr().out
+
+    generator.generate_focus_titlebars(tmp_path)
+
+    assert "0 new style(s) added" in capsys.readouterr().out
+    assert _crlf_only(gfx) and _crlf_only(styles)
 
 
-def test_modifier_icons_idempotent(tmp_path):
-    _modifier_icons_tree(tmp_path)
-    generate_modifier_icons(tmp_path)
-    first = (tmp_path / "interface" / "modifiericons_texticons.gfx").read_text(
-        encoding="utf-8"
-    )
-    generate_modifier_icons(tmp_path)
-    second = (tmp_path / "interface" / "modifiericons_texticons.gfx").read_text(
-        encoding="utf-8"
-    )
-    assert first == second
+def test_focus_titlebars_need_both_of_their_files(tmp_path, capsys):
+    (tmp_path / _TITLEBARS).mkdir(parents=True)
+
+    generator.generate_focus_titlebars(tmp_path)
+    assert "Missing file" in capsys.readouterr().out
+
+    # The .gfx file alone is not enough: the styles file is missing too.
+    write_text(tmp_path / "interface" / "nationalfocusview.gfx", "{}")
+    generator.generate_focus_titlebars(tmp_path)
+    assert "Missing file" in capsys.readouterr().out
+
+
+# ---- the menu ----------------------------------------------------------------
+
+# The menu number of each generator, in order.
+_MENU = (
+    "generate_goals",
+    "generate_event_pictures",
+    "generate_ideas",
+    "generate_party_icons",
+    "generate_intelligence_icons",
+    "generate_decisions",
+    "generate_focus_titlebars",
+    "generate_scripted_gui",
+    "generate_decisions_desc",
+    "generate_modifier_icons",
+)
+
+
+_MISSING_FOLDER = dict.fromkeys(_MENU, "Directory does not exist") | {
+    "generate_focus_titlebars": "Titlebar directory not found"
+}
+
+
+@pytest.mark.parametrize(("function", "message"), _MISSING_FOLDER.items())
+def test_generator_reports_a_missing_source_folder(tmp_path, capsys, function, message):
+    getattr(generator, function)(tmp_path)
+
+    assert message in capsys.readouterr().out
+
+
+@pytest.mark.parametrize(
+    ("selection", "function"), [(str(n), f) for n, f in enumerate(_MENU, start=1)]
+)
+def test_main_dispatches_each_menu_number(selection, function, monkeypatch):
+    calls = []
+    monkeypatch.setattr(generator, function, calls.append)
+    monkeypatch.setattr("builtins.input", lambda _prompt: selection)
+
+    generator.main()
+
+    assert calls == [REPO_ROOT]
+
+
+def test_main_rejects_invalid_input_before_dispatch(monkeypatch, capsys):
+    answers = iter(["", "not numeric", "0", "11", "2"])
+    calls = []
+    monkeypatch.setattr("builtins.input", lambda _prompt: next(answers))
+    monkeypatch.setattr(generator, "generate_event_pictures", calls.append)
+
+    generator.main()
+
+    output = capsys.readouterr().out
+    assert "Input cannot be empty" in output
+    assert "Invalid input" in output
+    assert "Invalid selection" in output
+    assert calls == [REPO_ROOT]
