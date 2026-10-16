@@ -128,7 +128,8 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - It follows effect order, direct technology guards, conditional grants, and
   `allow_without_tech = yes`. Country history through the earliest bookmark supplies
   starting technologies only for proven recipients. Tooltip effects and foreign scopes
-  cannot supply an unlock.
+  cannot supply an unlock. Starting-history DLC branches support both nested and
+  sibling `else`/`else_if` forms.
 - Scripted-effect calls share the caller's country, guards, technologies, and pending
   variants, including nested calls across files. Definitions are checked through their
   callers, not as separate executions. Recursive calls stop at an active effect.
@@ -136,6 +137,19 @@ backlogs live in GitHub issues, not here. Pipeline rules:
   consumption files.
 - It does not follow unrelated event or focus chains, substitute scripted-effect
   parameters, or resolve dynamic names, so findings need review.
+
+## validate_history.py
+
+- `history-influence-order` (WARNING): country history writes to `influence_array`
+  or `influence_array_val` need preceding `init_influence` and following
+  `sort_influence` (or its `recalculate_influence` wrapper). A later initialization
+  clears earlier writes; a sort before a later write is premature.
+- Checks track explicit country scopes, ROOT/THIS, hidden effects, and conditional
+  paths. Dated setups remain independent. Comments, tooltip blocks, unrelated
+  arrays, and countries without foreign influence writes do not require setup.
+  Arbitrary scripted effects and dynamic country scopes are not expanded.
+- Warning-only while the audited content backlog in #5825 remains. The existing
+  history CI batch selects this check for country-history changes.
 
 ## validate_events.py
 
@@ -265,6 +279,13 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 - `idea-quality` (WARNING): an idea `equipment_bonus` without `instant = yes` applies only
   to variants created afterwards. Exempt name prefixes go in
   `equipment_bonus_instant_exempt`.
+- `idea-quality` (WARNING): `weekly_war_support` and `weekly_stability` in a top-level
+  `modifier` on a `country` idea need a permanent grant to tick as intended. The check
+  reads static `add_idea(s)` and `add_timed_idea` call sites across `common/`, `events/`,
+  and `history/`; display-only `effect_tooltip` references are ignored. Timed-only ideas
+  are skipped, while mixed grants are reported. A definition with no statically resolved
+  grant is advisory because dynamic references and grants from outside those trees
+  cannot establish permanence.
 - `bonus-type-archetype-stack` (ERROR, also in `validate_mios.py`): a nested
   `equipment_bonus` naming a type category (`carrier`) and a child archetype of that type
   with the same modifier stacks twice. Helicopter operators are `type = carrier`.
@@ -443,9 +464,16 @@ backlogs live in GitHub issues, not here. Pipeline rules:
 
 - Contracts come from the `# Parameters:` block above a scripted effect, plus the
   `HARDCODED_CONTRACTS` table in the validator. Declare a parameter in the block to
-  have it checked. An effect with neither is never checked itself.
+  have its required temp variables checked. Effects without a contract still get the
+  unsupported-argument checks below.
 - `content/tool_data_drift_test.py` pins the four money and party popularity blocks. A
   blank line inside a block, or a renamed header, silently drops the contract.
+- `unsupported-effect-arguments` (WARNING): a known scripted effect called with a
+  block such as `HLS_holy_wargoal = { TARGET = FRA }` instead of `= yes`.
+- `unsupported-effect-placeholder` (WARNING): an unquoted `$NAME$` in a scripted
+  effect definition. Use scopes, temp variables, or `meta_effect` instead. Definitions,
+  comments, quoted strings, native effect blocks, and scripted trigger parameters are
+  not flagged. Both unsupported-syntax checks stay advisory pending backlog triage.
 - `call-shares-line` (ERROR): a contracted call sharing its line with another statement.
   Single-call wrappers and trailing comments are accepted. `--audit-shared-lines` adds
   uncontracted mixed lines as WARNING.
