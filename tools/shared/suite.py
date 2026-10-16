@@ -267,7 +267,7 @@ def fake_decisions_validator(*args, **kwargs):
 def decision_factory(body, basename="X.txt"):
     import validate_decisions as V
 
-    return V.DecisionFactory(body, source_basename=basename)
+    return V.DecisionFactory(body, source_path=basename)
 
 
 def event_block(event_id, *fields, kind="country_event"):

@@ -6,7 +6,7 @@ that only need to render reports.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import Dict, List, Optional, Tuple
 
 
 class Severity:
@@ -23,8 +23,8 @@ class Issue:
     line: int = 0
     validator: str = ""
     detected_by: List[str] = field(default_factory=list)
-    # Set by baseline.classify(): "new" / "existing" when a baseline was
-    # available and the issue could be keyed; None otherwise.
+    # Set by baseline.classify(): "new", "existing", "raised", or "lowered"
+    # when a baseline was available and the issue could be keyed; else None.
     baseline_status: Optional[str] = None
     # Set by baseline.tag_changed_files(): True when Issue.file is in the PR diff.
     in_diff: bool = False
@@ -103,6 +103,15 @@ class ReportContext:
     validation_scope: str = "full"
     # "available" or "unavailable" when the workflow requested a baseline.
     baseline_status: Optional[str] = None
+    # The main commit the baseline had to come from, when pinned.
+    baseline_commit: Optional[str] = None
+    # True when this run scanned the base commit instead of main's own run.
+    baseline_scanned_here: bool = False
+    # True when the PR's validator code differs from the base commit's.
+    tooling_changed: bool = False
+    # Category -> (added, dropped) by the PR's validators on main's own scan of
+    # the baseline commit; None when main has no such scan.
+    tool_effect: Optional[Dict[str, Tuple[int, int]]] = None
     # "available" or "unavailable" when --changed-files was passed.
     changed_files_status: Optional[str] = None
     # Impact reports use a separate comment marker and title.
