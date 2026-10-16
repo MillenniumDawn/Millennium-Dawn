@@ -18,6 +18,7 @@ import disk_cache
 # strip_comments is quote-aware: a '#' inside a quoted log string must survive,
 # or the orphaned quote desyncs extract_block_from_text's in-string tracking
 # and container spans are silently lost.
+from shared_utils import IDENTIFIER_BLOCK_LINE_RE as _CATEGORY_OPEN_RE
 from shared_utils import (
     ai_only_decision_categories,
     blank_quoted_strings,
@@ -573,7 +574,6 @@ _PLAYER_FACING_BLOCKS = frozenset({"available", "cancel_trigger", "bypass"})
 # pre-existing ERROR backlog in `cancel_trigger` / `bypass`.
 _CHECK_VARIABLE_BLOCK = "available"
 # Column-0 blocks in a decisions file are the decision categories.
-_CATEGORY_OPEN_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
 # All player-facing trigger scans cover the same object types.
 _PLAYER_FACING_GLOBS = [
     "common/decisions/**/*.txt",

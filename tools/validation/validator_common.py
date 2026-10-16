@@ -47,6 +47,9 @@ from shared_utils import (
 T = TypeVar("T")
 
 _ANSI_RE = re.compile(r"\033\[[0-9;]+m")
+BANKRUPTCY_GUARD_RE = re.compile(
+    r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
+)
 
 # Regex for meta_effect/meta_trigger template substitution patterns.
 # Matches identifiers containing at least one [VAR] placeholder with a non-empty
@@ -379,6 +382,11 @@ def _child_blocks(text: str, start: int, end: int) -> List[Tuple[str, int, int, 
         blocks.append((match.group(1), match.start(), match.end(), close))
         i = close + 1
     return blocks
+
+
+# Literal zero AI weights. The lookahead keeps `0.5` from reading as zero.
+FACTOR_ZERO_RE = re.compile(r"\bfactor\s*=\s*0(?:\.0+)?(?![\d.])")
+BASE_ZERO_RE = re.compile(r"\bbase\s*=\s*0(?:\.0+)?(?![\d.])")
 
 
 def casefold_index(names) -> dict:
