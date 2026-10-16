@@ -8,6 +8,7 @@ can pick.
 
 import sys
 
+import pytest
 import strip_idea_allowed_gates
 from shared.suite import read_text as _read
 from shared.suite import write_text as _write
@@ -371,6 +372,20 @@ def test_crlf_survives_the_rewrite(tmp_path):
     assert b"allowed" not in payload
 
 
+def test_rewrite_with_backup_keeps_a_copy(tmp_path):
+    idea_path = tmp_path / "ideas.txt"
+    with open(idea_path, "w", encoding="utf-8", newline="") as out:
+        out.write(_IDEA_SAMPLE)
+
+    assert process_file(str(idea_path), SLOTLESS, dry_run=False, backup=True) == (
+        1,
+        0,
+        False,
+    )
+    assert "allowed" not in idea_path.read_text(encoding="utf-8")
+    assert list(tmp_path.glob("ideas.txt.backup.*"))
+
+
 def test_unreadable_file_is_reported_not_raised(tmp_path):
     missing = str(tmp_path / "missing.txt")
     assert process_file(missing, SLOTLESS, False, False) == (0, 0, True)
@@ -393,18 +408,21 @@ def _mod_root(tmp_path):
     return root
 
 
-def test_main_sweeps_the_ideas_directory_by_default(tmp_path, monkeypatch):
+@pytest.mark.parametrize(
+    ("extra", "kept"), [((), False), (("--dry-run",), True)], ids=["write", "dry run"]
+)
+def test_main_sweeps_the_ideas_directory_by_default(tmp_path, monkeypatch, extra, kept):
     root = _mod_root(tmp_path)
     ideas = root / "common" / "ideas"
     ideas.mkdir()
     idea_file = ideas / "ideas.txt"
     _write(idea_file, _IDEA_SAMPLE)
     monkeypatch.setattr(
-        sys, "argv", ["strip_idea_allowed_gates.py", "--root", str(root)]
+        sys, "argv", ["strip_idea_allowed_gates.py", "--root", str(root), *extra]
     )
 
     assert strip_idea_allowed_gates.main() == 0
-    assert "allowed" not in _read(idea_file)
+    assert ("allowed" in _read(idea_file)) is kept
     assert "picture = gold" in _read(idea_file)
 
 

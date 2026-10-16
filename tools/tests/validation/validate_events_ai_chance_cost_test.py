@@ -172,30 +172,21 @@ def test_cli_path_under_worktrees_reports_known_cost_defect(tmp_path):
     assert "foo.1.a - ai_chance ignores the political power cost" in result.stderr
 
 
-def test_flat_weight_on_a_costed_option_is_flagged(tmp_path):
-    _write(tmp_path, "events/Ev.txt", _two_options(_PP_COST + _FLAT))
-    v = _validator(tmp_path, check_ai_chance_costs=True)
-    v.validate_ai_chance_ignores_cost()
-    assert [(i.message, i.file, i.line) for i in v._issues] == [
-        ("foo.1.a - ai_chance ignores the political power cost", "Ev.txt", 8)
-    ]
-    assert v._issues[0].category == "event-ai-chance-ignores-cost"
-    assert v.warnings_found == 1
-    assert v.errors_found == 0
+def test_flag_is_registered_on_the_parser():
+    parser = argparse.ArgumentParser()
+    _add_extra_args(parser)
+    assert parser.parse_args([]).check_ai_chance_costs is False
+    assert parser.parse_args(["--check-ai-chance-costs"]).check_ai_chance_costs is True
 
 
-def test_validator_reads_the_mods_scripted_effects(tmp_path):
-    _write(tmp_path, "common/scripted_effects/00_budget_effects.txt", _SCRIPTED_EFFECTS)
-    _write(
-        tmp_path,
-        "events/Ev.txt",
-        _two_options("\t\tone_office_construction = yes\n" + _FLAT),
-    )
-    v = _validator(tmp_path, check_ai_chance_costs=True)
-    v.validate_ai_chance_ignores_cost()
-    assert [i.message for i in v._issues] == [
-        "foo.1.a - ai_chance ignores the treasury cost"
-    ]
+_GATE = "\t\ttrigger = { has_country_flag = foo_flag }\n"
+_ALL_GATED = _event(
+    _option("foo.1.a", _GATE + _PP_COST + _FLAT),
+    _option("foo.1.b", "\t\ttrigger = { NOT = { has_country_flag = foo_flag } }\n"),
+)
+_PP_BLIND = "foo.1.a - ai_chance ignores the political power cost"
+_TREASURY_BLIND = "foo.1.a - ai_chance ignores the treasury cost"
+_BUDGET = "common/scripted_effects/00_budget_effects.txt"
 
 
 def test_check_is_off_without_the_flag(tmp_path):
@@ -205,60 +196,104 @@ def test_check_is_off_without_the_flag(tmp_path):
     assert not [i for i in v._issues if i.category == "event-ai-chance-ignores-cost"]
 
 
-def test_flag_is_registered_on_the_parser():
-    parser = argparse.ArgumentParser()
-    _add_extra_args(parser)
-    assert parser.parse_args([]).check_ai_chance_costs is False
-    assert parser.parse_args(["--check-ai-chance-costs"]).check_ai_chance_costs is True
+# case: (files, (message, line) per finding in Ev.txt)
+_VALIDATOR_CASES = {
+    "flat weight on a costed option": (
+        {"events/Ev.txt": _two_options(_PP_COST + _FLAT)},
+        [(_PP_BLIND, 8)],
+    ),
+    "empty tree": ({}, []),
+    "the mod's scripted effects": (
+        {
+            _BUDGET: _SCRIPTED_EFFECTS,
+            "events/Ev.txt": _two_options(
+                "\t\tone_office_construction = yes\n" + _FLAT
+            ),
+        },
+        [(_TREASURY_BLIND, 8)],
+    ),
+    "stored signs from the whole mod": (
+        {
+            _BUDGET: _SCRIPTED_EFFECTS,
+            "common/decisions/TAG.txt": "TAG_decision = {\n"
+            "\tcomplete_effect = { set_variable = { TAG_rail_cost = -4 } }\n"
+            "}\n",
+            "events/Ev.txt": _two_options(
+                "\t\tset_temp_variable = { treasury_change = TAG_rail_cost }\n"
+                "\t\tmodify_treasury_effect = yes\n" + _FLAT
+            ),
+        },
+        [(_TREASURY_BLIND, 9)],
+    ),
+    "every option gated": (
+        {"events/Ev.txt": _ALL_GATED},
+        [
+            (
+                _PP_BLIND
+                + " (every option has a trigger; check the AI sees more than one)",
+                9,
+            )
+        ],
+    ),
+    "commented cost": (
+        {"events/Ev.txt": _two_options("\t\t#add_political_power = -50\n" + _FLAT)},
+        [],
+    ),
+}
 
 
-def test_empty_tree_reports_nothing(tmp_path):
+@pytest.mark.parametrize(
+    "files, expected", _VALIDATOR_CASES.values(), ids=_VALIDATOR_CASES
+)
+def test_validate_ai_chance_ignores_cost(tmp_path, files, expected):
+    for rel, body in files.items():
+        _write(tmp_path, rel, body)
     v = _validator(tmp_path, check_ai_chance_costs=True)
     v.validate_ai_chance_ignores_cost()
-    assert v._issues == []
 
-
-def test_modifier_on_the_costed_option_is_clean():
-    assert _found(_two_options(_PP_COST + _AWARE)) == []
-
-
-def test_modifier_on_another_option_does_not_cover_the_costed_one():
-    text = _event(
-        _option("foo.1.a", _PP_COST + _FLAT),
-        _option("foo.1.b", _AWARE),
-    )
-    assert [found[0] for found in _found(text)] == ["foo.1.a"]
-
-
-def test_single_option_event_is_clean():
-    assert _found(_event(_option("foo.1.a", _PP_COST + _FLAT))) == []
-
-
-def test_missing_ai_chance_is_flat_and_reports_the_option_line():
-    assert _found(_two_options(_PP_COST)) == [("foo.1.a", 5, "political power", False)]
-
-
-_GATE = "\t\ttrigger = { has_country_flag = foo_flag }\n"
-
-
-def test_event_with_every_option_gated_is_marked_for_review(tmp_path):
-    text = _event(
-        _option("foo.1.a", _GATE + _PP_COST + _FLAT),
-        _option("foo.1.b", "\t\ttrigger = { NOT = { has_country_flag = foo_flag } }\n"),
-    )
-    assert _found(text) == [("foo.1.a", 9, "political power", True)]
-    _write(tmp_path, "events/Ev.txt", text)
-    v = _validator(tmp_path, check_ai_chance_costs=True)
-    v.validate_ai_chance_ignores_cost()
-    assert [i.message for i in v._issues] == [
-        "foo.1.a - ai_chance ignores the political power cost"
-        " (every option has a trigger; check the AI sees more than one)"
+    assert [(i.category, i.message, i.file, i.line) for i in v._issues] == [
+        ("event-ai-chance-ignores-cost", message, "events/Ev.txt", line)
+        for message, line in expected
     ]
+    assert (v.warnings_found, v.errors_found) == (len(expected), 0)
 
 
-def test_gated_option_with_an_always_visible_sibling_is_not_marked():
-    found = _found(_two_options(_GATE + _PP_COST + _FLAT))
-    assert found == [("foo.1.a", 9, "political power", False)]
+# case: (event, (option, line, cost kinds, every option gated) per finding)
+_OPTION_CASES = {
+    "modifier on the costed option": (_two_options(_PP_COST + _AWARE), []),
+    "modifier on another option": (
+        _event(_option("foo.1.a", _PP_COST + _FLAT), _option("foo.1.b", _AWARE)),
+        [("foo.1.a", 8, "political power", False)],
+    ),
+    "single option event": (_event(_option("foo.1.a", _PP_COST + _FLAT)), []),
+    "missing ai_chance reports the option line": (
+        _two_options(_PP_COST),
+        [("foo.1.a", 5, "political power", False)],
+    ),
+    "every option gated": (_ALL_GATED, [("foo.1.a", 9, "political power", True)]),
+    "gated option with an always-visible sibling": (
+        _two_options(_GATE + _PP_COST + _FLAT),
+        [("foo.1.a", 9, "political power", False)],
+    ),
+    "reference pattern and its flat sibling": (
+        _event(
+            _option(
+                "foo.1.a",
+                "\t\tset_temp_variable = { treasury_change = -15.00 }\n"
+                "\t\tmodify_treasury_effect = yes\n" + _AWARE,
+            ),
+            _option(
+                "foo.1.b", "\t\tadd_stability = -0.02\n\t\tai_chance = { base = 1 }\n"
+            ),
+        ),
+        [("foo.1.b", 17, "stability", False)],
+    ),
+}
+
+
+@pytest.mark.parametrize("text, expected", _OPTION_CASES.values(), ids=_OPTION_CASES)
+def test_find_cost_blind_options(text, expected):
+    assert _found(text) == expected
 
 
 @pytest.mark.parametrize(
@@ -519,50 +554,6 @@ def test_stored_variable_signs_keeps_what_is_set_negative():
     }
 
 
-def test_validator_reads_stored_signs_from_the_whole_mod(tmp_path):
-    _write(tmp_path, "common/scripted_effects/00_budget_effects.txt", _SCRIPTED_EFFECTS)
-    _write(
-        tmp_path,
-        "common/decisions/TAG.txt",
-        "TAG_decision = {\n"
-        "\tcomplete_effect = { set_variable = { TAG_rail_cost = -4 } }\n"
-        "}\n",
-    )
-    body = (
-        "\t\tset_temp_variable = { treasury_change = TAG_rail_cost }\n"
-        "\t\tmodify_treasury_effect = yes\n"
-    )
-    _write(tmp_path, "events/Ev.txt", _two_options(body + _FLAT))
-    v = _validator(tmp_path, check_ai_chance_costs=True)
-    v.validate_ai_chance_ignores_cost()
-    assert [i.message for i in v._issues] == [
-        "foo.1.a - ai_chance ignores the treasury cost"
-    ]
-
-
-def test_commented_cost_is_ignored_by_the_validator(tmp_path):
-    body = "\t\t#add_political_power = -50\n" + _FLAT
-    _write(tmp_path, "events/Ev.txt", _two_options(body))
-    v = _validator(tmp_path, check_ai_chance_costs=True)
-    v.validate_ai_chance_ignores_cost()
-    assert v._issues == []
-
-
-def test_reference_pattern_is_clean_and_its_flat_sibling_is_flagged():
-    pay = (
-        "\t\tset_temp_variable = { treasury_change = -15.00 }\n"
-        "\t\tmodify_treasury_effect = yes\n"
-        "\t\tai_chance = {\n"
-        "\t\t\tbase = 10\n"
-        "\t\t\tmodifier = { factor = 0.25 has_active_mission = "
-        "bankruptcy_incoming_collapse }\n"
-        "\t\t}\n"
-    )
-    decline = "\t\tadd_stability = -0.02\n\t\tai_chance = { base = 1 }\n"
-    text = _event(_option("foo.1.a", pay), _option("foo.1.b", decline))
-    assert _found(text) == [("foo.1.b", 17, "stability", False)]
-
-
 def _weighted(condition, weight="factor = 0.25"):
     return f"\t\tai_chance = {{ base = 5 modifier = {{ {weight} {condition} }} }}\n"
 
@@ -644,10 +635,22 @@ def test_mixed_costs_report_only_the_uncovered_kind():
     assert _found(_two_options(covered)) == []
 
 
-@pytest.mark.parametrize("scope", ["ROOT", "THIS", "AST"])
-def test_choosing_country_cost_scopes_are_checked(scope):
+@pytest.mark.parametrize(
+    "scope, trigger",
+    [
+        ("ROOT", "tag = AST"),
+        ("THIS", "tag = AST"),
+        ("AST", "tag = AST"),
+        ("AST", "tag = AST has_war = no"),
+        ("AST", "AND = { tag = AST has_war = no }"),
+        ("AST", "ROOT = { tag = AST }"),
+        ("AST", "THIS = { tag = AST }"),
+        ("AST", "tag = AST AND = { has_war = no }"),
+    ],
+)
+def test_choosing_country_cost_scopes_are_checked(scope, trigger):
     text = _two_options(f"\t\t{scope} = {{ add_political_power = -50 }}\n" + _FLAT)
-    text = text.replace("id = foo.1", "id = foo.1\n\ttrigger = { tag = AST }")
+    text = text.replace("id = foo.1", f"id = foo.1\n\ttrigger = {{ {trigger} }}")
     assert [found[0] for found in _found(text)] == ["foo.1.a"]
     assert _found(text.replace(_FLAT, _AWARE)) == []
 
@@ -664,7 +667,13 @@ def test_literal_receiver_scope_can_cover_its_own_cost():
 
 @pytest.mark.parametrize(
     "trigger",
-    ["NOT = { tag = AST }", "OR = { tag = AST tag = IND }", "original_tag = AST"],
+    [
+        "NOT = { tag = AST }",
+        "OR = { tag = AST tag = IND }",
+        "original_tag = AST",
+        "FROM = { tag = AST }",
+        "tag = AST tag = IND",
+    ],
 )
 def test_nonexclusive_tag_checks_do_not_make_foreign_costs_local(trigger):
     body = "\t\tAST = { add_political_power = -50 }\n" + _FLAT

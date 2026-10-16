@@ -243,7 +243,7 @@ def _pick_annotations(run: ValidatorRun) -> List[Dict]:
     eligible.sort(
         key=lambda i: (
             0 if i.severity == Severity.ERROR else 1,
-            0 if i.in_diff or i.baseline_status == "new" else 1,
+            0 if i.in_diff or i.baseline_status in ("new", "raised") else 1,
             i.file,
             i.line,
         )
