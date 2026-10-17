@@ -295,3 +295,39 @@ def test_the_affordability_veto_stops_a_buyer_who_cannot_pay(
     )
     condition = [entry for entry in veto if entry[0] not in {"add", "factor"}]
     assert race.condition(condition, 1) is expected
+
+
+def _reactor_completion():
+    action = _parse_race_script(
+        _named_block(
+            DIPLOMACY.read_text(encoding="utf-8"), "purchase_reactor_grade_material"
+        )
+    )["purchase_reactor_grade_material"]
+    return _body(action, "complete_effect")
+
+
+@pytest.mark.parametrize(
+    "treasury,bankrupt,expected",
+    [(4, False, True), (3.9, False, False), (50, True, False)],
+)
+def test_reactor_purchase_rechecks_the_buyer_at_acceptance(
+    treasury, bankrupt, expected
+):
+    race, country = _recovering()
+    country["vars"]["treasury"] = treasury
+    if bankrupt:
+        country["missions"].add("bankruptcy_incoming_collapse")
+    limit = _body(_body(_reactor_completion(), "if"), "limit")
+    assert _contains(limit, "has_reactor_material_stockpile")
+    assert race.condition(_body(limit, "ROOT"), 1) is expected
+
+
+def test_a_lapsed_reactor_purchase_moves_nothing_and_tells_the_buyer():
+    completion = _reactor_completion()
+    assert [key for key, _, _ in completion] == ["if", "else"]
+    lapsed = _body(completion, "else")
+    assert not _contains(lapsed, "modify_treasury_effect")
+    assert not _contains(lapsed, "change_reactor_grade_material_effect")
+    buyer = _body(lapsed, "ROOT")
+    assert ("clear_variable", "=", "pending_reactor_material_purchase") in buyer
+    assert ("country_event", "=", "MD_nuclear_energy.2") in buyer

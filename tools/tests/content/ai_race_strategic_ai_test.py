@@ -1364,3 +1364,37 @@ def test_wartime_support_research_skips_civilian_expansion_for_paid_material_rec
     assert country["vars"]["ai_race_ai_support_tech"] == 201
     assert country["vars"]["ai_race_ai_research_target"] == 0
     assert country["vars"]["ai_race_ai_savings_target"] == 0
+
+
+@pytest.mark.parametrize("fleet_consumption", [0, 40])
+def test_fossil_fuel_reserve_covers_the_existing_fleet_and_the_new_plant(
+    fleet_consumption,
+):
+    race, country = _planner()
+    country["vars"]["fossil_pp_fuel_consumption"] = fleet_consumption
+    race.run("ai_race_ai_cache_construction", 1)
+    assert country["vars"]["ai_race_ai_fossil_fuel_reserve"] == pytest.approx(
+        (20 + fleet_consumption) * 24 * 28 * 0.001
+    )
+
+
+def test_weekly_refresh_keeps_ai_readiness_current_and_the_offer_and_gui_human_only():
+    weekly = _parse_race_script(
+        _named_block(
+            (ROOT / "common/on_actions/MD_on_actions.txt").read_text(encoding="utf-8"),
+            "on_weekly",
+        )
+    )["on_weekly"]
+    effect = next(value for key, _, value in weekly if key == "effect")
+    refresh = next(
+        value
+        for key, _, value in effect
+        if key == "if" and ("ai_race_refresh_operating_state", "=", "yes") in value
+    )
+    limit = next(value for key, _, value in refresh if key == "limit")
+    assert ("is_ai", "=", "no") not in limit
+    assert ("ai_race_refresh_effective_capability", "=", "yes") in refresh
+    human = next(value for key, _, value in refresh if key == "if")
+    assert ("limit", "=", [("is_ai", "=", "no")]) in human
+    assert ("ai_race_refresh_offer", "=", "yes") in human
+    assert ("ai_race_refresh_gui", "=", "yes") in human
