@@ -1227,7 +1227,7 @@ When the economy is in severe distress (interest above 15%), countries can reque
 
 The AI treats these as last resorts. It considers them only once both taxes are at their automation caps (40% population, 50% corporate) and it still runs a deficit, its economy is in a major crisis, a financial collapse is incoming, or interest is at least 15% and debt service exceeds 30% of income. The debt-service condition applies even with a budget surplus. Cheap loans also open on a deficit over 10% of income, and the AI counts the paused debt payments as spending so it keeps raising taxes during the loan.
 
-An AI that passes one of those conditions may default on its debt once interest reaches 25%, but never while at war. A default has severe consequences.
+An AI that passes one of those conditions may default on its debt once interest reaches 25%, even while at war. A default forgives 40% of the debt, keeps 10% as normal debt, and moves the other 50% into defaulted debt you must settle within 360 days. It also starts a depression and a two-year Sovereign Credit Downgrade (+3 interest, -10% stability). Settle the defaulted debt with treasury payments, IMF or influencer concessions, or by selling buildings. Settling in time grants a one-year post-default construction boom. Failing zeroes your treasury and international investments and can give your creditors a war goal against you.
 
 ---
 
