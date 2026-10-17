@@ -953,7 +953,7 @@ def test_script_commit_posts_zero_rounded_installments_once_and_only_after_accru
     assert len(posting) == 1
     assert (
         _compact(_block(posting[0], "limit"))
-        == "NOT = { has_country_flag = disabled_economic_system }"
+        == "NOT = { has_country_flag = disabled_economic_system } has_capitulated = no"
     )
     _ordered(
         _compact(posting[0]),
