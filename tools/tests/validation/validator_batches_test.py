@@ -126,7 +126,7 @@ def test_shared_module_change_selects_its_transitive_consumers():
 @pytest.mark.usefixtures("reuse_repository_import_graph")
 def test_linting_wrapper_change_selects_the_validator_it_wraps():
     # validate_common_mistakes, validate_decisions, validate_equipment_variants,
-    # and validate_events import this scanner.
+    # validate_history and its DLC-guard consumer also use the shared parser.
     batch, adhoc = vb.select_for_changed_files(
         ["tools/linting/check_common_mistakes.py"]
     )
@@ -135,6 +135,8 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
         "decisions",
         "equipment-variants",
         "events",
+        "history",
+        "dlc-guards",
     }
     assert adhoc == []
 
@@ -420,3 +422,11 @@ def test_import_graph_is_built_once_per_selection_not_cached_across_calls(
     assert {spec.name for spec in batch} == {"tech-categories", "bonus-names", "ideas"}
     assert adhoc == []
     assert len(calls) == 3
+
+
+def test_country_history_selects_history_validator():
+    from change_groups import classify
+
+    groups = classify(["history/countries/JAP - Japan.txt"])
+    assert groups["history"]
+    assert "history" in {spec.name for spec in rvb.selected_specs("core", {"history"})}
