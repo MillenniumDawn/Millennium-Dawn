@@ -1,4 +1,5 @@
 add_namespace = ethiopia
+add_namespace = ethiopia_economy
 add_namespace = ethiopia_news
 
 #ethiopia requests Investments from China
@@ -801,6 +802,7 @@ country_event = {
 	fire_only_once = yes
 
 	immediate = {
+		log = "[GetDateText]: [Root.GetName]: event ethiopia.24"
 		hidden_effect = {
 			ERI = {
 				set_cosmetic_tag = ERI_ETH
@@ -1037,6 +1039,7 @@ country_event = {
 	# REFUSE #
 	option = {
 		name = ethiopia.26.c
+		log = "[GetDateText]: [This.GetName]: ethiopia.26.c executed"
 		custom_effect_tooltip = TT_IF_WE_DECLINE
 		custom_effect_tooltip = ethiopia.26.c_tt
 		hidden_effect = {
@@ -1195,6 +1198,7 @@ country_event = {
 	# REFUSE #
 	option = {
 		name = ethiopia.30.c
+		log = "[GetDateText]: [This.GetName]: ethiopia.30.c executed"
 		custom_effect_tooltip = TT_IF_WE_DECLINE
 		custom_effect_tooltip = ethiopia.30.c_tt
 		hidden_effect = {
@@ -1412,3 +1416,98 @@ country_event = {
 			name = ethiopia_news.10.a
 		}
 	}
+
+# Economic Events
+## The Lifan Company Deal
+country_event = {
+	id = ethiopia_economy.1
+	title = ethiopia_economy.1.t
+	desc = ethiopia_economy.1.d
+	picture = GFX_news_ethiopian_military # TODO: Replace with an image here
+	is_triggered_only = yes
+
+	# Accept the Deal
+	option = {
+		name = ethiopia_economy.1.a
+		log = "[GetDateText]: [This.GetName]: ethiopia_economy.1.a executed"
+		ETH = {
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI.id }
+			change_influence_percentage = yes
+			add_popularity = { ideology = communism popularity = 0.05 }
+			recalculate_party = yes
+			set_temp_variable = { skip_payment = 1 }
+			one_random_industrial_complex = yes
+		}
+		set_temp_variable = { treasury_change = -5.00 }
+		modify_treasury_effect = yes
+		set_temp_variable = { int_investment_change = 7.50 }
+		modify_international_investment_effect = yes
+		newline = yes
+		FROM = {
+			country_event = { id = ethiopia_economy.2 days = 3 }
+		}
+	}
+
+	# Reject the Deal
+	option = {
+		name = ethiopia_economy.1.b
+		log = "[GetDateText]: [This.GetName]: ethiopia_economy.1.b executed"
+		add_opinion_modifier = { target = ETH modifier = ETH_rejected_lifan_deal }
+		reverse_add_opinion_modifier = { target = ETH modifier = ETH_rejected_lifan_deal }
+
+		newline = yes
+		FROM = {
+			country_event = { id = ethiopia_economy.3 days = 3 }
+		}
+	}
+}
+
+## [FROM.GetNameWithFlag] Accepts the Lifan Deal
+country_event = {
+	id = ethiopia_economy.2
+	title = ethiopia_economy.2.t
+	desc = ethiopia_economy.2.d
+	picture = GFX_news_ethiopian_military # TODO: Replace with an image here
+	is_triggered_only = yes
+
+	# Accept the Deal
+	option = {
+		name = ethiopia_economy.1.a
+		log = "[GetDateText]: [This.GetName]: ethiopia_economy.1.a executed"
+		effect_tooltip = {
+			set_temp_variable = { percent_change = 2 }
+			set_temp_variable = { tag_index = CHI.id }
+			change_influence_percentage = yes
+			add_popularity = { ideology = communism popularity = 0.05 }
+			recalculate_party = yes
+			set_temp_variable = { skip_payment = 1 }
+			one_random_industrial_complex = yes
+			CHI = {
+				set_temp_variable = { treasury_change = -5.00 }
+				modify_treasury_effect = yes
+				set_temp_variable = { int_investment_change = 7.50 }
+				modify_international_investment_effect = yes
+			}
+		}
+	}
+}
+
+## [FROM.GetNameWithFlag] Rejects the Lifan Deal
+country_event = {
+	id = ethiopia_economy.3
+	title = ethiopia_economy.3.t
+	desc = ethiopia_economy.3.d
+	picture = GFX_news_ethiopian_military # TODO: Replace with an image here
+	is_triggered_only = yes
+
+	# Accept the Deal
+	option = {
+		name = ethiopia_economy.3.a
+		log = "[GetDateText]: [This.GetName]: ethiopia_economy.3.a executed"
+		effect_tooltip = {
+			add_opinion_modifier = { target = CHI modifier = ETH_rejected_lifan_deal }
+			reverse_add_opinion_modifier = { target = CHI modifier = ETH_rejected_lifan_deal }
+		}
+	}
+}
