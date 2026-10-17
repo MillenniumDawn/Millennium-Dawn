@@ -36,3 +36,68 @@ USA_has_tsmc_access = {
 		NOT = { has_country_flag = TAI_tsmc_us_export_ban }
 	}
 }
+
+# Operation Blue Tiger: government camps read from the ruling party index
+TAI_kmt_in_power = {
+	check_variable = { ruling_party = 1 }
+}
+
+TAI_pfp_in_power = {
+	check_variable = { ruling_party = 14 }
+}
+
+TAI_pan_blue_in_power = {
+	OR = {
+		check_variable = { ruling_party = 1 }
+		check_variable = { ruling_party = 6 }
+		check_variable = { ruling_party = 14 }
+	}
+}
+
+TAI_pan_green_in_power = {
+	OR = {
+		check_variable = { ruling_party = 2 }
+		check_variable = { ruling_party = 18 }
+	}
+}
+
+# Legislative Yuan majority approximated from Pan-Blue and Pan-Green party popularity
+TAI_government_has_ly_majority = {
+	set_temp_variable = { TAI_blue_seats = party_pop_array^1 }
+	add_to_temp_variable = { TAI_blue_seats = party_pop_array^6 }
+	add_to_temp_variable = { TAI_blue_seats = party_pop_array^14 }
+	set_temp_variable = { TAI_green_seats = party_pop_array^2 }
+	add_to_temp_variable = { TAI_green_seats = party_pop_array^18 }
+	if = {
+		limit = { TAI_pan_green_in_power = yes }
+		check_variable = { TAI_green_seats > TAI_blue_seats }
+	}
+	else = {
+		check_variable = { TAI_blue_seats > TAI_green_seats }
+	}
+}
+
+TAI_can_pass_legislation = {
+	custom_trigger_tooltip = {
+		tooltip = TAI_can_pass_legislation_tt
+		OR = {
+			TAI_government_has_ly_majority = yes
+			NOT = { has_idea = TAI_divided_government }
+			has_stability > 0.6
+		}
+	}
+}
+
+TAI_blue_tiger_roots_ready = {
+	custom_trigger_tooltip = {
+		tooltip = TAI_blue_tiger_roots_ready_tt
+		count_triggers = {
+			amount = 3
+			has_completed_focus = TAI_df_root
+			has_completed_focus = TAI_na_rebuild_shield
+			has_completed_focus = TAI_ss_root
+			has_completed_focus = TAI_as_root
+			has_completed_focus = TAI_pl_root
+		}
+	}
+}
