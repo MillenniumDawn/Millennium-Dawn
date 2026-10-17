@@ -84,6 +84,7 @@ are under `.claude/docs/`.
   `ai-equipment-reference.md`.
 - English strings: `localisation-rules.md`; party keys also need `party-loc-reference.md`.
 - GUI: `scripted-gui-rules.md` and `scripted-gui-patterns.md`.
+- Map modes and their colorblind palettes: `map-mode-reference.md`.
 - UN voting, elections, recognition: `un-system-reference.md`. Formables, EU end-states,
   UAR, union cosmetics: `formable-reference.md`.
 - Intelligence upgrades: `common/intelligence_agency_upgrades/README.md`.
