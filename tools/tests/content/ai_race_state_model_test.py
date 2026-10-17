@@ -647,9 +647,9 @@ class RaceScript:
                 )
             elif key == "can_construct_building":
                 assert identifier < 0, "Construction availability requires state scope"
-                result = self.root == country["country_id"] and country[
-                    "constructible_buildings"
-                ].get(operand, False)
+                result = getattr(self, "root", None) == country[
+                    "country_id"
+                ] and country["constructible_buildings"].get(operand, False)
             elif key == "is_special_project_completed":
                 result = operand in country.get("projects", set())
             elif key == "is_debug":
