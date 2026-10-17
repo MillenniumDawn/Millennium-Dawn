@@ -5,6 +5,7 @@ import pytest
 from ai_race_state_model_test import (
     ROOT,
     RaceScript,
+    _extract_block,
     _named_block,
     _parse_race_script,
 )
@@ -49,10 +50,32 @@ class StrategicRaceScript(RaceScript):
             self.triggers[name] = economic_triggers[name]
         self.owner_calls = []
         self.effects["calculate_energy_use"] = None
+        events = (ROOT / "events/MD_ai_race_events.txt").read_text(encoding="utf-8")
+        start = events.rfind("country_event =", 0, events.index("id = ai_race.12"))
+        self.facility_event = dict(
+            (key, value)
+            for key, _, value in _parse_race_script(_extract_block(events, start))[
+                "country_event"
+            ]
+        )
+
+    def fire_event(self, event_id, identifier):
+        if event_id != "ai_race.12":
+            return super().fire_event(event_id, identifier)
+        assert self.facility_event["hidden"] == "yes"
+        assert self.facility_event["is_triggered_only"] == "yes"
+        previous_root = self.root
+        self.root = identifier
+        try:
+            self.execute(self.facility_event["immediate"], identifier)
+        finally:
+            self.root = previous_root
 
     def country(self, identifier, **options):
         options.setdefault("ai", True)
         country = super().country(identifier, **options)
+        if not hasattr(self, "root"):
+            self.root = identifier
         country["flags"].update(energy_state_bases_initialized=None)
         country["states"] = [
             {
@@ -60,6 +83,7 @@ class StrategicRaceScript(RaceScript):
                 "non_damaged_building_level@internet_station": 10,
                 "building_level@industrial_complex": 20,
                 "building_level@internet_station": 10,
+                "constructible_buildings": {"nuclear_facility": True},
                 "free_slots": {
                     building: 1
                     for building in (
@@ -71,7 +95,6 @@ class StrategicRaceScript(RaceScript):
                         "microchip_plant",
                         "composite_plant",
                         "synthetic_refinery",
-                        "nuclear_facility",
                     )
                 },
             }
@@ -116,11 +139,15 @@ class StrategicRaceScript(RaceScript):
         if name == "owned_controlled_states":
             states = []
             for index, state in enumerate(self.countries[identifier]["states"]):
-                if state.get("owned", True):
+                if state.get("owned", True) and state.get("controlled", True):
                     state_id = -1000 * identifier - index
                     self.countries[state_id] = {
                         "vars": state,
+                        "country_id": identifier,
                         "free_slots": state.get("free_slots", {}),
+                        "constructible_buildings": state.get(
+                            "constructible_buildings", {}
+                        ),
                     }
                     states.append(state_id)
             return states
@@ -222,6 +249,53 @@ def _planner(*, stage=0, year=2013, month=1):
         country["vars"]["ai_race_stage"] = stage
     race.run("ai_race_ai_register_country", 1)
     return race, country
+
+
+@pytest.mark.parametrize(
+    "owned,controlled,constructible,expected",
+    [
+        (True, True, True, 1),
+        (True, True, False, 0),
+        (False, True, True, 0),
+        (True, False, True, 0),
+    ],
+)
+def test_facility_availability_uses_native_province_aware_state_query(
+    owned, controlled, constructible, expected
+):
+    race, country = _planner()
+    state = country["states"][0]
+    state.update(
+        owned=owned,
+        controlled=controlled,
+        constructible_buildings={"nuclear_facility": constructible},
+    )
+    race.run("ai_race_ai_cache_construction", 1)
+    assert country["vars"]["ai_race_ai_slots_facility"] == expected
+    assert "ai_race_ai_slots_facility" not in state
+
+
+def test_facility_availability_accepts_any_buildable_state_and_resets():
+    race, country = _planner()
+    blocked = country["states"][0]
+    blocked["constructible_buildings"]["nuclear_facility"] = False
+    country["states"].append(copy.deepcopy(blocked))
+    country["states"][1]["constructible_buildings"]["nuclear_facility"] = True
+    race.run("ai_race_ai_cache_construction", 1)
+    assert country["vars"]["ai_race_ai_slots_facility"] == 1
+    country["states"][1]["constructible_buildings"]["nuclear_facility"] = False
+    race.run("ai_race_ai_cache_construction", 1)
+    assert country["vars"]["ai_race_ai_slots_facility"] == 0
+
+
+def test_facility_query_rebinds_root_for_a_different_planning_country():
+    race, country = _planner()
+    race.country(2)
+    race.root = 2
+    race.run("ai_race_ai_cache_construction", 1)
+    assert country["vars"]["ai_race_ai_slots_facility"] == 1
+    assert race.root == 2
+    assert not race.events
 
 
 def _capacity(race, country, target, ratios=(1, 1, 1, 1, 1, 1)):

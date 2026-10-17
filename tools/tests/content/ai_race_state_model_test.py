@@ -438,6 +438,9 @@ class RaceScript:
         self.today = date(2016, 1, 1)
         self.goto(2016, 1)
 
+    def fire_event(self, event_id, identifier):
+        self.events.append((identifier, event_id))
+
     def goto(self, year, month, day=1):
         self.today = date(year, month, day)
         self.globals.update(
@@ -636,11 +639,17 @@ class RaceScript:
                 result = bool(country.get("states", []))
             elif key == "free_building_slots":
                 data = {key: value for key, _op, value in operand}
+                assert data["building"] != "nuclear_facility" or "province" in data
                 size = next(entry for entry in operand if entry[0] == "size")
                 result = self.comparisons[size[1]](
                     country["free_slots"].get(data["building"], 0),
                     self.value(size[2], identifier),
                 )
+            elif key == "can_construct_building":
+                assert identifier < 0, "Construction availability requires state scope"
+                result = self.root == country["country_id"] and country[
+                    "constructible_buildings"
+                ].get(operand, False)
             elif key == "is_special_project_completed":
                 result = operand in country.get("projects", set())
             elif key == "is_debug":
@@ -887,7 +896,7 @@ class RaceScript:
                     if isinstance(operand, list)
                     else operand
                 )
-                self.events.append((identifier, event_id))
+                self.fire_event(event_id, identifier)
             elif key == "remove_dynamic_modifier":
                 data = {key: value for key, _op, value in operand}
                 self.countries[identifier].setdefault(
