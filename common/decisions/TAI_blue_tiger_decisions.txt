@@ -1,0 +1,362 @@
+TAI_blue_tiger_category = {
+	TAI_declare_bt_emergency = {
+		icon = generic_operation
+
+		available = {
+			OR = {
+				has_war_with = CHI
+				custom_trigger_tooltip = {
+					tooltip = TAI_burden_above_19_tt
+					check_variable = { TAI_blockade_burden > 19 }
+				}
+			}
+		}
+
+		cost = 50
+		days_remove = 180
+		days_re_enable = 90
+
+		modifier = {
+			stability_factor = 0.03
+			war_support_factor = 0.05
+			political_power_factor = -0.10
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_declare_bt_emergency"
+			add_to_variable = { TAI_pressure_to_negotiate = -5 tooltip = TAI_pressure_to_negotiate_tt }
+			clamp_variable = { var = TAI_pressure_to_negotiate min = 0 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 20
+				check_variable = { TAI_blockade_burden > 39 }
+			}
+		}
+	}
+
+	TAI_release_fuel_reserve = {
+		icon = generic_factory
+
+		visible = {
+			has_idea = TAI_strategic_fuel_reserve
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TAI_burden_above_39_tt
+				check_variable = { TAI_blockade_burden > 39 }
+			}
+		}
+
+		cost = 25
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_release_fuel_reserve"
+			remove_ideas = TAI_strategic_fuel_reserve
+			add_to_variable = { TAI_pressure_to_negotiate = -15 tooltip = TAI_pressure_to_negotiate_tt }
+			clamp_variable = { var = TAI_pressure_to_negotiate min = 0 max = 100 }
+			add_stability = 0.03
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				add = 20
+				check_variable = { TAI_pressure_to_negotiate > 49 }
+			}
+		}
+	}
+
+	TAI_rebuild_fuel_reserve = {
+		icon = generic_construction
+
+		visible = {
+			has_completed_focus = TAI_ss_spr
+			NOT = { has_idea = TAI_strategic_fuel_reserve }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TAI_no_blockade_tt
+				check_variable = { TAI_blockade_burden < 1 }
+			}
+		}
+
+		cost = 25
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_rebuild_fuel_reserve"
+			set_temp_variable = { treasury_change = -3 }
+			modify_treasury_effect = yes
+			add_timed_idea = { idea = TAI_strategic_fuel_reserve days = 3650 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	TAI_guarantee_shipping = {
+		icon = generic_naval
+
+		visible = {
+			has_completed_focus = TAI_ss_marine_insurance
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TAI_burden_above_19_tt
+				check_variable = { TAI_blockade_burden > 19 }
+			}
+		}
+
+		cost = 25
+		days_remove = 180
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_guarantee_shipping"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			set_country_flag = { flag = TAI_shipping_guaranteed days = 180 value = 1 }
+			custom_effect_tooltip = TAI_guarantee_shipping_tt
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	TAI_ration_energy = {
+		icon = generic_factory
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TAI_burden_above_39_tt
+				check_variable = { TAI_blockade_burden > 39 }
+			}
+		}
+
+		cost = 25
+		days_remove = 120
+		days_re_enable = 60
+
+		modifier = {
+			industrial_capacity_factory = -0.05
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_ration_energy"
+			set_country_flag = { flag = TAI_energy_rationed days = 120 value = 1 }
+			custom_effect_tooltip = TAI_ration_energy_tt
+			add_to_variable = { TAI_pressure_to_negotiate = -5 tooltip = TAI_pressure_to_negotiate_tt }
+			clamp_variable = { var = TAI_pressure_to_negotiate min = 0 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	TAI_emergency_air_freight = {
+		icon = generic_research
+
+		visible = {
+			has_completed_focus = TAI_bt_airlift
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TAI_burden_above_19_tt
+				check_variable = { TAI_blockade_burden > 19 }
+			}
+		}
+
+		cost = 25
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_emergency_air_freight"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			add_to_variable = { TAI_semiconductor_security = 10 tooltip = TAI_semiconductor_security_tt }
+			clamp_variable = { var = TAI_semiconductor_security min = 0 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 5
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
+	}
+
+	TAI_request_us_support = {
+		icon = generic_political_discourse
+
+		visible = {
+			country_exists = USA
+		}
+
+		available = {
+			NOT = { has_war_with = USA }
+			custom_trigger_tooltip = {
+				tooltip = TAI_us_confidence_above_39_tt
+				check_variable = { TAI_us_confidence > 39 }
+			}
+			custom_trigger_tooltip = {
+				tooltip = TAI_under_pressure_tt
+				OR = {
+					check_variable = { TAI_blockade_burden > 19 }
+					CHI = { check_variable = { CHI_taiwan_strait_tension > 59 } }
+				}
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_request_us_support"
+			USA = { country_event = { id = blue_tiger.53 days = 2 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = {
+				add_timed_idea = { idea = TAI_american_assistance days = 180 }
+				add_to_variable = { TAI_pressure_to_negotiate = -10 tooltip = TAI_pressure_to_negotiate_tt }
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	TAI_request_japan_credit = {
+		icon = generic_welfare
+
+		visible = {
+			has_completed_focus = TAI_pl_japan_credit
+			country_exists = JAP
+		}
+
+		available = {
+			NOT = { has_war_with = JAP }
+			custom_trigger_tooltip = {
+				tooltip = TAI_burden_above_19_tt
+				check_variable = { TAI_blockade_burden > 19 }
+			}
+		}
+
+		cost = 25
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_request_japan_credit"
+			set_temp_variable = { treasury_change = 4 }
+			modify_treasury_effect = yes
+			set_temp_variable = { debt_change = 4 }
+			modify_debt_effect = yes
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	TAI_publicize_incidents = {
+		icon = generic_intelligence_operation
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = TAI_under_pressure_tt
+				OR = {
+					check_variable = { TAI_blockade_burden > 19 }
+					CHI = { check_variable = { CHI_taiwan_strait_tension > 59 } }
+				}
+			}
+		}
+
+		cost = 25
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_publicize_incidents"
+			if = {
+				limit = { country_exists = CHI }
+				CHI = {
+					add_to_variable = { CHI_taiwan_us_support = 3 tooltip = CHI_taiwan_us_support_tt }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+					add_to_variable = { CHI_taiwan_strait_tension = 3 tooltip = CHI_taiwan_strait_tension_tt }
+					clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
+				}
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	TAI_quiet_protest = {
+		icon = generic_political_discourse
+
+		available = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+		}
+
+		cost = 15
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_quiet_protest"
+			CHI = {
+				add_to_variable = { CHI_taiwan_strait_tension = -3 tooltip = CHI_taiwan_strait_tension_tt }
+				clamp_variable = { var = CHI_taiwan_strait_tension min = 0 max = 100 }
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	TAI_seek_mediation = {
+		icon = generic_political_discourse
+
+		visible = {
+			has_war_with = CHI
+		}
+
+		available = {
+			has_country_flag = { flag = TAI_strait_war days > 90 }
+			controls_state = 598
+		}
+
+		cost = 50
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_seek_mediation"
+			CHI = { country_event = { id = blue_tiger.52 days = 3 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = TAI_ceasefire_tt }
+		}
+
+		ai_will_do = {
+			base = 20
+		}
+	}
+}

@@ -1,0 +1,57 @@
+on_actions = {
+	on_monthly_TAI = {
+		effect = {
+			TAI_update_pressure = yes
+		}
+	}
+
+	# Operation Blue Tiger: an active blockade costs Beijing every month it lasts
+	on_monthly_CHI = {
+		effect = {
+			if = {
+				limit = { has_country_flag = CHI_TAI_full_blockade_active }
+				add_political_power = -10
+				add_stability = -0.005
+			}
+			else_if = {
+				limit = { has_country_flag = CHI_TAI_partial_blockade_active }
+				add_political_power = -3
+			}
+		}
+	}
+
+	on_declare_war = {
+		effect = {
+			if = {
+				limit = {
+					original_tag = CHI
+					FROM = { original_tag = TAI }
+				}
+				FROM = {
+					set_country_flag = TAI_strait_war
+					country_event = { id = blue_tiger.50 days = 1 }
+				}
+				if = {
+					limit = {
+						NOT = { has_game_rule = { rule = allow_enable_world_war option = yes } }
+						country_exists = USA
+					}
+					USA = { country_event = { id = blue_tiger.51 days = 3 } }
+				}
+			}
+			else_if = {
+				limit = {
+					original_tag = TAI
+					FROM = { original_tag = CHI }
+				}
+				set_country_flag = TAI_strait_war
+				add_to_variable = { TAI_us_confidence = -30 }
+				clamp_variable = { var = TAI_us_confidence min = 0 max = 100 }
+				FROM = {
+					add_to_variable = { CHI_taiwan_us_support = -20 }
+					clamp_variable = { var = CHI_taiwan_us_support min = 0 max = 100 }
+				}
+			}
+		}
+	}
+}
