@@ -8,6 +8,7 @@ must leave nested blocks intact and produce run2 == run1 exactly.
 
 import sys
 
+import pytest
 import standardize_mio
 from standardize_mio import MIOStandardizer
 
@@ -287,3 +288,141 @@ def test_main_standardizes_the_named_file(tmp_path, monkeypatch):
 
     with open(output, "r", encoding="utf-8", newline="") as handle:
         assert "allowed = { original_tag = TST }" in handle.read()
+
+
+# Every organization and trait field the standardizer knows, once each.
+_FULL_MIO = """TST_manufacturer = {
+\tallowed = { original_tag = TST }
+\tname = TST_manufacturer
+\ticon = {
+\t\ticon = GFX_mio
+\t}
+\tinclude = TST_base
+\ttask_capacity = 3
+\tavailable = { has_country_flag = TST_ready }
+\tvisible = { has_war = no }
+\ton_design_team_assigned_to_tech = { log = yes }
+\tai_will_do = { base = 1 }
+\tequipment_type = {
+\t\tinfantry_weapons
+\t\tartillery
+\t}
+\tresearch_categories = { armor }
+\ttree_header_text = { text = TST_header }
+\tinitial_trait = {
+\t\ttoken = TST_initial
+\t\tname = TST_initial
+\t}
+\ttrait = {
+\t\ttoken = TST_trait
+\t\tname = TST_trait
+\t\ticon = GFX_trait
+\t\tavailable = { has_country_flag = TST_ready }
+\t\tvisible = { has_war = no }
+\t\tparent = { traits = { TST_parent_one TST_parent_two } }
+\t\tall_parents = { TST_parent }
+\t\tposition = { x = 0 y = 0 }
+\t\trelative_position_id = TST_previous
+\t\tmutually_exclusive = { TST_other_one TST_other_two }
+\t\tlimit_to_equipment_type = { infantry_weapons }
+\t\tequipment_bonus = { reliability = 0.1 }
+\t\tequipment_bonus = { reliability = 0.2 }
+\t\tproduction_bonus = {
+\t\t\t# preserve
+\t\t\tproduction_speed = 0.1
+\t\t}
+\t\torganization_modifier = { organization = 0.1 }
+\t\ton_complete = {
+\t\t\tadd_political_power = 1
+\t\t\tfree_trait_picks = 1
+\t\t}
+\t\tai_will_do = { base = 1 }
+\t\tunknown = yes
+\t}
+}
+"""
+
+
+def test_every_field_survives_and_a_second_run_changes_nothing(tmp_path):
+    source = tmp_path / "mio.txt"
+    with open(source, "w", encoding="utf-8", newline="") as handle:
+        handle.write(_FULL_MIO)
+    standardizer = MIOStandardizer()
+    assert standardizer.standardize_file(str(source), str(source))
+    once = source.read_text(encoding="utf-8")
+    for fragment in (
+        "allowed = { original_tag = TST }",
+        "on_design_team_assigned_to_tech",
+        "equipment_type = {",
+        "TST_parent_one",
+        "reliability = 0.2",
+        "expenditure_for_mio_upgrade = yes",
+    ):
+        assert fragment in once, fragment
+    assert standardizer.standardize_file(str(source), str(source))
+    assert source.read_text(encoding="utf-8") == once
+
+
+def test_a_lone_pick_grant_becomes_the_upgrade_expenditure():
+    assert MIOStandardizer().normalize_on_complete(
+        ["on_complete = { free_trait_picks = 1 }"]
+    ) == ["on_complete = { expenditure_for_mio_upgrade = yes }"]
+
+
+def test_token_list_keeps_its_comments():
+    lines = ["parent = {", "\t# note", "\tTST_parent", "}"]
+    assert MIOStandardizer()._normalize_token_list(lines, "parent", "\t\t") == lines
+
+
+@pytest.mark.parametrize(
+    "lines, expected",
+    [
+        (
+            ["equipment_bonus = {", "\treliability = 0.1", "}"],
+            ["\tequipment_bonus = { reliability = 0.1 }"],
+        ),
+        (
+            ["equipment_bonus = {", "\treliability =", "}"],
+            ["equipment_bonus = {", "\treliability =", "}"],
+        ),
+    ],
+    ids=["one modifier on one line", "malformed kept verbatim"],
+)
+def test_modifier_block(lines, expected):
+    assert (
+        MIOStandardizer()._normalize_modifier_block(lines, "equipment_bonus", "\t")
+        == expected
+    )
+
+
+def test_modifier_block_with_two_modifiers_is_expanded():
+    lines = ["equipment_bonus = {", "\treliability = 0.1", "\tarmor = 0.2", "}"]
+    normalized = MIOStandardizer()._normalize_modifier_block(
+        lines, "equipment_bonus", "\t"
+    )
+    assert normalized[1] == "\t\treliability = 0.1"
+
+
+def test_repeated_modifier_blocks_merge_into_one():
+    merged = MIOStandardizer()._merge_and_normalize_modifier_blocks(
+        [
+            ["equipment_bonus = {", "\treliability = 0.1", "}"],
+            ["equipment_bonus = {", "\tarmor = 0.2", "}"],
+        ],
+        "equipment_bonus",
+        "\t",
+    )
+    assert merged[1:3] == ["\t\treliability = 0.1", "\t\tarmor = 0.2"]
+
+
+def test_merging_no_blocks_is_empty():
+    assert (
+        MIOStandardizer()._merge_and_normalize_modifier_blocks(
+            [], "equipment_bonus", "\t"
+        )
+        == []
+    )
+
+
+def test_nested_block_of_no_lines_is_empty():
+    assert MIOStandardizer().format_nested_block([], "\t") == []

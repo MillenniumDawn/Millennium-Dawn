@@ -13,6 +13,22 @@ def no_vanilla_gfx(monkeypatch):
 
 
 @pytest.fixture
+def pool_sizes(monkeypatch):
+    """Record the size of every worker pool validator_common starts."""
+    import validator_common
+
+    real_pool = validator_common.Pool
+    sizes = []
+
+    def counting_pool(*args, **kwargs):
+        sizes.append(kwargs.get("processes"))
+        return real_pool(*args, **kwargs)
+
+    monkeypatch.setattr(validator_common, "Pool", counting_pool)
+    return sizes
+
+
+@pytest.fixture
 def write_path():
     from shared.suite import write_text
 
@@ -20,44 +36,6 @@ def write_path():
         return write_text(root / relative_path, content)
 
     return write
-
-
-@pytest.fixture
-def country_file(tmp_path):
-    def write(body, name="ARA - Arabistan.txt"):
-        d = tmp_path / "history" / "countries"
-        d.mkdir(parents=True, exist_ok=True)
-        p = d / name
-        p.write_text(body, encoding="utf-8")
-        return str(p)
-
-    return write
-
-
-@pytest.fixture
-def ai_split_available():
-    """`available` holding an AI-only `if` branch beside its human `else` half.
-
-    Shared by all three available-block checks in validate_variables, which
-    exempt the AI half wherever the file lives.
-    """
-
-    def build(ai_body, else_body="has_war = no", limit="is_ai = yes"):
-        return (
-            "my_focus = {\n"
-            "\tavailable = {\n"
-            "\t\tif = {\n"
-            f"\t\t\tlimit = {{ {limit} }}\n"
-            f"\t\t\t{ai_body}\n"
-            "\t\t}\n"
-            "\t\telse = {\n"
-            f"\t\t\t{else_body}\n"
-            "\t\t}\n"
-            "\t}\n"
-            "}\n"
-        )
-
-    return build
 
 
 @pytest.fixture

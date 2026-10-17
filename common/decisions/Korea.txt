@@ -836,6 +836,7 @@ KOR_38th_parallel = {
 				tooltip = CHI_beijing_brokerage_above_49_tt
 				check_variable = { CHI_beijing_brokerage > 49 }
 			}
+			country_exists = NKO
 			NOT = { KOR = { has_war_with = NKO } }
 			NOT = { KOR = { has_country_flag = KOR_proposed_unity_reunification } }
 		}
@@ -851,10 +852,10 @@ KOR_38th_parallel = {
 			NKO = {
 				add_timed_idea = { idea = CHI_nko_security_assurance days = 730 }
 				add_timed_idea = { idea = CHI_nko_food_package days = 365 }
+				country_event = { id = korea.26 days = 3 }
 			}
 			KOR = {
 				set_country_flag = KOR_proposed_unity_reunification
-				country_event = { id = korea.26 days = 3 }
 				add_opinion_modifier = { target = CHI modifier = CHI_unity_broker }
 			}
 			every_country = {
@@ -974,7 +975,11 @@ KOR_38th_parallel = {
 			KOR = { add_to_variable = { SFR = 3 } }
 		}
 
-		ai_will_do = { base = 8 }
+		ai_will_do = {
+			base = 8
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 
 	CHI_MSS_Quiet_Removal_Operation = {
@@ -1042,7 +1047,11 @@ KOR_38th_parallel = {
 			}
 		}
 
-		ai_will_do = { base = 8 }
+		ai_will_do = {
+			base = 8
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+		}
 	}
 
 	CHI_Press_NKO_on_Nuclear = {
@@ -1982,5 +1991,120 @@ KOR_retake_homeland = {
 		}
 
 		ai_will_do = { base = 0 }
+	}
+}
+
+KOR_ai_path_category = {
+	KOR_rally_the_democrats = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = KOR_SUNSHINE_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			has_elections = yes
+			check_variable = { party_pop_array^3 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KOR_rally_the_democrats"
+			set_temp_variable = { party_index = 3 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	KOR_democrats_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = KOR_SUNSHINE_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			western_social_democrats_are_in_power = no
+			KOR_has_progressive_government = no
+			check_variable = { party_pop_array^3 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KOR_democrats_take_the_country"
+			set_temp_variable = { rul_party_temp = 3 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	KOR_rally_the_conservatives = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = {
+			OR = {
+				has_global_flag = KOR_HARDLINE_FOCUS_PATH
+				has_global_flag = KOR_YUSIN_FOCUS_PATH
+			}
+		}
+
+		available = {
+			has_civil_war = no
+			has_elections = yes
+			check_variable = { party_pop_array^1 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KOR_rally_the_conservatives"
+			set_temp_variable = { party_index = 1 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	KOR_conservatives_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = {
+			OR = {
+				has_global_flag = KOR_HARDLINE_FOCUS_PATH
+				has_global_flag = KOR_YUSIN_FOCUS_PATH
+			}
+		}
+
+		available = {
+			has_civil_war = no
+			KOR_has_conservative_government = no
+			check_variable = { party_pop_array^1 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision KOR_conservatives_take_the_country"
+			set_temp_variable = { rul_party_temp = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

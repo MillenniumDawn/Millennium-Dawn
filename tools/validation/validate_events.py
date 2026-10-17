@@ -9,21 +9,31 @@ import os
 import re
 import sys
 from collections import Counter
+from functools import partial
 from pathlib import Path
-from typing import Callable, Dict, List, Optional, Set, Tuple
+from typing import Callable, Dict, Iterable, Iterator, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "linting"))
 
 import disk_cache
+from check_common_mistakes import _iter_event_log_mismatches
 from image_size import read_image_size
+from shared_utils import MODIFIER_OPEN_RE as _AI_CHANCE_MODIFIER_RE
+from shared_utils import OPTION_OPEN_RE as _OPTION_OPEN_RE
+from shared_utils import TRIGGER_OPEN_RE as _TRIGGER_OPEN_RE
 from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
+    find_unquoted_brace_close,
     get_staged_files,
+    iter_statements,
     strip_comments,
     strip_inline_comment,
+    validation_config,
 )
 from sprite_index import build_sprite_index, build_sprite_texture_index
+from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -48,6 +58,65 @@ _EVENT_CALL_KEYWORDS = (
 )
 _EVENT_CALL_ALT = "|".join(_EVENT_CALL_KEYWORDS)
 _EVENT_CALL_NEEDLES = tuple(keyword.encode() for keyword in _EVENT_CALL_KEYWORDS)
+# `event_country`, `event_news`, ...: what _REVERSED_EVENT_CALL_RE matches.
+_REVERSED_CALL_NEEDLES = tuple(
+    "event_" + keyword.removesuffix("_event") for keyword in _EVENT_CALL_KEYWORDS
+)
+
+
+def _has_event_call(text: str) -> bool:
+    return any(keyword in text for keyword in _EVENT_CALL_KEYWORDS)
+
+
+def _keyword_starts(text: str) -> List[int]:
+    starts: List[int] = []
+    for keyword in _EVENT_CALL_KEYWORDS:
+        pos = text.find(keyword)
+        while pos != -1:
+            starts.append(pos)
+            pos = text.find(keyword, pos + 1)
+    starts.sort()
+    return starts
+
+
+def _keyword_matches(
+    pattern: "re.Pattern[str]", text: str, starts: Optional[List[int]] = None
+) -> Iterator["re.Match[str]"]:
+    """Same matches as `pattern.finditer(text)` for a pattern whose every match
+    starts with an event call keyword.
+
+    Trying the pattern only where a keyword starts skips the regex engine's
+    attempt at every other offset. `starts` lets callers share one keyword scan.
+    """
+    if starts is None:
+        starts = _keyword_starts(text)
+    end = 0
+    for pos in starts:
+        if pos >= end and (match := pattern.match(text, pos)):
+            end = match.end()
+            yield match
+
+
+def _line_lookup(text: str) -> Callable[[int], int]:
+    """1-based line of an offset in `text`, counted from the previous lookup.
+
+    Scans look offsets up in file order, so each lookup costs only the distance
+    moved instead of a count from the start of the file.
+    """
+    last_pos = 0
+    last_line = 1
+
+    def line(pos: int) -> int:
+        nonlocal last_pos, last_line
+        if pos >= last_pos:
+            last_line += text.count("\n", last_pos, pos)
+        else:
+            last_line -= text.count("\n", pos, last_pos)
+        last_pos = pos
+        return last_line
+
+    return line
+
 
 _LONG_FORM_PATTERN = re.compile(
     r"\b(" + _EVENT_CALL_ALT + r")\s*=\s*\{\s*id\s*=\s*([^\s{}]+)\s*\}",
@@ -57,7 +126,7 @@ _LONG_FORM_PATTERN = re.compile(
 # sprite). Sprite names may contain `.` (frame suffixes like GFX_CTC.5) and `-`
 # (e.g. GFX_Polizistin-Kiesewetter), so both are part of the captured name.
 _EVENT_PICTURE_REF = re.compile(r'\bpicture\s*=\s*"?(GFX_[A-Za-z0-9_.\-]+)"?')
-_PICTURE_ASSIGN = re.compile(r"\bpicture\s*=\s*")
+_PICTURE_TOKEN_RE = re.compile(r"[{}]|\bpicture\s*=\s*")
 
 # Stand-in art used while drafting an event; shipped events need real art.
 _PLACEHOLDER_PICTURES = frozenset(
@@ -77,50 +146,22 @@ def _own_picture_refs(body: str) -> List[Tuple[str, int]]:
     """
     refs: List[Tuple[str, int]] = []
     depth = 0
-    pos = 0
-    end = len(body)
-    while pos < end:
-        char = body[pos]
-        if char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-        elif depth == 0:
-            assign = _PICTURE_ASSIGN.match(body, pos)
-            if assign:
-                value = assign.end()
-                if value < end and body[value] == "{":
-                    _conditional_picture_refs(body, value, refs)
-                    pos = value
-                    continue
-                ref = _EVENT_PICTURE_REF.match(body, assign.start())
-                if ref:
-                    refs.append((ref.group(1), assign.start()))
-                pos = value
-                continue
-        pos += 1
-    return refs
-
-
-def _conditional_picture_refs(
-    body: str, open_pos: int, refs: List[Tuple[str, int]]
-) -> None:
-    """Collect the inner refs of a `picture = { trigger = { } picture = X }` block."""
-    depth = 0
-    for pos in range(open_pos, len(body)):
-        char = body[pos]
+    in_conditional = False
+    for token in _PICTURE_TOKEN_RE.finditer(body):
+        char = token.group()
         if char == "{":
             depth += 1
         elif char == "}":
             depth -= 1
             if depth == 0:
-                return
-        elif depth == 1:
-            assign = _PICTURE_ASSIGN.match(body, pos)
-            if assign:
-                ref = _EVENT_PICTURE_REF.match(body, assign.start())
-                if ref:
-                    refs.append((ref.group(1), assign.start()))
+                in_conditional = False
+        elif depth == 0 and body.startswith("{", token.end()):
+            in_conditional = True
+        elif depth == 0 or (depth == 1 and in_conditional):
+            ref = _EVENT_PICTURE_REF.match(body, token.start())
+            if ref:
+                refs.append((ref.group(1), token.start()))
+    return refs
 
 
 # Both event windows draw `event_picture` at the texture's native size — the
@@ -183,13 +224,17 @@ def _picture_format_message(
     )
 
 
-def _should_skip(filename: str) -> bool:
-    return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
+    return should_skip_file(
+        filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS, mod_path=mod_path
+    )
 
 
-def _read_cleaned_text(filename: str, *, skip: bool = True) -> Optional[str]:
+def _read_cleaned_text(
+    filename: str, *, skip: bool = True, mod_path: Optional[str] = None
+) -> Optional[str]:
     """Read a mod file and strip ``#`` comments, or return ``None`` on failure."""
-    if skip and _should_skip(filename):
+    if skip and _should_skip(filename, mod_path=mod_path):
         return None
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -198,21 +243,25 @@ def _read_cleaned_text(filename: str, *, skip: bool = True) -> Optional[str]:
     return re.sub(r"#[^\n]*", "", text)
 
 
-def _extract_event_pictures(filename: str) -> List[Tuple[str, str, int]]:
+def _extract_event_pictures(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
     """Pool worker: return (sprite, filename, line) for each event picture ref."""
-    text = _read_cleaned_text(filename)
+    text = _read_cleaned_text(filename, mod_path=mod_path)
     if text is None:
         return []
-    out: List[Tuple[str, str, int]] = []
-    for m in _EVENT_PICTURE_REF.finditer(text):
-        line = text.count("\n", 0, m.start()) + 1
-        out.append((m.group(1), filename, line))
-    return out
+    line = _line_lookup(text)
+    return [
+        (m.group(1), filename, line(m.start()))
+        for m in _EVENT_PICTURE_REF.finditer(text)
+    ]
 
 
-def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, int]]:
+def _extract_option_logs_without_effects(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
     """Pool worker: (option name, filename, line) for logs in effect-free options."""
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return []
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
@@ -223,28 +272,108 @@ def _extract_option_logs_without_effects(filename: str) -> List[Tuple[str, str, 
     ]
 
 
+def _extract_event_log_id_mismatches(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: (message, filename, line) for option logs citing the wrong id."""
+    if _should_skip(filename, mod_path=mod_path):
+        return []
+    try:
+        lines = (
+            Path(filename)
+            .read_text(encoding="utf-8-sig", errors="replace")
+            .splitlines(keepends=True)
+        )
+    except OSError:
+        return []
+    results: List[Tuple[str, str, int]] = []
+    for row, _s, _e, _repl, token, own_name, kind in _iter_event_log_mismatches(lines):
+        if own_name in _OPTION_LOG_ID_EXEMPT:
+            continue
+        if kind == "letter":
+            message = f"{own_name} log says Option {token}"
+        else:
+            message = f"{own_name} log cites {token}"
+        results.append((message, filename, row + 1))
+    return results
+
+
+_ALL_GATED_NOTE = " (every option has a trigger; check the AI sees more than one)"
+
+# Per-worker copies of costly_scripted_effects and stored_variable_signs, set
+# once by the Pool initializer.
+_W_COSTLY_EFFECTS: Dict[str, str] = {}
+_W_STORED_SIGNS: Dict[str, int] = {}
+
+
+def _init_cost_lookups(effects: Dict[str, str], stored: Dict[str, int]) -> None:
+    global _W_COSTLY_EFFECTS, _W_STORED_SIGNS
+    _W_COSTLY_EFFECTS = effects
+    _W_STORED_SIGNS = stored
+
+
+def _scan_stored_variable_signs(
+    filename: str, *, mod_path: Optional[str] = None
+) -> Dict[str, int]:
+    """Pool worker: stored_variable_signs for one file."""
+    text = _read_cleaned_text(filename, mod_path=mod_path)
+    if text is None or "set_variable" not in text:
+        return {}
+    return stored_variable_signs([text])
+
+
+def load_cost_lookups(
+    validator: BaseValidator,
+) -> Tuple[Dict[str, str], Dict[str, int]]:
+    """(costly_scripted_effects, stored_variable_signs) read from the whole mod."""
+    effect_texts = (
+        _read_cleaned_text(path, mod_path=validator.mod_path)
+        for path in validator._collect_files(
+            ["common/scripted_effects/**/*.txt"], ignore_staged=True
+        )
+    )
+    effects = costly_scripted_effects(text for text in effect_texts if text)
+    stored: Dict[str, int] = {}
+    script_files = validator._collect_files(
+        ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+        ignore_staged=True,
+    )
+    for found in validator._pool_map(
+        partial(_scan_stored_variable_signs, mod_path=validator.mod_path), script_files
+    ):
+        for name, signs in found.items():
+            stored[name] = stored.get(name, 0) | signs
+    return effects, stored
+
+
+def _extract_cost_blind_options(
+    filename: str, *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
+    """Pool worker: (message, path, line) for options whose AI weight ignores a cost."""
+    text = _read_cleaned_text(filename, mod_path=mod_path)
+    if text is None:
+        return []
+    path = os.path.relpath(filename, mod_path)
+    return [
+        (
+            f"{name} - ai_chance ignores the {costs} cost"
+            + (_ALL_GATED_NOTE if all_gated else ""),
+            path,
+            line,
+        )
+        for name, line, costs, all_gated in find_cost_blind_options(
+            text, _W_COSTLY_EFFECTS, _W_STORED_SIGNS
+        )
+    ]
+
+
 _ID_TOKEN_PATTERN = re.compile(r"[A-Za-z0-9_.]+")
 
 
 def _scan_event_id_counts_text(cleaned: str, tracked_ids: frozenset) -> Dict[str, int]:
+    """Whole-token counts: `foo.1` and its loc key `foo.1.t` are distinct tokens."""
     counts = Counter(_ID_TOKEN_PATTERN.findall(cleaned))
-    return {eid: counts[eid] for eid in tracked_ids if eid in counts}
-
-
-def count_event_ids_in_file(args: Tuple[str, frozenset]) -> Dict[str, int]:
-    """Pool worker: count occurrences of each tracked event ID in one file.
-
-    Tokenizes the file body ONCE and counts whole-token matches against the
-    tracked-ID set, rather than scanning the file once per tracked ID. The `.`
-    is part of an identifier token, so `ALG_civilwar.1` and its loc keys
-    `ALG_civilwar.1.t` / `.d` / `.a` tokenize as distinct tokens and don't
-    inflate each other's counts.
-    """
-    filename, tracked_ids = args
-    cleaned = _read_cleaned_text(filename)
-    if cleaned is None:
-        return {}
-    return _scan_event_id_counts_text(cleaned, tracked_ids)
+    return {eid: counts[eid] for eid in tracked_ids.intersection(counts)}
 
 
 # Event IDs built at runtime by string interpolation never appear as a literal
@@ -285,18 +414,6 @@ _MISSING_EVENT_CALL_EQUALS_RE = re.compile(
 )
 
 
-def _matching_brace(text: str, open_pos: int) -> int:
-    depth = 0
-    for i in range(open_pos, len(text)):
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-            if depth == 0:
-                return i
-    return -1
-
-
 _ID_OR_BRACE_RE = re.compile(r"[{}]|\bid\s*=\s*([A-Za-z_][\w.]*)")
 
 
@@ -327,9 +444,9 @@ def _iter_typed_event_bodies(cleaned: str, *, require_id: bool = True):
     with None for the id; the metadata checks report those blocks as "unknown"
     rather than passing over them.
     """
-    for m in _EVENT_BLOCK_OPEN_RE.finditer(cleaned):
+    for m in _keyword_matches(_EVENT_BLOCK_OPEN_RE, cleaned):
         ob = cleaned.index("{", m.end() - 1)
-        end = _matching_brace(cleaned, ob)
+        end = find_unquoted_brace_close(cleaned, ob)
         if end == -1:
             continue
         body = cleaned[ob + 1 : end]
@@ -345,15 +462,6 @@ def _iter_event_bodies(cleaned: str):
     """Yield (event_id, body, match_start) for defined events."""
     for eid, _event_type, body, start in _iter_typed_event_bodies(cleaned):
         yield eid, body, start
-
-
-def scan_event_definitions(args: Tuple[str, frozenset]) -> Set[str]:
-    """Pool worker: event IDs *defined* in one file."""
-    filename = args[0]
-    cleaned = _read_cleaned_text(filename, skip=False)
-    if cleaned is None:
-        return set()
-    return {eid for eid, _body, _start in _iter_event_bodies(cleaned) if eid}
 
 
 def scan_event_definition_types(
@@ -382,10 +490,11 @@ def _is_literal_id(eid: str, after: str) -> bool:
 
 def _iter_typed_fires(text: str):
     """Yield (event_id, call_keyword, match_start) for literal event fires."""
-    for m in _EVENT_FIRE_SHORT_RE.finditer(text):
+    starts = _keyword_starts(text)
+    for m in _keyword_matches(_EVENT_FIRE_SHORT_RE, text, starts):
         if _is_literal_id(m.group(2), text[m.end() : m.end() + 1]):
             yield m.group(2), m.group(1), m.start()
-    for m in _EVENT_FIRE_BLOCK_RE.finditer(text):
+    for m in _keyword_matches(_EVENT_FIRE_BLOCK_RE, text, starts):
         idm = _FIRE_ID_RE.search(m.group(2))
         if idm and _is_literal_id(idm.group(1), m.group(2)[idm.end() : idm.end() + 1]):
             yield idm.group(1), m.group(1), m.start()
@@ -397,104 +506,43 @@ def _iter_fired_ids(text: str):
         yield eid, pos
 
 
-def _scan_fires_text(cleaned: str, filename: str) -> List[Tuple[str, str, int]]:
-    return [
-        (eid, filename, cleaned.count("\n", 0, pos) + 1)
-        for eid, pos in _iter_fired_ids(cleaned)
-    ]
-
-
-def scan_event_fires(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
-    """Pool worker: every event ID fired from one file, as (id, file, line).
-
-    Only literal IDs are returned. An ID assembled at runtime (`UN.[ID]`) has no
-    literal form to resolve, so it is skipped rather than guessed at.
-    """
-    filename = args[0]
-    cleaned = _read_cleaned_text(filename)
-    if cleaned is None:
-        return []
-    return _scan_fires_text(cleaned, filename)
-
-
 def _scan_typed_fires_text(
     cleaned: str, filename: str
 ) -> List[Tuple[str, str, str, int]]:
+    line = _line_lookup(cleaned)
     return [
-        (eid, call_type, filename, cleaned.count("\n", 0, pos) + 1)
+        (eid, call_type, filename, line(pos))
         for eid, call_type, pos in _iter_typed_fires(cleaned)
     ]
-
-
-def scan_typed_event_fires(
-    args: Tuple[str, frozenset],
-) -> List[Tuple[str, str, str, int]]:
-    """Pool worker: literal event fires with their call keywords."""
-    filename = args[0]
-    cleaned = _read_cleaned_text(filename)
-    if cleaned is None:
-        return []
-    return _scan_typed_fires_text(cleaned, filename)
 
 
 def _scan_invalid_calls_text(
     cleaned: str, filename: str
 ) -> List[Tuple[str, str, str, str, int]]:
     results: List[Tuple[str, str, str, str, int]] = []
-    for m in _REVERSED_EVENT_CALL_RE.finditer(cleaned):
-        results.append(
-            (
-                "reversed",
-                m.group(1),
-                m.group(2) or m.group(3),
-                filename,
-                cleaned.count("\n", 0, m.start()) + 1,
+    line = _line_lookup(cleaned)
+    # Every reversed match starts with one of these keywords.
+    if any(needle in cleaned for needle in _REVERSED_CALL_NEEDLES):
+        for m in _REVERSED_EVENT_CALL_RE.finditer(cleaned):
+            results.append(
+                (
+                    "reversed",
+                    m.group(1),
+                    m.group(2) or m.group(3),
+                    filename,
+                    line(m.start()),
+                )
             )
-        )
-    for m in _MISSING_EVENT_CALL_EQUALS_RE.finditer(cleaned):
+    for m in _keyword_matches(_MISSING_EVENT_CALL_EQUALS_RE, cleaned):
         results.append(
-            (
-                "missing-equals",
-                m.group(1),
-                m.group(2),
-                filename,
-                cleaned.count("\n", 0, m.start()) + 1,
-            )
+            ("missing-equals", m.group(1), m.group(2), filename, line(m.start()))
         )
     results.sort(key=lambda result: result[-1])
     return results
 
 
-def scan_invalid_event_calls(
-    args: Tuple[str, frozenset],
-) -> List[Tuple[str, str, str, str, int]]:
-    """Pool worker: reversed keywords and event calls missing ``=``."""
-    filename = args[0]
-    if _should_skip(filename):
-        return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = blank_quoted_strings(strip_comments(text))
-    return _scan_invalid_calls_text(cleaned, filename)
-
-
 def _scan_dynamic_namespaces_text(cleaned: str) -> Set[str]:
-    return set(_DYNAMIC_EVENT_NS_PATTERN.findall(cleaned))
-
-
-def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
-    """Pool worker: namespaces fired via string-interpolated event IDs in a file.
-
-    Any triggered-only event in a returned namespace is reachable through dynamic
-    dispatch and must not be reported as unreferenced.
-    """
-    filename = args[0]
-    cleaned = _read_cleaned_text(filename)
-    if cleaned is None:
-        return set()
-    return _scan_dynamic_namespaces_text(cleaned)
+    return {m.group(1) for m in _keyword_matches(_DYNAMIC_EVENT_NS_PATTERN, cleaned)}
 
 
 # --- date-gated events and the event fire graph ---
@@ -505,7 +553,6 @@ def scan_dynamic_event_namespaces(args: Tuple[str, frozenset]) -> Set[str]:
 _DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
 # Any bound is redundant on an event the yearly effects already schedule.
 _DATE_BOUND_RE = re.compile(r"\bdate\s*[<>]=?\s*\d{4}\.\d{1,2}\.\d{1,2}")
-_TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
 
 
 def _event_trigger_body(body: str) -> Optional[str]:
@@ -525,47 +572,54 @@ def _event_trigger_body(body: str) -> Optional[str]:
         if depth != 0:
             continue
         ob = body.index("{", m.end() - 1)
-        end = _matching_brace(body, ob)
+        end = find_unquoted_brace_close(body, ob)
         return None if end == -1 else body[ob + 1 : end]
     return None
 
 
 def _events_with_trigger_date(
-    filename: str, pattern: "re.Pattern[str]"
+    filename: str, pattern: "re.Pattern[str]", mod_path: Optional[str]
 ) -> List[Tuple[str, str, int]]:
     """(id, file, line) of every event whose own trigger matches `pattern`."""
-    cleaned = _read_cleaned_text(filename)
+    cleaned = _read_cleaned_text(filename, mod_path=mod_path)
     if cleaned is None:
         return []
 
     out: List[Tuple[str, str, int]] = []
+    line = _line_lookup(cleaned)
     for eid, body, start in _iter_event_bodies(cleaned):
         if not eid:
             continue
         trigger = _event_trigger_body(body)
         if trigger and pattern.search(trigger):
-            out.append((eid, filename, cleaned.count("\n", 0, start) + 1))
+            out.append((eid, filename, line(start)))
     return out
 
 
-def scan_date_gated_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+def scan_date_gated_events(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
     """Pool worker: events whose own trigger carries a `date >` bound."""
-    return _events_with_trigger_date(args[0], _DATE_LOWER_BOUND_RE)
+    return _events_with_trigger_date(args[0], _DATE_LOWER_BOUND_RE, mod_path)
 
 
-def scan_date_bounded_events(args: Tuple[str, frozenset]) -> List[Tuple[str, str, int]]:
+def scan_date_bounded_events(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str, int]]:
     """Pool worker: events whose own trigger carries any `date` comparison."""
-    return _events_with_trigger_date(args[0], _DATE_BOUND_RE)
+    return _events_with_trigger_date(args[0], _DATE_BOUND_RE, mod_path)
 
 
-def scan_event_fire_graph(args: Tuple[str, frozenset]) -> List[Tuple[str, str]]:
+def scan_event_fire_graph(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> List[Tuple[str, str]]:
     """Pool worker: (parent_id, child_id) for every event fired from an event.
 
     Lets a chain event inherit whatever schedules its parent, so only the head
     of a chain needs a scheduling entry.
     """
     filename = args[0]
-    cleaned = _read_cleaned_text(filename)
+    cleaned = _read_cleaned_text(filename, mod_path=mod_path)
     if cleaned is None:
         return []
 
@@ -584,7 +638,7 @@ def _stat_cached_scan(mod_path: str, namespace: str, filename: str, scanner):
         mod_path,
         namespace,
         filename,
-        lambda: scanner((filename, frozenset())),
+        lambda: scanner((filename, frozenset()), mod_path=mod_path),
     )
 
 
@@ -660,11 +714,16 @@ _FOF_EVENT_SHORT = r"\b(?:" + _EVENT_CALL_ALT + r")\s*=\s*[A-Za-z0-9_.]+"
 _RE_FOF_EVENT_LONG = re.compile(_FOF_EVENT_LONG)
 _RE_FOF_EVENT_SHORT = re.compile(_FOF_EVENT_SHORT)
 _RE_FOF_ID = re.compile(r"\bid\s*=\s*([^\s}]+)")
+# Every token starts with one of these characters; testing that first skips most
+# positions without trying each alternative.
 _RE_FOF_TOKEN = re.compile(
-    "|".join(
+    r"(?=[{}A-Zcefnosuv])(?:"
+    + "|".join(
         (r"\{", r"\}", _FOF_ITER_OPEN, _FOF_PINNED, _FOF_EVENT_LONG, _FOF_EVENT_SHORT)
     )
+    + ")"
 )
+_LOOP_OPENERS = ("every_", "for_each_")
 
 
 _FOF_IN_LOOP_MSG = (
@@ -695,21 +754,31 @@ def _loop_stack_flags(stack: List[str], pinned_shields: bool) -> bool:
     return False
 
 
-def _scan_tracked_in_loop_text(
+def _scan_in_loop_text(
     cleaned: str,
     filename: str,
-    tracked_ids: frozenset,
     mod_path: str,
-    *,
-    pinned_shields: bool,
-    message: str,
-) -> List[str]:
-    findings: List[str] = []
+    fof_ids: frozenset,
+    major_ids: frozenset,
+) -> Tuple[List[str], List[str]]:
+    """(fire_only_once, major) findings for tracked events fired inside an iterator.
 
-    def _flag(eid: str, pos: int) -> None:
-        line = cleaned.count("\n", 0, pos) + 1
+    One token walk serves both checks. A fire inside any iterator repeats a major
+    broadcast; a fire_only_once event is flagged only with no pinned scope between.
+    """
+    fof: List[str] = []
+    major: List[str] = []
+    line = _line_lookup(cleaned)
+
+    def _finding(eid: str, pos: int, message: str) -> str:
         rel = os.path.relpath(filename, mod_path)
-        findings.append(f"{rel}:{line} - {message.format(eid=eid)}")
+        return f"{rel}:{line(pos)} - {message.format(eid=eid)}"
+
+    def _check(eid: str, pos: int, stack: List[str]) -> None:
+        if eid in major_ids:
+            major.append(_finding(eid, pos, _MAJOR_IN_LOOP_MSG))
+        if eid in fof_ids and _loop_stack_flags(stack, pinned_shields=True):
+            fof.append(_finding(eid, pos, _FOF_IN_LOOP_MSG))
 
     stack: List[str] = []
     for m in _RE_FOF_TOKEN.finditer(cleaned):
@@ -724,70 +793,24 @@ def _scan_tracked_in_loop_text(
         elif _RE_FOF_PINNED_OPEN.match(tok):
             stack.append("pinned")
         elif _RE_FOF_EVENT_LONG.match(tok):
+            if "iter" in stack:
+                body, _ = extract_block_from_text(cleaned, m.end() - 1)
+                idm = _RE_FOF_ID.search(body)
+                if idm:
+                    _check(idm.group(1), m.start(), stack)
             stack.append("other")
-            body, _ = extract_block_from_text(cleaned, m.end() - 1)
-            idm = _RE_FOF_ID.search(body)
-            eid = idm.group(1) if idm else None
-            if (
-                eid
-                and eid in tracked_ids
-                and _loop_stack_flags(stack[:-1], pinned_shields)
-            ):
-                _flag(eid, m.start())
-        elif _RE_FOF_EVENT_SHORT.match(tok):
-            eid = tok.split("=", 1)[1].strip()
-            if eid in tracked_ids and _loop_stack_flags(stack, pinned_shields):
-                _flag(eid, m.start())
-    return findings
-
-
-def _scan_tracked_events_in_loop(
-    args: Tuple[str, frozenset, str],
-    *,
-    pinned_shields: bool,
-    message: str,
-) -> List[str]:
-    """Flag tracked event IDs fired inside an every_*/for_each_* iterator."""
-    filename, tracked_ids, mod_path = args
-    if not tracked_ids or _should_skip(filename):
-        return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    if not any(k in text for k in _EVENT_CALL_KEYWORDS):
-        return []
-    cleaned = blank_quoted_strings(strip_comments(text))
-    return _scan_tracked_in_loop_text(
-        cleaned,
-        filename,
-        tracked_ids,
-        mod_path,
-        pinned_shields=pinned_shields,
-        message=message,
-    )
-
-
-def scan_fire_only_once_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
-    """Pool worker: flag fire_only_once events fired inside an iterator."""
-    return _scan_tracked_events_in_loop(
-        args, pinned_shields=True, message=_FOF_IN_LOOP_MSG
-    )
-
-
-def scan_major_event_in_loop(args: Tuple[str, frozenset, str]) -> List[str]:
-    """Pool worker: flag major events fired inside an iterator."""
-    return _scan_tracked_events_in_loop(
-        args, pinned_shields=False, message=_MAJOR_IN_LOOP_MSG
-    )
+        elif _RE_FOF_EVENT_SHORT.match(tok) and "iter" in stack:
+            _check(tok.split("=", 1)[1].strip(), m.start(), stack)
+    return fof, major
 
 
 def _scan_long_form_text(cleaned: str, filename: str, mod_path: str) -> List[str]:
     rel = os.path.relpath(filename, mod_path)
     results = []
     seen = set()
-    for m in _LONG_FORM_PATTERN.finditer(cleaned):
-        line = cleaned[: m.start()].count("\n") + 1
+    lookup = _line_lookup(cleaned)
+    for m in _keyword_matches(_LONG_FORM_PATTERN, cleaned):
+        line = lookup(m.start())
         key = (rel, line, m.group(1), m.group(2))
         if key in seen:
             continue
@@ -796,19 +819,6 @@ def _scan_long_form_text(cleaned: str, filename: str, mod_path: str) -> List[str
             f"{rel}:{line} - {m.group(1)} = {{ id = {m.group(2)} }} → use shorthand `{m.group(1)} = {m.group(2)}`"
         )
     return results
-
-
-def process_txt_for_long_form_events(args: Tuple[str, str]) -> List[str]:
-    """Pool worker: find id-only long-form event calls in one .txt file."""
-    filename, mod_path = args
-    if _should_skip(filename):
-        return []
-    try:
-        text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
-        return []
-    cleaned = re.sub(r"#[^\n]*", "", text)
-    return _scan_long_form_text(cleaned, filename, mod_path)
 
 
 _C_LONGFORM = 1
@@ -827,19 +837,34 @@ def _scan_shared_call_site_file(args) -> Tuple:
 
     Reads the file once and shares the naive-stripped and quote-aware artifacts
     across long-form, invalid-call, typed-fire, count, dynamic-namespace, and
-    in-loop scans instead of one read plus strip pass per check. Each scan calls
-    the same ``_scan_*_text`` helper its standalone worker uses, gated by ``mask``
-    so the file set per check is unchanged. Typed fires and dynamic namespaces
-    keep their existing disk-cache namespaces.
+    in-loop scans instead of one read plus strip pass per check. Each scan is
+    gated by ``mask`` so the file set per check is unchanged. Typed fires and
+    dynamic namespaces keep their disk-cache namespaces.
     Returns (longform, invalid, typed, counts, dynamic, fof, major).
     """
     filename, mod_path, mask, count_tracked, fof_ids, major_ids = args
-    if mask == 0 or _should_skip(filename):
+    if mask == 0 or _should_skip(filename, mod_path=mod_path):
         return _EMPTY_SHARED_CALL_SITE_RESULT
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
     except Exception:
         return _EMPTY_SHARED_CALL_SITE_RESULT
+
+    # Drop scans that cannot match: every call-site match contains an event
+    # keyword (a reversed call its reversed keyword), and an in-loop finding
+    # needs an every_*/for_each_* opener. Comment stripping only removes text.
+    if not _has_event_call(text):
+        mask &= _C_COUNT | _C_INVALID
+        if not any(needle in text for needle in _REVERSED_CALL_NEEDLES):
+            mask &= _C_COUNT
+    if not any(opener in text for opener in _LOOP_OPENERS):
+        mask &= ~(_C_FOF | _C_MAJOR)
+    if not count_tracked:
+        mask &= ~_C_COUNT
+    if not fof_ids:
+        mask &= ~_C_FOF
+    if not major_ids:
+        mask &= ~_C_MAJOR
 
     need_naive = mask & (_C_LONGFORM | _C_TYPED | _C_COUNT | _C_DYNAMIC)
     need_blanked = mask & (_C_INVALID | _C_FOF | _C_MAJOR)
@@ -869,7 +894,7 @@ def _scan_shared_call_site_file(args) -> Tuple:
             naive,
             lambda: _scan_typed_fires_text(naive, filename),
         )
-    if mask & _C_COUNT and count_tracked:
+    if mask & _C_COUNT:
         counts = _scan_event_id_counts_text(naive, count_tracked)
     if mask & _C_DYNAMIC:
         dynamic = disk_cache.per_file_cached_by_content(
@@ -880,25 +905,13 @@ def _scan_shared_call_site_file(args) -> Tuple:
             lambda: _scan_dynamic_namespaces_text(naive),
         )
     if mask & (_C_FOF | _C_MAJOR):
-        if any(k in text for k in _EVENT_CALL_KEYWORDS):
-            if mask & _C_FOF and fof_ids:
-                fof = _scan_tracked_in_loop_text(
-                    blanked,
-                    filename,
-                    fof_ids,
-                    mod_path,
-                    pinned_shields=True,
-                    message=_FOF_IN_LOOP_MSG,
-                )
-            if mask & _C_MAJOR and major_ids:
-                major = _scan_tracked_in_loop_text(
-                    blanked,
-                    filename,
-                    major_ids,
-                    mod_path,
-                    pinned_shields=False,
-                    message=_MAJOR_IN_LOOP_MSG,
-                )
+        fof, major = _scan_in_loop_text(
+            blanked,
+            filename,
+            mod_path,
+            fof_ids if mask & _C_FOF else frozenset(),
+            major_ids if mask & _C_MAJOR else frozenset(),
+        )
     return (longform, invalid, typed, counts, dynamic, fof, major)
 
 
@@ -908,15 +921,16 @@ def _scan_shared_call_site_file(args) -> Tuple:
 _ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
 _RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
 _RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
-_OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 
 # Statements an option can carry that change no game state. `trigger` gates the
 # option's visibility and `ai_chance` weights the AI's pick; neither runs an effect.
 # Triggered-only events the engine dispatches with no script reference to find.
-# lar_collab_gov.1 is the vanilla La Resistance event behind the live
-# operation_collaboration_government system, fired on collaboration-government
-# creation; MD keeps it so the operation still has its event.
-_EXEMPT_UNREFERENCED_EVENT_IDS = frozenset({"lar_collab_gov.1"})
+_EXEMPT_UNREFERENCED_EVENT_IDS = frozenset(
+    validation_config("validate_events", "exempt_unreferenced_event_ids")
+)
+_OPTION_LOG_ID_EXEMPT = frozenset(
+    validation_config("validate_events", "option_log_id_exempt")
+)
 
 _OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
 # A scope key is an effect too: `652 = { ... }` opens a state scope and `"LGN" = { ... }`
@@ -924,7 +938,8 @@ _OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
 # one of them reads as effect-free. Quoted keys survive blank_quoted_strings, which
 # blanks the interior but keeps the quotes.
 _OPTION_STATEMENT_RE = re.compile(r'([A-Za-z_]\w*|\d+|"[^"]*")\s*=')
-_OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
+_OPTION_TOKEN_RE = re.compile(r"[{}]|" + _OPTION_STATEMENT_RE.pattern)
+_BRACE_RE = re.compile(r"[{}]")
 
 # Event-level (depth-1) title/desc fields — option-level name fields are
 # nested deeper and are not matched.
@@ -958,7 +973,7 @@ def find_option_logs_without_effects(text: str) -> List[Tuple[str, int]]:
     out: List[Tuple[str, int]] = []
     row = 0
     while row < len(code):
-        match = _OPTION_OPEN_RE.search(code[row])
+        match = _OPTION_OPEN_RE.search(code[row]) if "option" in code[row] else None
         if match is None:
             row += 1
             continue
@@ -971,8 +986,12 @@ def find_option_logs_without_effects(text: str) -> List[Tuple[str, int]]:
         while end_row < len(code) and not closed:
             line = code[end_row]
             i = match.end() - 1 if end_row == row else 0
-            while i < len(line):
-                char = line[i]
+            # Statements count only at the option's own depth; deeper, only braces matter.
+            while token := (_OPTION_TOKEN_RE if depth == 1 else _BRACE_RE).search(
+                line, i
+            ):
+                i = token.end()
+                char = token.group()
                 if char == "{":
                     depth += 1
                 elif char == "}":
@@ -980,24 +999,407 @@ def find_option_logs_without_effects(text: str) -> List[Tuple[str, int]]:
                     if depth == 0:
                         closed = True
                         break
-                elif depth == 1:
-                    stmt = _OPTION_STATEMENT_RE.match(line, i)
-                    if stmt:
-                        key = stmt.group(1)
-                        names.append(key)
-                        if key == "log":
-                            logs.append(end_row + 1)
-                        elif key == "name":
-                            value = line[stmt.end() :].split()
-                            name = value[0] if value else None
-                        i = stmt.end()
-                        continue
-                i += 1
+                else:
+                    key = token.group(1)
+                    names.append(key)
+                    if key == "log":
+                        logs.append(end_row + 1)
+                    elif key == "name":
+                        value = line[i:].split()
+                        name = value[0] if value else None
             if not closed:
                 end_row += 1
         if logs and not (set(names) - _OPTION_NON_EFFECT_KEYS):
             out.extend((name or "unnamed option", line_no) for line_no in logs)
         row = end_row + 1 if end_row > row else row + 1
+    return out
+
+
+# Blocks that keep the option's own country scope. A cost inside any other block
+# (`FROM = { ... }`, a state scope, a trigger) is not paid by the country choosing.
+_OWN_SCOPE_BLOCKS = frozenset(
+    {
+        "if",
+        "else",
+        "else_if",
+        "hidden_effect",
+        "random",
+        "random_list",
+        "meta_effect",
+        "text",
+        "ROOT",
+        "THIS",
+    }
+)
+_VARIABLE_OPS = ("set", "add_to", "subtract_from", "multiply", "divide")
+# Kept whole: the math block nested in one (`x = { value = ... }`) is not a scope.
+_VARIABLE_EFFECTS = frozenset(
+    f"{op}_{temp}variable" for op in _VARIABLE_OPS for temp in ("", "temp_")
+)
+_BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
+_OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
+_AI_WEIGHT_LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
+_FINANCIAL_GUARD_RE = re.compile(
+    _BANKRUPTCY_GUARD_RE.pattern + r"|\bai_has_high_deficit\s*=\s*(?:yes|no)\b"
+    r"|\bcheck_variable\s*=\s*\{\s*(?:var\s*=\s*)?(?:ROOT\.|THIS\.)?"
+    r"(?:treasury|debt|int_investments|treasury_rate|budget_balance_ratio|"
+    r"corporate_tax_rate|population_tax_rate)\b"
+)
+_COST_GUARDS = {
+    "treasury": _FINANCIAL_GUARD_RE,
+    "debt": _FINANCIAL_GUARD_RE,
+    "international investment": _FINANCIAL_GUARD_RE,
+    "tax rate": _FINANCIAL_GUARD_RE,
+    "political power": _BANKRUPTCY_GUARD_RE,
+    "stability": re.compile(r"\bhas_stability\s*[<>=]"),
+    "war support": re.compile(r"\bhas_war_support\s*[<>=]"),
+}
+_TRIGGER_SCOPE_BLOCKS = frozenset(
+    {"AND", "OR", "NOT", "hidden_trigger", "custom_trigger_tooltip"}
+)
+
+# Signs a value can have, as bits. Zero has neither, so a zero change costs nothing.
+_NEG, _POS = 1, 2
+
+# Stored variable -> (signs of a change that cost the country, label). Debt is the
+# odd one out: adding to it is what hurts. A tax rate change costs either way.
+_COST_VARIABLES = {
+    "treasury": (_NEG, "treasury"),
+    "debt": (_POS, "debt"),
+    "int_investments": (_NEG, "international investment"),
+    "corporate_tax_rate": (_NEG | _POS, "tax rate"),
+    "population_tax_rate": (_NEG | _POS, "tax rate"),
+}
+_STAT_COSTS = {
+    "add_political_power": "political power",
+    "add_stability": "stability",
+    "add_war_support": "war support",
+}
+_COST_ORDER = (
+    *dict.fromkeys(kind for _cost_signs, kind in _COST_VARIABLES.values()),
+    *_STAT_COSTS.values(),
+)
+# `{ x = operand }` or the long form `{ var = x value = operand }`.
+_VARIABLE_ARGS = (
+    r"\s*=\s*\{\s*(?:var\s*=\s*(?P<long>[^\s={}]+)\s+value\s*=\s*"
+    r"|(?P<short>[^\s={}]+)\s*=\s*)(?P<operand>\{[^{}]*\}|[^\s{}]+)"
+)
+_STAT_COST = r"\b(?P<stat>add_political_power|add_stability|add_war_support)\s*=\s*-"
+_COST_STEP_RE = re.compile(
+    r"\b(?P<op>"
+    + "|".join(_VARIABLE_OPS)
+    + r")_(?P<temp>temp_)?variable"
+    + _VARIABLE_ARGS
+    + "|"
+    + _STAT_COST
+    + r"|\b(?P<call>[A-Za-z_]\w*)\s*=\s*yes\b"
+    r"|\b(?P<branch>if|else_if|else|random|\d+)\s*=\s*\{"
+)
+_DIRECT_COST_RE = re.compile(
+    r"\b(?:add_to|subtract_from)_variable\s*=\s*\{\s*(?:var\s*=\s*)?(?:"
+    + "|".join(_COST_VARIABLES)
+    + r")\b|"
+    + _STAT_COST
+)
+_EFFECT_CALL_RE = re.compile(r"\b([A-Za-z_]\w*)\s*=\s*yes\b")
+_SCRIPTED_EFFECT_DEF_RE = re.compile(r"^([A-Za-z_][\w.]*)\s*=\s*\{", re.MULTILINE)
+_MATH_TERM_RE = re.compile(r"\b(value|add|subtract|multiply|divide)\s*=\s*([^\s{}]+)")
+_STORED_LITERAL_RE = re.compile(
+    r"\bset_variable\s*=\s*\{\s*(?:var\s*=\s*([^\s={}]+)\s+value\s*=\s*"
+    r"|([^\s={}]+)\s*=\s*)(-?[\d.]+)\s*\}"
+)
+
+
+def _flip(signs: int) -> int:
+    return ((signs & _NEG) << 1) | ((signs & _POS) >> 1)
+
+
+def _combine(op: str, signs: int, term: int) -> int:
+    """Signs `signs` can have after one variable op (or math-block term) with `term`.
+
+    Adding or subtracting only decides the sign of a value that was zero
+    (`needed_money = 0`, then `subtract 4.5`). A value that already has a sign
+    keeps it: script subtracts a part from a whole (`bailout - debt`) far more
+    often than it crosses zero, and calling that negative would invent a charge.
+    """
+    if op in ("set", "value"):
+        return term
+    if op in ("multiply", "divide"):
+        return (signs if term & _POS else 0) | (_flip(signs) if term & _NEG else 0)
+    return signs or (_flip(term) if op.startswith("subtract") else term)
+
+
+def _stored_name(variable: str) -> str:
+    """`FROM.LBA_cost^2` -> `LBA_cost`: the name a stored variable is set under."""
+    return variable.rsplit(".", 1)[-1].split("^", 1)[0]
+
+
+def _signs(operand: str, known: Dict[str, int], stored: Dict[str, int]) -> int:
+    """Signs a variable-effect operand can have.
+
+    `known` is what this run of effects has set. `stored` is stored_variable_signs.
+    Anything else is a stored value like `gdp_total` and counts as positive.
+    """
+    if operand.startswith("{"):
+        signs = 0
+        for op, term in _MATH_TERM_RE.findall(operand):
+            signs = _combine(op, signs, _signs(term, known, stored))
+        return signs
+    if operand[0] in "-.0123456789":
+        if not operand.strip("-.0"):
+            return 0
+        return _NEG if operand[0] == "-" else _POS
+    if operand in known:
+        return known[operand]
+    return stored.get(_stored_name(operand), _POS)
+
+
+def _effect_costs(
+    text: str,
+    effects: Dict[str, str],
+    known: Dict[str, int],
+    stored: Dict[str, int],
+    stack: Tuple[str, ...] = (),
+) -> Set[str]:
+    """What these effects cost the country running them, read in script order.
+
+    Charges are rarely a plain negative literal: `treasury_change` is often set to
+    a GDP variable and negated by `multiply_temp_variable`, or built in one math
+    block (`{ value = gdp_total multiply = -0.03 }`), then applied by a scripted
+    effect. So this tracks the signs every variable can have and follows calls
+    into `effects` (see costly_scripted_effects), which share the caller's temp
+    variables the way the game does. A branch (`if`, `random`, a `random_list`
+    bucket) may or may not run, so what it sets is added to what was possible
+    before it, and an `else` starts from what held before its `if`. The cost
+    itself is always a write to a stored variable in _COST_VARIABLES or a negative
+    stat effect.
+    """
+    costs: Set[str] = set()
+    # Also right for the old `if = { ... else = { ... } }` form: this call is the `if`.
+    before_if = dict(known)
+    pos = 0
+    while True:
+        m = _COST_STEP_RE.search(text, pos)
+        if m is None:
+            return costs
+        pos = m.end()
+        end = find_unquoted_brace_close(text, pos - 1) if m["branch"] else -1
+        if end != -1:
+            if m["branch"] == "if":
+                before_if = dict(known)
+            branch = dict(before_if if m["branch"].startswith("else") else known)
+            costs |= _effect_costs(text[pos:end], effects, branch, stored, stack)
+            for variable, signs in branch.items():
+                known[variable] = signs | known.get(variable, 0)
+            pos = end
+        elif m["stat"]:
+            costs.add(_STAT_COSTS[m["stat"]])
+        elif m["call"]:
+            call = m["call"]
+            if call in effects and call not in stack:
+                costs |= _effect_costs(
+                    effects[call], effects, known, stored, (*stack, call)
+                )
+        elif m["op"]:
+            target = m["long"] or m["short"]
+            term = _signs(m["operand"], known, stored)
+            if target not in _COST_VARIABLES or m["temp"]:
+                current = 0 if m["op"] == "set" else _signs(target, known, stored)
+                known[target] = _combine(m["op"], current, term)
+            elif m["op"] in ("add_to", "subtract_from"):
+                cost_signs, kind = _COST_VARIABLES[target]
+                if _combine(m["op"], 0, term) & cost_signs:
+                    costs.add(kind)
+
+
+def stored_variable_signs(texts: Iterable[str]) -> Dict[str, int]:
+    """Stored variables some script sets to a negative literal -> the signs it is set to.
+
+    An option that reads `treasury_change = TAG_project_cost` charges the country
+    only if the stored value is negative, and that is decided wherever the mod
+    sets it (`set_variable = { TAG_project_cost = -4 }`), not in the option.
+    """
+    seen: Dict[str, int] = {}
+    for text in texts:
+        for long_name, short_name, literal in _STORED_LITERAL_RE.findall(text):
+            name = _stored_name(long_name or short_name)
+            seen[name] = seen.get(name, 0) | _signs(literal, {}, {})
+    return {name: signs for name, signs in seen.items() if signs & _NEG}
+
+
+def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
+    """Own-scope body of every scripted effect that can charge the country calling it.
+
+    That is an effect that writes a money variable or lowers a stat itself, or
+    calls one that does. `modify_treasury_effect` and the `*_expenditure` presets
+    are found this way, not listed by hand.
+    """
+    bodies: Dict[str, str] = {}
+    for text in texts:
+        code = blank_quoted_strings(text)
+        pos = 0
+        while True:
+            m = _SCRIPTED_EFFECT_DEF_RE.search(code, pos)
+            end = find_unquoted_brace_close(code, m.end() - 1) if m else -1
+            if m is None or end == -1:
+                break
+            bodies[m.group(1)] = _split_option(code[m.end() : end])[0]
+            pos = end
+    costly = {name for name, body in bodies.items() if _DIRECT_COST_RE.search(body)}
+    while True:
+        callers = {
+            name
+            for name, body in bodies.items()
+            if name not in costly
+            and not costly.isdisjoint(_EFFECT_CALL_RE.findall(body))
+        }
+        if not callers:
+            return {name: bodies[name] for name in costly}
+        costly |= callers
+
+
+def _split_option(
+    body: str, country: Optional[str] = None, *, triggers: bool = False
+) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
+    """(own-scope text, excluded option-level blocks as key -> (offset, body))."""
+    scope_blocks = _OWN_SCOPE_BLOCKS
+    if triggers:
+        scope_blocks |= _TRIGGER_SCOPE_BLOCKS
+    own: List[str] = []
+    blocks: Dict[Optional[str], Tuple[int, str]] = {}
+    depth = 0
+    cursor = 0
+    kept_whole = 0
+    skip: Optional[Tuple[int, int, Optional[str]]] = None
+    for m in _BLOCK_TOKEN_RE.finditer(body):
+        if m.group(0) != "}":
+            depth += 1
+            key = m.group(1)
+            if skip is not None or kept_whole:
+                continue
+            if key in _VARIABLE_EFFECTS or (triggers and key == "check_variable"):
+                kept_whole = depth
+            elif (
+                key not in scope_blocks
+                and (country is None or key != country)
+                and not (key or "").isdigit()
+            ):
+                own.append(body[cursor : m.start()])
+                skip = (depth, m.end(), key)
+            continue
+        if kept_whole == depth:
+            kept_whole = 0
+        if skip is not None and skip[0] == depth:
+            if depth == 1:
+                blocks[skip[2]] = (skip[1], body[skip[1] : m.start()])
+            cursor = m.end()
+            skip = None
+        depth -= 1
+    if skip is None:
+        own.append(body[cursor:])
+    return " ".join(own), blocks
+
+
+def _cost_sensitive_kinds(ai_chance: str, country: Optional[str]) -> Set[str]:
+    covered: Set[str] = set()
+    pos = 0
+    while True:
+        match = _AI_CHANCE_MODIFIER_RE.search(ai_chance, pos)
+        if match is None:
+            return covered
+        end = find_unquoted_brace_close(ai_chance, match.end() - 1)
+        if end == -1:
+            return covered
+        own, _blocks = _split_option(
+            ai_chance[match.end() : end], country, triggers=True
+        )
+        pos = end + 1
+        if not any(
+            float(value) != (1 if key == "factor" else 0)
+            for key, value, block in iter_statements(own)
+            if key in {"factor", "add"}
+            and block is None
+            and value is not None
+            and _AI_WEIGHT_LITERAL_RE.fullmatch(value)
+        ):
+            continue
+        covered.update(
+            kind for kind, guard in _COST_GUARDS.items() if guard.search(own)
+        )
+
+
+def uncovered_costs(
+    effect_text: str, ai_weights: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> Set[str]:
+    """Costs an effect block charges its own country that an AI weight block ignores.
+
+    Both arguments are block bodies with comments already stripped. `effects`
+    and `stored` come from load_cost_lookups.
+    """
+    own = _split_option(blank_quoted_strings(effect_text))[0]
+    return _effect_costs(own, effects, {}, stored) - _cost_sensitive_kinds(
+        ai_weights, None
+    )
+
+
+def _receiver_tag(trigger: str) -> Optional[str]:
+    """A literal tag required on every trigger path, not just mentioned in one."""
+    tags = set()
+    for key, value, block in iter_statements(trigger):
+        if key == "tag" and value and re.fullmatch(r"[A-Z0-9]{3}", value):
+            tags.add(value)
+        elif key in {"AND", "hidden_trigger", "ROOT", "THIS"} and block is not None:
+            tag = _receiver_tag(block)
+            if tag:
+                tags.add(tag)
+    return next(iter(tags)) if len(tags) == 1 else None
+
+
+def find_cost_blind_options(
+    text: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> List[Tuple[str, int, str, bool]]:
+    """(option name, 1-based line, costs, all gated) for AI weights that ignore a cost.
+
+    Reports each cost not covered by a relevant, non-neutral AI modifier in the
+    choosing country's scope. Opinion and path modifiers do not cover costs.
+    A missing `ai_chance` is the flat default weight. The line is the `ai_chance`
+    when there is one, since that is where the fix goes. `all gated` marks an event
+    where every option has a `trigger`: those may be variants the AI never chooses
+    between, so the finding needs a look before it is fixed. `effects` comes from
+    costly_scripted_effects and `stored` from stored_variable_signs.
+    """
+    code = blank_quoted_strings(text)
+    line = _line_lookup(code)
+    out: List[Tuple[str, int, str, bool]] = []
+    for _eid, body, start in _iter_event_bodies(code):
+        base = code.index("{", start) + 1
+        options = [
+            (match.end(), find_unquoted_brace_close(body, match.end() - 1))
+            for match in _OPTION_OPEN_RE.finditer(body)
+        ]
+        if len(options) < 2:
+            continue
+        country = _receiver_tag(_event_trigger_body(body) or "")
+        splits = [
+            _split_option(body[opt_start:opt_end], country)
+            for opt_start, opt_end in options
+        ]
+        all_gated = all("trigger" in blocks for _own, blocks in splits)
+        for (opt_start, opt_end), (own, blocks) in zip(options, splits):
+            ai_offset, ai_chance = blocks.get("ai_chance", (0, ""))
+            costs = _effect_costs(own, effects, {}, stored)
+            costs -= _cost_sensitive_kinds(ai_chance, country)
+            if not costs:
+                continue
+            name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
+            out.append(
+                (
+                    name.group(1) if name else "unnamed option",
+                    line(base + opt_start + ai_offset),
+                    ", ".join(kind for kind in _COST_ORDER if kind in costs),
+                    all_gated,
+                )
+            )
     return out
 
 
@@ -1024,7 +1426,9 @@ _RANDOM_BLOCK_PATTERN = re.compile(r"\brandom\s*=\s*\{")
 _CHANCE_PATTERN = re.compile(r"\bchance\s*=")
 
 
-def scan_probability_rolled_fires(args: Tuple[str, frozenset]) -> Set[str]:
+def scan_probability_rolled_fires(
+    args: Tuple[str, frozenset], *, mod_path: Optional[str] = None
+) -> Set[str]:
     """Pool worker: event IDs fired inside a `random = { chance = N ... }` poll.
 
     A chance-rolled on_action poll emulates MTTH: each tick it rolls a chance
@@ -1032,11 +1436,11 @@ def scan_probability_rolled_fires(args: Tuple[str, frozenset]) -> Set[str]:
     slot, so the date-gated scheduling check must not flag it as dead content.
     """
     filename = args[0]
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return set()
     try:
         text = Path(filename).read_text(encoding="utf-8-sig", errors="replace")
-    except Exception:
+    except OSError:
         return set()
     cleaned = re.sub(r"#[^\n]*", "", text)
     ids: set = set()
@@ -1056,6 +1460,7 @@ _RE_MAJOR_YES = re.compile(r"(?<![A-Za-z0-9_])major\s*=\s*yes")
 def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str]]:
     namespaces: Set[str] = set(_ADD_NAMESPACE_PATTERN.findall(text))
     meta: List[dict] = []
+    line = _line_lookup(text)
     # Brace matching rather than column-anchored patterns: 64 definitions in
     # the mod are indented, and an anchored scan drops every one of them from
     # the checks that read this metadata.
@@ -1073,7 +1478,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
         # (`picture = "GFX_EH_USN_HQ"`), which blank_quoted_strings would erase.
         # The body starts one character past its opening brace, so that brace's
         # line is the base every in-body offset counts from.
-        picture_base_line = text.count("\n", 0, text.index("{", start)) + 1
+        picture_base_line = line(text.index("{", start))
 
         meta.append(
             {
@@ -1081,7 +1486,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "body": body,
                 "type": event_type,
                 "file": basename,
-                "line": text.count("\n", 0, start) + 1,
+                "line": line(start),
                 "is_hidden": "hidden = yes" in body_nc,
                 "picture_refs": [
                     (sprite, picture_base_line + body_c.count("\n", 0, offset))
@@ -1091,7 +1496,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "fire_only_once": "fire_only_once = yes" in body_nc,
                 "is_major": bool(_RE_MAJOR_YES.search(body_nc)),
                 "has_mtth": "mean_time_to_happen" in body_nc,
-                "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
+                "option_count": len(_OPTION_OPEN_RE.findall(body)),
                 "title_desc_refs": [
                     v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
                 ],
@@ -1104,52 +1509,67 @@ class Validator(BaseValidator):
     TITLE = "EVENT VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, check_ai_chance_costs: bool = False, **kwargs):
         super().__init__(*args, **kwargs)
+        self.check_ai_chance_costs = check_ai_chance_costs
         self._meta_cache: Optional[Tuple[List[dict], set]] = None
+        self._parsed_event_files: Dict[str, Tuple[List[dict], Set[str]]] = {}
         self._random_events_cache: Optional[set] = None
         self._probability_rolled_cache: Optional[set] = None
         self._fire_only_once_ids_cache: Optional[set] = None
         self._major_event_ids_cache: Optional[set] = None
         self._fire_scan_args_cache: Optional[List[Tuple[str, frozenset]]] = None
         self._fires_cache: Optional[List[Tuple[str, str, int]]] = None
-        self._typed_fires_cache: Optional[List[Tuple[str, str, str, int]]] = None
+        self._fire_sources_cache: Optional[Dict[str, Set[str]]] = None
         self._definition_types_cache: Optional[Dict[str, str]] = None
         self._full_call_site_scan_cache: Optional[bool] = None
 
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id (or None for malformed blocks), type, file,
-        is_hidden, picture_refs, is_triggered_only, fire_only_once,
+        Each metadata dict has: id (or None for malformed blocks), type, file
+        (basename), path (mod-relative), line, is_hidden, picture_refs, is_triggered_only, fire_only_once,
         is_major, has_mtth, option_count, title_desc_refs.
         """
-        if self._meta_cache is not None:
-            return self._meta_cache
+        if self._meta_cache is None:
+            self._meta_cache = self._merged_event_metadata(
+                self._collect_files(["events/**/*.txt"])
+            )
+        return self._meta_cache
 
-        files = self._collect_files(["events/**/*.txt"])
+    def _merged_event_metadata(self, files: List[str]) -> Tuple[List[dict], set]:
+        """Metadata of `files` in order; each event file is parsed once per run.
+
+        The staged-scope checks and the full-repo fire_only_once / major lookups
+        read the same files, so they share one parse.
+        """
         meta: List[dict] = []
         namespaces: set = set()
-
         for filepath in files:
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=True
-            )
-            if not text:
-                continue
-            basename = os.path.basename(filepath)
-            file_meta, file_ns = disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                "events.metadata",
-                filepath,
-                text,
-                lambda: _parse_event_metadata(text, basename),
-            )
-            meta.extend(file_meta)
-            namespaces |= file_ns
-
-        self._meta_cache = (meta, namespaces)
-        return self._meta_cache
+            parsed = self._parsed_event_files.get(filepath)
+            if parsed is None:
+                text = FileOpener.open_text_file(
+                    filepath, lowercase=False, strip_comments_flag=True
+                )
+                basename = os.path.basename(filepath)
+                parsed = (
+                    disk_cache.per_file_cached_by_content(
+                        self.mod_path,
+                        "events.metadata",
+                        filepath,
+                        text,
+                        lambda: _parse_event_metadata(text, basename),
+                    )
+                    if text
+                    else ([], set())
+                )
+                rel = self._rel_posix(filepath)
+                for ev in parsed[0]:
+                    ev["path"] = rel
+                self._parsed_event_files[filepath] = parsed
+            meta.extend(parsed[0])
+            namespaces |= parsed[1]
+        return meta, namespaces
 
     def _rel_posix(self, filename: str) -> str:
         """Mod-relative path with forward slashes, so matching works on Windows."""
@@ -1231,9 +1651,8 @@ class Validator(BaseValidator):
         Reads each candidate file once and shares the naive-stripped and
         quote-aware artifacts across long-form, invalid-call, typed-fire,
         count, dynamic-namespace, and in-loop scans. Each file runs exactly the
-        scans its own check file list would have run (via ``mask``), and each
-        scan calls the same ``_scan_*_text`` helper its standalone worker uses,
-        so findings are unchanged. Typed fires derive untyped fires parent-side,
+        scans its own check file list selects (via ``mask``). Typed fires derive
+        untyped fires parent-side,
         and the two disk-cache namespaces are kept. Events-only passes (pictures,
         option logs, date gates, fire graph, definitions) and on_actions lookups
         keep their own file sets and stay separate.
@@ -1243,13 +1662,18 @@ class Validator(BaseValidator):
             return memo
         self._log_section("Sharing per-file reads across event call-site checks...")
 
-        full_files = [f for f, _ in self._get_fire_scan_args()]
         scoped_files = [f for f, _ in self._get_scoped_fire_scan_args()]
         use_full = (not self.staged_only) or self._needs_full_call_site_scan()
+        # A staged run with no event file staged scans only its own callers.
+        full_files = [f for f, _ in self._get_fire_scan_args()] if use_full else []
         union = full_files if use_full else scoped_files
 
-        fof_ids = frozenset(self._get_fire_only_once_ids())
-        major_ids = frozenset(self._get_major_event_ids())
+        # The in-loop scans only run on scoped files.
+        fof_ids: frozenset = frozenset()
+        major_ids: frozenset = frozenset()
+        if scoped_files:
+            fof_ids = frozenset(self._get_fire_only_once_ids())
+            major_ids = frozenset(self._get_major_event_ids())
         count_tracked: frozenset = frozenset()
         if not self.staged_only:
             meta, _ = self._get_event_metadata()
@@ -1317,12 +1741,17 @@ class Validator(BaseValidator):
             self._fires_cache = list(self._get_shared_call_site_scan()["fires"])
         return self._fires_cache
 
-    def _get_typed_event_fires(self) -> List[Tuple[str, str, str, int]]:
-        """Every literal event fire with its call keyword."""
-        if self._typed_fires_cache is not None:
-            return self._typed_fires_cache
-        self._typed_fires_cache = list(self._get_shared_call_site_scan()["typed"])
-        return self._typed_fires_cache
+    def _get_fire_sources(self) -> Dict[str, Set[str]]:
+        """Event id -> mod-relative posix paths of the files that fire it."""
+        if self._fire_sources_cache is None:
+            rels: Dict[str, str] = {}
+            sources: Dict[str, Set[str]] = {}
+            for eid, filename, _line in self._get_event_fires():
+                if filename not in rels:
+                    rels[filename] = self._rel_posix(filename)
+                sources.setdefault(eid, set()).add(rels[filename])
+            self._fire_sources_cache = sources
+        return self._fire_sources_cache
 
     def _get_event_definition_types(self) -> Dict[str, str]:
         """Return event declaration keywords from the full events tree."""
@@ -1331,14 +1760,13 @@ class Validator(BaseValidator):
         event_files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
 
         def _build() -> Dict[str, str]:
-            definitions: Dict[str, str] = {}
-            for result in self._pool_map(
-                scan_event_definition_types,
-                [(f, frozenset()) for f in event_files],
-                chunksize=20,
-            ):
-                definitions.update(result)
-            return definitions
+            return dict(
+                self._pool_flat_map(
+                    scan_event_definition_types,
+                    [(f, frozenset()) for f in event_files],
+                    chunksize=20,
+                )
+            )
 
         definitions = disk_cache.aggregate_cached(
             self.mod_path,
@@ -1398,36 +1826,22 @@ class Validator(BaseValidator):
         # Lookup pass: must scan full repo even in staged mode, mirroring
         # `_get_random_event_ids`.
         files = self._collect_files(["common/on_actions/**/*.txt"], ignore_staged=True)
-        ids: set = set()
-        for result in self._pool_map(
-            scan_probability_rolled_fires,
-            [(f, frozenset()) for f in files],
-            chunksize=30,
-        ):
-            ids.update(result)
+        ids = set(
+            self._pool_flat_map(
+                partial(scan_probability_rolled_fires, mod_path=self.mod_path),
+                [(f, frozenset()) for f in files],
+                chunksize=30,
+            )
+        )
 
         self._probability_rolled_cache = ids
         return ids
 
     def _collect_event_ids_where(self, predicate: Callable[[dict], bool]) -> set:
-        files = self._collect_files(["events/**/*.txt"], ignore_staged=True)
-        ids: set = set()
-        for filepath in files:
-            text = FileOpener.open_text_file(
-                filepath, lowercase=False, strip_comments_flag=True
-            )
-            if not text:
-                continue
-            basename = os.path.basename(filepath)
-            file_meta, _ = disk_cache.per_file_cached_by_content(
-                self.mod_path,
-                "events.metadata",
-                filepath,
-                text,
-                lambda: _parse_event_metadata(text, basename),
-            )
-            ids.update(ev["id"] for ev in file_meta if predicate(ev))
-        return ids
+        meta, _ = self._merged_event_metadata(
+            self._collect_files(["events/**/*.txt"], ignore_staged=True)
+        )
+        return {ev["id"] for ev in meta if predicate(ev)}
 
     def _get_fire_only_once_ids(self) -> set:
         """Return IDs of events declared ``fire_only_once = yes``.
@@ -1549,7 +1963,9 @@ class Validator(BaseValidator):
             eid = ev["id"] or "unknown"
             for key in _LOC_REF_PATTERN.findall(ev["body"]):
                 if "." in key and key not in loc_keys:
-                    results.append(f"{eid} - {ev['file']}: missing loc key '{key}'")
+                    results.append(
+                        (f"{eid}: missing loc key '{key}'", ev["path"], ev["line"])
+                    )
 
         self._report(
             results,
@@ -1565,8 +1981,8 @@ class Validator(BaseValidator):
         )
 
         meta, _ = self._get_event_metadata()
-        triggered_only_ids: Dict[str, str] = {
-            ev["id"]: ev["file"]
+        triggered_only_ids: Dict[str, dict] = {
+            ev["id"]: ev
             for ev in meta
             if ev["id"] is not None
             and ev["is_triggered_only"]
@@ -1611,7 +2027,8 @@ class Validator(BaseValidator):
             ns = eid[:last_dot] if last_dot >= 0 else eid
             if ns in dynamic_namespaces:
                 continue
-            results.append(f"{eid} - {triggered_only_ids[eid]}")
+            ev = triggered_only_ids[eid]
+            results.append((f"{eid}: no references found", ev["path"], ev["line"]))
 
         self._report(
             results,
@@ -1646,9 +2063,11 @@ class Validator(BaseValidator):
         gated_args = [
             (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
         ]
-        gated: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(scan_date_gated_events, gated_args, chunksize=10):
-            gated.extend(result)
+        gated: List[Tuple[str, str, int]] = self._pool_flat_map(
+            partial(scan_date_gated_events, mod_path=self.mod_path),
+            gated_args,
+            chunksize=10,
+        )
         self.log(f"  Found {len(gated)} events with a date > guard")
 
         results = []
@@ -1670,9 +2089,7 @@ class Validator(BaseValidator):
         self, gated: List[Tuple[str, str, int]]
     ) -> Optional[List[str]]:
         """Findings for `gated`, or None when the scheduling file is missing."""
-        sources: Dict[str, Set[str]] = {}
-        for eid, filename, _line in self._get_event_fires():
-            sources.setdefault(eid, set()).add(self._rel_posix(filename))
+        sources = self._get_fire_sources()
         scheduled = {
             eid for eid, rels in sources.items() if _YEARLY_EFFECTS_REL in rels
         }
@@ -1735,11 +2152,11 @@ class Validator(BaseValidator):
         bounded_args = [
             (f, frozenset()) for f in self._collect_files(["events/**/*.txt"])
         ]
-        bounded: List[Tuple[str, str, int]] = []
-        for result in self._pool_map(
-            scan_date_bounded_events, bounded_args, chunksize=10
-        ):
-            bounded.extend(result)
+        bounded: List[Tuple[str, str, int]] = self._pool_flat_map(
+            partial(scan_date_bounded_events, mod_path=self.mod_path),
+            bounded_args,
+            chunksize=10,
+        )
         self.log(f"  Found {len(bounded)} events with a date bound")
         if not bounded:
             self._report(
@@ -1751,9 +2168,7 @@ class Validator(BaseValidator):
             )
             return
 
-        sources: Dict[str, Set[str]] = {}
-        for eid, filename, _line in self._get_event_fires():
-            sources.setdefault(eid, set()).add(self._rel_posix(filename))
+        sources = self._get_fire_sources()
         if not any(_YEARLY_EFFECTS_REL in rels for rels in sources.values()):
             self.log(f"  {_YEARLY_EFFECTS_REL} schedules nothing, skipping")
             return
@@ -1917,7 +2332,7 @@ class Validator(BaseValidator):
             results,
             "✓ No hidden events with pictures",
             "Hidden events declaring a picture (hidden events display nothing — remove the field):",
-            Severity.WARNING,
+            Severity.ERROR,
             category="hidden-event-picture",
         )
 
@@ -2232,7 +2647,9 @@ class Validator(BaseValidator):
                 "warning",
             )
             return
-        refs = self._pool_map(_extract_event_pictures, files)
+        refs = self._pool_map(
+            partial(_extract_event_pictures, mod_path=self.mod_path), files
+        )
 
         results: List[str] = []
         seen: Set[Tuple[str, str, int]] = set()
@@ -2353,7 +2770,9 @@ class Validator(BaseValidator):
             self.log("  No event files in scope — skipping")
             return
         results: List[str] = []
-        for sub in self._pool_map(_extract_option_logs_without_effects, files):
+        for sub in self._pool_map(
+            partial(_extract_option_logs_without_effects, mod_path=self.mod_path), files
+        ):
             for name, filename, line in sub:
                 results.append(f"{os.path.basename(filename)}:{line} - {name}")
         self._report(
@@ -2361,8 +2780,64 @@ class Validator(BaseValidator):
             "✓ No event option logs without effects",
             "Event options with a log but no effects (the option changes nothing"
             " — remove the log line):",
-            Severity.WARNING,
+            Severity.ERROR,
             category="event-option-log-without-effect",
+        )
+
+    def validate_option_log_id(self):
+        """Flag option logs that cite another option's id.
+
+        Shares detection with check_common_mistakes._iter_event_log_mismatches
+        and tools/linting/fix_log_ids.py.
+        """
+        self._log_section("Checking event option logs for copied ids...")
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+        results: List[str] = []
+        for sub in self._pool_map(
+            partial(_extract_event_log_id_mismatches, mod_path=self.mod_path), files
+        ):
+            for message, filename, line in sub:
+                results.append(f"{os.path.basename(filename)}:{line} - {message}")
+        self._report(
+            sorted(results),
+            "✓ No event option logs citing another option's id",
+            "Event options whose log cites another option's id"
+            " (likely copy-paste — fix the log id):",
+            Severity.ERROR,
+            category="event-option-log-id",
+        )
+
+    def validate_ai_chance_ignores_cost(self):
+        """Warn on cost-insensitive AI weights when enabled by CLI or the CI batch."""
+        if not self.check_ai_chance_costs:
+            self._log_section(
+                "Skipping AI weight cost check (pass --check-ai-chance-costs to enable)"
+            )
+            return
+        self._log_section("Checking event options for AI weights that ignore costs...")
+        files = self._collect_files(["events/**/*.txt"])
+        if not files:
+            self.log("  No event files in scope — skipping")
+            return
+        effects, stored = load_cost_lookups(self)
+        results: List[Tuple[str, str, int]] = []
+        for sub in self._pool_map_init(
+            partial(_extract_cost_blind_options, mod_path=self.mod_path),
+            files,
+            _init_cost_lookups,
+            (effects, stored),
+        ):
+            results.extend(sub)
+        self._report(
+            sorted(results, key=lambda r: (r[1], r[2])),
+            "✓ No event AI weights ignoring option costs",
+            "Event options whose ai_chance ignores a cost (add a relevant modifier"
+            " in the choosing country's scope):",
+            Severity.WARNING,
+            category="event-ai-chance-ignores-cost",
         )
 
     def run_validations(self):
@@ -2388,7 +2863,22 @@ class Validator(BaseValidator):
         self.validate_fire_only_once_in_loop()
         self.validate_major_event_in_loop()
         self.validate_option_log_without_effect()
+        self.validate_option_log_id()
+        self.validate_ai_chance_ignores_cost()
+
+
+def _add_extra_args(parser):
+    parser.add_argument(
+        "--check-ai-chance-costs",
+        action="store_true",
+        dest="check_ai_chance_costs",
+        help="Report event options whose ai_chance ignores the option's cost",
+    )
 
 
 if __name__ == "__main__":
-    run_validator_main(Validator, "Validate events in Millennium Dawn mod")
+    run_validator_main(
+        Validator,
+        "Validate events in Millennium Dawn mod",
+        extra_args_fn=_add_extra_args,
+    )

@@ -14,11 +14,15 @@ Pins these behaviors for change_influence_percentage:
      refs, array subscripts, numerics, and aliases are accepted.
 """
 
+import json
 import runpy
 import sys
 
 import pytest
 import validate_scripted_params as vsp
+from shared.suite import initialize_git_repository, run_git
+from shared.suite import write_text as _write
+from shared_utils import collapse_or_compact
 from validate_scripted_params import _validate_call_sites_in_file
 
 
@@ -58,19 +62,20 @@ _TEST_VALID_TAGS = frozenset(
 )
 
 
-def _write(path, content):
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w", encoding="utf-8", newline="") as file:
-        file.write(content)
-
-
 def _issues(caller_body, contracts, mod_path, valid_tags=_TEST_VALID_TAGS):
     """Run the per-file validator against a one-shot focus file."""
     focus_dir = mod_path / "common" / "national_focus"
     fpath = focus_dir / "test_focus.txt"
     _write(fpath, caller_body)
     results = _validate_call_sites_in_file(
-        (str(fpath), contracts, str(mod_path), frozenset(valid_tags))
+        (
+            str(fpath),
+            contracts,
+            str(mod_path),
+            frozenset(valid_tags),
+            frozenset(),
+            frozenset(),
+        )
     )
     out = []
     for cat, msg, _line in results:
@@ -489,19 +494,17 @@ def test_change_influence_percentage_identical_with_distant_set_is_filtered(
 ):
     """The 20-line proximity window filters out scope-tracking false positives.
 
-    The validator's frame-based scope tracking keeps a temp var from a
-    previous focus's completion_reward visible to the current call, even
-    though it wouldn't be in scope at runtime.  Tagging a stale
-    `tag_index` from 25+ lines back as identical to the current
-    `influence_target` would create noise; the proximity window prevents
-    that.
+    The validator's frame-based scope tracking keeps a temp var from an
+    earlier block it does not reset (a previous scripted effect) visible to
+    the current call, even though it wouldn't be in scope at runtime.
+    Tagging a stale `tag_index` from 25+ lines back as identical to the
+    current `influence_target` would create noise; the proximity window
+    prevents that.
     """
     body = (
         "shared_focus = {\n"
         "    completion_reward = {\n"
-        # Stale tag_index, 25+ lines back from the call.  At runtime this
-        # would NOT be in scope (different focus's completion_reward),
-        # but the validator's scope tracking is too coarse to know that.
+        # Stale tag_index, 25+ lines back from the call.
         "        set_temp_variable = { tag_index = TAI }\n"
         + ("        add_political_power = 0.01\n" * 25)
         + "        set_temp_variable = { percent_change = 2 }\n"
@@ -672,8 +675,9 @@ def test_invalid_tag_placeholder_TAG_is_flagged(tmp_path, cip_contract):
 # --- contract auto-discovery ----------------------------------------------
 
 
-def test_contract_parser_returns_nothing_for_an_unreadable_file(tmp_path):
-    assert vsp._parse_effect_contracts_from_file(str(tmp_path / "gone.txt")) == {}
+def test_contract_parser_raises_for_an_unreadable_file(tmp_path):
+    with pytest.raises(OSError):
+        vsp._parse_effect_contracts_from_file(str(tmp_path / "gone.txt"))
 
 
 def test_contract_parser_skips_blank_and_separator_comment_lines(tmp_path):
@@ -769,20 +773,20 @@ def test_discovered_contract_with_only_optional_params_is_not_registered(tmp_pat
 def test_tag_set_accepts_both_country_tags_and_aliases(tmp_path):
     _write(
         tmp_path / "common" / "country_tags" / "00_countries.txt",
-        "# Country tags\n"
-        '\nUSA = "countries/USA.txt"\nGER = "countries/Germany.txt"\n',
+        '# Country tags\n\nUSA = "countries/USA.txt"\nGER = "countries/Germany.txt"\n',
     )
     _write(
         tmp_path / "common" / "country_tag_aliases" / "00_aliases.txt",
         "STC = {\n\toriginal_tag = YEM\n}\n",
     )
 
-    assert vsp._load_valid_country_tags(str(tmp_path)) == frozenset(
-        {"USA", "GER", "STC"}
+    assert vsp._load_valid_country_tags(str(tmp_path)) == (
+        frozenset({"USA", "GER", "STC"}),
+        [],
     )
 
 
-def test_tag_set_skips_unreadable_entries(tmp_path):
+def test_tag_set_reports_unreadable_entries(tmp_path):
     """A directory sitting where a .txt is expected must not abort the scan."""
     _write(
         tmp_path / "common" / "country_tags" / "00_countries.txt",
@@ -792,14 +796,18 @@ def test_tag_set_skips_unreadable_entries(tmp_path):
     (tmp_path / "common" / "country_tag_aliases").mkdir(parents=True)
     (tmp_path / "common" / "country_tag_aliases" / "broken.txt").mkdir()
 
-    assert vsp._load_valid_country_tags(str(tmp_path)) == frozenset({"USA"})
+    valid, unreadable = vsp._load_valid_country_tags(str(tmp_path))
+
+    assert valid == frozenset({"USA"})
+    assert len(unreadable) == 2
+    assert all("cannot read file" in message for message in unreadable)
 
 
 # --- call-site scanning edge cases ----------------------------------------
 
 
 def test_hash_inside_a_quoted_log_does_not_swallow_the_call(tmp_path, cip_contract):
-    """strip_comments keeps a `#` inside quotes; the tokenizer must drop it itself."""
+    """A `#` inside quotes is not a comment."""
     body = (
         "shared_focus = {\n"
         "    completion_reward = {\n"
@@ -847,16 +855,15 @@ def test_file_naming_no_contracted_effect_is_skipped(tmp_path, cip_contract):
     assert _issues(body, cip_contract, tmp_path) == []
 
 
-def test_unreadable_caller_file_yields_no_findings(tmp_path, cip_contract):
+def test_unreadable_caller_file_is_reported(tmp_path, cip_contract):
     path = tmp_path / "common" / "national_focus" / "test_focus.txt"
     path.mkdir(parents=True)
 
-    assert (
-        _validate_call_sites_in_file(
-            (str(path), cip_contract, str(tmp_path), frozenset())
-        )
-        == []
+    results = _validate_call_sites_in_file(
+        (str(path), cip_contract, str(tmp_path), frozenset(), frozenset(), frozenset())
     )
+
+    assert [category for category, _message, _line in results] == ["unreadable-input"]
 
 
 def test_stray_close_brace_does_not_desync_scope_tracking(tmp_path, cip_contract):
@@ -871,6 +878,398 @@ def test_stray_close_brace_does_not_desync_scope_tracking(tmp_path, cip_contract
         "}\n"
     )
     assert _issues(body, cip_contract, tmp_path) == []
+
+
+@pytest.mark.parametrize("block", sorted(vsp.EFFECT_BLOCK_KEYWORDS))
+def test_temp_variable_does_not_leak_into_the_next_effect_block(
+    tmp_path, cip_contract, block
+):
+    body = (
+        "container = {\n"
+        f"    {block} = {{ set_temp_variable = {{ percent_change = 5 }} }}\n"
+        f"    {block} = {{ change_influence_percentage = yes }}\n"
+        "}\n"
+    )
+    issues = _issues(body, cip_contract, tmp_path)
+    assert any(
+        category == "missing-required-param" and "percent_change" in message
+        for category, message in issues
+    )
+
+
+def test_numeric_scope_close_does_not_end_the_effect_block(tmp_path, cip_contract):
+    body = (
+        "shared_focus = { completion_reward = { "
+        "set_temp_variable = { percent_change = 5 } "
+        "741 = { add_extra_state_shared_building_slots = 1 } "
+        "change_influence_percentage = yes } }\n"
+    )
+    assert _issues(body, cip_contract, tmp_path) == []
+
+
+def test_temp_opinion_set_by_an_earlier_focus_does_not_hide_temp_change(tmp_path):
+    """Regression for #5122: five GENERIC_ agriculture rewards set temp_change."""
+    _write(
+        tmp_path / "common" / "scripted_effects" / "test_effect.txt",
+        "# Parameters:\n"
+        "# - temp_opinion: signed opinion change\n"
+        "change_farmers_opinion = {\n}\n",
+    )
+    agriculture_focus = (
+        "\tfocus = {\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tset_temp_variable = { temp_change = 3 }\n"
+        "\t\t\tchange_farmers_opinion = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+    )
+    _write(
+        tmp_path / "common" / "national_focus" / "00_generic.txt",
+        "focus_tree = {\n"
+        "\tfocus = {\n"
+        "\t\tcompletion_reward = {\n"
+        "\t\t\tset_temp_variable = { temp_opinion = 10 }\n"
+        "\t\t\tchange_farmers_opinion = yes\n"
+        "\t\t}\n"
+        "\t}\n" + agriculture_focus * 5 + "}\n",
+    )
+
+    issues = _missing_required_param_issues(tmp_path)
+    assert [issue.line for issue in issues] == [11, 17, 23, 29, 35]
+    assert all("'temp_opinion'" in issue.message for issue in issues)
+
+
+# --- quote, comment and unreadable-input handling (#5184) ------------------
+
+_AMOUNT_CONTRACT = {"test_effect": {"required": ["amount"], "optional": []}}
+
+_MISSING = "missing-required-param"
+_SHARED = "call-shares-line"
+
+# name -> (script, expected (category, line) findings in order)
+_SEMANTIC_FIXTURES = {
+    "quoted_call": ('option = {\n\tlog = "test_effect = yes"\n}\n', []),
+    "quoted_set_temp": (
+        'option = {\n\tlog = "set_temp_variable = { amount = 1 }"\n'
+        "\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
+    "quoted_hash_same_line": (
+        'option = {\n\tlog = "# text" test_effect = yes\n}\n',
+        [(_SHARED, 2), (_MISSING, 2)],
+    ),
+    "escaped_quote_before_hash": (
+        'option = {\n\tlog = "a \\" # b" test_effect = yes\n}\n',
+        [(_SHARED, 2), (_MISSING, 2)],
+    ),
+    "escaped_quote_then_comment": (
+        'option = {\n\tlog = "a \\" b" # test_effect = yes\n\ttest_effect = yes\n}\n',
+        [(_MISSING, 3)],
+    ),
+    "quoted_braces": (
+        "option = {\n\tset_temp_variable = { amount = 1 }\n"
+        '\tlog = "} } {"\n\ttest_effect = yes\n}\n',
+        [],
+    ),
+    "commented_set_temp": (
+        "option = {\n\t# set_temp_variable = { amount = 1 }\n\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
+    "trailing_comment_call": (
+        "option = {\n\tadd_stability = 0.05 # test_effect = yes\n}\n",
+        [],
+    ),
+    "trailing_comment_after_call": (
+        "option = {\n\ttest_effect = yes # needs amount\n}\n",
+        [(_MISSING, 2)],
+    ),
+    "multiline_set_temp": (
+        "option = {\n\tset_temp_variable = {\n\t\tamount = 1\n\t}\n"
+        "\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "multiline_other_set_temp": (
+        "option = {\n\tset_temp_variable = {\n\t\tother = 1\n\t}\n"
+        "\ttest_effect = yes\n}\n",
+        [(_MISSING, 5)],
+    ),
+    "add_to_temp": (
+        "option = {\n\tadd_to_temp_variable = { amount = 1 }\n\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "subtract_from_temp": (
+        "option = {\n\tsubtract_from_temp_variable = { amount = 1 }\n"
+        "\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "long_form_set_temp": (
+        "option = {\n\tset_temp_variable = { var = amount value = 1 }\n"
+        "\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "multiline_random_set_temp": (
+        "option = {\n\tset_temp_variable_to_random = {\n\t\tvar = amount\n"
+        "\t\tmax = 8\n\t}\n\ttest_effect = yes\n}\n",
+        [],
+    ),
+    "variable_named_var": (
+        "option = {\n\tset_temp_variable = { var = 1 }\n\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
+    "multiply_temp_sets_nothing": (
+        "option = {\n\tmultiply_temp_variable = { amount = 2 }\n\ttest_effect = yes\n}\n",
+        [(_MISSING, 3)],
+    ),
+    "multiline_string": (
+        'option = {\n\tlog = "first\n\ttest_effect = yes"\n\ttest_effect = yes\n}\n',
+        [(_MISSING, 4)],
+    ),
+    "bom_crlf": (
+        '\N{ZERO WIDTH NO-BREAK SPACE}option = {\r\n\tlog = "# x"\r\n'
+        "\ttest_effect = yes\r\n}\r\n",
+        [(_MISSING, 3)],
+    ),
+    "truncated_block": ("option = {\n\ttest_effect = yes", [(_MISSING, 2)]),
+    "truncated_string": (
+        'option = {\n\ttest_effect = yes\n\tlog = "test_effect = yes',
+        [(_MISSING, 2)],
+    ),
+    "packed_block": (
+        "option = { set_temp_variable = { amount = 1 } test_effect = yes }\n",
+        [(_SHARED, 1)],
+    ),
+    "two_calls_one_line": (
+        "option = {\n\tset_temp_variable = { amount = 1 }\n"
+        "\ttest_effect = yes test_effect = yes\n}\n",
+        [(_SHARED, 3)],
+    ),
+    "weighted_wrapper": ("25 = { test_effect = yes }\n", [(_MISSING, 1)]),
+    "wrapper_with_comment": (
+        'hidden_effect = { test_effect = yes } # " } test_effect = yes\n',
+        [(_MISSING, 1)],
+    ),
+    "nested_wrapper": (
+        "hidden_effect = { ROOT = { test_effect = yes } }\n",
+        [(_MISSING, 1)],
+    ),
+    "closing_brace": ("option = {\ntest_effect = yes }\n", [(_MISSING, 2)]),
+    "call_before_setter": (
+        "option = { test_effect = yes set_temp_variable = { amount = 1 } }\n",
+        [(_SHARED, 1), (_MISSING, 1)],
+    ),
+    "inline_limit": (
+        "if = { limit = { always = yes } test_effect = yes }\n",
+        [(_SHARED, 1), (_MISSING, 1)],
+    ),
+    "empty_sibling": (
+        "test_effect = yes hidden_effect = { }\n",
+        [(_SHARED, 1), (_MISSING, 1)],
+    ),
+}
+
+
+@pytest.mark.parametrize("fixture", sorted(_SEMANTIC_FIXTURES))
+def test_semantic_fixture_agrees_uncached_cold_and_warm(tmp_path, monkeypatch, fixture):
+    script, expected = _SEMANTIC_FIXTURES[fixture]
+    path = tmp_path / "events" / "fixture.txt"
+    _write(path, script)
+    args = (
+        str(path),
+        _AMOUNT_CONTRACT,
+        str(tmp_path),
+        frozenset(),
+        frozenset(),
+        frozenset(),
+    )
+
+    monkeypatch.setenv("MD_NO_CACHE", "1")
+    uncached = _validate_call_sites_in_file(args)
+    monkeypatch.delenv("MD_NO_CACHE")
+    cold = _validate_call_sites_in_file(args)
+    # A warm run must reuse the cached tokens.
+    monkeypatch.delattr(vsp, "_tokenize")
+    warm = _validate_call_sites_in_file(args)
+
+    assert uncached == cold == warm
+    assert [(category, line) for category, _message, line in uncached] == expected
+
+
+@pytest.mark.parametrize("audit", [False, True])
+def test_shared_line_calls_gate_and_audit_additions_only_warn(tmp_path, audit):
+    _write(
+        tmp_path / "common" / "scripted_effects" / "effects.txt",
+        "# Parameters:\n# - amount: how much\ntest_effect = {\n}\nplain_effect = {\n}\n",
+    )
+    _write(
+        tmp_path / "events" / "caller.txt",
+        "option = {\n"
+        "\tset_temp_variable = { amount = 1 } test_effect = yes\n"
+        "\tif = { limit = { always = yes } plain_effect = yes }\n"
+        "\tplain_effect = yes\n"
+        "}\n",
+    )
+
+    validator = vsp.Validator(
+        str(tmp_path), use_colors=False, workers=1, audit_shared_lines=audit
+    )
+    validator.run_validations()
+
+    expected = [(_SHARED, vsp.Severity.ERROR, 2)]
+    if audit:
+        expected.append(("audit-call-shares-line", vsp.Severity.WARNING, 3))
+    assert [
+        (issue.category, issue.severity, issue.line) for issue in validator._issues
+    ] == expected
+    assert validator.errors_found == 1
+    assert validator.warnings_found == int(audit)
+
+
+@pytest.mark.parametrize(
+    "calls",
+    [
+        "plain_effect = yes test_effect = yes",
+        "test_effect = yes plain_effect = yes",
+        "test_effect = yes test_effect = yes",
+    ],
+)
+def test_contracted_call_owns_a_mixed_audit_line(tmp_path, calls):
+    path = tmp_path / "mixed.txt"
+    _write(path, "set_temp_variable = { amount = 1 }\n" + calls + "\n")
+    findings = _validate_call_sites_in_file(
+        (
+            str(path),
+            _AMOUNT_CONTRACT,
+            str(tmp_path),
+            frozenset(),
+            frozenset({"plain_effect"}),
+            frozenset(),
+        )
+    )
+    assert [(category, line) for category, _message, line in findings] == [(_SHARED, 2)]
+    assert "'test_effect'" in findings[0][1]
+
+
+@pytest.mark.parametrize("wrapper", ["25", "hidden_effect", "ROOT", "var:target"])
+def test_single_leaf_formatter_output_passes_the_call_rule(tmp_path, wrapper):
+    block = [f"{wrapper} = {{", "\ttest_effect = yes", "}"]
+    rendered = collapse_or_compact(block)
+    assert rendered == [f"{wrapper} = {{ test_effect = yes }}"]
+    assert collapse_or_compact(rendered) == rendered
+    path = tmp_path / "formatted.txt"
+    _write(path, "set_temp_variable = { amount = 1 }\n" + rendered[0] + "\n")
+    assert (
+        _validate_call_sites_in_file(
+            (
+                str(path),
+                _AMOUNT_CONTRACT,
+                str(tmp_path),
+                frozenset(),
+                frozenset(),
+                frozenset(),
+            )
+        )
+        == []
+    )
+
+
+def test_splitting_statements_preserves_influence_values_and_errors(
+    tmp_path, cip_contract
+):
+    statements = [
+        "option = {",
+        "set_temp_variable = { percent_change = 2.00 }",
+        "set_temp_variable = { tag_index = USA }",
+        "set_temp_variable = { influence_target = USA }",
+        "change_influence_percentage = yes",
+        "set_temp_variable = { tag_index = ZZZ }",
+        "change_influence_percentage = yes",
+        "}",
+    ]
+    token_sequences = []
+    for separator in (" ", "\n"):
+        script = separator.join(statements)
+        path = tmp_path / "influence.txt"
+        _write(path, script)
+        token_sequences.append(
+            [(kind, name, rhs) for kind, _line, name, rhs in vsp._tokenize(script)]
+        )
+        findings = _validate_call_sites_in_file(
+            (
+                str(path),
+                cip_contract,
+                str(tmp_path),
+                _TEST_VALID_TAGS,
+                frozenset(),
+                frozenset(),
+            )
+        )
+        assert [
+            category for category, _message, _line in findings if category != _SHARED
+        ] == [
+            "identical-influence-params",
+            "invalid-influence-tag",
+        ]
+    assert token_sequences[0] == token_sequences[1]
+
+
+@pytest.mark.parametrize("audit", [False, True])
+@pytest.mark.parametrize("strict", [False, True])
+@pytest.mark.parametrize(
+    "script, fails",
+    [
+        ("hidden_effect = { plain_effect = yes }", False),
+        ("plain_effect = yes add_stability = 0.1", False),
+        (
+            "set_temp_variable = { amount = 1 }\ntest_effect = yes add_stability = 0.1",
+            True,
+        ),
+        (
+            "set_temp_variable = { amount = 1 }\nhidden_effect = { test_effect = yes }",
+            False,
+        ),
+        ("test_effect = yes", True),
+        ("plain_effect = { TARGET = FRA }", False),
+    ],
+)
+def test_cli_keeps_audit_advisory_without_weakening_errors(
+    tmp_path, monkeypatch, audit, strict, script, fails
+):
+    _write(
+        tmp_path / "common" / "scripted_effects" / "contracts.txt",
+        "# Parameters:\n# - amount: required\ntest_effect = { }\nplain_effect = { }\n",
+    )
+    _write(tmp_path / "events" / "calls.txt", script + "\n")
+    argv = [vsp.__file__, "--path", str(tmp_path), "--workers", "1", "--no-color"]
+    if audit:
+        argv.append("--audit-shared-lines")
+    if strict:
+        argv.append("--strict")
+    monkeypatch.setattr(sys, "argv", argv)
+    with pytest.raises(SystemExit) as exit_info:
+        runpy.run_path(vsp.__file__, run_name="__main__")
+    assert exit_info.value.code == int(strict and fails)
+
+
+def test_validator_reports_every_unreadable_input_as_an_error(tmp_path):
+    """Invalid UTF-8 after a real call used to return no findings."""
+    for relative in (
+        "common/scripted_effects/broken.txt",
+        "common/country_tags/broken.txt",
+        "events/broken.txt",
+    ):
+        path = tmp_path / relative
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"option = {\n\tchange_influence_percentage = yes\n}\n\xff\n")
+
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+    validator.run_validations()
+
+    assert [(issue.category, issue.file) for issue in validator._issues] == [
+        ("unreadable-input", "common/country_tags/broken.txt"),
+        ("unreadable-input", "common/scripted_effects/broken.txt"),
+        ("unreadable-input", "events/broken.txt"),
+    ]
+    assert validator.errors_found == 3
 
 
 # --- validator wiring ------------------------------------------------------
@@ -942,3 +1341,300 @@ def test_cli_entry_point_exits_zero_on_a_clean_tree(tmp_path, monkeypatch):
         runpy.run_path(vsp.__file__, run_name="__main__")
 
     assert exit_info.value.code == 0
+
+
+# relative caller, effect definitions, caller text, expected category/file/line
+_UNSUPPORTED_SYNTAX_CASES = {
+    "vatican_parameter_template": (
+        "common/national_focus/vatican.txt",
+        "HLS_holy_wargoal = {\n"
+        "\tcreate_wargoal = { type = annex_everything target = $TARGET$ }\n}\n",
+        "focus_tree = {\n\tfocus = { completion_reward = {\n"
+        "\t\tHLS_holy_wargoal = { TARGET = FRA }\n\t} }\n}\n",
+        [
+            ("unsupported-effect-placeholder", "common/scripted_effects/e.txt", 2),
+            ("unsupported-effect-arguments", "common/national_focus/vatican.txt", 3),
+        ],
+    ),
+    "corrected_country_scopes": (
+        "events/caller.txt",
+        "HLS_holy_wargoal = {\n\tif = {\n\t\tlimit = { exists = yes }\n"
+        "\t\tPREV = { create_wargoal = { type = annex_everything target = PREV } }\n"
+        "\t}\n}\n",
+        "option = {\n\tFRA = { HLS_holy_wargoal = yes }\n}\n",
+        [],
+    ),
+    "uncontracted_effect_with_arguments": (
+        "history/countries/HLS.txt",
+        "HLS_holy_wargoal = { add_political_power = 1 }\n",
+        "HLS_holy_wargoal = { TARGET = FRA }\n",
+        [("unsupported-effect-arguments", "history/countries/HLS.txt", 1)],
+    ),
+    "indented_definition_and_multiline_call": (
+        "events/caller.txt",
+        "\tHLS_holy_wargoal = { add_political_power = 1 }\n",
+        "option = {\n\tHLS_holy_wargoal =\n\t{ TARGET = FRA }\n}\n",
+        [("unsupported-effect-arguments", "events/caller.txt", 2)],
+    ),
+    "nested_call_in_effect_definition": (
+        "events/caller.txt",
+        "HLS_holy_wargoal = { }\n"
+        "wrapper = {\n\tHLS_holy_wargoal = { TARGET = FRA }\n}\n",
+        "",
+        [("unsupported-effect-arguments", "common/scripted_effects/e.txt", 3)],
+    ),
+    "placeholder_scope_and_repeated_values": (
+        "events/caller.txt",
+        "build_line = {\n\t$STATE$ = { add_extra_state_shared_building_slots = 1 }\n"
+        "\tset_variable = { amount = -$AMOUNT$ value = $AMOUNT$ }\n}\n",
+        "",
+        [
+            ("unsupported-effect-placeholder", "common/scripted_effects/e.txt", 2),
+            ("unsupported-effect-placeholder", "common/scripted_effects/e.txt", 3),
+        ],
+    ),
+    "comments_and_quoted_text": (
+        "events/caller.txt",
+        "HLS_holy_wargoal = {\n\t# target = $TARGET$\n"
+        '\tlog = "a \\" # $TARGET$ HLS_holy_wargoal = { }"\n}\n',
+        "option = {\n\t# HLS_holy_wargoal = { TARGET = FRA }\n"
+        '\tlog = "HLS_holy_wargoal = {\n\tTARGET = FRA }"\n}\n',
+        [],
+    ),
+    "variable_and_event_target_scopes": (
+        "common/scripted_guis/caller.txt",
+        "HLS_holy_wargoal = { }\n",
+        "var:HLS_holy_wargoal = { HLS_holy_wargoal = yes }\n"
+        "event_target:HLS_holy_wargoal = { HLS_holy_wargoal = yes }\n",
+        [],
+    ),
+    "builtin_blocks_and_trigger_parameters": (
+        "common/scripted_triggers/trigger.txt",
+        "HLS_holy_wargoal = { create_wargoal = { type = annex_everything target = FRA } }\n",
+        "test_trigger = { tag = $TAG$ }\n",
+        [],
+    ),
+    "bom_crlf_and_empty_argument_block": (
+        "events/caller.txt",
+        "\N{ZERO WIDTH NO-BREAK SPACE}HLS_holy_wargoal = { }\r\n",
+        "\N{ZERO WIDTH NO-BREAK SPACE}option = {\r\n\tHLS_holy_wargoal = { }\r\n}\r\n",
+        [("unsupported-effect-arguments", "events/caller.txt", 2)],
+    ),
+    "multiple_definitions_and_calls": (
+        "events/caller.txt",
+        "first_effect = { }\nsecond_effect = { }\n",
+        "option = { first_effect = { AMOUNT = 1 } second_effect = { AMOUNT = 2 } }\n",
+        [
+            ("unsupported-effect-arguments", "events/caller.txt", 1),
+            ("unsupported-effect-arguments", "events/caller.txt", 1),
+        ],
+    ),
+    "scope_keyword_matching_effect_name": (
+        "events/caller.txt",
+        "from = { custom_effect_tooltip = script.0.from }\n",
+        "option = {\n\teffect_tooltip = {\n\t\tFROM = {\n"
+        "\t\t\tadd_timed_idea = { idea = some_idea days = 60 }\n\t\t}\n\t}\n}\n",
+        [],
+    ),
+    "lowercase_scope_matching_effect_name": (
+        "events/caller.txt",
+        "from = { custom_effect_tooltip = script.0.from }\n",
+        "option = {\n\teffect_tooltip = {\n\t\tfrom = {\n"
+        "\t\t\tadd_timed_idea = { idea = some_idea days = 60 }\n\t\t}\n\t}\n}\n",
+        [
+            ("lowercase-scope-shadowed-by-effect", "events/caller.txt", 3),
+        ],
+    ),
+    "idea_definition_sharing_effect_name": (
+        "common/ideas/test_ideas.txt",
+        "depression = { swap_ideas = { remove_idea = recession add_idea = depression } }\n",
+        "ideas = {\n\teconomic_cycles = {\n\t\tdepression = {\n"
+        "\t\t\tcost = 300\n\t\t\tmodifier = { stability_factor = -0.1 }\n\t\t}\n\t}\n}\n",
+        [],
+    ),
+    "dynamic_modifier_definition_sharing_effect_name": (
+        "common/dynamic_modifiers/test_modifiers.txt",
+        "public_war_weariness_effect = { add_stability = 0.01 }\n",
+        "public_war_weariness_effect = {\n\twar_support_factor = war_support_factor_var\n}\n",
+        [],
+    ),
+}
+
+
+@pytest.mark.parametrize("case", _UNSUPPORTED_SYNTAX_CASES)
+def test_unsupported_scripted_effect_syntax(tmp_path, case):
+    relative, definitions, caller, expected = _UNSUPPORTED_SYNTAX_CASES[case]
+    _write(tmp_path / "common/scripted_effects/e.txt", definitions)
+    _write(tmp_path / relative, caller)
+    validator = vsp.Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator.run_validations()
+
+    assert sorted(
+        (issue.category, issue.file, issue.line) for issue in validator._issues
+    ) == sorted(expected)
+    assert all(issue.severity == vsp.Severity.WARNING for issue in validator._issues)
+
+
+# --- staged dependency rescans (#5185) -------------------------------------
+
+_EFFECT_FILE = "common/scripted_effects/e.txt"
+_TAG_FILE = "common/country_tags/00_countries.txt"
+_ALIAS_FILE = "common/country_tag_aliases/aliases.txt"
+_REQUIRES_AMOUNT = "# Parameters:\n# - amount: how much\ntest_effect = {\n}\n"
+_BARE_CALL = "option = {\n\ttest_effect = yes\n}\n"
+_INFLUENCE_CALL = (
+    "option = {\n"
+    "\tset_temp_variable = { percent_change = 5 }\n"
+    "\tset_temp_variable = { influence_target = ZZZ }\n"
+    "\tchange_influence_percentage = yes\n"
+    "}\n"
+)
+
+
+def _committed_tree(tmp_path, monkeypatch, files):
+    """Commit `files` as the base of a git repository at tmp_path."""
+    for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "MD_STAGED_FILES"):
+        monkeypatch.delenv(name, raising=False)
+    for relative, content in files.items():
+        _write(tmp_path / relative, content)
+    initialize_git_repository(tmp_path, *files)
+
+
+def _stage(tmp_path, relative, content):
+    """Stage new content for a file, or its deletion when content is None."""
+    if content is None:
+        run_git(tmp_path, "rm", relative)
+        return
+    _write(tmp_path / relative, content)
+    run_git(tmp_path, "add", relative)
+
+
+def _cli_findings(tmp_path, monkeypatch, *flags):
+    """Run the CLI on tmp_path and return each finding as (category, file, line)."""
+    output = tmp_path / "result.log"
+    argv = [vsp.__file__, "--path", str(tmp_path), "--workers", "1", "--no-color"]
+    monkeypatch.setattr(sys, "argv", [*argv, "--output", str(output), *flags])
+    with pytest.raises(SystemExit):
+        runpy.run_path(vsp.__file__, run_name="__main__")
+    with open(output.with_suffix(".json"), encoding="utf-8") as sidecar:
+        return sorted(
+            (issue["category"], issue["file"], issue["line"])
+            for issue in json.load(sidecar)
+        )
+
+
+def test_staged_contract_change_rechecks_unchanged_callers(tmp_path, monkeypatch):
+    """Staging only the contract used to report nothing for its callers."""
+    _committed_tree(
+        tmp_path,
+        monkeypatch,
+        {_EFFECT_FILE: "test_effect = {\n}\n", "events/e.txt": _BARE_CALL},
+    )
+    _stage(tmp_path, _EFFECT_FILE, _REQUIRES_AMOUNT)
+    cache = tmp_path / ".validation_cache"
+
+    full = _cli_findings(tmp_path, monkeypatch, "--no-cache")
+    uncached = _cli_findings(tmp_path, monkeypatch, "--staged", "--no-cache")
+    assert not cache.exists()
+    monkeypatch.delenv("MD_NO_CACHE")
+    cold = _cli_findings(tmp_path, monkeypatch, "--staged")
+    assert cache.exists()
+    warm = _cli_findings(tmp_path, monkeypatch, "--staged")
+
+    assert full == uncached == cold == warm == [(_MISSING, "events/e.txt", 2)]
+
+
+def test_staged_contract_removal_leaves_no_stale_warm_findings(tmp_path, monkeypatch):
+    """The rescan still runs, so findings from other contracts stay."""
+    _committed_tree(
+        tmp_path,
+        monkeypatch,
+        {
+            _EFFECT_FILE: _REQUIRES_AMOUNT,
+            "events/e.txt": _BARE_CALL,
+            "events/kept.txt": "option = {\n\tchange_influence_percentage = yes\n}\n",
+        },
+    )
+    kept = (_MISSING, "events/kept.txt", 2)
+    assert _cli_findings(tmp_path, monkeypatch) == [(_MISSING, "events/e.txt", 2), kept]
+
+    _stage(tmp_path, _EFFECT_FILE, None)
+
+    assert _cli_findings(tmp_path, monkeypatch, "--staged") == [kept]
+
+
+@pytest.mark.parametrize(
+    "dependency, base, staged",
+    [
+        (_TAG_FILE, 'ZZZ = "countries/ZZZ.txt"\n', 'ZZY = "countries/ZZZ.txt"\n'),
+        (_TAG_FILE, 'ZZZ = "countries/ZZZ.txt"\n', None),
+        (_ALIAS_FILE, "ZZZ = {\n}\n", "ZZY = {\n}\n"),
+        (_ALIAS_FILE, "ZZZ = {\n}\n", None),
+    ],
+    ids=["tag-renamed", "tag-file-deleted", "alias-renamed", "alias-file-deleted"],
+)
+def test_staged_tag_or_alias_change_rechecks_unchanged_callers(
+    tmp_path, monkeypatch, dependency, base, staged
+):
+    _committed_tree(
+        tmp_path, monkeypatch, {dependency: base, "events/e.txt": _INFLUENCE_CALL}
+    )
+    assert _cli_findings(tmp_path, monkeypatch) == []
+
+    _stage(tmp_path, dependency, staged)
+
+    assert _cli_findings(tmp_path, monkeypatch, "--staged") == [
+        ("invalid-influence-tag", "events/e.txt", 3)
+    ]
+
+
+def test_staged_trigger_change_rechecks_unchanged_callers(tmp_path, monkeypatch):
+    """A trigger that stops reading a parameter leaves its callers' setters dead."""
+    trigger = "common/scripted_triggers/t.txt"
+    caller = (
+        "option = {\n"
+        "\tif = {\n"
+        "\t\tlimit = {\n"
+        "\t\t\tset_temp_variable = { amount = 5 }\n"
+        "\t\t\ttest_trigger = yes\n"
+        "\t\t}\n"
+        "\t}\n"
+        "}\n"
+    )
+    _committed_tree(
+        tmp_path,
+        monkeypatch,
+        {
+            _EFFECT_FILE: _REQUIRES_AMOUNT,
+            trigger: "test_trigger = {\n\tcheck_variable = { amount > 1 }\n}\n",
+            "events/e.txt": caller,
+        },
+    )
+    assert _cli_findings(tmp_path, monkeypatch) == []
+
+    _stage(tmp_path, trigger, "test_trigger = {\n\talways = yes\n}\n")
+
+    assert _cli_findings(tmp_path, monkeypatch, "--staged") == [
+        ("orphan-param-setter", "events/e.txt", 4)
+    ]
+
+
+def test_staged_caller_edit_scans_only_that_caller(tmp_path, monkeypatch):
+    """No dependency changed, so unchanged and deleted callers are left alone."""
+    _committed_tree(
+        tmp_path,
+        monkeypatch,
+        {
+            _EFFECT_FILE: _REQUIRES_AMOUNT,
+            "events/changed.txt": _BARE_CALL,
+            "events/unchanged.txt": _BARE_CALL,
+            "events/removed.txt": _BARE_CALL,
+        },
+    )
+    _stage(tmp_path, "events/changed.txt", "\n" + _BARE_CALL)
+    _stage(tmp_path, "events/removed.txt", None)
+
+    assert _cli_findings(tmp_path, monkeypatch, "--staged") == [
+        (_MISSING, "events/changed.txt", 3)
+    ]
