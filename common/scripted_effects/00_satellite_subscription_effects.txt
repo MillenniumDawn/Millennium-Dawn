@@ -1,0 +1,120 @@
+calculate_satellite_service_expense = {
+	clear_temp_array = satellite_subscription_seen
+	for_each_loop = {
+		array = $SERVICE$_access_array
+		value = satellite_subscription_partner
+		if = {
+			limit = {
+				check_variable = { satellite_subscription_partner > 0 }
+				var:satellite_subscription_partner = { exists = yes }
+				NOT = { is_in_array = { array = satellite_subscription_seen value = satellite_subscription_partner } }
+			}
+			add_to_temp_array = { array = satellite_subscription_seen value = satellite_subscription_partner }
+			var:satellite_subscription_partner = {
+				if = {
+					limit = {
+						check_variable = { var_$SERVICE$_system_idx > $THRESHOLD$ }
+						is_in_array = { array = $SERVICE$_treaty_array value = PREV.id }
+					}
+					set_temp_variable = { satellite_subscription_fee = constant:satellite_subscriptions.$RATE$ }
+					if = {
+						limit = { is_in_faction_with = PREV }
+						set_temp_variable = { satellite_subscription_fee = constant:satellite_subscriptions.faction_$RATE$ }
+					}
+					add_to_variable = { PREV.satellite_subscription_expense = satellite_subscription_fee }
+				}
+			}
+		}
+	}
+	clear_temp_array = satellite_subscription_seen
+}
+
+calculate_satellite_service_income = {
+	if = {
+		limit = { check_variable = { var_$SERVICE$_system_idx > $THRESHOLD$ } }
+		clear_temp_array = satellite_subscription_seen
+		for_each_loop = {
+			array = $SERVICE$_treaty_array
+			value = satellite_subscription_partner
+			if = {
+				limit = {
+					check_variable = { satellite_subscription_partner > 0 }
+					var:satellite_subscription_partner = { exists = yes }
+					NOT = { is_in_array = { array = satellite_subscription_seen value = satellite_subscription_partner } }
+				}
+				add_to_temp_array = { array = satellite_subscription_seen value = satellite_subscription_partner }
+				var:satellite_subscription_partner = {
+					if = {
+						limit = { is_in_array = { array = $SERVICE$_access_array value = PREV.id } }
+						set_temp_variable = { satellite_subscription_fee = constant:satellite_subscriptions.$RATE$ }
+						if = {
+							limit = { is_in_faction_with = PREV }
+							set_temp_variable = { satellite_subscription_fee = constant:satellite_subscriptions.faction_$RATE$ }
+						}
+						add_to_variable = { PREV.satellite_subscription_income = satellite_subscription_fee }
+					}
+				}
+			}
+		}
+		clear_temp_array = satellite_subscription_seen
+	}
+}
+
+calculate_satellite_subscription_income = {
+	set_variable = { satellite_subscription_income = 0 }
+	if = {
+		limit = { exists = yes }
+		calculate_satellite_service_income = { SERVICE = GNSS_mil THRESHOLD = 121 RATE = military }
+		calculate_satellite_service_income = { SERVICE = GNSS_civ THRESHOLD = 121 RATE = civilian }
+		calculate_satellite_service_income = { SERVICE = COM_mil THRESHOLD = 141 RATE = military }
+		calculate_satellite_service_income = { SERVICE = COM_civ THRESHOLD = 141 RATE = civilian }
+		calculate_satellite_service_income = { SERVICE = SPY_mil THRESHOLD = 161 RATE = military }
+		calculate_satellite_service_income = { SERVICE = SPY_civ THRESHOLD = 161 RATE = civilian }
+	}
+}
+
+calculate_satellite_subscription_expense = {
+	set_variable = { satellite_subscription_expense = 0 }
+	if = {
+		limit = { exists = yes }
+		calculate_satellite_service_expense = { SERVICE = GNSS_mil THRESHOLD = 121 RATE = military }
+		calculate_satellite_service_expense = { SERVICE = GNSS_civ THRESHOLD = 121 RATE = civilian }
+		calculate_satellite_service_expense = { SERVICE = COM_mil THRESHOLD = 141 RATE = military }
+		calculate_satellite_service_expense = { SERVICE = COM_civ THRESHOLD = 141 RATE = civilian }
+		calculate_satellite_service_expense = { SERVICE = SPY_mil THRESHOLD = 161 RATE = military }
+		calculate_satellite_service_expense = { SERVICE = SPY_civ THRESHOLD = 161 RATE = civilian }
+	}
+}
+
+end_satellite_subscription = {
+	set_temp_variable = { satellite_subscription_last_index = $SERVICE$_access_array^num }
+	subtract_from_temp_variable = { satellite_subscription_last_index = 1 }
+	for_loop_effect = {
+		start = satellite_subscription_last_index
+		end = -1
+		compare = greater_than
+		add = -1
+		value = satellite_subscription_access_index
+		if = {
+			limit = { check_variable = { $SERVICE$_access_array^satellite_subscription_access_index = $PROVIDER$.id } }
+			remove_from_array = { array = $SERVICE$_access_array index = satellite_subscription_access_index }
+			if = {
+				limit = { check_variable = { $SERVICE$_access_system_idx_array^num > satellite_subscription_access_index } }
+				remove_from_array = { array = $SERVICE$_access_system_idx_array index = satellite_subscription_access_index }
+			}
+		}
+	}
+	$PROVIDER$ = {
+		while_loop_effect = {
+			limit = { is_in_array = { array = $SERVICE$_treaty_array value = PREV.id } }
+			remove_from_array = { array = $SERVICE$_treaty_array value = PREV.id }
+		}
+	}
+}
+
+refresh_satellite_subscription_finances = {
+	calculate_additional_income_rate = yes
+	calculate_additional_expense_rate = yes
+	update_display = yes
+	update_money_dirty_variable = yes
+}

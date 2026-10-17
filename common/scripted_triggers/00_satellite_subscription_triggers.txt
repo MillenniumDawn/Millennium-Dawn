@@ -1,0 +1,38 @@
+can_afford_satellite_subscription = {
+	OR = {
+		AND = {
+			is_in_faction_with = $PROVIDER$
+			check_variable = { treasury_rate > constant:satellite_subscriptions.faction_$RATE$ }
+		}
+		AND = {
+			NOT = { is_in_faction_with = $PROVIDER$ }
+			check_variable = { treasury_rate > constant:satellite_subscriptions.$RATE$ }
+		}
+	}
+}
+
+add_new_satellite_service_subscription_cost = {
+	if = {
+		limit = {
+			check_variable = { $PROVIDER$.var_$SERVICE$_system_idx > $THRESHOLD$ }
+			check_variable = { var = $PROVIDER$.var_$SERVICE$_system_idx value = var_$SERVICE$_system_idx compare = greater_than_or_equals }
+			NOT = { is_in_array = { array = $PROVIDER$.$SERVICE$_treaty_array value = THIS.id } }
+		}
+		if = {
+			limit = { is_in_faction_with = $PROVIDER$ }
+			add_to_temp_variable = { satellite_subscription_new_cost = constant:satellite_subscriptions.faction_$RATE$ }
+		}
+		else = {
+			add_to_temp_variable = { satellite_subscription_new_cost = constant:satellite_subscriptions.$RATE$ }
+		}
+	}
+}
+
+can_afford_full_satellite_system_access = {
+	set_temp_variable = { satellite_subscription_new_cost = 0 }
+	add_new_satellite_service_subscription_cost = { SERVICE = GNSS_mil THRESHOLD = 121 RATE = military PROVIDER = FROM }
+	add_new_satellite_service_subscription_cost = { SERVICE = GNSS_civ THRESHOLD = 121 RATE = civilian PROVIDER = FROM }
+	add_new_satellite_service_subscription_cost = { SERVICE = COM_mil THRESHOLD = 141 RATE = military PROVIDER = FROM }
+	add_new_satellite_service_subscription_cost = { SERVICE = COM_civ THRESHOLD = 141 RATE = civilian PROVIDER = FROM }
+	check_variable = { treasury_rate > satellite_subscription_new_cost }
+}
