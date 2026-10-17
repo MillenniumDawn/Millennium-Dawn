@@ -355,3 +355,83 @@ TAI_campaign_for_ruling_camp = {
 	set_temp_variable = { party_popularity_increase = 0.02 }
 	change_relative_party_popularity = yes
 }
+
+# Operation Blue Tiger milestone 3: monthly pressure update
+# Blockade Burden reads Beijing's real blockade state; the economic loss itself is charged once, by China's blockade spirits.
+TAI_update_pressure = {
+	set_variable = { TAI_blockade_burden = 0 }
+	if = {
+		limit = { country_exists = CHI }
+		if = {
+			limit = { has_war_with = CHI }
+			set_variable = { TAI_blockade_burden = 85 }
+		}
+		else_if = {
+			limit = { has_idea = TAI_blockade_economic_crisis }
+			set_variable = { TAI_blockade_burden = 70 }
+		}
+		else_if = {
+			limit = { has_idea = TAI_blockade_partial }
+			set_variable = { TAI_blockade_burden = 40 }
+		}
+	}
+	if = {
+		limit = { check_variable = { TAI_blockade_burden > 0 } }
+		if = { limit = { has_idea = TAI_strategic_reserves } subtract_from_variable = { TAI_blockade_burden = 10 } }
+		if = { limit = { has_idea = TAI_strategic_fuel_reserve } subtract_from_variable = { TAI_blockade_burden = 5 } }
+		if = { limit = { has_idea = TAI_emergency_doctrine } subtract_from_variable = { TAI_blockade_burden = 10 } }
+		if = { limit = { has_idea = TAI_pacific_lifeline } subtract_from_variable = { TAI_blockade_burden = 10 } }
+		if = { limit = { has_country_flag = TAI_shipping_guaranteed } subtract_from_variable = { TAI_blockade_burden = 10 } }
+		if = { limit = { has_country_flag = TAI_energy_rationed } subtract_from_variable = { TAI_blockade_burden = 5 } }
+		clamp_variable = { var = TAI_blockade_burden min = 0 max = 100 }
+
+		set_temp_variable = { TAI_ptn_change = TAI_blockade_burden }
+		divide_temp_variable = { TAI_ptn_change = 20 }
+		if = { limit = { has_stability > 0.6 } subtract_from_temp_variable = { TAI_ptn_change = 1 } }
+		if = { limit = { has_idea = TAI_impossible_to_coerce } subtract_from_temp_variable = { TAI_ptn_change = 1 } }
+		if = { limit = { CHI = { check_variable = { CHI_taiwan_us_support > 60 } } } subtract_from_temp_variable = { TAI_ptn_change = 1 } }
+		add_to_variable = { TAI_pressure_to_negotiate = TAI_ptn_change }
+
+		# Coercion paradox: pressure on a legitimate government hardens identity and draws support
+		if = {
+			limit = {
+				check_variable = { TAI_blockade_burden > 39 }
+				has_stability > 0.5
+			}
+			if = {
+				limit = { check_variable = { TAI_taiwanese_identity < 75 } }
+				add_to_variable = { TAI_taiwanese_identity = 0.5 }
+			}
+			if = {
+				limit = { CHI = { check_variable = { CHI_taiwan_us_support < 90 } } }
+				CHI = { add_to_variable = { CHI_taiwan_us_support = 0.5 } }
+			}
+		}
+	}
+	else = {
+		subtract_from_variable = { TAI_pressure_to_negotiate = 2 }
+	}
+	clamp_variable = { var = TAI_pressure_to_negotiate min = 0 max = 100 }
+
+	if = {
+		limit = {
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+			check_variable = { TAI_negotiation_stage = 0 }
+			check_variable = { TAI_pressure_to_negotiate > 69 }
+			check_variable = { TAI_blockade_burden > 39 }
+			NOT = { has_country_flag = TAI_refused_terms }
+			NOT = { has_country_flag = TAI_terms_offered }
+		}
+		set_country_flag = { flag = TAI_terms_offered days = 60 value = 1 }
+		country_event = { id = blue_tiger.40 days = 1 }
+	}
+
+	if = {
+		limit = {
+			has_country_flag = TAI_strait_war
+			NOT = { has_war_with = CHI }
+		}
+		clr_country_flag = TAI_strait_war
+	}
+}
