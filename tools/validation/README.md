@@ -247,6 +247,13 @@ Module-level constants and pool-worker functions (those passed to `_pool_map`) m
 
 ## Scripted effect call layout
 
+Scripted effects take `NAME = yes`, not an argument block such as
+`HLS_holy_wargoal = { TARGET = FRA }`. Pass values through scopes or temp variables.
+The validator reports `unsupported-effect-arguments` for known effect calls with
+blocks and `unsupported-effect-placeholder` for unquoted `$NAME$` templates in effect
+definitions. Both are WARNINGs pending backlog triage. Comments, quoted strings,
+native effect blocks, and scripted trigger parameters are not flagged.
+
 `validate_scripted_params.py` checks `NAME = yes` calls to effects with required
 parameter contracts by default. `call-shares-line` is an ERROR: a contracted call
 must not share its physical line with another statement. `--strict` gates it in

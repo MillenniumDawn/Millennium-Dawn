@@ -9,8 +9,11 @@ from collections import defaultdict
 from typing import DefaultDict, Dict, List, Optional, Set, Tuple, TypedDict
 
 import disk_cache
+from equipment_variant_context import branches, script_nodes
+from shared_utils import FileOpener
 from validator_common import (
     BaseValidator,
+    Severity,
     find_unquoted_block_end,
     run_validator_main,
     strip_comments,
@@ -1414,6 +1417,115 @@ def validate_country_file(
     return results
 
 
+def check_influence_order(text, country):
+    """Check country-local execution paths, keeping dated setups independent."""
+    findings = set()
+
+    def join(outcomes):
+        result = {}
+        for owner in set().union(*(state.keys() for state in outcomes)):
+            values = [
+                state.get(owner, (False, set(), set(), set(), False))
+                for state in outcomes
+            ]
+            result[owner] = (
+                all(value[0] for value in values),
+                *(set().union(*(value[i] for value in values)) for i in range(1, 4)),
+                all(value[4] for value in values),
+            )
+        return result
+
+    def walk(nodes, state, scope):
+        state = state.copy()
+        for node in branches(nodes, {}):
+            if isinstance(node, list):
+                state = join([walk(arm, state, scope) for arm in node])
+                continue
+            if re.fullmatch(r"\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?", node.key):
+                finish(walk(node.children, {}, scope))
+                continue
+            if node.key in {"hidden_effect", "THIS", "ROOT", scope} or re.fullmatch(
+                r"[A-Z]{3}", node.key
+            ):
+                target = (
+                    country
+                    if node.key == "ROOT"
+                    else scope if node.key in {"hidden_effect", "THIS"} else node.key
+                )
+                state = walk(node.children, state, target)
+                continue
+            if node.key in {"random", "while"}:
+                state = join([state, walk(node.children, state, scope)])
+                continue
+            operations = []
+            if node.key == "add_to_array":
+                for entry in node.children:
+                    target, _, array = entry.key.rpartition(".")
+                    if array in {"influence_array", "influence_array_val"}:
+                        owner = (
+                            country
+                            if target == "ROOT"
+                            else scope if target in {"", "THIS"} else target
+                        )
+                        operations.append((owner, "write"))
+            elif (
+                node.key
+                in {"init_influence", "sort_influence", "recalculate_influence"}
+                and node.value == "yes"
+            ):
+                operations.append((scope, node.key))
+            for owner, operation in operations:
+                initialized, written, pending, sorted_at, warned = state.get(
+                    owner, (False, set(), set(), set(), False)
+                )
+                if operation == "write":
+                    if not initialized and not warned:
+                        warned = True
+                        findings.add(
+                            (
+                                f"{owner}: initialize influence with init_influence = yes before writing starting influence arrays",
+                                node.line,
+                            )
+                        )
+                    for line in sorted_at:
+                        findings.add(
+                            (
+                                f"{owner}: sort_influence runs before a later influence array write; move it after the setup",
+                                line,
+                            )
+                        )
+                    written = written | {node.line}
+                    pending = pending | {node.line}
+                    sorted_at = set()
+                elif operation == "init_influence":
+                    if written:
+                        findings.add(
+                            (
+                                f"{owner}: init_influence clears earlier influence array writes; move it before the setup",
+                                node.line,
+                            )
+                        )
+                    initialized = True
+                else:
+                    pending = set()
+                    sorted_at = sorted_at | {node.line}
+                state[owner] = initialized, written, pending, sorted_at, warned
+        return state
+
+    def finish(state):
+        for owner, (_, _, pending, _, _) in state.items():
+            if pending:
+                findings.add(
+                    (
+                        f"{owner}: add sort_influence = yes after the starting influence array writes",
+                        max(pending),
+                    )
+                )
+
+    finish(walk(script_nodes(text), {}, country))
+    return sorted(findings, key=lambda finding: (finding[1], finding[0]))
+
+
 class Validator(BaseValidator):
     TITLE = "HISTORY FILE VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -1721,6 +1833,25 @@ class Validator(BaseValidator):
             "States starting with a project-granted building whose owner never completes the project:",
         )
 
+    def validate_influence_order(self):
+        results = []
+        for path in self._get_history_files():
+            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            country = os.path.basename(path).split(" ", 1)[0].split(".", 1)[0]
+            results.extend(
+                (message, relative, line)
+                for message, line in check_influence_order(
+                    FileOpener.open_text_file(path), country
+                )
+            )
+        self._report(
+            results,
+            "Starting influence setup is ordered correctly",
+            "Starting influence setup ordering problems:",
+            severity=Severity.WARNING,
+            category="history-influence-order",
+        )
+
     def run_validations(self):
         self._build_tech_graph()
         self.validate_tech_dependencies()
@@ -1732,6 +1863,7 @@ class Validator(BaseValidator):
         self.validate_oob_references()
         self.validate_capital_defined()
         self.validate_ruling_party_assigned()
+        self.validate_influence_order()
         self._build_building_ownership()
         self.validate_reactor_nuclear_status()
         self.validate_project_granted_buildings()
