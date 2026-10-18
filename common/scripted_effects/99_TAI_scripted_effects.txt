@@ -435,3 +435,528 @@ TAI_update_pressure = {
 		clr_country_flag = TAI_strait_war
 	}
 }
+
+TAI_activate_reclamation_bop = {
+	if = {
+		limit = { check_variable = { TAI_taiwanese_identity > 59 } }
+		set_power_balance = {
+			id = TAI_reclamation_bop
+			left_side = TAI_bop_restoration
+			right_side = TAI_bop_self_determination
+			set_value = 0.25
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TAI_taiwanese_identity > 44 } }
+		set_power_balance = {
+			id = TAI_reclamation_bop
+			left_side = TAI_bop_restoration
+			right_side = TAI_bop_self_determination
+			set_value = 0.10
+		}
+	}
+	else_if = {
+		limit = { check_variable = { TAI_taiwanese_identity > 29 } }
+		set_power_balance = {
+			id = TAI_reclamation_bop
+			left_side = TAI_bop_restoration
+			right_side = TAI_bop_self_determination
+			set_value = -0.05
+		}
+	}
+	else = {
+		set_power_balance = {
+			id = TAI_reclamation_bop
+			left_side = TAI_bop_restoration
+			right_side = TAI_bop_self_determination
+			set_value = -0.20
+		}
+	}
+}
+
+TAI_count_mainland_control = {
+	set_variable = { TAI_mainland_states_total = 0 }
+	set_variable = { TAI_mainland_states_held = 0 }
+	every_state = {
+		limit = {
+			is_core_of = CHI
+			NOT = { ROC_taiwan_island_state = yes }
+		}
+		ROOT = { add_to_variable = { TAI_mainland_states_total = 1 } }
+		if = {
+			limit = { is_controlled_by = ROOT }
+			ROOT = { add_to_variable = { TAI_mainland_states_held = 1 } }
+		}
+	}
+	set_variable = { TAI_mainland_control = 0 }
+	if = {
+		limit = { check_variable = { TAI_mainland_states_total > 0 } }
+		set_variable = { TAI_mainland_control = TAI_mainland_states_held }
+		multiply_variable = { TAI_mainland_control = 100 }
+		divide_variable = { TAI_mainland_control = TAI_mainland_states_total }
+	}
+}
+
+TAI_update_reclamation = {
+	if = {
+		limit = { has_country_flag = TAI_reclamation_war }
+		TAI_count_mainland_control = yes
+	}
+	if = {
+		limit = {
+			has_country_flag = TAI_reclamation_war
+			NOT = { has_country_flag = TAI_mainland_falling }
+			OR = {
+				AND = {
+					has_war_with = CHI
+					CHI = { has_capitulated = yes }
+				}
+				AND = {
+					NOT = { country_exists = CHI }
+					ROC_holds_mainland = yes
+				}
+			}
+		}
+		set_country_flag = TAI_mainland_falling
+		country_event = { id = reclamation.5 days = 1 }
+	}
+	else_if = {
+		limit = {
+			has_country_flag = TAI_reclamation_war
+			NOT = { has_country_flag = TAI_mainland_falling }
+			OR = {
+				NOT = { country_exists = CHI }
+				NOT = { has_war_with = CHI }
+			}
+		}
+		clr_country_flag = TAI_reclamation_war
+		country_event = { id = reclamation.18 days = 1 }
+	}
+}
+
+ROC_init_administration = {
+	set_country_flag = ROC_provisional_administration
+	if = {
+		limit = { NOT = { has_variable = ROC_regions_restored } }
+		set_variable = { ROC_regions_restored = 0 }
+	}
+	if = {
+		limit = { NOT = { has_variable = ROC_admin_reforms } }
+		set_variable = { ROC_admin_reforms = 0 }
+	}
+	if = {
+		limit = { NOT = { has_dynamic_modifier = { modifier = ROC_provisional_administration } } }
+		add_dynamic_modifier = { modifier = ROC_provisional_administration }
+	}
+	ROC_update_administration = yes
+}
+
+ROC_update_administration = {
+	set_temp_variable = { ROC_admin_points = ROC_regions_restored }
+	add_to_temp_variable = { ROC_admin_points = ROC_admin_reforms }
+	set_variable = { ROC_pa_factory = ROC_admin_points }
+	multiply_variable = { ROC_pa_factory = 0.04 }
+	subtract_from_variable = { ROC_pa_factory = 0.32 }
+	clamp_variable = { var = ROC_pa_factory max = 0 }
+	set_variable = { ROC_pa_stability = ROC_admin_points }
+	multiply_variable = { ROC_pa_stability = 0.02 }
+	subtract_from_variable = { ROC_pa_stability = 0.16 }
+	clamp_variable = { var = ROC_pa_stability max = 0 }
+	set_variable = { ROC_pa_pp = ROC_admin_points }
+	multiply_variable = { ROC_pa_pp = 0.025 }
+	subtract_from_variable = { ROC_pa_pp = 0.20 }
+	clamp_variable = { var = ROC_pa_pp max = 0 }
+	set_variable = { ROC_pa_conscription = ROC_admin_points }
+	multiply_variable = { ROC_pa_conscription = 0.06 }
+	subtract_from_variable = { ROC_pa_conscription = 0.48 }
+	clamp_variable = { var = ROC_pa_conscription max = 0 }
+}
+
+ROC_end_administration = {
+	clr_country_flag = ROC_provisional_administration
+	if = {
+		limit = { has_dynamic_modifier = { modifier = ROC_provisional_administration } }
+		remove_dynamic_modifier = { modifier = ROC_provisional_administration }
+	}
+}
+
+ROC_restore_region = {
+	add_to_variable = { ROC_regions_restored = 1 }
+	ROC_update_administration = yes
+	add_stability = 0.02
+	if = {
+		limit = { check_variable = { ROC_regions_restored > 4 } }
+		country_event = { id = reclamation.20 days = 1 }
+	}
+}
+
+TAI_split_successor_states = {
+	release = CHI
+	every_state = {
+		limit = {
+			ROC_taiwan_island_state = yes
+			is_owned_by = CHI
+		}
+		TAI = { transfer_state = PREV }
+	}
+	every_state = {
+		limit = {
+			ROC_taiwan_island_state = yes
+			is_core_of = CHI
+		}
+		remove_core_of = CHI
+	}
+	set_capital = { state = 598 }
+	ROC_end_administration = yes
+	remove_power_balance = { id = TAI_reclamation_bop }
+	set_country_flag = TAI_reclamation_concluded
+	CHI = {
+		set_variable = { ROC_regions_restored = TAI.ROC_regions_restored }
+		if = {
+			limit = { TAI = { has_country_flag = ROC_restored_north_china } }
+			set_country_flag = ROC_restored_north_china
+		}
+		if = {
+			limit = { TAI = { has_country_flag = ROC_restored_east_china } }
+			set_country_flag = ROC_restored_east_china
+		}
+		if = {
+			limit = { TAI = { has_country_flag = ROC_restored_south_china } }
+			set_country_flag = ROC_restored_south_china
+		}
+		if = {
+			limit = { TAI = { has_country_flag = ROC_restored_northeast } }
+			set_country_flag = ROC_restored_northeast
+		}
+		if = {
+			limit = { TAI = { has_country_flag = ROC_restored_northwest } }
+			set_country_flag = ROC_restored_northwest
+		}
+		ROC_setup_mainland_republic = yes
+		diplomatic_relation = {
+			country = TAI
+			relation = non_aggression_pact
+			active = yes
+		}
+	}
+}
+
+TAI_renounce_mainland_claims = {
+	every_state = {
+		limit = {
+			is_core_of = TAI
+			NOT = { ROC_taiwan_island_state = yes }
+		}
+		remove_core_of = TAI
+	}
+	every_state = {
+		limit = {
+			is_claimed_by = TAI
+			NOT = { ROC_taiwan_island_state = yes }
+		}
+		remove_claim_by = TAI
+	}
+}
+
+ROC_setup_mainland_republic = {
+	set_cosmetic_tag = CHI_ROC
+	set_country_flag = ROC_restored_mainland
+	remove_power_balance = { id = CHI_factional_balance }
+	remove_ideas = {
+		CHI_china_economic_assistant
+		CHI_semiconductor_backwardness
+		CHI_russian_arms_dependency
+		CHI_water_shortage
+		communist_cadres
+	}
+	load_focus_tree = { tree = roc_mainland_focus keep_completed = no }
+	set_politics = {
+		ruling_party = democratic
+		elections_allowed = yes
+	}
+	set_variable = { party_pop_array^0 = 0 }
+	set_variable = { party_pop_array^1 = 0.42 }
+	set_variable = { party_pop_array^2 = 0.2 }
+	set_variable = { party_pop_array^3 = 0.08 }
+	set_variable = { party_pop_array^4 = 0.06 }
+	set_variable = { party_pop_array^5 = 0 }
+	set_variable = { party_pop_array^6 = 0.03 }
+	set_variable = { party_pop_array^7 = 0.02 }
+	set_variable = { party_pop_array^8 = 0 }
+	set_variable = { party_pop_array^9 = 0 }
+	set_variable = { party_pop_array^10 = 0 }
+	set_variable = { party_pop_array^11 = 0 }
+	set_variable = { party_pop_array^12 = 0 }
+	set_variable = { party_pop_array^13 = 0 }
+	set_variable = { party_pop_array^14 = 0.08 }
+	set_variable = { party_pop_array^15 = 0 }
+	set_variable = { party_pop_array^16 = 0.03 }
+	set_variable = { party_pop_array^17 = 0.02 }
+	set_variable = { party_pop_array^18 = 0.04 }
+	set_variable = { party_pop_array^19 = 0 }
+	set_variable = { party_pop_array^20 = 0.01 }
+	set_variable = { party_pop_array^21 = 0 }
+	set_variable = { party_pop_array^22 = 0.01 }
+	set_variable = { party_pop_array^23 = 0 }
+	set_temp_variable = { rul_party_temp = 1 }
+	change_ruling_party_effect = yes
+	recalculate_party = yes
+	if = {
+		limit = {
+			TAI = { has_country_leader = { name = "Lien Chan" ruling_only = yes } }
+		}
+		create_country_leader = {
+			name = "Ma Ying-jeou"
+			picture = "gfx/leaders/TAI/Ma_Ying-jeou.dds"
+			ideology = conservatism
+			traits = { western_conservatism }
+		}
+	}
+	else = {
+		create_country_leader = {
+			name = "Lien Chan"
+			picture = "gfx/leaders/TAI/Lien_Chan.dds"
+			ideology = conservatism
+			traits = { western_conservatism }
+		}
+	}
+	set_stability = 0.45
+	set_war_support = 0.35
+	ROC_init_administration = yes
+	country_event = { id = reclamation.19 days = 2 }
+}
+
+OBT_strait_update = {
+	if = {
+		limit = {
+			country_exists = CHI
+			country_exists = TAI
+		}
+		set_variable = { global.OBT_strait_fill = CHI.CHI_taiwan_strait_tension }
+		clamp_variable = { var = global.OBT_strait_fill min = 0 max = 100 }
+		if = {
+			limit = { check_variable = { global.OBT_strait_fill > 79 } }
+			set_temp_variable = { OBT_new_stage = 4 }
+		}
+		else_if = {
+			limit = { check_variable = { global.OBT_strait_fill > 59 } }
+			set_temp_variable = { OBT_new_stage = 3 }
+		}
+		else_if = {
+			limit = { check_variable = { global.OBT_strait_fill > 39 } }
+			set_temp_variable = { OBT_new_stage = 2 }
+		}
+		else_if = {
+			limit = { check_variable = { global.OBT_strait_fill > 19 } }
+			set_temp_variable = { OBT_new_stage = 1 }
+		}
+		else = {
+			set_temp_variable = { OBT_new_stage = 0 }
+		}
+		if = {
+			limit = {
+				NOT = { has_global_flag = OBT_strait_initialized }
+			}
+			set_global_flag = OBT_strait_initialized
+			set_variable = { global.OBT_strait_stage = OBT_new_stage }
+			CHI = { OBT_strait_apply_stage = yes }
+			TAI = { OBT_strait_apply_stage = yes }
+			OBT_strait_init_snapshot = yes
+		}
+		else_if = {
+			limit = {
+				NOT = { check_variable = { global.OBT_strait_stage = OBT_new_stage } }
+			}
+			set_temp_variable = { OBT_old_stage = global.OBT_strait_stage }
+			set_variable = { global.OBT_strait_stage = OBT_new_stage }
+			CHI = { OBT_strait_apply_stage = yes }
+			TAI = { OBT_strait_apply_stage = yes }
+			if = {
+				limit = {
+					OR = {
+						NOT = { has_global_flag = OBT_strait_event_cooldown }
+						has_global_flag = { flag = OBT_strait_event_cooldown days > 179 }
+					}
+					NOT = { CHI = { has_war_with = TAI } }
+				}
+				clr_global_flag = OBT_strait_event_cooldown
+				set_global_flag = OBT_strait_event_cooldown
+				if = {
+					limit = { check_variable = { OBT_new_stage > OBT_old_stage } }
+					CHI = { country_event = { id = obt_strait.1 days = 1 } }
+					TAI = { country_event = { id = obt_strait.3 days = 1 } }
+				}
+				else = {
+					CHI = { country_event = { id = obt_strait.2 days = 1 } }
+					TAI = { country_event = { id = obt_strait.4 days = 1 } }
+				}
+			}
+		}
+	}
+}
+
+OBT_strait_snapshot = {
+	if = {
+		limit = {
+			country_exists = CHI
+			country_exists = TAI
+		}
+		set_variable = { global.OBT_d_trust = CHI.CHI_TAI_trust }
+		subtract_from_variable = { global.OBT_d_trust = global.OBT_prev_trust }
+		set_variable = { global.OBT_prev_trust = CHI.CHI_TAI_trust }
+		set_variable = { global.OBT_d_ussupport = CHI.CHI_taiwan_us_support }
+		subtract_from_variable = { global.OBT_d_ussupport = global.OBT_prev_ussupport }
+		set_variable = { global.OBT_prev_ussupport = CHI.CHI_taiwan_us_support }
+		set_variable = { global.OBT_d_burden = TAI.TAI_blockade_burden }
+		subtract_from_variable = { global.OBT_d_burden = global.OBT_prev_burden }
+		set_variable = { global.OBT_prev_burden = TAI.TAI_blockade_burden }
+		set_variable = { global.OBT_d_ptn = TAI.TAI_pressure_to_negotiate }
+		subtract_from_variable = { global.OBT_d_ptn = global.OBT_prev_ptn }
+		set_variable = { global.OBT_prev_ptn = TAI.TAI_pressure_to_negotiate }
+		set_variable = { global.OBT_d_usconf = TAI.TAI_us_confidence }
+		subtract_from_variable = { global.OBT_d_usconf = global.OBT_prev_usconf }
+		set_variable = { global.OBT_prev_usconf = TAI.TAI_us_confidence }
+		set_variable = { global.OBT_d_identity = TAI.TAI_taiwanese_identity }
+		subtract_from_variable = { global.OBT_d_identity = global.OBT_prev_identity }
+		set_variable = { global.OBT_prev_identity = TAI.TAI_taiwanese_identity }
+	}
+}
+
+OBT_strait_init_snapshot = {
+	if = {
+		limit = {
+			country_exists = CHI
+			country_exists = TAI
+		}
+		set_variable = { global.OBT_prev_trust = CHI.CHI_TAI_trust }
+		set_variable = { global.OBT_d_trust = 0 }
+		set_variable = { global.OBT_prev_ussupport = CHI.CHI_taiwan_us_support }
+		set_variable = { global.OBT_d_ussupport = 0 }
+		set_variable = { global.OBT_prev_burden = TAI.TAI_blockade_burden }
+		set_variable = { global.OBT_d_burden = 0 }
+		set_variable = { global.OBT_prev_ptn = TAI.TAI_pressure_to_negotiate }
+		set_variable = { global.OBT_d_ptn = 0 }
+		set_variable = { global.OBT_prev_usconf = TAI.TAI_us_confidence }
+		set_variable = { global.OBT_d_usconf = 0 }
+		set_variable = { global.OBT_prev_identity = TAI.TAI_taiwanese_identity }
+		set_variable = { global.OBT_d_identity = 0 }
+	}
+}
+
+OBT_strait_apply_stage = {
+	if = {
+		limit = { original_tag = CHI }
+		set_variable = { OBT_ss_stab = 0 }
+		set_variable = { OBT_ss_pp = 0 }
+		set_variable = { OBT_ss_trade = 0 }
+		set_variable = { OBT_ss_factory = 0 }
+		set_variable = { OBT_ss_cg = 0 }
+		set_variable = { OBT_ss_org = 0 }
+		set_variable = { OBT_ss_armyxp = 0 }
+		set_variable = { OBT_ss_navyxp = 0 }
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 0 } }
+			set_variable = { OBT_ss_stab = 0.02 }
+			set_variable = { OBT_ss_pp = 0.05 }
+			set_variable = { OBT_ss_trade = 0.05 }
+			set_variable = { OBT_ss_factory = 0.02 }
+		}
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 1 } }
+			set_variable = { OBT_ss_pp = 0.01 }
+			set_variable = { OBT_ss_trade = -0.02 }
+		}
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 2 } }
+			set_variable = { OBT_ss_stab = -0.01 }
+			set_variable = { OBT_ss_pp = -0.02 }
+			set_variable = { OBT_ss_trade = -0.05 }
+			set_variable = { OBT_ss_org = 0.02 }
+			set_variable = { OBT_ss_armyxp = 0.05 }
+			set_variable = { OBT_ss_navyxp = 0.05 }
+		}
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 3 } }
+			set_variable = { OBT_ss_stab = -0.03 }
+			set_variable = { OBT_ss_pp = -0.05 }
+			set_variable = { OBT_ss_trade = -0.1 }
+			set_variable = { OBT_ss_cg = 0.02 }
+			set_variable = { OBT_ss_org = 0.03 }
+			set_variable = { OBT_ss_armyxp = 0.1 }
+			set_variable = { OBT_ss_navyxp = 0.1 }
+		}
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 4 } }
+			set_variable = { OBT_ss_stab = -0.05 }
+			set_variable = { OBT_ss_pp = -0.1 }
+			set_variable = { OBT_ss_trade = -0.15 }
+			set_variable = { OBT_ss_cg = 0.04 }
+			set_variable = { OBT_ss_org = 0.05 }
+			set_variable = { OBT_ss_armyxp = 0.15 }
+			set_variable = { OBT_ss_navyxp = 0.15 }
+		}
+		if = {
+			limit = { NOT = { has_dynamic_modifier = { modifier = OBT_strait_stage_CHI } } }
+			add_dynamic_modifier = { modifier = OBT_strait_stage_CHI }
+		}
+	}
+	if = {
+		limit = { original_tag = TAI }
+		set_variable = { OBT_ss_stab = 0 }
+		set_variable = { OBT_ss_pp = 0 }
+		set_variable = { OBT_ss_trade = 0 }
+		set_variable = { OBT_ss_factory = 0 }
+		set_variable = { OBT_ss_cg = 0 }
+		set_variable = { OBT_ss_ws = 0 }
+		set_variable = { OBT_ss_def = 0 }
+		set_variable = { OBT_ss_consc = 0 }
+		set_variable = { OBT_ss_aa = 0 }
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 0 } }
+			set_variable = { OBT_ss_stab = 0.02 }
+			set_variable = { OBT_ss_pp = 0.05 }
+			set_variable = { OBT_ss_trade = 0.05 }
+			set_variable = { OBT_ss_factory = 0.02 }
+		}
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 1 } }
+			set_variable = { OBT_ss_trade = -0.02 }
+			set_variable = { OBT_ss_ws = 0.02 }
+		}
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 2 } }
+			set_variable = { OBT_ss_pp = -0.02 }
+			set_variable = { OBT_ss_trade = -0.03 }
+			set_variable = { OBT_ss_ws = 0.03 }
+			set_variable = { OBT_ss_def = 0.02 }
+			set_variable = { OBT_ss_consc = 0.02 }
+			set_variable = { OBT_ss_aa = 0.05 }
+		}
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 3 } }
+			set_variable = { OBT_ss_stab = -0.02 }
+			set_variable = { OBT_ss_pp = -0.04 }
+			set_variable = { OBT_ss_trade = -0.06 }
+			set_variable = { OBT_ss_cg = 0.02 }
+			set_variable = { OBT_ss_ws = 0.05 }
+			set_variable = { OBT_ss_def = 0.04 }
+			set_variable = { OBT_ss_consc = 0.04 }
+			set_variable = { OBT_ss_aa = 0.1 }
+		}
+		if = {
+			limit = { check_variable = { global.OBT_strait_stage = 4 } }
+			set_variable = { OBT_ss_stab = -0.04 }
+			set_variable = { OBT_ss_pp = -0.06 }
+			set_variable = { OBT_ss_trade = -0.1 }
+			set_variable = { OBT_ss_cg = 0.04 }
+			set_variable = { OBT_ss_ws = 0.08 }
+			set_variable = { OBT_ss_def = 0.05 }
+			set_variable = { OBT_ss_consc = 0.06 }
+			set_variable = { OBT_ss_aa = 0.15 }
+		}
+		if = {
+			limit = { NOT = { has_dynamic_modifier = { modifier = OBT_strait_stage_TAI } } }
+			add_dynamic_modifier = { modifier = OBT_strait_stage_TAI }
+		}
+	}
+}

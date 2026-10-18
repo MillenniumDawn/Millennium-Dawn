@@ -1,0 +1,514 @@
+TAI_reclamation_category = {
+	TAI_convene_reclamation_pact = {
+		icon = generic_political_discourse
+
+		visible = {
+			NOT = { has_country_flag = TAI_reclamation_pact_made }
+		}
+
+		available = {
+			OR = {
+				has_war_with = CHI
+				TAI_beijing_in_crisis = yes
+			}
+		}
+
+		cost = 75
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_convene_reclamation_pact"
+			set_country_flag = TAI_reclamation_pact_made
+			TAI_activate_reclamation_bop = yes
+			add_stability = -0.03
+			if = {
+				limit = { TAI_pan_green_in_power = yes }
+				add_to_variable = { party_pop_array^2 = -0.03 }
+			}
+			else = {
+				add_to_variable = { party_pop_array^2 = 0.03 }
+			}
+			recalculate_party = yes
+			country_event = { id = reclamation.1 days = 1 }
+		}
+
+		ai_will_do = {
+			base = 1
+		}
+	}
+
+	TAI_carry_war_across_strait = {
+		icon = generic_naval
+
+		visible = {
+			has_country_flag = TAI_reclamation_pact_made
+			NOT = { has_country_flag = TAI_reclamation_war }
+			NOT = { has_country_flag = TAI_mainland_falling }
+			has_war_with = CHI
+		}
+
+		available = {
+			TAI_repelled_invasion = yes
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_carry_war_across_strait"
+			set_country_flag = TAI_reclamation_war
+			add_power_balance_value = {
+				id = TAI_reclamation_bop
+				value = -0.1
+				tooltip_side = TAI_bop_restoration
+			}
+			country_event = { id = reclamation.2 days = 1 }
+			if = {
+				limit = { country_exists = USA }
+				USA = { country_event = { id = reclamation.3 days = 2 } }
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	TAI_strike_while_beijing_divided = {
+		icon = generic_operation
+
+		visible = {
+			has_country_flag = TAI_reclamation_pact_made
+			NOT = { has_country_flag = TAI_reclamation_war }
+			NOT = { has_country_flag = TAI_mainland_falling }
+			NOT = { has_war_with = CHI }
+		}
+
+		available = {
+			TAI_beijing_in_crisis = yes
+			has_war_support > 0.5
+		}
+
+		cost = 150
+		war_with_on_complete = CHI
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_strike_while_beijing_divided"
+			set_country_flag = TAI_reclamation_war
+			add_power_balance_value = {
+				id = TAI_reclamation_bop
+				value = -0.15
+				tooltip_side = TAI_bop_restoration
+			}
+			add_to_variable = { TAI_us_confidence = -20 tooltip = TAI_us_confidence_tt }
+			clamp_variable = { var = TAI_us_confidence min = 0 max = 100 }
+			declare_war_on = {
+				target = CHI
+				type = annex_everything
+			}
+			if = {
+				limit = { country_exists = USA }
+				USA = { country_event = { id = reclamation.4 days = 2 } }
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+		}
+	}
+
+	TAI_resume_reclamation_war = {
+		icon = generic_operation
+
+		visible = {
+			has_country_flag = TAI_reclamation_armistice
+			country_exists = CHI
+			NOT = { has_war_with = CHI }
+		}
+
+		available = {
+			has_country_flag = { flag = TAI_reclamation_armistice days > 364 }
+			has_war_support > 0.5
+		}
+
+		cost = 150
+		war_with_on_complete = CHI
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_resume_reclamation_war"
+			clr_country_flag = TAI_reclamation_armistice
+			set_country_flag = TAI_reclamation_war
+			add_to_variable = { TAI_us_confidence = -10 tooltip = TAI_us_confidence_tt }
+			clamp_variable = { var = TAI_us_confidence min = 0 max = 100 }
+			declare_war_on = {
+				target = CHI
+				type = annex_everything
+			}
+			if = {
+				limit = { country_exists = USA }
+				USA = { country_event = { id = reclamation.4 days = 2 } }
+			}
+		}
+
+		ai_will_do = {
+			base = 2
+		}
+	}
+
+	TAI_mobilize_for_reclamation = {
+		icon = generic_operation
+
+		visible = {
+			has_country_flag = TAI_reclamation_war
+		}
+
+		cost = 50
+		days_remove = 180
+		days_re_enable = 180
+
+		modifier = {
+			conscription_factor = 0.10
+			war_support_factor = 0.05
+			stability_factor = -0.03
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_mobilize_for_reclamation"
+			add_power_balance_value = {
+				id = TAI_reclamation_bop
+				value = -0.1
+				tooltip_side = TAI_bop_restoration
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	TAI_appeal_to_compatriots = {
+		icon = generic_political_discourse
+
+		visible = {
+			has_country_flag = TAI_reclamation_war
+		}
+
+		available = {
+			has_war_with = CHI
+		}
+
+		cost = 75
+		days_re_enable = 120
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_appeal_to_compatriots"
+			add_power_balance_value = {
+				id = TAI_reclamation_bop
+				value = -0.05
+				tooltip_side = TAI_bop_restoration
+			}
+			CHI = {
+				add_stability = -0.05
+				add_war_support = -0.05
+			}
+		}
+
+		ai_will_do = {
+			base = 5
+		}
+	}
+
+	TAI_reassure_the_island = {
+		icon = generic_welfare
+
+		visible = {
+			has_country_flag = TAI_reclamation_pact_made
+			NOT = { has_country_flag = TAI_reclamation_concluded }
+		}
+
+		cost = 50
+		days_re_enable = 120
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_reassure_the_island"
+			add_power_balance_value = {
+				id = TAI_reclamation_bop
+				value = 0.1
+				tooltip_side = TAI_bop_self_determination
+			}
+			add_stability = 0.04
+			add_war_support = -0.03
+		}
+
+		ai_will_do = {
+			base = 3
+		}
+	}
+
+	TAI_negotiate_island_grievances = {
+		icon = generic_political_discourse
+
+		visible = {
+			OR = {
+				has_idea = TAI_broken_reclamation_pact
+				has_idea = TAI_broken_reclamation_pact_severe
+			}
+		}
+
+		cost = 100
+		days_remove = 90
+		days_re_enable = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_negotiate_island_grievances"
+			add_stability = 0.02
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_negotiate_island_grievances remove"
+			if = {
+				limit = { has_idea = TAI_broken_reclamation_pact_severe }
+				swap_ideas = {
+					remove_idea = TAI_broken_reclamation_pact_severe
+					add_idea = TAI_broken_reclamation_pact
+				}
+			}
+			else = {
+				remove_ideas = TAI_broken_reclamation_pact
+				add_ideas = TAI_taiwan_autonomy_charter
+			}
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	TAI_suppress_island_opposition = {
+		icon = generic_intelligence_operation
+
+		visible = {
+			OR = {
+				has_idea = TAI_broken_reclamation_pact
+				has_idea = TAI_broken_reclamation_pact_severe
+			}
+			NOT = { has_idea = TAI_island_crackdown }
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision TAI_suppress_island_opposition"
+			add_timed_idea = { idea = TAI_island_crackdown days = 180 }
+			add_to_variable = { TAI_us_confidence = -10 tooltip = TAI_us_confidence_tt }
+			clamp_variable = { var = TAI_us_confidence min = 0 max = 100 }
+			add_to_variable = { TAI_taiwanese_identity = 5 tooltip = TAI_taiwanese_identity_tt }
+			clamp_variable = { var = TAI_taiwanese_identity min = 0 max = 100 }
+		}
+
+		ai_will_do = {
+			base = 2
+		}
+	}
+}
+
+ROC_administration_category = {
+	ROC_restore_north_china = {
+		icon = generic_construction
+
+		visible = {
+			NOT = { has_country_flag = ROC_restored_north_china }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ROC_region_held_tt
+				any_owned_state = { ROC_region_north_china = yes }
+				NOT = {
+					any_owned_state = {
+						ROC_region_north_china = yes
+						NOT = { is_controlled_by = ROOT }
+					}
+				}
+			}
+		}
+
+		cost = 75
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_north_china"
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_north_china remove"
+			set_country_flag = ROC_restored_north_china
+			ROC_restore_region = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	ROC_restore_east_china = {
+		icon = generic_construction
+
+		visible = {
+			NOT = { has_country_flag = ROC_restored_east_china }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ROC_region_held_tt
+				any_owned_state = { ROC_region_east_china = yes }
+				NOT = {
+					any_owned_state = {
+						ROC_region_east_china = yes
+						NOT = { is_controlled_by = ROOT }
+					}
+				}
+			}
+		}
+
+		cost = 75
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_east_china"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_east_china remove"
+			set_country_flag = ROC_restored_east_china
+			ROC_restore_region = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	ROC_restore_south_china = {
+		icon = generic_construction
+
+		visible = {
+			NOT = { has_country_flag = ROC_restored_south_china }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ROC_region_held_tt
+				any_owned_state = { ROC_region_south_china = yes }
+				NOT = {
+					any_owned_state = {
+						ROC_region_south_china = yes
+						NOT = { is_controlled_by = ROOT }
+					}
+				}
+			}
+		}
+
+		cost = 75
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_south_china"
+			set_temp_variable = { treasury_change = -8 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_south_china remove"
+			set_country_flag = ROC_restored_south_china
+			ROC_restore_region = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	ROC_restore_northeast = {
+		icon = generic_factory
+
+		visible = {
+			NOT = { has_country_flag = ROC_restored_northeast }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ROC_region_held_tt
+				any_owned_state = { ROC_region_northeast = yes }
+				NOT = {
+					any_owned_state = {
+						ROC_region_northeast = yes
+						NOT = { is_controlled_by = ROOT }
+					}
+				}
+			}
+		}
+
+		cost = 75
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_northeast"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_northeast remove"
+			set_country_flag = ROC_restored_northeast
+			ROC_restore_region = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+
+	ROC_restore_northwest = {
+		icon = generic_welfare
+
+		visible = {
+			NOT = { has_country_flag = ROC_restored_northwest }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ROC_region_held_tt
+				any_owned_state = { ROC_region_northwest = yes }
+				NOT = {
+					any_owned_state = {
+						ROC_region_northwest = yes
+						NOT = { is_controlled_by = ROOT }
+					}
+				}
+			}
+		}
+
+		cost = 75
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_northwest"
+			set_temp_variable = { treasury_change = -6 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ROC_restore_northwest remove"
+			set_country_flag = ROC_restored_northwest
+			ROC_restore_region = yes
+		}
+
+		ai_will_do = {
+			base = 10
+		}
+	}
+}
