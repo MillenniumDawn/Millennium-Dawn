@@ -224,7 +224,7 @@ Reserve currency issuers (the countries controlling USD, EUR, CNY, RUB, JPY, GBP
 Various sources provide supplementary revenue:
 
 - **Foreign Aid**: Some countries receive aid (e.g., US aid to allies, Iranian aid to partners)
-- **International Investments**: Returns from investing in other countries (~6% annually)
+- **International Investments**: Returns from investing in other countries (~3% annually)
 - **Trade Routes**: Controlling strategic chokepoints (Suez, Panama, Hormuz) provides income
 - **EU Subsidies**: Member states receive various subsidies
 - **Country-Specific Income**: Special ideas and national foci (tourism, narcotics, etc.)
@@ -1144,7 +1144,7 @@ Immigration control costs money. Stricter laws cost more to enforce.
 
 ## International Investments
 
-International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income, approximately **6% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
+International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income, approximately **3% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
 
 For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide/).
 
