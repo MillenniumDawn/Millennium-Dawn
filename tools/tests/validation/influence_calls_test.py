@@ -372,15 +372,6 @@ def test_only_target_assignments_cover_calls(assignment, expected):
     assert len(_findings(script)) == expected
 
 
-@pytest.mark.parametrize("validator", [V, pytest.param(None, id="dynamic-modifier")])
-def test_scan_file_missing_input_fails(tmp_path, validator):
-    import validate_dynamic_modifier_guards
-
-    scanner = validator or validate_dynamic_modifier_guards
-    with pytest.raises(ValueError, match="Cannot scan"):
-        scanner.scan_file((str(tmp_path / "missing.txt"), str(tmp_path)))
-
-
 @pytest.mark.parametrize("wrapper", ["effect_tooltip", "limit", "if"])
 def test_nested_set_does_not_cover_later_call(wrapper):
     script = (

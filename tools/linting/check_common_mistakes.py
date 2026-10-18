@@ -90,6 +90,15 @@ from bisect import bisect_left, bisect_right
 from functools import cached_property, lru_cache
 from itertools import accumulate
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+from shared_utils import AVAILABLE_OPEN_RE as _RE_AVAILABLE_OPEN
+from shared_utils import IDENTIFIER_BLOCK_START_RE as _RE_AI_STRATEGY_BLOCK
+from shared_utils import MODIFIER_OPEN_RE as _RE_AI_MODIFIER_OPEN
+from shared_utils import OPTION_OPEN_RE as _RE_OPTION_BLOCK_OPEN
+from shared_utils import TRIGGER_OPEN_RE as _RE_TRIGGER_BLOCK_OPEN
+from shared_utils import WORD_BLOCK_LINE_RE as _RE_MODIFIER_ENTRY
+from shared_utils import WORD_BLOCK_START_RE as _RE_CATEGORY
+
 _RE_THREAT = re.compile(r"(?<!\w)threat\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_WAR_SUPPORT = re.compile(r"(?<!\w)has_war_support\s*([><]=?)\s*(\d+\.?\d*)")
 _RE_STABILITY = re.compile(r"(?<!\w)has_stability\s*([><]=?)\s*(\d+\.?\d*)")
@@ -176,7 +185,6 @@ _RE_DECISION_ENTRY = re.compile(r"^\t(\w+)\s*=\s*\{", re.M)
 _RE_RELATION_MODIFIER = re.compile(
     r"\badd_(relation|opinion)_modifier\s*=\s*\{[^{}]*?\bmodifier\s*=\s*([A-Za-z_]\w*)"
 )
-_RE_MODIFIER_ENTRY = re.compile(r"^(\w+)\s*=\s*\{", re.M)
 _RE_RANDOM_SELECT_AMOUNT = re.compile(r"\brandom_select_amount\s*=\s*([^\s}]+)")
 _RE_BARE_INT = re.compile(r"^-?\d+$")
 # Tautological OR covering both polarities of one trigger (X = yes / X = no) is
@@ -197,7 +205,6 @@ _RE_INFLUENCE_LOOP_OPEN = re.compile(
     r"^\s*(?:every|random)_[a-z_]*country[a-z_]*\s*=\s*\{"
 )
 _RE_IDEAS_BLOCK = re.compile(r"^ideas\s*=\s*\{")
-_RE_CATEGORY = re.compile(r"^(\w+)\s*=\s*\{")
 _RE_AVAILABLE_ALWAYS_NO = re.compile(r"\bavailable\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_VISIBLE_ALWAYS_NO = re.compile(r"\bvisible\s*=\s*\{\s*always\s*=\s*no\s*\}")
 _RE_BYPASS_OPEN = re.compile(r"\bbypass\s*=\s*\{")
@@ -237,7 +244,6 @@ _RE_EVENT_DEF_OPEN = re.compile(
 _RE_EVENT_ID_IN_BLOCK = re.compile(r"^\s*id\s*=\s*([\w.]+)")
 _RE_OPTION_NAME_IN_BLOCK = re.compile(r"^\s*name\s*=\s*([\w.]+)")
 _RE_AI_CHANCE_OPEN = re.compile(r"\bai_chance\s*=\s*\{")
-_RE_AI_MODIFIER_OPEN = re.compile(r"\bmodifier\s*=\s*\{")
 _RE_AI_ASSIGNMENT = re.compile(r"\b([A-Za-z_]+)\s*=\s*([-A-Za-z0-9_.]+)")
 # Two log conventions coexist: the bare event id followed by a separate
 # "Option <letter>" phrase ("Event HKG_contract.1 Option a"), and the option's
@@ -347,7 +353,6 @@ _FOREIGN_COUNTRY_SCOPE_TOKENS = {
     "create_dynamic_country",
 }
 _RE_WHITESPACE_COLLAPSE = re.compile(r"\s+")
-_RE_AVAILABLE_OPEN = re.compile(r"\bavailable\s*=\s*\{")
 _RE_TOPLEVEL_WORD = re.compile(r"^\w")
 _RE_INDENTED_WORD = re.compile(r"^\s+\w")
 _RE_BLOCK_ID = re.compile(r"\s*([\w-]+)\s*=\s*\{")
@@ -367,8 +372,6 @@ _RE_IF_ELSE_OPEN = re.compile(r"\b(if|else_if|else)\s*=\s*\{")
 _RE_HAS_IDEA = re.compile(r"has_idea\s*=\s*(\w+)")
 _RE_OR_CONTENT = re.compile(r"OR\s*=\s*\{([^}]*)\}")
 _RE_LOG_ONLY_EFFECT = re.compile(r"log\s*=\s*\"[^\"]*\"\s*$")
-_RE_OPTION_BLOCK_OPEN = re.compile(r"\boption\s*=\s*\{")
-_RE_TRIGGER_BLOCK_OPEN = re.compile(r"\btrigger\s*=\s*\{")
 _OPTION_NON_EFFECT_KEYS = {"name", "log", "trigger", "ai_chance"}
 # Every block the engine runs as an effect list and MD logs from (#4456).
 _RE_LOGGED_EFFECT_BLOCK_OPEN = re.compile(
@@ -495,7 +498,6 @@ def _init_worker(focuses, decisions, nation_flags):
     _REAL_NATION_FLAGS = nation_flags
 
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from cleanup_or import find_redundant_and_blocks, find_single_condition_or_blocks
 from shared_utils import (
     PARTY_SLOT_NAMES,
@@ -2441,7 +2443,6 @@ def _check_ai_daily_flag_cache(lines, filepath=""):
     return issues
 
 
-_RE_AI_STRATEGY_BLOCK = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{")
 _RE_ENEMIES_STRENGTH_RATIO = re.compile(r"\benemies_strength_ratio\s*>\s*([\d.]+)")
 _RE_AI_STRATEGY_TYPE = re.compile(r"\bai_strategy\s*=\s*\{[^}]*?\btype\s*=\s*(\w+)")
 

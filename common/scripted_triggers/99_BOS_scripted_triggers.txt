@@ -136,10 +136,70 @@ BOS_ruling_outlook_focus_in_progress_uncached_trigger = {
 	}
 }
 
-BOS_ai_can_fund_faction_recovery_trigger = {
-	has_political_power > 59
-	NOT = { check_variable = { treasury < 0 } }
-	NOT = { has_active_mission = bankruptcy_incoming_collapse }
+# A breakaway carries the flag only while it is in revolt, so a puppet RSK or HZG released by Bosnia does not count
+BOS_civil_war_side_trigger = {
+	has_country_flag = civil_war_bosnia
+	OR = {
+		tag = BOS
+		tag = HZG
+		tag = RSK
+	}
+}
+
+# Scope is RSK or HZG: it won the civil war and is waiting for its settlement event
+BOS_breakaway_claim_trigger = {
+	OR = {
+		has_country_flag = RSK_civil_war_recovery_pending
+		has_country_flag = HZG_civil_war_recovery_pending
+	}
+}
+
+# With no path set, historical focuses stand in for the Historical path
+BOS_ai_avoids_civil_war_trigger = {
+	OR = {
+		has_global_flag = BOS_HISTORICAL_FOCUS_PATH
+		has_global_flag = BOS_SRPSKA_PARTNERSHIP_FOCUS_PATH
+		AND = {
+			is_historical_focus_on = yes
+			NOT = { has_global_flag = BOS_SRPSKA_UNION_FOCUS_PATH }
+			NOT = { has_global_flag = BOS_ISLAMIST_REVIVAL_FOCUS_PATH }
+			NOT = { has_global_flag = BOS_WORKERS_STATE_FOCUS_PATH }
+		}
+	}
+}
+
+# An early secession war sets BOS_civil_war_over, which also blocks the Islamist and Workers State focuses, so those paths defuse it too
+BOS_ai_defuses_secession_crises_trigger = {
+	NOT = { has_global_flag = BOS_SRPSKA_UNION_FOCUS_PATH }
+	OR = {
+		is_historical_focus_on = yes
+		has_global_flag = BOS_HISTORICAL_FOCUS_PATH
+		has_global_flag = BOS_SRPSKA_PARTNERSHIP_FOCUS_PATH
+		has_global_flag = BOS_ISLAMIST_REVIVAL_FOCUS_PATH
+		has_global_flag = BOS_WORKERS_STATE_FOCUS_PATH
+	}
+}
+
+BOS_ai_defuses_croat_crisis_trigger = {
+	BOS_ai_defuses_secession_crises_trigger = yes
+	OR = {
+		has_active_mission = BOS_croats_declare_independence
+		has_idea = BOS_croat_secession_crisis
+	}
+}
+
+BOS_ai_defuses_srpska_crisis_trigger = {
+	BOS_ai_defuses_secession_crises_trigger = yes
+	OR = {
+		has_active_mission = BOS_srpska_declares_independence
+		has_idea = BOS_republika_srpska_secession_crisis
+	}
+}
+
+# The crisis raised by the secession mission ends in war; the recurring one only escalates
+BOS_ai_defuses_srpska_war_crisis_trigger = {
+	BOS_ai_defuses_secession_crises_trigger = yes
+	has_country_flag = BOS_srpska_secession_war_pending
 }
 
 BOS_ai_ready_for_oversight_exit_trigger = {

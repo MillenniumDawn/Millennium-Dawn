@@ -13,6 +13,7 @@ from validate_factions import (
     extract_goals_block,
     extract_group_rule_ids,
     extract_upgrade_group_ids,
+    find_faction_scope_cache_reads,
 )
 
 
@@ -410,6 +411,115 @@ def test_duplicate_rule_scan_skips_rules_files_named_for_a_collection(tmp_path):
     validator._validate_duplicate_rules()
 
     assert validator._issues == []
+
+
+def _goal(completed: str) -> str:
+    return f"goal_one = {{\n\tcompleted = {{\n{completed}\n\t}}\n}}\n"
+
+
+@pytest.mark.parametrize(
+    "completed, expected",
+    [
+        (
+            "\t\tscope:faction = {\n"
+            "\t\t\tcheck_variable = {\n"
+            "\t\t\t\tvar = goal_tanks_cache\n"
+            "\t\t\t\tvalue = 10\n"
+            "\t\t\t\tcompare = greater_than_or_equals\n"
+            "\t\t\t}\n"
+            "\t\t}",
+            [(5, "goal_tanks_cache")],
+        ),
+        (
+            "\t\tscope:faction = { check_variable = { goal_tanks_cache > 1 } }",
+            [(3, "goal_tanks_cache")],
+        ),
+        (
+            "\t\tscope:faction = { has_variable = goal_tanks_cache }",
+            [(3, "goal_tanks_cache")],
+        ),
+        (
+            "\t\tscope:faction = {\n"
+            "\t\t\tcustom_trigger_tooltip = {\n"
+            "\t\t\t\ttooltip = goal_tt\n"
+            "\t\t\t\tOR = {\n"
+            "\t\t\t\t\tcheck_variable = { goal_tanks_cache = 1 }\n"
+            "\t\t\t\t}\n"
+            "\t\t\t}\n"
+            "\t\t}",
+            [(7, "goal_tanks_cache")],
+        ),
+        (
+            "\t\tscope:faction = {\n"
+            '\t\t\thas_global_flag = "stray } brace"\n'
+            "\t\t\tcheck_variable = { goal_tanks_cache = 1 }\n"
+            "\t\t}",
+            [(5, "goal_tanks_cache")],
+        ),
+        (
+            "\t\tscope:faction = { count_triggers = { amount = 1"
+            " check_variable = { goal_tanks_cache > 1 } } }",
+            [(3, "goal_tanks_cache")],
+        ),
+        (
+            "\t\tscope:faction = { count_triggers = { amount = 1"
+            " has_variable = goal_tanks_cache } }",
+            [(3, "goal_tanks_cache")],
+        ),
+        (
+            "\t\tscope:faction = {\n"
+            "\t\t\tcount_triggers = {\n"
+            "\t\t\t\tamount = 1\n"
+            "\t\t\t\tcheck_variable = {\n"
+            "\t\t\t\t\tvar = goal_tanks_cache\n"
+            "\t\t\t\t\tvalue = 10\n"
+            "\t\t\t\t\tcompare = greater_than_or_equals\n"
+            "\t\t\t\t}\n"
+            "\t\t\t}\n"
+            "\t\t}",
+            [(7, "goal_tanks_cache")],
+        ),
+    ],
+)
+def test_cache_read_in_faction_scope_is_found(completed, expected):
+    assert find_faction_scope_cache_reads(_goal(completed)) == expected
+
+
+@pytest.mark.parametrize(
+    "completed",
+    [
+        "\t\tfaction_leader = { check_variable = { goal_tanks_cache = 1 } }",
+        "\t\tcheck_variable = { goal_tanks_cache = 1 }",
+        "\t\tscope:faction = {\n"
+        "\t\t\tfaction_leader = { check_variable = { goal_tanks_cache = 1 } }\n"
+        "\t\t}",
+        "\t\tscope:faction = { count_triggers = { amount = 1"
+        " faction_leader = { check_variable = { goal_tanks_cache > 1 } } } }",
+        "\t\tscope:faction = { check_variable = { goal_tanks_cached = 1 } }",
+        "\t\tscope:faction = { check_variable = { ROOT.goal_tanks_cache = 1 } }",
+        "\t\tscope:faction = { set_temp_variable = { goal_tanks_cache = 1 } }",
+        "\t\tscope:faction = { goal_update_tanks_cache = yes }",
+    ],
+)
+def test_cache_read_outside_faction_scope_is_not_found(completed):
+    assert find_faction_scope_cache_reads(_goal(completed)) == []
+
+
+def test_goal_cache_scope_check_reports_file_and_line(tmp_path):
+    root = _faction_dirs(tmp_path)
+    _write_text(
+        root / "goals" / "a.txt",
+        _goal("\t\tscope:faction = { check_variable = { goal_tanks_cache = 1 } }"),
+    )
+    validator = Validator(str(tmp_path), use_colors=False, workers=1)
+
+    validator._validate_goal_cache_scope()
+
+    assert [
+        (issue.category, issue.file, issue.line) for issue in validator._issues
+    ] == [("faction-goal-cache-scope", "common/factions/goals/a.txt", 3)]
+    assert "goal_tanks_cache" in validator._issues[0].message
+    assert validator.errors_found == 1
 
 
 def test_script_entry_point_exits_nonzero_under_strict(tmp_path, monkeypatch):

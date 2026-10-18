@@ -15,7 +15,7 @@ International investments allow you to fund the construction of buildings in for
 
 **Why invest internationally?**
 
-- Generate passive income at a 6% annual return rate (modified by national ideas and focuses)
+- Generate passive income at a 3% annual return rate (modified by national ideas and focuses)
 - Gain influence over the target country
 - Strengthen allies with military or energy infrastructure
 
@@ -78,7 +78,7 @@ If your nation has an active economic boycott of Israel, all your investment pro
 
 Your International Investments total grows every time a project completes. The system pays out a fraction of that total every week:
 
-- **Base ROI**: 6% per year (roughly $0.115B per week per $100B invested)
+- **Base ROI**: 3% per year (roughly $0.0575B per week per $100B invested)
 - **Modifiable**: national ideas and focus tree completions can raise the ROI rate up to a cap of 20%
 - **Currency effect**: a weak domestic currency makes returns worth more in local terms; a strong currency reduces their local value
 

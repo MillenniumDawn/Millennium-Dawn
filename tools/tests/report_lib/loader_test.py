@@ -3,7 +3,12 @@
 import json
 
 import pytest
-from report_lib import MANIFEST_NAME, discover_validator_runs, load_all
+from report_lib import (
+    MANIFEST_NAME,
+    discover_validator_runs,
+    load_all,
+    validate_manifest,
+)
 from shared.suite import make_results_tree, write_log, write_sidecar, write_text
 
 
@@ -418,6 +423,151 @@ def test_malformed_manifest_only_batch_is_reported(tmp_path):
     assert runs[0].name == "impact-verification"
     assert runs[0].status == "failed"
     assert runs[0].issues[0].category == "batch-manifest"
+
+
+def _manifest_result(**overrides):
+    entry = {
+        "name": "events",
+        "script": "validate_events.py",
+        "strict": True,
+        "returncode": 0,
+        "status": "ok",
+    }
+    entry.update(overrides)
+    return entry
+
+
+def _manifest(**overrides):
+    manifest = {
+        "mode": "batch",
+        "batch": "core",
+        "selected": ["events"],
+        "results": [_manifest_result()],
+    }
+    manifest.update(overrides)
+    return manifest
+
+
+@pytest.mark.parametrize(
+    "manifest",
+    [
+        pytest.param(_manifest(), id="batch"),
+        pytest.param(_manifest(mode="impact", batch=None), id="impact"),
+        pytest.param(
+            _manifest(results=[_manifest_result(status="findings", returncode=1)]),
+            id="findings-nonzero",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(status="crash", returncode=-9)]),
+            id="crash-nonzero",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(status="missing")]), id="missing-zero"
+        ),
+    ],
+)
+def test_valid_manifest_is_accepted(manifest):
+    validate_manifest(manifest)
+
+
+@pytest.mark.parametrize(
+    "manifest, message",
+    [
+        pytest.param(
+            _manifest(results=[_manifest_result(returncode=1)]),
+            "inconsistent status",
+            id="ok-with-nonzero-returncode",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(status="findings")]),
+            "inconsistent status",
+            id="findings-with-zero-returncode",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(status="crash")]),
+            "inconsistent status",
+            id="crash-with-zero-returncode",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(status="missing", returncode=1)]),
+            "inconsistent status",
+            id="missing-with-nonzero-returncode",
+        ),
+        pytest.param([], "is not an object", id="not-an-object"),
+        pytest.param({"mode": "batch"}, "missing required fields", id="missing-keys"),
+        pytest.param(_manifest(mode="nightly"), "invalid mode", id="unknown-mode"),
+        pytest.param(_manifest(mode=None), "invalid mode", id="non-string-mode"),
+        pytest.param(
+            _manifest(mode="impact"), "impact batch must be null", id="impact-batch"
+        ),
+        pytest.param(_manifest(batch=None), "invalid batch", id="batch-null"),
+        pytest.param(_manifest(batch="../core"), "invalid batch", id="batch-path"),
+        pytest.param(
+            _manifest(selected="events"), "not a valid slug list", id="selected-string"
+        ),
+        pytest.param(
+            _manifest(selected=["../events"]),
+            "not a valid slug list",
+            id="selected-path",
+        ),
+        pytest.param(
+            _manifest(selected=["events", "events"]),
+            "selected contains duplicates",
+            id="selected-duplicates",
+        ),
+        pytest.param(
+            _manifest(results=["events"]), "not an object list", id="results-strings"
+        ),
+        pytest.param(
+            _manifest(results=[{"name": "events"}]),
+            "lacks required fields",
+            id="result-missing-keys",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(name="../events")]),
+            "invalid name",
+            id="result-name-path",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(script="../validate_events.py")]),
+            "invalid script",
+            id="result-script-path",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(script="run_events.py")]),
+            "invalid script",
+            id="result-script-not-a-validator",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(strict=1)]),
+            "invalid strict",
+            id="strict-int",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(returncode=True)]),
+            "invalid returncode",
+            id="returncode-bool",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(status="passed")]),
+            "invalid status",
+            id="unknown-status",
+        ),
+        pytest.param(
+            _manifest(results=[_manifest_result(), _manifest_result()]),
+            "results contains duplicates",
+            id="result-duplicates",
+        ),
+        pytest.param(
+            _manifest(selected=["events", "variables"]),
+            "selected/results do not match",
+            id="selected-without-result",
+        ),
+    ],
+)
+def test_malformed_manifest_is_rejected(manifest, message):
+    with pytest.raises(ValueError, match=message):
+        validate_manifest(manifest)
 
 
 def _write_suite_run(root, payload):
