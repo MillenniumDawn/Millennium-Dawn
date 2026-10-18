@@ -1,0 +1,165 @@
+OBT_reserve_category = {
+	OBT_start_reserve_program = {
+		icon = generic_army_support
+
+		visible = {
+			NOT = { has_country_flag = OBT_reserve_program }
+		}
+
+		cost = 25
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision OBT_start_reserve_program"
+			set_country_flag = OBT_reserve_program
+			add_dynamic_modifier = { modifier = OBT_reserve_program_cost }
+			custom_effect_tooltip = OBT_start_reserve_program_tt
+		}
+
+		ai_will_do = {
+			base = 3
+			modifier = { factor = 3 OBT_strait_at_least_coercion = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+	}
+
+	OBT_end_reserve_program = {
+		icon = generic_army_support
+
+		visible = {
+			has_country_flag = OBT_reserve_program
+		}
+
+		cost = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision OBT_end_reserve_program"
+			clr_country_flag = OBT_reserve_program
+			if = { limit = { has_dynamic_modifier = { modifier = OBT_reserve_program_cost } } remove_dynamic_modifier = { modifier = OBT_reserve_program_cost } }
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = { add = 2 OBT_strait_at_most_coercion = yes check_variable = { OBT_reserve_readiness > 60 } }
+		}
+	}
+
+	OBT_reserve_refresher_recall = {
+		icon = generic_army_support
+
+		visible = {
+			always = yes
+		}
+
+		cost = 25
+		days_re_enable = 365
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision OBT_reserve_refresher_recall"
+			set_temp_variable = { treasury_change = -0.3 }
+			modify_treasury_effect = yes
+			add_stability = -0.01
+			add_to_variable = { OBT_reserve_readiness = 8 }
+			clamp_variable = { var = OBT_reserve_readiness min = 0 max = 100 }
+			custom_effect_tooltip = OBT_reserve_refresher_recall_tt
+		}
+
+		ai_will_do = {
+			base = 2
+			modifier = { factor = 3 OBT_strait_at_least_coercion = yes }
+		}
+	}
+
+	OBT_partial_mobilization_dec = {
+		icon = generic_military
+
+		visible = {
+			NOT = { has_country_flag = OBT_mob_partial }
+			NOT = { has_country_flag = OBT_mob_general }
+		}
+
+		available = {
+			OBT_mob_crisis_condition = yes
+			OBT_reserve_readiness_at_least_20 = yes
+			has_manpower > 12000
+			NOT = { has_country_flag = OBT_mob_cooldown }
+		}
+
+		cost = 100
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision OBT_partial_mobilization_dec"
+			set_country_flag = OBT_mob_partial
+			add_dynamic_modifier = { modifier = OBT_partial_mobilization }
+			add_stability = -0.02
+			country_event = { id = obt_mob.1 days = 15 }
+			country_event = { id = obt_mob.1 days = 30 }
+			custom_effect_tooltip = OBT_partial_mobilization_dec_tt
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = { add = 20 OBT_strait_at_least_crisis = yes }
+			modifier = { add = 40 has_war_with = CHI }
+		}
+	}
+
+	OBT_general_mobilization_dec = {
+		icon = generic_military
+
+		visible = {
+			has_country_flag = OBT_mob_partial
+			NOT = { has_country_flag = OBT_mob_general }
+		}
+
+		available = {
+			OBT_mob_war_condition = yes
+			has_manpower > 24000
+		}
+
+		cost = 150
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision OBT_general_mobilization_dec"
+			set_country_flag = OBT_mob_general
+			if = { limit = { has_dynamic_modifier = { modifier = OBT_partial_mobilization } } remove_dynamic_modifier = { modifier = OBT_partial_mobilization } }
+			add_dynamic_modifier = { modifier = OBT_general_mobilization }
+			add_stability = -0.04
+			country_event = { id = obt_mob.1 days = 15 }
+			country_event = { id = obt_mob.1 days = 30 }
+			country_event = { id = obt_mob.1 days = 45 }
+			country_event = { id = obt_mob.1 days = 60 }
+			custom_effect_tooltip = OBT_general_mobilization_dec_tt
+		}
+
+		ai_will_do = {
+			base = 1
+			modifier = { add = 50 has_war_with = CHI }
+		}
+	}
+
+	OBT_demobilize_reserves = {
+		icon = generic_military
+
+		visible = {
+			OR = { has_country_flag = OBT_mob_partial has_country_flag = OBT_mob_general }
+		}
+
+		available = {
+			NOT = { AND = { country_exists = CHI has_war_with = CHI } }
+			OBT_strait_below_crisis = yes
+		}
+
+		cost = 0
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision OBT_demobilize_reserves"
+			OBT_reserve_demobilize = yes
+			custom_effect_tooltip = OBT_demobilize_reserves_tt
+		}
+
+		ai_will_do = {
+			base = 0
+			modifier = { add = 10 OBT_strait_at_most_coercion = yes NOT = { has_war_with = CHI } }
+		}
+	}
+}
