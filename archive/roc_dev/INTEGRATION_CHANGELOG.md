@@ -30,18 +30,18 @@ New files (all AUG content, separate from OBT's files so they can be reviewed on
 
 Changed files:
 
-| File                                                            | Change                                                                                                                                                            |
-| --------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `common/national_focus/05_taiwan.txt`                           | Regenerated: AUG's 58 focuses, three new branches (Island Society, Southern Policy, Project National Glory) as a fourth row, integrated rewards on 21 OBT focuses |
-| `common/game_rules/00_game_rules.txt`                           | `TAI_ai_behavior` gains AUG's options Project National Glory, Unification Channel and Road to Separation                                                          |
-| `common/scripted_triggers/99_TAI_scripted_triggers.txt`         | `TAI_ai_alt_path` counts the three new AI flags, so historical AI weights switch off when one is chosen                                                           |
-| `common/decisions/OBT_defense_decisions.txt`                    | Hold the Han Kuang Exercise gains AUG's +5% war support                                                                                                           |
-| `common/scripted_triggers/99_OBT_reserve_scripted_triggers.txt` | After Mobilized Reserve Troops (National Glory), reserve mobilization no longer needs a Strait crisis                                                             |
-| `common/scripted_effects/99_OBT_reserve_scripted_effects.txt`   | Demobilization clears the theater and militia flags                                                                                                               |
-| `events/Taiwan_Reclamation.txt`                                 | The Republic Restored (`reclamation.20`) fires `roc_dev.19`                                                                                                       |
-| `events/Taiwan_Blue_Tiger.txt`                                  | U.S. AI is more likely to defend Taiwan after AUG's Strait-policy event (`usa_intervene_taiwan`)                                                                  |
-| `history/countries/TAI - Taiwan.txt`                            | AUG's `TAI_921_earthquake` starting spirit                                                                                                                        |
-| `Changelog.txt`                                                 | Focus count and the three new branches                                                                                                                            |
+| File                                                            | Change                                                                                                                                                               |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `common/national_focus/05_taiwan.txt`                           | Regenerated: AUG's 58 focuses, three new branches (Island Society, Southern Policy, Project National Glory) in the bottom band, integrated rewards on 21 OBT focuses |
+| `common/game_rules/00_game_rules.txt`                           | `TAI_ai_behavior` gains AUG's options Project National Glory, Unification Channel and Road to Separation                                                             |
+| `common/scripted_triggers/99_TAI_scripted_triggers.txt`         | `TAI_ai_alt_path` counts the three new AI flags, so historical AI weights switch off when one is chosen                                                              |
+| `common/decisions/OBT_defense_decisions.txt`                    | Hold the Han Kuang Exercise gains AUG's +5% war support                                                                                                              |
+| `common/scripted_triggers/99_OBT_reserve_scripted_triggers.txt` | After Mobilized Reserve Troops (National Glory), reserve mobilization no longer needs a Strait crisis                                                                |
+| `common/scripted_effects/99_OBT_reserve_scripted_effects.txt`   | Demobilization clears the theater and militia flags                                                                                                                  |
+| `events/Taiwan_Reclamation.txt`                                 | The Republic Restored (`reclamation.20`) fires `roc_dev.19`                                                                                                          |
+| `events/Taiwan_Blue_Tiger.txt`                                  | U.S. AI is more likely to defend Taiwan after AUG's Strait-policy event (`usa_intervene_taiwan`)                                                                     |
+| `history/countries/TAI - Taiwan.txt`                            | AUG's `TAI_921_earthquake` starting spirit                                                                                                                           |
+| `Changelog.txt`                                                 | Focus count and the three new branches                                                                                                                               |
 
 All OBT edits are made in the generators (`spec.py`, `gen.py`, `events_spec.py`, `m5/rec_gen.py`, `m9/build9.py`, `m10/mob10.py`) and regenerated; each regenerated file differs from the previous build only by the change listed.
 
@@ -51,7 +51,7 @@ New branches:
 
 - **Island Society** (10 focuses): 921 earthquake reconstruction as the root, then a labour line (Labour Reform, the 2016 rest-day law, 2017 pension reform, Act 748) and a welfare line (Social Welfare Reform, Long-Term Care, Sustainable Development, Affordable Housing, Welfare State of Asia). Date gates follow the real laws.
 - **Southern Policy** (16 focuses): opens after OBT's Go South. Road to Peace leads to unofficial relations, a regional defence treaty and military access. Road to War and the ten conquest and ultimatum focuses are hidden unless the Southern Expansion rule is on.
-- **Project National Glory** (15 focuses): needs the Return to the Mainland rule and a communist China, and excludes the democratic capstones (KMT, PFP, DPP, TSU and Green Party capstones and Democracy in the Political DNA). Launch Our Plan opens the National Glory decision, whose war lets OBT's reclamation decisions take over.
+- **Project National Glory** (15 focuses): needs the Return to the Mainland rule and a communist China, and excludes the democratic capstones (KMT, PFP, DPP, TSU and Green Party capstones and Democracy in the Political DNA). The exclusion is written as a completed-focus check on both sides (see Layout). Launch Our Plan opens the National Glory decision, whose war lets OBT's reclamation decisions take over.
 
 Focuses added to OBT branches: Develop Rural Areas, Kaohsiung refinery, Taipei industrial park and Maanshan expansion (Silicon Island); 205th Arsenal, warship programme and shipbuilding (National Army); Wartime Industrial Mobilization (Operation Blue Tiger); the five-focus Red Infiltration path (Across the Strait); the Second Republic constitution (Kuomintang); the Republic of Taiwan (DPP, after the DPP or TSU capstone); the U.S. defence announcement and the NATO request (Pacific Lifeline).
 
@@ -80,6 +80,23 @@ Rewards folded into OBT focuses:
 | A New Constitution                        | DPP popularity +5                                                                             |
 | Consult Washington                        | Friendship opinion with the U.S.                                                              |
 | Friends on Capitol Hill                   | `tai_ait` opinion; fires `roc_dev.23`                                                         |
+
+### Layout
+
+The tree is 88 columns by 36 rows (down from 91 by 42 in the first unified build), with three columns between branches:
+
+| Row | Branches, left to right                                                                                                                                               |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Pacific Lifeline, 2000 Succession, Silicon Island                                                                                                                     |
+| 2   | Kuomintang, People First Party, DPP, Taiwan Solidarity Union, Green Party                                                                                             |
+| 3   | Across the Strait (with Southern Policy and Project National Glory below it), Operation Blue Tiger, National Army, Democratic Fortress (with Island Society below it) |
+
+- Southern Policy sits under Across the Strait, starting below Go South, in the Pacific Lifeline column. Project National Glory sits beside it, below the Kuomintang and the cross-Strait branch. Island Society sits under Democratic Fortress with the domestic branches.
+- Operation Blue Tiger moved under Pacific Lifeline, which it depends on.
+- Lines between branches are 24% shorter in total, the longest falls from 95 to 70 cells, and line crossings fall from 149 to 129.
+- Project National Glory's first focus no longer uses `mutually_exclusive` with the six democratic capstones, which drew six lines across the whole tree. Each side instead checks `NOT = { has_completed_focus = ... }` for the other. Only one focus can be in progress at a time and none of these focuses is completed by an effect, so players and the AI are blocked from exactly the same combinations, and no `ai_will_do` changed.
+- Only whole branches moved: every focus keeps its position relative to its branch's first focus, and no ID, prerequisite, reward or date changed.
+- The continuous-focus panel moved to the empty area under Operation Blue Tiger.
 
 ## 3. Other content
 
@@ -161,11 +178,11 @@ No path ends in an automatic annexation, capitulation or war. The Red Infiltrati
 
 Millennium Dawn's validators were run on a copy of the integration branch before and after the change: focus tree, ideas, decisions, events, localisation, common mistakes, modifiers, variables, style, history, unused scripted, scripted parameters, set variables, on-actions, dynamic-modifier guards, OOB units, GFX references, building guards, cosmetic tags, party loc, AI path rules, bonus names, DLC guards, tech categories, characters, simplifications and scripted localisation. All match the pre-integration baseline. The only difference is four standardization warnings for the new files, the same formatting warning OBT's generated files already carry.
 
-Not yet done: in-game testing, a visual check of the fourth row of the tree, and AI observation runs with each AI behaviour option.
+Not yet done: in-game testing of the new layout, and AI observation runs with each AI behaviour option.
 
 ## 9. Decisions for TheGeneral and AUG
 
-1. Confirm the three new branches as a fourth row of the tree (Island Society, Southern Policy, Project National Glory).
+1. Confirm the layout: Southern Policy and Project National Glory under Across the Strait, Island Society under Democratic Fortress.
 2. Confirm that the Southern Expansion conquest and the NATO request stay off by default behind game rules.
 3. AUG: the intended state for the National Glory beachhead (old ID 925) and the new-constitution civil war states.
 4. AUG: the student call-up figure (now 50,000) and the balance changes in section 6.
