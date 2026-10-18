@@ -669,6 +669,51 @@ apply_influence_special_modifiers = {
 	# How-to: gate on the influencer (tag_index) or the target (original_tag, = current scope),
 	# then check the target's idea. Add the delta to influence_change. Only the matching branch runs.
 
+	if = {
+		limit = {
+			NOT = { uses_own_reserve_currency = yes }
+			OR = {
+				AND = {
+					has_idea = us_dollar
+					check_variable = { tag_index = global.usd_issuer }
+				}
+				AND = {
+					has_idea = euro
+					check_variable = { tag_index = global.eur_issuer }
+				}
+				AND = {
+					OR = { has_idea = chinese_yuan has_idea = chinese_yuan_2 has_idea = chinese_yuan_3 }
+					check_variable = { tag_index = global.cny_issuer }
+				}
+				AND = {
+					has_idea = russia_rouble
+					check_variable = { tag_index = global.rub_issuer }
+				}
+				AND = {
+					has_idea = japanese_yen
+					check_variable = { tag_index = global.jpy_issuer }
+				}
+				AND = {
+					has_idea = british_pound
+					check_variable = { tag_index = global.gbp_issuer }
+				}
+				AND = {
+					has_idea = swiss_frank
+					check_variable = { tag_index = global.chf_issuer }
+				}
+				AND = {
+					has_idea = gulden
+					check_variable = { tag_index = global.nlg_issuer }
+				}
+				AND = {
+					has_idea = brazilian_real
+					check_variable = { tag_index = global.brl_issuer }
+				}
+			}
+		}
+		add_to_temp_variable = { influence_change = 0.03 }
+	}
+
 	# -- Influencer-specific (only the matching tag_index branch evaluates) --
 	if = { limit = { check_variable = { tag_index = ISR } }
 		if = { limit = { has_idea = full_isr_boycotte } add_to_temp_variable = { influence_change = -0.10 } }
@@ -731,6 +776,9 @@ apply_influence_special_modifiers = {
 	}
 	else_if = { limit = { check_variable = { tag_index = ENG } }
 		if = { limit = { has_dynamic_modifier = { modifier = Commonwealth_member_modifier } } add_to_temp_variable = { influence_change = 0.10 } }
+	}
+	else_if = { limit = { check_variable = { tag_index = HLS } }
+		if = { limit = { has_idea = christian HLS = { has_idea = HLS_idea_holy_see } } add_to_temp_variable = { influence_change = 0.10 } }
 	}
 
 	# -- Multi-influencer / influencer-property (independent, always checked) --

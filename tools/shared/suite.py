@@ -7,7 +7,6 @@ import os
 import struct
 import subprocess
 import sys
-import tempfile
 import urllib.error
 from http.client import HTTPMessage
 from pathlib import Path
@@ -17,22 +16,6 @@ import yaml
 from report_lib.models import Issue, Severity
 
 from shared.paths import REPO_ROOT
-
-
-def symlinks_available() -> bool:
-    """Whether this process may create a symlink.
-
-    Windows refuses without Developer Mode or admin rights (WinError 1314), so
-    symlink-rejection tests skip there instead of failing the whole suite.
-    """
-    with tempfile.TemporaryDirectory() as folder:
-        target = Path(folder) / "target"
-        target.mkdir()
-        try:
-            (Path(folder) / "link").symlink_to(target)
-        except (OSError, NotImplementedError):
-            return False
-    return True
 
 
 def imagemagick_available() -> bool:
@@ -105,12 +88,59 @@ def run_bash_step(script: str, cwd, env=None) -> subprocess.CompletedProcess:
     )
 
 
-def run_validator(validator_cls, tmp_path, **kwargs):
-    validator = validator_cls(
-        mod_path=str(tmp_path), use_colors=False, workers=1, no_cache=True, **kwargs
+def run_tool_script(script, *args, timeout=60) -> subprocess.CompletedProcess:
+    """Run tools/<script> as its own process, the way run.py and the hooks do."""
+    return subprocess.run(
+        [sys.executable, str(REPO_ROOT / "tools" / script), *map(str, args)],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
     )
+
+
+def build_validator(validator_cls, root, **kwargs):
+    return validator_cls(
+        mod_path=str(root), use_colors=False, workers=1, no_cache=True, **kwargs
+    )
+
+
+def run_validator(validator_cls, tmp_path, **kwargs):
+    validator = build_validator(validator_cls, tmp_path, **kwargs)
     validator.run_validations()
     return validator
+
+
+def checks_called_by_run(validator, monkeypatch):
+    """Stub every `validate_*` method and run the validator.
+
+    Returns (checks the run called, checks the class defines), both sorted.
+    """
+    checks = sorted(name for name in dir(validator) if name.startswith("validate_"))
+    called = []
+    for name in checks:
+        monkeypatch.setattr(
+            validator, name, lambda *_args, name=name: called.append(name)
+        )
+    validator.run_validations()
+    return sorted(called), checks
+
+
+def _finding_matches(row, entry):
+    if isinstance(entry, str):
+        return row == entry
+    return all(part in row for part in entry)
+
+
+def assert_findings(results, expected):
+    """One result per expected entry: a string matches a whole result, a tuple
+    matches a result holding every fragment in it. A result matches once."""
+    unmatched = list(results)
+    for entry in expected:
+        match = next((row for row in unmatched if _finding_matches(row, entry)), None)
+        assert match is not None, (entry, results)
+        unmatched.remove(match)
+    assert not unmatched, unmatched
 
 
 def issue_categories(validator):
@@ -234,10 +264,20 @@ def fake_decisions_validator(*args, **kwargs):
     return collecting_validator(V.Validator)(*args, **kwargs)
 
 
-def decision_factory(body):
+def decision_factory(body, basename="X.txt"):
     import validate_decisions as V
 
-    return V.DecisionFactory(body, source_basename="X.txt")
+    return V.DecisionFactory(body, source_path=basename)
+
+
+def event_block(event_id, *fields, kind="country_event"):
+    """One event definition: the id on line 2, then one line per field.
+
+    `event_id=None` leaves the id out. A multi-line field carries its own tabs
+    after the first line.
+    """
+    lines = (f"id = {event_id}",) * (event_id is not None) + fields
+    return f"{kind} = {{\n" + "".join(f"\t{line}\n" for line in lines) + "}\n"
 
 
 def decisions_results_for(factories, monkeypatch, check="validate_missing_log"):
@@ -314,6 +354,14 @@ def dds_header(
     )
 
 
+def dds_stub(width: int, height: int) -> bytes:
+    """A DDS header that carries a size and nothing else."""
+    header = bytearray(128)
+    header[0:4] = b"DDS "
+    struct.pack_into("<II", header, 12, height, width)
+    return bytes(header)
+
+
 def load_tool_module(
     relative_path: str, *, module_name: str | None = None, register: bool = False
 ) -> ModuleType:
@@ -342,6 +390,13 @@ def write_under(root: Path, relative_path: str, content: str) -> Path:
 
 def write_under_str(root: Path, relative_path: str, content: str) -> str:
     return str(write_under(root, relative_path, content))
+
+
+def write_tree(root: Path, files: dict) -> Path:
+    """Write `{relative path: content}` under root."""
+    for relative_path, content in files.items():
+        write_under(root, relative_path, content)
+    return root
 
 
 def write_focus_file(root: Path, content: str) -> Path:
