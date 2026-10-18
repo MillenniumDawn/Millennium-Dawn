@@ -64,8 +64,8 @@ when the identity is abandoned or revoked.
   and both UAR announces.
 
 The latch is a one-way visibility cut for players and AI. The ratchet is an AI-only
-ranked commitment. Once latched, the ratchet's upgrade path and the CANZUK exemptions
-are reachable only from pre-latch states.
+ranked commitment. Once latched, the ratchet's upgrade path is reachable only from
+pre-latch states.
 
 ### Decision set
 
@@ -79,13 +79,20 @@ are reachable only from pre-latch states.
 - `<TAG>_buy_core_state`: state-targeted purchase through
   `formable_purchase_deliver_offer` and `formable_purchase_cancel_offer`. Gate only.
 
-IBR and ANZ have no `integrate_start` or `buy_core_state`. Their integrate decisions set
-the flags and the idea in `remove_effect` and carry a guarded commit.
+Flags, the idea, and the commit are set at click, in a `complete_effect`. A
+`remove_effect` only cores, annexes, and sets `integrated_<SUB>`. An idea added when a
+timer ends can land after a special formable and strand.
+
+IBR and ANZ have no `integrate_start` or `buy_core_state`. The first `integrate_<SUB>`
+click is the start. Its `complete_effect` sets the flags, adds the idea, and commits, all
+behind `NOT is_<TAG>`.
 
 Spain also enters IBR by focus. `SPR_declare_the_iberian_union` sets `IBR_exists` and the
 cosmetic and carries the ratchet gate in `ai_will_do`. `SPR_solidify_the_iberian_union`
 sets `is_IBR`, latches, and makes a guarded commit. Neither adds the idea nor reads the
-formable game rule. IBR stays a decision commitment, not a sentinel.
+formable game rule. `spain.60` sets the cosmetic and removes the idea with it, because
+`IBR_update_flag` hides once the cosmetic is held. IBR stays a decision commitment, not a
+sentinel.
 
 ### External readers
 
@@ -126,8 +133,8 @@ Commit, in every `integrate_start` and `update_flag` `complete_effect`:
 	}
 ```
 
-Guarded commit, for a delayed or ungated site (a `remove_effect`, a focus) that must not
-downgrade a larger commitment made meanwhile:
+Guarded commit, for an ungated site that must not downgrade a larger commitment. Only
+`SPR_solidify_the_iberian_union` uses it:
 
 ```
 	hidden_effect = {
@@ -148,24 +155,14 @@ downgrade a larger commitment made meanwhile:
 `<ID>` is a unique ordinal below 100. `<SIZE>` is the `update_flag` state-list count. The
 validator recomputes both.
 
-### CANZUK exemption
+### CANZUK EU block
 
-`CANZUK_update_flag` is hidden for a member of a European federation, so a CANZUK
-commitment can strand.
+`CANZUK_update_flag` is hidden for a member of a European federation, so
+`CANZUK_integrate_start` has a second AI modifier: `factor = 0` when
+`EU_is_federation_member = yes`.
 
-- `CANZUK_integrate_start` has a second AI modifier: `factor = 0` when
-  `EU_is_federation_member = yes`.
-- Every ANZ, NORDEM, and AVG decision (CANZUK's fallback formables) extends its gate so a
-  stranded CANZUK commitment does not block them:
-
-```
-			NOT = {
-				AND = {
-					check_variable = { formable_committed_id = 15 }
-					EU_is_federation_member = yes
-				}
-			}
-```
+No other formable needs an exemption for a CANZUK commitment. A country holding id 15 is
+latched, so the ANZ, NORDEM, and AVG categories are hidden for it.
 
 ## Special formables
 
@@ -215,8 +212,13 @@ Call pattern. The setter must be immediately followed by the call:
 - 102 European Federation member (EU112): `focus_EU112_QMV_result` only sets the global
   `european_federation`, which is never cleared. The sentinel lives in `EFS_update_flag`
   because that decision fires for founders and every later joiner. `EFS_flag_change` is
-  one-shot. Branches `is_IBR`, `is_SCA`, and `is_BLT` set `EFS_IBR`, `EFS_SCA`, and
-  `EFS_BLT`. `leaving_EU` never drops the EFS cosmetic or the sentinel.
+  one-shot. The chain checks `is_IBR`, `is_SCA`, and `is_BLT` first and sets `EFS_IBR`,
+  `EFS_SCA`, or `EFS_BLT`, then `ENG_England` for `EFS_ENG_england`. Every other member
+  gets `EFS_<original_tag>` from a `meta_effect`, so EFS art and colors are named after
+  the tag. A member with no EFS art gets an `EFS_<TAG>` tag that has no flag art or color.
+  It replaces any other cosmetic the member held. Not checked in game. Every member
+  still gets the sentinel.
+  `leaving_EU` never drops the EFS cosmetic or the sentinel.
 - 103 United Arab Republic: both announces in `UnitedArabRepublic.txt`, plus
   `EGY_pan_arab_effort` and `LBA_strive_for_uar`. The `EGY_negot_*`,
   `SYR_the_arab_union`, and `egypt.144` pre-announce sites latch but are not sentinel
@@ -245,7 +247,7 @@ worldwide, and the idea alone strands an EU member before any federation exists.
   none of the nine tags that can form it is EU-potential.
 - MAGHREB and UAR exclude each other: `MAGHREB_integrate_start` is hidden for a UAR, and
   `form_UAR_category` is hidden on `is_MAGHREB`.
-- ANZ, NORDEM, AVG: no EU guard. They carry the CANZUK exemption.
+- ANZ, NORDEM, AVG: no EU guard.
 - All other formables have no EU guard. `EFS_update_flag` has no ratchet gate.
 
 ## Game rules
@@ -263,14 +265,12 @@ Check it first when the AI never federates.
 
 ## Known traps and accepted behavior
 
-- An IBR integrate timer that finishes after `EFS_update_flag` has fired adds
-  `reshaping_national_identity` on top of sentinel 1000. The AI keeps it, because the
-  ratchet blocks the `update_flag` that would remove it.
 - Player-side clobber: `SCA`, `IBR`, `HBL`, `NORDEM`, `AUSHUN`, and `AVG` `update_flag`
   have no EU guard, so a player can click one after EFS branding and lose it for good.
   A guard there must be `EU_is_federation_member`, never `EU_member` alone.
 - EFS variants exist only for IBR, SCA, and BLT. Other completed formables get a plain
-  `EFS_<TAG>`.
+  `EFS_<TAG>`. A new variant is flag art plus one `is_<TAG>` branch at the top of the
+  chain.
 - A member mid-formable when EU112 passes gets sentinel 102 and is AI-blocked from the
   rest of that formable. Intended: special beats decision.
 - No generic sentinel revocation. A path that drops a special cosmetic leaves size 1000
@@ -294,7 +294,8 @@ New decision formable:
    and adds the idea. `update_flag` sets the cosmetic and removes the idea.
 3. Take the next free id below 100. Size is the `update_flag` state-list count.
 4. Gate every decision. Commit in `integrate_start` and `update_flag`. Use a guarded
-   commit on any delayed or ungated site.
+   commit on any ungated site. Never set flags, the idea, or a commit in a
+   `remove_effect`.
 5. Editing an `update_flag` state list means updating the size literal at every gate
    and commit site, including the Spain focus for IBR.
 6. If an EU guard hides the `update_flag`, AI-block `integrate_start` under the same
@@ -307,8 +308,8 @@ New special formable:
    `effect_tooltip`, add the setter and the call. One id per identity.
 3. If the identity can dissolve, `clear_variable` both ratchet variables at each
    dissolution site. The latch stays.
-4. Add a test in `tools/tests/validation/validate_decisions_formable_commitment_test.py`
-   if the site shape is new.
+4. Add a row to the formable tables in
+   `tools/tests/validation/validate_decisions_test.py` if the site shape is new.
 
 Then run `python tools/validation/validate_decisions.py` and `python -m pytest`. The
 validator scans `common/decisions`, `common/national_focus`, `common/scripted_effects`,

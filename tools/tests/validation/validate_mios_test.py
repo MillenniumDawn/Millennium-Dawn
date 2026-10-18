@@ -7,7 +7,7 @@ import validate_mios as V
 
 
 def _validator(tmp_path):
-    return V.Validator(str(tmp_path))
+    return V.Validator(str(tmp_path), workers=1)
 
 
 def test_commented_org_blocks_are_not_parsed():
@@ -251,7 +251,7 @@ def test_staged_english_localisation_scans_all_mios(tmp_path, monkeypatch):
     )
     monkeypatch.setenv("MD_STAGED_FILES", "localisation/english/MD_mio_l_english.yml")
 
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
     v.run_validations()
 
     assert [issue.category for issue in v._issues] == ["trait-loc-missing"]
@@ -347,7 +347,7 @@ _MANPADS_ORG = (
 def test_bonus_on_stat_the_equipment_lacks_is_flagged(tmp_path):
     v = _run_org_check(tmp_path, _MANPADS_ORG)
     assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
-    assert v._issues[0].severity == "warning"
+    assert v._issues[0].severity == "error"
     assert "max_organisation" in v._issues[0].message
     assert v._issues[0].line == 7
 
@@ -355,6 +355,11 @@ def test_bonus_on_stat_the_equipment_lacks_is_flagged(tmp_path):
 def test_bonus_on_declared_stat_passes(tmp_path):
     body = _MANPADS_ORG.replace("max_organisation = 0.10", "air_attack = 0.10")
     assert not _run_org_check(tmp_path, body)._issues
+
+
+def test_zero_base_exempt_stat_is_not_flagged(tmp_path, monkeypatch):
+    monkeypatch.setattr(V, "ZERO_BASE_EXEMPT_STATS", frozenset({"max_organisation"}))
+    assert _run_org_check(tmp_path, _MANPADS_ORG)._issues == []
 
 
 def test_limit_to_equipment_type_narrows_the_scope(tmp_path):
@@ -1202,7 +1207,7 @@ def test_a_staged_equipment_edit_rescans_every_org(tmp_path, write_path, monkeyp
     monkeypatch.setenv(
         "MD_STAGED_FILES", "common/units/equipment/MD_test_equipment.txt"
     )
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1241,7 +1246,7 @@ def test_a_staged_scripted_trigger_rescans_orgs_and_references(
     monkeypatch.setenv(
         "MD_STAGED_FILES", "common/scripted_triggers/99_USA_scripted_triggers.txt"
     )
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1255,7 +1260,7 @@ def test_staged_run_with_no_mio_input_skips(tmp_path, write_path, monkeypatch):
     _run_repo(tmp_path, write_path)
     write_path(tmp_path, "interface/unrelated.txt", "guiTypes = { }\n")
     monkeypatch.setenv("MD_STAGED_FILES", "interface/unrelated.txt")
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1270,7 +1275,7 @@ def test_staged_interface_edit_rescans_all_mios(tmp_path, write_path, monkeypatc
     sprite.write_text("spriteType = { name = GFX_test }\n", encoding="utf-8")
     monkeypatch.setenv("MD_STAGED_FILES", "interface/mio.gfx")
 
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     assert v._org_files()
 

@@ -15,9 +15,10 @@ Millennium Dawn changes how you design, produce, and organize military equipment
 - [Air Force](#air-force)
 - [Navy](#navy)
 - [Missiles and Strategic Weapons](#missiles-and-strategic-weapons)
-  - [Cruise Missiles](#cruise-missiles)
-  - [Medium-Range Ballistic Missiles](#medium-range-ballistic-missiles)
-  - [MRBM and ICBM](#mrbm-and-icbm)
+  - [Ground Launched Cruise Missiles](#ground-launched-cruise-missiles)
+  - [Intermediate Range Ballistic Missiles](#intermediate-range-ballistic-missiles)
+  - [Intercontinental Ballistic Missiles](#intercontinental-ballistic-missiles)
+  - [Surface to Air Missiles](#surface-to-air-missiles)
   - [Missile Silos](#missile-silos)
 - [Military Production](#military-production)
 - [Division Template Designer](#division-template-designer)
@@ -66,11 +67,13 @@ The Air Force functions similarly to vanilla HOI4, but air wing sizes are drasti
 
 There are three airframes. As with armored vehicles, the modules you install decide the role, and modules in the primary weapons slot largely determine what type of aircraft the airframe becomes.
 
-| Airframe | Roles                                           |
-| -------- | ----------------------------------------------- |
-| Light    | Light Interceptor, Light Multirole, Light CAS   |
-| Medium   | Air Superiority Fighter, Multirole Fighter, CAS |
-| Heavy    | Bomber, Transport Aircraft, Heavy CAS, AWACS    |
+| Airframe | Roles                                                                          |
+| -------- | ------------------------------------------------------------------------------ |
+| Light    | Light Fighter, Light Multi-Role Fighter, Light CAS Fighter, Light Naval Bomber |
+| Medium   | Multi-Role Fighter, Air Superiority Fighter, CAS Aircraft                      |
+| Heavy    | Strategic Bomber, Gunship, AWACS, Heavy Lift Aircraft                          |
+
+The medium and heavy airframes also build maritime patrol aircraft, and the medium airframe builds a Medium Lift transport. Light and medium airframes can be built as drones. Carriers use their own light and medium airframes.
 
 ---
 
@@ -81,15 +84,16 @@ The naval system resembles vanilla HOI4 in that you build each vessel around a h
 Available ship hulls:
 
 - **Patrol Boats**
-- **Corvettes**
-- **Frigates**
-- **Destroyers**
+- **Corvettes** and **Stealth Corvettes**
+- **Frigates**, **Stealth Frigates**, and **Heavy Frigates**
+- **Destroyers** and **Stealth Destroyers**
 - **Cruisers**
-- **Battlecruisers**
-- **Battleships**
+- **Battleships** and **Battlecruisers**
+- **Helicopter Operators**
 - **Aircraft Carriers**
+- **Attack Submarines** and **Missile Submarines**
 
-There is also a specialized hull that can be configured into an **LTD**, **MHA**, or **LHA**.
+The Helicopter Operator hull takes one of three flight decks: **Amphibious Transport Dock**, **Multipurpose Helicopter Assault**, or **Landing Helicopter Assault**.
 
 As with armored vehicles and aircraft, the modules equipped on the hull determine the ship's capabilities and role.
 
@@ -99,7 +103,7 @@ As with armored vehicles and aircraft, the modules equipped on the hull determin
 
 Millennium Dawn features several types of missiles, each designed for a different purpose and range.
 
-### Cruise Missiles
+### Ground Launched Cruise Missiles
 
 Cruise missiles are primarily used for shorter-range conventional strikes. They can target infrastructure, industrial assets, and naval vessels at sea.
 
@@ -111,7 +115,7 @@ They work best against infrastructure and military installations, such as:
 - Anti-Aircraft Emplacements
 - Other strategic infrastructure
 
-### Medium-Range Ballistic Missiles
+### Intermediate Range Ballistic Missiles
 
 These are built for heavier conventional destruction. They can hit many of the same assets as cruise missiles, but they are at their best against industrial targets:
 
@@ -119,9 +123,13 @@ These are built for heavier conventional destruction. They can hit many of the s
 - Military Factories
 - Naval Dockyards
 
-### MRBM and ICBM
+### Intercontinental Ballistic Missiles
 
-Medium and intercontinental ballistic missiles are your nuclear delivery systems. Unlike nuclear-armed aircraft, they do not need to be carried by an airplane. Launch them at your target and watch the world burn.
+Intercontinental ballistic missiles are your long-range nuclear delivery system. Unlike nuclear-armed aircraft, they do not need to be carried by an airplane. Launch them at your target and watch the world burn.
+
+### Surface to Air Missiles
+
+Surface to air missiles are launched from the ground to destroy aircraft and other missiles.
 
 ### Missile Silos
 
@@ -211,21 +219,23 @@ Several weapons and modules are available, so experiment to find combinations th
 
 Special Forces are divided into three branches: Army, Navy, and Air.
 
-**Army Special Forces:** The basic Special Forces Battalion is relatively weak in conventional combat but well suited to raids. Ranger Battalions are a strong choice when you need specialized infantry for regular combat formations.
+**Army Special Forces:** The basic special forces battalion is relatively weak in conventional combat but well suited to raids. Rangers are a strong choice when you need specialized infantry for regular combat formations.
 
 **Navy Special Forces:** These consist primarily of Marines, with several variants:
 
-- Foot Marines
-- Motorized Marines
-- Mechanized Marines
+- Marine Infantry
+- Motorized Marine Infantry
+- Mechanized Marine Infantry
 - Armored Marine Infantry
 
-**Air Special Forces:** Air Assault Infantry requires Transport Helicopters to operate. These units are extremely fast, but combining them with slower units reduces that advantage. You can also field Airmobile units:
+**Air Special Forces:** Air Assault Infantry requires Transport Helicopters to operate. These units are extremely fast, but combining them with slower units reduces that advantage. You can also field Airborne units:
 
-- Mechanized Airmobile Infantry
-- Armored Airmobile Infantry
+- Airborne Infantry
+- Motorized Airborne Infantry
+- Mechanized Airborne Infantry
+- Armored Airborne Infantry
 
-Special Forces can significantly improve your divisions' stats, especially when paired with the right doctrine. The special forces doctrine branch offers Mixed Command, Marine Focused, Airborne Focused, and Ranger Focused options, so pick the one that matches the branch you actually field.
+Special Forces can significantly improve your divisions' stats, especially when paired with the right doctrine. The special forces doctrine branch offers Mixed Command, Marine Focused Special Forces, Airborne Focused Special Forces, and Ranger Focused Special Forces, so pick the one that matches the branch you actually field.
 
 ---
 
@@ -240,15 +250,15 @@ Operational land doctrines include Combined Arms, Shock And Awe, Defence In Dept
 
 Equipment Doctrines come in several layouts, so each one rewards a different equipment and unit mix:
 
-| Layout           | Focus                                                    |
-| ---------------- | -------------------------------------------------------- |
-| Mixed Equipment  | Balanced combination of systems                          |
-| Light Equipment  | Lightweight, easy to deploy                              |
-| Heavy Equipment  | Heavy protection and high capacity                       |
-| Mobile Equipment | High mobility and operational reach                      |
-| Fire Support     | Indirect and supporting fires                            |
-| Full Equipment   | Slots for every equipment and unit type, but far pricier |
-| Spearhead        | Mechanized depth behind a single penetrating thrust      |
+| Layout              | Focus                                                    |
+| ------------------- | -------------------------------------------------------- |
+| Mixed Equipment     | Balanced combination of systems                          |
+| Light Equipment     | Lightweight, easy to deploy                              |
+| Heavy Equipment     | Heavy protection and high capacity                       |
+| Mobile Equipment    | High mobility and operational reach                      |
+| Fire Support        | Indirect and supporting fires                            |
+| Full Equipment      | Slots for every equipment and unit type, but far pricier |
+| Spearhead Equipment | Mechanized depth behind a single penetrating thrust      |
 
 Always choose the doctrine that best suits your nation and army composition. There is no reason to pay for bonuses on equipment you are not using.
 
