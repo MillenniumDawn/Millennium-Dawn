@@ -7888,7 +7888,7 @@ UKR_t55_count_developed_models = {
 }
 
 # Storage list in the UKR_reactivate_sov_category GUI (UKR_reactivate_sov_storage_gui).
-# Row ids: 1-4 are section headers, 11 and up are vehicles, the tens digit is their section.
+# Row ids: 1-5 are section headers, 11 and up are vehicles, the tens digit is their section.
 # Sections and vehicles with nothing in storage are hidden. Only the section in UKR_storage_open_section
 # shows its vehicles (0 = all closed). UKR_storage_refresh rebuilds the rows.
 UKR_storage_rebuild_rows = {
@@ -7929,6 +7929,16 @@ UKR_storage_rebuild_rows = {
 			if = { limit = { check_variable = { ukraine_has_9k11_stockpile > 0 } } add_to_array = { UKR_storage_rows = 41 } }
 		}
 	}
+	if = {
+		limit = { check_variable = { UKR_storage_total_5 > 0 } }
+		add_to_array = { UKR_storage_rows = 5 }
+		if = {
+			limit = { check_variable = { UKR_storage_open_section = 5 } }
+			if = { limit = { check_variable = { ukraine_has_tu16k_stockpile > 0 } } add_to_array = { UKR_storage_rows = 51 } }
+			if = { limit = { check_variable = { ukraine_has_tu22kd_stockpile > 0 } } add_to_array = { UKR_storage_rows = 52 } }
+			if = { limit = { check_variable = { ukraine_has_tu22rd_stockpile > 0 } } add_to_array = { UKR_storage_rows = 53 } }
+		}
+	}
 }
 
 # Header click in the storage list: open the section in temp variable storage_section, or close it when it is already open
@@ -7958,6 +7968,9 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_total_3 = ukraine_has_2k11_stockpile }
 	add_to_variable = { UKR_storage_total_3 = ukraine_has_9k31_stockpile }
 	set_variable = { UKR_storage_total_4 = ukraine_has_9k11_stockpile }
+	set_variable = { UKR_storage_total_5 = ukraine_has_tu16k_stockpile }
+	add_to_variable = { UKR_storage_total_5 = ukraine_has_tu22kd_stockpile }
+	add_to_variable = { UKR_storage_total_5 = ukraine_has_tu22rd_stockpile }
 	UKR_storage_rebuild_rows = yes
 	if = {
 		limit = { check_variable = { UKR_storage_dirty_var < 10000 } }
@@ -8112,5 +8125,204 @@ UKR_sov_deliver_btr50m = {
 	}
 	else = {
 		add_equipment_to_stockpile = { type = APC_1 variant_name = "BTR-50M" amount = ukr_sov_amount producer = UKR }
+	}
+}
+
+# 9K11 Malyutka carriers to the buyer (mounted ATGM, the same with and without NSB)
+UKR_sov_deliver_9k11 = {
+	add_equipment_to_stockpile = { type = Heavy_Anti_tank_1 amount = ukr_sov_amount producer = SOV }
+}
+UKR_storage_sell_9k11 = {
+	subtract_from_variable = { ukraine_has_9k11_stockpile = ukr_sov_amount tooltip = ukraine_storage_9k11_sold_tt }
+	UKR_storage_sale_payment = yes
+	event_target:ukr_storage_buyer = { UKR_sov_deliver_9k11 = yes }
+}
+
+# Barrier-V launchers on the rebuilt BRDM-2 carriers (Malyutka and Konkurs)
+UKR_sov_variant_barrier_v = {
+	if = {
+		limit = { NOT = { has_country_flag = ukr_modernize_sov_equipment_variant_barrier_v_flag } }
+		set_country_flag = ukr_modernize_sov_equipment_variant_barrier_v_flag
+		create_equipment_variant = {
+			name = "BRDM-2 Barrier-V"
+			type = Heavy_Anti_tank_3
+			parent_version = 0
+			allow_without_tech = yes
+			upgrades = {
+				H_AT_fire_control = 3
+				H_AT_warhead = 3
+				H_AT_Reliability = 2
+			}
+			design_team = mio:UKR_luch_aa_at_equipment_manufacturer
+			icon = "GFX_SOV_LAND_BRDM_2" #TO-DO BRDM-2 Barrier-V icon
+		}
+	}
+}
+
+# Tu-16K and Tu-22KD/RD for buyers: an MBT-like design per model, with and without By Blood Alone
+UKR_sov_variant_tu16k = {
+	if = {
+		limit = { NOT = { has_country_flag = ukr_modernize_sov_equipment_variant_tu16k_flag } }
+		set_country_flag = ukr_modernize_sov_equipment_variant_tu16k_flag
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			create_equipment_variant = {
+				name = "Tu-16K"
+				type = large_plane_airframe_1
+				parent_version = 0
+				allow_without_tech = yes
+				modules = {
+					fixed_main_weapon_slot = weap_ag_strat_1
+					fixed_gun_slot = empty
+					avionics_type_slot = avionics_manned_1
+					wingform_type_slot = wing_swept
+					engine_type_slot = engine_jet_double_1
+					special_slot_type_1 = spec_countermeasures_1
+					fixed_auxiliary_weapon_slot_1 = weap_mp_heavy_hardpoint_1
+				}
+				obsolete = yes
+				icon = "GFX_CHI_AIR_H_6"
+			}
+		}
+		else = {
+			create_equipment_variant = {
+				name = "Tu-16K"
+				type = strategic_bomber1
+				allow_without_tech = yes
+			}
+		}
+	}
+}
+UKR_sov_deliver_tu16k = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		add_equipment_to_stockpile = { type = large_plane_airframe_1 variant_name = "Tu-16K" amount = ukr_sov_amount producer = UKR }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = strategic_bomber1 variant_name = "Tu-16K" amount = ukr_sov_amount producer = UKR }
+	}
+}
+UKR_sov_variant_tu22kd = {
+	if = {
+		limit = { NOT = { has_country_flag = ukr_modernize_sov_equipment_variant_tu22kd_flag } }
+		set_country_flag = ukr_modernize_sov_equipment_variant_tu22kd_flag
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			create_equipment_variant = {
+				name = "Tu-22KD"
+				type = large_plane_airframe_1
+				parent_version = 0
+				allow_without_tech = yes
+				modules = {
+					fixed_main_weapon_slot = weap_ag_strat_1
+					fixed_gun_slot = empty
+					avionics_type_slot = avionics_manned_1
+					wingform_type_slot = wing_swept
+					engine_type_slot = engine_jet_double_2
+					special_slot_type_1 = spec_countermeasures_1
+					special_slot_type_2 = spec_refuel_1
+					fixed_auxiliary_weapon_slot_1 = weap_mp_heavy_hardpoint_1
+				}
+				obsolete = yes
+				icon = "GFX_SOV_AIR_Tu_22KD"
+			}
+		}
+		else = {
+			create_equipment_variant = {
+				name = "Tu-22KD"
+				type = strategic_bomber1
+				allow_without_tech = yes
+			}
+		}
+	}
+}
+UKR_sov_deliver_tu22kd = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		add_equipment_to_stockpile = { type = large_plane_airframe_1 variant_name = "Tu-22KD" amount = ukr_sov_amount producer = UKR }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = strategic_bomber1 variant_name = "Tu-22KD" amount = ukr_sov_amount producer = UKR }
+	}
+}
+UKR_sov_variant_tu22rd = {
+	if = {
+		limit = { NOT = { has_country_flag = ukr_modernize_sov_equipment_variant_tu22rd_flag } }
+		set_country_flag = ukr_modernize_sov_equipment_variant_tu22rd_flag
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			create_equipment_variant = {
+				name = "Tu-22RD"
+				type = large_plane_airframe_1
+				parent_version = 0
+				allow_without_tech = yes
+				modules = {
+					fixed_main_weapon_slot = weap_ag_strat_1
+					fixed_gun_slot = empty
+					avionics_type_slot = avionics_manned_1
+					wingform_type_slot = wing_swept
+					engine_type_slot = engine_jet_double_2
+					special_slot_type_1 = spec_recon_1
+					special_slot_type_2 = spec_refuel_1
+				}
+				obsolete = yes
+				icon = "GFX_SOV_AIR_Tu_22B"
+			}
+		}
+		else = {
+			create_equipment_variant = {
+				name = "Tu-22RD"
+				type = strategic_bomber1
+				allow_without_tech = yes
+			}
+		}
+	}
+}
+UKR_sov_deliver_tu22rd = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		add_equipment_to_stockpile = { type = large_plane_airframe_1 variant_name = "Tu-22RD" amount = ukr_sov_amount producer = UKR }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = strategic_bomber1 variant_name = "Tu-22RD" amount = ukr_sov_amount producer = UKR }
+	}
+}
+
+# Sell every stored Tu-16K / every stored Tu-22 for temp ukr_sale_price to ukr_storage_buyer
+UKR_storage_sell_tu16k = {
+	set_temp_variable = { ukr_sov_amount = ukraine_has_tu16k_stockpile }
+	subtract_from_variable = { ukraine_has_tu16k_stockpile = ukr_sov_amount tooltip = ukraine_storage_tu16k_sold_tt }
+	UKR_sov_variant_tu16k = yes
+	event_target:ukr_storage_buyer = { UKR_sov_deliver_tu16k = yes }
+	UKR_storage_sale_payment = yes
+	UKR_storage_bomber_sale_backlash = yes
+}
+UKR_storage_sell_tu22 = {
+	set_temp_variable = { ukr_sov_amount = ukraine_has_tu22kd_stockpile }
+	subtract_from_variable = { ukraine_has_tu22kd_stockpile = ukr_sov_amount tooltip = ukraine_storage_tu22kd_sold_tt }
+	UKR_sov_variant_tu22kd = yes
+	event_target:ukr_storage_buyer = { UKR_sov_deliver_tu22kd = yes }
+	set_temp_variable = { ukr_sov_amount = ukraine_has_tu22rd_stockpile }
+	subtract_from_variable = { ukraine_has_tu22rd_stockpile = ukr_sov_amount tooltip = ukraine_storage_tu22rd_sold_tt }
+	UKR_sov_variant_tu22rd = yes
+	event_target:ukr_storage_buyer = { UKR_sov_deliver_tu22rd = yes }
+	UKR_storage_sale_payment = yes
+	UKR_storage_bomber_sale_backlash = yes
+}
+
+# Selling long-range bombers angers NATO and Russia for a while
+UKR_storage_bomber_sale_backlash = {
+	custom_effect_tooltip = ukraine_storage_bomber_outrage_tt
+	hidden_effect = {
+		every_country = {
+			limit = {
+				NOT = { tag = ROOT }
+				OR = {
+					tag = SOV
+					is_in_array = { global.nato_members = THIS }
+				}
+			}
+			add_opinion_modifier = { target = ROOT modifier = UKR_storage_bomber_sale_outrage }
+		}
 	}
 }

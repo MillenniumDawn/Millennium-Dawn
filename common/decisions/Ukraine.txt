@@ -14973,6 +14973,359 @@ UKR_reactivate_sov_category = {
 			696 = { add_dynamic_modifier = { modifier = UKR_scrapped_2k11_resources days = 365 } }
 		}
 	}
+
+	ukr_modernize_sov_equipment_9k11_caucasus_offer = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_9k11_caucasus_offer_done_flag }
+			date < 2009.01.01
+			check_variable = { ukraine_has_9k11_stockpile > 8 }
+			OR = {
+				country_exists = GEO
+				country_exists = AZE
+				country_exists = ARM
+			}
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_9k11_caucasus_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_9k11_orders_tt
+			custom_effect_tooltip = ukr_modernize_sov_equipment_9k11_caucasus_rivals_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_9k11_caucasus_offer"
+
+			set_country_flag = ukr_modernize_sov_equipment_9k11_caucasus_offer_done_flag
+			country_event = ukr_modernize_sov_equipment_storage_sale.9
+		}
+	}
+
+	ukr_modernize_sov_equipment_9k11_africa_offer = {
+		icon = GFX_decision_icon_UKR_modernize_sov_brdm2
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_9k11_africa_offer_done_flag }
+			date < 2009.01.01
+			check_variable = { ukraine_has_9k11_stockpile > 8 }
+			OR = {
+				has_country_flag = ukr_modernize_sov_equipment_9k11_caucasus_offer_done_flag
+				date > 2004.01.01
+			}
+			OR = {
+				country_exists = SUD
+				country_exists = ETH
+				country_exists = CHA
+			}
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_9k11_africa_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_9k11_orders_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_9k11_africa_offer"
+
+			set_country_flag = ukr_modernize_sov_equipment_9k11_africa_offer_done_flag
+			country_event = ukr_modernize_sov_equipment_storage_sale.11
+		}
+	}
+
+	ukr_modernize_sov_equipment_atgm_barrier_v = {
+		icon = GFX_decision_icon_UKR_develop_domestic_atgm_barrier
+		ai_will_do = { base = 10 }
+
+		visible = {
+			has_country_flag = UKR_develop_domestic_atgm_barrier_flag
+			OR = {
+				check_variable = { ukraine_has_9k11_stockpile > 0 }
+				has_equipment = { Heavy_Anti_tank_2 > 17 }
+			}
+		}
+
+		available = {
+			controls_state = 698 #Kyiv
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > 0.02 } }
+		custom_cost_text = cost_0_02
+
+		highlight_states = {
+			highlight_states_trigger = { state = 698 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_atgm_barrier_v"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+				set_variable = { ukraine_barrier_v_batch = 0 }
+			}
+
+			if = {
+				limit = { check_variable = { ukraine_has_9k11_stockpile > 0 } }
+				set_temp_variable = { ukr_sov_amount = ukraine_has_9k11_stockpile }
+				subtract_from_variable = { ukraine_has_9k11_stockpile = ukr_sov_amount tooltip = ukraine_storage_9k11_rebuilt_tt }
+				hidden_effect = {
+					add_to_variable = { ukraine_barrier_v_batch = ukr_sov_amount }
+					UKR_storage_refresh = yes
+				}
+			}
+			if = {
+				limit = { has_equipment = { Heavy_Anti_tank_2 > 17 } }
+				# Only the 9P148 Konkurs actually removed are rebuilt (Barrier-S is a Heavy_Anti_tank_2 too)
+				set_temp_variable = { ukr_konkurs_before = num_equipment@Heavy_Anti_tank_2 }
+				add_equipment_to_stockpile = { type = Heavy_Anti_tank_2 variant_name = "9P148 Konkurs" amount = -18 producer = SOV }
+				hidden_effect = {
+					set_temp_variable = { ukr_konkurs_taken = num_equipment@Heavy_Anti_tank_2 }
+					multiply_temp_variable = { ukr_konkurs_taken = -1 }
+					add_to_temp_variable = { ukr_konkurs_taken = ukr_konkurs_before }
+					add_to_variable = { ukraine_barrier_v_batch = ukr_konkurs_taken }
+				}
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_atgm_barrier_v"
+
+			UKR_sov_variant_barrier_v = yes
+			custom_effect_tooltip = ukr_modernize_sov_equipment_atgm_barrier_v_delivered_tt
+			hidden_effect = {
+				add_equipment_to_stockpile = { type = Heavy_Anti_tank_3 variant_name = "BRDM-2 Barrier-V" amount = ukraine_barrier_v_batch producer = UKR }
+				set_variable = { ukraine_barrier_v_batch = 0 }
+			}
+		}
+	}
+
+	ukr_modernize_sov_equipment_tu16_egypt_offer = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_tu16_egypt_offer_done_flag }
+			date < 2003.01.01
+			country_exists = EGY
+			check_variable = { ukraine_has_tu16k_stockpile > 0 }
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_tu16_egypt_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_tu16_orders_tt
+			custom_effect_tooltip = ukraine_storage_bomber_outrage_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_tu16_egypt_offer"
+
+			set_country_flag = ukr_modernize_sov_equipment_tu16_egypt_offer_done_flag
+			EGY = { save_global_event_target_as = ukr_storage_buyer }
+			country_event = ukr_modernize_sov_equipment_storage_sale.12
+		}
+	}
+
+	ukr_modernize_sov_equipment_tu16_china_offer = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_tu16_china_offer_done_flag }
+			date < 2006.01.01
+			country_exists = CHI
+			check_variable = { ukraine_has_tu16k_stockpile > 0 }
+			OR = {
+				has_country_flag = ukr_modernize_sov_equipment_tu16_egypt_offer_done_flag
+				date > 2003.01.01
+			}
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_tu16_china_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_tu16_orders_tt
+			custom_effect_tooltip = ukraine_storage_bomber_outrage_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_tu16_china_offer"
+
+			set_country_flag = ukr_modernize_sov_equipment_tu16_china_offer_done_flag
+			CHI = { save_global_event_target_as = ukr_storage_buyer }
+			country_event = ukr_modernize_sov_equipment_storage_sale.12
+		}
+	}
+
+	ukr_modernize_sov_equipment_tu16_scrap = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_tu16_scrap_done_flag }
+			check_variable = { ukraine_has_tu16k_stockpile > 0 }
+			OR = {
+				has_country_flag = ukr_modernize_sov_equipment_tu16_china_offer_done_flag
+				date > 2006.01.01
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+				check_variable = { treasury > 0.02 }
+			}
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_tu16_scrap"
+
+			# 10 million plus up to 10 million more, depending on how many are still stored
+			set_temp_variable = { treasury_change = 0 }
+			add_to_temp_variable = { treasury_change = ukraine_has_tu16k_stockpile }
+			divide_temp_variable = { treasury_change = 27 }
+			add_to_temp_variable = { treasury_change = 1 }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_tu16_scrap"
+
+			set_country_flag = ukr_modernize_sov_equipment_tu16_scrap_done_flag
+			custom_effect_tooltip = ukr_modernize_sov_equipment_tu16_scrapped_tt
+			hidden_effect = {
+				set_variable = { ukraine_has_tu16k_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+			696 = { add_dynamic_modifier = { modifier = UKR_scrapped_tu16_resources days = 365 } }
+		}
+	}
+
+	ukr_modernize_sov_equipment_tu22_libya_offer = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_tu22_libya_offer_done_flag }
+			date < 2004.01.01
+			country_exists = LBA
+			OR = {
+				check_variable = { ukraine_has_tu22kd_stockpile > 0 }
+				check_variable = { ukraine_has_tu22rd_stockpile > 0 }
+			}
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_tu22_libya_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_tu22_orders_tt
+			custom_effect_tooltip = ukraine_storage_bomber_outrage_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_tu22_libya_offer"
+
+			set_country_flag = ukr_modernize_sov_equipment_tu22_libya_offer_done_flag
+			LBA = { save_global_event_target_as = ukr_storage_buyer }
+			country_event = ukr_modernize_sov_equipment_storage_sale.13
+		}
+	}
+
+	ukr_modernize_sov_equipment_tu22_scrap = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_tu22_scrap_done_flag }
+			OR = {
+				check_variable = { ukraine_has_tu22kd_stockpile > 0 }
+				check_variable = { ukraine_has_tu22rd_stockpile > 0 }
+			}
+			OR = {
+				has_country_flag = ukr_modernize_sov_equipment_tu22_libya_offer_done_flag
+				date > 2004.01.01
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+				check_variable = { treasury > 0.02 }
+			}
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_tu22_scrap"
+
+			# 10 million plus up to 10 million more, depending on how many are still stored
+			set_temp_variable = { treasury_change = 0 }
+			add_to_temp_variable = { treasury_change = ukraine_has_tu22kd_stockpile }
+			add_to_temp_variable = { treasury_change = ukraine_has_tu22rd_stockpile }
+			divide_temp_variable = { treasury_change = 60 }
+			add_to_temp_variable = { treasury_change = 1 }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_tu22_scrap"
+
+			set_country_flag = ukr_modernize_sov_equipment_tu22_scrap_done_flag
+			custom_effect_tooltip = ukr_modernize_sov_equipment_tu22_scrapped_tt
+			hidden_effect = {
+				set_variable = { ukraine_has_tu22kd_stockpile = 0 }
+				set_variable = { ukraine_has_tu22rd_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+			696 = { add_dynamic_modifier = { modifier = UKR_scrapped_tu22_resources days = 365 } }
+		}
+	}
 }
 
 # Captured enemy equipment, rebuilt by volunteers: needs no state plant or factory
