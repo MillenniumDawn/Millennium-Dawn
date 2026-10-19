@@ -19,16 +19,21 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "linting"))
 import disk_cache
 from check_common_mistakes import _iter_event_log_mismatches
 from image_size import read_image_size
+from shared_utils import MODIFIER_OPEN_RE as _AI_CHANCE_MODIFIER_RE
+from shared_utils import OPTION_OPEN_RE as _OPTION_OPEN_RE
+from shared_utils import TRIGGER_OPEN_RE as _TRIGGER_OPEN_RE
 from shared_utils import (
     blank_quoted_strings,
     extract_block_from_text,
     find_unquoted_brace_close,
     get_staged_files,
+    iter_statements,
     strip_comments,
     strip_inline_comment,
     validation_config,
 )
 from sprite_index import build_sprite_index, build_sprite_texture_index
+from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
@@ -317,19 +322,43 @@ def _scan_stored_variable_signs(
     return stored_variable_signs([text])
 
 
+def load_cost_lookups(
+    validator: BaseValidator,
+) -> Tuple[Dict[str, str], Dict[str, int]]:
+    """(costly_scripted_effects, stored_variable_signs) read from the whole mod."""
+    effect_texts = (
+        _read_cleaned_text(path, mod_path=validator.mod_path)
+        for path in validator._collect_files(
+            ["common/scripted_effects/**/*.txt"], ignore_staged=True
+        )
+    )
+    effects = costly_scripted_effects(text for text in effect_texts if text)
+    stored: Dict[str, int] = {}
+    script_files = validator._collect_files(
+        ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
+        ignore_staged=True,
+    )
+    for found in validator._pool_map(
+        partial(_scan_stored_variable_signs, mod_path=validator.mod_path), script_files
+    ):
+        for name, signs in found.items():
+            stored[name] = stored.get(name, 0) | signs
+    return effects, stored
+
+
 def _extract_cost_blind_options(
     filename: str, *, mod_path: Optional[str] = None
 ) -> List[Tuple[str, str, int]]:
-    """Pool worker: (message, basename, line) for options whose AI weight ignores a cost."""
+    """Pool worker: (message, path, line) for options whose AI weight ignores a cost."""
     text = _read_cleaned_text(filename, mod_path=mod_path)
     if text is None:
         return []
-    basename = os.path.basename(filename)
+    path = os.path.relpath(filename, mod_path)
     return [
         (
-            f"{name} - flat ai_chance ignores the {costs} cost"
+            f"{name} - ai_chance ignores the {costs} cost"
             + (_ALL_GATED_NOTE if all_gated else ""),
-            basename,
+            path,
             line,
         )
         for name, line, costs, all_gated in find_cost_blind_options(
@@ -524,7 +553,6 @@ def _scan_dynamic_namespaces_text(cleaned: str) -> Set[str]:
 _DATE_LOWER_BOUND_RE = re.compile(r"\bdate\s*>\s*\d{4}\.\d{1,2}\.\d{1,2}")
 # Any bound is redundant on an event the yearly effects already schedule.
 _DATE_BOUND_RE = re.compile(r"\bdate\s*[<>]=?\s*\d{4}\.\d{1,2}\.\d{1,2}")
-_TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
 
 
 def _event_trigger_body(body: str) -> Optional[str]:
@@ -893,7 +921,6 @@ def _scan_shared_call_site_file(args) -> Tuple:
 _ADD_NAMESPACE_PATTERN = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
 _RANDOM_EVENTS_PATTERN = re.compile(r"\brandom_events\s*=\s*\{")
 _RANDOM_EVENT_ID_PATTERN = re.compile(r"=\s*([A-Za-z_]\w*\.[\w.]+)")
-_OPTION_BLOCK_PATTERN = re.compile(r"\boption\s*=\s*\{")
 
 # Statements an option can carry that change no game state. `trigger` gates the
 # option's visibility and `ai_chance` weights the AI's pick; neither runs an effect.
@@ -913,7 +940,6 @@ _OPTION_NON_EFFECT_KEYS = frozenset({"name", "log", "ai_chance", "trigger"})
 _OPTION_STATEMENT_RE = re.compile(r'([A-Za-z_]\w*|\d+|"[^"]*")\s*=')
 _OPTION_TOKEN_RE = re.compile(r"[{}]|" + _OPTION_STATEMENT_RE.pattern)
 _BRACE_RE = re.compile(r"[{}]")
-_OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
 
 # Event-level (depth-1) title/desc fields — option-level name fields are
 # nested deeper and are not matched.
@@ -997,7 +1023,6 @@ _OWN_SCOPE_BLOCKS = frozenset(
         "else",
         "else_if",
         "hidden_effect",
-        "effect_tooltip",
         "random",
         "random_list",
         "meta_effect",
@@ -1013,7 +1038,25 @@ _VARIABLE_EFFECTS = frozenset(
 )
 _BLOCK_TOKEN_RE = re.compile(r"(?:([\w.:@^]+)\s*=\s*)?\{|\}")
 _OPTION_NAME_RE = re.compile(r'\bname\s*=\s*"?([\w.]+)')
-_AI_CHANCE_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
+_AI_WEIGHT_LITERAL_RE = re.compile(r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)")
+_FINANCIAL_GUARD_RE = re.compile(
+    _BANKRUPTCY_GUARD_RE.pattern + r"|\bai_has_high_deficit\s*=\s*(?:yes|no)\b"
+    r"|\bcheck_variable\s*=\s*\{\s*(?:var\s*=\s*)?(?:ROOT\.|THIS\.)?"
+    r"(?:treasury|debt|int_investments|treasury_rate|budget_balance_ratio|"
+    r"corporate_tax_rate|population_tax_rate)\b"
+)
+_COST_GUARDS = {
+    "treasury": _FINANCIAL_GUARD_RE,
+    "debt": _FINANCIAL_GUARD_RE,
+    "international investment": _FINANCIAL_GUARD_RE,
+    "tax rate": _FINANCIAL_GUARD_RE,
+    "political power": _BANKRUPTCY_GUARD_RE,
+    "stability": re.compile(r"\bhas_stability\s*[<>=]"),
+    "war support": re.compile(r"\bhas_war_support\s*[<>=]"),
+}
+_TRIGGER_SCOPE_BLOCKS = frozenset(
+    {"AND", "OR", "NOT", "hidden_trigger", "custom_trigger_tooltip"}
+)
 
 # Signs a value can have, as bits. Zero has neither, so a zero change costs nothing.
 _NEG, _POS = 1, 2
@@ -1215,8 +1258,13 @@ def costly_scripted_effects(texts: Iterable[str]) -> Dict[str, str]:
         costly |= callers
 
 
-def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
-    """(own-scope effects, option-level blocks left out of them as key -> (offset, body))."""
+def _split_option(
+    body: str, country: Optional[str] = None, *, triggers: bool = False
+) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]:
+    """(own-scope text, excluded option-level blocks as key -> (offset, body))."""
+    scope_blocks = _OWN_SCOPE_BLOCKS
+    if triggers:
+        scope_blocks |= _TRIGGER_SCOPE_BLOCKS
     own: List[str] = []
     blocks: Dict[Optional[str], Tuple[int, str]] = {}
     depth = 0
@@ -1229,9 +1277,13 @@ def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]
             key = m.group(1)
             if skip is not None or kept_whole:
                 continue
-            if key in _VARIABLE_EFFECTS:
+            if key in _VARIABLE_EFFECTS or (triggers and key == "check_variable"):
                 kept_whole = depth
-            elif key not in _OWN_SCOPE_BLOCKS and not (key or "").isdigit():
+            elif (
+                key not in scope_blocks
+                and (country is None or key != country)
+                and not (key or "").isdigit()
+            ):
                 own.append(body[cursor : m.start()])
                 skip = (depth, m.end(), key)
             continue
@@ -1248,13 +1300,68 @@ def _split_option(body: str) -> Tuple[str, Dict[Optional[str], Tuple[int, str]]]
     return " ".join(own), blocks
 
 
+def _cost_sensitive_kinds(ai_chance: str, country: Optional[str]) -> Set[str]:
+    covered: Set[str] = set()
+    pos = 0
+    while True:
+        match = _AI_CHANCE_MODIFIER_RE.search(ai_chance, pos)
+        if match is None:
+            return covered
+        end = find_unquoted_brace_close(ai_chance, match.end() - 1)
+        if end == -1:
+            return covered
+        own, _blocks = _split_option(
+            ai_chance[match.end() : end], country, triggers=True
+        )
+        pos = end + 1
+        if not any(
+            float(value) != (1 if key == "factor" else 0)
+            for key, value, block in iter_statements(own)
+            if key in {"factor", "add"}
+            and block is None
+            and value is not None
+            and _AI_WEIGHT_LITERAL_RE.fullmatch(value)
+        ):
+            continue
+        covered.update(
+            kind for kind, guard in _COST_GUARDS.items() if guard.search(own)
+        )
+
+
+def uncovered_costs(
+    effect_text: str, ai_weights: str, effects: Dict[str, str], stored: Dict[str, int]
+) -> Set[str]:
+    """Costs an effect block charges its own country that an AI weight block ignores.
+
+    Both arguments are block bodies with comments already stripped. `effects`
+    and `stored` come from load_cost_lookups.
+    """
+    own = _split_option(blank_quoted_strings(effect_text))[0]
+    return _effect_costs(own, effects, {}, stored) - _cost_sensitive_kinds(
+        ai_weights, None
+    )
+
+
+def _receiver_tag(trigger: str) -> Optional[str]:
+    """A literal tag required on every trigger path, not just mentioned in one."""
+    tags = set()
+    for key, value, block in iter_statements(trigger):
+        if key == "tag" and value and re.fullmatch(r"[A-Z0-9]{3}", value):
+            tags.add(value)
+        elif key in {"AND", "hidden_trigger", "ROOT", "THIS"} and block is not None:
+            tag = _receiver_tag(block)
+            if tag:
+                tags.add(tag)
+    return next(iter(tags)) if len(tags) == 1 else None
+
+
 def find_cost_blind_options(
     text: str, effects: Dict[str, str], stored: Dict[str, int]
 ) -> List[Tuple[str, int, str, bool]]:
     """(option name, 1-based line, costs, all gated) for AI weights that ignore a cost.
 
-    Reports an option of a multi-option event when it charges its own country and
-    its `ai_chance` has no `modifier`, so the AI pays as readily broke as flush.
+    Reports each cost not covered by a relevant, non-neutral AI modifier in the
+    choosing country's scope. Opinion and path modifiers do not cover costs.
     A missing `ai_chance` is the flat default weight. The line is the `ai_chance`
     when there is one, since that is where the fix goes. `all gated` marks an event
     where every option has a `trigger`: those may be variants the AI never chooses
@@ -1272,15 +1379,16 @@ def find_cost_blind_options(
         ]
         if len(options) < 2:
             continue
+        country = _receiver_tag(_event_trigger_body(body) or "")
         splits = [
-            _split_option(body[opt_start:opt_end]) for opt_start, opt_end in options
+            _split_option(body[opt_start:opt_end], country)
+            for opt_start, opt_end in options
         ]
         all_gated = all("trigger" in blocks for _own, blocks in splits)
         for (opt_start, opt_end), (own, blocks) in zip(options, splits):
             ai_offset, ai_chance = blocks.get("ai_chance", (0, ""))
-            if _AI_CHANCE_MODIFIER_RE.search(ai_chance):
-                continue
             costs = _effect_costs(own, effects, {}, stored)
+            costs -= _cost_sensitive_kinds(ai_chance, country)
             if not costs:
                 continue
             name = _OPTION_NAME_RE.search(text, base + opt_start, base + opt_end)
@@ -1388,7 +1496,7 @@ def _parse_event_metadata(text: str, basename: str) -> Tuple[List[dict], Set[str
                 "fire_only_once": "fire_only_once = yes" in body_nc,
                 "is_major": bool(_RE_MAJOR_YES.search(body_nc)),
                 "has_mtth": "mean_time_to_happen" in body_nc,
-                "option_count": len(_OPTION_BLOCK_PATTERN.findall(body)),
+                "option_count": len(_OPTION_OPEN_RE.findall(body)),
                 "title_desc_refs": [
                     v.strip() for v in _EVENT_TITLEDESC_PATTERN.findall(body)
                 ],
@@ -1419,8 +1527,8 @@ class Validator(BaseValidator):
     def _get_event_metadata(self) -> Tuple[List[dict], set]:
         """Parse all event files and return (event_metadata_list, declared_namespaces).
 
-        Each metadata dict has: id (or None for malformed blocks), type, file,
-        is_hidden, picture_refs, is_triggered_only, fire_only_once,
+        Each metadata dict has: id (or None for malformed blocks), type, file
+        (basename), path (mod-relative), line, is_hidden, picture_refs, is_triggered_only, fire_only_once,
         is_major, has_mtth, option_count, title_desc_refs.
         """
         if self._meta_cache is None:
@@ -1455,6 +1563,9 @@ class Validator(BaseValidator):
                     if text
                     else ([], set())
                 )
+                rel = self._rel_posix(filepath)
+                for ev in parsed[0]:
+                    ev["path"] = rel
                 self._parsed_event_files[filepath] = parsed
             meta.extend(parsed[0])
             namespaces |= parsed[1]
@@ -1852,7 +1963,9 @@ class Validator(BaseValidator):
             eid = ev["id"] or "unknown"
             for key in _LOC_REF_PATTERN.findall(ev["body"]):
                 if "." in key and key not in loc_keys:
-                    results.append(f"{eid} - {ev['file']}: missing loc key '{key}'")
+                    results.append(
+                        (f"{eid}: missing loc key '{key}'", ev["path"], ev["line"])
+                    )
 
         self._report(
             results,
@@ -1868,8 +1981,8 @@ class Validator(BaseValidator):
         )
 
         meta, _ = self._get_event_metadata()
-        triggered_only_ids: Dict[str, str] = {
-            ev["id"]: ev["file"]
+        triggered_only_ids: Dict[str, dict] = {
+            ev["id"]: ev
             for ev in meta
             if ev["id"] is not None
             and ev["is_triggered_only"]
@@ -1914,7 +2027,8 @@ class Validator(BaseValidator):
             ns = eid[:last_dot] if last_dot >= 0 else eid
             if ns in dynamic_namespaces:
                 continue
-            results.append(f"{eid} - {triggered_only_ids[eid]}")
+            ev = triggered_only_ids[eid]
+            results.append((f"{eid}: no references found", ev["path"], ev["line"]))
 
         self._report(
             results,
@@ -2697,11 +2811,7 @@ class Validator(BaseValidator):
         )
 
     def validate_ai_chance_ignores_cost(self):
-        """Flag options whose flat `ai_chance` ignores what the option costs.
-
-        Off unless `--check-ai-chance-costs` is passed: the backlog is mod-wide
-        (#5096), so the check stays out of CI until it is worked down.
-        """
+        """Warn on cost-insensitive AI weights when enabled by CLI or the CI batch."""
         if not self.check_ai_chance_costs:
             self._log_section(
                 "Skipping AI weight cost check (pass --check-ai-chance-costs to enable)"
@@ -2712,23 +2822,7 @@ class Validator(BaseValidator):
         if not files:
             self.log("  No event files in scope — skipping")
             return
-        effect_texts = (
-            _read_cleaned_text(path, mod_path=self.mod_path)
-            for path in self._collect_files(
-                ["common/scripted_effects/**/*.txt"], ignore_staged=True
-            )
-        )
-        effects = costly_scripted_effects(text for text in effect_texts if text)
-        stored: Dict[str, int] = {}
-        script_files = self._collect_files(
-            ["common/**/*.txt", "events/**/*.txt", "history/**/*.txt"],
-            ignore_staged=True,
-        )
-        for found in self._pool_map(
-            partial(_scan_stored_variable_signs, mod_path=self.mod_path), script_files
-        ):
-            for name, signs in found.items():
-                stored[name] = stored.get(name, 0) | signs
+        effects, stored = load_cost_lookups(self)
         results: List[Tuple[str, str, int]] = []
         for sub in self._pool_map_init(
             partial(_extract_cost_blind_options, mod_path=self.mod_path),
@@ -2740,8 +2834,8 @@ class Validator(BaseValidator):
         self._report(
             sorted(results, key=lambda r: (r[1], r[2])),
             "✓ No event AI weights ignoring option costs",
-            "Event options with a cost and a flat ai_chance (add a modifier for"
-            " affordability or for the situation the cost solves):",
+            "Event options whose ai_chance ignores a cost (add a relevant modifier"
+            " in the choosing country's scope):",
             Severity.WARNING,
             category="event-ai-chance-ignores-cost",
         )
@@ -2778,7 +2872,7 @@ def _add_extra_args(parser):
         "--check-ai-chance-costs",
         action="store_true",
         dest="check_ai_chance_costs",
-        help="Report event options whose flat ai_chance ignores the option's cost",
+        help="Report event options whose ai_chance ignores the option's cost",
     )
 
 

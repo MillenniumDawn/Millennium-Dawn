@@ -11,6 +11,7 @@ from typing import Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import WORD_BLOCK_START_RE as VANILLA_NAMESPACE_RE
 from shared_utils import find_hoi4_install
 from validator_common import BaseValidator, run_validator_main
 
@@ -22,9 +23,6 @@ MD_DEFINE_RE = re.compile(r"NDefines\.(\w+)\.(\w+)\s*=", re.IGNORECASE)
 
 # Pattern in vanilla: NAME = value (inside a namespace block)
 VANILLA_DEFINE_RE = re.compile(r"^\s+(\w+)\s*=")
-
-# Pattern for namespace blocks in vanilla: NAMESPACE = {
-VANILLA_NAMESPACE_RE = re.compile(r"^(\w+)\s*=\s*\{")
 
 
 def find_vanilla_defines() -> Optional[str]:
@@ -176,7 +174,7 @@ class Validator(BaseValidator):
     TITLE = "DEFINES VALIDATION"
     STAGED_EXTENSIONS = [".lua"]
 
-    def __init__(self, *args, vanilla_path: str = None, **kwargs):
+    def __init__(self, *args, vanilla_path: Optional[str] = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.vanilla_path = vanilla_path
 

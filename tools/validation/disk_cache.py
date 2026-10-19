@@ -54,7 +54,9 @@ CACHE_VERSION = 9
 _VALIDATOR_NAMESPACES = {
     "agency": "validate_agency_upgrades.py",
     "agency_upgrades": "validate_agency_upgrades.py",
+    "ai_weight_order_scan_v1": "validate_ai_weight_order.py",
     "building_guards_scan_v5": "validate_building_guards.py",
+    "country_graphical_cultures": "validate_graphical_cultures.py",
     "cosmetic": "validate_cosmetic_tags.py",
     "decisions": "validate_decisions.py",
     "dlc_guards_scan": "validate_dlc_guards.py",
@@ -62,6 +64,7 @@ _VALIDATOR_NAMESPACES = {
     "events": "validate_events.py",
     "focus_tree": "validate_focus_tree.py",
     "gfx_ref": "validate_gfx_references.py",
+    "graphical_culture_registry": "validate_graphical_cultures.py",
     "history_techs": "validate_history.py",
     "ideas": "validate_ideas.py",
     "influence_calls_scan_v2": "validate_influence_calls.py",
@@ -91,6 +94,7 @@ _CACHE_RECORD = "md.cache.v9"
 # These helpers are called inside cached computations, so their source changes
 # must invalidate the owning namespace without making unrelated namespaces cold.
 _HELPER_DEPENDENCIES = {
+    "ai_weight_order_scan_v1": ("guard_scan.py",),
     "building_guards_scan_v5": ("guard_scan.py",),
     "dlc_guards_scan": ("validate_history.py",),
     "dynamic_modifier_guards_scan_v1": ("guard_scan.py",),

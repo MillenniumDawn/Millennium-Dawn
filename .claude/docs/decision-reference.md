@@ -142,6 +142,28 @@ state, so without it every repeat returns the same branch. `fire_only_once = yes
 decisions are exempt. Write `fixed_random_seed = yes` when the repeat should be
 deterministic.
 
+## Cost-aware AI weights
+
+A decision that charges the treasury, raises debt, or moves a tax rate needs an
+`ai_will_do` that checks whether the country can pay. Zero it under the bankruptcy
+mission and halve it on a high deficit:
+
+```
+ ai_will_do = {
+  base = 10
+  modifier = { add = 5 has_war = yes }
+  modifier = { factor = 0.5 ai_has_high_deficit = yes }
+  modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+ }
+```
+
+- Modifiers run in order on a running total. Put every `factor = 0` modifier after the
+  adds, or a later `add` brings the zeroed weight back.
+- Leave the weight off when skipping the decision costs the AI more than the charge.
+- Political power needs no weight. `cost` and `ai_hint_pp_cost` tell the AI the price.
+
+The Spanish decisions in `common/decisions/Spain.txt` are the reference.
+
 ## Formables
 
 Every decision in `formable_nation_decisions.txt` carries the AI commitment gate, and a
