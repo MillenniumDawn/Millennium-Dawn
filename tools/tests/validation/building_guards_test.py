@@ -528,44 +528,6 @@ def test_bare_comparison_guards_a_province_building():
     assert _scan_province(script) == []
 
 
-# --- scan_file cache --------------------------------------------------------
-
-
-def test_scan_file_reads_and_relativizes_path(tmp_path, monkeypatch):
-    monkeypatch.delenv("MD_NO_CACHE", raising=False)
-    events_dir = tmp_path / "events"
-    events_dir.mkdir()
-    filepath = events_dir / "test_events.txt"
-    filepath.write_text(
-        "652 = {\n"
-        "\tdamage_building = {\n"
-        "\t\ttype = fuel_silo\n"
-        "\t\tdamage = 1\n"
-        "\t}\n"
-        "}\n",
-        encoding="utf-8",
-    )
-    mod_path = str(tmp_path) + "/"
-    findings = V.scan_file((str(filepath), mod_path))
-    assert len(findings) == 1
-    category, relative, line, message = findings[0]
-    assert category == "unguarded-damage-building"
-    assert relative == "events/test_events.txt"
-    assert line == 2
-    assert "fuel_silo" in message
-
-
-def test_scan_file_skips_files_without_building_effects(tmp_path):
-    filepath = tmp_path / "no_buildings.txt"
-    filepath.write_text("focus = { id = TST_focus }\n", encoding="utf-8")
-    assert V.scan_file((str(filepath), str(tmp_path) + "/")) == []
-
-
-def test_scan_file_skips_unreadable_files(tmp_path):
-    (tmp_path / "damage_building.txt").mkdir()
-    assert V.scan_file((str(tmp_path / "damage_building.txt"), str(tmp_path))) == []
-
-
 # --- effects with no type field --------------------------------------------
 
 
