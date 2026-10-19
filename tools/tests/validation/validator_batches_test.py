@@ -50,28 +50,23 @@ def test_core_batch_selects_from_the_core_groups():
         assert set(spec.groups) == set(vb._CORE_GROUPS) | extra
 
 
-def test_variables_spec_carries_the_redundant_focus_flag_scan():
-    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "variables")
-    assert spec.args == ("--redundant-focus-flags",)
-    assert spec.strict is True
-
-
-def test_decisions_spec_carries_the_unannounced_category_scan():
-    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "decisions")
-    assert spec.args == ("--unannounced-categories",)
-    assert spec.strict is True
-
-
-def test_math_expressions_spec_carries_the_clamp_bounds_check():
-    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "math-expressions")
-    assert spec.args == ("--clamp-bounds",)
-    assert spec.strict is True
-
-
-def test_events_spec_carries_the_cost_sensitivity_check():
-    spec = next(spec for spec in vb.ALL_SPECS if spec.name == "events")
-    assert spec.args == ("--check-ai-chance-costs",)
-    assert spec.strict is True
+def test_specs_carry_their_opt_in_checks():
+    # PR batches and the main baseline both read args; baseline_args widen a
+    # diff-scoped check on main only.
+    assert {
+        spec.name: (spec.args, spec.baseline_args, spec.strict)
+        for spec in vb.ALL_SPECS
+        if spec.args or spec.baseline_args
+    } == {
+        "bonus-names": (("--name-not-owner-id",), (), True),
+        "decisions": (("--unannounced-categories",), (), True),
+        "events": (("--check-ai-chance-costs",), (), True),
+        "focus-tree": (("--missing-icons",), (), True),
+        "ideas": (("--missing-name-loc",), (), True),
+        "math-expressions": (("--clamp-bounds",), (), True),
+        "party-loc": ((), ("--all",), True),
+        "variables": (("--redundant-focus-flags",), (), True),
+    }
 
 
 def test_selected_specs_filters_by_changed_groups():
@@ -131,7 +126,7 @@ def test_shared_module_change_selects_its_transitive_consumers():
 @pytest.mark.usefixtures("reuse_repository_import_graph")
 def test_linting_wrapper_change_selects_the_validator_it_wraps():
     # validate_common_mistakes, validate_decisions, validate_equipment_variants,
-    # and validate_events import this scanner.
+    # validate_history and its DLC-guard consumer also use the shared parser.
     batch, adhoc = vb.select_for_changed_files(
         ["tools/linting/check_common_mistakes.py"]
     )
@@ -140,6 +135,8 @@ def test_linting_wrapper_change_selects_the_validator_it_wraps():
         "decisions",
         "equipment-variants",
         "events",
+        "history",
+        "dlc-guards",
     }
     assert adhoc == []
 
@@ -425,3 +422,11 @@ def test_import_graph_is_built_once_per_selection_not_cached_across_calls(
     assert {spec.name for spec in batch} == {"tech-categories", "bonus-names", "ideas"}
     assert adhoc == []
     assert len(calls) == 3
+
+
+def test_country_history_selects_history_validator():
+    from change_groups import classify
+
+    groups = classify(["history/countries/JAP - Japan.txt"])
+    assert groups["history"]
+    assert "history" in {spec.name for spec in rvb.selected_specs("core", {"history"})}

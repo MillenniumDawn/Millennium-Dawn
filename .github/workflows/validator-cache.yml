@@ -1,21 +1,12 @@
 name: Validator Cache (main)
 
-# Builds the shared validator cache and checks the main baseline in one run.
+# Builds the shared validator cache, records each main commit's baseline, and
+# checks it against the last accepted one in one run.
 
 on:
+  # No path filter: a PR report accepts only its base commit's baseline.
   push:
     branches: [main]
-    paths:
-      - "common/**"
-      - "events/**"
-      - "history/**"
-      - "localisation/**"
-      - "interface/**"
-      - "gfx/flags/**"
-      - "gfx/interface/decisions/**"
-      - "gfx/interface/equipmentdesigner/graphic_db/**"
-      - "tools/**"
-      - ".github/workflows/validator-cache.yml"
   # Rebuild nightly so quiet periods and cache eviction do not leave PRs cold.
   schedule:
     - cron: "0 7 * * *"
@@ -55,9 +46,9 @@ jobs:
         id: toolshash
         run: >-
           echo "hash=${{ hashFiles('tools/validation/**/*.py',
-          'tools/validation/**/*.txt',
-          'tools/shared_utils.py',
-          'validation_config.json') }}" >> "$GITHUB_OUTPUT"
+          'tools/validation/**/*.txt', 'tools/shared_utils.py',
+          'validation_config.json', 'resources/documentation/**',
+          '.claude/docs/typo-watchlist.md') }}" >> "$GITHUB_OUTPUT"
 
       # Restore the newest compatible entry for an incremental rebuild.
       - name: Restore previous validator disk cache
@@ -112,18 +103,19 @@ jobs:
           fi
           echo "Cache entry ${EXPECTED_KEY} confirmed"
 
-      # Ignore baselines from older validator generations.
-      - name: Restore previous validation baseline
+      # The alarm compares against the last accepted run of this validator
+      # generation; older generations are ignored.
+      - name: Restore last accepted validation baseline
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
-          path: .validation_baseline
+          path: .validation_accepted
           key: >-
-            md-baseline-v1-${{ runner.os }}-${{
+            md-accepted-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{ github.sha }}
           restore-keys: |
-            md-baseline-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
+            md-accepted-v1-${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-
 
-      - name: Diff against previous baseline
+      - name: Diff against last accepted baseline
         id: diff
         env:
           COMMIT_SHA: ${{ github.sha }}
@@ -133,17 +125,28 @@ jobs:
           workflow_url="$GITHUB_SERVER_URL/$GITHUB_REPOSITORY"
           workflow_url="$workflow_url/actions/runs/$GITHUB_RUN_ID"
           python3 tools/baseline_check.py \
-            --previous .validation_baseline \
+            --previous .validation_accepted \
             --current .validation_baseline_candidate \
-            --output .validation_baseline \
+            --output .validation_accepted \
+            --observation .validation_baseline \
             --toolshash "$TOOLSHASH" \
             --commit-sha "$COMMIT_SHA" \
             --workflow-run-url "$workflow_url" \
             --github-repository "$REPOSITORY"
 
-      # Save only when the baseline diff has no new errors.
+      # baseline_check records this commit's results only for a complete run.
+      - name: Check for a recorded baseline
+        id: recorded
+        if: ${{ !cancelled() }}
+        run: |
+          if [ -f .validation_baseline/baseline-meta.json ]; then
+            echo "found=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      # PR reports compare against this commit's results even when the alarm
+      # fails.
       - name: Save validation baseline
-        if: steps.diff.outcome == 'success'
+        if: ${{ !cancelled() && steps.recorded.outputs.found == 'true' }}
         uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
         with:
           path: .validation_baseline
@@ -152,21 +155,37 @@ jobs:
             steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
             github.run_id }}
 
-      # Make a failed save visible instead of leaving PRs on an old baseline.
-      - name: Verify this run's baseline entry exists
+      - name: Save accepted validation baseline
         if: steps.diff.outcome == 'success'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          EXPECTED_KEY: >-
-            md-baseline-v1-${{ runner.os }}-${{
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9
+        with:
+          path: .validation_accepted
+          key: >-
+            md-accepted-v1-${{ runner.os }}-${{
             steps.toolshash.outputs.hash }}-${{ github.sha }}-${{
             github.run_id }}
+
+      # Make a failed save visible instead of leaving PRs without a baseline.
+      - name: Verify this run's baseline entries exist
+        if: ${{ !cancelled() && steps.recorded.outputs.found == 'true' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ACCEPTED: ${{ steps.diff.outcome == 'success' }}
+          KEY_SUFFIX: >-
+            ${{ runner.os }}-${{ steps.toolshash.outputs.hash }}-${{
+            github.sha }}-${{ github.run_id }}
         run: |
-          cache_url="repos/${{ github.repository }}/actions/caches"
-          cache_url="${cache_url}?key=$EXPECTED_KEY&per_page=1"
-          count=$(gh api "$cache_url" --jq '.total_count')
-          if [ "$count" -eq 0 ]; then
-            echo "::error::Baseline entry ${EXPECTED_KEY} was not saved"
-            exit 1
+          keys=("md-baseline-v1-$KEY_SUFFIX")
+          if [ "$ACCEPTED" = true ]; then
+            keys+=("md-accepted-v1-$KEY_SUFFIX")
           fi
-          echo "Baseline entry ${EXPECTED_KEY} confirmed"
+          for key in "${keys[@]}"; do
+            cache_url="repos/${{ github.repository }}/actions/caches"
+            cache_url="${cache_url}?key=$key&per_page=1"
+            count=$(gh api "$cache_url" --jq '.total_count')
+            if [ "$count" -eq 0 ]; then
+              echo "::error::Cache entry ${key} was not saved"
+              exit 1
+            fi
+            echo "Cache entry ${key} confirmed"
+          done

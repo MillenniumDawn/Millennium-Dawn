@@ -23,6 +23,8 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
 from focus_geometry import HIDE_RULE_PREFIX, HIDE_RULE_TERMS, analyze_layout
+from shared_utils import AVAILABLE_OPEN_RE as _AVAILABLE_BLOCK_START
+from shared_utils import TRIGGER_OPEN_RE as _OPTION_TRIGGER_RE
 from shared_utils import extract_block_from_text as _extract_block
 from shared_utils import (
     get_staged_files,
@@ -33,6 +35,7 @@ from shared_utils import (
     word_start_re,
 )
 from sprite_index import build_sprite_index
+from validator_common import BANKRUPTCY_GUARD_RE as _BANKRUPTCY_GUARD_RE
 from validator_common import (
     FACTOR_ZERO_RE,
     BaseValidator,
@@ -156,9 +159,6 @@ _CAN_STAFF_NO_RE = re.compile(r"\b(can_staff_an_\w+)\s*=\s*no\b")
 _CAN_STAFF_NOT_YES_RE = re.compile(
     r"\bNOT\s*=\s*\{\s*(can_staff_an_\w+)\s*=\s*yes\s*\}"
 )
-_BANKRUPTCY_GUARD_RE = re.compile(
-    r"\bhas_active_mission\s*=\s*bankruptcy_incoming_collapse\b"
-)
 _ADD_BUILDING_START = word_start_re("add_building_construction", r"\s*=\s*\{")
 _TYPE_LINE_RE = re.compile(r"\btype\s*=\s*(\w+)")
 # Money spend (MD budget system): treasury_change is set (a literal, a `{ }`
@@ -235,7 +235,6 @@ _EVENT_BLOCK_RE = re.compile(r"^(country_event|news_event)\s*=\s*\{", re.M)
 _EVENT_ID_RE = re.compile(r"\bid\s*=\s*([\w.]+)")
 _EVENT_OPTION_RE = word_start_re("option", r"\s*=\s*\{")
 _EVENT_HIDDEN_RE = word_start_re("hidden", r"\s*=\s*yes\b")
-_OPTION_TRIGGER_RE = re.compile(r"\btrigger\s*=\s*\{")
 _NEGATION_RE = re.compile(r"\bNOT\s*=\s*\{")
 # Option bookkeeping that is not an outcome: the label, the log line, the AI
 # weight and the visibility trigger. An option with nothing else does nothing.
@@ -1210,7 +1209,6 @@ _FOCUS_DEFAULT_WRITE_RE = re.compile(
     r"\b(?:cancel_if_invalid\s*=\s*yes|continue_if_invalid\s*=\s*no"
     r"|available_if_capitulated\s*=\s*no)\b"
 )
-_AVAILABLE_BLOCK_START = re.compile(r"\bavailable\s*=\s*\{")
 _ALWAYS_NO_BODY_RE = re.compile(r"\s*always\s*=\s*no\s*")
 _RE_BYPASS_BLOCK = re.compile(r"\bbypass\s*=\s*\{")
 _RE_EMPTY_MUTEX = word_start_re("mutually_exclusive", r"\s*=\s*\{\s*\}")

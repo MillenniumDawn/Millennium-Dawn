@@ -125,10 +125,10 @@ def test_missing_loc_skips_hidden_events_and_dotless_keys(tmp_path):
 
     v.validate_missing_localisation()
 
-    assert sorted(_messages(v)) == [
-        "vis.1 - Ev.txt: missing loc key 'vis.1.a'",
-        "vis.2 - Ev.txt: missing loc key 'vis.2.a'",
-        "vis.2 - Ev.txt: missing loc key 'vis.2.t'",
+    assert sorted((i.message, i.file, i.line) for i in v._issues) == [
+        ("vis.1: missing loc key 'vis.1.a'", "events/Ev.txt", 1),
+        ("vis.2: missing loc key 'vis.2.a'", "events/Ev.txt", 8),
+        ("vis.2: missing loc key 'vis.2.t'", "events/Ev.txt", 8),
     ]
 
 
@@ -238,8 +238,13 @@ def test_unreferenced_triggered_only_flagged_unless_fired_dynamic_or_exempt(tmp_
 
     v.validate_triggered_only_unreferenced()
 
-    assert [(i.message, i.category) for i in v._issues] == [
-        ("foo.9 - Ev.txt", "unreferenced-triggered-only")
+    assert [(i.message, i.file, i.line, i.category) for i in v._issues] == [
+        (
+            "foo.9: no references found",
+            "events/Ev.txt",
+            4,
+            "unreferenced-triggered-only",
+        )
     ]
 
 

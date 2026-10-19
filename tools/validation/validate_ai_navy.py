@@ -4,13 +4,17 @@
 # taskforces, mission types against valid HOI4 naval missions, and optimal
 # composition sizes against NAI define limits. Suggests the closest match for
 # likely typos.
+import collections
 import difflib
 import glob
 import os
 import re
-from collections import Counter
+import sys
 from typing import Dict, List, Set, Tuple
 
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
+
+from shared_utils import WORD_BLOCK_START_RE as TASKFORCE_DEF_RE
 from validator_common import BaseValidator, run_validator_main, strip_comments
 
 # Valid HOI4 naval mission types
@@ -63,9 +67,6 @@ MISSION_BLOCK_RE = re.compile(r"mission\s*=?\s*\{([^}]*)\}")
 
 # Taskforce name references in fleet templates
 TASKFORCE_REF_RE = re.compile(r"^\s+(\w+)\s*=\s*(\d+)")
-
-# Taskforce definition: top-level name = {
-TASKFORCE_DEF_RE = re.compile(r"^(\w+)\s*=\s*\{")
 
 
 def parse_naval_units(mod_path: str) -> Set[str]:
@@ -387,7 +388,7 @@ class Validator(BaseValidator):
         )
 
         # The game allows one mission per template, asserts on more, and only uses the first.
-        per_line = Counter(
+        per_line = collections.Counter(
             (filename, line_num) for _m, filename, line_num in mission_refs
         )
         multi_results = [

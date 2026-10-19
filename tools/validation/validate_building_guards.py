@@ -60,7 +60,7 @@ from typing import List, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import disk_cache  # noqa: E402 — same-dir import after sys.path tweak above
 from guard_scan import SKIP_BLOCKS as _SKIP_BLOCKS  # noqa: E402
-from guard_scan import Context, report_findings  # noqa: E402
+from guard_scan import Context, read_file, report_findings  # noqa: E402
 from guard_scan import sanitize as _sanitize  # noqa: E402
 from shared_utils import compute_line_offsets, line_for_offset
 from validator_common import (
@@ -295,11 +295,7 @@ class Scanner:
 def scan_file(args: Tuple[str, str]) -> List[Tuple[str, str, int, str]]:
     """Return (category, relative path, line, message) for one content file."""
     filepath, mod_path = args
-    try:
-        with open(filepath, encoding="utf-8-sig", errors="replace") as handle:
-            raw = handle.read()
-    except OSError:
-        return []
+    raw = read_file(filepath)
     if not any(
         token in raw
         for token in (

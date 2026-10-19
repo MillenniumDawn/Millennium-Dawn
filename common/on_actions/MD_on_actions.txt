@@ -35,6 +35,7 @@ on_actions = {
 			# Per-week decay; must stay out of ingame_update_setup, which re-runs on demand (focuses, events, economy refresh button)
 			update_tension_premium = yes
 			ingame_update_setup = yes
+			update_population_growth_floor = yes
 			# Delay until every country's weekly economic totals have refreshed.
 			if = {
 				limit = { is_faction_leader = yes }
@@ -134,7 +135,12 @@ on_actions = {
 				clear_array = subject_subsidization_to_remove
 			}
 
-			if = { limit = { NOT = { has_country_flag = disabled_economic_system } }
+			# TODO: Revisit whether governments in exile should retain active cash flow.
+			if = {
+				limit = {
+					NOT = { has_country_flag = disabled_economic_system }
+					has_capitulated = no
+				}
 				set_temp_variable = { treasury_rate_gain = treasury_rate }
 
 				# Pay down debt automatically this weekly tick
@@ -326,6 +332,25 @@ on_actions = {
 				}
 			}
 
+			# FROM still exists here and can be released later, so clear both sides of its trade agreements
+			every_country = {
+				limit = { has_country_flag = trade_agreement@FROM }
+				clr_country_flag = trade_agreement@FROM
+				add_to_variable = { signed_trade_agreements = -1 }
+				if = {
+					limit = { original_tag = SIN }
+					SIN_calculate_singaporean_trade_agreements = yes
+				}
+				FROM = {
+					clr_country_flag = trade_agreement@PREV
+					add_to_variable = { signed_trade_agreements = -1 }
+					if = {
+						limit = { original_tag = SIN }
+						remove_from_array = { SIN_singaporean_trade_agreement = PREV.id }
+						SIN_calculate_singaporean_trade_agreements = yes
+					}
+				}
+			}
 			if = {
 				limit = { is_in_array = { SIN.SIN_singaporean_trade_agreement = FROM.id } }
 				remove_from_array = { SIN.SIN_singaporean_trade_agreement = FROM.id }
@@ -438,7 +463,7 @@ on_actions = {
 				}
 				if = {
 					limit = { has_country_flag = antarctica_has_active_station }
-					antarctica_remove_research_station = yes
+					antarctica_remove_all_research_stations = yes
 					ROOT = { country_event = MD_antarctica.10 }
 				}
 			}
@@ -820,6 +845,8 @@ on_actions = {
 					set_variable = { global.world_gdp_start = global.world_gdp }
 				}
 				set_variable = { global.world_trade_factor = { value = global.world_gdp divide = global.world_gdp_start } }
+
+				update_world_migration_balance = yes
 
 				# Power Ranking: Calculate contributions (months 1, 4, 7, 10)
 				if = {

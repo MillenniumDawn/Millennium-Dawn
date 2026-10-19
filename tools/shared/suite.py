@@ -119,7 +119,9 @@ def checks_called_by_run(validator, monkeypatch):
     checks = sorted(name for name in dir(validator) if name.startswith("validate_"))
     called = []
     for name in checks:
-        monkeypatch.setattr(validator, name, lambda name=name: called.append(name))
+        monkeypatch.setattr(
+            validator, name, lambda *_args, name=name: called.append(name)
+        )
     validator.run_validations()
     return sorted(called), checks
 
@@ -265,7 +267,7 @@ def fake_decisions_validator(*args, **kwargs):
 def decision_factory(body, basename="X.txt"):
     import validate_decisions as V
 
-    return V.DecisionFactory(body, source_basename=basename)
+    return V.DecisionFactory(body, source_path=basename)
 
 
 def event_block(event_id, *fields, kind="country_event"):

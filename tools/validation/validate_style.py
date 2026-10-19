@@ -25,6 +25,7 @@ from typing import List, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
+from shared_utils import OPTION_OPEN_RE as _RE_OPTION
 from shared_utils import blank_quoted_strings, strip_inline_comment, validation_config
 from validator_common import BaseValidator, Severity, run_validator_main
 
@@ -39,7 +40,6 @@ _RE_NO_SP_OPEN = re.compile(r"([^\s]+)\{|\{([^\s]+)", re.M | re.I)
 _RE_NO_SP_CLOSE = re.compile(r"([^\s]+)\}|\}([^\s]+)", re.M | re.I)
 _RE_FOCUS_FORMAT = re.compile(r"^[A-Z]{3}_[a-zA-Z0-9_-]+$", re.M | re.U)
 _RE_NEWS_EVENT = re.compile(r"news_event\s*=\s*\{")
-_RE_OPTION = re.compile(r"\boption\s*=\s*\{")
 _RE_OPTION_TRIGGER = re.compile(r"trigger\s*=\s*\{")
 
 _RE_EFFECT_BLOCK = re.compile(

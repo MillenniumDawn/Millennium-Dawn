@@ -110,44 +110,48 @@ def _counts(text, bare=None, dotted=None):
     return _count_refs_in_text(text)
 
 
-def test_bare_read_satisfies_a_global_namespaced_target():
-    counts, patterns = _counts(
+_GLOBAL_DOTTED = {"global.tag_global_var": "global.TAG_global_var"}
+
+# case: (text, bare targets, global targets, read counts)
+_REF_COUNT_CASES = {
+    "bare read of a global target": (
         "check_variable = { tag_global_var > 0 }",
-        dotted={"global.tag_global_var": "global.TAG_global_var"},
-    )
-
-    assert counts == {"global.TAG_global_var": 1}
-    assert patterns == set()
-
-
-def test_namespaced_read_is_consumed_as_one_unit():
-    counts, _ = _counts(
+        {},
+        _GLOBAL_DOTTED,
+        {"global.TAG_global_var": 1},
+    ),
+    "namespaced read is one unit": (
         "check_variable = { global.tag_global_var > 0 }",
-        bare={"tag_global_var": "TAG_global_var"},
-        dotted={"global.tag_global_var": "global.TAG_global_var"},
-    )
+        {"tag_global_var": "TAG_global_var"},
+        _GLOBAL_DOTTED,
+        {"global.TAG_global_var": 1},
+    ),
+    "unknown global chain counts its tail": (
+        "log = global.tag_other_var",
+        {"tag_other_var": "TAG_other_var"},
+        {},
+        {"TAG_other_var": 1},
+    ),
+    "scoped read counts against the bare target": (
+        "this.tag_gui_var",
+        {"tag_gui_var": "TAG_gui_var"},
+        {},
+        {"TAG_gui_var": 1},
+    ),
+    "write target is not a read": (
+        "set_variable = { tag_x = 1 }",
+        {"tag_x": "TAG_x"},
+        {},
+        {},
+    ),
+}
 
-    assert counts == {"global.TAG_global_var": 1}
 
-
-def test_unknown_global_chain_still_counts_its_tail_segment():
-    counts, _ = _counts(
-        "log = global.tag_other_var", bare={"tag_other_var": "TAG_other_var"}
-    )
-
-    assert counts == {"TAG_other_var": 1}
-
-
-def test_scoped_read_counts_against_the_bare_target():
-    counts, _ = _counts("this.tag_gui_var", bare={"tag_gui_var": "TAG_gui_var"})
-
-    assert counts == {"TAG_gui_var": 1}
-
-
-def test_write_target_is_not_counted_as_a_read():
-    counts, _ = _counts("set_variable = { tag_x = 1 }", bare={"tag_x": "TAG_x"})
-
-    assert counts == {}
+@pytest.mark.parametrize(
+    "text, bare, dotted, expected", _REF_COUNT_CASES.values(), ids=_REF_COUNT_CASES
+)
+def test_count_refs_in_text(text, bare, dotted, expected):
+    assert _counts(text, bare=bare, dotted=dotted) == (expected, set())
 
 
 def test_dynamic_reference_patterns_need_a_literal_anchor():

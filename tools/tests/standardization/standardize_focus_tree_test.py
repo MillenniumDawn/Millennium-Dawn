@@ -941,3 +941,160 @@ def test_main_exits_one_when_naming_check_rejects(tmp_path, monkeypatch):
 
     assert exit_info.value.code == 1
     assert not output.exists()
+
+
+_FULL_TREE = """focus_tree = {
+\tcontinuous_focus_position = { x = 5700 y = 2000 }
+\tinitial_show_position = { x = 2 y = 0 }
+\toffset = {
+\t\tx = 1
+\t\ty = 2
+\t\ttrigger = { has_country_flag = TST_ready }
+\t}
+\tshortcut = {
+\t\tname = TST_shortcut
+\t\ttarget = TST_focus
+\t\tscroll_wheel_factor = 1
+\t\ttrigger = { has_country_flag = TST_ready }
+\t\tpriority = 2
+\t}
+\tinlay_window = {
+\t\tid = TST_window
+\t\tposition = { x = 1 y = 2 }
+\t\toverride_position = { x = 3 y = 4 }
+\t\tvisible = yes
+\t}
+\tfocus = {
+\t\tid = TST_focus # comment
+\t\ticon = GFX_goal_generic_political_pressure
+\t\ttext_icon = TST_text
+\t\toverlay = GFX_overlay
+\t\tx = 0
+\t\ty = 1
+\t\trelative_position_id = TST_parent
+\t\toffset = {
+\t\t\tx = 2
+\t\t\ty = 3
+\t\t\ttrigger = { has_war = no }
+\t\t}
+\t\tallow_branch = { has_country_flag = TST_ready }
+\t\tprerequisite = { focus = TST_parent }
+\t\tmutually_exclusive = { focus = TST_other }
+\t\twill_lead_to_war_with = TST_enemy
+\t\tsearch_filters = {
+\t\t\tpolitics
+\t\t\tnational_focus
+\t\t}
+\t\tavailable = { has_war = no }
+\t\tbypass = { has_country_flag = TST_done }
+\t\tcancel = { has_war = yes }
+\t\tselect_effect = { add_political_power = 1 }
+\t\tcompletion_reward = {
+\t\t\tadd_stability = 0.1
+\t\t}
+\t\tcompletion_reward_joint_originator = { add_political_power = 2 }
+\t\tcompletion_reward_joint_member = { add_political_power = 3 }
+\t\tbypass_effect = { add_political_power = 4 }
+\t\tunknown_property = yes
+\t\tai_will_do = { factor = 0.5 }
+\t}
+}
+shared_focus = {
+\tid = TST_shared
+\tcompletion_reward = { add_political_power = 1 }
+}
+joint_focus = {
+\tid = TST_joint
+\tai_will_do = { factor = 0.2 }
+}
+"""
+
+
+def test_every_tree_level_block_is_standardized_once(tmp_path):
+    source = _write(tmp_path / "focus.txt", _FULL_TREE)
+    assert standardize_focus_tree(str(source), str(source), verbose=True)
+    once = _read(source)
+    for fragment in (
+        "continuous_focus_position = { x = 5700 y = 2000 }",
+        "initial_show_position = { x = 2 y = 0 }",
+        "\tshortcut = {",
+        "\tinlay_window = {",
+        'Focus TST_focus"',
+        'Focus TST_shared"',
+        "base = 0.5",
+    ):
+        assert fragment in once, fragment
+    assert "# shortcut" not in once
+    assert standardize_focus_tree(str(source), str(source))
+    assert _read(source) == once
+
+
+@pytest.mark.parametrize(
+    "lines, expected",
+    [
+        ([], True),
+        (["available = { }"], True),
+        (["available = { has_war = no }"], False),
+    ],
+    ids=["no lines", "empty braces", "a condition"],
+)
+def test_is_empty_block(lines, expected):
+    assert focus_tree_module.is_empty_block(lines) is expected
+
+
+def test_split_block_of_an_unclosed_line_is_none():
+    assert focus_tree_module._split_block(["x = { bad"]) is None
+
+
+def test_split_block_takes_a_trailing_comment_only_when_allowed():
+    line = ["x = { value } # note"]
+    assert focus_tree_module._split_block(line) is None
+    assert focus_tree_module._split_block(line, allow_trailing_comment=True) == (
+        "x = {",
+        ["\tvalue"],
+        "} # note",
+    )
+
+
+def test_merge_keeps_blocks_it_cannot_split():
+    assert focus_tree_module._merge_duplicate_blocks(
+        ["x = { value } # note"], ["x = { y }"]
+    ) == ["x = { value } # note", "x = { y }"]
+
+
+def test_effect_block_with_log_of_no_lines_is_empty():
+    assert effect_block_with_log([], "TST_empty") == []
+
+
+# case: (formatter, block lines, formatted lines)
+_TREE_BLOCK_EDGE_CASES = {
+    "continuous position without y": (
+        format_continuous_focus_position_block,
+        ["continuous_focus_position = { x = 1 }"],
+        ["continuous_focus_position = { x = 1 }"],
+    ),
+    "initial show position by focus": (
+        format_initial_show_position_block,
+        ["initial_show_position = { focus = TST_focus }"],
+        ["\tinitial_show_position = { focus = TST_focus }"],
+    ),
+    "empty shortcut": (
+        format_shortcut_block,
+        ["shortcut = { }"],
+        ["\tshortcut = { }"],
+    ),
+    "empty inlay window": (
+        format_inlay_window_block,
+        ["inlay_window = { }"],
+        ["\tinlay_window = { }"],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("formatter", "lines", "expected"),
+    _TREE_BLOCK_EDGE_CASES.values(),
+    ids=_TREE_BLOCK_EDGE_CASES,
+)
+def test_tree_block_formatters_keep_unusual_shapes(formatter, lines, expected):
+    assert formatter(lines) == expected

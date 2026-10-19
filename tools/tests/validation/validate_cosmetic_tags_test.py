@@ -285,3 +285,139 @@ def test_staged_run_with_nothing_staged_skips(tmp_path, write_path, monkeypatch)
 
     assert validator._issues == []
     assert any("skipping cosmetic tags" in line for line in validator.output_lines)
+
+
+_TAGS = (
+    "# set_cosmetic_tag = ignored\n"
+    "set_cosmetic_tag = TAG_A\n"
+    "has_cosmetic_tag = TAG_B\n"
+    "has_cosmetic_tag = [ROOT.GetTag]\n"
+)
+
+
+def test_set_worker_counts_only_the_listed_tags(tmp_path, write_path):
+    path = write_path(tmp_path, "events/tags.txt", _TAGS)
+    assert V.process_file_for_set_cosmetic_tag(
+        (str(path), False, ["TAG_A", "TAG_B", "TAG_NONE"])
+    ) == {"TAG_A": 1}
+
+
+def test_both_scan_skips_comments_and_dynamic_tags(tmp_path, write_path):
+    path = write_path(tmp_path, "events/tags.txt", _TAGS)
+    has_tags, _, set_tags, _ = V.process_file_for_both_cosmetic_tags(
+        (str(path), False, str(tmp_path))
+    )
+    assert (has_tags, set_tags) == ({"TAG_B": 0}, {"TAG_A": 0})
+
+
+def test_has_lookup_returns_the_tags_it_finds(tmp_path, write_path):
+    path = write_path(tmp_path, "events/tags.txt", _TAGS)
+    assert V.process_file_for_has_cosmetic_tag_lookup(
+        (str(path), frozenset({"TAG_B", "TAG_NONE"}))
+    ) == {"TAG_B"}
+
+
+def test_loc_worker_counts_every_reference(tmp_path, write_path):
+    path = write_path(
+        tmp_path, "localisation/english/x.yml", 'x:0 "TAG_A: TAG_A_democratic:"\n'
+    )
+    assert V.process_file_for_cosmetic_tag_in_loc(
+        (str(path), frozenset({"TAG_A", "TAG_NONE"}))
+    ) == {"TAG_A": 2}
+
+
+# case: (file written, or None for a missing file; worker(path, root); result)
+_EMPTY_WORKER_CASES = {
+    "has lookup, missing file": (
+        None,
+        lambda path, _root: V.process_file_for_has_cosmetic_tag_lookup(
+            (path, frozenset({"TAG_A"}))
+        ),
+        set(),
+    ),
+    "loc worker, missing file": (
+        None,
+        lambda path, _root: V.process_file_for_cosmetic_tag_in_loc(
+            (path, frozenset({"TAG_A"}))
+        ),
+        {},
+    ),
+    "has lookup, ignored directory": (
+        (".git/tags.txt", "has_cosmetic_tag = TAG_A\n"),
+        lambda path, _root: V.process_file_for_has_cosmetic_tag_lookup(
+            (path, frozenset({"TAG_A"}))
+        ),
+        set(),
+    ),
+    "both scan, no tags": (
+        ("events/empty.txt", "plain = yes\n"),
+        lambda path, root: V.process_file_for_both_cosmetic_tags((path, False, root)),
+        ({}, {}, {}, {}),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("written", "worker", "expected"),
+    _EMPTY_WORKER_CASES.values(),
+    ids=_EMPTY_WORKER_CASES,
+)
+def test_workers_return_nothing_for_missing_ignored_or_empty_files(
+    tmp_path, write_path, written, worker, expected
+):
+    if written is None:
+        path = tmp_path / "missing.txt"
+    else:
+        path = write_path(tmp_path, *written)
+    assert worker(str(path), str(tmp_path)) == expected
+
+
+def test_a_full_run_reports_missing_unused_and_colour_findings(tmp_path, write_path):
+    write_path(
+        tmp_path,
+        "common/countries/cosmetic.txt",
+        "TAG_COLOR_UNUSED = {\n}\nTAG_COLOR_USED = {\n}\n",
+    )
+    write_path(
+        tmp_path,
+        "common/national_focus/tags.txt",
+        "set_cosmetic_tag = TAG_SET_UNUSED\n"
+        "set_cosmetic_tag = TAG_USED\n"
+        "set_cosmetic_tag = TAG_COLOR_USED\n"
+        "has_cosmetic_tag = TAG_MISSING\n"
+        "has_cosmetic_tag = TAG_USED\n",
+    )
+    write_path(
+        tmp_path,
+        "localisation/english/tags_l_english.yml",
+        'l_english:\nTAG_USED:0 "plain"\n',
+    )
+
+    validator = _run(tmp_path)
+
+    assert set(_categories(validator)) == {
+        "missing-cosmetic-tag",
+        "unused-cosmetic-tag",
+        "unused-cosmetic-color",
+    }
+    messages = " ".join(issue.message for issue in validator._issues)
+    for tag in ("TAG_MISSING", "TAG_SET_UNUSED", "TAG_COLOR_UNUSED"):
+        assert tag in messages
+
+
+@pytest.mark.parametrize("staged_only", [False, True], ids=["full", "staged"])
+def test_a_tag_with_a_colour_flag_and_a_reader_is_clean(
+    tmp_path, write_path, monkeypatch, staged_only
+):
+    write_path(tmp_path, "common/countries/cosmetic.txt", "TAG = { }\n")
+    write_path(tmp_path, "gfx/flags/TAG_FLAG_democratic.tga", "")
+    staged = write_path(
+        tmp_path,
+        "common/national_focus/staged.txt",
+        "set_cosmetic_tag = TAG\nset_cosmetic_tag = TAG_FLAG\nhas_cosmetic_tag = TAG\n",
+    )
+    monkeypatch.setenv("MD_STAGED_FILES", str(staged))
+
+    validator = _run(tmp_path, staged_only=staged_only)
+
+    assert validator._issues == []

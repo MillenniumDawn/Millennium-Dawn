@@ -490,7 +490,12 @@ country_event = {
 	is_triggered_only = yes
 	hidden = yes
 
-	immediate = { var:prev_owner = { country_event = recognition.31 } }
+	immediate = {
+		if = {
+			limit = { check_variable = { prev_owner > 0 } }
+			var:prev_owner = { country_event = recognition.31 }
+		}
+	}
 }
 
 country_event = {
@@ -693,6 +698,14 @@ country_event = {
 	hidden = yes
 
 	immediate = {
+		set_variable = { recognition_campaign_acceptances = 0 }
+		every_collection_element = {
+			input = { input = collection:un_general_assembly_members_collection }
+			if = {
+				limit = { has_country_flag = original_owner_@ROOT }
+				set_variable = { recognition_campaign_ally_joined@ROOT = 0 }
+			}
+		}
 		every_collection_element = {
 			input = { input = collection:un_general_assembly_members_collection }
 			if = {
@@ -702,6 +715,14 @@ country_event = {
 					NOT = { has_country_flag = original_owner_@ROOT }
 				}
 				country_event = recognition.18
+			}
+		}
+		ROOT = { country_event = { id = recognition.21 days = 3 } }
+		every_collection_element = {
+			input = { input = collection:un_general_assembly_members_collection }
+			if = {
+				limit = { has_country_flag = original_owner_@ROOT }
+				country_event = { id = recognition.19 days = 7 }
 			}
 		}
 	}
@@ -739,9 +760,19 @@ country_event = {
 				NOT = { is_in_array = { recognised_countries = FROM } }
 			}
 			add_opinion_modifier = { target = ROOT modifier = recognises_them }
-			country_event = recognition.1
+		}
+		every_collection_element = {
+			input = { input = collection:un_general_assembly_members_collection }
+			if = {
+				limit = {
+					has_country_flag = original_owner_@FROM
+					is_ally_with = ROOT
+				}
+				set_variable = { recognition_campaign_ally_joined@FROM = 1 }
+			}
 		}
 		FROM = {
+			add_to_variable = { recognition_campaign_acceptances = 1 }
 			every_allied_country = {
 				add_opinion_modifier = { target = ROOT modifier = supporting_recognized_ally }
 			}
@@ -776,6 +807,50 @@ country_event = {
 			}
 		}
 	}
+}
+
+country_event = {
+	id = recognition.21
+	title = recognition.21.t
+	desc = {
+		trigger = { check_variable = { recognition_campaign_acceptances = 0 } }
+		text = recognition.21.d_none
+	}
+	desc = {
+		trigger = { check_variable = { recognition_campaign_acceptances > 0 } }
+		text = recognition.21.d
+	}
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+
+	option = { name = recognition.21.a }
+}
+
+country_event = {
+	id = recognition.19
+	title = recognition.19.t
+	desc = {
+		trigger = { FROM = { check_variable = { recognition_campaign_acceptances = 0 } } }
+		text = recognition.19.d_none
+	}
+	desc = {
+		trigger = {
+			FROM = { check_variable = { recognition_campaign_acceptances > 0 } }
+			check_variable = { recognition_campaign_ally_joined@FROM = 0 }
+		}
+		text = recognition.19.d
+	}
+	desc = {
+		trigger = {
+			FROM = { check_variable = { recognition_campaign_acceptances > 0 } }
+			check_variable = { recognition_campaign_ally_joined@FROM > 0 }
+		}
+		text = recognition.19.d_ally
+	}
+	picture = GFX_politics_talks
+	is_triggered_only = yes
+
+	option = { name = recognition.19.a }
 }
 
 ### [FROM.GetName] gets SC recomendation

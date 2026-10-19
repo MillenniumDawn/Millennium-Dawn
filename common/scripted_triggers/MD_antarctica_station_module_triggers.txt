@@ -41,10 +41,7 @@ antarctica_station_slot_unlocked_by_tier = {
 antarctica_station_selected_slot_module_different = {
 	custom_trigger_tooltip = {
 		tooltip = ANTARCTICA_STATION_INSTALL_MODULE_DIFFERENT_TT
-		OR = {
-			check_variable = { selected_antarctica_station_selected_slot_installed_module < 1 }
-			NOT = { check_variable = { selected_antarctica_station_selected_slot_installed_module = selected_antarctica_station_selected_module } }
-		}
+		NOT = { check_variable = { selected_antarctica_station_selected_slot_installed_module = selected_antarctica_station_selected_module } }
 	}
 }
 
@@ -137,13 +134,21 @@ antarctica_is_module_researched = {
 }
 
 # Usage: Check if installing selected module will maintain positive power balance
+# A station already in deficit may still take any change that does not lower the balance.
 antarctica_can_install_module_power_balance = {
 	custom_trigger_tooltip = {
 		tooltip = ANTARCTICA_STATION_INSTALL_MODULE_POWER_BALANCE_TT
-		check_variable = {
-			var = selected_antarctica_station_preview_output_power
-			value = 0
-			compare = greater_than_or_equals
+		OR = {
+			check_variable = {
+				var = selected_antarctica_station_preview_output_power
+				value = 0
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = selected_antarctica_station_preview_output_power
+				value = selected_antarctica_station_output_power
+				compare = greater_than_or_equals
+			}
 		}
 	}
 }
@@ -154,10 +159,17 @@ antarctica_can_install_module_power_balance = {
 antarctica_can_install_module_staff_availability = {
 	custom_trigger_tooltip = {
 		tooltip = ANTARCTICA_STATION_INSTALL_MODULE_STAFF_BALANCE_TT
-		check_variable = {
-			var = selected_antarctica_station_preview_output_required_staff
-			value = 0
-			compare = greater_than_or_equals
+		OR = {
+			check_variable = {
+				var = selected_antarctica_station_preview_output_required_staff
+				value = 0
+				compare = greater_than_or_equals
+			}
+			check_variable = {
+				var = selected_antarctica_station_preview_output_required_staff
+				value = selected_antarctica_station_output_required_staff
+				compare = greater_than_or_equals
+			}
 		}
 	}
 }
@@ -168,6 +180,7 @@ antarctica_can_install_module_no_duplicate_laboratories = {
 		tooltip = ANTARCTICA_STATION_INSTALL_MODULE_NO_DUPLICATE_LABS_TT
 		OR = {
 			NOT = { check_variable = { selected_antarctica_station_selected_module_category = 5 } }
+			check_variable = { selected_antarctica_station_selected_module < 1 }
 			AND = {
 				NOT = { check_variable = { global.antarctica_station_module_slot_6^selected_antarctica_station = selected_antarctica_station_selected_module } }
 				NOT = { check_variable = { global.antarctica_station_module_slot_7^selected_antarctica_station = selected_antarctica_station_selected_module } }

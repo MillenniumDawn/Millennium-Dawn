@@ -30,6 +30,19 @@ from typing import (
     Tuple,
 )
 
+WORD_BLOCK_START_RE = re.compile(r"^(\w+)\s*=\s*\{")
+WORD_BLOCK_LINE_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
+IDENTIFIER_BLOCK_START_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{")
+IDENTIFIER_BLOCK_LINE_RE = re.compile(
+    r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE
+)
+COUNTRY_TAG_ASSIGNMENT_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"')
+COUNTRY_TAG_ASSIGNMENT_LINE_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
+OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
+MODIFIER_OPEN_RE = re.compile(r"\bmodifier\s*=\s*\{")
+TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
+AVAILABLE_OPEN_RE = re.compile(r"\bavailable\s*=\s*\{")
+
 
 class Colors:
     HEADER = "\033[95m"
@@ -1365,7 +1378,7 @@ def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
 # The three trigger blocks that can hide a decision or category from a player.
 _AI_GATE_FIELDS = ("visible", "available", "allowed")
-_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+_TOP_LEVEL_BLOCK_RE = IDENTIFIER_BLOCK_LINE_RE
 
 
 def iter_flat_matches(

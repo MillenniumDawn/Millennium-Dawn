@@ -451,7 +451,12 @@ class HistoryStandardizer(BaseStandardizer):
                     props["country_vars"].append(stmt)
                 else:
                     props["system_vars"].append(stmt)
-            elif head in ("add_to_array", "remove_from_array"):
+            elif head in (
+                "add_to_array",
+                "remove_from_array",
+                "init_influence",
+                "sort_influence",
+            ):
                 props["system_vars"].append(stmt)
             elif head == "complete_special_project" or head.startswith("sp:"):
                 props["special_projects"].append(stmt)
