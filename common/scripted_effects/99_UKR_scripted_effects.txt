@@ -7093,6 +7093,40 @@ UKR_sov_btr60_bulgaria_send = {
 		}
 	}
 }
+# Bulgaria accepted a BTR-60PB batch in ukraine_modernize_sov_equipment_btr_60_modernization.10. Runs in Ukraine's scope.
+# Reads ukraine_bul_btr60_offer_amount (20 or 40) and ukraine_bul_btr60_offer_mode (0 = in service as they are, 1 = overhaul into the BTR-60D)
+UKR_bul_btr60_offer_accepted = {
+	set_temp_variable = { ukr_btr60_amount = ukraine_bul_btr60_offer_amount }
+	if = {
+		limit = { check_variable = { ukraine_bul_btr60_offer_mode = 0 } }
+		UKR_sov_btr60_bulgaria_send = yes
+		add_to_variable = { ukraine_btr_60d_batches = 1 }
+		if = {
+			limit = { check_variable = { ukraine_btr_60d_batches < 3 } }
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_btr_60_modernization.8 days = 60 random_days = 30 } }
+		}
+	}
+	else = {
+		UKR_sov_btr60_bulgaria_remove_stock = yes
+		if = {
+			limit = { check_variable = { ukraine_bul_btr60_offer_amount = 20 } }
+			set_temp_variable = { treasury_change = -0.07 }
+			modify_treasury_effect = yes
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_btr_60_modernization.7 days = 120 random_days = 15 } }
+		}
+		else_if = {
+			limit = { has_country_flag = ukraine_modernize_sov_equipment_btr_60_modernization_btr_60d_flag }
+			set_temp_variable = { treasury_change = -0.03 }
+			modify_treasury_effect = yes
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_btr_60_modernization.9 days = 90 random_days = 10 } }
+		}
+		else = {
+			set_temp_variable = { treasury_change = -0.07 }
+			modify_treasury_effect = yes
+			hidden_effect = { country_event = { id = ukraine_modernize_sov_equipment_btr_60_modernization.9 days = 120 random_days = 15 } }
+		}
+	}
+}
 UKR_sov_btr60_remove_stock = {
 	meta_effect = {
 		text = {
