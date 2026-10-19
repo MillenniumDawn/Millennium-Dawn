@@ -1,10 +1,13 @@
 """Tests for `validate_mios.py` (MIO organization definitions)."""
 
+import random
+import re
+
 import validate_mios as V
 
 
 def _validator(tmp_path):
-    return V.Validator(str(tmp_path))
+    return V.Validator(str(tmp_path), workers=1)
 
 
 def test_commented_org_blocks_are_not_parsed():
@@ -22,7 +25,7 @@ def test_commented_org_blocks_are_not_parsed():
 
 def test_shared_org_ids_are_exempt(tmp_path):
     v = _validator(tmp_path)
-    v._check_id("generic_tank_equipment_organization", "f.txt", 0)
+    v._check_id("generic_AFV_equipment_organization", "f.txt", 0)
     v._check_id("GENERIC_marshall_tractor_works", "f.txt", 0)
     assert not v._issues
 
@@ -248,7 +251,7 @@ def test_staged_english_localisation_scans_all_mios(tmp_path, monkeypatch):
     )
     monkeypatch.setenv("MD_STAGED_FILES", "localisation/english/MD_mio_l_english.yml")
 
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
     v.run_validations()
 
     assert [issue.category for issue in v._issues] == ["trait-loc-missing"]
@@ -285,8 +288,8 @@ def test_full_run_on_fixture_dir(tmp_path):
     assert "org-id-format" not in by_cat
     assert by_cat["org-allowed-tag"].severity == "error"
     assert by_cat["on-complete-empty"].severity == "error"
-    assert by_cat["trait-x-bounds"].severity == "warning"
-    assert by_cat["initial-trait-name"].severity == "warning"
+    assert by_cat["trait-x-bounds"].severity == "error"
+    assert by_cat["initial-trait-name"].severity == "error"
     assert by_cat["trait-loc-missing"].severity == "error"
 
 
@@ -344,7 +347,7 @@ _MANPADS_ORG = (
 def test_bonus_on_stat_the_equipment_lacks_is_flagged(tmp_path):
     v = _run_org_check(tmp_path, _MANPADS_ORG)
     assert [i.category for i in v._issues] == ["mio-bonus-no-base-stat"]
-    assert v._issues[0].severity == "warning"
+    assert v._issues[0].severity == "error"
     assert "max_organisation" in v._issues[0].message
     assert v._issues[0].line == 7
 
@@ -352,6 +355,11 @@ def test_bonus_on_stat_the_equipment_lacks_is_flagged(tmp_path):
 def test_bonus_on_declared_stat_passes(tmp_path):
     body = _MANPADS_ORG.replace("max_organisation = 0.10", "air_attack = 0.10")
     assert not _run_org_check(tmp_path, body)._issues
+
+
+def test_zero_base_exempt_stat_is_not_flagged(tmp_path, monkeypatch):
+    monkeypatch.setattr(V, "ZERO_BASE_EXEMPT_STATS", frozenset({"max_organisation"}))
+    assert _run_org_check(tmp_path, _MANPADS_ORG)._issues == []
 
 
 def test_limit_to_equipment_type_narrows_the_scope(tmp_path):
@@ -1052,6 +1060,128 @@ def test_full_run_covers_orgs_policies_and_references(tmp_path, write_path):
     }
 
 
+_COVERAGE_EQUIPMENT = """
+equipments = {
+\tsmall_plane_airframe = { is_archetype = yes }
+\tsmall_plane_airframe_1 = { archetype = small_plane_airframe }
+\tmedium_plane_airframe = {
+\t\tis_archetype = yes
+\t\ttype = { test_fighter }
+\t}
+\tmedium_plane_airframe_1 = { archetype = medium_plane_airframe }
+}
+duplicate_archetypes = {
+\tsmall_plane_cas_airframe = { archetype = small_plane_airframe }
+}
+"""
+
+_COVERAGE_GROUPS = """
+mio_cat_test_medium = {
+\tequipment_type = {
+\t\tmedium_plane_airframe
+\t}
+}
+"""
+
+_COVERAGE_FILE = "history/countries/TST - Test.txt"
+
+
+def _coverage_issues(tmp_path, write_path, org_types, variant):
+    """Issues for one variant written against a TST_org listing *org_types*."""
+    write_path(
+        tmp_path,
+        f"{V.ORG_DIR}/MD_TST_organizations.txt",
+        f"TST_org = {{\n\tequipment_type = {{ {org_types} }}\n}}\n",
+    )
+    write_path(tmp_path, "common/units/equipment/MD_test.txt", _COVERAGE_EQUIPMENT)
+    write_path(tmp_path, "common/equipment_groups/mio_test.txt", _COVERAGE_GROUPS)
+    v = _validator(tmp_path)
+    v._org_bodies = v._load_org_bodies()
+    text = "create_equipment_variant = {\n" f"{variant}" "}\n"
+    v._check_design_team_coverage(
+        text, _COVERAGE_FILE, V.build_equipment_stat_index(str(tmp_path))
+    )
+    return v._issues
+
+
+def _team(variant_type, team="\tdesign_team = mio:TST_org\n"):
+    return f"\ttype = {variant_type}\n{team}"
+
+
+def test_design_team_type_outside_equipment_type_is_flagged(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "small_plane_airframe", _team("medium_plane_airframe_1")
+    )
+    assert [(i.category, i.severity, i.line) for i in issues] == [
+        ("mio-design-team-type-uncovered", "warning", 3)
+    ]
+    assert "medium_plane_airframe" in issues[0].message
+
+
+def test_design_team_type_listed_directly_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "medium_plane_airframe", _team("medium_plane_airframe")
+    )
+    assert not issues
+
+
+def test_design_team_type_covered_through_mio_cat_group_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "mio_cat_test_medium", _team("medium_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_numbered_type_listed_directly_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path,
+        write_path,
+        "medium_plane_airframe_1",
+        _team("medium_plane_airframe_1"),
+    )
+    assert not issues
+
+
+def test_design_team_type_covered_through_category_passes(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "test_fighter", _team("medium_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_numbered_type_matches_its_archetype(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "small_plane_airframe", _team("small_plane_airframe_1")
+    )
+    assert not issues
+
+
+def test_design_team_clone_is_its_own_archetype(tmp_path, write_path):
+    org_types = "small_plane_airframe"
+    issues = _coverage_issues(
+        tmp_path, write_path, org_types, _team("small_plane_cas_airframe_1")
+    )
+    assert [i.category for i in issues] == ["mio-design-team-type-uncovered"]
+    assert "small_plane_cas_airframe" in issues[0].message
+
+
+def test_variant_without_design_team_is_not_flagged(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path,
+        write_path,
+        "small_plane_airframe",
+        _team("medium_plane_airframe_1", ""),
+    )
+    assert not issues
+
+
+def test_design_team_on_undefined_vanilla_type_is_skipped(tmp_path, write_path):
+    issues = _coverage_issues(
+        tmp_path, write_path, "small_plane_airframe", _team("fighter_equipment_1")
+    )
+    assert not issues
+
+
 def test_unreadable_and_undecodable_files_do_not_stop_the_run(tmp_path, write_path):
     _run_repo(tmp_path, write_path)
     (tmp_path / V.ORG_DIR / "broken.txt").mkdir()
@@ -1077,7 +1207,7 @@ def test_a_staged_equipment_edit_rescans_every_org(tmp_path, write_path, monkeyp
     monkeypatch.setenv(
         "MD_STAGED_FILES", "common/units/equipment/MD_test_equipment.txt"
     )
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1116,7 +1246,7 @@ def test_a_staged_scripted_trigger_rescans_orgs_and_references(
     monkeypatch.setenv(
         "MD_STAGED_FILES", "common/scripted_triggers/99_USA_scripted_triggers.txt"
     )
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1130,7 +1260,7 @@ def test_staged_run_with_no_mio_input_skips(tmp_path, write_path, monkeypatch):
     _run_repo(tmp_path, write_path)
     write_path(tmp_path, "interface/unrelated.txt", "guiTypes = { }\n")
     monkeypatch.setenv("MD_STAGED_FILES", "interface/unrelated.txt")
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     v.run_validations()
 
@@ -1145,7 +1275,7 @@ def test_staged_interface_edit_rescans_all_mios(tmp_path, write_path, monkeypatc
     sprite.write_text("spriteType = { name = GFX_test }\n", encoding="utf-8")
     monkeypatch.setenv("MD_STAGED_FILES", "interface/mio.gfx")
 
-    v = V.Validator(str(tmp_path), staged_only=True)
+    v = V.Validator(str(tmp_path), staged_only=True, workers=1)
 
     assert v._org_files()
 
@@ -1323,7 +1453,9 @@ def test_child_on_or_above_parent_row_is_flagged(tmp_path):
 
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
-    assert [i.category for i in v._issues] == ["trait-geometry-parent-row"]
+    assert [(i.category, i.severity) for i in v._issues] == [
+        ("trait-geometry-parent-row", "error")
+    ]
     assert "`child`" in v._issues[0].message and "`root`" in v._issues[0].message
 
     v = _geometry_validator(tmp_path, _index(body))
@@ -1376,7 +1508,9 @@ def test_mutually_exclusive_traits_on_different_rows_are_flagged(tmp_path):
 
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
-    assert [i.category for i in v._issues] == ["trait-geometry-mutex-row"]
+    assert [(i.category, i.severity) for i in v._issues] == [
+        ("trait-geometry-mutex-row", "error")
+    ]
 
 
 def test_mutually_exclusive_traits_sharing_a_row_are_clean(tmp_path):
@@ -1400,7 +1534,9 @@ def test_all_parents_with_mutually_exclusive_parents_is_flagged(tmp_path):
 
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
-    assert [i.category for i in v._issues] == ["trait-geometry-mutex-parents"]
+    assert [(i.category, i.severity) for i in v._issues] == [
+        ("trait-geometry-mutex-parents", "error")
+    ]
     assert "any_parent" in v._issues[0].message
 
 
@@ -1431,3 +1567,359 @@ def test_unknown_parent_or_mutex_tokens_report_nothing(tmp_path):
     v._check_trait_geometry("TST_org", body, "orgs.txt", 0)
 
     assert not v._issues
+
+
+# ---- edge-case files through a full run ------------------------------------
+
+_EDGE_TST = f"{V.ORG_DIR}/MD_TST_organizations.txt"
+_EDGE_TSU = f"{V.ORG_DIR}/MD_TSU_organizations.txt"
+_EDGE_FOCUS = "common/national_focus/05_edge.txt"
+
+# Line 1 is an org, line 2 a comment full of check tokens, line 5 hides a brace
+# and a `#` in a string, the trait nests three blocks deep, and the file ends
+# without a newline on an org whose quoted `{` never closes.
+_EDGE_TST_TEXT = (
+    "TST_first = { allowed = { original_tag = TST } on_complete = { } }\n"
+    "# TST_ghost = { trait = { token = TST_ghost_trait position = { x = 99 } }"
+    " icon = bad mio:TST_ghost }\n"
+    "TST_edge_org = {\n"
+    "\tallowed = { original_tag = GER }\n"
+    '\tdesc = "a {brace} and # hash"\n'
+    "\ticon = edge_icon # icon = in_comment\n"
+    "\ticon = GFX_missing_edge\n"
+    "\ttrait = {\n"
+    "\t\ttoken = TST_edge_trait\n"
+    "\t\tposition = { x = 12 y = 0 }\n"
+    "\t\ton_complete = {\n"
+    "\t\t\tif = { limit = { always = yes } }\n"
+    "\t\t}\n"
+    "\t}\n"
+    "}\n"
+    'TST_last = { allowed = { original_tag = TST } desc = "{" trait = {'
+    " token = TST_last_trait position = { x = 10 y = 0 } } }"
+)
+
+_EDGE_TSU_TEXT = (
+    "TSU_crlf_org = {\r\n"
+    "\tallowed = { original_tag = TSU }\r\n"
+    "\ttrait = { token = TSU_crlf_trait position = { x = 11 y = 1 } }\r\n"
+    "}\r\n"
+)
+
+# CRLF and read as bytes, so the `\r` stays in the scanned text.
+_EDGE_FOCUS_TEXT = (
+    "mio:TST_missing_first = { }\r\n"
+    "focus_tree = {\r\n"
+    "\tshared_focus = {\r\n"
+    "\t\tid = TSU_shared # mio:TST_commented\r\n"
+    '\t\tlog = "{ # mio:TST_in_string }"\r\n'
+    "\t\tcompletion_reward = {\r\n"
+    "\t\t\tdesign_team = mio:TST_edge_org\r\n"
+    "\t\t\tTST = { if = { limit = { always = yes } mio:TSU_crlf_org = { } } }\r\n"
+    "\t\t}\r\n"
+    "\t}\r\n"
+    "}\r\n"
+    "mio:TST_missing_last = { }"
+)
+
+
+def _unknown_reference(org_id, line):
+    return (
+        "mio-reference-unknown",
+        _EDGE_FOCUS,
+        line,
+        f"mio:{org_id} matches no MIO definition in {V.ORG_DIR}/ "
+        "(ids are case-sensitive)",
+    )
+
+
+def _nameless_trait(path, line, org_id, token):
+    return (
+        "trait-loc-missing",
+        path,
+        line,
+        f"trait '{token}' has no name and no '{org_id}_{token}' localisation key;"
+        f" add name = {token} plus a loc entry",
+    )
+
+
+def _x_bounds(path, line, x):
+    return (
+        "trait-x-bounds",
+        path,
+        line,
+        f"trait position x = {x} must stay inside 0..9",
+    )
+
+
+_EDGE_FINDINGS = [
+    (
+        "mio-icon-not-gfx",
+        _EDGE_TST,
+        6,
+        "icon = edge_icon is not a GFX_ sprite name; the engine renders a blank icon",
+    ),
+    (
+        "mio-icon-unresolved",
+        _EDGE_TST,
+        7,
+        "icon = GFX_missing_edge matches no spriteType in any interface/*.gfx "
+        "(mod or vanilla)",
+    ),
+    (
+        "on-complete-empty",
+        _EDGE_TST,
+        1,
+        "on_complete is empty; add expenditure_for_mio_upgrade = yes or custom effects",
+    ),
+    (
+        "org-allowed-tag",
+        _EDGE_TST,
+        3,
+        "MIO TST_edge_org must pin its tag with allowed = { original_tag = TST }",
+    ),
+    _x_bounds(_EDGE_TST, 10, 12),
+    _nameless_trait(_EDGE_TST, 8, "TST_edge_org", "TST_edge_trait"),
+    _x_bounds(_EDGE_TST, 16, 10),
+    _nameless_trait(_EDGE_TST, 16, "TST_last", "TST_last_trait"),
+    _x_bounds(_EDGE_TSU, 3, 11),
+    _nameless_trait(_EDGE_TSU, 3, "TSU_crlf_org", "TSU_crlf_trait"),
+    _unknown_reference("TST_missing_first", 1),
+    _unknown_reference("TST_in_string", 5),
+    (
+        "mio-reference-wrong-tag",
+        _EDGE_FOCUS,
+        7,
+        "mio:TST_edge_org is allowed only for GER, so it does not resolve in TSU scope",
+    ),
+    (
+        "mio-reference-wrong-tag",
+        _EDGE_FOCUS,
+        8,
+        "mio:TSU_crlf_org is allowed only for TSU, so it does not resolve in TST scope",
+    ),
+    _unknown_reference("TST_missing_last", 12),
+]
+
+
+def _write_edge_repo(tmp_path, write_path):
+    write_path(tmp_path, _EDGE_TST, _EDGE_TST_TEXT)
+    write_path(tmp_path, _EDGE_TSU, _EDGE_TSU_TEXT)
+    write_path(tmp_path, _EDGE_FOCUS, _EDGE_FOCUS_TEXT)
+    write_path(
+        tmp_path,
+        f"{V.COUNTRY_TAG_DIR}/00_countries.txt",
+        "TST = { }\nTSU = { }\nGER = { }\n",
+    )
+
+
+def _edge_rows(tmp_path, *, workers, sprites=None):
+    """Findings of one full run and whether it forked the worker pool."""
+    v = V.Validator(str(tmp_path), workers=workers)
+    if sprites is not None:
+        v._sprites = sprites
+    try:
+        v.run_validations()
+        pooled = v._pool is not None
+    finally:
+        if v._pool is not None:
+            v._pool.terminate()
+            v._pool.join()
+    return [(i.category, i.file, i.line, i.message) for i in v._issues], pooled
+
+
+def test_edge_case_files_report_exact_findings_in_order(tmp_path, write_path):
+    """Quoted braces and `#`, a token-filled comment, first and last lines, a
+    missing final newline, CRLF org and reference files, and a `shared_focus`
+    owner all keep their findings, lines and order."""
+    _write_edge_repo(tmp_path, write_path)
+
+    rows, _pooled = _edge_rows(tmp_path, workers=1, sprites=_sprite_set())
+
+    assert rows == _EDGE_FINDINGS
+
+
+def test_pooled_run_matches_the_in_process_run_in_order(
+    tmp_path, write_path, monkeypatch
+):
+    """Twelve .gfx files cross the pool threshold for the sprite index, which
+    also holds enough sprites to resolve icons."""
+    monkeypatch.setenv("MD_MAX_WORKERS", "2")
+    monkeypatch.setenv("MD_NO_CACHE", "1")
+    _write_edge_repo(tmp_path, write_path)
+    for index in range(12):
+        sprites = "".join(
+            f"\tspriteType = {{ name = GFX_pad_{index}_{n} }}\n" for n in range(100)
+        )
+        write_path(
+            tmp_path,
+            f"interface/pad_{index:02}.gfx",
+            f"spriteTypes = {{\n{sprites}}}\n",
+        )
+
+    in_process, forked = _edge_rows(tmp_path, workers=1)
+    pooled, pool_used = _edge_rows(tmp_path, workers=2)
+
+    assert (forked, pool_used) == (False, True)
+    assert pooled == in_process == _EDGE_FINDINGS
+
+
+# ---- equivalence with the character walks these scans replaced -------------
+
+
+def _walk_block_end(text, open_brace_end):
+    depth = 1
+    i = open_brace_end
+    while i < len(text) and depth > 0:
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+        i += 1
+    return i
+
+
+def _walk_left_open_braces(text, pos):
+    """Every `{` a leftward walk from *pos* meets at depth zero, innermost first."""
+    found = []
+    depth = 0
+    for i in range(pos - 1, -1, -1):
+        if text[i] == "}":
+            depth += 1
+        elif text[i] == "{":
+            if depth:
+                depth -= 1
+            else:
+                found.append(i)
+    return found
+
+
+def _random_texts(pieces, seed, count=400, longest=30):
+    rng = random.Random(seed)
+    for _ in range(count):
+        yield "".join(rng.choice(pieces) for _ in range(rng.randint(0, longest)))
+
+
+def test_block_end_matches_the_character_walk():
+    fixed = ["", "}", "{", " { } }", "a { b { c { d } } } e", "{ { {", '" { "}']
+    for text in [*fixed, *_random_texts('{}"# a\n', seed=1)]:
+        for start in range(len(text) + 1):
+            assert V._block_end(text, start) == _walk_block_end(text, start), (
+                text,
+                start,
+            )
+
+
+def test_open_braces_match_the_leftward_walk():
+    fixed = ["} a { a } } a", "{ a { { a } a", "a } } { a"]
+    for text in [*fixed, *_random_texts("{}a\n", seed=2)]:
+        positions = [i for i, char in enumerate(text) if char == "a"]
+        for pos, stack in zip(positions, V._open_braces(text, positions)):
+            assert list(reversed(stack)) == _walk_left_open_braces(text, pos), (
+                text,
+                pos,
+            )
+
+
+def test_focus_spans_match_the_line_anchored_regex():
+    pieces = [
+        "focus = {",
+        "shared_focus = {",
+        "joint_focus={",
+        "has_completed_focus = {",
+        "focus_tree = {",
+        "focus\n=\n{",
+        "\t",
+        " ",
+        "\n",
+        "}",
+        "x",
+    ]
+    for text in _random_texts(pieces, seed=3):
+        expected = [
+            (m.start(), _walk_block_end(text, m.end()))
+            for m in V.FOCUS_BLOCK_RE.finditer(text)
+        ]
+        assert V._focus_spans(text) == expected, text
+
+
+_LOOKBEHIND_FORMS = [
+    (V.ORIGINAL_TAG_RE, r"\boriginal_tag\s*=\s*([A-Z][A-Z0-9_]{1,7})\b"),
+    (V._POSITION_BLOCK_RE, r"(?<![A-Za-z0-9_])position\s*=\s*\{([^{}]*)\}"),
+    (
+        V._RELATIVE_POSITION_RE,
+        r"(?<![A-Za-z0-9_])relative_position_id\s*=\s*([A-Za-z0-9_]+)",
+    ),
+    (
+        V._PARENT_BLOCK_RE,
+        r"(?<![A-Za-z0-9_])(all_parents|any_parent|parent)\s*=\s*\{([^{}]*)\}",
+    ),
+    (
+        V._MUTUALLY_EXCLUSIVE_RE,
+        r"(?<![A-Za-z0-9_])mutually_exclusive\s*=\s*\{([^{}]*)\}",
+    ),
+    (V.HEADER_TEXT_RE, r'(?<![A-Za-z0-9_])text\s*=\s*("[^"]*"|[^\s{}]+)'),
+    (V.NAME_RE, r"(?<![A-Za-z0-9_])name\s*=\s*([A-Za-z0-9_]+)"),
+    (V.TOKEN_RE, r"(?<![A-Za-z0-9_])token\s*=\s*([A-Za-z0-9_]+)"),
+    (V.MIO_REFERENCE_RE, r"(?<![A-Za-z0-9_])mio:([A-Za-z0-9_]+)"),
+    (V.BLOCK_TAG_RE, r"(?<![A-Za-z0-9_])(?:original_)?tag\s*=\s*([A-Z][A-Z0-9]{2})\b"),
+    (V.INCLUDE_RE, r"(?<![A-Za-z0-9_])include\s*=\s*([A-Za-z0-9_]+)"),
+]
+
+_PATTERN_PIECES = [
+    *(
+        "original_tag tag position relative_position_id all_parents any_parent"
+        " parent mutually_exclusive text name token mio: include trait"
+        " initial_trait GER x _ 1 é = { }"
+    ).split(),
+    " ",
+    '"',
+    "\n",
+]
+
+
+def test_literal_first_patterns_match_the_lookbehind_forms():
+    # `\b` counts a non-ASCII letter as a word character; the others do not.
+    fixed = ["éoriginal_tag = GER", "étoken = a", "xmio:a mio:b", "original_tag=GER"]
+    for text in [*fixed, *_random_texts(_PATTERN_PIECES, seed=4)]:
+        for new, old in _LOOKBEHIND_FORMS:
+            got = [(m.span(), m.groups()) for m in new.finditer(text)]
+            want = [(m.span(), m.groups()) for m in re.finditer(old, text)]
+            assert got == want, (old, text)
+        for keyword in ("trait", "initial_trait"):
+            opener = re.compile(r"(?<![A-Za-z0-9_])" + keyword + r"\s*=\s*\{")
+            want_blocks = [
+                (m.start(), text[m.end() : _walk_block_end(text, m.end()) - 1])
+                for m in opener.finditer(text)
+            ]
+            assert V._sub_blocks(text, keyword) == want_blocks, (keyword, text)
+
+
+def test_relative_position_scan_matches_the_depth_walk():
+    old = re.compile(r"(?<![A-Za-z0-9_])relative_position_id\s*=\s*([A-Za-z0-9_]+)")
+    pieces = ["relative_position_id = a", "relative_position_id = b", "{", "}", " "]
+    for text in _random_texts(pieces + ["_"], seed=5):
+        body = "trait = { token = t " + text + " }"
+        inner = V._sub_blocks(body, "trait")[0][1]
+        depth = 0
+        expected = None
+        for index, char in enumerate(inner):
+            if char in "{}":
+                depth += 1 if char == "{" else -1
+            elif depth == 0 and old.match(inner, index):
+                expected = old.match(inner, index).group(1)
+                break
+        assert V._parse_org_traits(body)["t"].rel == expected, text
+
+
+def test_icon_lines_match_counting_from_the_top():
+    pieces = ["icon = a", 'icon="b c"', "xicon = d", "# icon = e", '"', "#"]
+    for text in _random_texts(pieces + ["\n", "\r\n", "\x0c", " ", "{"], seed=6):
+        expected = []
+        offset = 0
+        for raw_line in text.splitlines():
+            code, _comment = V.split_code_and_comment(raw_line)
+            for match in V.ICON_ASSIGNMENT_RE.finditer(V.blank_quoted_strings(code)):
+                expected.append(text.count("\n", 0, offset + match.start()) + 1)
+            offset += len(raw_line) + 1
+        assert [line for _name, line in V._iter_icon_values(text)] == expected, text

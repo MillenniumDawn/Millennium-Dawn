@@ -5,6 +5,7 @@ pool, so concurrency has to come out of one ceiling rather than each caller
 sizing itself against the raw core count.
 """
 
+import pytest
 import shared_utils as U
 
 
@@ -32,6 +33,15 @@ def test_ci_runners_get_every_core(monkeypatch):
     _cores(monkeypatch, 4)
     monkeypatch.setenv("CI", "true")
     assert U.cpu_budget() == 4
+
+
+@pytest.mark.parametrize(
+    ("value", "expected"),
+    [("1", True), ("true", True), (" TRUE ", True), ("", False), ("false", False)],
+)
+def test_running_in_ci_reads_both_ci_spellings(monkeypatch, value, expected):
+    monkeypatch.setenv("CI", value)
+    assert U.running_in_ci() is expected
 
 
 def test_explicit_override_wins_over_the_share(monkeypatch):

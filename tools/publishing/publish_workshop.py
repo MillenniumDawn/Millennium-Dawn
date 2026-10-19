@@ -5,15 +5,18 @@ publish_workshop.py - Publish Millennium Dawn to Steam Workshop.
 Usage:
   publish_workshop.py release --full --version 1.12.3
   publish_workshop.py beta --base-ref v1.12.3b --version 1.12.3b
-  publish_workshop.py release --full --username OtherUser
-  STEAM_USERNAME=MyUser publish_workshop.py beta --full
+  publish_workshop.py release --version 1.12.3 --username OtherUser
+  STEAM_USERNAME=MyUser publish_workshop.py beta --version 1.12.3b
 
 Username is read from --username or the STEAM_USERNAME env var.
---version rewrites version= in descriptor.mod and the in-game version banner
+Required --version rewrites version= in descriptor.mod and the in-game version banner
 (VERSION_MD_LOADING / VERSION_MD) for this upload only. Accepted values are
 X.Y.Z, legacy suffixes such as X.Y.Zb or X.Y.Zrc1, and SemVer prereleases such
-as X.Y.Z-beta.5. An optional leading v or V is ignored; omit the flag to ship
-whatever version is currently committed in the repo.
+as X.Y.Z-beta.5. An optional leading v or V is ignored. Full upload is the
+default; --base-ref selects a diff upload.
+
+The banner shows BETA on beta uploads, TEST on test uploads, and no marker on
+release uploads. Existing DEV, BETA, or TEST markers are replaced.
 """
 
 import argparse
@@ -22,6 +25,8 @@ import os
 import re
 import shlex
 import shutil
+import signal
+import stat
 import subprocess
 import sys
 import tarfile
@@ -65,8 +70,8 @@ FRONTEND_LOCALES = (
     "spanish",
 )
 
-# An existing version token inside those values, e.g. v2.0.0, v1.12.3b, or
-# v2.0.0-beta.1. Boundaries prevent a partial match from leaving a suffix behind.
+# An existing version token inside those values, e.g. v2.0.1, v1.12.3b, or
+# v2.0.1-beta.1. Boundaries prevent a partial match from leaving a suffix behind.
 _VERSION_NUMBER = r"(?:0|[1-9][0-9]*)"
 _PRERELEASE_IDENTIFIER = r"(?:0|[1-9][0-9]*|[0-9A-Za-z-]*[A-Za-z][0-9A-Za-z-]*)"
 _VERSION_BODY = (
@@ -76,6 +81,13 @@ _VERSION_BODY = (
 )
 VERSION_TOKEN = re.compile(rf"(?<![A-Za-z0-9_])v{_VERSION_BODY}(?![A-Za-z0-9_.+-])")
 VERSION_VALUE = re.compile(rf"[vV]?{_VERSION_BODY}")
+
+# Committed banners mark dev builds after the version (simp_chinese uses 开发版).
+# Each target replaces any existing build marker.
+BANNER_VERSION = re.compile(
+    rf"(?P<token>{VERSION_TOKEN.pattern})(?P<marker> (?:DEV|BETA|TEST|开发版)(?!\w))?"
+)
+BANNER_MARKERS = {"release": "", "beta": " BETA", "test": " TEST"}
 
 # Files that must always be included (even if unchanged in diff mode).
 ALWAYS_KEEP = {"descriptor.mod", "thumbnail.png"}
@@ -141,6 +153,12 @@ ANYWHERE_EXCLUDES = {
 
 DEFAULT_EXCLUDES = ROOT_ONLY_EXCLUDES | ANYWHERE_EXCLUDES
 
+# Seconds a stopped child gets to exit before the next, harder step.
+STOP_TIMEOUT_SECS = 5
+
+# POSIX runs the upload in its own session so its whole process group can be stopped.
+OWN_GROUP = os.name == "posix"
+
 
 def normalize_version(value: str | None) -> str | None:
     """Validate a publish version and remove one optional leading ``v``."""
@@ -185,12 +203,14 @@ class Spinner:
             self._stop.wait(0.1)
 
     def __enter__(self) -> "Spinner":
-        self._thread.start()
+        if sys.stdout.isatty():
+            self._thread.start()
         return self
 
     def __exit__(self, exc_type: object, *_: object) -> None:
         self._stop.set()
-        self._thread.join()
+        if self._thread.ident is not None:
+            self._thread.join()
         dt = elapsed_str(self._start)
         status = "+" if exc_type is None else "x"
         label = self._label if exc_type is None else f"{self._label} failed"
@@ -212,6 +232,55 @@ def find_steamcmd() -> Path:
         if p.exists():
             return p
     sys.exit("ERROR: steamcmd not found. Install it or add it to PATH.")
+
+
+def _signal_group(pgid: int, sig: int) -> bool:
+    """Signal a child's process group. False means nothing is left to signal."""
+    try:
+        os.killpg(pgid, sig)
+    except (ProcessLookupError, PermissionError):
+        # macOS reports EPERM for a group that holds only zombies.
+        return False
+    return True
+
+
+def _group_stopped(proc: subprocess.Popen) -> bool:
+    """Wait up to STOP_TIMEOUT_SECS for the child's process group to empty."""
+    deadline = time.monotonic() + STOP_TIMEOUT_SECS
+    while True:
+        # Reap the leader first; a zombie still counts as a group member.
+        proc.poll()
+        if not _signal_group(proc.pid, 0):
+            return True
+        if time.monotonic() >= deadline:
+            return False
+        time.sleep(0.05)
+
+
+def stop_process(proc: subprocess.Popen, own_group: bool = False) -> None:
+    """Stop a child, and its process group when it owns one, then reap it."""
+    stopped = True
+    if own_group:
+        # The group can outlive a wrapper that already exited.
+        for sig in (signal.SIGTERM, signal.SIGKILL):
+            stopped = not _signal_group(proc.pid, sig) or _group_stopped(proc)
+            if stopped:
+                break
+    elif proc.poll() is None:
+        proc.terminate()
+        try:
+            proc.wait(STOP_TIMEOUT_SECS)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+    for pipe in (proc.stdout, proc.stderr):
+        if pipe is not None:
+            pipe.close()
+    try:
+        proc.wait(STOP_TIMEOUT_SECS)
+    except subprocess.TimeoutExpired:
+        stopped = False
+    if not stopped:
+        print(f"  WARNING: Child process {proc.pid} is still running.")
 
 
 def git_diff_name_only(
@@ -256,13 +325,18 @@ def get_deleted_files(base_ref: str) -> set[str]:
 
 def get_publishable_changed_files(mod_dir: Path, changed: set[str]) -> set[str]:
     """Return changed files that survived the copy/exclude step."""
-    return {
-        path.relative_to(mod_dir).as_posix()
-        for path in mod_dir.rglob("*")
-        if path.is_file()
-        and not path.is_symlink()
-        and path.relative_to(mod_dir).as_posix() in changed
-    }
+    root = mod_dir.resolve()
+    publishable = set()
+    for rel in changed:
+        path = (root / rel).resolve()
+        # Resolving leaves root/rel unchanged only without traversal or symlinks.
+        if (
+            path.is_file()
+            and path.is_relative_to(root)
+            and path.relative_to(root).as_posix() == rel
+        ):
+            publishable.add(rel)
+    return publishable
 
 
 def dir_stats(root: Path) -> tuple[int, int]:
@@ -298,7 +372,7 @@ def copy_repo(dest_parent: Path, excludes: set[str]) -> Path:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        assert proc.stdout is not None
+        assert proc.stdout is not None and proc.stderr is not None
         try:
             with tarfile.open(fileobj=proc.stdout, mode="r|") as archive:
                 for member in archive:
@@ -328,16 +402,11 @@ def copy_repo(dest_parent: Path, excludes: set[str]) -> Path:
                     with target.open("wb") as handle:
                         shutil.copyfileobj(source, handle)
                     os.chmod(target, member.mode)
-        except Exception:
-            proc.terminate()
-            proc.wait()
-            raise
-        finally:
             proc.stdout.close()
-        stderr = (
-            proc.stderr.read().decode("utf-8", errors="replace") if proc.stderr else ""
-        )
-        returncode = proc.wait()
+            stderr = proc.stderr.read().decode("utf-8", errors="replace")
+            returncode = proc.wait()
+        finally:
+            stop_process(proc)
         if returncode != 0:
             raise RuntimeError(f"git archive HEAD failed: {stderr.strip()}")
 
@@ -420,7 +489,46 @@ def prune_unchanged(mod_dir: Path, changed: set[str], verbose: bool = False) -> 
     )
 
 
-def write_vdf(mod_dir: Path, mod_id: str, changenote: str) -> Path:
+def read_description(mod_dir: Path, version: str) -> str:
+    """Prepare English Workshop text from the tracked staging copy."""
+    source = mod_dir / "descriptions" / "descriptions_EN.txt"
+    try:
+        with source.open("r", encoding="utf-8-sig", newline="") as handle:
+            description = handle.read()
+    except (OSError, UnicodeError) as exc:
+        raise SystemExit(
+            f"ERROR: Cannot read English description {source}: {exc}"
+        ) from exc
+    if not description.strip() or "\0" in description:
+        raise SystemExit("ERROR: English description is empty or contains a NUL byte.")
+
+    prefix = "[b]Current Version:[/b]"
+    lines = description.splitlines(keepends=True)
+    version_lines = [i for i, line in enumerate(lines) if line.startswith(prefix)]
+    if len(version_lines) != 1:
+        raise SystemExit(
+            "ERROR: English description needs exactly one Current Version field."
+        )
+    index = version_lines[0]
+    pattern = re.compile(
+        rf"({re.escape(prefix)}[ \t]*)[vV]?{_VERSION_BODY}([ \t]*(?:\r?\n)?)"
+    )
+    if pattern.fullmatch(lines[index]) is None:
+        raise SystemExit(
+            "ERROR: English description has an invalid Current Version field."
+        )
+    lines[index] = pattern.sub(
+        lambda match: f"{match[1]}{version}{match[2]}", lines[index]
+    )
+    description = "".join(lines)
+    if len(description.encode("utf-8")) > 8000:
+        raise SystemExit("ERROR: English description exceeds Steam's 8000-byte limit.")
+    return description
+
+
+def write_vdf(
+    mod_dir: Path, mod_id: str, changenote: str, description: str | None = None
+) -> Path:
     vdf_path = mod_dir.parent / "workshop_upload.vdf"
     content = (
         f'"workshopitem"\n'
@@ -430,8 +538,10 @@ def write_vdf(mod_dir: Path, mod_id: str, changenote: str) -> Path:
         f'    "contentfolder"   "{escape_vdf(mod_dir)}"\n'
         f'    "previewfile"     "{escape_vdf(mod_dir / "thumbnail.png")}"\n'
         f'    "changenote"      "{escape_vdf(changenote)}"\n'
-        f"}}\n"
     )
+    if description is not None:
+        content += f'    "description"     "{escape_vdf(description)}"\n'
+    content += "}\n"
     with vdf_path.open("w", encoding="utf-8", newline="") as handle:
         handle.write(content)
     return vdf_path
@@ -496,8 +606,13 @@ def frontend_loc_files(mod_dir: Path) -> tuple[Path, ...]:
     )
 
 
-def patch_frontend_version(mod_dir: Path, version: str) -> None:
-    """Point every required in-game version banner at the uploaded version."""
+def patch_frontend_version(
+    mod_dir: Path, version: str | None, marker: str | None = None
+) -> None:
+    """Point every required in-game version banner at the uploaded version.
+
+    A marker replaces the banner's build marker; None keeps the committed one.
+    """
     loc_files = frontend_loc_files(mod_dir)
     validated: list[tuple[Path, list[str]]] = []
 
@@ -530,11 +645,15 @@ def patch_frontend_version(mod_dir: Path, version: str) -> None:
                 )
         validated.append((loc_file, lines))
 
+    def rewrite(match: re.Match[str]) -> str:
+        token = f"v{version}" if version else match["token"]
+        return token + ((match["marker"] or "") if marker is None else marker)
+
     updated = 0
     for loc_file, lines in validated:
         patched = [
             (
-                VERSION_TOKEN.sub(lambda _match: f"v{version}", line, count=1)
+                BANNER_VERSION.sub(rewrite, line, count=1)
                 if line.split(":", 1)[0].strip() in VERSION_LOC_KEYS
                 else line
             )
@@ -545,8 +664,9 @@ def patch_frontend_version(mod_dir: Path, version: str) -> None:
                 handle.write("".join(patched))
             updated += 1
 
+    shown = (f"v{version}" if version else "repo version") + (marker or "")
     print(
-        f"  Version banner: v{version} "
+        f"  Version banner: {shown} "
         f"({updated}/{len(loc_files)} frontend files rewritten)"
     )
 
@@ -562,14 +682,19 @@ def steam_login(steamcmd: Path, username: str) -> None:
 
 
 def publish(
-    mod_dir: Path, username: str, mod_id: str, changenote: str, verbose: bool = False
+    mod_dir: Path,
+    username: str,
+    mod_id: str,
+    changenote: str,
+    verbose: bool = False,
+    description: str | None = None,
 ) -> None:
     steamcmd = find_steamcmd()
 
     # Pre-login interactively so credentials are cached for the upload.
     steam_login(steamcmd, username)
 
-    vdf_path = write_vdf(mod_dir, mod_id, changenote)
+    vdf_path = write_vdf(mod_dir, mod_id, changenote, description)
 
     # Persistent log outside the temp content folder so it survives cleanup.
     with tempfile.NamedTemporaryFile(
@@ -680,65 +805,78 @@ def publish(
             stderr=subprocess.STDOUT,
             text=True,
             bufsize=1,
+            start_new_session=OWN_GROUP,
         )
 
         assert proc.stdout is not None
-        with log_path.open("a", encoding="utf-8", newline="") as log_f:
-            log_f.write(f"\n=== Attempt {attempt}/{MAX_ATTEMPTS} ===\n")
-            log_f.flush()
-
-            for line in proc.stdout:
-                line = line.rstrip()
-                if not line:
-                    continue
-
-                log_f.write(line + "\n")
+        try:
+            with log_path.open("a", encoding="utf-8", newline="") as log_f:
+                log_f.write(f"\n=== Attempt {attempt}/{MAX_ATTEMPTS} ===\n")
                 log_f.flush()
 
-                low = line.lower()
-                if any(m in low for m in AUTH_ERROR_MARKERS):
-                    auth_failed = True
+                for line in proc.stdout:
+                    line = line.rstrip()
+                    if not line:
+                        continue
 
-                # Detect monotonic phase transitions from steamcmd output.
-                for i in range(phase_idx + 1, len(PHASES)):
-                    name, keywords = PHASES[i]
-                    if any(k in low for k in keywords):
-                        dt = time.time() - phase_start
-                        phase_timings.append((PHASES[phase_idx][0], dt))
+                    log_f.write(line + "\n")
+                    log_f.flush()
+
+                    low = line.lower()
+                    if any(m in low for m in AUTH_ERROR_MARKERS):
+                        auth_failed = True
+
+                    # Detect monotonic phase transitions from steamcmd output.
+                    for i in range(phase_idx + 1, len(PHASES)):
+                        name, keywords = PHASES[i]
+                        if any(k in low for k in keywords):
+                            dt = time.time() - phase_start
+                            phase_timings.append((PHASES[phase_idx][0], dt))
+                            print(
+                                f"  [{elapsed_str(start)}] + {PHASES[phase_idx][0]} done ({int(dt)}s)"
+                            )
+                            phase_idx = i
+                            phase_start = time.time()
+                            break
+
+                    # Per-line steamcmd echo is huge (hundreds of lines per upload);
+                    # the full stream is still captured in the log file. At default
+                    # verbosity we only surface lines that look like errors/warnings
+                    # so the user isn't blind if steamcmd is unhappy.
+                    if verbose:
                         print(
-                            f"  [{elapsed_str(start)}] + {PHASES[phase_idx][0]} done ({int(dt)}s)"
+                            f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}"
                         )
-                        phase_idx = i
-                        phase_start = time.time()
-                        break
+                    elif any(
+                        m in low
+                        for m in (
+                            "error",
+                            "warning",
+                            "failed",
+                            "fail ",
+                            "denied",
+                            "timeout",
+                        )
+                    ):
+                        print(
+                            f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}"
+                        )
 
-                # Per-line steamcmd echo is huge (hundreds of lines per upload);
-                # the full stream is still captured in the log file. At default
-                # verbosity we only surface lines that look like errors/warnings
-                # so the user isn't blind if steamcmd is unhappy.
-                if verbose:
-                    print(f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}")
-                elif any(
-                    m in low
-                    for m in (
-                        "error",
-                        "warning",
-                        "failed",
-                        "fail ",
-                        "denied",
-                        "timeout",
-                    )
-                ):
-                    print(f"  [{elapsed_str(start)}] {PHASES[phase_idx][0]}: {line}")
-
-        proc.wait()
+            proc.wait()
+        finally:
+            stop_process(proc, own_group=OWN_GROUP)
         last_returncode = proc.returncode or 0
         phase_timings.append((PHASES[phase_idx][0], time.time() - phase_start))
 
-        print(f"\n  --- Phase timings (attempt {attempt}) ---")
-        for name, dt in phase_timings:
-            print(f"    {name:<28}  {int(dt)}s")
-        print(f"    {'TOTAL':<28}  {elapsed_str(start)}\n")
+        timing_lines = [
+            f"\n  --- Phase timings (attempt {attempt}) ---",
+            *(f"    {name:<28}  {int(dt)}s" for name, dt in phase_timings),
+            f"    {'TOTAL':<28}  {elapsed_str(start)}\n",
+        ]
+        with log_path.open("a", encoding="utf-8", newline="") as log_f:
+            log_f.write("\n".join(timing_lines) + "\n")
+        if verbose:
+            print("\n".join(timing_lines))
 
         if proc.returncode == 0:
             print(
@@ -763,6 +901,36 @@ def publish(
     )
 
 
+def remove_staging(tmp: Path) -> None:
+    """Remove this run's staging tree; warn instead of raising when it survives."""
+    shutil.rmtree(tmp, ignore_errors=True)
+    if not os.path.lexists(tmp):
+        return
+    try:
+        if not tmp.is_symlink():
+            # Read-only entries block removal; clear them on real paths in staging.
+            os.chmod(tmp, stat.S_IRWXU)
+            for root, dirs, files in os.walk(tmp):
+                for name in dirs + files:
+                    path = os.path.join(root, name)
+                    if not os.path.islink(path):
+                        os.chmod(path, stat.S_IRWXU)
+        shutil.rmtree(tmp)
+    except OSError as exc:
+        print(f"  WARNING: Could not remove staging directory {tmp}: {exc}")
+
+
+def _raise_exit(signum: int, _frame: object) -> None:
+    raise SystemExit(f"ERROR: Interrupted by signal {signum}")
+
+
+def exit_on_termination_signals() -> None:
+    """Turn kill and terminal hangup into SystemExit so cleanup still runs."""
+    for name in ("SIGTERM", "SIGHUP"):
+        if hasattr(signal, name):
+            signal.signal(getattr(signal, name), _raise_exit)
+
+
 def main() -> None:
     total_start = time.time()
 
@@ -782,7 +950,8 @@ def main() -> None:
     parser.add_argument("--mod-id", help="Override the Workshop mod ID")
     parser.add_argument(
         "--version",
-        help="Override version= and the in-game banner. Accepts X.Y.Z, legacy "
+        required=True,
+        help="Set version= and the in-game banner. Accepts X.Y.Z, legacy "
         "suffixes (X.Y.Zb or X.Y.Zrc1), or SemVer prereleases "
         "(X.Y.Z-beta.5); one leading v/V is optional. Missing, excluded, or "
         "malformed banners abort before upload.",
@@ -795,6 +964,12 @@ def main() -> None:
     )
     parser.add_argument(
         "--no-default-excludes", action="store_true", help="Skip built-in exclude list"
+    )
+    parser.add_argument(
+        "--sync-description",
+        action="store_true",
+        help="Update the English Workshop description from tracked descriptions/descriptions_EN.txt; "
+        "set only its Current Version field from --version (default: leave the public description unchanged).",
     )
     parser.add_argument(
         "--changenote",
@@ -810,9 +985,11 @@ def main() -> None:
         "is always written to the log file).",
     )
 
-    mode = parser.add_mutually_exclusive_group(required=True)
+    mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--base-ref", help="Git ref to diff against (changed files only)")
-    mode.add_argument("--full", action="store_true", help="Publish entire mod")
+    mode.add_argument(
+        "--full", action="store_true", help="Publish entire mod (default)"
+    )
 
     args = parser.parse_args()
 
@@ -822,6 +999,8 @@ def main() -> None:
 
     # Validate before copying or staging anything.
     version = normalize_version(args.version)
+    assert version is not None
+    marker = BANNER_MARKERS[args.target]
 
     mod_id = args.mod_id or MOD_IDS[args.target]
     excludes = set() if args.no_default_excludes else set(DEFAULT_EXCLUDES)
@@ -845,7 +1024,11 @@ def main() -> None:
 
             changed = get_changed_files(args.base_ref)
             print(f"  {len(changed)} file(s) changed since {args.base_ref}")
-            mod_dir = copy_repo(tmp, excludes)
+        mod_dir = copy_repo(tmp, excludes)
+        description = (
+            read_description(mod_dir, version) if args.sync_description else None
+        )
+        if args.base_ref:
             publishable_changed = get_publishable_changed_files(mod_dir, changed)
             skipped = sorted(changed - publishable_changed)
             if skipped:
@@ -858,33 +1041,36 @@ def main() -> None:
                     "ERROR: No publishable mod files changed after excludes. "
                     "Use --full or adjust --exclude / --no-default-excludes."
                 )
-            if version:
-                # The banner lives in files a diff upload would otherwise drop.
-                publishable_changed |= {
-                    loc_file.relative_to(mod_dir).as_posix()
-                    for loc_file in frontend_loc_files(mod_dir)
-                }
+            publishable_changed |= {
+                loc_file.relative_to(mod_dir).as_posix()
+                for loc_file in frontend_loc_files(mod_dir)
+            }
             prune_unchanged(mod_dir, publishable_changed, verbose=args.verbose)
-        else:
-            mod_dir = copy_repo(tmp, excludes)
 
         # Rewrite descriptor.mod so the shipped copy matches this target.
         patch_descriptor(mod_dir, MOD_NAMES[args.target], mod_id, version)
 
-        # Keep the menu/loading-screen version in step with the upload.
-        if version:
-            patch_frontend_version(mod_dir, version)
+        # Keep the menu/loading-screen version and label in step with the upload.
+        patch_frontend_version(mod_dir, version, marker)
 
         # Validate required files exist
         validate_mod_files(mod_dir)
 
         print()
-        publish(mod_dir, username, mod_id, args.changenote, verbose=args.verbose)
+        publish(
+            mod_dir,
+            username,
+            mod_id,
+            args.changenote,
+            verbose=args.verbose,
+            description=description,
+        )
     finally:
-        shutil.rmtree(tmp, ignore_errors=True)
+        remove_staging(tmp)
 
     print(f"\n  Total time: {elapsed_str(total_start)}\n")
 
 
 if __name__ == "__main__":
+    exit_on_termination_signals()
     main()

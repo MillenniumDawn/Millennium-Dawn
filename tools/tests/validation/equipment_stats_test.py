@@ -363,3 +363,19 @@ def test_is_naval_covers_archetypes_categories_and_land():
     assert index.is_naval("carrier")
     assert index.is_naval("submarine")
     assert not index.is_naval("AA_Equipment")
+
+
+def test_archetype_of_resolves_variants_clones_and_unknowns():
+    index = _index(
+        "equipments = {\n"
+        "\tplane_airframe = { is_archetype = yes }\n"
+        "\tplane_airframe_1 = { archetype = plane_airframe }\n"
+        "}\n"
+        "duplicate_archetypes = {\n"
+        "\tplane_cas_airframe = { archetype = plane_airframe }\n"
+        "}\n"
+    )
+    assert index.archetype_of("plane_airframe") == "plane_airframe"
+    assert index.archetype_of("plane_airframe_1") == "plane_airframe"
+    assert index.archetype_of("plane_cas_airframe_1") == "plane_cas_airframe"
+    assert index.archetype_of("fighter_equipment_1") is None

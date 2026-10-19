@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Validate technology category consistency in Millennium Dawn.
 
-Rules from .claude/docs/focus-tree-reference.md + AGENTS.md category rules:
+Rules:
   * A generation tech (one whose id matches a parent's id after stripping
     digits and underscores) must carry every category its parent carries.
   * A gen dropping a category its whole lineage has is a copy-paste slip that

@@ -206,7 +206,8 @@ is a pure alt-flag OR, so the killswitch wins. Two places break that guarantee:
 - Any reader **outside** `ai_will_do` — a decision or category `visible`, a strategy-plan `enable`, a
   walker event `trigger`. There is no second modifier to correct it.
 
-Either case needs the alt-flag guard (`99_FRA_scripted_triggers.txt:255`, `99_GEO_scripted_triggers.txt:43`):
+Either case needs the alt-flag guard (`99_FRA_scripted_triggers.txt` and
+`99_GEO_scripted_triggers.txt` are references):
 
 ```
 DEN_ai_alt_path = {
@@ -230,9 +231,8 @@ DEN_ai_historical_path = {
 ```
 
 Name the helper `TAG_ai_alt_path` for the non-historical flags and `TAG_ai_any_path` when it must
-include historical too (`99_EGY_scripted_triggers.txt:18`, `99_IRQ_scripted_triggers.txt:8`). A single
-reader outside `ai_will_do` may instead pair the plain trigger with its not trigger —
-`DEN_ai_historical_path = yes` + `DEN_ai_not_historical_path = no` (§8, `ITA_strategy_plans.txt:6`).
+include historical too. A single reader outside `ai_will_do` may instead pair the plain trigger with
+its not trigger: `DEN_ai_historical_path = yes` + `DEN_ai_not_historical_path = no` (§8).
 
 `ai_path_report.py` reports both failures: a focus alive under an alt rule only because historical is
 on, and a decision gate that is dead under `NO_PATH` or visible during an alt path.
@@ -329,9 +329,7 @@ Raw flags are right only while every path in the `visible` is an **alt** path, a
 also has to run for the **historical** party gates on the alt-guarded `DEN_ai_historical_path` (§4)
 instead — raw `DEN_HISTORICAL_FOCUS_PATH` is dead under `NO_PATH` with historical AI, which is the one
 state the trigger exists to cover, and a bare unguarded trigger runs the historical ramp on top of the
-alt ramp the player picked. Both mistakes are live today: `GER_ai_path_category` and
-`GRE_ai_path_category` read the raw flag; `EGY_ai_rally_the_generals` and `IND_rally_the_awakening`
-read the unguarded trigger.
+alt ramp the player picked.
 
 A ramp pair per path, in `common/decisions/<Country>.txt`:
 
@@ -403,10 +401,8 @@ wrong when the target sits inside a group next to the incumbent.
 gate (`TAG_avoid_unready_war_with_X`, `TAG_prepare_war_with_X`), no `declare_war` / `conquer`
 hold-and-release tiers, no `avoid_starting_wars`, no losing-war brake. War-goal declaration is
 already covered by the general suite in `MD_war_declaration_ai.txt` (mod-wide restraint without
-`allowed`, plus the named rivalry pairings) and the engine's own wargoal handling. Review rejected
-every per-TAG variant: Sweden #4287, Syria #4342, Bolivia #5014 ("Unneeded AI strategies"), and
-earlier ROM #3586, SAU #3705, UKR #4346. `DEN.txt`, `BOS.txt`, `ARM.txt`, `HOL.txt:57`,
-`SOV_avoid_starting_wars` and `BLR_avoid_starting_wars` are legacy, not models.
+`allowed`, plus the named rivalry pairings) and the engine's own wargoal handling. Review rejects
+every per-TAG variant. Existing per-TAG war blocks in other countries are legacy, not models.
 
 **When a focus war fires too early**, fix it in the focus: a strength check in `available` (Bolivia's
 `BOL_revenge_of_1879` reads `fighting_army_strength_ratio = { tag = CHL ratio > 1.2 }`) or a
@@ -415,9 +411,8 @@ that is a separate PR against `MD_war_declaration_ai.txt`, not a per-TAG block.
 
 **Pre-existing blocks** in `common/ai_strategy/TAG.txt` stay untouched unless they are the
 `declare_war`-on-`has_war_with` bug below. `declare_war` is target-keyed and weights only
-**opening** a war, so a block gated on `has_war_with = TARGET` is a no-op. The 306
-`TAG_cancel_war_TARGET` blocks across ITA/LIC/TUR/JAP/GER/HOL/ENG/SWE/CHI/BUL/CUB/IND/CAN/VEN/COL/
-ETH/GUY/KOR are that bug — never copy one, never add one.
+**opening** a war, so a block gated on `has_war_with = TARGET` is a no-op. Never add a
+`TAG_cancel_war_TARGET` block.
 
 **Never** add an `on_daily_<TAG>` pass that caches booleans into country flags for `enable` or
 `ai_will_do` to read. Both are already evaluated lazily; a daily cache costs more and lags real
@@ -430,11 +425,10 @@ roster, write nothing: the ramp decisions in §6 already deliver the party, and 
 undated roster installs the wrong person.
 
 The path rule steers the party; nothing steers the person. `set_leader` runs on a re-election only
-behind a term limit (`events/MD_Elections.txt:2277`, `:2355`) and only 95 of 393 history files set
-one, so a country whose party keeps winning never rotates its leader and no intra-party succession
-can happen. The walker is the fix: an AI-only hidden event fired at the real historical dates, which
-asserts the ruling party and the roster pointer and lets the existing succession list supply the
-name.
+behind a term limit, and most history files set none, so a country whose party keeps winning never
+rotates its leader. The walker is the fix: an AI-only hidden event fired at the real historical
+dates, which asserts the ruling party and the roster pointer and lets the existing succession list
+supply the name.
 
 ```
 country_event = {
@@ -495,28 +489,26 @@ unconditionally, so the list never falls off its end.
 
 **Assert the index in every branch.** Never blind-advance by calling `set_leader` and trusting the
 pointer. Explicit assertion makes each date idempotent and self-repairing: a generic election between
-two historical dates moves the pointer, and the next date snaps it back. `britain_md.400` and
-`HOL_politics.86` blind-advance, which is why the AI UK gets Gordon Brown in 2005 and Ed Miliband in 2007.
+two historical dates moves the pointer, and the next date snaps it back. A walker that
+blind-advances installs the wrong person.
 
-**Never pass `change_leader_temp = 1`.** It sets `do_not_retire`
-(`common/scripted_effects/00_MD_politicsview_scripted_effects.txt:2231`), which makes the roster
-cascade pin at the current pointer instead of fast-forwarding. `britain_md.400` does this on its 2015
-party change and installs William Hague — a leader whose tenure ended in 2001 — as Prime Minister.
-Use it only to deliberately keep an incumbent across a coalition reshuffle.
+**Never pass `change_leader_temp = 1`.** It sets `do_not_retire`, which makes the roster cascade
+pin at the current pointer instead of fast-forwarding. Use it only to deliberately keep an
+incumbent across a coalition reshuffle.
 
 **Bound the date chain.** One descending `if`/`else_if` where every branch asserts both the party and
 the roster index, then one shared tail that decides change-vs-advance. The chain's final `else` must
 not change the ruling party on its own: with no upper bound, a re-fire after the last historical date
 reinstalls the earliest government.
 
-**`set_elections_XX_months` on a party change only** (`:2619` / `:2626` / `:2633`), matching the
+**`set_elections_XX_months` on a party change only**, matching the
 country's `election_frequency`. It resyncs `last_election` so the generic clock does not fire weeks
 later and undo the forced government. Calling it on every branch suppresses AI election news
 indefinitely.
 
-**Never inline `create_country_leader`.** `ast_elections.1` (`events/05_australia_events.txt:4894`)
-does; it duplicates the leader data, leaves the person missing from the roster, and desyncs the
-pointer for every other caller of `set_leader`. If the historical person is absent, append an entry to
+**Never inline `create_country_leader`.** It duplicates the leader data, leaves the person missing
+from the roster, and desyncs the pointer for every other caller of `set_leader`. If the historical
+person is absent, append an entry to
 `<TAG>_political_leaders.txt` in that file's exact existing shape, with a real end-of-tenure `date <`
 marker and a `picture =` that exists under `gfx/leaders/<TAG>/` — nothing validates leader portraits,
 and the filename is case-sensitive on Linux.

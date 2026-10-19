@@ -294,6 +294,20 @@ BRA_idea_higher_minimum_wage_1 = {
 }
 ```
 
+## Removable Spirit Footer
+
+Every starting national spirit the player can fix ends its description with a footer that says how. Good examples are Armenia, Transnistria, and Iran.
+
+```yaml
+TAG_spirit_desc: "Last flavour sentence.\n§W--------------§!\nThis national spirit will be §RRemoved§! if we complete the §Y$TAG_focus_id$§! focus."
+```
+
+- Use the fixed wording: `will be §RRemoved§!`, `will §GImprove§!`, `will §RWorsen§!`, or `will never be §RRemoved§!`
+- Name the source as `the §Y$focus_id$§! focus`, `the §Y$decision_id$§! decision`, or a `§Y<threshold>§!` for a variable. An event fired by a focus names the focus
+- List up to three sources. With more, name the branch by its root focus
+- Tiered spirits get the footer on every tier
+- Skip the footer on spirits nothing ever changes: permanent spirits, positive flavour spirits, hidden ideas, and dynamic modifiers that only give bonuses
+
 ---
 
 # Technologies

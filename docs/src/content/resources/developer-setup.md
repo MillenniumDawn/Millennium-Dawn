@@ -184,7 +184,6 @@ tools/
 ├── loc.py             Localisation utilities
 ├── logging_tool.py    Logging utility
 ├── precommit_validate.py Pre-commit hook: runs commit-stage validators in parallel
-├── validate_staged.py Legacy staged-file router (no longer wired into pre-commit)
 └── standardize_staged.py Pre-commit hook: routes staged files to standardizers
 ```
 

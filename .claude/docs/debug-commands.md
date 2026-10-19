@@ -17,24 +17,23 @@ mod.
 | `tag TAG`             | Switch the country you control (e.g. `tag GER`)                     |
 | `observe` / `tag ---` | Drop into observer mode                                             |
 | `event <id>`          | Fire an event on the player (e.g. `event EUevent.4`)                |
-| `effect <script>`     | Run arbitrary effect script in the **player country** scope         |
+| `effect <name>`       | Run a scripted effect by name in the **player country** scope       |
 
 ### Running MD scripted effects
 
-The `effect` console command executes any effect block in the player's scope. This is the
-primary way to drive MD systems by hand:
+`effect` takes the name of a scripted effect and nothing else: no `= yes`, no raw
+effects, no blocks. An optional tag first runs it on that country. Source:
+`resources/documentation/console_commands_documentation.md`.
 
 ```
-effect add_ideas = EU_member
-effect apply_USoE_technologies = yes
-effect set_variable = { global.current_active_agenda_disp = 203 }
+effect apply_USoE_technologies
+effect GER apply_USoE_technologies
 ```
 
-You can chain multiple statements in one `effect` call:
-
-```
-effect = { add_ideas = EU_member set_country_flag = EU_candidate }
-```
+Raw effects are not console input. The recipes below that show a scripted effect body
+go in a scratch scripted effect, called by name.
+`common/scripted_effects/99_console_cheat_effects.txt` holds the existing ones. Ideas
+have their own commands: `add_ideas <idea>` and `remove_ideas <idea>`.
 
 ## General cheats
 
@@ -52,16 +51,17 @@ effect = { add_ideas = EU_member set_country_flag = EU_candidate }
 
 ## Inspecting variables, flags, and arrays
 
-HOI4 has no direct "print variable" console command. Three practical options:
+The console documentation lists `get_var <name>` and `list_vars <scope>`. Three other
+options:
 
 1. **`tdebug` tooltips** — hover a country/state with debug tooltips on to read its
    variables and flags inline.
-2. **Log dump** — write the value to the game log, then read
+2. **Log dump** — log the value from a scratch scripted effect, then read
    `~/.local/share/Paradox Interactive/Hearts of Iron IV/logs/game.log`:
 
    ```
-   effect log = "EU_passed_votes^0 = [?global.EU_passed_votes^0]"
-   effect log = "active agenda = [?global.current_active_agenda_disp], active vote = [?global.current_active_vote_disp]"
+   log = "EU_passed_votes^0 = [?global.EU_passed_votes^0]"
+   log = "active agenda = [?global.current_active_agenda_disp], active vote = [?global.current_active_vote_disp]"
    ```
 
 3. **Scripted-loc readout** — most EU display values already surface through the EU GUI;
@@ -73,10 +73,10 @@ HOI4 has no direct "print variable" console command. Three practical options:
 
 ```
 # Join: the EU_member idea's on_add pushes THIS into global.EU_member
-effect add_ideas = EU_member
+add_ideas EU_member
 
 # Leave: on_remove pops THIS from global.EU_member and runs leaving_EU
-effect remove_ideas = EU_member
+remove_ideas EU_member
 ```
 
 ### Mark a passed agenda without running a full vote
@@ -85,11 +85,11 @@ effect remove_ideas = EU_member
 `focus_EUxxx_accepted` trigger reads it.
 
 ```
-# Record that EU203 passed (opens every gate keyed on focus_EU203_accepted)
-effect add_to_array = { global.EU_passed_votes = 203 }
+# Scripted effect body: record that EU203 passed (opens every gate keyed on focus_EU203_accepted)
+add_to_array = { global.EU_passed_votes = 203 }
 
 # Undo
-effect remove_from_array = { global.EU_passed_votes = 203 }
+remove_from_array = { global.EU_passed_votes = 203 }
 ```
 
 ### Force a council (QMV) vote outcome
@@ -99,9 +99,9 @@ The QMV resolvers are `focus_EUxxx_QMV_result`. They branch on
 `cleanup_european_union_voting` with `vote_passed = 1` (which records the pass in `EU_passed_votes`).
 
 ```
-# Set the active vote, then resolve it as passed
-effect set_variable = { global.current_active_vote_disp = 203 }
-effect focus_EU203_QMV_result = yes
+# Scripted effect body: set the active vote, then resolve it as passed
+set_variable = { global.current_active_vote_disp = 203 }
+focus_EU203_QMV_result = yes
 ```
 
 ### Form the United States of Europe (EU111)
@@ -110,7 +110,7 @@ The full formation runs through `focus_EU111_QMV_result` (annexes members, trans
 cores, applies pooled tech). As a member-state player:
 
 ```
-effect focus_EU111_QMV_result = yes
+effect focus_EU111_QMV_result
 ```
 
 ### Test pooled technology transfer (`apply_USoE_technologies`)
@@ -120,10 +120,9 @@ effect focus_EU111_QMV_result = yes
 hold each member's tech, so load it first:
 
 ```
-effect = {
-    for_each_scope_loop = { array = global.EU_member  EUU = { inherit_technology = PREV } }
-    apply_USoE_technologies = yes
-}
+# Scripted effect body
+for_each_scope_loop = { array = global.EU_member  EUU = { inherit_technology = PREV } }
+apply_USoE_technologies = yes
 ```
 
 `apply_USoE_technologies` builds `ROOT.eu_technologies`, applies each token via
@@ -132,8 +131,10 @@ effect = {
 ### Recompute the EU Parliament
 
 ```
-effect clear_EU_Parliament = yes      # wipe all PG flags + per-party globals
-effect election_EU_Parliament = yes   # recompute MEP totals / majority
+# Wipe all PG flags + per-party globals
+effect clear_EU_Parliament
+# Recompute MEP totals / majority
+effect election_EU_Parliament
 ```
 
 ## Key EU state handles

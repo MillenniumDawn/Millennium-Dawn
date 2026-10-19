@@ -15,6 +15,7 @@ export const markdownSanitizeSchema: Schema = {
   attributes: {
     ...baseAttributes,
     a: [...(baseAttributes.a ?? []), "target", "rel"],
+    img: [...(baseAttributes.img ?? []), "loading", "decoding"],
     h2: allowTailwindClasses("h2"),
     ul: allowTailwindClasses("ul"),
     ol: allowTailwindClasses("ol"),

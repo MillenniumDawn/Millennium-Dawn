@@ -7,12 +7,21 @@ module->category, module-driven slot unlocks) and each finding kind against
 synthetic hull/module fixtures.
 """
 
+import random
+
+import pytest
 from equipment_module_slots import (
+    _depth0_text,
+    _iter_named_blocks,
+    blank_comments,
     build_indexes,
     check_created_variant_upgrades,
     check_created_variants,
     check_target_variants,
+    created_variant_spans,
+    parse_variant_names,
 )
+from shared.suite import write_under as _write
 from validate_ai_equipment import Validator
 
 # Archetype with three slots; hull_1 inherits, hull_2 overrides and adds a slot.
@@ -402,7 +411,10 @@ def _created(hull, modules_body):
 
 
 def _created_kinds(content):
-    return [f.kind for f in check_created_variants(content, _indexes())]
+    return [
+        f.kind
+        for f in check_created_variants(created_variant_spans(content), _indexes())
+    ]
 
 
 def test_created_variant_correct_passes():
@@ -455,7 +467,7 @@ def test_created_variant_reports_real_line_number():
         "\t\t\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
         "\t\t\t\t\t\tnonexistent_slot = module_test_gun\n",
     )
-    findings = check_created_variants(content, _indexes())
+    findings = check_created_variants(created_variant_spans(content), _indexes())
     assert len(findings) == 1
     assert (
         content.split("\n")[findings[0].line - 1].strip().startswith("nonexistent_slot")
@@ -478,7 +490,7 @@ def test_created_variant_missing_required_slot_flagged():
         "\t\t\t\t\t\tfixed_ship_battery_slot = module_test_gun\n"
         "\t\t\t\t\t\toptional_sensor_slot = module_test_screen_fc\n",
     )
-    findings = check_created_variants(content, _indexes())
+    findings = check_created_variants(created_variant_spans(content), _indexes())
     assert [f.kind for f in findings] == ["missing_required_module"]
     assert "fixed_ship_ammo_slot" in findings[0].message
     assert findings[0].hull == "req_ship_hull_1"
@@ -521,7 +533,7 @@ def test_created_variant_without_modules_block_flagged():
         "\t}\n"
         "}\n"
     )
-    findings = check_created_variants(content, _indexes())
+    findings = check_created_variants(created_variant_spans(content), _indexes())
     assert [f.kind for f in findings] == [
         "missing_required_module",
         "missing_required_module",
@@ -545,13 +557,6 @@ def test_target_variant_missing_required_slot_flagged():
         "\t\t\t\tfixed_ship_battery_slot = module_test_gun\n",
     )
     assert _kinds(content) == ["missing_required_module"]
-
-
-def _write(tmp_path, rel, body):
-    p = tmp_path / rel
-    p.parent.mkdir(parents=True, exist_ok=True)
-    p.write_text(body, encoding="utf-8")
-    return p
 
 
 def _variant_issues(tmp_path, hulls, rel, content, validator_cls, prefix):
@@ -583,7 +588,7 @@ def test_oob_validator_integration_reports_errors(tmp_path):
     assert "module_test_plain_fc" in issues[0].message
 
 
-def test_validator_integration_reports_warnings(tmp_path):
+def test_ai_validator_integration_reports_errors(tmp_path):
     issues = _variant_issues(
         tmp_path,
         HULLS,
@@ -597,7 +602,7 @@ def test_validator_integration_reports_warnings(tmp_path):
         "NAVAL VARIANT",
     )
     assert len(issues) == 1
-    assert issues[0].severity == "warning"
+    assert issues[0].severity == "error"
     assert issues[0].file == "common/ai_equipment/TST_naval.txt"
     assert "module_test_plain_fc" in issues[0].message
 
@@ -623,8 +628,7 @@ def test_oob_validator_reports_missing_required_slot(tmp_path):
 
 
 def test_ai_validator_missing_required_slot_is_error(tmp_path):
-    # A template that leaves a required slot empty can never be matched, so the
-    # AI validator escalates it above its usual slot-rule warning.
+    # A template that leaves a required slot empty can never be matched.
     issues = _variant_issues(
         tmp_path,
         REQUIRED_HULLS,
@@ -659,6 +663,33 @@ def test_ai_validator_count_limit_is_error(tmp_path):
     assert len(issues) == 1
     assert issues[0].severity == "error"
     assert "module_light_guns_category" in issues[0].message
+
+
+@pytest.mark.parametrize(
+    "modules_body, category",
+    [
+        (
+            "\t\t\t\tgun_slot = module_test_helipad\n",
+            "EQUIPMENT VARIANT: module category not allowed in slot",
+        ),
+        (
+            "\t\t\t\tgun_slot = module_test_exact_gun\n",
+            "EQUIPMENT VARIANT: module forbidden on hull type",
+        ),
+    ],
+)
+def test_ai_validator_non_ship_slot_findings_are_errors(
+    tmp_path, modules_body, category
+):
+    issues = _variant_issues(
+        tmp_path,
+        LIMIT_HULLS,
+        "common/ai_equipment/TST_land.txt",
+        _variant("lim_tank_hull_1", modules_body),
+        Validator,
+        "EQUIPMENT VARIANT",
+    )
+    assert [(i.severity, i.category) for i in issues] == [("error", category)]
 
 
 def test_two_guns_exceed_category_count_limit():
@@ -905,17 +936,17 @@ def test_variant_without_a_type_is_skipped():
         "\t\t\t\t\tgun_slot = edge_base_gun\n"
         "\t\t\t\t}\n"
     )
-    assert check_created_variants(content, _edge_index()) == []
+    assert check_created_variants(created_variant_spans(content), _edge_index()) == []
 
 
 def test_variant_with_neither_type_nor_modules_is_skipped():
     content = _edge_created('\t\t\t\tname = "Nameless"\n')
-    assert check_created_variants(content, _edge_index()) == []
+    assert check_created_variants(created_variant_spans(content), _edge_index()) == []
 
 
 def test_variant_naming_an_unindexed_hull_without_modules_is_skipped():
     content = _edge_created('\t\t\t\tname = "Ghost"\n\t\t\t\ttype = not_a_hull\n')
-    assert check_created_variants(content, _edge_index()) == []
+    assert check_created_variants(created_variant_spans(content), _edge_index()) == []
 
 
 def test_variant_on_an_unresolvable_hull_is_skipped():
@@ -926,7 +957,7 @@ def test_variant_on_an_unresolvable_hull_is_skipped():
         "\t\t\t\t\tno_such_slot = edge_base_gun\n"
         "\t\t\t\t}\n"
     )
-    assert check_created_variants(content, _edge_index()) == []
+    assert check_created_variants(created_variant_spans(content), _edge_index()) == []
 
 
 def test_blocks_before_modules_do_not_hide_it():
@@ -940,16 +971,17 @@ def test_blocks_before_modules_do_not_hide_it():
         "\t\t\t\t\tno_such_slot = edge_base_gun\n"
         "\t\t\t\t}\n"
     )
-    assert [f.kind for f in check_created_variants(content, _edge_index())] == [
-        "unknown_slot"
-    ]
+    assert [
+        f.kind
+        for f in check_created_variants(created_variant_spans(content), _edge_index())
+    ] == ["unknown_slot"]
 
 
 def test_empty_modules_block_yields_no_assignments():
     content = _edge_created(
         '\t\t\t\tname = "Bare"\n\t\t\t\ttype = edge_hull\n\t\t\t\tmodules = {}\n'
     )
-    assert check_created_variants(content, _edge_index()) == []
+    assert check_created_variants(created_variant_spans(content), _edge_index()) == []
 
 
 def test_non_identifier_module_value_is_skipped():
@@ -960,7 +992,7 @@ def test_non_identifier_module_value_is_skipped():
         "\t\t\t\t\tgun_slot = 2\n"
         "\t\t\t\t}\n"
     )
-    assert check_created_variants(content, _edge_index()) == []
+    assert check_created_variants(created_variant_spans(content), _edge_index()) == []
 
 
 def test_block_assignment_naming_nothing_is_skipped():
@@ -971,16 +1003,15 @@ def test_block_assignment_naming_nothing_is_skipped():
         "\t\t\t\t\tgun_slot = { }\n"
         "\t\t\t\t}\n"
     )
-    assert check_created_variants(content, _edge_index()) == []
+    assert check_created_variants(created_variant_spans(content), _edge_index()) == []
 
 
 def test_parse_variant_names_skips_blocks_missing_a_field():
-    from equipment_module_slots import parse_variant_names
-
     content = _edge_created("\t\t\t\ttype = edge_hull\n") + _edge_created(
         '\t\t\t\tname = "Real"\n\t\t\t\ttype = edge_hull\n'
     )
-    assert [name for _type, name, _line in parse_variant_names(content)] == ["Real"]
+    names = parse_variant_names(created_variant_spans(content))
+    assert [name for _type, name, _line in names] == ["Real"]
 
 
 def test_unreadable_equipment_file_is_skipped(tmp_path, caplog):
@@ -1077,7 +1108,7 @@ def _upgraded(hull, upgrades_body):
 
 def _upgrade_findings(hull, upgrades_body):
     return check_created_variant_upgrades(
-        _upgraded(hull, upgrades_body), _upgrade_index()
+        created_variant_spans(_upgraded(hull, upgrades_body)), _upgrade_index()
     )
 
 
@@ -1137,7 +1168,7 @@ def test_variant_of_unknown_type_has_no_upgrade_finding():
 def test_type_without_any_upgrade_list_is_skipped():
     index = build_indexes([HULLS], [MODULES])
     content = _upgraded("test_ship_hull_1", "\t\tlegacy_upgrade = 1\n")
-    assert check_created_variant_upgrades(content, index) == []
+    assert check_created_variant_upgrades(created_variant_spans(content), index) == []
 
 
 def test_oob_validator_reports_unsupported_upgrade(tmp_path):
@@ -1155,3 +1186,81 @@ def test_oob_validator_reports_unsupported_upgrade(tmp_path):
     assert issues[0].severity == "error"
     assert issues[0].file == "common/national_focus/07_test.txt"
     assert "legacy_upgrade" in issues[0].message
+
+
+def test_one_walk_feeds_every_created_variant_check_with_real_lines():
+    # The second design sits after the first, so a line counted from the
+    # modules block instead of the file start would come out short.
+    first = _created(
+        "test_ship_hull_1", "\t\t\t\t\t\tnonexistent_slot = module_test_gun\n"
+    )
+    second = _created("test_ship_hull_1", "\t\t\t\t\t\tother_slot = module_test_gun\n")
+    variants = created_variant_spans(
+        "# create_equipment_variant = { }\n" + first + second.rstrip("\n")
+    )
+    findings = check_created_variants(variants, _indexes())
+    assert [(f.kind, f.line) for f in findings] == [
+        ("unknown_slot", 11),
+        ("unknown_slot", 27),
+    ]
+    assert parse_variant_names(variants) == [
+        ("test_ship_hull_1", "Test Class", 7),
+        ("test_ship_hull_1", "Test Class", 23),
+    ]
+
+
+def test_named_block_walk_reaches_the_last_block_past_unrelated_siblings():
+    text = blank_comments(
+        '# create_equipment_variant = { name = "Commented" }\n'
+        "a = { b = { } }\n"
+        'c = { d = { create_equipment_variant = { name = "First" } } }\n'
+        "e = { }\n"
+        'f = { create_equipment_variant = { name = "Middle" } }\n'
+        'log = "create_equipment_variant"\n'
+        'create_equipment_variant = { name = "Last" }'
+    )
+    spans = _iter_named_blocks(text, 0, len(text), "create_equipment_variant")
+    assert [text[lo:hi].strip() for lo, hi in spans] == [
+        'name = "First"',
+        'name = "Middle"',
+        'name = "Last"',
+    ]
+
+
+def _walk_depth0_text(text, lo, hi):
+    """The per-character walk _depth0_text replaced."""
+    out = []
+    depth = 0
+    in_str = False
+    for i in range(lo, hi):
+        c = text[i]
+        if c == '"' and text[i - 1] != "\\":
+            in_str = not in_str
+            if depth == 0:
+                out.append(c)
+        elif c == "{" and not in_str:
+            depth += 1
+        elif c == "}" and not in_str:
+            depth -= 1
+        elif depth == 0:
+            out.append(c)
+    return "".join(out)
+
+
+def test_depth0_text_matches_the_character_walk():
+    """Quoted braces stay text, an escaped quote does not toggle, a stray `}`
+    hides the rest, and index 0 checks the last character for a backslash."""
+    rng = random.Random(20261002)
+    fixed = ['"a{b}"\\', 'x = { y } z "{" w', "} a { b", '\\" { "} c']
+    texts = fixed + [
+        "".join(rng.choice('{}"\\ a=\n') for _ in range(rng.randint(0, 24)))
+        for _ in range(300)
+    ]
+    for text in texts:
+        for lo in range(len(text) + 1):
+            for hi in range(lo, len(text) + 1):
+                assert _depth0_text(text, lo, hi) == _walk_depth0_text(text, lo, hi), (
+                    text,
+                    lo,
+                    hi,
+                )

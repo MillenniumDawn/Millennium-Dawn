@@ -15,7 +15,7 @@ Steps:
 
 3. Create the file at `common/national_focus/05_<TAG>.txt` (uppercase TAG) with:
    - A `focus_tree` container block with the correct `id`, `country` filter, and a placeholder `continuous_focus_position`
-   - One starter focus block following the required property order (see `.claude/docs/focus-tree-reference.md` § "Required Property Order")
+   - One starter focus block following the required property order (see "Property order" in `.claude/docs/focus-tree-reference.md`)
    - The root focus id following the pattern `TAG_start`
    - All tags capitalised in script IDs (e.g. `SER_free_market_capitalism`, not `ser_free_market_capitalism`)
    - `relative_position_id` on all focuses after the root (all focus trees must use relative positioning)

@@ -40,31 +40,18 @@ that deliberately change equipment type or variant.
 
 ## change_influence_percentage
 
-The scripted effect uses temp-variable arguments with these defaults:
-
 | Temp variable      | Required | Default   |
 | ------------------ | -------- | --------- |
-| `percent_change`   | yes      | —         |
+| `percent_change`   | yes      |           |
 | `tag_index`        | no       | `ROOT.id` |
 | `influence_target` | no       | `THIS.id` |
 
-Three pitfalls:
-
-1. **Don't write redundant defaults.** `set_temp_variable = { tag_index = ROOT.id }` and `set_temp_variable = { influence_target = THIS.id }` are no-ops. Leave them out.
-2. **Orphan setters are silent bugs.** A `percent_change` / `tag_index` / `influence_target` triple with no following `change_influence_percentage = yes` does nothing. When auditing influence code, grep for `percent_change` setters and confirm each has a matching invocation in the same scope.
-3. **Loop-local temp vars need the call inside the loop.** Setting temp vars inside `random_other_country` / `random_country` / `every_country` then calling `change_influence_percentage = yes` outside the block runs the effect once with stale or undefined values. The invocation must live in the same scope as the temp-var writes.
+- Do not write the defaults. `set_temp_variable = { tag_index = ROOT.id }` is a no-op.
+- A setter with no following `change_influence_percentage = yes` does nothing.
+- The call must sit in the same scope as the temp-var writes. Setters inside
+  `random_other_country` with the call outside the block run the effect on stale values:
 
 ```
-# Wrong — call runs outside the loop; tag_index/influence_target resolve to outer scope
-random_other_country = {
-    limit = { ... }
-    set_temp_variable = { percent_change = 3 }
-    set_temp_variable = { tag_index = THIS.id }
-    set_temp_variable = { influence_target = PREV.id }
-}
-change_influence_percentage = yes
-
-# Correct — call inside the loop with the loop-local scopes
 random_other_country = {
     limit = { ... }
     set_temp_variable = { percent_change = 3 }
@@ -74,203 +61,129 @@ random_other_country = {
 }
 ```
 
-Also watch for typos in the temp-var name itself (e.g., `influence_tBRAet` from a botched search-and-replace) — the engine accepts any name, so a typo silently sets a never-read variable and the influence change uses the default `THIS.id` target.
+- A typo in the temp-var name sets a variable nothing reads, and the effect uses the
+  default target.
 
 ## Array Index Semantics
 
-When a function uses `^index` array subscripts, the **meaning of the index variable** must be obvious and consistent. Bugs arise when two different index types are stored in similarly-named variables.
-
-| Variable name              | Should hold                  |
-| -------------------------- | ---------------------------- |
-| `project`, `slot`, `idx`   | Slot / array position (0..N) |
-| `type`, `kind`, `category` | Lookup key / type ID (1..N)  |
-
-Neither kind may hold the other's: a slot variable must not hold a building type, category ID, or other lookup key; a type variable must not hold a slot index.
-
-**Rule:** Document an array-index parameter in the function comment. Verify every caller passes the right kind of index. See `.claude/docs/refactor-checklist.md` for the full verification steps.
+Keep the two kinds of index apart. A slot variable (`project`, `slot`, `idx`) holds an
+array position from 0. A type variable (`type`, `kind`, `category`) holds a lookup key
+from 1. Neither may hold the other's. Document an array-index parameter in the effect's
+comment and verify every caller passes the right kind. Steps:
+`refactor-checklist.md`.
 
 ## damage_building / remove_building Need a Matching Presence Guard
 
-Both effects require the named building to exist in the scope they run in. Against a state that doesn't have it, the engine logs an error and does nothing. One stray call is invisible; MD fires these from raids and repeatable `random_list` decisions, so at campaign scale the log spam becomes a real cost (#2806).
-
-The guard must name the **same** building as the effect. An `if` that gates on something else — an idea, a flag, state control — reads like a guard and isn't one:
+Against a state that lacks the building, the engine logs an error and does nothing. At
+raid and `random_list` scale the log spam costs performance. The guard must name the
+same building as the effect:
 
 ```
-# Wrong — guarded, but on an idea; state 652 may hold no industrial_complex
+# Wrong: guarded on an idea
 if = {
     limit = { has_idea = SOV_foreign_cars_idea1 }
     652 = { remove_building = { type = industrial_complex level = 2 } }
 }
 
-# Correct — the building's own count trigger, in state scope
+# Correct: the building's own count trigger, in state scope
 if = {
     limit = { fuel_silo > 0 }
     damage_building = { type = fuel_silo damage = 1 }
 }
 ```
 
-Other accepted forms: `non_damaged_building_level = { building = X level > 0 }` (use this when damage matters, not just presence), a `random_list` bucket zeroed by `modifier = { factor = 0  X < 1 }`, and an `any_core_state = { X > N }` pre-selection before a `random_core_state` pick. Flagged (WARNING) by `validate_building_guards.py`.
+Also accepted: `non_damaged_building_level = { building = X level > 0 }` when damage
+matters, a `random_list` bucket zeroed by `modifier = { factor = 0  X < 1 }`, and an
+`any_core_state = { X > N }` pre-selection before a `random_core_state` pick.
 
 ## remove_dynamic_modifier Needs a Matching Presence Guard
 
-Removing a dynamic modifier the scope is not carrying logs an error and does nothing. MD fires these from focus rewards, on_actions and repeatable decisions, so one unguarded call keeps writing to `error.log` for the rest of the campaign (#3764).
-
-The guard must name the **same** modifier as the removal. A proxy trigger — a country flag, an idea, a variable that happens to track the modifier — reads like a guard and proves nothing, because anything else may have removed the modifier in between:
+Removing a dynamic modifier the scope does not carry logs an error and does nothing.
+The guard must name the same modifier. A flag, idea, or variable proxy proves nothing:
 
 ```
-# Wrong — gated on a flag, not on the modifier
-if = {
-    limit = { has_country_flag = CHI_hkg_integrated }
-    remove_dynamic_modifier = { modifier = CHI_HKG_sinicization_modifier }
-}
-
-# Correct — the house style, one line
 if = { limit = { has_dynamic_modifier = { modifier = CHI_HKG_sinicization_modifier } } remove_dynamic_modifier = { modifier = CHI_HKG_sinicization_modifier } }
 ```
 
-Cross-scope removals put the same trigger inside the state the effect runs in: `limit = { 215 = { has_dynamic_modifier = { modifier = X } } }` guarding `215 = { remove_dynamic_modifier = { modifier = X } }`. A decision `available` or an event `trigger` is **not** a guard — it sits on the enclosing object, not on the scope the effect runs in, and `allowed` is evaluated once at game start. Flagged (ERROR) by `validate_dynamic_modifier_guards.py`.
+For a cross-scope removal, put the trigger inside the state the effect runs in:
+`limit = { 215 = { has_dynamic_modifier = { modifier = X } } }`. A decision `available`
+or an event `trigger` is not a guard.
 
 ## EU Game-Rule Guard on europeanism_change Calls
 
-When the EU game rule (`GAME_RULE_eu_disabled`) is active, the `europeanism`
-country variable is meaningless — the EU system is entirely disabled. Any effect
-that modifies `europeanism` (via `europeanism_change`, `EU_europeanism_change`,
-or `EU_potential_europeanism_change`) will show in tooltips as junk effects
-that do nothing at runtime.
-
-**Rule:** the guard is built directly into `europeanism_change`,
-`EU_europeanism_change`, and `EU_potential_europeanism_change` themselves.
-No wrapper or inline `if` block is needed at call sites — just call them
-normally:
+`europeanism_change`, `EU_europeanism_change`, and `EU_potential_europeanism_change`
+carry the `GAME_RULE_eu_disabled` guard themselves. Call them with no wrapper:
 
 ```
 set_temp_variable = { modify_europeanism = ... }
-set_temp_variable = { modify_europeanism_target = ... }  # if needed
 europeanism_change = yes
 ```
 
-When `GAME_RULE_eu_disabled` is active, the `custom_effect_tooltip` and
-`hidden_effect` inside each scripted effect are skipped, so no junk tooltip
-entries appear. The guard applies regardless of whether the enclosing
-event/decision already has a `GAME_RULE_eu_disabled` trigger check — the
-`if` block inside the scripted effect is needed because tooltips evaluate
-`completion_reward` / `remove_effect` content independently of the trigger.
-
 ## Guard Gates on Optional or Elected Office Holders
 
-Any gate on an office holder needs a satisfiable branch for the vacant case, including
-before the first election or after a timed idea expires. Otherwise the path locks
-while nobody holds the office.
+A gate on an office holder needs a satisfiable branch for the vacant case, including
+before the first election or after a timed idea expires. Otherwise the path locks while
+nobody holds the office.
 
 ```
-# Wrong — un-completable while every office holder is vacant
-available = {
- any_of_scopes = { array = global.EU_potential  is_leader_of_EU_foreign_policy = yes }
- # ...influence requirement on the holder...
-}
-
-# Correct — fall back to a satisfiable bar when no holder exists
 available = {
  OR = {
   AND = {
    any_of_scopes = { array = global.EU_potential  is_leader_of_EU_foreign_policy = yes }
-   # ...influence requirement on the holder...
+   # requirement on the holder
   }
   AND = {
    NOT = { any_of_scopes = { array = global.EU_potential  is_leader_of_EU_foreign_policy = yes } }
-   # ...broad fallback so the path is never hard-locked...
+   # broad fallback
   }
  }
 }
 ```
 
-Mirror the vacant case in the tooltip (e.g. "if no office is filled, this requires X instead"), and guard `var:`-stored country refs with `check_variable = { var:holder > 0 }` before scoping in — an uninitialized holder reads 0.
+Mirror the vacant case in the tooltip. Guard a `var:`-stored country with
+`check_variable = { var:holder > 0 }` before scoping in, since an unset holder reads 0.
 
 ## Effect Scope Interpolation
 
-Some effects accept `event_target:` / `tag` / scope tokens directly in their parameters; others require you to enter the target country as the current scope (typically `event_target:X = { ... }`) and reference the other party as `ROOT` / `PREV` / `THIS` inside the block. The behavior is per-effect, not per-mod.
+Whether `target =` accepts `event_target:` is per effect.
 
 | Effect                         | `target =` accepts `event_target:`? |
 | ------------------------------ | ----------------------------------- |
 | `add_to_war`                   | yes                                 |
-| `add_opinion_modifier`         | yes (in practice)                   |
-| `reverse_add_opinion_modifier` | yes (in practice)                   |
-| `add_relation_modifier`        | **no — tag literal only**           |
+| `add_opinion_modifier`         | yes                                 |
+| `reverse_add_opinion_modifier` | yes                                 |
 | `send_equipment`               | yes                                 |
+| `add_relation_modifier`        | no, tag literal only                |
 
-Patterns:
-
-- `add_to_war = { targeted_alliance = event_target:X enemy = event_target:Y }` at executor scope
-- `add_opinion_modifier = { target = event_target:X modifier = foo }`
-- `reverse_add_opinion_modifier = { target = event_target:X modifier = foo }`
-- `add_relation_modifier` — enter scope: `event_target:X = { add_relation_modifier = { target = ROOT modifier = foo } }`
-- `send_equipment = { target = event_target:X ... }`
-
-**Rule of thumb:** when an effect has both an executor side and a `target =` side and the two countries must differ, open a scope block on the side whose `target =` would otherwise need a non-tag token. The executor side becomes `ROOT` / `PREV` from inside the block; the `target =` field takes the simple `TAG` form and is unambiguous.
+For `add_relation_modifier`, enter the scope:
+`event_target:X = { add_relation_modifier = { target = ROOT modifier = foo } }`. When the
+executor and the target must differ, open a scope block on the side whose `target =`
+would need a non-tag token.
 
 ## FROM in Events Fired From On Actions and `random_scope_in_array`
 
-`country_event = { id = ... }` fired from inside an `on_declare_war` / `on_weekly_X` block or a `random_scope_in_array` has no explicit `FROM`. Inside the event, `FROM` falls back to the country that fired it — the executor (NATO leader, the on_action's ROOT, the looping scope) — not the country you actually want to reference. Effects that use `FROM` in this position silently no-op against self or self-apply opinion modifiers.
+A `country_event` fired from an on_action block or a `random_scope_in_array` has no
+explicit `FROM`. Inside the event, `FROM` falls back to the country that fired it, not
+the counterpart you meant. Effects using `FROM` there apply to the wrong country.
 
-**Two fixes; pick by what reads cleanest:**
+Two fixes:
 
-1. **Hidden routing dummy event.** Fire a `hidden = yes` event on the right scope (e.g. fire on the defender from the on_action) and let the dummy's `immediate` run the scope-selection logic and fire the visible event. The visible event's `FROM` is now the dummy's host (the defender) and the global event targets (`event_target:mnna_defender` etc.) carry the identity unambiguously. The on_action can also stamp a `custom_effect_tooltip` for the user.
-2. **Defensive scope block in the option.** Even with a clean `FROM`, prefer `event_target:X = { ... }` blocks over `target = FROM` in effect calls — it works regardless of the firing chain and makes the relationship direction obvious to a reviewer.
-
-Worked example (MNNA dilemma, `events/United States.txt` `department_of_state.232.a` + dummy `department_of_state.1000`):
+1. Fire a `hidden = yes` routing event on the right scope and save global event targets
+   first. Its `immediate` picks the recipient and fires the visible event. Reference:
+   `department_of_state.1000` and `department_of_state.232` in
+   `events/United States.txt`.
+2. In the option, use `event_target:X = { ... }` blocks instead of `target = FROM`.
 
 ```
-# On-action (common/on_actions/99_USA_on_actions.txt on_declare_war)
-if = {
-    limit = {
-        NOT = { has_global_flag = GAME_RULE_nato_disabled }
-        FROM = { has_idea = Major_Non_NATO_Ally NOT = { is_subject_of = ROOT } }
-        NOT = { has_government = democratic }
-        NOT = { has_idea = NATO_member }
-        NOT = { has_idea = Major_Non_NATO_Ally }
-        any_of_scopes = { array = global.nato_members is_faction_leader = yes ... }
-    }
-    custom_effect_tooltip = MNNA_nato_may_intervene_in_this_conflict_tt
+event_target:mnna_defender = {
+    add_opinion_modifier = { target = ROOT modifier = usa_fp_major_alliance_support }
+    add_relation_modifier = { target = ROOT modifier = generic_increased_military_support }
     hidden_effect = {
-        save_global_event_target_as = mnna_aggressor
-        FROM = {
-            save_global_event_target_as = mnna_defender
-            country_event = { id = department_of_state.1000 days = 3 }
-        }
-    }
-}
-
-# Hidden dummy (events/United States.txt)
-country_event = {
-    id = department_of_state.1000
-    hidden = yes
-    is_triggered_only = yes
-    immediate = {
-        random_scope_in_array = {
-            array = global.nato_members
-            limit = { is_faction_leader = yes NOT = { has_country_flag = collapsed_nation } ... }
-            set_country_flag = { flag = mnna_event_cooldown days = 7 value = 1 }
-            country_event = { id = department_of_state.232 days = 2 }
-        }
-    }
-}
-
-# Visible dilemma option .a — chained-PREV add_to_war + scope-block modifiers
-option = {
-    name = department_of_state.232.a
-    add_war_support = 0.05
-    add_political_power = -50
-    event_target:mnna_defender = {
-        add_opinion_modifier      = { target = ROOT modifier = usa_fp_major_alliance_support }
-        reverse_add_opinion_modifier = { target = ROOT modifier = usa_fp_major_alliance_support }
-        add_relation_modifier     = { target = ROOT modifier = generic_increased_military_support }
-        hidden_effect = {
-            event_target:mnna_aggressor = {
-                ROOT = {
-                    add_to_war = {
-                        targeted_alliance = PREV.PREV   # = defender
-                        enemy = PREV                    # = aggressor
-                    }
+        event_target:mnna_aggressor = {
+            ROOT = {
+                add_to_war = {
+                    targeted_alliance = PREV.PREV   # defender
+                    enemy = PREV                    # aggressor
                 }
             }
         }
@@ -278,11 +191,5 @@ option = {
 }
 ```
 
-Walking the chain: outer scope `THIS` = defender, `PREV` = ROOT. `event_target:mnna_aggressor = { ... }` re-points: `THIS` = aggressor, `PREV` = defender. `ROOT = { ... }` re-points again: `THIS` = ROOT (executor of `add_to_war`), `PREV` = aggressor, `PREV.PREV` = defender. Executor joins defender's war against aggressor. Correct.
-
-**Audit checklist for any event fired from an on_action or `random_scope_in_array` (no explicit `FROM`):**
-
-- `FROM` references — confirm they intend the firing scope, not a counterpart. If they intend a counterpart, switch to event targets.
-- `add_to_war` calls — confirm executor vs. `targeted_alliance` vs. `enemy` resolves to three different countries where intended.
-- `add_relation_modifier` — open a scope block; `target =` must be a tag literal.
-- Mixed `add_opinion_modifier` + `add_relation_modifier` — open a scope block; works for both, clearer for the reviewer.
+When auditing such an event, confirm every `FROM` means the firing scope, and that
+`add_to_war` resolves executor, `targeted_alliance`, and `enemy` to three countries.
