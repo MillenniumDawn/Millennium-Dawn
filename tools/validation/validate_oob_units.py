@@ -134,6 +134,11 @@ _COLUMN_SIZE_MODIFIER = "additional_brigade_column_size"
 _SET_SUB_DOCTRINE_RE = re.compile(
     r"^set_sub_doctrine\s*=\s*(?:\{[^}]*?\bsub_doctrine\s*=\s*)?(\w+)", re.M
 )
+_ADD_MASTERY_RE = re.compile(r"^add_mastery\s*=\s*\{([^{}]*)\}", re.M)
+_ASSIGNMENT_RE = re.compile(r"(\w+)\s*=\s*(\S+)")
+_REWARD_MASTERY_RE = re.compile(
+    r"^\s*NDefines\.NDoctrines\.DEFAULT_REWARD_MASTERY\s*=\s*([\d.]+)", re.M
+)
 _SLOT_COORD_RE = re.compile(r"\b([xy])\s*=\s*(\d+)")
 _TEMPLATE_SLOT = "template-slot"
 _TEMPLATE_LOCKED_ROW = "template-locked-row"
@@ -1298,16 +1303,22 @@ def _limit_sources(mod_path: str, pattern: str) -> List[str]:
 
 
 def _starting_column_bonus(mod_path: str) -> Dict[str, int]:
-    """Regiments rows each tag's starting subdoctrines add.
+    """Regiments rows each tag's starting subdoctrines and mastery rewards add.
 
-    Mastery rewards and ideas that add rows are not counted.
+    Only root-level history counts. Ideas that add rows are not counted.
     """
+    reward_mastery = 100.0
+    for path in _limit_sources(mod_path, _DEFINES_PATTERN):
+        for value in _REWARD_MASTERY_RE.findall(_read_text(path, mod_path)):
+            reward_mastery = float(value)
     sizes: Dict[str, int] = {}
+    reward_rows: Dict[str, List[Tuple[float, int]]] = {}
     for path in _limit_sources(mod_path, _DOCTRINES_PATTERN):
         text = strip_comments(_read_text(path, mod_path))
         if _COLUMN_SIZE_MODIFIER not in text:
             continue
-        for node in _build_block_nodes(text):
+        nodes = _build_block_nodes(text)
+        for node in nodes:
             if node["parent"] != -1:
                 continue
             size = _top_level_value(
@@ -1315,20 +1326,50 @@ def _starting_column_bonus(mod_path: str) -> Dict[str, int]:
             )
             if size:
                 sizes[node["label"]] = int(size)
+            needed = 0.0
+            for child in node["children"]:
+                if nodes[child]["label"] != "rewards":
+                    continue
+                for idx in nodes[child]["children"]:
+                    start, end = nodes[idx]["start"] + 1, nodes[idx]["end"]
+                    # Rewards unlock in order, so each threshold adds to the last.
+                    needed += float(
+                        _top_level_value(text, start, end, "mastery") or reward_mastery
+                    )
+                    size = _top_level_value(text, start, end, _COLUMN_SIZE_MODIFIER)
+                    if size:
+                        reward_rows.setdefault(node["label"], []).append(
+                            (needed, int(size))
+                        )
     bonus: Dict[str, int] = {}
     for path in _limit_sources(mod_path, _COUNTRY_HISTORY_PATTERN):
         text = _read_text(path, mod_path)
         if "set_sub_doctrine" not in text:
             continue
-        doctrines = _SET_SUB_DOCTRINE_RE.findall(strip_comments(text))
+        text = strip_comments(text)
+        doctrines = _SET_SUB_DOCTRINE_RE.findall(text)
+        mastery: Dict[str, float] = {}
+        for body in _ADD_MASTERY_RE.findall(text):
+            fields = dict(_ASSIGNMENT_RE.findall(body))
+            if fields.keys() == {"amount", "sub_doctrine"} and _NUMBER_RE.fullmatch(
+                fields["amount"]
+            ):
+                doctrine = fields["sub_doctrine"]
+                mastery[doctrine] = mastery.get(doctrine, 0.0) + float(fields["amount"])
         rows = sum(sizes.get(doctrine, 0) for doctrine in doctrines)
+        rows += sum(
+            size
+            for doctrine in set(doctrines)
+            for needed, size in reward_rows.get(doctrine, [])
+            if mastery.get(doctrine, 0.0) >= needed
+        )
         if rows:
             bonus[os.path.basename(path)[:3]] = rows
     return bonus
 
 
 def read_template_limits(mod_path: str) -> TemplateLimits:
-    defines = dict(_VANILLA_TEMPLATE_DEFINES)
+    defines: Dict[str, Tuple[int, ...]] = dict(_VANILLA_TEMPLATE_DEFINES)
     for path in _limit_sources(mod_path, _DEFINES_PATTERN):
         for name, value in _NMILITARY_DEFINE_RE.findall(_read_text(path, mod_path)):
             if name in defines:
@@ -1435,7 +1476,7 @@ def check_template_slots(
     template-slot: the designer hides the unit and locks the template for
     editing. template-locked-row: the row needs a doctrine the owner lacks.
     """
-    findings = []
+    findings: List[Tuple[int, str, str]] = []
     for idx, node in enumerate(nodes):
         if node["label"] != "division_template":
             continue

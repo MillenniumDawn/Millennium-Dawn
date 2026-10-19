@@ -32,20 +32,30 @@ from report_lib import (  # noqa: E402
     ReportContext,
     classify,
     clear_comment,
+    count_keys,
     dedupe,
     load_all,
     load_baseline,
     load_changed_files,
+    load_hunks,
+    load_renames,
     post_checks,
     post_comment,
+    rename_issues,
     render,
     tag_changed_files,
+    tool_effect,
     truncate_if_needed,
 )
 
 
 def build_report(
-    results_dir: str, ctx: ReportContext, baseline=None, changed_files=None
+    results_dir: str,
+    ctx: ReportContext,
+    baseline=None,
+    changed_files=None,
+    renames=None,
+    hunks=None,
 ):
     """Return (body, step_summary_body, runs, deduped_issues, truncated, stats)."""
     runs = load_all(results_dir)
@@ -54,8 +64,12 @@ def build_report(
 
     # NEW vs EXISTING classification against the main-side baseline, when
     # one was restored. None keeps rendering exactly as before the baseline
-    # existed (cold cache, validator generation change).
-    baseline_stats = classify(deduped, baseline) if baseline is not None else None
+    # existed (cold cache, validator generation change, incomplete baseline).
+    baseline_stats = None
+    if baseline is not None:
+        main_issues = baseline.issues({run.name for run in runs})
+        rename_issues(main_issues, renames or {})
+        baseline_stats = classify(deduped, main_issues, hunks)
     if changed_files:
         tag_changed_files(deduped, changed_files)
 
@@ -122,8 +136,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         help=(
             "Directory holding the main-side validation baseline (restored "
             "cache entry, .validation_baseline). Findings are tagged NEW vs "
-            "EXISTING when it loads; a missing/stale baseline only drops the "
-            "annotation."
+            "EXISTING when it loads; a missing, stale, or incomplete baseline "
+            "only drops the annotation."
         ),
     )
     parser.add_argument(
@@ -135,11 +149,53 @@ def main(argv: Optional[List[str]] = None) -> int:
         ),
     )
     parser.add_argument(
+        "--baseline-commit",
+        default=None,
+        help=(
+            "Main commit the baseline must record (the PR's base); a baseline "
+            "of any other commit is ignored."
+        ),
+    )
+    parser.add_argument(
+        "--tooling-changed",
+        action="store_true",
+        help=(
+            "The PR's validator code differs from the base's. The report says "
+            "the comparison cannot show what that code does to main's findings."
+        ),
+    )
+    parser.add_argument(
         "--changed-files",
         default=None,
         help=(
             "Newline-separated PR changed-file list. Findings whose file is "
             "in the list are tagged IN YOUR PR."
+        ),
+    )
+    parser.add_argument(
+        "--main-tools-baseline",
+        default=None,
+        help=(
+            "Main's own baseline of the --baseline-commit, from main's "
+            "validators. With --tooling-changed, the report lists per category "
+            "what the PR's validators add to and drop from it."
+        ),
+    )
+    parser.add_argument(
+        "--renames",
+        default=None,
+        help=(
+            "Files the PR renamed, each old path on one line and its new path "
+            "on the next. Main's findings in an old path count as the new one's."
+        ),
+    )
+    parser.add_argument(
+        "--hunks",
+        default=None,
+        help=(
+            "The `diff --git`, `+++`, and `@@` lines of the PR's "
+            "`git diff --unified=0` from the baseline commit. Main's findings "
+            "then match only at the same place in the PR's files."
         ),
     )
     parser.add_argument(
@@ -162,18 +218,39 @@ def main(argv: Optional[List[str]] = None) -> int:
         date_utc=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
         repo=args.github_repository,
         validation_scope=args.validation_scope,
+        tooling_changed=args.tooling_changed,
     )
 
-    # None on a cold cache or stale toolshash: classification (and the
-    # NEW/EXISTING rendering) is skipped instead of comparing against output
-    # from a different validator generation.
+    # None on a cold cache, stale toolshash, other commit, or incomplete
+    # baseline: classification (and the NEW/EXISTING rendering) is skipped
+    # instead of comparing against stale or partial output.
     baseline = (
-        load_baseline(args.baseline_dir, args.baseline_toolshash)
+        load_baseline(args.baseline_dir, args.baseline_toolshash, args.baseline_commit)
         if args.baseline_dir
         else None
     )
     if args.baseline_dir:
         ctx.baseline_status = "available" if baseline is not None else "unavailable"
+        ctx.baseline_commit = args.baseline_commit
+        run_id = os.environ.get("GITHUB_RUN_ID")
+        # The base scan job records this run's id; main's own runs record theirs.
+        ctx.baseline_scanned_here = bool(
+            baseline is not None and run_id and baseline.meta.get("run_id") == run_id
+        )
+    if args.tooling_changed and baseline is not None and args.main_tools_baseline:
+        main_tools = load_baseline(args.main_tools_baseline, None, args.baseline_commit)
+        if main_tools is not None:
+            ctx.tool_effect = tool_effect(
+                count_keys(baseline.issues()), count_keys(main_tools.issues())
+            )
+    renames = (
+        load_renames(args.renames)
+        if args.renames and os.path.isfile(args.renames)
+        else None
+    )
+    hunks = (
+        load_hunks(args.hunks) if args.hunks and os.path.isfile(args.hunks) else None
+    )
 
     changed_files = None
     if args.changed_files:
@@ -184,7 +261,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             ctx.changed_files_status = "unavailable"
 
     body, step_body, runs, deduped, truncated, baseline_stats = build_report(
-        args.results_dir, ctx, baseline, changed_files
+        args.results_dir, ctx, baseline, changed_files, renames, hunks
     )
 
     try:
@@ -225,6 +302,7 @@ def main(argv: Optional[List[str]] = None) -> int:
             f"vs main baseline: {baseline_stats.new_errors} new error(s), "
             f"{baseline_stats.new_warnings} new warning(s), "
             f"{baseline_stats.existing_errors + baseline_stats.existing_warnings} existing, "
+            f"{len(baseline_stats.raised)} raised, {len(baseline_stats.lowered)} lowered, "
             f"{baseline_stats.unclassified} unclassified",
             file=sys.stderr,
         )
