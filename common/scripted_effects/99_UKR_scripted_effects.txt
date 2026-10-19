@@ -7968,9 +7968,8 @@ UKR_storage_rebuild_rows = {
 		add_to_array = { UKR_storage_rows = 5 }
 		if = {
 			limit = { check_variable = { UKR_storage_open_section = 5 } }
-			if = { limit = { check_variable = { ukraine_has_tu16k_stockpile > 0 } } add_to_array = { UKR_storage_rows = 51 } }
-			if = { limit = { check_variable = { ukraine_has_tu22kd_stockpile > 0 } } add_to_array = { UKR_storage_rows = 52 } }
-			if = { limit = { check_variable = { ukraine_has_tu22rd_stockpile > 0 } } add_to_array = { UKR_storage_rows = 53 } }
+			if = { limit = { check_variable = { UKR_storage_tu16_total > 0 } } add_to_array = { UKR_storage_rows = 51 } }
+			if = { limit = { check_variable = { UKR_storage_tu22_total > 0 } } add_to_array = { UKR_storage_rows = 52 } }
 		}
 	}
 }
@@ -8002,9 +8001,13 @@ UKR_storage_refresh = {
 	set_variable = { UKR_storage_total_3 = ukraine_has_2k11_stockpile }
 	add_to_variable = { UKR_storage_total_3 = ukraine_has_9k31_stockpile }
 	set_variable = { UKR_storage_total_4 = ukraine_has_9k11_stockpile }
-	set_variable = { UKR_storage_total_5 = ukraine_has_tu16k_stockpile }
-	add_to_variable = { UKR_storage_total_5 = ukraine_has_tu22kd_stockpile }
-	add_to_variable = { UKR_storage_total_5 = ukraine_has_tu22rd_stockpile }
+	# Tu-16 = Tu-16K + Tu-16R, Tu-22 = Tu-22KD + Tu-22RD
+	set_variable = { UKR_storage_tu16_total = ukraine_has_tu16k_stockpile }
+	add_to_variable = { UKR_storage_tu16_total = ukraine_has_tu16r_stockpile }
+	set_variable = { UKR_storage_tu22_total = ukraine_has_tu22kd_stockpile }
+	add_to_variable = { UKR_storage_tu22_total = ukraine_has_tu22rd_stockpile }
+	set_variable = { UKR_storage_total_5 = UKR_storage_tu16_total }
+	add_to_variable = { UKR_storage_total_5 = UKR_storage_tu22_total }
 	UKR_storage_rebuild_rows = yes
 	if = {
 		limit = { check_variable = { UKR_storage_dirty_var < 10000 } }
@@ -8236,6 +8239,48 @@ UKR_sov_deliver_tu16k = {
 		add_equipment_to_stockpile = { type = strategic_bomber1 variant_name = "Tu-16K" amount = ukr_sov_amount producer = UKR }
 	}
 }
+UKR_sov_variant_tu16r = {
+	if = {
+		limit = { NOT = { has_country_flag = ukr_modernize_sov_equipment_variant_tu16r_flag } }
+		set_country_flag = ukr_modernize_sov_equipment_variant_tu16r_flag
+		if = {
+			limit = { has_dlc = "By Blood Alone" }
+			create_equipment_variant = {
+				name = "Tu-16R"
+				type = large_plane_airframe_1
+				parent_version = 0
+				allow_without_tech = yes
+				modules = {
+					fixed_main_weapon_slot = weap_ag_strat_1
+					fixed_gun_slot = empty
+					avionics_type_slot = avionics_manned_1
+					wingform_type_slot = wing_swept
+					engine_type_slot = engine_jet_double_1
+					special_slot_type_1 = spec_countermeasures_1
+					special_slot_type_2 = spec_recon_1
+				}
+				obsolete = yes
+				icon = "GFX_CHI_AIR_H_6"
+			}
+		}
+		else = {
+			create_equipment_variant = {
+				name = "Tu-16R"
+				type = strategic_bomber1
+				allow_without_tech = yes
+			}
+		}
+	}
+}
+UKR_sov_deliver_tu16r = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		add_equipment_to_stockpile = { type = large_plane_airframe_1 variant_name = "Tu-16R" amount = ukr_sov_amount producer = UKR }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = strategic_bomber1 variant_name = "Tu-16R" amount = ukr_sov_amount producer = UKR }
+	}
+}
 UKR_sov_variant_tu22kd = {
 	if = {
 		limit = { NOT = { has_country_flag = ukr_modernize_sov_equipment_variant_tu22kd_flag } }
@@ -8323,12 +8368,16 @@ UKR_sov_deliver_tu22rd = {
 	}
 }
 
-# Sell every stored Tu-16K / every stored Tu-22 for temp ukr_sale_price to ukr_storage_buyer
-UKR_storage_sell_tu16k = {
+# Sell every stored Tu-16 / every stored Tu-22 for temp ukr_sale_price to ukr_storage_buyer
+UKR_storage_sell_tu16 = {
 	set_temp_variable = { ukr_sov_amount = ukraine_has_tu16k_stockpile }
 	subtract_from_variable = { ukraine_has_tu16k_stockpile = ukr_sov_amount tooltip = ukraine_storage_tu16k_sold_tt }
 	UKR_sov_variant_tu16k = yes
 	event_target:ukr_storage_buyer = { UKR_sov_deliver_tu16k = yes }
+	set_temp_variable = { ukr_sov_amount = ukraine_has_tu16r_stockpile }
+	subtract_from_variable = { ukraine_has_tu16r_stockpile = ukr_sov_amount tooltip = ukraine_storage_tu16r_sold_tt }
+	UKR_sov_variant_tu16r = yes
+	event_target:ukr_storage_buyer = { UKR_sov_deliver_tu16r = yes }
 	UKR_storage_sale_payment = yes
 	UKR_storage_bomber_sale_backlash = yes
 }
