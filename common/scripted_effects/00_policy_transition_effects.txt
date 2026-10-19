@@ -144,81 +144,140 @@ policy_transition_add_tax_penalty = {
 	policy_transition_sync_stability = yes
 }
 
-# Iran's Majlis can veto a law change and revert it days later; remember what the change was charged
+# Iran's Majlis can veto a law change and revert it days later; remember what each category's own change was charged
 # Temp policy_transition_category: 1 bureau, 2 police, 3 education, 4 health, 5 social
 policy_transition_remember_charge = {
 	if = {
-		limit = { original_tag = PER }
-		set_variable = { policy_transition_last_category = policy_transition_category }
-		set_variable = { policy_transition_last_amount = policy_transition_amount }
+		limit = { original_tag = PER policy_transition_own_choice = yes }
+		if = {
+			limit = { check_variable = { policy_transition_category = 1 } }
+			set_variable = { policy_transition_pending_bureau = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_bureau = 0 } } clear_variable = policy_transition_pending_bureau }
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 2 } }
+			set_variable = { policy_transition_pending_police = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_police = 0 } } clear_variable = policy_transition_pending_police }
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 3 } }
+			set_variable = { policy_transition_pending_education = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_education = 0 } } clear_variable = policy_transition_pending_education }
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 4 } }
+			set_variable = { policy_transition_pending_health = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_health = 0 } } clear_variable = policy_transition_pending_health }
+		}
+		else = {
+			set_variable = { policy_transition_pending_social = policy_transition_amount }
+			if = { limit = { check_variable = { policy_transition_pending_social = 0 } } clear_variable = policy_transition_pending_social }
+		}
 	}
 }
 
-# Majlis veto: the change is reverted, so its charge is taken back as far as it has not decayed yet
+# Majlis veto: the category's change is reverted, so its charge is taken back as far as it has not decayed yet
+# Refunds only when a removed level is flagged, since that is when the veto actually reverts the law
 policy_transition_refund_vetoed_change = {
+	set_temp_variable = { policy_transition_refund = 0 }
 	if = {
-		limit = { check_variable = { policy_transition_last_category = policy_transition_category } }
+		limit = { check_variable = { policy_transition_category = 1 } }
 		if = {
-			limit = { check_variable = { policy_transition_last_amount > 0 } }
+			limit = { OR = { has_country_flag = PER_removed_bureau_01 has_country_flag = PER_removed_bureau_02 has_country_flag = PER_removed_bureau_03 has_country_flag = PER_removed_bureau_04 has_country_flag = PER_removed_bureau_05 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_bureau }
+		}
+		clear_variable = policy_transition_pending_bureau
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_category = 2 } }
+		if = {
+			limit = { OR = { has_country_flag = PER_removed_police_01 has_country_flag = PER_removed_police_02 has_country_flag = PER_removed_police_03 has_country_flag = PER_removed_police_04 has_country_flag = PER_removed_police_05 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_police }
+		}
+		clear_variable = policy_transition_pending_police
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_category = 3 } }
+		if = {
+			limit = { OR = { has_country_flag = PER_removed_edu_01 has_country_flag = PER_removed_edu_02 has_country_flag = PER_removed_edu_03 has_country_flag = PER_removed_edu_04 has_country_flag = PER_removed_edu_05 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_education }
+		}
+		clear_variable = policy_transition_pending_education
+	}
+	else_if = {
+		limit = { check_variable = { policy_transition_category = 4 } }
+		if = {
+			limit = { OR = { has_country_flag = PER_removed_health_01 has_country_flag = PER_removed_health_02 has_country_flag = PER_removed_health_03 has_country_flag = PER_removed_health_04 has_country_flag = PER_removed_health_05 has_country_flag = PER_removed_health_06 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_health }
+		}
+		clear_variable = policy_transition_pending_health
+	}
+	else = {
+		if = {
+			limit = { OR = { has_country_flag = PER_removed_social_01 has_country_flag = PER_removed_social_02 has_country_flag = PER_removed_social_03 has_country_flag = PER_removed_social_04 has_country_flag = PER_removed_social_05 has_country_flag = PER_removed_social_06 } }
+			set_temp_variable = { policy_transition_refund = policy_transition_pending_social }
+		}
+		clear_variable = policy_transition_pending_social
+	}
+	if = {
+		limit = { check_variable = { policy_transition_refund > 0 } }
+		if = {
+			limit = { check_variable = { policy_transition_category = 1 } }
+			set_temp_variable = { policy_transition_room = { value = policy_transition_bureau_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
 			if = {
-				limit = { check_variable = { policy_transition_category = 1 } }
-				set_temp_variable = { policy_transition_room = { value = policy_transition_bureau_cost multiply = -1 } }
-				set_temp_variable = { policy_transition_amount = { value = policy_transition_last_amount multiply = -1 max = policy_transition_room } }
-				if = {
-					limit = { check_variable = { policy_transition_amount < 0 } }
-					add_to_variable = { var = policy_transition_bureau_cost value = policy_transition_amount tooltip = bureaucracy_cost_multiplier_modifier_tt }
-				}
-			}
-			else_if = {
-				limit = { check_variable = { policy_transition_category = 2 } }
-				set_temp_variable = { policy_transition_room = { value = policy_transition_police_cost multiply = -1 } }
-				set_temp_variable = { policy_transition_amount = { value = policy_transition_last_amount multiply = -1 max = policy_transition_room } }
-				if = {
-					limit = { check_variable = { policy_transition_amount < 0 } }
-					add_to_variable = { var = policy_transition_police_cost value = policy_transition_amount tooltip = police_cost_multiplier_modifier_tt }
-				}
-			}
-			else_if = {
-				limit = { check_variable = { policy_transition_category = 3 } }
-				set_temp_variable = { policy_transition_room = { value = policy_transition_education_cost multiply = -1 } }
-				set_temp_variable = { policy_transition_amount = { value = policy_transition_last_amount multiply = -1 max = policy_transition_room } }
-				if = {
-					limit = { check_variable = { policy_transition_amount < 0 } }
-					add_to_variable = { var = policy_transition_education_cost value = policy_transition_amount tooltip = education_cost_multiplier_modifier_tt }
-				}
-			}
-			else_if = {
-				limit = { check_variable = { policy_transition_category = 4 } }
-				set_temp_variable = { policy_transition_room = { value = policy_transition_health_cost multiply = -1 } }
-				set_temp_variable = { policy_transition_amount = { value = policy_transition_last_amount multiply = -1 max = policy_transition_room } }
-				if = {
-					limit = { check_variable = { policy_transition_amount < 0 } }
-					add_to_variable = { var = policy_transition_health_cost value = policy_transition_amount tooltip = health_cost_multiplier_modifier_tt }
-				}
-			}
-			else = {
-				set_temp_variable = { policy_transition_room = { value = policy_transition_social_cost multiply = -1 } }
-				set_temp_variable = { policy_transition_amount = { value = policy_transition_last_amount multiply = -1 max = policy_transition_room } }
-				if = {
-					limit = { check_variable = { policy_transition_amount < 0 } }
-					add_to_variable = { var = policy_transition_social_cost value = policy_transition_amount tooltip = social_cost_multiplier_modifier_tt }
-				}
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_bureau_cost value = policy_transition_amount tooltip = bureaucracy_cost_multiplier_modifier_tt }
 			}
 		}
 		else_if = {
-			limit = { check_variable = { policy_transition_last_amount < 0 } }
-			set_temp_variable = { policy_transition_room = { value = policy_transition_cut_stability multiply = -1 } }
-			set_temp_variable = { policy_transition_amount = { value = policy_transition_last_amount multiply = -1 min = policy_transition_room } }
+			limit = { check_variable = { policy_transition_category = 2 } }
+			set_temp_variable = { policy_transition_room = { value = policy_transition_police_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
 			if = {
-				limit = { check_variable = { policy_transition_amount > 0 } }
-				add_to_variable = { policy_transition_cut_stability = policy_transition_amount }
-				add_to_variable = { var = policy_transition_stability value = policy_transition_amount tooltip = stability_factor_tt }
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_police_cost value = policy_transition_amount tooltip = police_cost_multiplier_modifier_tt }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 3 } }
+			set_temp_variable = { policy_transition_room = { value = policy_transition_education_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_education_cost value = policy_transition_amount tooltip = education_cost_multiplier_modifier_tt }
+			}
+		}
+		else_if = {
+			limit = { check_variable = { policy_transition_category = 4 } }
+			set_temp_variable = { policy_transition_room = { value = policy_transition_health_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_health_cost value = policy_transition_amount tooltip = health_cost_multiplier_modifier_tt }
+			}
+		}
+		else = {
+			set_temp_variable = { policy_transition_room = { value = policy_transition_social_cost multiply = -1 } }
+			set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 max = policy_transition_room } }
+			if = {
+				limit = { check_variable = { policy_transition_amount < 0 } }
+				add_to_variable = { var = policy_transition_social_cost value = policy_transition_amount tooltip = social_cost_multiplier_modifier_tt }
 			}
 		}
 		policy_transition_refresh = yes
 	}
-	clear_variable = policy_transition_last_category
-	clear_variable = policy_transition_last_amount
+	else_if = {
+		limit = { check_variable = { policy_transition_refund < 0 } }
+		set_temp_variable = { policy_transition_room = { value = policy_transition_cut_stability multiply = -1 } }
+		set_temp_variable = { policy_transition_amount = { value = policy_transition_refund multiply = -1 min = policy_transition_room } }
+		if = {
+			limit = { check_variable = { policy_transition_amount > 0 } }
+			add_to_variable = { policy_transition_cut_stability = policy_transition_amount }
+			add_to_variable = { var = policy_transition_stability value = policy_transition_amount tooltip = stability_factor_tt }
+		}
+		policy_transition_refresh = yes
+	}
 	policy_transition_clear_if_empty = yes
 }
 
@@ -742,8 +801,11 @@ policy_transition_clear_costs = {
 	clear_variable = policy_transition_tax_bonus
 	clear_variable = policy_transition_productivity
 	clear_variable = policy_transition_investment_cost
-	clear_variable = policy_transition_last_category
-	clear_variable = policy_transition_last_amount
+	clear_variable = policy_transition_pending_bureau
+	clear_variable = policy_transition_pending_police
+	clear_variable = policy_transition_pending_education
+	clear_variable = policy_transition_pending_health
+	clear_variable = policy_transition_pending_social
 }
 
 # New nations, civil war splinters and annexed countries start over
