@@ -235,7 +235,7 @@ def test_rebuild_is_idempotent_and_quarter_wrapper_owns_replay_mutation():
     rebuild = _named_block(effects, "ai_race_rebuild_derived_state")
     quarterly = _named_block(effects, "ai_race_quarterly_reconcile")
     dispatch = _named_block(effects, "ai_race_monthly_dispatch")
-    debug_repair = _named_block(effects, "ai_race_debug_repair")
+    debug_repair = _named_block(effects, "ai_race_debug_repair_state")
 
     assert not any(
         target.endswith("_stock") for target in _variable_write_targets(metrics)
@@ -1261,7 +1261,7 @@ def test_executed_progress_survives_shortage_and_repair_without_replay():
     ledger = copy.deepcopy(country["ledger"])
     country["ratios"] = [0] * 6
     for action in (
-        "ai_race_debug_repair",
+        "ai_race_debug_repair_state",
         "ai_race_refresh_dashboard",
         "ai_race_monthly_dispatch",
     ):

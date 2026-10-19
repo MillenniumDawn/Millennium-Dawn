@@ -1440,15 +1440,21 @@ def test_wartime_support_research_skips_civilian_expansion_for_paid_material_rec
     assert country["vars"]["ai_race_ai_savings_target"] == 0
 
 
-@pytest.mark.parametrize("fleet_consumption", [0, 40])
-def test_fossil_fuel_reserve_covers_the_existing_fleet_and_the_new_plant(
-    fleet_consumption,
-):
+@pytest.mark.parametrize("plants", [0, 1, 2])
+def test_fossil_fuel_reserve_covers_the_existing_fleet_and_the_new_plant(plants):
     race, country = _planner()
-    country["vars"]["fossil_pp_fuel_consumption"] = fleet_consumption
+    country["vars"]["modifier@fossil_fuel_consumption"] = 20 * plants
+    energy = (ROOT / "common/scripted_effects/!_energy_effects.txt").read_text(
+        encoding="utf-8"
+    )
+    owner = re.search(
+        r"set_variable = \{\s*fossil_pp_fuel_consumption = \{.*?\n\t\t\}", energy, re.S
+    )
+    race.execute(_parse_race_script("owner = {" + owner[0] + "}")["owner"], 1)
+    assert country["vars"]["fossil_pp_fuel_consumption"] == -20 * plants
     race.run("ai_race_ai_cache_construction", 1)
     assert country["vars"]["ai_race_ai_fossil_fuel_reserve"] == pytest.approx(
-        (20 + fleet_consumption) * 24 * 28 * 0.001
+        20 * (1 + plants) * 24 * 28 * 0.001
     )
 
 
