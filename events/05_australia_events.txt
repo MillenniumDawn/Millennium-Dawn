@@ -4593,42 +4593,6 @@ news_event = {
 #Election Events
 #############################
 
-add_namespace = ast_elections_howard_placeholders
-
-news_event = {
-	id = ast_elections_howard_placeholders.1
-	title = ast_elections_howard_placeholders.1.t
-	desc = ast_elections_howard_placeholders.1.d
-	picture = GFX_howard_election_win_1
-	is_triggered_only = yes
-
-	trigger = {
-		tag = AST
-		NOT = { has_country_flag = election_victory_2001_ast }
-	}
-
-	immediate = { set_country_flag = election_victory_2001_ast }
-
-	option = { name = ast_elections_howard_placeholders.1.a }
-}
-
-news_event = {
-	id = ast_elections_howard_placeholders.2
-	title = ast_elections_howard_placeholders.2.t
-	desc = ast_elections_howard_placeholders.2.d
-	picture = GFX_liberal_rally
-	is_triggered_only = yes
-
-	trigger = {
-		tag = AST
-		NOT = { has_country_flag = election_victory_2004_ast }
-	}
-
-	immediate = { set_country_flag = election_victory_2004_ast }
-
-	option = { name = ast_elections_howard_placeholders.2.a }
-}
-
 add_namespace = dissolution_election_rudd
 
 country_event = {
@@ -4833,7 +4797,6 @@ country_event = {
 
 	trigger = {
 		original_tag = AST
-		date > 2005.01.01
 		NOT = { has_country_flag = election_cooldown_ast }
 		is_ai = no
 	}
@@ -4976,33 +4939,57 @@ country_event = {
 	hidden = yes
 
 	immediate = {
-		if = { #Peter Costello wins 2007
+		if = { #Kim Beazley wins 2001
+			limit = { 
+				western_social_democrats_are_in_power = yes
+				date > 2000.01.01
+				date < 2002.01.01
+				#doesnt need to check for prior gov
+			}
+			news_event = election_outcomes_ast.10
+		}
+		else_if = { #John Howard wins reelection 2001
+			limit = { 
+				western_conservatism_are_in_power = yes
+				date > 2000.01.01
+				date < 2002.01.01
+				#doesnt need to check for prior gov
+			}
+			news_event = election_outcomes_ast.13
+		}
+		else_if = { #Mark Latham wins 2004
 			limit = {
 				western_conservatism_are_in_power = yes
-				date > 2004.01.01
+				date > 2002.01.01
+				date < 2005.01.01
+				NOT = {
+					has_country_flag = labor_previously_in
+				}
+
+			}
+			news_event = election_outcomes_ast.11
+		}
+		else_if = { #John Howard wins reelection 2004
+			limit = {
+				western_conservatism_are_in_power = yes
+				date > 2002.01.01
+				date < 2005.01.01
+				has_country_flag = liberals_previously_in
+
+			}
+			news_event = election_outcomes_ast.14
+		}
+		else_if = { #Peter Costello wins 2004-07
+			limit = {
+				western_conservatism_are_in_power = yes
+				date > 2003.01.01
 				date < 2008.01.01
 				NOT = {
 					has_country_flag = liberals_previously_in
 				}
 
 			}
-			kill_country_leader = yes
-			create_country_leader = {
-						name = "Peter Costello"
-						picture = "peter_costello.dds"
-						desc = peter_costello_desc
-						ideology = conservatism
-						traits = {
-							western_conservatism
-							economist
-						}
-					}
-			load_focus_tree = {
-				tree = costellogov_focus
-				keep_completed = yes
-			}
-			set_temp_variable = { add_col_one = 14 }
-			add_coalition_members_effect = yes
+			news_event = election_outcomes_ast.12
 		}
 		else_if = { #Kevin Rudd wins 2007
 			limit = {
@@ -5014,6 +5001,15 @@ country_event = {
 				}
 			}
 			news_event = election_outcomes_ast.1 
+		}
+		else_if = { #Liberals win reelection 2007
+			limit = {
+				western_conservatism_are_in_power = yes
+				date > 2007.01.01
+				date < 2008.01.01
+				has_country_flag = liberals_previously_in
+			}
+			news_event = election_outcomes_ast.2
 		}
 		else_if = { #Rudd wins reelection
 			limit = {
@@ -5051,15 +5047,6 @@ country_event = {
 				}
 			}
 			news_event = election_outcomes_ast.6 #consecutive gillard wins
-		}
-		else_if = { #Liberals win reelection 2007
-			limit = {
-				western_conservatism_are_in_power = yes
-				date > 2007.01.01
-				date < 2008.01.01
-				has_country_flag = liberals_previously_in
-			}
-			news_event = election_outcomes_ast.2
 		}
 		else_if = { #Tony Abbott wins 2010-13
 			limit = {
@@ -5110,6 +5097,7 @@ country_event = {
 	}
 }
 
+#election after effects
 country_event = {
 	id = ast_elections.6
 	is_triggered_only = yes
@@ -5175,7 +5163,11 @@ news_event = {
 	picture = GFX_liberal_rally
 	is_triggered_only = yes
 
-	option = { name = election_outcomes_ast.2.a add_political_power = 50 }
+	option = { 
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.2.a executed"
+		name = election_outcomes_ast.2.a 
+		add_political_power = 50 
+	}
 }
 
 #generic labor reelection
@@ -5186,7 +5178,11 @@ news_event = {
 	picture = GFX_generic_labor_crowd
 	is_triggered_only = yes
 
-	option = { name = election_outcomes_ast.3.a add_political_power = 50 }
+	option = { 
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.3.a executed"
+		name = election_outcomes_ast.3.a 
+		add_political_power = 50 
+	}
 }
 
 #rudd reelected
@@ -5198,7 +5194,7 @@ news_event = {
 	is_triggered_only = yes
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.3.a executed"
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.4.a executed"
 		name = election_outcomes_ast.3.a
 		add_political_power = 50
 		set_country_flag = rudd_consecutive_win
@@ -5245,7 +5241,11 @@ news_event = {
 	picture = GFX_liberal_rally
 	is_triggered_only = yes
 
-	option = { name = election_outcomes_ast.7.a add_political_power = 50 }
+	option = {
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.7.a executed"
+		name = election_outcomes_ast.7.a 
+		add_political_power = 50 
+	}
 }
 
 #gillard wins 2013 nonconsecutive
@@ -5281,7 +5281,7 @@ news_event = {
 	}
 
 	option = {
-		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.5.a executed"
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.8.a executed"
 		name = election_outcomes_ast.5.a
 		add_ideas = hung_parliament_ast
 		set_country_flag = gillard_won_election_ast
@@ -5289,7 +5289,7 @@ news_event = {
 	}
 }
 
-#turnbull elected
+#turnbull win
 news_event = {
 	id = election_outcomes_ast.9
 	title = election_outcomes_ast.9.t
@@ -5321,6 +5321,140 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.9.a executed"
 		name = election_outcomes_ast.9.a
 		custom_effect_tooltip = focus_tree_has_changed_ast_tt
+	}
+}
+
+#kim beazley wins 2001
+news_event = {
+	id = election_outcomes_ast.10
+	title = election_outcomes_ast.10.t
+	desc = election_outcomes_ast.10.d
+	picture = GFX_AST_beazley_win
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			kill_country_leader = yes
+			create_country_leader = {
+					name = "Kim Beazley"
+					picture = "kim_beazley_1.dds"
+					desc = "kim_beazley_desc"
+					ideology = socialism
+					traits = {
+							western_socialism
+							former_defense_minister
+							cautious
+						}
+			}
+			load_focus_tree = {
+				tree = beazleygov_focus
+				keep_completed = yes
+			}
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.10.a executed" 
+		name = election_outcomes_ast.10.a
+		custom_effect_tooltip = focus_tree_has_changed_ast_tt
+	}
+}
+
+#Mark Latham wins 2004
+news_event = {
+	id = election_outcomes_ast.11
+	title = election_outcomes_ast.11.t
+	desc = election_outcomes_ast.11.d
+	picture = GFX_AST_latham_wins_election
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			kill_country_leader = yes
+			create_country_leader = {
+					name = "Mark Latham"
+					picture = "mark_latham_1.dds"
+					desc = "mark_latham_desc"
+					ideology = socialism
+					traits = {
+							western_socialism
+							emotional
+						}
+			}
+			load_focus_tree = {
+				tree = beazleygov_focus
+				keep_completed = yes
+			}
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.11.a executed" 
+		name = election_outcomes_ast.11.a
+		custom_effect_tooltip = focus_tree_has_changed_ast_tt
+	}
+}
+
+#Peter Costello wins 2004-07
+news_event = {
+	id = election_outcomes_ast.12
+	title = election_outcomes_ast.12.t
+	desc = election_outcomes_ast.12.d
+	picture = GFX_AST_costello_wins_election
+	is_triggered_only = yes
+
+	immediate = {
+		hidden_effect = {
+			kill_country_leader = yes
+			create_country_leader = {
+					name = "Peter Costello"
+					picture = "peter_costello.dds"
+					desc = "peter_costello_desc"
+					ideology = conservatism
+					traits = {
+						western_conservatism
+						economist
+					}
+				}	
+			load_focus_tree = {
+				tree = costellogov_focus
+				keep_completed = yes
+			}
+		}
+	}
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.12.a executed" 
+		name = election_outcomes_ast.12.a
+		custom_effect_tooltip = focus_tree_has_changed_ast_tt
+	}
+}
+
+news_event = {
+	id = election_outcomes_ast.13
+	title = election_outcomes_ast.13.t
+	desc = election_outcomes_ast.13.d
+	picture = GFX_howard_election_win_1
+	is_triggered_only = yes
+
+	option = {
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.13.a executed" 
+		name = election_outcomes_ast.13.a 
+		add_political_power = 50
+	}
+}
+
+news_event = {
+	id = election_outcomes_ast.14
+	title = election_outcomes_ast.14.t
+	desc = election_outcomes_ast.14.d
+	picture = GFX_liberal_rally
+	is_triggered_only = yes
+
+	option = { 
+		log = "[GetDateText]: [This.GetName]: election_outcomes_ast.14.a executed" 
+		name = election_outcomes_ast.14.a
+		add_political_power = 50
 	}
 }
 
@@ -7910,6 +8044,10 @@ country_event = {
 	option = {
 		log = "[GetDateText]: [This.GetName]: AST_christmas_island_saga.7.a executed"
 		name = AST_christmas_island_saga.7.a
+		add_popularity = {
+					ideology = nationalist
+					popularity = 0.04
+				}
 		hidden_effect = {
 			news_event = {
 				id = AST_christmas_island_saga.8
@@ -9267,6 +9405,22 @@ news_event = {
 		log = "[GetDateText]: [This.GetName]: AST_beazley_apology.1.a executed"
 		name = rudd_apology.1.a
 		add_stability = 0.03
+	}
+}
+
+add_namespace = AST_beazley_stepping_down
+
+country_event = {
+	id = AST_beazley_stepping_down.1
+	title = AST_beazley_stepping_down.1.t
+	desc = AST_beazley_stepping_down.1.d
+	picture = GFX_AST_the_lodge_event
+	is_triggered_only = yes
+
+	option = {
+		name = AST_beazley_stepping_down.1.a
+		custom_effect_tooltip = AST_beazley_stepping_down_tt
+		set_country_flag = bezley_stepdowntrigger
 	}
 }
 
