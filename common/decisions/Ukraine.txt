@@ -12969,6 +12969,12 @@ UKR_reactivate_sov_category = {
 			clr_country_flag = ukr_modernize_sov_equipment_t55_development_ongoing_flag
 
 			if = {
+				limit = { has_country_flag = ukr_modernize_sov_equipment_agm_own_tech_flag }
+				clr_country_flag = ukr_modernize_sov_equipment_agm_own_tech_flag
+				UKR_t55_grant_agm_techs = yes
+			}
+
+			if = {
 				limit = {
 					OR = {
 						has_country_flag = ukr_modernize_sov_equipment_t55_select_t55_5tdf_flag
@@ -13019,6 +13025,7 @@ UKR_reactivate_sov_category = {
 
 			hidden_effect = {
 				clr_country_flag = ukr_modernize_sov_equipment_t55_development_ongoing_flag
+				clr_country_flag = ukr_modernize_sov_equipment_agm_own_tech_flag
 				clr_country_flag = ukr_modernize_sov_equipment_t55_light_modernization_flag
 				clr_country_flag = ukr_modernize_sov_equipment_t55_full_modernization_flag
 				clr_country_flag = ukr_modernize_sov_equipment_t55_ifv_modernization_flag
@@ -13268,8 +13275,11 @@ UKR_reactivate_sov_category = {
 			country_exists = PRU
 
 			OR = {
-				has_country_flag = ukr_modernize_sov_equipment_t55_peru_full_requirements_flag
 				has_country_flag = ukr_modernize_sov_equipment_t55_peru_basic_requirements_flag
+				AND = {
+					has_country_flag = ukr_modernize_sov_equipment_t55_peru_full_requirements_flag
+					UKR_t55_tifon_techs = yes
+				}
 			}
 		}
 
@@ -13315,6 +13325,106 @@ UKR_reactivate_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_t55_tifon_development"
 
 			army_experience = 2
+
+			set_country_flag = ukr_modernize_sov_equipment_t55_tifon_development_done_flag
+
+			if = {
+				limit = { has_country_flag = ukr_modernize_sov_equipment_t55_peru_full_requirements_flag }
+
+				UKR_sov_variant_t55m8_a2_tifon_ii_full = yes
+			}
+			else = {
+				UKR_sov_variant_t55m8_a2_tifon_ii_basic = yes
+			}
+
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = UKR_modernize_sov_equipment_effect
+			}
+			add_to_variable = { UKR_modernize_sov_equipment_effect_equipment_conversion_speed = 0.03 tooltip = equipment_conversion_speed_tt }
+			add_to_variable = { UKR_modernize_sov_equipment_effect_military_industrial_organization_funds_gain = 0.03 tooltip = military_industrial_organization_funds_gain_tt }
+			add_to_variable = { UKR_modernize_sov_equipment_effect_productivity_growth_modifier = 0.015 tooltip = country_productivity_growth_modifier_tt }
+
+			custom_effect_tooltip = { localization_key = ukr_modernize_sov_equipment_t55_peru_wait_tt DAYS = 70 }
+
+			hidden_effect = {
+				set_variable = { ukraine_t55_peru_wait_days = 70 }
+				set_country_flag = ukr_modernize_sov_equipment_t55_peru_trials_ongoing_flag
+			}
+		}
+	}
+
+	ukr_modernize_sov_equipment_t55_tifon_development_own_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_t55_tifon_development_done_flag }
+			country_exists = PRU
+
+			has_country_flag = ukr_modernize_sov_equipment_t55_peru_full_requirements_flag
+			NOT = { UKR_t55_tifon_techs = yes }
+		}
+
+		available = {
+			controls_state = 696 # Kharkiv
+			has_army_experience > 4
+
+			custom_trigger_tooltip = {
+				tooltip = ukr_modernize_sov_equipment_t55_plant_free_tt
+				UKR_t55_kharkiv_plant_free = yes
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.05 }
+			has_political_power > 10
+			has_army_experience > 4
+		}
+
+		custom_cost_text = development_cost_0_05_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		modifier = {
+			research_speed_factor = -0.02
+			industrial_capacity_factory = -0.003
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 240
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_t55_tifon_development_own_tech"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_t55_peru_orders_tt
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+
+				add_political_power = -10
+				army_experience = -4
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_t55_tifon_development_own_tech"
+
+			army_experience = 2
+
+			UKR_t55_grant_tifon_techs = yes
 
 			set_country_flag = ukr_modernize_sov_equipment_t55_tifon_development_done_flag
 
@@ -14057,6 +14167,7 @@ UKR_reactivate_sov_category = {
 			date < 2020.01.01
 			country_exists = EGY
 			has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62_5tdf_flag
+			UKR_t62_6td2_techs = yes
 		}
 
 		available = {
@@ -14103,6 +14214,97 @@ UKR_reactivate_sov_category = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_t62_egypt_6td2_offer"
 
 			army_experience = 2
+
+			UKR_sov_variant_t62_6td2 = yes
+
+			custom_effect_tooltip = {
+				localization_key = modifies_dynamic_modifier_tt
+				MODIFIER = UKR_modernize_sov_equipment_effect
+			}
+			add_to_variable = { UKR_modernize_sov_equipment_effect_equipment_conversion_speed = 0.02 tooltip = equipment_conversion_speed_tt }
+			add_to_variable = { UKR_modernize_sov_equipment_effect_military_industrial_organization_funds_gain = 0.03 tooltip = military_industrial_organization_funds_gain_tt }
+			add_to_variable = { UKR_modernize_sov_equipment_effect_productivity_growth_modifier = 0.015 tooltip = country_productivity_growth_modifier_tt }
+
+			set_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_offer_done_flag
+
+			country_event = ukr_modernize_sov_equipment_t62_egypt_contract.3
+		}
+	}
+
+	ukr_modernize_sov_equipment_t62_egypt_6td2_offer_own_tech = {
+		icon = GFX_decision_icon_UKR_modernize_sov_t55
+		fire_only_once = yes
+
+		ai_will_do = {
+			base = 5
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_t62_egypt_6td2_offer_done_flag }
+			date > 2018.01.01
+			date < 2020.01.01
+			country_exists = EGY
+			has_country_flag = ukraine_modernize_sov_equipment_t62_developed_t62_5tdf_flag
+			NOT = { UKR_t62_6td2_techs = yes }
+		}
+
+		available = {
+			controls_state = 696 # Kharkiv
+			has_army_experience > 4
+
+			EGY = {
+				has_opinion = {
+					target = UKR
+					value > 29
+				}
+			}
+		}
+
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.05 }
+			has_political_power > 10
+			has_army_experience > 4
+		}
+
+		custom_cost_text = development_cost_0_05_pp_10_army_4
+		ai_hint_pp_cost = 10
+
+		modifier = {
+			research_speed_factor = -0.02
+			industrial_capacity_factory = -0.003
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_t62_egypt_6td2_offer_own_tech"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_t62_egypt_6td2_orders_tt
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.05 }
+				modify_treasury_effect = yes
+
+				add_political_power = -10
+				army_experience = -4
+			}
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_t62_egypt_6td2_offer_own_tech"
+
+			army_experience = 2
+
+			UKR_t62_grant_6td2_techs = yes
 
 			UKR_sov_variant_t62_6td2 = yes
 
