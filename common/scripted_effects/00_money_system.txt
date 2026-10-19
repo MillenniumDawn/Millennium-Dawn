@@ -293,6 +293,7 @@ update_money_dirty_variable = {
 		force_update_map_mode = { mapmode = gdp_c_map_mode }
 		force_update_map_mode = { mapmode = energy_consumption_map_mode }
 		force_update_map_mode = { mapmode = productivity_map_mode }
+		force_update_map_mode = { mapmode = reserve_currency_map_mode }
 
 		md_check_research_slot_alert = yes
 	}
@@ -4098,7 +4099,7 @@ calculate_additional_expense_rate = {
 # Purpose: Computes weekly ROI from international investments and splits it into treasury vs reinvested shares
 calculate_int_investments_rate = {
 	# Base ROI + stacked return_on_investment_modifier, clamped to the engine-wide ceiling
-	set_variable = { roi_rate = { value = 0.06 add = modifier@return_on_investment_modifier clamp = { min = 0 max = global.roi_rate_cap } } }
+	set_variable = { roi_rate = { value = 0.03 add = modifier@return_on_investment_modifier clamp = { min = 0 max = global.roi_rate_cap } } }
 
 	#This is how much money we get back in a year, converted to weekly
 	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 clamp = { min = 0 max = @math_expressions_max } } }
@@ -5906,14 +5907,30 @@ calculate_gdp_modifiers = {
 		}
 
 		#Population growth rate
-		# (60 - GDP/c) * 0.02
-		# Break-even at GDP/c = 60, clamped to 0 above
+		#-0.08 * GDP/C + 2.50 - GDP/C c [0, 31.25]
+		#-0.04 * GDP/C + 1.25 - GDP/C c [31.25, 62.5]
+		#-0.02 * GDP/C        - GDP/C c [62.5, 100]
+		# Break-even at GDP/c = 31.25, min clamp (-2.00) at GDP/c = 100
+		# Fitted to in-game GDP/c, not real-world dollars
 		set_variable = {
 			monthly_population_gdp_modifier = {
-				value = 60
-				subtract = gdp_per_capita
-				multiply = 0.02
-				clamp = { min = 0 max = 20000 }
+				value = gdp_per_capita
+				if = {
+					limit = { value = gdp_per_capita less_than = 31.25 }
+					multiply = -0.08
+					add = 2.5
+				}
+				else = {
+					if = {
+						limit = { value = gdp_per_capita less_than = 62.5 }
+						multiply = -0.04
+						add = 1.25
+					}
+					else = {
+						multiply = -0.02
+					}
+				}
+				clamp = { min = -2 max = 20000 }
 			}
 		}
 
@@ -6174,19 +6191,12 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# Calculate Unemployment/Worker fulfillment
+	# Worker shortage
 	set_variable = {
 		immigration_employment_factor_display = {
-			value = 0
-			if = {
-				limit = { value = average_worker_fulfillment less_than = 1 }
-				add = 1
-				subtract = average_worker_fulfillment
-			}
-			else = {
-				add = total_unemployed_percentage_display
-				multiply = -2
-			}
+			value = 1
+			subtract = average_worker_fulfillment
+			clamp = { min = 0 max = 1 }
 		}
 	}
 
@@ -6234,16 +6244,30 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# Calculate Net Immigration Rate
+	# Emigration pressure
+	set_variable = {
+		emigration_pressure = {
+			value = 0
+			if = {
+				limit = { value = average_worker_fulfillment greater_than_or_equals = 1 }
+				add = total_unemployed_percentage_display
+				multiply = 2
+			}
+			subtract = personal_war_refugees_display
+			clamp = { min = 0 max = 2.0 }
+		}
+	}
+
+	# Immigration at fully open borders
 	set_variable = {
 		max_net_immigration_rate = {
-			value = immigration_productivity_calculations_display
+			value = 1
+			add = immigration_productivity_calculations_display
 			add = immigration_employment_factor_display
 			add = immigration_government_factor_display
 			add = modifier@maximum_migration_rate_value
 			add = neighbour_war_refugees_display
-			add = personal_war_refugees_display
-			clamp = { min = -2.0 max = 2.0 }
+			clamp = { min = 0 max = 3.0 }
 		}
 	}
 
@@ -6273,18 +6297,86 @@ calculate_migration_mechanic_values = {
 	if = { limit = { check_variable = { global.countries^num < 2 } }
 		set_variable = { max_net_immigration_rate = 0 }
 	}
+	# Share the border law lets in
 	set_variable = {
-		net_immigration_rate = {
+		immigration_capacity = {
 			value = max_net_immigration_rate
 			multiply = migration_rate_value
-			if = { limit = { value = global.countries^num greater_than = 0 }
-				clamp = { min = -2.0 max = max_net_immigration_rate }
-			}
-			else = {
-				clamp = { min = 0 max = 0 }
+			clamp = { min = 0 max = max_net_immigration_rate }
+		}
+	}
+
+	# Net rate, balanced against world flows
+	set_variable = {
+		net_immigration_rate = {
+			value = immigration_capacity
+			multiply = global.world_immigration_fill
+			subtract = {
+				value = emigration_pressure
+				multiply = global.world_emigration_share
 			}
 		}
 	}
+	# Government Policy Impact carries net migration plus the growth floor top-up
+	set_variable = { gov_pop_monthly_population = { value = net_immigration_rate add = monthly_population_floor_modifier } }
+}
+
+# Effect: update_world_migration_balance
+# Purpose: Scales world immigration and emigration to the smaller of the two; global, monthly
+update_world_migration_balance = {
+	set_temp_variable = {
+		world_immigration_capacity = {
+			value = 0
+			every_collection = {
+				named_collection = all_countries_collection
+				add = {
+					value = immigration_capacity
+					multiply = population_total_m
+				}
+			}
+		}
+	}
+	set_temp_variable = {
+		world_emigration_pressure = {
+			value = 0
+			every_collection = {
+				named_collection = all_countries_collection
+				add = {
+					value = emigration_pressure
+					multiply = population_total_m
+				}
+			}
+		}
+	}
+	set_variable = {
+		global.world_immigration_fill = {
+			value = world_emigration_pressure
+			divide = { value = world_immigration_capacity clamp = { min = 0.001 max = @math_expressions_max } }
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = {
+		global.world_emigration_share = {
+			value = world_immigration_capacity
+			divide = { value = world_emigration_pressure clamp = { min = 0.001 max = @math_expressions_max } }
+			clamp = { min = 0 max = 1 }
+		}
+	}
+}
+
+# Effect: update_population_growth_floor
+# Purpose: Keeps population growth at or above 0.01% a month; weekly only, it reads back its own value
+update_population_growth_floor = {
+	# -0.8 total leaves 20% of base growth, 0.01% a month
+	set_variable = {
+		monthly_population_floor_modifier = {
+			value = -0.8
+			subtract = modifier@monthly_population
+			add = monthly_population_floor_modifier
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+	set_variable = { gov_pop_monthly_population = { value = net_immigration_rate add = monthly_population_floor_modifier } }
 }
 
 # Effect: calculate_cost_pp_economic_cycles

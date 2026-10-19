@@ -52,6 +52,7 @@ from functools import cached_property
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from shared_utils import MODIFIER_OPEN_RE as _MODIFIER_RE
 
 # strip_comments is re-exported here so validate_simplifications_test can import it.
 from shared_utils import (  # noqa: F401
@@ -238,7 +239,6 @@ def _find_scope_expansion(src: _Script):
 # Three+ buckets, or two non-empty buckets, must stay (see simplification-patterns.md).
 _RANDOM_LIST_RE = _keyword_block_re("random_list")
 _WEIGHT_RE = re.compile(r"^[0-9]+(?:\.[0-9]+)?$")
-_MODIFIER_RE = re.compile(r"\bmodifier\s*=\s*\{")
 
 
 def _find_two_bucket_random(src: _Script):
