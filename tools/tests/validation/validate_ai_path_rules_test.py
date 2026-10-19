@@ -23,10 +23,17 @@ NO_DEFAULT_RULE = (
 )
 
 
-def _write(tmp_path, write_path, tree=None, states=None, rules=""):
+def _write(
+    tmp_path,
+    write_path,
+    tree=None,
+    states=None,
+    rules="",
+    focus_path="common/national_focus/05_aaa.txt",
+):
     write_path(
         tmp_path,
-        "common/national_focus/05_aaa.txt",
+        focus_path,
         TREE.format(tag="AAA") if tree is None else tree,
     )
     write_path(
@@ -54,6 +61,25 @@ def test_reports_tree_without_rule(tmp_path, write_path):
     assert issue.file == "common/national_focus/05_aaa.txt"
     assert issue.line == 3
     assert "'AAA'" in issue.message
+
+
+def test_eritrea_puppet_tree_is_exempt_but_other_missing_rules_still_warn(
+    tmp_path, write_path
+):
+    _write(
+        tmp_path,
+        write_path,
+        tree=TREE.format(tag="ERI"),
+        states=STATE.format(tag="ERI"),
+        focus_path="common/national_focus/eritrea_puppet.txt",
+    )
+
+    assert _run(tmp_path) == []
+
+    _write(tmp_path, write_path)
+    issues = _run(tmp_path)
+    assert [issue.category for issue in issues] == ["ai-path-rule-missing"]
+    assert issues[0].file == "common/national_focus/05_aaa.txt"
 
 
 def test_full_rule_is_clean(tmp_path, write_path):

@@ -37,8 +37,10 @@ other. Pick a `name = X` nothing else uses, even when the display text matches.
 - Grammar first: subject-verb agreement, punctuation, complete sentences.
 - Be concise. Every sentence carries real information. No sentences that restate the
   title.
-- No em dashes in player-facing strings. Use a period when the clause stands alone, a
-  comma for a participial phrase, or a colon to introduce a list or requirement.
+- No em dashes in player-facing strings, and no spaced en dash ( – ) standing in for
+  one. Use a period when the clause stands alone, a comma for a participial phrase, or a
+  colon to introduce a list or requirement. Unspaced en dashes in ranges and compounds
+  (1998–1999, ASML–USA) are fine, and so is a spaced dash inside an official name.
 - No `...` in descriptions or tooltips. No all-caps for emphasis.
 - Hyphenate only compound modifiers before a noun ("pro-Western government").
 - Capitalize proper nouns, party names, ideology groups, and in-game concepts such as
@@ -135,8 +137,10 @@ rewrites:
 - `loc-tripled-letter`: three identical letters in a lowercase word.
 - `loc-placeholder`: a value that is only `TODO`, `TBD`, `TDA`, `WIP`, or `PLACEHOLDER`.
 - `loc-dangling-description`: a description that ends without punctuation on a word
-  like `the`, `of`, or `with`. Read it before adding a period. A period on cut-off text
-  is not a fix.
+  like `the`, `of`, or `with`. Event descriptions are identified by their `desc =`
+  references, including `text =` in conditional `desc` blocks, not by a `.d` suffix.
+  Other descriptions use `_desc`. Read the text before adding a period. A period on
+  cut-off text is not a fix.
 
 Reviewed exceptions live in `validation_config.json` under `validate_localisation`.
 Every entry needs a reason. Do not exempt a whole file or a placeholder to clear a

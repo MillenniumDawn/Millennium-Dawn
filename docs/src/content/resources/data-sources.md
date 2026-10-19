@@ -44,10 +44,11 @@ not December-to-December inflation.
 
 ## Starting policy rate
 
-`cb_policy_rate` is the central bank policy rate in whole percentage points. The GUI and the
-quarterly AI step it by 1 and clamp it to 0-30. The January 2000 start uses the official policy
-rate in force on **2000.1.1** where that instrument is documented. Half-percentage values round
-half up (5.50 becomes 6). Rates above 30 are stored as 30. Ukraine starts at that cap.
+`cb_policy_rate` is the central bank policy rate in whole percentage points. The GUI steps it by
+1 and clamps it to -10 to 30. The quarterly AI uses one-point or three-point steps toward its policy
+rate target, can cut to -10, and keeps its 20% hike ceiling. The January 2000 start uses the official
+policy rate in force on **2000.1.1** where that instrument is documented. Half-percentage values
+round half up (5.50 becomes 6). Rates above 30 are stored as 30. Ukraine starts at that cap.
 Russia, Turkey, and Romania stay at 20 from the previous gameplay ceiling.
 
 Euro-area founding members already sat at 3, which matches the ECB main refinancing rate of
@@ -56,7 +57,9 @@ unchanged. Countries without a sourced 2000.1.1 policy rate keep the existing de
 is a fallback, not a claim that their central bank was at 3%. Formables, rebels, and breakaway
 tags are not copied from a parent.
 
-Negative policy rates are out of scope. The clamp still bottoms out at 0.
+Historical seed data remains nonnegative. During play, rates can fall to -10%. During deflation,
+the AI target uses the actual negative inflation rate rather than the positive low-inflation
+baseline. Negative rates then provide additional inflation stimulus below the neutral rate.
 
 ### Seeded values
 

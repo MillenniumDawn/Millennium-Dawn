@@ -32,11 +32,34 @@ on_actions = {
 					set_country_flag = UKR_open_medical_laws
 					set_country_flag = UKR_open_pension_laws
 				}
+				# Building totals come from the money system's on_startup; if they are not counted yet, the first monthly check records them
+				if = {
+					limit = { check_variable = { industrial_complex_total > 0 } }
+					UKR_start_workforce_record_counts = yes
+				}
 			}
 		}
 	}
 	on_monthly_UKR = {
 		effect = {
+			UKR_start_workforce_update = yes
+			# BRDM-2: Arey rebuilds it on its own during a war with Russia when Mykolayiv does not lead the program
+			if = {
+				limit = {
+					date > 2015.01.01
+					date < 2019.01.01
+					has_war_with = SOV
+					OR = {
+						has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_techimpex_flag
+						has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_other_flag
+					}
+					NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_mykolayiv_flag }
+					NOT = { has_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_arey_initiative_flag }
+				}
+				set_country_flag = ukraine_modernize_sov_equipment_brdm_2_modernization_arey_initiative_flag
+				country_event = { id = ukraine_modernize_sov_equipment_brdm_2_modernization.14 days = 15 random_days = 180 }
+			}
+
 			# Storage list in the "Soviet Equipment in Storage" category
 			if = {
 				limit = { is_ai = no }

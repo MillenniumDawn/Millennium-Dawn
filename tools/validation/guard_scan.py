@@ -53,11 +53,7 @@ def scan_file(
     scan: Callable[[str], List[Tuple[int, str]]],
 ) -> List[Tuple[str, int, str]]:
     filepath, mod_path = args
-    try:
-        with open(filepath, encoding="utf-8-sig") as handle:
-            raw = handle.read()
-    except (OSError, UnicodeError) as exc:
-        raise ValueError(f"Cannot scan {filepath}: {exc}") from exc
+    raw = read_file(filepath)
     if effect not in raw:
         return []
     findings = disk_cache.per_file_cached_by_content(
@@ -65,6 +61,15 @@ def scan_file(
     )
     relative = os.path.relpath(filepath, mod_path).replace(os.sep, "/")
     return [(relative, line, message) for line, message in findings]
+
+
+def read_file(filepath: str) -> str:
+    """Read scan input strictly; unreadable content is a failed check."""
+    try:
+        with open(filepath, encoding="utf-8-sig") as handle:
+            return handle.read()
+    except (OSError, UnicodeError) as exc:
+        raise ValueError(f"Cannot scan {filepath}: {exc}") from exc
 
 
 class Context:
