@@ -7967,3 +7967,150 @@ UKR_storage_refresh = {
 		set_variable = { UKR_storage_dirty_var = 1 }
 	}
 }
+
+# ---------------------------------------------------------------------------------------------
+# Stored equipment sales and disposal (UKR_reactivate_sov_category): BTR-50, PT-76B, 2K11 Krug.
+# The buyer is the global event target ukr_storage_buyer.
+# ---------------------------------------------------------------------------------------------
+
+# Add temp variable ukr_sov_amount of a stored Soviet design to the current scope's stockpile
+UKR_sov_deliver_btr50 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis_0 variant_name = "BTR-50" amount = ukr_sov_amount producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = APC_1 amount = ukr_sov_amount producer = SOV }
+	}
+}
+UKR_sov_deliver_pt76b = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_to_stockpile = { type = medium_tank_destroyer_chassis_0 variant_name = "PT-76B" amount = ukr_sov_amount producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = Rec_tank_0 amount = ukr_sov_amount producer = SOV }
+	}
+}
+UKR_sov_deliver_2k11 = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_to_stockpile = { type = medium_tank_aa_chassis_0 variant_name = "2K11 Krug" amount = ukr_sov_amount producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = SP_Anti_Air_0 amount = ukr_sov_amount producer = SOV }
+	}
+}
+
+# Sell temp ukr_sov_amount stored vehicles for temp ukr_sale_price (billions) to ukr_storage_buyer
+UKR_storage_sell_btr50 = {
+	subtract_from_variable = { ukraine_has_btr50_stockpile = ukr_sov_amount tooltip = ukraine_storage_btr50_sold_tt }
+	UKR_storage_sale_payment = yes
+	event_target:ukr_storage_buyer = { UKR_sov_deliver_btr50 = yes }
+}
+UKR_storage_sell_pt76b = {
+	subtract_from_variable = { ukraine_has_pt76_stockpile = ukr_sov_amount tooltip = ukraine_storage_pt76_sold_tt }
+	UKR_storage_sale_payment = yes
+	event_target:ukr_storage_buyer = { UKR_sov_deliver_pt76b = yes }
+}
+UKR_storage_sell_2k11 = {
+	subtract_from_variable = { ukraine_has_2k11_stockpile = ukr_sov_amount tooltip = ukraine_storage_2k11_sold_tt }
+	hidden_effect = { subtract_from_variable = { ukraine_2k11_quota = ukr_sov_amount } }
+	UKR_storage_sale_payment = yes
+	event_target:ukr_storage_buyer = { UKR_sov_deliver_2k11 = yes }
+}
+UKR_storage_sale_payment = {
+	set_temp_variable = { treasury_change = ukr_sale_price }
+	modify_treasury_effect = yes
+	event_target:ukr_storage_buyer = {
+		set_temp_variable = { treasury_change = ukr_sale_price }
+		multiply_temp_variable = { treasury_change = -1 }
+		modify_treasury_effect = yes
+		add_opinion_modifier = { target = ROOT modifier = UKR_storage_sale_buyer }
+	}
+	hidden_effect = { UKR_storage_refresh = yes }
+}
+
+# In a Central Asian buyer's scope: does Russia talk it out of the Krug deal? Sets ROOT's ukraine_2k11_russia_objects (0/1).
+# The chance is twice the gap between Russian and Ukrainian influence there, in percent.
+UKR_2k11_russian_pressure = {
+	set_temp_variable = { ukr_infl = 0 }
+	set_temp_variable = { sov_infl = 0 }
+	for_each_loop = {
+		array = influence_array
+		value = v
+		index = i
+		if = {
+			limit = { var:v = { tag = ROOT } }
+			set_temp_variable = { ukr_infl = influence_array_val^i }
+		}
+		if = {
+			limit = { var:v = { tag = SOV } }
+			set_temp_variable = { sov_infl = influence_array_val^i }
+		}
+	}
+	set_temp_variable = { ukr_russia_pressure = sov_infl }
+	subtract_from_temp_variable = { ukr_russia_pressure = ukr_infl }
+	multiply_temp_variable = { ukr_russia_pressure = 2 }
+	set_temp_variable_to_random = { var = ukr_russia_roll min = 0 max = 100 }
+	set_variable = { ROOT.ukraine_2k11_russia_objects = 0 }
+	if = {
+		limit = {
+			country_exists = SOV
+			check_variable = { ukr_russia_roll < ukr_russia_pressure }
+		}
+		set_variable = { ROOT.ukraine_2k11_russia_objects = 1 }
+	}
+}
+
+# KhKBM's BTR-50M: new fighting module (30 mm cannon, Konkurs ATGM), UTD-20 diesel
+UKR_sov_variant_btr50m = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		create_equipment_variant = {
+			name = "BTR-50M"
+			type = medium_tank_amphibious_chassis_0
+			parent_version = 0
+			allow_without_tech = yes
+
+			modules = {
+				main_armament_slot = small_autocannon
+				secondary_armament_slot = afv_coax_machine_gun_2
+				reload_type_slot = automatic_loading
+				ammunition_load_slot = mixed_autocannon_ammo_2
+				turret_type_slot = tank_base_tank_turret
+				suspension_type_slot = tank_torsion_bar_suspension_light
+				armor_type_slot = tank_steel_armor_gen1
+				engine_type_slot = tank_diesel_engine_gen2
+				special_type_slot_1 = afv_troop_capacity
+				special_type_slot_2 = afv_atgm_gen2
+				special_type_slot_4 = tank_battlestation_2
+			}
+
+			upgrades = { tank_nsb_armor_upgrade = 1 }
+
+			icon = "GFX_SOV_LAND_BTR_50" #TO-DO BTR-50M icon
+			design_team = mio:UKR_kmdb_tank_manufacturer
+		}
+	}
+	else = {
+		hidden_effect = { set_technology = { APC_1 = 1 popup = no } }
+		create_equipment_variant = {
+			name = "BTR-50M"
+			type = APC_1
+			upgrades = {
+				tank_nsb_armor_upgrade = 1
+				tank_nsb_engine_upgrade = 1
+			}
+		}
+	}
+}
+UKR_sov_deliver_btr50m = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_to_stockpile = { type = medium_tank_amphibious_chassis_0 variant_name = "BTR-50M" amount = ukr_sov_amount producer = UKR }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = APC_1 variant_name = "BTR-50M" amount = ukr_sov_amount producer = UKR }
+	}
+}
