@@ -179,12 +179,12 @@ def test_every_raid_has_a_gate_that_binds_its_own_person_and_method(manifest):
     expected = {
         f"TOP_native_gate_{ident}_{method}"
         for ident in range(1, manifest["capacity"])
-        for method in (1, 2, 3)
+        for method in (1, 2)
     }
     assert defined == expected
 
     for ident in range(1, manifest["capacity"]):
-        for method in (1, 2, 3):
+        for method in (1, 2):
             body = _named_block(gates, f"TOP_native_gate_{ident}_{method}")
             assert f"TOP_arg_target = {ident}" in body
             assert f"TOP_arg_method = TOP_case_method^{ident}" in body
@@ -195,6 +195,7 @@ def test_every_raid_has_a_gate_that_binds_its_own_person_and_method(manifest):
     # Nothing in the generated raids may pass parameters.
     assert "TOP_native_authorized = {" not in raids
     assert "TOP_native_result = {" not in raids
+    assert "common/raids/targeted_operations_infiltration_raids.txt" not in rendered
 
 
 @pytest.mark.parametrize("method", [1, 2])
