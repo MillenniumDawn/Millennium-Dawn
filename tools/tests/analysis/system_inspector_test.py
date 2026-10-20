@@ -902,3 +902,48 @@ def test_randomize_variable_writes_a_global(mod_root):
     assert (
         "ZZZ_roll" not in inspect_mod(mod_root)["unresolved"]["globals_never_written"]
     )
+
+
+def test_quoted_gui_sprites_link_in_both_directions(mod_root):
+    write_under_str(
+        mod_root,
+        "interface/outside.gfx",
+        'spriteTypes = { spriteType = { name = "GFX_external_icon" } }\n',
+    )
+    write_under_str(
+        mod_root,
+        "interface/ZZZ.gfx",
+        'spriteTypes = { spriteType = { name = "GFX_ZZZ_icon" } }\n',
+    )
+    write_under_str(
+        mod_root,
+        "interface/ZZZ.gui",
+        'guiTypes = { iconType = { name = "a" SpriteType = "GFX_external_icon" } }\n',
+    )
+    write_under_str(
+        mod_root,
+        "interface/outside.gui",
+        'guiTypes = { buttonType = { name = "b" quadTextureSprite = "GFX_ZZZ_icon" } }\n',
+    )
+    report = inspect_mod(mod_root)
+    assert report["dependencies"]["sprite"] == [
+        {"name": "GFX_external_icon", "defined_in": "interface/outside.gfx"}
+    ]
+    assert report["hooks"]["interface/outside.gui"] == ["GFX_ZZZ_icon"]
+
+
+def test_missing_scripted_loc_substitution_in_system_yml_is_unresolved(mod_root):
+    write_under_str(
+        mod_root,
+        "common/scripted_localisation/ZZZ_text.txt",
+        "defined_text = {\n name = ZZZ_display\n}\n",
+    )
+    write_under_str(
+        mod_root,
+        "localisation/english/ZZZ_extra_l_english.yml",
+        '﻿l_english:\n ZZZ_label: "Status: [ZZZ_missing] [ZZZ_display] [Root.GetName]"\n',
+    )
+    unresolved = inspect_mod(mod_root)["unresolved"]["localisation"]
+    assert "ZZZ_missing" in unresolved
+    assert "ZZZ_display" not in unresolved
+    assert "GetName" not in unresolved

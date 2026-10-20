@@ -111,9 +111,10 @@ LOC_SUBSTITUTION_RE = re.compile(
 )
 QUOTED_FIELD_RE = re.compile(r"([A-Za-z0-9_.@:\-^]+)\s*=\s*$")
 # Fields whose quoted values still name definitions, references, or localisation keys.
+# Lowercase: GUI keys are case-insensitive (spriteType and SpriteType both occur).
 QUOTED_REFERENCE_FIELDS = {
     "add_ideas",
-    "buttonText",
+    "buttontext",
     "complete_national_focus",
     "custom_effect_tooltip",
     "custom_modifier_tooltip",
@@ -125,7 +126,9 @@ QUOTED_REFERENCE_FIELDS = {
     "localization_key",
     "pdx_tooltip",
     "pdx_tooltip_delayed",
+    "quadtexturesprite",
     "remove_ideas",
+    "spritetype",
     "text",
     "title",
     "tooltip",
@@ -214,7 +217,9 @@ def reference_code(text: str, rel: str = "") -> str:
             or rel.endswith(".gfx")
         )
         if re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]*", value) and (
-            field in QUOTED_REFERENCE_FIELDS or field.isdecimal() or name_is_reference
+            field.lower() in QUOTED_REFERENCE_FIELDS
+            or field.isdecimal()
+            or name_is_reference
         ):
             return match.group(0)
         return '"' + " ".join(LOC_SUBSTITUTION_RE.findall(value)) + '"'
@@ -547,7 +552,8 @@ def inspect(
         "events": sorted(e for e in fired if e not in all_events),
         "localisation": sorted(
             key
-            for key in loc_refs
+            # Bracketed engine calls such as GetName never carry a system prefix.
+            for key in loc_refs | system_loc_calls
             if "." in key or key.startswith(prefixes)
             if key not in loc_keys and key not in scripted_locs
         ),
