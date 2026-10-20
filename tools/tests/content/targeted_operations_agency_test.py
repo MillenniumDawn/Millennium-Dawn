@@ -477,3 +477,50 @@ def test_generated_actor_result_and_reaction_keep_frozen_permission_after_case_c
         [] if consent else ["MD_raid.8", "MD_raid.9", "MD_raid.1"]
     )
     assert script.globals["TOP_status"][11] == (1 if wrong_location else 2)
+
+
+@pytest.mark.parametrize("method", METHODS)
+@pytest.mark.parametrize("legacy_first", [False, True])
+def test_agency_and_legacy_resolution_retire_the_same_person_once(method, legacy_first):
+    script = AgencyScript()
+    if method == 7:
+        script.countries[1]["tag"] = "SOV"
+    variables = script.authorize(method=method)
+    script.callback(method, "on_start")
+    script.callback(method, "outcome_execute")
+    script.callback(method, "outcome_extra_execute")
+    if legacy_first:
+        script.temps.update(TOP_target=11, TOP_result=3)
+        script.run("TOP_record_legacy_result", 1)
+    script.complete(method)
+    if not legacy_first:
+        script.temps.update(TOP_target=11, TOP_result=3)
+        script.run("TOP_record_legacy_result", 3)
+    assert script.globals["TOP_removals"][11] == 1
+    assert script.globals["TOP_status"][11] == (
+        3 if legacy_first or method in (3, 7) else 2
+    )
+    assert variables["TOP_attempts"][11] == (0 if legacy_first else 1)
+
+
+def test_two_agency_actors_cannot_capture_and_kill_the_same_person_twice():
+    script = AgencyScript()
+    first = script.authorize(method=3)
+    script.callback(3, "on_start")
+    script.callback(3, "outcome_execute")
+    script.callback(3, "outcome_extra_execute")
+    script.countries[3]["techs"].add("special_forces_tech_1")
+    script.actor = 3
+    second = script.authorize(method=4, actor=3)
+    script.run("TOP_enroll_pending_actor", 3)
+    script.callback(4, "on_start")
+    script.callback(4, "outcome_execute")
+    script.callback(4, "outcome_extra_execute")
+    script.complete(4)
+    script.actor = 1
+    script.complete(3)
+    assert script.globals["TOP_status"][11] == 2
+    assert script.globals["TOP_custodian"][11] == 3
+    assert script.globals["TOP_removals"][11] == 1
+    assert first["TOP_attempts"][11] == 0
+    assert second["TOP_attempts"][11] == 1
