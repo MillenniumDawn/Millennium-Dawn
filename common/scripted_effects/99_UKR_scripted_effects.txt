@@ -8582,3 +8582,36 @@ UKR_sov_deliver_mig27m = {
 		add_equipment_to_stockpile = { type = Strike_fighter1 variant_name = "MiG-27M (LDARZ)" amount = ukr_sov_amount producer = UKR }
 	}
 }
+
+# One stationary air defense unit (S-75 regiment, S-125 battalion) for the buyer: +1 anti-air in one of its states
+UKR_air_defense_site_to_buyer = {
+	every_controlled_state = {
+		limit = { anti_air_random_build_loc = yes }
+		random_select_amount = 1
+		add_building_construction = { type = anti_air_building level = 1 instant_build = yes }
+	}
+}
+
+# Take one S-75 regiment off duty: its state loses one anti-air level
+UKR_s75_remove_regiment = {
+	custom_effect_tooltip = ukraine_s75_regiment_removed_tt
+	hidden_effect = {
+		random_owned_controlled_state = {
+			limit = { has_state_flag = UKR_s75_regiment_flag }
+			clr_state_flag = UKR_s75_regiment_flag
+			if = {
+				limit = { anti_air_building > 0 }
+				remove_building = { type = anti_air_building level = 1 }
+			}
+		}
+		subtract_from_variable = { ukraine_s75_regiments = 1 }
+	}
+}
+
+# Sell one S-75 regiment for temp ukr_sale_price to ukr_storage_buyer
+UKR_storage_sell_s75 = {
+	UKR_s75_remove_regiment = yes
+	event_target:ukr_storage_buyer = { UKR_air_defense_site_to_buyer = yes }
+	UKR_storage_sale_payment = yes
+	UKR_storage_sanctioned_sale_backlash = yes
+}

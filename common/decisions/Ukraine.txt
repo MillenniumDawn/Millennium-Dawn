@@ -15886,6 +15886,90 @@ UKR_reactivate_sov_category = {
 			}
 		}
 	}
+
+	ukr_modernize_sov_equipment_s75_offer = {
+		icon = GFX_decision_generic_air
+		ai_will_do = { base = 3 }
+
+		visible = {
+			date < 2009.01.01
+			UKR_s75_regiment_left = yes
+			OR = {
+				country_exists = EGY
+				country_exists = LBA
+				country_exists = ARM
+				country_exists = AZE
+				country_exists = GEO
+			}
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { has_state_flag = UKR_s75_regiment_flag }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 30
+		days_re_enable = 60
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_s75_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_s75_orders_tt
+			custom_effect_tooltip = ukraine_storage_sanctioned_sale_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_s75_offer"
+
+			country_event = ukr_modernize_sov_equipment_storage_sale.21
+		}
+	}
+
+	ukr_modernize_sov_equipment_s75_scrap = {
+		icon = GFX_decision_generic_air
+		ai_will_do = {
+			base = 1
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			UKR_s75_regiment_left = yes
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+				check_variable = { treasury > 0.02 }
+			}
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { has_state_flag = UKR_s75_regiment_flag }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 60
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_s75_scrap"
+
+			set_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_s75_scrap"
+
+			UKR_s75_remove_regiment = yes
+			696 = { add_dynamic_modifier = { modifier = UKR_scrapped_s75_resources days = 365 } }
+		}
+	}
 }
 
 # Captured enemy equipment, rebuilt by volunteers: needs no state plant or factory
