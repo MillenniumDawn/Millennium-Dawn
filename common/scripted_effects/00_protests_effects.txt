@@ -358,38 +358,71 @@ MD_protests_compute_drift_total = {
 	}
 }
 
-# Raises one civil expectation the current law already fails or just meets, so it shows as a new red square.
-MD_protests_add_random_demand = {
-	set_temp_variable = { desire_change = 1 }
-	random_list = {
-		10 = {
-			modifier = { factor = 0 check_variable = { social_law > expected_welfare_spending } }
-			modifier = { factor = 0 check_variable = { expected_welfare_spending > 5 } }
-			change_expected_social_spending = yes
+MD_protests_give_promises_effect = {
+	add_political_power = -100
+	add_stability = -0.05
+	custom_effect_tooltip = MD_protests_give_promises_strength_tt
+	hidden_effect = {
+		random_list = {
+			50 = { subtract_from_variable = { protest_strength = 5 } }
+			50 = { subtract_from_variable = { protest_strength = 10 } }
 		}
-		10 = {
-			modifier = { factor = 0 check_variable = { health_law > expected_health_spending } }
-			modifier = { factor = 0 check_variable = { expected_health_spending > 5 } }
-			change_expected_health_spending = yes
-		}
-		10 = {
-			modifier = { factor = 0 check_variable = { education_law > expected_edu_spending } }
-			modifier = { factor = 0 check_variable = { expected_edu_spending > 4 } }
-			change_expected_education_spending = yes
-		}
-		10 = {
-			modifier = { factor = 0 check_variable = { police_law > expected_police_spending } }
-			modifier = { factor = 0 check_variable = { expected_police_spending > 4 } }
-			change_expected_police_spending = yes
-		}
-		10 = {
-			modifier = { factor = 0 check_variable = { bureau_law > expected_adm_spending } }
-			modifier = { factor = 0 check_variable = { expected_adm_spending > 4 } }
-			change_expected_bureaucracy_spending = yes
-		}
+		clamp_variable = { var = protest_strength min = 0 max = 100 }
+		set_country_flag = { flag = MD_protests_promises_cooldown value = 1 days = 182 }
+		update_protest_dirty_var = yes
 	}
-	calculate_expected_spending = yes
-	MD_protests_recompute_display = yes
+}
+
+# Funds one random unmet expectation (a red square) by raising that law one level.
+MD_protests_delve_demands_effect = {
+	add_political_power = -100
+	add_stability = 0.05
+	custom_effect_tooltip = MD_protests_delve_demands_effect_tt
+	hidden_effect = {
+		random_list = {
+			10 = {
+				modifier = { factor = 0 NOT = { check_variable = { social_law < expected_welfare_spending } } }
+				increase_social_spending = yes
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { check_variable = { health_law < expected_health_spending } } }
+				increase_healthcare_budget = yes
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { check_variable = { education_law < expected_edu_spending } } }
+				increase_education_budget = yes
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { check_variable = { police_law < expected_police_spending } } }
+				increase_policing_budget = yes
+			}
+			10 = {
+				modifier = { factor = 0 NOT = { check_variable = { bureau_law < expected_adm_spending } } }
+				increase_centralization = yes
+			}
+			10 = {
+				modifier = { factor = 0 check_variable = { military_law > expected_military_sp } }
+				modifier = { factor = 0 has_idea = no_military }
+				increase_military_spending = yes
+			}
+		}
+		calculate_expected_spending = yes
+		set_country_flag = { flag = MD_protests_demands_cooldown value = 1 days = 91 }
+	}
+}
+
+MD_protests_bribe_effect = {
+	add_political_power = -50
+	set_temp_variable = { treasury_change = -0.1 }
+	modify_treasury_effect = yes
+	add_stability = -0.02
+	custom_effect_tooltip = MD_protests_bribe_strength_tt
+	hidden_effect = {
+		subtract_from_variable = { protest_strength = 5 }
+		clamp_variable = { var = protest_strength min = 0 max = 100 }
+		set_country_flag = { flag = MD_protests_bribe_cooldown value = 1 days = 365 }
+		update_protest_dirty_var = yes
+	}
 }
 
 MD_resolve_pacified_protest_states = {
