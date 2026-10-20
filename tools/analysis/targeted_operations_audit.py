@@ -21,7 +21,11 @@ def main() -> int:
     if run(generator):
         return 1
 
-    tests = sorted((ROOT / "tools/tests").glob("targeted_operations*_test.py"))
+    tests = sorted(
+        path
+        for folder in ("tools/tests", "tools/tests/content")
+        for path in (ROOT / folder).glob("targeted_operations*_test.py")
+    )
     basetemp = (ROOT / ".pytest_cache" / "targeted-operations-audit").resolve()
     basetemp.parent.mkdir(parents=True, exist_ok=True)
     pytest = [
