@@ -135,6 +135,7 @@ TOP_facility_operational_eligible = {
 
 # Reads TOP_access_method, TOP_access_state and TOP_access_host.
 TOP_person_access_available = {
+
 	NOT = { check_variable = { TOP_access_state = 0 } }
 	check_variable = { TOP_access_host > 0 }
 	var:TOP_access_host = { exists = yes }
@@ -252,6 +253,11 @@ TOP_native_authorized = {
 	TOP_case_binding_valid = yes
 	check_variable = { TOP_case_phase^TOP_arg_target = 3 }
 	raid_show_target_intervention_check = yes
+	if = {
+		limit = { check_variable = { TOP_arg_method = 5 } }
+		check_variable = { TOP_case_host_posture^TOP_arg_target = 4 }
+		check_variable = { TOP_case_consent^TOP_arg_target > 0 }
+	}
 }
 
 TOP_mission_binding_valid = {
@@ -324,11 +330,17 @@ TOP_facility_available = {
 
 TOP_organization_facility_available = {
 	NOT = { check_variable = { TOP_facility_state = 0 } }
-	var:TOP_facility_state = {
-		OR = {
-			AND = { check_variable = { TOP_facility_objective = 1 } infrastructure > 0 }
-			AND = { check_variable = { TOP_facility_objective = 2 } OR = { arms_factory > 0 infrastructure > 0 } }
-			check_variable = { TOP_facility_objective = 3 }
+	OR = {
+		AND = { TOP_native_facility_extension = no always = yes }
+		AND = {
+			TOP_native_facility_extension = yes
+			var:TOP_facility_state = {
+				OR = {
+					AND = { check_variable = { TOP_facility_objective = 1 } infrastructure > 0 }
+					AND = { check_variable = { TOP_facility_objective = 2 } OR = { arms_factory > 0 infrastructure > 0 } }
+					AND = { check_variable = { TOP_facility_objective = 3 } OR = { industrial_complex > 0 state_has_any_resource = yes } }
+				}
+			}
 		}
 	}
 }
@@ -344,7 +356,7 @@ TOP_method_startable = {
 	set_temp_variable = { TOP_access_host = TOP_lead_host^TOP_selected }
 	TOP_person_access_available = yes
 	if = {
-		limit = { check_variable = { TOP_requested_method < 3 } }
+		limit = { check_variable = { TOP_requested_method < 8 } }
 		set_temp_variable = { TOP_arg_target = TOP_selected }
 		set_temp_variable = { TOP_arg_method = TOP_requested_method }
 		set_temp_variable = { TOP_arg_state = TOP_lead_state^TOP_selected }

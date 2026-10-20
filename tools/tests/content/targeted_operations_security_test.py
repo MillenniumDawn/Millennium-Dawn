@@ -26,9 +26,10 @@ class SecurityScript(TargetedScript):
             "TOP_get_effective_person_pressure"
         ]
         self.effects["TOP_refresh_vip_details"] = []
+        self.effects["TOP_open_core_ct"] = []
         self.triggers = _parse_race_script(TRIGGERS.read_text(encoding="utf-8"))
         self.globals = {"TOP_clock": 7}
-        self.temps, self.scope_stack, self.charges = {}, [], []
+        self.temps, self.scope_stack, self.charges, self.navigations = {}, [], [], []
         self.enabled = True
         self.protected = {1: 2, 2: 0}
         self.countries = {
@@ -76,6 +77,9 @@ class SecurityScript(TargetedScript):
             super().execute_statement(statement, identifier)
 
     def run(self, name, identifier=1):
+        if name == "TOP_open_core_ct":
+            self.navigations.append(identifier)
+            return
         if name == "TOP_refresh_vip_details":
             return
         if name == "modify_treasury_effect":
@@ -113,18 +117,20 @@ class SecurityScript(TargetedScript):
 
 @pytest.mark.parametrize("level,pp,cash", [(1, 25, 0.25), (2, 40, 0.75), (3, 60, 1.5)])
 @pytest.mark.parametrize("track", ["protection", "counterintelligence"])
-def test_policy_charges_once_and_applies_only_its_track(track, level, pp, cash):
+def test_policy_controls_navigate_to_core_without_a_second_charge_or_tier(
+    track, level, pp, cash
+):
     game = SecurityScript()
     country = game.countries[2]
     country["power"] = pp
     country["vars"]["treasury"] = cash
     game.purchase(track, level)
-    assert country["power"] == 0
-    assert country["vars"]["treasury"] == 0
-    assert game.charges == [(2, -cash)]
-    assert country["vars"][f"TOP_{track}_until"] == 189
-    expected = (0, 5 * level, 0) if track == "protection" else (3 * level, 0, 5 * level)
-    assert game.modifiers() == expected
+    assert country["power"] == pp
+    assert country["vars"]["treasury"] == cash
+    assert game.charges == []
+    assert game.navigations == [2]
+    assert f"TOP_{track}_until" not in country["vars"]
+    assert game.modifiers() == (0, 0, 0)
 
 
 @pytest.mark.parametrize(
@@ -148,45 +154,46 @@ def test_invalid_policy_level_does_not_spend_or_create_policy(level):
     assert game.modifiers() == (0, 0, 0)
 
 
-def test_renewal_replaces_tier_and_expiry_without_stacking():
+def test_live_core_policy_changes_replace_values_without_stacking():
     game = SecurityScript()
+    core = game.countries[2]["vars"]
+    core.update(ct_home_defense_var=7, ct_global_base_detect_var=12)
     game.purchase("protection", 3)
     game.purchase("counterintelligence", 2)
-    game.globals["TOP_clock"] = 35
-    game.purchase("protection", 1)
-    country = game.countries[2]["vars"]
-    assert country["TOP_protection_until"] == 217
-    assert country["TOP_counterintelligence_until"] == 189
-    assert game.modifiers() == (6, 5, 10)
+    assert game.modifiers() == (7, 7, 12)
+    core.update(ct_home_defense_var=15, ct_global_base_detect_var=3)
+    assert game.modifiers() == (15, 15, 3)
+    assert game.charges == []
 
 
-def test_expiry_is_effective_without_a_country_tick():
+def test_core_security_has_no_duplicate_top_expiry():
     game = SecurityScript()
-    game.purchase("protection", 3)
-    game.purchase("counterintelligence", 3)
+    core = game.countries[2]["vars"]
+    core.update(ct_home_defense_var=15, ct_global_base_detect_var=9)
     game.globals["TOP_clock"] = 188
-    assert game.modifiers() == (9, 15, 15)
-    game.globals["TOP_clock"] = 189
+    assert game.modifiers() == (15, 15, 9)
+    game.globals["TOP_clock"] = 1000
+    assert game.modifiers() == (15, 15, 9)
+    core.update(ct_home_defense_var=0, ct_global_base_detect_var=0)
     assert game.modifiers() == (0, 0, 0)
-    game.run("TOP_security_refresh_view", 2)
-    assert game.countries[2]["vars"]["TOP_protection_days"] == 0
 
 
-def test_stand_down_clears_both_policies_without_refund():
+def test_security_policy_navigation_cannot_clear_core_policies():
     game = SecurityScript()
-    game.purchase("protection", 3)
-    game.purchase("counterintelligence", 3)
+    core = game.countries[2]["vars"]
+    core.update(ct_home_defense_var=15, ct_global_base_detect_var=9)
     game.run("TOP_security_stand_down", 2)
-    assert game.modifiers() == (0, 0, 0)
-    assert game.charges == [(2, -1.5), (2, -1.5)]
-    assert game.countries[2]["vars"]["treasury"] == 7
+    assert game.modifiers() == (15, 15, 9)
+    assert game.navigations == [2]
+    assert game.charges == []
 
 
 def test_unknown_or_retired_mapping_resets_previous_official_modifiers():
     game = SecurityScript()
-    game.purchase("protection", 3)
-    game.purchase("counterintelligence", 3)
-    assert game.modifiers() == (9, 15, 15)
+    game.countries[2]["vars"].update(
+        ct_home_defense_var=15, ct_global_base_detect_var=9
+    )
+    assert game.modifiers() == (15, 15, 9)
     assert game.modifiers(target=2) == (0, 0, 0)
     game.protected[1] = 0
     assert game.modifiers() == (0, 0, 0)
@@ -194,7 +201,7 @@ def test_unknown_or_retired_mapping_resets_previous_official_modifiers():
 
 def test_annexed_or_domestic_protection_country_gives_no_foreign_bonus():
     game = SecurityScript()
-    game.purchase("protection", 3)
+    game.countries[2]["vars"]["ct_home_defense_var"] = 15
     assert game.modifiers(attacker=2) == (0, 0, 0)
     game.countries[2]["exists"] = False
     assert game.modifiers() == (0, 0, 0)
@@ -202,19 +209,19 @@ def test_annexed_or_domestic_protection_country_gives_no_foreign_bonus():
 
 def test_target_selection_and_host_do_not_determine_protection():
     game = SecurityScript()
-    game.purchase("protection", 3)
+    game.countries[2]["vars"]["ct_home_defense_var"] = 15
     game.countries[1]["vars"].update(TOP_selected=2, TOP_pending_host=3)
-    assert game.modifiers(target=1) == (0, 15, 0)
+    assert game.modifiers(target=1) == (15, 15, 0)
     assert game.modifiers(target=2) == (0, 0, 0)
 
 
-def test_independent_protection_owners_do_not_share_policy_levels():
+def test_independent_protection_owners_read_their_own_core_security():
     game = SecurityScript()
     game.protected[2] = 3
-    game.purchase("protection", 3, identifier=2)
-    game.purchase("counterintelligence", 1, identifier=3)
-    assert game.modifiers(target=1) == (0, 15, 0)
-    assert game.modifiers(target=2) == (3, 0, 5)
+    game.countries[2]["vars"]["ct_home_defense_var"] = 15
+    game.countries[3]["vars"]["ct_global_base_detect_var"] = 5
+    assert game.modifiers(target=1) == (15, 15, 0)
+    assert game.modifiers(target=2) == (0, 0, 5)
 
 
 def test_disabled_system_neither_spends_nor_applies_existing_policy():
@@ -223,7 +230,7 @@ def test_disabled_system_neither_spends_nor_applies_existing_policy():
     game.enabled = False
     game.purchase("counterintelligence", 3)
     assert game.modifiers() == (0, 0, 0)
-    assert game.charges == [(2, -1.5)]
+    assert game.charges == []
 
 
 def test_state_security_facilities_use_host_policies_and_pressure_hardening():
@@ -234,35 +241,33 @@ def test_state_security_facilities_use_host_policies_and_pressure_hardening():
             "TOP_group_pressure^TOP_group_target": 75,
         }
     )
-    game.purchase("protection", 3)
-    game.purchase("counterintelligence", 2)
-    assert game.organization_modifiers() == (6, 25, 10)
+    game.countries[2]["vars"].update(
+        ct_home_defense_var=15, ct_global_base_detect_var=10
+    )
+    assert game.organization_modifiers() == (15, 25, 10)
     assert game.organization_modifiers(host=1) == (0, 10, 0)
     game.globals["TOP_group_class^TOP_group_target"] = 1
-    assert game.organization_modifiers() == (6, 15, 10)
+    assert game.organization_modifiers() == (15, 15, 10)
 
 
 def test_organization_defense_is_wired_to_collection_review_and_resolution():
     collection = _named_block(
-        REDESIGN_EFFECTS.read_text(encoding="utf-8"),
-        "TOP_collect_organization_pulse",
+        REDESIGN_EFFECTS.read_text(encoding="utf-8"), "TOP_collect_organization_pulse"
     )
     organization = (
         ROOT / "common/scripted_effects/07_targeted_operations_organization_cases.txt"
     ).read_text(encoding="utf-8")
     review = _named_block(organization, "TOP_calculate_organization_proposal_risks")
     resolution = _named_block(organization, "TOP_resolve_organization_operation")
-    assert (
-        "TOP_organization_security_host = TOP_org_lead_host^TOP_group_target"
-        in collection
-    )
-    assert "subtract = TOP_organization_defensive_collection_penalty" in collection
-    assert "TOP_organization_security_host = TOP_proposal_host" in review
+    assert "international_terror_org_intel^TOP_org_slot" in collection
     assert (
         "TOP_proposal_protection = TOP_organization_defensive_success_penalty" in review
     )
     assert "TOP_organization_defensive_exposure_bonus" in review
-    assert "TOP_org_case_protection^TOP_group_target" in resolution
+    assert "TOP_tier > 1" in resolution
+    assert "random" not in resolution
+    raids = (ROOT / "common/raids/targeted_operations_facility_raids.txt").read_text()
+    assert "TOP_org_case_protection" in raids
 
 
 def test_ai_policy_changes_do_not_dirty_the_human_window():
@@ -275,22 +280,24 @@ def test_ai_policy_changes_do_not_dirty_the_human_window():
 def test_defensive_access_does_not_require_offensive_country_eligibility():
     game = SecurityScript()
     game.countries[2].update(eligible=False, official=True)
+    game.countries[2]["vars"]["ct_home_defense_var"] = 10
     game.purchase("protection", 2)
-    assert game.modifiers() == (0, 10, 0)
+    assert game.modifiers() == (10, 10, 0)
+    assert game.navigations == [2]
+    assert game.charges == []
 
 
-def test_wartime_ai_buys_basic_policies_once_and_preserves_active_tiers():
+def test_wartime_ai_preserves_core_policy_without_duplicate_spending():
     game = SecurityScript()
     country = game.countries[2]
     country.update(ai=True, official=True, war=True)
-    game.run("TOP_security_country_tick", 2)
-    assert game.modifiers() == (3, 5, 5)
-    assert len(game.charges) == 2
-    game.run("TOP_security_country_tick", 2)
-    assert len(game.charges) == 2
-    game.purchase("protection", 3)
-    game.run("TOP_security_country_tick", 2)
-    assert game.modifiers() == (3, 15, 5)
+    country["vars"].update(ct_home_defense_var=5, ct_global_base_detect_var=8)
+    for _ in range(3):
+        game.run("TOP_security_country_tick", 2)
+    assert game.modifiers() == (5, 5, 8)
+    assert game.charges == []
+    assert country["power"] == 200
+    assert country["vars"]["treasury"] == 10
 
 
 @pytest.mark.parametrize(
@@ -351,9 +358,7 @@ def test_lethal_resolution_snapshots_defensive_exposure_before_retirement():
     game = ExposureScript()
     game.globals["TOP_rule_mode"] = 2
     variables = game.target(ident=129)
-    game.countries[2]["vars"].update(
-        TOP_counterintelligence_level=3, TOP_counterintelligence_until=182
-    )
+    game.countries[2]["vars"].update(ct_global_base_detect_var=15)
     variables.update(
         TOP_proposal_target=129,
         TOP_proposal_method=3,

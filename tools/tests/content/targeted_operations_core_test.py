@@ -40,6 +40,8 @@ class TargetScript(TargetedScript):
             "07_targeted_operations_organization_cases.txt",
             "08_targeted_operations_resolution.txt",
             "09_targeted_operations_depth.txt",
+            "10_targeted_operations_core.txt",
+            "11_targeted_operations_native_extensions.txt",
         ):
             self.effects.update(
                 _parse_race_script(
@@ -107,6 +109,20 @@ class TargetScript(TargetedScript):
                 ).read_text(encoding="utf-8")
             )
         )
+        self.triggers.update(
+            _parse_race_script(
+                (
+                    ROOT / "common/scripted_triggers/08_targeted_operations_core.txt"
+                ).read_text(encoding="utf-8")
+            )
+        )
+        core_raid = (
+            ROOT / "common/scripted_effects/00_raid_scripted_effects.txt"
+        ).read_text(encoding="utf-8")
+        for outcome in ("failure", "limited_success", "success", "critical_success"):
+            self.effects.update(
+                _parse_race_script(_named_block(core_raid, f"ct_hvt_raid_{outcome}"))
+            )
         self.countries, self.globals, self.temps = {}, {}, {}
         self.scope_stack, self.events = [], []
         self.global_flags, self.external = {}, Counter()
@@ -142,6 +158,7 @@ class TargetScript(TargetedScript):
             "TOP_initialize_doctrine",
             "TOP_seed_public_subjects",
             "international_systems_force_update",
+            "international_systems_update",
         }
         manifest = json.loads(
             (ROOT / "tools/data/targeted_operations.json").read_text(encoding="utf-8")
@@ -172,7 +189,12 @@ class TargetScript(TargetedScript):
             TOP_active_targets=ScriptArray(),
             active_terror_orgs=ScriptArray([0, 10]),
             active_terror_org_threat_lvl=ScriptArray([50, 40]),
+            active_terror_org_vis_lvl=ScriptArray([50, 50]),
         )
+        for country in self.countries.values():
+            country["vars"]["international_terror_org_temp_specific_intel"] = (
+                ScriptArray([0] * 40)
+            )
         capacity = int(self.globals["TOP_registry_capacity"])
         for field in (
             "TOP_visit_status",
@@ -250,6 +272,27 @@ class TargetScript(TargetedScript):
                 scope[key] = values
             return values, int(self.value(index, identifier))
         return super()._scope(name, identifier)
+
+    def facility_callback(self, actor=1, tier=2):
+        group = self.temps["TOP_group_target"]
+        variables = self.countries[actor]["vars"]
+        self.temps.update(
+            TOP_tier=tier,
+            TOP_facility_objective=variables["TOP_org_case_objective"][group],
+            target_state=variables["TOP_org_case_state"][group],
+            victim_country=variables["TOP_org_case_host"][group],
+            actor_country=actor,
+        )
+        self.countries[actor]["vars"]["actor_country"] = actor
+        self.stubs.update(
+            {
+                "calculate_aa_defense_value",
+                "apply_raid_building_damage_success",
+                "apply_raid_building_damage_critical",
+            }
+        )
+        self.run("TOP_native_facility_damage", actor)
+        self.run("TOP_native_facility_result", actor)
 
     def value(self, name, identifier):
         if isinstance(name, str):
@@ -539,6 +582,7 @@ class TargetScript(TargetedScript):
             ("lead_age", 0),
             ("access", method),
             ("host_posture", 4 if method == 5 else 1),
+            ("consent", 1 if method == 5 else 0),
             ("doctrine", 2),
             ("capability", 85),
             ("protection", host),
@@ -608,6 +652,15 @@ class TargetScript(TargetedScript):
             variables[f"TOP_org_case_{field}"][group] = value
         if group not in variables["TOP_active_organization_cases"]:
             variables["TOP_active_organization_cases"].append(group)
+        if self.globals["TOP_group_ct"][group] >= 0:
+            if objective == 2:
+                self.countries[host]["flags"]["ct_training_target_found_by@ROOT"] = None
+                self.countries[state]["capital"] = True
+            org_id = self.globals["TOP_group_ct"][group]
+            if org_id not in self.globals["active_terror_orgs"]:
+                self.globals["active_terror_orgs"].append(org_id)
+                self.globals["active_terror_org_threat_lvl"].append(50)
+                self.globals["active_terror_org_vis_lvl"].append(50)
         if begin:
             self.call("TOP_begin_organization_operation", actor, GROUP=group)
         self.temps["TOP_group_target"] = group
@@ -739,7 +792,7 @@ def test_facility_sabotage_damages_the_map_without_removing_a_person(objective):
     script = TargetScript()
     variables = script.authorize_organization(objective=objective, host=2, state=101)
     original_person_status = list(script.globals["TOP_status"])
-    script.run("TOP_resolve_organization_operation", 1)
+    script.facility_callback()
     assert variables["TOP_archive_cursor"] == 1
     assert variables["TOP_archive_subject_kind"][0] == 2
     assert variables["TOP_archive_subject_id"][0] == 2
@@ -770,7 +823,10 @@ def test_organization_facility_availability_matches_objective_fallbacks(
     script = TargetScript()
     state = script.countries[101]["vars"]
     state.update(arms_factory=arms, infrastructure=infrastructure, industrial_complex=0)
-    script.temps.update(TOP_facility_state=101, TOP_facility_objective=objective)
+    script.globals["TOP_group_ct"][2] = -1
+    script.temps.update(
+        TOP_group_target=2, TOP_facility_state=101, TOP_facility_objective=objective
+    )
 
     assert (
         script.condition(script.triggers["TOP_organization_facility_available"], 1)
@@ -783,6 +839,7 @@ def test_organization_operation_cannot_report_damage_when_no_fallback_exists(
     objective,
 ):
     script = TargetScript()
+    script.globals["TOP_group_ct"][2] = -1
     variables = script.authorize_organization(
         objective=objective, host=2, state=101, begin=False
     )
@@ -804,7 +861,7 @@ def test_training_report_records_infrastructure_fallback():
     variables = script.authorize_organization(objective=2, host=2, state=101)
     script.countries[101]["vars"].update(arms_factory=0, infrastructure=1)
 
-    script.run("TOP_resolve_organization_operation", 1)
+    script.facility_callback()
 
     assert variables["TOP_report_result"] == 11
     assert variables["TOP_report_objective"] == 2
@@ -819,7 +876,7 @@ def test_failed_organization_report_records_attempt_without_damage():
 
     script.run("TOP_resolve_organization_operation", 1)
 
-    assert variables["TOP_report_result"] == 1
+    assert variables["TOP_report_result"] == 9
     assert variables["TOP_report_objective"] == 1
     assert variables["TOP_report_impact"] == 0
     assert script.external["damage_building", 101] == 0
@@ -829,7 +886,7 @@ def test_failed_organization_report_records_attempt_without_damage():
 def test_open_field_report_preserves_queued_objective_and_impact_after_reload():
     script = TargetScript()
     variables = script.authorize_organization(group=2, objective=2, host=3, state=102)
-    script.run("TOP_resolve_organization_operation", 1)
+    script.facility_callback()
     assert variables["TOP_report_objective"] == 2
     assert variables["TOP_report_impact"] == 2
 
@@ -837,7 +894,7 @@ def test_open_field_report_preserves_queued_objective_and_impact_after_reload():
     variables["TOP_org_case_objective"][2] = 1
     script.authorize_organization(group=3, objective=3, host=2, state=101)
     script.countries[101]["vars"]["industrial_complex"] = 0
-    script.run("TOP_resolve_organization_operation", 1)
+    script.facility_callback()
     assert script.external["add_dynamic_modifier", 101] == 1
     assert variables["TOP_report_subject_ids"] == [3]
     assert variables["TOP_report_objectives"] == [3]
@@ -978,38 +1035,16 @@ def test_vip_detail_is_pruned_when_the_authored_protection_country_changes():
 
 
 def test_traveling_leader_deception_uses_the_authored_protection_country():
-    class FalseLocationScript(TargetScript):
-        def __init__(self):
-            self.random_chances = []
-            super().__init__()
+    from targeted_operations_security_test import SecurityScript
 
-        def execute_statement(self, statement, identifier):
-            key, _, operand = statement
-            if key == "random":
-                fields = {name: value for name, _, value in operand}
-                self.random_chances.append(self.value(fields["chance"], identifier))
-                return
-            super().execute_statement(statement, identifier)
-
-    script = FalseLocationScript()
-    protector = script.tag("SOV")
-    visitor_host = script.tag("USA")
-    script.target(129, host=visitor_host, state=100)
-    script.temps["TOP_target"] = 129
-    script.countries[protector]["vars"]["TOP_deception_until"] = 91
-    script.countries[visitor_host]["vars"]["TOP_deception_until"] = 0
-    script.random_chances.clear()
-
-    script.run("TOP_maybe_false_person_location", 1)
-
-    assert script.random_chances == [40]
-
-    script.countries[protector]["vars"]["TOP_deception_until"] = 0
-    script.countries[visitor_host]["vars"]["TOP_deception_until"] = 91
-    script.random_chances.clear()
-    script.run("TOP_maybe_false_person_location", 1)
-
-    assert script.random_chances == [15]
+    game = SecurityScript()
+    game.protected[129] = 2
+    game.temps["TOP_target"] = 129
+    game.countries[2]["ideas"] = {"TOP_defensive_deception"}
+    assert game.modifiers(target=129) == (0, 10, 5)
+    game.countries[2]["ideas"] = set()
+    game.countries[3]["ideas"] = {"TOP_defensive_deception"}
+    assert game.modifiers(target=129) == (0, 0, 0)
 
 
 def test_ai_custodian_can_transfer_after_exploitation_while_human_keeps_control():
@@ -1146,6 +1181,12 @@ def test_last_registry_slot_has_all_arrays_and_can_be_resolved():
                 "TOP_active_cases",
                 "TOP_cases_to_close",
                 "TOP_retired_native_bindings",
+                "TOP_tracking_person",
+                "TOP_tracking_org",
+                "TOP_locate_hq_org",
+                "TOP_locate_training_org",
+                "TOP_locate_cache_org",
+                "TOP_facility_tracking_group",
                 "TOP_vip_assignments",
                 "TOP_collecting_subjects",
                 "TOP_organization_dossiers",
@@ -1252,6 +1293,7 @@ def test_lethal_bda_waits_fourteen_days_and_never_rerolls_physical_truth(
     script = TargetScript()
     variables = script.authorize(method=3)
     variables["TOP_case_identity"][11] = identity
+    script.temps["TOP_tier"] = 2
     script.run("TOP_complete_operation", 1)
     assert script.globals["TOP_status"][11] == 3
     assert script.globals["TOP_removals"][11] == 1
@@ -1412,7 +1454,10 @@ def fire_native_callback(script, target=11, method=1, tier=2, state=101):
     script.country(1000, tag="raid_instance")
     script.countries[1000]["vars"].update(actor_country=1, target_state=state)
     script.temps.pop("target_state", None)
-    script.temps.update(TOP_target=target, TOP_method=method, TOP_tier=tier)
+    family = 2 if method in (2, 4, 5) else 3 if method in (3, 7) else 1
+    script.temps.update(
+        TOP_target=target, TOP_method=method, TOP_tier=tier, TOP_native_kind=family
+    )
     script.call("TOP_native_result_args", 1000)
 
 
@@ -1460,27 +1505,30 @@ def test_external_resolution_releases_a_matching_preparation_slot_immediately():
     script.call("TOP_capture_target", 3, TARGET=11)
     script.run("TOP_process_cases", 1)
 
-    assert variables["TOP_case_phase"][11] == 5
+    assert variables["TOP_case_phase"][11] == 0
     assert variables["TOP_operation_subject_kind"] == 0
     assert variables["TOP_operation_subject_id"] == 0
     assert variables["TOP_operation_sequence"] == 0
     assert variables["TOP_assessment"][11] == 6
 
 
-def test_exact_duration_dispatches_fire_on_the_due_day():
+def test_execution_waits_for_native_results_while_metadata_deadlines_fire():
     script = TargetScript()
     person = script.authorize(method=3)
-    assert person["TOP_case_due"][11] == 28
+    assert person["TOP_case_due"][11] == 0
     script.globals["TOP_clock"] = 28
     script.run("TOP_process_cases", 1)
+    assert person["TOP_attempts"][11] == 0
+    assert person["TOP_case_phase"][11] == 3
+    fire_native_callback(script, target=11, method=3, state=101, tier=2)
     assert person["TOP_attempts"][11] == 1
-
     organization = script.authorize_organization(group=2)
-    assert organization["TOP_org_case_due"][2] == 56
+    assert organization["TOP_org_case_due"][2] == 0
     script.globals["TOP_clock"] = 56
     script.run("TOP_process_organization_cases", 1)
+    assert organization["TOP_org_case_phase"][2] == 3
+    script.facility_callback()
     assert organization["TOP_org_case_phase"][2] == 5
-
     script.globals["TOP_active_targets"].append(12)
     script.globals["TOP_pressure"][12] = 10
     script.globals["TOP_pressure_decay_due"] = 56
@@ -1626,6 +1674,7 @@ def test_completed_attempt_keeps_pressure_without_warning_for_a_removed_person(
     group = int(script.globals["TOP_affiliation"][11])
     script.temps.update(TOP_target=11, TOP_method=method, TOP_tier=2)
 
+    script.temps["TOP_tier"] = 2
     script.run("TOP_complete_operation", 1)
 
     assert script.globals["TOP_status"][11] == status
@@ -1882,24 +1931,23 @@ def test_waiting_mandates_close_at_expiry_but_prepared_native_case_survives():
     assert native["TOP_case_phase"][12] == 3
 
 
-def test_begun_timed_operations_finish_after_the_waiting_mandate_expires():
-    person_script = TargetScript()
-    person = person_script.authorize(method=3)
+def test_prepared_native_operations_survive_waiting_mandate_expiry():
+    script = TargetScript()
+    person = script.authorize(method=3)
     person["TOP_case_until"][11] = 1
-    person_script.globals["TOP_clock"] = 28
-
-    person_script.run("TOP_process_cases", 1)
-
+    script.globals["TOP_clock"] = 28
+    script.run("TOP_process_cases", 1)
+    assert person["TOP_attempts"][11] == 0
+    assert person["TOP_case_phase"][11] == 3
+    fire_native_callback(script, target=11, method=3, state=101, tier=2)
     assert person["TOP_attempts"][11] == 1
     assert person["TOP_case_phase"][11] == 4
-
-    organization_script = TargetScript()
-    organization = organization_script.authorize_organization(group=2)
+    organization = script.authorize_organization(group=2)
     organization["TOP_org_case_until"][2] = 1
-    organization_script.globals["TOP_clock"] = 28
-
-    organization_script.run("TOP_process_organization_cases", 1)
-
+    script.globals["TOP_clock"] = 56
+    script.run("TOP_process_organization_cases", 1)
+    assert organization["TOP_org_case_phase"][2] == 3
+    script.facility_callback()
     assert organization["TOP_org_case_phase"][2] == 5
 
 
@@ -1919,6 +1967,7 @@ def test_async_resolution_reloads_the_case_selected_in_the_open_view():
     variables["TOP_selected_kind"] = 1
     script.temps.update(TOP_target=11, TOP_method=3, TOP_tier=0)
 
+    script.temps["TOP_tier"] = 2
     script.run("TOP_complete_operation", 1)
 
     assert variables["TOP_authorized_target"] == 12
@@ -2048,6 +2097,8 @@ def test_waiting_timed_mandates_execute_sequentially_through_one_slot(restore):
     script.temps.clear()
     script.globals["TOP_clock"] = 29
     script.run("TOP_process_timers", 1)
+    assert script.globals["TOP_status"][11] == 1
+    fire_native_callback(script, method=3)
     assert script.globals["TOP_status"][11] == 3
     assert script.globals["TOP_status"][12] == 1
     assert variables["TOP_case_phase"][11] == 4
@@ -2059,6 +2110,8 @@ def test_waiting_timed_mandates_execute_sequentially_through_one_slot(restore):
     assert variables["TOP_case_phase"][12] == 3
     script.globals["TOP_clock"] = 58
     script.run("TOP_process_timers", 1)
+    assert script.globals["TOP_status"][12] == 1
+    fire_native_callback(script, target=12, method=4, state=102)
     assert script.globals["TOP_status"][12] == 2
     assert variables["TOP_archive_cursor"] == 2
     assert variables["TOP_attempts"][11] == variables["TOP_attempts"][12] == 1
@@ -2096,7 +2149,7 @@ def test_another_countrys_kill_changes_global_truth_before_local_reporting():
     script.call("TOP_kill_target", 3, TARGET=11)
     script.run("TOP_process_timers", 1)
     assert script.globals["TOP_confirmed_dead"][11] == 1
-    assert variables["TOP_case_phase"][11] == 5
+    assert variables["TOP_case_phase"][11] == 0
     assert variables["TOP_assessment"][11] == 6
     script.run("TOP_confirm_assessment", 1)
     assert variables["TOP_case_phase"][11] == 0
@@ -2139,6 +2192,8 @@ def test_cancelled_timed_case_cannot_complete_after_other_host_is_authorized():
     script.call("TOP_begin_person_operation", TARGET=12)
     script.globals["TOP_clock"] = 29
     script.run("TOP_process_timers", 1)
+    fire_native_callback(script, method=3)
+    fire_native_callback(script, target=12, method=4, state=102)
     assert script.globals["TOP_status"][11] == 1
     assert script.globals["TOP_status"][12] == 2
     assert variables["TOP_attempts"][11] == 0
@@ -2390,6 +2445,7 @@ def test_stood_down_callback_cannot_overwrite_an_open_field_report():
     script.run("TOP_stand_down_selected", 1)
     script.authorize(target=12, method=3, host=3, state=102)
     script.temps.update(TOP_target=12, TOP_method=3, TOP_tier=2)
+    script.temps["TOP_tier"] = 2
     script.run("TOP_complete_operation", 1)
 
     assert variables["TOP_report_open"] == 1

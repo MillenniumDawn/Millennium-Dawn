@@ -1,100 +1,44 @@
 TOP_resolve_person_operation = {
-	if = {
-		limit = { check_variable = { TOP_method > 0 } check_variable = { TOP_method < 3 } }
-		set_temp_variable = { TOP_arg_target = TOP_target }
-		set_temp_variable = { TOP_history_current_event = 10 }
-		set_temp_variable = { TOP_history_current_reason = { value = TOP_method add = 30 } }
-		TOP_log_person_milestone = yes
-	}
+	set_temp_variable = { TOP_arg_target = TOP_target }
+	set_temp_variable = { TOP_history_current_event = 10 }
+	set_temp_variable = { TOP_history_current_reason = { value = TOP_method add = 30 } }
+	TOP_log_person_milestone = yes
 	set_temp_variable = { TOP_case_result_context = 1 }
 	set_temp_variable = { TOP_case_result_sequence = TOP_case_sequence^TOP_target }
 	add_to_variable = { global.TOP_attempts^TOP_target = 1 }
 	add_to_variable = { TOP_attempts^TOP_target = 1 }
-	set_temp_variable = { TOP_intelligence_roll = 0 }
-	randomize_temp_variable = { var = TOP_intelligence_roll min = 1 max = 100 distribution = uniform }
-	set_temp_variable = { TOP_result = 1 }
+	set_temp_variable = { TOP_result = 9 }
 	set_temp_variable = { TOP_physical_changed = 0 }
 	TOP_calculate_person_consequences = yes
 	if = {
-		limit = { check_variable = { TOP_intelligence_roll > TOP_case_identity^TOP_target } }
-		set_temp_variable = { TOP_result = 1 }
-		set_variable = { TOP_assessment^TOP_target = 6 }
-	}
-	else_if = {
-		limit = {
-			OR = {
-				check_variable = { TOP_intelligence_roll > TOP_case_location^TOP_target }
-				NOT = { check_variable = { global.TOP_state^TOP_target = TOP_case_state^TOP_target } }
-			}
-		}
+		limit = { NOT = { check_variable = { global.TOP_state^TOP_target = TOP_case_state^TOP_target } } }
 		set_temp_variable = { TOP_result = 7 }
-		set_variable = { TOP_assessment^TOP_target = 7 }
 		set_variable = { TOP_location_confidence^TOP_target = 0 }
 		set_variable = { TOP_location_source^TOP_target = 0 }
-		subtract_from_variable = { TOP_pattern_confidence^TOP_target = 15 }
-		clamp_variable = { var = TOP_pattern_confidence^TOP_target min = 0 max = 100 }
 		set_variable = { TOP_package_state^TOP_target = 1 }
-		TOP_update_person_compat_confidence = yes
 	}
 	else_if = {
-		limit = { check_variable = { TOP_intelligence_roll > TOP_case_pattern^TOP_target } }
-		set_temp_variable = { TOP_result = 8 }
-		if = {
-			limit = {
-				OR = {
-					check_variable = { TOP_method = 2 }
-					check_variable = { TOP_method = 4 }
-					check_variable = { TOP_method = 5 }
-				}
-			}
-			set_temp_variable = { TOP_result = 4 }
-		}
-		set_variable = { TOP_assessment^TOP_target = TOP_result }
+		limit = { check_variable = { TOP_tier > 1 } }
+		set_temp_variable = { TOP_result = 3 }
+		if = { limit = { OR = { check_variable = { TOP_method = 2 } check_variable = { TOP_method = 4 } check_variable = { TOP_method = 5 } } } set_temp_variable = { TOP_result = 2 } }
+		set_temp_variable = { TOP_physical_changed = 1 }
+		set_temp_variable = { TOP_core_result = 1 }
+		TOP_resolve_target = yes
+		set_temp_variable = { TOP_core_result = 0 }
 	}
-	else = {
+	else_if = { limit = { check_variable = { TOP_tier = 1 } } set_temp_variable = { TOP_result = 8 } }
+	if = { limit = { check_variable = { TOP_physical_changed = 0 } } set_variable = { TOP_assessment^TOP_target = TOP_result } }
+
+	if = {
+		limit = { NOT = { check_variable = { TOP_result = 7 } } }
+		TOP_find_org = yes
 		if = {
-			limit = { check_variable = { TOP_method > 2 } }
-			TOP_roll_timed_tactical_result = yes
-		}
-		if = {
-			limit = { check_variable = { TOP_tier > 1 } }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { TOP_method = 1 }
-						check_variable = { TOP_method = 3 }
-						check_variable = { TOP_method = 7 }
-						AND = { check_variable = { TOP_method = 2 } check_variable = { TOP_tier = 3 } }
-					}
-				}
-				set_temp_variable = { TOP_result = 3 }
-				set_temp_variable = { TOP_physical_changed = 1 }
-				TOP_resolve_target = yes
-			}
-			else = {
-				set_temp_variable = { TOP_result = 2 }
-				set_temp_variable = { TOP_physical_changed = 1 }
-				TOP_resolve_target = yes
-			}
-		}
-		else_if = {
-			limit = { check_variable = { TOP_tier = 1 } }
-			set_temp_variable = { TOP_result = 8 }
-			set_variable = { TOP_assessment^TOP_target = 8 }
-		}
-		else = {
-			set_temp_variable = { TOP_result = 9 }
-			if = {
-				limit = {
-					OR = {
-						check_variable = { TOP_method = 2 }
-						check_variable = { TOP_method = 4 }
-						check_variable = { TOP_method = 5 }
-					}
-				}
-				set_temp_variable = { TOP_result = 4 }
-			}
-			set_variable = { TOP_assessment^TOP_target = TOP_result }
+			limit = { check_variable = { TOP_org_slot > -1 } }
+			set_temp_variable = { targeted_org = TOP_org_slot }
+			if = { limit = { check_variable = { TOP_tier = 0 } } ct_hvt_raid_failure = yes }
+			else_if = { limit = { check_variable = { TOP_tier = 1 } } ct_hvt_raid_limited_success = yes }
+			else_if = { limit = { check_variable = { TOP_tier = 2 } } ct_hvt_raid_success = yes }
+			else = { ct_hvt_raid_critical_success = yes }
 		}
 	}
 	set_variable = { TOP_case_result^TOP_target = TOP_result }
@@ -124,23 +68,7 @@ TOP_resolve_person_operation = {
 	set_temp_variable = { TOP_case_result_sequence = 0 }
 }
 
-TOP_roll_timed_tactical_result = {
-	set_temp_variable = { TOP_tier = 0 }
-	set_temp_variable = { TOP_tactical_chance = { value = TOP_case_capability^TOP_target add = TOP_case_pattern^TOP_target divide = 2 } }
-	TOP_get_defensive_modifiers = yes
-	subtract_from_temp_variable = { TOP_tactical_chance = TOP_defensive_success_penalty }
-	set_temp_variable = { TOP_target_group = global.TOP_affiliation^TOP_target }
-	if = {
-		limit = { check_variable = { global.TOP_group_disruption_type^TOP_target_group = 2 } check_variable = { global.TOP_group_disruption_until^TOP_target_group > global.TOP_clock } }
-		add_to_temp_variable = { TOP_tactical_chance = 10 }
-	}
-	clamp_temp_variable = { var = TOP_tactical_chance min = 5 max = 90 }
-	random = { chance = TOP_tactical_chance set_temp_variable = { TOP_tier = 2 } }
-	if = {
-		limit = { check_variable = { TOP_tier = 0 } }
-		random = { chance = 50 set_temp_variable = { TOP_tier = 1 } }
-	}
-}
+
 
 TOP_calculate_person_consequences = {
 	set_temp_variable = { TOP_operation_protection_country = TOP_case_protection^TOP_target }

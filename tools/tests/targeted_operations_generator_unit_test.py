@@ -145,6 +145,8 @@ def test_all_native_raids_bind_their_own_person_method_and_callback(manifest):
                 "TOP_target": target,
                 "TOP_method": method,
                 "TOP_tier": str(tier),
+                "TOP_native_kind": method,
+                "raid_pp_loss": "-150",
             }, (token, outcome)
             assert any(key == "TOP_native_result_args" for key, _, _ in effects), (
                 token,
@@ -177,15 +179,17 @@ def test_every_raid_has_a_gate_that_binds_its_own_person_and_method(manifest):
     expected = {
         f"TOP_native_gate_{ident}_{method}"
         for ident in range(1, manifest["capacity"])
-        for method in (1, 2)
+        for method in (1, 2, 3)
     }
     assert defined == expected
 
     for ident in range(1, manifest["capacity"]):
-        for method in (1, 2):
+        for method in (1, 2, 3):
             body = _named_block(gates, f"TOP_native_gate_{ident}_{method}")
             assert f"TOP_arg_target = {ident}" in body
-            assert f"TOP_arg_method = {method}" in body
+            assert f"TOP_arg_method = TOP_case_method^{ident}" in body
+            assert f"TOP_native_kind = {method}" in body
+            assert "TOP_native_family_matches = yes" in body
             assert "TOP_native_authorized = yes" in body
 
     # Nothing in the generated raids may pass parameters.

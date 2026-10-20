@@ -1,0 +1,109 @@
+TOP_facility_tracking_started = {
+	if = {
+		limit = { TOP_enabled = yes }
+		TOP_country_initialize = yes
+		set_temp_variable = { TOP_tracking_host = FROM.id }
+		set_variable = { TOP_facility_tracking_group^TOP_tracking_host = TOP_selected_organization }
+	}
+}
+
+TOP_facility_tracking_completed = {
+	if = {
+		limit = { TOP_enabled = yes }
+		set_temp_variable = { TOP_tracking_host = FROM.id }
+		set_temp_variable = { TOP_group_target = TOP_facility_tracking_group^TOP_tracking_host }
+		if = {
+			limit = { check_variable = { TOP_group_target > 0 } TOP_group_operational = yes check_variable = { global.TOP_group_host^TOP_group_target = FROM } }
+			set_temp_variable = { TOP_arg_group = TOP_group_target }
+			TOP_discover_organization = yes
+			set_variable = { TOP_org_verification^TOP_group_target = 100 }
+			set_variable = { TOP_org_location^TOP_group_target = 100 }
+			set_variable = { TOP_org_activity^TOP_group_target = 100 }
+			set_variable = { TOP_org_verification_source^TOP_group_target = 2 }
+			set_variable = { TOP_org_location_source^TOP_group_target = 2 }
+			set_variable = { TOP_org_activity_source^TOP_group_target = 2 }
+			set_variable = { TOP_org_lead_report_clock^TOP_group_target = global.TOP_clock }
+			set_variable = { TOP_org_lead_host^TOP_group_target = FROM }
+			set_variable = { TOP_org_lead_state^TOP_group_target = global.TOP_group_state^TOP_group_target }
+			set_variable = { TOP_org_lead_source^TOP_group_target = 2 }
+		}
+		set_variable = { TOP_facility_tracking_group^TOP_tracking_host = 0 }
+	}
+}
+
+# Runs in native raid scope; group and objective are literal bindings in the raid type.
+TOP_native_facility_damage = {
+	set_temp_variable = { TOP_native_impact = 0 }
+	if = {
+		limit = { TOP_enabled = yes check_variable = { TOP_tier > 1 } }
+		set_temp_variable = { building_damage_by_missile = 1 }
+		set_temp_variable = { raid_damage_mult = 1 }
+		calculate_aa_defense_value = yes
+		if = { limit = { check_variable = { TOP_tier = 2 } } apply_raid_building_damage_success = yes }
+		else = { apply_raid_building_damage_critical = yes }
+		var:target_state = {
+			if = {
+				limit = { check_variable = { TOP_facility_objective = 1 } infrastructure > 0 }
+				damage_building = { type = infrastructure damage = building_damage_by_missile }
+				set_temp_variable = { TOP_native_impact = 1 }
+			}
+			else_if = {
+				limit = { check_variable = { TOP_facility_objective = 2 } }
+				if = {
+					limit = { arms_factory > 0 }
+					damage_building = { type = arms_factory damage = building_damage_by_missile }
+					set_temp_variable = { TOP_native_impact = 2 }
+				}
+				else_if = {
+					limit = { infrastructure > 0 }
+					damage_building = { type = infrastructure damage = building_damage_by_missile }
+					set_temp_variable = { TOP_native_impact = 1 }
+				}
+			}
+			else_if = {
+				limit = { check_variable = { TOP_facility_objective = 3 } }
+				if = {
+					limit = { industrial_complex > 0 }
+					damage_building = { type = industrial_complex damage = building_damage_by_missile }
+					set_temp_variable = { TOP_native_impact = 3 }
+				}
+				else_if = {
+					limit = { state_has_any_resource = yes }
+					add_dynamic_modifier = { modifier = TOP_resource_disruption days = 60 }
+					set_temp_variable = { TOP_native_impact = 4 }
+				}
+			}
+		}
+		if = {
+			limit = { check_variable = { TOP_native_impact > 0 } }
+			set_variable = { global.TOP_group_disruption_type^TOP_group_target = TOP_facility_objective }
+			set_variable = { global.TOP_group_disruption_until^TOP_group_target = { value = global.TOP_clock add = 90 } }
+			if = {
+				limit = { check_variable = { TOP_facility_objective = 3 } }
+				set_temp_variable = { TOP_group = TOP_group_target }
+				TOP_find_group_org = yes
+				if = { limit = { check_variable = { TOP_org_slot > -1 } } subtract_from_variable = { global.active_terror_org_threat_lvl^TOP_org_slot = 3 } clamp_variable = { var = global.active_terror_org_threat_lvl^TOP_org_slot min = 0 max = 100 } }
+			}
+		}
+	}
+}
+
+TOP_native_facility_result = {
+	set_temp_variable = { TOP_native_state = target_state }
+	set_temp_variable = { TOP_native_host = victim_country }
+	var:actor_country = {
+		if = {
+			limit = {
+				TOP_country_eligible = yes
+				check_variable = { TOP_org_case_phase^TOP_group_target = 3 }
+				check_variable = { TOP_org_case_objective^TOP_group_target = TOP_facility_objective }
+				check_variable = { TOP_org_case_state^TOP_group_target = TOP_native_state }
+				check_variable = { TOP_org_case_host^TOP_group_target = TOP_native_host }
+				check_variable = { TOP_operation_subject_kind = 2 }
+				check_variable = { TOP_operation_subject_id = TOP_group_target }
+				check_variable = { TOP_operation_sequence = TOP_org_case_sequence^TOP_group_target }
+			}
+			TOP_resolve_organization_operation = yes
+		}
+	}
+}

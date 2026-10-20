@@ -43,6 +43,12 @@ TOP_country_initialize = {
 	if = {
 		limit = { TOP_enabled = yes check_variable = { TOP_identity_confidence^num = 0 } }
 		TOP_resize_country_arrays = yes
+		resize_array = { TOP_tracking_person = 1000 }
+		resize_array = { TOP_facility_tracking_group = 1000 }
+		resize_array = { TOP_tracking_org = 1000 }
+		resize_array = { TOP_locate_hq_org = 1000 }
+		resize_array = { TOP_locate_training_org = 1000 }
+		resize_array = { TOP_locate_cache_org = 1000 }
 		TOP_initialize_redesign_country = yes
 		TOP_initialize_cases = yes
 		TOP_initialize_organization_cases = yes
@@ -104,6 +110,7 @@ TOP_refresh_organization_lead_age = {
 
 TOP_find_org = {
 	set_temp_variable = { TOP_group = global.TOP_affiliation^TOP_target }
+	set_temp_variable = { TOP_group_target = TOP_group }
 	TOP_find_group_org = yes
 }
 
@@ -519,6 +526,7 @@ TOP_kill_target = {
 }
 
 TOP_resolve_target = {
+	set_temp_variable = { TOP_resolution_applied = 0 }
 	if = {
 		limit = {
 			TOP_enabled = yes
@@ -526,6 +534,7 @@ TOP_resolve_target = {
 			check_variable = { TOP_target < global.TOP_status^num }
 			OR = {
 				check_variable = { global.TOP_status^TOP_target = 1 }
+				AND = { check_variable = { TOP_external_result = 1 } check_variable = { global.TOP_status^TOP_target = 0 } }
 				AND = {
 					check_variable = { TOP_result = 3 }
 					check_variable = { global.TOP_status^TOP_target = 2 }
@@ -533,6 +542,7 @@ TOP_resolve_target = {
 				}
 			}
 		}
+		set_temp_variable = { TOP_resolution_applied = 1 }
 		TOP_country_initialize = yes
 		set_temp_variable = { TOP_previous_status = global.TOP_status^TOP_target }
 		set_temp_variable = { TOP_first_removal = 0 }
@@ -599,13 +609,13 @@ TOP_resolve_target = {
 			TOP_enroll_pending_actor = yes
 		}
 		if = {
-			limit = { check_variable = { TOP_previous_status = 1 } check_variable = { global.TOP_removals^TOP_target = 0 } }
+			limit = { check_variable = { TOP_previous_status < 2 } check_variable = { global.TOP_removals^TOP_target = 0 } }
 			set_temp_variable = { TOP_first_removal = 1 }
 			set_variable = { global.TOP_first_outcome^TOP_target = TOP_result }
 			add_to_variable = { global.TOP_removals^TOP_target = 1 }
 			TOP_find_org = yes
 			if = {
-				limit = { check_variable = { TOP_org_slot > -1 } }
+				limit = { check_variable = { TOP_org_slot > -1 } check_variable = { TOP_external_result = 0 } check_variable = { TOP_core_result = 0 } }
 				subtract_from_variable = { global.active_terror_org_threat_lvl^TOP_org_slot = 8 }
 				clamp_variable = { var = global.active_terror_org_threat_lvl^TOP_org_slot min = 0 max = 100 }
 				if = {
@@ -613,14 +623,15 @@ TOP_resolve_target = {
 					add_to_variable = { global.TOP_backlash^TOP_group = 3 }
 				}
 			}
-			add_political_power = 10
+			if = { limit = { check_variable = { TOP_external_result = 0 } check_variable = { TOP_core_result = 0 } } add_political_power = 10 }
 		}
-		TOP_apply_legacy_outcome = yes
+		if = { limit = { check_variable = { TOP_external_result = 0 } } TOP_apply_legacy_outcome = yes }
 		if = {
-			limit = { check_variable = { TOP_previous_status = 1 } }
+			limit = { check_variable = { TOP_previous_status < 2 } }
 			TOP_retire_registered_character = yes
 			TOP_choose_successor = yes
 		}
+		TOP_invalidate_other_person_cases = yes
 		TOP_archive_result = yes
 		if = {
 			limit = { check_variable = { TOP_result = 2 } }
@@ -639,22 +650,24 @@ TOP_resolve_target = {
 TOP_native_result_args = {
 	set_temp_variable = { TOP_operation_state = target_state }
 	var:actor_country = {
+		set_temp_variable = { TOP_arg_method = TOP_case_method^TOP_target }
+		if = { limit = { TOP_native_family_matches = yes } set_temp_variable = { TOP_method = TOP_arg_method } }
 		if = {
-			limit = { TOP_mission_binding_valid = yes }
+			limit = { TOP_native_family_matches = yes TOP_mission_binding_valid = yes }
 			TOP_resolve_native_callback = yes
 		}
 		else_if = {
-			limit = { TOP_native_callback_matches_stood_down = yes }
+			limit = { TOP_native_family_matches = yes TOP_native_callback_matches_stood_down = yes }
 			TOP_resolve_native_callback = yes
 		}
 		else_if = {
-			limit = { TOP_native_callback_matches_stood_down_tuple = yes }
+			limit = { TOP_native_family_matches = yes TOP_native_callback_matches_stood_down_tuple = yes }
 			set_temp_variable = { TOP_arg_target = TOP_target }
 			set_temp_variable = { TOP_arg_sequence = TOP_case_sequence^TOP_target }
 			TOP_close_case = yes
 		}
 		else_if = {
-			limit = { TOP_native_callback_matches_current = yes }
+			limit = { TOP_native_family_matches = yes TOP_native_callback_matches_current = yes }
 			set_temp_variable = { TOP_arg_target = TOP_target }
 			set_temp_variable = { TOP_arg_sequence = TOP_case_sequence^TOP_target }
 			TOP_close_case = yes

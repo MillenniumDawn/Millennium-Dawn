@@ -130,23 +130,23 @@ def test_public_and_nonpublic_subject_seeding_uses_three_axes():
     )
 
 
-def test_collection_focus_spillover_decay_and_staleness_contract():
+def test_core_collection_preserves_decay_and_staleness_without_parallel_gains():
     effects = read("common/scripted_effects/06_targeted_operations_redesign.txt")
     compatibility = read("common/scripted_effects/00_targeted_operations_effects.txt")
     triggers = read("common/scripted_triggers/01_targeted_operations_triggers.txt")
-
-    for name in (
-        "TOP_apply_person_collection_gain",
-        "TOP_apply_organization_collection_gain",
-    ):
+    for name in ("TOP_collect_person_pulse", "TOP_collect_organization_pulse"):
         gain = _named_block(effects, name)
-        assert "multiply = 0.25" in gain
-        assert "min = 0 max = 100" in gain
-        assert "lead_age" in gain
-    assert "TOP_location_confidence^top_tick_target = 5" in compatibility
-    assert "TOP_pattern_confidence^top_tick_target = 3" in compatibility
-    assert "TOP_org_location^top_tick_group = 5" in compatibility
-    assert "TOP_org_activity^top_tick_group = 3" in compatibility
+        assert "international_terror_org_intel^TOP_org_slot" in gain
+        assert "random" not in gain
+        assert "TOP_gain" not in gain
+        assert "lead_report_clock" not in gain
+    for token in (
+        "TOP_location_confidence^top_tick_target = 5",
+        "TOP_pattern_confidence^top_tick_target = 3",
+        "TOP_org_location^top_tick_group = 5",
+        "TOP_org_activity^top_tick_group = 3",
+    ):
+        assert token in compatibility
     assert "TOP_lead_report_clock^TOP_arg_target" in triggers
     assert "TOP_org_lead_report_clock^TOP_group_target" in triggers
     assert triggers.count("TOP_current_lead_age < 57") == 2
@@ -293,38 +293,40 @@ def test_leader_assassination_is_explicit_and_requires_enhanced_package():
     assert "capture feasibility" in localization.lower()
 
 
-def test_facility_operations_damage_map_and_replace_disruption_only():
+def test_native_facility_extension_owns_damage_and_replaces_disruption_only():
     organization = read(
         "common/scripted_effects/07_targeted_operations_organization_cases.txt"
     )
     result = block(
-        "common/scripted_effects/07_targeted_operations_organization_cases.txt",
-        "TOP_damage_organization_facility",
+        "common/scripted_effects/11_targeted_operations_native_extensions.txt",
+        "TOP_native_facility_damage",
     )
-    disruption = block(
-        "common/scripted_effects/07_targeted_operations_organization_cases.txt",
-        "TOP_apply_organization_disruption",
-    )
-
-    assert "damage_building = { type = infrastructure" in result
-    assert "damage_building = { type = arms_factory" in result
-    assert "damage_building = { type = industrial_complex" in result
-    assert "TOP_group_disruption_type^TOP_group_target" in disruption
-    assert "TOP_group_disruption_until^TOP_group_target" in disruption
-    assert "add = 90" in disruption
-    assert "kill_country_leader" not in organization + result + disruption
+    for building in ("infrastructure", "arms_factory", "industrial_complex"):
+        assert f"damage_building = {{ type = {building}" in result
+    assert "TOP_tier > 1" in result
+    assert "calculate_aa_defense_value = yes" in result
+    assert "apply_raid_building_damage_success = yes" in result
+    assert "apply_raid_building_damage_critical = yes" in result
+    assert "TOP_group_disruption_type^TOP_group_target" in result
+    assert "TOP_group_disruption_until^TOP_group_target" in result
+    assert "add = 90" in result
+    assert "kill_country_leader" not in organization + result
     assert "global.TOP_status" not in result
+    assert "damage_building" not in _named_block(
+        organization, "TOP_resolve_organization_operation"
+    )
 
 
-def test_resolution_uses_one_intelligence_roll_and_bda_never_rerolls_truth():
+def test_resolution_uses_native_tiers_and_bda_never_rerolls_truth():
     resolution = read("common/scripted_effects/08_targeted_operations_resolution.txt")
     compatibility = read("common/scripted_effects/00_targeted_operations_effects.txt")
     person_resolution = _named_block(resolution, "TOP_resolve_person_operation")
     bda = _named_block(compatibility, "TOP_process_timers")
     investigation = _named_block(resolution, "TOP_process_attribution_investigations")
 
-    assert person_resolution.count("randomize_temp_variable") == 1
-    assert person_resolution.count("TOP_intelligence_roll >") == 3
+    assert "randomize_temp_variable" not in person_resolution
+    assert "TOP_intelligence_roll" not in person_resolution
+    assert "TOP_tier > 1" in person_resolution
     assert "TOP_kill_target" not in bda
     assert "TOP_capture_target" not in bda
     assert (
@@ -348,9 +350,9 @@ def test_exact_duration_processors_include_the_due_day():
 
     for token, source in (
         ("TOP_bda_due^top_bda_target compare = greater_than_or_equals", effects),
-        ("TOP_case_due^TOP_target compare = greater_than_or_equals", cases),
+        ("TOP_case_until^top_timer_case compare = greater_than_or_equals", cases),
         (
-            "TOP_org_case_due^top_org_case compare = greater_than_or_equals",
+            "TOP_org_case_until^top_org_case compare = greater_than_or_equals",
             organizations,
         ),
         (
@@ -450,7 +452,7 @@ def test_vip_deception_and_waiting_mandates_have_no_expiry_dead_zone():
     weekly = _named_block(core, "TOP_global_weekly")
     assert "TOP_refresh_vip_details = yes" in weekly
     deception = _named_block(triggers, "TOP_can_fund_deception")
-    assert "compare = greater_than_or_equals" in deception
+    assert "NOT = { has_idea = TOP_defensive_deception }" in deception
     assert "TOP_case_phase^top_timer_case < 3" in person_cases
     assert "TOP_org_case_phase^top_org_case < 3" in organization_cases
     assert (
@@ -509,7 +511,7 @@ def test_strategic_crisis_consults_faction_partners_and_guarantors():
     for choice in (
         "harsh_sanctions",
         "add_war_support",
-        "TOP_counterintelligence_level",
+        "TOP_defensive_deception",
         "TOP_adjust_crisis_tension",
     ):
         assert choice in crisis_event
@@ -588,10 +590,11 @@ def test_custody_bda_and_crisis_queues_preserve_immutable_records():
     assert "TOP_queue_field_report = yes" in _named_block(
         organizations, "TOP_resolve_organization_operation"
     )
-    facility_damage = _named_block(organizations, "TOP_damage_organization_facility")
-    assert (
-        facility_damage.count("set_temp_variable = { TOP_report_enqueue_impact =") == 5
+    facility_damage = block(
+        "common/scripted_effects/11_targeted_operations_native_extensions.txt",
+        "TOP_native_facility_damage",
     )
+    assert facility_damage.count("set_temp_variable = { TOP_native_impact =") == 6
     assert "TOP_dispatch_next_field_report = yes" in report_finish
     report_event = events[
         events.index("id = TOP_redesign.10") : events.index("id = TOP_redesign.11")

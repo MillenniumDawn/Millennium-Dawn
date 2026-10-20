@@ -35,21 +35,22 @@ def test_prosecuted_iraqi_fugitives_count_toward_resolution():
     assert "global.TOP_status^top_iraq_target < 5" in effect
 
 
-def test_false_location_keeps_the_lead_when_no_other_state_is_found():
-    for name, field in (
-        ("TOP_maybe_false_person_location", "TOP_lead_state^TOP_target"),
-        (
-            "TOP_maybe_false_organization_location",
-            "TOP_org_lead_state^TOP_group_target",
-        ),
-    ):
+def test_core_collection_cannot_invent_a_false_location():
+    for name in ("TOP_collect_person_pulse", "TOP_collect_organization_pulse"):
         effect = block(
             "common/scripted_effects/06_targeted_operations_redesign.txt", name
         )
-        assert (
-            "if = { limit = { NOT = { check_variable = { TOP_false_state = 0 } } } "
-            f"set_variable = {{ {field} = TOP_false_state }} }}"
-        ) in effect
+        assert "random" not in effect
+        assert "lead_state" not in effect
+    for name in ("TOP_tracking_completed", "TOP_facility_tracking_completed"):
+        path = "common/scripted_effects/" + (
+            "01_targeted_operations_world.txt"
+            if name == "TOP_tracking_completed"
+            else "11_targeted_operations_native_extensions.txt"
+        )
+        effect = block(path, name)
+        assert "TOP_enabled = yes" in effect
+        assert "TOP_tracking_host" in effect
 
 
 def test_extended_runtime_initializes_once_without_save_version_migrations():

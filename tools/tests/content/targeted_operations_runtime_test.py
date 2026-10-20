@@ -159,11 +159,21 @@ def test_cancelled_visit_closes_preparation_but_underway_operation_fails_closed(
     assert "global.TOP_visit_status^TOP_target = 0" in processor
     assert "NOT = { TOP_authored_role_eligible = yes }" in processor
     assert "TOP_case_phase^TOP_target = 3" in processor
-    assert "TOP_mission_binding_valid = yes" in processor
-    waiting = _named_block(TRIGGERS, "TOP_case_visit_waiting_for_arrival")
-    assert "global.TOP_visit_status^TOP_case_visit_target = 1" in waiting
-    assert "global.TOP_visit_planned_token^TOP_case_visit_target" in waiting
-    assert "NOT = { TOP_case_visit_waiting_for_arrival = yes }" in processor
+    callback = _named_block(
+        (
+            ROOT / "common/scripted_effects/00_targeted_operations_effects.txt"
+        ).read_text(),
+        "TOP_native_result_args",
+    )
+    assert "TOP_mission_binding_valid = yes" in callback
+    assert "TOP_close_case = yes" in callback
+    execution = _named_block(TRIGGERS, "TOP_case_visit_execution_valid")
+    assert "global.TOP_visit_active_token^TOP_case_visit_target" in execution
+    assert "global.TOP_visit_status^TOP_case_visit_target = 2" in execution
+    assert "TOP_case_visit_execution_valid = yes" in _named_block(
+        CORE_TRIGGERS, "TOP_native_callback_matches_stood_down"
+    )
+    assert "TOP_case_visit_execution_valid = yes" in CASE_TRIGGERS
 
 
 def test_visit_review_deadline_and_specific_tooltip_are_wired():

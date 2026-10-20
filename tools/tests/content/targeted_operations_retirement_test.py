@@ -55,39 +55,32 @@ def test_identity_is_durable_while_location_pattern_and_age_change_monthly():
     assert variables["TOP_lead_age"][1] == 28
 
 
-def test_only_location_focus_refreshes_lead_age():
+def test_only_native_location_reports_refresh_lead_age():
     script, variables = _discovered()
-    variables["TOP_package_state"][1] = 2
     variables["TOP_lead_age"][1] = 55
-    script.stubs.add("TOP_maybe_false_person_location")
-    script.temps.update(TOP_target=1, TOP_gain=20)
-
-    variables["TOP_collection_focus"][1] = 1
-    script.run("TOP_apply_person_collection_gain", 1)
-    assert variables["TOP_lead_age"][1] == 55
-
-    variables["TOP_collection_focus"][1] = 3
-    script.run("TOP_apply_person_collection_gain", 1)
-    assert variables["TOP_lead_age"][1] == 55
-
-    variables["TOP_collection_focus"][1] = 2
-    script.run("TOP_apply_person_collection_gain", 1)
+    script.temps["TOP_target"] = 1
+    for focus in (1, 2, 3):
+        variables["TOP_collection_focus"][1] = focus
+        script.run("TOP_collect_person_pulse", 1)
+        assert variables["TOP_lead_age"][1] == 55
+    script.run("TOP_core_location_report", 1)
     assert variables["TOP_lead_age"][1] == 0
+    assert variables["TOP_location_confidence"][1] == 100
 
 
-def test_focus_gain_uses_full_axis_and_quarter_spillover():
+def test_ct_inputs_preserve_durable_identity_without_spillover_or_location_gain():
     script, variables = _discovered()
-    variables["TOP_identity_confidence"][1] = 20
+    variables["international_terror_org_intel"][1] = 60
+    variables["TOP_identity_confidence"][1] = 100
     variables["TOP_location_confidence"][1] = 30
     variables["TOP_pattern_confidence"][1] = 40
-    variables["TOP_collection_focus"][1] = 3
-    script.temps.update(TOP_target=1, TOP_gain=20)
-
-    script.run("TOP_apply_person_collection_gain", 1)
-
-    assert variables["TOP_identity_confidence"][1] == 25
-    assert variables["TOP_location_confidence"][1] == 35
-    assert variables["TOP_pattern_confidence"][1] == 60
+    script.temps["TOP_target"] = 1
+    for focus in (1, 2, 3):
+        variables["TOP_collection_focus"][1] = focus
+        script.run("TOP_collect_person_pulse", 1)
+        assert variables["TOP_identity_confidence"][1] == 100
+        assert variables["TOP_location_confidence"][1] == 30
+        assert variables["TOP_pattern_confidence"][1] == 60
 
 
 def test_outcomes_and_custody_remain_in_the_same_persistent_dossier():

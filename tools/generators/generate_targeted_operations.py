@@ -682,7 +682,16 @@ def registry(data: dict) -> str:
 
 def raid(ident: int, method: int) -> str:
     drone = method == 1
-    kind = "drone" if drone else "capture"
+    kind = {1: "drone", 2: "capture", 3: "infiltration"}[method]
+    methods = {1: (1,), 2: (2, 4, 5), 3: (3, 7)}[method]
+    method_check = (
+        "OR = { "
+        + " ".join(
+            f"check_variable = {{ TOP_case_method^{ident} = {choice} }}"
+            for choice in methods
+        )
+        + " }"
+    )
     lines = [
         f"category = {'drone_strike_raids' if drone else 'special_forces_raids'}",
         (
@@ -694,16 +703,21 @@ def raid(ident: int, method: int) -> str:
         "days_re_enable = 30",
         "command_power = 20",
         "arrow = { type = line }",
-        f"visible = {{ TOP_enabled = yes check_variable = {{ TOP_case_phase^{ident} = 3 }} check_variable = {{ TOP_case_method^{ident} = {method} }} }}",
+        f"visible = {{ TOP_enabled = yes check_variable = {{ TOP_case_phase^{ident} = 3 }} {method_check} }}",
         f"show_target = {{ TOP_native_gate_{ident}_{method} = yes }}",
         "available = {",
         f"\tTOP_native_gate_{ident}_{method} = yes",
+        (
+            f"\tcustom_trigger_tooltip = {{ tooltip = TOP_raid_host_permissions_tt if = {{ limit = {{ check_variable = {{ TOP_case_method^{ident} = 5 }} }} raid_available_with_host_consent = yes }} else = {{ raid_available_base = yes }} }}"
+            if method == 2
+            else "\traid_available_base = yes"
+        ),
     ]
     if not drone:
-        lines.append("\thas_tech = special_forces_tech_1")
+        lines.append("\traid_special_forces_tech_available = yes")
     lines += [
         "}",
-        f"launchable = {{ TOP_native_gate_{ident}_{method} = yes }}",
+        f"launchable = {{ TOP_native_gate_{ident}_{method} = yes set_temp_variable = {{ cost = 150 }} raid_can_launch = yes }}",
         "target_type = { state = { always = yes } }",
         "unit_requirements = {",
     ]
@@ -773,9 +787,21 @@ def raid(ident: int, method: int) -> str:
     ):
         lines += [
             f"\t{name} = {{",
+            "\t\tvictim_effects = { send_raid_event_to_victim = yes }",
             "\t\tactor_effects = {",
+            "\t\t\tset_temp_variable = { raid_pp_loss = -150 }",
+            *(
+                [f"\t\t\tapply_raid_{name}_losses = yes"]
+                if drone
+                else [
+                    "\t\t\tapply_discounted_raid_pp_cost = yes",
+                    f"\t\t\traid_damage_units = {{ org_damage = {(0.3, 0.2, 0.2, 0.1)[tier]} str_damage = {(0.15, 0.05, 0.02, 0)[tier]} ratio = yes }}",
+                    "\t\t\traid_add_unit_experience = 0.25",
+                ]
+            ),
             f"\t\t\tset_temp_variable = {{ TOP_target = {ident} }}",
             f"\t\t\tset_temp_variable = {{ TOP_method = {method} }}",
+            f"\t\t\tset_temp_variable = {{ TOP_native_kind = {method} }}",
             f"\t\t\tset_temp_variable = {{ TOP_tier = {tier} }}",
             "\t\t\tTOP_native_result_args = yes",
             "\t\t}",
@@ -786,6 +812,56 @@ def raid(ident: int, method: int) -> str:
         "ai_will_do = { base = 0 }",
     ]
     return block(f"TOP_{kind}_{ident}", lines)
+
+
+def facility_raid(ident: int, objective: int) -> str:
+    """An identity-bound extension for objectives without a core CT raid."""
+    gate = f"TOP_facility_gate_{ident}_{objective}"
+    lines = [
+        "category = special_forces_raids",
+        "days_to_prepare = 28",
+        "days_re_enable = 30",
+        "command_power = 20",
+        "arrow = { type = line }",
+        f"visible = {{ TOP_enabled = yes check_variable = {{ TOP_org_case_phase^{ident} = 3 }} check_variable = {{ TOP_org_case_objective^{ident} = {objective} }} }}",
+        f"show_target = {{ {gate} = yes }}",
+        f"available = {{ {gate} = yes raid_available_base = yes raid_special_forces_tech_available = yes }}",
+        f"launchable = {{ {gate} = yes set_temp_variable = {{ cost = 150 }} raid_can_launch = yes }}",
+        "target_type = { state = { always = yes } }",
+        "unit_requirements = { battalion_types = { Special_Forces = { min = 2 } } }",
+        "starting_point = { types = { air_base naval_base } }",
+        "launch_sound = raid_launch_marine",
+        "target_icon = GFX_other_target_icon",
+        "success_factors = {",
+        "\tsuccess = { base = 0.25 experience = { weight = 0.5 start_weight = -0.25 reference = 0.75 } organisation = { reference = 100 weight = 0.2 start_weight = -0.1 } strength = { reference = 1 weight = 0.15 start_weight = -0.05 } intel = { weight = 0.5 start_weight = -0.1 start_reference = 10 reference = 100 }",
+        f"\t\tTOP_facility_protection = {{ scope = country formula = {{ base = 1 modifier = {{ factor = var:TOP_org_case_protection^{ident} }} }} weight = -1 reference = 100 can_actor_affect = no can_target_affect = no }}",
+        "\t}",
+        "\tcritical = { base = 0.05 }",
+        "\tdisaster = { base = 0.05 }",
+        "}",
+        "success_levels = {",
+    ]
+    for tier, name in enumerate(
+        ("failure", "limited_success", "success", "critical_success")
+    ):
+        lines += [
+            f"\t{name} = {{",
+            "\t\tvictim_effects = { send_raid_event_to_victim = yes }",
+            "\t\tactor_effects = {",
+            "\t\t\tset_temp_variable = { raid_pp_loss = -150 }",
+            "\t\t\tapply_discounted_raid_pp_cost = yes",
+            f"\t\t\traid_damage_units = {{ org_damage = {(0.3, 0.2, 0.2, 0.1)[tier]} str_damage = {(0.15, 0.05, 0.02, 0)[tier]} ratio = yes }}",
+            "\t\t\traid_add_unit_experience = 0.25",
+            f"\t\t\tset_temp_variable = {{ TOP_group_target = {ident} }}",
+            f"\t\t\tset_temp_variable = {{ TOP_facility_objective = {objective} }}",
+            f"\t\t\tset_temp_variable = {{ TOP_tier = {tier} }}",
+            "\t\t\tTOP_native_facility_damage = yes",
+            "\t\t\tTOP_native_facility_result = yes",
+            "\t\t}",
+            "\t}",
+        ]
+    lines += ["}", "ai_will_do = { base = 0 }"]
+    return block(f"TOP_facility_{ident}_{objective}", lines)
 
 
 def names(data: dict) -> dict[str, str]:
@@ -817,6 +893,8 @@ def localisation(data: dict) -> str:
             f' raid_type_TOP_drone_{ident}_desc: "Conduct the authorized native map operation against this target package."',
             f' raid_type_TOP_capture_{ident}: "Capture Raid: {name}"',
             f' raid_type_TOP_capture_{ident}_desc: "Attempt to secure this target alive through a native special-forces raid."',
+            f' raid_type_TOP_infiltration_{ident}: "Covert Infiltration: {name}"',
+            f' raid_type_TOP_infiltration_{ident}_desc: "Deliver the reviewed covert or poisoning operation through a native special-forces raid. The authorized method retains its own access and consequence rules."',
         ]
     for target in data["targets"]:
         lines.append(
@@ -845,6 +923,17 @@ def localisation(data: dict) -> str:
     ]
     for group in data["groups"]:
         lines.append(f' TOP_group_{group["id"]}: "{group["name"]}"')
+        mask = group_objective_mask(data, group)
+        for objective, label in (
+            (1, "Command Facility"),
+            (2, "Training Facility"),
+            (3, "Financial Network"),
+        ):
+            if mask & (1 << (objective - 1)):
+                lines += [
+                    f' raid_type_TOP_facility_{group["id"]}_{objective}: "{label}: {group["name"]}"',
+                    f' raid_type_TOP_facility_{group["id"]}_{objective}_desc: "Execute the reviewed objective through a native special-forces raid, using shared eligibility, launch costs, losses and victim reactions."',
+                ]
     return "\n".join(lines) + "\n"
 
 
@@ -1012,18 +1101,35 @@ def native_gates(data: dict) -> str:
     """
     blocks = []
     for ident in range(1, data["capacity"]):
-        for method in (1, 2):
+        for method in (1, 2, 3):
             blocks.append(
                 "\n".join(
                     [
                         f"TOP_native_gate_{ident}_{method} = {{",
                         f"\tset_temp_variable = {{ TOP_arg_target = {ident} }}",
-                        f"\tset_temp_variable = {{ TOP_arg_method = {method} }}",
+                        f"\tset_temp_variable = {{ TOP_arg_method = TOP_case_method^{ident} }}",
+                        f"\tset_temp_variable = {{ TOP_native_kind = {method} }}",
+                        "\tTOP_native_family_matches = yes",
                         "\tTOP_native_authorized = yes",
                         "}",
                     ]
                 )
             )
+    for group in data["groups"]:
+        ident = group["id"]
+        mask = group_objective_mask(data, group)
+        for objective in (1, 2, 3):
+            if mask & (1 << (objective - 1)):
+                blocks.append(
+                    block(
+                        f"TOP_facility_gate_{ident}_{objective}",
+                        [
+                            f"set_temp_variable = {{ TOP_arg_group = {ident} }}",
+                            f"set_temp_variable = {{ TOP_facility_objective = {objective} }}",
+                            "TOP_native_facility_authorized = yes",
+                        ],
+                    ).rstrip()
+                )
     header = (
         "# Generated by tools/generators/generate_targeted_operations.py.\n"
         "# One gate per raid; see native_gates() for why raids cannot call the\n"
@@ -1042,12 +1148,35 @@ def render(data: dict) -> dict[str, str]:
         )
         + "\n}\n"
     )
+    infiltrations = (
+        "types = {\n"
+        + "\n".join(
+            "\n".join("\t" + line for line in raid(ident, 3).splitlines())
+            for ident in range(1, data["capacity"])
+        )
+        + "\n}\n"
+    )
+    facilities = (
+        "types = {\n"
+        + "\n".join(
+            "\n".join(
+                "\t" + line
+                for line in facility_raid(group["id"], objective).splitlines()
+            )
+            for group in data["groups"]
+            for objective in (1, 2, 3)
+            if group_objective_mask(data, group) & (1 << (objective - 1))
+        )
+        + "\n}\n"
+    )
     return {
         "common/scripted_effects/01_targeted_operations_registry.txt": registry(data),
         "common/scripted_effects/01_targeted_operations_successors.txt": successors(
             data
         ),
         "common/raids/targeted_operations_raids.txt": raids,
+        "common/raids/targeted_operations_infiltration_raids.txt": infiltrations,
+        "common/raids/targeted_operations_facility_raids.txt": facilities,
         "common/scripted_triggers/06_targeted_operations_native_gates.txt": native_gates(
             data
         ),

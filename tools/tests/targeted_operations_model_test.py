@@ -453,7 +453,7 @@ class RaceScript:
                     self.scope_stack.pop()
             elif key == "for_each_scope_loop":
                 data = {key: value for key, _op, value in operand}
-                for member in list(self.value(data["array"], identifier)):
+                for member in list(self.value(data["array"], identifier) or []):
                     self.scope_stack.append(identifier)
                     try:
                         self.execute(

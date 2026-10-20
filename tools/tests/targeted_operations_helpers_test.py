@@ -41,15 +41,41 @@ class TargetedScript(RaceScript):
             return self.condition_statement(
                 (operand, "=", [("exists", "=", "yes")]), identifier
             )
+        if key == "is_capital":
+            country = self.countries[identifier]
+            controller = self.countries.get(country.get("controller"), {})
+            states = controller.get("states", [])
+            capital = (
+                bool(states and states[0] == identifier)
+                if isinstance(states, list)
+                else country.get("capital", False)
+            )
+            return capital == (operand == "yes")
+        if key.startswith("event_target:"):
+            target = getattr(self, "event_targets", {}).get(key.split(":", 1)[1])
+            if target is None:
+                return False
+            self.scope_stack.append(identifier)
+            try:
+                return self.condition(operand, target)
+            finally:
+                self.scope_stack.pop()
         if key in self.country_trigger_fields:
             actual = self.countries[identifier][self.country_trigger_fields[key]]
             return self.comparisons[comparison](actual, self.value(operand, identifier))
         if key in {"any_of", "all_of"}:
             fields = {name: value for name, _, value in operand}
-            body = [entry for entry in operand if entry[0] not in {"array", "value"}]
+            body = [
+                entry
+                for entry in operand
+                if entry[0] not in {"array", "value", "index"}
+            ]
             outcomes = []
-            for member in self.value(fields["array"], identifier) or []:
+            for index, member in enumerate(
+                self.value(fields["array"], identifier) or []
+            ):
                 self.temps[fields.get("value", "v")] = member
+                self.temps[fields.get("index", "index")] = index
                 outcomes.append(self.condition(body, identifier))
             return any(outcomes) if key == "any_of" else all(outcomes)
         return super().condition([statement], identifier)

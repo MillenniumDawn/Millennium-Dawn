@@ -4,50 +4,61 @@ ISI_setup_hvt_pool = {
 		end = 13
 		compare = less_than_or_equals
 
-		add_to_array = { global.ISI_hvt_pool = v }
+		set_temp_variable = { TOP_pool_target = { value = v add = 15 } }
+		if = {
+			limit = { OR = { TOP_enabled = no check_variable = { global.TOP_status^TOP_pool_target < 2 } } }
+			add_to_array = { global.ISI_hvt_pool = v }
+		}
 	}
 
 	set_global_flag = ISI_hvt_pool_seeded
 }
 
 ISI_burn_hvt = {
-	random_country = {
-		limit = {
-			has_war_with = ISI
-			is_subject = no
-			OR = {
-				original_tag = SOV
-				original_tag = USA
-				is_in_faction_with = USA
+	if = {
+		limit = { OR = { TOP_enabled = no check_variable = { global.ISI_hvt_pool^num > 0 } } }
+		random_country = {
+			limit = {
+				has_war_with = ISI
+				is_subject = no
+				OR = {
+					original_tag = SOV
+					original_tag = USA
+					is_in_faction_with = USA
+				}
 			}
-		}
 
-		set_temp_variable = { ISI_hvt_max = { value = global.ISI_hvt_pool^num subtract = 1 } }
+			set_temp_variable = { ISI_hvt_max = { value = global.ISI_hvt_pool^num subtract = 1 } }
 
-		set_temp_variable_to_random = {
-			var = ISI_hvt_slot
-			min = 0
-			max = ISI_hvt_max
-			integer = yes
-		}
+			set_temp_variable_to_random = {
+				var = ISI_hvt_slot
+				min = 0
+				max = ISI_hvt_max
+				integer = yes
+			}
 
-		set_temp_variable = { ISI_hvt_id = global.ISI_hvt_pool^ISI_hvt_slot }
-		remove_from_array = { array = global.ISI_hvt_pool index = ISI_hvt_slot }
+			set_temp_variable = { ISI_hvt_id = global.ISI_hvt_pool^ISI_hvt_slot }
+			remove_from_array = { array = global.ISI_hvt_pool index = ISI_hvt_slot }
 
-		ISI = {
-			add_timed_idea = { idea = ISI_decapitated_leadership days = 120 }
-			add_war_support = -0.02
-			set_country_flag = { flag = ISI_hvt_cooldown value = 1 days = 60 }
+			set_temp_variable = { TOP_target = { value = ISI_hvt_id add = 15 } }
+			set_temp_variable = { TOP_result = 3 }
+			TOP_record_legacy_result = yes
 
-			ISI_retire_hvt_character = yes
-		}
+			ISI = {
+				add_timed_idea = { idea = ISI_decapitated_leadership days = 120 }
+				add_war_support = -0.02
+				set_country_flag = { flag = ISI_hvt_cooldown value = 1 days = 60 }
 
-		if = {
-			limit = { original_tag = SOV }
-			ISI_hvt_news_russian = yes
-		}
-		else = {
-			ISI_hvt_news_coalition = yes
+				ISI_retire_hvt_character = yes
+			}
+
+			if = {
+				limit = { original_tag = SOV }
+				ISI_hvt_news_russian = yes
+			}
+			else = {
+				ISI_hvt_news_coalition = yes
+			}
 		}
 	}
 }

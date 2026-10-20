@@ -83,6 +83,11 @@ class ReviewScript(TargetedScript):
                 source("common/scripted_triggers/07_targeted_operations_redesign.txt")
             )
         )
+        self.triggers.update(
+            _parse_race_script(
+                source("common/scripted_triggers/08_targeted_operations_core.txt")
+            )
+        )
         self.countries = {
             country: {
                 "vars": {},
@@ -898,7 +903,7 @@ def test_snapshot_identity_and_host_slot_have_single_writers():
     assert "TOP_selected" not in _named_block(source(TRIGGER_PATH), "TOP_review_valid")
 
 
-def test_novichok_is_a_russia_only_high_exposure_timed_method():
+def test_novichok_is_a_russia_only_high_exposure_native_method():
     startable = _named_block(
         source("common/scripted_triggers/01_targeted_operations_triggers.txt"),
         "TOP_method_startable",
@@ -922,7 +927,10 @@ def test_novichok_is_a_russia_only_high_exposure_timed_method():
     assert "TOP_person_access_available = yes" in review
     assert "TOP_proposal_identity > 89" in review
     assert "TOP_proposal_method = 7" in lethal
-    assert "TOP_method = 7" in _named_block(resolution, "TOP_resolve_person_operation")
+    assert "TOP_tier > 1" in _named_block(resolution, "TOP_resolve_person_operation")
+    assert "TOP_arg_method = 7" in source(
+        "common/scripted_triggers/08_targeted_operations_core.txt"
+    )
     exposure = _named_block(source(EFFECT_PATH), "TOP_calculate_person_proposal_risks")
     assert "TOP_proposal_method = 7" in exposure
     assert "TOP_proposal_exposure_score = 65" in exposure

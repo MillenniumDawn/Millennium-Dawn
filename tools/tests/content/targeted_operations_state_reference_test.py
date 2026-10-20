@@ -342,7 +342,7 @@ def test_native_binding_preserves_upper_boundary_and_zero_sentinel(state):
     assert review.condition(review.triggers["TOP_native_binding_unused"], 1) == (
         state != 0 and state < 10000
     )
-    assert review.temps["TOP_binding_key"] == pytest.approx(20000 + state * 2 + 2)
+    assert review.temps["TOP_binding_key"] == pytest.approx(40000 + state * 4 + 2)
 
 
 def test_retired_encoded_native_binding_cannot_be_recycled():
@@ -354,7 +354,7 @@ def test_retired_encoded_native_binding_cannot_be_recycled():
     sequence = review.case(1, "sequence")
     review.call("TOP_close_case", TARGET=1, SEQUENCE=sequence)
     assert review.actor["TOP_retired_native_bindings"] == pytest.approx(
-        [20000 + ENCODED_STATE * 2 + 2]
+        [40000 + ENCODED_STATE * 4 + 2]
     )
     review.approve_unilateral()
     assert review.case(1, "phase") == 0

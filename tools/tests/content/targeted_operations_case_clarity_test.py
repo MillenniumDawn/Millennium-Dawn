@@ -2,7 +2,7 @@ import re
 from pathlib import Path
 
 from targeted_operations_authorization_test import ReviewScript
-from targeted_operations_core_test import TargetScript
+from targeted_operations_core_test import ScriptArray, TargetScript
 from targeted_operations_model_test import _extract_block, _parse_race_script
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -56,28 +56,23 @@ def test_public_identity_and_authored_lead_keep_distinct_sources():
     assert variables["TOP_lead_source"][11] == 2
 
 
-def test_focused_collection_relabels_only_axes_that_increase():
+def test_core_collection_relabels_only_axes_that_increase():
+    from targeted_operations_core_test import ScriptArray
+
     script = TargetScript()
     variables = script.target(11)
     variables["TOP_identity_confidence"][11] = 100
     variables["TOP_identity_source"][11] = 1
-    variables["TOP_location_source"][11] = 2
-    variables["TOP_pattern_source"][11] = 2
-    variables["TOP_lead_source"][11] = 2
-    variables["TOP_collection_focus"][11] = 1
-    script.temps.update(TOP_target=11, TOP_gain=20)
-
-    script.run("TOP_apply_person_collection_gain", 1)
-
+    variables["TOP_location_source"][11] = 4
+    variables["TOP_lead_source"][11] = 4
+    variables["international_terror_org_intel"] = ScriptArray([90, 0])
+    script.globals["TOP_group_ct"][int(script.globals["TOP_affiliation"][11])] = 0
+    script.temps["TOP_target"] = 11
+    script.run("TOP_collect_person_pulse", 1)
     assert variables["TOP_identity_source"][11] == 1
-    assert variables["TOP_location_source"][11] == 3
-    assert variables["TOP_pattern_source"][11] == 3
-    assert variables["TOP_lead_source"][11] == 2
-
-    variables["TOP_collection_focus"][11] = 2
-    script.globals["TOP_clock"] = 100
-    script.run("TOP_apply_person_collection_gain", 1)
-    assert variables["TOP_lead_source"][11] == 3
+    assert variables["TOP_pattern_source"][11] == 2
+    assert variables["TOP_location_source"][11] == 4
+    assert variables["TOP_lead_source"][11] == 4
 
 
 def test_liaison_source_changes_only_for_accepted_assessment_and_lead():
@@ -199,10 +194,11 @@ def test_organization_sources_follow_authored_collection_and_liaison_reports():
 
     variables["TOP_org_collection_focus"][2] = 1
     script.temps.update(TOP_group_target=2, TOP_gain=12)
-    script.run("TOP_apply_organization_collection_gain", 1)
+    variables["international_terror_org_intel"] = ScriptArray([90, 90])
+    script.run("TOP_collect_organization_pulse", 1)
     assert variables["TOP_org_verification_source"][2] == 1
-    assert variables["TOP_org_location_source"][2] == 3
-    assert variables["TOP_org_activity_source"][2] == 3
+    assert variables["TOP_org_location_source"][2] == 2
+    assert variables["TOP_org_activity_source"][2] == 2
 
     script.globals["TOP_clock"] = 100
     variables["TOP_enabled"] = 1

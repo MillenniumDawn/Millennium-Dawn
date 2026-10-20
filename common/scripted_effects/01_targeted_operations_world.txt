@@ -4,6 +4,7 @@ TOP_global_monthly = {
 		TOP_initialize_global = yes
 		TOP_reconcile_organizations = yes
 		TOP_activate_candidates = yes
+		TOP_sync_core_locations = yes
 		TOP_register_missing_organizations = yes
 		TOP_update_detained_targets = yes
 		for_each_loop = {
@@ -31,6 +32,7 @@ TOP_global_monthly = {
 			}
 			if = {
 				limit = {
+					NOT = { check_variable = { TOP_target = 1 } }
 					check_variable = { global.TOP_status^TOP_target = 1 }
 					check_variable = { global.TOP_visit_status^TOP_target = 0 }
 					NOT = { check_variable = { global.TOP_state^TOP_target = 0 } }
@@ -91,7 +93,7 @@ TOP_global_monthly = {
 				}
 			}
 			if = {
-				limit = { TOP_group_operational = yes check_variable = { global.TOP_group_host^top_world_group > 0 } }
+				limit = { TOP_group_operational = yes check_variable = { global.TOP_group_host^top_world_group > 0 } check_variable = { global.TOP_group_ct^top_world_group < 0 } }
 				set_temp_variable = { TOP_group_relocation_chance = 10 }
 				if = {
 					limit = { check_variable = { global.TOP_group_class^top_world_group = 2 } check_variable = { global.TOP_group_pressure^top_world_group > 49 } }
@@ -254,14 +256,27 @@ TOP_tracking_completed = {
 	if = {
 		limit = { TOP_enabled = yes }
 		TOP_country_initialize = yes
+		set_temp_variable = { TOP_tracking_host = FROM.id }
+		set_temp_variable = { TOP_tracked_person = TOP_tracking_person^TOP_tracking_host }
+		set_temp_variable = { TOP_tracked_org = TOP_tracking_org^TOP_tracking_host }
 		for_each_loop = {
 			array = global.TOP_active_targets
 			value = top_tracking_target
+			set_temp_variable = { TOP_target = top_tracking_target }
+			TOP_find_org = yes
 			if = {
-				limit = { check_variable = { global.TOP_host^top_tracking_target = FROM } }
-				set_temp_variable = { TOP_arg_target = top_tracking_target } set_temp_variable = { TOP_arg_amount = 30 } TOP_add_target_lead = yes
+				limit = {
+					check_variable = { global.TOP_host^TOP_target = FROM }
+					OR = {
+						check_variable = { TOP_target = TOP_tracked_person }
+						AND = { check_variable = { TOP_tracked_org > -1 } check_variable = { TOP_org_id = TOP_tracked_org } }
+					}
+				}
+				TOP_core_location_report = yes
 			}
 		}
+		set_variable = { TOP_tracking_person^TOP_tracking_host = 0 }
+		set_variable = { TOP_tracking_org^TOP_tracking_host = -1 }
 	}
 }
 

@@ -298,7 +298,7 @@ TOP_add_person_pressure = {
 	TOP_check_person_pressure_threshold = yes
 }
 
-TOP_add_person_pressure_5 = { set_temp_variable = { TOP_pressure_amount = 5 } TOP_add_person_pressure = yes }
+
 TOP_add_person_pressure_10 = { set_temp_variable = { TOP_pressure_amount = 10 } TOP_add_person_pressure = yes }
 TOP_add_person_pressure_20 = { set_temp_variable = { TOP_pressure_amount = 20 } TOP_add_person_pressure = yes }
 TOP_add_person_pressure_35 = { set_temp_variable = { TOP_pressure_amount = 35 } TOP_add_person_pressure = yes }
@@ -452,214 +452,41 @@ TOP_decay_pressure = {
 	}
 }
 
-# Reads TOP_target and TOP_gain.
-TOP_apply_person_collection_gain = {
-	set_temp_variable = { TOP_spill_gain = { value = TOP_gain multiply = 0.25 } }
-	set_temp_variable = { TOP_old_identity = TOP_identity_confidence^TOP_target }
-	set_temp_variable = { TOP_old_location = TOP_location_confidence^TOP_target }
-	set_temp_variable = { TOP_old_pattern = TOP_pattern_confidence^TOP_target }
-	if = {
-		limit = { check_variable = { TOP_collection_focus^TOP_target = 1 } }
-		add_to_variable = { TOP_identity_confidence^TOP_target = TOP_gain }
-		add_to_variable = { TOP_location_confidence^TOP_target = TOP_spill_gain }
-		add_to_variable = { TOP_pattern_confidence^TOP_target = TOP_spill_gain }
-	}
-	else_if = {
-		limit = { check_variable = { TOP_collection_focus^TOP_target = 3 } }
-		add_to_variable = { TOP_identity_confidence^TOP_target = TOP_spill_gain }
-		add_to_variable = { TOP_location_confidence^TOP_target = TOP_spill_gain }
-		add_to_variable = { TOP_pattern_confidence^TOP_target = TOP_gain }
-	}
-	else = {
-		add_to_variable = { TOP_identity_confidence^TOP_target = TOP_spill_gain }
-		add_to_variable = { TOP_location_confidence^TOP_target = TOP_gain }
-		add_to_variable = { TOP_pattern_confidence^TOP_target = TOP_spill_gain }
-		set_temp_variable = { TOP_old_lead_state = TOP_lead_state^TOP_target }
-		set_temp_variable = { TOP_old_lead_host = TOP_lead_host^TOP_target }
-		set_temp_variable = { TOP_old_lead_clock = TOP_lead_report_clock^TOP_target }
-		set_variable = { TOP_lead_age^TOP_target = 0 }
-		set_variable = { TOP_lead_report_clock^TOP_target = global.TOP_clock }
-		set_variable = { TOP_lead_host^TOP_target = global.TOP_host^TOP_target }
-		set_variable = { TOP_lead_state^TOP_target = global.TOP_state^TOP_target }
-		TOP_maybe_false_person_location = yes
-		if = {
-			limit = { OR = { NOT = { check_variable = { TOP_lead_state^TOP_target = TOP_old_lead_state } } NOT = { check_variable = { TOP_lead_host^TOP_target = TOP_old_lead_host } } NOT = { check_variable = { TOP_lead_report_clock^TOP_target = TOP_old_lead_clock } } } }
-			set_variable = { TOP_lead_source^TOP_target = 3 }
-		}
-	}
-	clamp_variable = { var = TOP_identity_confidence^TOP_target min = 0 max = 100 }
-	clamp_variable = { var = TOP_location_confidence^TOP_target min = 0 max = 100 }
-	clamp_variable = { var = TOP_pattern_confidence^TOP_target min = 0 max = 100 }
-	if = { limit = { check_variable = { TOP_identity_confidence^TOP_target > TOP_old_identity } } set_variable = { TOP_identity_source^TOP_target = 3 } }
-	if = { limit = { check_variable = { TOP_location_confidence^TOP_target > TOP_old_location } } set_variable = { TOP_location_source^TOP_target = 3 } }
-	if = { limit = { check_variable = { TOP_pattern_confidence^TOP_target > TOP_old_pattern } } set_variable = { TOP_pattern_source^TOP_target = 3 } }
-	TOP_update_person_compat_confidence = yes
-}
-
 # Reads TOP_target.
 TOP_collect_person_pulse = {
-	set_temp_variable = { TOP_role_target = TOP_target }
+	TOP_find_org = yes
 	if = {
-		limit = {
-			check_variable = { global.TOP_status^TOP_target = 1 }
-			TOP_authored_role_eligible = yes
-			check_variable = { TOP_package_state^TOP_target = 2 }
-		}
-		TOP_find_org = yes
-		TOP_get_defensive_modifiers = yes
-		set_temp_variable = { TOP_gain = { value = 12 subtract = global.TOP_security^TOP_target subtract = TOP_defensive_collection_penalty } }
-		add_to_temp_variable = { TOP_gain = ct_global_base_detect_var }
-		if = { limit = { has_intelligence_agency = yes } add_to_temp_variable = { TOP_gain = 2 } }
-		if = { limit = { has_tech = decryption_1 } add_to_temp_variable = { TOP_gain = 2 } }
-		if = { limit = { has_tech = decryption_2 } add_to_temp_variable = { TOP_gain = 2 } }
-		if = { limit = { check_variable = { TOP_liaison_reliability^TOP_target > 0 } check_variable = { TOP_liaison_age^TOP_target < 91 } } add_to_temp_variable = { TOP_gain = 2 } }
-		set_temp_variable = { TOP_collection_host = global.TOP_host^TOP_target }
-		if = { limit = { var:TOP_collection_host = { OR = { has_war_with = PREV is_in_faction_with = PREV } } } add_to_temp_variable = { TOP_gain = 2 } }
+		limit = { check_variable = { TOP_org_slot > -1 } }
 		if = {
-			limit = { check_variable = { TOP_org_slot > -1 } }
-			add_to_temp_variable = { TOP_gain = { value = international_terror_org_intel^TOP_org_slot multiply = 0.1 } }
-			if = { limit = { check_variable = { ct_infiltrated_org_arr^TOP_org_id > 0 } } add_to_temp_variable = { TOP_gain = 5 } }
+			limit = { check_variable = { TOP_identity_confidence^TOP_target < international_terror_org_intel^TOP_org_slot } }
+			set_variable = { TOP_identity_confidence^TOP_target = international_terror_org_intel^TOP_org_slot }
+			set_variable = { TOP_identity_source^TOP_target = 2 }
 		}
-		set_temp_variable = { TOP_group_target = global.TOP_affiliation^TOP_target }
 		if = {
-			limit = { check_variable = { global.TOP_group_disruption_type^TOP_group_target = 1 } check_variable = { global.TOP_group_disruption_until^TOP_group_target > global.TOP_clock } }
-			add_to_temp_variable = { TOP_gain = 5 }
+			limit = { check_variable = { TOP_pattern_confidence^TOP_target < international_terror_org_intel^TOP_org_slot } }
+			set_variable = { TOP_pattern_confidence^TOP_target = international_terror_org_intel^TOP_org_slot }
+			set_variable = { TOP_pattern_source^TOP_target = 2 }
 		}
-		clamp_temp_variable = { var = TOP_gain min = 2 max = 25 }
-		TOP_apply_person_collection_gain = yes
-		set_temp_variable = { TOP_detection_chance = { value = 10 add = TOP_defensive_collection_penalty } }
-		random = { chance = TOP_detection_chance TOP_add_person_pressure_5 = yes }
+		TOP_update_person_compat_confidence = yes
 	}
-}
-
-# Reads TOP_group_target and TOP_gain.
-TOP_apply_organization_collection_gain = {
-	set_temp_variable = { TOP_spill_gain = { value = TOP_gain multiply = 0.25 } }
-	set_temp_variable = { TOP_old_verification = TOP_org_verification^TOP_group_target }
-	set_temp_variable = { TOP_old_location = TOP_org_location^TOP_group_target }
-	set_temp_variable = { TOP_old_activity = TOP_org_activity^TOP_group_target }
-	if = {
-		limit = { check_variable = { TOP_org_collection_focus^TOP_group_target = 1 } }
-		add_to_variable = { TOP_org_verification^TOP_group_target = TOP_gain }
-		add_to_variable = { TOP_org_location^TOP_group_target = TOP_spill_gain }
-		add_to_variable = { TOP_org_activity^TOP_group_target = TOP_spill_gain }
-	}
-	else_if = {
-		limit = { check_variable = { TOP_org_collection_focus^TOP_group_target = 3 } }
-		add_to_variable = { TOP_org_verification^TOP_group_target = TOP_spill_gain }
-		add_to_variable = { TOP_org_location^TOP_group_target = TOP_spill_gain }
-		add_to_variable = { TOP_org_activity^TOP_group_target = TOP_gain }
-	}
-	else = {
-		add_to_variable = { TOP_org_verification^TOP_group_target = TOP_spill_gain }
-		add_to_variable = { TOP_org_location^TOP_group_target = TOP_gain }
-		add_to_variable = { TOP_org_activity^TOP_group_target = TOP_spill_gain }
-		set_temp_variable = { TOP_old_lead_state = TOP_org_lead_state^TOP_group_target }
-		set_temp_variable = { TOP_old_lead_host = TOP_org_lead_host^TOP_group_target }
-		set_temp_variable = { TOP_old_lead_clock = TOP_org_lead_report_clock^TOP_group_target }
-		set_variable = { TOP_org_lead_age^TOP_group_target = 0 }
-		set_variable = { TOP_org_lead_report_clock^TOP_group_target = global.TOP_clock }
-		set_variable = { TOP_org_lead_host^TOP_group_target = global.TOP_group_host^TOP_group_target }
-		set_variable = { TOP_org_lead_state^TOP_group_target = global.TOP_group_state^TOP_group_target }
-		TOP_maybe_false_organization_location = yes
-		if = {
-			limit = { OR = { NOT = { check_variable = { TOP_org_lead_state^TOP_group_target = TOP_old_lead_state } } NOT = { check_variable = { TOP_org_lead_host^TOP_group_target = TOP_old_lead_host } } NOT = { check_variable = { TOP_org_lead_report_clock^TOP_group_target = TOP_old_lead_clock } } } }
-			set_variable = { TOP_org_lead_source^TOP_group_target = 3 }
-		}
-	}
-	clamp_variable = { var = TOP_org_verification^TOP_group_target min = 0 max = 100 }
-	clamp_variable = { var = TOP_org_location^TOP_group_target min = 0 max = 100 }
-	clamp_variable = { var = TOP_org_activity^TOP_group_target min = 0 max = 100 }
-	if = { limit = { check_variable = { TOP_org_verification^TOP_group_target > TOP_old_verification } } set_variable = { TOP_org_verification_source^TOP_group_target = 3 } }
-	if = { limit = { check_variable = { TOP_org_location^TOP_group_target > TOP_old_location } } set_variable = { TOP_org_location_source^TOP_group_target = 3 } }
-	if = { limit = { check_variable = { TOP_org_activity^TOP_group_target > TOP_old_activity } } set_variable = { TOP_org_activity_source^TOP_group_target = 3 } }
 }
 
 # Reads TOP_group_target.
 TOP_collect_organization_pulse = {
+	set_temp_variable = { TOP_group = TOP_group_target }
+	TOP_find_group_org = yes
 	if = {
-		limit = { check_variable = { TOP_org_package_state^TOP_group_target = 2 } TOP_group_operational = yes }
-		TOP_find_group_org = yes
-		set_temp_variable = { TOP_organization_security_host = TOP_org_lead_host^TOP_group_target }
-		TOP_get_organization_defensive_modifiers = yes
-		set_temp_variable = { TOP_gain = { value = 12 subtract = { value = global.TOP_group_pressure^TOP_group_target multiply = 0.05 } subtract = TOP_organization_defensive_collection_penalty } }
-		add_to_temp_variable = { TOP_gain = ct_global_base_detect_var }
-		if = { limit = { has_intelligence_agency = yes } add_to_temp_variable = { TOP_gain = 2 } }
-		if = { limit = { has_tech = decryption_1 } add_to_temp_variable = { TOP_gain = 2 } }
-		if = { limit = { has_tech = decryption_2 } add_to_temp_variable = { TOP_gain = 2 } }
-		if = { limit = { check_variable = { TOP_org_liaison_reliability^TOP_group_target > 0 } check_variable = { TOP_org_liaison_age^TOP_group_target < 91 } } add_to_temp_variable = { TOP_gain = 2 } }
-		set_temp_variable = { TOP_collection_host = global.TOP_group_host^TOP_group_target }
-		if = { limit = { var:TOP_collection_host = { OR = { has_war_with = PREV is_in_faction_with = PREV } } } add_to_temp_variable = { TOP_gain = 2 } }
+		limit = { check_variable = { TOP_org_slot > -1 } }
 		if = {
-			limit = { check_variable = { TOP_org_slot > -1 } }
-			add_to_temp_variable = { TOP_gain = { value = international_terror_org_intel^TOP_org_slot multiply = 0.1 } }
-			if = { limit = { check_variable = { ct_infiltrated_org_arr^TOP_org_id > 0 } } add_to_temp_variable = { TOP_gain = 5 } }
+			limit = { check_variable = { TOP_org_verification^TOP_group_target < international_terror_org_intel^TOP_org_slot } }
+			set_variable = { TOP_org_verification^TOP_group_target = international_terror_org_intel^TOP_org_slot }
+			set_variable = { TOP_org_verification_source^TOP_group_target = 2 }
 		}
 		if = {
-			limit = { check_variable = { global.TOP_group_disruption_type^TOP_group_target = 1 } check_variable = { global.TOP_group_disruption_until^TOP_group_target > global.TOP_clock } }
-			add_to_temp_variable = { TOP_gain = 5 }
+			limit = { check_variable = { TOP_org_activity^TOP_group_target < international_terror_org_intel^TOP_org_slot } }
+			set_variable = { TOP_org_activity^TOP_group_target = international_terror_org_intel^TOP_org_slot }
+			set_variable = { TOP_org_activity_source^TOP_group_target = 2 }
 		}
-		clamp_temp_variable = { var = TOP_gain min = 2 max = 25 }
-		TOP_apply_organization_collection_gain = yes
-		set_temp_variable = { TOP_group_pressure_gain = 5 }
-		set_temp_variable = { TOP_detection_chance = { value = 10 add = TOP_organization_defensive_collection_penalty } }
-		random = { chance = TOP_detection_chance TOP_add_group_pressure = yes }
-	}
-}
-
-# Reads TOP_target.
-TOP_maybe_false_person_location = {
-	set_temp_variable = { TOP_false_location_chance = 15 }
-	set_temp_variable = { TOP_deception_country = global.TOP_host^TOP_target }
-	TOP_get_protection_country = yes
-	if = {
-		limit = { check_variable = { TOP_security_country > 0 } var:TOP_security_country = { exists = yes } }
-		set_temp_variable = { TOP_deception_country = TOP_security_country }
-	}
-	var:TOP_deception_country = {
-		if = { limit = { check_variable = { TOP_deception_until > global.TOP_clock } } add_to_temp_variable = { TOP_false_location_chance = 25 } }
-	}
-	set_temp_variable = { TOP_group_target = global.TOP_affiliation^TOP_target }
-	if = {
-		limit = {
-			check_variable = { global.TOP_group_class^TOP_group_target = 2 }
-			check_variable = { global.TOP_group_pressure^TOP_group_target > 74 }
-		}
-		add_to_temp_variable = { TOP_false_location_chance = 10 }
-	}
-	random = {
-		chance = TOP_false_location_chance
-		set_temp_variable = { TOP_false_state = 0 }
-		var:global.TOP_host^TOP_target = {
-			random_controlled_state = {
-				limit = { NOT = { check_variable = { THIS.id = global.TOP_state^TOP_target } } }
-				set_temp_variable = { TOP_false_state = THIS }
-			}
-		}
-		if = { limit = { NOT = { check_variable = { TOP_false_state = 0 } } } set_variable = { TOP_lead_state^TOP_target = TOP_false_state } }
-	}
-}
-
-# Reads TOP_group_target.
-TOP_maybe_false_organization_location = {
-	set_temp_variable = { TOP_false_location_chance = 15 }
-	var:global.TOP_group_host^TOP_group_target = {
-		if = { limit = { check_variable = { TOP_deception_until > global.TOP_clock } } add_to_temp_variable = { TOP_false_location_chance = 25 } }
-	}
-	if = {
-		limit = { check_variable = { global.TOP_group_class^TOP_group_target = 2 } check_variable = { global.TOP_group_pressure^TOP_group_target > 74 } }
-		add_to_temp_variable = { TOP_false_location_chance = 10 }
-	}
-	random = {
-		chance = TOP_false_location_chance
-		set_temp_variable = { TOP_false_state = 0 }
-		var:global.TOP_group_host^TOP_group_target = {
-			random_controlled_state = {
-				limit = { NOT = { check_variable = { THIS.id = global.TOP_group_state^TOP_group_target } } }
-				set_temp_variable = { TOP_false_state = THIS }
-			}
-		}
-		if = { limit = { NOT = { check_variable = { TOP_false_state = 0 } } } set_variable = { TOP_org_lead_state^TOP_group_target = TOP_false_state } }
 	}
 }
 
@@ -717,7 +544,7 @@ TOP_fund_deception = {
 		add_political_power = -25
 		set_temp_variable = { treasury_change = -0.25 }
 		modify_treasury_effect = yes
-		set_variable = { TOP_deception_until = { value = global.TOP_clock add = 91 } }
+		add_timed_idea = { idea = TOP_defensive_deception days = 91 }
 		TOP_security_refresh_view = yes
 	}
 }
