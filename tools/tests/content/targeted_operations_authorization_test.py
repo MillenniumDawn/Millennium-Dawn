@@ -193,8 +193,6 @@ class ReviewScript(TargetedScript):
             result = country["exists"] == (operand == "yes")
         elif key == "TOP_authored_role_eligible":
             result = True
-        elif key == "TOP_authored_capture_override":
-            result = operand == "no"
         elif key == "TOP_authored_civilian_mandate_valid":
             result = operand == "no"
         elif key == "TOP_exceptional_authority":

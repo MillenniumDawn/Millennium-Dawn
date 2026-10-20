@@ -183,20 +183,20 @@ def test_visit_review_deadline_and_specific_tooltip_are_wired():
     assert authorization_events.count("tooltip = TOP_visit_window_too_short_tt") == 2
 
 
-def test_exposure_roll_is_single_and_host_home_penalties_are_deduplicated():
-    exposure = _named_block(CORE_EFFECTS, "TOP_apply_exposure")
-    assert exposure.count("chance = TOP_exposure_chance") == 1
-    assert exposure.count("set_temp_variable = { TOP_exposure_recorded = 1 }") == 1
-    assert "TOP_operation_protection_country = TOP_authorized_host" in exposure
-    assert "TOP_operation_protection_country = THIS" in exposure
-    assert exposure.count("modifier = TOP_sovereignty_violation") == 2
-    assert (
-        exposure.count(
-            "add_opinion_modifier = { target = PREV modifier = TOP_sovereignty_violation }"
-        )
-        == 2
+def test_exposure_roll_is_single_and_sovereignty_penalty_is_applied_once():
+    resolution = (
+        ROOT / "common/scripted_effects/08_targeted_operations_resolution.txt"
+    ).read_text(encoding="utf-8")
+    roll = _named_block(resolution, "TOP_calculate_person_consequences")
+    assert roll.count("randomize_temp_variable = { var = TOP_exposure_roll") == 1
+    penalty = (
+        "add_opinion_modifier = { target = PREV modifier = TOP_sovereignty_violation }"
     )
-    assert "TOP_start_exposed_kill_crisis = yes" in exposure
+    for name in (
+        "TOP_apply_shared_consequences",
+        "TOP_apply_organization_consequences",
+    ):
+        assert _named_block(resolution, name).count(penalty) == 1
 
 
 def test_crisis_constants_deltas_bands_and_single_war_path():

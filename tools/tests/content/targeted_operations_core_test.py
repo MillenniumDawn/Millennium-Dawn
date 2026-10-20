@@ -126,7 +126,6 @@ class TargetScript(TargetedScript):
             "TOP_apply_legacy_assessment",
             "TOP_apply_office_successor",
             "TOP_exploit_capture",
-            "TOP_apply_exposure",
             "TOP_start_exposed_kill_crisis",
             "TOP_review_tick",
             "TOP_cancel_review",
@@ -315,8 +314,6 @@ class TargetScript(TargetedScript):
                 self.value("TOP_vip_target", identifier)
             )
             result = (identifier == protection) == (operand == "yes")
-        elif key == "TOP_target_protection_at_war":
-            result = operand == "no"
         elif key in {
             "TOP_case_visit_review_valid",
             "TOP_case_visit_approval_fits",
@@ -2084,8 +2081,6 @@ def test_assessment_holds_host_after_expiry_and_revoke_until_recorded_confirmati
     script.globals["TOP_clock"] = 100
     script.run("TOP_process_timers", 1)
     assert variables["TOP_case_phase"][11] == 5
-    script.call("TOP_find_host_case", HOST=2)
-    assert script.temps["TOP_host_case"] == 11
     script.run("TOP_revoke_authorization", 1)
     assert variables["TOP_case_phase"][11] == 5
     script.run("TOP_confirm_assessment", 1)

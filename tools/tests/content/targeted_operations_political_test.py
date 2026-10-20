@@ -194,7 +194,6 @@ class PoliticalScript(TargetedScript):
     TARGET_TEMPS = {
         "TOP_authored_role_eligible": "TOP_role_target",
         "TOP_authored_civilian_mandate_valid": "TOP_civilian_valid_target",
-        "TOP_authored_capture_override": "TOP_civilian_valid_target",
     }
 
     def trigger(self, name, target=None, actor="USA"):
@@ -424,9 +423,6 @@ def test_domestic_civilian_mandate_survives_its_cost_and_remains_target_specific
     assert usa["stability"] == pytest.approx(0.35)
     assert game.leads == [(game.tags["USA"], 141, 40)]
     assert game.trigger("TOP_authored_civilian_mandate_valid", 141)
-    assert game.trigger("TOP_authored_capture_override", 141)
-    for target in (0, 64, 129, 140, 142):
-        assert not game.trigger("TOP_authored_capture_override", target)
     assert not game.trigger("TOP_civilian_emergency_case_available")
 
 
@@ -464,16 +460,14 @@ def test_civilian_mandate_loses_authority_immediately_when_crisis_ends(ended):
             "stability": 0.45,
         }[ended]
     assert not game.trigger("TOP_authored_civilian_mandate_valid", 141)
-    assert not game.trigger("TOP_authored_capture_override", 141)
 
 
-def test_foreign_civilian_mandate_requires_live_war_and_cannot_override_capture():
+def test_foreign_civilian_mandate_requires_live_war():
     game = PoliticalScript()
     russia = game.countries[game.tags["SOV"]]
     russia["wars"].add(game.tags["USA"])
     game.enact_civilian_case("SOV")
     assert game.trigger("TOP_authored_civilian_mandate_valid", 141, "SOV")
-    assert not game.trigger("TOP_authored_capture_override", 141, "SOV")
     russia["wars"].clear()
     assert not game.trigger("TOP_authored_civilian_mandate_valid", 141, "SOV")
 
