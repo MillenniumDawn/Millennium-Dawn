@@ -34,6 +34,7 @@ from shared_utils import (
     flat_block_text,
     has_flat_is_ai,
     iter_flat_offsets,
+    line_of,
     read_text_strict,
     strip_comments,
     strip_inline_comment,
@@ -1245,8 +1246,10 @@ def extract_value_multi_line(obj: str, s: str) -> str:
 
 
 class DecisionFactory:
-    def __init__(self, dec: str, source_basename: str = "") -> None:
-        self.source_basename = source_basename
+    def __init__(self, dec: str, source_path: str = "", line: int = 0) -> None:
+        self.source_path = source_path
+        self.source_basename = os.path.basename(source_path)
+        self.line = line
         self.raw = dec
         self.token = re.findall(r"^\t*(\S+)\s*=\s*\{", dec, flags=re.MULTILINE)[0]
         self.allowed = extract_value_multi_line(dec, "allowed")
@@ -1351,8 +1354,8 @@ def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
 
 def parse_all_decisions(
     mod_path: str, lowercase: bool = False
-) -> Tuple[List[str], Dict[str, str]]:
-    """Parse all decisions with caching."""
+) -> Tuple[List[str], Dict[str, Tuple[str, int]]]:
+    """Parse all decisions with caching: each block and its (path, line)."""
 
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions")
@@ -1374,7 +1377,10 @@ def parse_all_decisions(
             for m in _DECISIONS_BLOCK_RE.finditer(blanked):
                 match = text_file[m.start() : m.end()]
                 decisions.append(match)
-                paths[match] = os.path.basename(filename)
+                paths[match] = (
+                    os.path.relpath(filename, mod_path),
+                    line_of(text_file, m.start()),
+                )
 
         return decisions, paths
 
@@ -1390,13 +1396,13 @@ def parse_all_decision_factories(
     them once and reusing across all validators eliminates the dominant cost of
     a full decisions validation run (was ~7s of ~10s on this mod).
 
-    The source filename is stored on the factory as ``source_basename`` so
-    reporting code can avoid re-keying a parallel paths dict.
+    The source path and line are stored on the factory so reporting code can
+    avoid re-keying a parallel paths dict.
     """
 
     def _build():
         decisions, dec_paths = parse_all_decisions(mod_path, lowercase)
-        return [DecisionFactory(dec=d, source_basename=dec_paths[d]) for d in decisions]
+        return [DecisionFactory(d, *dec_paths[d]) for d in decisions]
 
     return _get_cached("decision_factories", mod_path, lowercase, _build)
 
@@ -1413,7 +1419,7 @@ def parse_all_decision_names(
         for d in decisions:
             name = _DECISION_TOKEN_LINE_RE.findall(d)[0]
             names.append(name)
-            name_paths[name] = dec_paths[d]
+            name_paths[name] = os.path.basename(dec_paths[d][0])
         return names, name_paths
 
     return _get_cached("decision_names", mod_path, lowercase, _parse)
@@ -3069,8 +3075,12 @@ class Validator(BaseValidator):
 
             note = _TREASURY_GATE_NOTE if "treasury" in d.custom_cost_trigger else ""
             results.append(
-                f"{d.token:<55}{d.source_basename} - ai_will_do ignores the "
-                f"{', '.join(sorted(costs))} cost{note}"
+                (
+                    f"{d.token} - ai_will_do ignores the "
+                    f"{', '.join(sorted(costs))} cost{note}",
+                    d.source_path,
+                    d.line,
+                )
             )
 
         self._report(

@@ -329,7 +329,7 @@ def test_pool_map_init_closes_the_shared_pool_before_starting_its_own(
     monkeypatch.setenv("MD_MAX_WORKERS", "2")
     monkeypatch.setattr(VC, "Pool", _DedicatedPool)
     v = _Dummy(mod_path=str(tmp_path), use_colors=False, workers=2)
-    v._pool = _SharedPool()
+    monkeypatch.setattr(v, "_pool", _SharedPool())
 
     result = v._pool_map_init(str, list(range(12)), lambda: None, ())
 
@@ -351,6 +351,19 @@ def test_localisation_loader_skips_unreadable_yml(dummy, write_path, tmp_path):
 
     assert "k" in keys
     assert "recruit_in_europe" in keys
+
+
+@pytest.mark.parametrize(
+    "registry, expected",
+    [
+        ("TOKEN_one\nTOKEN_two\n\nnot a token line\n", {"TOKEN_one", "TOKEN_two"}),
+        ("", set()),
+    ],
+    ids=["tokens", "empty registry"],
+)
+def test_dynamic_token_names(write_path, tmp_path, registry, expected):
+    write_path(tmp_path, "common/synchronized_dynamic_tokens/MD_tokens.txt", registry)
+    assert VC.load_dynamic_token_names(str(tmp_path)) == expected
 
 
 def _loc_tree(write_path, tmp_path):

@@ -1139,3 +1139,117 @@ def test_staged_run_checks_only_staged_country_files(
     validator = build_validator(V.Validator, tmp_path, staged_only=True)
 
     assert [os.path.basename(f) for f in validator._get_history_files()] == checked
+
+
+_INFLUENCE_WRITE = "add_to_array = { influence_array = USA.id }"
+_INFLUENCE_INIT = "init_influence = yes"
+_INFLUENCE_SORT = "sort_influence = yes"
+_INFLUENCE_VALID = f"{_INFLUENCE_INIT}\n{_INFLUENCE_WRITE}\n{_INFLUENCE_SORT}"
+# case: (source, expected message fragments and lines)
+_INFLUENCE_CASES = {
+    "valid": (_INFLUENCE_VALID, []),
+    "missing initialization after branch join": (
+        'if = { limit = { has_dlc = "X" } init_influence = yes add_to_array = { influence_array = USA.id } }\nadd_to_array = { influence_array_val = 50 }\nsort_influence = yes',
+        [("initialize influence", 2)],
+    ),
+    "enclosing conditional setup": (
+        f'{_INFLUENCE_INIT}\nif = {{ limit = {{ has_dlc = "X" }} {_INFLUENCE_WRITE} }}\n{_INFLUENCE_SORT}',
+        [],
+    ),
+    "conditional late reset": (
+        f"{_INFLUENCE_VALID}\nif = {{ limit = {{ always = yes }} {_INFLUENCE_INIT} }}",
+        [("clears earlier", 4)],
+    ),
+    "root write in foreign scope": (
+        f'GER = {{ {_INFLUENCE_VALID.replace("influence_array =", "ROOT.influence_array =")} }}',
+        [("initialize influence", 2), ("add sort_influence", 2)],
+    ),
+    "recalculate sorts": (
+        _INFLUENCE_VALID.replace("sort_influence", "recalculate_influence"),
+        [],
+    ),
+    "multiline value write": (
+        "init_influence = yes\nadd_to_array = {\ninfluence_array_val = 250\n}\nsort_influence = yes",
+        [],
+    ),
+    "pre-fix Japan": (
+        f"{_INFLUENCE_WRITE}\n{_INFLUENCE_INIT}\n{_INFLUENCE_SORT}",
+        [("initialize influence", 1), ("clears earlier", 2)],
+    ),
+    "premature sort": (
+        f"{_INFLUENCE_INIT}\n{_INFLUENCE_SORT}\n{_INFLUENCE_WRITE}",
+        [("before a later", 2), ("add sort_influence", 3)],
+    ),
+    "missing sort": (
+        f"{_INFLUENCE_INIT}\n{_INFLUENCE_WRITE}",
+        [("add sort_influence", 2)],
+    ),
+    "later write": (
+        f"{_INFLUENCE_VALID}\nadd_to_array = {{ influence_array_val = 250 }}",
+        [("before a later", 3), ("add sort_influence", 4)],
+    ),
+    "no setup": (
+        f"{_INFLUENCE_SORT}\n{_INFLUENCE_INIT}\nadd_to_array = {{ influence_targets = CHI }}",
+        [],
+    ),
+    "comments and strings": (
+        f'# { _INFLUENCE_WRITE}\nlog = "{_INFLUENCE_WRITE}"\n{_INFLUENCE_INIT}',
+        [],
+    ),
+    "separate dates": (
+        f"2000.1.1 = {{\n{_INFLUENCE_VALID}\n}}\n2017.1.1 = {{ {_INFLUENCE_INIT} }}",
+        [],
+    ),
+    "separate countries": (
+        f"GER = {{\n{_INFLUENCE_VALID}\n}}\nFRA = {{ {_INFLUENCE_INIT} }}",
+        [],
+    ),
+    "unrelated block": (f"effect_tooltip = {{ {_INFLUENCE_WRITE} }}", []),
+    "separate branches": (
+        f"if = {{ limit = {{ always = yes }}\n{_INFLUENCE_VALID}\n}} else = {{ {_INFLUENCE_INIT} }}",
+        [],
+    ),
+    "transparent wrapper": (
+        f"{_INFLUENCE_INIT}\nhidden_effect = {{ {_INFLUENCE_WRITE} }}\n{_INFLUENCE_SORT}",
+        [],
+    ),
+    "qualified current": (
+        _INFLUENCE_VALID.replace("influence_array =", "TST.influence_array ="),
+        [],
+    ),
+    "foreign writes": (
+        _INFLUENCE_VALID.replace("influence_array =", "GER.influence_array ="),
+        [("initialize influence", 2), ("add sort_influence", 2)],
+    ),
+    "ignored non-call": (
+        f"init_influence = no\n{_INFLUENCE_WRITE}\n{_INFLUENCE_SORT}",
+        [("initialize influence", 2)],
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    "source,expected", _INFLUENCE_CASES.values(), ids=_INFLUENCE_CASES
+)
+def test_influence_order(source, expected):
+    findings = V.check_influence_order(source, "TST")
+    assert len(findings) == len(expected)
+    for fragment, line in expected:
+        assert any(
+            fragment in message and line == found_line
+            for message, found_line in findings
+        )
+
+
+def test_influence_order_reports_staged_country_only(tmp_path):
+    path = _country(tmp_path, _INFLUENCE_WRITE)
+    _write(tmp_path, "history/countries/OTHER.txt", _INFLUENCE_WRITE)
+    validator = build_validator(V.Validator, tmp_path)
+    validator.staged_only = True
+    validator.staged_files = [path]
+    validator.validate_influence_order()
+    assert len(validator._issues) == 2
+    assert all(issue.severity == V.Severity.WARNING for issue in validator._issues)
+    assert {
+        (issue.file, issue.line, issue.category) for issue in validator._issues
+    } == {(_COUNTRY_FILE, 1, "history-influence-order")}

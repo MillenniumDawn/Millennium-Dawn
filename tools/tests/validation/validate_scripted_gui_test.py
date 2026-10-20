@@ -274,6 +274,7 @@ def test_gui_parser_records_named_elements_and_windows():
     assert set(parsed["elements"]) == {"window", "button"}
     assert parsed["containers"] == ["window"]
     assert parsed["windows"] == ["window"]
+    assert parsed["unsupported_button_origos"] == []
 
 
 def test_gui_parser_skips_an_unclosed_block():
@@ -282,7 +283,46 @@ def test_gui_parser_skips_an_unclosed_block():
         "element_files": {},
         "containers": [],
         "windows": [],
+        "unsupported_button_origos": [],
     }
+
+
+def test_button_origo_reports_only_direct_button_properties(tmp_path, write_path):
+    gui = """containerWindowType = {
+ name = "legal_container"
+ origo = center
+ buttonType = {
+  name = "bad_button"
+  text = "quoted { origo = not_a_property }"
+  # origo = commented_out
+  OrIgO = center # } ignored comment brace
+  iconType = { name = "nested_icon" origo = center }
+  containerWindowType = {
+   name = "nested_container"
+   origo = center
+   BuTtOnTyPe = {
+    name = "nested_bad_button"
+    ORIGO = center
+   }
+  }
+ }
+}
+buttonType = {
+ origo = center
+}
+"""
+    write_path(tmp_path, "interface/nested.gui", gui)
+
+    validator = _run(tmp_path)
+
+    assert [
+        (issue.category, issue.severity, issue.file, issue.line)
+        for issue in validator._issues
+    ] == [
+        ("BUTTON_ORIGO_UNSUPPORTED", "error", "interface/nested.gui", 8),
+        ("BUTTON_ORIGO_UNSUPPORTED", "error", "interface/nested.gui", 15),
+        ("BUTTON_ORIGO_UNSUPPORTED", "error", "interface/nested.gui", 21),
+    ]
 
 
 def test_scripted_gui_parser_reads_every_field():
@@ -425,3 +465,23 @@ def test_cli_exit_code(tmp_path, write_path, monkeypatch, path, code):
     with pytest.raises(SystemExit) as result:
         V.main()
     assert result.value.code == code
+
+
+def test_button_origo_fails_strict_cli(tmp_path, write_path, monkeypatch):
+    _clean_repo(tmp_path, write_path)
+    write_path(
+        tmp_path,
+        "interface/good.gui",
+        "containerWindowType = { name = good_window }\n"
+        "buttonType = { origo = center }\n",
+    )
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        ["validate_scripted_gui.py", "--path", str(tmp_path), "--strict"],
+    )
+
+    with pytest.raises(SystemExit) as result:
+        V.main()
+
+    assert result.value.code == 1

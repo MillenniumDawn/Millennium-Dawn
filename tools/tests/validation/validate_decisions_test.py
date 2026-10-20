@@ -18,6 +18,7 @@ from shared.suite import (
     dds_stub,
     decision_factory,
     decisions_results_for,
+    issue_rows,
     write_tree,
 )
 from shared_utils import run_validator_main
@@ -90,7 +91,7 @@ _AI_ONLY_AVAILABLE = "\tavailable = {\n\t\tis_ai = yes\n\t}\n"
 
 
 def _ignores(what):
-    return [f"{'dec_one':<55}X.txt - ai_will_do ignores the {what}"]
+    return [(f"dec_one - ai_will_do ignores the {what}", "X.txt", 0)]
 
 
 def _setter(*unlocks, flag="set_country_flag = md_gate_flag"):
@@ -474,10 +475,12 @@ def test_cost_check_reads_the_mods_scripted_effects(tmp_path):
 
     validator.validate_ai_will_do_ignores_cost()
 
-    assert [(issue.category, issue.message) for issue in validator._issues] == [
+    assert issue_rows(validator) == [
         (
             "decision-ai-will-do-ignores-cost",
-            f"{'dec_bill':<55}Bills.txt - ai_will_do ignores the treasury cost",
+            "dec_bill - ai_will_do ignores the treasury cost",
+            "common/decisions/Bills.txt",
+            2,
         )
     ]
 

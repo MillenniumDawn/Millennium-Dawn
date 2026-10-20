@@ -421,9 +421,14 @@ focus_EU111_QMV_result = {
 		# annexed member from global.EU_member. Looping global.EU_member live would mutate it
 		# mid-iteration and skip most members, leaving them independent instead of forming USoE.
 		clear_array = global.USoE_formation_members
+		set_temp_variable = { usoe_inherits_un_membership = 0 }
 		for_each_scope_loop = {
 			array = global.EU_member
 			add_to_array = { global.USoE_formation_members = THIS }
+			if = {
+				limit = { has_dynamic_modifier = { modifier = united_nations_member } }
+				set_temp_variable = { usoe_inherits_un_membership = 1 }
+			}
 		}
 
 		for_each_scope_loop = {
@@ -434,7 +439,10 @@ focus_EU111_QMV_result = {
 			every_unit_leader = {
 				set_unit_leader_flag = USoE_unit_leader
 				set_nationality = ROOT
-				add_unit_leader_trait = military_reorganization
+				if = {
+					limit = { OR = { is_army_leader = yes is_navy_leader = yes } }
+					add_unit_leader_trait = military_reorganization
+				}
 			}
 			every_owned_state = {
 				limit = {
@@ -452,6 +460,10 @@ focus_EU111_QMV_result = {
 				add_core_of = ROOT
 			}
 			if = { limit = { NOT = { original_tag = ROOT } }
+				if = {
+					limit = { has_country_flag = antarctica_has_active_station }
+					antarctica_transfer_research_stations_to_root = yes
+				}
 				ROOT = {
 					add_to_variable = { treasury = PREV.treasury }
 					add_to_variable = { debt = PREV.debt }
@@ -469,6 +481,19 @@ focus_EU111_QMV_result = {
 		apply_USoE_technologies = yes
 	}
 	ROOT = {
+		if = {
+			limit = { check_variable = { usoe_inherits_un_membership > 0 } }
+			if = {
+				limit = { NOT = { is_in_array = { global.UN_general_assembly = THIS } } }
+				add_to_array = { global.UN_general_assembly = THIS }
+			}
+			if = {
+				limit = { NOT = { has_dynamic_modifier = { modifier = united_nations_member } } }
+				add_dynamic_modifier = { modifier = united_nations_member }
+			}
+			recompute_un_2_3_number = yes
+			international_systems_force_update = yes
+		}
 		set_cosmetic_tag = USoE
 		set_temp_variable = { special_formable_id = 101 }
 		commit_special_formable = yes
