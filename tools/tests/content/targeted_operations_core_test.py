@@ -1512,13 +1512,8 @@ def test_external_resolution_releases_a_matching_preparation_slot_immediately():
     assert variables["TOP_assessment"][11] == 6
 
 
-def test_execution_waits_for_native_results_while_metadata_deadlines_fire():
-    from targeted_operations_agency_test import AgencyScript
-
-    script = AgencyScript()
-    person = script.authorize(method=3)
-    script.callback(3, "on_start")
-    assert person["TOP_case_due"][11] == 0
+def complete_agency_case_after_metadata_tick(script, person):
+    """Check the old 28-day tick cannot execute a case before its native result."""
     script.globals["TOP_clock"] = 28
     script.run("TOP_process_cases", 1)
     assert person["TOP_attempts"][11] == 0
@@ -1527,6 +1522,16 @@ def test_execution_waits_for_native_results_while_metadata_deadlines_fire():
     script.callback(3, "outcome_extra_execute")
     script.complete(3)
     assert person["TOP_attempts"][11] == 1
+
+
+def test_execution_waits_for_native_results_while_metadata_deadlines_fire():
+    from targeted_operations_agency_test import AgencyScript
+
+    script = AgencyScript()
+    person = script.authorize(method=3)
+    script.callback(3, "on_start")
+    assert person["TOP_case_due"][11] == 0
+    complete_agency_case_after_metadata_tick(script, person)
     organization = script.authorize_organization(group=2)
     assert organization["TOP_org_case_due"][2] == 0
     script.globals["TOP_clock"] = 56
@@ -1943,14 +1948,7 @@ def test_prepared_native_operations_survive_waiting_mandate_expiry():
     person = script.authorize(method=3)
     script.callback(3, "on_start")
     person["TOP_case_until"][11] = 1
-    script.globals["TOP_clock"] = 28
-    script.run("TOP_process_cases", 1)
-    assert person["TOP_attempts"][11] == 0
-    assert person["TOP_case_phase"][11] == 3
-    script.callback(3, "outcome_execute")
-    script.callback(3, "outcome_extra_execute")
-    script.complete(3)
-    assert person["TOP_attempts"][11] == 1
+    complete_agency_case_after_metadata_tick(script, person)
     assert person["TOP_case_phase"][11] == 4
     organization = script.authorize_organization(group=2)
     organization["TOP_org_case_until"][2] = 1

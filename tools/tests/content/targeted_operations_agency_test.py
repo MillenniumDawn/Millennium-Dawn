@@ -1,13 +1,12 @@
 """Execute native agency callbacks and the complete shared raid reaction relay."""
 
-from copy import deepcopy
 import re
+from copy import deepcopy
 
 import pytest
-
 from targeted_operations_core_integration_test import CoreIntegrationScript
 from targeted_operations_model_test import _named_block, _parse_race_script
-from targeted_operations_redesign_test import block, read
+from targeted_operations_redesign_test import read
 
 METHODS = {3: "covert_killing", 4: "rendition", 5: "host_arrest", 7: "poisoning"}
 
