@@ -15461,6 +15461,118 @@ UKR_reactivate_sov_category = {
 			696 = { add_dynamic_modifier = { modifier = UKR_scrapped_mig23_resources days = 365 } }
 		}
 	}
+
+	ukr_modernize_sov_equipment_mig25_offer = {
+		icon = GFX_decision_generic_air
+		ai_will_do = { base = 10 }
+
+		visible = {
+			date < 2006.01.01
+			check_variable = { ukraine_has_mig25_stockpile > 11 }
+			OR = {
+				AND = {
+					country_exists = ARM
+					NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_tried_ARM_flag }
+				}
+				AND = {
+					country_exists = TRK
+					NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_tried_TRK_flag }
+				}
+				AND = {
+					country_exists = LBA
+					NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_tried_LBA_flag }
+				}
+			}
+		}
+
+		days_remove = 30
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig25_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig25_orders_tt
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig25_russia_tt
+			custom_effect_tooltip = ukraine_storage_sanctioned_sale_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig25_offer"
+
+			country_event = ukr_modernize_sov_equipment_storage_sale.17
+		}
+	}
+
+	ukr_modernize_sov_equipment_mig25_scrap = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig25_scrap_done_flag }
+			check_variable = { ukraine_has_mig25_stockpile > 0 }
+			OR = {
+				date > 2006.01.01
+				AND = {
+					OR = {
+						has_country_flag = ukr_modernize_sov_equipment_mig25_tried_ARM_flag
+						NOT = { country_exists = ARM }
+					}
+					OR = {
+						has_country_flag = ukr_modernize_sov_equipment_mig25_tried_TRK_flag
+						NOT = { country_exists = TRK }
+					}
+					OR = {
+						has_country_flag = ukr_modernize_sov_equipment_mig25_tried_LBA_flag
+						NOT = { country_exists = LBA }
+					}
+				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+				check_variable = { treasury > 0.02 }
+			}
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig25_scrap"
+
+			# 10 million plus up to 10 million more, depending on how many are still stored
+			set_temp_variable = { treasury_change = ukraine_has_mig25_stockpile }
+			divide_temp_variable = { treasury_change = 74 }
+			add_to_temp_variable = { treasury_change = 1 }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig25_scrap"
+
+			set_country_flag = ukr_modernize_sov_equipment_mig25_scrap_done_flag
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig25_scrapped_tt
+			hidden_effect = {
+				set_variable = { ukraine_has_mig25_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+			696 = { add_dynamic_modifier = { modifier = UKR_scrapped_mig25_resources days = 365 } }
+		}
+	}
 }
 
 # Captured enemy equipment, rebuilt by volunteers: needs no state plant or factory
