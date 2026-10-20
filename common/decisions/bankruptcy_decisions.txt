@@ -4,7 +4,7 @@ bankruptcy_decisions = {
 	#All of these are last resorts, only once ai_fiscal_last_resort_open passes
 	#Cheap IMF loans before bailouts, bailouts only if interest > 15%
 	#First ask bailout from IMF, then neighbours, then 2nd influencer, then 1st influencer to do the least damage
-	#Default if interest > 25%, not at war and the gate is open
+	#Default if interest > 25% and the gate is open
 	bankruptcy_cheap_loans_from_imf = {
 
 		icon = GFX_decision_bancru_imf_button
@@ -981,8 +981,14 @@ bankruptcy_decisions = {
 			multiply_variable = { debt_default_left = 0.5 }
 			round_variable = debt_default_left
 			set_variable = { debt_default_total = debt_default_left }
-			multiply_variable = { debt = 0.25 }
+			multiply_variable = { debt = 0.1 }
 			depression = yes
+			if = { limit = { has_idea = debt_default_credit_downgrade }
+				modify_timed_idea = { idea = debt_default_credit_downgrade days = 730 }
+			}
+			else = {
+				add_timed_idea = { idea = debt_default_credit_downgrade days = 730 }
+			}
 			custom_effect_tooltip = bankruptcy_default_on_debts_tt
 			activate_mission = debt_default_main_mission
 			set_variable = { old_gdp = gdp_total }
@@ -1002,7 +1008,6 @@ bankruptcy_decisions = {
 				OR = {
 					ai_fiscal_last_resort_open = no
 					check_variable = { interest_rate < 25 }
-					has_war = yes
 				}
 			}
 		}
@@ -1121,10 +1126,10 @@ debt_default_decisions = {
 
 	#AI Logic for default:
 	#1. Pay from treasury as much as you can
-	#2. Political concessions to IMF
-	#3. Sell factories unless GDP is < 80% of pre-default GDP (sell order NIC -> MIC -> Offices -> CIC)
-	#4. Political concessions to 2nd and 1st influencer
-	#Default if interest > 25% and not at war
+	#2. Political concessions to IMF, peacetime only
+	#3. Political concessions to 2nd and 1st influencer
+	#4. Sell buildings for the last $50 billion while GDP > 80% of pre-default (NIC -> MIC -> Offices -> CIC)
+	#Default if interest > 25%
 	debt_default_main_mission = {
 
 		icon = GFX_decision_bancru_collapse_button
@@ -1400,7 +1405,13 @@ debt_default_decisions = {
 			}
 		}
 
-		ai_will_do = { base = 900 }
+		ai_will_do = {
+			base = 900
+			modifier = {
+				factor = 0
+				has_war = yes
+			}
+		}
 	}
 
 	debt_default_political_concessions_to_biggest_influencer = {
@@ -1445,23 +1456,7 @@ debt_default_decisions = {
 			}
 		}
 
-		ai_will_do = {
-			base = 600
-			modifier = {
-				factor = 0
-				check_expr = {
-					value = old_gdp
-					multiply = 0.8
-					less_than = { value = gdp_total }
-				}
-				OR = {
-					num_of_civilian_factories > 0
-					num_of_military_factories > 0
-					num_of_naval_factories > 0
-					check_variable = { office_park_total > 0 }
-				}
-			}
-		}
+		ai_will_do = { base = 600 }
 	}
 
 	debt_default_political_concessions_to_second_biggest_influencer = {
@@ -1506,23 +1501,7 @@ debt_default_decisions = {
 			}
 		}
 
-		ai_will_do = {
-			base = 700
-			modifier = {
-				factor = 0
-				check_expr = {
-					value = old_gdp
-					multiply = 0.8
-					less_than = { value = gdp_total }
-				}
-				OR = {
-					num_of_civilian_factories > 0
-					num_of_military_factories > 0
-					num_of_naval_factories > 0
-					check_variable = { office_park_total > 0 }
-				}
-			}
-		}
+		ai_will_do = { base = 700 }
 	}
 
 	debt_default_sell_civilian_factories = {
@@ -1562,10 +1541,14 @@ debt_default_decisions = {
 			base = 800
 			modifier = {
 				factor = 0
+				check_variable = { debt_default_left > 50 }
+			}
+			modifier = {
+				factor = 0
 				check_expr = {
 					value = old_gdp
 					multiply = 0.8
-					less_than = { value = gdp_total }
+					greater_than = { value = gdp_total }
 				}
 			}
 		}
@@ -1610,10 +1593,14 @@ debt_default_decisions = {
 			base = 840
 			modifier = {
 				factor = 0
+				check_variable = { debt_default_left > 50 }
+			}
+			modifier = {
+				factor = 0
 				check_expr = {
-					value = gdp_total
-					multiply = 0.80
-					less_than = { value = gdp_total }
+					value = old_gdp
+					multiply = 0.8
+					greater_than = { value = gdp_total }
 				}
 			}
 		}
@@ -1656,10 +1643,14 @@ debt_default_decisions = {
 			base = 850
 			modifier = {
 				factor = 0
+				check_variable = { debt_default_left > 50 }
+			}
+			modifier = {
+				factor = 0
 				check_expr = {
-					value = gdp_total
-					multiply = 0.80
-					less_than = { value = gdp_total }
+					value = old_gdp
+					multiply = 0.8
+					greater_than = { value = gdp_total }
 				}
 			}
 		}
@@ -1705,10 +1696,14 @@ debt_default_decisions = {
 			base = 810
 			modifier = {
 				factor = 0
+				check_variable = { debt_default_left > 50 }
+			}
+			modifier = {
+				factor = 0
 				check_expr = {
 					value = old_gdp
 					multiply = 0.8
-					less_than = { value = gdp_total }
+					greater_than = { value = gdp_total }
 				}
 			}
 		}

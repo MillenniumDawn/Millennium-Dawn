@@ -224,7 +224,7 @@ Reserve currency issuers (the countries controlling USD, EUR, CNY, RUB, JPY, GBP
 Various sources provide supplementary revenue:
 
 - **Foreign Aid**: Some countries receive aid (e.g., US aid to allies, Iranian aid to partners)
-- **International Investments**: Returns from investing in other countries (~6% annually)
+- **International Investments**: Returns from investing in other countries (~3% annually)
 - **Trade Routes**: Controlling strategic chokepoints (Suez, Panama, Hormuz) provides income
 - **EU Subsidies**: Member states receive various subsidies
 - **Country-Specific Income**: Special ideas and national foci (tourism, narcotics, etc.)
@@ -1144,7 +1144,7 @@ Immigration control costs money. Stricter laws cost more to enforce.
 
 ## International Investments
 
-International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income, approximately **6% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
+International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income, approximately **3% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
 
 For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide/).
 
@@ -1227,7 +1227,7 @@ When the economy is in severe distress (interest above 15%), countries can reque
 
 The AI treats these as last resorts. It considers them only once both taxes are at their automation caps (40% population, 50% corporate) and it still runs a deficit, its economy is in a major crisis, a financial collapse is incoming, or interest is at least 15% and debt service exceeds 30% of income. The debt-service condition applies even with a budget surplus. Cheap loans also open on a deficit over 10% of income, and the AI counts the paused debt payments as spending so it keeps raising taxes during the loan.
 
-An AI that passes one of those conditions may default on its debt once interest reaches 25%, but never while at war. A default has severe consequences.
+An AI that passes one of those conditions may default on its debt once interest reaches 25%, even while at war. A default forgives 40% of the debt, keeps 10% as normal debt, and moves the other 50% into defaulted debt you must settle within 360 days. It also starts a depression and a two-year Sovereign Credit Downgrade (+3 interest, -10% stability). Settle the defaulted debt with treasury payments, IMF or influencer concessions, or by selling buildings. Settling in time grants a one-year post-default construction boom. Failing zeroes your treasury and international investments and can give your creditors a war goal against you.
 
 ---
 
