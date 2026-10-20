@@ -5,6 +5,7 @@
 
 calc_toll_cost = {
 	calc_num_of_infrastructure = yes
+	AUS_traffic_random = yes 
 	
 	set_temp_variable = { temp_calc_toll_cost = 0 }
 	
@@ -12,6 +13,7 @@ calc_toll_cost = {
 	add_to_temp_variable = { temp_calc_toll_cost = toll_cost }
 	add_to_temp_variable = { temp_calc_toll_cost = num_of_infrastructure }
 	multiply_temp_variable = { temp_calc_toll_cost = toll_factors }
+	multiply_temp_variable = { temp_calc_toll_cost = traffic_toll_system }
 	divide_temp_variable = { temp_calc_toll_cost = 512 }
 	
 	set_variable = { total_toll_income = temp_calc_toll_cost }
@@ -27,12 +29,25 @@ calc_toll_cost = {
 }
 
 calc_num_of_infrastructure = {
-    set_variable = { num_of_infrastructure = 0 }
-    every_owned_state = {
-        ROOT = {
-            add_to_variable = { num_of_infrastructure = PREV.building_level@infrastructure }
-        }
-    }
+	set_variable = { num_of_infrastructure = 0 }
+	75 = {
+		if = {
+			limit = { is_owned_by = ROOT }
+			ROOT = { add_to_variable = { num_of_infrastructure = PREV.building_level@infrastructure } }
+		}
+	}
+	76 = {
+		if = {
+			limit = { is_owned_by = ROOT }
+			ROOT = { add_to_variable = { num_of_infrastructure = PREV.building_level@infrastructure } }
+		}
+	}
+	286 = {
+		if = {
+			limit = { is_owned_by = ROOT }
+			ROOT = { add_to_variable = { num_of_infrastructure = PREV.building_level@infrastructure } }
+		}
+	}
     
     log = "[this.GetName] TOTAL INFRASTRUCTURE COUNTED: [?num_of_infrastructure]"
 }
@@ -52,7 +67,7 @@ calc_toll_cost_startup = {
 
 	clamp_variable = {
 		var = toll_cost
-		min = 1
+		min = 0
 		max = 10
 	}
 
@@ -82,6 +97,32 @@ AUS_energy_generated = {
 	if = {
 		limit = { check_variable = { total_renewable_energy > total_non_renewable_energy } }
 		set_country_flag = AUS_renewable_dominant
+	}
+}
+
+AUS_traffic_random = {
+	random_list = {
+		45 = {
+			set_variable = { traffic_toll_system = 1 }
+		}
+		15 = {
+			set_variable = { traffic_toll_system = 1.15 }
+		}
+		15 = {
+			set_variable = { traffic_toll_system = 0.85 }
+		}
+		2.5 = {
+			set_variable = { traffic_toll_system = 1.50 }
+		}
+		2.5 = {
+			set_variable = { traffic_toll_system = 0.50 }
+		}
+		10 = {
+			set_variable = { traffic_toll_system = 1.25 }
+		}
+		10 = {
+			set_variable = { traffic_toll_system = 0.75 }
+		}
 	}
 }
 
