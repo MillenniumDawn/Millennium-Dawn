@@ -43,6 +43,91 @@ scripted_gui = {
 				MD_protests_clear_display_vars = yes
 				update_protest_dirty_var = yes
 			}
+
+			MD_protests_give_promises_button_click = {
+				log = "[GetDateText]: [Root.GetName]: GUI: Protests Give Promises"
+				add_political_power = -100
+				add_stability = -0.05
+				custom_effect_tooltip = MD_protests_give_promises_strength_tt
+				hidden_effect = {
+					random_list = {
+						50 = { subtract_from_variable = { protest_strength = 5 } }
+						50 = { subtract_from_variable = { protest_strength = 10 } }
+					}
+					clamp_variable = { var = protest_strength min = 0 max = 100 }
+					set_country_flag = { flag = MD_protests_promises_cooldown value = 1 days = 182 }
+					update_protest_dirty_var = yes
+				}
+			}
+
+			MD_protests_delve_demands_button_click = {
+				log = "[GetDateText]: [Root.GetName]: GUI: Protests Delve into Demands"
+				add_political_power = -100
+				add_stability = 0.05
+				custom_effect_tooltip = MD_protests_delve_demands_effect_tt
+				hidden_effect = {
+					MD_protests_add_random_demand = yes
+					set_country_flag = { flag = MD_protests_demands_cooldown value = 1 days = 91 }
+					update_protest_dirty_var = yes
+				}
+			}
+
+			MD_protests_bribe_button_click = {
+				log = "[GetDateText]: [Root.GetName]: GUI: Protests Bribe the Protestors"
+				add_political_power = -50
+				set_temp_variable = { treasury_change = -0.1 }
+				modify_treasury_effect = yes
+				add_stability = -0.02
+				custom_effect_tooltip = MD_protests_bribe_strength_tt
+				hidden_effect = {
+					subtract_from_variable = { protest_strength = 5 }
+					clamp_variable = { var = protest_strength min = 0 max = 100 }
+					set_country_flag = { flag = MD_protests_bribe_cooldown value = 1 days = 365 }
+					update_protest_dirty_var = yes
+				}
+			}
+		}
+
+		triggers = {
+			MD_protests_give_promises_button_click_enabled = {
+				has_political_power > 99
+				custom_trigger_tooltip = {
+					tooltip = MD_protests_strength_above_50_tt
+					check_variable = { protest_strength > 50 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = MD_protests_promises_cooldown_tt
+					NOT = { has_country_flag = MD_protests_promises_cooldown }
+				}
+			}
+
+			MD_protests_delve_demands_button_click_enabled = {
+				has_political_power > 99
+				custom_trigger_tooltip = {
+					tooltip = MD_protests_strength_above_75_tt
+					check_variable = { protest_strength > 75 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = MD_protests_demands_cooldown_tt
+					NOT = { has_country_flag = MD_protests_demands_cooldown }
+				}
+			}
+
+			MD_protests_bribe_button_click_enabled = {
+				has_political_power > 49
+				custom_trigger_tooltip = {
+					tooltip = MD_protests_treasury_above_0_1_tt
+					check_variable = { treasury > 0.1 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = MD_protests_strength_below_50_tt
+					check_variable = { protest_strength < 50 }
+				}
+				custom_trigger_tooltip = {
+					tooltip = MD_protests_bribe_cooldown_tt
+					NOT = { has_country_flag = MD_protests_bribe_cooldown }
+				}
+			}
 		}
 
 		properties = {
