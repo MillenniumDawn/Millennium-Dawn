@@ -928,8 +928,11 @@ def test_novichok_is_a_russia_only_high_exposure_native_method():
     assert "TOP_proposal_identity > 89" in review
     assert "TOP_proposal_method = 7" in lethal
     assert "TOP_tier > 1" in _named_block(resolution, "TOP_resolve_person_operation")
-    assert "TOP_arg_method = 7" in source(
-        "common/scripted_triggers/08_targeted_operations_core.txt"
+    assert "top_agency_method = 7" in source(
+        "common/operations/02_targeted_operations.txt"
+    )
+    assert "operation_top_poisoning" in source(
+        "common/operations/02_targeted_operations.txt"
     )
     exposure = _named_block(source(EFFECT_PATH), "TOP_calculate_person_proposal_risks")
     assert "TOP_proposal_method = 7" in exposure

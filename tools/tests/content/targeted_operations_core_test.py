@@ -667,7 +667,7 @@ class TargetScript(TargetedScript):
         return variables
 
     def persisted_clone(self):
-        restored = TargetScript()
+        restored = type(self)()
         restored.countries = deepcopy(self.countries)
         restored.globals = deepcopy(self.globals)
         restored.global_flags = deepcopy(self.global_flags)
@@ -1513,14 +1513,19 @@ def test_external_resolution_releases_a_matching_preparation_slot_immediately():
 
 
 def test_execution_waits_for_native_results_while_metadata_deadlines_fire():
-    script = TargetScript()
+    from targeted_operations_agency_test import AgencyScript
+
+    script = AgencyScript()
     person = script.authorize(method=3)
+    script.callback(3, "on_start")
     assert person["TOP_case_due"][11] == 0
     script.globals["TOP_clock"] = 28
     script.run("TOP_process_cases", 1)
     assert person["TOP_attempts"][11] == 0
     assert person["TOP_case_phase"][11] == 3
-    fire_native_callback(script, target=11, method=3, state=101, tier=2)
+    script.callback(3, "outcome_execute")
+    script.callback(3, "outcome_extra_execute")
+    script.complete(3)
     assert person["TOP_attempts"][11] == 1
     organization = script.authorize_organization(group=2)
     assert organization["TOP_org_case_due"][2] == 0
@@ -1932,14 +1937,19 @@ def test_waiting_mandates_close_at_expiry_but_prepared_native_case_survives():
 
 
 def test_prepared_native_operations_survive_waiting_mandate_expiry():
-    script = TargetScript()
+    from targeted_operations_agency_test import AgencyScript
+
+    script = AgencyScript()
     person = script.authorize(method=3)
+    script.callback(3, "on_start")
     person["TOP_case_until"][11] = 1
     script.globals["TOP_clock"] = 28
     script.run("TOP_process_cases", 1)
     assert person["TOP_attempts"][11] == 0
     assert person["TOP_case_phase"][11] == 3
-    fire_native_callback(script, target=11, method=3, state=101, tier=2)
+    script.callback(3, "outcome_execute")
+    script.callback(3, "outcome_extra_execute")
+    script.complete(3)
     assert person["TOP_attempts"][11] == 1
     assert person["TOP_case_phase"][11] == 4
     organization = script.authorize_organization(group=2)
@@ -2085,8 +2095,11 @@ def test_inactive_former_officeholder_moves_to_cold_and_can_reactivate():
 
 @pytest.mark.parametrize("restore", [False, True], ids=["live", "persisted_state"])
 def test_waiting_timed_mandates_execute_sequentially_through_one_slot(restore):
-    script = TargetScript()
+    from targeted_operations_agency_test import AgencyScript
+
+    script = AgencyScript()
     script.authorize(method=3)
+    script.callback(3, "on_start")
     script.authorize(12, method=4, host=3, state=102)
     if restore:
         script = script.persisted_clone()
@@ -2098,7 +2111,9 @@ def test_waiting_timed_mandates_execute_sequentially_through_one_slot(restore):
     script.globals["TOP_clock"] = 29
     script.run("TOP_process_timers", 1)
     assert script.globals["TOP_status"][11] == 1
-    fire_native_callback(script, method=3)
+    script.callback(3, "outcome_execute")
+    script.callback(3, "outcome_extra_execute")
+    script.complete(3)
     assert script.globals["TOP_status"][11] == 3
     assert script.globals["TOP_status"][12] == 1
     assert variables["TOP_case_phase"][11] == 4
@@ -2107,11 +2122,15 @@ def test_waiting_timed_mandates_execute_sequentially_through_one_slot(restore):
     assert variables["TOP_attempts"][12] == 0
 
     script.call("TOP_begin_person_operation", TARGET=12)
+    script.from_country = 3
+    script.callback(4, "on_start")
     assert variables["TOP_case_phase"][12] == 3
     script.globals["TOP_clock"] = 58
     script.run("TOP_process_timers", 1)
     assert script.globals["TOP_status"][12] == 1
-    fire_native_callback(script, target=12, method=4, state=102)
+    script.callback(4, "outcome_execute")
+    script.callback(4, "outcome_extra_execute")
+    script.complete(4)
     assert script.globals["TOP_status"][12] == 2
     assert variables["TOP_archive_cursor"] == 2
     assert variables["TOP_attempts"][11] == variables["TOP_attempts"][12] == 1
@@ -2183,17 +2202,29 @@ def test_closing_one_case_preserves_other_hosts_and_rejects_its_late_callback(ac
 
 
 def test_cancelled_timed_case_cannot_complete_after_other_host_is_authorized():
-    script = TargetScript()
+    from targeted_operations_agency_test import AgencyScript
+
+    script = AgencyScript()
     variables = script.authorize(method=3)
+    script.callback(3, "on_start")
+    script.callback(3, "on_start")
     script.authorize(12, method=4, host=3, state=102)
     assert variables["TOP_case_phase"][12] == 2
     variables["TOP_selected"] = 11
     script.run("TOP_revoke_authorization", 1)
     script.call("TOP_begin_person_operation", TARGET=12)
+    script.from_country = 3
+    script.callback(4, "on_start")
     script.globals["TOP_clock"] = 29
     script.run("TOP_process_timers", 1)
-    fire_native_callback(script, method=3)
-    fire_native_callback(script, target=12, method=4, state=102)
+    script.from_country = 2
+    script.callback(3, "outcome_execute")
+    script.callback(3, "outcome_extra_execute")
+    script.complete(3)
+    script.from_country = 3
+    script.callback(4, "outcome_execute")
+    script.callback(4, "outcome_extra_execute")
+    script.complete(4)
     assert script.globals["TOP_status"][11] == 1
     assert script.globals["TOP_status"][12] == 2
     assert variables["TOP_attempts"][11] == 0

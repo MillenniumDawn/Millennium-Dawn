@@ -55,7 +55,7 @@ class CoreIntegrationScript(TargetScript):
             super().execute_statement(statement, identifier)
 
 
-@pytest.mark.parametrize("method", [1, 2, 3, 4, 5, 7])
+@pytest.mark.parametrize("method", [1, 2])
 @pytest.mark.parametrize("tier,expected", [(0, 9), (1, 8), (2, None), (3, None)])
 def test_native_tier_owns_physical_result_without_a_second_roll(method, tier, expected):
     script = CoreIntegrationScript()
@@ -208,7 +208,8 @@ def test_all_generated_raids_share_core_eligibility_cost_losses_and_victim_react
     raids = read("common/raids/targeted_operations_raids.txt")
     assert raids.count("raid_available_base = yes") == 320
     assert raids.count("raid_can_launch = yes") == 320
-    assert raids.count("send_raid_event_to_victim = yes") == 1280
+    assert raids.count("top_native_person_reaction = yes") == 1280
+    assert "victim_effects = { send_raid_event_to_victim" not in raids
     assert raids.count("apply_raid_failure_losses = yes") == 160
     assert raids.count("raid_damage_units = { org_damage") == 640
 
@@ -404,16 +405,20 @@ def test_extended_facility_objectives_follow_native_tiers_and_keep_people(
 
 
 def test_partner_capture_preserves_host_custody_and_consent_gate():
-    script = CoreIntegrationScript()
+    from targeted_operations_agency_test import AgencyScript
+
+    script = AgencyScript()
     variables = script.authorize(method=5)
     script.triggers["raid_show_target_intervention_check"] = []
-    script.temps.update(TOP_arg_target=11, TOP_arg_method=5, target_state=101)
-    assert script.condition(script.triggers["TOP_native_authorized"], 1)
+    script.temps.update(top_agency_method=5)
+    assert script.condition(script.triggers["top_agency_case_ready"], 1)
     variables["TOP_case_consent"][11] = 0
-    assert not script.condition(script.triggers["TOP_native_authorized"], 1)
+    assert not script.condition(script.triggers["top_agency_case_ready"], 1)
     variables["TOP_case_consent"][11] = 1
-    script.temps["TOP_tier"] = 2
-    script.run("TOP_resolve_native_callback", 1)
+    script.callback(5, "on_start")
+    script.callback(5, "outcome_execute")
+    script.callback(5, "outcome_extra_execute")
+    script.complete(5)
     assert script.globals["TOP_status"][11] == 2
     assert script.globals["TOP_custodian"][11] == 2
     assert script.globals["TOP_removals"][11] == 1

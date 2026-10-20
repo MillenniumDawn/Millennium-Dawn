@@ -81,6 +81,7 @@ TOP_calculate_person_consequences = {
 	if = { limit = { check_variable = { TOP_exposure_roll < TOP_credible_floor } } set_variable = { TOP_case_attribution^TOP_target = 2 } }
 	set_temp_variable = { TOP_public_floor = { value = TOP_exposure_score subtract = 40 } }
 	if = { limit = { check_variable = { TOP_exposure_roll < TOP_public_floor } } set_variable = { TOP_case_attribution^TOP_target = 3 } }
+	if = { limit = { check_variable = { TOP_method < 3 } } set_variable = { TOP_case_attribution^TOP_target = 3 } set_temp_variable = { top_native_reaction_attribution = 3 } }
 	set_variable = { TOP_case_attribution_due^TOP_target = { value = global.TOP_clock add = 14 } }
 	set_variable = { TOP_case_attribution_investigated^TOP_target = 0 }
 	if = { limit = { NOT = { is_in_array = { TOP_attribution_pending_people = TOP_target } } } add_to_array = { TOP_attribution_pending_people = TOP_target } }
@@ -99,6 +100,7 @@ TOP_calculate_organization_consequences = {
 	if = { limit = { check_variable = { TOP_exposure_roll < TOP_credible_floor } } set_variable = { TOP_org_case_attribution^TOP_group_target = 2 } }
 	set_temp_variable = { TOP_public_floor = { value = TOP_exposure_score subtract = 40 } }
 	if = { limit = { check_variable = { TOP_exposure_roll < TOP_public_floor } } set_variable = { TOP_org_case_attribution^TOP_group_target = 3 } }
+	set_variable = { TOP_org_case_attribution^TOP_group_target = 3 }
 	set_variable = { TOP_org_case_attribution_due^TOP_group_target = { value = global.TOP_clock add = 14 } }
 	set_variable = { TOP_org_case_attribution_investigated^TOP_group_target = 0 }
 	if = { limit = { NOT = { is_in_array = { TOP_attribution_pending_organizations = TOP_group_target } } } add_to_array = { TOP_attribution_pending_organizations = TOP_group_target } }
@@ -225,7 +227,13 @@ TOP_apply_shared_consequences = {
 		}
 	}
 	if = {
-		limit = { check_variable = { TOP_attribution_level > 0 } check_variable = { TOP_operation_protection_country > 0 } }
+		limit = { check_variable = { TOP_attribution_level > 0 } check_variable = { TOP_operation_protection_country > 0 }
+			OR = { check_variable = { TOP_case_consent^TOP_target = 0 } NOT = { check_variable = { TOP_operation_protection_country = TOP_case_host^TOP_target } } }
+			OR = {
+				NOT = { AND = { check_variable = { TOP_case_method^TOP_target > 0 } check_variable = { TOP_case_method^TOP_target < 3 } } }
+				NOT = { check_variable = { TOP_operation_protection_country = TOP_case_host^TOP_target } }
+			}
+		}
 		var:TOP_operation_protection_country = { add_opinion_modifier = { target = PREV modifier = TOP_sovereignty_violation } }
 	}
 	if = {

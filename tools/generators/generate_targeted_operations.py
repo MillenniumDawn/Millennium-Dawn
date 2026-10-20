@@ -682,8 +682,8 @@ def registry(data: dict) -> str:
 
 def raid(ident: int, method: int) -> str:
     drone = method == 1
-    kind = {1: "drone", 2: "capture", 3: "infiltration"}[method]
-    methods = {1: (1,), 2: (2, 4, 5), 3: (3, 7)}[method]
+    kind = {1: "drone", 2: "capture"}[method]
+    methods = {1: (1,), 2: (2,)}[method]
     method_check = (
         "OR = { "
         + " ".join(
@@ -707,11 +707,7 @@ def raid(ident: int, method: int) -> str:
         f"show_target = {{ TOP_native_gate_{ident}_{method} = yes }}",
         "available = {",
         f"\tTOP_native_gate_{ident}_{method} = yes",
-        (
-            f"\tcustom_trigger_tooltip = {{ tooltip = TOP_raid_host_permissions_tt if = {{ limit = {{ check_variable = {{ TOP_case_method^{ident} = 5 }} }} raid_available_with_host_consent = yes }} else = {{ raid_available_base = yes }} }}"
-            if method == 2
-            else "\traid_available_base = yes"
-        ),
+        "\traid_available_base = yes",
     ]
     if not drone:
         lines.append("\traid_special_forces_tech_available = yes")
@@ -787,7 +783,7 @@ def raid(ident: int, method: int) -> str:
     ):
         lines += [
             f"\t{name} = {{",
-            "\t\tvictim_effects = { send_raid_event_to_victim = yes }",
+            "\t\tvictim_effects = { }",
             "\t\tactor_effects = {",
             "\t\t\tset_temp_variable = { raid_pp_loss = -150 }",
             *(
@@ -804,6 +800,7 @@ def raid(ident: int, method: int) -> str:
             f"\t\t\tset_temp_variable = {{ TOP_native_kind = {method} }}",
             f"\t\t\tset_temp_variable = {{ TOP_tier = {tier} }}",
             "\t\t\tTOP_native_result_args = yes",
+            "\t\t\ttop_native_person_reaction = yes",
             "\t\t}",
             "\t}",
         ]
@@ -893,8 +890,6 @@ def localisation(data: dict) -> str:
             f' raid_type_TOP_drone_{ident}_desc: "Conduct the authorized native map operation against this target package."',
             f' raid_type_TOP_capture_{ident}: "Capture Raid: {name}"',
             f' raid_type_TOP_capture_{ident}_desc: "Attempt to secure this target alive through a native special-forces raid."',
-            f' raid_type_TOP_infiltration_{ident}: "Covert Infiltration: {name}"',
-            f' raid_type_TOP_infiltration_{ident}_desc: "Deliver the reviewed covert or poisoning operation through a native special-forces raid. The authorized method retains its own access and consequence rules."',
         ]
     for target in data["targets"]:
         lines.append(
@@ -1101,7 +1096,7 @@ def native_gates(data: dict) -> str:
     """
     blocks = []
     for ident in range(1, data["capacity"]):
-        for method in (1, 2, 3):
+        for method in (1, 2):
             blocks.append(
                 "\n".join(
                     [
@@ -1148,14 +1143,6 @@ def render(data: dict) -> dict[str, str]:
         )
         + "\n}\n"
     )
-    infiltrations = (
-        "types = {\n"
-        + "\n".join(
-            "\n".join("\t" + line for line in raid(ident, 3).splitlines())
-            for ident in range(1, data["capacity"])
-        )
-        + "\n}\n"
-    )
     facilities = (
         "types = {\n"
         + "\n".join(
@@ -1175,7 +1162,6 @@ def render(data: dict) -> dict[str, str]:
             data
         ),
         "common/raids/targeted_operations_raids.txt": raids,
-        "common/raids/targeted_operations_infiltration_raids.txt": infiltrations,
         "common/raids/targeted_operations_facility_raids.txt": facilities,
         "common/scripted_triggers/06_targeted_operations_native_gates.txt": native_gates(
             data

@@ -1,0 +1,65 @@
+# The host and literal operation type identify the native instance; sequence prevents case reuse.
+top_agency_started = {
+	if = {
+		limit = { top_agency_case_ready = yes }
+		set_temp_variable = { top_agency_host = FROM.id }
+		set_temp_variable = { top_agency_key = { value = top_agency_host multiply = 8 add = top_agency_method } }
+		set_variable = { top_agency_person^top_agency_key = TOP_arg_target }
+		set_variable = { top_agency_sequence^top_agency_key = TOP_case_sequence^TOP_arg_target }
+		set_variable = { top_agency_state^top_agency_key = TOP_case_state^TOP_arg_target }
+		set_variable = { top_agency_result^top_agency_key = 0 }
+	}
+}
+
+top_agency_outcome = {
+	set_temp_variable = { top_agency_host = FROM.id }
+	set_temp_variable = { top_agency_key = { value = top_agency_host multiply = 8 add = top_agency_method } }
+	set_temp_variable = { TOP_arg_target = top_agency_person^top_agency_key }
+	if = {
+		limit = { top_agency_receipt_matches = yes check_variable = { top_agency_result^top_agency_key < top_agency_tier } }
+		set_variable = { top_agency_result^top_agency_key = top_agency_tier }
+	}
+}
+
+# Ordinary and bonus native outcomes are additive; finalize once after both callbacks.
+top_agency_completed = {
+	set_temp_variable = { top_agency_host = FROM.id }
+	set_temp_variable = { top_agency_key = { value = top_agency_host multiply = 8 add = top_agency_method } }
+	set_temp_variable = { TOP_arg_target = top_agency_person^top_agency_key }
+	if = {
+		limit = { top_agency_receipt_matches = yes check_variable = { top_agency_result^top_agency_key > 0 } }
+		TOP_load_case = yes
+		set_temp_variable = { TOP_target = TOP_arg_target }
+		set_temp_variable = { TOP_method = top_agency_method }
+		set_temp_variable = { TOP_tier = top_agency_result^top_agency_key }
+		TOP_resolve_person_operation = yes
+	}
+	else_if = {
+		limit = {
+			check_variable = { TOP_arg_target > 0 }
+			check_variable = { top_agency_sequence^top_agency_key = TOP_case_sequence^TOP_arg_target }
+			check_variable = { TOP_case_method^TOP_arg_target = top_agency_method }
+			check_variable = { TOP_case_phase^TOP_arg_target = 3 }
+		}
+		set_temp_variable = { TOP_arg_sequence = top_agency_sequence^top_agency_key }
+		TOP_close_case = yes
+	}
+	set_variable = { top_agency_person^top_agency_key = 0 }
+	set_variable = { top_agency_sequence^top_agency_key = 0 }
+	set_variable = { top_agency_state^top_agency_key = 0 }
+	set_variable = { top_agency_result^top_agency_key = 0 }
+}
+
+# Run after the bound native result, while raid ROOT still identifies actor and victim.
+top_native_person_reaction = {
+	var:actor_country = {
+		if = {
+			limit = {
+				check_variable = { top_native_result_applied = 1 }
+				check_variable = { top_native_reaction_consent = 0 }
+				check_variable = { top_native_reaction_attribution > 1 }
+			}
+			PREV = { send_raid_event_to_victim = yes }
+		}
+	}
+}
