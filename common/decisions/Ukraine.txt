@@ -15660,6 +15660,232 @@ UKR_reactivate_sov_category = {
 			696 = { add_dynamic_modifier = { modifier = UKR_scrapped_su17_resources days = 365 } }
 		}
 	}
+
+	ukr_modernize_sov_equipment_mig27_sri_lanka_interest = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		cost = 10
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_interest_done_flag }
+			date > 1999.01.01
+			date < 2008.01.01
+			country_exists = SRI
+			check_variable = { ukraine_has_mig27_stockpile > 5 }
+		}
+
+		days_remove = 45
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig27_sri_lanka_interest"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_interest_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig27_sri_lanka_interest"
+
+			set_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_interest_done_flag
+			SRI = { add_opinion_modifier = { target = ROOT modifier = UKR_mig27_sri_lanka_talks } }
+			unlock_decision_tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_contract
+		}
+	}
+
+	ukr_modernize_sov_equipment_mig27_sri_lanka_contract = {
+		icon = GFX_decision_generic_air
+		ai_will_do = { base = 10 }
+
+		visible = {
+			has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_interest_done_flag
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_contract_flag }
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_offer_pending_flag }
+			date < 2008.01.01
+			country_exists = SRI
+			check_variable = { ukraine_has_mig27_stockpile > 5 }
+			check_variable = { ukraine_has_mig23_stockpile > 0 }
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_contract_opinion_tt
+				SRI = { has_opinion = { target = ROOT value > 14 } }
+			}
+		}
+
+		days_remove = 30
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig27_sri_lanka_contract"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_contract_terms_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig27_sri_lanka_contract"
+
+			set_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_offer_pending_flag
+			custom_effect_tooltip = ukr_modernize_sov_equipment_contract_offer_sent_SRI_tt
+			unlock_decision_tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation
+			hidden_effect = { SRI = { country_event = ukr_modernize_sov_equipment_mig27.1 } }
+		}
+	}
+
+	ukr_modernize_sov_equipment_mig27_sri_lanka_preparation = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_contract_flag
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_done_flag }
+		}
+
+		available = {
+			controls_state = 700 # Lviv
+			custom_trigger_tooltip = {
+				tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_stock_tt
+				check_variable = { ukraine_has_mig27_stockpile > 5 }
+				check_variable = { ukraine_has_mig23_stockpile > 0 }
+			}
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > 0.01 } }
+		custom_cost_text = cost_0_01
+
+		highlight_states = {
+			highlight_states_trigger = { state = 700 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 120
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig27_sri_lanka_preparation"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.01 }
+				modify_treasury_effect = yes
+			}
+			subtract_from_variable = { ukraine_has_mig27_stockpile = 6 tooltip = ukraine_storage_mig27_to_ldarz_tt }
+			subtract_from_variable = { ukraine_has_mig23_stockpile = 1 tooltip = ukraine_storage_mig23ub_to_ldarz_tt }
+			hidden_effect = { UKR_storage_refresh = yes }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig27_sri_lanka_preparation"
+
+			set_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_done_flag
+			UKR_sov_variant_mig27m = yes
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_done_tt
+			unlock_decision_tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_delivery
+			unlock_decision_tooltip = ukr_modernize_sov_equipment_mig27_restoration
+		}
+	}
+
+	ukr_modernize_sov_equipment_mig27_sri_lanka_delivery = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_done_flag
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_delivery_done_flag }
+		}
+
+		available = {
+			country_exists = SRI
+			NOT = { has_war_with = SRI }
+		}
+
+		days_remove = 14
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig27_sri_lanka_delivery"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig27_sri_lanka_delivery_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig27_sri_lanka_delivery"
+
+			set_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_delivery_done_flag
+			SRI = { save_event_target_as = ukr_storage_buyer }
+			set_temp_variable = { ukr_sov_amount = 6 }
+			event_target:ukr_storage_buyer = { UKR_sov_deliver_mig27m = yes }
+			set_temp_variable = { ukr_sov_amount = 1 }
+			event_target:ukr_storage_buyer = { UKR_sov_deliver_mig23 = yes }
+			set_temp_variable = { ukr_sale_price = 0.012 }
+			UKR_storage_sale_payment = yes
+		}
+	}
+
+	ukr_modernize_sov_equipment_mig27_restoration = {
+		icon = GFX_decision_generic_air
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			has_country_flag = ukr_modernize_sov_equipment_mig27_sri_lanka_preparation_done_flag
+			check_variable = { ukraine_has_mig27_stockpile > 0 }
+		}
+
+		available = {
+			controls_state = 700 # Lviv
+		}
+
+		custom_cost_trigger = { check_variable = { treasury > 0.02 } }
+		custom_cost_text = cost_0_02
+
+		highlight_states = {
+			highlight_states_trigger = { state = 700 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 150
+		days_re_enable = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig27_restoration"
+
+			hidden_effect = {
+				set_temp_variable = { treasury_change = -0.02 }
+				modify_treasury_effect = yes
+			}
+			# a squadron of 12, or what is left
+			set_variable = { ukraine_mig27_restoration_batch = 12 }
+			if = {
+				limit = { check_variable = { ukraine_has_mig27_stockpile < 12 } }
+				set_variable = { ukraine_mig27_restoration_batch = ukraine_has_mig27_stockpile }
+			}
+			subtract_from_variable = { ukraine_has_mig27_stockpile = ukraine_mig27_restoration_batch tooltip = ukraine_storage_mig27_restored_tt }
+			hidden_effect = { UKR_storage_refresh = yes }
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig27_restoration"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig27_restoration_done_tt
+			hidden_effect = {
+				set_temp_variable = { ukr_sov_amount = ukraine_mig27_restoration_batch }
+				UKR_sov_variant_mig27m = yes
+				UKR_sov_deliver_mig27m = yes
+				set_variable = { ukraine_mig27_restoration_batch = 0 }
+			}
+		}
+	}
 }
 
 # Captured enemy equipment, rebuilt by volunteers: needs no state plant or factory
