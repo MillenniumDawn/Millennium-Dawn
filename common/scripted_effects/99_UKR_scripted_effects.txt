@@ -8615,3 +8615,57 @@ UKR_storage_sell_s75 = {
 	UKR_storage_sale_payment = yes
 	UKR_storage_sanctioned_sale_backlash = yes
 }
+
+# S-125 launchers for a buyer or for us (4 per battalion): the Soviet S-125 Neva
+UKR_s125_deliver_base = {
+	if = {
+		limit = { has_dlc = "No Step Back" }
+		add_equipment_to_stockpile = { type = medium_tank_aa_chassis_0 variant_name = "S-125 Neva" amount = ukr_sov_amount producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = SP_Anti_Air_0 variant_name = "S-125 Pechora" amount = ukr_sov_amount producer = SOV }
+	}
+}
+# Our modernized launchers: S-125 Pechora-2D if developed, otherwise S-125M Pechora
+UKR_s125_deliver_modern = {
+	if = {
+		limit = { has_country_flag = UKR_s125_pechora_2d_flag }
+		if = {
+			limit = { has_dlc = "No Step Back" }
+			add_equipment_to_stockpile = { type = medium_tank_aa_chassis_0 variant_name = "S-125 Pechora-2D" amount = ukr_sov_amount producer = UKR }
+		}
+		else = {
+			add_equipment_to_stockpile = { type = SP_Anti_Air_0 variant_name = "S-125 Pechora-2D" amount = ukr_sov_amount producer = UKR }
+		}
+	}
+	else = {
+		if = {
+			limit = { has_dlc = "No Step Back" }
+			add_equipment_to_stockpile = { type = medium_tank_aa_chassis_0 variant_name = "S-125M Pechora" amount = ukr_sov_amount producer = UKR }
+		}
+		else = {
+			add_equipment_to_stockpile = { type = SP_Anti_Air_0 variant_name = "S-125M Pechora" amount = ukr_sov_amount producer = UKR }
+		}
+	}
+}
+# An S-125 battalion back on station in Dnipropetrovsk, Kharkiv, Mykolaiv or Kherson: +1 anti-air
+UKR_s125_site_reactivate = {
+	random_owned_controlled_state = {
+		limit = { UKR_s125_site_state = yes }
+		add_building_construction = { type = anti_air_building level = 1 instant_build = yes }
+	}
+}
+# Sell one stored battalion to ukr_storage_buyer for temp ukr_sale_price: as a site (+1 anti-air) or as 4 mobile launchers
+UKR_storage_sell_s125_site = {
+	subtract_from_variable = { ukraine_has_s125_stockpile = 1 tooltip = ukraine_storage_s125_sold_tt }
+	event_target:ukr_storage_buyer = { UKR_air_defense_site_to_buyer = yes }
+	UKR_storage_sale_payment = yes
+	UKR_storage_sanctioned_sale_backlash = yes
+}
+UKR_storage_sell_s125_mobile = {
+	subtract_from_variable = { ukraine_has_s125_stockpile = 1 tooltip = ukraine_storage_s125_sold_tt }
+	set_temp_variable = { ukr_sov_amount = 4 }
+	event_target:ukr_storage_buyer = { UKR_s125_deliver_base = yes }
+	UKR_storage_sale_payment = yes
+	UKR_storage_sanctioned_sale_backlash = yes
+}
