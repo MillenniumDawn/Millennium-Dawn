@@ -813,10 +813,10 @@ def localisation(data: dict) -> str:
     for ident, name in names(data).items():
         lines += [
             f' TOP_person_{ident}: "{name}"',
-            f' TOP_drone_{ident}: "Remote Strike: {name}"',
-            f' TOP_drone_{ident}_desc: "Conduct the authorized native map operation against this target package."',
-            f' TOP_capture_{ident}: "Capture Raid: {name}"',
-            f' TOP_capture_{ident}_desc: "Attempt to secure this target alive through a native special-forces raid."',
+            f' raid_type_TOP_drone_{ident}: "Remote Strike: {name}"',
+            f' raid_type_TOP_drone_{ident}_desc: "Conduct the authorized native map operation against this target package."',
+            f' raid_type_TOP_capture_{ident}: "Capture Raid: {name}"',
+            f' raid_type_TOP_capture_{ident}_desc: "Attempt to secure this target alive through a native special-forces raid."',
         ]
     for target in data["targets"]:
         lines.append(

@@ -794,3 +794,40 @@ def test_ai_liaison_reports_bootstrap_defensive_knowledge_without_offense():
     assert "TOP_prepare_ai_liaison_source = yes" in depth
     assert "TOP_liaison_source_available = {" in triggers
     assert "TOP_liaison_deception_available = {" in triggers
+
+
+def test_playtest_gui_and_runtime_fixes_stay_wired():
+    view = block(
+        "common/scripted_effects/01_targeted_operations_view.txt", "TOP_build_view"
+    )
+    assert "limit = { check_variable = { TOP_tab = 4 } }" in view
+    assert (
+        "if = { limit = { check_variable = { TOP_tab = 0 } } add_to_array = { TOP_visible_members"
+        in view
+    )
+
+    on_actions = read("common/on_actions/00_on_actions.txt")
+    assert (
+        "if = { limit = { check_variable = { TOP_open = 1 } } TOP_refresh_view = yes }"
+        in on_actions
+    )
+
+    events = read("events/Targeted Operations.txt")
+    unilateral = events[events.index("name = TOP_authorization.2.b") :]
+    unilateral = unilateral[: unilateral.index("log =")]
+    assert "NOT = { check_variable = { TOP_proposal_doctrine = 1 } }" in unilateral
+    assert "var:TOP_proposal_host = { has_war_with = PREV }" in unilateral
+
+    feedback = read("common/scripted_localisation/01_targeted_operations_status.txt")
+    for key in (
+        "TOP_designation_package_exists",
+        "TOP_designation_organization_ready",
+        "TOP_designation_organization_locked",
+        "TOP_designation_needs_power",
+    ):
+        assert key in feedback
+    assert "localization_key = TOP_authorized_method_none" in feedback
+
+    legacy = read("common/scripted_effects/01_targeted_operations_legacy_effects.txt")
+    assert "event_target:GLOBAL_bin_laden_hideout = {" not in legacy
+    assert 'icon = "GFX_coups"' in read("common/game_rules/01_targeted_operations.txt")
