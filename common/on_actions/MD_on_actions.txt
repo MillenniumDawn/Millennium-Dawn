@@ -280,11 +280,25 @@ on_actions = {
 		}
 	}
 
+	# Expected spending shifts with war; recalculate when a war starts or ends instead of waiting for the 1st
+	on_war = {
+		effect = {
+			calculate_expected_spending = yes
+		}
+	}
+
+	on_peace = {
+		effect = {
+			calculate_expected_spending = yes
+		}
+	}
+
 	#ROOT is winner #FROM gets annexed - For civil wars on_civil_war_end is also fired
 	on_annex = {
 		effect = {
 			update_neighbors_effects = yes
 			civil_war_cleanup_hooks = yes
+			FROM = { clear_policy_transition = yes }
 
 			if = {
 				limit = {
@@ -1386,6 +1400,19 @@ on_actions = {
 
 			# Currency system — runs for every country every month
 			calculate_currency_strength = yes
+
+			if = {
+				limit = {
+					OR = {
+						has_dynamic_modifier = { modifier = policy_transition_costs }
+						has_variable = policy_transition_population_tax_peak
+						has_variable = policy_transition_corporate_tax_peak
+						has_variable = policy_transition_population_tax_low
+						has_variable = policy_transition_corporate_tax_low
+					}
+				}
+				policy_transition_monthly_decay = yes
+			}
 
 			if = { limit = { is_ai = no }
 				space_automation_monthly = yes
