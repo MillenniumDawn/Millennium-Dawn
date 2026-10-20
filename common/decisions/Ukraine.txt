@@ -20911,6 +20911,726 @@ UKR_develop_domestic_btr4_category = {
 	}
 }
 
+UKR_repair_bombers_category = {
+	UKR_fund_narp_aircraft_manufacturer = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 365
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 2 }
+			has_political_power > 10
+			has_air_experience > 2
+		}
+		ai_hint_pp_cost = 10
+		custom_cost_text = cost_2_0_pp_10_air_2
+		visible = {
+			NOT = { has_country_flag = UKR_narp_funded_flag }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_fund_narp_aircraft_manufacturer"
+			set_temp_variable = { treasury_change = -2 }
+			modify_treasury_effect = yes
+			add_political_power = -10
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_fund_narp_aircraft_manufacturer"
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_size = 1
+				add_mio_funds = 1000
+				add_to_variable = { free_trait_picks = 2 }
+			}
+			set_country_flag = UKR_narp_funded_flag
+		}
+	}
+
+	UKR_repair_slots_expand = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 300
+		days_re_enable = 40
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 1 }
+			has_political_power > 10
+			has_air_experience > 2
+		}
+		ai_hint_pp_cost = 10
+		custom_cost_text = cost_1_0_pp_10_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { UKR_repair_slots_max < 6 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_repair_slots_expand"
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			add_political_power = -10
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_repair_slots_expand"
+			add_to_variable = { UKR_repair_slots_max = 1 }
+			UKR_repair_recalc_slots = yes
+			custom_effect_tooltip = UKR_repair_slots_expand_effect_tt
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 1000
+			}
+		}
+	}
+
+	UKR_tu160_repair_1 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 160
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.5 }
+			has_air_experience > 10
+		}
+		custom_cost_text = cost_0_5_air_10
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu160_storage > 0 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu160_repair_1 }
+			NOT = { has_decision = UKR_tu160_repair_2 }
+			NOT = { has_decision = UKR_tu160_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 0 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu160_repair_1"
+			add_to_variable = { UKR_repair_in_progress = 1 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu160 = -1 }
+			modify_tu160_storage = yes
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			air_experience = -10
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu160_repair_1"
+			subtract_from_variable = { UKR_repair_in_progress = 1 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 1 }
+			UKR_deliver_tu160 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 500
+			}
+		}
+	}
+
+	UKR_tu160_repair_2 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 320
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 1 }
+			has_air_experience > 10
+		}
+		custom_cost_text = cost_1_0_air_10
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu160_storage > 1 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu160_repair_1 }
+			NOT = { has_decision = UKR_tu160_repair_2 }
+			NOT = { has_decision = UKR_tu160_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 1 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu160_repair_2"
+			add_to_variable = { UKR_repair_in_progress = 2 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu160 = -2 }
+			modify_tu160_storage = yes
+			set_temp_variable = { treasury_change = -1 }
+			modify_treasury_effect = yes
+			air_experience = -10
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu160_repair_2"
+			subtract_from_variable = { UKR_repair_in_progress = 2 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 2 }
+			UKR_deliver_tu160 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 1000
+			}
+		}
+	}
+
+	UKR_tu160_repair_3 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 480
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 1.5 }
+			has_air_experience > 10
+		}
+		custom_cost_text = cost_1_5_air_10
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu160_storage > 2 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu160_repair_1 }
+			NOT = { has_decision = UKR_tu160_repair_2 }
+			NOT = { has_decision = UKR_tu160_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 2 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu160_repair_3"
+			add_to_variable = { UKR_repair_in_progress = 3 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu160 = -3 }
+			modify_tu160_storage = yes
+			set_temp_variable = { treasury_change = -1.5 }
+			modify_treasury_effect = yes
+			air_experience = -10
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu160_repair_3"
+			subtract_from_variable = { UKR_repair_in_progress = 3 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 3 }
+			UKR_deliver_tu160 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 1500
+			}
+		}
+	}
+
+	UKR_tu95_repair_1 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 120
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.25 }
+			has_air_experience > 2
+		}
+		custom_cost_text = cost_0_25_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu95_storage > 0 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu95_repair_1 }
+			NOT = { has_decision = UKR_tu95_repair_2 }
+			NOT = { has_decision = UKR_tu95_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 0 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu95_repair_1"
+			add_to_variable = { UKR_repair_in_progress = 1 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu95 = -1 }
+			modify_tu95_storage = yes
+			set_temp_variable = { treasury_change = -0.25 }
+			modify_treasury_effect = yes
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu95_repair_1"
+			subtract_from_variable = { UKR_repair_in_progress = 1 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 1 }
+			UKR_deliver_tu95 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 300
+			}
+		}
+	}
+
+	UKR_tu95_repair_2 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 240
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.5 }
+			has_air_experience > 2
+		}
+		custom_cost_text = cost_0_5_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu95_storage > 1 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu95_repair_1 }
+			NOT = { has_decision = UKR_tu95_repair_2 }
+			NOT = { has_decision = UKR_tu95_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 1 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu95_repair_2"
+			add_to_variable = { UKR_repair_in_progress = 2 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu95 = -2 }
+			modify_tu95_storage = yes
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu95_repair_2"
+			subtract_from_variable = { UKR_repair_in_progress = 2 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 2 }
+			UKR_deliver_tu95 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 600
+			}
+		}
+	}
+
+	UKR_tu95_repair_3 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 360
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.75 }
+			has_air_experience > 2
+		}
+		custom_cost_text = cost_0_75_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu95_storage > 2 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu95_repair_1 }
+			NOT = { has_decision = UKR_tu95_repair_2 }
+			NOT = { has_decision = UKR_tu95_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 2 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu95_repair_3"
+			add_to_variable = { UKR_repair_in_progress = 3 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu95 = -3 }
+			modify_tu95_storage = yes
+			set_temp_variable = { treasury_change = -0.75 }
+			modify_treasury_effect = yes
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu95_repair_3"
+			subtract_from_variable = { UKR_repair_in_progress = 3 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 3 }
+			UKR_deliver_tu95 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 900
+			}
+		}
+	}
+
+	UKR_tu22m2_repair_1 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 60
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.3 }
+			has_air_experience > 2
+		}
+		custom_cost_text = cost_0_3_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu22m2_storage > 0 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu22m2_repair_1 }
+			NOT = { has_decision = UKR_tu22m2_repair_2 }
+			NOT = { has_decision = UKR_tu22m2_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 0 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu22m2_repair_1"
+			add_to_variable = { UKR_repair_in_progress = 1 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu22m2 = -1 }
+			modify_tu22m2_storage = yes
+			set_temp_variable = { treasury_change = -0.3 }
+			modify_treasury_effect = yes
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu22m2_repair_1"
+			subtract_from_variable = { UKR_repair_in_progress = 1 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 1 }
+			UKR_deliver_tu22m2 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 300
+			}
+		}
+	}
+
+	UKR_tu22m2_repair_2 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 120
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.6 }
+			has_air_experience > 2
+		}
+		custom_cost_text = cost_0_6_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu22m2_storage > 1 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu22m2_repair_1 }
+			NOT = { has_decision = UKR_tu22m2_repair_2 }
+			NOT = { has_decision = UKR_tu22m2_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 1 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu22m2_repair_2"
+			add_to_variable = { UKR_repair_in_progress = 2 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu22m2 = -2 }
+			modify_tu22m2_storage = yes
+			set_temp_variable = { treasury_change = -0.6 }
+			modify_treasury_effect = yes
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu22m2_repair_2"
+			subtract_from_variable = { UKR_repair_in_progress = 2 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 2 }
+			UKR_deliver_tu22m2 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 600
+			}
+		}
+	}
+
+	UKR_tu22m2_repair_3 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 180
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.9 }
+			has_air_experience > 2
+		}
+		custom_cost_text = cost_0_9_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu22m2_storage > 2 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu22m2_repair_1 }
+			NOT = { has_decision = UKR_tu22m2_repair_2 }
+			NOT = { has_decision = UKR_tu22m2_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 2 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu22m2_repair_3"
+			add_to_variable = { UKR_repair_in_progress = 3 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu22m2 = -3 }
+			modify_tu22m2_storage = yes
+			set_temp_variable = { treasury_change = -0.9 }
+			modify_treasury_effect = yes
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu22m2_repair_3"
+			subtract_from_variable = { UKR_repair_in_progress = 3 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 3 }
+			UKR_deliver_tu22m2 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 900
+			}
+		}
+	}
+
+	UKR_tu142_repair_1 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 80
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.3 }
+			has_air_experience > 2
+		}
+		custom_cost_text = cost_0_3_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu142_storage > 0 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu142_repair_1 }
+			NOT = { has_decision = UKR_tu142_repair_2 }
+			NOT = { has_decision = UKR_tu142_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 0 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu142_repair_1"
+			add_to_variable = { UKR_repair_in_progress = 1 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu142 = -1 }
+			modify_tu142_storage = yes
+			set_temp_variable = { treasury_change = -0.3 }
+			modify_treasury_effect = yes
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu142_repair_1"
+			subtract_from_variable = { UKR_repair_in_progress = 1 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 1 }
+			UKR_deliver_tu142 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 300
+			}
+		}
+	}
+
+	UKR_tu142_repair_2 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 160
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.6 }
+			has_air_experience > 2
+		}
+		custom_cost_text = cost_0_6_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu142_storage > 1 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu142_repair_1 }
+			NOT = { has_decision = UKR_tu142_repair_2 }
+			NOT = { has_decision = UKR_tu142_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 1 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu142_repair_2"
+			add_to_variable = { UKR_repair_in_progress = 2 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu142 = -2 }
+			modify_tu142_storage = yes
+			set_temp_variable = { treasury_change = -0.6 }
+			modify_treasury_effect = yes
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu142_repair_2"
+			subtract_from_variable = { UKR_repair_in_progress = 2 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 2 }
+			UKR_deliver_tu142 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 600
+			}
+		}
+	}
+
+	UKR_tu142_repair_3 = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 240
+		days_re_enable = 10
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.9 }
+			has_air_experience > 2
+		}
+		custom_cost_text = cost_0_9_air_2
+		visible = {
+			has_country_flag = UKR_narp_funded_flag
+			check_variable = { tu142_storage > 2 }
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+		}
+		available = {
+			NOT = { has_decision = UKR_tu142_repair_1 }
+			NOT = { has_decision = UKR_tu142_repair_2 }
+			NOT = { has_decision = UKR_tu142_repair_3 }
+			custom_trigger_tooltip = {
+				tooltip = UKR_repair_slots_tt
+				check_variable = { UKR_repair_slots_free > 2 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_tu142_repair_3"
+			add_to_variable = { UKR_repair_in_progress = 3 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { modify_tu142 = -3 }
+			modify_tu142_storage = yes
+			set_temp_variable = { treasury_change = -0.9 }
+			modify_treasury_effect = yes
+			air_experience = -2
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_tu142_repair_3"
+			subtract_from_variable = { UKR_repair_in_progress = 3 }
+			UKR_repair_recalc_slots = yes
+			set_temp_variable = { UKR_bomber_delivery_amount = 3 }
+			UKR_deliver_tu142 = yes
+			mio:UKR_narp_aircraft_manufacturer = {
+				add_mio_funds = 900
+			}
+		}
+	}
+
+	UKR_finish_repair = {
+		icon = GFX_decision_icon_UKR_strat_aviation
+		days_remove = 15
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+		custom_cost_trigger = {
+			check_variable = { treasury > 0.5 }
+			has_political_power > 20
+		}
+		custom_cost_text = cost_0_5_pp_20
+		ai_hint_pp_cost = 20
+		visible = {
+			NOT = { has_country_flag = UKR_finished_repair_flag }
+			check_variable = { tu22m2_storage < 1 }
+			check_variable = { tu95_storage < 1 }
+			check_variable = { tu160_storage < 1 }
+			check_variable = { tu142_storage < 1 }
+		}
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = UKR_no_repairs_in_progress_tt
+				check_variable = { UKR_repair_in_progress = 0 }
+			}
+		}
+		complete_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision UKR_finish_repair"
+			set_temp_variable = { treasury_change = -0.5 }
+			modify_treasury_effect = yes
+			add_political_power = -20
+		}
+		remove_effect = {
+			log = "[GetDateText]: [This.GetName]: Decision remove UKR_finish_repair"
+			remove_ideas = UKR_strat_bomb_old
+			add_timed_idea = { idea = UKR_strat_bomb_repaired days = 365 }
+			hidden_effect = {
+				set_country_flag = UKR_finished_repair_flag
+			}
+		}
+	}
+}
+
 UKR_ai_path_category = {
 	UKR_rally_the_our_ukraine = {
 
