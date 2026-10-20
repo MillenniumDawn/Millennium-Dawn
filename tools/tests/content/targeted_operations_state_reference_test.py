@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 import pytest
@@ -117,19 +118,18 @@ def _effect_text(path, name):
     return _named_block(text, name)
 
 
-def test_nested_registry_location_selection_writes_back_to_country_scope():
+def test_nested_registry_location_selection_writes_the_chain_temp():
     registry = (
         ROOT / "common/scripted_effects/01_targeted_operations_registry.txt"
     ).read_text(encoding="utf-8")
     for group in (1, 17):
         choice = _named_block(registry, f"TOP_choose_location_{group}")
         activation = _named_block(registry, f"TOP_activate_group_{group}")
-        assert "ROOT.TOP_activation_state = THIS" in choice
-        assert "set_temp_variable = { TOP_activation_state = THIS }" not in choice
-        assert "PREV.TOP_activation_host = controller" in activation
+        assert "set_temp_variable = { TOP_activation_state = THIS }" in choice
+        assert "set_temp_variable = { TOP_activation_host = controller }" in activation
 
 
-def test_numeric_loop_selectors_write_results_to_the_owner_frame():
+def test_numeric_loop_selectors_write_results_to_chain_temps():
     find_org = _effect_text(
         "common/scripted_effects/00_targeted_operations_effects.txt",
         "TOP_find_group_org",
@@ -163,21 +163,21 @@ def test_numeric_loop_selectors_write_results_to_the_owner_frame():
         "TOP_exploit_linked_targets",
     )
 
-    assert "PREV.TOP_org_slot = top_find_i" in find_org
-    assert "PREV.TOP_new_dossiers_this_tick = 1" in country_tick
-    assert "PREV.TOP_modern_candidate = top_modern_target" in modern
-    assert "PREV.TOP_modern_best_score = TOP_modern_score" in modern
-    assert "PREV.TOP_political_candidate = top_political_person" in political
-    assert "PREV.TOP_political_lowest = TOP_political_score" in political
-    assert "PREV.TOP_candidate = top_generated_id" in successor
-    assert "global.TOP_state^PREV.TOP_predecessor" in successor
-    assert "PREV.TOP_visit_open_candidate = top_visit_person" in visit
-    assert "TOP_visit_trigger_state = PREV.TOP_visit_open_state" in visit
-    assert "PREV.TOP_liaison_pair_found = 1" in liaison
+    assert "{ TOP_org_slot = top_find_i }" in find_org
+    assert "{ TOP_new_dossiers_this_tick = 1 }" in country_tick
+    assert "{ TOP_modern_candidate = top_modern_target }" in modern
+    assert "{ TOP_modern_best_score = TOP_modern_score }" in modern
+    assert "{ TOP_political_candidate = top_political_person }" in political
+    assert "{ TOP_political_lowest = TOP_political_score }" in political
+    assert "{ TOP_candidate = top_generated_id }" in successor
+    assert "global.TOP_state^TOP_predecessor" in successor
+    assert "{ TOP_visit_open_candidate = top_visit_person }" in visit
+    assert "TOP_visit_trigger_state = TOP_visit_open_state" in visit
+    assert "{ TOP_liaison_pair_found = 1 }" in liaison
     assert "PREV.TOP_liaison_pair_until^top_liaison_index" in liaison
-    assert "PREV.TOP_linked_first = top_linked_target" in linked
-    assert "PREV.TOP_linked_second = top_linked_target" in linked
-    assert linked.count("PREV.TOP_linked_best_score = TOP_linked_score") == 2
+    assert "{ TOP_linked_first = top_linked_target }" in linked
+    assert "{ TOP_linked_second = top_linked_target }" in linked
+    assert linked.count("{ TOP_linked_best_score = TOP_linked_score }") == 2
 
 
 def test_state_and_fifo_selectors_do_not_depend_on_loop_local_temporaries():
@@ -194,12 +194,10 @@ def test_state_and_fifo_selectors_do_not_depend_on_loop_local_temporaries():
         "TOP_transfer_recorded_custody",
     )
 
-    assert "ROOT.TOP_visit_open_state = THIS" in visit
+    assert "{ TOP_visit_open_state = THIS }" in visit
     assert "TOP_oversight_queue^0" in oversight
     assert "for_each_loop" not in oversight
-    assert (
-        "global.TOP_custody_state^PREV.TOP_transfer_recipient_target = THIS" in transfer
-    )
+    assert "global.TOP_custody_state^TOP_transfer_recipient_target = THIS" in transfer
 
 
 @pytest.mark.parametrize("entry", STATE_GUARDS)
@@ -367,3 +365,40 @@ def test_retired_encoded_native_binding_cannot_be_recycled():
     review.begin_operation()
     assert review.binding(method=1, state=ENCODED_STATE)
     assert review.countries[1]["power"] == 100
+
+
+SCOPED_NAME = re.compile(r"(?<![\w.])(?:(?:PREV|ROOT|FROM)\.)+([A-Za-z_]\w*)")
+TEMP_NAME = re.compile(
+    r"\b(?:(?:set|add_to|subtract_from|multiply|divide|clamp)_temp_variable\s*=\s*\{"
+    r"|\b(?:value|index)\s*=)\s*(?:(?:PREV|ROOT|FROM)\.)*([A-Za-z_]\w*)"
+)
+PERSISTENT_NAME = re.compile(
+    r"\bset_variable\s*=\s*\{\s*(?:var\s*=\s*)?(?:(?:PREV|ROOT|FROM)\.)*([A-Za-z_]\w*)"
+)
+
+
+def test_temp_variables_are_never_scope_prefixed():
+    # The engine reads PREV.x / ROOT.x as 0 when x is a temp; temps are chain-wide.
+    scripts = [
+        path
+        for folder in ("common", "events")
+        for path in (ROOT / folder).rglob("*argeted*perations*.txt")
+    ]
+    texts = {
+        path: "\n".join(
+            line.split("#", 1)[0]
+            for line in path.read_text(encoding="utf-8-sig").splitlines()
+        )
+        for path in scripts
+    }
+    temps = {match for text in texts.values() for match in TEMP_NAME.findall(text)}
+    temps -= {
+        match for text in texts.values() for match in PERSISTENT_NAME.findall(text)
+    }
+    found = [
+        f"{path.relative_to(ROOT)}: {match.group(0)}"
+        for path, text in texts.items()
+        for match in SCOPED_NAME.finditer(text)
+        if match.group(1) in temps
+    ]
+    assert not found

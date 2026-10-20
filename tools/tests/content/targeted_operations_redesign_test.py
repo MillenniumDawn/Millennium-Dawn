@@ -590,10 +590,8 @@ def test_custody_bda_and_crisis_queues_preserve_immutable_records():
     )
     facility_damage = _named_block(organizations, "TOP_damage_organization_facility")
     assert (
-        facility_damage.count("set_temp_variable = { PREV.TOP_report_enqueue_impact =")
-        == 5
+        facility_damage.count("set_temp_variable = { TOP_report_enqueue_impact =") == 5
     )
-    assert "set_temp_variable = { TOP_report_enqueue_impact =" not in facility_damage
     assert "TOP_dispatch_next_field_report = yes" in report_finish
     report_event = events[
         events.index("id = TOP_redesign.10") : events.index("id = TOP_redesign.11")

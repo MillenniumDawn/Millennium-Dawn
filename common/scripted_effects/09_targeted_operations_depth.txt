@@ -69,9 +69,9 @@ TOP_request_liaison = {
 			value = top_liaison_key
 			index = top_liaison_index
 			if = {
-				limit = { check_variable = { top_liaison_key = PREV.TOP_liaison_pair_key } }
+				limit = { check_variable = { top_liaison_key = TOP_liaison_pair_key } }
 				set_variable = { PREV.TOP_liaison_pair_until^top_liaison_index = { value = global.TOP_clock add = 91 } }
-				set_temp_variable = { PREV.TOP_liaison_pair_found = 1 }
+				set_temp_variable = { TOP_liaison_pair_found = 1 }
 			}
 		}
 		if = {
@@ -84,9 +84,9 @@ TOP_request_liaison = {
 		var:TOP_liaison_target_country = {
 			if = {
 				limit = { check_variable = { TOP_incoming_liaison_actor = 0 } }
-				set_variable = { TOP_incoming_liaison_actor = PREV.TOP_liaison_actor }
-				set_variable = { TOP_incoming_liaison_kind = PREV.TOP_liaison_subject_kind }
-				set_variable = { TOP_incoming_liaison_id = PREV.TOP_liaison_subject_id }
+				set_variable = { TOP_incoming_liaison_actor = TOP_liaison_actor }
+				set_variable = { TOP_incoming_liaison_kind = TOP_liaison_subject_kind }
+				set_variable = { TOP_incoming_liaison_id = TOP_liaison_subject_id }
 				country_event = { id = TOP_redesign.30 days = 1 }
 			}
 			else = {
@@ -187,25 +187,15 @@ TOP_prepare_liaison_snapshot = {
 		set_temp_variable = { TOP_liaison_state = 0 }
 		var:TOP_liaison_host = {
 			random_controlled_state = {
-				limit = { NOT = { check_variable = { THIS.id = PREV.PREV.TOP_liaison_truth_state } } }
-				set_temp_variable = { PREV.PREV.TOP_liaison_state = THIS }
+				limit = { NOT = { check_variable = { THIS.id = TOP_liaison_truth_state } } }
+				set_temp_variable = { TOP_liaison_state = THIS }
 			}
 		}
 	}
 }
 
-# Runs in the requester scope using the snapshot prepared by PREV.
+# Runs in the requester scope and reads the temps TOP_prepare_liaison_snapshot just set.
 TOP_merge_liaison_snapshot = {
-	set_temp_variable = { TOP_liaison_snapshot_kind = PREV.TOP_liaison_snapshot_kind }
-	set_temp_variable = { TOP_liaison_snapshot_id = PREV.TOP_liaison_snapshot_id }
-	set_temp_variable = { TOP_liaison_axis_1 = PREV.TOP_liaison_axis_1 }
-	set_temp_variable = { TOP_liaison_axis_2 = PREV.TOP_liaison_axis_2 }
-	set_temp_variable = { TOP_liaison_axis_3 = PREV.TOP_liaison_axis_3 }
-	set_temp_variable = { TOP_liaison_state = PREV.TOP_liaison_state }
-	set_temp_variable = { TOP_liaison_host = PREV.TOP_liaison_host }
-	set_temp_variable = { TOP_liaison_age = PREV.TOP_liaison_age }
-	set_temp_variable = { TOP_liaison_leak_chance = PREV.TOP_liaison_leak_chance }
-	set_temp_variable = { TOP_liaison_response_reliability = PREV.TOP_liaison_response_reliability }
 	set_variable = { TOP_liaison_last_result = TOP_liaison_response_reliability }
 	if = {
 		limit = { check_variable = { TOP_liaison_snapshot_kind = 1 } }
@@ -543,12 +533,12 @@ TOP_exploit_linked_targets = {
 			set_temp_variable = { TOP_linked_score = { value = TOP_identity_confidence^top_linked_target add = TOP_location_confidence^top_linked_target add = TOP_pattern_confidence^top_linked_target } }
 			if = {
 				limit = {
-					check_variable = { global.TOP_affiliation^top_linked_target = PREV.TOP_capture_group }
+					check_variable = { global.TOP_affiliation^top_linked_target = TOP_capture_group }
 					check_variable = { TOP_linked_score < 300 }
-					check_variable = { TOP_linked_score < PREV.TOP_linked_best_score }
+					check_variable = { TOP_linked_score < TOP_linked_best_score }
 				}
-				set_temp_variable = { PREV.TOP_linked_first = top_linked_target }
-				set_temp_variable = { PREV.TOP_linked_best_score = TOP_linked_score }
+				set_temp_variable = { TOP_linked_first = top_linked_target }
+				set_temp_variable = { TOP_linked_best_score = TOP_linked_score }
 			}
 		}
 		if = {
@@ -565,13 +555,13 @@ TOP_exploit_linked_targets = {
 			set_temp_variable = { TOP_linked_score = { value = TOP_identity_confidence^top_linked_target add = TOP_location_confidence^top_linked_target add = TOP_pattern_confidence^top_linked_target } }
 			if = {
 				limit = {
-					check_variable = { global.TOP_affiliation^top_linked_target = PREV.TOP_capture_group }
-					NOT = { check_variable = { top_linked_target = PREV.TOP_linked_first } }
+					check_variable = { global.TOP_affiliation^top_linked_target = TOP_capture_group }
+					NOT = { check_variable = { top_linked_target = TOP_linked_first } }
 					check_variable = { TOP_linked_score < 300 }
-					check_variable = { TOP_linked_score < PREV.TOP_linked_best_score }
+					check_variable = { TOP_linked_score < TOP_linked_best_score }
 				}
-				set_temp_variable = { PREV.TOP_linked_second = top_linked_target }
-				set_temp_variable = { PREV.TOP_linked_best_score = TOP_linked_score }
+				set_temp_variable = { TOP_linked_second = top_linked_target }
+				set_temp_variable = { TOP_linked_best_score = TOP_linked_score }
 			}
 		}
 		if = {

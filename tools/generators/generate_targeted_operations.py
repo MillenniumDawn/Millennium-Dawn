@@ -621,7 +621,7 @@ def registry(data: dict) -> str:
             f"\tTOP_choose_location_{gid} = yes",
             "\tif = {",
             "\t\tlimit = { NOT = { check_variable = { TOP_activation_state = 0 } } }",
-            "\t\tvar:TOP_activation_state = { set_temp_variable = { PREV.TOP_activation_host = controller } }",
+            "\t\tvar:TOP_activation_state = { set_temp_variable = { TOP_activation_host = controller } }",
             f"\t\tset_variable = {{ global.TOP_group_state^{gid} = TOP_activation_state }}",
             f"\t\tset_variable = {{ global.TOP_group_host^{gid} = TOP_activation_host }}",
         ]
@@ -652,7 +652,7 @@ def registry(data: dict) -> str:
                 "if = {",
                 "\tlimit = { check_variable = { TOP_org_slot > -1 } NOT = { check_variable = { global.active_terror_hq^TOP_org_slot = 0 } } }",
                 "\tvar:global.active_terror_hq^TOP_org_slot = {",
-                "\t\tif = { limit = { controller = { exists = yes } } set_temp_variable = { ROOT.TOP_activation_state = THIS } }",
+                "\t\tif = { limit = { controller = { exists = yes } } set_temp_variable = { TOP_activation_state = THIS } }",
                 "\t}",
                 "}",
             ]
@@ -666,14 +666,14 @@ def registry(data: dict) -> str:
                 location += [
                     "if = {",
                     f"\tlimit = {{ check_variable = {{ TOP_activation_state = 0 }} {host} = {{ exists = yes num_of_controlled_states > 0 }} }}",
-                    f"\t{host} = {{ capital_scope = {{ if = {{ limit = {{ controller = {{ exists = yes }} }} set_temp_variable = {{ ROOT.TOP_activation_state = THIS }} }} }} }}",
+                    f"\t{host} = {{ capital_scope = {{ if = {{ limit = {{ controller = {{ exists = yes }} }} set_temp_variable = {{ TOP_activation_state = THIS }} }} }} }}",
                     "}",
                 ]
                 continue
             location += [
                 "if = {",
                 f"\tlimit = {{ check_variable = {{ TOP_activation_state = 0 }} {host} = {{ exists = yes num_of_controlled_states > 0 }} }}",
-                f"\t{host} = {{ random_controlled_state = {{ set_temp_variable = {{ ROOT.TOP_activation_state = THIS }} }} }}",
+                f"\t{host} = {{ random_controlled_state = {{ set_temp_variable = {{ TOP_activation_state = THIS }} }} }}",
                 "}",
             ]
         output += "\n" + block(f"TOP_choose_location_{gid}", location)

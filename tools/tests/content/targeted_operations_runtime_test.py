@@ -146,7 +146,7 @@ def test_visit_cases_snapshot_story_and_require_the_active_token_for_execution()
         "TOP_case_until^TOP_target > global.TOP_clock",
         "TOP_authored_role_eligible = yes",
         "TOP_person_access_available = yes",
-        "is_controlled_by = var:PREV.TOP_access_host",
+        "is_controlled_by = var:TOP_access_host",
         "TOP_case_visit_execution_valid = yes",
         "TOP_person_operational_eligible = yes",
     ):
