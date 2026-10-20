@@ -697,7 +697,16 @@ def test_operations_center_exposes_required_filters_tabs_and_dimensions():
         control_block = gui[gui.index(f'name = "{control}"') :][:260]
         assert 'quadTextureSprite = "GFX_button_94x31"' in control_block
     assert 'text = "[TOP_organization_row_name]"' in gui
-    assert 'text = "[TOP_organization_row_class]"' in gui
+    redesign_loc = read(
+        "localisation/english/MD_targeted_operations_redesign_l_english.yml"
+    )
+    assert (
+        'TOP_select_organization_tt: "§Y[TOP_organization_row_class]§!' in redesign_loc
+    )
+    assert 'pdx_tooltip = "TOP_person_row_intel_tt"' in gui
+    assert 'pdx_tooltip = "TOP_organization_row_intel_tt"' in gui
+    assert " TOP_person_row_intel_tt:" in redesign_loc
+    assert " TOP_organization_row_intel_tt:" in redesign_loc
     assert 'name = "TOP_begin_operation" position = { x = 840 y = 455 }' in gui
     assert 'name = "TOP_members_grid_scroll"' in gui
     assert 'name = "TOP_select_member"' in gui
