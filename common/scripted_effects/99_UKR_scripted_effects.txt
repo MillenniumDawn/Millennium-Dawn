@@ -8425,3 +8425,44 @@ UKR_storage_bomber_sale_backlash = {
 		}
 	}
 }
+
+# MiG-23 for buyers (the UB trainers go as MiG-23 ML/MLD)
+UKR_sov_deliver_mig23 = {
+	if = {
+		limit = { has_dlc = "By Blood Alone" }
+		add_equipment_to_stockpile = { type = medium_plane_airframe_1 variant_name = "MiG-23 ML/MLD" amount = ukr_sov_amount producer = SOV }
+	}
+	else = {
+		add_equipment_to_stockpile = { type = MR_Fighter1 amount = ukr_sov_amount producer = SOV }
+	}
+}
+UKR_storage_sell_mig23 = {
+	subtract_from_variable = { ukraine_has_mig23_stockpile = ukr_sov_amount tooltip = ukraine_storage_mig23_sold_tt }
+	event_target:ukr_storage_buyer = { UKR_sov_deliver_mig23 = yes }
+	UKR_storage_sale_payment = yes
+	UKR_storage_sanctioned_sale_backlash = yes
+}
+
+# Combat aircraft for a sanctioned regime (Libya, Sudan) anger NATO members for a while
+UKR_storage_sanctioned_sale_backlash = {
+	if = {
+		limit = {
+			event_target:ukr_storage_buyer = {
+				OR = {
+					tag = LBA
+					tag = SUD
+				}
+			}
+		}
+		custom_effect_tooltip = ukraine_storage_sanctioned_sale_tt
+		hidden_effect = {
+			every_country = {
+				limit = {
+					NOT = { tag = ROOT }
+					is_in_array = { global.nato_members = THIS }
+				}
+				add_opinion_modifier = { target = ROOT modifier = UKR_storage_sanctioned_sale }
+			}
+		}
+	}
+}

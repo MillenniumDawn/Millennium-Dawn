@@ -15340,6 +15340,127 @@ UKR_reactivate_sov_category = {
 			696 = { add_dynamic_modifier = { modifier = UKR_scrapped_tu22_resources days = 365 } }
 		}
 	}
+
+	ukr_modernize_sov_equipment_mig23_libya_offer = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig23_libya_offer_done_flag }
+			date < 2009.01.01
+			country_exists = LBA
+			check_variable = { ukraine_has_mig23_stockpile > 11 }
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig23_libya_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig23_orders_tt
+			custom_effect_tooltip = ukraine_storage_sanctioned_sale_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig23_libya_offer"
+
+			set_country_flag = ukr_modernize_sov_equipment_mig23_libya_offer_done_flag
+			LBA = { save_event_target_as = ukr_storage_buyer }
+			event_target:ukr_storage_buyer = { country_event = ukr_modernize_sov_equipment_storage_sale.16 }
+		}
+	}
+
+	ukr_modernize_sov_equipment_mig23_sudan_offer = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = { base = 10 }
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig23_sudan_offer_done_flag }
+			date < 2009.01.01
+			country_exists = SUD
+			check_variable = { ukraine_has_mig23_stockpile > 11 }
+		}
+
+		days_remove = 30
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig23_sudan_offer"
+
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig23_orders_tt
+			custom_effect_tooltip = ukraine_storage_sanctioned_sale_tt
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig23_sudan_offer"
+
+			set_country_flag = ukr_modernize_sov_equipment_mig23_sudan_offer_done_flag
+			SUD = { save_event_target_as = ukr_storage_buyer }
+			event_target:ukr_storage_buyer = { country_event = ukr_modernize_sov_equipment_storage_sale.16 }
+		}
+	}
+
+	ukr_modernize_sov_equipment_mig23_scrap = {
+		icon = GFX_decision_generic_air
+		fire_only_once = yes
+		ai_will_do = {
+			base = 10
+			modifier = { factor = 0.5 ai_has_high_deficit = yes }
+			modifier = { factor = 0 has_active_mission = bankruptcy_incoming_collapse }
+		}
+
+		visible = {
+			NOT = { has_country_flag = ukr_modernize_sov_equipment_mig23_scrap_done_flag }
+			check_variable = { ukraine_has_mig23_stockpile > 0 }
+			OR = {
+				date > 2005.01.01
+				AND = {
+					has_country_flag = ukr_modernize_sov_equipment_mig23_libya_offer_done_flag
+					has_country_flag = ukr_modernize_sov_equipment_mig23_sudan_offer_done_flag
+				}
+			}
+		}
+
+		available = {
+			custom_trigger_tooltip = {
+				tooltip = ukr_modernize_sov_equipment_scrap_treasury_tt
+				check_variable = { treasury > 0.02 }
+			}
+		}
+
+		highlight_states = {
+			highlight_states_trigger = { state = 696 }
+			highlight_color_while_active = 3
+			highlight_color_before_active = 2
+		}
+
+		on_map_mode = map_and_decisions_view
+		days_remove = 90
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision ukr_modernize_sov_equipment_mig23_scrap"
+
+			# 10 million plus up to 10 million more, depending on how many are still stored
+			set_temp_variable = { treasury_change = ukraine_has_mig23_stockpile }
+			divide_temp_variable = { treasury_change = 136 }
+			add_to_temp_variable = { treasury_change = 1 }
+			multiply_temp_variable = { treasury_change = -0.01 }
+			modify_treasury_effect = yes
+		}
+
+		remove_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision remove ukr_modernize_sov_equipment_mig23_scrap"
+
+			set_country_flag = ukr_modernize_sov_equipment_mig23_scrap_done_flag
+			custom_effect_tooltip = ukr_modernize_sov_equipment_mig23_scrapped_tt
+			hidden_effect = {
+				set_variable = { ukraine_has_mig23_stockpile = 0 }
+				UKR_storage_refresh = yes
+			}
+			696 = { add_dynamic_modifier = { modifier = UKR_scrapped_mig23_resources days = 365 } }
+		}
+	}
 }
 
 # Captured enemy equipment, rebuilt by volunteers: needs no state plant or factory
