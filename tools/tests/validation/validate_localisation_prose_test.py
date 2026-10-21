@@ -410,7 +410,7 @@ _EVENTS = (
     " {description}\n"
     " desc = {{ text = alternate_text trigger = {{ always = no }} }}\n"
     ' immediate = {{ log = "{{ desc = quoted.d }}" }}\n'
-    " option = {{ name = ukr_light_transport_tender.1.d }}\n"
+    " option = {{ name = ukraine_light_transport_tender.1.d }}\n"
     " option = {{ name = sample.1.d }}\n"
     "}}\n"
 )
@@ -446,7 +446,7 @@ def test_event_descriptions_follow_references_not_suffixes(
         relative,
         'l_english:\n actual_text: "We must invest in the"\n'
         ' alternate_text: "We must invest in the"\n'
-        ' ukr_light_transport_tender.1.d: "Select the §YDozor-A§!"\n'
+        ' ukraine_light_transport_tender.1.d: "Select the §YDozor-A§!"\n'
         ' sample.1.d: "Choose one of them"\n'
         ' commented.d: "We must invest in the"\n'
         ' unrelated.d: "We must invest in the"\n'

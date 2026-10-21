@@ -1,9 +1,9 @@
-# Associates equipment archetypes and/or types with a GFX entry or a dds file.
+# Associates equipment archetypes and/or types with a GFX entry.
 #
 # Valid root keys are "default", a continent name or a country tag. Root containers may contain keys with a name
 # corresponding to an equipment type or archetype.
 # Type containers can contain any number of "pool" collections which can define a "limit" trigger, a sort "weight",
-# an "icons" array containing GFX names and/or dds file paths, and a "models" array containing 3D entity names.
+# an "icons" array containing GFX names, and a "models" array containing 3D entity names.
 #
 # If pools have the same weight, e.g. the default weight of 1:
 # - Type and archetype is sorted higher than family type and family archetype.
@@ -17,7 +17,7 @@
 # Please note that if the database is split up into multiple files their alphabetical order will determine the order in
 # which they are read and as a result pool definition order.
 #
-# The final icon set for an equipment type sorted high to low with all pool weights being equal will then contain:
+# The final icon set for an equipment type, sorted high to low with all pool weights being equal, will then contain:
 # 1.  Country-specific icons for type
 # 2.  Country-specific icons for archetype
 # 3.  Continent-specific icons for type
@@ -30,43 +30,84 @@
 # 10. Continent-specific icons for archetype family
 # 11. Generic icons for type family
 # 12. Generic icons for archetype family
+#
+# Any duplicate icons will be removed, leaving the one with the highest priority.
+#
+# Pools support three optional filter lists that further restrict when a pool is allowed to match. An empty or absent
+# filter list keeps the default behavior (the pool is unrestricted along that axis). A non-empty filter list restricts
+# the pool to entries whose corresponding query value is in the list. All three filters compose with each other and
+# with the "limit" trigger: every filter that is specified must pass for the pool to match.
+#
+# - sub_units = { ... }
+#       A list of sub-unit definition keys. Empty or absent allows any sub-unit. When non-empty, the pool only matches
+#       if the equipment's sub-unit key is in the list.
+#
+# - ideologies = { ... }
+#       A list of ideology-group keys (e.g. democratic, fascism, communism, neutrality). Empty or absent allows any
+#       ideology. When non-empty, the pool only matches if the creator country's ruling party belongs to one of the
+#       listed ideology groups.
+#
+# - cultures = { ... }
+#       A list of graphical-culture keys, as defined in common/graphicalculturetype.txt (e.g. western_european_gfx,
+#       eastern_european_gfx, asian_gfx, southamerican_gfx, middle_eastern_gfx, african_gfx, commonwealth_gfx,
+#       sami_gfx). Empty or absent allows any culture. When non-empty, the pool only matches if the creator country's
+#       3D graphical culture key is in the list.
+#
+# Example pool using all three filters together:
+#
+#   pool = {
+#       limit = { has_dlc = "Thunder at Our Gates" }
+#       cultures = { eastern_european_gfx asian_gfx }
+#       ideologies = { communism }
+#       sub_units = { armor }
+#       icons = {
+#           GFX_SOV_advanced_medium_tank_medium
+#       }
+#       models = {
+#           SOV_medium_armor_2_entity
+#       }
+#   }
 
-# The comment on each line with either the file path or GFX entry is not needed and only there to ease testing during
-# development.
 default = {
 	light_tank_chassis = {
 		pool = {
+			limit = {
+
+			}
 			icons = {
-				"gfx/interface/technologies/gwtank.dds" # "GFX_gwtank_medium"
+				GFX_gwtank_medium
+			}
+			models = {
+
 			}
 		}
 		pool = {
 			icons = {
-				"gfx/interface/technologies/basic_light_tank.dds" # "GFX_basic_light_tank_medium"
-				"gfx/interface/technologies/improved_light_tank.dds" # "GFX_improved_light_tank_medium"
-				"gfx/interface/technologies/advanced_light_tank.dds" # "GFX_advanced_light_tank_medium"
+				GFX_basic_light_tank_medium
+				GFX_improved_light_tank_medium
+				GFX_advanced_light_tank_medium
 			}
 		}
 		pool = {
 			icons = {
-				"gfx/interface/technologies/basic_medium_tank.dds" # "GFX_basic_medium_tank_medium"
-				"gfx/interface/technologies/improved_medium_tank.dds" # "GFX_improved_medium_tank_medium"
-				"gfx/interface/technologies/advanced_medium_tank.dds" # "GFX_advanced_medium_tank_medium"
+				GFX_basic_medium_tank_medium
+				GFX_improved_medium_tank_medium
+				GFX_advanced_medium_tank_medium
 			}
 		}
 	}
 	light_tank_chassis_1 = {
 		pool = {
 			icons = {
-				"gfx/interface/technologies/basic_heavy_tank.dds" # "GFX_basic_heavy_tank_medium"
-				"gfx/interface/technologies/improved_heavy_tank.dds" # "GFX_improved_heavy_tank_medium"
-				"gfx/interface/technologies/advanced_heavy_tank.dds" # "GFX_advanced_heavy_tank_medium"
+				GFX_basic_heavy_tank_medium
+				GFX_improved_heavy_tank_medium
+				GFX_advanced_heavy_tank_medium
 			}
 		}
 		pool = {
 			icons = {
-				"gfx/interface/technologies/super_heavy_tank.dds" # "GFX_super_heavy_tank_medium"
-				"gfx/interface/technologies/main_battle_tank.dds" # "GFX_main_battle_tank_medium"
+				GFX_super_heavy_tank_medium
+				GFX_main_battle_tank_medium
 			}
 		}
 	}
@@ -76,43 +117,43 @@ europe = {
 	light_tank_chassis = {
 		pool = {
 			icons = {
-				"gfx/interface/technologies/FRA_basic_light_tank.dds" # "GFX_FRA_basic_light_tank_medium"
-				"gfx/interface/technologies/FRA_imp_light_tank.dds" # "GFX_FRA_improved_light_tank_medium"
-				"gfx/interface/technologies/FRA_adv_light_tank.dds" # "GFX_FRA_advanced_light_tank_medium"
+				GFX_FRA_basic_light_tank_medium
+				GFX_FRA_improved_light_tank_medium
+				GFX_FRA_advanced_light_tank_medium
 			}
 			models = {
-				"FRA_light_armor_0_entity"
-				"FRA_light_armor_2_entity"
+				FRA_light_armor_0_entity
+				FRA_light_armor_2_entity
 			}
 		}
 		pool = {
 			icons = {
-				"gfx/interface/technologies/FRA_basic_main_tank.dds" # "GFX_FRA_basic_medium_tank_medium"
-				"gfx/interface/technologies/FRA_imp_main_tank.dds" # "GFX_FRA_improved_medium_tank_medium"
-				"gfx/interface/technologies/FRA_adv_main_tank.dds" # "GFX_FRA_advanced_medium_tank_medium"
+				GFX_FRA_basic_medium_tank_medium
+				GFX_FRA_improved_medium_tank_medium
+				GFX_FRA_advanced_medium_tank_medium
 			}
 			models = {
-				"FRA_medium_armor_1_entity"
-				"FRA_medium_armor_2_entity"
+				FRA_medium_armor_1_entity
+				FRA_medium_armor_2_entity
 			}
 		}
 	}
 	light_tank_chassis_1 = {
 		pool = {
 			icons = {
-				"GFX_FRA_basic_heavy_tank_medium" # "gfx/interface/technologies/FRA_basic_heavy_tank.dds"
-				"GFX_FRA_improved_heavy_tank_medium" # "gfx/interface/technologies/FRA_imp_heavy_tank.dds"
-				"GFX_FRA_advanced_heavy_tank_medium" # "gfx/interface/technologies/FRA_adv_heavy_tank.dds"
+				GFX_FRA_basic_heavy_tank_medium
+				GFX_FRA_improved_heavy_tank_medium
+				GFX_FRA_advanced_heavy_tank_medium
 			}
 			models = {
-				"FRA_heavy_armor_1_entity"
-				"FRA_heavy_armor_2_entity"
+				FRA_heavy_armor_1_entity
+				FRA_heavy_armor_2_entity
 			}
 		}
 		pool = {
 			icons = {
-				"GFX_FRA_super_heavy_tank_medium" # "gfx/interface/technologies/FRA_superheavy_tank.dds"
-				"GFX_FRA_main_battle_tank_medium" # "gfx/interface/technologies/FRA_main_battle_tank.dds"
+				GFX_FRA_super_heavy_tank_medium
+				GFX_FRA_main_battle_tank_medium
 			}
 		}
 	}
@@ -122,41 +163,41 @@ GER = {
 	light_tank_chassis = {
 		pool = {
 			icons = {
-				"gfx/interface/technologies/ger_basic_light_tank.dds" # "GFX_GER_basic_light_tank_medium"
-				"gfx/interface/technologies/ger_imp_light_tank.dds" # "GFX_GER_improved_light_tank_medium"
-				"gfx/interface/technologies/ger_adv_light_tank.dds" # "GFX_GER_advanced_light_tank_medium"
+				GFX_GER_basic_light_tank_medium
+				GFX_GER_improved_light_tank_medium
+				GFX_GER_advanced_light_tank_medium
 			}
 		}
 		pool = {
 			icons = {
-				"gfx/interface/technologies/ger_basic_main_tank.dds" # "GFX_GER_basic_medium_tank_medium"
-				"gfx/interface/technologies/ger_imp_main_tank.dds" # "GFX_GER_improved_medium_tank_medium"
-				"gfx/interface/technologies/ger_adv_main_tank.dds" # "GFX_GER_advanced_medium_tank_medium"
+				GFX_GER_basic_medium_tank_medium
+				GFX_GER_improved_medium_tank_medium
+				GFX_GER_advanced_medium_tank_medium
 			}
 		}
 	}
 	light_tank_chassis_1 = {
 		pool = {
 			icons = {
-				"gfx/interface/technologies/ger_basic_heavy_tank.dds" # "GFX_GER_basic_heavy_tank_medium"
+				GFX_GER_basic_heavy_tank_medium
 			}
 		}
 		pool = {
 			icons = {
-				"GFX_GER_improved_heavy_tank_medium" # "gfx/interface/technologies/ger_imp_heavy_tank.dds"
+				GFX_GER_improved_heavy_tank_medium
 			}
 			models = {
-				"GER_heavy_armor_0_entity"
+				GER_heavy_armor_0_entity
 			}
 		}
 		pool = {
 			limit = { has_dlc = "La Resistance" }
 			weight = 2
 			icons = {
-				"GFX_GER_advanced_heavy_tank_medium" # "gfx/interface/technologies/ger_adv_heavy_tank.dds"
+				GFX_GER_advanced_heavy_tank_medium
 			}
 			models = {
-				"GER_heavy_armor_2_entity"
+				GER_heavy_armor_2_entity
 			}
 		}
 	}
