@@ -3,7 +3,7 @@
 Python's text mode rewrites each "\\n" as "\\r\\n" on Windows unless the caller
 passes newline="". A tool that reads an LF file, rewrites it, and hands back a
 CRLF file makes the mixed-line-ending pre-commit hook bounce the next commit
-that touches it — see AGENTS.md (Formatting).
+that touches it — see tools/README.md (Text Writes).
 
 Path.write_text is rejected outright: it grew a newline parameter only in
 3.10 and reads as safe at a glance, so an explicit open(..., newline="") is
@@ -102,6 +102,8 @@ def test_no_untranslated_text_writes():
 
 def test_allowlist_entries_still_exist():
     """A stale allowlist entry silently exempts whatever moves onto that line."""
+    if not _ALLOWLIST:
+        return
     live = set()
     for path in _python_sources():
         rel = os.path.relpath(path, REPO_ROOT).replace(os.sep, "/")

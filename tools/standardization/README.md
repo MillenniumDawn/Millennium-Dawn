@@ -107,6 +107,11 @@ Both find a block's closing brace by column, not by "the line where depth hit ze
 
 `validate_ideas.py` and `validate_modifiers.py` flag both patterns, so neither grows back silently.
 
+`add_idea_equipment_bonus_instant.py` adds `instant = yes` to idea equipment
+bonuses that lack it. It leaves other content and already instant bonuses unchanged.
+Run `python3 tools/standardization/add_idea_equipment_bonus_instant.py --dry-run`
+to preview the count, then omit `--dry-run` to update `common/ideas/`.
+
 **Usage:**
 
 ```bash
@@ -269,6 +274,9 @@ Every line written by a standardizer passes through `normalize_spacing`
 `NOT = {country_exists = ENG}` comes out as `NOT = { country_exists = ENG }`.
 Indentation, `"..."` string interiors and `#` comments are left byte-exact.
 `tools/linting/fix_styling.py` uses the same helper.
+
+Focus, event, decision, idea and technology blocks are reindented by brace
+depth, one tab per level, so a nested line written at the wrong depth is moved.
 
 ### Focus Trees
 

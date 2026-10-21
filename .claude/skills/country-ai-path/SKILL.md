@@ -108,12 +108,13 @@ decisions already deliver the party, and a walker over an undated roster install
 Never pass `change_leader_temp = 1`; never inline `create_country_leader`.
 
 **AI hardening pass**, mandatory. `ai_is_threatened` weighting on combat-capacity focuses
-(`.claude/docs/ai-strategy-reference.md`, the `ai_is_threatened` section); bankruptcy / `can_staff`
+(`.claude/docs/ai-strategy-reference.md`, "Threat and unit caps"); bankruptcy / `can_staff`
 guards on spending focuses (run `tools/validation/validate_focus_tree.py --path .` first — it may
-already be clean, and it flags guards on focuses that spend nothing); review
-`common/ai_strategy/[TAG].txt` for gaps, reusing the mod-wide strategies per
-[references/write.md](references/write.md) §7 before writing any per-TAG block. Under historical AI
-the AI must stick to history: killswitch non-historical branch roots, boost the historical branch.
+already be clean, and it flags guards on focuses that spend nothing). The pass lives in focus
+weights, `available` and guards only: **write no `common/ai_strategy/` war block** — the general
+war-goal declaration suite already covers it ([references/write.md](references/write.md) §7). Under
+historical AI the AI must stick to history: killswitch non-historical branch roots, boost the
+historical branch.
 
 The country must also stay able to fix itself. Every burden it starts with keeps a live cure in every
 rule state you leave standing — if killswitching a branch takes the last one, re-own the cure focus
@@ -133,9 +134,8 @@ bonuses), and a clean `government` section (every walker branch asserts an in-ra
 had). Then `validate_focus_tree.py --path .`, `validate_ai_path_rules.py --no-color` (the country
 must no longer appear), and `validate_decisions.py` warning-group counts against a stashed baseline.
 
-Then `git diff main -- common/ai_strategy/TAG.txt`: every added block's `enable` must name a
-target, focus or flag the mod-wide files cannot express; anything on `surrender_progress`,
-`enemies_strength_ratio` or bare `has_war` duplicates `MD_war_declaration_ai.txt` and is deleted.
+Then `git diff main --stat -- common/ai_strategy/` must be empty. Any added file or block is
+deleted before the PR, whatever its `enable` names.
 
 ## 6. Finish
 
@@ -143,10 +143,10 @@ Changelog: `Changelog.txt` carries one shared line under the current version's `
 `- Country AI path game rules standardised to Historical / alternate paths / Random Path / No Path:
 TAG, TAG`. Append your TAG to it; create the line if the version has none. No per-country line.
 
-PR body in the `/open-pr` step 5 format and nothing else: a single `### Changes` heading, one
-plain bullet per player-visible outcome, no file paths, commit hashes, tables, testing section or
-`## Bottom line`, then a blank line and `Closes #N` when the user gave an issue. Keep the body under
-ten lines. Create the PR, or update title/body if one exists, and report the URL.
+PR body in the `/open-pr` BLUF format and nothing else: `## Bottom line` with the
+player-visible outcome, no file paths, commit hashes, tables or testing section, then
+`Closes #N` when the user gave an issue, then `BLUF`. Keep the body under ten lines. Create the
+PR, or update title/body if one exists, and report the URL.
 
 ## House rules
 

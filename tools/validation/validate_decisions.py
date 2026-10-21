@@ -7,15 +7,23 @@ adapted for Millennium Dawn with multiprocessing.
 
 import bisect
 import glob
+import math
 import os
 import re
 import sys
+from functools import partial
 from pathlib import Path
 from typing import AbstractSet, Any, Dict, List, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
+from linting.check_common_mistakes import (
+    _build_event_index,
+    _event_chain_leads_to_war,
+    _owner_scope_event_sends,
+    _war_at_scope,
+)
 from shared_utils import (
     ai_only_decision_categories,
     atomic_write_text,
@@ -26,12 +34,16 @@ from shared_utils import (
     flat_block_text,
     has_flat_is_ai,
     iter_flat_offsets,
+    line_of,
     read_text_strict,
     strip_comments,
     strip_inline_comment,
+    validation_config,
 )
 from sprite_index import SpriteSizeIndex, build_sprite_index, build_sprite_size_index
+from validate_events import load_cost_lookups, uncovered_costs
 from validator_common import (
+    BASE_ZERO_RE,
     DEFAULT_EXTRA_SKIP_PATTERNS,
     BaseValidator,
     Colors,
@@ -53,8 +65,10 @@ _DECISION_REFERENCE_SOURCE_PATTERNS = (
 _LITERAL_ID_TOKEN = r"[\w-]+"
 
 
-def _should_skip(filename: str) -> bool:
-    return should_skip_file(filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS)
+def _should_skip(filename: str, *, mod_path: Optional[str] = None) -> bool:
+    return should_skip_file(
+        filename, extra_skip_patterns=EXTRA_SKIP_PATTERNS, mod_path=mod_path
+    )
 
 
 _TARGETED_BLOCK_RE = re.compile(
@@ -198,22 +212,8 @@ def _resolved_sprite(kind: str, value: str, sprites: SpriteSizeIndex) -> Optiona
     return None
 
 
-# Bespoke cartel map icons drawn at 52x40 on purpose; accepted as-is.
 _SLOT_EXEMPT_SPRITES = frozenset(
-    {
-        "GFX_decision_sinaloa_high",
-        "GFX_decision_sinaloa_medium",
-        "GFX_decision_sinaloa_low",
-        "GFX_decision_sinaloa_none",
-        "GFX_decision_tamaulpas_high",
-        "GFX_decision_tamaulpas_medium",
-        "GFX_decision_tamaulpas_low",
-        "GFX_decision_tamaulpas_none",
-        "GFX_decision_tierra_caliente_high",
-        "GFX_decision_tierra_caliente_medium",
-        "GFX_decision_tierra_caliente_low",
-        "GFX_decision_tierra_caliente_none",
-    }
+    validation_config("validate_decisions", "slot_exempt_sprites")
 )
 
 _MOD_ART_HINT = "resize with tools/assets/resize_decision_icons.py"
@@ -249,6 +249,55 @@ def _icon_type_message(
     )
 
 
+# A category description that opens with a text icon (`£name` draws GFX_name)
+# shows the art at native size, centred on its text line. `full_text` starts 6px
+# down in hoi_16mbs, whose lines are 16px (interface/countrydecisionview.gui:158),
+# so each leading `\n` lowers the art 16px. The 480x73 banners overhang the box by
+# about 7px behind their one newline and read fine, so 8px is allowed; a 480x225
+# picture behind the same padding covers the category header (#4315).
+_DESC_LEADING_ICON_RE = re.compile(
+    r'^[ \t]*([\w.\-]+)_desc:\d*[ \t]*"((?:\\n|[ \t])*)£(\w+)', re.MULTILINE
+)
+_DESC_LINE_HEIGHT = 16
+_DESC_HEADROOM = 6 + _DESC_LINE_HEIGHT // 2 + 8
+
+
+def _desc_image_min_newlines(height: int) -> int:
+    """Leading newlines a description needs above art of this pixel height."""
+    return max(0, math.ceil((height / 2 - _DESC_HEADROOM) / _DESC_LINE_HEIGHT))
+
+
+def _leading_desc_icons(text: str) -> List[Tuple[str, int, str, int]]:
+    """Return (owner, leading newlines, icon, line) for each `<owner>_desc`
+    value in a localisation file that opens with a text icon."""
+    return [
+        (
+            m.group(1),
+            m.group(2).count("\\n"),
+            m.group(3),
+            text.count("\n", 0, m.start()) + 1,
+        )
+        for m in _DESC_LEADING_ICON_RE.finditer(text)
+    ]
+
+
+def _desc_image_message(
+    owner: str, newlines: int, icon: str, sprites: SpriteSizeIndex
+) -> Optional[str]:
+    """Return a finding when the art opening a category description sits too
+    high. An icon that resolves to no measurable sprite is not reported."""
+    size = sprites.size(f"GFX_{icon}")
+    if size is None:
+        return None
+    needed = _desc_image_min_newlines(size[1])
+    if newlines >= needed:
+        return None
+    return (
+        f"{owner}_desc: £{icon} is {size[0]}x{size[1]} behind {newlines} leading "
+        f"\\n, so it overlaps the category header; it needs {needed}"
+    )
+
+
 def _is_category_file(filepath: str) -> bool:
     return "decisions/categories/" in filepath.replace("\\", "/")
 
@@ -272,9 +321,18 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
         # Owner spans and newline offsets are collected once and bisected per
         # reference; rescanning from the top for every icon is quadratic on the
         # bigger decision files.
-        owners = _owner_spans(text, 0 if is_category else 1)
+        owner_depth = 0 if is_category else 1
+        code = blank_quoted_strings(text)
+        owners = _owner_spans(code, owner_depth)
         owner_starts = [s for s, _, _ in owners]
         newlines = [i for i, ch in enumerate(text) if ch == "\n"]
+        brace_offsets: List[int] = []
+        brace_depths: List[int] = []
+        depth = 0
+        for m in re.finditer(r"[{}]", code):
+            depth += 1 if m.group() == "{" else -1
+            brace_offsets.append(m.start())
+            brace_depths.append(depth)
 
         refs: List[Tuple[int, str, str]] = []
         for m in _DEC_ICON_SIMPLE_RE.finditer(text):
@@ -291,6 +349,11 @@ def _extract_decision_icons(args: Tuple[str, str]) -> List[Tuple[str, str, str, 
 
         out: List[Tuple[str, str, str, int]] = []
         for offset, kind, value in sorted(refs):
+            # An icon nested in an effect, such as create_intelligence_agency,
+            # is not the owner's own icon.
+            brace = bisect.bisect_right(brace_offsets, offset) - 1
+            if (brace_depths[brace] if brace >= 0 else 0) != owner_depth + 1:
+                continue
             idx = bisect.bisect_right(owner_starts, offset) - 1
             owner = "<unknown>"
             if idx >= 0 and offset < owners[idx][1]:
@@ -397,6 +460,9 @@ _MIDGAME_GATE_RE = re.compile(
     r"\b(?:has_country_flag|has_global_flag|has_completed_focus|has_idea)"
     r"\s*=\s*[A-Za-z0-9_]+|\bcheck_variable\b"
 )
+_UNANNOUNCED_CATEGORY_EXEMPT = frozenset(
+    validation_config("validate_decisions", "unannounced_category_exempt")
+)
 _FLAG_GATE_RE = re.compile(r"has_(?:country|global)_flag\s*=\s*([A-Za-z0-9_]+)")
 # Both the bare form and the timed `set_country_flag = { flag = X days = N }`.
 _SET_FLAG_RE = re.compile(
@@ -477,7 +543,9 @@ def _flat_flag_gates(block: str) -> Set[str]:
     return flags
 
 
-def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, list]:
+def _scan_activations_and_removals(
+    filename: str, *, mod_path: Optional[str] = None
+) -> Tuple[set, set, set, list]:
     """Single-read worker: (activated, missions, removed, unlock refs).
 
     Combines the activation, external-removal and unlock-tooltip scans so the
@@ -485,7 +553,7 @@ def _scan_activations_and_removals(filename: str) -> Tuple[set, set, set, list]:
     element holds (kind, name, line) for every reference that tells the player a
     decision or category it has unlocked; the caller adds the file path.
     """
-    if _should_skip(filename):
+    if _should_skip(filename, mod_path=mod_path):
         return set(), set(), set(), []
     text_file = FileOpener.open_text_file(
         filename, lowercase=False, strip_comments_flag=True
@@ -512,7 +580,7 @@ def _load_scripted_localisation_keys(mod_path: str) -> set:
     keys = set()
     pattern = os.path.join(mod_path, "common", "scripted_localisation", "*.txt")
     for filename in glob.iglob(pattern):
-        if _should_skip(filename):
+        if _should_skip(filename, mod_path=mod_path):
             continue
         text_file = FileOpener.open_text_file(
             filename, lowercase=False, strip_comments_flag=True
@@ -538,6 +606,10 @@ _CATEGORY_BLOCK_RE = re.compile(
     rf"^{_LITERAL_ID_TOKEN} = \{{.*?^\}}", flags=re.DOTALL | re.MULTILINE
 )
 _CATEGORY_NAME_RE = re.compile(r"^(.*) = \{")
+_AI_ADD_RE = re.compile(r"\badd\s*=")
+# The money kinds validate_events.uncovered_costs can report.
+_MONEY_COSTS = frozenset({"treasury", "debt", "international investment", "tax rate"})
+_TREASURY_GATE_NOTE = " (behind a treasury custom_cost_trigger; verify)"
 _CATEGORY_DECISION_TOKEN_RE = re.compile(r"^[ \t]+(\S+) = \{", flags=re.MULTILINE)
 
 # FROM-usage detection (hoisted from validate_targets_no_trigger /
@@ -895,9 +967,8 @@ def _is_effectively_ai_only(
     return dec.ai_only or dec_id in ai_only_by_category
 
 
-# AI-only decisions whose name keys stay on purpose.
 _AI_ONLY_LOC_KEEP = frozenset(
-    {"monetary_policy_austerity", "monetary_policy_expand_money_supply"}
+    validation_config("validate_decisions", "ai_only_loc_keep")
 )
 
 
@@ -919,7 +990,7 @@ def _find_formable_commitment_rows(
     Every decision in the formables file carries an ``ai_will_do`` gate
     comparing ``formable_committed_size`` against that formable's full state
     count, and the commit sites (integrate_start / update_flag complete_effect,
-    the IBR/ANZ remove_effects, Spain's focus tree) store the same id/size
+    the IBR/ANZ integrate complete_effects, Spain's focus tree) store the same id/size
     pair. The counts exist only as inlined literals, so editing an
     update_flag's state list silently corrupts the ratchet ordering — this
     recomputes each count from the update_flag ``available`` block and diffs
@@ -1161,6 +1232,11 @@ def _top_level_neg_pp(block: str):
     return None
 
 
+def _ai_never_takes(ai_factor: str) -> bool:
+    """`base = 0` with no `add`: the weight cannot leave zero."""
+    return bool(BASE_ZERO_RE.search(ai_factor)) and not _AI_ADD_RE.search(ai_factor)
+
+
 def extract_value_multi_line(obj: str, s: str) -> str:
     pattern = r"(\t+)" + s + r" = (\{([^\n]*|.*?^\1)\})"
     if f"\t{s} =" not in obj:
@@ -1170,8 +1246,10 @@ def extract_value_multi_line(obj: str, s: str) -> str:
 
 
 class DecisionFactory:
-    def __init__(self, dec: str, source_basename: str = "") -> None:
-        self.source_basename = source_basename
+    def __init__(self, dec: str, source_path: str = "", line: int = 0) -> None:
+        self.source_path = source_path
+        self.source_basename = os.path.basename(source_path)
+        self.line = line
         self.raw = dec
         self.token = re.findall(r"^\t*(\S+)\s*=\s*\{", dec, flags=re.MULTILINE)[0]
         self.allowed = extract_value_multi_line(dec, "allowed")
@@ -1276,8 +1354,8 @@ def _get_cached(key: str, mod_path: str, lowercase: bool, factory_fn):
 
 def parse_all_decisions(
     mod_path: str, lowercase: bool = False
-) -> Tuple[List[str], Dict[str, str]]:
-    """Parse all decisions with caching."""
+) -> Tuple[List[str], Dict[str, Tuple[str, int]]]:
+    """Parse all decisions with caching: each block and its (path, line)."""
 
     def _parse():
         filepath = str(Path(mod_path) / "common" / "decisions")
@@ -1299,7 +1377,10 @@ def parse_all_decisions(
             for m in _DECISIONS_BLOCK_RE.finditer(blanked):
                 match = text_file[m.start() : m.end()]
                 decisions.append(match)
-                paths[match] = os.path.basename(filename)
+                paths[match] = (
+                    os.path.relpath(filename, mod_path),
+                    line_of(text_file, m.start()),
+                )
 
         return decisions, paths
 
@@ -1315,13 +1396,13 @@ def parse_all_decision_factories(
     them once and reusing across all validators eliminates the dominant cost of
     a full decisions validation run (was ~7s of ~10s on this mod).
 
-    The source filename is stored on the factory as ``source_basename`` so
-    reporting code can avoid re-keying a parallel paths dict.
+    The source path and line are stored on the factory so reporting code can
+    avoid re-keying a parallel paths dict.
     """
 
     def _build():
         decisions, dec_paths = parse_all_decisions(mod_path, lowercase)
-        return [DecisionFactory(dec=d, source_basename=dec_paths[d]) for d in decisions]
+        return [DecisionFactory(d, *dec_paths[d]) for d in decisions]
 
     return _get_cached("decision_factories", mod_path, lowercase, _build)
 
@@ -1338,7 +1419,7 @@ def parse_all_decision_names(
         for d in decisions:
             name = _DECISION_TOKEN_LINE_RE.findall(d)[0]
             names.append(name)
-            name_paths[name] = dec_paths[d]
+            name_paths[name] = os.path.basename(dec_paths[d][0])
         return names, name_paths
 
     return _get_cached("decision_names", mod_path, lowercase, _parse)
@@ -1554,7 +1635,11 @@ class Validator(BaseValidator):
             file_refs,
         ) in zip(
             all_files,
-            self._pool_map(_scan_activations_and_removals, all_files, chunksize=30),
+            self._pool_map(
+                partial(_scan_activations_and_removals, mod_path=self.mod_path),
+                all_files,
+                chunksize=30,
+            ),
         ):
             activated_decisions |= decision_set
             activated_missions |= mission_set
@@ -1611,7 +1696,7 @@ class Validator(BaseValidator):
         fixed_total = self._apply_decision_file_fixes(fixes, patch)
 
         self.log(
-            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.GREEN}  Auto-fixed {fixed_total} decision(s) with missing ai_will_do{Colors.ENDC}"
         )
         if fixed_total:
             _invalidate_decision_cache()
@@ -1666,9 +1751,7 @@ class Validator(BaseValidator):
         }
 
         if not cats_to_validate:
-            self.log(
-                f"{Colors.GREEN if self.use_colors else ''}✓ No empty decision categories{Colors.ENDC if self.use_colors else ''}"
-            )
+            self.log(f"{Colors.GREEN}✓ No empty decision categories{Colors.ENDC}")
             return
 
         bop_path = str(Path(self.mod_path) / "common" / "bop")
@@ -1685,7 +1768,7 @@ class Validator(BaseValidator):
 
         if not found_files:
             self.log(
-                f"{Colors.YELLOW if self.use_colors else ''}No BOP files found, skipping BOP check{Colors.ENDC if self.use_colors else ''}",
+                f"{Colors.YELLOW}No BOP files found, skipping BOP check{Colors.ENDC}",
                 "warning",
             )
 
@@ -1696,40 +1779,36 @@ class Validator(BaseValidator):
             "Unused decision categories (empty, not in BOP):",
         )
 
-    def validate_ai_factors(self):
-        self._log_section("Checking decision AI factors...")
-
-        factories = parse_all_decision_factories(self.mod_path)
+    def _ai_reachable(self, factories: List[DecisionFactory]) -> List[DecisionFactory]:
+        """Decisions with no `is_ai = no` or `always = no` on them or their category."""
         categories = parse_decision_categories(self.mod_path)
-        cats_with_decs = parse_categories_with_decisions(self.mod_path)
-
-        # Reverse index: decision token -> parent category. The previous
-        # version did an O(N) scan per decision over `cats_with_decs`, which
-        # added ~1.5s on this mod.
+        # Reverse index: decision token -> parent category. A scan per decision
+        # over the category map added ~1.5s on this mod.
         decision_to_category: Dict[str, str] = {}
-        for cat, dec_tokens in cats_with_decs.items():
+        for cat, dec_tokens in parse_categories_with_decisions(self.mod_path).items():
             for tok in dec_tokens:
                 decision_to_category.setdefault(tok, cat)
+
+        return [
+            d
+            for d in factories
+            if not any(
+                "is_ai = no" in gate or "always = no" in gate
+                for gate in (
+                    d.available,
+                    d.visible,
+                    categories.get(decision_to_category.get(d.token, ""), ""),
+                )
+            )
+        ]
+
+    def validate_ai_factors(self):
+        self._log_section("Checking decision AI factors...")
 
         results = []
         fixes_needed = []
 
-        for d in factories:
-            if d.available and any(
-                ["is_ai = no" in d.available, "always = no" in d.available]
-            ):
-                continue
-            if d.visible and any(
-                ["is_ai = no" in d.visible, "always = no" in d.visible]
-            ):
-                continue
-
-            dec_category = decision_to_category.get(d.token)
-            if dec_category and dec_category in categories:
-                cat_code = categories[dec_category]
-                if "is_ai = no" in cat_code or "always = no" in cat_code:
-                    continue
-
+        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
             if d.mission_subtype:
                 if d.selectable_mission and not d.ai_factor:
                     results.append(
@@ -1752,7 +1831,8 @@ class Validator(BaseValidator):
             # evaluates in order on a running total, and clustering
             # factor=0 before the adds makes them a no-op (0*0=0 with base=0).
             # The whole point of placing factor=0 after adds is to override
-            # the adds conditionally. Do not re-add that check.
+            # the adds conditionally. Do not re-add that check. The opposite
+            # order, an add after factor=0, is validate_ai_weight_order.py.
 
         self._report(results, "✓ No AI factor issues", "Decision AI factor issues:")
 
@@ -2036,6 +2116,19 @@ class Validator(BaseValidator):
             results,
             "✓ No decisions missing allowed check",
             "Decisions in categories without allowed check that also lack their own allowed trigger:",
+        )
+
+    def validate_allowed_country_flag(self):
+        results = [
+            f"{d.token:<55}{d.source_basename}"
+            for d in parse_all_decision_factories(self.mod_path)
+            if d.allowed and re.search(r"\bhas_country_flag\s*=", d.allowed)
+        ]
+        self._report(
+            results,
+            "✓ No unsupported country flags in decision allowed blocks",
+            "Decision allowed blocks with has_country_flag (unsupported by the engine; move the check to visible or available):",
+            category="unsupported-decision-allowed-flag",
         )
 
     def validate_random_seed(self):
@@ -2376,7 +2469,7 @@ class Validator(BaseValidator):
         )
 
         self.log(
-            f"{Colors.GREEN if self.use_colors else ''}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC if self.use_colors else ''}"
+            f"{Colors.GREEN}  Auto-fixed {fixed_total} decision(s) by moving available -> visible{Colors.ENDC}"
         )
         if fixed_total:
             _invalidate_decision_cache()
@@ -2396,7 +2489,7 @@ class Validator(BaseValidator):
         results = []
         dec_filepath = str(Path(self.mod_path) / "common" / "decisions")
         for filename in sorted(glob.iglob(dec_filepath + "/**/*.txt", recursive=True)):
-            if _should_skip(filename):
+            if _should_skip(filename, mod_path=self.mod_path):
                 continue
             text_file = FileOpener.open_text_file(
                 filename, lowercase=False, strip_comments_flag=True
@@ -2556,14 +2649,12 @@ class Validator(BaseValidator):
     def validate_unannounced_categories(self):
         """Flag categories that switch on mid-game without telling the player.
 
-        A category with no `visible` block is always on the decisions tab, and
-        one gated only on the tag or the date is on from the start, so neither
-        has anything to announce. A category gated on state that flips during
-        play — a flag, a completed focus, an idea, a variable — appears part-way
-        through, and needs `unlock_decision_category_tooltip` (or
-        `unlock_decision_tooltip` on one of its decisions) in whatever turns it
-        on. Without it a whole tab of decisions shows up with no indication of
-        where it came from. AI-only categories are exempt: nobody is watching.
+        A category with no `visible` block or only tag/date gates has nothing
+        to announce. A flag, focus, idea or variable gate needs
+        `unlock_decision_category_tooltip` (or `unlock_decision_tooltip` on one
+        of its decisions) in whatever opens it. AI-only categories are exempt.
+        Other exceptions, including startup gates and shared state with no
+        single unlock effect, need a reason in `unannounced_category_exempt`.
         """
         self._log_section("Checking decision categories announce themselves...")
         self._report(
@@ -2584,6 +2675,8 @@ class Validator(BaseValidator):
         results = []
         for name, body in sorted(parse_decision_categories(self.mod_path).items()):
             if name in ai_only or name in announced:
+                continue
+            if name in _UNANNOUNCED_CATEGORY_EXEMPT:
                 continue
             # parse_decision_categories hands back `NAME = { ... }`, so unwrap
             # the header before looking for the category's own child blocks.
@@ -2661,7 +2754,7 @@ class Validator(BaseValidator):
     def validate_missing_log(self):
         """Flag decision effect blocks that carry no log line.
 
-        AGENTS.md / decision-reference.md require the log in every block the
+        decision-reference.md requires the log in every block the
         engine runs as a decision's effects (complete_effect, remove_effect,
         timeout_effect, cancel_effect):
         `log = "[GetDateText]: [Root.GetName]: Decision <ID>"`. An effect block
@@ -2789,41 +2882,80 @@ class Validator(BaseValidator):
         )
 
     def validate_missing_war_hint(self):
-        """Flag decisions that declare war but carry no war_with_* hint.
-
-        A decision whose complete_effect/remove_effect/timeout_effect calls
-        create_wargoal or declare_war should set one of the war_with_on_* (fixed
-        target) or war_with_target_on_* (FROM target) attributes so the AI
-        prepares for the war. create_wargoal inside an effect_tooltip still
-        represents an intended war, so its presence counts; the hint anywhere in
-        the decision body clears it.
-        """
+        """Check direct wars and owner-scope event chains for a matching phase hint."""
         self._log_section(
             "Checking decisions declaring war for a missing war_with_* hint..."
         )
 
         factories = parse_all_decision_factories(self.mod_path)
-        results = []
-        hints = (
-            "war_with_on_complete",
-            "war_with_on_remove",
-            "war_with_on_timeout",
-            "war_with_target_on_complete",
-            "war_with_target_on_remove",
-            "war_with_target_on_timeout",
-        )
+        category_pins = _category_allowed_pins(parse_decision_categories(self.mod_path))
+        category_decisions = parse_categories_with_decisions(self.mod_path)
+        owners: Dict[str, Set[str]] = {}
+        for category, tokens in category_decisions.items():
+            tags = {tag for _, tag in category_pins.get(category, set())}
+            if len(tags) == 1:
+                for token in tokens:
+                    owners.setdefault(token, set()).update(tags)
 
+        results = []
+        event_index = None
         for d in factories:
-            if not re.search(r"\b(?:create_wargoal|declare_war_on)\b", d.raw):
-                continue
-            if any(hint in d.raw for hint in hints):
-                continue
-            results.append(f"{d.token:<55}{d.source_basename}")
+            fields = blank_quoted_strings(d.raw)
+            tags = owners.get(d.token, set())
+            prefix = re.match(r"^([A-Z]{3})_", d.token)
+            allowed_tags = _flat_tag_pins(d.allowed)
+            owner_tag = next(iter(tags)) if len(tags) == 1 else None
+            if not owner_tag and len(allowed_tags) == 1:
+                owner_tag = next(iter(allowed_tags))
+            if not owner_tag and prefix:
+                owner_tag = prefix.group(1)
+            for phase in ("complete", "remove", "timeout"):
+                effect = getattr(d, f"{phase}_effect")
+                if not effect:
+                    continue
+                direct_war = _war_at_scope(blank_quoted_strings(effect), owner_tag)
+                chain = []
+                if not direct_war:
+                    sends = _owner_scope_event_sends(effect, owner_tag)
+                    if sends:
+                        if event_index is None:
+                            event_index = _build_event_index(self.mod_path)
+                        for event_id in sends:
+                            leads, chain = _event_chain_leads_to_war(
+                                event_id, owner_tag, event_index=event_index
+                            )
+                            if leads:
+                                break
+                        else:
+                            chain = []
+                if not direct_war and not chain:
+                    continue
+
+                fixed_hint = _top_level_field_value(fields, f"war_with_on_{phase}")
+                target_hint = (
+                    _top_level_field_value(fields, f"war_with_target_on_{phase}")
+                    == "yes"
+                )
+                targets_from = direct_war and re.search(
+                    r"\btarget\s*=\s*FROM\b", effect
+                )
+                if targets_from:
+                    has_hint = bool(target_hint)
+                else:
+                    has_hint = bool(fixed_hint and fixed_hint != "FROM") or bool(
+                        target_hint and (d.targets or d.target_array)
+                    )
+                if not has_hint:
+                    path = f" via {' -> '.join(chain)}" if chain else ""
+                    results.append(
+                        (f"{d.token} - {phase}_effect{path}", d.source_basename, 0)
+                    )
 
         self._report(
             results,
-            "✓ No decisions declaring war without a war_with_* hint",
-            "Decisions that declare war but have no war_with_on_* / war_with_target_on_* hint (AI won't prepare):",
+            "✓ No decisions declaring war without a matching war_with_* hint",
+            "Decision effects leading to war without a matching war_with_on_* / war_with_target_on_* hint (AI won't prepare):",
+            category="missing-decision-war-hint",
         )
 
     def validate_cancel_if_not_visible(self):
@@ -2880,7 +3012,7 @@ class Validator(BaseValidator):
         for d in factories:
             if d.ai_hint_pp_cost:
                 continue
-            if d.ai_factor and "base = 0" in d.ai_factor and "add" not in d.ai_factor:
+            if _ai_never_takes(d.ai_factor):
                 continue
 
             if d.custom_cost_trigger and "political_power" in d.custom_cost_trigger:
@@ -2908,6 +3040,56 @@ class Validator(BaseValidator):
             "✓ No PP-spending decisions missing ai_hint_pp_cost",
             "Decisions spending political power with no ai_hint_pp_cost (AI won't reserve PP):",
             severity=Severity.WARNING,
+        )
+
+    def validate_ai_will_do_ignores_cost(self):
+        """Flag decisions that charge money while ai_will_do never looks at money.
+
+        The decision twin of the event check (issue #5738), with the same cost
+        and guard detection. Skipped: decisions the AI cannot see or never
+        takes, plain missions, and a selectable mission's `remove_effect`, which
+        is a timeout outcome. A treasury `custom_cost_trigger` already stops a
+        broke country, so those findings carry a note.
+        """
+        self._log_section("Checking decisions for AI weights that ignore money...")
+
+        effects, stored = load_cost_lookups(self)
+        results = []
+
+        for d in self._ai_reachable(parse_all_decision_factories(self.mod_path)):
+            if d.mission_subtype and not d.selectable_mission:
+                continue
+            if _ai_never_takes(d.ai_factor):
+                continue
+            ai_weights = d.ai_factor[1:-1]
+
+            costs: Set[str] = set()
+            blocks = [d.complete_effect]
+            if not d.mission_subtype:
+                blocks.append(d.remove_effect)
+            for block in blocks:
+                costs |= uncovered_costs(block[1:-1], ai_weights, effects, stored)
+            costs &= _MONEY_COSTS
+            if not costs:
+                continue
+
+            note = _TREASURY_GATE_NOTE if "treasury" in d.custom_cost_trigger else ""
+            results.append(
+                (
+                    f"{d.token} - ai_will_do ignores the "
+                    f"{', '.join(sorted(costs))} cost{note}",
+                    d.source_path,
+                    d.line,
+                )
+            )
+
+        self._report(
+            results,
+            "✓ No decision AI weights ignoring money costs",
+            "Decisions whose ai_will_do ignores a money cost (add a bankruptcy or"
+            " deficit modifier):",
+            severity=Severity.WARNING,
+            category="decision-ai-will-do-ignores-cost",
         )
 
     def validate_state_target_with_targets(self):
@@ -3082,7 +3264,7 @@ class Validator(BaseValidator):
         for parts in _COMMIT_SCAN_DIRS:
             pattern = os.path.join(self.mod_path, *parts, "**", "*.txt")
             for filename in glob.iglob(pattern, recursive=True):
-                if _should_skip(filename):
+                if _should_skip(filename, mod_path=self.mod_path):
                     continue
                 if os.path.basename(filename) == _FORMABLE_DECISIONS_BASENAME:
                     continue
@@ -3208,8 +3390,38 @@ class Validator(BaseValidator):
             results,
             "✓ All decision icons use art sized for their slot",
             "Decision icons using art from the wrong slot:",
-            Severity.WARNING,
+            Severity.ERROR,
             category="decision-icon-slot-mismatch",
+        )
+
+    def validate_category_desc_images(self):
+        """Flag category descriptions whose opening art overlaps the header."""
+        self._log_section("Checking category description images clear the header...")
+
+        categories = parse_decision_categories(self.mod_path, lowercase=False)
+        sprites = build_sprite_size_index(self.mod_path, self._pool_map)
+        files = self._collect_files(
+            ["localisation/english/**/*.yml"], ignore_staged=True
+        )
+
+        results = []
+        for filepath in files:
+            text = read_text_strict(filepath)
+            for owner, newlines, icon, line in _leading_desc_icons(text):
+                if owner not in categories:
+                    continue
+                msg = _desc_image_message(owner, newlines, icon, sprites)
+                if msg:
+                    results.append(
+                        (msg, os.path.relpath(filepath, self.mod_path), line)
+                    )
+
+        self._report(
+            results,
+            "✓ All category description images clear the header",
+            "Category description images overlapping the header:",
+            Severity.WARNING,
+            category="category-desc-image-overlap",
         )
 
     def run_validations(self):
@@ -3234,6 +3446,7 @@ class Validator(BaseValidator):
         self.validate_from_checks_in_visible()
         self.validate_from_without_targets()
         self.validate_without_allowed_check()
+        self.validate_allowed_country_flag()
         self.validate_random_seed()
         self.validate_redundant_tag_checks()
         self.validate_allowed_redundant_with_category()
@@ -3251,12 +3464,14 @@ class Validator(BaseValidator):
         self.validate_missing_war_hint()
         self.validate_cancel_if_not_visible()
         self.validate_custom_cost_ai_hint()
+        self.validate_ai_will_do_ignores_cost()
         self.validate_state_target_with_targets()
         self.validate_mission_only_attributes()
         self.validate_orphaned_remove_effect()
         self.validate_orphaned_target_modifiers()
         self.validate_formable_commitment_sync()
         self.validate_icon_types()
+        self.validate_category_desc_images()
 
         if self.missing_icons:
             self.validate_missing_icons()

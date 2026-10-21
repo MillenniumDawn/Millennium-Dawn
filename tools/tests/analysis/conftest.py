@@ -14,6 +14,7 @@ import sys
 from pathlib import Path
 
 import pytest
+from shared.suite import write_text
 
 ANALYSIS_DIR = Path(__file__).resolve().parents[2] / "analysis"
 REPO_ROOT = Path(__file__).resolve().parents[3]
@@ -28,12 +29,6 @@ def mini_repo(tmp_path: Path) -> Path:
     (tmp_path / "common" / "ideas").mkdir(parents=True)
     (tmp_path / "tools" / "analysis").mkdir(parents=True)
     return tmp_path
-
-
-def write_text(path: Path, content: str) -> None:
-    """Write text with the LF-only newline discipline required by AGENTS.md."""
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(content)
 
 
 def _state_file(name: str, body: str) -> str:
@@ -193,20 +188,5 @@ def import_pre_place(import_estimate_gdp, monkeypatch, mini_repo: Path):
     # it to a tmp file we'll create in each test as needed.
     monkeypatch.setattr(
         mod, "COMPOSITE_SEED_CSV", str(mini_repo / "seeds.csv"), raising=False
-    )
-    return mod
-
-
-@pytest.fixture
-def import_redistribute(import_estimate_gdp, monkeypatch, mini_repo: Path):
-    """Import tools.analysis.redistribute_productivity with STATES_DIR redirected."""
-    import importlib
-
-    tools_dir = str(REPO_ROOT / "tools" / "analysis")
-    monkeypatch.syspath_prepend(tools_dir)
-    sys.modules.pop("redistribute_productivity", None)
-    mod = importlib.import_module("redistribute_productivity")
-    monkeypatch.setattr(
-        mod, "STATES_DIR", str(mini_repo / "history" / "states"), raising=False
     )
     return mod

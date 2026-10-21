@@ -1587,10 +1587,12 @@ focus_tree = {
 				complete_special_project = sp:sp_missile_project
 			}
 			if = {
-				limit = { NOT = { has_tech = air_defense } }
-				set_technology = {
-					air_defense = 1
-				}
+				limit = { has_dlc = "Gotterdammerung" NOT = { has_tech = air_defense } }
+				set_technology = { air_defense = 1 }
+			}
+			else_if = {
+				limit = { NOT = { has_dlc = "Gotterdammerung" } NOT = { has_tech = air_defense_non_got } }
+				set_technology = { air_defense_non_got = 1 }
 			}
 		}
 
@@ -1627,7 +1629,10 @@ focus_tree = {
 
 		available = {
 			hidden_trigger = { NOT = { has_country_flag = civil_war_focus } }
-			has_tech = air_defense
+			OR = {
+				has_tech = air_defense
+				has_tech = air_defense_non_got
+			}
 		}
 
 		completion_reward = {
@@ -3202,6 +3207,7 @@ focus_tree = {
 			set_temp_variable = { pop_change = -2 }
 			modify_population_tax_rate_effect = yes
 			add_political_power = 180
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -3471,6 +3477,7 @@ focus_tree = {
 			if = {
 				limit = { NOT = { has_idea = BOS_srpska_supremacy_idea } }
 				add_ideas = BOS_srpska_supremacy_idea
+				unlock_decision_category_tooltip = BOS_srpska_supremacy_measures
 			}
 			add_stability = 0.05
 		}
@@ -3827,6 +3834,7 @@ focus_tree = {
 			}
 			custom_effect_tooltip = BOS_may_draw_us_closer_to_civil_war
 			custom_effect_tooltip = BOS_revanchism_peacekeepers_warning_tt
+			unlock_decision_category_tooltip = BOS_peacekeeper_oversight
 			set_temp_variable = { temp_opinion = 5 }
 			change_the_military_opinion = yes
 		}
@@ -4037,6 +4045,9 @@ focus_tree = {
 					has_completed_focus = BOS_national_appeasement
 					has_completed_focus = BOS_western_objectives
 					has_completed_focus = BOS_national_unrest
+					BOS_ai_avoids_civil_war_trigger = yes
+					# with no Srpska state the war mission is spent and the tree stalls
+					NOT = { any_owned_state = { is_core_of = RSK } }
 				}
 			}
 		}
@@ -5962,20 +5973,22 @@ focus_tree = {
 			unlock_decision_category_tooltip = BOS_eu_accession
 			if = {
 				limit = { FRA = { has_idea = EU_member } }
-				FRA = { invest_in_EU_single_market_infra = yes }
+				FRA = { country_event = { id = EUevent.23 days = 2 } }
 			}
 			if = {
 				limit = { ITA = { has_idea = EU_member } }
-				ITA = { invest_in_EU_single_market_infra = yes }
+				ITA = { country_event = { id = EUevent.23 days = 9 } }
 			}
 			if = {
 				limit = { GER = { has_idea = EU_member } }
-				GER = { invest_in_EU_single_market_infra = yes }
+				GER = { country_event = { id = EUevent.23 days = 16 } }
 			}
 			if = {
 				limit = { ENG = { has_idea = EU_member } }
-				ENG = { invest_in_EU_single_market_infra = yes }
+				ENG = { country_event = { id = EUevent.23 days = 23 } }
 			}
+			custom_effect_tooltip = TT_IF_EACH_ACCEPTS
+			custom_effect_tooltip = EUevent.23_tt
 		}
 
 		ai_will_do = {
@@ -7965,6 +7978,7 @@ focus_tree = {
 			add_political_power = 25
 			newline = yes
 			increase_economic_growth = yes
+			unlock_decision_category_tooltip = BOS_economic_development
 		}
 
 		ai_will_do = { base = 8 }
@@ -7992,6 +8006,7 @@ focus_tree = {
 			newline = yes
 			set_temp_variable = { temp_productivity_change = 20 }
 			flat_productivity_change_effect = yes
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = { base = 6 }
@@ -8182,7 +8197,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_west_energy_partnership"
 			set_temp_variable = { modify_europeanism = 0.05 }
-			set_temp_variable = { modify_europeanism_target = THIS }
 			europeanism_change = yes
 			set_temp_variable = { temp_trust_change = 5 }
 			BOS_croat_trust_add_effect = yes
@@ -8543,7 +8557,6 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus BOS_berlin_process_commitment"
 			set_temp_variable = { modify_europeanism = 0.01 }
-			set_temp_variable = { modify_europeanism_target = THIS }
 			europeanism_change = yes
 			if = {
 				limit = { country_exists = GER }

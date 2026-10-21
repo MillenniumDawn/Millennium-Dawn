@@ -1191,7 +1191,7 @@ focus_tree = {
 				set_temp_variable = { treasury_change = { value = USA.gdp_per_capita multiply = -0.20 } }
 				modify_treasury_effect = yes
 				add_equipment_to_stockpile = {
-					type = artillery_1
+					type = artillery_2
 					amount = 72
 					producer = USA
 				}
@@ -1313,7 +1313,7 @@ focus_tree = {
 			set_temp_variable = { treasury_change = { value = FRA.gdp_per_capita multiply = -0.20 } }
 				modify_treasury_effect = yes
 			add_equipment_to_stockpile = {
-				type = artillery_1
+				type = artillery_2
 				amount = 72
 				producer = FRA
 			}
@@ -3821,6 +3821,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_found_Visitdenmark"
 			add_ideas = DEN_idea_Visitdenmark
+			unlock_decision_category_tooltip = DEN_visitdenmark_category
 		}
 
 		ai_will_do = {
@@ -4141,6 +4142,7 @@ focus_tree = {
 				remove_idea = DEN_social_spending_reforms_centralization_idea_2
 				add_idea = DEN_social_spending_reforms_centralization_idea_3
 			}
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = { base = 1 }
@@ -4598,10 +4600,12 @@ focus_tree = {
 			set_temp_variable = { treasury_change = { value = gdp_total multiply = -0.06 } }
 			modify_treasury_effect = yes
 			if = { limit = { has_idea = social_01 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = {
 					remove_idea = social_01
 					add_idea = social_02
 				}
+				clr_country_flag = spending_law_scripted_change
 			}
 			add_ideas = DEN_special_municipal_districts_idea
 			newline = yes
@@ -4662,16 +4666,20 @@ focus_tree = {
 			remove_ideas = DEN_special_municipal_districts_idea
 			add_ideas = DEN_direct_governance_idea
 			if = { limit = { has_idea = bureau_01 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = {
 					remove_idea = bureau_01
 					add_idea = bureau_03
 				}
+				clr_country_flag = spending_law_scripted_change
 			}
 			else_if = { limit = { has_idea = bureau_02 }
+				set_country_flag = spending_law_scripted_change
 				swap_ideas = {
 					remove_idea = bureau_02
 					add_idea = bureau_03
 				}
+				clr_country_flag = spending_law_scripted_change
 			}
 			newline = yes
 			set_temp_variable = { percent_change = -2 }
@@ -4872,7 +4880,6 @@ focus_tree = {
 					level = 1
 					instant_build = yes
 				}
-				add_to_temp_variable = { treasury_change = -7.50 }
 			}
 			1162 = {
 				add_extra_state_shared_building_slots = 1
@@ -12018,6 +12025,7 @@ focus_tree = {
 		completion_reward = {
 			log = "[GetDateText]: [Root.GetName]: Focus DEN_the_true_wellfare_state"
 			add_ideas = DEN_idea_feal_well
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -12311,6 +12319,7 @@ focus_tree = {
 					emerging_communist_state_are_in_power = yes
 				}
 				set_temp_variable = { percent_change = 8 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				add_opinion_modifier = {
 					target = DEN
@@ -12373,6 +12382,7 @@ focus_tree = {
 				emerging_communist_state_are_in_power = yes
 			}
 			set_temp_variable = { percent_change = 8 }
+			set_temp_variable = { influence_target = THIS }
 			change_influence_percentage = yes
 			add_opinion_modifier = {
 				target = DEN
@@ -13728,6 +13738,7 @@ focus_tree = {
 			add_ideas = DEN_public_service_investment
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = DEN_the_State }
 			add_to_variable = { DEN_stability_factor = 0.03 tooltip = stability_factor_tt }
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -14859,6 +14870,7 @@ focus_tree = {
 			block_health_increase = yes
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = DEN_the_State }
 			add_to_variable = { DEN_health_cost_multiplier_modifier_var = -0.05 tooltip = health_cost_multiplier_modifier_tt }
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -15898,7 +15910,7 @@ focus_tree = {
 				name = DEN_Danske_Statsbaner
 				bonus = 0.30
 				uses = 2
-				technology = early_high_speed_rail
+				technology = railway_system_04
 			}
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = DEN_the_State }
 			add_to_variable = { DEN_population_energy_consumption = -0.02 tooltip = pop_energy_use_multiplier_tt }
@@ -16448,6 +16460,7 @@ focus_tree = {
 			add_to_variable = { DEN_social_cost_multiplier_modifier_var = -0.025 tooltip = social_cost_multiplier_modifier_tt }
 			decrease_social_spending = yes
 			block_social_increase = yes
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -16484,9 +16497,17 @@ focus_tree = {
 		cost = 8
 
 		allow_branch = {
-			NOT = { has_completed_focus = DEN_basic_welfare }
-			NOT = { has_completed_focus = DEN_keep_welfare }
-			NOT = { has_completed_focus = DEN_reduce_taxation }
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = obsolete_focus_branches_visibility
+						option = HIDE
+					}
+				}
+				NOT = { has_completed_focus = DEN_basic_welfare }
+				NOT = { has_completed_focus = DEN_keep_welfare }
+				NOT = { has_completed_focus = DEN_reduce_taxation }
+			}
 		}
 
 		prerequisite = { focus = DEN_minimal_welfare }
@@ -16539,9 +16560,17 @@ focus_tree = {
 		cost = 8
 
 		allow_branch = {
-			NOT = { has_completed_focus = DEN_basic_welfare }
-			NOT = { has_completed_focus = DEN_keep_welfare }
-			NOT = { has_completed_focus = DEN_Economic_first }
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = obsolete_focus_branches_visibility
+						option = HIDE
+					}
+				}
+				NOT = { has_completed_focus = DEN_basic_welfare }
+				NOT = { has_completed_focus = DEN_keep_welfare }
+				NOT = { has_completed_focus = DEN_Economic_first }
+			}
 		}
 
 		prerequisite = { focus = DEN_minimal_welfare }
@@ -16740,6 +16769,7 @@ focus_tree = {
 			custom_effect_tooltip = { localization_key = modifies_dynamic_modifier_tt MODIFIER = DEN_the_State }
 			add_to_variable = { DEN_bureaucracy_cost_multiplier_modifier_var = -0.015 tooltip = bureaucracy_cost_multiplier_modifier_tt }
 			add_to_variable = { DEN_social_cost_multiplier_modifier_var = -0.015 tooltip = social_cost_multiplier_modifier_tt }
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -16907,9 +16937,17 @@ focus_tree = {
 		cost = 8
 
 		allow_branch = {
-			NOT = { has_completed_focus = DEN_basic_welfare }
-			NOT = { has_completed_focus = DEN_minimal_welfare }
-			NOT = { has_completed_focus = DEN_Tax_the_rich }
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = obsolete_focus_branches_visibility
+						option = HIDE
+					}
+				}
+				NOT = { has_completed_focus = DEN_basic_welfare }
+				NOT = { has_completed_focus = DEN_minimal_welfare }
+				NOT = { has_completed_focus = DEN_Tax_the_rich }
+			}
 		}
 
 		prerequisite = { focus = DEN_keep_welfare }
@@ -16963,9 +17001,17 @@ focus_tree = {
 		cost = 8
 
 		allow_branch = {
-			NOT = { has_completed_focus = DEN_basic_welfare }
-			NOT = { has_completed_focus = DEN_minimal_welfare }
-			NOT = { has_completed_focus = DEN_increase_taxes }
+			if = {
+				limit = {
+					has_game_rule = {
+						rule = obsolete_focus_branches_visibility
+						option = HIDE
+					}
+				}
+				NOT = { has_completed_focus = DEN_basic_welfare }
+				NOT = { has_completed_focus = DEN_minimal_welfare }
+				NOT = { has_completed_focus = DEN_increase_taxes }
+			}
 		}
 
 		prerequisite = { focus = DEN_keep_welfare }
@@ -17369,6 +17415,7 @@ focus_tree = {
 			set_temp_variable = { party_popularity_increase = 0.003 }
 			change_relative_party_popularity = yes
 			}
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {

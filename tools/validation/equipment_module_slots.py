@@ -43,7 +43,7 @@ import os
 import re
 import sys
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, NamedTuple, Optional, Set, Tuple
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
@@ -74,26 +74,38 @@ def _iter_blocks(text: str, lo: int, hi: int):
         pos = close + 1
 
 
+_DEPTH_EVENT_RE = re.compile(r'["{}]')
+
+
 def _depth0_text(text: str, lo: int, hi: int) -> str:
     """The ``text[lo:hi]`` span with every nested ``{...}`` block removed, so a
-    regex sees only this block's own scalar assignments."""
+    regex sees only this block's own scalar assignments.
+
+    A quote toggles string state unless a backslash precedes it, and braces
+    inside a string are kept as text.
+    """
     out: List[str] = []
     depth = 0
     in_str = False
-    i = lo
-    while i < hi:
+    run_start = lo
+    # Depth only changes at a quote or brace, so copy the runs between them.
+    for m in _DEPTH_EVENT_RE.finditer(text, lo, hi):
+        i = m.start()
         c = text[i]
-        if c == '"' and text[i - 1] != "\\":
-            in_str = not in_str
+        if depth == 0:
+            out.append(text[run_start:i])
+        run_start = i + 1
+        if c == '"' or in_str:
+            if c == '"' and text[i - 1] != "\\":
+                in_str = not in_str
             if depth == 0:
                 out.append(c)
-        elif c == "{" and not in_str:
+        elif c == "{":
             depth += 1
-        elif c == "}" and not in_str:
+        else:
             depth -= 1
-        elif depth == 0:
-            out.append(c)
-        i += 1
+    if depth == 0:
+        out.append(text[run_start:hi])
     return "".join(out)
 
 
@@ -232,6 +244,8 @@ class _Hull:
     inherit: bool
     types: Set[str]
     count_limits: Dict[Tuple[str, str], int]
+    upgrades: Optional[Set[str]] = None
+    parent: Optional[str] = None
 
 
 def parse_hulls(text: str) -> Dict[str, _Hull]:
@@ -254,14 +268,20 @@ def parse_hulls(text: str) -> Dict[str, _Hull]:
             if am:
                 arch = am.group(1)
             slots = None
+            upgrades = None
+            parent = None
             inherit = bool(re.search(r"\bmodule_slots\s*=\s*inherit", body))
             for key, klo, khi, _ in _iter_blocks(text, hlo, hhi):
-                if key == "module_slots":
+                if key == "module_slots" and slots is None:
                     slots = _parse_slot_categories(text, klo, khi)
-                    break
+                elif key == "upgrades":
+                    upgrades = set(_CATEGORY_TOKEN_RE.findall(text[klo:khi]))
+            pm = re.search(r"\bparent\s*=\s*(\w+)", body)
+            if pm:
+                parent = pm.group(1)
             count_limits = _parse_count_limits(text, hlo, hhi)
             types = _named_type_tokens(text, hlo, hhi, "type")
-            if slots is None and not inherit and not am:
+            if slots is None and not inherit and not am and upgrades is None:
                 continue
             hulls[hull] = _Hull(
                 slots=slots,
@@ -269,6 +289,8 @@ def parse_hulls(text: str) -> Dict[str, _Hull]:
                 inherit=inherit,
                 types=types,
                 count_limits=count_limits,
+                upgrades=upgrades,
+                parent=parent,
             )
     return hulls
 
@@ -321,6 +343,29 @@ def resolve_hull_slots(
     for name in hulls:
         resolve(name, frozenset())
     return resolved
+
+
+def resolve_hull_upgrades(hulls: Dict[str, _Hull]) -> Dict[str, Set[str]]:
+    """hull -> allowed upgrade keys: its own ``upgrades`` list, else the nearest
+    one up the ``parent`` chain, else up the ``archetype`` chain. Hulls with no
+    list anywhere are left out, so callers treat them as unknown."""
+
+    def find(name: str) -> Optional[Set[str]]:
+        for link in ("parent", "archetype"):
+            seen: Set[str] = set()
+            cur: Optional[str] = name
+            while cur and cur not in seen:
+                seen.add(cur)
+                hull = hulls.get(cur)
+                if hull is None:
+                    break
+                if hull.upgrades is not None:
+                    return hull.upgrades
+                cur = getattr(hull, link)
+        return None
+
+    resolved = {name: find(name) for name in hulls}
+    return {name: ups for name, ups in resolved.items() if ups is not None}
 
 
 def resolve_hull_types(hulls: Dict[str, _Hull]) -> Dict[str, Set[str]]:
@@ -497,6 +542,7 @@ class EquipmentIndex:
     hull_count_limits: Dict[str, Dict[Tuple[str, str], int]]
     module_forbid_types: Dict[str, Set[str]]
     module_forbid_exact: Dict[str, Set[str]]
+    hull_upgrades: Dict[str, Set[str]]
 
 
 # ---- variant module assignments -------------------------------------------
@@ -549,17 +595,20 @@ def _parse_module_assignments(
 def _iter_named_blocks(text: str, lo: int, hi: int, name: str):
     """Yield ``(body_lo, body_hi)`` for every ``name = { ... }`` block at any
     nesting depth of the ``text[lo:hi]`` span."""
-    for key, blo, bhi, _ in _iter_blocks(text, lo, hi):
+    last = text.rfind(name, lo, hi)
+    for key, blo, bhi, header in _iter_blocks(text, lo, hi):
+        if header > last:
+            return
         if key == name:
             yield blo, bhi
-        else:
+        elif text.find(name, blo, bhi) != -1:
             yield from _iter_named_blocks(text, blo, bhi, name)
 
 
 @dataclass
 class Finding:
     line: int
-    kind: str  # unknown_hull | unknown_slot | unknown_module | category_mismatch | missing_required_module | count_limit_exceeded | forbidden_equipment_type
+    kind: str  # unknown_hull | unknown_slot | unknown_module | category_mismatch | missing_required_module | count_limit_exceeded | forbidden_equipment_type | unsupported_upgrade
     message: str
     hull: str = ""
 
@@ -722,11 +771,12 @@ def _check_variant(
         return
     if hull is None:
         return
+    mods_line = text.count("\n", 0, mods_span[0]) + 1
     if hull not in index.hull_slots:
         if require_known_hull:
             findings.append(
                 Finding(
-                    text.count("\n", 0, mods_span[0]) + 1,
+                    mods_line,
                     "unknown_hull",
                     f"variant type '{hull}' is not a defined hull",
                     hull,
@@ -747,7 +797,7 @@ def _check_variant(
                 unlocked.setdefault(slot, set()).update(cats)
 
     for slot, refs, off in assignments:
-        line = text.count("\n", 0, off) + 1
+        line = mods_line + text.count("\n", mods_span[0], off)
         if slot not in slots:
             findings.append(
                 Finding(
@@ -815,30 +865,39 @@ def _check_variant(
         filled = {
             slot for slot, refs, _ in assignments if any(ref != "empty" for ref in refs)
         }
-        _flag_required_slots(
-            findings, slots, hull, text.count("\n", 0, mods_span[0]) + 1, filled
-        )
+        _flag_required_slots(findings, slots, hull, mods_line, filled)
 
-    _flag_count_limits(
-        findings,
-        index,
-        hull,
-        assignments,
-        text.count("\n", 0, mods_span[0]) + 1,
+    _flag_count_limits(findings, index, hull, assignments, mods_line)
+
+
+class CreatedVariants(NamedTuple):
+    """Comment-blanked file text and the body span of each created variant."""
+
+    text: str
+    spans: List[Tuple[int, int]]
+
+
+def created_variant_spans(content: str) -> CreatedVariants:
+    """Walk *content* once for every ``create_equipment_variant`` block.
+
+    The created-variant checks and the name index all read this one result.
+    """
+    text = blank_comments(content)
+    return CreatedVariants(
+        text, list(_iter_named_blocks(text, 0, len(text), "create_equipment_variant"))
     )
 
 
 def _check_all(
-    content: str,
+    text: str,
+    spans: Iterable[Tuple[int, int]],
     index: EquipmentIndex,
-    block: str,
     *,
     require_known_hull: bool,
     require_filled_slots: bool,
 ) -> List[Finding]:
-    text = blank_comments(content)
     findings: List[Finding] = []
-    for vlo, vhi in _iter_named_blocks(text, 0, len(text), block):
+    for vlo, vhi in spans:
         _check_variant(
             text,
             vlo,
@@ -861,16 +920,19 @@ def check_target_variants(content: str, index: EquipmentIndex) -> List[Finding]:
     slots are checked too: a template that leaves one empty cannot be matched
     by any design the AI produces, so the roles it covers quietly degrade.
     """
+    text = blank_comments(content)
     return _check_all(
-        content,
+        text,
+        _iter_named_blocks(text, 0, len(text), "target_variant"),
         index,
-        "target_variant",
         require_known_hull=True,
         require_filled_slots=True,
     )
 
 
-def check_created_variants(content: str, index: EquipmentIndex) -> List[Finding]:
+def check_created_variants(
+    variants: CreatedVariants, index: EquipmentIndex
+) -> List[Finding]:
     """Same slot/category check for ``create_equipment_variant`` effects, which
     are what focus rewards, events, decisions and history files use.
 
@@ -885,23 +947,59 @@ def check_created_variants(content: str, index: EquipmentIndex) -> List[Finding]
     filled, including when the block carries no ``modules`` at all.
     """
     return _check_all(
-        content,
+        variants.text,
+        variants.spans,
         index,
-        "create_equipment_variant",
         require_known_hull=False,
         require_filled_slots=True,
     )
 
 
-def parse_variant_names(content: str) -> List[Tuple[str, str, int]]:
-    """``(type, name, line)`` for every ``create_equipment_variant`` in *content*.
+def check_created_variant_upgrades(
+    variants: CreatedVariants, index: EquipmentIndex
+) -> List[Finding]:
+    """Flag ``upgrades = { key = N }`` entries the variant's equipment type does
+    not list in its own ``upgrades`` block (the engine logs "Type 'X' does not
+    support upgrades 'Y'"). A type with no resolvable upgrade list is skipped.
+    """
+    text = variants.text
+    findings: List[Finding] = []
+    for vlo, vhi in variants.spans:
+        etype = _scalar(text, vlo, vhi, "type")
+        if not etype:
+            continue
+        allowed = index.hull_upgrades.get(etype)
+        if allowed is None:
+            continue
+        name = _quoted_scalar(text, vlo, vhi, "name") or ""
+        for key, ulo, uhi, _ in _iter_blocks(text, vlo, vhi):
+            if key != "upgrades":
+                continue
+            for m in re.finditer(r"([A-Za-z_]\w*)\s*=", text[ulo:uhi]):
+                if m.group(1) in allowed:
+                    continue
+                findings.append(
+                    Finding(
+                        text.count("\n", 0, ulo + m.start()) + 1,
+                        "unsupported_upgrade",
+                        f"'{name}' - Type '{etype}' does not support upgrades "
+                        f"'{m.group(1)}'",
+                        etype,
+                    )
+                )
+    findings.sort(key=lambda f: f.line)
+    return findings
+
+
+def parse_variant_names(variants: CreatedVariants) -> List[Tuple[str, str, int]]:
+    """``(type, name, line)`` for every ``create_equipment_variant`` block.
 
     Blocks missing either field are skipped: an OOB ``version_name`` lookup can
     never resolve to them.
     """
-    text = blank_comments(content)
+    text = variants.text
     out: List[Tuple[str, str, int]] = []
-    for vlo, vhi in _iter_named_blocks(text, 0, len(text), "create_equipment_variant"):
+    for vlo, vhi in variants.spans:
         etype = _scalar(text, vlo, vhi, "type")
         name = _quoted_scalar(text, vlo, vhi, "name")
         if etype and name:
@@ -960,8 +1058,10 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
     resolved = resolve_hull_slots(hulls)
     hull_types = resolve_hull_types(hulls)
     count_limits = resolve_count_limits(hulls)
+    hull_upgrades = resolve_hull_upgrades(hulls)
     _clone_family(resolved, duplicates)
     _clone_family(count_limits, duplicates)
+    _clone_family(hull_upgrades, duplicates)
     _apply_duplicate_types(hull_types, duplicates, dup_types)
 
     module_category: Dict[str, str] = {}
@@ -1002,6 +1102,7 @@ def build_indexes(hull_texts: List[str], module_texts: List[str]) -> EquipmentIn
         count_limits,
         forbid_types,
         forbid_exact,
+        hull_upgrades,
     )
 
 

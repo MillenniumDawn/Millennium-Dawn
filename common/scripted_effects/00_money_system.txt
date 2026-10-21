@@ -48,11 +48,17 @@
 # Resource Sales Rate Constant
 @resource_sale_rate_constant = 0.00298
 # Upper bound for math expression clamps — HOI4 requires both min and max on every clamp, so this serves as a sane "effectively unbounded" max
-@math_expressions_max = 1000000
-# Upper clamp on spending-law base costs before the per-level multiplier; effectively unbounded, distinct from @math_expressions_max (1e6)
-@spending_cost_clamp_max = 100000000
+@math_expressions_max = 100000000
 # Population Tax Adjuster
 @population_tax_adjuster = 0.008
+# Maximum exchange-rate multiplier on reserve-currency debt service
+@max_debt_fx_factor = 2
+# Near-zero GDP would otherwise give ratios in the thousands; no trigger checks above 2.5
+@max_debt_ratio = 5
+# Target share of gross income used for debt service after a financial collapse
+@financial_collapse_debt_service_target = 0.75
+# CP Policy Rate value
+@cp_policy_rate_interest = 0.33
 
 # GDP per-building contribution coefficients: output = total * (base_factor + prod_factor * productivity) * manpower_fulfillment
 @gdp_civ_base_factor = 17.5
@@ -71,6 +77,18 @@
 @gdp_composite_prod_factor = 30
 @gdp_synthetic_base_factor = 10
 @gdp_synthetic_prod_factor = 10
+@gdp_nuclear_reactor_factor = 4
+@gdp_fossil_powerplant_factor = 1.7
+@gdp_renewable_energy_factor = 2
+@gdp_internet_station_factor = 3.5
+@gdp_rail_terminal_factor = 2.5
+@gdp_resource_factor = 0.5
+@gdp_health_01_factor = 0.10
+@gdp_health_02_factor = 0.20
+@gdp_health_03_factor = 0.35
+@gdp_health_04_factor = 0.50
+@gdp_health_05_factor = 0.65
+@gdp_health_06_factor = 0.80
 
 # Spending-law base cost per capita (billion $ per 10 000 000 people)
 @bureau_base_cost_per_capita = 0.0007
@@ -82,6 +100,14 @@
 @bureau_salary_per_worker = 0.001
 # tweak this to modify the operative cost of all equipment
 @equipment_operative_cost_multiplier = 5
+
+# Default income every country gets
+@base_income_rate = 0.25
+
+# Weekly canal and strait income at 2000 world GDP, scaled by global.world_trade_factor
+@suez_toll_income = 0.0346 # 1.8B yearly
+@panama_toll_income = 0.0096 # 0.5B yearly
+@malacca_hub_income = 0.0135 # 0.7B yearly
 
 setup_spending_law_tables = {
 	clear_array = global.bureau_law_idea
@@ -237,11 +263,8 @@ ingame_update_setup = {
 	#Expenses
 	expense_modifier_calculations = yes
 	update_military_rate = yes
-	update_bureaucracy_rate = yes
-	update_police_rate = yes
+	update_population_spending_rates = yes
 	update_education_rate = yes
-	update_health_rate = yes
-	update_social_rate = yes
 	update_infra_rate = yes
 	calculate_interest_rate = yes
 	calculate_additional_expense_rate = yes
@@ -270,6 +293,7 @@ update_money_dirty_variable = {
 		force_update_map_mode = { mapmode = gdp_c_map_mode }
 		force_update_map_mode = { mapmode = energy_consumption_map_mode }
 		force_update_map_mode = { mapmode = productivity_map_mode }
+		force_update_map_mode = { mapmode = reserve_currency_map_mode }
 
 		md_check_research_slot_alert = yes
 	}
@@ -334,6 +358,8 @@ calculate_tax_rate = {
 				multiply = -0.01
 			}
 		}
+
+		calculate_expected_tax_rates = yes
 
 		# Average Tax Rate
 		set_variable = {
@@ -424,296 +450,257 @@ calculate_tax_gain = {
 	# Agriculture Districts - base constant 2.60
 
 	# Civilian Factories
-	if = { limit = { check_variable = { industrial_complex_total > 0 } }
-		set_variable = {
-			civil_fac_tax = {
-				value = industrial_complex_total
+	set_variable = {
+		civil_fac_tax = {
+			value = industrial_complex_total
+			multiply = {
+				value = 1
+				add = modifier@civilian_industry_tax_modifier
 				multiply = {
 					value = 1
-					add = modifier@civilian_industry_tax_modifier
-					multiply = {
-						value = 1
-						add = modifier@civilian_factories_productivity
-					}
-					multiply = civilian_factories_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 2.5
-					}
+					add = modifier@civilian_factories_productivity
 				}
-				clamp = { min = 0 max = 100000000 }
+				multiply = civilian_factories_manpower_fulfillment
+				multiply = {
+					value = unified_building_multiplier
+					multiply = 2.5
+				}
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { civil_fac_tax = 0 } }
 
 	# Military Factories
-	if = { limit = { check_variable = { military_factory_total > 0 } }
-		set_variable = {
-			military_fac_tax = {
-				value = military_factory_total
+	set_variable = {
+		military_fac_tax = {
+			value = military_factory_total
+			multiply = {
+				value = 1
+				add = modifier@military_industry_tax_modifier
 				multiply = {
 					value = 1
-					add = modifier@military_industry_tax_modifier
-					multiply = {
-						value = 1
-						add = modifier@military_factories_productivity
-					}
-					multiply = military_factories_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 0.2
-					}
+					add = modifier@military_factories_productivity
 				}
-				clamp = { min = 0 max = 100000000 }
+				multiply = military_factories_manpower_fulfillment
+				multiply = {
+					value = unified_building_multiplier
+					multiply = 0.2
+				}
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { military_fac_tax = 0 } }
 
 	# Dockyards
-	if = { limit = { check_variable = { naval_factory_total > 0 } }
-		set_variable = {
-			dockyard_tax = {
-				value = naval_factory_total
+	set_variable = {
+		dockyard_tax = {
+			value = naval_factory_total
+			multiply = {
+				value = 1
+				add = modifier@dockyard_income_tax_modifier
 				multiply = {
 					value = 1
-					add = modifier@dockyard_income_tax_modifier
-					multiply = {
-						value = 1
-						add = modifier@dockyard_productivity
-					}
-					multiply = naval_factories_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 0.2
-					}
+					add = modifier@dockyard_productivity
 				}
-				clamp = { min = 0 max = 100000000 }
+				multiply = naval_factories_manpower_fulfillment
+				multiply = {
+					value = unified_building_multiplier
+					multiply = 0.2
+				}
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { dockyard_tax = 0 } }
 
 	# Offices
-	if = { limit = { check_variable = { office_park_total > 0 } }
-		set_variable = {
-			office_tax = {
-				value = office_park_total
+	set_variable = {
+		office_tax = {
+			value = office_park_total
+			multiply = {
+				value = 1
+				add = modifier@office_park_income_tax_modifier
 				multiply = {
 					value = 1
-					add = modifier@office_park_income_tax_modifier
-					multiply = {
-						value = 1
-						add = modifier@offices_productivity
-					}
-					multiply = offices_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 5
-					}
+					add = modifier@offices_productivity
 				}
-				clamp = { min = 0 max = 100000000 }
+				multiply = offices_manpower_fulfillment
+				multiply = {
+					value = unified_building_multiplier
+					multiply = 5
+				}
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { office_tax = 0 } }
 
 	# Agriculture Districts
-	if = { limit = { check_variable = { agriculture_district_total > 0 } }
-		set_variable = {
-			agriculture_district_tax = {
-				value = agriculture_district_total
+	set_variable = {
+		agriculture_district_tax = {
+			value = agriculture_district_total
+			multiply = {
+				value = 1
+				add = modifier@agriculture_district_income_tax_modifier
 				multiply = {
 					value = 1
-					add = modifier@agriculture_district_income_tax_modifier
-					multiply = {
-						value = 1
-						add = modifier@agricolture_productivity_modifier
-					}
-					multiply = agriculture_district_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 2.6
-					}
+					add = modifier@agricolture_productivity_modifier
 				}
-				clamp = { min = 0 max = 100000000 }
+				multiply = agriculture_district_manpower_fulfillment
+				multiply = {
+					value = unified_building_multiplier
+					multiply = 2.6
+				}
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { agriculture_district_tax = 0 } }
 
 	# Microchip Plants
-	if = { limit = { check_variable = { microchip_plant_total > 0 } }
-		set_variable = {
-			microchip_plant_tax = {
-				value = microchip_plant_total
+	set_variable = {
+		microchip_plant_tax = {
+			value = microchip_plant_total
+			multiply = {
+				value = 1
+				add = modifier@microchip_plant_income_tax_modifier
 				multiply = {
 					value = 1
-					add = modifier@microchip_plant_income_tax_modifier
-					multiply = {
-						value = 1
-						add = modifier@microchip_plant_productivity_modifier
-					}
-					multiply = microchip_plant_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 3.6
-					}
+					add = modifier@microchip_plant_productivity_modifier
 				}
-				clamp = { min = 0 max = 100000000 }
+				multiply = microchip_plant_manpower_fulfillment
+				multiply = {
+					value = unified_building_multiplier
+					multiply = 3.6
+				}
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { microchip_plant_tax = 0 } }
 
 	# Composite Plants
-	if = { limit = { check_variable = { composite_plant_total > 0 } }
-		set_variable = {
-			composite_plant_tax = {
-				value = composite_plant_total
+	set_variable = {
+		composite_plant_tax = {
+			value = composite_plant_total
+			multiply = {
+				value = 1
+				add = modifier@composite_plant_income_tax_modifier
 				multiply = {
 					value = 1
-					add = modifier@composite_plant_income_tax_modifier
-					multiply = {
-						value = 1
-						add = modifier@composite_plant_productivity_modifier
-					}
-					multiply = composite_plant_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 3.15
-					}
+					add = modifier@composite_plant_productivity_modifier
 				}
-				clamp = { min = 0 max = 100000000 }
+				multiply = composite_plant_manpower_fulfillment
+				multiply = {
+					value = unified_building_multiplier
+					multiply = 3.15
+				}
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { composite_plant_tax = 0 } }
 
 	# Synthetic Refineries
-	if = { limit = { check_variable = { synthetic_refinery_total > 0 } }
-		set_variable = {
-			synthetic_refinery_tax = {
-				value = synthetic_refinery_total
+	set_variable = {
+		synthetic_refinery_tax = {
+			value = synthetic_refinery_total
+			multiply = {
+				value = 1
+				add = modifier@synthetic_refinery_productivity_modifier
 				multiply = {
 					value = 1
-					add = modifier@synthetic_refinery_productivity_modifier
-					multiply = {
-						value = 1
-						add = modifier@synthetic_refinery_income_tax_modifier
-					}
-					multiply = synthetic_refinery_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 2.7
-					}
+					add = modifier@synthetic_refinery_income_tax_modifier
 				}
-				clamp = { min = 0 max = 100000000 }
+				multiply = synthetic_refinery_manpower_fulfillment
+				multiply = {
+					value = unified_building_multiplier
+					multiply = 2.7
+				}
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { synthetic_refinery_tax = 0 } }
 
 	# Nuclear Reactors
-	if = { limit = { check_variable = { nuclear_reactors > 0 } }
-		set_variable = {
-			nuclear_reactor_tax = {
-				value = nuclear_reactors
+	set_variable = {
+		nuclear_reactor_tax = {
+			value = nuclear_reactors
+			multiply = {
+				value = 1
+				add = modifier@infrastructure_tax_gain_multiplier_modifier
+				multiply = nuclear_reactors_manpower_fulfillment
 				multiply = {
-					value = 1
-					add = modifier@infrastructure_tax_gain_multiplier_modifier
-					multiply = nuclear_reactors_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 2.875
-					}
+					value = unified_building_multiplier
+					multiply = 2.875
 				}
-				clamp = { min = 0 max = 100000000 }
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { nuclear_reactor_tax = 0 } }
 
 	# Fossil Power Plants
-	if = { limit = { check_variable = { number_of_fossil_pps > 0 } }
-		set_variable = {
-			fossil_powerplant_tax = {
-				value = number_of_fossil_pps
+	set_variable = {
+		fossil_powerplant_tax = {
+			value = number_of_fossil_pps
+			multiply = {
+				value = 1
+				add = modifier@infrastructure_tax_gain_multiplier_modifier
+				multiply = fossil_powerplants_manpower_fulfillment
 				multiply = {
-					value = 1
-					add = modifier@infrastructure_tax_gain_multiplier_modifier
-					multiply = fossil_powerplants_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 0.31875
-					}
+					value = unified_building_multiplier
+					multiply = 0.31875
 				}
-				clamp = { min = 0 max = 100000000 }
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { fossil_powerplant_tax = 0 } }
 
 	# Renewable Energy Infrastructure
-	if = { limit = { check_variable = { renewable_energy_infra > 0 } }
-		set_variable = {
-			renewable_energy_tax = {
-				value = renewable_energy_infra
+	set_variable = {
+		renewable_energy_tax = {
+			value = renewable_energy_infra
+			multiply = {
+				value = 1
+				add = modifier@infrastructure_tax_gain_multiplier_modifier
+				multiply = renewable_energy_infra_manpower_fulfillment
 				multiply = {
-					value = 1
-					add = modifier@infrastructure_tax_gain_multiplier_modifier
-					multiply = renewable_energy_infra_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 1.5
-					}
+					value = unified_building_multiplier
+					multiply = 1.5
 				}
-				clamp = { min = 0 max = 100000000 }
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { renewable_energy_tax = 0 } }
 
 	# Internet Stations
-	if = { limit = { check_variable = { internet_station_total > 0 } }
-		set_variable = {
-			internet_station_tax = {
-				value = internet_station_total
+	set_variable = {
+		internet_station_tax = {
+			value = internet_station_total
+			multiply = {
+				value = 1
+				add = modifier@infrastructure_tax_gain_multiplier_modifier
+				multiply = internet_stations_manpower_fulfillment
 				multiply = {
-					value = 1
-					add = modifier@infrastructure_tax_gain_multiplier_modifier
-					multiply = internet_stations_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 0.525
-					}
+					value = unified_building_multiplier
+					multiply = 0.525
 				}
-				clamp = { min = 0 max = 100000000 }
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { internet_station_tax = 0 } }
 
 	# Rail Terminals
-	if = { limit = { check_variable = { rail_terminal_total > 0 } }
-		set_variable = {
-			rail_terminal_tax = {
-				value = rail_terminal_total
+	set_variable = {
+		rail_terminal_tax = {
+			value = rail_terminal_total
+			multiply = {
+				value = 1
+				add = modifier@infrastructure_tax_gain_multiplier_modifier
+				multiply = rail_terminal_manpower_fulfillment
 				multiply = {
-					value = 1
-					add = modifier@infrastructure_tax_gain_multiplier_modifier
-					multiply = rail_terminal_manpower_fulfillment
-					multiply = {
-						value = unified_building_multiplier
-						multiply = 0.4375
-					}
+					value = unified_building_multiplier
+					multiply = 0.4375
 				}
-				clamp = { min = 0 max = 100000000 }
 			}
+			clamp = { min = 0 max = 100000000 }
 		}
 	}
-	else = { set_variable = { rail_terminal_tax = 0 } }
 
 	# Healthcare Corporate Income Tax
 	# Represents the private healthcare market: hospitals, pharmaceutical companies, medical devices, insurance
@@ -812,18 +799,23 @@ calculate_tax_gain = {
 # Effect: calculate_additional_income_rate
 # Purpose: Aggregates special income sources (seigniorage, ideas, canal revenue, foreign aid)
 calculate_additional_income_rate = {
-	set_variable = { additional_income_rate = 0 }
+	set_variable = { additional_income_base = @base_income_rate }
+	set_variable = { additional_income_rate = additional_income_base }
+
+	if = { limit = { has_idea = bitcoin }
+		add_to_variable = { additional_income_rate = global.bitcoin_reserve_income }
+	}
 
 	# Apply seigniorage_income_modifier as a multiplier on the issuer base:
 	# income = base × (1 + modifier). When no decision is active modifier = 0,
 	# so the factor is 1.0 and the base is unchanged.
+	set_variable = { seigniorage_income_display = 0 }
 	if = { limit = { check_variable = { seigniorage_base > 0 } }
 		add_to_temp_variable = { seigniorage_mod = 1.0 }
 		multiply_temp_variable = { seigniorage_base = seigniorage_mod }
 		add_to_variable = { additional_income_rate = seigniorage_base }
 		set_variable = { seigniorage_income_display = seigniorage_base }
 	}
-	else = { set_variable = { seigniorage_income_display = 0 } }
 	# Additional incomes, set income amount as a variable (weekly gain)
 	if = { limit = { original_tag = GRN }
 		if = {
@@ -955,30 +947,26 @@ calculate_additional_income_rate = {
 			add_to_variable = { additional_income_rate = HEZ_iranian_support_money }
 		}
 		if = {
-			 limit = { always = yes } # This is to stop Hezbollah's economy collapsing early.
+			limit = { always = yes } # This is to stop Hezbollah's economy collapsing early.
 			set_variable = { HEZ_unknown_funds_income = 0.400 }
 			add_to_variable = { additional_income_rate = HEZ_unknown_funds_income }
 		}
 	}
 	if = { limit = { has_idea = full_control_of_suez }
-		set_variable = { additional_income_suez = 0.1 }
+		set_variable = { additional_income_suez = { value = global.world_trade_factor multiply = @suez_toll_income } }
 		add_to_variable = { additional_income_rate = additional_income_suez }
 	}
 	if = { limit = { has_idea = partial_control_of_suez }
-		set_variable = { additional_income_suez_partial = 0.05 }
+		set_variable = { additional_income_suez_partial = { value = global.world_trade_factor multiply = @suez_toll_income multiply = 0.5 } }
 		add_to_variable = { additional_income_rate = additional_income_suez_partial }
 	}
 	if = { limit = { has_idea = full_control_of_panama }
-		set_variable = { additional_income_panama = 0.05 }
+		set_variable = { additional_income_panama = { value = global.world_trade_factor multiply = @panama_toll_income } }
 		add_to_variable = { additional_income_rate = additional_income_panama }
 	}
 	if = { limit = { has_idea = gateway_to_asia }
-		set_variable = { gateway_to_asia_income = 0.1 }
+		set_variable = { gateway_to_asia_income = { value = global.world_trade_factor multiply = @malacca_hub_income } }
 		add_to_variable = { additional_income_rate = gateway_to_asia_income }
-	}
-	if = { limit = { has_idea = MICROSTATE_fix }
-		set_variable = { additional_income_microstate_fix_var = 0.35 }
-		add_to_variable = { additional_income_rate = additional_income_microstate_fix_var }
 	}
 	if = { limit = { has_idea = saudi_aid }
 		set_variable = { additional_income_saudi_aid = { value = population_total multiply = 0.00002 } }	#Millions of people
@@ -1012,8 +1000,18 @@ calculate_additional_income_rate = {
 					has_dynamic_modifier = { modifier = narco_state_bonuses }
 				}
 			}
-			set_temp_variable = { strength_modifier = { value = ROOT.strength_of_cartels multiply = 0.01 add = 1 } }
-			set_variable = { CARTEL_drug_trade_money = { value = gdp_total multiply = 0.009 multiply = strength_modifier } }
+			set_variable = {
+				CARTEL_drug_trade_money = {
+					value = gdp_total
+					multiply = 0.009
+					multiply = {
+						value = ROOT.strength_of_cartels
+						multiply = 0.01
+						add = 1
+					}
+				}
+			}
+
 			add_to_variable = { additional_income_rate = CARTEL_drug_trade_money }
 		}
 	}
@@ -1058,9 +1056,15 @@ calculate_additional_income_rate = {
 	}
 	# Imposing Taxation on Religious Institutions
 	if = { limit = { has_idea = internal_factions_taxing_religious_institutions }
-		set_variable = { additional_income_taxing_religious_institutions = population_total_m }
-		set_temp_variable = { gdp_per_capita_temp = { value = gdp_per_capita divide = 750 } }
-		multiply_variable = { additional_income_taxing_religious_institutions = gdp_per_capita_temp }
+		set_variable = {
+			additional_income_taxing_religious_institutions = {
+				value = population_total_m
+				multiply = {
+					value = gdp_per_capita
+					divide = 750
+				}
+			}
+		}
 		add_to_variable = { additional_income_rate = additional_income_taxing_religious_institutions }
 	}
 
@@ -1290,6 +1294,11 @@ calculate_additional_income_rate = {
 			set_variable = { additional_income_BUL_varna_beaches = 0.45 }
 			add_to_variable = { additional_income_rate = additional_income_BUL_varna_beaches }
 		}
+		if = {
+			limit = { has_idea = BUL_gold_mining_revenue }
+			set_variable = { additional_income_BUL_gold_mining = 0.30 }
+			add_to_variable = { additional_income_rate = additional_income_BUL_gold_mining }
+		}
 	}
 	# Chechnya
 	else_if = {
@@ -1364,6 +1373,20 @@ calculate_additional_income_rate = {
 			limit = { has_idea = CRM_naval }
 			set_variable = { additional_income_CRM_naval = 0.045 }
 			add_to_variable = { additional_income_rate = additional_income_CRM_naval }
+		}
+	}
+	#Cuba
+	else_if = {
+		limit = { original_tag = CUB }
+		if = {
+			limit = { has_idea = CUB_tourism }
+			set_variable = { CUB_tourism_income = 0.100 }
+			add_to_variable = { additional_income_rate = CUB_tourism_income }
+		}
+		if = {
+			limit = { has_idea = CUB_tourism_hub_idea }
+			set_variable = { CUB_tourism_hub_income = 0.500 }
+			add_to_variable = { additional_income_rate = CUB_tourism_hub_income }
 		}
 	}
 	# Denmark
@@ -1509,6 +1532,11 @@ calculate_additional_income_rate = {
 	# Iraq
 	else_if = {
 		limit = { original_tag = IRQ }
+		if = {
+			limit = { has_idea = PER_irgc_black_market_exploits }
+			set_variable = { additional_income_irgc_black_market = { value = gdp_total multiply = 0.002 } }	#10% of GDP yearly estimated weekly
+			add_to_variable = { additional_income_rate = additional_income_irgc_black_market }
+		}
 		if = {
 			limit = { has_idea = IRQ_mosque_income_idea }
 			set_variable = { additional_income_IRQ_mosque_donations = 0.200 }
@@ -2136,255 +2164,147 @@ calculate_additional_income_rate = {
 	#Sold Equipment Tax Income
 	if = {
 		limit = { check_variable = { market_sold_contracts > 0 } }
-		# start the math
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.inf_cost_mult
-				multiply = amount_inf_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.cnc_cost_mult
-				multiply = amount_cnc_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.aa_cost_mult
-				multiply = amount_aa_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.at_cost_mult
-				multiply = amount_at_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.hat_cost_mult
-				multiply = amount_hat_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.art_cost_mult
-				multiply = amount_art_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.atk_helo_cost_mult
-				multiply = amount_atk_helo_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.trans_helo_cost_mult
-				multiply = amount_trans_helo_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.util_cost_mult
-				multiply = amount_util_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.mbt_cost_mult
-				multiply = amount_mbt_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.apc_cost_mult
-				multiply = amount_apc_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.ifv_cost_mult
-				multiply = amount_ifv_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.spart_cost_mult
-				multiply = amount_spart_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.light_tank_cost_mult
-				multiply = amount_light_tank_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.spaa_cost_mult
-				multiply = amount_spaa_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.train_cost_mult
-				multiply = amount_train_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.convoy_cost_mult
-				multiply = amount_convoy_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.sml_pln_cost_mult
-				multiply = amount_sml_pln_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.med_pln_cost_mult
-				multiply = amount_med_pln_equip_sold
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.lrg_pln_cost_mult
-				multiply = amount_lrg_pln_equip_sold
-			}
-		}
-
-		if = {
-			limit = { has_dlc = "Gotterdammerung" }
-
-			add_to_temp_variable = {
-				var = market_sold_cost
-				value = {
+		set_variable = {
+			market_sold_value_track = {
+				value = 0
+				add = {
+					value = global.base_unit_cost
+					multiply = global.inf_cost_mult
+					multiply = amount_inf_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.cnc_cost_mult
+					multiply = amount_cnc_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.aa_cost_mult
+					multiply = amount_aa_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.at_cost_mult
+					multiply = amount_at_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.hat_cost_mult
+					multiply = amount_hat_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.art_cost_mult
+					multiply = amount_art_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.atk_helo_cost_mult
+					multiply = amount_atk_helo_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.trans_helo_cost_mult
+					multiply = amount_trans_helo_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.util_cost_mult
+					multiply = amount_util_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.mbt_cost_mult
+					multiply = amount_mbt_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.apc_cost_mult
+					multiply = amount_apc_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.ifv_cost_mult
+					multiply = amount_ifv_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.spart_cost_mult
+					multiply = amount_spart_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.light_tank_cost_mult
+					multiply = amount_light_tank_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.spaa_cost_mult
+					multiply = amount_spaa_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.train_cost_mult
+					multiply = amount_train_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.convoy_cost_mult
+					multiply = amount_convoy_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.sml_pln_cost_mult
+					multiply = amount_sml_pln_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.med_pln_cost_mult
+					multiply = amount_med_pln_equip_sold
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.lrg_pln_cost_mult
+					multiply = amount_lrg_pln_equip_sold
+				}
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_ballistic_missile_equipment_sold
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_sold_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_nuclear_ballistic_missile_equipment_sold
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_sold_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_guided_missile_equipment_sold
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_sold_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_hypersonic_missile_equipment_sold
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_sold_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_nuclear_missile_equipment_sold
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_sold_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_sam_missile_equipment_sold
 				}
+				multiply = {
+					value = 1
+					add = modifier@international_market_income_modifier
+				}
 			}
 		}
 
-		multiply_temp_variable = {
-			var = market_sold_cost
-			value = {
-				value = 1
-				add = modifier@international_market_income_modifier
-			}
-		}
-
-		add_to_variable = { additional_income_rate = market_sold_cost }
-		set_variable = { market_sold_value_track = market_sold_cost }
+		add_to_variable = { additional_income_rate = market_sold_value_track }
 	}
 
 	#Czech-Hungarian trade
@@ -2406,23 +2326,17 @@ calculate_additional_income_rate = {
 		# Golden Visa Programme income
 		if = {
 			limit = { has_completed_focus = GRE_golden_visa_deals }
-			# Higher corruption draws more visa buyers; scale income by corruption tier
-			set_temp_variable = { GRE_visa_corruption_tier = 1 }
-			if = { limit = { has_idea = corruption_level_02 } set_temp_variable = { GRE_visa_corruption_tier = 2 } }
-			else_if = { limit = { has_idea = corruption_level_03 } set_temp_variable = { GRE_visa_corruption_tier = 3 } }
-			else_if = { limit = { has_idea = corruption_level_04 } set_temp_variable = { GRE_visa_corruption_tier = 4 } }
-			else_if = { limit = { has_idea = corruption_level_05 } set_temp_variable = { GRE_visa_corruption_tier = 5 } }
-			else_if = { limit = { has_idea = corruption_level_06 } set_temp_variable = { GRE_visa_corruption_tier = 6 } }
-			else_if = { limit = { has_idea = corruption_level_07 } set_temp_variable = { GRE_visa_corruption_tier = 7 } }
-			else_if = { limit = { has_idea = corruption_level_08 } set_temp_variable = { GRE_visa_corruption_tier = 8 } }
-			else_if = { limit = { has_idea = corruption_level_09 } set_temp_variable = { GRE_visa_corruption_tier = 9 } }
-			else_if = { limit = { has_idea = corruption_level_10 } set_temp_variable = { GRE_visa_corruption_tier = 10 } }
-			set_temp_variable = { GRE_visa_rate = GRE_visa_corruption_tier }
-			subtract_from_temp_variable = { GRE_visa_rate = 1 }
-			multiply_temp_variable = { GRE_visa_rate = 0.00001 }
-			add_to_temp_variable = { GRE_visa_rate = 0.00006 }
-			set_variable = { GRE_golden_visa_income = gdp_total }
-			multiply_variable = { GRE_golden_visa_income = GRE_visa_rate }
+			set_variable = {
+				GRE_golden_visa_income = {
+					value = gdp_total
+					multiply = {
+						value = corruption_level
+						subtract = 1
+						multiply = 0.00001
+						add = 0.00006
+					}
+				}
+			}
 			add_to_variable = { additional_income_rate = GRE_golden_visa_income }
 		}
 	}
@@ -2455,17 +2369,37 @@ calculate_additional_income_rate = {
 	if = { limit = { has_idea = CPD_war_reparations_receiver }
 		add_to_variable = { additional_income_rate = CPD_reparations_weekly }
 	}
-
-
 }
 
 # Effect: update_tension_premium
 # Purpose: Weekly decay of the tension-cause borrowing premium, plus intake of newly generated tension
 update_tension_premium = {
-	set_temp_variable = { recent_threat = { value = has_added_tension_amount subtract = tracked_threat } }
 	# 3.5%/week: 20 weeks to decay 50%, 66 weeks to decay 90%
-	set_variable = { tension_premium = { value = tension_premium multiply = 0.965 add = recent_threat } }
+	set_variable = {
+		tension_premium = {
+			value = tension_premium
+			multiply = 0.965
+			add = {
+				value = has_added_tension_amount
+				subtract = tracked_threat
+			}
+		}
+	}
 	set_variable = { tracked_threat = has_added_tension_amount }
+}
+
+# Effect: calculate_debt_fx_factor
+calculate_debt_fx_factor = {
+	set_variable = {
+		debt_fx_factor = {
+			value = 1
+			if = {
+				limit = { value = no_foreign_reserve  equals = 0 }
+				divide = currency_strength
+				clamp = { min = 0 max = @max_debt_fx_factor }
+			}
+		}
+	}
 }
 
 # Effect: calculate_interest_rate
@@ -2479,66 +2413,52 @@ calculate_interest_rate = {
 		set_variable = { debt_rate = 0 }
 		set_variable = { debt_ratio = 0 }
 		set_variable = { debt_interest_premium = 0 }
-		set_variable = { interest_rate_multiplier = 0 }
 		set_variable = { cb_rate_premium = 0 }
 		set_variable = { threat_interest_premium = 0 }
 		set_variable = { adjusted_tension_premium = 0 }
 		set_variable = { interest_rate_clamp_adjustment = 0 }
+		set_variable = { debt_fx_factor = 1 }
 	}
 	else = {
 		# Country has debt - calculate interest rate, debt_rate, and debt_ratio
-		clamp_variable = { var = gdp_total min = 0.001 }
 		#Base value comes from debt/gdp ratio
 		set_variable = { debt_interest_premium = { value = debt divide = gdp_total multiply = 10 } }
-		set_variable = { interest_rate = debt_interest_premium }
-
-		#Additional additive modifiers
-		set_variable = { interest_rate_multiplier = modifier@interest_rate_multiplier_modifier }
-		add_to_variable = { interest_rate = interest_rate_multiplier }
 
 		#CB policy rate raises sovereign borrowing premium — tighter monetary policy = costlier debt
-		#Coefficient 0.5: a 6% CB rate adds +3pp to interest_rate
-		set_variable = { cb_rate_premium = { value = cb_policy_rate multiply = 0.5 } }
-		add_to_variable = { interest_rate = cb_rate_premium }
+		#Coefficient 0.33: a 6% CB rate adds +1.98pp to interest_rate
+		set_variable = { cb_rate_premium = { value = cb_policy_rate multiply = @cp_policy_rate_interest } }
 
 		# Threat premium - current threat level raises borrowing costs; decays with world tension.
 		# as 1.825% per year. 80% (0.8) tensioon -> 4% interest rate (4.0).
 		set_variable = { threat_interest_premium = { value = global.threat multiply = 5 clamp = { min = 0 max = 5 } } }
-		add_to_variable = { interest_rate = threat_interest_premium }
 
 		# World tension cause premium - Countries which cause world tension are chaotic and less
 		# stable.
 		set_variable = { adjusted_tension_premium = { value = tension_premium multiply = 0.1 } } # 100% tension -> 10% interest rate
-		add_to_variable = { interest_rate = adjusted_tension_premium }
 
-		set_temp_variable = { pre_clamp_interest_rate = interest_rate }
-		clamp_variable = { var = interest_rate min = 0.8 max = 50 } #Min is 0.8% on debt max is 50%
-		set_variable = { interest_rate_clamp_adjustment = interest_rate }
-		subtract_from_variable = { interest_rate_clamp_adjustment = pre_clamp_interest_rate }
-
-		#Calculate weekly debt rate based on interest (52 weeks in a year)
-		set_variable = { debt_rate = { value = debt multiply = 0.00019 multiply = interest_rate } }
+		set_temp_variable = {
+			pre_clamp_interest_rate = {
+				value = debt_interest_premium
+				add = modifier@interest_rate_multiplier_modifier
+				add = cb_rate_premium
+				add = threat_interest_premium
+				add = adjusted_tension_premium
+			}
+		}
+		set_variable = { interest_rate = { value = pre_clamp_interest_rate clamp = { min = 0.8 max = 50 } } } #Min is 0.8% on debt max is 50%
+		set_variable = { interest_rate_clamp_adjustment = { value = interest_rate subtract = pre_clamp_interest_rate } }
 
 		# Only debt denominated in an external reserve currency takes the exchange hit.
-		# Must follow the set_variable above: applied before it, the adjustment is
-		# overwritten and never reaches the player.
-		if = {
-			limit = {
-				OR = {
-					has_idea = us_dollar
-					has_idea = euro
-					has_idea = chinese_yuan
-					has_idea = chinese_yuan_2
-					has_idea = chinese_yuan_3
-					has_idea = russia_rouble
-					has_idea = japanese_yen
-					has_idea = british_pound
-					has_idea = swiss_frank
-					has_idea = gulden
-				}
+		calculate_debt_fx_factor = yes
+
+		#Calculate weekly debt rate based on interest (52 weeks in a year) modified by your currency debt_fx_factor (1 or w/e foreign reserve you use)
+		set_variable = {
+			debt_rate = {
+				value = debt
+				multiply = 0.00019
+				multiply = interest_rate
+				multiply = debt_fx_factor
 			}
-			set_temp_variable = { debt_fx_factor = { value = 1 divide = currency_strength } }
-			multiply_variable = { debt_rate = debt_fx_factor }
 		}
 
 		#If interest rate is really high, add additional modifier
@@ -2581,10 +2501,12 @@ calculate_interest_rate = {
 		# Math Explanation:
 		# The Debt to GDP Ratio helps dictate the ability of the nation to repay the debts
 		# debt / total gdp = debt_ratio
-		set_variable = { debt_ratio = debt }
-		if = {
-			limit = { check_variable = { gdp_total > 0 } }
-			divide_variable = { debt_ratio = gdp_total }
+		set_variable = {
+			debt_ratio = {
+				value = debt
+				divide = gdp_total
+				clamp = { min = 0 max = @max_debt_ratio }
+			}
 		}
 	}
 
@@ -2605,6 +2527,35 @@ calculate_interest_rate = {
 	}
 }
 
+restructure_debt_after_financial_collapse = {
+	set_country_flag = { flag = recent_financial_collapse value = 1 days = 1095 }
+	if = {
+		limit = {
+			check_variable = { debt > 0 }
+			check_variable = { potential_income > 0 }
+		}
+		set_temp_variable = { restructuring_interest_rate = interest_rate }
+		clamp_temp_variable = { var = restructuring_interest_rate min = 0.8 }
+		calculate_debt_fx_factor = yes
+		set_temp_variable = {
+			restructured_debt = {
+				value = potential_income
+				multiply = @financial_collapse_debt_service_target
+				divide = 0.00019
+				divide = restructuring_interest_rate
+				divide = debt_fx_factor
+			}
+		}
+		if = { limit = { check_variable = { debt > restructured_debt } }
+			set_variable = { debt = restructured_debt }
+		}
+	}
+	else_if = { limit = { check_variable = { debt > 0 } }
+		set_variable = { debt = 0 }
+	}
+	ingame_update_setup = yes
+}
+
 # Effect: update_military_rate
 # Purpose: Computes daily military upkeep: defence-industry cost plus fielded-unit personnel cost
 update_military_rate = {
@@ -2616,24 +2567,20 @@ update_military_rate = {
 
 	## Calculate cost for defence industry (military factories and dockyards) ##
 	#A higher GDP/c makes defence industry more expensive, computed before the spending loop so each level reads the finished modifier
-	set_temp_variable = { gdp_defence_modifier_industry = gdp_per_capita }
-	if = {		#Linear approximation -0.007 * gdp/c + 2.333
-		limit = { check_variable = { gdp_defence_modifier_industry > 50 } }
-		multiply_temp_variable = { gdp_defence_modifier_industry = -0.007 }
-		add_to_temp_variable = { gdp_defence_modifier_industry = 2.333 }
+	#The three linear segments are convex, so the value is exactly the max of the three lines
+	set_temp_variable = {
+		gdp_defence_modifier_industry = {
+			value = gdp_per_capita
+			multiply = -0.3
+			add = 8.1
+			max = { value = gdp_per_capita multiply = -0.046 add = 4.286 }
+			max = { value = gdp_per_capita multiply = -0.007 add = 2.333 }
+			multiply = 1.1 #tweak this to modify gdp/c impact on industrial cost without having to rewrite the whole system
+			clamp = { min = 1 max = @math_expressions_max }
+		}
 	}
-	else_if = {	#Linear approximation -0.046 * gdp/c + 4.286
-		limit = { check_variable = { gdp_defence_modifier_industry > 15 } }
-		multiply_temp_variable = { gdp_defence_modifier_industry = -0.046 }
-		add_to_temp_variable = { gdp_defence_modifier_industry = 4.286 }
-	}
-	else_if = {	#Linear approximation -0.3 * gdp/c + 8.1
-		limit = { check_variable = { gdp_defence_modifier_industry > -1 } }
-		multiply_temp_variable = { gdp_defence_modifier_industry = -0.3 }
-		add_to_temp_variable = { gdp_defence_modifier_industry = 8.1 }
-	}
-	multiply_temp_variable = { gdp_defence_modifier_industry = 1.1 } #tweak this to modify gdp/c impact on industrial cost without having to rewrite the whole system
-	clamp_temp_variable = { var = gdp_defence_modifier_industry min = 1 }
+
+	set_temp_variable = { military_spending_cost_multiplier = { value = 1 add = modifier@military_spending_cost_multiplier_modifier max = 0 } }
 
 	#Base cost per spending level = (naval + mil factories) * inflation * level ladder / gdp/c modifier * 1.1
 	for_each_loop = {
@@ -2648,511 +2595,424 @@ update_military_rate = {
 				multiply = global.spending_ladder_defence^i
 				divide = gdp_defence_modifier_industry
 				multiply = 1.1 #tweak this to modify industrial cost spending in relations to everything else
+				multiply = military_spending_cost_multiplier
 			}
 		}
 	}
 
 	## Calculate the cost of fielded military ##
+	#Shared factors, each read by more than one branch below
+	#Total wage modifier
+	set_temp_variable = { personnel_cost_multiplier = { value = 1 add = modifier@personnel_cost_multiplier_modifier } }
+	#Higher GDP/c makes personnel more expensive (linear approximation 0.004 * gdp/c + 0.129)
+	set_temp_variable = { gdp_defence_modifier_personnel = { value = gdp_per_capita multiply = 0.004 add = 0.129 } }
+	set_temp_variable = { mobilization_level_modifier = { value = 0.25 multiply = def_index add = 0.75 } }
+
 	### Land ###
 	#Below sets up the personnel cost for mil spending based on how many battalions a country has (divided into special, elite, regular and irregular units)
-	if = { limit = { check_variable = { num_battalions > 0 } }
-		#Count number of special units
-		set_temp_variable = { special_btn = num_battalions_with_type@Special_Forces }
-
-		#Count number of elite units - Kal's note; set normal support battalions to be regular
-		set_temp_variable = { elite_btn = {
-			value = num_battalions_with_type@L_Air_assault_Bat
-			add = num_battalions_with_type@L_Air_Inf_Bat
-			add = num_battalions_with_type@Mot_Air_Inf_Bat
-			add = num_battalions_with_type@Mech_Air_Inf_Bat
-			add = num_battalions_with_type@Arm_Air_Inf_Bat
-			add = num_battalions_with_type@L_Marine_Bat
-			add = num_battalions_with_type@Mot_Marine_Bat
-			add = num_battalions_with_type@Mech_Marine_Bat
-			add = num_battalions_with_type@Arm_Marine_Bat
-			add = num_battalions_with_type@L_Ranger_Bat
-		} }
-
-		#Count number of regular units (SP_AA_Bat was previously elite - Kal)
-		set_temp_variable = { regular_btn = {
-			value = num_battalions_with_type@L_Inf_Bat
-			add = num_battalions_with_type@Mot_Inf_Bat
-			add = num_battalions_with_type@Mech_Inf_Bat
-			add = num_battalions_with_type@Arm_Inf_Bat
-			add = num_battalions_with_type@armor_Bat
-			add = num_battalions_with_type@L_arm_Bat
-			add = num_battalions_with_type@Arty_Bat
-			add = num_battalions_with_type@SP_Arty_Bat
-			add = num_battalions_with_type@SP_AA_Bat
-		} }
-
-		#Count number of irregular units
-		set_temp_variable = { irregular_btn = {
-			value = num_battalions_with_type@Militia_Bat
-			add = num_battalions_with_type@Mot_Militia_Bat
-		} }
-	}
-
-	# Multiply each category with a weight value, and then add up categories together (eg. one special forces battalion is worth 1 militia battalion etc).
+	# Multiply each category with a weight value, and then add up categories together (eg. one special forces battalion is worth 5 militia battalions etc).
 	# Use these if you want to control costs of different land units to each other
 	set_temp_variable = {
 		land_count = {
-			value = special_btn
-			multiply = 5
-			add = { value = elite_btn multiply = 3 }
-			add = { value = regular_btn multiply = 2 }
-			add = irregular_btn
+			value = 0
+			# Count the number of special units/battalions deployed
+			add = {
+				value = num_battalions_with_type@Special_Forces
+				multiply = 5
+			}
+			# Count the number of elite units/battalions deployed
+			add = {
+				value = num_battalions_with_type@L_Air_assault_Bat
+				add = num_battalions_with_type@L_Air_Inf_Bat
+				add = num_battalions_with_type@Mot_Air_Inf_Bat
+				add = num_battalions_with_type@Mech_Air_Inf_Bat
+				add = num_battalions_with_type@Arm_Air_Inf_Bat
+				add = num_battalions_with_type@L_Marine_Bat
+				add = num_battalions_with_type@Mot_Marine_Bat
+				add = num_battalions_with_type@Mech_Marine_Bat
+				add = num_battalions_with_type@Arm_Marine_Bat
+				add = num_battalions_with_type@L_Ranger_Bat
+				multiply = 3
+			}
+			#Count number of regular units (SP_AA_Bat was previously elite - Kal)
+			add = {
+				value = num_battalions_with_type@L_Inf_Bat
+				add = num_battalions_with_type@Mot_Inf_Bat
+				add = num_battalions_with_type@Mech_Inf_Bat
+				add = num_battalions_with_type@Arm_Inf_Bat
+				add = num_battalions_with_type@armor_Bat
+				add = num_battalions_with_type@L_arm_Bat
+				add = num_battalions_with_type@Arty_Bat
+				add = num_battalions_with_type@SP_Arty_Bat
+				add = num_battalions_with_type@SP_AA_Bat
+				multiply = 2
+			}
+			# Count the number of irregular units
+			add = {
+				value = num_battalions_with_type@Militia_Bat
+				add = num_battalions_with_type@Mot_Militia_Bat
+			}
+			# Add available manpower
 			add = { value = manpower multiply = 0.0002 }
+
+			# Control factor: scales land against navy and airforce
+			multiply = 0.5
+			multiply = personnel_cost_multiplier
+			multiply = { value = 1 add = modifier@army_personnel_cost_multiplier_modifier }
+			multiply = gdp_defence_modifier_personnel
+			multiply = mobilization_level_modifier
+			if = {
+				limit = { value = enemies^num greater_than = 0 }
+				multiply = 1.20
+			}
+			# Control factor: scales personnel against defence industry
+			multiply = 0.00076
 		}
 	}
 
 	#Land equipment
 	#num_equipment is for stockpile, num_equipment_in_armies is for deployed, num_equipment_in_armies_k is for small arms and support eq (1 = 1000 eq)
 	#Each item folds deployed cost + stockpile cost straight into the equipment_operative_cost accumulator
-	set_variable = { equipment_operative_cost = 0 }
+	set_variable = {
+		equipment_operative_cost = {
+			value = 0
+			# Infantry equipment (per 1000 guns, cost: 0.3M yearly)
+			add = {
+				value = num_equipment_in_armies_k@infantry_weapons_type
+				multiply = 0.3
+				add = { value = num_equipment@infantry_weapons_type multiply = 0.00006 } # 0.001 (to thousands) × 0.2 (stockpile) × 0.3 (cost)
+			}
 
-	# Infantry equipment (per 1000 guns, cost: 0.3M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies_k@infantry_weapons_type
-			multiply = 0.3
-			add = { value = num_equipment@infantry_weapons_type multiply = 0.00006 } # 0.001 (to thousands) × 0.2 (stockpile) × 0.3 (cost)
-		}
-	}
+			# CNC equipment (per 1000 units, cost: 0.4M yearly)
+			add = {
+				value = num_equipment_in_armies_k@cnc_equipment_type
+				multiply = 0.4
+				add = { value = num_equipment@cnc_equipment_type multiply = 0.00008 } # 0.001 × 0.2 × 0.4
+			}
 
-	# CNC equipment (per 1000 units, cost: 0.4M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies_k@cnc_equipment_type
-			multiply = 0.4
-			add = { value = num_equipment@cnc_equipment_type multiply = 0.00008 } # 0.001 × 0.2 × 0.4
-		}
-	}
+			# AA Equipment (cost: 0.012M yearly)
+			add = {
+				value = num_equipment_in_armies@AA_Equipment
+				multiply = 0.012
+				add = { value = num_equipment@AA_Equipment multiply = 0.0024 } # 0.2 × 0.012
+			}
 
-	# AA Equipment (cost: 0.012M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@AA_Equipment
-			multiply = 0.012
-			add = { value = num_equipment@AA_Equipment multiply = 0.0024 } # 0.2 × 0.012
-		}
-	}
+			# Medium tank AA chassis (cost: 0.231M yearly)
+			add = {
+				value = num_equipment_in_armies@medium_tank_aa_chassis
+				multiply = 0.231
+				add = { value = num_equipment@medium_tank_aa_chassis multiply = 0.0462 } # 0.2 × 0.231
+			}
 
-	# Medium tank AA chassis (cost: 0.231M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@medium_tank_aa_chassis
-			multiply = 0.231
-			add = { value = num_equipment@medium_tank_aa_chassis multiply = 0.0462 } # 0.2 × 0.231
-		}
-	}
+			# Light AT Equipment (cost: 0.011M yearly)
+			add = {
+				value = num_equipment_in_armies@L_AT_Equipment
+				multiply = 0.011
+				add = { value = num_equipment@L_AT_Equipment multiply = 0.0022 } # 0.2 × 0.011
+			}
 
-	# Light AT Equipment (cost: 0.011M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@L_AT_Equipment
-			multiply = 0.011
-			add = { value = num_equipment@L_AT_Equipment multiply = 0.0022 } # 0.2 × 0.011
-		}
-	}
+			# Heavy AT Equipment (cost: 0.5M yearly)
+			add = {
+				value = num_equipment_in_armies@H_AT_Equipment
+				multiply = 0.5
+				add = { value = num_equipment@H_AT_Equipment multiply = 0.1 } # 0.2 × 0.5
+			}
 
-	# Heavy AT Equipment (cost: 0.5M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@H_AT_Equipment
-			multiply = 0.5
-			add = { value = num_equipment@H_AT_Equipment multiply = 0.1 } # 0.2 × 0.5
-		}
-	}
+			# Medium tank amphibious chassis (cost: 0.16M yearly)
+			add = {
+				value = num_equipment_in_armies@medium_tank_amphibious_chassis
+				multiply = 0.16
+				add = { value = num_equipment@medium_tank_amphibious_chassis multiply = 0.032 } # 0.2 × 0.16
+			}
 
-	# Medium tank amphibious chassis (cost: 0.16M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@medium_tank_amphibious_chassis
-			multiply = 0.16
-			add = { value = num_equipment@medium_tank_amphibious_chassis multiply = 0.032 } # 0.2 × 0.16
-		}
-	}
+			# Medium tank flame chassis (cost: 0.435M yearly)
+			add = {
+				value = num_equipment_in_armies@medium_tank_flame_chassis
+				multiply = 0.435
+				add = { value = num_equipment@medium_tank_flame_chassis multiply = 0.087 } # 0.2 × 0.435
+			}
 
-	# Medium tank flame chassis (cost: 0.435M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@medium_tank_flame_chassis
-			multiply = 0.435
-			add = { value = num_equipment@medium_tank_flame_chassis multiply = 0.087 } # 0.2 × 0.435
-		}
-	}
+			# Artillery equipment (cost: 0.07M yearly)
+			add = {
+				value = num_equipment_in_armies@artillery_equipment
+				multiply = 0.07
+				add = { value = num_equipment@artillery_equipment multiply = 0.014 } # 0.2 × 0.07
+			}
 
-	# Artillery equipment (cost: 0.07M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@artillery_equipment
-			multiply = 0.07
-			add = { value = num_equipment@artillery_equipment multiply = 0.014 } # 0.2 × 0.07
-		}
-	}
+			# SP Artillery (cost: 0.5M yearly)
+			add = {
+				value = num_equipment_in_armies@medium_tank_artillery_chassis
+				multiply = 0.5
+				add = { value = num_equipment@medium_tank_artillery_chassis multiply = 0.1 } # 0.2 × 0.5
+			}
 
-	# SP Artillery (cost: 0.5M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@medium_tank_artillery_chassis
-			multiply = 0.5
-			add = { value = num_equipment@medium_tank_artillery_chassis multiply = 0.1 } # 0.2 × 0.5
-		}
-	}
+			# MLRS (cost: 0.5M yearly)
+			add = {
+				value = num_equipment_in_armies@medium_tank_rocket_chassis
+				multiply = 0.5
+				add = { value = num_equipment@medium_tank_rocket_chassis multiply = 0.1 } # 0.2 × 0.5
+			}
 
-	# MLRS (cost: 0.5M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@medium_tank_rocket_chassis
-			multiply = 0.5
-			add = { value = num_equipment@medium_tank_rocket_chassis multiply = 0.1 } # 0.2 × 0.5
-		}
-	}
+			# Medium tank chassis (cost: 0.7M yearly)
+			add = {
+				value = num_equipment_in_armies@medium_tank_chassis
+				multiply = 0.7
+				add = { value = num_equipment@medium_tank_chassis multiply = 0.14 } # 0.2 × 0.7
+			}
 
-	# Medium tank chassis (cost: 0.7M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@medium_tank_chassis
-			multiply = 0.7
-			add = { value = num_equipment@medium_tank_chassis multiply = 0.14 } # 0.2 × 0.7
-		}
-	}
+			# Medium tank destroyer chassis (cost: 0.35M yearly)
+			add = {
+				value = num_equipment_in_armies@medium_tank_destroyer_chassis
+				multiply = 0.35
+				add = { value = num_equipment@medium_tank_destroyer_chassis multiply = 0.07 } # 0.2 × 0.35
+			}
 
-	# Medium tank destroyer chassis (cost: 0.35M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@medium_tank_destroyer_chassis
-			multiply = 0.35
-			add = { value = num_equipment@medium_tank_destroyer_chassis multiply = 0.07 } # 0.2 × 0.35
-		}
-	}
+			# Heavy tank amphibious chassis / Transport helicopters (cost: 0.75M yearly)
+			add = {
+				value = num_equipment_in_armies@heavy_tank_amphibious_chassis
+				multiply = 0.75
+				add = { value = num_equipment@heavy_tank_amphibious_chassis multiply = 0.15 } # 0.2 × 0.75
+			}
 
-	# Heavy tank amphibious chassis / Transport helicopters (cost: 0.75M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@heavy_tank_amphibious_chassis
-			multiply = 0.75
-			add = { value = num_equipment@heavy_tank_amphibious_chassis multiply = 0.15 } # 0.2 × 0.75
-		}
-	}
+			# Heavy tank chassis / Attack helicopters (cost: 1.0M yearly)
+			add = {
+				value = num_equipment_in_armies@heavy_tank_chassis
+				multiply = 1
+				add = { value = num_equipment@heavy_tank_chassis multiply = 0.2 } # 0.2 × 1
+			}
 
-	# Heavy tank chassis / Attack helicopters (cost: 1.0M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@heavy_tank_chassis
-			multiply = 1
-			add = { value = num_equipment@heavy_tank_chassis multiply = 0.2 } # 0.2 × 1
-		}
-	}
+			# Light Walker Tank (cost: 0.8M yearly)
+			add = {
+				value = num_equipment_in_armies@super_heavy_tank_destroyer_chassis
+				multiply = 0.8
+				add = { value = num_equipment@super_heavy_tank_destroyer_chassis multiply = 0.16 } # 0.2 × 0.8
+			}
 
-	# Light Walker Tank (cost: 0.8M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@super_heavy_tank_destroyer_chassis
-			multiply = 0.8
-			add = { value = num_equipment@super_heavy_tank_destroyer_chassis multiply = 0.16 } # 0.2 × 0.8
-		}
-	}
+			# Medium Walker Tank (cost: 1.0M yearly)
+			add = {
+				value = num_equipment_in_armies@super_heavy_tank_chassis
+				multiply = 1
+				add = { value = num_equipment@super_heavy_tank_chassis multiply = 0.2 } # 0.2 × 1
+			}
 
-	# Medium Walker Tank (cost: 1.0M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@super_heavy_tank_chassis
-			multiply = 1
-			add = { value = num_equipment@super_heavy_tank_chassis multiply = 0.2 } # 0.2 × 1
-		}
-	}
+			# Heavy Walker Tank (cost: 1.2M yearly)
+			add = {
+				value = num_equipment_in_armies@super_heavy_tank_artillery_chassis
+				multiply = 1.2
+				add = { value = num_equipment@super_heavy_tank_artillery_chassis multiply = 0.24 } # 0.2 × 1.2
+			}
 
-	# Heavy Walker Tank (cost: 1.2M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@super_heavy_tank_artillery_chassis
-			multiply = 1.2
-			add = { value = num_equipment@super_heavy_tank_artillery_chassis multiply = 0.24 } # 0.2 × 1.2
-		}
-	}
+			# Utility vehicles (cost: 0.022M yearly)
+			add = {
+				value = num_equipment_in_armies@util_vehicle_type
+				multiply = 0.022
+				add = { value = num_equipment@util_vehicle_type multiply = 0.0044 } # 0.2 × 0.022
+			}
 
-	# Utility vehicles (cost: 0.022M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@util_vehicle_type
-			multiply = 0.022
-			add = { value = num_equipment@util_vehicle_type multiply = 0.0044 } # 0.2 × 0.022
-		}
-	}
+			# Heavy Utility vehicles (cost: 0.022M yearly)
+			add = {
+				value = num_equipment_in_armies@heavy_util_vehicle_type
+				multiply = 0.022
+				add = { value = num_equipment@heavy_util_vehicle_type multiply = 0.0044 } # 0.2 × 0.022
+			}
 
-	# Heavy Utility vehicles (cost: 0.022M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@heavy_util_vehicle_type
-			multiply = 0.022
-			add = { value = num_equipment@heavy_util_vehicle_type multiply = 0.0044 } # 0.2 × 0.022
-		}
-	}
+			# Land drones (cost: 0.022M yearly)
+			add = {
+				value = num_equipment_in_armies@land_drone_equipment_type
+				multiply = 0.022
+				add = { value = num_equipment@land_drone_equipment_type multiply = 0.0044 } # 0.2 × 0.022
+			}
 
-	# Land drones (cost: 0.022M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@land_drone_equipment_type
-			multiply = 0.022
-			add = { value = num_equipment@land_drone_equipment_type multiply = 0.0044 } # 0.2 × 0.022
-		}
-	}
+			# Orbital Fire Control Relay (cost: 2.0M yearly)
+			add = {
+				value = num_equipment_in_armies@space_artillery_equipment_type
+				multiply = 2
+				add = { value = num_equipment@space_artillery_equipment_type multiply = 0.4 } # 0.2 × 2
+			}
 
-	# Orbital Fire Control Relay (cost: 2.0M yearly)
-	add_to_variable = {
-		var = equipment_operative_cost
-		value = {
-			value = num_equipment_in_armies@space_artillery_equipment_type
-			multiply = 2
-			add = { value = num_equipment@space_artillery_equipment_type multiply = 0.4 } # 0.2 × 2
-		}
-	}
-
-	#from millions yearly to billions weekly
-	set_variable = { equipment_operative_cost = { value = equipment_operative_cost multiply = @equipment_operative_cost_multiplier multiply = 0.019 multiply = 0.001 } }
-	if = { limit = { has_war = yes }
-		if = { limit = { is_ai = no }
-			multiply_variable = { equipment_operative_cost = 2.25 }
-		}
-		else = {
-			multiply_variable = { equipment_operative_cost = 1.45 }
+			# From millions yearly to billions weekly
+			multiply = @equipment_operative_cost_multiplier
+			multiply = 0.019
+			multiply = 0.001
+			if = {
+				limit = { value = enemies^num greater_than = 0 }
+				multiply = 1.75
+			}
+			# Equipment cost modifier, inflation, GDP/c (linear approximation 0.015 * gdp/c + 1) and mobilization level
+			multiply = { value = 1 add = modifier@equipment_cost_multiplier_modifier }
+			multiply = inflation_multiplier
+			multiply = { value = gdp_per_capita multiply = 0.015 add = 1 }
+			multiply = mobilization_level_modifier
 		}
 	}
 
 	### Navy ###
 	#Below sets the cost for ships based on the number of ships (divided into carriers, capitals, destroyers and minors - children are cheap)
-	#Count number of carriers
-	set_temp_variable = { carrier_count = num_ships_with_type@carrier }
-
-	#Count number of capital/large ships
-	set_temp_variable = { capital_count = {
-		value = num_ships_with_type@cruiser
-		add = num_ships_with_type@battle_cruiser
-		add = num_ships_with_type@helicopter_operator
-		add = num_ships_with_type@attack_submarine
-		add = num_ships_with_type@missile_submarine
-		add = num_ships_with_type@battleship
-	} }
-
-	#Count number of destroyers and heavy frigates
-	set_temp_variable = { destroyer_count = {
-		value = num_ships_with_type@destroyer
-		add = num_ships_with_type@heavy_frigate
-		add = num_ships_with_type@stealth_destroyer
-	} }
-
-	#Count number of screens/small ships
-	set_temp_variable = { frigate_count = {
-		value = num_ships_with_type@frigate
-		add = num_ships_with_type@stealth_frigate
-	} }
-	set_temp_variable = { corvette_count = {
-		value = num_ships_with_type@corvette
-		add = num_ships_with_type@stealth_corvette
-	} }
-	set_temp_variable = { patrol_boat_count = {
-		value = num_ships_with_type@patrol_boat
-		add = num_ships_with_type@repair_ship
-		add = num_ships_with_type@support_ship
-	} }
-
 	#Multiply each category with a weight value, and then add up categories together (eg. one carrier is worth 10 frigates etc). Use these if you want to control costs of different ships to each other - Kal's note: changed math to match land stuff
-	set_temp_variable = { navy_count = {
-		value = carrier_count
-		multiply = 20
-		add = { value = capital_count multiply = 4 }
-		add = { value = destroyer_count multiply = 3 }
-		add = { value = frigate_count multiply = 2 }
-		add = corvette_count
-		add = { value = patrol_boat_count multiply = 0.25 }
-	} }
+	set_temp_variable = {
+		navy_count = {
+			value = 0
+			# Carriers (weight 20)
+			add = {
+				value = num_ships_with_type@carrier
+				multiply = 20
+			}
+			# Capital/large ships (weight 4)
+			add = {
+				value = num_ships_with_type@cruiser
+				add = num_ships_with_type@battle_cruiser
+				add = num_ships_with_type@helicopter_operator
+				add = num_ships_with_type@attack_submarine
+				add = num_ships_with_type@missile_submarine
+				add = num_ships_with_type@battleship
+				multiply = 4
+			}
+			# Destroyers and heavy frigates (weight 3)
+			add = {
+				value = num_ships_with_type@destroyer
+				add = num_ships_with_type@heavy_frigate
+				add = num_ships_with_type@stealth_destroyer
+				multiply = 3
+			}
+			# Frigates (weight 2)
+			add = {
+				value = num_ships_with_type@frigate
+				add = num_ships_with_type@stealth_frigate
+				multiply = 2
+			}
+			# Corvettes (weight 1)
+			add = {
+				value = num_ships_with_type@corvette
+				add = num_ships_with_type@stealth_corvette
+			}
+			# Patrol boats and auxiliaries (weight 0.25)
+			add = {
+				value = num_ships_with_type@patrol_boat
+				add = num_ships_with_type@repair_ship
+				add = num_ships_with_type@support_ship
+				multiply = 0.25
+			}
+
+			multiply = personnel_cost_multiplier
+			multiply = { value = 1 add = modifier@navy_personnel_cost_multiplier_modifier }
+			multiply = gdp_defence_modifier_personnel
+			multiply = mobilization_level_modifier
+			if = {
+				limit = { value = enemies^num greater_than = 0 }
+				multiply = 1.50
+			}
+			# Control factor: scales personnel against defence industry
+			multiply = 0.001
+		}
+	}
 
 	### Airforce ###
 	# Calculate costs for different aircraft types. Cost weights match land/navy ratios.
 	# Stockpiled planes cost 2/3 of deployed planes.
 	set_temp_variable = { stockpiled_cost_multiplier = 0.667 }
 
-	# Strategic aircraft (weight 14)
-	set_temp_variable = { strategic_airforce = {
-		value = num_equipment@large_plane_airframe
-		add = num_equipment@large_plane_cas_airframe
-		add = num_equipment@large_plane_awacs_airframe
-		multiply = stockpiled_cost_multiplier
-		add = num_deployed_planes_with_type@large_plane_airframe
-		add = num_deployed_planes_with_type@large_plane_cas_airframe
-		add = num_deployed_planes_with_type@large_plane_awacs_airframe
-		multiply = 14
-	} }
-
-	# Expensive aircraft (weight 5)
-	set_temp_variable = { expensive_airforce = {
-		value = num_equipment@large_plane_air_transport_airframe
-		add = num_equipment@large_plane_maritime_patrol_airframe
-		add = num_equipment@cv_medium_plane_air_transport_airframe
-		add = num_equipment@cv_medium_plane_maritime_patrol_airframe
-		add = num_equipment@medium_plane_air_transport_airframe
-		add = num_equipment@medium_plane_maritime_patrol_airframe
-		add = num_equipment@cv_medium_plane_scout_airframe
-		multiply = stockpiled_cost_multiplier
-		add = num_deployed_planes_with_type@large_plane_air_transport_airframe
-		add = num_deployed_planes_with_type@large_plane_maritime_patrol_airframe
-		add = num_deployed_planes_with_type@cv_medium_plane_air_transport_airframe
-		add = num_deployed_planes_with_type@cv_medium_plane_maritime_patrol_airframe
-		add = num_deployed_planes_with_type@medium_plane_air_transport_airframe
-		add = num_deployed_planes_with_type@medium_plane_maritime_patrol_airframe
-		add = num_deployed_planes_with_type@cv_medium_plane_scout_airframe
-		multiply = 5
-	} }
-
-	# Regular aircraft (weight 3)
-	set_temp_variable = { regular_airforce = {
-		value = num_equipment@medium_plane_airframe
-		add = num_equipment@cv_medium_plane_airframe
-		add = num_equipment@medium_plane_fighter_airframe
-		add = num_equipment@cv_medium_plane_fighter_airframe
-		add = num_equipment@small_plane_suicide_airframe
-		add = num_equipment@medium_plane_cas_airframe
-		add = num_equipment@cv_medium_plane_cas_airframe
-		multiply = stockpiled_cost_multiplier
-		add = num_deployed_planes_with_type@medium_plane_airframe
-		add = num_deployed_planes_with_type@cv_medium_plane_airframe
-		add = num_deployed_planes_with_type@medium_plane_fighter_airframe
-		add = num_deployed_planes_with_type@cv_medium_plane_fighter_airframe
-		add = num_deployed_planes_with_type@small_plane_suicide_airframe
-		add = num_deployed_planes_with_type@medium_plane_cas_airframe
-		add = num_deployed_planes_with_type@cv_medium_plane_cas_airframe
-		multiply = 3
-	} }
-
-	# Cheap aircraft (weight 1)
-	set_temp_variable = { cheap_airforce = {
-		value = num_equipment@small_plane_airframe
-		add = num_equipment@small_plane_cas_airframe
-		add = num_equipment@small_plane_naval_bomber_airframe
-		add = num_equipment@cv_small_plane_airframe
-		add = num_equipment@cv_small_plane_cas_airframe
-		add = num_equipment@cv_small_plane_naval_bomber_airframe
-		add = num_equipment@small_plane_strike_airframe
-		add = num_equipment@cv_small_plane_strike_airframe
-		multiply = stockpiled_cost_multiplier
-		add = num_deployed_planes_with_type@small_plane_airframe
-		add = num_deployed_planes_with_type@small_plane_cas_airframe
-		add = num_deployed_planes_with_type@small_plane_naval_bomber_airframe
-		add = num_deployed_planes_with_type@cv_small_plane_airframe
-		add = num_deployed_planes_with_type@cv_small_plane_cas_airframe
-		add = num_deployed_planes_with_type@cv_small_plane_naval_bomber_airframe
-	} }
-
-	# Add missile buildings
-	multiply_temp_variable = { num_missile_silo = 28 }
-	multiply_temp_variable = { num_anti_air_building = 14 }
-
 	# Calculate total airforce cost
-	set_temp_variable = { airforce_count = {
-		value = strategic_airforce
-		add = expensive_airforce
-		add = regular_airforce
-		add = cheap_airforce
-		add = num_missile_silo
-		add = num_anti_air_building
-	} }
+	set_temp_variable = {
+		airforce_count = {
+			value = 0
+			# Strategic aircraft (weight 14)
+			add = {
+				value = num_equipment@large_plane_airframe
+				add = num_equipment@large_plane_cas_airframe
+				add = num_equipment@large_plane_awacs_airframe
+				multiply = stockpiled_cost_multiplier
+				add = num_deployed_planes_with_type@large_plane_airframe
+				add = num_deployed_planes_with_type@large_plane_cas_airframe
+				add = num_deployed_planes_with_type@large_plane_awacs_airframe
+				multiply = 14
+			}
 
-	### Total ###
-	# Control factors to scale different branches with each other in cost.
-	# Use these to control how expensive different branches are against each other
+			# Expensive aircraft (weight 5)
+			add = {
+				value = num_equipment@large_plane_air_transport_airframe
+				add = num_equipment@large_plane_maritime_patrol_airframe
+				add = num_equipment@cv_medium_plane_air_transport_airframe
+				add = num_equipment@cv_medium_plane_maritime_patrol_airframe
+				add = num_equipment@medium_plane_air_transport_airframe
+				add = num_equipment@medium_plane_maritime_patrol_airframe
+				add = num_equipment@cv_medium_plane_scout_airframe
+				multiply = stockpiled_cost_multiplier
+				add = num_deployed_planes_with_type@large_plane_air_transport_airframe
+				add = num_deployed_planes_with_type@large_plane_maritime_patrol_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_air_transport_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_maritime_patrol_airframe
+				add = num_deployed_planes_with_type@medium_plane_air_transport_airframe
+				add = num_deployed_planes_with_type@medium_plane_maritime_patrol_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_scout_airframe
+				multiply = 5
+			}
 
-	# Land Forces - Cost weights per battalion:
-	#   - Special:   1.25
-	#   - Elite:	 0.75
-	#   - Regular:   0.50
-	#   - Irregular: 0.25
-	multiply_temp_variable = { land_count = 0.5 }
+			# Regular aircraft (weight 3)
+			add = {
+				value = num_equipment@medium_plane_airframe
+				add = num_equipment@cv_medium_plane_airframe
+				add = num_equipment@medium_plane_fighter_airframe
+				add = num_equipment@cv_medium_plane_fighter_airframe
+				add = num_equipment@small_plane_suicide_airframe
+				add = num_equipment@medium_plane_cas_airframe
+				add = num_equipment@cv_medium_plane_cas_airframe
+				multiply = stockpiled_cost_multiplier
+				add = num_deployed_planes_with_type@medium_plane_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_airframe
+				add = num_deployed_planes_with_type@medium_plane_fighter_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_fighter_airframe
+				add = num_deployed_planes_with_type@small_plane_suicide_airframe
+				add = num_deployed_planes_with_type@medium_plane_cas_airframe
+				add = num_deployed_planes_with_type@cv_medium_plane_cas_airframe
+				multiply = 3
+			}
 
-	# Naval Forces - Cost weights per ship:
-	#   - Carrier:   40
-	#   - Capital:   8
-	#   - Destroyer: 6
-	#   - Frigate:   4
-	#   - Corvette:  2
-	multiply_temp_variable = { navy_count = 1 }
+			# Cheap aircraft (weight 1)
+			add = {
+				value = num_equipment@small_plane_airframe
+				add = num_equipment@small_plane_cas_airframe
+				add = num_equipment@small_plane_naval_bomber_airframe
+				add = num_equipment@cv_small_plane_airframe
+				add = num_equipment@cv_small_plane_cas_airframe
+				add = num_equipment@cv_small_plane_naval_bomber_airframe
+				add = num_equipment@small_plane_strike_airframe
+				add = num_equipment@cv_small_plane_strike_airframe
+				multiply = stockpiled_cost_multiplier
+				add = num_deployed_planes_with_type@small_plane_airframe
+				add = num_deployed_planes_with_type@small_plane_cas_airframe
+				add = num_deployed_planes_with_type@small_plane_naval_bomber_airframe
+				add = num_deployed_planes_with_type@cv_small_plane_airframe
+				add = num_deployed_planes_with_type@cv_small_plane_cas_airframe
+				add = num_deployed_planes_with_type@cv_small_plane_naval_bomber_airframe
+			}
 
-	# Air Forces - Cost weights per aircraft:
-	#   - Strategic: 1.00
-	#   - Expensive: 0.35
-	#   - Regular:   0.21
-	#   - Cheap:	 0.07
-	multiply_temp_variable = { airforce_count = 0.071 }
+			# Missile sites (weight 28) and anti-air buildings (weight 14)
+			add = {
+				value = rocket_sites
+				multiply = 28
+			}
+			add = {
+				value = anti_air_building
+				multiply = 14
+			}
 
-	#Additive personnel cost multiplier
-	set_temp_variable = { personnel_cost_multiplier = { value = 1 add = modifier@personnel_cost_multiplier_modifier } }
-	set_temp_variable = { army_personnel_cost_multiplier = { value = 1 add = modifier@army_personnel_cost_multiplier_modifier } }
-	set_temp_variable = { navy_personnel_cost_multiplier = { value = 1 add = modifier@navy_personnel_cost_multiplier_modifier } }
-	set_temp_variable = { airforce_personnel_cost_multiplier = { value = 1 add = modifier@airforce_personnel_cost_multiplier_modifier } }
-	#Additive equipment cost multiplier
-	set_temp_variable = { equipment_cost_multiplier = { value = 1 add = modifier@equipment_cost_multiplier_modifier } }
-
-	#Modify personnel cost with total wage modifier
-	multiply_temp_variable = { land_count = personnel_cost_multiplier }
-	multiply_temp_variable = { navy_count = personnel_cost_multiplier }
-	multiply_temp_variable = { airforce_count = personnel_cost_multiplier }
-	multiply_temp_variable = { land_count = army_personnel_cost_multiplier }
-	multiply_temp_variable = { navy_count = navy_personnel_cost_multiplier }
-	multiply_temp_variable = { airforce_count = airforce_personnel_cost_multiplier }
-	#Modify equipment cost with modifier
-	set_variable = { equipment_operative_cost = { value = equipment_operative_cost multiply = equipment_cost_multiplier multiply = inflation_multiplier } }
-
-	#Multiply personnel costs basde on GDP/c, higher GDP makes things more expensive (linear approximation 0.003 * gdp/c + 0.129)
-	set_temp_variable = { gdp_defence_modifier_personnel = { value = gdp_per_capita multiply = 0.004 add = 0.129 } }
-	multiply_temp_variable = { land_count = gdp_defence_modifier_personnel }
-	multiply_temp_variable = { navy_count = gdp_defence_modifier_personnel }
-	multiply_temp_variable = { airforce_count = gdp_defence_modifier_personnel }
-
-	set_temp_variable = { gdp_defence_modifier_equipment = { value = gdp_per_capita multiply = 0.015 add = 1 } }
-	multiply_variable = { equipment_operative_cost = gdp_defence_modifier_equipment }
-
-	set_temp_variable = { mobilization_level_modifier = { value = 0.25 multiply = def_index add = 0.75 } }
-	multiply_temp_variable = { land_count = mobilization_level_modifier }
-	multiply_temp_variable = { navy_count = mobilization_level_modifier }
-	multiply_temp_variable = { airforce_count = mobilization_level_modifier }
-
-	set_temp_variable = { equipment_cost_mobilization_level_modifier = { value = 0.25 multiply = def_index add = 0.75 } }
-	multiply_variable = { equipment_operative_cost = equipment_cost_mobilization_level_modifier }
-
-	if = { limit = { has_war = yes }
-		multiply_temp_variable = { land_count = 1.20 }
-		multiply_temp_variable = { navy_count = 1.50 }
-		multiply_temp_variable = { airforce_count = 1.50 }
+			# Control factor: scales airforce against land and navy
+			multiply = 0.071
+			multiply = personnel_cost_multiplier
+			multiply = { value = 1 add = modifier@airforce_personnel_cost_multiplier_modifier }
+			multiply = gdp_defence_modifier_personnel
+			multiply = mobilization_level_modifier
+			if = {
+				limit = { value = enemies^num greater_than = 0 }
+				multiply = 1.50
+			}
+			# Control factors: scale personnel against defence industry
+			multiply = 0.001
+			multiply = 0.667
+		}
 	}
 
-	#Divide by control factors (same for all!) - Use this if you want to scale cost of military personnel in relation to defence industry
-	multiply_temp_variable = { land_count = 0.00076 }
-	multiply_temp_variable = { navy_count = 0.001 }
-	multiply_temp_variable = { airforce_count = 0.001 }
-	multiply_temp_variable = { airforce_count = 0.667 }
-
+	### Total ###
 	#Add up armed forces
 	set_temp_variable = { personnel_cost = { value = land_count add = navy_count add = airforce_count } }
 
@@ -3162,32 +3022,31 @@ update_military_rate = {
 	set_variable = { defence_breakdown_navy = { value = navy_count multiply = 7 } }
 	set_variable = { defence_breakdown_airforce = { value = airforce_count multiply = 7 } }
 
-	set_variable = { defence_breakdown_industry_gdp_modifier = 8.1 }	#Maximum modifier
-	clamp_variable = { var = gdp_defence_modifier_industry min = 0.001 }
-	divide_variable = { defence_breakdown_industry_gdp_modifier = gdp_defence_modifier_industry }
-	subtract_from_variable = { defence_breakdown_industry_gdp_modifier = 1 }	#Working with percentages
+	set_variable = { defence_breakdown_industry_gdp_modifier = { value = 8.1 divide = gdp_defence_modifier_industry subtract = 1 } }	#8.1 = maximum modifier; -1 to work with percentages
 	set_variable = { defence_breakdown_personnel_gdp_modifier = { value = gdp_defence_modifier_personnel multiply = 7.752 subtract = 1 } }	#7.752 = minimum modifier; -1 to work with percentages
 
+	# 0.0000003 to 0.0000015 of GDP a day by capability tier, in whole units so no literal risks rounding to zero.
 	set_variable = {
 		defence_breakdown_cyber = {
 			value = gdp_total
+			divide = 1000
 			multiply = {
 				value = 0
 				if = {
 					limit = { value = cyber_capability greater_than = 11 }
-					add = 0.00005
+					add = 5
 				}
 				if = {
 					limit = { value = cyber_capability greater_than = 7 }
-					add = 0.00004
+					add = 4
 				}
 				if = {
 					limit = { value = cyber_capability greater_than = 3 }
-					add = 0.00003
+					add = 3
 				}
 				if = {
 					limit = { value = cyber_capability greater_than = 0 }
-					add = 0.00003
+					add = 3
 				}
 			}
 			multiply = {
@@ -3195,6 +3054,7 @@ update_military_rate = {
 				add = modifier@cyber_cost_multiplier_modifier
 			}
 			multiply = 7
+			divide = 10000
 		}
 	}
 
@@ -3218,65 +3078,78 @@ update_military_rate = {
 	set_variable = { defence_gain = { value = array_defence_spend^def_index add = defence_breakdown_cyber clamp = { min = 0 max = @math_expressions_max } } }
 }
 
-# Effect: update_bureaucracy_rate
-# Purpose: Computes daily bureaucracy/civil-service spending based on population and selected law level
-update_bureaucracy_rate = {
-	# Recreate the Array
+# Effect: update_population_spending_rates
+# Purpose: Computes bureaucracy, security, healthcare, and welfare spending in one pass
+update_population_spending_rates = {
+	set_temp_variable = {
+		bureaucracy_spending_base = {
+			value = population_total
+			multiply = { value = 1 add = modifier@bureaucracy_cost_multiplier_modifier }
+			multiply = common_money_modifier
+			multiply = @bureau_base_cost_per_capita
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+	set_temp_variable = {
+		security_spending_base = {
+			value = population_total
+			multiply = {
+				value = 1
+				add = modifier@police_cost_multiplier_modifier
+				add = ct_police_cost_var
+			}
+			multiply = common_money_modifier
+			multiply = @police_base_cost_per_capita
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+	set_temp_variable = {
+		health_spending_base = {
+			value = population_total
+			multiply = { value = 1 add = modifier@health_cost_multiplier_modifier }
+			multiply = common_money_modifier
+			multiply = @health_base_cost_per_capita
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+	set_temp_variable = {
+		welfare_spending_base = {
+			value = population_total
+			multiply = { value = 1 add = modifier@social_cost_multiplier_modifier }
+			multiply = common_money_modifier
+			multiply = @social_base_cost_per_capita
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+
 	resize_array = { array = array_bureaucracy_spend size = 5 value = 0 }
-
-	#Calculate the base cost of each bureaucracy level, scaled by the per-level multiplier ladder
-	for_each_loop = {
-		array = array_bureaucracy_spend
-		index = i
-		value = v
-		set_variable = {
-			array_bureaucracy_spend^i = {
-				value = population_total
-				multiply = { value = 1 add = modifier@bureaucracy_cost_multiplier_modifier }
-				multiply = common_money_modifier
-				multiply = @bureau_base_cost_per_capita
-				clamp = { min = 0 max = @spending_cost_clamp_max }
-				multiply = global.spending_ladder_standard^i
-			}
-		}
-	}
-
-	#Set which spending level the country is at
-	set_temp_variable = { bureau_index = { value = bureau_law subtract = 1 clamp = { min = 0 max = 4 } } }
-	set_variable = { var = bureaucracy_gain value = { value = array_bureaucracy_spend^bureau_index clamp = { min = 0 max = @math_expressions_max } } }
-}
-
-# Effect: update_police_rate
-# Purpose: Computes daily police/public-security spending based on population and selected law level
-update_police_rate = {
-	# Recreate the Array
 	resize_array = { array = array_security_spend size = 5 value = 0 }
+	resize_array = { array = array_health_spend size = 6 value = 0 }
+	resize_array = { array = array_social_spend size = 6 value = 0 }
 
-	#Calculate the base cost of each police level, scaled by the per-level multiplier ladder
 	for_each_loop = {
-		array = array_security_spend
+		array = array_social_spend
 		index = i
 		value = v
-		set_variable = {
-			array_security_spend^i = {
-				value = population_total
-				multiply = {
-					value = 1
-					add = modifier@police_cost_multiplier_modifier
-					add = ct_police_cost_var
-				}
-				multiply = common_money_modifier
-				multiply = @police_base_cost_per_capita
-				clamp = { min = 0 max = @spending_cost_clamp_max }
-				multiply = global.spending_ladder_standard^i
-			}
+
+		set_variable = { array_health_spend^i = { value = health_spending_base multiply = global.spending_ladder_health^i } }
+		set_variable = { array_social_spend^i = { value = welfare_spending_base multiply = global.spending_ladder_social^i } }
+		if = {
+			limit = { check_variable = { i < 5 } }
+			set_variable = { array_bureaucracy_spend^i = { value = bureaucracy_spending_base multiply = global.spending_ladder_standard^i } }
+			set_variable = { array_security_spend^i = { value = security_spending_base multiply = global.spending_ladder_standard^i } }
 		}
 	}
 
-	#Set which spending level the country is at
+	set_temp_variable = { bureau_index = { value = bureau_law subtract = 1 clamp = { min = 0 max = 4 } } }
 	set_temp_variable = { security_index = { value = police_law subtract = 1 clamp = { min = 0 max = 4 } } }
+	set_temp_variable = { health_index = { value = health_law subtract = 1 clamp = { min = 0 max = 5 } } }
+	set_temp_variable = { social_index = { value = social_law subtract = 1 clamp = { min = 0 max = 5 } } }
 
+	set_variable = { bureaucracy_gain = { value = array_bureaucracy_spend^bureau_index clamp = { min = 0 max = @math_expressions_max } } }
 	set_variable = { security_gain = { value = array_security_spend^security_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { health_gain = { value = array_health_spend^health_index clamp = { min = 0 max = @math_expressions_max } } }
+	set_variable = { welfare_gain = { value = array_social_spend^social_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_education_rate
@@ -3368,7 +3241,7 @@ update_education_rate = {
 				value = population_total #Unit 100 000
 				multiply = education_cost_multiplier
 				add = total_facilities_spending_display_var
-				clamp = { min = 0 max = @spending_cost_clamp_max }
+				clamp = { min = 0 max = @math_expressions_max }
 				multiply = global.spending_ladder_education^i
 			}
 		}
@@ -3381,64 +3254,6 @@ update_education_rate = {
 
 	set_variable = { education_gain = { value = array_education_spend^education_index clamp = { min = 0 max = @math_expressions_max } } }
 	clamp_variable = { var = total_facilities_spending_display_var min = 0 }
-}
-
-# Effect: update_health_rate
-# Purpose: Computes daily healthcare spending based on population and selected law level
-update_health_rate = {
-	# Recreate the Array
-	resize_array = { array = array_health_spend size = 6 value = 0 }
-
-	#Calculate the base cost of each health level, scaled by the per-level multiplier ladder
-	for_each_loop = {
-		array = array_health_spend
-		index = i
-		value = v
-		set_variable = {
-			array_health_spend^i = {
-				value = population_total	#Unit 100 000
-				multiply = { value = 1 add = modifier@health_cost_multiplier_modifier }
-				multiply = common_money_modifier
-				multiply = @health_base_cost_per_capita
-				clamp = { min = 0 max = @spending_cost_clamp_max }
-				multiply = global.spending_ladder_health^i
-			}
-		}
-	}
-
-	#Set which spending level the country is at
-	set_temp_variable = { health_index = { value = health_law subtract = 1 clamp = { min = 0 max = 5 } } }
-
-	set_variable = { health_gain = { value = array_health_spend^health_index clamp = { min = 0 max = @math_expressions_max } } }
-}
-
-# Effect: update_social_rate
-# Purpose: Computes daily welfare/social-benefit spending based on population and selected law level
-update_social_rate = {
-	# Recreate the Array
-	resize_array = { array = array_social_spend size = 6 value = 0 }
-
-	#Calculate the base cost of each social level, scaled by the per-level multiplier ladder
-	for_each_loop = {
-		array = array_social_spend
-		index = i
-		value = v
-		set_variable = {
-			array_social_spend^i = {
-				value = population_total	#Unit 100 000
-				multiply = { value = 1 add = modifier@social_cost_multiplier_modifier }
-				multiply = common_money_modifier
-				multiply = @social_base_cost_per_capita
-				clamp = { min = 0 max = @spending_cost_clamp_max }
-				multiply = global.spending_ladder_social^i
-			}
-		}
-	}
-
-	#Set which spending level the country is at
-	set_temp_variable = { social_index = { value = social_law subtract = 1 clamp = { min = 0 max = 5 } } }
-
-	set_variable = { welfare_gain = { value = array_social_spend^social_index clamp = { min = 0 max = @math_expressions_max } } }
 }
 
 # Effect: update_infra_rate
@@ -3681,250 +3496,143 @@ calculate_additional_expense_rate = {
 		add_to_variable = { additional_expenses_rate = overlord_subsidies_total_cost }
 	}
 	if = { limit = { check_variable = { market_purchase_factories > 0 } }
-		#start the math
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.inf_cost_mult
-				multiply = amount_inf_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.cnc_cost_mult
-				multiply = amount_cnc_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.aa_cost_mult
-				multiply = amount_aa_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.at_cost_mult
-				multiply = amount_at_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.hat_cost_mult
-				multiply = amount_hat_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.art_cost_mult
-				multiply = amount_art_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.atk_helo_cost_mult
-				multiply = amount_atk_helo_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.trans_helo_cost_mult
-				multiply = amount_trans_helo_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.util_cost_mult
-				multiply = amount_util_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.mbt_cost_mult
-				multiply = amount_mbt_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.apc_cost_mult
-				multiply = amount_apc_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.ifv_cost_mult
-				multiply = amount_ifv_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.spart_cost_mult
-				multiply = amount_spart_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.light_tank_cost_mult
-				multiply = amount_light_tank_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.spaa_cost_mult
-				multiply = amount_spaa_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.train_cost_mult
-				multiply = amount_train_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.convoy_cost_mult
-				multiply = amount_convoy_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.sml_pln_cost_mult
-				multiply = amount_sml_pln_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.med_pln_cost_mult
-				multiply = amount_med_pln_equip_purchased
-			}
-		}
-
-		add_to_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = global.base_unit_cost
-				multiply = global.lrg_pln_cost_mult
-				multiply = amount_lrg_pln_equip_purchased
-			}
-		}
-
-		if = {
-			limit = { has_dlc = "Gotterdammerung" }
-
-			add_to_temp_variable = {
-				var = market_purchase_factories_cost
-				value = {
+		set_temp_variable = {
+			market_purchase_factories_cost = {
+				value = 0
+				add = {
+					value = global.base_unit_cost
+					multiply = global.inf_cost_mult
+					multiply = amount_inf_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.cnc_cost_mult
+					multiply = amount_cnc_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.aa_cost_mult
+					multiply = amount_aa_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.at_cost_mult
+					multiply = amount_at_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.hat_cost_mult
+					multiply = amount_hat_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.art_cost_mult
+					multiply = amount_art_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.atk_helo_cost_mult
+					multiply = amount_atk_helo_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.trans_helo_cost_mult
+					multiply = amount_trans_helo_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.util_cost_mult
+					multiply = amount_util_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.mbt_cost_mult
+					multiply = amount_mbt_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.apc_cost_mult
+					multiply = amount_apc_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.ifv_cost_mult
+					multiply = amount_ifv_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.spart_cost_mult
+					multiply = amount_spart_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.light_tank_cost_mult
+					multiply = amount_light_tank_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.spaa_cost_mult
+					multiply = amount_spaa_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.train_cost_mult
+					multiply = amount_train_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.convoy_cost_mult
+					multiply = amount_convoy_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.sml_pln_cost_mult
+					multiply = amount_sml_pln_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.med_pln_cost_mult
+					multiply = amount_med_pln_equip_purchased
+				}
+				add = {
+					value = global.base_unit_cost
+					multiply = global.lrg_pln_cost_mult
+					multiply = amount_lrg_pln_equip_purchased
+				}
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_ballistic_missile_equipment_purchased
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_purchase_factories_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_nuclear_ballistic_missile_equipment_purchased
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_purchase_factories_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_guided_missile_equipment_purchased
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_purchase_factories_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_hypersonic_missile_equipment_purchased
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_purchase_factories_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_nuclear_missile_equipment_purchased
 				}
-			}
-
-			add_to_temp_variable = {
-				var = market_purchase_factories_cost
-				value = {
+				add = {
 					value = global.base_unit_cost
 					multiply = global.missile_cost_mult
 					multiply = amount_sam_missile_equipment_purchased
 				}
-			}
-		}
-
-		multiply_temp_variable = {
-			var = market_purchase_factories_cost
-			value = {
-				value = 1
-				add = modifier@international_market_purchase_modifier
+				multiply = {
+					value = 1
+					add = modifier@international_market_purchase_modifier
+				}
 			}
 		}
 
@@ -4396,7 +4104,7 @@ calculate_additional_expense_rate = {
 # Purpose: Computes weekly ROI from international investments and splits it into treasury vs reinvested shares
 calculate_int_investments_rate = {
 	# Base ROI + stacked return_on_investment_modifier, clamped to the engine-wide ceiling
-	set_variable = { roi_rate = { value = 0.06 add = modifier@return_on_investment_modifier clamp = { min = 0 max = global.roi_rate_cap } } }
+	set_variable = { roi_rate = { value = 0.03 add = modifier@return_on_investment_modifier clamp = { min = 0 max = global.roi_rate_cap } } }
 
 	#This is how much money we get back in a year, converted to weekly
 	set_variable = { int_investments_rate = { value = int_investments multiply = roi_rate multiply = 0.019 clamp = { min = 0 max = @math_expressions_max } } }
@@ -4418,50 +4126,127 @@ calculate_int_investments_rate = {
 # Effect: calculate_resource_sale_rate
 # Purpose: Computes weekly revenue from resource exports at market prices
 calculate_resource_sale_rate = {
-	#Additive export multipliers (base + per-resource modifiers), computed before the export revenue so each fold reads the finished multiplier
-	set_temp_variable = { resource_export_multiplier = { value = 1 add = modifier@resource_export_multiplier_modifier } }
-
-	set_temp_variable = { oil_export_multiplier = { value = resource_export_multiplier add = modifier@oil_export_multiplier_modifier } }
-	set_temp_variable = { steel_export_multiplier = { value = resource_export_multiplier add = modifier@steel_export_multiplier_modifier } }
-	set_temp_variable = { aluminium_export_multiplier = { value = resource_export_multiplier add = modifier@aluminium_export_multiplier_modifier } }
-	set_temp_variable = { tungsten_export_multiplier = { value = resource_export_multiplier add = modifier@tungsten_export_multiplier_modifier } }
-	set_temp_variable = { chromium_export_multiplier = { value = resource_export_multiplier add = modifier@chromium_export_multiplier_modifier } }
-	set_temp_variable = { rubber_export_multiplier = { value = resource_export_multiplier add = modifier@rubber_export_multiplier_modifier } }
-	set_temp_variable = { microchip_export_multiplier = { value = resource_export_multiplier add = modifier@microchip_export_multiplier_modifier } }
-	set_temp_variable = { composite_export_multiplier = { value = resource_export_multiplier add = modifier@composite_export_multiplier_modifier } }
-
 	#Revenue = exported amount * market price * export multiplier * yearly-to-weekly constant
-	set_variable = { oil_exports = { value = resource_exported@oil multiply = global.oil_price multiply = oil_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { steel_exports = { value = resource_exported@steel multiply = global.steel_price multiply = steel_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { aluminium_exports = { value = resource_exported@aluminium multiply = global.aluminium_price multiply = aluminium_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { tungsten_exports = { value = resource_exported@tungsten multiply = global.tungsten_price multiply = tungsten_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { chromium_exports = { value = resource_exported@chromium multiply = global.chromium_price multiply = chromium_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { rubber_exports = { value = resource_exported@rubber multiply = global.rubber_price multiply = rubber_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { microchip_exports = { value = resource_exported@microchips multiply = global.microchip_price multiply = microchip_export_multiplier multiply = @resource_sale_rate_constant } }
-	set_variable = { composite_exports = { value = resource_exported@composites multiply = global.composite_price multiply = composite_export_multiplier multiply = @resource_sale_rate_constant } }
-
-	# Clamp Export Values at 0 so Luigi's massive negatives don't break my shit
-	clamp_variable = { var = oil_exports min = 0 }
-	clamp_variable = { var = steel_exports min = 0 }
-	clamp_variable = { var = aluminium_exports min = 0 }
-	clamp_variable = { var = tungsten_exports min = 0 }
-	clamp_variable = { var = chromium_exports min = 0 }
-	clamp_variable = { var = rubber_exports min = 0 }
-	clamp_variable = { var = microchip_exports min = 0 }
-	clamp_variable = { var = composite_exports min = 0 }
+	#The closing max = 0 is a floor at 0 so Luigi's massive negatives don't break my shit
+	set_variable = {
+		oil_exports = {
+			value = resource_exported@oil
+			multiply = global.oil_price
+			multiply = {
+				value = 1
+				add = modifier@oil_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		steel_exports = {
+			value = resource_exported@steel
+			multiply = global.steel_price
+			multiply = {
+				value = 1
+				add = modifier@steel_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		aluminium_exports = {
+			value = resource_exported@aluminium
+			multiply = global.aluminium_price
+			multiply = {
+				value = 1
+				add = modifier@aluminium_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		tungsten_exports = {
+			value = resource_exported@tungsten
+			multiply = global.tungsten_price
+			multiply = {
+				value = 1
+				add = modifier@tungsten_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		chromium_exports = {
+			value = resource_exported@chromium
+			multiply = global.chromium_price
+			multiply = {
+				value = 1
+				add = modifier@chromium_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		rubber_exports = {
+			value = resource_exported@rubber
+			multiply = global.rubber_price
+			multiply = {
+				value = 1
+				add = modifier@rubber_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		microchip_exports = {
+			value = resource_exported@microchips
+			multiply = global.microchip_price
+			multiply = {
+				value = 1
+				add = modifier@microchip_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
+	set_variable = {
+		composite_exports = {
+			value = resource_exported@composites
+			multiply = global.composite_price
+			multiply = {
+				value = 1
+				add = modifier@composite_export_multiplier_modifier
+				add = modifier@resource_export_multiplier_modifier
+			}
+			multiply = @resource_sale_rate_constant
+			max = 0
+		}
+	}
 
 	#Add total cost
-	set_variable = { resource_sale_rate = {
-		value = oil_exports
-		add = steel_exports
-		add = aluminium_exports
-		add = tungsten_exports
-		add = chromium_exports
-		add = rubber_exports
-		add = microchip_exports
-		add = composite_exports
-		clamp = { min = 0 max = @math_expressions_max }
-	} }
+	set_variable = {
+		resource_sale_rate = {
+			value = oil_exports
+			add = steel_exports
+			add = aluminium_exports
+			add = tungsten_exports
+			add = chromium_exports
+			add = rubber_exports
+			add = microchip_exports
+			add = composite_exports
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
 }
 
 # Effect: update_display
@@ -4535,6 +4320,19 @@ update_display = {
 
 	set_variable = { treasury_rate = { value = display_income subtract = display_expense } }
 
+	# Lets AI deficit checks scale with the size of the economy. Counts paused debt service so a cheap loan does not read as a surplus.
+	if = { limit = { check_variable = { display_income > 0 } }
+		set_variable = { budget_balance_ratio = { value = display_income subtract = potential_expense divide = display_income } }
+	}
+	else_if = { limit = { check_variable = { potential_expense > display_income } }
+		set_variable = { budget_balance_ratio = -1 }
+	}
+	else = {
+		set_variable = { budget_balance_ratio = 0 }
+	}
+	# Share of income paid as interest, read by ai_fiscal_last_resort_open
+	set_variable = { debt_service_share = { value = debt_rate divide = { value = potential_income clamp = { min = 0.001 max = 100000000 } } } }
+
 	if = { limit = { is_in_array = { global.arabic_countries = THIS.id } }
 		calculate_monthly_arab_spring_change = yes
 	}
@@ -4572,8 +4370,8 @@ update_state_variables = {
 	hidden_effect = {
 		productivity_growth_country_display_effect = yes
 
-		set_temp_variable = {
-			num_missile_silo = {
+		set_variable = {
+			rocket_sites = {
 				value = 0
 				every_collection = {
 					named_collection = controlled_states_collection
@@ -4582,8 +4380,8 @@ update_state_variables = {
 			}
 		}
 
-		set_temp_variable = {
-			num_anti_air_building = {
+		set_variable = {
+			anti_air_building = {
 				value = 0
 				every_collection = {
 					named_collection = controlled_states_collection
@@ -4591,8 +4389,6 @@ update_state_variables = {
 				}
 			}
 		}
-		set_variable = { rocket_sites = num_missile_silo }
-		set_variable = { anti_air_building = num_anti_air_building }
 
 		set_variable = {
 			agriculture_district_total = {
@@ -5109,7 +4905,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		gdp_from_resource_sector = {
 			value = total_resource_amount
-			multiply = 0.5
+			multiply = @gdp_resource_factor
 			multiply = {
 				value = 1
 				add = modifier@gdp_from_resource_sector_modifier
@@ -5188,15 +4984,6 @@ calculate_gdp = {
 	set_temp_variable = { workers_per_renewable_energy = 0.0225 }
 	set_temp_variable = { workers_per_internet_station = 0.012 }
 	set_temp_variable = { workers_per_rail_terminal = 0.015 }
-
-	set_temp_variable = {
-		mil_facs_worker_requirement_multiplier = {
-			value = 1
-			add = modifier@mil_facs_worker_requirement_modifier
-			add = modifier@buildings_worker_requirement_modifier
-			clamp = { min = 0.10 max = @math_expressions_max }
-		}
-	}
 
 	# Power Plants — allocated first so the grid is staffed before any industrial demand
 	# Nuclear Reactors
@@ -5315,31 +5102,23 @@ calculate_gdp = {
 		}
 	}
 
+	set_temp_variable = {
+		mil_facs_worker_requirement_multiplier = {
+			value = 1
+			add = modifier@mil_facs_worker_requirement_modifier
+			add = modifier@buildings_worker_requirement_modifier
+			clamp = { min = 0.10 max = @math_expressions_max }
+		}
+	}
+	set_temp_variable = { workers_per_mil_fac = { value = workers_per_mil_fac multiply = mil_facs_worker_requirement_multiplier } }
+	set_temp_variable = { workers_per_dockyard = { value = workers_per_dockyard multiply = mil_facs_worker_requirement_multiplier } }
+	set_variable = { workers_per_mil_fac_display = { value = workers_per_mil_fac multiply = 1000 } }
+	set_variable = { workers_per_dockyard_display = { value = workers_per_dockyard multiply = 1000 } }
 
 	if = { limit = { check_variable = { military_factory_total = 0 } }
 		set_variable = { military_factories_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_mil_fac_display = {
-				value = workers_per_mil_fac
-				multiply = mil_facs_worker_requirement_multiplier
-				multiply = 1000
-			}
-		}
 	}
 	else = {
-		set_temp_variable = {
-			workers_per_mil_fac = {
-				value = workers_per_mil_fac
-				multiply = mil_facs_worker_requirement_multiplier
-			}
-		}
-		set_variable = {
-			workers_per_mil_fac_display = {
-				value = workers_per_mil_fac
-				multiply = 1000
-			}
-		}
-
 		set_temp_variable = {
 			max_workers_in_mil_facs = {
 				value = military_factory_total
@@ -5364,28 +5143,8 @@ calculate_gdp = {
 
 	if = { limit = { check_variable = { naval_factory_total = 0 } }
 		set_variable = { naval_factories_manpower_fulfillment = 1 }
-		set_variable = {
-			workers_per_dockyard_display = {
-				value = workers_per_dockyard
-				multiply = mil_facs_worker_requirement_multiplier
-				multiply = 1000
-			}
-		}
 	}
 	else = {
-		set_temp_variable = {
-			workers_per_dockyard = {
-				value = workers_per_dockyard
-				multiply = mil_facs_worker_requirement_multiplier
-			}
-		}
-		set_variable = {
-			workers_per_dockyard_display = {
-				value = workers_per_dockyard
-				multiply = 1000
-			}
-		}
-
 		set_temp_variable = {
 			max_workers_in_dockyards = {
 				value = naval_factory_total
@@ -5415,16 +5174,12 @@ calculate_gdp = {
 			add = 1
 		}
 	}
-	set_temp_variable = { workers_per_civ_fac = { value = workers_per_civ_fac multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_office = { value = workers_per_office multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_agriculture_district = { value = workers_per_agriculture_district multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_microchip_plant = { value = workers_per_microchip_plant multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_composite_plant = { value = workers_per_composite_plant multiply = worker_requirement_gdp_multiplier } }
-	set_temp_variable = { workers_per_synthetic_refinery = { value = workers_per_synthetic_refinery multiply = worker_requirement_gdp_multiplier } }
+	set_variable = { worker_requirement_gdp_multiplier_display = { value = worker_requirement_gdp_multiplier subtract = 1 } }
 
 	set_temp_variable = {
 		workers_per_civ_fac = {
 			value = workers_per_civ_fac
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@civ_facs_worker_requirement_modifier
@@ -5433,12 +5188,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_civ_fac_display = {
-			value = workers_per_civ_fac
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_civ_fac_display = { value = workers_per_civ_fac multiply = 1000 } }
 
 	if = { limit = { check_variable = { industrial_complex_total = 0 } }
 		set_variable = { civilian_factories_manpower_fulfillment = 1 }
@@ -5469,6 +5219,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_office = {
 			value = workers_per_office
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@offices_worker_requirement_modifier
@@ -5477,12 +5228,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_office_display = {
-			value = workers_per_office
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_office_display = { value = workers_per_office multiply = 1000 } }
 
 	if = { limit = { check_variable = { office_park_total = 0 } }
 		set_variable = { offices_manpower_fulfillment = 1 }
@@ -5513,6 +5259,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_agriculture_district = {
 			value = workers_per_agriculture_district
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@agriculture_district_worker_requirement_modifier
@@ -5521,12 +5268,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_agriculture_district_display = {
-			value = workers_per_agriculture_district
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_agriculture_district_display = { value = workers_per_agriculture_district multiply = 1000 } }
 
 	if = { limit = { check_variable = { agriculture_district_total = 0 } }
 		set_variable = { agriculture_district_manpower_fulfillment = 1 }
@@ -5558,6 +5300,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_microchip_plant = {
 			value = workers_per_microchip_plant
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@microchip_plant_worker_requirement_modifier
@@ -5566,12 +5309,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_microchip_plant_display = {
-			value = workers_per_microchip_plant
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_microchip_plant_display = { value = workers_per_microchip_plant multiply = 1000 } }
 
 	if = { limit = { check_variable = { microchip_plant_total = 0 } }
 		set_variable = { microchip_plant_manpower_fulfillment = 1 }
@@ -5603,6 +5341,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_composite_plant = {
 			value = workers_per_composite_plant
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@composite_plant_worker_requirement_modifier
@@ -5611,12 +5350,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_composite_plant_display = {
-			value = workers_per_composite_plant
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_composite_plant_display = { value = workers_per_composite_plant multiply = 1000 } }
 
 	if = { limit = { check_variable = { composite_plant_total = 0 } }
 		set_variable = { composite_plant_manpower_fulfillment = 1 }
@@ -5648,6 +5382,7 @@ calculate_gdp = {
 	set_temp_variable = {
 		workers_per_synthetic_refinery = {
 			value = workers_per_synthetic_refinery
+			multiply = worker_requirement_gdp_multiplier
 			multiply = {
 				value = 1
 				add = modifier@synthetic_refinery_worker_requirement_modifier
@@ -5656,12 +5391,7 @@ calculate_gdp = {
 			}
 		}
 	}
-	set_variable = {
-		workers_per_synthetic_refinery_display = {
-			value = workers_per_synthetic_refinery
-			multiply = 1000
-		}
-	}
+	set_variable = { workers_per_synthetic_refinery_display = { value = workers_per_synthetic_refinery multiply = 1000 } }
 
 	if = { limit = { check_variable = { synthetic_refinery_total = 0 } }
 		set_variable = { synthetic_refinery_manpower_fulfillment = 1 }
@@ -6117,35 +5847,35 @@ calculate_gdp = {
 	set_temp_variable = {
 		gdp_from_nuclear_reactors = {
 			value = nuclear_reactors
-			multiply = 4
+			multiply = @gdp_nuclear_reactor_factor
 			multiply = nuclear_reactors_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_fossil_powerplants = {
 			value = number_of_fossil_pps
-			multiply = 1.7
+			multiply = @gdp_fossil_powerplant_factor
 			multiply = fossil_powerplants_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_renewable_energy = {
 			value = renewable_energy_infra
-			multiply = 2
+			multiply = @gdp_renewable_energy_factor
 			multiply = renewable_energy_infra_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_internet_stations = {
 			value = internet_station_total
-			multiply = 3.5
+			multiply = @gdp_internet_station_factor
 			multiply = internet_stations_manpower_fulfillment
 		}
 	}
 	set_temp_variable = {
 		gdp_from_rail_terminals = {
 			value = rail_terminal_total
-			multiply = 2.5
+			multiply = @gdp_rail_terminal_factor
 			multiply = rail_terminal_manpower_fulfillment
 		}
 	}
@@ -6153,12 +5883,12 @@ calculate_gdp = {
 	# Healthcare Sector — GDP Contribution
 	# Formula: population_total * 0.01 * gdp_per_capita * level_mult * fulfillment
 	# Global overall_productivity multiplier is applied to the full gdp_total pool below
-	if = { limit = { has_idea = health_01 } set_temp_variable = { health_gdp_level_mult = 0.10 } }
-	else_if = { limit = { has_idea = health_02 } set_temp_variable = { health_gdp_level_mult = 0.20 } }
-	else_if = { limit = { has_idea = health_03 } set_temp_variable = { health_gdp_level_mult = 0.35 } }
-	else_if = { limit = { has_idea = health_04 } set_temp_variable = { health_gdp_level_mult = 0.50 } }
-	else_if = { limit = { has_idea = health_05 } set_temp_variable = { health_gdp_level_mult = 0.65 } }
-	else_if = { limit = { has_idea = health_06 } set_temp_variable = { health_gdp_level_mult = 0.80 } }
+	if = { limit = { has_idea = health_01 } set_temp_variable = { health_gdp_level_mult = @gdp_health_01_factor } }
+	else_if = { limit = { has_idea = health_02 } set_temp_variable = { health_gdp_level_mult = @gdp_health_02_factor } }
+	else_if = { limit = { has_idea = health_03 } set_temp_variable = { health_gdp_level_mult = @gdp_health_03_factor } }
+	else_if = { limit = { has_idea = health_04 } set_temp_variable = { health_gdp_level_mult = @gdp_health_04_factor } }
+	else_if = { limit = { has_idea = health_05 } set_temp_variable = { health_gdp_level_mult = @gdp_health_05_factor } }
+	else_if = { limit = { has_idea = health_06 } set_temp_variable = { health_gdp_level_mult = @gdp_health_06_factor } }
 
 	set_temp_variable = {
 		gdp_from_healthcare = {
@@ -6285,15 +6015,17 @@ calculate_gdp = {
 	}
 
 	# Overall productivity grows over time (on_monthly) and with techs and its the main source of economic growth for developed countries
-	multiply_variable = {
-		var = gdp_total
-		value = {
-			value = overall_productivity
-			divide = { value = global.productivity_center clamp = { min = 1000 max = 100000000 } }
+	set_variable = {
+		gdp_total = {
+			value = gdp_total
+			multiply = {
+				value = overall_productivity
+				divide = { value = global.productivity_center clamp = { min = 1000 max = @math_expressions_max } }
+			}
+			clamp = { min = 0.1 max = @math_expressions_max }
 		}
 	}
 
-	clamp_variable = { var = gdp_total min = 0.1 }
 	set_variable = {
 		gdp_per_capita = {
 			value = gdp_total
@@ -6338,14 +6070,30 @@ calculate_gdp_modifiers = {
 		}
 
 		#Population growth rate
-		# (60 - GDP/c) * 0.02
-		# Break-even at GDP/c = 60, clamped to 0 above
+		#-0.08 * GDP/C + 2.50 - GDP/C c [0, 31.25]
+		#-0.04 * GDP/C + 1.25 - GDP/C c [31.25, 62.5]
+		#-0.02 * GDP/C        - GDP/C c [62.5, 100]
+		# Break-even at GDP/c = 31.25, min clamp (-2.00) at GDP/c = 100
+		# Fitted to in-game GDP/c, not real-world dollars
 		set_variable = {
 			monthly_population_gdp_modifier = {
-				value = 60
-				subtract = gdp_per_capita
-				multiply = 0.02
-				clamp = { min = 0 max = 20000 }
+				value = gdp_per_capita
+				if = {
+					limit = { value = gdp_per_capita less_than = 31.25 }
+					multiply = -0.08
+					add = 2.5
+				}
+				else = {
+					if = {
+						limit = { value = gdp_per_capita less_than = 62.5 }
+						multiply = -0.04
+						add = 1.25
+					}
+					else = {
+						multiply = -0.02
+					}
+				}
+				clamp = { min = -2 max = 20000 }
 			}
 		}
 
@@ -6407,39 +6155,72 @@ calculate_tax_adjustments = {
 
 	# --- TAX INCREASES (deficit response) ---
 
-	# Population tax: raise at mild deficit (treasury_rate < -1)
-	# Skip if low stability unless deficit is severe (< -5)
+	# Population tax: raise at mild deficit (< -1, or 3% of income)
+	# Skip if low stability unless deficit is severe (< -5, or 15% of income)
 	if = {
 		limit = {
-			check_variable = { treasury_rate < -1 }
+			OR = {
+				check_variable = { treasury_rate < -1 }
+				check_variable = { budget_balance_ratio < -0.03 }
+			}
 			check_variable = { population_tax_rate < 40 }
 			OR = {
 				has_stability > 0.24
 				check_variable = { treasury_rate < -5 }
+				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
 		set_temp_variable = { pop_tax_change = 1 }
 	}
 
-	# Corporate tax: raise at moderate deficit (treasury_rate < -2)
+	# Corporate tax: raise at moderate deficit (< -2, or 6% of income)
 	# Only after population tax reaches a moderate level (> 24), or at severe deficit regardless
 	if = {
 		limit = {
-			check_variable = { treasury_rate < -2 }
+			OR = {
+				check_variable = { treasury_rate < -2 }
+				check_variable = { budget_balance_ratio < -0.06 }
+			}
 			check_variable = { corporate_tax_rate < 50 }
 			OR = {
 				check_variable = { population_tax_rate > 24 }
 				check_variable = { treasury_rate < -5 }
+				check_variable = { budget_balance_ratio < -0.15 }
 			}
 		}
 		set_temp_variable = { corp_tax_change = 1 }
 	}
 
-	# Debt crisis escalation: if interest > 8% or debt_ratio > 1.0 with any deficit, force tax increases
-	# Catches debt spirals early before treasury_rate thresholds are hit
+	# Hold hikes that would add to recent tax transition penalties, unless the deficit is severe; a debt crisis below still raises
+	if = {
+		limit = {
+			check_variable = { policy_transition_tax_stability < -0.1 }
+			check_variable = { treasury_rate > -5 }
+			check_variable = { budget_balance_ratio > -0.15 }
+		}
+		if = {
+			limit = {
+				check_variable = { pop_tax_change = 1 }
+				NOT = { check_variable = { population_tax_rate < expected_population_tax_rate } }
+				NOT = { check_variable = { policy_transition_population_tax_peak > population_tax_rate } }
+			}
+			set_temp_variable = { pop_tax_change = 0 }
+		}
+		if = {
+			limit = {
+				check_variable = { corp_tax_change = 1 }
+				NOT = { check_variable = { corporate_tax_rate < expected_corporate_tax_rate } }
+				NOT = { check_variable = { policy_transition_corporate_tax_peak > corporate_tax_rate } }
+			}
+			set_temp_variable = { corp_tax_change = 0 }
+		}
+	}
+
+	# Debt crisis escalation: force tax increases when debt service is unsustainable or debt is excessive
 	if = {
 		limit = {
 			OR = {
+				check_variable = { debt_rate > potential_income }
 				check_variable = { interest_rate > 8 }
 				check_variable = { debt_ratio > 1.0 }
 			}
@@ -6467,7 +6248,11 @@ calculate_tax_adjustments = {
 	# Prefer lowering corporate tax first (it drags productivity and investment)
 	if = {
 		limit = {
-			check_variable = { treasury_rate > 2 }
+			OR = {
+				check_variable = { treasury_rate > 2 }
+				check_variable = { budget_balance_ratio > 0.10 }
+			}
+			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { debt_ratio < 0.30 }
 			check_variable = { interest_rate < 5 }
 			check_variable = { pop_tax_change = 0 }
@@ -6488,21 +6273,10 @@ calculate_tax_adjustments = {
 		limit = {
 			has_stability < 0.30
 			check_variable = { population_tax_rate > 20 }
-			check_variable = { treasury_rate > 0 }
+			check_variable = { budget_balance_ratio > 0.03 }
 			check_variable = { pop_tax_change = 0 }
 		}
 		set_temp_variable = { pop_tax_change = -1 }
-	}
-
-	# Factory scarcity: lower corporate tax to attract investment
-	if = {
-		limit = {
-			num_of_available_civilian_factories < 10
-			check_variable = { corporate_tax_rate > 15 }
-			check_variable = { treasury_rate > 0 }
-			check_variable = { corp_tax_change = 0 }
-		}
-		set_temp_variable = { corp_tax_change = -1 }
 	}
 }
 
@@ -6515,10 +6289,16 @@ calculate_ai_taxes_desire = {
 	}
 
 	if = { limit = { NOT = { check_variable = { pop_tax_change = 0 } } }
+		set_temp_variable = { previous_tax_rate = population_tax_rate }
 		add_to_variable = { population_tax_rate = pop_tax_change }
+		clamp_variable = { var = population_tax_rate min = 0 max = 50 }
+		population_tax_transition_check = yes
 	}
 	if = { limit = { NOT = { check_variable = { corp_tax_change = 0 } } }
+		set_temp_variable = { previous_tax_rate = corporate_tax_rate }
 		add_to_variable = { corporate_tax_rate = corp_tax_change }
+		clamp_variable = { var = corporate_tax_rate min = 0 max = 50 }
+		corporate_tax_transition_check = yes
 	}
 
 	clamp_variable = { var = population_tax_rate min = 0 max = 50 }
@@ -6585,7 +6365,7 @@ calculate_migration_mechanic_values = {
 				# Scaling Costs + base cost per 10 000 000 people
 				multiply = 0.07
 				multiply = 0.004
-				clamp = { min = 0 max = @spending_cost_clamp_max }
+				clamp = { min = 0 max = @math_expressions_max }
 				multiply = global.spending_ladder_standard^i
 			}
 		}
@@ -6605,19 +6385,12 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# Calculate Unemployment/Worker fulfillment
+	# Worker shortage
 	set_variable = {
 		immigration_employment_factor_display = {
-			value = 0
-			if = {
-				limit = { value = average_worker_fulfillment less_than = 1 }
-				add = 1
-				subtract = average_worker_fulfillment
-			}
-			else = {
-				add = total_unemployed_percentage_display
-				multiply = -2
-			}
+			value = 1
+			subtract = average_worker_fulfillment
+			clamp = { min = 0 max = 1 }
 		}
 	}
 
@@ -6665,16 +6438,30 @@ calculate_migration_mechanic_values = {
 		}
 	}
 
-	# Calculate Net Immigration Rate
+	# Emigration pressure
+	set_variable = {
+		emigration_pressure = {
+			value = 0
+			if = {
+				limit = { value = average_worker_fulfillment greater_than_or_equals = 1 }
+				add = total_unemployed_percentage_display
+				multiply = 2
+			}
+			subtract = personal_war_refugees_display
+			clamp = { min = 0 max = 2.0 }
+		}
+	}
+
+	# Immigration at fully open borders
 	set_variable = {
 		max_net_immigration_rate = {
-			value = immigration_productivity_calculations_display
+			value = 1
+			add = immigration_productivity_calculations_display
 			add = immigration_employment_factor_display
 			add = immigration_government_factor_display
 			add = modifier@maximum_migration_rate_value
 			add = neighbour_war_refugees_display
-			add = personal_war_refugees_display
-			clamp = { min = -2.0 max = 2.0 }
+			clamp = { min = 0 max = 3.0 }
 		}
 	}
 
@@ -6704,18 +6491,86 @@ calculate_migration_mechanic_values = {
 	if = { limit = { check_variable = { global.countries^num < 2 } }
 		set_variable = { max_net_immigration_rate = 0 }
 	}
+	# Share the border law lets in
 	set_variable = {
-		net_immigration_rate = {
+		immigration_capacity = {
 			value = max_net_immigration_rate
 			multiply = migration_rate_value
-			if = { limit = { value = global.countries^num greater_than = 0 }
-				clamp = { min = -2.0 max = max_net_immigration_rate }
-			}
-			else = {
-				clamp = { min = 0 max = 0 }
+			clamp = { min = 0 max = max_net_immigration_rate }
+		}
+	}
+
+	# Net rate, balanced against world flows
+	set_variable = {
+		net_immigration_rate = {
+			value = immigration_capacity
+			multiply = global.world_immigration_fill
+			subtract = {
+				value = emigration_pressure
+				multiply = global.world_emigration_share
 			}
 		}
 	}
+	# Government Policy Impact carries net migration plus the growth floor top-up
+	set_variable = { gov_pop_monthly_population = { value = net_immigration_rate add = monthly_population_floor_modifier } }
+}
+
+# Effect: update_world_migration_balance
+# Purpose: Scales world immigration and emigration to the smaller of the two; global, monthly
+update_world_migration_balance = {
+	set_temp_variable = {
+		world_immigration_capacity = {
+			value = 0
+			every_collection = {
+				named_collection = all_countries_collection
+				add = {
+					value = immigration_capacity
+					multiply = population_total_m
+				}
+			}
+		}
+	}
+	set_temp_variable = {
+		world_emigration_pressure = {
+			value = 0
+			every_collection = {
+				named_collection = all_countries_collection
+				add = {
+					value = emigration_pressure
+					multiply = population_total_m
+				}
+			}
+		}
+	}
+	set_variable = {
+		global.world_immigration_fill = {
+			value = world_emigration_pressure
+			divide = { value = world_immigration_capacity clamp = { min = 0.001 max = @math_expressions_max } }
+			clamp = { min = 0 max = 1 }
+		}
+	}
+	set_variable = {
+		global.world_emigration_share = {
+			value = world_immigration_capacity
+			divide = { value = world_emigration_pressure clamp = { min = 0.001 max = @math_expressions_max } }
+			clamp = { min = 0 max = 1 }
+		}
+	}
+}
+
+# Effect: update_population_growth_floor
+# Purpose: Keeps population growth at or above 0.01% a month; weekly only, it reads back its own value
+update_population_growth_floor = {
+	# -0.8 total leaves 20% of base growth, 0.01% a month
+	set_variable = {
+		monthly_population_floor_modifier = {
+			value = -0.8
+			subtract = modifier@monthly_population
+			add = monthly_population_floor_modifier
+			clamp = { min = 0 max = @math_expressions_max }
+		}
+	}
+	set_variable = { gov_pop_monthly_population = { value = net_immigration_rate add = monthly_population_floor_modifier } }
 }
 
 # Effect: calculate_cost_pp_economic_cycles
@@ -6764,80 +6619,6 @@ calculate_cost_pp_economic_cycles = {
 	if = { limit = { is_debug = yes }
 		log = "[GetDateText]: [THIS.GetName]: Next Cycle Political Power Cost: [?pp_cost_economic]"
 	}
-}
-
-# Effect: setup_employment_variables
-# Purpose: Sets up default employment variables for nations when this is called. Mostly used in the in game startup effects
-setup_employment_variables = {
-	if = { limit = { check_variable = { nation_to_copy_from = 0 } }
-		set_variable = { market_sold_contracts = 0 }
-		set_variable = { civilian_factory_employment_var = 1 }
-		set_variable = { naval_factory_employment_var = 1 }
-		set_variable = { military_factory_employment_var = 1 }
-		set_variable = { office_employment_var = 1 }
-		set_variable = { microchip_plant_employment_var = 1 }
-		set_variable = { composite_plant_employment_var = 1 }
-		set_variable = { agriculture_district_employment_var = 1 }
-		set_variable = { synthetic_refinery_employment_var = 1 }
-		set_variable = { nuclear_reactor_employment_var = 1 }
-		set_variable = { fossil_powerplant_employment_var = 1 }
-		set_variable = { renewable_energy_employment_var = 1 }
-		set_variable = { internet_station_employment_var = 1 }
-		set_variable = { rail_terminal_employment_var = 1 }
-		if = {
-			limit = { NOT = { has_variable = corporate_tax_rate } }
-			set_variable = { var = corporate_tax_rate value = 20 }
-		}
-		if = {
-			limit = { NOT = { has_variable = population_tax_rate } }
-			set_variable = { var = population_tax_rate value = 20 }
-		}
-	}
-	else = {
-		var:nation_to_copy_from = {
-			set_variable = { PREV.civilian_factory_employment_var = civilian_factory_employment_var }
-			set_variable = { PREV.naval_factory_employment_var = naval_factory_employment_var }
-			set_variable = { PREV.military_factory_employment_var = military_factory_employment_var }
-			set_variable = { PREV.office_employment_var = office_employment_var }
-			set_variable = { PREV.microchip_plant_employment_var = microchip_plant_employment_var }
-			set_variable = { PREV.composite_plant_employment_var = composite_plant_employment_var }
-			set_variable = { PREV.agriculture_district_employment_var = agriculture_district_employment_var }
-			set_variable = { PREV.synthetic_refinery_employment_var = synthetic_refinery_employment_var }
-			set_variable = { PREV.nuclear_reactor_employment_var = nuclear_reactor_employment_var }
-			set_variable = { PREV.fossil_powerplant_employment_var = fossil_powerplant_employment_var }
-			set_variable = { PREV.renewable_energy_employment_var = renewable_energy_employment_var }
-			set_variable = { PREV.internet_station_employment_var = internet_station_employment_var }
-			set_variable = { PREV.rail_terminal_employment_var = rail_terminal_employment_var }
-			set_variable = { var = PREV.corporate_tax_rate value = corporate_tax_rate }
-			set_variable = { var = PREV.population_tax_rate value = population_tax_rate }
-		}
-	}
-
-	# Set for the power ranking system
-	set_country_group_flags = yes
-}
-
-# Effect: set_initial_cost_resources
-# Purpose: Initializes base market prices for all resources (oil, steel, minerals, microchips, composites)
-set_initial_cost_resources = {
-	#Set the base price for single unit of resource, this is the relative price between resources
-	set_variable = { global.oil_price = 7.2 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
-	set_variable = { global.steel_price = 0.04 } #Based on steel price
-	set_variable = { global.aluminium_price = 0.26 }	#Based on aluminium price
-	set_variable = { global.tungsten_price = 0.28 }	#Based on copper price
-	set_variable = { global.chromium_price = 0.18 }	#Based on gold price
-	set_variable = { global.rubber_price = 0.09 }	#Based on rubber price
-	set_variable = { global.microchip_price = 2.5 }
-	set_variable = { global.composite_price = 2.1 }
-
-	set_variable = { global.starting_oil_price = 7.2 } #Divided 50/50 based on oil/natural gas price #Limited to 5, was 28
-	set_variable = { global.starting_steel_price = 0.04 } #Based on steel price
-	set_variable = { global.starting_aluminium_price = 0.26 }	#Based on aluminium price
-	set_variable = { global.starting_tungsten_price = 0.28 }	#Based on copper price
-	set_variable = { global.starting_chromium_price = 0.18 }	#Based on gold price
-	set_variable = { global.starting_rubber_price = 0.09 }	#Based on rubber price
-	set_variable = { global.starting_microchips_price = 2.5 }
-	set_variable = { global.starting_composites_price = 2.1 }
 }
 
 # Effect: recalculate_resources_price

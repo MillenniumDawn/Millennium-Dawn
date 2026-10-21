@@ -109,6 +109,55 @@ AFG_domestic_decisions = {
 
 		ai_will_do = { base = 10 }
 	}
+
+	AFG_request_american_return = {
+		allowed = { original_tag = AFG }
+		icon = GFX_decision_generic_operation
+
+		visible = {
+			is_subject = no
+			no_jihadist_government = yes
+			country_exists = USA
+			USA = { has_country_flag = USA_withdrew_from_afghanistan }
+		}
+
+		available = {
+			NOT = { has_war_with = USA }
+			custom_trigger_tooltip = {
+				tooltip = AFG_taliban_threat_overwhelming_tt
+				OR = {
+					has_war_with = TAL
+					check_variable = { taliban_strength > 49 }
+				}
+			}
+		}
+
+		cost = 50
+		days_re_enable = 180
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_request_american_return"
+			USA = { country_event = { id = department_of_state.201 days = 1 } }
+			custom_effect_tooltip = TT_IF_THEY_ACCEPT
+			effect_tooltip = { custom_effect_tooltip = AFG_american_return_tt }
+		}
+
+		ai_will_do = {
+			base = 10
+			modifier = {
+				add = 20
+				check_variable = { taliban_strength > 74 }
+			}
+			modifier = {
+				add = 50
+				has_war_with = TAL
+			}
+			modifier = {
+				factor = 0
+				has_opinion = { target = USA value < -25 }
+			}
+		}
+	}
 }
 
 AFG_northern_alliance_taloqan_siege = {
@@ -633,7 +682,7 @@ AFG_pashtunistan_decisions = {
 		}
 
 		cost = 75
-		war_with_target_on_remove = yes
+		war_with_on_remove = PAK
 		days_remove = 45
 
 		complete_effect = {
@@ -2738,5 +2787,237 @@ AFG_tal_insurgency_new = {
 		}
 
 		ai_will_do = { base = 25 }
+	}
+}
+
+AFG_ai_path_category = {
+	AFG_rally_the_republicans = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { AFG_ai_historical_path = yes }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^0 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_rally_the_republicans"
+			set_temp_variable = { party_index = 0 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	AFG_republicans_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { AFG_ai_historical_path = yes }
+
+		available = {
+			has_civil_war = no
+			has_global_flag = GLOBAL_afghan_civil_war_over
+			NOT = { check_variable = { ruling_party = 0 } }
+			check_variable = { party_pop_array^0 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_republicans_take_the_country"
+			set_temp_variable = { rul_party_temp = 0 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+	AFG_rally_wahdat = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = AFG_HAZARA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^8 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_rally_wahdat"
+			set_temp_variable = { party_index = 8 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	AFG_wahdat_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = AFG_HAZARA_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			has_completed_focus = AFG_future_national_policy
+			NOT = { check_variable = { ruling_party = 8 } }
+			check_variable = { party_pop_array^8 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_wahdat_take_the_country"
+			set_temp_variable = { rul_party_temp = 8 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	AFG_rally_junbish = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = AFG_JUNBISH_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^6 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_rally_junbish"
+			set_temp_variable = { party_index = 6 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	AFG_junbish_take_the_country = {
+
+		icon = generic_decision
+
+		cost = 150
+
+		days_re_enable = 180
+
+		visible = { has_global_flag = AFG_JUNBISH_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			has_completed_focus = AFG_future_national_policy
+			NOT = { check_variable = { ruling_party = 6 } }
+			check_variable = { party_pop_array^6 > 0.5 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_junbish_take_the_country"
+			set_temp_variable = { rul_party_temp = 6 }
+			set_temp_variable = { disable_elections = 1 }
+			change_ruling_party_effect = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	AFG_rally_monarchists = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = AFG_MONARCHY_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^23 < 0.55 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_rally_monarchists"
+			set_temp_variable = { party_index = 23 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	AFG_rally_hezb_e_islami = {
+
+		icon = generic_decision
+
+		cost = 25
+
+		days_re_enable = 30
+
+		visible = { has_global_flag = AFG_EMIRATE_FOCUS_PATH }
+
+		available = {
+			has_civil_war = no
+			check_variable = { party_pop_array^10 < 0.8 }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_rally_hezb_e_islami"
+			set_temp_variable = { party_index = 10 }
+			set_temp_variable = { party_popularity_increase = 0.04 }
+			set_temp_variable = { temp_outlook_increase = 0.04 }
+			change_relative_party_popularity = yes
+		}
+
+		ai_will_do = { base = 100 }
+	}
+
+	AFG_wahdat_break_the_tribal_order = {
+
+		icon = generic_decision
+
+		cost = 100
+
+		visible = { has_global_flag = AFG_HAZARA_FOCUS_PATH }
+
+		available = {
+			has_completed_focus = AFG_declare_hazaristan
+			has_idea = AFG_idea_tribal_culture
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision AFG_wahdat_break_the_tribal_order"
+			remove_ideas = AFG_idea_tribal_culture
+		}
+
+		ai_will_do = { base = 100 }
 	}
 }

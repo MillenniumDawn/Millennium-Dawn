@@ -1,6 +1,6 @@
 ---
 name: spirit-removal-desc
-description: 'Add or refresh the removal footer on a country''s fixable starting national spirits: trace how each negative spirit is removed, improved, or swapped (focus, decision, event, variable, weekly effect) and append the standard "This national spirit will be Removed if..." footer to every tier''s _desc, like PER and ARM. Permanent spirits and the economy/military dynamic modifiers get none. Use when asked to explain how starting spirits are solved or removed, e.g. "/spirit-removal-desc ISR".'
+description: 'Add or refresh the "This national spirit will be Removed if..." footer on a country''s fixable starting national spirits, tracing how each one is removed, improved, or swapped. Use when asked to explain how starting spirits are solved or removed, e.g. "/spirit-removal-desc ISR".'
 ---
 
 Append the standard removal footer to the `_desc` of a country's starting national spirits so the player can see how each one is solved.

@@ -875,6 +875,38 @@ USA_congress_md = {
 		ai_will_do = { base = 0 }
 	}
 
+	USA_ban_election_fraud = {
+		icon = GFX_decision_generic_arrest
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			NOT = { has_country_flag = USA_election_fraud_banned }
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_ban_election_fraud"
+			set_country_flag = USA_election_fraud_banned
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
+	USA_allow_election_fraud = {
+		icon = generic_political_discourse
+
+		visible = {
+			NOT = { has_country_flag = collapsed_nation }
+			has_country_flag = USA_election_fraud_banned
+		}
+
+		complete_effect = {
+			log = "[GetDateText]: [Root.GetName]: Decision USA_allow_election_fraud"
+			clr_country_flag = USA_election_fraud_banned
+		}
+
+		ai_will_do = { base = 0 }
+	}
+
 	USA_political_pandering = {
 		icon = ger_mefo_bills
 
@@ -3324,7 +3356,15 @@ USA_f35_program_decisions = {
 		icon = GFX_decision_nato_f35_airframe_button
 		days_remove = 60
 		fire_only_once = yes
-		available = { has_tech = gen_5_light }
+		available = {
+			if = {
+				limit = { has_dlc = "By Blood Alone" }
+				has_tech = gen_5_light
+			}
+			else = {
+				has_tech = L_Strike_fighter4
+			}
+		}
 		visible = { NOT = { USA = { has_country_flag = USA_f35_designed } } }
 
 		remove_effect = {
@@ -3854,22 +3894,12 @@ USA_iranian_sanctions = {
 USA_foreign_policy = {
 	USA_withdraw_from_afghanistan = {
 		icon = GFX_decision_generic_operation
-		fire_only_once = yes
-		cost = 100
 		days_remove = 30
 		visible = { has_idea = USA_afghan_mission_cost }
 
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_withdraw_from_afghanistan"
-			remove_ideas = USA_afghan_mission_cost
-			clr_country_flag = USA_disabled_casualty_report
-			release = AFG
-			set_autonomy = {
-				target = AFG
-				autonomous_state = autonomy_free
-				end_wars = no
-			}
-			remove_from_faction = AFG
+			USA_withdraw_from_afghanistan_effect = yes
 		}
 
 		ai_will_do = {
@@ -3879,13 +3909,25 @@ USA_foreign_policy = {
 				add = 10
 			}
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				date > 2019.1.1
 				add = 20
 			}
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				date > 2021.1.1
+				add = 30
+			}
+			modifier = {
+				NOT = { USA_ai_historical_path = yes }
+				AFG = {
+					NOT = { has_country_flag = AFG_active_taliban_insurgency }
+					NOT = { has_war_with = TAL }
+				}
+				add = 20
+			}
+			modifier = {
+				has_political_power < -50
 				add = 30
 			}
 		}
@@ -3932,7 +3974,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 40
 			}
 			modifier = {
@@ -3981,7 +4023,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 40
 			}
 			modifier = {
@@ -4042,7 +4084,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
@@ -4091,7 +4133,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 40
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -4144,7 +4186,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 50
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -4188,7 +4230,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 40
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -4254,7 +4296,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 50
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -4321,7 +4363,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 35
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
@@ -4376,7 +4418,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 35
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
@@ -4435,7 +4477,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 45
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -4492,7 +4534,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
@@ -4534,7 +4576,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 50
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -4584,12 +4626,16 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 35
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
 				SOV = { has_opinion = { target = USA value < 0 } }
 				add = 20
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_dem_historical_path = yes }
 			}
 		}
 	}
@@ -4661,7 +4707,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 40
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
@@ -4704,9 +4750,11 @@ USA_foreign_policy = {
 			for_each_scope_loop = {
 				array = global.is_african_nation
 				set_temp_variable = { percent_change = 2.40 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 				set_temp_variable = { percent_change = -10.00 }
 				set_temp_variable = { tag_index = CHI }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			newline = yes
@@ -4716,7 +4764,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 40
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -4783,7 +4831,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 40
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -4835,16 +4883,20 @@ USA_foreign_policy = {
 			modifier = {
 				has_country_flag = USA_wot_speech_given
 				NOT = { has_country_flag = JAP_war_on_terror_article_9_done }
-				add = 5
+				add = 15
 			}
 			modifier = {
 				has_completed_focus = USA_focus_starting_the_war_on_terror
 				NOT = { has_country_flag = JAP_focus_wot_article_9_done }
-				add = 5
+				add = 15
 			}
 			modifier = {
 				has_country_leader = { name = "Donald Trump" }
-				add = 5
+				add = 10
+			}
+			modifier = {
+				CHI = { has_added_tension_amount > 19.999 }
+				add = 10
 			}
 		}
 	}
@@ -4892,7 +4944,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 45
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -4950,7 +5002,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 40
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -5015,7 +5067,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 40
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
@@ -5072,7 +5124,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 40
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -5144,7 +5196,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 35
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
@@ -5166,6 +5218,10 @@ USA_foreign_policy = {
 			modifier = {
 				PER = { has_tech = nuclear_technology }
 				add = 20
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -5248,7 +5304,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 35
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
@@ -5315,7 +5371,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 30
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 35
 			}
 			modifier = {
@@ -5329,6 +5385,10 @@ USA_foreign_policy = {
 			modifier = {
 				has_war = yes
 				add = -20
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -5376,7 +5436,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 45
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -5458,7 +5518,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 55
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -5472,6 +5532,10 @@ USA_foreign_policy = {
 			modifier = {
 				PER = { has_added_tension_amount > 19.999 }
 				add = 25
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -5524,12 +5588,16 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 55
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
 				has_country_leader = { name = "Donald Trump" ruling_only = yes }
 				add = 15
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -5574,12 +5642,16 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 45
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
 				has_country_leader = { name = "Donald Trump" ruling_only = yes }
 				add = 15
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -5637,7 +5709,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 55
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -5685,16 +5757,146 @@ USA_foreign_policy = {
 		remove_effect = {
 			log = "[GetDateText]: [Root.GetName]: Decision remove USA_indo_pacific_economic_framework"
 			clr_country_flag = USA_doing_decision
-			if = { limit = { country_exists = JAP NOT = { has_war_with = JAP } } JAP = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = KOR NOT = { has_war_with = KOR } } KOR = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = AST NOT = { has_war_with = AST } } AST = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = VIE NOT = { has_war_with = VIE } } VIE = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = PHI NOT = { has_war_with = PHI } } PHI = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = IND NOT = { has_war_with = IND } } IND = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = SIA NOT = { has_war_with = SIA } } SIA = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = MAY NOT = { has_war_with = MAY } } MAY = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = SIN NOT = { has_war_with = SIN } } SIN = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = RAJ NOT = { has_war_with = RAJ } } RAJ = { country_event = { id = department_of_state.102 days = 1 } set_temp_variable = { percent_change = 2.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
+			if = {
+				limit = { country_exists = JAP NOT = { has_war_with = JAP } }
+				JAP = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = KOR NOT = { has_war_with = KOR } }
+				KOR = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = AST NOT = { has_war_with = AST } }
+				AST = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = VIE NOT = { has_war_with = VIE } }
+				VIE = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = PHI NOT = { has_war_with = PHI } }
+				PHI = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = IND NOT = { has_war_with = IND } }
+				IND = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = SIA NOT = { has_war_with = SIA } }
+				SIA = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = MAY NOT = { has_war_with = MAY } }
+				MAY = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = SIN NOT = { has_war_with = SIN } }
+				SIN = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = RAJ NOT = { has_war_with = RAJ } }
+				RAJ = {
+					country_event = { id = department_of_state.102 days = 1 }
+					set_temp_variable = { percent_change = 2.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
 			newline = yes
 			add_timed_idea = {
 				idea = USA_IPEF_trade_benefits
@@ -5708,7 +5910,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 55
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -5772,7 +5974,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 45
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -5845,7 +6047,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 55
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -5904,7 +6106,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 35
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -5986,7 +6188,7 @@ USA_foreign_policy = {
 				CHI = { emerging_communist_state_are_in_power = yes }
 			}
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -6069,7 +6271,7 @@ USA_foreign_policy = {
 				add = 20
 			}
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -6133,7 +6335,7 @@ USA_foreign_policy = {
 				add = 25
 			}
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 		}
@@ -6187,7 +6389,7 @@ USA_foreign_policy = {
 				add = 25
 			}
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -6257,7 +6459,7 @@ USA_foreign_policy = {
 				add = 20
 			}
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -6331,7 +6533,7 @@ USA_foreign_policy = {
 				add = 10
 			}
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -6423,7 +6625,7 @@ USA_foreign_policy = {
 				add = 25
 			}
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -6495,7 +6697,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 25
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -6574,7 +6776,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 25
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -6654,7 +6856,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 35
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -6694,12 +6896,66 @@ USA_foreign_policy = {
 			set_temp_variable = { treasury_change = -30 }
 			modify_treasury_effect = yes
 			newline = yes
-			if = { limit = { country_exists = GUA NOT = { has_war_with = GUA } } GUA = { country_event = { id = department_of_state.138 days = 1 } set_temp_variable = { percent_change = 3.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = HON NOT = { has_war_with = HON } } HON = { country_event = { id = department_of_state.138 days = 1 } set_temp_variable = { percent_change = 3.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = ELS NOT = { has_war_with = ELS } } ELS = { country_event = { id = department_of_state.138 days = 1 } set_temp_variable = { percent_change = 3.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = NIC NOT = { has_war_with = NIC } } NIC = { country_event = { id = department_of_state.138 days = 1 } set_temp_variable = { percent_change = 3.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = PAN NOT = { has_war_with = PAN } } PAN = { country_event = { id = department_of_state.138 days = 1 } set_temp_variable = { percent_change = 3.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = COS NOT = { has_war_with = COS } } COS = { country_event = { id = department_of_state.138 days = 1 } set_temp_variable = { percent_change = 3.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
+			if = {
+				limit = { country_exists = GUA NOT = { has_war_with = GUA } }
+				GUA = {
+					country_event = { id = department_of_state.138 days = 1 }
+					set_temp_variable = { percent_change = 3.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = HON NOT = { has_war_with = HON } }
+				HON = {
+					country_event = { id = department_of_state.138 days = 1 }
+					set_temp_variable = { percent_change = 3.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = ELS NOT = { has_war_with = ELS } }
+				ELS = {
+					country_event = { id = department_of_state.138 days = 1 }
+					set_temp_variable = { percent_change = 3.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = NIC NOT = { has_war_with = NIC } }
+				NIC = {
+					country_event = { id = department_of_state.138 days = 1 }
+					set_temp_variable = { percent_change = 3.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = PAN NOT = { has_war_with = PAN } }
+				PAN = {
+					country_event = { id = department_of_state.138 days = 1 }
+					set_temp_variable = { percent_change = 3.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = COS NOT = { has_war_with = COS } }
+				COS = {
+					country_event = { id = department_of_state.138 days = 1 }
+					set_temp_variable = { percent_change = 3.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
 			newline = yes
 			custom_effect_tooltip = USA_counter_narcotics_TT
 		}
@@ -6707,7 +6963,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 20
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 15
 			}
 			modifier = {
@@ -6746,12 +7002,96 @@ USA_foreign_policy = {
 			newline = yes
 			news_event = department_of_state.141
 			newline = yes
-			if = { limit = { country_exists = CUB NOT = { has_war_with = CUB } } CUB = { country_event = { id = department_of_state.140 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
-			if = { limit = { country_exists = DOM NOT = { has_war_with = DOM } } DOM = { country_event = { id = department_of_state.140 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
-			if = { limit = { country_exists = JAM NOT = { has_war_with = JAM } } JAM = { country_event = { id = department_of_state.140 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
-			if = { limit = { country_exists = HAI NOT = { has_war_with = HAI } } HAI = { country_event = { id = department_of_state.140 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
-			if = { limit = { country_exists = TRI NOT = { has_war_with = TRI } } TRI = { country_event = { id = department_of_state.140 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
-			if = { limit = { country_exists = BAH NOT = { has_war_with = BAH } } BAH = { country_event = { id = department_of_state.140 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
+			if = {
+				limit = { country_exists = CUB NOT = { has_war_with = CUB } }
+				CUB = {
+					country_event = { id = department_of_state.140 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
+			if = {
+				limit = { country_exists = DOM NOT = { has_war_with = DOM } }
+				DOM = {
+					country_event = { id = department_of_state.140 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
+			if = {
+				limit = { country_exists = JAM NOT = { has_war_with = JAM } }
+				JAM = {
+					country_event = { id = department_of_state.140 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
+			if = {
+				limit = { country_exists = HAI NOT = { has_war_with = HAI } }
+				HAI = {
+					country_event = { id = department_of_state.140 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
+			if = {
+				limit = { country_exists = TRI NOT = { has_war_with = TRI } }
+				TRI = {
+					country_event = { id = department_of_state.140 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
+			if = {
+				limit = { country_exists = BAH NOT = { has_war_with = BAH } }
+				BAH = {
+					country_event = { id = department_of_state.140 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
 			newline = yes
 			custom_effect_tooltip = USA_caribbean_investment_TT
 		}
@@ -6759,7 +7099,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 15
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -6821,7 +7161,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 20
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -6859,11 +7199,101 @@ USA_foreign_policy = {
 			newline = yes
 			news_event = department_of_state.145
 			newline = yes
-			if = { limit = { country_exists = NIG NOT = { has_war_with = NIG } } NIG = { country_event = { id = department_of_state.144 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -5.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = SOV } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
-			if = { limit = { country_exists = GAH NOT = { has_war_with = GAH } } GAH = { country_event = { id = department_of_state.144 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -5.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = SOV } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
-			if = { limit = { country_exists = SEN NOT = { has_war_with = SEN } } SEN = { country_event = { id = department_of_state.144 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -5.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = SOV } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
-			if = { limit = { country_exists = CDI NOT = { has_war_with = CDI } } CDI = { country_event = { id = department_of_state.144 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -5.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = SOV } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
-			if = { limit = { country_exists = GUI NOT = { has_war_with = GUI } } GUI = { country_event = { id = department_of_state.144 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -5.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = SOV } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } } } }
+			if = {
+				limit = { country_exists = NIG NOT = { has_war_with = NIG } }
+				NIG = {
+					country_event = { id = department_of_state.144 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -5.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = SOV }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
+			if = {
+				limit = { country_exists = GAH NOT = { has_war_with = GAH } }
+				GAH = {
+					country_event = { id = department_of_state.144 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -5.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = SOV }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
+			if = {
+				limit = { country_exists = SEN NOT = { has_war_with = SEN } }
+				SEN = {
+					country_event = { id = department_of_state.144 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -5.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = SOV }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
+			if = {
+				limit = { country_exists = CDI NOT = { has_war_with = CDI } }
+				CDI = {
+					country_event = { id = department_of_state.144 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -5.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = SOV }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
+			if = {
+				limit = { country_exists = GUI NOT = { has_war_with = GUI } }
+				GUI = {
+					country_event = { id = department_of_state.144 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -5.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = SOV }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					capital_scope = { add_building_construction = { type = infrastructure level = 1 instant_build = yes } }
+				}
+			}
 			newline = yes
 			custom_effect_tooltip = USA_west_africa_development_TT
 		}
@@ -6871,7 +7301,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 15
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -6913,11 +7343,76 @@ USA_foreign_policy = {
 			newline = yes
 			news_event = department_of_state.147
 			newline = yes
-			if = { limit = { country_exists = MIC NOT = { has_war_with = MIC } } MIC = { country_event = { id = department_of_state.146 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = MAR NOT = { has_war_with = MAR } } MAR = { country_event = { id = department_of_state.146 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = PAU NOT = { has_war_with = PAU } } PAU = { country_event = { id = department_of_state.146 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = PAP NOT = { has_war_with = PAP } } PAP = { country_event = { id = department_of_state.146 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
-			if = { limit = { country_exists = FIJ NOT = { has_war_with = FIJ } } FIJ = { country_event = { id = department_of_state.146 days = 1 } set_temp_variable = { percent_change = 5.00 } set_temp_variable = { tag_index = USA } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes set_temp_variable = { percent_change = -3.00 } set_temp_variable = { tag_index = CHI } set_temp_variable = { influence_target = THIS } change_influence_percentage = yes } }
+			if = {
+				limit = { country_exists = MIC NOT = { has_war_with = MIC } }
+				MIC = {
+					country_event = { id = department_of_state.146 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = MAR NOT = { has_war_with = MAR } }
+				MAR = {
+					country_event = { id = department_of_state.146 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = PAU NOT = { has_war_with = PAU } }
+				PAU = {
+					country_event = { id = department_of_state.146 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = PAP NOT = { has_war_with = PAP } }
+				PAP = {
+					country_event = { id = department_of_state.146 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
+			if = {
+				limit = { country_exists = FIJ NOT = { has_war_with = FIJ } }
+				FIJ = {
+					country_event = { id = department_of_state.146 days = 1 }
+					set_temp_variable = { percent_change = 5.00 }
+					set_temp_variable = { tag_index = USA }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+					set_temp_variable = { percent_change = -3.00 }
+					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
+					change_influence_percentage = yes
+				}
+			}
 			newline = yes
 			custom_effect_tooltip = USA_pacific_islands_TT
 		}
@@ -6925,7 +7420,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 15
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -6979,9 +7474,11 @@ USA_foreign_policy = {
 						days = 1
 					}
 					set_temp_variable = { percent_change = 3.00 }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 					set_temp_variable = { percent_change = -3.00 }
 					set_temp_variable = { tag_index = CHI }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 				}
 			}
@@ -6992,7 +7489,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 15
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
@@ -7057,7 +7554,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 55
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
@@ -7127,7 +7624,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 60
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -7186,7 +7683,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 40
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -7249,7 +7746,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 55
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -7331,12 +7828,16 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 50
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
 				VEN = { has_government = communism }
 				add = 15
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_historical_path = yes }
 			}
 		}
 	}
@@ -7393,8 +7894,12 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 50
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_dem_historical_path = yes }
 			}
 		}
 	}
@@ -7440,8 +7945,12 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 50
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -7484,7 +7993,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 50
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 			modifier = {
@@ -7533,7 +8042,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 55
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 		}
@@ -7577,7 +8086,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 45
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 		}
@@ -7618,8 +8127,12 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 70
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -7659,7 +8172,7 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 70
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 25
 			}
 		}
@@ -7709,12 +8222,16 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 65
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 20
 			}
 			modifier = {
 				has_war = yes
 				add = -20
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -7748,8 +8265,12 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 75
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 15
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -7793,12 +8314,16 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 50
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
 			}
 			modifier = {
 				MEX = { has_stability < 0.4 }
 				add = 15
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}
@@ -7835,10 +8360,14 @@ USA_foreign_policy = {
 		}
 
 		ai_will_do = {
-			base = 5
+			base = 20
 			modifier = {
-				add = 5
+				add = 15
 				CHI = { check_variable = { CHI_taiwan_strait_tension > 60 } }
+			}
+			modifier = {
+				has_war = yes
+				add = -15
 			}
 		}
 	}
@@ -7871,7 +8400,7 @@ USA_foreign_policy = {
 			}
 		}
 
-		ai_will_do = { base = 5 }
+		ai_will_do = { base = 15 }
 	}
 
 	USA_TAI_arm_taiwan = {
@@ -7906,7 +8435,7 @@ USA_foreign_policy = {
 			}
 		}
 
-		ai_will_do = { base = 8 }
+		ai_will_do = { base = 25 }
 	}
 
 	USA_TAI_fon_operation = {
@@ -7934,7 +8463,7 @@ USA_foreign_policy = {
 			}
 		}
 
-		ai_will_do = { base = 8 }
+		ai_will_do = { base = 20 }
 	}
 
 	USA_TAI_rimpac_exercise = {
@@ -7961,9 +8490,9 @@ USA_foreign_policy = {
 		}
 
 		ai_will_do = {
-			base = 3
+			base = 15
 			modifier = {
-				add = 5
+				add = 10
 				CHI = { check_variable = { CHI_taiwan_strait_tension > 40 } }
 			}
 		}
@@ -7998,9 +8527,9 @@ USA_foreign_policy = {
 		}
 
 		ai_will_do = {
-			base = 10
+			base = 20
 			modifier = {
-				add = 15
+				add = 20
 				ISI = { surrender_progress < 0.25 }
 			}
 			modifier = {
@@ -8055,8 +8584,12 @@ USA_foreign_policy = {
 		ai_will_do = {
 			base = 20
 			modifier = {
-				is_historical_focus_on = yes
+				USA_ai_historical_path = yes
 				add = 30
+			}
+			modifier = {
+				factor = 0
+				NOT = { USA_ai_rep_historical_path = yes }
 			}
 		}
 	}

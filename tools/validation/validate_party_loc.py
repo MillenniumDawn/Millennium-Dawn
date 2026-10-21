@@ -46,7 +46,13 @@ from typing import (
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import PARTY_SLOT_NAMES, read_text_strict, strip_comments
+from shared_utils import COUNTRY_TAG_ASSIGNMENT_LINE_RE as _COUNTRY_TAG_DEF_RE
+from shared_utils import (
+    PARTY_SLOT_NAMES,
+    find_unquoted_block_end,
+    read_text_strict,
+    strip_comments,
+)
 from validator_common import BaseValidator, Issue, Severity, run_validator_main
 
 LOC_PATH = "localisation/english/MD_politics_view_parties_l_english.yml"
@@ -79,7 +85,6 @@ _TRIGGER_RE = re.compile(r"trigger\s*=\s*\{")
 _BLOCK_NAME_RE = re.compile(r"name\s*=\s*(\w+)")
 _LONE_ORIGINAL_TAG_RE = re.compile(r"^original_tag\s*=\s*(\w+)$")
 _ORIGINAL_TAG_RE = re.compile(r"original_tag\s*=\s*(\w+)")
-_COUNTRY_TAG_DEF_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
 _ALIAS_DEF_RE = re.compile(r"^\s*([A-Z0-9_]{3})\s*=\s*\{", re.MULTILINE)
 _HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
 _DIFF_HEADER_RE = re.compile(r"^diff --git a/(.*) b/(.*)$")
@@ -102,19 +107,6 @@ class Hook(NamedTuple):
 
     line: int
     key: str
-
-
-def _match_brace(text: str, open_pos: int) -> int:
-    """Index just past the `}` closing the `{` at open_pos."""
-    depth = 1
-    pos = open_pos + 1
-    while depth and pos < len(text):
-        if text[pos] == "{":
-            depth += 1
-        elif text[pos] == "}":
-            depth -= 1
-        pos += 1
-    return pos
 
 
 def _split_kind(rest: str) -> Tuple[str, str]:
@@ -183,7 +175,7 @@ def parse_hooks(text: str) -> List[Hook]:
 
 def _iter_defined_text_blocks(text: str) -> Iterator[Tuple[str, int, int]]:
     for block in _DEFINED_TEXT_RE.finditer(text):
-        block_end = _match_brace(text, block.end() - 1)
+        block_end = find_unquoted_block_end(text, block.end())[0]
         name_match = _BLOCK_NAME_RE.search(text, block.end(), block_end)
         yield name_match.group(1) if name_match else "?", block.end(), block_end
 
@@ -192,11 +184,11 @@ def _iter_entry_triggers(
     text: str, start: int, end: int
 ) -> Iterator[Tuple[int, int, str]]:
     for entry in _TEXT_ENTRY_RE.finditer(text, start, end):
-        entry_end = _match_brace(text, entry.end() - 1)
+        entry_end = find_unquoted_block_end(text, entry.end())[0]
         trigger = _TRIGGER_RE.search(text, entry.end(), entry_end)
         if trigger is None:
             continue
-        trigger_end = _match_brace(text, trigger.end() - 1)
+        trigger_end = find_unquoted_block_end(text, trigger.end())[0]
         yield entry.start(), trigger.end(), text[trigger.end() : trigger_end - 1]
 
 

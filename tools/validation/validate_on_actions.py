@@ -10,7 +10,11 @@ from typing import List, Optional, Set, Tuple
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
 import disk_cache
-from shared_utils import extract_block_from_text, find_unquoted_block_end
+from shared_utils import (
+    extract_block_from_text,
+    find_unquoted_block_end,
+    validation_config,
+)
 from validator_common import (
     BaseValidator,
     Severity,
@@ -18,9 +22,6 @@ from validator_common import (
     casefold_index,
     run_validator_main,
 )
-
-# Declared namespaces: add_namespace = foo
-_ADD_NAMESPACE_RE = re.compile(r"^\s*add_namespace\s*=\s*(\S+)", re.MULTILINE)
 
 # Top-level event block openers (country_event, news_event, state_event, …).
 # Allow optional leading whitespace — some files indent the top-level blocks
@@ -71,13 +72,8 @@ _STATE_DRIVEN_DATE_POLL_GATE_RE = re.compile(
 )
 _PULSE_ON_ACTIONS = ("on_daily", "on_weekly", "on_monthly")
 _FACTION_GOAL_STARTUP_EVENT = "faction_goal_cache.2"
-# Dated polls intentionally kept as retries outside the yearly event table.
 _DATE_POLL_EXEMPT_IDS = frozenset(
-    {
-        "ast_elections_howard_placeholders.1",
-        "ast_elections_howard_placeholders.2",
-        "the_new_look_rudd.1",
-    }
+    validation_config("validate_on_actions", "date_poll_exempt_ids")
 )
 
 
@@ -127,16 +123,6 @@ def _scan_event_file(args: Tuple[str, str]) -> Tuple[Set[str], Set[str]]:
         text,
         lambda: _scan_event_text(text),
     )
-
-
-def _extract_random_events_ids(text: str) -> Set[str]:
-    """Return all event IDs found inside random_events = { ... } blocks."""
-    ids: Set[str] = set()
-    for m in _RANDOM_EVENTS_BLOCK_RE.finditer(text):
-        body, _ = extract_block_from_text(text, m.end() - 1)
-        for entry in _RANDOM_EVENT_ENTRY_RE.finditer(body):
-            ids.add(entry.group(1))
-    return ids
 
 
 # Opening of any control-flow or scope-change block that gates its body —
@@ -497,13 +483,11 @@ class Validator(BaseValidator):
         self._log_section("Checking pulse on-actions for deterministic date polling...")
 
         on_actions_files = self._collect_files(["common/on_actions/**/*.txt"])
-        polls: List[Tuple[str, str, int, str]] = []
-        for result in self._pool_map(
+        polls: List[Tuple[str, str, int, str]] = self._pool_flat_map(
             _scan_date_polls_file,
             [(f, self.mod_path) for f in on_actions_files],
             chunksize=10,
-        ):
-            polls.extend(result)
+        )
 
         results = []
         for eid, block_name, line, filepath in sorted(polls, key=lambda x: x[2]):

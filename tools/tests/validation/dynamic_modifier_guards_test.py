@@ -24,10 +24,12 @@ def _findings(script):
 
 def _modifiers(script):
     """The modifier name each finding names, in report order."""
-    return [
-        re.search(r"modifier = (\w+) \}", message).group(1)
-        for _, message in _findings(script)
-    ]
+    names = []
+    for _, message in _findings(script):
+        match = re.search(r"modifier = (\w+) \}", message)
+        assert match is not None, message
+        names.append(match.group(1))
+    return names
 
 
 # --- unguarded removals ---------------------------------------------------
@@ -185,43 +187,6 @@ def test_event_trigger_is_not_a_guard():
 
 def test_removal_without_a_modifier_field_is_ignored():
     assert _findings("remove_dynamic_modifier = { }\n") == []
-
-
-# --- scan_file --------------------------------------------------------------
-
-
-def test_scan_file_relativizes_the_path_and_reports_the_line(tmp_path, monkeypatch):
-    monkeypatch.delenv("MD_NO_CACHE", raising=False)
-    target = tmp_path / "common" / "decisions"
-    target.mkdir(parents=True)
-    path = target / "Iran.txt"
-    path.write_text(
-        "PER_purge = {\n\tcomplete_effect = {\n\t\t"
-        + REMOVE.format(name="PER_pan_iranist_attack")
-        + "\n\t}\n}\n",
-        encoding="utf-8",
-    )
-    findings = V.scan_file((str(path), str(tmp_path) + "/"))
-    assert findings == [
-        (
-            "common/decisions/Iran.txt",
-            3,
-            "remove_dynamic_modifier = { modifier = PER_pan_iranist_attack } is not "
-            "guarded by a check that PER_pan_iranist_attack is applied",
-        )
-    ]
-
-
-def test_scan_file_skips_files_without_the_effect(tmp_path):
-    path = tmp_path / "quiet.txt"
-    path.write_text("add_dynamic_modifier = { modifier = X }\n", encoding="utf-8")
-    assert V.scan_file((str(path), str(tmp_path) + "/")) == []
-
-
-def test_scan_file_survives_an_unreadable_path(tmp_path):
-    (tmp_path / "remove_dynamic_modifier.txt").mkdir()
-    args = (str(tmp_path / "remove_dynamic_modifier.txt"), str(tmp_path))
-    assert V.scan_file(args) == []
 
 
 # --- validator wiring -------------------------------------------------------

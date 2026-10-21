@@ -1,6 +1,7 @@
 import sys
 
 import pytest
+from shared.suite import write_text as _write
 
 import tools.standardization.rename_focus_ids as rename_focus_ids_module
 from tools.standardization.rename_focus_ids import (
@@ -8,11 +9,6 @@ from tools.standardization.rename_focus_ids import (
     main,
     rename_focus_ids,
 )
-
-
-def _write(path, text):
-    with path.open("w", encoding="utf-8", newline="") as handle:
-        handle.write(text)
 
 
 def test_extracts_focus_ids_without_tree_or_nested_ids():

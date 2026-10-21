@@ -91,6 +91,12 @@ Millennium Dawn is set in the modern day and uses an in-depth economic system to
   - [Cheap Loans from the IMF](#cheap-loans-from-the-imf)
   - [African Investment Fund Loans](#african-investment-fund-loans)
   - [Bailout Requests](#bailout-requests)
+- [Stabilizing a Struggling Economy](#stabilizing-a-struggling-economy)
+  - [Read the Numbers First](#read-the-numbers-first)
+  - [Check What a Focus Costs](#check-what-a-focus-costs)
+  - [Recovery Steps](#recovery-steps)
+  - [Worked Example](#worked-example)
+  - [Difficulty Relief](#difficulty-relief)
 - [Strategic Tips](#strategic-tips)
   - [Early Game](#early-game)
   - [Mid Game](#mid-game)
@@ -119,13 +125,13 @@ To view a country's economic information, click the graph icon in the bottom rig
 | Effect                         | How It Scales                                                                      |
 | ------------------------------ | ---------------------------------------------------------------------------------- |
 | Construction Speed             | Penalty increases with wealth, rich nations build slower                           |
-| Population Growth              | Bonus for poor nations, penalty for wealthy nations (break-even around $60k GDP/C) |
+| Population Growth              | Bonus for poor nations, penalty for wealthy nations (break-even around $31k GDP/C) |
 | Research Speed                 | Bonus increases with wealth (kicks in above ~$51k GDP/C)                           |
 | Stability                      | Small bonus that increases with wealth (kicks in above ~$100k GDP/C)               |
 | Workforce Costs                | Wealthy nations require more workers per building                                  |
 | Fossil Fuel Plant Construction | Cheaper for poor nations, expensive for rich ones                                  |
 
-This means poor nations grow their population faster and build cheaply, but have lower research speed. Rich nations research faster and are more stable, but face higher costs for construction and workforce.
+This means poor nations grow their population faster and build cheaply, but have lower research speed. Rich nations research faster and are more stable, but face higher costs for construction and workforce. Population growth never falls below 0.01% a month, however large the penalties.
 
 ---
 
@@ -218,7 +224,7 @@ Reserve currency issuers (the countries controlling USD, EUR, CNY, RUB, JPY, GBP
 Various sources provide supplementary revenue:
 
 - **Foreign Aid**: Some countries receive aid (e.g., US aid to allies, Iranian aid to partners)
-- **International Investments**: Returns from investing in other countries (~6% annually)
+- **International Investments**: Returns from investing in other countries (~3% annually)
 - **Trade Routes**: Controlling strategic chokepoints (Suez, Panama, Hormuz) provides income
 - **EU Subsidies**: Member states receive various subsidies
 - **Country-Specific Income**: Special ideas and national foci (tourism, narcotics, etc.)
@@ -283,21 +289,25 @@ Social spending affects stability and the impact of unemployment.
 
 ### Interest Rate Calculation
 
-Your interest rate is determined by:
+When you have debt, your annual interest rate is determined by:
 
 ```
-Interest Rate = (Debt / GDP) × 10 + (Central Bank Policy Rate × 0.5) + modifiers
+Interest Rate = (Debt / GDP) × 10 + (Central Bank Policy Rate × 0.33) + modifiers
 ```
 
-- **Minimum interest rate**: 0.8%
-- **Maximum interest rate**: 50%
-- Modified by national spirits and modifiers
+The modifiers include national spirits, current world tension, and the world tension your country has generated. Current world tension adds up to 5 percentage points. The premium for tension you generated decays by 3.5% each week.
 
-The central bank policy rate contributes half its value to the interest rate. This means raising the policy rate to fight inflation also increases the cost of servicing debt, a tradeoff between controlling inflation and managing debt.
+- **Minimum interest rate with debt**: 0.8%
+- **Maximum interest rate with debt**: 50%
+- **Without debt**: The interest rate and weekly interest payment are both zero
 
-If your weekly balance is negative, or if a national focus or event causes you to spend more than your current funds, debt is automatically issued. The game borrows 1% of GDP plus the deficit, with a 1% fee applied to automatically borrowed funds.
+Each 1 percentage point increase in the policy rate adds 0.33 percentage points to debt interest before the minimum and maximum apply. A 6% policy rate therefore contributes 1.98 points. Raising the policy rate to fight inflation also increases debt costs, but by about a third of the rate change, not half.
 
-For countries whose debt is denominated in a foreign reserve currency (USD, EUR, CNY, etc.), a weak domestic currency increases the real burden of debt repayment, while a strong currency reduces it.
+Hover over **Total Debt** to see the contributions from debt-to-GDP, national spirits, the policy rate, and both tension premiums. The tooltip also shows any adjustment from the minimum or maximum rate. Check **Interest on Debt** for the weekly payment, which also depends on your reserve currency and currency strength.
+
+If your treasury is below zero at the weekly update, debt is issued automatically. This happens when a negative weekly balance drains it, or when a national focus or event spends more than you hold. The game borrows 1.25 times the shortfall plus 1% of GDP, with a 1% fee on the borrowed amount.
+
+Debt under a reserve currency law is exposed to currency strength: a weak currency raises weekly interest payments, while a strong currency lowers them. **Domestic Reserve** removes this exchange-rate adjustment, not the underlying interest rate. See [Reserve Currency](#reserve-currency) for the payment multiplier.
 
 ### High Interest Penalties
 
@@ -328,11 +338,11 @@ If debt continues to spiral, the consequences become severe: debtor nations can 
 
 Tax rates are adjusted through the economy interface:
 
-- **Change Limit**: Taxes can only be changed once every 5 months (250 days)
+- **Step Size**: Click for 1 point, or Shift-click for 5 points. There is no cooldown
 - **Corporate Tax**: Affects building output, productivity, consumer goods
 - **Population Tax**: Affects stability
 
-**Tax Rate Change Cost**: Each 1% change costs approximately 50 political power.
+**Tax Rate Change Cost**: Each point costs 50 political power, so a 5 point step costs 250. National spirits can raise or lower this cost.
 
 For many countries, **20-30% corporate tax** is a practical starting range. A 20% rate avoids the productivity growth penalty; rates above that trade some long-term growth for additional revenue. Adjust the rate to your budget and development strategy rather than treating this range as a universal target.
 
@@ -344,7 +354,7 @@ Millennium Dawn models a currency system where each country has a **currency str
 
 ### Reserve Currency
 
-Every country denominates its debt and trade in a reserve currency, chosen via the **Reserve Currency** law in the Politics window. The available options are:
+Choose your reserve currency through the **Reserve Currency** law in the Politics window. This choice affects investment returns, trade bonuses, foreign influence defence, and whether debt interest payments receive an exchange-rate adjustment. The available options include:
 
 | Currency             | Typical Adopters                           |
 | -------------------- | ------------------------------------------ |
@@ -355,19 +365,37 @@ Every country denominates its debt and trade in a reserve currency, chosen via t
 | Russian Rouble (RUB) | Russian faction members                    |
 | British Pound (GBP)  | UK faction members                         |
 | Swiss Franc (CHF)    | Switzerland and Liechtenstein only         |
-| No Foreign Reserve   | Isolated or autarkic states                |
+| Domestic Reserve     | Isolated or autarkic states                |
 
-Choosing **No Foreign Reserve** eliminates foreign debt denomination effects and grants a small political power bonus, but removes the reserve currency ROI and trade bonuses that come from being part of a major currency network.
+With a reserve currency, weekly debt interest is multiplied by **1 / currency strength**, capped at **2×**. A strength of 0.5 doubles the payment; a strength of 2.0 halves it. This changes the payment, not the displayed annual interest rate.
+
+Holding any **foreign state-issued reserve currency** leaves a nation 3% more open to influence from its current issuer. This applies to the dollar, euro, yuan, rouble, yen, pound, franc, guilder, and real. Issuers holding their own currency are exempt. **Bitcoin** has no issuer and carries no such penalty. **Domestic Reserve** instead grants 3% foreign influence defence.
+
+Choosing **Domestic Reserve** keeps that multiplier at **1×** and grants a small political power bonus, but removes the reserve currency ROI and trade bonuses that come from being part of a major currency network. Switching to a reserve currency restores the exchange-rate adjustment; switching back to Domestic Reserve removes it.
 
 ### Currency Strength
 
-Currency strength is recalculated monthly based on three factors:
+Currency strength is recalculated monthly. Falls are a share of its current level, so a weak currency falls in smaller steps. Each currency is pulled back toward its **base strength**, while your economy pushes it up or down:
 
-1. **Budget Balance**: A budget surplus appreciates your currency; a deficit depreciates it
-2. **Debt-to-GDP Ratio**: High debt weakens your currency
-3. **Stability**: Political instability drives capital flight and currency depreciation
+| Factor             | Effect                                                                                                                                                          |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Real interest rate | A policy rate more than 1 point above inflation supports your currency. A lower rate weakens it.                                                                |
+| Debt interest rate | The part of your debt's interest rate not set by the policy rate weakens your currency once it passes 5 points, and quickly past 10. Having no debt is neutral. |
+| Inflation          | Weakens your currency through the real interest rate. A policy rate that keeps pace with inflation shields it.                                                  |
+| Stability          | Stability above 50% strengthens your currency, and stability below 50% weakens it.                                                                              |
+| Economic cycle     | A boom or fast growth helps. Stagnation, recession and depression hurt.                                                                                         |
+| War                | Losing a war or fighting a civil war weakens your currency.                                                                                                     |
+| Sanctions          | International sanctions weaken your currency.                                                                                                                   |
+| Financial collapse | Your currency is weaker for three years after a financial collapse.                                                                                             |
+| Reserve issuers    | Each country using your currency as its reserve strengthens it slightly.                                                                                        |
+| Safe havens        | While world tension stays above 50%, the US dollar and Japanese yen strengthen slightly, and the Swiss franc a little more.                                     |
+| National spirits   | A spirit with a **Currency Strength Target** value moves the level your currency is pulled toward by that amount. The pull closes 1% of the gap a month.        |
 
-Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. Its effects include:
+At a policy rate of 0%, the real interest rate can pull your currency down by at most 1% a month. Each point of the rate takes 2.5% off that limit, so a rate of 20% halves it. A higher rate therefore helps even when inflation is far above it.
+
+Your base strength starts at your country's historical value and slowly follows your currency. It rises at half the speed it falls, so trust is lost faster than it is earned. Years of good management raise the level your currency settles at, and years of bad management lower it.
+
+Currency strength ranges from 0.15 (extremely weak) to 2.0 (extremely strong), with 1.0 as neutral. A national spirit or difficulty setting with a **Currency Strength Floor** value raises that floor to the value shown, and values from several sources add up. Its effects include:
 
 - **Weak currency** (below 1.0): Resource exports and international investment returns are worth more in local terms, but foreign-denominated debt costs more and inflation pressure increases
 - **Strong currency** (above 1.0): Foreign-denominated debt is cheaper and inflation is suppressed, but export income and investment returns decrease in local terms
@@ -385,7 +413,7 @@ The **Currency Backing** law determines how your currency is anchored:
 | Bi-Metal Standard | +2%       | +1%           | Moderate volatility                      |
 | Fiat Currency     | -2%       | --            | +0.03 daily PP; highest flexibility      |
 
-Hard-money standards (gold, silver) dampen currency volatility and pull currency strength toward par (1.0) over time. However, they restrict monetary policy flexibility -- you cannot use the Expand Money Supply decision while on the gold standard.
+Hard-money standards dampen currency volatility and lift a currency at or below par (1.0) every month: gold and silver by 0.003, and a bi-metal standard by 0.002. The monthly fall is a share of the current level, so that lift stops the monthly slide at about 0.60 on gold, 0.38 on silver, and 0.20 on a bi-metal standard. However, they restrict monetary policy flexibility -- you cannot use the Expand Money Supply decision while on the gold standard.
 
 ### Monetary Policy Decisions
 
@@ -393,6 +421,8 @@ Two monetary policy decisions are available (AI-controlled nations use these aut
 
 - **Expand Money Supply**: Increases seigniorage income by 25% and weakens currency strength by 0.05. Cannot be used alongside Austerity Measures or while on the gold standard. Lasts 180 days with a 365-day cooldown.
 - **Austerity Measures**: Strengthens currency by 0.04. Lasts 120 days with a 180-day cooldown. Cannot be used alongside Expand Money Supply.
+
+The AI expands the money supply only when its treasury is negative, its currency is above its base strength and inflation is under 5%. It uses austerity measures when inflation is above 5% and its currency is below its base strength.
 
 ---
 
@@ -404,14 +434,14 @@ Inflation is one of the most important economic variables in Millennium Dawn. It
 
 Six factors feed into the quarterly inflation calculation:
 
-| Factor                       | Effect on Inflation                                                                                                                                     |
-| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **GDP/C Growth**             | Higher GDP per capita growth directly increases inflation pressure. A rapidly growing economy generates demand that pushes prices up.                   |
-| **Tax Rate**                 | Higher average tax rates reduce inflation pressure. Taxes act as a fiscal brake on the economy -- they pull money out of circulation.                   |
-| **Central Bank Policy Rate** | The _real_ policy rate (policy rate minus current inflation) is what matters. A positive real rate suppresses inflation; a negative real rate fuels it. |
-| **Economic Cycle**           | Boom and fast growth stages add inflationary pressure. Depression and recession stages reduce it. Stable growth is neutral.                             |
-| **Budget Balance**           | A budget deficit increases inflation (simulating money printing to cover the gap). A budget surplus decreases it.                                       |
-| **Currency Strength**        | A weak currency (below 1.0) feeds additional inflation pressure through higher import costs. A strong currency suppresses it.                           |
+| Factor                       | Effect on Inflation                                                                                                                   |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **GDP/C Growth**             | Higher GDP per capita growth directly increases inflation pressure. A rapidly growing economy generates demand that pushes prices up. |
+| **Tax Rate**                 | Higher average tax rates reduce inflation pressure. Taxes act as a fiscal brake on the economy -- they pull money out of circulation. |
+| **Central Bank Policy Rate** | Positive rate points reduce inflation carryover; rates at or below 0% leave it at 90%. A rate below neutral also adds more inflation. |
+| **Economic Cycle**           | Boom and fast growth stages add inflationary pressure. Depression and recession stages reduce it. Stable growth is neutral.           |
+| **Budget Balance**           | A budget deficit increases inflation (simulating money printing to cover the gap). A budget surplus decreases it.                     |
+| **Currency Strength**        | A weak currency (below 1.0) feeds additional inflation pressure through higher import costs. A strong currency suppresses it.         |
 
 ### The Inflation Formula
 
@@ -421,7 +451,7 @@ Each quarter, the game calculates an inflation adjustment from the factors above
 
 1. **GDP/C growth contribution**: The base adjustment starts from last quarter's GDP per capita growth rate, scaled by your GDP per capita level. Higher GDP/C amplifies the effect of growth on prices.
 2. **Tax dampening**: The adjustment is reduced proportionally to your average tax rate. At higher tax rates, more of the growth-driven inflation is absorbed.
-3. **Policy rate effect**: The real central bank rate (policy rate minus inflation, with a 2% floor on inflation for this calculation) is subtracted. A tight monetary policy (real rate > 0) pulls inflation down; loose policy (real rate < 0) lets it rise.
+3. **Policy rate effect**: The policy rate is compared with a neutral rate and also cuts how much inflation carries into the next quarter. See [Central Bank Policy Rate](#central-bank-policy-rate).
 4. **Economic cycle**: The current cycle stage applies an additional adjustment, scaled by total government spending:
 
 | Cycle Stage   | Inflation Adjustment |
@@ -436,37 +466,42 @@ Each quarter, the game calculates an inflation adjustment from the factors above
 5. **Budget balance**: A deficit adds inflationary pressure proportional to the shortfall. A surplus has the opposite effect.
 6. **Money printing multiplier**: If the Expand Money Supply decision is active, the entire adjustment is amplified.
 
+A national spirit or difficulty setting with a **Positive Quarterly Inflation** value scales a positive quarterly result by that percentage. At -20%, a quarterly result of 5% becomes 4%. It does not change a quarter of deflation.
+
 The quarterly result is stored and averaged with the previous three quarters. The rate is clamped to prevent wild swings: no more than +/-10 percentage points change per quarter, and a hard cap of +/-200% total.
 
 ### Central Bank Policy Rate
 
-The **Central Bank Policy Rate** is a manually adjustable interest rate (0-20%) that represents your country's monetary policy stance. It starts at 3% for all countries.
+The **Central Bank Policy Rate** represents your country's monetary policy stance. The manual controls range from **-10% to 30%**. Most countries start at 3%; Ukraine starts at 30% in January 2000.
 
-What matters for inflation is the **real rate** -- the difference between the policy rate and the current inflation rate. For example:
+To change it:
 
-- Policy rate 5%, inflation 3% = real rate +2% (tight, reduces inflation)
-- Policy rate 3%, inflation 5% = real rate -2% (loose, increases inflation)
-- Policy rate 2%, inflation 2% = real rate 0% (neutral)
+1. Open the Economic Preview and find **Policy Rate**.
+2. Keep more than 25 political power available. Each click spends 25 political power and raises or lowers the rate by **1 percentage point**.
+3. Wait **30 days** before another manual change. Increase is unavailable at 30%, and decrease is unavailable at -10%.
 
-The AI adjusts the policy rate automatically based on inflation:
+Ukraine's National Bank rate-cut events can also lower the rate. Accepted cuts cannot take it below 0% and block another rate change for **60 days**. A later event can therefore lower a rate you raised manually; player-controlled countries do not receive the generic AI adjustment.
 
-| Condition           | AI Action                     |
-| ------------------- | ----------------------------- |
-| Inflation above 10% | Raises policy rate toward 20% |
-| Inflation above 5%  | Raises policy rate toward 15% |
-| Inflation below 1%  | Lowers policy rate toward 1%  |
+The rate works on inflation in two ways:
 
-Players can adjust the policy rate manually to respond faster or pursue different monetary strategies than the AI default.
+- **Against the neutral rate.** The neutral rate uses inflation or a low-inflation baseline, whichever is higher, plus 0.5 to 2.5 points. It is limited to 1-30%. Each point your rate sits above neutral removes 0.2% of inflation a quarter. Each point below adds 0.2%, so negative rates provide additional inflation stimulus during deflation. The effect stops at 3% either way.
+- **As a share of inflation.** Inflation above about 2% carries into the next quarter. At a rate of 0%, 90% of it carries over. Each positive point of the rate takes 2.5 points off that share, down to 25% once the rate reaches 26%. Negative rates do not raise this share above 90%; their additional stimulus comes from the gap below neutral. This works at any inflation level, so a high rate still pulls down inflation that is far above 30%. A budget deficit above the sustainable 2-8% of GDP shrinks each point's cut. At 10% of GDP over that level the cut is halved, and it goes no lower, so a deficit never cancels the rate.
+
+AI-controlled countries move their rate toward a target once a quarter, provided no rate-change cooldown is active. During deflation, that target uses the actual negative inflation rate plus the natural real rate and can fall to -10%. Otherwise it matches the neutral rate. The AI moves three points when it is more than 5 points from the target, and one point when it is more than half a point away. It never cuts below -10% or raises above 20%, so only a player can take it to 30%. Each AI change starts a 60-day cooldown.
+
+Manual changes update debt costs immediately. Inflation responds at the next quarterly calculation and is averaged over four quarters, so do not expect a rate increase to remove inflation at once.
+
+The gap between your rate and inflation also moves your currency. See [Currency Strength](#currency-strength).
 
 ### Currency and Inflation
 
-Currency strength has a separate, additive effect on inflation costs. When your currency is weak (below 1.0), the gap between 1.0 and your currency strength feeds into a **currency inflation component**:
+Currency strength has a separate, additive effect on inflation costs. The gap between 1.0 and your currency strength feeds into a **currency inflation component**:
 
 ```
-Currency Inflation = (1.0 / Currency Strength - 1.0) × 0.05
+Currency Inflation = (1.0 / Currency Strength - 1.0) × 0.025
 ```
 
-This is added to the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds roughly 5% additional inflation pressure. A currency at 1.0 or above adds nothing.
+This is added to the base inflation rate to produce the **combined inflation cost** that the dynamic modifier uses. A currency at 0.5 strength adds 2.5% additional inflation pressure. A currency at 1.0 adds nothing. Above 1.0 the component goes negative, so a strong currency eases inflation costs. At 2.0 it subtracts 1.25%.
 
 This means inflation has two independent sources: the quarterly macroeconomic calculation and the currency channel. You can have low base inflation but still suffer high effective inflation if your currency has collapsed.
 
@@ -493,7 +528,7 @@ Inflation applies a dynamic modifier that scales with the inflation rate. The ef
 
 Inflation responds to multiple levers. Here are the main strategies:
 
-**Raise the central bank policy rate.** The most direct tool. Increasing the policy rate above the inflation rate creates a positive real rate, which suppresses inflation over the following quarters. The tradeoff is that high rates also slow economic growth.
+**Raise the central bank policy rate.** The most direct tool. Every point cuts how much inflation carries into the next quarter, even when inflation is far above the rate. A large budget deficit can halve that cut, so fix the budget alongside it. The tradeoff is that high rates also raise debt interest and slow economic growth.
 
 **Raise taxes.** Higher tax rates dampen inflation by pulling money out of the economy. However, high corporate taxes reduce productivity growth, so this is a short-term fix with long-term costs.
 
@@ -501,7 +536,7 @@ Inflation responds to multiple levers. Here are the main strategies:
 
 **Strengthen the currency.** Use Austerity Measures, reduce debt, or improve stability to push currency strength above 1.0. This eliminates the currency inflation channel.
 
-**Adopt a hard-money standard.** Gold and silver backing dampen currency volatility and pull it toward 1.0 over time, which indirectly reduces currency-driven inflation. However, hard-money standards restrict your ability to use the Expand Money Supply decision.
+**Adopt a hard-money standard.** Gold, silver, and bi-metal backing dampen currency volatility and pull it toward 1.0 over time, which indirectly reduces currency-driven inflation. However, hard-money standards restrict your ability to use the Expand Money Supply decision.
 
 **Avoid the Expand Money Supply decision during high inflation.** This decision amplifies the inflation adjustment and weakens the currency -- useful during deflation but dangerous during inflation.
 
@@ -606,7 +641,7 @@ There are six stages, each with distinct modifiers:
 | Fast Growth   | +45%               | +2%       | +2.0                | +0.15          |
 | Economic Boom | +55%               | +4%       | +3.5                | +0.25          |
 
-**Upgrading the Economic Cycle** costs both political power and treasury funds. The political power cost increases with each upgrade, and a treasury payment is deducted when the new stage is adopted. Depression is the worst state, reducing productivity growth severely and preventing immigration.
+**Upgrading the Economic Cycle** costs both political power and treasury funds. The political power cost increases with each upgrade, and a treasury payment is deducted when the new stage is adopted. Depression is the worst state, reducing productivity growth severely and cutting immigration.
 
 **Changing the Economic Cycle:**
 
@@ -717,7 +752,7 @@ The literacy-agriculture tradeoff is most relevant for agrarian economies. Inves
 
 ## Internal Factions
 
-Internal factions represent competing economic and political interest groups within your country. Each faction applies a dynamic modifier that scales with the faction's influence level. Factions can be empowered or weakened through decisions, events, and national focuses.
+Internal factions represent competing economic and political interest groups within your country. Each faction applies a dynamic modifier that scales with the faction's opinion of your government. Opinion moves through decisions, events, and national focuses. See the [Internal Factions Guide](/player-tutorials/internal-factions/).
 
 The main factions with economic effects include:
 
@@ -736,7 +771,7 @@ The main factions with economic effects include:
 | **Communist Cadres**               | Consumer goods, bureaucracy costs                                                           |
 | **The Priesthood**                 | Stability, political power, education costs                                                 |
 
-Each faction's effects can be positive or negative depending on their influence level and your government's relationship with them. Strong factions aligned with your policies provide bonuses; powerful factions that oppose your government can impose penalties. Managing faction influence is part of the political game but has direct economic consequences.
+Each faction's effects grow with opinion above 50 and reverse below it. Managing faction opinion is part of the political game but has direct economic consequences.
 
 ---
 
@@ -1085,15 +1120,31 @@ Two mutually exclusive keystone buildings provide state-wide bonuses. Only one c
 
 ## Immigration
 
-Immigration is one way to grow your population. Migration happens automatically, but you can adjust the acceptance level by changing the stage of **Migration Laws** (found at the far right of Policies in the Politics window).
+Your **Migration Law** decides how many migrants you take in. Open borders bring the most people, and closed borders bring none. The laws are at the far right of Policies in the Politics window.
 
-Immigration control costs money. Stricter restrictions cost more to enforce. The immigration rate is calculated from factors including national productivity, unemployment rate, and war status, and is further modified by national spirits and other sources. The Economic Cycle also affects migration: higher growth stages attract more immigrants, while depression and recession drive emigration.
+Each country has a **Maximum Migration Rate**. This is the immigration it would get with fully open borders. It starts at 100% and rises with productivity above the world average, worker shortages, and higher Economic Cycle stages. National spirits, your ruling party, and wars in neighboring countries also change it.
+
+Your law takes a share of that rate:
+
+| Migration Law               | Share of Maximum Migration Rate |
+| --------------------------- | ------------------------------- |
+| Open Borders                | 100%                            |
+| Lightly Regulated Migration | 75%                             |
+| Regulated Migration         | 20%                             |
+| Heavily Regulated Migration | 5%                              |
+| Closed Borders              | 0%                              |
+
+**Emigration** works the other way. Unemployment and being at war push your own people out, whatever your law is.
+
+Your **Net Migration Rate** is immigration minus emigration. The Economy window shows it next to the Maximum Migration Rate, and its tooltip breaks it into the two parts.
+
+Immigration control costs money. Stricter laws cost more to enforce.
 
 ---
 
 ## International Investments
 
-International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income, approximately **6% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
+International investments let you fund construction projects in foreign states. Completed buildings permanently join the target state, and you earn passive income, approximately **3% annually** on your total invested value. You also gain influence over the target country with each accepted project. Up to 15 projects can run simultaneously.
 
 For a full breakdown of buildable types, costs, duration mechanics, ROI calculation, and influence gain, see the [Investments Guide](/player-tutorials/investments-guide/).
 
@@ -1174,7 +1225,63 @@ When the economy is in severe distress (interest above 15%), countries can reque
 3. **Second-most influential country** (less diplomatic damage)
 4. **Most influential country** (last resort, most influence cost)
 
-If interest exceeds 25% and the country is not at war, the AI will default on its debt, triggering severe consequences.
+The AI treats these as last resorts. It considers them only once both taxes are at their automation caps (40% population, 50% corporate) and it still runs a deficit, its economy is in a major crisis, a financial collapse is incoming, or interest is at least 15% and debt service exceeds 30% of income. The debt-service condition applies even with a budget surplus. Cheap loans also open on a deficit over 10% of income, and the AI counts the paused debt payments as spending so it keeps raising taxes during the loan.
+
+An AI that passes one of those conditions may default on its debt once interest reaches 25%, even while at war. A default forgives 40% of the debt, keeps 10% as normal debt, and moves the other 50% into defaulted debt you must settle within 360 days. It also starts a depression and a two-year Sovereign Credit Downgrade (+3 interest, -10% stability). Settle the defaulted debt with treasury payments, IMF or influencer concessions, or by selling buildings. Settling in time grants a one-year post-default construction boom. Failing zeroes your treasury and international investments and can give your creditors a war goal against you.
+
+---
+
+## Stabilizing a Struggling Economy
+
+Close the weekly deficit first, then deal with inflation, then pay down debt. A deficit feeds both of the others, so the tools for inflation and debt do little while it stays open. You do not need to disband your army or wait for a bailout to do this.
+
+### Read the Numbers First
+
+- **Weekly balance** is recurring. It is your income minus your expenses, every week.
+- **Focus, decision, and event costs** are one-time. Their tooltip shows a single **Treasury** change in billions. They never appear in the weekly balance.
+- **Inflation** is the average of the last four quarterly results, not how fast prices are changing now. Keep hovering over Inflation in the Economic Preview to see **Last 4 Quarters**. If the newest quarters are higher than the older ones, the displayed rate keeps rising even if you change nothing. It moves at most 10 points a quarter.
+- **Debt-to-GDP** sets most of your interest rate. Every 10% of GDP you hold in debt adds 1 point. See [Interest Rate Calculation](#interest-rate-calculation).
+
+### Check What a Focus Costs
+
+Compare the **Treasury** cost in a focus tooltip with your treasury and your GDP before you take it. A cost you cannot pay in cash becomes debt at the next weekly update, with the extra borrowing described in [Debt and Interest](#debt-and-interest). Borrowing 10% of GDP adds about 1 point of interest, and that interest is a recurring expense. An economic focus can therefore widen the deficit it was meant to fix. Wait until the treasury covers it, or take a cheaper focus first.
+
+### Recovery Steps
+
+1. **Cut recurring spending.** Lower the spending levels you can live without for a year. Military spending is usually the largest saving.
+2. **Raise taxes with care.** Higher taxes add income and dampen inflation. Each point costs 50 political power, so pick a rate you can keep.
+3. **Raise the policy rate if inflation is high.** Each point cuts how much inflation carries into the next quarter and adds 0.33 points of debt interest. See [Central Bank Policy Rate](#central-bank-policy-rate).
+4. **Take a cheap IMF loan while you still qualify.** It needs interest below 15%, among other requirements. See [IMF and Bailouts](#imf-and-bailouts).
+5. **Leave Expand Money Supply alone** while inflation is high. It amplifies inflation and weakens your currency.
+6. **Give it a year.** Inflation is averaged over four quarters, so a good quarter shows up slowly.
+
+Some countries start in a hole that takes years to climb out of. If a start cannot be stabilized on Regular difficulty with these steps, that is a balance problem to report, not a mistake on your part.
+
+### Worked Example
+
+This example uses round numbers on Regular difficulty. It is not a specific country, and it ignores world tension and national spirits, which also move the interest rate.
+
+A country has a GDP of $50 billion, $20 billion of debt, $1 billion in the treasury, a 3% policy rate, and a weekly balance of -$0.06 billion.
+
+- The deficit is $0.06 billion × 52 = about $3.1 billion a year, or 6% of GDP.
+- Debt is 40% of GDP, which gives 4 points of interest. The policy rate adds 1 more. At 5%, the debt costs about $0.02 billion a week.
+- An economic focus costs $5 billion, or 10% of GDP. The treasury is $4 billion short. The game borrows about $5.6 billion, debt reaches 51% of GDP, and interest rises to about 6%. The weekly debt payment grows to about $0.03 billion, so the deficit is now -$0.07 billion.
+
+The better order is to cut spending and adjust taxes until the weekly balance is positive, let the treasury build, and then take the focus with cash.
+
+### Difficulty Relief
+
+The two easiest difficulties give the player economic relief. The two hardest give the same relief to AI countries. Regular gives none.
+
+| Difficulty | Who Benefits | Currency Strength Floor | Positive Quarterly Inflation |
+| ---------- | ------------ | ----------------------- | ---------------------------- |
+| Civilian   | Player       | 1.00                    | -50%                         |
+| Recruit    | Player       | 0.75                    | -25%                         |
+| Regular    | Nobody       | None                    | None                         |
+| Veteran    | AI           | 0.75                    | -25%                         |
+| Elite      | AI           | 1.00                    | -50%                         |
+
+The floor is applied when currency strength updates each month. The inflation relief scales a positive quarterly result before the four-quarter average, so it slows inflation growth and does not cut your current rate at once. Deflation is unchanged. A higher floor also lowers resource export income in local terms. If you follow a guide or a screenshot, check which difficulty it was made on.
 
 ---
 

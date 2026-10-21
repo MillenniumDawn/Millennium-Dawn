@@ -930,9 +930,9 @@ on_actions = {
 					10 = {
 						modifier = {
 							factor = 0
-							SPR = { owns_state = 88 }
-							88 = {
-								NOT = { is_core_of = NAV }
+							OR = {
+								NOT = { SPR = { owns_state = 88 } }
+								88 = { NOT = { is_core_of = NAV } }
 							}
 						}
 						# Basque
@@ -989,8 +989,10 @@ on_actions = {
 					10 = {
 						modifier = {
 							factor = 0
-							SPR = { owns_state = 86 }
-							86 = { NOT = { is_core_of = CAT } }
+							OR = {
+								NOT = { SPR = { owns_state = 86 } }
+								86 = { NOT = { is_core_of = CAT } }
+							}
 						}
 						# Catalonians
 						random_list = {
@@ -1018,8 +1020,10 @@ on_actions = {
 					10 = {
 						modifier = {
 							factor = 0
-							SPR = { owns_state = 93 }
-							93 = { NOT = { is_core_of = CAT } }
+							OR = {
+								NOT = { SPR = { owns_state = 93 } }
+								93 = { NOT = { is_core_of = SPA } }
+							}
 						}
 						# andalusians
 						random_list = {
@@ -1042,8 +1046,10 @@ on_actions = {
 					10 = {
 						modifier = {
 							factor = 0
-							SPR = { owns_state = 95 }
-							95 = { NOT = { is_core_of = CNR } }
+							OR = {
+								NOT = { SPR = { owns_state = 95 } }
+								95 = { NOT = { is_core_of = CNR } }
+							}
 						}
 						# Canarios
 						random_list = {
@@ -1227,33 +1233,11 @@ on_actions = {
 
 	# Bosnia
 	on_weekly_RSK = {
-		effect = {
-			if = {
-				limit = {
-					has_country_flag = RSK_civil_war_recovery_pending
-					is_subject = yes
-				}
-				clr_country_flag = RSK_civil_war_recovery_pending
-				clr_country_flag = civil_war_bosnia
-				clr_country_flag = civil_war_bos_two
-				BOS = {
-					clr_country_flag = civil_war_focus
-					clr_country_flag = civil_war_bosnia
-					clr_country_flag = civil_war_bos_two
-					clr_country_flag = BOS_defeat_all_serbs
-				}
-			}
-			else_if = {
-				limit = {
-					has_country_flag = RSK_civil_war_recovery_pending
-					has_country_flag = civil_war_bosnia
-					is_subject = no
-					has_civil_war = no
-					has_war = no
-				}
-				country_event = BOS_political.20
-			}
-		}
+		effect = { BOS_breakaway_weekly_recovery_effect = yes }
+	}
+
+	on_weekly_HZG = {
+		effect = { BOS_breakaway_weekly_recovery_effect = yes }
 	}
 
 	on_daily_BOS = {
@@ -1508,6 +1492,36 @@ on_actions = {
 				else_if = {
 					limit = { BOS_bosniak_leads_government_trigger = yes }
 					country_event = { id = BOS_events.63 days = 3 }
+				}
+			}
+			# Civil war aftermath: a breakaway's live claim comes first, and an open settlement event blocks the rest
+			if = {
+				limit = {
+					has_country_flag = civil_war_bosnia
+					has_civil_war = no
+					has_war = no
+					NOT = { has_country_flag = BOS_civil_war_settling }
+					NOT = { RSK = { exists = yes BOS_breakaway_claim_trigger = yes } }
+					NOT = { HZG = { exists = yes BOS_breakaway_claim_trigger = yes } }
+				}
+				if = {
+					limit = {
+						is_subject = no
+						has_country_flag = BOS_rsk_civil_war_recovery_pending
+					}
+					country_event = BOS_events.4
+				}
+				else_if = {
+					limit = {
+						is_subject = no
+						has_country_flag = BOS_hzg_civil_war_recovery_pending
+					}
+					country_event = BOS_political.20
+				}
+				# Nobody is left to claim the war: Bosnia was beaten by an outsider, the winner is a subject, or the fighting stopped without a capitulation
+				else_if = {
+					limit = { NOT = { RSK = { has_war_with = HZG } } }
+					BOS_finish_civil_war_recovery_effect = yes
 				}
 			}
 		}
@@ -1769,14 +1783,7 @@ on_actions = {
 			if = {
 				limit = {
 					NOT = { has_country_flag = ETH_isaias_afwerki_arrested }
-					OR = {
-						AND = {
-							owns_state = 228
-							owns_state = 229
-							NOT = { country_exists = ERI }
-						}
-						ERI = { is_subject_of = ETH }
-					}
+					ETH_eritrea_defeated = yes
 				}
 				set_country_flag = ETH_isaias_afwerki_arrested
 				country_event = { id = ethiopia.13 days = 2 }

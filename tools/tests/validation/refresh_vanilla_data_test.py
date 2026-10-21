@@ -7,17 +7,6 @@ import pytest
 
 
 @pytest.fixture
-def rvd(monkeypatch):
-    monkeypatch.setattr(
-        "shared_utils.find_hoi4_install", lambda explicit_path=None: "/fake/install"
-    )
-    import validation.refresh_vanilla_data as module
-
-    importlib.reload(module)
-    return module
-
-
-@pytest.fixture
 def tmp_manifests(monkeypatch, tmp_path):
     """Redirect _HERE / _DOC_DIR into a tmp directory for this test."""
     import validation.refresh_vanilla_data as rvd_mod

@@ -10,7 +10,7 @@
 
 ### Bun version
 
-The supported Bun release for this package is pinned in `package.json` as `packageManager` (for example `bun@1.3.14`). Treat that value as the canonical toolchain version: CI and other contributors use it, and Bun’s resolver and lockfile behavior can differ between releases, so drifting too far can cause “works on my machine” install or script failures. **Upgrade Bun on your machine from time to time** (security fixes and compatibility with newer tooling), and when this repo bumps the `packageManager` entry or refreshes `bun.lock`, align your local Bun to that version before working on docs.
+The supported Bun release for this package is pinned in `package.json` as `packageManager` (for example `bun@1.4.2`). Treat that value as the canonical toolchain version: CI and other contributors use it, and Bun’s resolver and lockfile behavior can differ between releases, so drifting too far can cause “works on my machine” install or script failures. **Upgrade Bun on your machine from time to time** (security fixes and compatibility with newer tooling), and when this repo bumps the `packageManager` entry or refreshes `bun.lock`, align your local Bun to that version before working on docs.
 
 ## Quick Start
 
@@ -189,6 +189,8 @@ Wrap consecutive images in a gallery container:
 
 Use `.mdx` under `src/content/devDiaries/` when the page has images. MDX routes markdown images through the responsive image pipeline (`MarkdownImage` / `Picture`). Plain `.md` bodies compile to basic `<img>` tags without AVIF/WebP `srcset`.
 
+The pipeline renders images at most 1920px wide. The lightbox still opens the original file.
+
 ## Checks Before PR
 
 ```bash
@@ -202,3 +204,5 @@ bun run check:og
 bun run check:a11y
 bun run check:perf
 ```
+
+`check:perf` budgets what a browser downloads for each page, not file size on disk. A page may load 300 KB before the reader scrolls (gzipped HTML, CSS, JS, and images without `loading="lazy"`) and 1 MB in total. Long text pages pass. A failure names the heaviest file, which is usually an image to shrink.

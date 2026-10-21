@@ -9,7 +9,15 @@ from collections import defaultdict
 from typing import DefaultDict, Dict, List, Optional, Set, Tuple, TypedDict
 
 import disk_cache
-from validator_common import BaseValidator, run_validator_main, strip_comments
+from equipment_variant_context import branches, script_nodes
+from shared_utils import FileOpener
+from validator_common import (
+    BaseValidator,
+    Severity,
+    find_unquoted_block_end,
+    run_validator_main,
+    strip_comments,
+)
 
 # --- Module-level compiled patterns ---
 # Hoisted from per-line/per-file loops in the tech-graph and history-file
@@ -22,12 +30,6 @@ _LEADS_TO_TECH_RE = re.compile(r"leads_to_tech\s*=\s*(\S+)")
 _MODULE_NAME_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_]*)\s*$")
 _ENABLE_MODULES_RE = re.compile(r"^enable_equipment_modules\s*=\s*\{")
 _ALLOW_BRANCH_RE = re.compile(r"^allow_branch\s*=\s*\{")
-# Reused with .match() on already-left-stripped lines, so the leading ^
-# behaves identically whether or not it's spelled out in the source pattern.
-_SET_TECHNOLOGY_BLOCK_RE = re.compile(r"^set_technology\s*=\s*\{")
-_IF_BLOCK_LINE_RE = re.compile(r"^if\s*=\s*\{")
-_SET_TECH_1_RE = re.compile(r"\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*=\s*1\s*$")
-_ELSE_BLOCK_RE = re.compile(r"else\s*=\s*\{")
 
 
 class _HistoryFrame(TypedDict):
@@ -40,8 +42,6 @@ _NOT_HAS_DLC_BLOCK_RE = re.compile(
     r'NOT\s*=\s*\{[^{}]*?has_dlc\s*=\s*"([^"]+)"[^{}]*?\}'
 )
 _STRIP_NOT_BLOCK_RE = re.compile(r"NOT\s*=\s*\{[^{}]*?\}")
-_NOT_HAS_DLC_PREFIX_RE = re.compile(r'NOT\s*=\s*\{[^}]*has_dlc\s*=\s*"([^"]+)"')
-_LIMIT_BLOCK_RE = re.compile(r"limit\s*=\s*\{(.*?)\}", re.DOTALL)
 _LIMIT_BLOCK_WORDBOUND_RE = re.compile(r"\blimit\s*=\s*\{(.*?)\}", re.DOTALL)
 _IF_BLOCK_START_RE = re.compile(r"\bif\s*=\s*\{")
 _CREATE_VARIANT_RE = re.compile(r"\bcreate_equipment_variant\s*=\s*\{")
@@ -63,10 +63,6 @@ _RULING_PARTY_VAR_RE = re.compile(
     r"set_variable\s*=\s*\{\s*ruling_party\s*=\s*(-?\d+)\s*\}",
     re.MULTILINE,
 )
-# `complete_special_project = sp:sp_X` lines grant a country the special project
-# at game start. Used to detect techs whose `allow` block requires an SP the
-# country has not completed.
-_COMPLETE_SP_RE = re.compile(r"^\s*complete_special_project\s*=\s*sp:([a-zA-Z0-9_]+)")
 # `is_special_project_completed = sp:sp_X` inside a tech's `allow` block.
 _SP_REQUIRED_RE = re.compile(r"is_special_project_completed\s*=\s*sp:([a-zA-Z0-9_]+)")
 # A project's `project_output` unlock tooltip and the tech it advertises.
@@ -151,7 +147,7 @@ def propagate_dlc_reqs(
     techs carries it: if all paths to a tech run through techs forbidden under
     DLC X, the tech itself cannot legitimately exist under X (and likewise for
     `require`). This extends a base-tech gate (e.g. SP_arty_0 forbidden under No
-    Step Back) to its whole upgrade chain (SP_arty_1..4, Arty_upgrade_*), so
+    Step Back) to its whole upgrade chain (SP_arty_1..4, arty_upgrade_*), so
     granting any tier of the legacy or NSB line in a contradicting branch is
     caught, not just the root.
     """
@@ -915,16 +911,7 @@ def _expand_dlc_configs(
 def _match_brace_end(text: str, pos: int) -> int:
     """Given pos pointing just past an opening `{`, return the index just past
     its matching `}`. Returns len(text) if the braces never balance."""
-    depth = 1
-    j = pos
-    while j < len(text) and depth > 0:
-        ch = text[j]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-        j += 1
-    return j
+    return find_unquoted_block_end(text, pos)[0]
 
 
 def _find_dlc_if_blocks(content: str) -> List[Tuple[int, int, str]]:
@@ -1084,7 +1071,7 @@ def validate_country_dlc_techs(
 
     A tech gated `NOT has_dlc = "X"` (the non-DLC fallback, e.g. SP_arty_0) must
     not be set in any reachable DLC configuration where X is active; a tech
-    gated `has_dlc = "X"` (a DLC-only tech, e.g. nsb_artillery_0) must not be
+    gated `has_dlc = "X"` (a DLC-only tech, e.g. nsb_artillery_1) must not be
     set where X is inactive. Granting it anyway force-enables equipment whose
     tech branch is disabled, duplicating the active-DLC designer's equipment.
 
@@ -1430,6 +1417,115 @@ def validate_country_file(
     return results
 
 
+def check_influence_order(text, country):
+    """Check country-local execution paths, keeping dated setups independent."""
+    findings = set()
+
+    def join(outcomes):
+        result = {}
+        for owner in set().union(*(state.keys() for state in outcomes)):
+            values = [
+                state.get(owner, (False, set(), set(), set(), False))
+                for state in outcomes
+            ]
+            result[owner] = (
+                all(value[0] for value in values),
+                *(set().union(*(value[i] for value in values)) for i in range(1, 4)),
+                all(value[4] for value in values),
+            )
+        return result
+
+    def walk(nodes, state, scope):
+        state = state.copy()
+        for node in branches(nodes, {}):
+            if isinstance(node, list):
+                state = join([walk(arm, state, scope) for arm in node])
+                continue
+            if re.fullmatch(r"\d{4}\.\d{1,2}\.\d{1,2}(?:\.\d{1,2})?", node.key):
+                finish(walk(node.children, {}, scope))
+                continue
+            if node.key in {"hidden_effect", "THIS", "ROOT", scope} or re.fullmatch(
+                r"[A-Z]{3}", node.key
+            ):
+                target = (
+                    country
+                    if node.key == "ROOT"
+                    else scope if node.key in {"hidden_effect", "THIS"} else node.key
+                )
+                state = walk(node.children, state, target)
+                continue
+            if node.key in {"random", "while"}:
+                state = join([state, walk(node.children, state, scope)])
+                continue
+            operations = []
+            if node.key == "add_to_array":
+                for entry in node.children:
+                    target, _, array = entry.key.rpartition(".")
+                    if array in {"influence_array", "influence_array_val"}:
+                        owner = (
+                            country
+                            if target == "ROOT"
+                            else scope if target in {"", "THIS"} else target
+                        )
+                        operations.append((owner, "write"))
+            elif (
+                node.key
+                in {"init_influence", "sort_influence", "recalculate_influence"}
+                and node.value == "yes"
+            ):
+                operations.append((scope, node.key))
+            for owner, operation in operations:
+                initialized, written, pending, sorted_at, warned = state.get(
+                    owner, (False, set(), set(), set(), False)
+                )
+                if operation == "write":
+                    if not initialized and not warned:
+                        warned = True
+                        findings.add(
+                            (
+                                f"{owner}: initialize influence with init_influence = yes before writing starting influence arrays",
+                                node.line,
+                            )
+                        )
+                    for line in sorted_at:
+                        findings.add(
+                            (
+                                f"{owner}: sort_influence runs before a later influence array write; move it after the setup",
+                                line,
+                            )
+                        )
+                    written = written | {node.line}
+                    pending = pending | {node.line}
+                    sorted_at = set()
+                elif operation == "init_influence":
+                    if written:
+                        findings.add(
+                            (
+                                f"{owner}: init_influence clears earlier influence array writes; move it before the setup",
+                                node.line,
+                            )
+                        )
+                    initialized = True
+                else:
+                    pending = set()
+                    sorted_at = sorted_at | {node.line}
+                state[owner] = initialized, written, pending, sorted_at, warned
+        return state
+
+    def finish(state):
+        for owner, (_, _, pending, _, _) in state.items():
+            if pending:
+                findings.add(
+                    (
+                        f"{owner}: add sort_influence = yes after the starting influence array writes",
+                        max(pending),
+                    )
+                )
+
+    finish(walk(script_nodes(text), {}, country))
+    return sorted(findings, key=lambda finding: (finding[1], finding[0]))
+
+
 class Validator(BaseValidator):
     TITLE = "HISTORY FILE VALIDATION"
     STAGED_EXTENSIONS = [".txt"]
@@ -1737,6 +1833,25 @@ class Validator(BaseValidator):
             "States starting with a project-granted building whose owner never completes the project:",
         )
 
+    def validate_influence_order(self):
+        results = []
+        for path in self._get_history_files():
+            relative = os.path.relpath(path, self.mod_path).replace("\\", "/")
+            country = os.path.basename(path).split(" ", 1)[0].split(".", 1)[0]
+            results.extend(
+                (message, relative, line)
+                for message, line in check_influence_order(
+                    FileOpener.open_text_file(path), country
+                )
+            )
+        self._report(
+            results,
+            "Starting influence setup is ordered correctly",
+            "Starting influence setup ordering problems:",
+            severity=Severity.WARNING,
+            category="history-influence-order",
+        )
+
     def run_validations(self):
         self._build_tech_graph()
         self.validate_tech_dependencies()
@@ -1748,6 +1863,7 @@ class Validator(BaseValidator):
         self.validate_oob_references()
         self.validate_capital_defined()
         self.validate_ruling_party_assigned()
+        self.validate_influence_order()
         self._build_building_ownership()
         self.validate_reactor_nuclear_status()
         self.validate_project_granted_buildings()

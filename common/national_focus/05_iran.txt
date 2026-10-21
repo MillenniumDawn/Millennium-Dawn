@@ -183,7 +183,7 @@ focus_tree = {
 					limit = { has_dlc = "Gotterdammerung" }
 					add_equipment_to_stockpile = { type = guided_missile_equipment_1 amount = 400 producer = SOV }
 				}
-				else = { add_equipment_to_stockpile = { type = ballistic_missile_equipment amount = 400 producer = SOV } }
+				else = { add_equipment_to_stockpile = { type = guided_missile_equipment_1 amount = 400 producer = SOV } }
 				set_temp_variable = { treasury_change = -47.00 }
 				modify_treasury_effect = yes
 				set_temp_variable = { percent_change = 4 }
@@ -457,7 +457,7 @@ focus_tree = {
 
 		prerequisite = { focus = PER_irost_budget_increase focus = PER_mutual_benefits }
 
-		search_filters = { FOCUS_FILTER_IRANIAN_NUCLEAR_DEV FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_ADD_BUILDING }
+		search_filters = { FOCUS_FILTER_IRANIAN_NUCLEAR_DEV FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_RESEARCH FOCUS_FILTER_ADD_BUILDING FOCUS_FILTER_EXPENDITURE }
 
 		available = { 976 = { is_owned_and_controlled_by = PER } }
 
@@ -471,6 +471,16 @@ focus_tree = {
 				}
 			}
 			newline = yes
+			one_random_air_facility = yes
+			newline = yes
+			if = {
+				limit = {
+					NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } }
+					NOT = { is_special_project_completed = sp:sp_nuclear_bomb }
+				}
+				sp:sp_nuclear_bomb = { add_project_progress_ratio = 0.25 }
+				newline = yes
+			}
 			add_ideas = natanz_nuclear_facility_idea
 			hidden_effect = {
 				country_event = {
@@ -480,7 +490,13 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				has_active_mission = bankruptcy_incoming_collapse
+			}
+		}
 	}
 
 	focus = {
@@ -770,7 +786,14 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				PER_ai_historical_path = yes
+				PER_ai_not_historical_path = no
+			}
+		}
 	}
 
 	focus = {
@@ -811,7 +834,14 @@ focus_tree = {
 			}
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 25
+				PER_ai_historical_path = yes
+				PER_ai_not_historical_path = no
+			}
+		}
 	}
 
 	focus = {
@@ -872,6 +902,15 @@ focus_tree = {
 				}
 			}
 			newline = yes
+			if = {
+				limit = {
+					has_dlc = "Gotterdammerung"
+					NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } }
+					NOT = { is_special_project_completed = sp:sp_nuclear_warhead_program }
+				}
+				sp:sp_nuclear_warhead_program = { add_project_progress_ratio = 0.20 }
+				newline = yes
+			}
 			set_temp_variable = { treasury_change = -27.00 }
 			modify_treasury_effect = yes
 		}
@@ -901,6 +940,17 @@ focus_tree = {
 
 		available = {
 			is_special_project_completed = sp:sp_nuclear_warhead_program
+			NOT = {
+				OR = {
+					has_country_flag = PER_nuclear_negotiations
+					has_country_flag = PER_its_joever_nukes
+					has_country_flag = PER_no_nuclear
+				}
+			}
+		}
+
+		bypass = {
+			NOT = { nuclear_grant_allowed = yes }
 			NOT = {
 				OR = {
 					has_country_flag = PER_nuclear_negotiations
@@ -1150,7 +1200,14 @@ focus_tree = {
 			change_relative_party_popularity = yes
 		}
 
-		ai_will_do = { base = 1 }
+		ai_will_do = {
+			base = 1
+			modifier = {
+				factor = 0
+				PER_ai_historical_path = yes
+				PER_ai_not_historical_path = no
+			}
+		}
 	}
 
 	focus = {
@@ -2082,10 +2139,10 @@ focus_tree = {
 			if = {
 				limit = {
 					NOT = {
-						has_tech = early_high_speed_rail
+						has_tech = railway_system_04
 					}
 				}
-				set_technology = { early_high_speed_rail = 1 }
+				set_technology = { railway_system_04 = 1 }
 			}
 		}
 
@@ -6866,6 +6923,7 @@ focus_tree = {
 		}
 	}
 
+	
 	focus = {
 		id = PER_artesh_navy
 		icon = {
@@ -6877,19 +6935,23 @@ focus_tree = {
 			}
 			Iranian_Navy_2 = yes
 		}
-
+	
 		x = 0
 		y = 1
 		relative_position_id = PER_future_of_the_artesh
-
+	
 		cost = 5.72
-
+	
 		prerequisite = { focus = PER_future_of_the_artesh }
-
+	
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_NAVY }
-
+	
 		dynamic = yes
-
+	
+		available = {
+			has_tech = tech_point_defense_system_1
+		}
+	
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_artesh_navy"
 			navy_experience = 50
@@ -6901,17 +6963,39 @@ focus_tree = {
 				category = CAT_naval
 			}
 			newline = yes
-			custom_effect_tooltip = PER_damavand_two_effect_tt
+			custom_effect_tooltip = PER_jamaran_effect_tt
 			hidden_effect = {
+				create_equipment_variant = {
+					name = "Moudge Class"
+					type = frigate_hull_2
+					design_team = mio:PER_marine_industries_organization_naval_manufacturer
+					parent_version = 0
+					allow_without_tech = yes
+					name_group = PER_FRIGATE_HISTORICAL
+					modules = {
+						fixed_ship_engine_slot = module_light_surface_diesel_power_1
+						fixed_ship_fire_control_system_slot = module_digital_integrated_fire_control
+						fixed_ship_radar_slot = module_radar_3
+						fixed_ship_battery_slot = module_76mm_gun_2
+						fixed_ship_auxillary_slot = module_chain_gun
+						fixed_ship_auxillary_slot_1 = module_torpedoes_1
+						fixed_ship_auxillary_slot_2 = module_naval_missile_mount_quad
+						front_1_custom_slot = module_ciws_1
+						rear_1_custom_slot = module_light_helipad_1
+						fixed_ship_missile_ammo_slot = module_naval_ammo_anti_ship_air_defense_1
+					}
+					role_icon_index = 12
+					icon = "GFX_PER_frigate_hull_7_medium"
+				}
 				create_ship = {
-					type = corvette_hull_3
-					equipment_variant = "Sina Class"
+					type = frigate_hull_2
+					equipment_variant = "Moudge Class"
 					creator = PER
-					name = "Damavand 2"
+					name = "IRIS Jamaran (76)"
 				}
 			}
 		}
-
+	
 		ai_will_do = {
 			base = 1
 			modifier = {
@@ -6924,6 +7008,7 @@ focus_tree = {
 			}
 		}
 	}
+
 
 	focus = {
 		id = PER_jask_base
@@ -7570,7 +7655,7 @@ focus_tree = {
 			}
 			else = {
 				add_equipment_to_stockpile = {
-					type = ballistic_missile_equipment
+					type = guided_missile_equipment_1
 					amount = 300
 				}
 			}
@@ -7741,7 +7826,7 @@ focus_tree = {
 					has_dlc = "Arms Against Tyranny"
 				}
 				newline = yes
-				mio:PER_defense_industries_organization_tank_manufacturer = {
+				mio:PER_defense_industries_organization_manufacturer = {
 					add_mio_size = 4
 				}
 			}
@@ -8207,6 +8292,15 @@ focus_tree = {
 				value = 1
 			}
 			newline = yes
+			if = {
+				limit = {
+					has_dlc = "Gotterdammerung"
+					NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } }
+					NOT = { is_special_project_completed = sp:sp_nuclear_warhead_program }
+				}
+				sp:sp_nuclear_warhead_program = { add_project_progress_ratio = 0.25 }
+				newline = yes
+			}
 			add_tech_bonus = {
 				name = PER_mouse_in_the_corner
 				bonus = 1.5
@@ -8253,7 +8347,10 @@ focus_tree = {
 
 		cost = 7.2
 
-		allow_branch = { has_dlc = "Gotterdammerung" }
+		allow_branch = {
+			has_dlc = "Gotterdammerung"
+			NOT = { has_game_rule = { rule = rule_nuclear_weapons option = disabled } }
+		}
 
 		prerequisite = { focus = PER_mouse_in_the_corner }
 
@@ -8263,9 +8360,12 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_with_no_choice"
-			add_equipment_to_stockpile = {
-				type = nuclear_missile_equipment_2
-				amount = 250
+			if = {
+				limit = { nuclear_grant_allowed = yes }
+				add_equipment_to_stockpile = {
+					type = nuclear_missile_equipment_2
+					amount = 250
+				}
 			}
 			newline = yes
 			add_war_support = 0.10
@@ -9310,6 +9410,7 @@ focus_tree = {
 					NOT = { original_tag = PER }
 				}
 				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			newline = yes
@@ -11039,7 +11140,7 @@ focus_tree = {
 		available = {
 			if = {
 				limit = {
-					PER = { is_ai = yes }
+					is_ai = yes
 					IRQ = { is_ai = yes }
 					OR = {
 						date > 2005.01.01
@@ -11739,7 +11840,11 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = { factor = 25 PER_ai_historical_path = yes }
+			modifier = {
+				factor = 0
+				PER_ai_historical_path = yes
+				PER_usa_is_tied_down = no
+			}
 			modifier = { factor = 0 PER_ai_not_historical_path = yes }
 		}
 	}
@@ -11894,10 +11999,8 @@ focus_tree = {
 			OR = {
 				NOT = { country_exists = SYR }
 				SYR = { is_subject_of = PER }
-				PER = {
-					is_subject_of = SYR
-					is_subject = yes
-				}
+				is_subject_of = SYR
+				is_subject = yes
 			}
 		}
 
@@ -11939,14 +12042,12 @@ focus_tree = {
 				}
 			}
 			else = {
-				PER = {
-					set_temp_variable = { wargoal_on = SYR }
-					set_temp_variable = { wargoal_type = 2 }
-					add_threat_from_wargoal_effect = yes
-					create_wargoal = {
-						type = annex_everything
-						target = SYR
-					}
+				set_temp_variable = { wargoal_on = SYR }
+				set_temp_variable = { wargoal_type = 2 }
+				add_threat_from_wargoal_effect = yes
+				create_wargoal = {
+					type = annex_everything
+					target = SYR
 				}
 				SYR = {
 					country_event = axis_of_resistance_events.9
@@ -12362,7 +12463,11 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = { factor = 25 PER_ai_historical_path = yes }
+			modifier = {
+				factor = 0
+				PER_ai_historical_path = yes
+				PER_usa_is_tied_down = no
+			}
 			modifier = { factor = 0 PER_ai_not_historical_path = yes }
 		}
 	}
@@ -12534,7 +12639,17 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = { factor = 25 PER_ai_historical_path = yes }
+			modifier = {
+				factor = 0
+				country_exists = SAU
+				strength_ratio = { tag = SAU ratio < 1 }
+				has_navy_size = { size < 15 }
+			}
+			modifier = {
+				factor = 0
+				PER_ai_historical_path = yes
+				PER_usa_is_tied_down = no
+			}
 			modifier = { factor = 0 PER_ai_not_historical_path = yes }
 		}
 	}
@@ -12907,9 +13022,7 @@ focus_tree = {
 			hidden_effect = {
 				if = {
 					limit = {
-						PER = {
-							is_ai = yes
-						}
+						is_ai = yes
 						YEM = {
 							is_ai = yes
 						}
@@ -13007,7 +13120,7 @@ focus_tree = {
 						producer = PER
 					}
 					add_equipment_to_stockpile = {
-						type = Heavy_Anti_tank_0
+						type = Heavy_Anti_tank_1
 						amount = 100
 						producer = PER
 					}
@@ -13183,7 +13296,7 @@ focus_tree = {
 							}
 							support = {
 								Mech_Recce_Comp = { x = 0 y = 0 }
-								SP_Arty_Battery = { x = 0 y = 1 }
+								SP_arty_battery = { x = 0 y = 1 }
 								SP_AA_Battery = { x = 0 y = 2 }
 							}
 							priority = 2
@@ -13196,7 +13309,7 @@ focus_tree = {
 							support = {
 								Mech_Recce_Comp = { x = 0 y = 0 }
 								armor_Comp = { x = 0 y = 1 }
-								SP_Arty_Battery = { x = 0 y = 2 }
+								SP_arty_battery = { x = 0 y = 2 }
 								SP_AA_Battery = { x = 0 y = 3 }
 							}
 							priority = 1
@@ -13234,7 +13347,7 @@ focus_tree = {
 							producer = PER
 						}
 						add_equipment_to_stockpile = {
-							type = Heavy_Anti_tank_0
+							type = Heavy_Anti_tank_1
 							amount = 300
 							producer = PER
 						}
@@ -13583,7 +13696,17 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 1
-			modifier = { factor = 25 PER_ai_historical_path = yes }
+			modifier = {
+				factor = 0
+				country_exists = SAU
+				strength_ratio = { tag = SAU ratio < 1 }
+				has_navy_size = { size < 15 }
+			}
+			modifier = {
+				factor = 0
+				PER_ai_historical_path = yes
+				PER_usa_is_tied_down = no
+			}
 			modifier = { factor = 0 PER_ai_not_historical_path = yes }
 		}
 	}
@@ -13621,6 +13744,7 @@ focus_tree = {
 					days = 900
 				}
 				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			newline = yes
@@ -13635,6 +13759,7 @@ focus_tree = {
 					days = 900
 				}
 				set_temp_variable = { percent_change = 4 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 		}
@@ -13982,17 +14107,7 @@ focus_tree = {
 
 		ai_will_do = {
 			base = 0
-			modifier = {
-				add = 10
-				USA = {
-					OR = {
-						has_war_with = SOV
-						has_war_with = CHI
-						has_civil_war = yes
-					}
-				}
-			}
-			modifier = { factor = 25 PER_ai_historical_path = yes }
+			modifier = { add = 10 PER_usa_is_tied_down = yes }
 			modifier = { factor = 0 PER_ai_not_historical_path = yes }
 		}
 	}
@@ -14207,12 +14322,10 @@ focus_tree = {
 						}
 					}
 				}
-				PER = {
-					set_cosmetic_tag = UNITED_ISLAMIC_REPUBLICS
-					add_timed_idea = {
-						idea = PER_integration_of_islamic_lands
-						days = 1440
-					}
+				set_cosmetic_tag = UNITED_ISLAMIC_REPUBLICS
+				add_timed_idea = {
+					idea = PER_integration_of_islamic_lands
+					days = 1440
 				}
 			}
 			else = {
@@ -14579,24 +14692,22 @@ focus_tree = {
 					set_temp_variable = { influence_target = PER }
 					change_influence_percentage = yes
 					newline = yes
-					PER = {
-						set_temp_variable = { treasury_change = -47.89 }
-						modify_treasury_effect = yes
-						if = {
-							limit = { has_dlc = "By Blood Alone" }
-							add_equipment_to_stockpile = {
-								type = medium_plane_fighter_airframe_2
-								amount = 45
-								variant_name = "Rafale C"
-								producer = FRA
-							}
+					set_temp_variable = { treasury_change = -47.89 }
+					modify_treasury_effect = yes
+					if = {
+						limit = { has_dlc = "By Blood Alone" }
+						add_equipment_to_stockpile = {
+							type = medium_plane_fighter_airframe_2
+							amount = 45
+							variant_name = "Rafale C"
+							producer = FRA
 						}
-						else = {
-							add_equipment_to_stockpile = {
-								type = MR_Fighter2
-								amount = 45
-								producer = FRA
-							}
+					}
+					else = {
+						add_equipment_to_stockpile = {
+							type = MR_Fighter2
+							amount = 45
+							producer = FRA
 						}
 					}
 					FRA = {
@@ -14644,15 +14755,13 @@ focus_tree = {
 				newline = yes
 				if = {
 					limit = { has_dlc = "No Step Back" }
-					PER = {
-						set_temp_variable = { treasury_change = -35.29 }
-						modify_treasury_effect = yes
-						add_equipment_to_stockpile = {
-							type = medium_tank_chassis_1
-							variant_name = "Leopard 2A5"
-							amount = 100
-							producer = GER
-						}
+					set_temp_variable = { treasury_change = -35.29 }
+					modify_treasury_effect = yes
+					add_equipment_to_stockpile = {
+						type = medium_tank_chassis_1
+						variant_name = "Leopard 2A5"
+						amount = 100
+						producer = GER
 					}
 					GER = {
 						add_equipment_to_stockpile = {
@@ -14666,14 +14775,12 @@ focus_tree = {
 				else = {
 					set_temp_variable = { treasury_change = 35.29 }
 					modify_treasury_effect = yes
-					PER = {
-						set_temp_variable = { treasury_change = -35.29 }
-						modify_treasury_effect = yes
-						add_equipment_to_stockpile = {
-							type = MBT_1
-							amount = 100
-							producer = GER
-						}
+					set_temp_variable = { treasury_change = -35.29 }
+					modify_treasury_effect = yes
+					add_equipment_to_stockpile = {
+						type = MBT_1
+						amount = 100
+						producer = GER
 					}
 					GER = {
 						add_equipment_to_stockpile = {
@@ -15217,6 +15324,7 @@ focus_tree = {
 		cost = 10
 
 		prerequisite = { focus = PER_repairing_region focus = PER_calm_the_nerves }
+		prerequisite = { focus = PER_artesh_navy }
 
 		search_filters = { FOCUS_FILTER_MILITARY_LAWS FOCUS_FILTER_NAVY }
 
@@ -15235,34 +15343,34 @@ focus_tree = {
 			custom_effect_tooltip = PER_caspian_fleet_TT
 			hidden_effect = {
 				create_ship = {
-					type = corvette_hull_1
-					equipment_variant = "Hamzeh Class"
+					type = frigate_hull_2
+					equipment_variant = "Moudge Class"
 					creator = PER
-					name = "IRIS Hamzeh"
+					name = "IRIS Damavand (77)"
 				}
 				create_ship = {
 					type = corvette_hull_3
 					equipment_variant = "Sina Class"
 					creator = PER
-					name = "IRIS Paykan"
+					name = "IRIS Paykan (P224)"
 				}
 				create_ship = {
 					type = corvette_hull_3
 					equipment_variant = "Sina Class"
 					creator = PER
-					name = "IRIS Joshan"
+					name = "IRIS Joshan (P225)"
 				}
 				create_ship = {
 					type = corvette_hull_3
 					equipment_variant = "Sina Class"
 					creator = PER
-					name = "IRIS Derafsh"
+					name = "IRIS Derafsh (P233)"
 				}
 				create_ship = {
 					type = corvette_hull_3
 					equipment_variant = "Sina Class"
 					creator = PER
-					name = "IRIS Separ"
+					name = "IRIS Separ (P234)"
 				}
 			}
 			newline = yes
@@ -15434,7 +15542,7 @@ focus_tree = {
 				producer = PER
 			}
 			add_equipment_to_stockpile = {
-				type = Heavy_Anti_tank_0
+				type = Heavy_Anti_tank_1
 				amount = -200
 				producer = PER
 			}
@@ -15487,11 +15595,9 @@ focus_tree = {
 				set_temp_variable = { percent_change = 15 }
 				set_temp_variable = { influence_target = FSA }
 				change_influence_percentage = yes
-				PER = {
-					add_opinion_modifier = {
-						target = FSA
-						modifier = diplomatic_support
-					}
+				add_opinion_modifier = {
+					target = FSA
+					modifier = diplomatic_support
 				}
 				FSA = {
 					add_opinion_modifier = {
@@ -15500,11 +15606,9 @@ focus_tree = {
 					}
 				}
 				# 1
-				PER = {
-					add_opinion_modifier = {
-						target = FSA
-						modifier = military_cooperation
-					}
+				add_opinion_modifier = {
+					target = FSA
+					modifier = military_cooperation
 				}
 				FSA = {
 					add_opinion_modifier = {
@@ -15513,11 +15617,9 @@ focus_tree = {
 					}
 				}
 				# 2
-				PER = {
-					add_opinion_modifier = {
-						target = FSA
-						modifier = supports_us_2
-					}
+				add_opinion_modifier = {
+					target = FSA
+					modifier = supports_us_2
 				}
 				FSA = {
 					add_opinion_modifier = {
@@ -15526,11 +15628,9 @@ focus_tree = {
 					}
 				}
 				# 3
-				PER = {
-					add_opinion_modifier = {
-						target = FSA
-						modifier = diplomatic_proximity
-					}
+				add_opinion_modifier = {
+					target = FSA
+					modifier = diplomatic_proximity
 				}
 				FSA = {
 					add_opinion_modifier = {
@@ -15539,11 +15639,9 @@ focus_tree = {
 					}
 				}
 				# Other
-				PER = {
-					add_opinion_modifier = {
-						target = FSA
-						modifier = has_expressed_loyalty
-					}
+				add_opinion_modifier = {
+					target = FSA
+					modifier = has_expressed_loyalty
 				}
 				FSA = {
 					add_equipment_to_stockpile = {
@@ -15557,7 +15655,7 @@ focus_tree = {
 						producer = PER
 					}
 					add_equipment_to_stockpile = {
-						type = Heavy_Anti_tank_0
+						type = Heavy_Anti_tank_1
 						amount = 200
 						producer = PER
 					}
@@ -15615,11 +15713,9 @@ focus_tree = {
 					modifier = no_diplomatic_ties
 				}
 			}
-			PER = {
-				add_opinion_modifier = {
-					target = HEZ
-					modifier = no_diplomatic_ties
-				}
+			add_opinion_modifier = {
+				target = HEZ
+				modifier = no_diplomatic_ties
 			}
 		}
 
@@ -15906,7 +16002,7 @@ focus_tree = {
 			}
 			else = {
 				add_equipment_to_stockpile = {
-					type = ballistic_missile_equipment
+					type = guided_missile_equipment_3
 					amount = 100
 				}
 			}
@@ -16996,7 +17092,7 @@ focus_tree = {
 						producer = PER
 					}
 					add_equipment_to_stockpile = {
-						type = Heavy_Anti_tank_0
+						type = Heavy_Anti_tank_1
 						amount = 200
 						producer = PER
 					}
@@ -17128,6 +17224,7 @@ focus_tree = {
 				add_stability = -0.05
 				newline = yes
 				set_temp_variable = { percent_change = 3 }
+				set_temp_variable = { influence_target = THIS }
 				change_influence_percentage = yes
 			}
 			newline = yes
@@ -17301,11 +17398,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_fighting_the_taliban"
-			PER = {
-				add_relation_modifier = {
-					target = AFG
-					modifier = generic_increased_military_support
-				}
+			add_relation_modifier = {
+				target = AFG
+				modifier = generic_increased_military_support
 			}
 			newline = yes
 			set_temp_variable = { percent_change = 3 }
@@ -19090,11 +19185,9 @@ focus_tree = {
 
 		completion_reward = {
 			log = "[GetDateText]: [THIS.GetName]: Focus PER_legacy_of_camp_ashraf"
-			PER = {
-				add_relation_modifier = {
-					target = IRQ
-					modifier = generic_increased_military_support
-				}
+			add_relation_modifier = {
+				target = IRQ
+				modifier = generic_increased_military_support
 			}
 			newline = yes
 			add_ideas = PER_camp_ashraf
@@ -20893,7 +20986,7 @@ focus_tree = {
 					support = {
 						Arm_Recce_Comp = { x = 0 y = 0 }
 						armor_Comp = { x = 0 y = 1 }
-						SP_Arty_Battery = { x = 0 y = 2 }
+						SP_arty_battery = { x = 0 y = 2 }
 						L_Engi_Comp = { x = 0 y = 3 }
 						drone_tactical_company = { x = 0 y = 4 }
 					}
@@ -21513,7 +21606,7 @@ focus_tree = {
 					support = {
 						Arm_Recce_Comp = { x = 0 y = 0 }
 						armor_Comp = { x = 0 y = 1 }
-						SP_Arty_Battery = { x = 0 y = 2 }
+						SP_arty_battery = { x = 0 y = 2 }
 						L_Engi_Comp = { x = 0 y = 3 }
 						drone_tactical_company = { x = 0 y = 4 }
 					}
@@ -25239,6 +25332,7 @@ focus_tree = {
 			newline = yes
 			set_temp_variable = { treasury_change = -36.5 }
 			modify_treasury_effect = yes
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -25612,6 +25706,7 @@ focus_tree = {
 			add_to_variable = { PER_agriculture_district_income_tax_modifier = 0.1 tooltip = agriculture_district_income_tax_modifier_tt }
 			newline = yes
 			add_stability = -0.03
+			grant_reform_mandate = yes
 		}
 
 		ai_will_do = {
@@ -27091,7 +27186,7 @@ focus_tree = {
 					support = {
 						Arm_Recce_Comp = { x = 0 y = 0 }
 						armor_Comp = { x = 0 y = 1 }
-						SP_Arty_Battery = { x = 0 y = 2 }
+						SP_arty_battery = { x = 0 y = 2 }
 						L_Engi_Comp = { x = 0 y = 3 }
 						drone_tactical_company = { x = 0 y = 4 }
 					}
@@ -28321,6 +28416,7 @@ focus_tree = {
 						}
 					}
 					set_temp_variable = { percent_change = 3 }
+					set_temp_variable = { influence_target = THIS }
 					change_influence_percentage = yes
 				}
 			}
@@ -28842,7 +28938,7 @@ focus_tree = {
 			}
 			newline = yes
 			add_equipment_to_stockpile = {
-				type = artillery_0
+				type = artillery_1
 				amount = 700
 				producer = PER
 			}
@@ -29574,7 +29670,7 @@ focus_tree = {
 					support = {
 						Arm_Recce_Comp = { x = 0 y = 0 }
 						armor_Comp = { x = 0 y = 1 }
-						SP_Arty_Battery = { x = 0 y = 2 }
+						SP_arty_battery = { x = 0 y = 2 }
 						L_Engi_Comp = { x = 0 y = 3 }
 						drone_tactical_company = { x = 0 y = 4 }
 					}

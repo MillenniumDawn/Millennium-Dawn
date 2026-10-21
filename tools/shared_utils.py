@@ -4,7 +4,7 @@
 
 import argparse
 import bisect
-import logging
+import json
 import os
 import re
 import stat
@@ -15,18 +15,33 @@ import time
 from collections import OrderedDict
 from datetime import datetime
 from functools import lru_cache
+from itertools import chain
 from pathlib import Path
 from typing import (
     Any,
     Callable,
     Container,
     Dict,
+    Iterable,
     Iterator,
     List,
     Optional,
     Set,
     Tuple,
 )
+
+WORD_BLOCK_START_RE = re.compile(r"^(\w+)\s*=\s*\{")
+WORD_BLOCK_LINE_RE = re.compile(r"^(\w+)\s*=\s*\{", re.MULTILINE)
+IDENTIFIER_BLOCK_START_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{")
+IDENTIFIER_BLOCK_LINE_RE = re.compile(
+    r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE
+)
+COUNTRY_TAG_ASSIGNMENT_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"')
+COUNTRY_TAG_ASSIGNMENT_LINE_RE = re.compile(r'^\s*([A-Z0-9_]{3})\s*=\s*"', re.MULTILINE)
+OPTION_OPEN_RE = re.compile(r"\boption\s*=\s*\{")
+MODIFIER_OPEN_RE = re.compile(r"\bmodifier\s*=\s*\{")
+TRIGGER_OPEN_RE = re.compile(r"\btrigger\s*=\s*\{")
+AVAILABLE_OPEN_RE = re.compile(r"\bavailable\s*=\s*\{")
 
 
 class Colors:
@@ -54,6 +69,30 @@ _LEVEL_COLORS = {
 # Default skip patterns shared across validators. Individual validators can
 # extend this list with their own patterns.
 DEFAULT_EXTRA_SKIP_PATTERNS: List[str] = ["FR_loc"]
+
+VALIDATION_CONFIG_PATH = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+    "validation_config.json",
+)
+VALIDATION_CONFIG_VERSION = 1
+
+
+@lru_cache(maxsize=None)
+def _load_validation_config() -> Dict[str, Any]:
+    with open(VALIDATION_CONFIG_PATH, encoding="utf-8") as handle:
+        config = json.load(handle)
+    if config.get("version") != VALIDATION_CONFIG_VERSION:
+        raise ValueError(
+            f"{VALIDATION_CONFIG_PATH}: expected version "
+            f"{VALIDATION_CONFIG_VERSION}, found {config.get('version')!r}"
+        )
+    return config
+
+
+def validation_config(validator: str, key: str) -> Dict[str, str]:
+    """Return one validation_config.json suppression list as entry -> reason."""
+    return _load_validation_config()[validator][key]
+
 
 # ruling_party 0-23. Slot 0 is Western Autocracy.
 PARTY_SLOT_NAMES: Dict[int, str] = {
@@ -90,6 +129,11 @@ PARTY_SLOT_NAMES: Dict[int, str] = {
 CPU_BUDGET_FRACTION = 0.75
 
 
+def running_in_ci() -> bool:
+    """True on a CI runner, which has its cores to itself."""
+    return os.environ.get("CI", "").strip().lower() in ("1", "true")
+
+
 def cpu_budget() -> int:
     """Cores this repo's tooling may occupy at once, never the whole machine.
 
@@ -100,7 +144,7 @@ def cpu_budget() -> int:
     if override.isdigit() and int(override) > 0:
         return int(override)
     cores = os.cpu_count() or 1
-    if os.environ.get("CI", "").strip().lower() in ("1", "true"):
+    if running_in_ci():
         return cores
     return max(1, int(cores * CPU_BUDGET_FRACTION))
 
@@ -134,7 +178,7 @@ def log_message(
 def add_standard_file_arguments(
     parser: argparse.ArgumentParser, *, input_help="Input file to process"
 ):
-    """Add shared file arguments; --no-color remains specific to create_standard_parser."""
+    """Add the shared input, --output, --backup, and --verbose arguments."""
     parser.add_argument("input_file", help=input_help)
     parser.add_argument(
         "-o", "--output", help="Output file (default: overwrites input)"
@@ -143,19 +187,6 @@ def add_standard_file_arguments(
         "-b", "--backup", action="store_true", help="Create backup before modifying"
     )
     parser.add_argument("-v", "--verbose", action="store_true", help="Verbose output")
-
-
-def create_standard_parser(description: str) -> argparse.ArgumentParser:
-    """Create a standard argument parser for Millennium Dawn tools"""
-    parser = argparse.ArgumentParser(
-        description=description,
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-    )
-    add_standard_file_arguments(parser)
-    parser.add_argument(
-        "--no-color", action="store_true", help="Disable ANSI color codes in output"
-    )
-    return parser
 
 
 def create_validation_parser(description: str) -> argparse.ArgumentParser:
@@ -260,6 +291,9 @@ def extract_block(lines: List[str], start_index: int) -> Tuple[List[str], int]:
     return block_lines, i  # position AFTER the block, not i-1
 
 
+_BRACE_OR_QUOTE_RE = re.compile(r'["{}]')
+
+
 def find_matching_brace(text: str, open_idx: int) -> int:
     """Return the index of the ``}`` matching the ``{`` at *open_idx*.
 
@@ -269,9 +303,12 @@ def find_matching_brace(text: str, open_idx: int) -> int:
     """
     depth = 0
     in_str = False
-    i = open_idx
-    n = len(text)
-    while i < n:
+    # Jump between quotes and braces; a negative offset walks the tail first.
+    offsets = chain(
+        range(open_idx, 0),
+        (m.start() for m in _BRACE_OR_QUOTE_RE.finditer(text, max(open_idx, 0))),
+    )
+    for i in offsets:
         c = text[i]
         if c == '"' and text[i - 1] != "\\":
             in_str = not in_str
@@ -282,7 +319,6 @@ def find_matching_brace(text: str, open_idx: int) -> int:
                 depth -= 1
                 if depth == 0:
                     return i
-        i += 1
     return -1
 
 
@@ -313,15 +349,33 @@ def find_unquoted_block_end(text: str, start: int) -> Tuple[int, bool]:
     hide a brace inside a ``"..."`` span.
     """
     depth = 1
-    i = start
-    n = len(text)
-    while i < n and depth > 0:
-        if text[i] == "{":
-            depth += 1
-        elif text[i] == "}":
-            depth -= 1
-        i += 1
-    return i, depth == 0
+    pos = start
+    # Depth only falls at a `}`, so hop between them and count the `{` skipped.
+    while True:
+        close = text.find("}", pos)
+        if close == -1:
+            return len(text), False
+        depth += text.count("{", pos, close) - 1
+        if not depth:
+            return close + 1, True
+        pos = close + 1
+
+
+def find_unquoted_brace_close(text: str, open_idx: int) -> int:
+    """Index of the ``}`` closing the ``{`` at *open_idx*, or -1 if unbalanced.
+
+    Like :func:`find_unquoted_block_end`, braces inside quotes still count.
+    """
+    depth = 0
+    pos = open_idx
+    while True:
+        close = text.find("}", pos)
+        if close == -1:
+            return -1
+        depth += text.count("{", pos, close) - 1
+        if not depth:
+            return close
+        pos = close + 1
 
 
 def compact_block(block_lines: List[str]) -> List[str]:
@@ -352,6 +406,24 @@ def count_braces(text: str) -> Tuple[int, int]:
             elif c == "}":
                 closes += 1
     return opens, closes
+
+
+def reindent_by_brace_depth(block_lines: List[str], indent: str = "") -> List[str]:
+    """Re-indent lines so each line's tab depth comes from brace nesting alone,
+    starting at *indent*. Blank lines are kept empty. Braces inside ``"..."``
+    strings or ``#`` comments do not shift the depth. Idempotent."""
+    out = []
+    depth = 0
+    for line in block_lines:
+        stripped = line.strip()
+        if not stripped:
+            out.append("")
+            continue
+        opens, closes = count_braces(stripped)
+        this_depth = depth - 1 if stripped.startswith("}") else depth
+        out.append(indent + "\t" * max(0, this_depth) + stripped)
+        depth = max(0, depth + opens - closes)
+    return out
 
 
 def collapse_ws_outside_quotes(text: str) -> str:
@@ -445,28 +517,29 @@ def collapse_or_compact(
     block_lines: List[str], indent: Optional[str] = None
 ) -> List[str]:
     """Render a ``key = { ... }`` block on one line when it reduces to a single
-    leaf assignment (even through nesting), else fall back to ``compact_block``.
+    leaf assignment (even through nesting), else compact it and reindent it by
+    brace depth.
 
     Single-leaf test (evaluated outside string literals and comments):
     ``leaves = (#"=<>") - (#"{")``; collapse iff ``leaves == 1`` and braces
     balance. Comparison operators ``<``/``>`` count as leaves alongside ``=`` so a
     block like ``{ a > 1 b > 2 }`` is not mistaken for a single leaf. A bare
     token list (``focus = { A B C }``) counts as one leaf per token, so a
-    multi-line list stays multi-line. Bails to
-    ``compact_block`` if any line carries a ``#`` comment. When *indent* is None
-    the single-line form keeps the block's existing leading whitespace (from
-    ``block_lines[0]``); otherwise *indent* is used as the prefix.
+    multi-line list stays multi-line. Stays multi-line if any line carries a
+    ``#`` comment. When *indent* is None the output starts at the block's
+    existing leading whitespace (from ``block_lines[0]``); otherwise *indent* is
+    used as the prefix.
     """
     if not block_lines:
         return compact_block(block_lines)
 
-    for line in block_lines:
-        if strip_inline_comment(line) != line:
-            return compact_block(block_lines)
-
     if indent is None:
         first = block_lines[0]
         indent = first[: len(first) - len(first.lstrip())]
+
+    for line in block_lines:
+        if strip_inline_comment(line) != line:
+            return reindent_by_brace_depth(compact_block(block_lines), indent)
 
     text = " ".join(line.strip() for line in block_lines if line.strip())
 
@@ -486,12 +559,14 @@ def collapse_or_compact(
                 n_close += 1
 
     if n_open != n_close or n_leaf - n_open != 1:
-        return compact_block(collapse_nested_blocks(block_lines))
+        multi = compact_block(collapse_nested_blocks(block_lines))
+        return reindent_by_brace_depth(multi, indent)
 
     unquoted = re.sub(r'"(?:[^"\\]|\\.)*"', '""', text)
     for group in re.findall(r"\{([^{}=<>]*)\}", unquoted):
         if len(group.split()) > 1:
-            return compact_block(collapse_nested_blocks(block_lines))
+            multi = compact_block(collapse_nested_blocks(block_lines))
+            return reindent_by_brace_depth(multi, indent)
 
     return [f"{indent}{_normalize_oneline_braces(text)}"]
 
@@ -596,9 +671,14 @@ def create_backup(filename: str) -> str:
 
 
 def should_skip_file(
-    filename: str, extra_skip_patterns: Optional[List[str]] = None
+    filename: str,
+    extra_skip_patterns: Optional[List[str]] = None,
+    *,
+    mod_path: Optional[str] = None,
 ) -> bool:
-    """Check if a file should be skipped during processing."""
+    """Match exclusions inside the checkout, not its ancestor directories."""
+    if mod_path is not None and os.path.isabs(filename):
+        filename = os.path.relpath(filename, mod_path)
     ignored_dirs = {".git", ".claude", "gfx", "tools", "resources", "docs", "map"}
     content_roots = {"common", "events", "history", "interface", "localisation"}
     normalized_path = filename.replace("\\", "/").strip("/")
@@ -1098,15 +1178,12 @@ def strip_comments(text: str) -> str:
         if line.lstrip().startswith("#"):
             result.append("")
             continue
-        in_quote = False
-        for i, ch in enumerate(line):
-            if ch == '"':
-                in_quote = not in_quote
-            elif ch == "#" and not in_quote:
-                line = line[:i]
-                break
-        result.append(line)
+        result.append(strip_inline_comment(line))
     return "\n".join(result)
+
+
+# A `"` opens or closes a string unless a backslash escapes it.
+_STRING_QUOTE_RE = re.compile(r'(?<!\\)"')
 
 
 def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> str:
@@ -1125,18 +1202,25 @@ def blank_quoted_strings(text: str, keep_start: Optional[Set[int]] = None) -> st
     """
     if '"' not in text:
         return text
-    out = list(text)
-    in_str = False
-    start = -1
     keep = keep_start or ()
-    for i, c in enumerate(text):
-        if c == '"' and (i == 0 or text[i - 1] != "\\"):
-            if not in_str:
-                start = i
-            in_str = not in_str
-        elif in_str and c != "\n" and start not in keep:
-            out[i] = " "
-    return "".join(out)
+    quotes = [m.start() for m in _STRING_QUOTE_RE.finditer(text)]
+    # An unterminated last string runs to the end of the text.
+    quotes.append(len(text))
+    pieces = []
+    done = 0
+    for open_idx, close_idx in zip(quotes[::2], quotes[1::2]):
+        if open_idx in keep:
+            continue
+        interior = text[open_idx + 1 : close_idx]
+        pieces.append(text[done : open_idx + 1])
+        if "\n" in interior:
+            interior = "\n".join(" " * len(part) for part in interior.split("\n"))
+        else:
+            interior = " " * len(interior)
+        pieces.append(interior)
+        done = close_idx
+    pieces.append(text[done:])
+    return "".join(pieces)
 
 
 def flat_block_text(block: str) -> str:
@@ -1215,9 +1299,10 @@ def iter_statement_ops(
             index = close + 1
             continue
         if cursor < length and body[cursor] == '"':
-            stop = body.find('"', cursor + 1)
-            if stop == -1:
+            closing_quote = _STRING_QUOTE_RE.search(body, cursor + 1)
+            if closing_quote is None:
                 return
+            stop = closing_quote.start()
             yield key, operator, body[cursor + 1 : stop], None
             index = stop + 1
             continue
@@ -1236,6 +1321,36 @@ def iter_statements(body: str) -> Iterator[Tuple[str, Optional[str], Optional[st
 
 def line_of(text: str, offset: int) -> int:
     return text.count("\n", 0, offset) + 1
+
+
+def word_start_re(literal: str, rest: str) -> "re.Pattern[str]":
+    """Compile `\\b<literal><rest>` with the literal first.
+
+    A leading `\\b` makes the engine try the pattern at every offset. Led by
+    the literal it skips between occurrences, and the lookbehind checks the
+    same word boundary.
+    """
+    return re.compile(literal + r"(?<=\b" + literal + ")" + rest)
+
+
+def label_before_brace(body: str, brace_idx: int) -> Optional[str]:
+    """Return the `key` of a `key = {` opener whose `{` is at *brace_idx*.
+
+    Returns None for an anonymous block (no `=` before the brace), e.g. a
+    color/array literal.
+    """
+    j = brace_idx - 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    if j < 0 or body[j] != "=":
+        return None
+    j -= 1
+    while j >= 0 and body[j] in " \t\r\n":
+        j -= 1
+    end = j + 1
+    while j >= 0 and (body[j].isalnum() or body[j] in "_:.@"):
+        j -= 1
+    return body[j + 1 : end] or None
 
 
 def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
@@ -1263,13 +1378,13 @@ def iter_focus_blocks(text: str) -> Iterator[Tuple[str, str, int, str]]:
 _IS_AI_YES_RE = re.compile(r"is_ai\s*=\s*yes\b")
 # The three trigger blocks that can hide a decision or category from a player.
 _AI_GATE_FIELDS = ("visible", "available", "allowed")
-_TOP_LEVEL_BLOCK_RE = re.compile(r"^([A-Za-z_][A-Za-z0-9_]*)\s*=\s*\{", re.MULTILINE)
+_TOP_LEVEL_BLOCK_RE = IDENTIFIER_BLOCK_LINE_RE
 
 
-def first_flat_match(
+def iter_flat_matches(
     block: str, pattern: "re.Pattern[str]"
-) -> Optional["re.Match[str]"]:
-    """First match of *pattern* sitting unconditionally at depth 0 of a block.
+) -> Iterator["re.Match[str]"]:
+    """Matches of *pattern* sitting unconditionally at depth 0 of a block.
 
     Nested inside NOT/OR/AND/if/limit or a scoped `TAG = { }` a token is
     conditional and means something different: `NOT = { has_country_flag = X }`
@@ -1278,14 +1393,20 @@ def first_flat_match(
     preceding-whitespace guard against matching mid-token.
     """
     if not block:
-        return None
+        return
     for inner, index in iter_flat_offsets(block):
         if index and not inner[index - 1].isspace():
             continue
         match = pattern.match(inner, index)
         if match:
-            return match
-    return None
+            yield match
+
+
+def first_flat_match(
+    block: str, pattern: "re.Pattern[str]"
+) -> Optional["re.Match[str]"]:
+    """First match of *pattern* sitting unconditionally at depth 0 of a block."""
+    return next(iter_flat_matches(block, pattern), None)
 
 
 def has_flat_is_ai(block: str) -> bool:
@@ -1410,50 +1531,12 @@ class FileOpener:
         cls._cache.clear()
 
 
-class DataCleaner:
-    """Helper class for cleaning data structures"""
-
-    @classmethod
-    def clear_false_positives(cls, input_iter, false_positives: tuple = ()):
-        """Remove false positives from a dictionary or list"""
-        if isinstance(input_iter, dict):
-            if len(false_positives) > 0:
-                for key in false_positives:
-                    try:
-                        input_iter.pop(key)
-                    except KeyError:
-                        continue
-            return input_iter
-        elif isinstance(input_iter, list):
-            if len(false_positives) > 0:
-                return [i for i in input_iter if i not in false_positives]
-            return input_iter
-
-    @classmethod
-    def clear_false_positives_partial_match(
-        cls, input_iter, false_positives: tuple = ()
-    ):
-        """Remove items that partially match false positives"""
-        if isinstance(input_iter, dict):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-                for i in skip_list:
-                    if i in input_iter:
-                        input_iter.pop(i)
-            return input_iter
-        elif isinstance(input_iter, list):
-            if len(false_positives) > 0:
-                skip_list = []
-                for k in input_iter:
-                    for f in false_positives:
-                        if f in k:
-                            skip_list.append(k)
-                input_iter = [i for i in input_iter if i not in skip_list]
-            return input_iter
+def drop_partial_matches(
+    names: Iterable[str], false_positives: Iterable[str]
+) -> List[str]:
+    """Return the names that contain none of the false-positive substrings."""
+    false_positives = tuple(false_positives)
+    return [name for name in names if not any(fp in name for fp in false_positives)]
 
 
 def timing_enabled() -> bool:
@@ -1870,62 +1953,6 @@ def get_staged_files(
         return None
     except (OSError, subprocess.CalledProcessError, subprocess.TimeoutExpired):
         return None
-
-
-def run_tool_main(
-    tool_class,
-    description: str = "Run tool",
-    extra_args_fn=None,
-    method_name: str = "process_file",
-    argv=None,
-    parser=None,
-):
-    """Main entry point for single-file tools and standardizers.
-
-    Args:
-        tool_class: Class to instantiate (DataCleaner subclass or BaseStandardizer).
-        description: CLI description string.
-        extra_args_fn: Optional callback to add custom argparse arguments.
-        method_name: Method to call on the instance (default: "process_file").
-        argv: Argument list (default: sys.argv[1:]).
-        parser: Custom ArgumentParser (default: create_standard_parser).
-    """
-    if parser is None:
-        parser = create_standard_parser(description)
-    if extra_args_fn:
-        extra_args_fn(parser)
-    args = parser.parse_args(argv)
-
-    if not os.path.exists(args.input_file):
-        log_message("ERROR", f"File '{args.input_file}' does not exist")
-        sys.exit(1)
-
-    output_file = args.output if args.output else args.input_file
-
-    import inspect
-
-    sig = inspect.signature(tool_class.__init__)
-    valid_params = set(sig.parameters.keys()) - {"self"}
-    ctor_kwargs = {}
-    if "verbose" in valid_params:
-        ctor_kwargs["verbose"] = args.verbose
-    if "use_colors" in valid_params:
-        ctor_kwargs["use_colors"] = not getattr(args, "no_color", False)
-    tool = tool_class(**ctor_kwargs)
-
-    if args.backup:
-        backup_file = create_backup(args.input_file)
-        if not backup_file:
-            sys.exit(1)
-
-    log_message("INFO", f"Starting processing of {args.input_file}", args.verbose)
-
-    method = getattr(tool, method_name)
-    if method(args.input_file, output_file):
-        log_message("SUCCESS", f"Processing completed: {output_file}")
-    else:
-        log_message("ERROR", "Processing failed")
-        sys.exit(1)
 
 
 def run_validator_main(

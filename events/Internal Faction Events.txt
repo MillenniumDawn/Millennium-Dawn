@@ -168,7 +168,7 @@ country_event = {
 	}
 	option = {
 		name = internal_factions_events.1.o4
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.1.o3 executed"	#Merge with a domestic company
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.1.o4 executed"	#Merge with a domestic company
 		trigger = {
 			has_idea = industrial_conglomerates
 			has_communist_government = yes
@@ -888,7 +888,7 @@ country_event = {
 
 	option = {
 		name = internal_factions_events.13.b
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.13.a executed" #Subsidy
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.13.b executed" #Subsidy
 		set_country_flag = { flag = large_company_subsidies value = 1 days = 180 }
 
 		set_temp_variable = { temp_opinion = 5 }
@@ -2214,7 +2214,11 @@ country_event = {
 				has_idea = oligarchs
 			}
 		}
-		check_variable = { agriculture_district_total > 0 }
+		any_owned_state = {
+			is_controlled_by = OWNER
+			agriculture_district > 0
+			industrial_complex < 50
+		}
 		NOT = { has_country_flag = recent_agricultural_industry_civ_conversion }
 	}
 
@@ -2275,7 +2279,8 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.31.a executed"
 		random_owned_controlled_state = {
 			limit = {
-				check_variable = { building_level@agriculture_district > 0 }
+				agriculture_district > 0
+				industrial_complex < 50
 			}
 			remove_building = {
 				type = agriculture_district
@@ -2337,11 +2342,33 @@ country_event = {
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.31.c executed"
 		trigger = {
 			has_idea = industrial_conglomerates
-			check_variable = { agriculture_district_total > 1 }
+			OR = {
+				any_owned_state = {
+					is_controlled_by = OWNER
+					agriculture_district > 1
+					industrial_complex < 49
+				}
+				collection_size = {
+					input = {
+						input = game:scope
+						operators = {
+							owned_states
+							limit = {
+								is_controlled_by = OWNER
+								agriculture_district > 0
+								industrial_complex < 50
+							}
+						}
+					}
+					# collection_size comparisons are inclusive: at least two states.
+					value > 2
+				}
+			}
 		}
 		random_owned_controlled_state = {
 			limit = {
-				check_variable = { building_level@agriculture_district > 0 }
+				agriculture_district > 0
+				industrial_complex < 50
 			}
 			remove_building = {
 				type = agriculture_district
@@ -2355,7 +2382,8 @@ country_event = {
 		}
 		random_owned_controlled_state = {
 			limit = {
-				check_variable = { building_level@agriculture_district > 0 }
+				agriculture_district > 0
+				industrial_complex < 50
 			}
 			remove_building = {
 				type = agriculture_district
@@ -2503,7 +2531,7 @@ country_event = {
 	# Give it To a Farmer!
 	option = {
 		name = internal_factions_events.32.b
-		log = "[GetDateText]: [This.GetName]: internal_factions_events.31.b executed"
+		log = "[GetDateText]: [This.GetName]: internal_factions_events.32.b executed"
 		trigger = {
 			OR = {
 				has_idea = farmers
@@ -2668,7 +2696,7 @@ country_event = {
 	trigger = {
 		NOT = { has_idea = closed_borders }
 		has_idea = labour_unions
-		check_variable = { net_immigration_rate > 0 }
+		check_variable = { net_immigration_rate > 0.10 }
 		NOT = { has_country_flag = recently_got_labour_union_migrant_protest }
 	}
 	immediate = {
@@ -2690,35 +2718,35 @@ country_event = {
 		}
 		modifier = {
 			factor = 1.05
-			check_variable = { net_immigration_rate > 0.02 }
+			check_variable = { net_immigration_rate > 0.06 }
 		}
 		modifier = {
 			factor = 1.10
-			check_variable = { net_immigration_rate > 0.05 }
-		}
-		modifier = {
-			factor = 1.12
-			check_variable = { net_immigration_rate > 0.10 }
-		}
-		modifier = {
-			factor = 1.15
 			check_variable = { net_immigration_rate > 0.15 }
 		}
 		modifier = {
+			factor = 1.12
+			check_variable = { net_immigration_rate > 0.30 }
+		}
+		modifier = {
+			factor = 1.15
+			check_variable = { net_immigration_rate > 0.45 }
+		}
+		modifier = {
 			factor = 1.20
-			check_variable = { net_immigration_rate > 0.25 }
+			check_variable = { net_immigration_rate > 0.75 }
 		}
 		modifier = {
 			factor = 1.25
-			check_variable = { net_immigration_rate > 0.35 }
+			check_variable = { net_immigration_rate > 1.05 }
 		}
 		modifier = {
 			factor = 1.50
-			check_variable = { net_immigration_rate > 0.40 }
+			check_variable = { net_immigration_rate > 1.20 }
 		}
 		modifier = {
 			factor = 2.0
-			check_variable = { net_immigration_rate > 0.5 }
+			check_variable = { net_immigration_rate > 1.50 }
 		}
 	}
 
@@ -2772,8 +2800,9 @@ country_event = {
 		increase_migration_law = yes
 		block_migration_law_decrease = yes
 
+		# The AI keeps its starting Migration Law
 		ai_chance = {
-			base = 1
+			base = 0
 		}
 	}
 }
@@ -2870,6 +2899,13 @@ country_event = {
 	}
 	immediate = {
 		set_country_flag = { flag = recently_invested_a_renewable_energy_infrastructure value = 1 days = 180 }
+		# Picked once so the option builds in the state its tooltip names
+		hidden_effect = {
+			random_owned_controlled_state = {
+				limit = { renewable_energy_infra_random_build_loc = yes }
+				save_event_target_as = renewable_investment_state
+			}
+		}
 	}
 
 	mean_time_to_happen = {
@@ -2899,12 +2935,14 @@ country_event = {
 	option = {
 		name = internal_factions_events.36.a
 		log = "[GetDateText]: [This.GetName]: internal_factions_events.36.a executed"
-		random_owned_controlled_state = {
-			limit = { renewable_energy_infra_random_build_loc = yes }
-			add_building_construction = {
-				type = renewable_energy_infra
-				level = 1
-				instant_build = yes
+		if = {
+			limit = { has_event_target = renewable_investment_state }
+			event_target:renewable_investment_state = {
+				add_building_construction = {
+					type = renewable_energy_infra
+					level = 1
+					instant_build = yes
+				}
 			}
 		}
 
@@ -2924,6 +2962,10 @@ country_event = {
 			modifier = {
 				factor = 2.5
 				check_variable = { interest_rate < 8 }
+			}
+			modifier = {
+				factor = 0
+				check_variable = { treasury < 8.50 }
 			}
 		}
 	}
@@ -2954,7 +2996,7 @@ country_event = {
 	picture = GFX_generic_factory
 	is_triggered_only = yes
 	trigger = {
-		check_variable = { net_immigration_rate > 0 }
+		check_variable = { net_immigration_rate > 0.10 }
 		NOT = { has_idea = closed_borders }
 		NOT = { has_country_flag = recently_farmer_abuse_migrant_labour }
 		OR = {
