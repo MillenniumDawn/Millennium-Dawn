@@ -1,147 +1,47 @@
 # Author(s): Yard1, Croc, AngriestBird
+# The header click fills ledger_sort_values in country_array order; a repeat click sorts descending
 create_sorted_array = {
 	if = {
-		limit = {
-			check_variable = { last_sort_var = sort_var }
-		}
-		set_variable = {
-			middle = {
-				value = country_array^num
-				multiply = 0.5
-				round = yes
-			}
-		}
-		set_temp_variable = {
-			len = {
-				value = country_array^num
-				subtract = 1
-			}
-		}
-		for_loop_effect = {
-			start = 0
-			end = middle
-
-			set_temp_variable = {
-				reverse = {
-					value = len
-					subtract = v
-				}
-			}
-			set_temp_variable = { swap = country_array^v }
-			set_variable = { country_array^v = country_array^reverse }
-			set_variable = { country_array^reverse = swap }
-		}
-		clear_variable = middle
+		limit = { check_variable = { last_sort_var = sort_var } }
+		clear_variable = last_sort_var
+		set_temp_variable = { ledger_sort_descending = 1 }
 	}
 	else = {
-		set_variable = {
-			high = {
-				value = country_array^num
-				subtract = 1
-			}
-		}
-		set_variable = { low = 0 }
-		ledger_quicksort = yes
 		set_variable = { last_sort_var = sort_var }
-		clear_variable = high
-		clear_variable = low
 	}
-	update_ledger_dirty_var = yes
-}
-
-update_misc_vars = {
-	# Consumer Good Factories
-	set_variable = {
-		consumer_goods_factories = {
-			value = num_of_civilian_factories
-			multiply = modifier@consumer_goods_expected_value
-			multiply = {
-				value = 1
-				add = modifier@consumer_goods_factor
-			}
+	for_each_loop = {
+		array = country_array
+		add_to_temp_array = { ledger_sort_nations = v }
+	}
+	clear_array = country_array
+	set_temp_variable = { ledger_sort_end = ledger_sort_nations^num }
+	for_loop_effect = {
+		end = ledger_sort_end
+		if = {
+			limit = { check_variable = { ledger_sort_descending = 1 } }
+			find_highest_in_array = { array = ledger_sort_values index = ledger_sort_idx }
 		}
-	}
-
-	set_variable = {
-		used_consumer_goods_factories = {
-			value = num_of_civilian_factories
-			subtract = consumer_goods_factories
+		else = {
+			find_lowest_in_array = { array = ledger_sort_values index = ledger_sort_idx }
 		}
+		set_temp_variable = { ledger_sort_nation = ledger_sort_nations^ledger_sort_idx }
+		add_to_array = { country_array = ledger_sort_nation }
+		remove_from_temp_array = { array = ledger_sort_nations index = ledger_sort_idx }
+		remove_from_temp_array = { array = ledger_sort_values index = ledger_sort_idx }
 	}
-
-	set_variable = {
-		effective_civilian_factories = {
-			value = num_of_civilian_factories
-			subtract = consumer_goods_factories
-			multiply = {
-				value = 1
-				add = modifier@production_speed_buildings_factor
-			}
-		}
-	}
-
-	set_variable = {
-		effective_military_factories = {
-			value = num_of_military_factories
-			multiply = {
-				value = 1
-				add = modifier@industrial_capacity_factory
-			}
-		}
-	}
-
-	set_variable = {
-		effective_naval_factories = {
-			value = num_of_naval_factories
-			multiply = {
-				value = 1
-				add = modifier@industrial_capacity_dockyard
-			}
-		}
-	}
-
-	set_variable = { num_controlled_states_including_subjects = num_controlled_states }
-	for_each_scope_loop = {
-		array = subjects
-		add_to_variable = {
-			PREV.num_controlled_states_including_subjects = num_controlled_states
-		}
-	}
-
-	if = {
-		limit = { is_faction_leader = yes }
-		set_variable = { faction_battalions = num_battalions }
-		set_variable = { faction_ships = num_ships }
-		set_variable = { faction_air = deployed_airforce_manpower_k }
-		set_variable = { faction_industry = num_of_factories }
-		set_variable = { faction_controlled_states = num_of_controlled_states }
-		for_each_scope_loop = {
-			array = allies
-			add_to_variable = { PREV.faction_battalions = num_battalions }
-			add_to_variable = { PREV.faction_ships = num_ships }
-			add_to_variable = { PREV.faction_air = deployed_airforce_manpower_k }
-			add_to_variable = { PREV.faction_industry = num_of_factories }
-			add_to_variable = { PREV.faction_controlled_states = num_of_controlled_states }
-		}
-	}
-	else = {
-		clear_variable = faction_battalions
-		clear_variable = faction_ships
-		clear_variable = faction_air
-		clear_variable = faction_industry
-		clear_variable = faction_controlled_states
-	}
-
 	update_ledger_dirty_var = yes
 }
 
 open_ledger = {
 	if = {
-		limit = { check_variable = { ledger_open = 1 } }
+		limit = { check_variable = { ledger_open > 0 } }
 		clear_variable = ledger_open
-		update_ledger_dirty_var = yes
-	} else = {
+	}
+	else = {
 		update_ledger_country_array = yes
+		# One entry so the header list draws the current page's header
+		clear_array = ledger_header_array
+		add_to_array = { ledger_header_array = THIS }
 		set_variable = { ledger_open = 1 }
 	}
 	update_ledger_dirty_var = yes
@@ -151,7 +51,60 @@ update_ledger_country_array = {
 	clear_variable = last_sort_var
 	clear_array = country_array
 	every_country = {
-		update_misc_vars = yes
+		set_variable = {
+			consumer_goods_factories = {
+				value = num_of_civilian_factories
+				multiply = actual_consumer_goods_percent_display
+			}
+		}
+
+		set_variable = {
+			used_consumer_goods_factories = {
+				value = num_of_civilian_factories
+				subtract = consumer_goods_factories
+			}
+		}
+
+		set_variable = {
+			effective_civilian_factories = {
+				value = used_consumer_goods_factories
+				multiply = {
+					value = 1
+					add = modifier@production_speed_buildings_factor
+				}
+			}
+		}
+
+		set_variable = {
+			effective_military_factories = {
+				value = num_of_military_factories
+				multiply = {
+					value = 1
+					add = modifier@industrial_capacity_factory
+				}
+			}
+		}
+
+		set_variable = {
+			effective_naval_factories = {
+				value = num_of_naval_factories
+				multiply = {
+					value = 1
+					add = modifier@industrial_capacity_dockyard
+				}
+			}
+		}
+
+		set_variable = {
+			num_controlled_states_including_subjects = {
+				value = 0
+				every_collection = {
+					named_collection = country_and_all_subjects_collection
+					add = num_of_controlled_states
+				}
+			}
+		}
+
 		add_to_array = {
 			PREV.country_array = THIS
 		}
@@ -165,7 +118,56 @@ update_ledger_faction_array = {
 	clear_array = country_array
 	every_country = {
 		limit = { is_faction_leader = yes }
-		update_misc_vars = yes
+		set_variable = {
+			faction_battalions = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = num_battalions
+				}
+			}
+		}
+
+		set_variable = {
+			faction_ships = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = num_ships
+				}
+			}
+		}
+
+		set_variable = {
+			faction_air = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = deployed_airforce_manpower_k
+				}
+			}
+		}
+
+		set_variable = {
+			faction_industry = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = num_of_factories
+				}
+			}
+		}
+
+		set_variable = {
+			faction_controlled_states = {
+				value = 0
+				every_collection = {
+					named_collection = faction_members_collection
+					add = num_of_controlled_states
+				}
+			}
+		}
+
 		add_to_array = {
 			PREV.country_array = THIS
 		}
@@ -173,138 +175,10 @@ update_ledger_faction_array = {
 	update_ledger_dirty_var = yes
 }
 
-ledger_quicksort = {
-	set_temp_variable = {
-		stack_size = {
-			value = high
-			subtract = low
-			add = 1
-		}
-	}
-	resize_temp_array = {
-		array = stack
-		value = 0
-		size = stack_size
-	}
-
-	set_temp_variable = { top = 0 }
-	set_temp_variable = { stack^top = low }
-	add_to_temp_variable = { top = 1 }
-	set_temp_variable = { stack^top = high }
-	meta_effect = {
-		text = {
-			while_loop_effect = {
-				limit = {
-					check_variable = {
-						var = top
-						value = 0
-						compare = greater_than_or_equals
-					}
-				}
-				set_variable = { high = stack^top }
-				subtract_from_temp_variable = { top = 1 }
-				set_variable = { low = stack^top }
-				subtract_from_temp_variable = { top = 1 }
-
-				##### PARTITON #####
-				set_variable = { random_pivot = random }
-				set_variable = {
-					random_pivot = {
-						value = random_pivot
-						multiply = high
-						round = yes
-						add = low
-						clamp = { min = low max = high }
-					}
-				}
-				set_temp_variable = { swap = country_array^high }
-				set_variable = { country_array^high = country_array^random_pivot }
-				set_variable = { country_array^random_pivot = swap }
-
-				set_temp_variable = {
-					idx = {
-						value = low
-						subtract = 1
-					}
-				}
-
-				var:country_array^high = {
-					set_variable = { PREV.min = [VARIABLE] }
-				}
-
-				for_loop_effect = {
-					start = low
-					end = high
-					var:country_array^v = {
-						set_variable = { PREV.tmp = [VARIABLE] }
-					}
-					if = {
-						limit = {
-							check_variable = {
-								var = tmp
-								value = min
-								compare = less_than
-							}
-						}
-						add_to_temp_variable = { idx = 1 }
-						set_temp_variable = { swap = country_array^idx }
-						set_variable = { country_array^idx = country_array^v }
-						set_variable = { country_array^v = swap }
-					}
-				}
-
-				add_to_temp_variable = { idx = 1 }
-				set_temp_variable = { swap = country_array^idx }
-				set_variable = { country_array^idx = country_array^high }
-				set_variable = { country_array^high = swap }
-
-				set_temp_variable = { qs_partition_return = idx }
-				#####
-
-				set_temp_variable = {
-					qs_partition_return_plus_1 = {
-						value = qs_partition_return
-						add = 1
-					}
-				}
-				set_temp_variable = {
-					qs_partition_return_minus_1 = {
-						value = qs_partition_return
-						subtract = 1
-					}
-				}
-
-				if = {
-					limit = { check_variable = { qs_partition_return_minus_1 > low } }
-					add_to_temp_variable = { top = 1 }
-					set_temp_variable = { stack^top = low }
-					add_to_temp_variable = { top = 1 }
-					set_temp_variable = { stack^top = qs_partition_return_minus_1 }
-				}
-
-				if = {
-					limit = { check_variable = { qs_partition_return_plus_1 < high } }
-					add_to_temp_variable = { top = 1 }
-					set_temp_variable = { stack^top = qs_partition_return_plus_1 }
-					add_to_temp_variable = { top = 1 }
-					set_temp_variable = { stack^top = high }
-				}
-			}
-		}
-		# Make sure to update common/scripted_localisation/ledger_localisation.txt for the new variables you're adding
-		VARIABLE = "[ROOT.LedgerGetVariableToSort]"
-	}
-
-	clear_variable = min
-	clear_variable = tmp
-	clear_variable = random_pivot
-	update_ledger_dirty_var = yes
-}
-
 update_ledger_dirty_var = {
 	set_variable = {
-		global.ledger_ui_dirty_var = {
-			value = global.ledger_ui_dirty_var
+		ledger_ui_dirty_var = {
+			value = ledger_ui_dirty_var
 			add = 1
 			mod = 1000001
 		}
