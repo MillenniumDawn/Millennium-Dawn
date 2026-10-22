@@ -3,14 +3,23 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 
 import focus_overlap_report as report
+import pytest
 from shared.suite import write_under
 from shared_utils import blank_quoted_strings
 
 
 def focus(body: str) -> str:
     return "\tfocus = {\n" + body + "\n\t}\n"
+
+
+def tree_offset() -> str:
+    return focus(
+        "\t\tid = a\n\t\tx = 4\n\t\ty = 0\n"
+        "\t\toffset = { x = 9 trigger = { has_focus_tree = abbott_tree } }"
+    )
 
 
 def parse(text: str):
@@ -214,6 +223,103 @@ class TestReport:
         assert "(3,1)" in text
         assert "a (l1)" in text
 
+    def test_fractional_cells_are_written_as_json_numbers(self):
+        text = (
+            focus("\t\tid = a\n\t\tx = 1.5\n\t\ty = 2.5")
+            + focus("\t\tid = b\n\t\tx = 0.75\n\t\ty = 2\n\t\trelative_position_id = c")
+            + focus("\t\tid = c\n\t\tx = 0.75\n\t\ty = 0.5")
+            + focus("\t\tid = d\n\t\tx = 2.5\n\t\ty = 2.5")
+            + focus(
+                "\t\tid = e\n\t\tx = 0.5\n\t\ty = 0.5\n\t\trelative_position_id = f"
+            )
+            + focus("\t\tid = f\n\t\tx = 0.5\n\t\ty = 0.5")
+        )
+        built = self.build(text, adjacent=True, show_map=True)
+        assert json.loads(json.dumps(built)) == built
+        collision = built["collisions"][0]
+        assert (collision["x"], collision["y"]) == (1.5, 2.5)
+        assert type(collision["x"]) is float and type(collision["y"]) is float
+        assert [entry["id"] for entry in collision["focuses"]] == ["a", "b"]
+        pairs = [(p["y"], p["left"]["id"], p["right"]["id"]) for p in built["adjacent"]]
+        assert pairs == [(2.5, "b", "d")]
+        assert type(built["adjacent"][0]["y"]) is float
+        cells = {entry["id"]: (entry["x"], entry["y"]) for entry in built["map"]}
+        assert cells["c"] == (0.75, 0.5)
+        assert [type(value) for value in cells["c"]] == [float, float]
+        assert cells["e"] == (1, 1)
+        assert [type(value) for value in cells["e"]] == [int, int]
+        assert "(1.5,2.5)" in report.format_text(built)
+
+
+class TestCoordinates:
+    @pytest.mark.parametrize(
+        "value,expected",
+        [
+            ("3", 3),
+            ("-2", -2),
+            ("+4", 4),
+            ("2.0", 2),
+            ("1.50", Decimal("1.5")),
+            (".5", Decimal("0.5")),
+            ("-4.5", Decimal("-4.5")),
+        ],
+    )
+    def test_whole_values_stay_ints_and_fractions_stay_exact(self, value, expected):
+        parsed = report.parse_coordinate(value)
+        assert parsed == expected
+        assert type(parsed) is type(expected)
+
+    @pytest.mark.parametrize("value", ["", "1e3", "nan", "1.2.3", "@column"])
+    def test_non_numeric_value_is_rejected(self, value):
+        with pytest.raises(ValueError, match="expected a number"):
+            report.parse_coordinate(value)
+
+    def test_fractional_focus_and_offset_coordinates_are_read(self):
+        focuses, resolved = positions(
+            focus(
+                "\t\tid = a\n\t\tx = 1.5\n\t\ty = -4.5\n"
+                "\t\toffset = { x = 0.5 y = -1.5 trigger = { always = yes } }"
+            )
+        )
+        assert (focuses["a"].x, focuses["a"].y) == (Decimal("1.5"), Decimal("-4.5"))
+        assert (focuses["a"].offsets[0].dx, focuses["a"].offsets[0].dy) == (
+            Decimal("0.5"),
+            Decimal("-1.5"),
+        )
+        assert resolved["a"] == (2, -6)
+
+    def test_fractions_that_add_up_land_on_the_same_cell(self):
+        text = (
+            focus("\t\tid = a\n\t\tx = 0.1\n\t\ty = 0")
+            + focus("\t\tid = b\n\t\tx = 0.2\n\t\ty = 1\n\t\trelative_position_id = a")
+            + focus("\t\tid = c\n\t\tx = 0.3\n\t\ty = 1")
+        )
+        _focuses, resolved = positions(text)
+        assert resolved["b"] == resolved["c"] == (Decimal("0.3"), 1)
+
+
+class TestFocusTree:
+    def test_has_focus_tree_is_unknown_without_a_tree(self):
+        assert report.evaluate("has_focus_tree = t", report.Scenario()) is None
+        assert positions(tree_offset())[1]["a"] == (4, 0)
+
+    def test_has_focus_tree_compares_with_the_scenario_tree(self):
+        scenario = report.Scenario(focus_tree="t")
+        assert report.evaluate("has_focus_tree = t", scenario) is True
+        assert report.evaluate("has_focus_tree = u", scenario) is False
+        assert report.evaluate("NOT = { has_focus_tree = u }", scenario) is True
+
+    def test_offset_follows_the_scenario_tree(self):
+        assert positions(tree_offset(), focus_tree="abbott_tree")[1]["a"] == (13, 0)
+        assert positions(tree_offset(), focus_tree="other_tree")[1]["a"] == (4, 0)
+
+    def test_file_tree_is_known_only_when_the_file_has_one(self):
+        one = "focus_tree = {\n\tid = t\n" + focus("\t\tid = a") + "}\n"
+        two = one + one.replace("id = t", "id = u")
+        assert report.file_focus_tree(one) == "t"
+        assert report.file_focus_tree(two) is None
+        assert report.file_focus_tree("shared_focus = {\n\tid = s\n}\n") is None
+
 
 class TestCli:
     def test_json_output_carries_the_scenario(self, tmp_path, capsys):
@@ -227,6 +333,33 @@ class TestCli:
         assert exit_code == 0
         assert payload["scenario"]["date"] == "2006.1.1"
         assert payload["focuses"] == 1
+
+    @pytest.mark.parametrize(
+        "extra,tree,x",
+        [
+            ([], "abbott_tree", 13),
+            (["--tree", "other_tree"], "other_tree", 4),
+        ],
+    )
+    def test_tree_comes_from_the_file_unless_given(
+        self, tmp_path, capsys, extra, tree, x
+    ):
+        path = write_under(
+            tmp_path,
+            "tree.txt",
+            "focus_tree = {\n\tid = abbott_tree\n" + tree_offset() + "}\n",
+        )
+        report.main(["--file", str(path), "--map", "--format", "json", *extra])
+        payload = json.loads(capsys.readouterr().out)
+        assert payload["scenario"]["focus_tree"] == tree
+        assert (payload["map"][0]["x"], payload["map"][0]["y"]) == (x, 0)
+
+    def test_fractional_coordinates_are_printed(self, tmp_path, capsys):
+        path = write_under(tmp_path, "tree.txt", focus("\t\tid = a\n\t\tx = 1.5"))
+        assert report.main(["--file", str(path), "--map"]) == 0
+        output = capsys.readouterr().out
+        assert "tree=-" in output
+        assert "(1.5,  0) a (l1)" in output
 
     def test_bad_date_is_rejected(self, tmp_path):
         path = write_under(tmp_path, "tree.txt", focus("\t\tid = a"))
